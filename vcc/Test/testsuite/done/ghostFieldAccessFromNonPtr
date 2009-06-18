@@ -1,0 +1,48 @@
+#include <vcc2.h>
+
+typedef struct _ABS_LIST
+{
+	int Card;
+	__specification ptrset List;
+} ABS_LIST, *PABS_LIST;
+
+ispure __specification bool IsEmptyAbsList(ABS_LIST AL) ensures(result == (AL.Card==0 && AL.List==set_empty()));
+
+void foo() {
+  ABS_LIST l;
+  assume(IsEmptyAbsList(l));
+}
+
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+typedef struct _S {
+  unsigned __int32 a;
+  unsigned __int32 b;
+  unsigned __int64 padding;
+  __specification unsigned __int64 sum;
+} S;
+
+S foo(S s)
+  requires(s.sum == (unsigned __int64)s.a + (unsigned __int64)s.b)
+  requires(s.a > 0 && s.b < 1000)
+  ensures(result.sum == (unsigned __int64)result.a + (unsigned __int64)result.b)
+{
+  s.a -=1;
+  s.b +=1;
+  return s;
+}
+
+void bar() {
+  S s;
+  s.a = 10;
+  s.b = 10;
+  s.sum = 20;
+  s = foo(s);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

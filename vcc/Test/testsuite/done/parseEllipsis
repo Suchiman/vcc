@@ -1,0 +1,6 @@
+#include <vcc2.h>
+
+void DbgPrint (void * f,  ... ) { }
+`
+Verification of DbgPrint succeeded.
+`

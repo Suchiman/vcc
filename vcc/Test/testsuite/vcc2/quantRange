@@ -1,0 +1,14 @@
+#include <vcc2.h>
+
+ispure unsigned fu(unsigned);
+ispure unsigned fi(int);
+
+void f() {
+  assert(forall(unsigned x; fu(x) >= 0));
+  assert(forall(int *p; is(p, int)));
+  assert(forall(int k; 10 <= fi(k); 0 <= fi(k)));
+  assert(forall(unsigned x,y,z; {fu(x),fu(y),fu(z)} x+y+z >= 0));
+}
+`
+Verification of f succeeded.
+`

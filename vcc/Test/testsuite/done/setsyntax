@@ -1,0 +1,108 @@
+
+#include <vcc2.h>
+
+void foo() {
+  int a,b,c,d,e,f;
+  
+  assert(set_eq(set_empty(), SET()));
+
+  assert(set_eq(
+    set_singleton(&a), 
+    SET(&a)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b)), 
+    SET(&a, &b)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&c),
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b))), 
+    SET(&a, &b, &c)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&d),
+    set_union(
+      set_singleton(&c),
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b)))), 
+    SET(&a, &b, &c, &d)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&d),
+    set_union(
+      set_singleton(&e),
+    set_union(
+      set_singleton(&c),
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b))))), 
+    SET(&a, &b, &c, &d, &e)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&f),
+    set_union(
+      set_singleton(&d),
+    set_union(
+      set_singleton(&e),
+    set_union(
+      set_singleton(&c),
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b)))))), 
+    SET(&a, &b, &c, &d, &e, &f)));
+}
+
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+
+struct vcc(dynamic_owns) T {
+  struct S s1;
+  struct S s2;
+  invariant(set_eq(owns(this), SET(&s1, &s2)))
+};
+
+void foo(struct T t) { }
+
+`
+Verification of T#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+
+struct vcc(dynamic_owns) T {
+  struct S s1;
+  struct S s2;
+  invariant(set_eq(owns(this), SET(&s1, &s2)))
+  invariant(s1.a == s2.a)
+  invariant(s1.b == s2.b)
+};
+
+void foo(struct T t) { }
+
+`
+Verification of T#adm succeeded.
+Verification of foo succeeded.
+`

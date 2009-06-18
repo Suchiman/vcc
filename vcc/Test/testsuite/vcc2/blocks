@@ -1,0 +1,231 @@
+
+#include <vcc2.h>
+
+void foo() 
+	{
+  int i = 5;
+  int j = 3;
+  block
+    requires(i <= 5 && j == 3)
+    ensures(i == old(i) + 1)
+  {
+    i++;
+  }
+  assert(i == 6 && j == 3);
+}	
+
+`
+Verification of foo succeeded.
+Verification of foo#block#0 succeeded.
+`
+
+#include <vcc2.h>
+
+void foo(int *i) 
+  writes(i)
+  ensures(*i == 10)
+{
+  int j = 5;
+  *i = 9;
+  block
+    writes(i)
+    requires(*i < 10 && j < 10)
+    ensures(*i == old(*i) + 1 && j == old(j + 1))
+  {
+    (*i)++; 
+    j++;
+  }
+  assert(j == 6);
+}
+`
+Verification of foo succeeded.
+Verification of foo#block#0 succeeded.
+`
+#include <vcc2.h>
+
+void foo() 
+	{
+  int i = 5;
+  int j = 3;
+  block
+    requires(i <= 5 && j == 3)
+    ensures(i == old(i) + 1 && j == 3)
+  {
+    i++;
+    block 
+      requires(j == 3)
+      ensures(j == 4)
+    {
+      j++;
+    }
+    j--;
+  }
+  assert(i == 6 && j == 3);
+}	
+
+`
+Verification of foo succeeded.
+Verification of foo#block#1 succeeded.
+Verification of foo#block#0 succeeded.
+`
+#include "vcc2.h"
+
+void foo(spec(out int a))
+  ensures(a == 10);
+
+void bar() {
+  spec(int x;)
+  block 
+    ensures(x == 10)
+  {
+    foo(spec(out x));
+    assert(x == 10);
+  }
+  assert(x == 10);
+}
+`
+Verification of bar succeeded.
+Verification of bar#block#0 succeeded.
+`
+#include <vcc2.h>
+
+int foo(int i)
+  requires(i < 10)
+{
+  i++;
+  block
+    requires(i < 11)
+	ensures(old(i) == 0 ==> i == 0)
+	ensures(old(i) != 0 ==> i == old(i) + 1)
+  {
+      if(i)
+        i++;
+  }
+
+  return i;
+}
+`
+Verification of foo succeeded.
+Verification of foo#block#0 succeeded.
+`
+#include <vcc2.h>
+
+typedef struct vcc(claimable) _a{
+    int dummy;
+    spec(int spec_dummy;)
+    invariant(dummy == spec_dummy)
+} a;
+
+void foo(a* p)
+requires(wrapped(p))
+writes(p)
+{
+  block
+    requires(wrapped(p))
+    writes(p)
+  {
+   spec(claim_t c;)
+   speconly( c = claim(p, closed(p));)
+  }
+}
+`
+Verification of _a#adm succeeded.
+Verification of foo succeeded.
+Verification of foo#block#0 succeeded.
+`
+#include <vcc2.h>
+
+#define NULL    ((void *) 0)
+
+struct A { int *x; };
+
+void foo(struct A* p)
+requires(p->x != NULL)
+{
+    block
+    requires(p->x != NULL)
+    {;
+    }        
+}
+`
+Verification of foo succeeded.
+Verification of foo#block#0 succeeded.
+`
+#include <vcc2.h>
+
+typedef struct _A{
+    int a;
+} A, *PA;
+
+void foo(PA p claimp(out c))
+ensures(wrapped(c) && is_fresh(c))
+writes(p)
+;
+
+void test(PA p, PA p1)
+requires(p != p1)
+ writes(p)
+ writes(p1)
+{
+spec(claim_t c;)
+spec(claim_t c1;)
+
+block
+ // writes(&c)
+ requires(p != p1)
+ ensures(wrapped(c))
+ ensures(wrapped(c1))
+ writes(p)
+ writes(p1)
+{
+   foo(p spec(out c));
+   assert(valid_claim(c));
+
+   foo(p1 spec(out c1));
+   assert(valid_claim(c));
+   assert(wrapped(c));
+   assert(wrapped(c1));
+}
+}
+`
+Verification of test succeeded.
+Verification of test#block#0 succeeded.
+`
+#include <vcc2.h>
+
+typedef struct _A{
+    int a;
+} A, *PA;
+
+void foo(PA p claimp(out c))
+ensures(wrapped(c) && is_fresh(c))
+writes(p)
+;
+
+void test(PA p, PA p1)
+requires(p != p1)
+ writes(p)
+ writes(p1)
+{
+spec(claim_t c;)
+spec(claim_t c1;)
+
+block
+ // writes(&c)
+ requires(p != p1)
+ ensures(wrapped(c))
+ writes(p)
+ writes(p1)
+{
+   foo(p spec(out c));
+   assert(valid_claim(c));
+
+   foo(p1 spec(out c1));
+   assert(valid_claim(c));
+   assert(wrapped(c));
+}
+}
+`
+Verification of test succeeded.
+Verification of test#block#0 succeeded.
+`

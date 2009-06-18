@@ -1,0 +1,195 @@
+#include <vcc2.h>
+
+int b;
+
+void admis_B(short *b)
+{
+assert(false);
+}
+
+
+void bar()
+  requires(program_entry_point())
+{
+  int tmp = b;
+}
+`
+Verification of admis_B failed.
+testcase(7,10) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bar succeeded.
+`
+#include <vcc2.h>
+
+int b;
+
+void bar()
+{
+  int tmp = b;
+}
+`
+Verification of bar failed.
+testcase(7,13) : error VC8512: Assertion 'b is thread local' did not verify.
+`
+#include <vcc2.h>
+
+int x;
+
+struct A {
+  int y;
+
+  spec(claim_t c;)
+
+  invariant(keeps(c) && claims(c, closed(emb(&x))))
+  invariant(y < by_claim(c, x))
+};
+
+spec(
+struct vcc(claimable) _GlobalOwner {
+  int dummy;
+  invariant(keeps(emb(&x)))
+} GlobalOwner;
+)
+
+struct A a;
+
+void init()
+  writes(set_universe())
+  requires(program_entry_point())
+{
+  spec(claim_t c;)
+
+  x = 42;
+  wrap(emb(&x));
+
+  set_owns(&GlobalOwner, set_singleton(emb(&x)));
+  wrap(&GlobalOwner);
+
+  a.y = 12;
+  speconly(  
+    c = claim(&GlobalOwner, true); 
+    a.c = c;
+    set_owns(&a, set_singleton(c));
+    wrap(&a);
+  )
+}
+`
+Verification of A#adm succeeded.
+Verification of _GlobalOwner#adm succeeded.
+Verification of init succeeded.
+`
+#include "vcc2.h"
+typedef struct _X { int a, b; } X;
+const X my_x;
+void foo(X x);
+
+void bar1() 
+  requires(program_entry_point())
+  { foo(my_x); }
+`
+Verification of bar1 succeeded.
+`
+
+
+#include <Vcc2.h>
+
+typedef struct _T {
+  int a; int b;
+} T;
+
+T S;
+
+void no_chg(int* x)
+        writes(x)
+        maintains(wrapped(&S))
+        maintains(thread_local(x))
+        ensures(deep_eq(&S,old(&S)))
+        ensures(*x == S.a);
+
+int foo()
+writes(&S,&S.a,&S.b)
+{
+        int c;
+
+        S.a=7;
+        S.b=42;
+
+        set_owns(&S, set_empty());
+        wrap(&S);
+
+        no_chg(&c);
+
+        assert(c == S.a); // VERIFIES
+        assert(S.a == 7); // FAILS
+
+        return 0;
+}
+
+`
+Verification of foo succeeded.
+`
+
+#include <vcc2.h>
+
+volatile int i;
+
+void fooShouldFail(claimp(p))
+  always(p, closed(gemb(&i)))
+{
+  atomic(p, gemb(&i)) {
+    i = 5;
+  }
+}
+`
+Verification of fooShouldFail failed.
+testcase(9,24) : error VC8525: Assertion 'invariant of _vcc_gemb(&i) holds after atomic' did not verify.
+`
+#include <vcc2.h>
+
+volatile int global;
+
+typedef struct vcc(claimable) GlobalsOwner{
+  invariant(this == &Globals)
+  invariant(keeps(gemb(&global)))
+
+  int dummy;
+  spec(volatile int shadow;)
+  invariant(shadow == global)
+} GlobalsOwner;
+
+GlobalsOwner Globals;
+
+void
+f(claimp(c))
+  always(c, closed(&Globals))
+  {
+  atomic(c, gemb(&global), &Globals){
+        global = 5;
+        speconly(Globals.shadow = 5;)
+     }    
+  }
+
+void foo()
+  maintains(wrapped(gemb(&global)))
+  writes(gemb(&global))
+{
+  atomic(gemb(&global)) {
+    global = 5;
+    bump_volatile_version(gemb(&global));
+  }
+}
+
+void fooShouldFail()
+  maintains(wrapped(gemb(&global)))
+  writes(gemb(&global))
+{
+  atomic(gemb(&global)) {
+    global = 5;
+  }
+}
+`
+Verification of GlobalsOwner#adm succeeded.
+Verification of f succeeded.
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(40,21) : error VC8525: Assertion 'invariant of _vcc_gemb(&global) holds after atomic' did not verify.
+`

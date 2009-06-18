@@ -1,0 +1,30 @@
+#include <vcc2.h>
+
+typedef unsigned __int64 uint;
+typedef unsigned int uint32;
+
+typedef struct str{
+	uint second;
+} *pstr;
+
+pstr arr[];
+
+
+pstr
+foo(uint str1)
+	reads(&arr)
+	reads(arr[str1])
+  requires(program_entry_point())
+	requires(arr[str1]->second == str1)
+	requires(thread_local(&arr[str1]))
+	requires(thread_local(arr[str1]))
+	requires(thread_local(&arr[str1]))
+	ensures(result == arr[str1])
+	ensures(result->second == str1)
+{
+	return arr[str1];
+}
+  
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,29 @@
+#include "vcc2.h"
+
+struct Point{int x; int y;};
+struct Rect{
+  struct Point* ll;
+  struct Point * ur;
+  invariant
+    (this->ll != this->ur && keeps(this->ll, this->ur))
+};
+
+void Move(struct Rect *r)
+  requires( wrapped(r) )
+  ensures( wrapped(r) )
+  writes( r )
+{
+  struct Point *tmp;
+  struct Point *x;
+
+  unwrap(r);
+    tmp = r->ll;
+    unwrap(tmp);
+      tmp->x = 3;
+    wrap(tmp);
+  wrap(r);
+}
+`
+Verification of Rect#adm succeeded.
+Verification of Move succeeded.
+`

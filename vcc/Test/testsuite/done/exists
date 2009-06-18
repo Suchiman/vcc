@@ -1,0 +1,73 @@
+#include <vcc2.h>
+
+void foo()
+{
+  int x = 10;
+  assert(x % 2 == 0);
+  assert(exists(int i; i % 2 == 0));
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+ispure int f(int);
+void foo()
+{
+  int x = 10;
+  assert(exists(int i; {f(i)} i < 0 && i == x));
+}
+`
+Verification of foo failed.
+testcase(7,12) : error VC9500: Assertion '__exists(int i; {f(i)} i < 0 && i == x)' did not verify.
+`
+#include <vcc2.h>
+
+ispure int f(int);
+void foo()
+{
+  int x = 10;
+  assert(exists(int i,j; {f(i),f(j)} i+j < 0 && i+j == x));
+}
+`
+Verification of foo failed.
+testcase(7,12) : error VC9500: Assertion '__exists(int i,j; {f(i),f(j)} i+j < 0 && i+j == x)' did not verify.
+`
+#include <vcc2.h>
+
+void main()
+{
+  int x = 10;
+  assert(exists(int i; i = 10));
+}
+`
+testcase(6,28) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.
+`
+#include <vcc2.h>
+
+void foo(int *p)
+  requires(is_thread_local_array(p,11))
+  requires(forall(int x; 0 <= x && x <= 10 ==> p[x] > 0))
+{
+  assert(!exists(int x; !(0 <= x && x <= 5 ==> p[x] > 0)));
+}
+
+void bar(int *p)
+  requires(is_thread_local_array(p,11))
+  requires(!exists(int x; !(0 <= x && x <= 10 ==> p[x] > 0)))
+  ensures(forall(int x; 0 <= x && x <= 5 ==> p[x] > 0))
+{
+}
+
+ispure bool baz(int x);
+
+bool qux(int z)
+  ensures(result ==> exists(int p; baz(p)))
+{
+  return baz(z/2);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of qux succeeded.
+`

@@ -1,0 +1,12 @@
+#include <vcc2.h>
+
+typedef void VOID;
+
+VOID foo(VOID __specification int a)
+  requires(a > 10)
+{
+}
+
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,9 @@
+#include <vcc2.h>
+
+void foo() {
+  assert(sizeof(void*) == 8);
+  assert(sizeof((void*)0)==8);  
+}
+`
+Verification of foo succeeded.
+`

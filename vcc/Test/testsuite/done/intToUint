@@ -1,0 +1,91 @@
+#include <vcc2.h>
+
+void foo(int x) { x = x+1;}
+
+void bar(unsigned int x) {
+  foo(x);
+}
+`
+testcase(6,7) : error VC0000: Cannot implicitly convert type 'unsigned __int32' to '__int32'.
+`
+#include <vcc2.h>
+
+void main() {
+  unsigned x;
+  x = 0;
+  assert(-1 < x);
+}
+`
+testcase(6,12) : error VC0000: Operator '<' cannot be applied to operands of type '__int32' and 'unsigned __int32'.
+`
+#include <vcc2.h>
+
+void foo() {
+  unsigned x;
+  x = 0;
+  assert(((unsigned)-1) < x);
+}
+`
+Verification of foo failed.
+testcase(6,12) : error VC9500: Assertion '((unsigned)-1) < x' did not verify.
+`
+#include <vcc2.h>
+
+int main(){
+  unsigned i = 0;
+  int j = (int)(unchecked(2*4)*i);
+  assert(j == 0);
+}
+`
+Verification of main succeeded.
+`
+#include <vcc2.h>
+
+int main(){
+  unsigned i = 0;
+  int j = (int)((0 ? 1 : 2) * i);
+  assert(j == 0);
+}
+`
+Verification of main succeeded.
+`
+#include <vcc2.h>
+
+int main(){
+  unsigned i = 0;
+  int j = (int)(sizeof(unsigned) * i);
+  assert(j == 0);
+}
+`
+Verification of main succeeded.
+`
+#include <vcc2.h>
+
+int main(){
+  unsigned i = 0;
+  int j = (int)(-(-1) * i);
+  assert(j == 0);
+}
+`
+Verification of main succeeded.
+`
+#include <vcc2.h>
+
+int main(){
+  unsigned i = 0;
+  int j = (int)((1 << 2) * i);
+  assert(j == 0);
+}
+`
+Verification of main succeeded.
+`
+#include <vcc2.h>
+
+int main(){
+  unsigned i = 0;
+  int j = (int)((2 >> 1) * i);
+  assert(j == 0);
+}
+`
+Verification of main succeeded.
+`

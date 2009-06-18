@@ -1,0 +1,16 @@
+#include <vcc2.h>
+
+int main() {
+  typedef struct  {
+    int c;
+  } D;
+  
+  typedef struct J { char a; } E;
+  D d; E e;
+  d.c = 10; e.a = 'e';
+  assert(d.c == 10);
+  assert(e.a == 'e');
+}
+`
+Verification of main succeeded.
+`

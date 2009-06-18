@@ -1,0 +1,4 @@
+#!/bin/sh
+
+chmod 755 z3-v2.exe
+cp //pexbuild3/drops/z32/latest/release/z3.exe z3-v2.exe

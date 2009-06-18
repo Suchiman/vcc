@@ -1,0 +1,206 @@
+#include <vcc2.h>
+
+union A {
+int a;
+short q;
+};
+
+void foo()
+{
+  union A x, y;
+  x = y;
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+typedef __w64 unsigned int   size_t;
+
+void f0() 
+{
+  int i = 1;
+  int j = 1;
+  
+  j += i + i;
+  assert(j == 3);
+}
+
+void f1() 
+{
+  int i = 1;
+  int j = 1;
+  
+  j -= i + i;
+  assert(j == -1);
+}
+
+void f2() 
+{
+  int i = 1;
+  int j = 2;
+  
+  j *= i + i;
+  assert(j == 4);
+}
+
+void f3() 
+{
+  int i = 1;
+  int j = 8;
+  
+  j /= i + i;
+  assert(j == 4);
+}
+
+void f4() 
+{
+  unsigned int i = 1;
+  unsigned int j = 2;
+  
+  j &= i | ~i;
+  assert(j == 2);
+}
+
+void f5() 
+{
+  unsigned int i = 1;
+  unsigned int j = 2;
+  
+  j |= i & ~i;
+  assert(j == 2);
+}
+
+void f6()
+{
+  unsigned int i = 1;
+  unsigned int j = 2;
+  
+  j ^= i | ~i;
+  j ^= i | ~i;
+  assert(j == 2);
+}
+
+void f7()
+{
+  unsigned int i = 1;
+  unsigned int j = 9;
+  j %= i + i;
+
+  assert(j == 1);
+}
+
+void f8()
+{
+  int i = 1;
+  int j = 1;
+  j <<= i + i;
+
+  assert(j == 4);
+}
+
+void f9()
+{
+  int i = 1;
+  int j = 4;
+  j >>= i + i;
+
+  assert(j == 1);
+}
+`
+Verification of f0 succeeded.
+Verification of f1 succeeded.
+Verification of f2 succeeded.
+Verification of f3 succeeded.
+Verification of f4 succeeded.
+Verification of f5 succeeded.
+Verification of f6 succeeded.
+Verification of f7 succeeded.
+Verification of f8 succeeded.
+Verification of f9 succeeded.
+`
+#include <vcc2.h>
+
+typedef __w64 unsigned int   size_t;
+
+void f8()
+{
+  unsigned int i = 1;
+  unsigned int j = 1;
+  j <<= i + i;
+
+  assert(j == 4);
+}
+
+void f9()
+{
+  unsigned int i = 1;
+  unsigned int j = 4;
+  j >>= i + i;
+
+  assert(j == 1);
+}
+`
+Verification of f8 succeeded.
+Verification of f9 succeeded.
+`
+#include <vcc2.h>
+
+typedef __w64 unsigned int   size_t;
+
+void foo()
+{
+  int i = 2;
+  int j = 2;
+  i *= j += 2;
+  assert(i == 8);
+  assert(j == 4);
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+void foo ()
+{
+  int* p;
+  int SizeInBytes;
+  p[SizeInBytes - 1] &= 0x1f;
+}
+void main(){}
+`
+Verification of foo failed.
+testcase(7,3) : error VC8507: Assertion 'p[SizeInBytes - 1] is writable' did not verify.
+testcase(7,3) : error VC8512: Assertion 'p[SizeInBytes - 1] is thread local' did not verify.
+testcase(7,5) : error VC8004: SizeInBytes - 1 might overflow.
+Verification of main succeeded.
+`
+#include <vcc2.h>
+
+unsigned int rax;
+
+void foo() {
+  *(char*)rax = 42;
+  ((char*)rax) = ((char*)rax+8);
+  *(char*)rax = 5;
+}
+void main(){}
+`
+Verification of foo failed.
+testcase(6,11) : error VC8507: Assertion 'rax is writable' did not verify.
+testcase(6,11) : error VC8512: Assertion 'rax is thread local' did not verify.
+testcase(7,11) : error VC8507: Assertion 'rax is writable' did not verify.
+testcase(8,11) : error VC8507: Assertion 'rax is writable' did not verify.
+Verification of main succeeded.
+`
+#include <vcc2.h>
+
+unsigned Bitcount (unsigned Target)
+  requires (Target < 256)
+{   
+  Target = Target & 0x0F;
+  return Target;
+}
+`
+Verification of Bitcount succeeded.
+`

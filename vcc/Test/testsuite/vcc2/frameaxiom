@@ -1,0 +1,23 @@
+#include <vcc2.h>
+
+spec(
+no_reads_check
+frameaxiom int foo(int *p);
+)
+
+spec(
+int foo(int *p) 
+  reads(p) { }
+)
+
+void bar() {
+  int i = 0;
+  spec(int a = foo(&i);)
+  spec(int b = foo(&i);)
+  assert(a == b);
+}
+
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

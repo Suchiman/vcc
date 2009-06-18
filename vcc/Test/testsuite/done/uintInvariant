@@ -1,0 +1,29 @@
+#include <vcc2.h>
+
+typedef __int32 INT32;
+typedef unsigned __int8 UINT8;
+typedef unsigned __int16 UINT16;
+typedef unsigned __int32 UINT32;
+typedef unsigned __int64 UINT64;
+typedef void VOID;
+
+void myswap(UINT8 *a, UINT8 *b)
+  reads(_vcc_compat_region(a, 2), _vcc_compat_region(b, 2))
+  writes(_vcc_compat_region(a, 2), _vcc_compat_region(b, 2))
+  requires(!_vcc_compat_overlaps(_vcc_compat_region(a, 2), _vcc_compat_region(b, 2)))
+  requires(_vcc_compat_typed(a, 2) && _vcc_compat_typed(b,2))
+  ensures(forall(UINT64 i; i<2 ==> a[i] == old(b[i])))
+  ensures(forall(UINT64 i; 0 <= i && i<2 ==> b[i] == old(a[i])))
+{
+  UINT8 tmp;
+  tmp = a[0];
+  a[0] = b[0];
+  b[0] = tmp;
+  tmp = a[1];
+  a[1] = b[1];
+  b[1] = tmp;
+
+}
+`
+Verification of myswap succeeded.
+`

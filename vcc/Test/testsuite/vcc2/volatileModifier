@@ -1,0 +1,556 @@
+#include <vcc2.h>
+
+struct S {
+  int nonvol;
+  volatile int vol;
+  spec( volatile int specvol; )
+  spec( int specnonvol; )
+};
+
+int ok1(struct S *s)
+  requires(thread_local(s))
+{
+  return s->nonvol;
+}
+
+int nok1(struct S *s)
+  requires(thread_local(s))
+{
+  return s->vol;
+}
+
+spec(
+int ok2(struct S *s)
+  requires(thread_local(s))
+{
+  return s->specnonvol;
+}
+)
+
+
+spec(
+int nok2(struct S *s)
+  requires(thread_local(s))
+{
+  return s->specvol;
+}
+)
+
+`
+Verification of ok1 succeeded.
+Verification of nok1 failed.
+testcase(19,10) : error VC8512: Assertion 's is mutable (accessing volatile field vol)' did not verify.
+Verification of ok2 succeeded.
+Verification of nok2 failed.
+testcase(31,82) : error VC8512: Assertion 's is mutable (accessing volatile field specvol)' did not verify.
+`
+#include "vcc2.h"
+
+typedef struct _X {
+  int nonvol;
+  volatile int vol;
+
+  spec(int specnonvol;)
+  spec(volatile int specvol;)
+} X;
+
+
+void ok1(X*x claimp(c))
+  always(c, closed(x))
+{
+  int q;
+  atomic(c,x) {
+    q = x->vol;
+  }
+}
+
+void ok11(X*x claimp(c))
+  always(c, closed(x))
+{
+  int q;
+  atomic(c,x) {
+    q = x->nonvol;
+  }
+}
+
+void nok2(X*x)
+  requires(typed(x))
+{
+  int q;
+  atomic(x) {
+    q = x->vol;
+  }
+}
+
+void ok2(X*x,X*y claimp(c))
+  always(c, closed(x) && closed(y))
+{
+  atomic(c,x,y) {
+    x->vol = 7;
+  }
+}
+
+void nok3(X*x,X*y claimp(c))
+  always(c, closed(x) && closed(y))
+{
+  atomic(c,x,y) {
+    x->nonvol = 7;
+  }
+}
+
+void nok4(X*x,X*y claimp(c))
+  always(c, closed(x) && closed(y))
+{
+  atomic(c,y) {
+    x->vol = 7;
+  }
+}
+
+
+spec(
+void specok1(X*x claimp(c))
+  always(c, closed(x))
+{
+  spec(int q;)
+  atomic(c,x) {
+    q = x->specvol;
+  }
+})
+
+spec(
+void specok11(X*x claimp(c))
+  always(c, closed(x))
+{
+  int q;
+  atomic(c,x) {
+    q = x->specnonvol;
+  }
+})
+
+spec(
+void nspecok2(X*x)
+  requires(typed(x))
+{
+  int q;
+  atomic(x) {
+    q = x->specvol;
+  }
+})
+
+
+void specok2(X*x,X*y claimp(c))
+  always(c, closed(x) && closed(y))
+{
+  atomic(c,x,y) {
+    speconly(x->specvol = 7;)
+  }
+}
+
+void nspecok3(X*x,X*y claimp(c))
+  always(c, closed(x) && closed(y))
+{
+  atomic(c,x,y) {
+    speconly(x->specnonvol = 7;)
+  }
+}
+
+void nspecok4(X*x,X*y claimp(c))
+  always(c, closed(x) && closed(y))
+{
+  atomic(c,y) {
+    speconly(x->specvol = 7;)
+  }
+}
+
+`
+Verification of ok1 succeeded.
+Verification of ok11 succeeded.
+Verification of nok2 failed.
+testcase(34,21) : error VC8527: Assertion 'x is closed (for atomic(...))' did not verify.
+Verification of ok2 succeeded.
+Verification of nok3 failed.
+testcase(51,5) : error VC8507: Assertion 'x->nonvol is writable' did not verify.
+Verification of nok4 failed.
+testcase(59,5) : error VC8507: Assertion 'x->vol is writable' did not verify.
+Verification of specok1 succeeded.
+Verification of specok11 succeeded.
+Verification of nspecok2 failed.
+testcase(84,90) : error VC8527: Assertion 'x is closed (for atomic(...))' did not verify.
+Verification of specok2 succeeded.
+Verification of nspecok3 failed.
+testcase(107,45) : error VC8507: Assertion 'x->specnonvol is writable' did not verify.
+Verification of nspecok4 failed.
+testcase(115,45) : error VC8507: Assertion 'x->specvol is writable' did not verify.
+`
+#include <vcc2.h>
+
+struct S {
+  int nonvol;
+  volatile int vol;
+  spec( volatile int specvol; )
+  spec( int specnonvol; )
+};
+
+void foo1(struct S *s claimp(c))
+  always(c, closed(s))
+{
+  atomic(c, s) {
+    s->nonvol = 1;
+    begin_update();
+  }
+}
+
+void foo2(struct S *s claimp(c))
+  always(c, closed(s))
+{
+  atomic(c, s) {
+    begin_update();
+    s->nonvol = 1;
+  }
+}
+
+void foo3(struct S *s claimp(c))
+  always(c, closed(s))
+{
+  atomic(c, s) {
+    s->vol = 1;
+    begin_update();
+  }
+}
+
+void foo4(struct S *s claimp(c))
+  always(c, closed(s))
+{
+  atomic(c, s) {
+    begin_update();
+    s->vol = 1;
+  }
+}
+`
+Verification of foo1 failed.
+testcase(14,5) : error VC8507: Assertion 's->nonvol is writable' did not verify.
+Verification of foo2 failed.
+testcase(24,5) : error VC8507: Assertion 's->nonvol is writable' did not verify.
+Verification of foo3 failed.
+testcase(32,5) : error VC8507: Assertion 's->vol is writable' did not verify.
+Verification of foo4 succeeded.
+`
+#include <vcc2.h>
+
+struct vcc(volatile_owns) VO {
+  int x;
+};
+
+struct NVO {
+  int x;
+};
+
+struct Ownee {
+  int x;
+};
+
+void foo(struct Ownee *o, struct VO *v)
+  requires(wrapped(v) && wrapped(o))
+  writes(o)
+{
+  atomic(v) {
+    set_closed_owner(o, v);
+  }
+}
+
+void foo2(struct Ownee *o, struct NVO *v)
+  requires(wrapped(v) && wrapped(o))
+  writes(o)
+{
+  atomic(v) {
+    set_closed_owner(o, v);
+  }
+}
+`
+Verification of foo succeeded.
+Verification of foo2 failed.
+testcase(29,5) : error VC9502: Call '_vcc_set_closed_owner(o, v)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the owner has volatile owns set'.
+`
+#include "vcc2.h"
+
+typedef volatile struct _COUNTER
+{
+    unsigned AsUNSIGNED;
+} COUNTER;
+
+typedef vcc(claimable) struct _Foo
+{
+    invariant(keeps(&c))
+    COUNTER c;
+} Foo;
+
+void foo(Foo* p claimp(c))
+    always(c,closed(&p->c))
+{
+    atomic(c,&p->c) {
+        p->c.AsUNSIGNED = 2;
+        //error VC8507: Assertion 'p->c.AsUNSIGNED is writable' did not verify.
+    }
+}
+
+`
+Verification of _Foo#adm succeeded.
+Verification of foo succeeded.
+`
+
+#include <Vcc2.h>
+
+spec(ispure int f(int a) ensures(result == (a == 0) ? 1 : -1);)
+
+struct S {
+  volatile int a;
+  spec(volatile int b;)
+  
+  invariant(b == f(a))
+};
+
+void foo(struct S *p claimp(c))
+  always(c, closed(p))
+{
+  atomic(c,p) {
+    p->a = 10;
+    speconly(p->b = f(10);)
+  }
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`
+
+#include <vcc2.h>
+
+typedef struct vcc(claimable) _counter {
+ int xxx;
+
+ invariant(depends(owner(this), this))
+} counter;
+
+typedef volatile counter vcounter;
+
+struct sum {
+ vcounter c[10];
+ int sum;
+
+ invariant(keeps(&c[0]))
+ invariant(keeps(&c[1]))
+ invariant(sum==c[0].xxx + c[1].xxx)
+};
+
+void test(struct sum *s claimp(c))
+ requires(wrapped(s))
+ writes(s)
+    always(c, closed(&s->c[0]) && closed(&s->c[1]))
+{
+ int i,j;
+
+ atomic(c, &s->c[0]) {
+  i=s->c[0].xxx;
+ }
+
+ atomic(c, &s->c[1]) {
+  j=s->c[1].xxx;
+ }
+}
+`
+Verification of _counter#adm succeeded.
+Verification of sum#adm succeeded.
+Verification of test succeeded.
+Verification of volatile#_counter#adm succeeded.
+`
+#include "vcc2.h"
+
+typedef union COUNTER
+{
+    struct
+    {
+        unsigned InUse            :  1;
+        unsigned Generation       : 31;
+   };
+
+    backing_member unsigned AsUINT32;
+} COUNTER;
+
+typedef struct vcc(claimable) _S
+{
+    volatile COUNTER cntr;
+    invariant(keeps(&cntr))
+} S;
+
+void foo(S* p claimp(c))
+    always(c,closed(p))
+{
+    unsigned x;
+    atomic(c,p,&p->cntr) {
+        x = p->cntr.InUse;
+    }
+}
+`
+Verification of _S#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+typedef struct _S {
+  int a;
+} S;
+
+struct vcc(dynamic_owns) T {
+  volatile S* s;
+  invariant(keeps(s))
+};
+
+void foo(struct T *t)
+  requires(wrapped(t))
+{
+  volatile S *s = t->s;
+  assert(set_in(t->s, owns(t)));
+  assert(set_in(s, owns(t)));  // <- HERE
+}
+`
+Verification of T#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc2test.h>
+
+typedef struct Node {
+  struct Node *next;
+  int data;
+} Node, *PNode;
+
+struct vcc(volatile_owns) Stack {
+  volatile PNode head;
+
+  invariant(head != NULL ==> keeps(head))
+  invariant(forall(PNode n; {&n->next} set_in(n, owns(this)) ==> n->next == NULL || set_in(n->next, owns(this))))
+};
+
+vcc(atomic_inline)
+PNode ICX(volatile PNode  *p, PNode tst, PNode rpl)
+{
+  if (*p == tst) {
+    *p = rpl;
+    return tst;
+  } else {
+    return *p;
+  }
+}
+
+void drain(struct Stack *s claimp(c))
+  always(c, closed(s))
+{
+  atomic(c,s) {
+    s->head = NULL;
+    set_closed_owns(s, set_empty());
+  }
+}
+
+void move(struct Stack *s1, struct Stack *s2 claimp(c))
+  always(c, closed(s1) && closed(s2))
+{
+  struct Node *n, *n2;
+  spec( ptrset s1_owns; )
+
+
+  atomic(c,s1) {
+    n = s1->head;
+  }
+
+  atomic(c,s1) {
+    n2 = ICX(&s1->head, n, NULL);
+    speconly(
+      if (n2 == n) {
+        s1_owns = owns(s1);
+        set_closed_owns(s1, set_empty());
+      }
+    )
+  }
+
+
+  if (n2 == n) {
+    atomic(c,s2) {
+      s2->head = n2;
+      set_closed_owns(s2, s1_owns);
+    }
+  }
+}
+
+void drainFail1(struct Stack *s claimp(c))
+  always(c, closed(s))
+{
+  atomic(c,s) {
+    set_closed_owns(s, set_empty());
+  }
+}
+
+
+void moveFail1(struct Stack *s1, struct Stack *s2 claimp(c))
+  always(c, closed(s1) && closed(s2))
+{
+  struct Node *n, *n2;
+  spec( ptrset s1_owns; )
+
+
+  atomic(c,s1) {
+    n = s1->head;
+  }
+
+  atomic(c,s1) {
+    n2 = ICX(&s1->head, n, NULL);
+    speconly(
+      if (n2 == n) {
+        s1_owns = owns(s1);
+//        set_closed_owns(s1, set_empty());
+      }
+    )
+  }
+
+
+  if (n2 == n) {
+    atomic(c,s2) {
+      s2->head = n2;
+      set_closed_owns(s2, s1_owns);
+    }
+  }
+}
+
+struct vcc(dynamic_owns) NVO  {
+  int x;
+};
+
+void foo(struct NVO *n)
+  requires(wrapped(n))
+{
+  atomic(n) {
+    set_closed_owns(n, set_empty());
+  }
+}
+
+void foo2(struct Stack *s)
+  requires(wrapped(s))
+  writes(s)
+{
+  set_closed_owns(s, set_empty());
+}
+`
+Verification of Stack#adm succeeded.
+Verification of drain succeeded.
+Verification of move succeeded.
+Verification of drainFail1 failed.
+testcase(68,23) : error VC8524: Assertion 'chunk head != ((void*)0) ==> _vcc_keeps(__this , head) of invariant of s holds after atomic' did not verify.
+Verification of moveFail1 failed.
+testcase(97,25) : error VC8524: Assertion 'chunk __forall(PNode n; {&n->next} _vcc_set_in(n,_vcc_owns(__this)) ==> n->next == ((void*)0) || _vcc_set_in(n->next,_vcc_owns(__this))) of invariant of s2 holds after atomic' did not verify.
+testcase(99,7) : error VC8510: Assertion '_vcc_new_ownees(owner, owns) is writable in call to _vcc_set_closed_owns(s2, s1_owns)' did not verify.
+testcase(99,7) : error VC9502: Call '_vcc_set_closed_owns(s2, s1_owns)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'all newly owned objects are wrapped'.
+Verification of foo failed.
+testcase(112,5) : error VC9502: Call '_vcc_set_closed_owns(n, _vcc_set_empty())' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the owner has volatile owns set'.
+Verification of foo2 failed.
+testcase(120,3) : error VC8532: Assertion 's is atomically updated in call to _vcc_set_closed_owns(s, _vcc_set_empty())' did not verify.
+`

@@ -1,0 +1,64 @@
+#include <vcc2.h>
+
+void main()
+{
+  unsigned il;
+  unsigned gil;
+
+  switch (il) {
+    case 0:
+      unsigned j;
+      gil = j;
+      break;
+  }
+}
+`
+Verification of main succeeded.
+`
+#include <vcc2.h>
+
+void main()
+{        
+  unsigned il;
+  switch (il) {
+    case (0):
+      unsigned j, ppx;
+      for (j = 0; j < 32; j++)
+        ppx = 0;
+      break;
+  }
+}        
+`
+Verification of main succeeded.
+`
+#include <vcc2.h>
+
+void foo(unsigned x)
+{
+  x = 7;
+  switch (x) {
+  case 7:
+  case 1:
+    assert(false); break;
+  default: break;
+  }
+}
+`
+Verification of foo failed.
+testcase(9,14) : error VC9500: Assertion '((bool)0)' did not verify.
+`
+#include <vcc2.h>
+
+void foo(unsigned x)
+{
+  assume(x == 7 || x == 1);
+  switch (x) {
+  case 7:
+  case 1:
+    break;
+  default:assert(0);
+  }
+}
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,22 @@
+#include "vcc2.h"
+
+typedef unsigned int UINT32;
+
+spec(bool ispure pf_reason(bool w) 
+returns(w);
+)
+
+bool do_memory_operation(UINT32 *mm_4, UINT32 max_ppx,
+             UINT32 a, bool write, UINT32 din, UINT32 *dout, bool t, UINT32 pto, UINT32 ptl)
+ requires(is_mutable_array(mm_4, (max_ppx + 1)*1024))
+ 
+ ensures(result == pf_reason(mm_4, a, pto, ptl, max_ppx, write))
+         {
+             return true;
+         }
+
+
+`
+testcase(13,22) : error VC9636: wrong number of arguments in call to function 'pf_reason'; was 6, should be 1
+testcase(5,1)-(5,100) : (Location of symbol related to previous error.)
+`

@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{ab567043-8047-4cb4-863c-f7fbab4e239a}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>CodeModel2Vcc</RootNamespace>
+    <AssemblyName>Microsoft.Research.Vcc.CodeModel</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Name>CodeModel2Vcc</Name>
+    <SccProjectName>
+    </SccProjectName>
+    <SccProvider>
+    </SccProvider>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <Optimize>true</Optimize>
+    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Cci.AstsProjectedAsCodeModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Cci.AstsProjectedAsCodeModel</Name>
+      <AssemblyName>Microsoft.Cci.AstsProjectedAsCodeModel.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.AstsProjectedAsCodeModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Cci.CodeModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Cci.CodeModel</Name>
+      <AssemblyName>Microsoft.Cci.CodeModel.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.CodeModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Cci.MutableCodeModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Cci.MutableCodeModel</Name>
+      <AssemblyName>Microsoft.Cci.MutableCodeModel.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.MutableCodeModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Cci.SourceModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Cci.SourceModel</Name>
+      <AssemblyName>Microsoft.Cci.SourceModel.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.SourceModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Research.Vcc.CodeModelHelper, Version=0.0.0.2, Culture=neutral, PublicKeyToken=null">
+      <Name>Microsoft.Cci.CodeModel2Vcc2Helper</Name>
+      <AssemblyName>Microsoft.Research.Vcc.CodeModelHelper.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Research.Vcc.CodeModelHelper.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Cci.MetadataHelper, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Cci.MetadataHelper</Name>
+      <AssemblyName>Microsoft.Cci.MetadataHelper.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.MetadataHelper.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Cci.MetadataModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Cci.MetadataModel</Name>
+      <AssemblyName>Microsoft.Cci.MetadataModel.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.MetadataModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Research.Vcc.Core, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Research.Vcc.Core</Name>
+      <AssemblyName>Microsoft.Research.Vcc.Core.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Research.Vcc.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Util.fs" />
+    <Compile Include="CAST.fs" />
+    <Compile Include="Helper.fs" />
+    <Compile Include="Visitor.fs" />
+    <Compile Include="TransUtil.fs" />
+    <Compile Include="ExtraWarnings.fs" />
+    <Compile Include="Normalizer.fs" />
+    <Compile Include="TransType.fs" />
+    <Compile Include="Simplifier.fs" />
+    <Compile Include="Inference.fs" />
+    <Compile Include="ToCoreC.fs" />
+    <Compile Include="AddChecks.fs" />
+    <Compile Include="TransFinalize.fs" />
+    <Compile Include="TransSideChecks.fs" />
+    <Compile Include="Transformers.fs" />
+    <Compile Include="Plugin.fs" />
+    <Compile Include="..\Common\Include\version.fs">
+      <Link>version.fs</Link>
+    </Compile>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\FSharp\1.0\Microsoft.FSharp.Targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	     Other similar extension points exist, see Microsoft.Common.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

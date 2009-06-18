@@ -1,0 +1,52 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright (C) Microsoft Corporation.  All Rights Reserved.
+//
+//-----------------------------------------------------------------------------
+namespace Microsoft.Research.Vcc {
+  internal enum Error {
+    None=0,
+
+    BadHexDigit,
+    ConstantExpected,
+    EmptyCharConst,
+    EmptySwitch,
+    EndOfPPLineExpected,
+    ErrorDirective,
+    ExpectedDoubleQuote,
+    ExpectedExpression,
+    ExpectedIdentifier,
+    ExpectedLeftBrace,
+    ExpectedRightBrace,
+    ExpectedRightBracket,
+    ExpectedRightParenthesis,
+    ExpectedSemicolon,
+    ExpectedSingleQuote,
+    FloatOverflow,
+    IllegalEscape,
+    IllegalStatement,
+    IntOverflow,
+    InvalidExprTerm,
+    InvalidLineNumber,
+    InvalidPreprocExpr,
+    LowercaseEllSuffix,
+    MissingPPFile,
+    NewlineInConst,
+    NoCommentEnd,
+    PossibleMistakenNullStatement,
+    PPDefFollowsToken,
+    PPDirectiveExpected,
+    ShiftCountOutOfRange,
+    StmtNotInCase,
+    SyntaxError,
+    TooManyCharsInConst,
+    UnescapedSingleQuote,
+    UnexpectedToken,
+    WarningDirective,
+    ExpectedConstantExpression, 
+    VccAttributeOnTypeDef,
+    ArgumentShouldNotBePassedWithOutKeyword,
+    ArgumentMustBePassedWithOutKeyword,
+    IllegalIndirection,
+  }
+}

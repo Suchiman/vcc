@@ -1,0 +1,10 @@
+#include <vcc2.h>
+
+void foo()
+{
+  assert(((int)(void *)1) == ((int)(void *)1));
+  assert(((int)(void *)0) != ((int)(void *)1));
+}
+`
+Verification of foo succeeded.
+`

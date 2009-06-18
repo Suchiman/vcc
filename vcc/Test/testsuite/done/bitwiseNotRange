@@ -1,0 +1,6 @@
+void foo(unsigned __int32 i) {
+  unsigned __int32 y = 0 + ~i;
+}
+`
+Verification of foo succeeded.
+`

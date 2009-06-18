@@ -1,0 +1,9 @@
+#include <vcc2.h>
+
+enum E { XXX, XXXX };
+static _Bool carry(enum E op) { return 0; }
+void ApplyALU() { _Bool x = carry("9"); }
+void main(){}
+`
+testcase(5,35) : error VC0000: Cannot implicitly convert type 'sbyte*' to 'E'.
+`

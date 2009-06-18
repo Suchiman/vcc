@@ -1,0 +1,16 @@
+#include <vcc2.h>
+
+void foo(int x) 
+  requires(x > 10) {
+  
+  do {
+    assert(x > 10);
+    x = x - 1;
+  } while (0);
+  
+  assert(x >= 10);
+}
+
+`
+Verification of foo succeeded.
+`

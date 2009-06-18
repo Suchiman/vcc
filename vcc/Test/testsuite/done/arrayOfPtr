@@ -1,0 +1,22 @@
+#include <vcc2.h>
+
+typedef unsigned long long   size_t;
+
+typedef __int64 INT64, *PINT64;
+
+void foo(PINT64 ptrs[]) 
+  requires(typed(ptrs))
+  requires(typed(ptrs[0]))
+  requires(thread_local(ptrs))
+  requires(thread_local(ptrs[0]))
+  reads(ptrs[0])
+{
+  PINT64 p = ptrs[0];
+  __int64 i = *ptrs[0];
+  __int64 j = **((PINT64 *)ptrs); 
+  assert(i == j);
+  assert(*p == i); 
+}
+`
+Verification of foo succeeded.
+`

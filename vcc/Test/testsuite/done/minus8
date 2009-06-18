@@ -1,0 +1,12 @@
+#include <vcc2.h>
+
+void foo(__int64 i) 
+  requires(-8 <= i && i <= 7)
+{
+  assert(false);
+}
+
+`
+Verification of foo failed.
+testcase(6,12) : error VC9500: Assertion '((bool)0)' did not verify.
+`

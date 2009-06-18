@@ -1,0 +1,9 @@
+#include <vcc2.h>
+
+void foo() {
+  assert((int)0 != 0);
+}
+`
+Verification of foo failed.
+testcase(4,12) : error VC9500: Assertion '(int)0 != 0' did not verify.
+`

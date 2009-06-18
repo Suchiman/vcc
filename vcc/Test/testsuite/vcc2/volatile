@@ -1,0 +1,73 @@
+#include "vcc2.h"
+
+typedef struct _s {
+  int dummy;
+  invariant(dummy==5)
+} s, *ps;
+
+struct t {
+  int dummy2;
+  volatile s x;
+  invariant(dummy2==5)
+};
+
+`
+Verification of _s#adm succeeded.
+Verification of t#adm succeeded.
+Verification of volatile#_s#adm succeeded.
+`
+typedef __int32 INT32;
+typedef INT32 volatile VINT32;
+
+#include "vcc2.h"
+
+typedef struct _A {
+
+VINT32 a;
+INT32 volatile b;
+
+} A, *PA;
+
+
+void foo(PA inp)
+requires(wrapped(inp))
+{
+	atomic(inp){
+		inp->a = 0;
+  }
+  atomic(inp) {
+		inp->b = 0;
+	}
+}
+
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+typedef struct Goo {
+      volatile int f[10];
+      invariant(f[0] == old(f[0]))
+} Goo;
+
+void foo(Goo *g claimp(c))
+  always(c, closed(g))
+{
+  atomic(c, g) {
+    g->f[1] = 1;
+  }
+}
+
+void fooShouldFail(Goo *g claimp(c))
+  always(c, closed(g))
+{
+  atomic(c, g) {
+    g->f[0] = 1;
+  }
+}
+`
+Verification of Goo#adm succeeded.
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(19,24) : error VC8524: Assertion 'chunk f[0] == __old(f[0]) of invariant of g holds after atomic' did not verify.
+`

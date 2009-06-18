@@ -1,0 +1,34 @@
+#include <vcc2.h>
+
+typedef unsigned long long int size_t;
+
+int global;
+
+void foo()
+  ensures(global == 1)
+  writes(&global)
+{
+  global = 1;
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+struct A {
+  int a;
+  int b;
+  __specification int x;
+  __specification int y;
+};
+
+void foo(struct A *p)
+  requires(_vcc_compat_typed(p,sizeof(*p)))
+  writes(&p->a, &p->x)
+{
+  p->a = 12;
+  p->x = 13;
+}
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,321 @@
+#include <vcc2.h>
+
+typedef int (*foo)(int);
+
+int test(int i){
+  return i;
+}
+
+int bar(foo fum){
+  return fum(0);
+}
+
+int baz(){
+  return bar((foo)&test);
+}
+`
+Verification of test succeeded.
+Verification of bar failed.
+testcase(10,10) : error VC8504: Assertion 'fum is valid function pointer' did not verify.
+Verification of baz succeeded.
+Verification of $fnptr_test_to_fnptr#1 succeeded.
+`
+#include <vcc2.h>
+
+typedef int (*foo)(int i)
+  requires(i > 0)
+  ensures(result > 0);
+
+int test(int i)
+  requires(i > 0)
+  ensures(result > 0)
+{
+  return i;
+}
+
+int bar(foo fum)
+  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+{
+  return fum(1);
+}
+
+int myn(){
+  return bar((foo)&test);
+}
+`
+Verification of test succeeded.
+Verification of bar succeeded.
+Verification of myn succeeded.
+Verification of $fnptr_test_to_fnptr#1 succeeded.
+`
+#include <vcc2.h>
+
+typedef int (*foo)(int i)
+  requires(i > 0)
+  ensures(result > 0);
+
+int test(int i)
+  requires(i > 0)
+  ensures(result > 0)
+{
+  return i;
+}
+
+int bar(foo fum)
+  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+{
+  return fum(0);
+}
+
+int myn(){
+  return bar((foo)&test);
+}
+`
+Verification of test succeeded.
+Verification of bar failed.
+testcase(17,10) : error VC9502: Call 'fum(0)' did not verify.
+testcase(4,14) : error VC9599: (related information) Precondition: 'i > 0'.
+Verification of myn succeeded.
+Verification of $fnptr_test_to_fnptr#1 succeeded.
+`
+#include <vcc2.h>
+
+typedef int (*foo)(int i)
+  requires(i > 0)
+  ensures(result > 0);
+
+int test(int i)
+  requires(i > 0)
+  ensures(result > 0)
+{
+  return i;
+}
+
+int bar(foo fum)
+{
+  return fum(1);
+}
+
+int myn(){
+  return bar((foo)&test);
+}
+`
+Verification of test succeeded.
+Verification of bar failed.
+testcase(16,10) : error VC8504: Assertion 'fum is valid function pointer' did not verify.
+Verification of myn succeeded.
+Verification of $fnptr_test_to_fnptr#1 succeeded.
+`
+#include <vcc2.h>
+
+typedef int (*foo)(int i)
+  requires(i > 0)
+  ensures(result > 0);
+
+int test(int i)
+  requires(i > 0)
+{
+  return i;
+}
+
+int bar(foo fum)
+  reads(fum) requires(_vcc_compat_typed(fum, sizeof(foo)))
+{
+  return fum(1);
+}
+
+int myn(){
+  return bar((foo)&test);
+}
+`
+Verification of test succeeded.
+Verification of bar succeeded.
+Verification of myn succeeded.
+Verification of $fnptr_test_to_fnptr#1 failed.
+testcase(20,19) : error VC9501: Post condition 'result > 0' did not verify.
+testcase(5,13) : error VC9599: (related information) Location of post condition.
+`
+#include <vcc2.h>
+
+typedef int (*foo)(int i)
+  requires(i > 0)
+  ensures(result > 0);
+
+int test(int i)
+  requires(i >= 0)
+  ensures(result > 1)
+{
+  return 2;
+}
+
+int bar(foo fum)
+  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+{
+  return fum(1);
+}
+
+int myn(){
+  return bar((foo)&test);
+}
+`
+Verification of test succeeded.
+Verification of bar succeeded.
+Verification of myn succeeded.
+Verification of $fnptr_test_to_fnptr#1 succeeded.
+`
+#include <vcc2.h>
+
+typedef int (*foo)(int i)
+  requires(i > 0)
+  ensures(result > 0);
+
+int test(int i)
+  requires(i > 1)
+  ensures(result > 1)
+{
+  return i;
+}
+
+int bar(foo fum)
+  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+{
+  return fum(1);
+}
+
+int myn(){
+  return bar((foo)&test);
+}
+`
+Verification of test succeeded.
+Verification of bar succeeded.
+Verification of myn succeeded.
+Verification of $fnptr_test_to_fnptr#1 failed.
+testcase(21,19) : error VC9502: Call '&test' did not verify.
+testcase(8,14) : error VC9599: (related information) Precondition: 'i > 1'.
+`
+#include <vcc2.h>
+
+typedef int (*foo)(int i);
+int test(int i)
+{
+  return i;
+}
+
+int bar(foo fum)
+  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+{
+  return fum(0);
+}
+
+int myn(){
+  return bar((foo)&test);
+}
+`
+Verification of test succeeded.
+Verification of bar succeeded.
+Verification of myn succeeded.
+Verification of $fnptr_test_to_fnptr#1 succeeded.
+`
+#include <vcc2.h>
+
+typedef void (*foo)();
+void test()
+{
+}
+
+int bar(foo fum)
+  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+{
+  fum(); return 0;
+}
+
+int myn(){
+  return bar((foo)&test);
+}
+`
+Verification of test succeeded.
+Verification of bar succeeded.
+Verification of myn succeeded.
+Verification of $fnptr_test_to_fnptr#1 succeeded.
+`
+#include <vcc2.h>
+
+typedef void (*foo)();
+
+int bar(foo fum)
+   reads(fum) requires(_vcc_compat_typed(fum, sizeof(foo)))
+{
+  fum(); return 0;
+}
+
+int myn(){
+  return bar((foo)(void *)0);
+}
+`
+Verification of bar succeeded.
+Verification of myn failed.
+testcase(12,10) : error VC9502: Call 'bar((foo)(void *)0)' did not verify.
+testcase(6,28) : error VC9599: (related information) Precondition: '_vcc_SAL_typed(fum,sizeof(foo))'.
+`
+#include <vcc2.h>
+
+void f(void) {}
+int main() {
+    void(*pf[2])(void);
+    pf[0] = f;
+    return 0;
+}
+`
+Verification of f succeeded.
+Verification of main succeeded.
+Verification of $fnptr_f_to_fnptr#1 succeeded.
+`
+#include <vcc2.h>
+
+typedef void (*ft)(int); 
+struct b {
+  ft f;
+};
+void test() {
+  struct b bs;
+  bs.f = 0;
+}
+`
+Verification of test succeeded.
+`
+#include <vcc2.h>
+
+typedef int (*FOO)(int i)
+  ensures(result == i);
+  
+typedef int (*BAR)(int i)
+  ensures(result == i);
+  
+void bar(FOO f) 
+  requires(typed(f, 8))
+{
+  int i = f(2);
+  assert(i == 2);
+}
+
+int foo(int i)
+  ensures(result == i)
+{
+  return i;
+}
+
+int baz() 
+{
+  BAR b = &foo;
+  bar(&foo);
+  bar(&foo); return 0;
+}
+
+`
+testcase(10) : warning C4002: too many actual parameters for macro 'typed'
+Verification of bar succeeded.
+Verification of foo succeeded.
+Verification of baz succeeded.
+Verification of $fnptr_foo_to_fnptr#1 succeeded.
+Verification of $fnptr_foo_to_fnptr#2 succeeded.
+`

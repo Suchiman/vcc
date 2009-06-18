@@ -1,0 +1,52 @@
+#include <vcc2.h>
+
+typedef unsigned int UINT32;
+typedef __int32 INT32;
+
+UINT32 g;
+INT32 h;
+
+UINT32 ptea(UINT32 y)
+  requires(program_entry_point())
+	requires(y<(1<<20))
+	reads(&g)
+{
+	return ((g % (1<<20)) << 10) + y;
+}
+
+void foo() 
+  requires(program_entry_point())
+  reads(&g)
+{
+  assert(0 <= g && g <= 4294967295);
+}
+
+void fooShouldFail() 
+  requires(program_entry_point())
+{
+  assert(g <= 2147483647);
+}
+
+
+void bar() 
+  requires(program_entry_point())
+  reads(&h)
+{
+  assert(-2147483648 <= h && h <= 2147483647);
+}
+
+void barShouldFail() 
+  requires(program_entry_point())
+  reads(&h)
+{
+  assert(0 <= h);
+}
+`
+Verification of ptea succeeded.
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(27,12) : error VC9500: Assertion 'g <= 2147483647' did not verify.
+Verification of bar succeeded.
+Verification of barShouldFail failed.
+testcase(42,12) : error VC9500: Assertion '0 <= h' did not verify.
+`

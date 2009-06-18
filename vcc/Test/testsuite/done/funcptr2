@@ -1,0 +1,12 @@
+#include <vcc2.h>
+
+struct {
+void (*func)() ; 
+} x;
+
+int main(){
+  assert(sizeof(x) == 8);
+}
+`
+Verification of main succeeded.
+`

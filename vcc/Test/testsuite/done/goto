@@ -1,0 +1,13 @@
+#include <vcc2.h>
+
+void foo() 
+{
+  int result = 1;
+  goto Continue;
+  result = 0;
+Continue:
+  assert(result == 1);
+}
+`
+Verification of foo succeeded.
+`

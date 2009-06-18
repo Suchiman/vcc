@@ -1,0 +1,51 @@
+#include <vcc2.h>
+
+void foo()
+ensures(false)
+{
+  int x;
+  if(x>0) 
+  {
+  }
+  else 
+  { 
+  }
+}
+
+void foo2()
+ensures(false)
+{
+  int x;
+  if(x>0) 
+  {
+    return;
+  }
+  else 
+  { 
+  while(1) {}
+  }
+}
+
+void foo3()
+ensures(false)
+{
+  int x;
+  if(x>0) 
+  {
+  }
+  else 
+  { 
+  }
+  return;
+}
+`
+Verification of foo failed.
+testcase(13,1) : error VC9501: Post condition '((bool)0)' did not verify.
+testcase(4,11) : error VC9599: (related information) Location of post condition.
+Verification of foo2 failed.
+testcase(21,5) : error VC9501: Post condition '((bool)0)' did not verify.
+testcase(16,11) : error VC9599: (related information) Location of post condition.
+Verification of foo3 failed.
+testcase(39,3) : error VC9501: Post condition '((bool)0)' did not verify.
+testcase(30,11) : error VC9599: (related information) Location of post condition.
+`

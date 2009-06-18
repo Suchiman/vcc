@@ -1,0 +1,20 @@
+#include "vcc2.h"
+
+struct S {
+int x;
+int y;
+};
+
+struct T {
+struct S s;
+};
+
+void f(struct T* t)
+requires (typed(t))
+{
+    assert (exists(struct S* s; typed(s) && (s == (struct S*) t)));
+}
+`
+Verification of f failed.
+testcase(15,15) : error VC9500: Assertion '__exists(struct S* s; _vcc_typed2(s) && (s == (struct S*) t))' did not verify.
+`

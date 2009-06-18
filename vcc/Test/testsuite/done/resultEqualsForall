@@ -1,0 +1,12 @@
+#include <vcc2.h>
+
+ispure __specification _Bool foo()
+  ensures(result == forall(int i; i == i));
+
+void bar()
+  requires(foo())
+{
+}
+`
+Verification of bar succeeded.
+`

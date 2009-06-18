@@ -1,0 +1,18 @@
+#include "vcc2.h"
+
+struct Acct {
+  int amount;
+};
+
+void deposit(struct Acct *a, int x)
+  requires(wrapped(a))
+  ensures(wrapped(a))
+  writes(a)
+{
+  unwrap(a);
+  a->amount = unchecked( a->amount + x );
+  wrap(a);
+}
+`
+Verification of deposit succeeded.
+`

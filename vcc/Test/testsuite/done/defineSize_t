@@ -1,0 +1,6 @@
+#include <vcc2.h>
+
+typedef __int64 size_t;
+void __stosq(size_t Count);
+`
+`

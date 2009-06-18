@@ -1,0 +1,160 @@
+#include <vcc2.h>
+
+struct A {
+  int x;
+  int y;
+};
+
+struct B {
+  struct A a;
+  int z;
+};
+
+ispure bool foo(struct A a)
+  returns(a.x == 0);
+
+ispure bool bar(struct B b)
+  returns(foo(b.a));
+
+void baz(struct B b)
+  requires(bar(b))
+{
+  assert(b.a.x == 0);
+}
+
+void baz2(struct B b)
+  requires(bar(b))
+{
+  assert(b.a.y == 0);
+}
+`
+Verification of baz succeeded.
+Verification of baz2 failed.
+testcase(28,12) : error VC9500: Assertion 'b.a.y == 0' did not verify.
+`
+#include <vcc2.h>
+
+struct A {
+  int x, y, z; 
+  int *p;
+  spec(obj_t pp;)
+};
+
+struct A foo()
+  ensures(result.x == 12)
+{
+ struct A a;
+ int x;
+ a.x = 12;
+ a.y = 13;
+ a.p = &x;
+ speconly( a.pp = &x; )
+ return a;
+}
+
+
+`
+Verification of foo succeeded.
+`
+
+#include <vcc2.h>
+
+typedef unsigned __int64 UINT64;
+typedef unsigned __int32 UINT32;
+
+struct C;
+
+#ifdef VERIFY
+
+struct A {
+  UINT64 a;
+  struct C *c;
+  invariant(abs(this->c).a == this->a)
+};
+
+#endif
+
+spec(ispure struct A abs(struct C *c);)
+struct C {
+  UINT32 x;
+  UINT32 y;
+};
+
+spec(ispure struct A abs(struct C *c) 
+  requires(thread_local(c))
+{
+  struct A r;
+  r.a = unchecked(c->x + c->y);
+  return r;
+}
+)
+`
+Verification of A#adm succeeded.
+Verification of abs succeeded.
+`
+#include <vcc2.h>
+
+typedef unsigned __int64 UINT64;
+
+struct T
+{
+    UINT64 AsUINT64;
+    UINT64 Dummy;
+};
+
+struct S {
+  struct T Privileges;
+  invariant(keeps(&Privileges))
+};
+
+struct S1 {
+  struct T Privileges;
+};
+
+void foo(struct S *q)
+  requires(wrapped(q))
+{ 
+  struct S s;
+  assert(in_domain(&q->Privileges, q));
+  s.Privileges = q->Privileges;
+}
+
+void fooShouldFail(struct S1 *q)
+  requires(wrapped(q))
+{ 
+  struct S s;
+  s.Privileges = q->Privileges;
+}
+
+void fooShouldFailToo(struct S1 *q)
+  requires(wrapped(q))
+{ 
+  struct S s;
+  assert(in_domain(&q->Privileges, q));
+  s.Privileges = q->Privileges;
+}
+
+ 
+void bar(struct S s);
+void bar1(struct S1 s);
+
+void baz(struct S *s)
+  requires(wrapped(s)) {
+  bar(*s);
+}
+
+void bazShouldFail(struct S1 *s)
+  requires(wrapped(s)) {
+  bar1(*s);
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(32,18) : error VC8512: Assertion 'q->Privileges is thread local' did not verify.
+Verification of fooShouldFailToo failed.
+testcase(39,12) : error VC9500: Assertion '_vcc_in_domain(&q->Privileges,q)' did not verify.
+Verification of baz succeeded.
+Verification of bazShouldFail failed.
+testcase(54,9) : error VC8512: Assertion 's.Privileges is thread local' did not verify.
+`

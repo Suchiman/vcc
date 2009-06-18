@@ -1,0 +1,6 @@
+#include <vcc2.h>
+
+typedef __int32 INT32;
+void RtlSort(INT32 (*Comp)());
+`
+`

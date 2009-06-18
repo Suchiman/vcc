@@ -1,0 +1,144 @@
+#include <Vcc2.h>
+
+template<typename T> void foo(T* t)
+  requires(wrapped(t));
+  
+struct S {
+  int a;
+}
+  
+void bar(struct S *s) 
+  requires(wrapped(s))
+{
+  foo(s);
+}
+`
+Verification of bar succeeded.
+`
+
+#include <Vcc2.h>
+
+template<typename T> void foo(T* t)
+  requires(wrapped(t));
+  
+struct S {
+  int a;
+}
+  
+void bar(struct S *s) 
+{
+  foo(s);
+}
+`
+Verification of bar failed.
+testcase(13,3) : error VC9502: Call 'foo(s)' did not verify.
+testcase(5,14) : error VC9599: (related information) Precondition: '_vcc_wrapped(t)'.
+`
+#include <Vcc2.h>
+
+template<typename T, typename S> void foo(T* t, S*s)
+  requires(wrapped(t) && wrapped(s));
+  
+struct Q {
+  int a;
+}
+  
+struct P {
+  int a;
+}
+  
+void bar(struct Q *q)
+  requires(wrapped(q))
+{
+  foo(q,q);
+}
+
+void bar1(struct Q *q, struct P *p)
+  requires(wrapped(q) && wrapped(p))
+{
+  foo(q,p);
+}
+`
+Verification of bar succeeded.
+Verification of bar1 succeeded.
+`
+#include <Vcc2.h>
+
+template<typename T> void foo(T* t)
+{
+  T *s = t;
+  T q = *s;
+}
+`
+testcase(6,3) : error VC9693: Cannot declare local 'q' of generic type 'T'
+testcase(6,9) : error VC9691: Expression '*s' is of generic type 'T'; only pointers to generic types are supported.
+`
+#include <Vcc2.h>
+
+template<typename T> void foo(T t)
+{
+  T* s = &t;
+}
+`
+testcase(3,22) : error VC9693: Cannot declare parameter 't' of generic type 'T'
+`
+#include <Vcc2.h>
+
+template<typename T> void foo(T* t);
+
+void bar(int *p) {
+  foo(p);
+}
+`
+testcase(6,3) : error VC9692: Cannot instantiate generic parameter 'T' with primitive type 'int32_t'
+`
+#include <Vcc2.h>
+
+template<typename T> void foo(T* t);
+
+void bar(int **p) {
+  foo(p);
+}
+`
+testcase(6,3) : error VC9692: Cannot instantiate generic parameter 'T' with primitive type 'int32_t*'
+`
+#include <vcc2.h>
+
+struct B{ int x; };
+
+struct A {
+	struct B *b;
+	invariant(keeps(b))
+};
+
+
+template<typename T>void blah(T **p)
+    writes(p);
+
+void foo(struct A *a)
+	requires(mutable(a))
+	writes(extent(a))
+{
+	blah(nospeccast(void **, &a->b));
+}
+`
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+struct P { int a; };
+struct Q { int b; };
+
+template<typename S, typename T>void blah(void *s, void *t)
+  writes((S*)s, (T*)t);
+
+
+void foo() {
+  struct P p;
+  struct Q q;
+	generic_instance(blah, <struct P, struct Q>)((void *)&p, (void *)&q);
+}
+`
+Verification of foo succeeded.
+`

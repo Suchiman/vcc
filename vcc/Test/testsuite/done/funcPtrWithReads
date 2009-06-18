@@ -1,0 +1,17 @@
+#include <vcc2.h>
+#include <sal.h>
+
+typedef void (*F)(__in int *p);
+
+void foo(__in int *p) {
+}
+
+void bar() {
+  F f = &foo;
+}
+
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of $fnptr_foo_to_fnptr#1 succeeded.
+`

@@ -1,0 +1,24 @@
+#include <vcc2.h>
+
+void foo(_Bool i, _Bool j){
+  _Bool* p = &i;
+  *p = 1;
+  j = i;
+  assert(j == 1);
+  assert(j == i);
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+void foo(int i, int j){
+  int* p = &i;
+  *p = 1;
+  j = i;
+  assert(j == 1);
+  assert(j == i);
+}
+`
+Verification of foo succeeded.
+`

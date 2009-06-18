@@ -1,0 +1,10 @@
+#include <vcc2.h>
+
+void foo () {
+  spec(thread_id m = me());
+  assert(m == me());
+}
+
+`
+Verification of foo succeeded.
+`

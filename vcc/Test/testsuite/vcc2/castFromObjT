@@ -1,0 +1,15 @@
+
+#include <vcc2.h>
+
+struct S {
+  int a;
+};
+
+spec(void foo(obj_t obj) {
+  struct S *p = (struct S *)obj;
+};
+)
+
+`
+Verification of foo succeeded.
+`

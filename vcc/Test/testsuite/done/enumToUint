@@ -1,0 +1,18 @@
+#include <vcc2.h>
+
+typedef enum _HV
+{
+
+    Hv0 = 0x00000000,
+    Hv1 = 0x00000001
+
+} HV, *PHV;
+
+void foo() {
+  unsigned u = (unsigned)Hv0 ;
+  assert(u == (unsigned)Hv0) ;
+}
+
+`
+Verification of foo succeeded.
+`

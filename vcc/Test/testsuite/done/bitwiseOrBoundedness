@@ -1,0 +1,24 @@
+#include <vcc2.h>
+
+typedef unsigned __int8 UINT8;
+
+UINT8 foo(UINT8 a, UINT8 b) {
+  return a | b;
+}
+
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+struct S {
+  unsigned int a : 4;  
+  unsigned int b : 28;
+};
+
+void foo(struct S s) {
+  s.a |= 0x1;
+}
+`
+Verification of foo succeeded.
+`

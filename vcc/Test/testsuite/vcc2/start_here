@@ -1,0 +1,97 @@
+#include <vcc2.h>
+
+void fail1(int x)
+{
+  assert(x > 0);
+}
+
+void fail2(int x)
+{
+  assume(start_here());
+  assert(x > 0);
+}
+
+void ok1(int x)
+{
+  assert(x > 0);
+  assume(start_here());
+}
+
+void ok2(int x)
+{
+  assume(start_here());
+  assume(false);
+  assert(x > 0);
+}
+
+void ok3(int *x)
+{
+  *x = 10;
+  assume(start_here());
+}
+
+
+void ok4(int x)
+{
+  x = x + 1;
+  assume(start_here());
+}
+
+void fail4(int x)
+{
+  assume(start_here());
+  x = x + 1;
+}
+`
+Verification of fail1 failed.
+testcase(5,12) : error VC9500: Assertion 'x > 0' did not verify.
+Verification of fail2 failed.
+testcase(11,12) : error VC9500: Assertion 'x > 0' did not verify.
+Verification of ok1 succeeded.
+Verification of ok2 succeeded.
+Verification of ok3 succeeded.
+Verification of ok4 succeeded.
+Verification of fail4 failed.
+testcase(43,7) : error VC8004: x + 1 might overflow.
+`
+#include "vcc2.h"
+
+void foo(int x)
+  requires(x > 0);
+
+void ok1(int x)
+{
+  foo(x);
+  assume(start_here());
+}
+
+void fail1(int x)
+{
+  assume(start_here());
+  foo(x);
+}
+
+
+struct A { int x; };
+
+void ok2(struct A *a)
+{
+  wrap(a);
+  assume(start_here());
+}
+
+void fail2(struct A *a)
+{
+  wrap(a);
+}
+`
+Verification of ok1 succeeded.
+Verification of fail1 failed.
+testcase(15,3) : error VC9502: Call 'foo(x)' did not verify.
+testcase(4,14) : error VC9599: (related information) Precondition: 'x > 0'.
+Verification of ok2 succeeded.
+Verification of fail2 failed.
+testcase(29,13) : error VC8020: 'a' is not writable before wrapping it.
+testcase(29,3) : error VC9502: Call '_vcc_wrap(a, _vcc_typeof(a))' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is not closed'.
+`

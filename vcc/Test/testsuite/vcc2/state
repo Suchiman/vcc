@@ -1,0 +1,119 @@
+#include <vcc2.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+spec(bool ispure swapped(struct S *s, state_t s1, state_t s2)
+  returns (in_state(s1, s->a) == in_state(s2, s->b) && in_state(s2, s->a) == in_state(s1, s->b));
+)
+
+void foo(struct S *s)
+  requires(mutable(s))
+  writes(extent(s))
+{
+  spec(state_t s0 = current_state();)
+  spec(state_t s1;)
+  int tmp = s->a;
+  s->a = s->b;
+  s->b = tmp;
+  speconly(s1 = current_state();)
+  assert(in_state(s0, s->a) == in_state(s1, s->b));
+  assert(in_state(s0, s->b) == in_state(s1, s->a));
+  assert(swapped(s, s0, s1));
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+void foo(int i) {
+  assert(old(i) == i);
+}
+
+void bar() {
+  int i = 1;
+  assert(old(i) == i);
+}
+`
+testcase(4,12) : warning VC9106: 'old' or 'in_state' in '__old(i)' has no effect
+testcase(9,12) : warning VC9106: 'old' or 'in_state' in '__old(i)' has no effect
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc2.h>
+
+typedef struct itype_instr_t {
+    int simm16:16;
+    unsigned rd:5;
+    unsigned rs1:5;
+    unsigned opc:6;
+} itype_instr_t;
+
+typedef union _U{
+itype_instr_t a;
+backing_member unsigned int b;
+} U;
+
+
+spec (ispure U sf(unsigned int i)
+      ensures(result.b == i);
+      )
+
+void test1()
+{
+unsigned int i;
+i = 5;
+assert(sf(i).b == 5);
+}
+
+void test3(unsigned int *i)
+requires(mutable(i) && *i == 5)
+{
+assert(sf(*i).b == 5);
+}
+`
+Verification of test1 succeeded.
+Verification of test3 succeeded.
+`
+#include <vcc2.h>
+
+void foo()
+{
+  int x, *p;
+  spec(state_t s1, s2; )
+  spec(state_t s3, *s3p; )
+  p = &x;
+  speconly( s3p = &s3; )
+
+  *p = 1;
+  speconly(s3 = current_state();)
+  speconly(s1 = current_state();)
+  *p = 2;
+  speconly(s3 = current_state();)
+  speconly(s2 = current_state();)
+
+  assert(in_state(s1, in_state(s2, *p)) == 2);
+  assert(in_state(s2, in_state(s1, *p)) == 1);
+  assert(in_state(s1, in_state(current_state(), *p)) == 2);
+
+
+  assert(in_state(s1, in_state(s3, *p)) == 2);
+  assert(skip_wf(in_state(in_state(s1, s3), *p)) == 1);
+  assert(in_state(s1, in_state(in_state(current_state(),s3), *p)) == 2);
+}
+`
+testcase(18,48) : warning VC9106: 'old' or 'in_state' in '*p' has no effect
+testcase(18,12) : warning VC9106: 'old' or 'in_state' in '_vcc_in_state(s1, _vcc_in_state(s2, *p))' has no effect
+testcase(19,48) : warning VC9106: 'old' or 'in_state' in '*p' has no effect
+testcase(19,12) : warning VC9106: 'old' or 'in_state' in '_vcc_in_state(s2, _vcc_in_state(s1, *p))' has no effect
+testcase(20,66) : warning VC9106: 'old' or 'in_state' in '*p' has no effect
+testcase(20,12) : warning VC9106: 'old' or 'in_state' in '_vcc_in_state(s1, _vcc_in_state(_vcc_current_state(), *p))' has no effect
+testcase(23,48) : warning VC9106: 'old' or 'in_state' in '*p' has no effect
+testcase(23,12) : warning VC9106: 'old' or 'in_state' in '_vcc_in_state(s1, _vcc_in_state(s3, *p))' has no effect
+testcase(24,12) : warning VC9106: 'old' or 'in_state' in '_vcc_in_state(_vcc_skip_wf(), _vcc_in_state(_vcc_in_state(s1, s3), *p))' has no effect
+testcase(25,85) : warning VC9106: 'old' or 'in_state' in '*p' has no effect
+testcase(25,12) : warning VC9106: 'old' or 'in_state' in '_vcc_in_state(s1, _vcc_in_state(_vcc_in_state(_vcc_current_state(), s3), *p))' has no effect
+Verification of foo succeeded.
+`

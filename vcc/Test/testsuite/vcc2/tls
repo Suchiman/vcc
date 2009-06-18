@@ -1,0 +1,118 @@
+#include <vcc2.h>
+
+struct FooBar {
+  int x;
+};
+
+struct FooBar g_FooBar;
+
+struct vcc(volatile_owns) vcc(thread_local_storage) TLS_DATA {
+  int dummy;
+  spec(volatile bool f1;)
+  
+
+  invariant(f1 ==> set_in(&g_FooBar, owns(this)))
+};
+
+spec(ispure
+struct TLS_DATA *_get_tls_data(thread_id m);)
+
+axiom(forall(thread_id m; owner(_get_tls_data(m)) == m && closed(_get_tls_data(m))));
+
+#define get_tls_data() _get_tls_data(me())
+
+void foo()
+  maintains(get_tls_data()->f1)
+{
+  speconly(
+    spec(struct TLS_DATA *d = get_tls_data();)
+    atomic (d) {
+      //assume(get_tls_data()->f1);
+      giveup_closed_owner(&g_FooBar, d);
+      get_tls_data()->f1 = false;
+    }
+
+    unwrap(&g_FooBar);
+    g_FooBar.x = 10;
+    wrap(&g_FooBar);
+
+    atomic (d) {
+      set_closed_owner(&g_FooBar, d);
+      get_tls_data()->f1 = true;
+    }
+  )
+}
+
+void shouldFail()
+{
+  spec(thread_id t;)
+  spec(struct TLS_DATA *d = _get_tls_data(t);)
+
+  assume(d->f1);
+  atomic (d) {
+    assert(d->f1);
+  }
+}
+`
+Verification of TLS_DATA#adm succeeded.
+Verification of foo succeeded.
+Verification of shouldFail failed.
+testcase(53,14) : error VC9500: Assertion 'd->f1' did not verify.
+`
+#include <vcc2.h>
+
+struct FooBar {
+  int x;
+};
+
+struct vcc(volatile_owns) vcc(thread_local_storage) vcc(claimable) TLS_DATA {
+  int dummy;
+  spec(volatile bool f1;)
+};
+
+void foo(struct TLS_DATA *p) {  }
+`
+testcase(7,1) : error VC9665: Type 'TLS_DATA' cannot be marked as both claimable and thread_local_storage
+`
+#include "vcc2.h"
+
+#define get_tls() _get_tls(me())
+
+typedef struct vcc(thread_local_storage) t{
+  volatile bool flag;
+  volatile bool arr[3];
+}t, *pt;
+
+spec(ispure t *_get_tls(thread_id m);)
+axiom(forall(thread_id m; typed(_get_tls(m)) &&  owner(_get_tls(m)) == m && 
+      closed(_get_tls(m))));
+
+void f()
+maintains(get_tls()->flag)
+{
+  spec(bool temp;)
+
+  atomic(get_tls()){
+    assert(get_tls()->flag);
+    begin_update();
+    speconly(temp = get_tls()->flag;)
+  }
+}
+
+void d()
+maintains(get_tls()->flag)
+maintains(forall(unsigned int i; i < 3 ==> get_tls()->arr[i]))
+{
+  spec(bool temp;)
+  atomic(get_tls()){
+    assert(get_tls()->flag);
+    assert(forall(unsigned int i; i < 3 ==> get_tls()->arr[i]));
+    begin_update();
+    speconly(temp = get_tls()->flag;)
+  }
+}
+
+`
+Verification of f succeeded.
+Verification of d succeeded.
+`

@@ -1,0 +1,521 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright (C) Microsoft Corporation.  All Rights Reserved.
+//
+//-----------------------------------------------------------------------------
+
+#light
+
+namespace Microsoft.Research.Vcc
+
+  open System.Diagnostics
+  open Microsoft
+  open Util
+
+  module BoogieAST =
+
+    let die() = failwith "confused, will now die"
+
+    type Id = string
+
+    type Type =
+      | Bool
+      | Int
+      | Map of list<Type> * Type
+      | Ref of Id
+      | Bv of int
+      
+      override this.ToString() =
+        match this with
+          | Bool -> "bool"
+          | Int -> "int"
+          | Map (f, t) ->
+            "[" + String.concat ", " [for t in f -> t.ToString()] + "]" + t.ToString()
+          | Ref n -> n
+          | Bv n -> "bv" + n.ToString()
+
+    type Var = Id * Type
+    
+    type Expr =
+      | Ref of Id // Bid Id from Microsoft.Boogie.hs
+      | BoolLiteral of bool
+      | IntLiteral of Microsoft.FSharp.Math.BigInt
+      | BvLiteral of Microsoft.FSharp.Math.BigInt * int
+      | BvConcat of Expr * Expr
+      | Primitive of Id * list<Expr>
+      | FunctionCall of Id * list<Expr>
+      | ArrayIndex of Expr * list<Expr>
+      | ArrayUpdate of Expr * list<Expr> * Expr
+      | Old of Expr
+      | Exists of list<Var> * list<list<Expr>> * list<Attribute> * Expr
+      | Forall of list<Var> * list<list<Expr>> * list<Attribute> * Expr
+      
+      override this.ToString () = toString this.WriteTo
+      
+      member this.WriteTo sb =
+        let wr = wrb sb
+        let self (p:Expr) = p.WriteTo sb
+        let doVar (n, (t:Type)) =
+          wr n
+          wr ":"
+          wr (t.ToString())          
+        let quant (vars, triggers, attrs, expr) =
+          commas sb doVar vars
+          wr " :: "
+          // TODO triggers
+          // TODO attrs
+          self expr
+          wr ")"
+        match this with
+          | Ref n -> wr n
+          | BoolLiteral true -> wr "true"
+          | BoolLiteral false -> wr "false"          
+          | IntLiteral n -> wr (n.ToString())
+          | BvLiteral (k, sz) -> wr (k.ToString()); wr "bv"; wr (sz.ToString())
+          | BvConcat (e1, e2) -> 
+            wr "("
+            self e1
+            wr " ++ "
+            self e2
+            wr ")"
+          | Primitive (n, [e1; e2]) ->
+            wr "("
+            self e1
+            wr (" " + n + " ")
+            self e2
+            wr ")"
+          | Primitive (n, [e1]) ->
+            wr ("(" + n + " ")
+            self e1
+            wr ")"
+          | Primitive (n, args)
+          | FunctionCall (n, args) ->
+            doArgsb sb self n args
+          | ArrayIndex (expr, args) ->
+            self expr
+            wr "["
+            commas sb self args
+            wr "]"
+          | ArrayUpdate (expr, args, v) ->
+            self expr
+            wr "["
+            commas sb self args
+            wr " := "
+            self v
+            wr "]"
+          | Old (e) ->
+            wr "old("
+            self e
+            wr ")"
+          | Exists (vars, triggers, attrs, expr) ->
+            wr "(exists "
+            quant (vars, triggers, attrs, expr)
+          | Forall (vars, triggers, attrs, expr) ->
+            wr "(forall "
+            quant (vars, triggers, attrs, expr)
+
+    and Attribute =
+      | ExprAttr of string * Expr
+      | StringAttr of string * string
+      
+   
+
+    let unaryOps = 
+      [
+         ("!", Microsoft.Boogie.UnaryOperator.Opcode.Not);
+      ]
+        
+    let binaryOps = 
+      [
+         ("+", Microsoft.Boogie.BinaryOperator.Opcode.Add);
+         ("-", Microsoft.Boogie.BinaryOperator.Opcode.Sub);
+         ("*", Microsoft.Boogie.BinaryOperator.Opcode.Mul);
+         ("/", Microsoft.Boogie.BinaryOperator.Opcode.Div);
+         ("%", Microsoft.Boogie.BinaryOperator.Opcode.Mod);
+         ("==", Microsoft.Boogie.BinaryOperator.Opcode.Eq);
+         ("!=", Microsoft.Boogie.BinaryOperator.Opcode.Neq);
+         (">", Microsoft.Boogie.BinaryOperator.Opcode.Gt);
+         (">=", Microsoft.Boogie.BinaryOperator.Opcode.Ge);
+         ("<", Microsoft.Boogie.BinaryOperator.Opcode.Lt);
+         ("<=", Microsoft.Boogie.BinaryOperator.Opcode.Le);
+         ("&&", Microsoft.Boogie.BinaryOperator.Opcode.And);
+         ("||", Microsoft.Boogie.BinaryOperator.Opcode.Or);
+         ("==>", Microsoft.Boogie.BinaryOperator.Opcode.Imp);
+         ("<==>", Microsoft.Boogie.BinaryOperator.Opcode.Iff)
+      ]
+
+    type AddCmdInfo =
+      | AddEnsures of Boogie.Ensures
+      | AddRequires of Boogie.CallCmd * Boogie.Requires
+      | AddNothing
+
+    type TokenWithAddCmdInfo (t:Token, ai:AddCmdInfo) =
+      inherit ForwardingToken(t, fun () -> t.Value)
+      member this.GetAddInfo () = ai           
+      
+    let noToken = Microsoft.Boogie.Token.NoToken
+    let tok (t : Token) = 
+      match t with
+        | :? ForwardingToken as fwd -> new BoogieToken(fwd, fwd.Related)
+        | _ -> new BoogieToken (t)
+      
+    let trIdent id =    
+      let res = Microsoft.Boogie.Expr.Ident(id, Microsoft.Boogie.Type.Int)
+      res.Type <- null
+      res
+       
+
+    let rec trType t =
+      match t with
+        | Bool -> Microsoft.Boogie.Type.Bool
+        | Int -> Microsoft.Boogie.Type.Int
+        | Map (it, et) ->
+          let args = Boogie.TypeSeq [| for t in it -> trType t |]
+          let tyargs = Boogie.TypeVariableSeq [| |] 
+          Microsoft.Boogie.MapType (noToken, tyargs, args, trType et) :> Microsoft.Boogie.Type
+        | Type.Ref id -> Microsoft.Boogie.UnresolvedTypeIdentifier (noToken, id) :> Microsoft.Boogie.Type
+        | Type.Bv n -> Microsoft.Boogie.BvType n :> Microsoft.Boogie.Type
+
+
+    let trBound (n, t) = 
+      (Microsoft.Boogie.BoundVariable (noToken, Microsoft.Boogie.TypedIdent (noToken, n, trType t)) :> Microsoft.Boogie.Variable)
+
+    let trConstant (n, t) unique = 
+      (Microsoft.Boogie.Constant (noToken, Microsoft.Boogie.TypedIdent (noToken, n, trType t), unique) :> Microsoft.Boogie.Variable)
+
+    let trFormal (n, t) incoming = 
+      (Microsoft.Boogie.Formal (noToken, Microsoft.Boogie.TypedIdent (noToken, n, trType t), incoming) :> Microsoft.Boogie.Variable)
+
+    let rec trLocalVariable ((n, t), where) = 
+      let where =
+        match where with
+          | Some e -> trExpr e
+          | None -> null
+      let var = Microsoft.Boogie.LocalVariable (noToken, Microsoft.Boogie.TypedIdent (noToken, n, trType t, where))
+      (var :> Microsoft.Boogie.Variable)
+
+    and trExpr e =
+      match e with
+        | Ref id -> 
+          (trIdent id) :> Microsoft.Boogie.Expr
+        | Primitive (op, args) ->
+          match args with
+            | [a; b] ->
+              match _try_assoc op binaryOps with
+                | Some o -> Microsoft.Boogie.Expr.Binary (o, trExpr a, trExpr b) :> Microsoft.Boogie.Expr
+                | None -> printf "unknown boogie binary op: %s" op; die()
+            | [a] ->
+              match _try_assoc op unaryOps with
+                | Some o -> Microsoft.Boogie.Expr.Unary (noToken, o, trExpr a) :> Microsoft.Boogie.Expr
+                | None -> printf "unknown boogie unary op: %s" op; die()
+            | _ -> die()
+        | BoolLiteral b ->
+          Microsoft.Boogie.LiteralExpr (noToken, b) :> Microsoft.Boogie.Expr
+        | IntLiteral v ->
+          Microsoft.Boogie.LiteralExpr (noToken, Microsoft.Basetypes.BigNum.FromBigInt v) :> Microsoft.Boogie.Expr
+        | BvLiteral (v, sz) ->
+          Microsoft.Boogie.LiteralExpr (noToken, Microsoft.Basetypes.BigNum.FromBigInt v, sz) :> Microsoft.Boogie.Expr
+        | BvConcat(e1, e2) ->
+          Microsoft.Boogie.BvConcatExpr(noToken, trExpr e1, trExpr e2) :> Microsoft.Boogie.Expr
+        | FunctionCall (id, args) ->
+          Microsoft.Boogie.NAryExpr (noToken, Microsoft.Boogie.FunctionCall(trIdent id), toExprSeq args) :> Microsoft.Boogie.Expr
+        | ArrayIndex (a, ie) ->
+          Microsoft.Boogie.NAryExpr (noToken, Boogie.MapSelect (noToken, ie.Length), toExprSeq (a :: ie)) :> Microsoft.Boogie.Expr
+        | ArrayUpdate (a, ie, v) ->
+          Microsoft.Boogie.NAryExpr (noToken, Boogie.MapStore (noToken, ie.Length), toExprSeq (a :: ie @ [v])) :> Microsoft.Boogie.Expr
+        | Old e ->
+          Microsoft.Boogie.OldExpr (noToken, trExpr e) :> Microsoft.Boogie.Expr // TODO: in AbsyExpr.scc we have OldExpr : Expr, AI.IFunApp // HACK ???
+        | Exists (vl, tl, attrs, e) ->
+          let vars = Boogie.VariableSeq(List.to_array (List.map trBound vl))          
+          let attrs = toAttributesList attrs
+          Boogie.ExistsExpr (noToken, Boogie.TypeVariableSeq [| |], vars, attrs, toTriggersList tl, trExpr e) :> Microsoft.Boogie.Expr
+        | Forall (vl, tl, attrs, e) -> 
+          let vars = Boogie.VariableSeq(List.to_array (List.map trBound vl))          
+          let attrs = toAttributesList attrs
+          Boogie.ForallExpr (noToken, Boogie.TypeVariableSeq [| |], vars, attrs, toTriggersList tl, trExpr e) :> Microsoft.Boogie.Expr
+
+    // TODO: In case the trigger is {foo(x,y) != const}, should we make it {foo(x,y)}? Does != work in triggers?
+    and toTriggersList (l:list<list<Expr>>) =
+      match l with
+        | [] -> null
+        | [[]] -> null      
+        | l ->
+          List.foldBack (
+            fun (p:Microsoft.Boogie.Trigger) (n:Microsoft.Boogie.Trigger) -> p.Next <- n; p) 
+            (List.map (fun el -> Microsoft.Boogie.Trigger (noToken, true, (toExprSeq el))) l) null
+
+    and toAttributesList (attr:list<Attribute>) =
+      let rec convert = function
+        | ExprAttr (key, value) :: rest -> Microsoft.Boogie.QKeyValue (noToken, key, glist [(trExpr value :> obj)], convert rest)
+        | StringAttr (key, value) :: rest -> Microsoft.Boogie.QKeyValue (noToken, key, glist [(value :> obj)], convert rest)
+        | [] -> null
+      convert attr
+
+    and toExprSeq l =
+      Microsoft.Boogie.ExprSeq (List.to_array (List.map trExpr l))
+
+    let toIdentifierExprSeq l =
+      Microsoft.Boogie.IdentifierExprSeq (List.to_array (List.map trIdent l))
+
+
+    type Stmt =
+      | Assert of Token * Expr // can generate errors
+      | Assume of Expr
+      | Havoc of list<Id>
+      | Assign of Expr * Expr
+      | Call of Token * list<Id> * Id * list<Expr> // can generate errors
+      | If of Expr * Stmt * Stmt
+      | While of Expr * list<Token * Expr> * Stmt // invariants can generate errors
+      | Label of Token * Id // appear in the error trace
+      | Goto of Token * list<Id>
+      | Block of list<Stmt>
+      | VarDecl of Var * option<Expr>
+      | Comment of string    
+      | Return of Token
+      
+    let rec mapStmt f s =
+      match f s with
+        | Some s -> s
+        | None ->
+          let self = mapStmt f
+          match s with
+            | Return _
+            | Goto _
+            | Comment _
+            | VarDecl _
+            | Assert _
+            | Assume _
+            | Havoc _
+            | Stmt.Label _
+            | Assign _
+            | Call _ -> s
+            | If (c, t, e) -> If (c, self t, self e)
+            | While (a, b, s) -> While (a, b, self s)
+            | Block stmts -> Block (List.map self stmts)
+    
+    type AbstrCmd =
+       | Label of string
+       | StructuredCmd of Microsoft.Boogie.StructuredCmd
+       | TransferCmd of Microsoft.Boogie.TransferCmd
+       | Cmd of Microsoft.Boogie.Cmd
+    
+
+    let mutable id = 0
+    let anonName () = id <- id + 1; "anon" + id.ToString()
+   
+    let toStmtList cmds =
+      let rec getSimple acc lst =
+        match lst with
+          | Cmd c :: rest -> getSimple (c :: acc) rest
+          | rest -> (List.rev acc, rest)
+
+      let rec loop blocks cmds =
+        match cmds with
+          | Label label :: rest ->
+            match getSimple [] rest with
+              | (simple, StructuredCmd cmd :: rest) ->
+                loop (Microsoft.Boogie.BigBlock (noToken, label, Microsoft.Boogie.CmdSeq (List.to_array simple), cmd, null) :: blocks) rest
+              | (simple, TransferCmd cmd :: rest) ->
+                loop (Microsoft.Boogie.BigBlock (noToken, label, Microsoft.Boogie.CmdSeq (List.to_array simple), null, cmd) :: blocks) rest
+              | (simple, rest) ->
+                loop (Microsoft.Boogie.BigBlock (noToken, label, Microsoft.Boogie.CmdSeq (List.to_array simple), null, null) :: blocks) rest
+          | [] -> List.rev blocks
+          | x -> loop blocks (Label (anonName ()) :: x)
+      
+      let blocks =
+        match loop [] cmds with
+          | [] -> [Microsoft.Boogie.BigBlock (noToken, anonName(), Microsoft.Boogie.CmdSeq([| |]), null, null)]
+          | x -> x
+       
+      Microsoft.Boogie.StmtList (System.Collections.Generic.List blocks, noToken)
+
+
+    let rec trStmt s =
+      match s with
+        | Assert (token, e) ->
+          let cmd =
+            match token with
+              | :? TokenWithAddCmdInfo as twaci ->
+                match twaci.GetAddInfo() with
+                  | AddNothing -> Boogie.AssertCmd (tok token, trExpr e) :> Boogie.Cmd
+                  | AddEnsures ens -> 
+                    let res = Boogie.AssertEnsuresCmd ens
+                    res.Expr <- trExpr e
+                    res :> Boogie.Cmd
+                  | AddRequires (c, r) ->
+                    let res = Boogie.AssertRequiresCmd (c, r)
+                    res.Expr <- trExpr e
+                    res :> Boogie.Cmd
+              | _ -> Boogie.AssertCmd (tok token, trExpr e) :> Boogie.Cmd
+          [Cmd cmd]
+        | Assume e -> 
+          [Cmd (Microsoft.Boogie.AssumeCmd (noToken, trExpr e) :> Microsoft.Boogie.Cmd)]
+        | Havoc il ->
+          [Cmd (Microsoft.Boogie.HavocCmd (noToken, toIdentifierExprSeq il) :> Microsoft.Boogie.Cmd)]
+        | Assign (lhs, rhs) ->
+          let lhs =
+            match lhs with
+              | Ref id -> (Boogie.SimpleAssignLhs (noToken, trIdent id) :> Boogie.AssignLhs)
+              | ArrayIndex (Ref a, ie) -> 
+                (Boogie.MapAssignLhs (noToken, Boogie.SimpleAssignLhs (noToken, trIdent a), 
+                                      glist (List.map trExpr ie)) :> Boogie.AssignLhs)
+              | _ -> die()
+          [Cmd (Microsoft.Boogie.AssignCmd (noToken, glist [lhs], glist [trExpr rhs]) :> Microsoft.Boogie.Cmd)]
+        | Call (token, il, f, args) ->
+          [Cmd (Microsoft.Boogie.CallCmd (tok token, f, toExprSeq args, toIdentifierExprSeq il) :> Microsoft.Boogie.Cmd)]
+        | If (c, t, Block []) -> 
+          [StructuredCmd 
+            (Microsoft.Boogie.IfCmd (noToken, trExpr c, toStmtList (trStmt t), null, null) :> Microsoft.Boogie.StructuredCmd)]
+        | If (c, t, e) -> 
+          [StructuredCmd 
+            (Microsoft.Boogie.IfCmd (noToken, trExpr c, toStmtList (trStmt t), null, toStmtList (trStmt e)) :> Microsoft.Boogie.StructuredCmd)]
+        | While (e, tinvl, b) ->
+          [StructuredCmd (Microsoft.Boogie.WhileCmd (noToken, trExpr e, 
+                            System.Collections.Generic.List [ 
+                              for (token, inv) in tinvl -> 
+                                Microsoft.Boogie.AssertCmd(tok token, trExpr inv) :> Microsoft.Boogie.PredicateCmd ], // TODO: is this ok? can invariant be free?
+                            toStmtList (trStmt b)) :> Microsoft.Boogie.StructuredCmd)]
+        | Stmt.Label (token, s) -> 
+          [Label s] // TODO: how to translate token for label?
+        | Goto (token, ls) ->
+          [TransferCmd (Microsoft.Boogie.GotoCmd (tok token, Microsoft.Boogie.StringSeq (List.to_array ls)) :> Microsoft.Boogie.TransferCmd)]
+        | Block stmts -> 
+          List.concat (List.map trStmt stmts)
+        | Comment s ->
+          [Cmd (Microsoft.Boogie.CommentCmd (s) :> Microsoft.Boogie.Cmd)]
+        | Return t ->
+          [TransferCmd (Microsoft.Boogie.ReturnCmd (tok t))]
+        | VarDecl _ -> die()
+
+
+    type Contract =
+      | Requires of Token * Expr // can generate errors
+      | Ensures of Token * Expr // can generate errors        
+      | FreeRequires of Expr
+      | FreeEnsures of Expr
+      | Modifies of Id
+
+    type ConstData = 
+      { 
+        Unique: bool; 
+        Name: Id; 
+        Type: Type; 
+      }
+
+    type ProcData = 
+      {     
+        Name: string;
+        InParms: list<Var>;
+        OutParms: list<Var>;
+        Contracts: list<Contract>;
+        Locals: list<Var * option<Expr>>;
+        Body: option<Stmt>;
+        Attributes: list<Attribute>
+      }
+
+    type Decl =
+      | Const of ConstData
+      | Function of Type * list<Attribute> * Id * list<Var>
+      | Axiom of Expr
+      | Proc of ProcData
+      | TypeDef of Id
+  //    | Comment of string // TODO: what to do with Comment Decl ?
+
+    let trDecl d =
+      match d with
+        | Const c -> 
+          [(trConstant (c.Name, c.Type) c.Unique :> Microsoft.Boogie.Declaration)]
+        | Function (t, attrs, f, vars) ->
+          [(Microsoft.Boogie.Function (noToken, f, 
+              Boogie.TypeVariableSeq [| |],
+              Microsoft.Boogie.VariableSeq ([| for (n, t) in vars -> trFormal (n, t) false |]),
+              trFormal (Microsoft.Boogie.TypedIdent.NoName, t) false, null, toAttributesList attrs) :> Microsoft.Boogie.Declaration)]
+        | Axiom e ->
+          [(Microsoft.Boogie.Axiom(noToken, trExpr e) :> Microsoft.Boogie.Declaration)]
+        | Proc p -> 
+          let inparms = Microsoft.Boogie.VariableSeq ([| for x in p.InParms -> trFormal x true |])
+          let outparms = Microsoft.Boogie.VariableSeq ([| for x in p.OutParms -> trFormal x false |])
+          let addVars = ref []
+          let aux = function
+            | VarDecl (v, where) -> addVars := (v, where) :: !addVars; Some (Block [])
+            | _ -> None
+          let body =
+            match p.Body with
+              | None -> None
+              | Some b -> Some (mapStmt aux b)
+          let proc =      
+            Microsoft.Boogie.Procedure (noToken, p.Name, Boogie.TypeVariableSeq [| |], inparms, outparms,
+              Microsoft.Boogie.RequiresSeq [| for e in p.Contracts do 
+                                                match e with
+                                                  | Requires (token, e) -> yield Microsoft.Boogie.Requires (tok token, false, trExpr e, null)
+                                                  | FreeRequires (e) -> yield Microsoft.Boogie.Requires (noToken, true, trExpr e, null)
+                                                  | _ -> yield! []
+                                           |],
+              Microsoft.Boogie.IdentifierExprSeq [| for n in p.Contracts do
+                                                      match n with
+                                                        | Modifies n -> yield trIdent n
+                                                        | _ -> yield! []
+                                                 |],
+              Microsoft.Boogie.EnsuresSeq [| for e in p.Contracts do
+                                               match e with
+                                                 | Ensures (token, e) -> yield Microsoft.Boogie.Ensures (tok token, false, trExpr e, null)
+                                                 | FreeEnsures (e) -> yield Microsoft.Boogie.Ensures (noToken, true, trExpr e, null)
+                                                 | _ -> yield! []
+                                          |],
+              toAttributesList p.Attributes)
+          [(proc :> Microsoft.Boogie.Declaration)] @ 
+            match body with
+              | Some (b) ->                       
+                let impl = 
+                  Microsoft.Boogie.Implementation (noToken, p.Name, Boogie.TypeVariableSeq [| |], inparms, outparms, 
+                    Microsoft.Boogie.VariableSeq ([| for v in p.Locals @ !addVars -> trLocalVariable v |]), toStmtList (trStmt b))
+                [(impl :> Microsoft.Boogie.Declaration)]
+              | _ -> []
+        | TypeDef tid ->
+          [(Microsoft.Boogie.TypeCtorDecl (noToken, tid, 0) :> Microsoft.Boogie.Declaration)]
+    
+
+    let trProgram decls =
+      let prog = new Microsoft.Boogie.Program()
+      prog.TopLevelDeclarations.AddRange (List.concat (List.map trDecl decls))
+      prog
+      
+
+    let printExpr outWriter expr =
+      let stream = new Microsoft.Boogie.TokenTextWriter("<debug>", outWriter, false);
+      (trExpr expr).Emit(stream)
+
+    let printStmt outWriter stmt =
+      let stream = new Microsoft.Boogie.TokenTextWriter("<debug>", outWriter, false);
+      (toStmtList (trStmt stmt)).Emit(stream, 0)
+
+    let printDecl outWriter decl =
+      let stream = new Microsoft.Boogie.TokenTextWriter("<debug>", outWriter, false);
+      for d in trDecl decl do
+        d.Emit(stream, 0)
+        
+    type Expr with
+      member this.Map (f : Expr -> option<Expr>) : Expr =
+        let self (e:Expr) = e.Map f
+        let selfs = List.map self
+        match f this with
+          | Some e -> e
+          | None ->
+            match this with
+              | Ref _
+              | BoolLiteral _
+              | BvLiteral _
+              | IntLiteral _ -> this
+              | BvConcat(e1, e2) -> BvConcat(self e1, self e2)
+              | Primitive (n, args) -> Primitive (n, selfs args)
+              | FunctionCall (n, args) -> FunctionCall (n, selfs args)
+              | ArrayIndex (e1, args) -> ArrayIndex (self e1, selfs args)
+              | ArrayUpdate (e1, args, e2) -> ArrayUpdate (self e1, selfs args, self e2)
+              | Old e -> Old (self e)
+              // Note that the map function is not applied to the attributes.
+              // These are usually used for weights and similar stuff anyhow.
+              | Exists (vars, triggers, attrs, body) ->
+                Exists (vars, List.map selfs triggers, attrs, self body)
+              | Forall (vars, triggers, attrs, body) ->
+                Forall (vars, List.map selfs triggers, attrs, self body)
+                

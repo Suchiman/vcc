@@ -1,0 +1,65 @@
+#include <vcc2.h>
+
+struct S {
+  int a;
+  int b;
+}
+
+void foo(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  expose(s) {
+    s->a = 4;
+    s->b = 5;
+  }
+}
+
+void fooShouldFail1(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  expose(s) {
+    unwrap(s);
+    s->a = 4;
+    s->b = 5;
+  }
+}
+
+void fooShouldFail2(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  expose(s) {
+    s->a = 4;
+    s->b = 5;
+    wrap(s);
+  }
+}
+
+void bar(struct S *s, struct S *t)
+  maintains(wrapped(s))
+  writes(s)
+  maintains(wrapped(t))
+  writes(t)
+  requires(s != t)
+{
+  expose(s) {
+  expose(t) {
+    s->a = 4;
+    s->b = 5;
+    t->a = 4;
+    t->b = 5;
+  }
+  }
+}
+
+`
+Verification of foo succeeded.
+Verification of fooShouldFail1 failed.
+testcase(23,17) : error VC8016: 's' is not wrapped before unwrap.
+Verification of fooShouldFail2 failed.
+testcase(33,21) : error VC9502: Call 'wrap(s)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is not closed'.
+Verification of bar succeeded.
+`

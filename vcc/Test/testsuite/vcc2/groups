@@ -1,0 +1,722 @@
+#include <vcc2.h>
+
+struct S {
+
+  def_group(G)
+
+  in_group(G) int a;
+  int b;
+  in_group(G) int c;
+  
+  invariant(keeps((struct S::G *)this))
+};
+
+void writeNonGroupField(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  unwrap(s);
+  s->b = 10;
+  wrap(s);
+}
+
+void writeGroupFieldShouldFail(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  unwrap(s);
+  s->a = 10;
+  wrap(s);
+}
+
+void writeGroupFieldShouldFail2(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  unwrap(s);
+  s->c = 10;
+  wrap(s);
+}
+
+void writeGroupField(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  unwrap(s);
+  unwrap((struct S::G *)s);
+  s->a = 10;
+  wrap((struct S::G *)s);
+  wrap(s);
+}
+
+`
+Verification of S#adm succeeded.
+Verification of writeNonGroupField succeeded.
+Verification of writeGroupFieldShouldFail failed.
+testcase(28,3) : error VC8507: Assertion 's->a is writable' did not verify.
+Verification of writeGroupFieldShouldFail2 failed.
+testcase(37,3) : error VC8507: Assertion 's->c is writable' did not verify.
+Verification of writeGroupField succeeded.
+`
+#include <vcc2.h>
+
+struct S {
+
+  def_group(G)
+  inv_group(G, this->a == this->c)
+  in_group(G) int a;
+  int b;
+  in_group(G) int c;
+  
+  invariant(keeps((struct S::G *)this))
+};
+
+void maintainGroupInvariant(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  int tmp;
+  unwrap(s);
+  unwrap((struct S::G *)s);
+  tmp = s->a;
+  s->a = s->c;
+  s->c = tmp;
+  wrap((struct S::G *)s);
+  wrap(s);
+}
+
+void destroyGroupInvariantShouldFail(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  //indomain((struct _S::G *)s, s);
+  unwrap(s);
+  unwrap((struct S::G *)s);
+  s->a = 10;
+  s->c = 11;
+  wrap((struct S::G *)s);
+  wrap(s);
+}
+`
+Verification of S#adm succeeded.
+Verification of S##G#adm succeeded.
+Verification of maintainGroupInvariant succeeded.
+Verification of destroyGroupInvariantShouldFail failed.
+testcase(37,28) : error VC8014: invariant(__this->a == __this->c) of S##G fails on wrap.
+testcase(6,36) : error VC9599: (related information) location of the invariant.
+`
+#include <vcc2.h>
+
+struct S{
+
+  def_group(G0)
+  def_group(G1)
+  int a;
+  def_group(G)
+  int b;
+  int c;
+  def_group(G2)
+};
+
+struct T {
+  int a;
+  int b;
+  int c;
+};
+
+void foo(struct S *s) {
+  assert(&(s->b) - &(s->a) == &(s->c) - &(s->b));
+}
+
+void bar(struct T *t) {
+  size_t ss = sizeof(struct S);
+  size_t st = sizeof(struct T);
+  assert(ss == st);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+
+struct S {  
+  int a;
+  __invariant((struct S::G *)__this == (void *)0)
+};
+
+void foo(struct S *s) { }
+`
+testcase(4,24) : error VC0000: 'S' does not contain a definition for 'G'.
+`
+#include "vcc2.h"
+
+struct S {
+ def_group(G)
+ in_group(G) int a;
+             int b;
+};
+
+
+struct S2 {
+ def_group(G)
+ in_group(G) int a;
+             int b;
+ invariant(keeps((struct S::G1 *)this))
+};
+`
+testcase(14,43) : error VC0000: 'S' does not contain a definition for 'G1'.
+`
+#include "vcc2.h"
+
+#define UINT32 unsigned int
+
+
+struct lock{
+ volatile int locked;  
+ spec(obj_t obj;)   
+};
+
+typedef struct t_st{
+ 
+  struct lock state_lock;  
+  def_group(g)
+  in_group(g) UINT32 state;
+
+  invariant(keeps(&state_lock))
+  invariant(state_lock.obj == (struct t_st::g *)this)  
+
+} *pst;
+`
+Verification of t_st#adm succeeded.
+`
+
+#include <vcc2.h>
+
+struct A {
+  int x;
+} ;
+
+struct B {
+  int y;
+
+  def_group(C)
+  in_group(C) int z;
+  in_group(C) struct A *a;
+  inv_group(C, a->x == z)
+  inv_group(C, keeps(a))
+
+  def_group(D)
+  in_group(D) int zz;
+  inv_group(D, keeps((struct B::C*)this))
+  inv_group(D, zz == z)
+};
+
+`
+Verification of B##C#adm succeeded.
+Verification of B##D#adm succeeded.
+`
+#include <vcc2.h>
+
+ struct vcc(claimable) Struct
+ {
+   int value;
+  
+   def_group(g, vcc(claimable))
+
+   in_group(g)
+   volatile int v;
+
+   in_group(g)
+   spec(volatile bool map[unsigned int];)
+
+   invariant(keeps((struct Struct::g*)this))
+   
+};
+ 
+
+int test2a(struct Struct *s)
+     requires(wrapped(s))
+ {
+    spec(claim_t c;)
+
+    assert(closed((struct Struct::g*)s));
+
+    atomic(s) {
+      speconly(c = claim((struct Struct::g*)s, closed((struct Struct::g*)s));)
+    }
+
+    atomic(c, (struct Struct::g*)s){
+    begin_update();
+    speconly(s->map[5] = (bool)1;)
+    };
+    
+ }
+
+int test(struct Struct *s)
+   requires(wrapped(s))
+{
+    int tmp;
+
+    atomic((struct Struct::g*)s){
+      tmp = s->v;
+    }
+    
+}
+
+ int test3(struct Struct *s)
+     requires(wrapped(s))
+ {
+    spec(claim_t c;)
+
+    atomic(s) {
+      assert(closed((struct Struct::g*)s));
+      speconly(c = claim((struct Struct::g*)s, closed((struct Struct::g*)s));)
+    }
+
+
+    atomic(c, (struct Struct::g*)s){
+    begin_update();
+    speconly(s->v = 1;)
+    };
+ }
+
+  struct vcc(claimable) Struct1
+ {
+   int value;
+   spec(volatile bool map[unsigned int];)
+};
+ 
+  int test1(struct Struct1 *s claimp(c))
+     always(c, closed(s))
+ {
+    atomic(c, s){
+    begin_update();
+    speconly(s->map[5] = (bool)1;)
+    };
+ }
+
+  int test2(struct Struct1 *s claimp(c))
+     requires(wrapped(s))
+ {
+ //  speconly(c = claim((struct Struct::g*)s, closed((struct Struct::g*)s));)*/
+
+    atomic(s){
+    begin_update();
+    speconly(s->map[5] = (bool)1;)
+    };
+    
+ }
+`
+Verification of Struct#adm succeeded.
+Verification of test2a succeeded.
+Verification of test succeeded.
+Verification of test3 succeeded.
+Verification of test1 succeeded.
+Verification of test2 succeeded.
+`
+#include <vcc2.h>
+
+struct S {
+
+  def_group(G)
+
+  in_group(G) int a;
+  int b;
+  in_group(G) int c;
+  
+  invariant(keeps(this::G))
+};
+
+void writeNonGroupField(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  unwrap(s);
+  s->b = 10;
+  wrap(s);
+}
+
+void writeGroupFieldShouldFail(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  unwrap(s);
+  s->a = 10;
+  wrap(s);
+}
+
+void writeGroupFieldShouldFail2(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  unwrap(s);
+  s->c = 10;
+  wrap(s);
+}
+
+void writeGroupField(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  unwrap(s);
+  unwrap(s::G);
+  s->a = 10;
+  wrap(s::G);
+  wrap(s);
+}
+
+`
+Verification of S#adm succeeded.
+Verification of writeNonGroupField succeeded.
+Verification of writeGroupFieldShouldFail failed.
+testcase(28,3) : error VC8507: Assertion 's->a is writable' did not verify.
+Verification of writeGroupFieldShouldFail2 failed.
+testcase(37,3) : error VC8507: Assertion 's->c is writable' did not verify.
+Verification of writeGroupField succeeded.
+`
+#include <vcc2.h>
+
+struct S {
+
+  def_group(G)
+  inv_group(G, this->a == this->c)
+  in_group(G) int a;
+  int b;
+  in_group(G) int c;
+  
+  invariant(keeps(this::G))
+};
+
+void maintainGroupInvariant(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  int tmp;
+  unwrap(s);
+  unwrap(s::G);
+  tmp = s->a;
+  s->a = s->c;
+  s->c = tmp;
+  wrap(s::G);
+  wrap(s);
+}
+
+void destroyGroupInvariantShouldFail(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+{
+  //indomain((struct _S::G *)s, s);
+  unwrap(s);
+  unwrap(s::G);
+  s->a = 10;
+  s->c = 11;
+  wrap(s::G);
+  wrap(s);
+}
+`
+Verification of S#adm succeeded.
+Verification of S##G#adm succeeded.
+Verification of maintainGroupInvariant succeeded.
+Verification of destroyGroupInvariantShouldFail failed.
+testcase(37,13) : error VC8014: invariant(__this->a == __this->c) of S##G fails on wrap.
+testcase(6,36) : error VC9599: (related information) location of the invariant.
+`
+#include <vcc2.h>
+
+struct S{
+
+  def_group(G0)
+  def_group(G1)
+  int a;
+  def_group(G)
+  int b;
+  int c;
+  def_group(G2)
+};
+
+struct T {
+  int a;
+  int b;
+  int c;
+};
+
+void foo(struct S *s) {
+  assert(&(s->b) - &(s->a) == &(s->c) - &(s->b));
+}
+
+void bar(struct T *t) {
+  size_t ss = sizeof(struct S);
+  size_t st = sizeof(struct T);
+  assert(ss == st);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+
+struct S {  
+  int a;
+  __invariant(__this::G == (void *)0)
+};
+
+void foo(struct S *s) { }
+`
+testcase(4,15) : error VC0000: 'S' does not contain a definition for 'G'.
+`
+#include "vcc2.h"
+
+struct S {
+ def_group(G)
+ in_group(G) int a;
+             int b;
+};
+
+
+struct S2 {
+ def_group(G)
+ in_group(G) int a;
+             int b;
+ invariant(keeps((((struct S *)this)::G1)))
+};
+`
+testcase(14,35) : error VC0000: 'S' does not contain a definition for 'G1'.
+`
+#include "vcc2.h"
+
+#define UINT32 unsigned int
+
+
+struct lock{
+ volatile int locked;  
+ spec(obj_t obj;)   
+};
+
+typedef struct t_st{
+ 
+  struct lock state_lock;  
+  def_group(g)
+  in_group(g) UINT32 state;
+
+  invariant(keeps(&state_lock))
+  invariant(state_lock.obj == this::g)  
+
+} *pst;
+`
+Verification of t_st#adm succeeded.
+`
+
+#include <vcc2.h>
+
+struct A {
+  int x;
+} ;
+
+struct B {
+  int y;
+
+  def_group(C)
+  in_group(C) int z;
+  in_group(C) struct A *a;
+  inv_group(C, a->x == z)
+  inv_group(C, keeps(a))
+
+  def_group(D)
+  in_group(D) int zz;
+  inv_group(D, keeps(this::C))
+  inv_group(D, zz == z)
+};
+
+`
+Verification of B##C#adm succeeded.
+Verification of B##D#adm succeeded.
+`
+#include <vcc2.h>
+
+ struct vcc(claimable) Struct
+ {
+   int value;
+  
+   def_group(g, vcc(claimable))
+
+   in_group(g)
+   volatile int v;
+
+   in_group(g)
+   spec(volatile bool map[unsigned int];)
+
+   invariant(keeps(this::g))
+   
+};
+ 
+
+int test2a(struct Struct *s)
+     requires(wrapped(s))
+ {
+    spec(claim_t c;)
+
+    atomic(s) {
+      assert(closed(s::g));
+      speconly(c = claim(s::g, closed(s::g));)
+    }
+
+    atomic(c,  s::g){
+    begin_update();
+    speconly(s->map[5] = (bool)1;)
+    };
+    
+ }
+
+int test(struct Struct *s)
+   requires(wrapped(s))
+{
+    int tmp;
+
+    atomic(s::g){
+      tmp = s->v;
+    }
+    
+}
+
+ int test3(struct Struct *s)
+     requires(wrapped(s))
+ {
+    spec(claim_t c;)
+
+    atomic(s) {
+      assert(closed(s::g));
+      speconly(c = claim(s::g, closed(s::g));)
+    }
+
+    atomic(c, s::g){
+    begin_update();
+    speconly(s->v = 1;)
+    };
+    
+ }
+
+
+
+
+
+struct vcc(claimable) Struct1
+ {
+   int value;
+   spec(volatile bool map[unsigned int];)
+};
+ 
+  int test1(struct Struct1 *s claimp(c))
+     always(c, closed(s))
+ {
+    atomic(c, s){
+    begin_update();
+    speconly(s->map[5] = (bool)1;)
+    };
+ }
+
+  int test2(struct Struct1 *s claimp(c))
+     requires(wrapped(s))
+ {
+    atomic(s){
+    begin_update();
+    speconly(s->map[5] = (bool)1;)
+    };
+    
+ }
+`
+Verification of Struct#adm succeeded.
+Verification of test2a succeeded.
+Verification of test succeeded.
+Verification of test3 succeeded.
+Verification of test1 succeeded.
+Verification of test2 succeeded.
+`
+#include <vcc2.h>
+
+struct A {
+  int x;
+
+  struct {
+    def_group(C)
+    in_group(C) int z;
+
+    def_group(D)
+    in_group(D) int zz;
+  } y;
+  
+  invariant(keeps(&this->y::C))
+  invariant(keeps(&this->y::D))
+};
+
+`
+Verification of A#adm succeeded.
+`
+#include <stdlib.h>
+#include "vcc2.h"
+
+#define UINT32 unsigned int
+
+typedef struct _st{
+    def_group(g)
+
+    in_group(g) UINT32 *p;
+
+    UINT32 f;
+} st;
+
+
+void test()
+{
+    st *newp;
+
+    newp = (st*) malloc(sizeof(st));
+    assert(set_eq(owns(newp), set_empty()));
+    assert(set_eq(owns((st::g*)newp), set_empty()));
+
+}
+`
+Verification of test succeeded.
+`
+#include "vcc2.h"
+
+struct A {
+  def_group(B)
+
+  in_group(B) int x;
+  int y;
+  invariant(keeps(this::B))
+};
+
+
+void foo(struct A *a)
+  writes(a)
+{
+  wrap(a);
+}
+`
+Verification of A#adm succeeded.
+Verification of foo failed.
+testcase(15,13) : error VC8018: '__this::B' is not wrapped before wrapping 'a' (its owner).
+testcase(15,13) : error VC8019: '__this::B' is not writable before wrapping 'a' (its owner).
+testcase(15,3) : error VC9502: Call '_vcc_wrap(a, _vcc_typeof(a))' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is not closed'.
+`
+#include <vcc2.h>
+
+typedef struct Pls *pPls;
+typedef struct vcc(claimable) _Protector {
+  int state;
+  //invariant(depends(((pPls)owner(this))::Ipi, this))
+  invariant(depends(owner(this)::Ipi, this))
+
+  } Protector;
+
+typedef struct vcc(claimable) Pls {
+  def_group(Ipi)
+  in_group(Ipi)
+  int state;
+  Protector p;
+
+  invariant(set_in(&p, owns(this)))
+} Pls, *pPls;
+`
+testcase(7,28) : error VC0000: The left of '::Ipi' must point to a struct or union.
+`

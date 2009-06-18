@@ -1,0 +1,335 @@
+#include <vcc2test.h>
+
+void foo(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 50);
+  split_array(as_array(arr+50, 50), 25);
+  split_array(as_array(arr, 50), 25);
+  split_array(as_array(arr+25, 25), 10);
+}
+
+`
+Verification of foo succeeded.
+`
+#include <vcc2test.h>
+
+typedef unsigned char byte;
+
+void *alloc(unsigned __int64  sz)
+  ensures(is_object_root(as_array((byte*)result, sz)))
+  ensures(mutable(as_array((byte*)result, sz)))
+  ensures(is_fresh(as_array((byte*)result, sz)))
+  ;
+
+struct A {
+  int x , y;
+};
+
+void f1()
+{
+  struct A * a = alloc(sizeof(struct A));
+  from_bytes(a);
+  a->x = 10;
+  a->y = 20;
+}
+
+void flatten(struct A *a)
+  writes(extent(a))
+  requires(is_object_root(a))
+{
+  byte*p = (byte*) a;
+
+  to_bytes(a);
+  p[2] = 10;
+}
+
+void shouldFail(byte *p)
+  // missing writes
+  requires(mutable(as_array(p, sizeof(struct A))) && 
+           is_object_root(as_array(p, sizeof(struct A))))
+{
+  from_bytes((struct A*)p);
+  ((struct A*)p)->x = 10;
+}
+
+
+void flattenFail1(struct A *a)
+  writes(extent(a))
+  requires(is_object_root(a))
+{
+  byte*p = (byte*) a;
+
+  to_bytes(a);
+  p[9] = 10;
+}
+
+void flattenFail2(struct A *a)
+  writes(extent(a))
+{
+  to_bytes(a);
+}
+
+void flattenFail3(struct A *a)
+  requires(mutable(a) && is_object_root(a))
+{
+  to_bytes(a);
+}
+
+void joinShouldFail2(int *p)
+  writes(extent(as_array(p, sizeof(struct A))))
+  requires(mutable(as_array((byte*)p, sizeof(struct A))) && 
+           is_object_root(as_array((byte*)p, sizeof(struct A))))
+{
+  from_bytes((struct A*)p);
+}
+
+void joinShouldFail3(byte *p)
+  writes(extent(as_array(p, sizeof(struct A)-1)))
+  requires(mutable(as_array(p, sizeof(struct A)-1)) && 
+           is_object_root(as_array(p, sizeof(struct A)-1)))
+{
+  from_bytes((struct A*)p, sizeof(struct A)-1);
+}
+
+`
+Verification of f1 succeeded.
+Verification of flatten succeeded.
+Verification of shouldFail failed.
+testcase(38,3) : error VC8510: Assertion 'as_array((uint8_t*)p, 8) is writable in call to _vcc_from_bytes((struct A*)p)' did not verify.
+Verification of flattenFail1 failed.
+testcase(50,3) : error VC8507: Assertion 'p[9] is writable' did not verify.
+Verification of flattenFail2 failed.
+testcase(56,3) : error VC9502: Call '_vcc_to_bytes(a)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the reinterpreted object is not embedded inside of another object'.
+Verification of flattenFail3 failed.
+testcase(62,3) : error VC8510: Assertion 'a is writable in call to _vcc_to_bytes(a)' did not verify.
+Verification of joinShouldFail2 failed.
+testcase(70,3) : error VC8510: Assertion 'as_array((uint8_t*)p, 8) is writable in call to _vcc_from_bytes((struct A*)p)' did not verify.
+Verification of joinShouldFail3 failed.
+testcase(78,3) : error VC9502: Call '_vcc_from_bytes((struct A*)p, sizeof(struct A)-1)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the reinterpreted array is large enough'.
+`
+#include <vcc2test.h>
+
+void fooFail1(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 50);
+}
+
+void fooFail2(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+ // impossible to get split-point-negative error
+  split_array(as_array(arr, 100), (unsigned __int64) -1);
+}
+
+void fooFail3(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+//  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 50);
+}
+
+
+void fooFail4(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 100);
+}
+
+void fooFail5(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 110);
+}
+
+void fooFail6(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 0);
+}
+
+void fooOK(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 50);
+}
+`
+Verification of fooFail1 failed.
+testcase(7,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), 50)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the array to split is not embedded inside of another object'.
+Verification of fooFail2 failed.
+testcase(16,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), (unsigned __int64) -1)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the split-point is within the array'.
+Verification of fooFail3 failed.
+testcase(24,3) : error VC8510: Assertion '_vcc_extent(arr) is writable in call to _vcc_split_array(_vcc_as_array(arr, 100), 50)' did not verify.
+Verification of fooFail4 failed.
+testcase(33,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), 100)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the split-point is within the array'.
+Verification of fooFail5 failed.
+testcase(41,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), 110)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the split-point is within the array'.
+Verification of fooFail6 failed.
+testcase(49,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), 0)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the array is split at positive index'.
+Verification of fooOK succeeded.
+`
+#include <vcc2test.h>
+
+typedef unsigned char byte;
+
+void *alloc(unsigned __int64  sz)
+  ensures(is_object_root(as_array((byte*)result, sz)))
+  ensures(mutable(as_array((byte*)result, sz)))
+  ensures(is_fresh(as_array((byte*)result, sz)))
+  ;
+
+struct A {
+  int x , y;
+};
+struct B {
+  struct A a1;
+  struct A a2;
+  int x;
+};
+
+void f1()
+{
+  struct B * b = alloc(sizeof(struct B));
+  from_bytes(b);
+  b->a1.x = 10;
+  b->a2.y = 20;
+  b->x = 20;
+}
+
+void mfree(void *p spec(unsigned __int64 sz))
+  writes(extent(as_array((byte*)p, sz)));
+
+void f2()
+{
+  struct B * b = alloc(sizeof(struct B));
+  from_bytes(b);
+  b->a1.x = 10;
+  b->a2.y = 20;
+  b->x = 20;
+  to_bytes(b);
+  mfree(b spec(sizeof(*b)));
+}
+
+`
+Verification of f1 succeeded.
+Verification of f2 succeeded.
+`
+#include <vcc2test.h>
+
+void foo(int *arr)
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 50);
+  join_arrays(as_array(arr, 50), as_array(arr+50, 50));
+}
+
+void foo2(int *arr1, int *arr2)
+  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
+  requires(arr1 + 100 == arr2)
+  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+{
+  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+}
+
+void foo2Fail1(int *arr1, int *arr2)
+  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
+  requires(arr1 + 100 == arr2)
+  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+{
+  join_arrays(as_array(arr1, 99), as_array(arr2, 32));
+}
+
+void foo2Fail2(int *arr1, int *arr2)
+  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
+  requires(arr1 + 100 == arr2)
+  writes(extent(as_array(arr2, 32)), extent(as_array(arr1, 100)))
+{
+  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+}
+
+void foo2Fail3(int *arr1, __int64 *arr2)
+  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
+  requires(arr1 + 100 == arr2)
+  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+{
+  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+}
+
+void foo2Fail4(int *arr1, int *arr2)
+  requires(is_object_root(as_array(arr2, 32)))
+  requires(arr1 + 100 == arr2)
+  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+{
+  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+}
+
+void foo2Fail5(int *arr1, int *arr2)
+  requires(is_object_root(as_array(arr1, 100)))
+  requires(arr1 + 100 == arr2)
+  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+{
+  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+}
+
+void foo2Fail6(int *arr1, int *arr2)
+  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
+  requires(arr1 + 100 == arr2)
+  writes(extent(as_array(arr1, 100)))
+{
+  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+}
+
+
+void foo2Fail7(int *arr1, int *arr2)
+  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
+  requires(arr1 + 100 == arr2)
+  writes(extent(as_array(arr2, 32)))
+{
+  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+}
+
+`
+Verification of foo succeeded.
+Verification of foo2 succeeded.
+Verification of foo2Fail1 failed.
+testcase(24,3) : error VC8510: Assertion '_vcc_extent(arr1) is writable in call to _vcc_join_arrays(_vcc_as_array(arr1, 99), _vcc_as_array(arr2, 32))' did not verify.
+testcase(24,3) : error VC9502: Call '_vcc_join_arrays(_vcc_as_array(arr1, 99), _vcc_as_array(arr2, 32))' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the first array to join is not embedded inside of another object'.
+Verification of foo2Fail2 succeeded.
+Verification of foo2Fail3 failed.
+testcase(40,3) : error VC9502: Call '_vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'types of arrays to join agree'.
+Verification of foo2Fail4 failed.
+testcase(48,3) : error VC9502: Call '_vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the first array to join is not embedded inside of another object'.
+Verification of foo2Fail5 failed.
+testcase(56,3) : error VC9502: Call '_vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the second array to join is not embedded inside of another object'.
+Verification of foo2Fail6 failed.
+testcase(64,3) : error VC8510: Assertion '_vcc_extent(arr2) is writable in call to _vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+Verification of foo2Fail7 failed.
+testcase(73,3) : error VC8510: Assertion '_vcc_extent(arr1) is writable in call to _vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+`

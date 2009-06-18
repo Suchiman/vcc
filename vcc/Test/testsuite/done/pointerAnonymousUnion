@@ -1,0 +1,17 @@
+#include <vcc2.h>
+
+typedef struct _S {
+  unsigned __int64 a;
+  union {
+    int *p;
+    int *q;
+  };
+} S;
+
+void foo(S s)
+  requires(typed(s.p)) {
+}
+
+`
+Verification of foo succeeded.
+`

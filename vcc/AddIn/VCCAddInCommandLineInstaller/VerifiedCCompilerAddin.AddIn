@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Extensibility xmlns="http://schemas.microsoft.com/AutomationExtensibility">
+	<HostApplication>
+		<Name>Microsoft Visual Studio Macros</Name>
+		<Version>9.0</Version>
+	</HostApplication>
+	<HostApplication>
+		<Name>Microsoft Visual Studio</Name>
+		<Version>9.0</Version>
+	</HostApplication>
+	<HostApplication>
+		<Name>Microsoft Visual Studio Macros</Name>
+		<Version>8.0</Version>
+	</HostApplication>
+	<HostApplication>
+		<Name>Microsoft Visual Studio</Name>
+		<Version>8.0</Version>
+	</HostApplication>
+	<Addin>
+		<FriendlyName>VerifiedCCompiler Add-in</FriendlyName>
+		<Description>VerifiedCCompiler Add-in</Description>
+		<AboutBoxDetails>PLACE HOLDER\r\nCopyright (C) Microsoft Corporation.  All Rights Reserved.</AboutBoxDetails>
+		<AboutIconData>@AboutIcon</AboutIconData>
+		<Assembly>VerifiedCCompilerAddin.dll</Assembly>
+		<FullClassName>VerifiedCCompilerAddin.VCCConnect</FullClassName>
+		<LoadBehavior>1</LoadBehavior>
+		<CommandPreload>1</CommandPreload>
+		<CommandLineSafe>0</CommandLineSafe>
+	</Addin>
+</Extensibility>

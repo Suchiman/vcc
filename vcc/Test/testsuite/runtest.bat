@@ -1,0 +1,1 @@
+..\..\Host\bin\debug\vcc.exe /s vcc2 done examples

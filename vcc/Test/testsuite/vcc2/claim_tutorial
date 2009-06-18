@@ -1,0 +1,148 @@
+#include <vcc2.h>
+
+vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
+  if (*Destination == Comparand) {
+    *Destination = Exchange;
+    return Comparand;
+  } else {
+    return *Destination;
+  }
+}
+
+struct vcc(claimable) A {
+  volatile int x;
+  invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
+};
+void LockFreeIncr(struct A *a claimp(c))
+  writes(ref_cnt_ptr(c))
+  always(c, closed(a))
+{
+  int y;
+  int z;
+  spec( claim_t c1, c2; )
+  atomic(c,a) {
+    y = a->x;
+    speconly( c1 = claim(c, y <= a->x); )
+  }
+  if (y >= 0x7fffffff) return;
+  atomic(c, c1, a) {
+    InterlockedCompareExchange(&a->x, y+1, y);
+    speconly( c2 = claim(c, y < a->x); )
+  }
+  atomic(c, c2, a) {
+    z = a->x;
+  }
+  assert(y < z);
+}
+`
+Verification of A#adm succeeded.
+Verification of LockFreeIncr succeeded.
+`
+
+#include <vcc2.h>
+struct vcc(claimable) A {
+  volatile int x;
+  invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
+};
+void incr(struct A *a, int *res claimp(c) claimp(*cres))
+  writes(ref_cnt_ptr(c), res, cres)
+  always(c, closed(a))
+  ensures(claims(*cres, a->x >= when_claimed(*res)))
+{
+  int val;
+  spec( claim_t c1; )
+  atomic(c,a) {
+    val = a->x;
+  }
+  *res = val;
+  speconly( c1 = claim(c, when_claimed(*res) <= a->x); )
+  speconly( *cres = c1; )
+}
+`
+Verification of A#adm succeeded.
+Verification of incr succeeded.
+`
+#include <vcc2.h>
+struct vcc(claimable) A {
+  volatile int x;
+  invariant( this->x > 0 && (old(this->x) == this->x || old(this->x) + 1 == this->x ))
+};
+void incr(struct A *a, int *res claimp(c) claimp(*cres))
+  writes(ref_cnt_ptr(c), res, cres)
+  always(c, closed(a))
+  ensures(claims(*cres, a->x > when_claimed(*res)))
+  ensures(claims_obj(*cres, c))
+{
+  int val;
+  spec( claim_t c1; )
+  atomic(c,a) {
+    val = a->x;
+  }
+  *res = val;
+  speconly( c1 = claim(c, when_claimed(*res) <= a->x); )
+
+  *res -= 1;
+  speconly( *cres = c1; )
+}
+`
+Verification of A#adm succeeded.
+Verification of incr succeeded.
+`
+#include <vcc2test.h>
+
+struct vcc(claimable) A {
+  volatile int x;
+  invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
+};
+
+void incr(struct A *a, int *res claimp(c) claimp(*cres))
+  writes(ref_cnt_ptr(c), res, cres)
+  always(c, closed(a))
+  // there will be a single new child to c
+  ensures(ref_cnt(c) == old(ref_cnt(c)) + 1)
+  // the claim we return will be child of c
+  ensures(claims_obj(*cres, c))
+  // it will be wrapped
+  ensures(wrapped(*cres))
+  // it will be childless (so we'll be free to kill it)
+  ensures(ref_cnt(*cres) == 0)
+  // and it will guarantee a condition about a->x
+  ensures(claims(*cres, a->x >= when_claimed(*res)))
+  // and it was not allocated before
+  ensures(is_fresh(*cres))
+  // we don't free any of our out parameters
+  ensures(mutable(res) && mutable(cres))
+{
+  spec( claim_t c1; )
+  int val;
+  atomic(c,a) {
+    val = a->x;
+  }
+  *res = val;
+  speconly( c1 = claim(c, when_claimed(*res) <= a->x); )
+  speconly( *cres = c1; )
+}
+
+void use_case()
+{
+  struct A *a;
+  int tmp;
+  spec( claim_t c; )
+  spec( claim_t c2; )
+  a = malloc(sizeof(*a));
+  a->x = 0;
+  wrap(a);
+  speconly( c = claim(a, true); )
+  incr(a, &tmp spec(c) spec( &c2) );
+  assert(valid_claim(c2));
+  assert(tmp <= skip_wf(a->x));
+  unclaim(c2, c);
+  unclaim(c, a);
+  unwrap(a);
+  free(a);
+}
+`
+Verification of A#adm succeeded.
+Verification of incr succeeded.
+Verification of use_case succeeded.
+`

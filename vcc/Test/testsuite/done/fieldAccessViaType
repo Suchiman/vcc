@@ -1,0 +1,29 @@
+
+struct x {
+    __specification int Map2[int];
+    int a;
+} z;
+
+void foo() {
+    struct x z;
+    //x.a = 10;
+    x.Map2[0] = 3;
+}
+
+`
+testcase(10,5) : error VC0000: An object reference is required for the nonstatic field, method, or property 'System.Diagnostics.Contracts.CodeContract.Map<System.Int32, System.Int32>.Item.set'.
+`
+
+struct x {
+    __specification int Map2[int];
+    int a;
+} z;
+
+void foo() {
+    struct x z;
+    x.a = 10;
+}
+`
+testcase(9,5) : error VC0000: An object reference is required for the nonstatic field, method, or property 'a'.
+testcase(4,5)-(4,10) : (Location of symbol related to previous error.)
+`

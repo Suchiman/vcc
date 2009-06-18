@@ -1,0 +1,11 @@
+#include <vcc2.h>
+
+int a[1000];
+
+void foo()
+  requires(is_thread_local_array(a, 10)) {
+}
+
+`
+Verification of foo succeeded.
+`

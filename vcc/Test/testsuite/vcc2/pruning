@@ -1,0 +1,138 @@
+`/functions:foo /a
+#include <vcc2.h>
+
+typedef unsigned __int32 UINT32;
+
+spec(typedef bool BITMAP32[UINT32];)
+
+spec(
+ispure BITMAP32 ToBm32(UINT32 n); 
+)
+
+spec(
+ispure BITMAP32 Bm32Singleton(UINT32 i) ensures(result == lambda(UINT32 j; true; (bool)(j == i)));
+)
+
+spec(
+ispure BITMAP32 Bm32Union(BITMAP32 bm1, BITMAP32 bm2)  ensures(result == lambda(UINT32 i; i < 32; (bool)(bm1[i] || bm2[i])));
+)
+
+spec(
+ispure BITMAP32 Bm32Intersect(BITMAP32 bm1, BITMAP32 bm2)
+  ensures(result == lambda(UINT32 i; i < 32; (bool)(bm1[i] && bm2[i])));
+)
+
+spec(
+ispure BITMAP32 Bm32SymmetricDiff(BITMAP32 bm1, BITMAP32 bm2)
+  ensures(result == lambda(UINT32 i; i < 32; (bool)!(bm1[i] <==> bm2[i])));
+)
+
+spec(
+ispure bool Bm32SpecialValue(UINT32 bm)
+  ensures(result == true);
+)
+
+axiom(forall(UINT32 i; { ToBm32(0)[i] } i < 32 ==> !ToBm32(0)[i]));
+axiom(forall(UINT32 i; { ToBm32((UINT32)-1)[i] } i < 32 ==> ToBm32((UINT32)-1)[i]));
+axiom(forall(UINT32 i; { ToBm32(1UI32 << i)[i] } i < 32 ==> ToBm32(1UI32 << i) == Bm32Singleton(i)));
+axiom(forall(UINT32 x; {Bm32SpecialValue(x)} forall(UINT32 i; i < 32 ==> !ToBm32(x)[i]) ==> x == 0));
+axiom(forall(UINT32 x; {Bm32SpecialValue(x)} forall(UINT32 i; i < 32 ==> ToBm32(x)[i]) ==> x == (UINT32)-1));
+axiom(forall(UINT32 x,y; { ToBm32(x & y) } ToBm32(x & y) == Bm32Intersect(ToBm32(x), ToBm32(y))));
+axiom(forall(UINT32 x,y; { ToBm32(x | y) } ToBm32(x | y) == Bm32Union(ToBm32(x), ToBm32(y))));
+axiom(forall(UINT32 x,y; { ToBm32(x ^ y) } ToBm32(x ^ y) == Bm32SymmetricDiff(ToBm32(x), ToBm32(y))));
+axiom(forall(UINT32 x, i; i < 32 ==> ToBm32(x)[i] <==> (x & (1UI32 << i)) != 0));
+
+
+void foo() {
+  assert(forall(UINT32 i; i < 32 ==> !(ToBm32(0)[i])));
+}
+`
+Verification of foo succeeded.
+`
+`/a /functions:baz
+#include <vcc2.h>
+
+typedef int (*FOO)(int i)
+  ensures(result == i);
+  
+typedef int (*BAR)(int i)
+  ensures(result == i);
+  
+void bar(FOO f) 
+  requires(typed(f))
+{
+  int i = f(2);
+  assert(i == 2);
+}
+
+int foo(int i)
+  ensures(result == i)
+{
+  return i;
+}
+
+int baz() 
+{
+  BAR b = &foo;
+  bar(&foo);
+  bar(&foo); return 0;
+}
+`
+Verification of baz succeeded.
+`
+`/a /functions:baz
+#include <vcc2.h>
+
+typedef int (*FOO)(int i)
+  ensures(result == i);
+  
+typedef int (*BAR)(int i)
+  ensures(result == i);
+  
+void bar(FOO f) 
+  requires(typed(f))
+{
+  int i = f(2);
+  assert(i == 2);
+}
+
+int foo(int i)
+  ensures(result == i)
+{
+  return i;
+}
+
+int baz() 
+{
+  BAR b = &foo;
+  bar(&foo);
+  bar(&foo); return 0;
+}
+`
+Verification of baz succeeded.
+`
+`/a /functions:LeaveTurnstile
+typedef _Bool bool;
+
+bool _vcc_spec_code();
+
+void LeaveTurnstile()
+{
+    __specification bool snapmap[unsigned][unsigned];
+    __specification bool snapmap_tmp[unsigned][unsigned];
+    while(_vcc_spec_code()) __specification(snapmap = __lambda(unsigned s; ((bool)1); __lambda(unsigned i; i < s; (i==s+1) ? ((bool)0):((bool)1)));)
+}
+`
+Verification of LeaveTurnstile succeeded.
+`
+`/a /functions:foo
+#include <vcc2.h>
+
+axiom(forall(int x,  y; ((x ^ y) ^ x) == y));
+
+void foo(int a, int b) {
+  assert(((a ^ b) ^ a) == b);
+}
+`
+Verification of foo succeeded.
+`

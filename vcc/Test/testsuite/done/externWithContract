@@ -1,0 +1,14 @@
+#include <vcc2.h>
+
+extern int foo(int i)
+  requires(i <= 1)
+  ensures(result == i+1);
+
+int bar()
+  ensures(result == 2)
+{
+  return foo(1);
+}
+`
+Verification of bar succeeded.
+`

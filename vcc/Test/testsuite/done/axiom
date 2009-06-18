@@ -1,0 +1,11 @@
+#include <vcc2.h>
+
+__specification const int foo;
+
+__specification __axiom fooVal = foo == 1;
+
+void bar(){
+}
+`
+Verification of bar succeeded.
+`

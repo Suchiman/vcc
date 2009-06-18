@@ -1,0 +1,16 @@
+#include <vcc2.h>
+
+int f(__specification int n)
+{
+  return 0;
+}
+
+int g(__specification int n)
+{
+  return f(__specification n);
+}        
+
+`
+Verification of f succeeded.
+Verification of g succeeded.
+`

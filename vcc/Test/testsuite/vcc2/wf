@@ -1,0 +1,267 @@
+#include "vcc2test.h"
+
+struct child {
+  int x;
+};
+
+struct parent {
+  struct child *a, *b;
+};
+
+postconditionsanity
+void initchild(struct child *a, struct child *b)
+  maintains(mutable(a))
+  writes(extent(a))
+  ensures(a->x==5)
+{
+  a->x = 5;
+}
+
+postconditionsanity
+void initchild2(struct child *a, struct child *b)
+  requires(mutable(a))
+  writes(extent(a))
+  ensures(a->x==5)
+{
+  a->x = 5;
+}
+
+void initparent(struct parent *p)
+  requires(mutable(p))
+  writes(extent(p))
+{
+  p->a = (struct child*) malloc(sizeof(struct child));
+  p->b = (struct child*) malloc(sizeof(struct child));
+
+  set_owns(p, set_union(set_singleton(p->a), set_singleton(p->b)));
+
+  initchild(p->a, p->b);
+  assert(p->a->x==5);
+  assert(set_disjoint(extent(p->a), extent(p->b)));
+  initchild(p->b, p->a);
+  assert(p->a->x==5);
+}
+
+void initparent2(struct parent *p)
+  requires(mutable(p))
+  writes(extent(p))
+{
+  p->a = (struct child*) malloc(sizeof(struct child));
+  p->b = (struct child*) malloc(sizeof(struct child));
+
+  set_owns(p, set_union(set_singleton(p->a), set_singleton(p->b)));
+
+  initchild2(p->a, p->b);
+  assume(typed(&p->a->x));
+  assert(p->a->x==5);
+  assert(set_disjoint(extent(p->a), extent(p->b)));
+  initchild2(p->b, p->a);
+  assume(typed(&p->a->x));
+  assert(p->a->x==5);
+}
+`
+Verification of initchild succeeded.
+Verification of initchild2 failed.
+testcase(24,13) : error VC8502: Assertion 'a->x is thread local (in well-formedness check)' did not verify.
+Verification of initparent succeeded.
+Verification of initparent2 failed.
+testcase(56,12) : error VC8502: Assertion 'p->a->x is thread local (in well-formedness check)' did not verify.
+testcase(60,12) : error VC8502: Assertion 'p->a->x is thread local (in well-formedness check)' did not verify.
+testcase(60,12) : error VC9500: Assertion 'p->a->x==5' did not verify.
+`
+
+#include "vcc2.h"
+
+void fail1(int *p)
+  requires(typed(p))
+  requires(*p == 5)
+{
+  assert(*p == 5);
+}
+
+
+void ok1(int *p)
+  requires(thread_local(p))
+  requires(*p == 5)
+{
+  assert(*p == 5);
+}
+
+void ok2(int all, int *p)
+  requires(all ==> thread_local(p) && *p == 5)
+{
+  if (all) assert(*p == 5);
+}
+
+
+void ok3(int all, int *p)
+  requires(all ==> thread_local(p) && *p == 5)
+{
+  assert(all ==> *p == 5);
+}
+
+
+void ok4(int all, int *p, int *q)
+  requires(all ==> thread_local(p) && *p == 5)
+  requires(!all ==> thread_local(q) && *q == 5)
+{
+  assert(all ==> *p == 5);
+  assert(!all ==> *q == 5);
+  assert(all ? *p == 5 : *q == 5);
+}
+
+void fail4(int all, int *p, int *q)
+  requires(all ==> thread_local(q) && *q == 5)
+  requires(!all ==> thread_local(p) && *q == 5)
+{
+  assume(typed(q));
+  assert(all ? *q == 5 : *q == 5);
+}
+
+void ok6(int *q, size_t sz)
+  requires(is_thread_local_array(q, sz))
+{
+  assert(forall(int *p; set_in(p, array_range(q,sz)) ==> *p > 3 || *p <= 3));
+  assert(forall(int *p; set_in(p, array_range(q,sz)); *p > 3 || *p <= 3));
+}
+
+/*
+// we don't do the quantifiers now
+void fail6(int *q, size_t sz)
+  requires(is_array(q, sz))
+{
+  assert(forall(int *p; set_in(p, array_range(q,sz)) ==> *p > 3 || true));
+}
+
+void fail7(int *q, size_t sz)
+  requires(is_array(q, sz))
+{
+  assert(forall(int *p; set_in(p, array_range(q,sz)); *p > 3 || true));
+}
+*/
+
+/*
+//We don't do it for lambdas yet (they are essentially function contracts)
+void ok5()
+{
+speconly(
+  int vals[int*];
+  vals = lambda(int *p; thread_local(p); *p);
+  assert(vals == lambda(int *p; thread_local(p); *p));
+)
+}
+
+void fail5()
+{
+speconly(
+  int vals[int*];
+  vals = lambda(int *p; typed(p); *p);
+  assert(vals == lambda(int *p; thread_local(p); *p));
+)
+}
+*/
+`
+Verification of fail1 failed.
+testcase(8,13) : error VC8502: Assertion 'p is thread local (in well-formedness check)' did not verify.
+Verification of ok1 succeeded.
+Verification of ok2 succeeded.
+Verification of ok3 succeeded.
+Verification of ok4 succeeded.
+Verification of fail4 failed.
+testcase(47,29) : error VC8502: Assertion 'q is thread local (in well-formedness check)' did not verify.
+Verification of ok6 succeeded.
+`
+#include <vcc2test.h>
+
+
+postconditionsanity
+void foo(int *p)
+  requires(mutable(p))
+  writes(p)
+  ensures(*p == 7)
+{
+  *p = 7;
+}
+
+postconditionsanity
+void foo2(int *p)
+  requires(mutable(p))
+  writes(p)
+  ensures(*p == 7)
+  ensures(thread_local(p))
+{
+  *p = 7;
+}
+
+postconditionsanity
+int foo3(int *p)
+  requires(mutable(p))
+  writes(p)
+  ensures(result ==> thread_local(p) && *p == 7)
+{
+  if (*p == 3) {
+    *p = 7;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+postconditionsanity
+int foo4(int *p)
+  requires(mutable(p))
+  requires(is_malloc_root(p))
+  writes(p)
+  ensures(result ==> thread_local(p) && *p == 7)
+{
+  if (*p == 3) {
+    *p = 7;
+    return 1;
+  } else {
+    free(p);
+    return 0;
+  }
+}
+
+postconditionsanity
+int foo5(int *p)
+  requires(mutable(p))
+  ensures(result ==> *p == 7)
+{
+  if (*p == 7) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+postconditionsanity
+void boogie1()
+{
+  assert(boogie("$full_stop($s)"));
+}
+
+`
+Verification of foo failed.
+testcase(8,14) : error VC8502: Assertion 'p is thread local (in well-formedness check)' did not verify.
+Verification of foo2 succeeded.
+Verification of foo3 succeeded.
+Verification of foo4 succeeded.
+Verification of foo5 succeeded.
+Verification of boogie1 succeeded.
+`
+#include <vcc2test.h>
+
+typedef struct  { int x; } A;
+
+void foo()
+{
+  A *p = malloc(sizeof(A));
+  p->x = 12;
+  assert(p->x == 12);
+  free(p);
+  assert(skip_wf(p->x == 12 || p->x != 12));
+}
+`
+Verification of foo succeeded.
+`

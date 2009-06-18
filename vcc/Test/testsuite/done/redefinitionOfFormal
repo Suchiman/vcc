@@ -1,0 +1,10 @@
+void foo(int a) {
+#ifdef VERIFY
+    int a;
+#endif
+    a = 3;
+}
+
+`
+testcase(3,5) : error VC0000: redefinition of formal parameter 'a'
+`

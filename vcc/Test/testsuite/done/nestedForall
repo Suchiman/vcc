@@ -1,0 +1,12 @@
+#include <vcc2.h>
+
+ispure _Bool foo() 
+  ensures(result == forall(__int64 x; x == 10 ==> (forall(__int64 y,z ; 1 || x <= y || y <= x))));
+
+void bar() {
+  assert(foo());
+}
+
+`
+Verification of bar succeeded.
+`

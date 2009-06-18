@@ -1,0 +1,915 @@
+#include <vcc2.h>
+
+struct B {
+  int x;
+  int y;
+};
+struct A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+};
+
+void foo(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+void fooFail(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->y = 12;
+  }
+}
+
+
+void fooFail2(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->y)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+void baz(struct A *a, struct B *b)
+  maintains(wrapped(a))
+  maintains(wrapped(b))
+  writes(a,b)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+
+  expose(b) {
+    b->y = 12;
+  }
+}
+
+void bazFail(struct A *a, struct B *b)
+  maintains(wrapped(a))
+  maintains(wrapped(b))
+  writes(a,b)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+
+  expose(a) {
+    a->z = 12;
+  }
+}
+
+void fooFailOwns(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    set_owns(a, SET());
+    a->b->x = 12;
+  }
+}
+
+
+void fooFailWrapped(struct A *a)
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+
+void bar()
+{
+  struct A a;
+  struct B b;
+
+
+  a.b = &b;
+  a.b->y = 10;
+  a.z = 10;
+  wrap(&b);
+  wrap(&a);
+
+  assert(in_domain(&a, &a));
+  assert(in_domain(&b, &a));
+  assert(a.b->y == 10);
+  assert(a.z == 10);
+
+  foo(&a);
+
+  assert(a.b->y == 10);
+  assert(a.z == 10);
+}
+`
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+Verification of fooFail failed.
+testcase(30,28) : error VC8530: Assertion 'skinny_expose(a, ...) body has written at an unlisted location' did not verify.
+Verification of fooFail2 failed.
+testcase(48,1) : error VC9501: Post condition '_vcc_domain_updated_at(a, _vcc_create_set(_vcc_dummy_set_element(), &a->b->y))' did not verify.
+testcase(41,13) : error VC9599: (related information) Location of post condition.
+Verification of baz succeeded.
+Verification of bazFail failed.
+testcase(82,1) : error VC9501: Post condition '_vcc_domain_updated_at(a, _vcc_create_set(_vcc_dummy_set_element(), &a->b->x))' did not verify.
+testcase(71,13) : error VC9599: (related information) Location of post condition.
+Verification of fooFailOwns failed.
+testcase(89,28) : error VC8530: Assertion 'skinny_expose(a, ...) body has written at an unlisted location' did not verify.
+testcase(89,28) : error VC8531: Assertion 'owns(a) was updated inside skinny_expose(...)' did not verify.
+Verification of fooFailWrapped failed.
+testcase(102,28) : error VC8016: 'a' is not wrapped before unwrap.
+Verification of bar succeeded.
+`
+#include <vcc2.h>
+
+struct A { int x; };
+
+void foo()
+{
+  struct A a;
+
+  wrap(&a);
+
+  skinny_expose(&a) 
+     invariant(a.x > 0)
+   {
+     a.x = 1;
+   }
+}
+`
+testcase(12,18) : error VC9674: skinny_expose(...) does not allow invariants, only writes(...)
+`
+#include <vcc2.h>
+
+struct vcc(dynamic_owns) B {
+  int x;
+  int y;
+};
+struct A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+};
+
+void foo(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+struct B2 {
+  int x;
+  int y;
+};
+struct A2 {
+  int z;
+  struct B2 *b;
+  struct B2 *b2;
+  invariant(keeps(b))
+  invariant(keeps(b2))
+};
+
+void foo2(struct A2 *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+`
+Verification of A#adm succeeded.
+Verification of A2#adm succeeded.
+Verification of foo succeeded.
+Verification of foo2 succeeded.
+`
+#include <vcc2.h>
+
+struct B {
+  int x;
+  int y;
+};
+struct vcc(dynamic_owns) A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+};
+
+void foo(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+`
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+struct vcc(dynamic_owns) B {
+  int x;
+  int y;
+  invariant(x < 100)
+};
+struct vcc(dynamic_owns) A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+  invariant(b->x > 0)
+};
+
+void foo(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+
+void fooFail1(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = -10;
+  }
+}
+void fooFail2(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 120;
+  }
+}
+`
+Verification of B#adm succeeded.
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+Verification of fooFail1 failed.
+testcase(33,28) : error VC8014: invariant(b->x > 0) of A fails on wrap.
+testcase(12,15) : error VC9599: (related information) location of the invariant.
+Verification of fooFail2 failed.
+testcase(44,31) : error VC8014: invariant(x < 100) of B fails on wrap.
+testcase(6,15) : error VC9599: (related information) location of the invariant.
+`
+#include <vcc2.h>
+
+struct B {
+  int x;
+  int y;
+  invariant(x < 100)
+};
+struct A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+  invariant(b->x > 0)
+};
+
+void foo(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+
+void fooFail1(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = -10;
+  }
+}
+void fooFail2(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 120;
+  }
+}
+`
+Verification of B#adm succeeded.
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+Verification of fooFail1 failed.
+testcase(33,28) : error VC8014: invariant(b->x > 0) of A fails on wrap.
+testcase(12,15) : error VC9599: (related information) location of the invariant.
+Verification of fooFail2 failed.
+testcase(44,31) : error VC8014: invariant(x < 100) of B fails on wrap.
+testcase(6,15) : error VC9599: (related information) location of the invariant.
+`
+#include <vcc2.h>
+
+struct B {
+  int x;
+  int y;
+  invariant(x < 100)
+};
+struct A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+  invariant(b->x > 0)
+};
+
+void fooFail1(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+    wrap(a->b);
+  }
+}
+
+void fooFail2(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    wrap(a->b);
+    a->b->x = 12;
+  }
+}
+
+`
+Verification of B#adm succeeded.
+Verification of A#adm succeeded.
+Verification of fooFail1 failed.
+testcase(20,28) : error VC8530: Assertion 'skinny_expose(a, ...) body has written at an unlisted location' did not verify.
+testcase(20,31) : error VC9502: Call 'wrap(a->b)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is not closed'.
+Verification of fooFail2 failed.
+testcase(37,5) : error VC8507: Assertion 'a->b->x is writable' did not verify.
+`
+#include "vcc2.h"
+
+struct B {
+  int x;
+  int y;
+};
+
+struct A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+};
+
+ 
+
+void works(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x, &a->b->y)))
+{
+
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+	writes(&a->b->y)
+  {
+    a->b->x = 12;
+    a->b->y = 144;
+  }
+  
+  assert(domain_updated_at(a, SET(&a->b->x, &a->b->y)));
+}
+
+
+void now_also_works(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x, &a->b->y)))
+{
+
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+  assert(domain_updated_at(a, SET(&a->b->x)));
+
+  skinny_expose(a, a->b)
+    writes(&a->b->y)
+  {
+    a->b->y = 144;
+  }
+  
+  assert(domain_updated_at(a, SET(&a->b->x, &a->b->y)));
+}
+`
+Verification of A#adm succeeded.
+Verification of works succeeded.
+Verification of now_also_works succeeded.
+`
+#include "vcc2.h"
+
+struct B {
+  int x;
+};
+
+struct A {
+  struct B *b;
+  invariant(keeps(b))
+};
+
+ 
+void foo(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, full_extent(a->b)))
+{
+  skinny_expose(a, a->b)
+	writes(full_extent(a->b))
+  {
+    a->b->x = 12;
+  }
+}
+`
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+`
+#include "vcc2.h"
+
+struct B {
+  int x;
+  int y;
+};
+
+spec(
+struct C {
+  int x;
+  int y;
+};)
+
+struct A {
+  struct B *b;
+  spec(struct C *c;)
+  invariant(keeps(b) && keeps(c))
+  invariant(b->x == c->y)
+};
+
+ 
+void foo(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, set_union(SET(&a->b->x), SET(&a->c->y))))
+{
+  skinny_expose(a, a->b, a->c)
+    writes(&a->b->x)
+	writes(&a->c->y)
+  {
+    a->b->x = 12;
+	speconly(a->c->y = 12;)
+  }
+}
+`
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+struct A {
+  int x;
+  int y;
+};
+
+struct B {
+  struct A a;
+  invariant(keeps(&a))
+};
+
+struct C {
+  struct B b;
+  int z;
+  invariant(keeps(&b))
+};
+
+void up1(int sw, struct B *b)
+  writes(b)
+  maintains(wrapped(b))
+  ensures(sw ==> domain_updated_at(b, SET(&b->a.x)))
+  ensures(!sw ==> domain_updated_at(b, SET(&b->a.y)))
+{
+  if (sw) {
+    skinny_expose(b, &b->a)
+      writes(&b->a.x)
+    {
+      b->a.x = 1;
+    }
+  } else {
+    skinny_expose(b, &b->a)
+      writes(&b->a.y)
+    {
+      b->a.y = 1;
+    }
+  }
+}
+
+void up2(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  // note that &c->b is hidden from the set, as it is non-primitive
+  ensures(domain_updated_at(c, SET(&c->b.a.x, &c->z)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->b)
+  {
+    up1(1, &c->b);
+  }
+
+  skinny_expose(c)
+    writes(&c->z)
+  {
+    c->z = 12;
+  }
+}
+
+void up3(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x, &c->z)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->z, &c->b)
+  {
+    up1(1, &c->b);
+    c->z = 12;
+  }
+}
+
+void up4(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x, &c->z)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->z, &c->b)
+  {
+    c->z = 12;
+    up1(1, &c->b);
+  }
+}
+
+void up5(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x, &c->z)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->z, &c->b)
+  {
+    c->z = 12;
+    up1(1, &c->b);
+    c->z = 13;
+  }
+}
+
+void up6(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x, &c->b.a.y)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->b.a.y, &c->b)
+  {
+    up1(1, &c->b);
+    up1(0, &c->b);
+  }
+}
+
+`
+Verification of B#adm succeeded.
+Verification of C#adm succeeded.
+Verification of up1 succeeded.
+Verification of up2 succeeded.
+Verification of up3 succeeded.
+Verification of up4 succeeded.
+Verification of up5 succeeded.
+Verification of up6 succeeded.
+`
+#include <vcc2.h>
+
+struct A {
+  int x;
+  int y;
+};
+
+struct B {
+  struct A a;
+  invariant(keeps(&a))
+};
+
+struct C {
+  struct B b;
+  int z;
+  int z2;
+  invariant(keeps(&b))
+};
+
+void up1(int sw, struct B *b)
+  writes(b)
+  maintains(wrapped(b))
+  ensures(sw ==> domain_updated_at(b, SET(&b->a.x)))
+  ensures(!sw ==> domain_updated_at(b, SET(&b->a.y)))
+{
+  if (sw) {
+    skinny_expose(b, &b->a)
+      writes(&b->a.x)
+    {
+      b->a.x = 1;
+    }
+  } else {
+    skinny_expose(b, &b->a)
+      writes(&b->a.x)
+    {
+      b->a.x = 1;
+    }
+  }
+}
+
+void up1b(int sw, struct B *b)
+  writes(b)
+  maintains(wrapped(b))
+  //ensures(sw ==> domain_updated_at(b, SET(&b->a.x)))
+  ensures(!sw ==> domain_updated_at(b, SET(&b->a.y)));
+
+void up2(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x)
+  {
+    up1(1, &c->b);
+  }
+}
+
+void up2b(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+{
+  skinny_expose(c)
+    writes(&c->b.a.y, &c->b)
+  {
+    up1(1, &c->b);
+  }
+}
+
+void up2c(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+{
+  skinny_expose(c)
+    writes(&c->b)
+  {
+    up1(1, &c->b);
+  }
+}
+
+void up2d(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.y)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->b)
+  {
+    up1(1, &c->b);
+  }
+}
+
+void up2f(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->b)
+  {
+    up1b(1, &c->b);
+  }
+}
+
+void up2ok(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->b)
+  {
+    up1(1, &c->b);
+  }
+}
+
+void up3(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x, &c->z)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->z, &c->b)
+  {
+    up1(1, &c->b);
+    c->z2 = 12;
+  }
+}
+
+void up4(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x, &c->z)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->z, &c->b)
+  {
+    c->z2 = 12;
+    up1(1, &c->b);
+  }
+}
+
+void up5(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x, &c->z)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->z, &c->b)
+  {
+    c->z2 = 12;
+    up1(1, &c->b);
+    c->z = 13;
+  }
+}
+
+void up6(struct C *c)
+  writes(c)
+  requires(wrapped(c))
+  ensures(domain_updated_at(c, SET(&c->b.a.x, &c->z)))
+{
+  skinny_expose(c)
+    writes(&c->b.a.x, &c->z, &c->b)
+  {
+    c->z = 12;
+    up1(1, &c->b);
+    c->z2 = 13;
+  }
+}
+`
+Verification of B#adm succeeded.
+Verification of C#adm succeeded.
+Verification of up1 failed.
+testcase(39,1) : error VC9501: Post condition '!sw ==> _vcc_domain_updated_at(b, _vcc_create_set(_vcc_dummy_set_element(), &b->a.y))' did not verify.
+testcase(24,13) : error VC9599: (related information) Location of post condition.
+Verification of up2 failed.
+testcase(51,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has written at an unlisted location' did not verify.
+Verification of up2b failed.
+testcase(62,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has written at an unlisted location in a domain' did not verify.
+Verification of up2c failed.
+testcase(73,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has written at an unlisted location in a domain' did not verify.
+Verification of up2d failed.
+testcase(90,1) : error VC9501: Post condition '_vcc_domain_updated_at(c, _vcc_create_set(_vcc_dummy_set_element(), &c->b.a.y))' did not verify.
+testcase(83,13) : error VC9599: (related information) Location of post condition.
+Verification of up2f failed.
+testcase(97,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has written at an unlisted location in a domain' did not verify.
+Verification of up2ok succeeded.
+Verification of up3 failed.
+testcase(121,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has written at an unlisted location' did not verify.
+Verification of up4 failed.
+testcase(134,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has written at an unlisted location' did not verify.
+Verification of up5 failed.
+testcase(147,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has written at an unlisted location' did not verify.
+Verification of up6 failed.
+testcase(161,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has written at an unlisted location' did not verify.
+`
+#include <vcc2.h>
+
+struct A {
+  int x;
+  int y;
+};
+
+void up1(struct A *a)
+  writes(a)
+  maintains(wrapped(a))
+  ensures(domain_updated_at(a, SET(&a->x, &a->y)))
+{
+  skinny_expose(a)
+      writes(&a->y, &a->x)
+  {
+    a->x = 1;
+    a->y = 1;
+  }
+}
+`
+Verification of up1 succeeded.
+`
+#include "vcc2.h"
+
+struct B {
+  def_group(G)
+  int x;
+  in_group(G) volatile int z;
+  spec(claim_t c;)
+  
+  invariant(keeps(c) && claims(c, closed(this::G)))
+  invariant(keeps(this::G))
+};
+ 
+void foo(struct B *b)
+  maintains(wrapped(b))
+  writes(b)
+  ensures(domain_updated_at(b, SET(&b->x)))
+{
+ 
+  skinny_expose(b)
+	   writes(&b->x)
+  {
+		b->x = 12;
+		atomic(b->c, b::G)
+		{
+			b->z = 12;
+		}
+  }
+}
+`
+Verification of B#adm succeeded.
+Verification of foo succeeded.
+`

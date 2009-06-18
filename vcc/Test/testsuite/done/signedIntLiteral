@@ -1,0 +1,10 @@
+
+void foo(int b) {
+  __int64 c = -1;
+  __int64 a = b ? 0xFFFFFFFFFFFFFFFFI64 : c;
+  __assert(a == -1);
+}
+
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,38 @@
+#include <vcc2.h>
+
+struct A {
+  int a,b,c,d;
+};
+
+struct B {
+  int x;
+  struct A a;
+};
+
+void foo()
+{
+  struct B *b;
+  void *p;
+
+  p = &b;
+  assume(typed(b, sizeof(struct B)));
+  assert(typed(&b->a, sizeof(struct A)));
+}
+
+
+void bar(struct B b)
+{
+  struct B *p;
+  p = &b;
+  assert(typed(p, sizeof(struct B)));
+  assert(typed(&p->a, sizeof(struct A)));
+}
+
+`
+testcase(18) : warning C4002: too many actual parameters for macro 'typed'
+testcase(19) : warning C4002: too many actual parameters for macro 'typed'
+testcase(27) : warning C4002: too many actual parameters for macro 'typed'
+testcase(28) : warning C4002: too many actual parameters for macro 'typed'
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

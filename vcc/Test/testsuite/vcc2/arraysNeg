@@ -1,0 +1,192 @@
+#include "vcc2.h"
+
+int sumup(int *p, int sz)
+  requires(is_thread_local_array(p, (size_t)sz))
+{
+  int i;
+  int sum;
+
+  sum = 0;
+  i = -1; // ERR
+  while (i < sz) 
+  //  invariant (i >= 0)
+  {
+    sum = unchecked(sum + p[i]);
+    i = i + 1;
+  }
+
+  return sum;
+}
+`
+Verification of sumup failed.
+testcase(14,29) : error VC8512: Assertion 'p[i] is thread local' did not verify.
+`
+#include "vcc2.h"
+
+int sumup(int *p, int sz)
+  requires(is_thread_local_array(p, (size_t)sz))
+{
+  int i;
+  int sum;
+
+  assume(sz < 10000);
+
+  sum = 0;
+  i = 0;
+  while (i <= sz)  // ERR
+    invariant (i >= 0)
+  {
+    sum = unchecked(sum + p[i]);
+    i = i + 1;
+  }
+
+  return sum;
+}
+`
+Verification of sumup failed.
+testcase(16,29) : error VC8512: Assertion 'p[i] is thread local' did not verify.
+`
+#include "vcc2.h"
+
+void setk(int *p, size_t sz)
+  requires(is_mutable_array(p, sz))
+  writes(array_range(p, sz - 1)) // ERR
+{
+  size_t i;
+
+  i = 0;
+  while (i < sz) 
+    invariant (i >= 0)
+  {
+    p[i] = unchecked((int)i);
+    i = i + 1;
+  }
+}
+`
+Verification of setk failed.
+testcase(13,5) : error VC8507: Assertion 'p[i] is writable' did not verify.
+`
+#include "vcc2.h"
+
+struct A {
+  int x;
+  int y[10];
+};
+
+void bar(struct A*a)
+  requires(mutable(a))
+  writes(full_extent(a))
+{
+  a->x = 1;
+  a->y[-2] = 3;
+}
+`
+Verification of bar failed.
+testcase(13,3) : error VC8507: Assertion 'a->y[-2] is writable' did not verify.
+`
+#include "vcc2.h"
+
+struct A {
+  int x;
+  int y[10];
+};
+
+void bar(struct A*a)
+  requires(mutable(a))
+  writes(full_extent(a))
+{
+  a->y[10] = 3; // ERR
+}
+`
+Verification of bar failed.
+testcase(12,3) : error VC8507: Assertion 'a->y[10] is writable' did not verify.
+`
+#include "vcc2.h"
+
+struct A {
+  int y[10];
+  int x;
+};
+
+void bar(struct A*a)
+  requires(typed(a))
+  writes(full_extent(a))
+{
+  a->y[-1] = 3;
+}
+`
+Verification of bar failed.
+testcase(12,3) : error VC8507: Assertion 'a->y[-1] is writable' did not verify.
+`
+#include "vcc2test.h"
+
+void foo(int *p) 
+  writes(p) {}
+
+void setk2(int *p, size_t sz)
+  requires(is_thread_local_array(p, sz))
+  writes(array_range(p, sz))
+{
+  size_t i;
+
+  i = 0;
+  while (i < sz) 
+    writes(array_range(p, sz))
+    invariant (i >= 0)
+  {
+    p[i] = unchecked((int)i);
+    foo(&p[i]);
+    i = i + 1;
+  }
+}
+
+void setk4(int *p, size_t sz)
+  requires(is_thread_local_array(p, sz))
+  writes(array_range(p, sz))
+{
+  size_t i;
+  claim_t c;
+
+
+  i = 0;
+  while (i < sz) 
+    writes(array_range(p, sz))
+    invariant (i >= 0)
+  {
+    p[i] = unchecked((int)i);
+    i = i + 1;
+    if(0) unclaim(c);
+  }
+}
+`
+Verification of foo succeeded.
+Verification of setk2 failed.
+testcase(17,5) : error VC8507: Assertion 'p[i] is writable' did not verify.
+Verification of setk4 failed.
+testcase(36,5) : error VC8507: Assertion 'p[i] is writable' did not verify.
+`
+#include "vcc2test.h"
+
+
+void setk3(int *p, size_t sz)
+  requires(is_thread_local_array(p, sz))
+  writes(array_range(p, sz))
+{
+  size_t i;
+  int *x;
+
+  i = 0;
+  while (i < sz) 
+    writes(array_range(p, sz))
+    invariant (i >= 0)
+  {
+    p[i] = unchecked((int)i);
+    i = i + 1;
+    if(0) free(x);
+  }
+}
+
+`
+Verification of setk3 failed.
+testcase(16,5) : error VC8507: Assertion 'p[i] is writable' did not verify.
+`

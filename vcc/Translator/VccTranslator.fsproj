@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{cdb01dbb-fd43-40f4-98f0-f5401e8c5919}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Translator</RootNamespace>
+    <AssemblyName>Microsoft.Research.Vcc.Translator</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Name>Vcc2Translator</Name>
+    <SccProjectName>
+    </SccProjectName>
+    <SccProvider>
+    </SccProvider>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>3</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
+    <Tailcalls>true</Tailcalls>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Graph, Version=2.0.10514.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Graph</Name>
+      <AssemblyName>Graph.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\Graph.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Cci.AstsProjectedAsCodeModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Cci.AstsProjectedAsCodeModel</Name>
+      <AssemblyName>Microsoft.Cci.AstsProjectedAsCodeModel.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.AstsProjectedAsCodeModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Cci.CodeModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Cci.CodeModel</Name>
+      <AssemblyName>Microsoft.Cci.CodeModel.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.CodeModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Cci.SourceModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Cci.SourceModel</Name>
+      <AssemblyName>Microsoft.Cci.SourceModel.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.SourceModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AIFramework, Version=1.0.11015.0, Culture=neutral, PublicKeyToken=null">
+      <Name>AIFramework</Name>
+      <AssemblyName>AIFramework.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\AIFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Basetypes, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <Name>Basetypes</Name>
+      <AssemblyName>Basetypes.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\Basetypes.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Core, Version=1.0.11015.0, Culture=neutral, PublicKeyToken=null">
+      <Name>Core</Name>
+      <AssemblyName>Core.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Research.Vcc.CodeModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=null">
+      <Name>Microsoft.Research.Vcc.CodeModel</Name>
+      <AssemblyName>Microsoft.Research.Vcc.CodeModel.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2Vcc\bin\$(Configuration)\Microsoft.Research.Vcc.CodeModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Research.Vcc.CodeModelHelper, Version=0.0.0.2, Culture=neutral, PublicKeyToken=null">
+      <Name>Microsoft.Research.Vcc.CodeModelHelper</Name>
+      <AssemblyName>Microsoft.Research.Vcc.CodeModelHelper.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Research.Vcc.CodeModelHelper.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Compiler.Framework, Version=1.0.20411.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>System.Compiler.Framework</Name>
+      <AssemblyName>System.Compiler.Framework.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\System.Compiler.Framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Compiler.Runtime, Version=1.0.20411.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>System.Compiler.Runtime</Name>
+      <AssemblyName>System.Compiler.Runtime.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\System.Compiler.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="VCExpr, Version=2.0.10514.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>VCExpr</Name>
+      <AssemblyName>VCExpr.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\VCExpr.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="VCGeneration, Version=1.0.11016.0, Culture=neutral, PublicKeyToken=null">
+      <Name>VCGeneration</Name>
+      <AssemblyName>VCGeneration.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\VCGeneration.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Research.Vcc.Core, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
+      <Name>Microsoft.Research.Vcc.Core</Name>
+      <AssemblyName>Microsoft.Research.Vcc.Core.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Research.Vcc.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BoogieAST.fs" />
+    <Compile Include="ToBoogieAST.fs" />
+    <Compile Include="Translator.fs" />
+    <Compile Include="VcOpt.fs" />
+    <Compile Include="..\Common\Include\version.fs">
+      <Link>version.fs</Link>
+    </Compile>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\FSharp\1.0\Microsoft.FSharp.Targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	     Other similar extension points exist, see Microsoft.Common.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{A23FF5D3-7775-4BD3-942A-1F488E339D27}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Microsoft.Research.Vcc.Host</RootNamespace>
+    <AssemblyName>vcc</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <ApplicationIcon>Vcc.ico</ApplicationIcon>
+    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
+    <TargetFrameworkSubset>
+    </TargetFrameworkSubset>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Common\InterimKey.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AbsInt, Version=1.0.10512.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\AbsInt.dll</HintPath>
+    </Reference>
+    <Reference Include="AIFramework, Version=1.0.10812.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\AIFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="Core, Version=1.0.20328.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\Core.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.Core, Version=1.9.3.14, Culture=neutral, PublicKeyToken=a19089b1c74d0809, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\FSharp.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.Simplify, Version=1.0.10512.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\Provers.Simplify.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.Z3, Version=1.0.10512.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\Provers.Z3.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Compiler.Runtime, Version=1.0.20411.0, Culture=neutral, PublicKeyToken=736440c9b414ea16, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\System.Compiler.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.Composition, Version=2008.11.24.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CodeModel2VccHelper\System.ComponentModel.Composition.dll</HintPath>
+    </Reference>
+    <Reference Include="VCGeneration, Version=1.0.20328.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Boogie\VCGeneration.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Common\Include\Version.cs">
+      <Link>Build\Version.cs</Link>
+    </Compile>
+    <Compile Include="PluginManager.cs" />
+    <Compile Include="Host.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Vcc2Plugin.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\cci\Sources\CodeModelNormalizer\CodeModelNormalizer.csproj">
+      <Project>{B98C89CF-BF3E-405C-88DE-D60AE4AADA15}</Project>
+      <Name>CodeModelNormalizer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Sources\AstsProjectedAsCodeModel\AstsProjectedAsCodeModel.csproj">
+      <Project>{15FF2982-EBD1-45DC-8FDF-4D901236E3D9}</Project>
+      <Name>AstsProjectedAsCodeModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Metadata\Sources\PeReader\PeReader.csproj">
+      <Project>{34B9A0CE-DF18-4CBC-8F7A-90C2B74338D5}</Project>
+      <Name>PeReader</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Metadata\Sources\MutableMetadataModel\MutableMetadataModel.csproj">
+      <Project>{319E151C-8F33-49E7-81C9-30F02F9BA90A}</Project>
+      <Name>MutableMetadataModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Sources\MutableCodeModel\MutableCodeModel.csproj">
+      <Project>{319E150C-8F33-49E7-81CA-30F02F9BA90A}</Project>
+      <Name>MutableCodeModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Metadata\Sources\MetadataHelper\MetadataHelper.csproj">
+      <Project>{4A34A3C5-6176-49D7-A4C5-B2B671247F8F}</Project>
+      <Name>MetadataHelper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Metadata\Sources\MetadataModel\MetadataModel.csproj">
+      <Project>{33CAB640-0D03-43DF-81BD-22CDC6C0A597}</Project>
+      <Name>MetadataModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Metadata\Sources\SourceModel\SourceModel.csproj">
+      <Project>{4B0054FD-124A-4037-9965-BDB55E6BF389}</Project>
+      <Name>SourceModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Sources\CodeModel\CodeModel.csproj">
+      <Project>{035FEA7F-0D36-4AE4-B694-EC45191B9AF2}</Project>
+      <Name>CodeModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Runtime\VccRuntime.csproj">
+      <Project>{D0544C0C-C6ED-4F91-9F3C-9F3A02B8CAB6}</Project>
+      <Name>VccRuntime</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Core\VccCore.csproj">
+      <Project>{B855D039-8A27-419D-9A81-86FF93227E31}</Project>
+      <Name>VccCore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CodeModel2VccHelper\CodeModel2VccHelper.csproj">
+      <Project>{B2144FB2-68AD-4F94-B53E-DCCF827115C8}</Project>
+      <Name>CodeModel2VccHelper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CodeModel2Vcc\CodeModel2Vcc.fsproj">
+      <Project>{AB567043-8047-4CB4-863C-F7FBAB4E239A}</Project>
+      <Name>CodeModel2Vcc</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Translator\VccTranslator.fsproj">
+      <Project>{CDB01DBB-FD43-40F4-98F0-F5401E8C5919}</Project>
+      <Name>VccTranslator</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Boogie\z3.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\Boogie\TypedUnivBackPred2.sx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ErrorMessages.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Vcc.ico" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <PropertyGroup>
+    <PostBuildEvent>set PATH=%25PATH%25;c:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE;c:\Program Files\Microsoft Visual Studio 9.0\VC\BIN
+set PATH=%25PATH%25;c:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\IDE;c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\BIN
+set PATH=%25PATH%25;$(DevEnvDir);$(DevEnvDir)..\..\VC\BIN
+set PATH=%25PATH%25;C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin\
+set PATH=%25PATH%25;C:\Program Files (x86)\Microsoft 
+
+editbin /nologo /STACK:0x2000000 $(TargetPath)
+editbin /nologo /STACK:0x2000000 $(ProjectDir)obj\$(ConfigurationName)\$(TargetFileName)
+sn -q -R  $(TargetPath) $(SolutionDir)\vcc\Common\InterimKey.snk
+sn -q -R  $(ProjectDir)obj\$(ConfigurationName)\$(TargetFileName) $(SolutionDir)\vcc\Common\InterimKey.snk</PostBuildEvent>
+  </PropertyGroup>
+</Project>

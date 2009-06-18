@@ -1,0 +1,27 @@
+#include <vcc2.h>
+
+enum _vcHintKind {
+  _vcMemorySafety,
+  _vcStructuralIntegrity,
+  _vcFunctionalCorrectness
+};
+
+
+
+struct S {
+  unsigned __int64 a[4];
+  unsigned __int64 b;
+};
+
+void foo() {
+  struct S s;
+  struct S *p;
+  p = &s;
+  __specification ptrset r;
+  assume(set_subset(_vcc_compat_region(p, sizeof(struct S)), r)); 
+  assert(set_subset(_vcc_compat_region(&(p->b), 8), r));
+}
+
+`
+Verification of foo succeeded.
+`

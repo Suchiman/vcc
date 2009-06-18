@@ -1,0 +1,9 @@
+int  sf( int i);
+
+void test3( int *xx)
+{
+  sf(xx);
+}
+`
+testcase(5,6) : error VC0000: Cannot implicitly convert type 'int*' to '__int32'.
+`

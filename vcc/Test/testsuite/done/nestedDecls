@@ -1,0 +1,23 @@
+#include <vcc2.h>
+
+void foo() {
+  int i = 0;
+  if (1) {
+    int j = i;
+  }
+}
+
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+void foo() {
+  int i = 0;
+  if (1) {
+    long long i = 1;
+  }
+}
+`
+Verification of foo succeeded.
+`

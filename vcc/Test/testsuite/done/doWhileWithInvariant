@@ -1,0 +1,17 @@
+#include <vcc2.h>
+
+void foo()
+{
+  int i = 0;
+  int j = 0;
+  do 
+    invariant(i * 10 == j)
+    invariant(0 <= i && i <= 10)
+  {
+    i++;
+    j += 10;
+  } while (i < 10);
+}
+`
+Verification of foo succeeded.
+`

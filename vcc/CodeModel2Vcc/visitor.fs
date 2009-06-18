@@ -1,0 +1,1555 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright (C) Microsoft Corporation.  All Rights Reserved.
+//
+//-----------------------------------------------------------------------------
+
+#light
+
+namespace Microsoft.Research.Vcc
+  open Microsoft.FSharp.Math
+  open Microsoft.Cci
+  open Microsoft.Cci.Contracts
+  open Microsoft.Cci.Ast
+  open Microsoft.Research.Vcc
+  module C = Microsoft.Research.Vcc.CAST
+
+  module StringLiterals =
+    [<Literal>]
+    let SystemDiagnosticsContractsCodeContract = "System.Diagnostics.Contracts.CodeContract"
+
+    [<Literal>]
+    let SystemDiagnosticsContractsCodeContractTypedPtr = "System.Diagnostics.Contracts.CodeContract.TypedPtr"
+
+    [<Literal>]
+    let SystemDiagnosticsContractsCodeContractMap = "System.Diagnostics.Contracts.CodeContract.Map"
+
+    [<Literal>]
+    let SystemDiagnosticsContractsCodeContractBigInt = "System.Diagnostics.Contracts.CodeContract.BigInt"
+
+  open StringLiterals
+
+  type Dict<'a, 'b> = System.Collections.Generic.Dictionary<'a, 'b>
+  
+  and Visitor(contractProvider:Microsoft.Cci.Ast.SourceContractProvider, helper:Helper.Env) =
+    //let (===) x y = LanguagePrimitives.PhysicalEquality x y
+    //let (!==) x y = not (x === y)
+
+    let mutable topDecls : list<C.Top> = []
+    let mutable stmtRes : C.Expr = C.Expr.Bogus
+    let mutable exprRes : C.Expr = C.Expr.Bogus
+    let mutable typeRes : C.Type = C.Type.Bogus
+    let mutable globalsType = null
+    let mutable fnPtrCount = 0
+    let finalActions = System.Collections.Generic.Queue<(unit -> unit)>()
+    
+    let mutable localsMap = new Dict<obj, C.Variable>()
+    let mutable localVars = []
+    let globalsMap = new Dict<IGlobalFieldDefinition, C.Variable>()
+    let specGlobalsMap = new Dict<string, C.Variable>()
+    let methodsMap = new Dict<ISignature, C.Function>()
+    let functionPointerMap = new Dict<ISignature, C.TypeDecl>()
+    let methodNameMap = new Dict<string, C.Function>()
+    let typesMap = new Dict<ITypeDefinition, C.TypeDecl>()
+    let typeNameMap = new Dict<string, C.TypeDecl>()
+    let fieldsMap = new Dict<IFieldDefinition, C.Field>()
+    let mutable doingEarlyPruning = false
+    let mutable currentFunctionName = ""
+    let mutable currentBlockId = 0
+    
+    let cTrue = C.Expr.BoolLiteral ( { Type = C.Type.Bool; Token = C.bogusToken }, true )
+
+    let token (o : Microsoft.Cci.IObjectWithLocations) = VisitorHelper.GetTokenFor (o.Locations)
+    let oops msg =
+      helper.Oops (C.bogusToken, msg)
+    let oopsLoc (o : Microsoft.Cci.IObjectWithLocations) msg =
+      helper.Oops (token o, msg)
+    let emacro name args = C.Expr.Macro (C.ExprCommon.Bogus, name, args)
+    let die () = helper.Die ()
+    let xassert cond =
+      if cond then ()
+      else oops "assertion failed"; die ()
+
+    let checkedStatus ch = if ch then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked
+  
+    let stmtToken (msg:string) (e:C.Expr) =
+      let forwardingToken tok (getmsg : unit -> string) =
+        { Token = (new ForwardingToken (tok, ForwardingToken.GetValue getmsg) :> Token);
+          Type = C.Type.Void } : C.ExprCommon
+      forwardingToken e.Token (fun () -> msg.Replace ("@@", e.Token.Value))
+
+    let removeDuplicates l =
+      let elements = new Dict<_,bool>()
+      List.iter (fun e -> elements.[e] <- true) l
+      List.filter (fun e ->elements.ContainsKey(e)) l
+
+    let convCustomAttributes tok (attrs : ICustomAttribute seq) = 
+      let getAttrTypeName (attr:ICustomAttribute) = TypeHelper.GetTypeName(attr.Type.ResolvedType)
+      let getAttrArgs (attr:ICustomAttribute) =
+        let args = new System.Collections.Generic.List<IMetadataExpression>(attr.Arguments)
+        let name = ((args.Item(0) :?> IMetadataConstant).Value :?> string)
+        let value = if args.Count > 1 then (args.Item(1) :?> IMetadataConstant).Value else null
+        (name, value)      
+      [ for attr in attrs do
+        let attrName = getAttrTypeName attr
+        match attrName with
+        | "Microsoft.Cci.DummyType" -> yield! []   
+        | "Microsoft.Contracts.SkipVerification" -> yield C.SkipVerification
+        | "Microsoft.Contracts.UseBitVectors" -> yield C.UseBitVectors
+        | "Microsoft.Contracts.NoAdmissibility" -> yield C.NoAdmissibility
+        | "Microsoft.Contracts.IsAdmissibilityCheck" -> yield C.IsAdmissibilityCheck
+        | "Microsoft.Contracts.BoolBoogieAttr" -> 
+          let (name, value) = getAttrArgs attr
+          yield C.BoolBoogieAttr (name, (value :?> int) <> 0)
+        | "Microsoft.Contracts.StringVccAttr" ->
+          let (name, value) = getAttrArgs attr
+          yield C.VccAttr (name, (value :?> string))
+        | "Microsoft.Contracts.IntBoogieAttr" ->
+          let (name, value) = getAttrArgs attr
+          yield C.IntBoogieAttr (name, (value :?> int))
+        | "Microsoft.Contracts.GroupDeclAttr" ->
+          let (name, value) = getAttrArgs attr
+          yield C.GroupDeclAttr (name)
+        | "Microsoft.Contracts.InGroupDeclAttr" ->
+          let (name, value) = getAttrArgs attr
+          yield C.InGroupDeclAttr (name)
+        | other when other.StartsWith("Microsoft.Contracts") ->
+            do helper.Oops (tok, "unsupported custom attribute: " + other); die (); 
+            yield! []
+        | _ -> yield! []
+      ]
+    
+    member private this.DoPrecond (p:IPrecondition) =
+      if p.HasErrors () then oopsLoc p "precondition has errors"; cTrue
+      else this.DoExpression (p.Condition)
+    member private this.DoPostcond (p:IPostcondition) =
+      if p.HasErrors () then oopsLoc p "postcondition has errors"; cTrue
+      else this.DoExpression (p.Condition)
+        
+    member this.GetResult () =
+      while finalActions.Count > 0 do      
+        finalActions.Dequeue () ()
+      topDecls
+
+    member this.EnsureMethodIsVisited (m : IMethodDefinition) =
+      if doingEarlyPruning then match m with | :? IGlobalMethodDefinition -> this.DoMethod(m) | _ -> ()
+    
+    member this.DoType (typ:ITypeReference) =
+      typeRes <- C.Type.Bogus
+      typ.Dispatch (this)
+      let res = typeRes
+      typeRes <- C.Type.Bogus
+      xassert (res <> C.Type.Bogus)
+      match res with
+        | C.Type.Ref ({ Name = "typeid_t"; Kind = C.MathType }) -> C.Type.TypeIdT
+        | _ -> res
+    
+    member this.ExprCommon (expr:IExpression) = { Token = token expr; Type = this.DoType (expr.Type) } : C.ExprCommon
+      
+    member this.StmtCommon (expr:IStatement) = { Token = token expr; Type = C.Void } : C.ExprCommon
+      
+    member this.LookupMethod (meth:ISignature) : C.Function =
+      if methodsMap.ContainsKey meth then
+        methodsMap.[meth]
+      else
+        let (name, tok) = 
+          match meth with
+            | :? IMethodDefinition as def -> (def.Name.Value, token def)
+            | _ -> 
+              fnPtrCount <- fnPtrCount + 1
+              ("fnptr#" + fnPtrCount.ToString(), C.bogusToken)
+        // there is an additional malloc in Vcc.Runtime, we want only one
+        // same goes for other ones
+        // TODO check if the thing is from Vcc.Runtime and if so, ignore it -- don't list all the names
+        match name with
+          | "malloc" 
+          | "free"
+          | "get___FUNCTION__"
+          | "memcmp"
+          | "__int2c"
+          | "__debugbreak"
+          | "memcpy" 
+              when methodNameMap.ContainsKey name ->
+            let decl = methodNameMap.[name]
+            methodsMap.Add (meth, decl)
+            decl
+          | _ when methodsMap.ContainsKey meth -> methodsMap.[meth]
+          | _ ->
+            let sanitizedTypeName (t : C.Type) = t.ToString().Replace(' ', '_').Replace('*', '^')
+            let nameWhenOverloadsArePresent methName (meth : ISignature) =
+              let typeName t = sanitizedTypeName (this.DoType(t))
+              let parTypes = [| for p in meth.Parameters -> typeName p.Type |]
+              let parTypeString = if parTypes.Length = 0 then "" else "^" + System.String.Join("#", parTypes)
+              methName + "#overload#" + (typeName meth.Type)  + parTypeString
+            let updatedNameWhenOverloadsArePresent (fn : C.Function) =
+              let parTypes = [| for p in fn.Parameters -> sanitizedTypeName p.Type |]
+              let parTypeString = if parTypes.Length = 0 then "" else "^" + System.String.Join("#", parTypes)
+              fn.Name + "#overload#" + (sanitizedTypeName fn.RetType) + parTypeString
+            let isSpec =
+              if name.StartsWith("_vcc") then true 
+              else match meth with
+                    | :? Microsoft.Research.Vcc.VccGlobalMethodDefinition as def -> def.IsSpec 
+                    | _ -> false 
+            let decl =
+              { Token           = tok
+                IsSpec          = isSpec
+                IsSpecInline    = false
+                RetType         = this.DoType(meth.Type)
+                OrigRetType     = this.DoType(meth.Type)
+                Name            = name
+                Parameters      = []
+                TypeParameters  = []
+                Requires        = []
+                Ensures         = []
+                Writes          = []
+                Reads           = []
+                CustomAttr      = []
+                Body            = None
+                IsProcessed     = false } : C.Function                      
+            if decl.Name = "" then
+              printf "null name\n"
+            else
+              match methodNameMap.TryGetValue(decl.Name) with
+                | true, clashingDecl ->
+                  decl.Name <- nameWhenOverloadsArePresent decl.Name meth
+                  clashingDecl.Name <- updatedNameWhenOverloadsArePresent clashingDecl
+                | _ ->
+                  methodNameMap.Add(decl.Name, decl)
+            methodsMap.Add(meth, decl)
+            decl
+    
+    member this.DoMethod (meth:ISignature) =
+      
+      let (name, genericPars) =
+        match meth with
+          | :? IMethodDefinition as def -> def.Name.Value, def.GenericParameters
+          | _ -> "", Seq.empty
+
+      if name = "_vcc_atomic_op_result" then ()
+      else       
+        let decl = this.LookupMethod (meth)
+        let contract = contractProvider.GetMethodContractFor(meth)     
+        if (contract <> null) then contract.HasErrors() |> ignore
+        
+        let parm (p:IParameterTypeInformation) =
+          let name =
+            match p with
+              | :? IParameterDefinition as def -> def.Name.Value
+              | _ -> "#p" + p.GetHashCode().ToString()
+          let isSpec, isOut =
+            match p with
+              | :? Microsoft.Research.Vcc.VccParameterDefinition as vcp -> vcp.IsSpec, vcp.IsOut
+              | _ -> false, false
+          let v =
+            { Name = name
+              Type = this.DoType (p.Type)
+              Kind = match isSpec, isOut with 
+                       | true, true -> C.VarKind.OutParameter 
+                       | true, false -> C.VarKind.SpecParameter
+                       | false, false -> C.VarKind.Parameter 
+                       | _ -> die() // out param must always also be a spec parameter
+            } : C.Variable
+          if localsMap.ContainsKey p then
+            printf "gonna have trouble"
+          localsMap.Add (p, v)
+          // this is SO WRONG, however it seems that sometimes different instances
+          // of IParameterDefinition are referenced from code (does it have to do with
+          // contract variable renaming?)
+          localsMap.Add ((p.ContainingSignature, v.Name), v)
+          v
+                                  
+        if decl.IsProcessed then ()
+        else
+          decl.IsProcessed <- true
+          // if decl.Name.StartsWith("incr") then System.Diagnostics.Debugger.Break()
+          // needs to be done first so they get into localsMap
+          decl.TypeParameters <- [ for tp in genericPars -> { Name = tp.Name.Value } : C.TypeVariable ]
+          decl.Parameters <- [ for p in meth.Parameters -> parm p ]
+                                
+          // do something with the signature
+          let block = 
+            match meth with
+              | :? IMethodDefinition as def ->
+                let attrsFromDecls = 
+                  match meth with
+                  | :? VccGlobalMethodDefinition as fd ->
+                    List.concat [ for d in fd.Declarations -> convCustomAttributes (token d) d.Attributes ]
+                  | _ -> []
+                let attrsFromDef = convCustomAttributes (token def) def.Attributes
+                decl.CustomAttr <- removeDuplicates attrsFromDef @ attrsFromDecls
+                (def.Body :?> ISourceMethodBody).Block
+              | _ -> null
+          if block = null then
+            topDecls <- C.Top.FunctionDecl decl :: topDecls
+          else
+            let savedLocalVars = localVars
+            localVars <- []
+            currentFunctionName <- decl.Name
+            currentBlockId <- 0
+            let body = this.DoStatement block
+            let locals = (List.map (fun v -> C.Expr.VarDecl (C.voidBogusEC(), v)) decl.InParameters) @ List.rev localVars
+            decl.Body <- Some (C.Expr.MkBlock (locals @ [body]))
+            localVars <- savedLocalVars
+            topDecls <- C.Top.FunctionDecl decl :: topDecls
+
+          if contract <> null then
+            // reset localsMap to deal with renaming of contracts between definition and declaration          
+            let savedLocalsMap = localsMap
+            match contract with
+            | :? MethodContract as methodContract ->
+              let isNotVoidPar (p : ParameterDeclaration) = p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void
+              if (methodContract.ContainingSignatureDeclaration.Parameters |> Seq.filter isNotVoidPar |> Seq.length) <> (Seq.length decl.Parameters) then
+                helper.Error(decl.Token, 9658, "declared formal parameter list different from definition", Some(VisitorHelper.GetTokenFor [(methodContract.ContainingSignatureDeclaration.SourceLocation :> ILocation)]))
+              localsMap <- new Dict<_,_>()
+              let addParmRenaming (fromParm:ParameterDeclaration) (toVar:C.Variable) =
+                localsMap.Add(((fromParm.ContainingSignature.SignatureDefinition), fromParm.Name.Value), toVar)
+              let contractPars = seq { for p in methodContract.ContainingSignatureDeclaration.Parameters do if p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void then yield p }
+              Seq.iter2 addParmRenaming contractPars decl.Parameters
+            | _ -> ()
+
+            contract.HasErrors() |> ignore
+            decl.Requires   <- [ for p in contract.Preconditions -> this.DoPrecond p ]
+            decl.Ensures    <- [ for r in contract.Postconditions -> this.DoPostcond r ]
+            decl.Writes     <- [ for e in contract.Writes -> this.DoExpression e ]
+            decl.Reads      <- [ for e in contract.Reads -> this.DoExpression e ]
+            localsMap <- savedLocalsMap
+        
+        
+    member this.DoStatement (stmt:IStatement) : C.Expr =
+      if stmt.HasErrors() then
+        oopsLoc stmt  "errors in stmt"
+        C.Comment (this.StmtCommon stmt, sprintf "statement %s had errors" (stmt.ToString()))
+      else
+        stmtRes <- C.Expr.Bogus
+        stmt.Dispatch(this)
+        let res = stmtRes
+        stmtRes <- C.Expr.Bogus
+        xassert (res <> C.Expr.Bogus)
+        res
+     
+    member this.DoExpression(expr:IExpression) : C.Expr =
+      if expr.HasErrors () then
+        oopsLoc expr "error in expr"
+        C.Expr.Bogus
+      else
+        exprRes <- C.Expr.Bogus
+        expr.Dispatch(this)
+        let res = exprRes
+        exprRes <- C.Expr.Bogus
+        xassert (res <> C.Expr.Bogus)
+        res
+
+    member this.DoBlock(block : IBlockStatement) =
+     let savedLocalVars = localVars
+     localVars <- []
+     let stmts = [for s in block.Statements -> this.DoStatement (s)]
+     let block' = C.Expr.MkBlock (localVars @ stmts)
+     localVars <- savedLocalVars
+     let contract = contractProvider.GetMethodContractFor(block)
+     if (contract = null) then
+       block'
+     else 
+      // we introduce a helper function to place the contracts on
+      // it will be later expanded into a proper function
+      let ec = { Type = C.Type.Void; Token = token block } : C.ExprCommon
+      let mkPure (e : C.Expr) = C.Pure(e.Common, e)
+      let rqs = C.Macro(ec, "block_requires", [ for req in contract.Preconditions -> mkPure (this.DoPrecond req) ] )
+      let ens = C.Macro(ec, "block_ensures", [ for ens in contract.Postconditions -> mkPure (this.DoPostcond ens) ] )
+      let wrs = C.Macro(ec, "block_writes", [ for wr in contract.Writes -> mkPure (this.DoExpression wr) ] )
+      let rds = C.Macro(ec, "block_reads", [ for rd in contract.Reads -> mkPure (this.DoExpression rd) ] )
+      C.Expr.Macro(ec, "block", [block'; rqs; ens; wrs; rds])
+
+    member this.DoUnary (op:string, bin:IUnaryOperation, ch) =
+      exprRes <- C.Expr.Prim (this.ExprCommon bin, C.Op(op, checkedStatus ch), [this.DoExpression (bin.Operand)])
+
+    member this.DoBinary (op:string, bin:IBinaryOperation) =
+      this.DoBinary(op, bin, false)
+
+    member this.DoBinary (op:string, bin:IBinaryOperation, ch:bool) =
+      exprRes <- C.Expr.Prim (this.ExprCommon bin, C.Op(op, checkedStatus ch), [this.DoExpression (bin.LeftOperand); this.DoExpression (bin.RightOperand)])
+
+    member this.DoGlobal (g:IGlobalFieldDefinition) =
+      // TODO initializer?
+      match globalsMap.TryGetValue g with
+        | (true, v) -> v
+        | _ -> 
+          match g with
+            | :? GlobalFieldDefinition as decl ->
+              let rec doInitializer t (expr : Expression) = 
+                match expr with
+                  | :? VccInitializer as initializer ->
+                    let ec = { Token = token expr; Type = t } : C.ExprCommon
+                    C.Macro(ec, "init", [ for e in initializer.Expressions -> doInitializer (this.DoType (e.Type)) e])
+                  | _ -> this.DoExpression (expr.ProjectAsIExpression())
+              let t = this.DoType g.Type
+              let t' = if decl.GlobalFieldDeclaration.IsVolatile then C.Type.Volatile(t) else t
+              let var = { Name = g.Name.Value; Type = t'; Kind = if decl.IsReadOnly then C.VarKind.ConstGlobal else C.VarKind.Global } : C.Variable
+              globalsMap.Add (g, var)
+              let initializer = if decl.GlobalFieldDeclaration.Initializer = null then None else Some(doInitializer (var.Type) (decl.GlobalFieldDeclaration.Initializer))
+              topDecls <- C.Top.Global(var, initializer) :: topDecls
+              var
+            | _ -> die()
+    
+    member this.DoSpecGlobal (g:Microsoft.Cci.Ast.FieldDefinition) =
+      // TODO initializer?
+      match specGlobalsMap.TryGetValue (g.Name.Value) with
+        | (true, v) -> v
+        | _ -> 
+          let var = { Name = g.Name.Value; Type = this.DoType g.Type; Kind = C.VarKind.Global } : C.Variable
+          specGlobalsMap.Add (var.Name, var)
+          topDecls <- C.Top.Global(var, None) :: topDecls
+          var
+    
+    member this.DoField (expr:IExpression) (instance:IExpression) (definition:obj) =
+      let ec = this.ExprCommon expr
+      if instance = null then
+        exprRes <-
+          match definition with
+            | :? IExpression as e -> this.DoExpression e
+            | _ when localsMap.ContainsKey definition ->
+              C.Expr.Ref (ec, localsMap.[definition]) 
+            | :? IParameterDefinition as p ->
+              let key = (p.ContainingSignature, p.Name.Value)
+              let name = p.Name.Value
+              if localsMap.ContainsKey name then
+                C.Expr.Ref (ec, localsMap.[name])
+              else
+                if not (localsMap.ContainsKey (key :> obj)) then
+                  oopsLoc p ("cannot find parameter " + name); die ()
+                C.Expr.Ref (ec, localsMap.[key])
+            | :? IGlobalFieldDefinition as g ->
+              C.Expr.Ref (ec, this.DoGlobal g)
+            | :? Microsoft.Cci.Ast.FieldDefinition as def ->
+              if def.FieldDeclaration.Name.Value.StartsWith ("?mappedLiteral") then
+                C.Expr.Macro (ec, "string", [C.Expr.Macro (ec, unbox def.FieldDeclaration.Initializer.Value, [])])
+              else
+                C.Expr.Ref (ec, this.DoSpecGlobal def)
+            | :? IMethodDefinition as def ->
+              this.EnsureMethodIsVisited(def)
+              let fn = this.LookupMethod def
+              C.Expr.Macro (ec, "get_fnptr", [C.Expr.Call ({ ec with Type = fn.RetType }, fn, [], [])])
+            | _ -> oopsLoc expr ("cannot find " + definition.ToString()); die ()
+      else
+        match definition with
+          | :? IAddressDereference as deref -> (this :> ICodeVisitor).Visit deref
+          | :? IFieldDefinition as def ->
+            let instance = this.DoExpression instance
+            if not (fieldsMap.ContainsKey def) then
+              oopsLoc def ("field " + def.Name.Value + " not found")
+            
+            let field = fieldsMap.[def]
+            let instance =
+              match instance.Type with
+               | C.Ptr _ -> instance
+               | t -> C.Expr.Macro ({ instance.Common with Type = C.Ptr t }, 
+                                    "&", [instance])
+            let dot = C.Expr.Dot ({ ec with Type = C.Ptr ec.Type }, 
+                                  instance,
+                                  field)
+            exprRes <- C.Expr.Deref (ec, dot)
+          | _ -> assert false
+    
+    member this.DoTypeDefinition (typeDef:ITypeDefinition) =
+      typeRes <-
+          match typeDef.TypeCode with
+            | PrimitiveTypeCode.Char -> C.Type.Integer (C.IntKind.UInt8)
+            | PrimitiveTypeCode.String -> C.Type.Ptr (C.Type.Integer C.IntKind.UInt8)
+            | PrimitiveTypeCode.UInt8  -> C.Type.Integer (C.IntKind.UInt8)
+            | PrimitiveTypeCode.UInt16 -> C.Type.Integer (C.IntKind.UInt16)
+            | PrimitiveTypeCode.UInt32 -> C.Type.Integer (C.IntKind.UInt32)
+            | PrimitiveTypeCode.UInt64 -> C.Type.Integer (C.IntKind.UInt64)
+            | PrimitiveTypeCode.Int8   -> C.Type.Integer (C.IntKind.Int8)
+            | PrimitiveTypeCode.Int16  -> C.Type.Integer (C.IntKind.Int16)
+            | PrimitiveTypeCode.Int32  -> C.Type.Integer (C.IntKind.Int32)
+            | PrimitiveTypeCode.Int64  -> C.Type.Integer (C.IntKind.Int64)
+            | PrimitiveTypeCode.Boolean -> C.Type.Bool
+            | PrimitiveTypeCode.Void -> C.Type.Void
+            | PrimitiveTypeCode.Float32 -> C.Type.Primitive C.PrimKind.Float32
+            | PrimitiveTypeCode.Float64 -> C.Type.Primitive C.PrimKind.Float64
+            | PrimitiveTypeCode.NotPrimitive ->
+              let (hasit, ret) = typesMap.TryGetValue(typeDef)
+              if hasit then C.Type.Ref (ret)
+              elif typeDef.IsEnum then this.DoType typeDef.UnderlyingType
+              else 
+                let fields = [ for f in typeDef.Fields -> f ]
+                let members = [ for m in typeDef.Members -> m ] // contains fields as well as nested types
+                // TODO check embedded structs in unions
+                let name =
+                  match typeDef with
+                    | :? INamespaceTypeDefinition as n -> n.Name.Value
+                    | :? INestedTypeDefinition as n -> n.ContainingTypeDefinition.ToString() + "." + n.Name.Value
+                    | _ -> die()
+                
+                let mathPref = "_vcc_math_type_"
+                if name.StartsWith mathPref then
+                  let td = C.Type.MathTd (name.Substring (mathPref.Length))
+                  typesMap.Add(typeDef, td)
+                  typeNameMap.Add(td.Name, td)
+                  topDecls <- C.Top.TypeDecl (td) :: topDecls
+                  C.Type.Ref td
+                else if name = "_vcc_claim_struct" then
+                  C.Type.Claim
+                else if name.Contains ("._FixedArrayOfSize") then
+                  match fields with
+                    | [f] ->
+                      xassert (typeDef.SizeOf > 0u)
+                      let eltype = this.DoType f.Type
+                      C.Type.Array (eltype, int typeDef.SizeOf / eltype.SizeOf)
+                    | _ -> die()
+                else if name = SystemDiagnosticsContractsCodeContractTypedPtr then
+                  C.Type.ObjectT
+                else if name = SystemDiagnosticsContractsCodeContractBigInt then
+                  C.Type.MathInteger
+                else              
+                  let tok = token typeDef
+                  let totalOffset f = MemberHelper.GetFieldBitOffset f + f.Offset
+                  let notAllEqual = function
+                    | x :: xs -> List.exists (fun y -> y <> x) xs
+                    | _ -> die()                        
+                  let td = 
+                    { Token = tok
+                      Name = name
+                      Fields = []
+                      Invariants = []
+                      CustomAttr = convCustomAttributes tok typeDef.Attributes
+                      SizeOf = int typeDef.SizeOf
+                      IsNestedAnon = false
+                      GenerateEquality = CAST.StructEqualityKind.NoEq
+                      GenerateFieldOffsetAxioms = false
+                      Kind = 
+                        // Cci does not know about unions, so a union for us is a struct with more than one member whose all offsets are equal
+                        if List.length fields <= 1 || notAllEqual (List.map totalOffset fields) then
+                          C.TypeKind.Struct
+                        else
+                          C.TypeKind.Union
+                      Parent =
+                        match typeDef with
+                        | :? NestedTypeDefinition as nestedType ->
+                          match typesMap.TryGetValue(nestedType.ContainingTypeDefinition) with
+                          | (true, parent) -> Some parent
+                          | _ -> None
+                        | _ -> None
+                      IsSpec = false
+                      IsVolatile = false
+                    } : C.TypeDecl
+                  
+                  if List.exists (function C.VccAttr ("record", _) -> true | _ -> false) td.CustomAttr then
+                    td.IsSpec <- true
+                    
+                  // TODO?
+                  let td =
+                    if td.Name = "Object" && td.SizeOf = 0 then
+                      { td with Name = "#Object"; SizeOf = 8 }
+                    else td
+                  
+                  let minOffset = 
+                    match fields with
+                      | f :: _ -> int f.Offset
+                      | _ -> 0
+                  let minOffset = List.fold (fun off (f:IFieldDefinition) -> 
+                                                    if int f.Offset < off then int f.Offset else off) minOffset fields
+                  typesMap.Add(typeDef, td)
+                  typeNameMap.Add(td.Name, td)
+                  topDecls <- C.Top.TypeDecl (td) :: topDecls
+                  
+                  let trField isSpec (f:IFieldDefinition) =
+                    let (fldMarkedVolatile, fldDeclaredAsPointer) = 
+                      match f with
+                        | :? Microsoft.Cci.Ast.FieldDefinition as fd -> (fd.FieldDeclaration.IsVolatile,
+                                                                         match fd.FieldDeclaration.Type with
+                                                                           | :? VccPointerTypeExpression -> true
+                                                                           | :? VccArrayTypeExpression -> true
+                                                                           | _ -> false )
+                        | _ -> false, false
+                    let ptrDeclaredAsVolatile = 
+                      match f.Type.ResolvedType with
+                        | :? ModifiedPointerType as modPtr ->
+                          let isVolatileCustomModifier (cm : ICustomModifier) = TypeHelper.GetTypeName(cm.Modifier) = "System.Runtime.CompilerServices.IsVolatile"
+                          Seq.exists isVolatileCustomModifier modPtr.CustomModifiers
+                        | _ -> false
+                    let (fldVolatile, pointsToVolatile) =
+                      if fldDeclaredAsPointer then (ptrDeclaredAsVolatile, fldMarkedVolatile)
+                      else (fldMarkedVolatile, ptrDeclaredAsVolatile)
+                      
+(*                        match f.Type.ResolvedType with
+                          | :? ModifiedPointerType as modPtr ->
+                            let isVolatileCustomModifier (cm : ICustomModifier) =
+                              cm.Modifier = (f.Type.PlatformType.SystemRuntimeCompilerServicesIsVolatile :> ITypeReference)
+                            (Seq.exists isVolatileCustomModifier modPtr.CustomModifiers, fldMarkedVolatile)
+                          | :? PointerType -> (false, fldMarkedVolatile)
+                          | _ -> (fldMarkedVolatile, false)
+                        else (fldMarkedVolatile, false) *)
+                    let t = 
+                      match this.DoType (f.Type) with
+                        | C.Type.Ptr(typ) when pointsToVolatile -> C.Type.Ptr(C.Type.Volatile(typ))
+                        | C.Type.Array(typ, size) when pointsToVolatile -> C.Type.Array(C.Type.Volatile(typ), size)
+                        | typ -> typ
+                    let tok = token f
+                    let isSpec = isSpec || td.IsSpec
+                    let isSpec =
+                      match t with
+                        | C.Type.Map(_,_) when not isSpec ->
+                          helper.Error(tok, 9632, "fields of map type must be declared as specification fields", None)
+                          true
+                        | _ -> isSpec
+                    let res =
+                      { Name = f.Name.Value
+                        Token = tok
+                        Type = t
+                        Parent = td
+                        IsSpec = isSpec
+                        IsVolatile = fldVolatile
+                        Offset =
+                          if f.IsBitField then                               
+                            C.FieldOffset.BitField (int f.Offset - minOffset, int (MemberHelper.GetFieldBitOffset f), int f.BitLength)
+                          else
+                            C.FieldOffset.Normal (int f.Offset - minOffset)
+                        CustomAttr = convCustomAttributes (token f) f.Attributes
+                      } : C.Field               
+                    fieldsMap.Add(f, res)
+                    res
+                        
+                  let trMember isSpec (m:ITypeDefinitionMember) =
+                    match m with
+                    | :? IFieldDefinition as f -> Some(trField isSpec f)
+                    | :? NestedTypeDefinition as t -> 
+                      this.DoTypeDefinition t
+                      None
+                    | _ -> None
+                    
+                  let rec trMembers isSpec = function
+                  | [] -> []
+                  | m :: ms ->
+                    match trMember isSpec m with
+                    | None -> trMembers isSpec ms
+                    | Some(f) -> f :: trMembers isSpec ms
+                  
+                  let contract = contractProvider.GetTypeContractFor(typeDef)
+                  //if (contract <> null) then contract.HasErrors() |> ignore
+
+                  match fields with
+                    | [] when not (VccScopedName.IsGroupType(typeDef)) ->
+                      if contract <> null && Seq.length contract.ContractFields > 0 then
+                        helper.Error (tok, 9620, "need at least one physical field in structure, got only spec fields", None)
+                      // forward declaration
+                      C.Type.Ref td
+                    | _ ->
+                      td.Fields <- trMembers false members
+
+                      if td.SizeOf < 1 then
+                        helper.Oops(td.Token, "type " + td.Name + " smaller than 1 byte!")
+                        die()
+                                            
+                      if contract <> null then
+                        td.Fields <- td.Fields @ [ for f in contract.ContractFields -> trField true f ]
+                        if not (contract.HasErrors()) then
+                          finalActions.Enqueue (fun () ->
+                            td.Invariants <- [ for inv in contract.Invariants -> this.DoExpression (inv.Condition) ])
+                       
+                      let reportErrorForDuplicateFields fields =
+                        let seenFields = new Dict<string,C.Field>()
+                        let addFieldOrReportError (f:C.Field) =
+                          if f.Name = "" then ()
+                          else 
+                            match seenFields.TryGetValue f.Name with
+                              | true, f' -> 
+                                let msg = "'" + f.Name + "' : '" + (if td.Kind = C.TypeKind.Struct then "struct" else "union") + "' member redefinition"
+                                helper.Error(f.Token, 9677, msg, Some(f'.Token))
+                              | _ -> seenFields.Add(f.Name, f)
+                        List.iter addFieldOrReportError fields
+                        
+                      reportErrorForDuplicateFields td.Fields
+                      C.Type.Ref (td)
+                
+            | v ->
+              oopsLoc typeDef ("bad value of typecode: " + v.ToString())
+              die()
+
+    // Range checks are added later, in transformers
+    member this.GetExpressionAndBindings (arguments:System.Collections.Generic.IEnumerable<IExpression>, kind:C.QuantKind, methodCall:IMethodCall) =
+      let getReturnStmt (blockStmt:IBlockStatement) : IExpression =
+        let mutable found = false
+        let mutable retval = CodeDummy.Expression
+        for stmt in blockStmt.Statements do
+          if (found = false) then
+            let retStmt = stmt :?> IReturnStatement
+            if (retStmt <> null) then
+              if (retStmt.Expression <> null) then 
+                found <- true
+                retval <- retStmt.Expression
+        retval
+        
+      let mutable (bindings:list<C.Variable>) = []
+      let argEnumerator = arguments.GetEnumerator()
+      if (argEnumerator.MoveNext() <> true) then
+        (cTrue, bindings, [])
+      else 
+        let anonymousDelegate = (argEnumerator.Current :?> IAnonymousDelegate)
+        if (anonymousDelegate = null) then
+          oopsLoc methodCall "found errors in quantifier body, faking it to be 'true'"
+          (cTrue, bindings, [])
+        else
+          let parEnumerator = anonymousDelegate.Parameters.GetEnumerator()
+          if (parEnumerator.MoveNext() <> true) then
+            oopsLoc anonymousDelegate ("found errors in quantifier body, faking it to be 'true'")
+            (cTrue, bindings, [])
+          else
+            let par = parEnumerator.Current
+            let parType = par.Type.ResolvedType
+            let var = 
+              { Name = par.Name.Value
+                Type = this.DoType (parType)
+                Kind = C.VarKind.QuantBound 
+              } : C.Variable
+            localsMap.Add (par, var)
+            
+            let name = par.Name.Value
+            match localsMap.TryGetValue name with
+              | true, prev ->
+                helper.Error(token par, 9675, "Quantified variable '" + name + "' clashes with earlier declaration", None)
+              | false, _ ->
+                localsMap.Add (name, var)
+            
+            bindings <- var :: bindings
+            let body = getReturnStmt(anonymousDelegate.Body)
+            if (body.HasErrors()) then
+              oopsLoc body "found errors in quantifier body, faking it to be 'true'"
+              (cTrue, bindings, [])
+            else
+              let resultExpr = this.DoExpression (body)
+              let rec collect addVars = function
+                | C.Quant (_, { Variables = vars; Body = b }) ->
+                  collect (vars @ addVars) b
+                | _ -> addVars
+              let addVars = collect [] resultExpr
+              for v in addVars do
+                localsMap.Add (v.Name, v)
+              let triggers = this.GetTriggers(methodCall)
+              for v in var :: addVars do
+                localsMap.Remove v.Name |> ignore
+              (resultExpr, bindings, triggers)
+
+    member this.GetTriggers (methodCall:IMethodCall) =
+      let triggers = contractProvider.GetTriggersFor(methodCall)
+      match triggers with
+        | null -> []
+        | _ -> 
+          [ for triggerExprs in triggers -> 
+            [ for triggerExpr in triggerExprs -> this.DoExpression (triggerExpr.ProjectAsIExpression())] ]
+    
+    member this.DoQuant (methodCall:IMethodCall) = 
+      let methodToCall = methodCall.MethodToCall.ResolvedMethod
+      let methodName = methodToCall.Name.Value
+      let kind = match methodName with 
+                   | "Exists" -> C.Exists
+                   | "ForAll" -> C.Forall
+                   | "Lambda" -> C.Lambda
+                   | _ -> die()
+      let (body, bindings, triggers) = this.GetExpressionAndBindings(methodCall.Arguments, kind, methodCall)
+      { 
+        Variables = bindings
+        Triggers = triggers
+        Condition = None // TODO: figure out where condition is in code model
+        Body = body
+        Kind = kind
+      } : C.QuantData 
+    
+    member this.DoLoopContract (loop:IStatement) =
+      let contract = contractProvider.GetLoopContractFor loop
+      if (contract <> null) then contract.HasErrors() |> ignore
+      let conds =
+        if contract = null then []
+        else [ for i in contract.Invariants -> C.Expr.MkAssert (this.DoExpression i.Condition) ] @
+             [ for w in contract.Writes -> 
+                  let set = this.DoExpression w                    
+                  C.Expr.MkAssert (C.Expr.Macro ({ set.Common with Type = C.Type.Bool }, "loop_writes", [set]))]
+      C.Expr.Macro (C.bogusEC, "loop_contract", conds)
+
+    member this.DoneVisitingAssembly() : unit = 
+
+      if globalsType <> null then
+        let contract = contractProvider.GetTypeContractFor globalsType
+        if contract <> null then
+          contract.HasErrors() |> ignore
+          for inv in contract.Invariants do
+            if inv.IsAxiom then
+              topDecls <- C.Top.Axiom (this.DoExpression inv.Condition) :: topDecls
+              
+      topDecls <- List.rev topDecls        
+
+    member this.Visit (assembly:IAssembly, fnNames) : unit =
+      let isRequired sym =
+        let syms = [ "malloc" ]
+        List.exists (fun elem -> elem = sym) syms
+      let ns = assembly.NamespaceRoot
+      doingEarlyPruning <- true
+      for n in ns.Members do 
+        let ncmp s = s = n.Name.Value
+        if n.Name.Value.StartsWith("_vcc") || Seq.exists ncmp fnNames || isRequired n.Name.Value then
+          n.Dispatch(this)
+      this.DoneVisitingAssembly()
+
+
+    // The idea is to only do dispatch into children, and not put any complicated
+    // logic inside Visit(***) methods. The logic should be up, in the Do*** methods.
+    // This is however not yet the case.
+    interface ICodeVisitor with    
+
+      [<OverloadID("VisitArrayTypeReference")>]
+      member this.Visit (arrayTypeReference:IArrayTypeReference) : unit = assert false
+
+      [<OverloadID("VisitAssembly")>]
+      member this.Visit (assembly:IAssembly) : unit =
+        let ns = assembly.NamespaceRoot
+        ns.Dispatch(this)
+        this.DoneVisitingAssembly()        
+                          
+      [<OverloadID("VisitAssemblyReference")>]
+      member this.Visit (assemblyReference:IAssemblyReference) : unit = assert false
+
+      [<OverloadID("VisitCustomAttribute")>]
+      member this.Visit (customAttribute:ICustomAttribute) : unit = assert false
+
+      [<OverloadID("VisitCustomModifier")>]
+      member this.Visit (customModifier:ICustomModifier) : unit = assert false
+
+      [<OverloadID("VisitEventDefinition")>]
+      member this.Visit (eventDefinition:IEventDefinition) : unit = assert false
+
+      [<OverloadID("VisitFieldDefinition")>]
+      member this.Visit (fieldDefinition:IFieldDefinition) : unit = assert false
+
+      [<OverloadID("VisitFieldReference")>]
+      member this.Visit (fieldReference:IFieldReference) : unit = assert false
+
+      [<OverloadID("VisitFileReference")>]
+      member this.Visit (fileReference:IFileReference) : unit = assert false
+
+      [<OverloadID("VisitFunctionPointerTypeReference")>]
+      member this.Visit (functionPointerTypeReference:IFunctionPointerTypeReference) : unit =
+        let meth = functionPointerTypeReference :> ISignature
+        let cont =
+          match Seq.to_list meth.Parameters with
+            | x :: _ -> x.ContainingSignature
+            | _ -> meth
+        let td =
+          match functionPointerMap.TryGetValue cont with
+            | true, td -> td
+            | _ ->
+              this.DoMethod meth
+              let fndecl = this.LookupMethod meth
+              let td = 
+                { 
+                  Token = C.bogusToken
+                  Kind = C.FunctDecl fndecl
+                  Name = fndecl.Name
+                  Fields = []
+                  Invariants = []
+                  CustomAttr = []
+                  SizeOf = 8
+                  IsNestedAnon = false
+                  GenerateEquality = CAST.StructEqualityKind.NoEq
+                  GenerateFieldOffsetAxioms = false
+                  Parent = None
+                  IsVolatile = false
+                  IsSpec = false
+                 } : C.TypeDecl
+              topDecls <- C.Top.TypeDecl td :: topDecls
+              functionPointerMap.Add (cont, td)
+              td
+        typeRes <- C.Type.Ptr (C.Type.Ref td)
+
+      [<OverloadID("VisitGenericMethodInstanceReference")>]
+      member this.Visit (genericMethodInstanceReference:IGenericMethodInstanceReference) : unit = assert false
+
+      [<OverloadID("VisitGenericMethodParameter")>]
+      member this.Visit (genericMethodParameter:IGenericMethodParameter) : unit = 
+        typeRes <- C.Type.TypeVar({ Name = genericMethodParameter.Name.Value })
+
+      [<OverloadID("VisitGenericMethodParameterReference")>]
+      member this.Visit (genericMethodParameterReference:IGenericMethodParameterReference) : unit = assert false
+
+      [<OverloadID("VisitGlobalFieldDefinition")>]
+      member this.Visit (globalFieldDefinition:IGlobalFieldDefinition) : unit =
+        this.DoGlobal globalFieldDefinition |> ignore
+                                  
+      [<OverloadID("VisitGlobalMethodDefinition")>]
+      member this.Visit (globalMethodDefinition:IGlobalMethodDefinition) : unit =
+        globalsType <- globalMethodDefinition.ContainingTypeDefinition
+        match globalMethodDefinition.Name.Value with
+          | "_vcc_in_state" | "_vcc_approves" | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" -> ()
+          | _ -> this.DoMethod (globalMethodDefinition)
+
+      [<OverloadID("VisitGenericTypeInstanceReference")>]
+      member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
+        if genericTypeInstanceReference.GenericType.ToString () = SystemDiagnosticsContractsCodeContractMap then
+          match [ for t in genericTypeInstanceReference.GenericArguments -> this.DoType t ] with
+            | [t1; t2] -> typeRes <- C.Type.Map (t1, t2)
+            | _ -> assert false
+        else
+          assert false
+        
+      [<OverloadID("VisitGenericTypeParameter")>]
+      member this.Visit (genericTypeParameter:IGenericTypeParameter) : unit = assert false
+
+      [<OverloadID("VisitGenericTypeParameterReference")>]
+      member this.Visit (genericTypeParameterReference:IGenericTypeParameterReference) : unit = assert false
+
+      [<OverloadID("VisitManagedPointerTypeReference")>]
+      member this.Visit (managedPointerTypeReference:IManagedPointerTypeReference) : unit =
+        typeRes <- C.Type.Ptr (this.DoType (managedPointerTypeReference.TargetType))
+
+      [<OverloadID("VisitMarshallingInformation")>]
+      member this.Visit (marshallingInformation:IMarshallingInformation) : unit = assert false
+      
+      [<OverloadID("VisitMetadataConstant")>]
+      member this.Visit (constant:IMetadataConstant) : unit = assert false
+
+      [<OverloadID("VisitMetadataCreateArray")>]
+      member this.Visit (createArray:IMetadataCreateArray) : unit = assert false
+
+      [<OverloadID("VisitMetadataExpression")>]
+      member this.Visit (expression:IMetadataExpression) : unit = assert false
+
+      [<OverloadID("VisitMetadataNamedArgument")>]
+      member this.Visit (namedArgument:IMetadataNamedArgument) : unit = assert false
+
+      [<OverloadID("VisitMetadataTypeOf")>]
+      member this.Visit (typeOf:IMetadataTypeOf) : unit = assert false
+
+      [<OverloadID("VisitMethodBody")>]
+      member this.Visit (methodBody:IMethodBody) : unit = assert false
+
+      [<OverloadID("VisitMethodDefinition")>]
+      member this.Visit (method_:IMethodDefinition) : unit = assert false
+
+      [<OverloadID("VisitMethodImplementation")>]
+      member this.Visit (methodImplementation:IMethodImplementation) : unit = assert false
+
+      [<OverloadID("VisitMethodReference")>]
+      member this.Visit (methodReference:IMethodReference) : unit = assert false
+
+      [<OverloadID("VisitModifiedTypeReference")>]
+      member this.Visit (modifiedTypeReference:IModifiedTypeReference) : unit = 
+        modifiedTypeReference.UnmodifiedType.Dispatch(this)
+        //TODO: this may loose modifiers that we need
+
+      [<OverloadID("VisitModule")>]
+      member this.Visit (module_:IModule) : unit = assert false
+
+      [<OverloadID("VisitModuleReference")>]
+      member this.Visit (moduleReference:IModuleReference) : unit = assert false
+
+      [<OverloadID("VisitNamespaceAliasForType")>]
+      member this.Visit (namespaceAliasForType:INamespaceAliasForType) : unit = assert false
+
+      [<OverloadID("VisitNamespaceTypeDefinition")>]
+      member this.Visit (namespaceTypeDefinition:INamespaceTypeDefinition) : unit =
+        this.DoTypeDefinition namespaceTypeDefinition
+            
+      [<OverloadID("VisitNamespaceTypeReference")>]
+      member this.Visit (namespaceTypeReference:INamespaceTypeReference) : unit =
+        this.DoTypeDefinition namespaceTypeReference.ResolvedType
+
+      [<OverloadID("VisitNestedAliasForType")>]
+      member this.Visit (nestedAliasForType:INestedAliasForType) : unit = assert false
+
+      [<OverloadID("VisitNestedTypeDefinition")>]
+      member this.Visit (nestedTypeDefinition:INestedTypeDefinition) : unit =
+        if not (nestedTypeDefinition.ContainingTypeDefinition.ToString().StartsWith(SystemDiagnosticsContractsCodeContract))
+           && (nestedTypeDefinition.ContainingTypeDefinition.ToString()) <> "__Globals__" then
+          nestedTypeDefinition.ContainingTypeDefinition.Dispatch(this)
+        this.DoTypeDefinition nestedTypeDefinition
+
+      [<OverloadID("VisitNestedTypeReference")>]
+      member this.Visit (nestedTypeReference:INestedTypeReference) : unit = assert false
+
+      [<OverloadID("VisitNestedUnitNamespace")>]
+      member this.Visit (nestedUnitNamespace:INestedUnitNamespace) : unit = assert false
+
+      [<OverloadID("VisitNestedUnitNamespaceReference")>]
+      member this.Visit (nestedUnitNamespaceReference:INestedUnitNamespaceReference) : unit = assert false
+
+      [<OverloadID("VisitNestedUnitSetNamespace")>]
+      member this.Visit (nestedUnitSetNamespace:INestedUnitSetNamespace) : unit = assert false
+
+      [<OverloadID("VisitParameterDefinition")>]
+      member this.Visit (parameterDefinition:IParameterDefinition) : unit = assert false
+
+      [<OverloadID("VisitParameterTypeInformation")>]
+      member this.Visit (parameterTypeInformation:IParameterTypeInformation) : unit = assert false
+
+      [<OverloadID("VisitPointerTypeReference")>]
+      member this.Visit (pointerTypeReference:IPointerTypeReference) : unit =
+        typeRes <- C.Type.Ptr (this.DoType (pointerTypeReference.TargetType))
+
+      [<OverloadID("VisitPropertyDefinition")>]
+      member this.Visit (propertyDefinition:IPropertyDefinition) : unit = assert false
+
+      [<OverloadID("VisitResourceReference")>]
+      member this.Visit (resourceReference:IResourceReference) : unit = assert false
+
+      [<OverloadID("VisitRootUnitNamespace")>]
+      member this.Visit (rootUnitNamespace:IRootUnitNamespace) : unit =
+        Seq.iter (fun (m : INamespaceMember) -> m.Dispatch(this)) rootUnitNamespace.Members
+
+      [<OverloadID("VisitRootUnitNamespaceReference")>]
+      member this.Visit (rootUnitNamespaceReference:IRootUnitNamespaceReference) : unit = assert false
+
+      [<OverloadID("VisitRootUnitSetNamespace")>]
+      member this.Visit (rootUnitSetNamespace:IRootUnitSetNamespace) : unit = assert false
+
+      [<OverloadID("VisitSecurityAttribute")>]
+      member this.Visit (securityAttribute:ISecurityAttribute) : unit = assert false
+
+      [<OverloadID("VisitUnitSet")>]
+      member this.Visit (unitSet:IUnitSet) : unit = assert false
+
+      [<OverloadID("VisitWin32Resource")>]
+      member this.Visit (win32Resource:IWin32Resource) : unit = assert false
+    
+      [<OverloadID("VisitAddition")>]
+      member this.Visit (addition:IAddition) : unit =
+        if (addition.LeftOperand.Type :? IPointerType) or (addition.RightOperand.Type :? IPointerType) then
+          exprRes <- C.Expr.Macro (this.ExprCommon addition, "ptr_addition", 
+                                   [this.DoExpression addition.LeftOperand; this.DoExpression addition.RightOperand])
+        else
+          this.DoBinary ("+", addition, addition.CheckOverflow)
+
+      [<OverloadID("VisitAddressableExpression")>]
+      member this.Visit (addressableExpression:IAddressableExpression) : unit =
+        this.DoField addressableExpression addressableExpression.Instance addressableExpression.Definition
+
+      [<OverloadID("VisitAddressDereference")>]
+      member this.Visit (addressDereference:IAddressDereference) : unit =
+        exprRes <- C.Expr.Deref (this.ExprCommon addressDereference, this.DoExpression (addressDereference.Address))
+
+      [<OverloadID("VisitAddressOf")>]
+      member this.Visit (addressOf:IAddressOf) : unit =
+        exprRes <- C.Expr.Macro (this.ExprCommon addressOf, "&", [this.DoExpression (addressOf.Expression)])
+
+      [<OverloadID("VisitAnonymousDelegate")>]
+      member this.Visit (anonymousMethod:IAnonymousDelegate) : unit = assert false
+
+      [<OverloadID("VisitArrayIndexer")>]
+      member this.Visit (arrayIndexer:IArrayIndexer) : unit = assert false
+
+      [<OverloadID("VisitAssertStatement")>]
+      member this.Visit (assertStatement:IAssertStatement) : unit =
+        stmtRes <- C.Expr.MkAssert (this.DoExpression (assertStatement.Condition))
+
+      [<OverloadID("VisitAssignment")>]
+      member this.Visit (assignment:IAssignment) : unit =
+        let target = this.DoExpression (assignment.Target)
+        let source = this.DoExpression (assignment.Source)
+        exprRes <- C.Expr.Macro (this.ExprCommon assignment, "=", [target; source])
+
+      [<OverloadID("VisitAssumeStatement")>]
+      member this.Visit (assumeStatement:IAssumeStatement) : unit =
+        stmtRes <- C.Expr.MkAssume (this.DoExpression (assumeStatement.Condition))
+
+      [<OverloadID("VisitBaseClassReference")>]
+      member this.Visit (baseClassReference:IBaseClassReference) : unit = assert false
+
+      [<OverloadID("VisitBitwiseAnd")>]
+      member this.Visit (bitwiseAnd:IBitwiseAnd) : unit =
+        this.DoBinary ("&", bitwiseAnd)
+
+      [<OverloadID("VisitBitwiseOr")>]
+      member this.Visit (bitwiseOr:IBitwiseOr) : unit =
+        this.DoBinary ("|", bitwiseOr)
+
+      [<OverloadID("VisitBlockExpression")>]
+      member this.Visit (blockExpression:IBlockExpression) : unit =
+        exprRes <- C.Expr.Block (this.ExprCommon blockExpression, 
+                                 [this.DoStatement blockExpression.BlockStatement; 
+                                  this.DoExpression blockExpression.Expression])
+        
+      
+
+      [<OverloadID("VisitBlockStatement")>]
+      member this.Visit (block:IBlockStatement) : unit =
+        stmtRes <- this.DoBlock(block) 
+        
+      [<OverloadID("VisitBreakStatement")>]
+      member this.Visit (breakStatement:IBreakStatement) : unit = 
+        stmtRes <- C.Expr.Macro(this.StmtCommon breakStatement, "break", [])
+
+      [<OverloadID("VisitBoundExpression")>]
+      member this.Visit (boundExpression:IBoundExpression) : unit =
+        this.DoField boundExpression boundExpression.Instance boundExpression.Definition 
+          
+      [<OverloadID("VisitCastIfPossible")>]
+      member this.Visit (castIfPossible:ICastIfPossible) : unit = assert false
+
+      [<OverloadID("VisitCatchClause")>]
+      member this.Visit (catchClause:ICatchClause) : unit = assert false
+
+      [<OverloadID("VisitCheckIfInstance")>]
+      member this.Visit (checkIfInstance:ICheckIfInstance) : unit = assert false
+
+      [<OverloadID("VisitCompileTimeConstant")>]
+      member this.Visit (constant:ICompileTimeConstant) : unit =
+        let ec = this.ExprCommon constant
+        exprRes <-
+          match ec.Type with
+            | C.Type.Integer _ ->
+              match constant.Value with
+                | :? char as c -> C.Expr.IntLiteral(ec, new bigint((int)c))
+                | _ -> C.Expr.IntLiteral (ec, bigint.Parse(constant.Value.ToString ()))
+            | C.Type.Bool      -> C.Expr.BoolLiteral (ec, unbox (constant.Value))
+            | C.Type.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.Macro (ec, unbox constant.Value, [])])
+            | _ -> die()
+
+      [<OverloadID("VisitConversion")>]
+      member this.Visit (conversion:IConversion) : unit =
+        exprRes <- C.Expr.Cast (this.ExprCommon conversion, 
+                                checkedStatus conversion.CheckNumericRange, 
+                                this.DoExpression (conversion.ValueToConvert))
+
+      [<OverloadID("VisitConditional")>]
+      member this.Visit (conditional:IConditional) : unit =
+        exprRes <- C.Expr.Macro (this.ExprCommon conditional, "ite",
+                                 [this.DoExpression conditional.Condition;
+                                  this.DoExpression conditional.ResultIfTrue;
+                                  this.DoExpression conditional.ResultIfFalse])
+
+      [<OverloadID("VisitConditionalStatement")>]
+      member this.Visit (conditionalStatement:IConditionalStatement) : unit =
+        stmtRes <- C.Expr.If (this.StmtCommon conditionalStatement,
+                              this.DoExpression conditionalStatement.Condition,
+                              this.DoStatement conditionalStatement.TrueBranch,
+                              this.DoStatement conditionalStatement.FalseBranch)
+
+      [<OverloadID("VisitContinueStatement")>]
+      member this.Visit (continueStatement:IContinueStatement) : unit = 
+        stmtRes <- C.Expr.Macro(this.StmtCommon continueStatement, "continue", [])
+
+      [<OverloadID("VisitCreateArray")>]
+      member this.Visit (createArray:ICreateArray) : unit = assert false
+
+      [<OverloadID("VisitCreateDelegateInstance")>]
+      member this.Visit (createDelegateInstance:ICreateDelegateInstance) : unit = assert false
+
+      [<OverloadID("VisitCreateObjectInstance")>]
+      member this.Visit (createObjectInstance:ICreateObjectInstance) : unit = assert false
+
+      [<OverloadID("VisitDebuggerBreakStatement")>]
+      member this.Visit (debuggerBreakStatement:IDebuggerBreakStatement) : unit = assert false
+
+      [<OverloadID("VisitDefaultValue")>]
+      member this.Visit (defaultValue:IDefaultValue) : unit = assert false
+
+      [<OverloadID("VisitDivision")>]
+      member this.Visit (division:IDivision) : unit =
+        this.DoBinary ("/", division, division.CheckOverflow)
+      
+      [<OverloadID("VisitDoUntilStatement")>]
+      member this.Visit (doUntilStatement:IDoUntilStatement) : unit =
+        stmtRes <- C.Expr.Macro (this.StmtCommon doUntilStatement,
+                                 "doUntil", 
+                                 [this.DoLoopContract doUntilStatement;
+                                  this.DoStatement doUntilStatement.Body; 
+                                  this.DoExpression doUntilStatement.Condition])
+
+      [<OverloadID("VisitEmptyStatement")>]
+      member this.Visit (emptyStatement:IEmptyStatement) : unit =
+        stmtRes <- C.Expr.Comment (this.StmtCommon emptyStatement, "empty")
+
+      [<OverloadID("VisitEquality")>]
+      member this.Visit (equality:IEquality) : unit =
+        this.DoBinary ("==", equality)
+
+      [<OverloadID("VisitExclusiveOr")>]
+      member this.Visit (exclusiveOr:IExclusiveOr) : unit =
+        this.DoBinary ("^", exclusiveOr)
+
+      [<OverloadID("VisitExpression")>]
+      member this.Visit (expression:IExpression) : unit = assert false
+
+      [<OverloadID("VisitExpressionStatement")>]
+      member this.Visit (expressionStatement:IExpressionStatement) : unit =
+        let expr = this.DoExpression (expressionStatement.Expression)
+        let expr =
+          match expr with
+            | C.Macro (c, "=", args) -> C.Macro ({ c with Type = C.Void }, "=", args) 
+            | expr -> expr
+        stmtRes <- expr
+
+      [<OverloadID("VisitForEachStatement")>]
+      member this.Visit (forEachStatement:IForEachStatement) : unit = assert false
+
+      [<OverloadID("VisitForStatement")>]
+      member this.Visit (forStatement:IForStatement) : unit =
+        let doStmts l =
+          C.Expr.MkBlock [for s in l -> this.DoStatement s]
+        let inits = doStmts forStatement.InitStatements // there can be declarations there, so do it first
+        stmtRes <- C.Expr.Macro (this.StmtCommon forStatement,
+                                 "for", 
+                                 [this.DoLoopContract forStatement;
+                                  inits;
+                                  this.DoExpression forStatement.Condition;
+                                  doStmts forStatement.IncrementStatements;
+                                  this.DoStatement forStatement.Body
+                                  ])
+
+      [<OverloadID("VisitGotoStatement")>]
+      member this.Visit (gotoStatement:IGotoStatement) : unit = 
+        stmtRes <- C.Goto(this.StmtCommon gotoStatement, { Name = gotoStatement.TargetStatement.Label.Value })
+
+      [<OverloadID("VisitGotoSwitchCaseStatement")>]
+      member this.Visit (gotoSwitchCaseStatement:IGotoSwitchCaseStatement) : unit = assert false
+
+      [<OverloadID("VisitGetTypeOfTypedReference")>]
+      member this.Visit (getTypeOfTypedReference:IGetTypeOfTypedReference) : unit = assert false
+
+      [<OverloadID("VisitGetValueOfTypedReference")>]
+      member this.Visit (getValueOfTypedReference:IGetValueOfTypedReference) : unit = assert false
+
+      [<OverloadID("VisitGreaterThan")>]
+      member this.Visit (greaterThan:IGreaterThan) : unit =
+        this.DoBinary (">", greaterThan)
+
+      [<OverloadID("VisitGreaterThanOrEqual")>]
+      member this.Visit (greaterThanOrEqual:IGreaterThanOrEqual) : unit =
+        this.DoBinary (">=", greaterThanOrEqual)
+
+      [<OverloadID("VisitLabeledStatement")>]
+      member this.Visit (labeledStatement:ILabeledStatement) : unit = 
+        let lblStmt = C.Label(this.StmtCommon labeledStatement, { Name = labeledStatement.Label.Value })
+        stmtRes <- C.Expr.MkBlock([lblStmt; this.DoStatement(labeledStatement.Statement)])
+
+      [<OverloadID("VisitLeftShift")>]
+      member this.Visit (leftShift:ILeftShift) : unit =
+        this.DoBinary ("<<", leftShift)
+
+      [<OverloadID("VisitLessThan")>]
+      member this.Visit (lessThan:ILessThan) : unit =
+        this.DoBinary ("<", lessThan)
+
+      [<OverloadID("VisitLessThanOrEqual")>]
+      member this.Visit (lessThanOrEqual:ILessThanOrEqual) : unit =
+        this.DoBinary ("<=", lessThanOrEqual)
+
+      [<OverloadID("VisitLocalDeclarationStatement")>]
+      member this.Visit (localDeclarationStatement:ILocalDeclarationStatement) : unit =
+        let loc = localDeclarationStatement.LocalVariable
+        let declaredAsVolatile = 
+          match loc with 
+            | :? Microsoft.Research.Vcc.VccLocalDefinition as vcLoc -> vcLoc.IsVolatile
+            | _ -> false
+        let t = 
+          match this.DoType (loc.Type) with
+            | C.Ptr(t) when declaredAsVolatile -> C.Ptr(C.Volatile(t))
+            | t -> t
+        let var = 
+          { 
+            Name = loc.Name.Value
+            Type = t
+            Kind = 
+              match loc with
+                | :?  Microsoft.Research.Vcc.VccLocalDefinition as vcl -> if vcl.IsSpec then C.VarKind.SpecLocal else C.VarKind.Local
+                | _ -> C.VarKind.Local
+          } : C.Variable
+        localsMap.Add(loc, var)
+        let sc = this.StmtCommon localDeclarationStatement
+        let decl = C.Expr.VarDecl (sc, var)
+        localVars <- decl :: localVars
+        // it seems that if there is an initalizer, it sometimes
+        // gets called separatly and the node returned from here is gone.
+        // so we return a comment instead of the decl, for if it is lost there is no big deal
+        let decl = C.Expr.Comment (sc, "var " + var.ToString())
+        let init = localDeclarationStatement.InitialValue
+        if init = null then
+          stmtRes <- decl
+        else
+          let assign = C.Expr.Macro (sc, "=", [C.Expr.Ref({ sc with Type = var.Type }, var); 
+                                                            this.DoExpression init])
+          let assign = if var.Kind = C.VarKind.SpecLocal then C.Expr.Macro(assign.Common, "spec", [assign]) else assign
+          stmtRes <- C.Expr.MkBlock [decl; assign]
+
+      [<OverloadID("VisitLockStatement")>]
+      member this.Visit (lockStatement:ILockStatement) : unit = assert false
+
+      [<OverloadID("VisitLogicalNot")>]
+      member this.Visit (logicalNot:ILogicalNot) : unit =
+        this.DoUnary ("!", logicalNot, false)
+
+      [<OverloadID("VisitMakeTypedReference")>]
+      member this.Visit (makeTypedReference:IMakeTypedReference) : unit = assert false
+
+      [<OverloadID("VisitMethodCall")>]
+      member this.Visit (methodCall:IMethodCall) : unit =
+        let ec = this.ExprCommon methodCall
+        let methodToCall = 
+          match methodCall with
+            // the two don't agree if there is an elipsis in function prototype (i.e. there are additional parameters)
+            | :? VccMethodCall as meth -> meth.ResolvedMethod
+            | _ -> methodCall.MethodToCall.ResolvedMethod            
+        let methodName = methodToCall.Name.Value
+        let containingTypeDefinitionName = TypeHelper.GetTypeName(methodToCall.ContainingTypeDefinition)        
+
+        let opMap = Map.of_list [ "op_Equality", "=="; "op_Inequality", "!="; "op_Addition", "+";
+                                  "op_Subtraction", "-"; "op_Division", "/"; "op_Modulus", "%";
+                                  "op_Multiply", "*"; "op_LessThan", "<"; "op_LessThanOrEqual", "<=";
+                                  "op_GreaterThan", ">"; "op_GreaterThanOrEqual", ">="
+                                ]
+
+        this.EnsureMethodIsVisited(methodToCall)
+
+        let (|MapTypeString|_|) = function
+          | (s:string) when s.StartsWith(SystemDiagnosticsContractsCodeContractMap) -> Some ()
+          | _ -> None
+
+        let (|BigIntOp|_|) = function
+          | "op_Equality" 
+          | "op_Inequality" 
+          | "op_Addition" 
+          | "op_Subtraction" 
+          | "op_Division" 
+          | "op_Modulus" 
+          | "op_Multiply" 
+          | "op_LessThan" 
+          | "op_LessThanOrEqual" 
+          | "op_GreaterThan" 
+          | "op_GreaterThanOrEqual" -> Some ()
+          | _ -> None
+
+        let oopsNumArgs() = oopsLoc methodCall ("unexpected number of arguments for "+ methodName); die ()
+
+        let args() = [ for e in methodCall.Arguments -> this.DoExpression e]       
+
+        let trOp methodName = 
+          match args() with
+            | [e1; e2] -> exprRes <- C.Expr.Prim (ec, C.Op(opMap.[methodName], C.CheckedStatus.Checked), [e1; e2])
+            | _ -> oopsNumArgs()
+            
+        let trTrivialCast() =             
+          match args() with
+            | [e] -> exprRes <- e
+            | _ -> oopsNumArgs()
+
+        let trCast() =             
+          match args() with
+            | [e] -> exprRes <- C.Expr.Cast(ec, C.CheckedStatus.Checked, e)
+            | _ -> oopsNumArgs()
+
+
+        match containingTypeDefinitionName, methodName with
+          | SystemDiagnosticsContractsCodeContract, ("Exists" | "ForAll" | "Lambda") ->
+            exprRes <- C.Expr.Quant (ec, this.DoQuant (methodCall))
+          | SystemDiagnosticsContractsCodeContract, "InLambda" -> exprRes <- C.Expr.Macro (ec, "in_lambda", args())
+          | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Implicit" | "op_Explicit") -> trTrivialCast()
+          | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Equality" | "op_Inequality") -> trOp methodName
+          | SystemDiagnosticsContractsCodeContractBigInt, "op_Implicit" -> trTrivialCast()
+          | SystemDiagnosticsContractsCodeContractBigInt, "op_Explicit" -> trCast()
+          | SystemDiagnosticsContractsCodeContractBigInt, BigIntOp -> trOp methodName
+          | "Microsoft.Research.Vcc.Runtime", "__noop" -> exprRes <- C.Expr.Macro (ec, "noop", [])
+          | MapTypeString, "get_Item" ->
+            let th = this.DoExpression methodCall.ThisArgument
+            match args() with
+              | [x] -> exprRes <- C.Expr.Macro (ec, "map_get", [th; x])
+              | _ -> oopsNumArgs()
+          | MapTypeString, "set_Item" ->
+            let th = this.DoExpression methodCall.ThisArgument
+            match args() with
+              | [x; y] -> exprRes <- C.Expr.Macro (ec, "map_set", [th; x; y])
+              | _ -> oopsNumArgs()
+          | ( SystemDiagnosticsContractsCodeContract | SystemDiagnosticsContractsCodeContractTypedPtr | MapTypeString), _ ->
+            oopsLoc methodCall ("unexpected method \'" + containingTypeDefinitionName + "." + methodName + "\'"); die()
+          | _, "_vcc_in_state" ->
+            match args() with
+              | [e1; e2] -> exprRes <- C.Expr.Old ({ec with Type = e2.Type}, e1, e2)
+              | _ -> oopsNumArgs()
+          | _, "_vcc_approves" ->
+            match args() with
+              | [e1; e2] -> exprRes <- C.Expr.Macro (ec, "approves", [e1; e2])
+              | _ -> oopsNumArgs() 
+          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq") ->
+            match args() with
+              | [e1; e2] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
+              | _ -> oopsNumArgs()
+          | _, "_vcc_atomic_op" ->
+            exprRes <- C.Expr.Macro(ec, "atomic_op",  args())
+          | _, "_vcc_atomic_op_result" ->
+            exprRes <- C.Expr.Macro(ec, "atomic_op_result", [])
+          | _ ->
+            let args = args()
+            let nonVoidParCount = [for p in methodToCall.Parameters do if p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void then yield p].Length;
+            if args.Length <> nonVoidParCount && not methodToCall.AcceptsExtraArguments then
+              helper.Error(token methodCall, 9636, 
+                           "wrong number of arguments in call to function '" + (methodToCall.Name.ToString()) + "'; was " 
+                           + (args.Length.ToString()) + ", should be " + (methodToCall.ParameterCount.ToString()), Some(token methodToCall))
+            if methodName = "_vcc_is" then
+              match args with
+                | [_; C.Expr.Call(_, _, _, [C.Expr.Cast(_,_,e)])] ->
+                  match e.Type with
+                    | C.Type.Ptr(C.Type.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended")
+                    | _ -> ()
+                | _ -> ()
+            let mtc, tArgs =
+              match methodToCall with
+                | :? IGenericMethodInstance as gmi -> gmi.GenericMethod.ResolvedMethod, [ for t in gmi.GenericArguments -> this.DoType t ]
+                | _ -> methodToCall, []
+            exprRes <- C.Expr.Call (ec, this.LookupMethod mtc, tArgs, args)
+
+      [<OverloadID("VisitModulus")>]
+      member this.Visit (modulus:IModulus) : unit =
+        this.DoBinary ("%", modulus, false)
+
+      [<OverloadID("VisitMultiplication")>]
+      member this.Visit (multiplication:IMultiplication) : unit =
+        this.DoBinary ("*", multiplication, multiplication.CheckOverflow)
+
+      [<OverloadID("VisitNamedArgument")>]
+      member this.Visit (namedArgument:INamedArgument) : unit = assert false
+
+      [<OverloadID("VisitNotEquality")>]
+      member this.Visit (notEquality:INotEquality) : unit =
+        this.DoBinary ("!=", notEquality)        
+
+      [<OverloadID("VisitOldValue")>]
+      member this.Visit (oldValue:IOldValue) : unit =
+        let ec = this.ExprCommon oldValue
+        let findTypeOrDie name =
+          match typeNameMap.TryGetValue(name) with
+            | (true, f) -> f
+            | _ -> oopsLoc oldValue ("cannot find internal type " + name); die()
+        let ts = findTypeOrDie "state_t"
+        exprRes <- C.Expr.Old (ec, C.Expr.Macro ({ec with Type = C.Type.Ref(ts) }, "prestate", []), this.DoExpression oldValue.Expression)
+
+      [<OverloadID("VisitOnesComplement")>]
+      member this.Visit (onesComplement:IOnesComplement) : unit =
+        this.DoUnary ("~", onesComplement, false)
+
+      [<OverloadID("VisitOutArgument")>]
+      member this.Visit (outArgument:IOutArgument) : unit = 
+        exprRes <- C.Expr.Macro(this.ExprCommon outArgument, "out", [this.DoExpression outArgument.Expression])
+
+      [<OverloadID("VisitPointerCall")>]
+      member this.Visit (pointerCall:IPointerCall) : unit = 
+        exprRes <- C.Expr.Macro (this.ExprCommon pointerCall, "fnptr_call", 
+                                 this.DoExpression pointerCall.Pointer :: 
+                                   [for e in pointerCall.Arguments -> this.DoExpression e])
+
+      [<OverloadID("VisitRefArgument")>]
+      member this.Visit (refArgument:IRefArgument) : unit = die()
+
+      [<OverloadID("VisitResourceUseStatement")>]
+      member this.Visit (resourceUseStatement:IResourceUseStatement) : unit = die()
+
+      [<OverloadID("VisitReturnValue")>]
+      member this.Visit (returnValue:IReturnValue) : unit =
+        let ec = this.ExprCommon returnValue
+        exprRes <- C.Expr.Result ec
+        
+      [<OverloadID("VisitRethrowStatement")>]
+      member this.Visit (rethrowStatement:IRethrowStatement) : unit = die()
+
+      [<OverloadID("VisitReturnStatement")>]
+      member this.Visit (returnStatement:IReturnStatement) : unit =
+        let expr = returnStatement.Expression
+        stmtRes <- C.Return (this.StmtCommon returnStatement, if expr = null then None else Some (this.DoExpression expr))
+
+      [<OverloadID("VisitRightShift")>]
+      member this.Visit (rightShift:IRightShift) : unit =
+        this.DoBinary (">>", rightShift)
+
+      [<OverloadID("VisitRuntimeArgumentHandleExpression")>]
+      member this.Visit (runtimeArgumentHandleExpression:IRuntimeArgumentHandleExpression) : unit = die()
+
+      [<OverloadID("VisitSizeOf")>]
+      member this.Visit (sizeOf:ISizeOf) : unit =
+       exprRes <- C.Expr.IntLiteral (this.ExprCommon sizeOf, 
+                                     new bigint(int64 (TypeHelper.SizeOfType (sizeOf.TypeToSize.ResolvedType))))
+
+      [<OverloadID("VisitStackArrayCreate")>]
+      member this.Visit (stackArrayCreate:IStackArrayCreate) : unit = 
+        match stackArrayCreate with
+        | :? CreateStackArray as createStackArray -> 
+          let numberOfElements = this.DoExpression(createStackArray.Size.ProjectAsIExpression())
+          let elementType = this.DoType(createStackArray.ElementType.ResolvedType)
+          exprRes <- C.Macro({numberOfElements.Common with Type = C.Ptr elementType}, "stack_allocate_array", [numberOfElements])
+        | _ -> assert false
+
+      [<OverloadID("VisitSubtraction")>]
+      member this.Visit (subtraction:ISubtraction) : unit =
+        this.DoBinary ("-", subtraction, subtraction.CheckOverflow)
+
+      [<OverloadID("VisitSwitchCase")>]
+      member this.Visit (switchCase:ISwitchCase) : unit = assert false // never encountered during traversal
+
+      [<OverloadID("VisitSwitchStatement")>]
+      member this.Visit (switchStatement:ISwitchStatement) : unit = 
+        let doCase (sc : ISwitchCase) =
+          let (caseLabel,castExprStmt) =
+            if sc.Expression = CodeDummy.Constant then ("default", [])
+            else ("case", [this.DoExpression sc.Expression])
+          let body = castExprStmt @ [ for stmt in sc.Body -> this.DoStatement stmt]       
+          C.Expr.Macro({ C.voidBogusEC () with Token = token sc }, caseLabel, body)
+        let condExprStmt = this.DoExpression switchStatement.Expression
+        let cases = [for sc in switchStatement.Cases -> doCase sc]
+        stmtRes <- C.Expr.Macro(this.StmtCommon switchStatement, "switch", condExprStmt :: cases)
+
+      [<OverloadID("VisitTargetExpression")>]
+      member this.Visit (targetExpression:ITargetExpression) : unit =
+        this.DoField targetExpression targetExpression.Instance targetExpression.Definition
+
+      [<OverloadID("VisitThisReference")>]
+      member this.Visit (thisReference:IThisReference) : unit =
+        exprRes <- C.Expr.Macro (this.ExprCommon thisReference, "this", [])
+
+      [<OverloadID("VisitThrowStatement")>]
+      member this.Visit (throwStatement:IThrowStatement) : unit = assert false
+
+      [<OverloadID("VisitTryCatchFinallyStatement")>]
+      member this.Visit (tryCatchFilterFinallyStatement:ITryCatchFinallyStatement) : unit = assert false
+
+      [<OverloadID("VisitTokenOf")>]
+      member this.Visit (tokenOf:ITokenOf) : unit = assert false
+
+      [<OverloadID("VisitTypeOf")>]
+      member this.Visit (typeOf:ITypeOf) : unit = assert false
+
+      [<OverloadID("VisitUnaryNegation")>]
+      member this.Visit (unaryNegation:IUnaryNegation) : unit =
+        this.DoUnary ("-", unaryNegation, unaryNegation.CheckOverflow)
+
+      [<OverloadID("VisitUnaryPlus")>]
+      member this.Visit (unaryPlus:IUnaryPlus) : unit =
+        this.DoUnary ("+", unaryPlus, false)
+
+      [<OverloadID("VisitVectorLength")>]
+      member this.Visit (vectorLength:IVectorLength) : unit = assert false
+
+      [<OverloadID("VisitWhileDoStatement")>]
+      member this.Visit (whileDoStatement:IWhileDoStatement) : unit =
+        let cond = this.DoExpression (whileDoStatement.Condition)
+        let body = this.DoStatement (whileDoStatement.Body)
+        let cmn = this.StmtCommon whileDoStatement
+
+        match cond with
+          | C.Call (_, { Name = "_vcc_atomic" }, _, args) ->
+            stmtRes <- C.Expr.Atomic (cmn, args, body)
+          | C.Call (_, { Name = "_vcc_expose" }, _, [arg]) ->
+            let findFunctionOrDie name =
+              match methodNameMap.TryGetValue(name) with
+                | true, f -> f
+                | _ -> oopsLoc whileDoStatement ("cannot find internal function " + name); die()
+            let wrap = findFunctionOrDie "_vcc_wrap"
+            let unwrap = findFunctionOrDie "_vcc_unwrap"
+            let typeof = findFunctionOrDie "_vcc_typeof"
+            let typeOfArg = C.Expr.Call({ arg.Common with Type = C.TypeIdT}, typeof, [], [arg])
+            let wArgs = [ arg; typeOfArg ]
+            stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" arg), unwrap, [], wArgs);  body; C.Expr.Call((stmtToken "wrap(@@)" arg), wrap, [], wArgs) ] )
+          | C.Call(_, { Name = "_vcc_spec_code" }, _, []) ->
+            stmtRes <- C.Expr.Macro(cmn, "spec", [body])
+          | _ ->
+            let contract = this.DoLoopContract whileDoStatement
+            stmtRes <- C.Expr.Macro (cmn, "while", [contract; cond; body])
+
+      [<OverloadID("VisitYieldBreakStatement")>]
+      member this.Visit (yieldBreakStatement:IYieldBreakStatement) : unit = assert false
+
+      [<OverloadID("VisitYieldReturnStatement")>]
+      member this.Visit (yieldReturnStatement:IYieldReturnStatement) : unit = assert false       

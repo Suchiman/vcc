@@ -1,0 +1,112 @@
+#include "vcc2test.h"
+
+ispure unsigned int bar(unsigned int x);
+
+void foo()
+{
+  bv_lemma(forall(unsigned int x; (bar(x) & 3) <= 3));
+  bv_lemma(forall(unsigned int *x; 1));
+}
+`
+testcase(7,64) : error VC9660: unsupported expression in bv_lemma(...): bar(x) (bar(x))
+testcase(8,38) : error VC9689: type 'uint32_t*' is not supported for bitvector translation (in __forall(unsigned int *x; 1))
+`
+#include "vcc2test.h"
+
+ispure unsigned int bar(unsigned int x);
+
+void foo()
+{
+  speconly( assert(_vcc_bv_lemma(forall(unsigned int x; x + x < 10))); )
+}
+`
+testcase(7,92) : error VC9659: operators in bv_lemma(...) need to be unchecked (expression: x + x)
+`
+#include "vcc2.h"
+
+typedef enum _REG_NAME
+{
+    R1 = 0x00020000,
+    R2 = 0x00020001,
+    R3 = 0x00020002,
+    R4 = 0x00020003,
+    R5 = 0x00020004,
+    R6 = 0x00020005,
+    R7 = 0x00020006,
+    R8 = 0x00020007
+} REG_NAME;
+
+#define MASK \
+    ((1 << (R3 - R1)) | \
+     (1 << (R6 - R1)))
+
+unsigned int foo(REG_NAME Name)
+	requires(R1 <= Name && Name <= R8)
+	ensures((Name == R3 || Name == R6) ==> (result == 1))
+	ensures((!(Name == R3 || Name == R6)) ==> (result == 0))
+{
+	unsigned int index;
+	unsigned int   res;
+
+	res = 0;
+	index = Name - R1;
+	
+	assert(R3 - R1 == 2);
+	assert(R6 - R1 == 5);
+	assert((1 << 2) & MASK);
+	assert((1 << 5) & MASK);
+
+	bv_lemma(forall(unsigned int i; ((1 << i) & MASK) <==> i == 2 || i == 5));
+
+	if ((1 << index) & MASK) 
+    {
+		assert(R3 - R1 == 2 || R6 - R1 == 5);
+		assert(R3 - R1 == 2);
+		assert(R6 - R1 == 5);
+		assert((1 << 2) & MASK);
+		assert((1 << 5) & MASK);
+
+
+		assert(index == 2 || index == 5);
+
+		res = 1;	
+    }
+
+	assert(Name == R3 ==> res == 1);
+	assert(Name == R6 ==> res == 1);
+
+	return res;
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+int foo(int i) 
+  ensures(result == unchecked(-i))
+{
+  bv_lemma( forall( int a; unchecked(-a) == unchecked(~a + 1) ) );
+  return unchecked(~i + 1);
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc2.h"
+
+void foo()
+{
+  bv_lemma(forall(int x; x!= 0 && x != 1 && x != -1 ==> -1 % x));
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc2.h"
+
+void foo(int j) {
+    bv_lemma(forall(int i; i&1 || !((bool)(i&1)))); // crashes
+    bv_lemma(forall(int i; i&1 || !(i&1))); // also crashes
+    assert(j&1 || !(j&1));
+}
+`
+Verification of foo succeeded.
+`

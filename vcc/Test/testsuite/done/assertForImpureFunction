@@ -1,0 +1,20 @@
+#include <vcc2.h>
+#include <sal.h>
+
+typedef unsigned __int32 UINT32, *PUINT32;
+
+UINT32 foo(__in_ecount(a) PUINT32 p, UINT32 a)
+  writes(set_empty())
+  ensures(a == 0 ==> result == 0)
+  
+ {
+    UINT32 b = 0;
+    assert(b == foo(p, 0));
+    
+    b += a;
+    return b;
+}
+
+`
+testcase(12,19) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.
+`

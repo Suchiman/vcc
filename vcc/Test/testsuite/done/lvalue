@@ -1,0 +1,11 @@
+#include "vcc2.h"
+
+struct S {
+    int a;
+    spec(int b[int];)
+    invariant(&b[3])
+};
+
+`
+testcase(6,18) : error VC0000: '&' requires l-value
+`

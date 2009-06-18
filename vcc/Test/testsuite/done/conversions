@@ -1,0 +1,20 @@
+#include <vcc2.h>
+
+void foo(unsigned x)
+  requires(x < 1000)
+{
+  int a = (int) x;
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+void foo(int x)
+  requires(x > 1000)
+{
+  unsigned int a = (unsigned int) x;
+}
+`
+Verification of foo succeeded.
+`

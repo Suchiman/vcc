@@ -1,0 +1,27 @@
+#include <vcc2.h>
+
+typedef void VOID;
+
+__forceinline VOID foo(VOID) { }
+
+void main()
+{
+  foo();
+}
+`
+Verification of foo succeeded.
+Verification of main succeeded.
+`
+
+
+typedef void VOID;
+
+void foo(VOID) { }
+
+void bar() {
+  foo();
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

@@ -1,0 +1,10 @@
+#include <vcc2.h>
+
+void foo()
+{
+  int i = 020;
+  assert(i == 16);
+}
+`
+Verification of foo succeeded.
+`

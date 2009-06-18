@@ -1,0 +1,35 @@
+#include <vcc2.h>
+
+void AssignLocalTestOk(){ int x,y,z;
+  x=1;y=2;z=3;
+  assert(x+y==z);
+}
+
+void AssumeLocalTestOk(){ int x,y,z;
+  assume(x==1);
+  assume(y==2);
+  assume(z==3);
+  assert(x+y==z);
+}
+
+void AssertTestFails()
+{
+  assert(false);
+}
+`
+Verification of AssignLocalTestOk succeeded.
+Verification of AssumeLocalTestOk succeeded.
+Verification of AssertTestFails failed.
+testcase(17,12) : error VC9500: Assertion '((bool)0)' did not verify.
+`
+#include <vcc2.h>
+
+ispure int bar(int q);
+
+void foo()
+{
+  assert(forall(int x; { bar(x) } bar(x) > 3 ==> bar(x) > 2));
+}
+`
+Verification of foo succeeded.
+`

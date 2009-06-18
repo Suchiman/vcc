@@ -1,0 +1,636 @@
+#include "vcc2.h"
+
+#ifdef VERIFY
+typedef _Bool bool;
+ispure bool is_zero(int n)
+  ensures(result == (n == 0));
+
+frameaxiom bool is_zerop(int *n)
+  reads(n)
+  ensures(result == (*n == 0));
+
+no_reads_check
+frameaxiom bool wont_tell(int *n)
+  reads(n);
+#endif
+
+void foo()
+{
+  assert (is_zero(0));
+  assert (!is_zero(1));
+}
+
+void bar()
+{
+  int x, y;
+  int *px = &x;
+  int *py = &y;
+
+  *px = 0;
+  assert (is_zerop(px));
+  *py = 1;
+  assert (is_zerop(px));
+}
+
+void baz()
+{
+  int x, y;
+  int *px = &x;
+  int *py = &y;
+
+  assume (wont_tell(px));
+  *py = 1;
+  assert (wont_tell(px));
+}
+
+struct A {
+  int x, y;
+};
+
+spec( no_reads_check frameaxiom bool wont_tell_A(struct A *a) reads(a); )
+spec( no_reads_check ispure bool wont_tell_nf(struct A *a) reads(a); )
+
+void mux(struct A *a)
+  requires(wrapped(a) && wont_tell_A(a))
+{
+  int x;
+  int *px = &x;
+
+  *px = 12;
+  assert(wont_tell_A(a));
+}
+
+void mux_Fail1(struct A *a)
+  requires(wrapped(a) && wont_tell_nf(a))
+{
+  int x;
+  int *px = &x;
+
+  *px = 12;
+  assert(wont_tell_nf(a));
+}
+
+void write_A(struct A *a)
+  writes(a);
+
+void mux_Fail2(struct A *a, struct A *b)
+  requires(wrapped(b) && wrapped(a) && wont_tell_A(a))
+  writes(b)
+{
+  write_A(b);
+  assert(wont_tell_A(a));
+}
+
+
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+Verification of mux succeeded.
+Verification of mux_Fail1 failed.
+testcase(70,12) : error VC9500: Assertion 'wont_tell_nf(a)' did not verify.
+Verification of mux_Fail2 failed.
+testcase(81,12) : error VC9500: Assertion 'wont_tell_A(a)' did not verify.
+Verification of is_zerop#reads succeeded.
+`
+#include <vcc2test.h>
+
+// TODO we want a better error message for that
+ispure
+void donothing_pure_fail()
+{
+  int *p = malloc(sizeof(int));
+  *p = 20;
+}
+`
+(7): verification: command assigns to a global variable that is not in the enclosing method's modifies clause: $s
+(0): verification: command assigns to a global variable that is not in the enclosing method's modifies clause: $s
+`
+#include <vcc2test.h>
+
+void donothing_nonpure();
+
+ispure
+void donothing_pure()
+{
+  int x = 0;
+  x++;
+  x++;
+}
+
+
+void t1(int *x)
+{
+  donothing_pure();
+  assert(old(emb(x)) == emb(x));
+}
+
+void t1_fail(int *x)
+{
+  donothing_nonpure();
+  assert(old(emb(x)) == emb(x));
+}
+
+void t1_failAlso(int *x)
+{
+  donothing_nonpure();
+  assert(old(emb(x)) != emb(x));
+}
+`
+Verification of donothing_pure succeeded.
+Verification of t1 succeeded.
+Verification of t1_fail failed.
+testcase(23,12) : error VC9500: Assertion '__old(_vcc_emb(x)) == _vcc_emb(x)' did not verify.
+Verification of t1_failAlso failed.
+testcase(29,12) : error VC9500: Assertion '__old(_vcc_emb(x)) != _vcc_emb(x)' did not verify.
+`
+#include <vcc2test.h>
+
+ispure
+void donothing_pure_fail(int *x)
+  writes(x)
+{
+}
+`
+testcase(3,1) : error VC9623: writes specified on a pure function
+`
+#include <vcc2.h>
+
+int f1(int x);
+
+ispure int f2(int x)
+{
+  return f1(x);
+}
+ispure int g1(int x) { return g2(x); }
+ispure int g2(int x) { return g3(x); }
+ispure int g3(int x) { return g1(x); }
+
+// there should be no error for this one
+ispure int g0(int x) { return g2(x); }
+
+`
+testcase(5,1) : error VC9637: the pure function 'f2' calls 'f1' which is not pure
+testcase(3,1)-(3,14) : (Location of symbol related to previous error.)
+testcase(9,1) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g1 -> g2 -> g3 -> g1
+testcase(10,1) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g2 -> g3 -> g1 -> g2
+testcase(11,1) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g3 -> g1 -> g2 -> g3
+`
+#include <vcc2.h>
+
+ispure int f1(int *x)
+  reads(x);
+
+ispure int f2(int *x)
+  reads(x);
+
+ispure int f3(int *x)
+  reads(x);
+
+ispure int f4(int *x)
+  reads(x);
+
+ispure int f5(int *x)
+  reads(x);
+
+ispure int f6(int *x)
+  reads(x);
+
+#ifdef VERIFY
+reads_check(f1)
+reads_check(f2)
+void reads_f12()
+{
+  reads_havoc();
+}
+
+
+reads_check(f3)
+void reads_f3_1()
+{
+  reads_havoc();
+}
+
+reads_check(f3)
+void reads_f3_2()
+{
+  reads_havoc();
+}
+
+reads_check(f4)
+void reads_f4(short *y)
+{
+  reads_havoc();
+}
+
+reads_check(f5)
+void reads_f5(int *x, short *y)
+{
+  reads_havoc();
+}
+
+
+
+reads_check(szczebrzyszczykiewicz)
+void reads_szczebrzyszczykiewicz()
+{
+  reads_havoc();
+}
+#endif
+`
+testcase(56,1) : error VC9643: function 'szczebrzyszczykiewicz' is nowhere to be found (for reads check)
+testcase(22,1) : error VC9639: function 'reads_f12' pretends to be several read checks at once
+testcase(36,1) : warning VC9105: reads check for 'f3' specified multiple times
+testcase(30,1) : warning VC9105: (this is the first one)
+testcase(42,1) : error VC9642: the reads check and function checked differ on type of parameter 'y'
+testcase(12,1)-(12,76) : (Location of symbol related to previous error.)
+testcase(48,1) : error VC9641: the reads check and the function checked have different number of parameters
+testcase(15,1)-(15,76) : (Location of symbol related to previous error.)
+`
+#include <vcc2.h>
+
+ispure int f1(int *x)
+  returns(*x)
+  reads(x);
+
+ispure int f2(int *x)
+  returns(*x)
+  reads(x);
+
+ispure int f3(int *x)
+  returns(*x)
+  reads(x);
+
+#ifdef VERIFY
+reads_check(f1)
+void reads_f1()
+{
+  reads_havoc();
+}
+
+
+reads_check(f2)
+void reads_f2(int *x)
+{
+  reads_havoc();
+}
+
+
+reads_check(f3)
+void reads_f3(int *y)
+{
+  reads_havoc();
+}
+
+
+#endif
+`
+Verification of reads_f1 succeeded.
+Verification of reads_f2 succeeded.
+Verification of reads_f3 succeeded.
+`
+#include <vcc2.h>
+
+ispure int f1(int *x)
+  returns(*x == 0)
+  reads(x);
+
+ispure int f2(int *x, int *y)
+  returns(*x == *y)
+  reads(x);
+
+void fux()
+{
+  int y,y2;
+  int x = f1(&y);
+  int z = f2(&y,&y2);
+}
+`
+Verification of fux succeeded.
+Verification of f2#reads failed.
+testcase(7,1) : error VC8007: the value of 'result' changed (in reads check of 'f2').
+Verification of f1#reads succeeded.
+`
+#include <vcc2.h>
+
+ispure int f1(void *x)
+  reads(x);
+
+spec(
+ispure int f2(obj_t x)
+  reads(x);
+)
+
+ispure int f3(int *x)
+  reads(owns(x));
+
+void fux()
+{
+  int y;
+  f1(&y);
+  speconly( f2(&y); )
+  f3(&y);
+}
+`
+testcase(12,11) : error VC9648: non-pointers are not supported in reads clauses
+testcase(6,107) : error VC9647: void* and obj_t are not supported in reads clauses
+testcase(4,11) : error VC9647: void* and obj_t are not supported in reads clauses
+`
+#include <vcc2.h>
+
+ispure int f1(int *x)
+  reads(x);
+
+spec(
+reads_check(f1)
+void r_f1(int *x);
+)
+
+void fux()
+{
+  int y;
+  speconly( r_f1(&y); )
+}
+`
+testcase(6,1) : error VC9646: the reads check is required to have a body
+`
+#include <vcc2.h>
+
+ispure int f1(int *x)
+  returns(*x == 0)
+  reads(x);
+
+spec(
+reads_check(f1)
+void r_f1(int *x)
+{
+  reads_havoc();
+}
+)
+
+void fux()
+{
+  int y;
+  speconly( r_f1(&y); )
+}
+`
+Verification of r_f1 succeeded.
+Verification of fux failed.
+testcase(18,44) : error VC8005: intercepted call to reads check (in call 'r_f1(&y)').
+`
+#include <vcc2.h>
+
+// should fail, no contract
+frameaxiom ispure int f1(int *x)
+  reads(x);
+
+// OK, assuming frameaxiom of f1
+frameaxiom ispure int f2(int *x)
+  returns(f1(x))
+  reads(x);
+
+`
+Verification of f2#reads succeeded.
+Verification of f1#reads failed.
+testcase(4,1) : error VC8007: the value of 'result' changed (in reads check of 'f1').
+`
+#include "vcc2.h"
+
+struct A {
+  int x;
+  int y;
+};
+
+ispure bool f1(struct A*a)
+  reads(a)
+  returns(a->x < a->y);
+
+struct B {
+  struct A *a;
+  invariant(keeps(a))
+};
+
+ispure bool f2(struct B*b)
+  reads(b)
+  returns(b->a->x < b->a->y);
+
+typedef unsigned __int64 uint64;
+struct CONC {
+    int a;
+    uint64   GPR[16];
+    uint64   RIP;
+ uint64  DebugR[8];
+};
+typedef struct X64_Core{
+    uint64   R[16];     // general-purpose registers
+    uint64   RIP;       // instruction pointer
+ uint64  DR[8];  // debug registers
+} X64_Core;
+struct ABS {
+    int a;
+ int c;
+ struct X64_Core core;
+ invariant(keeps(&this->core))
+};
+ 
+#ifdef VERIFY
+ispure
+bool AbsConcRel(struct ABS *abs, struct CONC *conc)
+ reads(abs, conc)
+ returns(abs->a == conc->a &&
+      abs->core.RIP == conc->RIP &&
+   forall(uint64 i; i < 16 ==> abs->core.R[i] == conc->GPR[i]) &&
+   forall(uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i])
+   );
+#endif
+`
+Verification of B#adm succeeded.
+Verification of ABS#adm succeeded.
+Verification of AbsConcRel#reads succeeded.
+Verification of f2#reads succeeded.
+Verification of f1#reads succeeded.
+`
+#include "vcc2.h"
+
+struct ArrayList{
+    size_t capacity;
+    size_t length;
+    int *array;
+
+};
+
+ispure 
+size_t Length(struct ArrayList * A)
+    reads(A)
+    requires (wrapped(A))
+    ensures (result == A->length)
+{
+    return A->length;
+}
+`
+Verification of Length succeeded.
+Verification of Length#reads succeeded.
+`
+#include "vcc2.h"
+
+ispure bool Length(int *x)
+    ensures (result == *x > 0);
+
+void foo()
+{
+  int x;
+  assert(Length(&x));
+}
+`
+testcase(3,1) : error VC9650: the specification refers to memory, but function is missing a reads clause
+`
+#include <vcc2.h>
+
+struct IN {
+  int d0;
+  int d1;
+  int d2;
+};
+
+struct A {
+  int x;
+  int y;
+};
+
+struct B {
+  struct A a;
+  int z;
+};
+
+ispure
+struct A ok1(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.x == x->d0 && result.y == x->d0)
+  reads(x);
+
+ispure
+struct A fail1(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.x == x->d0)
+  reads(x);
+
+ispure
+struct B ok2(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.a.x == x->d0 && result.a.y == x->d0 && result.z == x->d0)
+  reads(x);
+
+ispure
+struct B fail2(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.a.x == x->d0 && result.a.y == x->d0)
+  reads(x);
+
+ispure
+struct B fail3(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.a.y == x->d0 && result.z == x->d0)
+  reads(x);
+`
+Verification of fail3#reads failed.
+testcase(43,1) : error VC8007: the value of 'result.a.x' changed (in reads check of 'fail3').
+Verification of fail2#reads failed.
+testcase(37,1) : error VC8007: the value of 'result.z' changed (in reads check of 'fail2').
+Verification of ok2#reads succeeded.
+Verification of fail1#reads failed.
+testcase(25,1) : error VC8007: the value of 'result.y' changed (in reads check of 'fail1').
+Verification of ok1#reads succeeded.
+`
+#include <stdlib.h>
+#include "vcc2.h"
+
+
+
+
+typedef unsigned int UINT32;
+
+typedef struct itype_instr_t {
+    int simm16:16;
+    unsigned rd:5;
+    unsigned rs1:5;
+    unsigned opc:6;
+} itype_instr_t;
+
+typedef struct rtype_instr_t {
+    unsigned fu:6;
+    unsigned sa:5;
+    unsigned rd:5;
+    unsigned rs2:5;
+    unsigned rs1:5;
+    unsigned opc:6;
+} rtype_instr_t;
+
+typedef struct jtype_instr_t {
+    int simm26:26;
+    unsigned opc:6;
+} jtype_instr_t;
+
+typedef union instr_t {
+    rtype_instr_t rtype;
+    itype_instr_t itype;
+    jtype_instr_t jtype;
+    backing_member UINT32 uint32;
+} instr_t;
+
+typedef struct proc_t {
+    UINT32 gpr[32];    /* general-purpose register file */
+    UINT32 spr[17];    /* special-purpose register file */
+    UINT32 dpc;        /* delayed program counter */
+    UINT32 pcp;        /* (primed) program counter */
+} proc_t;
+
+
+spec(ispure instr_t Mem2Instr(proc_t *proc)	
+     //reads(&proc->gpr[0])
+     reads(proc)
+     ensures(result.uint32 == proc->gpr[0])
+    ;
+)
+`
+Verification of Mem2Instr#reads succeeded.
+`
+#include <vcc2.h>
+
+struct S {
+	int a;
+	int b;
+	invariant(a == b)
+};
+
+ispure
+void Validate(struct S *p)
+  requires(wrapped(p))
+{
+  assert(p->a == p->b);
+}
+
+ispure int GetA(struct S *p)
+  requires(wrapped(p))
+  reads(&p->a)
+  ensures(result == p->a)
+{
+  Validate(p);
+  return p->a;
+}
+`
+Verification of S#adm succeeded.
+Verification of Validate succeeded.
+Verification of GetA succeeded.
+Verification of GetA#reads succeeded.
+`
+#include "vcc2.h"
+ispure void f(int *a);
+ispure void g(int *a) reads(a);
+
+void foo() {
+  int i = 10;
+  g(&i);
+}
+`
+Verification of foo succeeded.
+`

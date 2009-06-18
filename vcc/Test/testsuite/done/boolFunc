@@ -1,0 +1,13 @@
+#include <vcc2.h>
+
+ispure bool f();
+
+bool bar() 
+  ensures(result == f())
+{
+  return f();
+}
+
+`
+Verification of bar succeeded.
+`

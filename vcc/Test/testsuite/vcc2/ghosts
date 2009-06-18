@@ -1,0 +1,45 @@
+#include "vcc2.h"
+
+struct A {
+  int a;
+  spec( int b; )
+  invariant (this->a + this->b > 0)
+};
+
+void f2(struct A *a)
+  requires(wrapped(a) && a->a < 1000 )
+  writes(a)
+{
+  assert(sizeof(struct A) == sizeof(int));
+
+  unwrap(a);
+    speconly( a->b = a->b - 1;)
+    a->a = a->a + 1;
+  wrap(a);
+}
+`
+Verification of A#adm succeeded.
+Verification of f2 succeeded.
+`
+struct Acct {
+  __specification volatile int baz;
+};
+`
+testcase(1,1) : error VC9620: need at least one physical field in structure, got only spec fields
+`
+#include <vcc2test.h>
+
+void foo(unsigned int x)
+  requires(x > 0 && x < 1000)
+{
+  speconly(
+    spec(ptrset *p = malloc(x*sizeof(ptrset));)
+    assert((char*)(p + 1) - (char*)p == 1);
+    p[x + 1] = set_empty();
+  )
+
+}
+`
+Verification of foo failed.
+testcase(9,5) : error VC8507: Assertion 'p[x + 1] is writable' did not verify.
+`

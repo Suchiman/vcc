@@ -1,0 +1,344 @@
+#include "vcc2.h"
+#ifdef VERIFY
+struct vcc(dynamic_owns) S { int a; obj_t b;};
+void foo(struct S *s) requires(wrapped(s)) {
+    assume(set_in(s->b,owns(s)));
+    assert(owner(s->b) == s);
+}
+void foo2(struct S *s) requires(wrapped(s)) {
+    assume(set_in(s->b,owns(s)));
+    assume(is_non_primitive_ptr(s->b));
+    assert(owner(s->b) == s);
+}
+
+void t()
+{
+  struct S s;
+  assert(is_non_primitive_ptr(&s));
+}
+void t2()
+{
+  int x;
+  assert(is_non_primitive_ptr(&x));
+}
+#endif
+`
+Verification of foo failed.
+testcase(6,14) : error VC9500: Assertion '_vcc_owner(s->b) == s' did not verify.
+Verification of foo2 succeeded.
+Verification of t succeeded.
+Verification of t2 failed.
+testcase(22,12) : error VC9500: Assertion '_vcc_is_non_primitive_ptr(&x)' did not verify.
+`
+#include <vcc2.h>
+
+bool _vcc_full_stop();
+
+struct foo {
+  int x;
+  invariant(_vcc_full_stop())
+  invariant(x > 0)
+};
+`
+Verification of foo#adm failed.
+testcase(7,15) : error VC8012: invariant(_vcc_full_stop()) of foo is not admissible.
+testcase(7,15) : error VC8018: invariant(_vcc_full_stop()) of foo forbids unwrapping.
+`
+#include "vcc2.h"
+
+typedef unsigned __int64 uint64;
+
+void testme(uint64* p)
+  requires(typed(p))
+  requires(thread_local(p))
+  requires(mutable((uint64*)(*p)))
+  writes((uint64 *)*p)
+{
+
+    *((uint64*)(*p)) = 5;
+}
+`
+Verification of testme succeeded.
+`
+#include "vcc2.h"
+
+struct x {
+  int dummy;
+};
+
+struct y {
+  int dummy;
+  struct x *xp;
+  invariant(closed(xp)) 
+};
+`
+Verification of y#adm failed.
+testcase(10,15) : error VC8012: invariant(_vcc_closed(xp)) of y is not admissible.
+`
+#include <vcc2.h>
+
+struct vcc(volatile_owns) Foo {
+  int x;
+};
+
+struct vcc(dynamic_owns) FooNV {
+  int x;
+};
+
+struct Baz { int x; };
+
+struct Bar {
+  struct Foo foo;
+  struct Baz baz;
+
+  invariant(keeps(&foo))
+  invariant(set_in(&baz, owns(&foo)))
+};
+
+struct BarOK {
+  struct FooNV foo;
+  struct Baz baz;
+
+  invariant(keeps(&foo))
+  invariant(set_in(&baz, owns(&foo)))
+};
+`
+Verification of Bar#adm failed.
+testcase(18,15) : error VC8012: invariant(_vcc_set_in(&baz,_vcc_owns(&foo))) of Bar is not admissible.
+Verification of BarOK#adm succeeded.
+`
+#include <vcc2.h>
+
+void bar(unsigned i) {
+   spec(bool map[unsigned];) 
+   speconly(map = (lambda(unsigned j; true; (bool) ((i==j)? true: (map[j]))));)
+}
+`
+Verification of bar succeeded.
+`
+#include <vcc2.h>
+
+void bar(unsigned i) {
+   spec(bool map[unsigned];) 
+   speconly(map = (lambda(unsigned j; true; (bool) ((i==j)? 1: (map[j]))));)
+}
+`
+testcase(5,91) : error VC0000: Type of conditional expression cannot be determined because there are implicit conversions between '__int32' and 'bool'; try adding an explicit cast to one of the arguments.
+`
+#include "vcc2.h"
+
+typedef struct _FOO
+{
+	int dummy;
+	spec(bool Map[AAA];)
+	invariant(Map[dummy])
+} FOO;
+
+
+isadmissibilitycheck 
+void funcname(FOO *p)
+{ 
+	havoc_others(p);
+}
+
+`
+testcase(6,27) : error VC0000: The name 'AAA' does not exist in the current context.
+`
+
+#include <vcc2.h>
+
+typedef struct vcc(volatile_owns) key{
+  int data;
+  invariant(unchanged(owns(this)) || (data == 0))
+} key;
+`
+Verification of key#adm succeeded.
+`
+
+#include <vcc2.h>
+
+struct S {
+    unsigned dummy;
+};
+
+vcc(dynamic_owns) struct _Foo
+{
+    struct S c;
+    struct S arr[10];
+};
+`
+testcase(8,1) : warning VC0000: Verification type attributes placed at this location are currently ignored; place them between the struct/union keyword and the type name.
+`
+#include "vcc2.h"
+struct X {
+    int dummy;
+    invariant(closed(&this))
+};
+`
+testcase(4,29) : error VC0000: '&' requires l-value
+`
+#include "vcc2.h"
+
+typedef __int64 int64;
+typedef unsigned __int64 uint64;
+
+struct {
+    uint64 R[16];            
+} core;
+
+void foo() {
+    int64 a;
+    uint64 b;
+
+    a = (int64)(core.R[12]) < 0;
+}
+`
+Verification of foo failed.
+testcase(14,17) : error VC8512: Assertion 'core.R[12] is thread local' did not verify.
+testcase(14,17) : error VC8518: Assertion 'core.R[12] fits range of int64_t' did not verify.
+`
+
+#include <vcc2.h>
+
+static void notJustForFun (
+    unsigned char *lo,
+    unsigned char *hi,
+    unsigned int width
+    )
+requires(is_thread_local_array(lo, (1u << 31) + 10u))
+requires(lo+width == hi)
+requires(width == (1u << 31) + 1)
+{
+
+	hi = hi - width;
+	assert(hi == lo);
+}
+`
+Verification of notJustForFun succeeded.
+`
+
+struct bla {
+  int dummy;
+};
+
+void bla(struct bla o) 
+{
+}
+`
+Verification of bla succeeded.
+`
+#include <vcc2.h>
+
+struct VS {
+  spec(volatile obj_t yappr;)
+  int x;
+};
+
+void foo2(struct VS *vs)
+{
+  assert(skip_wf(vs->yappr == vs->yappr));
+}
+`
+Verification of foo2 succeeded.
+`
+
+#include <vcc2.h>
+
+void foo(bool a, bool b) 
+  requires(a && !b)
+{
+  assert(b <== b);
+  assert(a <== b);
+  assert(a <== a);
+  assert(!(b <== a));
+  assert(b <== b <== a);
+  assert(a <== b <== a);
+  assert(b <== a <== b);
+  assert(a <== a <== b);
+  assert(!(b <== a <== a));
+  assert(a <== a <== a);
+  assert(a <== b <== b);
+  assert(b <== b <== b);
+  assert(!(a <== a ==> b));
+  assert(!((a <== a) ==> b));
+  assert(a <== (a ==> b));
+}
+`
+Verification of foo succeeded.
+`
+
+#include <vcc2.h>
+
+void foo() {
+  assert(forall(int i; i != 0 ==> forall(int i; i != 0)));
+}
+`
+testcase(5,48) : error VC9675: Quantified variable 'i' clashes with earlier declaration
+`
+
+#include <vcc2.h>
+
+void foo() {
+  spec(bool m[int];)
+  speconly(m[(void *)0] = true;)
+}
+`
+testcase(6,45) : error VC0000: Cannot implicitly convert type 'void*' to '__int32'.
+`
+void foo()
+{
+  int x, *p;
+  __assert(*x == 2);
+}
+`
+testcase(4,12) : error VC0000: Illegal indirection.
+`
+#include "vcc2.h"
+
+struct Foo {
+    def_group(g)
+    int a;
+    def_group(g)
+    int b;
+};
+
+void foo(struct Foo *s) {}
+`
+testcase(6,5) : error VC9678: 'g' : group name redefinition
+testcase(4,5)-(4,67) : (Location of symbol related to previous error.)
+`
+#include "vcc2.h"
+
+struct Foo {
+    int a;
+    int a;
+};
+
+void foo(struct Foo *s) {}
+`
+testcase(5,5) : error VC9677: 'a' : 'struct' member redefinition
+testcase(4,5)-(4,10) : (Location of symbol related to previous error.)
+`
+#include "vcc2.h"
+
+struct Foo {
+    int a;
+    spec(int a;)
+};
+
+void foo(struct Foo *s) {}
+`
+testcase(5,5) : error VC9677: 'a' : 'struct' member redefinition
+testcase(4,5)-(4,10) : (Location of symbol related to previous error.)
+`#include <vcc2test.h>
+
+struct vcc(dynamic_owns) F { int x; };
+
+void f(struct F *f)
+  maintains(wrapped(f))
+{
+  assert(! set_in((struct F*)NULL, owns(f)));
+}
+`
+Verification of f succeeded.
+`

@@ -1,0 +1,256 @@
+
+#include <vcc2.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+void foo() {
+  struct S s = { .a = 5, .b = 10 };
+  assert(s.a == 5);
+  assert(s.b == 10);
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+void foo() {
+  struct S s = { .b = 10, .a = 5  };
+  assert(s.a == 5);
+  assert(s.b == 10);
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+struct S {
+  int a;
+};
+
+void foo() {
+  spec(struct S s = { .b = 10, .a = 5  };)
+  assert(s.a == 5);
+}
+`
+testcase(8,35) : error VC0000: 'S' does not contain a definition for 'b'.
+`
+
+
+#include <vcc2.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+int foo(struct S s) 
+  ensures(result == s.a + s.b);
+  
+void bar() {
+  int x = foo( (struct S) { .a = 10, .b = 20 } );
+  assert(x == 30);
+}
+`
+Verification of bar succeeded.
+`
+
+#include <vcc2.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+int foo(struct S s) 
+  ensures(result == s.a + s.b);
+  
+void bar() {
+  struct S s = { .a = 10, .b = 20 };
+  int x = foo( s / { .b = 5 });
+  assert(x == 15);
+}
+
+`
+Verification of bar succeeded.
+`
+#include <vcc2.h>
+
+struct vcc(record) S {
+  int a;
+  int b;
+};
+
+spec(struct S foo(struct S s0) 
+  ensures(result == s0 / { .a = 10 })
+{
+  return s0 / { .a = 10 };
+}
+)
+
+void bar() {
+  spec(struct S s = { 1, 2 };)
+  speconly(s = foo(s);)
+  assert(s.a == 10);
+  assert(s.b == 2);
+}
+
+void baz(struct S s)
+{
+  assert(s.a <= 0x7fffffff);
+}
+
+
+spec(struct S foo2(int k, struct S s0) 
+  ensures(result == (k ? s0 / { .a = 10 } : s0 / { .b = 10 }))
+{
+  if (k)
+    return s0 / { .a = 10 };
+  else
+    return s0 / { .b = 10 };
+}
+)
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+Verification of foo2 succeeded.
+`
+#include <vcc2.h>
+
+struct vcc(record) S {
+  int a;
+  int b;
+};
+
+spec(struct S foo(struct S s0) 
+  ensures(result == s0 / { .a = 11 })
+{
+  return s0 / { .a = 10 };
+}
+)
+
+void bar() {
+  spec(struct S s = { 1, 2 };)
+  speconly(s = foo(s);)
+  assert(s.a == 10);
+  assert(s.b == 2);
+}
+
+void baz(struct S s)
+{
+  assert(s.a <= 0x7ffffff0);
+}
+
+
+spec(struct S foo2(int k, struct S s0) 
+  ensures(result == (k ? s0 / { .a = 10 } : s0 / { .b = 10 }))
+{
+  if (k)
+    return s0 / { .a = 10 };
+  else
+    return s0 / { .a = 10 };
+}
+)
+`
+Verification of foo failed.
+testcase(8,83) : error VC9501: Post condition 'result == s0 / { .a = 11 }' did not verify.
+testcase(8,53) : error VC9599: (related information) Location of post condition.
+Verification of bar failed.
+testcase(18,12) : error VC9500: Assertion 's.a == 10' did not verify.
+Verification of baz failed.
+testcase(24,12) : error VC9500: Assertion 's.a <= 0x7ffffff0' did not verify.
+Verification of foo2 failed.
+testcase(28,153) : error VC9501: Post condition 'result == (k ? s0 / { .a = 10 } : s0 / { .b = 10 })' did not verify.
+testcase(28,61) : error VC9599: (related information) Location of post condition.
+`
+#include <vcc2test.h>
+
+struct A {
+  int z;
+};
+
+spec(
+struct vcc(record) S {
+  int dummy;
+  struct A *a;
+  int b;
+  obj_t o;
+  int map[int];
+};
+)
+
+spec(struct S foo(struct A *a, struct S s0) 
+  ensures(result == s0 / { .a = a })
+{
+  return s0 / { .a = a };
+}
+)
+
+void bar() {
+  spec(struct S s = { 1 };)
+  struct A a;
+
+  assert(s.a == NULL);
+  assert(s.b == 0);
+
+  speconly(s = foo(&a, s);)
+  assert(s.a == &a);
+  assert(s.b == 0);
+
+  speconly( s = s / { .o = &a }; )
+  assert(s.o == &a);
+
+  speconly( s.map = lambda(int x; true; x + 1); )
+  assert(s.map[2] == 3);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc2test.h>
+
+spec(
+struct vcc(record) S {
+  int a;
+  int b;
+};
+)
+
+spec(
+struct vcc(record) T {
+  struct S s;
+  int c;
+};
+)
+
+void bar() {
+  spec(struct T t;)
+
+  speconly(
+    t.c = 10;
+    t.s.a = 20;
+    t.s.b = 21;
+
+    assert(t.c == 10);
+    assert(t.s.a == 20);
+    assert(t.s.b == 21);
+
+    t = t / { .s = t.s / { .b = 30 } };
+    t = t / { .c = 20 };
+
+    assert(t.s.b == 30);
+    assert(t.c == 20);
+    assert(t.s.a == 20);
+  )
+}
+`
+Verification of bar succeeded.
+`

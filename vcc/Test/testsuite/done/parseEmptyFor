@@ -1,0 +1,8 @@
+#include <vcc2.h>
+
+void foo() {
+  for(;;) { }
+}
+`
+Verification of foo succeeded.
+`
