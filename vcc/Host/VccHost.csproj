@@ -184,7 +184,7 @@ set PATH=%25PATH%25;C:\Program Files (x86)\Microsoft
 
 editbin /nologo /STACK:0x2000000 $(TargetPath)
 editbin /nologo /STACK:0x2000000 $(ProjectDir)obj\$(ConfigurationName)\$(TargetFileName)
-sn -q -R  $(TargetPath) $(SolutionDir)\vcc\Common\InterimKey.snk
-sn -q -R  $(ProjectDir)obj\$(ConfigurationName)\$(TargetFileName) $(SolutionDir)\vcc\Common\InterimKey.snk</PostBuildEvent>
+sn -q -R  $(TargetPath) $(ProjectDir)\..\Common\InterimKey.snk
+sn -q -R  $(ProjectDir)obj\$(ConfigurationName)\$(TargetFileName) $(ProjectDir)\..\Common\InterimKey.snk</PostBuildEvent>
   </PropertyGroup>
 </Project>
