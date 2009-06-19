@@ -244,12 +244,17 @@ namespace Microsoft.Research.Vcc
         methodVerificationTime = 0;
         double startTime = GetTime();
 
-        foreach (FileInfo fi in new DirectoryInfo(fileName).GetFiles("*", SearchOption.AllDirectories)) {
+        foreach (FileInfo fi in new DirectoryInfo(fileName).GetFiles("*", SearchOption.TopDirectoryOnly)) {
           if (fi.Name.StartsWith(".")) continue;
           if (fi.Name.Contains(vccSplitSuffix)) continue;
           if (fi.Extension == ".i" || fi.Extension == ".bpl" || fi.Extension == ".h") continue;
           if (!Vcc2CommandLineHost.RunTestSuite(fi.DirectoryName, fi.Name, new StreamReader(fi.Open(FileMode.Open, FileAccess.Read)), !fi.DirectoryName.Contains("WithErrors")))
             errorCount++;
+        }
+
+        foreach (DirectoryInfo di in new DirectoryInfo(fileName).GetDirectories("*", SearchOption.TopDirectoryOnly)) {
+          if (di.Name.StartsWith(".")) continue;
+          RunTestSuite(di.FullName, commandLineOptions);
         }
 
         double now = GetTime();
