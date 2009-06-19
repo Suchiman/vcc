@@ -92,11 +92,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\cci\Metadata\Sources\MetadataHelper\MetadataHelper.csproj">
-      <Project>{37ADB61C-81C0-4A19-B62E-17EA87A7A7C4}</Project>
+      <Project>{4A34A3C5-6176-49D7-A4C5-B2B671247F8F}</Project>
       <Name>MetadataHelper</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\cci\Metadata\Sources\MetadataModel\MetadataModel.csproj">
-      <Project>{30BA52C0-FF76-4469-8683-070978C5958E}</Project>
+      <Project>{33CAB640-0D03-43DF-81BD-22CDC6C0A597}</Project>
       <Name>MetadataModel</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\cci\Sources\AstsProjectedAsCodeModel\AstsProjectedAsCodeModel.csproj">

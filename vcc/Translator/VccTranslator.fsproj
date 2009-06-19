@@ -51,27 +51,6 @@
       <HintPath>..\Boogie\Graph.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Cci.AstsProjectedAsCodeModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
-      <Name>Microsoft.Cci.AstsProjectedAsCodeModel</Name>
-      <AssemblyName>Microsoft.Cci.AstsProjectedAsCodeModel.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.AstsProjectedAsCodeModel.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Cci.CodeModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
-      <Name>Microsoft.Cci.CodeModel</Name>
-      <AssemblyName>Microsoft.Cci.CodeModel.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.CodeModel.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Cci.SourceModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
-      <Name>Microsoft.Cci.SourceModel</Name>
-      <AssemblyName>Microsoft.Cci.SourceModel.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Cci.SourceModel.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="AIFramework, Version=1.0.11015.0, Culture=neutral, PublicKeyToken=null">
       <Name>AIFramework</Name>
       <AssemblyName>AIFramework.dll</AssemblyName>
@@ -91,20 +70,6 @@
       <AssemblyName>Core.dll</AssemblyName>
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Boogie\Core.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Research.Vcc.CodeModel, Version=0.0.0.2, Culture=neutral, PublicKeyToken=null">
-      <Name>Microsoft.Research.Vcc.CodeModel</Name>
-      <AssemblyName>Microsoft.Research.Vcc.CodeModel.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\CodeModel2Vcc\bin\$(Configuration)\Microsoft.Research.Vcc.CodeModel.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Research.Vcc.CodeModelHelper, Version=0.0.0.2, Culture=neutral, PublicKeyToken=null">
-      <Name>Microsoft.Research.Vcc.CodeModelHelper</Name>
-      <AssemblyName>Microsoft.Research.Vcc.CodeModelHelper.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Research.Vcc.CodeModelHelper.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Compiler.Framework, Version=1.0.20411.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
@@ -135,13 +100,6 @@
       <HintPath>..\Boogie\VCGeneration.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Research.Vcc.Core, Version=0.0.0.2, Culture=neutral, PublicKeyToken=736440c9b414ea16">
-      <Name>Microsoft.Research.Vcc.Core</Name>
-      <AssemblyName>Microsoft.Research.Vcc.Core.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\CodeModel2VccHelper\bin\$(Configuration)\Microsoft.Research.Vcc.Core.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
@@ -152,6 +110,38 @@
     <Compile Include="..\Common\Include\version.fs">
       <Link>version.fs</Link>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\cci\Metadata\Sources\SourceModel\SourceModel.csproj">
+      <Name>SourceModel</Name>
+      <Project>{4b0054fd-124a-4037-9965-bdb55e6bf389}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Sources\AstsProjectedAsCodeModel\AstsProjectedAsCodeModel.csproj">
+      <Name>AstsProjectedAsCodeModel</Name>
+      <Project>{15ff2982-ebd1-45dc-8fdf-4d901236e3d9}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\cci\Sources\CodeModel\CodeModel.csproj">
+      <Name>CodeModel</Name>
+      <Project>{035fea7f-0d36-4ae4-b694-ec45191b9af2}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\CodeModel2VccHelper\CodeModel2VccHelper.csproj">
+      <Name>CodeModel2VccHelper</Name>
+      <Project>{b2144fb2-68ad-4f94-b53e-dccf827115c8}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\CodeModel2Vcc\CodeModel2Vcc.fsproj">
+      <Name>CodeModel2Vcc</Name>
+      <Project>{ab567043-8047-4cb4-863c-f7fbab4e239a}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Core\VccCore.csproj">
+      <Name>VccCore</Name>
+      <Project>{b855d039-8a27-419d-9a81-86ff93227e31}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\FSharp\1.0\Microsoft.FSharp.Targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
