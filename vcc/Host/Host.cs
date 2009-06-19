@@ -245,6 +245,7 @@ namespace Microsoft.Research.Vcc
         double startTime = GetTime();
 
         foreach (FileInfo fi in new DirectoryInfo(fileName).GetFiles("*", SearchOption.AllDirectories)) {
+          if (fi.Name.StartsWith(".")) continue;
           if (fi.Name.Contains(vccSplitSuffix)) continue;
           if (fi.Extension == ".i" || fi.Extension == ".bpl" || fi.Extension == ".h") continue;
           if (!Vcc2CommandLineHost.RunTestSuite(fi.DirectoryName, fi.Name, new StreamReader(fi.Open(FileMode.Open, FileAccess.Read)), !fi.DirectoryName.Contains("WithErrors")))
