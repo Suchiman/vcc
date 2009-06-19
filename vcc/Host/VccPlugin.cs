@@ -7,7 +7,7 @@ using Microsoft.Boogie.AbstractInterpretation;
 
 namespace Microsoft.Research.Vcc
 {
-  class Vcc2FunctionVerifier : FunctionVerifier
+  class VccFunctionVerifier : FunctionVerifier
   {
     Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls;
     Vcc2Plugin parent;
@@ -31,7 +31,7 @@ namespace Microsoft.Research.Vcc
       //"/noinfer",  
     };
         
-    internal Vcc2FunctionVerifier(Vcc2Plugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, Helper.Env env)
+    internal VccFunctionVerifier(Vcc2Plugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, Helper.Env env)
       : base(env, currentDecls)
     {
       this.currentDecls = currentDecls;
@@ -95,7 +95,7 @@ namespace Microsoft.Research.Vcc
 
     public override VerificationResult Verify(string funcName)
     {
-      double start = Vcc2CommandLineHost.GetTime();
+      double start = VccCommandLineHost.GetTime();
 
       if (parent.options.AggressivePruning) {
         var decls = TransUtil.pruneBy(env, funcName, currentDecls);
@@ -130,7 +130,7 @@ namespace Microsoft.Research.Vcc
 
       string logPath = CommandLineOptions.Clo.SimplifyLogFilePath;
       if (logPath != null)
-        logPath = logPath.Replace("@VCCFILE@", Vcc2CommandLineHost.currentTestcaseName);
+        logPath = logPath.Replace("@VCCFILE@", VccCommandLineHost.currentTestcaseName);
       if (logPath != null && logPath.Contains("@VCCFUNC@")) {
         logPath = logPath.Replace("@VCCFUNC@", funcName.Replace("$", "_").Replace("^", "_"));
         CloseVcGen();
@@ -139,7 +139,7 @@ namespace Microsoft.Research.Vcc
       string extraFunctionOptions = null;
       if (parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) {
         CloseVcGen();
-        VccOptions extraCommandLineOptions = OptionParser.ParseCommandLineArguments(Vcc2CommandLineHost.hostEnvironment, extraFunctionOptions.Split(' ', '\t'), false);
+        VccOptions extraCommandLineOptions = OptionParser.ParseCommandLineArguments(VccCommandLineHost.hostEnvironment, extraFunctionOptions.Split(' ', '\t'), false);
         List<string> effectiveOptions = new List<string>(extraCommandLineOptions.BoogieOptions);
         foreach (string z3option in extraCommandLineOptions.Z3Options)
           effectiveOptions.Add("/z3opt:" + z3option);
@@ -320,7 +320,7 @@ namespace Microsoft.Research.Vcc
 
     public override string Name()
     {
-      return "Vcc2";
+      return "Vcc";
     }
 
     public override void UseCommandLineOptions(List<string> p1)
@@ -392,7 +392,7 @@ namespace Microsoft.Research.Vcc
     {
       Init(env, fileName);
       decls = env.ApplyTransformers(decls);
-      return new Vcc2FunctionVerifier(this, decls, env);
+      return new VccFunctionVerifier(this, decls, env);
     }
 
     internal Boogie.Program GetBoogieProgram(Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
@@ -401,7 +401,7 @@ namespace Microsoft.Research.Vcc
       try {
         swBoogie.Start();
         var pp = new Boogie.Program();
-        pp.TopLevelDeclarations.AddRange(Vcc2CommandLineHost.StandardPrelude.TopLevelDeclarations);
+        pp.TopLevelDeclarations.AddRange(VccCommandLineHost.StandardPrelude.TopLevelDeclarations);
         pp.TopLevelDeclarations.AddRange(p.TopLevelDeclarations);
         return pp;
       } finally {
@@ -426,7 +426,7 @@ namespace Microsoft.Research.Vcc
     {
       this.name = name;
       this.startTime = startTime;
-      this.prevTime = Vcc2CommandLineHost.GetTime();
+      this.prevTime = VccCommandLineHost.GetTime();
       this.commandLineOptions = opts;
     }
 
@@ -440,7 +440,7 @@ namespace Microsoft.Research.Vcc
       if (!this.outcomeReported) {
         this.outcomeReported = true;
         this.lineDirty = false;
-        Vcc2CommandLineHost.ReportOutcomeMethodSummary(outcome, addInfo, this.name, this.startTime);
+        VccCommandLineHost.ReportOutcomeMethodSummary(outcome, addInfo, this.name, this.startTime);
       }
       if (this.lineDirty) {
         Console.WriteLine();
@@ -456,7 +456,7 @@ namespace Microsoft.Research.Vcc
     public override void OnCounterexample(Counterexample ce, string message)
     {
       this.PrintSummary(VC.VCGen.Outcome.Errors);
-      Vcc2CommandLineHost.ReportCounterexample(ce, message);
+      VccCommandLineHost.ReportCounterexample(ce, message);
     }
 
     public override void OnOutOfMemory(string reason)
@@ -471,7 +471,7 @@ namespace Microsoft.Research.Vcc
       if (double.IsNaN(progressEst)) return;
 
       if (commandLineOptions != null && commandLineOptions.TimeStats && !commandLineOptions.XmlFormatOutput && !commandLineOptions.RunTestSuite) {
-        double now = Vcc2CommandLineHost.GetTime();
+        double now = VccCommandLineHost.GetTime();
         double length = now - this.prevTime;
         if (length < 0.5) return; // don't even bother reporting
         this.prevTime = now;
@@ -499,7 +499,7 @@ namespace Microsoft.Research.Vcc
       if (tok.filename == null || tok.filename == "") return false;
       PrintSummary(VC.VCGen.Outcome.Correct); // it is correct, but
       Console.WriteLine("{0}: found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)", 
-                        Vcc2CommandLineHost.TokenLocation(tok));
+                        VccCommandLineHost.TokenLocation(tok));
       return true;
     }
 

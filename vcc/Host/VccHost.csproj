@@ -91,7 +91,7 @@
     <Compile Include="PluginManager.cs" />
     <Compile Include="Host.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Vcc2Plugin.cs" />
+    <Compile Include="VccPlugin.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\cci\Sources\CodeModelNormalizer\CodeModelNormalizer.csproj">

@@ -104,16 +104,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    public bool Vcc2
-    {
-      get
-      {
-        VccOptions/*?*/ vcoptions = this.compilation.Options as VccOptions;
-        if (vcoptions == null) return false;
-        else return vcoptions.Vcc2;
-      }
-    }
-
     internal Parser(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors)
     {
       this.compilation = compilation;

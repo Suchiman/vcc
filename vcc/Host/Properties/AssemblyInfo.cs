@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("Vcc2")]
+[assembly: AssemblyTitle("Vcc")]
 [assembly: AssemblyDescription("Command line compiler for the Microsoft Research Vcc language")]
 #if DEBUG
 [assembly: AssemblyConfiguration("Debug")]

@@ -32,7 +32,6 @@ public sealed class VccOptions : FrameworkOptions {
   public bool EagerTranslation;
   public bool OmitReadWriteChecking;
   public bool RunInBatchMode;
-  public bool Vcc2;
   public bool NoCompilerRun;
   public bool ModifiedPreprocessorFiles;
   public Dictionary<long, bool> DisabledWarnings = new Dictionary<long, bool>();

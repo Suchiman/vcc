@@ -3035,10 +3035,9 @@ namespace Microsoft.Research.Vcc {
       }
 
       VccOptions/*?*/ vcoptions = this.Compilation.Options as VccOptions;
-      bool isVcc2 = (vcoptions == null) ? false : vcoptions.Vcc2;
       ITypeDefinition resolvedElementType = this.ElementType.ResolvedType;
       VccNamedTypeExpression namedType = this.ElementType as VccNamedTypeExpression;
-      if (namedType != null && isVcc2 && namedType.DidSilentlyResolveToVoid) {
+      if (namedType != null && namedType.DidSilentlyResolveToVoid) {
           Expression typePtrRef= NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.Compilation.NameTable, "TypedPtr");
           typePtrRef.SetContainingExpression(this);
           return new VccNamedTypeExpression(typePtrRef).Resolve(0);

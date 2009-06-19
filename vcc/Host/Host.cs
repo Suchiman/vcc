@@ -18,7 +18,7 @@ using System.Text.RegularExpressions;
 namespace Microsoft.Research.Vcc
 {
 
-  public class Vcc2CommandLineHost
+  public class VccCommandLineHost
   {
 
     /// <summary>
@@ -52,7 +52,6 @@ namespace Microsoft.Research.Vcc
       hostEnvironment.Errors += HandleErrors;
       commandLineOptions = OptionParser.ParseCommandLineArguments(hostEnvironment, args);
       commandLineOptions.RunningFromCommandLine = true;
-      commandLineOptions.Vcc2 = true;
       InitializePlugin();
 
       if (commandLineOptions.DisplayCommandLineHelp) {
@@ -193,7 +192,7 @@ namespace Microsoft.Research.Vcc
     }
 
     private static void DisplayCommandLineHelp() {
-      System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Vcc2Host.ErrorMessages", typeof(Vcc2CommandLineHost).Assembly);
+      System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
       Console.Out.WriteLine(rm.GetString("Usage"));
       if (pluginManager != null && pluginManager.Plugins != null) {
         foreach (var plugin in pluginManager.Plugins) {
@@ -211,7 +210,7 @@ namespace Microsoft.Research.Vcc
       if (commandLineOptions.XmlFormatOutput) {
         Console.WriteLine("<version>" + fileVersionString + "</version>");
       } else {
-        System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Vcc2Host.ErrorMessages", typeof(Vcc2CommandLineHost).Assembly);
+        System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
         Console.WriteLine(rm.GetString("Version"), fileVersionString);
       }
     }
@@ -248,7 +247,7 @@ namespace Microsoft.Research.Vcc
           if (fi.Name.StartsWith(".")) continue;
           if (fi.Name.Contains(vccSplitSuffix)) continue;
           if (fi.Extension == ".i" || fi.Extension == ".bpl" || fi.Extension == ".h") continue;
-          if (!Vcc2CommandLineHost.RunTestSuite(fi.DirectoryName, fi.Name, new StreamReader(fi.Open(FileMode.Open, FileAccess.Read)), !fi.DirectoryName.Contains("WithErrors")))
+          if (!VccCommandLineHost.RunTestSuite(fi.DirectoryName, fi.Name, new StreamReader(fi.Open(FileMode.Open, FileAccess.Read)), !fi.DirectoryName.Contains("WithErrors")))
             errorCount++;
         }
 
@@ -276,7 +275,7 @@ namespace Microsoft.Research.Vcc
         }
         return true;
       } else {
-        return Vcc2CommandLineHost.RunTestSuite(Path.GetDirectoryName(fileName), fileName, File.OpenText(fileName), true);
+        return VccCommandLineHost.RunTestSuite(Path.GetDirectoryName(fileName), fileName, File.OpenText(fileName), true);
       }
     }
 
@@ -522,7 +521,6 @@ namespace Microsoft.Research.Vcc
       }
 
       // TODO maybe copy more stuff
-      options.Vcc2 = commandLineOptions.Vcc2;
       options.Z3Options.AddRange(commandLineOptions.Z3Options);
       options.BoogieOptions.AddRange(commandLineOptions.BoogieOptions);
       options.TimeStats = commandLineOptions.TimeStats;
@@ -830,7 +828,7 @@ namespace Microsoft.Research.Vcc
     private static string/*?*/ ProbeForVccHeaders(bool quote) {
       if (cachedVccHeaderDirectory == null)
       {
-        FileInfo vccExe = new FileInfo(typeof(Vcc2CommandLineHost).Assembly.Location);
+        FileInfo vccExe = new FileInfo(typeof(VccCommandLineHost).Assembly.Location);
         DirectoryInfo/*?*/ dir = vccExe.Directory;
         while (dir != null && dir.Exists)
         {

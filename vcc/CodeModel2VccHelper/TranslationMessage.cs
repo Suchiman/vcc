@@ -50,7 +50,7 @@ namespace Microsoft.Research.Vcc
 
     public string ErrorReporterIdentifier
     {
-      get { return "Vcc2"; }
+      get { return "Vcc"; }
     }
 
     public long Code

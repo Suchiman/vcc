@@ -100,44 +100,6 @@ namespace Microsoft.Research.Vcc {
         return IteratorHelper.GetConversionEnumerable<TypeInvariant, ITypeInvariant>(this.invariants);
       List<ITypeInvariant> result = new List<ITypeInvariant>();
       foreach (TypeInvariant tinv in this.invariants) result.Add(tinv);
-      List<ITypeDeclarationMember> globalMembers = (List<ITypeDeclarationMember>)globals.GlobalMembers;
-      for (int i = 0; i < globalMembers.Count; i++){
-        ITypeDeclarationMember member = globalMembers[i];
-        GlobalVariableDeclaration/*?*/ globalVar = member as GlobalVariableDeclaration;
-        if (globalVar == null) continue;
-
-        VccOptions opts = globalVar.Compilation.Options as VccOptions;
-        if (opts != null && opts.Vcc2) continue;
-
-        if (globalVar.IsMapped) {
-          VccInitializer/*?*/ initializer = globalVar.Initializer as VccInitializer;
-          VccArrayTypeExpression/*?*/ arrayType = globalVar.Type as VccArrayTypeExpression;
-          if (initializer != null && arrayType != null) {
-            Expression array = new AddressOf(new AddressableExpression(new BoundExpression(initializer, globalVar.FieldDefinition)), initializer.SourceLocation);
-            array.SetContainingExpression(initializer);
-            array = globalVar.Helper.ExplicitConversion(array, PointerType.GetPointerType(arrayType.ElementType.ResolvedType, globalVar.Compilation.HostEnvironment.InternFactory));
-            IName iname = initializer.ContainingBlock.Helper.NameTable.GetNameFor("i");
-            int ival = 0;
-            foreach (Expression initialVal in initializer.Expressions) {
-              CompileTimeConstant index = new CompileTimeConstant(ival++, true, SourceDummy.SourceLocation);
-              LocalDeclaration locDecl = new LocalDeclaration(false, false, new NameDeclaration(iname, SourceDummy.SourceLocation), index, SourceDummy.SourceLocation);
-              List<LocalDeclaration> locDecls = new List<LocalDeclaration>(1); locDecls.Add(locDecl);
-              TypeExpression intT = TypeExpression.For(globalVar.PlatformType.SystemUInt64.ResolvedType);
-              LocalDeclarationsStatement loc = new LocalDeclarationsStatement(false, false, true, intT, locDecls, SourceDummy.SourceLocation);
-              List<LocalDeclarationsStatement> boundVars = new List<LocalDeclarationsStatement>(1); boundVars.Add(loc);
-              SimpleName indexVar = new SimpleName(iname, SourceDummy.SourceLocation, false);
-              Indexer indexer = new Indexer(array, IteratorHelper.GetSingletonEnumerable<Expression>(indexVar), SourceDummy.SourceLocation);
-              Equality indexVarEq = new Equality(indexVar, index, initialVal.SourceLocation);
-              Equality initialValEq = new Equality(indexer, initialVal, initialVal.SourceLocation);
-              Implies impl = new Implies(indexVarEq, initialValEq, initialVal.SourceLocation);
-              Forall forall = new Forall(boundVars, impl, initialVal.SourceLocation);
-              TypeInvariant axiom = new TypeInvariant(null, forall, true, initialVal.SourceLocation);
-              axiom.SetContainingExpression(initializer);
-              result.Add(axiom);
-            }
-          }
-        }
-      }
       return result.AsReadOnly();
     }
 
@@ -160,7 +122,7 @@ namespace Microsoft.Research.Vcc {
     public VccTypeContract MakeCopyFor(TypeDeclaration containingType) {
       if (this.containingType == containingType) return this;
       VccTypeContract result = new VccTypeContract(this);
-      result.SetContainingType(containingType);
+      result.SetContainingType(containingType); 
       return result;
     }
 
