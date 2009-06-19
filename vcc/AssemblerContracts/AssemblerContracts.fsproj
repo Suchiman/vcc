@@ -40,7 +40,7 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
-    <OtherFlags>--keyfile:..\..\Common\InterimKey.snk</OtherFlags>
+    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
     <StartAction>Program</StartAction>
     <StartProgram>C:\Users\stobies\verisoft\FELT\Vcc\Host\bin\Debug\vcc2.exe</StartProgram>
     <StartWorkingDirectory>c:\temp</StartWorkingDirectory>
@@ -60,7 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Plugin.fs" />
-    <Compile Include="..\..\Common\Include\version.fs">
+    <Compile Include="..\Common\Include\version.fs">
       <Link>version.fs</Link>
     </Compile>
   </ItemGroup>
