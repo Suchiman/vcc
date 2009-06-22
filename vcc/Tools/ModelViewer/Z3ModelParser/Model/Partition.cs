@@ -1,4 +1,9 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------------
+//
+// Copyright (C) Microsoft Corporation.  All Rights Reserved.
+//
+//-----------------------------------------------------------------------------
+using System;
 
 namespace Z3Model {
 

@@ -1,4 +1,9 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------------
+//
+// Copyright (C) Microsoft Corporation.  All Rights Reserved.
+//
+//-----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using Vcc2Model.Controller;
 using Z3Model;
