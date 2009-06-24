@@ -231,7 +231,7 @@ namespace Microsoft.Research.Vcc
         currentBoogie.Emit(writer);
     }
 
-    long bplFileCounter = 0;
+    long bplFileCounter;
 
     private void PrepareBoogie(Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
     {

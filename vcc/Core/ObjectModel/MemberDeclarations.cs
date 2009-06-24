@@ -15,23 +15,6 @@ using Microsoft.Research.Vcc.Parsing;
 
 namespace Microsoft.Research.Vcc {
 
-  internal sealed class AbstractMapDeclarator : Declarator {
-
-    internal AbstractMapDeclarator(Declarator domainDeclarator, List<Specifier> codomainSpecifiers, Declarator codomainDeclarator, ISourceLocation sourceLocation)
-      : base(sourceLocation) {
-      this.DomainDeclarator = domainDeclarator;
-      this.CodomainSpecifiers = codomainSpecifiers;
-      this.CodomainDeclarator = codomainDeclarator;
-    }
-
-    internal Declarator CodomainDeclarator;
-    internal List<Specifier> CodomainSpecifiers;
-    internal Declarator DomainDeclarator;
-    internal override NameDeclaration Identifier {
-      get { return this.CodomainDeclarator.Identifier; }
-    }
-  }
-
   /// <summary>
   /// Represents a map from values of one type (the domain) to another type (the codomain). Only for use in specifications.
   /// Think of this as "external fields" (with reference to C# external methods).

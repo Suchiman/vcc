@@ -743,7 +743,7 @@ namespace Microsoft.Research.Vcc {
         ITypeDefinition sourceType = expression.Type;
         return (sourceType.TypeCode != PrimitiveTypeCode.NotPrimitive || !sourceType.IsStruct)
           && sourceType.TypeCode != PrimitiveTypeCode.Void 
-          && !TypeHelper.GetTypeName(sourceType).StartsWith(SystemDiagnosticsContractsCodeContractMapString);
+          && !TypeHelper.GetTypeName(sourceType).StartsWith(SystemDiagnosticsContractsCodeContractMapString, StringComparison.Ordinal);
       }
       CompileTimeConstant/*?*/ cconst = expression as CompileTimeConstant;
       if (cconst != null) {

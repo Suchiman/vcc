@@ -34,68 +34,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     RootNamespaceExpression rootNs;
     AliasQualifiedName systemNs;
     
-
-
-    class ParserSourceLocationWrapper : ISourceLocation {
-
-      readonly ISourceLocation wrappedLocation;
-      readonly string source;
-
-      public ParserSourceLocationWrapper(ISourceLocation wrappedLocation, string source)
-      {
-        this.wrappedLocation = wrappedLocation;
-        this.source = source;
-      }
-
-      #region ISourceLocation Members
-
-      public bool Contains(ISourceLocation location)
-      {
-        return wrappedLocation.Contains(location);
-      }
-
-      public int CopyTo(int offset, char[] destination, int destinationOffset, int length)
-      {
-        return wrappedLocation.CopyTo(offset, destination, destinationOffset, length);
-      }
-
-      public int EndIndex
-      {
-        get { return wrappedLocation.EndIndex; }
-      }
-
-      public int Length
-      {
-        get { return wrappedLocation.Length; }
-      }
-
-      public ISourceDocument SourceDocument
-      {
-        get { return wrappedLocation.SourceDocument; }
-      }
-
-      public string Source
-      {
-        get { return this.source; }
-      }
-
-      public int StartIndex
-      {
-        get { return wrappedLocation.StartIndex; }
-      }
-
-      #endregion
-
-      #region ILocation Members
-
-      public IDocument Document
-      {
-        get { return wrappedLocation.Document; }
-      }
-
-      #endregion
-    }
-
     public bool VCCompatible {
       get {
         VccOptions/*?*/ vcoptions = this.compilation.Options as VccOptions;
@@ -257,13 +195,6 @@ namespace Microsoft.Research.Vcc.Parsing {
           // List<Specifier> innerSpecifiers = this.ParseSpecifiers(namespaceMembers, followers | Parser.DeclarationStart | Token.Semicolon | Token.Colon);
           declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followersOrCommaOrLeftBraceOrSemicolon);
         }
-        AbstractMapDeclarator/*?*/ abstractMapDeclarator = declarator as AbstractMapDeclarator;
-        if (abstractMapDeclarator != null) {
-          this.AddTypeDeclarationMember(specifiers, abstractMapDeclarator, typeMembers);
-          if (this.currentToken != Token.Comma) break;
-          this.GetNextToken();
-          continue;
-        }
         PointerDeclarator/*?*/ pointerDeclarator = declarator as PointerDeclarator;
         FunctionDeclarator/*?*/ funcDeclarator = declarator as FunctionDeclarator;
         ArrayDeclarator/*?*/ arrayDeclarator = declarator as ArrayDeclarator;
@@ -395,12 +326,25 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+      NameDeclaration nameDecl = null;
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
+      if (this.currentToken == Token.Identifier) {
+        string id = this.scanner.GetIdentifierString();
+        Scanner.Snapshot snap = this.scanner.MakeSnapshot();
+        Token tok = scanner.GetNextToken();
+        if (tok == Token.Colon) {
+          slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+          nameDecl = new NameDeclaration(this.GetNameFor(id), slb);
+          this.GetNextToken();
+        } else {
+          this.scanner.RevertToSnapshot(snap);
+        }
+      }
       Expression condition = this.ParseExpression(followers|Token.RightParenthesis);
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       this.Skip(Token.RightParenthesis);
-      TypeInvariant typeInvariant = new TypeInvariant(null, new CheckedExpression(condition, condition.SourceLocation), false, slb);
+      TypeInvariant typeInvariant = new TypeInvariant(nameDecl, new CheckedExpression(condition, condition.SourceLocation), false, slb);
       invariants.Add(typeInvariant);
       if (this.currentToken == Token.Semicolon)
         this.SkipOverTo(Token.Semicolon, followers);
@@ -664,14 +608,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             this.currentTypeInvariants.Add(new TypeInvariant(declarator.Identifier, new CheckedExpression(initializer, initializer.SourceLocation), true, slb));
           } else {
             if (this.currentSpecificationFields == null) this.currentSpecificationFields = new List<FieldDeclaration>();
-            AbstractMapDeclarator/*?*/ abstractMapDeclarator = declarator as AbstractMapDeclarator;
-            FieldDeclaration glob;
-            if (abstractMapDeclarator != null) {
-              TypeExpression domain = this.GetTypeExpressionFor(specifiers, abstractMapDeclarator.DomainDeclarator);
-              glob = new AbstractMap(domain, memberType, declarator.Identifier, slb);
-            } else {
-              glob = new GlobalVariableDeclaration(flags, TypeMemberVisibility.Public, memberType, declarator.Identifier, initializer, slb);
-            }
+            FieldDeclaration glob = new GlobalVariableDeclaration(flags, TypeMemberVisibility.Public, memberType, declarator.Identifier, initializer, slb);
             this.currentSpecificationFields.Add(glob);
           }
         }
@@ -824,11 +761,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (initialized != null)
         return this.GetTypeExpressionFor(specifiers, initialized.Declarator, initialized.InitialValue);
       else {
-        AbstractMapDeclarator/*?*/ abstractMapDeclarator = declarator as AbstractMapDeclarator;
-        if (abstractMapDeclarator != null)
-          return this.GetTypeExpressionFor(abstractMapDeclarator.CodomainSpecifiers, abstractMapDeclarator.CodomainDeclarator);
-        else
-          return this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, declarator as IdentifierDeclarator), declarator, initializer);
+        return this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, declarator as IdentifierDeclarator), declarator, initializer);
       }
     }
 
@@ -1495,24 +1428,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         contract.AddWrites(write);
     }
 
-    private bool ParameterHasPointerType(Parameter parameter)
-    {
-      if (parameter.Name is PointerDeclarator || parameter.Name is ArrayDeclarator)
-        return true;
-
-      foreach (Specifier specifier in parameter.TypeSpecifiers) {
-        TypedefNameSpecifier typedefSpec = specifier as TypedefNameSpecifier;
-        if (typedefSpec != null) {
-          TypeExpression typeExpr;
-          if (this.typedefExpressions.TryGetValue(typedefSpec.TypedefName.ToString(), out typeExpr)) {
-            if (this.TypeExpressionHasPointerType(typeExpr) != null) return true;
-          }
-        }
-      }
-
-      return false;
-    }
-
     private TypeExpression/*?*/ TypeExpressionHasPointerType(TypeExpression typeExpr)
     {
       return TypeExpressionHasPointerType(typeExpr, new List<TypeExpression>());
@@ -1558,71 +1473,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (nonNullType != null)
         return TypeExpressionHasPointerType(nonNullType);
       return null;
-    }
-
-    private Expression AddValidCondition(Expression ptr, Expression size, Expression previousConditions)
-    {
-      VccSimpleName methodToCall = new VccSimpleName(this.nameTable.GetNameFor("_vcc_SAL_typed"), ptr.SourceLocation);
-      Expression result = new VccValidatePointer(methodToCall, new Expression[] { ptr, size }, true, ptr.SourceLocation);
-      if (previousConditions != null) {
-        result = new VccLogicalAnd(result, previousConditions, ptr.SourceLocation);
-      }
-      return result;
-    }
-
-    private static Expression/*?*/ AddMaybeNullCondition(Expression ptr, Expression previousConditions)
-    {
-      if (previousConditions == null) return null;
-      else
-        return new VccLogicalOr(
-          new VccEquality(ptr, new CompileTimeConstant(0, ptr.SourceLocation), ptr.SourceLocation),
-            previousConditions,
-            ptr.SourceLocation);
-    }
-
-    private Expression CreateRegionExpression(Expression ptr, Expression byteCount, bool maybenull)
-    {
-      VccSimpleName methodToCall = maybenull ?
-        new VccSimpleName(this.nameTable.GetNameFor("_vcc_SAL_region_non_null"), ptr.SourceLocation) :
-        new VccSimpleName(this.nameTable.GetNameFor("_vcc_SAL_region"), ptr.SourceLocation);
-      return new VccMethodCall(methodToCall, new Expression[] { ptr, byteCount }, ptr.SourceLocation);
-    }
-
-    private Expression ParseSpecString(ISourceLocation sourceLoc) {
-      Token savedCurrentToken = this.currentToken;
-      Scanner savedScanner = this.scanner;
-      this.scanner = new Scanner(this.scannerAndParserErrors, sourceLoc, true);
-      this.GetNextToken();
-      Expression result = this.ParseExpressionWithCheckedDefault(Parser.EndOfFile);
-      this.scanner = savedScanner;
-      this.currentToken = savedCurrentToken;
-      return result;
-    }
-
-    private static string/*?*/ GetSpecString(IEnumerable<Expression> declSpecModifierExpressions) {
-      string/*?*/ result = null;
-      foreach (Expression e in declSpecModifierExpressions) {
-        if (result != null) return null;
-        CompileTimeConstant/*?*/ cc = e as CompileTimeConstant;
-        if (cc != null) {
-          result = cc.Value as String;
-          if (result == null) return null;
-        }
-      }
-      return result;
-    }
-
-    private static ISourceLocation/*?*/ GetSpecSourceLocation(IEnumerable<Expression> declSpecModifierExpressions) {
-      ISourceLocation/*?*/ result = null;
-      foreach (Expression e in declSpecModifierExpressions) {
-        if (result != null) return null;
-        CompileTimeConstant/*?*/ cc = e as CompileTimeConstant;
-        if (cc != null) {
-          if (!(cc.Value is String)) return null;
-          result = e.SourceLocation;
-        }
-      }
-      return result;
     }
 
     private Parameter ParseVarArgsParameter(TokenSet followers) {
@@ -2054,7 +1904,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       BlockStatement result = contract.HasContract ? new VccBlockWithContracts(statements, options, slb) : new BlockStatement(statements, options, slb);
       if (contract.HasContract) {
-        MethodContract mc = contract.ToMethodContract();
         this.compilation.ContractProvider.AssociateMethodWithContract(result, contract.ToMethodContract());
       }
       this.SkipOverTo(Token.RightBrace, followers);

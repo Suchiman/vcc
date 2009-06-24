@@ -1460,17 +1460,17 @@ namespace Microsoft.Research.Vcc.Parsing {
       return new string(this.buffer, start, length);
     }
 
-    public Snapshot MakeSnapshot() {
+    internal Snapshot MakeSnapshot() {
       this.GetNextFragment(); // make sure that we have wiggle room for the token lookahead
       return new Snapshot(this.startPos, this.endPos);
     }
 
-    public void RevertToSnapshot(Snapshot snapshot) {
+    internal void RevertToSnapshot(Snapshot snapshot) {
       this.startPos = snapshot.startPos;
       this.endPos = snapshot.endPos;
     }
 
-    public sealed class Snapshot
+    internal sealed class Snapshot
     {
       internal readonly int startPos;
       internal readonly int endPos;

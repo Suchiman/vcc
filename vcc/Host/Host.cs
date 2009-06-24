@@ -555,7 +555,7 @@ namespace Microsoft.Research.Vcc
       startTime = GetTime();
       return Felt2Cast2Plugin("testcase", options, hostEnvironment, assem);
     }
-    static int errorCount = 0;
+    static int errorCount;
 
     static void RunPlugin(VccOptions commandLineOptions) {
       var processedFiles = Preprocess(commandLineOptions);
@@ -850,7 +850,7 @@ namespace Microsoft.Research.Vcc
         return cachedVccHeaderDirectory.FullName;
     }
 
-    private static DirectoryInfo cachedVccHeaderDirectory = null;
+    private static DirectoryInfo cachedVccHeaderDirectory;
 
     private static double methodVerificationTime;
     private static StringBuilder testrunTimeStats = new StringBuilder();
@@ -868,8 +868,6 @@ namespace Microsoft.Research.Vcc
       }
 
       foreach (string funcName in fver.FunctionsToVerify()) {
-        double start = GetTime();
-
         if (checkSpecificFunctions) {
           // check if this function has been requested either specifically or by prefix
           bool checkThisFunction = false;
@@ -1233,11 +1231,6 @@ namespace Microsoft.Research.Vcc
         default:
           return "returned an unknown result";
       }
-    }
-
-    static void ReportOutcomeXml(VC.VCGen.Outcome outcome, string methodName, double startTime) {
-      Console.WriteLine("<method name=\"{0}\" outcome=\"{1}\" time=\"{2:0.00}\"/>",
-        methodName, outcome, GetTime() - startTime);
     }
 
     static long ErrorToId(long code)

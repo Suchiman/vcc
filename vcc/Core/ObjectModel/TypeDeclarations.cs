@@ -23,12 +23,6 @@ namespace Microsoft.Research.Vcc {
     {
     }
 
-    private VccGlobalDeclarationContainerClass(NamespaceDeclaration containingNamespaceDeclaration, VccGlobalDeclarationContainerClass template, List<ITypeDeclarationMember> members)
-      : base(containingNamespaceDeclaration, template, members)
-      //^ ensures this.containingNamespaceDeclaration == containingNamespaceDeclaration;
-    {
-    }
-
     public override INamespaceDeclarationMember MakeShallowCopyFor(NamespaceDeclaration targetNamespaceDeclaration)
       //^^ ensures result.GetType() == this.GetType();
       //^^ ensures result.ContainingNamespaceDeclaration == targetNamespaceDeclaration;
@@ -116,11 +110,6 @@ namespace Microsoft.Research.Vcc {
       : base(containingNamespaceDeclaration, template) {
     }
 
-    protected VccEnumDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccEnumDeclaration template, List<ITypeDeclarationMember> members)
-      : base(containingNamespaceDeclaration, template, members) {
-    }
-
-
     //^ [MustOverride]
     public override INamespaceDeclarationMember MakeShallowCopyFor(NamespaceDeclaration targetNamespaceDeclaration)
       //^^ ensures result.GetType() == this.GetType();
@@ -141,17 +130,6 @@ namespace Microsoft.Research.Vcc {
     protected VccStructuredTypeDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccStructuredTypeDeclaration template)
       : base(containingNamespaceDeclaration, template) {
       this.extendedAttributes = new List<DeclspecSpecifier>(template.extendedAttributes);
-    }
-
-    protected VccStructuredTypeDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccStructuredTypeDeclaration template, List<ITypeDeclarationMember> members)
-      : base(containingNamespaceDeclaration, template, members) {
-      this.extendedAttributes = new List<DeclspecSpecifier>(template.ExtendedAttributes);
-    }
-
-    public IEnumerable<DeclspecSpecifier> ExtendedAttributes {
-      get {
-        return this.extendedAttributes;
-      }
     }
 
     public override IEnumerable<ICustomAttribute> Attributes
@@ -272,10 +250,6 @@ namespace Microsoft.Research.Vcc {
       : base(containingNamespaceDeclaration, template) {
     }
 
-    protected VccStructDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccStructDeclaration template, List<ITypeDeclarationMember> members)
-      : base(containingNamespaceDeclaration, template, members) {
-    }
-
     /// <summary>
     /// Use compute field offset to get the offset. 
     /// </summary>
@@ -382,10 +356,6 @@ namespace Microsoft.Research.Vcc {
 
     protected VccUnionDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccUnionDeclaration template)
       : base(containingNamespaceDeclaration, template) {
-    }
-
-    protected VccUnionDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccUnionDeclaration template, List<ITypeDeclarationMember> members)
-      : base(containingNamespaceDeclaration, template, members) {
     }
 
 

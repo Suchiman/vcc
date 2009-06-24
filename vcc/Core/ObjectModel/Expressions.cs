@@ -1751,10 +1751,10 @@ namespace Microsoft.Research.Vcc {
     /// Allocates an expression that represents a call to the getter or setter of a default indexed property, or an access to an array element or string character.
     /// </summary>
     /// <param name="indexedObject">An expression that results in value whose type is expected to be an array, or string, or to define a default indexed property that matches the indices.</param>
-    /// <param name="indices">The indices to pass to the accessor.</param>
+    /// <param name="indexes">The indices to pass to the accessor.</param>
     /// <param name="sourceLocation">The source location corresponding to the newly allocated expression.</param>
-    public VccIndexer(Expression indexedObject, IEnumerable<Expression> indices, ISourceLocation sourceLocation)
-      : base(indexedObject, indices, sourceLocation) {
+    public VccIndexer(Expression indexedObject, IEnumerable<Expression> indexes, ISourceLocation sourceLocation)
+      : base(indexedObject, indexes, sourceLocation) {
     }
 
     /// <summary>
@@ -1984,7 +1984,6 @@ namespace Microsoft.Research.Vcc {
     }
 
     internal override void AddInitializingFieldAssignmentsTo(ICollection<Statement> statements, Expression target, VccStructuredTypeDeclaration typeDecl) {
-      bool isUnion = typeDecl is VccUnionDeclaration;
       foreach (var pair in this.designatorsWithExpressions) {
         QualifiedName targetDotField = new QualifiedName(target, pair.Designator, pair.Designator.SourceLocation);
         AddInitializationTo(statements, pair.Expression, targetDotField, GetTypeOfField(typeDecl, pair.Designator), this.ContainingBlock);
@@ -2433,11 +2432,11 @@ namespace Microsoft.Research.Vcc {
           if (!actualEnum.MoveNext()) break;
           i++;
           if (formalEnum.Current.IsOut && !(actualEnum.Current is OutArgument)) {
-            this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.ArgumentMustBePassedWithOutKeyword, i.ToString()));
+            this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.ArgumentMustBePassedWithOutKeyword, i.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             result = true;
           }
           if (!formalEnum.Current.IsOut && actualEnum.Current is OutArgument) {
-            this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.ArgumentShouldNotBePassedWithOutKeyword, i.ToString()));
+            this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.ArgumentShouldNotBePassedWithOutKeyword, i.ToString(System.Globalization.CultureInfo.InvariantCulture)));
           }
         }
       }
@@ -3034,7 +3033,6 @@ namespace Microsoft.Research.Vcc {
           return ModifiedPointerType.GetPointerType(this.ElementType.ResolvedType, modifiers, this.Compilation.HostEnvironment.InternFactory);
       }
 
-      VccOptions/*?*/ vcoptions = this.Compilation.Options as VccOptions;
       ITypeDefinition resolvedElementType = this.ElementType.ResolvedType;
       VccNamedTypeExpression namedType = this.ElementType as VccNamedTypeExpression;
       if (namedType != null && namedType.DidSilentlyResolveToVoid) {
@@ -3656,7 +3654,7 @@ namespace Microsoft.Research.Vcc {
 
     #region ISizeOf Members
 
-    ITypeReference ISizeOf.TypeToSize {
+    public ITypeReference TypeToSize {
       get {
         ITypeDefinition type = this.Expression.Type;
         TypeExpression/*?*/ texpr = this.Expression as TypeExpression;
@@ -3907,7 +3905,7 @@ namespace Microsoft.Research.Vcc {
         var shift = (int)right;
         var size = TypeHelper.SizeOfType(this.Type.ResolvedType) * 8;
         if (shift < 0 || shift >= size) {
-          this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Vcc.Error.ShiftCountOutOfRange, (size - 1).ToString()));
+          this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Vcc.Error.ShiftCountOutOfRange, (size - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)));
           base.CheckForErrorsAndReturnTrueIfAnyAreFound();
           return true;
         }
@@ -3974,7 +3972,7 @@ namespace Microsoft.Research.Vcc {
         var shift = (int)right;
         var size = TypeHelper.SizeOfType(this.Type.ResolvedType) * 8;
         if (shift < 0 || shift >= size) {
-          this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Vcc.Error.ShiftCountOutOfRange, (size - 1).ToString()));
+          this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Vcc.Error.ShiftCountOutOfRange, (size - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)));
           base.CheckForErrorsAndReturnTrueIfAnyAreFound();
           return true;
         }
