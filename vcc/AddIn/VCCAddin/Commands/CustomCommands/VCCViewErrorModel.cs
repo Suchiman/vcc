@@ -10,7 +10,7 @@ using System.Text;
 using System.IO;
 using EnvDTE80;
 using EnvDTE;
-using Vcc2ModelViewer;
+using VccModelViewer;
 using VerifiedCCompilerAddin.Manager.Verify;
 
 namespace VerifiedCCompilerAddin.Commands {

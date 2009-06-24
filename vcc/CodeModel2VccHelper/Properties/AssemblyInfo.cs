@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("Microsoft.Cci.CodeModel2Vcc2Helper")]
+[assembly: AssemblyTitle("Microsoft.Cci.CodeModel2VccHelper")]
 [assembly: AssemblyDescription("")]
 #if DEBUG
 [assembly: AssemblyConfiguration("Debug")]

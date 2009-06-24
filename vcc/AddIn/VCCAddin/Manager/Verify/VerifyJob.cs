@@ -234,7 +234,6 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
 
     private bool CheckForVCCHeader(string workDir, VCCSettings settings) {
       FileInfo fi;
-      //If VCC2, then search for vcc.h
       string vccHeaderFileName = "vcc.h";
       bool vccfound = false;
 

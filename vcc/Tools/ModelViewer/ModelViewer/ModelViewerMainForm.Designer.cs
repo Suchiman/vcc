@@ -1,4 +1,4 @@
-﻿namespace Vcc2ModelViewer
+﻿namespace VccModelViewer
 {
   partial class ModelViewerMainForm
   {
@@ -39,7 +39,7 @@
       this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
       this.MinimumSize = new System.Drawing.Size(640, 480);
       this.Name = "ModelViewerMainForm";
-      this.Text = "VCC2 Model Viewer";
+      this.Text = "VCC Model Viewer";
       this.ResumeLayout(false);
 
     }

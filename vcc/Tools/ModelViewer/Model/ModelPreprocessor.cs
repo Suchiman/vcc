@@ -8,14 +8,14 @@ using System.Collections.Generic;
 using System.IO;
 using Z3Model;
 using Z3Model.Parser;
-using Vcc2Model.Controller;
+using VccModel.Controller;
 
-namespace Vcc2Model.Preprocessor
+namespace VccModel.Preprocessor
 {
   public static class ModelPreprocessor
   {
 
-    public static Z3ModelVcc2 parse(string fileName)
+    public static Z3ModelVcc parse(string fileName)
     {
       TextReader tr = File.OpenText(fileName);
 
@@ -32,7 +32,7 @@ namespace Vcc2Model.Preprocessor
       return parseModel(partitionContent, functionContent);
     }
 
-    public static Z3ModelVcc2 parse(string fileName, int modelInFile)
+    public static Z3ModelVcc parse(string fileName, int modelInFile)
     {
       TextReader tr = File.OpenText(fileName);
 
@@ -53,7 +53,7 @@ namespace Vcc2Model.Preprocessor
         {
           // This should usually not happen, since this hints to an incomplete model.
           // Still there are models in the wild, which have a missing END_OF_MODEL marker.
-          return new Z3ModelVcc2();
+          return new Z3ModelVcc();
         }
 
         functionContent = FileContent.Substring(pos_function + 26, pos_end - (pos_function + 26));
@@ -62,7 +62,7 @@ namespace Vcc2Model.Preprocessor
       return parse(fileName);
     }
 
-    static void AddFileName(Z3ModelVcc2 model, Partition fileIndexPart, Partition fileNameTokenPart)
+    static void AddFileName(Z3ModelVcc model, Partition fileIndexPart, Partition fileNameTokenPart)
     {
       int fileIndex, specialCharPos;
 
@@ -103,7 +103,7 @@ namespace Vcc2Model.Preprocessor
       }
     }
 
-    static void AddExecutionState(Z3ModelVcc2 model, Partition state, Partition token)
+    static void AddExecutionState(Z3ModelVcc model, Partition state, Partition token)
     {
       if (FindExecutionState(model, state, token) != null)
       {
@@ -139,14 +139,14 @@ namespace Vcc2Model.Preprocessor
       model.ExecutionStates.Sort();
     }
 
-    static ExecutionState FindExecutionState(Z3ModelVcc2 model, Partition state, Partition token)
+    static ExecutionState FindExecutionState(Z3ModelVcc model, Partition state, Partition token)
     {
       SourceLocation lineNumber = new SourceLocation();
       lineNumber.SetFromToken(token.Set.Elements[0], model.FilenameMap);
       return FindExecutionState(model, state, lineNumber);
     }
 
-    static ExecutionState FindExecutionState(Z3ModelVcc2 model, Partition state, SourceLocation lineNumber)
+    static ExecutionState FindExecutionState(Z3ModelVcc model, Partition state, SourceLocation lineNumber)
     {
       if ((lineNumber.Line != 0) || (lineNumber.Column != 0) || (lineNumber.FileName != null))
       {
@@ -172,7 +172,7 @@ namespace Vcc2Model.Preprocessor
       return null;
     }
 
-    static void PruneExecutionStates(Z3ModelVcc2 model)
+    static void PruneExecutionStates(Z3ModelVcc model)
     {
       ExecutionState remove = null;
 
@@ -200,7 +200,7 @@ namespace Vcc2Model.Preprocessor
       } while (remove != null);
     }
 
-    private static Partition FindDistinguishedType(string typeref, Z3ModelVcc2 model, Dictionary<string, Partition> distTpMap)
+    private static Partition FindDistinguishedType(string typeref, Z3ModelVcc model, Dictionary<string, Partition> distTpMap)
     {
       if (!typeref.StartsWith("dt") && !typeref.StartsWith("tc"))
         return null;
@@ -245,9 +245,9 @@ namespace Vcc2Model.Preprocessor
       return null;
     }
 
-    public static Z3ModelVcc2 parseModel(string PartitionContent, string FunctionContent)
+    public static Z3ModelVcc parseModel(string PartitionContent, string FunctionContent)
     {
-      Z3ModelVcc2 model = new Z3ModelVcc2();
+      Z3ModelVcc model = new Z3ModelVcc();
 
       LinkedList<Partition> unresolved_types = new LinkedList<Partition>();
       Dictionary<string, Partition> distTpMap = new Dictionary<string, Partition>();
@@ -793,7 +793,7 @@ namespace Vcc2Model.Preprocessor
       return FindModelsInFile(FileContent).Count;
     }
 
-    private static Partition SelectResultIntToMap(Z3ModelVcc2 model, Partition content, ref string mapTypeString)
+    private static Partition SelectResultIntToMap(Z3ModelVcc model, Partition content, ref string mapTypeString)
     {
       string funcname = "$int_to_map.";
       Partition retval = null;
@@ -813,7 +813,7 @@ namespace Vcc2Model.Preprocessor
       return null;
     }
 
-    private static Partition SelectResult(Z3ModelVcc2 model, string functionType, Partition arg1)
+    private static Partition SelectResult(Z3ModelVcc model, string functionType, Partition arg1)
     {
       if (model.FunctionMap.ContainsKey(functionType))
       {

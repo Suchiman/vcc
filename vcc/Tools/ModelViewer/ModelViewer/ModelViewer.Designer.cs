@@ -1,4 +1,4 @@
-﻿namespace Vcc2ModelViewer
+﻿namespace VccModelViewer
 {
     partial class ModelViewer
     {
@@ -49,7 +49,7 @@
           this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.filterFunctionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.filterInconsistentStatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-          this.filterInternalVcc2VariablesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+          this.filterInternalVccVariablesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
@@ -255,7 +255,7 @@
           this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.filterFunctionsToolStripMenuItem,
             this.filterInconsistentStatesToolStripMenuItem,
-            this.filterInternalVcc2VariablesToolStripMenuItem});
+            this.filterInternalVccVariablesToolStripMenuItem});
           this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
           this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
           this.optionsToolStripMenuItem.Text = "&Options";
@@ -280,15 +280,15 @@
           this.filterInconsistentStatesToolStripMenuItem.Text = "F&ilter inconsistent states";
           this.filterInconsistentStatesToolStripMenuItem.Click += new System.EventHandler(this.filterOptionsMenuItem_Click);
           // 
-          // filterInternalVcc2VariablesToolStripMenuItem
+          // filterInternalVccVariablesToolStripMenuItem
           // 
-          this.filterInternalVcc2VariablesToolStripMenuItem.Checked = true;
-          this.filterInternalVcc2VariablesToolStripMenuItem.CheckOnClick = true;
-          this.filterInternalVcc2VariablesToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
-          this.filterInternalVcc2VariablesToolStripMenuItem.Name = "filterInternalVcc2VariablesToolStripMenuItem";
-          this.filterInternalVcc2VariablesToolStripMenuItem.Size = new System.Drawing.Size(224, 22);
-          this.filterInternalVcc2VariablesToolStripMenuItem.Text = "Filter internal VCC2 variables";
-          this.filterInternalVcc2VariablesToolStripMenuItem.Click += new System.EventHandler(this.filterOptionsMenuItem_Click);
+          this.filterInternalVccVariablesToolStripMenuItem.Checked = true;
+          this.filterInternalVccVariablesToolStripMenuItem.CheckOnClick = true;
+          this.filterInternalVccVariablesToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+          this.filterInternalVccVariablesToolStripMenuItem.Name = "filterInternalVccVariablesToolStripMenuItem";
+          this.filterInternalVccVariablesToolStripMenuItem.Size = new System.Drawing.Size(224, 22);
+          this.filterInternalVccVariablesToolStripMenuItem.Text = "Filter internal VCC variables";
+          this.filterInternalVccVariablesToolStripMenuItem.Click += new System.EventHandler(this.filterOptionsMenuItem_Click);
           // 
           // helpToolStripMenuItem
           // 
@@ -495,7 +495,7 @@
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.ImageList imageList1;
-        private System.Windows.Forms.ToolStripMenuItem filterInternalVcc2VariablesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem filterInternalVccVariablesToolStripMenuItem;
         private System.Windows.Forms.TextBox stateValueTextBox;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;

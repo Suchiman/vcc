@@ -9,12 +9,12 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.ComponentModel;
 using System.IO;
-using Vcc2Model;
-using Vcc2Model.Controller;
+using VccModel;
+using VccModel.Controller;
 using Z3Model;
 using System.Runtime.InteropServices;
 
-namespace Vcc2ModelViewer
+namespace VccModelViewer
 {
   [ComVisible(true)]
   [Guid("15032E00-DDC4-44d1-927B-2A08C23D3F8F")]
@@ -954,7 +954,7 @@ namespace Vcc2ModelViewer
     {
       OpenFileDialog openDialog = new OpenFileDialog();
 
-      openDialog.Filter = "VCC2 Model (*.vccmodel)|*.vccmodel|Text Files (*.txt)|*.txt|AllFiles (*.*)|*.*";
+      openDialog.Filter = "VCC Model (*.vccmodel)|*.vccmodel|Text Files (*.txt)|*.txt|AllFiles (*.*)|*.*";
       openDialog.FilterIndex = 0;
       openDialog.RestoreDirectory = true;
 
@@ -1163,7 +1163,7 @@ namespace Vcc2ModelViewer
       inhibitTriggerUpdate = true;
       FilterStates = filterInconsistentStatesToolStripMenuItem.Checked;
       FilterFunctions = filterFunctionsToolStripMenuItem.Checked;
-      FilterBoogieVariables = filterInternalVcc2VariablesToolStripMenuItem.Checked;
+      FilterBoogieVariables = filterInternalVccVariablesToolStripMenuItem.Checked;
       inhibitTriggerUpdate = false;
       SaveSettings();
 
@@ -1186,11 +1186,11 @@ namespace Vcc2ModelViewer
     {
       FilterStates = !Properties.ModelViewerSettings.Default.ShowInconsistentStates;
       FilterFunctions = !Properties.ModelViewerSettings.Default.ShowAllFunctions;
-      FilterBoogieVariables = !Properties.ModelViewerSettings.Default.ShowInternalVcc2Variables;
+      FilterBoogieVariables = !Properties.ModelViewerSettings.Default.ShowInternalVccVariables;
 
       filterInconsistentStatesToolStripMenuItem.Checked = FilterStates;
       filterFunctionsToolStripMenuItem.Checked = FilterFunctions;
-      filterInternalVcc2VariablesToolStripMenuItem.Checked = FilterBoogieVariables;
+      filterInternalVccVariablesToolStripMenuItem.Checked = FilterBoogieVariables;
 
       toolStripButton_filterStates.Checked = FilterStates;
       toolStripButton_filterFunctions.Checked = FilterFunctions;
@@ -1201,7 +1201,7 @@ namespace Vcc2ModelViewer
     {
       Properties.ModelViewerSettings.Default.ShowInconsistentStates = !FilterStates;
       Properties.ModelViewerSettings.Default.ShowAllFunctions = !FilterFunctions;
-      Properties.ModelViewerSettings.Default.ShowInternalVcc2Variables = !FilterBoogieVariables;
+      Properties.ModelViewerSettings.Default.ShowInternalVccVariables = !FilterBoogieVariables;
 
       Properties.ModelViewerSettings.Default.Save();
     }
@@ -1218,8 +1218,8 @@ namespace Vcc2ModelViewer
         filterInconsistentStatesToolStripMenuItem.Checked = FilterStates;
       if (filterFunctionsToolStripMenuItem.Checked != FilterFunctions)
         filterFunctionsToolStripMenuItem.Checked = FilterFunctions;
-      if (filterInternalVcc2VariablesToolStripMenuItem.Checked != FilterBoogieVariables)
-        filterInternalVcc2VariablesToolStripMenuItem.Checked = FilterBoogieVariables;
+      if (filterInternalVccVariablesToolStripMenuItem.Checked != FilterBoogieVariables)
+        filterInternalVccVariablesToolStripMenuItem.Checked = FilterBoogieVariables;
 
       if ((!inhibitTriggerUpdate) && (executionStatesComboBox.SelectedIndex >= 0))
       {

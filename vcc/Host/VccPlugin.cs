@@ -10,7 +10,7 @@ namespace Microsoft.Research.Vcc
   class VccFunctionVerifier : FunctionVerifier
   {
     Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls;
-    Vcc2Plugin parent;
+    VccPlugin parent;
     Helper.Env env;
     Boogie.Program currentBoogie;
     VC.VCGen vcgen;
@@ -31,7 +31,7 @@ namespace Microsoft.Research.Vcc
       //"/noinfer",  
     };
         
-    internal VccFunctionVerifier(Vcc2Plugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, Helper.Env env)
+    internal VccFunctionVerifier(VccPlugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, Helper.Env env)
       : base(env, currentDecls)
     {
       this.currentDecls = currentDecls;
@@ -287,7 +287,7 @@ namespace Microsoft.Research.Vcc
     }
   }
     
-  internal class Vcc2Plugin : Plugin
+  internal class VccPlugin : Plugin
   {
     internal VccOptions options;
     internal string ModelFileName;

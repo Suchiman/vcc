@@ -11,7 +11,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 
-namespace Vcc2ModelViewer
+namespace VccModelViewer
 {
   public partial class ModelViewerMainForm : Form
   {

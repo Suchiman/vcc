@@ -139,7 +139,7 @@ namespace Microsoft.Research.Vcc
         }
 
         if (currentPlugin == null) {
-          currentPlugin = new Vcc2Plugin();
+          currentPlugin = new VccPlugin();
         }
 
         currentPlugin.RegisterStopwatch(swTotal);

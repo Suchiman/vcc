@@ -13,7 +13,7 @@ using VerifiedCCompilerAddin.Manager.Marker;
 using VerifiedCCompilerAddin.Manager.Commands;
 using Microsoft.VisualStudio.CommandBars;
 using VerifiedCCompilerAddin.Forms;
-using Vcc2ModelViewer;
+using VccModelViewer;
 
 namespace VerifiedCCompilerAddin {
   public static class AddInGlobals {

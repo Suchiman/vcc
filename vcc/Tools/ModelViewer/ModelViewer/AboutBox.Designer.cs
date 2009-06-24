@@ -1,4 +1,4 @@
-﻿namespace Vcc2ModelViewer
+﻿namespace VccModelViewer
 {
   partial class AboutBox
   {

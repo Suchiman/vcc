@@ -3,8 +3,8 @@
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
 //
 //-----------------------------------------------------------------------------
-#ifndef _VCC2_H
-#define _VCC2_H
+#ifndef _VCC_H
+#define _VCC_H
 
 #include <crtdefs.h>
 
@@ -95,4 +95,4 @@ typedef int bool;
 
 #endif
 
-#endif // _VCC2_H
+#endif // _VCC_H

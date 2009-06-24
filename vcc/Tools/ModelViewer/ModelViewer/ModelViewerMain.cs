@@ -6,7 +6,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace Vcc2ModelViewer
+namespace VccModelViewer
 {
   static class ModelViewerMain
   {
@@ -21,7 +21,7 @@ namespace Vcc2ModelViewer
 
     static void printUsage()
     {
-      Console.WriteLine("Usage: Vcc2ModelViewer [options] <filename>");
+      Console.WriteLine("Usage: VccModelViewer [options] <filename>");
       Console.WriteLine("       filename           : Z3 model input file");
       Console.WriteLine("       options ");
       Console.WriteLine("          /l:<linenumber> : select state for specified line number in model");

@@ -5,10 +5,10 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using Vcc2Model.Controller;
+using VccModel.Controller;
 using Z3Model;
 
-namespace Vcc2Model
+namespace VccModel
 {
   public class ModelInfo
   {

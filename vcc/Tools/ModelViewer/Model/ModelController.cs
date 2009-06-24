@@ -6,12 +6,12 @@
 using System;
 using System.Collections.Generic;
 using Z3Model;
-using Vcc2Model.Preprocessor;
+using VccModel.Preprocessor;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
 
-namespace Vcc2Model.Controller
+namespace VccModel.Controller
 {
 
   public class SourceLocation : IComparable, IEquatable<SourceLocation>
@@ -446,7 +446,7 @@ namespace Vcc2Model.Controller
     }
   }
 
-  public class Z3ModelVcc2
+  public class Z3ModelVcc
   {
     public Dictionary<int, Partition> PartitionMap;
     public Dictionary<string, List<Function>> FunctionMap;
@@ -465,7 +465,7 @@ namespace Vcc2Model.Controller
 
   public class ModelController
   {
-    Z3ModelVcc2 model;
+    Z3ModelVcc model;
     string _modelFileName;
     string _sourceFileName;
     int _modelNumber;

@@ -3,8 +3,8 @@
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
 //
 //-----------------------------------------------------------------------------
-#ifndef _VCC2P_H
-#define _VCC2P_H
+#ifndef _VCCP_H
+#define _VCCP_H
 
 /*** 
  *** Core annotation language
@@ -509,4 +509,4 @@ char *get___FUNCTION__();
 void __annotation(...);
 void __debugbreak(...);
 
-#endif // _VCC2P_H
+#endif // _VCCP_H

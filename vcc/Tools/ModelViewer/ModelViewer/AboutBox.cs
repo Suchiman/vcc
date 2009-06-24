@@ -7,7 +7,7 @@ using System;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace Vcc2ModelViewer
+namespace VccModelViewer
 {
   partial class AboutBox : Form
   {

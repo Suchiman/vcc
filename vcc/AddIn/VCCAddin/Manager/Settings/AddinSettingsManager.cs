@@ -97,7 +97,6 @@ namespace VerifiedCCompilerAddin.Manager.Settings {
       settings.Add("VCCHint001", "false");
       settings.Add("VCCHint002", "false");
       settings.Add("VCCHint003", "false");
-      settings.Add("UseVCC2", "false");
       settings.Add("MasterFileName", "");
       settings.Add("UseMasterFile", "false");
       settings.Add("WarnForHeaderFile", "true");

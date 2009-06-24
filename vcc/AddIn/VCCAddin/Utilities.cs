@@ -14,7 +14,7 @@ using System.Windows.Forms;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.CommandBars;
-using Vcc2ModelViewer;
+using VccModelViewer;
 using VerifiedCCompilerAddin.Commands;
 using VerifiedCCompilerAddin.Forms;
 using VerifiedCCompilerAddin.Manager.Marker;
@@ -307,12 +307,12 @@ namespace VerifiedCCompilerAddin {
       string guidString = "{15032E00-DDC4-44d1-927B-2A08C23D3F8F}";
       Windows2 windows = (Windows2)application.Windows;
       Assembly asm = Assembly.GetExecutingAssembly();
-      string CodeBase = asm.CodeBase.Replace("VerifiedCCompilerAddin.dll", "Vcc2ModelViewer.exe");
+      string CodeBase = asm.CodeBase.Replace("VerifiedCCompilerAddin.dll", "VccModelViewer.exe");
 
       AddInGlobals.ModelViewerWindow = windows.CreateToolWindow2(addInInstance,
                                                       CodeBase,
-                                                      "Vcc2ModelViewer.ModelViewer",
-                                                      "VCC2 Model Viewer",
+                                                      "VccModelViewer.ModelViewer",
+                                                      "VCC Model Viewer",
                                                       guidString,
                                                       ref programmableObject);
 
