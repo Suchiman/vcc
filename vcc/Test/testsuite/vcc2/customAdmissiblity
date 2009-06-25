@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -15,7 +15,7 @@ Verification of A#adm succeeded.
 Verification of adm_A failed.
 testcase(12,1) : error VC8002: state was altered after havoc_others().
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -32,7 +32,7 @@ void adm_A(struct A* x)
 Verification of A#adm succeeded.
 Verification of adm_A succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -54,7 +54,7 @@ Verification of bar succeeded.
 Verification of adm_A failed.
 testcase(17,1) : error VC8002: state was altered after havoc_others().
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B {
   int y;
@@ -77,7 +77,7 @@ Verification of A#adm succeeded.
 Verification of adm_A failed.
 testcase(18,1) : error VC8012: invariant(__this->b.y > 0) of A is not admissible.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B {
   int y;
@@ -100,7 +100,7 @@ void adm_A(struct A* x)
 Verification of A#adm succeeded.
 Verification of adm_A succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -119,7 +119,7 @@ void adm_A(struct A* x)
 `
 testcase(9,1) : error VC9624: custom admissibility checks are not allowed to have explicit requires/ensures/writes
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -138,7 +138,7 @@ void adm_A(struct A* x)
 `
 testcase(9,1) : error VC9624: custom admissibility checks are not allowed to have explicit requires/ensures/writes
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -156,7 +156,7 @@ void qux()
 `
 testcase(9,1) : error VC9644: the admissibility check is required to have a body
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -180,7 +180,7 @@ Verification of adm_A succeeded.
 Verification of qux failed.
 testcase(17,44) : error VC8001: custom admissibility was called (in call 'adm_A((struct A*)0)').
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B {
   int y;
@@ -206,7 +206,7 @@ testcase(11,15) : error VC8012: invariant(__this->b.y > 0) of A is not admissibl
 Verification of C#adm failed.
 testcase(18,15) : error VC8013: invariant(__old(b.y) == 7) is not admissible (stuttering).
 `
-#include<vcc2.h>
+#include<vcc.h>
 
 typedef struct _T {
         int dummy;
@@ -249,7 +249,7 @@ testcase(25,17) : error VC8013: invariant(__old(s.x) > s.x) is not admissible (s
 Verification of bar succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct X {
   volatile int x ;

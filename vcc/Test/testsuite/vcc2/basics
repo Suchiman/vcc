@@ -1,4 +1,4 @@
-#include "vcc2.h"
+#include "vcc.h"
 #ifdef VERIFY
 struct vcc(dynamic_owns) S { int a; obj_t b;};
 void foo(struct S *s) requires(wrapped(s)) {
@@ -30,7 +30,7 @@ Verification of t succeeded.
 Verification of t2 failed.
 testcase(22,12) : error VC9500: Assertion '_vcc_is_non_primitive_ptr(&x)' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 bool _vcc_full_stop();
 
@@ -44,7 +44,7 @@ Verification of foo#adm failed.
 testcase(7,15) : error VC8012: invariant(_vcc_full_stop()) of foo is not admissible.
 testcase(7,15) : error VC8018: invariant(_vcc_full_stop()) of foo forbids unwrapping.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int64 uint64;
 
@@ -60,7 +60,7 @@ void testme(uint64* p)
 `
 Verification of testme succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct x {
   int dummy;
@@ -75,7 +75,7 @@ struct y {
 Verification of y#adm failed.
 testcase(10,15) : error VC8012: invariant(_vcc_closed(xp)) of y is not admissible.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(volatile_owns) Foo {
   int x;
@@ -107,7 +107,7 @@ Verification of Bar#adm failed.
 testcase(18,15) : error VC8012: invariant(_vcc_set_in(&baz,_vcc_owns(&foo))) of Bar is not admissible.
 Verification of BarOK#adm succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void bar(unsigned i) {
    spec(bool map[unsigned];) 
@@ -116,7 +116,7 @@ void bar(unsigned i) {
 `
 Verification of bar succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void bar(unsigned i) {
    spec(bool map[unsigned];) 
@@ -125,7 +125,7 @@ void bar(unsigned i) {
 `
 testcase(5,91) : error VC0000: Type of conditional expression cannot be determined because there are implicit conversions between '__int32' and 'bool'; try adding an explicit cast to one of the arguments.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef struct _FOO
 {
@@ -145,7 +145,7 @@ void funcname(FOO *p)
 testcase(6,27) : error VC0000: The name 'AAA' does not exist in the current context.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct vcc(volatile_owns) key{
   int data;
@@ -155,7 +155,7 @@ typedef struct vcc(volatile_owns) key{
 Verification of key#adm succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
     unsigned dummy;
@@ -169,7 +169,7 @@ vcc(dynamic_owns) struct _Foo
 `
 testcase(8,1) : warning VC0000: Verification type attributes placed at this location are currently ignored; place them between the struct/union keyword and the type name.
 `
-#include "vcc2.h"
+#include "vcc.h"
 struct X {
     int dummy;
     invariant(closed(&this))
@@ -177,7 +177,7 @@ struct X {
 `
 testcase(4,29) : error VC0000: '&' requires l-value
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef __int64 int64;
 typedef unsigned __int64 uint64;
@@ -198,7 +198,7 @@ testcase(14,17) : error VC8512: Assertion 'core.R[12] is thread local' did not v
 testcase(14,17) : error VC8518: Assertion 'core.R[12] fits range of int64_t' did not verify.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 static void notJustForFun (
     unsigned char *lo,
@@ -227,7 +227,7 @@ void bla(struct bla o)
 `
 Verification of bla succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct VS {
   spec(volatile obj_t yappr;)
@@ -242,7 +242,7 @@ void foo2(struct VS *vs)
 Verification of foo2 succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo(bool a, bool b) 
   requires(a && !b)
@@ -267,7 +267,7 @@ void foo(bool a, bool b)
 Verification of foo succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo() {
   assert(forall(int i; i != 0 ==> forall(int i; i != 0)));
@@ -276,7 +276,7 @@ void foo() {
 testcase(5,48) : error VC9675: Quantified variable 'i' clashes with earlier declaration
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo() {
   spec(bool m[int];)
@@ -293,7 +293,7 @@ void foo()
 `
 testcase(4,12) : error VC0000: Illegal indirection.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct Foo {
     def_group(g)
@@ -307,7 +307,7 @@ void foo(struct Foo *s) {}
 testcase(6,5) : error VC9678: 'g' : group name redefinition
 testcase(4,5)-(4,67) : (Location of symbol related to previous error.)
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct Foo {
     int a;
@@ -319,7 +319,7 @@ void foo(struct Foo *s) {}
 testcase(5,5) : error VC9677: 'a' : 'struct' member redefinition
 testcase(4,5)-(4,10) : (Location of symbol related to previous error.)
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct Foo {
     int a;

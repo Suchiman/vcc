@@ -19,7 +19,7 @@ void OldInInvCheckInLoop()
 Verification of A#adm succeeded.
 Verification of OldInInvCheckInLoop succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct vcc(dynamic_owns) _X
 {
@@ -30,7 +30,7 @@ struct vcc(dynamic_owns) _X
 testcase(6,37) : warning VC9104: primitive pointers are unlikely to be in the owns set
 Verification of _X#adm succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int f;
@@ -54,7 +54,7 @@ testcase(8,15) : error VC8012: invariant(f == b->f + b->g) of A is not admissibl
 Verification of B#adm failed.
 testcase(16,15) : error VC8012: invariant(f == b->f + b->g) of B is not admissible.
 `
-#include "vcc2.h"
+#include "vcc.h"
 typedef unsigned __int64 UINT64, *PUINT64;
 typedef struct vcc(volatile_owns) vcc(dynamic_owns) _rwkey{
   int data;

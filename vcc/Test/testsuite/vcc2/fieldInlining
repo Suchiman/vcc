@@ -1,5 +1,5 @@
 
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;
@@ -49,7 +49,7 @@ Verification of bar succeeded.
 Verification of barByVal succeeded.
 `
 
-	#include <vcc2.h>
+	#include <vcc.h>
 
 	struct S {
 		int a;
@@ -98,7 +98,7 @@ Verification of fooByVal succeeded.
 Verification of bar succeeded.
 Verification of barByVal succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
 	int a;
@@ -134,7 +134,7 @@ void bar(struct D *p)
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 union U {
   struct {

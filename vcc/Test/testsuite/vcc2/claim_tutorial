@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
   if (*Destination == Comparand) {
@@ -39,7 +39,7 @@ Verification of A#adm succeeded.
 Verification of LockFreeIncr succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 struct vcc(claimable) A {
   volatile int x;
   invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
@@ -62,7 +62,7 @@ void incr(struct A *a, int *res claimp(c) claimp(*cres))
 Verification of A#adm succeeded.
 Verification of incr succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 struct vcc(claimable) A {
   volatile int x;
   invariant( this->x > 0 && (old(this->x) == this->x || old(this->x) + 1 == this->x ))

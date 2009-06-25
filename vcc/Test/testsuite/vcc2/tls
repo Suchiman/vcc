@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct FooBar {
   int x;
@@ -59,7 +59,7 @@ Verification of foo succeeded.
 Verification of shouldFail failed.
 testcase(53,14) : error VC9500: Assertion 'd->f1' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct FooBar {
   int x;
@@ -74,7 +74,7 @@ void foo(struct TLS_DATA *p) {  }
 `
 testcase(7,1) : error VC9665: Type 'TLS_DATA' cannot be marked as both claimable and thread_local_storage
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 #define get_tls() _get_tls(me())
 

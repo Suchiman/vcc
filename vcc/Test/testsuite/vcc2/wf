@@ -70,7 +70,7 @@ testcase(60,12) : error VC8502: Assertion 'p->a->x is thread local (in well-form
 testcase(60,12) : error VC9500: Assertion 'p->a->x==5' did not verify.
 `
 
-#include "vcc2.h"
+#include "vcc.h"
 
 void fail1(int *p)
   requires(typed(p))

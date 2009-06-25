@@ -1,4 +1,4 @@
-#include "vcc2.h"
+#include "vcc.h"
 
 #ifdef VERIFY
 typedef _Bool bool;
@@ -154,7 +154,7 @@ void donothing_pure_fail(int *x)
 `
 testcase(3,1) : error VC9623: writes specified on a pure function
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 int f1(int x);
 
@@ -176,7 +176,7 @@ testcase(9,1) : warning VC9303: [possible unsoundness]: cycle in pure function c
 testcase(10,1) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g2 -> g3 -> g1 -> g2
 testcase(11,1) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g3 -> g1 -> g2 -> g3
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 ispure int f1(int *x)
   reads(x);
@@ -247,7 +247,7 @@ testcase(12,1)-(12,76) : (Location of symbol related to previous error.)
 testcase(48,1) : error VC9641: the reads check and the function checked have different number of parameters
 testcase(15,1)-(15,76) : (Location of symbol related to previous error.)
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 ispure int f1(int *x)
   returns(*x)
@@ -289,7 +289,7 @@ Verification of reads_f1 succeeded.
 Verification of reads_f2 succeeded.
 Verification of reads_f3 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 ispure int f1(int *x)
   returns(*x == 0)
@@ -311,7 +311,7 @@ Verification of f2#reads failed.
 testcase(7,1) : error VC8007: the value of 'result' changed (in reads check of 'f2').
 Verification of f1#reads succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 ispure int f1(void *x)
   reads(x);
@@ -336,7 +336,7 @@ testcase(12,11) : error VC9648: non-pointers are not supported in reads clauses
 testcase(6,107) : error VC9647: void* and obj_t are not supported in reads clauses
 testcase(4,11) : error VC9647: void* and obj_t are not supported in reads clauses
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 ispure int f1(int *x)
   reads(x);
@@ -354,7 +354,7 @@ void fux()
 `
 testcase(6,1) : error VC9646: the reads check is required to have a body
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 ispure int f1(int *x)
   returns(*x == 0)
@@ -378,7 +378,7 @@ Verification of r_f1 succeeded.
 Verification of fux failed.
 testcase(18,44) : error VC8005: intercepted call to reads check (in call 'r_f1(&y)').
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 // should fail, no contract
 frameaxiom ispure int f1(int *x)
@@ -394,7 +394,7 @@ Verification of f2#reads succeeded.
 Verification of f1#reads failed.
 testcase(4,1) : error VC8007: the value of 'result' changed (in reads check of 'f1').
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct A {
   int x;
@@ -450,7 +450,7 @@ Verification of AbsConcRel#reads succeeded.
 Verification of f2#reads succeeded.
 Verification of f1#reads succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct ArrayList{
     size_t capacity;
@@ -471,7 +471,7 @@ size_t Length(struct ArrayList * A)
 Verification of Length succeeded.
 Verification of Length#reads succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 ispure bool Length(int *x)
     ensures (result == *x > 0);
@@ -484,7 +484,7 @@ void foo()
 `
 testcase(3,1) : error VC9650: the specification refers to memory, but function is missing a reads clause
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct IN {
   int d0;
@@ -542,7 +542,7 @@ testcase(25,1) : error VC8007: the value of 'result.y' changed (in reads check o
 Verification of ok1#reads succeeded.
 `
 #include <stdlib.h>
-#include "vcc2.h"
+#include "vcc.h"
 
 
 
@@ -594,7 +594,7 @@ spec(ispure instr_t Mem2Instr(proc_t *proc)
 `
 Verification of Mem2Instr#reads succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
 	int a;
@@ -623,7 +623,7 @@ Verification of Validate succeeded.
 Verification of GetA succeeded.
 Verification of GetA#reads succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 ispure void f(int *a);
 ispure void g(int *a) reads(a);
 

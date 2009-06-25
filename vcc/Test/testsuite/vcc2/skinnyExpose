@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B {
   int x;
@@ -148,7 +148,7 @@ Verification of fooFailWrapped failed.
 testcase(102,28) : error VC8016: 'a' is not wrapped before unwrap.
 Verification of bar succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A { int x; };
 
@@ -167,7 +167,7 @@ void foo()
 `
 testcase(12,18) : error VC9674: skinny_expose(...) does not allow invariants, only writes(...)
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(dynamic_owns) B {
   int x;
@@ -221,7 +221,7 @@ Verification of A2#adm succeeded.
 Verification of foo succeeded.
 Verification of foo2 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B {
   int x;
@@ -249,7 +249,7 @@ void foo(struct A *a)
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(dynamic_owns) B {
   int x;
@@ -309,7 +309,7 @@ Verification of fooFail2 failed.
 testcase(44,31) : error VC8014: invariant(x < 100) of B fails on wrap.
 testcase(6,15) : error VC9599: (related information) location of the invariant.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B {
   int x;
@@ -369,7 +369,7 @@ Verification of fooFail2 failed.
 testcase(44,31) : error VC8014: invariant(x < 100) of B fails on wrap.
 testcase(6,15) : error VC9599: (related information) location of the invariant.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B {
   int x;
@@ -419,7 +419,7 @@ testcase(0,0) : error VC9599: (related information) Precondition: 'the object be
 Verification of fooFail2 failed.
 testcase(37,5) : error VC8507: Assertion 'a->b->x is writable' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct B {
   int x;
@@ -478,7 +478,7 @@ Verification of A#adm succeeded.
 Verification of works succeeded.
 Verification of now_also_works succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct B {
   int x;
@@ -505,7 +505,7 @@ void foo(struct A *a)
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct B {
   int x;
@@ -543,7 +543,7 @@ void foo(struct A *a)
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -664,7 +664,7 @@ Verification of up4 succeeded.
 Verification of up5 succeeded.
 Verification of up6 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -859,7 +859,7 @@ testcase(147,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has writt
 Verification of up6 failed.
 testcase(161,28) : error VC8530: Assertion 'skinny_expose(c, ...) body has written at an unlisted location' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -881,7 +881,7 @@ void up1(struct A *a)
 `
 Verification of up1 succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct B {
   def_group(G)

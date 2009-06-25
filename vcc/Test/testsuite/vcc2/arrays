@@ -232,7 +232,7 @@ Verification of set0 succeeded.
 Verification of usex succeeded.
 Verification of use1 succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct A {
   unsigned size;
@@ -248,7 +248,7 @@ void foo(struct A *a)
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void donothing();
 
@@ -285,7 +285,7 @@ ensures(forall(unsigned long i; i < width; a[i] == old(b[i]) && b[i] == old(a[i]
 `
 Verification of swap succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int64 uint64;
 
@@ -299,7 +299,7 @@ struct DESC {
 `
 Verification of DESC#adm succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int64 uint64;
 struct CONC {
@@ -343,7 +343,7 @@ Verification of ABS#adm succeeded.
 Verification of DESC#adm succeeded.
 Verification of AbsConcRel#reads succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int64 uint64;
 struct CONC {
@@ -387,7 +387,7 @@ Verification of ABS#adm succeeded.
 Verification of DESC#adm failed.
 testcase(26,14) : error VC8012: invariant(AbsConcRel(&__this->abs,__this->conc)) of DESC is not admissible.
 `
-#include "vcc2.h"
+#include "vcc.h"
  
 typedef unsigned __int64 uint64;
 
@@ -433,7 +433,7 @@ Verification of SetDescAbsArrayFail failed.
 testcase(23,11) : error VC9500: Assertion '((bool)0)' did not verify.
 Verification of SetDescAbsArray succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int64 uint64;
 
@@ -460,7 +460,7 @@ Verification of DESC#adm succeeded.
 Verification of SetConcGpr succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 #define MAX 100
 
@@ -496,7 +496,7 @@ Verification of foo succeeded.
 Verification of fooShouldFail failed.
 testcase(31,12) : error VC9500: Assertion '((bool)0)' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct S {
   volatile int a[2];
@@ -512,7 +512,7 @@ void foo(struct S *p claimp(c))
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 #define MAX 100
 
@@ -561,7 +561,7 @@ Verification of foo succeeded.
 Verification of bar succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   vcc(no_inline) int a[10];

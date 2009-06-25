@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void fail1(int x)
 {
@@ -54,7 +54,7 @@ Verification of ok4 succeeded.
 Verification of fail4 failed.
 testcase(43,7) : error VC8004: x + 1 might overflow.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 void foo(int x)
   requires(x > 0);

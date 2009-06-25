@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -21,7 +21,7 @@ Verification of foo failed.
 testcase(16,13) : error VC8014: invariant(__this->y > 0) of A fails on wrap.
 testcase(7,32) : error VC9599: (related information) location of the invariant.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct A {
   int a;
@@ -40,7 +40,7 @@ wrap(a);
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct T {
   int a;
@@ -71,7 +71,7 @@ testcase(19,15) : error VC8012: invariant(__this->t->a == __this->t->b) of S is 
 testcase(20,15) : error VC8012: invariant(__this->r->c == __this->r->d) of S is not admissible.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 vcc(atomic_inline) int InterlockedDecrement(volatile int *p) {
   *p = *p - 1;
@@ -113,7 +113,7 @@ testcase(23,23) : error VC8524: Assertion 'chunk __old(__this->x) == __this->x |
 Verification of fail2 failed.
 testcase(32,23) : error VC8524: Assertion 'chunk x >= 0 of invariant of a holds after atomic' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct CannotClose {
   int y;

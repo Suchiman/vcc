@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
 
@@ -58,7 +58,7 @@ Verification of writeGroupFieldShouldFail2 failed.
 testcase(37,3) : error VC8507: Assertion 's->c is writable' did not verify.
 Verification of writeGroupField succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
 
@@ -105,7 +105,7 @@ Verification of destroyGroupInvariantShouldFail failed.
 testcase(37,28) : error VC8014: invariant(__this->a == __this->c) of S##G fails on wrap.
 testcase(6,36) : error VC9599: (related information) location of the invariant.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S{
 
@@ -147,7 +147,7 @@ void foo(struct S *s) { }
 `
 testcase(4,24) : error VC0000: 'S' does not contain a definition for 'G'.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct S {
  def_group(G)
@@ -165,7 +165,7 @@ struct S2 {
 `
 testcase(14,43) : error VC0000: 'S' does not contain a definition for 'G1'.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 #define UINT32 unsigned int
 
@@ -189,7 +189,7 @@ typedef struct t_st{
 Verification of t_st#adm succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -214,7 +214,7 @@ struct B {
 Verification of B##C#adm succeeded.
 Verification of B##D#adm succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
  struct vcc(claimable) Struct
  {
@@ -313,7 +313,7 @@ Verification of test3 succeeded.
 Verification of test1 succeeded.
 Verification of test2 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
 
@@ -373,7 +373,7 @@ Verification of writeGroupFieldShouldFail2 failed.
 testcase(37,3) : error VC8507: Assertion 's->c is writable' did not verify.
 Verification of writeGroupField succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
 
@@ -420,7 +420,7 @@ Verification of destroyGroupInvariantShouldFail failed.
 testcase(37,13) : error VC8014: invariant(__this->a == __this->c) of S##G fails on wrap.
 testcase(6,36) : error VC9599: (related information) location of the invariant.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S{
 
@@ -462,7 +462,7 @@ void foo(struct S *s) { }
 `
 testcase(4,15) : error VC0000: 'S' does not contain a definition for 'G'.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct S {
  def_group(G)
@@ -480,7 +480,7 @@ struct S2 {
 `
 testcase(14,35) : error VC0000: 'S' does not contain a definition for 'G1'.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 #define UINT32 unsigned int
 
@@ -504,7 +504,7 @@ typedef struct t_st{
 Verification of t_st#adm succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -529,7 +529,7 @@ struct B {
 Verification of B##C#adm succeeded.
 Verification of B##D#adm succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
  struct vcc(claimable) Struct
  {
@@ -629,7 +629,7 @@ Verification of test3 succeeded.
 Verification of test1 succeeded.
 Verification of test2 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -650,7 +650,7 @@ struct A {
 Verification of A#adm succeeded.
 `
 #include <stdlib.h>
-#include "vcc2.h"
+#include "vcc.h"
 
 #define UINT32 unsigned int
 
@@ -675,7 +675,7 @@ void test()
 `
 Verification of test succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct A {
   def_group(B)
@@ -699,7 +699,7 @@ testcase(15,13) : error VC8019: '__this::B' is not writable before wrapping 'a' 
 testcase(15,3) : error VC9502: Call '_vcc_wrap(a, _vcc_typeof(a))' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is not closed'.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct Pls *pPls;
 typedef struct vcc(claimable) _Protector {

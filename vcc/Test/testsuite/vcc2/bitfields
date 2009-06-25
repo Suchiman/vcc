@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned int UINT32;
 typedef union foo_t {
@@ -50,7 +50,7 @@ Verification of t2 failed.
 testcase(36,12) : error VC9500: Assertion 'x.f.b == 3' did not verify.
 Verification of ok1 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned __int8     UINT8;
 typedef signed __int64      INT64;

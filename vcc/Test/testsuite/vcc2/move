@@ -1,4 +1,4 @@
-#include "vcc2.h"
+#include "vcc.h"
 
 struct Point{int x; int y;};
 struct Rect{

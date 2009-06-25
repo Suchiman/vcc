@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -32,7 +32,7 @@ Verification of baz succeeded.
 Verification of baz2 failed.
 testcase(28,12) : error VC9500: Assertion 'b.a.y == 0' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x, y, z; 
@@ -57,7 +57,7 @@ struct A foo()
 Verification of foo succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned __int64 UINT64;
 typedef unsigned __int32 UINT32;
@@ -92,7 +92,7 @@ spec(ispure struct A abs(struct C *c)
 Verification of A#adm succeeded.
 Verification of abs succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned __int64 UINT64;
 

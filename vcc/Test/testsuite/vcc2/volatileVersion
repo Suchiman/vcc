@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct VS {
   volatile int x;
@@ -98,7 +98,7 @@ testcase(72,21) : error VC8524: Assertion 'chunk _vcc_approves(_vcc_owner(__this
 Verification of foo2fail2 failed.
 testcase(82,5) : error VC8510: Assertion 'vs is writable in call to _vcc_bump_volatile_version(vs)' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct VS {
   volatile int x;
@@ -186,7 +186,7 @@ testcase(65,12) : error VC9500: Assertion '_vcc_in_state(_vcc_skip_wf(), vs->x =
 Verification of foo1fail3 failed.
 testcase(75,12) : error VC9500: Assertion '_vcc_in_state(_vcc_skip_wf(), vs->y == 10)' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct VS1 {
   volatile int y;
@@ -217,7 +217,7 @@ testcase(7,15) : error VC9672: volatile field 'yappr' is an approver, but not a 
 testcase(15,15) : error VC9673: approver field 'yappr' should have obj_t type, it has 'struct VS1*'
 testcase(24,21) : error VC9671: approves(...) can only be used as a top-level invariant
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A { spec(obj_t x;) int y; };
 
@@ -234,7 +234,7 @@ struct VS1 {
 testcase(11,15) : error VC9669: approves(...) needs this->field as the second parameter
 testcase(12,15) : error VC9670: approves(...) needs owner(this) or this->field as the first parameter
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct A {
   def_group(B)
@@ -278,7 +278,7 @@ Verification of VS#adm succeeded.
 Verification of foo1 succeeded.
 Verification of foo2 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct t{
     def_group(A, vcc(claimable))

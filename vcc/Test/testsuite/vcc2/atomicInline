@@ -45,7 +45,7 @@ Verification of _LOCK#adm succeeded.
 Verification of Acquire succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned __int32 UINT32;
 typedef __int32 INT32;
@@ -91,7 +91,7 @@ void bar(struct S *s claimp(c))
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 vcc(atomic_inline)
 int ICX(volatile int *p, int tst, int rpl)
@@ -113,7 +113,7 @@ void foo(int res)
 `
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 vcc(atomic_inline) void foo();
 void bar() { foo(); }
@@ -121,7 +121,7 @@ void bar() { foo(); }
 `
 Verification of bar succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 ispure vcc(atomic_inline) void foo();
 void bar() { foo(); }
@@ -129,7 +129,7 @@ void bar() { foo(); }
 testcase(3,1) : error VC9667: Pure function 'foo' cannot be inlined.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 #define RTL_MAXIMUM_EXCESSIVE_SPIN_COUNT 10000
 
@@ -201,7 +201,7 @@ testcase(63,43) : warning VC9302: [possible unsoundness]: more then one access t
 Verification of _RTL_SPIN_LOCK#adm succeeded.
 Verification of RtlpWaitForSpinLockAndAcquire succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct vcc(claimable) vcc(volatile_owns) _LOCK {
   volatile int locked;
@@ -232,7 +232,7 @@ void Acquire(LOCK *l claimp(c))
 `
 Verification of Acquire succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 vcc(atomic_inline)
 void foo(int a spec(out int c)) {
@@ -247,7 +247,7 @@ void bar(int a) {
 `
 Verification of bar succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 vcc(atomic_inline) int foo(spec(out int x)) {
   speconly(x = 10;)
@@ -265,7 +265,7 @@ void bar(int p) {
 `
 Verification of bar succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 vcc(atomic_inline)
 long _InterlockedIncrement(long volatile *target)

@@ -213,7 +213,7 @@ testcase(13,15) : error VC8016: 'b' is not wrapped before unwrap.
 Verification of failWrites failed.
 testcase(19,15) : error VC8021: 'b' is not writable before unwrapping it.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B { int x,y; };
 
@@ -227,7 +227,7 @@ struct A {
 testcase(9,21) : warning VC9110: keeps(...) (or set_in(..., owns(this))) is not allowed here; annotate the type 'A' with vcc(dynamic_owns)
 Verification of A#adm succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B { int x,y; };
 

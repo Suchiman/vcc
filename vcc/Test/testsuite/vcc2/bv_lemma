@@ -22,7 +22,7 @@ void foo()
 `
 testcase(7,92) : error VC9659: operators in bv_lemma(...) need to be unchecked (expression: x + x)
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef enum _REG_NAME
 {
@@ -80,7 +80,7 @@ unsigned int foo(REG_NAME Name)
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 int foo(int i) 
   ensures(result == unchecked(-i))
@@ -91,7 +91,7 @@ int foo(int i)
 `
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 void foo()
 {
@@ -100,7 +100,7 @@ void foo()
 `
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 void foo(int j) {
     bv_lemma(forall(int i; i&1 || !((bool)(i&1)))); // crashes

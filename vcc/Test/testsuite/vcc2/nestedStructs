@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 #define UINT32 unsigned int
 
@@ -20,7 +20,7 @@ typedef struct t_vp{
 
 `
 Verification of t_th#adm succeeded.
-`#include <vcc2.h>
+`#include <vcc.h>
 
 struct foo {
     vcc(no_inline) unsigned int arr[20];

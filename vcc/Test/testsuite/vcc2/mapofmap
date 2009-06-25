@@ -1,4 +1,4 @@
-#include "vcc2.h"
+#include "vcc.h"
 
 void success1()
 {
@@ -19,7 +19,7 @@ speconly(
 `
 Verification of success1 succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 void fail2()
 {
@@ -42,7 +42,7 @@ speconly(
 Verification of fail2 failed.
 testcase(17,11) : error VC9500: Assertion 'b[4] == 27' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 #ifdef VERIFY
 typedef int FromIntToInt[int];

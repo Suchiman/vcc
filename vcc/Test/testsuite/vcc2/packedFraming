@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B {
   int x;
@@ -15,7 +15,7 @@ void foo(struct B *b)
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x;
@@ -61,7 +61,7 @@ testcase(27,12) : error VC9500: Assertion 'b->x == __old(b->x)' did not verify.
 Verification of fooMayFail1 failed.
 testcase(37,12) : error VC9500: Assertion 'b->x == __old(b->x)' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B {
   int y;
@@ -90,7 +90,7 @@ void bar(struct A *a, struct A *b)
 Verification of A#adm succeeded.
 Verification of bar succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int64 uint64;
 struct CONC {
@@ -119,7 +119,7 @@ void foo(struct CONC *c, struct CONC *c2)
 `
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct S { int a; };
 
@@ -154,7 +154,7 @@ void bar2(struct S *s, int *a spec(obj_t c_root))
 Verification of bar succeeded.
 Verification of bar2 succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 void works(int *a, int *b)
     maintains(wrapped(as_array(a,42)))
@@ -199,7 +199,7 @@ Verification of works succeeded.
 Verification of set_5_at_0 succeeded.
 Verification of problematic succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct _A{
     int dummy;
@@ -315,7 +315,7 @@ Verification of fooComplex succeeded.
 Verification of fooFail2 failed.
 testcase(100,14) : error VC9500: Assertion '_vcc_in_vdomain(b->a,b)' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A { int x; };
 struct B {

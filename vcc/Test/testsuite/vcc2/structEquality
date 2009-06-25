@@ -1,5 +1,5 @@
 
-#include <vcc2.h>
+#include <vcc.h>
 
 union vcc(dynamic_owns) U {
   unsigned __int64 a;
@@ -58,7 +58,7 @@ Verification of T#adm succeeded.
 Verification of eq_S succeeded.
 Verification of eq_T succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int x[3];
@@ -119,7 +119,7 @@ Verification of foo succeeded.
 Verification of bar failed.
 testcase(51,12) : error VC9500: Assertion '_vcc_deep_struct_eq(&a, &b)' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 void foo(void *);
 

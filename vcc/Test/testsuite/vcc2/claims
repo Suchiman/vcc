@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct Counter {
   volatile int count;
@@ -125,7 +125,7 @@ testcase(87,24) : error VC8527: Assertion 'cnt is closed (for atomic(...))' did 
 Verification of fooFail5 failed.
 testcase(104,50) : error VC8521: Assertion 'chunk cnt->count == y of the claim holds after a step of the machine' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
   if (*Destination == Comparand) {
@@ -166,7 +166,7 @@ Verification of A#adm succeeded.
 Verification of LockFreeIncr failed.
 testcase(34,51) : error VC8520: Assertion 'chunk y < a->x of the claim initially holds' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   volatile int x;
@@ -196,7 +196,7 @@ Verification of A#adm succeeded.
 Verification of LockFreeIncr failed.
 testcase(22,5) : error VC8010: object c might equal c.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
   if (*Destination == Comparand) {
@@ -250,7 +250,7 @@ Verification of LockFreeIncr failed.
 testcase(48,1) : error VC9501: Post condition '_vcc_ref_cnt(c) == __old(_vcc_ref_cnt(c))' did not verify.
 testcase(20,13) : error VC9599: (related information) Location of post condition.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(claimable) A {
   volatile int x;
@@ -347,7 +347,7 @@ Verification of ok3 succeeded.
 Verification of foo8 failed.
 testcase(76,3) : error VC8010: object a might equal b.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(claimable) A {
   volatile int x;
@@ -410,7 +410,7 @@ Verification of claim_A succeeded.
 Verification of claim_A2 failed.
 testcase(49,20) : error VC8009: type of object a was not marked with vcc(claimable).
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(claimable) A {
   volatile int x;
@@ -443,7 +443,7 @@ testcase(17,14) : error VC9500: Assertion '((bool)0)' did not verify.
 Verification of RequiresIsNotEnough failed.
 testcase(24,21) : error VC8527: Assertion 'a is closed (for atomic(...))' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct Node {
     struct Node *next;
@@ -472,7 +472,7 @@ Verification of Node#adm succeeded.
 Verification of push failed.
 testcase(21,13) : error VC8532: Assertion 's is atomically updated in call to _vcc_set_closed_owner(n, s)' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct Node {
     struct Node *next;
@@ -516,7 +516,7 @@ testcase(19,5) : error VC9626: static_wrap(...) cannot be used inside atomic upd
 testcase(27,5) : error VC9626: static_unwrap(...) cannot be used inside atomic update/read
 testcase(37,3) : error VC9627: ordinary functions like foo(...) cannot be used inside atomic update/read
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(claimable) A {
   spec(claim_t c;)
@@ -536,7 +536,7 @@ void foo(struct A *a, struct A *b)
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   spec(claim_t c;)
@@ -553,7 +553,7 @@ void foo(struct A *a, struct A *b)
 `
 testcase(13,17) : error VC9652: claim(...) used in pure context
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(claimable) S {
   int x;
@@ -571,7 +571,7 @@ void foo(struct S *s)
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   volatile int x;
@@ -590,13 +590,13 @@ struct B {
 Verification of B#adm failed.
 testcase(12,15) : error VC8012: invariant(a->x > 0) of B is not admissible.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 void foo(obj_t O) requires(is_claimable(O)) { }    
 
 `
 Verification of foo succeeded.
-`#include "vcc2.h"
+`#include "vcc.h"
 
 typedef struct  vcc(claimable) A {
 
@@ -621,7 +621,7 @@ Verification of A#adm succeeded.
 Verification of foo2 failed.
 testcase(17,23) : error VC8528: Assertion 'object x is closed before claiming it' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int64 UINT64;
 
@@ -660,7 +660,7 @@ void update_o(struct DESC *d)
 Verification of DESC#adm succeeded.
 Verification of DESC##Group#adm succeeded.
 Verification of update_o succeeded.
-`#include <vcc2.h>
+`#include <vcc.h>
  
 struct vcc(claimable) Foo
 {
@@ -682,7 +682,7 @@ void foo(struct Foo *o claimp(c))
 Verification of foo failed.
 testcase(15,50) : error VC8520: Assertion 'chunk ((bool)0) of the claim initially holds' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
  
 struct vcc(claimable) Foo
 {
@@ -705,7 +705,7 @@ Verification of Foo#adm succeeded.
 Verification of foo failed.
 testcase(16,48) : error VC8520: Assertion 'chunk ((bool)0) of the claim initially holds' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct vcc(claimable) S {
   volatile int x;
@@ -751,7 +751,7 @@ testcase(33,51) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds af
 #define PVOID void*
 #define NULL ((void*)0)
 
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef struct TH *PTH;
 
@@ -777,7 +777,7 @@ GLOBAL_STATE SchGlobalState;
  }
 `
 Verification of MoveFromEvent succeeded.
-`#include <vcc2.h>
+`#include <vcc.h>
 
 struct vcc(volatile_owns) A {
   int x;
@@ -801,7 +801,7 @@ void bar(struct A *a, struct B *b)
 Verification of bar failed.
 testcase(15,12) : error VC9500: Assertion '_vcc_in_domain(b,a)' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(claimable) FooBar {
   int x;
@@ -822,7 +822,7 @@ void f(struct FooBar *b claimp(cc))
 `
 Verification of f succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 void foo() {
     unsigned i;
@@ -834,7 +834,7 @@ void foo() {
 `
 testcase(7,26) : error VC0000: Cannot implicitly convert type '_vcc_claim_struct**' to '_vcc_claim_struct*'.
 testcase(8,26) : error VC0000: Cannot implicitly convert type 'uint*' to '_vcc_claim_struct*'.
-`#include <vcc2.h>
+`#include <vcc.h>
 
 #define NULL ((void *)0)
 
@@ -888,7 +888,7 @@ Verification of _RTL_SPIN_LOCK#adm succeeded.
 Verification of T#adm succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   volatile int x;
@@ -912,7 +912,7 @@ Verification of A#adm succeeded.
 Verification of foo failed.
 testcase(16,5) : error VC8507: Assertion 'a0->x is writable' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(volatile_owns) A {
   int x;

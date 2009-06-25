@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 
 struct vcc(claimable) A {
@@ -120,7 +120,7 @@ testcase(93,11) : error VC8512: Assertion 'a->x is thread local' did not verify.
 Verification of fail3 failed.
 testcase(100,11) : error VC8512: Assertion 'a->x is thread local' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 
 struct vcc(claimable) A {
@@ -155,7 +155,7 @@ testcase(21,11) : error VC9629: by_claim(...) can only refer to a non-volatile f
 testcase(6,3)-(6,21) : (Location of symbol related to previous error.)
 testcase(27,11) : error VC9628: by_claim(...) expects field or embedded array reference as a second parameter
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 
 struct vcc(claimable) A {
@@ -236,7 +236,7 @@ Verification of ok1 succeeded.
 Verification of ok2 succeeded.
 Verification of ok3 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 
 struct vcc(claimable) A {
@@ -271,7 +271,7 @@ testcase(18,7) : error VC8508: Assertion 'c is a valid claim (in by_claim(c, a))
 Verification of fail2 failed.
 testcase(27,7) : error VC8509: Assertion 'object a is claimed by c (in by_claim(c, a))' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   unsigned x:1;
@@ -297,7 +297,7 @@ struct B2 {
 Verification of B#adm succeeded.
 Verification of B2#adm succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct vcc(claimable) _TH_PROCESS {
   int x;
@@ -314,7 +314,7 @@ void ThpCreateThread(PTH_PROCESS Process claimp(c))
 Verification of ThpCreateThread failed.
 testcase(12,12) : error VC9500: Assertion '_vcc_in_state(_vcc_by_claim(c), Process->x) == 0' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
  
 typedef struct _mailbox {
 int data;
@@ -352,7 +352,7 @@ Verification of _pls#adm succeeded.
 Verification of _pls##ipi#adm succeeded.
 Verification of _owner#adm succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int x;

@@ -1,4 +1,4 @@
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef struct _s {
   int dummy;
@@ -19,7 +19,7 @@ Verification of volatile#_s#adm succeeded.
 typedef __int32 INT32;
 typedef INT32 volatile VINT32;
 
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef struct _A {
 
@@ -43,7 +43,7 @@ requires(wrapped(inp))
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct Goo {
       volatile int f[10];

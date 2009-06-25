@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo () {
   spec(thread_id m = me());

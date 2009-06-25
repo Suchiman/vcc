@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 ispure unsigned fu(unsigned);
 ispure unsigned fi(int);

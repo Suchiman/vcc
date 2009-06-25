@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;
@@ -26,7 +26,7 @@ void foo(struct S *s)
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo(int i) {
   assert(old(i) == i);
@@ -42,7 +42,7 @@ testcase(9,12) : warning VC9106: 'old' or 'in_state' in '__old(i)' has no effect
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct itype_instr_t {
     int simm16:16;
@@ -77,7 +77,7 @@ assert(sf(*i).b == 5);
 Verification of test1 succeeded.
 Verification of test3 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo()
 {

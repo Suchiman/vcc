@@ -1,4 +1,4 @@
-#include "vcc2.h"
+#include "vcc.h"
 
 struct A {
   int a;
@@ -30,7 +30,7 @@ void reint(union B *b)
 Verification of reint failed.
 testcase(26,12) : error VC9500: Assertion '_vcc_set_in(&b->y.i,_vcc_extent(b))' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct A {
   int a;

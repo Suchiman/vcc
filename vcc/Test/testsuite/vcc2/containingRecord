@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned char *PUINT8;
 
@@ -30,7 +30,7 @@ void bar(int *a)
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 typedef unsigned char *PUINT8;
 
 #ifdef VERIFY

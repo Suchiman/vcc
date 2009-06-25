@@ -157,7 +157,7 @@ void use()
 Verification of foo succeeded.
 Verification of use succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct { int x; } A;
 
@@ -172,7 +172,7 @@ void update_after_wrap(A* p)
 Verification of update_after_wrap failed.
 testcase(10,3) : error VC8507: Assertion 'p->x is writable' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct DESC {
 	int a,b,c;
@@ -195,7 +195,7 @@ void test_wr(struct DESC2 *d)
 `
 Verification of test_wr succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 #define UINT32 unsigned int
 
@@ -230,7 +230,7 @@ Verification of test1 succeeded.
 Verification of test2 succeeded.
 `
 #include <stdlib.h>
-#include "vcc2.h"
+#include "vcc.h"
 
 #define UINT32 unsigned int
 
@@ -288,7 +288,7 @@ Verification of test1 failed.
 testcase(32,13) : error VC8512: Assertion '*(pte_t*)(&gm[ptea(pto, 0)]) is thread local' did not verify.
 Verification of test2 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct { int x; } A;
 
@@ -309,7 +309,7 @@ testcase(8,3) : error VC8507: Assertion 'p->x is writable' did not verify.
 Verification of writes_singleton_p failed.
 testcase(14,3) : error VC8507: Assertion 'p->x is writable' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct A {
 int x;
@@ -348,7 +348,7 @@ void foo2()
 Verification of foo succeeded.
 Verification of foo2 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned int UINT32;
 
@@ -433,7 +433,7 @@ Verification of test2 succeeded.
 Verification of test3 succeeded.
 Verification of test4 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 #include <stdlib.h>
 
 struct vcc(claimable) S {
@@ -457,7 +457,7 @@ void foo(struct S **s)
 Verification of foo failed.
 testcase(16,3) : error VC8510: Assertion '_vcc_extent(p) is writable in call to free((void *)_vcc_as_array(a, 10))' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int x;

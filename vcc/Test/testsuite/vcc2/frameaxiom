@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 spec(
 no_reads_check

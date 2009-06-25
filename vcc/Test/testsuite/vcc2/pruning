@@ -1,5 +1,5 @@
 `/functions:foo /a
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned __int32 UINT32;
 
@@ -50,7 +50,7 @@ void foo() {
 Verification of foo succeeded.
 `
 `/a /functions:baz
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*FOO)(int i)
   ensures(result == i);
@@ -81,7 +81,7 @@ int baz()
 Verification of baz succeeded.
 `
 `/a /functions:baz
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*FOO)(int i)
   ensures(result == i);
@@ -126,7 +126,7 @@ void LeaveTurnstile()
 Verification of LeaveTurnstile succeeded.
 `
 `/a /functions:foo
-#include <vcc2.h>
+#include <vcc.h>
 
 axiom(forall(int x,  y; ((x ^ y) ^ x) == y));
 
