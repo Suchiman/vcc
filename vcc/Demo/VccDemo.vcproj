@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files (x86)\Microsoft Research\VerifiedC\Headers&quot;;&quot;C:\Program Files\Microsoft Research\VerifiedC\Headers&quot;"
+				AdditionalIncludeDirectories="&quot;C:\Program Files (x86)\Microsoft Research\Vcc\Headers&quot;;&quot;C:\Program Files\Microsoft Research\VerifiedC\Headers&quot;"
 				PreprocessorDefinitions="MYVERIFY"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"

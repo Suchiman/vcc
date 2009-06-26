@@ -1,5 +1,6 @@
-#include <vcc2test.h>
+#include <vcc.h>
 #include "Spec.h"
+#include <stdlib.h>
 
 #define MAXPART 64
 #define ISSET(n, v) (((v) & (1ULL << (n))) != 0)

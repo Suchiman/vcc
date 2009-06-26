@@ -1,5 +1,5 @@
 
-#include <vcc2.h>
+#include <vcc.h>
 #include <stdlib.h>
 
 #define SIMPLE_SPIN_LOCKS

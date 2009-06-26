@@ -1,5 +1,5 @@
 
-#include <vcc2.h>
+#include <vcc.h>
 #include "Spinlock.h"
 #include "BitMap.h"
 

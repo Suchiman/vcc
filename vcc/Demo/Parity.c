@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct vcc(claimable) _A {
   volatile int f;
