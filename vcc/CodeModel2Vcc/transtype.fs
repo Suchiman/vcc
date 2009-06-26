@@ -227,6 +227,7 @@ namespace Microsoft.Research.Vcc
      
           match invs with 
           | [] -> []
+          | Expr.Macro(_, "labeled_invariant", [_; Expr.Macro(_, "group_invariant", [Expr.Macro(_, groupName,_); groupInvariant])]) :: invs'
           | Expr.Macro(_, "group_invariant", [Expr.Macro(_, groupName,_); groupInvariant]) :: invs' ->
             match typeDecls.TryGetValue(groupName) with
             | (true, (td, _)) -> 

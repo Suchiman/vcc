@@ -153,8 +153,12 @@ module Microsoft.Research.Vcc.CAST
     member this.IsUnion = this.Kind = Union
     
     member this.Declaration () =
+      let prInv = function
+        | Macro(_, "labeled_invariant", [Macro(_, "", _); i]) -> "invariant " + i.ToString()
+        | Macro(_, "labeled_invariant", [Macro(_, lbl, _); i]) -> "invariant " + lbl + ": " + i.ToString()
+        | e -> "invariant " + e.ToString()
       this.ToString () + " {\n  " + String.concat ";\n  " [for f in this.Fields -> f.ToString ()] + ";\n" +
-        String.concat "" [for i in this.Invariants -> "invariant " + i.ToString() + ";\n" ] + "}\n"
+        String.concat "" [for i in this.Invariants -> prInv i + ";\n" ] + "}\n"
         
   and Type =
     | Void

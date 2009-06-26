@@ -128,6 +128,7 @@ namespace Microsoft.Research.Vcc
     | x :: xs -> List.fold (boolOp "&&") x xs
       
   let rec splitConjunction = function
+    | Macro (_, "labeled_invariant", [_; i]) -> splitConjunction i
     | Macro (_, "ite", [a; b; EFalse])
     | Prim (_, Op ("&&", _), [a; b]) -> (splitConjunction a) @ (splitConjunction b)
     | Macro (_, "ite", [a; b; ETrue])

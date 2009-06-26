@@ -86,6 +86,8 @@ bool _vcc_in_domain(obj_t p, obj_t q);
 #define in_domain(p,q) _vcc_in_domain(p,q)
 bool _vcc_in_vdomain(obj_t p, obj_t q);
 #define in_vdomain(p,q) _vcc_in_vdomain(p,q)
+obj_t _vcc_use(const char *, obj_t);
+#define use(labelExpr, o) _vcc_use(#labelExpr, o)
 bool _vcc_inv(obj_t );
 #define inv(...) _vcc_inv(__VA_ARGS__)
 bool _vcc_inv2(obj_t );

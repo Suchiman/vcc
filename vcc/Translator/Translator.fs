@@ -85,6 +85,8 @@ namespace Microsoft.Research.Vcc
     let tpCtype = B.Type.Ref "$ctype"
     let tpState = B.Type.Ref "$state"
     let tpVersion = B.Type.Ref "$version"
+    let tpToken = B.Type.Ref "$token"
+    let tpLabel = B.Type.Ref "$label"
     
     let bImpl a b = 
       match a, b with
@@ -170,6 +172,8 @@ namespace Microsoft.Research.Vcc
       let mapTypes = new Dict<_,_>()
       let distinctTypes = new Dict<_,_>()
       let typeCodes = new Dict<_,_>()
+      let invLabels = new Dict<_,_>()
+      let invLabelConstants = ref []
       
       let weights = defaultWeights
       let weight (id:string) =
@@ -259,7 +263,7 @@ namespace Microsoft.Research.Vcc
                   else
                     (sb.Append '?').Append(System.String.Format("{0:X2}", (int)c)) |> ignore
                 let name = "#file^" + sb.ToString()
-                let constdata = { Name = name; Type = B.Type.Ref "$token"; Unique = true } : B.ConstData
+                let constdata = { Name = name; Type = tpToken; Unique = true } : B.ConstData
                 let axiom = B.Decl.Axiom (bCall "$file_name_is" [bInt idx; er name])
                 tokenConstants := B.Decl.Const constdata :: axiom :: !tokenConstants
                 idx
@@ -278,8 +282,17 @@ namespace Microsoft.Research.Vcc
       let registerToken name =
         if not (tokenConstantNames.ContainsKey name) then 
           tokenConstantNames.Add (name, true)
-          let constdata = { Name = name; Type = B.Type.Ref "$token"; Unique = true } : B.ConstData
+          let constdata = { Name = name; Type = tpToken; Unique = true } : B.ConstData
           tokenConstants := B.Decl.Const constdata :: !tokenConstants
+      
+      let trInvLabel (lbl:string) =
+        let result = "l#" + lbl;
+        if not (invLabels.ContainsKey(result)) then 
+          invLabels.Add(result, true)
+          let constdata = { Name = result; Type = tpLabel; Unique = true } : B.ConstData
+          invLabelConstants := B.Decl.Const constdata :: !invLabelConstants
+        result
+
       
       let getTokenConst tok =
         let name = "#tok" + tokSuffix tok
@@ -811,6 +824,10 @@ namespace Microsoft.Research.Vcc
               | _ -> bCall "$dont_instantiate_int" [castToInt (trType e.Type) arg]
           | "_vcc_claims", [cl; cond] ->
             claims env (self cl) cond
+          | "_vcc_in_domain", [s; C.Macro(_, "_vcc_use", [C.Macro(_, lbl, []); e1]); e2] ->
+            bCall "$in_domain_lab" ((selfs [s;e1;e2]) @ [er (trInvLabel lbl)])
+          | "_vcc_in_domain", args ->
+              bCall "$in_domain_lab" ((selfs args) @ [er (trInvLabel "public")])
           | "_vcc_sk_hack", [e] ->
             bCall "sk_hack" [self e]
             
@@ -1899,6 +1916,7 @@ namespace Microsoft.Research.Vcc
         let s1 = er "#s1"
         let s2 = er "#s2"
         let s1s2p = [("#s1", tpState); ("#s2", tpState); ("#p", tpPtr)]
+        let s2r = [("#s2", tpState); ("#r", B.Type.Int)]
         let s1s2pwe = [s1; s2; p; we];
         
         let is_claimable = ref false
@@ -1918,15 +1936,49 @@ namespace Microsoft.Research.Vcc
         let threadLocal = 
           if !is_thread_local then [B.Decl.Axiom (bCall "$is_thread_local_storage" [we])]
           else []
-                          
+           
+           
+        let stripLabel = function
+          | C.Macro(_, "labeled_invariant", [_; i]) -> i                  
+          | i -> i
+        let gatherByLabel invs = 
+          let dict = new Dict<_,_>()
+          let add = 
+            let add' lbl i =
+              match dict.TryGetValue(lbl) with
+                | true, invs -> dict.[lbl] <- i::invs
+                | false, _ -> dict.[lbl] <- [i]
+            function
+              | C.Macro(_, "labeled_invariant", [C.Macro(_, lbl, []); i]) -> add' lbl i
+              | i -> add' "public" i
+          List.iter add invs
+          [ for kv in dict -> (kv.Key, List.rev kv.Value) ]
+          
+        let removeTrivialEqualities (bExpr : B.Expr) =
+          let rec rte = function
+            | B.Primitive("==", [be1; be2]) when be1 = be2 -> Some(bTrue)
+            | B.Primitive("!=", [be1; be2]) when be1 = be2 -> Some(bFalse)
+            | B.Primitive("||", [be1; be2]) -> Some(bOr (be1.Map(rte)) (be2.Map(rte)))
+            | B.Primitive("&&", [be1; be2]) -> Some(bAnd (be1.Map(rte)) (be2.Map(rte)))
+            | B.Primitive("==>", [be1; be2]) -> Some(bImpl (be1.Map(rte)) (be2.Map(rte)))
+            | _ -> None
+          bExpr.Map(rte)
+            
         let doInv e = 
           e |> 
             trExpr initialEnv |>
             substOld [("$s", s1)] |>
             bSubst [("$_this", p); ("$s", s2)]
-        let inv = bMultiAnd (bCall "$typed" [s2; p] :: List.map doInv td.Invariants) 
+        let inv exprs = bMultiAnd (bCall "$typed" [s2; p] :: (exprs |> List.map doInv) ) 
         let invcall = bCall "$inv2" s1s2pwe
-        let inv = B.Forall (s1s2p, [[invcall]], weight "eqdef-inv", (bEq invcall inv))
+        let typedPtr = bCall "$ptr" [we; r]
+        let invlabcall lbl = bCall "$inv_lab" [s2; typedPtr; er (trInvLabel lbl)]
+        let normalizeLabeledInvariant = bSubst [("#s1", er "#s2"); ("#p", typedPtr)] >> removeTrivialEqualities
+        let invlab (lbl,exprs) = 
+          let invcall = invlabcall lbl
+          B.Forall(s2r, [[invcall]], weight "eqdef-inv", (bEq (invcall) (inv exprs |> normalizeLabeledInvariant)))
+        let inv = B.Forall (s1s2p, [[invcall]], weight "eqdef-inv", (bEq invcall (inv (td.Invariants |> List.map stripLabel))))
+        let labeledInvs = td.Invariants |> gatherByLabel |> List.map invlab |> List.map (fun e -> B.Axiom(e))
         
         let extentCall extentName meta union1 (fields:list<C.Field>) =
           let auxPtr r =
@@ -2101,17 +2153,17 @@ namespace Microsoft.Research.Vcc
           | _ -> 
             forward @ 
               [B.Decl.Axiom (bEq (bCall "$sizeof" [we]) (bInt td.SizeOf));
-               B.Decl.Axiom inv;
-               B.Decl.Axiom in_full_extent_of;
-               B.Decl.Axiom in_extent_of;
-               B.Decl.Axiom in_span_of;
-               B.Decl.Axiom state_spans_the_same;
-               B.Decl.Axiom state_nonvolatile_spans_the_same;
-               claimable;
-               volatile_owns
-               ] @ threadLocal 
-                 @ extentProps 
-                 @ List.concat (List.map (trField td) allFields)
+               B.Decl.Axiom inv ] @ labeledInvs @
+                [B.Decl.Axiom in_full_extent_of;
+                 B.Decl.Axiom in_extent_of;
+                 B.Decl.Axiom in_span_of;
+                 B.Decl.Axiom state_spans_the_same;
+                 B.Decl.Axiom state_nonvolatile_spans_the_same;
+                 claimable;
+                 volatile_owns
+                 ] @ threadLocal 
+                   @ extentProps 
+                   @ List.concat (List.map (trField td) allFields)
       
       let trRecord (td:C.TypeDecl) =
         let trRecField (f:C.Field) =
@@ -2350,6 +2402,6 @@ namespace Microsoft.Research.Vcc
                                      | C.Top.TypeDecl ({ Kind = (C.Union|C.Struct)} as td) -> td :: acc
                                      | _ -> acc) [] decls
         let tn = if nestingExtents then typeNesting types else []
-        List.concat (res @ [tn; !tokenConstants])
+        List.concat (res @ [tn; !invLabelConstants; !tokenConstants])
         
       helper.SwTranslator.Run main ()

@@ -15,6 +15,9 @@ namespace Microsoft.Research.Vcc
  module AddChecks =
    
   let invariantsOf (td:TypeDecl) =
+    let stripLabels = function
+      | Macro(_, "labeled_invariant", [_; i]) -> i
+      | i -> i
     td.Invariants |> List.map splitConjunction |> List.concat
     
   let invariantCheck (helper:Helper.Env) cond errno suffix prestate (this:Expr) =
@@ -117,6 +120,7 @@ namespace Microsoft.Research.Vcc
           | "rec_zero"
           | "inv_check" -> wfs args
           | "by_claim" -> []
+          | "_vcc_use" -> wfs args.Tail
           // TODO check, maybe some of those function are only defined sometimes
           | name when name.StartsWith ("_vcc_") -> wfs args
           | name when name.StartsWith ("in_range") -> wfs args

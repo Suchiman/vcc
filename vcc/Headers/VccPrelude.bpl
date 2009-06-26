@@ -56,6 +56,9 @@ type $state;
 // A constant is generated for each pure function, used for ordering frame axioms.
 type $pure_function;
 
+// For labeled contracts.
+type $label;
+
 // ----------------------------------------------------------------------------
 // built-in types
 // ----------------------------------------------------------------------------
@@ -860,14 +863,22 @@ function {:weight 0} $domain(S:$state, p:$ptr) returns($ptrset)
 
 function $in_domain(S:$state, p:$ptr, q:$ptr) returns(bool);
 function $in_vdomain(S:$state, p:$ptr, q:$ptr) returns(bool);
-  
+
+function $in_domain_lab(S:$state, p:$ptr, q:$ptr, l:$label) returns(bool);
+function $inv_lab(S:$state, p:$ptr, l:$label) returns(bool);
+
+axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_domain_lab(S, p, q, l)}
+  $in_domain_lab(S, p, q, l) ==> $inv_lab(S, p, l));
+
+axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_domain_lab(S, p, q, l)}
+  $in_domain_lab(S, p, q, l) <==> $in_domain(S, p, q));
+
 function {:inline true} $dom_thread_local(S:$state, #p:$ptr) returns(bool)
   { $typed(S, #p) && !$is_volatile(S, #p) }
 
 axiom (forall S:$state, p:$ptr, q:$ptr :: {:weight 0} {$in_domain(S, p, q)}
   $in_domain(S, p, q) ==> 
        $set_in(p, $domain(S, q)) 
-    && $inv(S, p, $typ(p)) 
     && $closed(S, p) 
     && (forall r:$ptr :: {$set_in(r, $owns(S, p))} 
              !$has_volatile_owns_set($typ(p)) && $set_in(r, $owns(S, p)) ==> 

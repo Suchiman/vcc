@@ -327,6 +327,15 @@ namespace Microsoft.Research.Vcc
         xassert (res <> C.Expr.Bogus)
         res
      
+    member this.DoInvariant (inv:ITypeInvariant) : C.Expr =
+      if inv.Condition.HasErrors() then
+        oopsLoc inv "error in invariant"
+        C.Expr.Bogus
+      else
+        let cond = this.DoExpression inv.Condition
+        let name =if inv.Name <> null then inv.Name.Value else "public"
+        C.Expr.Macro(cond.Common, "labeled_invariant", [C.Expr.Macro(C.bogusEC, name, []); cond])
+     
     member this.DoExpression(expr:IExpression) : C.Expr =
       if expr.HasErrors () then
         oopsLoc expr "error in expr"
@@ -644,7 +653,7 @@ namespace Microsoft.Research.Vcc
                         td.Fields <- td.Fields @ [ for f in contract.ContractFields -> trField true f ]
                         if not (contract.HasErrors()) then
                           finalActions.Enqueue (fun () ->
-                            td.Invariants <- [ for inv in contract.Invariants -> this.DoExpression (inv.Condition) ])
+                            td.Invariants <- [ for inv in contract.Invariants -> this.DoInvariant inv])
                        
                       let reportErrorForDuplicateFields fields =
                         let seenFields = new Dict<string,C.Field>()

@@ -150,6 +150,9 @@ namespace Microsoft.Research.Vcc
     let theKeepsWarning = function
       | TypeDecl td as decl when staticOwns td ->
         let rec check top self = function
+          | Macro(_, "labeled_invariant", [_; i]) when top ->
+            i.SelfVisit (check true)
+            false
           | Prim (_, Op (("<==>"|"=="), _), [cond; keeps]) as e when top ->
             cond.SelfVisit (check false) 
             cond.SelfVisit (check true)

@@ -45,10 +45,11 @@ namespace Microsoft.Research.Vcc
   let addDefaultAdmissibilityChecks (explicitAdm:Dict<_,_>) helper =
     let handleDecl = function
       | Top.TypeDecl td as decl when not (_list_mem NoAdmissibility td.CustomAttr) ->
-        let isTrivialInvariant = function
+        let rec isTrivialInvariant = function
           | CallMacro(_, "_vcc_typed2", [_;  This]) -> true
           | CallMacro(_, "_vcc_set_eq", [CallMacro(_, "_vcc_owns", [_; This]); CallMacro(_, "_vcc_set_empty", [])]) -> true
           | CallMacro(_, "_vcc_inv_is_owner_approved", _) -> true
+          | CallMacro(_, "labeled_invariant", [_; inv]) -> isTrivialInvariant inv
           | _ -> false
         
         if List.forall isTrivialInvariant (td.Invariants) then [decl]
