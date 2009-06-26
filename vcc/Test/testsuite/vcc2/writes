@@ -136,7 +136,7 @@ A *foo( A*p)
 
 void donothing();
 
-void useIt()
+void useA()
 {
   A loc;
   A *p1 = malloc(sizeof(A));
@@ -155,7 +155,7 @@ void useIt()
 }
 `
 Verification of foo succeeded.
-Verification of useIt succeeded.
+Verification of useA succeeded.
 `
 #include <vcc.h>
 
