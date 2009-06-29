@@ -274,8 +274,9 @@ namespace Microsoft.Research.Vcc
         *)
         | Deref (c, (Dot (_, p, f) as dot)) when isRecField f ->
           Some (self (Macro (c, "rec_fetch", [dot])))
-        | Macro (c, "vs_updated", ([Dot (_, _, f); _] as args)) when isRecField f ->
-          Some (self (Macro ({c with Type = Type.Ref f.Parent}, "rec_update", args)))
+        | Macro (c, name, ((Dot (_, _, f)::_) as args)) when name.StartsWith("vs_updated") && isRecField f ->
+          let update = match name with | "vs_updated" -> "rec_update" | "vs_updated_bv" -> "rec_update_bv" | _ -> die()
+          Some (self (Macro ({c with Type = Type.Ref f.Parent}, update, args)))
         | Dot (c, Macro (_, "&", [e]), f) when isRecField f ->
           Some (self (Dot (c, e, f)))
         | Dot (c, Macro (c', "vs_zero", []), f) when isRecField f ->

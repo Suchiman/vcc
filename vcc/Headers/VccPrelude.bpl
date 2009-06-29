@@ -499,6 +499,9 @@ const $rec_zero : $record;
 function $rec_update(r:$record, f:$field, v:int) returns($record);
 function $rec_fetch(r:$record, f:$field) returns(int);
 
+function $rec_update_bv(r:$record, f:$field, val_bitsize:int, from:int, to:int, repl:int) returns($record)
+  { $rec_update(r, f, $bv_update($rec_fetch(r, f), val_bitsize, from, to, repl)) }
+
 axiom (forall f:$field :: $rec_fetch($rec_zero, f) == 0);
 
 axiom (forall r:$record, f:$field, v:int :: {$rec_fetch($rec_update(r, f, v), f)}
@@ -2294,6 +2297,12 @@ function {:weight 0} $_shr(x:int, y:int) returns(int)
 function $bv_extract_signed(val:int, val_bitsize:int, from:int, to:int) returns(int);
 function $bv_extract_unsigned(val:int, val_bitsize:int, from:int, to:int) returns(int);
 function $bv_update(val:int, val_bitsize:int, from:int, to:int, repl:int) returns(int);
+
+axiom (forall x:int, from:int, to:int, xs:int, val:int :: 
+ { $bv_update(x, xs, from, to, val) }
+ 0 <= from && from < to && to <= xs ==>
+ 0 <= val && val < $_pow2(to - from) ==> 
+   0 <= $bv_update(x, xs, from, to, val) && $bv_update(x, xs, from, to, val) < $_pow2(xs));
 
 axiom (forall from:int, to:int, xs:int :: 
  { $bv_update(0, xs, from, to, 0) }

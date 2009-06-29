@@ -778,6 +778,9 @@ namespace Microsoft.Research.Vcc
           | "rec_update", [C.Dot (_, e, f); v] ->
             bCall "$rec_update" [self e; er (fieldName f); trForWrite env f.Type v]
           
+          | "rec_update_bv", [C.Dot (_, e, f); bvSize; bvStart; bvEnd; v] ->
+            bCall "$rec_update_bv" [self e; er (fieldName f); self bvSize; self bvStart; self bvEnd; trForWrite env f.Type v]
+          
           | "vs_placeholder", [] -> er "$vs_placeholder"
           | "vs_placeholder2", [] -> er "$vs_placeholder2"
           | "vs_zero", [] -> er "$struct_zero"

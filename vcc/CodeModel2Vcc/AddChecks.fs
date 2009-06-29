@@ -116,6 +116,7 @@ namespace Microsoft.Research.Vcc
           | "vs_fetch"
           | "map_get"
           | "rec_update"
+          | "rec_update_bv"
           | "rec_fetch"
           | "rec_zero"
           | "inv_check" -> wfs args

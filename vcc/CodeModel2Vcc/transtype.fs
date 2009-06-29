@@ -352,6 +352,7 @@ namespace Microsoft.Research.Vcc
       let processedTypes = new Dict<TypeDecl, bool>()
   
       let tryFindBackingMember (td:TypeDecl) = 
+        let isRecord = hasBoolAttr "record" td.CustomAttr
         let isValidField (fld : Field) =
           let isValidType = 
             let rec isValidType' allowArray = function
@@ -360,7 +361,7 @@ namespace Microsoft.Research.Vcc
             | Type.Ref(td) -> td.Fields.Length = 1 && isValidType' false  td.Fields.Head.Type
             | _ -> false
             isValidType' true
-          not fld.IsSpec && fld.Type.SizeOf = td.SizeOf && isValidType fld.Type
+          (isRecord || not fld.IsSpec) && fld.Type.SizeOf = td.SizeOf && isValidType fld.Type
         match List.tryFind (fun (fld:Field) -> _list_mem (VccAttr("backing_member", "")) fld.CustomAttr) (td.Fields) with
         | Some fld ->
            if isValidField fld then 
@@ -400,10 +401,11 @@ namespace Microsoft.Research.Vcc
           match tryFindBackingMember td with
             | Some fld -> 
               let bf = { backingField fld with IsVolatile = List.exists hasVolatileInExtent td.Fields }        
+              let isRecord = hasBoolAttr "record" td.CustomAttr
               let addOtherFlds (f : Field) =
-                if f = bf || f.IsSpec then () else fieldsToReplace.Add(f, bf)
+                if f = bf || (f.IsSpec && not isRecord) then () else fieldsToReplace.Add(f, bf)
               List.iter addOtherFlds (td.Fields)
-              td.Fields <- bf :: List.filter (fun (f : Field) -> f.IsSpec) td.Fields
+              td.Fields <- bf :: if isRecord then [] else List.filter (fun (f : Field) -> f.IsSpec) td.Fields
             | None ->()
         | _ -> ()
     
@@ -569,6 +571,18 @@ namespace Microsoft.Research.Vcc
       let replExpr self = function
         | Dot (c, Macro (_, "&", [Deref (_, e)]), f) -> Some (self (Dot (c, e, f)))
         | Index(c, Macro (_, "&", [Deref (_, e)]), i) -> Some(self (Index(c, e, i)))
+        | Macro(c, "vs_updated", [Dot(_, e, f); expr]) ->
+          match fieldsToReplace.TryGetValue(f) with
+            | true, newFld -> 
+              let ec = {c with Type = Ptr(f.Type)}
+              match subtractOffsets (f.Offset) (newFld.Offset) |> (toBitFieldOffset newFld.Type.SizeOf) with
+                | BitField(0, start, size) -> 
+                  match bv_extrAndPad ec (Dot({c with Type = (Ptr(newFld.Type))}, (self e), newFld)) start (start+size) with
+                    | Macro(_, name, [e; bvSize; bvStart; bvEnd]) when name.StartsWith("pullout_bv_extract") ->
+                      Some(Macro(c, "vs_updated_bv", [e; bvSize; bvStart; bvEnd; self expr]))
+                    | _ -> die()
+                | _ -> die()
+            | false, _ -> None
         | Dot (c, e, f) as expr ->
           match fieldsToReplace.TryGetValue(f) with
             | true, newFld -> 
@@ -1064,7 +1078,7 @@ namespace Microsoft.Research.Vcc
     let assignSingleFieldStructsByField self = function
       | Macro(ec, "=", [dst; src])  ->
         match dst.Type with
-          | Type.Ref({Fields = [fld]}) ->
+          | Type.Ref({Fields = [fld]} as td) when not (hasBoolAttr "record" td.CustomAttr)->
             let addDot (e:Expr) = 
               Deref({e.Common with Type = fld.Type}, Dot({e.Common with Type = Ptr(fld.Type)}, Macro({e.Common with Type = Ptr(e.Type)}, "&", [e]), fld))
             Some(Macro(ec, "=", [addDot dst; addDot src]))

@@ -68,7 +68,7 @@ typedef int bool;
 #define speccast(_TYPE_, _EXPR_) (_EXPR_)
 #define speccast_uc(_TYPE_, _EXPR_) (_EXPR_)
 #define nospeccast(_TYPE_, _EXPR_) ((_TYPE_)_EXPR_)
-#define speconly(_CODE_)
+#define speconly(...)
 #define writes(...)
 #define vcs_force_splits(n) 
 #define vcs_keep_going(n) 
