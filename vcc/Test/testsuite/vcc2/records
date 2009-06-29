@@ -1,5 +1,5 @@
 
-#include <vcc.h>
+#include <vcc2.h>
 
 struct S {
   int a;
@@ -14,7 +14,7 @@ void foo() {
 `
 Verification of foo succeeded.
 `
-#include <vcc.h>
+#include <vcc2.h>
 
 struct S {
   int a;
@@ -29,7 +29,7 @@ void foo() {
 `
 Verification of foo succeeded.
 `
-#include <vcc.h>
+#include <vcc2.h>
 
 struct S {
   int a;
@@ -44,7 +44,7 @@ testcase(8,35) : error VC0000: 'S' does not contain a definition for 'b'.
 `
 
 
-#include <vcc.h>
+#include <vcc2.h>
 
 struct S {
   int a;
@@ -62,7 +62,7 @@ void bar() {
 Verification of bar succeeded.
 `
 
-#include <vcc.h>
+#include <vcc2.h>
 
 struct S {
   int a;
@@ -81,7 +81,7 @@ void bar() {
 `
 Verification of bar succeeded.
 `
-#include <vcc.h>
+#include <vcc2.h>
 
 struct vcc(record) S {
   int a;
@@ -123,7 +123,7 @@ Verification of bar succeeded.
 Verification of baz succeeded.
 Verification of foo2 succeeded.
 `
-#include <vcc.h>
+#include <vcc2.h>
 
 struct vcc(record) S {
   int a;
@@ -252,5 +252,41 @@ void bar() {
   )
 }
 `
+Verification of bar succeeded.
+`
+#include "vcc2.h"
+
+union vcc(record) S {
+	struct {
+		unsigned int b1 : 1;
+		unsigned int b2 : 1;
+		unsigned int b3 : 6;
+		unsigned int b5 : 1;
+		unsigned int b6 : 1;
+		unsigned int b7 : 22;
+	};
+	backing_member unsigned int AsUINT;
+};
+
+spec(union S foo(union S s0)
+  ensures(result == s0 / { .b1 = 1 })
+{
+  return s0 / { .b1 = 1 };
+}
+
+)
+
+void bar() {
+  spec(union S s;)
+  speconly(s = (union S) { .b1 = 0, .b2 = 1, .b7 = 10 };)
+  speconly(s = foo(s);)
+
+  assert(s.b1 == 1);
+  assert(s.b7 == 10);
+  assert(s.b2 == 1);
+
+}
+`
+Verification of foo succeeded.
 Verification of bar succeeded.
 `
