@@ -579,6 +579,7 @@ module Microsoft.Research.Vcc.CAST
             | VarDecl _
             | Macro(_, _, [])
             | Call(_, _, _, [])
+            | UserData(_, _)
             | Result _ -> ()
             | Prim (_, _, es)
             | Block (_, es) 
@@ -600,10 +601,6 @@ module Microsoft.Research.Vcc.CAST
             | If (_, cond, s1, s2) -> visit ctx cond; visit ctx s1; visit ctx s2
             | Loop (_, invs, writes, s) -> pauxs invs; pauxs writes; visit ctx s
             | Atomic (c, exprs, s) -> pauxs exprs; visit ctx s
-            | UserData (c, o) ->
-              match o with
-                | :? Expr as e -> visit ctx e
-                | _ -> ()
 
       and paux = visit ExprCtx.PureCtx
       and pauxs = List.iter (visit ExprCtx.PureCtx)
@@ -679,6 +676,7 @@ module Microsoft.Research.Vcc.CAST
               | VarDecl _
               | Macro(_, _, [])
               | Call(_, _, _, [])
+              | UserData(_, _)
               | Result _ -> None
               | Prim (c, op, es) ->  constructList (fun args ->  Prim (c, op, args)) (map ctx) es
               | Call (c, fn, tas, es) -> constructList  (fun args -> Call (c, fn, tas, args)) (map ctx) es
@@ -721,10 +719,6 @@ module Microsoft.Research.Vcc.CAST
               | Block (c, ss) -> constructList (fun args-> Block (c, args)) (map ctx) ss
               | Stmt (c, e) -> construct1 (fun arg -> Stmt (c, arg)) (map ctx e)
               | Pure (c, e) -> construct1 (fun arg -> Pure (c, arg)) (paux e)
-              | UserData(c, o) ->
-                match o with
-                  | :? Expr as e -> construct1 (fun arg -> UserData(c, (arg :> obj))) (map ctx e)
-                  | _ -> None
       and paux = map ExprCtx.PureCtx
       
       match map { IsPure = ispure } this with
