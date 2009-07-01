@@ -858,7 +858,7 @@ module Microsoft.Research.Vcc.CAST
         | Comment (_, s) ->
           wr "// "; wr s; wr "\n"
         | UserData (_, o) ->
-          wr "userdata "; wr (o.ToString())
+          wr "userdata("; wr (o.ToString()); wr ") : "; wr (o.GetType().Name)
           
   let (|ETrue|_|) = function
       | BoolLiteral (_, true) -> Some (ETrue)

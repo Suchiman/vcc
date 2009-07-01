@@ -647,8 +647,8 @@ namespace Microsoft.Research.Vcc
       | Call(ec, ({Name = "_vcc_in_domain"} as fn), targs, [e1; e2]) ->
         let e2' = self e2
         match self e1 with
-          | Macro(uc, "_vcc_use", [UserData(_, lbl); e1']) ->
-            let lbls = [for s in ((string)lbl).Split('|') -> s]
+          | Macro(uc, "_vcc_use", [UserData(_, (:? string as lbl)); e1']) ->
+            let lbls = [for s in lbl.Split('|') -> s]
             let mkInDomain l = Call(ec, fn, targs, [Macro(uc, "_vcc_use", [Expr.ToUserData(l); e1']); e2'])
             let mkAnd c1 c2 = Expr.Prim(ec, Op("&&", Unchecked), [c1; c2])
             Some(List.fold (fun expr l -> mkAnd expr (mkInDomain l)) (mkInDomain lbls.Head) lbls.Tail)

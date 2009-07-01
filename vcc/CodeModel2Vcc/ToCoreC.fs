@@ -266,24 +266,28 @@ namespace Microsoft.Research.Vcc
           Some (self (Dot (c, Deref (inner.Common, inner), f2)))
         | _ -> None
       
-      let replAccess self = function
+      let replAccess self = 
       (*
         | Deref (c, Dot (c', (Dot (_, _, f1) as inner), f2)) when isRecField f1 && isRecField f2 ->
           Some (self (Deref (c, Dot (c', Deref (inner.Common, inner), f2))))
         | Macro (c1, "rec_update", [Dot (c2, (Dot (_, _, f1) as inner), f2); v]) ->
           Some (self Macro (c1, "rec_update", [Dot (c2, Deref (inner.Common, ot (_, _, f1), f2); v]) ->
         *)
+        
+        let normalizeRecord rt = function
+          | Macro(c, "vs_zero", []) -> Macro({c with Type = rt}, "rec_zero", [])
+          | Macro(c, "&", [e]) -> e
+          | Dot(c,_,_) as dot -> Deref({c with Type = rt}, dot)
+          | e -> e
+          
+        function
         | Deref (c, (Dot (_, p, f) as dot)) when isRecField f ->
-          Some (self (Macro (c, "rec_fetch", [dot])))
-        | Macro (c, name, ((Dot (_, _, f)::_) as args)) when name.StartsWith("vs_updated") && isRecField f ->
+          Some (self (Macro (c, "rec_fetch", [normalizeRecord (Type.Ref(f.Parent)) p; Expr.ToUserData(f)])))
+        | Macro (c, name, ((Dot (_, p, f)::args))) when name.StartsWith("vs_updated") && isRecField f ->
           let update = match name with | "vs_updated" -> "rec_update" | "vs_updated_bv" -> "rec_update_bv" | _ -> die()
-          Some (self (Macro ({c with Type = Type.Ref f.Parent}, update, args)))
-        | Dot (c, Macro (_, "&", [e]), f) when isRecField f ->
-          Some (self (Dot (c, e, f)))
-        | Dot (c, Macro (c', "vs_zero", []), f) when isRecField f ->
-          Some (self (Dot (c, Macro ({c' with Type = Type.Ref f.Parent}, "rec_zero", []), f)))
+          Some (self (Macro ({c with Type = Type.Ref f.Parent}, update, (normalizeRecord (Type.Ref(f.Parent)) p) :: Expr.ToUserData(f) :: args)))
         | MemoryWrite (c, (Dot (_, p, f) as dot), v) when isRecField f ->
-          let upd = Macro ({c with Type = Type.Ref f.Parent}, "rec_update", [dot; v])
+          let upd = Macro ({c with Type = Type.Ref f.Parent}, "rec_update", [normalizeRecord (Type.Ref(f.Parent)) p; Expr.ToUserData(f); v])
           let res =
             match p with
               | Deref (_, p') ->

@@ -763,8 +763,8 @@ namespace Microsoft.Research.Vcc
             
           | "rec_zero", [] -> er "$rec_zero"
           
-          | "rec_fetch", [C.Dot (_, e, f)] ->
-            let fetch = bCall "$rec_fetch" [self e; er (fieldName f)]
+          | "rec_fetch", [r; C.UserData(_, (:? C.Field as f))] ->
+            let fetch = bCall "$rec_fetch" [self r; er (fieldName f)]
             match f.Type with
               | C.Type.Integer _ ->
                 bCall "$unchecked" [toTypeId f.Type; fetch]
@@ -775,11 +775,11 @@ namespace Microsoft.Research.Vcc
               | t ->                
                 castFromInt (trType t) fetch
             
-          | "rec_update", [C.Dot (_, e, f); v] ->
-            bCall "$rec_update" [self e; er (fieldName f); trForWrite env f.Type v]
+          | "rec_update", [r; C.UserData(_, ( :? C.Field as f) ); v] ->
+            bCall "$rec_update" [self r; er (fieldName f); trForWrite env f.Type v]
           
-          | "rec_update_bv", [C.Dot (_, e, f); bvSize; bvStart; bvEnd; v] ->
-            bCall "$rec_update_bv" [self e; er (fieldName f); self bvSize; self bvStart; self bvEnd; trForWrite env f.Type v]
+          | "rec_update_bv", [r; C.UserData(_, (:? C.Field as f)); bvSize; bvStart; bvEnd; v] ->
+            bCall "$rec_update_bv" [self r; er (fieldName f); self bvSize; self bvStart; self bvEnd; trForWrite env f.Type v]
           
           | "vs_placeholder", [] -> er "$vs_placeholder"
           | "vs_placeholder2", [] -> er "$vs_placeholder2"
