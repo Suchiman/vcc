@@ -513,6 +513,8 @@ axiom (forall r:$record, f1:$field, f2:$field, v:int :: {$rec_fetch($rec_update(
 function $is_record_type(t:$ctype) returns(bool);
 function $is_record_field(parent:$ctype, field:$field, field_type:$ctype) returns(bool);
 
+axiom (forall t:$ctype :: {$is_record_type(t)} $is_record_type(t) ==> $is_primitive(t));
+
 
 // ----------------------------------------------------------------------------
 // state
