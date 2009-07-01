@@ -54,6 +54,7 @@ namespace Microsoft.Research.Vcc
       | Old (_, _, _)
       | Call (_, _, _, _) 
       | Pure (_, _)   
+      | UserData(_, _)
       | Macro (_, _, _) -> None
       
       | If (c, cond, th, el) ->

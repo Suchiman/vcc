@@ -82,6 +82,7 @@ namespace Microsoft.Research.Vcc
       | Result (_)
       | BoolLiteral (_, _)
       | IntLiteral (_, _)
+      | UserData(_, _)
       | Expr.Ref (_, _) -> []      
       | Prim (_, _, args)
       | Expr.Call (_, _, _, args) -> wfs args

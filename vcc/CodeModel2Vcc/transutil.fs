@@ -45,8 +45,8 @@ namespace Microsoft.Research.Vcc
   // ----------------------------------------------------------------------------- 
 
   let (|EString|_|) = function
-    | Expr.Macro (c, "string", [Expr.Macro (_, v, [])])
-    | Expr.Macro (c, "&", [Expr.Macro (_, "string", [Expr.Macro (_, v, [])])]) -> Some (c, v)
+    | Expr.Macro (c, "string", [UserData(_, o)])
+    | Expr.Macro (c, "&", [Expr.Macro (_, "string", [UserData(_, o)])]) -> Some (c, (string)o)
     | _ -> None
                  
   let (|CallMacro|_|) = function

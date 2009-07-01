@@ -827,8 +827,8 @@ namespace Microsoft.Research.Vcc
               | _ -> bCall "$dont_instantiate_int" [castToInt (trType e.Type) arg]
           | "_vcc_claims", [cl; cond] ->
             claims env (self cl) cond
-          | "_vcc_in_domain", [s; C.Macro(_, "_vcc_use", [C.Macro(_, lbl, []); e1]); e2] ->
-            bCall "$in_domain_lab" ((selfs [s;e1;e2]) @ [er (trInvLabel lbl)])
+          | "_vcc_in_domain", [s; C.Macro(_, "_vcc_use", [C.UserData(_, lbl); e1]); e2] ->
+            bCall "$in_domain_lab" ((selfs [s;e1;e2]) @ [er (trInvLabel ((string)lbl))])
           | "_vcc_in_domain", args ->
               bCall "$in_domain_lab" ((selfs args) @ [er (trInvLabel "public")])
           | "_vcc_sk_hack", [e] ->
