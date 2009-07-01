@@ -549,27 +549,7 @@ namespace Microsoft.Research.Vcc
         
       List.map doDecl decls |> List.concat
         
-
-    // ============================================================================================================
-        
-    /// Get rid of &(...) operator.
-    let removeAddressOf self = function
-      | Expr.Deref (_, Expr.Macro (_, "&", [e])) -> Some (self e)
-      | Expr.Macro (c, "&", [e]) ->
-        match self e with
-          | Expr.Deref (_, e) -> Some (e)
-          // for those it will be eliminated later
-          | Expr.Call _
-          | Expr.Result _
-          | Expr.Macro(_, "map_get", _) 
-          | Expr.Ref _ as expr -> Some (Expr.Macro (c, "&", [expr]))
-          | e ->
-            helper.Error (c.Token, 9610, "don't know how to take address of " + e.ToString(), None)
-            None
-      | _ -> None    
-
-    // ============================================================================================================
-    
+    // ============================================================================================================    
     
     /// Remove operators like +=, -=, pre++ ...
     /// Also handle assignments to bitfields (as they also require precomputation).
