@@ -638,7 +638,7 @@ namespace Microsoft.Research.Vcc
           | Cast(_, _, Macro(_, "&", [Macro(_, "string", [lbl])])) -> lbl
           | _ -> die()
         Some(Macro(ec, "_vcc_use", [normalizeLabel lbl; self e]))
-      | Call(ec, ({Name = "_vcc_in_domain"} as fn), targs, [e1; e2]) ->
+      | Call(ec, ({Name = "_vcc_in_domain"|"_vcc_in_vdomain"} as fn), targs, [e1; e2]) ->
         let e2' = self e2
         match self e1 with
           | Macro(uc, "_vcc_use", [UserData(_, (:? string as lbl)); e1']) ->

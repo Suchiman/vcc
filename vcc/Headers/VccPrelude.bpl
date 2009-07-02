@@ -870,6 +870,7 @@ function $in_domain(S:$state, p:$ptr, q:$ptr) returns(bool);
 function $in_vdomain(S:$state, p:$ptr, q:$ptr) returns(bool);
 
 function $in_domain_lab(S:$state, p:$ptr, q:$ptr, l:$label) returns(bool);
+function $in_vdomain_lab(S:$state, p:$ptr, q:$ptr, l:$label) returns(bool);
 function $inv_lab(S:$state, p:$ptr, l:$label) returns(bool);
 
 axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_domain_lab(S, p, q, l)}
@@ -877,6 +878,12 @@ axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_domain_lab(
 
 axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_domain_lab(S, p, q, l)}
   $in_domain_lab(S, p, q, l) <==> $in_domain(S, p, q));
+
+axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_vdomain_lab(S, p, q, l)}
+  $in_vdomain_lab(S, p, q, l) ==> $inv_lab(S, p, l));
+
+axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_vdomain_lab(S, p, q, l)}
+  $in_vdomain_lab(S, p, q, l) <==> $in_vdomain(S, p, q));
 
 function {:inline true} $dom_thread_local(S:$state, #p:$ptr) returns(bool)
   { $typed(S, #p) && !$is_volatile(S, #p) }

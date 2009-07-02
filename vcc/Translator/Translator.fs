@@ -831,6 +831,10 @@ namespace Microsoft.Research.Vcc
             bCall "$in_domain_lab" ((selfs [s;e1;e2]) @ [er (trInvLabel ((string)lbl))])
           | "_vcc_in_domain", args ->
               bCall "$in_domain_lab" ((selfs args) @ [er (trInvLabel "public")])
+          | "_vcc_in_vdomain", [s; C.Macro(_, "_vcc_use", [C.UserData(_, lbl); e1]); e2] ->
+            bCall "$in_vdomain_lab" ((selfs [s;e1;e2]) @ [er (trInvLabel ((string)lbl))])
+          | "_vcc_in_vdomain", args ->
+              bCall "$in_vdomain_lab" ((selfs args) @ [er (trInvLabel "public")])
           | "_vcc_sk_hack", [e] ->
             bCall "sk_hack" [self e]
             
