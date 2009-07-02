@@ -656,15 +656,26 @@ namespace Microsoft.Research.Vcc
       | _ -> None
  
     // ============================================================================================================
+
+    let normalizeInlineArrayAccesses self = function
+      | Macro(ec, "&", [e]) ->
+        match e with 
+          | Dot(_,_,f) when f.Type._IsArray -> Some(e)
+          | e' -> Some(Macro(ec, "&", [e']))
+      | Deref(_, (Dot(_,_,f) as dot)) when f.Type._IsArray -> Some(self dot)
+      | _ -> None
+ 
+    // ============================================================================================================
  
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
     helper.AddTransformer ("norm-initializers", Helper.Expr normalizeInitializers)
     helper.AddTransformer ("norm-use", Helper.Expr normalizeUse)
     helper.AddTransformer ("norm-fixed-array-parms", Helper.Decl removeFixedSizeArraysAsParameters)
+    helper.AddTransformer ("norm-inline-array-accesses", Helper.Expr normalizeInlineArrayAccesses)
     helper.AddTransformer ("norm-out-params", Helper.Expr removeDerefFromOutParams)
     helper.AddTransformer ("norm-comparison", Helper.Expr (doHandleComparison helper))
     helper.AddTransformer ("norm-conversions", Helper.Expr (doHandleConversions helper))   
-    helper.AddTransformer ("norm-genric-errors", Helper.Decl reportGenericsErrors) 
+    helper.AddTransformer ("norm-generic-errors", Helper.Decl reportGenericsErrors) 
     helper.AddTransformer ("norm-containing-struct", Helper.Expr normalizeContainingStruct)
     helper.AddTransformer ("add-assume-to-assert", Helper.Expr handleLemmas)    
     helper.AddTransformer ("fixup-claims", Helper.Expr handleClaims)    

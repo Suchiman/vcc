@@ -350,3 +350,18 @@ void foo() {
 `
 testcase(3,3) : error VC0000: A local variable named 'i' is already defined in this scope.
 `
+#include "vcc.h"
+
+struct S {
+  int a[5];
+  invariant(keeps(a)) 
+};
+
+void foo(struct S s) { }
+
+`
+testcase(5,35) : warning VC9104: primitive pointers are unlikely to be in the owns set
+Verification of S#adm succeeded.
+testcase(3,1): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+Verification of foo succeeded.
+`
