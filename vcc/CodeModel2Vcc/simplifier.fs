@@ -228,10 +228,12 @@ namespace Microsoft.Research.Vcc
           
           let hasQVar expr =
             let hasIt = ref false
-            let check _ = function
+            let check self = function
               | Expr.Ref (_, v) when _list_mem v q.Variables ->
                 hasIt := true
                 true
+              | Deref(_, Dot(_,e,f)) when hasBoolAttr "record" f.Parent.CustomAttr ->
+                self e; false
               | Deref _ ->
                 isPure := false
                 true

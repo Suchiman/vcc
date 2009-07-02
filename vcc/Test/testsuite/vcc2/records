@@ -325,3 +325,43 @@ void foo(struct S *s)
 Verification of S#adm succeeded.
 Verification of foo succeeded.
 `
+#include "vcc2.h"
+typedef unsigned __int64 uint64;
+typedef unsigned int uint;
+
+spec (
+    typedef struct vcc(record) Core{
+        uint64 RIP;
+        uint64 R[uint];
+    } Core;
+)
+
+#define let(x, X, y, f) exists (X x; x == (y) && (f))
+
+spec (
+ispure bool mov_reg_excp(uint regidx, uint64 data, Core c)
+    returns (regidx >= 8);
+)
+
+spec (
+ispure Core mov_reg(uint regidx, uint64 data, Core c)
+    requires (!mov_reg_excp(regidx, data, c))
+    ensures
+    (
+        let (c1, Core, c / {.R = lambda(uint i; i < 8 ; i == regidx ? data : c.R[i])},
+        result == c1)
+    )
+;
+)
+
+spec (
+void test_mov_reg()
+{
+    Core c;
+    c = mov_reg(1, 16, c);
+    assert(c.R[1] == 16);
+}
+)
+`
+Verification of test_mov_reg succeeded.
+`
