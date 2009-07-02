@@ -452,3 +452,27 @@ Verification of U#adm succeeded.
 Verification of S#adm succeeded.
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+typedef unsigned __int8 UINT8;
+typedef unsigned __int64 UINT64;
+
+typedef union XX
+{
+    struct member_name(AsStruct)
+    {
+        UINT8 PteFlags[8];
+    };
+
+    UINT64 AsUINT64;
+
+} X, *PX;
+
+
+void foo(PX g)
+    requires(union_active_anon(g,AsStruct))
+{
+}
+`
+Verification of foo succeeded.
+`

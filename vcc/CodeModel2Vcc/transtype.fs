@@ -302,7 +302,7 @@ namespace Microsoft.Research.Vcc
         match d with
           | Top.TypeDecl td ->
             for f in td.Fields do
-              if (f.Name = "") then
+              if f.Name = "" then
                 match f.Type with
                   | Type.Ref td' when td'.Name.StartsWith (td.Name + ".") ->
                     td'.IsNestedAnon <- true
@@ -651,25 +651,34 @@ namespace Microsoft.Research.Vcc
                   [f]
                 | _ -> [f]
             let nameNonameFields (fld:Field) =
-              if fld.Name = "" then 
-                let fldName = 
-                  let tryFindMemberName (f : Field) = 
-                    match f.Type with
-                      | Type.Ref(td) -> 
-                        let isMemberNameAttr = function
-                          | CustomAttr.VccAttr("member_name", _) -> true
-                          | _ -> false
-                        List.tryFind isMemberNameAttr td.CustomAttr 
-                      | _ -> None
-                  match tryFindMemberName fld with
-                    | Some(CustomAttr.VccAttr("member_name", fldName)) -> fldName
-                    | _ -> let result = "unnamed#" + (!unnamedFieldId).ToString() in incr unnamedFieldId; result
-                fld.Name <- fldName
+              if fld.Name = "" then                    
+                fld.Name <- "unnamed#" + (!unnamedFieldId).ToString() 
+                incr unnamedFieldId
               fld
 
             let newFields = td.Fields |> List.map trField |> List.concat |> List.map nameNonameFields
             td.Fields <- newFields
-             
+      
+      let nameFieldsByMemberName td =
+        let nameFieldByMemberName (f:Field) =
+          match f.Name, f.Type with
+            | "", Type.Ref(td') ->
+              let rec findMemberNames acc = function
+                | [] -> List.rev acc
+                | CustomAttr.VccAttr("member_name", name) :: attrs -> findMemberNames (name :: acc) attrs
+                | _ :: attrs -> findMemberNames acc attrs
+              match findMemberNames [] td'.CustomAttr with
+                | [] -> ()
+                | [name] -> f.Name <- name; td'.IsNestedAnon <- false
+                | _ -> helper.Error(f.Token, 9695, "More then one member_name for field")
+            | _ -> ()
+        List.iter nameFieldByMemberName td.Fields
+
+      for d in decls do
+        match d with
+          | Top.TypeDecl td -> nameFieldsByMemberName td
+          | _ -> ()
+       
       for d in decls do
         match d with
           | Top.TypeDecl td -> processTypeDecl td
