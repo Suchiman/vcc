@@ -294,20 +294,14 @@ namespace Microsoft.Research.Vcc
         match e.Type with
           | MathTypeRef "ptrset"
           | ObjectT
-          | Ptr _ -> e
-          
-          | Array (t, _) ->
-            // not quite sure about this
-            Expr.Macro ({ e.Common with Type = Ptr t }, "&", [e])              
-            
+          | Array _
+          | Ptr _ -> e         
           | _ ->
             match e with
               | Call (c, { Name = ("_vcc_ref_cnt"|"_vcc_ref_cnt_ptr") }, _, [p]) ->
                 //helper.Error (c.Token, 9999, "the ref_cnt(...) no longer resides in memory and cannot be written to", None)
                 p
-              | _ ->
-                helper.Warning (e.Token, 9103, "the expression listed in reads/writes is missing an ampersand: " + e.ToString())
-                Expr.Macro ({ e.Common with Type = Ptr e.Type }, "&", [e])
+              | _ -> e // we will catch this error later
                 
       let fixWrites = function
         | Top.FunctionDecl f ->
