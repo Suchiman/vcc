@@ -1,5 +1,5 @@
 
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;
@@ -14,7 +14,7 @@ void foo() {
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;
@@ -29,7 +29,7 @@ void foo() {
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;
@@ -44,7 +44,7 @@ testcase(8,35) : error VC0000: 'S' does not contain a definition for 'b'.
 `
 
 
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;
@@ -62,7 +62,7 @@ void bar() {
 Verification of bar succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;
@@ -81,7 +81,7 @@ void bar() {
 `
 Verification of bar succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(record) S {
   int a;
@@ -123,7 +123,7 @@ Verification of bar succeeded.
 Verification of baz succeeded.
 Verification of foo2 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(record) S {
   int a;
@@ -254,7 +254,7 @@ void bar() {
 `
 Verification of bar succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 union vcc(record) S {
 	struct {
@@ -325,7 +325,7 @@ void foo(struct S *s)
 Verification of S#adm succeeded.
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 typedef unsigned __int64 uint64;
 typedef unsigned int uint;
 
@@ -364,4 +364,32 @@ void test_mov_reg()
 )
 `
 Verification of test_mov_reg succeeded.
+`
+#include <vcc.h>
+
+struct vcc(record) S {
+  int a;
+  int b;
+};
+
+spec(
+ispure
+int foo(struct S s) 
+  ensures(result == unchecked(s.a + s.b))
+{
+  return unchecked(s.a + s.b);
+}
+)
+
+spec(ispure
+int bar(int a, int b)
+  ensures(result == unchecked(a+b))
+{
+  struct S s = {a,b};
+  return foo(s);
+}
+)
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
 `
