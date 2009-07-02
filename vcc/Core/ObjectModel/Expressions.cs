@@ -3330,6 +3330,9 @@ namespace Microsoft.Research.Vcc {
           if (locals.MoveNext()) {
             LocalDeclaration localVarDecl = locals.Current;
             VccLocalFunctionDeclaration/*?*/ localFunc = localVarDecl as VccLocalFunctionDeclaration;
+            if (locals.MoveNext()) {
+              this.Helper.ReportError(new VccErrorMessage(locals.Current.SourceLocation, Error.LocalDuplicate, this.Name.Value));
+            }
             if (localFunc != null) {
               return this.ResolveUsing(localFunc.MangledFunctionDeclaration.ContainingTypeDeclaration, restrictToNamespacesAndTypes);
             }

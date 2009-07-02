@@ -29,6 +29,7 @@ namespace Microsoft.Research.Vcc {
     InvalidExprTerm,
     InvalidLineNumber,
     InvalidPreprocExpr,
+    LocalDuplicate,
     LowercaseEllSuffix,
     MissingPPFile,
     NewlineInConst,
