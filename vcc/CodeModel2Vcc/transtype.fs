@@ -33,7 +33,8 @@ namespace Microsoft.Research.Vcc
       | Type.Ref td -> markTypeDecl eqKind td
       | _ -> ()
     markTypeDecl eqKind td
-  
+
+  let isRecord (td : TypeDecl) = hasBoolAttr "record" td.CustomAttr
   
   // ============================================================================================================
   
@@ -352,7 +353,7 @@ namespace Microsoft.Research.Vcc
       let processedTypes = new Dict<TypeDecl, bool>()
   
       let tryFindBackingMember (td:TypeDecl) = 
-        let isRecord = hasBoolAttr "record" td.CustomAttr
+        let tdIsRecord = isRecord td
         let isValidField (fld : Field) =
           let isValidType = 
             let rec isValidType' allowArray = function
@@ -361,7 +362,7 @@ namespace Microsoft.Research.Vcc
             | Type.Ref(td) -> td.Fields.Length = 1 && isValidType' false  td.Fields.Head.Type
             | _ -> false
             isValidType' true
-          (isRecord || not fld.IsSpec) && fld.Type.SizeOf = td.SizeOf && isValidType fld.Type
+          (tdIsRecord || not fld.IsSpec) && fld.Type.SizeOf = td.SizeOf && isValidType fld.Type
         match List.tryFind (fun (fld:Field) -> _list_mem (VccAttr("backing_member", "")) fld.CustomAttr) (td.Fields) with
         | Some fld ->
            if isValidField fld then 
@@ -401,11 +402,11 @@ namespace Microsoft.Research.Vcc
           match tryFindBackingMember td with
             | Some fld -> 
               let bf = { backingField fld with IsVolatile = List.exists hasVolatileInExtent td.Fields }        
-              let isRecord = hasBoolAttr "record" td.CustomAttr
+              let tdIsRecord = isRecord td
               let addOtherFlds (f : Field) =
-                if f = bf || (f.IsSpec && not isRecord) then () else fieldsToReplace.Add(f, bf)
+                if f = bf || (f.IsSpec && not tdIsRecord) then () else fieldsToReplace.Add(f, bf)
               List.iter addOtherFlds (td.Fields)
-              td.Fields <- bf :: if isRecord then [] else List.filter (fun (f : Field) -> f.IsSpec) td.Fields
+              td.Fields <- bf :: if tdIsRecord then [] else List.filter (fun (f : Field) -> f.IsSpec) td.Fields
             | None ->()
         | _ -> ()
     
@@ -978,7 +979,7 @@ namespace Microsoft.Research.Vcc
       and pushDownOne initial (td : TypeDecl) =
         let pdo (f:Field) =
           match f.Type with
-            | Type.Ref({Kind = Struct|Union} as td) when f.IsVolatile ->
+            | Type.Ref({Kind = Struct|Union} as td) when f.IsVolatile && not (isRecord td)->
               let td' = mkVolTd td
               let f' = {f with IsVolatile = false; Type = Type.Ref(td')}
               if initial then initialFldToVolatileFld.Add(f, f')
@@ -1087,7 +1088,7 @@ namespace Microsoft.Research.Vcc
     let assignSingleFieldStructsByField self = function
       | Macro(ec, "=", [dst; src])  ->
         match dst.Type with
-          | Type.Ref({Fields = [fld]} as td) when not (hasBoolAttr "record" td.CustomAttr)->
+          | Type.Ref({Fields = [fld]} as td) when not (isRecord td)->
             let addDot (e:Expr) = 
               Deref({e.Common with Type = fld.Type}, Dot({e.Common with Type = Ptr(fld.Type)}, Macro({e.Common with Type = Ptr(e.Type)}, "&", [e]), fld))
             Some(Macro(ec, "=", [addDot dst; addDot src]))
@@ -1140,7 +1141,7 @@ namespace Microsoft.Research.Vcc
         else 
           let checkField (f:Field) =
             let rec checkType = function
-              | Type.Ref(td') when not (hasBoolAttr "record" td'.CustomAttr) ->
+              | Type.Ref(td') when not (isRecord td') ->
                 helper.Error(f.Token, 9680, "field '" + f.Name + "' of record type '" + td.Name + "' cannot be of non-record structured type '" + td'.Name + "'", Some(td'.Token))
               | Type.Volatile _ -> helper.Error(f.Token, 9683, "volatile modified on field '" + f.Name + "' in record type '" + td.Name + "' is currently not supported")
               | Type.Array _ -> helper.Error(f.Token, 9688, "inline array field '" + f.Name + "' in record type '" + td.Name + "' is currently not supported")
@@ -1152,7 +1153,7 @@ namespace Microsoft.Research.Vcc
       
       for d in decls do
         match d with
-          | Top.TypeDecl(td) when hasBoolAttr "record" td.CustomAttr -> checkDecl td
+          | Top.TypeDecl(td) when isRecord td-> checkDecl td
           | _ -> ()
 
       decls

@@ -393,3 +393,31 @@ int bar(int a, int b)
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
+#include "vcc.h"
+
+typedef struct vcc(record) State {
+    int x;
+} State;
+
+typedef struct vcc(claimable) Container {
+    spec (volatile State s;)
+    volatile int a;
+} Container;
+
+void test(Container *c spec(claim_t claim))
+    requires (wrapped(claim))
+    requires (valid_claim(claim))
+    requires (claims (claim, closed(c)))
+{
+    atomic(c, claim)
+        writes(c)
+    {
+        speconly(
+            c->a = 0;
+            c->s = c->s / {.x = 1};
+        )
+    }
+}
+`
+Verification of test succeeded.
+`
