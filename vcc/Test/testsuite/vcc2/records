@@ -421,3 +421,31 @@ void test(Container *c spec(claim_t claim))
 `
 Verification of test succeeded.
 `
+#include <vcc2.h>
+
+struct vcc(record) R
+{
+	int x;
+};
+
+struct S
+{
+	volatile struct R r;
+
+	invariant(approves(owner(this),r))
+};
+
+
+void test(struct S *s)
+maintains(wrapped(s))
+writes(s)
+{
+	atomic(s)
+	{
+		bump_volatile_version(s);
+		s->r.x = 2;
+	}
+}
+`
+Verification of test succeeded.
+`
