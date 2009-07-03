@@ -1876,10 +1876,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     RealLiteral,
     /// <summary>
-    /// __regionunion
-    /// </summary>
-    RegionUnion,
-    /// <summary>
     /// register
     /// </summary>
     Register,
@@ -2023,10 +2019,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// __unchecked
     /// </summary>
     Unchecked,
-    /// <summary>
-    /// __validpointer
-    /// </summary>
-    ValidPointer,
     /// <summary>
     /// void
     /// </summary>
@@ -2208,8 +2200,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       Keyword keyword;
       // __
       keyword = new Keyword(Token.Specification, "__specification");
-      keyword = new Keyword(Token.ValidPointer,  "__validpointer", keyword);
-      keyword = new Keyword(Token.RegionUnion,   "__regionunion", keyword);
       keyword = new Keyword(Token.Inline,        "__forceinline", keyword);
       keyword = new Keyword(Token.Unchecked, "__unchecked", keyword);
       keyword = new Keyword(Token.Unaligned, "__unaligned", keyword);

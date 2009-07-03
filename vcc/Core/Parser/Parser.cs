@@ -2957,29 +2957,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    private Expression ParseValid(TokenSet followers)
-      //^ requires this.currentToken == Token.ValidPointer;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      List<Expression> args = new List<Expression>(2);
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      Expression pointer = this.ParseExpression(followers|Token.RightParenthesis);
-      args.Add(pointer);
-      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      if (this.currentToken == Token.Comma) {
-        this.GetNextToken();
-        Expression size = this.ParseExpression(followers|Token.RightParenthesis);
-        args.Add(size);
-        slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      }
-      VccSimpleName methodToCall = new VccSimpleName(this.nameTable.GetNameFor("__vcValid"), slb);
-      VccValidatePointer result = new VccValidatePointer(methodToCall, args, false, slb);
-      this.SkipOverTo(Token.RightParenthesis, followers);
-      return result;
-    }
-
     private Expression ParseUnaryExpression(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -3007,7 +2984,6 @@ namespace Microsoft.Research.Vcc.Parsing {
 
         case Token.Exists:
         case Token.Forall:
-        case Token.RegionUnion:
           return this.ParseQuantifier(followers);
         case Token.Lambda:
           Expression lambda = this.ParseQuantifier(followers|Token.LeftBracket);
@@ -3186,9 +3162,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         case Token.Unchecked:
           expression = this.ParseUnchecked(followers);
           break;
-        case Token.ValidPointer:
-          expression = this.ParseValid(followers);
-          break;
         default:
           if (Parser.InfixOperators[this.currentToken]) {
             this.HandleError(Error.InvalidExprTerm, this.scanner.GetTokenSource());
@@ -3293,7 +3266,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       IEnumerable<IEnumerable<Expression>> triggers = this.ParseQuantifierTriggers(followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart);
       Expression condition = this.ParseExpression(followers|Token.RightParenthesis|Token.Semicolon);
       Expression body = null;
-      if (this.currentToken == Token.Semicolon || tok == Token.RegionUnion || tok == Token.Lambda) {
+      if (this.currentToken == Token.Semicolon || tok == Token.Lambda) {
         // for the case of __regionunion, we want error message if there is ) not ;
         this.Skip(Token.Semicolon);
         body = this.ParseExpression(followers | Token.RightParenthesis);
@@ -3312,8 +3285,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         result = new Exists(boundVariables, condition, slb);
       else if (tok == Token.Forall)
         result = new Forall(boundVariables, condition, slb);
-      else if (tok == Token.RegionUnion)
-        result = new RegionUnion(boundVariables, condition, body, slb);
       else if (tok == Token.Lambda)
         result = new VccLambda(boundVariables, condition, body, slb);
       else {
@@ -4038,7 +4009,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       PrimaryStart |= Token.StringLiteral;
       PrimaryStart |= Token.LeftParenthesis;
       PrimaryStart |= Token.Unchecked;
-      PrimaryStart |= Token.ValidPointer;
 
       RightParenthesisOrSemicolon = new TokenSet();
       RightParenthesisOrSemicolon |= Token.RightParenthesis;
@@ -4126,7 +4096,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       UnaryStart |= Token.Sizeof;
       UnaryStart |= Token.Forall;
       UnaryStart |= Token.Exists;
-      UnaryStart |= Token.RegionUnion;
       UnaryStart |= Token.Old;
       UnaryStart |= Token.HexLiteral;
       UnaryStart |= Token.IntegerLiteral;
@@ -4135,7 +4104,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       UnaryStart |= Token.CharLiteral;
       UnaryStart |= Token.RealLiteral;
       UnaryStart |= Token.Unchecked;
-      UnaryStart |= Token.ValidPointer;
       UnaryStart |= Token.Bool;
       UnaryStart |= Token.Short;
       UnaryStart |= Token.Int;
@@ -4192,7 +4160,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       Term |= Token.CharLiteral;
       Term |= Token.LeftParenthesis;
       Term |= Token.Unchecked;
-      Term |= Token.ValidPointer;
 
       Predefined = new TokenSet();
       Predefined |= Token.Bool;
@@ -4239,7 +4206,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       CastFollower |= Token.BitwiseNot;
       CastFollower |= Token.LogicalNot;
       CastFollower |= Token.Unchecked;
-      CastFollower |= Token.ValidPointer;
     }
 
     private struct TokenSet { 
