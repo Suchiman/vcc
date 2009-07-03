@@ -261,7 +261,6 @@ namespace Microsoft.Research.Vcc
         if decl.IsProcessed then ()
         else
           decl.IsProcessed <- true
-          // if decl.Name.StartsWith("incr") then System.Diagnostics.Debugger.Break()
           // needs to be done first so they get into localsMap
           decl.TypeParameters <- [ for tp in genericPars -> { Name = tp.Name.Value } : C.TypeVariable ]
           decl.Parameters <- [ for p in meth.Parameters -> parm p ]
@@ -1425,7 +1424,9 @@ namespace Microsoft.Research.Vcc
             | (true, f) -> f
             | _ -> oopsLoc oldValue ("cannot find internal type " + name); die()
         let ts = findTypeOrDie "state_t"
-        exprRes <- C.Expr.Old (ec, C.Expr.Macro ({ec with Type = C.Type.Ref(ts) }, "prestate", []), this.DoExpression oldValue.Expression)
+        let expr = this.DoExpression oldValue.Expression
+        // the type of expr and old(expr) may disagree in CCI, so we fix it up here
+        exprRes <- C.Expr.Old ({ec with Type = expr.Type}, C.Expr.Macro ({ec with Type = C.Type.Ref(ts) }, "prestate", []), expr)
 
       [<OverloadID("VisitOnesComplement")>]
       member this.Visit (onesComplement:IOnesComplement) : unit =

@@ -218,7 +218,6 @@ namespace Microsoft.Research.Vcc
             loop []
           let stmtalizeNonVoid (expr : Expr) = if ignoreType expr.Type then [expr] else stmtalize (expr)
           let last, stmts' = splitLast stmts
-          //System.Diagnostics.Debugger.Break()
           Some(Block(ec, (stmts' |> List.map self |> List.map stmtalizeNonVoid |> List.concat) @ [ self last ]))
           
         | _ -> None
