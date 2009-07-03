@@ -721,7 +721,14 @@ namespace Microsoft.Research.Vcc
                 | Some e, C.Exists -> bAnd (self e) body
                 | _, C.Lambda -> die()
                 | None, _ -> body                
-            let vars = List.map trVar q.Variables
+            let supportedTypeForQuantification (v : C.Variable) =
+              match v.Type with
+                | C.Type.Ref({Kind = C.TypeKind.Struct|C.TypeKind.Union})
+                | C.Array _ ->
+                  helper.Error(c.Token, 9696, "Cannot quantify over type '" + v.Type.ToString() + "' (bound variable is '" + v.Name + "').")
+                  false
+                | _ -> true
+            let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
             let triggers = List.map selfs q.Triggers
             match q.Kind with
               | C.Forall -> B.Forall (vars, triggers, weight "user-forall", body)

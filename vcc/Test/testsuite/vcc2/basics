@@ -387,3 +387,17 @@ struct S {
 `
 Verification of S#adm succeeded.
 `
+#include "vcc.h"
+
+typedef struct 
+{
+    unsigned d;
+} T;
+
+void foo() {
+    assert(forall(T x; 42));
+}
+
+`
+testcase(9,14) : error VC9696: Cannot quantify over type 'struct basics17878' (bound variable is 'x').
+`
