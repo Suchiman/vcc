@@ -362,6 +362,7 @@ void foo(struct S s) { }
 `
 testcase(5,35) : warning VC9104: primitive pointers are unlikely to be in the owns set
 Verification of S#adm succeeded.
+testcase(3,1): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
 Verification of foo succeeded.
 `
 #include "vcc.h"
