@@ -330,14 +330,14 @@ void foo(struct Foo *s) {}
 `
 testcase(5,5) : error VC9677: 'a' : 'struct' member redefinition
 testcase(4,5)-(4,10) : (Location of symbol related to previous error.)
-`#include <vcc2test.h>
+`#include "vcc.h"
 
 struct vcc(dynamic_owns) F { int x; };
 
 void f(struct F *f)
   maintains(wrapped(f))
 {
-  assert(! set_in((struct F*)NULL, owns(f)));
+  assert(! set_in((struct F*)0, owns(f)));
 }
 `
 Verification of f succeeded.
@@ -362,7 +362,6 @@ void foo(struct S s) { }
 `
 testcase(5,35) : warning VC9104: primitive pointers are unlikely to be in the owns set
 Verification of S#adm succeeded.
-testcase(3,1): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
 Verification of foo succeeded.
 `
 #include "vcc.h"
