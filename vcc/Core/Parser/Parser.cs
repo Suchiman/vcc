@@ -3254,7 +3254,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private Expression ParseQuantifier(TokenSet followers)
-      //^ requires this.currentToken == Token.Exists || this.currentToken == Token.Forall || this.currentToken == Token.RegionUnion;
+      //^ requires this.currentToken == Token.Exists || this.currentToken == Token.Forall;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       Token tok = this.currentToken;
