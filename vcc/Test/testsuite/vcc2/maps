@@ -300,3 +300,13 @@ void foo(struct S *s) {}
 Verification of S#adm succeeded.
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+void foo() {
+    spec(int map[int][unsigned];)
+    speconly(map = lambda(int x; unsigned y; true; 42);)
+    assert(map[2][3] == 42);
+}
+`
+Verification of foo succeeded.
+`

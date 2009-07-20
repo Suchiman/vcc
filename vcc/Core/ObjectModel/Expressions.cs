@@ -4341,31 +4341,43 @@ namespace Microsoft.Research.Vcc {
 
     readonly Expression lambdaExpr;
 
+    private ITypeDefinition CreateTypeForLambda() {
+      Expression SysDiagContractsMap = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.NameTable, "Map");
+      var localDeclStmts = new List<LocalDeclarationsStatement>(this.BoundVariables);
+      localDeclStmts.Reverse();
+
+      TypeExpression texpr = TypeExpression.For(this.lambdaExpr.Type);
+
+      foreach (var localDeclStmt in localDeclStmts) {
+        foreach (var dummy in localDeclStmt.Declarations) // we care only about the number of variables of this type
+          targetType = texpr; // keep track of the previous type because it is required for 
+          texpr = new GenericTypeInstanceExpression(new NamedTypeExpression(SysDiagContractsMap),
+                                                    new TypeExpression[] { localDeclStmt.TypeExpression, texpr },
+                                                    SourceDummy.SourceLocation);
+      }
+      texpr = (TypeExpression)texpr.MakeCopyFor(this.ContainingBlock);
+      return texpr.ResolvedType;
+    }
+
     public override ITypeDefinition Type
     {
       get {
-
-        Expression SysDiagContractsMap = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.NameTable, "Map");
-        TypeExpression parmType = null;
-        foreach (LocalDeclarationsStatement loc in this.BoundVariables) {
-          if (parmType == null)
-            parmType = loc.TypeExpression;
-        }
-        
-        TypeExpression texpr = 
-          new GenericTypeInstanceExpression(new NamedTypeExpression(SysDiagContractsMap), 
-                                            new TypeExpression[] { parmType, TypeExpression.For(lambdaExpr.Type) }, 
-                                            SourceDummy.SourceLocation);
-
-        texpr = (TypeExpression)texpr.MakeCopyFor(this.ContainingBlock);
-        return texpr.ResolvedType;
+        if (this.type == null)
+          type = this.CreateTypeForLambda();
+        return type;
       }
     }
+    ITypeDefinition type;
 
     protected override void AddAdditionalTypeParameters(List<TypeExpression> genericInstanceParameters)
     {
-      genericInstanceParameters.Add(TypeExpression.For(lambdaExpr.Type));
+      // make sure we touch this.Type, which sets targetType
+      if (this.Type != null) {
+        genericInstanceParameters.Add((TypeExpression)targetType.MakeCopyFor(this.ContainingBlock));
+      }
     }
+
+    private TypeExpression targetType;
 
     private MethodCall cachedCondition;
     public override Expression Condition

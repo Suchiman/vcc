@@ -21,17 +21,7 @@ namespace System.Diagnostics.Contracts {
       return true;
     }
 
-    unsafe public static bool InRegion(bool condition, void* region)
-    {
-      return true;
-    }
-
     public static Map<K, V> Lambda<K, V>(Predicate<K> P)
-    {
-      return null;
-    }
-
-    unsafe public static void* RegionUnion<T>(Predicate<T> P)
     {
       return null;
     }

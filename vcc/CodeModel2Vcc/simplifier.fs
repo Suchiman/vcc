@@ -215,6 +215,9 @@ namespace Microsoft.Research.Vcc
     let desugarLambdas decls =
       let defs = ref []
       let expand self = function
+        | Quant (c, ({ Kind = Lambda; Condition = None; Body = Cast(({Type = Type.Bool} as bc), _, Quant(qc, ({Kind = Lambda} as nestedQData)))} as q)) -> 
+          let nestedType = match qc.Type with | Type.Map(_, t) -> t | _ -> die()
+          Some (self (Quant (c, { q with Body = Macro(bc, "in_lambda", [BoolLiteral(bc, true); Quant({qc with Type = nestedType }, nestedQData)]) })))
         | Quant (c, ({ Kind = Lambda; Condition = None; Body = Macro (_, "in_lambda", [cond; expr]) } as q)) ->
           Some (self (Quant (c, { q with Condition = Some cond; Body = (self expr) })))
           
@@ -262,7 +265,11 @@ namespace Microsoft.Research.Vcc
                 parms := (expr, var) :: !parms
                 Some (Expr.Ref (expr.Common, var))
             repl' None
-          let cond = q.Condition.Value.SelfMap repl
+          
+          let cond = 
+            match q.Condition with
+              | Some c -> c.SelfMap repl
+              | None -> BoolLiteral({c with Type = Type.Bool}, true)
           let body = q.Body.SelfMap repl
           
           let fn =

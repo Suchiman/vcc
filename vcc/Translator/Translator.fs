@@ -1576,7 +1576,6 @@ namespace Microsoft.Research.Vcc
 //            [ B.VarDecl(("stmt#" + helper.UniqueId().ToString(), trType e.Type), None) ] //Some(trExpr env e)) ]
 
           | _ -> 
-            dbgBreak()
             helper.Oops (stmt.Token, "unhandled stmt " + stmt.ToString())
             []
       
