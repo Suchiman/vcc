@@ -123,6 +123,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\testsuite\examples\Handles.c"
+				>
+			</File>
+			<File
 				RelativePath=".\testsuite\examples\Iterator.c"
 				DeploymentContent="true"
 				>
@@ -150,6 +154,10 @@
 			<File
 				RelativePath=".\testsuite\examples\PageSet.c"
 				DeploymentContent="true"
+				>
+			</File>
+			<File
+				RelativePath=".\testsuite\examples\Reserve.c"
 				>
 			</File>
 			<File
