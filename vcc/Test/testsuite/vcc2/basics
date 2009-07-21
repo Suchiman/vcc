@@ -352,17 +352,17 @@ testcase(3,3) : error VC0000: A local variable named 'i' is already defined in t
 `
 #include "vcc.h"
 
-struct S {
+struct vcc(dynamic_owns) S {
   int a[5];
-  invariant(keeps(a)) 
+  bool x;
+  invariant(x ==> keeps(a)) 
 };
 
 void foo(struct S s) { }
 
 `
-testcase(5,35) : warning VC9104: primitive pointers are unlikely to be in the owns set
+testcase(6,41) : warning VC9104: primitive pointers are unlikely to be in the owns set
 Verification of S#adm succeeded.
-testcase(3,1): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
 Verification of foo succeeded.
 `
 #include "vcc.h"
@@ -399,5 +399,5 @@ void foo() {
 }
 
 `
-testcase(9,14) : error VC9696: Cannot quantify over type 'struct basics17878' (bound variable is 'x').
+testcase(9,14) : error VC9696: Cannot quantify over type 'struct basics17902' (bound variable is 'x').
 `
