@@ -401,3 +401,14 @@ void foo() {
 `
 testcase(9,14) : error VC9696: Cannot quantify over type 'struct _T' (bound variable is 'x').
 `
+struct S { int a;};
+
+struct S GetS();
+
+void foo() {
+    struct S s;
+    s = GetS();
+}
+`
+Verification of foo succeeded.
+`

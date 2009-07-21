@@ -374,10 +374,10 @@ namespace Microsoft.Research.Vcc
                 | e ->
                   helper.Panic ("the path for value struct field update doesn't end with a local: " + ptr.ToString() + " >>> " + e.ToString())
               let loc = findLocal ptr
-              let updated = Macro ({c with Type = Type.MathStruct}, "vs_updated", [ptr; self src])
+              let (inits, tmp) = lateCache helper "vsAssign" (self src) VarKind.Local
+              let updated = Macro ({c with Type = Type.MathStruct}, "vs_updated", [ptr; tmp])
               let assump = Macro ({c with Type = Type.Bool}, "vs_can_update", [updated])
-              Some (Expr.MkBlock [Expr.MkAssume assump;
-                                  VarWrite (c, [loc], updated)])
+              Some (Expr.MkBlock (inits @ [Expr.MkAssume assump; VarWrite (c, [loc], updated)]))
             | None ->
               handleMemWrite self (c, dst, src)
         
