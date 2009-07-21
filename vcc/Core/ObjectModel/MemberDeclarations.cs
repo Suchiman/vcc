@@ -381,7 +381,6 @@ namespace Microsoft.Research.Vcc {
     private List<ParameterDeclaration>/*?*/ parameters;
 
     public override bool ReturnValueIsModified {
-      //get { return true; }
       get { return false; }
     }
 

@@ -679,18 +679,12 @@ namespace Microsoft.Research.Vcc {
     }
 
     private bool IsIntOrBooleanType(ITypeDefinition type) {
-      if (TypeHelper.TypesAreEquivalent(type, this.PlatformType.SystemBoolean)) {
-        return true;
-      }
-      if (TypeHelper.IsPrimitiveInteger(type)) return true;
-      return false;
+      return TypeHelper.TypesAreEquivalent(type, this.PlatformType.SystemBoolean) || TypeHelper.IsPrimitiveInteger(type);
     }
 
     private bool IsFloatType(ITypeDefinition type) {
-      if (TypeHelper.TypesAreEquivalent(type, this.PlatformType.SystemFloat32) ||
-        TypeHelper.TypesAreEquivalent(type, this.PlatformType.SystemFloat64))
-        return true;
-      return false;
+      return (TypeHelper.TypesAreEquivalent(type, this.PlatformType.SystemFloat32) ||
+        TypeHelper.TypesAreEquivalent(type, this.PlatformType.SystemFloat64));
     }
 
     public override Expression ImplicitConversionInAssignmentContext(Expression expression, ITypeDefinition targetType) {

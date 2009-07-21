@@ -36,12 +36,6 @@ namespace AddinInstallerClass {
       base.Install(stateSaver);
       InstallRoutines.InstallAddIn(this.Context);
     }
-
-
-    public override void Commit(System.Collections.IDictionary savedState)
-    {
-      base.Commit(savedState);
-    }
   }
 
 

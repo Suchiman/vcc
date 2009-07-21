@@ -219,10 +219,9 @@ namespace Microsoft.Research.Vcc {
     /// <returns></returns>
     public override bool IntegerConversionIsLossless(ITypeDefinition targetType)
     {
-      if (this.LeftOperand.IntegerConversionIsLossless(targetType) &&
-          this.RightOperand.IntegerConversionIsLossless(targetType))
-        return true;
-      return base.IntegerConversionIsLossless(targetType);
+      return (this.LeftOperand.IntegerConversionIsLossless(targetType) &&
+              this.RightOperand.IntegerConversionIsLossless(targetType)) 
+             || base.IntegerConversionIsLossless(targetType);
     }
 
     /// <summary>
@@ -709,15 +708,6 @@ namespace Microsoft.Research.Vcc {
       this.Size = template.Size;
     }
 
-    public override void Dispatch(SourceVisitor visitor) {
-      //TODO: if visitor is C specific, dispatch to an overload that knows about this kind of node.
-      base.Dispatch(visitor);
-    }
-
-    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      return base.CheckForErrorsAndReturnTrueIfAnyAreFound();
-    }
-
     /// <summary>
     /// Makes a copy of this expression, changing the ContainingBlock to the given block.
     /// </summary>
@@ -828,10 +818,6 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       return this.TargetWithoutCasts.HasErrors() || this.ConvertedSourceExpression is DummyExpression;
-    }
-
-    protected override Expression GetConvertedSourceExpression() {
-      return base.GetConvertedSourceExpression();
     }
 
     /// <summary>
@@ -1489,7 +1475,6 @@ namespace Microsoft.Research.Vcc {
           }
         }
       }
-
 
       return false;
     }
@@ -2443,35 +2428,6 @@ namespace Microsoft.Research.Vcc {
       return result | base.CheckForErrorsAndReturnTrueIfAnyAreFound();
     }
 
-    public override IEnumerable<Expression> OriginalArguments
-    {
-      get
-      {
-        if (this.extendedArguments == null)
-          this.extendedArguments = this.ExtendedArguments();
-        return this.extendedArguments;
-      }
-    }
-    private IEnumerable<Expression> extendedArguments;
-
-    private IEnumerable<Expression> ExtendedArguments()
-    {
-      SimpleName methodName = this.MethodExpression as SimpleName;
-      if (methodName != null && methodName.Name.Value.ToString() == "__vcRegion" && IteratorHelper.EnumerableHasLength(base.OriginalArguments, 1)) {
-        IEnumerator<Expression> originalArgumentEnumerator = base.OriginalArguments.GetEnumerator();
-        originalArgumentEnumerator.MoveNext();
-        Expression pointer = originalArgumentEnumerator.Current;
-        IPointerType/*?*/ pointerType = pointer.Type as IPointerType;
-        if (pointerType != null) {
-          Expression size;
-          size = new CompileTimeConstant(TypeHelper.SizeOfType(pointerType.TargetType.ResolvedType), pointer.SourceLocation);
-          size.SetContainingExpression(this);
-          return new Expression[] { originalArgumentEnumerator.Current, size };
-        }
-      }
-      return base.OriginalArguments;
-    }
-
     /// <summary>
     /// Returns a list of the arguments to pass to the constructor, indexer or method, after they have been converted to match the parameters of the resolved method.
     /// </summary>
@@ -2643,9 +2599,7 @@ namespace Microsoft.Research.Vcc {
     /// <returns></returns>
     public override bool IntegerConversionIsLossless(ITypeDefinition targetType)
     {
-      if (this.LeftOperand.IntegerConversionIsLossless(targetType))
-        return true;
-      return base.IntegerConversionIsLossless(targetType);
+      return this.LeftOperand.IntegerConversionIsLossless(targetType) || base.IntegerConversionIsLossless(targetType);
     }
 
     /// <summary>
@@ -2991,14 +2945,6 @@ namespace Microsoft.Research.Vcc {
     }
 
     /// <summary>
-    /// Calls the visitor.Visit(PointerTypeExpression) method.
-    /// </summary>
-    public override void Dispatch(SourceVisitor visitor) {
-      //TODO: if visitor is C specific, dispatch to an overload that knows about this kind of node.
-      base.Dispatch(visitor);
-    }
-
-    /// <summary>
     /// Makes a copy of this expression, changing the ContainingBlock to the given block.
     /// </summary>
     //^ [MustOverride]
@@ -3192,17 +3138,6 @@ namespace Microsoft.Research.Vcc {
       return false;
     }
 
-
-    //protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
-    //{
-    //  ITypeDefinition/*?*/ qualifierType = this.Qualifier.Type;
-    //  if (qualifierType == null || qualifierType == Dummy.Type || !(this.Qualifier is TypeExpression)) {
-    //    this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Microsoft.Cci.Ast.Error.TypeRequired, this.Qualifier.ToString()));
-    //    return false;
-    //  }
-    //  return base.CheckForErrorsAndReturnTrueIfAnyAreFound();
-    //}
-
     protected override IExpression ProjectAsNonConstantIExpression()
     {
       INestedTypeDefinition typeDef = this.Resolve() as INestedTypeDefinition;
@@ -3295,11 +3230,6 @@ namespace Microsoft.Research.Vcc {
     {
       if (containingBlock == this.ContainingBlock) return this;
       return new VccSimpleName(containingBlock, this);
-    }
-
-    public override object/*?*/ ResolveAsNamespaceOrType() {
-      //TODO: ignore variable definitions (i.e. look only in the enum/struct/typedef/union namespace)
-      return base.ResolveAsNamespaceOrType();
     }
 
     /// <summary>
@@ -3507,8 +3437,7 @@ namespace Microsoft.Research.Vcc {
     {
       get
       {
-        if (this.Type.ResolvedType.IsEnum) return true;
-        return base.ValueIsPolymorphicCompileTimeConstant;
+        return this.Type.ResolvedType.IsEnum || base.ValueIsPolymorphicCompileTimeConstant;
       }
     }
 
@@ -3836,9 +3765,7 @@ namespace Microsoft.Research.Vcc {
     /// <returns></returns>
     public override bool IntegerConversionIsLossless(ITypeDefinition targetType)
     {
-      if (this.LeftOperand.IntegerConversionIsLossless(targetType))
-        return true;
-      return base.IntegerConversionIsLossless(targetType);
+      return this.LeftOperand.IntegerConversionIsLossless(targetType) || base.IntegerConversionIsLossless(targetType);
     }
 
     /// <summary>
@@ -3897,9 +3824,7 @@ namespace Microsoft.Research.Vcc {
     /// <returns></returns>
     public override bool IntegerConversionIsLossless(ITypeDefinition targetType)
     {
-      if (this.LeftOperand.IntegerConversionIsLossless(targetType))
-        return true;
-      return base.IntegerConversionIsLossless(targetType);
+      return this.LeftOperand.IntegerConversionIsLossless(targetType) || base.IntegerConversionIsLossless(targetType);
     }
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
@@ -3964,9 +3889,7 @@ namespace Microsoft.Research.Vcc {
     /// <returns></returns>
     public override bool IntegerConversionIsLossless(ITypeDefinition targetType)
     {
-      if (this.LeftOperand.IntegerConversionIsLossless(targetType))
-        return true;
-      return base.IntegerConversionIsLossless(targetType);
+      return this.LeftOperand.IntegerConversionIsLossless(targetType) || base.IntegerConversionIsLossless(targetType);
     }
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
@@ -4015,10 +3938,9 @@ namespace Microsoft.Research.Vcc {
     /// <returns></returns>
     public override bool IntegerConversionIsLossless(ITypeDefinition targetType)
     {
-      if (this.LeftOperand.IntegerConversionIsLossless(targetType)
-        && this.RightOperand.IntegerConversionIsLossless(targetType))
-        return true;
-      return base.IntegerConversionIsLossless(targetType);
+      return (this.LeftOperand.IntegerConversionIsLossless(targetType) && 
+              this.RightOperand.IntegerConversionIsLossless(targetType))
+        || base.IntegerConversionIsLossless(targetType);
     }
 
     /// <summary>
@@ -4053,10 +3975,9 @@ namespace Microsoft.Research.Vcc {
     /// <returns></returns>
     public override bool IntegerConversionIsLossless(ITypeDefinition targetType)
     {
-      if (this.LeftOperand.IntegerConversionIsLossless(targetType)
-        && this.RightOperand.IntegerConversionIsLossless(targetType))
-        return true;
-      return base.IntegerConversionIsLossless(targetType);
+      return (this.LeftOperand.IntegerConversionIsLossless(targetType) && 
+              this.RightOperand.IntegerConversionIsLossless(targetType))
+        || base.IntegerConversionIsLossless(targetType);
     }
 
     /// <summary>
@@ -4293,14 +4214,6 @@ namespace Microsoft.Research.Vcc {
     //^ ensures this.containingBlock == containingBlock;
     {
       this.lambdaExpr = template.lambdaExpr.MakeCopyFor(base.Condition.ContainingBlock);
-    }
-
-    /// <summary>
-    /// Calls the visitor.Visit(Exists) method.
-    /// </summary>
-    public override void Dispatch(SourceVisitor visitor)
-    {
-      base.Dispatch(visitor);
     }
 
     /// <summary>
