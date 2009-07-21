@@ -896,7 +896,7 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================
     
-    let handleStructEquality self expr =
+    let handleStructAndRecordEquality self expr =
       let rec markTypeDecl eqKind (td : TypeDecl) =
         match td.GenerateEquality, eqKind with
           | (NoEq | ShallowEq), DeepEq  -> 
@@ -924,6 +924,10 @@ namespace Microsoft.Research.Vcc
           | _ -> 
             helper.Error(c.Token, 9655, "structured equality applied to non-structured type " + e1.Type.ToString(), None)
             None
+        | Expr.Prim(ec, Op("==",_), [e1; e2]) ->
+          match e1.Type with
+            | Type.Ref(td) when isRecord td -> Some(self (Expr.Macro(ec, "_vcc_rec_eq", [e1; e2])))
+            | _ -> None
         | _ -> None
 
     // ============================================================================================================
@@ -1173,6 +1177,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("type-fixup-single-member-unions", Helper.Decl turnSingleMemberUnionsIntoStructs)
     helper.AddTransformer ("type-check-records", Helper.Decl checkRecordValidity)
     helper.AddTransformer ("type-handle-volatile-modifiers", Helper.Decl handleVolatileModifiers)
-    helper.AddTransformer ("type-struct-equality", Helper.Expr handleStructEquality)
+    helper.AddTransformer ("type-struct-equality", Helper.Expr handleStructAndRecordEquality)
     helper.AddTransformer ("type-constant-arrays", Helper.Decl addAxiomsForReadsFromConstArrays)
     helper.AddTransformer ("type-end", Helper.DoNothing)

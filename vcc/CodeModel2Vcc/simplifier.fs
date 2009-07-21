@@ -159,6 +159,7 @@ namespace Microsoft.Research.Vcc
                   "is_unwrap_check", "";
                   "is_stuttering_check", "";
                   "new_ownees", "S..";
+                  "rec_eq", "..";
                 ]
     dict
     

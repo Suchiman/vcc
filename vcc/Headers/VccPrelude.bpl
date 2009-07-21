@@ -515,7 +515,6 @@ function $is_record_field(parent:$ctype, field:$field, field_type:$ctype) return
 
 axiom (forall t:$ctype :: {$is_record_type(t)} $is_record_type(t) ==> $is_primitive(t));
 
-/*
 function $as_record_record_field($field) returns($field);
 axiom (forall p:$ctype, f:$field, ft:$ctype :: {$is_record_field(p, f, ft), $is_record_type(ft)}
   $is_record_field(p, f, ft) && $is_record_type(ft) ==> $as_record_record_field(f) == f);
@@ -524,7 +523,11 @@ function $rec_eq(r1:$record, r2:$record) returns(bool)
   { r1 == r2 }
 function $rec_base_eq(x:int, y:int) returns(bool)
   { x == y }
+
 function $int_to_record(x:int) returns($record);
+function $record_to_int(r:$record) returns(int);
+
+axiom (forall r:$record :: $int_to_record($record_to_int(r)) == r);
 
 axiom (forall r1:$record, r2:$record :: {$rec_eq(r1, r2)}
   $rec_eq(r1, r2) <==
@@ -534,8 +537,6 @@ axiom (forall r1:$record, r2:$record, f:$field ::
  {$rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, $as_record_record_field(f)))}
  $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)) <==
    $rec_eq($int_to_record($rec_fetch(r1, f)), $int_to_record($rec_fetch(r2, f))));
-*/
-
 
 
 // ----------------------------------------------------------------------------

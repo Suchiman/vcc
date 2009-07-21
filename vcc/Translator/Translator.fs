@@ -370,6 +370,7 @@ namespace Microsoft.Research.Vcc
         let suff = suff t
         match suff with
           // predefined in the prelude
+          | "record"
           | "version"
           | "ptr"
           | "bool"
