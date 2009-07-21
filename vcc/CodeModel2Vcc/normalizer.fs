@@ -38,33 +38,38 @@ namespace Microsoft.Research.Vcc
     | _ -> None
   
   
-  let rec doHandleConversions helper self = function
-    | Expr.Cast ({Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
-    | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast (_, (Processed|Unchecked), e')) when e'.Type = t1 -> Some (self e')
-    | Expr.Cast ({ Type = Bool }, _, Expr.Cast (_, _, e')) when e'.Type = Bool -> Some (self e')
-    | Expr.Cast ({ Type = Ptr _ } as c, _, Expr.IntLiteral (_, ZeroBigInt)) -> 
-      Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Ptr Void}, "null", []))))
-    | Expr.Cast ({ Type = Ptr _ } as c, _, e) when e.Type._IsInteger ->
-      match e.Type with
-        | Integer k ->
-          Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Ptr(Void)}, "_vcc_" + (Type.IntSuffix k) + "_to_ptr" , [e]))))
-        | _ -> None
-    | Expr.Cast ({ Type = Integer k }, _, Expr.IntLiteral (c, n)) ->
-      let (min, max) = Type.IntRange k
-      if min <= n && n <= max then
-        Some (Expr.IntLiteral ({ c with Type = Integer k }, n))
-      else
-        None 
-    | Expr.Cast ({ Type = MathInteger }, _, expr) when expr.Type._IsInteger -> Some(self(expr))
-    | Expr.Cast (_, _, e') as e ->
-      match e'.Type, e.Type with
-        | Ptr _, Ptr Void -> Some (self e')
-        | _, Type.Ref { Name = "#Object" } -> Some (self e')
-        | t, t' when t = t' -> Some (self e')
-        | _ -> None
-    | _ -> None
+  let doHandleConversions = 
+    let rec doHandleConversions' inGroupInvariant self = function
+      | Expr.Cast ({Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
+      | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast (_, (Processed|Unchecked), e')) when e'.Type = t1 -> Some (self e')
+      | Expr.Cast ({ Type = Bool }, _, Expr.Cast (_, _, e')) when e'.Type = Bool -> Some (self e')
+      | Expr.Cast ({ Type = Ptr _ } as c, _, Expr.IntLiteral (_, ZeroBigInt)) -> 
+        Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Ptr Void}, "null", []))))
+      | Expr.Cast ({ Type = Ptr _ } as c, _, e) when e.Type._IsInteger ->
+        match e.Type with
+          | Integer k ->
+            Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Ptr(Void)}, "_vcc_" + (Type.IntSuffix k) + "_to_ptr" , [e]))))
+          | _ -> None
+      | Expr.Cast ({ Type = Integer k }, _, Expr.IntLiteral (c, n)) ->
+        let (min, max) = Type.IntRange k
+        if min <= n && n <= max then
+          Some (Expr.IntLiteral ({ c with Type = Integer k }, n))
+        else
+          None 
+      | Expr.Cast ({ Type = MathInteger }, _, expr) when expr.Type._IsInteger -> Some(self(expr))
+      | Expr.Cast(ec, _, Expr.Macro(tc, "this", [])) when inGroupInvariant && ec.Type = tc.Type -> 
+        None // Do not remove this cast because the type of 'this' will change later on
+      | Expr.Cast (_, _, e') as e ->
+        match e'.Type, e.Type with
+          | Ptr _, Ptr Void -> Some (self e')
+          | _, Type.Ref { Name = "#Object" } -> Some (self e')
+          | t, t' when t = t' -> Some (self e')
+          | _ -> None
+      | Expr.Call(c, ({Name = "_vcc_inv_group"} as fn), targs, args) -> Some(Expr.Call(c, fn, targs, List.map (fun (e:Expr) -> e.SelfMap(doHandleConversions' true)) args))
+      | _ -> None
+    doHandleConversions' false
     
-  let handleConversions helper = deepMapExpressions (doHandleComparison helper) >> deepMapExpressions (doHandleConversions helper)
+  let handleConversions helper = deepMapExpressions (doHandleComparison helper) >> deepMapExpressions doHandleConversions
     
   // ============================================================================================================      
   
@@ -668,7 +673,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-inline-array-accesses", Helper.Expr normalizeInlineArrayAccesses)
     helper.AddTransformer ("norm-out-params", Helper.Expr removeDerefFromOutParams)
     helper.AddTransformer ("norm-comparison", Helper.Expr (doHandleComparison helper))
-    helper.AddTransformer ("norm-conversions", Helper.Expr (doHandleConversions helper))   
+    helper.AddTransformer ("norm-conversions", Helper.Expr doHandleConversions)   
     helper.AddTransformer ("norm-generic-errors", Helper.Decl reportGenericsErrors) 
     helper.AddTransformer ("norm-containing-struct", Helper.Expr normalizeContainingStruct)
     helper.AddTransformer ("add-assume-to-assert", Helper.Expr handleLemmas)    
