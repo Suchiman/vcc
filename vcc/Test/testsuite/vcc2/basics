@@ -389,7 +389,7 @@ Verification of S#adm succeeded.
 `
 #include "vcc.h"
 
-typedef struct 
+typedef struct _T
 {
     unsigned d;
 } T;
@@ -399,5 +399,5 @@ void foo() {
 }
 
 `
-testcase(9,14) : error VC9696: Cannot quantify over type 'struct basics17902' (bound variable is 'x').
+testcase(9,14) : error VC9696: Cannot quantify over type 'struct _T' (bound variable is 'x').
 `
