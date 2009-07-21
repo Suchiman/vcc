@@ -515,6 +515,28 @@ function $is_record_field(parent:$ctype, field:$field, field_type:$ctype) return
 
 axiom (forall t:$ctype :: {$is_record_type(t)} $is_record_type(t) ==> $is_primitive(t));
 
+/*
+function $as_record_record_field($field) returns($field);
+axiom (forall p:$ctype, f:$field, ft:$ctype :: {$is_record_field(p, f, ft), $is_record_type(ft)}
+  $is_record_field(p, f, ft) && $is_record_type(ft) ==> $as_record_record_field(f) == f);
+
+function $rec_eq(r1:$record, r2:$record) returns(bool)
+  { r1 == r2 }
+function $rec_base_eq(x:int, y:int) returns(bool)
+  { x == y }
+function $int_to_record(x:int) returns($record);
+
+axiom (forall r1:$record, r2:$record :: {$rec_eq(r1, r2)}
+  $rec_eq(r1, r2) <==
+  (forall f:$field :: $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f))));
+
+axiom (forall r1:$record, r2:$record, f:$field ::
+ {$rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, $as_record_record_field(f)))}
+ $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)) <==
+   $rec_eq($int_to_record($rec_fetch(r1, f)), $int_to_record($rec_fetch(r2, f))));
+*/
+
+
 
 // ----------------------------------------------------------------------------
 // state
@@ -1641,7 +1663,7 @@ function {:inline true} $is_global(p:$ptr, t:$ctype) returns(bool)
   { (forall S:$state :: {$ts(S, p)} $good_state(S) ==> $typed(S, p) && $is_object_root(S, p)) &&
     (forall S:$state, f:$field :: {$ts(S, $dot(p, f))} $good_state(S) ==> $typed(S, p) && $is_object_root(S, p)) &&
     (forall S:$state, f:$field, i:int, tt:$ctype :: {$ts(S, $idx($dot(p, f), i, tt))} $good_state(S) ==> $typed(S, p) && $is_object_root(S, p)) &&
-    (forall S:$state :: {$program_entry_point(S)} $program_entry_point(S) ==> $mutable(S, p) && $owns(S, p) == $set_empty())
+    (forall S:$state :: {$program_entry_point(S)} $program_entry_point(S) ==> $extent_mutable(S, p) && $owns(S, p) == $set_empty())
   }
 
 function {:inline true} $is_global_array(p:$ptr, T:$ctype, sz:int) returns(bool)
