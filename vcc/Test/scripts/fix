@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SCR=$(echo $PWD | sed -e 's@\(.*/Test/\).*@\1/scripts@i')
+SCR=$(/bin/pwd | sed -e 's@\(.*/Test/\).*@\1/scripts@i')
 vcc2 /s "$@" > output.log
 $SCR/cmpout output.log
 echo -n "enter: "
