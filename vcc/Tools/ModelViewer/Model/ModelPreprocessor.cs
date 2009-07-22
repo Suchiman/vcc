@@ -486,7 +486,7 @@ namespace VccModel.Preprocessor
           Partition arrayTypePartition = arrayFunction.Result;
           arrayTypePartition.SetType(PartitionType.Type);
           arrayTypePartition.SetValue(String.Format("{0}[{1}]",
-            arrayFunction.FunctionArguments[0].Value, arrayFunction.FunctionArguments[1].Value));
+            arrayFunction.FunctionArguments[0].DisplayValue, arrayFunction.FunctionArguments[1].Value));
         }
       }
 
