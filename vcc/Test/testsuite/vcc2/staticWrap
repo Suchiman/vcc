@@ -105,7 +105,7 @@ Verification of failWr failed.
 testcase(17,13) : error VC8020: 'a' is not writable before wrapping it.
 Verification of failMut failed.
 testcase(24,3) : error VC9502: Call '_vcc_wrap(a, _vcc_typeof(a))' did not verify.
-testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is not closed'.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped must not be closed'.
 Verification of okA succeeded.
 Verification of okC succeeded.
 Verification of failCChWr failed.

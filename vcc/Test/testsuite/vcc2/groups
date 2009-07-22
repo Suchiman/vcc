@@ -697,7 +697,7 @@ Verification of foo failed.
 testcase(15,13) : error VC8018: '__this::B' is not wrapped before wrapping 'a' (its owner).
 testcase(15,13) : error VC8019: '__this::B' is not writable before wrapping 'a' (its owner).
 testcase(15,3) : error VC9502: Call '_vcc_wrap(a, _vcc_typeof(a))' did not verify.
-testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is not closed'.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped must not be closed'.
 `
 #include <vcc.h>
 

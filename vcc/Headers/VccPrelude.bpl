@@ -1355,15 +1355,15 @@ procedure $static_unwrap(#l:$ptr, S:$state);
 procedure $static_wrap(#l:$ptr, S:$state, owns:$ptrset);
   // writes #l, $owns($s, #l)
   modifies $s;
-  // TOKEN: OOPS: pre_static_wrap holds
+  // TOKEN: OOPS: pre_static_wrap must hold
   requires $pre_static_wrap($s);
-  // TOKEN: the wrapped type is non primitive
+  // TOKEN: the wrapped type must not be primitive
   requires $kind_of($typ(#l)) != $kind_primitive;
-  // TOKEN: the object being wrapped is typed
+  // TOKEN: the object being wrapped must be typed
   requires $typed($s, #l);
-  // TOKEN: the object being wrapped is not closed
+  // TOKEN: the object being wrapped must not be closed
   requires !$closed($s, #l);
-  // TOKEN: the object being wrapped is owned by the current thread
+  // TOKEN: the object being wrapped must be owned by the current thread
   requires $owner($s, #l) == $me();
   ensures $wrapped($s, #l, $typ(#l));
   // ensures $set_in(#l, $domain($s, #l));
