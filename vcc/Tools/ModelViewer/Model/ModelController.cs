@@ -920,6 +920,13 @@ namespace VccModel.Controller
       }
 
       FillFieldInfoAttributes(info, fieldName, p, execState, referringDotInfo);
+      foreach (string alias in p.Aliases)
+      {
+        if ((!fieldName.Equals(alias)) && (!info.Aliases.Contains(alias)))
+        {
+          info.AddAlias(alias);
+        }
+      }
 
       return info;
     }

@@ -589,12 +589,25 @@ namespace VccModel.Preprocessor
             List<Function> localFunctions = model.FunctionMap["$local_value_is"].FindAll(delegate(Function f) { return f.FunctionArguments[3] == var; });
             if (localFunctions.Count > 0)
             {
-              string varName = localFunctions[0].FunctionArguments[2].Value;
-              if (!varName.Contains("__vcc_alloc"))
+              bool varNameSet = false;
+              foreach (Function localFunc in localFunctions)
               {
-                string shortname = varName.Substring(5);
-                if (shortname == "_this_") shortname = "this";
-                var.SetValue(shortname);
+                string varName = localFunc.FunctionArguments[2].Value;
+                if (!varName.Contains("__vcc_alloc"))
+                {
+                  string shortname = varName.Substring(5);
+                  if (shortname == "_this_") shortname = "this";
+
+                  if (!varNameSet)
+                  {
+                    var.SetValue(shortname);
+                    varNameSet = true;
+                  }
+                  var.AddAlias(shortname);
+                }
+              }
+              if (varNameSet)
+              {
                 model.Variables.Add(var);
               }
             }

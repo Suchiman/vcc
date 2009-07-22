@@ -4,6 +4,7 @@
 //
 //-----------------------------------------------------------------------------
 using System;
+using System.Collections.Generic;
 
 namespace Z3Model {
 
@@ -30,6 +31,7 @@ namespace Z3Model {
     private Set _set;
     private PartitionType _type;
     private string _value;
+    private List<string> _aliases = new List<string>();
   
     public Partition(int Id) {
       _id = Id;
@@ -69,6 +71,14 @@ namespace Z3Model {
     public string Value {
       get {
         return _value;
+      }
+    }
+
+    public List<string> Aliases 
+    {
+      get
+      {
+        return _aliases;
       }
     }
 
@@ -127,6 +137,14 @@ namespace Z3Model {
 
     public void SetValue(string ValueString) {
       _value = ValueString;
+    }
+
+    public void AddAlias(string alias)
+    {
+      if (!_aliases.Contains(alias))
+      {
+        _aliases.Add(alias);
+      }
     }
 
     public void AddSetElement(string ElementName) {
