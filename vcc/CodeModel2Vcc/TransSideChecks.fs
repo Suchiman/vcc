@@ -98,7 +98,6 @@ namespace Microsoft.Research.Vcc
           let check = 
             { Token = td.Token
               IsSpec = true  
-              IsSpecInline = false
               RetType = Void
               OrigRetType = Void
               Name = td.Name + "#adm"
@@ -240,7 +239,6 @@ namespace Microsoft.Research.Vcc
         let rc =
           { Token = f.Token
             IsSpec = true  
-            IsSpecInline = false
             OrigRetType = Void
             RetType = Void
             Name = f.Name + "#reads"

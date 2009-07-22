@@ -373,7 +373,6 @@ module Microsoft.Research.Vcc.CAST
     {
       Token:Token;
       IsSpec:bool;
-      IsSpecInline:bool;
       mutable OrigRetType:Type;
       mutable RetType:Type;
       mutable Name:Id;
@@ -407,7 +406,6 @@ module Microsoft.Research.Vcc.CAST
       let b = StringBuilder()
       let wr (s:string) = b.Append s |> ignore
       if this.IsSpec then wr "spec " else ()
-      if this.IsSpecInline then wr "specinline " else ()
       this.RetType.WriteTo b; wr " "
       doArgsAndTArgsb b (fun (p:Variable) -> p.WriteTo b) (fun (tp:TypeVariable) -> tp.WriteTo b) (this.Name) this.Parameters this.TypeParameters 
       wr "\n"

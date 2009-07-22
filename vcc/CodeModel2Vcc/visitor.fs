@@ -192,7 +192,6 @@ namespace Microsoft.Research.Vcc
             let decl =
               { Token           = tok
                 IsSpec          = isSpec
-                IsSpecInline    = false
                 RetType         = this.DoType(meth.Type)
                 OrigRetType     = this.DoType(meth.Type)
                 Name            = name

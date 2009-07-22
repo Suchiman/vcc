@@ -683,7 +683,6 @@ namespace Microsoft.Research.Vcc
                 
               let fn = { Token = body.Token
                          IsSpec = false
-                         IsSpecInline = false
                          OrigRetType = Type.Void
                          RetType = Type.Void
                          Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut

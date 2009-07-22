@@ -276,7 +276,6 @@ namespace Microsoft.Research.Vcc
           let fn =
             { Token           = c.Token
               IsSpec          = true
-              IsSpecInline    = false
               RetType         = c.Type
               OrigRetType     = c.Type
               Name            = "lambda#" + (helper.UniqueId()).ToString()
