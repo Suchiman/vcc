@@ -95,7 +95,6 @@ namespace Microsoft.Research.Vcc
         match attrName with
         | "Microsoft.Cci.DummyType" -> yield! []   
         | "Microsoft.Contracts.SkipVerification" -> yield C.SkipVerification
-        | "Microsoft.Contracts.UseBitVectors" -> yield C.UseBitVectors
         | "Microsoft.Contracts.NoAdmissibility" -> yield C.NoAdmissibility
         | "Microsoft.Contracts.IsAdmissibilityCheck" -> yield C.IsAdmissibilityCheck
         | "Microsoft.Contracts.BoolBoogieAttr" -> 

@@ -495,7 +495,6 @@ enum _vcHintKind {
 bool __vcAssumeHintKind(enum _vcHintKind kind);
 #define hint(_KIND_, _EXPR_) assert(__vcAssumeHintKind(_vc ## _KIND_) || (_EXPR_)); assume(_EXPR_)
 
-#define usebitvectors
 #define ref_cnt_ptr
 
 #define _vcc_compat_region(p,s) _vcc_SAL_region(p,s)

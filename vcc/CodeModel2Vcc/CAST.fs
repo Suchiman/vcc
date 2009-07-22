@@ -76,7 +76,6 @@ module Microsoft.Research.Vcc.CAST
     }
   
   type CustomAttr =
-    | UseBitVectors
     | SkipVerification
     | IsAdmissibilityCheck
     | NoAdmissibility

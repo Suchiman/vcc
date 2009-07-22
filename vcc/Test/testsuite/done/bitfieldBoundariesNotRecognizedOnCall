@@ -26,7 +26,6 @@ void g2(foo_t f)
 }
 
 // we may want to make this one verify without bitvectors
-usebitvectors
 void h(foo_t f)
 {
 	g2(f); 

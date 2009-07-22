@@ -21,7 +21,6 @@ typedef struct _T
 `
 #include <vcc2.h>
 
-usebitvectors
 void main(){
 }
 `

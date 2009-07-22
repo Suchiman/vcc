@@ -5,7 +5,6 @@ struct S{
   unsigned __int64 b;
 };
 
-usebitvectors
 void foo(struct S s) {
 }
 

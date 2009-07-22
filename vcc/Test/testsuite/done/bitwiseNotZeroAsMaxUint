@@ -2,7 +2,6 @@
 
 typedef unsigned __int32 UINT32;
 
-usebitvectors
 UINT32 foo(UINT32 a, UINT32 b)
   requires(a <= ((UINT32)~((UINT32)0)) - b)
 {

@@ -85,7 +85,6 @@ speccast
 unchecked
 no_reads_check
 skipverification
-usebitvectors
 no_admissibility
 postconditionsanity
 vcc_attr

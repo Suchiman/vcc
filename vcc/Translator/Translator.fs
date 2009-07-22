@@ -1630,7 +1630,6 @@ namespace Microsoft.Research.Vcc
                   match attr with
                     | C.IntBoogieAttr (key, value) -> yield (B.ExprAttr (key, bInt value))
                     | C.BoolBoogieAttr (key, value) -> yield (B.ExprAttr (key, B.Expr.BoolLiteral value))
-                    | C.UseBitVectors -> yield (B.ExprAttr ("forceBvZ3Native", bTrue))
                     | C.SkipVerification -> yield (B.ExprAttr ("verify", bFalse))
                     | C.NoAdmissibility -> yield! []
                     | C.IsAdmissibilityCheck -> yield! []

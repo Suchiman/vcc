@@ -60,7 +60,6 @@ typedef int bool;
 #define spec(...)
 #define skipverification
 #define frameaxiom
-#define usebitvectors
 #define no_admissibility
 #define backing_member
 #define member_name(n)

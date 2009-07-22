@@ -162,10 +162,6 @@ namespace Microsoft.Contracts {
   }
 
   [AttributeUsage(AttributeTargets.Method)]
-  public class UseBitVectors : Attribute {
-  }
-
-  [AttributeUsage(AttributeTargets.Method)]
   public sealed class SkipVerification : Attribute {
   }
 
