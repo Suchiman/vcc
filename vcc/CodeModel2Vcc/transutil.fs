@@ -379,8 +379,8 @@ namespace Microsoft.Research.Vcc
 
       
   let doPruneBy funcName decls =
-    let used = new Dict<_,_>()
-    let generatedAxioms = new Dict<obj,_>()
+    let used = objDict()
+    let generatedAxioms = objDict()
     let todo = ref []
     let axioms = ref []
     let shouldDo (o:obj) =

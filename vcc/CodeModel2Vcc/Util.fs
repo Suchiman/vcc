@@ -21,6 +21,7 @@ namespace Microsoft.Research.Vcc
     
     let glist (l:list<_>) = new GList<_> (l)
     let gdict () = new Dict<_,_>()
+    let objDict() = new Dict<obj, _>(new ObjEqualityComparer())
      
     let die() = failwith "confused, will now die"
 

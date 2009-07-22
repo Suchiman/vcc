@@ -43,7 +43,7 @@ namespace Microsoft.Research.Vcc
     let mutable fnPtrCount = 0
     let finalActions = System.Collections.Generic.Queue<(unit -> unit)>()
     
-    let mutable localsMap = new Dict<obj, C.Variable>()
+    let mutable localsMap = new Dict<obj, C.Variable>(new ObjEqualityComparer());
     let mutable localVars = []
     let globalsMap = new Dict<IGlobalFieldDefinition, C.Variable>()
     let specGlobalsMap = new Dict<string, C.Variable>()
@@ -299,7 +299,7 @@ namespace Microsoft.Research.Vcc
               let isNotVoidPar (p : ParameterDeclaration) = p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void
               if (methodContract.ContainingSignatureDeclaration.Parameters |> Seq.filter isNotVoidPar |> Seq.length) <> (Seq.length decl.Parameters) then
                 helper.Error(decl.Token, 9658, "declared formal parameter list different from definition", Some(VisitorHelper.GetTokenFor [(methodContract.ContainingSignatureDeclaration.SourceLocation :> ILocation)]))
-              localsMap <- new Dict<_,_>()
+              localsMap <- new Dict<obj,_>(new ObjEqualityComparer())
               let addParmRenaming (fromParm:ParameterDeclaration) (toVar:C.Variable) =
                 localsMap.Add(((fromParm.ContainingSignature.SignatureDefinition), fromParm.Name.Value), toVar)
               let contractPars = seq { for p in methodContract.ContainingSignatureDeclaration.Parameters do if p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void then yield p }

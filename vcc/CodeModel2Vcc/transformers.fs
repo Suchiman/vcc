@@ -65,7 +65,7 @@ namespace Microsoft.Research.Vcc
             
   
   let pruneDecls (helper:Helper.Env) (decls : list<Top>) : list<Top> =
-    let objToTop = new Dict<obj, Top>()
+    let objToTop = objDict()
     let used = new Dict<_,_>()
     
     let populateObjToTop = function
