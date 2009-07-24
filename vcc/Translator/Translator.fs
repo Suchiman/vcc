@@ -2386,12 +2386,25 @@ namespace Microsoft.Research.Vcc
           | C.Top.Axiom e ->
             let res = trExpr initialEnv e
             let seenState = ref false
-            let replMS = function
-              | B.Expr.Ref "$s" -> seenState := true; Some (er "#s")
+            let rec replMS stateIsQuantBound = function
+              | B.Expr.Ref "$s" -> 
+                if not stateIsQuantBound then seenState := true
+                Some (er "#s")
               | B.Expr.Old _ ->
                 failwith "axiom mentions old"
+              | B.Expr.Exists(vars, trigs, attrs, e) ->
+                dbgBreak()
+                let quantBindsState = List.exists (fun (id,_) -> id = "#s") vars
+                let self = fun (e : B.Expr) -> e.Map(replMS quantBindsState)
+                let selfs = List.map (List.map self)
+                Some(B.Expr.Exists(vars, selfs trigs, attrs, self e))
+              | B.Expr.Forall(vars, trigs, attrs, e) ->
+                let quantBindsState = List.exists (fun (id,_) -> id = "#s") vars
+                let self = fun (e : B.Expr) -> e.Map(replMS quantBindsState)
+                let selfs = List.map (List.map self)
+                Some(B.Expr.Forall(vars, selfs trigs, attrs, self e))
               | _ -> None
-            let res = res.Map replMS
+            let res = res.Map (replMS false)
             let res, vars = 
               //XXX if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
               if !seenState then res, [("#s", tpState)] else res, []

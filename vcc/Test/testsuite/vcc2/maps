@@ -310,3 +310,31 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+typedef struct _TEST{
+  int dummy;
+  spec(claim_t a;)
+} TEST, *PTEST;
+
+
+spec(
+ispure bool Fun(PTEST a claimp(c))
+  reads(a) 
+  requires(typed(a))
+  requires(thread_local(a))
+  ensures(result == (a->a == c))
+{
+  return a->a == c;
+}
+)
+
+void foo(PTEST a)
+{
+  spec(bool m[claim_t] = lambda(claim_t cl; true; Fun(a, cl));)
+} 
+`
+Verification of Fun succeeded.
+Verification of foo succeeded.
+Verification of Fun#reads succeeded.
+`
