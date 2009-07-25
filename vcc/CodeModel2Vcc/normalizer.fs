@@ -125,11 +125,6 @@ namespace Microsoft.Research.Vcc
       | Call (c, ({ Name = "_vcc_claim" } as fn), _, args) ->
         match List.rev args with
           | x :: xs ->
-            let guard self = function
-              | Expr.Ref (c, { Kind = (Local|Parameter) }) as expr ->
-                Some (mkOld c "_vcc_when_claimed" expr)
-              | _ -> None
-            let x = x.SelfMap guard
             Some (self (Macro (c, "claim", Expr.Pure (x.Common, convertToBool (fun x -> x) x) :: xs)))
           | _ -> 
             helper.Oops (c.Token, "no arguments to claim")

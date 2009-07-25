@@ -483,7 +483,7 @@ namespace Microsoft.Research.Vcc
         
       let warnForIneffectiveOld token expr =
         if not (bContains "$s" expr) then
-          helper.Warning (token, 9106, "'old' or 'in_state' in '" + token.Value + "' has no effect")
+          helper.Warning (token, 9106, "'old', 'in_state', or 'when_claimed' in '" + token.Value + "' has no effect")
 
       let bvOps =
         [ "+", BinSame "add";
@@ -699,7 +699,8 @@ namespace Microsoft.Research.Vcc
               else bState :: args
             addType fn.RetType (bCall ("#" + fn.Name) args)
           // TODO this is wrong for loop invariants and stuff (but the legacy vcc doesn't handle that correctly as well)
-          | C.Expr.Old (_, C.Macro (_, "_vcc_when_claimed", []), e) ->
+          | C.Expr.Old (ec, C.Macro (_, "_vcc_when_claimed", []), e) ->
+            warnForIneffectiveOld ec.Token (self e)
             bSubst [("$s", er "$when_claimed_state")] (self e)
           | C.Expr.Old (ec, state, e) ->
             let be = self e
