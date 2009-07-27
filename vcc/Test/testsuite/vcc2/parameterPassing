@@ -138,7 +138,7 @@ void foo_w(int *p)
 struct A { int x; };
 
 void bar(struct A *a)
-  writes(a);
+  out_param(a);
 
 int baz()
 {

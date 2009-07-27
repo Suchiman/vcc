@@ -48,8 +48,8 @@ namespace Microsoft.Research.Vcc
  
   let isOnUnwrap = function
     | BoolOp (_, "==>", BoolOp (_, "&&", 
-                                COld (_, CallMacro (_, "_vcc_closed", [_; This])),
-                                Prim (_, Op ("!", _), [CallMacro (_, "_vcc_closed", [_; This])])), _) -> true
+                                COld (_, CallMacro (_, "_vcc_closed", _, [_; This])),
+                                Prim (_, Op ("!", _), [CallMacro (_, "_vcc_closed", _, [_; This])])), _) -> true
     | _ -> false
   
   let saveAndCheckInvariant helper cond errno suffix this =
@@ -191,7 +191,7 @@ namespace Microsoft.Research.Vcc
            in vcc.h.
         *)
     let handleSpecialCalls self = function
-      | Stmt (stmtComm, CallMacro (callComm, (("_vcc_wrap"|"_vcc_wrap_non_owns") as wrapName), [this; _])) as expr ->
+      | Stmt (stmtComm, CallMacro (callComm, (("_vcc_wrap"|"_vcc_wrap_non_owns") as wrapName), _, [this; _])) as expr ->
         match this.Type with
           | Ptr (Type.Ref td) when staticOwns td ->
             let tmpowns = getTmp helper "owns" Type.PtrSet VarKind.SpecLocal
@@ -247,7 +247,7 @@ namespace Microsoft.Research.Vcc
               | t -> 
                 helper.Error (expr.Token, 9621, "call to wrap(...) with an improper type: " + t.ToString(), None)
                 None
-      | Stmt (_, CallMacro (callComm, "_vcc_unwrap", [this; _])) as expr ->
+      | Stmt (_, CallMacro (callComm, "_vcc_unwrap", _, [this; _])) as expr ->
         match this.Type with
           | Ptr (Type.Ref td) when staticOwns td ->
             let (save, check) = saveAndCheckInvariant helper isOnUnwrap 8015 "fails on unwrap" this

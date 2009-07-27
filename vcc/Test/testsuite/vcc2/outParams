@@ -140,7 +140,7 @@ testcase(5,13) : error VC9599: (related information) Location of post condition.
 
 void foo(int * x spec(out int o))
   ensures(o == 5)
-  writes(x) // the problem
+  out_param(x)
 {
 speconly(  o = 5; )
 }

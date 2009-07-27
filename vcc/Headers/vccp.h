@@ -261,7 +261,10 @@ void _vcc_bump_volatile_version(obj_t p)
 void _vcc_free(obj_t p)
   writes (p)
   writes (extent(p));
-obj_t _vcc_alloc_local(typeid_t);
+
+void _vcc_stack_free(mathint, obj_t p);
+
+obj_t _vcc_stack_alloc(mathint, typeid_t);
 obj_t _vcc_alloc(typeid_t);
 obj_t _vcc_alloc_array(typeid_t, _vcc_size_t);
 

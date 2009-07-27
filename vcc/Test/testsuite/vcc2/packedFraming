@@ -217,7 +217,7 @@ typedef struct vcc(volatile_owns) _B{
 struct X { int x; };
 
 void wr(struct X *x)
-  writes(x);
+  out_param(x);
 
 void foo(B *b)
 requires(wrapped(b))

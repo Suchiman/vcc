@@ -813,7 +813,9 @@ function $extent_is_fresh(S1:$state, S2:$state, p:$ptr) returns(bool);
 axiom (forall T:$ctype :: {$is_primitive(T)}
   $is_primitive(T) ==> 
     (forall r:int, p:$ptr :: {$in_full_extent_of(p, $ptr(T, r))}
-      $in_full_extent_of(p, $ptr(T, r)) <==> p == $ptr(T, r)));
+      $in_full_extent_of(p, $ptr(T, r)) <==> p == $ptr(T, r)) &&
+    (forall r:int, S:$state :: {$extent_mutable(S, $ptr(T, r))}
+      $extent_mutable(S, $ptr(T, r)) <==> $mutable(S, $ptr(T, r))));
 
 axiom (forall T:$ctype :: {$is_primitive(T)}
   $is_primitive(T) ==> 
@@ -1604,10 +1606,58 @@ procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
 // -----------------------------------------------------------------------
 
 function $get_memory_allocator() returns($ptr);
+function $is_in_stackframe(#sf:int, p:$ptr) returns(bool);
 const unique $memory_allocator_type : $ctype;
 const $memory_allocator_ref : int;
 axiom $get_memory_allocator() == $ptr($memory_allocator_type, $memory_allocator_ref);
 axiom $ptr_level($memory_allocator_type) == 0;
+
+procedure $stack_alloc(#sf:int, #t:$ctype) returns (#r:$ptr);
+  modifies $s;
+  ensures $typed2($s, #r, #t);
+  ensures $mutable($s, #r);
+  ensures $mutable($s, $emb($s, #r));
+
+  ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
+    $in_extent_of($s, #p, #r) ==> $mutable($s, #p) 
+      && $nested(old($s), #p)
+      && $owns($s, #p) == $set_empty()
+      && $timestamp_is_now($s, #p)
+    );
+
+  ensures (forall #p:$ptr :: {$st($s, #p)} 
+    #p == $emb($s, #r) || $in_full_extent_of(#p, #r) ==> $timestamp_is_now($s, #p));
+
+  ensures $memory(old($s)) == $memory($s);
+  ensures (forall #p:$ptr :: {$st($s, #p)}
+    $typed(old($s), #p) || !$nested(old($s), #p) ==> $st_eq(old($s), $s, #p));
+  ensures (forall #p:$ptr :: {$ts($s, #p)}
+    $typed(old($s), #p) || !$nested(old($s), #p) ==> $ts_eq(old($s), $s, #p));
+  ensures (forall #p:$ptr :: {$thread_local($s, #p)}
+    $thread_local(old($s), #p) ==> $thread_local($s, #p));
+  ensures $timestamp_post_strict(old($s), $s);
+
+  ensures !$typed(old($s), #r);
+  ensures $is_in_stackframe(#sf, #r);
+  ensures $is_object_root($s, #r);
+  ensures $first_option_typed($s, #r);
+
+
+procedure $stack_free(#sf:int, #x:$ptr);
+  // writes extent(#x)
+  modifies $s;
+  // TOKEN: the extent of the object being reclaimed is mutable
+  requires $extent_mutable($s, #x);
+  // TOKEN: the pointer being reclaimed was returned by stack_alloc()
+  requires $is_in_stackframe(#sf, #x);
+
+  ensures (forall #p:$ptr :: {$st($s, #p)}
+    $in_full_extent_of(#p, #x) || $st($s, #p) == $st(old($s), #p));
+  ensures (forall #p:$ptr :: {$ts($s, #p)}
+    $in_full_extent_of(#p, #x) || $ts($s, #p) == $ts(old($s), #p));
+  ensures $memory($s) == $memory(old($s));
+  ensures $timestamp_post(old($s), $s);
+
 
 procedure $alloc(#t:$ctype) returns(#r:$ptr);
   modifies $s;
@@ -1654,6 +1704,7 @@ procedure $free(#x:$ptr);
     $in_full_extent_of(#p, #x) || $ts($s, #p) == $ts(old($s), #p));
   ensures $memory($s) == $memory(old($s));
   ensures $timestamp_post(old($s), $s);
+
 
 function $program_entry_point(s:$state) returns(bool);
 function $program_entry_point_ch(s:$state) returns(bool);

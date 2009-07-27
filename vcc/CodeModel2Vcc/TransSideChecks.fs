@@ -46,10 +46,10 @@ namespace Microsoft.Research.Vcc
     let handleDecl = function
       | Top.TypeDecl td as decl when not (_list_mem NoAdmissibility td.CustomAttr) ->
         let rec isTrivialInvariant = function
-          | CallMacro(_, "_vcc_typed2", [_;  This]) -> true
-          | CallMacro(_, "_vcc_set_eq", [CallMacro(_, "_vcc_owns", [_; This]); CallMacro(_, "_vcc_set_empty", [])]) -> true
-          | CallMacro(_, "_vcc_inv_is_owner_approved", _) -> true
-          | CallMacro(_, "labeled_invariant", [_; inv]) -> isTrivialInvariant inv
+          | CallMacro(_, "_vcc_typed2", _, [_;  This]) -> true
+          | CallMacro(_, "_vcc_set_eq", _, [CallMacro(_, "_vcc_owns", _, [_; This]); CallMacro(_, "_vcc_set_empty", _, [])]) -> true
+          | CallMacro(_, "_vcc_inv_is_owner_approved", _, _) -> true
+          | CallMacro(_, "labeled_invariant", _, [_; inv]) -> isTrivialInvariant inv
           | _ -> false
         
         if List.forall isTrivialInvariant (td.Invariants) then [decl]
@@ -322,7 +322,7 @@ namespace Microsoft.Research.Vcc
         
         let preconds = List.map (fun e -> Expr.MkAssume (subst e)) f.Requires
         let fixupHavocOthers self = function
-          | Stmt (_, CallMacro (ec, "_vcc_reads_havoc", [])) as call ->
+          | Stmt (_, CallMacro (ec, "_vcc_reads_havoc", _, [])) as call ->
             let isSame (expr:Expr) =
               match expr.Type with
                 | Ptr Void

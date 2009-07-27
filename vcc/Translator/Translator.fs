@@ -30,6 +30,7 @@ namespace Microsoft.Research.Vcc
         AtomicObjects : list<B.Expr>;
         AtomicReads : list<B.Expr>;
         ClaimContext : option<ClaimContext>;
+        FunctionCleanup : List<C.Expr> ref;
       }
 
     let nestingExtents = false
@@ -128,7 +129,8 @@ namespace Microsoft.Research.Vcc
                        AtomicReads = [];
                        WritesState = bOld bState;  
                        WritesTime = er "$bogus";
-                       ClaimContext = None
+                       ClaimContext = None;
+                       FunctionCleanup = ref []
                      }
     
     let fieldName (f:C.Field) = f.Parent.Name + "." + f.Name
@@ -924,6 +926,7 @@ namespace Microsoft.Research.Vcc
           | "is_atomic_obj", [e] ->
             let e = self e
             bMultiOr (List.map (bEq e) env.AtomicObjects)
+          | "stackframe", [] -> er "#stackframe"
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
             B.FunctionCall(name, [self e1; self e2])
           | n, _ when Simplifier.alwaysPureCalls.ContainsKey n ->
@@ -1389,10 +1392,9 @@ namespace Microsoft.Research.Vcc
       let rec trStmt (env:Env) (stmt:C.Expr) =
         let self = trStmt env
         let cmt () = B.Stmt.Comment ((stmt.ToString ()).Replace ("\n", " "))
-        let doCall (c:C.ExprCommon) (res : C.Variable list) fn name targs args =
+        let doCall (c:C.ExprCommon) (res : C.Variable list) fn (name:string) targs args =
           let name' = 
-            if name = "_vcc_alloc_local" then "$alloc" 
-            elif name.StartsWith "_vcc_" then "$" + name.Substring 5 
+            if name.StartsWith "_vcc_" then "$" + name.Substring 5 
             else name
           if env.AtomicObjects <> [] then
             match fn with
@@ -1571,6 +1573,10 @@ namespace Microsoft.Research.Vcc
           
           | C.Expr.Macro (_, "ignore_me", []) -> []
           | C.Expr.Macro (_, "inlined_atomic", [C.Expr.Macro (_, "ignore_me", [])]) -> []
+
+          | C.Expr.Macro (_, "function_cleanup", args) ->
+            env.FunctionCleanup := !env.FunctionCleanup @ args
+            []
           
           | e when not (hasSideEffect e) -> []
           
@@ -2358,13 +2364,16 @@ namespace Microsoft.Research.Vcc
                   [B.Stmt.Assume (bCall "$can_use_all_frame_axioms" [bState])]
               
               let doBody s =
-                B.Stmt.Block (B.Stmt.Assume (bCall "$function_entry" [bState]) ::                               
+                let cleanup = ref []
+                B.Stmt.Block (B.Stmt.Assume (bCall "$function_entry" [bState]) ::
+                               B.Stmt.VarDecl(("#stackframe", B.Type.Int), None) ::
                                assumeSync env h.Token ::
                                can_frame @
                                init @
                                List.map assumeMutability h.Writes @
-                               trStmt env s @ 
+                               trStmt {env with FunctionCleanup = cleanup} s @ 
                                [B.Stmt.Label (Token.NoToken, "#exit")] @
+                               (!cleanup |> List.map (trStmt env) |> List.concat) @
                                sanityChecks env h) 
               let theBody =
                 if functionToVerify = null || functionToVerify = h.Name then h.Body

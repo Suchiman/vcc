@@ -113,7 +113,7 @@ testcase(23,23) : error VC8524: Assertion 'chunk __old(__this->x) == __this->x |
 Verification of fail2 failed.
 testcase(32,23) : error VC8524: Assertion 'chunk x >= 0 of invariant of a holds after atomic' did not verify.
 `
-#include <vcc.h>
+#include <vcc2test.h>
 
 struct CannotClose {
   int y;
@@ -138,8 +138,8 @@ void foo()
 
 void ok2()
 {
-  struct CannotOpen x;
-  wrap(&x);
+  struct CannotOpen *x = (struct CannotOpen *)malloc(sizeof(struct CannotOpen));
+  wrap(x);
 }
 
 void bar(struct CannotOpen *x)

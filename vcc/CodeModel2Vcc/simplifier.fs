@@ -170,7 +170,7 @@ namespace Microsoft.Research.Vcc
       | Dot(_, _, f) when f.IsSpec -> specFound := Some("field '" + f.Name + "'"); false
       | Ref(_, ({Kind = SpecLocal} as v)) -> specFound := Some("variable '" + v.Name + "'"); false
       | Ref(_, ({Kind = SpecParameter|OutParameter} as v)) -> specFound := Some("parameter '" + v.Name + "'"); false
-      | CallMacro(_, ("_vcc_alloc" | "_vcc_alloc_local"), _) -> false
+      | CallMacro(_, ("_vcc_alloc" | "_vcc_stack_alloc"), _, _) -> false
       | Call(_, ({Name = "_vcc_containing_struct"}), _, [addr; df]) ->  self addr; self df; false
       | Macro(_, "by_claim", [_; obj; ptr]) -> self obj; self ptr; false
       | Call(_, ({IsSpec = true} as f), _, _) -> specFound := Some("function '" + f.Name + "'"); false
@@ -179,7 +179,7 @@ namespace Microsoft.Research.Vcc
           if p.Kind <> VarKind.SpecParameter && p.Kind <> VarKind.OutParameter then self e
         List.iter2 checkNonSpecPar fn.Parameters args
         false
-      | Old(_, (CallMacro(_, "_vcc_by_claim", _)), expr) -> self expr; false
+      | Old(_, (CallMacro(_, "_vcc_by_claim", _, _)), expr) -> self expr; false
       | Atomic(_, _, expr) -> self expr; false
       | Block(_, exprs) ->
         let rec checkLastExpr = function
@@ -261,7 +261,7 @@ namespace Microsoft.Research.Vcc
               | IntLiteral _
               | BoolLiteral _
               | Macro (_, "null", [])
-              | CallMacro(_, "_vcc_typeof", _)
+              | CallMacro(_, "_vcc_typeof", _, _)
               | Cast (_, _, Macro (_, "null", [])) -> None
               | expr ->
                 let pname = "#l" + (List.length !parms).ToString()
@@ -519,7 +519,7 @@ namespace Microsoft.Research.Vcc
       let doApproves self = function
         | Macro (ec, "approves", [approver; Deref (_, Dot (_, (This as th), subject))]) ->        
           match approver with
-            | CallMacro (_, "_vcc_owner", [This]) ->
+            | CallMacro (_, "_vcc_owner", _, [This]) ->
               res (Macro (ec, "_vcc_inv_is_owner_approved", [th; mkFieldRef subject]))
             | Deref (_, Dot (_, This, approver)) ->
               if approver = subject then
@@ -682,15 +682,20 @@ namespace Microsoft.Research.Vcc
       let fnTok = ref bogusEC
       let fakeEC t = { !fnTok with Type = t }
       let pointernize comm v =
+        let mkEc t = { comm with Type = t } : ExprCommon
         if not (addressableLocals.ContainsKey v) then
           let v' = { v with Type = Ptr v.Type; Name = "addr." + v.Name; Kind = VarKind.Local }
-          let alloc = Expr.Call (fakeEC v'.Type, internalFunction helper "alloc_local", [], [typeExpr v.Type])
-          let assign = Expr.Macro (fakeEC Void, "=", [mkRef v'; alloc])
+          let vRef = Expr.Ref({forwardingToken (comm.Token) None (fun () -> "&" + v.Name) with Type = v'.Type} , v')
+          let alloc = Expr.Call (fakeEC v'.Type, internalFunction helper "stack_alloc", [], [Macro(bogusEC, "stackframe", []); typeExpr v.Type])
+          let assign = Expr.Macro (fakeEC Void, "=", [vRef; alloc])
           let init =
             if v.Kind = VarKind.Parameter || v.Kind = VarKind.SpecParameter || v.Kind = VarKind.OutParameter then
               [Expr.Macro (fakeEC Void, "=", [Expr.Deref (fakeEC v.Type, Expr.Ref ({ comm with Type = v'.Type }, v')); mkRef v])]
             else []
-          let def = VarDecl (fakeEC Void, v') :: assign :: init
+          let ec = {forwardingToken (comm.Token) None (fun () -> "stack_free(&" + v.Name + ")") with Type = Void }
+          let free = Expr.Call(ec, internalFunction helper "stack_free", [], [Expr.Macro(ec, "stackframe", []); vRef])
+          let freeAtCleanup = Expr.Macro(ec, "function_cleanup", [free])
+          let def = VarDecl (fakeEC Void, v') :: assign :: init @ [freeAtCleanup]
           addressableLocals.[v] <- (v', Expr.MkBlock def)
           
       let isStructType = function
@@ -893,13 +898,13 @@ namespace Microsoft.Research.Vcc
        | _ -> true
 
       let rec checkAccessToSpecFields ctx self = function
-        | CallMacro(_, "spec", _) 
+        | CallMacro(_, "spec", _, _) 
         | Call(_, {IsSpec = true}, _, _) 
-        | CallMacro(_, "_vcc_unwrap", _)
-        | CallMacro(_, "_vcc_wrap", _)
-        | CallMacro(_, "_vcc_wrap_non_owns", _)
-        | CallMacro(_, "unclaim", _) -> false
-        | CallMacro(_, "by_claim", [_; obj; ptr]) ->
+        | CallMacro(_, "_vcc_unwrap", _, _)
+        | CallMacro(_, "_vcc_wrap", _, _)
+        | CallMacro(_, "_vcc_wrap_non_owns", _, _)
+        | CallMacro(_, "unclaim", _, _) -> false
+        | CallMacro(_, "by_claim", _, [_; obj; ptr]) ->
           obj.SelfCtxVisit(ctx.IsPure, checkAccessToSpecFields)
           ptr.SelfCtxVisit(ctx.IsPure, checkAccessToSpecFields)
           false
@@ -941,7 +946,7 @@ namespace Microsoft.Research.Vcc
         let countPhysicalAccesses' ctx self = function
           | Deref(_, ptr) when not ctx.IsPure && isHeapAllocatedParOrLocal ptr -> true
           | Deref(cmn, ptr) when not ctx.IsPure && isPhysicalLocation ptr -> incrAndReportError cmn.Token; true
-          | CallMacro(cmn, "inlined_atomic", _) -> incrAndReportError cmn.Token; false
+          | CallMacro(cmn, "inlined_atomic", _, _) -> incrAndReportError cmn.Token; false
           | _ -> true
         expr.SelfCtxVisit(false, countPhysicalAccesses')
         
@@ -953,7 +958,7 @@ namespace Microsoft.Research.Vcc
       
         
       let removeSpecMarker self = function
-        | CallMacro(_, "spec", [body]) -> Some(self(body))
+        | CallMacro(_, "spec", _, [body]) -> Some(self(body))
         | _ -> None
         
       for d in decls do

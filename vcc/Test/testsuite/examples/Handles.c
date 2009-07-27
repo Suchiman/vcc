@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc2test.h>
 
 struct X { int y; };
 
@@ -17,7 +17,7 @@ struct Handle {
   invariant(closed(data) && data->handles[this])
 };
 
-void foo(struct X *x) writes(extent(x));
+void foo(struct X *x) writes(extent(x)) maintains(mutable(x) && is_object_root(x));
 
 void wrapped_use()
 {
@@ -70,12 +70,12 @@ struct Container {
 
 void init()
 {
-  struct Container c;
+  struct Container *c = (struct Container *)malloc(sizeof(struct Container));
 
-  speconly( c.d.handles = lambda(struct Handle *h; true; false); )
-  assert(forall(struct Handle *h; h->data == &c.d ==> !inv(h)));
-  wrap(&c.d);
-  wrap(&c);
+  speconly( c->d.handles = lambda(struct Handle *h; true; false); )
+  assert(forall(struct Handle *h; h->data == &c->d ==> !inv(h)));
+  wrap(&c->d);
+  wrap(c);
 }
 
 void closed_use(struct Container *c)
@@ -92,7 +92,6 @@ speconly(
   wrap(&c->h);
 )
 }
-
 
 /*`
 Verification of Data#adm succeeded.

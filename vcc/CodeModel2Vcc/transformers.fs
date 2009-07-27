@@ -122,9 +122,10 @@ namespace Microsoft.Research.Vcc
           h.CustomAttr <- List.map doAttr h.CustomAttr
                   
           match h.Name with
-            | "_vcc_free"              
+            | "_vcc_free"
+            | "_vcc_stack_free"
             | "_vcc_alloc"
-            | "_vcc_alloc_local" -> useIt (h :> obj)
+            | "_vcc_stack_alloc" -> useIt (h :> obj)
             | "__FallThrough" -> ()
             | _ ->
              match h.Body, h.Reads with

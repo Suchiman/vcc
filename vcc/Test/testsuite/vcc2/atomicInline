@@ -290,6 +290,7 @@ void foo() {
     atomic (&s) {
         _InterlockedIncrement(&s.a);
     }
+    unwrap(&s);
 }
 `
 Verification of foo failed.

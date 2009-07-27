@@ -128,6 +128,8 @@ void bar()
 
   assert(a.b->y == 10);
   assert(a.z == 10);
+  unwrap(&a);
+  unwrap(&b);
 }
 `
 Verification of A#adm succeeded.

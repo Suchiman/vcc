@@ -20,7 +20,7 @@ typedef struct t_vp{
 
 `
 Verification of t_th#adm succeeded.
-`#include <vcc.h>
+`#include <vcc2test.h>
 
 struct foo {
     vcc(no_inline) unsigned int arr[20];
@@ -29,11 +29,11 @@ struct foo {
     invariant(keeps(as_array(arr, 20)))
     invariant(y >= 0 ==> forall(unsigned int x; x < 20; arr[x] == x))
 };
-
+	
 void init()
 {
-  struct foo f, *pf;
-  pf = &f;
+  struct foo *pf;
+  pf = (struct foo *)malloc(sizeof(struct foo));
 
   pf->y = -1;
   wrap(as_array(pf->arr, 20));

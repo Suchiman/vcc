@@ -131,7 +131,8 @@ struct P { int a; };
 struct Q { int b; };
 
 template<typename S, typename T>void blah(void *s, void *t)
-  writes((S*)s, (T*)t);
+  out_param((S*)s)
+  out_param((T*)t);
 
 
 void foo() {

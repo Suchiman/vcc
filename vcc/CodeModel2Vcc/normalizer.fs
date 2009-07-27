@@ -246,7 +246,7 @@ namespace Microsoft.Research.Vcc
             let t' = typeExpr elemType
             let arrTy = Expr.Macro(t'.Common, "_vcc_array", [t'; s])
             Some (Expr.Cast(c, Processed, 
-                            Expr.Call({ c with Type = Ptr Void }, internalFunction "alloc_local", [], [arrTy])))
+                            Expr.Call({ c with Type = Ptr Void }, internalFunction "stack_alloc", [], [Expr.Macro(bogusEC, "stackframe", []); arrTy])))
           | _ -> die()        
         | Expr.Cast ({ Type = Ptr t } as c, _, Expr.Call (_, { Name = "malloc" }, _, [sz])) as expr ->
           match extractArraySize helper expr t sz with
@@ -444,7 +444,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let normalizeSkinnyExpose self = function
-      | Macro (ec, "while", [Macro (_, "loop_contract", contract); CallMacro (_, "_vcc_skinny_expose", objects); body]) ->
+      | Macro (ec, "while", [Macro (_, "loop_contract", contract); CallMacro (_, "_vcc_skinny_expose", _, objects); body]) ->
         let ptrsetEC = { bogusEC with Type = Type.PtrSet }
         let empty = Macro (ptrsetEC, "_vcc_set_empty", [])
         let single e = Macro (ptrsetEC, "_vcc_set_singleton", [e])
@@ -588,7 +588,7 @@ namespace Microsoft.Research.Vcc
           Some (Stmt (c, Call (c, fn, [], [asArray (mkInt sz) obj; typeId obj])))
         | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [obj; sz]) ->
           Some (Stmt (c, Call (c, fn, [], [asArray sz obj; typeId obj])))
-        | CallMacro (c, "_vcc_from_bytes", _) ->
+        | CallMacro (c, "_vcc_from_bytes", _, _) ->
           helper.Error (c.Token, 9685, "wrong number of arguments to from_bytes(...)", None)
           None
         | _ -> None
@@ -633,7 +633,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let normalizeUse self = function
-      | CallMacro(ec, "_vcc_use", [lbl; e]) ->
+      | CallMacro(ec, "_vcc_use", _, [lbl; e]) ->
         let rec normalizeLabel = function
           | Cast(_, _, Macro(_, "&", [Macro(_, "string", [lbl])])) -> lbl
           | _ -> die()

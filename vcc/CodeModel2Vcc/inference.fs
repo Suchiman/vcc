@@ -108,7 +108,7 @@ namespace Microsoft.Research.Vcc
       let scan env (expr:Expr) =
         let env = ref env
         let check self = function
-          | CallMacro (_, name', args) when name' = name ->
+          | CallMacro (_, name', _, args) when name' = name ->
             env := updateEnv !env args
             Some (BoolLiteral (boolBogusEC(), true))
           | _ -> None
@@ -123,7 +123,7 @@ namespace Microsoft.Research.Vcc
         let repl self = function
           | Block (ec, stmts) ->
             let rec aux env acc = function
-              | AssertAssume (_, CallMacro (_, name', args)) as x :: xs when name' = name ->
+              | AssertAssume (_, CallMacro (_, name', _, args)) as x :: xs when name' = name ->
                 aux (updateEnv env args) acc xs
               | Block (_, stmts) :: xs when List.forall is_assert_assume stmts ->
                 aux env acc (stmts @ xs)                
@@ -192,7 +192,7 @@ namespace Microsoft.Research.Vcc
       let hasKeeps exprs =
         let keepsFound = ref false
         let hasKeeps' self = function
-          | CallMacro(_, "_vcc_keeps", _) -> 
+          | CallMacro(_, "_vcc_keeps", _, _) -> 
             keepsFound := true
             false
           | _ -> not !keepsFound
@@ -214,10 +214,10 @@ namespace Microsoft.Research.Vcc
         | Type.Ref { Name = "ptrset"; Kind = TypeKind.MathType } -> true
         | _ -> false
       let doInferSetIn self = function
-        | CallMacro(c, "_vcc_set_eq", [e1; e2]) as expr when (isSetType e1.Type) && (isSetType e2.Type) -> 
+        | CallMacro(c, "_vcc_set_eq", _, [e1; e2]) as expr when (isSetType e1.Type) && (isSetType e2.Type) -> 
           let rec collectSingletons = function
-            | CallMacro(_, "_vcc_set_singleton", [e]) -> [e]
-            | CallMacro(_, "_vcc_set_union", [e1; e2]) -> (collectSingletons e1) @ (collectSingletons e2)
+            | CallMacro(_, "_vcc_set_singleton", _, [e]) -> [e]
+            | CallMacro(_, "_vcc_set_union", _, [e1; e2]) -> (collectSingletons e1) @ (collectSingletons e2)
             | _ -> []
           let singletons1 = collectSingletons (self e1)
           let singletons2 = collectSingletons (self e2)

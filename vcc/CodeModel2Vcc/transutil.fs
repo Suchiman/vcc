@@ -50,8 +50,8 @@ namespace Microsoft.Research.Vcc
     | _ -> None
                  
   let (|CallMacro|_|) = function
-    | Call (ec, { Name = name }, _, args)
-    | Macro (ec, name, args) -> Some (ec, name, args)
+    | Call (ec, { Name = name }, targs, args) -> Some (ec, name, targs, args)
+    | Macro (ec, name, args) -> Some (ec, name, [], args)
     | _ -> None
   
   let (|AssertAssume|_|) = function

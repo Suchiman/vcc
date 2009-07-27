@@ -39,10 +39,10 @@ void Init(
 }
 
 void CallInit() {
-  PAGE_SET ps;
+  PAGE_SET *ps = (PAGE_SET *)malloc(sizeof PAGE_SET);
   PUINT64 arr = malloc(sizeof(UINT64) * 100);
   wrap(as_array(arr, 100));
-  Init(&ps, 100, arr);
+  Init(ps, 100, arr);
 }
 
 /*`

@@ -16,7 +16,7 @@ struct B {
 };
 
 void write_int(int *x)
-  writes(x);
+  out_param(x);
 
 void ok1(struct A*a claimp(c))
   always(c, closed(a))
@@ -173,7 +173,7 @@ struct B {
 };
 
 void write_int(int *x)
-  writes(x);
+  out_param(x);
 
 void ok1(struct A*a claimp(c))
   always(c, closed(a))

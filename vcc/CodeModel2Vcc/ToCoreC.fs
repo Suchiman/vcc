@@ -138,7 +138,7 @@ namespace Microsoft.Research.Vcc
         | _ :: sgn -> stateArgs' sgn
       stateArgs' (Seq.to_list(sgn))
     function 
-      | CallMacro (c, fn, args) ->
+      | CallMacro (c, fn, _, args) ->
         match Simplifier.alwaysPureCalls.TryGetValue(fn) with
           | true, sgn -> 
             let args = List.map self args
@@ -230,10 +230,10 @@ namespace Microsoft.Research.Vcc
     let handleKeeps decls = 
     
       let handleKeeps' staticOwns self = function
-        | CallMacro (c, "_vcc_keeps", this :: []) ->
+        | CallMacro (c, "_vcc_keeps", _, this :: []) ->
           Some (BoolLiteral (boolBogusEC(), true))
           
-        | CallMacro (c, "_vcc_keeps", this :: keeps) ->
+        | CallMacro (c, "_vcc_keeps", _, this :: keeps) ->
           let build acc (e:Expr) =
             let eq = Macro (c, "keeps_stable", [Old (e.Common, Macro (bogusEC, "prestate", []), e); e])
             let keeps = Macro (c, "keeps", [this; e])
@@ -441,7 +441,7 @@ namespace Microsoft.Research.Vcc
         | _ -> None
         
       and moveOldOutOfCtor self = function
-        | CallMacro(c, "_vcc_vs_ctor", [Old(_, prestate, expr)]) -> Some(Old(c, prestate, Macro(c, "_vcc_vs_ctor", [self expr])))
+        | CallMacro(c, "_vcc_vs_ctor", _, [Old(_, prestate, expr)]) -> Some(Old(c, prestate, Macro(c, "_vcc_vs_ctor", [self expr])))
         | _ -> None
       
       decls |> List.map doParms |> deepMapExpressions fixAccess |> deepMapExpressions moveOldOutOfCtor 
