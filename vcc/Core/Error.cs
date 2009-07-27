@@ -49,7 +49,6 @@ namespace Microsoft.Research.Vcc {
     ArgumentShouldNotBePassedWithOutKeyword,
     ArgumentMustBePassedWithOutKeyword,
     IllegalIndirection,
-    LValueRequired,
 
     /// <summary>
     /// The declaration of function '{0}' already specifies contracts. Discarding the contracts of the definition.
@@ -60,11 +59,6 @@ namespace Microsoft.Research.Vcc {
     /// '&amp;' on bit field ignored
     /// </summary>
     AddressOfBitField,
-
-    /// <summary>
-    /// Access to the ghost member {0} requires a pointer value
-    /// </summary>
-    PointerExpectedForGhostMember,
 
     /// <summary>
     /// Equality '==' binds stronger than '&amp;&amp;' and '||' which is possibly not what you wanted;  use '&lt;==&gt;' or parenthesize the equality.
@@ -85,11 +79,6 @@ namespace Microsoft.Research.Vcc {
     /// Cannot use 'this' in this context.
     /// </summary>
     ThisNotAllowedHere,
-
-    /// <summary>
-    /// '{0}' : unknown size
-    /// </summary>
-    UnknownSize,
 
     /// <summary>
     /// '{0}' : unknown element size
