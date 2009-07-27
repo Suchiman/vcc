@@ -3628,4 +3628,34 @@
   <data name="IllegalIndirection" xml:space="preserve">
     <value>Illegal indirection.</value>
   </data>
+  <data name="AddressOfBitField" xml:space="preserve">
+    <value>'&amp;' on bit field ignored</value>
+  </data>
+  <data name="DiscardedContractAtDefinition" xml:space="preserve">
+    <value>The declaration of function '{0}' already specifies contracts. Discarding the contracts of the definition.</value>
+  </data>
+  <data name="LValueRequired" xml:space="preserve">
+    <value>'{0}' requires l-value</value>
+  </data>
+  <data name="PointerExpectedForGhostMember" xml:space="preserve">
+    <value>Access to the ghost member '{0}' requires a pointer value</value>
+  </data>
+  <data name="PotentialPrecedenceErrorInLogicalExpression" xml:space="preserve">
+    <value>Operator '==' binds stronger than '&amp;&amp;' and '||' which is possibly not what you wanted;  use '&lt;==&gt;' or parenthesize the equality.</value>
+  </data>
+  <data name="RedefinitionOfFormalParameter" xml:space="preserve">
+    <value>redefinition of formal parameter '{0}'</value>
+  </data>
+  <data name="SizeOfUnknown" xml:space="preserve">
+    <value>The size of '{0}' is unknown in the current context.</value>
+  </data>
+  <data name="ThisNotAllowedHere" xml:space="preserve">
+    <value>Cannot use 'this' in this context.</value>
+  </data>
+  <data name="UnknownElementSize" xml:space="preserve">
+    <value>'{0}' : unknown element size</value>
+  </data>
+  <data name="UnknownSize" xml:space="preserve">
+    <value>'{0}' : unknown size</value>
+  </data>
 </root>

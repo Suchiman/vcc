@@ -25,7 +25,7 @@ namespace Microsoft.Research.Vcc
     /// Enumeration of error codes for verification errors
     /// </summary>
     enum ErrorCode : long {
-      AssertionFailed=(long)Error.ToBeDefined + 1,
+      AssertionFailed=(long)Cci.Ast.Error.ToBeDefined + 1,
       PreconditionFailed,
       PostconditionFailed,
       RelatedInformation
@@ -1235,18 +1235,19 @@ namespace Microsoft.Research.Vcc
 
     static long ErrorToId(long code)
     {
-      long id;
-      switch ((Error)code) {
-        case Error.ExpressionStatementHasNoSideEffect:
-          id = 9001; break;
-        case Error.DiscardedContractAtDefinition:
-          id = 9002; break;
-        case Error.SizeOfUnknown:
-          id = 9003; break;
-        default:
-          id = code; break;
+      switch ((Cci.Ast.Error)code) {
+        case Cci.Ast.Error.ExpressionStatementHasNoSideEffect:
+          return 9001;
       }
-      return id;
+
+      switch ((Vcc.Error)code) {
+        case Vcc.Error.DiscardedContractAtDefinition:
+          return 9002;
+        case Vcc.Error.SizeOfUnknown:
+          return 9003; 
+      }
+
+      return code;
     }
 
     private static Dictionary<string, bool> reportedErrors = new Dictionary<string, bool>();

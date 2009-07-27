@@ -697,7 +697,7 @@ namespace Microsoft.Research.Vcc {
       IMethodContract/*?*/ contract = provider.GetMethodContractFor(this);
       if (contract != null) {
         if (provider.GetMethodContractFor(result) != null) {
-          this.VccCompilationHelper.ReportError(new AstErrorMessage(result as ISourceItem, Microsoft.Cci.Ast.Error.DiscardedContractAtDefinition, this.Name.Value));
+          this.VccCompilationHelper.ReportError(new VccErrorMessage((result as ISourceItem).SourceLocation, Error.DiscardedContractAtDefinition, this.Name.Value));
         }
         provider.AssociateMethodWithContract(result, contract); //TODO: if result has a contract, make sure it is the same. If parameter names differ, do renames.
       }

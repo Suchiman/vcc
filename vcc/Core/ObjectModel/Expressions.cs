@@ -552,12 +552,12 @@ namespace Microsoft.Research.Vcc {
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       var fieldDef = this.Address.Definition as IFieldDefinition;
       if (fieldDef != null && fieldDef.IsBitField) {
-        this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.AddressOfBitField));
+        this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.AddressOfBitField));
         return true;
       }
 
       if (this.Address.Definition is VccThisReference) {
-        this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.LValueRequired, "&"));
+        this.Helper.ReportError(new AstErrorMessage(this, Cci.Ast.Error.CannotTakeAddress));
         return true;
       }
 
@@ -1293,7 +1293,7 @@ namespace Microsoft.Research.Vcc {
       if (equality != null) {
         if (equality.LeftOperand.Type.TypeCode == PrimitiveTypeCode.Boolean ||
             equality.RightOperand.Type.TypeCode == PrimitiveTypeCode.Boolean) {
-          this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.PotentialPrecedenceErrorInLogicalExpression));
+          this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.PotentialPrecedenceErrorInLogicalExpression));
         }
       }
     }
@@ -1349,7 +1349,7 @@ namespace Microsoft.Research.Vcc {
       if (equality != null) {
         if (equality.LeftOperand.Type.TypeCode == PrimitiveTypeCode.Boolean ||
             equality.RightOperand.Type.TypeCode == PrimitiveTypeCode.Boolean) {
-          this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.PotentialPrecedenceErrorInLogicalExpression));
+          this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.PotentialPrecedenceErrorInLogicalExpression));
         }
       }
     }
@@ -1784,7 +1784,7 @@ namespace Microsoft.Research.Vcc {
           reportedError = true;
         }
       }
-      if (!reportedError) this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.UnknownElementSize, this.IndexedObject.SourceLocation.Source));
+      if (!reportedError) this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.UnknownElementSize, this.IndexedObject.SourceLocation.Source));
     }
 
     /// <summary>
@@ -3483,7 +3483,7 @@ namespace Microsoft.Research.Vcc {
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       bool result = this.Expression.HasErrors();
       if (!result && this.Expression.Type.TypeCode == PrimitiveTypeCode.Void) {
-        this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.SizeOfUnknown, this.Expression.SourceLocation.Source));
+        this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.SizeOfUnknown, this.Expression.SourceLocation.Source));
         result = false;
       }
       return result;
@@ -4038,7 +4038,7 @@ namespace Microsoft.Research.Vcc {
     {
       if (this.ContainingBlock.ContainingTypeDeclaration is VccGlobalDeclarationContainerClass)
       {
-        this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.ThisNotAllowedHere));
+        this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.ThisNotAllowedHere));
         return true;        
       }
       else 

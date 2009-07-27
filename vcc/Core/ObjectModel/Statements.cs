@@ -105,7 +105,7 @@ namespace Microsoft.Research.Vcc {
       if (containingSignature != null) {
         foreach (var par in containingSignature.Parameters) {
           if (par.Name.UniqueKey == this.Name.UniqueKey) {
-            this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.RedefinitionOfFormalParameter, this.Name.Value));
+            this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.RedefinitionOfFormalParameter, this.Name.Value));
             return true;
           }
         }

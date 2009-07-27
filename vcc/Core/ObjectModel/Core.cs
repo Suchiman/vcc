@@ -1513,6 +1513,9 @@ namespace Microsoft.Research.Vcc {
         switch ((Error)this.Code) {
           case Error.PossibleMistakenNullStatement:
           case Error.VccAttributeOnTypeDef:
+          case Error.SizeOfUnknown:
+          case Error.DiscardedContractAtDefinition:
+          case Error.PotentialPrecedenceErrorInLogicalExpression:
             return 1;
           default:
             return 0;
