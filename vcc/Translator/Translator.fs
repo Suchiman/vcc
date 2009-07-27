@@ -309,6 +309,11 @@ namespace Microsoft.Research.Vcc
             | _ -> "$good_state_ext"
         B.Stmt.Assume (bCall pred [er name; bState])
       
+      let rec typeIdToName = function
+        | B.Expr.Ref s -> s
+        | B.Expr.FunctionCall (f, a) -> f + ".." + String.concat "." (List.map typeIdToName a)
+        | t -> helper.Panic ("cannot compute name for type expression " + t.ToString()); ""        
+      
       let rec trType (t:C.Type) : B.Type =
         match t with
           | C.Type.MathInteger
@@ -323,17 +328,25 @@ namespace Microsoft.Research.Vcc
           | C.Type.Map (t1, t2) ->
             let bt1 = trType t1
             let bt2 = trType t2
-            let typeId = "$map." + bt1.ToString() + "." + bt2.ToString()
+            let mapName = typeIdToName (toTypeId t)
+            let typeId = mapName
             let tp = B.Type.Ref typeId
             if not (mapTypes.ContainsKey typeId) then
               mapTypes.Add (typeId, true)
-              let iteName = ((bt1.ToString() + "." + bt2.ToString()).Replace ("$#", "")).Replace ("$", "")
-              let ite = "$ite.map." + iteName
+              let ite = "$ite." + (mapName.Replace ("$#", "")).Replace ("$", "")
               let mapType = B.Type.Ref (typeId)
               let sel = "$select." + typeId
               let stor  = "$store." + typeId
+              let v = er "v"
+              let v, inRange =
+                match t2 with
+                  | C.Type.Integer _ -> 
+                    bCall "$unchecked" [toTypeId t2; v], 
+                      [B.Decl.Axiom (B.Expr.Forall (["M", tp; "p", bt1], [], weight "select-map-eq", 
+                                                    bCall "$in_range_t" [toTypeId t2; bCall sel [er "M"; er "p"]]))]
+                  | _ -> v, []
               let selStorPP = 
-                bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) (er "v")
+                bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) v
               let selStorPQ =
                 bInvImpl (bNeq (er "p") (er "q"))
                           (bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "q"]) (bCall sel [er "M"; er "q"]))
@@ -344,7 +357,7 @@ namespace Microsoft.Research.Vcc
                          B.Decl.Function (tp, [], stor, mpv);
                          B.Decl.Axiom (B.Expr.Forall (mpv, [], weight "select-map-eq", selStorPP));
                          B.Decl.Axiom (B.Expr.Forall (mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
-                        ]
+                        ] @ inRange
               tokenConstants := fns @ !tokenConstants
             tp
           | C.Type.Ref ({ Kind = C.Record }) -> B.Type.Ref "$record"

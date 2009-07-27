@@ -138,7 +138,8 @@ namespace Microsoft.Research.Vcc
       typ.Dispatch (this)
       let res = typeRes
       typeRes <- C.Type.Bogus
-      xassert (res <> C.Type.Bogus)
+      if typ.TypeCode <> PrimitiveTypeCode.Invalid && res = C.Type.Bogus then
+        die ()
       match res with
         | C.Type.Ref ({ Name = "typeid_t"; Kind = C.MathType }) -> C.Type.TypeIdT
         | _ -> res

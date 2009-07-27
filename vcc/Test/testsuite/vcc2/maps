@@ -337,4 +337,26 @@ void foo(PTEST a)
 Verification of Fun succeeded.
 Verification of foo succeeded.
 Verification of Fun#reads succeeded.
+`#include "vcc.h"
+
+void foo(int x) {
+    spec(int map[int];)
+    spec(int i;)
+    assume(forall(int j; (j|x)==42));
+    assert((i|x)==42);
+    speconly(i = map[3];)
+    // We lose $in_range_i4() here, so the following assert doesn't verify...
+    assert((i|x)==42);
+}
+
+typedef unsigned __int64 UINT64;
+spec( typedef UINT64 MAP[UINT64]; )
+
+spec(
+void foo2(MAP m) {
+  assert(m[0] >= 0);
+})
+`
+Verification of foo succeeded.
+Verification of foo2 succeeded.
 `

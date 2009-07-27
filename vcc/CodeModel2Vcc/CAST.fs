@@ -32,6 +32,8 @@ module Microsoft.Research.Vcc.CAST
   
   let bogusToken = Token.NoToken
   
+  let mathTypeCache = new Dict<string, obj>()
+  
   type FieldOffset =
     | Normal of int
     | BitField of int * int * int // byte-offset, bit-offset, bit-size
@@ -244,22 +246,30 @@ module Microsoft.Research.Vcc.CAST
       | Ptr(t) -> t  
       | t -> t
     
+    // those should be treated as immutable
     static member MathTd name = 
-      { 
-        Token = bogusToken // TODO: which token?
-        Name = name
-        Kind = MathType
-        Fields = []
-        SizeOf = 1
-        Invariants = []
-        CustomAttr = []
-        IsNestedAnon = false
-        GenerateEquality = NoEq
-        GenerateFieldOffsetAxioms = false
-        Parent = None
-        IsVolatile = false
-        IsSpec = true
-      }
+      match mathTypeCache.TryGetValue name with
+        // if we get the type of the cache right, F# complains about invalid forward type references
+        | true, td -> (td :?> TypeDecl)
+        | false, _ ->
+          let td =
+            { 
+              Token = bogusToken
+              Name = name
+              Kind = MathType
+              Fields = []
+              SizeOf = 1
+              Invariants = []
+              CustomAttr = []
+              IsNestedAnon = false
+              GenerateEquality = NoEq
+              GenerateFieldOffsetAxioms = false
+              Parent = None
+              IsVolatile = false
+              IsSpec = true
+            }
+          mathTypeCache.Add (name, td)
+          td
  
     static member Math name = Type.Ref (Type.MathTd name)    
     static member Bogus = Type.Math "$$bogus$$"
