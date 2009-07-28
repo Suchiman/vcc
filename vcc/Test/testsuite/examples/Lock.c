@@ -1,23 +1,22 @@
-#include <vcc2test.h>
-
+#include <vcc.h>
 
 typedef struct vcc(claimable) vcc(volatile_owns) _LOCK {
   volatile int locked;
 
   spec( obj_t protected_obj; )
 
-  invariant( locked == 0 ==> set_in(protected_obj, owns(this)) )
+  invariant( locked == 0 ==> keeps(protected_obj) )
 } LOCK;
 
 void InitializeLock(LOCK *l spec(obj_t obj))
-  writes(extent(l), obj)
+  writes(span(l), obj)
   requires(wrapped(obj))
   ensures(wrapped(l) && l->protected_obj == obj)
 {
   l->locked = 0;
   speconly(
     l->protected_obj = obj;
-    set_owns(l, set_singleton(obj));
+    set_owns(l, SET(obj));
     wrap(l);
   )
 }
@@ -37,12 +36,10 @@ void Acquire(LOCK *l claimp(c))
 {
   int stop = 0;
 
-  do 
-    invariant(stop == 0)
-  {
+  do {
     atomic (c, l) {
       stop = InterlockedCompareExchange(&l->locked, 1, 0) == 0;
-    	speconly(if (stop) giveup_closed_owner(l->protected_obj, l);)
+      speconly(if (stop) giveup_closed_owner(l->protected_obj, l);)
     }
   } while (!stop);
 }
@@ -58,7 +55,6 @@ void Release(LOCK *l claimp(c))
     l->locked = 0;
   }
 }
-
 
 typedef struct _DATA {
   int a;
@@ -104,8 +100,6 @@ void boot()
   speconly(c = claim(&DataContainer, closed(&DataContainer)); )
   testit(spec(c));
 }
-
-
 
 /*`
 Verification of _LOCK#adm succeeded.

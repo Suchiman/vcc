@@ -19,7 +19,7 @@ typedef struct vcc(claimable) vcc(volatile_owns) _Rundown {
   spec( volatile claim_t self_claim; )
   spec( obj_t protected_obj; )
   volatile unsigned int count;
- 
+
   spec( volatile bool alive; )
   spec( volatile bool enabled; )
   spec( Protector enabled_protector; )
@@ -29,91 +29,75 @@ typedef struct vcc(claimable) vcc(volatile_owns) _Rundown {
   // cannot set both count and alive in one step
   invariant( old(count) > 0 && old(alive) ==> alive )
   invariant( alive ==>
-               set_in(protected_obj, owns(this)) &&
-	       set_in(self_claim, owns(this)) && 
-	       claims_obj(self_claim, this) && 
-	       ref_cnt(self_claim) == count )
+               keeps(protected_obj) &&
+               keeps(self_claim) &&
+               claims_obj(self_claim, this) &&
+               ref_cnt(self_claim) == count )
   invariant(old(alive) ==> unchanged(self_claim) )
 
   invariant( !enabled ==> count <= old(count) )
 
 } Rundown;
 
-void InitializeRundown(Rundown *r spec(obj_t obj) claimp( *rdi ))
-  writes(extent(r), obj, rdi)
-  requires(emb(rdi) != r && emb(rdi) != &r->enabled_protector)
-  ensures(mutable(rdi))
+void InitializeRundown(Rundown *r spec(obj_t obj) claimp(out rdi))
+  writes(extent(r), obj)
   requires(wrapped(obj))
-  ensures(claims_obj(*rdi, r))
-  ensures(claims_obj(*rdi, &r->enabled_protector))
-  ensures(is_fresh(*rdi) && wrapped(*rdi) && claims(*rdi, r->enabled && r->protected_obj == obj))
+  ensures(claims_obj(rdi, r))
+  ensures(claims_obj(rdi, &r->enabled_protector))
+  ensures(is_fresh(rdi) && wrapped0(rdi) && claims(rdi, r->enabled && r->protected_obj == obj))
   ensures(ref_cnt(r) == 2)
-  ensures(ref_cnt(*rdi) == 0)
   ensures(wrapped(&r->enabled_protector) && ref_cnt(&r->enabled_protector) == 1)
   ensures(wrapped(r))
 {
-  spec(claim_t s1, s2, s3, s4;)
+  spec(claim_t s1;)
 
   r->count = 0;
-  set_owns(r, set_empty());
-  set_owns(&r->enabled_protector, set_empty());
+  set_owns(r, SET());
+  set_owns(&r->enabled_protector, SET());
   speconly( r->protected_obj = obj; r->alive = false; r->enabled = false; )
-  assert(closed(obj));
   wrap(r);
-  assert(closed(obj));
 
   assert(not_shared(r));
 
-
-  speconly( 
+  speconly(
     atomic(r) {
-      s2 = claim(r, true);
+      s1 = claim(r, true);
       begin_update();
       r->alive = true;
       r->enabled = true;
-      r->self_claim = s2;
+      r->self_claim = s1;
       set_closed_owner(obj, r);
-      set_closed_owner(s2, r);
+      set_closed_owner(s1, r);
     }
     wrap(&r->enabled_protector);
     // we can still claim r->enabled, as the state is havoced only at the BEGINNING of the atomic,
     // not at the end
-    s3 = claim(r, &r->enabled_protector, r->enabled && r->protected_obj == obj);
-    *rdi = s3;
+    rdi = claim(r, &r->enabled_protector, r->enabled && r->protected_obj == obj);
   )
 }
 
-void ReferenceRundown(Rundown *r claimp(*res) claimp(rdi))
+void ReferenceRundown(Rundown *r claimp(out res) claimp(rdi))
   // we want a claim to our enabled rundown
   always(rdi, closed(r) && r->enabled )
-  // we will write *res, but not free it
-  writes(res)
-  ensures(mutable(res))
-  // we will give out a fresh claim
-  ensures(wrapped(*res) && is_fresh(*res))
-  // the ref_cnt will be initially zero
-  ensures(ref_cnt(*res) == 0)
-  // the claim will reference r->self_claim, will gurantee that the protected_obj is closed and the rundown is initialized
-  ensures(claims(*res, claims_obj(when_claimed(*res), r->self_claim) && closed(r) && closed(r->protected_obj) && r->count > 0))
+  // we will give out a fresh claim with zero ref_cnt
+  ensures(wrapped0(res) && is_fresh(res))
+  // the claim will reference r->self_claim, will guarantee that the protected_obj is closed and the rundown is initialized
+  ensures(claims(res, claims_obj(res, r->self_claim) && closed(r) && closed(r->protected_obj) && r->count > 0))
 {
   spec( claim_t c; )
 
   atomic(r, rdi) {
     assume(r->count < 0xffffffff);
     InterlockedIncrement(&r->count);
-    speconly( c = claim(r->self_claim, r->count > 0 && closed(r->protected_obj) && when_claimed(r->self_claim) == r->self_claim); )
+    speconly( res = claim(r->self_claim, r->count > 0 && closed(r->protected_obj) && when_claimed(r->self_claim) == r->self_claim); )
   }
-
-  speconly( *res = c; )
 }
 
 void DereferenceRundown(Rundown *r claimp( h ))
   // we write the claim, what will we do with it? we're not telling.
   writes(h)
-  // we want a claim to self_claim guranteeing that rundown is fully initialized
-  requires(wrapped(h) && claims(h, claims_obj(h, r->self_claim) && closed(r) && r->count > 0))
-  // with no outstanding references
-  requires(ref_cnt(h) == 0)
+  // we want a claim to self_claim with no outstanding references guaranteeing that rundown is fully initialized
+  requires(wrapped0(h) && claims(h, claims_obj(h, r->self_claim) && closed(r) && r->count > 0))
 {
   atomic(h, r) {
     unclaim(h, r->self_claim);
@@ -146,13 +130,13 @@ typedef struct _RundownContainer {
 } RundownContainer;
 
 void InitializeRundownContainer(Resource *rsc, RundownContainer *cont)
-  writes(extent(cont), rsc, extent(&rsc->rd))
+  writes(span(cont), rsc, extent(&rsc->rd))
   requires(mutable(&rsc->rd.enabled_protector))
   requires(wrapped(rsc))
   ensures(wrapped(cont))
 {
   cont->rsc = rsc;
-  InitializeRundown(&rsc->rd spec(rsc) spec(&cont->rd_claim));
+  InitializeRundown(&rsc->rd spec(rsc) spec(out cont->rd_claim));
   cont->enabled = 1;
 
   wrap(cont);
@@ -164,7 +148,7 @@ void FinalizeRundownContainer(RundownContainer *cont)
   requires(cont->enabled)
   ensures(!cont->enabled)
 {
-  spec(claim_t tmp, tmp2;)
+  spec(claim_t tmp;)
   Rundown *rd;
   Resource *r1;
 
@@ -204,33 +188,31 @@ Resource *KillRundownContainerDead(RundownContainer *cont)
   unwrap(cont);
     rsc = cont->rsc;
 
-    do 
+    do
       invariant(ref_cnt(cont->rd_claim) == 0)
       invariant(wrapped(cont->rd_claim))
       writes(cont->rd_claim)
     {
       atomic (cont->rd_claim, rd) {
         cur_count = rd->count;
-	speconly(
-	  if (cur_count == 0) {
-	    is_zero = claim(cont->rd_claim, rd->count == 0);
-	  }
-	)
+        speconly(
+           if (cur_count == 0) {
+             is_zero = claim(cont->rd_claim, rd->count == 0);
+           })
       }
     } while (cur_count != 0);
-      
 
     speconly(
       atomic(rd) {
         assert(valid_claim(is_zero));
         assert(valid_claim(cont->rd_claim));
-	unclaim(is_zero, cont->rd_claim);
+        unclaim(is_zero, cont->rd_claim);
         unclaim(cont->rd_claim, rd, &rd->enabled_protector);
         unwrap(&rd->enabled_protector);
-	begin_update();
-	tmp = rd->self_claim;
-	giveup_closed_owner(rd->self_claim, rd);
-	rd->alive = 0;
+        begin_update();
+        tmp = rd->self_claim;
+        giveup_closed_owner(rd->self_claim, rd);
+        rd->alive = 0;
       }
       unclaim(tmp, rd);
       unwrap(rd);
@@ -243,7 +225,7 @@ void UseRundown(Resource *a, Rundown *r claimp(rdi))
   always(rdi, closed(r) && r->protected_obj == a && r->enabled )
 {
   spec( claim_t ac; )
-  ReferenceRundown(r spec(&ac) spec(rdi));
+  ReferenceRundown(r spec(out ac) spec(rdi));
   atomic(rdi, ac, a) {
     a->x = 12;
   }
