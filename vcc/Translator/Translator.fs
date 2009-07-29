@@ -2416,7 +2416,6 @@ namespace Microsoft.Research.Vcc
               | B.Expr.Old _ ->
                 failwith "axiom mentions old"
               | B.Expr.Exists(vars, trigs, attrs, e) ->
-                dbgBreak()
                 let quantBindsState = List.exists (fun (id,_) -> id = "#s") vars
                 let self = fun (e : B.Expr) -> e.Map(replMS quantBindsState)
                 let selfs = List.map (List.map self)

@@ -239,10 +239,10 @@ namespace Microsoft.Research.Vcc
           let isPure = ref true
           let stateRequired = ref false
           
-          let rec hasQVar expr =
+          let rec hasQVar vars expr =
             let hasIt = ref false
             let check self = function
-              | Expr.Ref (_, v) when _list_mem v q.Variables ->
+              | Expr.Ref (_, v) when _list_mem v vars ->
                 hasIt := true
                 false
               | Deref(_, Dot(_,e,f)) when hasBoolAttr "record" f.Parent.CustomAttr ->
@@ -251,7 +251,7 @@ namespace Microsoft.Research.Vcc
                 isPure := false
                 true
               | Call(_, fn, _, args) ->
-                let argsHaveIt = List.map hasQVar args // ensure to really visit all arguments because of the side effects
+                let argsHaveIt = List.map (hasQVar vars) args // ensure to really visit all arguments because of the side effects
                 if List.exists (fun x -> x) argsHaveIt then
                   hasIt := true
                   if not fn.IsStateless then stateRequired := true
@@ -263,9 +263,12 @@ namespace Microsoft.Research.Vcc
           let parms = ref []
           
           let repl = 
-            let rec repl' prestate self = function           
-              | Old(ec, prestate, expr) -> Some(expr.SelfMap (repl'(Some(prestate))))
-              | expr when hasQVar expr -> None
+            let rec repl' vars prestate _ = function           
+              | Old(ec, prestate, expr) -> Some(expr.SelfMap (repl' vars (Some(prestate))))
+              | Quant(ec, qd) as quant when hasQVar vars quant ->
+                let self = fun (e : Expr) -> e.SelfMap(repl' (qd.Variables @ vars) prestate)
+                Some(Quant(ec, {qd with Body = self qd.Body}))
+              | expr when hasQVar vars expr -> None
               | IntLiteral _
               | BoolLiteral _
               | Macro (_, "null", [])
@@ -280,7 +283,7 @@ namespace Microsoft.Research.Vcc
                     | Some prestate -> Old(expr.Common, prestate, expr)
                 parms := (expr, var) :: !parms
                 Some (Expr.Ref (expr.Common, var))
-            repl' None
+            repl' q.Variables None
           
           let cond = 
             match q.Condition with
