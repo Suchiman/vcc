@@ -425,3 +425,12 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+struct S {
+int dummy;
+invariant(keeps(SET()))
+};
+`
+Verification of S#adm succeeded.
+`
