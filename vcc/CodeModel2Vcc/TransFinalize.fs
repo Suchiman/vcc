@@ -268,9 +268,33 @@ namespace Microsoft.Research.Vcc
             
       mapFunctions handleFunction
             
-        
-          
     // ============================================================================================================
+    
+    let errorForOldInOneStateContext decls =
+    
+      let reportErrorForOld self = function
+        | Expr.Old(ec, Expr.Macro(_, "prestate", []), expr) ->
+          helper.Error(ec.Token, 9697, "old(...) is allowed only in two-state contexts")
+          false
+        | CallMacro(ec, n, _, args) ->
+          match Simplifier.alwaysPureCalls.TryGetValue(n) with
+            | true, signature when signature.Contains("s") -> 
+              helper.Error(ec.Token, 9697, "calling '" + n + "' is allowed only in two-state contexts")
+              false
+            | _ -> true
+        | _ -> true
+            
+      let checkFunction (fn:Function) =
+        List.iter (fun (e : Expr) -> e.SelfVisit(reportErrorForOld)) (fn.Requires @ fn.Reads @ fn.Writes)
+        
+      for d in decls do
+        match d with
+          | Top.FunctionDecl(fn) -> checkFunction fn
+          | _ -> ()
+            
+      decls
+    
+   // ============================================================================================================
     
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
@@ -282,6 +306,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-linearize", Helper.Decl (ToCoreC.linearizeDecls helper))
     helper.AddTransformer ("final-keeps-warning", Helper.Decl (List.map theKeepsWarning))
     helper.AddTransformer ("final-dynamic-owns", Helper.Decl errorForMissingDynamicOwns)
+    helper.AddTransformer ("final-error-old", Helper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
     // reads check goes here
     
