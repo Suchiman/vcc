@@ -610,9 +610,12 @@ namespace Microsoft.Research.Vcc
 
 
     let removeAssignOps self = function
+    
         | Expr.Macro (c, "map_set", [map; idx; value]) ->
           let (inits, map) = cacheAssignTarget self map
           Some (inits (Expr.Macro (c, "=", [map; Expr.Macro (map.Common, "map_updated", [map; idx; value])])))
+        | Expr.Macro (c, "=", [Expr.Macro(c1, "map_get", [map; idx]); expr]) ->
+          Some(self(Expr.Macro(c, "map_set", [map; idx; expr])))
         // here we assume that bit extraction is always padded; when we write, we just ignore the padding
         | Expr.Macro (c, "=", [ Expr.Macro (c', ("bv_extract_signed" | "bv_extract_unsigned"), 
                                             [e1; 
@@ -651,8 +654,6 @@ namespace Microsoft.Research.Vcc
             | _ -> None       
         | _ -> None
         
-      
-    
     // ============================================================================================================
     
     
