@@ -106,13 +106,14 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.compilation.ContractProvider.AssociateTypeWithContract(globalContainer, tc);
     }
 
-    private NameDeclaration ParseNameDeclaration() {
+    private NameDeclaration ParseNameDeclaration(bool requireIdentifier) {
       IName name;
       ISourceLocation sourceLocation = this.scanner.SourceLocationOfLastScannedToken;
       if (this.currentToken == Token.Identifier) {
         name = this.GetNameFor(this.scanner.GetIdentifierString());
         this.GetNextToken();
       } else {
+        if (requireIdentifier) this.HandleError(Error.ExpectedIdentifier);
         name = this.GetNameFor(sourceLocation.SourceDocument.Name.Value+sourceLocation.StartIndex);
       }
       return new NameDeclaration(name, sourceLocation);
@@ -1070,6 +1071,15 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures result is IdentifierDeclarator || result is BitfieldDeclarator || result is ArrayDeclarator || result is FunctionDeclarator ||
       //^   result is PointerDeclarator || result is AbstractMapDeclarator || result is InitializedDeclarator;
     {
+      return this.ParseDeclarator(followers, false);
+    }
+
+
+    private Declarator ParseDeclarator(TokenSet followers, bool requireIdentifier)
+      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
+      //^ ensures result is IdentifierDeclarator || result is BitfieldDeclarator || result is ArrayDeclarator || result is FunctionDeclarator ||
+      //^   result is PointerDeclarator || result is AbstractMapDeclarator || result is InitializedDeclarator;
+    {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       List<Pointer> pointers = this.ParsePointers();
       Declarator result;
@@ -1078,12 +1088,12 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.GetNextToken();
         if (!Parser.DeclarationStart[this.currentToken])
           specifiers = this.ParseSpecifiers(new List<INamespaceDeclarationMember>(), null, followers|Parser.DeclaratorStart|Token.RightParenthesis|Token.Semicolon); 
-        result = this.ParseDeclarator(followers|Token.RightParenthesis);
+        result = this.ParseDeclarator(followers|Token.RightParenthesis, requireIdentifier);
         this.Skip(Token.RightParenthesis);
       } else if (this.currentToken == Token.Colon) {
         result = this.ParseBitfieldDeclarator(null, followers|Token.LeftBracket|Token.LeftParenthesis);
       } else {
-        result = new IdentifierDeclarator(this.ParseNameDeclaration());
+        result = new IdentifierDeclarator(this.ParseNameDeclaration(requireIdentifier));
         if (this.currentToken == Token.Colon)
           result = this.ParseBitfieldDeclarator(result, followers|Token.LeftBracket|Token.LeftParenthesis);
       }
@@ -1117,7 +1127,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       while (true) {
         SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
         this.Skip(Token.Typename);
-        NameDeclaration parName = this.ParseNameDeclaration();
+        NameDeclaration parName = this.ParseNameDeclaration(false);
         slb.UpdateToSpan(parName.SourceLocation);
         result.Add(new TemplateParameterDeclarator(parName, slb));
         SimpleName simpleName = new SimpleName(parName.Name, slb, false);
@@ -1202,7 +1212,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       if (fieldDeclarator == null)
-        fieldDeclarator = new IdentifierDeclarator(new NameDeclaration(this.ParseNameDeclaration(), this.scanner.SourceLocationOfLastScannedToken));
+        fieldDeclarator = new IdentifierDeclarator(new NameDeclaration(this.ParseNameDeclaration(false), this.scanner.SourceLocationOfLastScannedToken));
       SourceLocationBuilder slb = new SourceLocationBuilder(fieldDeclarator.SourceLocation);
       this.GetNextToken();
       BitfieldDeclarator result = new BitfieldDeclarator(fieldDeclarator, this.ParseExpression(followers), slb);
@@ -1685,7 +1695,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         extendedAttributes.Add(this.ParseDeclspec(followers | Token.LeftBrace));
       }
       bool noName = this.currentToken != Token.Identifier;
-      NameDeclaration name = this.ParseNameDeclaration();
+      NameDeclaration name = this.ParseNameDeclaration(false);
       NameDeclaration mangledName = this.MangledStructuredName(name);
       NamedTypeExpression/*?*/ texpr = null;
       List<ITypeDeclarationMember> newTypeMembers = new List<ITypeDeclarationMember>();
@@ -1798,7 +1808,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder sctx = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
-      NameDeclaration name = this.ParseNameDeclaration();
+      NameDeclaration name = this.ParseNameDeclaration(false);
       NameDeclaration newname = this.MangledStructuredName(name);
       VccNamedTypeExpression texpr = new VccNamedTypeExpression(new VccSimpleName(newname, name.SourceLocation));
       if (this.currentToken == Token.LeftBrace) {
@@ -1829,9 +1839,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder sctx = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       List<SourceCustomAttribute>/*?*/ attributes = null;
-      if (this.currentToken != Token.Identifier)
-        this.HandleError(Error.ExpectedIdentifier);
-      NameDeclaration name = this.ParseNameDeclaration();
+      NameDeclaration name = this.ParseNameDeclaration(true);
       Expression/*?*/ initializer = null;
       if (this.currentToken == Token.Assign) {
         this.GetNextToken();
@@ -3330,14 +3338,14 @@ namespace Microsoft.Research.Vcc.Parsing {
       while (this.CurrentTokenStartsTypeExpression()) {
         List<Specifier> specifiers = this.ParseSpecifiers(null, null, followers|Token.Semicolon);
         List<LocalDeclaration> declarations = new List<LocalDeclaration>(1);
-        Declarator declarator = this.ParseDeclarator(followers|Token.Comma|Token.Semicolon);
+        Declarator declarator = this.ParseDeclarator(followers|Token.Comma|Token.Semicolon, true);
         TypeExpression type = this.GetTypeExpressionFor(specifiers, declarator);
         SourceLocationBuilder slb = new SourceLocationBuilder(type.SourceLocation);
         slb.UpdateToSpan(declarator.SourceLocation);
         declarations.Add(new LocalDeclaration(false, false, declarator.Identifier, null, slb));
         while (this.currentToken == Token.Comma) {
           this.GetNextToken();
-          declarator = this.ParseDeclarator(followers|Token.Comma);
+          declarator = this.ParseDeclarator(followers|Token.Comma, true);
           slb.UpdateToSpan(declarator.SourceLocation);
           declarations.Add(new LocalDeclaration(false, false, declarator.Identifier, null, slb));
         }
