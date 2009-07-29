@@ -224,11 +224,60 @@ namespace Microsoft.Research.Vcc
         
 
     // ============================================================================================================
+
+    let flattenBlocks self = function
+      | Expr.Block(ec, stmts) ->
+        let rec loop acc = function
+          | [] -> List.rev acc
+          | Expr.Block(_, nested) :: stmts -> loop ((List.rev nested) @ acc) stmts
+          | stmt :: stmts -> loop (self stmt :: acc) stmts
+        Some(Expr.Block(ec, loop [] stmts))
+      | _ -> None
+        
+    // ============================================================================================================
+
+    let handleStackAllocations =
+      
+      let insertAfterVarDecls toInsert = function
+        | Expr.Block(ec, stmts) -> 
+          let rec loop decls = function
+            | (VarDecl _ as vd) :: stmts-> loop (vd::decls) stmts
+            | stmts -> List.rev decls @ toInsert @ stmts
+          Expr.Block(ec, loop [] stmts)
+        | e -> Expr.MkBlock(toInsert @ [e])
+            
+      let handleFunction (f : Function) =
+        match f.Body with
+          | None -> f
+          | Some body ->
+            let allocations = ref []         
+            let handleExpr self = function
+              | VarWrite(ec, [v], CallMacro(_, "_vcc_stack_alloc", _, _)) as vw -> 
+                let vName = if v.Name.StartsWith "addr." then v.Name.Substring(5) else v.Name
+                let ec' = {forwardingToken (ec.Token) None (fun () -> "stack_free(&" + vName + ")") with Type = Void }
+                let vRef = Expr.Ref({forwardingToken (ec.Token) None (fun () -> "&" + vName) with Type = v.Type} , v)
+                let free = Expr.Call(ec', internalFunction helper "stack_free", [], [Expr.Macro(ec', "stackframe", []); vRef])
+                let freeAtCleanup = Expr.Macro(ec, "function_cleanup", [Expr.Stmt(ec, free)])
+                let placeHolder = Expr.Comment(ec, "removed allocation")
+                allocations := vw :: !allocations
+                Some(Expr.MkBlock([placeHolder; freeAtCleanup]))
+              | _ -> None
+            let body' = body.SelfMap(handleExpr) |> insertAfterVarDecls (List.rev !allocations)
+            f.Body <- Some(body')
+            f
+            
+      mapFunctions handleFunction
+            
+        
+          
+    // ============================================================================================================
     
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
     helper.AddTransformer ("final-range-assumptions", Helper.Decl addRangeAssumptions)
     helper.AddTransformer ("final-return-conversions", Helper.Decl addReturnConversions)
+    helper.AddTransformer ("final-flatten-blocks", Helper.Expr flattenBlocks)
+    helper.AddTransformer ("final-free-stack", Helper.Decl handleStackAllocations)
     helper.AddTransformer ("final-stmt-expressions", Helper.Expr assignExpressionStmts)
     helper.AddTransformer ("final-linearize", Helper.Decl (ToCoreC.linearizeDecls helper))
     helper.AddTransformer ("final-keeps-warning", Helper.Decl (List.map theKeepsWarning))

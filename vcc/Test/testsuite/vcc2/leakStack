@@ -35,10 +35,10 @@ void bar() {
 }
 `
 Verification of foo failed.
-testcase(13,16) : error VC9502: Call 'stack_free(&s)' did not verify.
+testcase(6,8) : error VC9502: Call 'stack_free(&s)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the extent of the object being reclaimed is mutable'.
 Verification of xyz failed.
-testcase(24,16) : error VC9502: Call 'stack_free(&t)' did not verify.
+testcase(17,8) : error VC9502: Call 'stack_free(&t)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the extent of the object being reclaimed is mutable'.
 Verification of bar succeeded.
 `
@@ -68,7 +68,97 @@ void bar() {
 `
 Verification of foo succeeded.
 Verification of fooShouldFail failed.
-testcase(16,14) : error VC9502: Call 'stack_free(&s)' did not verify.
+testcase(14,1) : error VC9502: Call 'stack_free(&s)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the extent of the object being reclaimed is mutable'.
+Verification of bar succeeded.`
+#include <vcc.h>
+
+void foo() {
+  int a[5];
+}
+
+
+void fooShouldFail() {
+  int a[5];
+  wrap(as_array(a, 5));
+}
+
+void bar() {
+  int a[5];
+  wrap(as_array(a, 5));
+  unwrap(as_array(a, 5));
+}
+`
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(9,9) : error VC9502: Call 'stack_free(&res__vcc_stack_alloc#2)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the extent of the object being reclaimed is mutable'.
 Verification of bar succeeded.
+`
+#include <vcc.h>
+
+struct S { int a; };
+
+void foo() {
+  struct S a[10];
+}
+
+void fooShouldFail() {
+  struct S a[10];
+  wrap(&a[1]);
+}
+
+
+void bar() {
+  struct S a[10];
+  wrap(&a[1]);
+  unwrap(&a[1]);
+}
+`
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(10,14) : error VC9502: Call 'stack_free(&res__vcc_stack_alloc#2)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the extent of the object being reclaimed is mutable'.
+Verification of bar succeeded.
+`
+#include <vcc2.h>
+
+void foo() {
+  int i;
+
+  for (i = 0; i < 1024; i++) 
+  {
+    int j;
+    int *p = &j;
+    *p = i; 
+  }
+}
+
+void bar() {
+  int i;
+  int j;
+  for (i = 0; i < 1024; i++) 
+  {
+    int a[100];
+    j = i; 
+  }
+}
+
+
+struct S { int a; };
+
+void baz() {
+  int i;
+  int j;
+  for (i = 0; i < 1024; i++) 
+  {
+    struct S s;
+    struct S *p = &s;
+    j = i; 
+  }
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
 `

@@ -9,6 +9,7 @@ void foo() {
     invariant(0 <= i && i <= 1024)
     writes(array_range(a, 1024))
     invariant(is_mutable_array(a, 1024))
+    invariant(extent_mutable(as_array(a, 1024)))
   {
     int b[100];
     a[i] = i;

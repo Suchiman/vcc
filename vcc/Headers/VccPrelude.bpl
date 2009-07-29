@@ -821,6 +821,13 @@ axiom (forall T:$ctype :: {$is_primitive(T)}
   $is_primitive(T) ==> 
     (forall S:$state, r:int, p:$ptr :: {$in_extent_of(S, p, $ptr(T, r))}
       $in_extent_of(S, p, $ptr(T, r)) <==> p == $ptr(T, r)));
+      
+      
+axiom (forall S:$state, T:$ctype, sz:int, r:int :: {$extent_mutable(S, $ptr($array(T, sz), r))}
+  $extent_mutable(S, $ptr($array(T, sz), r)) <==>
+    (forall i:int :: {$extent_mutable(S, $idx($ptr(T, r), i, T))}
+       0 <= i && i < sz ==> $extent_mutable(S, $idx($ptr(T, r), i, T)))
+);
 
 function {:inline true} $forall_inv2_when_closed(#s1:$state, #s2:$state) returns (bool)
  { (forall #p:$ptr :: {$closed(#s1,#p)} {$closed(#s2,#p)} $inv2_when_closed(#s1,#s2,#p,$typ(#p)))

@@ -699,10 +699,7 @@ namespace Microsoft.Research.Vcc
             if v.Kind = VarKind.Parameter || v.Kind = VarKind.SpecParameter || v.Kind = VarKind.OutParameter then
               [Expr.Macro (fakeEC Void, "=", [Expr.Deref (fakeEC v.Type, Expr.Ref ({ comm with Type = v'.Type }, v')); mkRef v])]
             else []
-          let ec = {forwardingToken (comm.Token) None (fun () -> "stack_free(&" + v.Name + ")") with Type = Void }
-          let free = Expr.Call(ec, internalFunction helper "stack_free", [], [Expr.Macro(ec, "stackframe", []); vRef])
-          let freeAtCleanup = Expr.Macro(ec, "function_cleanup", [free])
-          let def = VarDecl (fakeEC Void, v') :: assign :: init @ [freeAtCleanup]
+          let def = VarDecl (fakeEC Void, v') :: assign :: init
           addressableLocals.[v] <- (v', Expr.MkBlock def)
           
       let isStructType = function
