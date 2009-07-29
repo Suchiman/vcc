@@ -65,6 +65,8 @@ namespace Microsoft.Research.Vcc
                   "inv",                    "St";
                   "inv2",                   "sSt";
                   "inv2_when_closed",       "sSt";
+                  "i1_to_ptr",              ".";
+                  "i2_to_ptr",              ".";
                   "i4_to_ptr",              ".";
                   "i8_to_ptr",              ".";
                   "is",                     "p.";
@@ -92,8 +94,12 @@ namespace Microsoft.Research.Vcc
                   "wrapped",                "St";
                   "ptr_eq",                 "pp";
                   "ptr_neq",                "pp";
+                  "ptr_to_i1",              "p";
+                  "ptr_to_i2",              "p";
                   "ptr_to_i4",              "p";
                   "ptr_to_i8",              "p";
+                  "ptr_to_u1",              "p";
+                  "ptr_to_u2",              "p";
                   "ptr_to_u4",              "p";
                   "ptr_to_u8",              "p";
                   "thread_local",           "Sp";
@@ -117,6 +123,8 @@ namespace Microsoft.Research.Vcc
                   "typed",                  "Sp";
                   "typed2",                 "St";
                   "typeof",                 "p";
+                  "u1_to_ptr",              ".";
+                  "u2_to_ptr",              ".";
                   "u4_to_ptr",              ".";
                   "u8_to_ptr",              ".";                  
                   "vs_ctor",                "Sp";

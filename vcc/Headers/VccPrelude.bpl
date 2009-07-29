@@ -2321,21 +2321,37 @@ function $ptr_to_u8($ptr) returns(int);
 function $ptr_to_i8($ptr) returns(int);
 function $ptr_to_u4($ptr) returns(int);
 function $ptr_to_i4($ptr) returns(int);
+function $ptr_to_u2($ptr) returns(int);
+function $ptr_to_i2($ptr) returns(int);
+function $ptr_to_u1($ptr) returns(int);
+function $ptr_to_i1($ptr) returns(int);
 
 axiom ($ptr_to_u8($null) == 0);
 axiom ($ptr_to_i8($null) == 0);
 axiom ($ptr_to_u4($null) == 0);
 axiom ($ptr_to_i4($null) == 0);
+axiom ($ptr_to_u2($null) == 0);
+axiom ($ptr_to_i2($null) == 0);
+axiom ($ptr_to_u1($null) == 0);
+axiom ($ptr_to_i1($null) == 0);
 
 function {:inline true} $u8_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
 function {:inline true} $i8_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
 function {:inline true} $u4_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
 function {:inline true} $i4_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
+function {:inline true} $u2_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
+function {:inline true} $i2_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
+function {:inline true} $u1_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
+function {:inline true} $i1_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
 
 axiom (forall p:$ptr :: { $ptr_to_u8(p) } $in_range_u8($ref(p)) ==> $ptr_to_u8(p) == $ref(p));
 axiom (forall p:$ptr :: { $ptr_to_i8(p) } $in_range_i8($ref(p)) ==> $ptr_to_i8(p) == $ref(p));
 axiom (forall p:$ptr :: { $ptr_to_u4(p) } $in_range_u4($ref(p)) ==> $ptr_to_u4(p) == $ref(p));
 axiom (forall p:$ptr :: { $ptr_to_i4(p) } $in_range_i4($ref(p)) ==> $ptr_to_i4(p) == $ref(p));
+axiom (forall p:$ptr :: { $ptr_to_u2(p) } $in_range_u2($ref(p)) ==> $ptr_to_u2(p) == $ref(p));
+axiom (forall p:$ptr :: { $ptr_to_i2(p) } $in_range_i2($ref(p)) ==> $ptr_to_i2(p) == $ref(p));
+axiom (forall p:$ptr :: { $ptr_to_u1(p) } $in_range_u1($ref(p)) ==> $ptr_to_u1(p) == $ref(p));
+axiom (forall p:$ptr :: { $ptr_to_i1(p) } $in_range_i1($ref(p)) ==> $ptr_to_i1(p) == $ref(p));
 
 function {:weight 0} $byte_ptr_subtraction(p1:$ptr, p2:$ptr) returns(int)
   { $ref(p1) - $ref(p2) }

@@ -412,3 +412,16 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+typedef unsigned __int8 UINT8;
+
+void foo() {
+    UINT8 x = 5;
+    void *p = (void *)x;
+    assert(p);
+    assert((UINT8)p == 5);
+}
+`
+Verification of foo succeeded.
+`

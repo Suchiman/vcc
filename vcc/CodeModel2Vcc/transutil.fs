@@ -147,14 +147,22 @@ namespace Microsoft.Research.Vcc
     else Cast ({ x.Common with Type = Bool }, Processed, self x)
 
   let ptrToIntFunction = function 
+    | Integer IntKind.UInt8 -> "_vcc_ptr_to_u1"
+    | Integer IntKind.UInt16 -> "_vcc_ptr_to_u2"
     | Integer IntKind.UInt32 -> "_vcc_ptr_to_u4"
     | Integer IntKind.UInt64 -> "_vcc_ptr_to_u8"
+    | Integer IntKind.Int8 ->  "_vcc_ptr_to_i1"
+    | Integer IntKind.Int16 ->  "_vcc_ptr_to_i2"
     | Integer IntKind.Int32 ->  "_vcc_ptr_to_i4"
     | Integer IntKind.Int64 ->  "_vcc_ptr_to_i8"
     | _ -> die()
   let intToPtrFunction = function 
+    | Integer IntKind.UInt8 -> "_vcc_u1_to_ptr"
+    | Integer IntKind.UInt16 -> "_vcc_u2_to_ptr"
     | Integer IntKind.UInt32 -> "_vcc_u4_to_ptr"
     | Integer IntKind.UInt64 -> "_vcc_u8_to_ptr"
+    | Integer IntKind.Int8 ->  "_vcc_i1_to_ptr"
+    | Integer IntKind.Int16 ->  "_vcc_i2_to_ptr"
     | Integer IntKind.Int32 ->  "_vcc_i4_to_ptr"
     | Integer IntKind.Int64 ->  "_vcc_i8_to_ptr"
     | _ -> die()
