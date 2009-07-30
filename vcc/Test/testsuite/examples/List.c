@@ -109,7 +109,7 @@ typedef struct vcc(dynamic_owns) _LIST_MANAGER
  */
 void InitializeListHead( PLIST_ENTRY ListHead )
     requires(mutable(ListHead))
-    writes(extent(ListHead))
+    writes(span(ListHead))
     ensures(set_eq(owns(ListHead->Manager),SET(ListHead)))
     ensures(ListHead->Manager->ListHead == ListHead)
     ensures(ListHead->Manager->size == 1)
@@ -125,7 +125,6 @@ speconly(
     ListManager->index[ListHead] = 0;
     ListManager->ListHead = ListHead;
     ListHead->Manager = ListManager;
-    set_owns(ListHead,SET());
     set_owns(ListManager,SET(ListHead));
     wrap(ListHead);
     wrap(ListManager);
@@ -149,9 +148,8 @@ speconly(
 bool IsListEmpty( PLIST_ENTRY ListHead )
     requires(wrapped(ListHead->Manager))
     requires(set_in(ListHead, owns(ListHead->Manager)))
-    ensures(result <==> (ListHead->Manager->size == 1))
+    returns(ListHead->Manager->size == 1)
 {
-    spec(PLIST_MANAGER ListManager = ListHead->Manager;)
     assert(set_in(ListHead->Flink,owns(ListHead->Manager)));
     return ListHead->Flink == ListHead;
 }
@@ -201,12 +199,13 @@ speconly(
         ListManager->size = ListManager->size - 1;
         giveup_owner(Entry,ListManager);
         ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 
-        (ListManager->index[x]< ListManager->index[Entry])?ListManager->index[x]:ListManager->index[x]-1);
+            ListManager->index[x] < ListManager->index[Entry]
+                ? ListManager->index[x]
+                : ListManager->index[x] - 1);
         )
-        assert(set_in(ListManager->ListHead->Blink, owns(ListManager)));
     }
 
-    return (bool)(Flink == Blink);
+    return Flink == Blink;
 }
 
 
@@ -253,12 +252,11 @@ PLIST_ENTRY RemoveHeadList( PLIST_ENTRY ListHead )
 speconly(
         ListManager->size = ListManager->size - 1;
         giveup_owner(Entry,ListManager);
-
         ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 
-        (ListManager->index[x]< ListManager->index[Entry])?ListManager->index[x]:ListManager->index[x]-1);
+            ListManager->index[x] < ListManager->index[Entry]
+                ? ListManager->index[x]
+                : ListManager->index[x] - 1);
         )
-
-        assert(set_in(ListManager->ListHead->Blink,owns(ListManager)));
     }
     return Entry;
 }
@@ -309,9 +307,10 @@ speconly(
         ListManager->size = ListManager->size - 1;
         giveup_owner(Entry,ListManager);
         ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 
-        (ListManager->index[x]< ListManager->index[Entry])?ListManager->index[x]:ListManager->index[x]-1);
+            ListManager->index[x] < ListManager->index[Entry]
+                ? ListManager->index[x]
+                : ListManager->index[x] - 1);
         )
-        assert(set_in(ListManager->ListHead->Blink,owns(ListManager)));
     }
     return Entry;
 }
@@ -337,14 +336,13 @@ void InsertTailList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
     maintains(wrapped(ListHead->Manager))
     maintains(set_in(ListHead,owns(ListHead->Manager)))
     requires(mutable(Entry))
-    requires(set_eq(owns(Entry),SET()))
     ensures(set_in(Entry,owns(ListHead->Manager)))
     requires(ListHead->Manager->size < MAXUINT)
     ensures(ListHead->Manager->size == old(ListHead->Manager->size) + 1)
     ensures(set_eq(owns(ListHead->Manager),set_union(old(owns(ListHead->Manager)),SET(Entry))))
     ensures(unchanged(ListHead->Manager->ListHead))
     ensures(Entry->Manager == ListHead->Manager)
-    writes(ListHead->Manager,extent(Entry))
+    writes(ListHead->Manager,span(Entry))
 
 {
     spec(PLIST_MANAGER ListManager = ListHead->Manager;)
@@ -369,18 +367,17 @@ speconly(
         ListManager->size = ListManager->size + 1;
         set_owner(Entry,ListManager);
 
-        if(ListHead == ListManager->ListHead) {
-            ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 
-                                        (x==Entry) ? ListManager->size - 1:
-                                        ListManager->index[x]);
+        if (ListHead == ListManager->ListHead) {
+            ListManager->index[Entry] = ListManager->size - 1;
         } else {
             ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 
-                                        (x==Entry) ? ListManager->index[ListHead]:
-                                        ((ListManager->index[x]< ListManager->index[ListHead]) ? ListManager->index[x] : ListManager->index[x] +1 ));
+                x==Entry
+                    ? ListManager->index[ListHead]
+                    : (ListManager->index[x] < ListManager->index[ListHead]
+                        ? ListManager->index[x]
+                        : ListManager->index[x] + 1));
         }
         )
-        assert(Entry->Manager == ListManager);
-        assert(set_in(ListManager->ListHead->Blink,owns(ListManager)));
     }
 }
 
@@ -405,13 +402,12 @@ void InsertHeadList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
     maintains(wrapped(ListHead->Manager))
     maintains(set_in(ListHead,owns(ListHead->Manager)))
     requires(mutable(Entry))
-    requires(set_eq(owns(Entry),SET()))
     ensures(set_in(Entry,owns(ListHead->Manager)))
     requires(ListHead->Manager->size < MAXUINT)
     ensures(ListHead->Manager->size == old(ListHead->Manager->size) + 1)
     ensures(set_eq(owns(ListHead->Manager),set_union(old(owns(ListHead->Manager)),SET(Entry))))
     ensures(Entry->Manager == ListHead->Manager)
-    writes(ListHead->Manager,extent(Entry))
+    writes(ListHead->Manager,span(Entry))
 {
     spec(PLIST_MANAGER ListManager = ListHead->Manager;)
 
@@ -434,11 +430,12 @@ speconly(
         ListManager->size = ListManager->size + 1;
         set_owner(Entry,ListManager);
         ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 
-                                    (x==Entry)?ListManager->index[ListHead] +1 : 
-                                        ((ListManager->index[x]<= ListManager->index[ListHead])?ListManager->index[x]:ListManager->index[x] +1 ));
+            x==Entry
+                ? ListManager->index[ListHead] + 1
+                : (ListManager->index[x] <= ListManager->index[ListHead]
+                    ? ListManager->index[x]
+                    : ListManager->index[x] + 1));
         )
-        assert(Entry->Manager == ListManager);
-        assert(set_in(ListManager->ListHead->Blink,owns(ListManager)));
     }
 }
 
