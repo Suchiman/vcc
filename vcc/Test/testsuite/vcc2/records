@@ -449,3 +449,18 @@ writes(s)
 `
 Verification of test succeeded.
 `
+#include "vcc.h"
+
+struct vcc(record) Y {
+  unsigned state;
+};
+
+struct vcc(record) Z {
+  int dummy;
+  spec(struct Y X;)
+  invariant(X.state==0)
+};
+`
+testcase(7,1) : error VC9698: type 'Z' is marked as a record type and thus must not declare invariants
+testcase(10,15)-(10,25) : (Location of symbol related to previous error.)
+`

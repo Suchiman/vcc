@@ -1140,6 +1140,10 @@ namespace Microsoft.Research.Vcc
     let checkRecordValidity decls =
       
       let checkDecl (td : TypeDecl) =
+      
+        if (td.Invariants.Length > 0) then
+          helper.Error(td.Token, 9698, "type '" + td.Name + "' is marked as a record type and thus must not declare invariants", Some(td.Invariants.Head.Token))
+        
         if (td.Kind = TypeKind.Union) then
           helper.Error(td.Token, 9682, "union '" + td.Name + "' cannot be flattened into a struct and thus cannot be marked as record type")
         else 
@@ -1154,6 +1158,8 @@ namespace Microsoft.Research.Vcc
             //if (f.IsSpec) then helper.Warning(f.Token, 9118, "field '" + f.Name + "' in record type does not need to marked as spec field")
             checkType f.Type
           List.iter checkField td.Fields
+          
+          
       
       for d in decls do
         match d with
