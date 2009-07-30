@@ -395,3 +395,24 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+struct T {
+    int dummy;
+    spec(bool Y[int];)
+};
+
+spec(ispure bool takes_quantified_variable(int l)
+    reads(set_universe())
+    returns(true);)
+
+void foo(struct T *t)
+    requires(wrapped(t))
+{
+    spec(bool Z[int];)
+    spec(bool Y[int];)
+    Z = lambda(int l; true; t->Y[l] || takes_quantified_variable(l));
+}
+`
+Verification of foo succeeded.
+`

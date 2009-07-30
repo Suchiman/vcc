@@ -237,7 +237,6 @@ namespace Microsoft.Research.Vcc
               | _ -> helper.Die()
           
           let isPure = ref true
-          let stateRequired = ref false
           
           let rec hasQVar vars expr =
             let hasIt = ref false
@@ -254,7 +253,7 @@ namespace Microsoft.Research.Vcc
                 let argsHaveIt = List.map (hasQVar vars) args // ensure to really visit all arguments because of the side effects
                 if List.exists (fun x -> x) argsHaveIt then
                   hasIt := true
-                  if not fn.IsStateless then stateRequired := true
+                  if not fn.IsStateless then isPure := false
                 false
               | _ -> true
             (expr:Expr).SelfVisit check
@@ -290,10 +289,6 @@ namespace Microsoft.Research.Vcc
               | Some c -> c.SelfMap repl
               | None -> BoolLiteral({c with Type = Type.Bool}, true)
           let body = q.Body.SelfMap repl
-          
-          if !stateRequired then 
-            let s = { Name = "#s"; Type = Type.MathState; Kind = QuantBound } : Variable
-            parms := (Macro({bogusEC with Type = Type.MathState}, "_vcc_current_state", []) , s) :: !parms
           
           let fn =
             { Token           = c.Token
