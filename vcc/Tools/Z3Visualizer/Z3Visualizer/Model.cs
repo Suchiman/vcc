@@ -597,7 +597,8 @@ namespace Z3AxiomProfiler.QuantifierModel
           TheMost("COSTLY", delegate(Instantiation i1, Instantiation i2) { return i2.Cost.CompareTo(i1.Cost); }),
           TheMost("FIRST", delegate(Instantiation i1, Instantiation i2) { return i1.LineNo.CompareTo(i2.LineNo); }),
           TheMost("LAST", delegate(Instantiation i1, Instantiation i2) { return i2.LineNo.CompareTo(i1.LineNo); }),
-          Callback("ALL", delegate() { return Instances; })
+          Callback("ALL", delegate() { return Instances; }),
+          Callback("REAL COST", delegate() { return new Common[] { new LabelNode(RealCost + "") }; })
         };
       }
     }
@@ -639,6 +640,7 @@ namespace Z3AxiomProfiler.QuantifierModel
     {
       get
       {
+        //return RealCost;
         return CrudeCost + Instances.Count;
       }
     }
@@ -1209,28 +1211,64 @@ namespace Z3AxiomProfiler.QuantifierModel
     public List<FunApp> Apps = new List<FunApp>();
     public List<FunSymbol> AllSymbols;
 
+    static bool appsByPartition = false;
+
     public override IEnumerable<Common> Children()
     {
       if (Apps.Count == 1)
         return Apps[0].Children();
       else {
-        // group by partition
-        Dictionary<string, List<Common>> byPart = new Dictionary<string, List<Common>>();
-        foreach (var f in Apps) {
-          List<Common> tmp;
-          if (!byPart.TryGetValue(f.Value.Id, out tmp)) {
-            tmp = new List<Common>();
-            byPart.Add(f.Value.Id, tmp);
+        if (appsByPartition) {
+          // group by partition
+          Dictionary<string, List<Common>> byPart = new Dictionary<string, List<Common>>();
+          foreach (var f in Apps) {
+            List<Common> tmp;
+            if (!byPart.TryGetValue(f.Value.Id, out tmp)) {
+              tmp = new List<Common>();
+              byPart.Add(f.Value.Id, tmp);
+            }
+            tmp.Add(f);
           }
-          tmp.Add(f);
+          // sort by partition size
+          List<List<Common>> lists = new List<List<Common>>(byPart.Values);
+          lists.Sort(delegate(List<Common> x, List<Common> y) { return y.Count - x.Count; });
+          List<Common> res = new List<Common>();
+          foreach (var l in lists)
+            res.AddRange(l);
+          return res;
+        } else {
+          Apps.Sort(delegate(FunApp a1, FunApp a2)
+          {
+            for (int i = 0; i < a1.Args.Length; ++i) {
+              int tmp = string.CompareOrdinal(a1.Args[i].ShortName(), a2.Args[i].ShortName());
+              if (tmp != 0) return tmp;
+            }
+            return 0;
+          });
+          return Common.ConvertIEnumerable<Common,FunApp>(Apps);
         }
-        // sort by partition size
-        List<List<Common>> lists = new List<List<Common>>(byPart.Values);
-        lists.Sort(delegate(List<Common> x, List<Common> y) { return y.Count - x.Count; });
-        List<Common> res = new List<Common>();
-        foreach (var l in lists)
-          res.AddRange(l);
-        return res;
+      }
+    }
+
+    string cachedDisplayName;
+    public string DisplayName
+    {
+      get
+      {
+        if (cachedDisplayName == null) {
+          cachedDisplayName = Name;
+
+          int idx = Name.LastIndexOf("@@");
+          if (idx > 0) {
+            int end = idx + 2;
+            while (end < Name.Length && Char.IsDigit(Name[end]))
+              end++;
+            if (end == Name.Length)
+              cachedDisplayName = Name.Substring(0, idx);
+          }
+        }
+
+        return cachedDisplayName;
       }
     }
 
@@ -1239,7 +1277,7 @@ namespace Z3AxiomProfiler.QuantifierModel
       if (Apps.Count == 1)
         return Apps[0].ToString();
       else
-        return Name + " [" + Apps.Count + "]";
+        return DisplayName + " [" + Apps.Count + "]";
     }
   }
 
@@ -1252,7 +1290,7 @@ namespace Z3AxiomProfiler.QuantifierModel
     public string ShortName()
     {
       if (Args.Length > 0) {
-        StringBuilder sb = new StringBuilder(Fun.Name);
+        StringBuilder sb = new StringBuilder(Fun.DisplayName);
         sb.Append("(");
         foreach (var a in Args)
           sb.Append(a.ShortName()).Append(", ");
@@ -1260,7 +1298,7 @@ namespace Z3AxiomProfiler.QuantifierModel
         sb.Append(")");
         return sb.ToString();
       } else {
-        return Fun.Name;
+        return Fun.DisplayName;
       }
     }
 
