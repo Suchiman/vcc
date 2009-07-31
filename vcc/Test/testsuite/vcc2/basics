@@ -428,28 +428,15 @@ Verification of foo succeeded.
 #include "vcc.h"
 
 struct S {
-int dummy;
-invariant(keeps(SET()))
+    int dummy;
+    invariant(keeps(SET()))
 };
 `
-Verification of S#adm succeeded.
+testcase(5,37) : error VC9699: 'keeps' requires arguments of pointer type; '_vcc_create_set(_vcc_dummy_set_element()  )' has type '_math ptrset' which is not allowed.
 `
 #include "vcc.h"
 
 void foo(int *x) requires(is_fresh(x)) {};
 `
 testcase(3,29) : error VC9697: calling '_vcc_is_fresh' is allowed only in two-state contexts
-`
-#include "vcc.h"
-
-struct T {
-  int a;
-};
-
-struct S {
-    struct T t1, t2;
-    invariant(keeps(SET(&t1, &t2)))
-};
-`
-testcase(9,37) : error VC9699: 'keeps' requires arguments of pointer type; '_vcc_create_set(_vcc_dummy_set_element(), &t1, &t2)' has type '_math ptrset' which is not allowed.
 `

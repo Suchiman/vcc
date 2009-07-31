@@ -230,8 +230,7 @@ namespace Microsoft.Research.Vcc
     let handleKeeps decls = 
     
       let handleKeeps' staticOwns self = function
-        | CallMacro (c, "_vcc_keeps", _, this :: []) 
-        | CallMacro (c, "_vcc_keeps", _, [this; CallMacro(_, "_vcc_set_empty", _, _)]) ->
+        | CallMacro (c, "_vcc_keeps", _, this :: []) ->
           Some (BoolLiteral (boolBogusEC(), true))
           
         | CallMacro (c, "_vcc_keeps", _, this :: keeps) ->
