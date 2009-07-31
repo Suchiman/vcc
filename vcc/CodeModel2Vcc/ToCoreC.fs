@@ -235,6 +235,14 @@ namespace Microsoft.Research.Vcc
           Some (BoolLiteral (boolBogusEC(), true))
           
         | CallMacro (c, "_vcc_keeps", _, this :: keeps) ->
+        
+          let reportErrorForNonPtrArgument (e : Expr) =
+            match e.Type with
+              | ObjectT
+              | Claim
+              | Ptr _ -> ()
+              | t -> helper.Error(e.Token, 9699, "'keeps' requires arguments of pointer type; '" + e.Token.Value + "' has type '" + t.ToString() + "' which is not allowed.")
+        
           let build acc (e:Expr) =
             let eq = Macro (c, "keeps_stable", [Old (e.Common, Macro (bogusEC, "prestate", []), e); e])
             let keeps = Macro (c, "keeps", [this; e])
@@ -243,6 +251,7 @@ namespace Microsoft.Research.Vcc
               | Some acc ->
                 Some (Prim (c, Op ("&&", Processed), [acc; both]))
               | None -> Some both
+          List.iter reportErrorForNonPtrArgument keeps
           Some (self (List.fold build None keeps).Value)
           
         | _ -> None

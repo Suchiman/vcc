@@ -268,7 +268,7 @@ namespace Microsoft.Research.Vcc
             | [_] -> Some(Expr.Macro(c, "_vcc_set_empty", []))
             | _ :: rest ->
               let mkSingleton (e:Expr) = Expr.Macro({e.Common with Type = c.Type}, "_vcc_set_singleton", [e])
-              let mkUnion (e1:Expr) (e2:Expr) = Expr.Macro(e1.Common, "_vcc_set_union", [e1;e2])
+              let mkUnion (e1:Expr) (e2:Expr) = Expr.Macro(c, "_vcc_set_union", [e1;e2])
               let rec createUnion exprs =
                 let rec splitAt n acc (l : 'a list) =
                   if (n = 0 || l.IsEmpty) then (List.rev acc, l)
