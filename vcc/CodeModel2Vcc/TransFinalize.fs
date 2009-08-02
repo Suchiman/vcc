@@ -229,7 +229,8 @@ namespace Microsoft.Research.Vcc
       | Expr.Block(ec, stmts) ->
         let rec loop acc = function
           | [] -> List.rev acc
-          | Expr.Block(_, nested) :: stmts -> loop ((List.rev nested) @ acc) stmts
+          | Expr.Block(_, nested) :: stmts -> loop acc (nested @ stmts)
+          | Expr.Comment(_, comment) :: stmts when comment.StartsWith("__vcc__") -> loop acc stmts
           | stmt :: stmts -> loop (self stmt :: acc) stmts
         Some(Expr.Block(ec, loop [] stmts))
       | _ -> None
@@ -258,9 +259,8 @@ namespace Microsoft.Research.Vcc
                 let vRef = Expr.Ref({forwardingToken (ec.Token) None (fun () -> "&" + vName) with Type = v.Type} , v)
                 let free = Expr.Call(ec', internalFunction helper "stack_free", [], [Expr.Macro(ec', "stackframe", []); vRef])
                 let freeAtCleanup = Expr.Macro(ec, "function_cleanup", [Expr.Stmt(ec, free)])
-                let placeHolder = Expr.Comment(ec, "removed allocation")
                 allocations := vw :: !allocations
-                Some(Expr.MkBlock([placeHolder; freeAtCleanup]))
+                Some(freeAtCleanup)
               | _ -> None
             let body' = body.SelfMap(handleExpr) |> insertAfterVarDecls (List.rev !allocations)
             f.Body <- Some(body')

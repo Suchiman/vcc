@@ -372,7 +372,7 @@ namespace Microsoft.Research.Vcc
       let rnExpr self = function
         | Expr.VarDecl (ce, var) ->
           varDecls := Expr.VarDecl (ce, renameVar var) :: !varDecls
-          Some (Expr.Comment(ce, "removed decl"))
+          Some (Expr.Comment(ce, "__vcc__ removed decl"))
         | Expr.Ref(ce, var) ->
           match subst.TryGetValue(var) with
             | true, substName -> Some(Expr.Ref(ce, substName)) 
