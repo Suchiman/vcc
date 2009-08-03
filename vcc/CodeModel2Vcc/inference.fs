@@ -46,10 +46,8 @@ namespace Microsoft.Research.Vcc
         | _ -> acc      
       List.fold add [] lst
     
-    let skip_wf (ec, e) = mkOld ec "_vcc_skip_wf" e
-    
     let inferAssert tok (e:Expr) =
-      Expr.MkAssert (skip_wf (forwardingToken tok None (fun () -> afmt 8505 "inferred assertion: {0}" [e.ToString()]), e))
+      Expr.Assert({forwardingToken tok None (fun () -> afmt 8505 "inferred assertion: {0}" [e.ToString()]) with Type = Type.Void }, e)
      
     let inferMacro name (args: list<Expr>) =
       inferAssert (List.hd args).Token (Macro (boolBogusEC(), name, args))

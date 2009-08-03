@@ -239,6 +239,7 @@ void foo2(struct VS *vs)
   assert(skip_wf(vs->yappr == vs->yappr));
 }
 `
+testcase(10,26) : warning VC9119: The use of skip_wf(...) is deprecated
 Verification of foo2 succeeded.
 `
 

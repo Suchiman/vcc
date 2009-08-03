@@ -135,7 +135,7 @@ void use_case()
   speconly( c = claim(a, true); )
   incr(a, &tmp spec(c) spec( &c2) );
   assert(valid_claim(c2));
-  assert(tmp <= skip_wf(a->x));
+  assert(tmp <= a->x);
   unclaim(c2, c);
   unclaim(c, a);
   unwrap(a);

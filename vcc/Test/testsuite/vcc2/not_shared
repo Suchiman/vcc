@@ -12,7 +12,7 @@ void test1()
   p->v = 1;
   p->f = 2;
   wrap(p);
-  assert(skip_wf(p->v) == 1); // OK, we didn't simulate other threads yet
+  assert(p->v == 1); // OK, we didn't simulate other threads yet
 
   atomic(p) {
     assert(p->f == 2);

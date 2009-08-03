@@ -497,7 +497,7 @@ namespace Microsoft.Research.Vcc
     
     helper.AddTransformer ("check-report-checked-in-bv-lemma", Helper.Expr reportCheckedOpsInBvLemma)
     helper.AddTransformer ("check-special-calls", Helper.Expr handleSpecialCalls)
-    helper.AddTransformer ("check-wf", Helper.Decl addWfChecks)
+    //helper.AddTransformer ("check-wf", Helper.Decl addWfChecks)
     helper.AddTransformer ("check-memory-access", Helper.ExprCtx addMemoryChecks)
     helper.AddTransformer ("check-overflows", Helper.ExprCtx addOverflowChecks)
     helper.AddTransformer ("check-div-by-zero", Helper.ExprCtx addDivByZeroChecks)

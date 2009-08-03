@@ -51,7 +51,7 @@ void use_case()
   assert(wrapped(c));
  
   assert(valid_claim(c2));
-  assert(tmp <= skip_wf(a->x));
+  assert(tmp <= a->x);
 
   assert(wrapped(c));
 

@@ -722,7 +722,6 @@ namespace Microsoft.Research.Vcc
             warnForIneffectiveOld ec.Token be
             match state with 
               | C.Macro (_, "prestate", []) -> bSubst [("$s", env.OldState)] be
-              | C.Macro (_, "_vcc_skip_wf", []) -> be
               | _ -> 
                 let state = state |> self |> bSubst [("$s", er "$$s")]
                 bSubst [("$s", state)] be
@@ -761,12 +760,12 @@ namespace Microsoft.Research.Vcc
         let selfs = List.map self
         match n, args with
           | "writes_check", [a] -> writesCheck env ec.Token false a
-          | "reads_check_cond_wf", [cond; a] ->
-            bImpl (self cond) (self (C.Macro (ec, "reads_check_wf", [a])))
-          | "reads_check_wf", [a] ->
-            match List.rev (readsCheck env true a) with
-              | B.Assert (_, expr) :: _ -> expr
-              | _ -> die ()
+//          | "reads_check_cond_wf", [cond; a] ->
+//            bImpl (self cond) (self (C.Macro (ec, "reads_check_wf", [a])))
+//          | "reads_check_wf", [a] ->
+//            match List.rev (readsCheck env true a) with
+//              | B.Assert (_, expr) :: _ -> expr
+//              | _ -> die ()
           | "prim_writes_check", [a] -> writesCheck env ec.Token true a
           | in_range, args when in_range.StartsWith ("in_range") -> bCall ("$" + in_range) (selfs args)
           | unchecked, args when unchecked.StartsWith ("unchecked_") -> bCall "$unchecked" (er ("^^" + unchecked.Substring (unchecked.IndexOf '_' + 1)) :: selfs args)
@@ -1490,13 +1489,13 @@ namespace Microsoft.Research.Vcc
             [B.Stmt.Comment s]
           | C.Expr.Assert (_, C.Expr.Macro (_, "_vcc_bv_lemma", [e])) -> 
             [cmt (); B.Stmt.Assert (stmt.Token, trBvExpr env e)]
-          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_cond_wf", [cond; e])) ->
-            let addCond = function
-              | B.Assert (t, e) -> B.Assert (t, bImpl (trExpr env cond) e)
-              | _ -> die()
-            cmt () :: (List.map addCond (readsCheck env true e))
-          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_wf", [e])) ->
-            cmt () :: readsCheck env true e
+//          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_cond_wf", [cond; e])) ->
+//            let addCond = function
+//              | B.Assert (t, e) -> B.Assert (t, bImpl (trExpr env cond) e)
+//              | _ -> die()
+//            cmt () :: (List.map addCond (readsCheck env true e))
+//          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_wf", [e])) ->
+//            cmt () :: readsCheck env true e
           | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_normal", [e])) ->
             cmt () :: readsCheck env false e            
           | C.Expr.Assert (_, e) -> 
@@ -2292,7 +2291,7 @@ namespace Microsoft.Research.Vcc
         // we disable that by default for now, it seems to be too much of a hassle
         if not (_list_mem (C.CustomAttr.VccAttr ("postcondition_sanity", "true")) h.CustomAttr) then []
         else
-          let checks = List.map (stripFreeFromEnsures>> (AddChecks.wellFormed helper)) h.Ensures |> List.concat
+          let checks = List.map stripFreeFromEnsures h.Ensures
           match checks with
             | [] -> []
             | lst ->

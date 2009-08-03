@@ -100,20 +100,14 @@ void foo()
 
 
   assert(in_state(s1, in_state(s3, *p)) == 2);
-  assert(skip_wf(in_state(in_state(s1, s3), *p)) == 1);
+  assert(in_state(in_state(s1, s3), *p) == 1);
   assert(in_state(s1, in_state(in_state(current_state(),s3), *p)) == 2);
 }
 `
-testcase(18,48) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '*p' has no effect
 testcase(18,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '_vcc_in_state(s1, _vcc_in_state(s2, *p))' has no effect
-testcase(19,48) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '*p' has no effect
 testcase(19,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '_vcc_in_state(s2, _vcc_in_state(s1, *p))' has no effect
-testcase(20,66) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '*p' has no effect
 testcase(20,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '_vcc_in_state(s1, _vcc_in_state(_vcc_current_state(), *p))' has no effect
-testcase(23,48) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '*p' has no effect
 testcase(23,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '_vcc_in_state(s1, _vcc_in_state(s3, *p))' has no effect
-testcase(24,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '_vcc_in_state(_vcc_skip_wf(), _vcc_in_state(_vcc_in_state(s1, s3), *p))' has no effect
-testcase(25,85) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '*p' has no effect
 testcase(25,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '_vcc_in_state(s1, _vcc_in_state(_vcc_in_state(_vcc_current_state(), s3), *p))' has no effect
 Verification of foo succeeded.
 `

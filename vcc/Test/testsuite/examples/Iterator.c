@@ -86,7 +86,7 @@ void iterate(struct Iterator *it)
   writes(it)
 {
   expose(it) {
-    assert(skip_wf(it->arr == it->coll->arr));
+    assert(it->arr == it->coll->arr);
   }
 }
 

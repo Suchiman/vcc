@@ -132,7 +132,7 @@ void foo1(struct VS *vs)
   struct A a;
   wrap(&a);
   writeA(&a);
-  assert(skip_wf(vs->x == 10));
+  assert(vs->x == 10);
   unwrap(&a);
 }
 
@@ -144,7 +144,7 @@ void foo2(struct VS *vs)
   struct A a;
   wrap(&a);
   writeA(&a);
-  assert(skip_wf(vs->y == 10));
+  assert(vs->y == 10);
   unwrap(&a);
 }
 
@@ -154,7 +154,7 @@ void foo1fail(struct VS *vs)
   writes(vs)
 {
   writeVS(vs);
-  assert(skip_wf(vs->x == 10));
+  assert(vs->x == 10);
 }
 
 // the axioms about versions should only hold for closed objects:
@@ -164,7 +164,7 @@ void foo1fail2(struct VS *vs)
   requires(vs->x == 10)
 {
   vs->x = 12;
-  assert(skip_wf(vs->x == 10));
+  assert(vs->x == 10);
 }
 
 void foo1fail3(struct VS *vs)
@@ -174,7 +174,7 @@ void foo1fail3(struct VS *vs)
   requires(vs->yappr == me())
 {
   vs->y = 12;
-  assert(skip_wf(vs->y == 10));
+  assert(vs->y == 10);
 }
 
 `
@@ -182,11 +182,11 @@ Verification of VS#adm succeeded.
 Verification of foo1 succeeded.
 Verification of foo2 succeeded.
 Verification of foo1fail failed.
-testcase(57,12) : error VC9500: Assertion '_vcc_in_state(_vcc_skip_wf(), vs->x == 10)' did not verify.
+testcase(57,12) : error VC9500: Assertion 'vs->x == 10' did not verify.
 Verification of foo1fail2 failed.
-testcase(67,12) : error VC9500: Assertion '_vcc_in_state(_vcc_skip_wf(), vs->x == 10)' did not verify.
+testcase(67,12) : error VC9500: Assertion 'vs->x == 10' did not verify.
 Verification of foo1fail3 failed.
-testcase(77,12) : error VC9500: Assertion '_vcc_in_state(_vcc_skip_wf(), vs->y == 10)' did not verify.
+testcase(77,12) : error VC9500: Assertion 'vs->y == 10' did not verify.
 `
 #include <vcc.h>
 
