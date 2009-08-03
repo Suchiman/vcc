@@ -170,6 +170,8 @@ namespace Microsoft.Research.Vcc
                   "rec_eq", "..";
                 ]
     dict
+
+  let isRecord (td : TypeDecl) = hasBoolAttr "record" td.CustomAttr
     
   let exprDependsOnSpecExpr (expr : Expr) = 
     let (specFound : string option ref) = ref None
@@ -596,6 +598,7 @@ namespace Microsoft.Research.Vcc
        *)        
 
     let cacheAssignTarget self = function
+      | Expr.Deref (_, Dot(_, _, f)) as e when isRecord f.Parent -> (self, e)
       | Expr.Deref (c, ptr) ->
         let cacheVarKind =
           match exprDependsOnSpecExpr ptr with

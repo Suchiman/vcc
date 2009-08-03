@@ -83,6 +83,8 @@ namespace Microsoft.Research.Vcc
       List.iter (fun e -> elements.[e] <- true) l
       List.filter (fun e ->elements.ContainsKey(e)) l
 
+    let isRecord (td : C.TypeDecl) = List.exists (function C.VccAttr ("record", _) -> true | _ -> false) td.CustomAttr
+
     let convCustomAttributes tok (attrs : ICustomAttribute seq) = 
       let getAttrTypeName (attr:ICustomAttribute) = TypeHelper.GetTypeName(attr.Type.ResolvedType)
       let getAttrArgs (attr:ICustomAttribute) =
@@ -540,8 +542,7 @@ namespace Microsoft.Research.Vcc
                       IsVolatile = false
                     } : C.TypeDecl
                   
-                  if List.exists (function C.VccAttr ("record", _) -> true | _ -> false) td.CustomAttr then
-                    td.IsSpec <- true
+                  if isRecord td then td.IsSpec <- true
                     
                   // TODO?
                   let td =
@@ -643,7 +644,7 @@ namespace Microsoft.Research.Vcc
                     | _ ->
                       td.Fields <- trMembers false members
 
-                      if td.SizeOf < 1 then
+                      if td.SizeOf < 1  && not (isRecord td) then
                         helper.Oops(td.Token, "type " + td.Name + " smaller than 1 byte!")
                         die()
                                             
