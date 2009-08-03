@@ -6,29 +6,29 @@
 
 namespace Microsoft.Research.Vcc
 
-  module DumpCodenInfo =
+  module DumpCodeInfo =
     open Microsoft.Research.Vcc
     open Microsoft.FSharp.Math
     open CAST
 
-    [<System.ComponentModel.Composition.Export("Microsoft.Research.Vcc.Plugin")>]    
+    [<System.ComponentModel.Composition.Export("Microsoft.Research.Vcc.Plugin")>]
     type ContractGeneratorPlugin() =
       inherit Microsoft.Research.Vcc.Plugin()
-      
+
       let dbg() = System.Diagnostics.Debugger.Break()
       let wr (s:string) = System.Console.Write(s)
-      
+
       let pluginOptions = ref []
       let verifiedCOptions = ref null
 
       let die() = failwith "confused, will now die"
-      
+
       let hasBoolAttr n = List.exists (function VccAttr (n', "true") -> n = n' | _ -> false)
 
       let commas (separator:string) p elems =
         let rec loop first = function
           | [] -> ()
-          | e::es -> 
+          | e::es ->
             if not first then wr separator
             p e
             loop false es
@@ -40,35 +40,45 @@ namespace Microsoft.Research.Vcc
       override this.UseCommandLineOptions options = pluginOptions := [ for o in options -> o ]
       override this.UseVccOptions options = verifiedCOptions := options
 
-      override this.Verify(filename, env, decls) = 
+      override this.Verify(filename, env, decls) =
         let functionDependencies (fn:Function) =
-          let pureDeps = new Dict<_,_>()
-          let physDeps = new Dict<_,_>()
-          
-          let visit ctx self = function
-            | CAST.Call(_, fn, _, _) -> 
+          let pureImplDeps = new Dict<_,_>()
+          let physImplDeps = new Dict<_,_>()
+          let pureContractDeps = new Dict<_,_>()
+          let physContractDeps = new Dict<_,_>()
+
+          let visit (pureDeps:Dict<_,_>) (physDeps:Dict<_,_>) ctx self = function
+            | CAST.Call(_, fn, _, _) ->
               if ctx.IsPure then pureDeps.[fn] <- true else physDeps.[fn] <- true
               true
             | _ -> true
-            
+
           match fn.Body with
             | None -> ()
-            | Some e -> e.SelfCtxVisit(false, visit)
-          
-          List.iter (fun (e:Expr) -> e.SelfCtxVisit(true, visit)) (fn.Reads @ fn.Writes @ fn.Requires @ fn.Ensures)
+            | Some e -> e.SelfCtxVisit(false, (visit pureImplDeps physImplDeps))
 
-          ( [ for k in pureDeps.Keys -> k ], [ for k in physDeps.Keys -> k] )
-          
-        let doFunction (fn:Function)  =
-          let (pureDeps, physDeps) = functionDependencies fn
-          let wrFn (fn : Function) = 
+          List.iter (fun (e:Expr) -> e.SelfCtxVisit(true, (visit pureContractDeps physContractDeps)))
+            (fn.Reads @ fn.Writes @ fn.Requires @ fn.Ensures)
+
+          ( [ for k in pureImplDeps.Keys -> k ], [ for k in physImplDeps.Keys -> k],
+            [ for k in pureContractDeps.Keys -> k ], [ for k in physContractDeps.Keys -> k])
+
+        let doFunction (fn:Function) =
+          let (pureImplDeps, physImplDeps, pureContractDeps, physContractDeps) = functionDependencies fn
+
+          assert (physContractDeps = [])
+
+          let wrFn (fn:Function) =
             wr (fn.Name + "(")
-            commas ", " (fun t -> wr (t.ToString())) fn.Parameters 
+            commas ", " (fun t -> wr (t.ToString())) fn.Parameters
             wr (") : " + fn.RetType.ToString())
-          let wrAttr = 
+
+          let wrFnName (fn:Function) = wr (fn.Name)
+
+          let wrAttr =
             let wr' s = wr ("\t\t" + s + "\n")
             let wrVcc s (o:obj) = wr' ("vcc(" + s + "," + o.ToString() + ")")
-            function 
+            function
               | SkipVerification -> wr' "skipverification"
               | IsAdmissibilityCheck -> wr' "isadmissibilitycheck"
               | NoAdmissibility -> wr' "no_admissibility"
@@ -81,8 +91,8 @@ namespace Microsoft.Research.Vcc
 
           let wrDeps = function
             | [] -> wr "\t\t<none>\n"
-            | fns -> for fn in fns do wr "\t\t"; wrFn fn; wr "\n"
-            
+            | fns -> for fn in fns do wr "\t\t"; wrFnName fn; wr "\n"
+
           let wrAttrs = function
             | [] -> wr "\t\t<none>\n"
             | attrs -> List.iter wrAttr attrs
@@ -91,20 +101,32 @@ namespace Microsoft.Research.Vcc
             if fn.IsPure || fn.IsSpec then
               if fn.IsPure then wr "\t\tispure\n"
               if fn.IsSpec then wr "\t\tspec\n"
+              if fn.IsStateless then wr "\t\tstateless\n"
             else
               wr "\t\t<none>\n"
 
+          let tokenLocation (t:Token) =
+            sprintf "%s(%d,%d)" t.Filename t.Line t.Column
+
           wr "function: "; wrFn fn; wr "\n"
+          wr "\tfilename:\n\t\t";
+          wr (tokenLocation fn.Token);
+          wr "\n"
           wr "\tflags:\n"
           wrFlags fn
-          wr "\tpure dependencies:\n"
-          wrDeps pureDeps
-          wr "\tphysical dependencies:\n"
-          wrDeps physDeps
+          wr "\tcontract dependencies:\n"
+          wrDeps pureContractDeps
+          match fn.Body with
+            | None -> ()
+            | Some e ->
+                wr "\tpure implementation dependencies:\n"
+                wrDeps pureImplDeps
+                wr "\tphysical implementation dependencies:\n"
+                wrDeps physImplDeps
           wr "\tattributes:\n"
           wrAttrs fn.CustomAttr
           wr "\n"
-          
+
         for d in decls do
           match d with
             | Top.FunctionDecl(fn) -> doFunction fn
