@@ -264,9 +264,8 @@ void _vcc_free(obj_t p)
 
 void _vcc_stack_free(mathint, obj_t p);
 
-obj_t _vcc_stack_alloc(mathint, typeid_t);
+template<typename T> obj_t _vcc_stack_alloc(mathint);
 obj_t _vcc_alloc(typeid_t);
-obj_t _vcc_alloc_array(typeid_t, _vcc_size_t);
 
 void _vcc_atomic_op(obj_t, ...);
 // do not change this expression - the compiler relies on exactly this structure to find the information it needs

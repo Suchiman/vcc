@@ -243,10 +243,12 @@ namespace Microsoft.Research.Vcc
         | Expr.Macro (c, "stack_allocate_array", [s]) -> 
           match c.Type with 
           | Ptr elemType ->
-            let t' = typeExpr elemType
-            let arrTy = Expr.Macro(t'.Common, "_vcc_array", [t'; s])
+            let arrTy = 
+              match s with
+              | Expr.IntLiteral(_, sz) -> Type.Array(elemType, (int)sz)
+              | _ -> die()
             Some (Expr.Cast(c, Processed, 
-                            Expr.Call({ c with Type = Ptr Void }, internalFunction "stack_alloc", [], [Expr.Macro(bogusEC, "stackframe", []); arrTy])))
+                            Expr.Call({ c with Type = Ptr Void }, internalFunction "stack_alloc", [arrTy], [Expr.Macro(bogusEC, "stackframe", [])])))
           | _ -> die()        
         | Expr.Cast ({ Type = Ptr t } as c, _, Expr.Call (_, { Name = "malloc" }, _, [sz])) as expr ->
           match extractArraySize helper expr t sz with
@@ -268,7 +270,7 @@ namespace Microsoft.Research.Vcc
             | [_] -> Some(Expr.Macro(c, "_vcc_set_empty", []))
             | _ :: rest ->
               let mkSingleton (e:Expr) = Expr.Macro({e.Common with Type = c.Type}, "_vcc_set_singleton", [e])
-              let mkUnion (e1:Expr) (e2:Expr) = Expr.Macro(c, "_vcc_set_union", [e1;e2])
+              let mkUnion (e1:Expr) (e2:Expr) = Expr.Macro(e1.Common, "_vcc_set_union", [e1;e2])
               let rec createUnion exprs =
                 let rec splitAt n acc (l : 'a list) =
                   if (n = 0 || l.IsEmpty) then (List.rev acc, l)

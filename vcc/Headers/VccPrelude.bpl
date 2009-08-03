@@ -1619,7 +1619,7 @@ const $memory_allocator_ref : int;
 axiom $get_memory_allocator() == $ptr($memory_allocator_type, $memory_allocator_ref);
 axiom $ptr_level($memory_allocator_type) == 0;
 
-procedure $stack_alloc(#sf:int, #t:$ctype) returns (#r:$ptr);
+procedure $stack_alloc(#t:$ctype, #sf:int) returns (#r:$ptr);
   modifies $s;
   ensures $typed2($s, #r, #t);
   ensures $mutable($s, #r);

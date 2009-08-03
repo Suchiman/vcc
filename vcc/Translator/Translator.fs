@@ -189,7 +189,7 @@ namespace Microsoft.Research.Vcc
         if w = 1 then []
         else [B.ExprAttr ("weight", bInt w)]
       
-      let rec toTypeId t =
+      let rec toTypeId' translateArrayAsPtr t =
         let internalizeType t bt =      
           let rec isDerivedFromTypeVar = function
             | C.Type.TypeVar _ -> true
@@ -212,13 +212,15 @@ namespace Microsoft.Research.Vcc
           | C.Type.Primitive kind -> er ("^^" + C.Type.PrimSuffix kind) 
           | C.Type.Void -> er "^^void"
           | C.Type.Ptr tp ->
-            internalizeType t (bCall "$ptr_to" [toTypeId tp])
-          | C.Type.ObjectT -> toTypeId (C.Ptr C.Void)
+            internalizeType t (bCall "$ptr_to" [toTypeId' false tp])
+          | C.Type.ObjectT -> toTypeId' false (C.Ptr C.Void)
+          | C.Type.Array (tp, _) when translateArrayAsPtr ->
+            internalizeType (C.Type.Ptr tp) (bCall "$ptr_to" [toTypeId' translateArrayAsPtr tp])
           | C.Type.Array (tp, sz) ->
-            internalizeType (C.Type.Ptr tp) (bCall "$ptr_to" [toTypeId tp])
+            internalizeType t (bCall "$array" [toTypeId' translateArrayAsPtr tp; B.Expr.IntLiteral(new bigint(sz))])
             //bCall "$array" [toTypeId tp; bInt sz]
           | C.Type.Map (range, dom) -> 
-            internalizeType t (bCall "$map_t" [toTypeId range; toTypeId dom])
+            internalizeType t (bCall "$map_t" [toTypeId' false range; toTypeId' false dom])
           | C.Type.Ref { Name = n; Kind = (C.MathType|C.Record|C.FunctDecl _) } -> er ("^$#" + n)
           | C.Type.Ref td -> er ("^" + td.Name)
           | C.Type.TypeIdT -> er "^$#typeid_t"
@@ -226,7 +228,9 @@ namespace Microsoft.Research.Vcc
           | C.Type.TypeVar({Name = id}) -> er ("^^TV#" + id)
           | C.Type.Volatile(t) -> 
             helper.Panic("volatile type modifier survived")
-            toTypeId(C.Type.Ptr(t))
+            toTypeId'  false t
+            
+      let toTypeId = toTypeId' false
     
       let getTypeCode t =
         match typeCodes.TryGetValue t with
@@ -708,7 +712,7 @@ namespace Microsoft.Research.Vcc
               | t ->                
                 castFromInt (trType t) (bCall "$read_any" [bState; self p])
           | C.Expr.Call (_, fn, targs, args) ->
-            let args =  List.map toTypeId targs @ convertArgs fn (selfs args)
+            let args =  List.map (toTypeId' true) targs @ convertArgs fn (selfs args)
             let args = 
               if fn.IsStateless then args
               else bState :: args
