@@ -825,6 +825,7 @@ axiom (forall T:$ctype :: {$is_primitive(T)}
       
 axiom (forall S:$state, T:$ctype, sz:int, r:int :: {$extent_mutable(S, $ptr($array(T, sz), r))}
   $extent_mutable(S, $ptr($array(T, sz), r)) <==>
+    $mutable(S, $ptr($array(T, sz), r)) &&
     (forall i:int :: {$extent_mutable(S, $idx($ptr(T, r), i, T))}
        0 <= i && i < sz ==> $extent_mutable(S, $idx($ptr(T, r), i, T)))
 );
@@ -1816,7 +1817,7 @@ function $joined_array(a1:$ptr, a2:$ptr) returns($ptr)
   { $ptr($array($element_type($typ(a1)), $array_length($typ(a1))+$array_length($typ(a2))), $ref(a1)) }
 
 function {:inline true} $mutable_root(S:$state, p:$ptr) returns(bool)
-  { $mutable(S, p) && $is_object_root(S, p) && $timestamp_is_now(S, p) }
+  { $extent_mutable(S, p) && $is_object_root(S, p) && $timestamp_is_now(S, p) }
 
 procedure $split_array(a:$ptr, i:int);
   // writes extent(a)

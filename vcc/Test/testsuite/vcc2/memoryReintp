@@ -333,3 +333,38 @@ testcase(64,3) : error VC8510: Assertion '_vcc_extent(arr2) is writable in call 
 Verification of foo2Fail7 failed.
 testcase(73,3) : error VC8510: Assertion '_vcc_extent(arr1) is writable in call to _vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
 `
+#include "vcc2.h"
+
+typedef unsigned __int8 byte;
+
+typedef struct C {
+   int dummy;
+} C;
+
+typedef struct B {
+    C c;
+} B;
+
+typedef struct A1 {
+    B b;
+} A1;
+
+typedef struct vcc(dynamic_owns) gA {
+    A1 g[10]; 
+} gA;
+
+void foo ()
+ requires(is_object_root(as_array((byte*) 1024, sizeof(gA))))
+ writes(extent(as_array((byte*) 1024, sizeof(gA))))
+{
+    gA* a;
+    a = (gA*) 1024;
+   
+    from_bytes (a);
+    assert(mutable(&a->g[0])); // verifies 
+    assert(mutable(&a->g[0].b)); //verifies
+    assert(mutable(&a->g[0].b.c));  //does not verifiy !
+}
+`
+Verification of foo succeeded.
+`
