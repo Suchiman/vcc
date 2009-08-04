@@ -608,15 +608,11 @@ namespace Microsoft.Research.Vcc
                 helper.Error(e.Token, 9691, "Expression '" + e.Token.Value + "' is of generic type '" + name + "'; only pointers to generic types are supported.")
                 Some(bogusExpr)
               | _ -> None
-        let errorForNonCompositeTypePar tok (tv : TypeVariable) (t : Type) =
-          if not t.IsComposite then
-            helper.Error(tok, 9692, "Cannot instantiate generic parameter '" + tv.Name + "' with primitive type '" + t.ToString() + "'")
         function
           | Expr.VarDecl(ec, {Name = name; Type = TypeVar({Name = tvName}); Kind = (Local|SpecLocal) }) ->
             helper.Error(ec.Token, 9693, "Cannot declare local '" + name + "' of generic type '" + tvName + "'")
             Some(bogusExpr)
           | Expr.Call(ec,{TypeParameters = tpars}, targs, _) as e -> 
-            List.iter2 (errorForNonCompositeTypePar ec.Token) tpars targs
             errorForVarType e
           | e -> errorForVarType e
 
