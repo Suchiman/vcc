@@ -126,6 +126,9 @@ namespace Microsoft.Research.Vcc
           wr "\tattributes:\n"
           wrAttrs fn.CustomAttr
           wr "\n"
+          let hasRequiresFalse = List.exists (function BoolLiteral(_,false) -> true | _ -> false) (fn.Requires)
+          wr "\tinfo:\n"
+          if hasRequiresFalse then wr "\t\trequires false\n"
 
         for d in decls do
           match d with
