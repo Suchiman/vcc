@@ -316,6 +316,7 @@ namespace Microsoft.Research.Vcc {
       } else if (TypeHelper.GetTypeName(expression.Type) == SystemDiagnosticsContractsCodeContractTypedPtrString) {
         if (targetType is IPointerType && !TypeHelper.TypesAreEquivalent(targetType.ResolvedType, this.PlatformType.SystemVoidPtr.ResolvedType))
           return this.ConversionExpression(expression, targetType);
+        else return expression;
       } else { 
         if (targetType is IPointerType || targetType is IFunctionPointer || TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractTypedPtrString) {
           if (isExplicitConversion && TypeHelper.IsPrimitiveInteger(expression.Type) || expression is CompileTimeConstant && ExpressionHelper.IsIntegralZero((CompileTimeConstant)expression))

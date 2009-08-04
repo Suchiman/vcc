@@ -441,3 +441,15 @@ void foo(int *x) requires(is_fresh(x)) {};
 `
 testcase(3,29) : error VC9697: calling '_vcc_is_fresh' is allowed only in two-state contexts
 `
+#include <stdlib.h>
+#include "vcc.h"
+
+void bar()
+{
+    int *a;
+    a = (int*) malloc(sizeof(*a) * 42);
+    free(as_array(a,42));
+}
+`
+Verification of bar succeeded.
+`
