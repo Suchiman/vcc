@@ -1,8 +1,8 @@
 // ----------------------------------------------------------------------------
 // ArrayList.c
 //
-// The capacity of a ArrayList is the number of elements the ArrayList can hold. 
-// As elements are added to a ArrayList, the capacity is automatically increased as required through reallocation. 
+// The capacity of an ArrayList is the number of elements the ArrayList can hold.
+// As elements are added to an ArrayList, the capacity is automatically increased as required through reallocation.
 // Elements in this collection can be accessed using an integer index. Indexes in this collection are zero-based.
 //
 // ----------------------------------------------------------------------------
@@ -10,170 +10,142 @@
 #include <stdlib.h>
 #include "vcc.h"
 
-#define bool _Bool
-
 struct ArrayList{
     size_t capacity;
     size_t length;
     int *array;
 
     invariant(
-       this->capacity >=0 
-    && keeps(as_array(this->array, this->capacity))
-    && typed(as_array(this->array, this->capacity))
-    && is_malloc_root(this)
-    && is_malloc_root(as_array(this->array, this->capacity))
-    && this->length>=0 
-    && this->length<= this->capacity )
+       is_malloc_root(this)
+    && length <= capacity
+    && keeps(as_array(array, capacity))
+    && typed(as_array(array, capacity))
+    && is_malloc_root(as_array(array, capacity)))
 };
 
-ispure 
-size_t Length(struct ArrayList * A)
+ispure
+size_t Length(struct ArrayList *A)
     reads(A)
-    requires (wrapped(A))
-    ensures (result == A->length)
+    requires(wrapped(A))
+    returns(A->length)
 {
     return A->length;
 }
 
-struct ArrayList * CreateArrayList(size_t InitialCapacity)
-  requires(0<InitialCapacity)
-  ensures (wrapped(result))
-  ensures (Length(result)==0)
-  ensures (is_fresh(result))
+struct ArrayList *CreateArrayList(size_t InitialCapacity)
+  requires(0 < InitialCapacity)
+  ensures(wrapped(result))
+  ensures(Length(result)==0)
+  ensures(is_fresh(result))
 {
     struct ArrayList *A;
     spec(obj_t arr;)
 
-    A = malloc(sizeof(struct ArrayList));
+    A = malloc(sizeof(*A));
 
     A->capacity = InitialCapacity;
     A->length = 0;
-    A->array = malloc(sizeof(int) * InitialCapacity);
-    
-    arr = as_array(A->array, InitialCapacity);
+    A->array = malloc(sizeof(*A->array) * InitialCapacity);
+
+    speconly(arr = as_array(A->array, InitialCapacity);)
     wrap(arr);
-    set_owner(arr, A);
+    set_owns(A, SET(arr));
     wrap(A);
     return A;
 }
 
-void MakeEmpty(struct ArrayList * A)
-    requires(wrapped(A))
-    ensures(wrapped(A))
+void MakeEmpty(struct ArrayList *A)
+    maintains(wrapped(A))
     ensures(Length(A)==0)
     writes(A)
 {
     unwrap(A);
-        A->length = 0;
+    A->length = 0;
     wrap(A);
 }
 
-int Select(struct ArrayList * A, size_t i)
-  requires (i>=0 && i < Length(A))
-  requires (wrapped(A))
-  reads(A)
+ispure
+int Select(struct ArrayList *A, size_t i)
+    requires(i < Length(A))
+    requires(wrapped(A))
+    reads(set_universe())
 {
-    assert(inv(A));
-    return A->array [i];
+    return A->array[i];
 }
 
-void Update(struct ArrayList * A, size_t i, int v)
-    requires (i>=0 && i < Length(A))
-    requires (wrapped(A))
-    writes(A)
-{   unwrap(A);
-        unwrap(as_array(A->array, A->capacity));
-            A->array[i] = v;
-        wrap(as_array(A->array, A->capacity));
-    wrap(A);
-}
-
-
-
-void DisposeArrayList(struct ArrayList * A)
+void Update(struct ArrayList *A, size_t i, int v)
+    requires(i < Length(A))
     requires(wrapped(A))
     writes(A)
-{   
-    spec(obj_t arr;)
-
+{
     unwrap(A);
-    arr = as_array(A->array, A->capacity);
-        unwrap(arr) ;
-        // giveup_owner(arr, A);
-        speconly(free((void *)arr);)
-        A->array = (int *) NULL;
-        free(A);
+    unwrap(as_array(A->array, A->capacity));
+    A->array[i] = v;
+    wrap(as_array(A->array, A->capacity));
+    wrap(A);
 }
 
-void Add(struct ArrayList * A, int v)
-    requires(wrapped(A))  
-    requires(Length(A) < 100000)
-    ensures (wrapped(A))
-    ensures (Length(A)==old(Length(A))+1)
+void DisposeArrayList(struct ArrayList *A)
+    requires(wrapped(A))
     writes(A)
-{   
+{
     unwrap(A);
-        unwrap(as_array(A->array, A->capacity));
-
-        if (A->capacity == A->length) {
-            size_t i;
-            int *tmp;
-            size_t k;
-            spec(obj_t newArr;)
-            spec(obj_t oldArr;)
-            size_t newCapacity;
-
-            i = 0;
-
-            newCapacity = A->capacity * 2 + 1;
-
-            tmp = malloc(sizeof(int) * newCapacity);
-
-            while (i < A->length) 
-              invariant(i >= 0)
-              writes (array_range(tmp, A->length))
-            {
-              tmp[i] = A->array[i];
-              i = i + 1;
-            }
-            oldArr = as_array(A->array, A->capacity);
-            A->capacity = newCapacity;
-            A->array = tmp;
-            newArr = as_array(A->array, A->capacity);
-            giveup_owner(oldArr, A);
-            free((void *)oldArr);
-            set_owner(newArr, A);
-        }
-
-        A->array[A->length] = v;
-        A->length = A->length + 1;
-        wrap(as_array(A->array, A->capacity));
-
-    wrap(A);        
+    unwrap(as_array(A->array, A->capacity));
+    free(as_array(A->array, A->capacity));
+    A->array = (int *) NULL;
+    free(A);
 }
 
+void Add(struct ArrayList *A, int v)
+    requires(Length(A) < 100000)
+    maintains(wrapped(A))
+    ensures(Length(A)==old(Length(A))+1)
+    // Note: there should be additional postconditions / annotations on the
+    // elements of A after returning
+    writes(A)
+{
+    unwrap(A);
+    unwrap(as_array(A->array, A->capacity));
+    if (A->capacity == A->length) {
+        size_t i;
+        int *tmp;
+        size_t newCapacity;
+
+        newCapacity = A->capacity * 2 + 1;
+
+        tmp = malloc(sizeof(*A->array) * newCapacity);
+
+        i = 0;
+        while (i < A->length)
+            writes(array_range(tmp, A->length))
+        {
+            tmp[i] = A->array[i];
+            i = i + 1;
+        }
+        free(as_array(A->array, A->capacity));
+        A->capacity = newCapacity;
+        A->array = tmp;
+        set_owns(A, SET(as_array(A->array, A->capacity)));
+    }
+    A->array[A->length] = v;
+    A->length++;
+    wrap(as_array(A->array, A->capacity));
+    wrap(A);
+}
 
 int main_test()
 {
-    struct ArrayList * A;
-    size_t N;
-    size_t i; 
-    int j;
+    size_t N = 42;
+    struct ArrayList *A = CreateArrayList(N);
+    size_t i = 0;
 
-    N = 1;
-    A = CreateArrayList(N);
-    assert(Length(A)==0);
-    i = 0;
-    while(i < N)
-        invariant (wrapped(A))       
+    while (i < N)
+        invariant(wrapped(A))
+        invariant(Length(A)==i)
     {
-        assume(Length(A) < 100000);
-        Add(A, unchecked((int)i));
-        i = unchecked(i + 1);
+        Add(A, (int)i);
+        i++;
     }
-    //assert (Length(A)==N);
-
     DisposeArrayList(A);
     return 0;
 }
