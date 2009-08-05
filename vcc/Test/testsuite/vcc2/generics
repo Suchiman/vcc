@@ -152,13 +152,13 @@ struct T {
   spec(struct S *p;)
 };
 
-template<typename T> T *spec_malloc();
+template<typename T> T *bar();
 
 void foo() 
   writes(set_empty())
 {
   struct T t;
-  speconly(t.p = spec_malloc<struct S>();)
+  speconly(t.p = bar<struct S>();)
 }
 `
 Verification of foo succeeded.
