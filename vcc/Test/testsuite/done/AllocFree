@@ -11,16 +11,14 @@ void AllocTestOk()
   if (px != 0){
     px[9] = 7;
     x = px[0];
-  } else {
-    assert(false); // remove when malloc is fixed!
-  }
+  } 
 }
 
 void FreeTestOk()
 { 
   int* p; 
   p = (int*) malloc(sizeof(int));
-  free(p);
+  if (p != 0) free(p);
 }
 `
 Verification of AllocTestOk succeeded.
@@ -54,13 +52,13 @@ void test_it()
 void test_free_base()
 {
   char* p = malloc(7);
-  free(p + 1);
+  if (p != 0) free(p + 1);
 }
 `
 Verification of do_free succeeded.
 Verification of test_it failed.
 testcase(22,5) : error VC8507: Assertion 'p->x is writable' did not verify.
 Verification of test_free_base failed.
-testcase(29,3) : error VC9502: Call 'free(p + 1)' did not verify.
+testcase(29,15) : error VC9502: Call 'free(p + 1)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the pointer being reclaimed was returned by malloc()'.
 `

@@ -139,7 +139,7 @@ void foo()
 void ok2()
 {
   struct CannotOpen *x = (struct CannotOpen *)malloc(sizeof(struct CannotOpen));
-  wrap(x);
+  if (x != NULL) wrap(x);
 }
 
 void bar(struct CannotOpen *x)

@@ -1666,8 +1666,7 @@ procedure $stack_free(#sf:int, #x:$ptr);
   ensures $memory($s) == $memory(old($s));
   ensures $timestamp_post(old($s), $s);
 
-
-procedure $alloc(#t:$ctype) returns(#r:$ptr);
+procedure $spec_alloc(#t:$ctype) returns(#r:$ptr);
   modifies $s;
   ensures $typed2($s, #r, #t);
   ensures $mutable($s, #r);
@@ -1696,6 +1695,67 @@ procedure $alloc(#t:$ctype) returns(#r:$ptr);
   ensures $is_malloc_root($s, #r);
   ensures $is_object_root($s, #r);
   ensures $first_option_typed($s, #r);
+
+procedure $spec_alloc_array(#t:$ctype, sz:int) returns(#r:$ptr);
+  modifies $s;
+  ensures $typed2($s, #r, $array(#t, sz));
+  ensures $mutable($s, #r);
+  ensures $mutable($s, $emb($s, #r));
+
+  ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
+    $in_extent_of($s, #p, #r) ==> $mutable($s, #p) 
+      && $nested(old($s), #p)
+      && $owns($s, #p) == $set_empty()
+      && $timestamp_is_now($s, #p)
+    );
+
+  ensures (forall #p:$ptr :: {$st($s, #p)} 
+    #p == $emb($s, #r) || $in_full_extent_of(#p, #r) ==> $timestamp_is_now($s, #p));
+
+  ensures $memory(old($s)) == $memory($s);
+  ensures (forall #p:$ptr :: {$st($s, #p)}
+    $typed(old($s), #p) || !$nested(old($s), #p) ==> $st_eq(old($s), $s, #p));
+  ensures (forall #p:$ptr :: {$ts($s, #p)}
+    $typed(old($s), #p) || !$nested(old($s), #p) ==> $ts_eq(old($s), $s, #p));
+  ensures (forall #p:$ptr :: {$thread_local($s, #p)}
+    $thread_local(old($s), #p) ==> $thread_local($s, #p));
+  ensures $timestamp_post_strict(old($s), $s);
+
+  ensures !$typed(old($s), #r);
+  ensures $is_malloc_root($s, #r);
+  ensures $is_object_root($s, #r);
+  ensures $first_option_typed($s, #r);
+
+
+procedure $alloc(#t:$ctype) returns(#r:$ptr);
+  modifies $s;
+  ensures $ref(#r) == 0 || $typed2($s, #r, #t);
+  ensures $ref(#r) == 0 || $mutable($s, #r);
+  ensures $ref(#r) == 0 || $mutable($s, $emb($s, #r));
+
+  ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
+    $in_extent_of($s, #p, #r) ==> $mutable($s, #p) 
+      && $nested(old($s), #p)
+      && $owns($s, #p) == $set_empty()
+      && $timestamp_is_now($s, #p)
+    );
+
+  ensures (forall #p:$ptr :: {$st($s, #p)} 
+    #p == $emb($s, #r) || $in_full_extent_of(#p, #r) ==> $timestamp_is_now($s, #p));
+
+  ensures $memory(old($s)) == $memory($s);
+  ensures (forall #p:$ptr :: {$st($s, #p)}
+    $typed(old($s), #p) || !$nested(old($s), #p) ==> $st_eq(old($s), $s, #p));
+  ensures (forall #p:$ptr :: {$ts($s, #p)}
+    $typed(old($s), #p) || !$nested(old($s), #p) ==> $ts_eq(old($s), $s, #p));
+  ensures (forall #p:$ptr :: {$thread_local($s, #p)}
+    $thread_local(old($s), #p) ==> $thread_local($s, #p));
+  ensures $timestamp_post_strict(old($s), $s);
+
+  ensures !$typed(old($s), #r);
+  ensures $ref(#r) == 0 || $is_malloc_root($s, #r);
+  ensures $ref(#r) == 0 || $is_object_root($s, #r);
+  ensures $ref(#r) == 0 || $first_option_typed($s, #r);
 
 
 procedure $free(#x:$ptr);

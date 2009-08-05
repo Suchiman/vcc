@@ -100,7 +100,7 @@ void reint4()
 {
   union B *b;
   b = malloc(sizeof(union B));
-  reint2(b);
+  if (b != NULL) reint2(b);
 }
 `
 Verification of foo succeeded.

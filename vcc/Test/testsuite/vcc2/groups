@@ -668,8 +668,8 @@ void test()
     st *newp;
 
     newp = (st*) malloc(sizeof(st));
-    assert(set_eq(owns(newp), set_empty()));
-    assert(set_eq(owns((st::g*)newp), set_empty()));
+    assert(newp == NULL || set_eq(owns(newp), set_empty()));
+    assert(newp == NULL || set_eq(owns((st::g*)newp), set_empty()));
 
 }
 `

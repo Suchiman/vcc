@@ -46,17 +46,19 @@ size_t Length(struct Stack * S)
 }
 
 struct Stack * CreateStack()
-    ensures(wrapped(result))
-    ensures(is_fresh(result))
-    ensures(IsEmpty(result))
+    ensures(result == NULL || wrapped(result))
+    ensures(result == NULL || is_fresh(result))
+    ensures(result == NULL || IsEmpty(result))
 {
         struct Stack * S;
 
         assume(Capacity() == 100);
 
-        S = malloc(sizeof(struct Stack));
-        S->topOfStack = 0;
-    wrap(S);
+    S = malloc(sizeof(struct Stack));
+    if (S != NULL) {
+      S->topOfStack = 0;
+      wrap(S);
+    }
     return S;
 }
 
@@ -123,6 +125,7 @@ int test_main()
     int j;
 
     S = CreateStack();
+    assume(S != NULL);
     assert(IsEmpty(S));
     i = 0;
     while(i < Capacity()) 

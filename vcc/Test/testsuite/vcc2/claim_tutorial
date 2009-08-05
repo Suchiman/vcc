@@ -130,16 +130,18 @@ void use_case()
   spec( claim_t c; )
   spec( claim_t c2; )
   a = malloc(sizeof(*a));
-  a->x = 0;
-  wrap(a);
-  speconly( c = claim(a, true); )
-  incr(a, &tmp spec(c) spec( &c2) );
-  assert(valid_claim(c2));
-  assert(tmp <= a->x);
-  unclaim(c2, c);
-  unclaim(c, a);
-  unwrap(a);
-  free(a);
+  if (a != 0) {
+    a->x = 0;
+    wrap(a);
+    speconly( c = claim(a, true); )
+    incr(a, &tmp spec(c) spec( &c2) );
+    assert(valid_claim(c2));
+    assert(tmp <= a->x);
+    unclaim(c2, c);
+    unclaim(c, a);
+    unwrap(a);
+    free(a);
+  }
 }
 `
 Verification of A#adm succeeded.

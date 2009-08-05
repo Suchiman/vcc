@@ -478,7 +478,16 @@ namespace Microsoft.Research.Vcc
               helper.Error (c.Token, 9635, "function '" + fn.Name + "' used in pure context, but not marked with 'ispure'", Some(fn.Token))
             None
           else
-            let tmp = getTmp helper ("res_" + fn.Name) fn.RetType VarKind.Local
+            let rec isGenericType = function
+              | TypeVar _ -> true
+              | Ptr t
+              | Volatile t
+              | Array(t, _) -> isGenericType t
+              | Map(t1, t2) -> isGenericType t1 || isGenericType t2
+              | _ -> false
+            
+            let retType = if isGenericType fn.RetType then call.Type else fn.RetType
+            let tmp = getTmp helper ("res_" + fn.Name) retType VarKind.Local
             let call' = Call (c, fn, targs, List.map self args)
             let c' = { c with Type = Void }
             let tmpRef = Expr.Ref (c, tmp)

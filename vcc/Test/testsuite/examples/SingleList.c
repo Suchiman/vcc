@@ -8,7 +8,6 @@
  */
 #define NULL    (void*)0
 #define MAXUINT 0x7FFFFFFF
-extern void* malloc(unsigned int size);
 
 #ifdef VERIFY
 /*
@@ -124,7 +123,7 @@ void InitializeSingleListHead( PSINGLE_LIST_ENTRY ListHead )
     speconly(ListHead->Back = NULL;)
 
 speconly(
-    ListManager = (PSINGLE_LIST_MANAGER) malloc(sizeof(SINGLE_LIST_MANAGER));
+    ListManager = spec_malloc<SINGLE_LIST_MANAGER>();
     ListManager->size = 1;
     ListManager->index[ListHead] = 0;
     ListManager->ListHead = ListHead;

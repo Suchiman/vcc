@@ -39,6 +39,7 @@ void use_case()
   spec( claim_t c2; )
 
   a = malloc(sizeof(*a));
+  assume(a != NULL);
   a->x = 0;
   wrap(a);
 

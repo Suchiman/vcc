@@ -88,11 +88,11 @@ size_t Length(struct Stack * S)
 
 struct Stack * CreateStack( unsigned int max_capacity )
     requires( max_capacity > 0 )
-    ensures(wrapped(result))
-    ensures(old(nested(result)))
-    ensures(IsEmpty(result))
-    ensures(max_capacity == result->abs->capacity)
-    ensures(is_fresh(result))
+    ensures(result == NULL || wrapped(result))
+    ensures(result == NULL || old(nested(result)))
+    ensures(result == NULL || IsEmpty(result))
+    ensures(result == NULL || max_capacity == result->abs->capacity)
+    ensures(result == NULL || is_fresh(result))
     writes(set_empty())
 {
 	struct Stack * S;
@@ -100,29 +100,33 @@ struct Stack * CreateStack( unsigned int max_capacity )
     S = (struct Stack*)0;
 
 	S = malloc(sizeof(struct Stack));
-	S->topOfStack = 0;
+	if (S != NULL) {
+    S->topOfStack = 0;
     S->capacity   = max_capacity;
     S->elements    = malloc(sizeof(size_t) * S->capacity );
+    if (S->elements != NULL) {
 
 speconly(
 
-  S->elementsAsArray = as_array(S->elements, S->capacity);
-	S->abs = malloc(sizeof(struct AbsStack));
-	S->abs->high_mark = S->topOfStack ; 
-	S->abs->capacity  = S->capacity;
-    
-	set_owns( S->abs, set_empty() );
-	assert( S->abs->high_mark == S->topOfStack );
+      S->elementsAsArray = as_array(S->elements, S->capacity);
+      S->abs = spec_malloc<struct AbsStack>();
+      S->abs->high_mark = S->topOfStack ; 
+      S->abs->capacity  = S->capacity;
+      
+      set_owns( S->abs, set_empty() );
+      assert( S->abs->high_mark == S->topOfStack );
 
-  wrap( S->elementsAsArray );
-	set_owner( S->elementsAsArray, S );
-    
-    wrap( S->abs );
-	set_owner( S->abs, S );
-
+      wrap( S->elementsAsArray );
+      set_owner( S->elementsAsArray, S );
+        
+      wrap( S->abs );
+      set_owner( S->abs, S );
 )
-	wrap(S);
-    return S;
+      wrap(S);
+    } 
+    else return NULL;
+	}
+  return S;
 }
 
 

@@ -42,10 +42,12 @@ struct ArrayList *CreateArrayList(size_t InitialCapacity)
     spec(obj_t arr;)
 
     A = malloc(sizeof(*A));
+    assume(A != NULL);
 
     A->capacity = InitialCapacity;
     A->length = 0;
     A->array = malloc(sizeof(*A->array) * InitialCapacity);
+    assume(A->array != NULL);
 
     speconly(arr = as_array(A->array, InitialCapacity);)
     wrap(arr);
@@ -114,6 +116,7 @@ void Add(struct ArrayList *A, int v)
         newCapacity = A->capacity * 2 + 1;
 
         tmp = malloc(sizeof(*A->array) * newCapacity);
+        assume(tmp != NULL);
 
         i = 0;
         while (i < A->length)

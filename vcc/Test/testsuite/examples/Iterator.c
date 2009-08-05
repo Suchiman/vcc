@@ -20,14 +20,16 @@ struct Collection {
 void init()
 {
   struct Collection *coll = (struct Collection *)malloc(sizeof(struct Collection));
-  coll->arr = NULL;
-  coll->ver = 0;
+  if (coll != NULL) {
+    coll->arr = NULL;
+    coll->ver = 0;
 
-  speconly(
-    coll->shadow = current_state();
-    wrap(coll::Shadow);
-    wrap(coll);
-  )
+    speconly(
+      coll->shadow = current_state();
+      wrap(coll::Shadow);
+      wrap(coll);
+    )
+  }
 }
 
 
@@ -68,15 +70,16 @@ void get_iter(struct Collection *c)
   requires(wrapped(c))
 {
   struct Iterator *iter = (struct Iterator *)malloc(sizeof(struct Iterator));
+  if (iter != NULL) {
+    iter->coll = c;
+    iter->ver = c->ver;
+    speconly( iter->arr = c->arr; )
+    atomic(c) {
+      speconly( iter->cl = claim(c::Shadow, true); )
+    }
 
-  iter->coll = c;
-  iter->ver = c->ver;
-  speconly( iter->arr = c->arr; )
-  atomic(c) {
-    speconly( iter->cl = claim(c::Shadow, true); )
+    wrap(iter);
   }
-
-  wrap(iter);
 }
 
 void iterate(struct Iterator *it)

@@ -265,7 +265,14 @@ void _vcc_free(obj_t p)
 void _vcc_stack_free(mathint, obj_t p);
 
 template<typename T> obj_t _vcc_stack_alloc(mathint);
+
+template<typename T> T *_vcc_spec_alloc();
+template<typename T> T *_vcc_spec_alloc_array(unsigned int n);
+
 obj_t _vcc_alloc(typeid_t);
+
+#define spec_malloc _vcc_spec_alloc
+#define spec_malloc_array _vcc_spec_alloc_array
 
 void _vcc_atomic_op(obj_t, ...);
 // do not change this expression - the compiler relies on exactly this structure to find the information it needs
@@ -484,7 +491,6 @@ state_t _vcc_by_claim(claim_t c);
 
 bool _vcc_always_by_claim(claim_t c, obj_t o);
 #define always_by_claim _vcc_always_by_claim
-
 
 /*** 
  *** Obsolete

@@ -7,7 +7,6 @@
  * Required forward definitions/declarations.
  */
 #define MAXUINT 0x7FFFFFFF
-extern void *malloc(unsigned int size);
 
 #ifdef VERIFY
 /*
@@ -120,7 +119,7 @@ void InitializeListHead( PLIST_ENTRY ListHead )
     ListHead->Flink = ListHead->Blink = ListHead;
 
 speconly(
-    ListManager = (PLIST_MANAGER) malloc(sizeof(LIST_MANAGER));
+    ListManager = spec_malloc<LIST_MANAGER>();
     ListManager->size = 1;
     ListManager->index[ListHead] = 0;
     ListManager->ListHead = ListHead;

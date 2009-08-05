@@ -71,11 +71,12 @@ struct Container {
 void init()
 {
   struct Container *c = (struct Container *)malloc(sizeof(struct Container));
-
-  speconly( c->d.handles = lambda(struct Handle *h; true; false); )
-  assert(forall(struct Handle *h; h->data == &c->d ==> !inv(h)));
-  wrap(&c->d);
-  wrap(c);
+  if (c != NULL) {
+    speconly( c->d.handles = lambda(struct Handle *h; true; false); )
+    assert(forall(struct Handle *h; h->data == &c->d ==> !inv(h)));
+    wrap(&c->d);
+    wrap(c);
+  }
 }
 
 void closed_use(struct Container *c)

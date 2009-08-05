@@ -715,13 +715,13 @@ void foo()
 {
    
    struct S *sp = (struct S *)malloc(sizeof(struct S));
-
    spec(claim_t c;)
-
-   wrap(sp);
-   atomic(sp) {
-     sp->x = 10;
-     speconly( c = claim(sp, sp->x > 0); )
+   if (sp != NULL) { 
+     wrap(sp);
+     atomic(sp) {
+       sp->x = 10;
+       speconly( c = claim(sp, sp->x > 0); )
+     }
    }
 }
 
@@ -733,20 +733,22 @@ void bar()
 
    spec(claim_t c;)
 
-   wrap(sp);
-   atomic(sp) {
-     q = 10;
-     sp->x = 10;
-     speconly( c = claim(sp, q == 9 && sp->x > 0); )
-     q = 9;
+   if (sp != NULL) {
+     wrap(sp);
+     atomic(sp) {
+       q = 10;
+       sp->x = 10;
+       speconly( c = claim(sp, q == 9 && sp->x > 0); )
+       q = 9;
+     }
    }
 }
 
 `
 Verification of foo failed.
-testcase(17,51) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
+testcase(16,53) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
 Verification of bar failed.
-testcase(33,51) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
+testcase(34,53) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
 `
 #define PVOID void*
 #define NULL ((void*)0)

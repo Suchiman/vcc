@@ -12,7 +12,7 @@ void OldInInvCheckInLoop()
   {
     struct A *a;
     a = malloc(sizeof(*a));
-    wrap(a);
+    if (a != NULL) wrap(a);
   }
 }
 `

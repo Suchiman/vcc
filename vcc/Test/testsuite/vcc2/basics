@@ -448,8 +448,18 @@ void bar()
 {
     int *a;
     a = (int*) malloc(sizeof(*a) * 42);
+    if (a != NULL) free(as_array(a,42));
+}
+
+spec(
+void barSafe()
+{
+    int *a;
+    a = spec_malloc_array<int>(42);
     free(as_array(a,42));
 }
+)
 `
 Verification of bar succeeded.
+Verification of barSafe succeeded.
 `

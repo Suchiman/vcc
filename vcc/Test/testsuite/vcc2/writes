@@ -127,8 +127,8 @@ typedef struct A {
 A *foo( A*p)
   writes(extent(p))
   requires(is_malloc_root(p))
-  ensures(is_fresh(result))
-  ensures(typed(result) && mutable(result))
+  ensures(result == NULL || is_fresh(result))
+  ensures(result == NULL || (typed(result) && mutable(result)))
 {
   free(p);
   return malloc(sizeof(A));
@@ -143,15 +143,21 @@ void useA()
   A *p2 = malloc(sizeof(A));
   A *t1, *t2;
 
-  donothing();
-  t1 = foo(p1);
-  donothing();
-  assert(p2 != t1);
-  t2 = foo(p2);
-  donothing();
-  assert(t1 != t2);
-  assert(t1 != &loc);
-  assert(t2 != &loc);
+  if (p1 != NULL && p2 != NULL) {
+    donothing();
+    t1 = foo(p1);
+    if (t1 != NULL) {
+      donothing();
+      assert(p2 != t1);
+      t2 = foo(p2);
+      if (t2 != NULL) {
+        donothing();
+        assert(t1 != t2);
+        assert(t1 != &loc);
+        assert(t2 != &loc);
+      }
+    }
+  }
 }
 `
 Verification of foo succeeded.
@@ -443,19 +449,16 @@ struct vcc(claimable) S {
 void foo(struct S **s) 
   writes(s)
 {
-//  spec( claim_t c;)
   struct S *a = (struct S *)malloc(sizeof(struct S) * 10);
   struct S *b = &a[0];
-  wrap(b);
-//  speconly(c = claim(b, true);)
-  free((void *)as_array(a, 10));
-//  atomic (c, b) {
-//    b->c = 1;
-//  }
+  if (a != NULL) {
+    wrap(b);
+    free((void *)as_array(a, 10));
+  }
 }
 `
 Verification of foo failed.
-testcase(16,3) : error VC8510: Assertion '_vcc_extent(p) is writable in call to free((void *)_vcc_as_array(a, 10))' did not verify.
+testcase(15,5) : error VC8510: Assertion '_vcc_extent(p) is writable in call to free((void *)_vcc_as_array(a, 10))' did not verify.
 `
 #include <vcc.h>
 
@@ -504,7 +507,7 @@ void foo(struct B *b)
 }
 
 struct B *alloc_B()
-  ensures(extent_is_fresh(result) && extent_mutable(result))
+  ensures(result == NULL || (extent_is_fresh(result) && extent_mutable(result)))
 {
   return (struct B*)malloc(sizeof(struct B));
 }
@@ -514,9 +517,11 @@ void baz()
   struct B *b;
 
   b = alloc_B();
-  b->z = 12;
-  b->a1.y = 12;
-  b->a2.x = 12;
+  if (b != NULL) {
+    b->z = 12;
+    b->a1.y = 12;
+    b->a2.x = 12;
+  }
 }
 
 struct C {
@@ -524,7 +529,7 @@ struct C {
 };
 
 struct C *alloc_C()
-  ensures(extent_is_fresh(result) && extent_mutable(result))
+  ensures(result == NULL || (extent_is_fresh(result) && extent_mutable(result)))
 {
   return (struct C*)malloc(sizeof(struct C));
 }
@@ -534,7 +539,7 @@ void baz_C()
   struct C *b;
 
   b = alloc_C();
-  b->a[1].x = 12;
+  if (b != NULL) b->a[1].x = 12;
 }
 
 void fail()
@@ -563,7 +568,7 @@ Verification of baz succeeded.
 Verification of alloc_C succeeded.
 Verification of baz_C succeeded.
 Verification of fail failed.
-testcase(56,12) : error VC9500: Assertion '_vcc_mutable(b) ==> _vcc_extent_mutable(b)' did not verify.
+testcase(58,12) : error VC9500: Assertion '_vcc_mutable(b) ==> _vcc_extent_mutable(b)' did not verify.
 Verification of ok succeeded.
 Verification of ok2 succeeded.
 `
