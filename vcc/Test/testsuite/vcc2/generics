@@ -143,3 +143,23 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+
+#include <vcc.h>
+
+struct S { int a; };
+struct T { 
+  int b;
+  spec(struct S *p;)
+};
+
+template<typename T> T *spec_malloc();
+
+void foo() 
+  writes(set_empty())
+{
+  struct T t;
+  speconly(t.p = spec_malloc<struct S>();)
+}
+`
+Verification of foo succeeded.
+`

@@ -370,8 +370,8 @@ namespace Microsoft.Research.Vcc
           if isRefToStruct c.Type then
             Some (Expr.Result ({ c with Type = Type.MathStruct }))
           else None
-        | Expr.Call (c, fn, targs, args) ->
-          Some (Expr.Call ({ c with Type = fn.RetType }, fn, targs, List.map self args))
+        | Expr.Call (c, fn, targs, args) when fn.RetType = Type.MathStruct -> 
+          Some (Expr.Call ({ c with Type = Type.MathStruct }, fn, targs, List.map self args))
         
         | MemoryWrite (c, dst, src) ->
           match underDeref dst with
