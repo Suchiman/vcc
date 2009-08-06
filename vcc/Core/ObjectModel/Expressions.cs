@@ -3238,12 +3238,12 @@ namespace Microsoft.Research.Vcc {
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       object/*?*/ container = this.Resolve();
       if (container == null) {
-        this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.NameNotInContext, this.Name.Value));
+        this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.NameNotInContext, LexicalScope.UnmangledName(this.Name.Value)));
         return true;
       }
       if (container is ILocalDefinition || container is IParameterDefinition || container is IFieldDefinition || container is IPropertyDefinition || container is IMethodDefinition)
         return false;
-      this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.NameNotInContext, this.Name.Value)); //TODO: better error message
+      this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.NameNotInContext, LexicalScope.UnmangledName(this.Name.Value))); //TODO: better error message
       return true;
     }
 
