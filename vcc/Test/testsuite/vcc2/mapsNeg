@@ -25,3 +25,15 @@ void oopsExample()
 `
 testcase(6,15) : error VC0000: Cannot implicitly convert type '__int32' to 'unsigned __int32'.
 `
+#include "vcc2.h"
+
+#define NULL (void*)0
+
+void foo()
+{
+  spec(claim_t t;)
+  assert(forall(int flag; (flag==0) ==> set_in(lambda(int x; true; (x==0 ? t : NULL) )[flag], SET(t))));
+} 
+`
+testcase(8,85) : error VC0000: Type of conditional expression cannot be determined because there are implicit conversions between '_vcc_claim_struct*' and 'void*'; try adding an explicit cast to one of the arguments.
+`

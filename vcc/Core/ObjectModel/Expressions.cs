@@ -4230,6 +4230,7 @@ namespace Microsoft.Research.Vcc {
         result |= decl.HasErrors();
       IsTrue convertedCondition = new IsTrue(base.Condition);
       result |= convertedCondition.HasErrors();
+      result |= this.lambdaExpr.HasErrors();
       result |= this.HasSideEffect(true);
       return result;
     }
