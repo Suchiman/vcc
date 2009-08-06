@@ -354,11 +354,16 @@ namespace Microsoft.Research.Vcc
       if (!this.options.RunTestSuite) return false;
       bool foundADirectory = false;
       if (path != null && Directory.Exists(path)) {
-        foreach (string file in Directory.GetDirectories(path, pattern)) {
-          string ext = Path.HasExtension(file) ? Path.GetExtension(file) : "";
-          if (string.Compare(extension, ext, true, System.Globalization.CultureInfo.InvariantCulture) != 0) continue;
-          this.options.FileNames.Add(Path.GetFullPath(file));
+        if (path == ".\\" || path == "..\\") {
+          this.options.FileNames.Add(Path.GetFullPath(path));
           foundADirectory = true;
+        } else {
+          foreach (string file in Directory.GetDirectories(path, pattern)) {
+            string ext = Path.HasExtension(file) ? Path.GetExtension(file) : "";
+            if (string.Compare(extension, ext, true, System.Globalization.CultureInfo.InvariantCulture) != 0) continue;
+            this.options.FileNames.Add(Path.GetFullPath(file));
+            foundADirectory = true;
+          }
         }
       }
       return foundADirectory;
