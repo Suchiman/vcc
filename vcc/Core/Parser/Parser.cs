@@ -1384,7 +1384,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ requires this.currentToken == Token.Reads;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      this.resultIsAKeyword = true;
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
       while (true) {
@@ -1394,7 +1393,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.GetNextToken();
       }
       this.SkipOverTo(Token.RightParenthesis, followers);
-      this.resultIsAKeyword = false;
     }
 
     private void ParseRequires(FunctionOrBlockContract contract, TokenSet followers)
@@ -1415,7 +1413,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ requires this.currentToken == Token.Writes;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      this.resultIsAKeyword = true;
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
       while (true) {
@@ -1425,7 +1422,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.GetNextToken();
       }
       this.SkipOverTo(Token.RightParenthesis, followers);
-      this.resultIsAKeyword = false;
     }
 
     private void ParseWrites(FunctionOrBlockContract contract, TokenSet followers)
