@@ -1,0 +1,53 @@
+#include <stdlib.h>
+#include "vcc2.h"
+
+typedef unsigned __int8 byte;
+
+typedef struct C {
+   int dummy;
+} C;
+
+typedef struct B {
+    C c;
+} B;
+
+typedef struct A1 {
+    B b;
+} A1;
+
+typedef struct vcc(dynamic_owns) gA {
+    A1 g[10]; 
+} gA;
+
+void withSpecAlloc ()
+{
+    spec(gA* a;)
+    speconly(a = spec_malloc<gA>();)
+    assert(mutable(&a->g[0]));
+    assert(mutable(&a->g[0].b));
+    assert(mutable(&a->g[0].b.c)); 
+}
+
+void withMalloc ()
+{
+    gA* a = (gA*) malloc(sizeof(gA));
+    if (a != NULL) {
+      assert(mutable(&a->g[0])); 
+      assert(mutable(&a->g[0].b)); 
+      assert(mutable(&a->g[0].b.c));
+    }
+}
+
+void withStackAlloc ()
+{
+    gA g;
+    gA* a = &g;
+    assert(mutable(&a->g[0]));
+    assert(mutable(&a->g[0].b));
+    assert(mutable(&a->g[0].b.c));
+}
+`
+Verification of withSpecAlloc succeeded.
+Verification of withMalloc succeeded.
+Verification of withStackAlloc succeeded.
+`

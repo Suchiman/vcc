@@ -1623,7 +1623,7 @@ axiom $ptr_level($memory_allocator_type) == 0;
 procedure $stack_alloc(#t:$ctype, #sf:int) returns (#r:$ptr);
   modifies $s;
   ensures $typed2($s, #r, #t);
-  ensures $mutable($s, #r);
+  ensures $extent_mutable($s, #r);
   ensures $mutable($s, $emb($s, #r));
 
   ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
@@ -1669,7 +1669,7 @@ procedure $stack_free(#sf:int, #x:$ptr);
 procedure $spec_alloc(#t:$ctype) returns(#r:$ptr);
   modifies $s;
   ensures $typed2($s, #r, #t);
-  ensures $mutable($s, #r);
+  ensures $extent_mutable($s, #r);
   ensures $mutable($s, $emb($s, #r));
 
   ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
@@ -1699,7 +1699,7 @@ procedure $spec_alloc(#t:$ctype) returns(#r:$ptr);
 procedure $spec_alloc_array(#t:$ctype, sz:int) returns(#r:$ptr);
   modifies $s;
   ensures $typed2($s, #r, $array(#t, sz));
-  ensures $mutable($s, #r);
+  ensures $extent_mutable($s, #r);
   ensures $mutable($s, $emb($s, #r));
 
   ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
@@ -1730,7 +1730,7 @@ procedure $spec_alloc_array(#t:$ctype, sz:int) returns(#r:$ptr);
 procedure $alloc(#t:$ctype) returns(#r:$ptr);
   modifies $s;
   ensures $ref(#r) == 0 || $typed2($s, #r, #t);
-  ensures $ref(#r) == 0 || $mutable($s, #r);
+  ensures $ref(#r) == 0 || $extent_mutable($s, #r);
   ensures $ref(#r) == 0 || $mutable($s, $emb($s, #r));
 
   ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
