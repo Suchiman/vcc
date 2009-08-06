@@ -354,7 +354,7 @@ namespace Microsoft.Research.Vcc
       if (!this.options.RunTestSuite) return false;
       bool foundADirectory = false;
       if (path != null && Directory.Exists(path)) {
-        if (path == ".\\" || path == "..\\") {
+        if ((path == ".\\" || path == "..\\") && pattern == ".") {
           this.options.FileNames.Add(Path.GetFullPath(path));
           foundADirectory = true;
         } else {
