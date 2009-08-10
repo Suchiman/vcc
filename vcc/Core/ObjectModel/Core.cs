@@ -475,22 +475,22 @@ namespace Microsoft.Research.Vcc {
     //^ [Pure]
     public override Expression ImplicitConversion(Expression expression, ITypeDefinition targetType) {
 
+      Expression result = base.ImplicitConversion(expression, targetType);
+
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean)) {
         if (TypeHelper.IsPrimitiveInteger(expression.Type) || this.IsFloatType(expression.Type)) {
-          Expression convertedTarget = base.ImplicitConversion(expression, targetType);
           // The converted result may not be in {0,1} in the framework. While in C, the
           // value "true" has to be 1. 
           Expression t = new CompileTimeConstant(true, SourceDummy.SourceLocation);
           Expression f = new CompileTimeConstant(false, SourceDummy.SourceLocation);
-
-          Expression result = new Conditional(convertedTarget, t, f, convertedTarget.SourceLocation);
+          result = new Conditional(result, t, f, result.SourceLocation);
           result.SetContainingExpression(expression);
           t.SetContainingExpression(result);
           f.SetContainingExpression(result);
-          return result;
         }
       }
-      return base.ImplicitConversion(expression, targetType);
+
+      return result;
     }
 
     /// <summary>
@@ -584,17 +584,20 @@ namespace Microsoft.Research.Vcc {
       return base.ImplicitConversionInAssignmentContext(expression, targetType);
     }
 
+    private static bool ImplicitConversionToBooleanExists(ITypeDefinition sourceType) {
+      return (sourceType.TypeCode != PrimitiveTypeCode.NotPrimitive || !sourceType.IsStruct)
+          && sourceType.TypeCode != PrimitiveTypeCode.Void
+          && !TypeHelper.GetTypeName(sourceType).StartsWith(SystemDiagnosticsContractsCodeContractMapString, StringComparison.Ordinal);
+    }
+
     /// <summary>
     /// Returns true if an implicit conversion is available to convert the value of the given expression to a corresponding value of the given target type.
     /// </summary>
     //^ [Pure]
     public override bool ImplicitConversionExists(Microsoft.Cci.Ast.Expression expression, ITypeDefinition targetType) {
-      if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean)) {
-        ITypeDefinition sourceType = expression.Type;
-        return (sourceType.TypeCode != PrimitiveTypeCode.NotPrimitive || !sourceType.IsStruct)
-          && sourceType.TypeCode != PrimitiveTypeCode.Void 
-          && !TypeHelper.GetTypeName(sourceType).StartsWith(SystemDiagnosticsContractsCodeContractMapString, StringComparison.Ordinal);
-      }
+      if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean))
+        return ImplicitConversionToBooleanExists(expression.Type);
+
       CompileTimeConstant/*?*/ cconst = expression as CompileTimeConstant;
       if (cconst != null) {
         if (targetType is IPointerType && ExpressionHelper.IsIntegralZero(cconst)) return true;
@@ -615,36 +618,32 @@ namespace Microsoft.Research.Vcc {
 
     //^ [Pure]
     public override bool ImplicitConversionExists(ITypeDefinition sourceType, ITypeDefinition targetType) {
-      if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean)) {
-        return sourceType.TypeCode != PrimitiveTypeCode.NotPrimitive || !sourceType.IsStruct;
-      }
-      if (TypeHelper.TypesAreEquivalent(sourceType, this.PlatformType.SystemBoolean)) {
+
+      // * -> bool
+      if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean))
+        return ImplicitConversionToBooleanExists(sourceType);
+
+      // bool -> int
+      if (TypeHelper.TypesAreEquivalent(sourceType, this.PlatformType.SystemBoolean))
         return TypeHelper.IsPrimitiveInteger(targetType);
-      }
+
+      // enum -> int
+      if (sourceType.IsEnum && TypeHelper.IsPrimitiveInteger(targetType))
+        return this.ImplicitConversionExists(sourceType.UnderlyingType.ResolvedType, targetType);
+     
       IPointerType/*?*/ sourcePointerType = sourceType as IPointerType;
-      if (sourcePointerType != null) {
-        if (TypeHelper.TypesAreEquivalent(sourcePointerType.TargetType.ResolvedType, sourcePointerType.PlatformType.SystemVoid) && targetType is IPointerType)
+      IPointerType/*?*/ targetPointerType = targetType as IPointerType;
+      if (targetPointerType != null) {
+        // void* -> T*
+        if (sourcePointerType != null && TypeHelper.TypesAreEquivalent(sourcePointerType.TargetType.ResolvedType, sourcePointerType.PlatformType.SystemVoid))
           return true;
-      } else {
-        IPointerType/*?*/ targetPointerType = targetType as IPointerType;
-        if (targetPointerType != null) {
+
+        // T[] -> T*
+        if (sourcePointerType == null) {
           sourcePointerType = this.ArrayPointerFor(sourceType);
           if (sourcePointerType != null) return this.ImplicitConversionExists(sourcePointerType, targetPointerType);
         }
       }
-      /*
-       * Rule for int -> enum */
-      //if (!this.VcCompatible) {
-      //  if (targetType.IsEnum && TypeHelper.IsPrimitiveInteger(sourceType))
-      //    return this.ImplicitConversionExists(sourceType, targetType.UnderlyingType);
-      //}
-
-      /* Rule for enum -> int. */
-      // if (this.VcCompatible) {
-        if (sourceType.IsEnum && TypeHelper.IsPrimitiveInteger(targetType)) {
-          return this.ImplicitConversionExists(sourceType.UnderlyingType.ResolvedType, targetType);
-        }
-      // }
 
       return base.ImplicitConversionExists(sourceType, targetType);
     }

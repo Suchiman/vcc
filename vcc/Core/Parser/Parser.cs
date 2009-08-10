@@ -783,13 +783,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         } else
           elementType = new VccArrayTypeExpression(elementType, arraySize, slb);
         TypeExpression result = this.GetTypeExpressionFor(elementType, nestedDeclarator);
-        if (pointerDeclarator != null) {
-          foreach (Pointer p in pointerDeclarator.Pointers) {
-            SourceLocationBuilder pslb = new SourceLocationBuilder(p.SourceLocation);
-            pslb.UpdateToSpan(slb);
-            result = new VccPointerTypeExpression(result, p.Qualifiers, pslb);
-          }
-        }
+        result = AddIndirectionsToType(result, pointerDeclarator, slb);
         return result;
       }
       FunctionDeclarator/*?*/ function = declarator as FunctionDeclarator;
@@ -806,13 +800,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         CallingConvention callingConvention = GetCallingConvention(function.Specifiers, acceptsExtraArguments);
         TypeExpression result = new VccFunctionTypeExpression(acceptsExtraArguments, callingConvention, returnType, 
           function.FunctionName.Identifier, parameters, function, slb);
-        if (pointerDeclarator != null) {
-          foreach (Pointer p in pointerDeclarator.Pointers) {
-            SourceLocationBuilder pslb = new SourceLocationBuilder(p.SourceLocation);
-            pslb.UpdateToSpan(slb);
-            result = new VccPointerTypeExpression(result, p.Qualifiers, pslb);
-          }
-        }
+        result = AddIndirectionsToType(result, pointerDeclarator, slb);
         if (arrayDeclarator != null) {
           SourceLocationBuilder aslb = new SourceLocationBuilder(arrayDeclarator.SourceLocation);
           aslb.UpdateToSpan(slb);
@@ -821,16 +809,22 @@ namespace Microsoft.Research.Vcc.Parsing {
         return result;
       }
       PointerDeclarator/*?*/ pointer = declarator as PointerDeclarator;
-      if (pointer != null) {
-        foreach (Pointer p in pointer.Pointers) {
+      elementType = AddIndirectionsToType(elementType, pointer, slb);
+      if (pointer != null)
+        return this.GetTypeExpressionFor(elementType, pointer.Declarator);
+      return elementType;
+    }
+
+    private static TypeExpression AddIndirectionsToType(TypeExpression type, PointerDeclarator pointerDeclarator, SourceLocationBuilder slb) {
+      TypeExpression result = type;
+      if (pointerDeclarator != null) {
+        foreach (Pointer p in pointerDeclarator.Pointers) {
           SourceLocationBuilder pslb = new SourceLocationBuilder(p.SourceLocation);
           pslb.UpdateToSpan(slb);
-          elementType = new VccPointerTypeExpression(elementType, p.Qualifiers, pslb);
+          result = new VccPointerTypeExpression(result, p.Qualifiers, pslb);
         }
-        return this.GetTypeExpressionFor(elementType, pointer.Declarator);
       }
-      //^ assume declarator is IdentifierDeclarator; //TODO: prove this
-      return elementType;
+      return result;
     }
 
     private TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, IdentifierDeclarator/*?*/ declarator) {
@@ -1218,6 +1212,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       while (this.currentToken == Token.Multiply) {
         result.Add(this.ParsePointer());
       }
+      result.TrimExcess();
       return result;
     }
 
@@ -1225,6 +1220,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ requires this.currentToken == Token.Multiply;
     {
       SourceLocationBuilder sloc = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+      bool isSpec = this.currentToken == Token.BitwiseXor;
       this.GetNextToken();
       List<TypeQualifier>/*?*/ qualifiers = this.ParseTypeQualifiers();
       return new Pointer(qualifiers, sloc);
@@ -3949,6 +3945,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       DeclaratorStart = new TokenSet();
       DeclaratorStart |= Token.Multiply;
+      DeclaratorStart |= Token.BitwiseXor;
       DeclaratorStart |= Token.Identifier;
       DeclaratorStart |= Token.LeftParenthesis;
       DeclaratorStart |= Token.Colon; // occurs in anonymous bitfields
@@ -4114,7 +4111,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       UnaryStart |= Token.Subtract;
       UnaryStart |= Token.AddOne;
       UnaryStart |= Token.SubtractOne;
-      UnaryStart |= Token.Multiply;
       UnaryStart |= Token.BitwiseAnd;
 
       LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart = new TokenSet();
