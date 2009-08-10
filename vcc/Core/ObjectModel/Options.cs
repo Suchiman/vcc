@@ -21,7 +21,6 @@ namespace Microsoft.Research.Vcc
     public bool RunTestSuite;
     public bool TranslateToBPL;
     public bool Verify;
-    public bool VCCompatible;
     public List<string> Z3Options = new List<string>();
     public bool VCLikeErrorMessages;
     public bool TimeStats;
@@ -168,12 +167,6 @@ namespace Microsoft.Research.Vcc
             }
           }
           return true;
-        case 'l':
-          if (this.ParseName(arg, "lenient", "l")) {
-            this.options.VCCompatible = true;
-            return true;
-          }
-          return false;
         case 'm':
           if (this.ParseName(arg, "modifiedpreprocessorfile", "modifiedpreprocessorfile")) {
             this.options.ModifiedPreprocessorFiles = true;

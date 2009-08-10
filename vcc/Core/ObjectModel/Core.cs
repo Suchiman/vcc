@@ -311,7 +311,7 @@ namespace Microsoft.Research.Vcc {
         if ((isExplicitConversion && TypeHelper.IsPrimitiveInteger(targetType)) || sourcePointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void && (targetType is IPointerType || targetType is IFunctionPointer))
           return this.ConversionExpression(expression, targetType);
         IPointerType/*?*/ targetPointerType = targetType as IPointerType;
-        if ((targetPointerType != null) && (isExplicitConversion || this.VcCompatible || targetPointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void))
+        if ((targetPointerType != null) && (isExplicitConversion || targetPointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void))
           return this.ConversionExpression(expression, targetType);
       } else if (TypeHelper.GetTypeName(expression.Type) == SystemDiagnosticsContractsCodeContractTypedPtrString) {
         if (targetType is IPointerType && !TypeHelper.TypesAreEquivalent(targetType.ResolvedType, this.PlatformType.SystemVoidPtr.ResolvedType))
@@ -424,142 +424,6 @@ namespace Microsoft.Research.Vcc {
       return new VccTypeNameFormatter();
     }
 
-
-    /// <summary>
-    /// Resolve overloaded methods.
-    /// 
-    /// We override this method for C arithmetic/comparison semantics. Vcc uses stricter rules
-    /// that guard against unsafe arithmetics. We implement C's rules for compatibility reasons. C's
-    /// rules are:
-    /// 
-    /// - If either operand is a long double, then the other one is converted to long double and that 
-    /// is the type of the result. 
-    /// - Otherwise, if either operand is a double, then the other one is converted to double, and that is the type of the result. 
-    /// - Otherwise, if either operand is a float, then the other one is converted to float, and that is the type of the result. 
-    /// - Otherwise the integral promotions are applied to both operands and the following conversions are applied: 
-    ///    - If either operand is an unsigned long int, then the other one is converted to unsigned long int, and that is the type of the result. 
-    ///    - Otherwise, if either operand is a long int, then the other one is converted to long int, and that is the type of the result. 
-    ///    - Otherwise, if either operand is an unsigned int, then the other one is converted to unsigned int, and that is the type of the result. 
-    ///    - Otherwise, both operands must be of type int, so that is the type of the result. 
-    /// </summary>
-    /// <param name="candidateMethods">A set of candidate methods.</param>
-    /// <param name="arguments"> The actual arguments passed to the overloaded method. </param>
-    /// <param name="allowTypeMismatches"> Whether type mismatch is allowed in resolution.</param>
-    /// <returns></returns>
-    //^ [Pure]
-    public override IMethodDefinition ResolveOverload(IEnumerable<IMethodDefinition> candidateMethods, IEnumerable<Expression> arguments, bool allowTypeMismatches) {
-
-      if (this.VcCompatible && !allowTypeMismatches) {
-        bool useDouble = false ; // the condition that we shall use float64 op float 64, similar below.
-        bool useFloat = false ;
-        bool useUnsignedLong = false ; // u 64
-        bool useLong = false; // int 64, not C long
-        bool useUnsigned = false; // u 32
-        bool useInt = false;
-        bool notArith = false; // The rules are only in effect if we are dealing with arithmetics or comparison.
-        int numOfArgs =0;
-        IEnumerator<Expression> enumerator = arguments.GetEnumerator();
-        Expression/*?*/ arg1 = null;
-        Expression/*?*/ arg2 = null;
-        ITypeDefinition/*?*/ type1 = null;
-        ITypeDefinition/*?*/ type2 = null;
-
-        if (enumerator.MoveNext()) {
-          numOfArgs++; 
-          arg1 = enumerator.Current;
-          type1 = arg1.Type;
-        }
-        if (enumerator.MoveNext()) {
-          numOfArgs++; 
-          arg2 = enumerator.Current;
-          type2 = arg2.Type;
-        }
-        // pointers involved, use verifiedc semantics
-        if (type1 is IPointerType || type2 is IPointerType) {
-          return base.ResolveOverload(candidateMethods, arguments, allowTypeMismatches);
-        }
-        bool type1IsIntOrFloat = (type1 == null) || this.IsIntOrBooleanType(type1) || this.IsFloatType(type1);
-        bool type2IsIntOrFloat = (type2 == null) || this.IsIntOrBooleanType(type2) || this.IsFloatType(type2);
-        // if more than 2 arguments, give up, that is, let the verified c semantics take over.
-        if (!enumerator.MoveNext() && type1IsIntOrFloat && type2IsIntOrFloat) {
-          if (numOfArgs == 1) {
-            //^ assert type1 != null;
-            // possibly unary negation, we allow the operand to be unsigned
-            if (TypeHelper.TypesAreEquivalent(type1, this.PlatformType.SystemUInt64)) {
-              useLong = true;
-            }
-            if (TypeHelper.TypesAreEquivalent(type1, this.PlatformType.SystemUInt32)) {
-              useInt = true;
-            }
-
-            // at most one of useint and uselong is true. 
-            foreach (IMethodDefinition m in candidateMethods) {
-              if (m == this.Compilation.BuiltinMethods.OpInt64 && useLong) {
-                return m;
-              }
-
-              if (m == this.Compilation.BuiltinMethods.OpInt32 && useInt) {
-                return m;
-              }
-            }
-          } else {
-            if (type1 == null || type2 == null) {
-              return base.ResolveOverload(candidateMethods, arguments, allowTypeMismatches);
-            }
-
-            if (TypeHelper.TypesAreEquivalent(type1, this.PlatformType.SystemFloat64)
-              || TypeHelper.TypesAreEquivalent(type2, this.PlatformType.SystemFloat64)) {
-              useDouble = true;
-            } else if (TypeHelper.TypesAreEquivalent(type1, this.PlatformType.SystemFloat32)
-              || TypeHelper.TypesAreEquivalent(type2, this.PlatformType.SystemFloat32)) {
-              useFloat = true;
-            } else if (TypeHelper.TypesAreEquivalent(type1, this.PlatformType.SystemUInt64)
-              || TypeHelper.TypesAreEquivalent(type2, this.PlatformType.SystemUInt64)) {
-              useUnsignedLong = true;
-            } else if (TypeHelper.TypesAreEquivalent(type1, this.PlatformType.SystemInt64)
-              || TypeHelper.TypesAreEquivalent(type2, this.PlatformType.SystemInt64)) {
-              useLong = true;
-            } else if (TypeHelper.TypesAreEquivalent(type1, this.PlatformType.SystemUInt32)
-              || TypeHelper.TypesAreEquivalent(type2, this.PlatformType.SystemUInt32)) {
-              useUnsigned = true;
-            } else if (TypeHelper.TypesAreAssignmentCompatible(type1, this.PlatformType.SystemUInt64.ResolvedType)
-                  && TypeHelper.TypesAreAssignmentCompatible(type2, this.PlatformType.SystemUInt64.ResolvedType)) {
-              useInt = true;
-            } else {
-              notArith = true;
-            }
-
-            if (!notArith) {
-              // at most one of useDouble, useFloat, useUnsignedLong, useLong, useUnsigned, useInt is true
-              foreach (IMethodDefinition method in candidateMethods) {
-                if (method == this.Compilation.BuiltinMethods.Float64opFloat64 && useDouble) {
-                  return method;
-                }
-                if (method == this.Compilation.BuiltinMethods.Float32opFloat32 && useFloat) {
-                  return method;
-                }
-                if (method == this.Compilation.BuiltinMethods.UInt64opUInt64 && useUnsignedLong) {
-                  return method;
-                }
-                if (method == this.Compilation.BuiltinMethods.Int64opInt64 && useLong) {
-                  return method;
-                }
-                if (method == this.Compilation.BuiltinMethods.UInt32opUInt32 && useUnsigned) {
-                  return method;
-                }
-                if (method == this.Compilation.BuiltinMethods.Int32opInt32 && useInt) {
-                  return method;
-                }
-                // if we dont find any match, then the verifiedc semantics takes over. 
-              }
-            }
-          }
-        }
-      }
-
-      return base.ResolveOverload(candidateMethods, arguments, allowTypeMismatches);
-    }
-
     public override IEnumerable<ITypeDefinitionMember> GetExtensionMembers(ITypeDefinition type, IName memberName, bool ignoreCase) {
       foreach (ITypeDefinitionMember anonMember in type.GetMembersNamed(Dummy.Name, false)) {
         IFieldDefinition/*?*/ anonField = anonMember as IFieldDefinition;
@@ -610,15 +474,6 @@ namespace Microsoft.Research.Vcc {
 
     //^ [Pure]
     public override Expression ImplicitConversion(Expression expression, ITypeDefinition targetType) {
-
-      if (this.VcCompatible) {
-        // allow double -> single
-        if (TypeHelper.TypesAreEquivalent(expression.Type, this.PlatformType.SystemFloat64)) {
-          if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemFloat32)) {
-            return ExplicitConversion(expression, targetType);
-          }
-        }
-      }
 
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean)) {
         if (TypeHelper.IsPrimitiveInteger(expression.Type) || this.IsFloatType(expression.Type)) {
@@ -689,7 +544,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override Expression ImplicitConversionInAssignmentContext(Expression expression, ITypeDefinition targetType) {
-      return this.ImplicitConversionInAssignmentContext(expression, targetType, this.VcCompatible);
+      return this.ImplicitConversionInAssignmentContext(expression, targetType, false);
     }
 
     public Expression ImplicitConversionInAssignmentContext(Expression expression, ITypeDefinition targetType, bool allowUnsafeNumericConversions) {
@@ -885,20 +740,6 @@ namespace Microsoft.Research.Vcc {
     public override bool UseCompileTimeValueOfField(IFieldDefinition field) {
       return field.IsCompileTimeConstant || (field.IsReadOnly && TypeHelper.IsCompileTimeConstantType(field.Type.ResolvedType) && field.CompileTimeValue != Dummy.Constant);
     }
-
-    /// <summary>
-    /// Whether the compilation has to be observe Visual C++ rules, which is different
-    /// than verifiedc, which borrows many rules from c#, for example, 
-    /// conversion. 
-    /// </summary>
-    public bool VcCompatible {
-      get {
-        VccOptions/*?*/ vcoptions = this.Compilation.Options as VccOptions;
-        if (vcoptions == null) return false;
-        else return vcoptions.VCCompatible;
-      }
-    }
-
   }
 
   public sealed class VccTypeNameFormatter : TypeNameFormatter {

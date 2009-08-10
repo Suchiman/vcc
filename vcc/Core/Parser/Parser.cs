@@ -34,14 +34,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     RootNamespaceExpression rootNs;
     AliasQualifiedName systemNs;
     
-    public bool VCCompatible {
-      get {
-        VccOptions/*?*/ vcoptions = this.compilation.Options as VccOptions;
-        if (vcoptions == null) return false;
-        else return vcoptions.VCCompatible;
-      }
-    }
-
     internal Parser(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors)
     {
       this.compilation = compilation;
@@ -2217,7 +2209,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.GetNextToken();
       LoopContract/*?*/ contract = this.ParseLoopContract(followers);
       Statement body = this.ParseStatement(followers|Token.While);
-      if (body is EmptyStatement && !this.VCCompatible)
+      if (body is EmptyStatement)
         this.HandleError(body.SourceLocation, Error.PossibleMistakenNullStatement);
       this.Skip(Token.While);
       Expression condition = this.ParseParenthesizedExpression(false, followers|Token.Semicolon);
@@ -2338,13 +2330,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.GetNextToken();
       Expression ifCondition = this.ParseParenthesizedExpression(false, followers|Parser.StatementStart);
       Statement ifTrue = this.ParseStatement(followers|Token.Else);
-      if (ifTrue is EmptyStatement && !this.VCCompatible)
+      if (ifTrue is EmptyStatement)
         this.HandleError(ifTrue.SourceLocation, Error.PossibleMistakenNullStatement);
       Statement ifFalse;
       if (this.currentToken == Token.Else) {
         this.GetNextToken();
         ifFalse = this.ParseStatement(followers);
-        if (ifFalse is EmptyStatement && !this.VCCompatible)
+        if (ifFalse is EmptyStatement)
           this.HandleError(ifFalse.SourceLocation, Error.PossibleMistakenNullStatement);
       } else {
         ifFalse = new EmptyStatement(false, ifTrue.SourceLocation);

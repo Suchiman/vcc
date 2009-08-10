@@ -2590,7 +2590,6 @@
 /z3                     Z3 options
 
                         - Compilation -
-/lenient                Compilation will use C semantics, which typically mean many type conversions are legal (/l)
 /clerrors               Output Visual C++ like error messages during compilation
 /clpath                 Path of Visual C++ (cl) compiler, typically used in preprocessing
 /n                      Not to run preprocessor
