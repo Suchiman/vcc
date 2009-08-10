@@ -98,7 +98,7 @@ namespace Microsoft.Research.Vcc {
         result.SetContainingTypeDeclaration(this.GlobalDeclarationContainer, true);
         arrayTypeTable2.Add(elementType, result);
       }
-      this.VccHelper.AddFixedSizeArrayToPointerMapEntry(result.TypeDefinition, PointerType.GetPointerType(elementType, this.Compilation.HostEnvironment.InternFactory));
+      this.VccHelper.AddFixedSizeArrayToPointerMapEntry(result.TypeDefinition, new VccPointerType(elementType, false, this.Compilation.HostEnvironment.InternFactory));
       this.GlobalDeclarationContainer.AddHelperMember(result);
       return result;
     }

@@ -571,22 +571,17 @@ namespace Microsoft.Research.Vcc
                         | _ -> false, false
                     let ptrDeclaredAsVolatile = 
                       match f.Type.ResolvedType with
-                        | :? ModifiedPointerType as modPtr ->
-                          let isVolatileCustomModifier (cm : ICustomModifier) = TypeHelper.GetTypeName(cm.Modifier) = "System.Runtime.CompilerServices.IsVolatile"
-                          Seq.exists isVolatileCustomModifier modPtr.CustomModifiers
+                        | :? IPointerType ->
+                          match f.Type.ResolvedType with 
+                            | :? SystemDefinedStructuralType as t when t.IsModified -> 
+                              let isVolatileCustomModifier (cm : ICustomModifier) = TypeHelper.GetTypeName(cm.Modifier) = "System.Runtime.CompilerServices.IsVolatile"
+                              Seq.exists isVolatileCustomModifier t.CustomModifiers
+                            | _ -> false
                         | _ -> false
                     let (fldVolatile, pointsToVolatile) =
                       if fldDeclaredAsPointer then (ptrDeclaredAsVolatile, fldMarkedVolatile)
                       else (fldMarkedVolatile, ptrDeclaredAsVolatile)
                       
-(*                        match f.Type.ResolvedType with
-                          | :? ModifiedPointerType as modPtr ->
-                            let isVolatileCustomModifier (cm : ICustomModifier) =
-                              cm.Modifier = (f.Type.PlatformType.SystemRuntimeCompilerServicesIsVolatile :> ITypeReference)
-                            (Seq.exists isVolatileCustomModifier modPtr.CustomModifiers, fldMarkedVolatile)
-                          | :? PointerType -> (false, fldMarkedVolatile)
-                          | _ -> (fldMarkedVolatile, false)
-                        else (fldMarkedVolatile, false) *)
                     let t = 
                       match this.DoType (f.Type) with
                         | C.Type.Ptr(typ) when pointsToVolatile -> C.Type.Ptr(C.Type.Volatile(typ))

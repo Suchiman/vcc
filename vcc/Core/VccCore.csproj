@@ -85,6 +85,7 @@
     <Compile Include="ObjectModel\Options.cs" />
     <Compile Include="ObjectModel\Statements.cs" />
     <Compile Include="ObjectModel\TypeDeclarations.cs" />
+    <Compile Include="ObjectModel\Types.cs" />
     <Compile Include="ObjectModel\Units.cs" />
     <Compile Include="Parser\Parser.cs" />
     <Compile Include="Parser\Preprocessor.cs" />
