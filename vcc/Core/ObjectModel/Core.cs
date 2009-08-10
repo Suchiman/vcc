@@ -290,31 +290,39 @@ namespace Microsoft.Research.Vcc {
     //^ [Pure]
     protected override Expression Conversion(Expression expression, ITypeDefinition targetType, bool isExplicitConversion) {
 
+      // bool -> bool
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean) &&
           TypeHelper.TypesAreEquivalent(expression.Type, this.PlatformType.SystemBoolean))
         return expression;
 
+      // * -> bool
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean))
         return this.ConversionExpression(expression, this.PlatformType.SystemBoolean.ResolvedType);
       
+      // bool -> *
       if (TypeHelper.TypesAreEquivalent(expression.Type, this.PlatformType.SystemBoolean)) 
         return this.ConversionExpression(expression, targetType);
 
+      // int -> enum
       if (targetType.IsEnum && TypeHelper.IsPrimitiveInteger(expression.Type))
         return base.Conversion(expression, targetType, true);
 
+      // int -> mathint
       if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigIntString && TypeHelper.IsPrimitiveInteger(expression.Type))
         return this.ConversionExpression(expression, targetType);
 
       IPointerType/*?*/ sourcePointerType = expression.Type as IPointerType;
+      IPointerType/*?*/ targetPointerType = targetType as IPointerType;
+
       if (sourcePointerType != null) {
-        if ((isExplicitConversion && TypeHelper.IsPrimitiveInteger(targetType)) || sourcePointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void && (targetType is IPointerType || targetType is IFunctionPointer))
+        if (isExplicitConversion && TypeHelper.IsPrimitiveInteger(targetType))
           return this.ConversionExpression(expression, targetType);
-        IPointerType/*?*/ targetPointerType = targetType as IPointerType;
-        if ((targetPointerType != null) && (isExplicitConversion || targetPointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void))
+        if (sourcePointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void && (targetPointerType != null || targetType is IFunctionPointer))
+          return this.ConversionExpression(expression, targetType);
+        if (targetPointerType != null && (isExplicitConversion || targetPointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void))
           return this.ConversionExpression(expression, targetType);
       } else if (TypeHelper.GetTypeName(expression.Type) == SystemDiagnosticsContractsCodeContractTypedPtrString) {
-        if (targetType is IPointerType && !TypeHelper.TypesAreEquivalent(targetType.ResolvedType, this.PlatformType.SystemVoidPtr.ResolvedType))
+        if (targetPointerType != null && !TypeHelper.TypesAreEquivalent(targetType.ResolvedType, this.PlatformType.SystemVoidPtr.ResolvedType))
           return this.ConversionExpression(expression, targetType);
         else return expression;
       } else { 
@@ -548,39 +556,36 @@ namespace Microsoft.Research.Vcc {
     }
 
     public Expression ImplicitConversionInAssignmentContext(Expression expression, ITypeDefinition targetType, bool allowUnsafeNumericConversions) {
-      if (TypeHelper.TypesAreEquivalent(expression.Type, targetType)) return expression;
-      if (allowUnsafeNumericConversions) {
-        if (this.IsIntOrBooleanType(expression.Type) && this.IsFloatType(targetType))
-          return this.ExplicitConversion(expression, targetType);
-        if (this.IsFloatType(expression.Type) && TypeHelper.IsPrimitiveInteger(targetType))
-          return this.ExplicitConversion(expression, targetType);
-        if (TypeHelper.IsPrimitiveInteger(expression.Type) && TypeHelper.IsPrimitiveInteger(targetType)) {
-          object/*?*/ val = expression.Value;
-          if (val != null) {
-            CompileTimeConstant cconst = new CompileTimeConstant(val, true, true, expression.SourceLocation);
-            cconst.SetContainingExpression(expression);
-            expression = cconst;
-          }
-          return this.ExplicitConversion(expression, targetType);
-        }
-        CompileTimeConstant/*?*/ cst = expression as CompileTimeConstant;
-        if (cst != null && targetType.TypeCode == PrimitiveTypeCode.Pointer && ExpressionHelper.IsIntegralZero(cst)) {
-          return cst;
-        }
-      }
+      if (TypeHelper.TypesAreEquivalent(expression.Type, targetType)) 
+        return expression;
       if (targetType.IsEnum && TypeHelper.IsPrimitiveInteger(expression.Type))
         return this.ExplicitConversion(expression, targetType);
       if (expression.Type.IsEnum && TypeHelper.IsPrimitiveInteger(targetType))
         return this.ExplicitConversion(expression, targetType);
+
       if (TypeHelper.IsPrimitiveInteger(expression.Type) && TypeHelper.IsPrimitiveInteger(targetType)) {
         object/*?*/ val = expression.Value;
         if (val != null) {
           CompileTimeConstant cconst = new CompileTimeConstant(val, true, expression.CouldBeInterpretedAsNegativeSignedInteger, expression.SourceLocation);
           cconst.SetContainingExpression(expression);
-          if (this.ImplicitConversionExists(cconst, targetType)) expression = cconst;
-        } else if (expression.IntegerConversionIsLossless(targetType))
+          if (allowUnsafeNumericConversions || this.ImplicitConversionExists(cconst, targetType)) expression = cconst;
+        }
+        if (allowUnsafeNumericConversions || expression.IntegerConversionIsLossless(targetType))
           return this.ExplicitConversion(expression, targetType);
       }
+
+      if (allowUnsafeNumericConversions) {
+        if (this.IsIntOrBooleanType(expression.Type) && this.IsFloatType(targetType))
+          return this.ExplicitConversion(expression, targetType);
+        if (this.IsFloatType(expression.Type) && TypeHelper.IsPrimitiveInteger(targetType))
+          return this.ExplicitConversion(expression, targetType);
+
+        CompileTimeConstant/*?*/ cst = expression as CompileTimeConstant;
+        if (cst != null && targetType.TypeCode == PrimitiveTypeCode.Pointer && ExpressionHelper.IsIntegralZero(cst)) {
+          return cst;
+        }
+      }
+
       return base.ImplicitConversionInAssignmentContext(expression, targetType);
     }
 
