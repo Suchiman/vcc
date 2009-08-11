@@ -368,15 +368,14 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
-    private PtrConvKind ToPtrConvKind(ITypeDefinition type, out IPointerType ptrType) {
-      ptrType = null;
+    private PtrConvKind ToPtrConvKind(ITypeDefinition type, out IPointerType ptrTypeForArray) {
+      ptrTypeForArray = null;
       if (TypeHelper.IsPrimitiveInteger(type))
         return PtrConvKind.Int;
       if (TypeHelper.GetTypeName(type) == SystemDiagnosticsContractsCodeContractTypedPtrString)
         return PtrConvKind.ObjT;
       IPointerType typeAsPtrType = type as IPointerType;
       if (typeAsPtrType != null) {
-        ptrType = typeAsPtrType;
         if (typeAsPtrType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void)
           return PtrConvKind.VoidP;
         else {
@@ -387,7 +386,7 @@ namespace Microsoft.Research.Vcc {
           return PtrConvKind.FuncP;
         IPointerType arrayPtr = this.ArrayPointerFor(type);
         if (arrayPtr != null) {
-          ptrType = arrayPtr;
+          ptrTypeForArray = arrayPtr;
           return PtrConvKind.Array;
         }
       }
@@ -1004,11 +1003,11 @@ namespace Microsoft.Research.Vcc {
     
   }
 
-  public abstract class VccCompositeDocument<PrimaryDocumentType, VersionType> : VccCompositeDocument, IVccSourceDocument
-    where PrimaryDocumentType : class, IVccUnpreprocessedSourceDocument
+  public abstract class VccCompositeDocument<TPrimaryDocument, TVersion> : VccCompositeDocument, IVccSourceDocument
+    where TPrimaryDocument : class, IVccUnpreprocessedSourceDocument
   {
 
-    protected VccCompositeDocument(VccCompilationHelper helper, PrimaryDocumentType/*!*/ documentToPreprocess, IDictionary<string, string>/*?*/ preprocessorDefinedSymbols)
+    protected VccCompositeDocument(VccCompilationHelper helper, TPrimaryDocument/*!*/ documentToPreprocess, IDictionary<string, string>/*?*/ preprocessorDefinedSymbols)
       : base(documentToPreprocess.Name)
     {
       this.helper = helper;
@@ -1016,8 +1015,8 @@ namespace Microsoft.Research.Vcc {
       this.preprocessorDefinedSymbols = preprocessorDefinedSymbols;
     }
 
-    protected VccCompositeDocument(VccCompilationHelper helper, PrimaryDocumentType/*!*/ documentToPreprocess, PreprocessorInformation/*?*/ preprocessorInformation, 
-      VccCompositeDocument<PrimaryDocumentType, VersionType> previousVersion, int position, int oldLength, int newLength)
+    protected VccCompositeDocument(VccCompilationHelper helper, TPrimaryDocument/*!*/ documentToPreprocess, PreprocessorInformation/*?*/ preprocessorInformation, 
+      VccCompositeDocument<TPrimaryDocument, TVersion> previousVersion, int position, int oldLength, int newLength)
       : base(previousVersion, position, oldLength, newLength)
     {
       this.helper = helper;
@@ -1047,12 +1046,12 @@ namespace Microsoft.Research.Vcc {
     }
     private VccCompilationPart/*?*/ compilationPart;
 
-    public PrimaryDocumentType/*!*/ DocumentToPreprocess {
+    public TPrimaryDocument/*!*/ DocumentToPreprocess {
       //^ [Pure]
       get { return this.documentToPreprocess; }
       protected set { this.documentToPreprocess = value; }
     }
-    private PrimaryDocumentType/*!*/ documentToPreprocess;
+    private TPrimaryDocument/*!*/ documentToPreprocess;
 
     /// <summary>
     /// Returns a source document that represents the replacement of the text of this.DocumentToPreprocess from position to position+length with updatedText.
@@ -1064,14 +1063,14 @@ namespace Microsoft.Research.Vcc {
     /// <param name="position">The position in this.DocumentToPreprocess, of the first character to be replaced by this edit.</param>
     /// <param name="length">The number of characters in this.DocumentToPreprocess that will be replaced by this edit.</param>
     /// <param name="updatedText">The replacement string.</param>
-    protected IVccSourceDocument GetUpdatedDocument(int position, int length, string updatedText, VersionType version)
+    protected IVccSourceDocument GetUpdatedDocument(int position, int length, string updatedText, TVersion version)
       //^ requires 0 <= position && position < this.DocumentToPreprocess.Length;
       //^ requires 0 <= length && length <= this.DocumentToPreprocess.Length;
       //^ requires 0 <= position+length && position+length <= this.DocumentToPreprocess.Length;
       //^ ensures result.IsUpdatedVersionOf(this);
       //^ ensures result.GetType() == this.GetType();
     {
-      VccCompositeDocument<PrimaryDocumentType, VersionType> result;
+      VccCompositeDocument<TPrimaryDocument, TVersion> result;
       List<CompilationPart> nextParts = new List<CompilationPart>(this.VccCompilationPart.Compilation.Parts);
       Compilation nextCompilation = this.VccCompilationPart.Compilation.UpdateCompilationParts(nextParts);
       VccCompilationHelper nextHelper = (VccCompilationHelper)this.Helper.MakeShallowCopyFor(nextCompilation);
@@ -1079,7 +1078,7 @@ namespace Microsoft.Research.Vcc {
       foreach (ISourceLocation includedLocation in ppInfo.IncludedLocations) {
         if (includedLocation.StartIndex <= position && position+length <= includedLocation.StartIndex+includedLocation.Length) {
           //Included section spans the edit.
-          PrimaryDocumentType nextVersionOfDocumentToPreprocess = this.GetNextVersionOfDocumentToPreprocess(position, length, updatedText, version);
+          TPrimaryDocument nextVersionOfDocumentToPreprocess = this.GetNextVersionOfDocumentToPreprocess(position, length, updatedText, version);
           PreprocessorInformation nextVersionOfPreprocessorInformation = new PreprocessorInformation(nextVersionOfDocumentToPreprocess, ppInfo);
           result = this.GetNextVersion(nextHelper, nextVersionOfDocumentToPreprocess, nextVersionOfPreprocessorInformation, position, length, updatedText.Length);
           goto updateCompilationPart;
@@ -1088,7 +1087,7 @@ namespace Microsoft.Research.Vcc {
       foreach (ISourceLocation excludedLocation in ppInfo.excludedLocations) {
         if (excludedLocation.StartIndex <= position && position+length <= excludedLocation.StartIndex+excludedLocation.Length) {
           //Excluded section spans the edit.
-          PrimaryDocumentType nextVersionOfDocumentToPreprocess = this.GetNextVersionOfDocumentToPreprocess(position, length, updatedText, version);
+          TPrimaryDocument nextVersionOfDocumentToPreprocess = this.GetNextVersionOfDocumentToPreprocess(position, length, updatedText, version);
           PreprocessorInformation nextVersionOfPreprocessorInformation = new PreprocessorInformation(nextVersionOfDocumentToPreprocess, ppInfo);
           result = this.GetNextVersion(nextHelper, nextVersionOfDocumentToPreprocess, nextVersionOfPreprocessorInformation, 0, 0, 0);
           goto updateCompilationPart;
@@ -1097,7 +1096,7 @@ namespace Microsoft.Research.Vcc {
       {
         //Not a common case and could be an edit that results in a different list of included locations.
         //Re-preprocess and produce an edit that replaces the entire resulting document (and thus forces the entire CompilationUnit to be rebuilt).
-        PrimaryDocumentType nextVersionOfDocumentToPreprocess = this.GetNextVersionOfDocumentToPreprocess(position, length, updatedText, version);
+        TPrimaryDocument nextVersionOfDocumentToPreprocess = this.GetNextVersionOfDocumentToPreprocess(position, length, updatedText, version);
         result = this.GetNewVersion(nextHelper, nextVersionOfDocumentToPreprocess);
         result = this.GetNextVersion(nextHelper, nextVersionOfDocumentToPreprocess, result.PreprocessorInformation, 0, this.Length, result.Length);
         goto updateCompilationPart;
@@ -1185,7 +1184,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     /// <param name="helper">A Vcc specific helper object that is used to provide the value of the CompilationPart property.</param>
     /// <param name="documentToPreprocess">The unpreprocessed document on which the newly allocated document should be based.</param>
-    protected abstract VccCompositeDocument<PrimaryDocumentType, VersionType> GetNewVersion(VccCompilationHelper helper, PrimaryDocumentType documentToPreprocess);
+    protected abstract VccCompositeDocument<TPrimaryDocument, TVersion> GetNewVersion(VccCompilationHelper helper, TPrimaryDocument documentToPreprocess);
     // ^ ensures result.GetType() == this.GetType(); //TODO: this crashes the non null analyzer
 
     /// <summary>
@@ -1195,7 +1194,7 @@ namespace Microsoft.Research.Vcc {
     /// <param name="length">The number of characters to replace.</param>
     /// <param name="updatedText">The replacement string.</param>
     /// <param name="version">A version object (may be null) to associate with the result.</param>
-    protected abstract PrimaryDocumentType/*!*/ GetNextVersionOfDocumentToPreprocess(int position, int length, string updatedText, VersionType version);
+    protected abstract TPrimaryDocument/*!*/ GetNextVersionOfDocumentToPreprocess(int position, int length, string updatedText, TVersion version);
     // ^ requires 0 <= position && position < this.DocumentToPreprocess.Length; //Spec# bug: this contract is not fully analyzed by the time it is inherited by the override
     // ^ requires 0 <= length && length <= this.DocumentToPreprocess.Length;
     // ^ requires 0 <= position+length && position+length <= this.DocumentToPreprocess.Length;
@@ -1210,8 +1209,8 @@ namespace Microsoft.Research.Vcc {
     /// <param name="oldLength">The number of characters in the previous verion of the new document that will be changed in the new document.</param>
     /// <param name="newLength">The number of replacement characters in the new document. 
     /// (The length of the string that replaces the substring from position to position+length in the previous version of the new document.)</param>
-    protected abstract VccCompositeDocument<PrimaryDocumentType, VersionType> GetNextVersion(VccCompilationHelper helper,
-      PrimaryDocumentType nextVersionOfDocumentToPreprocess, PreprocessorInformation/*?*/ nextVersionOfPreprocessorInformation, int position, int oldLength, int newLength);
+    protected abstract VccCompositeDocument<TPrimaryDocument, TVersion> GetNextVersion(VccCompilationHelper helper,
+      TPrimaryDocument nextVersionOfDocumentToPreprocess, PreprocessorInformation/*?*/ nextVersionOfPreprocessorInformation, int position, int oldLength, int newLength);
     // ^ ensures result.GetType() == this.GetType(); //TODO: this crashes the non null analyzer
 
     protected override IEnumerable<ISourceLocation> GetFragments()  {
