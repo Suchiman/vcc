@@ -287,8 +287,124 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
+    private enum PtrConvKind
+    { 
+      None,
+      VoidP,
+      Ptr,
+      FuncP,
+      ObjT,
+      Int,
+      Array
+    }
+
+    private enum ConvMethod
+    {
+      Implicit,
+      Explicit,
+      ExplicitAndImplicitIfZero,
+      Identity,
+      Base
+    }
+
+    private static ConvMethod KindsToConvMethod(PtrConvKind src, PtrConvKind tgt) {
+
+      if (src == PtrConvKind.None || tgt == PtrConvKind.None) return ConvMethod.Base;
+      
+      switch (src) {
+        case PtrConvKind.VoidP:
+          switch (tgt) {
+            case PtrConvKind.Int:
+              return ConvMethod.Explicit;
+            case PtrConvKind.ObjT:
+              return ConvMethod.Base; // dealt with by user-defined conversion operator
+            default:
+              return ConvMethod.Implicit;
+          }
+
+        case PtrConvKind.Ptr:
+          switch (tgt) {
+            case PtrConvKind.VoidP:
+              return ConvMethod.Implicit;
+            case PtrConvKind.ObjT:
+              return ConvMethod.Base;
+            default:
+              return ConvMethod.Explicit;
+          }
+
+        case PtrConvKind.FuncP:
+          switch (tgt) {
+            case PtrConvKind.VoidP:
+              return ConvMethod.Implicit;
+            case PtrConvKind.ObjT:
+              return ConvMethod.Base;
+            default:
+              return ConvMethod.Explicit;
+          }
+
+        case PtrConvKind.ObjT:
+         switch (tgt) {
+           case PtrConvKind.Int:
+           case PtrConvKind.FuncP:
+             return ConvMethod.Explicit;
+           case PtrConvKind.VoidP:
+           case PtrConvKind.ObjT:
+             return ConvMethod.Identity;
+           default:
+             return ConvMethod.Implicit;
+         }
+
+        case PtrConvKind.Int:
+         switch (tgt) {
+           case PtrConvKind.Int:
+             return ConvMethod.Base;
+           default:
+             return ConvMethod.ExplicitAndImplicitIfZero;
+         }
+         
+        default:
+         System.Diagnostics.Debug.Assert(false);
+         return ConvMethod.Base;
+      }
+    }
+
+    private PtrConvKind ToPtrConvKind(ITypeDefinition type, out IPointerType ptrType) {
+      ptrType = null;
+      if (TypeHelper.IsPrimitiveInteger(type))
+        return PtrConvKind.Int;
+      if (TypeHelper.GetTypeName(type) == SystemDiagnosticsContractsCodeContractTypedPtrString)
+        return PtrConvKind.ObjT;
+      IPointerType typeAsPtrType = type as IPointerType;
+      if (typeAsPtrType != null) {
+        ptrType = typeAsPtrType;
+        if (typeAsPtrType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void)
+          return PtrConvKind.VoidP;
+        else {
+          return PtrConvKind.Ptr;
+        }
+      } else {
+        if (type is IFunctionPointer)
+          return PtrConvKind.FuncP;
+        IPointerType arrayPtr = this.ArrayPointerFor(type);
+        if (arrayPtr != null) {
+          ptrType = arrayPtr;
+          return PtrConvKind.Array;
+        }
+      }
+
+      return PtrConvKind.None;
+    }
+
+    private static bool IsIntegralZero(Expression expression) {
+      CompileTimeConstant cc = expression as CompileTimeConstant;
+      return (cc != null && ExpressionHelper.IsIntegralZero((CompileTimeConstant)expression));
+    }
+
     //^ [Pure]
     protected override Expression Conversion(Expression expression, ITypeDefinition targetType, bool isExplicitConversion) {
+
+      //// T -> T
+      //if (TypeHelper.TypesAreEquivalent(expression.Type, targetType)) return expression;
 
       // bool -> bool
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean) &&
@@ -311,35 +427,26 @@ namespace Microsoft.Research.Vcc {
       if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigIntString && TypeHelper.IsPrimitiveInteger(expression.Type))
         return this.ConversionExpression(expression, targetType);
 
-      IPointerType/*?*/ sourcePointerType = expression.Type as IPointerType;
-      IPointerType/*?*/ targetPointerType = targetType as IPointerType;
+      IPointerType/*?*/ srcPointerType;
+      IPointerType/*?*/ tgtPointerType;
 
-      if (sourcePointerType != null) {
-        if (isExplicitConversion && TypeHelper.IsPrimitiveInteger(targetType))
-          return this.ConversionExpression(expression, targetType);
-        if (sourcePointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void && (targetPointerType != null || targetType is IFunctionPointer))
-          return this.ConversionExpression(expression, targetType);
-        if (targetPointerType != null && (isExplicitConversion || targetPointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void))
-          return this.ConversionExpression(expression, targetType);
-      } else if (TypeHelper.GetTypeName(expression.Type) == SystemDiagnosticsContractsCodeContractTypedPtrString) {
-        if (targetPointerType != null && !TypeHelper.TypesAreEquivalent(targetType.ResolvedType, this.PlatformType.SystemVoidPtr.ResolvedType))
-          return this.ConversionExpression(expression, targetType);
-        else return expression;
-      } else { 
-        if (targetType is IPointerType || targetType is IFunctionPointer || TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractTypedPtrString) {
-          if (isExplicitConversion && TypeHelper.IsPrimitiveInteger(expression.Type) || expression is CompileTimeConstant && ExpressionHelper.IsIntegralZero((CompileTimeConstant)expression))
-            return this.ConversionExpression(expression, targetType);
-          sourcePointerType = this.ArrayPointerFor(expression.Type);
-        } else if (TypeHelper.IsPrimitiveInteger(targetType)) {
-          if (isExplicitConversion && expression.Type is IFunctionPointer)
-            return this.ConversionExpression(this.ConversionExpression(expression, this.PlatformType.SystemVoidPtr.ResolvedType), targetType);
-          sourcePointerType = this.ArrayPointerFor(expression.Type);
-        }
-        if (sourcePointerType != null) {
+      PtrConvKind srcKind = this.ToPtrConvKind(expression.Type, out srcPointerType);
+      PtrConvKind tgtKind = this.ToPtrConvKind(targetType, out tgtPointerType);
+
+      if (srcKind != PtrConvKind.None && tgtKind != PtrConvKind.None) {
+        if (srcKind == PtrConvKind.Array) {
           AddressOf addressOf = new AddressOf(new AddressableExpression(expression), expression.SourceLocation);
           addressOf.SetContainingExpression(expression);
-          return this.Conversion(this.Conversion(addressOf, sourcePointerType, true), targetType, isExplicitConversion);
+          return this.Conversion(this.Conversion(addressOf, srcPointerType, true), targetType, isExplicitConversion);
         }
+
+        var convKind = KindsToConvMethod(srcKind, tgtKind);
+        if (convKind == ConvMethod.Identity) return expression;
+        if (convKind == ConvMethod.Implicit ||
+            convKind == ConvMethod.Explicit && isExplicitConversion ||
+            convKind == ConvMethod.ExplicitAndImplicitIfZero && (isExplicitConversion || IsIntegralZero(expression)))
+
+          return this.ConversionExpression(expression, targetType);
       }
 
       if (expression.Type == Dummy.Type) {
