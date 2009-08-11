@@ -193,5 +193,6 @@ void call_zero(struct S *s)
     from_bytes(s);
 }
 `
-Verification of call_zero succeeded.
+testcase(11,19) : error VC9600: OOPS: unhandled macro sizeof
+
 `

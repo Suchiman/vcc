@@ -367,4 +367,44 @@ void foo ()
 }
 `
 Verification of foo succeeded.
+`#include "vcc.h"
+
+typedef unsigned __int32 UINT32;
+typedef unsigned char byte;
+
+void reinterpret_array()
+requires(is_object_root(as_array((byte*) 1024, 4)))
+requires(mutable(as_array((byte*) 1024, 4)))
+writes(extent(as_array((byte*) 1024, 4)))
+{ 
+from_bytes(as_array((UINT32*)1024, 1));
+} 
+`
+Verification of reinterpret_array succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned __int32 UINT32;
+typedef unsigned char byte;
+
+void reinterpret_prim_fail(UINT32 total)
+    requires(is_object_root(as_array((byte*) 1024, 4)))
+    requires(mutable(as_array((byte*) 1024, 4)))
+    writes(extent(as_array((byte*) 1024, 4)))
+{    
+    from_bytes( (UINT32*) 1024,4);    
+    assert(false);
+}
+
+void reinterpret_prim2_fail(UINT32 total)
+    requires(is_object_root(as_array((byte*) 1024, 1)))
+    requires(mutable(as_array((byte*) 1024, 1)))
+    writes(extent(as_array((byte*) 1024, 1)))
+{    
+    from_bytes( (byte*) 1024);    
+    assert(false);
+}
+`
+testcase(11,5) : error VC9700: reinterpretation to a primitive type is not supported; please use a single-element array instead
+testcase(20,5) : error VC9700: reinterpretation to a primitive type is not supported; please use a single-element array instead
 `

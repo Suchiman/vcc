@@ -579,16 +579,36 @@ namespace Microsoft.Research.Vcc
       let typeId (obj:Expr) =
         Macro ({ obj.Common with Type = Type.Math "typeid_t" }, "_vcc_typeof", [obj])
       function
+        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [CallMacro (_, "_vcc_as_array", [], [arg; sz]) as arr]) ->
+          let eltSz =
+            match arg.Type with
+              | Ptr t -> mkInt t.SizeOf
+              | _ ->
+                helper.Error (c.Token, 9684, "wrong type of object in from_bytes(as_array(...))", None)
+                mkInt 1
+          let sz = Prim (sz.Common, Op("*", Processed), [eltSz; sz])
+          Some (Stmt (c, Call (c, fn, [], [asArray sz arg; typeId arr])))
+        
         | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [obj]) ->
           let sz =
             match obj.Type with
-              | Ptr t -> t.SizeOf
-              | Array (_, _) as a -> a.SizeOf
+              | Ptr t ->
+                if not t.IsComposite then
+                  helper.Error (c.Token, 9700, "reinterpretation to a primitive type is not supported; please use a single-element array instead")
+                t.SizeOf
+              // Seems to be never reached
+              // | Array (_, _) as a -> a.SizeOf
               | _ -> 
                 helper.Error (c.Token, 9684, "wrong type of object in from_bytes(...)", None)
                 1
           Some (Stmt (c, Call (c, fn, [], [asArray (mkInt sz) obj; typeId obj])))
         | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [obj; sz]) ->
+          match obj.Type with
+            | Ptr t ->
+              if not t.IsComposite then
+                helper.Error (c.Token, 9700, "reinterpretation to a primitive type is not supported; please use a single-element array instead")
+            | _ -> 
+              helper.Error (c.Token, 9684, "wrong type of object in from_bytes(...)", None)
           Some (Stmt (c, Call (c, fn, [], [asArray sz obj; typeId obj])))
         | CallMacro (c, "_vcc_from_bytes", _, _) ->
           helper.Error (c.Token, 9685, "wrong number of arguments to from_bytes(...)", None)

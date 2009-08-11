@@ -2114,6 +2114,7 @@ axiom (forall T:$ctype, s:int :: {$array(T, s)} $array_length($array(T, s)) == s
 axiom (forall T:$ctype, s:int :: {$array(T, s)} $ptr_level($array(T, s)) == 0);
 axiom (forall T:$ctype, s:int :: {$array(T, s)} $is_arraytype($array(T, s)));
 axiom (forall T:$ctype, s:int :: {$array(T, s)} !$is_claimable($array(T, s)));
+axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
 
 function {:inline true} $is_array_elt(S:$state, p:$ptr) returns(bool)
   { $ts_is_array_elt($ts(S, p)) }
