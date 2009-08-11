@@ -4262,12 +4262,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     ISourceLocation sourceLocation;
     LexicalScope/*?*/ parentScope;
 
-    public ISourceLocation SourceLocation {
-      get {
-        return sourceLocation;
-      }
-    }
-
     public LexicalScope/*?*/ ParentScope {
       get {
         return parentScope;

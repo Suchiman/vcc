@@ -1465,8 +1465,12 @@ namespace Microsoft.Research.Vcc
 
       [<OverloadID("VisitSizeOf")>]
       member this.Visit (sizeOf:ISizeOf) : unit =
-       exprRes <- C.Expr.IntLiteral (this.ExprCommon sizeOf, 
-                                     new bigint(int64 (TypeHelper.SizeOfType (sizeOf.TypeToSize.ResolvedType))))
+       match sizeOf.TypeToSize.ResolvedType with
+         | :? IGenericMethodParameter as tVar ->
+          let ec = this.ExprCommon sizeOf
+          exprRes <- C.Expr.Macro(ec, "sizeof", [ C.Expr.UserData(ec, C.Type.TypeVar({ Name = tVar.Name.Value })) ])
+         | _ ->  exprRes <- C.Expr.IntLiteral (this.ExprCommon sizeOf, 
+                                               new bigint(int64 (TypeHelper.SizeOfType (sizeOf.TypeToSize.ResolvedType))))
 
       [<OverloadID("VisitStackArrayCreate")>]
       member this.Visit (stackArrayCreate:IStackArrayCreate) : unit = 
