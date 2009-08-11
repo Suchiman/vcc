@@ -201,7 +201,10 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
       }
 
       if (_additionalParameterHere != String.Empty) {
-        if (_additionalParameterHere.Contains("/a") && AdditionalParameter == "/t")
+        // Remove /a if /t is specified and no function is given to apply pruning to.
+        if ((_additionalParameterHere.Contains("/a")) && 
+            (AdditionalParameter.Contains("/t")) && 
+            (FunctionToVerify == String.Empty))
         {
           string[] SplittedArgs = _additionalParameterHere.Split(' ');
           for (int i = 0; i < SplittedArgs.Length; i++)
