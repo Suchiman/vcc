@@ -1624,6 +1624,7 @@ procedure $stack_alloc(#t:$ctype, #sf:int) returns (#r:$ptr);
   modifies $s;
   ensures $typed2($s, #r, #t);
   ensures $extent_mutable($s, #r);
+  ensures $extent_is_fresh(old($s), $s, #r);
   ensures $mutable($s, $emb($s, #r));
 
   ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
@@ -1670,6 +1671,7 @@ procedure $spec_alloc(#t:$ctype) returns(#r:$ptr);
   modifies $s;
   ensures $typed2($s, #r, #t);
   ensures $extent_mutable($s, #r);
+  ensures $extent_is_fresh(old($s), $s, #r);
   ensures $mutable($s, $emb($s, #r));
 
   ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
@@ -1700,6 +1702,7 @@ procedure $spec_alloc_array(#t:$ctype, sz:int) returns(#r:$ptr);
   modifies $s;
   ensures $typed2($s, #r, $array(#t, sz));
   ensures $extent_mutable($s, #r);
+  ensures $extent_is_fresh(old($s), $s, #r);
   ensures $mutable($s, $emb($s, #r));
 
   ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
@@ -1731,6 +1734,7 @@ procedure $alloc(#t:$ctype) returns(#r:$ptr);
   modifies $s;
   ensures $ref(#r) == 0 || $typed2($s, #r, #t);
   ensures $ref(#r) == 0 || $extent_mutable($s, #r);
+  ensures $ref(#r) == 0 || $extent_is_fresh(old($s), $s, #r);
   ensures $ref(#r) == 0 || $mutable($s, $emb($s, #r));
 
   ensures (forall #p:$ptr :: {$ts($s, #p)} {$st($s, #p)} // {$st(old($s), #p)} 
