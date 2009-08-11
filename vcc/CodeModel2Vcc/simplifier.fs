@@ -630,10 +630,11 @@ namespace Microsoft.Research.Vcc
           let rec stripUnchecked = function
             | Expr.Macro(_, name, [e]) when name.StartsWith("unchecked_") -> stripUnchecked e
             | e -> e
-          let (inits, bv) = cacheAssignTarget self (self (stripUnchecked e1)) // the unchecked ops were only meaningful for reading
-          let concat = Macro ({c' with Type = c'.Type.Deref}, "bv_update", [bv; mkInt total; mkInt beg; mkInt end_; e2])
+          let (inits1, bv1) = cacheAssignTarget self (self (stripUnchecked e1)) // the unchecked ops were only meaningful for reading
+          let (inits2, e2) = cache helper "assignSrc" e2 (VarKind.Local)
+          let concat = Macro ({c' with Type = c'.Type.Deref}, "bv_update", [bv1; mkInt total; mkInt beg; mkInt end_; e2])
           let rangeAssertForRhs = Expr.MkAssert(inRangeBvExtract (ignoreEffects e2) (end_ - beg) )
-          Some (inits (Expr.MkBlock [rangeAssertForRhs; Expr.Macro (c, "=", [bv; concat])]))
+          Some (inits1 (Expr.MkBlock (inits2 @ [rangeAssertForRhs; Expr.Macro (c, "=", [bv1; concat])])))
           
         | Expr.Macro (c, "=", [ Expr.Macro (_, ("_vcc_ptr_to_i4" | "_vcc_ptr_to_i8" | "_vcc_ptr_to_u4" | "_vcc_ptr_to_u8"), [e1]); e2 ]) -> 
           let (inits, target) = cacheAssignTarget self (self e1)
