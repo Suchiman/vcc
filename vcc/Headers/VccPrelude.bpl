@@ -2274,11 +2274,18 @@ function {:inline true} $as_array(p:$ptr, T:$ctype, sz:int) returns($ptr)
 function {:inline true} $array_eq(s1:$state, s2:$state, arr:$ptr, T:$ctype, sz:int) returns(bool)
   { (forall #i:int :: {$idx(arr, #i, T)} 0 <= #i && #i < sz ==> $mem_eq(s1, s2, $idx(arr, #i, T))) }
 
+// $index_within(p, arr) = ($ref(p) - $ref(arr)) / $sizeof($typ(arr))
+// To avoid using division, we define a category of simple indices. 
+//   $simple_index(p, arr) iff p == arr[k].f1.f2.f3...fN, where N >= 0.
+// We're only interested in simple indices for verification.
 function $index_within(p:$ptr, arr:$ptr) returns(int);
+function $simple_index(p:$ptr, arr:$ptr) returns(bool);
+
 axiom (forall p:$ptr, k:int :: {$idx(p, k, $typ(p))}
-  $index_within($idx(p, k, $typ(p)), p) == k);
-axiom (forall p:$ptr, k:int, f:$field :: {$index_within($dot($idx(p, k, $typ(p)), f), p)}
-  $index_within($dot($idx(p, k, $typ(p)), f), p) == k);
+  $index_within($idx(p, k, $typ(p)), p) == k && $simple_index($idx(p, k, $typ(p)), p));
+
+axiom (forall p:$ptr, q:$ptr, f:$field :: {$simple_index($dot(p, f), q)} {$index_within($dot(p, f), q)}
+  $simple_index(p, q) ==> $simple_index($dot(p, f), q) && $index_within($dot(p, f), q) == $index_within(p, q));
 
 function {:inline true} $in_array(q:$ptr, arr:$ptr, T:$ctype, sz:int) returns(bool)
   { $in_range(0, $index_within(q, arr), sz - 1) && q == $idx(arr, $index_within(q, arr), T) }
