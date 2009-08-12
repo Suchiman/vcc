@@ -943,6 +943,13 @@ namespace Microsoft.Research.Vcc
             let e = self e
             bMultiOr (List.map (bEq e) env.AtomicObjects)
           | "stackframe", [] -> er "#stackframe"
+          | "sizeof", [ C.Expr.UserData(_, typeVar) ] ->
+            match typeVar with
+              | :? C.Type as t ->
+                match t with 
+                  | C.TypeVar tv -> bCall "$sizeof" [typeVarRef tv]
+                  | _ -> die()
+              | _ -> die()
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
             B.FunctionCall(name, [self e1; self e2])
           | n, _ when Simplifier.alwaysPureCalls.ContainsKey n ->
