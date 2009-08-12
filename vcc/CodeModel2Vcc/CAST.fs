@@ -341,6 +341,20 @@ module Microsoft.Research.Vcc.CAST
                     (sub zero x, sub x one)
                   else
                     (zero, sub (Math.BigInt.Pow(two, (mkBigInt sz))) one))
+                    
+    member this.Subst(typeSubst : Dict<TypeVariable, Type>) =
+      let rec subst = function
+          | TypeVar tv -> 
+            match typeSubst.TryGetValue(tv) with
+              | true, t ->  subst t
+              | false, _ -> TypeVar tv
+          | Ptr(t) -> Ptr(subst t)
+          | Volatile(t) -> Volatile(subst t)
+          | Array(t, n) -> Array(subst t, n)
+          | Map(t1, t2) -> Map(subst t1, subst t2)
+          | t -> t
+      subst this
+
         
   and 
     [<StructuralEquality(false); StructuralComparison(false)>]
@@ -411,6 +425,27 @@ module Microsoft.Research.Vcc.CAST
       
     member this.IsStateless =
       this.IsPure && this.Reads = []
+
+    member this.Specialize(targs : list<Type>) =
+      if targs.Length = 0 then this else       
+        let typeSubst = new Dict<_,_>()
+        let varSubst = new Dict<_,_>()
+        List.iter2 (fun tv t -> typeSubst.Add(tv, t)) this.TypeParameters targs 
+        let sv v = 
+          let v' = { v with Type = v.Type.Subst(typeSubst) } : Variable
+          varSubst.Add(v,v')
+          v'
+        let pars = List.map sv this.Parameters // do this first to populate varSubst
+        let se (e : Expr) = e.SubstType(typeSubst, varSubst)
+        let ses = List.map se
+        { this with OrigRetType = this.OrigRetType.Subst(typeSubst);
+                    RetType = this.RetType.Subst(typeSubst);
+                    Parameters = pars;
+                    Requires = ses this.Requires;
+                    Ensures = ses this.Ensures;
+                    Writes = ses this.Writes;
+                    Reads = ses this.Reads;
+                    Body = Option.map se this.Body }
 
     override this.ToString () : string = 
       let b = StringBuilder()
@@ -732,6 +767,51 @@ module Microsoft.Research.Vcc.CAST
         | None -> this
         | Some this' -> this'
     
+    member this.SubstType(typeSubst : Dict<TypeVariable, Type>, varSubst : Dict<Variable, Variable>) =
+      let sc c = { c with Type = c.Type.Subst(typeSubst) } : ExprCommon
+      let varSubst = new Dict<_,_>(varSubst) // we add to it, so make a copy first
+      let sv v = 
+        match varSubst.TryGetValue(v) with
+          | true, v' -> v'
+          | false, _ ->
+            let v' = { v with Type = v.Type.Subst(typeSubst) }
+            varSubst.Add(v,v')
+            v'
+      let repl self = 
+        let selfs = List.map self
+        function
+          | Return (_, None) 
+          | Goto _
+          | Label _
+          | Comment _
+          | IntLiteral _
+          | BoolLiteral _
+          | UserData _
+          | MemoryWrite _
+          | Assert _
+          | Assume _
+          | Pure _
+          | Block _ 
+          | Stmt _
+          | If _
+          | Atomic _
+          | Loop _  -> None
+          | Ref(c, v) -> Some(Ref(sc c, sv v))
+          | VarDecl(c, v) -> Some(VarDecl(c, sv v))
+          | Result c -> Some(Result(sc c))
+          | Prim (c, op, es) ->  Some(Prim(sc c, op, selfs es))
+          | Call (c, fn, tas, es) -> Some(Call(sc c, fn, List.map (fun (t : Type) -> t.Subst(typeSubst)) tas, selfs es))
+          | Macro (c, op, es) -> Some(Macro(sc c, op, selfs es))
+          | Deref (c, e) -> Some(Deref(sc c, self e))
+          | Dot (c, e, f) -> Some(Dot(sc c, self e, f))
+          | Index (c, e1, e2) -> Some(Index(sc c, self e1, self e2))
+          | Cast (c, ch, e) -> Some(Cast(sc c, ch, self e))
+          | Old (c, e1, e2) -> Some(Old(sc c, self e1, self e2))
+          | Quant (c, q) -> Some(Quant(sc c, {q with Triggers = List.map selfs q.Triggers; Condition = Option.map self (q.Condition); Body = self (q.Body)}))
+          | VarWrite (c, vs, e) -> Some(VarWrite(sc c, List.map sv vs, self e))
+          | Return (c, Some e) -> Some(Return(sc c, Some(self e)))
+      this.SelfMap(repl)
+    
     member this.SelfCtxMap (ispure : bool, f : ExprCtx -> (Expr -> Expr) -> Expr -> option<Expr>) : Expr =        
       let rec aux ctx (e:Expr) = e.Map (ispure, f')
       and f' ctx e = f ctx (aux ctx) e
@@ -749,16 +829,6 @@ module Microsoft.Research.Vcc.CAST
             | true, Ref(_, v') -> v'
             | true, _ -> die()
             | _ -> v
-        let rec substType = function
-          | TypeVar tv -> 
-            match typeSubst.TryGetValue(tv) with
-              | true, t -> substType t
-              | false, _ -> TypeVar tv
-          | Ptr(t) -> Ptr(substType t)
-          | Volatile(t) -> Volatile(substType t)
-          | Array(t, n) -> Array(substType t, n)
-          | Map(t1, t2) -> Map(substType t1, substType t2)
-          | t -> t
         match e with
           | Ref (_, v) -> 
             match subst.TryGetValue v with
@@ -766,7 +836,7 @@ module Microsoft.Research.Vcc.CAST
               | _ -> None
           | VarDecl (c, v) when subst.ContainsKey v -> Some (Block (c, []))
           | VarWrite (c, v, e) -> Some (VarWrite (c, List.map substVar v, self e))
-          | Cast(ec, cs, expr) -> Some(Cast({ec with Type = substType ec.Type}, cs, self expr))
+          | Cast(ec, cs, expr) -> Some(Cast({ec with Type = ec.Type.Subst(typeSubst)}, cs, self expr))
           | _ -> None
       this.SelfMap repl
                 

@@ -332,7 +332,8 @@ namespace Microsoft.Research.Vcc
         | _ -> true
         
       let _inline self = function
-        | Call (c, f, _, args) when inlines.ContainsKey f ->
+        | Call (c, f, targs, args) when inlines.ContainsKey f ->
+          let f = f.Specialize(targs)
           let map = gdict()
           let bindIn (formal:Variable) = function
             | Expr.Ref _ as r -> 
