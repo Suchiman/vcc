@@ -2,7 +2,7 @@
 
 struct foo{
 int (*var)(), xx;
-}
+};
   
 int main(){}
 `

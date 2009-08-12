@@ -21,7 +21,7 @@ void bar(int* p)
 struct A {
   int q;
   spec( int m[int]; )
-}
+};
 
 void baz(struct A *a)
   requires(thread_local(a))

@@ -3,7 +3,7 @@
 struct S {
   int a;
   int b;
-}
+};
 
 void foo(struct S *s)
   maintains(wrapped(s))

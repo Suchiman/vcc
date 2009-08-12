@@ -1,6 +1,6 @@
 #include <vcc2.h>
 
-struct A { int foo; }
+struct A { int foo; };
 
 void foo() {
   struct A* x;

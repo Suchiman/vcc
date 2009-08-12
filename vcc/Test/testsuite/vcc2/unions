@@ -161,7 +161,7 @@ union vcc(dynamic_owns) U {
   invariant(
     set_in(this->s, owns(this)) ||
     set_in(this->t, owns(this)))
-}
+};
 
 void foo() {
   union U u;

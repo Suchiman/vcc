@@ -1741,8 +1741,15 @@ namespace Microsoft.Research.Vcc.Parsing {
             namespaceMembers.Add(namespaceType);
           type = namespaceType;
         }
+
         //TODO: else give error
         this.ParseRestOfTypeDeclaration(sctx, namespaceMembers, texpr.Expression, newTypeMembers, followers);
+        if (!Parser.StructFollowers[this.currentToken]) {
+          ISourceLocation errorLocation = this.scanner.SourceLocationOfLastScannedToken;
+          string errorToken = this.currentToken == Token.EndOfFile ? "end-of-file" : errorLocation.Source;
+          this.HandleError(errorLocation, Error.MissingSemicolonAfterStruct, errorToken);
+        }   
+        this.SkipTo(followers);
         // filter out unexpected constructs that cannot have they CompilationPart setup properly, they may
         // have been generated as artifacts of recovery from parse errors
         // see Microsoft.Cci.Ast.TypeDeclaration.SetMemberContainingTypeDeclaration for the supported classes
@@ -1794,7 +1801,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ assume tokLoc.SourceDocument == sctx.SourceDocument;
       sctx.UpdateToSpan(tokLoc);
       typeMembers.TrimExcess();
-      this.SkipOverTo(Token.RightBrace, followers);
+      this.Skip(Token.RightBrace); //, followers);
       this.currentTypeName = savedCurrentTypeName;
       this.currentTypeMembers = savedCurrentTypeMembers;
     }
@@ -3902,6 +3909,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     private static readonly TokenSet Term; //  Token belongs to first set for term-or-unary-operator (follows casts), but is not a predefined type.
     private static readonly TokenSet Predefined; // Token is a predefined type
     private static readonly TokenSet UnaryOperator; //  Token belongs to unary operator
+    private static readonly TokenSet StructFollowers;
     
     static Parser(){
       AddOneOrSubtractOne = new TokenSet();
@@ -4065,7 +4073,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       SpecifierThatCombinesWithTypedefName |= Token.Multiply;
       SpecifierThatCombinesWithTypedefName |= Token.Unaligned;
       SpecifierThatCombinesWithTypedefName |= Token.ScopeResolution;
-      
+
+      StructFollowers = new TokenSet();
+      StructFollowers |= Token.Identifier;
+      StructFollowers |= Token.Semicolon;
+      StructFollowers |= Token.Multiply;
 
       TypeStart = new TokenSet();
       TypeStart |= Token.Identifier;

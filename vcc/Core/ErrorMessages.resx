@@ -3648,4 +3648,7 @@
   <data name="UnknownElementSize" xml:space="preserve">
     <value>'{0}' : unknown element size</value>
   </data>
+  <data name="MissingSemicolonAfterStruct" xml:space="preserve">
+    <value>Unexpected '{0}'. Did you forget a ';'?</value>
+  </data>
 </root>

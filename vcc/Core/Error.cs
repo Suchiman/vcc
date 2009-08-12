@@ -85,5 +85,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     UnknownElementSize,
 
+    MissingSemicolonAfterStruct,
+
   }
 }
