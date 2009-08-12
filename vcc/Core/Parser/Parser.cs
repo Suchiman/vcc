@@ -106,9 +106,41 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.GetNextToken();
       } else {
         if (requireIdentifier) this.HandleError(Error.ExpectedIdentifier);
-        name = this.GetNameFor(sourceLocation.SourceDocument.Name.Value+sourceLocation.StartIndex);
+        name = this.GetNameFor(SanitizeString(sourceLocation.SourceDocument.Name.Value)+sourceLocation.StartIndex);
       }
       return new NameDeclaration(name, sourceLocation);
+    }
+
+    private static string SanitizeString(string str) {
+      StringBuilder result = new StringBuilder(str.Length);
+      foreach (var c in str) {
+        switch (c) {
+          case '$':
+          case '%':
+          case '\'':
+          case '-':
+          case '@':
+          case '~':
+          case '`':
+          case '!':
+          case '(':
+          case ')':
+          case '&':
+          case '+':
+          case ',':
+          case ';':
+          case '=':
+          case '[':
+          case ']':
+          case ' ':
+            result.Append('_');
+            break;
+          default: 
+            result.Append(c);
+            break;
+        }
+      }
+      return result.ToString();
     }
 
     private Expression ParseScopedName(Expression qualifier, TokenSet followers)
