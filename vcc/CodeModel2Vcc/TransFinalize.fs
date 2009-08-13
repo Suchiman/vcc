@@ -206,7 +206,10 @@ namespace Microsoft.Research.Vcc
         let assign = VarWrite(ecVoid, [dummy], expr)
         incr dummyId
         [decl; assign]
+      let stmtalizeNonVoid (expr : Expr) = if ignoreType expr.Type then [expr] else stmtalize (expr)
       function
+        | If(ec, cond, e1, e2) -> Some(If(ec, self cond, Expr.MkBlock(stmtalizeNonVoid (self e1)), Expr.MkBlock(stmtalizeNonVoid (self e2))))
+        | Loop(ec, inv, writes, stmts) -> Some(Loop(ec, List.map self inv, List.map self writes, Expr.MkBlock(stmtalizeNonVoid (self stmts))))
         | Stmt(ec, expr) when not (ignoreType expr.Type) -> Some(Expr.MkBlock(stmtalize (self expr)))
         | Block(ec, []) -> None
         | Block(ec, stmts) ->
@@ -216,7 +219,6 @@ namespace Microsoft.Research.Vcc
               | [x] -> x, List.rev acc
               | x::xs -> loop (x::acc) xs
             loop []
-          let stmtalizeNonVoid (expr : Expr) = if ignoreType expr.Type then [expr] else stmtalize (expr)
           let last, stmts' = splitLast stmts
           Some(Block(ec, (stmts' |> List.map self |> List.map stmtalizeNonVoid |> List.concat) @ [ self last ]))
           
