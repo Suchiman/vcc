@@ -225,10 +225,23 @@ namespace Microsoft.Research.Vcc
     
     let desugarLambdas decls =
       let defs = ref []
-      let expand self = function
+      
+      // n-ary lambdas are represented as nested quantifiers. We need to make sure that we place an in_lambda for every quantifier
+      // also, we need to adjust the types. Originally, all nested quantifiers have the same type, which is the type of the
+      // entire lambda. We need to shave of map-type for map-type as we walk down the nested quantifiers
+      // for this, we pass in the extra optional type argument. Initially, the argument in None, which corresponds to the
+      // fact that we have found the outermost quantifier
+      let rec addNestedInLambdas mapType self = function
+        | Quant (_, ({ Kind = Lambda; Condition = None; Body = Cast({Type = Type.Bool}, _, Quant(qc, ({Kind = Lambda})))})) as outer when Option.isNone mapType ->
+          Some(outer.SelfMap(addNestedInLambdas (Some(qc.Type))))
         | Quant (c, ({ Kind = Lambda; Condition = None; Body = Cast(({Type = Type.Bool} as bc), _, Quant(qc, ({Kind = Lambda} as nestedQData)))} as q)) -> 
-          let nestedType = match qc.Type with | Type.Map(_, t) -> t | _ -> die()
-          Some (self (Quant (c, { q with Body = Macro(bc, "in_lambda", [BoolLiteral(bc, true); Quant({qc with Type = nestedType }, nestedQData)]) })))
+          let nestedType = match mapType with | Some(Type.Map(_, t)) -> t | _ -> die()
+          let nestedQ = Quant({qc with Type = nestedType }, nestedQData)
+          let nestedQ = nestedQ.SelfMap(addNestedInLambdas (Some(nestedType)))
+          Some ((Quant (c, { q with Body = Macro(bc, "in_lambda", [BoolLiteral(bc, true); nestedQ]) })))
+        | _ -> None
+
+      let expand self = function
         | Quant (c, ({ Kind = Lambda; Condition = None; Body = Macro (_, "in_lambda", [cond; expr]) } as q)) ->
           Some (self (Quant (c, { q with Condition = Some cond; Body = (self expr) })))
           
@@ -326,7 +339,7 @@ namespace Microsoft.Research.Vcc
         | _ -> None   
         
            
-      let decls = deepMapExpressions expand decls
+      let decls = decls |> deepMapExpressions (addNestedInLambdas None) |> deepMapExpressions expand 
       decls @ !defs    
     
     // ============================================================================================================

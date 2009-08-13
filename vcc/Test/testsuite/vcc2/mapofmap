@@ -67,3 +67,20 @@ spec(FromIntToIntToBool success3() {
 `
 Verification of success3 succeeded.
 `
+#include "vcc.h"
+
+struct T {
+    int dummy;
+    spec(volatile bool map[int][int][int];)
+};
+
+void foo(struct T *t)
+    requires(wrapped(t))
+    writes(t)
+{
+    unwrap(t);
+    t->map=lambda(int i; int j; int k; true; false);
+}
+`
+Verification of foo succeeded.
+`

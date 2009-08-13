@@ -463,3 +463,10 @@ void barSafe()
 Verification of bar succeeded.
 Verification of barSafe succeeded.
 `
+struct S { int a; }
+
+struct T { int b; }
+`
+testcase(3,1) : error VC0000: Unexpected 'struct'. Did you forget a ';'?
+Unexpected 'end-of-file'. Did you forget a ';'?
+`
