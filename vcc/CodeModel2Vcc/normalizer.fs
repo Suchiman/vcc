@@ -548,7 +548,7 @@ namespace Microsoft.Research.Vcc
       let foldBackFieldAssignments ec tmp =
         let rec foldBackFieldAssignments' (acc : Expr) = function
           | Macro(_, "=", [Ref(_,v); e]) when v = tmp -> e
-          | Macro(_, "=", [Deref(_, Dot(_, Macro(_, "&", [Ref(_,v)]), f)); e]) when v = tmp -> Macro({acc.Common with Type = Type.MathStruct}, "vs_updated", [Dot({acc.Common with Type = Type.Ptr(f.Type)}, acc, f); e])
+          | Macro(_, "=", [Deref(_, Dot(_, Macro(_, "&", [Ref(_,v)]), f)); e]) when v = tmp -> Macro({acc.Common with Type = v.Type}, "vs_updated", [Dot({acc.Common with Type = Type.Ptr(f.Type)}, acc, f); e])
           | Block(_, stmts) -> recurse acc stmts
           | _ -> acc
         and recurse = List.fold foldBackFieldAssignments' 

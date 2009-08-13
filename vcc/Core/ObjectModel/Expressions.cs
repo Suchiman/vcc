@@ -1995,6 +1995,8 @@ namespace Microsoft.Research.Vcc {
 
     protected VccInitializerBase(BlockStatement containingBlock, VccInitializerBase template) 
       : base(containingBlock, template) {
+      this.structureTypeExpression = template.structureTypeExpression;
+      this.arrayTypeExpression = template.arrayTypeExpression;
     }
 
     private static VccStructuredTypeDeclaration/*?*/ MiniResolve(NamespaceDeclaration nsDeclaration, VccNamedTypeExpression/*?*/ typeExp) {

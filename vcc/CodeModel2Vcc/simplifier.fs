@@ -254,6 +254,10 @@ namespace Microsoft.Research.Vcc
           let isPure = ref true
           
           let rec hasQVar vars expr =
+            let argHasIt args =
+              let argsHaveIt = List.map (hasQVar vars) args // ensure to really visit all arguments because of the side effects
+              List.exists (fun x -> x) argsHaveIt
+              
             let hasIt = ref false
             let check self = function
               | Expr.Ref (_, v) when _list_mem v vars ->
@@ -265,8 +269,7 @@ namespace Microsoft.Research.Vcc
                 isPure := false
                 true
               | Call(_, fn, _, args) ->
-                let argsHaveIt = List.map (hasQVar vars) args // ensure to really visit all arguments because of the side effects
-                if List.exists (fun x -> x) argsHaveIt then
+                if argHasIt args then
                   hasIt := true
                   if not fn.IsStateless then isPure := false
                 false
@@ -277,18 +280,9 @@ namespace Microsoft.Research.Vcc
           let parms = ref []
           
           let repl = 
-            let rec repl' vars prestate _ = function           
-              | Old(ec, prestate, expr) -> Some(expr.SelfMap (repl' vars (Some(prestate))))
-              | Quant(ec, qd) as quant when hasQVar vars quant ->
-                let self = fun (e : Expr) -> e.SelfMap(repl' (qd.Variables @ vars) prestate)
-                Some(Quant(ec, {qd with Body = self qd.Body}))
-              | expr when hasQVar vars expr -> None
-              | IntLiteral _
-              | BoolLiteral _
-              | Macro (_, "null", [])
-              | CallMacro(_, "_vcc_typeof", _, _)
-              | Cast (_, _, Macro (_, "null", [])) -> None
-              | expr ->
+          
+            let rec repl' vars prestate _ = 
+              let turnExpressionIntoParameter (expr : Expr) = 
                 let pname = "#l" + (List.length !parms).ToString()
                 let var = { Name = pname; Type = expr.Type; Kind = QuantBound } : Variable
                 let expr = 
@@ -297,6 +291,23 @@ namespace Microsoft.Research.Vcc
                     | Some prestate -> Old(expr.Common, prestate, expr)
                 parms := (expr, var) :: !parms
                 Some (Expr.Ref (expr.Common, var))
+
+              function
+                | Old(ec, prestate, expr) -> Some(expr.SelfMap (repl' vars (Some(prestate))))
+                | Quant(ec, qd) as quant when hasQVar vars quant ->
+                  let self = fun (e : Expr) -> e.SelfMap(repl' (qd.Variables @ vars) prestate)
+                  Some(Quant(ec, {qd with Body = self qd.Body}))
+                | Macro(_, "vs_updated", args) as expr when hasQVar vars expr -> Some(expr)
+                  // special handling because the field and assignment are split into two separate arguments but must be handled
+                  // together
+                  // TODO: this will fail if we start mixing in things that need to be evaluated at the calling site, like old(...)
+                | expr when hasQVar vars expr -> None
+                | IntLiteral _
+                | BoolLiteral _
+                | Macro (_, "null", [])
+                | CallMacro(_, "_vcc_typeof", _, _)
+                | Cast (_, _, Macro (_, "null", [])) -> None
+                | expr -> turnExpressionIntoParameter expr
             repl' q.Variables None
           
           let cond = 

@@ -416,3 +416,18 @@ void foo(struct T *t)
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+struct vcc(record) S {
+    int a;
+};
+
+void foo()
+{
+    spec(struct S map2[int];)
+    speconly(map2 = lambda(int x; true; (struct S) { .a = x });)
+    assert(map2[4].a == 4);
+}
+`
+Verification of foo succeeded.
+`
