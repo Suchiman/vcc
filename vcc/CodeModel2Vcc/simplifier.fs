@@ -337,8 +337,7 @@ namespace Microsoft.Research.Vcc
           Some (Call (c, fn, [], List.map (fst >> self) !parms))
           
         | _ -> None   
-        
-           
+                   
       let decls = decls |> deepMapExpressions (addNestedInLambdas None) |> deepMapExpressions expand 
       decls @ !defs    
     
