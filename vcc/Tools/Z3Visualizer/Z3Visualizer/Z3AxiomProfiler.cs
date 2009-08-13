@@ -112,7 +112,19 @@ namespace Z3AxiomProfiler
                   return false;
                 }
                 config.timeout = (int)timeout;
-              } else if (args[idx] == "/v2") {
+              }
+              else if (args[idx].StartsWith("/c:"))
+              {
+                uint ch;
+                if (!UInt32.TryParse(args[idx].Substring(3), out ch))
+                {
+                  error = String.Format("Cannot parse check number \"{0}\"", args[idx].Substring(3));
+                  return false;
+                }
+                config.checkToConsider = (int)ch;
+              }
+              else if (args[idx] == "/v2")
+              {
                 // Silently accept old command line argument
               } else if (args[idx] == "/v1") {
                 error = String.Format("Z3 version 1 is no longer supported.");

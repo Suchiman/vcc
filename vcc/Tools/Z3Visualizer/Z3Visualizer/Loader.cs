@@ -26,6 +26,7 @@ namespace Z3AxiomProfiler
     public string z3LogFile = "";
     public string z3InputFile = null;
     public bool skipDecisions = false;
+    public int checkToConsider = 1;
 
 
     static public ParameterConfiguration loadParameterConfigurationFromSettings()
@@ -120,7 +121,7 @@ namespace Z3AxiomProfiler
 
         }
       }
-      processor = new LogProcessor(filelist, config.skipDecisions);
+      processor = new LogProcessor(filelist, config.skipDecisions, config.checkToConsider);
     }
 
     public void Cancel()

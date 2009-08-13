@@ -18,6 +18,8 @@ namespace Z3AxiomProfiler
   {
     private int curlineNo = 0;
     private int beginCheckSeen = 0;
+    private bool interestedInCurrentCheck = true;
+    private int checkToConsider = 1;
     private int eofSeen = 0;
     private Conflict curConfl = null;
     private List<Literal> cnflResolveLits = new List<Literal>();
@@ -28,8 +30,9 @@ namespace Z3AxiomProfiler
     private Dictionary<string, string> shortnameMap = new Dictionary<string, string>();
     private FunSymbol currentFun;
 
-    public LogProcessor(List<FileInfo> bplFileInfos, bool skipDecisions)
+    public LogProcessor(List<FileInfo> bplFileInfos, bool skipDecisions, int cons)
     {
+      checkToConsider = cons;
       lastInst = null;
       curlineNo = 0;
       this.skipDecisions = skipDecisions;
@@ -85,11 +88,11 @@ namespace Z3AxiomProfiler
     void loadBoogieToken(Quantifier quant)
     {
       string result = "";
-      string[] tokens = quant.Name.Split(':', '.');
+      string[] tokens = quant.Qid.Split(':', '.');
       string shortname = tokens[0].ToLower();
       if (shortname != "bg" && shortname != "bv" && shortname != "unknown" && shortnameMap.ContainsKey(shortname)) {
         string fullname = shortnameMap[shortname];
-        quant.Name = StringReplaceIgnoreCase(quant.Name, shortname, fullname);
+        quant.Qid = StringReplaceIgnoreCase(quant.Qid, shortname, fullname);
         //quant.Name = quant.Name.Replace(shortname, fullname);
         List<string> lines = boogieFiles[fullname];
         int lineNo = int.Parse(tokens[1]) - 1;
@@ -147,13 +150,14 @@ namespace Z3AxiomProfiler
           }
         } else {
           if (lines.Count > 0)
-            Console.WriteLine("not enough lines: {0}", quant.Name);
-          result = "unknown";
+            Console.WriteLine("not enough lines: {0}", quant.Qid);
+          result = null;
         }
       } else {
-        result = "typed prelude";
+        result = null;
       }
-      quant.Body = result.Trim();
+      if (result != null)
+        quant.Body = result.Trim();
     }
 
 
@@ -231,7 +235,7 @@ namespace Z3AxiomProfiler
       curlineNo++;
       if (line == "") return;
 
-      if (beginCheckSeen > 1) return;
+      if (beginCheckSeen > checkToConsider) return;
 
       //if ((curlineNo & 0xffff) == 0)
       //  Console.Write(".");
@@ -392,6 +396,31 @@ namespace Z3AxiomProfiler
     {
       switch (words[0]) {
         case "[mk-quant]":
+          {
+            Term[] args = GetArgs(3, words);
+
+            /*
+              if (words[2] == "not" && args[0].Name == "or") {
+                words[2] = "And";
+                args = NegateAll(args[0].Args);
+              } 
+             */
+
+            Term t = new Term("FORALL", args);
+            model.terms[words[1]] = t;
+
+            if (args.Length != 0)
+            {
+              Quantifier q = CreateQuantifier(words[1], words[2]);
+              q.BodyTerm = t;
+              if (words[2] != "null")
+                q.PrintName = words[2] + "[" + words[1] + "]";
+              else
+                q.PrintName = words[1];
+              q.ComputeBody();
+            }
+          } break;
+
         case "[mk-app]": {
             Term[] args = GetArgs(3, words);
 
@@ -419,6 +448,7 @@ namespace Z3AxiomProfiler
           }  break;
         
         case "[new-match]": {
+            if (!interestedInCurrentCheck) break;
             if (words.Length < 3) break;
             Instantiation inst = new Instantiation();
             Term[] args = GetArgs(3, words);
@@ -433,11 +463,12 @@ namespace Z3AxiomProfiler
               Array.Copy(args, firstNull + 1, inst.Responsible, 0, inst.Responsible.Length);
             }
 
-            inst.Quant = CreateQuantifier(words[2]);
+            inst.Quant = CreateQuantifier(words[2], words[2]);
             model.fingerprints[words[1]] = inst;
           } break;
 
         case "[instance]": {
+            if (!interestedInCurrentCheck) break;
             Instantiation inst;
             if (!model.fingerprints.TryGetValue(words[1], out inst)) {
               System.Console.WriteLine("fingerprint not found {0}", words[0]);
@@ -463,6 +494,7 @@ namespace Z3AxiomProfiler
 
 
         case "[decide-and-or]":
+          if (!interestedInCurrentCheck) break;
           if (words.Length >= 2)
             decideClause = GetTerm(words[1]);
           break;
@@ -471,6 +503,7 @@ namespace Z3AxiomProfiler
         case "[decide]": break;
 
         case "[assign]": {
+            if (!interestedInCurrentCheck) break;
             if (skipDecisions || words.Length < 2) break;
             ScopeDesc d = model.scopes[model.scopes.Count - 1];
             Literal l = GetLiteral(words[1]);
@@ -500,11 +533,13 @@ namespace Z3AxiomProfiler
           } break;
 
         case "[push]":
+          if (!interestedInCurrentCheck) break;
           if(!skipDecisions)
             model.PushScope();
           break;
 
         case "[pop]":
+          if (!interestedInCurrentCheck) break;
           if (skipDecisions || words.Length < 2) break;
           model.PopScopes(int.Parse(words[1]), curConfl);
           curConfl = null;
@@ -512,21 +547,27 @@ namespace Z3AxiomProfiler
 
         case "[begin-check]":
           beginCheckSeen++;
-          if (beginCheckSeen > 1)
-            Console.WriteLine("More than a single search log in the file, sticking to the first one");
+          interestedInCurrentCheck = checkToConsider == beginCheckSeen;
+          if (beginCheckSeen > 1 && checkToConsider == 1)
+            Console.WriteLine("More than a single search log in the file, sticking to the first one; use /c:N option to override");
           break;
 
         case "[query-done]":
+          if (interestedInCurrentCheck) eofSeen++;
+          break;
+
         case "[eof]":
           eofSeen++;
           break;
 
         case "[conflict-resolve]":
+          if (!interestedInCurrentCheck) break;
           if (skipDecisions) break;
           cnflResolveLits.Add(GetLiteral(words[1]));
           break;
 
         case "[conflict]":
+          if (!interestedInCurrentCheck) break;
           if (skipDecisions) break;
           curConfl = new Conflict();
           curConfl.ResolutionLits = cnflResolveLits.ToArray();
@@ -595,7 +636,7 @@ namespace Z3AxiomProfiler
               //Console.WriteLine("multi inst");
               break;
             }
-            inst.Quant = CreateQuantifier(words[1]);
+            inst.Quant = CreateQuantifier(words[1], words[1]);
             AddInstance(inst);
             for (int i = 4; i < words.Length; ++i)
               words[i] = words[i].Substring(words[i].IndexOf(':') + 1);
@@ -746,12 +787,12 @@ namespace Z3AxiomProfiler
         }
     }
 
-    private Quantifier CreateQuantifier(string name)
+    private Quantifier CreateQuantifier(string name, string qid)
     {
       Quantifier quant;
       if (!model.quantifiers.TryGetValue(name, out quant)) {
         quant = new Quantifier();
-        quant.Name = name;
+        quant.Qid = qid;
         quant.Instances = new List<Instantiation>();
         model.quantifiers[name] = quant;
 

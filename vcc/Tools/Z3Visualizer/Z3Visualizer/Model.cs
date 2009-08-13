@@ -534,8 +534,10 @@ namespace Z3AxiomProfiler.QuantifierModel
 
   public class Quantifier : Common
   {
-    public string Name;
+    public string Qid;
+    public string PrintName;
     public string Body;
+    public Term BodyTerm;
     public List<Instantiation> Instances;
     public double CrudeCost;
 
@@ -554,12 +556,14 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override string ToString()
     {
+      if (PrintName == null) PrintName = Qid;
       string costFormat = String.Format("{0:0}         ", Cost).Substring(0, 9);
-      return string.Format("{0:0} {1}  (direct: {2}, cnfl: {3})", costFormat, Name, Instances.Count, GeneratedConflicts);
+      return string.Format("{0:0} {1}  (direct: {2}, cnfl: {3})", costFormat, PrintName, Instances.Count, GeneratedConflicts);
     }
 
     public override string ToolTip()
     {
+      ComputeBody();
       return Body;
     }
 
@@ -586,21 +590,29 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override IEnumerable<Common> Children()
     {
+      Common[] theCommons = new Common[] {
+      };
+
+      /*
       if (Instances.Count < 20) {
         List<Instantiation> sortedInstantiationList = Instances;
         sortedInstantiationList.Sort(delegate(Instantiation i1, Instantiation i2) { return i2.Depth.CompareTo(i1.Depth); });
         return ConvertIEnumerable<Common,Instantiation>(sortedInstantiationList);
-      } else {
+      } else { */
+
+      if (BodyTerm == null)
+        BodyTerm = new Term("?", new Term[] { });
+
         return new Common[] {
           //new LabelNode("Real cost " + RealCost),
+          Callback("REAL COST", delegate() { return new Common[] { new LabelNode(RealCost + "") }; }),
+          BodyTerm,
           TheMost("DEEP", delegate(Instantiation i1, Instantiation i2) { return i2.Depth.CompareTo(i1.Depth); }),
           TheMost("COSTLY", delegate(Instantiation i1, Instantiation i2) { return i2.Cost.CompareTo(i1.Cost); }),
           TheMost("FIRST", delegate(Instantiation i1, Instantiation i2) { return i1.LineNo.CompareTo(i2.LineNo); }),
           TheMost("LAST", delegate(Instantiation i1, Instantiation i2) { return i2.LineNo.CompareTo(i1.LineNo); }),
-          Callback("ALL", delegate() { return Instances; }),
-          Callback("REAL COST", delegate() { return new Common[] { new LabelNode(RealCost + "") }; })
+          Callback("ALL [" + Instances.Count + "]", delegate() { return Instances; }),
         };
-      }
     }
 
     public override int ForeColor()
@@ -642,6 +654,15 @@ namespace Z3AxiomProfiler.QuantifierModel
       {
         //return RealCost;
         return CrudeCost + Instances.Count;
+      }
+    }
+
+    internal void ComputeBody()
+    {
+      if (Body == null) {
+        Body = "?";
+        if (BodyTerm != null)
+          Body = BodyTerm.ToString();
       }
     }
   }
@@ -731,7 +752,7 @@ namespace Z3AxiomProfiler.QuantifierModel
     public override string ToString()
     {
       StringBuilder s = new StringBuilder();
-      s.Append(Quant.Name);
+      s.Append(Quant.PrintName);
       int size = 0, depth = 0;
       foreach (Term t in Bindings)
       {
@@ -750,6 +771,7 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override string ToolTip()
     {
+      Quant.ComputeBody();
       return Quant.Body;
     }
 
