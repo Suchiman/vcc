@@ -2572,29 +2572,6 @@
   <data name="AmbiguousLiteralExpression" xml:space="preserve">
     <value>Embedded expression of type '{1}' is ambiguous on element '{0}'. Expecting ({2}).</value>
   </data>
-  <data name="Usage" xml:space="preserve">
-    <value>
-
-                        - MISCELLANEOUS -
-@&lt;file&gt;                 Read response file for more options
-/help                   Display this usage message (Short form: /?)
-/noconfig               Do not auto include CSC.RSP file
-/out:filename           Write the compilation result to filename (Short form: /o)
-      
-                        - STATIC VERIFICATION -
-/verify                 Perform static verification as part of the compilation.
-/verifyopt:&lt;option list&gt; Options to pass through to the static verification.
-/boogie /b              Boogie options
-/c                      Checked Arithmetic is used.
-/translate /t           Translate to bpl
-/z3                     Z3 options
-
-                        - Compilation -
-/clerrors               Output Visual C++ like error messages during compilation
-/clpath                 Path of Visual C++ (cl) compiler, typically used in preprocessing
-/n                      Not to run preprocessor
-</value>
-  </data>
   <data name="InstanceMemberInStaticClass" xml:space="preserve">
     <value>'{0}': cannot declare instance members in a static class</value>
     <comment>0708</comment>
