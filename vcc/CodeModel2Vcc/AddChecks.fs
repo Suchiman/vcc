@@ -60,103 +60,6 @@ namespace Microsoft.Research.Vcc
     let check = invariantCheck helper cond errno suffix (mkRef prestate) this
     (saveState, List.map Expr.MkAssert check)  
     
-  // ============================================================================================================
-  
-  let rec wellFormed (helper:Helper.Env) expr =
-    let wf = wellFormed helper
-    let wfWithPrecond cond expr =
-      let addCond = function
-        | Macro (c, "reads_check_wf", [e]) ->
-          Macro (c, "reads_check_cond_wf", [cond; e])
-        | Macro (c, "reads_check_cond_wf", [cond'; e]) ->
-          Macro (c, "reads_check_cond_wf", [Expr.Prim (cond.Common, Op ("&&", Processed), [cond; cond']); e])
-        | e -> Expr.Prim (e.Common, Op ("==>", Processed), [cond; e])
-      List.map addCond (wf expr)
-    let wfs = List.map wf >> List.concat 
-    let wfo = Option.map wf >> Option.to_list >> List.concat 
-    match expr with    
-      | Prim (c, Op ("&&", _), [a;b]) -> wf (Macro (c, "ite", [a; b; BoolLiteral (boolBogusEC(), false)]))
-      | Prim (c, Op ("==>", _), [a;b]) -> wf (Macro (c, "ite", [a; b; BoolLiteral (boolBogusEC(), true)]))
-      | Prim (c, Op ("||", _), [a;b]) -> wf (Macro (c, "ite", [a; BoolLiteral (boolBogusEC(), true); b]))
-      
-      | Result (_)
-      | BoolLiteral (_, _)
-      | IntLiteral (_, _)
-      | UserData(_, _)
-      | Expr.Ref (_, _) -> []      
-      | Prim (_, _, args)
-      | Expr.Call (_, _, _, args) -> wfs args
-      | Deref (c, e) -> 
-        wf e @ [Macro ({ c with Type = Bool }, "reads_check_wf", [ignoreEffects e])]
-      | Pure (_, e)
-      | Cast (_, _, e)
-      | Dot (_, e, _) -> wf e
-      | Index (_, e, off) -> wf e @ wf off
-      
-      | Macro (_, "inv_check", _) -> []
-      | Old (_, Macro (_, "_vcc_skip_wf", []), _) -> []
-      
-      | Old (_, w, e) -> List.map (fun (e:Expr) -> Old (e.Common, w, e)) (wf e)
-      
-      | Quant _ when true -> [] // disable wf checks for quantifiers for now
-      
-      | Quant (_, q) ->
-        let cond = withDefault (BoolLiteral (boolBogusEC(), true)) q.Condition
-        let noTrigger var = Macro (boolBogusEC(), "dont_instantiate", [mkRef var])
-        let make (body:Expr) =
-          Quant (addSuffix body.Token (fun () -> " in " + expr.Token.Value),
-                 { q with Body = body; Condition = None; Kind = Forall; Triggers = [List.map noTrigger q.Variables] })
-        List.map make (wf cond @ wfWithPrecond cond q.Body)
-        
-      | Expr.Macro (c, name, args) ->
-        match name with
-          | "state"
-          | "bv_extract_signed"
-          | "bv_extract_unsigned"
-          | "bv_update"
-          | "vs_fetch"
-          | "map_get"
-          | "rec_update"
-          | "rec_update_bv"
-          | "rec_fetch"
-          | "rec_zero"
-          | "inv_check" -> wfs args
-          | "by_claim" -> []
-          | "_vcc_use" -> wfs args.Tail
-          // TODO check, maybe some of those function are only defined sometimes
-          | name when name.StartsWith ("_vcc_") -> wfs args
-          | name when name.StartsWith ("in_range") -> wfs args
-          | name when name.StartsWith ("unchecked_") -> wfs args
-          | "boogie_quote"           
-          | "field"
-          | "null"
-          | "writes_check"
-          | "prim_writes_check" -> []
-          | "ite" ->
-            match args with
-              | [cond; th; el] ->
-                wf cond @ wfWithPrecond cond th @ wfWithPrecond (Expr.Prim (boolBogusEC(), Op("!", Processed), [cond])) el
-              | _ -> die()
-          | _ -> helper.Oops (c.Token, "unexpected macro in wf-check " + expr.ToString()); []
-
-      // we don't expect to see those in contract context
-      | VarDecl _
-      | VarWrite _
-      | MemoryWrite _
-      | Goto _
-      | Label _
-      | Assert _
-      | Assume _
-      | Return _
-      | Return _
-      | If _ 
-      | Loop _
-      | Atomic _
-      | Block _
-      | Stmt _
-      | Comment _ -> helper.Oops (expr.Token, "unexpected in well-formedness check " + expr.ToString()); []
-
-  // ============================================================================================================
   
   let init (helper:Helper.Env) =
   
@@ -286,29 +189,6 @@ namespace Microsoft.Research.Vcc
                 None
       | _ -> None
 
-    // ============================================================================================================
-              
-    let wf = wellFormed helper
-    
-    let doAddWfChecks _ = function
-      | Assert (_, cond) as expr ->
-        match wf cond |> List.map Expr.MkAssert with
-          | [] -> None
-          | lst -> Some (Expr.MkBlock (lst @ [expr]))
-      | _ -> None        
-      
-    let addWfChecks decls = 
-      for d in decls do
-        match d with
-          | Top.FunctionDecl ({ Body = Some body } as h) ->
-            let isAdm = function
-              | Macro (_, "_vcc_admissibility_pre", _) -> true
-              | _ -> false
-            if not (List.exists isAdm h.Requires) then
-              h.Body <- Some (body.SelfMap doAddWfChecks)
-          | _ -> ()
-      decls      
-      
     // ============================================================================================================
     
     let notInTestsuite expr =
@@ -497,7 +377,6 @@ namespace Microsoft.Research.Vcc
     
     helper.AddTransformer ("check-report-checked-in-bv-lemma", Helper.Expr reportCheckedOpsInBvLemma)
     helper.AddTransformer ("check-special-calls", Helper.Expr handleSpecialCalls)
-    //helper.AddTransformer ("check-wf", Helper.Decl addWfChecks)
     helper.AddTransformer ("check-memory-access", Helper.ExprCtx addMemoryChecks)
     helper.AddTransformer ("check-overflows", Helper.ExprCtx addOverflowChecks)
     helper.AddTransformer ("check-div-by-zero", Helper.ExprCtx addDivByZeroChecks)

@@ -459,54 +459,59 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     // Make non-pure calls statements.        
-    let pullOutCalls ctx self = function
-      | VarWrite (c, v, Call (c', fn, targs, args)) -> 
-        let processed = VarWrite (c, v, Call (c', fn, targs, List.map self args))
-        if not fn.IsPure then 
-          // prevent foldIteBack to trigger on this VarWrite, see bug 964
-          addStmtsOpt [Comment(c, "non-pure function")] processed 
-        else Some (processed)
-      | Stmt (c, Call (c', fn, targs, args)) -> 
-        Some (Stmt (c, Call (c', fn, targs, List.map self args)))
-      | Call (c, fn, targs, args) as call ->
-        if fn.RetType = Type.Void then
-          if ctx.IsPure then helper.Error (call.Token, 9613, "void-call used in pure context", None)
-          Some (Stmt (c, Call (c, fn, targs, List.map self args)))
-        else
-          if ctx.IsPure then
-            if not fn.IsPure then
-              helper.Error (c.Token, 9635, "function '" + fn.Name + "' used in pure context, but not marked with 'ispure'", Some(fn.Token))
-            None
+    let rec pullOutCalls ctx self = 
+      let reportErrorForCallToImpureFunction (call : Expr) (fn :Function) = 
+        helper.Error (call.Token, 9635, "function '" + fn.Name + "' used in pure context, but not marked with 'ispure'", Some(fn.Token))
+      function
+        | VarWrite (c, v, (Call (c', fn, targs, args) as call)) -> 
+          let processed = VarWrite (c, v, Call (c', fn, targs, List.map self args))
+          if not fn.IsPure then 
+            if ctx.IsPure then reportErrorForCallToImpureFunction call fn
+            // prevent foldIteBack to trigger on this VarWrite, see bug 964
+            addStmtsOpt [Comment(c, "non-pure function")] processed 
+          else Some (processed)
+        | Stmt (c, Call (c', fn, targs, args)) -> 
+          Some (Stmt (c, Call (c', fn, targs, List.map self args)))
+        | Call (c, fn, targs, args) as call ->
+          let requireArgsToBePure = fn.Name.StartsWith("_vcc_")
+          let checkArgs = List.map (fun (e : Expr) -> e.SelfCtxMap(requireArgsToBePure, pullOutCalls))
+          if fn.RetType = Type.Void then
+            if ctx.IsPure then helper.Error (call.Token, 9613, "void-call used in pure context", None)
+            Some (Stmt (c, Call (c, fn, targs, checkArgs args)))
           else
-            let rec isGenericType = function
-              | TypeVar _ -> true
-              | Ptr t
-              | Volatile t
-              | Array(t, _) -> isGenericType t
-              | Map(t1, t2) -> isGenericType t1 || isGenericType t2
-              | _ -> false
-            
-            let retType = if isGenericType fn.RetType then call.Type else fn.RetType
-            let tmp = getTmp helper ("res_" + fn.Name) retType VarKind.Local
-            let call' = Call (c, fn, targs, List.map self args)
-            let c' = { c with Type = Void }
-            let tmpRef = Expr.Ref (c, tmp)
-            addStmtsOpt [VarDecl (c', tmp); VarWrite (c', [tmp], call')] tmpRef
-            
-      | VarWrite (c, v, Macro (c', "claim", args)) ->
-        Some (VarWrite (c, v, Macro (c', "claim", List.map self args)))
-      
-      | Macro (c, "claim", args) ->
-        if ctx.IsPure then
-          helper.Error (c.Token, 9652, "claim(...) used in pure context", None)
-        let tmp = getTmp helper "res_claim" (Ptr Claim) VarKind.SpecLocal
-        let call' = Macro (c, "claim", List.map self args)
-        let c' = { c with Type = Void }
-        let tmpRef = Expr.Ref (c, tmp)
-        addStmtsOpt [VarDecl (c', tmp); VarWrite (c', [tmp], call')] tmpRef
-  
-      | Expr.Macro (_, "noop", _) -> Some (Expr.MkBlock [])
-      | _ -> None
+            if ctx.IsPure then
+              if not fn.IsPure then reportErrorForCallToImpureFunction call fn
+              None
+            else
+              let rec isGenericType = function
+                | TypeVar _ -> true
+                | Ptr t
+                | Volatile t
+                | Array(t, _) -> isGenericType t
+                | Map(t1, t2) -> isGenericType t1 || isGenericType t2
+                | _ -> false
+              
+              let retType = if isGenericType fn.RetType then call.Type else fn.RetType
+              let tmp = getTmp helper ("res_" + fn.Name) retType VarKind.Local
+              let call' = Call (c, fn, targs, checkArgs args)
+              let c' = { c with Type = Void }
+              let tmpRef = Expr.Ref (c, tmp)
+              addStmtsOpt [VarDecl (c', tmp); VarWrite (c', [tmp], call')] tmpRef
+              
+        | VarWrite (c, v, Macro (c', "claim", args)) ->
+          Some (VarWrite (c, v, Macro (c', "claim", List.map self args)))
+        
+        | Macro (c, "claim", args) ->
+          if ctx.IsPure then
+            helper.Error (c.Token, 9652, "claim(...) used in pure context", None)
+          let tmp = getTmp helper "res_claim" (Ptr Claim) VarKind.SpecLocal
+          let call' = Macro (c, "claim", List.map self args)
+          let c' = { c with Type = Void }
+          let tmpRef = Expr.Ref (c, tmp)
+          addStmtsOpt [VarDecl (c', tmp); VarWrite (c', [tmp], call')] tmpRef
+    
+        | Expr.Macro (_, "noop", _) -> Some (Expr.MkBlock [])
+        | _ -> None
 
     // ============================================================================================================
       

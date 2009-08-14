@@ -634,3 +634,37 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+
+#include <vcc.h>
+#include <stdlib.h>
+
+struct S {
+  int a;
+};
+
+struct S *foo() 
+  ensures(typed(result))
+  ensures(thread_local(result))
+  ensures(is_fresh(result))
+  ensures(mutable(result))
+{
+  struct S *p = (struct S *)malloc(sizeof(struct S));
+  assume(p != NULL);
+  return p;
+}
+
+void bar() {
+  struct S *p;
+  wrap((p = foo()));
+  unwrap((p = foo()));
+}
+`
+testcase(22,18) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
+testcase(22,43) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
+testcase(23,20) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
+testcase(23,45) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
+`
