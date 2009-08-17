@@ -281,7 +281,7 @@ namespace Microsoft.Research.Vcc
           
           let repl = 
           
-            let rec repl' vars prestate _ = 
+            let rec repl' vars prestate self = 
               let turnExpressionIntoParameter (expr : Expr) = 
                 let pname = "#l" + (List.length !parms).ToString()
                 let var = { Name = pname; Type = expr.Type; Kind = QuantBound } : Variable
@@ -297,15 +297,19 @@ namespace Microsoft.Research.Vcc
                 | Quant(ec, qd) as quant when hasQVar vars quant ->
                   let self = fun (e : Expr) -> e.SelfMap(repl' (qd.Variables @ vars) prestate)
                   Some(Quant(ec, {qd with Body = self qd.Body}))
-                | Macro(_, "vs_updated", args) as expr when hasQVar vars expr -> Some(expr)
+                | Macro(ec, "vs_updated", [Dot(dc, e1, f); e2]) when hasQVar vars e1 || hasQVar vars e2 ->
+                  //dbgBreak()
+                  let e1' = self e1
+                  let e2' = self e2
+                  Some(Macro(ec, "vs_updated", [Dot(dc, e1', f); e2']))
                   // special handling because the field and assignment are split into two separate arguments but must be handled
                   // together
-                  // TODO: this will fail if we start mixing in things that need to be evaluated at the calling site, like old(...)
                 | expr when hasQVar vars expr -> None
                 | IntLiteral _
                 | BoolLiteral _
                 | Macro (_, "null", [])
                 | CallMacro(_, "_vcc_typeof", _, _)
+                | CallMacro(_, "vs_zero", _, [])
                 | Cast (_, _, Macro (_, "null", [])) -> None
                 | expr -> turnExpressionIntoParameter expr
             repl' q.Variables None
