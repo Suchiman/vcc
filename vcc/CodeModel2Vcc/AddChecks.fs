@@ -216,9 +216,9 @@ namespace Microsoft.Research.Vcc
                             Macro (c, fn.Name, List.map self args)])
       
       | Call (c, f, targs, args) as call when not ctx.IsPure ->
-        let f = f.Specialize(targs, false)
+        let f' = f.Specialize(targs, false)
         let wrasserts =
-          match f.Writes with
+          match f'.Writes with
             | [] -> []
             | _ ->
               let subst = new Dict<_,_>()
@@ -228,9 +228,9 @@ namespace Microsoft.Research.Vcc
                   loop (pp, vv)
                 | ([], _) -> () // for varargs functions
                 | _ -> helper.Die()
-              loop (f.InParameters, args)             
+              loop (f'.InParameters, args)             
 
-              [for w in f.Writes ->
+              [for w in f'.Writes ->
                 let w' = w.Subst (subst)
                 let prop = afmte 8510 "{1} is writable in call to {0}" [call; w']
                 let ch =
@@ -245,7 +245,7 @@ namespace Microsoft.Research.Vcc
             Expr.MkAssert (Macro (afmte 8532 "{1} is atomically updated in call to {0}" [call; arg],
                                   "is_atomic_obj", [arg])) :: acc
           | _ -> acc
-        match List.fold check_req wrasserts f.Requires with
+        match List.fold check_req wrasserts f'.Requires with
           | [] -> None
           | checks -> Some (Expr.MkBlock (checks @ [Call (c, f, targs, List.map self args)]))          
         

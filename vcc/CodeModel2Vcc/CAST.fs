@@ -445,6 +445,7 @@ module Microsoft.Research.Vcc.CAST
                     Ensures = ses this.Ensures;
                     Writes = ses this.Writes;
                     Reads = ses this.Reads;
+                    TypeParameters = [];
                     Body = if includeBody then Option.map se this.Body else None }
 
     override this.ToString () : string = 
