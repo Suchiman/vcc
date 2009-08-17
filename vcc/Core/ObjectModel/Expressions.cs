@@ -1784,7 +1784,17 @@ namespace Microsoft.Research.Vcc {
           reportedError = true;
         }
       }
-      if (!reportedError) this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.UnknownElementSize, this.IndexedObject.SourceLocation.Source));
+      if (!reportedError)
+      {
+        foreach (var arg in this.OriginalArguments)
+          if (!TypeHelper.IsPrimitiveInteger(arg.Type)) {
+            this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.SubscriptNotOfIntegralType));
+            reportedError = true;
+          }
+      }
+      if (!reportedError) {
+        this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.IllegalIndex));
+      }
     }
 
     /// <summary>

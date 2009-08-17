@@ -484,4 +484,9 @@ void foo(int *a) {
 `
 Verification of foo failed.
 testcase(5,10) : error VC8512: Assertion 'a is thread local' did not verify.
-testcase(9,8) : error VC8512: Assertion 'a is thread local' did not verify.`
+testcase(9,8) : error VC8512: Assertion 'a is thread local' did not verify.
+`
+void foo() { int a[42]; a[(void*)0] = 3; }
+`
+testcase(1,25) : error VC0000: subscript is not of integral type
+`

@@ -87,5 +87,15 @@ namespace Microsoft.Research.Vcc {
 
     MissingSemicolonAfterStruct,
 
+    /// <summary>
+    /// subscript is not of integral type
+    /// </summary>
+    SubscriptNotOfIntegralType,
+
+    /// <summary>
+    /// illegal index
+    /// </summary>
+    IllegalIndex
+
   }
 }
