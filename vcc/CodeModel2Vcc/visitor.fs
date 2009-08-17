@@ -133,7 +133,11 @@ namespace Microsoft.Research.Vcc
       topDecls
 
     member this.EnsureMethodIsVisited (m : IMethodDefinition) =
-      if doingEarlyPruning then match m with | :? IGlobalMethodDefinition -> this.DoMethod(m) | _ -> ()
+      if doingEarlyPruning then 
+        match m with 
+          | :? IGlobalMethodDefinition -> this.DoMethod(m) 
+          | :? IGenericMethodInstance as gmi -> this.EnsureMethodIsVisited(gmi.GenericMethod.ResolvedMethod)
+          | _ -> ()
     
     member this.DoType (typ:ITypeReference) =
       typeRes <- C.Type.Bogus
