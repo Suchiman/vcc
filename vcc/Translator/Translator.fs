@@ -2241,7 +2241,7 @@ namespace Microsoft.Research.Vcc
           let te e = trExpr env e
           let fname = "#" + h.Name
           let retType = trType h.RetType
-          let parameters = List.map trVar h.Parameters
+          let parameters =  List.map trTypeVar h.TypeParameters @ List.map trVar h.Parameters
           let requires = bMultiAnd (List.map te h.Requires)
           (*
           match h.Ensures with
