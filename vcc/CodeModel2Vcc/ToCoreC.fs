@@ -41,21 +41,22 @@ namespace Microsoft.Research.Vcc
         let (prev, e1) = selfe [] e
         ret (Macro(cmn, "inlined_atomic", [e1]) :: prev)
       
-      | Expr.Ref (_, _)
-      | Prim (_, _, _)
-      | IntLiteral (_, _)
-      | BoolLiteral (_, _) 
-      | Deref (_, _)
-      | Dot (_, _, _)
-      | Index (_, _, _)
-      | Cast (_, _, _)
-      | Quant (_, _)
-      | Result (_)
-      | Old (_, _, _)
-      | Call (_, _, _, _) 
-      | Pure (_, _)   
-      | UserData(_, _)
-      | Macro (_, _, _) -> None
+      | Expr.Ref _
+      | Prim _
+      | IntLiteral _
+      | BoolLiteral _
+      | Deref _
+      | Dot _
+      | Index _
+      | Cast _
+      | Quant _
+      | Result _
+      | Old _
+      | Call _
+      | Pure _
+      | UserData _
+      | SizeOf _
+      | Macro _ -> None
       
       | If (c, cond, th, el) ->
         let (prev, cond) = selfe [] cond

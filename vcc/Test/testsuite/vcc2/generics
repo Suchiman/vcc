@@ -232,3 +232,16 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+template<typename T> bool foo(T *x)
+    writes(array_range(x,sizeof(T)/4));
+
+void bar(int *p) 
+  writes(p)
+{ 
+  foo(p);
+}
+`
+Verification of bar succeeded.
+`

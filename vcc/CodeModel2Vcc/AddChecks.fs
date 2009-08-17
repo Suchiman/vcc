@@ -216,12 +216,12 @@ namespace Microsoft.Research.Vcc
                             Macro (c, fn.Name, List.map self args)])
       
       | Call (c, f, targs, args) as call when not ctx.IsPure ->
+        let f = f.Specialize(targs, false)
         let wrasserts =
           match f.Writes with
             | [] -> []
             | _ ->
               let subst = new Dict<_,_>()
-              let typeSubst = new Dict<_,_>()
               let rec loop = function
                 | (p :: pp, v :: vv) ->
                   subst.Add (p, v)
@@ -229,10 +229,9 @@ namespace Microsoft.Research.Vcc
                 | ([], _) -> () // for varargs functions
                 | _ -> helper.Die()
               loop (f.InParameters, args)             
-              List.iter2 (fun (tv : TypeVariable) (t : Type) -> typeSubst.Add(tv, t)) f.TypeParameters targs
 
               [for w in f.Writes ->
-                let w' = w.Subst (subst, typeSubst)
+                let w' = w.Subst (subst)
                 let prop = afmte 8510 "{1} is writable in call to {0}" [call; w']
                 let ch =
                   match w'.Type with

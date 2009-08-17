@@ -426,7 +426,7 @@ module Microsoft.Research.Vcc.CAST
     member this.IsStateless =
       this.IsPure && this.Reads = []
 
-    member this.Specialize(targs : list<Type>) =
+    member this.Specialize(targs : list<Type>, includeBody : bool) =
       if targs.Length = 0 then this else       
         let typeSubst = new Dict<_,_>()
         let varSubst = new Dict<_,_>()
@@ -445,7 +445,7 @@ module Microsoft.Research.Vcc.CAST
                     Ensures = ses this.Ensures;
                     Writes = ses this.Writes;
                     Reads = ses this.Reads;
-                    Body = Option.map se this.Body }
+                    Body = if includeBody then Option.map se this.Body else None }
 
     override this.ToString () : string = 
       let b = StringBuilder()
@@ -541,6 +541,7 @@ module Microsoft.Research.Vcc.CAST
     | Quant of ExprCommon * QuantData
     | Result of ExprCommon
     | Old of ExprCommon * Expr * Expr           // the first expression refers to ``when''
+    | SizeOf of ExprCommon * Type
     
     // stmt-like expressions
     | VarDecl of ExprCommon * Variable
@@ -605,6 +606,7 @@ module Microsoft.Research.Vcc.CAST
         | Stmt (e, _)
         | Pure (e, _)
         | UserData(e, _)
+        | SizeOf(e, _)
           -> e
 
     member this.Visit (ispure : bool, f: ExprCtx -> Expr -> bool) : unit =
@@ -621,7 +623,8 @@ module Microsoft.Research.Vcc.CAST
             | VarDecl _
             | Macro(_, _, [])
             | Call(_, _, _, [])
-            | UserData(_, _)
+            | UserData _
+            | SizeOf _
             | Result _ -> ()
             | Prim (_, _, es)
             | Block (_, es) 
@@ -643,6 +646,7 @@ module Microsoft.Research.Vcc.CAST
             | If (_, cond, s1, s2) -> visit ctx cond; visit ctx s1; visit ctx s2
             | Loop (_, invs, writes, s) -> pauxs invs; pauxs writes; visit ctx s
             | Atomic (c, exprs, s) -> pauxs exprs; visit ctx s
+
 
       and paux = visit ExprCtx.PureCtx
       and pauxs = List.iter (visit ExprCtx.PureCtx)
@@ -718,7 +722,8 @@ module Microsoft.Research.Vcc.CAST
               | VarDecl _
               | Macro(_, _, [])
               | Call(_, _, _, [])
-              | UserData(_, _)
+              | UserData _
+              | SizeOf _
               | Result _ -> None
               | Prim (c, op, es) ->  constructList (fun args ->  Prim (c, op, args)) (map ctx) es
               | Call (c, fn, tas, es) -> constructList  (fun args -> Call (c, fn, tas, args)) (map ctx) es
@@ -810,6 +815,7 @@ module Microsoft.Research.Vcc.CAST
           | Quant (c, q) -> Some(Quant(sc c, {q with Triggers = List.map selfs q.Triggers; Condition = Option.map self (q.Condition); Body = self (q.Body)}))
           | VarWrite (c, vs, e) -> Some(VarWrite(sc c, List.map sv vs, self e))
           | Return (c, Some e) -> Some(Return(sc c, Some(self e)))
+          | SizeOf(c, t) -> Some(SizeOf(c, t.Subst(typeSubst)))
       this.SelfMap(repl)
     
     member this.SelfCtxMap (ispure : bool, f : ExprCtx -> (Expr -> Expr) -> Expr -> option<Expr>) : Expr =        
@@ -822,21 +828,20 @@ module Microsoft.Research.Vcc.CAST
       and f' ctx e = f (aux ctx) e
       this.Map (false, f')
 
-    member this.Subst (subst : System.Collections.Generic.Dictionary<Variable, Expr>, typeSubst : System.Collections.Generic.Dictionary<TypeVariable, Type>) =
-      let repl self e =
+    member this.Subst (subst : System.Collections.Generic.Dictionary<Variable, Expr>) =
+      let repl self =
         let substVar v = 
           match subst.TryGetValue(v) with
             | true, Ref(_, v') -> v'
             | true, _ -> die()
             | _ -> v
-        match e with
+        function
           | Ref (_, v) -> 
             match subst.TryGetValue v with
               | true, e -> Some (e)
               | _ -> None
           | VarDecl (c, v) when subst.ContainsKey v -> Some (Block (c, []))
           | VarWrite (c, v, e) -> Some (VarWrite (c, List.map substVar v, self e))
-          | Cast(ec, cs, expr) -> Some(Cast({ec with Type = ec.Type.Subst(typeSubst)}, cs, self expr))
           | _ -> None
       this.SelfMap repl
                 
@@ -936,6 +941,8 @@ module Microsoft.Research.Vcc.CAST
           wr "// "; wr s; wr "\n"
         | UserData (_, o) ->
           wr "userdata("; wr (o.ToString()); wr ") : "; wr (o.GetType().Name)
+        | SizeOf(_, t) ->
+          wr "sizeof("; wr (t.ToString()); wr ")"
           
   let (|ETrue|_|) = function
       | BoolLiteral (_, true) -> Some (ETrue)

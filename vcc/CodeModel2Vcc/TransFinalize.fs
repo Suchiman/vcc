@@ -92,29 +92,30 @@ namespace Microsoft.Research.Vcc
       and fs = List.map f
       
       and doExpr self = function
-        | Expr.Ref (_, _)
-        | Prim (_, _, _)
-        | Expr.Call (_, _, _, _)
-        | IntLiteral (_, _)
-        | BoolLiteral (_, _) 
-        | Deref (_, _)
-        | Dot (_, _, _)
-        | Index (_, _, _)
-        | Cast (_, _, _)
-        | Result (_)
-        | Old (_, _, _)  
-        | Macro (_, _, _)
-        | VarWrite (_, _, _)
-        | MemoryWrite (_, _, _)
-        | Goto (_, _)
-        | Label (_, _)
-        | Block (_, _)
-        | Return (_, _)
-        | VarDecl (_, _)
-        | Stmt (_, _)
-        | Pure (_, _)
-        | UserData(_, _)
-        | Comment (_, _) -> None
+        | Expr.Ref _
+        | Prim _
+        | Expr.Call _
+        | IntLiteral _
+        | BoolLiteral _
+        | Deref _
+        | Dot _
+        | Index _
+        | Cast _
+        | Result _
+        | Old _
+        | Macro _
+        | VarWrite _
+        | MemoryWrite _
+        | Goto _
+        | Label _
+        | Block _
+        | Return _
+        | VarDecl _
+        | Stmt _
+        | Pure _
+        | UserData _
+        | SizeOf _
+        | Comment _ -> None
         
         | Quant (c, q) -> Some (Quant (c, { q with Body = f q.Body; Condition = Option.map f q.Condition }))
         | If (c, cond, e1, e2) -> Some (If (c, f cond, self e1, self e2))

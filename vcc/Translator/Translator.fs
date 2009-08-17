@@ -755,6 +755,8 @@ namespace Microsoft.Research.Vcc
               | C.Exists -> B.Exists (vars, triggers, weight "user-exists", body)
               | C.Lambda -> die()
           
+          | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
+          | C.Expr.SizeOf(_, t) -> bInt t.SizeOf
           | _ ->         
             helper.Oops (expr.Token, "unhandled expr " + expr.ToString())
             er "$bogus"
@@ -943,13 +945,6 @@ namespace Microsoft.Research.Vcc
             let e = self e
             bMultiOr (List.map (bEq e) env.AtomicObjects)
           | "stackframe", [] -> er "#stackframe"
-          | "sizeof", [ C.Expr.UserData(_, typeVar) ] ->
-            match typeVar with
-              | :? C.Type as t ->
-                match t with 
-                  | C.TypeVar tv -> bCall "$sizeof" [typeVarRef tv]
-                  | _ -> die()
-              | _ -> die()
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
             B.FunctionCall(name, [self e1; self e2])
           | n, _ when Simplifier.alwaysPureCalls.ContainsKey n ->

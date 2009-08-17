@@ -1468,7 +1468,7 @@ namespace Microsoft.Research.Vcc
        match sizeOf.TypeToSize.ResolvedType with
          | :? IGenericMethodParameter as tVar ->
           let ec = this.ExprCommon sizeOf
-          exprRes <- C.Expr.Macro(ec, "sizeof", [ C.Expr.UserData(ec, C.Type.TypeVar({ Name = tVar.Name.Value })) ])
+          exprRes <- C.Expr.SizeOf(ec, C.Type.TypeVar({ Name = tVar.Name.Value }))
          | _ ->  exprRes <- C.Expr.IntLiteral (this.ExprCommon sizeOf, 
                                                new bigint(int64 (TypeHelper.SizeOfType (sizeOf.TypeToSize.ResolvedType))))
 
