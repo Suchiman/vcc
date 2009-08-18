@@ -259,7 +259,7 @@ namespace Microsoft.Research.Vcc
       if (numErrors == 0) {
         try {
           parent.swBoogieAI.Start();
-          AbstractInterpretation.RunAbstractInterpretation(currentBoogie, null);
+          AbstractInterpretation.RunAbstractInterpretation(currentBoogie);
         } finally {
           parent.swBoogieAI.Stop();
         }
