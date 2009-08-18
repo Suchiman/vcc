@@ -110,3 +110,14 @@ void foo(int j) {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+void foo(int j) {
+    bv_lemma(forall(int i; i&1 || !((bool)(i&1))));
+    bv_lemma(forall(int i; i&1 || !(i&1)));   
+    assume(start_here());
+    assert(j&1 || !(j&1));
+}
+`
+Verification of foo succeeded.
+`

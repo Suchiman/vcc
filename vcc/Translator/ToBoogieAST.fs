@@ -96,6 +96,7 @@ namespace Microsoft.Research.Vcc
     let rec unType (t:Boogie.Type) = 
       if t.IsBool then Type.Bool
       elif t.IsInt then Type.Int
+      elif t.IsBv then Type.Bv(t.BvBits)
       else
         match t with
           | :? Boogie.CtorType as u ->
@@ -124,8 +125,10 @@ namespace Microsoft.Research.Vcc
             Expr.BoolLiteral false
           elif lit.IsTrue then
             Expr.BoolLiteral true
-          else
-            failwith ("cannot unparse lit " + lit.ToString())
+          else match lit.Val with
+                 | :? Microsoft.Boogie.BvConst as bvConst ->
+                   Expr.BvLiteral(Math.BigInt.Parse(bvConst.Value.ToString()), bvConst.Bits)
+                 | _ -> failwith ("cannot unparse lit " + lit.ToString())
         | :? Boogie.NAryExpr as nary ->
           let args = [for e in nary.Args -> unparse (e :?> Microsoft.Boogie.Expr)]
           match nary.Fun with
