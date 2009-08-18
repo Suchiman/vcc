@@ -153,6 +153,7 @@ namespace Microsoft.Research.Vcc
                   "bv_lemma",               ".";
                   "is_non_primitive_ptr",   "p";
                   "extent_mutable",         "Sp";
+                  "extent_zero",            "Sp";
                   "extent_is_fresh",        "sSp";
                   "inv_is_approved_by",     "sSp..";
                   "inv_is_owner_approved",  "sSp.";

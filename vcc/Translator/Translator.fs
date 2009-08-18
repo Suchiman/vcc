@@ -2071,7 +2071,7 @@ namespace Microsoft.Research.Vcc
               (bMultiAnd (List.map (function fld -> maybeArrayLift p fld (fun idx -> bCall "$mem_eq" [s1; s2; idx])) fields)))
           (mkForall bSpansCall fields, mkForall bNonVolatileSpansCall (List.filter (fun fld -> not fld.IsVolatile) fields))
         
-        let extentProp propName twostate union1 (fields:list<C.Field>) =
+        let extentProp propName twostate union1 includeSelf primFieldProp (fields:list<C.Field>) =
           let auxPtr r =
             bCall "$ptr" [we; r]
           let auxDot r f =
@@ -2088,18 +2088,17 @@ namespace Microsoft.Research.Vcc
               | C.Array (t, sz) ->
                 if TransUtil.hasBoolAttr "no_inline" fld.CustomAttr then
                   prop (bCall "$as_array" [dot; toTypeId t; bInt sz])
-                elif t.IsComposite then              
+                else 
                   let idx = bCall "$idx" [dot; er "#i"; toTypeId t]
+                  let fieldProp = if t.IsComposite then prop else primFieldProp
                   B.Forall ([("#i", B.Type.Int)], 
                          //[[bCall ("$" + propName) (states @ [idx])]],
                          [[idx]], weight "array-extentprop",
-                         bInvImpl (bCall "$in_range" [bInt 0; er "#i"; bInt (sz - 1)]) (prop idx))
-                else bTrue
-              | t -> 
-                if t.IsComposite then prop dot else bTrue
+                         bInvImpl (bCall "$in_range" [bInt 0; er "#i"; bInt (sz - 1)]) (fieldProp idx))
+              | t -> if t.IsComposite then prop dot else primFieldProp dot
               
           let allHaveProp = bMultiAnd (List.map (function fld -> bInvImpl (typedCond r fld) (hasProp fld (auxDot r fld))) fields)
-          let body = bAnd (bCall ("$" + propName) (states @ [auxPtr r])) allHaveProp
+          let body = if includeSelf then bAnd (bCall ("$" + propName) (states @ [auxPtr r])) allHaveProp else allHaveProp
           let bExtentCall = prop (auxPtr r)
           B.Forall (qvars, [[bExtentCall]], weight "eqdef-extentprop", bEq bExtentCall body)
         
@@ -2117,6 +2116,7 @@ namespace Microsoft.Research.Vcc
                         CustomAttr = [] } : C.Field) :: lst
         let primFields = List.filter (function fld -> not (isComp (fld))) allFields
         let in_full_extent_of = extentCall "$in_full_extent_of" false false allFields
+        let nonSpecFields = List.filter (function (fld:C.Field) -> not (fld.IsSpec)) td.Fields
         
         let in_extent_of = 
           if nestingExtents then
@@ -2155,10 +2155,13 @@ namespace Microsoft.Research.Vcc
                   | _ -> die()
               else def        
         
-        let in_span_of = extentCall "$in_span_of" false false primFields        
+        let in_span_of = extentCall "$in_span_of" false false primFields   
+        let ignorePrimField _ = bTrue     
+        let readAnyIsZero field = bEq (bCall "$read_any" [ er "#s1"; field ]) (bInt 0)
         let extentProps = List.map B.Decl.Axiom
-                              [extentProp "mutable" false isUnion allFields;
-                               extentProp "is_fresh" true isUnion allFields]
+                              [extentProp "mutable" false isUnion true ignorePrimField allFields;
+                               extentProp "is_fresh" true isUnion true ignorePrimField allFields;
+                               extentProp "zero" false isUnion false readAnyIsZero nonSpecFields ]
         
         let (state_spans_the_same, state_nonvolatile_spans_the_same) = spansCalls primFields
         

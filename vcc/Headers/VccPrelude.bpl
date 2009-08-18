@@ -809,6 +809,7 @@ function {:inline true} $in_full_extent_of(#p1:$ptr, #p2:$ptr) returns(bool)
 
 function $extent_mutable(S:$state, p:$ptr) returns(bool);
 function $extent_is_fresh(S1:$state, S2:$state, p:$ptr) returns(bool);
+function $extent_zero(S:$state, p:$ptr) returns(bool);
 
 axiom (forall T:$ctype :: {$is_primitive(T)}
   $is_primitive(T) ==> 
@@ -821,7 +822,6 @@ axiom (forall T:$ctype :: {$is_primitive(T)}
   $is_primitive(T) ==> 
     (forall S:$state, r:int, p:$ptr :: {$in_extent_of(S, p, $ptr(T, r))}
       $in_extent_of(S, p, $ptr(T, r)) <==> p == $ptr(T, r)));
-      
       
 axiom (forall S:$state, T:$ctype, sz:int, r:int :: {$extent_mutable(S, $ptr($array(T, sz), r))}
   $extent_mutable(S, $ptr($array(T, sz), r)) <==>

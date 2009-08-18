@@ -1,0 +1,69 @@
+
+#include <vcc.h>
+
+struct S { int a; };
+
+struct T { 
+  struct S s; 
+  unsigned int b;
+};
+
+void foo(struct S *s) 
+  requires(typed(s) && thread_local(s))
+  requires(extent_zero(s))
+{
+  assert(s->a == 0);
+}
+
+void bar(struct T *t) 
+  requires(typed(t) && thread_local(t))
+  requires(extent_zero(t))
+{
+  assert(t->s.a == 0);
+  assert(t->b == 0);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+struct S { 
+  int a; 
+  unsigned int b;
+  short c;
+  unsigned short d;
+  char e;
+  unsigned char f;
+  void *p;
+};
+
+void foo(struct S *s) 
+  requires(typed(s) && thread_local(s))
+  requires(extent_zero(s))
+{
+  assert(s->a == 0);
+  assert(s->b == 0);
+  assert(s->c == 0);
+  assert(s->d == 0);
+  assert(s->e == 0);
+  assert(s->f == 0);
+  assert(s->p == (void *)0);
+}
+
+void bar() {
+  struct S s;
+  s.a = 0;
+  s.b = 0;
+  s.c = 0;
+  s.d = 0;
+  s.e = 0;
+  s.f = 0;
+  s.p = (void *)0;
+  assert(extent_zero(&s));
+}
+
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

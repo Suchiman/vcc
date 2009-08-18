@@ -155,6 +155,8 @@ bool _vcc_extent_mutable(obj_t o);
 #define extent_mutable _vcc_extent_mutable
 bool _vcc_extent_is_fresh(obj_t o);
 #define extent_is_fresh _vcc_extent_is_fresh
+bool _vcc_extent_zero(obj_t o);
+#define extent_zero _vcc_extent_zero
 
 template<typename T>
 bool _vcc_approves(obj_t approver, T expr);
