@@ -741,8 +741,8 @@ namespace Microsoft.Research.Vcc
           let def = VarDecl (fakeEC Void, v') :: assign :: init
           addressableLocals.[v] <- (v', Expr.MkBlock def)
           
-      let isStructType = function
-        | Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)}) -> true
+      let pointsToStruct = function
+        | Type.Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)})) -> true
         | _ -> false
           
       let findThem inBody self = function
@@ -756,7 +756,7 @@ namespace Microsoft.Research.Vcc
              | e -> self e
            aux dot
            false // don't recurse
-         | Expr.Macro (_, "=", [Expr.Deref(_, e1); e2]) when isStructType e2.Type -> self e1; self e2; false            
+         | Expr.Macro (_, "=", [Expr.Deref(_, e1); Expr.Deref(_, e2)]) when pointsToStruct e2.Type -> self e1; self e2; false            
          | Expr.Macro (_, "&", [Expr.Ref (c, ({ Kind = (VarKind.Local|VarKind.Parameter|VarKind.SpecLocal|VarKind.SpecParameter|VarKind.OutParameter) } as v))]) when inBody ->
            pointernize c v
            true
