@@ -742,19 +742,18 @@ namespace Microsoft.Research.Vcc {
       if (sourceType.IsEnum && TypeHelper.IsPrimitiveInteger(targetType))
         return this.ImplicitConversionExists(sourceType.UnderlyingType.ResolvedType, targetType);
      
-      IPointerType/*?*/ sourcePointerType = sourceType as IPointerType;
-      IPointerType/*?*/ targetPointerType = targetType as IPointerType;
-      if (targetPointerType != null) {
-        // void* -> T*
-        if (sourcePointerType != null && TypeHelper.TypesAreEquivalent(sourcePointerType.TargetType.ResolvedType, sourcePointerType.PlatformType.SystemVoid))
-          return true;
+      // special pointer conversion rules
+      IPointerType/*?*/ srcPointerType;
+      IPointerType/*?*/ tgtPointerType;
+      PtrConvKind srcKind = this.ToPtrConvKind(sourceType, out srcPointerType);
+      PtrConvKind tgtKind = this.ToPtrConvKind(targetType, out tgtPointerType);
 
-        // T[] -> T*
-        if (sourcePointerType == null) {
-          sourcePointerType = this.ArrayPointerFor(sourceType);
-          if (sourcePointerType != null) return this.ImplicitConversionExists(sourcePointerType, targetPointerType);
-        }
-      }
+      if (srcKind == PtrConvKind.Array) return this.ImplicitConversionExists(srcPointerType, targetType);
+
+      if (srcKind != PtrConvKind.None && 
+          tgtKind != PtrConvKind.None && 
+          VccCompilationHelper.KindsToConvMethod(srcKind, tgtKind) == ConvMethod.Implicit)
+        return true;
 
       return base.ImplicitConversionExists(sourceType, targetType);
     }
