@@ -316,28 +316,24 @@ namespace Microsoft.Research.Vcc {
           switch (tgt) {
             case PtrConvKind.Int:
               return ConvMethod.Explicit;
-            case PtrConvKind.ObjT:
-              return ConvMethod.Base; // dealt with by user-defined conversion operator
             default:
               return ConvMethod.Implicit;
           }
 
         case PtrConvKind.Ptr:
           switch (tgt) {
+            case PtrConvKind.ObjT:
             case PtrConvKind.VoidP:
               return ConvMethod.Implicit;
-            case PtrConvKind.ObjT:
-              return ConvMethod.Base;
             default:
               return ConvMethod.Explicit;
           }
 
         case PtrConvKind.FuncP:
           switch (tgt) {
+            case PtrConvKind.ObjT:
             case PtrConvKind.VoidP:
               return ConvMethod.Implicit;
-            case PtrConvKind.ObjT:
-              return ConvMethod.Base;
             default:
               return ConvMethod.Explicit;
           }

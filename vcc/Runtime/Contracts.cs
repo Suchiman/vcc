@@ -132,16 +132,6 @@ namespace System.Diagnostics.Contracts {
         return p1.ptr != p2.ptr;
       }
 
-      public static implicit operator TypedPtr(void* p)
-      {
-        return new TypedPtr(p);
-      }
-
-      public static explicit operator void*(TypedPtr p)
-      {
-        return p.ptr;
-      }
-
       public override int GetHashCode()
       {
         return base.GetHashCode();

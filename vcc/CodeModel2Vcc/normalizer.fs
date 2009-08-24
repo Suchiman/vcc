@@ -40,6 +40,7 @@ namespace Microsoft.Research.Vcc
   
   let doHandleConversions = 
     let rec doHandleConversions' inGroupInvariant self = function
+      | Expr.Cast ({ Type = ObjectT}, _, e) -> Some (self e)
       | Expr.Cast ({Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
       | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast (_, (Processed|Unchecked), e')) when e'.Type = t1 -> Some (self e')
       | Expr.Cast ({ Type = Bool }, _, Expr.Cast (_, _, e')) when e'.Type = Bool -> Some (self e')
