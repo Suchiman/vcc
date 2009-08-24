@@ -306,6 +306,17 @@ namespace Microsoft.Research.Vcc
       | _ -> None
 
     // ============================================================================================================
+
+    let rec flattenOld _ = function
+      | Old(ec, (Expr.Macro(_, "prestate", []) as ps), expr) ->
+        let removeOldForPrestate self = function
+          | Old(_, Expr.Macro(_, "prestate", []), expr)  -> Some(self expr)
+          | Old(_, _, _) as o -> Some(o.SelfMap(flattenOld))
+          | _ -> None
+        Some(Old(ec, ps, expr.SelfMap(removeOldForPrestate)))
+      | _ -> None
+    
+    // ============================================================================================================
     
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
@@ -326,6 +337,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-ITE-to-logical", Helper.Expr introduceAndOrs)
     helper.AddTransformer ("final-bool-conversions", Helper.Decl addBoolConversions)
     helper.AddTransformer ("final-bv-cleanup", Helper.Expr removeTrivialBitvectorOperations)
+    helper.AddTransformer ("final-flatten-old", Helper.Expr flattenOld)
     helper.AddTransformer ("final-insert-state-arguments", Helper.Expr (ToCoreC.handlePureCalls helper))
     
     helper.AddTransformer ("final-end", Helper.DoNothing)

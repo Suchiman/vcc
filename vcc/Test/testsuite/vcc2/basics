@@ -515,3 +515,13 @@ void bar()
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
+
+#include <vcc2test.h>
+
+struct S {
+  volatile int a;
+  invariant(old(old(a)) == a)
+};
+`
+Verification of S#adm succeeded.
+`
