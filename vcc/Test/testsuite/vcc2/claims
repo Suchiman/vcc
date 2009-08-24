@@ -834,7 +834,7 @@ void foo() {
     assert(claims(&i,1));
 }
 `
-testcase(7,26) : error VC0000: Cannot implicitly convert type '_vcc_claim_struct**' to '_vcc_claim_struct*'.
+testcase(7,26) : error VC0000: Cannot implicitly convert type '_vcc_claim_struct*^' to '_vcc_claim_struct*'.
 testcase(8,26) : error VC0000: Cannot implicitly convert type 'uint*' to '_vcc_claim_struct*'.
 `#include <vcc.h>
 

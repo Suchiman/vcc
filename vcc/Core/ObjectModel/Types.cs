@@ -47,7 +47,7 @@ namespace Microsoft.Research.Vcc
     }
 
     public override string ToString() {
-      return this.TargetType.ResolvedType.ToString() + "*";
+      return this.TargetType.ResolvedType.ToString() + (this.isSpec ? "^" : "*");
     }
 
     public override PrimitiveTypeCode TypeCode {

@@ -224,7 +224,7 @@ void foo(spec(out int a))
 
 void bar() {
   spec(int a;)
-  spec(int *b = &a;)
+  spec(int ^b = &a;)
   int c;
   
   foo(spec(out a));

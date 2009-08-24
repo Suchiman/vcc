@@ -546,7 +546,28 @@ namespace Microsoft.Research.Vcc {
     public override ITypeDefinition InferType() {
       IPointerType/*?*/ pointerType = ((VccCompilationHelper)this.Helper).ArrayPointerFor(this.Address.Type);
       if (pointerType != null) return pointerType;
-      return base.InferType();
+      if (this.Address.Type == Dummy.Type) return Dummy.Type;
+
+      bool isSpec = IsSpecVisitor.Check(this.Address);
+
+      //var localDef = this.Address.Definition as VccLocalDefinition;
+      //if (localDef != null) {
+      //  if (localDef.IsSpec) isSpec = true;
+      //} else {
+      //  var field = this.Address.Definition as Cci.Ast.FieldDefinition;
+      //  if (field != null) {
+      //    if (this.Address.Instance != null) {
+      //      IVccPointerType instanceTypeAsPtr = this.Address.Instance.Type.ResolvedType as IVccPointerType;
+      //      if (instanceTypeAsPtr != null && instanceTypeAsPtr.IsSpec == true)
+      //        isSpec = true;
+      //      else {
+      //        var fieldDef = field.Declaration as Vcc.FieldDefinition;
+      //        if (fieldDef != null && fieldDef.IsSpec) isSpec = true;
+      //      }
+      //    }
+      //  }
+      //}
+      return new VccPointerType(this.Address.Type, isSpec, this.Compilation.HostEnvironment.InternFactory);
     }
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
@@ -576,6 +597,46 @@ namespace Microsoft.Research.Vcc {
       return new VccAddressOf(containingBlock, this);
     }
 
+    private class IsSpecVisitor : BaseCodeVisitor
+    {
+      private bool result;
+
+      public override void Visit(IExpression expr) {
+        expr.Dispatch(this);
+      }
+
+      public override void Visit(IAddressOf addressOf) {
+        this.Visit(addressOf.Expression);
+      }
+
+      public override void Visit(IBoundExpression boundExpression) {
+        var typeAsPtr = boundExpression.Type as IVccPointerType;
+        if (typeAsPtr != null && typeAsPtr.IsSpec) result = true;
+      }
+
+      public override void Visit(IAddressableExpression addressableExpression) {
+        var localDef = addressableExpression.Definition as VccLocalDefinition;
+        if (localDef != null) {
+          if (localDef.IsSpec) result = true;
+        } else {
+          var field = addressableExpression.Definition as Cci.Ast.FieldDefinition;
+          if (field != null) {
+            var fieldDef = field.Declaration as Vcc.FieldDefinition;
+            if (fieldDef != null && fieldDef.IsSpec) result = true;
+          }
+        }
+
+        if (!result && addressableExpression.Instance != null) {
+          this.Visit(addressableExpression.Instance);
+        }
+      }
+
+      public static bool Check(IExpression expr) {
+        var visitor = new IsSpecVisitor();
+        visitor.Visit(expr);
+        return visitor.result;
+      }
+    }
   }
 
   /// <summary>
@@ -2938,9 +2999,10 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     /// <param name="elementType">The type of value that the pointer points to.</param>
     /// <param name="sourceLocation">The source location corresponding to the newly allocated expression.</param>
-    public VccPointerTypeExpression(TypeExpression elementType, List<TypeQualifier>/*?*/ qualifiers, ISourceLocation sourceLocation)
+    public VccPointerTypeExpression(TypeExpression elementType, List<TypeQualifier>/*?*/ qualifiers, bool isSpec, ISourceLocation sourceLocation)
       : base(elementType, sourceLocation) {
       this.qualifiers = qualifiers;
+      this.isSpec = isSpec;
     }
 
     /// <summary>
@@ -2954,6 +3016,7 @@ namespace Microsoft.Research.Vcc {
       //^ ensures this.containingBlock == containingBlock;
     {
       this.qualifiers = template.qualifiers;
+      this.isSpec = template.isSpec;
     }
 
     /// <summary>
@@ -2966,6 +3029,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     readonly List<TypeQualifier>/*?*/ qualifiers;
+    readonly bool isSpec;
 
     /// <summary>
     /// Returns the type denoted by the expression. If expression cannot be resolved, a dummy type is returned. If the expression is ambiguous the first matching type is returned.
@@ -2988,18 +3052,19 @@ namespace Microsoft.Research.Vcc {
           }
         }
         if (modifiers.Count != 0) 
-          return new VccModifiedPointerType(this.ElementType.ResolvedType, modifiers, false, this.Compilation.HostEnvironment.InternFactory);
+          return new VccModifiedPointerType(this.ElementType.ResolvedType, modifiers, this.isSpec, this.Compilation.HostEnvironment.InternFactory);
       }
 
       ITypeDefinition resolvedElementType = this.ElementType.ResolvedType;
       VccNamedTypeExpression namedType = this.ElementType as VccNamedTypeExpression;
       if (namedType != null && namedType.DidSilentlyResolveToVoid) {
-          Expression typePtrRef= NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.Compilation.NameTable, "TypedPtr");
-          typePtrRef.SetContainingExpression(this);
-          return new VccNamedTypeExpression(typePtrRef).Resolve(0);
+        // turn forward-declated pointers into obj_t
+        Expression typePtrRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.Compilation.NameTable, "TypedPtr");
+        typePtrRef.SetContainingExpression(this);
+        return new VccNamedTypeExpression(typePtrRef).Resolve(0);
       }
 
-      return new VccPointerType(resolvedElementType, false, this.Compilation.HostEnvironment.InternFactory);
+      return new VccPointerType(this.ElementType.ResolvedType, this.isSpec, this.Compilation.HostEnvironment.InternFactory);
     }
 
     /// <summary>

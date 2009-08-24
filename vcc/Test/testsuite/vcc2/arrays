@@ -390,7 +390,7 @@ struct DESC {
  
 #ifdef VERIFY
 ispure
-bool AbsConcRel(struct ABS *abs, struct CONC *conc)
+bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
  reads(abs, conc)
  returns(abs->a == conc->a &&
       abs->core.RIP == conc->RIP &&
@@ -434,7 +434,7 @@ struct DESC {
  
 #ifdef VERIFY
 no_reads_check
-ispure bool AbsConcRel(struct ABS *abs, struct CONC *conc)
+ispure bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
  reads(abs, conc)
  returns(abs->a == conc->a &&
       abs->core.RIP == conc->RIP &&

@@ -2375,6 +2375,7 @@ function {:inline true} $in_range_u1(x:int) returns(bool) { $in_range(0, x, $max
 function {:inline true} $in_range_u2(x:int) returns(bool) { $in_range(0, x, $max.u2) }
 function {:inline true} $in_range_u4(x:int) returns(bool) { $in_range(0, x, $max.u4) }
 function {:inline true} $in_range_u8(x:int) returns(bool) { $in_range(0, x, $max.u8) }
+function {:inline true} $in_range_ptr(p:$ptr) returns(bool) { $in_range_u8($ref(p)) }
 
 function {:inline true} $in_range_div_i1(x:int, y:int) returns(bool) { y != -1 || x != $min.i1 }
 function {:inline true} $in_range_div_i2(x:int, y:int) returns(bool) { y != -1 || x != $min.i2 }
@@ -2930,4 +2931,3 @@ function $domain_updated_at(S1:$state, S2:$state, p:$ptr, W:$ptrset) returns(boo
 
 
 // That's all folks.
-

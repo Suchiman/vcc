@@ -95,7 +95,7 @@ struct vcc(claimable) A {
   invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
 };
 
-void incr(struct A *a, int *res claimp(c) claimp(*cres))
+void incr(struct A *a, int *res claimp(c) claimp(^cres))
   writes(ref_cnt_ptr(c), res, cres)
   always(c, closed(a))
   // there will be a single new child to c

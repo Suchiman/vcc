@@ -83,7 +83,7 @@ void foo()
 {
   int x, *p;
   spec(state_t s1, s2; )
-  spec(state_t s3, *s3p; )
+  spec(state_t s3, ^s3p; )
   p = &x;
   speconly( s3p = &s3; )
 

@@ -272,15 +272,15 @@ namespace Microsoft.Research.Vcc {
     static readonly string SystemDiagnosticsContractsCodeContractMapString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Map";
     static readonly string SystemDiagnosticsContractsCodeContractBigIntString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigInt";
 
-    internal void AddFixedSizeArrayToPointerMapEntry(ITypeDefinition fixedSizeArray, IPointerType pointerType) {
+    internal void AddFixedSizeArrayToPointerMapEntry(ITypeDefinition fixedSizeArray, IVccPointerType pointerType) {
       lock (this.arrayToPointerMap) {
         this.arrayToPointerMap.Add(fixedSizeArray, pointerType);
       }
     }
-    private readonly Dictionary<ITypeDefinition, IPointerType> arrayToPointerMap = new Dictionary<ITypeDefinition, IPointerType>();
+    private readonly Dictionary<ITypeDefinition, IVccPointerType> arrayToPointerMap = new Dictionary<ITypeDefinition, IVccPointerType>();
 
-    internal IPointerType/*?*/ ArrayPointerFor(ITypeDefinition fixedSizeArray) {
-      IPointerType/*?*/ result = null;
+    internal IVccPointerType/*?*/ ArrayPointerFor(ITypeDefinition fixedSizeArray) {
+      IVccPointerType/*?*/ result = null;
       lock (this.arrayToPointerMap) {
         this.arrayToPointerMap.TryGetValue(fixedSizeArray, out result);
       }
@@ -291,7 +291,9 @@ namespace Microsoft.Research.Vcc {
     { 
       None,
       VoidP,
+      VoidSpecP,
       Ptr,
+      SpecPtr,
       FuncP,
       ObjT,
       Int,
@@ -304,6 +306,7 @@ namespace Microsoft.Research.Vcc {
       Explicit,
       ExplicitAndImplicitIfZero,
       Identity,
+      Incompatible,
       Base
     }
 
@@ -316,8 +319,21 @@ namespace Microsoft.Research.Vcc {
           switch (tgt) {
             case PtrConvKind.Int:
               return ConvMethod.Explicit;
+            case PtrConvKind.VoidSpecP:
+            case PtrConvKind.SpecPtr:
+              return ConvMethod.Incompatible;
             default:
               return ConvMethod.Implicit;
+          }
+
+        case PtrConvKind.VoidSpecP:
+          switch (tgt) {
+            case PtrConvKind.ObjT:
+            case PtrConvKind.SpecPtr:
+            case PtrConvKind.VoidSpecP:
+              return ConvMethod.Implicit;
+            default:
+              return ConvMethod.Incompatible;
           }
 
         case PtrConvKind.Ptr:
@@ -325,8 +341,22 @@ namespace Microsoft.Research.Vcc {
             case PtrConvKind.ObjT:
             case PtrConvKind.VoidP:
               return ConvMethod.Implicit;
+            case PtrConvKind.SpecPtr:
+            case PtrConvKind.VoidSpecP:
+              return ConvMethod.Incompatible;
             default:
               return ConvMethod.Explicit;
+          }
+
+        case PtrConvKind.SpecPtr:
+          switch (tgt) {
+            case PtrConvKind.VoidSpecP:
+            case PtrConvKind.ObjT:
+              return ConvMethod.Implicit;
+            case PtrConvKind.SpecPtr:
+              return ConvMethod.Explicit;
+            default:
+              return ConvMethod.Incompatible;
           }
 
         case PtrConvKind.FuncP:
@@ -334,6 +364,9 @@ namespace Microsoft.Research.Vcc {
             case PtrConvKind.ObjT:
             case PtrConvKind.VoidP:
               return ConvMethod.Implicit;
+            case PtrConvKind.SpecPtr:
+            case PtrConvKind.VoidSpecP:
+              return ConvMethod.Incompatible;
             default:
               return ConvMethod.Explicit;
           }
@@ -345,6 +378,7 @@ namespace Microsoft.Research.Vcc {
              return ConvMethod.Explicit;
            case PtrConvKind.VoidP:
            case PtrConvKind.ObjT:
+           case PtrConvKind.VoidSpecP:
              return ConvMethod.Identity;
            default:
              return ConvMethod.Implicit;
@@ -360,27 +394,30 @@ namespace Microsoft.Research.Vcc {
          
         default:
          System.Diagnostics.Debug.Assert(false);
-         return ConvMethod.Base;
+         return ConvMethod.Incompatible;
       }
     }
 
-    private PtrConvKind ToPtrConvKind(ITypeDefinition type, out IPointerType ptrTypeForArray) {
+    private PtrConvKind ToPtrConvKind(ITypeDefinition type, out IVccPointerType ptrTypeForArray) {
       ptrTypeForArray = null;
       if (TypeHelper.IsPrimitiveInteger(type))
         return PtrConvKind.Int;
       if (TypeHelper.GetTypeName(type) == SystemDiagnosticsContractsCodeContractTypedPtrString)
         return PtrConvKind.ObjT;
+      //System.Diagnostics.Debug.Assert(!(type is IPointerType && !(type is IVccPointerType)));
       IPointerType typeAsPtrType = type as IPointerType;
+      IVccPointerType typeAsVccPtrType = type as IVccPointerType;
       if (typeAsPtrType != null) {
+        var isSpec = !(typeAsVccPtrType == null ||  !typeAsVccPtrType.IsSpec);
         if (typeAsPtrType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void)
-          return PtrConvKind.VoidP;
+          return isSpec ? PtrConvKind.VoidSpecP : PtrConvKind.VoidP;
         else {
-          return PtrConvKind.Ptr;
+          return isSpec ? PtrConvKind.SpecPtr : PtrConvKind.Ptr;
         }
       } else {
         if (type is IFunctionPointer)
           return PtrConvKind.FuncP;
-        IPointerType arrayPtr = this.ArrayPointerFor(type);
+        IVccPointerType arrayPtr = this.ArrayPointerFor(type);
         if (arrayPtr != null) {
           ptrTypeForArray = arrayPtr;
           return PtrConvKind.Array;
@@ -397,9 +434,6 @@ namespace Microsoft.Research.Vcc {
 
     //^ [Pure]
     protected override Expression Conversion(Expression expression, ITypeDefinition targetType, bool isExplicitConversion) {
-
-      //// T -> T
-      //if (TypeHelper.TypesAreEquivalent(expression.Type, targetType)) return expression;
 
       // bool -> bool
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean) &&
@@ -422,8 +456,8 @@ namespace Microsoft.Research.Vcc {
       if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigIntString && TypeHelper.IsPrimitiveInteger(expression.Type))
         return this.ConversionExpression(expression, targetType);
 
-      IPointerType/*?*/ srcPointerType;
-      IPointerType/*?*/ tgtPointerType;
+      IVccPointerType/*?*/ srcPointerType;
+      IVccPointerType/*?*/ tgtPointerType;
 
       PtrConvKind srcKind = this.ToPtrConvKind(expression.Type, out srcPointerType);
       PtrConvKind tgtKind = this.ToPtrConvKind(targetType, out tgtPointerType);
@@ -436,6 +470,7 @@ namespace Microsoft.Research.Vcc {
         }
 
         var convKind = KindsToConvMethod(srcKind, tgtKind);
+        if (convKind == ConvMethod.Incompatible) return new DummyExpression(expression.ContainingBlock, expression.SourceLocation);
         if (convKind == ConvMethod.Identity) return expression;
         if (convKind == ConvMethod.Implicit ||
             convKind == ConvMethod.Explicit && isExplicitConversion ||
@@ -653,12 +688,19 @@ namespace Microsoft.Research.Vcc {
         TypeHelper.TypesAreEquivalent(type, this.PlatformType.SystemFloat64));
     }
 
+    private static bool TypesAreEquivalent(ITypeDefinition t1, ITypeDefinition t2) {
+      IVccPointerType/*?*/ p1 = t1 as IVccPointerType;
+      IVccPointerType/*?*/ p2 = t2 as IVccPointerType;
+      if (p1 != null && p2 != null && p1.IsSpec != p2.IsSpec) return false;
+      return TypeHelper.TypesAreEquivalent(t1, t2);
+    }
+
     public override Expression ImplicitConversionInAssignmentContext(Expression expression, ITypeDefinition targetType) {
       return this.ImplicitConversionInAssignmentContext(expression, targetType, false);
     }
 
     public Expression ImplicitConversionInAssignmentContext(Expression expression, ITypeDefinition targetType, bool allowUnsafeNumericConversions) {
-      if (TypeHelper.TypesAreEquivalent(expression.Type, targetType)) 
+      if (VccCompilationHelper.TypesAreEquivalent(expression.Type, targetType)) 
         return expression;
       if (targetType.IsEnum && TypeHelper.IsPrimitiveInteger(expression.Type))
         return this.ExplicitConversion(expression, targetType);
@@ -739,8 +781,8 @@ namespace Microsoft.Research.Vcc {
         return this.ImplicitConversionExists(sourceType.UnderlyingType.ResolvedType, targetType);
      
       // special pointer conversion rules
-      IPointerType/*?*/ srcPointerType;
-      IPointerType/*?*/ tgtPointerType;
+      IVccPointerType/*?*/ srcPointerType;
+      IVccPointerType/*?*/ tgtPointerType;
       PtrConvKind srcKind = this.ToPtrConvKind(sourceType, out srcPointerType);
       PtrConvKind tgtKind = this.ToPtrConvKind(targetType, out tgtPointerType);
 
@@ -881,6 +923,14 @@ namespace Microsoft.Research.Vcc {
         }
       }
       return base.GetNestedTypeName(nestedType, formattingOptions);
+    }
+
+    protected override string GetPointerTypeName(IPointerTypeReference pointerType, NameFormattingOptions formattingOptions) {
+      var vccPointerType = pointerType as VccPointerType;
+      if (vccPointerType != null) {
+        return this.GetTypeName(vccPointerType.TargetType, formattingOptions) + (vccPointerType.IsSpec ? "^" : "*");
+      }
+      return base.GetPointerTypeName(pointerType, formattingOptions);
     }
 
   }

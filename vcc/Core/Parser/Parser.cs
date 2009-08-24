@@ -271,7 +271,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Statement> result = new List<Statement>(4);      
       // Because, in C, a local declaration may introduce a type definition to the global scope
       // pass in the namespace declaration members so that these definitions can be found later. 
-      List<Specifier> specifiers = this.ParseSpecifiers(this.namespaceDeclarationMembers, null, followers|Token.Semicolon);
+      List<Specifier> specifiers = this.ParseSpecifiers(this.namespaceDeclarationMembers, null, followers|Token.Semicolon|Token.BitwiseXor);
       if ((this.currentToken == Token.LeftBrace || this.currentToken == Token.LeftParenthesis) && specifiers.Count == 1) {
         StorageClassSpecifier/*?*/ scSpecifier = specifiers[0] as StorageClassSpecifier;
         if (scSpecifier != null && scSpecifier.Token == Token.Specification) {
@@ -495,7 +495,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters = Parser.ConvertToGenericMethodParameterDeclarations(funcDeclarator.TemplateParameters);
       CallingConvention callingConvention = GetCallingConvention(specifiers, acceptsExtraArguments);
       if (returnType is VccFunctionTypeExpression)
-        returnType = new VccPointerTypeExpression(returnType, null, returnType.SourceLocation);
+        returnType = new VccPointerTypeExpression(returnType, null, false, returnType.SourceLocation);
       MethodDeclaration.Flags flags = 0;
       if (acceptsExtraArguments) flags |= MethodDeclaration.Flags.AcceptsExtraArguments;
       FunctionDefinition func = new FunctionDefinition(flags, specifiers, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, body, slb);
@@ -853,7 +853,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         foreach (Pointer p in pointerDeclarator.Pointers) {
           SourceLocationBuilder pslb = new SourceLocationBuilder(p.SourceLocation);
           pslb.UpdateToSpan(slb);
-          result = new VccPointerTypeExpression(result, p.Qualifiers, pslb);
+          result = new VccPointerTypeExpression(result, p.Qualifiers, p.IsSpec, pslb);
         }
       }
       return result;
@@ -891,7 +891,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           if (elementType != null) {
             if (typeQualifiers == null) {
               typeQualifiers = new List<TypeQualifier>(2);
-              result = new VccPointerTypeExpression(elementType, typeQualifiers, result.SourceLocation);
+              result = new VccPointerTypeExpression(elementType, typeQualifiers, false, result.SourceLocation);
             }
             typeQualifiers.Add(tq);
           }
@@ -1241,7 +1241,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     private List<Pointer> ParsePointers() {
       List<Pointer> result = new List<Pointer>(2);
-      while (this.currentToken == Token.Multiply) {
+      while (this.currentToken == Token.Multiply || this.currentToken == Token.BitwiseXor) {
         result.Add(this.ParsePointer());
       }
       result.TrimExcess();
@@ -1249,13 +1249,13 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private Pointer ParsePointer()
-      //^ requires this.currentToken == Token.Multiply;
+      //^ requires this.currentToken == Token.Multiply || this.currentToken == Token.BitwiseXor;
     {
       SourceLocationBuilder sloc = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       bool isSpec = this.currentToken == Token.BitwiseXor;
       this.GetNextToken();
       List<TypeQualifier>/*?*/ qualifiers = this.ParseTypeQualifiers();
-      return new Pointer(qualifiers, sloc);
+      return new Pointer(qualifiers, isSpec, sloc);
     }
 
     private ArrayDeclarator ParseArrayDeclarator(Declarator elementTypeAndName, TokenSet followers)
@@ -4078,6 +4078,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       StructFollowers |= Token.Identifier;
       StructFollowers |= Token.Semicolon;
       StructFollowers |= Token.Multiply;
+      StructFollowers |= Token.BitwiseXor;
 
       TypeStart = new TokenSet();
       TypeStart |= Token.Identifier;

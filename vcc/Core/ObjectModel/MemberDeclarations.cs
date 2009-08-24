@@ -224,6 +224,17 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
+    public bool IsSpec {
+      get { 
+        foreach (var specifier in this.extendedAttributes) {
+          StorageClassSpecifier scs = specifier as StorageClassSpecifier;
+          if (scs != null && scs.Token == Token.Specification)
+            return true;
+        }
+        return false;
+      }
+    }
+
     // Prevent warning about unverifiable code
     private IEnumerable<ICustomAttribute> BaseAttributes
     {
@@ -1402,12 +1413,14 @@ namespace Microsoft.Research.Vcc {
   }
 
   internal sealed class Pointer : SourceItem {
-    internal Pointer(List<TypeQualifier>/*?*/ qualifiers, ISourceLocation sourceLocation)
+    internal Pointer(List<TypeQualifier>/*?*/ qualifiers, bool isSpec, ISourceLocation sourceLocation)
       : base(sourceLocation) {
       this.Qualifiers = qualifiers;
+      this.IsSpec = isSpec;
     }
 
     internal readonly List<TypeQualifier>/*?*/ Qualifiers;
-  }
+    internal readonly bool IsSpec;
 
+  }
 }
