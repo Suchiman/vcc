@@ -120,3 +120,23 @@ testcase(14,29) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
 testcase(15,29) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
 testcase(19,29) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
 `
+
+#include <vcc.h>
+
+struct S {
+  int a;
+  spec(int b;)
+  spec(int ^p;)
+  invariant(p != &b)
+};
+
+struct T {
+  int a;
+  spec(int b;)
+  spec(int ^p;)
+  invariant(p == &b)
+};
+`
+Verification of S#adm succeeded.
+Verification of T#adm succeeded.
+`

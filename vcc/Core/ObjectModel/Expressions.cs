@@ -1502,6 +1502,7 @@ namespace Microsoft.Research.Vcc {
         yield return dummyMethods.DecimalOpDecimal;
         yield return dummyMethods.UIntPtrOpUIntPtr;
         yield return dummyMethods.VoidPtrOpVoidPtr;
+        yield return ((VccCompilation)this.Compilation).VoidSpecPtrOpVoidSpecPtr;
         ITypeDefinition leftOperandType = this.LeftOperand.Type;
         ITypeDefinition rightOperandType = this.RightOperand.Type;
         if (leftOperandType.IsEnum)
@@ -1689,6 +1690,7 @@ namespace Microsoft.Research.Vcc {
         yield return dummyMethods.DecimalOpDecimal;
         yield return dummyMethods.UIntPtrOpUIntPtr;
         yield return dummyMethods.VoidPtrOpVoidPtr;
+        yield return ((VccCompilation)this.Compilation).VoidSpecPtrOpVoidSpecPtr;
         ITypeDefinition leftOperandType = this.LeftOperand.Type;
         ITypeDefinition rightOperandType = this.RightOperand.Type;
         if (leftOperandType.IsEnum)
