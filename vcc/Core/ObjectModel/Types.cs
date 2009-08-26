@@ -20,22 +20,19 @@ namespace Microsoft.Research.Vcc
 
   internal class VccPointerType : SystemDefinedStructuralType, IVccPointerType
   {
-    readonly bool isSpec;
     readonly ITypeReference targetType;
 
-    public VccPointerType(ITypeReference targetType, bool isSpec, IInternFactory internFactory) 
-      : base(internFactory)
-    {
+    internal VccPointerType(ITypeReference targetType, IInternFactory internFactory)
+      : base(internFactory) {
       this.targetType = targetType;
-      this.isSpec = isSpec;
     }
 
     public ITypeReference TargetType {
       get { return this.targetType; }
     }
 
-    public bool IsSpec {
-      get { return this.isSpec; }
+    public virtual bool IsSpec {
+      get { return false; }
     }
 
     public override void Dispatch(IMetadataVisitor visitor) {
@@ -47,19 +44,51 @@ namespace Microsoft.Research.Vcc
     }
 
     public override string ToString() {
-      return this.TargetType.ResolvedType.ToString() + (this.isSpec ? "^" : "*");
+      return this.TargetType.ResolvedType.ToString() + (this.IsSpec ? "^" : "*");
     }
 
     public override PrimitiveTypeCode TypeCode {
       get { return PrimitiveTypeCode.Pointer; }
     }
+
+    public static VccPointerType GetPointerType(ITypeReference targetType, bool isSpec, IInternFactory internFactory) {
+      if (isSpec) return new VccSpecPointerType(targetType, internFactory);
+      else return new VccPointerType(targetType, internFactory);
+    }
   }
 
-  internal sealed class VccModifiedPointerType : VccPointerType, IVccPointerType
+  internal class VccSpecPointerType : VccPointerType, IModifiedTypeReference
   {
-    public VccModifiedPointerType(ITypeReference targetType, IEnumerable<ICustomModifier> customModifiers, bool isSpec, IInternFactory internFactory)
-      : base(targetType, isSpec, internFactory) {
+    internal VccSpecPointerType(ITypeReference targetType, IInternFactory internFactory)
+      : base(targetType, internFactory) {
+    }
+
+    public override void Dispatch(IMetadataVisitor visitor) {
+      visitor.Visit((IPointerType)this);
+    }
+
+    public override bool IsSpec {
+      get { return true; }
+    }
+
+    public ITypeReference UnmodifiedType {
+      get { return new VccPointerType(this.TargetType, this.InternFactory); }
+    }
+
+    public override IEnumerable<ICustomModifier> CustomModifiers {
+      get { return IteratorHelper.GetSingletonEnumerable<ICustomModifier>(new CustomModifier(true, this.PlatformType.SystemDiagnosticsContractsContract)); }
+    }
+  }
+
+  internal class VccModifiedPointerType : VccPointerType, IModifiedTypeReference
+  {
+    public VccModifiedPointerType(ITypeReference targetType, IEnumerable<ICustomModifier> customModifiers, IInternFactory internFactory)
+      : base(targetType, internFactory) {
       this.customModifiers = customModifiers;
+    }
+
+    public override void Dispatch(IMetadataVisitor visitor) {
+      visitor.Visit((IModifiedTypeReference)this);
     }
 
     public override bool IsModified {
@@ -70,5 +99,33 @@ namespace Microsoft.Research.Vcc
       get { return this.customModifiers; }
     }
     readonly IEnumerable<ICustomModifier> customModifiers;
+
+    public ITypeReference UnmodifiedType {
+      get { return new VccPointerType(this.TargetType, this.InternFactory); }
+    }
+
+    public static VccModifiedPointerType GetPointerType(ITypeReference targetType, IEnumerable<ICustomModifier> customModifiers, bool isSpec, IInternFactory internFactory) {
+      if (isSpec) return new VccModifiedPointerType(targetType, customModifiers, internFactory);
+      else return new VccModifiedSpecPointerType(targetType, customModifiers, internFactory);
+    }
+  }
+
+  internal class VccModifiedSpecPointerType : VccModifiedPointerType
+  {
+    internal VccModifiedSpecPointerType(ITypeReference targetType, IEnumerable<ICustomModifier> customModifiers, IInternFactory internFactory)
+      : base(targetType, customModifiers, internFactory) {
+    }
+
+    public override bool IsSpec {
+      get { return true; }
+    }
+
+    public override IEnumerable<ICustomModifier> CustomModifiers {
+      get {
+        return IteratorHelper.Concat<ICustomModifier>(
+          IteratorHelper.GetSingletonEnumerable<ICustomModifier>(new CustomModifier(true, this.PlatformType.SystemDiagnosticsContractsContract)),
+          base.CustomModifiers);
+      }
+    }
   }
 }

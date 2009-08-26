@@ -152,7 +152,7 @@ namespace Microsoft.Research.Vcc {
           ITypeDefinition result;
           VccArrayTypeExpression/*?*/ arrayTypeExpression = this.ContainingLocalDeclarationsStatement.TypeExpression as VccArrayTypeExpression;
           if (arrayTypeExpression != null && arrayTypeExpression.Size != null)
-            result = new VccPointerType(arrayTypeExpression.ElementType.ResolvedType, false, this.ContainingLocalDeclarationsStatement.Compilation.HostEnvironment.InternFactory);
+            result = VccPointerType.GetPointerType(arrayTypeExpression.ElementType.ResolvedType, false, this.ContainingLocalDeclarationsStatement.Compilation.HostEnvironment.InternFactory);
           else
             result = this.ContainingLocalDeclarationsStatement.Type;
           this.type = result;

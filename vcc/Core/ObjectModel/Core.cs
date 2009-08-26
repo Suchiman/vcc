@@ -12,6 +12,7 @@ using System.Text;
 using System.Diagnostics.SymbolStore;
 using Microsoft.Cci;
 using Microsoft.Research.Vcc.Parsing;
+using System.Diagnostics;
 
 //^ using Microsoft.Contracts;
 
@@ -43,6 +44,22 @@ namespace Microsoft.Research.Vcc {
     {
       this.parts = parts;
     }
+
+    public IMethodDefinition VoidSpecPtrOpVoidSpecPtr {
+      //[DebuggerNonUserCode]
+      get {
+        if (this.voidSpecPtrOpVoidSpecPtr == null) {
+          lock (GlobalLock.LockingObject) {
+            if (this.voidSpecPtrOpVoidSpecPtr == null) {
+              ITypeDefinition voidSpecPtr = VccPointerType.GetPointerType(this.PlatformType.SystemVoid.ResolvedType, true, this.HostEnvironment.InternFactory).ResolvedType;
+              this.voidSpecPtrOpVoidSpecPtr = BuiltinMethods.GetDummyOp(voidSpecPtr, voidSpecPtr, voidSpecPtr);
+            }
+          }
+        }
+        return this.voidSpecPtrOpVoidSpecPtr;
+      }
+    }
+    IMethodDefinition/*?*/ voidSpecPtrOpVoidSpecPtr;
 
     protected override List<CompilationPart> GetPartList() {
       return new List<CompilationPart>(this.parts);
@@ -98,7 +115,7 @@ namespace Microsoft.Research.Vcc {
         result.SetContainingTypeDeclaration(this.GlobalDeclarationContainer, true);
         arrayTypeTable2.Add(elementType, result);
       }
-      this.VccHelper.AddFixedSizeArrayToPointerMapEntry(result.TypeDefinition, new VccPointerType(elementType, false, this.Compilation.HostEnvironment.InternFactory));
+      this.VccHelper.AddFixedSizeArrayToPointerMapEntry(result.TypeDefinition, VccPointerType.GetPointerType(elementType, false, this.Compilation.HostEnvironment.InternFactory));
       this.GlobalDeclarationContainer.AddHelperMember(result);
       return result;
     }
@@ -788,12 +805,20 @@ namespace Microsoft.Research.Vcc {
 
       if (srcKind == PtrConvKind.Array) return this.ImplicitConversionExists(srcPointerType, targetType);
 
-      if (srcKind != PtrConvKind.None && 
-          tgtKind != PtrConvKind.None && 
-          VccCompilationHelper.KindsToConvMethod(srcKind, tgtKind) == ConvMethod.Implicit)
-        return true;
-
+      if (srcKind != PtrConvKind.None && tgtKind != PtrConvKind.None) {
+        if (VccCompilationHelper.KindsToConvMethod(srcKind, tgtKind) == ConvMethod.Implicit) 
+          return true;
+        if (srcKind == PtrConvKind.SpecPtr || srcKind == PtrConvKind.VoidSpecP || tgtKind == PtrConvKind.SpecPtr || tgtKind == PtrConvKind.VoidSpecP)
+          return false;
+      }
       return base.ImplicitConversionExists(sourceType, targetType);
+
+      //if (srcKind != PtrConvKind.None && tgtKind != PtrConvKind.None) {
+      //  ConvMethod convKind = VccCompilationHelper.KindsToConvMethod(srcKind, tgtKind);
+      //  if (convKind == ConvMethod.Identity || convKind == ConvMethod.Implicit) return true;
+      //  if (convKind == ConvMethod.Explicit || convKind == ConvMethod.ExplicitAndImplicitIfZero || convKind == ConvMethod.Incompatible) return false;
+      //}
+      //return base.ImplicitConversionExists(sourceType, targetType);
     }
 
     /// <summary>

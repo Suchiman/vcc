@@ -255,10 +255,10 @@ namespace Microsoft.Research.Vcc {
       get {
         ITypeDefinition/*?*/ leftOperandFixedArrayElementType = this.LeftOperandFixedArrayElementType;
         if (leftOperandFixedArrayElementType != null)
-          return this.GetLeftPointerAdditionMethods(new VccPointerType(leftOperandFixedArrayElementType, false, this.Compilation.HostEnvironment.InternFactory));
+          return this.GetLeftPointerAdditionMethods(VccPointerType.GetPointerType(leftOperandFixedArrayElementType, false, this.Compilation.HostEnvironment.InternFactory));
         ITypeDefinition/*?*/ rightOperandFixedArrayElementType = this.RightOperandFixedArrayElementType;
         if (rightOperandFixedArrayElementType != null)
-          return this.GetRightPointerAdditionMethods(new VccPointerType(rightOperandFixedArrayElementType, false, this.Compilation.HostEnvironment.InternFactory));
+          return this.GetRightPointerAdditionMethods(VccPointerType.GetPointerType(rightOperandFixedArrayElementType, false, this.Compilation.HostEnvironment.InternFactory));
         return base.StandardOperators;
       }
     }
@@ -567,7 +567,7 @@ namespace Microsoft.Research.Vcc {
       //    }
       //  }
       //}
-      return new VccPointerType(this.Address.Type, isSpec, this.Compilation.HostEnvironment.InternFactory);
+      return VccPointerType.GetPointerType(this.Address.Type, isSpec, this.Compilation.HostEnvironment.InternFactory);
     }
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
@@ -779,8 +779,8 @@ namespace Microsoft.Research.Vcc {
     }
 
     protected override ITypeDefinition Resolve() {
-      if (this.Size == null || this.SizeAsInt32 == 0) 
-        return new VccPointerType(this.ElementType.ResolvedType, false, this.Compilation.HostEnvironment.InternFactory);
+      if (this.Size == null || this.SizeAsInt32 == 0)
+        return VccPointerType.GetPointerType(this.ElementType.ResolvedType, false, this.Compilation.HostEnvironment.InternFactory);
       return this.VccCompilationPart.GetFixedSizeArrayType(this.ElementType.ResolvedType, (uint)this.SizeAsInt32).TypeDefinition;
     }
 
@@ -1028,7 +1028,7 @@ namespace Microsoft.Research.Vcc {
     /// When type inference fails, Dummy.Type is returned.
     /// </summary>
     public override ITypeDefinition InferType() {
-      return new VccPointerType(this.PlatformType.SystemInt8, false, this.Compilation.HostEnvironment.InternFactory);
+      return VccPointerType.GetPointerType(this.PlatformType.SystemInt8, false, this.Compilation.HostEnvironment.InternFactory);
     }
 
     /// <summary>
@@ -1915,9 +1915,9 @@ namespace Microsoft.Research.Vcc {
       if (this.FixedArrayElementType != null) {
         ptr = new VccAddressOf(new VccAddressableExpression(this.IndexedObject, true), this.IndexedObject.SourceLocation);
         ptr.SetContainingExpression(this);
-        ITypeDefinition voidPointer = new VccPointerType(this.Compilation.PlatformType.SystemVoid, false, this.Compilation.HostEnvironment.InternFactory);
+        ITypeDefinition voidPointer = VccPointerType.GetPointerType(this.Compilation.PlatformType.SystemVoid, false, this.Compilation.HostEnvironment.InternFactory);
         ptr = this.Helper.ExplicitConversion(ptr, voidPointer);
-        ITypeDefinition pointerType = new VccPointerType(this.FixedArrayElementType, false, this.Compilation.HostEnvironment.InternFactory);
+        ITypeDefinition pointerType = VccPointerType.GetPointerType(this.FixedArrayElementType, false, this.Compilation.HostEnvironment.InternFactory);
         ptr = this.Helper.ExplicitConversion(ptr, pointerType);
       }
       Expression index = indexEnumerator.Current;
@@ -2218,7 +2218,7 @@ namespace Microsoft.Research.Vcc {
           if (this.structureTypeExpression != null)
             type = this.structureTypeExpression.ResolvedType;
           else if (this.arrayTypeExpression != null) {
-            type = new VccPointerType(this.arrayTypeExpression.ElementType.ResolvedType, false, this.Compilation.HostEnvironment.InternFactory);
+            type = VccPointerType.GetPointerType(this.arrayTypeExpression.ElementType.ResolvedType, false, this.Compilation.HostEnvironment.InternFactory);
           } else type = Dummy.Type;
           this.type = type;
         }
@@ -2960,9 +2960,9 @@ namespace Microsoft.Research.Vcc {
     public override ITypeDefinition InferType() {
       object member = this.ResolveAsValueContainer();
       INestedTypeDefinition groupType = member as INestedTypeDefinition;
-      if (groupType != null) return new VccPointerType(groupType, false, this.Compilation.HostEnvironment.InternFactory);
+      if (groupType != null) return VccPointerType.GetPointerType(groupType, false, this.Compilation.HostEnvironment.InternFactory);
       IFieldDefinition field = member as IFieldDefinition;
-      if (field != null) return new VccPointerType(field.Type.ResolvedType, false, this.Compilation.HostEnvironment.InternFactory);
+      if (field != null) return VccPointerType.GetPointerType(field.Type.ResolvedType, false, this.Compilation.HostEnvironment.InternFactory);
       return Dummy.Type;
     }
 
@@ -3051,8 +3051,8 @@ namespace Microsoft.Research.Vcc {
             //TODO: record p.IsRestricted. (Need a new modifier for that).
           }
         }
-        if (modifiers.Count != 0) 
-          return new VccModifiedPointerType(this.ElementType.ResolvedType, modifiers, this.isSpec, this.Compilation.HostEnvironment.InternFactory);
+        if (modifiers.Count != 0)
+          return VccModifiedPointerType.GetPointerType(this.ElementType.ResolvedType, modifiers, this.isSpec, this.Compilation.HostEnvironment.InternFactory);
       }
 
       ITypeDefinition resolvedElementType = this.ElementType.ResolvedType;
@@ -3064,7 +3064,7 @@ namespace Microsoft.Research.Vcc {
         return new VccNamedTypeExpression(typePtrRef).Resolve(0);
       }
 
-      return new VccPointerType(this.ElementType.ResolvedType, this.isSpec, this.Compilation.HostEnvironment.InternFactory);
+      return VccPointerType.GetPointerType(this.ElementType.ResolvedType, this.isSpec, this.Compilation.HostEnvironment.InternFactory);
     }
 
     /// <summary>
@@ -3736,7 +3736,7 @@ namespace Microsoft.Research.Vcc {
       } else {
         size = originalArgumentEnumerator.Current;
       }
-      IPointerType voidPointer = new VccPointerType(this.PlatformType.SystemVoid, false, this.Compilation.HostEnvironment.InternFactory);
+      IPointerType voidPointer = VccPointerType.GetPointerType(this.PlatformType.SystemVoid, false, this.Compilation.HostEnvironment.InternFactory);
       Expression convertedPointer = this.Helper.ImplicitConversionInAssignmentContext(pointer, voidPointer);
       if (convertedPointer is DummyExpression && !this.fromSAL) this.Helper.ReportFailedImplicitConversion(pointer, voidPointer);
       Expression convertedSize = this.Helper.ImplicitConversionInAssignmentContext(size, this.PlatformType.SystemUInt64.ResolvedType, true);
@@ -3756,7 +3756,7 @@ namespace Microsoft.Research.Vcc {
         foreach (ITypeDefinitionMember member in nestedType.Members) {
           IFieldDefinition/*?*/ field = member as IFieldDefinition;
           if (field != null && field.Name.Value == "_ElementType")
-            return new VccPointerType(field.Type.ResolvedType, false, this.Compilation.HostEnvironment.InternFactory);
+            return VccPointerType.GetPointerType(field.Type.ResolvedType, false, this.Compilation.HostEnvironment.InternFactory);
         }
       }
       return null;
@@ -4131,7 +4131,7 @@ namespace Microsoft.Research.Vcc {
       get
       {
         ITypeDefinition t = base.Type;
-        return new VccPointerType(t, false, this.Compilation.HostEnvironment.InternFactory);
+        return VccPointerType.GetPointerType(t, false, this.Compilation.HostEnvironment.InternFactory);
       }
     }
 
