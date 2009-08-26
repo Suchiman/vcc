@@ -22,7 +22,7 @@ int foo(){
   while (i >= 0 && i < 10){
     if (i < 20) ++i; else assert(0);
     if (i == 1) continue;
-    goto xx;
+    if (i == 2) goto xx; // previous version triggered bogus smoke test error
   }
 xx: return i;
 }

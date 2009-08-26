@@ -1453,17 +1453,6 @@ namespace Microsoft.Research.Vcc {
     }
 
     /// <summary>
-    /// Computes the compile time value of the expression. Can be null.
-    /// </summary>
-    protected override object/*?*/ GetValue() {
-      object/*?*/ obj = base.GetValue();
-      if (obj is System.Boolean) {
-        return (bool)obj ? 1 : 0;
-      }
-      return obj;
-    }
-
-    /// <summary>
     /// Infers the type of value that this expression will evaluate to. At runtime the actual value may be an instance of subclass of the result of this method.
     /// Calling this method does not cache the computed value and does not generate any error messages. In some cases, such as references to the parameters of lambda
     /// expressions during type overload resolution, the value returned by this method may be different from one call to the next.
@@ -1471,7 +1460,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     /// <remarks>This override allows StandardOperators to use the same dummy methods as the arithmetic operations.</remarks>
     public override ITypeDefinition InferType() {
-      return this.PlatformType.SystemInt32.ResolvedType;
+      return this.PlatformType.SystemBoolean.ResolvedType;
     }
 
     /// <summary>
@@ -1641,17 +1630,6 @@ namespace Microsoft.Research.Vcc {
     }
 
     /// <summary>
-    /// Computes the compile time value of the expression. Can be null.
-    /// </summary>
-    protected override object/*?*/ GetValue() {
-      object/*?*/ obj = base.GetValue();
-      if (obj is System.Boolean) {
-        return (bool)obj ? 1 : 0;
-      }
-      return obj;
-    }
-
-    /// <summary>
     /// Infers the type of value that this expression will evaluate to. At runtime the actual value may be an instance of subclass of the result of this method.
     /// Calling this method does not cache the computed value and does not generate any error messages. In some cases, such as references to the parameters of lambda
     /// expressions during type overload resolution, the value returned by this method may be different from one call to the next.
@@ -1659,7 +1637,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     /// <remarks>This override allows StandardOperators to use the same dummy methods as the arithmetic operations.</remarks>
     public override ITypeDefinition InferType() {
-      return this.PlatformType.SystemInt32.ResolvedType;
+      return this.PlatformType.SystemBoolean.ResolvedType;
     }
 
     /// <summary>
