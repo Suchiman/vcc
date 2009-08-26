@@ -236,8 +236,13 @@ namespace Microsoft.Research.Vcc
     private void PrepareBoogie(Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
     {
       currentBoogie = parent.GetBoogieProgram(boogieDecls);
+      if (env.Options.PrintCEVModel)
+      {
+          currentBoogie.TopLevelDeclarations.AddRange(VccCommandLineHost.CEVPrelude.TopLevelDeclarations);
+      }
       CloseVcGen();
       CommandLineOptions.Clo.Parse(standardBoogieOptions);
+
       IErrorSink errorSink = new BoogieErrorSink(parent.options.NoPreprocessor);
 
       int numErrors;

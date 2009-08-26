@@ -10,6 +10,7 @@ namespace Microsoft.Research.Vcc
   open Microsoft.FSharp.Math
   open Microsoft.Research.Vcc
   open Microsoft.Research.Vcc.Util
+  open System
   
   module C = Microsoft.Research.Vcc.CAST
   module B = Microsoft.Research.Vcc.BoogieAST
@@ -496,6 +497,207 @@ namespace Microsoft.Research.Vcc
             | _ -> valIs "" (castToInt (trType l.Type) (varRef l))
         B.Stmt.Assume cond
       
+    (* CLG Counter Example visualizer code starts here *)
+      let n = ref 0
+
+      let loc_or_glob k =
+        let str =
+          match k with
+            | C.Parameter -> "cev_parameter"
+            | C.SpecParameter -> "cev_local"
+            | C.OutParameter -> "cev_local"
+            | C.Local -> "cev_local"
+            | C.SpecLocal -> "cev_local"
+            | C.Global -> "cev_global"
+            | C.ConstGlobal -> "cev_global"
+            | C.QuantBound -> die()
+        er str
+
+      let cevPrintVarOK (str : string) k = 
+        match k with 
+        | C.QuantBound -> false
+        | _ -> not (str.Contains "ite") (* CLG: what other vars are added in automatically? *)
+
+      let cevNIncr = n := !n + 1
+      let cevSavePos n pos = B.Stmt.Assume (bEq (bCall "$cev_save_position" [B.Expr.IntLiteral(BigInt.Parse((n).ToString()))]) (er pos) );
+
+      let cevVarsIntroed = new System.Collections.Generic.Dictionary<C.Variable, bool>()
+
+      let cevVarIntro tok (incr : bool) (l:C.Variable) = 
+        if helper.Options.PrintCEVModel && (cevPrintVarOK l.Name l.Kind) && (not (cevVarsIntroed.ContainsKey l)) then
+            cevVarsIntroed.Add(l, true)
+            let pos = getTokenConst tok 
+            let name = "#loc." + l.Name
+            registerToken name
+            let valIs v = bCall "#cev_var_intro" [B.Expr.IntLiteral(BigInt.Parse((!n).ToString())); (loc_or_glob l.Kind); er name; v; toTypeId l.Type] 
+            let cond =       
+                match l.Type with
+                | C.Ptr _ ->  
+                    let v' = addType l.Type (varRef l)
+                    (valIs (bCall "$ptr_to_int" [v']))
+                | _ -> valIs (castToInt (trType l.Type) (varRef l))
+            if incr then
+                let assume = [cevSavePos !n pos; B.Stmt.Assume cond]
+                cevNIncr;                  
+                assume                
+            else [B.Stmt.Assume cond; ]
+        else []
+
+      let cevVarUpdate tok (incr : bool) (l:C.Variable) =
+        if helper.Options.PrintCEVModel && (cevPrintVarOK l.Name l.Kind) then
+            if cevVarsIntroed.ContainsKey l then 
+                let pos = getTokenConst tok 
+                let name = "#loc." + l.Name
+                registerToken name (* CLG - things are different for pointer updates! *)
+                let valIs suff v = bCall ("#cev_var_update" + suff) [bState; er "$n" ; er pos; (loc_or_glob l.Kind); er name; v; toTypeId l.Type] 
+                let cond =
+                    match l.Type with
+                    | C.Ptr _ -> 
+                        let v' = addType l.Type (varRef l)
+                        (valIs "_ptr" (bCall "$ptr_to_int" [v']))
+                    | _ -> valIs "" (castToInt (trType l.Type) (varRef l))
+                if incr then cevNIncr
+                [B.Stmt.Assume cond;]
+            else cevVarIntro tok incr l
+        else []
+            
+
+
+      let rec cevVarUpdateList tok (l:C.Variable list) = // fixme: make sure we save state after this and increment n
+        if helper.Options.PrintCEVModel then
+            match l with
+            | v :: vs -> if cevPrintVarOK v.Name v.Kind then (cevVarUpdate tok false v) @ (cevVarUpdateList tok vs) else (cevVarUpdateList tok vs)  
+            | [] -> []
+        else []
+
+      let rec processEList (elist : C.Expr list) varlist = 
+        match elist with
+        | e :: [] -> let _, vlist = lastStmtVars e varlist
+                     vlist
+        | e :: es -> let (_, vlist) = lastStmtVars e varlist
+                     processEList es vlist
+        | [] -> varlist 
+
+      and lastStmtVars (body : C.Expr) varlist = 
+        match body with
+        | C.Expr.Prim(ec, o, elist) ->
+            let varlist' = processEList elist varlist 
+            if not (List.isEmpty elist) then 
+                let (t, _) = lastStmtVars (List.hd (List.rev elist)) varlist
+                (t, varlist')
+            else
+                (ec.Token, varlist)
+        | C.Expr.Call(ec, f, tlist, elist) -> 
+            let varlist' = processEList elist varlist 
+            if not (List.isEmpty elist) then
+                let (t, _) = lastStmtVars (List.hd (List.rev elist)) varlist
+                (t, varlist')            
+            else
+                (ec.Token, varlist')
+        | C.Expr.IntLiteral(ec, bi) -> 
+            ec.Token, varlist
+        | C.Expr.BoolLiteral(ec, b) -> 
+            ec.Token, varlist
+        | C.Expr.Deref(ec, e) -> 
+            lastStmtVars e varlist 
+        | C.Expr.Dot(ec, e, f) -> 
+            lastStmtVars e varlist
+        | C.Expr.Index(ec, e1, e2) -> 
+            let t, vlist' = lastStmtVars e1 varlist
+            lastStmtVars e2 vlist'
+        | C.Expr.Cast(ec, cs, e) -> lastStmtVars e varlist
+        | C.Expr.Quant(ec, qd) -> (* CLG fixme *)
+            let b = qd.Body 
+            lastStmtVars b varlist
+        | C.Expr.Result(ec) -> 
+            ec.Token, varlist
+        | C.Expr.Old(ec, e1, e2) -> 
+            let t, vlist' = lastStmtVars e1 varlist
+            lastStmtVars e2 vlist'
+        | C.Expr.VarDecl(ec, v) -> 
+            ec.Token, varlist
+        | C.Expr.VarWrite(ec, vlist, e) -> 
+            lastStmtVars e (varlist @ vlist) (* FIXME *)
+        | C.Expr.MemoryWrite(ec, e1, e2) -> (* CLG this memory write probably updates a var - do something different for that? *)
+            let t, vlist' = lastStmtVars e1 varlist
+            lastStmtVars e2 vlist'
+        | C.Expr.If(ec, e1, e2, e3) -> 
+            let t, vlist' = lastStmtVars e1 varlist
+            let t', vlist'' = lastStmtVars e2 vlist'
+            lastStmtVars e3 vlist''
+        | C.Expr.Loop(ec, elist1, elist2, e) -> 
+            lastStmtVars e varlist
+        | C.Expr.Goto(ec, lid) -> ec.Token, varlist
+        | C.Expr.Label(ec, lid) -> ec.Token, varlist
+        | C.Expr.Block(ec, elist) -> 
+            if not (List.isEmpty elist) then
+                let vlist = processEList elist varlist
+                let revlist = List.rev elist
+                let h = List.hd revlist
+                let tok, vlist' = lastStmtVars h vlist
+                (tok, vlist)                
+            else (ec.Token, varlist)
+        | C.Expr.Assert(ec, e) -> lastStmtVars e varlist
+        | C.Expr.Assume(ec, e) -> lastStmtVars e varlist
+        | C.Expr.Pure(ec, e) -> lastStmtVars e varlist
+        | C.Expr.Return(ec, eopt) -> 
+            match eopt with
+            | Some(e) -> lastStmtVars e varlist
+            | None -> ec.Token, varlist
+        | C.Expr.Atomic(ec, elist, e) -> 
+            let vlist = processEList elist varlist
+            let _, vlist' = lastStmtVars e vlist
+            if not (List.isEmpty elist) then
+                lastStmtVars (List.hd (List.rev elist)) vlist' (* CLG I think elist is the atomic block, right? *)
+            else (ec.Token, vlist')
+        | C.Expr.Comment(ec, s) -> ec.Token, varlist
+        | C.Expr.Stmt(ec, e) -> 
+            lastStmtVars e varlist
+        | C.Expr.Macro(ec, s, elist) -> 
+            if not (List.isEmpty elist) then
+                lastStmtVars (List.hd (List.rev elist)) varlist
+            else (ec.Token, varlist)
+        | C.Expr.UserData(ec, o) ->  
+            ec.Token, varlist
+        | _ -> 
+            (body.Token, varlist)
+
+      let cevRegLoopBody (stmt : C.Expr) body = 
+        if helper.Options.PrintCEVModel then
+          let pos1 = getTokenConst stmt.Token
+          let valIs = bCall "#cev_control_flow_event" [B.Expr.IntLiteral(BigInt.Parse((!n).ToString())); er "loop_register"]
+          let retval = [B.Stmt.Assume valIs; cevSavePos !n pos1]
+          cevNIncr; retval
+        else []    
+        
+      let cevCondMoment tok =
+        if helper.Options.PrintCEVModel then
+          let pos = getTokenConst tok
+          let valIs = bCall "#cev_control_flow_event" [B.Expr.IntLiteral(BigInt.Parse((!n).ToString())); er "conditional_moment"; ] 
+          let retval = [B.Stmt.Assume valIs; cevSavePos !n pos]
+          cevNIncr; retval
+        else []
+      
+      let cevFunctionCall tok = (* put in updates for stuff referenced in args, I think *)
+        if helper.Options.PrintCEVModel then
+            let pos = getTokenConst tok
+            let valIs = bCall "#cev_function_call" [B.Expr.IntLiteral(BigInt.Parse((!n).ToString()))]
+            let retval = [B.Stmt.Assume valIs; cevSavePos !n pos]
+            cevNIncr;
+            retval
+        else []
+            
+      let cevBranchChoice tok branchTaken =
+        if helper.Options.PrintCEVModel then
+            let pos = getTokenConst tok
+            let valIs = bCall "#cev_control_flow_event" [B.Expr.IntLiteral(BigInt.Parse((!n).ToString())); branchTaken; ] 
+            let retval = [B.Stmt.Assume valIs; cevSavePos !n pos]
+            cevNIncr;
+            retval
+        else []
+    
+       (* CLG Counter Example visualizer code ends here *)
+
       let isSetEmpty = function
         | C.Macro (_, "_vcc_set_empty", []) -> true
         | _ -> false
@@ -711,12 +913,12 @@ namespace Microsoft.Research.Vcc
                 bCall "$read_bool" [bState; self p]
               | t ->                
                 castFromInt (trType t) (bCall "$read_any" [bState; self p])
-          | C.Expr.Call (_, fn, targs, args) ->
+          | C.Expr.Call (_, fn, targs, args) -> 
             let args =  List.map (toTypeId' true) targs @ convertArgs fn (selfs args)
             let args = 
               if fn.IsStateless then args
               else bState :: args
-            addType fn.RetType (bCall ("#" + fn.Name) args)
+            addType fn.RetType (bCall ("#" + fn.Name) args) 
           // TODO this is wrong for loop invariants and stuff (but the legacy vcc doesn't handle that correctly as well)
           | C.Expr.Old (ec, C.Macro (_, "_vcc_when_claimed", []), e) ->
             warnForIneffectiveOld ec.Token (self e)
@@ -1407,7 +1609,7 @@ namespace Microsoft.Research.Vcc
       
       
       let callConvCnt = ref 0
-      let rec trStmt (env:Env) (stmt:C.Expr) =
+      let rec trStmt (env:Env) (stmt:C.Expr) = 
         let self = trStmt env
         let cmt () = B.Stmt.Comment ((stmt.ToString ()).Replace ("\n", " "))
         let doCall (c:C.ExprCommon) (res : C.Variable list) fn (name:string) targs args =
@@ -1488,7 +1690,7 @@ namespace Microsoft.Research.Vcc
           let targs = List.map toTypeId targs
           [cmt (); B.Stmt.Call (c.Token, resBuf, name',  targs @ args); assumeSync syncEnv c.Token] @ tail
         
-        match stmt with
+        match stmt with 
           | C.Expr.Block (_, stmts) -> 
             List.concat (List.map self stmts)
           | C.Expr.Comment (_, s) -> 
@@ -1512,14 +1714,14 @@ namespace Microsoft.Research.Vcc
             [cmt (); B.Stmt.Assert (stmt.Token, trExpr env e)]
           | C.Expr.Assume (_, e) -> 
             [cmt (); B.Stmt.Assume (trExpr env e)]
-          | C.Expr.Return (c, s) ->
+          | C.Expr.Return (c, s) -> 
             match s with
             | None -> [cmt (); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
             | (Some e) -> 
               [cmt (); B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e)); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
           | C.Expr.MemoryWrite (_, e, C.Expr.Macro (_, "havoc", [t])) ->
             [cmt (); B.Stmt.Call (e.Token, [], "$havoc", [trExpr env e; trExpr env t]); assumeSync env e.Token]
-          | C.Expr.MemoryWrite (_, e1, e2) ->
+          | C.Expr.MemoryWrite (_, e1, e2) ->  (* CLG need to do cev_var_updates at memory writes. How to know if local? *)
             let e2' =
               match e1.Type with
                 | C.Ptr t -> trForWrite env t e2
@@ -1528,8 +1730,8 @@ namespace Microsoft.Research.Vcc
              B.Stmt.Call (C.bogusToken, [], "$write_int", [trExpr env e1; e2']); 
              assumeSync env e1.Token]
             
-          | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "claim", args)) ->
-            cmt() :: trClaim env c.Token v args
+          | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "claim", args)) -> 
+            cmt() :: trClaim env c.Token v args @ (cevVarUpdate c.Token true v)
             
           | C.Expr.Stmt (_, C.Expr.Macro (c, "unclaim", args)) ->
             cmt() :: trUnclaim env c.Token args
@@ -1537,25 +1739,34 @@ namespace Microsoft.Research.Vcc
           | C.Expr.Atomic (ec, objs, body) ->
             trAtomic trStmt env ec objs body
             
-          | C.Expr.VarWrite (_, vs, C.Expr.Call (c, fn, targs, args)) -> 
-            doCall c vs (Some fn) fn.Name targs args @ List.map (fun v -> assumeLocalIs c.Token v) vs
+          | C.Expr.VarWrite (_, vs, C.Expr.Call (c, fn, targs, args)) -> (* CLG put a call here *)
+            let cevlist = cevFunctionCall c.Token
+            let cevlist = if List.isEmpty vs then cevlist else cevlist @ (cevVarUpdateList c.Token vs) 
+            doCall c vs (Some fn) fn.Name targs args @ (List.map (fun v -> assumeLocalIs c.Token v) vs) @ cevlist
             
-          | C.Expr.Stmt (_, C.Expr.Call (c, fn, targs, args))        -> doCall c [] (Some fn) fn.Name targs args         
+          | C.Expr.Stmt (_, C.Expr.Call (c, fn, targs, args))        -> 
+            doCall c [] (Some fn) fn.Name targs args @ (cevFunctionCall c.Token)   (* CLG put a call here *)
           | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|
                                 "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap") as name), args) -> 
             doCall c [] None name [] args
           | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->
             doCall c [] None name [] args         
             
-          | C.Expr.VarWrite (c, [v], e) ->
-            [cmt (); B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)); assumeLocalIs c.Token v]
+          | C.Expr.VarWrite (c, [v], e) -> 
+            [cmt (); B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)); assumeLocalIs c.Token v]  @ (cevVarUpdate c.Token true v)
           
-          | C.Expr.If (_, c, s1, s2) ->
+          | C.Expr.If (_, c, s1, s2) -> 
+            let prefix = cevCondMoment c.Token
+            let thenBranch = cevBranchChoice c.Token (er "took_then_branch")
+            let elseBranch = cevBranchChoice c.Token (er "took_else_branch")
+            prefix @ 
             [B.Stmt.Comment ("if (" + c.ToString() + ") ..."); 
-             B.Stmt.If (trExpr env c, B.Stmt.Block (trStmt env s1), B.Stmt.Block (trStmt env s2))]
-          | C.Expr.Loop (comm, invs, writes, s) ->
+             B.Stmt.If (trExpr env c, B.Stmt.Block (thenBranch @ trStmt env s1), B.Stmt.Block (elseBranch @  trStmt env s2))]
+          | C.Expr.Loop (comm, invs, writes, s) -> 
             let (save, oldState) = saveState "loop"
             let env = { env with OldState = oldState }
+            let condMoment = cevCondMoment stmt.Token 
+            let regLoopBody = cevRegLoopBody stmt s
             let (bump, wrCheck, env) =
               match writes with
                 | [] -> ([], [], env)
@@ -1569,22 +1780,24 @@ namespace Microsoft.Research.Vcc
                   let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
                   let check = [B.Stmt.Assert (tok, B.Forall ([name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
                   (bump, init @ check, env')
-            
+            let tok, vlist = lastStmtVars stmt []
+            let arbitraryLoopIter = cevVarUpdateList comm.Token vlist in (* CLG FIXME: this doesn't work/get at all the vars *)
             let body =
               B.Stmt.While (bTrue, 
                 List.map (fun (e:C.Expr) -> (e.Token, trExpr env e)) invs,
                 B.Stmt.Block (B.Stmt.Assume (stateChanges env) :: 
                 B.Stmt.Assume (bCall "$timestamp_post" [env.OldState; bState]) ::
                 assumeSync env comm.Token :: 
-                List.map (assumeLocalIs comm.Token) !soFarAssignedLocals @
+                (List.map (assumeLocalIs comm.Token) !soFarAssignedLocals) @
+                regLoopBody @ arbitraryLoopIter @
                   trStmt env s))
             bump @ save @ wrCheck @ [body; assumeSync env comm.Token]
-              
-          | C.Expr.VarDecl (_, v) ->
-            if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then []
-            else
+          | C.Expr.VarDecl (b, v) -> 
+             let ls = if v.Kind = C.Parameter then cevVarIntro b.Token true v else []
+             if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then ls
+             else
               let (v, w) = trWhereVar v
-              [cmt(); B.Stmt.VarDecl (v, w)]
+              [cmt(); B.Stmt.VarDecl (v, w)] @ ls
 
           | C.Expr.Goto (c, l) -> [cmt (); B.Stmt.Goto (c.Token, [trLabel l])]
           | C.Expr.Label (c, l) -> [B.Stmt.Label (c.Token, trLabel l)]
@@ -1627,10 +1840,14 @@ namespace Microsoft.Research.Vcc
           if header.IsPure then
             if writes <> [] then helper.Error (header.Token, 9623, "writes specified on a pure function", None)
             []
-          else
+          else if helper.Options.PrintCEVModel then 
             [B.FreeEnsures (stateChanges { env with Writes = writes });                    
              B.Modifies "$s";
              ]
+          else
+            [B.FreeEnsures (stateChanges { env with Writes = writes });                    
+             B.Modifies "$s";
+             ] 
         let tEnsures = function
           | C.Macro(_, "free_ensures", [e]) -> B.FreeEnsures(te e)
           | e -> B.Ensures(e.Token, te e)
@@ -2376,15 +2593,16 @@ namespace Microsoft.Research.Vcc
                         | _ -> mut None "$thread_owned_or_even_mutable"
                     | _ -> bTrue
                 B.Stmt.Assume assump
-              
-              let init = List.map (assumeLocalIs h.Token) (List.filter (fun (v : C.Variable) -> v.Kind <> C.VarKind.OutParameter) h.Parameters) @ init
+            (* clg - set var intros here. Also need to introduce vars, maybe? *) 
+              let cevInit = List.fold (fun accum -> fun v -> (cevVarIntro h.Token true) v @ accum) [] (List.filter (fun (v : C.Variable) -> v.Kind <> C.VarKind.OutParameter) h.Parameters)
+              let init = List.map (assumeLocalIs h.Token) (List.filter (fun (v : C.Variable) -> v.Kind <> C.VarKind.OutParameter) h.Parameters) @ init @ cevInit
               
               let can_frame =
                 if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
                 else
                   [B.Stmt.Assume (bCall "$can_use_all_frame_axioms" [bState])]
               
-              let doBody s =
+              let doBody s = (* CLG - insert function parameter introductions here *)
                 let cleanup = ref []
                 B.Stmt.Block (B.Stmt.Assume (bCall "$function_entry" [bState]) ::
                                B.Stmt.VarDecl(("#stackframe", B.Type.Int), None) ::
@@ -2399,6 +2617,7 @@ namespace Microsoft.Research.Vcc
               let theBody =
                 if functionToVerify = null || functionToVerify = h.Name then h.Body
                 else None
+
               let proc = { proc with Body = Option.map doBody theBody }
               let proc =
                 match proc.Body with
