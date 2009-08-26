@@ -158,3 +158,20 @@ typedef struct _LCPU_PLS
 `
 Verification of _LCPU_PLS#adm succeeded.
 `
+#include "vcc.h"
+
+struct S {
+    int dummy;
+    def_group(a)
+    in_group(a) int b;
+};
+
+struct T {
+    int dummy;
+    spec(struct S ^s;)
+    invariant(keeps(s))
+    invariant(keeps(s::a))
+};
+`
+Verification of T#adm succeeded.
+`

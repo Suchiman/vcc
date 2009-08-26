@@ -2962,9 +2962,11 @@ namespace Microsoft.Research.Vcc {
     public override ITypeDefinition InferType() {
       object member = this.ResolveAsValueContainer();
       INestedTypeDefinition groupType = member as INestedTypeDefinition;
-      if (groupType != null) return VccPointerType.GetPointerType(groupType, false, this.Compilation.HostEnvironment.InternFactory);
+      IVccPointerType instanceType = this.Instance.Type.ResolvedType as IVccPointerType;
+      bool isSpec = instanceType != null && instanceType.IsSpec;
+      if (groupType != null) return VccPointerType.GetPointerType(groupType, isSpec, this.Compilation.HostEnvironment.InternFactory);
       IFieldDefinition field = member as IFieldDefinition;
-      if (field != null) return VccPointerType.GetPointerType(field.Type.ResolvedType, false, this.Compilation.HostEnvironment.InternFactory);
+      if (field != null) return VccPointerType.GetPointerType(field.Type.ResolvedType, isSpec, this.Compilation.HostEnvironment.InternFactory);
       return Dummy.Type;
     }
 
