@@ -346,7 +346,7 @@ module Microsoft.Research.Vcc.CAST
       let rec subst = function
           | TypeVar tv -> 
             match typeSubst.TryGetValue(tv) with
-              | true, t ->  subst t
+              | true, t ->  t
               | false, _ -> TypeVar tv
           | Ptr(t) -> Ptr(subst t)
           | Volatile(t) -> Volatile(subst t)

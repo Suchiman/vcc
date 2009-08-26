@@ -286,8 +286,10 @@ namespace Microsoft.Research.Vcc
       match byteCount with
         | IntLiteral (c, allocSz) when (allocSz % typeSz) = zero ->
           IntLiteral (c, allocSz / typeSz)
-        | Prim (_, Op("*", _), [Expr.IntLiteral (_, allocSz); e]) when allocSz = typeSz -> e
+        | Prim (_, Op("*", _), [Expr.IntLiteral (_, allocSz); e])
         | Prim (_, Op("*", _), [e; Expr.IntLiteral (_, allocSz)]) when allocSz = typeSz -> e
+        | Prim (_, Op("*", _), [e; Expr.Cast(_, _, Expr.SizeOf(_, t))])
+        | Prim (_, Op("*", _), [Expr.Cast(_, _, Expr.SizeOf(_, t)); e]) when t = elementType -> e
         | _ when typeSz = one -> byteCount
         | _ ->
           helper.Warning (byteCount.Common.Token, 9102, "don't know how to determine number of elements in array: " + expr.ToString())
