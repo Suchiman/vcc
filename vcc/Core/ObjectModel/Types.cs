@@ -105,8 +105,8 @@ namespace Microsoft.Research.Vcc
     }
 
     public static VccModifiedPointerType GetPointerType(ITypeReference targetType, IEnumerable<ICustomModifier> customModifiers, bool isSpec, IInternFactory internFactory) {
-      if (isSpec) return new VccModifiedPointerType(targetType, customModifiers, internFactory);
-      else return new VccModifiedSpecPointerType(targetType, customModifiers, internFactory);
+      if (isSpec) return new VccModifiedSpecPointerType(targetType, customModifiers, internFactory);
+      else return new VccModifiedPointerType(targetType, customModifiers, internFactory);
     }
   }
 
