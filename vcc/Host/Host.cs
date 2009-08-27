@@ -948,128 +948,60 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    internal static Program CEVPrelude
-    {
-        get
-        {
-            // For now Boogie does not support reusing the prelude.
+    internal static Program StandardPrelude {
+      get {
+        // For now Boogie does not support reusing the prelude.
 
-            //if (standardPrelude == null)
-            //  standardPrelude = GetStandardPrelude();
-            //return standardPrelude;
-                return GetCEVPrelude();
+        //if (standardPrelude == null)
+        //  standardPrelude = GetStandardPrelude();
+        //return standardPrelude;
+
+        try {
+          swPrelude.Start();
+          return GetStandardPrelude();
+        } finally {
+          swPrelude.Stop();
         }
-    }
-
-    internal static Program StandardPrelude
-    {
-        get
-        {
-            // For now Boogie does not support reusing the prelude.
-
-            //if (standardPrelude == null)
-            //  standardPrelude = GetStandardPrelude();
-            //return standardPrelude;
-
-            try
-            {
-                swPrelude.Start();
-                return GetStandardPrelude();
-            }
-            finally
-            {
-                swPrelude.Stop();
-            }
-        }
+      }
     }
     // [Once]
     //static Program/*?*/ standardPrelude;
-    static string[] cevPreludeLines;
-    static string cevPreludeString;
-    private static Program GetCEVPrelude()
-    {
-
-        string headersDir = ProbeForVccHeaders(false);
-        string preludePath = "c:\\workspace\\vcc_test\\CEVPrelude.bpl";
-
-        System.IO.Stream stream = null;
-        if (cevPreludeLines == null)
-        {
-
-            stream = headersDir == null ?
-                //typeof(ConvertFelt2Boogie).Assembly.GetManifestResourceStream("Microsoft.Cci.VccPrelude.bpl") :
-            null : // TODO
-            System.IO.File.OpenRead(preludePath);
-            BoogiePL.Buffer.Fill(new System.IO.StreamReader(stream));
-        }
-        else
-        {
-            BoogiePL.Buffer.Fill(cevPreludeString);
-        }
-
-        BoogiePL.Scanner.Init(preludePath);
-        Program prelude;
-        int errorCount = BoogiePL.Parser.Parse(out prelude);
-        if (stream != null) stream.Close();
-        if (prelude == null || errorCount > 0)
-        {
-            System.Console.WriteLine("There were errors parsing VccPrelude.bpl.");
-            return new Program();
-        }
-        else
-        {
-            if (cevPreludeString == null)
-            {
-                cevPreludeLines = File.ReadAllLines(preludePath, Encoding.UTF8);
-                cevPreludeString = String.Join(Environment.NewLine, cevPreludeLines);
-            }
-            return prelude;
-        }
-    }
-
     static string[] standardPreludeLines;
     static string standardPreludeString;
-    private static Program GetStandardPrelude()
-    {
 
-        string headersDir = ProbeForVccHeaders(false);
-        string preludePath = "<VccPrelude.bpl>";
-        if (headersDir != null)
-            preludePath = System.IO.Path.Combine(headersDir, "VccPrelude.bpl");
+    private static Program GetStandardPrelude() {
 
-        System.IO.Stream stream = null;
-        if (standardPreludeLines == null)
-        {
+      string headersDir = ProbeForVccHeaders(false);
+      string preludePath = "<VccPrelude.bpl>";
+      if (headersDir != null)
+        preludePath = System.IO.Path.Combine(headersDir, "VccPrelude.bpl");
 
-            stream = headersDir == null ?
-                //typeof(ConvertFelt2Boogie).Assembly.GetManifestResourceStream("Microsoft.Cci.VccPrelude.bpl") :
-            null : // TODO
-            System.IO.File.OpenRead(preludePath);
-            BoogiePL.Buffer.Fill(new System.IO.StreamReader(stream));
-        }
-        else
-        {
-            BoogiePL.Buffer.Fill(standardPreludeString);
-        }
+      System.IO.Stream stream = null;
+      if (standardPreludeLines == null) {
 
-        BoogiePL.Scanner.Init(preludePath);
-        Program prelude;
-        int errorCount = BoogiePL.Parser.Parse(out prelude);
-        if (stream != null) stream.Close();
-        if (prelude == null || errorCount > 0)
-        {
-            System.Console.WriteLine("There were errors parsing VccPrelude.bpl.");
-            return new Program();
+        stream = headersDir == null ?
+          //typeof(ConvertFelt2Boogie).Assembly.GetManifestResourceStream("Microsoft.Cci.VccPrelude.bpl") :
+        null : // TODO
+        System.IO.File.OpenRead(preludePath);
+        BoogiePL.Buffer.Fill(new System.IO.StreamReader(stream));
+      } else {
+        BoogiePL.Buffer.Fill(standardPreludeString);
+      }
+
+      BoogiePL.Scanner.Init(preludePath);
+      Program prelude;
+      int errorCount = BoogiePL.Parser.Parse(out prelude);
+      if (stream != null) stream.Close();
+      if (prelude == null || errorCount > 0) {
+        System.Console.WriteLine("There were errors parsing VccPrelude.bpl.");
+        return new Program();
+      } else {
+        if (standardPreludeString == null) {
+          standardPreludeLines = File.ReadAllLines(preludePath, Encoding.UTF8);
+          standardPreludeString = String.Join(Environment.NewLine, standardPreludeLines);
         }
-        else
-        {
-            if (standardPreludeString == null)
-            {
-                standardPreludeLines = File.ReadAllLines(preludePath, Encoding.UTF8);
-                standardPreludeString = String.Join(Environment.NewLine, standardPreludeLines);
-            }
-            return prelude;
-        }
+        return prelude;
+      }
     }
 
     internal static void ReportCounterexample(Counterexample ce, string message) {
@@ -1137,55 +1069,27 @@ namespace Microsoft.Research.Vcc
     private static bool ReportError(IToken tok, ErrorCode code, string fmt, params string[] args)
     {
       if (ErrorHasBeenReported(tok, code)) return false;
-      string msg = string.Format("{0} ({1},{2}) : error {3}: {4}.", 
+      string msg = string.Format("{0}({1},{2}) : error {3}: {4}.", 
                                  commandLineOptions.RunTestSuite ? "testcase" : tok.filename, tok.line, tok.col, 
                                  ErrorCodeToString(code), string.Format(fmt, args));
       if (commandLineOptions.RunTestSuite)
-          errors.Add(msg);
+        errors.Add(msg);
       else
-      {
         Console.WriteLine(msg);
-		if(CommandLineOptions.Clo.CEVPrint)
-		{
-		lock(typeof(CommandLineOptions)) {
-			FileStream file = new FileStream(CommandLineOptions.Clo.PrintErrorModelFile, FileMode.Append, FileAccess.Write);
-			StreamWriter sw = new StreamWriter(file);
-			sw.WriteLine("BEGINNING_OF_ERROR");
-			sw.WriteLine(msg);
-            sw.WriteLine("END_OF_ERROR");
-		    sw.Flush();
-            sw.Close();
-			}
-		}
-      }
 
       return true;
     }
 
     private static void ReportRelated(IToken tok, string fmt, params string[] args)
     {
-      string msg = string.Format("{0} ({1},{2}) : error {3}: (related information) {4}.", 
+      string msg = string.Format("{0}({1},{2}) : error {3}: (related information) {4}.", 
                                  commandLineOptions.RunTestSuite ? "testcase" : tok.filename, tok.line, tok.col, 
                                  ErrorCodeToString(ErrorCode.RelatedInformation),
                                  string.Format(fmt, args));
       if (commandLineOptions.RunTestSuite)
-          errors[errors.Count - 1] = errors[errors.Count - 1] + "\r\n" + msg;
+        errors[errors.Count - 1] = errors[errors.Count - 1] + "\r\n" + msg;
       else
-      {
-          Console.WriteLine(msg);
-		if(CommandLineOptions.Clo.CEVPrint)
-		{
-			lock(typeof(CommandLineOptions)) {
-			FileStream file = new FileStream(CommandLineOptions.Clo.PrintErrorModelFile, FileMode.Append, FileAccess.Write);
-			StreamWriter sw = new StreamWriter(file);
-            sw.WriteLine("BEGINNING_OF_RELATED_INFO");
-			sw.WriteLine(msg);
-			sw.WriteLine("END_OF_RELATED_INFO");
-		    sw.Flush();
-            sw.Close();
-			}
-		}
-      }
+        Console.WriteLine(msg);
     }
 
     private static ErrorCode GetErrorNumber(ref string msg, ErrorCode def)
