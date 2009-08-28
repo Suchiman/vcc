@@ -601,7 +601,7 @@ namespace Microsoft.Research.Vcc
         if helper.Options.PrintCEVModel then
             match l with
             | v :: vs -> if cevPrintVarOK v.Name v.Kind then (cevVarUpdate tok false v) @ (cevVarUpdateList tok vs) else (cevVarUpdateList tok vs)  
-            | [] -> []
+            | [] -> cevNIncr(); []
         else []
 
       let rec processEList (elist : C.Expr list) varlist = 
@@ -701,7 +701,7 @@ namespace Microsoft.Research.Vcc
           let pos1 = getTokenConst stmt.Token
           let valIs = bCall "#cev_control_flow_event" [B.Expr.IntLiteral(BigInt.Parse((!n).ToString())); er "loop_register"]
           let retval = [B.Stmt.Assume valIs; cevSavePos !n pos1]
-          cevNIncr (); retval
+          retval
         else []    
         
       let cevCondMoment tok =
