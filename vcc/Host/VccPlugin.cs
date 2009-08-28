@@ -238,6 +238,7 @@ namespace Microsoft.Research.Vcc
       currentBoogie = parent.GetBoogieProgram(boogieDecls);
       if (env.Options.PrintCEVModel)
       {
+          VccCommandLineHost.preludePath = env.Options.CEVPreludePath;
           currentBoogie.TopLevelDeclarations.AddRange(VccCommandLineHost.CEVPrelude.TopLevelDeclarations);
       }
       CloseVcGen();

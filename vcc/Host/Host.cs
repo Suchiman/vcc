@@ -980,7 +980,7 @@ namespace Microsoft.Research.Vcc
 
     static string[] cevPreludeLines;
     static string cevPreludeString;
-    static string preludePath = "c:\\workspace\\vcc_test\\CEVPrelude.bpl";
+    public static string preludePath = "";
     private static Program GetCEVPrelude()
     {
 

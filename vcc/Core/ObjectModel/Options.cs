@@ -49,6 +49,7 @@ namespace Microsoft.Research.Vcc
     public bool SaveModel;
     public bool DetailedTimes;
     public bool PrintCEVModel;  
+    public string CEVPreludePath = "c:\\workspace\\vcc_test\\CEVPrelude.bpl";
   }
 
   public class OptionParser : OptionParser<VccOptions>
@@ -109,11 +110,17 @@ namespace Microsoft.Research.Vcc
             this.options.ClPath = clPath;
             return true;
           }
-          string filename = this.ParseNamedArgument(arg, "CEVprint", "cev");
+          string filename = this.ParseNamedArgument(arg, "cevprint", "cev");
           if (filename != null)
           {
               this.options.PrintCEVModel = true;
               this.options.BoogieOptions.Add("/cev:" + filename);
+              return true;
+          }
+          filename = this.ParseNamedArgument(arg, "cevpreludepath", "cevpath");
+          if (filename != null)
+          {
+              this.options.CEVPreludePath = filename;
               return true;
           }
           return false;
