@@ -163,7 +163,7 @@ namespace Microsoft.Research.Vcc
       | BinDifferent of string * string
       | BinPredDifferent of string * string
       | UnarySame of string
-    
+          
     let translate functionToVerify (helper:Helper.Env) decls =
       let quantVarTokens = new Dict<_,_>()
       let tokenConstantNames = new Dict<_,_>()
@@ -418,7 +418,18 @@ namespace Microsoft.Research.Vcc
         match t with
           | B.Type.Int -> e
           | _ -> bCall ("$int_to_" + castSuffix t) [e]
-       
+     
+      let typedRead s p t =
+        match t with
+          | C.Ptr t ->
+            bCall "$read_ptr" [s; p; toTypeId t]
+          | C.Integer k ->
+            bCall ("$read_" + C.Type.IntSuffix k) [s; p]
+          | C.Bool ->
+            bCall "$read_bool" [s; p]
+          | t ->                
+            castFromInt (trType t) (bCall "$read_any" [s; p])
+
       let varName (v:C.Variable) =
         if v.Name.IndexOf '#' >= 0 || v.Name.IndexOf '.' >= 0 then
           if v.Kind = C.VarKind.ConstGlobal then
@@ -899,16 +910,7 @@ namespace Microsoft.Research.Vcc
             bCall "$dot" [self o; er (fieldName f)]
           | C.Expr.Index (_, arr, idx) ->
             bCall "$idx" [self arr; self idx; ptrType arr]
-          | C.Expr.Deref (_, p) ->
-            match expr.Type with
-              | C.Ptr t ->
-                bCall "$read_ptr" [bState; self p; toTypeId t]
-              | C.Integer k ->
-                bCall ("$read_" + C.Type.IntSuffix k) [bState; self p]
-              | C.Bool ->
-                bCall "$read_bool" [bState; self p]
-              | t ->                
-                castFromInt (trType t) (bCall "$read_any" [bState; self p])
+          | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
           | C.Expr.Call (_, fn, targs, args) ->
             let args =  List.map (toTypeId' true) targs @ convertArgs fn (selfs args)
             let args = 
@@ -2266,8 +2268,8 @@ namespace Microsoft.Research.Vcc
               | C.Type.Array (t, sz) ->
                 let idx = bCall "$idx" [dot; er "#i"; toTypeId t]
                 B.Forall ([("#i", B.Type.Int)], [[idx]], weight "array-span",
-                       bInvImpl (bCall "$in_range" [bInt 0; er "#i"; bInt (sz - 1)]) (prop idx))
-              | _ -> prop dot
+                       bInvImpl (bCall "$in_range" [bInt 0; er "#i"; bInt (sz - 1)]) (prop t idx))
+              | t -> prop t dot
 
           let auxDot r f =
             bCall "$dot" [r; toFieldRef f] 
@@ -2275,9 +2277,10 @@ namespace Microsoft.Research.Vcc
           let args = [s1; s2; p; we]
           let bSpansCall = bCall "$state_spans_the_same" args
           let bNonVolatileSpansCall = bCall "$state_nonvolatile_spans_the_same" args
+          let mkEq t idx = bEq (typedRead s1 idx t) (typedRead s2 idx t)
           let mkForall call fields =
             B.Forall (qvars, [[call]], weight "eqdef-span", bEq call 
-              (bMultiAnd (List.map (function fld -> maybeArrayLift p fld (fun idx -> bCall "$mem_eq" [s1; s2; idx])) fields)))
+              (bMultiAnd (List.map (function fld -> maybeArrayLift p fld mkEq) fields)))
           (mkForall bSpansCall fields, mkForall bNonVolatileSpansCall (List.filter (fun fld -> not fld.IsVolatile) fields))
         
         let extentProp propName twostate union1 includeSelf primFieldProp (fields:list<C.Field>) =
