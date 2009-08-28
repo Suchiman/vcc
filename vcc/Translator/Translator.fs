@@ -2268,8 +2268,8 @@ namespace Microsoft.Research.Vcc
               | C.Type.Array (t, sz) ->
                 let idx = bCall "$idx" [dot; er "#i"; toTypeId t]
                 B.Forall ([("#i", B.Type.Int)], [[idx]], weight "array-span",
-                       bInvImpl (bCall "$in_range" [bInt 0; er "#i"; bInt (sz - 1)]) (prop t idx))
-              | t -> prop t dot
+                       bInvImpl (bCall "$in_range" [bInt 0; er "#i"; bInt (sz - 1)]) (prop idx))
+              | _ -> prop dot
 
           let auxDot r f =
             bCall "$dot" [r; toFieldRef f] 
@@ -2277,10 +2277,9 @@ namespace Microsoft.Research.Vcc
           let args = [s1; s2; p; we]
           let bSpansCall = bCall "$state_spans_the_same" args
           let bNonVolatileSpansCall = bCall "$state_nonvolatile_spans_the_same" args
-          let mkEq t idx = bEq (typedRead s1 idx t) (typedRead s2 idx t)
           let mkForall call fields =
             B.Forall (qvars, [[call]], weight "eqdef-span", bEq call 
-              (bMultiAnd (List.map (function fld -> maybeArrayLift p fld mkEq) fields)))
+              (bMultiAnd (List.map (function fld -> maybeArrayLift p fld (fun idx -> bCall "$mem_eq" [s1; s2; idx])) fields)))
           (mkForall bSpansCall fields, mkForall bNonVolatileSpansCall (List.filter (fun fld -> not fld.IsVolatile) fields))
         
         let extentProp propName twostate union1 includeSelf primFieldProp (fields:list<C.Field>) =

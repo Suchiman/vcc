@@ -102,6 +102,20 @@ axiom $sizeof(^^u8) == 8;
 axiom $sizeof(^^f4) == 4;
 axiom $sizeof(^^f8) == 8;
 
+// for types for which $in_range_t(...) is defined
+function $as_in_range_t($ctype) returns($ctype);
+axiom $as_in_range_t(^^i1) == ^^i1;
+axiom $as_in_range_t(^^i2) == ^^i2;
+axiom $as_in_range_t(^^i4) == ^^i4;
+axiom $as_in_range_t(^^i8) == ^^i8;
+axiom $as_in_range_t(^^u1) == ^^u1;
+axiom $as_in_range_t(^^u2) == ^^u2;
+axiom $as_in_range_t(^^u4) == ^^u4;
+axiom $as_in_range_t(^^u8) == ^^u8;
+axiom $as_in_range_t(^^f4) == ^^f4;
+axiom $as_in_range_t(^^f8) == ^^f8;
+
+
 // -- sizeof bool, void, mathint uninterpreted
 
 const unique ^$#thread_id_t: $ctype;
@@ -2387,14 +2401,14 @@ function {:inline true} $in_range_div_i2(x:int, y:int) returns(bool) { y != -1 |
 function {:inline true} $in_range_div_i4(x:int, y:int) returns(bool) { y != -1 || x != $min.i4 }
 function {:inline true} $in_range_div_i8(x:int, y:int) returns(bool) { y != -1 || x != $min.i8 }
 
-function {:weight 0} $read_i1(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:weight 0} $read_i2(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:weight 0} $read_i4(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:weight 0} $read_i8(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:weight 0} $read_u1(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:weight 0} $read_u2(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:weight 0} $read_u4(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:weight 0} $read_u8(S:$state, p:$ptr) returns(int) { $mem(S, p) }
+function {:inline true} $read_i1(S:$state, p:$ptr) returns(int) { $mem(S, p) }
+function {:inline true} $read_i2(S:$state, p:$ptr) returns(int) { $mem(S, p) }
+function {:inline true} $read_i4(S:$state, p:$ptr) returns(int) { $mem(S, p) }
+function {:inline true} $read_i8(S:$state, p:$ptr) returns(int) { $mem(S, p) }
+function {:inline true} $read_u1(S:$state, p:$ptr) returns(int) { $mem(S, p) }
+function {:inline true} $read_u2(S:$state, p:$ptr) returns(int) { $mem(S, p) }
+function {:inline true} $read_u4(S:$state, p:$ptr) returns(int) { $mem(S, p) }
+function {:inline true} $read_u8(S:$state, p:$ptr) returns(int) { $mem(S, p) }
 
 function $ptr_to_u8($ptr) returns(int);
 function $ptr_to_i8($ptr) returns(int);
@@ -2435,16 +2449,8 @@ axiom (forall p:$ptr :: { $ptr_to_i1(p) } $in_range_i1($ref(p)) ==> $ptr_to_i1(p
 function {:weight 0} $byte_ptr_subtraction(p1:$ptr, p2:$ptr) returns(int)
   { $ref(p1) - $ref(p2) }
 
-// TODO this is unsound, by definition read_u8(x) == read_u1(x), thus for all memory locations in a good
-// state, if we ignore the triggers, we can conclude 0<=x<=127.
-axiom (forall S:$state, p:$ptr :: {$read_i1(S, p)} $good_state(S) ==> $in_range_i1($read_i1(S, p)));
-axiom (forall S:$state, p:$ptr :: {$read_i2(S, p)} $good_state(S) ==> $in_range_i2($read_i2(S, p)));
-axiom (forall S:$state, p:$ptr :: {$read_i4(S, p)} $good_state(S) ==> $in_range_i4($read_i4(S, p)));
-axiom (forall S:$state, p:$ptr :: {$read_i8(S, p)} $good_state(S) ==> $in_range_i8($read_i8(S, p)));
-axiom (forall S:$state, p:$ptr :: {$read_u1(S, p)} $good_state(S) ==> $in_range_u1($read_u1(S, p)));
-axiom (forall S:$state, p:$ptr :: {$read_u2(S, p)} $good_state(S) ==> $in_range_u2($read_u2(S, p)));
-axiom (forall S:$state, p:$ptr :: {$read_u4(S, p)} $good_state(S) ==> $in_range_u4($read_u4(S, p)));
-axiom (forall S:$state, p:$ptr :: {$read_u8(S, p)} $good_state(S) ==> $in_range_u8($read_u8(S, p)));
+axiom (forall S:$state, r:int, t:$ctype :: {$mem(S, $ptr($as_in_range_t(t), r))}
+  $good_state(S) ==> $in_range_t(t, $mem(S, $ptr($as_in_range_t(t), r))));
 
 function $_pow2(int) returns(int);
 axiom 
