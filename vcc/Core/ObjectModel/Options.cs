@@ -48,6 +48,7 @@ namespace Microsoft.Research.Vcc
     public bool WarningsAsErrors;
     public bool SaveModel;
     public bool DetailedTimes;
+    public bool PrintCEVModel;  
   }
 
   public class OptionParser : OptionParser<VccOptions>
@@ -107,6 +108,13 @@ namespace Microsoft.Research.Vcc
           if (clPath != null) {
             this.options.ClPath = clPath;
             return true;
+          }
+          string filename = this.ParseNamedArgument(arg, "CEVprint", "cev");
+          if (filename != null)
+          {
+              this.options.PrintCEVModel = true;
+              this.options.BoogieOptions.Add("/cev:" + filename);
+              return true;
           }
           return false;
         case 'd':
