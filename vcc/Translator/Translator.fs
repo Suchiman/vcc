@@ -2416,9 +2416,13 @@ namespace Microsoft.Research.Vcc
                    @ List.concat (List.map (trField td) allFields)
       
       let trRecord (td:C.TypeDecl) =
+        let intKind = function
+          | C.Type.Integer _ as t -> toTypeId t
+          | _ -> er "^^mathint"
         let trRecField (f:C.Field) =
           [B.Decl.Const { Unique = true; Name = fieldName f; Type = B.Type.Ref "$field" };
-           B.Decl.Axiom (bCall "$is_record_field" [toTypeId (C.Type.Ref td); er (fieldName f); toTypeId f.Type])]
+           B.Decl.Axiom (bCall "$is_record_field" [toTypeId (C.Type.Ref td); er (fieldName f); toTypeId f.Type]);
+           B.Decl.Axiom (bEq (bCall "$record_field_int_kind" [er (fieldName f)]) (intKind f.Type))]
         List.map trRecField td.Fields |> List.concat
         
       let trMathType (td:C.TypeDecl) =
