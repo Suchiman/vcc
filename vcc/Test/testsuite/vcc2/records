@@ -477,4 +477,28 @@ void foo() {
 }
 `
 Verification of foo succeeded.
+`#include <vcc.h>
+
+struct vcc(record) R
+{
+	int x;
+};
+
+struct Rc
+{
+  int a;
+	spec(struct R r;)
+};
+
+void test(struct Rc *s)
+  writes(s)
+  maintains(wrapped(s))
+  ensures(unchanged(s->r))
+{
+  expose(s) {
+    speconly(s->r = s->r / {.x = s->r.x };)
+	}
+}
+`
+Verification of test succeeded.
 `

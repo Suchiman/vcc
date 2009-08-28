@@ -505,7 +505,10 @@ function $rec_update_bv(r:$record, f:$field, val_bitsize:int, from:int, to:int, 
 axiom (forall f:$field :: $rec_fetch($rec_zero, f) == 0);
 
 axiom (forall r:$record, f:$field, v:int :: {$rec_fetch($rec_update(r, f, v), f)}
-  $rec_fetch($rec_update(r, f, v), f) == v);
+  $rec_fetch($rec_update(r, f, v), f) == $unchecked($record_field_int_kind(f), v));
+
+axiom (forall r:$record, f:$field :: {$rec_fetch(r, f)}
+  $in_range_t($record_field_int_kind(f), $rec_fetch(r, f)));
 
 axiom (forall r:$record, f1:$field, f2:$field, v:int :: {$rec_fetch($rec_update(r, f1, v), f2)}
   $rec_fetch($rec_update(r, f1, v), f2) == $rec_fetch(r, f2) || f1 == f2);
@@ -518,6 +521,8 @@ axiom (forall t:$ctype :: {$is_record_type(t)} $is_record_type(t) ==> $is_primit
 function $as_record_record_field($field) returns($field);
 axiom (forall p:$ctype, f:$field, ft:$ctype :: {$is_record_field(p, f, ft), $is_record_type(ft)}
   $is_record_field(p, f, ft) && $is_record_type(ft) ==> $as_record_record_field(f) == f);
+
+function $record_field_int_kind(f:$field) returns($ctype);
 
 function $rec_eq(r1:$record, r2:$record) returns(bool)
   { r1 == r2 }
@@ -2580,6 +2585,7 @@ axiom (forall val:int :: {$in_range_t(^^u1, val)} $in_range_t(^^u1, val) <==> $i
 axiom (forall val:int :: {$in_range_t(^^u2, val)} $in_range_t(^^u2, val) <==> $in_range_u2(val));
 axiom (forall val:int :: {$in_range_t(^^u4, val)} $in_range_t(^^u4, val) <==> $in_range_u4(val));
 axiom (forall val:int :: {$in_range_t(^^u8, val)} $in_range_t(^^u8, val) <==> $in_range_u8(val));
+axiom (forall val:int :: {$in_range_t(^^mathint, val)} $in_range_t(^^mathint, val));
 
 axiom (forall t:$ctype, val:int :: {$unchecked(t, val)} $in_range_t(t, val) ==> $unchecked(t, val) == val);
 axiom (forall t:$ctype, val:int :: {$unchecked(t, val)} $in_range_t(t, $unchecked(t, val)));
