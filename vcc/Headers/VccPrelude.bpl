@@ -1240,7 +1240,7 @@ procedure $unwrap_check(#l:$ptr);
 
   // from $unwrap(...):
   ensures $mutable($s, #l);
-  ensures $owns(old($s), #l) == $owns($s, #l);
+  ensures $spans_the_same(old($s), $s, #l, $typ(#l));
   ensures (forall #p:$ptr :: {$set_in(#p, $owns(old($s), #l))}
     $set_in(#p, $owns(old($s), #l)) ==> 
       $typed(old($s), #p) &&
@@ -2435,6 +2435,8 @@ axiom (forall p:$ptr :: { $ptr_to_i1(p) } $in_range_i1($ref(p)) ==> $ptr_to_i1(p
 function {:weight 0} $byte_ptr_subtraction(p1:$ptr, p2:$ptr) returns(int)
   { $ref(p1) - $ref(p2) }
 
+// TODO this is unsound, by definition read_u8(x) == read_u1(x), thus for all memory locations in a good
+// state, if we ignore the triggers, we can conclude 0<=x<=127.
 axiom (forall S:$state, p:$ptr :: {$read_i1(S, p)} $good_state(S) ==> $in_range_i1($read_i1(S, p)));
 axiom (forall S:$state, p:$ptr :: {$read_i2(S, p)} $good_state(S) ==> $in_range_i2($read_i2(S, p)));
 axiom (forall S:$state, p:$ptr :: {$read_i4(S, p)} $good_state(S) ==> $in_range_i4($read_i4(S, p)));
