@@ -169,6 +169,7 @@ namespace Microsoft.Research.Vcc
                   "is_stuttering_check", "";
                   "new_ownees", "S..";
                   "rec_eq", "..";
+                  "account_claim", "Spp";
                 ]
     dict
 
