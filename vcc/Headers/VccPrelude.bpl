@@ -2852,6 +2852,19 @@ axiom $is_claimable(^^claim);
 
 function $is_thread_local_storage($ctype) returns (bool);
 
+
+function $account_claim(S:$state, c:$ptr, o:$ptr) returns(bool)
+  { $good_state(S) && $closed(S, c) && $claims_obj(c, o) }
+
+function $claim_no(S:$state, o:$ptr, idx:int) returns($ptr);
+function $claim_idx(o:$ptr, c:$ptr) returns(int);
+
+axiom (forall S:$state, c:$ptr, o:$ptr :: {$account_claim(S, c, o)}
+  $account_claim(S, c, o) ==>
+    $claim_no(S, o, $claim_idx(o, c)) == c &&
+    0 <= $claim_idx(o, c) && $claim_idx(o, c) < $ref_cnt(S, o));
+    
+
 // --------------------------------------------------------------------------------
 // Frame axiom ordering
 // --------------------------------------------------------------------------------

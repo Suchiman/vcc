@@ -494,6 +494,9 @@ state_t _vcc_by_claim(claim_t c);
 bool _vcc_always_by_claim(claim_t c, obj_t o);
 #define always_by_claim _vcc_always_by_claim
 
+bool _vcc_account_claim(claim_t, obj_t);
+#define account_claim _vcc_account_claim
+
 /*** 
  *** Obsolete
  ***/
