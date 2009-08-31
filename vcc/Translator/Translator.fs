@@ -976,9 +976,16 @@ namespace Microsoft.Research.Vcc
                 | _ -> true
             let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
             let triggers = List.map selfs q.Triggers
+            // the nested ptr_cast(ptr(...)) gets into triggers and causes trouble later
+            let rec stripPtrCast (expr:B.Expr) = 
+              let aux = function
+                | B.FunctionCall ("$ptr_cast", [B.FunctionCall ("$ptr", [_; r]); t]) ->
+                  Some (stripPtrCast (bCall "$ptr" [t; r]))
+                | _ -> None
+              expr.Map aux              
             match q.Kind with
-              | C.Forall -> B.Forall (vars, triggers, weight "user-forall", body)
-              | C.Exists -> B.Exists (vars, triggers, weight "user-exists", body)
+              | C.Forall -> B.Forall (vars, triggers, weight "user-forall", stripPtrCast body)
+              | C.Exists -> B.Exists (vars, triggers, weight "user-exists", stripPtrCast body)
               | C.Lambda -> die()
           
           | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]

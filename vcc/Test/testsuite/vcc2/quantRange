@@ -12,3 +12,46 @@ void f() {
 `
 Verification of f succeeded.
 `
+#include "vcc.h"
+
+void fill(void *arr, unsigned len, int fill)
+    writes(array_range((int*)arr,len))
+    ensures(forall(unsigned j; j < len; ((int*)arr)[j]==fill))
+{
+    unsigned i;
+    for (i = 0; i < len; i++)
+        invariant(i <= len)
+        invariant(forall(unsigned j; j < i; ((int*)arr)[j]==fill))
+        ((int*)arr)[i] = fill;
+}
+
+void foo(int *arr, unsigned a)
+    requires(0 <= a && a < 100)
+    maintains(wrapped(as_array(arr,100)))
+    writes(as_array(arr,100))
+    ensures(forall(unsigned j; j < 100;
+        j < a ? unchanged(arr[j]) : arr[j]==42))
+{
+    unwrap(as_array(arr,100));
+    fill(arr+a, 100-a, 42);
+    // doesn't help: assert(forall(unsigned j; a <= j; arr+j == (((int*)((void*)arr))+a)+(j-a)));
+    assert(forall(unsigned j; a <= j; arr+j == (arr+a)+(j-a)));
+    wrap(as_array(arr,100));
+}
+
+void bar(int *arr, unsigned a, unsigned b)
+    requires(a && a < b && b < 100)
+    maintains(wrapped(as_array(arr,100)))
+    writes(as_array(arr,100))
+    ensures(forall(unsigned j; j < 100; a <= j && j < b ? arr[j]==42 : unchanged(arr[j])))
+{
+    unwrap(as_array(arr,100));
+    fill(arr+a, b-a, 42);
+    wrap(as_array(arr,100));
+    assert(forall(unsigned j; a <= j; arr+j == (arr+a)+(j-a)));
+}
+`
+Verification of fill succeeded.
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
