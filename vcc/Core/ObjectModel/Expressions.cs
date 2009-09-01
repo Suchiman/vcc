@@ -4113,7 +4113,9 @@ namespace Microsoft.Research.Vcc {
       get
       {
         ITypeDefinition t = base.Type;
-        return VccPointerType.GetPointerType(t, false, this.Compilation.HostEnvironment.InternFactory);
+        VccTypeContract contract = this.Compilation.ContractProvider.GetTypeContractFor(t) as VccTypeContract;
+        bool isSpec = contract != null ? contract.IsSpec : false;
+        return VccPointerType.GetPointerType(t, isSpec, this.Compilation.HostEnvironment.InternFactory);
       }
     }
 

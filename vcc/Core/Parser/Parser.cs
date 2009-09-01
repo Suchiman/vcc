@@ -94,7 +94,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ assume this.currentToken != Token.EndOfFile; //assume this method is called directly after construction and then never again.
       this.GetNextToken(); //Get first token from scanner
       this.ParseNamespaceMemberDeclarations(globalContainer, members, Parser.EndOfFile);
-      VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentSpecificationFunctions, this.currentTypeInvariants);
+      VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentSpecificationFunctions, this.currentTypeInvariants, false);
       this.compilation.ContractProvider.AssociateTypeWithContract(globalContainer, tc);
     }
 
@@ -1543,14 +1543,17 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Specifier> result = new List<Specifier>();
       bool typeDefNameIsAllowed = true;
       bool typeDefNameMustReferencePrimitive = false;
+      bool seenSpecificationSpecifier = false;
       TokenSet followersOrSpecifierStart = followers|Parser.SpecifierStart;
       for (; ; ) {
         switch (this.currentToken) {
+          case Token.Specification:
+            seenSpecificationSpecifier = true;
+            goto case Token.Auto;
           case Token.Auto:
           case Token.Register:
           case Token.Static:
           case Token.Extern:
-          case Token.Specification:
           case Token.Typedef:
             result.Add(new StorageClassSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
             this.GetNextToken();
@@ -1585,12 +1588,12 @@ namespace Microsoft.Research.Vcc.Parsing {
           case Token.Struct:
             typeDefNameIsAllowed = false;
             LookAndWarnForMisplacedDeclspec(result);
-            result.Add(new StructSpecifier(this.ParseStructuredDeclarationOrDefinition(namespaceMembers, typeMembers, followersOrSpecifierStart, true)));
+            result.Add(new StructSpecifier(this.ParseStructuredDeclarationOrDefinition(namespaceMembers, typeMembers, followersOrSpecifierStart, true, seenSpecificationSpecifier)));
             goto default;
           case Token.Union:
             typeDefNameIsAllowed = false;
             LookAndWarnForMisplacedDeclspec(result);
-            result.Add(new UnionSpecifier(this.ParseStructuredDeclarationOrDefinition(namespaceMembers, typeMembers, followersOrSpecifierStart, false)));
+            result.Add(new UnionSpecifier(this.ParseStructuredDeclarationOrDefinition(namespaceMembers, typeMembers, followersOrSpecifierStart, false, seenSpecificationSpecifier)));
             goto default;
           case Token.Enum:
             typeDefNameIsAllowed = false;
@@ -1694,8 +1697,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       return new NameDeclaration(this.nameTable.GetNameFor(newname), unmangeledName.SourceLocation);
     }
 
-    private TypeExpression ParseStructuredDeclarationOrDefinition(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isStruct) 
-      //^ requires this.currentToken == Token.Struct;
+    private TypeExpression ParseStructuredDeclarationOrDefinition(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isStruct, bool isSpec) 
+      //^ requires this.currentToken == Token.Struct || this.currentToken == Token.Union;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       List<FieldDeclaration>/*?*/ savedSpecificationFields = this.currentSpecificationFields;
@@ -1755,7 +1758,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         // see Microsoft.Cci.Ast.TypeDeclaration.SetMemberContainingTypeDeclaration for the supported classes
         newTypeMembers.RemoveAll(delegate(ITypeDeclarationMember member) { return !(member is TypeDeclarationMember || member is NestedTypeDeclaration); });
         if (this.currentSpecificationFields != null || this.currentTypeInvariants != null) {
-          VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, null, this.currentTypeInvariants);
+          VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, null, this.currentTypeInvariants, isSpec);
           this.compilation.ContractProvider.AssociateTypeWithContract(type, tc);
         }
       } else if (noName) {

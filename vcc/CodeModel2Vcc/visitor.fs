@@ -520,6 +520,11 @@ namespace Microsoft.Research.Vcc
                     | x :: xs -> List.exists (fun y -> y <> x) xs
                     | _ -> die()                        
                   let customAttr = convCustomAttributes tok typeDef.Attributes
+                  let contract = contractProvider.GetTypeContractFor(typeDef)
+                  let specFromContract = 
+                    match contract with
+                      | :? VccTypeContract as vccTypeContract -> vccTypeContract.IsSpec
+                      | _ -> false
                   let td = 
                     { Token = tok
                       Name = name
@@ -543,7 +548,7 @@ namespace Microsoft.Research.Vcc
                           | (true, parent) -> Some parent
                           | _ -> None
                         | _ -> None
-                      IsSpec = hasRecordAttr customAttr
+                      IsSpec = specFromContract || hasRecordAttr customAttr
                       IsVolatile = false
                     } : C.TypeDecl
                                       
@@ -630,7 +635,6 @@ namespace Microsoft.Research.Vcc
                     | None -> trMembers isSpec ms
                     | Some(f) -> f :: trMembers isSpec ms
                   
-                  let contract = contractProvider.GetTypeContractFor(typeDef)
                   //if (contract <> null) then contract.HasErrors() |> ignore
 
                   match fields with

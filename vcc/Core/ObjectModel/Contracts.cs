@@ -29,10 +29,11 @@ namespace Microsoft.Research.Vcc {
     /// <param name="contractFunctions">A possibly empty list of contract functions. Contract functions have no bodies and can only be used inside contracts. The meaning of a contract
     /// functions is specified by the axioms (assumed invariants) of the associated type. Contract functions are not available at runtime.</param>
     /// <param name="invariants">A possibly empty list of type invariants. Axioms are a special type of invariant.</param>
-    public VccTypeContract(IEnumerable<FieldDeclaration>/*?*/ contractFields, IEnumerable<FunctionDeclaration>/*?*/ contractFunctions, IEnumerable<TypeInvariant>/*?*/ invariants) {
+    public VccTypeContract(IEnumerable<FieldDeclaration>/*?*/ contractFields, IEnumerable<FunctionDeclaration>/*?*/ contractFunctions, IEnumerable<TypeInvariant>/*?*/ invariants, bool isSpec) {
       this.contractFields = contractFields==null ? EmptyListOfFields:contractFields;
       this.contractFunctions = contractFunctions==null ? EmptyListOfMethods:contractFunctions;
       this.invariants = invariants==null ? EmptyListOfInvariants:invariants;
+      this.isSpec = isSpec;
     }
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
@@ -60,6 +61,13 @@ namespace Microsoft.Research.Vcc {
         this.invariants = new List<TypeInvariant>(template.invariants);
       else
         this.invariants = template.invariants;
+      this.isSpec = template.isSpec;
+    }
+
+    readonly bool isSpec;
+
+    public bool IsSpec {
+      get { return this.isSpec; }
     }
 
     /// <summary>
