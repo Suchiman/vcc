@@ -83,7 +83,7 @@ namespace Microsoft.Research.Vcc
       List.iter (fun e -> elements.[e] <- true) l
       List.filter (fun e ->elements.ContainsKey(e)) l
 
-    let isRecord (td : C.TypeDecl) = List.exists (function C.VccAttr ("record", _) -> true | _ -> false) td.CustomAttr
+    let hasRecordAttr = List.exists (function C.VccAttr ("record", _) -> true | _ -> false)
 
     let convCustomAttributes tok (attrs : ICustomAttribute seq) = 
       let getAttrTypeName (attr:ICustomAttribute) = TypeHelper.GetTypeName(attr.Type.ResolvedType)
@@ -519,12 +519,13 @@ namespace Microsoft.Research.Vcc
                   let notAllEqual = function
                     | x :: xs -> List.exists (fun y -> y <> x) xs
                     | _ -> die()                        
+                  let customAttr = convCustomAttributes tok typeDef.Attributes
                   let td = 
                     { Token = tok
                       Name = name
                       Fields = []
                       Invariants = []
-                      CustomAttr = convCustomAttributes tok typeDef.Attributes
+                      CustomAttr = customAttr
                       SizeOf = int typeDef.SizeOf
                       IsNestedAnon = false
                       GenerateEquality = CAST.StructEqualityKind.NoEq
@@ -542,12 +543,10 @@ namespace Microsoft.Research.Vcc
                           | (true, parent) -> Some parent
                           | _ -> None
                         | _ -> None
-                      IsSpec = false
+                      IsSpec = hasRecordAttr customAttr
                       IsVolatile = false
                     } : C.TypeDecl
-                  
-                  if isRecord td then td.IsSpec <- true
-                    
+                                      
                   // TODO?
                   let td =
                     if td.Name = "Object" && td.SizeOf = 0 then
@@ -643,7 +642,7 @@ namespace Microsoft.Research.Vcc
                     | _ ->
                       td.Fields <- trMembers false members
 
-                      if td.SizeOf < 1  && not (isRecord td) then
+                      if td.SizeOf < 1  && not td.IsSpec then
                         helper.Oops(td.Token, "type " + td.Name + " smaller than 1 byte!")
                         die()
                                             
