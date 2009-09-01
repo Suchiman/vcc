@@ -820,7 +820,7 @@ namespace Microsoft.Research.Vcc
         let rec aux invs writes = function
           | Assert (_, Expr.Macro (_, "loop_writes", [e])) :: rest -> aux invs (e :: writes) rest
           | Assert (_, e) :: rest -> aux (e :: invs) writes rest
-          | [] -> (invs, writes)
+          | [] -> (List.rev invs, List.rev writes)
           | _ -> die()
         let (invs, writes) = aux [] [] contract
         let mkLoop stmts =
