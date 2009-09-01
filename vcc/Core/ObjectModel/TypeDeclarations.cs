@@ -130,6 +130,7 @@ namespace Microsoft.Research.Vcc {
     protected VccStructuredTypeDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccStructuredTypeDeclaration template)
       : base(containingNamespaceDeclaration, template) {
       this.extendedAttributes = new List<DeclspecSpecifier>(template.extendedAttributes);
+      this.isSpec = template.isSpec;
     }
 
     public override IEnumerable<ICustomAttribute> Attributes
@@ -166,6 +167,8 @@ namespace Microsoft.Research.Vcc {
     }
 
     readonly IEnumerable<DeclspecSpecifier> extendedAttributes;
+
+    private readonly bool isSpec;
 
     public override TypeMemberVisibility GetDefaultVisibility() {
       return TypeMemberVisibility.Public;
