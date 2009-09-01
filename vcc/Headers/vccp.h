@@ -47,7 +47,7 @@ SPEC_TYPE(thread_id_t)
 SPEC_TYPE(state_t) // for in_state
 
 
-typedef thread_id_t *_vcc_thread_id;
+typedef thread_id_t ^_vcc_thread_id;
 #define thread_id _vcc_thread_id
 
 typedef unsigned __int64 _vcc_size_t;
@@ -460,7 +460,7 @@ bool _vcc_match_long(__int64 x)
  *** Claims
  ***/
 struct _vcc_claim_struct { };
-typedef struct _vcc_claim_struct *_vcc_claim_t;
+typedef struct _vcc_claim_struct ^_vcc_claim_t;
 #define claim_t _vcc_claim_t
 
 claim_t _vcc_claim(obj_t, ...);
