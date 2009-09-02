@@ -796,6 +796,8 @@ namespace Microsoft.Research.Vcc {
     //^ [Pure]
     public override bool ImplicitConversionExists(ITypeDefinition sourceType, ITypeDefinition targetType) {
 
+      if (TypeHelper.TypesAreEquivalent(sourceType, targetType)) return true;
+
       // * -> bool
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean))
         return ImplicitConversionToBooleanExists(sourceType);

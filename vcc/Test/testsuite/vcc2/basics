@@ -454,7 +454,7 @@ void bar()
 spec(
 void barSafe()
 {
-    int *a;
+    int ^a;
     a = spec_malloc_array<int>(42);
     free(as_array(a,42));
 }

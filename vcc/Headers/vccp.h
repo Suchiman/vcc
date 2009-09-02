@@ -268,8 +268,8 @@ void _vcc_stack_free(mathint, obj_t p);
 
 template<typename T> obj_t _vcc_stack_alloc(mathint);
 
-template<typename T> T *_vcc_spec_alloc();
-template<typename T> T *_vcc_spec_alloc_array(unsigned int n);
+template<typename T> T ^_vcc_spec_alloc();
+template<typename T> T ^_vcc_spec_alloc_array(unsigned int n);
 
 obj_t _vcc_alloc(typeid_t);
 

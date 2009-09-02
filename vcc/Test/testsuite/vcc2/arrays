@@ -103,7 +103,7 @@ int foo()
 spec(
 int fooSafe()
 {
-  int *a; 
+  int ^a; 
   a = spec_malloc_array<int>(10);
   a[3] = 12;
   return unchecked(a[0] + a[1]);
@@ -166,7 +166,7 @@ void foo()
 spec(
 void fooSafe()
 {
-  struct A *a;
+  struct A ^a;
   int *tmp;
   int q;
 
@@ -222,7 +222,7 @@ void usex()
 spec(
 void usexSafe()
 {
-  struct A *a;
+  struct A ^a;
 
   a = spec_malloc<struct A>();
   free(a);
@@ -250,7 +250,7 @@ void use1()
 spec(
 void use1Safe()
 {
-  struct A *a;
+  struct A ^a;
 
   a = spec_malloc<struct A>();
   donothing();
