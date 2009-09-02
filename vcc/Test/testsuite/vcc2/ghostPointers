@@ -184,3 +184,10 @@ spec(struct S {
 `
 Verification of S#adm succeeded.
 `
+int foo()
+{
+  int ^a = (void *)0;
+}
+`
+Verification of foo succeeded.
+`
