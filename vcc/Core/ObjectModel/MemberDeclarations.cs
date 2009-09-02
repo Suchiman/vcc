@@ -1413,14 +1413,11 @@ namespace Microsoft.Research.Vcc {
   }
 
   internal sealed class Pointer : SourceItem {
-    internal Pointer(List<TypeQualifier>/*?*/ qualifiers, bool isSpec, ISourceLocation sourceLocation)
+    internal Pointer(List<TypeQualifier>/*?*/ qualifiers, ISourceLocation sourceLocation)
       : base(sourceLocation) {
       this.Qualifiers = qualifiers;
-      this.IsSpec = isSpec;
     }
 
     internal readonly List<TypeQualifier>/*?*/ Qualifiers;
-    internal readonly bool IsSpec;
-
   }
 }

@@ -146,13 +146,13 @@ namespace Microsoft.Research.Vcc {
     /// The type of the local.
     /// </summary>
     public override ITypeDefinition Type {
-      //[DebuggerNonUserCode]
+      [DebuggerNonUserCode]
       get {
         if (this.type == null) {
           ITypeDefinition result;
           VccArrayTypeExpression/*?*/ arrayTypeExpression = this.ContainingLocalDeclarationsStatement.TypeExpression as VccArrayTypeExpression;
           if (arrayTypeExpression != null && arrayTypeExpression.Size != null)
-            result = VccPointerType.GetPointerType(arrayTypeExpression.ElementType.ResolvedType, false, this.ContainingLocalDeclarationsStatement.Compilation.HostEnvironment.InternFactory);
+            result = PointerType.GetPointerType(arrayTypeExpression.ElementType.ResolvedType, this.ContainingLocalDeclarationsStatement.Compilation.HostEnvironment.InternFactory);
           else
             result = this.ContainingLocalDeclarationsStatement.Type;
           this.type = result;
