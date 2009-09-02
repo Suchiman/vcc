@@ -46,12 +46,13 @@ namespace Microsoft.Research.Vcc {
     }
 
     public IMethodDefinition VoidSpecPtrOpVoidSpecPtr {
-      //[DebuggerNonUserCode]
+      [DebuggerNonUserCode]
       get {
         if (this.voidSpecPtrOpVoidSpecPtr == null) {
           lock (GlobalLock.LockingObject) {
             if (this.voidSpecPtrOpVoidSpecPtr == null) {
-              ITypeDefinition voidSpecPtr = VccPointerType.GetPointerType(this.PlatformType.SystemVoid.ResolvedType, true, this.HostEnvironment.InternFactory).ResolvedType;
+              var modifiers = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
+              ITypeDefinition voidSpecPtr = ModifiedPointerType.GetPointerType(this.PlatformType.SystemVoid.ResolvedType, modifiers, this.HostEnvironment.InternFactory).ResolvedType;
               this.voidSpecPtrOpVoidSpecPtr = BuiltinMethods.GetDummyOp(voidSpecPtr, voidSpecPtr, voidSpecPtr);
             }
           }
@@ -115,7 +116,7 @@ namespace Microsoft.Research.Vcc {
         result.SetContainingTypeDeclaration(this.GlobalDeclarationContainer, true);
         arrayTypeTable2.Add(elementType, result);
       }
-      this.VccHelper.AddFixedSizeArrayToPointerMapEntry(result.TypeDefinition, VccPointerType.GetPointerType(elementType, false, this.Compilation.HostEnvironment.InternFactory));
+      this.VccHelper.AddFixedSizeArrayToPointerMapEntry(result.TypeDefinition, PointerType.GetPointerType(elementType, this.Compilation.HostEnvironment.InternFactory));
       this.GlobalDeclarationContainer.AddHelperMember(result);
       return result;
     }
@@ -289,15 +290,15 @@ namespace Microsoft.Research.Vcc {
     static readonly string SystemDiagnosticsContractsCodeContractMapString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Map";
     static readonly string SystemDiagnosticsContractsCodeContractBigIntString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigInt";
 
-    internal void AddFixedSizeArrayToPointerMapEntry(ITypeDefinition fixedSizeArray, IVccPointerType pointerType) {
+    internal void AddFixedSizeArrayToPointerMapEntry(ITypeDefinition fixedSizeArray, IPointerType pointerType) {
       lock (this.arrayToPointerMap) {
         this.arrayToPointerMap.Add(fixedSizeArray, pointerType);
       }
     }
-    private readonly Dictionary<ITypeDefinition, IVccPointerType> arrayToPointerMap = new Dictionary<ITypeDefinition, IVccPointerType>();
+    private readonly Dictionary<ITypeDefinition, IPointerType> arrayToPointerMap = new Dictionary<ITypeDefinition, IPointerType>();
 
-    internal IVccPointerType/*?*/ ArrayPointerFor(ITypeDefinition fixedSizeArray) {
-      IVccPointerType/*?*/ result = null;
+    internal IPointerType/*?*/ ArrayPointerFor(ITypeDefinition fixedSizeArray) {
+      IPointerType/*?*/ result = null;
       lock (this.arrayToPointerMap) {
         this.arrayToPointerMap.TryGetValue(fixedSizeArray, out result);
       }
@@ -415,17 +416,16 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
-    private PtrConvKind ToPtrConvKind(ITypeDefinition type, out IVccPointerType ptrTypeForArray) {
+    private PtrConvKind ToPtrConvKind(ITypeDefinition type, out IPointerType ptrTypeForArray) {
       ptrTypeForArray = null;
       if (TypeHelper.IsPrimitiveInteger(type))
         return PtrConvKind.Int;
       if (TypeHelper.GetTypeName(type) == SystemDiagnosticsContractsCodeContractTypedPtrString)
         return PtrConvKind.ObjT;
-      //System.Diagnostics.Debug.Assert(!(type is IPointerType && !(type is IVccPointerType)));
+      //System.Diagnostics.Debug.Assert(!(type is IPointerType && !(type is IPointerType)));
       IPointerType typeAsPtrType = type as IPointerType;
-      IVccPointerType typeAsVccPtrType = type as IVccPointerType;
       if (typeAsPtrType != null) {
-        var isSpec = !(typeAsVccPtrType == null ||  !typeAsVccPtrType.IsSpec);
+        var isSpec = VccCompilationHelper.IsSpecPointer(typeAsPtrType);
         if (typeAsPtrType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void)
           return isSpec ? PtrConvKind.VoidSpecP : PtrConvKind.VoidP;
         else {
@@ -434,7 +434,7 @@ namespace Microsoft.Research.Vcc {
       } else {
         if (type is IFunctionPointer)
           return PtrConvKind.FuncP;
-        IVccPointerType arrayPtr = this.ArrayPointerFor(type);
+        IPointerType arrayPtr = this.ArrayPointerFor(type);
         if (arrayPtr != null) {
           ptrTypeForArray = arrayPtr;
           return PtrConvKind.Array;
@@ -447,6 +447,17 @@ namespace Microsoft.Research.Vcc {
     private static bool IsIntegralZero(Expression expression) {
       CompileTimeConstant cc = expression as CompileTimeConstant;
       return (cc != null && ExpressionHelper.IsIntegralZero((CompileTimeConstant)expression));
+    }
+
+    internal static bool IsSpecPointer(IPointerType type) {
+      var modifiedPtr = type as IModifiedTypeReference;
+      if (modifiedPtr != null) {
+        foreach (var modifier in modifiedPtr.CustomModifiers) {
+          if (modifier.Modifier.InternedKey == type.PlatformType.SystemDiagnosticsContractsContract.InternedKey)
+            return true;
+        }
+      }
+      return false;
     }
 
     //^ [Pure]
@@ -473,8 +484,8 @@ namespace Microsoft.Research.Vcc {
       if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigIntString && TypeHelper.IsPrimitiveInteger(expression.Type))
         return this.ConversionExpression(expression, targetType);
 
-      IVccPointerType/*?*/ srcPointerType;
-      IVccPointerType/*?*/ tgtPointerType;
+      IPointerType/*?*/ srcPointerType;
+      IPointerType/*?*/ tgtPointerType;
 
       PtrConvKind srcKind = this.ToPtrConvKind(expression.Type, out srcPointerType);
       PtrConvKind tgtKind = this.ToPtrConvKind(targetType, out tgtPointerType);
@@ -706,9 +717,9 @@ namespace Microsoft.Research.Vcc {
     }
 
     private static bool TypesAreEquivalent(ITypeDefinition t1, ITypeDefinition t2) {
-      IVccPointerType/*?*/ p1 = t1 as IVccPointerType;
-      IVccPointerType/*?*/ p2 = t2 as IVccPointerType;
-      if (p1 != null && p2 != null && p1.IsSpec != p2.IsSpec) return false;
+      IPointerType/*?*/ p1 = t1 as IPointerType;
+      IPointerType/*?*/ p2 = t2 as IPointerType;
+      if (p1 != null && p2 != null && VccCompilationHelper.IsSpecPointer(p1) != VccCompilationHelper.IsSpecPointer(p2)) return false;
       return TypeHelper.TypesAreEquivalent(t1, t2);
     }
 
@@ -798,8 +809,8 @@ namespace Microsoft.Research.Vcc {
         return this.ImplicitConversionExists(sourceType.UnderlyingType.ResolvedType, targetType);
      
       // special pointer conversion rules
-      IVccPointerType/*?*/ srcPointerType;
-      IVccPointerType/*?*/ tgtPointerType;
+      IPointerType/*?*/ srcPointerType;
+      IPointerType/*?*/ tgtPointerType;
       PtrConvKind srcKind = this.ToPtrConvKind(sourceType, out srcPointerType);
       PtrConvKind tgtKind = this.ToPtrConvKind(targetType, out tgtPointerType);
 
@@ -951,10 +962,9 @@ namespace Microsoft.Research.Vcc {
     }
 
     protected override string GetPointerTypeName(IPointerTypeReference pointerType, NameFormattingOptions formattingOptions) {
-      var vccPointerType = pointerType as VccPointerType;
-      if (vccPointerType != null) {
-        return this.GetTypeName(vccPointerType.TargetType, formattingOptions) + (vccPointerType.IsSpec ? "^" : "*");
-      }
+      IPointerType pt = pointerType as IPointerType;
+      if (pt != null) 
+        return this.GetTypeName(pt.TargetType, formattingOptions) + (VccCompilationHelper.IsSpecPointer(pt) ? "^" : "*");
       return base.GetPointerTypeName(pointerType, formattingOptions);
     }
 

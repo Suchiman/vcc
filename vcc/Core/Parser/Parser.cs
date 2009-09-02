@@ -495,7 +495,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters = Parser.ConvertToGenericMethodParameterDeclarations(funcDeclarator.TemplateParameters);
       CallingConvention callingConvention = GetCallingConvention(specifiers, acceptsExtraArguments);
       if (returnType is VccFunctionTypeExpression)
-        returnType = new VccPointerTypeExpression(returnType, null, false, returnType.SourceLocation);
+        returnType = new VccPointerTypeExpression(returnType, null, returnType.SourceLocation);
       MethodDeclaration.Flags flags = 0;
       if (acceptsExtraArguments) flags |= MethodDeclaration.Flags.AcceptsExtraArguments;
       FunctionDefinition func = new FunctionDefinition(flags, specifiers, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, body, slb);
@@ -853,7 +853,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         foreach (Pointer p in pointerDeclarator.Pointers) {
           SourceLocationBuilder pslb = new SourceLocationBuilder(p.SourceLocation);
           pslb.UpdateToSpan(slb);
-          result = new VccPointerTypeExpression(result, p.Qualifiers, p.IsSpec, pslb);
+          result = new VccPointerTypeExpression(result, p.Qualifiers, pslb);
         }
       }
       return result;
@@ -891,7 +891,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           if (elementType != null) {
             if (typeQualifiers == null) {
               typeQualifiers = new List<TypeQualifier>(2);
-              result = new VccPointerTypeExpression(elementType, typeQualifiers, false, result.SourceLocation);
+              result = new VccPointerTypeExpression(elementType, typeQualifiers, result.SourceLocation);
             }
             typeQualifiers.Add(tq);
           }
@@ -1255,7 +1255,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       bool isSpec = this.currentToken == Token.BitwiseXor;
       this.GetNextToken();
       List<TypeQualifier>/*?*/ qualifiers = this.ParseTypeQualifiers();
-      return new Pointer(qualifiers, isSpec, sloc);
+      if (isSpec) {
+        if (qualifiers == null) qualifiers = new List<TypeQualifier>(1);
+        qualifiers.Add(new TypeQualifier(Token.Specification, sloc));
+      }
+      return new Pointer(qualifiers, sloc);
     }
 
     private ArrayDeclarator ParseArrayDeclarator(Declarator elementTypeAndName, TokenSet followers)
