@@ -323,6 +323,7 @@ namespace Microsoft.Research.Vcc {
       Implicit,
       Explicit,
       ExplicitAndImplicitIfZero,
+      IncompatibleAndImplicitIfZero,
       Identity,
       Incompatible,
       Base
@@ -339,7 +340,7 @@ namespace Microsoft.Research.Vcc {
               return ConvMethod.Explicit;
             case PtrConvKind.VoidSpecP:
             case PtrConvKind.SpecPtr:
-              return ConvMethod.Incompatible;
+              return ConvMethod.IncompatibleAndImplicitIfZero;
             default:
               return ConvMethod.Implicit;
           }
@@ -446,7 +447,30 @@ namespace Microsoft.Research.Vcc {
 
     private static bool IsIntegralZero(Expression expression) {
       CompileTimeConstant cc = expression as CompileTimeConstant;
-      return (cc != null && ExpressionHelper.IsIntegralZero((CompileTimeConstant)expression));
+      return (cc != null && ExpressionHelper.IsIntegralZero(cc));
+    }
+
+    private class IsZeroVisitor : BaseCodeVisitor
+    {
+      private bool result = false;
+
+      public override void Visit(ICompileTimeConstant constant) {
+        result = ExpressionHelper.IsIntegralZero(constant);
+      }
+
+      public override void Visit(IConversion conversion) {
+        this.Visit(conversion.ValueToConvert);
+      }
+
+      public override void Visit(IExpression expression) {
+        expression.Dispatch(this);
+      }
+
+      public static bool IsZero(IExpression expression) {
+        var visitor = new IsZeroVisitor();
+        visitor.Visit(expression);
+        return visitor.result;
+      }
     }
 
     internal static bool IsSpecPointer(IPointerType type) {
@@ -498,13 +522,16 @@ namespace Microsoft.Research.Vcc {
         }
 
         var convKind = KindsToConvMethod(srcKind, tgtKind);
-        if (convKind == ConvMethod.Incompatible) return new DummyExpression(expression.ContainingBlock, expression.SourceLocation);
         if (convKind == ConvMethod.Identity) return expression;
         if (convKind == ConvMethod.Implicit ||
             convKind == ConvMethod.Explicit && isExplicitConversion ||
-            convKind == ConvMethod.ExplicitAndImplicitIfZero && (isExplicitConversion || IsIntegralZero(expression)))
-
+            convKind == ConvMethod.ExplicitAndImplicitIfZero && (isExplicitConversion || IsIntegralZero(expression)) ||
+            convKind == ConvMethod.IncompatibleAndImplicitIfZero && IsZeroVisitor.IsZero(expression.ProjectAsIExpression()))
           return this.ConversionExpression(expression, targetType);
+
+        if (convKind == ConvMethod.Incompatible ||
+            convKind == ConvMethod.IncompatibleAndImplicitIfZero) 
+          return new DummyExpression(expression.ContainingBlock, expression.SourceLocation);
       }
 
       if (expression.Type == Dummy.Type) {
