@@ -24,7 +24,7 @@ typedef struct _LIST_ENTRY
     struct _LIST_ENTRY *Blink;
 
     // Each list entry contains a back link to its corresponding list manager.
-    spec(PLIST_MANAGER Manager;)
+    spec(LIST_MANAGER ^Manager;)
 } LIST_ENTRY, *PLIST_ENTRY;
 
 #ifdef VERIFY
@@ -36,7 +36,8 @@ typedef struct _LIST_ENTRY
  * values in the range of 0 to size-1, which represent the position of the pointer in 
  * the list. 
  */
-typedef struct vcc(dynamic_owns) _LIST_MANAGER
+spec (
+struct vcc(dynamic_owns) _LIST_MANAGER
 { 
     // Number of entries in the list
     unsigned int size;
@@ -89,7 +90,9 @@ typedef struct vcc(dynamic_owns) _LIST_MANAGER
     invariant(forall(PLIST_ENTRY e1, e2; {set_in(e1,owns(this)), set_in(e2,owns(this))}
         set_in(e1,owns(this)) && set_in(e2,owns(this)) && e1 != e2 ==> index[e1] != index[e2]))
 
-} LIST_MANAGER, *PLIST_MANAGER;
+};)
+
+typedef struct _LIST_MANAGER LIST_MANAGER, PLIST_MANAGER;
 
 #endif
 
@@ -115,7 +118,7 @@ void InitializeListHead( PLIST_ENTRY ListHead )
     ensures(wrapped(ListHead->Manager))
     ensures(is_fresh(ListHead->Manager))
 {
-    spec(PLIST_MANAGER ListManager;)
+    spec(LIST_MANAGER ^ListManager;)
     ListHead->Flink = ListHead->Blink = ListHead;
 
 speconly(
@@ -178,7 +181,7 @@ bool RemoveEntryList( PLIST_ENTRY Entry )
     writes(Entry->Manager)
 {
     PLIST_ENTRY Blink, Flink;
-    spec(PLIST_MANAGER ListManager = Entry->Manager;)
+    spec(LIST_MANAGER ^ListManager = Entry->Manager;)
 
     assert(in_domain(Entry,ListManager));
     assert(in_domain(Entry->Blink,ListManager));
@@ -232,7 +235,7 @@ PLIST_ENTRY RemoveHeadList( PLIST_ENTRY ListHead )
     writes(ListHead->Manager)
 {
     PLIST_ENTRY Flink, Entry;
-    spec(PLIST_MANAGER ListManager = ListHead->Manager;)
+    spec(LIST_MANAGER ^ListManager = ListHead->Manager;)
 
     assert(in_domain(ListHead,ListManager));
     assert(in_domain(ListHead->Flink,ListManager));
@@ -286,7 +289,7 @@ PLIST_ENTRY RemoveTailList( PLIST_ENTRY ListHead )
 
 {
     PLIST_ENTRY Blink, Entry;
-    spec(PLIST_MANAGER ListManager = ListHead->Manager;)
+    spec(LIST_MANAGER ^ListManager = ListHead->Manager;)
 
     assert(in_domain(ListHead,ListManager));
     assert(in_domain(ListHead->Blink,ListManager));
@@ -344,7 +347,7 @@ void InsertTailList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
     writes(ListHead->Manager,span(Entry))
 
 {
-    spec(PLIST_MANAGER ListManager = ListHead->Manager;)
+    spec(LIST_MANAGER ^ListManager = ListHead->Manager;)
 
     assert(in_domain(ListHead,ListManager));
     assert(in_domain(ListHead->Blink,ListManager));
@@ -408,7 +411,7 @@ void InsertHeadList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
     ensures(Entry->Manager == ListHead->Manager)
     writes(ListHead->Manager,span(Entry))
 {
-    spec(PLIST_MANAGER ListManager = ListHead->Manager;)
+    spec(LIST_MANAGER ^ListManager = ListHead->Manager;)
 
     assert(in_domain(ListHead,ListManager));
     assert(in_domain(ListHead->Flink,ListManager));

@@ -9,8 +9,7 @@
 #define bool int
 #endif
 
-
-#ifdef VERIFY
+spec(
 struct AbsStack {
 	size_t high_mark;
 	size_t capacity;
@@ -19,7 +18,8 @@ struct AbsStack {
     invariant( this->high_mark <= this->capacity )
     invariant( is_malloc_root(this) )
 };
-#endif
+)
+
 
 struct Stack{
     size_t topOfStack;
@@ -27,7 +27,7 @@ struct Stack{
 
     size_t *elements;
 
-    spec( struct AbsStack *abs; )
+    spec( struct AbsStack ^abs; )
     spec( obj_t elementsAsArray;)
 
     invariant( this->capacity >= 0 )
@@ -145,7 +145,6 @@ void DisposeStack(struct Stack * S)
 
 speconly(
     unwrap( S->abs );
-    free( S->abs );
 )
 
     free(S);

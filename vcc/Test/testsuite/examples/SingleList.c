@@ -27,7 +27,7 @@ typedef struct _SINGLE_LIST_ENTRY
     // to the previous item in the list.
     spec(struct _SINGLE_LIST_ENTRY *Back;)
     // Each list entry contains a back link to its corresponding list manager.
-    spec(PSINGLE_LIST_MANAGER Manager;)
+    spec(SINGLE_LIST_MANAGER ^Manager;)
 } SINGLE_LIST_ENTRY, *PSINGLE_LIST_ENTRY;
 
 #ifdef VERIFY
@@ -39,7 +39,8 @@ typedef struct _SINGLE_LIST_ENTRY
  * values in the range of 0 to size-1, which represent the position of the pointer in
  * the list.
  */
-typedef struct vcc(dynamic_owns) _SINGLE_LIST_MANAGER
+spec(
+struct vcc(dynamic_owns) _SINGLE_LIST_MANAGER
 {
     // Number of entries in the list
     unsigned int size;
@@ -90,7 +91,10 @@ typedef struct vcc(dynamic_owns) _SINGLE_LIST_MANAGER
     invariant(forall(PSINGLE_LIST_ENTRY e1, e2; {set_in(e1,owns(this)), set_in(e2,owns(this))}
         set_in(e1,owns(this)) && set_in(e2,owns(this)) && e1 != e2 ==> index[e1] != index[e2]))
 
-} SINGLE_LIST_MANAGER, *PSINGLE_LIST_MANAGER;
+};
+)
+
+typedef struct _SINGLE_LIST_MANAGER SINGLE_LIST_MANAGER, *PSINGLE_LIST_MANAGER;
 
 #endif
 
@@ -118,7 +122,7 @@ void InitializeSingleListHead( PSINGLE_LIST_ENTRY ListHead )
     ensures(wrapped(ListHead->Manager))
     ensures(is_fresh(ListHead->Manager))
 {
-    spec(PSINGLE_LIST_MANAGER ListManager;)
+    spec(SINGLE_LIST_MANAGER ^ListManager;)
     ListHead->Next = NULL;
     speconly(ListHead->Back = NULL;)
 
@@ -168,7 +172,7 @@ PSINGLE_LIST_ENTRY PopEntryList( PSINGLE_LIST_ENTRY ListHead )
     writes(ListHead->Manager)
 {
     PSINGLE_LIST_ENTRY FirstEntry;
-    spec(PSINGLE_LIST_MANAGER ListManager = ListHead->Manager;)
+    spec(SINGLE_LIST_MANAGER ^ListManager = ListHead->Manager;)
 
     assert(in_domain(ListHead,ListManager));
     assert(ListHead->Next != NULL ==> in_domain(ListHead->Next,ListManager));
@@ -230,7 +234,7 @@ PushEntryList( PSINGLE_LIST_ENTRY ListHead, PSINGLE_LIST_ENTRY Entry )
     ensures(set_eq(owns(ListHead->Manager), set_union(old(owns(ListHead->Manager)), SET(Entry))))
     writes(ListHead->Manager, extent(Entry))
 {
-    spec(PSINGLE_LIST_MANAGER ListManager = ListHead->Manager;)
+    spec(SINGLE_LIST_MANAGER ^ListManager = ListHead->Manager;)
 
     assert(in_domain(ListHead, ListManager));
     assert(ListHead->Next != NULL ==> in_domain(ListHead->Next, ListManager));
