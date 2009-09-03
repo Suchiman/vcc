@@ -102,7 +102,7 @@ void no_chg(int* x)
         writes(x)
         maintains(wrapped(&S))
         maintains(thread_local(x))
-        ensures(deep_eq(&S,old(&S)))
+        ensures(deep_eq(S,old(S)))
         ensures(*x == S.a)
         maintains(mutable(x) && is_object_root(x));
 

@@ -410,10 +410,10 @@ bool _vcc_inv_group(const char *, bool);
 bool _vcc_public_writes(ptrset);
 #define public_writes(s) ensures(_vcc_public_writes(s))
 
-template<typename T> bool _vcc_shallow_struct_eq(T* s, T* t);
+template<typename T> bool _vcc_shallow_struct_eq(T s, T t);
 #define shallow_eq(s1, s2) _vcc_shallow_struct_eq(s1, s2)
 
-template<typename T> bool _vcc_deep_struct_eq(T* s, T* t);
+template<typename T> bool _vcc_deep_struct_eq(T s, T t);
 #define deep_eq(s1, s2) _vcc_deep_struct_eq(s1, s2)
 
 bool _vcc_boogie(const char*);
