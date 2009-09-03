@@ -29,13 +29,13 @@ struct T {
   union U u1,u2;
   
   invariant(keeps(&s1, &s2, &u1, &u2))
-  invariant(deep_eq(&s1, &s2))
-  invariant(deep_eq(&u1, &u2))
+  invariant(deep_eq(s1, s2))
+  invariant(deep_eq(u1, u2))
 };
 
 
 bool eq_S(struct S s1, struct S s2) 
-  requires(deep_eq(&s1, &s2))
+  requires(deep_eq(s1, s2))
 {
   assert(s1.a == s2.a);
   assert(s1.b == s2.b);
@@ -43,12 +43,12 @@ bool eq_S(struct S s1, struct S s2)
 }
 
 bool eq_T(struct T t1, struct T t2) 
-  requires(deep_eq(&t1, &t2))
+  requires(deep_eq(t1, t2))
 {
   assert(t1.a == t2.a);
   assert(t1.b == t2.b);
-  assert(deep_eq(&t1.s1, &t2.s1));
-  assert(deep_eq(&t1.s2, &t2.s2));
+  assert(deep_eq(t1.s1, t2.s1));
+  assert(deep_eq(t1.s2, t2.s2));
 }
 
 `
@@ -76,7 +76,7 @@ struct C {
   struct A a2;
   int z;
   invariant(keeps(&a1, &a2))
-  invariant(deep_eq(&a1, &a2))
+  invariant(deep_eq(a1, a2))
 };
 
 struct D {
@@ -84,7 +84,7 @@ struct D {
   struct A a2;
   int z;
   invariant(keeps(&a1))
-  invariant(deep_eq(&a1, &a2))
+  invariant(deep_eq(a1, a2))
 };
 
 void foo()
@@ -96,7 +96,7 @@ void foo()
   b.x[0] = 1;
   b.x[1] = 2;
   b.x[2] = 3;
-  assert(deep_eq(&a, &b));
+  assert(deep_eq(a, b));
 }
 
 void bar()
@@ -108,16 +108,16 @@ void bar()
   b.x[0] = 1;
   b.x[1] = 2;
   b.x[2] = 4;
-  assert(deep_eq(&a, &b));
+  assert(deep_eq(a, b));
 }
 `
 Verification of B#adm succeeded.
 Verification of C#adm succeeded.
 Verification of D#adm failed.
-testcase(27,15) : error VC8012: invariant(_vcc_deep_struct_eq(&a1, &a2)) of D is not admissible.
+testcase(27,15) : error VC8012: invariant(_vcc_deep_struct_eq(a1, a2)) of D is not admissible.
 Verification of foo succeeded.
 Verification of bar failed.
-testcase(51,12) : error VC9500: Assertion '_vcc_deep_struct_eq(&a, &b)' did not verify.
+testcase(51,12) : error VC9500: Assertion '_vcc_deep_struct_eq(a, b)' did not verify.
 `
 #include "vcc.h"
 

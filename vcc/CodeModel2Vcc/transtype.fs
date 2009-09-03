@@ -918,9 +918,9 @@ namespace Microsoft.Research.Vcc
         | Expr.Macro(c, (("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq") as name), ([e1;e2] as args)) ->
           let eqKind = if name = "_vcc_deep_struct_eq" then DeepEq else ShallowEq
           match e1.Type with
-          | Type.Ptr(Type.Ref(td) as t) ->
+          | Type.Ref(td) as t ->
             setEqualityKind td eqKind
-            Some(Expr.Macro(c, name + "." + td.Name, (args |> List.map (fun e -> Expr.Deref({e.Common with Type = t}, self e)))))
+            Some(Expr.Macro(c, name + "." + td.Name, [self e1; self e2]))
           | _ -> 
             helper.Error(c.Token, 9655, "structured equality applied to non-structured type " + e1.Type.ToString(), None)
             None
