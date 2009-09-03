@@ -203,3 +203,16 @@ int foo()
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+spec(struct S { int a; };)
+
+void foo() {
+    spec(struct S s1, s2;)
+    assume(deep_eq(s1,s2));
+    assume(shallow_eq(s1,s2));
+    assert(deep_eq(s1,s2));
+}
+`
+Verification of foo succeeded.
+`
