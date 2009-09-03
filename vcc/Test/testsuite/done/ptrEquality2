@@ -1,10 +1,10 @@
 #include <vcc2.h>
 
-void foo()
+void foo(void *p)
 {
-  assert((void *)0 != (void *)0);
+  assert(p != (void *)0); // NULL != NULL is now ambiguous between 'void* op void *' and 'void^ op void^'
 }
 `
 Verification of foo failed.
-testcase(5,12) : error VC9500: Assertion '(void *)0 != (void *)0' did not verify.
+testcase(5,12) : error VC9500: Assertion 'p != (void *)0' did not verify.
 `
