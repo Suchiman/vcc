@@ -502,3 +502,21 @@ void test(struct Rc *s)
 `
 Verification of test succeeded.
 `
+#include <vcc.h>
+
+struct vcc(record) S {
+  int a;
+};
+
+struct vcc(record) T {
+  struct S s;
+};
+
+void foo(spec(struct T t)) {
+  spec(struct T s;)
+  speconly(s = t / { .s = t.s / { .a = 5 } };)
+  assert(s == t / { .s = t.s / { .a = 5 } });
+}
+`
+Verification of foo succeeded.
+`

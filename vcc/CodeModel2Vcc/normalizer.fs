@@ -549,7 +549,8 @@ namespace Microsoft.Research.Vcc
       let foldBackFieldAssignments ec tmp =
         let rec foldBackFieldAssignments' (acc : Expr) = function
           | Macro(_, "=", [Ref(_,v); e]) when v = tmp -> e
-          | Macro(_, "=", [Deref(_, Dot(_, Macro(_, "&", [Ref(_,v)]), f)); e]) when v = tmp -> Macro({acc.Common with Type = v.Type}, "vs_updated", [Dot({acc.Common with Type = Type.Ptr(f.Type)}, acc, f); e])
+          | Macro(_, "=", [Deref(_, Dot(_, Macro(_, "&", [Ref(_,v)]), f)); e]) when v = tmp -> 
+            Macro({acc.Common with Type = v.Type}, "vs_updated", [Dot({acc.Common with Type = Type.Ptr(f.Type)}, acc, f); self e])
           | Block(_, stmts) -> recurse acc stmts
           | _ -> acc
         and recurse = List.fold foldBackFieldAssignments' 
@@ -559,16 +560,7 @@ namespace Microsoft.Research.Vcc
         | Block(ec, stmts) when shouldHandle (ec.Type) ->
             match splitOfLast stmts with 
               | Ref(ec, v), stmts' -> Some(foldBackFieldAssignments ec v stmts')
-              | _ -> None
-            
-//        | Macro(ec, "=", [tgt; (Expr.Block(_,_) as bl)]) when shouldHandle (tgt.Type) -> 
-//          match self bl with
-//            | Expr.Block(_, stmts) ->
-//              match splitOfLast stmts with 
-//                | Ref(_, v), stmts' -> Some(Expr.Block(ec, List.map (subst v tgt) stmts'))
-//                | _ -> None
-//            | _ -> die()
-        
+              | _ -> None        
         | _ -> None
     
     // ============================================================================================================
