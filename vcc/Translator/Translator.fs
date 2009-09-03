@@ -2363,7 +2363,6 @@ namespace Microsoft.Research.Vcc
                         CustomAttr = [] } : C.Field) :: lst
         let primFields = List.filter (function fld -> not (isComp (fld))) allFields
         let in_full_extent_of = extentCall "$in_full_extent_of" false false allFields
-        let nonSpecFields = List.filter (function (fld:C.Field) -> not (fld.IsSpec)) td.Fields
         
         let in_extent_of = 
           if nestingExtents then
@@ -2408,7 +2407,7 @@ namespace Microsoft.Research.Vcc
         let extentProps = List.map B.Decl.Axiom
                               [extentProp "mutable" false isUnion true ignorePrimField allFields;
                                extentProp "is_fresh" true isUnion true ignorePrimField allFields;
-                               extentProp "zero" false isUnion false readAnyIsZero nonSpecFields ]
+                               extentProp "zero" false isUnion false readAnyIsZero td.Fields ]
         
         let (state_spans_the_same, state_nonvolatile_spans_the_same) = spansCalls primFields
         
