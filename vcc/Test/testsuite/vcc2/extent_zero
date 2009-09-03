@@ -401,3 +401,45 @@ Verification of union_foo3 succeeded.
 Verification of union_foo4ShouldFail failed.
 testcase(294,12) : error VC9500: Assertion 'u->a==0' did not verify.
 `
+#include <vcc.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+void foo() {
+  struct S s;
+  s.a = 0;
+  s.b = 0;
+  assert(extent_zero(&s));
+}
+
+void bar() {
+  int i = 0;
+  assert(extent_zero(&i));
+}
+
+void baz() {
+  int a[4] = { 0,0,0,0 };
+  assert(extent_zero(as_array(a, 4)));
+}
+
+void qux() {
+  struct S a[4];
+  a[0].a = 0;
+  a[0].b = 0;
+  a[1].a = 0;
+  a[1].b = 0;
+  a[2].a = 0;
+  a[2].b = 0;
+  a[3].a = 0;
+  a[3].b = 0;
+  assert(extent_zero(as_array(a,4)));
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+Verification of qux succeeded.
+`
