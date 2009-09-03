@@ -802,9 +802,12 @@ namespace Microsoft.Research.Vcc {
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean))
         return ImplicitConversionToBooleanExists(expression.Type);
 
+      IPointerType targetTypeAsPtr = targetType as IPointerType;
+      if (targetTypeAsPtr != null && VccCompilationHelper.IsSpecPointer(targetTypeAsPtr) && IsZeroVisitor.IsZero(expression.ProjectAsIExpression())) return true;
+
       CompileTimeConstant/*?*/ cconst = expression as CompileTimeConstant;
       if (cconst != null) {
-        if (targetType is IPointerType && ExpressionHelper.IsIntegralZero(cconst)) return true;
+        if (targetTypeAsPtr != null && ExpressionHelper.IsIntegralZero(cconst)) return true;
         // Disable int -> enum so that any enum operation becomes int operation
         if (targetType.IsEnum && ExpressionHelper.IsIntegralZero(cconst)) return false;
         if (TypeHelper.IsUnsignedPrimitiveInteger(cconst.Type) && !TypeHelper.IsUnsignedPrimitiveInteger(targetType) && 
@@ -812,8 +815,7 @@ namespace Microsoft.Research.Vcc {
           return false;
       }
       if (expression.Type == Dummy.Type) {
-        IPointerType/*?*/ targetPointerType = targetType as IPointerType;
-        if (targetPointerType != null && targetPointerType.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void) {
+        if (targetTypeAsPtr != null && targetTypeAsPtr.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void) {
           if (this.ResolveToMethod(expression) != null) return true;
         }
       }
