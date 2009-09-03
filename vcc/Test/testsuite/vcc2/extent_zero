@@ -443,3 +443,22 @@ Verification of bar succeeded.
 Verification of baz succeeded.
 Verification of qux succeeded.
 `
+#include "vcc.h"
+
+void foo() {
+    unsigned __int8 a[128];
+    assume(extent_zero(as_array(a,128)));
+    assert(forall(unsigned i; i < 128; a[i]==0));
+}
+
+void bar() {
+    unsigned __int8 a[128];
+    assume(typed(as_array(a,128)));
+    assume(mutable(as_array(a,128)));
+    assume(forall(unsigned i; i < 128; a[i]==0));
+    assert(extent_zero(as_array(a,128)));
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
