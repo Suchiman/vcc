@@ -852,7 +852,7 @@ axiom (forall S:$state, T:$ctype, sz:int, r:int :: {$extent_mutable(S, $ptr($arr
 axiom (forall T:$ctype :: {$is_primitive(T)}
   $is_primitive(T) ==>
       (forall S:$state, r:int :: {$extent_zero(S, $ptr(T,r))}
-       $extent_zero(S, $ptr(T,r)) ==> $read_any(S, $ptr(T,r)) == 0 ));
+       $extent_zero(S, $ptr(T,r)) <==> $read_any(S, $ptr(T,r)) == 0 ));
 
 axiom (forall S:$state, T:$ctype, sz:int, r:int :: {$extent_zero(S, $ptr($array(T, sz), r))}
   $extent_zero(S, $ptr($array(T, sz), r)) <==>
