@@ -121,3 +121,48 @@ void foo(int j) {
 `
 Verification of foo succeeded.
 `
+#include "vcc2.h"
+
+typedef unsigned __int16 UINT16;
+typedef unsigned __int32 UINT32;
+
+void foo(UINT16 t)
+{
+	UINT16 a;
+	UINT16 b;
+	UINT16 res;
+
+	a = (t & 0x0f00);
+	b = (t & 0x00ff);
+	res = a | b;
+
+	assert(a == (t & 0x0f00));
+	assert(b == (t & 0x00ff));
+	assert(res == (a | b));
+	
+	bv_lemma(forall(UINT32 a,b; ((a & b) & b) == (a & b)));
+	bv_lemma(forall(UINT16 a,b; (a|b) == (int)((UINT32)a | (UINT32)b)));
+	assert(res == ((a & 0x0f00) | (b & 0x00ff)));
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc2test.h"
+
+void foo()
+{
+  bv_lemma(forall(__int64 a; short b; (a | b) == (b | a)));
+  bv_lemma(forall(__int64 a; int b; (a | b) == (b | a)));
+  bv_lemma(forall(__int32 a; short b; (a | b) == (b | a)));
+  bv_lemma(forall(unsigned __int32 a; short b; (a | b) == (b | a)));
+  bv_lemma(forall(__int32 a; unsigned short b; (a | b) == (b | a)));
+  bv_lemma(forall(unsigned __int32 a; unsigned short b; (a | b) == (b | a)));
+  bv_lemma(forall(__int64 a; unsigned short b; (a | b) == (b | a)));
+  bv_lemma(forall(unsigned __int64 a; unsigned short b; (a | b) == (b | a)));
+  bv_lemma(forall(__int64 a; unsigned int b; (a | b) == (b | a)));
+  bv_lemma(forall(unsigned __int64 a; unsigned int b; (a | b) == (b | a)));
+  bv_lemma(forall(__int64 a; short b; ((short)a | b) == (b | (short)a)));
+}
+`
+Verification of foo succeeded.
+`
