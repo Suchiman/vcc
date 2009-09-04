@@ -708,7 +708,7 @@ assert(foo(1)+bar(1)+baz(1)+ok1(1)+ok2(1)+baz2(3) == 3);
 
 `
 testcase(3,1) : warning VC9306: [possible unsoundness]: 'result' cannot be used recursively in a pure function definition
-testcase(8,130) : warning VC9309: [possible unsoundness]: value of 'result' was already defined in this pure function contract
+testcase(8,130) : warning VC9309: [possible unsoundness]: value of 'result' was already defined in this pure function contract (as 'result')
 testcase(14,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
 testcase(19,104) : warning VC9307: [possible unsoundness]: form of a pure function postcondition is neither 'result == ...' nor 'result.x.y.z == ...' (it is: +(result, 3))
 Verification of usecase failed.
@@ -754,7 +754,7 @@ struct B b2 = fail2(0);
 int aa = fail3(2);
 }
 `
-testcase(24,32) : warning VC9309: [possible unsoundness]: value of 'result.a.x' was already defined in this pure function contract
+testcase(24,32) : warning VC9309: [possible unsoundness]: value of 'result.a.x' was already defined in this pure function contract (as 'result.a.x')
 testcase(26,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
 testcase(32,13) : warning VC9305: [possible unsoundness]: 'result' does not occur in one of a pure function postconditions
 Verification of foo succeeded.
@@ -963,4 +963,61 @@ assert(foo(&x) != &x);
 }
 `
 Verification of qux succeeded.
+`
+#include <vcc2.h>
+
+union U {
+  struct {
+    int a : 16;
+    int b : 16;
+  };
+  
+  struct {
+    int overlap1 : 8;
+    int overlap2 : 12;
+    int overlap3 : 12;
+  };
+  
+  backing_member int AsInt;
+};
+
+
+ispure
+union U fu(int a, int b)
+  ensures(result.a == a && result.b == b);
+
+ispure
+union U fu1(int a, int b)
+  ensures(result.a == a && result.overlap1 == b);
+
+ispure
+union U fu2(int a, int b)
+  ensures(result.AsInt == a && result.b == b);
+
+ispure
+union U fu3(int a, int b)
+  ensures(result.b == b && result.AsInt == a);
+
+void foo()
+{
+  union U u;
+  speconly( u = fu(100000, 10); )
+  assert(false);
+}
+
+void foo2()
+{
+  union U u;
+  speconly( u = fu1(100000, 10); )
+  speconly( u = fu2(100000, 10); )
+  speconly( u = fu3(100000, 10); )
+  assert(false);
+}
+`
+testcase(25,30) : warning VC9309: [possible unsoundness]: value of 'result.overlap1' was already defined in this pure function contract (as 'result.a')
+testcase(29,34) : warning VC9311: [possible unsoundness]: value of 'result.b' was already defined in this pure function contract (as 'result.AsInt')
+testcase(33,13) : warning VC9311: [possible unsoundness]: value of 'result.b' was already defined in this pure function contract (as 'result.AsInt')
+Verification of foo failed.
+testcase(39,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of foo2 succeeded.
 `

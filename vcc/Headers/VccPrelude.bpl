@@ -2483,6 +2483,22 @@ $_pow2(26) == 67108864 && $_pow2(27) == 134217728 && $_pow2(28) == 268435456 && 
  576460752303423488 && $_pow2(60) == 1152921504606846976 && $_pow2(61) == 2305843009213693952 && $_pow2(62) ==
 4611686018427387904 && $_pow2(63) == 9223372036854775808;
 
+function $in_range_ubits(bits:int, v:int) returns(bool)
+  { $in_range(0, v, $_pow2(bits) - 1) }
+
+function $unchecked_sbits(bits:int, v:int) returns(int);
+axiom (forall bits:int, v:int :: {$unchecked_sbits(bits, v)}
+  $in_range_sbits(bits, $unchecked_sbits(bits, v)) &&
+  ($in_range_sbits(bits, v) ==> $unchecked_sbits(bits, v) == v));
+
+function $in_range_sbits(bits:int, v:int) returns(bool)
+  { $in_range(-$_pow2(bits-1), v, $_pow2(bits-1) - 1) }
+
+function $unchecked_ubits(bits:int, v:int) returns(int);
+axiom (forall bits:int, v:int :: {$unchecked_ubits(bits, v)}
+  $in_range_ubits(bits, $unchecked_ubits(bits, v)) &&
+  ($in_range_ubits(bits, v) ==> $unchecked_ubits(bits, v) == v));
+
 function $_or(t:$ctype, x:int, y:int) returns(int);
 function $_xor(t:$ctype, x:int, y:int) returns(int);
 function $_and(t:$ctype, x:int, y:int) returns(int);
