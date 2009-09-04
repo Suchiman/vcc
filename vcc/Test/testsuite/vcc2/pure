@@ -950,3 +950,17 @@ Verification of foo failed.
 testcase(7,3) : error VC8022: the pure function 'foo' is underspecified; please supply ensures(result == ...) contract matching the implementation.
 Verification of bar succeeded.
 `
+#include <vcc.h>
+
+ispure
+int *foo(int *q)
+  returns(q + 10);
+
+void qux()
+{
+int x;
+assert(foo(&x) != &x);
+}
+`
+Verification of qux succeeded.
+`

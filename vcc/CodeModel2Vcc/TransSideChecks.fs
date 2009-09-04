@@ -308,10 +308,14 @@ namespace Microsoft.Research.Vcc
             else
               Quant (c, { qd with Body = checkOne qd.Body })
             
+          | Macro (c0, "_vcc_ptr_eq", [Cast ({ Type = Ptr _ } as c1, _, (Result ({ Type = Ptr _ }) as res)); e2]) ->
+            checkOne (Macro (c0, "_vcc_ptr_eq", [res; e2]))
+            
           // push the cast to Bool around
           | Prim (c0, (Op ("==", _) as op), [Cast ({ Type = Integer _ } as c1, _, (Result ({ Type = Bool }) as res)); e2]) ->
             checkOne (Prim (c0, op, [res; Cast ({ e2.Common with Type = Bool }, Unchecked, e2)]))
             
+          | CallMacro (c, "_vcc_ptr_eq", _, [e1; e2])
           | CallMacro (c, "_vcc_rec_eq", _, [e1; e2])
           | Prim (c, Op ("==", _), [e1; e2]) as post ->
             let res, def = 
