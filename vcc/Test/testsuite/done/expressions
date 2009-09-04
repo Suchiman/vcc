@@ -314,8 +314,9 @@ Verification of baz succeeded.
 #include <vcc2.h>
 
 ispure
-int sin(int x)
-    ensures((-1 <= result) && (result <= 1));
+int sin(int x);
+
+axiom(forall(int x; (-1 <= sin(x)) && (sin(x) <= 1)));
 
 #define RHS sin(a)*b
 #define LHS c

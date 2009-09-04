@@ -147,10 +147,10 @@ void foo3(i2i f1, i2i f2)
   assert(f1 == f2 ==> f1(1) == f2(1)); // OK
 }
 `
-Verification of foo succeeded.
-Verification of foo2 failed.
-testcase(19,12) : error VC9500: Assertion 'f1(1) == f2(1)' did not verify.
-Verification of foo3 succeeded.
+testcase(19,12) : error VC9635: function 'fnptr#1' used in pure context, but not marked with 'ispure'
+testcase(19,21) : error VC9635: function 'fnptr#1' used in pure context, but not marked with 'ispure'
+testcase(26,25) : error VC9635: function 'fnptr#1' used in pure context, but not marked with 'ispure'
+testcase(26,34) : error VC9635: function 'fnptr#1' used in pure context, but not marked with 'ispure'
 `
 #include <vcc.h>
 

@@ -268,6 +268,104 @@ namespace Microsoft.Research.Vcc
             trans.Add (g, true)
             allCalled := g :: !allCalled
             List.iter (add (g::path)) calls.[g]
+            
+        let usesRes (expr:Expr) =
+          expr.HasSubexpr (function Result (_) -> true | _ -> false)
+          
+        
+        let (|QuantLet|_|) = function
+          | Quant (c, ({ Kind = Exists; Variables = [v] } as qd)) ->
+            let isV = function
+              | Expr.Ref (_, v') when v = v' -> true
+              | _ -> false
+            let qd = 
+              match qd.Condition with
+                | Some (Expr.BoolLiteral _)
+                | None ->
+                  match qd.Body with
+                    | Macro (_, "ite", [a; b; EFalse])
+                    | Prim (_, Op ("&&", _), [a; b]) -> 
+                      {qd with Condition = Some a; Body = b}
+                    | _ -> qd
+                | Some _ -> qd
+            match qd.Condition with
+              | Some (CallMacro (_, "_vcc_rec_eq", _, [e1; e2]))
+              | Some (Prim (_, Op ("==", _), [e1; e2])) ->
+                if isV e1 && not (e2.HasSubexpr isV) then
+                  Some (c, qd)
+                else None
+              | _ -> None
+          | _ ->
+            None
+                
+        
+        let paths = gdict()
+        let rec checkOne = function
+          | QuantLet (c, ({ Condition = Some cond } as qd)) as expr ->
+            if usesRes cond then
+              helper.GraveWarning (f.Token, 9312, "'result' cannot be used in let binding in a pure function definition")
+              expr
+            else
+              Quant (c, { qd with Body = checkOne qd.Body })
+            
+          // push the cast to Bool around
+          | Prim (c0, (Op ("==", _) as op), [Cast ({ Type = Integer _ } as c1, _, (Result ({ Type = Bool }) as res)); e2]) ->
+            checkOne (Prim (c0, op, [res; Cast ({ e2.Common with Type = Bool }, Unchecked, e2)]))
+            
+          | CallMacro (c, "_vcc_rec_eq", _, [e1; e2])
+          | Prim (c, Op ("==", _), [e1; e2]) as post ->
+            let res, def = 
+              if usesRes e2 then e2, e1
+              else e1, e2
+            if not (usesRes res) then
+              helper.GraveWarning (post.Token, 9305, "'result' does not occur in one of a pure function postconditions")
+            elif usesRes def then
+              helper.GraveWarning (f.Token, 9306, "'result' cannot be used recursively in a pure function definition")
+            else
+              let gave = ref false
+              let path =
+                let rec collect aux = function
+                  | CallMacro (_, "vs_fetch", _, [e]) -> collect aux e
+                  | CallMacro (_, "rec_fetch", _, [e; Expr.UserData (_, (:? Field as f)) ]) -> collect (f :: aux) e
+                  | Result (_) -> List.rev aux
+                  | Dot (_, e, f) -> collect (f :: aux) e
+                  | e ->
+                    gave := true
+                    helper.GraveWarning (post.Token, 9307, "form of a pure function postcondition is neither 'result == ...' nor 'result.x.y.z == ...' (it is: " + e.ToString() + ")")
+                    List.rev aux
+                collect [] res
+              if not !gave && paths.ContainsKey path then
+                gave := true
+                helper.GraveWarning (post.Token, 9309, "value of '" + res.Token.Value + "' was already defined in this pure function contract")
+              else
+                paths.[path] <- res
+            let post =
+              match res.Type with
+                | Type.Integer _ -> 
+                  Prim (c, Op ("==", Processed), [res; Macro ({ def.Common with Type = res.Type }, "unchecked_" + intSuffix res.Type, [def])])
+                | _ -> post
+            post
+          | expr ->
+            helper.GraveWarning (f.Token, 9310, "a non-equality postcondition in a pure function (not ensures(result == ...))")
+            expr
+            
+        let freebies, normals = f.Ensures |> List.partition (function CallMacro (_, "free_ensures", _, _) -> true | _ -> false)
+        f.Ensures <- freebies @ (normals |> List.map TransUtil.splitConjunction |> List.concat |> List.map checkOne)
+        
+        let gave = ref false
+        let rec checkSub tok l =
+          if not !gave && paths.ContainsKey l then
+            gave := true
+            helper.GraveWarning (tok, 9311, "value of '" + tok.Value + "' was already defined in this pure function contract (as '" + paths.[l].Token.Value + "')")
+          else
+            match l with
+              | _ :: xs -> checkSub tok xs
+              | [] -> ()
+                            
+        for p in paths.Keys do
+          if p <> [] then          
+            checkSub paths.[p].Token p.Tail
+          
         for g in calls.[f] do
           if g.IsPure then add [f] g
           else

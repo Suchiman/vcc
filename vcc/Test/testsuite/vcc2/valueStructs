@@ -90,7 +90,8 @@ spec(ispure struct A abs(struct C *c)
 )
 `
 Verification of A#adm succeeded.
-Verification of abs succeeded.
+Verification of abs failed.
+testcase(25,184) : error VC8022: the pure function 'abs' is underspecified; please supply ensures(result == ...) contract matching the implementation.
 `
 #include <vcc.h>
 

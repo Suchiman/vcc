@@ -7,7 +7,7 @@ frameaxiom int foo(int *p);
 
 spec(
 int foo(int *p) 
-  reads(p) { }
+  reads(p) { assume(false); }
 )
 
 void bar() {

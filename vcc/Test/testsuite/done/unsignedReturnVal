@@ -1,9 +1,6 @@
 #include <vcc2.h>
 
-unsigned int ispure bar()
-{
-   return(5);
-}
+ispure unsigned int bar();
 
 void foo(unsigned int x)
 requires(x > 10)
@@ -13,6 +10,5 @@ requires(x > 10)
 }
 
 `
-Verification of bar succeeded.
 Verification of foo succeeded.
 `

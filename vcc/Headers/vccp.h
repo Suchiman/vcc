@@ -325,6 +325,7 @@ void _vcc_from_bytes(obj_t obj, ...)
 #define frameaxiom vcc_attr("frameaxiom", "")
 #define isadmissibilitycheck __declspec(Microsoft.Contracts.IsAdmissibilityCheck)
 #define ispure vcc_attr("is_pure", "")
+#define specmacro vcc_attr("specmacro", "")
 #define no_reads_check vcc_attr("no_reads_check", "")
 #define postconditionsanity vcc_attr("postcondition_sanity", "true")
 #define reads_check(f) vcc_attr("is_reads_check", #f)
@@ -452,9 +453,9 @@ bool _vcc_dont_instantiate_size_t(_vcc_size_t);
 #define dont_instantiate_size_t(...) _vcc_dont_instantiate_size_t(__VA_ARGS__)
 
 bool _vcc_match_ulong(unsigned __int64 x)
-   ensures(result);
+   ensures(result == true);
 bool _vcc_match_long(__int64 x)
-   ensures(result);
+   ensures(result == true);
 
 /*** 
  *** Claims

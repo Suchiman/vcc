@@ -1860,7 +1860,8 @@ namespace Microsoft.Research.Vcc
             let parms = 
               (if header.IsStateless then [] else [bState]) @ [for tv in header.TypeParameters -> typeVarRef tv] 
                                                             @ [for v in header.Parameters -> varRef v]
-            [B.FreeEnsures (bEq (er "$result") (bCall ("#" + header.Name) parms))]
+            let tok = TransUtil.afmtt header.Token 8022 "the pure function '{0}' is underspecified; please supply ensures(result == ...) contract matching the implementation" [header.Name]
+            [B.Ensures (tok.Token, bEq (er "$result") (bCall ("#" + header.Name) parms))]
           else []
         let (writes, ensures) =
           let check (writes, ensures) = function
@@ -2495,7 +2496,6 @@ namespace Microsoft.Research.Vcc
           let fname = "#" + h.Name
           let retType = trType h.RetType
           let parameters =  List.map trTypeVar h.TypeParameters @ List.map trVar h.Parameters
-          let requires = bMultiAnd (List.map te h.Requires)
           (*
           match h.Ensures with
             // note that it is in general unsafe to strip casts from "result", e.g. this:
@@ -2510,7 +2510,7 @@ namespace Microsoft.Research.Vcc
           let qargs = (if h.IsStateless then [] else [("#s", tpState)]) @ parameters
           let fappl = bCall fname (List.map (fun ((vi,vt):B.Var) -> er vi) qargs)
           let subst = bSubst [("$result", fappl); ("$s", er "#s")]
-          let defBody = subst (bImpl requires ensures)
+          let defBody = subst ensures
           if h.IsStateless && bContains "#s" defBody then
             helper.Error (h.Token, 9650, "the specification refers to memory, but function is missing a reads clause", None)
           let defAxiom =
