@@ -1007,6 +1007,8 @@ namespace Microsoft.Research.Vcc
 //              | _ -> die ()
           | "prim_writes_check", [a] -> writesCheck env ec.Token true a
           | in_range, args when in_range.StartsWith ("in_range") -> bCall ("$" + in_range) (selfs args)
+          | ("unchecked_sbits"|"unchecked_ubits"), args ->
+            bCall ("$" + n) (selfs args)
           | unchecked, args when unchecked.StartsWith ("unchecked_") -> bCall "$unchecked" (er ("^^" + unchecked.Substring (unchecked.IndexOf '_' + 1)) :: selfs args)
           | "map_get", [a; b] ->
             match a.Type with
