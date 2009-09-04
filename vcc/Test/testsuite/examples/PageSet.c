@@ -23,15 +23,12 @@ void Init(
     UINT64 Array[]
     )
     writes(extent(PageSet), as_array(Array, PageCount))
-    requires(mutable(PageSet))
     requires(wrapped(as_array(Array, PageCount)))
-    requires(set_eq(set_empty(), (owns(PageSet))))
     ensures(PageSet->PageCount == PageCount)
     ensures(PageSet->PagesAllocated == 0)
     ensures(PageSet->Array == Array)
     ensures(wrapped(PageSet))
 {
-    set_owner(as_array(Array, PageCount), PageSet);
     PageSet->Array = Array;
     PageSet->PageCount = PageCount;
     PageSet->PagesAllocated = 0;
@@ -39,7 +36,7 @@ void Init(
 }
 
 void CallInit() {
-  PAGE_SET *ps = (PAGE_SET *)malloc(sizeof PAGE_SET);
+  PAGE_SET *ps = (PAGE_SET *)malloc(sizeof(PAGE_SET));
   PUINT64 arr = malloc(sizeof(UINT64) * 100);
   if (ps != NULL && arr != NULL) {
     wrap(as_array(arr, 100));
