@@ -1014,3 +1014,31 @@ testcase(26,12) : error VC9500: Assertion '_vcc_ref_cnt(a) >= 3' did not verify.
 Verification of fooFail2 failed.
 testcase(35,12) : error VC9500: Assertion '_vcc_account_claim(c1, a)' did not verify.
 `
+#include <vcc.h>
+
+struct vcc(claimable) A {
+  int dummy;
+};
+
+void succeeds(struct A *a, struct A *b claimp(d))
+  writes(a)
+  requires(wrapped(a))
+  requires(wrapped(d) && claims_obj(d, b))
+{
+  spec(claim_t c;)
+  atomic(d, b) {
+    speconly(c = claim(a, claims_obj(c,a));)
+  }
+}
+
+void usedToFail(struct A *a)
+  writes(a)
+  requires(wrapped(a))
+{
+  spec(claim_t c;)
+  speconly(c = claim(a, claims_obj(c,a));)
+}
+`
+Verification of succeeds succeeded.
+Verification of usedToFail succeeded.
+`
