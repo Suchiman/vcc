@@ -1995,6 +1995,7 @@ procedure $from_bytes(a:$ptr, t:$ctype);
     $set_in(p, $full_extent($ptr(t, $ref(a)))) ||
     ($st_eq(old($s), $s, p) && $ts_eq(old($s), $s, p) && $mem_eq(old($s), $s, p)));
   ensures $timestamp_post_strict(old($s), $s);
+  ensures $extent_zero(old($s), a) ==> $extent_zero($s, $ptr(t, $ref(a)));
 
 // -----------------------------------------------------------------------
 // Sets of pointers
