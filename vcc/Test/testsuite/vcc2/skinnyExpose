@@ -915,3 +915,35 @@ void foo(struct B *b)
 Verification of B#adm succeeded.
 Verification of foo succeeded.
 `
+#include "vcc2.h"
+
+struct S {
+	def_group(G)
+	in_group(G)  int dummy;
+	def_group(SubG)
+	inv_group(G, keeps(this::SubG))
+	in_group(SubG) int g;
+};
+
+
+void blah(struct S *s)
+	maintains(wrapped(s::SubG))
+	writes(s::SubG)
+	ensures(domain_updated_at(s::SubG, SET(&s->g)))
+;
+
+void foo(struct S *s)
+	maintains(wrapped(s::G))
+	writes(s::G)
+	ensures(domain_updated_at(s::G, SET(&s->g)))
+{
+	skinny_expose(s::G)
+		writes(&s->g, s::SubG)
+	{
+		blah(s);
+	}
+}
+`
+Verification of S##G#adm succeeded.
+Verification of foo succeeded.
+`
