@@ -667,4 +667,286 @@ testcase(23,20) : error VC9635: function 'foo' used in pure context, but not mar
 testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
 testcase(23,45) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
 testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
+`#include "vcc.h"
+
+spec(
+ispure int foo(int x)
+  ensures(result == result + 0);
+)
+
+spec(
+ispure int bar(int x)
+  ensures(result == x + 2)
+  ensures(result == x + 2);
+)
+
+spec(
+ispure int baz(int x)
+  ensures(result < 3);
+)
+
+spec(
+ispure int baz2(int x)
+  ensures(x == result + 3);
+)
+
+spec(
+ispure int ok1(int x)
+  ensures(result == x + 2);
+)
+
+
+spec(
+ispure int ok2(int x)
+  ensures(x + 2 == result);
+)
+
+void usecase()
+{
+assert(foo(1)+bar(1)+baz(1)+ok1(1)+ok2(1)+baz2(3) == 3);
+}
+
+`
+testcase(3,1) : warning VC9306: [possible unsoundness]: 'result' cannot be used recursively in a pure function definition
+testcase(8,130) : warning VC9309: [possible unsoundness]: value of 'result' was already defined in this pure function contract
+testcase(14,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+testcase(19,104) : warning VC9307: [possible unsoundness]: form of a pure function postcondition is neither 'result == ...' nor 'result.x.y.z == ...' (it is: +(result, 3))
+Verification of usecase failed.
+testcase(37,10) : error VC9500: Assertion 'foo(1)+bar(1)+baz(1)+ok1(1)+ok2(1)+baz2(3) == 3' did not verify.
+`
+#include "vcc.h"
+
+
+
+struct IN {
+  int d0;
+  int d1;
+  int d2;
+};
+
+struct A {
+  int x;
+  int y;
+};
+
+struct B {
+  struct A a;
+  int z;
+};
+
+
+ispure
+struct B fail1(int k)
+  ensures(result.a.x == k && result.a.x == k * 2);
+
+ispure
+struct B fail2(int k)
+  ensures(result.a.x == k && result.a.x < 7);
+
+ispure
+int fail3(int k)
+  ensures(k == 2);
+
+void foo()
+{
+struct B b1 = fail1(0);
+struct B b2 = fail2(0);
+int aa = fail3(2);
+}
+`
+testcase(24,32) : warning VC9309: [possible unsoundness]: value of 'result.a.x' was already defined in this pure function contract
+testcase(26,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+testcase(32,13) : warning VC9305: [possible unsoundness]: 'result' does not occur in one of a pure function postconditions
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+struct vcc(record) S {
+  int a;
+  int b;
+};
+
+
+struct vcc(record) T {
+ struct S s;
+ int c;
+};
+
+spec(ispure struct S foo() 
+  ensures(result == (struct S) { .a = 10, .b = 20 } && result.a == 20);
+)
+
+spec(ispure struct T foo2(struct S s) 
+  ensures(result == (struct T) { .s = s, .c = 20 } && result.s.a == 20);
+)
+
+spec(ispure struct T foo3(struct S s) 
+  ensures(result == (struct T) { .s = s, .c = 20 } && result.s == (struct S) { .a = 10, .b = 20 });
+)
+
+spec(ispure struct T foo4(struct S s) 
+  ensures(result.s == s && result.s.a == 20);
+)
+
+void baz()
+{
+ spec( struct S s; )
+ spec( struct T t; )
+
+ speconly( s = foo(); t = foo2(s); t = foo3(s);  t = foo4(s); )
+ assert(false);
+
+}
+`
+testcase(14,148) : warning VC9311: [possible unsoundness]: value of 'result.a' was already defined in this pure function contract (as 'result')
+testcase(18,158) : warning VC9311: [possible unsoundness]: value of 'result.s.a' was already defined in this pure function contract (as 'result')
+testcase(22,158) : warning VC9311: [possible unsoundness]: value of 'result.s' was already defined in this pure function contract (as 'result')
+testcase(26,131) : warning VC9311: [possible unsoundness]: value of 'result.s.a' was already defined in this pure function contract (as 'result.s')
+Verification of baz succeeded.
+`
+#include "vcc.h"
+typedef unsigned __int64 uint64;
+typedef unsigned int uint;
+
+spec (
+    typedef struct vcc(record) Core{
+        uint64 RIP;
+        uint64 R[uint];
+    } Core;
+)
+
+#define let(x, X, y, f) exists (X x; x == (y) && (f))
+
+spec (
+ispure bool mov_reg_excp(uint regidx, uint64 data, Core c)
+    returns (regidx >= 8);
+)
+
+spec (
+ispure Core mov_reg(uint regidx, uint64 data, Core c)
+    requires (!mov_reg_excp(regidx, data, c))
+    ensures
+    (
+        let (c1, Core, c / {.R = lambda(uint i; i < 8 ; i == regidx ? data : result.R[i])},
+        result == c1)
+    )
+;
+)
+
+spec (
+ispure Core mov_reg_f1(uint regidx, uint64 data, Core c)
+    requires (!mov_reg_excp(regidx, data, c))
+    ensures
+    (
+        let (c1, Core, c / {.R = lambda(uint i; i < 8 ; i == regidx ? data : c1.R[i])},
+        result == c1)
+    )
+;
+)
+
+spec (
+void test_mov_reg()
+{
+    Core c;
+    c = mov_reg(1, 16, c);
+    assert(c.R[1] == 16);
+    c = mov_reg_f1(1, 16, c);
+}
+)
+`
+testcase(19,1) : warning VC9312: [possible unsoundness]: 'result' cannot be used in let binding in a pure function definition
+testcase(30,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+Verification of test_mov_reg succeeded.
+`
+#include "vcc.h"
+
+spec(
+ispure unsigned foo(unsigned x)
+  ensures(result == x - 1000);
+)
+
+
+void bar(unsigned y)
+{
+  spec( unsigned tmp; )
+  assert(foo(y) >= 0);
+  speconly( tmp = foo(100); )
+  assert(false);
+}
+
+
+struct X {
+  unsigned x;
+  unsigned y;
+};
+
+ispure struct X bzz(unsigned x)
+  ensures( result.x == x - 10 );
+
+
+void bzz2()
+{
+  struct X x;
+  x = bzz(0);
+  assert(x.x >= 0);
+  assert(false);
+}
+
+struct vcc(record) X2 {
+  unsigned x;
+  unsigned y;
+};
+
+ispure struct X2 bzzX(unsigned x)
+  ensures( result.x == x - 10 );
+
+
+void bzz2X()
+{
+  struct X2 x;
+  x = bzzX(0);
+  assert(x.x >= 0);
+  assert(false);
+}
+
+ispure struct X2 bzzX2(unsigned x)
+  ensures( result == (struct X2) { .x = x - 10 } );
+
+
+void bzz2X2()
+{
+  struct X2 x;
+  x = bzzX2(0);
+  assert(x.x >= 0);
+  assert(false);
+}
+`
+Verification of bar failed.
+testcase(14,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bzz2 failed.
+testcase(32,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bzz2X failed.
+testcase(49,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bzz2X2 failed.
+testcase(61,12) : error VC9500: Assertion '((bool)0)' did not verify.
+`
+#include "vcc.h"
+
+ispure
+int foo()
+{
+  int x;
+  return x;
+}
+
+void bar()
+{
+  int t1 = foo();
+  int t2 = foo();
+  assert(t1 == t2);
+}
+`
+Verification of foo failed.
+testcase(7,3) : error VC8022: the pure function 'foo' is underspecified; please supply ensures(result == ...) contract matching the implementation.
+Verification of bar succeeded.
 `

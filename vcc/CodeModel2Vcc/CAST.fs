@@ -418,10 +418,10 @@ module Microsoft.Research.Vcc.CAST
     member this.IsPure =
       if this.Name.StartsWith "_vcc_" && this.Writes = [] then
         true
-      else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
-        true // HACK
+      //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
+      //  true // HACK
       else
-        List.exists (function VccAttr(("frameaxiom"|"is_pure"), "") -> true | _ -> false) this.CustomAttr 
+        List.exists (function VccAttr(("frameaxiom"|"is_pure"|"specmacro"), "") -> true | _ -> false) this.CustomAttr 
       
     member this.IsStateless =
       this.IsPure && this.Reads = []
@@ -663,8 +663,19 @@ module Microsoft.Research.Vcc.CAST
       let rec aux ctx (e:Expr) = e.Visit (false, f')
       and f' ctx e = f (aux ctx) e
       this.Visit (false, f')
-
-            
+    
+    member this.HasSubexpr (f : Expr -> bool) : bool =
+      let found = ref false
+      let check _ expr =
+        if !found then false
+        elif f expr then
+          found := true
+          false
+        else true
+      this.SelfVisit check
+      !found
+          
+       
 
     /// When f returns Some(x), this is replaced by x, otherwise Map is applied
     /// recursively to children, including application of g to children expressions.

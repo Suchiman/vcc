@@ -592,9 +592,8 @@ typedef vcc(claimable) struct _Dummy
    unsigned dummy;
 } Dummy;
 
-spec(ispure ptrset F(obj_t arr, size_t sz)
-  ensures(forall(obj_t ptr; set_in(ptr, result) <==> in_array(ptr, arr, sz)));
-)
+spec(ispure ptrset F(obj_t arr, size_t sz); )
+axiom(forall(obj_t arr; size_t sz; obj_t ptr; set_in(ptr, F(arr, sz)) <==> in_array(ptr, arr, sz)));
 
 void foo(T* T, Dummy* d)
 requires(wrapped(d))

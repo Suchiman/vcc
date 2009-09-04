@@ -321,7 +321,7 @@ namespace Microsoft.Research.Vcc
       let isntInline = function
         | Top.FunctionDecl fd ->
           if hasBoolAttr "atomic_inline" fd.CustomAttr then
-            if List.exists (function | VccAttr("is_pure", _) -> true | _ -> false) fd.CustomAttr then
+            if fd.IsPure then
               helper.Error(fd.Token, 9667, "Pure function '" + fd.Name + "' cannot be inlined.")
               true
             else 

@@ -301,7 +301,7 @@ Verification of foo succeeded.
 
 #include <Vcc2.h>
 
-spec(ispure int f(int a) ensures(result == (a == 0) ? 1 : -1);)
+spec(ispure int f(int a) ensures(result == (a == 0 ? 1 : -1));)
 
 struct S {
   volatile int a;

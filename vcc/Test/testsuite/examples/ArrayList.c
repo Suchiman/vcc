@@ -70,6 +70,7 @@ ispure
 int Select(struct ArrayList *A, size_t i)
     requires(i < Length(A))
     requires(wrapped(A))
+    ensures(result == A->array[i])
     reads(set_universe())
 {
     return A->array[i];
