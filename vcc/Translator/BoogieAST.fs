@@ -42,6 +42,7 @@ namespace Microsoft.Research.Vcc
       | IntLiteral of Microsoft.FSharp.Math.BigInt
       | BvLiteral of Microsoft.FSharp.Math.BigInt * int
       | BvConcat of Expr * Expr
+      | BvExtract of Expr * int * int
       | Primitive of Id * list<Expr>
       | FunctionCall of Id * list<Expr>
       | ArrayIndex of Expr * list<Expr>
@@ -78,6 +79,14 @@ namespace Microsoft.Research.Vcc
             wr " ++ "
             self e2
             wr ")"
+          | BvExtract (e1, t, f) ->
+            wr "("
+            self e1
+            wr "["
+            wr (t.ToString())
+            wr ":"
+            wr (f.ToString())
+            wr "])"
           | Primitive (n, [e1; e2]) ->
             wr "("
             self e1
@@ -217,6 +226,8 @@ namespace Microsoft.Research.Vcc
           Microsoft.Boogie.LiteralExpr (noToken, Microsoft.Basetypes.BigNum.FromBigInt v, sz) :> Microsoft.Boogie.Expr
         | BvConcat(e1, e2) ->
           Microsoft.Boogie.BvConcatExpr(noToken, trExpr e1, trExpr e2) :> Microsoft.Boogie.Expr
+        | BvExtract(e, t, f) -> 
+          Microsoft.Boogie.ExtractExpr(noToken, trExpr e, t, f) :> Microsoft.Boogie.Expr
         | FunctionCall (id, args) ->
           Microsoft.Boogie.NAryExpr (noToken, Microsoft.Boogie.FunctionCall(trIdent id), toExprSeq args) :> Microsoft.Boogie.Expr
         | ArrayIndex (a, ie) ->
@@ -507,6 +518,7 @@ namespace Microsoft.Research.Vcc
               | BvLiteral _
               | IntLiteral _ -> this
               | BvConcat(e1, e2) -> BvConcat(self e1, self e2)
+              | BvExtract(e, t, f) -> BvExtract(self e, t, f)
               | Primitive (n, args) -> Primitive (n, selfs args)
               | FunctionCall (n, args) -> FunctionCall (n, selfs args)
               | ArrayIndex (e1, args) -> ArrayIndex (self e1, selfs args)
