@@ -1570,8 +1570,8 @@ namespace Microsoft.Research.Vcc
             [B.Stmt.Assign ((rf "s0"), bState)] @
             [B.Stmt.Call (tok, [claim], "$alloc_claim", [])] @
             claims_obj @
-            initial @
-            assign
+            assign @
+            initial
             
           | _ ->           
             helper.Oops (tok, "wrong format of a claim")
