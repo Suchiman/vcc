@@ -1236,7 +1236,7 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    static internal void ReportOutcomeMethodSummary(VC.VCGen.Outcome outcome, string addInfo, string methodName, double startTime) {
+    static internal void ReportOutcomeMethodSummary(VC.VCGen.Outcome outcome, string addInfo, string methodName, double startTime, IEnumerable<string> proverWarnings) {
       if (outcome != VC.VCGen.Outcome.Correct) errorCount++;
       if (!commandLineOptions.XmlFormatOutput) {
         string result = OutcomeToDescription(outcome);
@@ -1260,6 +1260,12 @@ namespace Microsoft.Research.Vcc
               Console.Write("[{0:0.00}s] ", t);
           }
           Console.WriteLine("{0}.", result);
+        }
+      }
+
+      if (!commandLineOptions.RunTestSuite) {
+        foreach (var proverWarning in proverWarnings) {
+          Console.WriteLine("Prover warning: {0}", proverWarning);
         }
       }
     }
