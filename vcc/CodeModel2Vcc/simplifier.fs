@@ -240,7 +240,7 @@ namespace Microsoft.Research.Vcc
           let nestedType = match mapType with | Some(Type.Map(_, t)) -> t | _ -> die()
           let nestedQ = Quant({qc with Type = nestedType }, nestedQData)
           let nestedQ = nestedQ.SelfMap(addNestedInLambdas (Some(nestedType)))
-          Some ((Quant (c, { q with Body = Macro(bc, "in_lambda", [BoolLiteral(bc, true); nestedQ]) })))
+          Some ((Quant (c, { q with Body = Macro(bc, "in_lambda", [Expr.True; nestedQ]) })))
         | _ -> None
 
       let expand self = function
@@ -319,7 +319,7 @@ namespace Microsoft.Research.Vcc
           let cond = 
             match q.Condition with
               | Some c -> c.SelfMap repl
-              | None -> BoolLiteral({c with Type = Type.Bool}, true)
+              | None -> Expr.True
           let body = q.Body.SelfMap repl
           
           let fn =

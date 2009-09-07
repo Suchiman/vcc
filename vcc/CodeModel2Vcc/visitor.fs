@@ -1108,6 +1108,7 @@ namespace Microsoft.Research.Vcc
                 | :? char as c -> C.Expr.IntLiteral(ec, new bigint((int)c))
                 | _ -> C.Expr.IntLiteral (ec, bigint.Parse(constant.Value.ToString ()))
             | C.Type.Bool      -> C.Expr.BoolLiteral (ec, unbox (constant.Value))
+            | C.Type.Primitive _ -> C.Expr.Macro(ec, "float_literal", [C.Expr.UserData(ec, constant.Value)])
             | C.Type.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.ToUserData(constant.Value)])
             | _ -> die()
 

@@ -177,6 +177,7 @@ namespace Microsoft.Research.Vcc
       let typeCodes = new Dict<_,_>()
       let invLabels = new Dict<_,_>()
       let invLabelConstants = ref []
+      let floatLiterals = new Dict<_,_>()
       
       let weights = defaultWeights
       let weight (id:string) =
@@ -300,7 +301,6 @@ namespace Microsoft.Research.Vcc
           invLabelConstants := B.Decl.Const constdata :: !invLabelConstants
         result
 
-      
       let getTokenConst tok =
         let name = "#tok" + tokSuffix tok
         registerToken name
@@ -313,6 +313,18 @@ namespace Microsoft.Research.Vcc
             | [] -> "$full_stop_ext"
             | _ -> "$good_state_ext"
         B.Stmt.Assume (bCall pred [er name; bState])
+
+      let getFloatConst (f : float) =
+        match floatLiterals.TryGetValue f with
+          | true, e -> e
+          | false, _ ->
+            let floatName = "floatLiteral#" + helper.UniqueId().ToString()
+            let t = B.Type.Ref "$primitive"
+            let decl = B.Const( {Unique = true; Name = floatName; Type = t } )
+            let result = B.Expr.Ref floatName
+            floatLiterals.Add(f, result)
+            tokenConstants := decl :: !tokenConstants
+            result
       
       let rec typeIdToName = function
         | B.Expr.Ref s -> s
@@ -922,6 +934,7 @@ namespace Microsoft.Research.Vcc
       let rec trExpr (env:Env) expr =
         let self = trExpr env
         let selfs = List.map self
+        let isFloatingPoint = function | C.Type.Primitive _ -> true | _ -> false
         match expr with
           | C.Expr.Cast ({ Type = C.Type.Integer k }, _, e') ->
             match e'.Type with
@@ -947,6 +960,16 @@ namespace Microsoft.Research.Vcc
           | C.Expr.Pure (_, e') -> self e'
           | C.Expr.Macro (c1, name, [C.Expr.Prim (c2, C.Op(_, C.Unchecked), _) as inner]) 
               when name.StartsWith "unchecked" && c1.Type = c2.Type -> trExpr env inner
+          | C.Expr.Prim (c, C.Op(opName, _), args) when isFloatingPoint c.Type ->
+            let suffix = match c.Type with | C.Type.Primitive k -> C.Type.PrimSuffix k | _ -> die()
+            let opName' = if args.Length = 1 then "u" + opName else opName
+            let funcNameTbl = Map.of_list [ "+", "$add"; "-", "$sub"; "*", "$mul"; "/", "$div"; "u-", "$neg";
+                                         "<", "$lt"; "<=", "$leq"; ">", "$gt"; ">=", "$geq" ]
+            match funcNameTbl.TryFind opName' with
+              | Some(fName) -> bCall (fName + "_" + suffix)(selfs args)
+              | None -> 
+                helper.Error(expr.Token, 9701, "Operator '" + opName + "' not supported for floating point values")
+                bTrue
           | C.Expr.Prim (c, C.Op(opName, ch), args) ->
             let args = selfs args
             let targs = toTypeId c.Type :: args
@@ -1045,12 +1068,6 @@ namespace Microsoft.Research.Vcc
         let selfs = List.map self
         match n, args with
           | "writes_check", [a] -> writesCheck env ec.Token false a
-//          | "reads_check_cond_wf", [cond; a] ->
-//            bImpl (self cond) (self (C.Macro (ec, "reads_check_wf", [a])))
-//          | "reads_check_wf", [a] ->
-//            match List.rev (readsCheck env true a) with
-//              | B.Assert (_, expr) :: _ -> expr
-//              | _ -> die ()
           | "prim_writes_check", [a] -> writesCheck env ec.Token true a
           | in_range, args when in_range.StartsWith ("in_range") -> bCall ("$" + in_range) (selfs args)
           | ("unchecked_sbits"|"unchecked_ubits"), args ->
@@ -1226,6 +1243,11 @@ namespace Microsoft.Research.Vcc
             let e = self e
             bMultiOr (List.map (bEq e) env.AtomicObjects)
           | "stackframe", [] -> er "#stackframe"
+          | "float_literal", [C.Expr.UserData(_, f)] ->
+            match f with
+              | :? float as f -> getFloatConst f
+              | :? single as s -> getFloatConst ((float)s)
+              | _ -> die()
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
             B.FunctionCall(name, [self e1; self e2])
           | n, _ when Simplifier.alwaysPureCalls.ContainsKey n ->

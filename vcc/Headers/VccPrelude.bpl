@@ -2985,5 +2985,27 @@ function $domain_updated_at(S1:$state, S2:$state, p:$ptr, W:$ptrset) returns(boo
          $fetch_from_domain($read_version(S2, p), q)) &&
     $domain(S1, p) == $domain(S2, p) }
 
+// --------------------------------------------------------------------------------
+// Floating point arithmetic - currently uninterpreted
+// --------------------------------------------------------------------------------
+
+function $add_f4(x:$primitive, y:$primitive) returns($primitive);
+function $sub_f4(x:$primitive, y:$primitive) returns($primitive);
+function $mul_f4(x:$primitive, y:$primitive) returns($primitive);
+function $div_f4(x:$primitive, y:$primitive) returns($primitive);
+function $neg_f4(x:$primitive) returns($primitive);
+function $lt_f4(x:$primitive, y:$primitive) returns(bool);
+function $leq_f4(x:$primitive, y:$primitive) returns(bool);
+function $gt_f4(x:$primitive, y:$primitive) returns(bool);
+function $geq_f4(x:$primitive, y:$primitive) returns(bool);
+function $add_f8(x:$primitive, y:$primitive) returns($primitive);
+function $sub_f8(x:$primitive, y:$primitive) returns($primitive);
+function $mul_f8(x:$primitive, y:$primitive) returns($primitive);
+function $div_f8(x:$primitive, y:$primitive) returns($primitive);
+function $neg_f8(x:$primitive) returns($primitive);
+function $lt_f8(x:$primitive, y:$primitive) returns(bool);
+function $leq_f8(x:$primitive, y:$primitive) returns(bool);
+function $gt_f8(x:$primitive, y:$primitive) returns(bool);
+function $geq_f8(x:$primitive, y:$primitive) returns(bool);
 
 // That's all folks.

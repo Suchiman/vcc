@@ -108,7 +108,7 @@ namespace Microsoft.Research.Vcc
         let check self = function
           | CallMacro (_, name', _, args) when name' = name ->
             env := updateEnv !env args
-            Some (BoolLiteral (boolBogusEC(), true))
+            Some (Expr.True)
           | _ -> None
         let res = expr.SelfMap check
         (res, !env)
