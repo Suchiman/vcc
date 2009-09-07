@@ -766,9 +766,7 @@ namespace Microsoft.Research.Vcc
             helper.Error (expr.Token, 9689, "type '" + tp.ToString() + "' is not supported for bitvector translation (in " + expr.Token.Value + ")")            
             B.Type.Int
             
-      let bvSignExtensionOp fromSize toSize =
-        let fromBits = fromSize * 8
-        let toBits = toSize * 8
+      let bvSignExtensionOp fromBits toBits =
         let boogieName = "$bv_sign_ext_" + fromBits.ToString() + "_" + toBits.ToString()
         if generatedBvOps.ContainsKey boogieName then boogieName
         else
@@ -779,12 +777,14 @@ namespace Microsoft.Research.Vcc
           tokenConstants := fn :: !tokenConstants
           boogieName
             
-      let bvZeroExtend fromSize toSize e =  B.BvConcat(B.Expr.BvLiteral (new bigint(0), 8 * (toSize - fromSize)), e)
+      let bvZeroExtend fromBits toBits e =  B.BvConcat(B.Expr.BvLiteral (new bigint(0), toBits - fromBits), e)
             
       let bvExtend (fromType : C.Type) (toType : C.Type) e =
-        if fromType.SizeOf >= toType.SizeOf then e 
-        elif fromType.IsSignedInteger then bCall (bvSignExtensionOp fromType.SizeOf toType.SizeOf) [e]
-        else bvZeroExtend fromType.SizeOf toType.SizeOf e
+        let fromBits = 8 * fromType.SizeOf
+        let toBits = 8 * toType.SizeOf
+        if fromBits >= toBits then e 
+        elif fromType.IsSignedInteger then bCall (bvSignExtensionOp fromBits toBits) [e]
+        else bvZeroExtend fromBits toBits e
           
       let bvOpFor expr tp name =
         let bvt = bvType expr tp
@@ -835,7 +835,7 @@ namespace Microsoft.Research.Vcc
             
           | C.Expr.Prim (c, (C.Op((">>"|"<<") as op, _)), [arg1; arg2]) when c.Type.SizeOf = 8 ->
            let bArg1 = self arg1
-           let bArg2 = bvZeroExtend arg2.Type.SizeOf 64 (self arg2)
+           let bArg2 = bvZeroExtend (arg2.Type.SizeOf * 8) 64 (self arg2)
            bCall (bvOpFor expr arg1.Type op) [bArg1; bArg2]
           
           | C.Expr.Prim (c, C.Op ("-", _), [arg]) ->
