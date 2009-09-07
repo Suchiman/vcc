@@ -123,7 +123,7 @@ namespace Microsoft.Research.Vcc
     Prim (boolBogusEC (), Op (op, Processed), [a; b])
   
   let multiAnd = function
-    | [] -> BoolLiteral (boolBogusEC(), true)
+    | [] -> Expr.True
     | [x] -> x
     | x :: xs -> List.fold (boolOp "&&") x xs
       
@@ -206,8 +206,10 @@ namespace Microsoft.Research.Vcc
       | _ -> failwith "integer type expected"
   
   let inRange ec (expr:Expr) =
-    let suff = intSuffix expr.Type
-    Expr.Macro (ec, "in_range_" + suff, [expr])
+    match expr.Type with
+      | Integer k -> Expr.Macro (ec, "in_range_" + Type.IntSuffix k, [expr])
+      | Primitive _ -> Expr.True
+      | _ -> failwith "integer or float type expected"
 
   let uncheckedSignConversion (expr :Expr) =
     match expr.Type.Deref with 

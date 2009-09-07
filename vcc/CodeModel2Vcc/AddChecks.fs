@@ -287,8 +287,10 @@ namespace Microsoft.Research.Vcc
       | _ -> None
                                                                     
 
+    let isFloatingPoint = function | Type.Primitive _ -> true | _ -> false
+
     let addDivByZeroChecks ctx self = function
-      | Prim(c, (Op(("/"|"%"), _) as op), [arg1; arg2]) when not ctx.IsPure ->
+      | Prim(c, (Op(("/"|"%"), _) as op), [arg1; arg2]) when not ctx.IsPure && not (isFloatingPoint c.Type) ->
         let arg1 = self arg1
         let arg2 = self arg2
         let arg2' = ignoreEffects arg2

@@ -232,7 +232,7 @@ namespace Microsoft.Research.Vcc
     
       let handleKeeps' staticOwns self = function
         | CallMacro (c, "_vcc_keeps", _, this :: []) ->
-          Some (BoolLiteral (boolBogusEC(), true))
+          Some (Expr.True)
           
         | CallMacro (c, "_vcc_keeps", _, this :: keeps) ->
         

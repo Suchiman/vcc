@@ -981,6 +981,9 @@ module Microsoft.Research.Vcc.CAST
   type Expr with    
     static member Bogus = bogusExpr
     
+    static member True = BoolLiteral(boolBogusEC(), true)
+    static member False = BoolLiteral(boolBogusEC(), false)
+    
     static member MkBlock exprs =
       let rec last = function
         | [x] -> x
