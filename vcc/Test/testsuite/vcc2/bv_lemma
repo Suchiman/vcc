@@ -174,7 +174,5 @@ bv_lemma(forall(unsigned __int64 a; unsigned __int32 b; b <= 63;
 bv_lemma(forall(unsigned __int64 x; ((x >> 13) & 0xFF) == (x & 0x1FE000) >> 13));
 }
 `
-Verification of foo Prover warning: using arith. in pattern (quantifier id: unknown.0:0), the weight was increased to 5 (this value can be modified using PI_ARITH_WEIGHT=<val>).
-Prover warning: using arith. in pattern (quantifier id: unknown.0:0), the weight was increased to 5 (this value can be modified using PI_ARITH_WEIGHT=<val>).
-succeeded.
+Verification of foo succeeded.
 `

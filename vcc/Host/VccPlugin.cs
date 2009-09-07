@@ -426,6 +426,7 @@ namespace Microsoft.Research.Vcc
     bool lineDirty;
     double prevTime;
     VccOptions commandLineOptions;
+    List<string> proverWarnings;
 
     public ErrorReporter(VccOptions opts, string name, double startTime)
     {
@@ -433,6 +434,7 @@ namespace Microsoft.Research.Vcc
       this.startTime = startTime;
       this.prevTime = VccCommandLineHost.GetTime();
       this.commandLineOptions = opts;
+      this.proverWarnings = new List<string>();
     }
 
     public void PrintSummary(VC.VCGen.Outcome outcome)
@@ -445,8 +447,9 @@ namespace Microsoft.Research.Vcc
       if (!this.outcomeReported) {
         this.outcomeReported = true;
         this.lineDirty = false;
-        VccCommandLineHost.ReportOutcomeMethodSummary(outcome, addInfo, this.name, this.startTime);
+        VccCommandLineHost.ReportOutcomeMethodSummary(outcome, addInfo, this.name, this.startTime, this.proverWarnings);
       }
+
       if (this.lineDirty) {
         Console.WriteLine();
         this.lineDirty = false;
@@ -467,6 +470,10 @@ namespace Microsoft.Research.Vcc
     public override void OnOutOfMemory(string reason)
     {
       this.PrintSummary(VC.VCGen.Outcome.OutOfMemory, reason);
+    }
+
+    public override void OnWarning(string msg) {
+      this.proverWarnings.Add(msg);
     }
 
     public override void OnProgress(string phase, int step, int totalSteps, double progressEst)

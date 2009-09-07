@@ -227,7 +227,7 @@ namespace Microsoft.Research.Vcc
         | BvConcat(e1, e2) ->
           Microsoft.Boogie.BvConcatExpr(noToken, trExpr e1, trExpr e2) :> Microsoft.Boogie.Expr
         | BvExtract(e, t, f) -> 
-          Microsoft.Boogie.ExtractExpr(noToken, trExpr e, t, f) :> Microsoft.Boogie.Expr
+          Microsoft.Boogie.BvExtractExpr(noToken, trExpr e, t, f) :> Microsoft.Boogie.Expr
         | FunctionCall (id, args) ->
           Microsoft.Boogie.NAryExpr (noToken, Microsoft.Boogie.FunctionCall(trIdent id), toExprSeq args) :> Microsoft.Boogie.Expr
         | ArrayIndex (a, ie) ->
