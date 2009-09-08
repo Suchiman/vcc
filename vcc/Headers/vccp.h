@@ -209,10 +209,6 @@ _vcc_size_t _vcc_set_cardinality(ptrset);
 // treated specially when calling _vcc_* procedures
 bool _vcc_is_atomic_obj(int parameter_index);
 
-void _vcc_deep_unwrap(obj_t p, typeid_t t)
-  writes (p);
-#define deep_unwrap(x) _vcc_deep_unwrap(x, _vcc_typeof(x))
-
 void _vcc_giveup_closed_owner(obj_t obj, obj_t owner)
   requires (_vcc_is_atomic_obj(1));
 #define giveup_closed_owner(x, y) _vcc_giveup_closed_owner(x, y)
@@ -248,13 +244,17 @@ void _vcc_union_reinterpret(obj_t u, obj_t fld)
   writes (extent(u));
 #define union_reinterpret(u,f) _vcc_union_reinterpret(u,&((u)->f))
 
-void _vcc_unwrap(obj_t p, typeid_t t)
+void _vcc_unwrap(obj_t p)
   writes (p);
-#define unwrap(x) _vcc_unwrap(x, _vcc_typeof(x))
+#define unwrap _vcc_unwrap
 
-void _vcc_wrap(obj_t p, typeid_t t)
+void _vcc_wrap(obj_t p)
   writes (p, owns(p));
-#define wrap(x) _vcc_wrap(x, _vcc_typeof(x))
+#define wrap _vcc_wrap
+
+void _vcc_deep_unwrap(obj_t p)
+  writes (p);
+#define deep_unwrap _vcc_deep_unwrap
 
 void _vcc_bump_volatile_version(obj_t p)
   writes (p);

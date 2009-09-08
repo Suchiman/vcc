@@ -402,7 +402,7 @@ speconly(
 Verification of A#adm succeeded.
 Verification of A2#adm succeeded.
 Verification of kill_A failed.
-testcase(17,3) : error VC9502: Call '_vcc_unwrap(a, _vcc_typeof(a))' did not verify.
+testcase(17,3) : error VC9502: Call '_vcc_unwrap(a)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the object has no outstanding claims'.
 Verification of kill_A2 succeeded.
 Verification of kill_A_ok succeeded.

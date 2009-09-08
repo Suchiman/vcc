@@ -317,6 +317,14 @@ namespace Microsoft.Research.Vcc
       | _ -> None
     
     // ============================================================================================================
+
+    let insertTypeArgumentForWrapUnwrap _ = 
+      let typeOf (expr:Expr) = Expr.Macro({expr.Common with Type = Type.TypeIdT}, "_vcc_typeof", [expr])
+      function
+        | CallMacro(ec, ("_vcc_wrap"|"_vcc_unwrap"|"_vcc_deep_unwrap" as name), _, [e]) -> Some(Macro(ec, name, [e; typeOf e]))
+        | _ -> None
+    
+    // ============================================================================================================
     
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
@@ -338,6 +346,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-bool-conversions", Helper.Decl addBoolConversions)
     helper.AddTransformer ("final-bv-cleanup", Helper.Expr removeTrivialBitvectorOperations)
     helper.AddTransformer ("final-flatten-old", Helper.Expr flattenOld)
+    helper.AddTransformer ("final-insert-type-arguments", Helper.Expr insertTypeArgumentForWrapUnwrap)
     helper.AddTransformer ("final-insert-state-arguments", Helper.Expr (ToCoreC.handlePureCalls helper))
     
     helper.AddTransformer ("final-end", Helper.DoNothing)
