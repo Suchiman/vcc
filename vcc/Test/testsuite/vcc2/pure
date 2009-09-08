@@ -661,13 +661,10 @@ void bar() {
 `
 testcase(22,18) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
 testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
-testcase(22,43) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
-testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
 testcase(23,20) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
 testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
-testcase(23,45) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
-testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
-`#include "vcc.h"
+`
+#include "vcc.h"
 
 spec(
 ispure int foo(int x)

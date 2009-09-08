@@ -92,6 +92,6 @@ testcase(4,14) : error VC9599: (related information) Precondition: 'x > 0'.
 Verification of ok2 succeeded.
 Verification of fail2 failed.
 testcase(29,13) : error VC8020: 'a' is not writable before wrapping it.
-testcase(29,3) : error VC9502: Call '_vcc_wrap(a, _vcc_typeof(a))' did not verify.
+testcase(29,3) : error VC9502: Call '_vcc_wrap(a)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped must not be closed'.
 `

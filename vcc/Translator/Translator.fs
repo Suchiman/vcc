@@ -1852,7 +1852,7 @@ namespace Microsoft.Research.Vcc
           | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|
                                 "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap") as name), args) -> 
             doCall c [] None name [] args
-          | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->
+          | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_deep_unwrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->
             doCall c [] None name [] args         
             
           | C.Expr.VarWrite (c, [v], e) ->
@@ -1915,9 +1915,6 @@ namespace Microsoft.Research.Vcc
           
           | e when not (hasSideEffect e) -> []
           
-//          | e when e.Type <> C.Type.Void ->
-//            [ B.VarDecl(("stmt#" + helper.UniqueId().ToString(), trType e.Type), None) ] //Some(trExpr env e)) ]
-
           | _ -> 
             helper.Oops (stmt.Token, "unhandled stmt " + stmt.ToString())
             []

@@ -1555,10 +1555,7 @@ namespace Microsoft.Research.Vcc
                 | _ -> oopsLoc whileDoStatement ("cannot find internal function " + name); die()
             let wrap = findFunctionOrDie "_vcc_wrap"
             let unwrap = findFunctionOrDie "_vcc_unwrap"
-            let typeof = findFunctionOrDie "_vcc_typeof"
-            let typeOfArg = C.Expr.Call({ arg.Common with Type = C.TypeIdT}, typeof, [], [arg])
-            let wArgs = [ arg; typeOfArg ]
-            stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" arg), unwrap, [], wArgs);  body; C.Expr.Call((stmtToken "wrap(@@)" arg), wrap, [], wArgs) ] )
+            stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" arg), unwrap, [], [arg]);  body; C.Expr.Call((stmtToken "wrap(@@)" arg), wrap, [], [arg]) ] )
           | C.Call(_, { Name = "_vcc_spec_code" }, _, []) ->
             stmtRes <- C.Expr.Macro(cmn, "spec", [body])
           | _ ->

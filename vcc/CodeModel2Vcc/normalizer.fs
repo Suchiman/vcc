@@ -500,10 +500,7 @@ namespace Microsoft.Research.Vcc
           let obj' = old obj
           let wrapLike name vcc_name =
             let tok = fnToken obj name
-            let typ = match obj with
-                        | CallMacro(ec, "_vcc_as_array", _, _) -> Expr.Macro ({ ec with Type = Type.Math "typeid_t" }, "_vcc_typeof", [obj])
-                        | _ -> typeExpr obj.Type.Deref
-            Stmt (tok, Macro (tok, vcc_name, [obj'; typ]))
+            Stmt (tok, Macro (tok, vcc_name, [obj']))
             
           let owns st = Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_owns", [st; obj])
           let checkOwns = 
