@@ -2281,10 +2281,12 @@ axiom (forall p:$ptr, #r:int, T:$ctype, sz:int ::
 
 axiom (forall p:$ptr, T:$ctype, sz:int, idx:int, S:$ptrset ::
     { $idx(p, idx, T), $set_disjoint($array_range(p, T, sz), S) }
+    $set_disjoint($array_range(p, T, sz), S) ==>
     0 <= idx && idx < sz ==> $id_set_disjoint($idx(p, idx, T), $array_range(p, T, sz), S) == 1);
 
 axiom (forall p:$ptr, T:$ctype, sz:int, idx:int, S:$ptrset ::
     { $idx(p, idx, T), $set_disjoint(S, $array_range(p, T, sz)) }
+    $set_disjoint(S, $array_range(p, T, sz)) ==>
     0 <= idx && idx < sz ==> $id_set_disjoint($idx(p, idx, T), S, $array_range(p, T, sz)) == 2);
 
 function $non_null_array_range(p:$ptr, T:$ctype, sz:int) returns($ptrset);
