@@ -288,10 +288,15 @@ namespace Microsoft.Research.Vcc
       match byteCount with
         | IntLiteral (c, allocSz) when (allocSz % typeSz) = zero ->
           IntLiteral (c, allocSz / typeSz)
-        | Prim (_, Op("*", _), [Expr.IntLiteral (_, allocSz); e])
-        | Prim (_, Op("*", _), [e; Expr.IntLiteral (_, allocSz)]) when allocSz = typeSz -> e
-        | Prim (_, Op("*", _), [e; Expr.Cast(_, _, Expr.SizeOf(_, t))])
-        | Prim (_, Op("*", _), [Expr.Cast(_, _, Expr.SizeOf(_, t)); e]) when t = elementType -> e
+        | Prim (_, Op("*", _), [e1; e2]) ->
+          let rec stripCasts = function | Cast(_,_, e) -> stripCasts e | e -> e
+          match stripCasts e1, stripCasts e2 with
+            | Expr.IntLiteral (_, allocSz), _ when allocSz = typeSz -> e2
+            | _, Expr.IntLiteral (_, allocSz) when allocSz = typeSz -> e1
+            | Expr.SizeOf(_, t), _ when t = elementType -> e2
+            | _, Expr.SizeOf(_, t) when t = elementType -> e1
+            | _ -> helper.Warning (byteCount.Common.Token, 9102, "don't know how to determine number of elements in array: " + expr.ToString())
+                   Prim (byteCount.Common, Op("/", Processed), [byteCount; mkInt elementType.SizeOf])
         | _ when typeSz = one -> byteCount
         | _ ->
           helper.Warning (byteCount.Common.Token, 9102, "don't know how to determine number of elements in array: " + expr.ToString())
