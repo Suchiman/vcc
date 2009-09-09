@@ -275,7 +275,7 @@ int test(struct Struct *s)
 
     atomic(c, (struct Struct::g*)s){
     begin_update();
-    speconly(s->v = 1;)
+    s->v = 1;
     };
  }
 
@@ -588,7 +588,7 @@ int test(struct Struct *s)
 
     atomic(c, s::g){
     begin_update();
-    speconly(s->v = 1;)
+    s->v = 1;
     };
     
  }

@@ -998,16 +998,16 @@ union U fu3(int a, int b)
 void foo()
 {
   union U u;
-  speconly( u = fu(100000, 10); )
+  u = fu(100000, 10);
   assert(false);
 }
 
 void foo2()
 {
   union U u;
-  speconly( u = fu1(100000, 10); )
-  speconly( u = fu2(100000, 10); )
-  speconly( u = fu3(100000, 10); )
+  u = fu1(100000, 10);
+  u = fu2(100000, 10);
+  u = fu3(100000, 10);
   assert(false);
 }
 `
