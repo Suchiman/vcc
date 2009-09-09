@@ -607,6 +607,18 @@ namespace Microsoft.Research.Vcc {
           if (field != null) {
             var fieldDef = field.Declaration as Vcc.FieldDefinition;
             if (fieldDef != null && fieldDef.IsSpec) result = true;
+            else {
+              var gVar = field.Declaration as GlobalVariableDeclaration;
+              if (gVar != null) {
+                var typeContract = gVar.Compilation.ContractProvider.GetTypeContractFor(gVar.ContainingTypeDeclaration);
+                foreach (var cField in typeContract.ContractFields) {
+                  if (cField == field) {
+                    result = true;
+                    break;
+                  }
+                }
+              }
+            }
           }
         }
 
