@@ -351,9 +351,9 @@ namespace Microsoft.Research.Vcc
             | Macro(_, "out", [actual]) ->
               let c = actual.Common
               let cvoid = { c with Type = Void }
-              let tmp = getTmp helper formal.Name formal.Type VarKind.Local
+              let tmp = getTmp helper formal.Name formal.Type VarKind.SpecLocal
               map.Add (formal, Ref (c, tmp))
-              VarDecl (cvoid, tmp), Macro (cvoid, "=", [ actual; Ref ({ c with Type = tmp.Type }, tmp)])
+              VarDecl (cvoid, tmp), Macro(cvoid, "spec", [Macro (cvoid, "=", [ actual; Ref ({ c with Type = tmp.Type }, tmp)])])
             | _ -> die()
           let inPars, inActuals, outPars, outActuals = 
             let rec loop (formals:Variable list) actuals fiAcc aiAcc foAcc aoAcc = 

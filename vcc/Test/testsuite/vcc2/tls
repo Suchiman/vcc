@@ -24,18 +24,19 @@ axiom(forall(thread_id m; owner(_get_tls_data(m)) == m && closed(_get_tls_data(m
 void foo()
   maintains(get_tls_data()->f1)
 {
+  spec(struct TLS_DATA *d = get_tls_data();)
   speconly(
-    spec(struct TLS_DATA *d = get_tls_data();)
     atomic (d) {
       //assume(get_tls_data()->f1);
       giveup_closed_owner(&g_FooBar, d);
       get_tls_data()->f1 = false;
     }
+  )
+  unwrap(&g_FooBar);
+  g_FooBar.x = 10;
+  wrap(&g_FooBar);
 
-    unwrap(&g_FooBar);
-    g_FooBar.x = 10;
-    wrap(&g_FooBar);
-
+  speconly(
     atomic (d) {
       set_closed_owner(&g_FooBar, d);
       get_tls_data()->f1 = true;
@@ -57,7 +58,7 @@ void shouldFail()
 Verification of TLS_DATA#adm succeeded.
 Verification of foo succeeded.
 Verification of shouldFail failed.
-testcase(53,14) : error VC9500: Assertion 'd->f1' did not verify.
+testcase(54,14) : error VC9500: Assertion 'd->f1' did not verify.
 `
 #include <vcc.h>
 

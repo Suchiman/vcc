@@ -384,7 +384,7 @@ void claim_A(struct A *a)
   writes(ref_cnt_ptr(a))
   requires(wrapped(a))
 {
-speconly( 
+spec( 
   claim_t c = claim(a, true);
 )
 }
@@ -394,7 +394,7 @@ void claim_A2(struct A2 *a)
   writes(ref_cnt_ptr(a))
   requires(wrapped(a))
 {
-speconly( 
+spec( 
   claim_t c = claim(a, true);
 )
 }
@@ -408,7 +408,7 @@ Verification of kill_A2 succeeded.
 Verification of kill_A_ok succeeded.
 Verification of claim_A succeeded.
 Verification of claim_A2 failed.
-testcase(49,20) : error VC8009: type of object a was not marked with vcc(claimable).
+testcase(48,34) : error VC8009: type of object a was not marked with vcc(claimable).
 `
 #include <vcc.h>
 

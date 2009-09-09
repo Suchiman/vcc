@@ -363,11 +363,11 @@ namespace Microsoft.Research.Vcc
      
     /// Get rid of &&, || -- operators that alter control flow.
     /// Actually FELT translates them all to "ite" (IConditional) nodes.
-    let doRemoveLazyOps ctx self = function
+    let rec doRemoveLazyOps inSpecBlock ctx self = function
       | Expr.Macro (c, "ite", [cond; th; el]) when not ctx.IsPure ->
         let varKind =
           match exprDependsOnSpecExpr th, exprDependsOnSpecExpr el with
-            | None, None -> VarKind.Local
+            | None, None when not inSpecBlock  -> VarKind.Local
             | _,_ -> VarKind.SpecLocal
         
         let tmp = getTmp helper "ite" c.Type varKind
@@ -377,9 +377,10 @@ namespace Microsoft.Research.Vcc
                              Macro (c', "=", [tmpRef; th]),
                              Macro (c', "=", [tmpRef; el]))
         addStmtsOpt [VarDecl (c', tmp); self write] tmpRef
+      | Macro(ec, "spec", args) -> Some(Macro(ec, "spec", List.map (fun (e:Expr) -> e.SelfCtxMap(true, doRemoveLazyOps true)) args))
       | _ -> None
     
-    let removeLazyOps = deepMapExpressionsCtx doRemoveLazyOps    
+    let removeLazyOps = deepMapExpressionsCtx (doRemoveLazyOps false)
     
     // ============================================================================================================
 
@@ -924,14 +925,16 @@ namespace Microsoft.Research.Vcc
         | Dot(_, ptr, _) -> isPhysicalLocation ptr
         | Index(_, ptr, _) -> isPhysicalLocation ptr
         | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> false        
-        // a hack for compiler-generated locals
         | Ref(_, {Type = Type.Ref td }) when hasBoolAttr "record" td.CustomAttr -> false
         | Deref(_, expr) -> isPhysicalLocation expr //TODO: this is actually not true - how to we guarantee that the pointer is not pointing to physical memory
         | _ -> true
 
-      let checkNoWritesToPhysicalFromSpec self = function
+      let rec checkNoWritesToPhysicalFromSpec withinSpec self = function
        | Macro(cmn, "=", [location ; expr]) when isPhysicalLocation location ->
          match exprDependsOnSpecExpr expr with
+           | None when withinSpec ->
+              helper.GraveWarning(cmn.Token, 9300, "assignment to physical location from specification code")
+              false
            | None -> false
            | Some specField -> 
             helper.GraveWarning(cmn.Token, 9300, "assignment to physical location from specification " + specField)
@@ -939,6 +942,7 @@ namespace Microsoft.Research.Vcc
        | Macro(cmn, "out", [outPar]) when isPhysicalLocation outPar ->
          helper.GraveWarning(cmn.Token, 9304, "physical location passed as out parameter")
          false
+       | CallMacro(_, "spec", _, args) -> List.iter (fun (e:Expr) -> e.SelfVisit(checkNoWritesToPhysicalFromSpec true)) args; false
        | _ -> true
 
       let rec checkAccessToSpecFields ctx self = function
@@ -1009,7 +1013,7 @@ namespace Microsoft.Research.Vcc
         match d with 
           | Top.FunctionDecl({IsSpec = true}) -> ()
           | _ -> [d] |> deepVisitExpressionsCtx checkAccessToSpecFields 
-                 [d] |> deepVisitExpressions checkNoWritesToPhysicalFromSpec 
+                 [d] |> deepVisitExpressions (checkNoWritesToPhysicalFromSpec false)
                  [d] |> deepVisitExpressions checkAtMostOnePhysicalAccessInAtomic
         
         

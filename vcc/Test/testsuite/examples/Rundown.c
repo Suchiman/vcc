@@ -149,8 +149,7 @@ void FinalizeRundownContainer(RundownContainer *cont)
   ensures(!cont->enabled)
 {
   spec(claim_t tmp;)
-  Rundown *rd;
-  Resource *r1;
+  spec(Rundown *rd;)
 
   unwrap(cont);
   cont->enabled = 0;

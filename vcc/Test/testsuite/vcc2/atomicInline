@@ -240,7 +240,7 @@ void foo(int a spec(out int c)) {
 }
 
 void bar(int a) {
-    int x;
+    spec(int x;)
     foo(42 spec(out x));
     assert(x == 42);
 }

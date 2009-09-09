@@ -412,8 +412,8 @@ void test(Container *c spec(claim_t claim))
     atomic(c, claim)
         writes(c)
     {
+        c->a = 0;
         speconly(
-            c->a = 0;
             c->s = c->s / {.x = 1};
         )
     }
