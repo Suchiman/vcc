@@ -422,7 +422,7 @@ namespace Microsoft.Research.Vcc
               TransType.setEqualityKind td DeepEq
               let stmts =
                     pre @ 
-                    [MemoryWrite (c, dst, Expr.Macro (src.Common, "havoc", [typeExpr t]));
+                    [Expr.Macro(c, "havoc", [dst; typeExpr t]);
                      Expr.MkAssume (Expr.Macro ({ src.Common with Type = Bool }, 
                                                "_vcc_deep_struct_eq." + td.Name,
                                                [construct dst; src]))] 

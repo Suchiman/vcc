@@ -208,6 +208,12 @@ namespace Microsoft.Research.Vcc
         let indom = Expr.MkAssert (Macro (afmte 8509 "object {0} is claimed by {1} (in by_claim({1}, {0}))" [obj; c], "_vcc_in_claim_domain", [obj; c]))
         Some (Expr.MkBlock [indom; vc; Macro (ec, "by_claim", List.map self args)])
         
+      | Macro (ec, "havoc", [obj; t]) ->
+        let istyped = propAssert 8506 "{0} is typed" "_vcc_typed2" obj
+        let w = Macro ({ obj.Common with Type = Type.PtrSet }, "_vcc_extent", [obj])
+        let wrassert = propAssert 8507 "extent({0}) is writable" "writes_check" w
+        Some (Expr.MkBlock [notInTestsuite istyped; wrassert; Macro(ec, "havoc", [self obj; t])])
+        
       | Call (c, ({ Name = "_vcc_from_bytes"|"_vcc_to_bytes"} as fn), _, args) as call ->
         let obj = args.Head
         let w = Macro ({ obj.Common with Type = Type.PtrSet }, "_vcc_extent", [obj])
