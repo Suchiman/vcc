@@ -8,7 +8,7 @@ static const UINT32 A[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 void foo(__in_ecount(n) UINT32 *buffer, UINT32 n)
   requires(n > 1)
   requires(program_entry_point())
-  writes(_vcc_compat_region(buffer, n * sizeof(UINT32)))
+  writes(array_range(buffer, n * sizeof(UINT32)))
 {
     
     buffer[0] = 0;
@@ -20,7 +20,7 @@ static const UINT32 B[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 void bar(__in_ecount(n) UINT32 *buffer, UINT32 n)
   requires(n > 1)
   requires(program_entry_point())
-  writes(_vcc_compat_region(buffer, n * sizeof(UINT32)))
+  writes(array_range(buffer, n * sizeof(UINT32)))
 {
     
     buffer[0] = 0;

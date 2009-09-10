@@ -23,7 +23,7 @@ struct A {
 };
 
 void foo(struct A *p)
-  requires(_vcc_compat_typed(p,sizeof(*p)))
+  requires(mutable(p))
   writes(&p->a, &p->x)
 {
   p->a = 12;

@@ -552,53 +552,6 @@ namespace Microsoft.Research.Vcc
         | VarWrite(_, vs, (Call(_, _, _, _) as c)) -> processCall vs c
         | _ -> None
     
-    // ============================================================================================================
-
-    let transformSalExpr self = function
-      | Expr.Call (ec, fn, _, [ptr; bytesCount]) as expr when fn.Name.StartsWith "_vcc_SAL" ->
-        let elType = elementTypeForArithmetic ptr.Type
-        let arrSz = extractArraySize helper expr elType bytesCount
-        match fn.Name with
-          | "_vcc_SAL_typed" ->
-            match arrSz with
-              | Some sz -> Some (Expr.Macro (ec, "_vcc_is_thread_local_array" , [ptr; sz]))
-              | None -> Some (Expr.Macro (ec, "_vcc_thread_local2" , [ptr]))                
-          | "_vcc_SAL_region" ->
-            match arrSz with
-              | Some sz -> Some (Expr.Macro (ec, "_vcc_array_range" , [ptr; sz]))
-              | None -> Some (Expr.Macro (ec, "_vcc_extent", [ptr]))
-          | "_vcc_SAL_region_non_null" ->
-            match arrSz with
-              | Some sz -> Some (Expr.Macro (ec, "_vcc_non_null_array_range" , [ptr; sz]))
-              | None -> 
-                let ec' = { ec with Type = Type.PtrSet }
-                Some (Expr.Macro (ec', "_vcc_non_null_extent", [ptr]))
-          | _ -> None
-      | _ -> None
-  
-    let handleSalAnnotations decls = 
-      let handleDecl = function
-        | Top.FunctionDecl h ->
-          let addEns e =
-            h.Ensures <- e :: h.Ensures
-            h.Requires <- e :: h.Requires
-          let doWrites = function
-            | Call (_, fn, _, _) as expr when fn.Name.StartsWith ("_vcc_SAL") ->
-              let expr = expr.SelfMap transformSalExpr
-              // TODO do the non-null things
-              match expr with
-                | Macro (_, "_vcc_extent", [p]) ->
-                  addEns (Macro (afmte 8516 "{0} is mutable (SAL)" [p], "_vcc_mutable", [p]))
-                | Macro (_, "_vcc_array_range", [p; sz]) ->
-                  addEns (Macro (afmte 8517 "array {0} is mutable (SAL)" [p], "_vcc_is_mutable_array", [p; sz]))
-                | _ -> ()
-              expr
-            | e -> e
-          h.Writes <- List.map doWrites h.Writes
-        | _ -> ()
-      List.iter handleDecl decls
-      deepMapExpressions transformSalExpr decls            
-
     // ============================================================================================================    
 
     let liftBlocksWithContracts decls = 
@@ -757,8 +710,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("core-pull-out-calls", Helper.ExprCtx pullOutCalls)
     helper.AddTransformer ("core-out-parameters", Helper.ExprCtx handleOutParameters)
     helper.AddTransformer ("core-linearize", Helper.Decl (linearizeDecls helper))
-    
-    helper.AddTransformer ("core-SAL", Helper.Decl handleSalAnnotations)
     
     helper.AddTransformer ("core-end", Helper.DoNothing)
     

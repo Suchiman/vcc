@@ -41,7 +41,7 @@ void update_spt(unsigned i, unsigned j, unsigned k)
 	requires(i<(8))
 	requires(k <= (100))
 	requires(j<=k)
-	requires(_vcc_compat_typed((((union pte_t *) &mm_4[((33) + (((1)*(8)+(i))*(((100)>>10)+1)))<<10])), (((100))+1)*sizeof(unsigned)))
+	requires(is_thread_local_array((((union pte_t *) &mm_4[((33) + (((1)*(8)+(i))*(((100)>>10)+1)))<<10])), (((100))+1)*sizeof(unsigned)))
 	writes(array_range((((union pte_t *) &mm_4[((33) + (((1)*(8)+(i))*(((100)>>10)+1)))<<10])), 100+1))
 {
 	pte_t hpte;

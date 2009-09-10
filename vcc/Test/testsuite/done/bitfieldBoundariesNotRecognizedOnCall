@@ -13,7 +13,7 @@ typedef union foo_t {
 int a[4];
 
 void g1(foo_t f)
-	writes(_vcc_compat_region(a, sizeof(a)))
+	writes(array_range(a, sizeof(a)))
 {
 	a[f.f.two] = 42; 
 	return;
