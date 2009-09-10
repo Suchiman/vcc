@@ -169,3 +169,23 @@ testcase(32,3) : error VC9502: Call 'foo(&a.x)' did not verify.
 testcase(4,45) : error VC9599: (related information) Precondition: '_vcc_is_object_root(p)'.
 Verification of ok1 succeeded.
 `
+#include <vcc.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+void foo(struct S *p)
+  out_param(p)
+{
+  struct S s;
+  s.a = 1;
+  s.b = 1;
+  *p = s;
+};
+
+`
+Verification of foo failed.
+testcase(14,4) : error VC8507: Assertion 'extent(p) is writable' did not verify.
+`

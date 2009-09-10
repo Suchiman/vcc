@@ -1318,12 +1318,7 @@ namespace Microsoft.Research.Vcc
               inWritesOrIrrelevant false env (trExpr env e) (if prim then Some e else None)
             | C.MathTypeRef "ptrset" ->
               xassert (not prim)
-              let e = trExpr env e
-              match e with
-                | B.FunctionCall (("$extent"|"$full_extent"), _)  ->
-                  writesMultiCheck true env tok (fun p -> bAnd (bCall "$is_non_primitive_ch" [bCall "$typ" [p]]) (bCall "$set_in" [p; e]))
-                | _ ->
-                  writesMultiCheck false env tok (fun p -> bCall "$set_in" [p; e])
+              writesMultiCheck false env tok (fun p -> bCall "$set_in" [p; trExpr env e])
             | _ -> 
               helper.Error (e.Token, 9617, "unsupported thing passed to writes check (" + e.ToString() + ")", None)
               er "$bogus"
@@ -1820,7 +1815,7 @@ namespace Microsoft.Research.Vcc
             | None -> [cmt (); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
             | (Some e) -> 
               [cmt (); B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e)); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
-          | C.Expr.MemoryWrite (_, e, C.Expr.Macro (_, "havoc", [t])) ->
+          | C.Expr.Macro (_, "havoc", [e ;t]) ->
             [cmt (); B.Stmt.Call (e.Token, [], "$havoc", [trExpr env e; trExpr env t]); assumeSync env e.Token] @ (cevStateUpdate e.Token)
           | C.Expr.MemoryWrite (_, e1, e2) ->
             let e2' =
