@@ -9,10 +9,10 @@ typedef void VOID;
 
 
 void myswap(UINT8 *a, UINT8 *b)
-  reads(_vcc_compat_region(a, 2), _vcc_compat_region(b, 2))
-  writes(_vcc_compat_region(a, 2), _vcc_compat_region(b, 2))
-  requires(!_vcc_compat_overlaps(_vcc_compat_region(a, 2), _vcc_compat_region(b, 2)))
-  requires(_vcc_compat_typed(a, 2) && _vcc_compat_typed(b,2))
+  reads(array_range(a, 2), array_range(b, 2))
+  writes(array_range(a, 2), array_range(b, 2))
+  requires(set_disjoint(array_range(a, 2), array_range(b, 2)))
+  requires(is_thread_local_array(a, 2) && is_thread_local_array(b,2))
   ensures(forall(UINT64 i; 0 <= i && i<2 ==> a[i] == old(b[i])))
   ensures(forall(UINT64 i; 0 <= i && i<2 ==> b[i] == old(a[i])))
 {

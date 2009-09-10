@@ -501,23 +501,8 @@ bool _vcc_account_claim(claim_t, obj_t);
 /*** 
  *** Obsolete
  ***/
-enum _vcHintKind {
-  _vcMemorySafety,
-  _vcStructuralIntegrity,
-  _vcFunctionalCorrectness
-};
-bool __vcAssumeHintKind(enum _vcHintKind kind);
-#define hint(_KIND_, _EXPR_) assert(__vcAssumeHintKind(_vc ## _KIND_) || (_EXPR_)); assume(_EXPR_)
 
 #define ref_cnt_ptr
-
-#define _vcc_compat_region(p,s) _vcc_SAL_region(p,s)
-#define _vcc_compat_typed(p,s) _vcc_SAL_typed(p,s)
-#define _vcc_compat_overlaps(x,y) (!(set_disjoint(x,y)))
-
-bool _vcc_SAL_typed(obj_t , _vcc_size_t);
-ptrset _vcc_SAL_region(obj_t , _vcc_size_t);
-ptrset _vcc_SAL_region_non_null(obj_t , _vcc_size_t);
 
 // Misc
 char *get___FUNCTION__();

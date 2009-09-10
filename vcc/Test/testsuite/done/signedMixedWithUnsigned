@@ -46,11 +46,11 @@ U8* MSRs;
 
 void RtlpZeroSinglePage()
   requires(program_entry_point())
-  requires(_vcc_compat_typed(MSRs+0x0C0000080,8))
+  requires(is_thread_local_array(MSRs+0x0C0000080,8))
 {
   assume(rcx == 0x0C0000080);
-  assert(_vcc_compat_typed(MSRs+0x0C0000080,8));
-  assert(_vcc_compat_typed(MSRs+rcx,8));
+  assert(is_thread_local_array(MSRs+0x0C0000080,8));
+  assert(is_thread_local_array(MSRs+rcx,8));
 }
 `
 Verification of RtlpZeroSinglePage succeeded.

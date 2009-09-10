@@ -34,7 +34,7 @@ int test(int i)
 }
 
 int bar(foo fum)
-  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+  reads(fum) requires(thread_local(fum))
 {
   return fum(1);
 }
@@ -62,7 +62,7 @@ int test(int i)
 }
 
 int bar(foo fum)
-  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+  reads(fum)  requires(thread_local(fum))
 {
   return fum(0);
 }
@@ -119,7 +119,7 @@ int test(int i)
 }
 
 int bar(foo fum)
-  reads(fum) requires(_vcc_compat_typed(fum, sizeof(foo)))
+  reads(fum) requires(thread_local(fum))
 {
   return fum(1);
 }
@@ -149,7 +149,7 @@ int test(int i)
 }
 
 int bar(foo fum)
-  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+  reads(fum)  requires(thread_local(fum))
 {
   return fum(1);
 }
@@ -177,7 +177,7 @@ int test(int i)
 }
 
 int bar(foo fum)
-  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+  reads(fum)  requires(typed(fum))
 {
   return fum(1);
 }
@@ -202,7 +202,7 @@ int test(int i)
 }
 
 int bar(foo fum)
-  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+  reads(fum)  requires(thread_local(fum))
 {
   return fum(0);
 }
@@ -224,7 +224,7 @@ void test()
 }
 
 int bar(foo fum)
-  reads(fum)  requires(_vcc_compat_typed(fum, sizeof(foo)))
+  reads(fum)  requires(thread_local(fum))
 {
   fum(); return 0;
 }
@@ -243,7 +243,7 @@ Verification of $fnptr_test_to_fnptr#1 succeeded.
 typedef void (*foo)();
 
 int bar(foo fum)
-   reads(fum) requires(_vcc_compat_typed(fum, sizeof(foo)))
+   reads(fum) requires(typed(fum))
 {
   fum(); return 0;
 }
@@ -255,7 +255,7 @@ int myn(){
 Verification of bar succeeded.
 Verification of myn failed.
 testcase(12,10) : error VC9502: Call 'bar((foo)(void *)0)' did not verify.
-testcase(6,28) : error VC9599: (related information) Precondition: '_vcc_SAL_typed(fum,sizeof(foo))'.
+testcase(6,28) : error VC9599: (related information) Precondition: '_vcc_typed2(fum)'.
 `
 #include <vcc2.h>
 
