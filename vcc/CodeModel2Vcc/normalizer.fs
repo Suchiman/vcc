@@ -301,7 +301,7 @@ namespace Microsoft.Research.Vcc
           | Ptr _ -> e         
           | _ ->
             match e with
-              | Call (c, { Name = ("_vcc_ref_cnt"|"_vcc_ref_cnt_ptr") }, _, [p]) ->
+              | Call (c, { Name = ("_vcc_ref_cnt") }, _, [p]) ->
                 //helper.Error (c.Token, 9999, "the ref_cnt(...) no longer resides in memory and cannot be written to", None)
                 p
               | _ -> e // we will catch this error later
