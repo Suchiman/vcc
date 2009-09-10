@@ -3431,19 +3431,21 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
       Expression result;
-      bool skipRightParenthesis = false;
+      bool seenLeftParenthesis = false;
       if (this.currentToken == Token.LeftParenthesis) {
         this.GetNextToken();
-        skipRightParenthesis = true;
+        seenLeftParenthesis = true;
       }
       Expression expression;
-      if (this.CurrentTokenStartsTypeExpression())
-        expression = this.ParseTypeExpression(followers|Token.RightParenthesis);
-      else
-        expression = this.ParseExpression(followers|Token.RightParenthesis);
+      if (this.CurrentTokenStartsTypeExpression()) {
+        // C standard 6.5.3.4 - '... parenthesize name of a type ...'
+        if (!seenLeftParenthesis) this.HandleError(Error.UnexpectedToken, this.scanner.GetTokenSource()); 
+        expression = this.ParseTypeExpression(followers | Token.RightParenthesis);
+      } else
+        expression = this.ParseExpression(followers | Token.RightParenthesis);
       slb.UpdateToSpan(expression.SourceLocation);
       result = new VccSizeOf(expression, slb);
-      if (skipRightParenthesis) {
+      if (seenLeftParenthesis) {
         slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
         this.Skip(Token.RightParenthesis);
       }
