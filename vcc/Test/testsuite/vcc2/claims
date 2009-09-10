@@ -6,7 +6,7 @@ struct Counter {
 };
 
 int foo(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
-  writes(res, ref_cnt_ptr(cl))
+  writes(res, cl)
   requires(wrapped(cl) && claims(cl, closed(cnt)))
   ensures(wrapped(*res) && claims(*res, cnt->count >= result - 1 ))
 {
@@ -42,7 +42,7 @@ int fooFail1(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
 }
 
 int fooFail2(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
-  writes(res, ref_cnt_ptr(cl))
+  writes(res, cl)
   requires(wrapped(cl) && claims(cl, closed(cnt)))
   ensures(wrapped(*res) && claims(*res, cnt->count >= result + 1 ))
 {
@@ -60,7 +60,7 @@ int fooFail2(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
 }
 
 int fooFail3(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
-  writes(res, ref_cnt_ptr(cl))
+  writes(res, cl)
   requires(wrapped(cl) && claims(cl, closed(cnt)))
   ensures(wrapped(*res) && claims(*res, cnt->count >= 0 ))
 {
@@ -78,7 +78,7 @@ int fooFail3(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
 }
 
 int fooFail4(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
-  writes(res, ref_cnt_ptr(cl))
+  writes(res, cl)
   requires(wrapped(cl) && claims(cl, true))
 {
   int y;
@@ -92,7 +92,7 @@ int fooFail4(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
 }
 
 int fooFail5(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
-  writes(res, ref_cnt_ptr(cl))
+  writes(res, cl)
   requires(wrapped(cl) && claims(cl, closed(cnt)))
   ensures(wrapped(*res) && claims(*res, cnt->count >= result - 1 ))
 {
@@ -142,7 +142,7 @@ struct A {
 };
 
 void LockFreeIncr(struct A *a claimp(c))
-  writes(ref_cnt_ptr(c))
+  writes(c)
   always(c, closed(a))
 {
   int y;
@@ -174,7 +174,7 @@ struct A {
 };
 
 void LockFreeIncr(struct A *a claimp(c))
-  writes(ref_cnt_ptr(c))
+  writes(c)
   always(c, closed(a))
 {
   int y;
@@ -213,7 +213,7 @@ struct A {
 };
 
 void LockFreeIncr(struct A *a claimp(c))
-  writes(ref_cnt_ptr(c))
+  writes(c)
   always(c, closed(a))
   ensures(ref_cnt(c) == old(ref_cnt(c)))
 {
@@ -272,7 +272,7 @@ void foo2(struct A *a claimp(c))
 }
 
 void foo4(struct A *a claimp(c))
-  writes(c, ref_cnt_ptr(a))
+  writes(c, a)
   requires(wrapped(c) && claims(c, closed(a)))
   requires(ref_cnt(c) == 0)
 {
@@ -288,7 +288,7 @@ void foo6(struct A *a claimp(c))
 }
 
 void foo7(struct A *a claimp(c))
-  writes(c, ref_cnt_ptr(a))
+  writes(c, a)
   requires(wrapped(c) && claims(c, closed(a)))
   requires(ref_cnt(c) == 0 && claims_obj(c, a))
 {
@@ -305,7 +305,7 @@ void ok1(struct A *a claimp(c))
 
 
 void ok2(struct A *a claimp(c))
-  writes(c, ref_cnt_ptr(a))
+  writes(c, a)
   requires(wrapped(c) && claims(c, closed(a)))
   requires(ref_cnt(c) == 0 && claims_obj(c, a))
 {
@@ -313,7 +313,7 @@ void ok2(struct A *a claimp(c))
 }
 
 void ok3(struct A *a, struct A *b claimp(c))
-  writes(c, ref_cnt_ptr(a), ref_cnt_ptr(b))
+  writes(c, a, b)
   requires(wrapped(c) && claims(c, closed(a)))
   requires(ref_cnt(c) == 0 && claims_obj(c, a) && claims_obj(c, b) && a != b)
 {
@@ -321,7 +321,7 @@ void ok3(struct A *a, struct A *b claimp(c))
 }
 
 void foo8(struct A *a, struct A *b claimp(c))
-  writes(c, ref_cnt_ptr(a), ref_cnt_ptr(b))
+  writes(c, a, b)
   requires(wrapped(c) && claims(c, closed(a)))
   requires(ref_cnt(c) == 0 && claims_obj(c, a) && claims_obj(c, b))
 {
@@ -381,7 +381,7 @@ void kill_A_ok(struct A *a)
 }
 
 void claim_A(struct A *a)
-  writes(ref_cnt_ptr(a))
+  writes(a)
   requires(wrapped(a))
 {
 spec( 
@@ -391,7 +391,7 @@ spec(
 
 
 void claim_A2(struct A2 *a)
-  writes(ref_cnt_ptr(a))
+  writes(a)
   requires(wrapped(a))
 {
 spec( 
