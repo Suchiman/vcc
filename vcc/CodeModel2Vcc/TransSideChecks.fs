@@ -428,11 +428,10 @@ namespace Microsoft.Research.Vcc
           match tp with
             | Type.Ref ({ Kind = Struct | Union } as td) ->
               for fld in td.Fields do
+                let dot = Dot(ftok, expr, fld)
                 let deref =
-                  if fld.Type.IsComposite then
-                    vsDot ftok expr fld
-                  else
-                    Macro ({ ftok with Type = fld.Type }, "vs_fetch", [vsDot ftok expr fld])
+                  if fld.Type.IsComposite then dot
+                  else Macro ({ ftok with Type = fld.Type }, "vs_fetch", [dot])
                 cmp (name + "." + fld.Name) fld.Type deref
             | _ -> 
               rd_f.Ensures <- Prim (mkTok name, Op ("==",Processed), [mkOld ftok "prestate" expr; expr]) :: rd_f.Ensures

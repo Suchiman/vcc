@@ -433,7 +433,7 @@ namespace Microsoft.Research.Vcc
       and underDeref = function
         | Dot (c, e, f) ->
           match underDeref e with
-            | Some e -> Some (vsDot c e f)
+            | Some e -> Some(Dot(c, e, f))
             | None -> None
         | Index (c, e, idx) ->
           match underDeref e with
