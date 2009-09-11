@@ -456,9 +456,7 @@ namespace Microsoft.Research.Vcc
                | C.Ptr _ -> instance
                | t -> C.Expr.Macro ({ instance.Common with Type = C.Ptr t }, 
                                     "&", [instance])
-            let dot = C.Expr.Dot ({ ec with Type = C.Ptr ec.Type }, 
-                                  instance,
-                                  field)
+            let dot =  C.Expr.MkDot(ec, instance, field)
             exprRes <- C.Expr.Deref (ec, dot)
           | _ -> assert false
     

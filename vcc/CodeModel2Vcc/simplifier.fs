@@ -482,7 +482,7 @@ namespace Microsoft.Research.Vcc
                 [Macro (boolBogusEC(), "approves", 
                   [ Macro( ecObjT, "_vcc_owner", [ this ]); 
                     Deref ({bogusEC with Type = v.Type}, 
-                           Dot ({bogusEC with Type = Type.Ptr(v.Type)}, this, fld))])]
+                           Expr.MkDot (this, fld))])]
               | _ -> []
           td.Invariants <- approvesInv
           let v' = { Name = "wrap#" + v.Name; Type = Type.Ref td; Kind = VarKind.Global } : Variable

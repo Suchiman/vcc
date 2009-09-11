@@ -256,7 +256,7 @@ namespace Microsoft.Research.Vcc
                 | Cast (_, _, (Macro (_, "this", []) as th)) when th.Type.IsPtrTo (Type.Ref groupTd) ->
                   Some (Dot (c, th, fieldField))
                 | se ->
-                  Some (Dot (c, Dot( {c with Type = Ptr groupField.Type}, se, groupField), fieldField))
+                  Some (Dot (c, Expr.MkDot(c, se, groupField), fieldField))
         // rewrite (user supplied) casts to group types into field accesses
         | Cast (c, _, e) ->
           match c.Type, e.Type with
@@ -318,7 +318,7 @@ namespace Microsoft.Research.Vcc
       let rec addDotForAnonField  = function
         | Dot (c, e, f) when f.Parent.IsNestedAnon -> 
           let fld = findFieldForType f.Parent
-          Dot(c, addDotForAnonField(Dot({c with Type = Ptr(fld.Type)}, e, fld)), f)
+          Dot(c, addDotForAnonField(Expr.MkDot(c, e, fld)), f)
         | expr -> expr
      
       let normalizeDots self = function
@@ -423,7 +423,9 @@ namespace Microsoft.Research.Vcc
         | Dot (c, e, f) as expr ->
           match fieldsToReplace.TryGetValue(f) with
             | true, newFld -> 
-              Some(self (genDotPrime (f.Type) (newFld.Type) (Dot({c with Type = Ptr(newFld.Type)}, (self e), newFld))))
+              Some(self (genDotPrime (f.Type) (newFld.Type) (Dot({c with Type = Ptr(newFld.Type)}, (self e), newFld)))) 
+              // do NOT call MkDot here because we need to preserve the information that the new field is of array type
+              // todo: make this go away
             | false, _ -> None          
         | _ -> None
 
@@ -578,7 +580,7 @@ namespace Microsoft.Research.Vcc
               let ec = {c with Type = Ptr(f.Type)}
               match subtractOffsets (f.Offset) (newFld.Offset) |> (toBitFieldOffset newFld.Type.SizeOf) with
                 | BitField(0, start, size) -> 
-                  match bv_extrAndPad ec (Dot({c with Type = (Ptr(newFld.Type))}, (self e), newFld)) start (start+size) with
+                  match bv_extrAndPad ec (Expr.MkDot(c, (self e), newFld)) start (start+size) with
                     | Macro(_, name, [e; bvSize; bvStart; bvEnd]) when name.StartsWith("pullout_bv_extract") ->
                       Some(Macro(c, "vs_updated_bv", [e; bvSize; bvStart; bvEnd; self expr]))
                     | _ -> die()
@@ -590,7 +592,7 @@ namespace Microsoft.Research.Vcc
               let ec = {c with Type = Ptr(f.Type)}
               match subtractOffsets (f.Offset) (newFld.Offset) |> (toBitFieldOffset newFld.Type.SizeOf) with
                 // this will create 'pullout' expressions, which will be normalized in the subsequent union flattening step
-                | BitField(0, start, size) -> Some(bv_extrAndPad ec (Dot({c with Type = (Ptr(newFld.Type))}, (self e), newFld)) start (start+size))
+                | BitField(0, start, size) -> Some(bv_extrAndPad ec (Expr.MkDot(c, (self e), newFld)) start (start+size))
                 | _ -> die()
             | false, _ -> None
         | _ -> None
@@ -713,7 +715,6 @@ namespace Microsoft.Research.Vcc
       let (dotAxioms : Top list ref) = ref []
 
       let mkBogusEC t = { bogusEC with Type = t }
-      let mkDot (field : Field) expr = Dot(mkBogusEC (Ptr(field.Type)), expr, field)
       
       let genDotAxioms (td : TypeDecl) (oldField: Field) (newFields : Field list) =
         let genDotAxiom (oldSubField : Field) (newField : Field) =
@@ -721,10 +722,8 @@ namespace Microsoft.Research.Vcc
           let var = { Name = "p"; Type = varType; Kind = QuantBound } : Variable
           let varref = Ref(mkBogusEC varType, var)
             
-          let left = mkDot oldSubField 
-                       (Cast(mkBogusEC (Ptr(oldField.Type)), Unchecked,
-                         (mkDot newFields.Head varref)))
-          let right = mkDot newField varref
+          let left = Expr.MkDot(Cast(mkBogusEC (Ptr(oldField.Type)), Unchecked, Expr.MkDot(varref, newFields.Head)), oldSubField)
+          let right = Expr.MkDot(varref, newField)
           GeneratedAxiom(Quant(mkBogusEC Bool, { Kind = Forall 
                                                  Variables = [var] 
                                                  Triggers = [[left]] 
@@ -739,7 +738,7 @@ namespace Microsoft.Research.Vcc
       let genInlinedArrayAxiom td elemType (newFields : Field list) =
         let var = { Name = "p"; Type = ObjectT; Kind = QuantBound } : Variable
         let varref = Ref(mkBogusEC ObjectT, var)
-        let mkInstantiatePtr (f : Field) = Macro(mkBogusEC Bool, "instantiate_ptr", [mkDot f varref])
+        let mkInstantiatePtr (f : Field) = Macro(mkBogusEC Bool, "instantiate_ptr", [Expr.MkDot(varref, f)])
         let mkAnd e1 e2 = Expr.Prim(mkBogusEC Bool, Op("&&", Unchecked), [e1; e2])
         let instExpr = List.fold mkAnd (mkInstantiatePtr newFields.Head) (List.map mkInstantiatePtr (newFields.Tail))
         let ec = mkBogusEC elemType
@@ -955,7 +954,7 @@ namespace Microsoft.Research.Vcc
           let subsFields self = function
             | Dot(ec, expr, f) ->
               match fieldSubst.TryGetValue(f) with
-                | (true, f') -> Some(Dot({ec with Type = Type.Ptr(f'.Type)}, self expr, f'))
+                | (true, f') -> Some(Expr.MkDot({ec with Type = Type.Ptr(f'.Type)}, self expr, f'))
                 | _ -> None
             | _ -> None
           subsFields      
@@ -1033,7 +1032,7 @@ namespace Microsoft.Research.Vcc
               match expr'.Type with
                 | Type.Ptr(Type.Ref({IsVolatile = true})) ->
                   match fldToVolatileFld.TryGetValue(f) with
-                    | true, f' -> Some(Dot({ec with Type = Type.Ptr(f'.Type)}, expr', f'))
+                    | true, f' -> Some(Expr.MkDot(ec, expr', f'))
                     | false, _ -> Some(Dot(ec, expr', f))
                 | _ -> None
 
@@ -1094,7 +1093,7 @@ namespace Microsoft.Research.Vcc
         match dst.Type with
           | Type.Ref({Fields = [fld]} as td) when not (isRecord td)->
             let addDot (e:Expr) = 
-              Deref({e.Common with Type = fld.Type}, Dot({e.Common with Type = Ptr(fld.Type)}, Macro({e.Common with Type = Ptr(e.Type)}, "&", [e]), fld))
+              Deref({e.Common with Type = fld.Type}, Expr.MkDot(Macro({e.Common with Type = Ptr(e.Type)}, "&", [e]), fld))
             Some(Macro(ec, "=", [addDot dst; addDot src]))
           | _ -> None
       | _ -> None

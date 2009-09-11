@@ -102,8 +102,7 @@ namespace Microsoft.Research.Vcc
     IntLiteral (intec, new Math.BigInt(x))
 
   let mkFieldRef (f:Field) =
-    Macro ({ bogusEC with Type = Type.FieldT }, "field",
-           [Dot ({ bogusEC with Type = Ptr (f.Type) }, Macro ({ bogusEC with Type = Ptr Void }, "bogus_field_ref", []), f)])
+      Macro ({ bogusEC with Type = Type.FieldT }, "field", [ Expr.MkDot(Macro ({ bogusEC with Type = Ptr Void }, "bogus_field_ref", []), f) ])
   
   let mkBoolOp str (args:list<Expr>) =
     Prim ((List.hd (List.rev args)).Common, Op(str, Processed), args)

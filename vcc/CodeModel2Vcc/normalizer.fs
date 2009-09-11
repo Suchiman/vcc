@@ -34,7 +34,7 @@ namespace Microsoft.Research.Vcc
             Some (self (Expr.Prim (c, op, [toGenericPtr a1; toGenericPtr a2])))
         | _ -> None
     | Expr.Dot (c, e, ({ Type = Array (t, _) } as f)) when c.Type <> Ptr t ->
-      Some (self (Expr.Dot ({ c with Type = Ptr t }, e, f)))
+      Some (self (Expr.MkDot (c, e, f)))
     | _ -> None
   
   
@@ -409,9 +409,7 @@ namespace Microsoft.Research.Vcc
             None
           | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, e, fld) as dot))])->
             let mkFieldExpr ec (f : Field) =
-              Expr.Dot(
-                {ec with Type = Ptr(f.Type)}, 
-                  Expr.Cast({ec with Type = Ptr(Type.Ref(f.Parent))}, Unchecked, Expr.Macro({ec with Type = Ptr(Void)}, "null", [])), f)             
+              Expr.MkDot(Expr.Cast({ec with Type = Ptr(Type.Ref(f.Parent))}, Unchecked, Expr.Macro({ec with Type = Ptr(Void)}, "null", [])), f)             
             let result = Some (self (Call(ec, f, [], [Call({ec with Type = Ptr(Type.Ref(fld.Parent))}, f, [], [addr; mkFieldExpr ec fld]); e])))
             result
           | _ -> None
@@ -550,7 +548,7 @@ namespace Microsoft.Research.Vcc
         let rec foldBackFieldAssignments' (acc : Expr) = function
           | Macro(_, "=", [Ref(_,v); e]) when v = tmp -> e
           | Macro(_, "=", [Deref(_, Dot(_, Macro(_, "&", [Ref(_,v)]), f)); e]) when v = tmp -> 
-            Macro({acc.Common with Type = v.Type}, "vs_updated", [Dot({acc.Common with Type = Type.Ptr(f.Type)}, acc, f); self e])
+            Macro({acc.Common with Type = v.Type}, "vs_updated", [Expr.MkDot(acc, f); self e])
           | Block(_, stmts) -> recurse acc stmts
           | _ -> acc
         and recurse = List.fold foldBackFieldAssignments' 

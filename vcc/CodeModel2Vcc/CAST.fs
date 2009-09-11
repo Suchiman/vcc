@@ -576,6 +576,12 @@ module Microsoft.Research.Vcc.CAST
     
     override this.ToString () = toString (this.WriteTo 0)
   
+    static member MkDot(ec, expr, field:Field) = 
+      let t = match field.Type with | Array(t, _) -> t | t -> t
+      Expr.Dot({ec with Type = Type.Ptr(t)}, expr, field)
+  
+    static member MkDot(expr:Expr, field:Field) = Expr.MkDot(expr.Common, expr, field)
+  
     member x.Common =
       match x with
         | Ref (e, _)
