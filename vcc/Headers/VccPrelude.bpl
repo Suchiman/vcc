@@ -2870,10 +2870,21 @@ procedure $unclaim(c:$ptr);
   // TOKEN: the claim has no outstanding references
   requires $ref_cnt($s, c) == 0;
   ensures (forall p:$ptr :: {$st($s, p)} $st_eq(old($s), $s, p) || p == c);
-  ensures (forall p:$ptr :: {$ts($s, p)} $ts_eq(old($s), $s, p) || p == c);
-  ensures (forall p:$ptr :: {$mem($s, p)} $mem_eq(old($s), $s, p) || p == c);
+  ensures $typemap(old($s)) == $typemap($s);
+  ensures $memory(old($s)) == $memory($s);
   ensures $timestamp_post(old($s), $s);
   ensures $good_state($s);
+
+procedure $kill_claim(c:$ptr);
+  modifies $s;
+  ensures (forall p:$ptr :: {$st($s, p)} $st_eq(old($s), $s, p) || p == c);
+  ensures $typemap(old($s)) == $typemap($s);
+  ensures $memory(old($s)) == $memory($s);
+  ensures $timestamp_post(old($s), $s);
+  ensures $good_state($s);
+
+function $claims_upgrade(the_new:$ptr, the_old:$ptr) returns(bool)
+  { (forall o:$ptr :: $claims_obj(the_old, o) ==> $claims_obj(the_new, o)) }
 
 function {:weight 0} $ref_cnt(S:$state, p:$ptr) returns(int)
   { $st_ref_cnt($st(S, p)) }
