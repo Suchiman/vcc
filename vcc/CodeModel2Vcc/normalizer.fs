@@ -123,10 +123,10 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     let handleClaims self = function
-      | Call (c, ({ Name = "_vcc_claim" } as fn), _, args) ->
+      | Call (c, ({ Name = ("_vcc_claim"|"_vcc_upgrade_claim" as name) } as fn), _, args) ->
         match List.rev args with
           | x :: xs ->
-            Some (self (Macro (c, "claim", Expr.Pure (x.Common, convertToBool (fun x -> x) x) :: xs)))
+            Some (self (Macro (c, name.Replace("_vcc_", ""), Expr.Pure (x.Common, convertToBool (fun x -> x) x) :: xs)))
           | _ -> 
             helper.Oops (c.Token, "no arguments to claim")
             None

@@ -499,14 +499,14 @@ namespace Microsoft.Research.Vcc
               let tmpRef = Expr.Ref (c, tmp)
               addStmtsOpt [VarDecl (c', tmp); VarWrite (c', [tmp], call')] tmpRef
               
-        | VarWrite (c, v, Macro (c', "claim", args)) ->
-          Some (VarWrite (c, v, Macro (c', "claim", List.map self args)))
+        | VarWrite (c, v, Macro (c', ("claim"|"upgrade_claim" as name), args)) ->
+          Some (VarWrite (c, v, Macro (c', name, List.map self args)))
         
-        | Macro (c, "claim", args) ->
+        | Macro (c, ("claim"|"upgrade_claim" as name), args) ->
           if ctx.IsPure then
             helper.Error (c.Token, 9652, "claim(...) used in pure context", None)
           let tmp = getTmp helper "res_claim" (Ptr Claim) VarKind.SpecLocal
-          let call' = Macro (c, "claim", List.map self args)
+          let call' = Macro (c, name, List.map self args)
           let c' = { c with Type = Void }
           let tmpRef = Expr.Ref (c, tmp)
           addStmtsOpt [VarDecl (c', tmp); VarWrite (c', [tmp], call')] tmpRef

@@ -467,6 +467,9 @@ typedef struct _vcc_claim_struct ^_vcc_claim_t;
 claim_t _vcc_claim(obj_t, ...);
 #define claim _vcc_claim
 
+claim_t _vcc_upgrade_claim(obj_t, ...);
+#define upgrade_claim _vcc_upgrade_claim
+
 bool _vcc_claims(claim_t, bool);
 #define claims _vcc_claims
 

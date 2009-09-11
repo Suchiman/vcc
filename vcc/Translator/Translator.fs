@@ -1519,7 +1519,8 @@ namespace Microsoft.Research.Vcc
          B.Stmt.Assume (B.Expr.Primitive (">=", [ref_cnt; B.Expr.IntLiteral (Math.BigInt.Zero)]))]
                
       let claimId = ref 0            
-      let trClaim (env:Env) tok (local:C.Variable) args =
+      
+      let trClaim (env:Env) upgrade tok (local:C.Variable) args =
         match args with
           | C.Pure (_, expr) :: objects ->
             let claim = "claim#" + (!claimId).ToString()
@@ -1543,12 +1544,32 @@ namespace Microsoft.Research.Vcc
               let tok' = afmtet tok 8528 "object {0} is closed before claiming it" [obj]
               B.Stmt.Assert (tok', bCall "$closed" [bState; obj']) :: claimedObjCheck env tok true obj
             
-            let wrChecks = List.map doObj objects |> List.concat
+            let doClaim (obj:C.Expr) =
+              let obj' = trExpr env obj
+              let tokWrite = afmtet tok 8023 ("{0} is non-writable and (and thus is impossible to upgrade)") [obj]
+              let tokWrap = afmtet tok 8024 "the claim {0} is not wrapped before upgrade" [obj]
+              let tokRef = afmtet tok 8025 "the claim {0} has outstanding claims" [obj]
+              [B.Assert (tokWrap, bCall "$wrapped" [bState; obj'; er "^^claim"]);
+               B.Assert (tokRef, bEq (bCall "$ref_cnt" [bState; obj']) (bInt 0));
+               B.Assert (tokWrite, inWritesOrIrrelevant env obj' None)]
+            
+            let killClaim obj =
+              B.Call (C.bogusToken, [], "$kill_claim", [trExpr env obj])
+                        
+            let wrChecks = 
+              if upgrade then
+                // first checking for conditions and then killing all at once
+                // allows for aliasing between claims
+                (List.map doClaim objects |> List.concat) @
+                  List.map killClaim objects
+              else
+                List.map doObj objects |> List.concat
             
             let claimAdm =
               [B.Stmt.Assume (inState (rf "s1") expr);
                B.Stmt.Assume (bCall "$valid_claim_impl" [rf "s0"; rf "s2"]);
-               B.Stmt.Assume (bCall "$claim_transitivity_assumptions" ([rf "s1"; rf "s2"; er claim; er (getTokenConst tok)]))] @
+               B.Stmt.Assume (bCall "$claim_transitivity_assumptions" ([rf "s1"; rf "s2"; er claim; er (getTokenConst tok)]));
+               ] @
                List.map (mkAdmAssert (rf "s2")) conditions @
                [B.Stmt.Assume bFalse]
             let rand = claim + "doAdm"
@@ -1561,7 +1582,7 @@ namespace Microsoft.Research.Vcc
               claimAdm cond @
               [B.Stmt.Assume (didAlloc (claims env (er claim) expr))]
             
-            let claims_obj = List.map (fun e -> B.Stmt.Assume (bCall "$claims_obj" [er claim; trExpr env e])) objects 
+            let claims_obj = List.map (fun e -> B.Stmt.Assume (bCall (if upgrade then "$claims_upgrade" else "$claims_obj") [er claim; trExpr env e])) objects 
             
             let assign = 
               [B.Stmt.Assign (varRef local, bCall "$ref" [er claim]);
@@ -1827,7 +1848,10 @@ namespace Microsoft.Research.Vcc
              assumeSync env e1.Token] @ (cevStateUpdate e1.Token)
             
           | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "claim", args)) ->
-            cmt() :: trClaim env c.Token v args @ (cevVarUpdate c.Token true v)
+            cmt() :: trClaim env false c.Token v args @ (cevVarUpdate c.Token true v)
+            
+          | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "upgrade_claim", args)) ->
+            cmt() :: trClaim env true c.Token v args @ (cevVarUpdate c.Token true v)
             
           | C.Expr.Stmt (_, C.Expr.Macro (c, "unclaim", args)) ->
             cmt() :: trUnclaim env c.Token args
