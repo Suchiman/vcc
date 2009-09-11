@@ -101,8 +101,7 @@ namespace Microsoft.Research.Vcc
     let intec = { Token = bogusToken; Type = Integer (IntKind.Int32) } : ExprCommon
     IntLiteral (intec, new Math.BigInt(x))
 
-  let mkFieldRef (f:Field) =
-      Macro ({ bogusEC with Type = Type.FieldT }, "field", [ Expr.MkDot(Macro ({ bogusEC with Type = Ptr Void }, "bogus_field_ref", []), f) ])
+  let mkFieldRef (f:Field) = Macro ({ bogusEC with Type = Type.FieldT }, "field",  [Expr.UserData(bogusEC, f)]) 
   
   let mkBoolOp str (args:list<Expr>) =
     Prim ((List.hd (List.rev args)).Common, Op(str, Processed), args)
@@ -115,9 +114,6 @@ namespace Microsoft.Research.Vcc
     let c = { ExprCommon.Bogus with Type = Ptr t }
     Expr.Macro ({ c with Type = Type.Math "typeid_t" }, "_vcc_typeof", [Expr.Cast (c, Processed, mkInt 0)])
       
-  let vsDot c e f = 
-    Expr.Dot (c, e, f)
-
   let boolOp op a b =
     Prim (boolBogusEC (), Op (op, Processed), [a; b])
   

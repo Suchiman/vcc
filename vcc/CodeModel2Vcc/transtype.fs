@@ -423,9 +423,7 @@ namespace Microsoft.Research.Vcc
         | Dot (c, e, f) as expr ->
           match fieldsToReplace.TryGetValue(f) with
             | true, newFld -> 
-              Some(self (genDotPrime (f.Type) (newFld.Type) (Dot({c with Type = Ptr(newFld.Type)}, (self e), newFld)))) 
-              // do NOT call MkDot here because we need to preserve the information that the new field is of array type
-              // todo: make this go away
+              Some(self (genDotPrime (f.Type) (newFld.Type) (Expr.MkDot(c, (self e), newFld))))
             | false, _ -> None          
         | _ -> None
 
@@ -439,18 +437,19 @@ namespace Microsoft.Research.Vcc
           match self e with
             | Macro(_, "Dot'", [expr; IntLiteral(_, offset)]) ->
               let reportError() = helper.Error(c.Token, 9654, "Expression is invalid due to union flattening. Flattening of arrays requires the backing member to be of array type with same element size and alignment.", None)
-              if not expr.Type.Deref._IsArray then 
-                reportError()
-                Some(bogusExpr)
-              else
-                let elemSize = c.Type.Deref.SizeOf
-                let bmElemType = match expr.Type.Deref with Array(t, _) -> t | _ -> die()
-                if ((int)offset % elemSize <> 0) || (elemSize  <> bmElemType.SizeOf) then
+              match expr with
+                | Dot(_,_,f) when not f.Type._IsArray ->
                   reportError()
                   Some(bogusExpr)
-                else
-                  let idx' = if offset = bigint.Zero then idx else Prim(idx.Common, Op("+", Checked), [mkInt((int)offset); idx])
-                  Some(self(Macro({bogusEC with Type = c.Type}, "Dot'", [Index({c with Type = Ptr(bmElemType)}, expr, idx'); mkInt 0])))
+                | _ ->
+                  let elemSize = c.Type.Deref.SizeOf
+                  let bmElemType = expr.Type.Deref 
+                  if ((int)offset % elemSize <> 0) || (elemSize  <> bmElemType.SizeOf) then
+                    reportError()
+                    Some(bogusExpr)
+                  else
+                    let idx' = if offset = bigint.Zero then idx else Prim(idx.Common, Op("+", Checked), [mkInt((int)offset); idx])
+                    Some(self(Macro({bogusEC with Type = c.Type}, "Dot'", [Index({c with Type = Ptr(bmElemType)}, expr, idx'); mkInt 0])))
             | e' -> Some(Index(c, e', self idx))
         | _ -> None
 

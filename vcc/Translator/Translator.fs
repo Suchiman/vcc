@@ -1085,7 +1085,7 @@ namespace Microsoft.Research.Vcc
                 let fn = "$store." + (trType a.Type).ToString()
                 bCall fn [self a; stripType f (self b); stripType t (self c)]
               | _ -> die()
-          | "field", [C.Expr.Dot (_, _, f)] ->
+          | "field", [C.Expr.UserData (_, ( :? C.Field as f))] ->
             er (fieldName f)
             
           | "rec_zero", [] -> er "$rec_zero"
