@@ -42,6 +42,12 @@
     <Optimize>true</Optimize>
     <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'CompilerOnly' ">
+    <Optimize>true</Optimize>
+    <OtherFlags>
+    </OtherFlags>
+    <OutputPath>bin\CompilerOnly\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>

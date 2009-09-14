@@ -35,6 +35,13 @@
     <StartProgram>C:\Users\stobies\verisoft\Codeplex\src\vcc\Host\bin\Debug\vcc.exe</StartProgram>
     <StartWorkingDirectory>c:\temp</StartWorkingDirectory>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'CompilerOnly' ">
+    <StartArguments>/pdir:\Users\stobies\verisoft\Codeplex\src\Vcc\Plugins\vcc2plugins\dumpcodeinfo\bin\Debug /pcodeinfo s.c /pause /nc</StartArguments>
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Users\stobies\verisoft\Codeplex\src\vcc\Host\bin\Debug\vcc.exe</StartProgram>
+    <StartWorkingDirectory>c:\temp</StartWorkingDirectory>
+    <OutputPath>bin\CompilerOnly\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />

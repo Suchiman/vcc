@@ -38,6 +38,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'CompilerOnly' ">
+    <OutputPath>bin\CompilerOnly\</OutputPath>
+  </PropertyGroup>
   <!-- Generate the lexer and parser -->
   <ItemGroup>
     <Content Include="Parser.fsy" />

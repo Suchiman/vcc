@@ -46,6 +46,16 @@
     <StartWorkingDirectory>c:\temp</StartWorkingDirectory>
     <StartArguments>/pdir:\Users\stobies\verisoft\FELT\Vcc\AssemblerContracts\bin\Debug /pvx86contractgen test.h</StartArguments>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'CompilerOnly' ">
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Users\stobies\verisoft\FELT\Vcc\Host\bin\Debug\vcc2.exe</StartProgram>
+    <StartWorkingDirectory>c:\temp</StartWorkingDirectory>
+    <StartArguments>/pdir:\Users\stobies\verisoft\FELT\Vcc\AssemblerContracts\bin\Debug /pvx86contractgen test.h</StartArguments>
+    <OutputPath>bin\CompilerOnly\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
