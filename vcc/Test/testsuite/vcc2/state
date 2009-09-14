@@ -111,3 +111,22 @@ testcase(23,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '_vcc_
 testcase(25,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '_vcc_in_state(s1, _vcc_in_state(_vcc_in_state(_vcc_current_state(), s3), *p))' has no effect
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+#define unchanged_s(s,e) (in_state((s),e)==(e))
+
+spec(struct X {
+	spec(state_t s;)
+	int a;
+});
+
+void foo(int *y)
+{
+    spec(struct X x;)
+    assert(unchanged_s(x.s,*y));
+}
+
+`
+Verification of foo failed.
+testcase(13,15) : error VC9500: Assertion '_vcc_in_state((x.s), *y)==(*y)' did not verify.
+`
