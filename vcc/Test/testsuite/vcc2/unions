@@ -476,3 +476,31 @@ void foo(PX g)
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+typedef unsigned __int64 UINT64;
+
+typedef union U
+{
+    struct 
+    {
+                UINT64   Rax;
+                UINT64   Rip;
+    };
+    backing_member UINT64  AsUINT64[2];
+} U, *PU;
+
+
+void foo(PU vmcb, UINT64 Value)
+        maintains(wrapped(vmcb))
+        writes(vmcb)
+        ensures(vmcb->Rip == Value)
+{
+        unwrap(vmcb);
+        vmcb->Rip = Value;
+        assert(vmcb->Rip == Value);
+        wrap(vmcb);
+};
+`
+Verification of foo succeeded.
+`
