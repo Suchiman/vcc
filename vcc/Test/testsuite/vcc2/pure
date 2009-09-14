@@ -1018,3 +1018,14 @@ Verification of foo failed.
 testcase(39,12) : error VC9500: Assertion '((bool)0)' did not verify.
 Verification of foo2 succeeded.
 `
+#include "vcc.h"
+
+spec(ispure bool foo(int *arr, unsigned c)
+    reads(set_universe())
+    returns(mutable(as_array(arr,c)) ==> is_mutable_array(arr,c))
+{ 
+  return mutable(as_array(arr,c)) ==> is_mutable_array(arr,c); 
+} )
+`
+Verification of foo succeeded.
+`
