@@ -2032,6 +2032,23 @@ namespace Microsoft.Research.Vcc {
       if (containingBlock == this.ContainingBlock) return this;
       return new VccInitializerWithDesignators(containingBlock, this);
     }
+
+    internal override void PropagateStructuredTypeToSubExpressions(VccStructuredTypeDeclaration typeDecl) {
+      // read field->type map into a dictionary so that we do not run into quadratic behaviour 
+      // (even though the number of fields should likely be small)
+      Dictionary<IName, TypeExpression> fieldToTypeMap = new Dictionary<IName, TypeExpression>();
+      foreach (var field in IteratorHelper.GetFilterEnumerable<ITypeDeclarationMember, FieldDefinition>(typeDecl.TypeDeclarationMembers))
+        fieldToTypeMap[field.Name.Name] = field.Type;
+      foreach (var init in this.DesignatorsWithExpressions) {
+        TypeExpression fieldType;
+        if (fieldToTypeMap.TryGetValue(init.Designator.Name, out fieldType))
+          VccInitializerBase.PropagateTypeToExpressionIfAppropriate(init.Expression, fieldType);
+      }
+    }
+
+    internal override void PropagateArrayTypeToSubExpressions(TypeExpression elementType) {
+      // Cannot use designator list to initialize an array - ignore
+    }
   }
 
   public abstract class VccInitializerBase : Expression
@@ -2044,6 +2061,18 @@ namespace Microsoft.Research.Vcc {
       : base(containingBlock, template) {
       this.structureTypeExpression = template.structureTypeExpression;
       this.arrayTypeExpression = template.arrayTypeExpression;
+    }
+
+    protected static void PropagateTypeToExpressionIfAppropriate(Expression expr, TypeExpression type) {
+      VccInitializerBase exprAsInitializer = expr as VccInitializerBase;
+      if (exprAsInitializer != null && exprAsInitializer.structureTypeExpression == null && exprAsInitializer.arrayTypeExpression == null) {
+        VccArrayTypeExpression fieldTypeAsArrayType = type as VccArrayTypeExpression;
+        if (fieldTypeAsArrayType != null) exprAsInitializer.arrayTypeExpression = fieldTypeAsArrayType;
+        else {
+          VccNamedTypeExpression fieldTypeAsStructType = type as VccNamedTypeExpression;
+          if (fieldTypeAsStructType != null) exprAsInitializer.structureTypeExpression = fieldTypeAsStructType;
+        }
+      }
     }
 
     private static VccStructuredTypeDeclaration/*?*/ MiniResolve(NamespaceDeclaration nsDeclaration, VccNamedTypeExpression/*?*/ typeExp) {
@@ -2184,19 +2213,22 @@ namespace Microsoft.Research.Vcc {
       return GetStructuredTypeDeclFor(this.structureTypeExpression.ResolvedType);
     }
 
+    internal abstract void PropagateStructuredTypeToSubExpressions(VccStructuredTypeDeclaration typeDecl);
+    internal abstract void PropagateArrayTypeToSubExpressions(TypeExpression elementType);
+
     /// <summary>
     /// The type of value that the expression will evaluate to, as determined at compile time.
     /// </summary>
     public override ITypeDefinition Type {
       get {
         if (this.type == null) {
-          ITypeDefinition type;
-          if (this.structureTypeExpression != null)
-            type = this.structureTypeExpression.ResolvedType;
-          else if (this.arrayTypeExpression != null) {
-            type = PointerType.GetPointerType(this.arrayTypeExpression.ElementType.ResolvedType, this.Compilation.HostEnvironment.InternFactory);
-          } else type = Dummy.Type;
-          this.type = type;
+          if (this.structureTypeExpression != null) {
+            this.type = this.structureTypeExpression.ResolvedType;
+            this.PropagateStructuredTypeToSubExpressions(this.GetStructuredTypeDecl());
+          } else if (this.arrayTypeExpression != null) {
+            this.type = PointerType.GetPointerType(this.arrayTypeExpression.ElementType.ResolvedType, this.Compilation.HostEnvironment.InternFactory);
+            this.PropagateArrayTypeToSubExpressions(this.arrayTypeExpression.ElementType);
+          } else this.type = Dummy.Type;
         }
         return this.type;
       }
@@ -2425,6 +2457,18 @@ namespace Microsoft.Research.Vcc {
       base.SetContainingExpression(containingExpression);
       for (int i = 0, n = this.expressions.Count; i < n; i++)
         this.expressions[i].SetContainingExpression(containingExpression);
+    }
+
+    internal override void PropagateStructuredTypeToSubExpressions(VccStructuredTypeDeclaration typeDecl) {
+      using (IEnumerator<FieldDefinition> fieldEnum = IteratorHelper.GetFilterEnumerable<ITypeDeclarationMember, FieldDefinition>(typeDecl.TypeDeclarationMembers).GetEnumerator())
+      using (IEnumerator<Expression> exprEnum = this.Expressions.GetEnumerator())
+      while (fieldEnum.MoveNext() && exprEnum.MoveNext()) 
+        VccInitializerBase.PropagateTypeToExpressionIfAppropriate(exprEnum.Current, fieldEnum.Current.Type);
+    }
+
+    internal override void PropagateArrayTypeToSubExpressions(TypeExpression elementType) {
+      foreach (var expr in this.Expressions)
+        VccInitializerBase.PropagateTypeToExpressionIfAppropriate(expr, elementType);
     }
   }
 
