@@ -394,7 +394,7 @@ namespace Microsoft.Research.Vcc
         | VarWrite (c, v, src)  ->
           Some (VarWrite (c, List.map mapLocal v, self src))
                   
-        | Old(c, prestate, e) -> Some( Old(c, prestate, self e))
+        | Old(c, prestate, e) -> Some( Old(c, self prestate, self e))
 
         | Macro(c, "map_get", args) ->
           match c.Type with
