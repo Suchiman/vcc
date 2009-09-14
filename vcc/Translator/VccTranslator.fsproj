@@ -43,6 +43,13 @@
     <Tailcalls>true</Tailcalls>
     <Optimize>true</Optimize>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'CompilerOnly' ">
+    <OtherFlags>
+    </OtherFlags>
+    <Tailcalls>true</Tailcalls>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\CompilerOnly\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Graph, Version=2.0.10514.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
       <Name>Graph</Name>
