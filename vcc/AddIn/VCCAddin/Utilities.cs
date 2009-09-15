@@ -294,7 +294,7 @@ namespace VerifiedCCompilerAddin {
                                                       guidString,
                                                       ref programmableObject);
 
-      AddInGlobals.VCCWindow.SetTabPicture(ImageConverter.ImageToIPicture(ImageResources._9999));
+      AddInGlobals.VCCWindow.SetTabPicture(Microsoft.VisualBasic.Compatibility.VB6.Support.ImageToIPicture(ImageResources._9999));
       AddInGlobals.VCCPane = (VCCPane)AddInGlobals.VCCWindow.Object;
       AddInGlobals.VCCPane.ApplicationObject = application;
       AddInGlobals.VCCPane.RefreshData();
@@ -316,7 +316,7 @@ namespace VerifiedCCompilerAddin {
                                                       guidString,
                                                       ref programmableObject);
 
-      AddInGlobals.ModelViewerWindow.SetTabPicture(ImageConverter.ImageToIPicture(ImageResources._9890));
+      AddInGlobals.ModelViewerWindow.SetTabPicture(Microsoft.VisualBasic.Compatibility.VB6.Support.ImageToIPicture(ImageResources._9890));
       AddInGlobals.ModelViewerObj = (ModelViewer)AddInGlobals.ModelViewerWindow.Object;
       AddInGlobals.ModelViewerObj.LineColumnChanged += new EventHandler<LineColumnChangedEventArgs>(ModelViewerObj_LineColumnChanged);
     }
