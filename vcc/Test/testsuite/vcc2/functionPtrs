@@ -198,3 +198,16 @@ Verification of $fnptr_f1_to_fnptr#2 succeeded.
 Verification of $fnptr_f2_to_fnptr#1 succeeded.
 Verification of $fnptr_f1_to_fnptr#1 succeeded.
 `
+typedef unsigned __int64 uint64_t;
+
+typedef int (*F)(int);
+
+int foo(int a);
+
+int baz() {
+	uint64_t addr;
+	addr = (uint64_t) foo;
+}
+`
+Verification of baz succeeded.
+`
