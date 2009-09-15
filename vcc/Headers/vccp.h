@@ -213,7 +213,7 @@ void _vcc_giveup_closed_owner(obj_t obj, obj_t owner)
   requires (_vcc_is_atomic_obj(1));
 #define giveup_closed_owner(x, y) _vcc_giveup_closed_owner(x, y)
 
-#define giveup_owner(p, owner) set_owns(owner, set_difference(owns(owner), set_singleton(p)))
+#define giveup_owner(p, owner) do { assert(set_in(p, owns(owner))); set_owns(owner, set_difference(owns(owner), set_singleton(p))); } while (0)
 
 void _vcc_reads_havoc();
 #define reads_havoc _vcc_reads_havoc
