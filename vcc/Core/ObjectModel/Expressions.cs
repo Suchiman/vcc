@@ -2063,6 +2063,9 @@ namespace Microsoft.Research.Vcc {
       this.arrayTypeExpression = template.arrayTypeExpression;
     }
 
+    /// <summary>
+    /// If expr is a VccInitializerBase with type hint fields unset, and if type is a potential type hint, set the type hint field
+    /// </summary>
     protected static void PropagateTypeToExpressionIfAppropriate(Expression expr, TypeExpression type) {
       VccInitializerBase exprAsInitializer = expr as VccInitializerBase;
       if (exprAsInitializer != null && exprAsInitializer.structureTypeExpression == null && exprAsInitializer.arrayTypeExpression == null) {
@@ -2213,7 +2216,16 @@ namespace Microsoft.Research.Vcc {
       return GetStructuredTypeDeclFor(this.structureTypeExpression.ResolvedType);
     }
 
+    /// <summary>
+    /// To be called when this object has been determined to be of structured type and the appropriate type information should be
+    /// propagated to field initializers
+    /// </summary>
     internal abstract void PropagateStructuredTypeToSubExpressions(VccStructuredTypeDeclaration typeDecl);
+
+    /// <summary>
+    /// To be called when this object has been determined to be of array type ant the appropriate type information should be
+    /// propagate to the field initializers.
+    /// </summary>
     internal abstract void PropagateArrayTypeToSubExpressions(TypeExpression elementType);
 
     /// <summary>
