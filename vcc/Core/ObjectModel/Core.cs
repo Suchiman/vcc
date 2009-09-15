@@ -543,6 +543,7 @@ namespace Microsoft.Research.Vcc {
           bool intConversion = isExplicitConversion && TypeHelper.IsPrimitiveInteger(targetType);
           if (intConversion) pointer = this.PlatformType.SystemVoidPtr.ResolvedType as IPointerType;
           if (pointer != null && pointer.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void) {
+            expression = this.AddAddressOfIfExpressionIsFunctionName(expression);
             Expression result = new Conversion(expression, pointer, expression.SourceLocation);
             if (intConversion) result = this.ConversionExpression(result, targetType);
             return result;
