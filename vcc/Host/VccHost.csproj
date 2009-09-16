@@ -91,6 +91,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\CodeModel2VccHelper\System.ComponentModel.Composition.dll</HintPath>
     </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
     <Reference Include="VCGeneration, Version=1.0.20328.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Boogie\VCGeneration.dll</HintPath>
@@ -100,6 +102,7 @@
     <Compile Include="..\Common\Include\Version.cs">
       <Link>Build\Version.cs</Link>
     </Compile>
+    <Compile Include="PathHelper.cs" />
     <Compile Include="PluginManager.cs" />
     <Compile Include="Host.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

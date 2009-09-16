@@ -107,9 +107,8 @@ namespace Microsoft.Research.Vcc
 
         if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp) {
           pluginManager = new PluginManager(commandLineOptions);
-          ProbeForVccHeaders(false);
-          if (cachedVccHeaderDirectory != null)
-            pluginManager.AddPluginDirectory(Path.Combine(cachedVccHeaderDirectory.Parent.FullName, "Plugins"));
+          string pluginDir = PathHelper.ProbeForPluginDir();
+          if (pluginDir != null)  pluginManager.AddPluginDirectory(pluginDir);
           pluginManager.Discover();
           foreach (var opt in commandLineOptions.PluginOptions.Keys) {
             if (opt == "dir") continue;
@@ -665,7 +664,7 @@ namespace Microsoft.Research.Vcc
         args.Append(' ');
         args.Append(ppOption);
       }
-      string/*?*/ vccHeaders = ProbeForVccHeaders(true);
+      string/*?*/ vccHeaders = PathHelper.ProbeForVccHeaders(true);
       if (vccHeaders != null)
       {
         args.Append(" /I");
@@ -825,32 +824,6 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private static string/*?*/ ProbeForVccHeaders(bool quote) {
-      if (cachedVccHeaderDirectory == null)
-      {
-        FileInfo vccExe = new FileInfo(typeof(VccCommandLineHost).Assembly.Location);
-        DirectoryInfo/*?*/ dir = vccExe.Directory;
-        while (dir != null && dir.Exists)
-        {
-          foreach (DirectoryInfo subdir in dir.GetDirectories())
-          {
-            if (string.Compare(subdir.Name, "Headers", true) == 0 && subdir.GetFiles("vcc.h").Length > 0) {
-              cachedVccHeaderDirectory = subdir;
-              break;
-            }
-          }
-          dir = dir.Parent;
-        }
-      }
-
-      if (cachedVccHeaderDirectory == null) return null;
-      if (quote && cachedVccHeaderDirectory.FullName.Contains(" "))
-        return "\"" + cachedVccHeaderDirectory.FullName + "\"";
-      else
-        return cachedVccHeaderDirectory.FullName;
-    }
-
-    private static DirectoryInfo cachedVccHeaderDirectory;
 
     private static double methodVerificationTime;
     private static StringBuilder testrunTimeStats = new StringBuilder();
@@ -984,7 +957,7 @@ namespace Microsoft.Research.Vcc
     private static Program GetCEVPrelude()
     {
 
-        string headersDir = ProbeForVccHeaders(false);
+        string headersDir = PathHelper.ProbeForVccHeaders(false);
 
         System.IO.Stream stream = null;
         if (cevPreludeLines == null)
@@ -1028,35 +1001,20 @@ namespace Microsoft.Research.Vcc
 
     private static Program GetStandardPrelude() {
 
-      string headersDir = ProbeForVccHeaders(false);
-      string preludePath = "<VccPrelude.bpl>";
-      if (headersDir != null)
-        preludePath = System.IO.Path.Combine(headersDir, "VccPrelude.bpl");
-
-      System.IO.Stream stream = null;
+      string preludePath = PathHelper.ProbeForPrelude();
       if (standardPreludeLines == null) {
-
-        stream = headersDir == null ?
-          //typeof(ConvertFelt2Boogie).Assembly.GetManifestResourceStream("Microsoft.Cci.VccPrelude.bpl") :
-        null : // TODO
-        System.IO.File.OpenRead(preludePath);
-        BoogiePL.Buffer.Fill(new System.IO.StreamReader(stream));
-      } else {
-        BoogiePL.Buffer.Fill(standardPreludeString);
+        standardPreludeLines = File.ReadAllLines(preludePath, Encoding.UTF8);
+        standardPreludeString = String.Join(Environment.NewLine, standardPreludeLines);
       }
 
+      BoogiePL.Buffer.Fill(standardPreludeString);
       BoogiePL.Scanner.Init(preludePath);
       Program prelude;
       int errorCount = BoogiePL.Parser.Parse(out prelude);
-      if (stream != null) stream.Close();
       if (prelude == null || errorCount > 0) {
         System.Console.WriteLine("There were errors parsing VccPrelude.bpl.");
         return new Program();
       } else {
-        if (standardPreludeString == null) {
-          standardPreludeLines = File.ReadAllLines(preludePath, Encoding.UTF8);
-          standardPreludeString = String.Join(Environment.NewLine, standardPreludeLines);
-        }
         return prelude;
       }
     }
