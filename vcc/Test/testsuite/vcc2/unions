@@ -504,3 +504,17 @@ void foo(PU vmcb, UINT64 Value)
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+union X { unsigned a : 8; backing_member int b; } x;
+
+void foo() {
+  union X x;
+  x.a = 5;
+  assert(x.a == 5);
+  x.b = 10;
+  assert(x.b == 10);
+}
+`
+Verification of foo succeeded.
+`

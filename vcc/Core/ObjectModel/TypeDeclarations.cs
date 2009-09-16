@@ -378,28 +378,32 @@ namespace Microsoft.Research.Vcc {
     internal static uint ComputeSizeOf(IEnumerable<ITypeDeclarationMember> members)
     {
       uint size = 0;
-      foreach (ITypeDeclarationMember member in members)
-      {
+      foreach (ITypeDeclarationMember member in members) {
         AnonymousFieldDefinition anonFieldDef = member as AnonymousFieldDefinition;
         if (anonFieldDef != null) {
-          uint anonFieldSize = TypeHelper.SizeOfType(anonFieldDef.Type.ResolvedType);
-          if (anonFieldSize > size) size = anonFieldSize;
+          uint memberSize = TypeHelper.SizeOfType(anonFieldDef.Type.ResolvedType);
+          size = Math.Max(size, memberSize);
           continue;
         }
         FieldDefinition/*?*/ fieldDef = member as FieldDefinition;
-        if (fieldDef == null || fieldDef.IsStatic || fieldDef.IsCompileTimeConstant) continue;
-        uint memberSize = 0;
-        VccArrayTypeExpression/*?*/ arrayType = fieldDef.Type as VccArrayTypeExpression;
-        if (arrayType != null && arrayType.Size != null)
-        {
-          uint numElements = (uint)arrayType.SizeAsInt32;
-          memberSize = numElements * TypeHelper.SizeOfType(arrayType.ElementType.ResolvedType);
+        if (fieldDef != null && !fieldDef.IsStatic && !fieldDef.IsCompileTimeConstant) {
+          uint memberSize = 0;
+          VccArrayTypeExpression/*?*/ arrayType = fieldDef.Type as VccArrayTypeExpression;
+          if (arrayType != null && arrayType.Size != null) {
+            uint numElements = (uint)arrayType.SizeAsInt32;
+            memberSize = numElements * TypeHelper.SizeOfType(arrayType.ElementType.ResolvedType);
+          } else {
+            memberSize = TypeHelper.SizeOfType(fieldDef.Type.ResolvedType);
+          }
+          size = Math.Max(size, memberSize);
+          continue;
         }
-        else
-        {
-          memberSize = TypeHelper.SizeOfType(fieldDef.Type.ResolvedType);
+        BitFieldDefinition bfieldDef = member as BitFieldDefinition;
+        if (bfieldDef != null && !bfieldDef.IsStatic && !bfieldDef.IsCompileTimeConstant) {
+          uint memberSize = TypeHelper.SizeOfType(bfieldDef.Type.ResolvedType);
+          size = Math.Max(size, memberSize);
+          continue;
         }
-        if (memberSize > size) size = memberSize;
       }
       return size;
     }
