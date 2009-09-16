@@ -542,3 +542,18 @@ spec(ispure struct T foo()
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+struct vcc(record) X {
+  int a:10;
+  int b:22;
+}; 
+
+void foo() {
+  struct X x;
+  x.a = 5;
+  assert(x.a == 5);
+} 
+`
+Verification of foo succeeded.
+`
