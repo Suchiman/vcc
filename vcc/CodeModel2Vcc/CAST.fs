@@ -324,6 +324,16 @@ module Microsoft.Research.Vcc.CAST
       | IntKind.Int32  -> IntKind.UInt32
       | IntKind.Int64  -> IntKind.UInt64
 
+    static member ToUnsigned = function
+      | IntKind.UInt8
+      | IntKind.Int8   -> IntKind.UInt8
+      | IntKind.UInt16 
+      | IntKind.Int16  -> IntKind.UInt16
+      | IntKind.UInt32
+      | IntKind.Int32  -> IntKind.UInt32
+      | IntKind.UInt64
+      | IntKind.Int64  -> IntKind.UInt64
+
     static member PrimSuffix = function
       | PrimKind.Float32 -> "f4"
       | PrimKind.Float64 -> "f8"
