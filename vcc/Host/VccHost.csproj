@@ -103,6 +103,7 @@
       <Link>Build\Version.cs</Link>
     </Compile>
     <Compile Include="CCompilerHelper.cs" />
+    <Compile Include="ErrorHandler.cs" />
     <Compile Include="PathHelper.cs" />
     <Compile Include="PluginManager.cs" />
     <Compile Include="Host.cs" />
