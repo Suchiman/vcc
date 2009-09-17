@@ -15,15 +15,15 @@ namespace Microsoft.Research.Vcc
   class CCompilerHelper
   {
     public static IEnumerable<String> PreprocessAndCompile(VccOptions commandLineOptions, bool suppressCompiler, out bool hasErrors) {
-      bool runCompiler = !suppressCompiler && !commandLineOptions.NoCompilerRun;
       hasErrors = false;
       if (commandLineOptions.NoPreprocessor) return commandLineOptions.FileNames;
+      bool runCompiler = !suppressCompiler && !commandLineOptions.NoCompilerRun;
       string savedCurentDir = Directory.GetCurrentDirectory();
       List<String> preprocessedFiles = new List<string>();
       try {
         foreach (string fileName in commandLineOptions.FileNames) {
           Directory.SetCurrentDirectory(Path.GetDirectoryName(fileName));
-          if (runCompiler && !RunCompiler(fileName, commandLineOptions)) {
+          if (runCompiler && RunCompilerAndReturnTrueIfErrorsAreFound(fileName, commandLineOptions)) {
             hasErrors = true;
             break;
           }
@@ -48,9 +48,12 @@ namespace Microsoft.Research.Vcc
       return preprocessedFiles;
     }
 
-    private static StringBuilder GenerateClArgs(string fileName, VccOptions commandLineOptions) {
+    private static string GenerateClArgs(string fileName, bool forVerification, VccOptions commandLineOptions) {
       StringBuilder args = new StringBuilder();
       args.Append("/nologo /TC");
+      if (forVerification) args.Append(" /E /D_PREFAST_ /DVERIFY /DVERIFY2 /D_USE_DECLSPECS_FOR_SAL");
+      else args.Append(" /c /Zs");
+
       foreach (string ppOption in commandLineOptions.PreprocessorOptions) {
         args.Append(' ');
         args.Append(ppOption);
@@ -61,7 +64,8 @@ namespace Microsoft.Research.Vcc
         args.Append(vccHeaders);
       }
       args.Append(" \"").Append(fileName).Append('\"');
-      return args;
+
+      return args.ToString();
     }
 
     private static bool ProcessOutputAndReturnTrueIfErrorsAreFound(string fileName, bool reportError, StringBuilder outputSB) {
@@ -76,22 +80,25 @@ namespace Microsoft.Research.Vcc
       return hasErrors;
     }
 
-    private static bool RunCompiler(string fileName, VccOptions commandLineOptions) {
-      string args = GenerateClArgs(fileName, commandLineOptions).ToString();
-      return StartClProcessAndReturnTrueIfErrorsAreFound(fileName, "/c /Zs " + args, true, false, null, commandLineOptions);
+    private static bool RunCompilerAndReturnTrueIfErrorsAreFound(string fileName, VccOptions commandLineOptions) {
+      string args = GenerateClArgs(fileName, false, commandLineOptions);
+      return StartClProcessAndReturnTrueIfErrorsAreFound(fileName, args, true, false, null, commandLineOptions);
     }
 
     private static string RunPreprocessor(string fileName, VccOptions commandLineOptions) {
-      string args = GenerateClArgs(fileName, commandLineOptions).ToString();
+      string args = GenerateClArgs(fileName, true, commandLineOptions);
       string outExtension = ".i";
       if (commandLineOptions.ModifiedPreprocessorFiles) outExtension += "." + System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
       string outFileName = Path.ChangeExtension(fileName, outExtension);
-      if (StartClProcessAndReturnTrueIfErrorsAreFound(fileName, args + " /E /D_PREFAST_ /DVERIFY /DVERIFY2 /D_USE_DECLSPECS_FOR_SAL", false, true, outFileName, commandLineOptions))
+      if (StartClProcessAndReturnTrueIfErrorsAreFound(fileName, args, false, true, outFileName, commandLineOptions))
         return null;
       return outFileName;
     }
 
     private static bool StartClProcessAndReturnTrueIfErrorsAreFound(string fileName, string arguments, bool reportError, bool redirect, string outFileName, VccOptions commandLineOptions) {
+
+      StringBuilder output = new StringBuilder();
+      StringBuilder errors = new StringBuilder();
       ProcessStartInfo info = ConfigureStartInfoForClVersion9Or8(commandLineOptions);
       info.Arguments = arguments;
       info.CreateNoWindow = true;
@@ -99,35 +106,26 @@ namespace Microsoft.Research.Vcc
       info.RedirectStandardError = true;
       info.UseShellExecute = false;
 
-      StringBuilder output = new StringBuilder();
-      StringBuilder errors = new StringBuilder();
-      StreamWriter outFile = redirect ? new StreamWriter(outFileName) : null;
+      using (StreamWriter outFile = redirect ? new StreamWriter(outFileName) : null)
+      using (Process process = Process.Start(info)) {
+        process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs args) {
+          if (args.Data != null)
+            if (outFile != null) outFile.WriteLine(args.Data);
+            else output.AppendLine(args.Data);
+        };
 
-      try {
-        using (Process process = Process.Start(info)) {
-          process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs args) {
-            if (args.Data != null)
-              if (outFile != null) outFile.WriteLine(args.Data);
-              else output.Append(args.Data).Append("\r\n");
-          };
+        process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs args) {
+          if (args.Data != null) errors.AppendLine(args.Data);
+        };
 
-          process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs args) {
-            if (args.Data != null) {
-              errors.Append(args.Data).Append("\r\n");
-            }
-          };
-
-          process.BeginErrorReadLine();
-          process.BeginOutputReadLine();
-          process.WaitForExit();
-
-          output.Append(errors);
-          return ProcessOutputAndReturnTrueIfErrorsAreFound(fileName, reportError, output);
-        }
-      } finally {
-        if (outFile != null) outFile.Dispose();
+        process.BeginErrorReadLine();
+        process.BeginOutputReadLine();
+        process.WaitForExit();
       }
+      output.Append(errors);
+      return ProcessOutputAndReturnTrueIfErrorsAreFound(fileName, reportError, output);
     }
+    
 
     /// <summary>
     /// Determine the install location of cl.exe via the environment variables VS90COMNTOOLS and
