@@ -447,7 +447,7 @@ namespace Microsoft.Research.Vcc
       if (!this.outcomeReported) {
         this.outcomeReported = true;
         this.lineDirty = false;
-        VccCommandLineHost.ReportOutcomeMethodSummary(outcome, addInfo, this.name, this.startTime, this.proverWarnings);
+        VccCommandLineHost.ErrorHandler.ReportOutcomeMethodSummary(outcome, addInfo, this.name, this.startTime, this.proverWarnings);
       }
 
       if (this.lineDirty) {
@@ -464,7 +464,7 @@ namespace Microsoft.Research.Vcc
     public override void OnCounterexample(Counterexample ce, string message)
     {
       this.PrintSummary(VC.VCGen.Outcome.Errors);
-      VccCommandLineHost.ReportCounterexample(ce, message);
+      VccCommandLineHost.ErrorHandler.ReportCounterexample(ce, message);
     }
 
     public override void OnOutOfMemory(string reason)

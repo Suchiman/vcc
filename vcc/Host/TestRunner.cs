@@ -97,7 +97,7 @@ namespace Microsoft.Research.Vcc
     static bool RunTestSuite(string directoryName, string suiteName, TextReader instream, VccOptions commandLineOptions, bool verify) {
       System.Diagnostics.Debug.Listeners.Remove("Default");
       HostEnvironment hostEnvironment = new HostEnvironment();
-      hostEnvironment.Errors += VccCommandLineHost.HandleErrors;
+      hostEnvironment.Errors += VccCommandLineHost.ErrorHandler.HandleErrors;
       StringBuilder source = null;
       StringBuilder expectedOutput = null;
       StringBuilder actualOutput = null;
@@ -338,7 +338,7 @@ namespace Microsoft.Research.Vcc
       options.TimeStats = commandLineOptions.TimeStats;
       options.VcOpt.AddRange(commandLineOptions.VcOpt);
 
-      VccCommandLineHost.ResetReportedErrors();
+      VccCommandLineHost.ErrorHandler.ResetReportedErrors();
       CCompilerHelper.Preprocess(options, false);
       StreamReader tempStreamReader = new StreamReader(fileNameI);
       test = tempStreamReader.ReadToEnd();
