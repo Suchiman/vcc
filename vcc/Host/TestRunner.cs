@@ -339,7 +339,8 @@ namespace Microsoft.Research.Vcc
       options.VcOpt.AddRange(commandLineOptions.VcOpt);
 
       VccCommandLineHost.ErrorHandler.ResetReportedErrors();
-      CCompilerHelper.Preprocess(options, false);
+      bool errorsInPreprocessor;
+      CCompilerHelper.PreprocessAndCompile(options, true, out errorsInPreprocessor);
       StreamReader tempStreamReader = new StreamReader(fileNameI);
       test = tempStreamReader.ReadToEnd();
       tempStreamReader.Close();

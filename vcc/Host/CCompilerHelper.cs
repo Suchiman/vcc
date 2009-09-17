@@ -14,32 +14,33 @@ namespace Microsoft.Research.Vcc
 {
   class CCompilerHelper
   {
-    public static IEnumerable<String> Preprocess(VccOptions commandLineOptions) {
-      return Preprocess(commandLineOptions, !commandLineOptions.NoCompilerRun);
-    }
-
-    public static IEnumerable<String> Preprocess(VccOptions commandLineOptions, bool runCompiler) {
+    public static IEnumerable<String> PreprocessAndCompile(VccOptions commandLineOptions, bool suppressCompiler, out bool hasErrors) {
+      bool runCompiler = !suppressCompiler && !commandLineOptions.NoCompilerRun;
+      hasErrors = false;
       if (commandLineOptions.NoPreprocessor) return commandLineOptions.FileNames;
       string savedCurentDir = Directory.GetCurrentDirectory();
       List<String> preprocessedFiles = new List<string>();
       try {
         foreach (string fileName in commandLineOptions.FileNames) {
           Directory.SetCurrentDirectory(Path.GetDirectoryName(fileName));
-          //System.Console.WriteLine("{0} run compiler", System.DateTime.Now.Second);
-          if (runCompiler) {
-            RunCompiler(fileName, commandLineOptions);
-            //System.Console.WriteLine("{0} run compiler done", System.DateTime.Now.Second);
-            if (VccCommandLineHost.ErrorCount > 0) break;
+          if (runCompiler && !RunCompiler(fileName, commandLineOptions)) {
+            hasErrors = true;
+            break;
           }
-          preprocessedFiles.Add(RunPreprocessor(fileName, commandLineOptions));
-          //System.Console.WriteLine("{0} cpp done", System.DateTime.Now.Second);
+          string ppFileName = RunPreprocessor(fileName, commandLineOptions);
+          if (String.IsNullOrEmpty(ppFileName)) {
+            hasErrors = true;
+            break;
+          } else {
+            preprocessedFiles.Add(ppFileName);
+          }
         }
       } catch {
         if (commandLineOptions.ClPath != null)
           Console.WriteLine("Error while running preprocessor " + commandLineOptions.ClPath);
         else
           Console.WriteLine("Please install Microsoft VC++ before using VCC. If already installed, please ensure that the VS80COMNTOOLS or VS90COMNTOOLS environment variable is set.");
-        VccCommandLineHost.ErrorCount++;
+        hasErrors = true;
       } finally {
         Directory.SetCurrentDirectory(savedCurentDir);
       }
@@ -63,20 +64,21 @@ namespace Microsoft.Research.Vcc
       return args;
     }
 
-
-    private static void ProcessOutput(string fileName, bool reportError, StringBuilder outputSB) {
+    private static bool ProcessOutputAndReturnTrueIfErrorsAreFound(string fileName, bool reportError, StringBuilder outputSB) {
+      bool hasErrors = false;
       string output = outputSB.ToString();
       if (output.Length > 0) {
         output = output.Replace(Path.GetFileName(fileName) + "\r\n", "");
         if (output.Length > 0) Console.Write(output);
         if (reportError && (output.Contains(": error C") || output.Contains(": fatal error C")))
-          VccCommandLineHost.ErrorCount++;
+          hasErrors = true;
       }
+      return hasErrors;
     }
 
-    private static void RunCompiler(string fileName, VccOptions commandLineOptions) {
+    private static bool RunCompiler(string fileName, VccOptions commandLineOptions) {
       string args = GenerateClArgs(fileName, commandLineOptions).ToString();
-      StartClProcess(fileName, "/c /Zs " + args, true, false, null, commandLineOptions);
+      return StartClProcessAndReturnTrueIfErrorsAreFound(fileName, "/c /Zs " + args, true, false, null, commandLineOptions);
     }
 
     private static string RunPreprocessor(string fileName, VccOptions commandLineOptions) {
@@ -84,11 +86,12 @@ namespace Microsoft.Research.Vcc
       string outExtension = ".i";
       if (commandLineOptions.ModifiedPreprocessorFiles) outExtension += "." + System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
       string outFileName = Path.ChangeExtension(fileName, outExtension);
-      StartClProcess(fileName, args + " /E /D_PREFAST_ /DVERIFY /DVERIFY2 /D_USE_DECLSPECS_FOR_SAL", false, true, outFileName, commandLineOptions);
+      if (StartClProcessAndReturnTrueIfErrorsAreFound(fileName, args + " /E /D_PREFAST_ /DVERIFY /DVERIFY2 /D_USE_DECLSPECS_FOR_SAL", false, true, outFileName, commandLineOptions))
+        return null;
       return outFileName;
     }
 
-    private static void StartClProcess(string fileName, string arguments, bool reportError, bool redirect, string outFileName, VccOptions commandLineOptions) {
+    private static bool StartClProcessAndReturnTrueIfErrorsAreFound(string fileName, string arguments, bool reportError, bool redirect, string outFileName, VccOptions commandLineOptions) {
       ProcessStartInfo info = ConfigureStartInfoForClVersion9Or8(commandLineOptions);
       info.Arguments = arguments;
       info.CreateNoWindow = true;
@@ -98,23 +101,14 @@ namespace Microsoft.Research.Vcc
 
       StringBuilder output = new StringBuilder();
       StringBuilder errors = new StringBuilder();
-      StreamWriter outFile = null;
-      if (redirect) {
-        outFile = new StreamWriter(outFileName);
-      }
+      StreamWriter outFile = redirect ? new StreamWriter(outFileName) : null;
 
       try {
         using (Process process = Process.Start(info)) {
           process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs args) {
-            if (args.Data != null) {
-              if (outFile != null) {
-                if (VccCommandLineHost.currentPlugin != null)
-                  VccCommandLineHost.currentPlugin.WritePreProcessed(outFile, args.Data);
-                else
-                  outFile.WriteLine(args.Data);
-              } else
-                output.Append(args.Data).Append("\r\n");
-            }
+            if (args.Data != null)
+              if (outFile != null) outFile.WriteLine(args.Data);
+              else output.Append(args.Data).Append("\r\n");
           };
 
           process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs args) {
@@ -127,12 +121,8 @@ namespace Microsoft.Research.Vcc
           process.BeginOutputReadLine();
           process.WaitForExit();
 
-          if (VccCommandLineHost.currentPlugin != null) {
-            VccCommandLineHost.currentPlugin.FinishPreProcessing(outFile);
-          }
-
-          ProcessOutput(fileName, reportError, output);
-          ProcessOutput(fileName, reportError, errors);
+          output.Append(errors);
+          return ProcessOutputAndReturnTrueIfErrorsAreFound(fileName, reportError, output);
         }
       } finally {
         if (outFile != null) outFile.Dispose();
