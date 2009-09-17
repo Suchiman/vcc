@@ -97,7 +97,8 @@ namespace Microsoft.Research.Vcc
     static bool RunTestSuite(string directoryName, string suiteName, TextReader instream, VccOptions commandLineOptions, bool verify) {
       System.Diagnostics.Debug.Listeners.Remove("Default");
       HostEnvironment hostEnvironment = new HostEnvironment();
-      hostEnvironment.Errors += VccCommandLineHost.ErrorHandler.HandleErrors;
+      var errorHandler = new CciErrorHandler(commandLineOptions);
+      hostEnvironment.Errors += errorHandler.HandleErrors;
       StringBuilder source = null;
       StringBuilder expectedOutput = null;
       StringBuilder actualOutput = null;
@@ -250,6 +251,9 @@ namespace Microsoft.Research.Vcc
             else
               testrunTimeStats.Append("</file>\r\n");
           }
+
+          errorHandler.Reset();
+          VccCommandLineHost.ErrorHandler.ResetReportedErrors();
           compilerParameters = null;
           testCaseParameters = null;
           Console.SetOut(savedOut);
@@ -338,7 +342,6 @@ namespace Microsoft.Research.Vcc
       options.TimeStats = commandLineOptions.TimeStats;
       options.VcOpt.AddRange(commandLineOptions.VcOpt);
 
-      VccCommandLineHost.ErrorHandler.ResetReportedErrors();
       bool errorsInPreprocessor;
       CCompilerHelper.PreprocessAndCompile(options, true, out errorsInPreprocessor);
       StreamReader tempStreamReader = new StreamReader(fileNameI);

@@ -6,38 +6,48 @@ using Microsoft.Boogie;
 
 namespace Microsoft.Research.Vcc
 {
-  class ErrorHandler
+  class CciErrorHandler
   {
-    /// <summary>
-    /// Enumeration of error codes for verification errors
-    /// </summary>
-    public enum ErrorCode : long
-    {
-      AssertionFailed = (long)Cci.Ast.Error.ToBeDefined + 1,
-      PreconditionFailed,
-      PostconditionFailed,
-      RelatedInformation
-    };
+    public CciErrorHandler() { }
 
-    public ErrorHandler(VccOptions commandLineOptions) {
-      this.commandLineOptions = commandLineOptions;
+    public CciErrorHandler(VccOptions commandLineOptions) {
+      this.CommandLineOptions = commandLineOptions;
     }
 
-    private readonly VccOptions commandLineOptions;
-    private readonly Dictionary<string, bool> reportedErrors = new Dictionary<string, bool>();
-    private Dictionary<IToken, List<ErrorCode>> reportedVerificationErrors = new Dictionary<IToken, List<ErrorCode>>();
-    private List<string> errors = new List<string>();
+    public VccOptions CommandLineOptions { get; set; }
 
-    public void ResetReportedErrors() {
-      reportedErrors.Clear();
-      reportedVerificationErrors.Clear();
+    private readonly Dictionary<string, bool> reportedErrors = new Dictionary<string, bool>();
+
+    public void Reset() {
+      this.reportedErrors.Clear();
+    }
+
+    private bool WarningsAsErrors {
+      get { return CommandLineOptions != null ? CommandLineOptions.WarningsAsErrors : false; }
+    }
+
+    private bool WarningIsDisabled(long id) {
+      if (CommandLineOptions == null) return false;
+      return CommandLineOptions.DisabledWarnings.ContainsKey(id);
+    }
+
+    private bool RunningTestSuite {
+      get { return CommandLineOptions != null ? CommandLineOptions.RunTestSuite : false; }
+    }
+
+    private bool VCLikeErrorMessages {
+      get { return CommandLineOptions != null ? CommandLineOptions.VCLikeErrorMessages : false; }
+    }
+
+    private bool NoPreprocessor {
+      get { return CommandLineOptions != null ? CommandLineOptions.NoPreprocessor : false; }
     }
 
     public void HandleErrors(object sender, Microsoft.Cci.ErrorEventArgs args) {
       foreach (IErrorMessage error in args.Errors) {
         ISourceLocation/*?*/ sourceLocation = error.Location as ISourceLocation;
         if (sourceLocation == null) continue;
-        bool isError = !error.IsWarning || commandLineOptions.WarningsAsErrors;
+        bool isError = !error.IsWarning || WarningsAsErrors;
         if (isError) VccCommandLineHost.ErrorCount++;
         CompositeSourceDocument/*?*/ compositeDocument = sourceLocation.SourceDocument as CompositeSourceDocument;
         if (compositeDocument != null) {
@@ -65,13 +75,13 @@ namespace Microsoft.Research.Vcc
           endLine = includedSourceLocation.OriginalEndLine;
         }
         long id = error.IsWarning ? ErrorToId(error.Code) : error.Code;
-        if (commandLineOptions.DisabledWarnings.ContainsKey(id)) return;
+        if (WarningIsDisabled(id)) return;
 
         StringBuilder msgBldr = new StringBuilder();
-        msgBldr.AppendFormat("{0}({1},{2})", commandLineOptions.RunTestSuite ? "testcase" : docName, startLine, startColumn);
+        msgBldr.AppendFormat("{0}({1},{2})", this.RunningTestSuite ? "testcase" : docName, startLine, startColumn);
         //if (commandLineOptions == null || (commandLineOptions.NoPreprocessor && !commandLineOptions.VCLikeErrorMessages))
         //  msgBldr.AppendFormat("-({0},{1})", endLine, endColumn);
-        msgBldr.AppendFormat(" : {0} VC{1:0000}: {2}", isError ? "error" : "warning", commandLineOptions.RunTestSuite && id < 9000 ? 0 : id, error.Message);
+        msgBldr.AppendFormat(" : {0} VC{1:0000}: {2}", isError ? "error" : "warning", this.RunningTestSuite && id < 9000 ? 0 : id, error.Message);
 
         string msg = msgBldr.ToString();
         if (reportedErrors.ContainsKey(msg)) return;
@@ -107,8 +117,8 @@ namespace Microsoft.Research.Vcc
               endLine = includedSourceLocation.OriginalEndLine;
             }
             if (docName != firstErrFile || firstErrLine != startLine) {
-              Console.Write("{0}({1},{2})", commandLineOptions.RunTestSuite ? "testcase" : docName, startLine, startColumn);
-              if (commandLineOptions == null || (commandLineOptions.NoPreprocessor && !commandLineOptions.VCLikeErrorMessages))
+              Console.Write("{0}({1},{2})", this.RunningTestSuite ? "testcase" : docName, startLine, startColumn);
+              if (this.NoPreprocessor && !this.VCLikeErrorMessages)
                 Console.Write("-({0},{1})", endLine, endColumn);
               Console.WriteLine(" : (Location of symbol related to previous {0}.)", isError ? "error" : "warning");
             }
@@ -116,6 +126,48 @@ namespace Microsoft.Research.Vcc
           //TODO: deal with non source locations
         }
       }
+    }
+
+    static long ErrorToId(long code) {
+      switch ((Cci.Ast.Error)code) {
+        case Cci.Ast.Error.ExpressionStatementHasNoSideEffect:
+          return 9001;
+      }
+
+      switch ((Vcc.Error)code) {
+        case Vcc.Error.DiscardedContractAtDefinition:
+          return 9002;
+        case Vcc.Error.SizeOfUnknown:
+          return 9003;
+      }
+
+      return code;
+    }
+  }
+
+  class VerificationErrorHandler
+  {
+    /// <summary>
+    /// Enumeration of error codes for verification errors
+    /// </summary>
+    public enum ErrorCode : long
+    {
+      AssertionFailed = (long)Cci.Ast.Error.ToBeDefined + 1,
+      PreconditionFailed,
+      PostconditionFailed,
+      RelatedInformation
+    };
+
+    public VerificationErrorHandler(VccOptions commandLineOptions) {
+      this.commandLineOptions = commandLineOptions;
+    }
+
+    private readonly VccOptions commandLineOptions;
+    private Dictionary<IToken, List<ErrorCode>> reportedVerificationErrors = new Dictionary<IToken, List<ErrorCode>>();
+    private List<string> errors = new List<string>();
+
+    public void ResetReportedErrors() {
+      reportedVerificationErrors.Clear();
     }
 
 
@@ -166,7 +218,7 @@ namespace Microsoft.Research.Vcc
 
 
 
-    private bool ReportError(IToken tok, ErrorHandler.ErrorCode code, string fmt, params string[] args) {
+    private bool ReportError(IToken tok, VerificationErrorHandler.ErrorCode code, string fmt, params string[] args) {
       if (ErrorHasBeenReported(tok, code)) return false;
       string msg = string.Format("{0}({1},{2}) : error {3}: {4}.",
                                  commandLineOptions.RunTestSuite ? "testcase" : tok.filename, tok.line, tok.col,
@@ -326,13 +378,13 @@ namespace Microsoft.Research.Vcc
     private static string ErrorCodeToString(ErrorCode errCode) {
       long id;
       switch (errCode) {
-        case ErrorHandler.ErrorCode.AssertionFailed:
+        case VerificationErrorHandler.ErrorCode.AssertionFailed:
           id = 9500; break;
-        case ErrorHandler.ErrorCode.PostconditionFailed:
+        case VerificationErrorHandler.ErrorCode.PostconditionFailed:
           id = 9501; break;
-        case ErrorHandler.ErrorCode.PreconditionFailed:
+        case VerificationErrorHandler.ErrorCode.PreconditionFailed:
           id = 9502; break;
-        case ErrorHandler.ErrorCode.RelatedInformation:
+        case VerificationErrorHandler.ErrorCode.RelatedInformation:
           id = 9599; break;
         default:
           id = (long)errCode; break;
@@ -357,24 +409,8 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private static bool IsStandaloneError(ErrorHandler.ErrorCode num) {
+    private static bool IsStandaloneError(VerificationErrorHandler.ErrorCode num) {
       return (int)num >= 8000 && (int)num < 8500;
-    }
-
-    static long ErrorToId(long code) {
-      switch ((Cci.Ast.Error)code) {
-        case Cci.Ast.Error.ExpressionStatementHasNoSideEffect:
-          return 9001;
-      }
-
-      switch ((Vcc.Error)code) {
-        case Vcc.Error.DiscardedContractAtDefinition:
-          return 9002;
-        case Vcc.Error.SizeOfUnknown:
-          return 9003;
-      }
-
-      return code;
     }
 
     internal static double GetTime() {
