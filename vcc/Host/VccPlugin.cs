@@ -271,6 +271,7 @@ namespace Microsoft.Research.Vcc
       }
 
       if (numErrors != 0) {
+        VccCommandLineHost.ErrorCount++;
         if (!parent.options.RunTestSuite) {
           Console.WriteLine("attempting to dump BPL to buggy.bpl");
           using(TokenTextWriter writer = new TokenTextWriter("buggy.bpl"))
@@ -411,8 +412,7 @@ namespace Microsoft.Research.Vcc
         return pp;
       } finally {
         swBoogie.Stop();
-      }
-      
+      }   
     }
   }
 
@@ -548,5 +548,4 @@ namespace Microsoft.Research.Vcc
     outer: ;
     }
   }
-
 }
