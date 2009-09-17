@@ -130,7 +130,7 @@ namespace Microsoft.Research.Vcc
 
       string logPath = CommandLineOptions.Clo.SimplifyLogFilePath;
       if (logPath != null)
-        logPath = logPath.Replace("@VCCFILE@", VccCommandLineHost.currentTestcaseName);
+        logPath = logPath.Replace("@VCCFILE@", TestRunner.currentTestcaseName);
       if (logPath != null && logPath.Contains("@VCCFUNC@")) {
         logPath = logPath.Replace("@VCCFUNC@", funcName.Replace("$", "_").Replace("^", "_"));
         CloseVcGen();
