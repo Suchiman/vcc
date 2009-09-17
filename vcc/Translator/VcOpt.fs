@@ -202,7 +202,7 @@ namespace Microsoft.Research.Vcc
           | e -> e
           
         let rec findFunctions (fns:Map<_,FunctionDef>) = function
-          | Forall (vars, _, _, body) ->
+          | Forall (_, vars, _, _, body) ->
             //info ("do forall " + body.ToString())
             match stripGoodState body with
               | App (("==>"|"<==>"|"==") as op, [App (name, args); body]) ->
@@ -358,7 +358,7 @@ namespace Microsoft.Research.Vcc
                 | Some f -> 
                   List.iter (update (name :: fns) ctx) (f.Implications args)
                 | None -> ()
-          | Forall ([(ptr, Type.Ref "$ptr")], _, _, body) ->
+          | Forall (_, [(ptr, Type.Ref "$ptr")], _, _, body) ->
             let heapPair = ref None
             let find = function
               | App (("$st_eq"|"$ts_eq"|"$mem_eq"), [s1; s2; Ref ptr']) when ptr = ptr' ->

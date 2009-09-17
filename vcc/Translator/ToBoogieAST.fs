@@ -154,9 +154,9 @@ namespace Microsoft.Research.Vcc
           let triggers = doTrig quant.Triggers
           let body = unparse quant.Body
           if (quant :? Boogie.ExistsExpr) then
-            Exists (dummies, triggers, unparseAttr quant.Attributes, body)
+            Exists (BoogieToken.Strip quant.tok, dummies, triggers, unparseAttr quant.Attributes, body)
           else
-            Forall (dummies, triggers, unparseAttr quant.Attributes, body)
+            Forall (BoogieToken.Strip quant.tok, dummies, triggers, unparseAttr quant.Attributes, body)
         | s -> 
           //System.Console.WriteLine ("cannot unparse " + s.ToString())
           failwith ("cannot unparse " + s.ToString())
