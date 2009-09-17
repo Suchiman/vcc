@@ -308,7 +308,7 @@ namespace Microsoft.Research.Vcc
                                string test, StringBuilder actualOutput, VccOptions commandLineOptions, List<string> compilerParameters, List<string> testCaseParameters,
                                bool verify) {
 
-      VccCommandLineHost.ResetErrorCount();
+      VccCommandLineHost.ErrorCount = 0;
       bool keepPreprocessorOutput = false;
       string fileNameC = fileNameWithoutExt + ".c";
       string fileNameI = fileNameWithoutExt + ".i";
@@ -339,7 +339,7 @@ namespace Microsoft.Research.Vcc
       options.VcOpt.AddRange(commandLineOptions.VcOpt);
 
       VccCommandLineHost.ResetReportedErrors();
-      VccCommandLineHost.Preprocess(options, false);
+      CCompilerHelper.Preprocess(options, false);
       StreamReader tempStreamReader = new StreamReader(fileNameI);
       test = tempStreamReader.ReadToEnd();
       tempStreamReader.Close();
