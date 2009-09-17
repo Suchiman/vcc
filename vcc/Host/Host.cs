@@ -78,7 +78,6 @@ namespace Microsoft.Research.Vcc
     }
 
     static ErrorHandler errorHandler;
-
     static PluginManager pluginManager;
 
     private static void PrintPluginMessage(object sender, string message)
@@ -192,15 +191,16 @@ namespace Microsoft.Research.Vcc
     }
 
     static void RunPlugin(VccOptions commandLineOptions) {
-      var processedFiles = CCompilerHelper.Preprocess(commandLineOptions);
-      if (errorCount > 0) return;
+      bool errorsInPreprocessor;
+      var processedFiles = CCompilerHelper.PreprocessAndCompile(commandLineOptions, false, out errorsInPreprocessor);
+      if (errorsInPreprocessor) return;
       using (var fnEnum = commandLineOptions.FileNames.GetEnumerator())
       using (var ppEnum = processedFiles.GetEnumerator())
       while (fnEnum.MoveNext() && ppEnum.MoveNext())
         RunPlugin(fnEnum.Current, ppEnum.Current, commandLineOptions);
     }
 
-    public static Plugin currentPlugin;
+    private static Plugin currentPlugin;
     private static void RunPlugin(string fileName, string ppFileName, VccOptions commandLineOptions)
     {
       HostEnvironment hostEnvironment = new HostEnvironment();

@@ -50,8 +50,6 @@ namespace Microsoft.Research.Vcc
    abstract IsModular : unit -> bool
    abstract UseCommandLineOptions : GList<string> -> unit
    abstract UseVccOptions : VccOptions -> unit
-   abstract WritePreProcessed : System.IO.StreamWriter * string -> unit
-   abstract FinishPreProcessing : System.IO.StreamWriter -> unit
    // depending on IsModular one uses FunctionVerifier or method Verify
    abstract GetFunctionVerifier : string * Helper.Env * list<Top> -> FunctionVerifier
    abstract Verify : string * Helper.Env * list<Top> -> unit
@@ -61,8 +59,6 @@ namespace Microsoft.Research.Vcc
    default this.GetFunctionVerifier (_, _, _) = raise (System.NotImplementedException())
    default this.Verify (_, _, _) = raise (System.NotImplementedException())
    default this.UseVccOptions _ = ()
-   default this.WritePreProcessed (sw, s) = sw.WriteLine s
-   default this.FinishPreProcessing sw = ()
 
 
    member this.MessageHandler = messageHandlerEvent
