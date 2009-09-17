@@ -80,8 +80,13 @@ namespace Microsoft.Research.Vcc
 
     let removeDuplicates l =
       let elements = new Dict<_,bool>()
-      List.iter (fun e -> elements.[e] <- true) l
-      List.filter (fun e ->elements.ContainsKey(e)) l
+      let rec loop = function
+        | [] -> []
+        | x::xs ->
+          match elements.TryGetValue x with
+            | true, _ -> loop xs
+            | false, _ -> elements.Add(x, true); x :: loop xs
+      loop l
 
     let hasRecordAttr = List.exists (function C.VccAttr ("record", _) -> true | _ -> false)
 
@@ -280,7 +285,8 @@ namespace Microsoft.Research.Vcc
                     List.concat [ for d in fd.Declarations -> convCustomAttributes (token d) d.Attributes ]
                   | _ -> []
                 let attrsFromDef = convCustomAttributes (token def) def.Attributes
-                decl.CustomAttr <- removeDuplicates attrsFromDef @ attrsFromDecls
+                decl.CustomAttr <- removeDuplicates (attrsFromDef @ attrsFromDecls)
+                if decl.CustomAttr.Length = 4 then System.Diagnostics.Debugger.Break()
                 (def.Body :?> ISourceMethodBody).Block
               | _ -> null
           if block = null then
