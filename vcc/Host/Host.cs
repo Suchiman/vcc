@@ -33,28 +33,31 @@ namespace Microsoft.Research.Vcc
       Microsoft.Boogie.Z3.Factory x = new Microsoft.Boogie.Z3.Factory();
 
       startTime = GetTime();
-      commandLineOptions = OptionParser.ParseCommandLineArguments(hostEnvironment, args);
+      // as we do not know the command line arguments, create an error handle with null and replace it later
+      cciErrorHandler = new CciErrorHandler();
+      hostEnvironment.Errors += cciErrorHandler.HandleErrors;
+      var commandLineOptions = OptionParser.ParseCommandLineArguments(hostEnvironment, args);
       commandLineOptions.RunningFromCommandLine = true;
-      errorHandler = new ErrorHandler(commandLineOptions);
-      hostEnvironment.Errors += errorHandler.HandleErrors;
+      cciErrorHandler.CommandLineOptions = commandLineOptions;
+      verificationErrorHandler = new VerificationErrorHandler(commandLineOptions);
       
       if (commandLineOptions.DisplayCommandLineHelp) {
         DisplayCommandLineHelp();
         return 0;
       }
       if (commandLineOptions.DisplayVersion) {
-        DisplayVersion();
+        DisplayVersion(commandLineOptions.XmlFormatOutput);
         return 0;
       }
 
-      if ((currentPlugin = InitializePlugin()) == null) {
-        Console.WriteLine("Exiting with 3 - error initializing plugin.");
-        return 3;
+      if (errorCount > 0) {
+        Console.WriteLine("Exiting with 1 - error parsing arguments.");
+        return 1;
       }
 
-      if (errorCount > 0) {
-        Console.WriteLine("Exiting with 1 ({0} errors.)", errorCount);
-        return 1;
+      if ((currentPlugin = InitializePlugin(commandLineOptions)) == null) {
+        Console.WriteLine("Exiting with 2 - error initializing plugin.");
+        return 2;
       }
 
       if (commandLineOptions.RunTestSuite)
@@ -66,8 +69,11 @@ namespace Microsoft.Research.Vcc
 
       DumpTimes(commandLineOptions);
 
+      int retVal = 0;
+
       if (errorCount > 0) {
-        Console.WriteLine("Exiting with 2 ({0} errors).", errorCount);
+        Console.WriteLine("Exiting with 3 ({0} error(s).)", errorCount);
+        retVal = 3;
       }
 
       if (commandLineOptions.PauseBeforeExit) {
@@ -75,14 +81,15 @@ namespace Microsoft.Research.Vcc
         Console.ReadKey();
       }
 
-      return errorCount > 0 ? 2 : 0;
+      return retVal;
     }
 
-    internal static ErrorHandler ErrorHandler {
-      get { return errorHandler; }
+    internal static VerificationErrorHandler ErrorHandler {
+      get { return verificationErrorHandler; }
     }
 
-    static ErrorHandler errorHandler;
+    static VerificationErrorHandler verificationErrorHandler;
+    static CciErrorHandler cciErrorHandler;
     static PluginManager pluginManager;
 
     private static void PrintPluginMessage(object sender, string message)
@@ -95,7 +102,7 @@ namespace Microsoft.Research.Vcc
     static Stopwatch swPrelude = new Stopwatch("Prelude");
     static Stopwatch swTotal = new Stopwatch("Total");
 
-    private static Plugin InitializePlugin()
+    private static Plugin InitializePlugin(VccOptions commandLineOptions)
     {
       try {
         string pluginName = null;
@@ -161,7 +168,6 @@ namespace Microsoft.Research.Vcc
       return null;
     }
 
-    private static VccOptions commandLineOptions;
     private static double startTime;
     internal static HostEnvironment hostEnvironment = new HostEnvironment();
 
@@ -179,9 +185,9 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private static void DisplayVersion() {
+    private static void DisplayVersion(bool formatAsXml) {
       string fileVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location).FileVersion;
-      if (commandLineOptions.XmlFormatOutput) {
+      if (formatAsXml) {
         Console.WriteLine("<version>" + fileVersionString + "</version>");
       } else {
         System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
@@ -210,7 +216,7 @@ namespace Microsoft.Research.Vcc
     private static void RunPlugin(string fileName, string ppFileName, VccOptions commandLineOptions)
     {
       HostEnvironment hostEnvironment = new HostEnvironment();
-      hostEnvironment.Errors += errorHandler.HandleErrors;
+      hostEnvironment.Errors += new CciErrorHandler(commandLineOptions).HandleErrors;
       IName assemName = hostEnvironment.NameTable.GetNameFor(Path.GetFileNameWithoutExtension(fileName));
       IName docName = hostEnvironment.NameTable.GetNameFor(Path.GetFileName(fileName));
       List<IAssemblyReference> assemblyReferences = new List<IAssemblyReference>();
@@ -301,8 +307,6 @@ namespace Microsoft.Research.Vcc
       return -2;
     }
 
-    private static double methodVerificationTime;
-
     private static void VerifyFunctions(VccOptions commandLineOptions, string fileName, FunctionVerifier fver)
     {
       double beforeBoogie = GetTime();
@@ -338,7 +342,7 @@ namespace Microsoft.Research.Vcc
         }
 
         var outcome = fver.Verify(funcName);
-        errorHandler.FlushErrors();
+        verificationErrorHandler.FlushErrors();
 
         if (outcome == VerificationResult.Succeeded || outcome == VerificationResult.Skipped) { } else { numErrors++; }
       }
@@ -361,8 +365,6 @@ namespace Microsoft.Research.Vcc
       }
 
       double now = GetTime();
-      methodVerificationTime += now - beforeMethods;
-
       fver.Close();
 
       if (commandLineOptions.TimeStats) {
@@ -497,13 +499,6 @@ namespace Microsoft.Research.Vcc
       } else {
         return prelude;
       }
-    }
-
-    internal static string TokenLocation(IToken tok) {
-      if (commandLineOptions == null || commandLineOptions.NoPreprocessor)
-        return string.Format("{0}({1},{2})", tok.filename, tok.line, tok.col);
-      else
-        return string.Format("{0}({1})", tok.filename, tok.line);
     }
 
     internal static double GetTime() {

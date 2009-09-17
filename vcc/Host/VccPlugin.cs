@@ -165,7 +165,7 @@ namespace Microsoft.Research.Vcc
         }
       }
 
-      var reporter = new ErrorReporter(parent.options, impl.Proc.Name, start);
+      var reporter = new ErrorReporter(parent.options, impl.Proc.Name, start, VccCommandLineHost.ErrorHandler);
 
       bool hasStartHere = false;
       try {
@@ -427,14 +427,16 @@ namespace Microsoft.Research.Vcc
     double prevTime;
     VccOptions commandLineOptions;
     List<string> proverWarnings;
+    VerificationErrorHandler errorHandler;
 
-    public ErrorReporter(VccOptions opts, string name, double startTime)
+    public ErrorReporter(VccOptions opts, string name, double startTime, VerificationErrorHandler errorHandler)
     {
       this.name = name;
       this.startTime = startTime;
       this.prevTime = VccCommandLineHost.GetTime();
       this.commandLineOptions = opts;
       this.proverWarnings = new List<string>();
+      this.errorHandler = errorHandler;
     }
 
     public void PrintSummary(VC.VCGen.Outcome outcome)
@@ -447,7 +449,7 @@ namespace Microsoft.Research.Vcc
       if (!this.outcomeReported) {
         this.outcomeReported = true;
         this.lineDirty = false;
-        VccCommandLineHost.ErrorHandler.ReportOutcomeMethodSummary(outcome, addInfo, this.name, this.startTime, this.proverWarnings);
+        this.errorHandler.ReportOutcomeMethodSummary(outcome, addInfo, this.name, this.startTime, this.proverWarnings);
       }
 
       if (this.lineDirty) {
@@ -464,7 +466,7 @@ namespace Microsoft.Research.Vcc
     public override void OnCounterexample(Counterexample ce, string message)
     {
       this.PrintSummary(VC.VCGen.Outcome.Errors);
-      VccCommandLineHost.ErrorHandler.ReportCounterexample(ce, message);
+      this.errorHandler.ReportCounterexample(ce, message);
     }
 
     public override void OnOutOfMemory(string reason)
@@ -506,12 +508,19 @@ namespace Microsoft.Research.Vcc
       }
     }
 
+    private string TokenLocation(IToken tok) {
+      if (commandLineOptions == null || commandLineOptions.NoPreprocessor)
+        return string.Format("{0}({1},{2})", tok.filename, tok.line, tok.col);
+      else
+        return string.Format("{0}({1})", tok.filename, tok.line);
+    }
+
     private bool ReportUnreachable(IToken tok)
     {
       if (tok.filename == null || tok.filename == "") return false;
       PrintSummary(VC.VCGen.Outcome.Correct); // it is correct, but
       Console.WriteLine("{0}: found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)", 
-                        VccCommandLineHost.TokenLocation(tok));
+                        TokenLocation(tok));
       return true;
     }
 
