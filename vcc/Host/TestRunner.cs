@@ -370,6 +370,5 @@ namespace Microsoft.Research.Vcc
     }
 
     public static StringBuilder testrunTimeStats = new StringBuilder();
-
   }
 }

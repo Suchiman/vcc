@@ -380,5 +380,6 @@ namespace Microsoft.Research.Vcc
     internal static double GetTime() {
       return System.Environment.TickCount / 1000.0;
     }
+
   }
 }

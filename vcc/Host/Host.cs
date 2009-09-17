@@ -37,8 +37,7 @@ namespace Microsoft.Research.Vcc
       commandLineOptions.RunningFromCommandLine = true;
       errorHandler = new ErrorHandler(commandLineOptions);
       hostEnvironment.Errors += errorHandler.HandleErrors;
-      InitializePlugin();
-
+      
       if (commandLineOptions.DisplayCommandLineHelp) {
         DisplayCommandLineHelp();
         return 0;
@@ -47,8 +46,14 @@ namespace Microsoft.Research.Vcc
         DisplayVersion();
         return 0;
       }
+
+      if ((currentPlugin = InitializePlugin()) == null) {
+        Console.WriteLine("Exiting with 3 - error initializing plugin.");
+        return 3;
+      }
+
       if (errorCount > 0) {
-        System.Console.WriteLine("Exiting with 1 ({0} errors)", errorCount);
+        Console.WriteLine("Exiting with 1 ({0} errors.)", errorCount);
         return 1;
       }
 
@@ -62,7 +67,7 @@ namespace Microsoft.Research.Vcc
       DumpTimes(commandLineOptions);
 
       if (errorCount > 0) {
-        System.Console.WriteLine("Exiting with 2 ({0} errors)", errorCount);
+        Console.WriteLine("Exiting with 2 ({0} errors).", errorCount);
       }
 
       if (commandLineOptions.PauseBeforeExit) {
@@ -90,14 +95,15 @@ namespace Microsoft.Research.Vcc
     static Stopwatch swPrelude = new Stopwatch("Prelude");
     static Stopwatch swTotal = new Stopwatch("Total");
 
-    private static void InitializePlugin()
+    private static Plugin InitializePlugin()
     {
       try {
         string pluginName = null;
+        Plugin selectedPlugin = null;
 
         if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp) {
           pluginManager = new PluginManager(commandLineOptions);
-          string pluginDir = PathHelper.ProbeForPluginDir();
+          string pluginDir = PathHelper.PluginDir;
           if (pluginDir != null)  pluginManager.AddPluginDirectory(pluginDir);
           pluginManager.Discover();
           foreach (var opt in commandLineOptions.PluginOptions.Keys) {
@@ -105,47 +111,46 @@ namespace Microsoft.Research.Vcc
             if (pluginName == null) {
               pluginName = opt;
             } else {
-              System.Console.WriteLine("More than one plugin requested ('{0}' and '{1}')", pluginName, opt);
-              errorCount++;
+              System.Console.WriteLine("More than one plugin requested ('{0}' and '{1}').", pluginName, opt);
+              return null;
             }
           }
 
           if (pluginName != null) {
             foreach (var plugin in pluginManager.Plugins) {
               if (string.Compare(pluginName, plugin.Name(), true) == 0) {
-                if (currentPlugin != null) {
-                  System.Console.WriteLine("More than one plugin matches '{0}'", pluginName);
-                  errorCount++;
+                if (selectedPlugin != null) {
+                  System.Console.WriteLine("More than one plugin matches '{0}'.", pluginName);
+                  return null;
                 }
-                currentPlugin = plugin;
+                selectedPlugin = plugin;
               }
             }
-            if (currentPlugin == null) {
-              System.Console.WriteLine("Plugin '{0}' not found", pluginName);
-              errorCount++;
+            if (selectedPlugin == null) {
+              System.Console.WriteLine("Plugin '{0}' not found.", pluginName);
+              return null;
             }
           }
         }
 
-        if (currentPlugin == null) {
-          currentPlugin = new VccPlugin();
-        }
+        if (selectedPlugin == null) selectedPlugin = new VccPlugin(); // the default
 
-        currentPlugin.RegisterStopwatch(swTotal);
-        currentPlugin.RegisterStopwatch(swVisitor);
-        currentPlugin.RegisterStopwatch(swPlugin);
-        currentPlugin.RegisterStopwatch(swPrelude);
-
-        currentPlugin.MessageHandler.AddHandler(new Microsoft.FSharp.Control.Handler<string>(PrintPluginMessage));
+        selectedPlugin.RegisterStopwatch(swTotal);
+        selectedPlugin.RegisterStopwatch(swVisitor);
+        selectedPlugin.RegisterStopwatch(swPlugin);
+        selectedPlugin.RegisterStopwatch(swPrelude);
+        selectedPlugin.MessageHandler.AddHandler(new Microsoft.FSharp.Control.Handler<string>(PrintPluginMessage));
 
         try {
           swPlugin.Start();
-          currentPlugin.UseVccOptions(commandLineOptions);
+          selectedPlugin.UseVccOptions(commandLineOptions);
           if (pluginName != null)
-            currentPlugin.UseCommandLineOptions(commandLineOptions.PluginOptions[pluginName]);
+            selectedPlugin.UseCommandLineOptions(commandLineOptions.PluginOptions[pluginName]);
         } finally {
           swPlugin.Stop();
         }
+
+        return selectedPlugin;
 
       } catch (System.Reflection.ReflectionTypeLoadException e) {
         foreach (Exception ex in e.LoaderExceptions) {
@@ -153,6 +158,7 @@ namespace Microsoft.Research.Vcc
           Console.WriteLine(ex.StackTrace);
         }
       }
+      return null;
     }
 
     private static VccOptions commandLineOptions;
@@ -426,7 +432,7 @@ namespace Microsoft.Research.Vcc
     private static Program GetCEVPrelude()
     {
 
-        string headersDir = PathHelper.ProbeForVccHeaders(false);
+        string headersDir = PathHelper.GetVccHeaderDir(false);
 
         System.IO.Stream stream = null;
         if (cevPreludeLines == null)
@@ -474,7 +480,7 @@ namespace Microsoft.Research.Vcc
 
     private static Program GetStandardPrelude() {
 
-      string preludePath = PathHelper.ProbeForPrelude();
+      string preludePath = PathHelper.PreludePath;
       if (standardPreludeLines == null) {
         var lines = File.ReadAllLines(preludePath, Encoding.UTF8);
         standardPreludeLines = new List<string>(lines);

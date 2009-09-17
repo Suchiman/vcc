@@ -58,7 +58,7 @@ namespace Microsoft.Research.Vcc
         args.Append(' ');
         args.Append(ppOption);
       }
-      string/*?*/ vccHeaders = PathHelper.ProbeForVccHeaders(true);
+      string/*?*/ vccHeaders = PathHelper.GetVccHeaderDir(true);
       if (vccHeaders != null) {
         args.Append(" /I");
         args.Append(vccHeaders);

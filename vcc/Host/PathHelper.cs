@@ -13,7 +13,7 @@ namespace Microsoft.Research.Vcc
 {
   static class PathHelper
   {
-    public static string/*?*/ ProbeForVccHeaders(bool quoteResult) {
+    public static string/*?*/ GetVccHeaderDir(bool quoteResult) {
       if (cachedVccHeaderDirectory == null) {
         var dir = new FileInfo(typeof(PathHelper).Assembly.Location).Directory;
         while (dir != null && dir.Exists) {
@@ -36,18 +36,22 @@ namespace Microsoft.Research.Vcc
 
     private static DirectoryInfo cachedVccHeaderDirectory;
 
-    public static string/*?*/ ProbeForPluginDir() {
-      PathHelper.ProbeForVccHeaders(false);
-      if (cachedVccHeaderDirectory == null) return null;
-      DirectoryInfo[] candidates = cachedVccHeaderDirectory.Parent.GetDirectories("Plugins");
-      if (candidates.Length > 0) return candidates[0].FullName;
-      return null;
+    public static string/*?*/ PluginDir {
+      get {
+        PathHelper.GetVccHeaderDir(false);
+        if (cachedVccHeaderDirectory == null) return null;
+        DirectoryInfo[] candidates = cachedVccHeaderDirectory.Parent.GetDirectories("Plugins");
+        if (candidates.Length > 0) return candidates[0].FullName;
+        return null;
+      }
     }
 
-    public static string ProbeForPrelude() {
-      string headersDir = PathHelper.ProbeForVccHeaders(false);
-      if (headersDir != null) return System.IO.Path.Combine(headersDir, "VccPrelude.bpl");
-      return null;
+    public static string PreludePath {
+      get {
+        string headersDir = PathHelper.GetVccHeaderDir(false);
+        if (headersDir != null) return System.IO.Path.Combine(headersDir, "VccPrelude.bpl");
+        return null;
+      }
     }
   }
 }
