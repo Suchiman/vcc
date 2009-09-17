@@ -48,8 +48,8 @@ namespace Microsoft.Research.Vcc
       | ArrayIndex of Expr * list<Expr>
       | ArrayUpdate of Expr * list<Expr> * Expr
       | Old of Expr
-      | Exists of list<Var> * list<list<Expr>> * list<Attribute> * Expr
-      | Forall of list<Var> * list<list<Expr>> * list<Attribute> * Expr
+      | Exists of Token * list<Var> * list<list<Expr>> * list<Attribute> * Expr // may generate warnings
+      | Forall of Token * list<Var> * list<list<Expr>> * list<Attribute> * Expr // may generate warnings
       
       override this.ToString () = toString this.WriteTo
       
@@ -116,10 +116,10 @@ namespace Microsoft.Research.Vcc
             wr "old("
             self e
             wr ")"
-          | Exists (vars, triggers, attrs, expr) ->
+          | Exists (_, vars, triggers, attrs, expr) ->
             wr "(exists "
             quant (vars, triggers, attrs, expr)
-          | Forall (vars, triggers, attrs, expr) ->
+          | Forall (_, vars, triggers, attrs, expr) ->
             wr "(forall "
             quant (vars, triggers, attrs, expr)
 
@@ -186,8 +186,8 @@ namespace Microsoft.Research.Vcc
         | Type.Bv n -> Microsoft.Boogie.BvType n :> Microsoft.Boogie.Type
 
 
-    let trBound (n, t) = 
-      (Microsoft.Boogie.BoundVariable (noToken, Microsoft.Boogie.TypedIdent (noToken, n, trType t)) :> Microsoft.Boogie.Variable)
+    let trBound tok (n, t) = 
+      (Microsoft.Boogie.BoundVariable (tok, Microsoft.Boogie.TypedIdent (tok, n, trType t)) :> Microsoft.Boogie.Variable)
 
     let trConstant (n, t) unique = 
       (Microsoft.Boogie.Constant (noToken, Microsoft.Boogie.TypedIdent (noToken, n, trType t), unique) :> Microsoft.Boogie.Variable)
@@ -236,14 +236,14 @@ namespace Microsoft.Research.Vcc
           Microsoft.Boogie.NAryExpr (noToken, Boogie.MapStore (noToken, ie.Length), toExprSeq (a :: ie @ [v])) :> Microsoft.Boogie.Expr
         | Old e ->
           Microsoft.Boogie.OldExpr (noToken, trExpr e) :> Microsoft.Boogie.Expr // TODO: in AbsyExpr.scc we have OldExpr : Expr, AI.IFunApp // HACK ???
-        | Exists (vl, tl, attrs, e) ->
-          let vars = Boogie.VariableSeq(List.to_array (List.map trBound vl))          
+        | Exists (token, vl, tl, attrs, e) ->
+          let vars = Boogie.VariableSeq(List.to_array (List.map (trBound (tok token)) vl))          
           let attrs = toAttributesList attrs
-          Boogie.ExistsExpr (noToken, Boogie.TypeVariableSeq [| |], vars, attrs, toTriggersList tl, trExpr e) :> Microsoft.Boogie.Expr
-        | Forall (vl, tl, attrs, e) -> 
-          let vars = Boogie.VariableSeq(List.to_array (List.map trBound vl))          
+          Boogie.ExistsExpr (tok token, Boogie.TypeVariableSeq [| |], vars, attrs, toTriggersList tl, trExpr e) :> Microsoft.Boogie.Expr
+        | Forall (token, vl, tl, attrs, e) -> 
+          let vars = Boogie.VariableSeq(List.to_array (List.map (trBound (tok token)) vl))          
           let attrs = toAttributesList attrs
-          Boogie.ForallExpr (noToken, Boogie.TypeVariableSeq [| |], vars, attrs, toTriggersList tl, trExpr e) :> Microsoft.Boogie.Expr
+          Boogie.ForallExpr (tok token, Boogie.TypeVariableSeq [| |], vars, attrs, toTriggersList tl, trExpr e) :> Microsoft.Boogie.Expr
 
     // TODO: In case the trigger is {foo(x,y) != const}, should we make it {foo(x,y)}? Does != work in triggers?
     and toTriggersList (l:list<list<Expr>>) =
@@ -526,8 +526,8 @@ namespace Microsoft.Research.Vcc
               | Old e -> Old (self e)
               // Note that the map function is not applied to the attributes.
               // These are usually used for weights and similar stuff anyhow.
-              | Exists (vars, triggers, attrs, body) ->
-                Exists (vars, List.map selfs triggers, attrs, self body)
-              | Forall (vars, triggers, attrs, body) ->
-                Forall (vars, List.map selfs triggers, attrs, self body)
+              | Exists (token, vars, triggers, attrs, body) ->
+                Exists (token, vars, List.map selfs triggers, attrs, self body)
+              | Forall (token, vars, triggers, attrs, body) ->
+                Forall (token, vars, List.map selfs triggers, attrs, self body)
                 

@@ -359,7 +359,7 @@ namespace Microsoft.Research.Vcc
                 match t2 with
                   | C.Type.Integer _ -> 
                     bCall "$unchecked" [toTypeId t2; v], 
-                      [B.Decl.Axiom (B.Expr.Forall (["M", tp; "p", bt1], [], weight "select-map-eq", 
+                      [B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["M", tp; "p", bt1], [], weight "select-map-eq", 
                                                     bCall "$in_range_t" [toTypeId t2; bCall sel [er "M"; er "p"]]))]
                   | _ -> v, []
               let selStorPP = 
@@ -372,8 +372,8 @@ namespace Microsoft.Research.Vcc
                          B.Decl.Function (mapType, [B.StringAttr("external", "ITE"); B.StringAttr("bvz", "ITE"); B.StringAttr("bvint", "ITE")], ite, ["c", B.Type.Bool; "a", mapType; "b", mapType]);
                          B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1]);
                          B.Decl.Function (tp, [], stor, mpv);
-                         B.Decl.Axiom (B.Expr.Forall (mpv, [], weight "select-map-eq", selStorPP));
-                         B.Decl.Axiom (B.Expr.Forall (mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
+                         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", selStorPP));
+                         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
                         ] @ inRange
               tokenConstants := fns @ !tokenConstants
             tp
@@ -417,7 +417,7 @@ namespace Microsoft.Research.Vcc
               let fromIntName = "$int_to_" + suff
               let fromInt = B.Decl.Function (t, [], fromIntName, [("x", B.Type.Int)])
               let both = bCall fromIntName [bCall toIntName [er "#x"]]
-              let ax1 = B.Decl.Axiom (B.Expr.Forall ([("#x", t)], [], weight "conversion", bEq (er "#x") both)) 
+              let ax1 = B.Decl.Axiom (B.Expr.Forall (Token.NoToken, [("#x", t)], [], weight "conversion", bEq (er "#x") both)) 
               tokenConstants := toInt :: fromInt :: ax1 :: !tokenConstants
             suff
       
@@ -877,7 +877,7 @@ namespace Microsoft.Research.Vcc
             let trVar v =
               (varName v, bvType expr v.Type)
             let vars = List.map trVar q.Variables
-            B.Forall (vars, [], weight "user-bv", body)
+            B.Forall (c.Token, vars, [], weight "user-bv", body)
           
           | C.Expr.Ref (_, ({ Kind = C.QuantBound } as v)) ->
             varRef v
@@ -1053,8 +1053,8 @@ namespace Microsoft.Research.Vcc
                 | _ -> None
               expr.Map aux              
             match q.Kind with
-              | C.Forall -> B.Forall (vars, triggers, weight "user-forall", stripPtrCast body)
-              | C.Exists -> B.Exists (vars, triggers, weight "user-exists", stripPtrCast body)
+              | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", stripPtrCast body)
+              | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", stripPtrCast body)
               | C.Lambda -> die()
           
           | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
@@ -1369,7 +1369,7 @@ namespace Microsoft.Research.Vcc
           if nestingExtents then 
             bAnd (f p) (bOr (bCall "$is_primitive" [bCall "$typ" [p]]) (bCall "$is_non_primitive" [bCall "$typ" [p]]))
           else f p
-        B.Expr.Forall ([(name, tpPtr)], dont_inst p, weight "dont-inst", bImpl precond (inWritesOrIrrelevant use_wr env p None))
+        B.Expr.Forall (Token.NoToken, [(name, tpPtr)], dont_inst p, weight "dont-inst", bImpl precond (inWritesOrIrrelevant use_wr env p None))
          
       and inWritesOrIrrelevant use_wr env (e:B.Expr) (origPrim:option<C.Expr>) =
         let prim = origPrim.IsSome
@@ -1410,7 +1410,7 @@ namespace Microsoft.Research.Vcc
         incr claimStateId
         let ms = [er cs]
         let use_claim = bCall "$valid_claim" (ms @ [claim])
-        B.Expr.Forall ([(cs, tpState)], [[use_claim]], weight "claims",
+        B.Expr.Forall (Token.NoToken, [(cs, tpState)], [[use_claim]], weight "claims",
              bImpl use_claim (claimIn env claim (er cs) expr))      
       
       and vsTrans env p =
@@ -1488,7 +1488,7 @@ namespace Microsoft.Research.Vcc
           let quant prop =
             let newState = bCall prop [bState; p]
             let stateEq = bCall (prop + "_eq") [env.WritesState; bState; p]
-            B.Expr.Forall (["#p", tpPtr], [[newState]], weight ("writes-" + prop.Replace ("$", "")), bOr base_ stateEq)
+            B.Expr.Forall (Token.NoToken, ["#p", tpPtr], [[newState]], weight ("writes-" + prop.Replace ("$", "")), bOr base_ stateEq)
             
           let timestamp = bCall "$timestamp_post" [env.WritesState; bState]
           bMultiAnd [quant "$mem"; quant "$st"; quant "$ts"; timestamp]
@@ -1623,7 +1623,7 @@ namespace Microsoft.Research.Vcc
         let init =
           [B.Stmt.VarDecl ((name, B.Type.Int), None);
            B.Stmt.Assume (bEq (er name) (bCall "$current_timestamp" [bState]));
-           B.Stmt.Assume (B.Expr.Forall ([("#p", tpPtr)], [[inWritesAt]], weight "begin-writes", bEq inWritesAt (isInWrites env p)))]
+           B.Stmt.Assume (B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], [[inWritesAt]], weight "begin-writes", bEq inWritesAt (isInWrites env p)))]
         (init, env)
                   
       let trUnclaim env tok = function
@@ -1900,7 +1900,7 @@ namespace Microsoft.Research.Vcc
                   let impl = bImpl (inWritesOrIrrelevant env' p None) (inWritesOrIrrelevant env p None)
                   let tok = afmtet fst.Common.Token 8011 "writes clause of the loop might not be included writes clause of the function" []
                   let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
-                  let check = [B.Stmt.Assert (tok, B.Forall ([name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
+                  let check = [B.Stmt.Assert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
                   (bump, init @ check, env')
             let tok, vlist = lastStmtVars stmt []
             let arbitraryLoopIter = cevVarUpdateList comm.Token vlist
@@ -2025,7 +2025,7 @@ namespace Microsoft.Research.Vcc
           else bCall "$ptr" [we; er "#r"], ("#r", B.Type.Int)
         let weTyped = bCall "$typed2" [s; p; we] 
         
-        let forallRM id trig body = B.Expr.Forall ([pv; ("#s", tpState)], trig, weight id, body)              
+        let forallRM id trig body = B.Expr.Forall (Token.NoToken, [pv; ("#s", tpState)], trig, weight id, body)              
         let fieldRef = toFieldRef f
         let baset = toBaseType f
         let dot = bCall "$dot" [p; fieldRef]
@@ -2039,7 +2039,7 @@ namespace Microsoft.Research.Vcc
               bCall "$physical_ref" [p; fieldRef]
         let dotdef = bAnd (bEq dot (bCall "$ptr" [dott; ptrref])) (bCall "$extent_hint" [dot; p])
         let dotdef = if useIs then bInvImpl (bCall "$is" [p; we]) dotdef else dotdef
-        let dotdef = B.Forall ([pv], [[dot]], weight "def-field-dot", dotdef)
+        let dotdef = B.Forall (Token.NoToken, [pv], [[dot]], weight "def-field-dot", dotdef)
         // ghost fields we treat alike regardless if in union or struct
         let isUnion = if f.IsSpec then false else isUnion          
         
@@ -2156,7 +2156,7 @@ namespace Microsoft.Research.Vcc
             | C.Array(t,n) -> 
               let cond = B.Expr.Primitive ("==>", [ bAnd (B.Expr.Primitive("<=", [bInt 0; idx])) (B.Expr.Primitive("<", [idx; bInt n]));
                                                       bEq (read s1 f.Type) (read s2 f.Type) ])
-              Some(B.Forall([("#i", B.Int)], [], weight "array-structeq", cond))
+              Some(B.Forall(Token.NoToken, [("#i", B.Int)], [], weight "array-structeq", cond))
             | C.Map(_,_) ->                 
               helper.Warning(f.Token, 9108, "structured type equality treats map equality as map identity")
               Some(bEq (read s1 f.Type) (read s2 f.Type))
@@ -2180,7 +2180,7 @@ namespace Microsoft.Research.Vcc
             //activeOptionEq = 
             //bEq (bCall "$active_option" [s; p]) fieldRef
           | _ -> die()
-        let eqForall = B.Forall(vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
+        let eqForall = B.Forall(Token.NoToken, vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
         [eqFun; B.Axiom eqForall]
 
 
@@ -2348,8 +2348,8 @@ namespace Microsoft.Research.Vcc
         let normalizeLabeledInvariant = bSubst [("#s1", er "#s2"); ("#p", typedPtr)] >> removeTrivialEqualities
         let invlab (lbl,exprs) = 
           let invcall = invlabcall lbl
-          B.Forall(s2r, [[invcall]], weight "eqdef-inv", (bEq (invcall) (inv exprs |> normalizeLabeledInvariant)))
-        let inv = B.Forall (s1s2p, [[invcall]], weight "eqdef-inv", (bEq invcall (inv (td.Invariants |> List.map stripLabel))))
+          B.Forall(Token.NoToken, s2r, [[invcall]], weight "eqdef-inv", (bEq (invcall) (inv exprs |> normalizeLabeledInvariant)))
+        let inv = B.Forall (Token.NoToken, s1s2p, [[invcall]], weight "eqdef-inv", (bEq invcall (inv (td.Invariants |> List.map stripLabel))))
         let labeledInvs = td.Invariants |> gatherByLabel |> List.map invlab |> List.map (fun e -> B.Axiom(e))
         
         let extentCall extentName meta union1 (fields:list<C.Field>) =
@@ -2382,7 +2382,7 @@ namespace Microsoft.Research.Vcc
                 else bEq q dot
           let isAField = bMultiOr (List.map (function fld -> bAnd (inExtent fld (auxDot r fld)) (typedCond r fld)) fields)
           let body = bOr (bEq q (auxPtr r)) isAField
-          B.Forall (qvars, [[bExtentCall]], weight ("eqdef-extent-" + extentName.Replace ("$", "")), bEq bExtentCall body)
+          B.Forall (Token.NoToken, qvars, [[bExtentCall]], weight ("eqdef-extent-" + extentName.Replace ("$", "")), bEq bExtentCall body)
 
         let spansCalls (fields:list<C.Field>) =
           let maybeArrayLift r f prop =
@@ -2390,7 +2390,7 @@ namespace Microsoft.Research.Vcc
             match f.Type with
               | C.Type.Array (t, sz) ->
                 let idx = bCall "$idx" [dot; er "#i"; toTypeId t]
-                B.Forall ([("#i", B.Type.Int)], [[idx]], weight "array-span",
+                B.Forall (Token.NoToken, [("#i", B.Type.Int)], [[idx]], weight "array-span",
                        bInvImpl (bCall "$in_range" [bInt 0; er "#i"; bInt (sz - 1)]) (prop idx))
               | _ -> prop dot
 
@@ -2401,7 +2401,7 @@ namespace Microsoft.Research.Vcc
           let bSpansCall = bCall "$state_spans_the_same" args
           let bNonVolatileSpansCall = bCall "$state_nonvolatile_spans_the_same" args
           let mkForall call fields =
-            B.Forall (qvars, [[call]], weight "eqdef-span", bEq call 
+            B.Forall (Token.NoToken, qvars, [[call]], weight "eqdef-span", bEq call 
               (bMultiAnd (List.map (function fld -> maybeArrayLift p fld (fun idx -> bCall "$mem_eq" [s1; s2; idx])) fields)))
           (mkForall bSpansCall fields, mkForall bNonVolatileSpansCall (List.filter (fun fld -> not fld.IsVolatile) fields))
         
@@ -2425,7 +2425,7 @@ namespace Microsoft.Research.Vcc
                 else 
                   let idx = bCall "$idx" [dot; er "#i"; toTypeId t]
                   let fieldProp = if t.IsComposite then prop else primFieldProp
-                  B.Forall ([("#i", B.Type.Int)], 
+                  B.Forall (Token.NoToken, [("#i", B.Type.Int)], 
                          //[[bCall ("$" + propName) (states @ [idx])]],
                          [[idx]], weight "array-extentprop",
                          bInvImpl (bCall "$in_range" [bInt 0; er "#i"; bInt (sz - 1)]) (fieldProp idx))
@@ -2434,7 +2434,7 @@ namespace Microsoft.Research.Vcc
           let allHaveProp = bMultiAnd (List.map (function fld -> bInvImpl (typedCond r fld) (hasProp fld (auxDot r fld))) fields)
           let body = if includeSelf then bAnd (bCall ("$" + propName) (states @ [auxPtr r])) allHaveProp else allHaveProp
           let bExtentCall = prop (auxPtr r)
-          B.Forall (qvars, [[bExtentCall]], weight "eqdef-extentprop", bEq bExtentCall body)
+          B.Forall (Token.NoToken, qvars, [[bExtentCall]], weight "eqdef-extentprop", bEq bExtentCall body)
         
         
         let allFields = 
@@ -2466,7 +2466,7 @@ namespace Microsoft.Research.Vcc
                 is_emb (bOr acc here) (lev + 1) emb in_range
             let is_emb = is_emb (bEq (er "#p") q) 1 (er "#p")
             let quant in_range = 
-              B.Forall (["#s", tpState; "#p", tpPtr; "#r", B.Int], 
+              B.Forall (Token.NoToken, ["#s", tpState; "#p", tpPtr; "#r", B.Int], 
                         [[in_ext]], weight "eqdef-extent",
                         if in_range then bImpl in_ext (is_emb true)
                         else bImpl (is_emb false) in_ext)
@@ -2478,12 +2478,12 @@ namespace Microsoft.Research.Vcc
               let def = extentCall "$in_extent_of" true false allFields
               if noUnions (C.Type.Ref td) then
                 match def with
-                  | B.Forall (vars, [[extent]], attrs, body) ->
+                  | B.Forall (tok, vars, [[extent]], attrs, body) ->
                     let us = bCall "$ptr" [we; er "#r"]
-                    let d1 = B.Forall (vars, [[extent]], attrs, bEq extent (bCall "$in_struct_extent_of" [er "#q"; us]))
+                    let d1 = B.Forall (tok, vars, [[extent]], attrs, bEq extent (bCall "$in_struct_extent_of" [er "#q"; us]))
                     if typeDepth (C.Type.Ref td) = 2 then
                       let consq = bOr (bEq (er "#q") us) (bEq (bCall "$emb" [er "#s"; er "#q"]) us)
-                      bAnd d1 (B.Forall (vars, [[extent]], attrs, bInvImpl (bCall "$typed" [er "#s"; us]) (bEq extent consq)))
+                      bAnd d1 (B.Forall (tok, vars, [[extent]], attrs, bInvImpl (bCall "$typed" [er "#s"; us]) (bEq extent consq)))
                     else d1
                   | _ -> die()
               else def        
@@ -2502,7 +2502,7 @@ namespace Microsoft.Research.Vcc
           let ptr = bCall "$ptr" [we; r]
           let firstOptionTypedCall = bCall "$first_option_typed" [s; ptr]
           let firstOptionTypedAxiom f =
-            B.Decl.Axiom (B.Expr.Forall ([("#r", B.Type.Int); ("#s", tpState)], 
+            B.Decl.Axiom (B.Expr.Forall (Token.NoToken, [("#r", B.Type.Int); ("#s", tpState)], 
                                          [[firstOptionTypedCall]], 
                                          weight "typedef-union_active",
                                          bInvImpl firstOptionTypedCall (bCall "$union_active" [s; ptr; toFieldRef f])))
@@ -2602,7 +2602,7 @@ namespace Microsoft.Research.Vcc
           let defAxiom =
             if (defBody = bTrue) then [] 
             else if qargs = [] then [B.Decl.Axiom defBody]
-            else [B.Decl.Axiom (B.Expr.Forall(qargs, [[fappl]], weight "eqdef-userfun", defBody))]
+            else [B.Decl.Axiom (B.Expr.Forall(Token.NoToken, qargs, [[fappl]], weight "eqdef-userfun", defBody))]
           let fnconst = "cf#" + h.Name
           let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$pure_function" }
           let frameAxiom =
@@ -2626,7 +2626,7 @@ namespace Microsoft.Research.Vcc
               
               let pre = bMultiAnd (bCall "$full_stop" [er "#s"] :: bCall "$can_use_frame_axiom_of" [er fnconst] :: conds)
               let post = bEq fappl (bCall framename refs)
-              [framedecl; B.Decl.Axiom (B.Expr.Forall(qargs, [[fappl]], weight "frameaxiom", subst (bImpl pre post)))]
+              [framedecl; B.Decl.Axiom (B.Expr.Forall(Token.NoToken, qargs, [[fappl]], weight "frameaxiom", subst (bImpl pre post)))]
           let typeInfo =
             let arg i t = B.Decl.Axiom (bCall "$function_arg_type" [er fnconst; bInt i; toTypeId t])
             arg 0 h.RetType :: (h.Parameters |> List.mapi (fun i v -> arg (i + 1) v.Type))
@@ -2698,7 +2698,7 @@ namespace Microsoft.Research.Vcc
                               [[bCall "$extent_hint" [p; q]]]
                             | None ->
                               List.map (fun n -> [bCall n [bState; p]]) ["$st"; "$ts"]
-                        B.Expr.Forall ([("#p", tpPtr)], triggers,
+                        B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], triggers,
                                        weight "begin-writes2",
                                        bInvImpl (bCall "$set_in" [p; e']) (bCall name [bState; p]))
 
@@ -2767,10 +2767,10 @@ namespace Microsoft.Research.Vcc
             let res =
               match vars, res with
                 | [], _ -> res
-                | _, B.Expr.Forall (vars2, triggers, attrs, body) ->
-                  B.Expr.Forall (vars @ vars2, triggers, attrs, body)
+                | _, B.Expr.Forall (tok, vars2, triggers, attrs, body) ->
+                  B.Expr.Forall (tok, vars @ vars2, triggers, attrs, body)
                 | _, _ -> 
-                  B.Expr.Forall (vars, [], weight "user-axiom", res)
+                  B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
             [B.Decl.Axiom res]
           | C.Top.Global ({ Kind = C.ConstGlobal ; Type = C.Ptr t } as v, _) ->
             [B.Decl.Const ({ Unique = true; Name = varName v; Type = B.Type.Int })]
