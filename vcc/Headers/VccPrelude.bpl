@@ -418,6 +418,8 @@ function $is_primitive_volatile_field($field) returns(bool);
 function $is_primitive_embedded_array(f:$field, sz:int) returns(bool);
 function $is_primitive_embedded_volatile_array(f:$field, sz:int, t:$ctype) returns(bool);
 
+function $embedded_array_size(f:$field, t:$ctype) returns(int);
+
 function {:inline true} $static_field_properties(f:$field, t:$ctype) returns(bool)
   { $is_base_field(f) && $field_parent_type(f) == t }
 
@@ -2323,6 +2325,14 @@ axiom (forall p:$ptr, k:int :: {$idx(p, k, $typ(p))}
 
 axiom (forall p:$ptr, q:$ptr, f:$field :: {$simple_index($dot(p, f), q)} {$index_within($dot(p, f), q)}
   $simple_index(p, q) ==> $simple_index($dot(p, f), q) && $index_within($dot(p, f), q) == $index_within(p, q));
+
+axiom (forall p:$ptr, q:$ptr, f:$field, i:int, t:$ctype :: 
+  {$simple_index($idx($dot(p, f), i, t), q)}
+  {$index_within($idx($dot(p, f), i, t), q)}
+  0 <= i && i < $embedded_array_size(f, t) && 
+  $simple_index(p, q) ==> 
+    $simple_index($idx($dot(p, f), i, t), q) && 
+    $index_within($idx($dot(p, f), i, t), q) == $index_within(p, q));
 
 function {:inline true} $in_array(q:$ptr, arr:$ptr, T:$ctype, sz:int) returns(bool)
   { $in_range(0, $index_within(q, arr), sz - 1) && q == $idx(arr, $index_within(q, arr), T) }
