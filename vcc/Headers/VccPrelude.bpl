@@ -2273,21 +2273,24 @@ axiom (forall p:$ptr, T:$ctype, sz:int, elem:$ptr ::
   { $set_in(elem, $array_members(p,T,sz)) }
   $set_in(elem, $array_members(p,T,sz)) <==> $in_array(elem, p, T, sz));
 
-function $array_range(p:$ptr, T:$ctype, sz:int) returns($ptrset);
+function $array_range_no_state(p:$ptr, T:$ctype, sz:int) returns($ptrset);
+function $array_range(S:$state, p:$ptr, T:$ctype, sz:int) returns($ptrset)
+  { $array_range_no_state(p, T, sz) }
 
-axiom (forall p:$ptr, #r:int, T:$ctype, sz:int ::
-    { $set_in(p, $array_range($ptr(T, #r), T, sz)) }
-    $set_in(p, $array_range($ptr(T, #r), T, sz)) <==> $in_array_full_extent_of(p, $ptr(T, #r), T, sz));
-
-axiom (forall p:$ptr, T:$ctype, sz:int, idx:int, S:$ptrset ::
-    { $idx(p, idx, T), $set_disjoint($array_range(p, T, sz), S) }
-    $set_disjoint($array_range(p, T, sz), S) ==>
-    0 <= idx && idx < sz ==> $id_set_disjoint($idx(p, idx, T), $array_range(p, T, sz), S) == 1);
+axiom (forall S:$state, p:$ptr, #r:int, T:$ctype, sz:int ::
+    { $set_in(p, $array_range(S, $ptr(T, #r), T, sz)) }
+    $instantiate_bool($typed(S, p)) &&
+    ($set_in(p, $array_range(S, $ptr(T, #r), T, sz)) <==> $in_array_full_extent_of(p, $ptr(T, #r), T, sz)));
 
 axiom (forall p:$ptr, T:$ctype, sz:int, idx:int, S:$ptrset ::
-    { $idx(p, idx, T), $set_disjoint(S, $array_range(p, T, sz)) }
-    $set_disjoint(S, $array_range(p, T, sz)) ==>
-    0 <= idx && idx < sz ==> $id_set_disjoint($idx(p, idx, T), S, $array_range(p, T, sz)) == 2);
+    { $idx(p, idx, T), $set_disjoint($array_range_no_state(p, T, sz), S) }
+    $set_disjoint($array_range_no_state(p, T, sz), S) ==>
+    0 <= idx && idx < sz ==> $id_set_disjoint($idx(p, idx, T), $array_range_no_state(p, T, sz), S) == 1);
+
+axiom (forall p:$ptr, T:$ctype, sz:int, idx:int, S:$ptrset ::
+    { $idx(p, idx, T), $set_disjoint(S, $array_range_no_state(p, T, sz)) }
+    $set_disjoint(S, $array_range_no_state(p, T, sz)) ==>
+    0 <= idx && idx < sz ==> $id_set_disjoint($idx(p, idx, T), S, $array_range_no_state(p, T, sz)) == 2);
 
 function $non_null_array_range(p:$ptr, T:$ctype, sz:int) returns($ptrset);
 axiom (forall p:$ptr, #r:int, T:$ctype, sz:int ::

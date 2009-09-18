@@ -30,7 +30,7 @@ namespace Microsoft.Research.Vcc
                   "admissibility_pre",      "Sp";
                   "good_for_post_admissibility", "S";
                   "array_members",          "ti";
-                  "array_range",            "ti";
+                  "array_range",            "Sti";
                   "array",                  ".i";
                   "as_array",               "ti";
                   "byte_ptr_subtraction",   "pp";
