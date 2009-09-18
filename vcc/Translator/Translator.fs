@@ -2097,7 +2097,12 @@ namespace Microsoft.Research.Vcc
               | _ ->
                 [B.Decl.Axiom (bCall "$is_primitive_non_volatile_field" [fieldRef])]
            
-           
+        let arraySize() =
+            match f.Type with
+              | C.Array (t, sz) ->
+                [B.Decl.Axiom (bEq (bCall "$embedded_array_size" [fieldRef; toTypeId t]) (bInt sz))]
+              | _ -> []
+          
         let fldOffsetAxioms =
           //if td.GenerateFieldOffsetAxioms || helper.Options.GenerateFieldOffsetAxioms then
             (if f.IsSpec then [] else [B.Decl.Axiom fieldoff]) @ [B.Decl.Axiom dotdef]
@@ -2107,6 +2112,7 @@ namespace Microsoft.Research.Vcc
                          Type = B.Type.Ref "$field"
                          Unique = true } : B.ConstData)] @
         primVolatile() @
+        arraySize() @
         fldOffsetAxioms @
         [B.Decl.Axiom emb] @ 
         //(if f.Type.IsComposite then [] else [B.Decl.Axiom mutableTrans]) @
