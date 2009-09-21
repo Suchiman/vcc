@@ -1193,3 +1193,40 @@ testcase(130,50) : error VC8521: Assertion 'chunk cnt1->count + cnt2->count >= 0
 testcase(131,1) : error VC9501: Post condition '(_vcc_wrapped(res) && _vcc_ref_cnt(res) == 0) && _vcc_claims(res, cnt1->count + cnt2->count >= 0) && _vcc_claims_obj(res, cnt1) && _vcc_claims_obj(res, cnt2) && _vcc_is_fresh(res)' did not verify.
 testcase(125,13) : error VC9599: (related information) Location of post condition.
 `
+// Authors: Mark Hillebrand, Dirk Leinenbach (with inspiration from Ernie Cohen)
+#include "vcc.h"
+
+#define stays_unchanged(o) ((o)==when_claimed(o))
+#define protects(structure,protector,expression) \
+    (wrapped(structure) && ref_cnt(structure)==1 && \
+    wrapped0((structure)->protector) && \
+    valid_claim((structure)->protector) && claims_obj(((structure)->protector),(structure)) && \
+    claims(((structure)->protector), closed(structure) && stays_unchanged(structure->protector)) && \
+    claims(((structure)->protector), (expression)))
+
+struct vcc(claimable) S {
+    unsigned dummy;
+    spec(volatile claim_t protector;)
+    spec(volatile unsigned protected;)
+    invariant(closed(old(protector)) ==> unchanged(protector) && unchanged(protected))
+};
+
+void middle(struct S *s)
+    requires(protects(s,protector,s->protected==2))
+    ensures(protects(s,protector,s->protected==1))
+    ensures(is_fresh(s->protector))
+    writes(s->protector)
+{
+    atomic(s) {
+        assert(valid_claim(old(s->protector)));
+        begin_update();
+        speconly(
+	  s->protected = 1;
+          s->protector = upgrade_claim(s->protector, stays_unchanged(s->protector) && s->protected==1);
+	)
+    }
+}
+`
+Verification of S#adm succeeded.
+Verification of middle succeeded.
+`
