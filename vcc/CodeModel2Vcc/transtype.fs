@@ -60,7 +60,7 @@ namespace Microsoft.Research.Vcc
             fnids.[called.Name] <- fnids.Count
           Some (Expr.Macro ({ comm with Type = Ptr Void }, "_vcc_get_fnptr", [mkInt fnids.[called.Name]; typeExpr Void]))
           
-        | Expr.Cast ({ Token = tok; Type = (Ptr (Type.Ref { Kind = FunctDecl fnptr } as fnptrref)) } as comm, _, 
+        | Expr.Cast ({ Token = tok; Type = (Ptr (Type.Ref { Kind = FunctDecl fnptr } as fnptrref)) } as comm, CheckedStatus.Checked, 
                      Expr.Macro (_, "&", [Expr.Macro (_, "get_fnptr", [Expr.Call (_, called, [], [])])])) ->
           if not (fnids.ContainsKey called.Name) then
             fnids.[called.Name] <- fnids.Count
@@ -68,16 +68,16 @@ namespace Microsoft.Research.Vcc
           addThis fnptr
           let fnptrparms = fnptr.Parameters.Tail
           if ctx.IsPure then
-            helper.Error (tok, 9602, "function pointer casts are only allowed in non-pure context", None)
+            helper.Error (tok, 9602, "checked function pointer casts are only allowed in non-pure context", None)
             None
           elif List.length fnptrparms <> List.length called.Parameters then
-            helper.Error (tok, 9603, "function pointers: different number of parameters", Some(called.Token))
+            helper.Error (tok, 9603, "checked function pointer cast: different number of parameters", Some(called.Token))
             None
           elif List.exists2 neqPar fnptrparms called.Parameters then
-            helper.Error (tok, 9604, "function pointers: different types of parameters", Some(called.Token))
+            helper.Error (tok, 9604, "checked function pointer cast: different types of parameters", Some(called.Token))
             None
           elif fnptr.RetType <> called.RetType then
-            helper.Error (tok, 9605, "function pointers: different return types", Some(called.Token))
+            helper.Error (tok, 9605, "checked function pointer cast: different return types", Some(called.Token))
             None
           else
             let header = { fnptr with Name = "$fnptr_" + called.Name + "_to_" + fnptr.Name; Token = tok }
