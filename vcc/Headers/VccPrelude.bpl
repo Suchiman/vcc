@@ -2887,6 +2887,7 @@ procedure $unclaim(c:$ptr);
   ensures $memory(old($s)) == $memory($s);
   ensures $timestamp_post(old($s), $s);
   ensures $good_state($s);
+  ensures !$closed($s, c);
 
 procedure $kill_claim(c:$ptr);
   modifies $s;
@@ -2895,6 +2896,7 @@ procedure $kill_claim(c:$ptr);
   ensures $memory(old($s)) == $memory($s);
   ensures $timestamp_post(old($s), $s);
   ensures $good_state($s);
+  ensures !$closed($s, c);
 
 function $claims_upgrade(the_new:$ptr, the_old:$ptr) returns(bool)
   { (forall o:$ptr :: $claims_obj(the_old, o) ==> $claims_obj(the_new, o)) }
