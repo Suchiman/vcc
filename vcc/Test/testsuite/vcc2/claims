@@ -1193,6 +1193,22 @@ testcase(130,50) : error VC8521: Assertion 'chunk cnt1->count + cnt2->count >= 0
 testcase(131,1) : error VC9501: Post condition '(_vcc_wrapped(res) && _vcc_ref_cnt(res) == 0) && _vcc_claims(res, cnt1->count + cnt2->count >= 0) && _vcc_claims_obj(res, cnt1) && _vcc_claims_obj(res, cnt2) && _vcc_is_fresh(res)' did not verify.
 testcase(125,13) : error VC9599: (related information) Location of post condition.
 `
+#include "vcc.h"
+
+struct vcc(claimable) S { int a; };
+
+void foo(struct S *s)
+	requires(wrapped(s))
+	writes(s)
+{
+	claimp(c;)
+	speconly(c = claim(s,1);)
+	unclaim(c,s);
+	assert(!closed(c));
+}
+`
+Verification of foo succeeded.
+`
 // Authors: Mark Hillebrand, Dirk Leinenbach (with inspiration from Ernie Cohen)
 #include "vcc.h"
 
