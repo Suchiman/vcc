@@ -717,12 +717,18 @@ namespace Microsoft.Research.Vcc
        }
      *)
     let replaceWithPointers (subst:Dict<_,_>) _ = function
-      | Expr.Macro (c, "&", [Expr.Ref (_, v)]) when subst.ContainsKey v -> 
-        Some (Expr.Ref (c, fst subst.[v]))
-      | Expr.Ref (c, v) when subst.ContainsKey v ->
-        Some (Expr.Deref (c, Expr.Ref ({ c with Type = Ptr v.Type }, fst subst.[v])))
-      | Expr.VarDecl (_, v) when subst.ContainsKey v ->
-        Some (snd subst.[v])
+      | Expr.Macro (c, "&", [Expr.Ref (_, v)]) ->
+        match subst.TryGetValue v with
+          | true, (v', _) -> Some (Expr.Ref (c, v'))
+          | _ -> None
+      | Expr.Ref (c, v) ->
+        match subst.TryGetValue v with
+          | true, (v', _) -> Some (Expr.Deref (c, Expr.Ref ({ c with Type = v'.Type }, v')))
+          | _ -> None
+      | Expr.VarDecl (_, v) ->
+        match subst.TryGetValue v with
+          | true, (_, decl) -> Some(decl)
+          | false, _ -> None
       | _ -> None
 
     let heapifyAddressedLocals decls =
