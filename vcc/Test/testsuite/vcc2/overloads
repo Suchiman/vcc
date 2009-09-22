@@ -18,7 +18,53 @@ void bar() {
   assert(ui == 2);
 }
 `
-Verification of foo#overload#int32_t^int32_t succeeded.
-Verification of foo#overload#uint32_t^uint32_t succeeded.
+Verification of foo#overload#int32_t#int32_t succeeded.
+Verification of foo#overload#uint32_t#uint32_t succeeded.
+Verification of bar succeeded.
+`
+#include "vcc.h"
+
+struct S {
+  int a;
+};
+
+void foo(struct S *s)
+  writes(s)
+  maintains(wrapped(s)) 
+  ensures(s->a == 0)
+{
+  if (s->a != 0) {
+    expose(s) {
+    s->a = 0;
+    }
+  }
+}
+
+spec(
+void foo(struct S ^s)
+  writes(s)
+  maintains(wrapped(s)) 
+  ensures(s->a == 1)
+{
+  if (s->a != 1) {
+    expose(s) {
+    s->a = 1;
+    }
+  }
+}
+)
+
+void bar(struct S *s spec(struct S ^t))
+  writes(s,t)
+  requires(wrapped(s) && wrapped(t))
+{
+  foo(s);
+  assert(s->a == 0);
+  speconly(foo(t);)
+  assert(t->a == 1);
+}
+`
+Verification of foo#overload#void#struct_S. succeeded.
+Verification of foo#overload#void#struct_S^ succeeded.
 Verification of bar succeeded.
 `
