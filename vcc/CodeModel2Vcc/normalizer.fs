@@ -406,11 +406,9 @@ namespace Microsoft.Research.Vcc
       | Call(ec, ({Name = "_vcc_containing_struct"} as f), _, [addr; df]) ->
         match df with
           | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, Expr.Cast(_, _, Expr.Macro(_, "null", [])),fld) as dot))]) ->
-            None
+            Some(Macro(ec, "_vcc_containing_struct", [addr; Expr.UserData(bogusEC, fld)]))
           | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, e, fld) as dot))])->
-            let mkFieldExpr ec (f : Field) =
-              Expr.MkDot(Expr.Cast({ec with Type = Ptr(Type.Ref(f.Parent))}, Unchecked, Expr.Macro({ec with Type = Ptr(Void)}, "null", [])), f)             
-            let result = Some (self (Call(ec, f, [], [Call({ec with Type = Ptr(Type.Ref(fld.Parent))}, f, [], [addr; mkFieldExpr ec fld]); e])))
+            let result = Some (self (Call(ec, f, [], [Expr.Macro({ ec with Type = Ptr(Type.Ref(fld.Parent))}, "_vcc_containing_struct", [addr; Expr.UserData(bogusEC, fld)]); e])))
             result
           | _ -> None
       | _ -> None
