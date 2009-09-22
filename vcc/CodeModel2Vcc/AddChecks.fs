@@ -262,11 +262,11 @@ namespace Microsoft.Research.Vcc
       | Macro(c, "_vcc_vs_ctor", [p]) as m when not ctx.IsPure ->
         let rec deepReadsCheck (e : Expr) =
           match e.Type with
-            | Type.Ptr(Type.Ref(td)) -> 
+            | Ptr(Type.Ref(td)) -> 
               let locAssert = Expr.MkAssert(Expr.Macro({e.Common with Type = Bool}, "reads_check_normal", [ignoreEffects e]))
               let fldAssert (fld:Field) = 
-                let ec = { forwardingToken e.Token None (fun() -> e.Token.Value + "." + fld.Name) with Type = Ptr(fld.Type) }
-                deepReadsCheck (Expr.Dot(ec, e, fld))
+                let ec = forwardingToken e.Token None (fun() -> e.Token.Value + "." + fld.Name)
+                deepReadsCheck (Expr.MkDot(ec, e, fld))
               locAssert :: (td.Fields |> List.map fldAssert |> List.concat)
             | _ -> []
         Some (Expr.MkBlock(deepReadsCheck p @ [Macro(c, "_vcc_vs_ctor", [self p])]))

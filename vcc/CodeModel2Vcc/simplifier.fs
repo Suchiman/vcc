@@ -466,6 +466,7 @@ namespace Microsoft.Research.Vcc
        and then all "x" into "x.data". This allows to own globals (with emb(&x) at the C level).
      *)
     let wrapPrimitiveGlobals decls =
+      // TODO: Ptr kind - deal also with spec globals, where all ptrs are spec ptrs
       let globalSubst = new Dict<_,_>()
       let varSubst = new Dict<_,_>()
       let rec isPrimitive = function
@@ -478,7 +479,7 @@ namespace Microsoft.Research.Vcc
             match v.Type with 
               | Type.Volatile _ -> 
                 let ecObjT = { bogusEC with Type = Type.ObjectT }
-                let this = Macro( {bogusEC with Type = Type.Ptr(Type.Ref(td))}, "this", [])
+                let this = Macro( { bogusEC with Type = Type.PhysPtr(Type.Ref td) }, "this", [])
                 [Macro (boolBogusEC(), "approves", 
                   [ Macro( ecObjT, "_vcc_owner", [ this ]); 
                     Deref ({bogusEC with Type = v.Type}, 
@@ -487,12 +488,12 @@ namespace Microsoft.Research.Vcc
           td.Invariants <- approvesInv
           let v' = { Name = "wrap#" + v.Name; Type = Type.Ref td; Kind = VarKind.Global } : Variable
           let repl ec =
-            let inner = Macro ({ ec with Type = Ptr (Type.Ref td) }, "&", [Expr.Ref ({ ec with Type = Type.Ref td }, v')])
+            let inner = Macro ({ ec with Type = Type.MkPtrToStruct(td) }, "&", [Expr.Ref ({ ec with Type = Type.Ref td }, v')])
             match v.Type with
               | Array (t, _) ->
-                Deref ({ ec with Type = t }, Dot ({ ec with Type = Ptr t }, inner, fld))
+                Deref ({ ec with Type = t }, Dot ({ ec with Type = PhysPtr t }, inner, fld))
               | _ ->
-                Deref (ec, Dot ({ ec with Type = Ptr ec.Type }, inner, fld))
+                Deref (ec, Dot ({ ec with Type = PhysPtr ec.Type }, inner, fld))
           globalSubst.Add (v, repl)
           varSubst.Add(v, v')
           [Top.TypeDecl td; Top.Global (v', init)]
@@ -738,7 +739,7 @@ namespace Microsoft.Research.Vcc
       let pointernize comm v =
         let mkEc t = { comm with Type = t } : ExprCommon
         if not (addressableLocals.ContainsKey v) then
-          let v' = { v with Type = Ptr v.Type; Name = "addr." + v.Name; Kind = VarKind.Local }
+          let v' = { v with Type = Type.MkPtr(v.Type, v.IsSpec); Name = "addr." + v.Name; Kind = VarKind.Local }
           let vRef = Expr.Ref({forwardingToken (comm.Token) None (fun () -> "&" + v.Name) with Type = v'.Type} , v')
           let alloc = Expr.Call (fakeEC v'.Type, internalFunction helper "stack_alloc", [v.Type], [Macro(bogusEC, "stackframe", [])])
           let assign = Expr.Macro (fakeEC Void, "=", [vRef; alloc])
@@ -750,7 +751,7 @@ namespace Microsoft.Research.Vcc
           addressableLocals.[v] <- (v', Expr.MkBlock def)
           
       let pointsToStruct = function
-        | Type.Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)})) -> true
+        | Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)})) -> true
         | _ -> false
           
       let findThem inBody self = function
@@ -789,16 +790,17 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     let handleGlobals decls =
+      // TODO Ptr kind for globals
       let globalSubst = new Dict<_,_>()
       let handle = function
         | Top.Global ({ Kind = VarKind.Global|VarKind.ConstGlobal; Type = Array (t, sz) } as v, init) ->
-          let v' = { v with Type = Ptr t; Kind = VarKind.ConstGlobal }
+          let v' = { v with Type = PhysPtr t; Kind = VarKind.ConstGlobal }
           globalSubst.[v] <- (v', Expr.MkBlock [])
           let is_global = Expr.Macro (boolBogusEC (), "_vcc_is_global_array", 
                                       [mkRef v'; mkInt sz])
           [Top.Global (v', init); Top.GeneratedAxiom(is_global, Top.Global(v', None))]
         | Top.Global ({ Kind = VarKind.Global|VarKind.ConstGlobal } as v, init) ->
-          let v' = { v with Type = Ptr v.Type; Kind = VarKind.ConstGlobal }
+          let v' = { v with Type = PhysPtr v.Type; Kind = VarKind.ConstGlobal }
           globalSubst.[v] <- (v', Expr.MkBlock [])
           let is_global = Expr.Macro (boolBogusEC (), "_vcc_is_global", 
                                       [mkRef v'])

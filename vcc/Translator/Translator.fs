@@ -192,6 +192,14 @@ namespace Microsoft.Research.Vcc
         else [B.ExprAttr ("weight", bInt w)]
       
       let rec toTypeId' translateArrayAsPtr t =
+      
+        let rec normalizePtrs = function
+          | C.Type.PhysPtr(t)
+          | C.Type.SpecPtr(t) -> C.Type.PhysPtr(normalizePtrs t)
+          | C.Type.Array(t,n) -> C.Type.Array(normalizePtrs t, n)
+          | t -> t
+        let t = normalizePtrs t
+
         let internalizeType t bt =      
           let rec isDerivedFromTypeVar = function
             | C.Type.TypeVar _ -> true
@@ -213,11 +221,12 @@ namespace Microsoft.Research.Vcc
           | C.Type.MathInteger -> er "^^mathint"
           | C.Type.Primitive kind -> er ("^^" + C.Type.PrimSuffix kind) 
           | C.Type.Void -> er "^^void"
-          | C.Type.Ptr tp ->
+          | C.Type.SpecPtr tp
+          | C.Type.PhysPtr tp ->
             internalizeType t (bCall "$ptr_to" [toTypeId' false tp])
-          | C.Type.ObjectT -> toTypeId' false (C.Ptr C.Void)
+          | C.Type.ObjectT -> toTypeId' false (C.Type.PhysPtr C.Void)
           | C.Type.Array (tp, _) when translateArrayAsPtr ->
-            internalizeType (C.Type.Ptr tp) (bCall "$ptr_to" [toTypeId' translateArrayAsPtr tp])
+            internalizeType (C.Type.PhysPtr tp) (bCall "$ptr_to" [toTypeId' translateArrayAsPtr tp])
           | C.Type.Array (tp, sz) ->
             internalizeType t (bCall "$array" [toTypeId' translateArrayAsPtr tp; B.Expr.IntLiteral(new bigint(sz))])
             //bCall "$array" [toTypeId tp; bInt sz]
@@ -335,7 +344,8 @@ namespace Microsoft.Research.Vcc
         match t with
           | C.Type.MathInteger
           | C.Type.Integer _ 
-          | C.Type.Ptr _ -> B.Type.Int
+          | C.Type.SpecPtr _
+          | C.Type.PhysPtr _ -> B.Type.Int
           | C.Type.Primitive _ -> tpPrimitive
           | C.Type.Bool -> B.Type.Bool
           | C.Type.ObjectT -> tpPtr
@@ -483,13 +493,15 @@ namespace Microsoft.Research.Vcc
       
       let addType t e =
         match t with
-          | C.Type.Ptr t ->
+          | C.Type.SpecPtr t
+          | C.Type.PhysPtr t ->
             bCall "$ptr" [toTypeId t; e]
           | _ -> e
       
       let stripType t e =
         match t with
-          | C.Type.Ptr t ->
+          | C.Type.SpecPtr t
+          | C.Type.PhysPtr t ->
             bCall "$ref" [e]
           | _ -> e
         
@@ -942,7 +954,7 @@ namespace Microsoft.Research.Vcc
                 bCall "$bool_to_int" [self e']
               | C.Type.Integer _ -> self e'
               | C.Type.MathInteger -> self e'
-              | C.Type.Ptr _ ->
+              | C.Ptr _ -> // TODO insert checks for casts here
                 bCall ("$ptr_to_" + C.Type.IntSuffix k) [self e']
               | _ -> die()
           | C.Expr.Cast ({ Type = C.Type.Bool }, _, e') ->
@@ -952,7 +964,7 @@ namespace Microsoft.Research.Vcc
                   | C.IntLiteral (_, ZeroBigInt) -> bFalse
                   | C.IntLiteral (_, OneBigInt) -> bTrue
                   | _ -> bCall "$int_to_bool" [self e']
-              | C.Type.Ptr _ ->
+              | C.Ptr _ ->
                 bCall "$ptr_neq" [self e'; er "$null"]
               | _ -> die()
           | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
@@ -1149,7 +1161,8 @@ namespace Microsoft.Research.Vcc
             let arg = self e
             match e.Type with
               | C.Type.Integer _ -> bCall "$dont_instantiate_int" [arg]
-              | C.Type.Ptr _
+              | C.Type.SpecPtr _
+              | C.Type.PhysPtr _
               | C.Type.ObjectT  -> bCall "$dont_instantiate" [arg]
               | _ -> bCall "$dont_instantiate_int" [castToInt (trType e.Type) arg]
           | "_vcc_claims", [cl; cond] ->
@@ -1447,9 +1460,9 @@ namespace Microsoft.Research.Vcc
           | _ -> ()
         let e2' = stripType t (trExpr env e2)
         match e2.Type with
-          | C.Type.Ptr _ ->
+          | C.Ptr _ ->
             match t with 
-              | C.Type.Ptr _ -> e2'
+              | C.Ptr _ -> e2'
               | _ -> bCall "$ptr_to_int" [e2']
           | C.Type.Integer _ -> e2'
           | _ ->
@@ -1658,11 +1671,11 @@ namespace Microsoft.Research.Vcc
         
         let getType (obj : C.Expr) (bobj : B.Expr)=
           match obj.Type with
-            | C.Type.Ptr(_) -> ptrType obj
+            | C.Ptr(_) -> ptrType obj
             | C.Type.ObjectT -> bCall "$typ" [bobj]
             | _ -> die()
           
-        let (objs, claims) = List.partition (fun (e:C.Expr) -> e.Type <> C.Ptr C.Claim) objs
+        let (objs, claims) = List.partition (fun (e:C.Expr) -> e.Type <> C.Type.SpecPtr C.Claim) objs
         let (before, after) =
           match body with
             | C.Block (_, lst) -> split [] lst

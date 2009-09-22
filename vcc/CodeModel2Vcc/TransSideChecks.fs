@@ -55,7 +55,7 @@ namespace Microsoft.Research.Vcc
         if List.forall isTrivialInvariant (td.Invariants) then [decl]
         else              
           let parm =
-            { Type = Ptr (Type.Ref td)
+            { Type = Type.MkPtrToStruct td
               Name = "_this_"
               Kind = Parameter } : Variable
           

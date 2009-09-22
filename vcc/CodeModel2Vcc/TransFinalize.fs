@@ -183,7 +183,7 @@ namespace Microsoft.Research.Vcc
         | CallMacro(_, "_vcc_owns", _, [_; Cast(_,_,expr)]) 
         | CallMacro(_, "_vcc_owns", _, [_; expr]) as owns -> 
           match expr.Type with
-            | Type.Ptr(Type.Ref(td)) when staticOwns td ->
+            | Ptr(Type.Ref(td)) when staticOwns td ->
               helper.Error(owns.Token, 9662, "Explicit reference to owns-set of type '" + td.Name + "', which is static. Use keeps(...) or mark '" + td.Name + "' with vcc(dynamic_owns).")
               true
             | _ -> true

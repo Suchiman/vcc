@@ -51,14 +51,14 @@ namespace Microsoft.Research.Vcc
         match fnptr.Parameters with
           | { Name = "$this" } :: _ -> ()
           | parms ->
-            let th = { Type = Ptr Void; Name = "$this"; Kind = VarKind.Parameter } : Variable
+            let th = { Type = PhysPtr Void; Name = "$this"; Kind = VarKind.Parameter } : Variable
             fnptr.Parameters <- th :: parms
                     
       let repl ctx self = function
         | Expr.Macro (comm, "&", [Expr.Macro (_, "get_fnptr", [Expr.Call (_, called, _, [])])]) ->
           if not (fnids.ContainsKey called.Name) then
             fnids.[called.Name] <- fnids.Count
-          Some (Expr.Macro ({ comm with Type = Ptr Void }, "_vcc_get_fnptr", [mkInt fnids.[called.Name]; typeExpr Void]))
+          Some (Expr.Macro ({ comm with Type = PhysPtr Void }, "_vcc_get_fnptr", [mkInt fnids.[called.Name]; typeExpr Void]))
           
         | Expr.Cast ({ Token = tok; Type = (Ptr (Type.Ref { Kind = FunctDecl fnptr } as fnptrref)) } as comm, CheckedStatus.Checked, 
                      Expr.Macro (_, "&", [Expr.Macro (_, "get_fnptr", [Expr.Call (_, called, [], [])])])) ->
@@ -160,8 +160,8 @@ namespace Microsoft.Research.Vcc
         List.iter addToDictIfGroupType decls
            
       let genGroupAxiom (group:TypeDecl) (parent:TypeDecl) (groupField : Field) =
-        let t = Type.Ptr(Type.Ref(group))
-        let pt = Type.Ptr(Type.Ref(parent))
+        let t = Type.MkPtrToStruct(group)
+        let pt = Type.MkPtrToStruct(parent)
         let v = { Name = "ptr"; Type = t; Kind = VarKind.QuantBound } : Variable
         let ptr = Expr.Ref({bogusEC with Type = t}, v)
         let rhs = Expr.Dot({bogusEC with Type = t}, Expr.Cast({bogusEC with Type = pt}, CheckedStatus.Unchecked, ptr), groupField)
@@ -222,7 +222,7 @@ namespace Microsoft.Research.Vcc
             | Expr.Dot (c1, (Expr.Macro (c2, "this", []) as th), f) ->
               Some (Expr.Dot (c1, Expr.Cast (c2, Processed, self th), f))
             | Expr.Macro(c, "this", []) ->
-              Some (Expr.Macro( { c with Type = Type.Ptr(Type.Ref(td)) }, "this", []))
+              Some (Expr.Macro( { c with Type = Type.MkPtrToStruct(td) }, "this", []))
             | _ -> None
            
      
@@ -412,7 +412,7 @@ namespace Microsoft.Research.Vcc
     
       let rec genDotPrime t1 t2 expr =
         match t1, t2 with
-          | (Integer _ | Type.Ref _ | Ptr _), (Integer _ | Ptr _) -> Macro({bogusEC with Type = Ptr(t1)}, "Dot'", [expr; mkInt 0])
+          | (Integer _ | Type.Ref _ | Ptr _), (Integer _ | Ptr _) -> Macro({bogusEC with Type = PhysPtr(t1)}, "Dot'", [expr; mkInt 0])
           | t1', Array(t2', _) -> genDotPrime t1' t2' expr
           | Array(t1',_), t2' -> genDotPrime t1' t2' expr
           | _, _ -> die()
@@ -423,7 +423,8 @@ namespace Microsoft.Research.Vcc
         | Dot (c, e, f) as expr ->
           match fieldsToReplace.TryGetValue(f) with
             | true, newFld -> 
-              Some(self (genDotPrime (f.Type) (newFld.Type) (Dot({c with Type = Ptr(newFld.Type)}, (self e), newFld)))) 
+              let isSpec = match e.Type with | SpecPtr _ -> true | _ -> newFld.IsSpec
+              Some(self (genDotPrime (f.Type) (newFld.Type) (Dot({c with Type = Type.MkPtr(newFld.Type, isSpec)}, (self e), newFld)))) 
               // do NOT call MkDot here because we need to preserve the information that the new field is of array type
               // during the bm substitution process
             | false, _ -> None          
@@ -433,7 +434,7 @@ namespace Microsoft.Research.Vcc
         | Dot(c, e, f) ->
           match self e with
             | Macro(_, "Dot'", [expr; IntLiteral(_, offset)]) ->
-              Some(Macro({bogusEC with Type = Ptr(f.Type)}, "Dot'", [expr; mkInt ((int)offset + f.ByteOffset)]))
+              Some(Macro({bogusEC with Type = PhysPtr(f.Type)}, "Dot'", [expr; mkInt ((int)offset + f.ByteOffset)]))
             | se -> Some(Dot(c, se, f))
         | Index(c, e, idx) ->
           match self e with
@@ -450,7 +451,7 @@ namespace Microsoft.Research.Vcc
                   Some(bogusExpr)
                 else
                   let idx' = if offset = bigint.Zero then idx else Prim(idx.Common, Op("+", Checked), [mkInt((int)offset); idx])
-                  Some(self(Macro({bogusEC with Type = c.Type}, "Dot'", [Index({c with Type = Ptr(bmElemType)}, expr, idx'); mkInt 0])))
+                  Some(self(Macro({bogusEC with Type = c.Type}, "Dot'", [Index({c with Type = PhysPtr(bmElemType)}, expr, idx'); mkInt 0])))
             | e' -> Some(Index(c, e', self idx))
         | _ -> None
 
@@ -460,14 +461,14 @@ namespace Microsoft.Research.Vcc
             | ct, _ when ct.IsComposite ->
               Some(expr)
             | _, Array(elemType, _) ->  
-              Some(self(Macro(c, "Dot'", [Index({expr.Common with Type = Ptr(elemType)}, expr, mkInt ((int)offset / elemType.SizeOf)); mkInt ((int)offset % elemType.SizeOf)])))
+              Some(self(Macro(c, "Dot'", [Index({expr.Common with Type = PhysPtr(elemType)}, expr, mkInt ((int)offset / elemType.SizeOf)); mkInt ((int)offset % elemType.SizeOf)])))
             | (Ptr(_) as ct), Ptr(_) -> Some(Macro({c with Type = ct}, "pullout_cast", [self expr]))
             | Integer(_) as ct, Ptr(_) ->
               let targetTypeCode, conversionFunction = if ct.IsSignedInteger then IntKind.Int64, "pullout__vcc_ptr_to_i8" else IntKind.UInt64, "pullout__vcc_ptr_to_u8"
-              Some(self(Macro(c, "Dot'", [Macro({bogusEC with Type = Ptr(Integer(targetTypeCode))}, conversionFunction, [expr]); mkInt((int)offset)])))
+              Some(self(Macro(c, "Dot'", [Macro({bogusEC with Type = PhysPtr(Integer(targetTypeCode))}, conversionFunction, [expr]); mkInt((int)offset)])))
             | Ptr(_) as ct, (Integer(_) as et) ->
               let conversionFunction = if et.IsSignedInteger then "pullout__vcc_i8_to_ptr" else "pullout__vcc_u8_to_ptr"
-              Some(Macro({c with Type = ct}, "pullout_cast", [Macro({bogusEC with Type = Ptr(Void)}, conversionFunction, [self expr])]))
+              Some(Macro({c with Type = ct}, "pullout_cast", [Macro({bogusEC with Type = PhysPtr(Void)}, conversionFunction, [self expr])]))
             | Integer(_) as ct, Integer(_) as et ->
               Some(bv_extrAndPad {expr.Common with Type = ct} (self expr) ((int)offset * 8) (((int)offset + ct.SizeOf) * 8))
             | _ -> die()
@@ -491,8 +492,8 @@ namespace Microsoft.Research.Vcc
           | Expr.Macro (c, ("bv_extract_signed" | "bv_extract_unsigned"), 
                         [e; IntLiteral(_, sz); IntLiteral(_, z); IntLiteral(_, sz') ]) when z = zero && sz = sz' -> 
               let unchecked (expr :Expr) =
-                match expr.Type.Deref with 
-                  | Integer k -> Macro({expr.Common with Type = Ptr(Integer(Type.SwitchSignedness k))}, "unchecked_" + Type.IntSuffix(Type.SwitchSignedness k), [expr])
+                match expr.Type.DerefSoP with 
+                  | Integer k, isSpec -> Macro({expr.Common with Type = Type.MkPtr(Integer(Type.SwitchSignedness k), isSpec)}, "unchecked_" + Type.IntSuffix(Type.SwitchSignedness k), [expr])
                   | _ -> die()                      
               let e' = if c.Type.Deref.IsSignedInteger = e.Type.Deref.IsSignedInteger then e else unchecked e             
               Some(self e')
@@ -578,7 +579,7 @@ namespace Microsoft.Research.Vcc
         | Macro(c, "vs_updated", [Dot(_, e, f); expr]) ->
           match fieldsToReplace.TryGetValue(f) with
             | true, newFld -> 
-              let ec = {c with Type = Ptr(f.Type)}
+              let ec = {c with Type = PhysPtr(f.Type)} // TODO Ptr kind
               match subtractOffsets (f.Offset) (newFld.Offset) |> (toBitFieldOffset newFld.Type.SizeOf) with
                 | BitField(0, start, size) -> 
                   match bv_extrAndPad ec (Expr.MkDot(c, (self e), newFld)) start (start+size) with
@@ -590,7 +591,7 @@ namespace Microsoft.Research.Vcc
         | Dot (c, e, f) as expr ->
           match fieldsToReplace.TryGetValue(f) with
             | true, newFld -> 
-              let ec = {c with Type = Ptr(f.Type)}
+              let ec = {c with Type = PhysPtr(f.Type)} // TODO Ptr kind
               match subtractOffsets (f.Offset) (newFld.Offset) |> (toBitFieldOffset newFld.Type.SizeOf) with
                 // this will create 'pullout' expressions, which will be normalized in the subsequent union flattening step
                 | BitField(0, start, size) -> Some(bv_extrAndPad ec (Expr.MkDot(c, (self e), newFld)) start (start+size))
@@ -719,11 +720,11 @@ namespace Microsoft.Research.Vcc
       
       let genDotAxioms (td : TypeDecl) (oldField: Field) (newFields : Field list) =
         let genDotAxiom (oldSubField : Field) (newField : Field) =
-          let varType = Ptr(Type.Ref(td))
+          let varType = PhysPtr(Type.Ref(td)) // TODO Ptr kind - we need these axioms to hold for both physical and spec 
           let var = { Name = "p"; Type = varType; Kind = QuantBound } : Variable
           let varref = Ref(mkBogusEC varType, var)
             
-          let left = Expr.MkDot(Cast(mkBogusEC (Ptr(oldField.Type)), Unchecked, Expr.MkDot(varref, newFields.Head)), oldSubField)
+          let left = Expr.MkDot(Cast(mkBogusEC (PhysPtr(oldField.Type)), Unchecked, Expr.MkDot(varref, newFields.Head)), oldSubField) // TODO Ptr kind
           let right = Expr.MkDot(varref, newField)
           GeneratedAxiom(Quant(mkBogusEC Bool, { Kind = Forall 
                                                  Variables = [var] 
@@ -796,7 +797,7 @@ namespace Microsoft.Research.Vcc
                     ]
                   let newFields = [ for i in seq { 0 .. n-1 } -> mkFieldForIndex i ] |> List.concat
                   inlinedArrays.Add(f, newFields.Head)
-                  dotAxioms := (genInlinedArrayAxiom td (Ptr(Type.Ref(td'))) newFields) :: !dotAxioms
+                  dotAxioms := (genInlinedArrayAxiom td (Type.MkPtrToStruct(td')) newFields) :: !dotAxioms
                   newFields
                 | _ -> 
                   helper.Warning(f.Token, 9109, "field '" + f.Name + "' could not be inlined")
@@ -955,14 +956,14 @@ namespace Microsoft.Research.Vcc
           let subsFields self = function
             | Dot(ec, expr, f) ->
               match fieldSubst.TryGetValue(f) with
-                | (true, f') -> Some(Expr.MkDot({ec with Type = Type.Ptr(f'.Type)}, self expr, f'))
+                | (true, f') -> Some(Expr.MkDot(ec, self expr, f'))
                 | _ -> None
             | _ -> None
           subsFields      
           
         let retypeThis oldTd newTd self = function
           | Expr.Macro({Type = Ptr(Type.Ref(oldType))} as c, "this", []) ->
-              Some (Expr.Macro( { c with Type = Type.Ptr(Type.Ref(newTd)) }, "this", []))
+              Some (Expr.Macro( { c with Type = Type.MkPtrToStruct(newTd) }, "this", []))
           | _ -> None
       
         match typeToVolatileType.TryGetValue(td) with
@@ -988,9 +989,9 @@ namespace Microsoft.Research.Vcc
               let f' = {f with IsVolatile = false; Type = Type.Ref(td')}
               if initial then initialFldToVolatileFld.Add(f, f')
               f'
-            | Type.Ptr(Type.Volatile((Type.Ref({Kind = Struct|Union} as td)))) ->
+            | PtrSoP(Type.Volatile((Type.Ref({Kind = Struct|Union} as td))), isSpec) ->
               let td' = mkVolTd td
-              let f' = {f with Type = Type.Ptr(Type.Ref(td'))}
+              let f' = {f with Type = Type.MkPtr(Type.Ref(td'), isSpec)}
               initialFldToVolatileFld.Add(f, f')
               f'
             | Type.Array(Type.Volatile((Type.Ref({Kind = Struct|Union} as td))), size) ->
@@ -1002,10 +1003,10 @@ namespace Microsoft.Research.Vcc
               let f' = {f with Type = Type.Array(t, size); IsVolatile=true}
               initialFldToVolatileFld.Add(f, f')
               f'
-            | Type.Ptr(Type.Volatile(t)) ->
+            | PtrSoP(Type.Volatile(t), isSpec) ->
               if initial then
                 helper.Warning(f.Token, 9114, "volatile specifier for pointers to primitive types are currently ignored")
-              let f' = {f with Type = Type.Ptr(t) }
+              let f' = {f with Type = Type.MkPtr(t, isSpec) }
               initialFldToVolatileFld.Add(f, f')
               f'
             | _ -> f
@@ -1014,7 +1015,7 @@ namespace Microsoft.Research.Vcc
         
       let rec typeShouldBePropagated = function
         | Type.Ref(td) when td.IsVolatile -> true
-        | Type.Ptr(t) -> typeShouldBePropagated t
+        | Ptr(t) -> typeShouldBePropagated t
         | Type.Array(t, _) -> typeShouldBePropagated t
         | _ -> false
         
@@ -1026,12 +1027,12 @@ namespace Microsoft.Research.Vcc
         | Dot(ec, expr, f) ->
           match initialFldToVolatileFld.TryGetValue(f) with
             | true, f' -> 
-              let t = match f'.Type with | Array(t, _) | t -> Type.Ptr(t)
+              let t = match f'.Type with | Array(t, _) | t -> Type.PhysPtr(t) // TODO Ptr kind
               Some(Dot({ec with Type = t}, self expr, f'))
             | false, _ ->
               let (expr' : Expr) = self expr
               match expr'.Type with
-                | Type.Ptr(Type.Ref({IsVolatile = true})) ->
+                | Ptr(Type.Ref({IsVolatile = true})) ->
                   match fldToVolatileFld.TryGetValue(f) with
                     | true, f' -> Some(Expr.MkDot(ec, expr', f'))
                     | false, _ -> Some(Dot(ec, expr', f))
@@ -1043,7 +1044,7 @@ namespace Microsoft.Research.Vcc
           let se = self expr
           let si = self idx
           if typeShouldBePropagated se.Type then
-            let t = match se.Type with | Ptr(Array(t, _)) -> Ptr(t) | t -> t
+            let t = match se.Type with | Ptr(Array(t, _)) -> PhysPtr(t) | t -> t
             Some(Index({ec with Type = t}, se, si))
           else
             Some(Index(ec, se, si))
@@ -1058,7 +1059,8 @@ namespace Microsoft.Research.Vcc
         | Macro(ec, "&", [expr]) ->
           let se = self expr
           if typeShouldBePropagated se.Type then
-            Some(Macro({ec with Type = Ptr(se.Type)}, "&", [se]))
+            let isSpec = match ec.Type with | SpecPtr _ -> true | _ -> false
+            Some(Macro({ec with Type = Type.MkPtr(se.Type, isSpec)}, "&", [se]))
           else
             Some(Macro(ec, "&", [se]))
         | Pure(ec, expr) ->
@@ -1076,7 +1078,7 @@ namespace Microsoft.Research.Vcc
             let pdLocalDecls self = function
               | VarDecl(_, ({Type = Ptr(Volatile(Type.Ref(td)))} as v)) -> 
                 let td' = mkVolTd td
-                volatileVars.Add(v, {v with Type = Ptr(Type.Ref(td'))})
+                volatileVars.Add(v, {v with Type = Type.MkPtrToStruct(td')})
                 false
               | _ -> true
             body.SelfVisit pdLocalDecls
@@ -1094,7 +1096,7 @@ namespace Microsoft.Research.Vcc
         match dst.Type with
           | Type.Ref({Fields = [fld]} as td) when not (isRecord td)->
             let addDot (e:Expr) = 
-              Deref({e.Common with Type = fld.Type}, Expr.MkDot(Macro({e.Common with Type = Ptr(e.Type)}, "&", [e]), fld))
+              Deref({e.Common with Type = fld.Type}, Expr.MkDot(Macro({e.Common with Type = PhysPtr(e.Type)}, "&", [e]), fld)) // TODO Ptr kind, but should not matter here
             Some(Macro(ec, "=", [addDot dst; addDot src]))
           | _ -> None
       | _ -> None
@@ -1106,7 +1108,7 @@ namespace Microsoft.Research.Vcc
         | Global({Type = Array(t, n); Kind = ConstGlobal} as v, Some(init)) -> 
           let ec_b = {bogusEC with Type = Bool }
           let ec_t = {bogusEC with Type = t }
-          let ec_ptr = {bogusEC with Type = Ptr(t)}
+          let ec_ptr = {bogusEC with Type = PhysPtr(t)}
           let readAxioms =
             let rec readAxiom n = function
               | [] -> []

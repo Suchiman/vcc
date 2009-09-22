@@ -10,7 +10,7 @@ namespace Microsoft.Research.Vcc
  open Microsoft.Research.Vcc
  open Microsoft.Research.Vcc.CAST
  open Microsoft.Research.Vcc.Util
- 
+
  module TransUtil =
    
   // -----------------------------------------------------------------------------
@@ -111,8 +111,8 @@ namespace Microsoft.Research.Vcc
   let mkNot a = mkBoolOp "!" [a]
   
   let typeExpr t =
-    let c = { ExprCommon.Bogus with Type = Ptr t }
-    Expr.Macro ({ c with Type = Type.Math "typeid_t" }, "_vcc_typeof", [Expr.Cast (c, Processed, mkInt 0)])
+    let c = { ExprCommon.Bogus with Type = PhysPtr t } // ptr kind does not matter here because it will ve stripped of again later
+    Expr.Macro ({ ExprCommon.Bogus with Type = Type.Math "typeid_t" }, "_vcc_typeof", [Expr.Cast (c, Processed, mkInt 0)])
       
   let boolOp op a b =
     Prim (boolBogusEC (), Op (op, Processed), [a; b])
@@ -207,8 +207,8 @@ namespace Microsoft.Research.Vcc
       | _ -> failwith "integer or float type expected"
 
   let uncheckedSignConversion (expr :Expr) =
-    match expr.Type.Deref with 
-      | Integer k -> Macro({expr.Common with Type = Ptr(Integer(Type.SwitchSignedness k))}, "unchecked_" + Type.IntSuffix(Type.SwitchSignedness k), [expr])
+    match expr.Type.DerefSoP with 
+      | Integer k, isSpec -> Macro({expr.Common with Type = Type.MkPtr(Integer(Type.SwitchSignedness k), isSpec)}, "unchecked_" + Type.IntSuffix(Type.SwitchSignedness k), [expr])
       | _ -> die()
 
   let subtractOffsets fo1 fo2  =
@@ -326,7 +326,8 @@ namespace Microsoft.Research.Vcc
   let rec walkType (cb:PruneCallback) t = 
     let checkType = walkType cb
     match t with
-      | Type.Ptr t
+      | PhysPtr t
+      | SpecPtr t
       | Type.Volatile t
       | Type.Array (t, _) -> checkType t
       | Type.Map (t1, t2) ->
