@@ -460,7 +460,7 @@ namespace Microsoft.Research.Vcc
             let instance =
               match instance.Type with
                | C.Ptr _ -> instance
-               | t -> C.Expr.Macro ({ instance.Common with Type = C.Ptr t }, 
+               | t -> C.Expr.Macro ({ instance.Common with Type = C.PhysPtr t }, // TODO: Ptr kind
                                     "&", [instance])
             let dot =  C.Expr.MkDot(ec, instance, field)
             exprRes <- C.Expr.Deref (ec, dot)
@@ -470,7 +470,7 @@ namespace Microsoft.Research.Vcc
       typeRes <-
           match typeDef.TypeCode with
             | PrimitiveTypeCode.Char -> C.Type.Integer (C.IntKind.UInt8)
-            | PrimitiveTypeCode.String -> C.Type.Ptr (C.Type.Integer C.IntKind.UInt8)
+            | PrimitiveTypeCode.String -> C.Type.PhysPtr (C.Type.Integer C.IntKind.UInt8)
             | PrimitiveTypeCode.UInt8  -> C.Type.Integer (C.IntKind.UInt8)
             | PrimitiveTypeCode.UInt16 -> C.Type.Integer (C.IntKind.UInt16)
             | PrimitiveTypeCode.UInt32 -> C.Type.Integer (C.IntKind.UInt32)
@@ -596,7 +596,7 @@ namespace Microsoft.Research.Vcc
                       
                     let t = 
                       match this.DoType (f.Type) with
-                        | C.Type.Ptr(typ) when pointsToVolatile -> C.Type.Ptr(C.Type.Volatile(typ))
+                        | C.PtrSoP(typ, isSpec) when pointsToVolatile -> C.Type.MkPtr(C.Type.Volatile(typ), isSpec)
                         | C.Type.Array(typ, size) when pointsToVolatile -> C.Type.Array(C.Type.Volatile(typ), size)
                         | typ -> typ
                     let tok = token f
@@ -871,7 +871,7 @@ namespace Microsoft.Research.Vcc
               topDecls <- C.Top.TypeDecl td :: topDecls
               functionPointerMap.Add (cont, td)
               td
-        typeRes <- C.Type.Ptr (C.Type.Ref td)
+        typeRes <- C.Type.PhysPtr (C.Type.Ref td)
 
       [<OverloadID("VisitGenericMethodInstanceReference")>]
       member this.Visit (genericMethodInstanceReference:IGenericMethodInstanceReference) : unit = assert false
@@ -911,7 +911,7 @@ namespace Microsoft.Research.Vcc
 
       [<OverloadID("VisitManagedPointerTypeReference")>]
       member this.Visit (managedPointerTypeReference:IManagedPointerTypeReference) : unit =
-        typeRes <- C.Type.Ptr (this.DoType (managedPointerTypeReference.TargetType))
+        typeRes <- C.Type.PhysPtr (this.DoType (managedPointerTypeReference.TargetType)) //TODO: Ptr kind
 
       [<OverloadID("VisitMarshallingInformation")>]
       member this.Visit (marshallingInformation:IMarshallingInformation) : unit = assert false
@@ -995,7 +995,10 @@ namespace Microsoft.Research.Vcc
 
       [<OverloadID("VisitPointerTypeReference")>]
       member this.Visit (pointerTypeReference:IPointerTypeReference) : unit =
-        typeRes <- C.Type.Ptr (this.DoType (pointerTypeReference.TargetType))
+        let isSpec = match pointerTypeReference with
+                      | :? IPointerType as pt -> VccCompilationHelper.IsSpecPointer(pt)
+                      | _ -> false // TODO: Ptr kind
+        typeRes <- C.Type.MkPtr (this.DoType (pointerTypeReference.TargetType), isSpec)
 
       [<OverloadID("VisitPropertyDefinition")>]
       member this.Visit (propertyDefinition:IPropertyDefinition) : unit = assert false
@@ -1113,7 +1116,7 @@ namespace Microsoft.Research.Vcc
                 | _ -> C.Expr.IntLiteral (ec, bigint.Parse(constant.Value.ToString ()))
             | C.Type.Bool      -> C.Expr.BoolLiteral (ec, unbox (constant.Value))
             | C.Type.Primitive _ -> C.Expr.Macro(ec, "float_literal", [C.Expr.UserData(ec, constant.Value)])
-            | C.Type.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.ToUserData(constant.Value)])
+            | C.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.ToUserData(constant.Value)])
             | _ -> die()
 
       [<OverloadID("VisitConversion")>]
@@ -1255,7 +1258,7 @@ namespace Microsoft.Research.Vcc
             | _ -> false
         let t = 
           match this.DoType (loc.Type) with
-            | C.Ptr(t) when declaredAsVolatile -> C.Ptr(C.Volatile(t))
+            | C.PtrSoP(t, isSpec) when declaredAsVolatile -> C.Type.MkPtr(C.Volatile(t), isSpec)
             | t -> t
         let var = 
           { 
@@ -1399,7 +1402,7 @@ namespace Microsoft.Research.Vcc
               match args with
                 | [_; C.Expr.Call(_, _, _, [C.Expr.Cast(_,_,e)])] ->
                   match e.Type with
-                    | C.Type.Ptr(C.Type.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended")
+                    | C.Ptr(C.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended")
                     | _ -> ()
                 | _ -> ()
             let mtc, tArgs =
@@ -1490,7 +1493,7 @@ namespace Microsoft.Research.Vcc
         | :? CreateStackArray as createStackArray -> 
           let numberOfElements = this.DoExpression(createStackArray.Size.ProjectAsIExpression())
           let elementType = this.DoType(createStackArray.ElementType.ResolvedType)
-          exprRes <- C.Macro({numberOfElements.Common with Type = C.Ptr elementType}, "stack_allocate_array", [numberOfElements])
+          exprRes <- C.Macro({numberOfElements.Common with Type = C.PhysPtr elementType}, "stack_allocate_array", [numberOfElements]) //TODO: Ptr kind
         | _ -> assert false
 
       [<OverloadID("VisitSubtraction")>]

@@ -22,18 +22,19 @@ namespace Microsoft.Research.Vcc
     | Expr.Prim ({ Type = Type.Integer _ } as c, op, args) when op.IsEqOrIneq ->
       Some (self (Expr.Cast (c, Processed, Expr.Prim ({ c with Type = Type.Bool }, op, args))))
     | Expr.Prim (c, op, [a1; a2]) when op.IsEqOrIneq ->
-      let toGenericPtr (e:Expr) =
-        Expr.Cast ({ e.Common with Type = Ptr (Integer IntKind.UInt8) }, Processed, e)
+      let toGenericPtr (e:Expr) isSpec =
+        Expr.Cast ({ e.Common with Type = Type.MkPtr(Integer IntKind.UInt8, isSpec) }, Processed, e)
       match a1.Type, a2.Type with
-        | Ptr t, Ptr t' ->
+        | PtrSoP(t, isSpec), PtrSoP(t', isSpec') ->
+          if isSpec <> isSpec' then die()
           if (t = Void) or (t' = Void) then 
             let macro = if op.IsEq then "_vcc_ptr_eq" else "_vcc_ptr_neq"
-            Some (self (Expr.Macro (c, macro, [toGenericPtr a1; toGenericPtr a2])))
+            Some (self (Expr.Macro (c, macro, [toGenericPtr a1 isSpec; toGenericPtr a2 isSpec])))
           elif t = t' then None
           else 
-            Some (self (Expr.Prim (c, op, [toGenericPtr a1; toGenericPtr a2])))
+            Some (self (Expr.Prim (c, op, [toGenericPtr a1 isSpec; toGenericPtr a2 isSpec])))
         | _ -> None
-    | Expr.Dot (c, e, ({ Type = Array (t, _) } as f)) when c.Type <> Ptr t ->
+    | Expr.Dot (c, e, ({ Type = Array (t, _) } as f)) when c.Type <> SpecPtr t && c.Type <> PhysPtr t ->
       Some (self (Expr.MkDot (c, e, f)))
     | _ -> None
   
@@ -44,12 +45,12 @@ namespace Microsoft.Research.Vcc
       | Expr.Cast ({Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
       | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast (_, (Processed|Unchecked), e')) when e'.Type = t1 -> Some (self e')
       | Expr.Cast ({ Type = Bool }, _, Expr.Cast (_, _, e')) when e'.Type = Bool -> Some (self e')
-      | Expr.Cast ({ Type = Ptr _ } as c, _, Expr.IntLiteral (_, ZeroBigInt)) -> 
-        Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Ptr Void}, "null", []))))
-      | Expr.Cast ({ Type = Ptr _ } as c, _, e) when e.Type._IsInteger ->
+      | Expr.Cast ({ Type = PtrSoP(_, isSpec) } as c, _, Expr.IntLiteral (_, ZeroBigInt)) -> 
+        Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Type.MkPtr(Void, isSpec)}, "null", []))))
+      | Expr.Cast ({ Type = PtrSoP(_, isSpec) } as c, _, e) when e.Type._IsInteger ->
         match e.Type with
           | Integer k ->
-            Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Ptr(Void)}, "_vcc_" + (Type.IntSuffix k) + "_to_ptr" , [e]))))
+            Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Type.MkPtr(Void, isSpec)}, "_vcc_" + (Type.IntSuffix k) + "_to_ptr" , [e]))))
           | _ -> None
       | Expr.Cast ({ Type = Integer k }, _, Expr.IntLiteral (c, n)) ->
         let (min, max) = Type.IntRange k
@@ -90,7 +91,7 @@ namespace Microsoft.Research.Vcc
           | _ ->
             match p.Type with
               | Array (t, _) ->
-                let p' = { p with Type = Ptr t }
+                let p' = { p with Type = Type.MkPtr(t, p.IsSpec) }
                 map.Add (p, p')
                 p'          
               | _ -> p       
@@ -140,7 +141,7 @@ namespace Microsoft.Research.Vcc
       | Atomic (c, objs, body) -> 
         let errorIfNotPtrToStruct (expr : Expr) =
           match expr.Type with
-            | Type.Ptr(Type.Ref(_)| Claim) -> ()
+            | Ptr(Type.Ref(_)| Claim) -> ()
             | Type.ObjectT -> ()
             | t -> helper.Error(expr.Token, 9668, "'" + expr.Token.Value + "' has non-admissible type '" + t.ToString() + "' for atomic")
         List.iter errorIfNotPtrToStruct objs
@@ -249,7 +250,7 @@ namespace Microsoft.Research.Vcc
               | Expr.IntLiteral(_, sz) -> Type.Array(elemType, (int)sz)
               | _ -> die()
             Some (Expr.Cast(c, Processed, 
-                            Expr.Call({ c with Type = Ptr Void }, internalFunction "stack_alloc", [arrTy], [Expr.Macro(bogusEC, "stackframe", [])])))
+                            Expr.Call({ c with Type = PhysPtr Void }, internalFunction "stack_alloc", [arrTy], [Expr.Macro(bogusEC, "stackframe", [])]))) // TODO Ptr kind
           | _ -> die()        
         | Expr.Cast ({ Type = Ptr t } as c, _, Expr.Call (_, { Name = "malloc" }, _, [sz])) as expr ->
           match extractArraySize helper expr t sz with
@@ -260,7 +261,7 @@ namespace Microsoft.Research.Vcc
               let t' = typeExpr t
               let arrTy = Expr.Macro (t'.Common, "_vcc_array", [t'; self elts])
               Some (Expr.Cast (c, Processed, 
-                               Expr.Call ({ c with Type = Ptr Void }, internalFunction "alloc", [], [arrTy])))
+                               Expr.Call ({ c with Type = PhysPtr Void }, internalFunction "alloc", [], [arrTy])))
         | Expr.Call (c, { Name = "free" }, _, [p]) ->
           Some (Expr.Call (c, internalFunction "free", [], [self p]))
         | Expr.Macro (c, "&", [Macro (c', "this", [])]) when not c'.Type._IsPtr ->
@@ -409,7 +410,7 @@ namespace Microsoft.Research.Vcc
           | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, Expr.Cast(_, _, Expr.Macro(_, "null", [])),fld) as dot))]) ->
             Some(Macro(ec, cs, [self addr; Expr.UserData(bogusEC, fld)]))
           | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, e, fld) as dot))])->
-            let result = Some (self (Macro(ec, cs, [Expr.Macro({ ec with Type = Ptr(Type.Ref(fld.Parent))}, cs, [addr; Expr.UserData(bogusEC, fld)]); e])))
+            let result = Some (self (Macro(ec, cs, [Expr.Macro({ ec with Type = PhysPtr(Type.Ref(fld.Parent))}, cs, [addr; Expr.UserData(bogusEC, fld)]); e]))) // TODO Ptr kind
             result
           | _ -> None
       | _ -> None
@@ -565,7 +566,7 @@ namespace Microsoft.Research.Vcc
     let normalizeReinterpretation self = 
       let asArray sz (obj:Expr) =
         let msg () = "as_array((uint8_t*)" + obj.Token.Value + ", " + sz.ToString() + ")"
-        let bec = { forwardingToken obj.Token None msg with Type = Ptr Type.Byte }
+        let bec = { forwardingToken obj.Token None msg with Type = PhysPtr Type.Byte } // TODO Ptr kind
         Macro (bec, "_vcc_as_array", [Cast (bec, Unchecked, obj); sz])
       let typeId (obj:Expr) =
         Macro ({ obj.Common with Type = Type.Math "typeid_t" }, "_vcc_typeof", [obj])

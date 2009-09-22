@@ -34,7 +34,7 @@ namespace Microsoft.Research.Vcc
           | CallMacro(_, "_vcc_closed", _, _) -> found()
           | CallMacro(_, "_vcc_owns", _, [Cast(_,_, expr)|expr]) ->
             match expr.Type with 
-              | Type.Ptr(Type.Ref(td)) ->
+              | Ptr(Type.Ref(td)) ->
                 if hasBoolAttr "volatile_owns" td.CustomAttr then found() else continueIfNotFound()
               | _ -> continueIfNotFound()
           | _ -> continueIfNotFound()

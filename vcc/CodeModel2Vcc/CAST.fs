@@ -167,7 +167,8 @@ module Microsoft.Research.Vcc.CAST
     | Primitive of PrimKind
     | Bool
     | Volatile of Type
-    | Ptr of Type
+    | PhysPtr of Type
+    | SpecPtr of Type
     | Ref of TypeDecl
     | Array of Type * int
     | TypeIdT
@@ -185,7 +186,8 @@ module Microsoft.Research.Vcc.CAST
         | Primitive x -> wr (x.ToString())
         | Bool -> wr "_Bool"
         | TypeIdT -> wr "_TypeId"
-        | Ptr t -> t.WriteTo b; wr "*"
+        | PhysPtr t -> t.WriteTo b; wr "*"
+        | SpecPtr t -> t.WriteTo b; wr "^"
         | Volatile t -> wr "volatile "; t.WriteTo b
         | Type.Ref d -> wr (d.ToString ())
         | Array (t, sz) -> t.WriteTo b; wr ("[" + sz.ToString() + "]")
@@ -197,6 +199,10 @@ module Microsoft.Research.Vcc.CAST
     
     override this.ToString () = toString (this.WriteTo)
     
+    static member MkPtr(t,isSpec) = if isSpec then Type.SpecPtr(t) else Type.PhysPtr(t)
+    
+    static member MkPtrToStruct (td:TypeDecl) = Type.MkPtr(Type.Ref(td), td.IsSpec)
+    
     member this._IsArray =
       match this with
         | Array _ -> true
@@ -205,12 +211,14 @@ module Microsoft.Research.Vcc.CAST
     member this._IsPtr =
       match this with
         | ObjectT
-        | Ptr _ -> true
+        | SpecPtr _
+        | PhysPtr _ -> true
         | _ -> false
         
     member this.IsPtrTo td =
       match this with 
-        | Ptr td' when td = td' -> true
+        | SpecPtr td'
+        | PhysPtr td' when td = td' -> true
         | _ -> false
     
     member this.IsComposite =
@@ -220,7 +228,8 @@ module Microsoft.Research.Vcc.CAST
         | MathInteger
         | Primitive _
         | Bool
-        | Ptr _
+        | PhysPtr _
+        | SpecPtr _
         | TypeIdT
         | ObjectT
         | Type.Ref { Kind = (FunctDecl _|MathType|Record) }
@@ -243,8 +252,15 @@ module Microsoft.Research.Vcc.CAST
       
     member this.Deref =
       match this with
-      | Ptr(t) -> t  
+      | SpecPtr t 
+      | PhysPtr t -> t
       | t -> t
+      
+    member this.DerefSoP =
+      match this with
+      | SpecPtr t -> t, true
+      | PhysPtr t -> t, false  
+      | t -> t, false
     
     // those should be treated as immutable
     static member MathTd name = 
@@ -296,7 +312,8 @@ module Microsoft.Research.Vcc.CAST
       match this with
         | Integer k -> fst (Type.sizeSign k) / 8
         | Primitive k -> Type.primSize k
-        | Ptr _
+        | SpecPtr _
+        | PhysPtr _
         | ObjectT -> 8
         | Volatile t -> t.SizeOf
         | Type.Ref td -> td.SizeOf
@@ -358,7 +375,8 @@ module Microsoft.Research.Vcc.CAST
             match typeSubst.TryGetValue(tv) with
               | true, t ->  t
               | false, _ -> TypeVar tv
-          | Ptr(t) -> Ptr(subst t)
+          | SpecPtr(t) -> SpecPtr(subst t)
+          | PhysPtr(t) -> PhysPtr(subst t)
           | Volatile(t) -> Volatile(subst t)
           | Array(t, n) -> Array(subst t, n)
           | Map(t1, t2) -> Map(subst t1, subst t2)
@@ -385,6 +403,14 @@ module Microsoft.Research.Vcc.CAST
         this.Type.WriteTo b
         wrb b (" " + this.Name)      
       
+      member this.IsSpec = 
+        match this.Kind with 
+          | SpecParameter
+          | OutParameter
+          | SpecLocal
+          | QuantBound -> true
+          | _ -> false
+
       override this.ToString () = toString (this.WriteTo)
  
   and 
@@ -586,9 +612,13 @@ module Microsoft.Research.Vcc.CAST
     
     override this.ToString () = toString (this.WriteTo 0)
   
-    static member MkDot(ec, expr, field:Field) = 
+    static member MkDot(ec, expr:Expr, field:Field) = 
       let t = match field.Type with | Array(t, _) -> t | t -> t
-      Expr.Dot({ec with Type = Type.Ptr(t)}, expr, field)
+      let isSpec = match expr.Type with
+                    | _ when field.IsSpec -> true
+                    | SpecPtr _ -> true
+                    | _ -> false
+      Expr.Dot({ec with Type = Type.MkPtr(t, isSpec)}, expr, field)
   
     static member MkDot(expr:Expr, field:Field) = Expr.MkDot(expr.Common, expr, field)
   
@@ -979,6 +1009,16 @@ module Microsoft.Research.Vcc.CAST
   let (|EFalse|_|) = function
       | BoolLiteral (_, false) -> Some (EFalse)
       | _ -> None
+    
+  let (|Ptr|_|) = function
+      | PhysPtr t  
+      | SpecPtr t -> Some(t)
+      | _ -> None
+      
+  let (|PtrSoP|_|) = function
+    | PhysPtr t -> Some(t,false)
+    | SpecPtr t -> Some(t,true)
+    | _ -> None
     
   let (|MathTypeRef|_|) = function
     | Type.Ref ({ Name = n; Kind = MathType }) -> Some (MathTypeRef n)

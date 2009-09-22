@@ -473,7 +473,7 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
-    internal static bool IsSpecPointer(IPointerType type) {
+    public static bool IsSpecPointer(IPointerType type) {
       var modifiedPtr = type as IModifiedTypeReference;
       if (modifiedPtr != null) {
         foreach (var modifier in modifiedPtr.CustomModifiers) {
