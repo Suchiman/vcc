@@ -403,12 +403,13 @@ namespace Microsoft.Research.Vcc
     // CONTAINING_RECORD(CONTAINING_RECORD(addr, T0, f2), T, f1)
    
     let normalizeContainingStruct self = function
-      | Call(ec, ({Name = "_vcc_containing_struct"} as f), _, [addr; df]) ->
+      | CallMacro(ec, "_vcc_containing_struct", _, [addr; df]) ->
+        let cs =  "_vcc_containing_struct"
         match df with
           | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, Expr.Cast(_, _, Expr.Macro(_, "null", [])),fld) as dot))]) ->
-            Some(Macro(ec, "_vcc_containing_struct", [addr; Expr.UserData(bogusEC, fld)]))
+            Some(Macro(ec, cs, [self addr; Expr.UserData(bogusEC, fld)]))
           | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, e, fld) as dot))])->
-            let result = Some (self (Call(ec, f, [], [Expr.Macro({ ec with Type = Ptr(Type.Ref(fld.Parent))}, "_vcc_containing_struct", [addr; Expr.UserData(bogusEC, fld)]); e])))
+            let result = Some (self (Macro(ec, cs, [Expr.Macro({ ec with Type = Ptr(Type.Ref(fld.Parent))}, cs, [addr; Expr.UserData(bogusEC, fld)]); e])))
             result
           | _ -> None
       | _ -> None
