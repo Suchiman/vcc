@@ -284,7 +284,7 @@ namespace Microsoft.Research.Vx86.ContractGeneration
           let normalize (e : Expr) = 
 
             let i64 = Type.Integer(IntKind.Int64)
-            let u64Ptr = Type.Ptr(Type.Integer(IntKind.UInt64))
+            let u64Ptr = Type.PhysPtr(Type.Integer(IntKind.UInt64))
             let sizeOf (e:Expr) =
               match e.Type with
                 | Ptr(t) -> t.SizeOf
