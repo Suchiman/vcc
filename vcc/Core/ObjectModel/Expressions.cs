@@ -543,17 +543,23 @@ namespace Microsoft.Research.Vcc {
     /// expressions during type overload resolution, the value returned by this method may be different from one call to the next.
     /// When type inference fails, Dummy.Type is returned.
     /// </summary>
-    public override ITypeDefinition InferType() {
-      IPointerType/*?*/ pointerType = ((VccCompilationHelper)this.Helper).ArrayPointerFor(this.Address.Type);
-      if (pointerType != null) return pointerType;
-      if (this.Address.Type == Dummy.Type) return Dummy.Type;
-      if (IsSpecVisitor.Check(this.Address)) {
-        var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
-        return ModifiedPointerType.GetPointerType(this.Address.Type, modifier, this.Compilation.HostEnvironment.InternFactory);
-      }
-      return PointerType.GetPointerType(this.Address.Type, this.Compilation.HostEnvironment.InternFactory);
-    }
+     public override ITypeDefinition InferType() {
+       bool isSpec = IsSpecVisitor.Check(this.Address);
+       IPointerType/*?*/ pointerType = ((VccCompilationHelper)this.Helper).ArrayPointerFor(this.Address.Type);
+       if (pointerType != null) {
+         if (isSpec) return this.GetSpecPointerType(pointerType.TargetType.ResolvedType);
+         return pointerType;
+       }
+       if (this.Address.Type == Dummy.Type) return Dummy.Type;
+       if (isSpec) return this.GetSpecPointerType(this.Address.Type);
+       return PointerType.GetPointerType(this.Address.Type, this.Compilation.HostEnvironment.InternFactory);
+     }
 
+     private ITypeDefinition GetSpecPointerType(ITypeDefinition targetType) {
+       var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
+       return ModifiedPointerType.GetPointerType(targetType, modifier, this.Compilation.HostEnvironment.InternFactory);
+     }
+ 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       var fieldDef = this.Address.Definition as IFieldDefinition;
       if (fieldDef != null && fieldDef.IsBitField) {
