@@ -1875,26 +1875,12 @@ namespace Microsoft.Research.Vcc {
     private IExpression ProjectAsDereferencedConvertedPointerAddition() {
       //transform to *(ptr + index)
       
-      // !!! DEPENDENCY WARNING !!!
-      //
-      // if you ever change the way that a VccIndexer is projected, you will need to fix
-      // 
-      // ConvertFelt2Boogie.Visit(IAddressDereference addressDerefence)
-      //
-      // which relies on the exact structure of the generated projected expression
-      //
-      // !!! DEPENDENCY WARNING !!!
-
       IEnumerator<Expression> indexEnumerator = this.ConvertedArguments.GetEnumerator();
       if (!indexEnumerator.MoveNext()) return CodeDummy.Expression;
       Expression ptr = this.IndexedObject;
       if (this.FixedArrayElementType != null) {
         ptr = new VccAddressOf(new VccAddressableExpression(this.IndexedObject, true), this.IndexedObject.SourceLocation);
         ptr.SetContainingExpression(this);
-        ITypeDefinition voidPointer = PointerType.GetPointerType(this.Compilation.PlatformType.SystemVoid, this.Compilation.HostEnvironment.InternFactory);
-        ptr = this.Helper.ExplicitConversion(ptr, voidPointer);
-        ITypeDefinition pointerType = PointerType.GetPointerType(this.FixedArrayElementType, this.Compilation.HostEnvironment.InternFactory);
-        ptr = this.Helper.ExplicitConversion(ptr, pointerType);
       }
       Expression index = indexEnumerator.Current;
       if (index.Type.IsEnum) index = this.Helper.ExplicitConversion(index, index.Type.UnderlyingType.ResolvedType);
