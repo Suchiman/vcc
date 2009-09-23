@@ -517,7 +517,7 @@ struct B {
 spec(
 struct C {
   int x;
-  int y;
+  spec(int y;)
 };)
 
 struct A {

@@ -5,7 +5,7 @@ struct Counter {
   invariant( unchanged(count) || count == old(count) + 1 )
 };
 
-int foo(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
+int foo(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
   writes(res, cl)
   requires(wrapped(cl) && claims(cl, closed(cnt)))
   ensures(wrapped(*res) && claims(*res, cnt->count >= result - 1 ))
@@ -23,7 +23,7 @@ int foo(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
   return y;
 }
 
-int fooFail1(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
+int fooFail1(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
   writes(res)
   requires(wrapped(cl) && claims(cl, closed(cnt)))
   ensures(wrapped(*res) && claims(*res, cnt->count >= result - 1 ))
@@ -41,7 +41,7 @@ int fooFail1(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
   return y;
 }
 
-int fooFail2(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
+int fooFail2(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
   writes(res, cl)
   requires(wrapped(cl) && claims(cl, closed(cnt)))
   ensures(wrapped(*res) && claims(*res, cnt->count >= result + 1 ))
@@ -59,7 +59,7 @@ int fooFail2(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
   return y;
 }
 
-int fooFail3(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
+int fooFail3(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
   writes(res, cl)
   requires(wrapped(cl) && claims(cl, closed(cnt)))
   ensures(wrapped(*res) && claims(*res, cnt->count >= 0 ))
@@ -77,7 +77,7 @@ int fooFail3(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
   return y;
 }
 
-int fooFail4(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
+int fooFail4(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
   writes(res, cl)
   requires(wrapped(cl) && claims(cl, true))
 {
@@ -91,7 +91,7 @@ int fooFail4(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
   return y;
 }
 
-int fooFail5(struct Counter *cnt spec(claim_t cl) spec(claim_t *res))
+int fooFail5(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
   writes(res, cl)
   requires(wrapped(cl) && claims(cl, closed(cnt)))
   ensures(wrapped(*res) && claims(*res, cnt->count >= result - 1 ))

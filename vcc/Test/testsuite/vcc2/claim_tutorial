@@ -44,7 +44,7 @@ struct vcc(claimable) A {
   volatile int x;
   invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
 };
-void incr(struct A *a, int *res claimp(c) claimp(*cres))
+void incr(struct A *a, int *res claimp(c) claimp(^cres))
   writes(c, res, cres)
   always(c, closed(a))
   ensures(claims(*cres, a->x >= when_claimed(*res)))
@@ -67,7 +67,7 @@ struct vcc(claimable) A {
   volatile int x;
   invariant( this->x > 0 && (old(this->x) == this->x || old(this->x) + 1 == this->x ))
 };
-void incr(struct A *a, int *res claimp(c) claimp(*cres))
+void incr(struct A *a, int *res claimp(c) claimp(^cres))
   writes(c, res, cres)
   always(c, closed(a))
   ensures(claims(*cres, a->x > when_claimed(*res)))
