@@ -1117,7 +1117,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         } else if (ch2 == 'i' || ch2 == 'I') {
           return this.ScanExtendedIntegerSuffix(true);
         }
-        return TypeCode.UInt16;
+        return TypeCode.UInt32;
       } else if (ch == 'l' || ch == 'L') {
         this.endPos++;
         if (ch == 'l') this.HandleError(Error.LowercaseEllSuffix);
