@@ -404,13 +404,13 @@ namespace Microsoft.Research.Vcc
     // CONTAINING_RECORD(CONTAINING_RECORD(addr, T0, f2), T, f1)
    
     let normalizeContainingStruct self = function
-      | CallMacro(ec, "_vcc_containing_struct", _, [addr; df]) ->
-        let cs =  "_vcc_containing_struct"
+      | Call(ec, ({Name = "_vcc_containing_struct"} as f), _, [addr; df]) ->
         match df with
           | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, Expr.Cast(_, _, Expr.Macro(_, "null", [])),fld) as dot))]) ->
-            Some(Macro(ec, cs, [self addr; Expr.UserData(bogusEC, fld)]))
+            None
           | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, e, fld) as dot))])->
-            let result = Some (self (Macro(ec, cs, [Expr.Macro({ ec with Type = PhysPtr(Type.Ref(fld.Parent))}, cs, [addr; Expr.UserData(bogusEC, fld)]); e]))) // TODO Ptr kind
+            let mkFieldExpr ec (f : Field) = Expr.MkDot(Expr.Macro({ec with Type = PhysPtr(Type.Ref(f.Parent))}, "null", []), f)             
+            let result = Some (self (Call(ec, f, [], [Call({ec with Type = PhysPtr(Type.Ref(fld.Parent))}, f, [], [addr; mkFieldExpr ec fld]); e])))
             result
           | _ -> None
       | _ -> None
