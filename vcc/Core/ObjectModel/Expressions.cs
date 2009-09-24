@@ -388,11 +388,6 @@ namespace Microsoft.Research.Vcc {
       return this.fromProjectionOfFixedSizeArray ? false : base.CheckForErrorsAndReturnTrueIfAnyAreFound();
     }
 
-    protected override AddressableExpression CreateAddressableExpr(Expression expr)
-    {
-      return new VccAddressableExpression(expr, this.fromProjectionOfFixedSizeArray);
-    }
-
     private readonly bool fromProjectionOfFixedSizeArray;
 
     /// <summary>
@@ -1086,7 +1081,7 @@ namespace Microsoft.Research.Vcc {
       }
       //^ assume globalVar != null;      
       AddressableExpression fieldRef = new AddressableExpression(new BoundExpression(this, globalVar.FieldDefinition));
-      AddressOf addressOf = new AddressOf(fieldRef, this.SourceLocation);
+      VccAddressOf addressOf = new VccAddressOf(fieldRef, this.SourceLocation);
       addressOf.SetContainingExpression(this);
       Conversion conversion = new Conversion(addressOf, this.Type, this.SourceLocation);
       return conversion.ProjectAsIExpression();
@@ -2970,7 +2965,7 @@ namespace Microsoft.Research.Vcc {
         }
         IFieldDefinition fieldDef = member as IFieldDefinition;
         if (fieldDef != null) {
-          var addrOf = new AddressOf(new AddressableExpression(new ProjectionHelper(this.Qualifier, this.SimpleName, fieldDef, this.SourceLocation)), this.SourceLocation);
+          var addrOf = new VccAddressOf(new AddressableExpression(new ProjectionHelper(this.Qualifier, this.SimpleName, fieldDef, this.SourceLocation)), this.SourceLocation);
           addrOf.SetContainingExpression(this);
           return this.cachedProjection = addrOf.ProjectAsIExpression();
         }

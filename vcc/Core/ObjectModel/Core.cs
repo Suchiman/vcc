@@ -625,6 +625,10 @@ namespace Microsoft.Research.Vcc {
       return new VccTypeNameFormatter();
     }
 
+    public override AddressOf GetAddressOf(Expression expr, ISourceLocation sourceLocation) {
+      return new VccAddressOf(new VccAddressableExpression(expr), sourceLocation);
+    }
+
     public override IEnumerable<ITypeDefinitionMember> GetExtensionMembers(ITypeDefinition type, IName memberName, bool ignoreCase) {
       foreach (ITypeDefinitionMember anonMember in type.GetMembersNamed(Dummy.Name, false)) {
         IFieldDefinition/*?*/ anonField = anonMember as IFieldDefinition;
