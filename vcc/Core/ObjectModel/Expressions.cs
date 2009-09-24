@@ -383,6 +383,10 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
+    protected override AddressOf GetAddressOfForInstance(Expression instance) {
+      return new VccAddressOf(new VccAddressableExpression(instance, this.fromProjectionOfFixedSizeArray), instance.SourceLocation);
+    }
+
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
     {
       return this.fromProjectionOfFixedSizeArray ? false : base.CheckForErrorsAndReturnTrueIfAnyAreFound();
