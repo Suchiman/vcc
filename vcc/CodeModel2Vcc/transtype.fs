@@ -962,8 +962,8 @@ namespace Microsoft.Research.Vcc
           subsFields      
           
         let retypeThis oldTd newTd self = function
-          | Expr.Macro({Type = Ptr(Type.Ref(oldType))} as c, "this", []) ->
-              Some (Expr.Macro( { c with Type = Type.MkPtrToStruct(newTd) }, "this", []))
+          | Expr.Macro({Type = PtrSoP(Type.Ref(oldType), isSpec)} as c, "this", []) ->
+              Some (Expr.Macro( { c with Type = Type.MkPtr(Type.Ref(newTd), isSpec) }, "this", []))
           | _ -> None
       
         match typeToVolatileType.TryGetValue(td) with
@@ -1026,9 +1026,7 @@ namespace Microsoft.Research.Vcc
             | _ -> None
         | Dot(ec, expr, f) ->
           match initialFldToVolatileFld.TryGetValue(f) with
-            | true, f' -> 
-              let t = match f'.Type with | Array(t, _) | t -> Type.PhysPtr(t) // TODO Ptr kind
-              Some(Dot({ec with Type = t}, self expr, f'))
+            | true, f' -> Some(Expr.MkDot(ec, self expr, f'))
             | false, _ ->
               let (expr' : Expr) = self expr
               match expr'.Type with
