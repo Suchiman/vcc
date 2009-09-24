@@ -491,12 +491,10 @@ namespace Microsoft.Research.Vcc
       
   let pruneBy (env:Helper.Env) funcName decls = env.SwPruning.Run doPruneBy funcName decls
   
-  let printDecls decls =
-    for (d:Top) in decls do
-      printf "%s" (d.ToString())
+  let dumpDecls showTypes decls = 
+    for (d:Top) in decls do printf "%s" (d.ToStringWT(showTypes))
+    decls
 
-  let dumpDecls decls = printDecls decls; decls        
- 
   let forEachInvariant f decls =
     for d in decls do
       match d with

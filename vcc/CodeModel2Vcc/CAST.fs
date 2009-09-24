@@ -495,7 +495,7 @@ module Microsoft.Research.Vcc.CAST
       let doList pref lst =
         for (e:Expr) in lst do
           wr "  "; wr pref; wr " ";
-          e.WriteTo System.Int32.MinValue b
+          e.WriteTo System.Int32.MinValue false b
           wr ";\n";
       doList "requires" (this.Requires)
       doList "ensures" (this.Ensures)
@@ -610,7 +610,9 @@ module Microsoft.Research.Vcc.CAST
     | Macro of ExprCommon * string * list<Expr>
     | UserData of ExprCommon * obj
     
-    override this.ToString () = toString (this.WriteTo 0)
+    override this.ToString () = toString (this.WriteTo 0 false)
+    
+    member this.ToStringWT (showTypes) = toString (this.WriteTo 0 showTypes)
   
     static member MkDot(ec, expr:Expr, field:Field) = 
       let t = match field.Type with | Array(t, _) -> t | t -> t
@@ -903,104 +905,114 @@ module Microsoft.Research.Vcc.CAST
           | _ -> None
       this.SelfMap repl
                 
-    member x.Type = x.Common.Type
-    member x.Token = x.Common.Token
+    member this.Type = this.Common.Type
+    member this.Token = this.Common.Token
     
-    member x.WriteTo (ind:int) b : unit =
-      let f e = (e:Expr).WriteTo (ind + 2) b
-      let fe e = (e:Expr).WriteTo System.Int32.MinValue b
-      let wr = wrb b
-      let doArgs = doArgsb b fe
-      let doInd ind = 
-        if ind > 0 then wr (System.String(' ', ind))
-      doInd ind
-      match x with
-        | Ref (_, v) -> wr (v.Name)
-        | Prim (_, op, args) -> doArgs (op.ToString()) args
-        | Expr.Call (_, fn, tArgs, args) -> doArgsAndTArgsb b  fe (fun (t:Type) -> t.WriteTo b) fn.Name args tArgs
-        | BoolLiteral (_, v) -> wr (if v then "true" else "false")
-        | IntLiteral (_, l) -> wr (l.ToString())
-        | Deref (_, e) -> wr "*("; fe e; wr ")"
-        | Dot (_, e, fld) -> 
-          let fieldName = if fld.Name <> "" then fld.Name else "'" + (fld.ToString()) + "'"
-          wr "("; fe e; wr "->"; wr fieldName; wr ")"
-        | Index (_, e, off) -> fe e; wr "["; fe off; wr "]"
-        | Cast (_, ch, e) -> 
-          wr "("; wr (ch.ToString()); wr " "; wr (x.Type.ToString()); wr ")"; fe e;
-          //wr " tok: "; wr x.Common.Token.Value; wr "]"
-        | Quant (_, q) ->
-          match q.Kind with
-            | Exists -> wr "exists("
-            | Forall -> wr "forall("
-            | Lambda -> wr "lambda("
-          for v in q.Variables do
-            wr (v.Type.ToString())
-            wr " "
-            wr v.Name
-            wr "; "
-          match q.Condition with
-            | Some e -> fe e; wr "; "
-            | None -> ()
-          fe q.Body
-          wr ")"
-        | Result (_) -> wr "result"
-        | Old (_, w, e) -> doArgs "old" [w; e]
-        | Pure (_, e) -> doArgs "pure" [e]
-        | Expr.Macro (_, op, args) -> doArgs ("@" + op) args        
-
-        | VarDecl (_, v) ->
-          wr (v.Type.ToString()); wr " "; wr v.Name; wr ";\n"
-        | VarWrite (_, [v], e) ->
-          wr v.Name; wr " := "; fe e; wr ";\n"
-        | VarWrite (_, vs, e) -> 
-          let bogus = { Type = Type.Void; Token = Token.NoToken } : ExprCommon
-          doArgs "" (List.map (fun v -> Ref(bogus, v)) vs); wr " = "; fe e; wr ";\n"
-        | MemoryWrite (_, d, s) ->
-          wr "*"; fe d; wr " := "; fe s; wr ";\n"
-        | Goto (_, l) -> wr "goto "; wr l.Name; wr ";\n"
-        | Label (_, l) -> wr l.Name; wr ":\n"
-        | Assert (_, e) -> wr "assert "; fe e; wr ";\n"
-        | Assume (_, e) -> wr "assume "; fe e; wr ";\n"
-        | Return (_, Some (e)) -> wr "return "; fe e; wr ";\n"
-        | Return (_, None) -> wr "return;\n"
-        | If (_, cond, th, el) ->
-          wr "if ("; fe cond; wr ")\n"; f th; doInd ind; wr "else\n"; f el
-        | Loop (_, invs, writes, body) ->
-          wr "loop\n";
-          for i in invs do
-            doInd (ind + 4)
-            wr "invariant ";
-            fe i;
+    member this.WriteTo (ind:int) (showTypes:bool) (b:StringBuilder) : unit =
+      
+      let rec wt (ind:int) (outerType:Type) (e:Expr) = 
+      
+        let f = wt (ind + 2) e.Type
+        let fe = wt System.Int32.MinValue e.Type
+        let wr = wrb b
+        let doArgs = doArgsb b fe
+        let doInd ind = 
+          if ind > 0 then wr (System.String(' ', ind))
+        let showType = showTypes && e.Type <> Type.Bogus && e.Type <> Type.Void && e.Type <> outerType
+        doInd ind
+        if showType then wr "("
+        match e with
+          | Ref (_, v) -> wr (v.Name)
+          | Prim (_, op, args) -> doArgs (op.ToString()) args
+          | Expr.Call (_, fn, tArgs, args) -> doArgsAndTArgsb b  fe (fun (t:Type) -> t.WriteTo b) fn.Name args tArgs
+          | BoolLiteral (_, v) -> wr (if v then "true" else "false")
+          | IntLiteral (_, l) -> wr (l.ToString())
+          | Deref (_, e) -> wr "*("; fe e; wr ")"
+          | Dot (_, e, fld) -> 
+            let fieldName = if fld.Name <> "" then fld.Name else "'" + (fld.ToString()) + "'"
+            wr "("; fe e; wr "->"; wr fieldName; wr ")"
+          | Index (_, e, off) -> fe e; wr "["; fe off; wr "]"
+          | Cast (_, ch, e) -> 
+            let cs = ch.ToString()
+            let cs = if cs <> "" then cs + " " else cs
+            wr "("; wr cs; wr (e.Type.ToString()); wr ")"; fe e;
+          | Quant (_, q) ->
+            match q.Kind with
+              | Exists -> wr "exists("
+              | Forall -> wr "forall("
+              | Lambda -> wr "lambda("
+            for v in q.Variables do
+              wr (v.Type.ToString())
+              wr " "
+              wr v.Name
+              wr "; "
+            match q.Condition with
+              | Some e -> fe e; wr "; "
+              | None -> ()
+            fe q.Body
+            wr ")"
+          | Result (_) -> wr "result"
+          | Old (_, w, e) -> doArgs "old" [w; e]
+          | Pure (_, e) -> doArgs "pure" [e]
+          | Expr.Macro (_, op, args) -> 
+              match args with 
+                  | [] -> wr "@"; wr op
+                  | _ -> doArgs ("@" + op) args
+          | VarDecl (_, v) ->
+            wr (v.Type.ToString()); wr " "; wr v.Name; wr ";\n"
+          | VarWrite (_, [v], e) ->
+            wr v.Name; wr " := "; fe e; wr ";\n"
+          | VarWrite (_, vs, e) -> 
+            let bogus = { Type = Type.Void; Token = Token.NoToken } : ExprCommon
+            doArgs "" (List.map (fun v -> Ref(bogus, v)) vs); wr " = "; fe e; wr ";\n"
+          | MemoryWrite (_, d, s) ->
+            wr "*"; fe d; wr " := "; fe s; wr ";\n"
+          | Goto (_, l) -> wr "goto "; wr l.Name; wr ";\n"
+          | Label (_, l) -> wr l.Name; wr ":\n"
+          | Assert (_, e) -> wr "assert "; fe e; wr ";\n"
+          | Assume (_, e) -> wr "assume "; fe e; wr ";\n"
+          | Return (_, Some (e)) -> wr "return "; fe e; wr ";\n"
+          | Return (_, None) -> wr "return;\n"
+          | If (_, cond, th, el) ->
+            wr "if ("; fe cond; wr ")\n"; f th; doInd ind; wr "else\n"; f el
+          | Loop (_, invs, writes, body) ->
+            wr "loop\n";
+            for i in invs do
+              doInd (ind + 4)
+              wr "invariant ";
+              fe i;
+              wr ";\n"
+            for w in writes do
+              doInd (ind + 4)
+              wr "writes ";
+              fe w;
+              wr ";\n"
+            f body        
+          | Atomic (c, args, body) ->
+            doArgs "atomic" args
+            f (Block (c, [body]))
+          | Block (_, stmts) ->
+            wr "{\n";
+            for s in stmts do 
+              match s with
+                | Macro (_, _, _) -> 
+                  f s
+                  wr "\n"
+                | _ -> f s
+            doInd ind
+            wr "}\n"
+          | Stmt (_, e) ->
+            wr "stmt "
+            fe e
             wr ";\n"
-          for w in writes do
-            doInd (ind + 4)
-            wr "writes ";
-            fe w;
-            wr ";\n"
-          f body        
-        | Atomic (c, args, body) ->
-          doArgs "atomic" args
-          f (Block (c, [body]))
-        | Block (_, stmts) ->
-          wr "{\n";
-          for s in stmts do 
-            match s with
-              | Macro (_, _, _) -> 
-                f s
-                wr "\n"
-              | _ -> f s
-          doInd ind
-          wr "}\n"
-        | Stmt (_, e) ->
-          wr "stmt "
-          fe e
-          wr ";\n"
-        | Comment (_, s) ->
-          wr "// "; wr s; wr "\n"
-        | UserData (_, o) ->
-          wr "userdata("; wr (o.ToString()); wr ") : "; wr (o.GetType().Name)
-        | SizeOf(_, t) ->
-          wr "sizeof("; wr (t.ToString()); wr ")"
+          | Comment (_, s) ->
+            wr "// "; wr s; wr "\n"
+          | UserData (_, o) ->
+            wr "userdata("; wr (o.ToString()); wr ") : "; wr (o.GetType().Name)
+          | SizeOf(_, t) ->
+            wr "sizeof("; wr (t.ToString()); wr ")"
+        if showType then wr " : "; wr (e.Type.ToString()); wr ")"
+      wt ind Type.Bogus this
           
   let (|ETrue|_|) = function
       | BoolLiteral (_, true) -> Some (ETrue)
@@ -1073,24 +1085,25 @@ module Microsoft.Research.Vcc.CAST
     | Axiom of Expr
     | GeneratedAxiom of Expr * Top
     
-    override this.ToString () = toString (this.WriteTo)
+    override this.ToString () = toString (this.WriteTo false)
+    member this.ToStringWT (showTypes : bool) = toString (this.WriteTo showTypes)
     
-    member this.WriteTo b =
+    member this.WriteTo showTypes b =
       let wr = wrb b
       match this with
         | Global (v, None) -> wr (v.ToString() + ";\n")
-        | Global (v, Some e) -> wr (v.ToString()); wr " = "; e.WriteTo System.Int32.MinValue b; wr ";\n"
+        | Global (v, Some e) -> wr (v.ToString()); wr " = "; e.WriteTo System.Int32.MinValue false b; wr ";\n"
         | TypeDecl d -> wr (d.Declaration())
         | FunctionDecl d -> 
           wr (d.ToString())
           match d.Body with
             | Some e ->
-              e.WriteTo 0 b
+              e.WriteTo 0 showTypes b
               wr "\n"
             | None -> ()
-        | Axiom e -> wr "axiom "; e.WriteTo System.Int32.MinValue b; wr ";\n"
+        | Axiom e -> wr "axiom "; e.WriteTo System.Int32.MinValue showTypes b; wr ";\n"
         | GeneratedAxiom(e, origin) ->
-          wr "axiom (from "; wr (origin.ToString()); wr ") "; e.WriteTo System.Int32.MinValue b; wr ";\n"
+          wr "axiom (from "; wr (origin.ToString()); wr ") "; e.WriteTo System.Int32.MinValue showTypes b; wr ";\n"
     
     member this.MapExpressions f =
       let pf = f true
