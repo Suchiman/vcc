@@ -28,11 +28,15 @@ namespace Microsoft.Research.Vcc
   let processPipeOptions (helper:Helper.Env) =
     let pipeErr msg =
       failwith ("/pipe: error: " + msg)
+    let showTypes = ref false
     for w in helper.Options.PipeOperations do
       let w = w.Replace('.', ' ').Replace('+', ' ')
       let w = w.Split ([| ' ' |])
       if w.Length > 0 then
         match w.[0] with
+          | "show-types" ->
+            if w.Length <> 1 then pipeErr "show-types expects no parameters"
+            showTypes := true
           | "dump" ->
             if w.Length <> 3 then pipeErr "dump expects two parameters"
             let off =
@@ -40,7 +44,7 @@ namespace Microsoft.Research.Vcc
                 | "before" -> 0
                 | "after" -> 1
                 | _ -> pipeErr "dump expects 'before' or 'after'"
-            helper.AddTransformerAt ("dump", Helper.Decl TransUtil.dumpDecls, w.[2], off)
+            helper.AddTransformerAt ("dump", Helper.Decl (TransUtil.dumpDecls !showTypes), w.[2], off)
           | "active" ->
             if w.Length <> 1 then pipeErr "active expects no parameters"
             helper.DumpTransformers()
