@@ -255,4 +255,40 @@ struct A4 {
 testcase(9,36) : error VC9662: Explicit reference to owns-set of type 'A2', which is static. Use keeps(...) or mark 'A2' with vcc(dynamic_owns).
 testcase(16,37) : error VC9662: Explicit reference to owns-set of type 'A3', which is static. Use keeps(...) or mark 'A3' with vcc(dynamic_owns).
 testcase(23,66) : error VC9662: Explicit reference to owns-set of type 'A4', which is static. Use keeps(...) or mark 'A4' with vcc(dynamic_owns).
+`#include "vcc.h"
+
+struct S {
+    int a;
+};
+
+struct vcc(dynamic_owns) T {
+    struct S a, b, c;
+    invariant(keeps(&a, &b, &c))
+};
+
+void works(struct T *t)
+    requires(wrapped(t))
+    writes(t)
+{
+    unwrap(t);
+    assert(forall(obj_t o; set_in(o,owns(t)); wrapped(o)));
+}
+
+struct U {
+    struct S a, b, c;
+    invariant(keeps(&a, &b, &c))
+};
+
+void fails(struct U *u)
+    requires(wrapped(u))
+    writes(u)
+{
+    unwrap(u);
+    assert(forall(obj_t o; set_in(o,owns(u)); wrapped(o)));
+}
+`
+Verification of T#adm succeeded.
+Verification of U#adm succeeded.
+Verification of works succeeded.
+Verification of fails succeeded.
 `

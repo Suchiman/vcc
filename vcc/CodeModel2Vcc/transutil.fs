@@ -109,6 +109,7 @@ namespace Microsoft.Research.Vcc
   let mkOr a b = mkBoolOp "||" [a; b]
   let mkImpl a b = mkBoolOp "==>" [a; b]
   let mkNot a = mkBoolOp "!" [a]
+  let mkEq a b = Expr.Prim(boolBogusEC(), Op.Op("==", CheckedStatus.Unchecked), [a; b])
   
   let typeExpr t =
     let c = { ExprCommon.Bogus with Type = PhysPtr t } // ptr kind does not matter here because it will ve stripped of again later

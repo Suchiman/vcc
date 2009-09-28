@@ -93,12 +93,23 @@ namespace Microsoft.Research.Vcc
            writes checks, and those are handled by the declarations of those functions
            in vcc.h.
         *)
-    let handleSpecialCalls self = function
+    let handleSpecialCalls self = 
+      let genTmpOwns() = 
+        let tmp = getTmp helper "owns" Type.PtrSet VarKind.SpecLocal
+        [VarDecl (bogusEC, tmp); 
+         VarWrite (bogusEC, [tmp], Macro (bogusSet, "_vcc_set_empty", []))], tmp
+         
+      let addToOwns tmpowns obj =
+        let single = Macro (bogusSet, "_vcc_set_singleton", [obj])
+        VarWrite (bogusEC, [tmpowns], 
+          pureEx (Macro (bogusSet, "_vcc_set_union", [mkRef tmpowns; single])))
+      
+      function
       | Stmt (stmtComm, CallMacro (callComm, (("_vcc_wrap"|"_vcc_wrap_non_owns") as wrapName), _, [this])) as expr ->
         match this.Type with
           | Ptr (Type.Ref td) when staticOwns td ->
-            let tmpowns = getTmp helper "owns" Type.PtrSet VarKind.SpecLocal
             let curstate = getTmp helper "staticWrapState" Type.MathState VarKind.SpecLocal
+            let initOwns, tmpowns = genTmpOwns()
             
             let (save, checks) = saveAndCheckInvariant helper (fun e -> not (isOnUnwrap e)) 8014 "fails on wrap" this 
             
@@ -107,21 +118,16 @@ namespace Microsoft.Research.Vcc
               Expr.MkAssert (Expr.Macro (afmte id msg [this; p], name, [p]))
             
             let updateFor obj =
-              let single = Macro (bogusSet, "_vcc_set_singleton", [obj])
-              
               [myAssert 8018 "'{1}' is not wrapped before wrapping '{0}' (its owner)" "_vcc_wrapped" obj;
                myAssert 8019 "'{1}' is not writable before wrapping '{0}' (its owner)" "writes_check" obj;
-               VarWrite (bogusEC, [tmpowns], 
-                pureEx (Macro (bogusSet, "_vcc_set_union", [mkRef tmpowns; single])));
+               addToOwns tmpowns obj;
                VarWrite (bogusEC, [curstate], 
                 pureEx (Macro (bogusState, "_vcc_take_over", [mkRef curstate; this; obj])))]
             let addOwnees = extractKeeps updateFor checks
             let ownSave =
-                  [VarDecl (bogusEC, tmpowns); 
-                   VarDecl (bogusEC, curstate); 
-                   VarWrite (bogusEC, [tmpowns], Macro (bogusSet, "_vcc_set_empty", []));
+                  [VarDecl (bogusEC, curstate); 
                    VarWrite (bogusEC, [curstate], Macro (bogusState, "_vcc_current_state", [])); 
-                   ]
+                   ] @ initOwns
             let pre = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_pre_static_wrap", []))
             let assume = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_full_stop", []))
             let staticWrap = 
@@ -158,6 +164,8 @@ namespace Microsoft.Research.Vcc
             let checkWr = propAssert 8021 "'{0}' is not writable before unwrapping it" "writes_check" this
             let assumeInv = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_inv", [ignoreEffects this]))
             let assume = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_full_stop", []))
+            let initOwns, tmpowns = genTmpOwns()
+            let assumeOwns = Expr.MkAssume (mkEq (mkRef tmpowns) (Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_owns", [this])))
             let pre = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_pre_static_unwrap", []))
             
             match saveAndCheckInvariant helper (fun e -> not (isOnUnwrap e)) 0 "OOPS" this with
@@ -166,10 +174,18 @@ namespace Microsoft.Research.Vcc
                 let updateFor obj =
                   [VarWrite (bogusEC, [curstate], 
                     pureEx (Macro (bogusState, "_vcc_release", [now; mkRef curstate; this; obj])));
+                   addToOwns tmpowns obj;
                    Expr.MkAssume (pureEx (Macro (boolBogusEC(), "_vcc_typed", [obj])))]
                 let addOwnees = extractKeeps updateFor props
                 let staticUnwrap = Macro (callComm, "_vcc_static_unwrap", [pureEx this; mkRef curstate])
-                Some (Expr.MkBlock (save @ save2 @ [checkWrap; checkWr; assumeInv] @ addOwnees @ [pre; staticUnwrap] @ check @ [assume]))
+                Some (Expr.MkBlock (initOwns @
+                                     save @ 
+                                     save2 @ 
+                                     [checkWrap; checkWr; assumeInv] @ 
+                                     addOwnees @ 
+                                     [pre; staticUnwrap] @ 
+                                     check @ 
+                                     [assume; assumeOwns]))
               | _ -> die()
             
           | _ -> 
