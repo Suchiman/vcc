@@ -90,6 +90,7 @@ namespace Microsoft.Research.Vcc
 
     public static Token GetTokenFor(IEnumerable<ILocation> locations, bool useEndOfLocation)
     {
+      if (IteratorHelper.EnumerableIsEmpty(locations)) return Token.NoToken;
       return new LazyToken(
         delegate() {
           Token result = Token.NoToken;

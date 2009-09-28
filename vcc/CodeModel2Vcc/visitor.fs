@@ -896,9 +896,23 @@ namespace Microsoft.Research.Vcc
 
       [<OverloadID("VisitGenericTypeInstanceReference")>]
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
+        let rec isAdmissibleMapRangeType = function
+          | C.Volatile t -> isAdmissibleMapRangeType t
+          | C.Ref _ 
+          | C.TypeVar _
+          | C.Array _
+          | C.Void -> false
+          | _ -> true
+
         if genericTypeInstanceReference.GenericType.ToString () = SystemDiagnosticsContractsCodeContractMap then
           match [ for t in genericTypeInstanceReference.GenericArguments -> this.DoType t ] with
-            | [t1; t2] -> typeRes <- C.Type.Map (t1, t2)
+            | [t1; t2] ->
+              let rangeType = [ for t in genericTypeInstanceReference.GenericArguments -> t ].Head
+              let t1 = if isAdmissibleMapRangeType t1 then t1
+                       else 
+                         helper.Error(token rangeType, 9702, "Illegal type '" + t1.ToString() + "' in map range.")
+                         C.Type.Bogus
+              typeRes <- C.Type.Map (t1, t2)
             | _ -> assert false
         else
           assert false
