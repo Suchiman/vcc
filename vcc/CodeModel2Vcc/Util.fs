@@ -70,7 +70,17 @@ namespace Microsoft.Research.Vcc
           let res = f x
           cache.Add (x, res)
           res
-
+          
+    let memoize0 f =
+      let cache = ref None
+      fun () ->
+        match !cache with
+          | Some x -> x
+          | None ->
+            let x = f()
+            cache := Some x
+            x
+            
     let toString f =
       let b = StringBuilder ()
       f b
