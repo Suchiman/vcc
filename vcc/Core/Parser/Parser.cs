@@ -403,6 +403,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           this.typedefExpressions[funcDeclarator.Identifier.Value] = functionType;
           TypedefDeclaration typedef = new TypedefDeclaration(functionType, funcDeclarator.Identifier, slb);  //TODO: const and volatile
           this.typedefDecls[funcDeclarator.Identifier.Value] = typedef;
+          this.InitializeLocallyDefinedNamesFromParameters(funcDeclarator.Parameters);
           this.ParseFunctionOrBlockContract(funcDeclarator.Contract, followers);
           this.AssociateContracts(functionType, funcDeclarator);
           typeMembers.Add(typedef);
@@ -475,9 +476,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(funcDeclarator.SourceLocation);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[0].SourceLocation);
-      this.locallyDefinedNames.Clear();
-      foreach (Parameter p in funcDeclarator.Parameters)
-        this.locallyDefinedNames[p.Name.Identifier.Name.Value] = true;
+      InitializeLocallyDefinedNamesFromParameters(funcDeclarator.Parameters);
 
       this.currentLexicalScope = new LexicalScope(this.currentLexicalScope, slb);
       BlockStatement body = this.ParseBody(followers | Token.Semicolon);
@@ -507,6 +506,12 @@ namespace Microsoft.Research.Vcc.Parsing {
       //TODO: complain if statements != null;
       if (this.currentToken == Token.Semicolon) this.GetNextToken();
       this.SkipTo(followers);
+    }
+
+    private void InitializeLocallyDefinedNamesFromParameters(IEnumerable<Parameter> parameters) {
+      this.locallyDefinedNames.Clear();
+      foreach (Parameter p in parameters)
+        this.locallyDefinedNames[p.Name.Identifier.Name.Value] = true;
     }
 
     private TypeExpression ApplyDeclarator(Declarator declarator, TypeExpression returnType) {
@@ -1302,6 +1307,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       FunctionDeclarator result = new FunctionDeclarator(functionName, parameters, slb);
       this.Skip(Token.RightParenthesis);
+      this.InitializeLocallyDefinedNamesFromParameters(parameters);
       this.ParseFunctionOrBlockContract(result.Contract, followers);
       return result;
     }
