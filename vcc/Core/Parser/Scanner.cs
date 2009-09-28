@@ -1461,7 +1461,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     internal Snapshot MakeSnapshot() {
-      this.GetNextFragment(); // make sure that we have wiggle room for the token lookahead
+      if (this.startPos  > this.charsInBuffer - 512) this.GetNextFragment(); // make sure that we have wiggle room for the token lookahead
       return new Snapshot(this.startPos, this.endPos);
     }
 
