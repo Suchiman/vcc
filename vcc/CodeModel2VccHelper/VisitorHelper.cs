@@ -54,66 +54,40 @@ namespace Microsoft.Research.Vcc
       return VisitorHelper.GetTokenFor(locations, false);
     }
 
-    //private class GetTokenForClosure
-    //{
-    //  private readonly IEnumerable<ILocation> locations;
-    //  private readonly bool useEndOfLocation;
+    private class DeferredToken
+    {
+      private readonly IEnumerable<ILocation> locations;
 
-    //  public GetTokenForClosure(IEnumerable<ILocation> locations, bool useEndOfLocation) {
-    //    this.locations = locations;
-    //    this.useEndOfLocation = useEndOfLocation;
-    //  }
+      public DeferredToken(IEnumerable<ILocation> locations) {
+        this.locations = locations;
+      }
 
-    //  public Token GetToken() {
-    //    Token result = Token.NoToken;
-    //    foreach (ILocation loc in this.locations) {
-    //      IPrimarySourceLocation/*?*/ sloc = loc as IPrimarySourceLocation;
-    //      if (sloc == null) {
-    //        IDerivedSourceLocation/*?*/ dloc = loc as IDerivedSourceLocation;
-    //        if (dloc != null) {
-    //          foreach (IPrimarySourceLocation ploc in dloc.PrimarySourceLocations) {
-    //            sloc = ploc;
-    //            break;
-    //          }
-    //        } else
-    //          continue;
-    //      }
-    //      if (sloc == null) continue;
-    //      if (this.useEndOfLocation)
-    //        sloc = sloc.PrimarySourceDocument.GetPrimarySourceLocation(sloc.EndIndex, 1);
-    //      result = new SourceLocationWrapper(sloc);
-    //      break;
-    //    }
-    //    return result;
-    //  }
-    //}
+      public Token GetToken() {
+        Token result = Token.NoToken;
+        foreach (ILocation loc in locations) {
+          IPrimarySourceLocation/*?*/ sloc = loc as IPrimarySourceLocation;
+          if (sloc == null) {
+            IDerivedSourceLocation/*?*/ dloc = loc as IDerivedSourceLocation;
+            if (dloc != null) {
+              foreach (IPrimarySourceLocation ploc in dloc.PrimarySourceLocations) {
+                sloc = ploc;
+                break;
+              }
+            } 
+            else continue;
+          }
+          if (sloc == null) continue;
+          result = new SourceLocationWrapper(sloc);
+          break;
+        }
+        return result;
+      }
+    }
 
     public static Token GetTokenFor(IEnumerable<ILocation> locations, bool useEndOfLocation)
     {
       if (IteratorHelper.EnumerableIsEmpty(locations)) return Token.NoToken;
-      return new LazyToken(
-        delegate() {
-          Token result = Token.NoToken;
-          foreach (ILocation loc in locations) {
-            IPrimarySourceLocation/*?*/ sloc = loc as IPrimarySourceLocation;
-            if (sloc == null) {
-              IDerivedSourceLocation/*?*/ dloc = loc as IDerivedSourceLocation;
-              if (dloc != null) {
-                foreach (IPrimarySourceLocation ploc in dloc.PrimarySourceLocations) {
-                  sloc = ploc;
-                  break;
-                }
-              } else
-                continue;
-            }
-            if (sloc == null) continue;
-            if (useEndOfLocation)
-              sloc = sloc.PrimarySourceDocument.GetPrimarySourceLocation(sloc.EndIndex, 1);
-            result = new SourceLocationWrapper(sloc);
-            break;
-          }
-          return result;
-        });
+      return new LazyToken(new DeferredToken(locations).GetToken);
     }
 
     public static int RoundToBvSize(ITypeDefinition type)
