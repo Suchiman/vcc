@@ -518,3 +518,21 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+typedef union _T {
+  struct {unsigned dummy;};
+  backing_member unsigned cnt;
+  spec(volatile obj_t container;)
+} T;
+
+
+void foo(T* t)
+    requires(wrapped(t))
+{
+   unsigned n;
+   n=t->cnt;
+}
+`
+Verification of foo succeeded.
+`

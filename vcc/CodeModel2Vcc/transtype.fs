@@ -384,7 +384,8 @@ namespace Microsoft.Research.Vcc
           | _ -> die()
                      
       let rec hasVolatileInExtent (fld : Field) =
-        if fld.IsVolatile then true else hasVolatileExtentForType fld.Type
+        if fld.IsSpec then false 
+        else if fld.IsVolatile then true else hasVolatileExtentForType fld.Type
       and hasVolatileExtentForType = function
           | Type.Ref(td) -> List.exists hasVolatileInExtent td.Fields
           | Array(t,_) -> hasVolatileExtentForType t
