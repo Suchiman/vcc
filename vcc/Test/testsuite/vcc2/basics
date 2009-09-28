@@ -721,3 +721,21 @@ Verification of q1#adm succeeded.
 Verification of f failed.
 testcase(19,19) : error VC9500: Assertion '_vcc_set_in(q->s,_vcc_owns(q))' did not verify.
 `
+#include "vcc.h"
+
+typedef struct { int a; } X;
+
+typedef void (*FOO)(unsigned X)
+  requires((X) & 3);
+
+void foo(unsigned X, FOO f)
+	requires((X) & 3)	
+	requires(X & 3)		
+	requires(typed(f))
+{
+	assert((X) & 3);	
+	f(X);
+}
+`
+Verification of foo succeeded.
+`
