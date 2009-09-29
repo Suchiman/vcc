@@ -934,7 +934,7 @@ namespace Microsoft.Research.Vcc
         | Index(_, ptr, _) -> isPhysicalLocation ptr
         | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> false        
         | Ref(_, {Type = Type.Ref td }) when hasBoolAttr "record" td.CustomAttr -> false
-        | Deref(_, expr) -> isPhysicalLocation expr //TODO: this is actually not true - how to we guarantee that the pointer is not pointing to physical memory
+        | Deref(_, expr) -> match expr.Type with | SpecPtr _ -> false | _ -> true
         | _ -> true
 
       let rec checkNoWritesToPhysicalFromSpec withinSpec self = function
