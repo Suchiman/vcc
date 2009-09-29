@@ -287,7 +287,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     static readonly string SystemDiagnosticsContractsCodeContractTypedPtrString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".TypedPtr";
-    static readonly string SystemDiagnosticsContractsCodeContractMapString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Map";
+    public static readonly string SystemDiagnosticsContractsCodeContractMapString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Map";
     static readonly string SystemDiagnosticsContractsCodeContractBigIntString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigInt";
 
     internal void AddFixedSizeArrayToPointerMapEntry(ITypeDefinition fixedSizeArray, IPointerType pointerType) {

@@ -896,8 +896,8 @@ namespace Microsoft.Research.Vcc
 
       [<OverloadID("VisitGenericTypeInstanceReference")>]
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
-        let rec isAdmissibleMapRangeType = function
-          | C.Volatile t -> isAdmissibleMapRangeType t
+        let rec isAdmissibleMapDomainType = function
+          | C.Volatile t -> isAdmissibleMapDomainType t
           | C.Ref _ 
           | C.TypeVar _
           | C.Array _
@@ -907,10 +907,10 @@ namespace Microsoft.Research.Vcc
         if genericTypeInstanceReference.GenericType.ToString () = SystemDiagnosticsContractsCodeContractMap then
           match [ for t in genericTypeInstanceReference.GenericArguments -> this.DoType t ] with
             | [t1; t2] ->
-              let rangeType = [ for t in genericTypeInstanceReference.GenericArguments -> t ].Head
-              let t1 = if isAdmissibleMapRangeType t1 then t1
+              let domainType = [ for t in genericTypeInstanceReference.GenericArguments -> t ].Head
+              let t1 = if isAdmissibleMapDomainType t1 then t1
                        else 
-                         helper.Error(token rangeType, 9702, "Illegal type '" + t1.ToString() + "' in map range.")
+                         helper.Error(token domainType, 9702, "Illegal type '" + t1.ToString() + "' in map domain.")
                          C.Type.Bogus
               typeRes <- C.Type.Map (t1, t2)
             | _ -> assert false

@@ -383,6 +383,14 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
+    protected override void ReportError() {
+      if (TypeHelper.GetTypeName(this.Instance.Type).StartsWith(VccCompilationHelper.SystemDiagnosticsContractsCodeContractMapString, StringComparison.Ordinal)) {
+        this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.IllegalMapUpdate, this.Instance.SourceLocation.Source));
+      } else {
+        base.ReportError();
+      }
+    }
+
     protected override AddressOf GetAddressOfForInstance(Expression instance) {
       return new VccAddressOf(new VccAddressableExpression(instance, this.fromProjectionOfFixedSizeArray), instance.SourceLocation);
     }
