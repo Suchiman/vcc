@@ -181,15 +181,21 @@ namespace Microsoft.Research.Vcc
         | Macro(_, "out", [Expr.Ref(_, v)]) when isInParKind v.Kind -> handleVar v; false
         | _ -> true
 
-      let replace self =    
-        let vMap (v: Variable) = 
-          match mapping.TryGetValue(v) with
-            | true, v' -> v'
-            | false, _ -> v
-        function
-          | Expr.Ref (c, v) -> Some(Expr.Ref(c, vMap v))
-          | VarWrite(c, vs, e) -> Some(VarWrite(c, List.map vMap vs, self e))
-          | _ -> None
+      let replace self = function
+        | Expr.Ref (c, v) -> 
+          match mapping.TryGetValue v with
+            | true, v' -> Some(Expr.Ref(c, v'))
+            | false, _ -> None
+        | VarWrite(c, vs, e) -> 
+          let vMap (v: Variable) = 
+            match mapping.TryGetValue(v) with
+              | true, v' -> v'
+              | false, _ -> v
+          Some(VarWrite(c, List.map vMap vs, self e))
+        | Old(_, Expr.Macro(_, "prestate", _), (Expr.Ref(_,v) as r)) as o ->
+          if mapping.ContainsKey(v) then Some(r) else Some(o)
+        | Old(_, Expr.Macro(_, "prestate", _), _) as  o -> Some(o)
+        | _ -> None
         
       match f.Body with
         | Some body -> 
