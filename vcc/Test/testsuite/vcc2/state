@@ -130,3 +130,13 @@ void foo(int *y)
 Verification of foo failed.
 testcase(13,15) : error VC9500: Assertion '_vcc_in_state((x.s), *y)==(*y)' did not verify.
 `
+#include <vcc.h>
+
+void foo(int x) {
+  int x0 = x;
+  x = 0;
+  assert(x0 == old(x));
+}
+`
+Verification of foo succeeded.
+`
