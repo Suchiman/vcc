@@ -95,7 +95,12 @@ namespace Microsoft.Research.Vcc {
     /// <summary>
     /// illegal index
     /// </summary>
-    IllegalIndex
+    IllegalIndex,
+
+    /// <summary>
+    /// Illegal update of map '{0}'
+    /// </summary>
+    IllegalMapUpdate,
 
   }
 }

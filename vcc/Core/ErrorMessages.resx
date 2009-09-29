@@ -3634,4 +3634,7 @@
   <data name="SubscriptNotOfIntegralType" xml:space="preserve">
     <value>subscript is not of integral type</value>
   </data>
+  <data name="IllegalMapUpdate" xml:space="preserve">
+    <value>Illegal update of map '{0}'.</value>
+  </data>
 </root>
