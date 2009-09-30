@@ -331,7 +331,8 @@ namespace Microsoft.Research.Vcc
           if (compilerParameters[i].StartsWith("/functions:")) options.Functions.AddRange(compilerParameters[i].Substring(11).Split(','));
           else if (compilerParameters[i] == "/a" || compilerParameters[i] == "/aggressivepruning") options.AggressivePruning = true;
           else if (compilerParameters[i] == "/keepppoutput") keepPreprocessorOutput = true;
-          else if (compilerParameters[i].StartsWith("/z:")) { ++i; options.Z3Options.Add(compilerParameters[i]); }
+          else if (compilerParameters[i] =="/z:") { ++i; options.Z3Options.Add(compilerParameters[i]); } 
+          else if (compilerParameters[i] == "/b:") { ++i; options.BoogieOptions.Add(compilerParameters[i]); }
         }
       }
 

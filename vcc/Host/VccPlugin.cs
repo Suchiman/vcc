@@ -37,7 +37,7 @@ namespace Microsoft.Research.Vcc
       this.currentDecls = currentDecls;
       this.parent = parent;
       this.env = env;
-      this.InitBoogie();
+      if (!this.InitBoogie()) this.env.Error(Token.NoToken, 1000, "Boogie initialization failed.");
     }
 
     public override Microsoft.FSharp.Collections.FSharpList<string> FunctionsToVerify()
@@ -79,7 +79,7 @@ namespace Microsoft.Research.Vcc
       return CommandLineOptions.Clo.Parse(optionsWithMemSetting.ToArray()) == 1;
     }
 
-    private void InitBoogie()
+    private bool InitBoogie()
     {
       options.AddRange(standardBoogieOptions);
       options.Add("/proverOpt:V" + parent.options.Z3Version);
@@ -90,7 +90,7 @@ namespace Microsoft.Research.Vcc
       options.AddRange(parent.options.BoogieOptions);
       foreach (string z3option in parent.options.Z3Options)
         options.Add("/z3opt:" + z3option);
-      if (!ReParseBoogieOptions(options, parent.options.RunningFromCommandLine)) return;
+      return ReParseBoogieOptions(options, parent.options.RunningFromCommandLine);
     }
 
     public override VerificationResult Verify(string funcName)
