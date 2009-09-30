@@ -327,12 +327,11 @@ namespace Microsoft.Research.Vcc
       options.FileNames = new List<string> { fileNameC };
 
       if (compilerParameters != null) {
-        foreach (string cp in compilerParameters) {
-          if (cp.StartsWith("/functions:"))
-            options.Functions.AddRange(cp.Substring(11, cp.Length - 11).Split(','));
-
-          if (cp == "/a" || cp == "/aggressivepruning") options.AggressivePruning = true;
-          if (cp == "/keepppoutput") keepPreprocessorOutput = true;
+        for (int i = 0; i < compilerParameters.Count; i++) {
+          if (compilerParameters[i].StartsWith("/functions:")) options.Functions.AddRange(compilerParameters[i].Substring(11).Split(','));
+          else if (compilerParameters[i] == "/a" || compilerParameters[i] == "/aggressivepruning") options.AggressivePruning = true;
+          else if (compilerParameters[i] == "/keepppoutput") keepPreprocessorOutput = true;
+          else if (compilerParameters[i].StartsWith("/z:")) { ++i; options.Z3Options.Add(compilerParameters[i]); }
         }
       }
 

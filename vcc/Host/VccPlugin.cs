@@ -471,7 +471,7 @@ namespace Microsoft.Research.Vcc
 
     public override void OnOutOfMemory(string reason)
     {
-      this.PrintSummary(VC.VCGen.Outcome.OutOfMemory, reason);
+      this.PrintSummary(VC.VCGen.Outcome.OutOfMemory, null);
     }
 
     public override void OnWarning(string msg) {
