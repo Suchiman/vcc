@@ -1,0 +1,10 @@
+`/b:/noSuchBoogieOption
+#include "vcc.h"
+
+void foo() {
+	assert(1);
+};
+`
+Use /help for available options
+Boogie initialization failed.
+`
