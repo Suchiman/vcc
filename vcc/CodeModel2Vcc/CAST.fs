@@ -932,10 +932,10 @@ module Microsoft.Research.Vcc.CAST
             let fieldName = if fld.Name <> "" then fld.Name else "'" + (fld.ToString()) + "'"
             wr "("; fe e; wr "->"; wr fieldName; wr ")"
           | Index (_, e, off) -> fe e; wr "["; fe off; wr "]"
-          | Cast (_, ch, e) -> 
+          | Cast (ec, ch, e) -> 
             let cs = ch.ToString()
             let cs = if cs <> "" then cs + " " else cs
-            wr "("; wr cs; wr (e.Type.ToString()); wr ")"; fe e;
+            wr "("; wr cs; wr (ec.Type.ToString()); wr ")"; fe e;
           | Quant (_, q) ->
             match q.Kind with
               | Exists -> wr "exists("

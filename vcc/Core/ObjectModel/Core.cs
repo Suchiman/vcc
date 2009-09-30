@@ -496,8 +496,9 @@ namespace Microsoft.Research.Vcc {
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean))
         return this.ConversionExpression(expression, this.PlatformType.SystemBoolean.ResolvedType);
       
-      // bool -> *
-      if (TypeHelper.TypesAreEquivalent(expression.Type, this.PlatformType.SystemBoolean)) 
+      // bool -> int
+      if (TypeHelper.TypesAreEquivalent(expression.Type, this.PlatformType.SystemBoolean) &&
+          TypeHelper.IsPrimitiveInteger(targetType))
         return this.ConversionExpression(expression, targetType);
 
       // int -> enum
