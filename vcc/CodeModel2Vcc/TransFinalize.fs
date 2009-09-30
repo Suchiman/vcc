@@ -299,6 +299,30 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================
 
+    let errorForStateWriteInPureContext decls = 
+    
+      let reportErrorForStateWriteInPureContext ctx self = function
+        | CallMacro(ec, ("_vcc_alloc"|"_vcc_spec_alloc"|"_vcc_spec_alloc_array"),_ ,_) when ctx.IsPure -> 
+          helper.Error(ec.Token, 9703, "Memory allocation in pure context is not allowed."); false
+        | MemoryWrite(ec, loc, _) when ctx.IsPure -> 
+          helper.Error(ec.Token, 9703, "Writing memory location '" + loc.Token.Value + "' in pure context is not allowed."); false
+        | Call(ec, fn, _, _) when ctx.IsPure && fn.Writes.Length > 0 -> 
+          helper.Error(ec.Token, 9703, "Calling function '" + fn.Name + "' with non-empty writes clause in pure context is not allowed."); false
+        | _ -> true
+    
+      let checkFunction (fn:Function) = 
+        List.iter (fun (e:Expr) -> e.SelfCtxVisit(true, reportErrorForStateWriteInPureContext)) (fn.Requires @ fn.Ensures @ fn.Reads @ fn.Writes)
+        Option.iter (fun (e:Expr) -> e.SelfCtxVisit(fn.IsPure, reportErrorForStateWriteInPureContext)) fn.Body
+
+      for d in decls do
+        match d with 
+          | Top.FunctionDecl(fn) -> checkFunction fn
+          | _ -> ()
+    
+      decls
+
+    // ============================================================================================================
+
     let deprecateSkipWf self = function
       | Expr.Old (ec, (Macro (_, "_vcc_skip_wf", []) as skipwf), e) ->
         helper.Warning(skipwf.Token, 9119, "The use of skip_wf(...) is deprecated")
@@ -338,6 +362,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-deprecate-skipwf", Helper.Expr deprecateSkipWf)
     helper.AddTransformer ("final-dynamic-owns", Helper.Decl errorForMissingDynamicOwns)
     helper.AddTransformer ("final-error-old", Helper.Decl errorForOldInOneStateContext)
+    helper.AddTransformer ("final-error-pure", Helper.Decl errorForStateWriteInPureContext)
     helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
     // reads check goes here
     
