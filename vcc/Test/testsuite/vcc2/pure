@@ -103,8 +103,8 @@ void donothing_pure_fail()
   *p = 20;
 }
 `
-(7): verification: command assigns to a global variable that is not in the enclosing method's modifies clause: $s
-(0): verification: command assigns to a global variable that is not in the enclosing method's modifies clause: $s
+testcase(7,12) : error VC9703: Memory allocation in pure context is not allowed.
+testcase(8,3) : error VC9703: Writing memory location 'p' in pure context is not allowed.
 `
 #include <vcc2test.h>
 
