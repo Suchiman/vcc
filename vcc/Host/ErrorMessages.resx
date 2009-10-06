@@ -145,6 +145,8 @@
 /z3:&lt;z3 option list&gt;           Options to pass on to Z3 (Short form: /z)</value>
   </data>
   <data name="Version" xml:space="preserve">
-    <value>Microsoft Research Vcc Version {0}</value>
+    <value>Microsoft Research Vcc Version {0}
+Microsoft Research Boogie Version {1}
+Microsoft Research Z3 Version {2}</value>
   </data>
 </root>
