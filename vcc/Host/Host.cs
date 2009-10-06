@@ -185,13 +185,36 @@ namespace Microsoft.Research.Vcc
       }
     }
 
+    private static string GetZ3Version() {
+      ProcessStartInfo z3Psi = new ProcessStartInfo("z3.exe", "/version");
+      z3Psi.CreateNoWindow = true;
+      z3Psi.UseShellExecute = false;
+      z3Psi.RedirectStandardOutput = true;
+      try {
+        using (Process z3Proc = Process.Start(z3Psi)) {
+          z3Proc.WaitForExit();
+          var z3VersionString = z3Proc.StandardOutput.ReadToEnd();
+          Regex regex = new Regex("(?<major>\\d+)\\s+(?<minor>\\d+)\\s+(?<build>\\d+)\\s+(?<revision>\\d+)");
+          var match = regex.Match(z3VersionString);
+          if (match.Success) {
+            return String.Format("{0}.{1}.{2}.{3}", match.Groups["major"].Value, match.Groups["minor"].Value, match.Groups["build"].Value, match.Groups["revision"].Value);
+          }
+          return z3VersionString;
+        }
+      } catch (Exception) {
+        return "unknow";
+      }
+    }
+
     private static void DisplayVersion(bool formatAsXml) {
-      string fileVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location).FileVersion;
+      string vccVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location).FileVersion;
+      string boogieVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(BoogiePL.Parser).Assembly.Location).FileVersion;
+      string z3VersionString = GetZ3Version();
       if (formatAsXml) {
-        Console.WriteLine("<version>" + fileVersionString + "</version>");
+        Console.WriteLine("<version>Vcc " + vccVersionString + ", Boogie " + boogieVersionString + ", Z3 " + z3VersionString + "</version>");
       } else {
         System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
-        Console.WriteLine(rm.GetString("Version"), fileVersionString);
+        Console.WriteLine(rm.GetString("Version"), vccVersionString, boogieVersionString, z3VersionString);
       }
     }
 
