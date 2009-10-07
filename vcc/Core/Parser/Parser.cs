@@ -1725,6 +1725,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       bool noName = this.currentToken != Token.Identifier;
       NameDeclaration name = this.ParseNameDeclaration(false);
+      if (name.Name == this.nameTable.System) {
+        this.HandleError(name.SourceLocation, Error.ReservedName, name.Name.Value, "type name");
+        name = new NameDeclaration(this.GetNameFor(SanitizeString(name.SourceLocation.SourceDocument.Name.Value) + name.SourceLocation.StartIndex), name.SourceLocation);
+      }
       NameDeclaration mangledName = this.MangledStructuredName(name);
       NamedTypeExpression/*?*/ texpr = null;
       List<ITypeDeclarationMember> newTypeMembers = new List<ITypeDeclarationMember>();

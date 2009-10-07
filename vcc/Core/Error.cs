@@ -102,5 +102,10 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     IllegalMapUpdate,
 
+    /// <summary>
+    /// '{0}' is a reserved name and cannot be used as {1}.
+    /// </summary>
+    ReservedName,
+
   }
 }

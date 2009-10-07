@@ -761,3 +761,11 @@ testcase(13,18) : error VC0000: Cannot convert type 'bool' to 'int*'.
 testcase(14,18) : error VC0000: Cannot implicitly convert type 'bool' to 'int^'.
 testcase(15,18) : error VC0000: Cannot convert type 'bool' to 'int^'.
 `
+#include <vcc.h>
+
+struct System {
+  int x;
+};
+`
+testcase(3,8) : error VC0000: 'System' is a reserved name and cannot be used as type name.
+`
