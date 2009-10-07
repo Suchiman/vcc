@@ -3637,4 +3637,7 @@
   <data name="IllegalMapUpdate" xml:space="preserve">
     <value>Illegal update of map '{0}'.</value>
   </data>
+  <data name="ReservedName" xml:space="preserve">
+    <value>'{0}' is a reserved name and cannot be used as {1}.</value>
+  </data>
 </root>
