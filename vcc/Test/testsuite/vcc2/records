@@ -557,3 +557,19 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+struct vcc(record) S {
+    int a;
+    int b;
+};
+
+void foo() {
+    spec(struct S wa = {.a = 5, .b = 10};)
+    speconly(wa /= { .a = 3 };)
+    assert(wa.a == 3 && wa.b == 10);
+}
+
+`
+Verification of foo succeeded.
+`
