@@ -457,6 +457,9 @@ bool _vcc_match_ulong(unsigned __int64 x)
 bool _vcc_match_long(__int64 x)
    ensures(result == true);
 
+#define match_ulong _vcc_match_ulong
+#define match_long _vcc_match_long
+
 /*** 
  *** Claims
  ***/
