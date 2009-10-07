@@ -2475,7 +2475,12 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.BitwiseAndAssign: return new BitwiseAndAssignment(target, operand2, slb);
             case Token.BitwiseOrAssign: return new BitwiseOrAssignment(target, operand2, slb);
             case Token.BitwiseXorAssign: return new ExclusiveOrAssignment(target, operand2, slb);
-            case Token.DivideAssign: return new DivisionAssignment(target, operand2, slb);
+            case Token.DivideAssign:
+              VccInitializerWithDesignators initializer = operand2 as VccInitializerWithDesignators;
+              if (initializer != null)
+                return new VccInitializerAssignment(target, initializer, slb);
+              else 
+                return new DivisionAssignment(target, operand2, slb);
             case Token.LeftShiftAssign: return new LeftShiftAssignment(target, this.ConvertToInt32(operand2), slb);
             case Token.MultiplyAssign: return new MultiplicationAssignment(target, operand2, slb);
             case Token.RemainderAssign: return new VccModulusAssignment(target, operand2, slb);

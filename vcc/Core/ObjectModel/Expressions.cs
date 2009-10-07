@@ -1931,6 +1931,28 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
+  internal class VccInitializerAssignment : BinaryOperationAssignment
+  {
+    public VccInitializerAssignment(TargetExpression leftOperand, VccInitializerWithDesignators rightOperand, ISourceLocation sourceLocation)
+      : base(leftOperand, rightOperand, sourceLocation) {
+    }
+
+    protected VccInitializerAssignment(BlockStatement containingBlock, VccInitializerAssignment template)
+      : base(containingBlock, template) {
+    }
+
+    protected override Expression CreateBinaryExpression(Expression leftOperand) {
+      VccInitializerWithDefault result = new VccInitializerWithDefault(leftOperand, (VccInitializerWithDesignators)RightOperand, this.SourceLocation);
+      result.SetContainingExpression(this);
+      return result;
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      return new VccInitializerAssignment(containingBlock, this);
+    }
+  }
+
   internal class VccInitializerWithDefault : VccInitializerWithDesignators
   {
     private readonly Expression defaultExpression;
