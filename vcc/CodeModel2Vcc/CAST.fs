@@ -1085,6 +1085,15 @@ module Microsoft.Research.Vcc.CAST
     | Axiom of Expr
     | GeneratedAxiom of Expr * Top
     
+    member this.Token =
+      match this with
+        | Global(v, Some e) -> e.Token
+        | Global(v, None) -> Token.NoToken
+        | TypeDecl d -> d.Token
+        | FunctionDecl d -> d.Token
+        | Axiom e -> e.Token
+        | GeneratedAxiom(e, _) -> e.Token
+    
     override this.ToString () = toString (this.WriteTo false)
     member this.ToStringWT (showTypes : bool) = toString (this.WriteTo showTypes)
     
