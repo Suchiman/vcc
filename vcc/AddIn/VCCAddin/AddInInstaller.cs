@@ -14,84 +14,55 @@ using Microsoft.Win32;
 using System.Reflection;
 using System.Globalization;
 
-namespace AddinInstallerClass {
+namespace AddinInstallerClass
+{
 
   [RunInstaller(true)]
-  public partial class AddInInstaller : Installer {
+  public partial class AddInInstaller : Installer
+  {
 
-    public AddInInstaller()
-    {
+    public AddInInstaller() {
       InitializeComponent();
     }
 
-    public override void Uninstall(System.Collections.IDictionary savedState)
-    {
+    public override void Uninstall(System.Collections.IDictionary savedState) {
       base.Uninstall(savedState);
       InstallRoutines.UninstallAddIn(this.Context);
     }
 
 
-    public override void Install(System.Collections.IDictionary stateSaver)
-    {
+    public override void Install(System.Collections.IDictionary stateSaver) {
       base.Install(stateSaver);
       InstallRoutines.InstallAddIn(this.Context);
     }
   }
 
 
-  public static class PathSetting {
-    public static void AddPathToPath(string VCCBinsPath, bool AllUsers)
-    {
+  public static class PathSetting
+  {
+    public static void AddPathToEnvironment(string env, string path, bool AllUsers) {
       RegistryKey hklm = Registry.LocalMachine;
       RegistryKey hkcu = Registry.CurrentUser;
 
-      hklm = hklm.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", true);
-      hkcu = hkcu.OpenSubKey("Environment", true);
+      using (RegistryKey envKey = AllUsers ?
+          hklm.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", true) :
+          hkcu.OpenSubKey("Environment", true)) {
 
+        string current = envKey.GetValue(env, String.Empty) as string;
+        string[] paths = current.Split(';');
 
-      string hklmPath = hklm.GetValue("Path", String.Empty) as string;
-      string hkcuPath = hkcu.GetValue("Path", String.Empty) as string;
+        foreach (string s in paths)
+          if (PathsAreEqual(s, path))
+            return;
 
-      string[] hklmPaths = hklmPath.Split(';');
-      string[] hkcuPaths = hkcuPath.Split(';');
+        if (!String.IsNullOrEmpty(current) && !current.EndsWith(";"))
+          current = current + ";";
 
-      bool found = false;
+        envKey.SetValue(env, current + path);
+      }
+    }
 
-      if (AllUsers) {
-        foreach (string s in hklmPaths) {
-          if (PathsAreEqual(s, VCCBinsPath)) {
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) {
-          if (!hklmPath.EndsWith(";")) {
-            hklm.SetValue("Path", hklmPath + ";" + VCCBinsPath);
-          } else {
-            hklm.SetValue("Path", hklmPath + VCCBinsPath);
-          }
-        }
-      } else {
-        foreach (string s in hkcuPaths) {
-          if (PathsAreEqual(s, VCCBinsPath)) {
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) {
-          if (!hkcuPath.EndsWith(";")) {
-            hkcu.SetValue("Path", hkcuPath + ";" + VCCBinsPath);
-          } else {
-            hkcu.SetValue("Path", hkcuPath + VCCBinsPath);
-          }
-        }
-      } //else
-    } // Function
-
-    private static bool PathsAreEqual(string path1, string path2)
-    {
+    private static bool PathsAreEqual(string path1, string path2) {
       if (path1 == path2) return true;
       if (String.IsNullOrEmpty(path1)) return false;
       if (String.IsNullOrEmpty(path2)) return false;
@@ -105,15 +76,13 @@ namespace AddinInstallerClass {
 
 
 
-  public static class InstallRoutines {
+  public static class InstallRoutines
+  {
     const string AddInName = "VerifiedCCompilerAddin.Addin";
     const string UserTypeName = "usertype.dat";
     const string VsVersions = "Visual Studio 2008";
 
-    public static void InstallAddIn(InstallContext Context)
-    {
-
-
+    public static void InstallAddIn(InstallContext Context) {
       try {
         string asmLocation = typeof(AddInInstaller).Assembly.Location;
         string fileName = Path.Combine(Path.GetDirectoryName(asmLocation), AddInName);
@@ -148,11 +117,13 @@ namespace AddinInstallerClass {
           }
         }
 
-        //Install VCCBindir to Path
+        //Setup paths
         Assembly asm = Assembly.GetExecutingAssembly();
-        string ASMLocation = asm.Location.ToLower();
-        string VCCBinDir = ASMLocation.Replace("verifiedccompileraddin.dll", "").Replace("addin", "Binaries");
-        PathSetting.AddPathToPath(VCCBinDir, Everyone);
+        string ASMLocation = asm.Location.ToLower(CultureInfo.InvariantCulture).Replace("verifiedccompileraddin.dll", "");
+        string VccBinDir = ASMLocation.Replace("addin", "Binaries");
+        string VccHeaderDir = ASMLocation.Replace("addin", "Headers");
+        PathSetting.AddPathToEnvironment("Path", VccBinDir, Everyone);
+        PathSetting.AddPathToEnvironment("INCLUDE", VccHeaderDir, Everyone);
 
         if (!Everyone) {
           string FolderPath = GetVsDocFolder(VsVersions); //Users\Documents\Visual Studio 2008
@@ -202,9 +173,8 @@ namespace AddinInstallerClass {
             FileContent.Replace(Environment.NewLine, ";");
             List<string> ExistingTypesList = new List<string>(FileContent.Split(';'));
 
-            foreach (String Type in UserTypes.Split(';'))
-            {
-              if (!ExistingTypesList.Contains(Type)){
+            foreach (String Type in UserTypes.Split(';')) {
+              if (!ExistingTypesList.Contains(Type)) {
                 tw.WriteLine(Type);
               }
             }
@@ -220,13 +190,9 @@ namespace AddinInstallerClass {
       }
     }
 
-    public static void UninstallAddIn(InstallContext Context)
-    {
-
+    public static void UninstallAddIn(InstallContext Context) {
       try {
-
         string destFile = String.Empty;
-
         string FolderPath = GetVsDocFolder(VsVersions); //Users\Documents\Visual Studio 2008
         if (Directory.Exists(FolderPath)) {
           DirectoryInfo dirInfo = new System.IO.DirectoryInfo(GetVsAddinsFolder(VsVersions));  //Users\Documents\Visual Studio 2008\Addins
@@ -246,9 +212,7 @@ namespace AddinInstallerClass {
             fInfo.Delete();
         }
 
-
         string idePath = GetIDEPath();
-
         if (idePath != null && File.Exists(Path.Combine(idePath, UserTypeName)))
           File.Delete(Path.Combine(idePath, UserTypeName));
       } catch (Exception ex) {
@@ -256,24 +220,20 @@ namespace AddinInstallerClass {
       }
     }
 
-    public static string GetVsDocFolder(string vsVersion)
-    {
+    public static string GetVsDocFolder(string vsVersion) {
       return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), vsVersion);
     }
 
-    public static string GetVsAddinsFolder(string vsVersion)
-    {
+    public static string GetVsAddinsFolder(string vsVersion) {
       return Path.Combine(GetVsDocFolder(vsVersion), "Addins");
     }
 
-    private static string GetVSCOMNTOOLS()
-    {
+    private static string GetVSCOMNTOOLS() {
       string VSDir = Environment.GetEnvironmentVariable("VS90COMNTOOLS");
       return VSDir;
     }
 
-    private static string GetIDEPath()
-    {
+    private static string GetIDEPath() {
       string VPath = GetVSCOMNTOOLS();
       if (VPath != null) VPath = VPath.Replace("Tools", "IDE");
       return VPath;
