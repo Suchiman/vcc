@@ -769,3 +769,9 @@ struct System {
 `
 testcase(3,8) : error VC0000: 'System' is a reserved name and cannot be used as type name.
 `
+void foo() { \
+  __assert(0);
+}
+`
+testcase(2,12) : error VC9500: Assertion '0' did not verify.
+`

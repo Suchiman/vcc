@@ -449,6 +449,11 @@ namespace Microsoft.Research.Vcc.Parsing {
             break;
           }
           this.endPos++;
+          if (this.GetCurrentChar() == '\r') {
+            c = this.GetNextCharAndIncrementEndPos();
+            if (c == '\n') this.GetNextCharAndIncrementEndPos();
+            goto nextToken;
+          }
           //^ assume this.endPos < this.charsInBuffer; //otherwise c would be (char)0
           this.ScanEscapedChar();
           token = Token.IllegalCharacter;
