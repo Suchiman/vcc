@@ -947,133 +947,138 @@ namespace Microsoft.Research.Vcc
         let self = trExpr env
         let selfs = List.map self
         let isFloatingPoint = function | C.Type.Primitive _ -> true | _ -> false
-        match expr with
-          | C.Expr.Cast ({ Type = C.Type.Integer k }, _, e') ->
-            match e'.Type with
-              | C.Type.Bool ->
-                bCall "$bool_to_int" [self e']
-              | C.Type.Integer _ -> self e'
-              | C.Type.MathInteger -> self e'
-              | C.Ptr _ -> // TODO insert checks for casts here
-                bCall ("$ptr_to_" + C.Type.IntSuffix k) [self e']
-              | _ -> die()
-          | C.Expr.Cast ({ Type = C.Type.Bool }, _, e') ->
-            match e'.Type with
-              | C.Type.Integer _ ->
-                match e' with
-                  | C.IntLiteral (_, ZeroBigInt) -> bFalse
-                  | C.IntLiteral (_, OneBigInt) -> bTrue
-                  | _ -> bCall "$int_to_bool" [self e']
-              | C.Ptr _ ->
-                bCall "$ptr_neq" [self e'; er "$null"]
-              | _ -> die()
-          | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
-            bCall "$ptr_cast" [self e'; ptrType expr]
-          | C.Expr.Pure (_, e') -> self e'
-          | C.Expr.Macro (c1, name, [C.Expr.Prim (c2, C.Op(_, C.Unchecked), _) as inner]) 
-              when name.StartsWith "unchecked" && c1.Type = c2.Type -> trExpr env inner
-          | C.Expr.Prim (c, C.Op(opName, _), args) when isFloatingPoint c.Type ->
-            let suffix = match c.Type with | C.Type.Primitive k -> C.Type.PrimSuffix k | _ -> die()
-            let opName' = if args.Length = 1 then "u" + opName else opName
-            let funcNameTbl = Map.of_list [ "+", "$add"; "-", "$sub"; "*", "$mul"; "/", "$div"; "u-", "$neg";
-                                         "<", "$lt"; "<=", "$leq"; ">", "$gt"; ">=", "$geq" ]
-            match funcNameTbl.TryFind opName' with
-              | Some(fName) -> bCall (fName + "_" + suffix)(selfs args)
-              | None -> 
-                helper.Error(expr.Token, 9701, "Operator '" + opName + "' not supported for floating point values")
-                bTrue
-          | C.Expr.Prim (c, C.Op(opName, ch), args) ->
-            let args = selfs args
-            let targs = toTypeId c.Type :: args
-            match opName with
-              | "&" -> bCall "$_and" targs
-              | "|" -> bCall "$_or" targs
-              | ">>" -> bCall "$_shr" args
-              | "<<" -> bCall "$_shl" targs
-              | "~" -> bCall "$_not" targs
-              | "^" -> bCall "$_xor" targs 
-              | "*" when ch <> C.Unchecked -> bCall "$_mul" args
-              | _ -> 
-                if ch = C.Unchecked then
-                  match opName with
-                    | "+" -> bCall "$unchk_add" targs
-                    | "-" -> bCall "$unchk_sub" targs
-                    | "*" -> bCall "$unchk_mul" targs
-                    | "/" -> bCall "$unchk_div" targs
-                    | "%" -> bCall "$unchk_mod" targs
-                    | _ -> B.Expr.Primitive (opName, args)
-                else
-                  B.Expr.Primitive (opName, args)
-          | C.Expr.Ref (_, v) -> 
-            addType v.Type (varRef v)
-          | C.Expr.IntLiteral (_, v) ->
-            B.Expr.IntLiteral v
-          | C.Expr.BoolLiteral (_, v) ->
-            B.Expr.BoolLiteral v
-          | C.Macro(ec, n, args) -> trMacro env ec n args    
-          | C.Expr.Dot (c, o, f) ->
-            if f.Parent.Kind = C.Record then
-              helper.Oops (c.Token, "record dot found " + expr.ToString())
-            bCall "$dot" [self o; er (fieldName f)]
-          | C.Expr.Index (_, arr, idx) ->
-            bCall "$idx" [self arr; self idx; ptrType arr]
-          | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
-          | C.Expr.Call (_, fn, targs, args) ->
-            let args =  List.map (toTypeId' true) targs @ convertArgs fn (selfs args)
-            let args = 
-              if fn.IsStateless then args
-              else bState :: args
-            addType fn.RetType (bCall ("#" + fn.Name) args)
-          // TODO this is wrong for loop invariants and stuff (but the legacy vcc doesn't handle that correctly as well)
-          | C.Expr.Old (ec, C.Macro (_, "_vcc_when_claimed", []), e) ->
-            warnForIneffectiveOld ec.Token (self e)
-            bSubst [("$s", er "$when_claimed_state")] (self e)
-          | C.Expr.Old (ec, state, e) ->
-            let be = self e
-            warnForIneffectiveOld ec.Token be
-            match state with 
-              | C.Macro (_, "prestate", []) -> bSubst [("$s", env.OldState)] be
-              | _ -> 
-                let state = state |> self |> bSubst [("$s", er "$$s")]
-                bSubst [("$s", state)] be
-          | C.Expr.Result c ->
-            addType c.Type (er "$result")
-          | C.Expr.Quant (c, q) ->
-            for v in q.Variables do
-              quantVarTokens.[v] <- c.Token
-            let body = self q.Body
-            let body =
-              match q.Condition, q.Kind with
-                | Some e, C.Forall -> bImpl (self e) body
-                | Some e, C.Exists -> bAnd (self e) body
-                | _, C.Lambda -> die()
-                | None, _ -> body                
-            let supportedTypeForQuantification (v : C.Variable) =
-              match v.Type with
-                | C.Type.Ref({Kind = C.TypeKind.Struct|C.TypeKind.Union})
-                | C.Array _ ->
-                  helper.Error(c.Token, 9696, "Cannot quantify over type '" + v.Type.ToString() + "' (bound variable is '" + v.Name + "').")
-                  false
-                | _ -> true
-            let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
-            let triggers = List.map selfs q.Triggers
-            // the nested ptr_cast(ptr(...)) gets into triggers and causes trouble later
-            let rec stripPtrCast (expr:B.Expr) = 
-              let aux = function
-                | B.FunctionCall ("$ptr_cast", [B.FunctionCall ("$ptr", [_; r]); t]) ->
-                  Some (stripPtrCast (bCall "$ptr" [t; r]))
-                | _ -> None
-              expr.Map aux              
-            match q.Kind with
-              | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", stripPtrCast body)
-              | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", stripPtrCast body)
-              | C.Lambda -> die()
-          
-          | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
-          | C.Expr.SizeOf(_, t) -> bInt t.SizeOf
-          | _ ->         
-            helper.Oops (expr.Token, "unhandled expr " + expr.ToString())
-            er "$bogus"
+        try 
+          match expr with
+            | C.Expr.Cast ({ Type = C.Type.Integer k }, _, e') ->
+              match e'.Type with
+                | C.Type.Bool ->
+                  bCall "$bool_to_int" [self e']
+                | C.Type.Integer _ -> self e'
+                | C.Type.MathInteger -> self e'
+                | C.Ptr _ -> // TODO insert checks for casts here
+                  bCall ("$ptr_to_" + C.Type.IntSuffix k) [self e']
+                | _ -> die()
+            | C.Expr.Cast ({ Type = C.Type.Bool }, _, e') ->
+              match e'.Type with
+                | C.Type.Integer _ ->
+                  match e' with
+                    | C.IntLiteral (_, ZeroBigInt) -> bFalse
+                    | C.IntLiteral (_, OneBigInt) -> bTrue
+                    | _ -> bCall "$int_to_bool" [self e']
+                | C.Ptr _ ->
+                  bCall "$ptr_neq" [self e'; er "$null"]
+                | _ -> die()
+            | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
+              bCall "$ptr_cast" [self e'; ptrType expr]
+            | C.Expr.Pure (_, e') -> self e'
+            | C.Expr.Macro (c1, name, [C.Expr.Prim (c2, C.Op(_, C.Unchecked), _) as inner]) 
+                when name.StartsWith "unchecked" && c1.Type = c2.Type -> trExpr env inner
+            | C.Expr.Prim (c, C.Op(opName, _), args) when isFloatingPoint c.Type ->
+              let suffix = match c.Type with | C.Type.Primitive k -> C.Type.PrimSuffix k | _ -> die()
+              let opName' = if args.Length = 1 then "u" + opName else opName
+              let funcNameTbl = Map.of_list [ "+", "$add"; "-", "$sub"; "*", "$mul"; "/", "$div"; "u-", "$neg";
+                                           "<", "$lt"; "<=", "$leq"; ">", "$gt"; ">=", "$geq" ]
+              match funcNameTbl.TryFind opName' with
+                | Some(fName) -> bCall (fName + "_" + suffix)(selfs args)
+                | None -> 
+                  helper.Error(expr.Token, 9701, "Operator '" + opName + "' not supported for floating point values")
+                  bTrue
+            | C.Expr.Prim (c, C.Op(opName, ch), args) ->
+              let args = selfs args
+              let targs = toTypeId c.Type :: args
+              match opName with
+                | "&" -> bCall "$_and" targs
+                | "|" -> bCall "$_or" targs
+                | ">>" -> bCall "$_shr" args
+                | "<<" -> bCall "$_shl" targs
+                | "~" -> bCall "$_not" targs
+                | "^" -> bCall "$_xor" targs 
+                | "*" when ch <> C.Unchecked -> bCall "$_mul" args
+                | _ -> 
+                  if ch = C.Unchecked then
+                    match opName with
+                      | "+" -> bCall "$unchk_add" targs
+                      | "-" -> bCall "$unchk_sub" targs
+                      | "*" -> bCall "$unchk_mul" targs
+                      | "/" -> bCall "$unchk_div" targs
+                      | "%" -> bCall "$unchk_mod" targs
+                      | _ -> B.Expr.Primitive (opName, args)
+                  else
+                    B.Expr.Primitive (opName, args)
+            | C.Expr.Ref (_, v) -> 
+              addType v.Type (varRef v)
+            | C.Expr.IntLiteral (_, v) ->
+              B.Expr.IntLiteral v
+            | C.Expr.BoolLiteral (_, v) ->
+              B.Expr.BoolLiteral v
+            | C.Macro(ec, n, args) -> trMacro env ec n args    
+            | C.Expr.Dot (c, o, f) ->
+              if f.Parent.Kind = C.Record then
+                helper.Oops (c.Token, "record dot found " + expr.ToString())
+              bCall "$dot" [self o; er (fieldName f)]
+            | C.Expr.Index (_, arr, idx) ->
+              bCall "$idx" [self arr; self idx; ptrType arr]
+            | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
+            | C.Expr.Call (_, fn, targs, args) ->
+              let args =  List.map (toTypeId' true) targs @ convertArgs fn (selfs args)
+              let args = 
+                if fn.IsStateless then args
+                else bState :: args
+              addType fn.RetType (bCall ("#" + fn.Name) args)
+            // TODO this is wrong for loop invariants and stuff (but the legacy vcc doesn't handle that correctly as well)
+            | C.Expr.Old (ec, C.Macro (_, "_vcc_when_claimed", []), e) ->
+              warnForIneffectiveOld ec.Token (self e)
+              bSubst [("$s", er "$when_claimed_state")] (self e)
+            | C.Expr.Old (ec, state, e) ->
+              let be = self e
+              warnForIneffectiveOld ec.Token be
+              match state with 
+                | C.Macro (_, "prestate", []) -> bSubst [("$s", env.OldState)] be
+                | _ -> 
+                  let state = state |> self |> bSubst [("$s", er "$$s")]
+                  bSubst [("$s", state)] be
+            | C.Expr.Result c ->
+              addType c.Type (er "$result")
+            | C.Expr.Quant (c, q) ->
+              for v in q.Variables do
+                quantVarTokens.[v] <- c.Token
+              let body = self q.Body
+              let body =
+                match q.Condition, q.Kind with
+                  | Some e, C.Forall -> bImpl (self e) body
+                  | Some e, C.Exists -> bAnd (self e) body
+                  | _, C.Lambda -> die()
+                  | None, _ -> body                
+              let supportedTypeForQuantification (v : C.Variable) =
+                match v.Type with
+                  | C.Type.Ref({Kind = C.TypeKind.Struct|C.TypeKind.Union})
+                  | C.Array _ ->
+                    helper.Error(c.Token, 9696, "Cannot quantify over type '" + v.Type.ToString() + "' (bound variable is '" + v.Name + "').")
+                    false
+                  | _ -> true
+              let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
+              let triggers = List.map selfs q.Triggers
+              // the nested ptr_cast(ptr(...)) gets into triggers and causes trouble later
+              let rec stripPtrCast (expr:B.Expr) = 
+                let aux = function
+                  | B.FunctionCall ("$ptr_cast", [B.FunctionCall ("$ptr", [_; r]); t]) ->
+                    Some (stripPtrCast (bCall "$ptr" [t; r]))
+                  | _ -> None
+                expr.Map aux              
+              match q.Kind with
+                | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", stripPtrCast body)
+                | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", stripPtrCast body)
+                | C.Lambda -> die()
+            
+            | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
+            | C.Expr.SizeOf(_, t) -> bInt t.SizeOf
+            | _ ->         
+              helper.Oops (expr.Token, "unhandled expr " + expr.ToString())
+              er "$bogus"
+          with 
+            | :? FailureException -> 
+              helper.Error(expr.Token, 9600, "OOPS for expression " + expr.ToString())
+              rethrow()
 
       and trMacro env (ec : C.ExprCommon) n args = 
         let self = trExpr env
@@ -1819,138 +1824,143 @@ namespace Microsoft.Research.Vcc
               | _ -> env
           let targs = List.map toTypeId targs
           [cmt (); B.Stmt.Call (c.Token, resBuf, name',  targs @ args); assumeSync syncEnv c.Token] @ tail
-        
-        match stmt with
-          | C.Expr.Block (_, stmts) -> 
-            List.concat (List.map self stmts)
-          | C.Expr.Comment (_, s) -> 
-            [B.Stmt.Comment s]
-          | C.Expr.Assert (_, C.Expr.Macro (_, "_vcc_bv_lemma", [e])) -> 
-            [cmt (); B.Stmt.Assert (stmt.Token, trBvExpr env e)]
-//          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_cond_wf", [cond; e])) ->
-//            let addCond = function
-//              | B.Assert (t, e) -> B.Assert (t, bImpl (trExpr env cond) e)
-//              | _ -> die()
-//            cmt () :: (List.map addCond (readsCheck env true e))
-//          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_wf", [e])) ->
-//            cmt () :: readsCheck env true e
-          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_normal", [e])) ->
-            cmt () :: readsCheck env false e            
-          | C.Expr.Assert (_, e) -> 
-            // In general this is a good idea, but FELT sometimes creates expressions
-            // with dummy tokens and we can do nothing about it
-            //if e.Token.line = 0 then
-            //  failwith ("trying to put dummy token on assertion " + e.ToString())
-            [cmt (); B.Stmt.Assert (stmt.Token, trExpr env e)]
-          | C.Expr.Assume (_, e) -> 
-            [cmt (); B.Stmt.Assume (trExpr env e)]
-          | C.Expr.Return (c, s) ->
-            match s with
-            | None -> [cmt (); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
-            | (Some e) -> 
-              [cmt (); B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e)); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
-          | C.Expr.Macro (_, "havoc", [e ;t]) ->
-            [cmt (); B.Stmt.Call (e.Token, [], "$havoc", [trExpr env e; trExpr env t]); assumeSync env e.Token] @ (cevStateUpdate e.Token)
-          | C.Expr.MemoryWrite (_, e1, e2) ->
-            let e2' =
-              match e1.Type with
-                | C.Ptr t -> trForWrite env t e2
-                | _ -> die()
-            [cmt (); 
-             B.Stmt.Call (C.bogusToken, [], "$write_int", [trExpr env e1; e2']); 
-             assumeSync env e1.Token] @ (cevStateUpdate e1.Token)
-            
-          | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "claim", args)) ->
-            cmt() :: trClaim env false c.Token v args @ (cevVarUpdate c.Token true v)
-            
-          | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "upgrade_claim", args)) ->
-            cmt() :: trClaim env true c.Token v args @ (cevVarUpdate c.Token true v)
-            
-          | C.Expr.Stmt (_, C.Expr.Macro (c, "unclaim", args)) ->
-            cmt() :: trUnclaim env c.Token args
-          
-          | C.Expr.Atomic (ec, objs, body) ->
-            trAtomic trStmt env ec objs body
-            
-          | C.Expr.VarWrite (_, vs, C.Expr.Call (c, fn, targs, args)) -> 
-            let cevlist = cevFunctionCall c.Token
-            let cevlist = if List.isEmpty vs then cevlist else cevlist @ (cevVarUpdateList c.Token vs) @ (cevStateUpdate c.Token)
-            doCall c vs (Some fn) fn.Name targs args @ List.map (fun v -> assumeLocalIs c.Token v) vs @ cevlist
-            
-          | C.Expr.Stmt (_, C.Expr.Call (c, fn, targs, args))        -> 
-            let cevList = cevFunctionCall c.Token
-            let stateUpdate = cevStateUpdate c.Token
-            doCall c [] (Some fn) fn.Name targs args @ cevList @ stateUpdate         
-          | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|
-                                "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap") as name), args) -> 
-            doCall c [] None name [] args
-          | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_deep_unwrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->
-            doCall c [] None name [] args         
-            
-          | C.Expr.VarWrite (c, [v], e) ->
-            [cmt (); B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)); assumeLocalIs c.Token v] @ (cevVarUpdate c.Token true v)
-          
-          | C.Expr.If (_, c, s1, s2) ->
-            let prefix = cevCondMoment c.Token
-            let thenBranch = cevBranchChoice c.Token (er "took_then_branch")
-            let elseBranch = cevBranchChoice c.Token (er "took_else_branch")
-            prefix @
-            [B.Stmt.Comment ("if (" + c.ToString() + ") ..."); 
-             B.Stmt.If (trExpr env c, B.Stmt.Block (thenBranch @ trStmt env s1), B.Stmt.Block (elseBranch @ trStmt env s2))]
-          | C.Expr.Loop (comm, invs, writes, s) ->
-            let (save, oldState) = saveState "loop"
-            let env = { env with OldState = oldState }
-            let condMoment = cevCondMoment stmt.Token
-            let regLoopBody = cevRegLoopBody stmt s
-            let (bump, wrCheck, env) =
-              match writes with
-                | [] -> ([], [], env)
-                | fst :: _ ->
-                  let env' = { env with WritesState = oldState }
-                  let (init, env') = setWritesTime fst.Token env' writes
-                  let name = "#loopWrites^" + (tokSuffix fst.Token)
-                  let p = er name
-                  let impl = bImpl (inWritesOrIrrelevant env' p None) (inWritesOrIrrelevant env p None)
-                  let tok = afmtet fst.Common.Token 8011 "writes clause of the loop might not be included writes clause of the function" []
-                  let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
-                  let check = [B.Stmt.Assert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
-                  (bump, init @ check, env')
-            let tok, vlist = lastStmtVars stmt []
-            let arbitraryLoopIter = cevVarUpdateList comm.Token vlist
-            let body =
-              B.Stmt.While (bTrue, 
-                List.map (fun (e:C.Expr) -> (e.Token, trExpr env e)) invs,
-                B.Stmt.Block (B.Stmt.Assume (stateChanges env) :: 
-                B.Stmt.Assume (bCall "$timestamp_post" [env.OldState; bState]) ::
-                assumeSync env comm.Token :: 
-                List.map (assumeLocalIs comm.Token) !soFarAssignedLocals @
-                  regLoopBody @ arbitraryLoopIter @
-                  trStmt env s))
-            bump @ save @ wrCheck @ [body; assumeSync env comm.Token]
+
+        try         
+          match stmt with
+            | C.Expr.Block (_, stmts) -> 
+              List.concat (List.map self stmts)
+            | C.Expr.Comment (_, s) -> 
+              [B.Stmt.Comment s]
+            | C.Expr.Assert (_, C.Expr.Macro (_, "_vcc_bv_lemma", [e])) -> 
+              [cmt (); B.Stmt.Assert (stmt.Token, trBvExpr env e)]
+  //          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_cond_wf", [cond; e])) ->
+  //            let addCond = function
+  //              | B.Assert (t, e) -> B.Assert (t, bImpl (trExpr env cond) e)
+  //              | _ -> die()
+  //            cmt () :: (List.map addCond (readsCheck env true e))
+  //          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_wf", [e])) ->
+  //            cmt () :: readsCheck env true e
+            | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_normal", [e])) ->
+              cmt () :: readsCheck env false e            
+            | C.Expr.Assert (_, e) -> 
+              // In general this is a good idea, but FELT sometimes creates expressions
+              // with dummy tokens and we can do nothing about it
+              //if e.Token.line = 0 then
+              //  failwith ("trying to put dummy token on assertion " + e.ToString())
+              [cmt (); B.Stmt.Assert (stmt.Token, trExpr env e)]
+            | C.Expr.Assume (_, e) -> 
+              [cmt (); B.Stmt.Assume (trExpr env e)]
+            | C.Expr.Return (c, s) ->
+              match s with
+              | None -> [cmt (); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
+              | (Some e) -> 
+                [cmt (); B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e)); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
+            | C.Expr.Macro (_, "havoc", [e ;t]) ->
+              [cmt (); B.Stmt.Call (e.Token, [], "$havoc", [trExpr env e; trExpr env t]); assumeSync env e.Token] @ (cevStateUpdate e.Token)
+            | C.Expr.MemoryWrite (_, e1, e2) ->
+              let e2' =
+                match e1.Type with
+                  | C.Ptr t -> trForWrite env t e2
+                  | _ -> die()
+              [cmt (); 
+               B.Stmt.Call (C.bogusToken, [], "$write_int", [trExpr env e1; e2']); 
+               assumeSync env e1.Token] @ (cevStateUpdate e1.Token)
               
-          | C.Expr.VarDecl (b, v) ->
-            let ls = if v.Kind = C.Parameter then cevVarIntro b.Token true v else []
-            if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then []
-            else
-              let (v, w) = trWhereVar v
-              [cmt(); B.Stmt.VarDecl (v, w)] @ ls
+            | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "claim", args)) ->
+              cmt() :: trClaim env false c.Token v args @ (cevVarUpdate c.Token true v)
+              
+            | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "upgrade_claim", args)) ->
+              cmt() :: trClaim env true c.Token v args @ (cevVarUpdate c.Token true v)
+              
+            | C.Expr.Stmt (_, C.Expr.Macro (c, "unclaim", args)) ->
+              cmt() :: trUnclaim env c.Token args
+            
+            | C.Expr.Atomic (ec, objs, body) ->
+              trAtomic trStmt env ec objs body
+              
+            | C.Expr.VarWrite (_, vs, C.Expr.Call (c, fn, targs, args)) -> 
+              let cevlist = cevFunctionCall c.Token
+              let cevlist = if List.isEmpty vs then cevlist else cevlist @ (cevVarUpdateList c.Token vs) @ (cevStateUpdate c.Token)
+              doCall c vs (Some fn) fn.Name targs args @ List.map (fun v -> assumeLocalIs c.Token v) vs @ cevlist
+              
+            | C.Expr.Stmt (_, C.Expr.Call (c, fn, targs, args))        -> 
+              let cevList = cevFunctionCall c.Token
+              let stateUpdate = cevStateUpdate c.Token
+              doCall c [] (Some fn) fn.Name targs args @ cevList @ stateUpdate         
+            | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|
+                                  "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap") as name), args) -> 
+              doCall c [] None name [] args
+            | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_deep_unwrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->
+              doCall c [] None name [] args         
+              
+            | C.Expr.VarWrite (c, [v], e) ->
+              [cmt (); B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)); assumeLocalIs c.Token v] @ (cevVarUpdate c.Token true v)
+            
+            | C.Expr.If (_, c, s1, s2) ->
+              let prefix = cevCondMoment c.Token
+              let thenBranch = cevBranchChoice c.Token (er "took_then_branch")
+              let elseBranch = cevBranchChoice c.Token (er "took_else_branch")
+              prefix @
+              [B.Stmt.Comment ("if (" + c.ToString() + ") ..."); 
+               B.Stmt.If (trExpr env c, B.Stmt.Block (thenBranch @ trStmt env s1), B.Stmt.Block (elseBranch @ trStmt env s2))]
+            | C.Expr.Loop (comm, invs, writes, s) ->
+              let (save, oldState) = saveState "loop"
+              let env = { env with OldState = oldState }
+              let condMoment = cevCondMoment stmt.Token
+              let regLoopBody = cevRegLoopBody stmt s
+              let (bump, wrCheck, env) =
+                match writes with
+                  | [] -> ([], [], env)
+                  | fst :: _ ->
+                    let env' = { env with WritesState = oldState }
+                    let (init, env') = setWritesTime fst.Token env' writes
+                    let name = "#loopWrites^" + (tokSuffix fst.Token)
+                    let p = er name
+                    let impl = bImpl (inWritesOrIrrelevant env' p None) (inWritesOrIrrelevant env p None)
+                    let tok = afmtet fst.Common.Token 8011 "writes clause of the loop might not be included writes clause of the function" []
+                    let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
+                    let check = [B.Stmt.Assert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
+                    (bump, init @ check, env')
+              let tok, vlist = lastStmtVars stmt []
+              let arbitraryLoopIter = cevVarUpdateList comm.Token vlist
+              let body =
+                B.Stmt.While (bTrue, 
+                  List.map (fun (e:C.Expr) -> (e.Token, trExpr env e)) invs,
+                  B.Stmt.Block (B.Stmt.Assume (stateChanges env) :: 
+                  B.Stmt.Assume (bCall "$timestamp_post" [env.OldState; bState]) ::
+                  assumeSync env comm.Token :: 
+                  List.map (assumeLocalIs comm.Token) !soFarAssignedLocals @
+                    regLoopBody @ arbitraryLoopIter @
+                    trStmt env s))
+              bump @ save @ wrCheck @ [body; assumeSync env comm.Token]
+                
+            | C.Expr.VarDecl (b, v) ->
+              let ls = if v.Kind = C.Parameter then cevVarIntro b.Token true v else []
+              if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then []
+              else
+                let (v, w) = trWhereVar v
+                [cmt(); B.Stmt.VarDecl (v, w)] @ ls
 
-          | C.Expr.Goto (c, l) -> [cmt (); B.Stmt.Goto (c.Token, [trLabel l])]
-          | C.Expr.Label (c, l) -> [B.Stmt.Label (c.Token, trLabel l)]
-          
-          | C.Expr.Macro (_, "ignore_me", []) -> []
-          | C.Expr.Macro (_, "inlined_atomic", [C.Expr.Macro (_, "ignore_me", [])]) -> []
+            | C.Expr.Goto (c, l) -> [cmt (); B.Stmt.Goto (c.Token, [trLabel l])]
+            | C.Expr.Label (c, l) -> [B.Stmt.Label (c.Token, trLabel l)]
+            
+            | C.Expr.Macro (_, "ignore_me", []) -> []
+            | C.Expr.Macro (_, "inlined_atomic", [C.Expr.Macro (_, "ignore_me", [])]) -> []
 
-          | C.Expr.Macro (_, "function_cleanup", args) ->
-            env.FunctionCleanup := !env.FunctionCleanup @ args
-            []
-          
-          | e when not (hasSideEffect e) -> []
-          
-          | _ -> 
-            helper.Oops (stmt.Token, "unhandled stmt " + stmt.ToString())
-            []
-      
+            | C.Expr.Macro (_, "function_cleanup", args) ->
+              env.FunctionCleanup := !env.FunctionCleanup @ args
+              []
+            
+            | e when not (hasSideEffect e) -> []
+            
+            | _ -> 
+              helper.Oops (stmt.Token, "unhandled stmt " + stmt.ToString())
+              []
+          with
+            | :? FailureException ->
+              helper.Error(stmt.Token, 9600, "OOPS for statement " + stmt.ToString())
+              rethrow()
+
       let trHeader (header:C.Function) =
         let env = { initialEnv with Writes = header.Writes }
         let te e = trExpr env e
@@ -2691,111 +2701,115 @@ namespace Microsoft.Research.Vcc
         !found
       
       let trTop decl =      
-        match decl with
-          | C.Top.FunctionDecl h ->
-            if h.Name.StartsWith "_vcc_" && not (h.Name.StartsWith "_vcc_match") then 
-              []
-            else
-              soFarAssignedLocals := []
-              let (proc, env) = trHeader h
-              let (init, env) = setWritesTime h.Token env h.Writes              
-              let assumeMutability e =
-                let te = trExpr env
-                let e' = te e 
-                let assump =
-                  match e.Type with
-                    | C.Ptr t ->                      
-                      bCall (if t.IsComposite then "$thread_owned" else "$mutable") [bState; e']
-                    | C.ObjectT ->
-                      bCall "$thread_owned_or_even_mutable" [bState; e']
-                    | C.MathTypeRef "ptrset" ->
-                      let mut extOf name =
-                        let p = er "#p"
-                        let triggers =
-                          match extOf with
-                            | Some q ->
-                              [[bCall "$extent_hint" [p; q]]]
-                            | None ->
-                              List.map (fun n -> [bCall n [bState; p]]) ["$st"; "$ts"]
-                        B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], triggers,
-                                       weight "begin-writes2",
-                                       bInvImpl (bCall "$set_in" [p; e']) (bCall name [bState; p]))
+        try 
+          match decl with
+            | C.Top.FunctionDecl h ->
+              if h.Name.StartsWith "_vcc_" && not (h.Name.StartsWith "_vcc_match") then 
+                []
+              else
+                soFarAssignedLocals := []
+                let (proc, env) = trHeader h
+                let (init, env) = setWritesTime h.Token env h.Writes              
+                let assumeMutability e =
+                  let te = trExpr env
+                  let e' = te e 
+                  let assump =
+                    match e.Type with
+                      | C.Ptr t ->                      
+                        bCall (if t.IsComposite then "$thread_owned" else "$mutable") [bState; e']
+                      | C.ObjectT ->
+                        bCall "$thread_owned_or_even_mutable" [bState; e']
+                      | C.MathTypeRef "ptrset" ->
+                        let mut extOf name =
+                          let p = er "#p"
+                          let triggers =
+                            match extOf with
+                              | Some q ->
+                                [[bCall "$extent_hint" [p; q]]]
+                              | None ->
+                                List.map (fun n -> [bCall n [bState; p]]) ["$st"; "$ts"]
+                          B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], triggers,
+                                         weight "begin-writes2",
+                                         bInvImpl (bCall "$set_in" [p; e']) (bCall name [bState; p]))
 
-                      match e' with
-                        | B.Expr.FunctionCall (("$set_universe" | "$set_empty"), []) ->
-                          // writes(set_universe()) is for debugging, so disable the immediate false that we could conclude
-                          // writes(set_empty()) doesn't mean anything, so also ignore it
-                          bTrue
-                        | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent"), args) ->
-                          mut (Some (List.hd (List.rev args))) "$mutable"
-                        | _ -> mut None "$thread_owned_or_even_mutable"
-                    | _ -> bTrue
-                B.Stmt.Assume assump
-              let cevInit = cevInitCall h.Token
-              let cevInit = cevInit @ List.fold (fun accum -> fun v -> (cevVarIntro h.Token true) v @ accum) [] (List.filter (fun (v : C.Variable) -> v.Kind <> C.VarKind.OutParameter) h.Parameters)
-              let _ = if helper.Options.PrintCEVModel then cevNIncr ()
-              let init = List.map (assumeLocalIs h.Token) (List.filter (fun (v : C.Variable) -> v.Kind <> C.VarKind.OutParameter) h.Parameters) @ init @ cevInit
-                  
-              let can_frame =
-                if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
-                else
-                  [B.Stmt.Assume (bCall "$can_use_all_frame_axioms" [bState])]
-              
-              let doBody s =
-                let cleanup = ref []
-                B.Stmt.Block (B.Stmt.Assume (bCall "$function_entry" [bState]) ::
-                               B.Stmt.VarDecl(("#stackframe", B.Type.Int), None) ::
-                               assumeSync env h.Token ::
-                               can_frame @
-                               init @
-                               List.map assumeMutability h.Writes @
-                               trStmt {env with FunctionCleanup = cleanup} s @ 
-                               [B.Stmt.Label (Token.NoToken, "#exit")] @
-                               (!cleanup |> List.map (trStmt env) |> List.concat) @
-                               sanityChecks env h) 
-              let theBody =
-                if functionToVerify = null || functionToVerify = h.Name then h.Body
-                else None
-              let proc = { proc with Body = Option.map doBody theBody }
-              let proc =
-                match proc.Body with
-                  | Some b when hasStartHere b ->
-                    { proc with Attributes = B.Attribute.ExprAttr ("has_start_here", bTrue) :: proc.Attributes }
-                  | _ -> proc
-              trPureFunction h @ [B.Decl.Proc proc]
-          | C.Top.TypeDecl td ->
-            match td.Kind with
-              | C.TypeKind.Union
-              | C.TypeKind.Struct -> trCompositeType td
-              | C.TypeKind.Record
-              | C.TypeKind.FunctDecl _
-              | C.TypeKind.MathType -> trMathType td
-          | C.Top.GeneratedAxiom(e, _)
-          | C.Top.Axiom e ->
-            let res = trExpr initialEnv e
-            let seenState = ref false
-            let replMS = function
-              | B.Expr.Ref "$s" -> seenState := true; Some (er "#s")
-              | B.Expr.Old _ ->
-                failwith "axiom mentions old"
-              | _ -> None
-            let res = res.Map replMS
-            let res, vars = 
-              //XXX if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
-              if !seenState then res, [("#s", tpState)] else res, []
-            let res =
-              match vars, res with
-                | [], _ -> res
-                | _, B.Expr.Forall (tok, vars2, triggers, attrs, body) ->
-                  B.Expr.Forall (tok, vars @ vars2, triggers, attrs, body)
-                | _, _ -> 
-                  B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
-            [B.Decl.Axiom res]
-          | C.Top.Global ({ Kind = C.ConstGlobal ; Type = C.Ptr t } as v, _) ->
-            [B.Decl.Const ({ Unique = true; Name = varName v; Type = B.Type.Int })]
-          | C.Top.Global _ -> die()
+                        match e' with
+                          | B.Expr.FunctionCall (("$set_universe" | "$set_empty"), []) ->
+                            // writes(set_universe()) is for debugging, so disable the immediate false that we could conclude
+                            // writes(set_empty()) doesn't mean anything, so also ignore it
+                            bTrue
+                          | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent"), args) ->
+                            mut (Some (List.hd (List.rev args))) "$mutable"
+                          | _ -> mut None "$thread_owned_or_even_mutable"
+                      | _ -> bTrue
+                  B.Stmt.Assume assump
+                let cevInit = cevInitCall h.Token
+                let cevInit = cevInit @ List.fold (fun accum -> fun v -> (cevVarIntro h.Token true) v @ accum) [] (List.filter (fun (v : C.Variable) -> v.Kind <> C.VarKind.OutParameter) h.Parameters)
+                let _ = if helper.Options.PrintCEVModel then cevNIncr ()
+                let init = List.map (assumeLocalIs h.Token) (List.filter (fun (v : C.Variable) -> v.Kind <> C.VarKind.OutParameter) h.Parameters) @ init @ cevInit
+                    
+                let can_frame =
+                  if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
+                  else
+                    [B.Stmt.Assume (bCall "$can_use_all_frame_axioms" [bState])]
+                
+                let doBody s =
+                  let cleanup = ref []
+                  B.Stmt.Block (B.Stmt.Assume (bCall "$function_entry" [bState]) ::
+                                 B.Stmt.VarDecl(("#stackframe", B.Type.Int), None) ::
+                                 assumeSync env h.Token ::
+                                 can_frame @
+                                 init @
+                                 List.map assumeMutability h.Writes @
+                                 trStmt {env with FunctionCleanup = cleanup} s @ 
+                                 [B.Stmt.Label (Token.NoToken, "#exit")] @
+                                 (!cleanup |> List.map (trStmt env) |> List.concat) @
+                                 sanityChecks env h) 
+                let theBody =
+                  if functionToVerify = null || functionToVerify = h.Name then h.Body
+                  else None
+                let proc = { proc with Body = Option.map doBody theBody }
+                let proc =
+                  match proc.Body with
+                    | Some b when hasStartHere b ->
+                      { proc with Attributes = B.Attribute.ExprAttr ("has_start_here", bTrue) :: proc.Attributes }
+                    | _ -> proc
+                trPureFunction h @ [B.Decl.Proc proc]
+            | C.Top.TypeDecl td ->
+              match td.Kind with
+                | C.TypeKind.Union
+                | C.TypeKind.Struct -> trCompositeType td
+                | C.TypeKind.Record
+                | C.TypeKind.FunctDecl _
+                | C.TypeKind.MathType -> trMathType td
+            | C.Top.GeneratedAxiom(e, _)
+            | C.Top.Axiom e ->
+              let res = trExpr initialEnv e
+              let seenState = ref false
+              let replMS = function
+                | B.Expr.Ref "$s" -> seenState := true; Some (er "#s")
+                | B.Expr.Old _ ->
+                  failwith "axiom mentions old"
+                | _ -> None
+              let res = res.Map replMS
+              let res, vars = 
+                //XXX if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
+                if !seenState then res, [("#s", tpState)] else res, []
+              let res =
+                match vars, res with
+                  | [], _ -> res
+                  | _, B.Expr.Forall (tok, vars2, triggers, attrs, body) ->
+                    B.Expr.Forall (tok, vars @ vars2, triggers, attrs, body)
+                  | _, _ -> 
+                    B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
+              [B.Decl.Axiom res]
+            | C.Top.Global ({ Kind = C.ConstGlobal ; Type = C.Ptr t } as v, _) ->
+              [B.Decl.Const ({ Unique = true; Name = varName v; Type = B.Type.Int })]
+            | C.Top.Global _ -> die()
+          with
+            | :? FailureException ->
+              helper.Error(decl.Token, 9600, "OOPS for declaration " + decl.ToString())
+              rethrow()
 
-      
       let main () =
         let res = List.map trTop decls
         
