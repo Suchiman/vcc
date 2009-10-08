@@ -773,5 +773,6 @@ void foo() { \
   __assert(0);
 }
 `
+Verification of foo failed.
 testcase(2,12) : error VC9500: Assertion '0' did not verify.
 `
