@@ -1887,7 +1887,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       EnumMember member = new EnumMember(attributes, typeExpression, name, initializer, sctx);
       if (members != null) members.Add(member);
-      QualifiedName globalInitializer = new QualifiedName(typeExpression.Expression, new VccSimpleName(name, name.SourceLocation), name.SourceLocation);
+      var globalInitializer = new QualifiedName(typeExpression.Expression, new VccSimpleName(name, name.SourceLocation), name.SourceLocation);
       FieldDeclaration.Flags flags = FieldDeclaration.Flags.Constant|FieldDeclaration.Flags.Static|FieldDeclaration.Flags.Unsafe; //TODO: why unsafe?
       FieldDeclaration result = new FieldDeclaration(null, flags, TypeMemberVisibility.Assembly, typeExpression, name, globalInitializer, sctx);
       this.SkipTo(followers);
@@ -3300,7 +3300,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         result = new VccPointerScopedName(qualifier, name, slb);
       else {
         //^ assert tok == Token.Dot 
-        result = new QualifiedName(qualifier, name, slb);
+        result = new VccQualifiedName(qualifier, name, slb);
       }
       //^ assume followers[this.currentToken] || this.currentToken == Token.EndOfFile;
       return result;

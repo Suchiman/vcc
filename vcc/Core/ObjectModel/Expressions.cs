@@ -2038,7 +2038,7 @@ namespace Microsoft.Research.Vcc {
 
     internal override void AddInitializingFieldAssignmentsTo(ICollection<Statement> statements, Expression target, VccStructuredTypeDeclaration typeDecl) {
       foreach (var pair in this.designatorsWithExpressions) {
-        QualifiedName targetDotField = new QualifiedName(target, pair.Designator, pair.Designator.SourceLocation);
+        var targetDotField = new VccQualifiedName(target, pair.Designator, pair.Designator.SourceLocation);
         AddInitializationTo(statements, pair.Expression, targetDotField, GetTypeOfField(typeDecl, pair.Designator), this.ContainingBlock);
       }
     }
@@ -2360,7 +2360,7 @@ namespace Microsoft.Research.Vcc {
       IEnumerator<Expression> exprEnumerator= this.expressions.GetEnumerator();
       foreach (FieldDefinition fd in IteratorHelper.GetFilterEnumerable<ITypeDeclarationMember, FieldDefinition>(typeDecl.TypeDeclarationMembers)) {
         SimpleName fieldName = new SimpleName(fd.Name, target.SourceLocation, false);
-        QualifiedName varDotField = new QualifiedName(target, fieldName, target.SourceLocation);
+        var varDotField = new VccQualifiedName(target, fieldName, target.SourceLocation);
         if (exprEnumerator.MoveNext())
           AddInitializationTo(statements, exprEnumerator.Current, varDotField, fd.Type, this.ContainingBlock);
         if (isUnion) return;
@@ -3337,6 +3337,40 @@ namespace Microsoft.Research.Vcc {
       if (this.ContainingBlock == containingBlock) return this;
       return new VccScopedTypeExpression(containingBlock, this);
     }
+  }
+
+  public class VccQualifiedName : QualifiedName
+  {
+    public VccQualifiedName(Expression qualifier, SimpleName simpleName, ISourceLocation sourceLocation)
+      : base(qualifier, simpleName, sourceLocation) {
+    }
+
+    protected VccQualifiedName(BlockStatement containingBlock, VccQualifiedName template)
+      : base(containingBlock, template) {
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccQualifiedName(containingBlock, this);
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      if (this.ResolveAsValueContainer() == null) {
+        if (this.Qualifier.HasErrors()) return true;
+        if (this.Qualifier.Type == Dummy.Type) {
+          this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.StructRequiredForDot, this.SimpleName.Name.Value));
+          return true;
+        }
+      }
+      return base.CheckForErrorsAndReturnTrueIfAnyAreFound();
+    }
+
+    public override ITypeDefinitionMember ResolveAsValueContainer() {
+      var result = base.ResolveAsValueContainer();
+      if (result != null && this.Qualifier.Type == Dummy.Type) return null;
+      return result;
+    }
+
   }
 
   public class VccSimpleName : SimpleName {
