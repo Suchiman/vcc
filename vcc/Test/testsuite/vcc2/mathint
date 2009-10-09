@@ -83,3 +83,23 @@ testcase(39,40) : error VC8004: a + b might overflow.
 Verification of foo6 succeeded.
 Verification of bar succeeded.
 `
+#include <vcc.h>
+spec(
+mathint plus(mathint x, mathint y)
+  requires(x>=0 && y>=0)
+  ensures(result == x + y)
+{
+  spec(mathint z = x+y;)
+  while (x>0)
+    invariant(y == z - x)
+    invariant(x >= 0)
+    {
+      x-= 1;
+      y+= 1;
+    }
+  return y;
+}
+) 
+`
+Verification of plus succeeded.
+`

@@ -360,7 +360,8 @@ namespace Microsoft.Research.Vcc
     let unchecked (newop:Expr) =
       match newop.Type with
         | Type.Integer k ->
-          Expr.Macro (newop.Common, "unchecked_" + Type.IntSuffix k, [newop])              
+          Expr.Macro (newop.Common, "unchecked_" + Type.IntSuffix k, [newop])  
+        | Type.MathInteger -> newop            
         | _ -> failwith ("non-integer primitive operation " + newop.ToString())
     
     let stripRemainingChecked self = function
