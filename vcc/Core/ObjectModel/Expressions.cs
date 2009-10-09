@@ -2541,6 +2541,8 @@ namespace Microsoft.Research.Vcc {
         var actualEnum = this.OriginalArguments.GetEnumerator();
         while (formalEnum.MoveNext()) {
           if (!actualEnum.MoveNext()) break;
+          if (actualEnum.Current.HasErrors())
+            result = true;
           i++;
           if (formalEnum.Current.IsOut && !(actualEnum.Current is OutArgument)) {
             this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.ArgumentMustBePassedWithOutKeyword, i.ToString(System.Globalization.CultureInfo.InvariantCulture)));
@@ -2548,6 +2550,7 @@ namespace Microsoft.Research.Vcc {
           }
           if (!formalEnum.Current.IsOut && actualEnum.Current is OutArgument) {
             this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.ArgumentShouldNotBePassedWithOutKeyword, i.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            result = true;
           }
         }
       }
