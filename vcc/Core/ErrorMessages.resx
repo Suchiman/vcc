@@ -3640,4 +3640,7 @@
   <data name="ReservedName" xml:space="preserve">
     <value>'{0}' is a reserved name and cannot be used as {1}.</value>
   </data>
+  <data name="StructRequiredForDot" xml:space="preserve">
+    <value>left of '.{0}' must have struct/union type</value>
+  </data>
 </root>

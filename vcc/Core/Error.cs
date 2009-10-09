@@ -107,5 +107,10 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     ReservedName,
 
+    /// <summary>
+    /// left of .{0} must have struct/union type
+    /// </summary>
+    StructRequiredForDot,
+
   }
 }
