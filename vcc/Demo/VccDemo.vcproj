@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files (x86)\Microsoft Research\Vcc\Headers&quot;;&quot;C:\Program Files\Microsoft Research\VerifiedC\Headers&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProgramFiles)\Microsoft Research\Vcc\Headers&quot;"
 				PreprocessorDefinitions="MYVERIFY"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
@@ -175,14 +175,6 @@
 			<File
 				RelativePath=".\BitMap.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories="&quot;C:\Program Files (x86)\Microsoft Research\VerifiedC\Headers&quot;"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\Client.c"
