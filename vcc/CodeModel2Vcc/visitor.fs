@@ -1321,10 +1321,10 @@ namespace Microsoft.Research.Vcc
         let methodName = methodToCall.Name.Value
         let containingTypeDefinitionName = TypeHelper.GetTypeName(methodToCall.ContainingTypeDefinition)        
 
-        let opMap = Map.of_list [ "op_Equality", "=="; "op_Inequality", "!="; "op_Addition", "+";
-                                  "op_Subtraction", "-"; "op_Division", "/"; "op_Modulus", "%";
-                                  "op_Multiply", "*"; "op_LessThan", "<"; "op_LessThanOrEqual", "<=";
-                                  "op_GreaterThan", ">"; "op_GreaterThanOrEqual", ">="
+        let opMap = Map.of_list [ "op_Equality", ("==", false) ; "op_Inequality", ("!=", false); "op_Addition", ("+", false);
+                                  "op_Subtraction", ("-", false); "op_Division", ("/", true); "op_Modulus", ("%", true);
+                                  "op_Multiply", ("*", false); "op_LessThan", ("<", false); "op_LessThanOrEqual", ("<=", false);
+                                  "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false)
                                 ]
 
         this.EnsureMethodIsVisited(methodToCall)
@@ -1351,9 +1351,11 @@ namespace Microsoft.Research.Vcc
 
         let args() = [ for e in methodCall.Arguments -> this.DoExpression e]       
 
-        let trOp methodName = 
+        let trBigIntOp methodName = 
           match args() with
-            | [e1; e2] -> exprRes <- C.Expr.Prim (ec, C.Op(opMap.[methodName], C.CheckedStatus.Checked), [e1; e2])
+            | [e1; e2] -> 
+              let op, checked = opMap.[methodName]
+              exprRes <- C.Expr.Prim (ec, C.Op(op, if checked then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked), [e1; e2])
             | _ -> oopsNumArgs()
             
         let trTrivialCast() =             
@@ -1372,10 +1374,10 @@ namespace Microsoft.Research.Vcc
             exprRes <- C.Expr.Quant (ec, this.DoQuant (methodCall))
           | SystemDiagnosticsContractsCodeContract, "InLambda" -> exprRes <- C.Expr.Macro (ec, "in_lambda", args())
           | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Implicit" | "op_Explicit") -> trTrivialCast()
-          | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Equality" | "op_Inequality") -> trOp methodName
+          | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Equality" | "op_Inequality") -> trBigIntOp methodName
           | SystemDiagnosticsContractsCodeContractBigInt, "op_Implicit" -> trTrivialCast()
           | SystemDiagnosticsContractsCodeContractBigInt, "op_Explicit" -> trCast()
-          | SystemDiagnosticsContractsCodeContractBigInt, BigIntOp -> trOp methodName
+          | SystemDiagnosticsContractsCodeContractBigInt, BigIntOp -> trBigIntOp methodName
           | "Microsoft.Research.Vcc.Runtime", "__noop" -> exprRes <- C.Expr.Macro (ec, "noop", [])
           | MapTypeString, "get_Item" ->
             let th = this.DoExpression methodCall.ThisArgument
