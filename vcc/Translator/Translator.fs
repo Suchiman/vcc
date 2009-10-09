@@ -2792,8 +2792,8 @@ namespace Microsoft.Research.Vcc
                 | _ -> None
               let res = res.Map replMS
               let res, vars = 
-                //XXX if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
-                if !seenState then res, [("#s", tpState)] else res, []
+                if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
+                //if !seenState then res, [("#s", tpState)] else res, []
               let res =
                 match vars, res with
                   | [], _ -> res

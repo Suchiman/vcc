@@ -15,3 +15,14 @@ void foo() { assert(x.a==x.a); }
 `
 testcase(4,23) : error VC0000: left of '.a' must have struct/union type
 `
+#include "vcc.h"
+spec(ispure bool foo(unsigned n);)
+spec(ispure bool bar(unsigned *map);)
+axiom(forall(unsigned *p; { bar(p) } foo(*p)));
+
+void f() {
+  foo(5);
+ }
+`
+Verification of f succeeded.
+`
