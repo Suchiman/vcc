@@ -1124,7 +1124,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (this.currentToken == Token.LeftBracket)
           result = this.ParseArrayDeclarator(result, followers|Token.LeftBracket|Token.LeftParenthesis|Token.Assign);
         else
-          result = this.ParseFunctionDeclarator(result, followers|Token.LeftBracket|Token.LeftParenthesis|Token.Assign);
+          result = this.ParseFunctionDeclarator(result, followers|Token.LeftParenthesis|Token.Assign);
       }
       if (pointers.Count > 0) {
         slb.UpdateToSpan(result.SourceLocation);
