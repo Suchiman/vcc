@@ -1354,8 +1354,8 @@ namespace Microsoft.Research.Vcc
         let trBigIntOp methodName = 
           match args() with
             | [e1; e2] -> 
-              let op, checked = opMap.[methodName]
-              exprRes <- C.Expr.Prim (ec, C.Op(op, if checked then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked), [e1; e2])
+              let op, isChecked = opMap.[methodName]
+              exprRes <- C.Expr.Prim (ec, C.Op(op, if isChecked then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked), [e1; e2])
             | _ -> oopsNumArgs()
             
         let trTrivialCast() =             
