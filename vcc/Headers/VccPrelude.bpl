@@ -2665,6 +2665,7 @@ axiom (forall i: int, j: int :: { i / j }  0 <= i && 0 < j ==> i / j <= i);
 
 axiom (forall i: int, j: int :: { i / j }  i > 0 && j > 0 ==> i - j < (i / j) * j && (i / j) * j <= i);
 axiom (forall i: int :: { i / i }  i != 0 ==> i / i == 1);
+axiom (forall i: int :: { 0 / i }  i != 0 ==> 0 / i == 0);
 
 // from Spec# prelude, needs review
 axiom (forall x: int, y: int :: { x % y } { x / y } x % y == x - x / y * y);

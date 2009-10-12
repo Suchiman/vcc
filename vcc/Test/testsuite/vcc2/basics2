@@ -26,3 +26,15 @@ void f() {
 `
 Verification of f succeeded.
 `
+#include <vcc.h>
+
+void test()
+{
+  assert(forall(mathint m; 0 < m; (1 % m) == (0 % m) ));
+  assert(forall(mathint m; 0 < m; (1 / m) == (0 / m) ));
+} 
+`
+Verification of test failed.
+testcase(5,12) : error VC9500: Assertion '__forall(_vcc_integer_t m; 0 < m; (1 % m) == (0 % m) )' did not verify.
+testcase(6,12) : error VC9500: Assertion '__forall(_vcc_integer_t m; 0 < m; (1 / m) == (0 / m) )' did not verify.
+`
