@@ -325,10 +325,10 @@ namespace Microsoft.Research.Vcc
     
     /// Get rid of structs that are passed by value, or who are allocated on the stack and their address is never taken
     let removeStructsPassedByValue (decls:list<Top>) =
-      let localsMapping = new Dict<_,_>()
+      let localsMapping = ref (new Dict<_,_>())
 
       let mapLocal v = 
-        match localsMapping.TryGetValue(v) with
+        match (!localsMapping).TryGetValue(v) with
           | true, v' -> v'
           | _ -> v
       
@@ -343,7 +343,7 @@ namespace Microsoft.Research.Vcc
       let doVar (v:Variable) =
         if isRefToStruct v.Type then
           let v' = { v with Type = Type.MathStruct; Name = "vs." + v.Name }
-          localsMapping.Add (v, v')
+          (!localsMapping).Add (v, v')
           v'           
         else v
            
@@ -359,8 +359,42 @@ namespace Microsoft.Research.Vcc
       
       let construct (ptr:Expr) =
         Expr.Macro ({ ptr.Common with Type = Type.MathStruct }, "_vcc_vs_ctor", [ptr])
-      
+          
+      let replacedQuantVars = new Dict<_,_>()
+          
       let rec fixAccess self = function
+        | Quant (c, qd) -> 
+          let isAdmissibleFieldType = function
+            | Type.Integer _
+            | Type.PhysPtr _
+            | Type.SpecPtr _ -> true
+            | _ -> false
+          let rec mapVars = function
+            | [] -> []
+            | (v:Variable) :: vs ->
+              let vs'= mapVars vs
+              match v.Type with 
+                | Type.Ref({Kind = TypeKind.Struct; Fields = [f]}) when isAdmissibleFieldType f.Type ->
+                  let v' = doVar v
+                  let vField = getTmp helper (v.Name + "#" + f.Name) f.Type VarKind.QuantBound
+                  replacedQuantVars.Add(v', (f, vField))
+                  vField::vs'
+                | Type.Ref({Kind = TypeKind.Struct|TypeKind.Union}) -> 
+                  helper.Error(c.Token, 9696, "Cannot quantify over structured type '" + v.Type.ToString() + "' (bound variable is '" + v.Name + "').")
+                  v::vs'
+                | _ -> v::vs'
+          let savedLocalsMapping = !localsMapping
+          localsMapping := new Dict<_,_>(!localsMapping)
+          let vars = mapVars qd.Variables
+          let qd' = { 
+                      Kind = qd.Kind 
+                      Variables = vars
+                      Triggers = List.map (List.map self) qd.Triggers
+                      Condition = Option.map self qd.Condition
+                      Body = self qd.Body
+                    } : QuantData
+          localsMapping := savedLocalsMapping
+          Some(Quant(c, qd'))
         | VarDecl (c, ({ Kind = Parameter|SpecParameter|OutParameter } as v)) -> Some (VarDecl (c, mapLocal v))
         | VarDecl (c, ({ Kind = Local|SpecLocal } as v)) -> Some (VarDecl (c, doVar v))
         | Deref (c, e) as expr -> 
@@ -459,8 +493,20 @@ namespace Microsoft.Research.Vcc
       and moveOldOutOfCtor self = function
         | CallMacro(c, "_vcc_vs_ctor", _, [Old(_, prestate, expr)]) -> Some(Old(c, prestate, Macro(c, "_vcc_vs_ctor", [self expr])))
         | _ -> None
+
+      let replaceStructVarAccess _ = function
+        | Macro(ec, "vs_fetch", [Dot(_, Ref(_,v) , f)]) ->
+          match replacedQuantVars.TryGetValue(v) with
+            | true, (f', v') when f' = f -> Some(Ref(ec, v'))
+            | true, (f, _) -> die()
+            | false, _ -> None
+        | Ref(ec, v) when replacedQuantVars.ContainsKey(v) ->
+          helper.Error(ec.Token, 9704, "Cannot replace reference to quantified variable'" + v.Name + "' of structured type.")
+          None
+        | _ -> None
       
-      decls |> List.map doParms |> deepMapExpressions fixAccess |> deepMapExpressions moveOldOutOfCtor 
+      decls |> List.map doParms |> deepMapExpressions fixAccess |> deepMapExpressions moveOldOutOfCtor |> deepMapExpressions replaceStructVarAccess
+      
     
     
     // ============================================================================================================
