@@ -655,9 +655,9 @@ namespace Microsoft.Research.Vcc
                                              Expr.IntLiteral (_, beg); 
                                              Expr.IntLiteral (_, end_)]); e2]) ->
                                              
-          let beg = bigint.ToInt32 beg
-          let end_ = bigint.ToInt32 end_
-          let total = bigint.ToInt32 total          
+          let beg = int32 beg
+          let end_ = int32 end_
+          let total = int32 total          
           let rec stripUnchecked = function
             | Expr.Macro(_, name, [e]) when name.StartsWith("unchecked_") -> stripUnchecked e
             | e -> e

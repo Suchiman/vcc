@@ -778,8 +778,8 @@ namespace Microsoft.Research.Vcc
                                         | Normal n -> Normal (n + f.ByteOffset)
                                         | BitField (n, b, s) -> BitField (n + f.ByteOffset, b, s)
                                       ;
-                                    Parent = td; 
-                                    Name = "inline#" + f.Name + "#" + f'.Name }
+                                   Parent = td; 
+                                   Name = "inline#" + f.Name + "#" + f'.Name }
                        newf'
                     ]
                   inlinedFields.Add(f, List.zip td'.Fields newFields)
@@ -793,8 +793,8 @@ namespace Microsoft.Research.Vcc
                                      | Normal n -> Normal (n + f.ByteOffset + i * td'.SizeOf)
                                      | BitField (n,b,s) -> BitField (n + f.ByteOffset + i * td'.SizeOf, b, s)
                                    ;
-                                 Parent = td;
-                                 Name = f.Name + "#" + f'.Name + "#" + i.ToString() }
+                                Parent = td;
+                                Name = f.Name + "#" + f'.Name + "#" + i.ToString() }
                     ]
                   let newFields = [ for i in seq { 0 .. n-1 } -> mkFieldForIndex i ] |> List.concat
                   inlinedArrays.Add(f, newFields.Head)
