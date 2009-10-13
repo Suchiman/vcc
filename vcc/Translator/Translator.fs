@@ -801,13 +801,14 @@ namespace Microsoft.Research.Vcc
           tokenConstants := fn :: !tokenConstants
           boogieName
             
-      let bvZeroExtend fromBits toBits e =  B.BvConcat(B.Expr.BvLiteral (new bigint(0), toBits - fromBits), e)
+      let bvZeroExtend fromBits toBits e = B.BvConcat(B.Expr.BvLiteral (new bigint(0), toBits - fromBits), e)
+      let bvSignExtend fromBits toBits e = bCall (bvSignExtensionOp fromBits toBits) [e]
             
       let bvExtend (fromType : C.Type) (toType : C.Type) e =
         let fromBits = 8 * fromType.SizeOf
         let toBits = 8 * toType.SizeOf
         if fromBits >= toBits then e 
-        elif fromType.IsSignedInteger then bCall (bvSignExtensionOp fromBits toBits) [e]
+        elif fromType.IsSignedInteger then bvSignExtend fromBits toBits e
         else bvZeroExtend fromBits toBits e
           
       let bvOpFor expr tp name =
@@ -924,11 +925,12 @@ namespace Microsoft.Research.Vcc
           
           | C.Expr.BoolLiteral (_, v) -> B.BoolLiteral v
           
-          | C.Expr.Macro(_, "bv_extract_unsigned", [e; C.IntLiteral(_,bs); C.IntLiteral(_, fromBit); C.IntLiteral(_, toBit)]) ->
+          | C.Expr.Macro(_, (("bv_extract_unsigned"|"bv_extract_signed") as name), [e; C.IntLiteral(_,bs); C.IntLiteral(_, fromBit); C.IntLiteral(_, toBit)]) ->
             let bs = int32 bs
             let fromBit = int32 fromBit
             let toBit = int32 toBit
-            B.BvConcat(B.BvLiteral(bigint.Zero, bs - (toBit - fromBit)), B.BvExtract(trBvExpr env e, toBit, fromBit))
+            let extend = if name = "bv_extract_unsigned" then bvZeroExtend else bvSignExtend
+            extend (toBit - fromBit) bs (B.BvExtract(trBvExpr env e, toBit, fromBit))
           
           | C.Expr.Cast (c, ch, e) ->
             match e.Type, c.Type with
