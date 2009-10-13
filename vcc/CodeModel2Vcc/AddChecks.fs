@@ -263,7 +263,7 @@ namespace Microsoft.Research.Vcc
                                         
         let check_req acc = function
           | Call (_, { Name = "_vcc_is_atomic_obj" }, _, [IntLiteral (_, n)]) ->
-            let arg = List.nth args (Math.BigInt.ToInt32(n))
+            let arg = List.nth args (int32 n)
             Expr.MkAssert (Macro (afmte 8532 "{1} is atomically updated in call to {0}" [call; arg],
                                   "is_atomic_obj", [arg])) :: acc
           | _ -> acc
