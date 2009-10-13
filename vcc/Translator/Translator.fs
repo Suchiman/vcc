@@ -924,6 +924,12 @@ namespace Microsoft.Research.Vcc
           
           | C.Expr.BoolLiteral (_, v) -> B.BoolLiteral v
           
+          | C.Expr.Macro(_, "bv_extract_unsigned", [e; C.IntLiteral(_,bs); C.IntLiteral(_, fromBit); C.IntLiteral(_, toBit)]) ->
+            let bs = int32 bs
+            let fromBit = int32 fromBit
+            let toBit = int32 toBit
+            B.BvConcat(B.BvLiteral(bigint.Zero, bs - (toBit - fromBit)), B.BvExtract(trBvExpr env e, toBit, fromBit))
+          
           | C.Expr.Cast (c, ch, e) ->
             match e.Type, c.Type with
               | src, dst when src = dst -> self e

@@ -1,4 +1,4 @@
-#include "vcc2test.h"
+#include "vcc.h"
 
 ispure unsigned int bar(unsigned int x);
 
@@ -11,7 +11,7 @@ void foo()
 testcase(7,64) : error VC9660: unsupported expression in bv_lemma(...): bar(x) (bar(x))
 testcase(8,38) : error VC9689: type 'uint32_t*' is not supported for bitvector translation (in __forall(unsigned int *x; 1))
 `
-#include "vcc2test.h"
+#include "vcc.h"
 
 ispure unsigned int bar(unsigned int x);
 
@@ -147,7 +147,7 @@ void foo(UINT16 t)
 `
 Verification of foo succeeded.
 `
-#include "vcc2test.h"
+#include "vcc.h"
 
 void foo()
 {
@@ -172,6 +172,33 @@ void foo() {
 bv_lemma(forall(unsigned __int64 a; unsigned __int32 b; b <= 63;
     ((a & ~((1UI64<<b)-1)) == 0 <==> a < 1UI64<<b)));
 bv_lemma(forall(unsigned __int64 x; ((x >> 13) & 0xFF) == (x & 0x1FE000) >> 13));
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc2.h>
+
+typedef unsigned __int64 UINT64;
+
+typedef union _X {
+	backing_member UINT64 AsUINT64;
+	struct {
+		UINT64 l:1;
+		UINT64 mid:62;
+		UINT64 h:1;
+	};
+} X;
+
+void foo() {
+	bv_lemma(forall(X i; i.AsUINT64 & 0x8000000000000000UI64 <==> i.h));
+} 
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+void foo() {
+  bv_lemma(forall(unsigned int i; i == i));
 }
 `
 Verification of foo succeeded.
