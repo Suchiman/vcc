@@ -730,3 +730,24 @@ Verification of bar succeeded.
 Verification of fails succeeded.
 Verification of failsV succeeded.
 `
+#include <vcc.h>
+
+struct S
+{
+  int dummy;
+  spec(mathint a[42];)
+  spec(bool b[10];)
+};
+
+void foo() {
+  struct S s;
+  speconly(s.a[0]= 5;)
+  speconly(s.a[1] = s.a[0] * 5;)
+  assert(s.a[1] == 25);
+  speconly(s.b[0] = false;)
+  speconly(s.b[1] = !s.b[0];)
+  assert(s.b[1]);
+}
+`
+Verification of foo succeeded.
+`
