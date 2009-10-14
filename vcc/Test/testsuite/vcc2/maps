@@ -243,7 +243,7 @@ void xxx(unsigned i) {
 
 void bar(unsigned i) {
    spec(bool map[unsigned];) 
-   speconly(map = (lambda(unsigned j; true; (bool) ((i==j)? true: (map[j]))));)
+   speconly(map = (lambda(unsigned j; true; i==j || map[j]));)
    //error VC9600: OOPS: error in expr
 }
 
@@ -261,7 +261,7 @@ Verification of works succeeded.
 
 void foo() {
     spec(bool map[unsigned][unsigned];)
-    speconly(map = (lambda(unsigned i; true; (lambda(unsigned j; true; (bool) (j==i)))));)
+    speconly(map = (lambda(unsigned i; true; (lambda(unsigned j; true; j==i))));)
     assert(map[3][3]);
     assert(!map[3][2]);
     assert(forall(unsigned i; map[i][i]));

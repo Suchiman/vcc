@@ -246,7 +246,7 @@ int test2a(struct Struct *s)
 
     atomic(c, (struct Struct::g*)s){
     begin_update();
-    speconly(s->map[5] = (bool)1;)
+    speconly(s->map[5] = true;)
     };
     
  }
@@ -290,7 +290,7 @@ int test(struct Struct *s)
  {
     atomic(c, s){
     begin_update();
-    speconly(s->map[5] = (bool)1;)
+    speconly(s->map[5] = true;)
     };
  }
 
@@ -301,7 +301,7 @@ int test(struct Struct *s)
 
     atomic(s){
     begin_update();
-    speconly(s->map[5] = (bool)1;)
+    speconly(s->map[5] = true;)
     };
     
  }
@@ -560,7 +560,7 @@ int test2a(struct Struct *s)
 
     atomic(c,  s::g){
     begin_update();
-    speconly(s->map[5] = (bool)1;)
+    speconly(s->map[5] = true;)
     };
     
  }
@@ -608,7 +608,7 @@ struct vcc(claimable) Struct1
  {
     atomic(c, s){
     begin_update();
-    speconly(s->map[5] = (bool)1;)
+    speconly(s->map[5] = true;)
     };
  }
 
@@ -617,7 +617,7 @@ struct vcc(claimable) Struct1
  {
     atomic(s){
     begin_update();
-    speconly(s->map[5] = (bool)1;)
+    speconly(s->map[5] = true;)
     };
     
  }
