@@ -318,13 +318,14 @@ module Microsoft.Research.Vcc.CAST
         | Volatile t -> t.SizeOf
         | Type.Ref td -> td.SizeOf
         | Array (t, sz) -> t.SizeOf * sz
+        | MathInteger -> 8
         | Bool
         | Void
         | Claim
         | TypeIdT
         | Map _
-        | TypeVar _ 
-        | MathInteger -> 1
+        | TypeVar _ -> 1
+
       
     static member IntSuffix k =
       match Type.sizeSign k with
