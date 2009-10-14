@@ -111,7 +111,7 @@ Verification of BarOK#adm succeeded.
 
 void bar(unsigned i) {
    spec(bool map[unsigned];) 
-   speconly(map = (lambda(unsigned j; true; (bool) ((i==j)? true: (map[j]))));)
+   speconly(map = (lambda(unsigned j; true; i==j || map[j]));)
 }
 `
 Verification of bar succeeded.

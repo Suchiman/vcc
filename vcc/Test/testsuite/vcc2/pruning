@@ -10,21 +10,21 @@ ispure BITMAP32 ToBm32(UINT32 n);
 )
 
 spec(
-ispure BITMAP32 Bm32Singleton(UINT32 i) ensures(result == lambda(UINT32 j; true; (bool)(j == i)));
+ispure BITMAP32 Bm32Singleton(UINT32 i) ensures(result == lambda(UINT32 j; true; j == i));
 )
 
 spec(
-ispure BITMAP32 Bm32Union(BITMAP32 bm1, BITMAP32 bm2)  ensures(result == lambda(UINT32 i; i < 32; (bool)(bm1[i] || bm2[i])));
+ispure BITMAP32 Bm32Union(BITMAP32 bm1, BITMAP32 bm2)  ensures(result == lambda(UINT32 i; i < 32; bm1[i] || bm2[i]));
 )
 
 spec(
 ispure BITMAP32 Bm32Intersect(BITMAP32 bm1, BITMAP32 bm2)
-  ensures(result == lambda(UINT32 i; i < 32; (bool)(bm1[i] && bm2[i])));
+  ensures(result == lambda(UINT32 i; i < 32; bm1[i] && bm2[i]));
 )
 
 spec(
 ispure BITMAP32 Bm32SymmetricDiff(BITMAP32 bm1, BITMAP32 bm2)
-  ensures(result == lambda(UINT32 i; i < 32; (bool)!(bm1[i] <==> bm2[i])));
+  ensures(result == lambda(UINT32 i; i < 32; bm1[i] != bm2[i]));
 )
 
 spec(

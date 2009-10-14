@@ -14,11 +14,11 @@ ispure BITMAP ToBm32(UINT32 n);
 )
 
 spec(
-ispure BITMAP Bm64Singleton(UINT64 i) ensures(result == lambda(UINT64 j; true; (bool)(j == i)));
+ispure BITMAP Bm64Singleton(UINT64 i) ensures(result == lambda(UINT64 j; true; j == i));
 )
 
 spec(
-ispure BITMAP Bm32Singleton(UINT64 i) ensures(result == lambda(UINT64 j; true; (bool)(j == i)));
+ispure BITMAP Bm32Singleton(UINT64 i) ensures(result == lambda(UINT64 j; true; j == i));
 )
 
 spec(

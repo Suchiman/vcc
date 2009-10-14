@@ -33,7 +33,7 @@ void wrapped_use()
   assert(in_domain(&d,&d));
 
   atomic(&d) {
-    d.handles = lambda(struct Handle *hh; true; (bool)(hh == &h));
+    d.handles = lambda(struct Handle *hh; true; hh == &h);
     bump_volatile_version(&d);
   }
   assert(in_domain(&d,&d));
@@ -87,7 +87,7 @@ void closed_use(struct Container *c)
 speconly(
   atomic(&c->d) {
     assert(inv(c));
-    c->d.handles = lambda(struct Handle *hh; true; (bool)(hh == &c->h || c->d.handles[hh]));
+    c->d.handles = lambda(struct Handle *hh; true; hh == &c->h || c->d.handles[hh]);
   }
   c->h.data = &c->d;
   wrap(&c->h);
