@@ -162,6 +162,7 @@ void foo(struct X *p)
 }
 `
 Verification of foo succeeded.
+`
 `/functions:bar2 /a
 #include "vcc.h"
 
