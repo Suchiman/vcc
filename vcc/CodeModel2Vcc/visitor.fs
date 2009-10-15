@@ -140,7 +140,7 @@ namespace Microsoft.Research.Vcc
     member this.EnsureMethodIsVisited (m : IMethodDefinition) =
       if doingEarlyPruning then 
         match m with 
-          | :? IGlobalMethodDefinition -> this.DoMethod(m) 
+          | :? IGlobalMethodDefinition -> this.DoMethod(m, true) 
           | :? IGenericMethodInstance as gmi -> this.EnsureMethodIsVisited(gmi.GenericMethod.ResolvedMethod)
           | _ -> ()
     
@@ -228,7 +228,7 @@ namespace Microsoft.Research.Vcc
             methodsMap.Add(meth, decl)
             decl
     
-    member this.DoMethod (meth:ISignature) =
+    member this.DoMethod (meth:ISignature, contractsOnly:bool) =
       
       let (name, genericPars) =
         match meth with
@@ -238,71 +238,73 @@ namespace Microsoft.Research.Vcc
       if name = "_vcc_atomic_op_result" then ()
       else       
         let decl = this.LookupMethod (meth)
-        let contract = contractProvider.GetMethodContractFor(meth)     
-        if (contract <> null) then contract.HasErrors() |> ignore
-        
-        let parm (p:IParameterTypeInformation) =
-          let name =
-            match p with
-              | :? IParameterDefinition as def -> def.Name.Value
-              | _ -> "#p" + p.GetHashCode().ToString()
-          let isSpec, isOut =
-            match p with
-              | :? Microsoft.Research.Vcc.VccParameterDefinition as vcp -> vcp.IsSpec, vcp.IsOut
-              | _ -> false, false
-          let v =
-            { Name = name
-              Type = this.DoType (p.Type)
-              Kind = match isSpec, isOut with 
-                       | true, true -> C.VarKind.OutParameter 
-                       | true, false -> C.VarKind.SpecParameter
-                       | false, false -> C.VarKind.Parameter 
-                       | _ -> die() // out param must always also be a spec parameter
-            } : C.Variable
-          if localsMap.ContainsKey p then
-            printf "gonna have trouble"
-          localsMap.Add (p, v)
-          // this is SO WRONG, however it seems that sometimes different instances
-          // of IParameterDefinition are referenced from code (does it have to do with
-          // contract variable renaming?)
-          localsMap.Add ((p.ContainingSignature, v.Name), v)
-          v
-                                  
-        if decl.IsProcessed then ()
+        let body = 
+          match meth with
+            | :? IMethodDefinition as def ->
+              (def.Body :?> ISourceMethodBody).Block
+            | _ -> null
+        if decl.IsProcessed && (contractsOnly || Option.isSome decl.Body || body = null) then ()
         else
-          decl.IsProcessed <- true
+          decl.IsProcessed <- true       
+          let parm (p:IParameterTypeInformation) =
+            let name =
+              match p with
+                | :? IParameterDefinition as def -> def.Name.Value
+                | _ -> "#p" + p.GetHashCode().ToString()
+            let isSpec, isOut =
+              match p with
+                | :? Microsoft.Research.Vcc.VccParameterDefinition as vcp -> vcp.IsSpec, vcp.IsOut
+                | _ -> false, false
+            let v =
+              { Name = name
+                Type = this.DoType (p.Type)
+                Kind = match isSpec, isOut with 
+                         | true, true -> C.VarKind.OutParameter 
+                         | true, false -> C.VarKind.SpecParameter
+                         | false, false -> C.VarKind.Parameter 
+                         | _ -> die() // out param must always also be a spec parameter
+              } : C.Variable
+            if localsMap.ContainsKey p then
+              printf "gonna have trouble"
+            localsMap.Add (p, v)
+            // this is SO WRONG, however it seems that sometimes different instances
+            // of IParameterDefinition are referenced from code (does it have to do with
+            // contract variable renaming?)
+            localsMap.Add ((p.ContainingSignature, v.Name), v)
+            v
+                                    
           // needs to be done first so they get into localsMap
           decl.TypeParameters <- [ for tp in genericPars -> { Name = tp.Name.Value } : C.TypeVariable ]
           decl.Parameters <- [ for p in meth.Parameters -> parm p ]
-                                
-          // do something with the signature
-          let block = 
-            match meth with
-              | :? IMethodDefinition as def ->
-                let attrsFromDecls = 
-                  match meth with
-                  | :? VccGlobalMethodDefinition as fd ->
-                    List.concat [ for d in fd.Declarations -> convCustomAttributes (token d) d.Attributes ]
-                  | _ -> []
-                let attrsFromDef = convCustomAttributes (token def) def.Attributes
-                decl.CustomAttr <- removeDuplicates (attrsFromDef @ attrsFromDecls)
-                if decl.CustomAttr.Length = 4 then System.Diagnostics.Debugger.Break()
-                (def.Body :?> ISourceMethodBody).Block
-              | _ -> null
-          if block = null then
+
+          // extract custom attributes
+          match meth with
+            | :? IMethodDefinition as def ->
+              let attrsFromDecls = 
+                match meth with
+                | :? VccGlobalMethodDefinition as fd ->
+                  List.concat [ for d in fd.Declarations -> convCustomAttributes (token d) d.Attributes ]
+                | _ -> []
+              let attrsFromDef = convCustomAttributes (token def) def.Attributes
+              decl.CustomAttr <- removeDuplicates (attrsFromDef @ attrsFromDecls)
+            | _ -> ()
+
+          if body = null || contractsOnly then
             topDecls <- C.Top.FunctionDecl decl :: topDecls
           else
             let savedLocalVars = localVars
             localVars <- []
             currentFunctionName <- decl.Name
             currentBlockId <- 0
-            let body = this.DoStatement block
+            let body = this.DoStatement body
             let locals = (List.map (fun v -> C.Expr.VarDecl (C.voidBogusEC(), v)) decl.InParameters) @ List.rev localVars
             decl.Body <- Some (C.Expr.MkBlock (locals @ [body]))
             localVars <- savedLocalVars
             topDecls <- C.Top.FunctionDecl decl :: topDecls
 
+          let contract = contractProvider.GetMethodContractFor(meth)     
           if contract <> null then
+            contract.HasErrors() |> ignore
             // reset localsMap to deal with renaming of contracts between definition and declaration          
             let savedLocalsMap = localsMap
             match contract with
@@ -317,7 +319,6 @@ namespace Microsoft.Research.Vcc
               Seq.iter2 addParmRenaming contractPars decl.Parameters
             | _ -> ()
 
-            contract.HasErrors() |> ignore
             decl.Requires   <- [ for p in contract.Preconditions -> this.DoPrecond p ]
             decl.Ensures    <- [ for r in contract.Postconditions -> this.DoPostcond r ]
             decl.Writes     <- [ for e in contract.Writes -> this.DoExpression e ]
@@ -850,7 +851,7 @@ namespace Microsoft.Research.Vcc
           match functionPointerMap.TryGetValue cont with
             | true, td -> td
             | _ ->
-              this.DoMethod meth
+              this.DoMethod(meth, true)
               let fndecl = this.LookupMethod meth
               let td = 
                 { 
@@ -892,7 +893,7 @@ namespace Microsoft.Research.Vcc
         globalsType <- globalMethodDefinition.ContainingTypeDefinition
         match globalMethodDefinition.Name.Value with
           | "_vcc_in_state" | "_vcc_approves" | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" -> ()
-          | _ -> this.DoMethod (globalMethodDefinition)
+          | _ -> this.DoMethod (globalMethodDefinition, false)
 
       [<OverloadID("VisitGenericTypeInstanceReference")>]
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
