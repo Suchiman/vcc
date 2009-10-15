@@ -1098,11 +1098,12 @@ namespace Microsoft.Research.Vcc
           | ("unchecked_sbits"|"unchecked_ubits"), args ->
             bCall ("$" + n) (selfs args)
           | unchecked, args when unchecked.StartsWith ("unchecked_") -> bCall "$unchecked" (er ("^^" + unchecked.Substring (unchecked.IndexOf '_' + 1)) :: selfs args)
-          | "map_get", [a; b] ->
+          | ("map_get"|"map_get_trig"), [a; b] ->
             match a.Type with
               | C.Type.Map (f, t) ->
                 let fn = "$select." + (trType a.Type).ToString()
-                addType t (bCall fn [self a; stripType f (self b)])
+                let select = bCall fn [self a; stripType f (self b)]
+                if n = "map_get" then addType t select else select
               | _ -> die()
           | "map_updated", [a; b; c] ->
             match a.Type with

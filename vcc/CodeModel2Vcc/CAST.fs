@@ -947,6 +947,11 @@ module Microsoft.Research.Vcc.CAST
               wr " "
               wr v.Name
               wr "; "
+            let wrTrigger trigs = 
+              wr "{ "
+              commas b fe trigs
+              wr " } "
+            List.iter wrTrigger q.Triggers
             match q.Condition with
               | Some e -> fe e; wr "; "
               | None -> ()
