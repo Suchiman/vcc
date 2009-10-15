@@ -3586,8 +3586,10 @@ namespace Microsoft.Research.Vcc {
           if (functionDef != null) return functionDef.MethodDefinition;
         }
 
-        if (this.Name.Value.StartsWith("__", StringComparison.Ordinal))
-          return this.ResolveUsing(this.VccCompilationHelper.Runtime, false);
+        if (this.Name.Value.StartsWith("__", StringComparison.Ordinal)) {
+          var fromRuntime = this.ResolveUsing(this.VccCompilationHelper.Runtime, false);
+          if (fromRuntime != null) return fromRuntime;
+        }
       }
       object/*?*/ result = base.ResolveUsing(typeDeclaration, restrictToNamespacesAndTypes);
       if (result == null && gdcc == null) {
