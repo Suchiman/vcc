@@ -293,7 +293,7 @@ namespace Microsoft.Research.Vcc
           let contractsOnly = contractsOnly && 
                               not (List.exists (function | C.VccAttr (n, "true") when n = "atomic_inline" -> true | _ -> false) decl.CustomAttr) && 
                               not (List.exists (fun n -> n = decl.Name) requestedFunctions)
-          // make sure that if the current function is explicitly requested, then process its body
+          // make sure that if the current function is explicitly requested or atomic_inline, then process its body
           // coming here again to process the body in a second round does not work.
           
           if body = null || contractsOnly then
