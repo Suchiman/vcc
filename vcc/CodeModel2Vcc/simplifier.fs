@@ -341,11 +341,13 @@ namespace Microsoft.Research.Vcc
                 
           let axcall = Call ({ bogusEC with Type = fn.RetType }, fn, [], List.map (snd >> mkRef) !parms)
           let idxvar = match q.Variables with [x] -> x | _ -> die()
-          let idx = Macro ({ bogusEC with Type = range }, "map_get", [axcall; mkRef idxvar])
+          let mkIdx mgf = Macro ({ bogusEC with Type = range }, mgf, [axcall; mkRef idxvar])
+          let idx = mkIdx "map_get"
+          let trigIdx = mkIdx "map_get_trig"
           let axiom = Quant ({ c with Type = Bool }, 
                              { Kind = Forall
                                Variables = idxvar :: List.map snd !parms
-                               Triggers = [[idx]]
+                               Triggers = [[trigIdx]]
                                Condition = Some cond
                                Body = Prim ({ c with Type = Bool }, Op ("==", Processed), [idx; body])
                              })
