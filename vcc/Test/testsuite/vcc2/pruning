@@ -178,3 +178,25 @@ int bar2(int a) returns(a+1) requires(a<5) { return foo2(a); }
 `
 Verification of bar2 succeeded.
 `
+`/a /functions:bar
+#include <vcc.h>
+
+spec(bool ispure baz() ensures (result == true);)
+
+vcc(atomic_inline) int foo(spec(out int x)) {
+  speconly(x = 10;)
+  assert(baz());
+  return 1;
+};
+
+void bar(int p) {
+  spec(int i;)
+  int j;
+  j = p || foo(spec(out i));
+  assert(j);
+  assert(p || i == 10);
+  
+}
+`
+Verification of bar succeeded.
+`
