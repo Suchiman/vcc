@@ -54,6 +54,7 @@ namespace Microsoft.Research.Vcc
     let typeNameMap = new Dict<string, C.TypeDecl>()
     let fieldsMap = new Dict<IFieldDefinition, C.Field>()
     let mutable doingEarlyPruning = false
+    let mutable requestedFunctions = []
     let mutable currentFunctionName = ""
     let mutable currentBlockId = 0
     
@@ -243,7 +244,7 @@ namespace Microsoft.Research.Vcc
             | :? IMethodDefinition as def ->
               (def.Body :?> ISourceMethodBody).Block
             | _ -> null
-        if decl.IsProcessed && (contractsOnly || Option.isSome decl.Body || body = null) then ()
+        if decl.IsProcessed then ()
         else
           decl.IsProcessed <- true       
           let parm (p:IParameterTypeInformation) =
@@ -289,6 +290,10 @@ namespace Microsoft.Research.Vcc
               decl.CustomAttr <- removeDuplicates (attrsFromDef @ attrsFromDecls)
             | _ -> ()
 
+          let contractsOnly = contractsOnly && not (List.exists (fun n -> n = decl.Name) requestedFunctions)
+          // make sure that if the current function is explicitly requested, then process its body
+          // coming here again to process the body in a second round does not work.
+          
           if body = null || contractsOnly then
             topDecls <- C.Top.FunctionDecl decl :: topDecls
           else
@@ -798,9 +803,10 @@ namespace Microsoft.Research.Vcc
         List.exists (fun elem -> elem = sym) syms
       let ns = assembly.NamespaceRoot
       doingEarlyPruning <- true
+      requestedFunctions <- Seq.to_list fnNames
       for n in ns.Members do 
         let ncmp s = s = n.Name.Value
-        if n.Name.Value.StartsWith("_vcc") || Seq.exists ncmp fnNames || isRequired n.Name.Value then
+        if n.Name.Value.StartsWith("_vcc") || List.exists ncmp requestedFunctions || isRequired n.Name.Value then
           n.Dispatch(this)
       this.DoneVisitingAssembly()
 
