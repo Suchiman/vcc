@@ -512,6 +512,7 @@ namespace VerifiedCCompilerAddin {
     internal static CommandBar GetCommandBar(CommandBarName cmdBarName) {
       string barName = String.Empty;
 
+      // Four our self created command bars we use the object lookup and not the name lookup.
       switch (cmdBarName) {
         case CommandBarName.MenuBar:
           barName = "MenuBar";
@@ -535,14 +536,11 @@ namespace VerifiedCCompilerAddin {
           barName = "Error List";
           break;
         case CommandBarName.VCCMain:
-          barName = "VCCMainMenuBar";
-          break;
+          return AddInGlobals.VCCMainMenu.CommandBar;
         case CommandBarName.VCCRandomSeed:
-          barName = "VCCRandomSeedMenuBar";
-          break;
+          return AddInGlobals.VCCRandomSeedMenu.CommandBar;
         case CommandBarName.VCCMoreCommands:
-          barName = "VCCMoreCommandsMenuBar";
-          break;
+          return AddInGlobals.VCCToolsMenu.CommandBar;
         default:
           break;
       }

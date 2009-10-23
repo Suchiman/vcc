@@ -45,6 +45,17 @@ namespace VerifiedCCompilerAddin.Commands.CustomCommandBar {
       }
       return popup;
     }
+    private CommandBarPopup FindExistingPopUpControl(CommandBar cmdBar)
+    {
+      CommandBarPopup popup = null;
+
+      foreach (CommandBarControl Ctrl in cmdBar.Controls) {
+        if (Ctrl.Caption == Caption) {
+          popup = Ctrl as CommandBarPopup;
+        }
+      }
+      return popup;
+    }
 
     private CommandBarPopup CreatePopUpControl() {
       CommandBar cmdBar = Utilities.GetCommandBar(ParentCmdBarName);
@@ -57,6 +68,36 @@ namespace VerifiedCCompilerAddin.Commands.CustomCommandBar {
                                       true) as CommandBarPopup;
       return popup;
     }
+
+    private CommandBarPopup CreatePopUpControl(CommandBar cmdBar)
+    {
+        CommandBarPopup popup = null;
+
+        popup = cmdBar.Controls.Add(MsoControlType.msoControlPopup,
+                                        System.Type.Missing,
+                                        System.Type.Missing,
+                                        Position,
+                                        true) as CommandBarPopup;
+
+        return popup;
+    }
+
+    public VCCPopupCommand(string Caption, string Name, int Position, CommandBar cmdBar)
+    {
+        this.name = Name;
+        this.caption = Caption;
+        this.position = Position;
+      
+        Control = FindExistingPopUpControl(cmdBar);
+        if (Control == null)
+        {
+            Control = CreatePopUpControl(cmdBar);
+        }
+
+        Control.Caption = this.Caption;
+     
+    }
+    
     public VCCPopupCommand(string Caption, string Name, int Position, CommandBarName cmdBarName ) {
       this.name = Name;
       this.caption = Caption;
@@ -69,7 +110,7 @@ namespace VerifiedCCompilerAddin.Commands.CustomCommandBar {
       }
 
       Control.Caption = this.Caption;
-      Control.CommandBar.Name = this.Name;
+     
     }
     public void Delete()
     {

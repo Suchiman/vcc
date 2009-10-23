@@ -58,7 +58,7 @@ namespace VerifiedCCompilerAddin.Manager.Commands {
       }
 
       VCCPopupCommand VCCMainMenu = new VCCPopupCommand("Verif&y", "VCCMainMenuBar", position, CommandBarName.MenuBar);
-      VCCPopupCommand VCCRandomSeedMenu = new VCCPopupCommand("&Random Seed", "VCCRandomSeedMenuBar", 1, CommandBarName.VCCMain);
+      VCCPopupCommand VCCRandomSeedMenu = new VCCPopupCommand("&Random Seed", "VCCRandomSeedMenuBar", 1, VCCMainMenu.Control.CommandBar);
       VCCPopupCommand VCCToolsMenu = new VCCPopupCommand("More VCC Commands", "VCCMoreCommandsMenuBar", 1, CommandBarName.CodeWindow);
       AddInGlobals.VCCMainMenu = VCCMainMenu.Control;
       AddInGlobals.VCCRandomSeedMenu = VCCRandomSeedMenu.Control;
