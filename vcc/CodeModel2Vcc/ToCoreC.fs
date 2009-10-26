@@ -612,6 +612,20 @@ namespace Microsoft.Research.Vcc
       let currentBlockId = ref 0
       let blockFunctionDecls = ref []
     
+      let reportErrorForJumpsOutOfBlock (block:Expr) =
+        let internalLabels = new Dict<_,_>()
+        let findLabels _ = function
+          | Expr.Label(_, { Name = l }) -> internalLabels.[l] <- true; false
+          | _ -> true
+        let reportError _ = function
+          | Expr.Goto(ec, { Name = l }) when not (internalLabels.ContainsKey l) ->
+            helper.Error(ec.Token, 9705, "Block with explicit contract must not contain goto to external label '" + l + "'."); false
+          | Expr.Return(ec, _) ->
+            helper.Error(ec.Token, 9705, "Block with explicit contract must not contain return statement."); false
+          | _ -> true
+        block.SelfVisit(findLabels)
+        block.SelfVisit(reportError)
+        
       let findLocalsAndTurnIntoParameters fBefore fAfter (exprs: list<Expr>) =
         let inMap = new Dict<_,_>()
         let outMap = new Dict<_,_>()
@@ -698,6 +712,7 @@ namespace Microsoft.Research.Vcc
           
       let liftBlocks findRefs self = function
         | Expr.Macro(ec, "block", block :: blockContracts) as b ->
+          reportErrorForJumpsOutOfBlock b
           let block' = self block
           let fBefore, fAfter = findRefs b
           match findLocalsAndTurnIntoParameters fBefore fAfter (block' :: blockContracts) with
