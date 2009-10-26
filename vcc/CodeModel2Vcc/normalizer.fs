@@ -521,7 +521,7 @@ namespace Microsoft.Research.Vcc
           
         let totalBody = 
           saveState @
-          (List.rev objects |> List.fold introduceWrapUnwrap (savePostUnwrapState @ [body] @ writesCheck)) @
+          (List.rev objects |> List.fold introduceWrapUnwrap (savePostUnwrapState @ [self body] @ writesCheck)) @
           [finalAssume]
           
         Some (Expr.MkBlock totalBody)
