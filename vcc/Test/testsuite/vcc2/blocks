@@ -246,7 +246,6 @@ void foo(int x) {
     {
       int j;
       bar(&j);
-      return;
     }
   }
 }
