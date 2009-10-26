@@ -271,7 +271,14 @@ namespace Microsoft.Research.Vcc
             | [] 
             | [_] -> Some(Expr.Macro(c, "_vcc_set_empty", []))
             | _ :: rest ->
-              let mkSingleton (e:Expr) = Expr.Macro({e.Common with Type = c.Type}, "_vcc_set_singleton", [e])
+              let mkSingleton (e:Expr) = 
+                match e.Type with 
+                  | Type.ObjectT 
+                  | Type.PhysPtr _
+                  | Type.SpecPtr _
+                  | Type.Claim -> ()
+                  | _ -> helper.Error(e.Token, 9706, "Invalid type '" + e.Type.ToString() + "' in SET expression.")
+                Expr.Macro({e.Common with Type = c.Type}, "_vcc_set_singleton", [e])
               let mkUnion (e1:Expr) (e2:Expr) = Expr.Macro(e1.Common, "_vcc_set_union", [e1;e2])
               let rec createUnion exprs =
                 let rec splitAt n acc (l : 'a list) =
