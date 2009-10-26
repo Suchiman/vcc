@@ -391,7 +391,6 @@ namespace Microsoft.Research.Vcc
       let subst = new Dict<Variable, Variable>()
       let seenNames = new Dict<string,bool>()    
       let addVarToSeen (v : Variable) = seenNames.[v.Name] <- true
-      let varDecls = ref []
 
       let renameVar (v : Variable) =
         if seenNames.ContainsKey(v.Name) then
@@ -404,9 +403,7 @@ namespace Microsoft.Research.Vcc
           v 
 
       let rnExpr self = function
-        | Expr.VarDecl (ce, var) ->
-          varDecls := Expr.VarDecl (ce, renameVar var) :: !varDecls
-          Some (Expr.Comment(ce, "__vcc__ removed decl"))
+        | Expr.VarDecl (ce, var) -> Some(Expr.VarDecl (ce, renameVar var))
         | Expr.Ref(ce, var) ->
           match subst.TryGetValue(var) with
             | true, substName -> Some(Expr.Ref(ce, substName)) 
@@ -414,12 +411,7 @@ namespace Microsoft.Research.Vcc
         | VarWrite _ -> die()
         | _ -> None
         
-      f.Body <- 
-        match f.Body with
-          | Some body -> 
-            let body' =  body.SelfMap(rnExpr)
-            Some(Expr.MkBlock((List.rev !varDecls) @ [body']))
-          | None -> None
+      f.Body <- Option.map (fun (body : Expr) -> body.SelfMap(rnExpr)) f.Body
       f
        
     let removeNestedLocals = mapFunctions doRemoveNestedLocals    
