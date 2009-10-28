@@ -57,3 +57,10 @@ void foo() {
 `
 testcase(4,85) : error VC9706: Invalid type '_math ptrset' in SET expression.
 `
+#include "vcc.h"
+
+int foo(int a, int *a) {
+}
+`
+testcase(3,1) : error VC9707: 'a' : parameter redefinition
+`
