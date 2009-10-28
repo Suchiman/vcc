@@ -265,13 +265,15 @@ namespace Microsoft.Research.Vcc
                          | false, false -> C.VarKind.Parameter 
                          | _ -> die() // out param must always also be a spec parameter
               } : C.Variable
-            if localsMap.ContainsKey p then
-              printf "gonna have trouble"
-            localsMap.Add (p, v)
-            // this is SO WRONG, however it seems that sometimes different instances
-            // of IParameterDefinition are referenced from code (does it have to do with
-            // contract variable renaming?)
-            localsMap.Add ((p.ContainingSignature, v.Name), v)
+              
+            if localsMap.ContainsKey p || localsMap.ContainsKey ((p.ContainingSignature, v.Name)) then
+              helper.Error(decl.Token, 9707, "'" + v.Name + "' : parameter redefinition")
+            else 
+              localsMap.Add (p, v)
+              // this is SO WRONG, however it seems that sometimes different instances
+              // of IParameterDefinition are referenced from code (does it have to do with
+              // contract variable renaming?)
+              localsMap.Add ((p.ContainingSignature, v.Name), v)
             v
                                     
           // needs to be done first so they get into localsMap
