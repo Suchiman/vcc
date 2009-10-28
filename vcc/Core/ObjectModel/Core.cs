@@ -699,6 +699,24 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
+    private bool IsGenericTypeOrPointerToOne(ITypeDefinition type) {
+      while (true) {
+        if (type is IGenericMethodParameter) return true;
+        IPointerType ptr = type as IPointerType;
+        if (ptr == null) return false;
+        type = ptr.TargetType.ResolvedType;
+      }
+    }
+
+    private bool StripPointersThenInferTypesAndReturnTrueIfInferenceFails(Dictionary<IGenericMethodParameter, ITypeDefinition> inferredTypeArgumentFor, ITypeDefinition argumentType, ITypeDefinition parameterType) {
+      IPointerType/*?*/ pType = parameterType as IPointerType;
+      if (pType != null) {
+        IPointerType/*?*/ apType = argumentType as IPointerType;
+        if (apType != null) return this.StripPointersThenInferTypesAndReturnTrueIfInferenceFails(inferredTypeArgumentFor, apType.TargetType.ResolvedType, pType.TargetType.ResolvedType);
+      }
+      return base.InferTypesAndReturnTrueIfInferenceFails(inferredTypeArgumentFor, argumentType, parameterType);
+    }
+
     /// <summary>
     /// Try to unify the given argument type with the given parameter type by replacing any occurrences of type parameters in parameterType with corresponding type
     /// arguments obtained from inferredTypeArgumentsFor. Returns true if unification fails. Updates inferredTypeArgumentsFor with any new inferences made during
@@ -706,17 +724,11 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     //^ [Pure]
     public override bool InferTypesAndReturnTrueIfInferenceFails(Dictionary<IGenericMethodParameter, ITypeDefinition> inferredTypeArgumentFor, ITypeDefinition argumentType, ITypeDefinition parameterType) {
-      bool result = base.InferTypesAndReturnTrueIfInferenceFails(inferredTypeArgumentFor, argumentType, parameterType);
-      if (result) {
-        IPointerType/*?*/ pType = parameterType as IPointerType;
-        if (pType != null) {
-          IPointerType/*?*/ apType = argumentType as IPointerType;
-          if (apType == null) return true; //Type inference fails
-          return this.InferTypesAndReturnTrueIfInferenceFails(inferredTypeArgumentFor, apType.TargetType.ResolvedType, pType.TargetType.ResolvedType);
-        }
-      }
-      return result;
+      if (!IsGenericTypeOrPointerToOne(parameterType)) return false;
+      return this.StripPointersThenInferTypesAndReturnTrueIfInferenceFails(inferredTypeArgumentFor, argumentType, parameterType);
     }
+
+
 
     public override ITypeReference GetPointerTargetType(ITypeDefinition type)
     {
