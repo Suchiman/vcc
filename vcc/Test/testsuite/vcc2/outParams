@@ -276,3 +276,16 @@ void barOut() {
 testcase(5,3) : error VC0000: Argument '1' should not be passed with the 'out' keyword.
 testcase(12,3) : error VC0000: Argument '1' must be passed with the 'out' keyword.
 `
+#include "vcc.h"
+
+void foo(claimp(z) claimp(out x));
+
+struct X { int dummy; spec(claim_t e;)};
+
+void bar(struct X *x) {
+    claimp(c;)
+    foo(spec(c) spec(out x->f/* should be e*/));
+}
+`
+testcase(9,47) : error VC0000: 'X' does not contain a definition for 'f'.
+`
