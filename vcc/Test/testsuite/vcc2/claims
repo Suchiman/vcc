@@ -1246,3 +1246,13 @@ void middle(struct S *s)
 Verification of S#adm succeeded.
 Verification of middle succeeded.
 `
+#include "vcc.h"
+
+struct S {
+    int a;
+    invariant(when_claimed(a))
+};
+
+`
+testcase(5,31) : error VC9708: 'when_claimed' cannot be used outside of a claim.
+`
