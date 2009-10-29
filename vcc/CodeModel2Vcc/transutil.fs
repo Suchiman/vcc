@@ -115,8 +115,8 @@ namespace Microsoft.Research.Vcc
     let c = { ExprCommon.Bogus with Type = PhysPtr t } // ptr kind does not matter here because it will ve stripped of again later
     Expr.Macro ({ ExprCommon.Bogus with Type = Type.Math "typeid_t" }, "_vcc_typeof", [Expr.Cast (c, Processed, mkInt 0)])
       
-  let boolOp op a b =
-    Prim (boolBogusEC (), Op (op, Processed), [a; b])
+  let boolOp op (a:Expr) b =
+    Prim (a.Common, Op (op, Processed), [a; b])
   
   let multiAnd = function
     | [] -> Expr.True

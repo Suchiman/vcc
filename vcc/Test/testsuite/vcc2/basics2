@@ -64,3 +64,17 @@ int foo(int a, int *a) {
 `
 testcase(3,1) : error VC9707: 'a' : parameter redefinition
 `
+#include "vcc.h"
+
+spec(
+ptrset foo()
+  ensures(set_eq(result, set_singleton((void *)0)))
+{
+  return set_empty();
+}
+)
+`
+Verification of foo failed.
+testcase(3,93) : error VC9501: Post condition '_vcc_set_eq(result,_vcc_set_singleton((void *)0))' did not verify.
+testcase(3,40) : error VC9599: (related information) Location of post condition.
+`
