@@ -826,7 +826,7 @@ namespace Microsoft.Research.Vcc
         | Dot (c, e, f) as expr ->
           match inlinedFields.TryGetValue(f) with
             //| true, [(_, f')] -> Some (self (Dot({c with Type = Ptr(f'.Type) }, e, f')))
-            | true, _ -> helper.Error(expr.Token, 9679, "Field '" + f.Name + "' has been inlined an cannot be referred to as such; refer to its nested fields instead"); None
+            | true, _ -> helper.Error(expr.Token, 9679, "Field '" + f.Name + "' has been inlined and cannot be referred to as such; refer to its nested fields instead"); None
             | false, _ -> 
               match inlinedArrays.TryGetValue(f) with
                 | true, f' -> Some (self (Macro(c, "_vcc_inlined_array", [Dot(c, e, f')])))

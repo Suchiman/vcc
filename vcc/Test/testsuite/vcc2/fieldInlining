@@ -186,5 +186,5 @@ void foo(struct S *p)
   wrap(p);
 }
 `
-testcase(20,3) : error VC9679: Field 'u' has been inlined an cannot be referred to as such; refer to its nested fields instead
+testcase(20,3) : error VC9679: Field 'u' has been inlined and cannot be referred to as such; refer to its nested fields instead
 `
