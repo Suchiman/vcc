@@ -350,6 +350,20 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================
     
+    let errorForWhenClaimedOutsideOfClaim decls =
+
+      let errorForWhenClaimedOutsideOfClaim' _ = function
+        | Macro(_, ("claim" | "_vcc_claims" | "upgrade_claim"), body) -> false
+        | CallMacro(ec, "_vcc_when_claimed", _, _) ->
+          helper.Error(ec.Token, 9708, "'when_claimed' cannot be used outside of a claim.")
+          false
+        | _ -> true
+
+      deepVisitExpressions errorForWhenClaimedOutsideOfClaim' decls
+      decls
+
+    // ============================================================================================================
+    
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
     helper.AddTransformer ("final-range-assumptions", Helper.Decl addRangeAssumptions)
@@ -363,6 +377,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-dynamic-owns", Helper.Decl errorForMissingDynamicOwns)
     helper.AddTransformer ("final-error-old", Helper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", Helper.Decl errorForStateWriteInPureContext)
+    helper.AddTransformer ("final-error-when-claimed", Helper.Decl errorForWhenClaimedOutsideOfClaim)
     helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
     // reads check goes here
     
