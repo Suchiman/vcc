@@ -1022,6 +1022,81 @@ namespace Microsoft.Research.Vcc
       decls |> deepMapExpressions removeSpecMarker
 
     // ============================================================================================================\
+  
+    let pushDeclsIntoBlocks decls =
+      
+      // we use reference equality to speed this up as in most cases we will compare objects with themselves
+      let commonPrefix l1 l2 = 
+        let rec commonPrefix' acc l1 l2 =
+          match l1, l2 with
+            | [], _ 
+            | _, [] -> List.rev acc
+            | x::xs, y::ys when obj.ReferenceEquals(x,y) -> commonPrefix' (x::acc) xs ys
+            | _ -> List.rev acc
+        if obj.ReferenceEquals(l1, l2) then l1 else commonPrefix' [] l1 l2
+              
+      let findInnermostBlockForVariables (block:Expr) =
+        let innermostSoFar = new Dict<_,_>()
+        let rec findInnermostBlock blocks self =
+          let insertOrJoin (v:Variable) =
+            match innermostSoFar.TryGetValue v with
+              | true, soFar -> innermostSoFar.[v] <- commonPrefix blocks soFar
+              | _ -> innermostSoFar.Add(v, blocks)
+          function 
+            | Ref(_, v) -> insertOrJoin v; false
+            | VarWrite(_, vs, _) -> List.iter insertOrJoin vs; true
+            | Macro(_, "block", bl :: contracts) as block -> 
+              List.iter self contracts // refs inside of the block's contract cannot be moved inside
+              bl.SelfVisit(findInnermostBlock (blocks @ [block])); false
+            | _ -> true
+        block.SelfVisit(findInnermostBlock [block])
+        
+        let result = new Dict<_,_>()
+        
+        for kvp in innermostSoFar do 
+          let last = List.rev >> List.hd
+          match last kvp.Value with
+            // keep only those where the target is a block with contracts
+            | Macro(_,"block",_) as block -> result.Add(kvp.Key, block)
+            | _ -> ()
+        result
+        
+      let moveDeclsIntoTargetBlocks (targetMap : Dict<Variable,Expr>) (block:Expr)= 
+        let declsToReinsert = new Dict<_,_>()
+        let markForReInsertion block decl =
+          match declsToReinsert.TryGetValue block with
+            | true, others -> declsToReinsert.[block] <- decl::others
+            | _ -> declsToReinsert.Add(block, [decl])
+        let rec moveDecls (currentBlock : Expr) _ = function
+          | VarDecl(ec, v) as decl ->
+            match targetMap.TryGetValue v with
+              | true, tgt -> 
+                targetMap.Remove(v) |> ignore
+                if tgt = currentBlock then None 
+                else 
+                   markForReInsertion tgt decl
+                   Some(Comment(ec, "__vcc__ pushed decl into block"))
+              | _ -> None
+          | Macro(ec, "block", bl :: contracts) as block ->
+            let declsToMoveHere = 
+              match declsToReinsert.TryGetValue block with
+                | true, decls -> decls
+                | _ -> []
+            let newBlock = Expr.MkBlock(declsToMoveHere @ [bl.SelfMap(moveDecls block)])
+            Some(Macro(ec, "block",  newBlock::contracts))
+          | _ -> None
+        block.SelfMap(moveDecls Expr.Bogus)
+            
+      let doFunction (f:Function) =
+        let doBody body =
+          let targetBlocks = findInnermostBlockForVariables body
+          if targetBlocks.Count = 0 then body else moveDeclsIntoTargetBlocks targetBlocks body
+        f.Body <- Option.map doBody f.Body
+        f
+        
+      mapFunctions doFunction decls        
+
+    // ============================================================================================================\
     
     helper.AddTransformer ("desugar-begin", Helper.DoNothing)
     
@@ -1034,6 +1109,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("desugar-approvers", Helper.Decl handleApprovers)
     helper.AddTransformer ("desugar-assign-ops", Helper.Expr removeAssignOps)
     helper.AddTransformer ("check-spec-code", Helper.Decl checkSpecCodeAndRemoveSpecMark)
+    helper.AddTransformer ("desugar-push-decls-into-blocks", Helper.Decl pushDeclsIntoBlocks)
     helper.AddTransformer ("desugar-addressable-locals", Helper.Decl heapifyAddressedLocals)
     helper.AddTransformer ("desugar-globals", Helper.Decl handleGlobals)
     helper.AddTransformer ("desugar-loops", Helper.Expr (loopAndSwitchDesugaring None))
