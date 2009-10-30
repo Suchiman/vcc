@@ -807,9 +807,13 @@ namespace Microsoft.Research.Vcc {
     }
 
     private static bool ImplicitConversionToBooleanExists(ITypeDefinition sourceType) {
-      return (sourceType.TypeCode != PrimitiveTypeCode.NotPrimitive || !sourceType.IsStruct)
-          && sourceType.TypeCode != PrimitiveTypeCode.Void
-          && !TypeHelper.GetTypeName(sourceType).StartsWith(SystemDiagnosticsContractsCodeContractMapString, StringComparison.Ordinal);
+      if (sourceType.TypeCode == PrimitiveTypeCode.Boolean) return true; // bools are trivially compatible
+      string typeName = TypeHelper.GetTypeName(sourceType);
+      if (typeName.StartsWith(SystemDiagnosticsContractsCodeContractTypedPtrString, StringComparison.Ordinal)) return true;
+      if (sourceType.TypeCode == PrimitiveTypeCode.NotPrimitive && sourceType.IsStruct) return false; // structs are not
+      if (sourceType.TypeCode == PrimitiveTypeCode.Void) return false;
+      if (typeName.StartsWith(SystemDiagnosticsContractsCodeContractMapString, StringComparison.Ordinal)) return false;
+      return true;
     }
 
     /// <summary>
