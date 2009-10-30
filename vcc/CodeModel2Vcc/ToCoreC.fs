@@ -35,8 +35,8 @@ namespace Microsoft.Research.Vcc
           enc := lst @ !enc
           Some (Macro (voidBogusEC(), "ignore_me", []))
         | None -> Some (Expr.MkBlock (List.rev lst))
+
     match expr with
-      
       | Macro(cmn, "inlined_atomic", [e]) ->
         let (prev, e1) = selfe [] e
         ret (Macro(cmn, "inlined_atomic", [e1]) :: prev)
@@ -96,7 +96,7 @@ namespace Microsoft.Research.Vcc
       | Block (c, stmts) ->
         pureCheck ()
         match enclosing with
-          | None -> Some (Block (c, List.map selfs stmts))
+          | None -> None
           | Some enc ->
             let self (expr:Expr) = expr.SelfCtxMap (false, linearize helper enclosing) 
             let rec loop = function
