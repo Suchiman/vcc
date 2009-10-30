@@ -2432,7 +2432,7 @@ axiom (forall x:int :: $in_range_u1(x) <==> $in_range(0, x, $max.u1));
 axiom (forall x:int :: $in_range_u2(x) <==> $in_range(0, x, $max.u2));
 axiom (forall x:int :: $in_range_u4(x) <==> $in_range(0, x, $max.u4));
 axiom (forall x:int :: $in_range_u8(x) <==> $in_range(0, x, $max.u8));
-axiom (forall p:$ptr :: $in_range_ptr(p) <==>  $in_range_u8($ref(p)));
+axiom (forall p:$ptr :: {$in_range_ptr(p)} $in_range_ptr(p) <==> $in_range_u8($ref(p)));
 
 function {:inline true} $in_range_div_i1(x:int, y:int) returns(bool) { y != -1 || x != $min.i1 }
 function {:inline true} $in_range_div_i2(x:int, y:int) returns(bool) { y != -1 || x != $min.i2 }
