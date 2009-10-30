@@ -2414,25 +2414,15 @@ axiom ($max.u2 ==  65535);
 axiom ($max.u4 ==  65536*65536-1);
 axiom ($max.u8 ==  65536*65536*65536*65536-1);
 
-function $in_range_i1(x:int) returns(bool);
-function $in_range_i2(x:int) returns(bool);
-function $in_range_i4(x:int) returns(bool);
-function $in_range_i8(x:int) returns(bool);
-function $in_range_u1(x:int) returns(bool);
-function $in_range_u2(x:int) returns(bool);
-function $in_range_u4(x:int) returns(bool);
-function $in_range_u8(x:int) returns(bool);
-function $in_range_ptr(p:$ptr) returns(bool);
-
-axiom (forall x:int :: $in_range_i1(x) <==> $in_range($min.i1, x, $max.i1));
-axiom (forall x:int :: $in_range_i2(x) <==> $in_range($min.i2, x, $max.i2));
-axiom (forall x:int :: $in_range_i4(x) <==> $in_range($min.i4, x, $max.i4));
-axiom (forall x:int :: $in_range_i8(x) <==> $in_range($min.i8, x, $max.i8));
-axiom (forall x:int :: $in_range_u1(x) <==> $in_range(0, x, $max.u1));
-axiom (forall x:int :: $in_range_u2(x) <==> $in_range(0, x, $max.u2));
-axiom (forall x:int :: $in_range_u4(x) <==> $in_range(0, x, $max.u4));
-axiom (forall x:int :: $in_range_u8(x) <==> $in_range(0, x, $max.u8));
-axiom (forall p:$ptr :: {$in_range_ptr(p)} $in_range_ptr(p) <==> $in_range_u8($ref(p)));
+function {:inline true} $in_range_i1(x:int) returns(bool) { $in_range($min.i1, x, $max.i1) }
+function {:inline true} $in_range_i2(x:int) returns(bool) { $in_range($min.i2, x, $max.i2) }
+function {:inline true} $in_range_i4(x:int) returns(bool) { $in_range($min.i4, x, $max.i4) }
+function {:inline true} $in_range_i8(x:int) returns(bool) { $in_range($min.i8, x, $max.i8) }
+function {:inline true} $in_range_u1(x:int) returns(bool) { $in_range(0, x, $max.u1) }
+function {:inline true} $in_range_u2(x:int) returns(bool) { $in_range(0, x, $max.u2) }
+function {:inline true} $in_range_u4(x:int) returns(bool) { $in_range(0, x, $max.u4) }
+function {:inline true} $in_range_u8(x:int) returns(bool) { $in_range(0, x, $max.u8) }
+function {:inline true} $in_range_ptr(p:$ptr) returns(bool) { $in_range_u8($ref(p)) }
 
 function {:inline true} $in_range_div_i1(x:int, y:int) returns(bool) { y != -1 || x != $min.i1 }
 function {:inline true} $in_range_div_i2(x:int, y:int) returns(bool) { y != -1 || x != $min.i2 }
