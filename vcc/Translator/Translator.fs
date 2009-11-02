@@ -973,6 +973,7 @@ namespace Microsoft.Research.Vcc
                     | C.IntLiteral (_, ZeroBigInt) -> bFalse
                     | C.IntLiteral (_, OneBigInt) -> bTrue
                     | _ -> bCall "$int_to_bool" [self e']
+                | C.ObjectT
                 | C.Ptr _ ->
                   bCall "$ptr_neq" [self e'; er "$null"]
                 | _ -> die()
