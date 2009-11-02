@@ -106,7 +106,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.GetNextToken();
       } else {
         if (requireIdentifier) this.HandleError(Error.ExpectedIdentifier);
-        name = this.GetNameFor(SanitizeString(sourceLocation.SourceDocument.Name.Value)+sourceLocation.StartIndex);
+        name = this.GetNameFor("#" + SanitizeString(sourceLocation.SourceDocument.Name.Value)+sourceLocation.StartIndex);
       }
       return new NameDeclaration(name, sourceLocation);
     }

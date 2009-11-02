@@ -305,8 +305,10 @@ namespace Microsoft.Research.Vcc
           | Top.TypeDecl td ->
             for f in td.Fields do
               if f.Name = "" then
+                let isAnonymousSubtypeName (name :string) =
+                  name.StartsWith (td.Name + ".") && name.Substring(td.Name.Length + 1).StartsWith("#", System.StringComparison.Ordinal)
                 match f.Type with
-                  | Type.Ref td' when td'.Name.StartsWith (td.Name + ".") ->
+                  | Type.Ref td' when isAnonymousSubtypeName td'.Name ->
                     td'.IsNestedAnon <- true
                   | _ -> ()
           | _ -> ()
