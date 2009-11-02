@@ -28,7 +28,7 @@ namespace Microsoft.Research.Vcc
       let quantRange self = function
         | Quant (c, q) ->
           let lst = List.concat (List.map rangeAssumptions q.Variables)
-          let condition = Some (multiAnd (Option.to_list q.Condition @ lst))
+          let condition = Some (multiAnd (Option.toList q.Condition @ lst))
           Some (Quant (c, { q with Condition = condition; Body = self q.Body }))
         | _ -> None        
 

@@ -54,11 +54,7 @@ namespace Microsoft.Research.Vcc
         
         if List.forall isTrivialInvariant (td.Invariants) then [decl]
         else              
-          let parm =
-            { Type = Type.MkPtrToStruct td
-              Name = "_this_"
-              Kind = Parameter } : Variable
-          
+          let parm = Variable.CreateUnique "_this_"  (Type.MkPtrToStruct td) Parameter
           let (explicitAdm, explicitUnwrap, explicitStutt) =
             match explicitAdm.TryGetValue td with
               | true, r -> r
@@ -109,7 +105,8 @@ namespace Microsoft.Research.Vcc
               Reads = []
               CustomAttr = [ IsAdmissibilityCheck ]
               Body = Some body
-              IsProcessed = true } : Function
+              IsProcessed = true
+              UniqueId = CAST.unique() } : Function
           [decl; Top.FunctionDecl check]
       | decl -> [decl]
     List.map handleDecl >> List.concat
@@ -372,7 +369,8 @@ namespace Microsoft.Research.Vcc
             Reads = []
             CustomAttr = [ ReadsCheck f ]
             Body = Some body
-            IsProcessed = true } : Function
+            IsProcessed = true
+            UniqueId = CAST.unique() } : Function
         let decl = Top.FunctionDecl rc
         revReadChecks.[rc] <- f
         synteticReadChecks := decl :: !synteticReadChecks

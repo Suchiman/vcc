@@ -27,7 +27,7 @@ namespace Microsoft.Research.Vcc
       match a1.Type, a2.Type with
         | PtrSoP(t, isSpec), PtrSoP(t', isSpec') ->
           if isSpec <> isSpec' then die()
-          if (t = Void) or (t' = Void) then 
+          if (t = Void) || (t' = Void) then 
             let macro = if op.IsEq then "_vcc_ptr_eq" else "_vcc_ptr_neq"
             Some (self (Expr.Macro (c, macro, [toGenericPtr a1 isSpec; toGenericPtr a2 isSpec])))
           elif t = t' then None
@@ -114,12 +114,36 @@ namespace Microsoft.Research.Vcc
       
     // ============================================================================================================
     
-    let handleLemmas self = function 
-      | Assert (c, e) -> 
-        let e = self e 
-        Some (Expr.MkBlock [Assert (c, e); Assume (c, e)])
-      | Macro (_, "loop_contract", _) as expr -> Some expr
-      | _ -> None      
+    let handleLemmas self = 
+      let makeQuantifiedVarsUnique self = function
+        | Quant(ec, qd) ->
+          let subst = new Dict<_,_>()
+          let doSubst (v:Variable) =
+            let v' = v.UniqueCopy()
+            subst.Add(v,v')
+            v'
+          let replace (e:Expr) = 
+            let replace' _ = function
+              | Expr.Ref(ec, v) -> 
+                match subst.TryGetValue v with
+                  | true, v' -> Some(Expr.Ref(ec, v'))
+                  | false, _ -> None
+              | _ -> None
+            e.SelfMap(replace')
+          let vs' = List.map doSubst qd.Variables
+          let qd' = { qd with Variables = vs';
+                              Triggers = List.map (List.map(replace)) qd.Triggers;
+                              Condition = Option.map replace qd.Condition;
+                              Body = replace qd.Body }
+          Some(Quant(ec, qd'))
+        | _ -> None
+          
+      function 
+        | Assert (c, e) -> 
+          let e = self e 
+          Some (Expr.MkBlock [Assert (c, e); Assume (c, e.SelfMap(makeQuantifiedVarsUnique))])
+        | Macro (_, "loop_contract", _) as expr -> Some expr
+        | _ -> None      
          
     // ============================================================================================================
     

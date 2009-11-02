@@ -89,8 +89,8 @@ namespace Microsoft.Research.Vcc
   // Expression construction/manipulation utilities
   // ----------------------------------------------------------------------------- 
 
-  let zero = Math.BigInt.Zero
-  let one = Math.BigInt.One
+  let zero = bigint.Zero
+  let one = bigint.One
   let sizeT = Type.Integer IntKind.UInt64
 
   let mkRef (v:Variable) = Expr.Ref ({ bogusEC with Type = v.Type }, v)
@@ -99,12 +99,12 @@ namespace Microsoft.Research.Vcc
     
   let mkInt (x : int32) = 
     let intec = { Token = bogusToken; Type = Integer (IntKind.Int32) } : ExprCommon
-    IntLiteral (intec, new Math.BigInt(x))
+    IntLiteral (intec, new bigint(x))
 
   let mkFieldRef (f:Field) = Macro ({ bogusEC with Type = Type.FieldT }, "field",  [Expr.UserData(bogusEC, f)]) 
   
   let mkBoolOp str (args:list<Expr>) =
-    Prim ((List.hd (List.rev args)).Common, Op(str, Processed), args)
+    Prim ((List.head (List.rev args)).Common, Op(str, Processed), args)
   let mkAnd a b = mkBoolOp "&&" [a; b]
   let mkOr a b = mkBoolOp "||" [a; b]
   let mkImpl a b = mkBoolOp "==>" [a; b]
@@ -228,8 +228,7 @@ namespace Microsoft.Research.Vcc
   // Caching
   // ----------------------------------------------------------------------------- 
 
-  let getTmp (helper:Helper.Env) name tp kind =
-     { Name = name + "#" + (helper.UniqueId()).ToString() ; Type = tp; Kind = kind }
+  let getTmp (helper:Helper.Env) name = Variable.CreateUnique (name + "#" + (helper.UniqueId()).ToString()) 
      
   let cacheEx helper assign name expr varKind = 
     let rec isSimple = function
@@ -271,7 +270,7 @@ namespace Microsoft.Research.Vcc
   // Warning: this function gets rid of multiplication so possible overflow check is gone
   // This usually is OK in spec context.
   let extractArraySize (helper:Helper.Env) (expr:Expr) (elementType:Type) (byteCount:Expr) =
-    let typeSz =new Math.BigInt(elementType.SizeOf)
+    let typeSz =new bigint(elementType.SizeOf)
     let byteCount =
       match byteCount with
         | Cast (_, _, e) -> e
@@ -447,7 +446,7 @@ namespace Microsoft.Research.Vcc
     List.iter findTheOne decls
     
     let drainTodo() =
-      while !todo <> [] do
+      while not (!todo).IsEmpty do
         let lst = !todo
         todo := []
         deepVisitExpressions (walkExpr cb) lst
@@ -469,12 +468,12 @@ namespace Microsoft.Research.Vcc
                    
       (not !anyReferenced) || !usedReferenced // if we do not mention anything, that we also need to be included
     
-    while !axioms <> [] do
+    while not (!axioms).IsEmpty do
       let axs1, axs2 = List.partition axiomWouldTriggerOnUsed !axioms
       List.iter (shouldDo >> ignore) axs1
       todo  := axs1
       drainTodo()
-      axioms := if axs1 <> [] then axs2 else []
+      axioms := if axs1.IsEmpty then [] else axs2
     
     let rec needed = function
       | FunctionDecl f -> used.ContainsKey f

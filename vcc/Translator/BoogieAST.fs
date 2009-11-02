@@ -39,8 +39,8 @@ namespace Microsoft.Research.Vcc
     type Expr =
       | Ref of Id // Bid Id from Microsoft.Boogie.hs
       | BoolLiteral of bool
-      | IntLiteral of Microsoft.FSharp.Math.BigInt
-      | BvLiteral of Microsoft.FSharp.Math.BigInt * int
+      | IntLiteral of bigint
+      | BvLiteral of bigint * int
       | BvConcat of Expr * Expr
       | BvExtract of Expr * int * int
       | Primitive of Id * list<Expr>
@@ -237,11 +237,11 @@ namespace Microsoft.Research.Vcc
         | Old e ->
           Microsoft.Boogie.OldExpr (noToken, trExpr e) :> Microsoft.Boogie.Expr // TODO: in AbsyExpr.scc we have OldExpr : Expr, AI.IFunApp // HACK ???
         | Exists (token, vl, tl, attrs, e) ->
-          let vars = Boogie.VariableSeq(List.to_array (List.map (trBound (tok token)) vl))          
+          let vars = Boogie.VariableSeq(List.toArray (List.map (trBound (tok token)) vl))          
           let attrs = toAttributesList attrs
           Boogie.ExistsExpr (tok token, Boogie.TypeVariableSeq [| |], vars, attrs, toTriggersList tl, trExpr e) :> Microsoft.Boogie.Expr
         | Forall (token, vl, tl, attrs, e) -> 
-          let vars = Boogie.VariableSeq(List.to_array (List.map (trBound (tok token)) vl))          
+          let vars = Boogie.VariableSeq(List.toArray (List.map (trBound (tok token)) vl))          
           let attrs = toAttributesList attrs
           Boogie.ForallExpr (tok token, Boogie.TypeVariableSeq [| |], vars, attrs, toTriggersList tl, trExpr e) :> Microsoft.Boogie.Expr
 
@@ -263,10 +263,10 @@ namespace Microsoft.Research.Vcc
       convert attr
 
     and toExprSeq l =
-      Microsoft.Boogie.ExprSeq (List.to_array (List.map trExpr l))
+      Microsoft.Boogie.ExprSeq (List.toArray (List.map trExpr l))
 
     let toIdentifierExprSeq l =
-      Microsoft.Boogie.IdentifierExprSeq (List.to_array (List.map trIdent l))
+      Microsoft.Boogie.IdentifierExprSeq (List.toArray (List.map trIdent l))
 
 
     type Stmt =
@@ -325,11 +325,11 @@ namespace Microsoft.Research.Vcc
           | Label label :: rest ->
             match getSimple [] rest with
               | (simple, StructuredCmd cmd :: rest) ->
-                loop (Microsoft.Boogie.BigBlock (noToken, label, Microsoft.Boogie.CmdSeq (List.to_array simple), cmd, null) :: blocks) rest
+                loop (Microsoft.Boogie.BigBlock (noToken, label, Microsoft.Boogie.CmdSeq (List.toArray simple), cmd, null) :: blocks) rest
               | (simple, TransferCmd cmd :: rest) ->
-                loop (Microsoft.Boogie.BigBlock (noToken, label, Microsoft.Boogie.CmdSeq (List.to_array simple), null, cmd) :: blocks) rest
+                loop (Microsoft.Boogie.BigBlock (noToken, label, Microsoft.Boogie.CmdSeq (List.toArray simple), null, cmd) :: blocks) rest
               | (simple, rest) ->
-                loop (Microsoft.Boogie.BigBlock (noToken, label, Microsoft.Boogie.CmdSeq (List.to_array simple), null, null) :: blocks) rest
+                loop (Microsoft.Boogie.BigBlock (noToken, label, Microsoft.Boogie.CmdSeq (List.toArray simple), null, null) :: blocks) rest
           | [] -> List.rev blocks
           | x -> loop blocks (Label (anonName ()) :: x)
       
@@ -389,7 +389,7 @@ namespace Microsoft.Research.Vcc
         | Stmt.Label (token, s) -> 
           [Label s] // TODO: how to translate token for label?
         | Goto (token, ls) ->
-          [TransferCmd (Microsoft.Boogie.GotoCmd (tok token, Microsoft.Boogie.StringSeq (List.to_array ls)) :> Microsoft.Boogie.TransferCmd)]
+          [TransferCmd (Microsoft.Boogie.GotoCmd (tok token, Microsoft.Boogie.StringSeq (List.toArray ls)) :> Microsoft.Boogie.TransferCmd)]
         | Block stmts -> 
           List.concat (List.map trStmt stmts)
         | Comment s ->

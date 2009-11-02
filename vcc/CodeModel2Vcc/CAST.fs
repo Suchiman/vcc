@@ -13,6 +13,7 @@ module Microsoft.Research.Vcc.CAST
   open Microsoft.Research.Vcc.Util
   
   type Id = string
+  type Unique = uint64
 
   type VarKind =    
     | Parameter
@@ -29,6 +30,11 @@ module Microsoft.Research.Vcc.CAST
     | Exists
     | Lambda
     // sum and stuff here
+
+  let uniqueCounter = ref 0UL
+  let unique() : Unique = 
+    uniqueCounter := !uniqueCounter + 1UL
+    !uniqueCounter
   
   let bogusToken = Token.NoToken
   
@@ -77,7 +83,7 @@ module Microsoft.Research.Vcc.CAST
       Name:string;
     }
   
-  type CustomAttr =
+  type [<StructuralEquality; NoComparison>] CustomAttr =
     | SkipVerification
     | IsAdmissibilityCheck
     | NoAdmissibility
@@ -88,15 +94,14 @@ module Microsoft.Research.Vcc.CAST
     | InGroupDeclAttr of string
     | ReadsCheck of Function
 
-  and TypeKind =
+  and [<StructuralEquality; NoComparison>] TypeKind =
     | Struct
     | Union
     | MathType
     | FunctDecl of Function
     | Record
     
-  and 
-    [<StructuralEquality(false); StructuralComparison(false)>]
+  and [<CustomEquality; NoComparison>]
     Field =    
     {
       Token:Token;
@@ -106,8 +111,12 @@ module Microsoft.Research.Vcc.CAST
       IsSpec:bool;    
       mutable IsVolatile:bool;
       Offset:FieldOffset;
-      CustomAttr:list<CustomAttr>
+      CustomAttr:list<CustomAttr>;
+      UniqueId:Unique;
     }
+    
+    override this.GetHashCode () = int this.UniqueId
+    override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
     
     override this.ToString () =
       let postfix =
@@ -124,8 +133,7 @@ module Microsoft.Research.Vcc.CAST
         | _ -> die()
   
   
-  and 
-    [<StructuralEquality(false); StructuralComparison(false)>]
+  and [<CustomEquality; NoComparison>]
     TypeDecl =
     {
       Token:Token;    
@@ -141,7 +149,11 @@ module Microsoft.Research.Vcc.CAST
       mutable IsSpec: bool;
       Parent : TypeDecl option;
       IsVolatile : bool
+      UniqueId:Unique;
     }
+    
+    override this.GetHashCode () = int this.UniqueId
+    override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
     
     override this.ToString () =
       (match this.Kind with
@@ -160,8 +172,9 @@ module Microsoft.Research.Vcc.CAST
         | e -> "invariant " + e.ToString()
       this.ToString () + " {\n  " + String.concat ";\n  " [for f in this.Fields -> f.ToString ()] + ";\n" +
         String.concat "" [for i in this.Invariants -> prInv i + ";\n" ] + "}\n"
-        
-  and Type =
+  
+  // TODO: this attribute shouldn't be needed here, but is      
+  and [<StructuralEquality; NoComparison>] Type =
     | Void
     | Integer of IntKind
     | Primitive of PrimKind
@@ -283,6 +296,7 @@ module Microsoft.Research.Vcc.CAST
               Parent = None
               IsVolatile = false
               IsSpec = true
+              UniqueId = unique()
             }
           mathTypeCache.Add (name, td)
           td
@@ -356,19 +370,19 @@ module Microsoft.Research.Vcc.CAST
       | PrimKind.Float32 -> "f4"
       | PrimKind.Float64 -> "f8"
                 
-    static member IntRange : IntKind -> Math.BigInt * Math.BigInt =
+    static member IntRange : IntKind -> bigint * bigint =
       memoize (fun k ->
-                  let mkBigInt (n : int32) = new Math.BigInt(n)
+                  let mkBigInt (n : int32) = new bigint(n)
                   let sub bi1 bi2 = bi1 - bi2
-                  let zero = Math.BigInt.Zero
-                  let one = Math.BigInt.One
+                  let zero = bigint.Zero
+                  let one = bigint.One
                   let two = mkBigInt 2
                   let (sz, signed) = Type.sizeSign k
                   if signed then
-                    let x = Math.BigInt.Pow(two, (mkBigInt (sz - 1)))
+                    let x = bigint.Pow (two, sz - 1)
                     (sub zero x, sub x one)
                   else
-                    (zero, sub (Math.BigInt.Pow(two, (mkBigInt sz))) one))
+                    (zero, sub (bigint.Pow(two, sz)) one))
                     
     member this.Subst(typeSubst : Dict<TypeVariable, Type>) =
       let rec subst = function
@@ -385,14 +399,26 @@ module Microsoft.Research.Vcc.CAST
       subst this
 
         
-  and 
-    [<StructuralEquality(false); StructuralComparison(false)>]
+  and [<CustomEquality; NoComparison>]
     Variable = 
       { 
         Name:Id; 
         Type:Type; 
         Kind:VarKind; 
+        UniqueId:Unique;
       }
+    
+      override this.GetHashCode () = int this.UniqueId
+      override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
+    
+      static member CreateUnique name _type kind = 
+        { Name = name; 
+          Type = _type;
+          Kind = kind;
+          UniqueId = unique()
+        } : Variable
+    
+      member this.UniqueCopy() = Variable.CreateUnique this.Name this.Type this.Kind
     
       member this.WriteTo b =
         match this.Kind with
@@ -414,7 +440,7 @@ module Microsoft.Research.Vcc.CAST
 
       override this.ToString () = toString (this.WriteTo)
  
-  and 
+  and [<StructuralEquality; NoComparison>]
     TypeVariable = 
       {
         Name:Id;
@@ -428,8 +454,7 @@ module Microsoft.Research.Vcc.CAST
       Type:Type;
     }
 
-  and 
-    [<StructuralEquality(false); StructuralComparison(false)>]
+  and [<CustomEquality; NoComparison>]
     Function = 
     {
       Token:Token;
@@ -446,7 +471,11 @@ module Microsoft.Research.Vcc.CAST
       mutable CustomAttr:list<CustomAttr>;
       mutable Body:option<Expr>;
       mutable IsProcessed:bool;
+      UniqueId:Unique;
     }
+    
+    override this.GetHashCode () = int this.UniqueId
+    override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
     
     member this.InParameters = [ for p in this.Parameters do if p.Kind <> VarKind.OutParameter then yield p ]
     
@@ -1084,12 +1113,15 @@ module Microsoft.Research.Vcc.CAST
     | Ptr (Type.Ref { Kind = FunctDecl f }) -> Some f
     | _ -> None
   
-  type [<StructuralEquality(false); StructuralComparison(false)>] Top =
+  type [<ReferenceEquality>] Top =
     | Global of Variable * Expr option
     | TypeDecl of TypeDecl
     | FunctionDecl of Function
     | Axiom of Expr
     | GeneratedAxiom of Expr * Top
+    
+    // override this.Equals (o:obj) = LanguagePrimitives.PhysicalEquality (this :> obj) o
+    // override this.GetHashCode () = LanguagePrimitives.PhysicalHash this
     
     member this.Token =
       match this with

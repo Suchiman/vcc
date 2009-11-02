@@ -12,6 +12,7 @@ namespace Microsoft.Research.Vcc
   open Microsoft.Cci.Contracts
   open Microsoft.Cci.Ast
   open Microsoft.Research.Vcc
+  open Microsoft.Research.Vcc.Util
   module C = Microsoft.Research.Vcc.CAST
 
   module StringLiterals =
@@ -216,7 +217,8 @@ namespace Microsoft.Research.Vcc
                 Reads           = []
                 CustomAttr      = []
                 Body            = None
-                IsProcessed     = false } : C.Function                      
+                IsProcessed     = false
+                UniqueId        = CAST.unique() } : C.Function                      
             if decl.Name = "" then
               printf "null name\n"
             else
@@ -256,16 +258,13 @@ namespace Microsoft.Research.Vcc
               match p with
                 | :? Microsoft.Research.Vcc.VccParameterDefinition as vcp -> vcp.IsSpec, vcp.IsOut
                 | _ -> false, false
-            let v =
-              { Name = name
-                Type = this.DoType (p.Type)
-                Kind = match isSpec, isOut with 
-                         | true, true -> C.VarKind.OutParameter 
-                         | true, false -> C.VarKind.SpecParameter
-                         | false, false -> C.VarKind.Parameter 
-                         | _ -> die() // out param must always also be a spec parameter
-              } : C.Variable
-              
+            let varKind =
+              match isSpec, isOut with
+                | true, true -> C.VarKind.OutParameter
+                | true, false -> C.VarKind.SpecParameter
+                | false, false -> C.VarKind.Parameter
+                | _ -> die() // out param must always also be a spec parameter
+            let v = C.Variable.CreateUnique name (this.DoType (p.Type)) varKind
             if localsMap.ContainsKey p || localsMap.ContainsKey ((p.ContainingSignature, v.Name)) then
               helper.Error(decl.Token, 9707, "'" + v.Name + "' : parameter redefinition")
             else 
@@ -412,7 +411,7 @@ namespace Microsoft.Research.Vcc
                   | _ -> this.DoExpression (expr.ProjectAsIExpression())
               let t = this.DoType g.Type
               let t' = if decl.GlobalFieldDeclaration.IsVolatile then C.Type.Volatile(t) else t
-              let var = { Name = g.Name.Value; Type = t'; Kind = if decl.IsReadOnly then C.VarKind.ConstGlobal else C.VarKind.Global } : C.Variable
+              let var = C.Variable.CreateUnique g.Name.Value t' (if decl.IsReadOnly then C.VarKind.ConstGlobal else C.VarKind.Global)
               globalsMap.Add (g, var)
               let initializer = if decl.GlobalFieldDeclaration.Initializer = null then None else Some(doInitializer (var.Type) (decl.GlobalFieldDeclaration.Initializer))
               topDecls <- C.Top.Global(var, initializer) :: topDecls
@@ -424,7 +423,7 @@ namespace Microsoft.Research.Vcc
       match specGlobalsMap.TryGetValue (g.Name.Value) with
         | (true, v) -> v
         | _ -> 
-          let var = { Name = g.Name.Value; Type = this.DoType g.Type; Kind = C.VarKind.Global } : C.Variable
+          let var = C.Variable.CreateUnique g.Name.Value (this.DoType g.Type) C.VarKind.Global
           specGlobalsMap.Add (var.Name, var)
           topDecls <- C.Top.Global(var, None) :: topDecls
           var
@@ -564,6 +563,7 @@ namespace Microsoft.Research.Vcc
                         | _ -> None
                       IsSpec = specFromContract || hasRecordAttr customAttr
                       IsVolatile = false
+                      UniqueId = C.unique()
                     } : C.TypeDecl
                                       
                   // TODO?
@@ -630,6 +630,7 @@ namespace Microsoft.Research.Vcc
                           else
                             C.FieldOffset.Normal (int f.Offset - minOffset)
                         CustomAttr = convCustomAttributes (token f) f.Attributes
+                        UniqueId = C.unique()
                       } : C.Field               
                     fieldsMap.Add(f, res)
                     res
@@ -720,11 +721,7 @@ namespace Microsoft.Research.Vcc
           else
             let par = parEnumerator.Current
             let parType = par.Type.ResolvedType
-            let var = 
-              { Name = par.Name.Value
-                Type = this.DoType (parType)
-                Kind = C.VarKind.QuantBound 
-              } : C.Variable
+            let var = C.Variable.CreateUnique par.Name.Value (this.DoType (parType)) C.VarKind.QuantBound
             localsMap.Add (par, var)
             
             let name = par.Name.Value
@@ -807,7 +804,7 @@ namespace Microsoft.Research.Vcc
         List.exists (fun elem -> elem = sym) syms
       let ns = assembly.NamespaceRoot
       doingEarlyPruning <- true
-      requestedFunctions <- Seq.to_list fnNames
+      requestedFunctions <- Seq.toList fnNames
       for n in ns.Members do 
         let ncmp s = s = n.Name.Value
         if n.Name.Value.StartsWith("_vcc") || List.exists ncmp requestedFunctions || isRequired n.Name.Value then
@@ -820,41 +817,31 @@ namespace Microsoft.Research.Vcc
     // This is however not yet the case.
     interface ICodeVisitor with    
 
-      [<OverloadID("VisitArrayTypeReference")>]
       member this.Visit (arrayTypeReference:IArrayTypeReference) : unit = assert false
 
-      [<OverloadID("VisitAssembly")>]
       member this.Visit (assembly:IAssembly) : unit =
         let ns = assembly.NamespaceRoot
         ns.Dispatch(this)
         this.DoneVisitingAssembly()        
                           
-      [<OverloadID("VisitAssemblyReference")>]
       member this.Visit (assemblyReference:IAssemblyReference) : unit = assert false
 
-      [<OverloadID("VisitCustomAttribute")>]
       member this.Visit (customAttribute:ICustomAttribute) : unit = assert false
 
-      [<OverloadID("VisitCustomModifier")>]
       member this.Visit (customModifier:ICustomModifier) : unit = assert false
 
-      [<OverloadID("VisitEventDefinition")>]
       member this.Visit (eventDefinition:IEventDefinition) : unit = assert false
 
-      [<OverloadID("VisitFieldDefinition")>]
       member this.Visit (fieldDefinition:IFieldDefinition) : unit = assert false
 
-      [<OverloadID("VisitFieldReference")>]
       member this.Visit (fieldReference:IFieldReference) : unit = assert false
 
-      [<OverloadID("VisitFileReference")>]
       member this.Visit (fileReference:IFileReference) : unit = assert false
 
-      [<OverloadID("VisitFunctionPointerTypeReference")>]
       member this.Visit (functionPointerTypeReference:IFunctionPointerTypeReference) : unit =
         let meth = functionPointerTypeReference :> ISignature
         let cont =
-          match Seq.to_list meth.Parameters with
+          match Seq.toList meth.Parameters with
             | x :: _ -> x.ContainingSignature
             | _ -> meth
         let td =
@@ -878,34 +865,29 @@ namespace Microsoft.Research.Vcc
                   Parent = None
                   IsVolatile = false
                   IsSpec = false
+                  UniqueId = C.unique()
                  } : C.TypeDecl
               topDecls <- C.Top.TypeDecl td :: topDecls
               functionPointerMap.Add (cont, td)
               td
         typeRes <- C.Type.PhysPtr (C.Type.Ref td)
 
-      [<OverloadID("VisitGenericMethodInstanceReference")>]
       member this.Visit (genericMethodInstanceReference:IGenericMethodInstanceReference) : unit = assert false
 
-      [<OverloadID("VisitGenericMethodParameter")>]
       member this.Visit (genericMethodParameter:IGenericMethodParameter) : unit = 
         typeRes <- C.Type.TypeVar({ Name = genericMethodParameter.Name.Value })
 
-      [<OverloadID("VisitGenericMethodParameterReference")>]
       member this.Visit (genericMethodParameterReference:IGenericMethodParameterReference) : unit = assert false
 
-      [<OverloadID("VisitGlobalFieldDefinition")>]
       member this.Visit (globalFieldDefinition:IGlobalFieldDefinition) : unit =
         this.DoGlobal globalFieldDefinition |> ignore
                                   
-      [<OverloadID("VisitGlobalMethodDefinition")>]
       member this.Visit (globalMethodDefinition:IGlobalMethodDefinition) : unit =
         globalsType <- globalMethodDefinition.ContainingTypeDefinition
         match globalMethodDefinition.Name.Value with
           | "_vcc_in_state" | "_vcc_approves" | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false)
 
-      [<OverloadID("VisitGenericTypeInstanceReference")>]
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
         let rec isAdmissibleMapDomainType = function
           | C.Volatile t -> isAdmissibleMapDomainType t
@@ -928,180 +910,131 @@ namespace Microsoft.Research.Vcc
         else
           assert false
         
-      [<OverloadID("VisitGenericTypeParameter")>]
       member this.Visit (genericTypeParameter:IGenericTypeParameter) : unit = assert false
 
-      [<OverloadID("VisitGenericTypeParameterReference")>]
       member this.Visit (genericTypeParameterReference:IGenericTypeParameterReference) : unit = assert false
 
-      [<OverloadID("VisitManagedPointerTypeReference")>]
       member this.Visit (managedPointerTypeReference:IManagedPointerTypeReference) : unit =
         typeRes <- C.Type.PhysPtr (this.DoType (managedPointerTypeReference.TargetType)) //TODO: Ptr kind
 
-      [<OverloadID("VisitMarshallingInformation")>]
       member this.Visit (marshallingInformation:IMarshallingInformation) : unit = assert false
       
-      [<OverloadID("VisitMetadataConstant")>]
       member this.Visit (constant:IMetadataConstant) : unit = assert false
 
-      [<OverloadID("VisitMetadataCreateArray")>]
       member this.Visit (createArray:IMetadataCreateArray) : unit = assert false
 
-      [<OverloadID("VisitMetadataExpression")>]
       member this.Visit (expression:IMetadataExpression) : unit = assert false
 
-      [<OverloadID("VisitMetadataNamedArgument")>]
       member this.Visit (namedArgument:IMetadataNamedArgument) : unit = assert false
 
-      [<OverloadID("VisitMetadataTypeOf")>]
       member this.Visit (typeOf:IMetadataTypeOf) : unit = assert false
 
-      [<OverloadID("VisitMethodBody")>]
       member this.Visit (methodBody:IMethodBody) : unit = assert false
 
-      [<OverloadID("VisitMethodDefinition")>]
       member this.Visit (method_:IMethodDefinition) : unit = assert false
 
-      [<OverloadID("VisitMethodImplementation")>]
       member this.Visit (methodImplementation:IMethodImplementation) : unit = assert false
 
-      [<OverloadID("VisitMethodReference")>]
       member this.Visit (methodReference:IMethodReference) : unit = assert false
 
-      [<OverloadID("VisitModifiedTypeReference")>]
       member this.Visit (modifiedTypeReference:IModifiedTypeReference) : unit = 
         modifiedTypeReference.UnmodifiedType.Dispatch(this)
         //TODO: this may loose modifiers that we need
 
-      [<OverloadID("VisitModule")>]
       member this.Visit (module_:IModule) : unit = assert false
 
-      [<OverloadID("VisitModuleReference")>]
       member this.Visit (moduleReference:IModuleReference) : unit = assert false
 
-      [<OverloadID("VisitNamespaceAliasForType")>]
       member this.Visit (namespaceAliasForType:INamespaceAliasForType) : unit = assert false
 
-      [<OverloadID("VisitNamespaceTypeDefinition")>]
       member this.Visit (namespaceTypeDefinition:INamespaceTypeDefinition) : unit =
         this.DoTypeDefinition namespaceTypeDefinition
             
-      [<OverloadID("VisitNamespaceTypeReference")>]
       member this.Visit (namespaceTypeReference:INamespaceTypeReference) : unit =
         this.DoTypeDefinition namespaceTypeReference.ResolvedType
 
-      [<OverloadID("VisitNestedAliasForType")>]
       member this.Visit (nestedAliasForType:INestedAliasForType) : unit = assert false
 
-      [<OverloadID("VisitNestedTypeDefinition")>]
       member this.Visit (nestedTypeDefinition:INestedTypeDefinition) : unit =
         if not (nestedTypeDefinition.ContainingTypeDefinition.ToString().StartsWith(SystemDiagnosticsContractsCodeContract))
            && (nestedTypeDefinition.ContainingTypeDefinition.ToString()) <> "__Globals__" then
           nestedTypeDefinition.ContainingTypeDefinition.Dispatch(this)
         this.DoTypeDefinition nestedTypeDefinition
 
-      [<OverloadID("VisitNestedTypeReference")>]
       member this.Visit (nestedTypeReference:INestedTypeReference) : unit = assert false
 
-      [<OverloadID("VisitNestedUnitNamespace")>]
       member this.Visit (nestedUnitNamespace:INestedUnitNamespace) : unit = assert false
 
-      [<OverloadID("VisitNestedUnitNamespaceReference")>]
       member this.Visit (nestedUnitNamespaceReference:INestedUnitNamespaceReference) : unit = assert false
 
-      [<OverloadID("VisitNestedUnitSetNamespace")>]
       member this.Visit (nestedUnitSetNamespace:INestedUnitSetNamespace) : unit = assert false
 
-      [<OverloadID("VisitParameterDefinition")>]
       member this.Visit (parameterDefinition:IParameterDefinition) : unit = assert false
 
-      [<OverloadID("VisitParameterTypeInformation")>]
       member this.Visit (parameterTypeInformation:IParameterTypeInformation) : unit = assert false
 
-      [<OverloadID("VisitPointerTypeReference")>]
       member this.Visit (pointerTypeReference:IPointerTypeReference) : unit =
         let isSpec = match pointerTypeReference with
                       | :? IPointerType as pt -> VccCompilationHelper.IsSpecPointer(pt)
                       | _ -> false // TODO: Ptr kind
         typeRes <- C.Type.MkPtr (this.DoType (pointerTypeReference.TargetType), isSpec)
 
-      [<OverloadID("VisitPropertyDefinition")>]
       member this.Visit (propertyDefinition:IPropertyDefinition) : unit = assert false
 
-      [<OverloadID("VisitResourceReference")>]
       member this.Visit (resourceReference:IResourceReference) : unit = assert false
 
-      [<OverloadID("VisitRootUnitNamespace")>]
       member this.Visit (rootUnitNamespace:IRootUnitNamespace) : unit =
         Seq.iter (fun (m : INamespaceMember) -> m.Dispatch(this)) rootUnitNamespace.Members
 
-      [<OverloadID("VisitRootUnitNamespaceReference")>]
       member this.Visit (rootUnitNamespaceReference:IRootUnitNamespaceReference) : unit = assert false
 
-      [<OverloadID("VisitRootUnitSetNamespace")>]
       member this.Visit (rootUnitSetNamespace:IRootUnitSetNamespace) : unit = assert false
 
-      [<OverloadID("VisitSecurityAttribute")>]
       member this.Visit (securityAttribute:ISecurityAttribute) : unit = assert false
 
-      [<OverloadID("VisitUnitSet")>]
       member this.Visit (unitSet:IUnitSet) : unit = assert false
 
-      [<OverloadID("VisitWin32Resource")>]
       member this.Visit (win32Resource:IWin32Resource) : unit = assert false
     
-      [<OverloadID("VisitAddition")>]
       member this.Visit (addition:IAddition) : unit =
-        if (addition.LeftOperand.Type :? IPointerType) or (addition.RightOperand.Type :? IPointerType) then
+        if (addition.LeftOperand.Type :? IPointerType) || (addition.RightOperand.Type :? IPointerType) then
           exprRes <- C.Expr.Macro (this.ExprCommon addition, "ptr_addition", 
                                    [this.DoExpression addition.LeftOperand; this.DoExpression addition.RightOperand])
         else
           this.DoBinary ("+", addition, addition.CheckOverflow)
 
-      [<OverloadID("VisitAddressableExpression")>]
       member this.Visit (addressableExpression:IAddressableExpression) : unit =
         this.DoField addressableExpression addressableExpression.Instance addressableExpression.Definition
 
-      [<OverloadID("VisitAddressDereference")>]
       member this.Visit (addressDereference:IAddressDereference) : unit =
         exprRes <- C.Expr.Deref (this.ExprCommon addressDereference, this.DoExpression (addressDereference.Address))
 
-      [<OverloadID("VisitAddressOf")>]
       member this.Visit (addressOf:IAddressOf) : unit =
         exprRes <- C.Expr.Macro (this.ExprCommon addressOf, "&", [this.DoExpression (addressOf.Expression)])
 
-      [<OverloadID("VisitAnonymousDelegate")>]
       member this.Visit (anonymousMethod:IAnonymousDelegate) : unit = assert false
 
-      [<OverloadID("VisitArrayIndexer")>]
       member this.Visit (arrayIndexer:IArrayIndexer) : unit = assert false
 
-      [<OverloadID("VisitAssertStatement")>]
       member this.Visit (assertStatement:IAssertStatement) : unit =
         stmtRes <- C.Expr.MkAssert (this.DoExpression (assertStatement.Condition))
 
-      [<OverloadID("VisitAssignment")>]
       member this.Visit (assignment:IAssignment) : unit =
         let target = this.DoExpression (assignment.Target)
         let source = this.DoExpression (assignment.Source)
         exprRes <- C.Expr.Macro (this.ExprCommon assignment, "=", [target; source])
 
-      [<OverloadID("VisitAssumeStatement")>]
       member this.Visit (assumeStatement:IAssumeStatement) : unit =
         stmtRes <- C.Expr.MkAssume (this.DoExpression (assumeStatement.Condition))
 
-      [<OverloadID("VisitBaseClassReference")>]
       member this.Visit (baseClassReference:IBaseClassReference) : unit = assert false
 
-      [<OverloadID("VisitBitwiseAnd")>]
       member this.Visit (bitwiseAnd:IBitwiseAnd) : unit =
         this.DoBinary ("&", bitwiseAnd)
 
-      [<OverloadID("VisitBitwiseOr")>]
       member this.Visit (bitwiseOr:IBitwiseOr) : unit =
         this.DoBinary ("|", bitwiseOr)
 
-      [<OverloadID("VisitBlockExpression")>]
       member this.Visit (blockExpression:IBlockExpression) : unit =
         exprRes <- C.Expr.Block (this.ExprCommon blockExpression, 
                                  [this.DoStatement blockExpression.BlockStatement; 
@@ -1109,28 +1042,21 @@ namespace Microsoft.Research.Vcc
         
       
 
-      [<OverloadID("VisitBlockStatement")>]
       member this.Visit (block:IBlockStatement) : unit =
         stmtRes <- this.DoBlock(block) 
         
-      [<OverloadID("VisitBreakStatement")>]
       member this.Visit (breakStatement:IBreakStatement) : unit = 
         stmtRes <- C.Expr.Macro(this.StmtCommon breakStatement, "break", [])
 
-      [<OverloadID("VisitBoundExpression")>]
       member this.Visit (boundExpression:IBoundExpression) : unit =
         this.DoField boundExpression boundExpression.Instance boundExpression.Definition 
           
-      [<OverloadID("VisitCastIfPossible")>]
       member this.Visit (castIfPossible:ICastIfPossible) : unit = assert false
 
-      [<OverloadID("VisitCatchClause")>]
       member this.Visit (catchClause:ICatchClause) : unit = assert false
 
-      [<OverloadID("VisitCheckIfInstance")>]
       member this.Visit (checkIfInstance:ICheckIfInstance) : unit = assert false
 
-      [<OverloadID("VisitCompileTimeConstant")>]
       member this.Visit (constant:ICompileTimeConstant) : unit =
         let ec = this.ExprCommon constant
         exprRes <-
@@ -1144,50 +1070,39 @@ namespace Microsoft.Research.Vcc
             | C.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.ToUserData(constant.Value)])
             | _ -> die()
 
-      [<OverloadID("VisitConversion")>]
       member this.Visit (conversion:IConversion) : unit =
         exprRes <- C.Expr.Cast (this.ExprCommon conversion, 
                                 checkedStatus conversion.CheckNumericRange, 
                                 this.DoExpression (conversion.ValueToConvert))
 
-      [<OverloadID("VisitConditional")>]
       member this.Visit (conditional:IConditional) : unit =
         exprRes <- C.Expr.Macro (this.ExprCommon conditional, "ite",
                                  [this.DoExpression conditional.Condition;
                                   this.DoExpression conditional.ResultIfTrue;
                                   this.DoExpression conditional.ResultIfFalse])
 
-      [<OverloadID("VisitConditionalStatement")>]
       member this.Visit (conditionalStatement:IConditionalStatement) : unit =
         stmtRes <- C.Expr.If (this.StmtCommon conditionalStatement,
                               this.DoExpression conditionalStatement.Condition,
                               this.DoStatement conditionalStatement.TrueBranch,
                               this.DoStatement conditionalStatement.FalseBranch)
 
-      [<OverloadID("VisitContinueStatement")>]
       member this.Visit (continueStatement:IContinueStatement) : unit = 
         stmtRes <- C.Expr.Macro(this.StmtCommon continueStatement, "continue", [])
 
-      [<OverloadID("VisitCreateArray")>]
       member this.Visit (createArray:ICreateArray) : unit = assert false
 
-      [<OverloadID("VisitCreateDelegateInstance")>]
       member this.Visit (createDelegateInstance:ICreateDelegateInstance) : unit = assert false
 
-      [<OverloadID("VisitCreateObjectInstance")>]
       member this.Visit (createObjectInstance:ICreateObjectInstance) : unit = assert false
 
-      [<OverloadID("VisitDebuggerBreakStatement")>]
       member this.Visit (debuggerBreakStatement:IDebuggerBreakStatement) : unit = assert false
 
-      [<OverloadID("VisitDefaultValue")>]
       member this.Visit (defaultValue:IDefaultValue) : unit = assert false
 
-      [<OverloadID("VisitDivision")>]
       member this.Visit (division:IDivision) : unit =
         this.DoBinary ("/", division, division.CheckOverflow)
       
-      [<OverloadID("VisitDoUntilStatement")>]
       member this.Visit (doUntilStatement:IDoUntilStatement) : unit =
         stmtRes <- C.Expr.Macro (this.StmtCommon doUntilStatement,
                                  "doUntil", 
@@ -1195,22 +1110,17 @@ namespace Microsoft.Research.Vcc
                                   this.DoStatement doUntilStatement.Body; 
                                   this.DoExpression doUntilStatement.Condition])
 
-      [<OverloadID("VisitEmptyStatement")>]
       member this.Visit (emptyStatement:IEmptyStatement) : unit =
         stmtRes <- C.Expr.Comment (this.StmtCommon emptyStatement, "empty")
 
-      [<OverloadID("VisitEquality")>]
       member this.Visit (equality:IEquality) : unit =
         this.DoBinary ("==", equality)
 
-      [<OverloadID("VisitExclusiveOr")>]
       member this.Visit (exclusiveOr:IExclusiveOr) : unit =
         this.DoBinary ("^", exclusiveOr)
 
-      [<OverloadID("VisitExpression")>]
       member this.Visit (expression:IExpression) : unit = assert false
 
-      [<OverloadID("VisitExpressionStatement")>]
       member this.Visit (expressionStatement:IExpressionStatement) : unit =
         let expr = this.DoExpression (expressionStatement.Expression)
         let expr =
@@ -1219,10 +1129,8 @@ namespace Microsoft.Research.Vcc
             | expr -> expr
         stmtRes <- expr
 
-      [<OverloadID("VisitForEachStatement")>]
       member this.Visit (forEachStatement:IForEachStatement) : unit = assert false
 
-      [<OverloadID("VisitForStatement")>]
       member this.Visit (forStatement:IForStatement) : unit =
         let doStmts l =
           C.Expr.MkBlock [for s in l -> this.DoStatement s]
@@ -1236,45 +1144,34 @@ namespace Microsoft.Research.Vcc
                                   this.DoStatement forStatement.Body
                                   ])
 
-      [<OverloadID("VisitGotoStatement")>]
       member this.Visit (gotoStatement:IGotoStatement) : unit = 
         stmtRes <- C.Goto(this.StmtCommon gotoStatement, { Name = gotoStatement.TargetStatement.Label.Value })
 
-      [<OverloadID("VisitGotoSwitchCaseStatement")>]
       member this.Visit (gotoSwitchCaseStatement:IGotoSwitchCaseStatement) : unit = assert false
 
-      [<OverloadID("VisitGetTypeOfTypedReference")>]
       member this.Visit (getTypeOfTypedReference:IGetTypeOfTypedReference) : unit = assert false
 
-      [<OverloadID("VisitGetValueOfTypedReference")>]
       member this.Visit (getValueOfTypedReference:IGetValueOfTypedReference) : unit = assert false
 
-      [<OverloadID("VisitGreaterThan")>]
       member this.Visit (greaterThan:IGreaterThan) : unit =
         this.DoBinary (">", greaterThan)
 
-      [<OverloadID("VisitGreaterThanOrEqual")>]
       member this.Visit (greaterThanOrEqual:IGreaterThanOrEqual) : unit =
         this.DoBinary (">=", greaterThanOrEqual)
 
-      [<OverloadID("VisitLabeledStatement")>]
       member this.Visit (labeledStatement:ILabeledStatement) : unit = 
         let lblStmt = C.Label(this.StmtCommon labeledStatement, { Name = labeledStatement.Label.Value })
         stmtRes <- C.Expr.MkBlock([lblStmt; this.DoStatement(labeledStatement.Statement)])
 
-      [<OverloadID("VisitLeftShift")>]
       member this.Visit (leftShift:ILeftShift) : unit =
         this.DoBinary ("<<", leftShift)
 
-      [<OverloadID("VisitLessThan")>]
       member this.Visit (lessThan:ILessThan) : unit =
         this.DoBinary ("<", lessThan)
 
-      [<OverloadID("VisitLessThanOrEqual")>]
       member this.Visit (lessThanOrEqual:ILessThanOrEqual) : unit =
         this.DoBinary ("<=", lessThanOrEqual)
 
-      [<OverloadID("VisitLocalDeclarationStatement")>]
       member this.Visit (localDeclarationStatement:ILocalDeclarationStatement) : unit =
         let loc = localDeclarationStatement.LocalVariable
         let declaredAsVolatile = 
@@ -1285,15 +1182,11 @@ namespace Microsoft.Research.Vcc
           match this.DoType (loc.Type) with
             | C.PtrSoP(t, isSpec) when declaredAsVolatile -> C.Type.MkPtr(C.Volatile(t), isSpec)
             | t -> t
-        let var = 
-          { 
-            Name = loc.Name.Value
-            Type = t
-            Kind = 
-              match loc with
-                | :?  Microsoft.Research.Vcc.VccLocalDefinition as vcl -> if vcl.IsSpec then C.VarKind.SpecLocal else C.VarKind.Local
-                | _ -> C.VarKind.Local
-          } : C.Variable
+        let varkind =             
+          match loc with
+            | :?  Microsoft.Research.Vcc.VccLocalDefinition as vcl -> if vcl.IsSpec then C.VarKind.SpecLocal else C.VarKind.Local
+            | _ -> C.VarKind.Local
+        let var = C.Variable.CreateUnique loc.Name.Value t varkind
         localsMap.Add(loc, var)
         let sc = this.StmtCommon localDeclarationStatement
         let decl = C.Expr.VarDecl (sc, var)
@@ -1311,17 +1204,13 @@ namespace Microsoft.Research.Vcc
           let assign = if var.Kind = C.VarKind.SpecLocal then C.Expr.Macro(assign.Common, "spec", [assign]) else assign
           stmtRes <- C.Expr.MkBlock [decl; assign]
 
-      [<OverloadID("VisitLockStatement")>]
       member this.Visit (lockStatement:ILockStatement) : unit = assert false
 
-      [<OverloadID("VisitLogicalNot")>]
       member this.Visit (logicalNot:ILogicalNot) : unit =
         this.DoUnary ("!", logicalNot, false)
 
-      [<OverloadID("VisitMakeTypedReference")>]
       member this.Visit (makeTypedReference:IMakeTypedReference) : unit = assert false
 
-      [<OverloadID("VisitMethodCall")>]
       member this.Visit (methodCall:IMethodCall) : unit =
         let ec = this.ExprCommon methodCall
         let methodToCall = 
@@ -1332,11 +1221,11 @@ namespace Microsoft.Research.Vcc
         let methodName = methodToCall.Name.Value
         let containingTypeDefinitionName = TypeHelper.GetTypeName(methodToCall.ContainingTypeDefinition)        
 
-        let opMap = Map.of_list [ "op_Equality", ("==", false) ; "op_Inequality", ("!=", false); "op_Addition", ("+", false);
-                                  "op_Subtraction", ("-", false); "op_Division", ("/", true); "op_Modulus", ("%", true);
-                                  "op_Multiply", ("*", false); "op_LessThan", ("<", false); "op_LessThanOrEqual", ("<=", false);
-                                  "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false)
-                                ]
+        let opMap = Map.ofList [ "op_Equality", ("==", false) ; "op_Inequality", ("!=", false); "op_Addition", ("+", false);
+                                 "op_Subtraction", ("-", false); "op_Division", ("/", true); "op_Modulus", ("%", true);
+                                 "op_Multiply", ("*", false); "op_LessThan", ("<", false); "op_LessThanOrEqual", ("<=", false);
+                                 "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false)
+                               ]
 
         this.EnsureMethodIsVisited(methodToCall)
 
@@ -1438,22 +1327,17 @@ namespace Microsoft.Research.Vcc
                 | _ -> methodToCall, []
             exprRes <- C.Expr.Call (ec, this.LookupMethod mtc, tArgs, args)
 
-      [<OverloadID("VisitModulus")>]
       member this.Visit (modulus:IModulus) : unit =
         this.DoBinary ("%", modulus, false)
 
-      [<OverloadID("VisitMultiplication")>]
       member this.Visit (multiplication:IMultiplication) : unit =
         this.DoBinary ("*", multiplication, multiplication.CheckOverflow)
 
-      [<OverloadID("VisitNamedArgument")>]
       member this.Visit (namedArgument:INamedArgument) : unit = assert false
 
-      [<OverloadID("VisitNotEquality")>]
       member this.Visit (notEquality:INotEquality) : unit =
         this.DoBinary ("!=", notEquality)        
 
-      [<OverloadID("VisitOldValue")>]
       member this.Visit (oldValue:IOldValue) : unit =
         let ec = this.ExprCommon oldValue
         let findTypeOrDie name =
@@ -1465,47 +1349,36 @@ namespace Microsoft.Research.Vcc
         // the type of expr and old(expr) may disagree in CCI, so we fix it up here
         exprRes <- C.Expr.Old ({ec with Type = expr.Type}, C.Expr.Macro ({ec with Type = C.Type.Ref(ts) }, "prestate", []), expr)
 
-      [<OverloadID("VisitOnesComplement")>]
       member this.Visit (onesComplement:IOnesComplement) : unit =
         this.DoUnary ("~", onesComplement, false)
 
-      [<OverloadID("VisitOutArgument")>]
       member this.Visit (outArgument:IOutArgument) : unit = 
         exprRes <- C.Expr.Macro(this.ExprCommon outArgument, "out", [this.DoExpression outArgument.Expression])
 
-      [<OverloadID("VisitPointerCall")>]
       member this.Visit (pointerCall:IPointerCall) : unit = 
         exprRes <- C.Expr.Macro (this.ExprCommon pointerCall, "fnptr_call", 
                                  this.DoExpression pointerCall.Pointer :: 
                                    [for e in pointerCall.Arguments -> this.DoExpression e])
 
-      [<OverloadID("VisitRefArgument")>]
       member this.Visit (refArgument:IRefArgument) : unit = die()
 
-      [<OverloadID("VisitResourceUseStatement")>]
       member this.Visit (resourceUseStatement:IResourceUseStatement) : unit = die()
 
-      [<OverloadID("VisitReturnValue")>]
       member this.Visit (returnValue:IReturnValue) : unit =
         let ec = this.ExprCommon returnValue
         exprRes <- C.Expr.Result ec
         
-      [<OverloadID("VisitRethrowStatement")>]
       member this.Visit (rethrowStatement:IRethrowStatement) : unit = die()
 
-      [<OverloadID("VisitReturnStatement")>]
       member this.Visit (returnStatement:IReturnStatement) : unit =
         let expr = returnStatement.Expression
         stmtRes <- C.Return (this.StmtCommon returnStatement, if expr = null then None else Some (this.DoExpression expr))
 
-      [<OverloadID("VisitRightShift")>]
       member this.Visit (rightShift:IRightShift) : unit =
         this.DoBinary (">>", rightShift)
 
-      [<OverloadID("VisitRuntimeArgumentHandleExpression")>]
       member this.Visit (runtimeArgumentHandleExpression:IRuntimeArgumentHandleExpression) : unit = die()
 
-      [<OverloadID("VisitSizeOf")>]
       member this.Visit (sizeOf:ISizeOf) : unit =
        match sizeOf.TypeToSize.ResolvedType with
          | :? IGenericMethodParameter as tVar ->
@@ -1514,7 +1387,6 @@ namespace Microsoft.Research.Vcc
          | _ ->  exprRes <- C.Expr.IntLiteral (this.ExprCommon sizeOf, 
                                                new bigint(int64 (TypeHelper.SizeOfType (sizeOf.TypeToSize.ResolvedType))))
 
-      [<OverloadID("VisitStackArrayCreate")>]
       member this.Visit (stackArrayCreate:IStackArrayCreate) : unit = 
         match stackArrayCreate with
         | :? CreateStackArray as createStackArray -> 
@@ -1523,14 +1395,11 @@ namespace Microsoft.Research.Vcc
           exprRes <- C.Macro({numberOfElements.Common with Type = C.PhysPtr elementType}, "stack_allocate_array", [numberOfElements]) //TODO: Ptr kind
         | _ -> assert false
 
-      [<OverloadID("VisitSubtraction")>]
       member this.Visit (subtraction:ISubtraction) : unit =
         this.DoBinary ("-", subtraction, subtraction.CheckOverflow)
 
-      [<OverloadID("VisitSwitchCase")>]
       member this.Visit (switchCase:ISwitchCase) : unit = assert false // never encountered during traversal
 
-      [<OverloadID("VisitSwitchStatement")>]
       member this.Visit (switchStatement:ISwitchStatement) : unit = 
         let doCase (sc : ISwitchCase) =
           let (caseLabel,castExprStmt) =
@@ -1542,38 +1411,28 @@ namespace Microsoft.Research.Vcc
         let cases = [for sc in switchStatement.Cases -> doCase sc]
         stmtRes <- C.Expr.Macro(this.StmtCommon switchStatement, "switch", condExprStmt :: cases)
 
-      [<OverloadID("VisitTargetExpression")>]
       member this.Visit (targetExpression:ITargetExpression) : unit =
         this.DoField targetExpression targetExpression.Instance targetExpression.Definition
 
-      [<OverloadID("VisitThisReference")>]
       member this.Visit (thisReference:IThisReference) : unit =
         exprRes <- C.Expr.Macro (this.ExprCommon thisReference, "this", [])
 
-      [<OverloadID("VisitThrowStatement")>]
       member this.Visit (throwStatement:IThrowStatement) : unit = assert false
 
-      [<OverloadID("VisitTryCatchFinallyStatement")>]
       member this.Visit (tryCatchFilterFinallyStatement:ITryCatchFinallyStatement) : unit = assert false
 
-      [<OverloadID("VisitTokenOf")>]
       member this.Visit (tokenOf:ITokenOf) : unit = assert false
 
-      [<OverloadID("VisitTypeOf")>]
       member this.Visit (typeOf:ITypeOf) : unit = assert false
 
-      [<OverloadID("VisitUnaryNegation")>]
       member this.Visit (unaryNegation:IUnaryNegation) : unit =
         this.DoUnary ("-", unaryNegation, unaryNegation.CheckOverflow)
 
-      [<OverloadID("VisitUnaryPlus")>]
       member this.Visit (unaryPlus:IUnaryPlus) : unit =
         this.DoUnary ("+", unaryPlus, false)
 
-      [<OverloadID("VisitVectorLength")>]
       member this.Visit (vectorLength:IVectorLength) : unit = assert false
 
-      [<OverloadID("VisitWhileDoStatement")>]
       member this.Visit (whileDoStatement:IWhileDoStatement) : unit =
         let cond = this.DoExpression (whileDoStatement.Condition)
         let body = this.DoStatement (whileDoStatement.Body)
@@ -1596,8 +1455,6 @@ namespace Microsoft.Research.Vcc
             let contract = this.DoLoopContract whileDoStatement
             stmtRes <- C.Expr.Macro (cmn, "while", [contract; cond; body])
 
-      [<OverloadID("VisitYieldBreakStatement")>]
       member this.Visit (yieldBreakStatement:IYieldBreakStatement) : unit = assert false
 
-      [<OverloadID("VisitYieldReturnStatement")>]
       member this.Visit (yieldReturnStatement:IYieldReturnStatement) : unit = assert false       

@@ -10,6 +10,7 @@ namespace Microsoft.Research.Vx86.ContractGeneration
     open Microsoft.Research.Vcc
     open Microsoft.FSharp.Math
     open CAST
+    open Util
 
     [<System.ComponentModel.Composition.Export("Microsoft.Research.Vcc.Plugin")>]    
     type ContractGeneratorPlugin() =
@@ -50,7 +51,7 @@ namespace Microsoft.Research.Vx86.ContractGeneration
           wr "That's all folks."
           out.WriteLine()
           
-        let opp = Map.of_list[ ".", 0; 
+        let opp = Map.ofList [ ".", 0; 
                                "->", 1; 
                                "[]", 2; 
                                "f()", 3; 
@@ -244,7 +245,7 @@ namespace Microsoft.Research.Vx86.ContractGeneration
 
             let extractArraySize (expr:Expr) (elementType:Type) (byteCount:Expr) =
 
-              let typeSz =new Math.BigInt(elementType.SizeOf)
+              let typeSz = new bigint(elementType.SizeOf)
               let byteCount =
                 match byteCount with
                   | Cast (_, _, e) -> e
@@ -255,11 +256,11 @@ namespace Microsoft.Research.Vx86.ContractGeneration
                   | e -> (fun x -> x), e
               let elts =
                 match byteCount with
-                  | IntLiteral (c, allocSz) when (allocSz % typeSz) = Math.BigInt.Zero ->
+                  | IntLiteral (c, allocSz) when (allocSz % typeSz) = bigint.Zero ->
                     IntLiteral (c, allocSz / typeSz)
                   | Prim (_, Op("*", _), [Expr.IntLiteral (_, allocSz); e]) when allocSz = typeSz -> e
                   | Prim (_, Op("*", _), [e; Expr.IntLiteral (_, allocSz)]) when allocSz = typeSz -> e
-                  | _ when typeSz = Math.BigInt.One -> byteCount
+                  | _ when typeSz = bigint.One -> byteCount
                   | _ -> failwith "don't know how to determine number of elements in array"
           
               match neg elts with
@@ -275,7 +276,7 @@ namespace Microsoft.Research.Vx86.ContractGeneration
                 let off =
                   match extractArraySize expr elType off with
                     | Some e -> dbg(); e
-                    | None -> Expr.IntLiteral (off.Common, Math.BigInt.One)
+                    | None -> Expr.IntLiteral (off.Common, bigint.One)
                 Some (self (Expr.Index (c, ptr, off)))
               | _ ->  None
             

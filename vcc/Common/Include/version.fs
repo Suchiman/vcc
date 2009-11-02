@@ -8,6 +8,8 @@
 
 #light
 
+namespace Microsoft.Research.Vcc
+
 open System.Reflection
 
 module _CbTools_VersionInfo_ =
