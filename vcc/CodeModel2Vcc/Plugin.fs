@@ -41,7 +41,7 @@ namespace Microsoft.Research.Vcc
     else []
  
  type [<AbstractClass>] Plugin() =
-   let (triggerMessageHandler : (string -> unit)), messageHandlerEvent = Event.create()
+   let messageHandlerEvent = new Event<string>()
    let messageHandler = new DelegateEvent<MessageHandler>()
    let stopWatches = glist []
    
@@ -61,7 +61,7 @@ namespace Microsoft.Research.Vcc
    default this.UseVccOptions _ = ()
 
 
-   member this.MessageHandler = messageHandlerEvent
+   member this.MessageHandler = messageHandlerEvent.Publish
    member this.RegisterStopwatch (s:Stopwatch) = 
      let rec repl i =
        if i >= stopWatches.Count then

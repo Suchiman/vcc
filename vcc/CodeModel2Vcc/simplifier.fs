@@ -207,14 +207,14 @@ namespace Microsoft.Research.Vcc
   let inRangeBvExtract (expr:Expr) numOfBits =
     let ec = expr.Common
     let (lower, upper) =
-      let mkBigInt (n:int32) = new Math.BigInt(n)
+      let mkBigInt (n:int32) = new bigint(n)
       let two = mkBigInt 2
       let sub bi1 bi2 = bi1 - bi2
       if ec.Type.IsSignedInteger then
-        let x = Math.BigInt.Pow(two, (mkBigInt (numOfBits - 1)))
+        let x = bigint.Pow(two, numOfBits - 1)
         (sub zero x, sub x one)
       else
-        (zero, sub (Math.BigInt.Pow(two, (mkBigInt numOfBits))) one)
+        (zero, sub (bigint.Pow(two, numOfBits)) one)
     let mkCheck args = Expr.Prim({ec with Type = Type.Bool }, Op("<=", Processed), args )
     let lowerCheck = mkCheck [IntLiteral(ec, lower); expr]
     let upperCheck = mkCheck [expr; IntLiteral(ec, upper)]
@@ -286,7 +286,7 @@ namespace Microsoft.Research.Vcc
             let rec repl' vars prestate self = 
               let turnExpressionIntoParameter (expr : Expr) = 
                 let pname = "#l" + (List.length !parms).ToString()
-                let var = { Name = pname; Type = expr.Type; Kind = QuantBound } : Variable
+                let var = Variable.CreateUnique pname expr.Type QuantBound
                 let expr = 
                   match prestate with
                     | None -> expr
@@ -337,6 +337,7 @@ namespace Microsoft.Research.Vcc
               CustomAttr      = [VccAttr ("is_pure", "")]
               Body            = None
               IsProcessed     = true
+              UniqueId = CAST.unique()
             } : Function                  
                 
           let axcall = Call ({ bogusEC with Type = fn.RetType }, fn, [], List.map (snd >> mkRef) !parms)
@@ -432,7 +433,8 @@ namespace Microsoft.Research.Vcc
             GenerateFieldOffsetAxioms = false
             Parent = None
             IsVolatile = false 
-            IsSpec = false }
+            IsSpec = false
+            UniqueId = CAST.unique() }
       let (t, vol) = match t with | Volatile(t) -> (t, true) | t -> (t, false)
       let singleField =
         { Name = field_name
@@ -442,7 +444,8 @@ namespace Microsoft.Research.Vcc
           IsSpec = false
           Offset = Normal 0
           IsVolatile = vol
-          CustomAttr = [] }
+          CustomAttr = []
+          UniqueId = CAST.unique() }
       td.Fields <- [singleField]
       (td, singleField)
           
@@ -480,7 +483,7 @@ namespace Microsoft.Research.Vcc
                            Expr.MkDot (this, fld))])]
               | _ -> []
           td.Invariants <- approvesInv
-          let v' = { Name = "wrap#" + v.Name; Type = Type.Ref td; Kind = VarKind.Global } : Variable
+          let v' = Variable.CreateUnique ("wrap#" + v.Name) (Type.Ref td) VarKind.Global
           let repl ec =
             let inner = Macro ({ ec with Type = Type.MkPtrToStruct(td) }, "&", [Expr.Ref ({ ec with Type = Type.Ref td }, v')])
             match v.Type with
@@ -1054,7 +1057,7 @@ namespace Microsoft.Research.Vcc
         let result = new Dict<_,_>()
         
         for kvp in innermostSoFar do 
-          let last = List.rev >> List.hd
+          let last = List.rev >> List.head
           match last kvp.Value with
             // keep only those where the target is a block with contracts
             | Macro(_,"block",_) as block -> result.Add(kvp.Key, block)

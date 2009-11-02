@@ -18,10 +18,11 @@ namespace Microsoft.Research.Vcc
   
     type GList<'a> = System.Collections.Generic.List<'a>
     type Dict<'a, 'b> = System.Collections.Generic.Dictionary<'a, 'b>  
+    type bigint = System.Numerics.BigInteger
     
     let glist (l:list<_>) = new GList<_> (l)
     let gdict () = new Dict<_,_>()
-    let objDict() = new Dict<obj, _>(new ObjEqualityComparer())
+    let objDict() = new Dict<obj, _>() // new ObjEqualityComparer())
      
     let die() = failwith "confused, will now die"
 

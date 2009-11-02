@@ -177,7 +177,7 @@ namespace Microsoft.Research.Vcc
             res
           with
             e -> 
-              if this.ShouldContinue then rethrow ()
+              if this.ShouldContinue then reraise ()
               else []
         finally
           swTransformers.Stop()

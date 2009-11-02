@@ -32,7 +32,7 @@ namespace Microsoft.Research.Vcc
           Assume this.Condition
       
     type 
-      [<StructuralEquality(false); StructuralComparison(false)>] 
+      [<NoComparison>] [<ReferenceEquality>] 
       Block =
       {
         mutable Label : string;
@@ -104,7 +104,7 @@ namespace Microsoft.Research.Vcc
           | :? Boogie.UnresolvedTypeIdentifier as u ->
             Type.Ref u.Name
           | :? Boogie.MapType as a ->
-            Type.Map ([for a in a.Arguments -> unType (a :?> Boogie.Type)], unType a.Result)
+            Type.Map ([for a in a.Arguments -> unType a], unType a.Result)
           | _ ->
             failwith ("cannot handle boogie type " + t.ToString() + " : " + t.GetType().ToString())
      
@@ -120,17 +120,17 @@ namespace Microsoft.Research.Vcc
         | :? Microsoft.Boogie.IdentifierExpr as id -> Expr.Ref id.Name
         | :? Microsoft.Boogie.LiteralExpr as lit ->
           if lit.isBigNum then
-            Expr.IntLiteral (Math.BigInt.Parse (lit.asBigNum.ToString()))
+            Expr.IntLiteral (bigint.Parse (lit.asBigNum.ToString()))
           elif lit.IsFalse then
             Expr.BoolLiteral false
           elif lit.IsTrue then
             Expr.BoolLiteral true
           else match lit.Val with
                  | :? Microsoft.Boogie.BvConst as bvConst ->
-                   Expr.BvLiteral(Math.BigInt.Parse(bvConst.Value.ToString()), bvConst.Bits)
+                   Expr.BvLiteral(bigint.Parse(bvConst.Value.ToString()), bvConst.Bits)
                  | _ -> failwith ("cannot unparse lit " + lit.ToString())
         | :? Boogie.NAryExpr as nary ->
-          let args = [for e in nary.Args -> unparse (e :?> Microsoft.Boogie.Expr)]
+          let args = [for e in nary.Args -> unparse e]
           match nary.Fun with
             | :? Boogie.FunctionCall as fcall -> FunctionCall (fcall.FunctionName, args)
             | :? Boogie.BinaryOperator as binop -> Primitive (binop.FunctionName, args)
@@ -150,7 +150,7 @@ namespace Microsoft.Research.Vcc
             if t = null then []
             elif not t.Pos then
               failwith "negative triggers unsupported at this time"
-            else [for e in t.Tr -> unparse (e :?> Boogie.Expr)] :: doTrig t.Next
+            else [for e in t.Tr -> unparse e] :: doTrig t.Next
           let triggers = doTrig quant.Triggers
           let body = unparse quant.Body
           if (quant :? Boogie.ExistsExpr) then
@@ -200,7 +200,7 @@ namespace Microsoft.Research.Vcc
       match b.TransferCmd with
         | :? Boogie.ReturnCmd -> []
         | :? Boogie.GotoCmd as goto ->
-          [ for t in goto.labelTargets -> names.[(t :?> Boogie.Block).Label] ]
+          [ for t in goto.labelTargets -> names.[t.Label] ]
         | _ -> failwith ("unexpected transfer cmd " + if b.TransferCmd = null then "(null)" else b.TransferCmd.ToString())
       
     let rename proc =

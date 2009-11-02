@@ -137,7 +137,7 @@ namespace Microsoft.Research.Vcc
         | 's' :: sgn -> oldState :: stateArgs' sgn
         | 'S' :: sgn -> nowState :: stateArgs' sgn
         | _ :: sgn -> stateArgs' sgn
-      stateArgs' (Seq.to_list(sgn))
+      stateArgs' (Seq.toList(sgn))
     function 
       | CallMacro (c, fn, _, args) ->
         match Simplifier.alwaysPureCalls.TryGetValue(fn) with
@@ -639,7 +639,7 @@ namespace Microsoft.Research.Vcc
           
         let addIn (v:Variable) =
           if fBefore v && not (inMap.ContainsKey(v)) then 
-            let vp = { v with Kind = Parameter; Name = v.Name }
+            let vp = Variable.CreateUnique v.Name v.Type Parameter
             inMap.Add(v, vp)
             localsThatGoIn := v :: !localsThatGoIn
             
@@ -647,7 +647,7 @@ namespace Microsoft.Research.Vcc
           addIn v
           if fAfter v then
             if not (outMap.ContainsKey(v)) then 
-              let vp = { v with Kind = OutParameter; Name = "o#"+v.Name }
+              let vp = Variable.CreateUnique ("o#"+v.Name) v.Type OutParameter
               outMap.Add(v, vp)
               localsThatGoOut := v :: !localsThatGoOut
 
@@ -738,7 +738,8 @@ namespace Microsoft.Research.Vcc
                          Reads = stripInitialPure rds
                          CustomAttr = []
                          Body = Some (Expr.MkBlock(body :: List.map mkSetOutPar localsThatGoOut))
-                         IsProcessed = true } : Function
+                         IsProcessed = true
+                         UniqueId = CAST.unique() } : Function
               incr currentBlockId
               blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
               let call = Expr.Call(ec, fn, [], List.map mkRef localsThatGoIn)

@@ -146,7 +146,7 @@ namespace Microsoft.Research.Vcc
         selectedPlugin.RegisterStopwatch(swVisitor);
         selectedPlugin.RegisterStopwatch(swPlugin);
         selectedPlugin.RegisterStopwatch(swPrelude);
-        selectedPlugin.MessageHandler.AddHandler(new Microsoft.FSharp.Control.Handler<string>(PrintPluginMessage));
+        selectedPlugin.MessageHandler.AddHandler(new Microsoft.FSharp.Control.FSharpHandler<string>(PrintPluginMessage));
 
         try {
           swPlugin.Start();

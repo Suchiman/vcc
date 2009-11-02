@@ -174,7 +174,7 @@ namespace Microsoft.Research.Vcc
           impl = vcopt.RoundTrip(impl);
         } else if (impl.Proc.CheckBooleanAttribute("has_start_here", ref hasStartHere) && hasStartHere) {
           if (dummyOpt == null) {
-            dummyOpt = new VcOpt.DummyOpt(currentBoogie, env, Microsoft.FSharp.Collections.ListModule.of_seq(parent.options.VcOpt));
+            dummyOpt = new VcOpt.DummyOpt(currentBoogie, env, Microsoft.FSharp.Collections.ListModule.OfSeq(parent.options.VcOpt));
             dummyOpt.RemoveExpansionAxioms();
           }
           impl = dummyOpt.RoundTrip(impl);
@@ -282,7 +282,7 @@ namespace Microsoft.Research.Vcc
         if (parent.options.VcOpt.Count > 0) {
           try {
             parent.swVcOpt.Start();
-            vcopt = new VcOpt.Optimizer(currentBoogie, env, Microsoft.FSharp.Collections.ListModule.of_seq(parent.options.VcOpt));
+            vcopt = new VcOpt.Optimizer(currentBoogie, env, Microsoft.FSharp.Collections.ListModule.OfSeq(parent.options.VcOpt));
             vcopt.RemoveExpansionAxioms();
           } finally {
             parent.swVcOpt.Stop();

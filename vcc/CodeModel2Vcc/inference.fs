@@ -50,7 +50,7 @@ namespace Microsoft.Research.Vcc
       Expr.Assert({forwardingToken tok None (fun () -> afmt 8505 "inferred assertion: {0}" [e.ToString()]) with Type = Type.Void }, e)
      
     let inferMacro name (args: list<Expr>) =
-      inferAssert (List.hd args).Token (Macro (boolBogusEC(), name, args))
+      inferAssert args.Head.Token (Macro (boolBogusEC(), name, args))
     
     let inferInDomain f b =
       Expr.MkBlock (allOnWhichCalled "_vcc_wrapped" (fun p -> inferMacro "_vcc_in_domain" [p; p]) (preconditions f) @ [b])

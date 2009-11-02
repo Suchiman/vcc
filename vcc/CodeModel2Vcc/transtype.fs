@@ -51,7 +51,7 @@ namespace Microsoft.Research.Vcc
         match fnptr.Parameters with
           | { Name = "$this" } :: _ -> ()
           | parms ->
-            let th = { Type = PhysPtr Void; Name = "$this"; Kind = VarKind.Parameter } : Variable
+            let th = Variable.CreateUnique "$this" (PhysPtr Void) VarKind.Parameter
             fnptr.Parameters <- th :: parms
                     
       let repl ctx self = function
@@ -162,7 +162,7 @@ namespace Microsoft.Research.Vcc
       let genGroupAxiom (group:TypeDecl) (parent:TypeDecl) (groupField : Field) =
         let t = Type.MkPtrToStruct(group)
         let pt = Type.MkPtrToStruct(parent)
-        let v = { Name = "ptr"; Type = t; Kind = VarKind.QuantBound } : Variable
+        let v = Variable.CreateUnique "ptr" t VarKind.QuantBound
         let ptr = Expr.Ref({bogusEC with Type = t}, v)
         let rhs = Expr.Dot({bogusEC with Type = t}, Expr.Cast({bogusEC with Type = pt}, CheckedStatus.Unchecked, ptr), groupField)
         let eq = Expr.Prim(boolBogusEC(), Op.Op("==", CheckedStatus.Unchecked), [ptr; rhs])
@@ -190,7 +190,8 @@ namespace Microsoft.Research.Vcc
                                IsSpec = false
                                IsVolatile = false 
                                Offset = Normal 0
-                               CustomAttr = [] }
+                               CustomAttr = []
+                               UniqueId = CAST.unique() }
               typeDecls.[groupName] <- (td, newField)
               groupParent.[td] <- (parent, newField)
               groupAxioms := genGroupAxiom td parent newField :: !groupAxioms
@@ -722,7 +723,7 @@ namespace Microsoft.Research.Vcc
       let genDotAxioms (td : TypeDecl) (oldField: Field) (newFields : Field list) =
         let genDotAxiom (oldSubField : Field) (newField : Field) =
           let varType = PhysPtr(Type.Ref(td)) // TODO Ptr kind - we need these axioms to hold for both physical and spec 
-          let var = { Name = "p"; Type = varType; Kind = QuantBound } : Variable
+          let var = Variable.CreateUnique "p" varType QuantBound
           let varref = Ref(mkBogusEC varType, var)
             
           let left = Expr.MkDot(Cast(mkBogusEC (PhysPtr(oldField.Type)), Unchecked, Expr.MkDot(varref, newFields.Head)), oldSubField) // TODO Ptr kind
@@ -739,7 +740,7 @@ namespace Microsoft.Research.Vcc
         List.map2 genDotAxiom (oldFieldTypeDecl.Fields) newFields
         
       let genInlinedArrayAxiom td elemType (newFields : Field list) =
-        let var = { Name = "p"; Type = ObjectT; Kind = QuantBound } : Variable
+        let var = Variable.CreateUnique "p" ObjectT QuantBound
         let varref = Ref(mkBogusEC ObjectT, var)
         let mkInstantiatePtr (f : Field) = Macro(mkBogusEC Bool, "instantiate_ptr", [Expr.MkDot(varref, f)])
         let mkAnd e1 e2 = Expr.Prim(mkBogusEC Bool, Op("&&", Unchecked), [e1; e2])
