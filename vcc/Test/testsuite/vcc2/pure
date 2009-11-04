@@ -1055,13 +1055,12 @@ ispure int foo(int *i)
 void bar(int *i)
   writes(i)
   requires(thread_local(i))
-  requires(*i == 1)
 {
-  int p;
-  int j = 1;
+  int p = 1;
+  int j;
   *i = 0;
   p = j && old(foo(i));
-  assert(p);
+  assert(j && old(*i) ==> p);
 }
 `
 Verification of bar succeeded.
