@@ -234,6 +234,8 @@ module Microsoft.Research.Vcc.CAST
         | PhysPtr td' when td = td' -> true
         | _ -> false
     
+    member this._IsMap = match this with | Map _ -> true | _ -> false
+    
     member this.IsComposite =
       match this with
         | Void
