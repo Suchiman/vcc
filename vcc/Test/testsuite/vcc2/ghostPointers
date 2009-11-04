@@ -229,3 +229,19 @@ spec( s g; )
 `
 Verification of s#adm succeeded.
 `
+#include <vcc.h>
+
+typedef struct _S {
+  int x;
+  int y[5];
+} S;
+
+int bla(S ^s)
+{
+  int ^x;
+  x = &s->x;
+  x = &(s->y[1]); 
+}
+`
+Verification of bla succeeded.
+`
