@@ -606,17 +606,12 @@ namespace Microsoft.Research.Vcc {
         this.Visit(addressOf.Expression);
       }
 
-      public override void Visit(IBoundExpression boundExpression) {
-        var typeAsPtr = boundExpression.Type as IPointerType;
-        if (typeAsPtr != null && VccCompilationHelper.IsSpecPointer(typeAsPtr)) result = true;
-      }
-
-      public override void Visit(IAddressableExpression addressableExpression) {
-        var localDef = addressableExpression.Definition as VccLocalDefinition;
+      private void VisitDefinitionThenInstance(object definition, IExpression instance) {
+        var localDef = definition as VccLocalDefinition;
         if (localDef != null) {
           if (localDef.IsSpec) result = true;
         } else {
-          var field = addressableExpression.Definition as Cci.Ast.FieldDefinition;
+          var field = definition as Cci.Ast.FieldDefinition;
           if (field != null) {
             var fieldDef = field.Declaration as Vcc.FieldDefinition;
             if (fieldDef != null && fieldDef.IsSpec) result = true;
@@ -635,9 +630,21 @@ namespace Microsoft.Research.Vcc {
           }
         }
 
-        if (!result && addressableExpression.Instance != null) {
-          this.Visit(addressableExpression.Instance);
+        if (!result && instance != null)   this.Visit(instance);
+      }
+
+      public override void Visit(IBoundExpression boundExpression) {
+        var typeAsPtr = boundExpression.Type as IPointerType;
+        if (typeAsPtr != null && VccCompilationHelper.IsSpecPointer(typeAsPtr)) result = true;
+        else {
+          if (TypeHelper.GetTypeName(boundExpression.Type).Contains("._FixedArrayOfSize")) {
+            this.VisitDefinitionThenInstance(boundExpression.Definition, boundExpression.Instance);
+          }
         }
+      }
+
+      public override void Visit(IAddressableExpression addressableExpression) {
+        this.VisitDefinitionThenInstance(addressableExpression.Definition, addressableExpression.Instance);
       }
 
       public static bool Check(IExpression expr) {

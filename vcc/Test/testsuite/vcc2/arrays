@@ -211,6 +211,24 @@ void set0(int *arr, size_t sz)
   }
 }
 
+void set0Spec(int ^arr, size_t sz)
+  requires(is_mutable_array(arr, sz))
+  ensures(is_mutable_array(arr, sz))
+  writes(array_range(arr, sz))
+{
+  size_t i;
+  i = 0;
+  while (i < sz) 
+    invariant(is_mutable_array(arr, sz))
+  {
+    donothing();
+    arr[i] = 0;
+    donothing();
+    i = i + 1;
+    donothing();
+  }
+}
+
 void usex()
 {
   struct A *a;
@@ -256,7 +274,7 @@ void use1Safe()
   donothing();
   set0(a->x, 100);
   donothing();
-  set0(&a->x[10], 90);
+  set0Spec(&a->x[10], 90);
   donothing();
   set0(a->x, 50);
   donothing();
@@ -287,6 +305,7 @@ void use2()
 `
 Verification of donothing succeeded.
 Verification of set0 succeeded.
+Verification of set0Spec succeeded.
 Verification of usex succeeded.
 Verification of usexSafe succeeded.
 Verification of use1 succeeded.
