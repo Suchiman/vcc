@@ -215,6 +215,7 @@ namespace Microsoft.Research.Vcc
           
         | CallMacro (c, "_vcc_ptr_eq", _, [e1; e2])
         | CallMacro (c, "_vcc_rec_eq", _, [e1; e2])
+        | CallMacro (c, "map_eq", _, [e1; e2])
         | Prim (c, Op ("==", _), [e1; e2]) as post ->
           let res, def = 
             if usesRes e2 then e2, e1

@@ -364,6 +364,7 @@ namespace Microsoft.Research.Vcc
               let mapType = B.Type.Ref (typeId)
               let sel = "$select." + typeId
               let stor  = "$store." + typeId
+              let eq = "$eq." + typeId
               let v = er "v"
               let v, inRange =
                 match t2 with
@@ -372,18 +373,34 @@ namespace Microsoft.Research.Vcc
                       [B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["M", tp; "p", bt1], [], weight "select-map-eq", 
                                                     bCall "$in_range_t" [toTypeId t2; bCall sel [er "M"; er "p"]]))]
                   | _ -> v, []
+              let argRange = 
+                match t1 with
+                  | C.Type.Integer _ -> bCall "$in_range_t" [toTypeId t1; er "p"]
+                  | _ -> bTrue
               let selStorPP = 
                 bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) v
               let selStorPQ =
                 bInvImpl (bNeq (er "p") (er "q"))
                           (bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "q"]) (bCall sel [er "M"; er "q"]))
+              let t2Eq =
+                match t2 with
+                  | C.Type.Map _ -> fun b1 b2 -> bCall ("$eq." + (typeIdToName (toTypeId t2))) [b1; b2]
+                  | _ -> bEq
+              let eqM1M2 = bCall eq [er "M1"; er "M2"]
+              let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", bImpl argRange (t2Eq (bCall sel [er "M1"; er "p"]) (bCall sel [er "M2"; er "p"]))))
+                                   eqM1M2
+              let eqM1M2Ax2 = bImpl eqM1M2 (bEq (er "M1") (er "M2"))
               let mpv = ["M", tp; "p", bt1; "v", bt2]
+              let m1m2 = ["M1", tp; "M2", tp]
               let fns = [B.Decl.TypeDef typeId;
                          B.Decl.Function (mapType, [B.StringAttr("external", "ITE"); B.StringAttr("bvz", "ITE"); B.StringAttr("bvint", "ITE")], ite, ["c", B.Type.Bool; "a", mapType; "b", mapType]);
                          B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1]);
                          B.Decl.Function (tp, [], stor, mpv);
+                         B.Decl.Function (B.Type.Bool, [], eq, m1m2);
                          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", selStorPP));
                          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
+                         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax1));
+                         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax2))
                         ] @ inRange
               tokenConstants := fns @ !tokenConstants
             tp
@@ -1271,6 +1288,7 @@ namespace Microsoft.Research.Vcc
             let e = self e
             bMultiOr (List.map (bEq e) env.AtomicObjects)
           | "stackframe", [] -> er "#stackframe"
+          | "map_eq", [e1; e2] -> bCall ("$eq." + (typeIdToName (toTypeId e1.Type))) [self e1; self e2]
           | "float_literal", [C.Expr.UserData(_, f)] ->
             match f with
               | :? float as f -> getFloatConst f

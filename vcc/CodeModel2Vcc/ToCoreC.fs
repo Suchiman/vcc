@@ -761,6 +761,15 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================    
 
+    let handleMapEquality self = function
+      | Expr.Prim(ec, Op("==", _), [e1; e2]) when e1.Type._IsMap ->
+        Some(Expr.Macro(ec, "map_eq", [self e1; self e2]))
+      | Expr.Prim(ec, Op("!=", _), [e1; e2]) when e1.Type._IsMap ->
+        Some(Expr.Prim(ec, Op("!", Unchecked), [Expr.Macro(ec, "map_eq", [self e1; self e2])]))
+      | _ -> None
+
+    // ============================================================================================================    
+
     helper.AddTransformer ("core-begin", Helper.DoNothing)
     
     // it's important if a transformer is before or after those two
@@ -777,6 +786,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("core-parm-writes", Helper.Decl removeWritesToParameters)
     helper.AddTransformer ("core-pull-out-calls", Helper.ExprCtx pullOutCalls)
     helper.AddTransformer ("core-out-parameters", Helper.ExprCtx handleOutParameters)
+    helper.AddTransformer ("core-map-eq", Helper.Expr handleMapEquality)
     helper.AddTransformer ("core-linearize", Helper.Decl (linearizeDecls helper))
     
     helper.AddTransformer ("core-end", Helper.DoNothing)

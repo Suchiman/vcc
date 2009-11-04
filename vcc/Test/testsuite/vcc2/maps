@@ -133,9 +133,7 @@ void foo(struct S *s, int j)
   }
 }
 `
-Verification of foo failed.
-testcase(20,1) : error VC9501: Post condition 's->m == __lambda(int n; ((bool)1); n == j ? 0 : __old(s->m)[n])' did not verify.
-testcase(15,13) : error VC9599: (related information) Location of post condition.
+Verification of foo succeeded.
 `
 #include <vcc.h>
 
@@ -477,6 +475,23 @@ speconly(X[0].d = 42;)
 }
 `
 testcase(7,41) : error VC0000: Illegal update of map 'X'.
+`
+#include <vcc.h>
+
+void foo() {
+  spec(int a[int] = lambda(int i; true; i);)
+  spec(int b[int] = lambda(int i; true; i);)
+  assert(a == b);
+}
+
+void bar() {
+  spec(int a[int][int] = lambda(int i; int j; true; i);)
+  spec(int b[int][int] = lambda(int i; int j; true; i);)
+  assert(a == b);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
 `
 #include "vcc.h"
 
