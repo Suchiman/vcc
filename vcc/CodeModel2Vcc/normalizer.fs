@@ -174,6 +174,13 @@ namespace Microsoft.Research.Vcc
       | _ -> None
     
     // ============================================================================================================
+    
+    let fixupOld (ctx:ExprCtx) self = function
+      | Old(_, (CallMacro(_, "_vcc_by_claim", _, _)), _) -> None
+      | Old (c, _, _) as o when not ctx.IsPure -> Some (Expr.Pure (c, o))
+      | _ -> None
+    
+    // ============================================================================================================
 
     let addExplicitReturn =
       let doDecl = function
@@ -713,6 +720,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-generic-errors", Helper.Decl reportGenericsErrors) 
     helper.AddTransformer ("norm-containing-struct", Helper.Expr normalizeContainingStruct)
     helper.AddTransformer ("add-assume-to-assert", Helper.Expr handleLemmas)    
+    helper.AddTransformer ("fixup-old", Helper.ExprCtx fixupOld)    
     helper.AddTransformer ("fixup-claims", Helper.Expr handleClaims)    
     helper.AddTransformer ("add-explicit-return", Helper.Decl addExplicitReturn)
     helper.AddTransformer ("norm-atomic-ops", Helper.Expr normalizeAtomicOperations)
