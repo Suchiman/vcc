@@ -340,6 +340,53 @@ namespace Microsoft.Research.Vcc
         | B.Expr.FunctionCall (f, a) -> f + ".." + String.concat "." (List.map typeIdToName a)
         | t -> helper.Panic ("cannot compute name for type expression " + t.ToString()); ""        
       
+      let mapEqAxioms t1 t2 bt1 bt2 mapName =
+        let tp = B.Type.Ref mapName
+        let ite = "$ite." + (mapName.Replace ("$#", "")).Replace ("$", "")
+        let mapType = B.Type.Ref (mapName)
+        let sel = "$select." + mapName
+        let selMP = bCall sel [er "M"; er "p"]
+        let stor  = "$store." + mapName
+        let eq = "$eq." + mapName
+        let v = er "v"
+        let v, inRange =
+          match t2 with
+            | C.Type.Integer _ -> 
+              bCall "$unchecked" [toTypeId t2; v], 
+                [B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["M", tp; "p", bt1], [], weight "select-map-eq", 
+                                              bCall "$in_range_t" [toTypeId t2; selMP]))]
+            | _ -> v, []
+        let argRange = 
+          match t1 with
+            | C.Type.Integer _ -> 
+              bCall "$in_range_t" [toTypeId t1; er "p"]
+            | _ -> bTrue
+        let selStorPP = 
+          bImpl argRange (bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) v)
+        let selStorPQ =
+          bInvImpl (bNeq (er "p") (er "q"))
+                    (bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"]) selMP)
+        let t2Eq =
+          match t2 with
+            | C.Type.Map _ -> fun b1 b2 -> bCall ("$eq." + (typeIdToName (toTypeId t2))) [b1; b2]
+            | _ -> bEq
+        let eqM1M2 = bCall eq [er "M1"; er "M2"]
+        let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", bImpl argRange (t2Eq (bCall sel [er "M1"; er "p"]) (bCall sel [er "M2"; er "p"]))))
+                             eqM1M2
+        let eqM1M2Ax2 = bImpl eqM1M2 (bEq (er "M1") (er "M2"))
+        let mpv = ["M", tp; "p", bt1; "v", bt2]
+        let m1m2 = ["M1", tp; "M2", tp]
+        [B.Decl.TypeDef mapName;
+           B.Decl.Function (mapType, [B.StringAttr("external", "ITE"); B.StringAttr("bvz", "ITE"); B.StringAttr("bvint", "ITE")], ite, ["c", B.Type.Bool; "a", mapType; "b", mapType]);           
+           B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1]);
+           B.Decl.Function (tp, [], stor, mpv);
+           B.Decl.Function (B.Type.Bool, [], eq, m1m2);
+           B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", selStorPP));
+           B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
+           B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax1));
+           B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax2))
+          ] @ inRange
+      
       let rec trType (t:C.Type) : B.Type =
         match t with
           | C.Type.MathInteger
@@ -356,54 +403,11 @@ namespace Microsoft.Research.Vcc
             let bt1 = trType t1
             let bt2 = trType t2
             let mapName = typeIdToName (toTypeId t)
-            let typeId = mapName
-            let tp = B.Type.Ref typeId
-            if not (mapTypes.ContainsKey typeId) then
-              mapTypes.Add (typeId, true)
-              let ite = "$ite." + (mapName.Replace ("$#", "")).Replace ("$", "")
-              let mapType = B.Type.Ref (typeId)
-              let sel = "$select." + typeId
-              let stor  = "$store." + typeId
-              let eq = "$eq." + typeId
-              let v = er "v"
-              let v, inRange =
-                match t2 with
-                  | C.Type.Integer _ -> 
-                    bCall "$unchecked" [toTypeId t2; v], 
-                      [B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["M", tp; "p", bt1], [], weight "select-map-eq", 
-                                                    bCall "$in_range_t" [toTypeId t2; bCall sel [er "M"; er "p"]]))]
-                  | _ -> v, []
-              let argRange = 
-                match t1 with
-                  | C.Type.Integer _ -> bCall "$in_range_t" [toTypeId t1; er "p"]
-                  | _ -> bTrue
-              let selStorPP = 
-                bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) v
-              let selStorPQ =
-                bInvImpl (bNeq (er "p") (er "q"))
-                          (bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "q"]) (bCall sel [er "M"; er "q"]))
-              let t2Eq =
-                match t2 with
-                  | C.Type.Map _ -> fun b1 b2 -> bCall ("$eq." + (typeIdToName (toTypeId t2))) [b1; b2]
-                  | _ -> bEq
-              let eqM1M2 = bCall eq [er "M1"; er "M2"]
-              let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", bImpl argRange (t2Eq (bCall sel [er "M1"; er "p"]) (bCall sel [er "M2"; er "p"]))))
-                                   eqM1M2
-              let eqM1M2Ax2 = bImpl eqM1M2 (bEq (er "M1") (er "M2"))
-              let mpv = ["M", tp; "p", bt1; "v", bt2]
-              let m1m2 = ["M1", tp; "M2", tp]
-              let fns = [B.Decl.TypeDef typeId;
-                         B.Decl.Function (mapType, [B.StringAttr("external", "ITE"); B.StringAttr("bvz", "ITE"); B.StringAttr("bvint", "ITE")], ite, ["c", B.Type.Bool; "a", mapType; "b", mapType]);
-                         B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1]);
-                         B.Decl.Function (tp, [], stor, mpv);
-                         B.Decl.Function (B.Type.Bool, [], eq, m1m2);
-                         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", selStorPP));
-                         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
-                         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax1));
-                         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax2))
-                        ] @ inRange
+            if not (mapTypes.ContainsKey mapName) then
+              mapTypes.Add (mapName, true)
+              let fns = mapEqAxioms t1 t2 bt1 bt2 mapName
               tokenConstants := fns @ !tokenConstants
-            tp
+            B.Type.Ref mapName
           | C.Type.Ref ({ Kind = C.Record }) -> B.Type.Ref "$record"
           | C.Type.Ref ({ Name = n; Kind = (C.MathType|C.FunctDecl _) }) ->
             match n with
@@ -444,7 +448,7 @@ namespace Microsoft.Research.Vcc
               let fromIntName = "$int_to_" + suff
               let fromInt = B.Decl.Function (t, [], fromIntName, [("x", B.Type.Int)])
               let both = bCall fromIntName [bCall toIntName [er "#x"]]
-              let ax1 = B.Decl.Axiom (B.Expr.Forall (Token.NoToken, [("#x", t)], [], weight "conversion", bEq (er "#x") both)) 
+              let ax1 = B.Decl.Axiom (B.Expr.Forall (Token.NoToken, [("#x", t)], [], weight "conversion", bEq (er "#x") both))
               tokenConstants := toInt :: fromInt :: ax1 :: !tokenConstants
             suff
       
