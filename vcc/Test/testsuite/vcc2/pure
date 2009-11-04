@@ -1045,3 +1045,25 @@ typedef struct Core {
 `
 Verification of fun_1 succeeded.
 `
+#include <vcc.h>
+
+ispure int foo(int *i)
+  reads(i)
+  requires(thread_local(i))
+  ensures(result == *i);
+  
+void bar(int *i)
+  writes(i)
+  requires(thread_local(i))
+  requires(*i == 1)
+{
+  int p;
+  int j = 1;
+  *i = 0;
+  p = j && old(foo(i));
+  assert(p);
+}
+`
+Verification of bar succeeded.
+Verification of foo#reads succeeded.
+`
