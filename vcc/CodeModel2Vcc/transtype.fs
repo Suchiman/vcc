@@ -626,7 +626,6 @@ namespace Microsoft.Research.Vcc
 
       let fields = new Dict<Field,Field>()
       let fieldsToRemove = new Dict<Field,bool>()
-      let anonTypeDeclsToKeep = new Dict<TypeDecl,bool>()
       let processedTypeDecls = new Dict<TypeDecl, bool>()
       let id = ref 0
       let unnamedFieldId = ref 0
@@ -654,9 +653,6 @@ namespace Microsoft.Research.Vcc
                      fields.Add (f', newf')
                      newf'
                   ]
-                | Type.Ref td' when td'.IsNestedAnon ->
-                  anonTypeDeclsToKeep.Add(td', true)
-                  [f]
                 | _ -> [f]
             let nameNonameFields (fld:Field) =
               if fld.Name = "" then                    
@@ -703,13 +699,7 @@ namespace Microsoft.Research.Vcc
             | (false, _) -> None
         | _ -> None
  
-      let keepTypeDecl d = 
-        match d with
-          | Top.TypeDecl td when not td.IsNestedAnon || anonTypeDeclsToKeep.ContainsKey td -> true
-          | Top.TypeDecl _ -> false
-          | _ -> true
-
-      decls |> List.filter keepTypeDecl |> deepMapExpressions replFields 
+      decls |> deepMapExpressions replFields 
 
     // ============================================================================================================
 
