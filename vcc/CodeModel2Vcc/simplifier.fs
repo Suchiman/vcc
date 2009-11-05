@@ -373,17 +373,59 @@ namespace Microsoft.Research.Vcc
             | None, None when not inSpecBlock  -> VarKind.Local
             | _,_ -> VarKind.SpecLocal
         
-        let tmp = getTmp helper "ite" c.Type varKind
         let c' = { c with Type = Void }
+        let tmp = getTmp helper "ite" c.Type varKind
         let tmpRef = Expr.Ref (c, tmp)
-        let write = Expr.If (c', cond,
-                             Macro (c', "=", [tmpRef; th]),
-                             Macro (c', "=", [tmpRef; el]))
+        let thAssign = Macro (c', "=", [tmpRef; th])
+        let elAssign = Macro (c', "=", [tmpRef; el])
+        let assertFalse cond expectedValue = Expr.MkAssert (Expr.BoolLiteral (afmte 8533 "{0} has the value {1} specified by known(...)" [cond; expectedValue], false))
+
+        let cond', th', el' =
+          match cond with
+            | Cast(_,_, Macro(_, "_vcc_known", [cond'; expectedValue]))
+            | Macro(_, "_vcc_known", [cond'; expectedValue]) ->
+              match expectedValue with 
+                | BoolLiteral(_, true) -> cond', thAssign, assertFalse cond' expectedValue
+                | BoolLiteral(_, false) -> cond', assertFalse cond' expectedValue, elAssign
+                | _ -> helper.Oops(expectedValue.Token, "unexpected value in known(...)"); die()
+            | Macro(_, "_vcc_known", _) ->
+              helper.Oops(cond.Token, "unexpected use of known(...)"); die()
+            | _ -> cond, thAssign, elAssign
+            
+        let write = Expr.If (c', cond', th', el')
         addStmtsOpt [VarDecl (c', tmp); self write] tmpRef
+      | Macro(_, "_vcc_known", [e; _]) -> Some(self e)
       | Macro(ec, "spec", args) -> Some(Macro(ec, "spec", List.map (fun (e:Expr) -> e.SelfCtxMap(true, doRemoveLazyOps true)) args))
       | _ -> None
     
-    let removeLazyOps = deepMapExpressionsCtx (doRemoveLazyOps false)
+    let propagateKnownValue ctx self = function
+      | Expr.Macro(c, "ite", [cond; th; el]) when not ctx.IsPure ->
+        let cond' = self cond
+        let ite = Expr.Macro(c, "ite", [cond'; self th; self el])
+        match cond' with
+          | Cast(_,_, Macro(_, "_vcc_known", [cond'; expectedValue]))
+          | Macro(_, "_vcc_known", [cond'; expectedValue]) ->
+            let knownValue = 
+              match expectedValue with 
+                | BoolLiteral(_, true) -> 
+                  match th with
+                    | Cast(_,_, ((BoolLiteral _) as b))
+                    | (BoolLiteral(_, _) as b) -> Some b
+                    | _ -> None
+                | BoolLiteral(_, false) ->
+                  match el with
+                    | Cast(_,_, ((BoolLiteral _) as b))
+                    | (BoolLiteral(_, _) as b) -> Some b
+                    | _ -> None
+                | _ -> helper.Oops(expectedValue.Token, "unexpected value in known(...)"); die()
+            
+            match knownValue with
+              | None -> Some(ite)
+              | Some b -> Some(Expr.Macro(c, "_vcc_known", [ite; b]))
+          | _ -> Some(ite)
+      | _ -> None
+                  
+    let removeLazyOps = deepMapExpressionsCtx propagateKnownValue >> deepMapExpressionsCtx (doRemoveLazyOps false)
     
     // ============================================================================================================
 

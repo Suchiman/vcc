@@ -87,6 +87,7 @@ typedef int bool;
 #define skip_wf(_EXPR_) (_EXPR_)
 #define SPEC_TYPE(name)
 #define generic_instance(_F_, ...) (_F_)
+#define known(_EXPR_, _KNOWN_VALUE_) (_EXPR_)
 
 #else
 
