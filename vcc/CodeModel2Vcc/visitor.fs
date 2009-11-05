@@ -885,7 +885,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (globalMethodDefinition:IGlobalMethodDefinition) : unit =
         globalsType <- globalMethodDefinition.ContainingTypeDefinition
         match globalMethodDefinition.Name.Value with
-          | "_vcc_in_state" | "_vcc_approves" | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" -> ()
+          | "_vcc_in_state" | "_vcc_approves" | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false)
 
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
@@ -1299,7 +1299,7 @@ namespace Microsoft.Research.Vcc
             match args() with
               | [e1; e2] -> exprRes <- C.Expr.Macro (ec, "approves", [e1; e2])
               | _ -> oopsNumArgs() 
-          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq") ->
+          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known") ->
             match args() with
               | [e1; e2] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
               | _ -> oopsNumArgs()
