@@ -366,8 +366,10 @@ namespace Microsoft.Research.Vcc
      
     /// Get rid of &&, || -- operators that alter control flow.
     /// Actually FELT translates them all to "ite" (IConditional) nodes.
-    let rec doRemoveLazyOps inSpecBlock ctx self = function
-      | Expr.Macro (c, "ite", [cond; th; el]) when not ctx.IsPure ->
+    let rec doRemoveLazyOps inSpecBlock ctx self = 
+      let assertFalse cond expectedValue = Expr.MkAssert (Expr.BoolLiteral (afmte 8533 "{0} has the value {1} specified by known(...)" [cond; expectedValue], false))
+      function
+      | Macro (c, "ite", [cond; th; el]) when not ctx.IsPure ->
         let varKind =
           match exprDependsOnSpecExpr th, exprDependsOnSpecExpr el with
             | None, None when not inSpecBlock  -> VarKind.Local
@@ -378,7 +380,6 @@ namespace Microsoft.Research.Vcc
         let tmpRef = Expr.Ref (c, tmp)
         let thAssign = Macro (c', "=", [tmpRef; th])
         let elAssign = Macro (c', "=", [tmpRef; el])
-        let assertFalse cond expectedValue = Expr.MkAssert (Expr.BoolLiteral (afmte 8533 "{0} has the value {1} specified by known(...)" [cond; expectedValue], false))
 
         let cond', th', el' =
           match cond with
@@ -394,6 +395,15 @@ namespace Microsoft.Research.Vcc
             
         let write = Expr.If (c', cond', th', el')
         addStmtsOpt [VarDecl (c', tmp); self write] tmpRef
+      | If(c, cond, th, el) ->
+          match cond with
+            | Cast(_,_, Macro(_, "_vcc_known", [cond'; expectedValue]))
+            | Macro(_, "_vcc_known", [cond'; expectedValue]) ->
+              match expectedValue with 
+                | BoolLiteral(_, true) -> Some(If(c, cond', self th, assertFalse cond' expectedValue))
+                | BoolLiteral(_, false) -> Some(If(c, cond', assertFalse cond' expectedValue, self el))
+                | _ -> helper.Oops(expectedValue.Token, "unexpected value in known(...)"); die()
+            | _ -> None     
       | Macro(_, "_vcc_known", [e; _]) -> Some(self e)
       | Macro(ec, "spec", args) -> Some(Macro(ec, "spec", List.map (fun (e:Expr) -> e.SelfCtxMap(true, doRemoveLazyOps true)) args))
       | _ -> None
