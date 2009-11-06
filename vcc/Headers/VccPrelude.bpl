@@ -1196,8 +1196,7 @@ axiom (forall S:$state :: {$good_state(S)}
   $good_state(S) ==> $closed_is_transitive(S));
 
 axiom (forall S:$state, #p:$ptr, #q:$ptr :: {$set_in(#q,$owns(S,#p))}
-  $is_non_primitive_ptr(#p) && $is_non_primitive_ptr(#q) && $closed(S, #p) && $typed(S,#p) && $set_in(#q,$owns(S,#p)) ==>
-  $typed(S,#q));
+  $closed(S, #p) && $set_in(#q,$owns(S,#p)) ==> $typed(S,#q));
 
 // ----------------------------------------------------------------------------
 // Custom admissibility checks
