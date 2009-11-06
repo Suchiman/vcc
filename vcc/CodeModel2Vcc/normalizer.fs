@@ -669,12 +669,14 @@ namespace Microsoft.Research.Vcc
       for d in decls do
         match d with 
           | Top.FunctionDecl(fn) ->
-            let errorForGenericPar (v : Variable) =
-              match v.Type with 
+            let reportErrorIfGeneric prefix t =
+              match t with 
                 | TypeVar({Name = tvName}) ->
-                  helper.Error(fn.Token, 9693, "Cannot declare parameter '" + v.Name + "' of generic type '" + tvName + "'")
+                  helper.Error(fn.Token, 9693, "Cannot " + prefix + " of generic type '" + tvName + "'")
                 | _ -> ()
-            List.iter errorForGenericPar (fn.Parameters)
+          
+            List.iter (fun (v : Variable) -> reportErrorIfGeneric ("declare parameter '" + v.Name + "'") v.Type) (fn.Parameters)
+            reportErrorIfGeneric "return value" (fn.RetType)
           | _ -> ()
           
       decls |> deepMapExpressions reportGenericsErrors' 
