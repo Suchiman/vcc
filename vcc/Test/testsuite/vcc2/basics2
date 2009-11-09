@@ -147,3 +147,18 @@ Verification of baz failed.
 testcase(22,22) : error VC8533: Assertion 'i has the value ((bool)1) specified by known(...)' did not verify.
 Verification of qux succeeded.
 `
+#include <vcc.h>
+
+void foo() {
+int i = 0;
+do { } while(known(i, false));
+} 
+
+void bar() {
+int i = 1;
+do { } while(known(i, false));
+} 
+`
+Verification of foo succeeded.
+Verification of bar failed.
+testcase(10,25) : error VC8533: Assertion 'i has the value ((bool)0) specified by known(...)' did not verify.`
