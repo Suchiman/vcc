@@ -366,8 +366,9 @@ namespace Microsoft.Research.Vcc
      
     /// Get rid of &&, || -- operators that alter control flow.
     /// Actually FELT translates them all to "ite" (IConditional) nodes.
-    let rec doRemoveLazyOps inSpecBlock ctx self = 
+    let rec doRemoveLazyOps inSpecBlock keepKnown ctx self = 
       let assertFalse cond expectedValue = Expr.MkAssert (Expr.BoolLiteral (afmte 8533 "{0} has the value {1} specified by known(...)" [cond; expectedValue], false))
+      let selfs = List.map self
       function
       | Macro (c, "ite", [cond; th; el]) when not ctx.IsPure ->
         let varKind =
@@ -404,8 +405,11 @@ namespace Microsoft.Research.Vcc
                 | BoolLiteral(_, false) -> Some(If(c, cond', assertFalse cond' expectedValue, self el))
                 | _ -> helper.Oops(expectedValue.Token, "unexpected value in known(...)"); die()
             | _ -> None     
-      | Macro(_, "_vcc_known", [e; _]) -> Some(self e)
-      | Macro(ec, "spec", args) -> Some(Macro(ec, "spec", List.map (fun (e:Expr) -> e.SelfCtxMap(true, doRemoveLazyOps true)) args))
+      | Macro (wtok, "doUntil", [Macro (lc, "loop_contract", conds); body; cond]) ->
+        // special treatment for the condition of doUntil so that we re-visit the 'known' annotation once we have desugared the loop 
+        Some(Macro(wtok, "doUntil", [Macro(lc, "loop_contract", selfs conds); self body; cond.SelfCtxMap(false, doRemoveLazyOps false true)]))
+      | Macro(_, "_vcc_known", [e; _]) when not keepKnown -> Some(self e)
+      | Macro(ec, "spec", args) -> Some(Macro(ec, "spec", List.map (fun (e:Expr) -> e.SelfCtxMap(true, doRemoveLazyOps true false)) args))
       | _ -> None
     
     let propagateKnownValue ctx self = function
@@ -439,7 +443,7 @@ namespace Microsoft.Research.Vcc
           | expr' -> Some(Expr.Prim(ec, op, [expr']))
       | _ -> None
                   
-    let removeLazyOps = deepMapExpressionsCtx propagateKnownValue >> deepMapExpressionsCtx (doRemoveLazyOps false)
+    let removeLazyOps = deepMapExpressionsCtx propagateKnownValue >> deepMapExpressionsCtx (doRemoveLazyOps false false)
     
     // ============================================================================================================
 
@@ -942,12 +946,9 @@ namespace Microsoft.Research.Vcc
               false
             | _ -> not !usedBreak // keep looking
           let body = inBody body
-          let res () =
-            mkLoop [ body;
-                     Label (wtok, continue_lbl); 
-                     If (wtok, cond, 
-                          Goto (wtok, break_lbl), 
-                          Expr.MkBlock [])]
+          let branch = If (wtok, cond, Goto (wtok, break_lbl), Expr.MkBlock [])
+          let branch = branch.SelfCtxMap(false, doRemoveLazyOps false false)
+          let res () = mkLoop [ body; Label (wtok, continue_lbl); branch ]
           match cond with
             | Expr.BoolLiteral (_, true) ->
               body.SelfVisit check
