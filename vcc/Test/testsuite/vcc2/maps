@@ -523,5 +523,5 @@ int f()
 }
 #endif
 `
-Verification of foo succeeded.
+Verification of f succeeded.
 `
