@@ -433,6 +433,10 @@ namespace Microsoft.Research.Vcc
               | None -> Some(ite)
               | Some b -> Some(Expr.Macro(c, "_vcc_known", [ite; b]))
           | _ -> Some(ite)
+      | Expr.Prim(ec, (Op("!", _) as op), [expr]) ->
+        match self expr with
+          | Macro(ec, "_vcc_known", [e; BoolLiteral(bc, bv)]) -> Some(Macro(ec, "_vcc_known", [Expr.Prim(e.Common, op, [e]); BoolLiteral(bc, not bv)]))
+          | expr' -> Some(Expr.Prim(ec, op, [expr']))
       | _ -> None
                   
     let removeLazyOps = deepMapExpressionsCtx propagateKnownValue >> deepMapExpressionsCtx (doRemoveLazyOps false)
