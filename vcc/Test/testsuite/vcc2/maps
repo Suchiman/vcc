@@ -507,3 +507,21 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include <vcc.h>
+
+#ifdef VERIFY
+
+struct S {
+  int x;
+};
+
+int f()
+{
+  struct S s1[int];
+  struct S s2[int] = s1;
+  assert(s1 == s2);
+}
+#endif
+`
+Verification of foo succeeded.
+`

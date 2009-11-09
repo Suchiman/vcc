@@ -230,6 +230,7 @@ namespace Microsoft.Research.Vcc
           | C.Type.Array (tp, sz) ->
             internalizeType t (bCall "$array" [toTypeId' translateArrayAsPtr tp; B.Expr.IntLiteral(new bigint(sz))])
             //bCall "$array" [toTypeId tp; bInt sz]
+          | C.Type.Map (range, C.Type.Ref({ Kind = C.Union|C.Struct})) -> toTypeId' translateArrayAsPtr (C.Type.Map(range, C.Type.MathStruct))
           | C.Type.Map (range, dom) -> 
             internalizeType t (bCall "$map_t" [toTypeId' false range; toTypeId' false dom])
           | C.Type.Ref { Name = n; Kind = (C.MathType|C.Record|C.FunctDecl _) } -> er ("^$#" + n)
