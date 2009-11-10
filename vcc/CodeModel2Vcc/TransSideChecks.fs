@@ -27,7 +27,7 @@ namespace Microsoft.Research.Vcc
     AddChecks.invariantCheck helper (fun e -> not (AddChecks.isOnUnwrap e)) 8018 "forbids unwrapping" prestate (mkRef p)
 
   let stuttChecks helper p =    
-    let stuttetringCheck (inv:Expr) =
+    let stutteringCheck (inv:Expr) =
       let seenOld = ref false
       let replaceThisOld self = function 
         | Expr.Macro(c, "this", []) -> Some (mkRef p)
@@ -40,7 +40,7 @@ namespace Microsoft.Research.Vcc
         [Expr.Macro(afmte 8013 "invariant({0}) is not admissible (stuttering)" [inv], "token_holder", [inv])]
             else []
     let td = match p.Type with Ptr (Type.Ref td) -> td | _ -> die()
-    List.map stuttetringCheck (AddChecks.invariantsOf td) |> List.concat
+    List.map stutteringCheck (AddChecks.invariantsOf td) |> List.concat
 
   let addDefaultAdmissibilityChecks (explicitAdm:Dict<_,_>) helper =
     let handleDecl = function
