@@ -1177,7 +1177,8 @@ namespace Microsoft.Research.Vcc {
     }
 
     internal MethodContract ToMethodContract() {
-      return new MethodContract(this.Allocates, this.Frees, null, this.Postconditions, this.Preconditions, this.Reads, null, this.Writes);
+      // TODO: leverage the IsPure flag
+      return new MethodContract(this.Allocates, this.Frees, null, this.Postconditions, this.Preconditions, this.Reads, null, this.Writes, false);
     }
 
     internal void AddPostcondition(Postcondition postcondition) {
