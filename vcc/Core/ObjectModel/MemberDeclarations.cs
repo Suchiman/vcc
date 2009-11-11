@@ -15,66 +15,6 @@ using Microsoft.Research.Vcc.Parsing;
 
 namespace Microsoft.Research.Vcc {
 
-  /// <summary>
-  /// Represents a map from values of one type (the domain) to another type (the codomain). Only for use in specifications.
-  /// Think of this as "external fields" (with reference to C# external methods).
-  /// </summary>
-  public sealed class AbstractMap : GlobalFieldDeclaration {
-    /// <summary>
-    /// Allocates a map from values of one type (the domain) to another type (the codomain). Only for use in specifications.
-    /// Think of this as "external fields" (with reference to C# external methods).
-    /// </summary>
-    /// <param name="domain">An expression that denotes the domain (argument type) of this map.</param>
-    /// <param name="codomain">An expression that denotes the codomain (result type) of this map.</param>
-    /// <param name="name">The name of the member. </param>
-    /// <param name="sourceLocation">The source location corresponding to the newly allocated expression.</param>
-    public AbstractMap(TypeExpression domain, TypeExpression codomain, NameDeclaration name, ISourceLocation sourceLocation)
-      : base(null, FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Public, codomain, name, null, sourceLocation) {
-      this.domain = domain;
-    }
-
-    /// <summary>
-    /// A copy constructor that allocates an instance that is the same as the given template, except for its containing type.
-    /// </summary>
-    /// <param name="containingTypeDeclaration">The containing type of the copied member. This should be different from the containing type of the template member.</param>
-    /// <param name="template">The type member to copy.</param>
-    private AbstractMap(TypeDeclaration containingTypeDeclaration, AbstractMap template)
-      : base(containingTypeDeclaration, template)
-      //^ ensures this.containingTypeDeclaration == containingTypeDeclaration;
-    {
-      this.domain = (TypeExpression)template.Domain.MakeCopyFor(containingTypeDeclaration.DummyBlock);
-    }
-
-    /// <summary>
-    /// An expression that denotes the codomain (result type) of this map.
-    /// </summary>
-    public TypeExpression Codomain {
-      get { return this.Type; }
-    }
-
-    /// <summary>
-    /// An expression that denotes the domain (argument type) of this map.
-    /// </summary>
-    public TypeExpression Domain {
-      get { return this.domain; }
-    }
-    readonly TypeExpression domain;
-
-
-    /// <summary>
-    /// Makes a shallow copy of this member that can be added to the member list of the given target type declaration.
-    /// The shallow copy may share child objects with this instance, but should never expose such child objects except through
-    /// wrappers (or shallow copies made on demand). If this instance is already a member of the target type declaration it
-    /// returns itself.
-    /// </summary>
-    //^ [MustOverride, Pure]
-    public override TypeDeclarationMember MakeShallowCopyFor(TypeDeclaration targetTypeDeclaration) {
-      if (targetTypeDeclaration == this.ContainingTypeDeclaration) return this;
-      return new AbstractMap(targetTypeDeclaration, this);
-    }
-
-  }
-
   public sealed class AnonymousFieldDefinition : FieldDeclaration {
 
     public AnonymousFieldDefinition(FieldDeclaration.Flags flags, TypeExpression type, NameDeclaration name) :
