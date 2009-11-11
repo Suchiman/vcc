@@ -1086,11 +1086,12 @@ namespace Microsoft.Research.Vcc {
       this.Writes = template.Writes;
       this.Allocates = template.Allocates;
       this.Frees = template.Frees;
+      this.IsPure = template.IsPure;
     }
 
     internal MethodContract ToMethodContract() {
       // TODO: leverage the IsPure flag
-      return new MethodContract(this.Allocates, this.Frees, null, this.Postconditions, this.Preconditions, this.Reads, null, this.Writes, false);
+      return new MethodContract(this.Allocates, this.Frees, null, this.Postconditions, this.Preconditions, this.Reads, null, this.Writes, this.IsPure);
     }
 
     internal void AddPostcondition(Postcondition postcondition) {
@@ -1142,6 +1143,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     internal bool HasContract;
+    internal bool IsPure;
     internal List<Postcondition>/*?*/ Postconditions;
     internal List<Precondition>/*?*/ Preconditions;
     internal List<Expression>/*?*/ Reads;

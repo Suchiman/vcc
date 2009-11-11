@@ -978,8 +978,8 @@ namespace Microsoft.Research.Vcc {
     }
 
     internal static bool ContainsTypeQualifier(IEnumerable<Specifier> specifiers, Token token) {
-      foreach (var spec in specifiers) {
-        TypeQualifier tq = spec as TypeQualifier;
+      foreach (var specifier in specifiers) {
+        TypeQualifier tq = specifier as TypeQualifier;
         if (tq != null && tq.Token == token)
           return true;
       }
