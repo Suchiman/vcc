@@ -3489,7 +3489,9 @@ namespace Microsoft.Research.Vcc {
       if (functionDeclaration != null && functionDeclaration.templateParameters != null) {
         foreach (GenericMethodParameterDeclaration templateParameter in functionDeclaration.templateParameters) {
           if (this.Name.UniqueKey == templateParameter.Name.UniqueKey)
-            return templateParameter.GenericMethodParameterDefinition;
+            foreach (var tPar in functionDeclaration.ResolvedMethod.GenericParameters) {
+              if (this.Name.UniqueKey == tPar.Name.UniqueKey) return tPar;
+            }
         }
       }
       return base.ResolveUsing(signatureDeclaration, restrictToNamespacesAndTypes);

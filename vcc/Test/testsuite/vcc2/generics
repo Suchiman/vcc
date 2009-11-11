@@ -298,3 +298,15 @@ void foo(struct T *p)
 `
 testcase(16,1) : error VC9693: Cannot return value of generic type 'T'
 `
+
+//#include <vcc.h>
+
+template<typename T> void foo(void **p)
+  __requires(*(T**)p != 0);
+
+template<typename T> void foo(void **p)
+{
+}
+`
+Verification of foo succeeded.
+`
