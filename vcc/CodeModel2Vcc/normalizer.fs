@@ -632,14 +632,6 @@ namespace Microsoft.Research.Vcc
                 helper.Error (c.Token, 9684, "wrong type of object in from_bytes(...)", None)
                 1
           Some (Stmt (c, Call (c, fn, [], [asArray (mkInt sz) obj; typeId obj])))
-        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [obj; sz]) ->
-          match obj.Type with
-            | Ptr t ->
-              if not t.IsComposite then
-                helper.Error (c.Token, 9700, "reinterpretation to a primitive type is not supported; please use a single-element array instead")
-            | _ -> 
-              helper.Error (c.Token, 9684, "wrong type of object in from_bytes(...)", None)
-          Some (Stmt (c, Call (c, fn, [], [asArray sz obj; typeId obj])))
         | CallMacro (c, "_vcc_from_bytes", _, _) ->
           helper.Error (c.Token, 9685, "wrong number of arguments to from_bytes(...)", None)
           None

@@ -86,14 +86,6 @@ void joinShouldFail2(int *p)
   from_bytes((struct A*)p);
 }
 
-void joinShouldFail3(byte *p)
-  writes(extent(as_array(p, sizeof(struct A)-1)))
-  requires(mutable(as_array(p, sizeof(struct A)-1)) && 
-           is_object_root(as_array(p, sizeof(struct A)-1)))
-{
-  from_bytes((struct A*)p, sizeof(struct A)-1);
-}
-
 `
 Verification of f1 succeeded.
 Verification of flatten succeeded.
@@ -108,9 +100,6 @@ Verification of flattenFail3 failed.
 testcase(62,3) : error VC8510: Assertion 'a is writable in call to _vcc_to_bytes(a)' did not verify.
 Verification of joinShouldFail2 failed.
 testcase(70,3) : error VC8510: Assertion 'as_array((uint8_t*)p, 8) is writable in call to _vcc_from_bytes((struct A*)p)' did not verify.
-Verification of joinShouldFail3 failed.
-testcase(78,3) : error VC9502: Call '_vcc_from_bytes((struct A*)p, sizeof(struct A)-1)' did not verify.
-testcase(0,0) : error VC9599: (related information) Precondition: 'the reinterpreted array is large enough'.
 `
 #include <vcc2test.h>
 
@@ -367,46 +356,6 @@ void foo ()
 }
 `
 Verification of foo succeeded.
-`#include "vcc.h"
-
-typedef unsigned __int32 UINT32;
-typedef unsigned char byte;
-
-void reinterpret_array()
-requires(is_object_root(as_array((byte*) 1024, 4)))
-requires(mutable(as_array((byte*) 1024, 4)))
-writes(extent(as_array((byte*) 1024, 4)))
-{ 
-from_bytes(as_array((UINT32*)1024, 1));
-} 
-`
-Verification of reinterpret_array succeeded.
-`
-#include "vcc.h"
-
-typedef unsigned __int32 UINT32;
-typedef unsigned char byte;
-
-void reinterpret_prim_fail(UINT32 total)
-    requires(is_object_root(as_array((byte*) 1024, 4)))
-    requires(mutable(as_array((byte*) 1024, 4)))
-    writes(extent(as_array((byte*) 1024, 4)))
-{    
-    from_bytes( (UINT32*) 1024,4);    
-    assert(false);
-}
-
-void reinterpret_prim2_fail(UINT32 total)
-    requires(is_object_root(as_array((byte*) 1024, 1)))
-    requires(mutable(as_array((byte*) 1024, 1)))
-    writes(extent(as_array((byte*) 1024, 1)))
-{    
-    from_bytes( (byte*) 1024);    
-    assert(false);
-}
-`
-testcase(11,5) : error VC9700: reinterpretation to a primitive type is not supported; please use a single-element array instead
-testcase(20,5) : error VC9700: reinterpretation to a primitive type is not supported; please use a single-element array instead
 `
 #include <stdlib.h>
 #include "vcc2.h"
