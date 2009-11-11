@@ -289,13 +289,9 @@ namespace Microsoft.Research.Vcc.Parsing {
           return result;
         }
       }
-      bool isLocalTypeDef = false;
-      foreach (Specifier sp in specifiers) {
-        StorageClassSpecifier/*?*/ scs = sp as StorageClassSpecifier;
-        if (scs != null) {
-          if (scs.Token == Token.Typedef) isLocalTypeDef = true;
-        }
-      }
+
+      bool isLocalTypeDef = VccCompilationHelper.ContainsStorageClassSpecifier(specifiers, Token.Typedef);
+      
       while (Parser.DeclaratorStart[this.currentToken]) {
         Declarator declarator = this.ParseDeclarator(followers|Token.Comma|Token.LeftBrace|Token.Semicolon);
         declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
@@ -552,13 +548,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = new SourceLocationBuilder(declarator.SourceLocation);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[0].SourceLocation);
       TypeExpression localType = this.GetTypeExpressionFor(specifiers, declarator);
-      bool isConstant;
-      bool isVolatile;
-      if (this.IsPointerDeclarator(declarator)) {
-        LookForConstAndVolatileForLocalPointer(specifiers, out isConstant, out isVolatile);
-      }
-      else 
-      LookForConstAndVolatile(specifiers, out isConstant, out isVolatile);
+      FieldDeclaration.Flags constOrVolatile = 
+        this.IsPointerDeclarator(declarator) ? LookForConstAndVolatileForLocalPointer(specifiers) : LookForConstAndVolatile(specifiers);
       //Token sct = GetStorageClassToken(specifiers); //TODO: use a LocalDeclaration subclass that can record and interpret the storage class
       Expression/*?*/ initializer = null;
       InitializedDeclarator/*?*/ initializedDeclarator = declarator as InitializedDeclarator;
@@ -601,21 +592,16 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       //TODO: There may also be constant pointers - this would need to be dealt with differently
       if (TypeExpressionHasPointerType(localType) != null)
-        isConstant = false;
+        constOrVolatile &= ~FieldDeclaration.Flags.ReadOnly;
 
-      statements.Add(new LocalDeclarationsStatement(isConstant, false, false, localType, declarations, slb));
+      statements.Add(new LocalDeclarationsStatement((constOrVolatile & FieldDeclaration.Flags.ReadOnly) != 0, false, false, localType, declarations, slb));
     }
 
     private void AddTypeDeclarationMember(List<Specifier> specifiers, Declarator declarator, List<ITypeDeclarationMember> typeMembers) {
       SourceLocationBuilder slb = new SourceLocationBuilder(declarator.SourceLocation);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[0].SourceLocation);
       TypeExpression memberType = this.GetTypeExpressionFor(specifiers, declarator);
-      bool isConstant;
-      bool isVolatile;
-      LookForConstAndVolatile(specifiers, out isConstant, out isVolatile);
-      FieldDeclaration.Flags flags = 0;
-      if (isConstant) flags |= FieldDeclaration.Flags.ReadOnly;
-      if (isVolatile) flags |= FieldDeclaration.Flags.Volatile;
+      FieldDeclaration.Flags flags = LookForConstAndVolatile(specifiers) ;
       // C's const will be treated as readonly. When we are inside a type, isConst is never true because you 
       // cannot initialize it.
       Token sct = GetStorageClassToken(specifiers);
@@ -737,48 +723,45 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// TODO: to fully support the const specifier, we need a more expressive type system in the framework. 
     /// </summary>
     /// <param name="specifiers"></param>
-    /// <param name="isConstant"></param>
-    /// <param name="isVolatile"></param>
-    private static void LookForConstAndVolatileForLocalPointer(List<Specifier> specifiers, out bool isConstant, out bool isVolatile) {
-      isConstant = false;
-      isVolatile = false;
+    private FieldDeclaration.Flags LookForConstAndVolatileForLocalPointer(List<Specifier> specifiers) {
+      FieldDeclaration.Flags result = 0;
       foreach (Specifier specifier in specifiers) {
         if (specifier is CompositeTypeSpecifier || specifier is PrimitiveTypeSpecifier ||
           specifier is FunctionSpecifier || specifier is TypedefNameSpecifier) {
-          if (isConstant) isConstant = false;
+          result &= ~FieldDeclaration.Flags.ReadOnly;
           continue;
         }
         TypeQualifier/*?*/ tqual = specifier as TypeQualifier;
         if (tqual == null) continue;
-        if (tqual.Token == Token.Const) isConstant = true;
-        else if (tqual.Token == Token.Volatile) isVolatile = true;
+        if (tqual.Token == Token.Const) result |= FieldDeclaration.Flags.ReadOnly;
+        else if (tqual.Token == Token.Volatile) result |= FieldDeclaration.Flags.Volatile;
       }
+      return result;
     }
 
-    private void LookForConstAndVolatile(List<Specifier> specifiers, out bool isConstant, out bool isVolatile) {
-      isConstant = false;
-      isVolatile = false;
+    private FieldDeclaration.Flags LookForConstAndVolatile(List<Specifier> specifiers) {
+      FieldDeclaration.Flags result = 0;
       foreach (Specifier specifier in specifiers) {
         TypeQualifier/*?*/ tqual = specifier as TypeQualifier;
         if (tqual != null) {
-          if (tqual.Token == Token.Const) isConstant = true;
-          else if (tqual.Token == Token.Volatile) isVolatile = true;
+          if (tqual.Token == Token.Const) result |= FieldDeclaration.Flags.ReadOnly;
+          else if (tqual.Token == Token.Volatile) result |= FieldDeclaration.Flags.Volatile;
           continue;
         }
         TypedefNameSpecifier tdn = specifier as TypedefNameSpecifier;
         if (tdn != null) {
           TypedefDeclaration typedefDecl;
           if (this.typedefDecls.TryGetValue(tdn.TypedefName.Name.Value, out typedefDecl)) {
-            if (typedefDecl.IsConst) isConstant = true;
-            if (typedefDecl.IsVolatile) isVolatile = true;
+            if (typedefDecl.IsConst) result |= FieldDeclaration.Flags.ReadOnly;
+            if (typedefDecl.IsVolatile) result |= FieldDeclaration.Flags.Volatile;
 
             if (this.TypeExpressionHasPointerType(typedefDecl.Type) != null) {
-              return; //specifiers after a typedef belong to the field
+              break; //specifiers after a typedef belong to the field
             }
-
           }
         }
       }
+      return result;
     }
 
     private TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, Declarator declarator)
