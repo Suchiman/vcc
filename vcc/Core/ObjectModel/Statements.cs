@@ -47,25 +47,11 @@ namespace Microsoft.Research.Vcc {
     private readonly List<Specifier> specifiers;
 
     public bool IsSpec {
-      get {
-        foreach (var specifier in this.specifiers) {
-          StorageClassSpecifier scs = specifier as StorageClassSpecifier;
-          if (scs != null && scs.Token == Token.Specification)
-            return true;
-        }
-        return false;
-      }
+      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.specifiers, Token.Specification); }
     }
 
     public bool IsVolatile {
-      get {
-        foreach (var specifier in this.specifiers) {
-          TypeQualifier tq = specifier as TypeQualifier;
-          if (tq != null && tq.Token == Token.Volatile)
-            return true;
-        }
-        return false;
-      }
+      get { return VccCompilationHelper.ContainsTypeQualifier(this.specifiers, Token.Volatile); }
     }
   }
 

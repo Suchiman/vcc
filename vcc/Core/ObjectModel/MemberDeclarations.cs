@@ -225,14 +225,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public bool IsSpec {
-      get { 
-        foreach (var specifier in this.extendedAttributes) {
-          StorageClassSpecifier scs = specifier as StorageClassSpecifier;
-          if (scs != null && scs.Token == Token.Specification)
-            return true;
-        }
-        return false;
-      }
+      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.extendedAttributes, Token.Specification); }
     }
 
     // Prevent warning about unverifiable code
@@ -350,14 +343,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public bool IsSpec {
-      get {
-        foreach (var specifier in this.specifiers) {
-          StorageClassSpecifier scs = specifier as StorageClassSpecifier;
-          if (scs != null && scs.Token == Token.Specification)
-            return true;
-        }
-        return false;
-      }
+      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.specifiers, Token.Specification); }
     }
 
     static private bool IsUnsupportedDeclspec(string spec) {
@@ -1002,25 +988,11 @@ namespace Microsoft.Research.Vcc {
     TypeDeclaration/*?*/ containingTypeDeclaration;
 
     public bool IsVolatile {
-      get {
-        foreach (var spec in specifiers) {
-          TypeQualifier tq = spec as TypeQualifier;
-          if (tq != null && tq.Token == Token.Volatile)
-            return true;
-        }
-        return false;
-      }
+      get { return VccCompilationHelper.ContainsTypeQualifier(specifiers, Token.Volatile); }
     }
 
     public bool IsConst {
-      get {
-        foreach (var spec in specifiers) {
-          TypeQualifier tq = spec as TypeQualifier;
-          if (tq != null && tq.Token == Token.Const)
-            return true;
-        }
-        return false;
-      }
+      get { return VccCompilationHelper.ContainsTypeQualifier(specifiers, Token.Const); }
     }
 
     public bool IsNew {
@@ -1359,14 +1331,7 @@ namespace Microsoft.Research.Vcc {
     readonly IEnumerable<Specifier> specifiers;
 
     public bool IsSpec {
-      get {
-        foreach (var specifier in specifiers) {
-          StorageClassSpecifier scs = specifier as StorageClassSpecifier;
-          if (scs != null && scs.Token == Token.Specification)
-            return true;
-        }
-        return false;
-      }
+      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.specifiers, Token.Specification); }
     }
   }
 

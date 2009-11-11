@@ -976,6 +976,25 @@ namespace Microsoft.Research.Vcc {
     public override bool UseCompileTimeValueOfField(IFieldDefinition field) {
       return field.IsCompileTimeConstant || (field.IsReadOnly && TypeHelper.IsCompileTimeConstantType(field.Type.ResolvedType) && field.CompileTimeValue != Dummy.Constant);
     }
+
+    internal static bool ContainsTypeQualifier(IEnumerable<Specifier> specifiers, Token token) {
+      foreach (var spec in specifiers) {
+        TypeQualifier tq = spec as TypeQualifier;
+        if (tq != null && tq.Token == token)
+          return true;
+      }
+      return false;
+    }
+
+    internal static bool ContainsStorageClassSpecifier(IEnumerable<Specifier> specifiers, Token token) {
+      foreach (var specifier in specifiers) {
+        StorageClassSpecifier scs = specifier as StorageClassSpecifier;
+        if (scs != null && scs.Token == token)
+          return true;
+      }
+      return false;
+    }
+
   }
 
   public sealed class VccTypeNameFormatter : TypeNameFormatter {
