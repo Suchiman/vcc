@@ -1988,7 +1988,7 @@ procedure $from_bytes(a:$ptr, t:$ctype, preserve_zero:bool);
   requires $element_type($typ(a)) == ^^u1;
   // TOKEN: the reinterpreted array is large enough
   requires $sizeof(t) <= $array_length($typ(a));
-  // TOKEN: the reinterpreted array is zeroed
+  // TOKEN: extent_zero holds for the reinterpreted array
   requires preserve_zero ==> $extent_zero($s, a);
   ensures $mutable_root($s, $ptr(t, $ref(a)));
   ensures (forall p:$ptr :: {$st($s, p)} {$ts($s, p)}
