@@ -1979,7 +1979,7 @@ procedure $to_bytes(a:$ptr);
     ($st_eq(old($s), $s, p) && $ts_eq(old($s), $s, p) && $mem_eq(old($s), $s, p)));
   ensures $timestamp_post_strict(old($s), $s);
 
-procedure $from_bytes(a:$ptr, t:$ctype);
+procedure $from_bytes(a:$ptr, t:$ctype, preserve_zero:bool);
   // writes extent(a)
   modifies $s;
   // TOKEN: the reinterpreted array is not embedded inside of another object
@@ -1988,6 +1988,8 @@ procedure $from_bytes(a:$ptr, t:$ctype);
   requires $element_type($typ(a)) == ^^u1;
   // TOKEN: the reinterpreted array is large enough
   requires $sizeof(t) <= $array_length($typ(a));
+  // TOKEN: the reinterpreted array is zeroed
+  requires preserve_zero ==> $extent_zero($s, a);
   ensures $mutable_root($s, $ptr(t, $ref(a)));
   ensures (forall p:$ptr :: {$st($s, p)} {$ts($s, p)}
     ($set_in(p, $extent($s, $ptr(t, $ref(a)))) ==> $now_writable($s, p)) &&
@@ -1999,7 +2001,7 @@ procedure $from_bytes(a:$ptr, t:$ctype);
     $set_in(p, $full_extent($ptr(t, $ref(a)))) ||
     ($st_eq(old($s), $s, p) && $ts_eq(old($s), $s, p) && $mem_eq(old($s), $s, p)));
   ensures $timestamp_post_strict(old($s), $s);
-  ensures $extent_zero(old($s), a) ==> $extent_zero($s, $ptr(t, $ref(a)));
+  ensures preserve_zero ==> $extent_zero($s, $ptr(t, $ref(a)));
 
 // -----------------------------------------------------------------------
 // Sets of pointers

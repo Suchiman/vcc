@@ -609,7 +609,7 @@ namespace Microsoft.Research.Vcc
       let typeId (obj:Expr) =
         Macro ({ obj.Common with Type = Type.Math "typeid_t" }, "_vcc_typeof", [obj])
       function
-        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [CallMacro (_, "_vcc_as_array", [], [arg; sz]) as arr]) ->
+        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [CallMacro (_, "_vcc_as_array", [], [arg; sz]) as arr; preserveZero]) ->
           let eltSz =
             match arg.Type with
               | Ptr t -> mkInt t.SizeOf
@@ -617,9 +617,9 @@ namespace Microsoft.Research.Vcc
                 helper.Error (c.Token, 9684, "wrong type of object in from_bytes(as_array(...))", None)
                 mkInt 1
           let sz = Prim (sz.Common, Op("*", Processed), [eltSz; sz])
-          Some (Stmt (c, Call (c, fn, [], [asArray sz arg; typeId arr])))
+          Some (Stmt (c, Call (c, fn, [], [asArray sz arg; typeId arr; preserveZero])))
         
-        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [obj]) ->
+        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [obj; preserveZero]) ->
           let sz =
             match obj.Type with
               | Ptr t ->
@@ -631,7 +631,7 @@ namespace Microsoft.Research.Vcc
               | _ -> 
                 helper.Error (c.Token, 9684, "wrong type of object in from_bytes(...)", None)
                 1
-          Some (Stmt (c, Call (c, fn, [], [asArray (mkInt sz) obj; typeId obj])))
+          Some (Stmt (c, Call (c, fn, [], [asArray (mkInt sz) obj; typeId obj; preserveZero])))
         | CallMacro (c, "_vcc_from_bytes", _, _) ->
           helper.Error (c.Token, 9685, "wrong number of arguments to from_bytes(...)", None)
           None

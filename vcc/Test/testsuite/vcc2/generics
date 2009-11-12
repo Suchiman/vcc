@@ -190,7 +190,7 @@ void call_zero(struct S *s)
 {
     to_bytes(s);
     zero<struct S>((void*) s, sizeof(*s));
-    from_bytes(s);
+    from_bytes(s, false);
 }
 `
 Verification of call_zero succeeded.
