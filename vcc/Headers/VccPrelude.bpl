@@ -1088,6 +1088,14 @@ axiom (forall S:$state, p:$ptr, c:$ptr, f:$field, i:int, sz:int, t:$ctype ::
     $mem(S, $idx($dot(p, f), i, t)) == $fetch_from_domain($claim_version(c), $idx($dot(p, f), i, t))
     );
 
+axiom (forall S:$state, p:$ptr, c:$ptr, i:int, sz:int, t:$ctype :: 
+  {$valid_claim(S, c), $in_claim_domain($as_array(p, t, sz), c), $mem(S, $idx(p, i, t)), $is_primitive(t) }
+  {$by_claim(S, c, p, $idx(p, i, t)), $is_primitive(t), $is_array(S,p,t,sz) }
+  $good_state(S) &&
+  $closed(S, c) && $in_claim_domain($as_array(p, t, sz), c) && $is_primitive(t) && 0 <= i && i < sz ==> 
+    $mem(S, $idx(p, i, t)) == $fetch_from_domain($claim_version(c), $idx(p, i, t))
+    );
+
 procedure $write_ref_cnt(p:$ptr, v:int);
   modifies $s;
   ensures old($typemap($s)) == $typemap($s);

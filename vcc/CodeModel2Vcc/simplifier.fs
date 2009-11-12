@@ -603,6 +603,10 @@ namespace Microsoft.Research.Vcc
               if f.IsVolatile then
                 helper.Error (ec.Token, 9629, "by_claim(...) can only refer to a non-volatile field", Some(f.Token))
               Some (Expr.Macro (ec, "by_claim", [self c; self obj; self ptr]))
+            | Expr.Deref (ec', (Index (_, obj, _) as ptr)) ->
+              if not ec'.Type._IsInteger && not ec'.Type._IsPtr then
+                helper.Error (ec.Token, 9629, "by_claim(...) can only refer to arrays of primitive types")
+              Some (Expr.Macro (ec, "by_claim", [self c; self obj; self ptr]))
             | _ ->
               helper.Error (ec.Token, 9628, "by_claim(...) expects field or embedded array reference as a second parameter", None)
               None            
