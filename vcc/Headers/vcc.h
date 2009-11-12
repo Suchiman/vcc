@@ -40,7 +40,7 @@ typedef int bool;
 #define join_arrays(...)
 #define split_array(...)
 #define to_bytes(...)
-#define from_bytes(x)
+#define from_bytes(...)
 
 #define block
 #define atomic(...)

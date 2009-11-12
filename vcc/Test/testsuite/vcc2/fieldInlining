@@ -202,14 +202,14 @@ struct S1 {
 
 void foo1() {
     byte x[sizeof(struct S1)];
-    from_bytes((struct S1*)x);
+    from_bytes((struct S1*)x, false);
     assume(0); // avoid stack-free check here
 }
 
 
 void foo3() {
     byte x[sizeof(struct S3)];
-    from_bytes((struct S3*)x);
+    from_bytes((struct S3*)x, false);
     assume(0); // avoid stack-free check here
 }
 `
@@ -230,14 +230,14 @@ struct S1 {
 
 void foo1() {
     byte x[sizeof(struct S1)];
-    from_bytes((struct S1*)x);
+    from_bytes((struct S1*)x, false);
     assume(0); // avoid stack-free check here
 }
 
 
 void foo3() {
     byte x[sizeof(struct S3)];
-    from_bytes((struct S3*)x);
+    from_bytes((struct S3*)x, false);
     assume(0); // avoid stack-free check here
 }
 `

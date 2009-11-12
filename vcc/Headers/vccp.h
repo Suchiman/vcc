@@ -309,7 +309,7 @@ void _vcc_split_array(obj_t arr, _vcc_size_t sz)
   writes(extent(arr));
 void _vcc_to_bytes(obj_t obj)
   writes(extent(obj));
-void _vcc_from_bytes(obj_t obj)
+void _vcc_from_bytes(obj_t obj, bool preserve_zero)
   writes(extent(obj));
 
 #define join_arrays _vcc_join_arrays
