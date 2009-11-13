@@ -23,7 +23,7 @@ Verification of t_th#adm succeeded.
 `#include <vcc2test.h>
 
 struct foo {
-    vcc(no_inline) unsigned int arr[20];
+    vcc(as_array) unsigned int arr[20];
     int y;
 
     invariant(keeps(as_array(arr, 20)))
@@ -49,7 +49,7 @@ writes(extent(f))
   wrap(f);
 }
 struct fail1 {
-  vcc(no_inline) unsigned int arr[10];
+  vcc(as_array) unsigned int arr[10];
   invariant(arr[0] == 7) // you don't own it
 };
 `
