@@ -17,6 +17,5 @@ bool do_memory_operation(UINT32 *mm_4, UINT32 max_ppx,
 
 
 `
-testcase(13,22) : error VC9636: wrong number of arguments in call to function 'pf_reason'; was 6, should be 1
-testcase(5,1)-(5,100) : (Location of symbol related to previous error.)
+testcase(13,22) : error VC0000: No overload for method '__Globals__.pf_reason' takes '6' arguments.
 `
