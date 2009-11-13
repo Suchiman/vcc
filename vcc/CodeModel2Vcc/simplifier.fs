@@ -44,7 +44,6 @@ namespace Microsoft.Research.Vcc
                   "not_shared",             "Sp";
                   "ref_cnt",                "Sp";
                   "valid_claim",            "Sp";
-                  "skip_wf",                "";
                   "containing_struct",      "pp";
                   "depends",                "sSpp";
                   "dont_instantiate",       "p";

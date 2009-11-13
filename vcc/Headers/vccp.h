@@ -430,9 +430,6 @@ template<typename T>
 T _vcc_in_state(state_t state, T expr);
 #define in_state(state, expr) _vcc_in_state(state, expr)
 
-state_t _vcc_skip_wf();
-#define skip_wf(e) _vcc_in_state(_vcc_skip_wf(), e)
-
 state_t _vcc_current_state();
 #define current_state() _vcc_current_state()
 
