@@ -323,14 +323,6 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
-    let deprecateSkipWf self = function
-      | Expr.Old (ec, (Macro (_, "_vcc_skip_wf", []) as skipwf), e) ->
-        helper.Warning(skipwf.Token, 9119, "The use of skip_wf(...) is deprecated")
-        Some(self e)
-      | _ -> None
-
-    // ============================================================================================================
-
     let rec flattenOld _ = function
       | Old(ec, (Expr.Macro(_, "prestate", []) as ps), expr) ->
         let removeOldForPrestate self = function
@@ -373,7 +365,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-stmt-expressions", Helper.Expr assignExpressionStmts)
     helper.AddTransformer ("final-linearize", Helper.Decl (ToCoreC.linearizeDecls helper))
     helper.AddTransformer ("final-keeps-warning", Helper.Decl (List.map theKeepsWarning))
-    helper.AddTransformer ("final-deprecate-skipwf", Helper.Expr deprecateSkipWf)
     helper.AddTransformer ("final-dynamic-owns", Helper.Decl errorForMissingDynamicOwns)
     helper.AddTransformer ("final-error-old", Helper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", Helper.Decl errorForStateWriteInPureContext)

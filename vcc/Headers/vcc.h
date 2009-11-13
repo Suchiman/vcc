@@ -84,7 +84,6 @@ typedef int bool;
 #define unclaim(...)
 #define usevccoptions(...)
 #define by_claim(c, e) (e)
-#define skip_wf(_EXPR_) (_EXPR_)
 #define SPEC_TYPE(name)
 #define generic_instance(_F_, ...) (_F_)
 #define known(_EXPR_, _KNOWN_VALUE_) (_EXPR_)
