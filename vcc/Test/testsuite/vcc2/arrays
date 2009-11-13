@@ -642,7 +642,7 @@ Verification of bar succeeded.
 #include <vcc.h>
 
 struct S {
-  vcc(no_inline) int a[10];
+  vcc(as_array) int a[10];
   invariant(keeps(as_array(a,10)))
 };
 

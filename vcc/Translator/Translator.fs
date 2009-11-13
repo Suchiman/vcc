@@ -2102,7 +2102,7 @@ namespace Microsoft.Research.Vcc
         let fieldoff = bEq (bCall "$field_offset" [fieldRef]) (bInt f.ByteOffset)
         
         let isActive = bEq (bCall "$active_option" [s; p]) fieldRef
-        let noInline = if TransUtil.hasBoolAttr "no_inline" f.CustomAttr then "no_inline_" else ""
+        let noInline = if TransUtil.hasBoolAttr "as_array" f.CustomAttr then "no_inline_" else ""
         let emb =
           match f.Type with
             | C.Array (_, sz) -> 
@@ -2141,7 +2141,7 @@ namespace Microsoft.Research.Vcc
           B.Decl.Axiom (bCall "$static_field_properties" [fieldRef; we]) ::
             match f.Type with
               | C.Array (t, sz) when not t.IsComposite ->
-                if TransUtil.hasBoolAttr "no_inline" f.CustomAttr then
+                if TransUtil.hasBoolAttr "as_array" f.CustomAttr then
                   []
                 elif f.IsVolatile then
                   [B.Decl.Axiom (bCall "$is_primitive_embedded_volatile_array" [fieldRef; bInt sz; dott])]
@@ -2330,7 +2330,7 @@ namespace Microsoft.Research.Vcc
         let isUnion = td.Kind = C.Union
         let isComp (f:C.Field) =
           match f.Type with
-            | C.Array _ when TransUtil.hasBoolAttr "no_inline" f.CustomAttr -> true
+            | C.Array _ when TransUtil.hasBoolAttr "as_array" f.CustomAttr -> true
             | _ -> f.Type.IsComposite
 
         let p = er "#p"
@@ -2433,7 +2433,7 @@ namespace Microsoft.Research.Vcc
             match fld.Type with
               | C.Array (t, sz) -> 
                 let add = [toTypeId t; bInt sz]
-                if TransUtil.hasBoolAttr "no_inline" fld.CustomAttr then
+                if TransUtil.hasBoolAttr "as_array" fld.CustomAttr then
                   let args = (if meta then [s] else []) @ [q; bCall "$as_array" (dot :: add)]
                   bCall extentName args
                 else
@@ -2482,7 +2482,7 @@ namespace Microsoft.Research.Vcc
           let hasProp (fld:C.Field) dot =
             match fld.Type with
               | C.Array (t, sz) ->
-                if TransUtil.hasBoolAttr "no_inline" fld.CustomAttr then
+                if TransUtil.hasBoolAttr "as_array" fld.CustomAttr then
                   prop (bCall "$as_array" [dot; toTypeId t; bInt sz])
                 else 
                   let idx = bCall "$idx" [dot; er "#i"; toTypeId t]
