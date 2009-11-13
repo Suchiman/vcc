@@ -754,12 +754,7 @@ namespace Microsoft.Research.Vcc
               | _ -> ()
           let trField (f:Field) =
             processType f.Type
-            let inlineRequested = 
-              let inlineAttr = function
-                | CustomAttr.VccAttr("inline", "true") -> true
-                | _ -> false
-              List.exists inlineAttr
-            if (not (inlineRequested f.CustomAttr)) then [f] else
+            if (not (hasBoolAttr "inline" f.CustomAttr)) then [f] else
               match f.Type with 
                 | Type.Ref td' when ((td.Kind = Struct && td'.Kind = Struct) || td'.Fields.Length <= 1) ->
                   let newFields = 
