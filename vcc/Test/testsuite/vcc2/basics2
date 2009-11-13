@@ -161,4 +161,43 @@ do { } while(known(i, false));
 `
 Verification of foo succeeded.
 Verification of bar failed.
-testcase(10,25) : error VC8533: Assertion 'i has the value ((bool)0) specified by known(...)' did not verify.`
+testcase(10,25) : error VC8533: Assertion 'i has the value ((bool)0) specified by known(...)' did not verify.
+`
+
+#include <vcc2test.h>
+
+struct S {  int a; };
+
+void void a(struct S *x)
+  requires(x == NULL);
+
+void a(int *x)
+  requires(x != NULL);
+
+void b() {
+    int x;
+    a(&x);
+}
+
+void c() {
+  struct S s;
+  a(&s);
+}
+
+void d() {
+  a((struct S *)NULL);
+}
+
+void e() {
+  a((int *)NULL);
+}
+`
+Verification of b succeeded.
+Verification of c failed.
+testcase(19,3) : error VC9502: Call 'a(&s)' did not verify.
+testcase(7,14) : error VC9599: (related information) Precondition: 'x == ((void*)0)'.
+Verification of d succeeded.
+Verification of e failed.
+testcase(27,3) : error VC9502: Call 'a((int *)((void*)0))' did not verify.
+testcase(10,14) : error VC9599: (related information) Precondition: 'x != ((void*)0)'.
+`

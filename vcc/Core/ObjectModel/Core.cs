@@ -650,8 +650,22 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     //^ [Pure]
     public override IEnumerable<IMethodDefinition> GetMethodGroupMethods(IMethodDefinition methodGroupRepresentative, uint argumentCount) {
-      if (methodGroupRepresentative.IsForwardReference) return IteratorHelper.GetSingletonEnumerable(methodGroupRepresentative);
+      if (methodGroupRepresentative.IsForwardReference) return GetMatchingForwardDeclarations(methodGroupRepresentative, argumentCount);
       return base.GetMethodGroupMethods(methodGroupRepresentative, argumentCount);
+    }
+
+    private IEnumerable<IMethodDefinition> GetMatchingForwardDeclarations(IMethodDefinition methodGroupRepresentative, uint argumentCount) {
+      // forward declarations cannot be found with 'GetMembersNamed'; thus we have to go looking for them the long way
+      IName methodName = methodGroupRepresentative.Name;
+      foreach (var member in methodGroupRepresentative.ContainingTypeDefinition.Members) {
+        if (member.Name == methodName) {
+          var memberAsMethod = member as IMethodDefinition;
+          if (memberAsMethod != null) {
+            if (memberAsMethod.ParameterCount == argumentCount || 
+                memberAsMethod.ParameterCount < argumentCount && memberAsMethod.AcceptsExtraArguments) yield return memberAsMethod;
+          }
+        }
+      }
     }
 
     /// <summary>
