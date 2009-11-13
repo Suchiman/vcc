@@ -90,7 +90,7 @@ namespace Microsoft.Research.Vcc
             | false, _ -> elements.Add(x, true); x :: loop xs
       loop l
 
-    let hasRecordAttr = List.exists (function C.VccAttr ("record", _) -> true | _ -> false)
+    let hasBoolAttr n = List.exists (function C.VccAttr (n', "true") -> n = n' | _ -> false)
 
     let convCustomAttributes tok (attrs : ICustomAttribute seq) = 
       let getAttrTypeName (attr:ICustomAttribute) = TypeHelper.GetTypeName(attr.Type.ResolvedType)
@@ -292,7 +292,7 @@ namespace Microsoft.Research.Vcc
             | _ -> ()
 
           let contractsOnly = contractsOnly && 
-                              not (List.exists (function | C.VccAttr (n, "true") when n = "atomic_inline" -> true | _ -> false) decl.CustomAttr) && 
+                              not (hasBoolAttr "atomic_inline" decl.CustomAttr) && 
                               not (List.exists (fun n -> n = decl.Name) requestedFunctions)
           // make sure that if the current function is explicitly requested or atomic_inline, then process its body
           // coming here again to process the body in a second round does not work.
@@ -561,7 +561,7 @@ namespace Microsoft.Research.Vcc
                           | (true, parent) -> Some parent
                           | _ -> None
                         | _ -> None
-                      IsSpec = specFromContract || hasRecordAttr customAttr
+                      IsSpec = specFromContract || hasBoolAttr "record" customAttr
                       IsVolatile = false
                       UniqueId = C.unique()
                     } : C.TypeDecl
