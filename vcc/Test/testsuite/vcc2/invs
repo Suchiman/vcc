@@ -64,6 +64,13 @@ typedef struct vcc(volatile_owns) vcc(dynamic_owns) _rwkey{
   invariant(unchanged(owns(this)) || inv2(&ghost))
 } rwkey;
 
+typedef struct vcc(volatile_owns) vcc(dynamic_owns) _rwkey2{
+  int data;
+  invariant(unchanged(closed(this)) || inv2(&ghost))
+  invariant(unchanged(owns(this)) || inv2(&ghost))
+} rwkey2;
+
+
 typedef struct vcc(dynamic_owns) p
 {
 
@@ -141,6 +148,7 @@ f(
 }
 `
 Verification of _rwkey#adm succeeded.
+Verification of _rwkey2#adm succeeded.
 Verification of p#adm succeeded.
 Verification of p##Ipi#adm succeeded.
 Verification of _ownerkpr#adm succeeded.
