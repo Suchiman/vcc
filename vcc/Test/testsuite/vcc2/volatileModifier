@@ -554,3 +554,42 @@ testcase(0,0) : error VC9599: (related information) Precondition: 'the owner has
 Verification of foo2 failed.
 testcase(120,3) : error VC8532: Assertion 's is atomically updated in call to _vcc_set_closed_owns(s, _vcc_set_empty())' did not verify.
 `
+
+#include <vcc.h>
+
+typedef int *PINT;
+
+struct T { int a; };
+
+typedef struct T *PT;
+
+struct vcc(volatile_owns) S {
+  PT volatile x;
+  invariant(keeps(x))
+};
+
+void foo(struct S *p, struct T *t)
+  requires(wrapped(p))
+  requires(wrapped(t))
+  writes(t)
+{
+  atomic(p) {
+    set_closed_owner(t, p);
+    p->x = t;
+  }
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+struct S {
+    int dummy;
+    spec(claim_t volatile c;)
+    spec(int a;)
+    invariant(c!=&a)
+};
+`
+Verification of S#adm succeeded.
+`

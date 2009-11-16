@@ -754,10 +754,6 @@ namespace Microsoft.Research.Vcc.Parsing {
           if (this.typedefDecls.TryGetValue(tdn.TypedefName.Name.Value, out typedefDecl)) {
             if (typedefDecl.IsConst) result |= FieldDeclaration.Flags.ReadOnly;
             if (typedefDecl.IsVolatile) result |= FieldDeclaration.Flags.Volatile;
-
-            if (this.TypeExpressionHasPointerType(typedefDecl.Type) != null) {
-              break; //specifiers after a typedef belong to the field
-            }
           }
         }
       }
@@ -906,6 +902,7 @@ namespace Microsoft.Research.Vcc.Parsing {
               }
             }
             result = new VccNamedTypeExpression(tdns.TypedefName, false);
+            break; // further specifiers belong to the field, not the type
           }
         }
         ScopedTypeNameSpecifier/*?*/ stns = specifier as ScopedTypeNameSpecifier;

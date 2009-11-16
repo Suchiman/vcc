@@ -593,12 +593,7 @@ namespace Microsoft.Research.Vcc
                         | _ -> false, false
                     let ptrDeclaredAsVolatile = 
                       match f.Type.ResolvedType with
-                        | :? IPointerType ->
-                          match f.Type.ResolvedType with 
-                            | :? SystemDefinedStructuralType as t when t.IsModified -> 
-                              let isVolatileCustomModifier (cm : ICustomModifier) = TypeHelper.GetTypeName(cm.Modifier) = "System.Runtime.CompilerServices.IsVolatile"
-                              Seq.exists isVolatileCustomModifier t.CustomModifiers
-                            | _ -> false
+                        | :? IPointerType as pt -> VccCompilationHelper.IsVolatilePointer(pt)
                         | _ -> false
                     let (fldVolatile, pointsToVolatile) =
                       if fldDeclaredAsPointer then (ptrDeclaredAsVolatile, fldMarkedVolatile)
@@ -617,6 +612,7 @@ namespace Microsoft.Research.Vcc
                           helper.Error(tok, 9632, "fields of map type must be declared as specification fields", None)
                           true
                         | _ -> isSpec
+                    //dbgBreak()
                     let res =
                       { Name = f.Name.Value
                         Token = tok
