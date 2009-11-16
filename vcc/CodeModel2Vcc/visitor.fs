@@ -191,7 +191,12 @@ namespace Microsoft.Research.Vcc
             let sanitizedTypeName (t : C.Type) = t.ToString().Replace(' ', '_').Replace('*', '.')
             let nameWhenOverloadsArePresent methName (meth : ISignature) =
               let typeName t = sanitizedTypeName (this.DoType(t))
-              let parTypes = [| for p in meth.Parameters -> typeName p.Type |]
+              let parKind (p:IParameterTypeInformation) =
+                match p with
+                  | :? Microsoft.Research.Vcc.VccParameterDefinition as vcp -> 
+                    if vcp.IsOut then "out_" elif vcp.IsSpec then "spec_" else ""
+                  | _ -> ""
+              let parTypes = [| for p in meth.Parameters -> parKind p + typeName p.Type |]
               let parTypeString = if parTypes.Length = 0 then "" else "#" + System.String.Join("#", parTypes)
               methName + "#overload#" + (typeName meth.Type)  + parTypeString
             let updatedNameWhenOverloadsArePresent (fn : C.Function) =
