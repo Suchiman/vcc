@@ -310,7 +310,7 @@ namespace Microsoft.Research.Vcc
         if hd.Name = name then hd
         else find xs
       | _ :: xs -> find xs
-      | [] -> helper.Panic ("cannot find internal function " + name)
+      | [] -> helper.Panic ("cannot find internal function " + name + ". Forgotten #include <vcc.h>?")
     find helper.TopDecls
            
     

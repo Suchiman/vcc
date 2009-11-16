@@ -1343,7 +1343,7 @@ namespace Microsoft.Research.Vcc
         let findTypeOrDie name =
           match typeNameMap.TryGetValue(name) with
             | (true, f) -> f
-            | _ -> oopsLoc oldValue ("cannot find internal type " + name); die()
+            | _ -> oopsLoc oldValue ("cannot find internal type " + name + ". Forgotten #include <vcc.h>?"); die()
         let ts = findTypeOrDie "state_t"
         let expr = this.DoExpression oldValue.Expression
         // the type of expr and old(expr) may disagree in CCI, so we fix it up here
@@ -1445,7 +1445,7 @@ namespace Microsoft.Research.Vcc
             let findFunctionOrDie name =
               match methodNameMap.TryGetValue(name) with
                 | true, f -> f
-                | _ -> oopsLoc whileDoStatement ("cannot find internal function " + name); die()
+                | _ -> oopsLoc whileDoStatement ("cannot find internal function " + name + ". Forgotten #include <vcc.h>?"); die()
             let wrap = findFunctionOrDie "_vcc_wrap"
             let unwrap = findFunctionOrDie "_vcc_unwrap"
             stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" arg), unwrap, [], [arg]);  body; C.Expr.Call((stmtToken "wrap(@@)" arg), wrap, [], [arg]) ] )

@@ -1062,9 +1062,13 @@ namespace Microsoft.Research.Vcc
           | Top.TypeDecl(td) -> pushDownOne true td
           | Top.FunctionDecl({Body = Some(body)}) ->
             let pdLocalDecls self = function
-              | VarDecl(_, ({Type = Ptr(Volatile(Type.Ref(td)))} as v)) -> 
+              | VarDecl(_, ({Type = PtrSoP(Volatile(Type.Ref(td)), isSpec)} as v)) -> 
                 let td' = mkVolTd td
-                volatileVars.Add(v, {v with Type = Type.MkPtrToStruct(td')})
+                volatileVars.Add(v, {v with Type = Type.MkPtr(Type.Ref(td'), isSpec || td'.IsSpec)})
+                false
+              | VarDecl(_, ({Type = PtrSoP(Volatile(t), isSpec)} as v)) ->
+                helper.Warning(d.Token, 9120, "Ignoring volatile modifier on pointer to non-structured type '" + t.ToString() + "'")
+                volatileVars.Add(v, {v with Type = Type.MkPtr(t, isSpec)})
                 false
               | _ -> true
             body.SelfVisit pdLocalDecls
