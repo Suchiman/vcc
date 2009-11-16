@@ -473,16 +473,25 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
-    public static bool IsSpecPointer(IPointerType type) {
+    public static bool HasModifier(IPointerType type, INamespaceTypeReference modifier) {
       var modifiedPtr = type as IModifiedTypeReference;
       if (modifiedPtr != null) {
-        foreach (var modifier in modifiedPtr.CustomModifiers) {
-          if (modifier.Modifier.InternedKey == type.PlatformType.SystemDiagnosticsContractsContract.InternedKey)
+        foreach (var tmodifier in modifiedPtr.CustomModifiers) {
+          if (tmodifier.Modifier.InternedKey == modifier.InternedKey)
             return true;
         }
       }
       return false;
     }
+
+    public static bool IsSpecPointer(IPointerType type) {
+      return HasModifier(type, type.PlatformType.SystemDiagnosticsContractsContract);
+    }
+
+    public static bool IsVolatilePointer(IPointerType type) {
+      return HasModifier(type, type.PlatformType.SystemRuntimeCompilerServicesIsVolatile);
+    }
+
 
     //^ [Pure]
     protected override Expression Conversion(Expression expression, ITypeDefinition targetType, bool isExplicitConversion) {
@@ -1049,8 +1058,11 @@ namespace Microsoft.Research.Vcc {
 
     protected override string GetPointerTypeName(IPointerTypeReference pointerType, NameFormattingOptions formattingOptions) {
       IPointerType pt = pointerType as IPointerType;
-      if (pt != null) 
-        return this.GetTypeName(pt.TargetType, formattingOptions) + (VccCompilationHelper.IsSpecPointer(pt) ? "^" : "*");
+      if (pt != null) {
+        var ptrSym = VccCompilationHelper.IsSpecPointer(pt) ? "^" : "*";
+        var vol = VccCompilationHelper.IsVolatilePointer(pt) ? "volatile " : "";
+        return vol + this.GetTypeName(pt.TargetType, formattingOptions) + ptrSym;
+      }
       return base.GetPointerTypeName(pointerType, formattingOptions);
     }
 
