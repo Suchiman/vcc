@@ -55,12 +55,16 @@ namespace Microsoft.Research.Vcc
 
         methodVerificationTime = 0;
         double startTime = GetTime();
+        int threads = 1;
+        if (commandLineOptions.RunTestSuiteMultiThreaded == 0) threads = System.Environment.ProcessorCount;
+        else if (commandLineOptions.RunTestSuiteMultiThreaded > 0) threads = commandLineOptions.RunTestSuiteMultiThreaded;
+        
 
         foreach (FileInfo fi in new DirectoryInfo(fileName).GetFiles("*", SearchOption.TopDirectoryOnly)) {
           if (fi.Name.StartsWith(".")) continue;
           if (fi.Name.Contains(vccSplitSuffix)) continue;
           if (fi.Extension == ".i" || fi.Extension == ".bpl" || fi.Extension == ".h") continue;
-          if (!TestRunner.RunTestSuite(fi.DirectoryName, fi.Name, new StreamReader(fi.Open(FileMode.Open, FileAccess.Read)), commandLineOptions, !fi.DirectoryName.Contains("WithErrors")))
+          if (!TestRunner.RunTestSuite(fi, commandLineOptions))
             errorCount++;
         }
 
@@ -88,13 +92,18 @@ namespace Microsoft.Research.Vcc
         }
         return true;
       } else {
-        return TestRunner.RunTestSuite(Path.GetDirectoryName(fileName), fileName, File.OpenText(fileName), commandLineOptions, true);
+        return TestRunner.RunTestSuite(new FileInfo(fileName), commandLineOptions);
       }
     }
 
     public static string currentTestcaseName;
 
-    static bool RunTestSuite(string directoryName, string suiteName, TextReader instream, VccOptions commandLineOptions, bool verify) {
+    static bool RunTestSuite(FileInfo testFile, VccOptions commandLineOptions) {
+      using (var reader = new StreamReader(testFile.Open(FileMode.Open, FileAccess.Read)))
+        return RunTestSuite(testFile.DirectoryName, testFile.Name, reader, commandLineOptions);
+    }
+
+    static bool RunTestSuite(string directoryName, string suiteName, TextReader instream, VccOptions commandLineOptions) {
       System.Diagnostics.Debug.Listeners.Remove("Default");
       HostEnvironment hostEnvironment = new HostEnvironment();
       var errorHandler = new CciErrorHandler(commandLineOptions);
@@ -238,7 +247,7 @@ namespace Microsoft.Research.Vcc
           else
             testrunTimeStats = null;
           try {
-            int returnCode = RunTest(hostEnvironment, suiteNameWithoutExt, fileNameWithoutExt, source.ToString(), actualOutput, commandLineOptions, compilerParameters, testCaseParameters, verify);
+            int returnCode = RunTest(hostEnvironment, suiteNameWithoutExt, fileNameWithoutExt, source.ToString(), actualOutput, commandLineOptions, compilerParameters, testCaseParameters);
             if (returnCode != 0)
               actualOutput.Append("Non zero return code: " + returnCode);
           } catch (System.Reflection.TargetInvocationException e) {
@@ -309,8 +318,7 @@ namespace Microsoft.Research.Vcc
     }
 
     private static int RunTest(HostEnvironment hostEnvironment, string suiteName, string fileNameWithoutExt,
-                               string test, StringBuilder actualOutput, VccOptions commandLineOptions, List<string> compilerParameters, List<string> testCaseParameters,
-                               bool verify) {
+                               string test, StringBuilder actualOutput, VccOptions commandLineOptions, List<string> compilerParameters, List<string> testCaseParameters) {
 
       VccCommandLineHost.ErrorCount = 0;
       bool keepPreprocessorOutput = false;

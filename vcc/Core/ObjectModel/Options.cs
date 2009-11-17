@@ -19,6 +19,7 @@ namespace Microsoft.Research.Vcc
     public bool NoPreprocessor;
     public List<string> PreprocessorOptions = new List<string>();
     public bool RunTestSuite;
+    public int RunTestSuiteMultiThreaded = -1;
     public bool TranslateToBPL;
     public bool Verify;
     public List<string> Z3Options = new List<string>();
@@ -276,6 +277,21 @@ namespace Microsoft.Research.Vcc
           this.options.TimeStats = true;
           this.options.TimeStatsForVs = true;
           return true;
+        } else {
+          string mt = this.ParseNamedArgument(arg, "suitemt", "smt");
+          int threads = 0;
+          if (!String.IsNullOrEmpty(mt)) {
+            if (Int32.TryParse(mt, out threads)) {
+              this.options.RunTestSuiteMultiThreaded = threads;
+              return true;
+            } else {
+              return false;
+            }
+          }
+          if (this.ParseName(arg, "suitemt", "smt")) {
+            this.options.RunTestSuiteMultiThreaded = 0;
+            return true;
+          }
         }
         return false;
         case 't':
