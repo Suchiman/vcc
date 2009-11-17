@@ -1971,8 +1971,8 @@ namespace Microsoft.Research.Vcc
               let ls = if v.Kind = C.Parameter then cevVarIntro b.Token true v else []
               if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then []
               else
-                let (v, w) = trWhereVar v
-                [cmt(); B.Stmt.VarDecl (v, w)] @ ls
+                let (v', w) = trWhereVar v
+                [cmt(); B.Stmt.VarDecl (v', w); assumeLocalIs b.Token v] @ ls
 
             | C.Expr.Goto (c, l) -> [cmt (); B.Stmt.Goto (c.Token, [trLabel l])]
             | C.Expr.Label (c, l) -> [B.Stmt.Label (c.Token, trLabel l)]
