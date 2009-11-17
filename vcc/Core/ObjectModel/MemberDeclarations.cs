@@ -580,7 +580,7 @@ namespace Microsoft.Research.Vcc {
       //and thus cannot depend on it being initialized. Instead, it searches the members of each compilation part separately.
 
       //Check if the compilation part containing this declaration has a matching definition
-      foreach (ITypeDeclarationMember tdmem in this.CompilationPart.GlobalDeclarationContainer.GetTypeDeclarationMembersNamed(this.Name.UniqueKey)) { //TODO: lookup by name
+      foreach (ITypeDeclarationMember tdmem in this.CompilationPart.GlobalDeclarationContainer.GetTypeDeclarationMembersNamed(this.Name.UniqueKey)) { //TODO: handle overloads!!!
         FunctionDefinition/*?*/ fdef = tdmem as FunctionDefinition;
         if (fdef != null) {
           this.TransferContract(fdef.GlobalMethodDefinition);
@@ -1289,6 +1289,9 @@ namespace Microsoft.Research.Vcc {
     }
     readonly NameDeclaration identifier;
 
+    public override string ToString() {
+      return identifier.ToString();
+    }
   }
 
   internal sealed class InitializedDeclarator : Declarator {
