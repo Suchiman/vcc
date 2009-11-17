@@ -294,7 +294,6 @@ namespace Microsoft.Research.Vcc
                   let self = fun (e : Expr) -> e.SelfMap(repl' (qd.Variables @ vars) prestate)
                   Some(Quant(ec, {qd with Body = self qd.Body}))
                 | Macro(ec, "vs_updated", [Dot(dc, e1, f); e2]) when hasQVar vars e1 || hasQVar vars e2 ->
-                  //dbgBreak()
                   let e1' = self e1
                   let e2' = self e2
                   Some(Macro(ec, "vs_updated", [Dot(dc, e1', f); e2']))

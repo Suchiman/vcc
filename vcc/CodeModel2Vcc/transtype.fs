@@ -1008,6 +1008,10 @@ namespace Microsoft.Research.Vcc
         | _ -> false
         
       let subsFields self = function
+        | VarDecl(ec, v) ->
+          match volatileVars.TryGetValue(v) with
+            | true, v' -> Some(VarDecl(ec, v'))
+            | _ -> None
         | Expr.Ref(ec, v) ->
           match volatileVars.TryGetValue(v) with
             | true, v' -> Some(Expr.Ref({ec with Type = v'.Type}, v'))
@@ -1174,7 +1178,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("type-inline-fields", Helper.Decl inlineFieldsByRequest)
     helper.AddTransformer ("type-fixup-single-member-unions", Helper.Decl turnSingleMemberUnionsIntoStructs)
     helper.AddTransformer ("type-check-records", Helper.Decl checkRecordValidity)
-    helper.AddTransformer ("type-handle-volatile-modifiers", Helper.Decl handleVolatileModifiers)
+    helper.AddTransformer ("type-volatile-modifiers", Helper.Decl handleVolatileModifiers)
     helper.AddTransformer ("type-struct-equality", Helper.Expr handleStructAndRecordEquality)
     helper.AddTransformer ("type-constant-arrays", Helper.Decl addAxiomsForReadsFromConstArrays)
     helper.AddTransformer ("type-end", Helper.DoNothing)
