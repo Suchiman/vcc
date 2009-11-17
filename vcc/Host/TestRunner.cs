@@ -58,14 +58,24 @@ namespace Microsoft.Research.Vcc
         int threads = 1;
         if (commandLineOptions.RunTestSuiteMultiThreaded == 0) threads = System.Environment.ProcessorCount;
         else if (commandLineOptions.RunTestSuiteMultiThreaded > 0) threads = commandLineOptions.RunTestSuiteMultiThreaded;
+
+        TestRunnerMT trmt = threads > 1 ? new TestRunnerMT(threads, commandLineOptions) : null;
         
 
         foreach (FileInfo fi in new DirectoryInfo(fileName).GetFiles("*", SearchOption.TopDirectoryOnly)) {
           if (fi.Name.StartsWith(".")) continue;
           if (fi.Name.Contains(vccSplitSuffix)) continue;
           if (fi.Extension == ".i" || fi.Extension == ".bpl" || fi.Extension == ".h") continue;
-          if (!TestRunner.RunTestSuite(fi, commandLineOptions))
-            errorCount++;
+
+          if (trmt != null) trmt.Queue(fi);
+          else {
+            if (!TestRunner.RunTestSuite(fi, commandLineOptions))
+              errorCount++;
+          }
+        }
+
+        if (trmt != null) {
+          errorCount += trmt.Run();
         }
 
         foreach (DirectoryInfo di in new DirectoryInfo(fileName).GetDirectories("*", SearchOption.TopDirectoryOnly)) {
@@ -381,5 +391,118 @@ namespace Microsoft.Research.Vcc
     }
 
     public static StringBuilder testrunTimeStats = new StringBuilder();
+
+    class TestRunnerMT
+    {
+      readonly VccOptions commandLineOptions;
+      readonly int threadCount;
+      Queue<FileInfo> queue = new Queue<FileInfo>();
+      private object lkQueue = new object();
+      private object lkOutput = new object();
+      int errorCount;
+      int runningThreadCount;
+
+      public TestRunnerMT(int threadCount, VccOptions commandLineOptions) {
+        this.threadCount = threadCount;
+        this.commandLineOptions = commandLineOptions;
+      }
+
+      public void Queue(FileInfo job) {
+        this.queue.Enqueue(job);
+      }
+
+      private System.Diagnostics.ProcessStartInfo VccStartInfo(IEnumerable<FileInfo> jobs) {
+        System.Diagnostics.ProcessStartInfo result = new System.Diagnostics.ProcessStartInfo();
+        result.Arguments = "/s";
+        foreach (var job in jobs) { result.Arguments += " \"" + job.FullName + "\""; }
+        foreach (var boogieOption in this.commandLineOptions.BoogieOptions) { result.Arguments += " /b:" + boogieOption; }
+        result.CreateNoWindow = true;
+        result.FileName = typeof(TestRunnerMT).Assembly.Location;
+        result.UseShellExecute = false;
+        result.RedirectStandardError = true;
+        result.RedirectStandardOutput = true;
+        return result;
+      }
+
+      private void CopyFileToStream(string path, TextWriter writer) {
+        string[] lines = File.ReadAllLines(path);
+        foreach (var line in lines) { writer.WriteLine(line); }
+      }
+
+      private static Regex TestPassed = new Regex("^\\w+ passed$");
+
+      private void RunJobSequence(IEnumerable<FileInfo> jobs) {
+        using (System.CodeDom.Compiler.TempFileCollection tempFiles = new System.CodeDom.Compiler.TempFileCollection()) {
+          string stdOutFileName = tempFiles.AddExtension("out", false);
+          string stdErrFileName = tempFiles.AddExtension("err", false);
+          using (var outWriter = new StreamWriter(stdOutFileName))
+          using (var errWriter = new StreamWriter(stdErrFileName))
+          using (var vccProc = System.Diagnostics.Process.Start(VccStartInfo(jobs))) {
+            vccProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.AboveNormal;
+            vccProc.OutputDataReceived += delegate(object sender, System.Diagnostics.DataReceivedEventArgs data) {
+              if (!String.IsNullOrEmpty(data.Data)) {
+                // write 'passed' message out immediately so we show progress
+                if (TestPassed.IsMatch(data.Data)) { lock (lkOutput) { Console.WriteLine(data.Data); } }
+                else outWriter.WriteLine(data.Data);
+              }
+            };
+            vccProc.ErrorDataReceived += delegate(object sender, System.Diagnostics.DataReceivedEventArgs data) {
+              if (!String.IsNullOrEmpty(data.Data)) 
+                errWriter.WriteLine(data.Data);
+            };
+
+            vccProc.BeginOutputReadLine();
+            vccProc.BeginErrorReadLine();
+            vccProc.WaitForExit();
+
+            if (vccProc.ExitCode != 0) System.Threading.Interlocked.Increment(ref this.errorCount);
+          }
+
+          lock (lkOutput) {
+            CopyFileToStream(stdOutFileName, System.Console.Out);
+            CopyFileToStream(stdErrFileName, System.Console.Error);
+          }
+        }
+      }
+
+      private void RunJobs() {
+        System.Threading.Interlocked.Increment(ref this.runningThreadCount);
+        while (true) {
+          List<FileInfo> jobSequence = null;
+          lock (lkQueue) {
+            if (queue.Count > 0) {
+              int targetNumber = Math.Max(1, Math.Min(20, queue.Count / this.threadCount));
+              jobSequence = new List<FileInfo>(targetNumber);
+              for (int i = 0; i < targetNumber; i++)
+                jobSequence.Add(queue.Dequeue());
+            }
+          }
+          if (jobSequence == null) return;
+          RunJobSequence(jobSequence);
+        }
+      }
+
+      private void SpanwRunAndJoin() {
+        List<System.Threading.Thread> threads = new List<System.Threading.Thread>(this.threadCount);
+        for (int i = 0; i < this.threadCount; i++) {
+          System.Threading.Thread thread = new System.Threading.Thread(RunJobs);
+          thread.Start();
+          threads.Add(thread);
+        }
+
+        // wait for all threads to come up becaue attempting to join them before will raise an exception
+        while (this.runningThreadCount < this.threadCount) System.Threading.Thread.Sleep(50);
+
+        for (int i = 0; i < this.threadCount; i++)
+          threads[i].Join();
+      }
+
+      public int Run() {
+        errorCount = 0;
+        runningThreadCount = 0;
+        SpanwRunAndJoin();
+        return errorCount;
+      }
+    }
   }
 }
