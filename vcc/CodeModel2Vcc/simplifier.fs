@@ -252,27 +252,22 @@ namespace Microsoft.Research.Vcc
               | Type.Map (d, r) -> (d, r)
               | _ -> helper.Die()
           
-          let isPure = ref true
+          let isPure = ref true         
+          let rec checkForSideEffect _ = function
+            | Deref(_, Dot(_,e,f)) when hasBoolAttr "record" f.Parent.CustomAttr -> true
+            | Deref _ ->
+              isPure := false
+              false
+            | Call(_, fn, _, _) ->
+                if not fn.IsStateless then isPure := false; false
+                else true
+            | _ -> true
           
           let rec hasQVar vars expr =
-            let argHasIt args =
-              let argsHaveIt = List.map (hasQVar vars) args // ensure to really visit all arguments because of the side effects
-              List.exists (fun x -> x) argsHaveIt
-              
             let hasIt = ref false
             let check self = function
               | Expr.Ref (_, v) when _list_mem v vars ->
                 hasIt := true
-                false
-              | Deref(_, Dot(_,e,f)) when hasBoolAttr "record" f.Parent.CustomAttr ->
-                self e; false
-              | Deref _ ->
-                isPure := false
-                true
-              | Call(_, fn, _, args) ->
-                if argHasIt args then
-                  hasIt := true
-                  if not fn.IsStateless then isPure := false
                 false
               | _ -> true
             (expr:Expr).SelfVisit check
@@ -320,6 +315,7 @@ namespace Microsoft.Research.Vcc
               | Some c -> c.SelfMap repl
               | None -> Expr.True
           let body = q.Body.SelfMap repl
+          body.SelfVisit(checkForSideEffect)
           
           let fn =
             { Token           = c.Token
@@ -1163,7 +1159,6 @@ namespace Microsoft.Research.Vcc
     
     helper.AddTransformer ("desugar-begin", Helper.DoNothing)
     
-    helper.AddTransformer ("desugar-lambdas", Helper.Decl desugarLambdas)
     helper.AddTransformer ("desugar-ite", Helper.Decl removeLazyOps)
     helper.AddTransformer ("norm-nested-locals", Helper.Decl removeNestedLocals)
     helper.AddTransformer ("norm-primitive-globals", Helper.Decl wrapPrimitiveGlobals)
@@ -1171,6 +1166,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("desugar-by-claim", Helper.Decl expandByClaim)
     helper.AddTransformer ("desugar-approvers", Helper.Decl handleApprovers)
     helper.AddTransformer ("desugar-assign-ops", Helper.Expr removeAssignOps)
+    helper.AddTransformer ("desugar-lambdas", Helper.Decl desugarLambdas)
     helper.AddTransformer ("check-spec-code", Helper.Decl checkSpecCodeAndRemoveSpecMark)
     helper.AddTransformer ("desugar-push-decls-into-blocks", Helper.Decl pushDeclsIntoBlocks)
     helper.AddTransformer ("desugar-addressable-locals", Helper.Decl heapifyAddressedLocals)
