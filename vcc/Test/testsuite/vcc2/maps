@@ -525,3 +525,30 @@ int f()
 `
 Verification of f succeeded.
 `
+#include "vcc.h"
+
+spec(typedef struct vcc(record) X { int x[unsigned]; } X;)
+
+typedef struct Y { unsigned rd:5; } Y;
+
+typedef union Z { Y rtype; } Z;
+
+spec(ispure X bar(Z I, X p)
+    returns(p / { .x = lambda(unsigned r; true; r==I.rtype.rd ? p.x[I.rtype.rd] : p.x[r]) });)
+
+spec(ispure bool bax(Z I)
+    returns(I.rtype.rd);)
+
+void baz2(spec(Z I)) requires(bax(I)) {}; // <-- that one's okay
+
+void baz3(spec(X p) spec(Z I)) requires(p.x[0]) {}; // <-- that one also
+
+// this one not:
+void foo(spec(X p) spec(Z I))
+	requires(bar(I, p).x[0])
+{}
+`
+Verification of baz2 succeeded.
+Verification of baz3 succeeded.
+Verification of foo succeeded.
+`
