@@ -46,9 +46,8 @@ namespace Microsoft.Research.Vcc
                       ") supplied to invariantCheck(...), expecting something of pointer-to-struct type")
     
  
+  // true iff invariant is just true except when unwrapping
   let isOnUnwrap = function
-    | BoolOp (_, "||", Prim(_, Op("==", _), [ COld (_, CallMacro (_, "_vcc_closed", _, [_; This]));
-                                           CallMacro (_, "_vcc_closed", _, [_; This])]), _)   
     | BoolOp (_, "==>", BoolOp (_, "&&", 
                                 COld (_, CallMacro (_, "_vcc_closed", _, [_; This])),
                                 Prim (_, Op ("!", _), [CallMacro (_, "_vcc_closed", _, [_; This])])), _) -> true

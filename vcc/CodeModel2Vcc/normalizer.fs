@@ -701,6 +701,21 @@ namespace Microsoft.Research.Vcc
       | Deref(_, (Dot(_,_,f) as dot)) when f.Type._IsArray -> Some(self dot)
       | _ -> None
  
+ 
+    // ============================================================================================================
+
+    let normalizeOnUnwrap = 
+      let expandOne = function
+         | BoolOp (c1, "||", Prim(_, Op("==", _), [ COld (_, CallMacro (_, "_vcc_closed", _, [This])) as theOld;
+                                               CallMacro (_, "_vcc_closed", _, [This]) as theNew]), body) ->
+           mkAnd (Prim (c1, Op("==>",Unchecked), [mkAnd theOld (mkNot theNew); body]))
+                 (Prim (c1, Op("==>",Unchecked), [mkAnd (mkNot theOld) theNew; body]))
+         | expr -> 
+           expr
+         
+      mapInvariants expandOne
+                                           
+
     // ============================================================================================================
  
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
@@ -723,6 +738,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-writes", Helper.Decl normalizeWrites)
     helper.AddTransformer ("norm-atomic-inline", Helper.Decl inlineAtomics)
     helper.AddTransformer ("norm-reintp", Helper.Expr normalizeReinterpretation)
+    helper.AddTransformer ("norm-on-unwrap", Helper.Decl normalizeOnUnwrap)
     helper.AddTransformer ("norm-end", Helper.DoNothing)
       
     

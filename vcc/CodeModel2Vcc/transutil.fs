@@ -123,21 +123,42 @@ namespace Microsoft.Research.Vcc
     | [x] -> x
     | x :: xs -> List.fold (boolOp "&&") x xs
       
-  let rec splitConjunction = function
-    | Macro (_, "labeled_invariant", [_; i]) -> splitConjunction i
-    | Macro (_, "ite", [a; b; EFalse])
-    | Prim (_, Op ("&&", _), [a; b]) -> (splitConjunction a) @ (splitConjunction b)
-    | Macro (_, "ite", [a; b; ETrue])
-    | Prim (_, Op ("==>", _), [a; b]) as expr ->
-      match splitConjunction b with
-        | [_] -> [expr]
-        | lst ->
-          let mkOne (e:Expr) =
-            let t = forwardingToken e.Token None (fun () -> a.Token.Value + " ==> " + e.Token.Value)
-            Prim ({ e.Common with Token = t.Token }, Op ("==>", Processed), [a; e])
-          List.map mkOne lst
-    | x -> [x]
-    
+  let rec splitConjunctionEx keepLabels expr = 
+    let splitConjunction = splitConjunctionEx keepLabels
+    match expr with
+      | Macro (c, "labeled_invariant", [lab; i]) -> 
+        if keepLabels then
+          splitConjunction i |> List.map (fun i -> Macro (c, "labeled_invariant", [lab; i]))
+        else
+          splitConjunction i
+      | Macro (_, "ite", [a; b; EFalse])
+      | Prim (_, Op ("&&", _), [a; b]) -> (splitConjunction a) @ (splitConjunction b)
+      | Macro (_, "ite", [a; b; ETrue])
+      | Prim (_, Op ("==>", _), [a; b]) as expr ->
+        match splitConjunction b with
+          | [_] -> [expr]
+          | lst ->
+            let mkOne (e:Expr) =
+              let t = forwardingToken e.Token None (fun () -> a.Token.Value + " ==> " + e.Token.Value)
+              Prim ({ e.Common with Token = t.Token }, Op ("==>", Processed), [a; e])
+            List.map mkOne lst
+      | x -> [x]
+  
+  let splitConjunction = splitConjunctionEx false
+  
+  let mapInvariants f decls =
+    let fLab = function
+      | Macro (c, "labeled_invariant", [lab; i]) -> 
+        Macro (c, "labeled_invariant", [lab; f i])
+      | i -> f i
+      
+    let aux = function
+      | Top.TypeDecl td -> 
+        td.Invariants <- td.Invariants |> List.map (splitConjunctionEx true) |> List.concat |> List.map fLab
+      | _ -> ()
+    List.iter aux decls
+    decls
+
   let convertToBool self (x:Expr) =
     if x.Type = Bool then self x
     else Cast ({ x.Common with Type = Bool }, Processed, self x)
