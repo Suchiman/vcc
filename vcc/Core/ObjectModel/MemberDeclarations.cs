@@ -105,7 +105,7 @@ namespace Microsoft.Research.Vcc {
     private BlockStatement DummyBlock {
       get {
         if (this.dummyBlock == null) {
-          BlockStatement dummyBlock = new BlockStatement(new List<Statement>(0), this.SourceLocation);
+          BlockStatement dummyBlock = BlockStatement.CreateDummyFor(this.SourceLocation);
           dummyBlock.SetContainers(this.ContainingTypeDeclaration.DummyBlock, this.ContainingTypeDeclaration);
           lock (this) {
             if (this.dummyBlock == null) {
@@ -181,7 +181,7 @@ namespace Microsoft.Research.Vcc {
       get
       {
         if (this.dummyBlock == null) {
-          BlockStatement dummyBlock = new BlockStatement(new List<Statement>(0), this.SourceLocation);
+          BlockStatement dummyBlock = BlockStatement.CreateDummyFor(this.SourceLocation);
           dummyBlock.SetContainers(this.ContainingTypeDeclaration.DummyBlock, this.ContainingTypeDeclaration);
           lock (this) {
             if (this.dummyBlock == null) {
@@ -477,7 +477,7 @@ namespace Microsoft.Research.Vcc {
     public BlockStatement DummyBlock {
       get {
         if (this.dummyBlock == null) {
-          BlockStatement dummyBlock = new BlockStatement(new List<Statement>(0), this.SourceLocation);
+          BlockStatement dummyBlock = BlockStatement.CreateDummyFor(this.SourceLocation);
           dummyBlock.SetContainers(this.ContainingTypeDeclaration.DummyBlock, this);
           lock (this) {
             if (this.dummyBlock == null) {
