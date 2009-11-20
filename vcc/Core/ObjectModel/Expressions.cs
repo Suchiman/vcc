@@ -1821,7 +1821,7 @@ namespace Microsoft.Research.Vcc {
         ITypeDefinition indexedObjectType = this.IndexedObject.Type;
         if (/*indexedObjectType.IsSpecialName &&*/ indexedObjectType.IsStruct && indexedObjectType.SizeOf > 0) {
           IFieldDefinition/*?*/ field = TypeHelper.GetField(indexedObjectType, this.Helper.NameTable.GetNameFor("_ElementType"));
-          if (field != null) return field.Type.ResolvedType;
+          if (field != Dummy.Field) return field.Type.ResolvedType;
         }
         return null;
       }
