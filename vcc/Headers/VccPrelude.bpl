@@ -1402,6 +1402,9 @@ procedure $static_unwrap(#l:$ptr, S:$state);
   ensures $typemap(old($s)) == $typemap($s);
   ensures (exists #x:int :: $memory($s) == $store.mem($memory(old($s)), #l, #x));
   ensures (exists #st:$status :: $statusmap($s) == $store.sm($statusmap(S), #l, #st));
+  ensures (forall #p:$ptr :: {$thread_local($s, #p)}
+    $thread_local(old($s), #p) ==> $thread_local($s, #p));
+
   ensures $timestamp_post_strict(old($s), $s);
   ensures $post_unwrap(old($s), $s);
 
@@ -1425,6 +1428,7 @@ procedure $static_wrap(#l:$ptr, S:$state, owns:$ptrset);
   ensures $typemap(old($s)) == $typemap($s);
   ensures (exists #st:$status :: $statusmap($s) == $store.sm($statusmap(S), #l, #st));
   ensures (exists #x:int :: $memory($s) == $store.mem($store.mem($memory(old($s)), #l, #x), $dot(#l, $owns_set_field($typ(#l))), $ptrset_to_int(owns)));
+  //ensures (forall #p:$ptr :: {$thread_local($s, #p)} $thread_local(old($s), #p) ==> $thread_local($s, #p));
   ensures $timestamp_post_strict(old($s), $s);
 
   /*
@@ -1457,6 +1461,8 @@ procedure $static_wrap_non_owns(#l:$ptr, S:$state);
   ensures $typemap(old($s)) == $typemap($s);
   ensures (exists #st:$status :: $statusmap($s) == $store.sm($statusmap(S), #l, #st));
   ensures (exists #x:int :: $memory($s) == $store.mem($memory(old($s)), #l, #x));
+  //ensures (forall #p:$ptr :: {$thread_local($s, #p)} $thread_local(old($s), #p) ==> $thread_local($s, #p));
+
   ensures $timestamp_post_strict(old($s), $s);
 
 
@@ -1483,7 +1489,9 @@ procedure $unwrap(#l:$ptr, T:$ctype);
   ensures (forall #p:$ptr :: {$set_in(#p, $owns(old($s), #l)), $is_claimable($typ(#p))}
     $set_in(#p, $owns(old($s), #l)) ==> 
       ($is_claimable($typ(#p)) ==> 
-         old($ref_cnt($s, #p)) == $ref_cnt($s, #p) ));
+         old($ref_cnt($s, #p)) == $ref_cnt($s, #p) ));     
+  ensures (forall #p:$ptr :: {$thread_local($s, #p)}
+    $thread_local(old($s), #p) ==> $thread_local($s, #p));
   ensures $timestamp_is_now($s, #l);
 
   ensures $typemap(old($s)) == $typemap($s);
@@ -1520,6 +1528,8 @@ procedure $wrap(#l:$ptr, T:$ctype);
     $set_in(#p, $owns(old($s), #l)) ==> 
       ($is_claimable($typ(#p)) ==> 
          old($ref_cnt($s, #p)) == $ref_cnt($s, #p) ));
+  //ensures (forall #p:$ptr :: {$thread_local($s, #p)}
+  //  $thread_local(old($s), #p) ==> $thread_local($s, #p));
 
   ensures $typemap(old($s)) == $typemap($s);
   ensures (forall #p:$ptr :: {:weight 0} {$st($s, #p)}
@@ -1551,6 +1561,9 @@ procedure $deep_unwrap(#l:$ptr, T:$ctype);
      !$closed($s, #p) && (#p == #l || $nested(old($s), #p)));
   ensures (forall #p:$ptr :: {$st($s, #p)}
     $in_extent_of($s, #p, #l) ==> $owner($s, #p) == $me());
+  ensures (forall #p:$ptr :: {$thread_local($s, #p)}
+    $thread_local(old($s), #p) ==> $thread_local($s, #p));
+
 
   ensures $typemap($s) == $typemap(old($s));
   ensures (forall #p:$ptr :: {$st($s, #p)}
