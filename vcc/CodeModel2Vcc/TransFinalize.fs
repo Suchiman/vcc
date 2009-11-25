@@ -288,7 +288,8 @@ namespace Microsoft.Research.Vcc
         | _ -> true
             
       let checkFunction (fn:Function) =
-        List.iter (fun (e : Expr) -> e.SelfVisit(reportErrorForOld)) (fn.Requires @ fn.Reads @ fn.Writes)
+        List.iter (fun (e : Expr) -> e.SelfVisit(reportErrorForOld)) 
+                  (fn.Requires @ (if fn.IsPure then fn.Ensures else []) @ fn.Reads @ fn.Writes) 
         
       for d in decls do
         match d with
