@@ -281,7 +281,7 @@ namespace Microsoft.Research.Vcc
               | Expr.IntLiteral(_, sz) -> Type.Array(elemType, (int)sz)
               | _ -> die()
             Some (Expr.Cast(c, Processed, 
-                            Expr.Call({ c with Type = PhysPtr Void }, internalFunction "stack_alloc", [arrTy], [Expr.Macro(bogusEC, "stackframe", [])]))) // TODO Ptr kind
+                            Expr.Call({ c with Type = PhysPtr Void }, internalFunction "stack_alloc", [arrTy], [Expr.Macro(bogusEC, "stackframe", []); Expr.False]))) // TODO Ptr kind
           | _ -> die()        
         | Expr.Cast ({ Type = Ptr t } as c, _, Expr.Call (_, { Name = "malloc" }, _, [sz])) as expr ->
           match extractArraySize helper expr t sz with

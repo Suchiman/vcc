@@ -121,6 +121,8 @@ namespace Microsoft.Research.Vcc
                   "volatile_span",          "Sp";
                   "typed",                  "Sp";
                   "typed2",                 "St";
+                  "typed2_phys",            "St";
+                  "typed2_spec",            "St";
                   "typeof",                 "p";
                   "u1_to_ptr",              ".";
                   "u2_to_ptr",              ".";
@@ -796,7 +798,7 @@ namespace Microsoft.Research.Vcc
         if not (addressableLocals.ContainsKey v) then
           let v' = { v with Type = Type.MkPtr(v.Type, v.IsSpec); Name = "addr." + v.Name; Kind = VarKind.Local }
           let vRef = Expr.Ref({forwardingToken (comm.Token) None (fun () -> "&" + v.Name) with Type = v'.Type} , v')
-          let alloc = Expr.Call (fakeEC v'.Type, internalFunction helper "stack_alloc", [v.Type], [Macro(bogusEC, "stackframe", [])])
+          let alloc = Expr.Call (fakeEC v'.Type, internalFunction helper "stack_alloc", [v.Type], [Macro(bogusEC, "stackframe", []); BoolLiteral(boolBogusEC(), v.IsSpec)])
           let assign = Expr.Macro (fakeEC Void, "=", [vRef; alloc])
           let init =
             if v.Kind = VarKind.Parameter || v.Kind = VarKind.SpecParameter || v.Kind = VarKind.OutParameter then

@@ -133,7 +133,11 @@ ptrset _vcc_span(obj_t );
 bool _vcc_thread_local2(obj_t );
 #define thread_local(x) _vcc_thread_local2(x)
 bool _vcc_typed2(obj_t );
+bool _vcc_typed2_phys(obj_t );
+bool _vcc_typed2_spec(obj_t );
 #define typed(x) _vcc_typed2(x)
+#define typed_phys(x) _vcc_typed2_phys(x)
+#define typed_spec(x) _vcc_typed2_spec(x)
 typeid_t _vcc_typeof(obj_t );
 #define typeidof(t) (_vcc_typeof((t*)0))
 bool _vcc_wrapped(obj_t );
@@ -266,7 +270,7 @@ void _vcc_free(obj_t p)
 
 void _vcc_stack_free(mathint, obj_t p);
 
-template<typename T> obj_t _vcc_stack_alloc(mathint);
+template<typename T> obj_t _vcc_stack_alloc(mathint, bool);
 
 template<typename T> T ^_vcc_spec_alloc();
 template<typename T> T ^_vcc_spec_alloc_array(unsigned int n);

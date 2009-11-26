@@ -641,9 +641,23 @@ axiom
 axiom
   (forall S:$state, #p:$ptr :: {$typed(S,#p)} $good_state(S) && $typed(S,#p) ==> $ref(#p) > 0);
 
+function $in_range_phys_ptr(#r:int) returns(bool);
+function $in_range_spec_ptr(#r:int) returns(bool);
+
+axiom (forall #r:int :: {$in_range_phys_ptr(#r)}
+  $in_range_phys_ptr(#r) <==> $in_range_u8(#r));
+
+axiom (forall #r:int :: {$in_range_spec_ptr(#r)}
+  $in_range_spec_ptr(#r) <==> 0 == #r || #r > $max.u8);
 
 function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) returns(bool)
   { $is(#p, #t) && $typed(S, #p) }
+
+function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool)
+  { $typed2(S, #p, #t) && $in_range_phys_ptr($ref(#p)) }
+
+function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) returns (bool)
+  { $typed2(S, #p, #t) && $in_range_spec_ptr($ref(#p)) }
 
 function {:inline true} $ptr_eq(p1:$ptr,p2:$ptr) returns(bool)
   { $ref(p1) == $ref(p2) }
@@ -1676,7 +1690,7 @@ const $memory_allocator_ref : int;
 axiom $get_memory_allocator() == $ptr($memory_allocator_type, $memory_allocator_ref);
 axiom $ptr_level($memory_allocator_type) == 0;
 
-procedure $stack_alloc(#t:$ctype, #sf:int) returns (#r:$ptr);
+procedure $stack_alloc(#t:$ctype, #sf:int, #spec:bool) returns (#r:$ptr);
   modifies $s;
   ensures $typed2($s, #r, #t);
   ensures $extent_mutable($s, #r);
@@ -1706,6 +1720,8 @@ procedure $stack_alloc(#t:$ctype, #sf:int) returns (#r:$ptr);
   ensures $is_in_stackframe(#sf, #r);
   ensures $is_object_root($s, #r);
   ensures $first_option_typed($s, #r);
+  ensures #spec ==> $in_range_spec_ptr($ref(#r));
+  ensures !#spec ==> $in_range_phys_ptr($ref(#r));
 
 
 procedure $stack_free(#sf:int, #x:$ptr);
@@ -1753,6 +1769,7 @@ procedure $spec_alloc(#t:$ctype) returns(#r:$ptr);
   ensures $is_malloc_root($s, #r);
   ensures $is_object_root($s, #r);
   ensures $first_option_typed($s, #r);
+  ensures $in_range_spec_ptr($ref(#r));
 
 procedure $spec_alloc_array(#t:$ctype, sz:int) returns(#r:$ptr);
   modifies $s;
@@ -1784,6 +1801,7 @@ procedure $spec_alloc_array(#t:$ctype, sz:int) returns(#r:$ptr);
   ensures $is_malloc_root($s, #r);
   ensures $is_object_root($s, #r);
   ensures $first_option_typed($s, #r);
+  ensures $in_range_spec_ptr($ref(#r));
 
 
 procedure $alloc(#t:$ctype) returns(#r:$ptr);
@@ -1816,6 +1834,7 @@ procedure $alloc(#t:$ctype) returns(#r:$ptr);
   ensures $ref(#r) == 0 || $is_malloc_root($s, #r);
   ensures $ref(#r) == 0 || $is_object_root($s, #r);
   ensures $ref(#r) == 0 || $first_option_typed($s, #r);
+  ensures $in_range_phys_ptr($ref(#r));
 
 
 procedure $free(#x:$ptr);
