@@ -505,6 +505,8 @@ namespace Microsoft.Research.Vcc
         let v' = trVar v
         match v.Type with
           | C.Type.Integer k -> (v', Some (bCall ("$in_range_" + C.Type.IntSuffix k) [varRef v]))
+          | C.Type.PhysPtr _ -> (v', Some (bCall "$in_range_phys_ptr" [varRef v]))
+          | C.Type.SpecPtr _ -> (v', Some (bCall "$in_range_spec_ptr" [varRef v]))
           | _ -> (v', None)
     
       let ptrType (expr:C.Expr) =
