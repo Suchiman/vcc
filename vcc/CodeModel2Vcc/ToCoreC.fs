@@ -277,18 +277,13 @@ namespace Microsoft.Research.Vcc
             td.Kind <- TypeKind.Record
           | _ -> ()
       let isRecField (f:Field) = f.Parent.Kind = Record
+      let isRecType = function | Type.Ref({Kind = Record}) -> true | _ -> false
       let replNestedDots self = function
         | Dot (c, (Dot (_, _, f1) as inner), f2) when isRecField f1 && isRecField f2 ->
           Some (self (Dot (c, Deref (inner.Common, inner), f2)))
         | _ -> None
       
       let replAccess self = 
-      (*
-        | Deref (c, Dot (c', (Dot (_, _, f1) as inner), f2)) when isRecField f1 && isRecField f2 ->
-          Some (self (Deref (c, Dot (c', Deref (inner.Common, inner), f2))))
-        | Macro (c1, "rec_update", [Dot (c2, (Dot (_, _, f1) as inner), f2); v]) ->
-          Some (self Macro (c1, "rec_update", [Dot (c2, Deref (inner.Common, ot (_, _, f1), f2); v]) ->
-        *)
         
         let normalizeRecord rt = function
           | Macro(c, "vs_zero", []) -> Macro({c with Type = rt}, "rec_zero", [])
@@ -297,6 +292,8 @@ namespace Microsoft.Research.Vcc
           | e -> e
           
         function
+        | VarDecl(ec, v) as decl when (v.Kind = VarKind.SpecLocal  || v.Kind = VarKind.Local) && isRecType v.Type ->
+          Some(Expr.MkBlock([decl; Expr.VarWrite(ec, [v], Macro({ec with Type = v.Type}, "rec_zero", []))]))
         | Deref (c, (Dot (_, p, f) as dot)) when isRecField f ->
           Some (self (Macro (c, "rec_fetch", [normalizeRecord (Type.Ref(f.Parent)) p; Expr.ToUserData(f)])))
         | Macro (c, name, ((Dot (_, p, f)::args))) when name.StartsWith("vs_updated") && isRecField f ->
