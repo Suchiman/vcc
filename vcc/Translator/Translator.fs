@@ -987,6 +987,7 @@ namespace Microsoft.Research.Vcc
                   bCall "$bool_to_int" [self e']
                 | C.Type.Integer _ -> self e'
                 | C.Type.MathInteger -> self e'
+                | C.Type.ObjectT
                 | C.Ptr _ -> // TODO insert checks for casts here
                   bCall ("$ptr_to_" + C.Type.IntSuffix k) [self e']
                 | _ -> die()
