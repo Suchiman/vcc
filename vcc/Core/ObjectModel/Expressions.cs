@@ -2091,6 +2091,14 @@ namespace Microsoft.Research.Vcc {
       this.arrayTypeExpression = template.arrayTypeExpression;
     }
 
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      if (this.structureTypeExpression == null && this.arrayTypeExpression == null && this.Type == Dummy.Type) {
+        this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.UnableToDetermineTypeOfInitializer));
+        return true;
+      }
+      return base.CheckForErrorsAndReturnTrueIfAnyAreFound();
+    }
+
     /// <summary>
     /// If expr is a VccInitializerBase with type hint fields unset, and if type is a potential type hint, set the type hint field
     /// </summary>
