@@ -237,3 +237,10 @@ void set(MyCtx_t *pCtx, size_t idx, int *pX )
 Verification of MyCtx_s#adm succeeded.
 Verification of set succeeded.
 `
+#include "vcc.h"
+
+void foo(spec(obj_t x)) { assert((int)x); } 
+`
+Verification of foo failed.
+testcase(3,51) : error VC9500: Assertion '(int)x' did not verify.
+`
