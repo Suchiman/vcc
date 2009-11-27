@@ -3643,4 +3643,7 @@
   <data name="StructRequiredForDot" xml:space="preserve">
     <value>left of '.{0}' must have struct/union type</value>
   </data>
+  <data name="UnableToDetermineTypeOfInitializer" xml:space="preserve">
+    <value>Cannot determine initializer's type from context.</value>
+  </data>
 </root>

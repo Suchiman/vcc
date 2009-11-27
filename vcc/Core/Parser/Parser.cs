@@ -1160,7 +1160,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.Skip(Token.Dot);
       SimpleName designator = this.ParseSimpleName(followers | Token.Assign);
       this.Skip(Token.Assign);
-      Expression expr = this.ParseExpression(followers);
+      Expression expr = this.ParseExpression(false, true, followers);
       return new VccDesignatorExpressionPair(designator, expr);
     }
 
@@ -1995,7 +1995,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           return new StatementGroup(statements);
       }
       TokenSet followersOrCommaOrColonOrSemicolon = followers|Token.Comma|Token.Colon|Token.Semicolon;
-      Expression e = this.ParseExpression(!acceptComma, followersOrCommaOrColonOrSemicolon);
+      Expression e = this.ParseExpression(!acceptComma, false, followersOrCommaOrColonOrSemicolon);
       SourceLocationBuilder slb = new SourceLocationBuilder(e.SourceLocation);
       ExpressionStatement eStat = new ExpressionStatement(e, slb);
       VccSimpleName/*?*/ id = null;
@@ -2045,7 +2045,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.GetNextToken();
       Expression/*?*/ expr = null;
       if (this.currentToken != Token.Semicolon) {
-        expr = this.ParseExpression(true, followers|Token.Semicolon);
+        expr = this.ParseExpression(true, false, followers|Token.Semicolon);
         slb.UpdateToSpan(expr.SourceLocation);
       }
       Statement result = new ReturnStatement(expr, slb);
@@ -2060,7 +2060,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      Expression/*?*/ expr = this.ParseExpression(true, followers|Token.RightParenthesis|Token.Semicolon);
+      Expression/*?*/ expr = this.ParseExpression(true, false, followers|Token.RightParenthesis|Token.Semicolon);
       slb.UpdateToSpan(expr.SourceLocation);
       Statement result = new AssertStatement(expr, slb);
       this.SkipOverTo(Token.RightParenthesis, followers|Token.Semicolon);
@@ -2075,7 +2075,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      Expression/*?*/ expr = this.ParseExpression(true, followers|Token.RightParenthesis|Token.Semicolon);
+      Expression/*?*/ expr = this.ParseExpression(true, false, followers|Token.RightParenthesis|Token.Semicolon);
       slb.UpdateToSpan(expr.SourceLocation);
       Statement result = new AssumeStatement(expr, slb);
       this.SkipOverTo(Token.RightParenthesis, followers|Token.Semicolon);
@@ -2392,23 +2392,23 @@ namespace Microsoft.Research.Vcc.Parsing {
     private Expression ParseExpression(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      return this.ParseExpression(false, followers);
+      return this.ParseExpression(false, false, followers);
     }
 
     private Expression ParseExpressionWithCheckedDefault(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      Expression e = this.ParseExpression(false, followers);
+      Expression e = this.ParseExpression(followers);
       if (this.compilation.Options.CheckedArithmetic)
         e = new CheckedExpression(e, e.SourceLocation);
       return e;
     }
 
-    private Expression ParseExpression(bool allowCommaExpressions, TokenSet followers)
+    private Expression ParseExpression(bool allowCommaExpressions, bool allowInitializer, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       TokenSet followersOrInfixOperators = followers|Parser.InfixOperators;
-      Expression operand1 = this.ParseUnaryExpression(followersOrInfixOperators);
+      Expression operand1 = this.ParseUnaryExpression(allowInitializer, followersOrInfixOperators);
       for (; ; ) {
         if (!Parser.InfixOperators[this.currentToken] || (this.currentToken == Token.Comma && !allowCommaExpressions)) {
           this.SkipTo(followers);
@@ -2451,7 +2451,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           Token operatorToken = this.currentToken;
           this.GetNextToken();
           TargetExpression target = new TargetExpression(operand1);
-          Expression operand2 = this.ParseExpression(followers);
+          Expression operand2 = this.ParseExpression(false, operatorToken == Token.DivideAssign, followers);
           slb.UpdateToSpan(operand2.SourceLocation);
           //^ assume followers[this.currentToken] || this.currentToken == Token.EndOfFile;
           switch (operatorToken) {
@@ -2511,7 +2511,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           Token operator1 = this.currentToken;
           this.GetNextToken();
           Expression operand2;
-          operand2 = this.ParseUnaryExpression(unaryFollowers);
+          operand2 = this.ParseUnaryExpression(operator1 == Token.Divide, unaryFollowers);
           switch (this.currentToken) {
             case Token.Plus:
             case Token.BitwiseAnd:
@@ -2610,7 +2610,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ assume this.currentToken != Token.EndOfFile; //OK because of precondition and state at point where control comes back here
       Token operator2 = this.currentToken;
       this.GetNextToken();
-      Expression operand3 = this.ParseUnaryExpression(followers);
+      Expression operand3 = this.ParseUnaryExpression(operator2 == Token.Divide, followers);
       if (Parser.LowerPriority(operator1, operator2)) {
         switch (this.currentToken) {
           case Token.Plus:
@@ -2952,16 +2952,16 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       this.GetNextToken();
       SourceLocationBuilder slb = new SourceLocationBuilder(condition.SourceLocation);
-      Expression resultIfTrue = this.ParseExpression(true, followers|Token.Colon);
+      Expression resultIfTrue = this.ParseExpression(true, false, followers|Token.Colon);
       Expression resultIfFalse;
       if (this.currentToken == Token.Colon) {
         this.GetNextToken();
-        resultIfFalse = this.ParseExpression(false, followers);
+        resultIfFalse = this.ParseExpression(followers);
       } else {
         this.Skip(Token.Colon); //gives appropriate error message
         if (!followers[this.currentToken])
           //Assume that only the : is missing. Go ahead as if it were specified.
-          resultIfFalse = this.ParseExpression(false, followers);
+          resultIfFalse = this.ParseExpression(followers);
         else
           resultIfFalse = this.ParseDummyExpression();
       }
@@ -2991,6 +2991,12 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private Expression ParseUnaryExpression(TokenSet followers)
+      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
+    {
+      return this.ParseUnaryExpression(false, followers);
+    }
+
+    private Expression ParseUnaryExpression(bool allowInitializer, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       switch (this.currentToken) {
@@ -3033,7 +3039,8 @@ namespace Microsoft.Research.Vcc.Parsing {
           return this.ParseSizeof(followers);
 
         case Token.LeftBrace:
-          return this.ParseInitializer(followers);
+          if (allowInitializer) return this.ParseInitializer(followers);
+          else goto default;
 
         default:
           return this.ParsePostfixExpression(followers);
@@ -3236,7 +3243,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (this.CurrentTokenStartsTypeExpression()) {
         TypeExpression targetType = this.ParseTypeExpression(followers|Token.RightParenthesis);
         this.Skip(Token.RightParenthesis);
-        Expression valueToCast = this.ParseUnaryExpression(followers);
+        Expression valueToCast = this.ParseUnaryExpression(true, followers);
         VccInitializerBase initializer = valueToCast as VccInitializerBase;
         if (initializer != null)
           initializer.structureTypeExpression = targetType as VccNamedTypeExpression; // null does not hurt here
@@ -3245,7 +3252,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.SkipTo(followers);
         return expression;
       }else{
-        Expression expression = this.ParseExpression(true, followers|Token.RightParenthesis|Token.LeftBracket|Token.LeftParenthesis|Token.Dot|Token.Arrow|Token.ScopeResolution|Token.AddOne|Token.SubtractOne);
+        Expression expression = this.ParseExpression(true, false, followers|Token.RightParenthesis|Token.LeftBracket|Token.LeftParenthesis|Token.Dot|Token.Arrow|Token.ScopeResolution|Token.AddOne|Token.SubtractOne);
         slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
         expression = new Parenthesis(expression, slb);
         this.SkipOverTo(Token.RightParenthesis, followers|Token.LeftBracket|Token.LeftParenthesis|Token.Dot|Token.Arrow|Token.ScopeResolution|Token.AddOne|Token.SubtractOne);
@@ -3598,7 +3605,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         return dummy;
       }
       this.Skip(Token.LeftParenthesis);
-      Expression result = this.ParseExpression(true, followers|Token.RightParenthesis|Token.Colon);
+      Expression result = this.ParseExpression(true, false, followers|Token.RightParenthesis|Token.Colon);
       if (keepParentheses) {
         sctx.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
         result = new Parenthesis(result, sctx);

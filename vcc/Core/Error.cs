@@ -112,5 +112,10 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     StructRequiredForDot,
 
+    /// <summary>
+    /// Cannot determine initializer's type from context.
+    /// </summary>
+    UnableToDetermineTypeOfInitializer,
+
   }
 }
