@@ -1001,6 +1001,8 @@ namespace Microsoft.Research.Vcc
                 | C.ObjectT
                 | C.Ptr _ ->
                   bCall "$ptr_neq" [self e'; er "$null"]
+                | C.Type.MathInteger _ ->
+                  bCall "$int_to_bool" [self e']
                 | _ -> die()
             | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
               bCall "$ptr_cast" [self e'; ptrType expr]
