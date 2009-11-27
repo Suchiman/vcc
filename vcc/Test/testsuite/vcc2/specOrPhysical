@@ -10,3 +10,20 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+struct S {
+  int a;
+  spec(int b;)
+};
+
+void foo() {
+  struct S s;
+  struct S *p = &s;
+  assert(typed_phys(p));
+  assert(typed_phys(&p->a));
+  assert(typed_spec(&p->b));
+}
+`
+Verification of foo succeeded.
+`

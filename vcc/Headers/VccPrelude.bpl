@@ -358,6 +358,9 @@ function $ghost_path(int) returns($field);
 axiom (forall p:$ptr, f:$field :: {:weight 0} {$ghost_ref(p, f)}
   $ghost_emb($ghost_ref(p, f)) == p && $ghost_path($ghost_ref(p, f)) == f );
 
+axiom (forall p:$ptr, f:$field :: {$ghost_ref(p, f)}
+  $in_range_spec_ptr($ghost_ref(p,f)));
+
 function $physical_ref($ptr, $field) returns(int);
 
 function $array_path(basefield:$field, off:int) returns($field);
