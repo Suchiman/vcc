@@ -1027,6 +1027,7 @@ namespace Microsoft.Research.Vcc
                 | _ -> die()
             | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
               bCall "$ptr_cast" [self e'; ptrType expr]
+            | C.Expr.Cast ({ Type = C.Type.ObjectT }, _, C.Expr.IntLiteral(_, z)) when z = bigint.Zero -> er "$null"
             | C.Expr.Pure (_, e') -> self e'
             | C.Expr.Macro (c1, name, [C.Expr.Prim (c2, C.Op(_, C.Unchecked), _) as inner]) 
                 when name.StartsWith "unchecked" && c1.Type = c2.Type -> trExpr env inner
@@ -1154,6 +1155,8 @@ namespace Microsoft.Research.Vcc
                 let select = bCall fn [self a; stripType f (self b)]
                 if n = "map_get" then addType t select else select
               | _ -> die()
+          
+          | "map_zero", _ -> er ("$zero." + typeIdToName(toTypeId ec.Type))
           | "map_updated", [a; b; c] ->
             match a.Type with
               | C.Type.Map (f, t) ->

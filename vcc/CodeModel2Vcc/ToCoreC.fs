@@ -767,6 +767,13 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let handleMapInit self = function
+      | VarDecl(ec, v) as decl when (v.Kind = VarKind.SpecLocal  || v.Kind = VarKind.Local) && v.Type._IsMap ->
+        Some(Expr.MkBlock([decl; Expr.VarWrite(ec, [v], Macro({ec with Type = v.Type}, "map_zero", []))]))
+      | _ -> None
+
+    // ============================================================================================================    
+
     helper.AddTransformer ("core-begin", Helper.DoNothing)
     
     // it's important if a transformer is before or after those two
@@ -784,6 +791,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("core-pull-out-calls", Helper.ExprCtx pullOutCalls)
     helper.AddTransformer ("core-out-parameters", Helper.ExprCtx handleOutParameters)
     helper.AddTransformer ("core-map-eq", Helper.Expr handleMapEquality)
+    helper.AddTransformer ("core-map-init", Helper.Expr handleMapInit)
     helper.AddTransformer ("core-linearize", Helper.Decl (linearizeDecls helper))
     
     helper.AddTransformer ("core-end", Helper.DoNothing)
