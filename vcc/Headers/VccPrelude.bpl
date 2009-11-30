@@ -509,6 +509,9 @@ axiom (forall S:$state, p:$ptr :: {$vs_ctor(S, p)}
   $good_state(S) ==>
     $vs_base_ref($vs_ctor(S, p)) == $ref(p) && $vs_state($vs_ctor(S, p)) == S);
 
+axiom (forall f:$field, t:$ctype :: { $mem($vs_state($struct_zero), $dot($vs_base($struct_zero, t), f)) }
+  $mem($vs_state($struct_zero), $dot($vs_base($struct_zero, t), f)) == 0);
+
 // ----------------------------------------------------------------------------
 // Records
 // ----------------------------------------------------------------------------
