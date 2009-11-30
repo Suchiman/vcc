@@ -191,6 +191,45 @@ namespace Microsoft.Research.Vcc
         if w = 1 then []
         else [B.ExprAttr ("weight", bInt w)]
       
+      let castSuffix t = 
+        let rec suff = function
+          | B.Type.Bool -> "bool"
+          | B.Type.Int -> "int"
+          | B.Type.Map ([f], t) -> "map." + suff f + "." + suff t
+          | B.Type.Ref n -> n.Replace ("$", "")
+          | t -> helper.Panic ("wrong type in castSuffix " + t.ToString())
+        let suff = suff t
+        match suff with
+          // predefined in the prelude
+          | "record"
+          | "version"
+          | "ptr"
+          | "bool"
+          | "int"
+          | "ptrset" -> suff
+          // possible need to generate conversion function
+          | _ ->
+            if not (conversionTypes.ContainsKey suff) then
+              conversionTypes.Add (suff, true)
+              let toIntName = "$" + suff + "_to_int"
+              let toInt = B.Decl.Function (B.Type.Int, [], toIntName, [("x", t)])
+              let fromIntName = "$int_to_" + suff
+              let fromInt = B.Decl.Function (t, [], fromIntName, [("x", B.Type.Int)])
+              let both = bCall fromIntName [bCall toIntName [er "#x"]]
+              let ax1 = B.Decl.Axiom (B.Expr.Forall (Token.NoToken, [("#x", t)], [], weight "conversion", bEq (er "#x") both))
+              tokenConstants := toInt :: fromInt :: ax1 :: !tokenConstants
+            suff
+      
+      let castToInt t e =
+        match t with
+          | B.Type.Int -> e
+          | _ -> bCall ("$" + castSuffix t + "_to_int") [e]
+      
+      let castFromInt t e =
+        match t with
+          | B.Type.Int -> e
+          | _ -> bCall ("$int_to_" + castSuffix t) [e]
+     
       let rec toTypeId' translateArrayAsPtr t =
       
         let rec normalizePtrs = function
@@ -341,13 +380,15 @@ namespace Microsoft.Research.Vcc
         | B.Expr.FunctionCall (f, a) -> f + ".." + String.concat "." (List.map typeIdToName a)
         | t -> helper.Panic ("cannot compute name for type expression " + t.ToString()); ""        
       
-      let mapEqAxioms t1 t2 bt1 bt2 mapName =
+      let mapEqAxioms mt t1 t2 bt1 bt2 mapName =
         let tp = B.Type.Ref mapName
-        let ite = "$ite." + (mapName.Replace ("$#", "")).Replace ("$", "")
+        let mapTypeName = (mapName.Replace ("$#", "")).Replace ("$", "")
+        let ite = "$ite." + mapTypeName
         let mapType = B.Type.Ref (mapName)
         let sel = "$select." + mapName
         let selMP = bCall sel [er "M"; er "p"]
         let stor  = "$store." + mapName
+        let zero = "$zero." + mapName
         let eq = "$eq." + mapName
         let v = er "v"
         let v, inRange =
@@ -367,6 +408,21 @@ namespace Microsoft.Research.Vcc
         let selStorPQ =
           bInvImpl (bNeq (er "p") (er "q"))
                     (bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"]) selMP)
+        let selZero =
+          let zeroVal = 
+            match t2 with
+              | C.Type.Claim
+              | C.Ptr _
+              | C.Type.MathInteger
+              | C.Type.Integer _ -> bInt 0
+              | C.Type.ObjectT _ -> er "$null"
+              | C.Type.Ref({Kind = C.TypeKind.Record}) -> er "$rec_zero"
+              | C.Type.Ref _ -> er "$struct_zero"
+              | C.Type.Bool -> bFalse
+              | C.Type.Map _ -> er ("$zero." + typeIdToName(toTypeId t2))
+              | _ -> die()
+            
+          bEq (bCall sel [er zero; er "p"]) zeroVal
         let t2Eq =
           match t2 with
             | C.Type.Map _ -> fun b1 b2 -> bCall ("$eq." + (typeIdToName (toTypeId t2))) [b1; b2]
@@ -382,13 +438,16 @@ namespace Microsoft.Research.Vcc
            B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1]);
            B.Decl.Function (tp, [], stor, mpv);
            B.Decl.Function (B.Type.Bool, [], eq, m1m2);
+           B.Decl.Const({Unique = false; Name = zero; Type = mapType});
            B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", selStorPP));
            B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
            B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax1));
-           B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax2))
+           B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax2));
+           B.Decl.Axiom (bEq (castFromInt mt (bInt 0)) (er zero));
+           B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["p", bt1], [], weight "select-map-eq", selZero))
           ] @ inRange
       
-      let rec trType (t:C.Type) : B.Type =
+      let rec trType (t:C.Type) : B.Type = 
         match t with
           | C.Type.MathInteger
           | C.Type.Integer _ 
@@ -404,11 +463,12 @@ namespace Microsoft.Research.Vcc
             let bt1 = trType t1
             let bt2 = trType t2
             let mapName = typeIdToName (toTypeId t)
+            let mapType = B.Type.Ref mapName
             if not (mapTypes.ContainsKey mapName) then
               mapTypes.Add (mapName, true)
-              let fns = mapEqAxioms t1 t2 bt1 bt2 mapName
+              let fns = mapEqAxioms mapType t1 t2 bt1 bt2 mapName
               tokenConstants := fns @ !tokenConstants
-            B.Type.Ref mapName
+            mapType
           | C.Type.Ref ({ Kind = C.Record }) -> B.Type.Ref "$record"
           | C.Type.Ref ({ Name = n; Kind = (C.MathType|C.FunctDecl _) }) ->
             match n with
@@ -424,45 +484,6 @@ namespace Microsoft.Research.Vcc
           | C.Type.Ref _ ->
             helper.Panic ("wrong type survived: " + t.ToString())
 
-      let castSuffix t = 
-        let rec suff = function
-          | B.Type.Bool -> "bool"
-          | B.Type.Int -> "int"
-          | B.Type.Map ([f], t) -> "map." + suff f + "." + suff t
-          | B.Type.Ref n -> n.Replace ("$", "")
-          | t -> helper.Panic ("wrong type in castSuffix " + t.ToString())
-        let suff = suff t
-        match suff with
-          // predefined in the prelude
-          | "record"
-          | "version"
-          | "ptr"
-          | "bool"
-          | "int"
-          | "ptrset" -> suff
-          // possible need to generate conversion function
-          | _ ->
-            if not (conversionTypes.ContainsKey suff) then
-              conversionTypes.Add (suff, true)
-              let toIntName = "$" + suff + "_to_int"
-              let toInt = B.Decl.Function (B.Type.Int, [], toIntName, [("x", t)])
-              let fromIntName = "$int_to_" + suff
-              let fromInt = B.Decl.Function (t, [], fromIntName, [("x", B.Type.Int)])
-              let both = bCall fromIntName [bCall toIntName [er "#x"]]
-              let ax1 = B.Decl.Axiom (B.Expr.Forall (Token.NoToken, [("#x", t)], [], weight "conversion", bEq (er "#x") both))
-              tokenConstants := toInt :: fromInt :: ax1 :: !tokenConstants
-            suff
-      
-      let castToInt t e =
-        match t with
-          | B.Type.Int -> e
-          | _ -> bCall ("$" + castSuffix t + "_to_int") [e]
-      
-      let castFromInt t e =
-        match t with
-          | B.Type.Int -> e
-          | _ -> bCall ("$int_to_" + castSuffix t) [e]
-     
       let typedRead s p t =
         match t with
           | C.Ptr t ->
