@@ -37,3 +37,12 @@ void foo()
 `
 testcase(8,85) : error VC0000: Type of conditional expression cannot be determined because there are implicit conversions between '_vcc_claim_struct^' and 'void^'; try adding an explicit cast to one of the arguments.
 `
+#include "vcc.h"
+
+void bar(unsigned i) {
+    spec(unsigned a[unsigned];)
+    speconly(a = lambda(unsigned j; true; i = 0);)
+}
+`
+testcase(5,81) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.
+`

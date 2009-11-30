@@ -4437,7 +4437,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override bool HasSideEffect(bool reportError) {
-      return new IsTrue(base.Condition).HasSideEffect(reportError);
+      return base.Condition.HasSideEffect(true) || this.lambdaExpr.HasSideEffect(true);
     }
 
     /// <summary>
