@@ -561,3 +561,13 @@ void foo(int i) {
 `
 Verification of foo succeeded.
 `
+#include <vcc.h>
+
+void foo(int *p) {
+  spec(obj_t o = (obj_t)0;)
+  spec(obj_t m[int];)
+  assert(m[0] == (obj_t)0);
+}
+`
+Verification of foo succeeded.
+`
