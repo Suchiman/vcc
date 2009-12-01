@@ -2576,7 +2576,7 @@ namespace Microsoft.Research.Vcc {
     /// Returns a list of the arguments to pass to the constructor, indexer or method, after they have been converted to match the parameters of the resolved method.
     /// </summary>
     protected override List<Expression> ConvertArguments() {
-      return this.Helper.ConvertArguments(this.OriginalArguments, this.ResolvedMethod.Parameters, true);
+      return this.Helper.ConvertArguments(this, this.OriginalArguments, this.ResolvedMethod.Parameters, true);
     }
 
     /// <summary>
