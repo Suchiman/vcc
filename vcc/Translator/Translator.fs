@@ -1157,8 +1157,7 @@ namespace Microsoft.Research.Vcc
                 let fn = "$select." + (trType a.Type).ToString()
                 let select = bCall fn [self a; stripType f (self b)]
                 if n = "map_get" then addType t select else select
-              | _ -> die()
-          
+              | _ -> die()          
           | "map_zero", _ -> er ("$zero." + typeIdToName(toTypeId ec.Type))
           | "map_updated", [a; b; c] ->
             match a.Type with
