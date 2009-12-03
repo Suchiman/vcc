@@ -417,7 +417,10 @@ namespace Microsoft.Research.Vcc
               | C.Type.Integer _ -> bInt 0
               | C.Type.ObjectT _ -> er "$null"
               | C.Type.Ref({Kind = C.TypeKind.Record}) -> er "$rec_zero"
-              | C.Type.Ref _ -> er "$struct_zero"
+              | C.Type.Ref({Name = n; Kind = C.TypeKind.MathType}) -> 
+                match n with 
+                  | "ptrset" -> bCall "$set_empty" []
+                  | _ -> er "$struct_zero"
               | C.Type.Bool -> bFalse
               | C.Type.Map _ -> er ("$zero." + typeIdToName(toTypeId t2))
               | _ -> die()

@@ -596,6 +596,7 @@ struct vcc(record) S {
   spec(struct R m5[int];)
   spec(M m6[int];)
   spec(int m7[int][int];)
+  spec(ptrset m8[int];)
 };
 
 void foo() {
@@ -608,6 +609,7 @@ void foo() {
   assert(a.m5[0].a == 0); 
   assert(a.m6[0][0] == 0);
   assert(a.m7[0][0] == 0);
+  assert(set_eq(a.m8[0], set_empty()));
 }
 `
 Verification of foo succeeded.
