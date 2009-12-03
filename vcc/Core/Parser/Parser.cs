@@ -1157,11 +1157,15 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private VccDesignatorExpressionPair ParseDesignatorExpressionPair(TokenSet followers) {
-      this.Skip(Token.Dot);
-      SimpleName designator = this.ParseSimpleName(followers | Token.Assign);
+      List<SimpleName> designators = new List<SimpleName>();
+      while (this.currentToken == Token.Dot) {
+        this.Skip(Token.Dot);
+        designators.Add(this.ParseSimpleName(followers | Token.Assign | Token.Dot));
+      }
+      designators.TrimExcess();
       this.Skip(Token.Assign);
       Expression expr = this.ParseExpression(false, true, followers);
-      return new VccDesignatorExpressionPair(designator, expr);
+      return new VccDesignatorExpressionPair(designators, expr);
     }
 
     private Expression ParseInitializerWithDesignators(TokenSet followers, SourceLocationBuilder slb)

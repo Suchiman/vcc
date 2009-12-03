@@ -283,6 +283,21 @@ namespace Microsoft.Research.Vcc
           Some (self (Dot (c, Deref (inner.Common, inner), f2)))
         | _ -> None
       
+      let replNestedUpdates self = function
+        | Macro(ec, "vs_updated", [Dot(_, Dot(_, _, f1), f2) as nestedDots; e]) when isRecField f1 && isRecField f2 -> 
+          let rec collectDots acc = function
+            | Dot(_, e, f) when isRecField f1 -> collectDots (f::acc) e
+            | e -> acc,e 
+          let dots, inner = collectDots [] nestedDots
+          let rec construct (inner:Expr) source = function
+            | [] -> die()
+            | [f] -> Macro(inner.Common, "vs_updated", [Expr.MkDot(inner, f); source])
+            | (f:Field) :: fs -> 
+              let fetch = Macro ({inner.Common with Type = f.Type}, "rec_fetch", [inner; Expr.ToUserData(f)])
+              Macro(inner.Common, "vs_updated", [Expr.MkDot(inner, f); construct fetch source fs])
+          Some(construct inner e dots)
+        | _ -> None
+      
       let replAccess self = 
         
         let normalizeRecord rt = function
@@ -315,7 +330,7 @@ namespace Microsoft.Research.Vcc
           Some (self res)
         | _ -> None
         
-      deepMapExpressions replNestedDots decls |> deepMapExpressions replAccess
+      decls |> deepMapExpressions replNestedUpdates |> deepMapExpressions replNestedDots |> deepMapExpressions replAccess
 
     // ============================================================================================================
 

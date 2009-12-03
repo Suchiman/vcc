@@ -1925,16 +1925,20 @@ namespace Microsoft.Research.Vcc {
 
   internal class VccDesignatorExpressionPair
   {
-    internal readonly SimpleName Designator;
+    internal readonly List<SimpleName> Designators;
     internal readonly Expression Expression;
 
-    internal VccDesignatorExpressionPair(SimpleName designator, Expression expression) {
-      this.Designator = designator;
+    internal VccDesignatorExpressionPair(List<SimpleName> designators, Expression expression) {
+      this.Designators = designators;
       this.Expression = expression;
     }
 
     internal VccDesignatorExpressionPair MakeCopyFor(BlockStatement containingBlock) {
-      return new VccDesignatorExpressionPair((SimpleName)this.Designator.MakeCopyFor(containingBlock), this.Expression.MakeCopyFor(containingBlock));
+      List<SimpleName> desigs = new List<SimpleName>(this.Designators.Count);
+      foreach (var d in this.Designators)
+        desigs.Add((SimpleName)d.MakeCopyFor(containingBlock));
+
+      return new VccDesignatorExpressionPair(desigs, this.Expression.MakeCopyFor(containingBlock));
     }
   }
 
@@ -2034,7 +2038,8 @@ namespace Microsoft.Research.Vcc {
     public override void SetContainingExpression(Expression containingExpression) {
       base.SetContainingExpression(containingExpression);
       foreach (var pair in this.designatorsWithExpressions) {
-        pair.Designator.SetContainingExpression(this);
+        foreach (var designator in pair.Designators)
+          designator.SetContainingExpression(this);
         pair.Expression.SetContainingExpression(this);
       }
     }
@@ -2045,15 +2050,13 @@ namespace Microsoft.Research.Vcc {
 
     internal override void AddInitializingFieldAssignmentsTo(ICollection<Statement> statements, Expression target, VccStructuredTypeDeclaration typeDecl) {
       foreach (var pair in this.designatorsWithExpressions) {
-        var targetDotField = new VccQualifiedName(target, pair.Designator, pair.Designator.SourceLocation);
-        AddInitializationTo(statements, pair.Expression, targetDotField, GetTypeOfField(typeDecl, pair.Designator), this.ContainingBlock);
-      }
-    }
+        var targetDotField = target;
+        foreach (var desig in pair.Designators)
+          targetDotField = new VccQualifiedName(targetDotField, desig, desig.SourceLocation);
 
-    private static TypeExpression GetTypeOfField(VccStructuredTypeDeclaration typeDecl, SimpleName fieldName) {
-      foreach (FieldDefinition fd in IteratorHelper.GetFilterEnumerable<ITypeDeclarationMember, FieldDefinition>(typeDecl.TypeDeclarationMembers))
-        if (fd.Name.UniqueKey == fieldName.Name.UniqueKey) return fd.Type;
-      return null;
+        targetDotField.SetContainingExpression(this);
+        AddInitializationTo(statements, pair.Expression, targetDotField, TypeExpression.For(targetDotField.Type.ResolvedType), this.ContainingBlock);
+      }
     }
 
     public override Expression MakeCopyFor(BlockStatement containingBlock) {
@@ -2069,7 +2072,7 @@ namespace Microsoft.Research.Vcc {
         fieldToTypeMap[field.Name.Name] = field.Type;
       foreach (var init in this.DesignatorsWithExpressions) {
         TypeExpression fieldType;
-        if (fieldToTypeMap.TryGetValue(init.Designator.Name, out fieldType))
+        if (fieldToTypeMap.TryGetValue(init.Designators[0].Name, out fieldType))
           VccInitializerBase.PropagateTypeToExpressionIfAppropriate(init.Expression, fieldType);
       }
     }

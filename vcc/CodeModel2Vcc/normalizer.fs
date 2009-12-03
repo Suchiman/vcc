@@ -586,12 +586,17 @@ namespace Microsoft.Research.Vcc
         | _ -> false
         
       let foldBackFieldAssignments ec tmp =
-        let rec foldBackFieldAssignments' (acc : Expr) = function
+        let rec buildDotExpr tgt = function
+          | Ref(_,v) when v = tmp -> tgt
+          | Deref(_, Dot(_, Macro(_, "&", [e]), f)) ->
+            Expr.MkDot(buildDotExpr tgt e, f)
+          | _ -> die()
+        let rec foldBackFieldAssignments' (tgt : Expr) = function
           | Macro(_, "=", [Ref(_,v); e]) when v = tmp -> e
-          | Macro(_, "=", [Deref(_, Dot(_, Macro(_, "&", [Ref(_,v)]), f)); e]) when v = tmp -> 
-            Macro({acc.Common with Type = v.Type}, "vs_updated", [Expr.MkDot(acc, f); self e])
-          | Block(_, stmts) -> recurse acc stmts
-          | _ -> acc
+          | Macro(_, "=", [fieldExpr; e]) -> 
+            Macro({tgt.Common with Type = tgt.Type}, "vs_updated", [buildDotExpr tgt fieldExpr; self e])
+          | Block(_, stmts) -> recurse tgt stmts
+          | _ -> tgt
         and recurse = List.fold foldBackFieldAssignments' 
         recurse (Macro({ec with Type = Type.MathStruct}, "vs_zero",  []))
         
