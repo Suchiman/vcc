@@ -1479,7 +1479,15 @@ namespace VccModel.Controller
             content = SelectResult("$read_" + type.Value.Substring(2), state, field);
             if (content != null)
             {
-              content.SetType(PartitionType.Value);
+                content.SetType(PartitionType.Value);
+            }
+            else
+            {
+                content = SelectResult("$select.mem", memory, field);
+                if (content != null)
+                {
+                    content.SetType(PartitionType.Value);
+                }
             }
             break;
           case "^^bool":
