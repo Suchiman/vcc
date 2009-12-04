@@ -1524,25 +1524,27 @@ namespace Microsoft.Research.Vcc {
     {
       INamespaceTypeDefinition ltype = t1 as INamespaceTypeDefinition;
       INamespaceTypeDefinition rtype = t2 as INamespaceTypeDefinition;
-      if (ltype != null && rtype != null &&
-          TypeHelper.TypesAreEquivalent(ltype, rtype) &&
-          ltype.Name.Value.StartsWith("_vcc_math_type", StringComparison.Ordinal))
-        return true;
 
-      if (ltype != null) {
-        foreach (ICustomAttribute attr in ltype.Attributes) {
-          if (TypeHelper.GetTypeName(attr.Type) == "Microsoft.Contracts.StringVccAttr") {
-            List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
-            if (args.Count == 2) {
-              IMetadataConstant attrName = args[0] as IMetadataConstant;
-              IMetadataConstant attrVal = args[1] as IMetadataConstant;
-              if (attrName != null && attrVal != null && ((string)attrName.Value) == "record" && ((string)attrVal.Value) == "true")
-                return true;
-            }
+      if (ltype != null && rtype != null && TypeHelper.TypesAreEquivalent(ltype, rtype)) {
+        if (ltype.Name.Value.StartsWith("_vcc_math_type", StringComparison.Ordinal))  return true;
+        if (IsRecordType(ltype)) return true;
+      }
+      
+      return false;
+    }
+
+    static private bool IsRecordType(INamespaceTypeDefinition t) {
+      foreach (ICustomAttribute attr in t.Attributes) {
+        if (TypeHelper.GetTypeName(attr.Type) == "Microsoft.Contracts.StringVccAttr") {
+          List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
+          if (args.Count == 2) {
+            IMetadataConstant attrName = args[0] as IMetadataConstant;
+            IMetadataConstant attrVal = args[1] as IMetadataConstant;
+            if (attrName != null && attrVal != null && ((string)attrName.Value) == "record" && ((string)attrVal.Value) == "true")
+              return true;
           }
         }
       }
-
       return false;
     }
 
