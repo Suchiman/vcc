@@ -790,7 +790,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         Expression/*?*/ arraySize = array.ArraySize;
         if (arraySize == null) {
           var vcInitializer = initializer as VccInitializerBase;         
-          if (initializer != null)
+          if (vcInitializer != null)
             arraySize = new CompileTimeConstant(vcInitializer.ExpressionCount, array.SourceLocation);
         }
         if (arraySize is TypeExpression) {
