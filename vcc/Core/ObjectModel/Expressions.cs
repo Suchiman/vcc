@@ -2962,7 +2962,7 @@ namespace Microsoft.Research.Vcc {
       return new VccPointerScopedName(containingBlock, this);
     }
 
-    protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType) {
+    protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType, bool ignoreAccessibility) {
       IPointerTypeReference/*?*/ pointerQualifyingType = qualifyingType as IPointerTypeReference;
       if (pointerQualifyingType == null) return null;
       ITypeDefinition type = pointerQualifyingType.TargetType.ResolvedType;
@@ -3010,7 +3010,7 @@ namespace Microsoft.Research.Vcc {
     protected override IExpression ProjectAsNonConstantIExpression()
     {
       if (this.cachedProjection == null) {
-        object member = this.ResolveAsValueContainer();
+        object member = this.ResolveAsValueContainer(true);
         INestedTypeDefinition groupType = member as INestedTypeDefinition;
         if (groupType != null) {
           // expression refers to a group
@@ -3034,7 +3034,7 @@ namespace Microsoft.Research.Vcc {
     IExpression cachedProjection = null;
 
     public override ITypeDefinition InferType() {
-      object member = this.ResolveAsValueContainer();
+      object member = this.ResolveAsValueContainer(true);
       INestedTypeDefinition groupType = member as INestedTypeDefinition;
       ITypeReference targetType = groupType;
       if (targetType == null) {
@@ -3065,7 +3065,7 @@ namespace Microsoft.Research.Vcc {
         this.definition = definition;
       }
 
-      protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType) {
+      protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType, bool ignoreAccessibility) {
         return definition;
       }
 
@@ -3245,7 +3245,7 @@ namespace Microsoft.Research.Vcc {
 
     private bool inErrorCheck;
 
-    protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType)
+    protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType, bool ignoreAccessibility)
     {
       if (this.resolvedMember == null)
         this.resolvedMember = this.ResolveAgainstGroup(qualifyingType);
@@ -3303,7 +3303,7 @@ namespace Microsoft.Research.Vcc {
 
     protected override IExpression ProjectAsNonConstantIExpression()
     {
-      INestedTypeDefinition typeDef = this.Resolve() as INestedTypeDefinition;
+      INestedTypeDefinition typeDef = this.Resolve(true) as INestedTypeDefinition;
       if (typeDef != null)
         return TypeExpression.For(typeDef).ProjectAsIExpression();
       else return new DummyExpression(this.SourceLocation);
@@ -3345,7 +3345,7 @@ namespace Microsoft.Research.Vcc {
     protected override ITypeDefinition Resolve(object resolvedExpression, int numberOfTypeParameters)
     {
       if (resolvedExpression is NestedTypeGroup) {
-        INestedTypeDefinition nestedType = ((VccScopedName)this.Expression).Resolve() as INestedTypeDefinition;
+        INestedTypeDefinition nestedType = ((VccScopedName)this.Expression).Resolve(true) as INestedTypeDefinition;
         if (nestedType != null)
           return nestedType;
       }
@@ -3375,7 +3375,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      if (this.ResolveAsValueContainer() == null) {
+      if (this.ResolveAsValueContainer(true) == null) {
         if (this.Qualifier.HasErrors()) return true;
         if (this.Qualifier.Type == Dummy.Type) {
           this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.StructRequiredForDot, this.SimpleName.Name.Value));
@@ -3385,8 +3385,8 @@ namespace Microsoft.Research.Vcc {
       return base.CheckForErrorsAndReturnTrueIfAnyAreFound();
     }
 
-    public override ITypeDefinitionMember ResolveAsValueContainer() {
-      var result = base.ResolveAsValueContainer();
+    public override ITypeDefinitionMember ResolveAsValueContainer(bool ignoreAccessibility) {
+      var result = base.ResolveAsValueContainer(ignoreAccessibility);
       if (result != null && this.Qualifier.Type == Dummy.Type) return null;
       return result;
     }

@@ -636,7 +636,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (initializedDeclarator != null)
           initializer = initializedDeclarator.InitialValue;
         else if (sct == Token.Extern || sct == Token.Static) {
-          TypeMemberVisibility visibility = sct == Token.Static ? TypeMemberVisibility.Other : TypeMemberVisibility.Public;
+          TypeMemberVisibility visibility = sct == Token.Static ? TypeMemberVisibility.Assembly : TypeMemberVisibility.Public;
           typeMembers.Add(new GlobalVariableDeclaration(flags, visibility, memberType, declarator.Identifier, null, slb));
           return;
         }
@@ -655,7 +655,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         } else {
           flags |= FieldDeclaration.Flags.Static; //global fields are always static
           //at the global level, the static modifier means visible only inside the current compilation unit (file)
-          TypeMemberVisibility visibility = sct == Token.Static ? TypeMemberVisibility.Other : TypeMemberVisibility.Public;
+          TypeMemberVisibility visibility = sct == Token.Static ? TypeMemberVisibility.Assembly : TypeMemberVisibility.Public;
           typeMembers.Add(new GlobalVariableDeclaration(flags, visibility, memberType, declarator.Identifier, initializer, slb));
         }
       }
