@@ -18,7 +18,7 @@ namespace Microsoft.Research.Vcc {
   public sealed class AnonymousFieldDefinition : FieldDeclaration {
 
     public AnonymousFieldDefinition(FieldDeclaration.Flags flags, TypeExpression type, NameDeclaration name) :
-      base(null, flags | FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Other, type, name, null, type.SourceLocation) {
+      base(null, flags | FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Public, type, name, null, type.SourceLocation) {
     }
 
     public AnonymousFieldDefinition(TypeExpression type, NameDeclaration name)
