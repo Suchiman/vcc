@@ -387,7 +387,7 @@ bool _vcc_inv_group(const char *, bool);
   ensures(wrapped(c) && valid_claim(c))
 #define claimp(n) __specification claim_t n
 #define maintains(...) requires(__VA_ARGS__) ensures(__VA_ARGS__)
-#define returns(e) ensures(result == (e))
+#define returns(...) ensures(result == (__VA_ARGS__))
 
 #define speccast(_TYPE_, _EXPR_) ((_TYPE_)(_EXPR_))
 #define speccast_uc(_TYPE_, _EXPR_) (unchecked((_TYPE_)(_EXPR_)))
