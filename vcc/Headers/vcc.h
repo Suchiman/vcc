@@ -56,7 +56,7 @@ typedef int bool;
 #define requires(...)
 #define maintains(...)
 #define reads(...)
-#define returns(e)
+#define returns(...)
 #define spec(...)
 #define skipverification
 #define frameaxiom
