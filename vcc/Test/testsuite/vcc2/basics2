@@ -301,4 +301,5 @@ struct T { struct R x; };
 
 void foo(struct R *s) { }
 `
+testcase(4,1) : error VC9709: Cycle in type definition for type 'R'
 `
