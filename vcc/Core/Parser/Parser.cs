@@ -868,6 +868,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (cts != null) {
           //TODO: if (result != null || sign != null || length != null || primitiveType != null) Error;
           result = cts.TypeExpression;
+          continue;
         }
         TypeQualifier/*?*/ tq = specifier as TypeQualifier;
         if (tq != null && result != null) {
@@ -879,6 +880,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             }
             typeQualifiers.Add(tq);
           }
+          continue;
         }
         TypedefNameSpecifier/*?*/ tdns = specifier as TypedefNameSpecifier;
         if (tdns != null) {
@@ -904,10 +906,12 @@ namespace Microsoft.Research.Vcc.Parsing {
             result = new VccNamedTypeExpression(tdns.TypedefName, false);
             break; // further specifiers belong to the field, not the type
           }
+          continue;
         }
         ScopedTypeNameSpecifier/*?*/ stns = specifier as ScopedTypeNameSpecifier;
         if (stns != null) {
           result = new VccScopedTypeExpression(stns.ScopedName);
+          continue;
         }
         PrimitiveTypeSpecifier/*?*/ pts = specifier as PrimitiveTypeSpecifier;
         if (pts != null) {
