@@ -290,3 +290,15 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+
+struct S;
+struct T;
+struct R { struct S x; int a; };
+
+struct S { struct T y; };
+
+struct T { struct R x; };
+
+void foo(struct R *s) { }
+`
+`

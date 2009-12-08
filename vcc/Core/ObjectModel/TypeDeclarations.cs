@@ -174,8 +174,18 @@ namespace Microsoft.Research.Vcc {
       return TypeMemberVisibility.Public;
     }
 
+    private bool cycleInAlignment;
+
     public override ushort Alignment {
-      get { return TypeHelper.TypeAlignment(this.TypeDefinition, false); }
+      get {
+        if (cycleInAlignment) return 1;
+        else {
+          cycleInAlignment = true;
+          var result = TypeHelper.TypeAlignment(this.TypeDefinition, false);
+          cycleInAlignment = false;
+          return result;
+        }
+      }
     }
   }
 
@@ -266,8 +276,18 @@ namespace Microsoft.Research.Vcc {
         return MemberHelper.ComputeFieldOffset((INestedTypeDefinition)item, this.TypeDefinition);
     }
 
+    private bool cycleInSizeOf;
+
     public override uint SizeOf {
-      get { return TypeHelper.SizeOfType(this.TypeDefinition, false); }
+      get {
+        if (cycleInSizeOf) return 1;
+        else {
+          cycleInSizeOf = true;
+          var result = TypeHelper.SizeOfType(this.TypeDefinition, false);
+          cycleInSizeOf = false;
+          return result;
+        }
+      }
     }
 
 
@@ -298,8 +318,18 @@ namespace Microsoft.Research.Vcc {
     {
     }
 
+    private bool cycleInSizeOf;
+
     public override uint SizeOf {
-      get { return TypeHelper.SizeOfType(this.NestedTypeDefinition, false); }
+      get {
+        if (cycleInSizeOf) return 1;
+        else {
+          cycleInSizeOf = true;
+          var result = TypeHelper.SizeOfType(this.NestedTypeDefinition, false);
+          cycleInSizeOf = false;
+          return result;
+        }
+      }
     }
 
     public override uint GetFieldOffset(object item)

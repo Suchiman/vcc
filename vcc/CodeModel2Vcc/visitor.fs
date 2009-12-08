@@ -684,6 +684,19 @@ namespace Microsoft.Research.Vcc
                               | _ -> seenFields.Add(f.Name, f)
                         List.iter addFieldOrReportError fields
                         
+                      let reportErrorForTypeCycle td =
+                        let rec checkOrComplain seenTypes (td : C.TypeDecl) = 
+                          if List.exists (fun (td':C.TypeDecl) -> td' = td) seenTypes then
+                            helper.Error(td.Token, 9709, "Cycle in type definition for type '" + td.Name + "'")
+                          else
+                            let rec checkType = function
+                              | C.Type.Ref(td') -> checkOrComplain (td::seenTypes) td'
+                              | C.Type.Volatile t -> checkType t
+                              | _ -> ()
+                            List.iter (fun (f:C.Field) -> checkType f.Type) td.Fields
+                        checkOrComplain [] td
+                        
+                      reportErrorForTypeCycle td
                       reportErrorForDuplicateFields td.Fields
                       C.Type.Ref (td)
                 
