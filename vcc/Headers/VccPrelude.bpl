@@ -633,12 +633,6 @@ function {:inline true} $nested_in(S:$state, p:$ptr, owner:$ptr) returns(bool)
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) returns(bool)
   { $closed(S, #p) && $owner(S, #p) == $me() && $typed2(S, #p, #t) && $kind_of(#t) != $kind_primitive && $is_non_primitive(#t) }
 
-function {:inline true} $wrapped_phys(S:$state, #p:$ptr, #t:$ctype) returns(bool)
-  { $wrapped(S, #p, #t) && $in_range_phys_ptr($ref(#p)) }
-
-function {:inline true} $wrapped_spec(S:$state, #p:$ptr, #t:$ctype) returns(bool)
-  { $wrapped(S, #p, #t) && $in_range_spec_ptr($ref(#p)) }
-
 function {:inline true} $irrelevant(S:$state, p:$ptr) returns(bool)
   { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
 
