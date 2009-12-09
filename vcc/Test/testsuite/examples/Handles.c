@@ -14,7 +14,7 @@ struct Data {
 struct Handle {
   int dummy;
   spec( struct Data *data; )
-  invariant(closed(data) && data->handles[this])
+  invariant(typed_phys(this) && closed(data) && data->handles[this])
 };
 
 void foo(struct X *x) writes(extent(x)) maintains(mutable(x) && is_object_root(x));
