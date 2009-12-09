@@ -392,7 +392,7 @@ namespace Microsoft.Research.Vcc {
     /// Do not call this method directly, but evaluate the HasErrors property. The latter will cache the return value.
     /// </summary>
     private bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      bool result = this.Type.HasErrors();
+      bool result = this.Type.HasErrors;
       //TODO: more checks
       return result;
     }
@@ -942,7 +942,7 @@ namespace Microsoft.Research.Vcc {
     /// Do not call this method directly, but evaluate the HasErrors property. The latter will cache the return value.
     /// </summary>
     private bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      bool result = this.Type.HasErrors();
+      bool result = this.Type.HasErrors;
       //TODO: check that typedef name is unique 
       return result;
     }

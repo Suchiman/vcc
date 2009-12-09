@@ -128,10 +128,10 @@ namespace Microsoft.Research.Vcc
       ]
     
     member private this.DoPrecond (p:IPrecondition) =
-      if p.HasErrors () then oopsLoc p "precondition has errors"; cTrue
+      if p.HasErrors then oopsLoc p "precondition has errors"; cTrue
       else this.DoExpression (p.Condition)
     member private this.DoPostcond (p:IPostcondition) =
-      if p.HasErrors () then oopsLoc p "postcondition has errors"; cTrue
+      if p.HasErrors then oopsLoc p "postcondition has errors"; cTrue
       else this.DoExpression (p.Condition)
         
     member this.GetResult () =
@@ -317,7 +317,7 @@ namespace Microsoft.Research.Vcc
 
           let contract = contractProvider.GetMethodContractFor(meth)     
           if contract <> null then
-            contract.HasErrors() |> ignore
+            contract.HasErrors |> ignore
             // reset localsMap to deal with renaming of contracts between definition and declaration          
             let savedLocalsMap = localsMap
             match contract with
@@ -340,7 +340,7 @@ namespace Microsoft.Research.Vcc
         
         
     member this.DoStatement (stmt:IStatement) : C.Expr =
-      if stmt.HasErrors() then
+      if stmt.HasErrors then
         oopsLoc stmt  "errors in stmt"
         C.Comment (this.StmtCommon stmt, sprintf "statement %s had errors" (stmt.ToString()))
       else
@@ -352,7 +352,7 @@ namespace Microsoft.Research.Vcc
         res
      
     member this.DoInvariant (inv:ITypeInvariant) : C.Expr =
-      if inv.Condition.HasErrors() then
+      if inv.Condition.HasErrors then
         oopsLoc inv "error in invariant"
         C.Expr.Bogus
       else
@@ -361,7 +361,7 @@ namespace Microsoft.Research.Vcc
         C.Expr.Macro(cond.Common, "labeled_invariant", [C.Expr.Macro(C.bogusEC, name, []); cond])
      
     member this.DoExpression(expr:IExpression) : C.Expr =
-      if expr.HasErrors () then
+      if expr.HasErrors then
         oopsLoc expr "error in expr"
         C.Expr.Bogus
       else
@@ -651,7 +651,7 @@ namespace Microsoft.Research.Vcc
                     | None -> trMembers isSpec ms
                     | Some(f) -> f :: trMembers isSpec ms
                   
-                  //if (contract <> null) then contract.HasErrors() |> ignore
+                  //if (contract <> null) then contract.HasErrors |> ignore
 
                   match fields with
                     | [] when not (VccScopedName.IsGroupType(typeDef)) ->
@@ -668,7 +668,7 @@ namespace Microsoft.Research.Vcc
                                             
                       if contract <> null then
                         td.Fields <- td.Fields @ [ for f in contract.ContractFields -> trField true f ]
-                        if not (contract.HasErrors()) then
+                        if not (contract.HasErrors) then
                           finalActions.Enqueue (fun () ->
                             td.Invariants <- [ for inv in contract.Invariants -> this.DoInvariant inv])
                        
@@ -747,7 +747,7 @@ namespace Microsoft.Research.Vcc
             
             bindings <- var :: bindings
             let body = getReturnStmt(anonymousDelegate.Body)
-            if (body.HasErrors()) then
+            if (body.HasErrors) then
               oopsLoc body "found errors in quantifier body, faking it to be 'true'"
               (cTrue, bindings, [])
             else
@@ -791,7 +791,7 @@ namespace Microsoft.Research.Vcc
     
     member this.DoLoopContract (loop:IStatement) =
       let contract = contractProvider.GetLoopContractFor loop
-      if (contract <> null) then contract.HasErrors() |> ignore
+      if (contract <> null) then contract.HasErrors |> ignore
       let conds =
         if contract = null then []
         else [ for i in contract.Invariants -> C.Expr.MkAssert (this.DoExpression i.Condition) ] @
@@ -805,7 +805,7 @@ namespace Microsoft.Research.Vcc
       if globalsType <> null then
         let contract = contractProvider.GetTypeContractFor globalsType
         if contract <> null then
-          contract.HasErrors() |> ignore
+          contract.HasErrors |> ignore
           for inv in contract.Invariants do
             if inv.IsAxiom then
               topDecls <- C.Top.Axiom (this.DoExpression inv.Condition) :: topDecls
