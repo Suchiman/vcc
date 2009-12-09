@@ -20,6 +20,7 @@ namespace Microsoft.Research.Vcc
     let addRangeAssumptions =
       let rangeAssumptions (parm : Variable) =
         match parm.Type with
+          | Ptr _
           | Integer _ ->
             [inRange (boolBogusEC ()) (mkRef parm)]
           | _ ->

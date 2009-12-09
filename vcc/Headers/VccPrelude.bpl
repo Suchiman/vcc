@@ -154,10 +154,13 @@ axiom $is_composite(^^root_emb);
 
 // pointers to types
 function $ptr_to($ctype) returns($ctype);
+function $spec_ptr_to($ctype) returns ($ctype);
 function $unptr_to($ctype) returns($ctype);
 function $ptr_level($ctype) returns(int);
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $unptr_to($ptr_to(#n)) == #n);
+axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $unptr_to($spec_ptr_to(#n)) == #n);
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $sizeof($ptr_to(#n)) == 8);
+axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $sizeof($ptr_to(#n)) == 8);
 
 function $map_t($ctype, $ctype) returns($ctype);
 function $map_domain($ctype) returns($ctype);
@@ -170,6 +173,7 @@ axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $map_range($map_t(#r,#d)) 
 // The two numbers should be relatively large primes (so that they least common multiple is large
 // enough so that the clash is unlikely for reasonable code).
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $ptr_level($ptr_to(#n)) == $ptr_level(#n) + 17);
+axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $ptr_level($spec_ptr_to(#n)) == $ptr_level(#n) + 31);
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $ptr_level($map_t(#r,#d)) == $ptr_level(#r) + 23);
 
 // {:weight 0} makes it possible to trigger on $is_primitive(...)
@@ -221,6 +225,7 @@ function {:inline true} $is_non_primitive_ptr(p:$ptr) returns(bool)
 
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $is_primitive($map_t(#r,#d)));
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $is_primitive($ptr_to(#n)));
+axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $is_primitive($spec_ptr_to(#n)));
 axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claimable(#n));
 axiom $is_primitive(^^void);
 axiom $is_primitive(^^bool);
@@ -242,6 +247,7 @@ axiom $is_primitive(^^f8);
 
 const $me_ref : int;
 function $me() returns($ptr);
+axiom $in_range_spec_ptr($me_ref);
 axiom $me() == $ptr(^$#thread_id_t, $me_ref);
 
 function {:inline true} $current_state(s:$state) returns($state) { s }
@@ -426,16 +432,14 @@ function $embedded_array_size(f:$field, t:$ctype) returns(int);
 function {:inline true} $static_field_properties(f:$field, t:$ctype) returns(bool)
   { $is_base_field(f) && $field_parent_type(f) == t }
 
-function {:inline true} $field_properties(S:$state, p:$ptr, f:$field, tp:$ctype, isvolatile:bool)  returns(bool)
+function {:inline true} $field_properties(S:$state, p:$ptr, f:$field, tp:$ctype, isvolatile:bool, isspec:bool)  returns(bool)
   { $typed2(S, $dot(p, f), tp) &&
     $emb(S, $dot(p, f)) == p &&
     $path(S, $dot(p, f)) == f &&
     !$is_array_elt(S, $dot(p, f)) &&
-    $is_volatile(S, $dot(p, f)) == isvolatile }
-
-//function $emb_impl($type_state,$ptr) returns($ptr);
-//axiom (forall S:$state, p:$ptr ::
-//  $good_state(S) ==> $emb(S, p) == $emb_impl($ts(S, $emb(S, p)), p))
+    $is_volatile(S, $dot(p, f)) == isvolatile &&
+    (!isspec && $in_range_phys_ptr($ref(p)) ==> $in_range_phys_ptr($ref($dot(p,f))))
+  }
 
 function $ts_typed($type_state) returns(bool);
 function $ts_emb($type_state) returns($ptr);
@@ -628,6 +632,12 @@ function {:inline true} $nested_in(S:$state, p:$ptr, owner:$ptr) returns(bool)
 
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) returns(bool)
   { $closed(S, #p) && $owner(S, #p) == $me() && $typed2(S, #p, #t) && $kind_of(#t) != $kind_primitive && $is_non_primitive(#t) }
+
+function {:inline true} $wrapped_phys(S:$state, #p:$ptr, #t:$ctype) returns(bool)
+  { $wrapped(S, #p, #t) && $in_range_phys_ptr($ref(#p)) }
+
+function {:inline true} $wrapped_spec(S:$state, #p:$ptr, #t:$ctype) returns(bool)
+  { $wrapped(S, #p, #t) && $in_range_spec_ptr($ref(#p)) }
 
 function {:inline true} $irrelevant(S:$state, p:$ptr) returns(bool)
   { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
@@ -934,6 +944,9 @@ function $read_ptr_m(S:$state, p:$ptr, t:$ctype) returns($ptr);
 // for easier model viewing
 axiom (forall S:$state, r:int, t:$ctype :: {$ptr(t, $mem(S, $ptr($ptr_to(t), r)))}
   $ptr(t, $mem(S, $ptr($ptr_to(t), r))) == $read_ptr_m(S, $ptr($ptr_to(t), r), t));
+
+axiom (forall S:$state, r:int, t:$ctype :: {$ptr(t, $mem(S, $ptr($spec_ptr_to(t), r)))}
+  $ptr(t, $mem(S, $ptr($spec_ptr_to(t), r))) == $read_ptr_m(S, $ptr($spec_ptr_to(t), r), t));
 
 function $type_code_is(x:int, tp:$ctype) returns(bool);
 // idx==0 - return type
@@ -1727,7 +1740,7 @@ procedure $stack_alloc(#t:$ctype, #sf:int, #spec:bool) returns (#r:$ptr);
   ensures $is_object_root($s, #r);
   ensures $first_option_typed($s, #r);
   ensures #spec ==> $in_range_spec_ptr($ref(#r));
-  ensures !#spec ==> $in_range_phys_ptr($ref(#r));
+  ensures !#spec ==> $in_range_phys_ptr($ref(#r)) && $in_range_phys_ptr($ref(#r) + $sizeof(#t));
 
 
 procedure $stack_free(#sf:int, #x:$ptr);
@@ -1840,7 +1853,7 @@ procedure $alloc(#t:$ctype) returns(#r:$ptr);
   ensures $ref(#r) == 0 || $is_malloc_root($s, #r);
   ensures $ref(#r) == 0 || $is_object_root($s, #r);
   ensures $ref(#r) == 0 || $first_option_typed($s, #r);
-  ensures $in_range_phys_ptr($ref(#r));
+  ensures $in_range_phys_ptr($ref(#r)) && $in_range_phys_ptr($ref(#r) + $sizeof(#t) - 1);
 
 
 procedure $free(#x:$ptr);
@@ -2530,6 +2543,12 @@ function {:weight 0} $byte_ptr_subtraction(p1:$ptr, p2:$ptr) returns(int)
 axiom (forall S:$state, r:int, t:$ctype :: {$mem(S, $ptr($as_in_range_t(t), r))}
   $good_state(S) ==> $in_range_t(t, $mem(S, $ptr($as_in_range_t(t), r))));
 
+axiom (forall S:$state, r:int, t:$ctype :: {$mem(S, $ptr($ptr_to(t), r))}
+  $good_state(S) ==> $in_range_phys_ptr($mem(S, $ptr($ptr_to(t), r))));
+
+axiom (forall S:$state, r:int, t:$ctype :: {$mem(S, $ptr($spec_ptr_to(t), r))}
+  $good_state(S) ==> $in_range_spec_ptr($mem(S, $ptr($spec_ptr_to(t), r))));
+
 function $_pow2(int) returns(int);
 axiom 
 $_pow2(0) == 1 && $_pow2(1) == 2 && $_pow2(2) == 4 && $_pow2(3) == 8 && $_pow2(4) == 16 && $_pow2(5) == 32 &&
@@ -2890,6 +2909,7 @@ axiom (forall S:$state, p:$ptr :: {$invok_state(S), $claimed_closed(S, p)}
 procedure $atomic_havoc();
   modifies $s;
   ensures $writes_nothing(old($s), $s);
+  ensures (forall p:$ptr :: {$mem($s, p)} $instantiate_int($mem(old($s), p)));
   ensures (forall r:int, t:$ctype, f:$field :: 
               {$is_thread_local_storage(t), $select.mem($memory($s), $dot($ptr(t, r), f))}
               $is_thread_local_storage(t) &&
