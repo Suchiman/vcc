@@ -731,6 +731,10 @@ axiom (forall S1:$state, S2:$state, p:$ptr :: {$st(S2, p), $call_transition(S1, 
   $call_transition(S1, S2) ==>
   $instantiate_st($st(S1, p)));
 
+axiom (forall S1:$state, S2:$state, p:$ptr :: {$mem(S2, p), $call_transition(S1, S2)}
+  $call_transition(S1, S2) ==>
+  $instantiate_int($mem(S1, p)));
+
 /*
 axiom (forall S:$state, p:$ptr :: {$thread_owner(S, p), $is_primitive($typ(p))}
   $instantiate_st($st(S, $emb(S, p))));
@@ -2903,7 +2907,6 @@ axiom (forall S:$state, p:$ptr :: {$invok_state(S), $claimed_closed(S, p)}
 procedure $atomic_havoc();
   modifies $s;
   ensures $writes_nothing(old($s), $s);
-  ensures (forall p:$ptr :: {$mem($s, p)} $instantiate_int($mem(old($s), p)));
   ensures (forall r:int, t:$ctype, f:$field :: 
               {$is_thread_local_storage(t), $select.mem($memory($s), $dot($ptr(t, r), f))}
               $is_thread_local_storage(t) &&
