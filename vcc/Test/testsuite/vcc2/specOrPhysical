@@ -101,4 +101,48 @@ void foo(struct T *t)
 `
 Verification of T#adm succeeded.
 Verification of foo succeeded.
+`#include <vcc.h>
+
+struct A {
+  int x;
+};
+
+struct B {
+  int dummy;
+  spec( struct A ^a; )
+
+  invariant(typed_spec(this) && a->x == 12)
+};
+
+
+void foo()
+{
+spec( struct B ^b; )
+speconly(
+  b = spec_malloc<struct B>();
+  b->a = spec_malloc<struct A>();
+  b->a->x = 12;
+  wrap(b);
+)
+}
+
+struct B2 {
+  int dummy;
+  spec( struct A ^a; )
+
+  invariant(typed_spec(this) && a->x == 12)
+};
+
+isadmissibilitycheck
+void adm_B2(struct B2* x)
+{
+  havoc_others(x);
+}
+`
+Verification of B#adm failed.
+testcase(11,43) : error VC8012: invariant(a->x == 12) of B is not admissible.
+Verification of B2#adm succeeded.
+Verification of foo succeeded.
+Verification of adm_B2 failed.
+testcase(37,1) : error VC8012: invariant(a->x == 12) of B2 is not admissible.
 `

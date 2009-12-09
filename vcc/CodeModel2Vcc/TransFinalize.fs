@@ -9,6 +9,7 @@
 
 namespace Microsoft.Research.Vcc
  open Microsoft.Research.Vcc
+ open Microsoft.Research.Vcc.Util
  open Microsoft.Research.Vcc.TransUtil
  open Microsoft.Research.Vcc.CAST
  
@@ -36,7 +37,8 @@ namespace Microsoft.Research.Vcc
       let rangeAssume (parm:Variable) =
         List.map Expr.MkAssume (rangeAssumptions parm)
       let aux (h:Function) =
-        h.Body <- Option.map (addStmts (List.concat (List.map rangeAssume h.InParameters))) h.Body
+        if not (_list_mem IsAdmissibilityCheck h.CustomAttr) then
+          h.Body <- Option.map (addStmts (List.concat (List.map rangeAssume h.InParameters))) h.Body
         if h.RetType._IsInteger then
           let ec = { boolBogusEC() with Token = h.Token }
           h.Ensures <- Expr.Macro(ec, "free_ensures", [inRange ec (Expr.Result({bogusEC with Type = h.RetType}))]) :: h.Ensures

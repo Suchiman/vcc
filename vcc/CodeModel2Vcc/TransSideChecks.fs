@@ -113,7 +113,6 @@ namespace Microsoft.Research.Vcc
  
   let handleCustomAdmissibilityChecks (explicitAdm:Dict<_,_>) (helper:Helper.Env) decls =
     let errCheck (f:Function) cb =
-      f.CustomAttr <- []
       match f.Parameters with
         | [{ Type = Ptr (Type.Ref td) } as p] ->
           if f.Requires <> [] || f.Ensures <> [] || f.Writes <> [] then
