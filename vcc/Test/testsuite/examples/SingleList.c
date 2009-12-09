@@ -51,7 +51,7 @@ struct vcc(dynamic_owns) _SINGLE_LIST_MANAGER
 
     // All objects are of the type SINGLE_LIST_ENTRY
     invariant(forall(obj_t p; {set_in(p,owns(this))}
-        set_in(p,owns(this)) ==> is(p,SINGLE_LIST_ENTRY) && typed(p)))
+        set_in(p,owns(this)) ==> is(p,SINGLE_LIST_ENTRY) && typed_phys(p)))
 
     // The "Manager" back-pointer of each LIST_ENTRY points back to this list manager.
     invariant(forall(PSINGLE_LIST_ENTRY p; {set_in(p,owns(this))}

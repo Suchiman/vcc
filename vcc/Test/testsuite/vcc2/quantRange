@@ -29,13 +29,13 @@ void foo(int *arr, unsigned a)
     requires(0 <= a && a < 100)
     maintains(wrapped(as_array(arr,100)))
     writes(as_array(arr,100))
-    ensures(forall(unsigned j; j < 100;
+    ensures(forall(unsigned j; {sk_hack(match_ulong(j))} j < 100;
         j < a ? unchanged(arr[j]) : arr[j]==42))
 {
     unwrap(as_array(arr,100));
     fill(arr+a, 100-a, 42);
     // doesn't help: assert(forall(unsigned j; a <= j; arr+j == (((int*)((void*)arr))+a)+(j-a)));
-    assert(forall(unsigned j; a <= j; arr+j == (arr+a)+(j-a)));
+    assert(forall(unsigned j; {match_ulong(j)} a <= j; arr+j == (arr+a)+(j-a)));
     wrap(as_array(arr,100));
 }
 
@@ -43,12 +43,12 @@ void bar(int *arr, unsigned a, unsigned b)
     requires(a && a < b && b < 100)
     maintains(wrapped(as_array(arr,100)))
     writes(as_array(arr,100))
-    ensures(forall(unsigned j; j < 100; a <= j && j < b ? arr[j]==42 : unchanged(arr[j])))
+    ensures(forall(unsigned j; {sk_hack(match_ulong(j))} j < 100; a <= j && j < b ? arr[j]==42 : unchanged(arr[j])))
 {
     unwrap(as_array(arr,100));
     fill(arr+a, b-a, 42);
     wrap(as_array(arr,100));
-    assert(forall(unsigned j; a <= j; arr+j == (arr+a)+(j-a)));
+    assert(forall(unsigned j; {match_ulong(j)} a <= j; arr+j == (arr+a)+(j-a)));
 }
 `
 Verification of fill succeeded.

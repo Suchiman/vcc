@@ -232,13 +232,6 @@ namespace Microsoft.Research.Vcc
      
       let rec toTypeId' translateArrayAsPtr t =
       
-        let rec normalizePtrs = function
-          | C.Type.PhysPtr(t)
-          | C.Type.SpecPtr(t) -> C.Type.PhysPtr(normalizePtrs t)
-          | C.Type.Array(t,n) -> C.Type.Array(normalizePtrs t, n)
-          | t -> t
-        let t = normalizePtrs t
-
         let internalizeType t bt =      
           let rec isDerivedFromTypeVar = function
             | C.Type.TypeVar _ -> true
@@ -260,9 +253,10 @@ namespace Microsoft.Research.Vcc
           | C.Type.MathInteger -> er "^^mathint"
           | C.Type.Primitive kind -> er ("^^" + C.Type.PrimSuffix kind) 
           | C.Type.Void -> er "^^void"
-          | C.Type.SpecPtr tp
           | C.Type.PhysPtr tp ->
             internalizeType t (bCall "$ptr_to" [toTypeId' false tp])
+          | C.Type.SpecPtr tp ->
+            internalizeType t (bCall "$spec_ptr_to" [toTypeId' false tp])
           | C.Type.ObjectT -> toTypeId' false (C.Type.PhysPtr C.Void)
           | C.Type.Array (tp, _) when translateArrayAsPtr ->
             internalizeType (C.Type.PhysPtr tp) (bCall "$ptr_to" [toTypeId' translateArrayAsPtr tp])
@@ -971,6 +965,8 @@ namespace Microsoft.Research.Vcc
           | C.Expr.Macro (_, "unchecked_u8", [e])
           | C.Expr.Macro (_, "unchecked_i8", [e]) when e.Type.SizeOf <= 8 -> self e
           
+          | C.Expr.Macro (_, "in_range_phys_ptr", [e]) -> self e
+          
           | C.Expr.BoolLiteral (_, v) -> B.BoolLiteral v
           
           | C.Expr.Macro(_, (("bv_extract_unsigned"|"bv_extract_signed") as name), [e; C.IntLiteral(_,bs); C.IntLiteral(_, fromBit); C.IntLiteral(_, toBit)]) ->
@@ -989,6 +985,7 @@ namespace Microsoft.Research.Vcc
                 if src.SizeOf = dst.SizeOf then self e
                 elif src.SizeOf < dst.SizeOf then selfExtend dst e
                 else B.BvExtract(self e, dst.SizeOf * 8, 0)
+              | C.Ptr _, C.MathInteger -> self e
               | src, dst -> 
                 helper.Error (expr.Token, 9690, "cast from " + src.ToString() + " to " + dst.ToString() + " is not supported in bv_lemma(...)")
                 er "$err"
@@ -1028,6 +1025,8 @@ namespace Microsoft.Research.Vcc
                 | C.Type.MathInteger _ ->
                   bCall "$int_to_bool" [self e']
                 | _ -> die()
+            | C.Cast ({ Type = C.Type.MathInteger }, _, e') when e'.Type._IsPtr ->
+              bCall "$ref" [self e']
             | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
               bCall "$ptr_cast" [self e'; ptrType expr]
             | C.Expr.Cast ({ Type = C.Type.ObjectT }, _, C.Expr.IntLiteral(_, z)) when z = bigint.Zero -> er "$null"
@@ -2141,7 +2140,7 @@ namespace Microsoft.Research.Vcc
             | _ ->
               let tsOfDot = bCall "$ts" [s; dot]
               let statusOfDot = bCall "$st" [s; dot]
-              let emb = bCall "$field_properties" [s; p; fieldRef; dott; bBool f.IsVolatile]
+              let emb = bCall "$field_properties" [s; p; fieldRef; dott; bBool f.IsVolatile; bBool f.IsSpec]
               let triggers = [ (* [dot; bCall "$typed" [s; p]]; *) [tsOfDot]; [statusOfDot]]
               let emb =
                 if isUnion then bInvImpl (bAnd weTyped isActive) emb
