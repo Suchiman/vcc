@@ -387,6 +387,16 @@ namespace Microsoft.Research.Vcc {
     }
     CallingConvention callingConvention;
 
+    /// <summary>
+    /// Performs any error checks still needed and returns true if any errors were found in the method or a constituent part of the method.
+    /// Do not call this method directly, but evaluate the HasErrors property. The latter will cache the return value.
+    /// </summary>
+    private bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      bool result = this.Type.HasErrors();
+      //TODO: more checks
+      return result;
+    }
+
     public CompilationPart CompilationPart {
       get { return this.ContainingTypeDeclaration.CompilationPart; }
     }
@@ -494,6 +504,18 @@ namespace Microsoft.Research.Vcc {
     public TypeMemberVisibility GetDefaultVisibility() {
       return TypeMemberVisibility.Public;
     }
+
+    /// <summary>
+    /// Checks the member for errors and returns true if any were found.
+    /// </summary>
+    public bool HasErrors {
+      get {
+        if (this.hasErrors == null)
+          this.hasErrors = this.CheckForErrorsAndReturnTrueIfAnyAreFound();
+        return this.hasErrors.Value;
+      }
+    }
+    bool? hasErrors;
 
     public bool IsExternal {
       get { return this.isExternal; }
@@ -915,6 +937,16 @@ namespace Microsoft.Research.Vcc {
       this.type = template.type;
     }
 
+    /// <summary>
+    /// Performs any error checks still needed and returns true if any errors were found in the method or a constituent part of the method.
+    /// Do not call this method directly, but evaluate the HasErrors property. The latter will cache the return value.
+    /// </summary>
+    private bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      bool result = this.Type.HasErrors();
+      //TODO: check that typedef name is unique 
+      return result;
+    }
+
     public CompilationPart CompilationPart {
       get { return this.ContainingTypeDeclaration.CompilationPart; }
     }
@@ -946,6 +978,18 @@ namespace Microsoft.Research.Vcc {
     public TypeMemberVisibility GetDefaultVisibility() {
       return TypeMemberVisibility.Public;
     }
+
+    /// <summary>
+    /// Checks the member for errors and returns true if any were found.
+    /// </summary>
+    public bool HasErrors {
+      get {
+        if (this.hasErrors == null)
+          this.hasErrors = this.CheckForErrorsAndReturnTrueIfAnyAreFound();
+        return this.hasErrors.Value;
+      }
+    }
+    bool? hasErrors;
 
     public NameDeclaration Name {
       get { return this.name; }
