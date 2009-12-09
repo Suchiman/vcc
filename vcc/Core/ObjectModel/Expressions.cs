@@ -447,7 +447,7 @@ namespace Microsoft.Research.Vcc {
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       bool result = base.CheckForErrorsAndReturnTrueIfAnyAreFound();
       if (this.Type == Dummy.Type) this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.IllegalIndirection));
-      result |= this.ConvertedAddress.HasErrors();
+      result |= this.ConvertedAddress.HasErrors;
       return result;
     }
 
@@ -689,7 +689,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
     {
-      return this.TypeExpression.HasErrors();
+      return this.TypeExpression.HasErrors;
     }
 
     /// <summary>
@@ -831,7 +831,7 @@ namespace Microsoft.Research.Vcc {
           Expression convertedExpression = this.Helper.ImplicitConversion(this.Size, this.PlatformType.SystemInt32.ResolvedType);
           object/*?*/ val = convertedExpression.Value;
           if (val == null) {
-            if (!this.Size.HasErrors() && !convertedExpression.HasErrors()) {
+            if (!this.Size.HasErrors && !convertedExpression.HasErrors) {
               this.ContainingBlock.Helper.ReportError(new VccErrorMessage(this.Size.SourceLocation, Error.ExpectedConstantExpression));
             }
           }
@@ -894,7 +894,7 @@ namespace Microsoft.Research.Vcc {
     /// Performs any error checks still needed and returns true if any errors were found in the statement or a constituent part of the statement.
     /// </summary>
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      return this.TargetWithoutCasts.HasErrors() || this.ConvertedSourceExpression is DummyExpression;
+      return this.TargetWithoutCasts.HasErrors || this.ConvertedSourceExpression is DummyExpression;
     }
 
     /// <summary>
@@ -959,8 +959,10 @@ namespace Microsoft.Research.Vcc {
         visitor.Visit(this);
       }
 
-      public bool HasErrors() {
-        return this.ValueToConvert.HasErrors();
+      public bool HasErrors {
+        get {
+          return this.ValueToConvert.HasErrors;
+        }
       }
 
       public IEnumerable<ILocation> Locations {
@@ -1553,7 +1555,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
     {
-      if (this.LeftOperand.HasErrors() || this.RightOperand.HasErrors()) return true;
+      if (this.LeftOperand.HasErrors || this.RightOperand.HasErrors) return true;
       if (VccEquality.IsMathOrRecordTypeComparison(this.LeftOperand.Type, this.RightOperand.Type))
         return false;
 
@@ -1705,7 +1707,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
     {
-      if (this.LeftOperand.HasErrors() || this.RightOperand.HasErrors()) return true;
+      if (this.LeftOperand.HasErrors || this.RightOperand.HasErrors) return true;
 
       if (VccEquality.IsMathOrRecordTypeComparison(this.LeftOperand.Type, this.RightOperand.Type))
         return false;
@@ -1750,7 +1752,7 @@ namespace Microsoft.Research.Vcc {
     /// Performs any error checks still needed and returns true if any errors were found in the statement or a constituent part of the statement.
     /// </summary>
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      return this.ReturnType.HasErrors();
+      return this.ReturnType.HasErrors;
     }
 
     readonly internal FunctionDeclarator/*?*/ declarator;
@@ -2561,7 +2563,7 @@ namespace Microsoft.Research.Vcc {
         var actualEnum = this.OriginalArguments.GetEnumerator();
         while (formalEnum.MoveNext()) {
           if (!actualEnum.MoveNext()) break;
-          if (actualEnum.Current.HasErrors())
+          if (actualEnum.Current.HasErrors)
             result = true;
           i++;
           if (formalEnum.Current.IsOut && !(actualEnum.Current is OutArgument)) {
@@ -3339,7 +3341,7 @@ namespace Microsoft.Research.Vcc {
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
     {
-      return this.Expression.HasErrors() || base.CheckForErrorsAndReturnTrueIfAnyAreFound();
+      return this.Expression.HasErrors || base.CheckForErrorsAndReturnTrueIfAnyAreFound();
     } 
 
     protected override ITypeDefinition Resolve(object resolvedExpression, int numberOfTypeParameters)
@@ -3376,7 +3378,7 @@ namespace Microsoft.Research.Vcc {
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       if (this.ResolveAsValueContainer(true) == null) {
-        if (this.Qualifier.HasErrors()) return true;
+        if (this.Qualifier.HasErrors) return true;
         if (this.Qualifier.Type == Dummy.Type) {
           this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.StructRequiredForDot, this.SimpleName.Name.Value));
           return true;
@@ -3682,7 +3684,7 @@ namespace Microsoft.Research.Vcc {
     /// Performs any error checks still needed and returns true if any errors were found in the statement or a constituent part of the statement.
     /// </summary>
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      bool result = this.Expression.HasErrors();
+      bool result = this.Expression.HasErrors;
       if (!result && this.Expression.Type.TypeCode == PrimitiveTypeCode.Void) {
         this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.SizeOfUnknown, this.Expression.SourceLocation.Source));
         result = false;
@@ -3927,7 +3929,7 @@ namespace Microsoft.Research.Vcc {
     protected override IExpression ProjectAsNonConstantIExpression() {
       IEnumerator<Expression> args = this.OriginalArguments.GetEnumerator();
       if (!(args.MoveNext() && (this.fixedSizeArray || args.Current.Type is IPointerType || args.Current.Type is IFunctionPointer))) {
-        if (this.HasErrors()) {
+        if (this.HasErrors) {
           // when we already have reported an error for this construct we do not need to throw
           CompileTimeConstant result = new CompileTimeConstant(false, SourceDummy.SourceLocation);
           result.SetContainingExpression(this);
@@ -4433,10 +4435,10 @@ namespace Microsoft.Research.Vcc {
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       bool result = false;
       foreach (LocalDeclarationsStatement decl in this.BoundVariables)
-        result |= decl.HasErrors();
+        result |= decl.HasErrors;
       IsTrue convertedCondition = new IsTrue(base.Condition);
-      result |= convertedCondition.HasErrors();
-      result |= this.lambdaExpr.HasErrors();
+      result |= convertedCondition.HasErrors;
+      result |= this.lambdaExpr.HasErrors;
       result |= this.HasSideEffect(true);
       return result;
     }

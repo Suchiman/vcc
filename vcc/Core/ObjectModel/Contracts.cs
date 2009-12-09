@@ -40,7 +40,7 @@ namespace Microsoft.Research.Vcc {
     {
       bool result = false;
       foreach (ITypeInvariant inv in this.Invariants)
-        result |= inv.HasErrors();
+        result |= inv.HasErrors;
       return result;
     }
 
