@@ -6,7 +6,8 @@ void bar(unsigned int x) {
   foo(x);
 }
 `
-testcase(6,7) : error VC0000: Cannot implicitly convert type 'unsigned __int32' to '__int32'.
+testcase(6,3) : error VC0000: The best overloaded method match for '__Globals__.foo(int)' has some invalid arguments.
+testcase(6,7) : error VC0000: Argument '1': cannot convert from 'unsigned __int32' to '__int32'.
 `
 #include <vcc2.h>
 

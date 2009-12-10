@@ -5,5 +5,6 @@ void test3( int *xx)
   sf(xx);
 }
 `
-testcase(5,6) : error VC0000: Cannot implicitly convert type 'int*' to '__int32'.
+testcase(5,3) : error VC0000: The best overloaded method match for '__Globals__.sf(int)' has some invalid arguments.
+testcase(5,6) : error VC0000: Argument '1': cannot convert from 'int*' to '__int32'.
 `
