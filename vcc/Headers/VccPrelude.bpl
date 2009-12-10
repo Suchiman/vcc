@@ -2938,6 +2938,7 @@ procedure $alloc_claim() returns(#r:$ptr);
     p == #r || $st_eq(old($s), $s, p));
   ensures $wrapped($s, #r, ^^claim);
   ensures $is_fresh(old($s), $s, #r);
+  ensures $in_range_spec_ptr($ref(#r));
   ensures $ref_cnt($s, #r) == 0;
   ensures !$closed(old($s), #r) && $owner(old($s), #r) != $me();
   ensures $timestamp_post_strict(old($s), $s);

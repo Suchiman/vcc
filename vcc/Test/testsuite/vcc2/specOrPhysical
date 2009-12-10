@@ -146,3 +146,20 @@ Verification of foo succeeded.
 Verification of adm_B2 failed.
 testcase(37,1) : error VC8012: invariant(a->x == 12) of B2 is not admissible.
 `
+#include <vcc.h>
+
+struct vcc(claimable) S {
+  int a;
+};
+
+void foo(struct S *s)
+  writes(extent(s))
+{
+  claimp(c;)
+  wrap(s);
+  speconly(c = claim(s);)
+  assert(typed_spec(c));
+}
+`
+Verification of foo succeeded.
+`
