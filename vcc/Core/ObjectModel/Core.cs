@@ -886,6 +886,10 @@ namespace Microsoft.Research.Vcc {
       if (sourceType.IsEnum && TypeHelper.IsPrimitiveInteger(targetType))
         return this.ImplicitConversionExists(sourceType.UnderlyingType.ResolvedType, targetType);
      
+      // int -> enum
+      if (targetType.IsEnum && TypeHelper.IsPrimitiveInteger(sourceType))
+        return this.ImplicitConversionExists(sourceType, targetType.UnderlyingType.ResolvedType);
+
       // special pointer conversion rules
       IPointerType/*?*/ srcPointerType;
       IPointerType/*?*/ tgtPointerType;
