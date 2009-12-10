@@ -860,6 +860,8 @@ namespace Microsoft.Research.Vcc {
           return false;
       }
       if (expression.Type == Dummy.Type) {
+        IFunctionPointer/*?*/ functionPointer = targetType as IFunctionPointer;
+        if (functionPointer != null) return (this.ConversionFromMethodGroupToFunctionPointer(expression, functionPointer).Type != Dummy.Type);
         if (targetTypeAsPtr != null && targetTypeAsPtr.TargetType.ResolvedType.TypeCode == PrimitiveTypeCode.Void) {
           if (this.ResolveToMethod(expression) != null) return true;
         }
@@ -893,7 +895,8 @@ namespace Microsoft.Research.Vcc {
       if (srcKind == PtrConvKind.Array) return this.ImplicitConversionExists(srcPointerType, targetType);
 
       if (srcKind != PtrConvKind.None && tgtKind != PtrConvKind.None) {
-        if (VccCompilationHelper.KindsToConvMethod(srcKind, tgtKind) == ConvMethod.Implicit) 
+        ConvMethod convMethod = VccCompilationHelper.KindsToConvMethod(srcKind, tgtKind);
+        if (convMethod == ConvMethod.Implicit || convMethod == ConvMethod.Identity) 
           return true;
         if (srcKind == PtrConvKind.SpecPtr || srcKind == PtrConvKind.VoidSpecP || tgtKind == PtrConvKind.SpecPtr || tgtKind == PtrConvKind.VoidSpecP)
           return false;

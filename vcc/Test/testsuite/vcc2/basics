@@ -269,8 +269,8 @@ void foo() {
   speconly(m[(void *)0] = true;)
 }
 `
-testcase(6,45) : error VC0000: Cannot implicitly convert type 'void*' to '__int32'.
-`
+testcase(6,43) : error VC0000: The best overloaded method match for 'System.Diagnostics.Contracts.CodeContract.Map<int, bool>.Item.get(int)' has some invalid arguments.
+testcase(6,45) : error VC0000: Argument '1': cannot convert from 'void*' to '__int32'.`
 void foo()
 {
   int x, *p;
@@ -741,11 +741,12 @@ void wrong_type() {
     assert(bar((int ^)false));
 }
 `
-testcase(12,18) : error VC0000: Cannot implicitly convert type 'bool' to 'int*'.
+testcase(12,14) : error VC0000: The best overloaded method match for '__Globals__.foo(int*)' has some invalid arguments.
+testcase(12,18) : error VC0000: Argument '1': cannot convert from 'bool' to 'int*'.
 testcase(13,18) : error VC0000: Cannot convert type 'bool' to 'int*'.
-testcase(14,18) : error VC0000: Cannot implicitly convert type 'bool' to 'int^'.
-testcase(15,18) : error VC0000: Cannot convert type 'bool' to 'int^'.
-`
+testcase(14,14) : error VC0000: The best overloaded method match for '__Globals__.bar(int*)' has some invalid arguments.
+testcase(14,18) : error VC0000: Argument '1': cannot convert from 'bool' to 'int^'.
+testcase(15,18) : error VC0000: Cannot convert type 'bool' to 'int^'.`
 #include <vcc.h>
 
 struct System {

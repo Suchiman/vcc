@@ -23,7 +23,8 @@ void oopsExample()
   }
 }
 `
-testcase(6,15) : error VC0000: Cannot implicitly convert type '__int32' to 'unsigned __int32'.
+testcase(6,7) : error VC0000: The best overloaded method match for 'System.Diagnostics.Contracts.CodeContract.Map<uint, uint>.Item.get(uint)' has some invalid arguments.
+testcase(6,15) : error VC0000: Argument '1': cannot convert from '__int32' to 'unsigned __int32'.
 `
 #include "vcc2.h"
 
