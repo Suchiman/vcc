@@ -1841,7 +1841,7 @@ namespace Microsoft.Research.Vcc {
         List<ITypeReference> expectedTypes = new List<ITypeReference>(genericType.GenericArguments);
         if (arguments.Count == 1 && expectedTypes.Count == 2)
         {
-          Helper.ReportFailedImplicitConversion(arguments[0], expectedTypes[0].ResolvedType);
+          Helper.ReportFailedArgumentConversion(arguments[0], expectedTypes[0].ResolvedType, 0);
           reportedError = true;
         }
       }
@@ -2597,22 +2597,6 @@ namespace Microsoft.Research.Vcc {
       if (containingBlock == this.ContainingBlock) return this;
       return new VccMethodCall(containingBlock, this);
     }
-
-    /// <summary>
-    /// Uses the this.OriginalArguments and this.GetCandidateMethods to resolve the actual method to call.
-    /// </summary>
-    protected override IMethodDefinition ResolveMethod() {
-      IEnumerable<IMethodDefinition> candidateMethods = this.GetCandidateMethods(false);
-      IMethodDefinition resolvedMethod = this.Helper.ResolveOverload(candidateMethods, this.OriginalArguments, true);
-      if (resolvedMethod == Dummy.Method) {
-        if (this.ComplainedAboutArguments()) return resolvedMethod;
-        if (this.ComplainedAboutFailedInferences()) return resolvedMethod;
-        this.ComplainAboutCallee();
-      }
-
-      return resolvedMethod;
-    }
-
   }
 
   public class VccReturnValue : ReturnValue
