@@ -83,23 +83,15 @@ namespace Microsoft.Research.Vcc {
       return new BitFieldDefinition(targetTypeDeclaration, this);
     }
 
-    public override IEnumerable<ICustomAttribute> Attributes {
-      get {
-        foreach (ICustomAttribute baseAttr in this.BaseAttributes)
-          yield return baseAttr;
-        IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
-          this.extendedAttributes,
-          new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
-        foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
-          yield return new CustomAttribute(extAttr);
-      }
+    protected override List<ICustomAttribute> GetAttributes() {
+      var result = base.GetAttributes();
+      IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
+        this.extendedAttributes,
+        new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
+      foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
+        result.Add(new CustomAttribute(extAttr));
+      return result;
     }
-
-    // Prevent warning about unverifiable code
-    private IEnumerable<ICustomAttribute> BaseAttributes {
-      get { return base.Attributes; }
-    }
-
     private readonly IList<Specifier> extendedAttributes;
 
     private BlockStatement DummyBlock {
@@ -152,26 +144,18 @@ namespace Microsoft.Research.Vcc {
       return new FieldDefinition(targetTypeDeclaration, this);
     }
 
-    public override IEnumerable<ICustomAttribute> Attributes {
-      get {
-        foreach (ICustomAttribute baseAttr in this.BaseAttributes)
-          yield return baseAttr;
-        IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
-          this.extendedAttributes,
-          new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
-                foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
-                  yield return new CustomAttribute(extAttr);
-      }
+    protected override List<ICustomAttribute> GetAttributes() {
+      var result = base.GetAttributes();
+      IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
+        this.extendedAttributes,
+        new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
+      foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
+        result.Add(new CustomAttribute(extAttr));
+      return result;      
     }
 
     public bool IsSpec {
       get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.extendedAttributes, Token.Specification); }
-    }
-
-    // Prevent warning about unverifiable code
-    private IEnumerable<ICustomAttribute> BaseAttributes
-    {
-      get { return base.Attributes; }
     }
 
     private readonly IList<Specifier> extendedAttributes;

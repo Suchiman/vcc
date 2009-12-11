@@ -133,24 +133,14 @@ namespace Microsoft.Research.Vcc {
       this.isSpec = template.isSpec;
     }
 
-    public override IEnumerable<ICustomAttribute> Attributes
-    {
-      get
-      {
-        foreach (ICustomAttribute attr in BaseAttributes)
-          yield return attr;
-        IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
-          IteratorHelper.GetConversionEnumerable<DeclspecSpecifier, Specifier>(this.extendedAttributes),
-          new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
-        foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
-          yield return new CustomAttribute(extAttr);
-      }
-    }
-
-    // to prevent warning about unverifiable code
-    private IEnumerable<ICustomAttribute> BaseAttributes
-    {
-      get { return base.Attributes; }
+    protected override List<ICustomAttribute> GetAttributes() {
+      var result = base.GetAttributes();
+      IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
+        IteratorHelper.GetConversionEnumerable<DeclspecSpecifier, Specifier>(this.extendedAttributes),
+        new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
+      foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
+        result.Add(new CustomAttribute(extAttr));
+      return result;
     }
 
     /// <summary>
@@ -218,16 +208,14 @@ namespace Microsoft.Research.Vcc {
 
     readonly IEnumerable<DeclspecSpecifier> extendedAttributes;
 
-    public override IEnumerable<ICustomAttribute> Attributes  {
-      get {
-        foreach (ICustomAttribute attr in BaseAttributes)
-          yield return attr;
-        IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
-          IteratorHelper.GetConversionEnumerable<DeclspecSpecifier, Specifier>(this.extendedAttributes), 
-          new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
-        foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
-          yield return new CustomAttribute(extAttr);
-      }
+    protected override List<ICustomAttribute> GetAttributes() {
+      var result = base.GetAttributes();
+      IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
+        IteratorHelper.GetConversionEnumerable<DeclspecSpecifier, Specifier>(this.extendedAttributes),
+        new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
+      foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
+        result.Add(new CustomAttribute(extAttr));
+      return result;
     }
 
     /// <summary>
