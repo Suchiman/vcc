@@ -3646,4 +3646,7 @@
   <data name="UnableToDetermineTypeOfInitializer" xml:space="preserve">
     <value>Cannot determine initializer's type from context.</value>
   </data>
+  <data name="ValueTypeLayoutCycle" xml:space="preserve">
+    <value>Type member '{0}' in type '{1}' causes a cycle in the type layout.</value>
+  </data>
 </root>

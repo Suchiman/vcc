@@ -117,5 +117,11 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     UnableToDetermineTypeOfInitializer,
 
+    /// <summary>
+    /// Type member '{0}' in type '{1}' causes a cycle in the type layout.
+    /// </summary>
+    ValueTypeLayoutCycle,
+
+
   }
 }

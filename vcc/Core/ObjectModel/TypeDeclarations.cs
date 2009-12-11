@@ -164,17 +164,54 @@ namespace Microsoft.Research.Vcc {
       return TypeMemberVisibility.Public;
     }
 
-    private bool cycleInAlignment;
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      return base.CheckForErrorsAndReturnTrueIfAnyAreFound() || VccStructuredTypeDeclaration.HasTypeCycle(this.TypeDefinition, this.Helper);
+    }
+
+    internal static bool HasTypeCycle(ITypeReference type, LanguageSpecificCompilationHelper helper) {
+      return VccStructuredTypeDeclaration.HasTypeCycle(type, null, new Stack<ITypeReference>(), helper);
+    }
+
+    private static Dictionary<ITypeReference, bool> typesWithKnownLoops = new Dictionary<ITypeReference, bool>();
+
+    private static bool HasTypeCycle(ITypeReference type, IFieldDefinition/*?*/ offendingField, Stack<ITypeReference> seenTypes, LanguageSpecificCompilationHelper helper) {
+
+      if (type.TypeCode != PrimitiveTypeCode.NotPrimitive ||
+          !type.ResolvedType.IsStruct) return false;
+
+      lock (GlobalLock.LockingObject) {
+        if (typesWithKnownLoops.ContainsKey(type)) return true;
+      }
+
+      if (seenTypes.Contains(type)) {
+        lock (GlobalLock.LockingObject) {
+          if (!typesWithKnownLoops.ContainsKey(type)) {
+            typesWithKnownLoops.Add(type, true);
+            var locations = new List<IPrimarySourceLocation>(helper.Compilation.SourceLocationProvider.GetPrimarySourceLocationsFor(type.Locations));
+            helper.ReportError(
+              new VccErrorMessage(locations[0],
+                Error.ValueTypeLayoutCycle, offendingField.Name.Value.ToString(), helper.GetTypeName(type.ResolvedType)));
+          }
+        }
+        return true;
+      }
+
+      seenTypes.Push(type);
+      bool hasCycle = false;
+      foreach (var field in IteratorHelper.GetFilterEnumerable<ITypeDefinitionMember, IFieldDefinition>(type.ResolvedType.Members)) {
+        if (!field.IsStatic) {
+          hasCycle |= VccStructuredTypeDeclaration.HasTypeCycle(field.Type, field, seenTypes, helper);
+        }
+      }
+
+      seenTypes.Pop();
+      return hasCycle;
+    }
 
     public override ushort Alignment {
       get {
-        if (cycleInAlignment) return 1;
-        else {
-          cycleInAlignment = true;
-          var result = TypeHelper.TypeAlignment(this.TypeDefinition, false);
-          cycleInAlignment = false;
-          return result;
-        }
+        if (this.HasErrors) return 1;
+        return TypeHelper.TypeAlignment(this.TypeDefinition, false);
       }
     }
   }
@@ -237,7 +274,14 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override ushort Alignment {
-      get { return TypeHelper.TypeAlignment(this.NestedTypeDefinition, false); }
+      get {
+        if (this.HasErrors) return 1;
+        return TypeHelper.TypeAlignment(this.NestedTypeDefinition, false); 
+      }
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      return base.CheckForErrorsAndReturnTrueIfAnyAreFound() || VccStructuredTypeDeclaration.HasTypeCycle(this.TypeDefinition, this.Helper);
     }
   }
 
@@ -264,17 +308,10 @@ namespace Microsoft.Research.Vcc {
         return MemberHelper.ComputeFieldOffset((INestedTypeDefinition)item, this.TypeDefinition);
     }
 
-    private bool cycleInSizeOf;
-
     public override uint SizeOf {
       get {
-        if (cycleInSizeOf) return 1;
-        else {
-          cycleInSizeOf = true;
-          var result = TypeHelper.SizeOfType(this.TypeDefinition, false);
-          cycleInSizeOf = false;
-          return result;
-        }
+        if (this.HasErrors) return 1;
+        return TypeHelper.SizeOfType(this.TypeDefinition, false);
       }
     }
 
@@ -306,17 +343,10 @@ namespace Microsoft.Research.Vcc {
     {
     }
 
-    private bool cycleInSizeOf;
-
     public override uint SizeOf {
       get {
-        if (cycleInSizeOf) return 1;
-        else {
-          cycleInSizeOf = true;
-          var result = TypeHelper.SizeOfType(this.NestedTypeDefinition, false);
-          cycleInSizeOf = false;
-          return result;
-        }
+        if (this.HasErrors) return 1;
+        return TypeHelper.SizeOfType(this.NestedTypeDefinition, false);
       }
     }
 
@@ -390,7 +420,10 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override uint SizeOf {
-      get { return ComputeSizeOf(this.TypeDeclarationMembers); }
+      get { 
+        if (this.HasErrors) return 1;
+        return ComputeSizeOf(this.TypeDeclarationMembers); 
+      }
     }
 
     internal static uint ComputeSizeOf(IEnumerable<ITypeDeclarationMember> members)
