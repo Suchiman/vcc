@@ -83,8 +83,10 @@ namespace Microsoft.Research.Vcc
     let tpPtr = B.Type.Ref "$ptr"
     let tpPrimitive = B.Type.Ref "$primitive"
     let tpStruct = B.Type.Ref "$struct"
+    let tpRecord = B.Type.Ref "$record"
     let tpPtrset = B.Type.Ref "$ptrset"
     let tpCtype = B.Type.Ref "$ctype"
+    let tpField = B.Type.Ref "$field"
     let tpState = B.Type.Ref "$state"
     let tpVersion = B.Type.Ref "$version"
     let tpToken = B.Type.Ref "$token"
@@ -428,6 +430,16 @@ namespace Microsoft.Research.Vcc
         let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", bImpl argRange (t2Eq (bCall sel [er "M1"; er "p"]) (bCall sel [er "M2"; er "p"]))))
                              eqM1M2
         let eqM1M2Ax2 = bImpl eqM1M2 (bEq (er "M1") (er "M2"))
+        
+        let eqRecAx = 
+          let m1 = bCall "$rec_fetch" [er "r1"; er "f"]
+          let m2 = bCall "$rec_fetch" [er "r2"; er "f"]
+          let recEq = bCall "$rec_base_eq" [m1; m2]
+          let mapEq = bCall eq [castFromInt mt m1; castFromInt mt m2]                    
+          let vars = ["r1", tpRecord; "r2", tpRecord; "f", tpField; "R", tpCtype]
+          let isRecFld = bCall "$is_record_field" [er "R"; er "f"; toTypeId (C.Type.Map (t1, t2))]
+          B.Expr.Forall (Token.NoToken, vars, [[recEq; isRecFld]], weight "select-map-eq", bImpl mapEq recEq)
+        
         let mpv = ["M", tp; "p", bt1; "v", bt2]
         let m1m2 = ["M1", tp; "M2", tp]
         [B.Decl.TypeDef mapName;
@@ -441,7 +453,8 @@ namespace Microsoft.Research.Vcc
            B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax1));
            B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax2));
            B.Decl.Axiom (bEq (castFromInt mt (bInt 0)) (er zero));
-           B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["p", bt1], [], weight "select-map-eq", selZero))
+           B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["p", bt1], [], weight "select-map-eq", selZero));
+           B.Decl.Axiom eqRecAx
           ] @ inRange
       
       let rec trType (t:C.Type) : B.Type = 
