@@ -2890,6 +2890,13 @@ namespace Microsoft.Research.Vcc
               helper.Error(decl.Token, 9600, "OOPS for declaration " + decl.ToString())
               reraise()
 
+      let archSpecific() = 
+        let ptrSizeInBytes = !C.PointerSizeInBytes
+        //let archComment = B.Comment ("Configuration for sizeof(void *) == " + ptrSizeInBytes.ToString())
+        let sizeOfPtrAxiom = B.Axiom(bEq (er "$arch_ptr_size") (bInt ptrSizeInBytes))
+        let startOfSpecPtrRange = B.Axiom(bEq (er "$arch_spec_ptr_start") (er ("$max.u" + (ptrSizeInBytes.ToString()))))
+        [[sizeOfPtrAxiom; startOfSpecPtrRange]]
+
       let main () =
         let res = List.map trTop decls
         
@@ -2897,6 +2904,6 @@ namespace Microsoft.Research.Vcc
                                      | C.Top.TypeDecl ({ Kind = (C.Union|C.Struct)} as td) -> td :: acc
                                      | _ -> acc) [] decls
         let tn = if nestingExtents then typeNesting types else []
-        List.concat (res @ [tn; !invLabelConstants; !tokenConstants])
+        List.concat (archSpecific() @ res @ [tn; !invLabelConstants; !tokenConstants])
         
       helper.SwTranslator.Run main ()

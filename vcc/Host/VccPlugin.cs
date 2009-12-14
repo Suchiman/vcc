@@ -125,7 +125,7 @@ namespace Microsoft.Research.Vcc
       string extraFunctionOptions = null;
       if (parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) {
         CloseVcGen();
-        VccOptions extraCommandLineOptions = OptionParser.ParseCommandLineArguments(VccCommandLineHost.hostEnvironment, extraFunctionOptions.Split(' ', '\t'), false);
+        VccOptions extraCommandLineOptions = OptionParser.ParseCommandLineArguments(VccCommandLineHost.dummyHostEnvironment, extraFunctionOptions.Split(' ', '\t'), false);
         List<string> effectiveOptions = new List<string>(extraCommandLineOptions.BoogieOptions);
         foreach (string z3option in extraCommandLineOptions.Z3Options)
           effectiveOptions.Add("/z3opt:" + z3option);

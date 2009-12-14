@@ -1,0 +1,17 @@
+`/ps:32
+
+#include <vcc.h>
+
+struct S {
+  int *p;
+  int i;
+};
+
+void foo(struct S *x) { 
+  size_t s = sizeof(struct S);
+  assert(s == 8);
+  assert((char *)(&x->i) == ((char *)x) + 4);
+}
+`
+Verification of foo succeeded.
+`

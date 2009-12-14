@@ -94,6 +94,8 @@ namespace Microsoft.Research.Vcc
       member this.SwTranslator = swTranslator
       member this.SwPruning = swPruning
       
+      member this.PointerSizeInBytes = opts.PointerSize / 8
+      
       member this.Oops (tok:Token, msg:string) =
         if not !errorReported then
           oopsed := true

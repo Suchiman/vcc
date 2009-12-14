@@ -33,8 +33,8 @@ namespace Microsoft.Research.Vcc
   type Dict<'a, 'b> = System.Collections.Generic.Dictionary<'a, 'b>
   
   and Visitor(contractProvider:Microsoft.Cci.Ast.SourceContractProvider, helper:Helper.Env) =
-    //let (===) x y = LanguagePrimitives.PhysicalEquality x y
-    //let (!==) x y = not (x === y)
+
+    do C.PointerSizeInBytes := helper.PointerSizeInBytes
 
     let mutable topDecls : list<C.Top> = []
     let mutable stmtRes : C.Expr = C.Expr.Bogus
@@ -574,7 +574,7 @@ namespace Microsoft.Research.Vcc
                   // TODO?
                   let td =
                     if td.Name = "Object" && td.SizeOf = 0 then
-                      { td with Name = "#Object"; SizeOf = 8 }
+                      { td with Name = "#Object"; SizeOf = C.Type.ObjectT.SizeOf }
                     else td
                   
                   let minOffset = 
@@ -859,7 +859,7 @@ namespace Microsoft.Research.Vcc
                   Fields = []
                   Invariants = []
                   CustomAttr = []
-                  SizeOf = 8
+                  SizeOf = C.Type.ObjectT.SizeOf
                   IsNestedAnon = false
                   GenerateEquality = CAST.StructEqualityKind.NoEq
                   GenerateFieldOffsetAxioms = false
