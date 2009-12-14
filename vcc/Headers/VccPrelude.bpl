@@ -1741,7 +1741,7 @@ procedure $stack_alloc(#t:$ctype, #sf:int, #spec:bool) returns (#r:$ptr);
   ensures $is_object_root($s, #r);
   ensures $first_option_typed($s, #r);
   ensures #spec ==> $in_range_spec_ptr($ref(#r));
-  ensures !#spec ==> $in_range_phys_ptr($ref(#r)) && $in_range_phys_ptr($ref(#r) + $sizeof(#t));
+  ensures !#spec ==> $in_range_phys_ptr($ref(#r)) && $in_range_phys_ptr($ref(#r) + $sizeof(#t) - 1);
 
 
 procedure $stack_free(#sf:int, #x:$ptr);
