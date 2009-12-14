@@ -3032,10 +3032,10 @@ namespace Microsoft.Research.Vcc.Parsing {
         case Token.Exists:
         case Token.Forall:
           return this.ParseQuantifier(followers);
+
         case Token.Lambda:
           Expression lambda = this.ParseQuantifier(followers|Token.LeftBracket);
           return ParsePostFix(lambda, followers);
-
 
         case Token.LeftParenthesis:
           return this.ParseCastExpression(followers);
@@ -3302,7 +3302,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private Expression ParseQuantifier(TokenSet followers)
-      //^ requires this.currentToken == Token.Exists || this.currentToken == Token.Forall;
+      //^ requires this.currentToken == Token.Exists || this.currentToken == Token.Forall || this.currentToken == Token.Lambda;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       Token tok = this.currentToken;
@@ -3314,17 +3314,26 @@ namespace Microsoft.Research.Vcc.Parsing {
       IEnumerable<IEnumerable<Expression>> triggers = this.ParseQuantifierTriggers(followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart);
       Expression condition = this.ParseExpression(followers|Token.RightParenthesis|Token.Semicolon);
       Expression body = null;
-      if (this.currentToken == Token.Semicolon || tok == Token.Lambda) {
-        // for the case of __regionunion, we want error message if there is ) not ;
-        this.Skip(Token.Semicolon);
-        body = this.ParseExpression(followers | Token.RightParenthesis);
-        if (tok == Token.Forall) {
-          condition = new Implies(condition, body, slb);
-          body = null;
-        } else if (tok == Token.Exists) {
-          condition = new VccLogicalAnd(condition, body, slb);
-          body = null;
-        }
+      if (this.currentToken == Token.Semicolon)
+      {
+          // for the case of __regionunion, we want error message if there is ) not ;
+          this.Skip(Token.Semicolon);
+          body = this.ParseExpression(followers | Token.RightParenthesis);
+          if (tok == Token.Forall)
+          {
+              condition = new Implies(condition, body, slb);
+              body = null;
+          }
+          else if (tok == Token.Exists)
+          {
+              condition = new VccLogicalAnd(condition, body, slb);
+              body = null;
+          }
+      }
+      else if (tok == Token.Lambda)
+      {
+          body = condition;
+          condition = new CompileTimeConstant(true, slb);
       }
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       this.Skip(Token.RightParenthesis);
