@@ -397,7 +397,7 @@ namespace Microsoft.Research.Vcc
         case VC.VCGen.Outcome.Correct:
           return "succeeded";
         case VC.VCGen.Outcome.Inconclusive:
-          return "was inconslusive";
+          return "was inconclusive";
         case VC.VCGen.Outcome.TimedOut:
           return "timed out";
         case VC.VCGen.Outcome.Errors:
