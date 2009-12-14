@@ -157,10 +157,12 @@ function $ptr_to($ctype) returns($ctype);
 function $spec_ptr_to($ctype) returns ($ctype);
 function $unptr_to($ctype) returns($ctype);
 function $ptr_level($ctype) returns(int);
+
+const $arch_ptr_size : int;
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $unptr_to($ptr_to(#n)) == #n);
 axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $unptr_to($spec_ptr_to(#n)) == #n);
-axiom (forall #n:$ctype :: {$ptr_to(#n)} $sizeof($ptr_to(#n)) == 8);
-axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $sizeof($ptr_to(#n)) == 8);
+axiom (forall #n:$ctype :: {$ptr_to(#n)} $sizeof($ptr_to(#n)) == $arch_ptr_size);
+axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $sizeof($ptr_to(#n)) == $arch_ptr_size);
 
 function $map_t($ctype, $ctype) returns($ctype);
 function $map_domain($ctype) returns($ctype);
@@ -653,12 +655,13 @@ axiom
 
 function $in_range_phys_ptr(#r:int) returns(bool);
 function $in_range_spec_ptr(#r:int) returns(bool);
+const $arch_spec_ptr_start : int;
 
 axiom (forall #r:int :: {$in_range_phys_ptr(#r)}
-  $in_range_phys_ptr(#r) <==> $in_range_u8(#r));
+  $in_range_phys_ptr(#r) <==> $in_range(0, #r, $arch_spec_ptr_start));
 
 axiom (forall #r:int :: {$in_range_spec_ptr(#r)}
-  $in_range_spec_ptr(#r) <==> 0 == #r || #r > $max.u8);
+  $in_range_spec_ptr(#r) <==> 0 == #r || #r > $arch_spec_ptr_start);
 
 function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) returns(bool)
   { $is(#p, #t) && $typed(S, #p) }
@@ -3104,5 +3107,12 @@ function $lt_f8(x:$primitive, y:$primitive) returns(bool);
 function $leq_f8(x:$primitive, y:$primitive) returns(bool);
 function $gt_f8(x:$primitive, y:$primitive) returns(bool);
 function $geq_f8(x:$primitive, y:$primitive) returns(bool);
+
+// --------------------------------------------------------------------------------
+// Architecture specific
+// --------------------------------------------------------------------------------
+
+axiom ($arch_ptr_size == 8);
+axiom ($arch_spec_ptr_start == $max.u8);
 
 // That's all folks.
