@@ -320,7 +320,7 @@ module Microsoft.Research.Vcc.CAST
       | Integer from, Integer to_ ->
         let (sz1, signed1) = Type.sizeSign from
         let (sz2, signed2) = Type.sizeSign to_
-        (signed1 = signed2 && sz1 >= sz2) || (not signed1 && signed2 && sz1 > sz2)
+        (signed1 = signed2 && sz1 <= sz2) || (not signed1 && signed2 && sz1 < sz2)
       | MathInteger, Integer _ -> false
       | _ -> true
               

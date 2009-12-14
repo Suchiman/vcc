@@ -266,6 +266,9 @@ namespace Microsoft.Research.Vcc
         | Expr.Prim (c, Op ("-", ch), [e]) ->
           Some (self (Expr.Prim (c, Op ("-", ch), [Expr.IntLiteral (c, zero); e])))
         
+        | Expr.Prim (c, (Op(("<<"|">>"), _) as op), [e1; Cast(_,_, e2)]) ->
+          Some(self (Expr.Prim(c, op, [e1; e2])))
+        
         | Expr.Prim (c, (Op (("&"|"|"|"^"), _) as op), [e1; e2]) when e1.Type = Bool || e2.Type = Bool ->
           let toInt (e:Expr) = 
             if e.Type = Bool then

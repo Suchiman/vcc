@@ -972,6 +972,9 @@ namespace Microsoft.Research.Vcc
           | C.Expr.Macro (_, "in_range_i8", [e]) when e.Type.SizeOf <= 8 ->
             bTrue
           
+          | C.Expr.Macro (_, "unchecked_u2", [e])
+          | C.Expr.Macro (_, "unchecked_i2", [e]) when e.Type.SizeOf <= 2 -> self e
+
           | C.Expr.Macro (_, "unchecked_u4", [e])
           | C.Expr.Macro (_, "unchecked_i4", [e]) when e.Type.SizeOf <= 4 -> self e
           
