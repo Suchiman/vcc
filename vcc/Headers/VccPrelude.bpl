@@ -158,7 +158,7 @@ function $spec_ptr_to($ctype) returns ($ctype);
 function $unptr_to($ctype) returns($ctype);
 function $ptr_level($ctype) returns(int);
 
-const $arch_ptr_size : int;
+const $arch_ptr_size : int; // arch-specific; to be defined by a compiler-generated axiom
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $unptr_to($ptr_to(#n)) == #n);
 axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $unptr_to($spec_ptr_to(#n)) == #n);
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $sizeof($ptr_to(#n)) == $arch_ptr_size);
@@ -655,7 +655,7 @@ axiom
 
 function $in_range_phys_ptr(#r:int) returns(bool);
 function $in_range_spec_ptr(#r:int) returns(bool);
-const $arch_spec_ptr_start : int;
+const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
 
 axiom (forall #r:int :: {$in_range_phys_ptr(#r)}
   $in_range_phys_ptr(#r) <==> $in_range(0, #r, $arch_spec_ptr_start));
@@ -3107,12 +3107,5 @@ function $lt_f8(x:$primitive, y:$primitive) returns(bool);
 function $leq_f8(x:$primitive, y:$primitive) returns(bool);
 function $gt_f8(x:$primitive, y:$primitive) returns(bool);
 function $geq_f8(x:$primitive, y:$primitive) returns(bool);
-
-// --------------------------------------------------------------------------------
-// Architecture specific
-// --------------------------------------------------------------------------------
-
-axiom ($arch_ptr_size == 8);
-axiom ($arch_spec_ptr_start == $max.u8);
 
 // That's all folks.

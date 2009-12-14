@@ -31,6 +31,8 @@ module Microsoft.Research.Vcc.CAST
     | Lambda
     // sum and stuff here
 
+  let PointerSizeInBytes = ref 8
+
   let uniqueCounter = ref 0UL
   let unique() : Unique = 
     uniqueCounter := !uniqueCounter + 1UL
@@ -330,7 +332,7 @@ module Microsoft.Research.Vcc.CAST
         | Primitive k -> Type.primSize k
         | SpecPtr _
         | PhysPtr _
-        | ObjectT -> 8
+        | ObjectT -> !PointerSizeInBytes
         | Volatile t -> t.SizeOf
         | Type.Ref td -> td.SizeOf
         | Array (t, sz) -> t.SizeOf * sz

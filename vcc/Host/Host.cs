@@ -33,10 +33,9 @@ namespace Microsoft.Research.Vcc
       Microsoft.Boogie.Z3.Factory x = new Microsoft.Boogie.Z3.Factory();
 
       startTime = GetTime();
-      // as we do not know the command line arguments, create an error handle with null and replace it later
       cciErrorHandler = new CciErrorHandler();
-      hostEnvironment.Errors += cciErrorHandler.HandleErrors;
-      var commandLineOptions = OptionParser.ParseCommandLineArguments(hostEnvironment, args);
+      dummyHostEnvironment.Errors += cciErrorHandler.HandleErrors;
+      var commandLineOptions = OptionParser.ParseCommandLineArguments(dummyHostEnvironment, args);
       commandLineOptions.RunningFromCommandLine = true;
       cciErrorHandler.CommandLineOptions = commandLineOptions;
       verificationErrorHandler = new VerificationErrorHandler(commandLineOptions);
@@ -169,7 +168,7 @@ namespace Microsoft.Research.Vcc
     }
 
     private static double startTime;
-    internal static HostEnvironment hostEnvironment = new HostEnvironment();
+    internal static HostEnvironment dummyHostEnvironment = new HostEnvironment(64);
 
     private static void DisplayCommandLineHelp() {
       System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
@@ -238,7 +237,7 @@ namespace Microsoft.Research.Vcc
     private static Plugin currentPlugin;
     private static void RunPlugin(string fileName, string ppFileName, VccOptions commandLineOptions)
     {
-      HostEnvironment hostEnvironment = new HostEnvironment();
+      HostEnvironment hostEnvironment = new HostEnvironment(commandLineOptions.PointerSize);
       hostEnvironment.Errors += new CciErrorHandler(commandLineOptions).HandleErrors;
       IName assemName = hostEnvironment.NameTable.GetNameFor(Path.GetFileNameWithoutExtension(fileName));
       IName docName = hostEnvironment.NameTable.GetNameFor(Path.GetFileName(fileName));
@@ -552,8 +551,9 @@ namespace Microsoft.Research.Vcc
 
   internal class HostEnvironment : SourceEditHostEnvironment {
 
-    internal HostEnvironment()
-      : base(new NameTable(), 8) {
+    internal HostEnvironment(int pointerSizeInBits)
+      : base(new NameTable(), (byte)(pointerSizeInBits / 8)) {
+      Debug.Assert(pointerSizeInBits == 32 || pointerSizeInBits == 64);
       this.peReader = new PeReader(this);
       string/*?*/ loc = typeof(object).Assembly.Location;
       if (loc == null) loc = "";

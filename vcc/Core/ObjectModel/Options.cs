@@ -21,7 +21,6 @@ namespace Microsoft.Research.Vcc
     public bool RunTestSuite;
     public int RunTestSuiteMultiThreaded = -1;
     public bool TranslateToBPL;
-    public bool Verify;
     public List<string> Z3Options = new List<string>();
     public bool VCLikeErrorMessages;
     public bool TimeStats;
@@ -48,7 +47,8 @@ namespace Microsoft.Research.Vcc
     public bool WarningsAsErrors;
     public bool SaveModel;
     public bool DetailedTimes;
-    public bool PrintCEVModel;  
+    public bool PrintCEVModel;
+    public int PointerSize = 64;
     public string CEVPreludePath = "c:\\workspace\\vcc_test\\CEVPrelude.bpl";
   }
 
@@ -223,6 +223,15 @@ namespace Microsoft.Research.Vcc
             this.options.PauseBeforeExit = true;
             return true;
           }
+
+          string pointerSizeStr = this.ParseNamedArgument(arg, "pointersize", "ps");
+          if (pointerSizeStr != null) {
+            int pointerSize;
+            if (!Int32.TryParse(pointerSizeStr, out pointerSize) || (pointerSize != 32 && pointerSize != 64)) return false;
+            this.options.PointerSize = pointerSize;
+            return true;
+          }
+
           List<string>/*?*/ pipeOptions = this.ParseNamedArgumentList(arg, "pipe", "pipe");
           if (pipeOptions != null && pipeOptions.Count > 0) {
             this.options.PipeOperations.AddRange(pipeOptions);
@@ -231,7 +240,7 @@ namespace Microsoft.Research.Vcc
 
           List<string>/*?*/ preprocessorOptions = this.ParseNamedArgumentList(arg, "preprocessor", "p");
           if (preprocessorOptions != null && preprocessorOptions.Count > 0) {
-            //i-sebaf: If IncludeDir Contains Spaces like "Program Files" than a quote is requiered.
+            //i-sebaf: If IncludeDir Contains Spaces like "Program Files" than a quote is required.
             for (int i = 0; i < preprocessorOptions.Count; i++) {
               if (preprocessorOptions[i].Contains(" ")) {
                 preprocessorOptions[i] = preprocessorOptions[i].Insert(2, "\"") + "\"";
@@ -310,10 +319,13 @@ namespace Microsoft.Research.Vcc
         }
         return false;
         case 'v':
+
         if (this.ParseName(arg, "verify", "v")) {
-          this.options.Verify = true;
+          DummyExpression dummyExpression = new DummyExpression(SourceDummy.SourceLocation);
+          this.hostEnvironment.ReportError(new AstErrorMessage(dummyExpression, Microsoft.Cci.Ast.Error.InvalidCompilerOption, "/verify is the default option and does not need to be specified explicitly"));
           return true;
         }
+
         if (this.ParseName(arg, "version", "version")) {
           this.options.DisplayVersion = true;
           return true;

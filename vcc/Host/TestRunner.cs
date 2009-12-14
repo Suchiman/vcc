@@ -115,9 +115,7 @@ namespace Microsoft.Research.Vcc
 
     static bool RunTestSuite(string directoryName, string suiteName, TextReader instream, VccOptions commandLineOptions) {
       System.Diagnostics.Debug.Listeners.Remove("Default");
-      HostEnvironment hostEnvironment = new HostEnvironment();
       var errorHandler = new CciErrorHandler(commandLineOptions);
-      hostEnvironment.Errors += errorHandler.HandleErrors;
       StringBuilder source = null;
       StringBuilder expectedOutput = null;
       StringBuilder actualOutput = null;
@@ -257,7 +255,7 @@ namespace Microsoft.Research.Vcc
           else
             testrunTimeStats = null;
           try {
-            int returnCode = RunTest(hostEnvironment, suiteNameWithoutExt, fileNameWithoutExt, source.ToString(), actualOutput, commandLineOptions, compilerParameters, testCaseParameters);
+            int returnCode = RunTest(errorHandler, suiteNameWithoutExt, fileNameWithoutExt, source.ToString(), actualOutput, commandLineOptions, compilerParameters, testCaseParameters);
             if (returnCode != 0)
               actualOutput.Append("Non zero return code: " + returnCode);
           } catch (System.Reflection.TargetInvocationException e) {
@@ -327,7 +325,7 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private static int RunTest(HostEnvironment hostEnvironment, string suiteName, string fileNameWithoutExt,
+    private static int RunTest(CciErrorHandler errorHandler, string suiteName, string fileNameWithoutExt,
                                string test, StringBuilder actualOutput, VccOptions commandLineOptions, List<string> compilerParameters, List<string> testCaseParameters) {
 
       VccCommandLineHost.ErrorCount = 0;
@@ -350,9 +348,13 @@ namespace Microsoft.Research.Vcc
           else if (compilerParameters[i] == "/a" || compilerParameters[i] == "/aggressivepruning") options.AggressivePruning = true;
           else if (compilerParameters[i] == "/keepppoutput") keepPreprocessorOutput = true;
           else if (compilerParameters[i] =="/z:") { ++i; options.Z3Options.Add(compilerParameters[i]); } 
-          else if (compilerParameters[i] == "/b:") { ++i; options.BoogieOptions.Add(compilerParameters[i]); }
+          else if (compilerParameters[i] == "/b:") { ++i; options.BoogieOptions.Add(compilerParameters[i]); } 
+          else if (compilerParameters[i].StartsWith("/ps:")) { options.PointerSize = Int32.Parse(compilerParameters[i].Substring(4)); }
         }
       }
+
+      HostEnvironment hostEnvironment = new HostEnvironment(options.PointerSize);
+      hostEnvironment.Errors += errorHandler.HandleErrors;
 
       // TODO maybe copy more stuff
       options.Z3Options.AddRange(commandLineOptions.Z3Options);
