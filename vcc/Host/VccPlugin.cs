@@ -61,28 +61,14 @@ namespace Microsoft.Research.Vcc
 
     private bool ReParseBoogieOptions(List<string> options, bool runningFromCommandLine)
     {
-      List<string> optionsWithMemSetting = null;
-      foreach (string option in options)
-        if (option.StartsWith("/z3opt:/memory:", StringComparison.Ordinal)) {
-          optionsWithMemSetting = options;
-          break;
-        }
-      if (optionsWithMemSetting == null) {
-        optionsWithMemSetting = new List<string>(options);
-        int memval = 128;
-        if (parent.options.Z3Version < 2)
-          memval *= 1024 * 1024;
-        optionsWithMemSetting.Add("/z3opt:/memory:" + memval);
-      }
       CommandLineOptions.Clo = new CommandLineOptions();
       CommandLineOptions.Clo.RunningBoogieFromCommandLine = runningFromCommandLine;
-      return CommandLineOptions.Clo.Parse(optionsWithMemSetting.ToArray()) == 1;
+      return CommandLineOptions.Clo.Parse(options.ToArray()) == 1;
     }
 
     private bool InitBoogie()
     {
       options.AddRange(standardBoogieOptions);
-      options.Add("/proverOpt:V" + parent.options.Z3Version);
       if (parent.ModelFileName != null) {
         options.Add("/printModel:1");
         options.Add("/printModelToFile:" + parent.ModelFileName);
