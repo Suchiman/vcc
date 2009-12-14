@@ -45,7 +45,6 @@ namespace Microsoft.Research.Vcc
     public Dictionary<string, List<string>> PluginOptions = new Dictionary<string, List<string>>();
     public bool DumpBoogie;
     public bool GenerateFieldOffsetAxioms = true;
-    public int Z3Version = 2; // 1 or 2 currently
     public bool WarningsAsErrors;
     public bool SaveModel;
     public bool DetailedTimes;
@@ -349,18 +348,6 @@ namespace Microsoft.Research.Vcc
         }
         return false;
         case 'z':
-        bool? v1 = this.ParseNamedBoolean(arg, "z3v1", "z1");
-        if (v1 != null) {
-          this.options.Z3Version = 1;
-          return true;
-        }
-
-        bool? v2 = this.ParseNamedBoolean(arg, "z3v2", "z2");
-        if (v2 != null) {
-          this.options.Z3Version = 2;
-          return true;
-        }
-
         List<string>/*?*/ z3Options = this.ParseNamedArgumentList(arg, "z3", "z");
         if (z3Options == null || z3Options.Count == 0) return false;
         this.options.Z3Options.AddRange(z3Options);
