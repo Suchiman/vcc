@@ -157,7 +157,7 @@ void foo(struct S *s)
 {
   claimp(c;)
   wrap(s);
-  speconly(c = claim(s);)
+  speconly(c = claim(s, true);)
   assert(typed_spec(c));
 }
 `
