@@ -303,3 +303,9 @@ void foo(struct R *s) { }
 `
 testcase(4,1) : error VC0000: Type member 'x' in type 'R' causes a cycle in the type layout.
 `
+typedef unsigned __int8 uint8_t;
+int ToBm8(uint8_t n);
+void foo(unsigned i) { ToBm8(1UI8); };
+`
+Verification of foo succeeded.
+`

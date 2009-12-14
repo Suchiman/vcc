@@ -3753,8 +3753,16 @@ namespace Microsoft.Research.Vcc.Parsing {
         result = new CompileTimeConstant((int)ul, true, ctx);
       else if (ul <= uint.MaxValue && tc == TypeCode.Empty)
         result = new CompileTimeConstant((uint)ul, true, hexOrOctal, ctx);
+      else if (ul <= byte.MaxValue && tc == TypeCode.Byte)
+        result = new CompileTimeConstant((byte)ul, true, ctx);
+      else if (ul <= byte.MaxValue && tc == TypeCode.SByte)
+        result = new CompileTimeConstant((sbyte)ul, true, ctx);
       else if (ul <= uint.MaxValue && tc == TypeCode.UInt32)
         result = new CompileTimeConstant((uint)ul, true, ctx);
+      else if (ul <= uint.MaxValue && tc == TypeCode.Int16)
+        result = new CompileTimeConstant((short)ul, true, ctx);
+      else if (ul <= uint.MaxValue && tc == TypeCode.UInt16)
+        result = new CompileTimeConstant((ushort)ul, true, ctx);
       else if (ul <= uint.MaxValue && tc == TypeCode.Int32)
         result = new CompileTimeConstant((int)ul, true, ctx);
       else if (ul <= long.MaxValue && (tc == TypeCode.Empty || tc == TypeCode.Int64))
