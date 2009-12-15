@@ -15,7 +15,7 @@ void bar (enum Month x) {
 int main() {
   enum Month m = 1;
   int x = m + 3;
-  foo(m);
+  foo((int)m);
   if (m == 1) return 0; else __assert(0);
   if (m!=1) return 0; else __assert(0);
   if (m >1) return m; else __assert(0);

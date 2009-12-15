@@ -854,7 +854,7 @@ namespace Microsoft.Research.Vcc {
       if (cconst != null) {
         if (targetTypeAsPtr != null && ExpressionHelper.IsIntegralZero(cconst)) return true;
         // Disable int -> enum so that any enum operation becomes int operation
-        if (targetType.IsEnum && ExpressionHelper.IsIntegralZero(cconst)) return false;
+        if (targetType.IsEnum && cconst.ValueIsPolymorphicCompileTimeConstant) return ImplicitConversionExists(cconst, targetType.UnderlyingType.ResolvedType);
         if (TypeHelper.IsUnsignedPrimitiveInteger(cconst.Type) && !TypeHelper.IsUnsignedPrimitiveInteger(targetType) && 
           cconst is CompileTimeConstantWhoseSignDependsOnAnotherExpression)
           return false;

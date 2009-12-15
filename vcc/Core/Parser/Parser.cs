@@ -1841,7 +1841,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       VccNamedTypeExpression texpr = new VccNamedTypeExpression(new VccSimpleName(newname, name.SourceLocation));
       if (this.currentToken == Token.LeftBrace) {
         List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>();
-        NamespaceEnumDeclaration enumDeclaration = new VccEnumDeclaration(newname, this.GetTypeExpressionFor(TypeCode.Int32, name.SourceLocation), members, sctx);
+        NamespaceEnumDeclaration enumDeclaration = new VccEnumDeclaration(newname, this.GetTypeExpressionFor(TypeCode.UInt32, name.SourceLocation), members, sctx);
         if (namespaceMembers != null)
           namespaceMembers.Add(enumDeclaration);
         //TODO: else give error
