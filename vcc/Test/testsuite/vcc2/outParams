@@ -290,3 +290,18 @@ void bar(struct X *x) {
 `
 testcase(9,47) : error VC0000: 'X' does not contain a definition for 'f'.
 `
+
+#include <vcc.h>
+#include <limits.h>
+
+void foo(spec(out int x));
+
+
+void bar() {
+  spec(int i;)
+  foo(spec(out i));
+  assert(i <= INT_MAX);
+}
+`
+Verification of bar succeeded.
+`

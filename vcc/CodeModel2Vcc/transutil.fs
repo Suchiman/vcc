@@ -227,6 +227,7 @@ namespace Microsoft.Research.Vcc
       | Integer k -> Expr.Macro (ec, "in_range_" + Type.IntSuffix k, [expr])
       | PhysPtr _ -> Expr.Macro (ec, "in_range_phys_ptr", [Expr.Cast({expr.Common with Type= Type.MathInteger}, CheckedStatus.Processed, expr)])
       | SpecPtr _ -> Expr.Macro (ec, "in_range_spec_ptr", [Expr.Cast({expr.Common with Type= Type.MathInteger}, CheckedStatus.Processed, expr)])
+      | ObjectT
       | Primitive _ -> Expr.True
       | _ -> failwith "integer or float type expected"
 
