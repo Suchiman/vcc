@@ -27,6 +27,8 @@ namespace Microsoft.Research.Vcc
           | _ ->
             []                    
 
+      let mkFreeEnsures (expr:Expr) = Expr.Macro(expr.Common, "free_ensures", [expr])
+
       let quantRange self = function
         | Quant (c, q) ->
           let lst = List.concat (List.map rangeAssumptions q.Variables)
@@ -39,9 +41,10 @@ namespace Microsoft.Research.Vcc
       let aux (h:Function) =
         if not (_list_mem IsAdmissibilityCheck h.CustomAttr) then
           h.Body <- Option.map (addStmts (List.concat (List.map rangeAssume h.InParameters))) h.Body
-        if h.RetType._IsInteger then
+          h.Ensures <- List.map mkFreeEnsures (List.concat (List.map rangeAssumptions h.OutParameters)) @ h.Ensures
+        if h.RetType._IsInteger || h.RetType._IsPtr then
           let ec = { boolBogusEC() with Token = h.Token }
-          h.Ensures <- Expr.Macro(ec, "free_ensures", [inRange ec (Expr.Result({bogusEC with Type = h.RetType}))]) :: h.Ensures
+          h.Ensures <- (mkFreeEnsures (inRange ec (Expr.Result({bogusEC with Type = h.RetType})))) :: h.Ensures
         h
       mapFunctions aux >> deepMapExpressions quantRange
       

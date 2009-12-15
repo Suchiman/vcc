@@ -163,3 +163,54 @@ void foo(struct S *s)
 `
 Verification of foo succeeded.
 `
+#include <vcc.h>
+
+struct S {
+  int a;
+};
+
+spec(
+void foo(spec(out struct S ^p))
+  ensures(wrapped(p))
+{
+  struct S ^result = spec_malloc<struct S>();
+  wrap(result);
+  p = result;
+}
+)
+
+spec(
+struct S ^foo1()
+  ensures(wrapped(result))
+{
+  struct S ^result = spec_malloc<struct S>();
+  wrap(result);
+  return result;
+}
+)
+
+spec(
+void bar() {
+  struct S ^x;
+  foo(spec(out x));
+  assert(wrapped(x));
+  assert(typed(x));
+  assert(typed_spec(x));
+}
+)
+
+spec(
+void bar1() {
+  struct S ^x;
+  x = foo1();
+  assert(wrapped(x));
+  assert(typed(x));
+  assert(typed_spec(x));
+}
+)
+`
+Verification of foo succeeded.
+Verification of foo1 succeeded.
+Verification of bar succeeded.
+Verification of bar1 succeeded.
+`
