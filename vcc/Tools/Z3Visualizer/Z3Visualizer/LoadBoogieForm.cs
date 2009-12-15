@@ -131,7 +131,7 @@ namespace Z3AxiomProfiler
       reloadParameterConfiguration();
 
       Properties.Settings.Default.BoogieOptions = "/bv:z /trace";
-      Properties.Settings.Default.Z3Options = "/mam:0 /rs:0";
+      Properties.Settings.Default.Z3Options = "/rs:0";
       Properties.Settings.Default.Timeout = 10;
 
       boogieOptionTextBox.Text = Properties.Settings.Default.BoogieOptions;

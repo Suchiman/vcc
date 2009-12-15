@@ -91,7 +91,7 @@ namespace Z3AxiomProfiler
         ParameterConfiguration config = new ParameterConfiguration();
 
         config.boogieOptions = "/bv:z /trace";
-        config.z3Options = "/mam:0 /rs:0";
+        config.z3Options = "/rs:0";
         error = "";
 
         for (idx = 0; idx < args.Length; idx++)
