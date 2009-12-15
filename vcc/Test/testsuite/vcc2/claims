@@ -1279,3 +1279,22 @@ void foo(struct T *p claimp(c))
 Verification of T#adm succeeded.
 Verification of foo succeeded.
 `
+#include <vcc.h>
+
+struct vcc(claimable) S {
+  int a;
+};
+
+void foo(struct S *s)
+  writes(extent(s))
+{
+  claimp(c;)
+  wrap(s);
+  speconly(c = claim(s);)
+  speconly(c = claim(s,s);)
+  assert(typed_spec(c));
+}
+`
+testcase(12,47) : error VC9710: claim(...) requires at least one object and a claimed property
+testcase(13,60) : error VC9711: claimed property must not be of pointer type
+`
