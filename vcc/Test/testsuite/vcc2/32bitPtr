@@ -83,3 +83,91 @@ void foo(struct S *x) {
 `
 Verification of foo succeeded.
 `
+`/ps:32
+
+#include <vcc.h>
+#include <stddef.h>
+
+struct Alignment {
+	char c1;
+	char c2;
+	short s1;
+	short s2;
+	int i1;
+	int i2;
+	long l1;
+	long l2;
+	long long ll1;
+	long long ll2;
+};
+
+void foo() { 
+	assert(offsetof(struct Alignment, c1) == 0);
+	assert(offsetof(struct Alignment, c2) == 1);
+	assert(offsetof(struct Alignment, s1) == 2);
+	assert(offsetof(struct Alignment, s2) == 4);
+	assert(offsetof(struct Alignment, i1) == 8);
+	assert(offsetof(struct Alignment, i2) == 12);
+	assert(offsetof(struct Alignment, l1) == 16);
+	assert(offsetof(struct Alignment, l2) == 20);
+	assert(offsetof(struct Alignment, ll1) == 24);
+	assert(offsetof(struct Alignment, ll2) == 32);
+	assert(sizeof(struct Alignment) == 40);
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32
+
+#include <vcc.h>
+#include <stddef.h>
+
+struct Alignment {
+	char c1;
+	short s1;
+	char c2;
+	int i1;
+	short s2;
+	long l1;
+	int i2;
+	long long ll1;
+};
+
+void foo() { 
+	assert(offsetof(struct Alignment, c1) == 0);
+	assert(offsetof(struct Alignment, s1) == 2);
+	assert(offsetof(struct Alignment, c2) == 4);
+	assert(offsetof(struct Alignment, i1) == 8);
+	assert(offsetof(struct Alignment, s2) == 12);
+	assert(offsetof(struct Alignment, l1) == 16);
+	assert(offsetof(struct Alignment, i2) == 20);
+	assert(offsetof(struct Alignment, ll1) == 24);
+	assert(sizeof(struct Alignment) == 32);
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32
+
+#include <vcc.h>
+#include <stddef.h>
+
+struct Alignment {
+     char a[13];
+     long b;
+     char c[7];
+     short d;
+     char e[3];
+};
+
+void foo() { 
+	assert(offsetof(struct Alignment, a) == 0);
+	assert(offsetof(struct Alignment, b) == 16);
+	assert(offsetof(struct Alignment, c) == 20);
+	assert(offsetof(struct Alignment, d) == 28);
+	assert(offsetof(struct Alignment, e) == 30);
+	assert(sizeof(struct Alignment) == 36);
+}
+`
+Verification of foo succeeded.
+`
