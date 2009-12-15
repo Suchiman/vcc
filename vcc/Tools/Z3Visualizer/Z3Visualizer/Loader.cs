@@ -210,17 +210,20 @@ namespace Z3AxiomProfiler
     void taskExecuteBoogieAndZ3()
     {
       // Step 1: produce Z3 log output + load it
-      step1RunBoogie(config.preludeBplFileInfo, config.codeBplFileInfo, config.functionName, config.boogieOptions);
+
+      int timeout = (config.timeout >= 0) ? config.timeout : 0;
+      step1RunBoogie(config.preludeBplFileInfo, config.codeBplFileInfo, config.functionName, timeout, config.boogieOptions);
+
       statusUpdate(0, 1); 
     }
 
-    void step1RunBoogie(FileInfo preludeBplFile, FileInfo codeBplFile, string functionName, string boogieOptions)
+    void step1RunBoogie(FileInfo preludeBplFile, FileInfo codeBplFile, string functionName, int timeOut, string boogieOptions)
     {
       string bplFilesString = String.Format("\"{0}\" \"{1}\"", (preludeBplFile == null) ? "" : preludeBplFile.FullName, codeBplFile);
       boogieOptions = boogieOptions ?? "";
       string z3Log = Path.ChangeExtension(config.codeBplFileInfo.FullName, "z3log");
-      string arguments = String.Format(" {0} {1} /proc:{2} /z3opt:TRACE=true /z3opt:TRACE_FILE_NAME=\"'{3}'\" ", 
-                        bplFilesString, boogieOptions, functionName, z3Log.Replace("\\", "\\\\"));
+      string arguments = String.Format(" {0} {1} /proc:{2} /z3opt:TRACE=true /z3opt:TRACE_FILE_NAME=\"'{3}'\" /z3opt:/T:{4}", 
+                        bplFilesString, boogieOptions, functionName, z3Log.Replace("\\", "\\\\"), timeOut);
       Process process = createLoaderProcess("boogie.exe", arguments);
       if(isCancelled)
         return;
