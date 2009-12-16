@@ -167,12 +167,12 @@ spec(
 void fooSafe()
 {
   struct A ^a;
-  int *tmp;
+  int ^tmp;
   int q;
 
   a = spec_malloc<struct A>();
   a->x = 12;
-  tmp = a->y;
+  tmp = &a->y[0];
   q = a->y[3];
 }
 )
@@ -272,11 +272,11 @@ void use1Safe()
 
   a = spec_malloc<struct A>();
   donothing();
-  set0(a->x, 100);
+  set0Spec(&a->x[0], 100);
   donothing();
   set0Spec(&a->x[10], 90);
   donothing();
-  set0(a->x, 50);
+  set0Spec(&a->x[0], 50);
   donothing();
   free(a);
 }
