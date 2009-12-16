@@ -385,6 +385,21 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let addPointerConversionChecks ctx self = function
+      | Cast(ec, (Checked|Unchecked), e') as e when not ctx.IsPure && ec.Type._IsPtr && e'.Type._IsPtr ->
+        let newe = Cast (ec, Processed, self e')
+        match ec.Type, e'.Type with
+          | PtrSoP(_, s0), PtrSoP(_, s1) when s0 = s1 -> None
+          | PtrSoP(_, s), _ ->
+            let expectedRange, checkFn, errno = if s then "spec", "in_range_spec_ptr", 8534 else "physical", "in_range_phys_ptr", 8535
+            let comm = afmte errno ("{0} is in " + expectedRange + " pointer range (in cast)") [e']
+            let check = Expr.Macro (comm, checkFn, [Expr.Cast({e'.Common with Type= Type.MathInteger}, CheckedStatus.Processed, e')])
+            addStmtsOpt [Expr.MkAssert check] newe
+          | _ -> None
+      | _ -> None
+
+    // ============================================================================================================
+
     let reportCheckedOpsInBvLemma self = function
       | Expr.Assert (_, Expr.Macro (_, "_vcc_bv_lemma", [e])) -> 
         let reportCheckedOpsInBvLemma' self = function 
@@ -403,6 +418,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("check-report-checked-in-bv-lemma", Helper.Expr reportCheckedOpsInBvLemma)
     helper.AddTransformer ("check-special-calls", Helper.Expr handleSpecialCalls)
     helper.AddTransformer ("check-memory-access", Helper.ExprCtx addMemoryChecks)
+    helper.AddTransformer ("check-ptr-range", Helper.ExprCtx addPointerConversionChecks)
     helper.AddTransformer ("check-overflows", Helper.ExprCtx addOverflowChecks)
     helper.AddTransformer ("check-div-by-zero", Helper.ExprCtx addDivByZeroChecks)
     helper.AddTransformer ("check-shift-bits-in-range", Helper.ExprCtx addShiftChecks)

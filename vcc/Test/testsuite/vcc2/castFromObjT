@@ -5,11 +5,31 @@ struct S {
   int a;
 };
 
-spec(void foo(obj_t obj) {
+spec(void foo(obj_t obj) 
+  requires(typed_phys(obj))
+{
   struct S *p = (struct S *)obj;
 };
 )
 
 `
 Verification of foo succeeded.
+`
+
+#include <vcc.h>
+
+struct S {
+  int a;
+};
+
+spec(void foo(obj_t obj) {
+  struct S *p = (struct S *)obj;
+  struct S ^p = (struct S ^)obj;
+};
+)
+
+`
+Verification of foo failed.
+testcase(8,101) : error VC8534: Assertion 'obj is in spec pointer range (in cast)' did not verify.
+testcase(8,70) : error VC8535: Assertion 'obj is in physical pointer range (in cast)' did not verify.
 `

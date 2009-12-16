@@ -229,3 +229,31 @@ void foo(struct S *s)
 `
 Verification of foo succeeded.
 `
+#include <vcc2.h>
+
+struct S {
+  int a;
+};
+
+void bar(struct S *p) 
+  requires(typed(p))
+  ensures(typed_phys(p))
+{
+  assert(typed_phys(p));
+}
+
+void foo(obj_t o) 
+  requires(wrapped(o))
+  requires(is(o, struct S))
+  ensures(typed_phys(o))
+{
+  struct S *p;
+  assert(typed(o));
+  p = (struct S *)o;
+  bar(p); 
+}
+`
+Verification of bar succeeded.
+Verification of foo failed.
+testcase(21,19) : error VC8535: Assertion 'o is in physical pointer range (in cast)' did not verify.
+`
