@@ -213,4 +213,19 @@ Verification of foo succeeded.
 Verification of foo1 succeeded.
 Verification of bar succeeded.
 Verification of bar1 succeeded.
+`#include "vcc.h"
+
+struct S {
+    int a;
+    int b;
+};
+
+void foo(struct S *s)
+    requires(wrapped(s))
+{
+    assert(typed(&s->b) && typed_phys(&s->b));
+}
+
+`
+Verification of foo succeeded.
 `
