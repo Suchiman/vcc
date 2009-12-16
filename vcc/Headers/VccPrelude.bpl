@@ -667,10 +667,10 @@ function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) returns(bool)
   { $is(#p, #t) && $typed(S, #p) }
 
 function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool)
-  { $typed2(S, #p, #t) && $in_range_phys_ptr($ref(#p)) }
+  { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_phys_ptr($ref(#p))) }
 
 function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) returns (bool)
-  { $typed2(S, #p, #t) && $in_range_spec_ptr($ref(#p)) }
+  { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($ref(#p))) }
 
 function {:inline true} $ptr_eq(p1:$ptr,p2:$ptr) returns(bool)
   { $ref(p1) == $ref(p2) }
