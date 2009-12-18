@@ -108,20 +108,12 @@ namespace Microsoft.Research.Vcc
       | x :: xs -> List.fold (fun acc e -> if e > acc then e else acc) x xs
       | [] -> 0
       
-    type BvOp =
-      | BinSame of string
-      | BinDifferent of string * string
-      | BinPredDifferent of string * string
-      | UnarySame of string
-          
-    
     type TranslationState(helper:Helper.Env) =
       let quantVarTokens = new Dict<_,_>()
       let tokenConstantNames = new Dict<_,_>()
       let tokenConstants = ref []
       let soFarAssignedLocals = ref []      
       let fileIndices = new Dict<_,_>()
-      let generatedBvOps = new Dict<_,_>()
       let conversionTypes = new Dict<_,_>()
       let mapTypes = new Dict<_,_>()
       let mapTypeList = glist[]
@@ -393,70 +385,6 @@ namespace Microsoft.Research.Vcc
             | _ -> valIs "" (this.CastToInt (trType l.Type) (this.VarRef l))
         B.Stmt.Assume cond
         
-      member this.BvSignExtensionOp fromBits toBits =
-        let boogieName = "$bv_sign_ext_" + fromBits.ToString() + "_" + toBits.ToString()
-        if generatedBvOps.ContainsKey boogieName then boogieName
-        else
-          generatedBvOps.Add(boogieName, true)
-          let retTp = B.Type.Bv toBits
-          let fromTp = B.Type.Bv fromBits
-          let fn = B.Decl.Function (retTp, [B.Attribute.StringAttr("bvbuiltin", "sign_extend " + (toBits - fromBits).ToString())], boogieName, [("p", fromTp)])
-          tokenConstants := fn :: !tokenConstants
-          boogieName
-      
-      member this.BvType (expr:C.Expr) = function
-          | C.Integer k ->
-            let (sz, _) = k.SizeSign
-            B.Type.Bv sz
-          | C.Bool as t -> trType t
-          | tp ->
-            helper.Error (expr.Token, 9689, "type '" + tp.ToString() + "' is not supported for bitvector translation (in " + expr.Token.Value + ")")            
-            B.Type.Int
-            
-      member this.BvOpFor expr tp name =
-        let bvOps =
-          [ "+", BinSame "add";
-            "-", BinSame "sub"; 
-            "*", BinSame "mul"; 
-            "/", BinDifferent ("sdiv", "udiv"); 
-            "%", BinDifferent ("srem", "urem"); 
-            "&", BinSame "and"; 
-            "|", BinSame "or"; 
-            "^", BinSame "xor"; 
-            "<<", BinSame "shl"; 
-            ">>", BinDifferent ("ashr", "lshr"); 
-            "<", BinPredDifferent ("slt", "ult");
-            ">", BinPredDifferent ("sgt", "ugt");
-            "<=", BinPredDifferent ("sle", "ule");
-            ">=", BinPredDifferent ("sge", "uge");
-            "u~", UnarySame "not";
-            ]
-        let bvt = this.BvType expr tp
-        let (signedName, unsignedName, nargs, boolRes) =
-          match _try_assoc name bvOps with
-            | Some (UnarySame name) -> (name, name, 1, false)
-            | Some (BinSame name)   -> (name, name, 2, false)
-            | Some (BinDifferent (n1, n2)) -> (n1, n2, 2, false)
-            | Some (BinPredDifferent (n1, n2)) -> (n1, n2, 2, true)
-            | None -> 
-              helper.Oops (expr.Token, "unknown operator '" + name + "' bv_lemma(..." + expr.Token.Value + "...)")
-              die()
-        let (sz, sign) = 
-          match tp with
-            | C.Integer k -> k.SizeSign
-            | _ -> die()
-        let bvname = "bv" + (if sign then signedName else unsignedName)
-        let boogieName = "$bv_" + bvname + sz.ToString()
-        if generatedBvOps.ContainsKey boogieName then boogieName
-        else
-          generatedBvOps.Add (boogieName, true)
-          let bvt = B.Type.Bv sz
-          let parms = [for i = 1 to nargs do yield ("p" + i.ToString(), bvt)]
-          let retTp = if boolRes then B.Type.Bool else bvt
-          let fn = B.Decl.Function (retTp, [B.Attribute.StringAttr ("bvbuiltin", bvname)], boogieName, parms)
-          tokenConstants := fn :: !tokenConstants
-          boogieName
-          
       member this.TrInvLabel (lbl:string) =
         let result = "l#" + lbl;
         if not (invLabels.ContainsKey(result)) then 

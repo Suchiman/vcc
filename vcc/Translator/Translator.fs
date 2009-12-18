@@ -71,6 +71,7 @@ namespace Microsoft.Research.Vcc
       let ctx = TranslationState(helper)
       let helper = ctx.Helper
       let cev = CEV(ctx)
+      let bv = BvTranslator(ctx)
       
       let toTypeId = ctx.ToTypeId
       let castFromInt = ctx.CastFromInt
@@ -245,134 +246,6 @@ namespace Microsoft.Research.Vcc
         if not (bContains "$s" expr) then
           helper.Warning (token, 9106, "'old', 'in_state', or 'when_claimed' in '" + token.Value + "' has no effect")
 
-      let bvZeroExtend fromBits toBits e = B.BvConcat(B.Expr.BvLiteral (new bigint(0), toBits - fromBits), e)
-      let bvSignExtend fromBits toBits e = bCall (ctx.BvSignExtensionOp fromBits toBits) [e]
-            
-      let bvExtend (fromType : C.Type) (toType : C.Type) e =
-        let fromBits = 8 * fromType.SizeOf
-        let toBits = 8 * toType.SizeOf
-        if fromBits >= toBits then e 
-        elif fromType.IsSignedInteger then bvSignExtend fromBits toBits e
-        else bvZeroExtend fromBits toBits e 
-      
-      let rec trBvExpr env expr =
-        let bvOpFor = ctx.BvOpFor
-        let self = trBvExpr env
-        let selfs = List.map self
-        let selfExtend toType (expr : C.Expr) = bvExtend expr.Type  toType (self expr)
-        let selfsExtend toType = List.map (selfExtend toType)
-        match expr with
-          | C.Expr.Prim (_, C.Op (("!="|"==") as opName, _), [e1; e2]) ->
-            let args = 
-              if e1.Type.SizeOf = e2.Type.SizeOf then [self e1; self e2]
-              elif e1.Type.SizeOf < e2.Type.SizeOf then [selfExtend e2.Type e1; self e2]
-              else [self e1; selfExtend e1.Type e2]
-            B.Expr.Primitive (opName, args)
-
-          | C.Expr.Prim (_, C.Op (("&&"|"||"|"==>"|"<==>"|"!") as opName, _), args) ->
-            B.Expr.Primitive (opName, selfs args)
-            
-          | C.Expr.Prim (_, C.Op (("+"|"-"|"*"|"/"|"%"), C.Checked), _) ->
-            helper.Error (expr.Token, 9659, "operators in bv_lemma(...) need to be unchecked (expression: " + expr.Token.Value + ")")
-            er "$err"
-            
-          | C.Expr.Prim (c, (C.Op((">>"|"<<") as op, _)), [arg1; arg2]) when c.Type.SizeOf = 8 ->
-           let bArg1 = self arg1
-           let bArg2 = bvZeroExtend (arg2.Type.SizeOf * 8) 64 (self arg2)
-           bCall (bvOpFor expr arg1.Type op) [bArg1; bArg2]
-          
-          | C.Expr.Prim (c, C.Op ("-", _), [arg]) ->
-            trBvExpr env (C.Expr.Prim(c, C.Op("-", C.CheckedStatus.Processed), [C.Expr.IntLiteral(c, new bigint(0)); arg]))
-            
-          | C.Expr.Prim (_, C.Op (("<"|">"|"<="|">=") as opName, _), [e1; e2]) ->
-            let args, opType = 
-              if e1.Type.SizeOf = e2.Type.SizeOf then [self e1; self e2], e1.Type
-              elif e1.Type.SizeOf < e2.Type.SizeOf then [selfExtend e2.Type e1; self e2], e2.Type
-              else [self e1; selfExtend e1.Type e2], e1.Type
-            bCall (bvOpFor expr opType opName) args
-            
-          | C.Expr.Prim (_, C.Op (op, _), args) ->
-            let op =
-              if args.Length = 1 then "u" + op else op
-            bCall (bvOpFor expr expr.Type op) (selfsExtend expr.Type args)
-            
-          | C.Expr.Quant (c, ({ Kind = C.Forall } as q)) ->
-            for v in q.Variables do
-              ctx.QuantVarTokens.[v] <- c.Token
-            let body = self q.Body
-            let body =
-              match q.Condition, q.Kind with
-                | Some e, C.Forall -> bImpl (self e) body
-                | None, _ -> body                
-                | _ -> die()
-            let trVar v =
-              (ctx.VarName v, ctx.BvType expr v.Type)
-            let vars = List.map trVar q.Variables
-            B.Forall (c.Token, vars, [], weight "user-bv", body)
-          
-          | C.Expr.Ref (_, ({ Kind = C.QuantBound } as v)) ->
-            varRef v
-          
-          | C.Expr.IntLiteral (c, v) when v >= bigint.Zero ->          
-            B.Expr.BvLiteral (v, c.Type.SizeOf * 8)
-            
-          | C.Expr.IntLiteral (c, v) when v < bigint.Zero ->
-            trBvExpr env (C.Expr.Prim(c, C.Op("-", C.CheckedStatus.Processed), [C.Expr.IntLiteral(c, -v)]))
-          
-          | C.Expr.Macro (_, "in_range_u1", [e])
-          | C.Expr.Macro (_, "in_range_i1", [e]) when e.Type.SizeOf <= 1 ->
-            bTrue
-
-          | C.Expr.Macro (_, "in_range_u2", [e])
-          | C.Expr.Macro (_, "in_range_i2", [e]) when e.Type.SizeOf <= 2 ->
-            bTrue
-
-          | C.Expr.Macro (_, "in_range_u4", [e])
-          | C.Expr.Macro (_, "in_range_i4", [e]) when e.Type.SizeOf <= 4 ->
-            bTrue
-            
-          | C.Expr.Macro (_, "in_range_u8", [e])
-          | C.Expr.Macro (_, "in_range_i8", [e]) when e.Type.SizeOf <= 8 ->
-            bTrue
-          
-          | C.Expr.Macro (_, "unchecked_u2", [e])
-          | C.Expr.Macro (_, "unchecked_i2", [e]) when e.Type.SizeOf <= 2 -> self e
-
-          | C.Expr.Macro (_, "unchecked_u4", [e])
-          | C.Expr.Macro (_, "unchecked_i4", [e]) when e.Type.SizeOf <= 4 -> self e
-          
-          | C.Expr.Macro (_, "unchecked_u8", [e])
-          | C.Expr.Macro (_, "unchecked_i8", [e]) when e.Type.SizeOf <= 8 -> self e
-          
-          | C.Expr.Macro (_, "in_range_phys_ptr", [e]) -> self e
-          
-          | C.Expr.BoolLiteral (_, v) -> B.BoolLiteral v
-          
-          | C.Expr.Macro(_, (("bv_extract_unsigned"|"bv_extract_signed") as name), [e; C.IntLiteral(_,bs); C.IntLiteral(_, fromBit); C.IntLiteral(_, toBit)]) ->
-            let bs = int32 bs
-            let fromBit = int32 fromBit
-            let toBit = int32 toBit
-            let extend = if name = "bv_extract_unsigned" then bvZeroExtend else bvSignExtend
-            extend (toBit - fromBit) bs (B.BvExtract(trBvExpr env e, toBit, fromBit))
-          
-          | C.Expr.Cast (c, ch, e) ->
-            match e.Type, c.Type with
-              | src, dst when src = dst -> self e
-              | C.Integer k, C.Bool ->
-                B.Expr.Primitive ("!=", [trBvExpr env e; B.Expr.BvLiteral (bigint.Zero, fst k.SizeSign)])
-              | C.Integer _ as src, (C.Integer _ as dst) when ch <> C.CheckedStatus.Checked ->
-                if src.SizeOf = dst.SizeOf then self e
-                elif src.SizeOf < dst.SizeOf then selfExtend dst e
-                else B.BvExtract(self e, dst.SizeOf * 8, 0)
-              | C.Ptr _, C.MathInteger -> self e
-              | src, dst -> 
-                helper.Error (expr.Token, 9690, "cast from " + src.ToString() + " to " + dst.ToString() + " is not supported in bv_lemma(...)")
-                er "$err"
-          
-          | _ ->
-            helper.Error (expr.Token, 9660, "unsupported expression in bv_lemma(...): " + expr.Token.Value + " (" + expr.ToString() + ")")
-            er "$err"
-      
       let claimStateId = ref 0
           
       let rec trExpr (env:Env) expr =
@@ -1275,7 +1148,7 @@ namespace Microsoft.Research.Vcc
             | C.Expr.Comment (_, s) -> 
               [B.Stmt.Comment s]
             | C.Expr.Assert (_, C.Expr.Macro (_, "_vcc_bv_lemma", [e])) -> 
-              [cmt (); B.Stmt.Assert (stmt.Token, trBvExpr env e)]
+              [cmt (); B.Stmt.Assert (stmt.Token, bv.TrBvExpr env e)]
   //          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_cond_wf", [cond; e])) ->
   //            let addCond = function
   //              | B.Assert (t, e) -> B.Assert (t, bImpl (trExpr env cond) e)
