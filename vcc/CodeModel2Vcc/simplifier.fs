@@ -995,12 +995,12 @@ namespace Microsoft.Research.Vcc
        | Macro(cmn, "=", [location ; expr]) when isPhysicalLocation location ->
          match exprDependsOnSpecExpr expr with
            | None when withinSpec ->
-              helper.GraveWarning(cmn.Token, 9300, "assignment to physical location from specification code")
-              false
+             helper.GraveWarning(cmn.Token, 9300, "assignment to physical location from specification code")
+             false
            | None -> false
            | Some specField -> 
-            helper.GraveWarning(cmn.Token, 9300, "assignment to physical location from specification " + specField)
-            false
+             helper.GraveWarning(cmn.Token, 9300, "assignment to physical location from specification " + specField)
+             false
        | Macro(cmn, "out", [outPar]) when isPhysicalLocation outPar ->
          helper.GraveWarning(cmn.Token, 9304, "physical location passed as out parameter")
          false
@@ -1008,15 +1008,15 @@ namespace Microsoft.Research.Vcc
        | _ -> true
 
       let rec checkAccessToSpecFields ctx self = function
+        | _ when ctx.IsPure -> 
+          false
         | CallMacro(_, "spec", _, _) 
         | Call(_, {IsSpec = true}, _, _) 
         | CallMacro(_, "_vcc_unwrap", _, _)
         | CallMacro(_, "_vcc_wrap", _, _)
         | CallMacro(_, "_vcc_wrap_non_owns", _, _)
-        | CallMacro(_, "unclaim", _, _) -> false
-        | CallMacro(_, "by_claim", _, [_; obj; ptr]) ->
-          obj.SelfCtxVisit(ctx.IsPure, checkAccessToSpecFields)
-          ptr.SelfCtxVisit(ctx.IsPure, checkAccessToSpecFields)
+        | CallMacro(_, "unclaim", _, _) 
+        | CallMacro(_, "by_claim", _, [_; _; _]) ->
           false
         | Macro(_, "=", [tgt; src]) as assign ->
           match exprDependsOnSpecExpr tgt with
@@ -1027,16 +1027,16 @@ namespace Microsoft.Research.Vcc
             if v.Kind <> VarKind.SpecParameter && v.Kind <> VarKind.OutParameter then expr.SelfCtxVisit(ctx.IsPure, checkAccessToSpecFields)
           List.iter2 checkIfNotSpecPar f.Parameters args
           false
-        | Dot(cmn, _, f) when not ctx.IsPure && f.IsSpec ->
+        | Dot(cmn, _, f) when f.IsSpec ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification field '" + f.Name + "' within non-specification code")
           true
-        | Ref(cmn, ({Kind = SpecLocal} as v)) when not ctx.IsPure ->
+        | Ref(cmn, ({Kind = SpecLocal} as v)) ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification variable '" + v.Name + "' within non-specification code")
           true
-        | Ref(cmn, ({Kind = SpecParameter|OutParameter} as v)) when not ctx.IsPure ->
+        | Ref(cmn, ({Kind = SpecParameter|OutParameter} as v)) ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification parameter '" + v.Name + "' within non-specification code")
           true
-        | Call(cmn, ({IsSpec = true} as fn), _, args) when not ctx.IsPure ->
+        | Call(cmn, ({IsSpec = true} as fn), _, args) ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification function '" + fn.Name + "' within non-specification code")
           true
         | _ -> true
