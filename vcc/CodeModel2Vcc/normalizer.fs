@@ -417,7 +417,7 @@ namespace Microsoft.Research.Vcc
 
           let inits = List.map2 bindIn inPars inActuals |> List.concat
           let declsForOutPars, outParAssignmentOnExit = List.map2 bindOut outPars outActuals |> List.unzip
-          let resVar = getTmp helper "res" f.RetType VarKind.Local
+          let resVar = getTmp helper "res" f.RetType (if f.IsSpec then VarKind.SpecLocal else VarKind.Local)
           let subst self = function
             | Ref (_, v)  ->
               match map.TryGetValue(v) with
@@ -487,7 +487,7 @@ namespace Microsoft.Research.Vcc
               let fixupResult self = function
                 | Result _ -> Some(res)
                 | _ -> None
-              [ghostUpdate.SelfMap fixupResult]
+              [Macro(voidBogusEC(), "spec", [ghostUpdate.SelfMap fixupResult])]
         let stmts = VarDecl(cvoid, tmp) :: Atomic(cvoid, atomicParameters, Expr.MkBlock (op':: ghostUpdate')) :: [res]
         Some(Block(ec, stmts))
       | _ -> None

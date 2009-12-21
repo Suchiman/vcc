@@ -296,3 +296,12 @@ void foo() {
 Verification of foo failed.
 testcase(24,31) : error VC8512: Assertion '&s.a is thread local or atomically updated' did not verify.
 `
+#include "vcc.h"
+spec(vcc(atomic_inline) bool True() { return true; })
+void foo() {
+    spec(bool f;)
+    speconly(f = True();)
+}
+`
+Verification of foo succeeded.
+`
