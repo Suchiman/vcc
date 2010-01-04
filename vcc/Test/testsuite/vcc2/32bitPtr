@@ -171,3 +171,37 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+`/ps:32
+#include "vcc.h"
+
+union x {
+  unsigned a;
+  int *b;
+  backing_member unsigned __int64 x; 
+};
+
+void foo(int *c)
+{
+  union x bla;
+  bla.b = c;
+  assert(bla.a == (unsigned)c);
+}
+
+struct y {
+  int *b;
+  unsigned a;
+};
+
+
+void bar(unsigned int *arr,unsigned int c)
+  requires(is_mutable_array(arr,2))
+  writes(array_range(arr,2))
+  ensures(((struct y *)arr)->a == c)
+{
+  arr[1] = c;
+  assert(&((struct y *)arr)->a == &arr[1]);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
