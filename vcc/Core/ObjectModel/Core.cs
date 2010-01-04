@@ -52,7 +52,7 @@ namespace Microsoft.Research.Vcc {
           lock (GlobalLock.LockingObject) {
             if (this.voidSpecPtrOpVoidSpecPtr == null) {
               var modifiers = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
-              ITypeDefinition voidSpecPtr = ModifiedPointerType.GetPointerType(this.PlatformType.SystemVoid.ResolvedType, modifiers, this.HostEnvironment.InternFactory).ResolvedType;
+              ITypeDefinition voidSpecPtr = ModifiedPointerType.GetModifiedPointerType(this.PlatformType.SystemVoid.ResolvedType, modifiers, this.HostEnvironment.InternFactory).ResolvedType;
               this.voidSpecPtrOpVoidSpecPtr = BuiltinMethods.GetDummyOp(voidSpecPtr, voidSpecPtr, voidSpecPtr);
             }
           }
