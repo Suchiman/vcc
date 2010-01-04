@@ -564,7 +564,7 @@ namespace Microsoft.Research.Vcc {
 
      private ITypeDefinition GetSpecPointerType(ITypeDefinition targetType) {
        var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
-       return ModifiedPointerType.GetPointerType(targetType, modifier, this.Compilation.HostEnvironment.InternFactory);
+       return ModifiedPointerType.GetModifiedPointerType(targetType, modifier, this.Compilation.HostEnvironment.InternFactory);
      }
  
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
@@ -3031,7 +3031,7 @@ namespace Microsoft.Research.Vcc {
         IPointerType instanceType = this.Instance.Type.ResolvedType as IPointerType;
         if (instanceType != null && VccCompilationHelper.IsSpecPointer(instanceType)) {
           var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
-          return ModifiedPointerType.GetPointerType(targetType, modifier, this.Compilation.HostEnvironment.InternFactory);
+          return ModifiedPointerType.GetModifiedPointerType(targetType, modifier, this.Compilation.HostEnvironment.InternFactory);
         }
         return PointerType.GetPointerType(targetType, this.Compilation.HostEnvironment.InternFactory);
       }
@@ -3124,7 +3124,7 @@ namespace Microsoft.Research.Vcc {
           }
         }
         if (modifiers.Count != 0)
-          return ModifiedPointerType.GetPointerType(this.ElementType.ResolvedType, modifiers, this.Compilation.HostEnvironment.InternFactory);
+          return ModifiedPointerType.GetModifiedPointerType(this.ElementType.ResolvedType, modifiers, this.Compilation.HostEnvironment.InternFactory);
       }
 
       ITypeDefinition resolvedElementType = this.ElementType.ResolvedType;
@@ -4244,7 +4244,7 @@ namespace Microsoft.Research.Vcc {
         VccTypeContract contract = this.Compilation.ContractProvider.GetTypeContractFor(t) as VccTypeContract;
         if (contract != null && contract.IsSpec) {
           var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
-          return ModifiedPointerType.GetPointerType(t, modifier, this.Compilation.HostEnvironment.InternFactory);
+          return ModifiedPointerType.GetModifiedPointerType(t, modifier, this.Compilation.HostEnvironment.InternFactory);
         }
         return PointerType.GetPointerType(t, this.Compilation.HostEnvironment.InternFactory);
       }
