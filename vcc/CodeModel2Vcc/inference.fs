@@ -182,6 +182,7 @@ namespace Microsoft.Research.Vcc
               | Some c -> Some ((Macro (ec, "by_claim", [c; self p; self ptr])))
               | None -> None
           | Atomic _ as expr -> Some expr
+          | Macro(ec, "=", [Deref(ec1, e1); e2]) -> Some(Macro(ec, "=", [Deref(ec1, self e1); self e2]))
           | _ -> None      
       applyMagicAssertion "by_claim" "_vcc_always_by_claim" [] updateEnv applyEnv decls                
       
