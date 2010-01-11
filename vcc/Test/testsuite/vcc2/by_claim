@@ -396,3 +396,48 @@ void foo(struct S *s claimp(c))
 Verification of S#adm succeeded.
 Verification of foo succeeded.
 `
+#include <stdlib.h>
+#include <vcc.h>
+
+typedef struct vcc(claimable) vcc(volatile_owns) _SPIN_LOCK
+{
+  volatile int Lock;
+  spec(obj_t protected_obj;)
+  invariant(!Lock ==> keeps(protected_obj))
+} SPIN_LOCK;
+
+void Acquire(SPIN_LOCK *SpinLock claimp(access_claim))   
+  always(access_claim, closed(SpinLock))
+  ensures(wrapped(SpinLock->protected_obj))
+  ensures(is_fresh(SpinLock->protected_obj))
+  ;
+
+void Release(SPIN_LOCK *SpinLock claimp(access_claim))
+  writes(SpinLock->protected_obj)
+  always(access_claim, closed(SpinLock))
+  requires(access_claim != SpinLock->protected_obj)
+  requires(wrapped(SpinLock->protected_obj))
+  ;
+
+struct vcc(claimable) LockedArray {
+  vcc(as_array) int arr[10];
+  SPIN_LOCK Lock;
+  invariant(keeps(&Lock))
+  invariant(Lock.protected_obj == as_array(arr,10))
+};
+
+void WriteArr(struct LockedArray *larr, unsigned int pos, int val claimp(cl))
+  always(cl, closed(larr))
+  requires(pos < 10)
+{
+  Acquire(&larr->Lock spec(cl));
+  expose(as_array(larr->arr, 10)) {
+    larr->arr[pos] = val;
+  }
+  Release(&larr->Lock spec(cl));
+}
+`
+Verification of _SPIN_LOCK#adm succeeded.
+Verification of LockedArray#adm succeeded.
+Verification of WriteArr succeeded.
+`
