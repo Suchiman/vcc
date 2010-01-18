@@ -420,19 +420,6 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    internal static Program CEVPrelude
-    {
-        get
-        {
-            // For now Boogie does not support reusing the prelude.
-
-            //if (standardPrelude == null)
-            //  standardPrelude = GetStandardPrelude();
-            //return standardPrelude;
-            return GetCEVPrelude();
-        }
-    }
-
     internal static Program StandardPrelude {
       get {
         // For now Boogie does not support reusing the prelude.
@@ -450,49 +437,7 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    static string[] cevPreludeLines;
-    static string cevPreludeString;
     public static string preludePath = "";
-    private static Program GetCEVPrelude()
-    {
-
-        string headersDir = PathHelper.GetVccHeaderDir(false);
-
-        System.IO.Stream stream = null;
-        if (cevPreludeLines == null)
-        {
-
-            stream = headersDir == null ?
-                //typeof(ConvertFelt2Boogie).Assembly.GetManifestResourceStream("Microsoft.Cci.VccPrelude.bpl") :
-            null : // TODO
-            System.IO.File.OpenRead(preludePath);
-            BoogiePL.Buffer.Fill(new System.IO.StreamReader(stream));
-        }
-        else
-        {
-            BoogiePL.Buffer.Fill(cevPreludeString);
-        }
-
-        BoogiePL.Scanner.Init(preludePath);
-        Program prelude;
-        int errorCount = BoogiePL.Parser.Parse(out prelude);
-        if (stream != null) stream.Close();
-        if (prelude == null || errorCount > 0)
-        {
-            System.Console.WriteLine("There were errors parsing VccPrelude.bpl.");
-            return new Program();
-        }
-        else
-        {
-            if (cevPreludeString == null)
-            {
-                cevPreludeLines = File.ReadAllLines(preludePath, Encoding.UTF8);
-                cevPreludeString = String.Join(Environment.NewLine, cevPreludeLines);
-            }
-            return prelude;
-        }
-    }
-
     // [Once]
 
     public static IList<String> StandardPreludeLines {

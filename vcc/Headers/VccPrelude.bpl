@@ -647,7 +647,7 @@ function {:inline true} $thread_owned(S:$state, p:$ptr) returns(bool)
 function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) returns(bool)
   { $typed(S, p) && $owner(S, p) == $me() && ($is_primitive_ch($typ(p)) ==> !$closed(S, p)) }
 
-function $typed(S:$state, $ptr) returns(bool);
+function $typed(S:$state, p:$ptr) returns(bool);
 axiom
   (forall S:$state, #p:$ptr :: {:weight 0} {$typed(S,#p)} $good_state(S) ==> $typed(S,#p) == $ts_typed($ts(S, #p)));
 axiom
@@ -3044,6 +3044,8 @@ function $ptr_to_int($ptr) returns(int);
 function $int_to_ptr(int) returns($ptr);
 axiom (forall p:$ptr :: $int_to_ptr($ptr_to_int(p)) == p);
 
+function $state_to_int($state) returns(int);
+
 // --------------------------------------------------------------------------------
 // Skinny writes
 // --------------------------------------------------------------------------------
@@ -3107,5 +3109,45 @@ function $lt_f8(x:$primitive, y:$primitive) returns(bool);
 function $leq_f8(x:$primitive, y:$primitive) returns(bool);
 function $gt_f8(x:$primitive, y:$primitive) returns(bool);
 function $geq_f8(x:$primitive, y:$primitive) returns(bool);
+
+// --------------------------------------------------------------------------------
+// Counter Example Visualizer things
+// --------------------------------------------------------------------------------
+
+type cf_event;
+type var_locglob;
+
+const unique conditional_moment : cf_event;
+const unique took_then_branch : cf_event;
+const unique took_else_branch : cf_event;
+
+const unique loop_register : cf_event;
+const unique loop_entered : cf_event;
+const unique loop_exited : cf_event;
+
+const unique cev_local : var_locglob;
+const unique cev_global : var_locglob;
+const unique cev_parameter : var_locglob;
+const unique cev_implicit : var_locglob;
+
+function #cev_init(n:int) returns(bool);
+function #cev_save_position(n:int) returns($token);
+function #cev_var_intro(n:int, locorglob:var_locglob, name:$token, val:int, typ: $ctype) returns(bool);
+function #cev_var_update(n:int, locorglob:var_locglob, name:$token, val:int) returns(bool);
+function #cev_control_flow_event(n:int, tag : cf_event) returns(bool);
+function #cev_function_call(n:int) returns(bool);
+
+var $cev_pc : int;
+
+procedure $cev_step(pos: $token);
+  modifies $cev_pc;
+  ensures #cev_save_position(old($cev_pc)) == pos;
+  ensures $cev_pc == old($cev_pc) + 1;
+
+procedure $cev_pre_loop(pos: $token) returns (oldPC: int);
+  modifies $cev_pc;
+  ensures #cev_control_flow_event(old($cev_pc), conditional_moment);
+  ensures #cev_save_position(old($cev_pc)) == pos;
+  ensures oldPC == old($cev_pc) && $cev_pc == old($cev_pc) + 1;
 
 // That's all folks.
