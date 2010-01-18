@@ -1222,8 +1222,7 @@ namespace Microsoft.Research.Vcc
             | C.Expr.Loop (comm, invs, writes, s) ->
               let (save, oldState) = saveState "loop"
               let env = { env with OldState = oldState }
-              let condMoment = cev.CondMoment stmt.Token
-              let regLoopBody = cev.RegLoopBody stmt s
+              let regLoopBody, cevInv = cev.RegLoopBody stmt s
               let (bump, wrCheck, env) =
                 match writes with
                   | [] -> ([], [], env)
@@ -1243,11 +1242,12 @@ namespace Microsoft.Research.Vcc
                   List.map (fun (e:C.Expr) -> (e.Token, trExpr env e)) invs,
                   B.Stmt.Block (B.Stmt.Assume (stateChanges env) :: 
                   B.Stmt.Assume (bCall "$timestamp_post" [env.OldState; bState]) ::
+                  B.Stmt.Assume cevInv ::
                   assumeSync env comm.Token :: 
                   List.map (ctx.AssumeLocalIs comm.Token) ctx.SoFarAssignedLocals @
-                    regLoopBody @ arbitraryLoopIter @
+                    arbitraryLoopIter @
                     trStmt env s))
-              bump @ save @ wrCheck @ [body; assumeSync env comm.Token]
+              bump @ save @ wrCheck @ regLoopBody @ [body; assumeSync env comm.Token]
                 
             | C.Expr.VarDecl (b, v) ->
               let ls = if v.Kind = C.Parameter then cev.VarIntro b.Token true v else []
@@ -1302,6 +1302,7 @@ namespace Microsoft.Research.Vcc
           else
             [B.FreeEnsures (stateChanges { env with Writes = writes });                    
              B.Modifies "$s";
+             B.Modifies "$cev_pc";
              ]
         let tEnsures = function
           | C.Macro(_, "free_ensures", [e]) -> B.FreeEnsures(te e)
@@ -2058,10 +2059,11 @@ namespace Microsoft.Research.Vcc
                           | _ -> mut None "$thread_owned_or_even_mutable"
                       | _ -> bTrue
                   B.Stmt.Assume assump
-                let cevInit = cev.InitCall h.Token
-                let cevInit = cevInit @ List.fold (fun accum -> fun v -> (cev.VarIntro h.Token true) v @ accum) [] (List.filter (fun (v : C.Variable) -> v.Kind <> C.VarKind.OutParameter) h.Parameters)
-                let init = List.map (ctx.AssumeLocalIs h.Token) (List.filter (fun (v : C.Variable) -> v.Kind <> C.VarKind.OutParameter) h.Parameters) @ init @ cevInit
-                    
+                  
+                let inParams = h.Parameters |> List.filter (fun v -> v.Kind <> C.VarKind.OutParameter)
+                let cevInit = cev.InitCall h.Token :: List.map (cev.VarIntro h.Token true) inParams |> List.concat 
+                let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ init @ cevInit                    
+                
                 let can_frame =
                   if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
                   else
