@@ -25,8 +25,8 @@ void bar()
   int i = 0;
   
   do
-    invariant(b ==> 0 < i && i <= 10)
-    invariant(0 <= i && i <= 10)
+    invariant(b ==> 0 < i && i < 10)
+    invariant(0 <= i && i < 10)
   {
     b = 1;
     i++;
