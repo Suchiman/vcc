@@ -305,3 +305,21 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include <vcc.h>
+
+vcc(atomic_inline) bool f() {
+  return 1;
+}
+
+void test(spec(obj_t o) claimp(lock_access_claim))
+  requires(wrapped(o))
+{
+  spec(int i;)
+  atomic_op(1,
+    o,
+    result + f())
+    ;
+}
+`
+Verification of test succeeded.
+`

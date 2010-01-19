@@ -206,28 +206,34 @@ namespace Microsoft.Research.Vcc
         | Type.Void
         | Type.Ref({Kind = TypeKind.MathType; Name = "$$bogus$$" }) -> true
         | _ -> false
-      let stmtalize (expr : Expr) = 
-        let ecVoid = {expr.Common with Type = Type.Void}
-        let dummy = getTmp helper ("stmtexpr" + ((!dummyId).ToString())) expr.Type VarKind.Local
-        let decl = VarDecl(ecVoid, dummy)
-        let assign = VarWrite(ecVoid, [dummy], expr)
-        incr dummyId
-        [decl; assign]
-      let stmtalizeNonVoid (expr : Expr) = if ignoreType expr.Type then [expr] else stmtalize (expr)
+      let splitLast = 
+        let rec loop acc = function
+          | [] -> helper.Die()
+          | [x] -> x, List.rev acc
+          | x::xs -> loop (x::acc) xs
+        loop []
+      let rec stmtalize = function
+        | Block(ec, []) -> [Block(ec, [])]
+        | Block(ec, stmts) ->
+          let last, stmts' = splitLast stmts
+          [Block({ec with Type = Type.Void}, stmts' @ stmtalize last)]
+        | expr when ignoreType expr.Type -> [expr]
+        | expr ->
+          let ecVoid = {expr.Common with Type = Type.Void}
+          let dummy = getTmp helper ("stmtexpr" + ((!dummyId).ToString())) expr.Type VarKind.Local
+          let decl = VarDecl(ecVoid, dummy)
+          let assign = VarWrite(ecVoid, [dummy], expr)
+          incr dummyId
+          [decl; assign]
       function
-        | If(ec, cond, e1, e2) -> Some(If(ec, self cond, Expr.MkBlock(stmtalizeNonVoid (self e1)), Expr.MkBlock(stmtalizeNonVoid (self e2))))
-        | Loop(ec, inv, writes, stmts) -> Some(Loop(ec, List.map self inv, List.map self writes, Expr.MkBlock(stmtalizeNonVoid (self stmts))))
+        | If(ec, cond, e1, e2) -> Some(If(ec, self cond, Expr.MkBlock(stmtalize (self e1)), Expr.MkBlock(stmtalize (self e2))))
+        | Loop(ec, inv, writes, stmts) -> Some(Loop(ec, List.map self inv, List.map self writes, Expr.MkBlock(stmtalize (self stmts))))
         | Stmt(ec, expr) when not (ignoreType expr.Type) -> Some(Expr.MkBlock(stmtalize (self expr)))
+        | Atomic(ec, args, expr) -> Some(Atomic(ec, List.map self args, Expr.MkBlock(stmtalize (self expr))))
         | Block(ec, []) -> None
         | Block(ec, stmts) ->
-          let splitLast = 
-            let rec loop acc = function
-              | [] -> helper.Die()
-              | [x] -> x, List.rev acc
-              | x::xs -> loop (x::acc) xs
-            loop []
           let last, stmts' = splitLast stmts
-          Some(Block(ec, (stmts' |> List.map self |> List.map stmtalizeNonVoid |> List.concat) @ [ self last ]))
+          Some(Block(ec, (stmts' |> List.map self |> List.map stmtalize |> List.concat) @ [ self last ]))
           
         | _ -> None
         

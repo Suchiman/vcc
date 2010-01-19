@@ -382,7 +382,8 @@ namespace Microsoft.Research.Vcc
           else true
         | _ -> true
         
-      let _inline self = function
+      let rec _inline inSpec self = function
+        | Macro(ec, "spec", [body]) -> Some(Macro(ec, "spec", [body.SelfMap(_inline true)]))
         | Call (c, f, targs, args) when inlines.ContainsKey f ->
           let f = f.Specialize(targs, true)
           let map = gdict()
@@ -417,7 +418,7 @@ namespace Microsoft.Research.Vcc
 
           let inits = List.map2 bindIn inPars inActuals |> List.concat
           let declsForOutPars, outParAssignmentOnExit = List.map2 bindOut outPars outActuals |> List.unzip
-          let resVar = getTmp helper "res" f.RetType (if f.IsSpec then VarKind.SpecLocal else VarKind.Local)
+          let resVar = getTmp helper "res" f.RetType (if f.IsSpec || inSpec then VarKind.SpecLocal else VarKind.Local)
           let subst self = function
             | Ref (_, v)  ->
               match map.TryGetValue(v) with
@@ -445,7 +446,7 @@ namespace Microsoft.Research.Vcc
         | d -> None
               
       let decls = List.filter isntInline decls      
-      decls |> deepMapExpressions _inline
+      decls |> deepMapExpressions (_inline false)
    
     // ============================================================================================================
    
