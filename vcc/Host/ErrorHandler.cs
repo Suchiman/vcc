@@ -184,39 +184,57 @@ namespace Microsoft.Research.Vcc
       if (message != null) message = " (" + message + ")";
       else message = "";
 
-      ReturnCounterexample/*?*/ rce = ce as ReturnCounterexample;
-      if (rce != null) {
-        IToken tok = rce.FailingReturn.tok;
-        for (int i = rce.Trace.Length - 1; i >= 0; i--) {
-          foreach (Cmd c in rce.Trace[i].Cmds) {
-            AssertCmd assrt = c as AssertCmd;
-            if (assrt != null) {
-              NAryExpr nary = assrt.Expr as NAryExpr;
-              if (nary != null) {
-                FunctionCall fcall = nary.Fun as FunctionCall;
-                if (fcall != null && fcall.FunctionName == "$position_marker") {
-                  tok = assrt.tok;
+      if (commandLineOptions.PrintCEVModel) {
+        cevModelWriter = VC.VCGen.ErrorReporter.ModelWriter;
+        cevModelWriter.WriteLine("BEGINNING_OF_ERROR");
+      }
+
+      try {
+        ReturnCounterexample/*?*/ rce = ce as ReturnCounterexample;
+        if (rce != null) {
+          IToken tok = rce.FailingReturn.tok;
+          for (int i = rce.Trace.Length - 1; i >= 0; i--) {
+            foreach (Cmd c in rce.Trace[i].Cmds) {
+              AssertCmd assrt = c as AssertCmd;
+              if (assrt != null) {
+                NAryExpr nary = assrt.Expr as NAryExpr;
+                if (nary != null) {
+                  FunctionCall fcall = nary.Fun as FunctionCall;
+                  if (fcall != null && fcall.FunctionName == "$position_marker") {
+                    tok = assrt.tok;
+                  }
                 }
               }
             }
           }
+          ReportOutcomePostconditionFailed(rce.FailingEnsures.tok, tok, message);
         }
-        ReportOutcomePostconditionFailed(rce.FailingEnsures.tok, tok, message);
+        AssertCounterexample/*?*/ ace = ce as AssertCounterexample;
+        if (ace != null) {
+          ReportOutcomeAssertFailed(ace.FailingAssert.tok,
+            (ace.FailingAssert is LoopInvMaintainedAssertCmd ? "Loop body invariant" :
+           ace.FailingAssert is LoopInitAssertCmd ? "Loop entry invariant" : "Assertion"),
+           message
+            );
+        }
+        CallCounterexample/*?*/ cce = ce as CallCounterexample;
+        if (cce != null)
+          ReportOutcomePreconditionFailed(cce.FailingCall.tok, cce.FailingRequires, message);
+      } finally {
+        if (commandLineOptions.PrintCEVModel) {
+          cevModelWriter.WriteLine("END_OF_ERROR");
+          cevModelWriter.Flush();
+          cevModelWriter = null;
+        }
       }
-      AssertCounterexample/*?*/ ace = ce as AssertCounterexample;
-      if (ace != null) {
-        ReportOutcomeAssertFailed(ace.FailingAssert.tok,
-          (ace.FailingAssert is LoopInvMaintainedAssertCmd ? "Loop body invariant" :
-         ace.FailingAssert is LoopInitAssertCmd ? "Loop entry invariant" : "Assertion"),
-         message
-          );
-      }
-      CallCounterexample/*?*/ cce = ce as CallCounterexample;
-      if (cce != null)
-        ReportOutcomePreconditionFailed(cce.FailingCall.tok, cce.FailingRequires, message);
     }
 
-
+    private System.IO.TextWriter cevModelWriter;
+    private void WriteCevError(string msg)
+    {
+        if (cevModelWriter != null)
+            cevModelWriter.WriteLine(msg);
+    }
 
     private bool ReportError(IToken tok, VerificationErrorHandler.ErrorCode code, string fmt, params string[] args) {
       if (ErrorHasBeenReported(tok, code)) return false;
@@ -227,6 +245,8 @@ namespace Microsoft.Research.Vcc
         errors.Add(msg);
       else
         Console.WriteLine(msg);
+
+      WriteCevError(msg);
 
       return true;
     }
