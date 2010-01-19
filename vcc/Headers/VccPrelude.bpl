@@ -580,6 +580,8 @@ var $s: $state;
 function $good_state($state) returns(bool);
 function $invok_state($state) returns(bool);
 
+const $state_zero : $state; // for record/map initialization
+
 function $has_volatile_owns_set(t:$ctype) returns(bool);
 axiom $has_volatile_owns_set(^^claim);
 

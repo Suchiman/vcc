@@ -136,6 +136,7 @@ namespace Microsoft.Research.Vcc
               | C.Type.Ref({Name = n; Kind = C.TypeKind.MathType}) -> 
                 match n with 
                   | "ptrset" -> bCall "$set_empty" []
+                  | "state_t" -> er "$state_zero"
                   | _ -> er "$struct_zero"
               | C.Type.Bool -> bFalse
               | C.Type.Map _ -> er ("$zero." + ctx.TypeIdToName(toTypeId t2))
