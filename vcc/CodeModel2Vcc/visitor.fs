@@ -413,6 +413,8 @@ namespace Microsoft.Research.Vcc
                   | :? VccInitializer as initializer ->
                     let ec = { Token = token expr; Type = t } : C.ExprCommon
                     C.Macro(ec, "init", [ for e in initializer.Expressions -> doInitializer (this.DoType (e.Type)) e])
+                  | _ when expr.Type.ResolvedType = Microsoft.Cci.Dummy.Type ->
+                    this.DoExpression (expr.ContainingBlock.Helper.ImplicitConversionInAssignmentContext(expr, decl.Type.ResolvedType).ProjectAsIExpression())
                   | _ -> this.DoExpression (expr.ProjectAsIExpression())
               let t = this.DoType g.Type
               let t' = if decl.GlobalFieldDeclaration.IsVolatile then C.Type.Volatile(t) else t

@@ -236,3 +236,19 @@ Verification of baz succeeded.
 Verification of bar succeeded.
 Verification of $fnptr_foo_to_fnptr#1 succeeded.
 `
+
+int x(int param) {
+return 0;
+}
+
+typedef int (*f)(int);
+
+f F = x;
+
+int main() {
+  return 0;
+}
+`
+Verification of x succeeded.
+Verification of main succeeded.
+`
