@@ -3044,8 +3044,6 @@ function $ptr_to_int($ptr) returns(int);
 function $int_to_ptr(int) returns($ptr);
 axiom (forall p:$ptr :: $int_to_ptr($ptr_to_int(p)) == p);
 
-function $state_to_int($state) returns(int);
-
 // --------------------------------------------------------------------------------
 // Skinny writes
 // --------------------------------------------------------------------------------
