@@ -1090,7 +1090,8 @@ namespace Microsoft.Research.Vcc
         match dst.Type with
           | Type.Ref({Fields = [fld]} as td) when not (isRecord td)->
             let addDot (e:Expr) = 
-              Deref({e.Common with Type = fld.Type}, Expr.MkDot(Macro({e.Common with Type = PhysPtr(e.Type)}, "&", [e]), fld)) // TODO Ptr kind, but should not matter here
+              let isSpecRef = function | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> true | _ -> false
+              Deref({e.Common with Type = fld.Type}, Expr.MkDot(Macro({e.Common with Type = Type.MkPtr(e.Type, isSpecRef e)}, "&", [e]), fld))
             Some(Macro(ec, "=", [addDot dst; addDot src]))
           | _ -> None
       | _ -> None
