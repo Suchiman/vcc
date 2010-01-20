@@ -166,10 +166,7 @@
   <data name="9999" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>1092.bmp;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="AboutIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>AboutIcon.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="VCCTrayIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>VCCTrayIcon.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="VccIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>vcc.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

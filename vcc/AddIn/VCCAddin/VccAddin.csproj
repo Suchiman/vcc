@@ -41,7 +41,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <ApplicationIcon>Resources\vcc.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\Vcc.ico</ApplicationIcon>
     <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -267,11 +267,9 @@
     <Content Include="Extensibility.dll" />
     <Content Include="Resources\Cancel_VCC.bmp" />
     <Content Include="Resources\Check_Sln.bmp" />
-    <Content Include="Resources\vcc icon sharper lighter.ico" />
-    <Content Include="Resources\AboutIcon.ico" />
     <Content Include="Resources\Check_File.bmp" />
     <Content Include="Resources\Check_Project.bmp" />
-    <Content Include="Resources\vcc.ico" />
+    <Content Include="Resources\Vcc.ico" />
     <Content Include="Resources\VerifiedCCompilerAddin.AddIn">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -301,7 +299,6 @@
     <Content Include="Resources\1092.bmp" />
     <Content Include="Resources\9892.bmp" />
     <Content Include="Resources\CreateOpenBoogie.bmp" />
-    <Content Include="Resources\VCCTrayIcon.ico" />
     <Content Include="Resources\ViewModel.bmp" />
     <Content Include="Resources\assert_selection.bmp" />
     <Content Include="Resources\Check_Fkt.bmp" />
@@ -309,7 +306,6 @@
     <Content Include="Resources\Dummy.bmp" />
     <Content Include="Resources\info.png" />
     <Content Include="Resources\settings.bmp" />
-    <Content Include="Resources\Settings.ico" />
     <Content Include="Resources\usertype.dat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

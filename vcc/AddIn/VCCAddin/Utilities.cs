@@ -556,7 +556,7 @@ namespace VerifiedCCompilerAddin {
           NotifyIcon = new NotifyIcon();
 
       NotifyIcon.Visible = true;
-      NotifyIcon.Icon = Resources.ImageResources.VCCTrayIcon;
+      NotifyIcon.Icon = Resources.ImageResources.VccIcon;
       NotifyIcon.Text = "VCC Notifications";
     }
 
