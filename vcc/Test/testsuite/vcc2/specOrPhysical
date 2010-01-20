@@ -257,3 +257,37 @@ Verification of bar succeeded.
 Verification of foo failed.
 testcase(21,19) : error VC8535: Assertion 'o is in physical pointer range (in cast)' did not verify.
 `
+
+#include <vcc.h>
+
+struct S {
+  int a;
+  vcc(as_array) int c[5];
+};
+
+struct T {
+  int a;
+  int c[5];
+};
+
+void foo(struct S *s)
+  requires(wrapped(s))
+{
+  assert(typed(s));
+  assert(typed_phys(s));
+  assert(typed_phys(&s->a));
+  assert(typed_phys(&s->c[4]));
+}
+
+void bar(struct T *s)
+  requires(wrapped(s))
+{
+  assert(typed(s));
+  assert(typed_phys(s));
+  assert(typed_phys(&s->a));
+  assert(typed_phys(&s->c[4]));
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

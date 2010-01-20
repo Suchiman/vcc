@@ -668,6 +668,9 @@ axiom (forall #r:int :: {$in_range_spec_ptr(#r)}
 function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) returns(bool)
   { $is(#p, #t) && $typed(S, #p) }
 
+axiom (forall S:$state, #p:$ptr, #t:$ctype ::
+  $typed2(S, #p, #t) && $in_range_phys_ptr($ref(#p)) ==> $in_range_phys_ptr($ref(#p) + $sizeof(#t) - 1));
+
 function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool)
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_phys_ptr($ref(#p))) }
 
@@ -2309,7 +2312,7 @@ function {:inline true} $no_inline_array_field_properties(f:$field, T:$ctype, sz
          $extent_hint($as_array($dot(p, f), T, sz), p) &&
          $typed(S, $as_array($dot(p, f), T, sz)) &&
          $emb(S, $as_array($dot(p, f), T, sz)) == p &&
-         $path(S, $as_array($dot(p, f), T, sz)) == f
+         $path(S, $as_array($dot(p, f), T, sz)) == f 
       )
     &&
    (forall p:$ptr, i:int :: {$idx($dot(p, f), i, T)} $instantiate_ptr($as_array($dot(p, f), T, sz)))
