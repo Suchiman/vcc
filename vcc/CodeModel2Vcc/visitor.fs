@@ -60,6 +60,7 @@ namespace Microsoft.Research.Vcc
     let mutable currentBlockId = 0
     
     let cTrue = C.Expr.BoolLiteral ( { Type = C.Type.Bool; Token = C.bogusToken }, true )
+    let cFalse = C.Expr.BoolLiteral ( { Type = C.Type.Bool; Token = C.bogusToken }, false )
 
     let token (o : Microsoft.Cci.IObjectWithLocations) = VisitorHelper.GetTokenFor (o.Locations)
     let oops msg =
@@ -1395,7 +1396,11 @@ namespace Microsoft.Research.Vcc
         | :? CreateStackArray as createStackArray -> 
           let numberOfElements = this.DoExpression(createStackArray.Size.ProjectAsIExpression())
           let elementType = this.DoType(createStackArray.ElementType.ResolvedType)
-          exprRes <- C.Macro({numberOfElements.Common with Type = C.PhysPtr elementType}, "stack_allocate_array", [numberOfElements]) //TODO: Ptr kind
+          let isSpec = 
+            match createStackArray with 
+              | :? VccCreateStackArray as vccCreateStackArray -> if vccCreateStackArray.IsSpec then cTrue else cFalse
+              | _ -> cFalse
+          exprRes <- C.Macro({numberOfElements.Common with Type = C.PhysPtr elementType}, "stack_allocate_array", [numberOfElements; isSpec]) 
         | _ -> assert false
 
       member this.Visit (subtraction:ISubtraction) : unit =

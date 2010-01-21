@@ -284,7 +284,7 @@ namespace Microsoft.Research.Vcc
         
         // this is an easy one ;-)
         | Expr.Prim (_, Op ("+", _), [e]) -> Some (self e)
-        | Expr.Macro (c, "stack_allocate_array", [s]) -> 
+        | Expr.Macro (c, "stack_allocate_array", [s; isSpec]) -> 
           match c.Type with 
           | Ptr elemType ->
             let arrTy = 
@@ -292,7 +292,7 @@ namespace Microsoft.Research.Vcc
               | Expr.IntLiteral(_, sz) -> Type.Array(elemType, (int)sz)
               | _ -> die()
             Some (Expr.Cast(c, Processed, 
-                            Expr.Call({ c with Type = PhysPtr Void }, internalFunction "stack_alloc", [arrTy], [Expr.Macro(bogusEC, "stackframe", []); Expr.False]))) // TODO Ptr kind
+                            Expr.Call({ c with Type = PhysPtr Void }, internalFunction "stack_alloc", [arrTy], [Expr.Macro(bogusEC, "stackframe", []); isSpec]))) 
           | _ -> die()        
         | Expr.Cast ({ Type = Ptr t } as c, _, Expr.Call (_, { Name = "malloc" }, _, [sz])) as expr ->
           match extractArraySize helper expr t sz with
