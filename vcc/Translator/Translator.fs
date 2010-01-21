@@ -1394,7 +1394,7 @@ namespace Microsoft.Research.Vcc
             | _ ->
               let tsOfDot = bCall "$ts" [s; dot]
               let statusOfDot = bCall "$st" [s; dot]
-              let emb = bCall "$field_properties" [s; p; fieldRef; dott; bBool f.IsVolatile; bBool f.IsSpec]
+              let emb = bCall "$field_properties" [s; p; fieldRef; dott; bBool f.IsVolatile]
               let triggers = [ (* [dot; bCall "$typed" [s; p]]; *) [tsOfDot]; [statusOfDot]]
               let emb =
                 if isUnion then bInvImpl (bAnd weTyped isActive) emb
