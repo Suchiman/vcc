@@ -434,13 +434,12 @@ function $embedded_array_size(f:$field, t:$ctype) returns(int);
 function {:inline true} $static_field_properties(f:$field, t:$ctype) returns(bool)
   { $is_base_field(f) && $field_parent_type(f) == t }
 
-function {:inline true} $field_properties(S:$state, p:$ptr, f:$field, tp:$ctype, isvolatile:bool, isspec:bool)  returns(bool)
+function {:inline true} $field_properties(S:$state, p:$ptr, f:$field, tp:$ctype, isvolatile:bool)  returns(bool)
   { $typed2(S, $dot(p, f), tp) &&
     $emb(S, $dot(p, f)) == p &&
     $path(S, $dot(p, f)) == f &&
     !$is_array_elt(S, $dot(p, f)) &&
-    $is_volatile(S, $dot(p, f)) == isvolatile &&
-    (!isspec && $in_range_phys_ptr($ref(p)) ==> $in_range_phys_ptr($ref($dot(p,f))))
+    $is_volatile(S, $dot(p, f)) == isvolatile 
   }
 
 function $ts_typed($type_state) returns(bool);
