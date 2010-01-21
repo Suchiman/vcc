@@ -105,7 +105,7 @@ namespace Microsoft.Research.Vcc {
       if (this.InitialValue == null && arrayTypeExpression != null && arrayTypeExpression.Size != null) {
         Expression dummyExpression = new DummyExpression(this.Name.SourceLocation);
         TargetExpression targetExpression = new TargetExpression(new BoundExpression(dummyExpression, this.LocalVariable), this.Name.SourceLocation);
-        Expression initialValue = new CreateStackArray(arrayTypeExpression.ElementType, arrayTypeExpression.Size, SourceDummy.SourceLocation);
+        Expression initialValue = new VccCreateStackArray(arrayTypeExpression.ElementType, arrayTypeExpression.Size, this.IsSpec, SourceDummy.SourceLocation);
         Assignment assignment = new Assignment(targetExpression, initialValue, this.SourceLocation);
         ExpressionStatement aStat = new ExpressionStatement(assignment);
         aStat.SetContainingBlock(this.ContainingLocalDeclarationsStatement.ContainingBlock);
@@ -128,6 +128,10 @@ namespace Microsoft.Research.Vcc {
       return new VccLocalDefinition(this, this.specifiers);
     }
 
+    public bool IsSpec {
+      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.specifiers, Token.Specification); }
+    }
+
     /// <summary>
     /// The type of the local.
     /// </summary>
@@ -137,9 +141,14 @@ namespace Microsoft.Research.Vcc {
         if (this.type == null) {
           ITypeDefinition result;
           VccArrayTypeExpression/*?*/ arrayTypeExpression = this.ContainingLocalDeclarationsStatement.TypeExpression as VccArrayTypeExpression;
-          if (arrayTypeExpression != null && arrayTypeExpression.Size != null)
-            result = PointerType.GetPointerType(arrayTypeExpression.ElementType.ResolvedType, this.ContainingLocalDeclarationsStatement.Compilation.HostEnvironment.InternFactory);
-          else
+          if (arrayTypeExpression != null && arrayTypeExpression.Size != null) {
+            if (this.IsSpec) {
+              var modifier = new ICustomModifier[] { new CustomModifier(false, arrayTypeExpression.PlatformType.SystemDiagnosticsContractsContract) };
+              return ModifiedPointerType.GetModifiedPointerType(arrayTypeExpression.ElementType.ResolvedType, modifier, this.ContainingLocalDeclarationsStatement.Compilation.HostEnvironment.InternFactory);
+            } else {
+              result = PointerType.GetPointerType(arrayTypeExpression.ElementType.ResolvedType, this.ContainingLocalDeclarationsStatement.Compilation.HostEnvironment.InternFactory);
+            }
+          } else
             result = this.ContainingLocalDeclarationsStatement.Type;
           this.type = result;
         }

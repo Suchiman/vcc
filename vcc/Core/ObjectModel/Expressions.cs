@@ -1334,6 +1334,34 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
+  public class VccCreateStackArray : CreateStackArray
+  {
+    public VccCreateStackArray(TypeExpression elementType, Expression size, bool isSpec, ISourceLocation sourceLocation)
+      : base(elementType, size, sourceLocation) {
+      this.isSpec = isSpec;
+    }
+
+    protected VccCreateStackArray(BlockStatement containingBlock, VccCreateStackArray template)
+      : base(containingBlock, template) {
+      this.isSpec = template.isSpec;
+    }
+
+    private readonly bool isSpec;
+
+    public bool IsSpec { get { return this.isSpec; } }
+
+    public override ITypeDefinition InferType() {
+      if (!this.isSpec) return base.InferType();
+      var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
+      return ModifiedPointerType.GetModifiedPointerType(this.ElementType.ResolvedType, modifier, this.Compilation.HostEnvironment.InternFactory);
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      return new VccCreateStackArray(containingBlock, this);
+    }
+  }
+
   public class VccLogicalOr : LogicalOr {
     /// <summary>
     /// Allocates an expression that results in true if both operands result in true. If the left operand results in false, the right operand is not evaluated.
