@@ -278,6 +278,9 @@ namespace Microsoft.Research.Vcc
           this.options.TimeStats = true;
           this.options.TimeStatsForVs = true;
           return true;
+        } else if (this.ParseName(arg, "smoke", "sm")) {
+          this.options.BoogieOptions.Add("/smoke");
+          return true;
         } else {
           string mt = this.ParseNamedArgument(arg, "suitemt", "smt");
           int threads = 0;

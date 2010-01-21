@@ -136,6 +136,7 @@
 /preprocessor:&lt;pp option list&gt; Options to pass on to the C preprocessor (Short form: /p)
 /pause                         Wait for a key press before terminating
 /pointersize:&lt;32|64&gt;           Size of the target platform's pointer type in bits, default is 64 (Short form: /ps)
+/smoke                         Run smoke tests, which is equivalent to /b:/smoke (Short form: /sm)
 /stats                         Display time statistics (Short form: /st)
 /suite &lt;file or directory&gt;     Treat the given file or directory as a collection of test cases with expected output and report any differences (Short form: /s)
 /time                          Display more detailed time statistics.
