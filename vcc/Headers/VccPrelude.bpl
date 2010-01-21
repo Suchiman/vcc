@@ -655,21 +655,17 @@ axiom
 axiom
   (forall S:$state, #p:$ptr :: {$typed(S,#p)} $good_state(S) && $typed(S,#p) ==> $ref(#p) > 0);
 
-function $in_range_phys_ptr(#r:int) returns(bool);
-function $in_range_spec_ptr(#r:int) returns(bool);
+function $in_range_phys_ptr(#r:int) returns(bool)
+  { $in_range(0, #r, $arch_spec_ptr_start) }
+function $in_range_spec_ptr(#r:int) returns(bool)
+  { 0 == #r || #r > $arch_spec_ptr_start }
 const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
-
-axiom (forall #r:int :: {$in_range_phys_ptr(#r)}
-  $in_range_phys_ptr(#r) <==> $in_range(0, #r, $arch_spec_ptr_start));
-
-axiom (forall #r:int :: {$in_range_spec_ptr(#r)}
-  $in_range_spec_ptr(#r) <==> 0 == #r || #r > $arch_spec_ptr_start);
 
 function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) returns(bool)
   { $is(#p, #t) && $typed(S, #p) }
 
-axiom (forall S:$state, #p:$ptr, #t:$ctype ::
-  $typed2(S, #p, #t) && $in_range_phys_ptr($ref(#p)) ==> $in_range_phys_ptr($ref(#p) + $sizeof(#t) - 1));
+axiom (forall S:$state, #r:int, #t:$ctype :: {$typed(S, $ptr(#t, #r))}
+  $typed(S, $ptr(#t, #r)) && $in_range_phys_ptr(#r) ==> $in_range_phys_ptr(#r + $sizeof(#t) - 1));
 
 function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool)
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_phys_ptr($ref(#p))) }
