@@ -405,7 +405,7 @@ namespace Microsoft.Research.Vcc
         // special treatment for the condition of doUntil so that we re-visit the 'known' annotation once we have desugared the loop 
         Some(Macro(wtok, "doUntil", [Macro(lc, "loop_contract", selfs conds); self body; cond.SelfCtxMap(false, doRemoveLazyOps false true)]))
       | Macro(_, "_vcc_known", [e; _]) when not keepKnown -> Some(self e)
-      | Macro(ec, "spec", args) -> Some(Macro(ec, "spec", List.map (fun (e:Expr) -> e.SelfCtxMap(true, doRemoveLazyOps true false)) args))
+      | Macro(ec, "spec", args) -> Some(Macro(ec, "spec", List.map (fun (e:Expr) -> e.SelfCtxMap(ctx.IsPure, doRemoveLazyOps true false)) args))
       | _ -> None
     
     let propagateKnownValue ctx self = function

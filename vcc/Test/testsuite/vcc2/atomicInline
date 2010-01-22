@@ -323,3 +323,35 @@ void test(spec(obj_t o) claimp(lock_access_claim))
 `
 Verification of test succeeded.
 `
+#include <vcc.h>
+
+struct S {
+  volatile int a;
+  spec(volatile int b;)
+};
+
+int f(struct S *s spec(int ^x) claimp(c))
+  requires(claims(c, closed(s)))
+  requires(wrapped(c))
+  requires(x!=0 ==> mutable(x))
+{
+  atomic(s, c) {
+    s->a=5;
+    speconly(x!=0 && (s->b=*x);)
+  }
+}
+
+int g(struct S *s spec(int ^x) claimp(c))
+  requires(claims(c, closed(s)))
+  requires(wrapped(c))
+  requires(x!=0 ==> mutable(x))
+{
+  atomic_op(s->a=5,
+            s, c,
+            x!=0 && (s->b=*x)
+            );
+}
+`
+Verification of f succeeded.
+Verification of g succeeded.
+`
