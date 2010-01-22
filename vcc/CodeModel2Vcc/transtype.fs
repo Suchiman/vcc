@@ -1098,8 +1098,8 @@ namespace Microsoft.Research.Vcc
             
     // ============================================================================================================
 
-    let addAxiomsForReadsFromConstArrays decls = 
-      let addAxiomsForReadsFromConstArrays' = function
+    let addAxiomsForGlobals decls = 
+      let addAxiomsForGlobals' = function
         | Global({Type = Array(t, n); Kind = ConstGlobal} as v, Some(init)) -> 
           let ec_b = {bogusEC with Type = Bool }
           let ec_t = {bogusEC with Type = t }
@@ -1124,13 +1124,25 @@ namespace Microsoft.Research.Vcc
 
           Global (v, None) :: threadLocalAxiom :: (readAxioms init) 
         | Global ({Kind = VarKind.ConstGlobal} as v, Some init) when not init.Type.IsComposite -> [Global (v, None)] // the initial value is handled by FELT in the AST
+        | Global (v, Some(init)) when v.Type._IsInteger || v.Type._IsPtr ->
+          let state = Variable.CreateUnique "#s" Type.MathState VarKind.QuantBound
+          let stateRef = Expr.Ref({bogusEC with Type = Type.MathState}, state)
+          let ec_t = {bogusEC with Type = v.Type}
+          let programEntryState = Macro(boolBogusEC(), "_vcc_program_entry_point", [stateRef])
+          let readAtEntry = Expr.Old(ec_t, stateRef, Expr.Ref(ec_t, v))
+          let readCondition = Expr.Quant(boolBogusEC(), { Kind = QuantKind.Forall                                                 
+                                                          Variables = [state]
+                                                          Triggers = [[readAtEntry; programEntryState]]
+                                                          Condition = Some(programEntryState)
+                                                          Body = Expr.Prim(boolBogusEC(), Op("==", Unchecked), [readAtEntry; init])})
+          Global (v, None) :: Top.GeneratedAxiom(readCondition, Top.Global(v, None)) :: []         
         | Global (v, Some(init)) -> 
           helper.Warning(init.Token, 9112, "unhandled initializer")
           [Global(v, None)]
         | other -> [other]
         
         
-      decls |> List.map addAxiomsForReadsFromConstArrays' |> List.concat
+      decls |> List.map addAxiomsForGlobals' |> List.concat
 
     // ============================================================================================================
 
@@ -1181,5 +1193,5 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("type-check-records", Helper.Decl checkRecordValidity)
     helper.AddTransformer ("type-volatile-modifiers", Helper.Decl handleVolatileModifiers)
     helper.AddTransformer ("type-struct-equality", Helper.Expr handleStructAndRecordEquality)
-    helper.AddTransformer ("type-constant-arrays", Helper.Decl addAxiomsForReadsFromConstArrays)
+    helper.AddTransformer ("type-globals", Helper.Decl addAxiomsForGlobals)
     helper.AddTransformer ("type-end", Helper.DoNothing)
