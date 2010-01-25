@@ -1940,10 +1940,11 @@ namespace Microsoft.Research.Vcc
               helper.Warning (h.Token, 0, "wrong " + String.concat "; " (lst |> List.map (fun e -> e.ToString())))
             *)  
           let ensures = bMultiAnd (List.map (stripFreeFromEnsures>> te) h.Ensures)
+          let requires = bMultiAnd (List.map te h.Requires)
           let qargs = (if h.IsStateless then [] else [("#s", tpState)]) @ parameters
           let fappl = bCall fname (List.map (fun ((vi,vt):B.Var) -> er vi) qargs)
           let subst = bSubst [("$result", fappl); ("$s", er "#s")]
-          let defBody = subst ensures
+          let defBody = subst (bImpl requires ensures)
           if h.IsStateless && bContains "#s" defBody then
             helper.Error (h.Token, 9650, "the specification refers to memory, but function is missing a reads clause", None)
           let defAxiom =
