@@ -3470,13 +3470,15 @@ namespace Microsoft.Research.Vcc {
           IEnumerator<LocalDeclaration> locals = b.Scope.GetMembersNamed(this.Name, false).GetEnumerator();
           if (locals.MoveNext()) {
             LocalDeclaration localVarDecl = locals.Current;
-            VccLocalFunctionDeclaration/*?*/ localFunc = localVarDecl as VccLocalFunctionDeclaration;
             if (locals.MoveNext()) {
               this.Helper.ReportError(new VccErrorMessage(locals.Current.SourceLocation, Error.LocalDuplicate, this.Name.Value));
             }
+            VccLocalFunctionDeclaration/*?*/ localFunc = localVarDecl as VccLocalFunctionDeclaration;
             if (localFunc != null) {
               return this.ResolveUsing(localFunc.MangledFunctionDeclaration.ContainingTypeDeclaration, restrictToNamespacesAndTypes);
             }
+            if (this.SourceLocation.StartIndex < localVarDecl.SourceLocation.StartIndex)
+              this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.LocalUsedBeforeDeclaration, this.Name.Value));
             return localVarDecl.LocalVariable;
           }
         }

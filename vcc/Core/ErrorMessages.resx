@@ -3649,4 +3649,7 @@
   <data name="ValueTypeLayoutCycle" xml:space="preserve">
     <value>Type member '{0}' in type '{1}' causes a cycle in the type layout.</value>
   </data>
+  <data name="LocalUsedBeforeDeclaration" xml:space="preserve">
+    <value>Cannot use local variable '{0}' before it is declared.</value>
+  </data>
 </root>
