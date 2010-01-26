@@ -122,6 +122,11 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     ValueTypeLayoutCycle,
 
+    /// <summary>
+    /// Cannot use local variable '{0}' before it is declared.
+    /// </summary>
+    LocalUsedBeforeDeclaration,
+
 
   }
 }
