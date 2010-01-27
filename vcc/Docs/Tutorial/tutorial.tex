@@ -1,0 +1,119 @@
+\documentclass{article}
+\bibliographystyle{plain}
+
+\usepackage{amsmath}
+\usepackage{stmaryrd}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{marginnote}
+\usepackage{hyperref}
+\usepackage{amsmath, amssymb}
+\usepackage{url, listings}
+%\usepackage{msrtr}
+\usepackage{vcc}
+\usepackage{boogie}
+\usepackage{xspace}
+\definecolor{bgcode}{rgb}{0.92,0.92,0.92}
+
+\definecolor{todocolor}{rgb}{0.9,0.0,0.0}
+\newcommand{\todo}[1]{\marginnote{\scriptsize {[\textcolor{red}{\textbf{TODO:} {#1}}]}} }
+\newcommand{\itodo}[1]{{[\textcolor{red}{\textbf{TODO:} {#1}}]}}
+%\renewcommand{\todo}[1]{}
+%\renewcommand{\itodo}[1]{}
+\newcommand{\lines}[1]{\begin{array}{l}#1\end{array}}
+\newcommand{\linesi}[1]{\;\;\;\begin{array}{l}#1\end{array}}
+\newcommand{\tuple}[1]{{\langle}{#1}\rangle}
+\usepackage[OT1]{fontenc}
+\usepackage{courier}
+
+\newcommand{\secref}[1]{Section~\ref{sect:#1}}
+\newcommand{\figref}[1]{Figure~\ref{fig:#1}}
+\newcommand{\Secref}[1]{Section~\ref{sect:#1}}
+\newcommand{\Figref}[1]{Figure~\ref{fig:#1}}
+
+\newcommand{\lemmaref}[1]{Lemma~\ref{lemma:#1}}
+\newcommand{\thmref}[1]{Theorem~\ref{thm:#1}}
+\newcommand{\lineref}[1]{line~\ref{line:#1}}
+
+\newcommand{\ie}[0]{i.e.,{ }}
+\newcommand{\eg}[0]{e.g.,{ }}
+\newcommand{\cf}[0]{cf.{ }}
+
+
+\newcommand{\eqspc}[1]{\;\;{#1}\;\;}
+\setlength{\arraycolsep}{0mm}
+
+%%% the model
+
+%%% general
+\newcommand{\MathOp}[2]{{}\mathbin{\hbox{$\mkern#2mu#1\mkern#2mu$}}{}}
+\newcommand{\Iff}{\MathOp{\Leftrightarrow}{6}}
+\newcommand{\Equal}{\MathOp{=}{6}}
+\newcommand{\Xor}{\MathOp{\not\equiv}{6}}
+\newcommand{\Implies}{\MathOp{\Rightarrow}{4}}
+\renewcommand{\And}{\MathOp{\wedge}{2}}
+\newcommand{\Or}{\MathOp{\vee}{2}}
+\newcommand{\Neg}{\neg}
+\newcommand{\dor}[0]{\MathOp{|}{2}}
+
+\newcommand{\ON}[1]{\operatorname{#1}}
+
+% -----------------------------------------------------
+
+\newcommand{\Def}[1]{{\em  #1}}
+
+\begin{document}
+
+\title{Verifying Concurrent C Programs with VCC}
+
+\author{ }
+
+
+%\msrtrno{MSR-TR-2010-9}
+%{\def\@titletext{foo}}
+%\msrtrmaketitle
+
+%\pagebreak
+%\begin{figure*}
+%\vspace{3in}
+%\begin{center}
+%This page intentionally left blank.
+
+%\end{center}
+%\end{figure*}
+
+%\setcounter{page}{0}
+
+\maketitle
+
+\pagestyle{plain} % turn on page numbers
+
+%\begin{abstract}
+%\end{abstract}
+
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  keywordstyle=\bfseries,
+  breaklines=true,
+%  aboveskip=2mm,
+%  belowskip=2mm,
+%  xleftmargin=2mm,
+%  xrightmargin=2mm,
+  }
+
+
+\lstset{numberstyle=\tiny\sf}
+\lstset{escapeinside={/*}{*/}}
+\lstset{numbers=none}
+
+
+\input{00-preface}
+\input{01-functions}
+
+\bibliography{other}
+
+
+\end{document}
+
+% vim: spell

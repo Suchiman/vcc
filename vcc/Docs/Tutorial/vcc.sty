@@ -1,0 +1,37 @@
+\usepackage{listings}
+\lstloadlanguages{C++}
+\lstdefinestyle{vcc}{%
+  language=C++,
+  morekeywords={spec,axiom,requires,ensures,returns,reads,writes,%
+                old,speconly,%
+                VOID,BOOLEAN,%
+                assert,assume,invariant,result,forall,exists,expose,skinny_expose,wrap,unwrap,atomic,}
+  literate={==>}{$\Longrightarrow$}3 %
+                 {&&}{$\land$}1 %
+                 {||}{$\lor$}1 %
+                 {<=}{$\le$}1 %
+                 {>=}{$\ge$}1 %
+                 {!}{$\lnot$}1 %
+                 {!=}{$\neq$}1 %
+                 {forall}{$\forall$}1 %
+                 {exists}{$\exists$}1 %
+           {<==>}{$\Longleftrightarrow$}3 %
+}
+
+\lstnewenvironment{VCC}[1][]{%
+  \lstset{%
+    floatplacement={tbp},
+    captionpos=b,language=VCC,#1
+    }}{}%
+
+\lstnewenvironment{VCC2}[1][0.45]
+    {\global\let\lst@intname\@empty
+     \gdef\lst@sample{}%
+    \setbox0=\hbox\bgroup
+         \setkeys{lst}{floatplacement={tbp},captionpos=b,language=VCC}
+         }
+    {\egroup%
+      \noindent\begin{minipage}{#1\linewidth}\hbox to\linewidth{\box0\hss}\end{minipage}}
+
+\def\vcc{%
+    \lstinline[language=VCC,columns=fullflexible]}
