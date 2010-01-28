@@ -1,21 +1,14 @@
 \usepackage{listings}
-\lstloadlanguages{C++}
-\lstdefinestyle{vcc}{%
-  language=C++,
+\definecolor{vccOutColor}{rgb}{0.0,0.0,0.3}
+\lstloadlanguages{C}
+\lstdefinelanguage{VCC}[ANSI]{C}{%
   morekeywords={spec,axiom,requires,ensures,returns,reads,writes,%
                 old,speconly,%
                 VOID,BOOLEAN,%
-                assert,assume,invariant,result,forall,exists,expose,skinny_expose,wrap,unwrap,atomic,}
-  literate={==>}{$\Longrightarrow$}3 %
-                 {&&}{$\land$}1 %
-                 {||}{$\lor$}1 %
-                 {<=}{$\le$}1 %
-                 {>=}{$\ge$}1 %
-                 {!}{$\lnot$}1 %
-                 {!=}{$\neq$}1 %
-                 {forall}{$\forall$}1 %
-                 {exists}{$\exists$}1 %
-           {<==>}{$\Longleftrightarrow$}3 %
+                assert,assume,invariant,result,forall,exists,expose,skinny_expose,wrap,unwrap,atomic,%
+                % New stuff:
+		\true,},
+  moredelim=[is][\fontfamily{cmtt}\selectfont\textcolor{vccOutColor}]{/*`}{`*/}
 }
 
 \lstnewenvironment{VCC}[1][]{%
@@ -34,4 +27,7 @@
       \noindent\begin{minipage}{#1\linewidth}\hbox to\linewidth{\box0\hss}\end{minipage}}
 
 \def\vcc{%
-    \lstinline[language=VCC,columns=fullflexible]}
+    \lstinline[language=VCC]}
+
+\newcommand\vccInput[2][]{{\lstset{language=VCC,#1}\lstinputlisting{#2}}}
+\newcommand\vccInputSC[2][]{{\lstset{language=VCC,morecomment=[is]{/*}{*/},#1}\lstinputlisting{#2}}}

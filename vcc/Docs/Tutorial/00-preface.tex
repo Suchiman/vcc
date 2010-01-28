@@ -1,7 +1,48 @@
 \section{Preface a.k.a. ``You don't have to read this''}
 
 This document serves as an introduction to verifying programs with VCC.
-The theoretical background, including soundness arguments, is mostly
-not covered here.
-It is covered in a separate publication~\cite{lci}.
-An high-level overview of the VCC tool chain is also covered separately~\cite{Cohen:TPHOLs2009-23}.
+VCC is a \Def{sound deductive verifier} for C programs.
+
+VCC is a \emph{verifier} because it checks that the program is correct, that is it behaves according to
+some specification.
+In particular it will check that the program never crashes (because of division
+by zero or segmentation violation).
+
+VCC is \emph{deductive} because it creates a mathematical formula which
+states ``the program is correct'', and then uses deduction system
+to prove that this formula is actually a theorem, something that is always true.
+This formula is called \emph{verification condition}.
+The proof is performed using formal methods of mathematics,
+and the deductive system that VCC most often uses, called Z3~\cite{z3},
+is fully automatic.
+
+VCC is \emph{sound}, because the verification condition models the program behavior conservatively.
+This means that if the verification condition is a theorem, then the program will never
+violate its specification.
+In practice, if VCC tells you that everything is OK with your program,
+then it doesn't mean it couldn't find any more bugs, but it means that there are none.%
+\footnote{
+  At least theoretically.
+  There could be bugs in VCC itself, there could be bugs in the compiler, operating system, or the hardware.
+  However it is all about confidence, and the levels of confidence you get from verifying your program with
+  VCC are somewhere around (or above) what is currently required for airplane or space shuttle software.
+}
+
+This tutorial covers basics of VCC annotation language and some tricks you
+need to know to get your program through it. 
+It doesn't talk about the theoretical background, including soundness
+arguments.
+These topics are covered separately~\cite{lci}.
+A high-level overview
+of the VCC tool chain is also available separately~\cite{Cohen:TPHOLs2009-23}.
+
+You will first need to install VCC, you can find instructions on doing so at \url{http://vcc.codeplex.com/}.
+After you're done you have two choices: one is to edit the tutorial examples
+using Visual Studio and verify them using VCC Visual Studio addin.
+\todo{explain how to create VS project for VCC and stuff}
+The other option is to invoke the VCC verifier directly from command line
+(which is also what the addin does under the hood),
+and use your favorite text editor to edit the examples.
+In any event, the examples found in this tutorial come with VCC, you
+can find them in the \texttt{.../VCC/Tutorial} directory.
+\todo{set the location properly, maybe have a VS project there}

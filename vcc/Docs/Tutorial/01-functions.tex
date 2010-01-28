@@ -1,2 +1,99 @@
 \section{Function contracts}
 
+So let's start.
+The first example we're going to look at is very simple, but it will serve
+us well to illustrate the most basic VCC concepts.
+
+\vccInputSC{c/01_min1.c}
+
+\noindent
+The \vcc{main()} function changes the variable \vcc{position} to a new
+value, but tries to make sure the \vcc{position} doesn't exceed \vcc{LIMIT}.
+In a full example we would have some code computing \vcc{newPos}
+and using \vcc{position} in place of \vcc{// ...}, but we can actually
+verify the code as is: \vcc{newPos} is uninitialized,
+but this only means
+VCC will not assume anything particular about its value.
+
+\begin{VCC}
+/*`C:\somewhere> vcc 01_min1.c
+Verification of min succeeded.
+Verification of main succeeded.
+C:\somewhere>`*/
+\end{VCC}
+
+\noindent
+VCC is happy about our program, it reports that nothing can go wrong.
+However, because we did not say what do we want the program to do,
+it only means it will not crash.
+The next step is to convey our ideas on what the program should
+to the verifier, and have it validate them.
+\todo{the example uses the current syntax, the text will mostly talk about the new one}
+A simplest way of doing that is through \vcc{spec( assert E )}
+statements, where \vcc{E} is a boolean expression.
+It is an instruction to the verifier asking it to try to prove
+that in any execution of the program \vcc{E} will be true.
+All such annotations, surrounded by \vcc{spec( ... )}
+are there only for VCC.
+The regular C compiler should not see them,
+so the program with annotation behaves exactly as the program
+without them.
+\footnote{
+  The \vcc{<assert.h>} header file defines an \vcc{assert(E)}
+  macro with similar functionality: \vcc{E} will be evaluated
+  at runtime and the program will be terminated if \vcc{E} is false.
+  The goal of VCC is not to perturb the execution,
+  and moreover the expressions VCC can show to hold are not always
+  checkable at runtime.
+}
+For the regular C compiler the \vcc{<vcc.h>} header file contains
+just a single definition:
+\begin{VCC}
+#define spec(...) /* nothing */
+\end{VCC}
+VCC does not use this definition, and instead parses the inside of \vcc{spec( ... )}
+annotations.
+Let's then have a look at the example.
+
+\vccInput{c/01_min2.c}
+
+\noindent
+The listing above presents both the source code and the output
+of VCC, typeset in a different font and color.
+As we can see VCC failed to prove our assertion,
+even though by looking at implementation of \vcc{min()}
+one can easily see it always holds.
+The reason is that verification in VCC is modular:
+it will not look into body of \vcc{min()} when
+verifying \vcc{main()}.%
+\footnote{
+  If VCC did look into \vcc{min()} when verifying \vcc{main()}
+  then in general we would quickly run into scalability problems.
+  It is sometimes useful to perform such inlining during verification,
+  we will look into that issue later.
+}
+However, clearly, the correctness of \vcc{main()} depends on what \vcc{min()}
+does.
+Because of that VCC requires the programmer to annotation function
+with \Def{contracts}.
+There are two basic kinds of contracts on functions:
+\begin{itemize}
+\item the requirements before the function is called, and
+\item the conditions that the implementation of the function ensures to be true when it finishes.
+\end{itemize}
+These are given with \vcc{spec( requires E )} and \vcc{spec( ensures E )} respectively.
+
+\vccInput{c/01_min3.c}
+
+\noindent
+The function \vcc{min()} is special in the sense that it can be always called,
+there are no specific requirements.
+Thus we say \vcc{spec( requires \true )} to say that the entry condition is
+always true.
+Note that \vcc{\true} and \vcc{\result} are spelled with a backslash.
+All VCC keywords, which can be used in expressions, start with a backslash.
+This does not apply to the first keyword after \vcc{spec}, because it cannot
+be confused with a C identifier (thus you are still free to have, \eg,
+a function called \texttt{requires} or \texttt{assert}).
+
+
