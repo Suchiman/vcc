@@ -3290,7 +3290,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       slb.UpdateToSpan(name.SourceLocation);
       Expression result;
       if (tok == Token.Arrow)
-        result = new PointerQualifiedName(qualifier, name, slb);
+        result = new VccPointerQualifiedName(qualifier, name, slb);
       else if (tok == Token.ScopeResolution)
         result = new VccPointerScopedName(qualifier, name, slb);
       else {

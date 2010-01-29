@@ -318,3 +318,53 @@ void foo() {
 `
 testcase(4,12) : error VC0000: Cannot use local variable 'i' before it is declared.
 `
+#include <vcc.h>
+
+struct S {
+  unsigned __int64 a:63 ;
+  unsigned __int64 b:1;
+};
+
+void foo(__int64 a) { }
+
+void bar(struct S s) {
+  __int64 y;
+  y = s.a;
+  foo(s.a);
+}
+
+void baz(struct S *s) 
+  requires(mutable(s))
+{
+  __int64 y;
+  y = s->a;
+  foo(s->a);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+`
+#include <vcc.h>
+
+struct S {
+  unsigned __int64 a:32;
+  unsigned __int64 b:16;
+};
+
+void foo(unsigned __int32 a, unsigned __int16 b) { }
+
+void bar(struct S s) {
+  foo(s.a, s.b);
+}
+
+void baz(struct S *s) 
+  requires(mutable(s))
+{
+  foo(s->a, s->b);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+`
