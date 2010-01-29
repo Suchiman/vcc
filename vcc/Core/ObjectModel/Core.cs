@@ -859,6 +859,16 @@ namespace Microsoft.Research.Vcc {
           cconst is CompileTimeConstantWhoseSignDependsOnAnotherExpression)
           return false;
       }
+
+      // allow implicit conversion of bitfields if their effective value range can be safely converted to the target type
+      QualifiedName/*?*/ qName = expression as QualifiedName;
+      if (qName != null && qName.IntegerConversionIsLossless(targetType))
+        return true;
+
+      PointerQualifiedName/*?*/ pqName = expression as PointerQualifiedName;
+      if (pqName != null && pqName.IntegerConversionIsLossless(targetType))
+        return true;
+
       if (expression.Type == Dummy.Type) {
         IFunctionPointer/*?*/ functionPointer = targetType as IFunctionPointer;
         if (functionPointer != null) return (this.ConversionFromMethodGroupToFunctionPointer(expression, functionPointer).Type != Dummy.Type);

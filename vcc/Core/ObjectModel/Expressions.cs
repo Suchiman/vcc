@@ -2946,6 +2946,29 @@ namespace Microsoft.Research.Vcc {
     public bool DidSilentlyResolveToVoid { get; private set; }
   }
 
+  public class VccPointerQualifiedName : PointerQualifiedName
+  {
+    public VccPointerQualifiedName(Expression qualifier, SimpleName simpleName, ISourceLocation sourceLocation)
+      : base(qualifier, simpleName, sourceLocation) {
+    }
+
+    protected VccPointerQualifiedName(BlockStatement containingBlock, VccPointerQualifiedName template)
+      : base(containingBlock, template) {
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccPointerQualifiedName(containingBlock, this);
+    }
+
+    public override bool IntegerConversionIsLossless(ITypeDefinition targetType) {
+      if (TypeHelper.IsPrimitiveInteger(this.Type.ResolvedType) && TypeHelper.IsPrimitiveInteger(targetType)) {
+        return VccQualifiedName.IntegerConversionIsLosslessForBitField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
+      }
+      return false;
+    }
+  }
+
   public class VccPointerScopedName : PointerQualifiedName
   {
     public VccPointerScopedName(Expression qualifier, SimpleName simpleName, ISourceLocation sourceLocation)
@@ -3405,6 +3428,24 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
+    internal static bool IntegerConversionIsLosslessForBitField(Microsoft.Cci.Ast.FieldDefinition field, ITypeDefinition targetType) {
+      if (field != null && field.IsBitField) {
+        var exprSigned = TypeHelper.IsSignedPrimitiveInteger(field.Type.ResolvedType);
+        var tgtSigned = TypeHelper.IsSignedPrimitiveInteger(targetType);
+        var tgtSize = TypeHelper.SizeOfType(targetType) * 8;
+        var exprSize = field.BitLength;
+        if (exprSigned == tgtSigned && exprSize <= tgtSize) return true;
+        if (tgtSigned && exprSize < tgtSize) return true;
+      }
+      return false;
+    }
+
+    public override bool IntegerConversionIsLossless(ITypeDefinition targetType) {
+      if (TypeHelper.IsPrimitiveInteger(this.Type.ResolvedType) && TypeHelper.IsPrimitiveInteger(targetType)) {
+        return IntegerConversionIsLosslessForBitField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
+      }
+      return false;
+    }
   }
 
   public class VccSimpleName : SimpleName {
