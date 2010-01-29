@@ -1,5 +1,6 @@
 \usepackage{listings}
 \definecolor{vccOutColor}{rgb}{0.0,0.0,0.3}
+\definecolor{vccDotsColor}{rgb}{0.3,0.3,0.3}
 \lstloadlanguages{C}
 \lstdefinelanguage{VCC}[ANSI]{C}{%
   morekeywords={spec,axiom,requires,ensures,returns,reads,writes,%
@@ -7,8 +8,8 @@
                 VOID,BOOLEAN,%
                 assert,assume,invariant,result,forall,exists,expose,skinny_expose,wrap,unwrap,atomic,%
                 % New stuff:
-		\true,},
-  moredelim=[is][\fontfamily{cmtt}\selectfont\textcolor{vccOutColor}]{/*`}{`*/}
+		\true,\false,},
+  moredelim=[is][\fontfamily{cmtt}\selectfont\textcolor{vccOutColor}]{/*`}{`*/},
 }
 
 \lstnewenvironment{VCC}[1][]{%
@@ -29,5 +30,5 @@
 \def\vcc{%
     \lstinline[language=VCC]}
 
-\newcommand\vccInput[2][]{{\lstset{language=VCC,#1}\lstinputlisting{#2}}}
-\newcommand\vccInputSC[2][]{{\lstset{language=VCC,morecomment=[is]{/*}{*/},#1}\lstinputlisting{#2}}}
+\newcommand\vccInput[2][]{{\lstset{language=VCC}\lstinputlisting[#1]{#2}}}
+\newcommand\vccInputSC[2][]{{\lstset{language=VCC,morecomment=[is]{/*}{*/}}\lstinputlisting[#1]{#2}}}
