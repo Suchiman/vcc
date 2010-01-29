@@ -861,11 +861,11 @@ namespace Microsoft.Research.Vcc {
       }
 
       // allow implicit conversion of bitfields if their effective value range can be safely converted to the target type
-      QualifiedName/*?*/ qName = expression as QualifiedName;
+      VccQualifiedName/*?*/ qName = expression as VccQualifiedName;
       if (qName != null && qName.IntegerConversionIsLossless(targetType))
         return true;
 
-      PointerQualifiedName/*?*/ pqName = expression as PointerQualifiedName;
+      VccPointerQualifiedName/*?*/ pqName = expression as VccPointerQualifiedName;
       if (pqName != null && pqName.IntegerConversionIsLossless(targetType))
         return true;
 
