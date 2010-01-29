@@ -60,6 +60,7 @@ Let's then have a look at the example.
 \noindent
 The listing above presents both the source code and the output
 of VCC, typeset in a different font and color.
+The actual file name of the example is replaced with \vcc{/*`testcase`*/}.
 As we can see VCC failed to prove our assertion,
 even though by looking at implementation of \vcc{min()}
 one can easily see it always holds.
@@ -83,17 +84,65 @@ There are two basic kinds of contracts on functions:
 \end{itemize}
 These are given with \vcc{spec( requires E )} and \vcc{spec( ensures E )} respectively.
 
-\vccInput{c/01_min3.c}
+\vccInput[linerange={min-endmin,out-}]{c/01_min3.c}
 
 \noindent
-The function \vcc{min()} is special in the sense that it can be always called,
-there are no specific requirements.
+The function \vcc{min()} doesn't have any specific entry requirements:
+it can be always called.
 Thus we say \vcc{spec( requires \true )} to say that the entry condition is
 always true.
+The postcondition states that the value returned from the function (referred to as \vcc{\result})
+will be no bigger than any of the input arguments \vcc{a} and \vcc{b}.
+
 Note that \vcc{\true} and \vcc{\result} are spelled with a backslash.
 All VCC keywords, which can be used in expressions, start with a backslash.
 This does not apply to the first keyword after \vcc{spec}, because it cannot
 be confused with a C identifier (thus you are still free to have, \eg,
 a function called \texttt{requires} or \texttt{assert}).
 
+Another thing to note is that the specification of \vcc{min()} is partial:
+\todo{this might be not the best place to put this note?}
+it only says that what you get out of it is no bigger than what you put in.
+The full specification would also say \vcc{\result == a || \result == b}.
+While for simple functions like \vcc{min()} it is often useful to give the full
+specification, the primary function of specifications for more complex
+functions is hiding implementation details.
+Thus, the specifications will be partial most of the time, will only
+talk about important aspects of what the function does.
+The decision on what is important will depend on the person specifying
+the function, and the needs of the calling function.
+
+The verification of \vcc{main()} only depends on the specification of \vcc{min()}.
+To illustrate that let's replace \vcc{<} with \vcc{>} in the return statement of \vcc{min()}.
+The output of verification is:
+
+\vccInput[linerange={out-}]{c/01_min4.c}
+
+\noindent
+VCC says that verification of \vcc{main()} is OK, only \vcc{min()} is broken.
+\todo{Do we want that here?}
+This can be taken to an extreme: a specification \vcc{spec( ensures \false )}
+states \vcc{\false} is true after the function returns. Of course \vcc{\false}
+is never true, and therefore this specification means that the function never
+returns.
+If we placed \vcc{spec( ensures \false )} on \vcc{min()} we would be able to verify
+anything (including dereferencing null pointers and the like) in the in \vcc{main()},
+following call to \vcc{min()}.
+
+Finally, 
+\todo{kill this?}
+to show something little less trivial, the implementation of \vcc{min()} can surprisingly be more involved.
+For example the one below does not use a branch.
+
+\vccInput[]{c/01_min5.c}
+
+\noindent
+The syntax:
+\begin{VCC}
+  spec( assert {bv} \forall int x; (x & -1) == x )
+\end{VCC}
+
+\noindent
+VCC to prove the assertion using the fixed-length bit vector theory, a.k.a. machine integers.
+This is then used as a lemma to prove the postcondition.
 
