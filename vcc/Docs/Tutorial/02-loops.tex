@@ -1,0 +1,19 @@
+\section{Loop invariants}
+
+Loops in VCC usually need to be annotated with invariants.
+A loop invariant is a condition that needs to hold before
+the loop starts executing, and then if the invariant holds
+at the beginning of the loop, it should also hold at the
+end of the loop.
+Moreover the invariant is the only thing the verifier ``knows''
+at the beginning of a loop. 
+More precisely the way VCC reasons about the loop is that
+it assigns an arbitrary value to all the variables that the loop body might modify,
+assumes the invariant
+
+\vccInput[]{c/02_sqrt.c}
+
+\noindent
+The \vcc{isqrt()} function finds an integer approximation of a
+square root 
+In the

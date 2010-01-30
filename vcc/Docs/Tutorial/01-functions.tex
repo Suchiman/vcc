@@ -120,14 +120,103 @@ The output of verification is:
 
 \noindent
 VCC says that verification of \vcc{main()} is OK, only \vcc{min()} is broken.
+
+\subsection{Assumptions and assertions}
+
+The way verification process works can be usually explained using the
+notion of assertions and assumptions.
+We've already seen assertions, that is annotations of the form \vcc{spec( assert E )}.
+When VCC sees such an assertion in the code
+it tries to see if from what it ``knows'' about the program it can infer
+that \vcc{E} is true.
+If it cannot it will report an error.
+Otherwise, in the following code the verifier will ``know'' \vcc{E}.
+So an assertion can be understood as a hint for the verifier:
+you should better be able to infer \vcc{E}, and by the way, you can use
+\vcc{E} in your later proofs.
+
+An assumption, written \vcc{spec( assume E )}, has only the second component:
+it makes the verifier ``know'' \vcc{E} holds in the following code of the function.
+It does not need to prove that it will actually hold, it just assumes it will.
+Of course, introducing such assumptions is unsafe, for example consider:
+
+\begin{VCC}
+void perc(int x) {
+  spec( assume x != 0 )
+  return 100 / x;
+}
+int main()
+{
+  perc(0);
+  return 0;
+}
+\end{VCC}
+
+\noindent
+Without the assumption the verifier would complain about possible division by zero.
+With the assumption this goes through VCC without problems, and it crashes at runtime.
+The promise that verified programs will never crash is only valid if you do not
+use assumptions.
+
+So are such assumptions useful at all?
+One case is interaction with hardware: you might know the hardware is going to leave
+specific I/O register positive, and an assumption is a way to communicate that to VCC.
+What is however much more common is use of assumption when debugging your specifications:
+when the program does not verify you might try to temporarily add assumptions in a bet
+``if VCC knew that, would it verify my program?''.
+Once you find what is that thing VCC doesn't know, but what makes it verify the program,
+you can figure out how to specify rest of your program, so that is knows it.
+
+One however needs to be very careful with assumptions.
+An assumption of the form \vcc{spec( assume \false )} makes everything below
+it verify, including null pointer dereferences and the like.
+This is because it constrains the verification to all the execution
+where \vcc{\false} holds, which is never.
+Note that there are many creative ways of writing \vcc{\false}, including
+\vcc{spec( assume 1 != 0 )} or \vcc{spec( assume x < 0 )} when \vcc{x} is \vcc{unsigned}.
+
+Another use of assumption is for explaining how some specification construct work ---
+internally VCC will often translate them to assertions and assumptions, and presenting
+such translation helps understanding.
+
+For example, when verifying function body
+its \vcc{requires} clause becomes an assumption at the beginning, and its
+\vcc{ensures} clause becomes an assertion just before each of its \vcc{return} statements
+(including the implicit return statement at its end).
+Conversely, when verifying a call to such function, its \vcc{requires} clause is asserted
+and its \vcc{ensures} clause is assumed. For example, our example program is translated
+as follows:
+
+\vccInput{c/01_min_assert.c}
+
+As for call itself, because the \vcc{min()} function above has no visible specification,
+VCC doesn't know anything about the value it might possibly return.
+Therefore, as far as VCC's understanding is concerned, the line:
+\begin{VCC}
+position = min(newPos, LIMIT);
+\end{VCC}
+could be replaced with \vcc{position = *;}, that is assigning an unspecified value
+to the variable \vcc{position}. 
+The only knowledge about it comes from the following assumption.
+
+Let's also consider the meaning of \vcc{spec( requires \false )}.
+When verifying function body it translates to an assumption.
+As we have noted this will make the body of function verify,
+regardless what it contains.
+On the other hand, you will be unable to verify call to such a function
+from outside.
 \todo{Do we want that here?}
-This can be taken to an extreme: a specification \vcc{spec( ensures \false )}
-states \vcc{\false} is true after the function returns. Of course \vcc{\false}
-is never true, and therefore this specification means that the function never
-returns.
-If we placed \vcc{spec( ensures \false )} on \vcc{min()} we would be able to verify
-anything (including dereferencing null pointers and the like) in the in \vcc{main()},
-following call to \vcc{min()}.
+
+Conversely, \vcc{spec( ensures \false )} will prevent verification
+of the body of the function, but will make the function that calls
+it verify.
+
+As we can see, in each case there is something that does not verify.
+However, because of this one should be careful when interpreting
+VCC answers: successful verification of a function is only meaningful
+if everything it calls was verified.
+
+\subsection{Fancy example}
 
 Finally, 
 \todo{kill this?}
