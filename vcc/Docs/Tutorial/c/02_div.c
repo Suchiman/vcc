@@ -1,17 +1,20 @@
 #include <vcc.h>
-
+//--
 axiom(forall(unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b));
-axiom(forall(unsigned a,b; a < b && b != 0 ==> a % b == a));
-
+axiom(forall(unsigned a,b; a < b && b != 0 ==> a % b == a));//--
 unsigned mod(unsigned a, unsigned b)
   ensures(result == a % b)
 {
-  spec( unsigned a0 = a; )
+  unsigned res = a;
 
-  while (a >= b)
-    invariant( a % b == a0 % b )
+  for (;;)
+    invariant( a % b == res % b )
   {
-    a -= b;
+    if (res < b) break;
+    res -= b;
   }
-  return a;
+  return res;
 }
+/*`
+Verification of mod succeeded.
+`*/

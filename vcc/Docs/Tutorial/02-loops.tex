@@ -7,14 +7,57 @@ at the beginning of the loop, it should also hold at the
 end of the loop.
 Moreover the invariant is the only thing the verifier ``knows''
 at the beginning of a loop. 
-More precisely the way VCC reasons about the loop is that
-it assigns an arbitrary value to all the variables that the loop body might modify,
-assumes the invariant
+Let's then have a look at an example.
 
-\vccInput[]{c/02_sqrt_ovf.c}
+
+\vccInput[]{c/02_div.c}
 
 \noindent
-The \vcc{isqrt()} function finds an integer approximation of a square root.
-The loop guard makes sure we do not exceed the upper bound on the squere.
-The invariant makes sure we did not yet exceeded the lower bound.
+The \vcc{mod()} function computes a reminder of a integer division
+using iterated subtraction.
+\todo{do we need to claim it makes sense?}
+The invariant is that the \vcc{res % a} stays unchanged,
+and equal to \vcc{a % b}.
+To make the invariant semantics clearer below
+you can find the translation in terms of asserts
+and assumes.
+
+\vccInput[]{c/02_div_assert.c}
+
+\noindent
+We can see that the invariant is first checked in the state before the
+loop iteration.
+Then we simulate an arbitrary loop iteration.
+Because the loop assigns to the variable \vcc{res},
+VCC doesn't know what value it might have.
+Thus it conservatively assigns it an arbitrary value.
+Should the loop assign more variables, they would all be assigned
+arbitrary values.
+Then it assumes the invariant, this places some constraints on
+the \vcc{res}.
+What follows is the loop body, where the \vcc{break} statement
+has been replaced by a \vcc{goto}.
+Then VCC checks the invariant after the arbitrary iteration.
+Finally, the iteration ends with an assumption that will never be satisfied.
+The idea is that we are verifying an arbitrary loop iteration,
+so verifying just one is enough, we do not need to have a jump
+at the end of the loop.
+On the other hand, the only way to exit the loop is through the
+\vcc{break} statement, and this is why we assume the control never falls over the end of the loop.
+Thus, for the verifier, the only way to reach the \vcc{return} statement and 
+the associated assertion is through the \vcc{goto}. However, the \vcc{goto}
+only happens after the invariant was assumed and from the \vcc{if} statement
+we also know \vcc{res < b}.
+This is enough to show the postcondition assertion.
+
+If the loop was of the form:
+\begin{VCC}
+while (res >= b) 
+  spec( invariant a % b == res % b )
+{
+  res -= b;
+}
+\end{VCC}
+the assert/assume translation would be exactly the same: the invariant would be assumed before
+checking the guard.
 
