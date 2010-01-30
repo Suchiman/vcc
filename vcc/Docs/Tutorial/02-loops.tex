@@ -11,9 +11,10 @@ More precisely the way VCC reasons about the loop is that
 it assigns an arbitrary value to all the variables that the loop body might modify,
 assumes the invariant
 
-\vccInput[]{c/02_sqrt.c}
+\vccInput[]{c/02_sqrt_ovf.c}
 
 \noindent
-The \vcc{isqrt()} function finds an integer approximation of a
-square root 
-In the
+The \vcc{isqrt()} function finds an integer approximation of a square root.
+The loop guard makes sure we do not exceed the upper bound on the squere.
+The invariant makes sure we did not yet exceeded the lower bound.
+

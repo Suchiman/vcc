@@ -195,7 +195,7 @@ Therefore, as far as VCC's understanding is concerned, the line:
 \begin{VCC}
 position = min(newPos, LIMIT);
 \end{VCC}
-could be replaced with \vcc{position = *;}, that is assigning an unspecified value
+could be replaced with \vcc{position = anything();}, that is assigning an unspecified value
 to the variable \vcc{position}. 
 The only knowledge about it comes from the following assumption.
 
