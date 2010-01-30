@@ -1,9 +1,7 @@
 #include <vcc.h>
 
-// from Spec# tutorial
-
 unsigned isqrt(unsigned x)
-  requires(x < 0xfffe0001)
+  requires( x < 0xfffe0001 )
   ensures( result*result <= x && x < (result+1)*(result+1))
 {
   unsigned r = 0;
@@ -14,4 +12,6 @@ unsigned isqrt(unsigned x)
   }
   return r;
 }
-
+/*`
+Verification of isqrt succeeded.
+`*/
