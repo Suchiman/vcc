@@ -879,6 +879,24 @@ namespace Microsoft.Research.Vcc {
       return base.ImplicitConversionExists(expression, targetType);
     }
 
+
+    /// <summary>
+    /// True if the last call to 'MethodIsEligible' has been for an operator method
+    /// This is a hack that is being used to allow implicit conversion from a bitfield 
+    /// to any type that can accomodate the bit field's value range. This behavior
+    /// is undesirable when resolving operators. See the implementation of
+    /// IntegerConversionIsLossless of types VccQualifiedName and VccPointerQualifiedName.
+    /// </summary>
+    internal bool CurrentlyResolvingOperator { get; private set; }
+
+    public override bool MethodIsEligible(IMethodDefinition method, IEnumerable<Expression> arguments) {
+      bool savedCurrentlyResolvingOperator = this.CurrentlyResolvingOperator;
+      this.CurrentlyResolvingOperator = method.Name.Value.Contains(" op ");
+      bool result = base.MethodIsEligible(method, arguments);
+      this.CurrentlyResolvingOperator = savedCurrentlyResolvingOperator;
+      return result;
+    }
+
     //^ [Pure]
     public override bool ImplicitConversionExists(ITypeDefinition sourceType, ITypeDefinition targetType) {
 
