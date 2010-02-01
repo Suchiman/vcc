@@ -2962,6 +2962,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override bool IntegerConversionIsLossless(ITypeDefinition targetType) {
+      if (((VccCompilationHelper)this.Helper).CurrentlyResolvingOperator) return false;
       if (targetType.IsEnum) targetType = targetType.UnderlyingType.ResolvedType;
       if (TypeHelper.IsPrimitiveInteger(this.Type.ResolvedType) && TypeHelper.IsPrimitiveInteger(targetType)) {
         return VccQualifiedName.IntegerConversionIsLosslessForBitField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
@@ -3442,6 +3443,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override bool IntegerConversionIsLossless(ITypeDefinition targetType) {
+      if (((VccCompilationHelper)this.Helper).CurrentlyResolvingOperator) return false;
       if (targetType.IsEnum) targetType = targetType.UnderlyingType.ResolvedType;
       if (TypeHelper.IsPrimitiveInteger(this.Type.ResolvedType) && TypeHelper.IsPrimitiveInteger(targetType)) {
         return IntegerConversionIsLosslessForBitField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
