@@ -15,24 +15,24 @@ using System.Text;
 namespace Microsoft.Research.Vcc.Parsing {
 
   internal class Parser {
-    Compilation compilation;
+    readonly Compilation compilation;
+    readonly Dictionary<string, TypeExpression> typedefExpressions;
+    readonly Dictionary<string, TypedefDeclaration> typedefDecls;
+    readonly Dictionary<string, bool> locallyDefinedNames;
+    readonly Dictionary<Expression, bool> emptyStructuredTypes;
+    readonly INameTable nameTable;
+    readonly Scanner scanner;
+    readonly List<IErrorMessage> scannerAndParserErrors;
+    readonly RootNamespaceExpression rootNs;
+    readonly AliasQualifiedName systemNs;
+
     List<FieldDeclaration>/*?*/ currentSpecificationFields;
-    List<FunctionDeclaration>/*?*/ currentSpecificationFunctions;
     List<TypeInvariant>/*?*/ currentTypeInvariants;
     List<ITypeDeclarationMember>/*?*/ currentTypeMembers;
+    LexicalScope/*?*/ currentLexicalScope;
     Token currentToken;
     Expression/*?*/ currentTypeName;
-    Dictionary<string, TypeExpression> typedefExpressions;
-    Dictionary<string, TypedefDeclaration> typedefDecls;
-    Dictionary<string, bool> locallyDefinedNames;
-    Dictionary<Expression, bool> emptyStructuredTypes;
-    INameTable nameTable;
     bool resultIsAKeyword;
-    Scanner scanner;
-    List<IErrorMessage> scannerAndParserErrors;
-    LexicalScope/*?*/ currentLexicalScope = null;
-    RootNamespaceExpression rootNs;
-    AliasQualifiedName systemNs;
     
     internal Parser(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors)
     {
@@ -94,7 +94,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ assume this.currentToken != Token.EndOfFile; //assume this method is called directly after construction and then never again.
       this.GetNextToken(); //Get first token from scanner
       this.ParseNamespaceMemberDeclarations(globalContainer, members, Parser.EndOfFile);
-      VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentSpecificationFunctions, this.currentTypeInvariants, false);
+      VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentTypeInvariants, false);
       this.compilation.ContractProvider.AssociateTypeWithContract(globalContainer, tc);
     }
 
@@ -199,7 +199,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ requires this.currentToken != Token.EndOfFile;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      Dictionary<string, TypeExpression> savedTypedefExpressions = this.typedefExpressions;
       List<TemplateParameterDeclarator>/*?*/ templateParameters = this.ParseTemplateParameters(followers|Parser.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
       List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, followers|Parser.DeclaratorStart|Token.Semicolon|Token.Colon);
       VccFunctionTypeExpression/*?*/ functionTypeExpression = null;
@@ -264,17 +263,16 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.SkipTo(followers);
       }else
         this.SkipSemiColon(followers);
-      this.typedefExpressions = savedTypedefExpressions;
     }
 
     private List<Statement> ParseLocalDeclaration(TokenSet followers) {
-      List<Statement> result = new List<Statement>(4);      
       // Because, in C, a local declaration may introduce a type definition to the global scope
       // pass in the namespace declaration members so that these definitions can be found later. 
       List<Specifier> specifiers = this.ParseSpecifiers(this.namespaceDeclarationMembers, null, followers|Token.Semicolon|Token.BitwiseXor);
       if ((this.currentToken == Token.LeftBrace || this.currentToken == Token.LeftParenthesis) && specifiers.Count == 1) {
         StorageClassSpecifier/*?*/ scSpecifier = specifiers[0] as StorageClassSpecifier;
         if (scSpecifier != null && scSpecifier.Token == Token.Specification) {
+          List<Statement> result = new List<Statement>(1);
           if (this.currentToken == Token.LeftParenthesis) {
             List<Statement> statements = new List<Statement>();
             SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
@@ -291,22 +289,21 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
 
       bool isLocalTypeDef = VccCompilationHelper.ContainsStorageClassSpecifier(specifiers, Token.Typedef);
-      
+      List<Statement> result1 = new List<Statement>();
       while (Parser.DeclaratorStart[this.currentToken]) {
         Declarator declarator = this.ParseDeclarator(followers|Token.Comma|Token.LeftBrace|Token.Semicolon);
         declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
         if (isLocalTypeDef) {
-          if (this.currentTypeMembers != null)
-            this.AddTypeDeclarationMember(specifiers, declarator, this.currentTypeMembers);
+          this.AddTypeDeclarationMember(specifiers, declarator, this.currentTypeMembers);
           break;
         }
-        this.AddDeclarationStatement(specifiers, declarator, result);
+        this.AddDeclarationStatement(specifiers, declarator, result1);
         this.locallyDefinedNames[declarator.Identifier.Name.Value] = true;
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
       }
       this.SkipSemiColon(followers);
-      return result;
+      return result1;
     }
 
     private LoopContract/*?*/ ParseLoopContract(TokenSet followers)
@@ -316,11 +313,12 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<LoopInvariant> invariants = new List<LoopInvariant>();
       List<Expression> writes = new List<Expression>();
       LoopContract loopContract = new LoopContract(invariants, writes);
+      TokenSet loopContractFollowers = followers | Token.Invariant | Token.Writes;
       while (true) {
         if (this.currentToken == Token.Invariant)
-          this.ParseLoopInvariant(invariants, followers | Token.Invariant | Token.Writes);
+          invariants.Add(ParseLoopInvariant(loopContractFollowers));
         else if (this.currentToken == Token.Writes)
-          this.ParseWrites(writes, followers | Token.Invariant | Token.Writes);
+          this.ParseWrites(writes, loopContractFollowers);
         else
           break;
       }
@@ -328,7 +326,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return loopContract;
     }
 
-    private void ParseLoopInvariant(List<LoopInvariant> invariants, TokenSet followers)
+    private LoopInvariant ParseLoopInvariant(TokenSet followers)
     //^ requires this.currentToken == Token.Invariant;
     //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -338,8 +336,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       Expression condition = this.ParseExpression(followers | Token.RightParenthesis);
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       this.Skip(Token.RightParenthesis);
-      LoopInvariant loopInvariant = new LoopInvariant(condition, slb);
-      invariants.Add(loopInvariant);
+      return new LoopInvariant(condition, slb);
     }
 
     private void ParseTypeInvariant(List<TypeInvariant> invariants, TokenSet followers)
@@ -580,10 +577,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           new NameDeclaration(this.GetNameFor(cFuncTypeExp.Name.Value + cFuncTypeExp.GetHashCode()), cFuncTypeExp.SourceLocation),
           null, parameters, slb);
         
-        // this.currentTypeMembers shouldnt be null.
-        if (this.currentTypeMembers != null) {
-          this.currentTypeMembers.Add(mangledFunc);
-        }
+        this.currentTypeMembers.Add(mangledFunc);
         declarations.Add(new VccLocalFunctionDeclaration(declarator.Identifier, initializer, specifiers, slb, mangledFunc));
       } else {
         declarations.Add(new VccLocalDeclaration(declarator.Identifier, initializer, specifiers, slb));
@@ -1127,7 +1121,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       if (this.currentToken != Token.Template) return null;
-      this.typedefExpressions = new Dictionary<string, TypeExpression>(this.typedefExpressions);
       this.GetNextToken();
       this.Skip(Token.LessThan);
       List<TemplateParameterDeclarator> result = new List<TemplateParameterDeclarator>();
@@ -1337,7 +1330,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       TokenSet followersOrContractStart = followers|Parser.ContractStart;
       while (Parser.ContractStart[this.currentToken]){
         switch (this.currentToken) {
-          case Token.Allocates: this.ParseAllocates(contract, followersOrContractStart); break;
           case Token.Ensures: this.ParseEnsures(contract, followersOrContractStart); break;
           case Token.Frees: this.ParseFrees(contract, followersOrContractStart); break;
           case Token.Reads: this.ParseReads(contract, followersOrContractStart); break;
@@ -1346,23 +1338,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
       }
       this.SkipTo(followers);
-    }
-
-    private void ParseAllocates(FunctionOrBlockContract contract, TokenSet followers)
-      //^ requires this.currentToken == Token.Allocates;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      this.resultIsAKeyword = true;
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      while (true) {
-        Expression expr = this.ParseExpressionWithCheckedDefault(followers|Token.Comma|Token.RightParenthesis);
-        contract.AddAllocates(expr);
-        if (this.currentToken != Token.Comma) break;
-        this.GetNextToken();
-      }
-      this.SkipOverTo(Token.RightParenthesis, followers);
-      this.resultIsAKeyword = false;
     }
 
     private void ParseEnsures(FunctionOrBlockContract contract, TokenSet followers)
@@ -1700,11 +1675,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       List<FieldDeclaration>/*?*/ savedSpecificationFields = this.currentSpecificationFields;
-      List<FunctionDeclaration>/*?*/ savedSpecificationMethods = this.currentSpecificationFunctions;
       List<TypeInvariant>/*?*/ savedTypeInvariants = this.currentTypeInvariants;
       List<DeclspecSpecifier> extendedAttributes = new List<DeclspecSpecifier>();
       this.currentSpecificationFields = null;
-      this.currentSpecificationFunctions = null;
       this.currentTypeInvariants = null;
       SourceLocationBuilder sctx = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
@@ -1760,7 +1733,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         // see Microsoft.Cci.Ast.TypeDeclaration.SetMemberContainingTypeDeclaration for the supported classes
         newTypeMembers.RemoveAll(delegate(ITypeDeclarationMember member) { return !(member is TypeDeclarationMember || member is NestedTypeDeclaration); });
         if (this.currentSpecificationFields != null || this.currentTypeInvariants != null) {
-          VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, null, this.currentTypeInvariants, isSpec);
+          VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentTypeInvariants, isSpec);
           this.compilation.ContractProvider.AssociateTypeWithContract(type, tc);
         }
       } else if (noName) {
@@ -1780,7 +1753,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.emptyStructuredTypes[texpr] = true;
 
       this.currentSpecificationFields = savedSpecificationFields;
-      this.currentSpecificationFunctions = savedSpecificationMethods;
       this.currentTypeInvariants = savedTypeInvariants;
       return texpr;
     }
@@ -1849,7 +1821,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         while (this.currentToken == Token.Identifier) {
           FieldDeclaration enumField = this.ParseEnumMember(texpr, members, followers|Token.Comma|Token.RightBrace);
           //TODO: deal with enums declared inside a method body.
-          if (this.currentTypeMembers != null) this.currentTypeMembers.Add(enumField); //promote the enumeration member to a constant in the current namespace.
+          this.currentTypeMembers.Add(enumField); //promote the enumeration member to a constant in the current namespace.
           if (this.currentToken == Token.RightBrace) break;
           this.Skip(Token.Comma);
           if (this.currentToken == Token.RightBrace) break;
@@ -3978,7 +3950,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       CommaOrRightBrace |= Token.RightBrace;
 
       ContractStart = new TokenSet();
-      ContractStart |= Token.Allocates;
       ContractStart |= Token.Ensures;
       ContractStart |= Token.Frees;
       ContractStart |= Token.Reads;
