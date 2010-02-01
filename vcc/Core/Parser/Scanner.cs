@@ -1497,10 +1497,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     AlignOf,
     /// <summary>
-    /// __allocates
-    /// </summary>
-    Allocates,
-    /// <summary>
     /// auto
     /// </summary>
     Auto,
@@ -2209,7 +2205,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.Unchecked, "__unchecked", keyword);
       keyword = new Keyword(Token.Unaligned, "__unaligned", keyword);
       keyword = new Keyword(Token.Invariant, "__invariant", keyword);
-      keyword = new Keyword(Token.Allocates, "__allocates", keyword);
       keyword = new Keyword(Token.Restrict,  "__restrict", keyword);
       keyword = new Keyword(Token.Requires,  "__requires", keyword);
       keyword = new Keyword(Token.Fastcall,  "__fastcall", keyword);

@@ -26,12 +26,9 @@ namespace Microsoft.Research.Vcc {
     /// that describe invariants, model variables and functions, as well as axioms.
     /// </summary>
     /// <param name="contractFields">A possibly empty list of contract fields. Contract fields can only be used inside contracts and are not available at runtime.</param>
-    /// <param name="contractFunctions">A possibly empty list of contract functions. Contract functions have no bodies and can only be used inside contracts. The meaning of a contract
-    /// functions is specified by the axioms (assumed invariants) of the associated type. Contract functions are not available at runtime.</param>
     /// <param name="invariants">A possibly empty list of type invariants. Axioms are a special type of invariant.</param>
-    public VccTypeContract(IEnumerable<FieldDeclaration>/*?*/ contractFields, IEnumerable<FunctionDeclaration>/*?*/ contractFunctions, IEnumerable<TypeInvariant>/*?*/ invariants, bool isSpec) {
+    public VccTypeContract(IEnumerable<FieldDeclaration>/*?*/ contractFields, IEnumerable<TypeInvariant>/*?*/ invariants, bool isSpec) {
       this.contractFields = contractFields==null ? EmptyListOfFields:contractFields;
-      this.contractFunctions = contractFunctions==null ? EmptyListOfMethods:contractFunctions;
       this.invariants = invariants==null ? EmptyListOfInvariants:invariants;
       this.isSpec = isSpec;
     }
@@ -53,10 +50,6 @@ namespace Microsoft.Research.Vcc {
         this.contractFields = new List<FieldDeclaration>(template.contractFields);
       else
         this.contractFields = template.contractFields;
-      if (template.contractFunctions != EmptyListOfMethods)
-        this.contractFunctions = new List<FunctionDeclaration>(template.contractFunctions);
-      else
-        this.contractFunctions = template.contractFunctions;
       if (template.invariants != EmptyListOfInvariants)
         this.invariants = new List<TypeInvariant>(template.invariants);
       else
@@ -90,16 +83,10 @@ namespace Microsoft.Research.Vcc {
     /// method is specified by the axioms (assumed invariants) of the associated type. Contract methods are not available at runtime.
     /// </summary>
     public IEnumerable<IMethodDefinition> ContractMethods {
-      get {
-        foreach (FunctionDeclaration fdecl in this.contractFunctions)
-          if (fdecl.ResolvedMethod != null)
-            yield return fdecl.ResolvedMethod;
-      }
+      get { yield break; }
     }
-    readonly IEnumerable<FunctionDeclaration> contractFunctions;
 
     private static readonly IEnumerable<FieldDeclaration> EmptyListOfFields = IteratorHelper.GetEmptyEnumerable<FieldDeclaration>();
-    private static readonly IEnumerable<FunctionDeclaration> EmptyListOfMethods = IteratorHelper.GetEmptyEnumerable<FunctionDeclaration>();
     private static readonly IEnumerable<TypeInvariant> EmptyListOfInvariants = IteratorHelper.GetEmptyEnumerable<TypeInvariant>();
 
     private IEnumerable<ITypeInvariant> GetInvariantsAndAxiomsAboutConstantArraysAndStructs() {
@@ -144,8 +131,6 @@ namespace Microsoft.Research.Vcc {
       Expression containingExpression = new DummyExpression(containingType.DummyBlock, SourceDummy.SourceLocation);
       foreach (FieldDeclaration contractField in this.contractFields)
         contractField.SetContainingTypeDeclaration(containingType, true);
-      foreach (FunctionDeclaration contractFunction in this.contractFunctions)
-        contractFunction.SetContainingTypeDeclaration(containingType);
       foreach (TypeInvariant typeInvariant in this.invariants)
         typeInvariant.SetContainingExpression(containingExpression);
     }
@@ -156,8 +141,6 @@ namespace Microsoft.Research.Vcc {
       get {
         foreach (var f in this.contractFields)
           foreach (var loc in f.Locations) yield return loc;
-        foreach (var m in this.contractFunctions)
-          foreach (var loc in m.Locations) yield return loc;
         foreach (var i in this.invariants)
           foreach (var loc in i.Locations) yield return loc;
       }
