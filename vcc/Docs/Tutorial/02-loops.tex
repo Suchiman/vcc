@@ -72,17 +72,16 @@ the following function looking linearly for an integer in an array.
 \noindent
 The requirement \itodo{decide what do we put there}
 makes sure the array is readable.
-The \vcc{P ==> Q} formally means \vcc{!P || Q}, and is usually 
-read as ``\vcc{P} implies \vcc{Q}''.
-In particular note that \vcc{\false ==> P} is true for any \vcc{P}.
 However this specification is not full, what about the case when the result is not found?
 To express that an element is not in an array we will use a universal quantifier:
 
 \vccInput{c/03_lsearch_full.c}
 
 \noindent
-The syntax \vcc{\forall unsigned i; i < sz; ar[i] != elt} means that 
-\vcc{ar[i] != elt} for all \vcc{i} between \vcc{0} and \vcc{sz - 1}.
-The \vcc{0} bound comes from the fact that we're quantifying over and unsigned
+The syntax \vcc{\forall unsigned j; j < i; ar[j] != elt} means that 
+\vcc{ar[j] != elt} for all \vcc{j} between \vcc{0} and \vcc{i - 1}.
+The \vcc{0} bound comes from the fact that we're quantifying over an unsigned
 integer.
-
+Thus, the invariant says that the element was not found between \vcc{0}
+and \vcc{i - 1}.
+If the loop terminates with \vcc{i == sz}, then the postcondition follows.
