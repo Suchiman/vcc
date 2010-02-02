@@ -1555,9 +1555,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             LookAndWarnForMisplacedDeclspec(result);
             result.Add(new EnumSpecifier(this.ParseEnumDeclarationOrDefinition(namespaceMembers, followersOrSpecifierStart)));
             goto default;
-          case Token.Based:
           case Token.Const:
-          case Token.Restrict:
           case Token.Volatile:
           case Token.Unaligned:
             result.Add(new TypeQualifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
@@ -1770,7 +1768,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       for (; ; ) {
         switch (this.currentToken) {
           case Token.Const:
-          case Token.Restrict:
           case Token.Volatile:
           case Token.Cdecl:
           case Token.Unaligned:
@@ -3947,7 +3944,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       DeclarationStart |= Token.Auto;
       DeclarationStart |= Token.Register;
       DeclarationStart |= Token.Const;
-      DeclarationStart |= Token.Restrict;
       DeclarationStart |= Token.Volatile;
       DeclarationStart |= Token.Inline;
       DeclarationStart |= Token.Void;
@@ -4048,10 +4044,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       SpecifierThatCombinesWithTypedefName |= Token.Signed;
       SpecifierThatCombinesWithTypedefName |= Token.Unsigned;
       SpecifierThatCombinesWithTypedefName |= Token.Const;
-      SpecifierThatCombinesWithTypedefName |= Token.Restrict;
       SpecifierThatCombinesWithTypedefName |= Token.Volatile;
       //SpecifierThatCombinesWithTypedefName |= Token.Asm;
-      SpecifierThatCombinesWithTypedefName |= Token.Based;
       SpecifierThatCombinesWithTypedefName |= Token.Cdecl;
       SpecifierThatCombinesWithTypedefName |= Token.Fastcall;
       SpecifierThatCombinesWithTypedefName |= Token.Inline;
@@ -4090,14 +4084,12 @@ namespace Microsoft.Research.Vcc.Parsing {
       TypeStart |= Token.Union;
       TypeStart |= Token.Enum;
       TypeStart |= Token.Const;
-      TypeStart |= Token.Restrict;
       TypeStart |= Token.Volatile;
       TypeStart |= Token.Axiom;
       TypeStart |= Token.Unaligned;
 
       SpecifierStart = SpecifierThatCombinesWithTypedefName | TypeStart;
       //SpecifierStart |= Token.Asm;
-      SpecifierStart |= Token.Based;
       SpecifierStart |= Token.Cdecl;
       SpecifierStart |= Token.Fastcall;
       SpecifierStart |= Token.Inline;

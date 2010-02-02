@@ -1513,10 +1513,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     Arrow,
     /// <summary>
-    /// __asm
-    /// </summary>
-    Asm,
-    /// <summary>
     /// __assert
     /// </summary>
     Assert,
@@ -1532,10 +1528,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// __axiom
     /// </summary>
     Axiom,
-    /// <summary>
-    /// __based
-    /// </summary>
-    Based,
     /// <summary>
     /// &amp;
     /// </summary>
@@ -1661,10 +1653,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     Equal,
     /// <summary>
-    /// __except
-    /// </summary>
-    Except,
-    /// <summary>
     /// __exists
     /// </summary>
     Exists,
@@ -1680,10 +1668,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// __fastcall
     /// </summary>
     Fastcall,
-    /// <summary>
-    /// __finally
-    /// </summary>
-    Finally,
     /// <summary>
     /// float
     /// </summary>
@@ -1733,10 +1717,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     IllegalCharacter,
     /// <summary>
-    /// _Imaginary
-    /// </summary>
-    Imaginary,
-    /// <summary>
     /// ==>
     /// </summary>
     Implies,
@@ -1776,10 +1756,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// __lambda
     /// </summary>
     Lambda,
-    /// <summary>
-    /// __leave
-    /// </summary>
-    Leave,
     /// <summary>
     /// { or &lt;%
     /// </summary>
@@ -1889,10 +1865,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     Requires,
     /// <summary>
-    /// restrict
-    /// </summary>
-    Restrict,
-    /// <summary>
     /// return
     /// </summary>
     Return,
@@ -1988,10 +1960,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// template
     /// </summary>
     Template,
-    /// <summary>
-    /// __try
-    /// </summary>
-    Try,
     /// <summary>
     /// typedef
     /// </summary>
@@ -2183,9 +2151,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       // So the constructor invocations must occur in the opposite order.
       Keyword keyword;
       // _
-      keyword = new Keyword(Token.Imaginary, "_Imaginary");
+      //keyword = new Keyword(Token.Imaginary, "_Imaginary");
       //keyword = new Keyword(Token.Complex, "_Complex", keyword);
-      keyword = new Keyword(Token.Bool, "_Bool", keyword);
+      keyword = new Keyword(Token.Bool, "_Bool");
 
       return keyword;
     }
@@ -2201,12 +2169,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.Unchecked, "__unchecked", keyword);
       keyword = new Keyword(Token.Unaligned, "__unaligned", keyword);
       keyword = new Keyword(Token.Invariant, "__invariant", keyword);
-      keyword = new Keyword(Token.Restrict,  "__restrict", keyword);
       keyword = new Keyword(Token.Requires,  "__requires", keyword);
       keyword = new Keyword(Token.Fastcall,  "__fastcall", keyword);
       keyword = new Keyword(Token.Declspec,  "__declspec", keyword);
       keyword = new Keyword(Token.Stdcall,   "__stdcall", keyword);
-      keyword = new Keyword(Token.Finally,   "__finally", keyword);
       keyword = new Keyword(Token.Ensures,   "__ensures", keyword);
       keyword = new Keyword(Token.AlignOf,   "__alignof", keyword);
       keyword = new Keyword(Token.Writes,    "__writes", keyword);
@@ -2215,23 +2181,18 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.Inline,    "__inline", keyword);
       keyword = new Keyword(Token.Forall,    "__forall", keyword);
       keyword = new Keyword(Token.Exists,    "__exists", keyword);
-      keyword = new Keyword(Token.Except,    "__except", keyword);
       keyword = new Keyword(Token.Assume,    "__assume", keyword);
       keyword = new Keyword(Token.Assert,    "__assert", keyword);
       keyword = new Keyword(Token.Reads,     "__reads", keyword);
-      keyword = new Keyword(Token.Leave,     "__leave", keyword);
       keyword = new Keyword(Token.Int64,     "__int64", keyword);
       keyword = new Keyword(Token.Int32,     "__int32", keyword);
       keyword = new Keyword(Token.Int16,     "__int16", keyword);
       keyword = new Keyword(Token.Cdecl,     "__cdecl", keyword);
       keyword = new Keyword(Token.Block,     "__block", keyword);
-      keyword = new Keyword(Token.Based,     "__based", keyword);
       keyword = new Keyword(Token.Axiom,     "__axiom", keyword);
       keyword = new Keyword(Token.Int8,      "__int8", keyword);
       keyword = new Keyword(Token.W64,       "__w64", keyword);
-      keyword = new Keyword(Token.Try,       "__try", keyword);
       keyword = new Keyword(Token.Old,       "__old", keyword);
-      keyword = new Keyword(Token.Asm,       "__asm", keyword);
 
       return keyword;
     }
