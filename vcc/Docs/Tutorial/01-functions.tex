@@ -88,7 +88,7 @@ These are given with \vcc{spec( requires E )} and \vcc{spec( ensures E )} respec
 
 \noindent
 The function \vcc{min()} doesn't have any specific entry requirements:
-it can be always called.
+it can be called with any values of arguments.
 Thus we say \vcc{spec( requires \true )} to say that the entry condition is
 always true.
 The postcondition states that the value returned from the function (referred to as \vcc{\result})
@@ -97,7 +97,7 @@ will be no bigger than any of the input arguments \vcc{a} and \vcc{b}.
 Note that \vcc{\true} and \vcc{\result} are spelled with a backslash.
 All VCC keywords, which can be used in expressions, start with a backslash.
 This does not apply to the first keyword after \vcc{spec}, because it cannot
-be confused with a C identifier (thus you are still free to have, \eg,
+be confused with a C identifier (thus you are still free to have, \eg
 a function called \texttt{requires} or \texttt{assert}).
 
 Another thing to note is that the specification of \vcc{min()} is partial:
@@ -119,7 +119,7 @@ The output of verification is:
 \vccInput[linerange={out-}]{c/01_min4.c}
 
 \noindent
-VCC says that verification of \vcc{main()} is OK, only \vcc{min()} is broken.
+VCC says that \vcc{main()} is correct, only \vcc{min()} is broken.
 
 \subsection{Assumptions and assertions}
 
@@ -129,7 +129,7 @@ We've already seen assertions, that is annotations of the form \vcc{spec( assert
 When VCC sees such an assertion in the code
 it tries to see if from what it ``knows'' about the program it can infer
 that \vcc{E} is true.
-If it cannot it will report an error.
+If it cannot, it will report an error.
 Otherwise, in the following code the verifier will ``know'' \vcc{E}.
 So an assertion can be understood as a hint for the verifier:
 you should better be able to infer \vcc{E}, and by the way, you can use
@@ -138,7 +138,13 @@ you should better be able to infer \vcc{E}, and by the way, you can use
 An assumption, written \vcc{spec( assume E )}, has only the second component:
 it makes the verifier ``know'' \vcc{E} holds in the following code of the function.
 It does not need to prove that it will actually hold, it just assumes it will.
-Of course, introducing such assumptions is unsafe, for example consider:
+It is useful to think in terms of possible program executions: the verifier
+will by default consider all possible executions of the program (\eg all values
+of input parameters, any layout of data structures in the heap, and so on).
+An assumption causes the verifier to discard the executions that do not satisfy it.
+An assertion cause it to check that all executions do indeed satisfy it.
+
+Of course, introducing assumptions is unsafe, for example consider:
 
 \begin{VCC}
 void perc(int x) {
@@ -170,12 +176,12 @@ you can figure out how to specify rest of your program, so that is knows it.
 One however needs to be very careful with assumptions.
 An assumption of the form \vcc{spec( assume \false )} makes everything below
 it verify, including null pointer dereferences and the like.
-This is because it constrains the verification to all the execution
-where \vcc{\false} holds, which is never.
+This is because it constrains the verification to all the executions
+where \vcc{\false} holds, which is none executions.
 Note that there are many creative ways of writing \vcc{\false}, including
 \vcc{spec( assume 1 != 0 )} or \vcc{spec( assume x < 0 )} when \vcc{x} is \vcc{unsigned}.
 
-Another use of assumption is for explaining how some specification construct work ---
+Another use of assumption is for explaining how some specification construct works ---
 internally VCC will often translate them to assertions and assumptions, and presenting
 such translation helps understanding.
 
@@ -195,7 +201,13 @@ Therefore, as far as VCC's understanding is concerned, the line:
 \begin{VCC}
 position = min(newPos, LIMIT);
 \end{VCC}
-could be replaced with \vcc{position = anything();}, that is assigning an unspecified value
+\noindent
+could be replaced with:
+\begin{VCC}
+position = anything();
+\end{VCC}
+\noindent
+that is assigning an unspecified value
 to the variable \vcc{position}. 
 The only knowledge about it comes from the following assumption.
 
@@ -228,10 +240,91 @@ For example the one below does not use a branch.
 \noindent
 The syntax:
 \begin{VCC}
-  spec( assert {bv} \forall int x; (x & -1) == x )
+spec( assert {bv} \forall int x; (x & -1) == x )
 \end{VCC}
 
 \noindent
 VCC to prove the assertion using the fixed-length bit vector theory, a.k.a. machine integers.
 This is then used as a lemma to prove the postcondition.
+
+
+\subsection{Write Clauses and old(...)}
+
+The write clause is a form of function contract.
+It specifies what happens to globally accessible memory locations
+(\ie heap objects or global variables; the write clauses never talk
+about local variables).
+Intuitively, a clause \vcc{spec( writes p, q )} is equivalent to saying
+that the function is going to modify \emph{only} objects pointed to by \vcc{p}
+and objects pointed to by \vcc{q}.
+In other words, it is the same as having an ensures clause
+saying that everything except for \vcc{p} and \vcc{q} stays unchanged.
+By default, functions are not allowed to write any global locations.
+Let's then give a simple example of heap-modifying function:
+
+\vccInput[linerange={beg-foo}]{c/01_writes1.c}
+
+\noindent
+The expression \vcc{\old(*p)}, when used in a postcondition of a function,
+returns the value of expression \vcc{*p}
+as it was at just before the function was called.
+The \vcc{P ==> Q} formally means \vcc{!P || Q}, and is usually 
+read as ``\vcc{P} implies \vcc{Q}''.
+In particular note that \vcc{\false ==> P} is true for any \vcc{P}.
+
+Now, let's have a look at a function calling \vcc{boundedIncr()}.
+
+\vccInput[linerange={foo-}]{c/01_writes1.c}
+
+There are two things to note here.
+First, one lists pointers to memory locations, not l-values in the writes
+clause.
+This is why we write \vcc{spec(writes &x, &y)} and not \vcc{spec(writes x, y)}.
+Second, VCC has no problems showing that \vcc{boundedIncr(&x)} does not change
+\vcc{y}.
+
+Should we forget the writes clause on the \vcc{boundedIncr()}, we would get an error:
+
+\vccInput[linerange={out-}]{c/01_writes2.c}
+
+\noindent
+The first error refers to the read access to \vcc{*p} in the condition of the
+\vcc{if} statement.
+It is generally unsafe to read something just because you happen to have a pointer to it.
+For example, the pointer might be \vcc{NULL}, or the object pointed to might be lock-protected.
+It might have also been \vcc{free()}d.
+For these (and other) reasons VCC inserts an implicit assertion of the form
+\vcc{\thread_local(p)} just above any read access to \vcc{*p}.
+Similarly, for write access to \vcc{*p} it inserts the assertion
+\vcc{\writable(p)}.
+For example, the assert/assume translation of \vcc{boundedIncr()} is:
+
+\vccInput[linerange={beg-}]{c/01_writes3.c}
+
+\noindent
+Because the clause \vcc{writes p} essentially gives rise to a precondition
+\vcc{requires \writable(p)}, when one calls \vcc{boundedIncr(p)},
+VCC will also insert \vcc{assert \writable(p)}.
+In particular if we forget to list \vcc{&x} in the writes
+clause of \vcc{foo()} we will get:
+
+\vccInput[linerange={out-}]{c/01_writes4.c}
+
+One might wonder why cannot we just have 
+\vcc{requires \writable(p)} and instead have the specialized writes clause.
+The reason is that the writes clause also specifies that nothing
+outside of the writes clause will be changed.
+This is why we can prove that \vcc{y} is still \vcc{42} after the call
+to \vcc{boundedIncr(&x)}. 
+
+
+%A predicate \vcc{\mutable(p)} states that the object pointed to by \vcc{p}
+%is allocated, ``belongs'' to the current thread, and is in a ``phase of life''
+%that allows for modification.
+%We will get into details all of these later.
+%For now we just need to know that in order to be able to write to \vcc{*p}
+%one needs to know that \vcc{p} was listed in the writes clause \emph{and} \vcc{\mutable(p)}.
+%For example, if we remove the \vcc{spec( writes ... )} clause from the
+%\vcc{boundedIncr()} we get the following output:
+
 
