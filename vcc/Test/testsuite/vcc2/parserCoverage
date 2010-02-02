@@ -1,0 +1,162 @@
+void foo(int i) {
+  int j = (i == 0) ? 5 i;
+  j = j + 1;
+}
+`
+testcase(2,24) : error VC0000: Syntax error, ':' expected.
+testcase(2,24) : error VC0000: ; expected.
+`
+#include <vcc.h>
+
+struct S {
+  int a;
+  invariant(forall(int x; { } x == a ==> x == a))
+};
+
+void foo(struct S *s) { }
+`
+testcase(5,33) : error VC0000: Invalid expression term '}'.
+testcase(5,33) : error VC0000: ) expected.
+`
+#include <vcc.h>
+
+int foo(int i)
+  ensures(result == 5)
+{
+  switch(i) 
+  {
+    default:
+      return 5;
+  }
+  
+  return 6;
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+void foo(int i)
+{
+  if (i == 1);
+}
+`
+testcase(5,14) : warning VC0000: Possible mistaken null statement.
+Verification of foo succeeded.
+`
+#include<vcc.h>
+
+typedef void (*FOO)();
+
+void foo() { }
+
+FOO bar() {
+  return  &foo;
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of $fnptr_foo_to_fnptr#1 succeeded.
+`
+
+#include<vcc.h>
+
+void foo() { }
+
+void bar() {
+  void (*f)() = &foo;
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of $fnptr_foo_to_fnptr#1 succeeded.
+`
+#include <vcc.h>
+
+int foo(spec(spec(int i)))
+{
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+void foo(int i) { }
+
+void bar(int i)
+{
+  foo(i); ; 
+  ; 
+  ;
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+struct S {
+  int a;
+  invariant(a > 0);
+};
+`
+Verification of S#adm succeeded.
+`
+void foo() {
+  int i = 0;
+  while {
+    i++;
+  }
+}
+`
+testcase(3,9) : error VC0000: Syntax error, '(' expected.
+`
+void foo() {
+  for () { 
+  }
+}
+`
+testcase(2,8) : error VC0000: ; expected.
+testcase(2,8) : error VC0000: Invalid expression term ')'.
+`
+void foo(int i)
+{
+  switch (i)
+  {
+    case:
+      break;
+  }
+}
+`
+testcase(5,9) : error VC0000: A constant value is expected.
+`
+void foo()
+{
+  lab:
+    ->f;
+}
+`
+testcase(4,5) : error VC0000: ; expected.
+testcase(4,7) : warning VC9001: The expression 'f' has no side effect; expected operation with side effect.
+testcase(4,7) : error VC0000: The name 'f' does not exist in the current context.
+`    
+void foo()
+{
+  goto (2+3);
+}
+`
+testcase(4,8) : error VC0000: Identifier expected.
+testcase(4,8) : error VC0000: ; expected.
+testcase(4,8) : error VC0000: Label '' can not be found within the scope of the goto statement.
+`
+void foo()
+{
+  int i;
+  for (i = 0; i < 5; (unsigned)i)
+  {
+  }
+}
+`
+testcase(4,22) : error VC0000: Only assignment, call, increment, decrement, and new object expressions can be used as a statement.
+testcase(4,22) : warning VC9001: The expression '(unsigned)i' has no side effect; expected operation with side effect.
+`

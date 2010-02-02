@@ -166,8 +166,16 @@ vcc(dynamic_owns) struct _Foo
     struct S c;
     struct S arr[10];
 };
+
+vcc(volatile_owns) struct _Bar
+{
+    struct S c;
+    struct S arr[10];
+};
+
 `
 testcase(8,1) : warning VC0000: Verification type attributes placed at this location are currently ignored; place them between the struct/union keyword and the type name.
+testcase(14,1) : warning VC0000: Verification type attributes placed at this location are currently ignored; place them between the struct/union keyword and the type name.
 `
 #include "vcc.h"
 struct X {
