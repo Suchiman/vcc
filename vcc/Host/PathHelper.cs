@@ -17,15 +17,21 @@ namespace Microsoft.Research.Vcc
       if (cachedVccHeaderDirectory == null) {
         var dir = new FileInfo(typeof(PathHelper).Assembly.Location).Directory;
         while (dir != null && dir.Exists) {
+          if (dir.GetFiles("vcc.h").Length > 0) {
+            cachedVccHeaderDirectory = dir;
+            goto terminateSearch;
+          }
           foreach (DirectoryInfo subdir in dir.GetDirectories()) {
             if (string.Compare(subdir.Name, "Headers", true) == 0 && subdir.GetFiles("vcc.h").Length > 0) {
               cachedVccHeaderDirectory = subdir;
-              break;
+              goto terminateSearch;
             }
           }
           dir = dir.Parent;
         }
       }
+
+    terminateSearch:
 
       if (cachedVccHeaderDirectory == null) return null;
       if (quoteResult && cachedVccHeaderDirectory.FullName.Contains(" "))

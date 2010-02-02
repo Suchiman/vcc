@@ -25,7 +25,7 @@ namespace Microsoft.Research.Vcc
     /// The main entry point for the application.
     /// </summary>
     [STAThread]
-    static int Main(string[] args)
+    public static int Main(string[] args)
     {
       swTotal.Start();
 
