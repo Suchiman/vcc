@@ -258,57 +258,59 @@ Intuitively, a clause \vcc{spec( writes p, q )} is equivalent to saying
 that the function is going to modify \emph{only} objects pointed to by \vcc{p}
 and objects pointed to by \vcc{q}.
 In other words, it is the same as having an ensures clause
-saying that everything except for \vcc{p} and \vcc{q} stays unchanged.
+saying that everything except for \vcc{*p} and \vcc{*q} stays unchanged.
 By default, functions are not allowed to write any global locations.
 Let's then give a simple example of heap-modifying function:
 
-\vccInput[linerange={beg-foo}]{c/01_writes1.c}
+\vccInput[linerange={swap-partition}]{c/04_partition.c}
 
 \noindent
 The expression \vcc{\old(*p)}, when used in a postcondition of a function,
 returns the value of expression \vcc{*p}
 as it was at just before the function was called.
-The \vcc{P ==> Q} formally means \vcc{!P || Q}, and is usually 
-read as ``\vcc{P} implies \vcc{Q}''.
-In particular note that \vcc{\false ==> P} is true for any \vcc{P}.
 
-Now, let's have a look at a function calling \vcc{boundedIncr()}.
+Now, let's have a look at a function calling \vcc{swap()}.
 
-\vccInput[linerange={foo-}]{c/01_writes1.c}
+\vccInput[linerange={foo-}]{c/01_swap1.c}
 
 There are two things to note here.
 First, one lists pointers to memory locations, not l-values in the writes
-clause.
-This is why we write \vcc{spec(writes &x, &y)} and not \vcc{spec(writes x, y)}.
-Second, VCC has no problems showing that \vcc{boundedIncr(&x)} does not change
-\vcc{y}.
+clause (\ie \vcc{spec(writes &x, &y, &z)} and not \vcc{spec(writes x, y, z)}).
+Second, VCC has no problems showing that \vcc{swap(&x, &y)} does not change
+\vcc{z}.
 
-Should we forget the writes clause on the \vcc{boundedIncr()}, we would get an error:
+Should we forget the writes clause on the \vcc{swap()}, we would get an error:
 
-\vccInput[linerange={out-}]{c/01_writes2.c}
+\vccInput[linerange={out-}]{c/01_swap2.c}
 
 \noindent
-The first error refers to the read access to \vcc{*p} in the condition of the
-\vcc{if} statement.
+The complaints about thread-locality refer to the places where we
+read \vcc{*p} and \vcc{*q}.
 It is generally unsafe to read something just because you happen to have a pointer to it.
 For example, the pointer might be \vcc{NULL}, or the object pointed to might be lock-protected.
-It might have also been \vcc{free()}d.
+It might have also been \vcc{free()}'d.
 For these (and other) reasons VCC inserts an implicit assertion of the form
 \vcc{\thread_local(p)} just above any read access to \vcc{*p}.
+This predicate implies that that the pointer is currently allocated,
+non-null, and belongs to the current thread.
 Similarly, for write access to \vcc{*p} it inserts the assertion
 \vcc{\writable(p)}.
-For example, the assert/assume translation of \vcc{boundedIncr()} is:
+It implies \vcc{\thread_local(p)},
+and additionally that \vcc{*p} is in the ``phase of life'' where
+it can be modified, and moreover, that it was listed in the writes
+clause of the current function.
+For example, the assert/assume translation of \vcc{swap()} is:
 
-\vccInput[linerange={beg-}]{c/01_writes3.c}
+\vccInput[linerange={swap-}]{c/01_swap3.c}
 
 \noindent
-Because the clause \vcc{writes p} essentially gives rise to a precondition
-\vcc{requires \writable(p)}, when one calls \vcc{boundedIncr(p)},
-VCC will also insert \vcc{assert \writable(p)}.
+Because the clause \vcc{writes p, q} essentially gives rise to a precondition
+\vcc{requires \writable(p) && \writable(q)}, when one calls \vcc{swap(p, q)},
+VCC will also insert \vcc{assert \writable(p) && \writable(q)}.
 In particular if we forget to list \vcc{&x} in the writes
 clause of \vcc{foo()} we will get:
 
-\vccInput[linerange={out-}]{c/01_writes4.c}
+\vccInput[linerange={out-}]{c/01_swap4.c}
 
 One might wonder why cannot we just have 
 \vcc{requires \writable(p)} and instead have the specialized writes clause.

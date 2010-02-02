@@ -4,9 +4,9 @@
 
 /*{swap}*/
 void swap(int *p, int *q)
-  writes(p, q)
-  requires(mutable(p) && mutable(q))
-  ensures(mutable(p) && mutable(q))
+  // will be spec( writes p, q )
+  weak_out_param(p)
+  weak_out_param(q)
   ensures(*p == old(*q) && *q == old(*p))
 {
   int tmp;
