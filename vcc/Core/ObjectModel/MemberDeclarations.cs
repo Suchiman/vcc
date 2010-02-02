@@ -1112,14 +1112,12 @@ namespace Microsoft.Research.Vcc {
       this.Preconditions = template.Preconditions;
       this.Reads = template.Reads;
       this.Writes = template.Writes;
-      this.Allocates = template.Allocates;
-      this.Frees = template.Frees;
       this.IsPure = template.IsPure;
     }
 
     internal MethodContract ToMethodContract() {
       // TODO: leverage the IsPure flag
-      return new MethodContract(this.Allocates, this.Frees, null, this.Postconditions, this.Preconditions, this.Reads, null, this.Writes, this.IsPure);
+      return new MethodContract(null, null, null, this.Postconditions, this.Preconditions, this.Reads, null, this.Writes, this.IsPure);
     }
 
     internal void AddPostcondition(Postcondition postcondition) {
@@ -1154,30 +1152,12 @@ namespace Microsoft.Research.Vcc {
       this.HasContract = true;
     }
 
-    internal void AddFrees(Expression frees) {
-      if (this.Frees == null) {
-        this.Frees = new List<Expression>();
-      }
-      this.Frees.Add(frees);
-      this.HasContract = true;
-    }
-
-    internal void AddAllocates(Expression allocates) {
-      if (this.Allocates == null) {
-        this.Allocates = new List<Expression>();
-      }
-      this.Allocates.Add(allocates);
-      this.HasContract = true;
-    }
-
     internal bool HasContract;
     internal bool IsPure;
     internal List<Postcondition>/*?*/ Postconditions;
     internal List<Precondition>/*?*/ Preconditions;
     internal List<Expression>/*?*/ Reads;
     internal List<Expression>/*?*/ Writes;
-    internal List<Expression>/*?*/ Allocates;
-    internal List<Expression>/*?*/ Frees;
   }
 
   internal sealed class FunctionDeclarator : Declarator {

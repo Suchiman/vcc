@@ -1331,7 +1331,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       while (Parser.ContractStart[this.currentToken]){
         switch (this.currentToken) {
           case Token.Ensures: this.ParseEnsures(contract, followersOrContractStart); break;
-          case Token.Frees: this.ParseFrees(contract, followersOrContractStart); break;
           case Token.Reads: this.ParseReads(contract, followersOrContractStart); break;
           case Token.Requires: this.ParseRequires(contract, followersOrContractStart); break;
           case Token.Writes: this.ParseWrites(contract, followersOrContractStart); break;
@@ -1353,23 +1352,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.Skip(Token.RightParenthesis);
       Postcondition postCondition = new Postcondition(condition, slb);
       contract.AddPostcondition(postCondition);
-      this.resultIsAKeyword = false;
-    }
-
-    private void ParseFrees(FunctionOrBlockContract contract, TokenSet followers)
-      //^ requires this.currentToken == Token.Frees;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      this.resultIsAKeyword = true;
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      while (true) {
-        Expression expr = this.ParseExpressionWithCheckedDefault(followers|Token.Comma|Token.RightParenthesis);
-        contract.AddFrees(expr);
-        if (this.currentToken != Token.Comma) break;
-        this.GetNextToken();
-      }
-      this.SkipOverTo(Token.RightParenthesis, followers);
       this.resultIsAKeyword = false;
     }
 
@@ -3951,7 +3933,6 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       ContractStart = new TokenSet();
       ContractStart |= Token.Ensures;
-      ContractStart |= Token.Frees;
       ContractStart |= Token.Reads;
       ContractStart |= Token.Requires;
       ContractStart |= Token.Writes;
