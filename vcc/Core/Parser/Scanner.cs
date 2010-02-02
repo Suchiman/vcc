@@ -1697,10 +1697,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     Forall,
     /// <summary>
-    /// __frees
-    /// </summary>
-    Frees,
-    /// <summary>
     /// goto
     /// </summary>
     Goto,
@@ -2227,7 +2223,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.Int64,     "__int64", keyword);
       keyword = new Keyword(Token.Int32,     "__int32", keyword);
       keyword = new Keyword(Token.Int16,     "__int16", keyword);
-      keyword = new Keyword(Token.Frees,     "__frees", keyword);
       keyword = new Keyword(Token.Cdecl,     "__cdecl", keyword);
       keyword = new Keyword(Token.Block,     "__block", keyword);
       keyword = new Keyword(Token.Based,     "__based", keyword);
