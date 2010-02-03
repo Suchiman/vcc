@@ -1603,35 +1603,6 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
-  public sealed class DummyVccCompilation : Compilation {
-
-    public DummyVccCompilation(ICompilation compilation, IMetadataHost compilationHost)
-      : base(new DummyEditHostEnvironment(compilationHost), new DummyUnit(compilation, compilationHost), new VccOptions()) {
-    }
-
-    protected override List<CompilationPart> GetPartList() {
-      return new List<CompilationPart>(0);
-    }
-
-    public override Compilation UpdateCompilationParts(IEnumerable<CompilationPart> parts) {
-      return this;
-    }
-  }
-
-  internal sealed class DummyEditHostEnvironment : SourceEditHostEnvironment {
-
-    internal DummyEditHostEnvironment(IMetadataHost compilationHost)
-      : base(compilationHost.NameTable, 4) {
-      this.compilationHost = compilationHost;
-    }
-
-    readonly IMetadataHost compilationHost;
-
-    public override IUnit LoadUnitFrom(string location) {
-      return this.compilationHost.LoadUnitFrom(location);
-    }
-  }
-
   internal sealed class VccErrorMessage : ErrorMessage {
 
     private VccErrorMessage(ISourceLocation sourceLocation, long code, string messageKey, params string[] messageArguments)

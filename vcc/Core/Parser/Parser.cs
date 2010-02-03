@@ -1431,10 +1431,6 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       NamedTypeExpression namedTypeExpr = typeExpr as NamedTypeExpression;
       if (namedTypeExpr != null) {
-        QualifiedName qName = namedTypeExpr.Expression as QualifiedName;
-        if (qName != null) {
-          return null;
-        }
         SimpleName simpleName = namedTypeExpr.Expression as SimpleName;
         if (simpleName != null) {
           TypeExpression referencedType;
@@ -1442,8 +1438,6 @@ namespace Microsoft.Research.Vcc.Parsing {
             visitedTypes.Add(typeExpr);
             return TypeExpressionHasPointerType(referencedType, visitedTypes);
           }
-          else
-            return null ;
         }
         return null;
       }
