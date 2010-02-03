@@ -12,39 +12,6 @@ using Microsoft.Cci;
 
 namespace Microsoft.Research.Vcc {
 
-  internal sealed class DummyUnit : Unit {
-
-    internal DummyUnit(ICompilation compilation, IMetadataHost compilationHost)
-      : base(compilation.Result.Name, compilation.Result.Location) {
-      this.compilation = compilation;
-      this.compilationHost = compilationHost;
-    }
-
-    public override Compilation Compilation {
-      get { return new DummyVccCompilation(this.compilation, this.compilationHost); }
-    }
-    readonly ICompilation compilation;
-
-    readonly IMetadataHost compilationHost;
-
-    public override void Dispatch(IMetadataVisitor visitor) {
-    }
-
-    public override RootUnitNamespace UnitNamespaceRoot {
-      get { return this.Compilation.Result.UnitNamespaceRoot; }
-    }
-
-    public override IEnumerable<IUnitReference> UnitReferences {
-      get { return this.Compilation.Result.UnitReferences; }
-    }
-
-    public override UnitIdentity UnitIdentity {
-      get {
-        return new ModuleIdentity(Dummy.Name, string.Empty);
-      }
-    }
-  }
-
   internal sealed class EntryPointFinder : BaseMetadataTraverser {
 
     internal EntryPointFinder(ICompilation compilation) {
