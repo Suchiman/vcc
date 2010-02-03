@@ -2535,7 +2535,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private Expression ConvertToInt32(Expression expression) {
-      return new UncheckedExpression(new Cast(expression, this.GetTypeExpressionFor(TypeCode.Int32, expression.SourceLocation), expression.SourceLocation), expression.SourceLocation);      
+      return new UncheckedExpression(new VccCast(expression, this.GetTypeExpressionFor(TypeCode.Int32, expression.SourceLocation), expression.SourceLocation), expression.SourceLocation);      
     }
 
     private Expression ParseComplexExpression(Token operator0, Expression operand1, Token operator1, Expression operand2, TokenSet followers)
@@ -3184,7 +3184,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (initializer != null)
           initializer.structureTypeExpression = targetType as VccNamedTypeExpression; // null does not hurt here
         slb.UpdateToSpan(valueToCast.SourceLocation);
-        Expression expression = new Cast(valueToCast, targetType, slb);
+        Expression expression = new VccCast(valueToCast, targetType, slb);
         this.SkipTo(followers);
         return expression;
       }else{

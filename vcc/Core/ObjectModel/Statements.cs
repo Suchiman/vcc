@@ -142,12 +142,10 @@ namespace Microsoft.Research.Vcc {
           ITypeDefinition result;
           VccArrayTypeExpression/*?*/ arrayTypeExpression = this.ContainingLocalDeclarationsStatement.TypeExpression as VccArrayTypeExpression;
           if (arrayTypeExpression != null && arrayTypeExpression.Size != null) {
-            if (this.IsSpec) {
-              var modifier = new ICustomModifier[] { new CustomModifier(false, arrayTypeExpression.PlatformType.SystemDiagnosticsContractsContract) };
-              return ModifiedPointerType.GetModifiedPointerType(arrayTypeExpression.ElementType.ResolvedType, modifier, this.ContainingLocalDeclarationsStatement.Compilation.HostEnvironment.InternFactory);
-            } else {
-              result = PointerType.GetPointerType(arrayTypeExpression.ElementType.ResolvedType, this.ContainingLocalDeclarationsStatement.Compilation.HostEnvironment.InternFactory);
-            }
+            if (this.IsSpec)
+              result = ((VccCompilationHelper)this.Helper).MakeSpecPointer(arrayTypeExpression.ElementType.ResolvedType);
+            else
+              result = PointerType.GetPointerType(arrayTypeExpression.ElementType.ResolvedType, this.Helper.Compilation.HostEnvironment.InternFactory);
           } else
             result = this.ContainingLocalDeclarationsStatement.Type;
           this.type = result;
