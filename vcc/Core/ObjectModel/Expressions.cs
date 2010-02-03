@@ -563,8 +563,7 @@ namespace Microsoft.Research.Vcc {
      }
 
      private ITypeDefinition GetSpecPointerType(ITypeDefinition targetType) {
-       var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
-       return ModifiedPointerType.GetModifiedPointerType(targetType, modifier, this.Compilation.HostEnvironment.InternFactory);
+       return ((VccCompilationHelper)this.Helper).MakeSpecPointer(targetType);
      }
  
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
@@ -1295,6 +1294,22 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
+  public class VccCast : Cast
+  {
+    public VccCast(Expression valueToCast, TypeExpression targetType, ISourceLocation sourceLocation)
+      : base(valueToCast, targetType, sourceLocation) {
+    }
+
+    protected VccCast(BlockStatement containingBlock, VccCast template)
+      : base(containingBlock, template) {
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      return new VccCast(containingBlock, this);
+    }
+  }
+
   public class VccConditional : Conditional {
     /// <summary>
     /// Allocates an expression that results in one of two values, depending on the value of a condition.
@@ -1352,8 +1367,7 @@ namespace Microsoft.Research.Vcc {
 
     public override ITypeDefinition InferType() {
       if (!this.isSpec) return base.InferType();
-      var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
-      return ModifiedPointerType.GetModifiedPointerType(this.ElementType.ResolvedType, modifier, this.Compilation.HostEnvironment.InternFactory);
+      return ((VccCompilationHelper)this.Helper).MakeSpecPointer(this.ElementType.ResolvedType);
     }
 
     public override Expression MakeCopyFor(BlockStatement containingBlock) {
@@ -3082,10 +3096,8 @@ namespace Microsoft.Research.Vcc {
       }
       if (targetType != null) {
         IPointerType instanceType = this.Instance.Type.ResolvedType as IPointerType;
-        if (instanceType != null && VccCompilationHelper.IsSpecPointer(instanceType)) {
-          var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
-          return ModifiedPointerType.GetModifiedPointerType(targetType, modifier, this.Compilation.HostEnvironment.InternFactory);
-        }
+        if (instanceType != null && VccCompilationHelper.IsSpecPointer(instanceType))
+          return ((VccCompilationHelper)this.Helper).MakeSpecPointer(targetType);
         return PointerType.GetPointerType(targetType, this.Compilation.HostEnvironment.InternFactory);
       }
       return Dummy.Type;
@@ -4178,10 +4190,8 @@ namespace Microsoft.Research.Vcc {
       {
         ITypeDefinition t = base.Type;
         VccTypeContract contract = this.Compilation.ContractProvider.GetTypeContractFor(t) as VccTypeContract;
-        if (contract != null && contract.IsSpec) {
-          var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
-          return ModifiedPointerType.GetModifiedPointerType(t, modifier, this.Compilation.HostEnvironment.InternFactory);
-        }
+        if (contract != null && contract.IsSpec)
+          return ((VccCompilationHelper)this.Helper).MakeSpecPointer(t);
         return PointerType.GetPointerType(t, this.Compilation.HostEnvironment.InternFactory);
       }
     }

@@ -484,6 +484,11 @@ namespace Microsoft.Research.Vcc {
       return false;
     }
 
+    public IPointerType MakeSpecPointer(ITypeReference targetType) {
+      var modifier = new ICustomModifier[] { new CustomModifier(false, this.PlatformType.SystemDiagnosticsContractsContract) };
+      return ModifiedPointerType.GetModifiedPointerType(targetType, modifier, this.Compilation.HostEnvironment.InternFactory);
+    }
+
     public static bool IsSpecPointer(IPointerType type) {
       return HasModifier(type, type.PlatformType.SystemDiagnosticsContractsContract);
     }
