@@ -19,7 +19,7 @@ namespace Microsoft.Research.Vcc {
   /// <summary>
   /// A polymorphic compile constant that should be interpreted as either signed or unsigned, depending on the type of another expression with which it is combined in a binary operator expression.
   /// </summary>
-  class CompileTimeConstantWhoseSignDependsOnAnotherExpression : CompileTimeConstant {
+  class VccCompileTimeConstantWhoseSignDependsOnAnotherExpression : CompileTimeConstant {
 
     /// <summary>
     /// Initializes a numeric literal that could be interpreted as either signed or unsigned, depending on the type of another expression with which it is combined in a binary operator expression.
@@ -27,7 +27,7 @@ namespace Microsoft.Research.Vcc {
     /// <param name="compileTimeConstant">A polymorphic compile time constant.</param>
     /// <param name="expression">An expression that determines which sign this polymorhpic sign agnostic constant will assume when asked what its type is.</param>
     /// <param name="sourceLocation">The location in the source text of the expression that corresponds to this constant.</param>
-    public CompileTimeConstantWhoseSignDependsOnAnotherExpression(CompileTimeConstant compileTimeConstant, Expression expression)
+    public VccCompileTimeConstantWhoseSignDependsOnAnotherExpression(CompileTimeConstant compileTimeConstant, Expression expression)
       : base(null, true, compileTimeConstant.SourceLocation)
       //^ requires compileTimeConstant.ValueIsPolymorhpicCompileTimeConstant;
     {
@@ -40,7 +40,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     /// <param name="containingBlock">A new value for containing block. This replaces template.ContainingBlock in the resulting copy of template.</param>
     /// <param name="template">The template to copy.</param>
-    protected CompileTimeConstantWhoseSignDependsOnAnotherExpression(BlockStatement containingBlock, CompileTimeConstantWhoseSignDependsOnAnotherExpression template)
+    protected VccCompileTimeConstantWhoseSignDependsOnAnotherExpression(BlockStatement containingBlock, VccCompileTimeConstantWhoseSignDependsOnAnotherExpression template)
       : base(containingBlock, template)
       //^ requires template.ContainingBlock != containingBlock;
       //^ ensures this.containingBlock == containingBlock;
@@ -121,7 +121,7 @@ namespace Microsoft.Research.Vcc {
     //^ [MustOverride]
     public override Expression MakeCopyFor(BlockStatement containingBlock) {
       if (containingBlock == this.ContainingBlock) return this;
-      return new CompileTimeConstantWhoseSignDependsOnAnotherExpression(containingBlock, this);
+      return new VccCompileTimeConstantWhoseSignDependsOnAnotherExpression(containingBlock, this);
     }
 
     /// <summary>
@@ -3947,7 +3947,7 @@ namespace Microsoft.Research.Vcc {
     public override CompileTimeConstant GetAsConstant()
       //^^ requires this.Value != null;
     {
-      CompileTimeConstant result = new CompileTimeConstantWhoseSignDependsOnAnotherExpression(base.GetAsConstant(), this.RightOperand);
+      CompileTimeConstant result = new VccCompileTimeConstantWhoseSignDependsOnAnotherExpression(base.GetAsConstant(), this.RightOperand);
       result.SetContainingExpression(this);
       return result;
     }
@@ -4004,7 +4004,7 @@ namespace Microsoft.Research.Vcc {
     public override CompileTimeConstant GetAsConstant()
       //^^ requires this.Value != null;
     {
-      CompileTimeConstant result = new CompileTimeConstantWhoseSignDependsOnAnotherExpression(base.GetAsConstant(), this.RightOperand);
+      CompileTimeConstant result = new VccCompileTimeConstantWhoseSignDependsOnAnotherExpression(base.GetAsConstant(), this.RightOperand);
       result.SetContainingExpression(this);
       return result;
     }

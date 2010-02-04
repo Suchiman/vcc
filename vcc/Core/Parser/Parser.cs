@@ -2526,7 +2526,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (cc != null && cc.ValueIsPolymorphicCompileTimeConstant) {
         //If operand2 is unsigned, we want cc to prefer binding to unsigned types during overload resolution.
         //For example, 1 << 2u, whould result in (unsigned)4, not (signed)4.
-        return new CompileTimeConstantWhoseSignDependsOnAnotherExpression(cc, operand2);
+        return new VccCompileTimeConstantWhoseSignDependsOnAnotherExpression(cc, operand2);
       }
       Parenthesis/*?*/ paren = operand1 as Parenthesis;
       if (paren != null)
