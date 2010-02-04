@@ -861,7 +861,7 @@ namespace Microsoft.Research.Vcc {
         // Disable int -> enum so that any enum operation becomes int operation
         if (targetType.IsEnum && cconst.ValueIsPolymorphicCompileTimeConstant) return ImplicitConversionExists(cconst, targetType.UnderlyingType.ResolvedType);
         if (TypeHelper.IsUnsignedPrimitiveInteger(cconst.Type) && !TypeHelper.IsUnsignedPrimitiveInteger(targetType) && 
-          cconst is CompileTimeConstantWhoseSignDependsOnAnotherExpression)
+          cconst is VccCompileTimeConstantWhoseSignDependsOnAnotherExpression)
           return false;
       }
 
