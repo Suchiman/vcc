@@ -66,7 +66,7 @@ namespace Microsoft.Research.Vcc
         None // Do not remove this cast because the type of 'this' will change later on
       | Expr.Cast (_, _, e') as e ->
         match e'.Type, e.Type with
-          | Ptr _, Ptr Void -> Some (self e')
+          | (Ptr _|ObjectT), Ptr Void -> Some (self e')
           | _, Type.Ref { Name = "#Object" } -> Some (self e')
           | t, t' when t = t' -> Some (self e')
           | _ -> None
