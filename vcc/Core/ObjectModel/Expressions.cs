@@ -1304,9 +1304,90 @@ namespace Microsoft.Research.Vcc {
       : base(containingBlock, template) {
     }
 
+    protected override IExpression ProjectAsNonConstantIExpression() {
+      VccArrayTypeExpression tgtArrayType = this.TargetType as VccArrayTypeExpression;
+      if (tgtArrayType != null && tgtArrayType.Size != null) {
+        return new VccCastArrayConversion((IConversion)base.ProjectAsNonConstantIExpression(), tgtArrayType.Size.ProjectAsIExpression());
+      }
+      return base.ProjectAsNonConstantIExpression();
+    }
+
+    public override ITypeDefinition Type {
+      get {
+        // arrays types may resolve to special fixed-size array types, which we don't want here
+        VccArrayTypeExpression tgtArrayType = this.TargetType as VccArrayTypeExpression;
+        if (tgtArrayType != null)
+          return PointerType.GetPointerType(tgtArrayType.ElementType.ResolvedType, this.Compilation.HostEnvironment.InternFactory);
+        return base.Type;
+      }
+    }
+
     public override Expression MakeCopyFor(BlockStatement containingBlock) {
       if (this.ContainingBlock == containingBlock) return this;
       return new VccCast(containingBlock, this);
+    }
+
+    /// <summary>
+    /// Marker class that allows the visitor to latch onto conversion of the kind '(int[2])p',
+    /// which is a syntactic alternative to as_array(p,2) (if p is of type int *)
+    /// </summary>
+    public class VccCastArrayConversion : IConversion {
+
+      private readonly IConversion conversion;
+      private readonly IExpression size;
+
+      public VccCastArrayConversion(IConversion conversion, IExpression size) {
+        this.conversion = conversion;
+        this.size = size;
+      }
+
+      public IExpression Size {
+        get { return this.size; }
+      }
+
+      public bool HasErrors {
+        get {
+          if (this.hasErrors == null)
+            this.hasErrors = this.CheckForErrorsAndReturnTrueIfAnyAreFound();
+          return this.hasErrors.Value;
+        }
+      }
+      protected bool? hasErrors;
+
+      protected virtual bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+        if (this.conversion.HasErrors || this.size.HasErrors) return true;
+        // TODO: check that the size if of integer type and that the
+        // type of the conversion and the to-be-converted object match
+        return false;
+      }
+
+      public IExpression ValueToConvert {
+        get { return this.conversion.ValueToConvert; }
+      }
+
+      public bool CheckNumericRange {
+        get { return this.conversion.CheckNumericRange; }
+      }
+
+      public ITypeReference TypeAfterConversion {
+        get { return this.conversion.TypeAfterConversion; }
+      }
+
+      public void Dispatch(ICodeVisitor visitor) {
+        visitor.Visit(this);
+      }
+
+      public ITypeReference Type {
+        get { return this.conversion.Type; }
+      }
+
+      public bool IsPure {
+        get { return this.conversion.IsPure && this.size.IsPure; }
+      }
+
+      public IEnumerable<ILocation> Locations {
+        get { return this.conversion.Locations; }
+      }
     }
   }
 

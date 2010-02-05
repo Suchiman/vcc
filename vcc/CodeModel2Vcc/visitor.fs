@@ -73,6 +73,12 @@ namespace Microsoft.Research.Vcc
       if cond then ()
       else oops "assertion failed"; die ()
 
+    let findFunctionOrDie name objWithLoc =
+      match methodNameMap.TryGetValue(name) with
+        | true, f -> f
+        | _ -> oopsLoc objWithLoc ("cannot find internal function " + name + ". Forgotten #include <vcc.h>?"); die()
+
+
     let checkedStatus ch = if ch then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked
   
     let stmtToken (msg:string) (e:C.Expr) =
@@ -1075,9 +1081,15 @@ namespace Microsoft.Research.Vcc
             | _ -> die()
 
       member this.Visit (conversion:IConversion) : unit =
-        exprRes <- C.Expr.Cast (this.ExprCommon conversion, 
-                                checkedStatus conversion.CheckNumericRange, 
-                                this.DoExpression (conversion.ValueToConvert))
+        match conversion with
+          | :? Microsoft.Research.Vcc.VccCast.VccCastArrayConversion as arrConv -> 
+            let cmn = this.ExprCommon conversion
+            exprRes <- C.Expr.Macro({cmn with Type = C.Type.ObjectT}, "_vcc_as_array",
+                                   [this.DoExpression(arrConv.ValueToConvert); this.DoExpression(arrConv.Size)]) 
+          | _ -> 
+            exprRes <- C.Expr.Cast (this.ExprCommon conversion, 
+                                    checkedStatus conversion.CheckNumericRange, 
+                                    this.DoExpression (conversion.ValueToConvert))
 
       member this.Visit (conditional:IConditional) : unit =
         exprRes <- C.Expr.Macro (this.ExprCommon conditional, "ite",
@@ -1450,12 +1462,8 @@ namespace Microsoft.Research.Vcc
           | C.Call (_, { Name = "_vcc_atomic" }, _, args) ->
             stmtRes <- C.Expr.Atomic (cmn, args, body)
           | C.Call (_, { Name = "_vcc_expose" }, _, [arg]) ->
-            let findFunctionOrDie name =
-              match methodNameMap.TryGetValue(name) with
-                | true, f -> f
-                | _ -> oopsLoc whileDoStatement ("cannot find internal function " + name + ". Forgotten #include <vcc.h>?"); die()
-            let wrap = findFunctionOrDie "_vcc_wrap"
-            let unwrap = findFunctionOrDie "_vcc_unwrap"
+            let wrap = findFunctionOrDie "_vcc_wrap" whileDoStatement
+            let unwrap = findFunctionOrDie "_vcc_unwrap" whileDoStatement
             stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" arg), unwrap, [], [arg]);  body; C.Expr.Call((stmtToken "wrap(@@)" arg), wrap, [], [arg]) ] )
           | C.Call(_, { Name = "_vcc_spec_code" }, _, []) ->
             stmtRes <- C.Expr.Macro(cmn, "spec", [body])

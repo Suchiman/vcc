@@ -3406,7 +3406,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       List<INamespaceDeclarationMember> members = new List<INamespaceDeclarationMember>();
-      List<Specifier> specifiers = this.ParseSpecifiers(members, null, followers|Token.Multiply|Token.RightParenthesis);
+      List<Specifier> specifiers = this.ParseSpecifiers(members, null, followers|Token.Multiply|Token.RightParenthesis|Token.LeftBracket);
       Declarator declarator = this.ParseDeclarator(followers);
       slb.UpdateToSpan(declarator.SourceLocation);
       TypeExpression type = this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, (IdentifierDeclarator)null), declarator);
