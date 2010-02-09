@@ -7,9 +7,11 @@
                 old,speconly,%
                 VOID,BOOLEAN,%
                 assert,assume,invariant,result,forall,exists,expose,skinny_expose,wrap,unwrap,atomic,%
+		unchecked,bv_lemma,
                 % New stuff:
                 NULL,
-		\true,\false,\mutable,\old,\writable,\thread_local},
+		\true,\false,\relaxed,\relaxable,\valid,\proper,\old,\writable,\thread_local,%
+                \object,},
   moredelim=[is][\fontfamily{cmtt}\selectfont\textcolor{vccOutColor}]{/*`}{`*/},
   morecomment=[is]{//--}{//--},
 }

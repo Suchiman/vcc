@@ -1,0 +1,79 @@
+\section{Object invariants}
+
+Object invariants are predicates describing ``valid'' states of objects.
+Take for example a safe string structure implemented with a
+statically allocated array (we'll move to dynamic allocation later).
+
+\vccInput[linerange={beg-index}]{c/05_safestring.c}
+
+\noindent
+The invariant of \vcc{struct SafeString} states that valid instances
+of that structure will shorter than \vcc{SSTR_MAX_LEN} and \vcc{'\0'}-terminated.
+While this seems simple and intuitive, we need a quick overlook of how VCC
+models C memory, to get a full understanding.
+
+\subsection{Memory model and the object type}
+
+Talking about instances of structures in C is a tricky business. 
+In plain C a structure type generally just gives some guidelines how to interpret
+arrays of bytes.
+Some programming languages, like Java or ML, have a much more disciplined
+view of memory:
+one allocates an object of given type, not merely N bytes of memory,
+and later there is no way to change the type of that object.
+Most C programs also follow this model, most of the time:
+when a function gets a pointer to \vcc{struct Foo}, it usually doesn't
+expect to find data corresponding to some \vcc{struct Bar} there.
+Still, there are rare situations where the program needs to
+change type assignment of a pointer.
+The most common is in the memory allocator, which needs to create
+and destroy objects of arbitrary types from arrays of bytes
+in its memory pool.
+Therefore, the general rule in VCC is that programs are forced to
+follow the strict Java-like type discipline, except for places
+where explicit annotations indicate reinterpretations of type assignment
+(these annotations are explained in \secref{TODO}).
+In particular, as long as there are no type reinterpretations,
+the type of a pointer is fixed.
+
+In most situations in C the type of a pointer is statically known:
+while at the machine code level the pointer is passed around as a type-less
+word, at the C level, in places where it is used, we know its type.
+VCC memory model makes this explicit: pointers are understood as pairs
+of their type and address (an word or integer representing location in memory
+understood as an array of bytes).
+For any state of program execution, VCC maintains the set of \Def{proper pointers}.
+\todo{we might want a better name}
+Only proper pointers can be accessed (read or written).
+There are rules on changing the proper pointer set --- \eg one can remove
+a pointer \vcc{(T*)a}, and add pointers \vcc{(char*)a}, \vcc{(char*)(a+1)},
+..., \vcc{(char*)(a+sizeof(T))}, or \emph{vice versa}.
+These rules make sure that at any given time, representations of two
+unrelated proper pointers do not overlap, which greatly simplifies reasoning.
+Note that given a \vcc{struct SafeString *p}, when \vcc{\proper(p)}
+we will also expect \vcc{\proper(&p->len)}.
+That is, when a structure is proper, and thus safe to access, so should
+be all its fields.
+This is what ``unrelated'' means in the sentence above:
+the representations overlap if and only if they pointer refer to a struct
+and fields of that struct.
+It is OK that fields overlap with their containing struct, but that
+structs overlap each other.
+
+The net result is that VCC needs to check if every memory access is proper,
+but in return it gets that representations of proper pointers to structs
+are disjoint, and thus pointers to structs can be treated as type-safe
+Java-like objects.
+
+The type of type/address pairs, written \vcc{\object}, is exposed in the annotation
+language.
+For example, functions like \vcc{\thread_local()} discussed before,
+or the function \vcc{\proper()} checking if a pointer is in the proper set,
+take values of type \vcc{\object}.
+They actually need that:
+the fact that \vcc{(short*)0xdeadf00d} is proper
+does not imply that \vcc{(int*)0xdeadf00d} is proper.
+Note that this is different than a function taking \vcc{void*} --- in
+VCC there would be no way to tell on value of what actual type the function was called.
+
+
