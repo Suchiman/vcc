@@ -988,6 +988,7 @@ namespace Microsoft.Research.Vcc
         | Index(_, ptr, _) -> isPhysicalLocation ptr
         | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> false        
         | Ref(_, {Type = Type.Ref td }) when hasBoolAttr "record" td.CustomAttr -> false
+        | Ref(_, {Name = name}) when name.StartsWith("__temp") -> false // introduced during IExpression projection; unclear status
         | Deref(_, expr) -> match expr.Type with | SpecPtr _ -> false | _ -> true
         | _ -> true
 
