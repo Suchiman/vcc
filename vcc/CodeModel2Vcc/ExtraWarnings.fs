@@ -31,6 +31,7 @@ namespace Microsoft.Research.Vcc
         let found() = foundVolatile := true; false
         let findVolatile self = function
           | Expr.Dot(_,_,f) when f.IsVolatile || isVolatileType f.Type -> found()
+          | CallMacro(_, "_vcc_current_state", _, _) -> found()
           | CallMacro(_, "_vcc_closed", _, _) -> found()
           | CallMacro(_, "_vcc_owns", _, [Cast(_,_, expr)|expr]) ->
             match expr.Type with 
