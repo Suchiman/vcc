@@ -43,3 +43,16 @@ void foo(unsigned int x)
 Verification of foo failed.
 testcase(9,5) : error VC8507: Assertion 'p[x + 1] is writable' did not verify.
 `
+#include "vcc.h"
+struct S {
+    int a;
+    spec(int b;)
+};
+
+void foo() {
+    struct S s;
+    speconly(unchecked(s.b++);)
+}
+`
+Verification of foo succeeded.
+`
