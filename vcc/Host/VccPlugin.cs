@@ -29,7 +29,6 @@ namespace Microsoft.Research.Vcc
       "/proverWarnings:1",
       // skip AI (inference of variable ranges mostly)
       //"/noinfer",  
-      "/inline:none",
     };
         
     internal VccFunctionVerifier(VccPlugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, Helper.Env env)
