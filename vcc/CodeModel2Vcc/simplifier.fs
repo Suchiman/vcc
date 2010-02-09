@@ -1058,6 +1058,7 @@ namespace Microsoft.Research.Vcc
           | Deref(_, ptr) when not ctx.IsPure && isHeapAllocatedParOrLocal ptr -> true
           | Deref(cmn, ptr) when not ctx.IsPure && isPhysicalLocation ptr -> incrAndReportError cmn.Token; true
           | CallMacro(cmn, "inlined_atomic", _, _) -> incrAndReportError cmn.Token; false
+          | CallMacro(_, "spec", _, _) -> false
           | _ -> true
         expr.SelfCtxVisit(false, countPhysicalAccesses')
         

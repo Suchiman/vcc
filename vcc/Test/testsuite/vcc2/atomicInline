@@ -197,7 +197,6 @@ RtlpWaitForSpinLockAndAcquire(
 }
 
 `
-testcase(63,43) : warning VC9302: [possible unsoundness]: more then one access to physical memory in atomic block; extra accesses might be due to bitfield operations
 Verification of _RTL_SPIN_LOCK#adm succeeded.
 Verification of RtlpWaitForSpinLockAndAcquire succeeded.
 `
@@ -354,4 +353,25 @@ int g(struct S *s spec(int ^x) claimp(c))
 `
 Verification of f succeeded.
 Verification of g succeeded.
+`
+#include "vcc.h"
+
+struct S {
+    volatile int x;
+    spec(volatile int y;)
+};
+
+spec(vcc(atomic_inline)
+void SetX(struct S *s) {
+    s->y = 1;
+};)
+
+void foo(struct S *s)
+    requires(wrapped(s))
+{
+    atomic (s) { s->x = 1; speconly(s->y = 1;) } // no warning
+    atomic (s) { s->x = 1; speconly(SetX(s);) } // warning
+}
+`
+Verification of foo succeeded.
 `
