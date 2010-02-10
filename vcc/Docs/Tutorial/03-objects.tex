@@ -97,8 +97,26 @@ Thus, in VCC one needs to explicitly state which objects are consistent.
 This is what the \vcc{requires \wrapped(s)} precondition achieves:
 it states that before the function is called the object should
 better be consistent and owned by the current thread.
-Now we need to explain ownership.
+Now we need to explain ownership, and later we shall have a take
+at explaining the naming (\ie why is it wrapped).
 
 \subsection{Ownership}
+
+In VCC each object has a single owner, denoted \vcc{\owner(o)}.
+The owner itself is also an object, but VCC provides objects, of \vcc{\thread} type, to represent threads.
+Thus, intuitively an object is owned by another object or a thread.
+Threads own themselves.
+For now we're going to ignore the possibility of non-thread objects owning things.
+
+The current thread of execution is referred to as \vcc{\me}.
+The concept of ``currently executing'' threads has only meaning when verifying
+functions, so \vcc{\me} cannot be used in invariants.
+
+\begin{VCC}
+bool \wrapped(\object o) 
+  { return \consistent(o) && \owner(o) == \me; }
+bool \unwrapped(\object o) 
+  { return !\consistent(o) && \owner(o) == \me; }
+\end{VCC}
 
 
