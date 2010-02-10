@@ -29,11 +29,11 @@ it only means it will not crash.
 The next step is to convey our ideas on what the program should
 to the verifier, and have it validate them.
 \todo{the example uses the current syntax, the text will mostly talk about the new one}
-A simplest way of doing that is through \vcc{spec( assert E )}
+A simplest way of doing that is through \vcc{_( assert E );}
 statements, where \vcc{E} is a boolean expression.
 It is an instruction to the verifier asking it to try to prove
 that in any execution of the program \vcc{E} will be true.
-All such annotations, surrounded by \vcc{spec( ... )}
+All such annotations, surrounded by \vcc{_( ... )}
 are there only for VCC.
 The regular C compiler should not see them,
 so the program with annotation behaves exactly as the program
@@ -49,10 +49,14 @@ without them.
 For the regular C compiler the \vcc{<vcc.h>} header file contains
 just a single definition:
 \begin{VCC}
-#define spec(...) /* nothing */
+#define _(...) /* nothing */
 \end{VCC}
-VCC does not use this definition, and instead parses the inside of \vcc{spec( ... )}
-annotations.
+VCC does not use this definition, and instead parses the inside of \vcc{_( ... )}
+annotations.%
+\footnote{
+  One can prevent definition of \vcc{_}, and instead surround annotations with
+  \vcc{__vcc_spec(...)}.
+  This is controlled with \vcc{_VCC_DONT_USE_UNDERSCORE} macro-definition.}
 Let's then have a look at the example.
 
 \vccInput{c/01_min2.c}
@@ -82,21 +86,21 @@ There are two basic kinds of contracts on functions:
 \item the requirements before the function is called, and
 \item the conditions that the implementation of the function ensures to be true when it finishes.
 \end{itemize}
-These are given with \vcc{spec( requires E )} and \vcc{spec( ensures E )} respectively.
+These are given with \vcc{_( requires E )} and \vcc{_( ensures E )} respectively.
 
 \vccInput[linerange={min-endmin,out-}]{c/01_min3.c}
 
 \noindent
 The function \vcc{min()} doesn't have any specific entry requirements:
 it can be called with any values of arguments.
-Thus we say \vcc{spec( requires \true )} to say that the entry condition is
+Thus we say \vcc{_( requires \true )} to say that the entry condition is
 always true.
 The postcondition states that the value returned from the function (referred to as \vcc{\result})
 will be no bigger than any of the input arguments \vcc{a} and \vcc{b}.
 
 Note that \vcc{\true} and \vcc{\result} are spelled with a backslash.
 All VCC keywords, which can be used in expressions, start with a backslash.
-This does not apply to the first keyword after \vcc{spec}, because it cannot
+This does not apply to the first keyword after \vcc{_}, because it cannot
 be confused with a C identifier (thus you are still free to have, \eg
 a function called \texttt{requires} or \texttt{assert}).
 
@@ -125,7 +129,7 @@ VCC says that \vcc{main()} is correct, only \vcc{min()} is broken.
 
 The way verification process works can be usually explained using the
 notion of assertions and assumptions.
-We've already seen assertions, that is annotations of the form \vcc{spec( assert E )}.
+We've already seen assertions, that is annotations of the form \vcc{_( assert E )}.
 When VCC sees such an assertion in the code
 it tries to see if from what it ``knows'' about the program it can infer
 that \vcc{E} is true.
@@ -135,7 +139,7 @@ So an assertion can be understood as a hint for the verifier:
 you should better be able to infer \vcc{E}, and by the way, you can use
 \vcc{E} in your later proofs.
 
-An assumption, written \vcc{spec( assume E )}, has only the second component:
+An assumption, written \vcc{_( assume E )}, has only the second component:
 it makes the verifier ``know'' \vcc{E} holds in the following code of the function.
 It does not need to prove that it will actually hold, it just assumes it will.
 It is useful to think in terms of possible program executions: the verifier
@@ -148,7 +152,7 @@ Of course, introducing assumptions is unsafe, for example consider:
 
 \begin{VCC}
 void perc(int x) {
-  spec( assume x != 0 )
+  _( assume x != 0 )
   return 100 / x;
 }
 int main()
@@ -174,12 +178,12 @@ Once you find what is that thing VCC doesn't know, but what makes it verify the 
 you can figure out how to specify rest of your program, so that is knows it.
 
 One however needs to be very careful with assumptions.
-An assumption of the form \vcc{spec( assume \false )} makes everything below
+An assumption of the form \vcc{_( assume \false )} makes everything below
 it verify, including null pointer dereferences and the like.
 This is because it constrains the verification to all the executions
 where \vcc{\false} holds, which is none executions.
 Note that there are many creative ways of writing \vcc{\false}, including
-\vcc{spec( assume 1 != 0 )} or \vcc{spec( assume x < 0 )} when \vcc{x} is \vcc{unsigned}.
+\vcc{_( assume 1 != 0 )} or \vcc{_( assume x < 0 )} when \vcc{x} is \vcc{unsigned}.
 
 Another use of assumption is for explaining how some specification construct works ---
 internally VCC will often translate them to assertions and assumptions, and presenting
@@ -211,7 +215,7 @@ that is assigning an unspecified value
 to the variable \vcc{position}. 
 The only knowledge about it comes from the following assumption.
 
-Let's also consider the meaning of \vcc{spec( requires \false )}.
+Let's also consider the meaning of \vcc{_( requires \false )}.
 When verifying function body it translates to an assumption.
 As we have noted this will make the body of function verify,
 regardless what it contains.
@@ -219,7 +223,7 @@ On the other hand, you will be unable to verify call to such a function
 from outside.
 \todo{Do we want that here?}
 
-Conversely, \vcc{spec( ensures \false )} will prevent verification
+Conversely, \vcc{_( ensures \false )} will prevent verification
 of the body of the function, but will make the function that calls
 it verify.
 
@@ -240,7 +244,7 @@ For example the one below does not use a branch.
 \noindent
 The syntax:
 \begin{VCC}
-spec( assert {bv} \forall int x; (x & -1) == x )
+_( assert {bv} \forall int x; (x & -1) == x )
 \end{VCC}
 
 \noindent
@@ -254,7 +258,7 @@ The write clause is a form of function contract.
 It specifies what happens to globally accessible memory locations
 (\ie heap objects or global variables; the write clauses never talk
 about local variables).
-Intuitively, a clause \vcc{spec( writes p, q )} is equivalent to saying
+Intuitively, a clause \vcc{_( writes p, q )} is equivalent to saying
 that the function is going to modify \emph{only} objects pointed to by \vcc{p}
 and objects pointed to by \vcc{q}.
 In other words, it is the same as having an ensures clause
@@ -275,7 +279,7 @@ Now, let's have a look at a function calling \vcc{swap()}.
 
 There are two things to note here.
 First, one lists pointers to memory locations, not l-values in the writes
-clause (\ie \vcc{spec(writes &x, &y, &z)} and not \vcc{spec(writes x, y, z)}).
+clause (\ie \vcc{_(writes &x, &y, &z)} and not \vcc{_(writes x, y, z)}).
 Second, VCC has no problems showing that \vcc{swap(&x, &y)} does not change
 \vcc{z}.
 
@@ -326,7 +330,7 @@ to \vcc{boundedIncr(&x)}.
 %We will get into details all of these later.
 %For now we just need to know that in order to be able to write to \vcc{*p}
 %one needs to know that \vcc{p} was listed in the writes clause \emph{and} \vcc{\mutable(p)}.
-%For example, if we remove the \vcc{spec( writes ... )} clause from the
+%For example, if we remove the \vcc{_( writes ... )} clause from the
 %\vcc{boundedIncr()} we get the following output:
 
 

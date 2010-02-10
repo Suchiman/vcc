@@ -53,7 +53,7 @@ This is enough to show the postcondition assertion.
 If the loop was of the form:
 \begin{VCC}
 while (res >= b) 
-  spec( invariant a % b == res % b )
+  _( invariant a % b == res % b )
 {
   res -= b;
 }
