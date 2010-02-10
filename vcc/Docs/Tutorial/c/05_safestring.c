@@ -11,7 +11,7 @@ struct SafeString {
 /*{index}*/
 int sstr_index_of(struct SafeString *s, char c)
   requires(wrapped(s))
-  ensures(result > 0 ==> s->content[result] == c)
+  ensures(result >= 0 ==> s->content[result] == c)
 {
   unsigned i;
 
@@ -22,5 +22,5 @@ int sstr_index_of(struct SafeString *s, char c)
 
 /*`
 Verification of SafeString#adm succeeded.
-Verification of sstr_indexOf succeeded.
+Verification of sstr_index_of succeeded.
 `*/

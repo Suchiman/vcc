@@ -1,14 +1,14 @@
 \section{Object invariants}
 
-Object invariants are predicates describing ``valid'' states of objects.
+Object invariants are predicates describing ``consistent'' states of objects.
 Take for example a safe string structure implemented with a
 statically allocated array (we'll move to dynamic allocation later).
 
 \vccInput[linerange={beg-index}]{c/05_safestring.c}
 
 \noindent
-The invariant of \vcc{struct SafeString} states that valid instances
-of that structure will shorter than \vcc{SSTR_MAX_LEN} and \vcc{'\0'}-terminated.
+The invariant of \vcc{struct SafeString} states that consistent instances
+of that structure will shorter than \vcc{SSTR_MAXLEN} and \vcc{'\0'}-terminated.
 While this seems simple and intuitive, we need a quick overlook of how VCC
 models C memory, to get a full understanding.
 
@@ -60,6 +60,8 @@ and fields of that struct.
 It is OK that fields overlap with their containing struct, but that
 structs overlap each other.
 
+\todo{this is essentially the take-away, we should consider trimming this
+section}
 The net result is that VCC needs to check if every memory access is proper,
 but in return it gets that representations of proper pointers to structs
 are disjoint, and thus pointers to structs can be treated as type-safe
@@ -75,5 +77,28 @@ the fact that \vcc{(short*)0xdeadf00d} is proper
 does not imply that \vcc{(int*)0xdeadf00d} is proper.
 Note that this is different than a function taking \vcc{void*} --- in
 VCC there would be no way to tell on value of what actual type the function was called.
+
+\subsection{Wrapped}
+
+Consider the function \vcc{sstr_index_of()} in the example below. 
+
+\vccInput[linerange={index-999}]{c/05_safestring.c}
+
+\noindent
+To avoid indexing the \vcc{s->content[]} array out of bounds it needs to know
+that \vcc{s->len <= SSTR_MAXLEN}. 
+One could argue that all objects at all times should be consistent (\ie their
+invariants hold),
+so if a function takes an object as an argument, it should better be consistent.
+Unfortunately, the reality is more complicated.
+In particular, the invariants of objects generally do not hold before they are fully
+initialized, or in a middle of a function operating on them.
+Thus, in VCC one needs to explicitly state which objects are consistent.
+This is what the \vcc{requires \wrapped(s)} precondition achieves:
+it states that before the function is called the object should
+better be consistent and owned by the current thread.
+Now we need to explain ownership.
+
+\subsection{Ownership}
 
 
