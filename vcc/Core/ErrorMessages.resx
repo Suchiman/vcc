@@ -3652,4 +3652,7 @@
   <data name="LocalUsedBeforeDeclaration" xml:space="preserve">
     <value>Cannot use local variable '{0}' before it is declared.</value>
   </data>
+  <data name="MapAccessAsOutArgument" xml:space="preserve">
+    <value>A map access cannot be passed as an out parameter.</value>
+  </data>
 </root>

@@ -127,6 +127,9 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     LocalUsedBeforeDeclaration,
 
-
+    /// <summary>
+    /// A map access cannot be passed as an out parameter.
+    /// </summary>
+    MapAccessAsOutArgument,
   }
 }

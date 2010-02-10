@@ -3041,6 +3041,32 @@ namespace Microsoft.Research.Vcc {
     public bool DidSilentlyResolveToVoid { get; private set; }
   }
 
+  public class VccOutArgument : OutArgument
+  {
+    public VccOutArgument(TargetExpression expression, ISourceLocation sourceLocation)
+      : base(expression, sourceLocation) { 
+    }
+
+    protected VccOutArgument(BlockStatement containingBlock, VccOutArgument template)
+      : base(containingBlock, template) {
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      if (base.CheckForErrorsAndReturnTrueIfAnyAreFound()) return true;
+      if (this.Expression.Definition is IPropertyDefinition) {
+        this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.MapAccessAsOutArgument));
+        return true;
+      }
+      return false;
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      return new VccOutArgument(containingBlock, this);
+    }
+
+  }
+
   public class VccPointerQualifiedName : PointerQualifiedName
   {
     public VccPointerQualifiedName(Expression qualifier, SimpleName simpleName, ISourceLocation sourceLocation)

@@ -43,10 +43,15 @@ namespace Microsoft.Research.Vcc
       get { return CommandLineOptions != null ? CommandLineOptions.NoPreprocessor : false; }
     }
 
+    private bool DebugOnWarningOrError {
+      get { return CommandLineOptions != null ? CommandLineOptions.DebugOnWarningOrError : false; }
+    }
+
     public void HandleErrors(object sender, Microsoft.Cci.ErrorEventArgs args) {
       foreach (IErrorMessage error in args.Errors) {
         ISourceLocation/*?*/ sourceLocation = error.Location as ISourceLocation;
         if (sourceLocation == null) continue;
+        if (this.DebugOnWarningOrError) System.Diagnostics.Debugger.Launch();
         bool isError = !error.IsWarning || WarningsAsErrors;
         if (isError) VccCommandLineHost.ErrorCount++;
         CompositeSourceDocument/*?*/ compositeDocument = sourceLocation.SourceDocument as CompositeSourceDocument;
