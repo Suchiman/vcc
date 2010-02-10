@@ -3515,7 +3515,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.GetNextToken();
         var argExpr = this.ParseExpression(followers);
         var slb = new SourceLocationBuilder(argExpr.SourceLocation);
-        return new OutArgument(new TargetExpression(argExpr), slb);
+        return new VccOutArgument(new TargetExpression(argExpr), slb);
       } else 
         return this.ParseExpression(followers);
     }

@@ -45,6 +45,7 @@ namespace Microsoft.Research.Vcc
     public bool DumpBoogie;
     public bool GenerateFieldOffsetAxioms = true;
     public bool WarningsAsErrors;
+    public bool DebugOnWarningOrError;
     public bool SaveModel;
     public bool DetailedTimes;
     public bool PrintCEVModel;
@@ -110,14 +111,17 @@ namespace Microsoft.Research.Vcc
             return true;
           }
           string filename = this.ParseNamedArgument(arg, "cevprint", "cev");
-          if (filename != null)
-          {
+          if (filename != null) {
               this.options.PrintCEVModel = true;
               this.options.BoogieOptions.Add("/cev:" + filename);
               return true;
           }
           return false;
         case 'd':
+          if (this.ParseName(arg, "debug", "dbg")) {
+            this.options.DebugOnWarningOrError = true;
+            return true;
+          }
           bool? dump = this.ParseNamedBoolean(arg, "dumpsource", "d");
           if (dump != null) {
             this.options.PipeOperations.Add("dump after end");
