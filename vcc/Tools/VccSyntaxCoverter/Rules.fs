@@ -61,14 +61,43 @@ module Rules =
         | _ -> fn toks, rest            
     parenRuleExt kw repl
   
+  let splitAt op toks =
+    let rec aux acc locAcc = function
+      | Tok.Op (_, n) :: rest when n = op ->
+        aux (List.rev locAcc :: acc) [] rest
+      | x :: rest ->
+        aux acc (x :: locAcc) rest
+      | [] ->
+        if locAcc.IsEmpty then List.rev acc
+        else List.rev (List.rev locAcc :: acc)
+    aux [] [] toks
+  
+  let parenRuleN kw n fn =
+    let repl = function
+      | id :: toks ->
+        match eatWs toks with
+          | Tok.Group (_, "(", toks) :: rest when (splitAt "," (eatWs toks)).Length = n ->
+            let args = splitAt "," (apply [] toks)
+            fn args, rest
+          | _ -> [id], toks
+      | _ -> failwith ""
+    { keyword = kw
+      replFn = repl }
+    
   let addRule (r:rule) = rules.Add (r.keyword, r)
   let poss = function
     | [] -> fakePos
     | (x:Tok) :: _ -> x.Pos
+  
+  let trim toks =
+    toks |> List.rev |> eatWs |> List.rev |> eatWs
+    
+  let paren p toks =
+    Tok.Group (fakePos, p, trim toks)
     
   let fnApp fnName toks = 
     let p = poss toks 
-    [Tok.Id (p, fnName); Tok.Group (p, "(", toks)]
+    [Tok.Id (p, fnName); paren "(" toks]
     
   let spec kw toks = 
     let p = poss toks 
@@ -98,15 +127,6 @@ module Rules =
     else
       toks
 
-  let splitAt op toks =
-    let rec aux acc locAcc = function
-      | Tok.Op (_, n) :: rest when n = op ->
-        aux (List.rev locAcc :: acc) [] rest
-      | x :: rest ->
-        aux acc (x :: locAcc) rest
-      | [] -> List.rev (List.rev locAcc :: acc)
-    aux [] [] toks
-  
   let joinWith op defs =
     let rec aux acc = function
       | [x] -> List.rev (rev_append x acc)
@@ -144,33 +164,58 @@ module Rules =
       if (eatWs rest).IsEmpty then
         body, rest
       else
-        [Tok.Group (p, "(", body)], rest
+        [paren "(" body], rest
     parenRuleExt name repl    
     
   let init() =
     addStmtKwRule "assert" "assert"
+    addStmtKwRule "bv_lemma" "assert {bv}" // this is stretching it
     addStmtKwRule "assume" "assume"
-    addStmtKwRule "wrap" "pack"
-    addStmtKwRule "unwrap" "unpack"
+    addStmtKwRule "wrap" "wrap"
+    addStmtKwRule "unwrap" "unwrap"
     addStmtKwRule "spec" "ghost"
     
-    addKwRepl "true" "\\true"
-    addKwRepl "false" "\\false"
+    //addKwRepl "true" "\\true"
+    //addKwRepl "false" "\\false"
     addKwRepl "mathint" "\\integer"
+    addKwRepl "obj_t" "\\object"
+    addKwRepl "threadid_t" "\\thread"
+    addKwRepl "result" "\\result"
+    addKwRepl "this" "\\this"
     
     addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
     addRule (quantRule "forall" "==>")
     addRule (quantRule "exists" "&&")
     
-    addKwRule "expose" "expose"
+    addKwRule "expose" "unwrapping"
     addKwRule "invariant" "invariant"
     addKwRule "ensures" "ensures"
     addKwRule "requires" "requires"
     addKwRule "reads" "reads"
     addKwRule "writes" "writes"
     
-    addFnRule "mutable" "\\mutable"
-    addFnRule "wrapped" "\\packed"
+    addFnRule "mutable" "\\unwrapped"
+    addFnRule "wrapped" "\\wrapped"
+    addFnRule "closed" "\\consistent"
+    addFnRule "typed" "\\valid"
+    addFnRule "owner" "\\owner"
     addFnRule "thread_local" "\\thread_local"
+    addFnRule "span" "\\span"
+    addFnRule "unchecked" "_(unchecked)"
+    addFnRule "inv" "\\inv"
+    addFnRule "inv2" "\\inv2"
+    addFnRule "keeps" "\\mine"
     
+    addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
+    
+    let as_array = function
+      | [arr; sz] ->
+        let arr =
+          match arr with
+            | [Tok.Id _] -> arr
+            | _ -> [paren "(" arr]
+        [paren "(" [Tok.Id (fakePos, "\\any"); paren "[" sz]] @ arr
+      | _ -> failwith ""
+    addRule (parenRuleN "as_array" 2 as_array)
+        
     
