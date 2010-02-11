@@ -5,7 +5,7 @@
 struct SafeString {
   unsigned len;
   char content[SSTR_MAXLEN + 1];
-  invariant(len < SSTR_MAXLEN)
+  invariant(this->len < SSTR_MAXLEN)
   invariant(content[len] == '\0')
 };
 /*{init}*/
