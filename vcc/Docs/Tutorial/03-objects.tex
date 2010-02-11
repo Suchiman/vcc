@@ -12,6 +12,8 @@ statically allocated array (we'll move to dynamic allocation later).
 \noindent
 The invariant of \vcc{struct SafeString} states that consistent instances
 of that structure will shorter than \vcc{SSTR_MAXLEN} and \vcc{'\0'}-terminated.
+To refer to the current instance in an invariant we can use \vcc{\this}, but
+we can also omit it (the example above shows both).
 
 Talking about instances of structures in C is a tricky business. 
 In plain C a structure type generally just gives some guidelines how to interpret
@@ -116,19 +118,39 @@ When verifying a body of a function VCC assumes that it is being executed by som
 particular thread.
 The \vcc{\thread} object representing it is referred to as \vcc{\me}.
 
-(Some of) the rules of ownership:
+(Some of) the rules of ownership and consistency:
 \begin{enumerate}
-\item threads are always consistent and own themselves
-\item only threads can own inconsistent objects
+\item every atomic step of the program has to preserve invariants of all consistent objects 
 \item only the owning thread can modify inconsistent object
+\item threads own themselves
+\item only threads can own inconsistent objects
 \end{enumerate}
-These rules are usually ensured by using the wrap/unwrap protocol.
-The first approximation is that the wrap operation asserts that the invariant
-indeed holds and sets the consistent flag to true.
-The unwrap operation assumes the invariant and sets the consistent
-flag to false.
-Both require that the object is owned by the current thread.
-Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\unwrapped(...)}
+Thus, by the first two rules, VCC allows updates of objects in the following two situations:
+\begin{enumerate}
+\item the updated object is consistent, the update is atomic, and the update preserves the invariant of the object,
+\item or the updated object is inconsistent and the update is performed by the owning thread.
+\end{enumerate}
+In the first case to ensure that an update is atomic, VCC requires that the
+updated field has a \vcc{volatile} modifier.
+There is a lot to be said about atomic updates in VCC, and we shall do
+that in \secref{TODO}, but for now we're only considering sequentially
+accessed objects, with no \vcc{volatile} modifiers.
+For such objects we can assume that they \emph{do not change}
+when they are consistent.
+
+So a thread needs to make the object inconsistent to update it.
+Because making it inconsistent counts as an update, the thread needs
+to own it first.
+This is performed by the unwrap operation, which translates to the following:
+(1) assert that the object wrapped (consistent and owned by the current thread), 
+(2) assume the invariant (as a consequence of rule 1, the invariant holds for every consistent object),
+and (3) set the consistent flag to false.
+The wrap operation does just the reverse:
+(1) assert that the object is unwrapped (inconsistent and owned by the current thread;
+note that this does not mean ``not wrapped''),
+(2) assert the invariant, 
+and (3) set the consistent flag to true.
+Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\unwrapped(...)}%
 and at the assert/assume desugaring of \vcc{sstr_append_char()} function.
 
 \begin{VCC}
@@ -145,9 +167,68 @@ use the \vcc{\object} type.
 It is much like \vcc{void*}, in the sense that it is a wildcard for any pointer type.
 However, unlike \vcc{void*}, it also carries the dynamic information about the type of the pointer.
 It can be only used in specifications.
-Note that \vcc{\unwrapped(s)} does not mean \vcc{!\wrapped(s)}.
 
+\subsubsection{The Writes}
 
+The final issue to explain for the example above is the treatment of the \vcc{writes} clauses.
+The initialization function posses no problems: it lists all the fields is assigns to
+(the \vcc{\span(s)} notation is just syntactic sugar, as explained before).
+However, the \vcc{sstr_append_char()} declares that it will only write
+\vcc{s}, wheres it writes \vcc{s->content[...]} and \vcc{s->len}.
+Listing \vcc{s} allows one to unwrap \vcc{s}, and unwrapping \vcc{s}
+makes all its field writable. 
+The next section elaborates on why is it useful.
 
+\subsection{Ownership Trees}
 
+Often objects stand for abstractions that are implemented with
+more than just one object.
+For example a hash table will consist of a control object, an array of pointers,
+and linked lists pointed to by those pointers.
+However, before we get to hash tables, we shall first 
+reimplement our \vcc{SafeString} to have dynamically
+allocated buffer. The logical string consists of the control object holding the length
+and the array of bytes holding the content.
 
+\vccInput[linerange={obj-append}]{c/06_safestring_dynamic.c}
+
+\noindent
+The type \vcc{char[10]} denotes an array with exactly 10 elements,
+and thus the type \vcc{char[capacity]} denotes an array with \vcc{capacity} elements.
+Such types can be only used in casts, as in \vcc{(char[capacity])content},
+which means: take the pointer \vcc{content} and interpret it as an array
+of \vcc{capacity} elements of type \vcc{char}.
+This notation is used so we can think of arrays as objects (of some weird type).
+The other way to think about it is that \vcc{content} represents just
+one object of type \vcc{char}, whereas \vcc{(char[capacity])content}
+represents the array.
+One can use \vcc{\any} instead of \vcc{char} in all of the above, to let
+VCC infer the type.
+
+Now, that we've packed a bunch of characters into an object, we can make
+the \vcc{SafeString} own it.
+And indeed, this is what \vcc{SafeString} specifies in its invariant:
+the syntax \vcc{\mine(o1, ..., oN)} is roughly equivalent
+(the exact translation is provided later)
+to:
+\begin{VCC}
+\owner(o1) == \this && ... && \owner(oN) == \this
+\end{VCC}
+
+OK, so what's the benefit of objects owning other objects?
+The main benefit is abstraction:
+
+\vccInput[linerange={append-alloc}]{c/06_safestring_dynamic.c}
+
+\noindent
+First, the syntax:
+\begin{VCC}
+_(unwrapping o) { ... }
+\end{VCC}
+is equivalent to:
+\begin{VCC}
+_(unwrap(o)); { ... } _(wrap(o));
+\end{VCC}
+Thus, what happens in the example is that we first unwrap the string, then its content, do the
+updates, and then wrap them again.
+The interesting thing is that only \vcc{s} is listed in the writes clause.

@@ -9,6 +9,7 @@ build:
 	$(CONV) c/*.c
 	pdflatex $(D).tex </dev/null
 	chmod +x $(D).pdf
+	rm c/*.c.out
 
 bib:
 	bibtex $(D)
