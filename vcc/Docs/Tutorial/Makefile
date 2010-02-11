@@ -1,9 +1,12 @@
 D = tutorial
 
+CONV = ../../Tools/VccSyntaxCoverter/bin/Debug/VccSyntaxCoverter.exe
+
 all: build 
 #maybe-show
 
 build:
+	$(CONV) c/*.c
 	pdflatex $(D).tex </dev/null
 	chmod +x $(D).pdf
 

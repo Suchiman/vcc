@@ -1,0 +1,27 @@
+\section{Memory model}
+\label{sect:memmodel}
+
+In most situations in C the type of a pointer is statically known:
+while at the machine code level the pointer is passed around as a type-less
+word, at the C level, in places where it is used, we know its type.
+VCC memory model makes this explicit: pointers are understood as pairs
+of their type and address (an word or integer representing location in memory
+understood as an array of bytes).
+For any state of program execution, VCC maintains the set of \Def{proper pointers}.
+\todo{we might want a better name}
+Only proper pointers can be accessed (read or written).
+There are rules on changing the proper pointer set --- \eg one can remove
+a pointer \vcc{(T*)a}, and add pointers \vcc{(char*)a}, \vcc{(char*)(a+1)},
+..., \vcc{(char*)(a+sizeof(T))}, or \emph{vice versa}.
+These rules make sure that at any given time, representations of two
+unrelated proper pointers do not overlap, which greatly simplifies reasoning.
+Note that given a \vcc{struct SafeString *p}, when \vcc{\proper(p)}
+we will also expect \vcc{\proper(&p->len)}.
+That is, when a structure is proper, and thus safe to access, so should
+be all its fields.
+This is what ``unrelated'' means in the sentence above:
+the representations overlap if and only if they pointer refer to a struct
+and fields of that struct.
+It is OK that fields overlap with their containing struct, but that
+structs overlap each other.
+
