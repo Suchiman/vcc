@@ -216,7 +216,9 @@ to:
 \end{VCC}
 
 OK, so what's the benefit of objects owning other objects?
-The main benefit is abstraction:
+The main benefit is abstraction: the function operating on a string
+\vcc{s}, still need to only mention \vcc{s} in their \vcc{writes}
+clause, not \vcc{s->content} or any other objects the string might comprise of.
 
 \vccInput[linerange={append-alloc}]{c/06_safestring_dynamic.c}
 
@@ -229,6 +231,44 @@ is equivalent to:
 \begin{VCC}
 _(unwrap(o)); { ... } _(wrap(o));
 \end{VCC}
-Thus, what happens in the example is that we first unwrap the string, then its content, do the
-updates, and then wrap them again.
-The interesting thing is that only \vcc{s} is listed in the writes clause.
+Thus, at the beginning of the function the string is owned by the current thread and consistent (\ie wrapped),
+whereas the content is owned by the string and consistent.
+After unwrapping the string, the ownership of the content goes to the current thread,
+but the content remains consistent.
+Thus, unwrapping the string makes the string unwrapped, and the content wrapped.
+Then we unwrap the content (which doesn't own anything, so the thread gets no new wrapped objects), and perform the changes,
+and wrap the content.
+Finally, we wrap the string.
+This transfers ownership of the content from the current thread to the string, so the content is no longer wrapped (but still consistent).
+Let's then have a look at the part of the assert/assume translation
+that deals with ownership:
+
+\vccInput[linerange={append-999}]{c/06_safestring_dynamic_assert.c}
+
+\noindent
+To make it easier to read, we made it store the \vcc{s->content} pointer
+casted to an array into a temporary variable.
+Also, an invariant of \vcc{o} is referred to as \vcc{\inv(o)}
+(one can use that in regular VCC specifications).
+As you can see there are two ownership transfers.
+The first one is kind of clear: when unwrapping an object everything that it used
+to own, will be now owned by the thread.
+The second one is much more tricky: 
+in VCC the ownership relations are specified fully through invariants.
+Thus, when wrapping an object, we would need to give it ownership
+of \emph{some} other objects, to satisfy its invariant.
+Of course, in general the invariant might be such that the choice
+is unclear, for example:
+\begin{VCC}
+struct S {
+  struct T *a, *b;
+  _(invariant \mine(a) || \mine(b))
+};
+\end{VCC}
+When wrapping an instance of \vcc{struct S}, should we transfer ownership of \vcc{a}, \vcc{b}, or both?
+By default VCC will reject such invariants, and only allow \vcc{\mine(...)}
+as a top-level conjunct in an invariant.
+Such invariants are supported, but need additional annotation
+and manual ownership transfer when wrapping, see \secref{TODO}.
+
+
