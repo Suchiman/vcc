@@ -1,0 +1,180 @@
+# This document gives extensions to the C99 grammar provided by the
+# VCC verification tool to facilitate annotation of C programs.
+# The C99 grammar extended can be found at:
+#   http://www.open-std.org/JTC1/SC22/wg14/www/docs/n1124.pdf
+
+# TODO:
+#   - map types
+#   - ghost pointers
+#   - ==> and <==>
+#   - (int[10])arr
+#   - p + (0 .. 9), &p[0 .. 9]
+#   - _( logic bool isPositive(int x) = x > 0; )
+#   - set_owner/owns
+#   - claim/unclaim
+#   - block
+
+# Additions
+primary-expression:
+	...
+	specification-expression
+
+cast-expression:
+	...
+	"__vcc_spec" '(' "unchecked" ')' cast-expression
+	
+
+struct-or-union:
+	...
+	"\record"
+
+declaration:
+	...
+	specification-declaration
+
+struct-declaration:
+	...
+	specification-struct-declaration
+
+parameter-type-list:
+	...
+	parameter-list ghost-parameter-list
+
+statement:
+	...
+	specification-statement
+
+iteration-statement:
+	...
+	annotated-iteration-statement
+
+function-definition:
+	...
+	declaration-specifiers declarator function-specification-list compound-statement
+
+declarator:
+	...
+	pointer(opt) direct-declarator '(' parameter-type-list ')' function-specification-list
+
+# new definitions
+specification-struct-declaration:
+	"__vcc_spec" '(' "ghost" specifier-qualifier-list struct-declarator-list ')'
+	"__vcc_spec" '(' "invariant" conditional-expression ')'
+
+specification-expression:
+	quant-name variable-binding-list prover-hints(opt) ';' conditional-expression
+	"\let" let-binding-list ';' conditional-expression
+	set-constructor
+	struct-update
+
+quant-name:
+	"\forall"
+	"\exists"
+	"\lambda"
+
+set-constructor:
+	'{' conditional-expression-list '}'
+
+struct-update:
+	'{' expression "\with" update-specifier-list '}'
+	'{' expression "for" update-specifier-list '}'
+
+update-specifier:
+	designator '=' conditional-expression
+
+let-binding:
+	identifier '=' conditional-expression
+
+variable-binding:
+	type-specifier declarator-list
+
+prover-hints:
+	prover-hints(opt) prover-hint
+
+prover-hint:
+	'{' identifier '}'
+	'{' identifier ':' expression '}'
+	'{' conditional-expression-list '}'
+
+# Note that this allows stray semicolons, and that contracts of ghost functions
+# will need to sit in a (nested) _(...).
+specification-declaration:
+	"__vcc_spec" '(' top-specification-declaration ';'(opt) ')'
+
+top-specification-declaration:
+	"ghost" external-declaration
+	"pure" external-declaration
+	"axiom" conditional-expression
+
+ghost-parameter-list:
+	ghost-parameter-list(opt) ghost-parameter
+
+ghost-parameter:
+	"__vcc_spec" '(' "ghost" parameter-list ')'
+	"__vcc_spec" '(' "ghost_out" parameter-list ')'
+
+specification-statement:
+	"__vcc_spec" '(' "ghost" statement ')'  # it would be good to make the ';' at the end of statement optional
+	"__vcc_spec" '(' "assert" prover-hints(opt) conditional-expression ')'
+	"__vcc_spec" '(' "assume" conditional-expression ')'
+
+	"__vcc_spec" '(' "atomic" conditional-expression ')' compound-statement
+	"__vcc_spec" '(' "begin_update" ')' # TODO: rename?
+
+	"__vcc_spec" '(' "wrap" conditional-expression ')'
+	"__vcc_spec" '(' "unwrap" conditional-expression ')'
+	"__vcc_spec" '(' "unwrapping" conditional-expression-list ')' compound-statement  # note the list
+
+	"__vcc_spec" '(' "to_bytes" conditional-expression ')'
+	"__vcc_spec" '(' "from_bytes" conditional-expression ')'
+	"__vcc_spec" '(' "split_array" conditional-expression-list ')'
+	"__vcc_spec" '(' "join_arrays" conditional-expression-list ')'
+
+iteration-statement:
+	"while" '(' expression ')' loop-specification-list statement
+	"do" loop-specification-list statement while '(' expression ')' ;
+	"for" '(' expression(opt) ';' expression(opt) ';' expression(opt) ')' loop-specification-list statement
+	"for" '(' declaration expression(opt) ';' expression(opt) ')' loop-specification-list statement
+
+loop-specification-list:
+	loop-specification-list(opt) loop-specification
+
+loop-specification:
+	"__vcc_spec" '(' "invariant" conditional-expression ')'
+	"__vcc_spec" '(' "writes" conditional-expression-list ')'
+
+function-specification-list:
+	function-specification-list(opt) function-specification
+
+function-specification:
+	"__vcc_spec" '(' "reads" conditional-expression-list ')'
+	"__vcc_spec" '(' "writes" conditional-expression-list ')'
+	"__vcc_spec" '(' "requires" conditional-expression ')'
+	"__vcc_spec" '(' "ensures" conditional-expression ')'
+	"__vcc_spec" '(' "maintains" conditional-expression ')'
+
+
+# comma-separated lists
+let-binding-list:
+	let-binding-list ',' let-binding
+	let-binding
+
+variable-binding-list:
+	variable-binding-list ',' variable-binding
+	variable-binding
+
+conditional-expression-list:
+	conditional-expression-list ',' conditional-expression
+	conditional-expression
+
+declarator-list:
+	declarator-list ',' declarator
+	declarator
+
+
+update-specifier-list:
+	update-specifier-list ',' update-specifier
+	update-specifier
+
+
+# vim: spell
