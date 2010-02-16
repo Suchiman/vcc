@@ -205,6 +205,12 @@ module Rules =
     addFnRule "inv" "\\inv"
     addFnRule "inv2" "\\inv2"
     addFnRule "keeps" "\\mine"
+    addFnRule "owns" "\\owns"
+    addFnRule "old" "\\old"
+    addFnRule "set_union" "\\union"
+    addFnRule "set_difference" "\\diff"
+    addFnRule "set_intersection" "\\inter"
+    addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
     
@@ -218,4 +224,30 @@ module Rules =
       | _ -> failwith ""
     addRule (parenRuleN "as_array" 2 as_array)
         
+    let set_in = function
+      | [e; s] ->
+        e @ [Tok.Id (fakePos, " \\in ")] @ eatWs s
+      | _ -> failwith ""
+    addRule (parenRuleN "set_in" 2 set_in)
     
+    let set_owns = function
+      | [e; s] ->
+        fnApp "\\set" (fnApp "\\owns" e @ [Tok.Op (fakePos, ",")] @ s)
+      | _ -> failwith ""
+    addRule (parenRuleN "set_owns" 2 set_owns)
+    
+    let struct_rule = function
+      | hd :: rest ->
+        match eatWs rest with
+          | Tok.Id (_, "vcc") :: args ->
+            match eatWs args with
+              | Tok.Group (_, "(", toks) :: rest ->
+                fnApp "_" toks @ [Tok.Whitespace (fakePos, " ")], hd :: rest
+              | _ -> [hd], rest
+          | _ -> [hd], rest
+      | _ -> failwith ""
+    
+    addRule { keyword = "struct"; replFn = struct_rule }
+    addRule { keyword = "union"; replFn = struct_rule }
+    
+      
