@@ -4,17 +4,18 @@
 #   http://www.open-std.org/JTC1/SC22/wg14/www/docs/n1124.pdf
 
 # TODO:
-#   - map types
-#   - ghost pointers
-#   - ==> and <==>
-#   - (int[10])arr
 #   - p + (0 .. 9), &p[0 .. 9]
 #   - _( logic bool isPositive(int x) = x > 0; )
 #   - set_owner/owns
 #   - claim/unclaim
-#   - block
+#
+# DONE
+#   - (int[10])arr  - already allowed by the syntax
 
-# Additions
+#
+# Additions.
+#
+
 primary-expression:
 	...
 	specification-expression
@@ -56,7 +57,35 @@ declarator:
 	...
 	pointer(opt) direct-declarator '(' parameter-type-list ')' function-specification-list
 
-# new definitions
+pointer:
+	...
+	'^' type-qualifier-list(opt) pointer(opt)
+
+direct-declarator:
+	...
+	direct-declarator '[' type-name ']'
+
+# this is a replacement, not addition
+conditional-expression:
+	iff-expression
+	iff-expression ? expression : conditional-expression
+
+#
+# New definitions.
+#
+
+iff-expression:
+	iff-expression "<==>" explies-expression
+	explies-expression
+
+explies-expression:
+	explies-expression "<==" implies-expression
+	implies-expression
+
+implies-expression:
+	logical-OR-expression "==>" implies-expression
+	logical-OR-expression
+
 specification-struct-declaration:
 	"__vcc_spec" '(' "ghost" specifier-qualifier-list struct-declarator-list ')'
 	"__vcc_spec" '(' "invariant" conditional-expression ')'
@@ -120,6 +149,8 @@ specification-statement:
 
 	"__vcc_spec" '(' "atomic" conditional-expression ')' compound-statement
 	"__vcc_spec" '(' "begin_update" ')' # TODO: rename?
+
+	"__vcc_spec" '(' "block" ')' function-specification-list compound-statement
 
 	"__vcc_spec" '(' "wrap" conditional-expression ')'
 	"__vcc_spec" '(' "unwrap" conditional-expression ')'
