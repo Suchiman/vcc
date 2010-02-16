@@ -4,8 +4,7 @@
 #   http://www.open-std.org/JTC1/SC22/wg14/www/docs/n1124.pdf
 
 # TODO:
-#   - p + (0 .. 9), &p[0 .. 9]
-#   - _( logic bool isPositive(int x) = x > 0; )
+# - for now stick to \claim, \unclaim and what's not.
 #   - set_owner/owns
 #   - claim/unclaim
 #
@@ -64,6 +63,11 @@ pointer:
 direct-declarator:
 	...
 	direct-declarator "[" type-name "]"
+
+relational-expression:
+	...
+	relational-expression "\in" shift-expression
+	relational-expression "..." shift-expression # don't use .., use something that is already a token
 
 # this is a replacement, not addition
 conditional-expression:
@@ -134,6 +138,7 @@ top-specification-declaration:
 	"ghost" external-declaration
 	"pure" external-declaration
 	"axiom" conditional-expression
+	"logic" type-specifier pointer(opt) identifier "(" parameter-list(opt) ")" "=" conditional-expression
 
 ghost-parameter-list:
 	ghost-parameter-list(opt) ghost-parameter
