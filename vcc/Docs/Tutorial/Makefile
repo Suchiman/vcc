@@ -5,11 +5,13 @@ CONV = ../../Tools/VccSyntaxCoverter/bin/Debug/VccSyntaxCoverter.exe
 all: build 
 #maybe-show
 
-build:
-	$(CONV) c/*.c
+build: conv
 	pdflatex $(D).tex </dev/null
 	chmod +x $(D).pdf
 	rm c/*.c.out
+
+conv:
+	$(CONV) c/*.c
 
 bib:
 	bibtex $(D)

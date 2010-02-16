@@ -268,9 +268,72 @@ struct S {
 When wrapping an instance of \vcc{struct S}, should we transfer ownership of \vcc{a}, \vcc{b}, or both?
 By default VCC will reject such invariants, and only allow \vcc{\mine(...)}
 as a top-level conjunct in an invariant.
-Such invariants are supported, but need additional annotation
+Invariants like the ones above are supported, but need additional annotation
 and manual ownership transfer when wrapping, see \secref{dynamic-ownership}.
 
 
 \subsection{Dynamic ownership}
 \label{sect:dynamic-ownership}
+
+When a struct is annotated with \vcc{_(dynamic_owns)} the ownership transfers
+during wrapping need to performed explicitly, but \vcc{\mine(...)} can
+be freely used in its invariant, including using it under a universal
+quantifier.
+
+\vccInput[linerange={obj-set}]{c/07_table.c}
+
+\noindent
+The invariant of \vcc{struct SafeContainer} states that it owns its underlaying array,
+as well as all elements pointed to from it.
+It also states that there are no duplicates in that array.
+Let's now say we want to change a pointer in that array,
+from \vcc{x} to \vcc{y}.
+After such operation, the container should own whatever it used
+to own minus \vcc{x} plus \vcc{y}.
+To facilitate such transfers VCC introduces the \Def{owns set}.
+It is essentially the inverse of the owner field.
+It is defined on every object \vcc{o} and referred to as \vcc{\owns(o)}.
+VCC maintains that:
+\begin{VCC}
+\forall object p, q; \consistent(p) ==> 
+  (q \in \owns(p) <==> \owner(p) == q)
+\end{VCC}
+That is, for consistent \vcc{p}, the set \vcc{\owns(p)} contains exactly
+the objects owned by \vcc{p}.
+Additionally, the unwrap operation does not touch the owns set,
+that is after unwrapping \vcc{p}, the \vcc{\owns(p)} still contains
+all that objects that \vcc{p} used to own.
+Finally, the wrap operation will attempt to transfer ownership
+of everything in the owns set to the object being wrapped.
+This requires that the current thread has write access to these objects
+and that they are wrapped.
+
+Thus, the usual pattern is to unwrap the object, modify the owns
+set, and wrap the object.
+Let's have a look at an example:
+
+\vccInput[linerange={set-use}]{c/07_table.c}
+
+\noindent
+The \vcc{sc_set()} function transfer ownership of \vcc{s} to \vcc{c},
+and additionally leaves object initially pointed to by \vcc{s->strings[idx]}
+wrapped, \ie owned by the current thread.
+This can be used in the call site:
+
+\vccInput[linerange={use-out}]{c/07_table.c}
+
+\noindent
+In the contract of \vcc{sc_add} the string \vcc{s} is mentioned
+in the writes clause, but in the postcondition we do not say it's wrapped.
+Thus, asserting \vcc{\wrapped(s)} after the call would fail.
+This effectively tells the call site that it no longer has ownership of \vcc{s}.
+Additionally, when we look at the invariant of \vcc{c}, we can even figure out
+that \vcc{s} is indeed no longer wrapped.
+
+VCC does know that the invariant of \vcc{s} holds (because the object is consistent),
+but we need to explicitly assert it to bring it into theorem prover scope.
+Normally, this is done by \vcc{unwrap}, or \vcc{requires \wrapped(...)}.
+
+Note the distinction between not being able to prove \vcc{P} and 
+being able to prove \vcc{!P}.
+
