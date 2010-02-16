@@ -65,6 +65,16 @@ relational-expression:
 	relational-expression "\in" shift-expression
 	relational-expression "..." shift-expression # don't use .., use something that is already a token
 
+storage-class-specifier:
+	...
+	specification-type-specifier
+	specification-field-specifier
+
+function-specifier:
+	...
+	specification-function-specifier
+
+
 # this is a replacement, not addition
 conditional-expression:
 	iff-expression
@@ -185,6 +195,24 @@ function-specification:
 	"__vcc_spec" "(" "requires" conditional-expression ")"
 	"__vcc_spec" "(" "ensures" conditional-expression ")"
 	"__vcc_spec" "(" "maintains" conditional-expression ")"
+
+# TODO: add the remaining ones
+specification-field-specifier:
+	"__vcc_spec" "(" "backing_member" ")"
+	"__vcc_spec" "(" "name" identifier ")"
+	"__vcc_spec" "(" "inline" ")"
+	"__vcc_spec" "(" "outline" ")"  # as_array
+
+
+# Note that this places them *before* "struct", not after.
+specification-type-specifier:
+	"__vcc_spec" "(" "dynamic_owns" ")"
+	"__vcc_spec" "(" "volatile_owns" ")"
+
+specification-function-specifier:
+	"__vcc_spec" "(" "status" identifier ")"  # verified, specified, ...
+	"__vcc_spec" "(" "hint" identifier ":" expression ")" # splits, options, frame_axiom
+	"__vcc_spec" "(" "atomic_inline" ")"
 
 
 # comma-separated lists
