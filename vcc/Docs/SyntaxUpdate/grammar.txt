@@ -3,13 +3,8 @@
 # The C99 grammar extended can be found at:
 #   http://www.open-std.org/JTC1/SC22/wg14/www/docs/n1124.pdf
 
-# TODO:
-# - for now stick to \claim, \unclaim and what's not.
-#   - set_owner/owns
-#   - claim/unclaim
-#
-# DONE
-#   - (int[10])arr  - already allowed by the syntax
+# claim/unclaim: use \claim/\unclaim
+# set_owner/set_owns: \set(\owns(x), ...); \set(\owner(y), ...);
 
 #
 # Additions.
@@ -62,7 +57,8 @@ pointer:
 
 direct-declarator:
 	...
-	direct-declarator "[" type-name "]"
+	direct-declarator "[" type-name "]" # maps
+	# note that int[10] (for as_array() casting) is already a valid C type
 
 relational-expression:
 	...
@@ -161,6 +157,7 @@ specification-statement:
 	"__vcc_spec" "(" "unwrap" conditional-expression ")"
 	"__vcc_spec" "(" "unwrapping" conditional-expression-list ")" compound-statement  # note the list
 
+	# TODO We might want to use \to_bytes, etc.
 	"__vcc_spec" "(" "to_bytes" conditional-expression ")"
 	"__vcc_spec" "(" "from_bytes" conditional-expression ")"
 	"__vcc_spec" "(" "split_array" conditional-expression-list ")"
