@@ -186,14 +186,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     ITypeDefinition/*?*/ LeftOperandFixedArrayElementType {
-      get {
-        ITypeDefinition leftOperandType = this.LeftOperand.Type;
-        if (/*leftOperandType.IsSpecialName &&*/ leftOperandType.IsStruct && leftOperandType.SizeOf > 0) {
-          IFieldDefinition/*?*/ field = TypeHelper.GetField(leftOperandType, this.Helper.NameTable.GetNameFor("_ElementType"));
-          if (field != null) return field.Type.ResolvedType;
-        }
-        return null;
-      }
+      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.LeftOperand.Type); }
     }
 
     /// <summary>
@@ -237,14 +230,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     ITypeDefinition/*?*/ RightOperandFixedArrayElementType {
-      get {
-        ITypeDefinition rightOperandType = this.RightOperand.Type;
-        if (/*leftOperandType.IsSpecialName &&*/ rightOperandType.IsStruct && rightOperandType.SizeOf > 0) {
-          IFieldDefinition/*?*/ field = TypeHelper.GetField(rightOperandType, this.Helper.NameTable.GetNameFor("_ElementType"));
-          if (field != null) return field.Type.ResolvedType;
-        }
-        return null;
-      }
+      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.RightOperand.Type); }
     }
 
     /// <summary>
@@ -487,11 +473,7 @@ namespace Microsoft.Research.Vcc {
       if (result == Dummy.Type) {
         NestedTypeDefinition/*?*/ addressType = this.Address.Type as NestedTypeDefinition;
         if (addressType != null && addressType.Name.Value.StartsWith("_FixedArrayOfSize", StringComparison.Ordinal)) {
-          foreach (ITypeDefinitionMember member in addressType.Members) {
-            IFieldDefinition/*?*/ field = member as IFieldDefinition;
-            if (field != null && field.Name.Value == "_ElementType")
-              return field.Type.ResolvedType;
-          }
+          return ((VccCompilationHelper)this.Helper).FixedArrayElementType(addressType);
         }
       }
       return result;
@@ -1944,14 +1926,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     ITypeDefinition/*?*/ FixedArrayElementType {
-      get {
-        ITypeDefinition indexedObjectType = this.IndexedObject.Type;
-        if (/*indexedObjectType.IsSpecialName &&*/ indexedObjectType.IsStruct && indexedObjectType.SizeOf > 0) {
-          IFieldDefinition/*?*/ field = TypeHelper.GetField(indexedObjectType, this.Helper.NameTable.GetNameFor("_ElementType"));
-          if (field != Dummy.Field) return field.Type.ResolvedType;
-        }
-        return null;
-      }
+      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.IndexedObject.Type); }
     }
 
     protected override void ComplainAboutCallee()

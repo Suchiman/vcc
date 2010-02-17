@@ -297,12 +297,19 @@ namespace Microsoft.Research.Vcc {
     }
     private readonly Dictionary<ITypeDefinition, IPointerType> arrayToPointerMap = new Dictionary<ITypeDefinition, IPointerType>();
 
-    internal IPointerType/*?*/ ArrayPointerFor(ITypeDefinition fixedSizeArray) {
-      IPointerType/*?*/ result = null;
-      lock (this.arrayToPointerMap) {
-        this.arrayToPointerMap.TryGetValue(fixedSizeArray, out result);
+    internal ITypeDefinition/*?*/ FixedArrayElementType(ITypeDefinition fixedSizeArray) {
+      if (fixedSizeArray.IsStruct && fixedSizeArray.SizeOf > 0) {
+        IFieldDefinition field = TypeHelper.GetField(fixedSizeArray, this.NameTable.GetNameFor("_ElementType"));
+        if (field != Dummy.Field) return field.Type.ResolvedType;
       }
-      return result;
+      return null;
+    }
+
+    internal IPointerType/*?*/ ArrayPointerFor(ITypeDefinition fixedSizeArray) {
+      ITypeDefinition/*?*/ elementType = this.FixedArrayElementType(fixedSizeArray);
+      if (elementType != null)
+        return PointerType.GetPointerType(elementType, this.Compilation.HostEnvironment.InternFactory);
+      return null;
     }
 
     private enum PtrConvKind
@@ -762,11 +769,7 @@ namespace Microsoft.Research.Vcc {
     {
       NestedTypeDefinition/*?*/ nestedType = type as NestedTypeDefinition;
       if (nestedType != null && nestedType.Name.Value.StartsWith("_FixedArrayOfSize", StringComparison.Ordinal)) {
-        foreach (ITypeDefinitionMember member in nestedType.Members) {
-          IFieldDefinition/*?*/ field = member as IFieldDefinition;
-          if (field != null && field.Name.Value == "_ElementType")
-            return field.Type;
-        }
+        return this.FixedArrayElementType(nestedType);
       }
       return base.GetPointerTargetType(type);
     }
