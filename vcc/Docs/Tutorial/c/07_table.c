@@ -35,6 +35,7 @@ void sc_set(struct SafeContainer *c,
       c->strings[idx] = s;
     }
     speconly(
+      // could be also done with one assignment
       set_owns(c, set_difference(owns(c), SET(old(c->strings[idx]))));
       set_owns(c, set_union(owns(c), SET(s)));
     )
@@ -49,16 +50,17 @@ void use_case(struct SafeContainer *c, struct SafeString *s)
   struct SafeString *o;
   o = c->strings[5];
 
-  assert(wrapped(s) && !wrapped(o));
+  assert(wrapped(s)); // OK
+  assert(wrapped(o)); // error
   sc_set(c, s, 5);
-  assert(wrapped(o));
-  assert(inv(c));
-  assert(!wrapped(s));
+  assert(wrapped(s)); // error
+  assert(wrapped(o)); // OK
 }
 /*{out}*/
 /*`
 Verification of SafeString#adm succeeded.
 Verification of SafeContainer#adm succeeded.
-Verification of sc_add succeeded.
-Verification of use_case succeeded.
+Verification of sc_set succeeded.
+Verification of use_case failed.
+testcase(54,12) : error VC9500: Assertion '_vcc_wrapped(o)' did not verify.
 `*/

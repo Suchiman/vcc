@@ -308,9 +308,11 @@ of everything in the owns set to the object being wrapped.
 This requires that the current thread has write access to these objects
 and that they are wrapped.
 
-Thus, the usual pattern is to unwrap the object, modify the owns
+Thus, the usual pattern is to unwrap the object, potentially modify the owns
 set, and wrap the object.
-Let's have a look at an example:
+Note that when no ownership transfers are needed, one can just unwrap
+and wrap the object, without worrying about ownership.
+Let's have a look at an example, which does perform an ownership transfer:
 
 \vccInput[linerange={set-use}]{c/07_table.c}
 
@@ -325,15 +327,136 @@ This can be used in the call site:
 \noindent
 In the contract of \vcc{sc_add} the string \vcc{s} is mentioned
 in the writes clause, but in the postcondition we do not say it's wrapped.
-Thus, asserting \vcc{\wrapped(s)} after the call would fail.
-This effectively tells the call site that it no longer has ownership of \vcc{s}.
-Additionally, when we look at the invariant of \vcc{c}, we can even figure out
-that \vcc{s} is indeed no longer wrapped.
+Thus, asserting \vcc{\wrapped(s)} after the call fails.
+On the other hand, asserting \vcc{\wrapped(o)} fails before the call,
+but succeeds afterwards.
 
-VCC does know that the invariant of \vcc{s} holds (because the object is consistent),
-but we need to explicitly assert it to bring it into theorem prover scope.
-Normally, this is done by \vcc{unwrap}, or \vcc{requires \wrapped(...)}.
+%This effectively tells the call site that it no longer has ownership of \vcc{s}.
+%Additionally, when we look at the invariant of \vcc{c}, we can even figure out
+%that \vcc{s} is indeed no longer wrapped.
+%
+%VCC does know that the invariant of \vcc{s} holds (because the object is consistent),
+%but we need to explicitly assert it to bring it into theorem prover scope.
+%Normally, this is done by \vcc{unwrap}, or \vcc{requires \wrapped(...)}.
+%
+%Note the distinction between not being able to prove \vcc{P} and 
+%being able to prove \vcc{!P}.
+%
 
-Note the distinction between not being able to prove \vcc{P} and 
-being able to prove \vcc{!P}.
+\subsection{Ownership domains}
+
+An ownership domain of an object \vcc{o} is the set of objects
+that it owns and their ownership domains.
+In other words, it's the set of objects that are transitively
+owned by a given object.
+
+\todo{this remark might be confusing}
+In general there can cycles in the ownership graph,
+and so the definition above should be understood in the least fix point sense.
+However, every object has exactly one owner and threads own themselves,
+and thus anything that
+is owned by a thread will have a ownership domain that is a tree.
+It is most useful to think about ownership as trees, and disregard
+the degenerate cycle case.
+
+Thus, the current thread will own a number of objects, some of them
+unwrapped (inconsistent and thus not owning anything), but other wrapped (consistent and
+so with possibly large ownership domains).
+The ownership domains of the wrapped objects are disjoint
+(in the grand ownership tree of the thread they are all at the same level).
+
+Mentioning a wrapped object in the writes clause gives the function
+a right to unwrap it, and then unwrap everything it owns.
+Thus, it effectively gives write access to its entire ownership domain.
+\todo{make it a real example that actually means something}
+Consider the following piece of code:
+
+\begin{VCC}
+void f(T *p) 
+  _(writes p) { ... }
+...
+T *p, *q, *r;
+_(assert \wrapped(p) && \wrapped(q) && p != q);
+_(assert p \in \domain(q))
+_(assert r \in \domain(q))
+_(assert q->f == 1 && r->f == 1);
+f(p);
+_(assert q->f == 1 && r->f == 1);
+\end{VCC}
+
+\noindent
+The function \vcc{\domain(o)} returns the ownership
+domain of \vcc{o}.
+We have three objects, two of them are wrapped.
+We call a function that will update one of them.
+We now want to know if the values of the other two are preserved.
+Clearly, because \vcc{p != q} and both are wrapped, then
+\vcc{q} is not in the ownership domain of \vcc{p},
+so value of \vcc{q->f} should be preserved by the call.
+But what about \vcc{r->f}?
+This depends on whether \vcc{r \in \domain(p)},
+because \vcc{f(p)} could have written everything
+in \vcc{\domain(p)} (according to its writes clause).
+Unfortunately, the concept of ownership domains involves a transitive
+closure property, which is not expressible in first order logic.
+More precisely, we can (usually) prove that something \emph{is} in the ownership
+domain, but not (directly) that something \emph{is not}.
+Therefore, we need to hack our way around it: there are implicit
+assumptions in VCC about the ownership domains not overlapping.
+Once we prove \vcc{p != q} and \vcc{r \in \domain(q)}
+when VCC knows that functions writing \vcc{p} are not
+going to touch \vcc{r}.
+Unfortunately, we need to explicitly tell VCC in
+which ownership domain \vcc{r} is to make use of that.
+This is what the assertion \vcc{r \in \domain(q)} is doing.
+\itodo{say something about the other in domain assertion;
+it would be best if we didn't need it}
+
+\subsection{Admissibility light}
+
+Until now we've been skimming on the issue of what you can actually
+mention in an invariant. 
+Intuitively the invariant of an object should talk about consistent states
+of that very object, not some other objects.
+However, for example the invariant of the \vcc{struct SafeString} 
+talks about the values stored in its underlaying array.
+This also seems natural: one should be able to mention things
+from the ownership domain of \vcc{o} in \vcc{o}'s invariant.
+
+This is important, because VCC checks only invariants of objects
+that you actually modify, and as we recall the most important
+verification property we want to enforce (and which we rely on in our
+verifications) is that all invariant of all (consistent) objects 
+are always preserved.
+For example, consider:
+
+\begin{VCC}
+struct A { 
+  int x;
+};
+struct A *a; // global variable
+struct B {
+  int y;
+  _(invariant a->x == y)
+};
+void foo()
+  _(writes a)
+{
+  _(unwrapping a) {
+    a->x = 7;
+  }
+}
+\end{VCC}
+
+\noindent
+In \vcc{foo()}, when wrapping \vcc{a} we would only check invariant
+of \vcc{a}, not all \vcc{struct B}s that could possibly depend on it.
+Thus, an action which preserves of modified object breaks invariant of another object.
+For this reason VCC makes the invariant of \vcc{struct B} inadmissible.
+In fact, for all invariant VCC will check that they are admissible.
+We shall refrain now from giving a full definition of admissibility, as 
+it only makes full sense after we learn about two-state object invariants
+(see \secref{TODO}), but for sequential programs the useful approximation
+is that invariants that only talk about their ownership domains are admissible.
+
 
