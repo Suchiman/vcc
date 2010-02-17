@@ -602,5 +602,5 @@ void bar() {
     foo(0 spec(out n[0]));
 }
 `
-testcase(8,31) : error VC0000: A map element cannot be passed as an out parameter.
+testcase(8,31) : error VC0000: A map access cannot be passed as an out parameter.
 `
