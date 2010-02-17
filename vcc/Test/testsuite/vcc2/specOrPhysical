@@ -301,3 +301,33 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include<vcc.h>
+
+typedef struct  c{
+int b;
+}c;
+
+typedef struct vcc(dynamic_owns) d{
+    c *cc;
+    spec(
+        c arr[3];
+        )
+    c iarr[3];
+    invariant(keeps(cc))
+}d;
+
+void foo(d *dd)
+requires(wrapped(dd))
+writes(dd)
+requires(forall(int i; i >= 0 && i < 3; set_in(&dd->arr[i], owns(dd))))
+requires(forall(int i; i >= 0 && i < 3; set_in(&dd->iarr[i], owns(dd))))
+{
+    unwrap(dd);
+    
+    set_owns(dd, set_difference(owns(dd),array_members(dd->iarr, 3)));
+    set_owns(dd, set_difference(owns(dd),array_members(dd->arr, 3)));
+}
+`
+Verification of d#adm succeeded.
+Verification of foo succeeded.
+`

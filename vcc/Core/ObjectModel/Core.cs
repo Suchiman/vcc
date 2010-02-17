@@ -538,9 +538,9 @@ namespace Microsoft.Research.Vcc {
 
       if (srcKind != PtrConvKind.None && tgtKind != PtrConvKind.None) {
         if (srcKind == PtrConvKind.Array) {
-          AddressOf addressOf = new AddressOf(new AddressableExpression(expression), expression.SourceLocation);
+          AddressOf addressOf = new VccAddressOf(new AddressableExpression(expression), expression.SourceLocation);
           addressOf.SetContainingExpression(expression);
-          return this.Conversion(this.Conversion(addressOf, srcPointerType, true), targetType, isExplicitConversion);
+          return this.Conversion(addressOf, targetType, isExplicitConversion);
         }
 
         var convKind = KindsToConvMethod(srcKind, tgtKind);
