@@ -6,6 +6,6 @@ void f(int i)
 }
 
 `
-testcase(4,14) : warning VC0000: '0 <= i <= 10' probably does not express what you intended; use two conjoined conditions to express an interval or parenthesize the left comparison.
+testcase(4,14) : warning VC9003: '0 <= i <= 10' probably does not express what you intended; use two conjoined conditions to express an interval or parenthesize the left comparison.
 Verification of f succeeded.
 `
