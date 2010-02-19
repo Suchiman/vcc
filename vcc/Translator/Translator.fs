@@ -1242,12 +1242,12 @@ namespace Microsoft.Research.Vcc
                 B.Stmt.While (bTrue, 
                   List.map (fun (e:C.Expr) -> (e.Token, trExpr env e)) invs,
                   B.Stmt.Block (B.Stmt.Assume (stateChanges env) :: 
-                  B.Stmt.Assume (bCall "$timestamp_post" [env.OldState; bState]) ::
-                  B.Stmt.Assume cevInv ::
-                  assumeSync env comm.Token :: 
-                  List.map (ctx.AssumeLocalIs comm.Token) ctx.SoFarAssignedLocals @
-                    arbitraryLoopIter @
-                    trStmt env s))
+                    B.Stmt.Assume (bCall "$timestamp_post" [env.OldState; bState]) ::
+                      B.Stmt.Assume cevInv ::
+                        assumeSync env comm.Token :: 
+                          List.map (ctx.AssumeLocalIs comm.Token) ctx.SoFarAssignedLocals @
+                            arbitraryLoopIter @
+                              trStmt env s))
               bump @ save @ wrCheck @ regLoopBody @ [body; assumeSync env comm.Token]
                 
             | C.Expr.VarDecl (b, v) ->
