@@ -167,3 +167,19 @@ struct S {
 `
 Verification of S#adm succeeded.
 `
+#include <vcc.h>
+
+struct x {
+  int dummy;
+  invariant(!inv(this))
+};
+
+int f ()
+{
+  struct x X;
+  wrap(&X);
+  assert(false);
+}
+`
+testcase(5,16) : error VC9712: Use of 'inv(...)' or 'inv2(...)' with negative polarity.
+`

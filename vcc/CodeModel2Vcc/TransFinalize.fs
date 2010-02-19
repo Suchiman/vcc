@@ -368,6 +368,39 @@ namespace Microsoft.Research.Vcc
       decls
 
     // ============================================================================================================
+
+    let errorForInvWithNegativPolarity decls =
+    
+      // polarity: -1, 1, and 0 for unknown 
+      // once we are 'unknown', only search for invariants and report errors
+      let rec checkPolarity polarity _ = function
+        | CallMacro(ec, ("_vcc_inv"|"_vcc_inv2"), _, _) ->
+          if (polarity <= 0) then
+            let polarityStatus = if polarity = 0 then "unknown" else "negative"
+            helper.Error(ec.Token, 9712, "Use of 'inv(...)' or 'inv2(...)' with " + polarityStatus + " polarity.")
+          true
+        | _ when polarity = 0 -> true // stick on unknown
+        | Macro(_, "labeled_invariant", _)
+        | Prim(_, Op(("||"|"&&"), _), _)
+        | Quant _
+        | Old _ -> true // these do not change polarity
+        | Prim(_, Op("!", _), [e]) -> e.SelfVisit (checkPolarity (-polarity)); false
+        | Prim(_, Op("<==", _), [e2; e1])
+        | Prim(_, Op("==>", _), [e1; e2]) -> e1.SelfVisit (checkPolarity (-polarity)); e2.SelfVisit (checkPolarity polarity); false
+        | Macro(_, "ite", [cond; e1; e2]) -> // (cond ==> e1) && (!cond ==> e2)
+          cond.SelfVisit (checkPolarity 0); e1.SelfVisit (checkPolarity polarity); e2.SelfVisit (checkPolarity polarity); false
+        | e -> e.SelfVisit (checkPolarity 0); false // AST node with unknown effect on polarity, switch to unknown polarity
+        
+      for d in decls do
+        match d with 
+          | Top.TypeDecl(td) -> List.iter (fun (e:Expr) -> e.SelfVisit(checkPolarity 1)) td.Invariants
+          | Top.Axiom(e)
+          | Top.GeneratedAxiom(e,_) -> e.SelfVisit(checkPolarity 1)
+          | _ -> ()
+          
+      decls
+    
+    // ============================================================================================================
     
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
@@ -382,6 +415,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-error-old", Helper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", Helper.Decl errorForStateWriteInPureContext)
     helper.AddTransformer ("final-error-when-claimed", Helper.Decl errorForWhenClaimedOutsideOfClaim)
+    helper.AddTransformer ("final-error-inv-polarity", Helper.Decl errorForInvWithNegativPolarity)
     helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
     // reads check goes here
     
