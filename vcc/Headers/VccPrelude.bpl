@@ -369,7 +369,11 @@ axiom (forall p:$ptr, f:$field :: {:weight 0} {$ghost_ref(p, f)}
 axiom (forall p:$ptr, f:$field :: {$ghost_ref(p, f)}
   $in_range_spec_ptr($ghost_ref(p,f)));
 
-function $physical_ref($ptr, $field) returns(int);
+function $physical_ref(p:$ptr, f:$field) returns(int);
+// Make the physical fields, when we do not generate offset axioms, behave like ghost fields
+//  (this is unsound, but not so much).
+//axiom (forall p:$ptr, f:$field :: {:weight 0} {$physical_ref(p, f)}
+//  $ghost_emb($physical_ref(p, f)) == p && $ghost_path($physical_ref(p, f)) == f );
 
 function $array_path(basefield:$field, off:int) returns($field);
 
