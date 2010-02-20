@@ -1373,7 +1373,7 @@ namespace Microsoft.Research.Vcc
         let ptrref = 
           if f.IsSpec then bCall "$ghost_ref" [p; fieldRef]            
           else           
-            if td.GenerateFieldOffsetAxioms || helper.Options.GenerateFieldOffsetAxioms then
+            if f.Type.IsComposite || td.GenerateFieldOffsetAxioms || helper.Options.GenerateFieldOffsetAxioms then
               B.Primitive ("+", [bCall "$ref" [p]; bInt f.ByteOffset])
             else
               bCall "$physical_ref" [p; fieldRef]
