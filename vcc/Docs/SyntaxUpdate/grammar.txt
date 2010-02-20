@@ -5,9 +5,20 @@
 
 # claim/unclaim: use \claim/\unclaim
 # set_owner/set_owns: \set(\owns(x), ...); \set(\owner(y), ...);
+#    The alternatives are:
+#       x->\owns = ...;
+#       \owns(x) = ...;
+#    Both look weird, but maybe this is just a matter of taste.
+#
+# Functions like \old, \owner and so forth parse as regular functions, so there is no
+# need to add them to the grammar.
+#
 
 #
 # Additions.
+#
+
+# Mark: old (or \old?) & when_claimed() are missing; distinguish one- versus two-state expression at the grammar level?
 #
 
 primary-expression:
@@ -17,7 +28,7 @@ primary-expression:
 cast-expression:
 	...
 	"__vcc_spec" "(" "unchecked" ")" cast-expression
-	
+	"__vcc_spec" "(" "spec_cast" type-name ")" cast-expression # not sure if needed
 
 struct-or-union:
 	...
@@ -54,6 +65,7 @@ declarator:
 pointer:
 	...
 	"^" type-qualifier-list(opt) pointer(opt)
+	# This places ^ in exactly the same place as * (see 6.7.5)
 
 direct-declarator:
 	...
@@ -102,9 +114,13 @@ specification-struct-declaration:
 
 specification-expression:
 	quant-name variable-binding-list prover-hints(opt) ";" conditional-expression
+	# There are no ranges, also for lambdas. There seem to be no gain (checking-wise) from partially defined lambda.
 	"\let" let-binding-list ";" conditional-expression
+	# Mark: this is just a feature idea: \let in function specs outside the
+	# regular clauses could be handy, such that the same abbreviations can be
+	# used in (multiple) requires and ensures.
 	set-constructor
-	struct-update
+	record-map-update
 
 quant-name:
 	"\forall"
@@ -114,7 +130,7 @@ quant-name:
 set-constructor:
 	"{" conditional-expression-list "}"
 
-struct-update:
+record-map-update:
 	"{" expression "\with" update-specifier-list "}"
 	"{" expression "for" update-specifier-list "}"
 
@@ -158,14 +174,22 @@ specification-statement:
 	"__vcc_spec" "(" "assert" prover-hints(opt) conditional-expression ")"
 	"__vcc_spec" "(" "assume" conditional-expression ")"
 
-	"__vcc_spec" "(" "atomic" conditional-expression ")" compound-statement
-	"__vcc_spec" "(" "begin_update" ")" # TODO: rename?
+	"__vcc_spec" "(" "atomic" conditional-expression-list ")" compound-statement
+	# Mark: is it intentional to enforce braces for atomic, blocks, unwrapping,
+	# and the like? Or should we just take a statement and stick more to
+	# regular C ?
+	"__vcc_spec" "(" "begin_update" conditional-expression-list ")" # TODO: rename?
+	# allow for begin_update to take an optional list of additional claims
 
 	"__vcc_spec" "(" "block" ")" function-specification-list compound-statement
 
 	"__vcc_spec" "(" "wrap" conditional-expression ")"
 	"__vcc_spec" "(" "unwrap" conditional-expression ")"
-	"__vcc_spec" "(" "unwrapping" conditional-expression-list ")" compound-statement  # note the list
+	"__vcc_spec" "(" "unwrapping" conditional-expression-list ")" unwrapping-specification-list(opt) compound-statement
+	# The _(writes ...) turns it into current skinny_expose.
+
+	# Mark: for symmetry support lists for wrap / unwrap as well?
+	# Michal: possibly.
 
 	# TODO We might want to use \to_bytes, etc.
 	"__vcc_spec" "(" "to_bytes" conditional-expression ")"
@@ -186,6 +210,13 @@ loop-specification:
 	"__vcc_spec" "(" "invariant" conditional-expression ")"
 	"__vcc_spec" "(" "writes" conditional-expression-list ")"
 
+unwrapping-specification-list:
+	unwrapping-specification-list(opt) unwrapping-specification
+
+unwrapping-specification:
+	"__vcc_spec" "(" "writes" conditional-expression-list ")"
+
+
 function-specification-list:
 	function-specification-list(opt) function-specification
 
@@ -195,6 +226,7 @@ function-specification:
 	"__vcc_spec" "(" "requires" conditional-expression ")"
 	"__vcc_spec" "(" "ensures" conditional-expression ")"
 	"__vcc_spec" "(" "maintains" conditional-expression ")"
+	# Mark: should "maintains" really be a first-order construct? We probably need abbreviations for other stuff (returns, always, ...) as well...
 
 # TODO: add the remaining ones
 specification-field-specifier:
@@ -208,12 +240,13 @@ specification-field-specifier:
 specification-type-specifier:
 	"__vcc_spec" "(" "dynamic_owns" ")"
 	"__vcc_spec" "(" "volatile_owns" ")"
+	"__vcc_spec" "(" "claimable" ")"
 
 specification-function-specifier:
-	"__vcc_spec" "(" "status" identifier ")"  # verified, specified, ...
+	"__vcc_spec" "(" "status" expression ")"  # verified, specified, ...
 	"__vcc_spec" "(" "hint" identifier ":" expression ")" # splits, options, frame_axiom
 	"__vcc_spec" "(" "atomic_inline" ")"
-
+	# Mark: maybe add a regular "inline" as well
 
 # comma-separated lists
 let-binding-list:
@@ -223,6 +256,9 @@ let-binding-list:
 variable-binding-list:
 	variable-binding-list "," variable-binding
 	variable-binding
+	# Mark: ACSL does not seem to support 'int x, y;' in contrast to the thing
+	# that's written above, although the "," makes it a little hard to parse
+	# (and read, with respect to standard C)
 
 conditional-expression-list:
 	conditional-expression-list "," conditional-expression
