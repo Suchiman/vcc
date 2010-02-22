@@ -287,7 +287,7 @@ namespace Microsoft.Research.Vcc
 
       // in case of testsuite, don't print the full paths to prelude
       // also skip line numbers as they change
-      bool isPrelude = reqTok.filename.EndsWith("VccPrelude.bpl") || reqTok.filename.EndsWith("VccPrelude.bpl>");
+      bool isPrelude = reqTok.filename.EndsWith(".bpl") || reqTok.filename.EndsWith(".bpl>");
       if (isPrelude && reqTok.line > 1) {
         string line = VccCommandLineHost.StandardPreludeLines[reqTok.line - 2];
         int idx = line.IndexOf("TOKEN:");
