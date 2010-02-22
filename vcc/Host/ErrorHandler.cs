@@ -26,6 +26,10 @@ namespace Microsoft.Research.Vcc
       get { return CommandLineOptions != null ? CommandLineOptions.WarningsAsErrors : false; }
     }
 
+    private int WarningLevel {
+      get { return CommandLineOptions != null ? CommandLineOptions.WarningLevel : 1; }
+    }
+
     private bool WarningIsDisabled(long id) {
       if (CommandLineOptions == null) return false;
       return CommandLineOptions.DisabledWarnings.ContainsKey(id);
@@ -53,6 +57,7 @@ namespace Microsoft.Research.Vcc
         if (sourceLocation == null) continue;
         if (this.DebugOnWarningOrError) System.Diagnostics.Debugger.Launch();
         bool isError = !error.IsWarning || WarningsAsErrors;
+        if (!isError && GetWarningLevel(error.Code) > WarningLevel) continue;
         if (isError) VccCommandLineHost.ErrorCount++;
         CompositeSourceDocument/*?*/ compositeDocument = sourceLocation.SourceDocument as CompositeSourceDocument;
         if (compositeDocument != null) {
@@ -147,6 +152,13 @@ namespace Microsoft.Research.Vcc
       }
 
       return code;
+    }
+
+    private static int GetWarningLevel(long warningCode) {
+      if (9300 <= warningCode && warningCode < 9400) return 0; // soundness warnings - cannot be suppressed
+      else if (warningCode == (long)Error.PotentialPrecedenceErrorInLogicalExpression) return 2;
+      else if (warningCode == (long)Cci.Ast.Error.PotentialUnintendRangeComparison) return 2;
+      else return 1;
     }
   }
 
@@ -441,6 +453,5 @@ namespace Microsoft.Research.Vcc
     internal static double GetTime() {
       return System.Environment.TickCount / 1000.0;
     }
-
   }
 }

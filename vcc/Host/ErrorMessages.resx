@@ -135,7 +135,7 @@
 /omitrw                        Omit reads/writes clause checking
 /preprocessor:&lt;pp option list&gt; Options to pass on to the C preprocessor (Short form: /p)
 /pause                         Wait for a key press before terminating
-/pointersize:&lt;32|64&gt;           Size of the target platform's pointer type in bits, default is 64 (Short form: /ps)
+/pointersize:&lt;32|64&gt;           Size of the target platform's pointer type in bits (32,64), default is 64 (Short form: /ps)
 /smoke                         Run smoke tests, which is equivalent to /b:/smoke (Short form: /sm)
 /stats                         Display time statistics (Short form: /st)
 /suite &lt;file or directory&gt;     Treat the given file or directory as a collection of test cases with expected output and report any differences (Short form: /s)
@@ -143,6 +143,7 @@
 /translate                     Translate the source files into corresponding BPL files (Short form: /t)
 /version                       Display the compiler version.
 /warningsaserrors              Treat warnings as errors (Short form: /wx)
+/warn:&lt;n&gt;                      Set warning level (0-2), default is 1 (Short form: /w)
 /xml                           Use XML format output.
 /z3:&lt;z3 option list&gt;           Options to pass on to Z3 (Short form: /z)</value>
   </data>
