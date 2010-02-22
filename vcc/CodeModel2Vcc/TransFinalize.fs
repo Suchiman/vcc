@@ -415,7 +415,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-error-old", Helper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", Helper.Decl errorForStateWriteInPureContext)
     helper.AddTransformer ("final-error-when-claimed", Helper.Decl errorForWhenClaimedOutsideOfClaim)
-    helper.AddTransformer ("final-error-inv-polarity", Helper.Decl errorForInvWithNegativPolarity)
     helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
     // reads check goes here
     
@@ -423,6 +422,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-ITE-to-logical", Helper.Expr introduceAndOrs)
     helper.AddTransformer ("final-bool-conversions", Helper.Decl addBoolConversions)
     helper.AddTransformer ("final-bv-cleanup", Helper.Expr removeTrivialBitvectorOperations)
+    helper.AddTransformer ("final-error-inv-polarity", Helper.Decl errorForInvWithNegativPolarity)
     helper.AddTransformer ("final-flatten-old", Helper.Expr flattenOld)
     helper.AddTransformer ("final-insert-type-arguments", Helper.Expr insertTypeArgumentForWrapUnwrap)
     helper.AddTransformer ("final-insert-state-arguments", Helper.Expr (ToCoreC.handlePureCalls helper))
