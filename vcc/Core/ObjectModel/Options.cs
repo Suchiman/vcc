@@ -51,6 +51,9 @@ namespace Microsoft.Research.Vcc
     public bool DetailedTimes;
     public bool PrintCEVModel;
     public int PointerSize = 64;
+    public bool Vcc3;
+    // we might want an option for setting it
+    public string PreludPath = "VccPrelude.bpl";
   }
 
   public class OptionParser : OptionParser<VccOptions>
@@ -79,6 +82,14 @@ namespace Microsoft.Research.Vcc
       if (ch != '/' && ch != '-') return false;
       ch = arg[1];
       switch (ch) {
+        case '3':
+          bool? vcc3 = this.ParseNamedBoolean(arg, "3", "3");
+          if (vcc3 != null) {
+            this.options.Vcc3 = vcc3.Value;
+            this.options.PreludPath = "Vcc3Prelude.bpl";
+            return true;
+          }
+          return false;
         case 'a':
           bool? aggressivePruning = this.ParseNamedBoolean(arg, "aggressivepruning", "a");
           if (aggressivePruning != null) {

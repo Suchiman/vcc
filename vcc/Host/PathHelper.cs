@@ -52,10 +52,13 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    public static string PreludePath {
-      get {
+    public static string PreludePath(string basename)
+    {
+      if (basename.IndexOf(System.IO.Path.DirectorySeparatorChar) >= 0)
+        return basename;
+      else {
         string headersDir = PathHelper.GetVccHeaderDir(false);
-        if (headersDir != null) return System.IO.Path.Combine(headersDir, "VccPrelude.bpl");
+        if (headersDir != null) return System.IO.Path.Combine(headersDir, basename);
         return null;
       }
     }

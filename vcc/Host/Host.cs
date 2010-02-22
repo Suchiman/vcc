@@ -37,6 +37,7 @@ namespace Microsoft.Research.Vcc
       dummyHostEnvironment.Errors += cciErrorHandler.HandleErrors;
       var commandLineOptions = OptionParser.ParseCommandLineArguments(dummyHostEnvironment, args);
       commandLineOptions.RunningFromCommandLine = true;
+      standardPreludePath = commandLineOptions.PreludPath;
       cciErrorHandler.CommandLineOptions = commandLineOptions;
       verificationErrorHandler = new VerificationErrorHandler(commandLineOptions);
       
@@ -446,10 +447,10 @@ namespace Microsoft.Research.Vcc
 
     static List<String> standardPreludeLines;
     static string standardPreludeString;
+    static string standardPreludePath;
 
     private static Program GetStandardPrelude() {
-
-      string preludePath = PathHelper.PreludePath;
+      string preludePath = PathHelper.PreludePath(standardPreludePath);
       if (standardPreludeLines == null) {
         var lines = File.ReadAllLines(preludePath, Encoding.UTF8);
         standardPreludeLines = new List<string>(lines);
