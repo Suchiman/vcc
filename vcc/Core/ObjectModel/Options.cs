@@ -45,6 +45,7 @@ namespace Microsoft.Research.Vcc
     public bool DumpBoogie;
     public bool GenerateFieldOffsetAxioms = true;
     public bool WarningsAsErrors;
+    public int WarningLevel = 1;
     public bool DebugOnWarningOrError;
     public bool SaveModel;
     public bool DetailedTimes;
@@ -347,6 +348,13 @@ namespace Microsoft.Research.Vcc
         return false;
 
         case 'w':
+        string warnLevelStr = this.ParseNamedArgument(arg, "warn", "w");
+        if (warnLevelStr != null) {
+          int warnLevel;
+          if (!Int32.TryParse(warnLevelStr, out warnLevel) || (warnLevel < 0 || warnLevel > 2)) return false;
+          this.options.WarningLevel = warnLevel;
+          return true;
+        }
         bool? wx = this.ParseNamedBoolean(arg, "warningsaserrors", "wx");
         if (wx != null) {
           this.options.WarningsAsErrors = wx.Value;
