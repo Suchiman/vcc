@@ -1241,8 +1241,8 @@ axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
 axiom (forall S:$state :: {$good_state(S)}
   $good_state(S) ==> $closed_is_transitive(S));
 
-axiom (forall S:$state, #p:$ptr, #q:$ptr :: {$set_in(#q,$owns(S,#p))}
-  $closed(S, #p) && $set_in(#q,$owns(S,#p)) ==> $typed(S,#q));
+axiom (forall S:$state, #p:$ptr :: {$closed(S,#p)}
+  $closed(S, #p) ==> $typed(S,#p));
 
 // ----------------------------------------------------------------------------
 // Custom admissibility checks

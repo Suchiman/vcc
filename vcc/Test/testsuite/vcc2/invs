@@ -183,3 +183,41 @@ int f ()
 `
 testcase(5,16) : error VC9712: Use of 'inv(...)' or 'inv2(...)' with negative polarity.
 `
+#include <vcc.h>
+
+typedef unsigned int UINT;
+#define N ((unsigned) 2)
+
+typedef struct Bakery Bakery;
+
+typedef struct vcc(claimable) Client {
+	volatile bool choosing;
+	spec(volatile bool waiting;)
+	spec(obj_t bakery;)
+	on_unwrap(inv(bakery))
+	invariant(approves(owner(this),choosing))
+	invariant(approves(bakery,choosing))
+} Client;
+
+typedef struct Bakery {
+	Client *c;
+	invariant(forall(UINT i; i<N ==> closed(&c[i]) /*&& typed(&c[i])*/ && (c[i].bakery==this)))
+	invariant(forall(UINT i; i<N  ==> c[i].choosing))
+} Bakery;
+
+void client(Bakery *server, Client *cl spec(UINT idx) spec(claimp(sc)))
+requires(wrapped0(sc) && idx<N && wrapped(cl))
+requires(claims(sc,closed(server) && &server->c[idx]==cl))
+writes(cl,sc)
+{
+	atomic(sc,server,cl) {
+		// note: the verification goes through if waiting below is replaced with choosing
+		speconly(cl->waiting = 0;)
+		bump_volatile_version(cl);
+	}
+}
+`
+Verification of Client#adm succeeded.
+Verification of Bakery#adm succeeded.
+Verification of client succeeded.
+`
