@@ -326,8 +326,11 @@ Similarly, for write access to \vcc{*p} it inserts the assertion
 \vcc{\writable(p)}.
 It implies \vcc{\thread_local(p)},
 and additionally that \vcc{*p} is in the ``phase of life'' where
-it can be modified, and moreover, that it was listed in the writes
-clause of the current function.
+it can be modified, and moreover, that it was listed in the current
+``writes set''. (You can think of the writes set as being the set
+of objects named in the writes clause, along with those objects that
+the thread has gotten control of since entry of the function; we will
+see how this can happen in section ??.)
 For example, the assert/assume translation of \vcc{swap()} is:
 
 \vccInput[linerange={swap-}]{c/01_swap3.c}
