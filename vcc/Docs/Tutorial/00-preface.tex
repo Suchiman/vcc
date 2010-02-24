@@ -1,48 +1,145 @@
-\section{Preface}
+\section{Introduction}
+This tutorial is an introduction to verifying C code with VCC. Our
+primary audience is programmers who want to write correct code and
+verification engineers who want to check code for correctness. The
+only prerequisite is a working understanding of C. 
 
-This document serves as an introduction to verifying programs with VCC.
-VCC is a \Def{sound deductive verifier} for C programs.
+To use VCC, you must first \emph{annotate} your code to specify how
+your functions and data structures are meant to be used, and what your
+functions guarantee to their callers. (VCC requires additional
+annotations that we'll describe throughout the tutorial.) VCC then
+takes your program and tries to \emph{prove} (mathematically) that
+your program meets these specifications.  Unlike most program
+analyzers, VCC doesn't look for bugs, or analyze an abstraction of
+your program; if VCC certifies that your program is correct, then your
+program really should be correct\footnote{In reality, this isn't
+  really a guarantee, because VCC itself might have bugs. But in
+  practice, this is unlikely to cause you to accidentally verify an
+  incorrect program, unless you find and intentionally exploit such a
+  bug. In addition, VCC currently doesn't do the checks needed to
+  ignore processor store buffering; this will be remedied in the near
+  future.}. 
 
-VCC is a \emph{verifier} because it checks that the program is correct, that is it behaves according to
-some specification.
-In particular it will check that the program never crashes (because of division
-by zero or segmentation violation).
+To check your program, VCC generates a number of mathematical
+statements (called \emph{verification conditions}) whose proofs
+suffice to guarantee the program's correctness, and tries to prove
+these statements using an automatic theorem prover. If any of these
+proofs fail, VCC reflects these failures back to you in terms of the
+program itself. For example, if your program contains uses division
+somewhere, and VCC is unable to prove (from what thinks holds at the
+point at which the division is done) that the divisor is nonzero, it
+will report this to you as a program error at that point in the
+program. (If you use VCC from within Visual Studio, it will show in
+your program text the place where the error is, just like a syntax
+error.) This doesn't mean that your program is necessarily incorrect;
+most of the time, it is because your specifications aren't strong
+enough to guarantee that the suspected error doesn't occur.
+Typically, you fix this ``error'' by strengthening your
+specifications. This might lead to other error reports, necessitating
+the strengthening of other specifications, so verification is in
+practive an iterative process. On occasion, this process reveals a
+genuine programming error.
 
-VCC is \emph{deductive} because it creates a mathematical formula which
-states ``the program is correct'', and then uses deduction system
-to prove that this formula is actually a theorem, something that is always true.
-This formula is called \emph{verification condition}.
-The proof is performed using formal methods of mathematics,
-and the deductive system that VCC most often uses, called Z3~\cite{z3},
-is fully automatic.
+The important thing about this process is that you interact with VCC
+entirely at the level of your program; you can safely ignore most of
+the mathematical reasoning going on ``under the hood''.
 
-VCC is \emph{sound}, because the verification condition models the program behavior conservatively.
-This means that if the verification condition is a theorem, then the program will never
-violate its specification.
-In practice, if VCC tells you that everything is OK with your program,
-then it doesn't mean it couldn't find any more bugs, but it means that there are none.%
-\footnote{
-  At least theoretically.
-  There could be bugs in VCC itself, there could be bugs in the compiler, operating system, or the hardware.
-  However it is all about confidence, and the levels of confidence you get from verifying your program with
-  VCC are somewhere around (or above) what is currently required for airplane or space shuttle software.
-}
+Sometimes, annotating your program requires doing some extra
+programming. For example, in a concurrent program where threads
+acquire and release exclusive ownership of chunks of data, you will
+often write small bits of \emph{ghost} code to manipulate the
+ownership relation. (Ghost code is seen by VCC but not by the C
+compiler, and so introduces no runtime overhead.) This is part of the
+VCC philosophy -- 
 
-This tutorial covers basics of VCC annotation language and some tricks you
-need to know to get your program through it. 
-It doesn't talk about the theoretical background, including soundness
-arguments.
-These topics are covered separately~\cite{lci}.
-A high-level overview
-of the VCC tool chain is also available separately~\cite{Cohen:TPHOLs2009-23}.
+This tutorial covers basics of VCC annotation language; by the time
+you have finished working through it, you should be able to use VCC to
+verify interesting programs. It doesn't cover the theoretical
+background of VCC, implementation details, or advanced topics;
+information on these can be found on the VCC homepage.
 
-You will first need to install VCC, you can find instructions on doing so at \url{http://vcc.codeplex.com/}.
+%%  These topics are covered
+%% separately~\cite{lci}.  A high-level overview of the VCC tool chain is
+%% also available separately~\cite{Cohen:TPHOLs2009-23}.
+
+The following section covers the installation of VCC and 
 After you're done you have two choices: one is to edit the tutorial examples
 using Visual Studio and verify them using VCC Visual Studio addin.
-\todo{explain how to create VS project for VCC and stuff}
-The other option is to invoke the VCC verifier directly from command line
-(which is also what the addin does under the hood),
+Alternatively, you can invoke the VCC verifier directly from command line,
 and use your favorite text editor to edit the examples.
-In any event, the examples found in this tutorial come with VCC, you
-can find them in the \texttt{.../VCC/Tutorial} directory.
-\todo{set the location properly, maybe have a VS project there}
+
+\section{Installing VCC} 
+You can use VCC either from the command line or from Visual Studio
+2008 (VS).  We recommend the VS interface, but the command line interface
+is sometimes useful for scripting.
+
+If you are using VS, you should install it before
+installing VCC\footnote{Does this matter now?}. You can use any
+edition other than the express editions (which do not allow
+plugins). If you neither own nor wish to buy VS, you can download a
+free 6 month trial from the Microsoft web site.
+
+After installing VS, install VCC\ from the installer link on the
+VCC\ homepage. If you plan to build code verified with VCC (rather
+than just verifying it), you will also want to put the VCC headers
+into the VS\ include path, as follows: under the VS\ menu, 
+\begin{enumerate}
+\item Choose Tools$\rightarrow$Options
+\item On the left hand side of the Options dialog box, click on the
+  triangle next to Projects and Solutions, then click on the
+  subheading marked ``VC++ Directories''
+\item On the upper right hand corner of the dialog box, under the
+  label ``Show directories for'' click on the drop-down box and select
+  ``Include files''
+\item Below the drop-down box, click on the second box from the left
+  (the one with the folder icon, labelled ``New Line'').
+\item To the right of the text entry box that opens, click on the box
+  with labelled ``...''.
+\item In the file chooser that opens up, navigate to the \verb!\\Headers!
+  subdirectory of the VCC installation directory (e.g., \verb!C:\\Program Files\\Microsoft Research\\Vcc\\Headers! is the default location for
+  installations on 32-bit Windows) and click ``select folder''.
+\item Close the options dialog box.
+\end{enumerate}
+
+\section{Running VCC}
+\subsection{Running VCC from the command line}
+The easiest way to call vcc on a set of files is
+\todo{I've added some options that currently exist only as options to
+  be passed to Boogie. We should not be exposing boogie to clients,
+  so we should really have separate options to call the proof
+  inspector and/or see error models (though I don't know which one we
+  would display for multiple errors).}
+\todo{More options}
+\begin{verbatim}
+vcc [/f:funs] [/Inspector] [/Models] files
+\end{verbatim}
+The \verb!/f! switch provides a comma-separate list of functions to
+verify. The \verb!/Inspector! switch causes the VCC inspector to be
+displayed while the verification is running, top monitor what VCC is
+trying to do. The \verb!/Models! switch causes VCC to display models for
+the errors that it finds.
+ 
+\subsection{Running VCC from VS}
+There are two ways to invoke VCC from within Visual
+Studio\todo{Should we bother with the VCC menu also?}. First,
+from the Verify tab at the top of the window, you can ask VCC verify
+the current file. Second, if you right-click within a C source file,
+several VCC commands are made available, depending on what kind of
+construction intellisense thinks you are in the middle of. The choice
+of verifying the entire file is always available. If you click within
+the definition of a struct type, VCC will offer you the choice of
+checking admissibility for that type (a concept explained in
+section \ref{}). If you click within the body of a function, VCC should offer
+you the opportunity to verify just that function. However,
+intellisense often gets confused about the syntactic structure of
+VCC code, so it may not give these context-dependent
+options. However, if you select the name of a function and then right
+click, it will allow you to verify just that function.
+
+If you want to run the VCC inspector during verification, this
+option can be selected from the \verb!Verify->settings! menu. If you want
+to look at the error model for a particular error, right-click on
+error (in the source), and choose ``Show VCC error model''\todo{This
+  should really say ``VCC error model'', to not expose z3.}
+
+
