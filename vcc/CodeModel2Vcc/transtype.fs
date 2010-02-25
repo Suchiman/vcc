@@ -674,7 +674,7 @@ namespace Microsoft.Research.Vcc
               match findMemberNames [] td'.CustomAttr with
                 | [] -> ()
                 | [name] -> f.Name <- name; td'.IsNestedAnon <- false
-                | _ -> helper.Error(f.Token, 9695, "More then one member_name for field")
+                | _ -> helper.Error(f.Token, 9695, "More than one member_name for field")
             | _ -> ()
         List.iter nameFieldByMemberName td.Fields
 
