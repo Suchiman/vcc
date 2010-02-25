@@ -703,9 +703,9 @@ namespace VccModelViewer
         }
       }
 
-      List<int> keyList = new List<int>(o.ElementDots.Keys);
+      var keyList = new List<long>(o.ElementDots.Keys);
       keyList.Sort();
-      foreach (int idx in keyList)
+      foreach (var idx in keyList)
       {
         FieldInfo fi = o.ElementDots[idx];
         if (fi != null)
