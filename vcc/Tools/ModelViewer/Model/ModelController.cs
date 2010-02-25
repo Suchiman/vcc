@@ -743,8 +743,8 @@ namespace VccModel.Controller
       // we have an aray
       foreach (Function idx_fn in idxFunctions)
       {
-        int idx;
-        if (Int32.TryParse(idx_fn.FunctionArguments[1].Value, out idx))
+        long idx;
+        if (Int64.TryParse(idx_fn.FunctionArguments[1].Value, out idx))
         {
           string arrayIndexName = String.Format("{0}[{1}]", fieldName, idx);
           Partition field = GetContentInState(idx_fn.Result, execState);

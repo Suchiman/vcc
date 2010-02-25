@@ -232,7 +232,7 @@ namespace VccModel
 
   public class ArrayInfo : FieldInfo
   {
-    public Dictionary<int, FieldInfo> ElementDots = new Dictionary<int, FieldInfo>();
+    public Dictionary<long, FieldInfo> ElementDots = new Dictionary<long, FieldInfo>();
     public List<FieldInfo> ArrayInterpretations = new List<FieldInfo>();
     public FieldInfo NotInterpretedPointer;
   }
