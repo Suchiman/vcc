@@ -1052,7 +1052,7 @@ namespace Microsoft.Research.Vcc
         let incrAndReportError token =
           incr count
           if !count > 1 then
-            helper.GraveWarning(token, 9302, "more then one access to physical memory in atomic block; extra accesses might be due to bitfield operations")
+            helper.GraveWarning(token, 9302, "more than one access to physical memory in atomic block; extra accesses might be due to bitfield operations")
        
         let countPhysicalAccesses' ctx self = function
           | Deref(_, ptr) when not ctx.IsPure && isHeapAllocatedParOrLocal ptr -> true
