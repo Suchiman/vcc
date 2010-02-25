@@ -113,10 +113,17 @@ namespace Microsoft.Research.Vcc
       member this.Warning (tok:Token, code, msg:string) =
         if not (tok.SuppressWarning code) then
           hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true))
+
+      member this.Warning (tok:Token, code, msg:string, relatedTok) =
+        if not (tok.SuppressWarning code) then
+          hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true, (Seq.singleton (VisitorHelper.LocationFromToken relatedTok))))
           
       // 9300 <= code <= 9399
       member this.GraveWarning (tok, code, msg:string) =
         this.Warning (tok, code, "[possible unsoundness]: " + msg)
+      
+      member this.GraveWarning (tok, code, msg:string, relatedTok) =
+        this.Warning (tok, code, "[possible unsoundness]: " + msg, relatedTok)
       
       // 9601 <= code <= 9699
       // see (and update) comments on the top of transformers.fs for the next available number

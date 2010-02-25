@@ -982,18 +982,25 @@ namespace Microsoft.Research.Vcc
 
     let checkSpecCodeAndRemoveSpecMark decls =
 
-      let rec isPhysicalLocation = function
-        | Dot(_, _, f) when f.IsSpec -> false
-        | Dot(_, ptr, _) -> isPhysicalLocation ptr
-        | Index(_, ptr, _) -> isPhysicalLocation ptr
-        | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> false        
-        | Ref(_, {Type = Type.Ref td }) when hasBoolAttr "record" td.CustomAttr -> false
-        | Ref(_, {Name = name}) when name.StartsWith("__temp") -> false // introduced during IExpression projection; unclear status
-        | Deref(_, expr) -> match expr.Type with | SpecPtr _ -> false | _ -> true
-        | _ -> true
+      let isPhysicalLocation triggerOnlyOnVolatileFields = 
+        let rec isPhysicalLocation' = function 
+          | Dot(_, _, f) when f.IsSpec -> false
+          | Dot(_, _, f) when triggerOnlyOnVolatileFields && not f.IsVolatile -> false
+          | Dot(_, ptr, _) -> isPhysicalLocation' ptr
+          | Index(_, ptr, _) -> isPhysicalLocation' ptr
+          | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> false        
+          | Ref(_, {Type = Type.Ref td }) when hasBoolAttr "record" td.CustomAttr -> false
+          | Ref(_, {Name = name}) when name.StartsWith("__temp") -> false // introduced during IExpression projection; unclear status
+          | Deref(_, expr) -> 
+            match expr.Type with 
+              | SpecPtr _ -> false 
+              | _ when triggerOnlyOnVolatileFields -> isPhysicalLocation' expr 
+              | _  -> true
+          | _ -> true
+        isPhysicalLocation'
 
       let rec checkNoWritesToPhysicalFromSpec withinSpec self = function
-       | Macro(cmn, "=", [location ; expr]) when isPhysicalLocation location ->
+       | Macro(cmn, "=", [location ; expr]) when isPhysicalLocation false location ->
          match exprDependsOnSpecExpr expr with
            | None when withinSpec ->
              helper.GraveWarning(cmn.Token, 9300, "assignment to physical location from specification code")
@@ -1002,7 +1009,7 @@ namespace Microsoft.Research.Vcc
            | Some specField -> 
              helper.GraveWarning(cmn.Token, 9300, "assignment to physical location from specification " + specField)
              false
-       | Macro(cmn, "out", [outPar]) when isPhysicalLocation outPar ->
+       | Macro(cmn, "out", [outPar]) when isPhysicalLocation false outPar ->
          helper.GraveWarning(cmn.Token, 9304, "physical location passed as out parameter")
          false
        | CallMacro(_, "spec", _, args) -> List.iter (fun (e:Expr) -> e.SelfVisit(checkNoWritesToPhysicalFromSpec true)) args; false
@@ -1043,21 +1050,23 @@ namespace Microsoft.Research.Vcc
         | _ -> true
         
       let errorForSecondPhysicalAccess (expr : Expr) =
-        let count = ref 0
+        let foundInstances = ref None
         let rec isHeapAllocatedParOrLocal = function
           | Macro(_, "&", [Ref(_, {Kind = VarKind.Local|VarKind.Parameter|VarKind.SpecLocal|VarKind.SpecParameter|VarKind.OutParameter})]) -> true
           | Dot(_, ptr, _) -> isHeapAllocatedParOrLocal ptr
           | _ -> false
         
-        let incrAndReportError token =
-          incr count
-          if !count > 1 then
-            helper.GraveWarning(token, 9302, "more than one access to physical memory in atomic block; extra accesses might be due to bitfield operations")
+        let registerAndReportError token =
+          match !foundInstances with
+            | None -> foundInstances := Some token
+            | Some otherToken -> 
+              helper.GraveWarning(token, 9302, "more than one access to physical memory in atomic block ('" + 
+                                               token.Value + "' and '" + otherToken.Value + "'; extra accesses might be due to bitfield operations", otherToken)
        
         let countPhysicalAccesses' ctx self = function
           | Deref(_, ptr) when not ctx.IsPure && isHeapAllocatedParOrLocal ptr -> true
-          | Deref(cmn, ptr) when not ctx.IsPure && isPhysicalLocation ptr -> incrAndReportError cmn.Token; true
-          | CallMacro(cmn, "inlined_atomic", _, _) -> incrAndReportError cmn.Token; false
+          | Deref(cmn, ptr) when not ctx.IsPure && isPhysicalLocation true ptr -> registerAndReportError cmn.Token; true
+          | CallMacro(cmn, "inlined_atomic", _, _) -> registerAndReportError cmn.Token; false
           | CallMacro(_, "spec", _, _) -> false
           | _ -> true
         expr.SelfCtxVisit(false, countPhysicalAccesses')

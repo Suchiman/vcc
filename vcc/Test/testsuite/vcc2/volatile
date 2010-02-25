@@ -71,3 +71,38 @@ Verification of foo succeeded.
 Verification of fooShouldFail failed.
 testcase(19,24) : error VC8524: Assertion 'chunk f[0] == __old(f[0]) of invariant of g holds after atomic' did not verify.
 `
+#include <vcc.h>
+#include <limits.h>
+typedef unsigned int UINT;
+
+typedef struct vcc(claimable) Client {
+	volatile bool flag;					// true when choosing a ticket
+	spec(obj_t bakery;)					// the bakery this client is in
+	on_unwrap(inv(bakery))				// don't destroy the client while the bakery is running
+	invariant(approves(owner(this),flag))
+	invariant(approves(bakery,flag))	// changes to the fields require checking the bakery invariants
+} Client;
+
+typedef struct vcc(claimable) vcc(dynamic_owns) Bakery {
+	UINT N;						// number of clients
+	Client *c;					// pointer to array of clients
+	invariant(forall(UINT i; i<N ==> closed(&c[i])  && typed(&c[i]) && (c[i].bakery==this)))
+} Bakery;
+
+#define cl (&server->c[idx])	// defined rather than declared as a local so we can use it in the contract (replace with let someday)
+
+void BakeryAcquire(Bakery *server, UINT idx spec(claimp(sc)))
+requires(wrapped(sc) && claims(sc,closed(server)))  // need evidence that nobody will destroy the server
+requires(idx < server->N && wrapped(cl))			// must own a client of the server
+writes(cl)
+{	
+	atomic(sc,server,cl) {
+		cl->flag = 1;
+		bump_volatile_version(cl);
+	}
+}
+`
+Verification of Client#adm succeeded.
+Verification of Bakery#adm succeeded.
+Verification of BakeryAcquire succeeded.
+`
