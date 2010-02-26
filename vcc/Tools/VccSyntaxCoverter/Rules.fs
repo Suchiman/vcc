@@ -162,7 +162,7 @@ module Rules =
       let body = Tok.Id (p, "\\" + name) :: Tok.Whitespace (p, " ") :: body
       // stylistic: always place () around \forall ..., or only when neccessary?
       if (eatWs rest).IsEmpty then
-        body, rest
+        [paren "" body], rest
       else
         [paren "(" body], rest
     parenRuleExt name repl    
@@ -184,8 +184,10 @@ module Rules =
     addKwRepl "this" "\\this"
     
     addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
+    addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, "hint: "); paren "" toks]))
     addRule (quantRule "forall" "==>")
     addRule (quantRule "exists" "&&")
+    addRule (quantRule "lambda" "###")
     
     addKwRule "expose" "unwrapping"
     addKwRule "invariant" "invariant"
