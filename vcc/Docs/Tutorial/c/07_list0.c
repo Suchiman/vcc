@@ -1,23 +1,23 @@
 #include <vcc2test.h>
 
+/*{types}*/
 struct Node {
   struct Node *next;
   int data;
 };
 
-typedef struct Node *PNode;
-
 struct vcc(dynamic_owns) List {
-  spec( bool val[int]; ) // public
-
   struct Node *head;
-  invariant(head != NULL ==> set_in(head, owns(this)))
-  invariant(forall(struct Node *n; {set_in(n->next, owns(this))}
-            set_in(n, owns(this)) ==> n->next == NULL || set_in(n->next, owns(this))))
-  invariant(forall(struct Node *n; {set_in(n, owns(this))}
-            set_in(n, owns(this)) ==> val[n->data]))
+  spec( bool val[int]; )
+  invariant(head != NULL ==> keeps(head))
+  invariant(forall(struct Node *n;
+                {set_in(n->next, owns(this))}
+                keeps(n) ==> n->next == NULL || keeps(n->next)))
+  invariant(forall(struct Node *n; 
+                {set_in(n, owns(this))}
+                keeps(n) ==> val[n->data]))
 };
-
+/*{init}*/
 struct List *mklist()
   ensures(result != NULL ==> wrapped(result) && result->val == lambda(int k; false))
 {
@@ -31,21 +31,23 @@ struct List *mklist()
   wrap(l);
   return l;
 }
-
+/*{add}*/
 int add(struct List *l, int k)
   requires(wrapped(l))
   ensures(wrapped(l))
-  ensures(result == 0 ==> l->val == lambda(int p; old(l->val)[p] || p == k))
   ensures(result != 0 ==> l->val == old(l->val))
+  ensures(result == 0 ==>
+       forall(int p; l->val[p] == (old(l->val)[p] || p == k)))
   writes(l)
+/*{endspec}*/
 {
   struct Node *n = malloc(sizeof(*n));
   if (n == NULL) return -1;
   expose(l) {
     n->next = l->head;
     n->data = k;
-    l->head = n;
     wrap(n);
+    l->head = n;
     speconly(
       set_owns(l, set_union(owns(l), SET(n)));
       l->val = lambda(int z; z == k || l->val[z]);
@@ -53,7 +55,7 @@ int add(struct List *l, int k)
   }
   return 0;
 }
-
+/*{member}*/
 int member(struct List *l, int k)
   requires(wrapped(l))
   // partial specification, ==> instead of <==>
@@ -76,6 +78,7 @@ int member(struct List *l, int k)
       return 0;
   }
 }
+/*{out}*/
 /*`
 Verification of List#adm succeeded.
 Verification of mklist succeeded.
