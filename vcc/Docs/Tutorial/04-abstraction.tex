@@ -200,6 +200,8 @@ trigger, for example \vcc|{\mine(n->next)}|.
 This will cause the quantifier to be instantiated only when the current
 model talks about \vcc{n->next} already.
 It is thus more ``goal-oriented''.
+This is a typical pattern when specifying properties of recursive data-structures
+using quantified formulas in VCC.
 This is what our example does, however instead of using the shorthand
 notation, it uses explicit owns set membership.
 \itodo{we need to fix that}
@@ -238,7 +240,6 @@ to having a two-dimensional map).
 
 \noindent
 \itodo{more explanations}
-For now ignore the \vcc|{hint: ...}| thing.
 All these changes in the invariant do not affect
 the contract of \vcc{add()} function, and the only change in the body
 is that we need to replace the update of \vcc{l->val} with the following:
@@ -251,5 +252,21 @@ Now let us have a look at the \vcc{member()} function:
 
 \vccInput[linerange={member-out}]{c/07_list.c}
 
-\subsection{Hinting triggers}
+\noindent
+The invariants of the \vcc{for} loop state that we only iterate over
+nodes owned by the list, and that at each iteration \vcc{k} is in the
+set of value represented by the list if and only if it is in the followers
+set of the current node.
+The followers set of the current node, and the next one differ only by
+the data stored in the current node, which is precisely what we check for.
+
+%\subsection{Hinting triggers}
+%
+%Consider a quantified formula \vcc|\forall T x; {hint: H} E|.
+%Intuitively the hint annotation states that the expression \vcc{H} (which can
+%refer to \vcc{x}) might have something to do with proving \vcc{E}.
+%In our invariant example, we state that list ownership of \vcc{n->next}
+%might have something to do with proving the \vcc{followers[n]}
+%is \vcc{followers[n->next]} plus \vcc{n->data}.
+
 

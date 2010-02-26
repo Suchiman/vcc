@@ -18,7 +18,6 @@ struct vcc(dynamic_owns) List {
                 keeps(n) ==> n->next == NULL || keeps(n->next)))
   invariant(forall(struct Node *n; 
                 {set_in(n, owns(this))}
-                {sk_hack(keeps(n->next))}
                 keeps(n) ==> 
                    forall(int e; 
                       followers[n][e] <==> 
@@ -71,8 +70,8 @@ int member(struct List *l, int k)
   struct Node *n;
 
   for (n = l->head; n; n = n->next)
-    invariant(l->val[k] <==> l->followers[n][k])
     invariant(n != NULL ==> set_in(n, owns(l)))
+    invariant(l->val[k] <==> l->followers[n][k])
   {
     if (n->data == k)
       return 1;
