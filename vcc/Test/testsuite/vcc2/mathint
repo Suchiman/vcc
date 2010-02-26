@@ -103,3 +103,12 @@ mathint plus(mathint x, mathint y)
 `
 Verification of plus succeeded.
 `
+#include <vcc.h>
+spec(ispure mathint mod(mathint a, mathint b) ensures(result == 12); )
+void foo()
+{
+assert(forall(unsigned a, b; mod(a + b, b) == 12));
+}
+`
+Verification of foo succeeded.
+`
