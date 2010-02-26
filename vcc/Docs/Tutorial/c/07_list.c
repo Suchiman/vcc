@@ -5,23 +5,26 @@ struct Node {
   int data;
 };
 
-typedef struct Node *PNode;
-
+/*{type}*/
 struct vcc(dynamic_owns) List {
-  spec( bool val[int]; ) // public
-
+  spec( bool val[int]; )
   struct Node *head;
-  spec( bool followers[PNode][int]; )
+  spec( bool followers[struct Node *][int]; )
   invariant(val == followers[head])
-  invariant(head != NULL ==> set_in(head, owns(this)))
+  invariant(head != NULL ==> keeps(head))
   invariant(followers[NULL] == lambda(int k; false))
-  invariant(forall(struct Node *n; {set_in(n->next, owns(this))}
-            set_in(n, owns(this)) ==> n->next == NULL || set_in(n->next, owns(this))))
-  invariant(forall(struct Node *n; {set_in(n, owns(this))} {sk_hack(set_in(n->next, owns(this)))}
-            set_in(n, owns(this)) ==> 
-                       forall(int e; followers[n][e] <==> followers[n->next][e] || e == n->data)))
+  invariant(forall(struct Node *n;
+                {set_in(n->next, owns(this))}
+                keeps(n) ==> n->next == NULL || keeps(n->next)))
+  invariant(forall(struct Node *n; 
+                {set_in(n, owns(this))}
+                {sk_hack(keeps(n->next))}
+                keeps(n) ==> 
+                   forall(int e; 
+                      followers[n][e] <==> 
+                      followers[n->next][e] || e == n->data)))
 };
-
+/*{init}*/
 struct List *mklist()
   ensures(result != NULL ==> wrapped(result) && result->val == lambda(int k; false))
 {
@@ -52,37 +55,31 @@ int add(struct List *l, int k)
     l->head = n;
     wrap(n);
     speconly(
-      set_owns(l, set_union(owns(l), SET(n)));
-      l->followers[n] = lambda(int z; l->followers[n->next][z] || z == k);
-      //-- l->followers = lambda(struct Node *p; int z; p == n ? (l->followers[p->next][z] || z == k) : l->followers[p][z]); //--
-      l->val = l->followers[n];
+      set_owns(l, set_union(owns(l), SET(n))); /*{specupdate}*/
+      l->followers[n] = 
+        lambda(int z; l->followers[n->next][z] || z == k);
+      l->val = l->followers[n]; /*{updateend}*/
     )
   }
   return 0;
 }
-
+/*{member}*/
 int member(struct List *l, int k)
   requires(wrapped(l))
-  ensures(result != 0 <==> l->val[k])
+  ensures(result != 0 <==> l->val[k])/*{endspec}*/
 {
   struct Node *n;
 
-  n = l->head;
-
-  if (n == NULL)
-    return 0;
-
-  for (;;)
+  for (n = l->head; n; n = n->next)
     invariant(l->val[k] <==> l->followers[n][k])
-    invariant(set_in(n, owns(l)))
+    invariant(n != NULL ==> set_in(n, owns(l)))
   {
     if (n->data == k)
       return 1;
-    n = n->next;
-    if (n == NULL)
-      return 0;
   }
+  return 0;
 }
+/*{out}*/
 /*`
 Verification of List#adm succeeded.
 Verification of mklist succeeded.
