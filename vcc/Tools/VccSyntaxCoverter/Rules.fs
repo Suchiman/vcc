@@ -254,7 +254,7 @@ module Rules =
         //fnApp "\\set" (owns @ [Tok.Op (fakePos, ",")] @ (fnApp "\\union" (owns @ [Tok.Op(fakePos, ","); paren "{" ob])))
         fnApp "\\diff_with" (owns @ [Tok.Op (fakePos, ",")] @ [paren "{" ob])
       | _ -> failwith ""
-    addRule (parenRuleN "giveup_closed_owner" 2 set_closed_owner)
+    addRule (parenRuleN "giveup_closed_owner" 2 giveup_closed_owner)
         
     let struct_rule = function
       | hd :: rest ->
