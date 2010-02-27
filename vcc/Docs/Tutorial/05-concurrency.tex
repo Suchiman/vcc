@@ -143,12 +143,93 @@ of its built-in functions.
 The header files coming with VCC provide a handful of popular operations,
 you can just rename them to fit your compiler.
 
-\subsection{Claims}
+\subsection{Using claims}
 
-\itodo{explain claims to claim stuff is closed}
+The contracts of functions operating on the lock require that the lock
+is wrapped.
+This is because one can only perform atomic operations on objects
+that are consistent. 
+If object is inconsistent, then the owning thread is in full control of it.
+However, wrapped means not only consistent, but also owned by the current thread,
+which defeats the purpose of the lock --- it should be possible
+for multiple threads to compete for the lock.
+Let's then say, there is a thread which owns the lock.
+Assume some other thread got to know that the lock is consistent.
+How would it know that the owning thread won't unwrap (or worse yet, deallocate) the lock, just
+before the thread tries an atomic operation on the lock?
+The owning thread thus needs to somehow promise the other thread
+that lock will stay consistent.
+In VCC such a promise takes form of a \Def{claim}.
+Later we'll see that claims are more powerful, but for
+now consider the following to be the definition of a claim:
+
+\begin{VCC}
+_(ghost 
+typedef struct {
+  \object claimed;
+  _(invariant \consistent(claimed))
+} \claim_struct, *\claim;
+)
+\end{VCC}
+
+\noindent
+Thus, a claim is an object, with an invariant stating that some other object
+(we call it \Def{claimed object}) is consistent.
+As this is stated in the invariant of the claim, it only needs to be true
+as long as the claim itself stays consistent.
+
+One will ask, how is this admissible --- the claim doesn't own the claimed
+object, so how should it know it will stay consistent?
+This is ensured by an implicit invariant, defined on all types
+marked with \vcc{_(claimable)} attribute.
+This invariant states that the object cannot be unwrapped when
+when there are consistent claims on it.
+More precisely, each such object keeps track of the count of outstanding
+claims.
+The number of outstanding claim on object \vcc{o} is given by
+the \vcc{\claim_count(o)} function.
+
+Now we getting back to our lock example, the trick is that there can be
+multiple claims claiming the lock.
+The thread that owns the lock will need to keep track of who's using
+the lock.
+It won't be able to destroy the lock (which requires unwrapping it),
+before it makes sure there is no one using the lock.
+Thus, we need to add \vcc{_(claimable)} attribute to our lock
+definition, and change the contract on the functions operating
+on the lock. As the changes are vary similar we'll only
+show \vcc{Release()}.
+\todo{ghost parameters should be explained earlier}
+
+\vccInput[linerange={release-out}]{c/08_lock_claimsobj.c}
+
+\noindent
+We pass a ghost parameter holding a claim.
+The claim should be wrapped, and \vcc{c->claimed}
+should point to \vcc{l} --- we use \vcc{\claims_obj(c, l)}
+to express that (which is because in general claims can claim multiple objects).
+We also need to know that the claim is not the protected object,
+otherwise we couldn't ensure that the claim is wrapped after the call.
+This is the kind of weird corner case that VCC is very good catching
+(even if it's bogus in this context).
+Other than the contract, the only change is that we list the claim
+as parameter to the atomic block.
+\todo{our current syntax is horrible, we need something different}
+Listing a normal object as parameter to the atomic makes VCC know you're
+going to modify the object.
+For claims, it is just a hint, that it should use this claim when trying
+to prove that the object is consistent.
+
+\subsection{Creating claims}
+
+\itodo{}
+
+\subsection{Guaranteed properties}
 
 \itodo{explain claims about properties -- possibly use counter as an example,
 also for two-state invariants}
+
+\subsection{Dynamic claim management}
 
 \itodo{a rundown as a bigger example}
 
