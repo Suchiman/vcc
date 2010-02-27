@@ -317,7 +317,7 @@ Let's have a look at an example, which does perform an ownership transfer:
 \vccInput[linerange={set-use}]{c/07_table.c}
 
 \noindent
-The \vcc{sc_set()} function transfer ownership of \vcc{s} to \vcc{c},
+The \vcc{sc_set()} function transfers ownership of \vcc{s} to \vcc{c},
 and additionally leaves object initially pointed to by \vcc{s->strings[idx]}
 wrapped, \ie owned by the current thread.
 This can be used in the call site:
