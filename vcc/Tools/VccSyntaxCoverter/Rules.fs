@@ -190,12 +190,14 @@ module Rules =
     addRule (quantRule "lambda" "###")
     
     addKwRule "expose" "unwrapping"
+    addKwRule "atomic" "atomic"
     addKwRule "invariant" "invariant"
     addKwRule "ensures" "ensures"
     addKwRule "requires" "requires"
     addKwRule "reads" "reads"
     addKwRule "writes" "writes"
     
+    addFnRule "is_fresh" "\\fresh"
     addFnRule "mutable" "\\unwrapped"
     addFnRule "wrapped" "\\wrapped"
     addFnRule "closed" "\\consistent"
@@ -238,6 +240,22 @@ module Rules =
       | _ -> failwith ""
     addRule (parenRuleN "set_owns" 2 set_owns)
     
+    let set_closed_owner = function
+      | [ob; owner] ->
+        let owns = fnApp "\\owns" owner
+        //fnApp "\\set" (owns @ [Tok.Op (fakePos, ",")] @ (fnApp "\\union" (owns @ [Tok.Op(fakePos, ","); paren "{" ob])))
+        fnApp "\\union_with" (owns @ [Tok.Op (fakePos, ",")] @ [paren "{" ob])
+      | _ -> failwith ""
+    addRule (parenRuleN "set_closed_owner" 2 set_closed_owner)
+        
+    let giveup_closed_owner = function
+      | [ob; owner] ->
+        let owns = fnApp "\\owns" owner
+        //fnApp "\\set" (owns @ [Tok.Op (fakePos, ",")] @ (fnApp "\\union" (owns @ [Tok.Op(fakePos, ","); paren "{" ob])))
+        fnApp "\\diff_with" (owns @ [Tok.Op (fakePos, ",")] @ [paren "{" ob])
+      | _ -> failwith ""
+    addRule (parenRuleN "giveup_closed_owner" 2 set_closed_owner)
+        
     let struct_rule = function
       | hd :: rest ->
         match eatWs rest with
