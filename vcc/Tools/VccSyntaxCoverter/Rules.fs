@@ -214,7 +214,9 @@ module Rules =
     addFnRule "set_union" "\\union"
     addFnRule "set_difference" "\\diff"
     addFnRule "set_intersection" "\\inter"
+    addFnRule "claims_obj" "\\claims_obj"
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
+    addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\claim ") :: toks)))
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
     
@@ -255,7 +257,7 @@ module Rules =
         fnApp "\\diff_with" (owns @ [Tok.Op (fakePos, ",")] @ [paren "{" ob])
       | _ -> failwith ""
     addRule (parenRuleN "giveup_closed_owner" 2 giveup_closed_owner)
-        
+            
     let struct_rule = function
       | hd :: rest ->
         match eatWs rest with
