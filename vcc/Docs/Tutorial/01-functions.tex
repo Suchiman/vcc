@@ -1,4 +1,4 @@
-\section{Assertion and assumptions}
+\section{Assert and Assume}
 Let's begin with a simple example:
 
 \vccInputSC{c/01_minInline2.c}
@@ -75,7 +75,7 @@ Succesful verification with VCC only guarantees absence of errors for
 those executions in which no assumption is is violated. Thus, you
 normally want to verify your program without any assumptions.
 
-So if assumptions are to be avoided, why are assumptions useful at
+If assumptions are to be avoided, why are assumptions useful at
 all? They are useful in several ways:
 \begin{itemize}
 \item If a verification is not yet complete, assumptions can be used
@@ -126,7 +126,49 @@ _( assert x == 0 ) // fails
 _( assert x == 0 ) // succeeds
 \end{VCC}
 
-\todo{exercises?}
+When we talk about what VCC knows, we mean what it knows in an ideal
+sense, where if it knows \vcc{p}, it also knows any logical
+consequence of \vcc{p}. In such a world, adding an assertion that
+succeeds would have no effect on whether later assertions succeed.
+VCC's ability to deduce consequences is indeed complete for many types
+of expressions (e.g. expressions that use only equalities,
+inequalities, addition, subtraction, multiplication by constants, and
+logical operators), but not for all expressions, and VCC will
+sometimes fail to prove an assertion, even though it ``knows'' enough
+to prove it.  
+
+Because VCC's reasoning is incomplete\footnote{Note that this
+  incompleteness in no way makes VCC \emph{unsound}; it can cause
+  false failure reports, but cannot cause VCC to verify a program that
+  is not correct.}, an assertion that succeeds can sometimes cause
+later assertions to succeed, by drawing VCC's attention to a crucial
+lemma it needs to prove the later assertion.  This is relatively rare,
+and typically involves ``nonlinear arithmetic'' (e.g. where variables
+are multiplied together), bitvevtor reasoning, or quantifiers. We'll
+say more about these in section \ref{}.
+
+\subsection{Exercises}
+\begin{enumerate}
+\item
+In the following program fragment, which assertions will fail?
+\begin{VCC}
+int x,y; 
+_( assert x > 5 ) 
+_( assert x > 3 ) 
+_( assert x < 2 ) 
+_( assert y < 3 )
+\end{VCC}
+\item
+Is there any difference between 
+\begin{VCC}
+_( assume p ) _( assume q  )
+\end{VCC}
+and 
+\begin{VCC}
+_( assume q ) _( assume p )
+\end{VCC}
+? What about if the assumptions are replaced by assertions?
+\end{enumerate}
 \section{Function specifications}
 
 Now we turn to the specification of functions. We'll take the example
@@ -263,16 +305,17 @@ This is then used as a lemma to prove the postcondition.
 
 
 \subsection{Write Clauses and old(...)}
-So far, we have considered only functions without side effects. We
-used this implicitly in the translations above; for example, we assumed
-that the call to \vcc{min()} didn't have the side effect of changing
-the local variables of \vcc{main()}. VCC requires that any side
-effects of a function that might be visible to the caller (in the
-sense of destroying knowledge that the caller might have) must be explicitly
-declared in the specification of the function. For example, because
-the caller cannot have any knowledge about the local variables of the
-function, changes to these don't have to be reported, whereas changes
-to global variables typically do. (We will see later that
+So far, we have considered only functions without side effects; for
+example, we assumed that the call to \vcc{min()} didn't have the side
+effect of changing the local variables of \vcc{main()}. The
+translation above captured this requirement implicitly, by allowing a
+\vcc{main()} to call \vcc{min()} without losing any of its prior
+knowledge. VCC requires that any side effects of a function that might
+be visible to the caller (in the sense of destroying knowledge that
+the caller might have) must be explicitly declared in the
+specification of the function. Side effects to state that the caller
+cannot possibly know about (e.g., local variables of the function
+body) do not have to be reported. (We will see in section \ref{} that
 VCC only allows the caller to know very specific things, which allows
 the function to do other things with global side effects without
 having to report them.)
@@ -301,36 +344,35 @@ Now, let's have a look at a function calling \vcc{swap()}.
 
 \vccInput[linerange={foo-}]{c/01_swap1.c}
 
-There are two things to note here.
-First, one lists pointers to memory locations, not l-values, in the writes
-clause (\ie \vcc{_(writes &x, &y, &z)} and not \vcc{_(writes x, y, z)}).
-Second, VCC has no problems showing that \vcc{swap(&x, &y)} does not change
-\vcc{z}.
+Note that writes clauses list pointers to memory locations, not l-values
+(\ie \vcc{_(writes &x, &y, &z)} and not \vcc{_(writes x, y, z)}).
+Note also that because \vcc{z} aliases neither \vcc{x} not \vcc{y}, VCC can
+knows that \vcc{swap(&x, &y)} does not change \vcc{z}.
 
-Should we forget the writes clause on the \vcc{swap()}, we would get an error:
+Had we left out the writes clause from the specification of
+\vcc{swap()}, VCC would report an error:
 
 \vccInput[linerange={out-}]{c/01_swap2.c}
 
 \noindent
 \todo{change thread-locality to something better}
-The complaints about thread-locality refer to the places where we
-read \vcc{*p} and \vcc{*q}.
-It is generally unsafe to read something just because you happen to have a pointer to it.
-For example, the pointer might be \vcc{NULL}, or point to an object
-that is lock-protected, or might have also been \vcc{free()}'d.
-For these (and other) reasons VCC implicitly asserts
-\vcc{\thread_local(p)} just before any read access to \vcc{*p}.
-This predicate implies that that the pointer points to an object that
+The complaints about thread-locality refer to the places where the function
+reads \vcc{*p} and \vcc{*q}. Reading memory doesn't necessarily require
+a writes clause (since it can't destroy knowledge of the caller),
+but that doesn't necessarily make it safe; for example, the pointer might point
+to memory that has been freed, or to memory that is lock-protected or owned
+by another thread. For these (and other) reasons VCC implicitly
+asserts \vcc{\thread_local(p)} just before any read access to \vcc{*p};
+this predicate means that that the pointer points to an object that
 ``belongs'' to the current thread (much more about this later).
-Similarly, for write access to \vcc{*p} it inserts the assertion
-\vcc{\writable(p)}.
-It implies \vcc{\thread_local(p)},
-and additionally that \vcc{*p} is in the ``phase of life'' where
-it can be modified, and moreover, that it was listed in the current
-``writes set''. (You can think of the writes set as being the set
-of objects named in the writes clause, along with those objects that
-the thread has gotten control of since entry of the function; we will
-see how this can happen in section ??.)
+
+Similarly, just before write access to \vcc{*p}, VCC inserts the
+assertion \vcc{\writable(p)}, which means that \vcc{\thread_local(p)},
+that \vcc{*p} is in the ``phase of life'' where it can be modified,
+that it \vcc{p} is in the current ``writes set''. (You can think of
+the writes set as being the set of objects named in the writes clause,
+along with those objects that the thread has gotten control of since
+entry of the function; we will see how this can happen in section ??.)
 For example, the assert/assume translation of \vcc{swap()} is:
 
 \vccInput[linerange={swap-}]{c/01_swap3.c}
@@ -344,12 +386,12 @@ clause of \vcc{foo()} we will get:
 
 \vccInput[linerange={out-}]{c/01_swap4.c}
 
-One might wonder why cannot we just have 
-\vcc{requires \writable(p)} and instead have the specialized writes clause.
-The reason is that the writes clause also specifies that nothing
-outside of the writes clause will be changed.
-This is why we can prove that \vcc{y} is still \vcc{42} after the call
-to \vcc{boundedIncr(&x)}. 
+%% One might wonder why cannot we just have 
+%% \vcc{requires \writable(p)} and instead have the specialized writes clause.
+%% The reason is that the writes clause also specifies that nothing
+%% outside of the writes clause will be changed.
+%% This is why we can prove that \vcc{y} is still \vcc{42} after the call
+%% to \vcc{boundedIncr(&x)}. 
 
 
 %A predicate \vcc{\mutable(p)} states that the object pointed to by \vcc{p}
