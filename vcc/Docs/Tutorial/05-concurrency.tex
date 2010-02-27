@@ -1,6 +1,149 @@
 \section{Atomics}
 
-\itodo{start with a example of a spin-lock}
+Writing concurrent programs is generally considered to be harder than writing
+sequential programs.
+Similar opinions are held about verification.
+Surprisingly, in VCC the leap from verifying sequential programs to
+verifying fancy lock-free stuff is not that big.
+This is because the verification in VCC is inherently based on invariants:
+conditions that attached to data and need hold \emph{no matter which thread}
+accesses it.
+
+But let us move from words to actions, and verify a canonical example
+of a lock-free algorithm, which is the implementation of a spin-lock itself.
+The spin-lock data-structure is really simple -- it contains just a single
+field, meant to be interpreted as a boolean stating whether the spin-lock
+is currently acquired.
+However, in VCC we would like to attach some formal meaning to this boolean.
+We do that through ownership -- the spin-lock will protect some object,
+and will own it whenever it is not acquired.
+Thus, the following invariant should come as no surprise:
+
+\vccInput[linerange={lock-init}]{c/08_lockw.c}
+
+\noindent
+We use a ghost field to hold a reference to the object meant to be protected
+by this lock.
+If one wishes to protect multiple objects with a single lock, one can make
+the object referenced by \vcc{protected_obj} own them all.
+The \vcc{locked} filed is annotated with \vcc{volatile}.
+It has the usual meaning for the regular C compiler (\ie it makes the compiler
+assume that the environment might write to that field, while the compiler
+is not looking).
+For VCC it means that the field can be written also when the object is
+consistent.
+The idea is that we will not unwrap the object, but write it atomically,
+while preserving its invariant.
+The attribute
+\vcc{_(volatile_owns)} means that we want the \vcc{\owns} set
+to be treated as a volatile field (\ie we want to be able to write
+it while to object is consistent; normally this is not possible).
+
+Now we can see how one operates on volatile fields.
+We shall start with the function releasing the lock, as it is simpler.
+
+\vccInput[linerange={release-out}]{c/08_lockw.c}
+
+\noindent
+First, let's have a look at the contract.
+\vcc{Release()} requires the lock to be wrapped.
+You might wonder how multiple threads can all own the lock (to have it
+wrapped), we will fix that later.
+Second, we require that the protected object is wrapped.
+We need it to be consistent because we will want to make the lock own it, and
+lock can only own consistent objects.
+We need the current thread to own it, because ownership transfer can
+only happen between the current thread and an object.
+Third, we say we're going to write the protected object.
+This allows for the transfer, and prevents the calling function from assuming
+that the object stays wrapped after the call.
+Note that this contract is much like the contract of the function
+adding an object to a container data-structure (see TODO).
+
+The \vcc{atomic} block is similar in spirit to the \vcc{unwrapping} block ---
+it allows for modifications of listed objects and checks if their invariants
+are preserved.
+The difference is that the entire update happens instantaneously from the point
+of view of other threads.
+We needed the unwrapping operation because we wanted to mark that we temporarily
+break the object invariants.
+Here, there is no point in time, where other threads can observe that the invariants
+are broken.
+Invariants hold before the beginning of the atomic block (by our principal reasoning
+rule, \secref{TODO}), and we check the invariant at the end of the atomic block.
+
+The question arises, what guarantees that other threads won't interfere with the atomic
+action?
+VCC allows only one physical memory operation inside of an atomic block,
+which is indeed atomic from the point of view of the hardware.
+Here, that operation is writing to the \vcc{l->locked}.
+Other possibilities include reading from a volatile field, or a performing
+a primitive operation supported by the hardware, like interlocked
+compare-and-exchange.
+However, inside our atomic block we can also see the update of the owns set
+(remember that \vcc{\union_with(\owns(A), B)} is a shorthand for \vcc{\set(\owns(A), \union(\owns(A), B))}).
+\todo{need better explanation}
+This is fine, because the ghost code is not executed by the actual hardware.
+If we were to imagine a VCC machine, which would actually execute the 
+ghost code, we could say that it blocks other threads when the ghost
+code is executing.
+Because the real machine doesn't execute any ghost code, it doesn't need to do
+any such blocking.
+
+It is not particularly difficult to see that this atomic operation preserves the
+invariant of the lock.
+But this isn't the only condition imposed by VCC here.
+To transfer ownership of \vcc{l->protected_obj} to the lock, we also need
+write permission to the object being transferred, and
+we need to know its consistent.
+For example, should we forget to mention \vcc{l->protected_obj}
+in the writes clause VCC will complain about:
+
+\vccInput[linerange={out-999}]{c/08_lockw_wrong.c}
+
+\noindent
+Should we forget to perform the ownership transfer inside of \vcc{Release()}, we'll get complain
+about the invariant of lock.
+
+\vccInput[linerange={out-999}]{c/08_lockw_wrong2.c}
+
+Let's then move to \vcc{Acquire()}. 
+The specification is not very surprising: it requires the lock to be wrapped,
+and ensures that after the call the thread will own the protected object,
+and moreover, that the thread didn't own it before.
+\todo{is-fresh should be explained earlier}
+
+\vccInput[linerange={acquire-release}]{c/08_lockw.c}
+
+\noindent
+The \vcc{InterlockedCompareAndExchange()} function is a compiler built-in,
+which on the x86/x64 hardware translates to \vcc{cmpxchg} assembly instruction.
+It takes a memory location and two values.
+If the memory location contains the first value, then it is replaced with the second.
+It returns the old value.
+The entire operation is performed atomically (and is also a write barrier).
+
+\subsection{Atomic inline}
+
+VCC doesn't have all the primitives of all the C compilers predefined.
+One can define them by suppling a body.
+It is presented only to the VCC compiler (it is enclosed in
+\vcc{_(atomic_inline ...)}) so that the normal compiler doesn't get confused
+about it.
+
+\vccInput[linerange={xchg-acquire}]{c/08_lockw.c}
+
+\noindent
+This is one of the places where one needs to be very careful,
+as there is no way for VCC to know if the definition you provided matches
+the semantics of your regular C compiler.
+Make sure to check with the regular C compiler manual for exact semantics
+of its built-in functions.
+
+The header files coming with VCC provide a handful of popular operations,
+you can just rename them to fit your compiler.
+
+\subsection{Claims}
 
 \itodo{explain claims to claim stuff is closed}
 
