@@ -17,7 +17,8 @@ program really should be correct\footnote{In reality, this isn't
   practice, this is unlikely to cause you to accidentally verify an
   incorrect program, unless you find and intentionally exploit such a
   bug. In addition, VCC currently doesn't do the checks needed to
-  ignore processor store buffering; this will be remedied in the near
+  ignore memory system optimizations on multiprocessor machines, e.g.,
+  processor store buffering on x64 machines; this will be remedied in the near
   future.}. 
 
 To check your program, VCC generates a number of mathematical
@@ -25,8 +26,8 @@ statements (called \emph{verification conditions}) whose proofs
 suffice to guarantee the program's correctness, and tries to prove
 these statements using an automatic theorem prover. If any of these
 proofs fail, VCC reflects these failures back to you in terms of the
-program itself. For example, if your program contains uses division
-somewhere, and VCC is unable to prove (from what thinks holds at the
+program itself. For example, if your program uses division
+somewhere, and VCC is unable to prove (from what it thinks holds at the
 point at which the division is done) that the divisor is nonzero, it
 will report this to you as a program error at that point in the
 program. (If you use VCC from within Visual Studio, it will show in
@@ -37,12 +38,9 @@ enough to guarantee that the suspected error doesn't occur.
 Typically, you fix this ``error'' by strengthening your
 specifications. This might lead to other error reports, necessitating
 the strengthening of other specifications, so verification is in
-practice an iterative process.
-\todo{the "occasionally" part only applies when you run VCC on
-a well-tested code}
-On occasion, this process reveals a
-genuine programming error.
-
+practice an iterative process.  From time to time, however, depending on how
+robust and well-tested your code already is, genuine programming errors may be
+revealed during this process.
 
 The important thing about this process is that you interact with VCC
 entirely at the level of your program; you can safely ignore most of
@@ -54,19 +52,19 @@ acquire and release exclusive ownership of chunks of data, you will
 often write small bits of \emph{ghost} code to manipulate the
 ownership relation. (Ghost code is seen by VCC but not by the C
 compiler, and so introduces no runtime overhead.) This is part of the
-VCC philosophy -- 
+VCC philosophy -- \todo{missing stuff}
 
-This tutorial covers basics of VCC annotation language; by the time
+This tutorial covers basics of VCC annotation language. By the time
 you have finished working through it, you should be able to use VCC to
 verify interesting programs. It doesn't cover the theoretical
 background of VCC, implementation details, or advanced topics;
-information on these can be found on the VCC homepage.
+information on these can be found on the \href{http://vcc.codeplex.com/}{VCC homepage}.
 
 %%  These topics are covered
 %% separately~\cite{lci}.  A high-level overview of the VCC tool chain is
 %% also available separately~\cite{Cohen:TPHOLs2009-23}.
 
-The following section covers the installation of VCC and 
+The following section covers the installation of VCC.
 After you're done you have two choices: one is to edit the tutorial examples
 using Visual Studio and verify them using VCC Visual Studio addin.
 Alternatively, you can invoke the VCC verifier directly from command line,
@@ -81,14 +79,14 @@ If you are using VS, you should install it before
 installing VCC\footnote{Does this matter now?}. You can use any
 edition other than the express editions (which do not allow
 plugins). If you neither own nor wish to buy VS, you can download a
-free 6 month trial from the Microsoft web site.
+free six month trial from the Microsoft web site.
 
 After installing VS, install VCC\ from the installer link on the
 VCC\ homepage. If you plan to build code verified with VCC (rather
 than just verifying it), you will also want to put the VCC headers
-into the VS\ include path, as follows: under the VS\ menu, 
+into the VS\ include path, as follows:
 \begin{enumerate}
-\item Choose Tools$\rightarrow$Options
+\item In the VS\ menu bar, choose Tools$\rightarrow$Options
 \item On the left hand side of the Options dialog box, click on the
   triangle next to Projects and Solutions, then click on the
   subheading marked ``VC++ Directories''
@@ -99,26 +97,28 @@ into the VS\ include path, as follows: under the VS\ menu,
   (the one with the folder icon, labelled ``New Line'').
 \item To the right of the text entry box that opens, click on the box
   with labelled ``...''.
-\item In the file chooser that opens up, navigate to the \verb!\\Headers!
-  subdirectory of the VCC installation directory (e.g., \verb!C:\\Program Files\\Microsoft Research\\Vcc\\Headers! is the default location for
+\item In the file chooser that opens up, navigate to the \verb!\Headers!
+  subdirectory of the VCC installation directory (e.g., \verb!C:\Program Files\Microsoft Research\Vcc\Headers! is the default location for
   installations on 32-bit Windows) and click ``select folder''.
 \item Close the options dialog box.
 \end{enumerate}
 
 \section{Running VCC}
 \subsection{Running VCC from the command line}
-The easiest way to call vcc on a set of files is
+The easiest way to call VCC on a set of files is
 \todo{I've added some options that currently exist only as options to
-  be passed to Boogie. We should not be exposing boogie to clients,
+  be passed to Boogie. We should not be exposing Boogie to clients,
   so we should really have separate options to call the proof
   inspector and/or see error models (though I don't know which one we
   would display for multiple errors).}
 \todo{More options}
+% Mark: there is /model as a switch but that would save a model to a file and
+% not display it.
 \begin{verbatim}
 vcc [/f:funs] [/Inspector] [/Models] files
 \end{verbatim}
-The \verb!/f! switch provides a comma-separate list of functions to
-verify. The \verb!/Inspector! switch causes the VCC inspector to be
+Via the \verb!/f! switch a comma-separated list of functions to
+verify may be provided. The \verb!/Inspector! switch causes the VCC inspector to be
 displayed while the verification is running, top monitor what VCC is
 trying to do. The \verb!/Models! switch causes VCC to display models for
 the errors that it finds.
@@ -127,23 +127,22 @@ the errors that it finds.
 There are two ways to invoke VCC from within Visual
 Studio\todo{Should we bother with the VCC menu also?}. First,
 from the Verify tab at the top of the window, you can ask VCC verify
+% "Verify tab at the top of the window" -> "Verify menu in the menu bar" ?
 the current file. Second, if you right-click within a C source file,
 several VCC commands are made available, depending on what kind of
-construction intellisense thinks you are in the middle of. The choice
+construction IntelliSense thinks you are in the middle of. The choice
 of verifying the entire file is always available. If you click within
 the definition of a struct type, VCC will offer you the choice of
 checking admissibility for that type (a concept explained in
 section \ref{}). If you click within the body of a function, VCC should offer
 you the opportunity to verify just that function. However,
-intellisense often gets confused about the syntactic structure of
+IntelliSense often gets confused about the syntactic structure of
 VCC code, so it may not give these context-dependent
 options. However, if you select the name of a function and then right
 click, it will allow you to verify just that function.
 
 If you want to run the VCC inspector during verification, this
-option can be selected from the \verb!Verify->settings! menu. If you want
+option can be selected from the Verify$\rightarrow$Settings menu. If you want
 to look at the error model for a particular error, right-click on
 error (in the source), and choose ``Show VCC error model''\todo{This
-  should really say ``VCC error model'', to not expose z3.}
-
-
+  should really say ``VCC error model'', to not expose Z3.}
