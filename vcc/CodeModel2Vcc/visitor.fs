@@ -847,6 +847,8 @@ namespace Microsoft.Research.Vcc
       member this.Visit (fieldReference:IFieldReference) : unit = assert false
 
       member this.Visit (fileReference:IFileReference) : unit = assert false
+      
+      member this.Visit (aliasForType:IAliasForType) : unit = assert false
 
       member this.Visit (functionPointerTypeReference:IFunctionPointerTypeReference) : unit =
         let meth = functionPointerTypeReference :> ISignature
