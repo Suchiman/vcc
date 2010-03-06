@@ -400,3 +400,14 @@ int f() {
 `
 Verification of f succeeded.
 `
+#include <vcc.h>
+#include <limits.h>
+
+void foo()
+{
+  unsigned i = UINT_MAX / 2;
+  assert(i == INT_MAX);
+} 
+`
+Verification of foo succeeded.
+`
