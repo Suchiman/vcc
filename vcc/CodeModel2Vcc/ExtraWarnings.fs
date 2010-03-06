@@ -29,7 +29,7 @@ namespace Microsoft.Research.Vcc
         let foundVolatile = ref false     
         let continueIfNotFound() = not !foundVolatile
         let found() = foundVolatile := true; false
-        let findVolatile self = function
+        let findVolatile _ = function
           | Expr.Dot(_,_,f) when f.IsVolatile || isVolatileType f.Type -> found()
           | CallMacro(_, "_vcc_current_state", _, _) -> found()
           | CallMacro(_, "_vcc_closed", _, _) -> found()

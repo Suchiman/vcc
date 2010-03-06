@@ -3975,6 +3975,11 @@ namespace Microsoft.Research.Vcc {
     {
     }
 
+    protected override IMethodDefinition LookForOverloadMethod() {
+      IMethodDefinition method = base.LookForOverloadMethod();
+      return VccBitwiseAnd.ProvideUnsignedBias(method, this.LeftOperand, this.RightOperand, this.Compilation.BuiltinMethods);
+    }
+
     /// <summary>
     /// Returns true if no information is lost if the integer value of this expression is converted to the target integer type.
     /// </summary>
@@ -4146,6 +4151,11 @@ namespace Microsoft.Research.Vcc {
     protected VccMultiplication(BlockStatement containingBlock, VccMultiplication template)
       : base(containingBlock, template)
     {
+    }
+
+    protected override IMethodDefinition LookForOverloadMethod() {
+      IMethodDefinition method = base.LookForOverloadMethod();
+      return VccBitwiseAnd.ProvideUnsignedBias(method, this.LeftOperand, this.RightOperand, this.Compilation.BuiltinMethods);
     }
 
     /// <summary>
