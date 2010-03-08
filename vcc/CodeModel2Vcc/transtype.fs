@@ -220,10 +220,10 @@ namespace Microsoft.Research.Vcc
             // the 'this' will have type of the group in the invariant defintion
             // however field accesses are done with the type of parent in mind
             // therefore for field accesses we cast back
-            | Expr.Dot (c1, (Expr.Macro (c2, "this", []) as th), f) ->
+            | Expr.Dot (c1, (Expr.This(c2) as th), f) ->
               Some (Expr.Dot (c1, Expr.Cast (c2, Processed, self th), f))
-            | Expr.Macro(c, "this", []) ->
-              Some (Expr.Macro( { c with Type = Type.MkPtrToStruct(td) }, "this", []))
+            | Expr.This(c) ->
+              Some (Expr.This({ c with Type = Type.MkPtrToStruct(td) }))
             | _ -> None
            
      
@@ -254,7 +254,7 @@ namespace Microsoft.Research.Vcc
             else
               match self e with
                 // Simplify group field access in invariants, makes matching in @approves(...) work.
-                | Cast (_, _, (Macro (_, "this", []) as th)) when th.Type.IsPtrTo (Type.Ref groupTd) ->
+                | Cast (_, _, (This _ as th)) when th.Type.IsPtrTo (Type.Ref groupTd) ->
                   Some (Dot (c, th, fieldField))
                 | se ->
                   Some (Dot (c, Expr.MkDot(c, se, groupField), fieldField))
@@ -950,8 +950,8 @@ namespace Microsoft.Research.Vcc
           subsFields      
           
         let retypeThis oldTd newTd self = function
-          | Expr.Macro({Type = PtrSoP(Type.Ref(oldType), isSpec)} as c, "this", []) ->
-              Some (Expr.Macro( { c with Type = Type.MkPtr(Type.Ref(newTd), isSpec) }, "this", []))
+          | Expr.This({Type = PtrSoP(Type.Ref(oldType), isSpec)} as c) ->
+              Some (Expr.This( { c with Type = Type.MkPtr(Type.Ref(newTd), isSpec) }))
           | _ -> None
       
         match typeToVolatileType.TryGetValue(td) with

@@ -62,7 +62,7 @@ namespace Microsoft.Research.Vcc
         else
           None 
       | Expr.Cast ({ Type = MathInteger }, _, expr) when expr.Type._IsInteger -> Some(self(expr))
-      | Expr.Cast(ec, _, Expr.Macro(tc, "this", [])) when inGroupInvariant && ec.Type = tc.Type -> 
+      | Expr.Cast(ec, _, This(tc)) when inGroupInvariant && ec.Type = tc.Type -> 
         None // Do not remove this cast because the type of 'this' will change later on
       | Expr.Cast (_, _, e') as e ->
         match e'.Type, e.Type with
@@ -306,8 +306,8 @@ namespace Microsoft.Research.Vcc
                                Expr.Call ({ c with Type = PhysPtr Void }, internalFunction "alloc", [], [arrTy])))
         | Expr.Call (c, { Name = "free" }, _, [p]) ->
           Some (Expr.Call (c, internalFunction "free", [], [self p]))
-        | Expr.Macro (c, "&", [Macro (c', "this", [])]) when not c'.Type._IsPtr ->
-          Some (self (Macro (c, "this", [])))
+        | Expr.Macro (c, "&", [This(c')]) when not c'.Type._IsPtr ->
+          Some (self (This(c)))
         | Expr.Call (c, { Name = "_vcc_create_set" }, _, pars) ->
           match pars with
             | [] 
@@ -723,8 +723,8 @@ namespace Microsoft.Research.Vcc
 
     let normalizeOnUnwrap = 
       let expandOne = function
-         | BoolOp (c1, "||", Prim(_, Op("==", _), [ COld (_, CallMacro (_, "_vcc_closed", _, [This])) as theOld;
-                                               CallMacro (_, "_vcc_closed", _, [This]) as theNew]), body) ->
+         | BoolOp (c1, "||", Prim(_, Op("==", _), [ COld (_, CallMacro (_, "_vcc_closed", _, [This(_)])) as theOld;
+                                               CallMacro (_, "_vcc_closed", _, [This(_)]) as theNew]), body) ->
            mkAnd (Prim (c1, Op("==>",Unchecked), [mkAnd theOld (mkNot theNew); body]))
                  (Prim (c1, Op("==>",Unchecked), [mkAnd (mkNot theOld) theNew; body]))
          | expr -> 

@@ -66,10 +66,6 @@ namespace Microsoft.Research.Vcc
     | Expr.Prim (c, Op (op, _), [e1; e2]) -> Some (BoolOp (c, op, e1, e2))
     | _ -> None
       
-  let (|This|_|) = function
-    | Expr.Macro (_, "this", []) -> Some (This)
-    | _ -> None
-  
   let (|COld|_|) = function
     | Expr.Old (c, Macro (_, "prestate", []), e) -> Some (COld (c, e))
     | _ -> None
@@ -79,7 +75,7 @@ namespace Microsoft.Research.Vcc
     | Dot (_, e, f), Dot (_, e', f') -> f = f' && simpleCmp helper failOnError (e, e')
     | Expr.Macro (_, "&", [e]), Expr.Macro (_, "&", [e'])
     | Deref (_, e), Deref (_, e') -> simpleCmp helper failOnError (e, e')
-    | Macro (_, "this", []), Macro (_, "this", []) -> true
+    | This _, This _ -> true
     | e, e' -> 
       if failOnError then
         helper.Error (e'.Token, 9608, sprintf "expressions are not the same: %s  !==  %s" (e.ToString()) (e'.ToString()), None)
