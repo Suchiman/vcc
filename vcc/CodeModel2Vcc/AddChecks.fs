@@ -24,7 +24,7 @@ namespace Microsoft.Research.Vcc
     match this.Type with
       | Ptr (Type.Ref td) ->
         let replaceThisOld self = function 
-          | Expr.Macro(c, "this", []) -> Some this
+          | Expr.This _ -> Some this
           | Expr.Old (c, Macro (_, "prestate", []), e) ->
             Some (Expr.Old (c, prestate, self e))
           | _ -> None
@@ -49,8 +49,8 @@ namespace Microsoft.Research.Vcc
   // true iff invariant is just true except when unwrapping
   let isOnUnwrap = function
     | BoolOp (_, "==>", BoolOp (_, "&&", 
-                                COld (_, CallMacro (_, "_vcc_closed", _, [_; This])),
-                                Prim (_, Op ("!", _), [CallMacro (_, "_vcc_closed", _, [_; This])])), _) -> true
+                                COld (_, CallMacro (_, "_vcc_closed", _, [_; This(_)])),
+                                Prim (_, Op ("!", _), [CallMacro (_, "_vcc_closed", _, [_; This _])])), _) -> true
     | _ -> false
   
   let saveAndCheckInvariant helper cond errno suffix this =

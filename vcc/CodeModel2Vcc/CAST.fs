@@ -611,6 +611,7 @@ module Microsoft.Research.Vcc.CAST
     | Cast of ExprCommon * CheckedStatus * Expr   // take the type from ExprCommon
     | Quant of ExprCommon * QuantData
     | Result of ExprCommon
+    | This of ExprCommon
     | Old of ExprCommon * Expr * Expr           // the first expression refers to ``when''
     | SizeOf of ExprCommon * Type
     
@@ -671,6 +672,7 @@ module Microsoft.Research.Vcc.CAST
         | Cast (e, _, _)
         | Quant (e, _)
         | Result (e)
+        | This(e)
         | Old (e, _, _)        
         | Macro (e, _, _)
         | VarWrite (e, _, _)
@@ -708,6 +710,7 @@ module Microsoft.Research.Vcc.CAST
             | Call(_, _, _, [])
             | UserData _
             | SizeOf _
+            | This _
             | Result _ -> ()
             | Prim (_, _, es)
             | Block (_, es) 
@@ -818,6 +821,7 @@ module Microsoft.Research.Vcc.CAST
               | Call(_, _, _, [])
               | UserData _
               | SizeOf _
+              | This _
               | Result _ -> None
               | Prim (c, op, es) ->  constructList (fun args ->  Prim (c, op, args)) (map ctx) es
               | Call (c, fn, tas, es) -> constructList  (fun args -> Call (c, fn, tas, args)) (map ctx) es
@@ -898,6 +902,7 @@ module Microsoft.Research.Vcc.CAST
           | Ref(c, v) -> Some(Ref(sc c, sv v))
           | VarDecl(c, v) -> Some(VarDecl(c, sv v))
           | Result c -> Some(Result(sc c))
+          | This c -> Some(This(sc c))
           | Prim (c, op, es) ->  Some(Prim(sc c, op, selfs es))
           | Call (c, fn, tas, es) -> Some(Call(sc c, fn, List.map (fun (t : Type) -> t.Subst(typeSubst)) tas, selfs es))
           | Macro (c, op, es) -> Some(Macro(sc c, op, selfs es))
@@ -990,7 +995,8 @@ module Microsoft.Research.Vcc.CAST
               | None -> ()
             fe q.Body
             wr ")"
-          | Result (_) -> wr "result"
+          | Result _ -> wr "result"
+          | This _ -> wr "this"
           | Old (_, w, e) -> doArgs "old" [w; e]
           | Pure (_, e) -> doArgs "pure" [e]
           | Expr.Macro (_, op, args) -> 

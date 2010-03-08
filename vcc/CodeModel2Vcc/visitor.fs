@@ -1437,7 +1437,7 @@ namespace Microsoft.Research.Vcc
         this.DoField targetExpression targetExpression.Instance targetExpression.Definition
 
       member this.Visit (thisReference:IThisReference) : unit =
-        exprRes <- C.Expr.Macro (this.ExprCommon thisReference, "this", [])
+        exprRes <- C.Expr.This (this.ExprCommon thisReference)
 
       member this.Visit (throwStatement:IThrowStatement) : unit = assert false
 

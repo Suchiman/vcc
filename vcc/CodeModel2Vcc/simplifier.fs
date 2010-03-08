@@ -532,7 +532,7 @@ namespace Microsoft.Research.Vcc
             match v.Type with 
               | Type.Volatile _ -> 
                 let ecObjT = { bogusEC with Type = Type.ObjectT }
-                let this = Macro( { bogusEC with Type = Type.PhysPtr(Type.Ref td) }, "this", [])
+                let this = This( { bogusEC with Type = Type.PhysPtr(Type.Ref td) })
                 [Macro (boolBogusEC(), "approves", 
                   [ Macro( ecObjT, "_vcc_owner", [ this ]); 
                     Deref ({bogusEC with Type = v.Type}, 
@@ -620,11 +620,11 @@ namespace Microsoft.Research.Vcc
       let approvers = gdict()
       let selfApproved = gdict()
       let doApproves self = function
-        | Macro (ec, "approves", [approver; Deref (_, Dot (_, (This as th), subject))]) ->        
+        | Macro (ec, "approves", [approver; Deref (_, Dot (_, (This _ as th), subject))]) ->        
           match approver with
-            | CallMacro (_, "_vcc_owner", _, [This]) ->
+            | CallMacro (_, "_vcc_owner", _, [This(_)]) ->
               res (Macro (ec, "_vcc_inv_is_owner_approved", [th; mkFieldRef subject]))
-            | Deref (_, Dot (_, This, approver)) ->
+            | Deref (_, Dot (_, This(_), approver)) ->
               if approver = subject then
                 selfApproved.[approver] <- true
               approvers.[approver] <- ec.Token

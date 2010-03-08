@@ -30,7 +30,7 @@ namespace Microsoft.Research.Vcc
     let stutteringCheck (inv:Expr) =
       let seenOld = ref false
       let replaceThisOld self = function 
-        | Expr.Macro(c, "this", []) -> Some (mkRef p)
+        | Expr.This _ -> Some (mkRef p)
         | Expr.Old (_, Macro (_, "prestate", []), e) -> 
           seenOld := true
           Some (self e)
@@ -46,8 +46,8 @@ namespace Microsoft.Research.Vcc
     let handleDecl = function
       | Top.TypeDecl td as decl when not (_list_mem NoAdmissibility td.CustomAttr) ->
         let rec isTrivialInvariant = function
-          | CallMacro(_, "_vcc_typed2", _, [_;  This]) -> true
-          | CallMacro(_, "_vcc_set_eq", _, [CallMacro(_, "_vcc_owns", _, [_; This]); CallMacro(_, "_vcc_set_empty", _, [])]) -> true
+          | CallMacro(_, "_vcc_typed2", _, [_;  This(_)]) -> true
+          | CallMacro(_, "_vcc_set_eq", _, [CallMacro(_, "_vcc_owns", _, [_; This(_)]); CallMacro(_, "_vcc_set_empty", _, [])]) -> true
           | CallMacro(_, "_vcc_inv_is_owner_approved", _, _) -> true
           | CallMacro(_, "labeled_invariant", _, [_; inv]) -> isTrivialInvariant inv
           | _ -> false
@@ -332,10 +332,10 @@ namespace Microsoft.Research.Vcc
       match expr.Type with
         | Ptr (Type.Ref { Kind = Struct|Union; Invariants = invs }) ->
           let possibly = function
-            | Macro (_, "keeps", [Macro (_, "this", []); p])
-            | Macro (_, ("_vcc_set_in"|"_vcc_set_in0"), [p; Macro (_, "_vcc_owns", [Macro (_, "this", [])])]) ->
+            | Macro (_, "keeps", [This _; p])
+            | Macro (_, ("_vcc_set_in"|"_vcc_set_in0"), [p; Macro (_, "_vcc_owns", [This _])]) ->
               let repl self = function
-                | Macro (_, "this", []) -> Some expr
+                | This _ -> Some expr
                 | _ -> None
               Some (p.SelfMap repl)
             | _ -> None

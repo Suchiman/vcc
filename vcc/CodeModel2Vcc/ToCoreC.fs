@@ -56,6 +56,7 @@ namespace Microsoft.Research.Vcc
       | Pure _
       | UserData _
       | SizeOf _
+      | This _
       | Macro _ -> None
       
       | If (c, cond, th, el) ->

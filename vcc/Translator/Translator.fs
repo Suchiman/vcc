@@ -385,6 +385,7 @@ namespace Microsoft.Research.Vcc
             
             | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
             | C.Expr.SizeOf(_, t) -> bInt t.SizeOf
+            | C.Expr.This _ -> er "$_this"
             | _ ->         
               helper.Oops (expr.Token, "unhandled expr " + expr.ToString())
               er "$bogus"
@@ -476,7 +477,6 @@ namespace Microsoft.Research.Vcc
           | "by_claim_ptr", [c; obj; ptr] ->
             bCall "$by_claim" [bState; self c; self obj; self ptr]
           | "current_claim", [] -> er "$claim"
-          | "this", [] -> er "$_this"
           | "null", [] -> er "$null"
           | "dont_instantiate", [e] ->
             let arg = self e

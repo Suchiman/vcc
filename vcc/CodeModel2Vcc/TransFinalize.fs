@@ -121,6 +121,7 @@ namespace Microsoft.Research.Vcc
         | Pure _
         | UserData _
         | SizeOf _
+        | This _
         | Comment _ -> None
         
         | Quant (c, q) -> Some (Quant (c, { q with Body = f q.Body; Condition = Option.map f q.Condition }))
