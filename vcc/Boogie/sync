@@ -1,6 +1,6 @@
 #!/bin/sh
 
-src=c:/boogie2/binaries/
+src=c:/dev/boogie/binaries/
 
 for f in * ; do
   test -f $src/$f || continue
