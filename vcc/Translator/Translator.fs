@@ -1300,6 +1300,7 @@ namespace Microsoft.Research.Vcc
           match List.fold check ([], []) header.Ensures with
             | ([], e) -> (header.Writes, e)
             | acc -> acc
+        let ensures = List.rev ensures
         let stateCondition =
           if header.IsPure then
             if writes <> [] then helper.Error (header.Token, 9623, "writes specified on a pure function", None)
