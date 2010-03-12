@@ -814,6 +814,10 @@ namespace Microsoft.Research.Vcc
       let stateChanges (env:Env) =
         if env.Writes = [] then
           bCall "$writes_nothing" [env.WritesState; bState]
+        else if helper.Options.Vcc3 then
+          let inWr = isInWrites env (er "#p") |> bSubst [("$s", env.WritesState)]
+          let wrSet = B.Lambda (Token.NoToken, [("#p", tpPtr)], [], inWr)
+          bCall "$modifies" [env.WritesState; bState; wrSet]
         else
           let p = er "#p"
           let t = er "#t"
@@ -1346,6 +1350,24 @@ namespace Microsoft.Research.Vcc
         fieldRef
         
 
+      let trField3 (td:C.TypeDecl) (f:C.Field) =
+        xassert (td.Kind <> C.Union)
+        match f.Type with
+          | C.Array _ -> die()
+          | _ -> ()
+        let tdname = er ("^" + td.Name)
+        let def =
+          [B.Decl.Const ({ Name = fieldName f
+                           Type = B.Type.Ref "$field"
+                           Unique = true } : B.ConstData)]
+        let args = [tdname; toFieldRef f; toTypeId f.Type; bBool f.IsVolatile]
+        let axs =
+          if f.IsSpec then
+            [B.Decl.Axiom (bCall "$def_ghost_field" args)]
+          else
+            [B.Decl.Axiom (bCall "$def_phys_field" (args @ [bInt f.ByteOffset]))]
+        def @ axs
+        
       let trField (td:C.TypeDecl) (f:C.Field) =
         let toBaseType (f:C.Field) =
           let baset = 
@@ -1649,12 +1671,6 @@ namespace Microsoft.Research.Vcc
         if !is_claimable && !is_thread_local then
           helper.Error(tok, 9665, "Type '" + td.Name + "' cannot be marked as both claimable and thread_local_storage")
                                              
-        let volatile_owns = B.Decl.Axiom (bEq (bCall "$has_volatile_owns_set" [we]) (B.Expr.BoolLiteral !owns_set_is_volatile))
-        let claimable = B.Decl.Axiom (bEq (bCall "$is_claimable" [we]) (B.Expr.BoolLiteral !is_claimable))
-        let threadLocal = 
-          if !is_thread_local then [B.Decl.Axiom (bCall "$is_thread_local_storage" [we])]
-          else []
-           
            
         let stripLabel = function
           | C.Macro(_, "labeled_invariant", [_; i]) -> i                  
@@ -1782,9 +1798,11 @@ namespace Microsoft.Research.Vcc
           let bExtentCall = prop (auxPtr r)
           B.Forall (Token.NoToken, qvars, [[bExtentCall]], weight "eqdef-extentprop", bEq bExtentCall body)
         
-        
+        let vcc3 = helper.Options.Vcc3
+                
         let allFields = 
           match td.Fields with
+            | x when vcc3 -> x
             | [] -> []
             | lst -> ({ Name = "$owns" 
                         Token = td.Token
@@ -1860,10 +1878,23 @@ namespace Microsoft.Research.Vcc
         let forward =
           [B.Decl.Const { Unique = true
                           Type = tpCtype
-                          Name = "^" + td.Name };
-           B.Decl.Axiom (bCall "$is_composite" [we]);
-           B.Decl.Axiom (bEq (bCall "$ptr_level" [we]) (bInt 0))] @
-           firstOptionTyped
+                          Name = "^" + td.Name }] @ firstOptionTyped
+                          
+        let forward =
+          if vcc3 then
+            forward @ 
+              [B.Decl.Axiom (bCall "$def_composite_type" [we; bInt td.SizeOf; B.Expr.BoolLiteral !owns_set_is_volatile; B.Expr.BoolLiteral !is_claimable])]
+          else
+            forward @ 
+              [B.Decl.Axiom (bCall "$is_composite" [we]);
+               B.Decl.Axiom (bEq (bCall "$ptr_level" [we]) (bInt 0))]
+           
+        let volatile_owns = B.Decl.Axiom (bEq (bCall "$has_volatile_owns_set" [we]) (B.Expr.BoolLiteral !owns_set_is_volatile))
+        let claimable = B.Decl.Axiom (bEq (bCall "$is_claimable" [we]) (B.Expr.BoolLiteral !is_claimable))
+        let threadLocal = 
+          if !is_thread_local then [B.Decl.Axiom (bCall "$is_thread_local_storage" [we])]
+          else []
+           
         let forward = 
           match td.GenerateEquality with
           | C.StructEqualityKind.NoEq -> forward
@@ -1871,6 +1902,10 @@ namespace Microsoft.Research.Vcc
           | C.StructEqualityKind.DeepEq -> (trStructEq true td) @ (trStructEq false td) @ forward
         match td.Fields with
           | [] -> forward
+          | _ when vcc3 ->
+            forward @ 
+               [ B.Decl.Axiom inv ] 
+                 @ List.concat (List.map (trField3 td) allFields)
           | _ -> 
             forward @ 
               [B.Decl.Axiom (bEq (bCall "$sizeof" [we]) (bInt td.SizeOf));
@@ -2067,7 +2102,8 @@ namespace Microsoft.Research.Vcc
                 let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ init @ cevInit                    
                 
                 let can_frame =
-                  if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
+                  if helper.Options.Vcc3 then []
+                  else if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
                   else
                     [B.Stmt.Assume (bCall "$can_use_all_frame_axioms" [bState])]
                 
