@@ -10,7 +10,7 @@ struct vcc(claimable) vcc(volatile_owns) Lock {
 void InitializeLock(struct Lock *l spec(obj_t obj))
   writes(span(l), obj)
   requires(wrapped(obj))
-  ensures(wrapped(l) && l->protected_obj == obj)
+  ensures(wrapped0(l) && l->protected_obj == obj)
 {
   l->locked = 0;
   speconly(
@@ -51,9 +51,28 @@ void Release(struct Lock *l claimp(c))
   writes(l->protected_obj)
 {
   atomic (c, l) {
+    assert(by_claim(c, l->protected_obj) != c); // why do we need it?
     l->locked = 0;
     set_closed_owner(l->protected_obj, l);
   }
+}
+/*{struct_data}*/
+struct Data {
+  int x;
+};
+/*{create_claim}*/
+void create_claim(struct Data *d)
+  requires(wrapped(d))
+  writes(d)
+{
+  spec(claim_t c; )
+  struct Lock l;
+  InitializeLock(&l spec(d));
+  speconly( c = claim(&l, true); )
+  Acquire(&l spec(c));
+  Release(&l spec(c));
+  unclaim(c, &l);
+  unwrap(&l);
 }
 /*{out}*/
 /*`
