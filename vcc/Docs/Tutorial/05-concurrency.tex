@@ -201,7 +201,7 @@ on the lock. As the changes are vary similar we'll only
 show \vcc{Release()}.
 \todo{ghost parameters should be explained earlier}
 
-\vccInput[linerange={release-out}]{c/08_lock_claimsobj.c}
+\vccInput[linerange={release-struct_data}]{c/08_lock_claimsobj.c}
 
 \noindent
 We pass a ghost parameter holding a claim.
@@ -222,7 +222,47 @@ to prove that the object is consistent.
 
 \subsection{Creating claims}
 
-\itodo{}
+When creating (or destroying) a claim one needs to list the claimed objects.
+Let's have a look at an example.
+
+\vccInput[linerange={create_claim-out}]{c/08_lock_claimsobj.c}
+
+We initialize the lock, which leaves the lock wrapped (we'll get to that in a minute),
+we create a claim on the lock, acquire it, release, destroy the claim, and unwrap the lock
+(which allows it to be destroyed when the function activation record is popped off the stack).
+The \vcc{\make_claim(...)} function takes the set of objects to be claimed
+and a property (an invariant of the claim, we'll get to that in the next section).
+Let us give desugaring of \vcc{\make_claim(...)} for a single object
+in terms of the \vcc{\claim_struct} defined in the previous section.
+
+\begin{VCC}
+// c = \make_claim({o}, true) expands to
+\claim_count(o) = \claim_count(o) + 1;
+c = malloc(sizeof(\struct_claim));
+c->claimed = o;
+_(wrap c);
+
+// \destroy_claim(c, {o}) expands to
+\claim_count(o) = \claim_count(o) - 1;
+_(unwrap c);
+free(c);
+\end{VCC}
+
+
+The objects 
+
+Creating or destroying a claim on \vcc{c} requires write access to \vcc{\claim_count(c)}.
+One way to obtain such access is getting sequential write access to \vcc{c} itself.
+
+
+
+The \vcc{true} in \vcc{\make_claim(...)} is the claimed property (an invariant of the claim), which will be explained
+in the next section.
+
+
+It seems clear why the claimed objects need to be listed when creating a claim, but
+why do we need them for destruction?
+
 
 \subsection{Guaranteed properties}
 
