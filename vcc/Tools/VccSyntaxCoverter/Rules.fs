@@ -179,6 +179,7 @@ module Rules =
     //addKwRepl "false" "\\false"
     addKwRepl "mathint" "\\integer"
     addKwRepl "obj_t" "\\object"
+    addKwRepl "claim_t" "\\claim"
     addKwRepl "threadid_t" "\\thread"
     addKwRepl "result" "\\result"
     addKwRepl "this" "\\this"
@@ -257,6 +258,20 @@ module Rules =
         fnApp "\\diff_with" (owns @ [Tok.Op (fakePos, ",")] @ [paren "{" ob])
       | _ -> failwith ""
     addRule (parenRuleN "giveup_closed_owner" 2 giveup_closed_owner)
+    
+    let reify toks = 
+      match List.rev (splitAt "," toks) with 
+        | prop :: objs ->
+          fnApp "\\make_claim" (paren "{" (joinWith "," (List.rev objs)) :: Tok.Op (fakePos, ",") :: prop)
+        | _ -> failwith ""
+    addRule (parenRule false "claim" reify)
+            
+    let unclaim toks = 
+      match splitAt "," toks with 
+        | cl :: objs ->
+          spec "ghost" (fnApp "\\destroy_claim" (cl @ [Tok.Op (fakePos, ", "); paren "{" (joinWith "," objs)]))
+        | _ -> failwith ""
+    addRule (parenRule false "unclaim" unclaim)
             
     let struct_rule = function
       | hd :: rest ->
@@ -271,5 +286,6 @@ module Rules =
     
     addRule { keyword = "struct"; replFn = struct_rule }
     addRule { keyword = "union"; replFn = struct_rule }
+    
     
       
