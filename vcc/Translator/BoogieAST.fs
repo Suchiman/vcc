@@ -50,6 +50,7 @@ namespace Microsoft.Research.Vcc
       | Old of Expr
       | Exists of Token * list<Var> * list<list<Expr>> * list<Attribute> * Expr // may generate warnings
       | Forall of Token * list<Var> * list<list<Expr>> * list<Attribute> * Expr // may generate warnings
+      | Lambda of Token * list<Var> * list<Attribute> * Expr
       
       override this.ToString () = toString this.WriteTo
       
@@ -122,6 +123,9 @@ namespace Microsoft.Research.Vcc
           | Forall (_, vars, triggers, attrs, expr) ->
             wr "(forall "
             quant (vars, triggers, attrs, expr)
+          | Lambda (_, vars, attrs, expr) ->
+            wr "(lambda "
+            quant (vars, [], attrs, expr)
 
     and Attribute =
       | ExprAttr of string * Expr
@@ -244,6 +248,10 @@ namespace Microsoft.Research.Vcc
           let vars = Boogie.VariableSeq(List.toArray (List.map (trBound (tok token)) vl))          
           let attrs = toAttributesList attrs
           Boogie.ForallExpr (tok token, Boogie.TypeVariableSeq [| |], vars, attrs, toTriggersList tl, trExpr e) :> Microsoft.Boogie.Expr
+        | Lambda (token, vl, attrs, e) -> 
+          let vars = Boogie.VariableSeq(List.toArray (List.map (trBound (tok token)) vl))          
+          let attrs = toAttributesList attrs
+          Boogie.LambdaExpr (tok token, Boogie.TypeVariableSeq [| |], vars, attrs, trExpr e) :> Microsoft.Boogie.Expr
 
     // TODO: In case the trigger is {foo(x,y) != const}, should we make it {foo(x,y)}? Does != work in triggers?
     and toTriggersList (l:list<list<Expr>>) =
@@ -530,4 +538,6 @@ namespace Microsoft.Research.Vcc
                 Exists (token, vars, List.map selfs triggers, attrs, self body)
               | Forall (token, vars, triggers, attrs, body) ->
                 Forall (token, vars, List.map selfs triggers, attrs, self body)
+              | Lambda (token, vars, attrs, body) ->
+                Lambda (token, vars, attrs, self body)
                 

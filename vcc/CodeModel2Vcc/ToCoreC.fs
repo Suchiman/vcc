@@ -121,6 +121,10 @@ namespace Microsoft.Research.Vcc
   // ============================================================================================================  
 
   let handlePureCalls (helper : Helper.Env) self = 
+  
+    if helper.Options.Vcc3 then
+      Simplifier.alwaysPureCalls.["_vcc_span"] <- "Sp"    
+
     let ecState = { bogusEC with Type = Type.MathState }
     let nowState = Expr.Macro(ecState, "state", [])
     let oldState = Expr.Old(ecState, Macro(ecState, "prestate", []), nowState)
