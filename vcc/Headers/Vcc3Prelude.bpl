@@ -289,7 +289,7 @@ function {:inline true} $read_ptr(S:$state, p:$ptr, t:$ctype) returns($ptr)
 
 //dot and (its "inverse") emb/path access
 function $dot($ptr,$field) returns ($ptr);
-function {:inline true} $emb(S:$state,#p:$ptr) returns ($ptr)
+function {:inline false} $emb(S:$state,#p:$ptr) returns ($ptr)
   { $int_to_ptr(S[$dot(#p, $f_emb)]) }
 function {:inline true} $path(S:$state,#p:$ptr) returns($field)
   { $int_to_field(S[$dot(#p, $f_path)]) }
@@ -374,7 +374,7 @@ function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) returns(bool)
 function $in_writes_at(time:int, p:$ptr) returns(bool);
 
 function {:inline true} $writable(S:$state, begin_time:int, p:$ptr) returns(bool)
-  { ($in_writes_at(begin_time, p) || $timestamp(S, p) >= begin_time) && $mutable(S, p) }
+  { $mutable(S, p) && ($in_writes_at(begin_time, p) || $timestamp(S, p) >= begin_time) }
 
 function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) returns(bool)
   { ($in_writes_at(begin_time, p) || $timestamp(S, p) >= begin_time)
@@ -419,13 +419,24 @@ function {:inline true} $irrelevant(S:$state, p:$ptr) returns(bool)
   { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
 
 function {:weight 0} $mutable(S:$state, p:$ptr) returns(bool)
-  { $typed(S, p) && $owner(S, p) == $me() && !$closed(S, p) }
+  { $typed(S, p) && 
+    ($typed(S, p) ==>
+      if $is_primitive_ch($typ(p)) then 
+        $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
+      else
+        $owner(S, p) == $me() && !$closed(S, p))
+  }
 
 function {:inline true} $thread_owned(S:$state, p:$ptr) returns(bool)
   { $typed(S, p) && $owner(S, p) == $me() }
 
 function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) returns(bool)
-  { $typed(S, p) && $owner(S, p) == $me() && ($is_primitive_ch($typ(p)) ==> !$closed(S, p)) }
+  { $typed(S, p) &&
+    if $is_primitive_ch($typ(p)) then
+      $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p))
+    else
+      $owner(S, p) == $me()
+  }
 
 function $in_range_phys_ptr(#r:int) returns(bool)
   { $in_range(0, #r, $arch_spec_ptr_start) }
@@ -583,7 +594,7 @@ function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) returns(b
 
 procedure $write_int(p:$ptr, v:int);
   modifies $s;
-  ensures $s == (lambda q:$ptr :: if p != q then old($s)[p] else v);
+  ensures $s == (lambda q:$ptr :: if p != q then old($s)[q] else v);
   ensures $timestamp_post_strict(old($s), $s);
 
 function {:inline true} $timestamp_is_now(S:$state, p:$ptr) returns(bool)
@@ -612,8 +623,9 @@ function {:inline true} $timestamp_post_strict(M1:$state, M2:$state) returns(boo
 
 function $full_extent(#p:$ptr) returns($ptrset);
 function $extent(S:$state, #p:$ptr) returns($ptrset);
+
 function $span(S:$state, o:$ptr) returns($ptrset)
-  { (lambda p:$ptr :: $emb(S, o) == p) }
+  { (lambda p:$ptr :: o == p || $emb(S, p) == o) }
 function $first_option_typed(S:$state, #p:$ptr) returns(bool);
 
 function {:inline true} $struct_extent(#p:$ptr) returns($ptrset)
