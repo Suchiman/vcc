@@ -668,7 +668,7 @@ namespace Microsoft.Research.Vcc
             if isWf then (8501, 8502, " (in well-formedness check)")
             else         (8511, 8512, "")
           let tp =
-            if helper.Options.RunTestSuite then []
+            if helper.Options.RunTestSuite || helper.Options.Vcc3 then []
             else [cond codeTp ("{0} is typed" + suff) "_vcc_typed2" [cState;p] ]
           let th =
             match p with
@@ -2079,10 +2079,13 @@ namespace Microsoft.Research.Vcc
                           let p = er "#p"
                           let triggers =
                             match extOf with
-                              | Some q ->
+                              | Some q when not helper.Options.Vcc3 ->
                                 [[bCall "$extent_hint" [p; q]]]
-                              | None ->
-                                List.map (fun n -> [bCall n [bState; p]]) ["$st"; "$ts"]
+                              | _ ->
+                                if helper.Options.Vcc3 then
+                                  List.map (fun n -> [bCall n [bState; p]]) ["$typed"; "$owner"; "$closed"]
+                                else
+                                  List.map (fun n -> [bCall n [bState; p]]) ["$st"; "$ts"]
                           B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], triggers,
                                          weight "begin-writes2",
                                          bInvImpl (bCall "$set_in" [p; e']) (bCall name [bState; p]))
@@ -2092,7 +2095,7 @@ namespace Microsoft.Research.Vcc
                             // writes(set_universe()) is for debugging, so disable the immediate false that we could conclude
                             // writes(set_empty()) doesn't mean anything, so also ignore it
                             bTrue
-                          | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent"), args) ->
+                          | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent" | "$span"), args) ->
                             mut (Some (List.head (List.rev args))) "$mutable"
                           | _ -> mut None "$thread_owned_or_even_mutable"
                       | _ -> bTrue

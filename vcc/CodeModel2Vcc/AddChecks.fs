@@ -209,7 +209,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     let notInTestsuite expr =
-      if helper.Options.RunTestSuite then Expr.MkBlock []
+      if helper.Options.RunTestSuite || helper.Options.Vcc3 then Expr.MkBlock []
       else expr
 
     /// Add checks for writability/readability of memory

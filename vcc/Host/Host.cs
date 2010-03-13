@@ -108,7 +108,7 @@ namespace Microsoft.Research.Vcc
         string pluginName = null;
         Plugin selectedPlugin = null;
 
-        if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp) {
+        if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp || commandLineOptions.Vcc3) {
           pluginManager = new PluginManager(commandLineOptions);
           string pluginDir = PathHelper.PluginDir;
           if (pluginDir != null)  pluginManager.AddPluginDirectory(pluginDir);
@@ -140,7 +140,7 @@ namespace Microsoft.Research.Vcc
           }
         }
 
-        if (selectedPlugin == null) selectedPlugin = new VccPlugin(); // the default
+        if (selectedPlugin == null) selectedPlugin = new VccPlugin(commandLineOptions.Vcc3 ? pluginManager.VCGenPlugins : null); // the default
 
         selectedPlugin.RegisterStopwatch(swTotal);
         selectedPlugin.RegisterStopwatch(swVisitor);

@@ -7,6 +7,12 @@ using Microsoft.Boogie.AbstractInterpretation;
 
 namespace Microsoft.Research.Vcc
 {
+  public abstract class VCGenPlugin
+  {
+    public abstract string Name { get; }
+    public abstract VC.VCGen.Outcome VerifyImpl(Helper.Env env, VC.VCGen vcgen, Implementation impl, Program prog, VerifierCallback reporter);
+  }
+
   class VccFunctionVerifier : FunctionVerifier
   {
     Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls;
@@ -69,6 +75,11 @@ namespace Microsoft.Research.Vcc
 
     private bool InitBoogie()
     {
+      if (parent.options.Vcc3)
+        for (int i = 0; i < standardBoogieOptions.Length; ++i)
+          if (standardBoogieOptions[i].StartsWith("/typeEncoding"))
+            standardBoogieOptions[i] = "/monomorphize";
+
       options.AddRange(standardBoogieOptions);
       if (parent.ModelFileName != null) {
         options.Add("/printModel:1");
@@ -175,7 +186,18 @@ namespace Microsoft.Research.Vcc
 
       try {
         parent.swVerifyImpl.Start();
-        outcome = vcgen.VerifyImplementation(impl, currentBoogie, reporter);
+        VCGenPlugin plugin = null;
+        if (parent.options.Vcc3) {
+          foreach (var p in parent.plugins)
+            if (p.Name == "Vcc3")
+              plugin = p;
+          if (plugin == null)
+            System.Console.WriteLine("Cannot find Vcc3 plugin");
+        }
+        if (plugin != null)
+          outcome = plugin.VerifyImpl(env, vcgen, impl, currentBoogie, reporter);
+        else
+          outcome = vcgen.VerifyImplementation(impl, currentBoogie, reporter);
       } finally {
         parent.swVerifyImpl.Stop();
       }
@@ -252,6 +274,10 @@ namespace Microsoft.Research.Vcc
         }
       }
 
+      if (numErrors == 0) {
+        Boogie.LambdaHelper.ExpandLambdas(currentBoogie);
+      }
+
       if (numErrors != 0) {
         VccCommandLineHost.ErrorCount++;
         if (!parent.options.RunTestSuite) {
@@ -279,6 +305,7 @@ namespace Microsoft.Research.Vcc
   {
     internal VccOptions options;
     internal string ModelFileName;
+    internal IEnumerable<VCGenPlugin> plugins;
 
     Stopwatch swBoogieAST = new Stopwatch("Boogie AST");
     internal Stopwatch swBoogie = new Stopwatch("Boogie");
@@ -288,6 +315,11 @@ namespace Microsoft.Research.Vcc
     internal Stopwatch swVcOpt = new Stopwatch("VC Optimizer");
     internal Stopwatch swVerifyImpl = new Stopwatch("Boogie Verify Impl.");
     Stopwatch swSaveBPL = new Stopwatch("Boogie Save BPL");
+
+    public VccPlugin(IEnumerable<VCGenPlugin> plugins)
+    {
+      this.plugins = plugins;
+    }
 
     private void RegisterStopwatches()
     {

@@ -17,6 +17,8 @@ namespace Microsoft.Research.Vcc
 
     [Import]
     public IEnumerable<Plugin> Plugins { get; set; }
+    [Import]
+    public IEnumerable<VCGenPlugin> VCGenPlugins { get; set; }
 
     public PluginManager(VccOptions options)
     {
