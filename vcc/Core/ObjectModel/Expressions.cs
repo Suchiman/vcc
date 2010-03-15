@@ -1911,8 +1911,7 @@ namespace Microsoft.Research.Vcc {
     {
     }
 
-    protected override Indexer CreateNewIndexerForFactoring(Expression indexedObject, IEnumerable<Expression> indices, ISourceLocation sourceLocation)
-    {
+    protected override Indexer CreateNewIndexerForFactoring(Expression indexedObject, IEnumerable<Expression> indices, ISourceLocation sourceLocation) {
       return new VccIndexer(indexedObject, indices, sourceLocation);
     }
 
@@ -1948,17 +1947,6 @@ namespace Microsoft.Research.Vcc {
     }
 
     /// <summary>
-    /// Returns a collection of methods that match the name of the method/indexer to call, or that represent the
-    /// collection of constructors for the named type.
-    /// </summary>
-    /// <param name="allowMethodParameterInferencesToFail">If this flag is true, 
-    /// generic methods should be included in the collection if their method parameter types could not be inferred from the argument types.</param>
-    protected override IEnumerable<IMethodDefinition> GetCandidateMethods(bool allowMethodParameterInferencesToFail) {
-      if (this.FixedArrayElementType != null) return this.GetPointerAdditionMethods(FixedArrayElementType);
-      return base.GetCandidateMethods(allowMethodParameterInferencesToFail);
-    }
-
-    /// <summary>
     /// Makes a copy of this expression, changing the ContainingBlock to the given block.
     /// </summary>
     //^ [MustOverride]
@@ -1971,21 +1959,9 @@ namespace Microsoft.Research.Vcc {
     }
 
     /// <summary>
-    /// Returns an object that implements IExpression and that represents this expression after language specific rules have been
-    /// applied to it in order to determine its semantics. The resulting expression is a standard representation of the semantics
-    /// of this expression, suitable for use by language agnostic clients and complete enough for translation of the expression
-    /// into IL.
-    /// </summary>
-    protected override IExpression ProjectAsNonConstantIExpression() {
-      if (this.FixedArrayElementType != null)
-        return this.ProjectAsDereferencedConvertedPointerAddition();
-      return base.ProjectAsNonConstantIExpression();
-    }
-
-    /// <summary>
     /// Returns an expression corresponding to *(ptr + index) where ptr is this.IndexedObject and index is the first element of this.ConvertedArguments.
     /// </summary>
-    private IExpression ProjectAsDereferencedConvertedPointerAddition() {
+    override protected IExpression ProjectAsDereferencedPointerAddition() {
       //transform to *(ptr + index)
       
       IEnumerator<Expression> indexEnumerator = this.ConvertedArguments.GetEnumerator();
@@ -2002,19 +1978,7 @@ namespace Microsoft.Research.Vcc {
       aderef.SetContainingExpression(this);
       return aderef.ProjectAsIExpression();
     }
- 
-    /// <summary>
-    /// Results in null or an array indexer or an indexer (property) definition.
-    /// </summary>
-    public override object/*?*/ ResolveAsValueContainer()
-      //^ ensures result == null || result is IArrayIndexer || result is IAddressDereference || result is IPropertyDefinition;
-    {
-      if (this.FixedArrayElementType != null)
-        return this.ProjectAsDereferencedConvertedPointerAddition() as IAddressDereference;
-      return base.ResolveAsValueContainer();
-    }
-    
-  }
+   }
 
   internal class VccDesignatorExpressionPair
   {
