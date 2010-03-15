@@ -40,7 +40,7 @@ namespace Microsoft.Research.Vcc
         List.map Expr.MkAssume (rangeAssumptions parm)
       let aux (h:Function) =
         if not (_list_mem IsAdmissibilityCheck h.CustomAttr) then
-          h.Body <- Option.map (addStmts (List.concat (List.map rangeAssume h.InParameters))) h.Body
+          h.Body <- Option.map (addStmts (List.concat (List.map rangeAssume (h.InParameters @ h.OutParameters)))) h.Body
           h.Ensures <- List.map mkFreeEnsures (List.concat (List.map rangeAssumptions h.OutParameters)) @ h.Ensures
         if h.RetType._IsInteger || h.RetType._IsPtr then
           let ec = { boolBogusEC() with Token = h.Token }
