@@ -15,6 +15,10 @@ using System.Text;
 namespace Microsoft.Research.Vcc.Parsing {
 
   internal class Parser {
+
+    private delegate TResult Func<T, TResult>(T arg);
+    private delegate TResult Func<T1, T2, TResult>(T1 arg1, T2 arg2);
+
     readonly Compilation compilation;
     readonly Dictionary<string, TypeExpression> typedefExpressions;
     readonly Dictionary<string, TypedefDeclaration> typedefDecls;
@@ -328,13 +332,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     //^ requires this.currentToken == Token.Invariant;
     //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      Expression condition = this.ParseExpression(followers | Token.RightParenthesis);
-      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      this.Skip(Token.RightParenthesis);
-      return new LoopInvariant(condition, slb);
+      return this.ParseExpressionWithParens(followers, (expr, slb) => new LoopInvariant(expr, slb));
     }
 
     private void ParseTypeInvariant(List<TypeInvariant> invariants, TokenSet followers)
@@ -1339,19 +1337,14 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     private void ParseRequiresOrEnsures(FunctionOrBlockContract contract, TokenSet followers, bool parseRequires) {
       this.resultIsAKeyword = !parseRequires;
-      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      Expression condition = this.ParseExpression(followers|Token.RightParenthesis);
+      var condition = this.ParseExpressionWithParens(followers, (expr, slb) => expr);
       if (this.compilation.Options.CheckedArithmetic)
         condition = new CheckedExpression(condition, condition.SourceLocation);
-      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      this.Skip(Token.RightParenthesis);
       if (parseRequires) {
-        Precondition preCondition = new Precondition(condition, null, slb);
+        Precondition preCondition = new Precondition(condition, null, condition.SourceLocation);
         contract.AddPrecondition(preCondition);
       } else {
-        Postcondition postCondition = new Postcondition(condition, slb);
+        Postcondition postCondition = new Postcondition(condition, condition.SourceLocation);
         contract.AddPostcondition(postCondition);
       }
       this.resultIsAKeyword = false;
@@ -1879,10 +1872,10 @@ namespace Microsoft.Research.Vcc.Parsing {
         case Token.While: return this.ParseWhile(followers);
         case Token.Do: return this.ParseDoWhile(followers);
         case Token.For: return this.ParseFor(followers);
-        case Token.Assert: return this.ParseAssertOrAssume(followers, true);
-        case Token.Assume: return this.ParseAssertOrAssume(followers, false);
-        case Token.Break: return this.ParseBreakOrContinue(followers, true);
-        case Token.Continue: return this.ParseBreakOrContinue(followers, false);
+        case Token.Assert: return this.ParseSingleArgStatement(followers, (expr, sl) => new AssertStatement(expr, sl));
+        case Token.Assume: return this.ParseSingleArgStatement(followers, (expr, sl) => new AssumeStatement(expr, sl));
+        case Token.Break: return this.ParseSimpleStatement(followers, sl => new BreakStatement(sl));
+        case Token.Continue: return this.ParseSimpleStatement(followers, sl => new ContinueStatement(sl));
         case Token.Goto: return this.ParseGoto(followers);
         case Token.Return: return this.ParseReturn(followers);
         default:
@@ -1961,16 +1954,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    private Statement ParseAssertOrAssume(TokenSet followers, bool parseAssert)
-      //^ requires this.currentToken == Token.Assert || this.currentToken == Token.Assume
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
+    private Statement ParseSingleArgStatement(TokenSet followers, Func<Expression, ISourceLocation, Statement> func)  {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
       Expression/*?*/ expr = this.ParseExpression(true, false, followers|Token.RightParenthesis|Token.Semicolon);
       slb.UpdateToSpan(expr.SourceLocation);
-      Statement result = parseAssert ? (Statement)new AssertStatement(expr, slb) : (Statement)new AssumeStatement(expr, slb);
+      Statement result = func(expr, slb);
       this.SkipOverTo(Token.RightParenthesis, followers|Token.Semicolon);
       this.SkipSemiColon(followers);
       return result;
@@ -1987,13 +1977,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    private Statement ParseBreakOrContinue(TokenSet followers, bool parseBreak)       
-      //^ requires this.currentToken == Token.Break;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
+    private Statement ParseSimpleStatement(TokenSet followers, Func<ISourceLocation, Statement> func)       
     {
       ISourceLocation sourceLocation = this.scanner.SourceLocationOfLastScannedToken;
       this.GetNextToken();
-      Statement result = parseBreak ? (Statement)new BreakStatement(sourceLocation) : (Statement)new ContinueStatement(sourceLocation);
+      Statement result = func(sourceLocation);
       this.SkipSemiColon(followers);
       return result;
     }
@@ -2304,6 +2292,17 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       this.SkipOverTo(rightParen, followers);
       return listToAddTo;
+    }
+
+    private TResult ParseExpressionWithParens<TResult>(TokenSet followers, Func<Expression, ISourceLocation, TResult> func) {
+      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+      this.GetNextToken();
+      this.Skip(Token.LeftParenthesis);
+      Expression expr = this.ParseExpression(followers | Token.RightParenthesis);
+      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+      TResult result = func(expr, slb);
+      this.SkipOverTo(Token.RightParenthesis, followers);
+      return result;
     }
 
     private Expression ParseAssignmentExpression(Expression operand1, TokenSet followers) 
@@ -2852,20 +2851,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       return new CompileTimeConstant(null, currentLocation.SourceDocument.GetSourceLocation(currentLocation.StartIndex, 0));
     }
 
-    private Expression ParseUnchecked(TokenSet followers)
-      //^ requires this.currentToken == Token.Unchecked;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      Expression operand = this.ParseExpression(followers|Token.RightParenthesis);
-      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      Expression result = new UncheckedExpression(operand, slb);
-      this.SkipOverTo(Token.RightParenthesis, followers);
-      return result;
-    }
-
     private Expression ParseUnaryExpression(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -3073,10 +3058,10 @@ namespace Microsoft.Research.Vcc.Parsing {
           expression = this.ParseParenthesizedExpression(followers);
           break;
         case Token.Old:
-          expression = this.ParseOld(followers);
+          expression = this.ParseExpressionWithParens(followers, (expr, sl) => new OldValue(expr, sl));
           break;
         case Token.Unchecked:
-          expression = this.ParseUnchecked(followers);
+          expression = this.ParseExpressionWithParens(followers, (expr, sl) => new UncheckedExpression(expr, sl));
           break;
         default:
           if (Parser.InfixOperators[this.currentToken]) {
@@ -3270,21 +3255,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         result.Add(locDecls);
         this.SkipSemiColon(followersOrTypeStart);
       }
-      return result;
-    }
-
-    private Expression ParseOld(TokenSet followers)
-      //^ requires this.currentToken == Token.Old;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      this.GetNextToken();
-      Expression result;
-      this.Skip(Token.LeftParenthesis);
-      Expression expr = this.ParseExpression(followers|Token.RightParenthesis);
-      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      result = new OldValue(expr, slb);
-      this.SkipOverTo(Token.RightParenthesis, followers);
       return result;
     }
 
