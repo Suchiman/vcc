@@ -959,11 +959,6 @@ namespace Microsoft.Research.Vcc {
         get { return this.Type; }
       }
 
-      public bool IsPure
-      {
-        get { return this.ValueToConvert.IsPure; }
-      }
-
       #region IExpression Members
 
       ITypeReference IExpression.Type {
@@ -1361,10 +1356,6 @@ namespace Microsoft.Research.Vcc {
 
       public ITypeReference Type {
         get { return this.conversion.Type; }
-      }
-
-      public bool IsPure {
-        get { return this.conversion.IsPure && this.size.IsPure; }
       }
 
       public IEnumerable<ILocation> Locations {
