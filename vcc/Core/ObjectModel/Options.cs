@@ -35,7 +35,6 @@ namespace Microsoft.Research.Vcc
     public bool EagerTranslation;
     public bool OmitReadWriteChecking;
     public bool RunInBatchMode;
-    public bool NoCompilerRun;
     public bool ModifiedPreprocessorFiles;
     public Dictionary<long, bool> DisabledWarnings = new Dictionary<long, bool>();
     public bool AggressivePruning;
@@ -204,10 +203,6 @@ namespace Microsoft.Research.Vcc
         case 'n':
           if (this.ParseName(arg, "nopreprocessor", "n")) {
             this.options.NoPreprocessor = true;
-            return true;
-          }
-          if (this.ParseName(arg, "nocompiler", "nc")) {
-            this.options.NoCompilerRun = true;
             return true;
           }
           return false;

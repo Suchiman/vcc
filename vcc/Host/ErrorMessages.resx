@@ -130,7 +130,6 @@
 /hide:&lt;warning list&gt;           Hide specified warnings (by number; short form: /h)
 /model                         Save model to &lt;currentFile&gt;.vccmodel (Short form: /m)
 /modifiedpreprocessorfile      Save C preprocessor output to &lt;currentFile&gt;.i.&lt;PID&gt;
-/nocompiler                    Skip C-compiler invocation (Short form: /nc)
 /nopreprocessor                Do not invoke the C preprocessor on the input files (Short form: /n)
 /omitrw                        Omit reads/writes clause checking
 /preprocessor:&lt;pp option list&gt; Options to pass on to the C preprocessor (Short form: /p)

@@ -227,7 +227,7 @@ namespace Microsoft.Research.Vcc
 
     static void RunPlugin(VccOptions commandLineOptions) {
       bool errorsInPreprocessor;
-      var processedFiles = CCompilerHelper.PreprocessAndCompile(commandLineOptions, false, out errorsInPreprocessor);
+      var processedFiles = CCompilerHelper.Preprocess(commandLineOptions, out errorsInPreprocessor);
       if (errorsInPreprocessor) return;
       using (var fnEnum = commandLineOptions.FileNames.GetEnumerator())
       using (var ppEnum = processedFiles.GetEnumerator())
