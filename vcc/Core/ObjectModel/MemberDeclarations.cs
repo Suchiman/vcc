@@ -1144,11 +1144,28 @@ namespace Microsoft.Research.Vcc {
       this.HasContract = true;
     }
 
+    internal void AddReads(IEnumerable<Expression> reads) {
+      if (this.Reads == null) {
+        this.Reads = new List<Expression>();
+      }
+      this.Reads.AddRange(reads);
+      this.HasContract = true;
+    }
+
+
     internal void AddWrites(Expression writes) {
       if (this.Writes == null) {
         this.Writes = new List<Expression>();
       }
       this.Writes.Add(writes);
+      this.HasContract = true;
+    }
+
+    internal void AddWrites(IEnumerable<Expression> writes) {
+      if (this.Writes == null) {
+        this.Writes = new List<Expression>();
+      }
+      this.Writes.AddRange(writes);
       this.HasContract = true;
     }
 

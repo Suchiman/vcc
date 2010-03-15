@@ -314,13 +314,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Expression> writes = new List<Expression>();
       LoopContract loopContract = new LoopContract(invariants, writes);
       TokenSet loopContractFollowers = followers | Token.Invariant | Token.Writes;
-      while (true) {
-        if (this.currentToken == Token.Invariant)
-          invariants.Add(ParseLoopInvariant(loopContractFollowers));
-        else if (this.currentToken == Token.Writes)
-          this.ParseWrites(writes, loopContractFollowers);
-        else
-          break;
+      while (Parser.LoopContractStart[this.currentToken]) {
+        switch (this.currentToken) {
+          case Token.Invariant: invariants.Add(ParseLoopInvariant(loopContractFollowers)); break;
+          case Token.Writes: this.ParseExpressionList(writes, true, Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, loopContractFollowers); break;
+        }
       }
       this.SkipTo(followers);
       return loopContract;
@@ -1330,90 +1328,47 @@ namespace Microsoft.Research.Vcc.Parsing {
       TokenSet followersOrContractStart = followers|Parser.ContractStart;
       while (Parser.ContractStart[this.currentToken]){
         switch (this.currentToken) {
-          case Token.Ensures: this.ParseEnsures(contract, followersOrContractStart); break;
-          case Token.Reads: this.ParseReads(contract, followersOrContractStart); break;
-          case Token.Requires: this.ParseRequires(contract, followersOrContractStart); break;
-          case Token.Writes: this.ParseWrites(contract, followersOrContractStart); break;
+          case Token.Ensures: this.ParseRequiresOrEnsures(contract, followersOrContractStart, false); break;
+          case Token.Reads: this.ParseReadsOrWrites(contract, followersOrContractStart, true); break;
+          case Token.Requires: this.ParseRequiresOrEnsures(contract, followersOrContractStart, true); break;
+          case Token.Writes: this.ParseReadsOrWrites(contract, followersOrContractStart, false); break;
         }
       }
       this.SkipTo(followers);
     }
 
-    private void ParseEnsures(FunctionOrBlockContract contract, TokenSet followers)
-      //^ requires this.currentToken == Token.Ensures;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      this.resultIsAKeyword = true;
+    private void ParseRequiresOrEnsures(FunctionOrBlockContract contract, TokenSet followers, bool parseRequires) {
+      this.resultIsAKeyword = !parseRequires;
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      Expression condition = this.ParseExpressionWithCheckedDefault(followers|Token.RightParenthesis);
+      Expression condition = this.ParseExpression(followers|Token.RightParenthesis);
+      if (this.compilation.Options.CheckedArithmetic)
+        condition = new CheckedExpression(condition, condition.SourceLocation);
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       this.Skip(Token.RightParenthesis);
-      Postcondition postCondition = new Postcondition(condition, slb);
-      contract.AddPostcondition(postCondition);
+      if (parseRequires) {
+        Precondition preCondition = new Precondition(condition, null, slb);
+        contract.AddPrecondition(preCondition);
+      } else {
+        Postcondition postCondition = new Postcondition(condition, slb);
+        contract.AddPostcondition(postCondition);
+      }
       this.resultIsAKeyword = false;
     }
 
-    private void ParseReads(FunctionOrBlockContract contract, TokenSet followers)
-      //^ requires this.currentToken == Token.Reads;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      while (true) {
-        Expression expr = this.ParseExpressionWithCheckedDefault(followers|Token.Comma|Token.RightParenthesis);
-        contract.AddReads(expr);
-        if (this.currentToken != Token.Comma) break;
-        this.GetNextToken();
-      }
-      this.SkipOverTo(Token.RightParenthesis, followers);
-    }
-
-    private void ParseRequires(FunctionOrBlockContract contract, TokenSet followers)
-      //^ requires this.currentToken == Token.Requires;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      Expression condition = this.ParseExpressionWithCheckedDefault(followers|Token.RightParenthesis);
-      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      this.Skip(Token.RightParenthesis);
-      Precondition preCondition = new Precondition(condition, null, slb);
-      contract.AddPrecondition(preCondition);
-    }
-
-    private void ParseWrites(List<Expression> writes, TokenSet followers)
-      //^ requires this.currentToken == Token.Writes;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      while (true) {
-        Expression expr = this.ParseExpressionWithCheckedDefault(followers|Token.Comma|Token.RightParenthesis);
-        writes.Add(expr);
-        if (this.currentToken != Token.Comma) break;
-        this.GetNextToken();
-      }
-      this.SkipOverTo(Token.RightParenthesis, followers);
-    }
-
-    private void ParseWrites(FunctionOrBlockContract contract, TokenSet followers)
-    //^ requires this.currentToken == Token.Writes;
-    //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      List<Expression> writes = new List<Expression>();
-      this.ParseWrites(writes, followers);
-      foreach (var write in writes)
-        contract.AddWrites(write);
+    private void ParseReadsOrWrites(FunctionOrBlockContract contract, TokenSet followers, bool parseReads) {
+      var exprList = this.ParseExpressionList(true, Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, followers);
+      if (parseReads)
+        contract.AddReads(exprList);
+      else
+        contract.AddWrites(exprList);
     }
 
     private TypeExpression/*?*/ TypeExpressionHasPointerType(TypeExpression typeExpr)
     {
       return TypeExpressionHasPointerType(typeExpr, new List<TypeExpression>());
     }
-
 
     private TypeExpression/*?*/ TypeExpressionHasPointerType(TypeExpression typeExpr, List<TypeExpression> visitedTypes)
     {
@@ -1924,10 +1879,10 @@ namespace Microsoft.Research.Vcc.Parsing {
         case Token.While: return this.ParseWhile(followers);
         case Token.Do: return this.ParseDoWhile(followers);
         case Token.For: return this.ParseFor(followers);
-        case Token.Assert: return this.ParseAssert(followers);
-        case Token.Assume: return this.ParseAssume(followers);
-        case Token.Break: return this.ParseBreak(followers);
-        case Token.Continue: return this.ParseContinue(followers);
+        case Token.Assert: return this.ParseAssertOrAssume(followers, true);
+        case Token.Assume: return this.ParseAssertOrAssume(followers, false);
+        case Token.Break: return this.ParseBreakOrContinue(followers, true);
+        case Token.Continue: return this.ParseBreakOrContinue(followers, false);
         case Token.Goto: return this.ParseGoto(followers);
         case Token.Return: return this.ParseReturn(followers);
         default:
@@ -2006,8 +1961,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    private Statement ParseAssert(TokenSet followers)
-      //^ requires this.currentToken == Token.Assert;
+    private Statement ParseAssertOrAssume(TokenSet followers, bool parseAssert)
+      //^ requires this.currentToken == Token.Assert || this.currentToken == Token.Assume
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
@@ -2015,22 +1970,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.Skip(Token.LeftParenthesis);
       Expression/*?*/ expr = this.ParseExpression(true, false, followers|Token.RightParenthesis|Token.Semicolon);
       slb.UpdateToSpan(expr.SourceLocation);
-      Statement result = new AssertStatement(expr, slb);
-      this.SkipOverTo(Token.RightParenthesis, followers|Token.Semicolon);
-      this.SkipSemiColon(followers);
-      return result;
-    }
-
-    private Statement ParseAssume(TokenSet followers)
-      //^ requires this.currentToken == Token.Assume;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      Expression/*?*/ expr = this.ParseExpression(true, false, followers|Token.RightParenthesis|Token.Semicolon);
-      slb.UpdateToSpan(expr.SourceLocation);
-      Statement result = new AssumeStatement(expr, slb);
+      Statement result = parseAssert ? (Statement)new AssertStatement(expr, slb) : (Statement)new AssumeStatement(expr, slb);
       this.SkipOverTo(Token.RightParenthesis, followers|Token.Semicolon);
       this.SkipSemiColon(followers);
       return result;
@@ -2047,24 +1987,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    private Statement ParseContinue(TokenSet followers)
-      //^ requires this.currentToken == Token.Continue;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      ISourceLocation sourceLocation = this.scanner.SourceLocationOfLastScannedToken;
-      this.GetNextToken();
-      Statement result = new ContinueStatement(sourceLocation);
-      this.SkipSemiColon(followers);
-      return result;
-    }
-
-    private Statement ParseBreak(TokenSet followers)       
+    private Statement ParseBreakOrContinue(TokenSet followers, bool parseBreak)       
       //^ requires this.currentToken == Token.Break;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       ISourceLocation sourceLocation = this.scanner.SourceLocationOfLastScannedToken;
       this.GetNextToken();
-      Statement result = new BreakStatement(sourceLocation);
+      Statement result = parseBreak ? (Statement)new BreakStatement(sourceLocation) : (Statement)new ContinueStatement(sourceLocation);
       this.SkipSemiColon(followers);
       return result;
     }
@@ -2331,15 +2260,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       return this.ParseExpression(false, false, followers);
     }
 
-    private Expression ParseExpressionWithCheckedDefault(TokenSet followers)
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      Expression e = this.ParseExpression(followers);
-      if (this.compilation.Options.CheckedArithmetic)
-        e = new CheckedExpression(e, e.SourceLocation);
-      return e;
-    }
-
     private Expression ParseExpression(bool allowCommaExpressions, bool allowInitializer, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -2364,6 +2284,26 @@ namespace Microsoft.Research.Vcc.Parsing {
           operand1 = assignmentExpr;
         }
       }
+    }
+
+    private List<Expression> ParseExpressionList(bool checkedDefault, Token leftParen, Token separator, Token rightParen, TokenSet followers) {
+      return ParseExpressionList(new List<Expression>(), checkedDefault, leftParen, separator, rightParen, followers);
+    }
+
+    private List<Expression> ParseExpressionList(List<Expression> listToAddTo, bool checkedDefault, Token leftParen, Token separator, Token rightParen, TokenSet followers) {
+      TokenSet exprFollowers = followers | separator | rightParen;
+      this.GetNextToken();
+      this.Skip(leftParen);
+      while (true) {
+        Expression e = this.ParseExpression(exprFollowers);
+        if (this.compilation.Options.CheckedArithmetic)
+          e = new CheckedExpression(e, e.SourceLocation);
+        listToAddTo.Add(e);
+        if (this.currentToken != separator) break;
+        this.GetNextToken();
+      }
+      this.SkipOverTo(rightParen, followers);
+      return listToAddTo;
     }
 
     private Expression ParseAssignmentExpression(Expression operand1, TokenSet followers) 
@@ -3858,6 +3798,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     private static readonly TokenSet EndOfFile;
     private static readonly TokenSet InfixOperators;
     private static readonly TokenSet LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart;
+    private static readonly TokenSet LoopContractStart;
     private static readonly TokenSet PrimaryStart;
     private static readonly TokenSet RightParenthesisOrSemicolon;
     private static readonly TokenSet SpecifierStart;
@@ -3987,6 +3928,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       InfixOperators |= Token.SubtractAssign;
       InfixOperators |= Token.Arrow;
       InfixOperators |= Token.ScopeResolution;
+
+      LoopContractStart = new TokenSet();
+      LoopContractStart |= Token.Invariant;
+      LoopContractStart |= Token.Writes;
 
       PrimaryStart = new TokenSet();
       PrimaryStart |= Token.Identifier;
