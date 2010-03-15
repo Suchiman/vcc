@@ -134,7 +134,6 @@ namespace Microsoft.Research.Vcc {
       this.compileTimeConstant.SetContainingExpression(containingExpression);
       this.expression.SetContainingExpression(containingExpression);
     }
-
   }
   
   /// <summary>
@@ -163,31 +162,6 @@ namespace Microsoft.Research.Vcc {
     {
     }
 
-    /// <summary>
-    /// Returns a collection of methods that represents the overloads for ptr + index.
-    /// </summary>
-    private IEnumerable<IMethodDefinition> GetLeftPointerAdditionMethods(ITypeDefinition pointerType) {
-      BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
-      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt32.ResolvedType);
-      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt32.ResolvedType);
-      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt64.ResolvedType);
-      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt64.ResolvedType);
-    }
-
-    /// <summary>
-    /// Returns a collection of methods that represents the overloads for index + ptr.
-    /// </summary>
-    private IEnumerable<IMethodDefinition> GetRightPointerAdditionMethods(ITypeDefinition pointerType) {
-      BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
-      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt32.ResolvedType, pointerType);
-      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt32.ResolvedType, pointerType);
-      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt64.ResolvedType, pointerType);
-      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt64.ResolvedType, pointerType);
-    }
-
-    ITypeDefinition/*?*/ LeftOperandFixedArrayElementType {
-      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.LeftOperand.Type); }
-    }
 
     /// <summary>
     /// Returns the user defined operator overload method, or a dummy method corresponding to an IL operation, that best
@@ -228,27 +202,6 @@ namespace Microsoft.Research.Vcc {
       if (containingBlock == this.ContainingBlock) return this;
       return new VccAddition(containingBlock, this);
     }
-
-    ITypeDefinition/*?*/ RightOperandFixedArrayElementType {
-      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.RightOperand.Type); }
-    }
-
-    /// <summary>
-    /// A list of dummy methods that correspond to operations that are built into IL. The dummy methods are used, via overload resolution,
-    /// to determine how the operands are to be converted before the operation is carried out.
-    /// </summary>
-    protected override IEnumerable<IMethodDefinition> StandardOperators {
-      get {
-        ITypeDefinition/*?*/ leftOperandFixedArrayElementType = this.LeftOperandFixedArrayElementType;
-        if (leftOperandFixedArrayElementType != null)
-          return this.GetLeftPointerAdditionMethods(PointerType.GetPointerType(leftOperandFixedArrayElementType, this.Compilation.HostEnvironment.InternFactory));
-        ITypeDefinition/*?*/ rightOperandFixedArrayElementType = this.RightOperandFixedArrayElementType;
-        if (rightOperandFixedArrayElementType != null)
-          return this.GetRightPointerAdditionMethods(PointerType.GetPointerType(rightOperandFixedArrayElementType, this.Compilation.HostEnvironment.InternFactory));
-        return base.StandardOperators;
-      }
-    }
-
   }
 
   /// <summary>
@@ -1911,7 +1864,8 @@ namespace Microsoft.Research.Vcc {
     {
     }
 
-    protected override Indexer CreateNewIndexerForFactoring(Expression indexedObject, IEnumerable<Expression> indices, ISourceLocation sourceLocation) {
+    protected override Indexer CreateNewIndexerForFactoring(Expression indexedObject, IEnumerable<Expression> indices, ISourceLocation sourceLocation)
+    {
       return new VccIndexer(indexedObject, indices, sourceLocation);
     }
 
@@ -1947,6 +1901,17 @@ namespace Microsoft.Research.Vcc {
     }
 
     /// <summary>
+    /// Returns a collection of methods that match the name of the method/indexer to call, or that represent the
+    /// collection of constructors for the named type.
+    /// </summary>
+    /// <param name="allowMethodParameterInferencesToFail">If this flag is true, 
+    /// generic methods should be included in the collection if their method parameter types could not be inferred from the argument types.</param>
+    protected override IEnumerable<IMethodDefinition> GetCandidateMethods(bool allowMethodParameterInferencesToFail) {
+      if (this.FixedArrayElementType != null) return this.GetPointerAdditionMethods(FixedArrayElementType);
+      return base.GetCandidateMethods(allowMethodParameterInferencesToFail);
+    }
+
+    /// <summary>
     /// Makes a copy of this expression, changing the ContainingBlock to the given block.
     /// </summary>
     //^ [MustOverride]
@@ -1956,6 +1921,18 @@ namespace Microsoft.Research.Vcc {
     {
       if (containingBlock == this.ContainingBlock) return this;
       return new VccIndexer(containingBlock, this);
+    }
+
+    /// <summary>
+    /// Returns an object that implements IExpression and that represents this expression after language specific rules have been
+    /// applied to it in order to determine its semantics. The resulting expression is a standard representation of the semantics
+    /// of this expression, suitable for use by language agnostic clients and complete enough for translation of the expression
+    /// into IL.
+    /// </summary>
+    protected override IExpression ProjectAsNonConstantIExpression() {
+      if (this.FixedArrayElementType != null)
+        return this.ProjectAsDereferencedPointerAddition();
+      return base.ProjectAsNonConstantIExpression();
     }
 
     /// <summary>
@@ -1973,12 +1950,24 @@ namespace Microsoft.Research.Vcc {
       }
       Expression index = indexEnumerator.Current;
       if (index.Type.IsEnum) index = this.Helper.ExplicitConversion(index, index.Type.UnderlyingType.ResolvedType);
-      Addition addition = new Addition(ptr, index, this.SourceLocation);
+      VccAddition addition = new VccAddition(ptr, index, this.SourceLocation);
       AddressDereference aderef = new AddressDereference(addition, this.SourceLocation);
       aderef.SetContainingExpression(this);
       return aderef.ProjectAsIExpression();
     }
-   }
+ 
+    /// <summary>
+    /// Results in null or an array indexer or an indexer (property) definition.
+    /// </summary>
+    public override object/*?*/ ResolveAsValueContainer()
+      //^ ensures result == null || result is IArrayIndexer || result is IAddressDereference || result is IPropertyDefinition;
+    {
+      if (this.FixedArrayElementType != null)
+        return this.ProjectAsDereferencedPointerAddition() as IAddressDereference;
+      return base.ResolveAsValueContainer();
+    }
+    
+  }
 
   internal class VccDesignatorExpressionPair
   {
