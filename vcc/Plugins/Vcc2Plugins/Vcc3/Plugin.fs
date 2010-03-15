@@ -4,7 +4,7 @@
 //
 //-----------------------------------------------------------------------------
 
-namespace Microsoft.Research.Vcc
+namespace Microsoft.Research.Vcc3
 
     open Microsoft.Research.Vcc
     open Microsoft.FSharp.Math
@@ -15,22 +15,25 @@ namespace Microsoft.Research.Vcc
     open Microsoft.Research.Vcc.BoogieAST
     open Microsoft.Research.Vcc.ToBoogieAST
 
-    type CustomPassyficator (prog:Boogie.Program, helper:Helper.Env, options) =
-      inherit ToBoogieAST.Passyficator(prog, helper, options)      
-      override this.Optimize (proc:BlockProc) = ()
-      
-      member this.GetBlocks impl =
-        this.Passify impl
-
     [<System.ComponentModel.Composition.Export("Microsoft.Research.Vcc.VCGenPlugin")>]
     type Vcc3Plugin() =
       inherit VCGenPlugin()
       
       override this.Name = "Vcc3"
       override this.VerifyImpl (helper, vcgen, impl, prog, handler) =
-        let z3 = new Microsoft.Z3.Context(Z3.Config())
-        let opt = CustomPassyficator(prog, helper, [])
-        let proc = opt.GetBlocks impl
+        let wr (s:obj) = System.Console.WriteLine s
+        
+        use cfg = new Z3.Config()
+        use z3 = new Microsoft.Z3.Context(cfg)
+        
+        let opt = FromBoogie.Passyficator(prog, helper, [])
+        opt.Init()
+        for a in opt.Functions do
+          wr a
+        for a in opt.Axioms do
+          wr a
+          
+        let blocks = opt.Passify impl
         
         vcgen.VerifyImplementation(impl, prog, handler)
       
