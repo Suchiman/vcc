@@ -65,8 +65,8 @@ void foo()
 
 `
 Verification of foo succeeded.
-Verification of foo#block#1 succeeded.
 Verification of foo#block#0 succeeded.
+Verification of foo#block#0#0 succeeded.
 `
 #include "vcc.h"
 
@@ -310,6 +310,6 @@ void foo(int x) {
 `
 Verification of bar succeeded.
 Verification of foo succeeded.
-Verification of foo#block#1 succeeded.
 Verification of foo#block#0 succeeded.
+Verification of foo#block#1 succeeded.
 `

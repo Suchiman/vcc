@@ -626,7 +626,6 @@ namespace Microsoft.Research.Vcc
     let liftBlocksWithContracts decls = 
     
       let currentFunctionName = ref ""
-      let currentBlockId = ref 0
       let blockFunctionDecls = ref []
     
       let reportErrorForJumpsOutOfBlock (block:Expr) =
@@ -727,10 +726,12 @@ namespace Microsoft.Research.Vcc
           | _ -> die()
         fVar before, fVar after
           
-      let liftBlocks findRefs self = function
+      let rec liftBlocks findRefs currentBlockId blockPrefix self = function
         | Expr.Macro(ec, "block", block :: blockContracts) as b ->
+          let blockId = (!currentBlockId).ToString()
+          incr currentBlockId
           reportErrorForJumpsOutOfBlock b
-          let block' = self block
+          let block' = block.SelfMap(liftBlocks findRefs (ref 0) (blockPrefix + blockId + "#"))
           let fBefore, fAfter = findRefs b
           match findLocalsAndTurnIntoParameters fBefore fAfter (block' :: blockContracts) with
             | [ body; 
@@ -748,7 +749,7 @@ namespace Microsoft.Research.Vcc
                          RetType = Type.Void
                          Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut
                          TypeParameters = []
-                         Name = !currentFunctionName + "#block#" + (!currentBlockId).ToString()
+                         Name = !currentFunctionName + "#block#" + blockPrefix + blockId
                          Requires = stripInitialPure rqs
                          Ensures = stripInitialPure ens
                          Writes = stripInitialPure wrs
@@ -757,7 +758,6 @@ namespace Microsoft.Research.Vcc
                          Body = Some (Expr.MkBlock(body :: List.map mkSetOutPar localsThatGoOut))
                          IsProcessed = true
                          UniqueId = CAST.unique() } : Function
-              incr currentBlockId
               blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
               let call = Expr.Call(ec, fn, [], List.map mkRef localsThatGoIn)
               let result = if localsThatGoOut.Length = 0 then call else Expr.VarWrite(ec, localsThatGoOut, call)
@@ -769,11 +769,9 @@ namespace Microsoft.Research.Vcc
         match d with
           | Top.FunctionDecl({ Name = name; Body = Some body} as fn) ->
             currentFunctionName := name
-            currentBlockId := 0
-            fn.Body <- Some(body.SelfMap (liftBlocks (findReferencesBeforeAndAfter fn)))
+            fn.Body <- Some(body.SelfMap (liftBlocks (findReferencesBeforeAndAfter fn) (ref 0) ""))
           | _ -> ()
-            
-      decls @ !blockFunctionDecls
+      decls @ List.sortBy (fun top -> match top with | Top.FunctionDecl(fn) -> fn.Name | _ -> die()) !blockFunctionDecls
 
     
     // ============================================================================================================    
