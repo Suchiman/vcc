@@ -12,14 +12,19 @@ open Ast
 open Microsoft // for Boogie and Z3
 
 
-type Z3Translator() =
+type Z3Translator(pass:FromBoogie.Passyficator) =
   let cfg = new Z3.Config()
   let z3 = new Microsoft.Z3.Context(cfg)
   let mutable disposed = false
   let sorts = gdict()
   let functions = gdict()
   let consts = gdict()
+  let locals = gdict()
   let mutable boundVars = Map.empty
+  let mutable stack = [[]]
+  let mutable smtFileIdx = 0
+  let mutable numDeclaredFunctions = 0
+  
   let cache (dict:Dict<_,_>) f id =
     match dict.TryGetValue id with
       | true, res -> res
@@ -55,39 +60,49 @@ type Z3Translator() =
     cfg.SetParamValue ("BV_REFLECT", "true")
   
   member this.Sort tp = 
-    let aux () = 
-      match tp with
-        | Type.Bool -> z3.MkBoolSort()
-        | Type.Bv n -> z3.MkBvSort ((uint32)n)
-        | Type.Int -> z3.MkIntSort()
-        | Type.Map (_, _) as m -> z3.MkSort(m.ToString())
-        | Type.Named td -> z3.MkSort(td.Name)
-    cache sorts aux tp
+    match tp with
+      | Type.Bool -> z3.MkBoolSort()
+      | Type.Bv n -> z3.MkBvSort ((uint32)n)
+      | Type.Int -> z3.MkIntSort()
+      | Type.Map (_, _) as m -> z3.MkSort(m.ToString())
+      | Type.Named td -> z3.MkSort(td.Name)
   
-  member this.Function (fn:FuncDecl) =
-    let aux () =
-      z3.MkFuncDecl (fn.Name + fn.Qualifier, [| for t in fn.ArgTypes -> this.Sort t |], this.Sort fn.RetType)
-    cache functions aux fn.Id
-  
+  member this.Function (fn:FuncDecl) = functions.[fn.Id]
   member this.Const (v:Var) =
-    let aux () =
-      z3.MkConst (v.Name, this.Sort v.Typ)
-    cache consts aux v.Id
+    match locals.TryGetValue v.Id with
+      | true, t -> t
+      | _ ->
+        match consts.TryGetValue v.Id with
+          | true, t -> t
+          | false, _ ->
+            failwith ("undeclared global " + v.ToString())
   
-  member this.BgAssumptions (pass:FromBoogie.Passyficator) =
+  member private this.DeclareFunctions () =
+    for i = numDeclaredFunctions to pass.Functions.Count - 1 do
+      let fn = pass.Functions.[i]
+      let decl = z3.MkFuncDecl (fn.Name + fn.Qualifier, [| for t in fn.ArgTypes -> this.Sort t |], this.Sort fn.RetType)
+      functions.Add (fn.Id, decl)
+    
+  member this.BgAssumptions () =
     let res = glist[]
     let sorts = glist[]
     let globalsBySort = gdict()
     for g in pass.Globals do
-      match globalsBySort.TryGetValue g.Typ with
-        | false, _ ->
-          sorts.Add g.Typ
-          globalsBySort.Add (g.Typ, glist[g])
-        | true, l -> l.Add g
+      consts.Add (g.Id, z3.MkConst (g.Name, this.Sort g.Typ))
+      match g.Kind with
+        | VarKind.ConstUnique ->
+          match globalsBySort.TryGetValue g.Typ with
+            | false, _ ->
+              sorts.Add g.Typ
+              globalsBySort.Add (g.Typ, glist[g])
+            | true, l -> l.Add g
+        | _ -> ()
     for s in sorts do
       res.Add (z3.MkDistinct [| for g in globalsBySort.[s] -> this.Const g |])
+    this.DeclareFunctions()
+    numDeclaredFunctions <- pass.Functions.Count
     for a in pass.Axioms do
-      res.Add (this.Expr a.Body)
+      res.Add (this.Expr (a.Body.Expand()))
       (*
       TODO:
     for f in pass.Functions do
@@ -153,20 +168,68 @@ type Z3Translator() =
           | Exists -> z3.MkExists (0u, bound, patterns, body)
         
       
-  member this.Init (pass:FromBoogie.Passyficator) =
+  member private this.Save term =
+    match stack with
+      | x :: xs -> stack <- (term :: x) :: xs
+      | _ -> failwith ""
+      
+  member this.BeginProc (p:BlockProc) =
+    this.Push()
+    this.DeclareFunctions()
+    for l in p.Locals do
+      if l.Kind <> VarKind.Local then failwith ""
+      locals.Add (l.Id, z3.MkConst (l.Name, this.Sort l.Typ))
+  
+  member this.FinishProc () =
+    this.Pop()
+    
+  member this.Init () =
     this.InitCfg()
-    z3.AssertCnstr (z3.MkAnd (this.BgAssumptions pass))
+    let term = z3.MkAnd (this.BgAssumptions ())
+    this.Save term
+    z3.AssertCnstr term
   
   member this.Assume expr =
-    z3.AssertCnstr (this.Expr expr)
+    let term = this.Expr expr
+    this.Save term
+    z3.AssertCnstr term
     
   member this.Assert expr =
-    z3.AssertCnstr (z3.MkNot (this.Expr expr))
+    let term = z3.MkNot (this.Expr expr)
+    this.Save term
+    z3.AssertCnstr term    
     z3.Check () = Z3.LBool.False
   
   member this.Push() =
     z3.Push()
+    stack <- [] :: stack
   
   member this.Pop() =
     z3.Pop()
+    stack <- stack.Tail
+  
+  member this.Smt() =
+    //System.Diagnostics.Debugger.Launch() |> ignore
+    let assumptions = glist[]
+    let rec add (t:Z3.Term) =
+      if t.GetKind() = Z3.TermKind.App && t.GetAppDecl().GetKind() = Z3.DeclKind.And then
+        Seq.iter add (t.GetAppArgs())
+      else
+        assumptions.Add t
+    match stack with
+      | (form :: a1) :: a2 ->
+        List.iter (List.iter add) (a1 :: a2)
+        (*
+        for a in assumptions do
+          z3.Display (System.Console.Out, a)
+          System.Console.WriteLine()
+          z3.BenchmarkToSmtlib ("vcc3bench", "UFNIA", "unknown", null, [| |], a) |> ignore
+          *)
+        z3.BenchmarkToSmtlib ("vcc3bench", "UFNIA", "unknown", null, assumptions.ToArray(), form)
+      | _ -> failwith ""
     
+  member this.SmtToFile() =
+    let fn = sprintf "b%04d.smt" smtFileIdx
+    smtFileIdx <- smtFileIdx + 1
+    System.IO.File.WriteAllText (fn, this.Smt())
+    fn
