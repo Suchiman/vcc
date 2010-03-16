@@ -23,7 +23,6 @@ namespace Microsoft.Research.Vcc3
       override this.VerifyImpl (helper, vcgen, impl, prog, handler) =
         let wr (s:obj) = System.Console.WriteLine s
         
-        use z3 = new Z3Translator()
         
         wr ""
         
@@ -41,19 +40,24 @@ namespace Microsoft.Research.Vcc3
         
         for b in proc.Blocks do wr b
         
-        z3.Init opt
+        use z3 = new Z3Translator(opt)
+        z3.Init ()
         
         let rec check (b:Ast.Block) =
           for c in b.Cmds do
             if c.IsAssert then
               wr (c.Condition.ToString())
-              let res = z3.Assert c.Condition
+              z3.Push()
+              let res = z3.Assert (c.Condition.Expand())
+              //let fn = z3.SmtToFile()
+              let fn = ""
               if res then
-                wr "   OK"
+                wr ("   OK " + fn)
               else
-                wr "   FAILED"
+                wr ("   FAILED " + fn)              
+              z3.Pop()
             else
-              z3.Assume c.Condition
+              z3.Assume (c.Condition.Expand())
           
           match b.Exits with
             | [] -> wr "DONE"
@@ -64,7 +68,9 @@ namespace Microsoft.Research.Vcc3
                 check e
                 z3.Pop()
         
+        z3.BeginProc proc
         check proc.Blocks.Head
+        z3.FinishProc ()
 
         VC.VCGen.Outcome.Inconclusive
       
