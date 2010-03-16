@@ -6,14 +6,11 @@
 
 namespace Microsoft.Research.Vcc3
 
-    open Microsoft.Research.Vcc
     open Microsoft.FSharp.Math
-    open CAST
-    
     open Microsoft
+    
+    open Microsoft.Research.Vcc
     open Microsoft.Research.Vcc.Util
-    open Microsoft.Research.Vcc.BoogieAST
-    open Microsoft.Research.Vcc.ToBoogieAST
 
     [<System.ComponentModel.Composition.Export("Microsoft.Research.Vcc.VCGenPlugin")>]
     type Vcc3Plugin() =
@@ -23,8 +20,6 @@ namespace Microsoft.Research.Vcc3
       override this.VerifyImpl (helper, vcgen, impl, prog, handler) =
         let wr (s:obj) = System.Console.WriteLine s
         
-        
-        wr ""
         
         let opt = FromBoogie.Passyficator(prog, helper, [])
         opt.Init()
@@ -38,29 +33,27 @@ namespace Microsoft.Research.Vcc3
           
         let proc = opt.Passify impl
         
-        for b in proc.Blocks do wr b
+        //for b in proc.Blocks do wr b
         
         use z3 = new Z3Translator(opt)
         z3.Init ()
         
         let rec check (b:Ast.Block) =
           for c in b.Cmds do
-            if c.IsAssert then
-              wr (c.Condition.ToString())
-              z3.Push()
-              let res = z3.Assert (c.Condition.Expand())
-              //let fn = z3.SmtToFile()
-              let fn = ""
-              if res then
-                wr ("   OK " + fn)
-              else
-                wr ("   FAILED " + fn)              
-              z3.Pop()
-            else
-              z3.Assume (c.Condition.Expand())
+            match c with
+              | Ast.Assert (tok, cond) ->
+                //wr (cond.ToString())
+                z3.Push()
+                let res = z3.Assert (cond.Expand())
+                //let fn = z3.SmtToFile()
+                if not res then
+                  handler.OnCounterexample (tok.GetCounterexample(new Microsoft.Boogie.BlockSeq()), null)
+                z3.Pop()
+              | Ast.Assume (_, cond) ->
+                z3.Assume (cond.Expand())
           
           match b.Exits with
-            | [] -> wr "DONE"
+            | [] -> ()
             | [e] -> check e
             | _ ->
               for e in b.Exits do
