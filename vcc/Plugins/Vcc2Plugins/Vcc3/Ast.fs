@@ -143,11 +143,22 @@ namespace Microsoft.Research.Vcc3
         RetType : Type
         ArgTypes : list<Type>
         Attrs : list<Attribute>
+        mutable Body : FuncBody
       }
       
       override this.ToString() =
-        "function " + objConcat " " this.Attrs + " " + this.Name + "(" + objConcat ", " this.ArgTypes + ") : " + this.RetType.ToString()
-            
+        let pref = "function " + objConcat " " this.Attrs + " " + this.Name         
+        match this.Body with
+          | Uninterpreted -> 
+            pref + "(" + objConcat ", " this.ArgTypes + ") : " + this.RetType.ToString()
+          | Expand (vars, body) ->
+            pref + "(" + objConcat ", " vars + ") : " + this.RetType.ToString() + "\n" +
+              "{ " + body.ToString() + " }"              
+    
+    and FuncBody =
+      | Uninterpreted
+      | Expand of list<Var> * Expr
+          
     type Axiom =
       {
         Attrs : list<Attribute>
@@ -164,6 +175,12 @@ namespace Microsoft.Research.Vcc3
         Condition : Expr
       }
       
+      member this.WriteTo sb =        
+        wrb sb (if this.IsAssert then "assert " else "assume ")
+        this.Condition.WriteTo sb
+      
+      override this.ToString() = toString (this.WriteTo)
+      
     type 
       [<NoComparison>] [<ReferenceEquality>] 
       Block =
@@ -172,12 +189,26 @@ namespace Microsoft.Research.Vcc3
         mutable Cmds : list<Command>
         mutable Exits : list<Block>
       }
+      
+      member this.WriteTo sb =
+        let wr = wrb sb
+        wr this.Label
+        wr ":\n"
+        for c in this.Cmds do
+          wr "  "
+          c.WriteTo sb
+          wr "\n"
+        wr "  goto {"
+        wr (String.concat ", " (this.Exits |> List.map (fun b -> b.Label)))
+        wr "}\n"
+        
+      override this.ToString() = toString (this.WriteTo)
             
     type BlockProc =
       {
         Name : string
-        mutable Locals : list<Var>
-        mutable Blocks : list<Block>
+        Locals : list<Var>
+        Blocks : list<Block>
       }
           
     
@@ -195,5 +226,23 @@ namespace Microsoft.Research.Vcc3
               | App (f, args) -> App (f, selfs args)
               | Binder q ->
                 Binder { q with Body = self q.Body ; Triggers = List.map selfs q.Triggers }
+     
+      member this.Expand () =
+        let expanding = gdict()
+        let rec aux subst = function
+          | App ({ Body = Expand (formals, body) } as f, args) ->
+            let args = args |> List.map (fun e -> e.Map (aux subst))
+            if expanding.ContainsKey f.Id then
+              failwith ("recursive expansion of " + f.Name)
+            expanding.Add (f.Id, true)
+            let subst = List.fold2 (fun subst (f:Var) a -> Map.add f.Id a subst) subst formals args
+            let res = body.Map (aux subst)
+            expanding.Remove f.Id |> ignore
+            Some res
+          | Ref v when subst.ContainsKey v.Id ->
+            Some (subst.[v.Id])
+          | _ -> None
+          
+        this.Map (aux Map.empty)
                 
 
