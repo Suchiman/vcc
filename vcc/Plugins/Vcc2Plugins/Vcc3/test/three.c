@@ -8,6 +8,9 @@ struct A {
 void foo(struct A *x)
   writes(span(x))
 {
+  assert(false);
+
   x->a = 10;
   speconly( x->b = 20; )
+
 }

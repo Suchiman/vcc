@@ -44,6 +44,9 @@ module FromBoogie =
     
     member this.DeclareVar (v:Boogie.Variable) vr =
       vars <- vars.Add (v.UniqueId, vr)
+    
+    member this.GetVars () =
+      vars |> Map.fold (fun acc _ e -> e :: acc) []
       
     member this.DeclareFuncDecl (f:FuncDecl) =
       funList.Add f
@@ -55,7 +58,10 @@ module FromBoogie =
         | _ -> None
       
     member this.GetVar (v:Boogie.Variable) =
-      (vars.TryFind v.UniqueId).Value
+      match vars.TryFind v.UniqueId with
+        | Some v -> v
+        | None ->
+          failwith ("unregistered variable " + v.Name + " [" + v.UniqueId.ToString() + "] : " + v.TypedIdent.Type.ToString())
       
     member this.GetType name = 
       cache typList types name 
@@ -63,6 +69,18 @@ module FromBoogie =
                      Id = this.NextId()
                      Name = name
                    } : TypeDecl)
+    
+    member this.NewFunc name args ret =
+      {
+        Id = this.NextId()
+        Name = name
+        Qualifier = ""
+        RetType = ret
+        ArgTypes = args
+        Attrs = []
+        Body = Uninterpreted
+      }                
+
       
   let rec unType (ctx:Ctx) (t:Boogie.Type) = 
     if t.IsBool then Type.Bool
@@ -118,31 +136,23 @@ module FromBoogie =
           let getSelStore sel = fun () ->
             match args.Head.Type with
               | Type.Map (from, ret) as t ->
-                {
-                  Id = ctx.NextId()
-                  Name = if sel then "select@" else "store@"
-                  Qualifier = t.ToString()
-                  RetType = if sel then ret else t
-                  ArgTypes = if sel then t :: from else t :: from @ [ret]
-                  Attrs = []
-                }
+                let fnc =
+                  if sel then ctx.NewFunc "select@" (t :: from)         ret
+                  else        ctx.NewFunc "store@"  (t :: from @ [ret]) t
+                { fnc with Qualifier = t.ToString() }
               | t -> failwith ("wrong type in sel/store " + t.ToString())
           match nary.Fun with
             | :? Boogie.FunctionCall as fcall ->
+              let func = fcall.Func
+              if (ctx.TryGetFuncDecl func.Name).IsNone && func.Name.StartsWith "lambda@" then
+                declareFunction ctx func
               predef fcall.FunctionName
             | :? Boogie.BinaryOperator as binop ->
               match binop.FunctionName with
                 | "==" | "!=" as n ->
                   let t = args.[0].Type
                   let getEq () =
-                    {
-                      Id = ctx.NextId()
-                      Name = n
-                      Qualifier = "@" + t.ToString()
-                      RetType = Type.Bool
-                      ArgTypes = [t; t]
-                      Attrs = []
-                    }                
+                    { ctx.NewFunc n [t; t] Type.Bool with Qualifier = "@" + t.ToString() }
                   n + "@" + t.ToString(), getEq                
                 | n -> predef n
             | :? Boogie.UnaryOperator as unop -> predef unop.FunctionName
@@ -153,14 +163,7 @@ module FromBoogie =
             | :? Boogie.IfThenElse ->
               let t = args.Tail.Head.Type
               let getIte () =
-                {
-                  Id = ctx.NextId()
-                  Name = "ite@"
-                  Qualifier = t.ToString()
-                  RetType = t
-                  ArgTypes = [Type.Bool; t; t]
-                  Attrs = []
-                }                
+                { ctx.NewFunc "ite@" [Type.Bool; t; t] t with Qualifier = t.ToString() }
               "ite@" + (t.ToString()), getIte
               
             | _ -> failwith ("wrong nary " + nary.ToString() + " : " + nary.Fun.GetType().ToString())
@@ -182,14 +185,8 @@ module FromBoogie =
                   | Some f -> Expr.App (f, args)
                   | None ->
                     let f =
-                      {
-                        Id = ctx.NextId()
-                        Name = "concat@"
-                        Qualifier = l1.ToString() + "." + l2.ToString()
-                        RetType = Type.Bv (l1 + l2)
-                        ArgTypes = [Type.Bv l1; Type.Bv l2]
-                        Attrs = []
-                      }
+                      { ctx.NewFunc "concat@" [Type.Bv l1; Type.Bv l2] (Type.Bv (l1 + l2)) 
+                        with Qualifier = l1.ToString() + "." + l2.ToString() }
                     ctx.DeclareFuncDecl f
                     Expr.App (f, args)
               | _ -> failwith ("unexpected argument list of BvConcatExpr")
@@ -241,16 +238,17 @@ module FromBoogie =
           | x -> failwith ("wrong attribute value " + x.ToString())
       cur :: unparseAttr ctx q.Next
           
+  and declareFunction (ctx:Ctx) (func:Boogie.Function) =
+    let retType = unType ctx (func.OutParams.[0].TypedIdent.Type)
+    let argTypes = [for v in func.InParams -> unType ctx v.TypedIdent.Type]
+    let fundecl =
+      { ctx.NewFunc func.Name argTypes retType
+        with Attrs = unparseAttr ctx func.Attributes }
+    ctx.DeclareFuncDecl fundecl
+  
   let declareBuiltins (ctx:Ctx) =
     let makeBinary name t =
-      {
-        Id = ctx.NextId()
-        Name = name
-        Qualifier = ""
-        RetType = t
-        ArgTypes = [t; t]
-        Attrs = []
-      }                
+      ctx.NewFunc name [t;t] t
     let addBinary name t = ctx.DeclareFuncDecl (makeBinary name t)
     let addRel name t = ctx.DeclareFuncDecl { makeBinary name t with RetType = Type.Bool }
     addBinary "+" Type.Int
@@ -311,8 +309,6 @@ module FromBoogie =
       | _ -> failwith ("unexpected transfer cmd " + if b.TransferCmd = null then "(null)" else b.TransferCmd.ToString())
     
       
-  
-  
   type Passyficator(prog:Boogie.Program, helper:Helper.Env, options:list<string>) =
     inherit VC.VCGen(prog, null, false)
     
@@ -334,25 +330,26 @@ module FromBoogie =
         match d with
           | :? Boogie.Constant as v ->
             globals.Add (addVar ctx (if v.Unique then VarKind.ConstUnique else VarKind.Const) v)
-          //| :? Boogie.GlobalVariable as v ->
-          //  globals.Add (addVar ctx VarKind.Global v)
+          | :? Boogie.GlobalVariable as v ->
+            // it behaves like a local variable at this level
+            globals.Add (addVar ctx VarKind.Local v)
           | :? Boogie.Function as func ->
-            let fundecl =
-              {
-                Id = ctx.NextId()
-                Name = func.Name
-                Qualifier = ""
-                RetType = unType ctx (func.OutParams.[0].TypedIdent.Type)
-                ArgTypes = [for v in func.InParams -> unType ctx v.TypedIdent.Type]
-                Attrs = unparseAttr ctx func.Attributes
-              }        
-            ctx.DeclareFuncDecl fundecl
+            declareFunction ctx func
           | _ -> ()
     
       for d in prog.TopLevelDeclarations do
         match d with
           | :? Boogie.Axiom as ax ->
             axioms.Add ({ Body = unparse ctx ax.Expr; Attrs = unparseAttr ctx ax.Attributes })
+          | :? Boogie.Function as func when func.Body <> null ->            
+            let fundecl = (ctx.TryGetFuncDecl func.Name).Value
+            let backup = ctx.Push()
+            try
+              let vars = [for v in func.InParams -> addVar ctx VarKind.Local v]
+              let body = unparse ctx func.Body                 
+              fundecl.Body <- Expand (vars, body)
+            finally
+              ctx.Pop backup
           | _ -> ()
     
     member this.Axioms = axioms :> RoList<_>
@@ -364,17 +361,17 @@ module FromBoogie =
       this.ConvertCFG2DAG (impl, prog)
       this.PassifyImpl (impl, prog) |> ignore
       
+      let locals = glist[]
       let addVars (vs:Boogie.VariableSeq) =
         for v in vs do
-          addVar ctx VarKind.Local v |> ignore
-      
+          locals.Add (addVar ctx VarKind.Local v)
+          
       let backup = ctx.Push ()
       let blocks =
         try
           addVars impl.InParams
           addVars impl.OutParams      
-          addVars impl.LocVars
-              
+          addVars impl.LocVars              
           [ for b in impl.Blocks -> doBlock ctx b ]
         finally
           ctx.Pop backup
@@ -399,5 +396,9 @@ module FromBoogie =
       if impl.Proc.CheckBooleanAttribute ("has_start_here", res) && !res then
         handleStartHere blocks.Head
       
-      blocks  
+      {
+        Blocks = blocks
+        Name = impl.Name
+        Locals = Seq.toList locals
+      }
    
