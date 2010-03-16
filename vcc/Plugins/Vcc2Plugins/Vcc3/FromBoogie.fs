@@ -274,26 +274,20 @@ module FromBoogie =
       | (0, e) -> unparse ctx e
       | _ -> failwith "cannot parse boogie expression"
 
-  type AddCmdInfo =
-    | AddEnsures of Boogie.Ensures
-    | AddRequires of Boogie.CallCmd * Boogie.Requires
-    | AddNothing
-
-  type TokenWithAddCmdInfo (t:Token, ai:AddCmdInfo) =
-    inherit ForwardingToken(t, fun () -> t.Value)
-    member this.GetAddInfo () = ai           
-      
   let doCommand (ctx:Ctx) (cmd:obj) =
     match cmd with
-      | :? Boogie.PredicateCmd as asrt ->
-        let tok =
+      | :? Boogie.AssumeCmd as assu ->
+        Command.Assume (BoogieToken.Strip assu.tok, unparse ctx assu.Expr)
+      | :? Boogie.AssertCmd as asrt ->
+        let getCE trace =
           match asrt with
-            | :? Boogie.AssertEnsuresCmd as a -> new TokenWithAddCmdInfo (BoogieToken.Strip asrt.tok, AddEnsures a.Ensures) :> Token
-            | :? Boogie.AssertRequiresCmd as a -> new TokenWithAddCmdInfo (BoogieToken.Strip asrt.tok, AddRequires (a.Call, a.Requires)) :> Token
-            | _ -> BoogieToken.Strip asrt.tok
-        { Token = tok
-          IsAssert = (asrt :? Boogie.AssertCmd)
-          Condition = unparse ctx asrt.Expr }
+            | :? Boogie.AssertEnsuresCmd as a ->
+              new Boogie.ReturnCounterexample (trace, new Boogie.ReturnCmd(asrt.tok), a.Ensures) :> Boogie.Counterexample
+            | :? Boogie.AssertRequiresCmd as a ->
+              new Boogie.CallCounterexample (trace, a.Call, a.Requires) :> Boogie.Counterexample
+            | _ ->
+              new Boogie.AssertCounterexample (trace, asrt) :> Boogie.Counterexample
+        Command.Assert (new CounterexampleToken (BoogieToken.Strip asrt.tok, getCE), unparse ctx asrt.Expr)
       | _ -> failwith ("unexpected boogie command in passified program " + cmd.ToString())
             
   let doBlock (ctx:Ctx) (b:Boogie.Block) =
@@ -385,8 +379,8 @@ module FromBoogie =
       let rec handleStartHere (block:Block) =
         let found = ref false
         let doCmd = function 
-          | { Condition = App ({ Name = "$start_here" }, []) } as c -> found := true; c
-          | c when not !found -> { c with IsAssert = false }
+          | Assert (_, App ({ Name = "$start_here" }, [])) as c -> found := true; c
+          | c when not !found -> c.ToAssume()
           | c -> c
         block.Cmds <- block.Cmds |> List.map doCmd
         if not !found then

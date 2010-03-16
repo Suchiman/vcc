@@ -168,16 +168,37 @@ namespace Microsoft.Research.Vcc3
       override this.ToString() =
         "axiom " + objConcat " " this.Attrs + this.Body.ToString()
       
-    type Command =
-      {
-        Token : Token
-        IsAssert : bool
-        Condition : Expr
-      }
+    type CounterexampleToken (t:Token, getCE:Microsoft.Boogie.BlockSeq -> Microsoft.Boogie.Counterexample) =
+      inherit ForwardingToken(t, fun () -> t.Value)
+      member this.GetCounterexample trace = getCE trace
       
-      member this.WriteTo sb =        
-        wrb sb (if this.IsAssert then "assert " else "assume ")
-        this.Condition.WriteTo sb
+    type Command =
+      | Assume of Token * Expr
+      | Assert of CounterexampleToken * Expr
+      
+      member this.ToAssume() =
+        match this with
+          | Assert (t, e) -> Assume (t, e)
+          | Assume _ -> this
+        
+      member this.Condition =
+        match this with
+          | Assert (_, e) -> e
+          | Assume (_, e) -> e
+      
+      member this.Token =
+        match this with
+          | Assert (t, _) -> t :> Token
+          | Assume (t, _) -> t
+      
+      member this.WriteTo sb =
+        match this with
+          | Assert (_, e) ->
+            wrb sb "assert "
+            e.WriteTo sb
+          | Assume (_, e) ->
+            wrb sb "assume "
+            e.WriteTo sb
       
       override this.ToString() = toString (this.WriteTo)
       
