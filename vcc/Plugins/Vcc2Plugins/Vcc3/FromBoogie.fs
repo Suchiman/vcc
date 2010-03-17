@@ -377,7 +377,8 @@ module FromBoogie =
           ctx.Pop backup
         
       let names = new Dict<_,_>()
-      for b in blocks do names.Add (b.Label, b)
+      for b in blocks do
+        names.Add (b.Label, b)
       for b in impl.Blocks do
         names.[b.Label].Exits <- resolveExits names b
       
@@ -385,7 +386,7 @@ module FromBoogie =
       let rec handleStartHere (block:Block) =
         let found = ref false
         let doCmd = function 
-          | Assert (_, App ({ Name = "$start_here" }, [])) as c -> found := true; c
+          | Assume (_, App ({ Name = "$start_here" }, [])) as c -> found := true; c
           | c when not !found -> c.ToAssume()
           | c -> c
         block.Cmds <- block.Cmds |> List.map doCmd
