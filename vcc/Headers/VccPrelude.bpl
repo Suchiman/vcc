@@ -1669,14 +1669,16 @@ procedure $set_closed_owns(owner:$ptr, owns:$ptrset);
   ensures (forall #p:$ptr :: {$set_in(#p, $owns(old($s), owner))} $set_in(#p, $owns(old($s), owner)) ==> $is_non_primitive($typ(#p)));
   ensures (forall #p:$ptr :: {$st($s, #p)} {$ts($s, #p)}
     $ref_cnt(old($s), #p) == $ref_cnt($s, #p) &&
-      $ite.bool(
-        $set_in(#p, $owns(old($s), owner)),
-          $ite.bool($set_in(#p, owns), 
-            $st_eq(old($s), $s, #p), 
-            $wrapped($s, #p, $typ(#p)) && $timestamp_is_now($s, #p)),
-          $ite.bool($set_in(#p, owns), 
-            $owner($s, #p) == owner && $closed($s, #p), 
-            $st_eq(old($s), $s, #p))));
+      if $set_in(#p, $owns(old($s), owner)) then
+        if $set_in(#p, owns) then
+          $st_eq(old($s), $s, #p) 
+        else 
+          $wrapped($s, #p, $typ(#p)) && $timestamp_is_now($s, #p)
+      else
+        if $set_in(#p, owns) then
+          $owner($s, #p) == owner && $closed($s, #p)
+        else
+          $st_eq(old($s), $s, #p));
   ensures $memory($s) == $store.mem(old($memory($s)), $dot(owner, $owns_set_field($typ(owner))), $ptrset_to_int(owns));
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -2436,7 +2438,7 @@ function {:inline true} $in_range(min:int, val:int, max:int) returns(bool)
   { min <= val && val <= max }
 
 function {:inline true} $bool_to_int(v:bool) returns(int)
-  { $ite.int(v, 1, 0) }
+  { if v then 1 else 0 }
 
 function {:inline true} $int_to_bool(x:int) returns(bool)
   { x != 0 }
@@ -2444,14 +2446,6 @@ function {:inline true} $int_to_bool(x:int) returns(bool)
 function {:inline true} $read_bool(S:$state, p:$ptr) returns(bool)
   { $int_to_bool($mem(S, p)) }
 
-
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.int(c:bool, t:int, e:int) returns(int);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.bool(c:bool, t:bool, e:bool) returns(bool);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.ptr(c:bool, t:$ptr, e:$ptr) returns($ptr);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.struct(bool, $struct, $struct) returns($struct);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.ptrset(bool, $ptrset, $ptrset) returns($ptrset);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.primitive(bool, $primitive, $primitive) returns($primitive);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.record(c:bool, t:$record, e:$record) returns($record);
 
 // a hack, used when parameter to ITE is a quntified variable to prevent Z3 from crashing
 function {:weight 0} $bool_id(x:bool) returns(bool) { x }
