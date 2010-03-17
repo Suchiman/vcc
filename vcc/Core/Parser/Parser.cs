@@ -97,7 +97,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     internal void ParseCompilationUnit(GlobalDeclarationContainerClass globalContainer, List<INamespaceDeclarationMember> members) {
       //^ assume this.currentToken != Token.EndOfFile; //assume this method is called directly after construction and then never again.
       this.GetNextToken(); //Get first token from scanner
-      this.ParseNamespaceMemberDeclarations(globalContainer, members, Parser.EndOfFile);
+      this.ParseNamespaceMemberDeclarations(globalContainer, members, TS.EndOfFile);
       VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentTypeInvariants, false);
       this.compilation.ContractProvider.AssociateTypeWithContract(globalContainer, tc);
     }
@@ -193,7 +193,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       this.currentTypeMembers = globalMembers;
       this.namespaceDeclarationMembers = members;
-      TokenSet followersOrDeclarationStart = followers|Parser.DeclarationStart;
+      TokenSet followersOrDeclarationStart = followers | TS.DeclarationStart;
       while (followersOrDeclarationStart[this.currentToken] && this.currentToken != Token.EndOfFile)
         this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
       this.SkipTo(followers);
@@ -203,8 +203,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ requires this.currentToken != Token.EndOfFile;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      List<TemplateParameterDeclarator>/*?*/ templateParameters = this.ParseTemplateParameters(followers|Parser.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
-      List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, followers|Parser.DeclaratorStart|Token.Semicolon|Token.Colon);
+      List<TemplateParameterDeclarator>/*?*/ templateParameters = this.ParseTemplateParameters(followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
+      List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, followers|TS.DeclaratorStart|Token.Semicolon|Token.Colon);
       VccFunctionTypeExpression/*?*/ functionTypeExpression = null;
       TypedefNameSpecifier/*?*/ typeDefName = GetTypedefNameSpecifier(specifiers);
       if (typeDefName != null) {
@@ -214,7 +214,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       bool foundNoDeclaration = true;
       TokenSet followersOrCommaOrLeftBraceOrSemicolon = followers|Token.Comma|Token.LeftBrace|Token.Semicolon;
-      while (Parser.DeclaratorStart[this.currentToken]) {
+      while (TS.DeclaratorStart[this.currentToken]) {
         foundNoDeclaration = false;
         Declarator declarator = this.ParseDeclarator(followersOrCommaOrLeftBraceOrSemicolon);
         if (functionTypeExpression != null && functionTypeExpression.declarator != null && declarator is IdentifierDeclarator)
@@ -283,7 +283,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             this.GetNextToken();
             this.ParseStatements(statements, followers | Token.RightParenthesis);
             slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-            result.Add(new BlockStatement(statements, BlockStatement.Options.Default, slb));
+            result.Add(new BlockStatement(statements, slb));
             this.SkipOverTo(Token.RightParenthesis, followers);
           } else {
             result.Add(this.ParseBlock(followers));
@@ -294,7 +294,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       bool isLocalTypeDef = VccCompilationHelper.ContainsStorageClassSpecifier(specifiers, Token.Typedef);
       List<Statement> result1 = new List<Statement>();
-      while (Parser.DeclaratorStart[this.currentToken]) {
+      while (TS.DeclaratorStart[this.currentToken]) {
         Declarator declarator = this.ParseDeclarator(followers|Token.Comma|Token.LeftBrace|Token.Semicolon);
         declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
         if (isLocalTypeDef) {
@@ -318,7 +318,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Expression> writes = new List<Expression>();
       LoopContract loopContract = new LoopContract(invariants, writes);
       TokenSet loopContractFollowers = followers | Token.Invariant | Token.Writes;
-      while (Parser.LoopContractStart[this.currentToken]) {
+      while (TS.LoopContractStart[this.currentToken]) {
         switch (this.currentToken) {
           case Token.Invariant: invariants.Add(ParseLoopInvariant(loopContractFollowers)); break;
           case Token.Writes: this.ParseExpressionList(writes, true, Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, loopContractFollowers); break;
@@ -1083,8 +1083,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Specifier>/*?*/ specifiers = null;
       if (this.currentToken == Token.LeftParenthesis){
         this.GetNextToken();
-        if (!Parser.DeclarationStart[this.currentToken])
-          specifiers = this.ParseSpecifiers(new List<INamespaceDeclarationMember>(), null, followers|Parser.DeclaratorStart|Token.RightParenthesis|Token.Semicolon); 
+        if (!TS.DeclarationStart[this.currentToken])
+          specifiers = this.ParseSpecifiers(new List<INamespaceDeclarationMember>(), null, followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon); 
         result = this.ParseDeclarator(followers|Token.RightParenthesis, requireIdentifier);
         this.Skip(Token.RightParenthesis);
       } else if (this.currentToken == Token.Colon) {
@@ -1323,8 +1323,8 @@ namespace Microsoft.Research.Vcc.Parsing {
     private void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      TokenSet followersOrContractStart = followers|Parser.ContractStart;
-      while (Parser.ContractStart[this.currentToken]){
+      TokenSet followersOrContractStart = followers|TS.ContractStart;
+      while (TS.ContractStart[this.currentToken]){
         switch (this.currentToken) {
           case Token.Ensures: this.ParseRequiresOrEnsures(contract, followersOrContractStart, false); break;
           case Token.Reads: this.ParseReadsOrWrites(contract, followersOrContractStart, true); break;
@@ -1414,7 +1414,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         return ParseVarArgsParameter(followers);
 
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      List<Specifier> specifiers = this.ParseSpecifiers(null, null, followers | Parser.DeclaratorStart, this.currentToken == Token.Specification);
+      List<Specifier> specifiers = this.ParseSpecifiers(null, null, followers | TS.DeclaratorStart, this.currentToken == Token.Specification);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[specifiers.Count-1].SourceLocation);
       Declarator declarator = this.ParseDeclarator(followers);
       declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
@@ -1441,7 +1441,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       bool typeDefNameIsAllowed = true;
       bool typeDefNameMustReferencePrimitive = false;
       bool seenSpecificationSpecifier = false;
-      TokenSet followersOrSpecifierStart = followers|Parser.SpecifierStart;
+      TokenSet followersOrSpecifierStart = followers | TS.SpecifierStart;
       for (; ; ) {
         switch (this.currentToken) {
           case Token.Specification:
@@ -1526,7 +1526,7 @@ namespace Microsoft.Research.Vcc.Parsing {
               if (!(nte.Expression is AliasQualifiedName)) goto default;
             }
             typeDefNameIsAllowed = false;
-            result.Add(ScopedTypeNameSpecifier.CreateForExpression(this.ParseSimpleOrScopedName(followers|Parser.SpecifierThatCombinesWithTypedefName)));
+            result.Add(ScopedTypeNameSpecifier.CreateForExpression(this.ParseSimpleOrScopedName(followers | TS.SpecifierThatCombinesWithTypedefName)));
             break;
           default:
             this.SkipTo(followers);
@@ -1644,7 +1644,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
         //TODO: else give error
         this.ParseRestOfTypeDeclaration(sctx, namespaceMembers, texpr.Expression, newTypeMembers, followers);
-        if (!Parser.StructFollowers[this.currentToken]) {
+        if (!TS.StructFollowers[this.currentToken]) {
           ISourceLocation errorLocation = this.scanner.SourceLocationOfLastScannedToken;
           string errorToken = this.currentToken == Token.EndOfFile ? "end-of-file" : errorLocation.Source;
           this.HandleError(errorLocation, Error.MissingSemicolonAfterStruct, errorToken);
@@ -1687,7 +1687,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<ITypeDeclarationMember>/*?*/ savedCurrentTypeMembers = this.currentTypeMembers;
       this.currentTypeMembers = typeMembers;
       this.Skip(Token.LeftBrace);
-      while (Parser.DeclarationStart[this.currentToken] || this.currentToken == Token.Colon || this.currentToken == Token.Invariant) {
+      while (TS.DeclarationStart[this.currentToken] || this.currentToken == Token.Colon || this.currentToken == Token.Invariant) {
         if (this.currentToken == Token.Invariant) {
           if (this.currentTypeInvariants == null)
             this.currentTypeInvariants = new List<TypeInvariant>();
@@ -1811,17 +1811,11 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private BlockStatement ParseBlock(TokenSet followers)
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      return this.ParseBlock(BlockStatement.Options.Default, slb, followers);
-    }
-
-    private BlockStatement ParseBlock(BlockStatement.Options options, SourceLocationBuilder slb, TokenSet followers)
       //^ requires options == BlockStatement.Options.Default || options == BlockStatement.Options.AllowUnsafeCode || 
       //^  options == BlockStatement.Options.UseCheckedArithmetic || options == BlockStatement.Options.UseUncheckedArithmetic;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
+      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       FunctionOrBlockContract contract = new FunctionOrBlockContract();
       if (this.currentToken == Token.Block) {
         this.Skip(Token.Block);
@@ -1831,7 +1825,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Statement> statements = new List<Statement>();
       this.ParseStatements(statements, followers|Token.RightBrace);
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      BlockStatement result = contract.HasContract ? new VccBlockWithContracts(statements, options, slb) : new BlockStatement(statements, options, slb);
+      BlockStatement result = contract.HasContract ? new VccBlockWithContracts(statements, slb) : new BlockStatement(statements, slb);
       if (contract.HasContract) {
         this.compilation.ContractProvider.AssociateMethodWithContract(result, contract.ToMethodContract());
       }
@@ -1842,10 +1836,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     private void ParseStatements(List<Statement> statements, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      TokenSet statementFollowers = followers|Parser.StatementStart;
+      TokenSet statementFollowers = followers | TS.StatementStart;
       if (!statementFollowers[this.currentToken])
         this.SkipTo(statementFollowers, Error.InvalidExprTerm, this.scanner.GetTokenSource());
-      while (Parser.StatementStart[this.currentToken]) {
+      while (TS.StatementStart[this.currentToken]) {
         Statement s = this.ParseStatement(statementFollowers);
         StatementGroup.AddStatementOrGroupToList(s, statements);
       }
@@ -1923,7 +1917,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.GetNextToken();
       LoopContract/*?*/ contract = this.ParseLoopContract(followers);
       Statement statement;
-      if (Parser.StatementStart[this.currentToken]) {
+      if (TS.StatementStart[this.currentToken]) {
         statement = this.ParseStatement(followers);
       } else {
         statement = new EmptyStatement(false, this.scanner.SourceLocationOfLastScannedToken);
@@ -1993,7 +1987,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      TokenSet followersOrRightParenthesisOrSemicolon = followers|Parser.RightParenthesisOrSemicolon|Token.Invariant|Token.Writes;
+      TokenSet followersOrRightParenthesisOrSemicolon = followers | TS.RightParenthesisOrSemicolon | Token.Invariant | Token.Writes;
       List<Statement> initStatements = this.ParseForInitializer(followersOrRightParenthesisOrSemicolon);
       Expression condition = this.ParseForCondition(followersOrRightParenthesisOrSemicolon);
       List<Statement> incrementStatements = this.ParseForIncrementer(followers|Token.RightParenthesis|Token.Invariant|Token.Writes);
@@ -2134,8 +2128,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       Expression expression = this.ParseParenthesizedExpression(followers|Token.LeftBrace);
       List<SwitchCase> cases = new List<SwitchCase>();
       this.Skip(Token.LeftBrace);
-      TokenSet followersOrCaseOrColonOrDefaultOrRightBrace = followers|Parser.CaseOrColonOrDefaultOrRightBrace;
-      TokenSet followersOrCaseOrDefaultOrRightBrace = followers|Parser.CaseOrDefaultOrRightBrace;
+      TokenSet followersOrCaseOrColonOrDefaultOrRightBrace = followers | TS.CaseOrColonOrDefaultOrRightBrace;
+      TokenSet followersOrCaseOrDefaultOrRightBrace = followers | TS.CaseOrDefaultOrRightBrace;
       for (; ; ) {
         SourceLocationBuilder scCtx = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
         Expression/*?*/ scExpression = null;
@@ -2153,7 +2147,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             this.GetNextToken();
             break;
           default:
-            if (Parser.StatementStart[this.currentToken]) {
+            if (TS.StatementStart[this.currentToken]) {
               this.HandleError(Error.StmtNotInCase);
               this.ParseStatement(followersOrCaseOrColonOrDefaultOrRightBrace);
               continue;
@@ -2162,7 +2156,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
         this.Skip(Token.Colon);
         IEnumerable<Statement> scBody;
-        if (Parser.StatementStart[this.currentToken])
+        if (TS.StatementStart[this.currentToken])
           scBody = this.ParseSwitchCaseStatementBlock(scCtx, followersOrCaseOrDefaultOrRightBrace);
         else
           scBody = IteratorHelper.GetEmptyEnumerable<Statement>();
@@ -2192,7 +2186,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       List<Statement> statements = new List<Statement>();
-      while (Parser.StatementStart[this.currentToken]) {
+      while (TS.StatementStart[this.currentToken]) {
         Statement s = this.ParseStatement(followers);
         StatementGroup.AddStatementOrGroupToList(s, statements);
       }
@@ -2213,7 +2207,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
-      Expression ifCondition = this.ParseParenthesizedExpression(followers|Parser.StatementStart);
+      Expression ifCondition = this.ParseParenthesizedExpression(followers | TS.StatementStart);
       Statement ifTrue = this.ParseStatement(followers|Token.Else);
       if (ifTrue is EmptyStatement)
         this.HandleError(ifTrue.SourceLocation, Error.PossibleMistakenNullStatement);
@@ -2251,10 +2245,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     private Expression ParseExpression(bool allowCommaExpressions, bool allowInitializer, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      TokenSet followersOrInfixOperators = followers|Parser.InfixOperators;
+      TokenSet followersOrInfixOperators = followers | TS.InfixOperators;
       Expression operand1 = this.ParseUnaryExpression(allowInitializer, followersOrInfixOperators);
       for (; ; ) {
-        if (!Parser.InfixOperators[this.currentToken] || (this.currentToken == Token.Comma && !allowCommaExpressions)) {
+        if (!TS.InfixOperators[this.currentToken] || (this.currentToken == Token.Comma && !allowCommaExpressions)) {
           this.SkipTo(followers);
           return operand1;
         }
@@ -2262,8 +2256,8 @@ namespace Microsoft.Research.Vcc.Parsing {
           operand1 = this.ParseConditional(operand1, followers|Token.Comma);
         else if (this.currentToken == Token.Comma) {
           this.GetNextToken();
-          Expression operand2 = this.ParseUnaryExpression(followers|Parser.InfixOperators);
-          if (Parser.InfixOperators[this.currentToken])
+          Expression operand2 = this.ParseUnaryExpression(followers | TS.InfixOperators);
+          if (TS.InfixOperators[this.currentToken])
             operand2 = this.ParseAssignmentExpression(operand2, followers);
           operand1 = this.AllocateBinaryExpression(operand1, operand2, Token.Comma);
         } else {
@@ -2359,7 +2353,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     private Expression ParseBinaryExpression(Expression operand1, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      TokenSet unaryFollowers = followers|Parser.InfixOperators;
+      TokenSet unaryFollowers = followers | TS.InfixOperators;
       Expression expression;
       switch (this.currentToken) {
         case Token.Plus:
@@ -2937,7 +2931,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       slb.UpdateToSpan(expression.SourceLocation);
       this.GetNextToken();
-      if (TypeStart[this.currentToken] && (this.currentToken != Token.Identifier || this.typedefExpressions.ContainsKey(this.scanner.GetIdentifierString()))) {
+      if (TS.TypeStart[this.currentToken] && (this.currentToken != Token.Identifier || this.typedefExpressions.ContainsKey(this.scanner.GetIdentifierString()))) {
         TokenSet followersOrCommaOrGreaterThan = followers|Token.Comma|Token.GreaterThan;
         List<TypeExpression> arguments = new List<TypeExpression>();
         if (this.currentToken != Token.GreaterThan) {
@@ -3064,13 +3058,13 @@ namespace Microsoft.Research.Vcc.Parsing {
           expression = this.ParseExpressionWithParens(followers, (expr, sl) => new UncheckedExpression(expr, sl));
           break;
         default:
-          if (Parser.InfixOperators[this.currentToken]) {
+          if (TS.InfixOperators[this.currentToken]) {
             this.HandleError(Error.InvalidExprTerm, this.scanner.GetTokenSource());
             //^ assume this.currentToken != Token.EndOfFile; //should not be a member of InfixOperators
             this.GetNextToken();
           } else
-            this.SkipTo(followers|Parser.PrimaryStart, Error.InvalidExprTerm, this.scanner.GetTokenSource());
-          if (Parser.PrimaryStart[this.currentToken]) return this.ParsePrimaryExpression(followers);
+            this.SkipTo(followers | TS.PrimaryStart, Error.InvalidExprTerm, this.scanner.GetTokenSource());
+          if (TS.PrimaryStart[this.currentToken]) return this.ParsePrimaryExpression(followers);
           break;
       }
       this.SkipTo(followers);
@@ -3122,11 +3116,11 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private bool CurrentTokenStartsDeclaration() {
-      return Parser.DeclarationStart[this.currentToken] && (this.currentToken != Token.Identifier || this.typedefExpressions.ContainsKey(this.scanner.GetIdentifierString()));
+      return TS.DeclarationStart[this.currentToken] && (this.currentToken != Token.Identifier || this.typedefExpressions.ContainsKey(this.scanner.GetIdentifierString()));
     }
 
     private bool CurrentTokenStartsTypeExpression() {
-      return Parser.TypeStart[this.currentToken] &&
+      return TS.TypeStart[this.currentToken] &&
         (this.currentToken != Token.Identifier ||
           (this.typedefExpressions.ContainsKey(this.scanner.GetIdentifierString()) &&
            !this.locallyDefinedNames.ContainsKey(this.scanner.GetIdentifierString())));
@@ -3162,7 +3156,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      TokenSet followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart = followers|Parser.LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart;
+      TokenSet followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart = followers | TS.LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart;
       List<LocalDeclarationsStatement> boundVariables = this.ParseQuantifierBoundVariables(followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart);
       IEnumerable<IEnumerable<Expression>> triggers = this.ParseQuantifierTriggers(followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart);
       Expression condition = this.ParseExpression(followers|Token.RightParenthesis|Token.Semicolon);
@@ -3222,7 +3216,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.GetNextToken();
       if (this.currentToken == Token.RightBrace) return null;
       List<Expression> result = new List<Expression>();
-      TokenSet followersOrCommaOrRightBrace = followers|Parser.CommaOrRightBrace;
+      TokenSet followersOrCommaOrRightBrace = followers | TS.CommaOrRightBrace;
       while (this.currentToken != Token.RightBrace) {
         Expression e = this.ParseExpression(followersOrCommaOrRightBrace);
         result.Add(e);
@@ -3236,7 +3230,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     private List<LocalDeclarationsStatement> ParseQuantifierBoundVariables(TokenSet followers) {
       List<LocalDeclarationsStatement> result = new List<LocalDeclarationsStatement>();
-      TokenSet followersOrTypeStart = followers|Parser.TypeStart;
+      TokenSet followersOrTypeStart = followers | TS.TypeStart;
       while (this.CurrentTokenStartsTypeExpression()) {
         List<Specifier> specifiers = this.ParseSpecifiers(null, null, followers|Token.Semicolon);
         List<LocalDeclaration> declarations = new List<LocalDeclaration>(1);
@@ -3756,363 +3750,367 @@ namespace Microsoft.Research.Vcc.Parsing {
       return new VccSimpleName(name, this.scanner.SourceLocationOfLastScannedToken);
     }
 
-    private static readonly TokenSet AddOneOrSubtractOne;
-    private static readonly TokenSet AssignmentOperators;
-    private static readonly TokenSet CaseOrDefaultOrRightBrace;
-    private static readonly TokenSet CaseOrColonOrDefaultOrRightBrace;
-    private static readonly TokenSet CastFollower;
-    private static readonly TokenSet CommaOrRightBrace;
-    private static readonly TokenSet ContractStart;
-    private static readonly TokenSet DeclarationStart;
-    private static readonly TokenSet DeclaratorStart;
-    private static readonly TokenSet EndOfFile;
-    private static readonly TokenSet InfixOperators;
-    private static readonly TokenSet LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart;
-    private static readonly TokenSet LoopContractStart;
-    private static readonly TokenSet PrimaryStart;
-    private static readonly TokenSet RightParenthesisOrSemicolon;
-    private static readonly TokenSet SpecifierStart;
-    private static readonly TokenSet SpecifierThatCombinesWithTypedefName;
-    private static readonly TokenSet StatementStart;
-    private static readonly TokenSet TypeStart;
-    private static readonly TokenSet TypeOperator;
-    private static readonly TokenSet UnaryStart;
-    private static readonly TokenSet Term; //  Token belongs to first set for term-or-unary-operator (follows casts), but is not a predefined type.
-    private static readonly TokenSet Predefined; // Token is a predefined type
-    private static readonly TokenSet UnaryOperator; //  Token belongs to unary operator
-    private static readonly TokenSet StructFollowers;
-    
-    static Parser(){
-      AddOneOrSubtractOne = new TokenSet();
-      AddOneOrSubtractOne |= Token.AddOne;
-      AddOneOrSubtractOne |= Token.SubtractOne;
+    private static class TS
+    {
 
-      AssignmentOperators = new TokenSet();      
-      AssignmentOperators |= Token.AddAssign;
-      AssignmentOperators |= Token.Assign;
-      AssignmentOperators |= Token.BitwiseAndAssign;
-      AssignmentOperators |= Token.BitwiseOrAssign;
-      AssignmentOperators |= Token.BitwiseXorAssign;
-      AssignmentOperators |= Token.DivideAssign;
-      AssignmentOperators |= Token.LeftShiftAssign;
-      AssignmentOperators |= Token.MultiplyAssign;
-      AssignmentOperators |= Token.RemainderAssign;
-      AssignmentOperators |= Token.RightShiftAssign;
-      AssignmentOperators |= Token.SubtractAssign;
+      public static readonly TokenSet AddOneOrSubtractOne;
+      public static readonly TokenSet AssignmentOperators;
+      public static readonly TokenSet CaseOrDefaultOrRightBrace;
+      public static readonly TokenSet CaseOrColonOrDefaultOrRightBrace;
+      public static readonly TokenSet CastFollower;
+      public static readonly TokenSet CommaOrRightBrace;
+      public static readonly TokenSet ContractStart;
+      public static readonly TokenSet DeclarationStart;
+      public static readonly TokenSet DeclaratorStart;
+      public static readonly TokenSet EndOfFile;
+      public static readonly TokenSet InfixOperators;
+      public static readonly TokenSet LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart;
+      public static readonly TokenSet LoopContractStart;
+      public static readonly TokenSet PrimaryStart;
+      public static readonly TokenSet RightParenthesisOrSemicolon;
+      public static readonly TokenSet SpecifierStart;
+      public static readonly TokenSet SpecifierThatCombinesWithTypedefName;
+      public static readonly TokenSet StatementStart;
+      public static readonly TokenSet TypeStart;
+      public static readonly TokenSet TypeOperator;
+      public static readonly TokenSet UnaryStart;
+      public static readonly TokenSet Term; //  Token belongs to first set for term-or-unary-operator (follows casts), but is not a predefined type.
+      public static readonly TokenSet Predefined; // Token is a predefined type
+      public static readonly TokenSet UnaryOperator; //  Token belongs to unary operator
+      public static readonly TokenSet StructFollowers;
 
-      CaseOrDefaultOrRightBrace = new TokenSet();
-      CaseOrDefaultOrRightBrace |= Token.Case;
-      CaseOrDefaultOrRightBrace |= Token.Default;
-      CaseOrDefaultOrRightBrace |= Token.RightBrace;
+      static TS() {
+        AddOneOrSubtractOne = new TokenSet();
+        AddOneOrSubtractOne |= Token.AddOne;
+        AddOneOrSubtractOne |= Token.SubtractOne;
 
-      CaseOrColonOrDefaultOrRightBrace = CaseOrDefaultOrRightBrace;
-      CaseOrColonOrDefaultOrRightBrace |= Token.Colon;
+        AssignmentOperators = new TokenSet();
+        AssignmentOperators |= Token.AddAssign;
+        AssignmentOperators |= Token.Assign;
+        AssignmentOperators |= Token.BitwiseAndAssign;
+        AssignmentOperators |= Token.BitwiseOrAssign;
+        AssignmentOperators |= Token.BitwiseXorAssign;
+        AssignmentOperators |= Token.DivideAssign;
+        AssignmentOperators |= Token.LeftShiftAssign;
+        AssignmentOperators |= Token.MultiplyAssign;
+        AssignmentOperators |= Token.RemainderAssign;
+        AssignmentOperators |= Token.RightShiftAssign;
+        AssignmentOperators |= Token.SubtractAssign;
 
-      CommaOrRightBrace = new TokenSet();
-      CommaOrRightBrace |= Token.Comma;
-      CommaOrRightBrace |= Token.RightBrace;
+        CaseOrDefaultOrRightBrace = new TokenSet();
+        CaseOrDefaultOrRightBrace |= Token.Case;
+        CaseOrDefaultOrRightBrace |= Token.Default;
+        CaseOrDefaultOrRightBrace |= Token.RightBrace;
 
-      ContractStart = new TokenSet();
-      ContractStart |= Token.Ensures;
-      ContractStart |= Token.Reads;
-      ContractStart |= Token.Requires;
-      ContractStart |= Token.Writes;
+        CaseOrColonOrDefaultOrRightBrace = CaseOrDefaultOrRightBrace;
+        CaseOrColonOrDefaultOrRightBrace |= Token.Colon;
 
-      DeclarationStart = new TokenSet();
-      DeclarationStart |= Token.Declspec;
-      DeclarationStart |= Token.Specification;
-      DeclarationStart |= Token.Axiom;
-      DeclarationStart |= Token.Typedef;
-      DeclarationStart |= Token.Extern;
-      DeclarationStart |= Token.Static;
-      DeclarationStart |= Token.Auto;
-      DeclarationStart |= Token.Register;
-      DeclarationStart |= Token.Const;
-      DeclarationStart |= Token.Volatile;
-      DeclarationStart |= Token.Inline;
-      DeclarationStart |= Token.Void;
-      DeclarationStart |= Token.Char;
-      DeclarationStart |= Token.Short;
-      DeclarationStart |= Token.Int;
-      DeclarationStart |= Token.Int8;
-      DeclarationStart |= Token.Int16;
-      DeclarationStart |= Token.Int32;
-      DeclarationStart |= Token.Int64;
-      DeclarationStart |= Token.Long;
-      DeclarationStart |= Token.Float;
-      DeclarationStart |= Token.Double;
-      DeclarationStart |= Token.Signed;
-      DeclarationStart |= Token.Unsigned;
-      DeclarationStart |= Token.Bool;
-      //DeclarationStart |= Token.Complex;
-      DeclarationStart |= Token.Struct;
-      DeclarationStart |= Token.Template;
-      DeclarationStart |= Token.Union;
-      DeclarationStart |= Token.Enum;
-      DeclarationStart |= Token.Identifier;
+        CommaOrRightBrace = new TokenSet();
+        CommaOrRightBrace |= Token.Comma;
+        CommaOrRightBrace |= Token.RightBrace;
 
-      DeclaratorStart = new TokenSet();
-      DeclaratorStart |= Token.Multiply;
-      DeclaratorStart |= Token.BitwiseXor;
-      DeclaratorStart |= Token.Identifier;
-      DeclaratorStart |= Token.LeftParenthesis;
-      DeclaratorStart |= Token.Colon; // occurs in anonymous bitfields
+        ContractStart = new TokenSet();
+        ContractStart |= Token.Ensures;
+        ContractStart |= Token.Reads;
+        ContractStart |= Token.Requires;
+        ContractStart |= Token.Writes;
 
-      EndOfFile = new TokenSet();
-      EndOfFile |= Token.EndOfFile;
-      
-      InfixOperators = new TokenSet();      
-      InfixOperators |= Token.AddAssign;
-      InfixOperators |= Token.Assign;
-      InfixOperators |= Token.BitwiseAnd;
-      InfixOperators |= Token.BitwiseAndAssign;
-      InfixOperators |= Token.BitwiseOr;
-      InfixOperators |= Token.BitwiseOrAssign;
-      InfixOperators |= Token.BitwiseXor;
-      InfixOperators |= Token.BitwiseXorAssign;
-      InfixOperators |= Token.Conditional;
-      InfixOperators |= Token.Comma;
-      InfixOperators |= Token.Divide;
-      InfixOperators |= Token.DivideAssign;
-      InfixOperators |= Token.Equal;
-      InfixOperators |= Token.Explies;
-      InfixOperators |= Token.GreaterThan;
-      InfixOperators |= Token.GreaterThanOrEqual;
-      InfixOperators |= Token.IfAndOnlyIf;
-      InfixOperators |= Token.Implies;
-      InfixOperators |= Token.LeftShift;
-      InfixOperators |= Token.LeftShiftAssign;
-      InfixOperators |= Token.LessThan;
-      InfixOperators |= Token.LessThanOrEqual;
-      InfixOperators |= Token.LogicalAnd;
-      InfixOperators |= Token.LogicalOr;
-      InfixOperators |= Token.Multiply;
-      InfixOperators |= Token.MultiplyAssign;
-      InfixOperators |= Token.NotEqual;
-      InfixOperators |= Token.Plus;
-      InfixOperators |= Token.Remainder;
-      InfixOperators |= Token.RemainderAssign;
-      InfixOperators |= Token.RightShift;
-      InfixOperators |= Token.RightShiftAssign;
-      InfixOperators |= Token.Subtract;
-      InfixOperators |= Token.SubtractAssign;
-      InfixOperators |= Token.Arrow;
-      InfixOperators |= Token.ScopeResolution;
+        DeclarationStart = new TokenSet();
+        DeclarationStart |= Token.Declspec;
+        DeclarationStart |= Token.Specification;
+        DeclarationStart |= Token.Axiom;
+        DeclarationStart |= Token.Typedef;
+        DeclarationStart |= Token.Extern;
+        DeclarationStart |= Token.Static;
+        DeclarationStart |= Token.Auto;
+        DeclarationStart |= Token.Register;
+        DeclarationStart |= Token.Const;
+        DeclarationStart |= Token.Volatile;
+        DeclarationStart |= Token.Inline;
+        DeclarationStart |= Token.Void;
+        DeclarationStart |= Token.Char;
+        DeclarationStart |= Token.Short;
+        DeclarationStart |= Token.Int;
+        DeclarationStart |= Token.Int8;
+        DeclarationStart |= Token.Int16;
+        DeclarationStart |= Token.Int32;
+        DeclarationStart |= Token.Int64;
+        DeclarationStart |= Token.Long;
+        DeclarationStart |= Token.Float;
+        DeclarationStart |= Token.Double;
+        DeclarationStart |= Token.Signed;
+        DeclarationStart |= Token.Unsigned;
+        DeclarationStart |= Token.Bool;
+        //DeclarationStart |= Token.Complex;
+        DeclarationStart |= Token.Struct;
+        DeclarationStart |= Token.Template;
+        DeclarationStart |= Token.Union;
+        DeclarationStart |= Token.Enum;
+        DeclarationStart |= Token.Identifier;
 
-      LoopContractStart = new TokenSet();
-      LoopContractStart |= Token.Invariant;
-      LoopContractStart |= Token.Writes;
+        DeclaratorStart = new TokenSet();
+        DeclaratorStart |= Token.Multiply;
+        DeclaratorStart |= Token.BitwiseXor;
+        DeclaratorStart |= Token.Identifier;
+        DeclaratorStart |= Token.LeftParenthesis;
+        DeclaratorStart |= Token.Colon; // occurs in anonymous bitfields
 
-      PrimaryStart = new TokenSet();
-      PrimaryStart |= Token.Identifier;
-      PrimaryStart |= Token.IntegerLiteral;
-      PrimaryStart |= Token.OctalLiteral;
-      PrimaryStart |= Token.HexLiteral;
-      PrimaryStart |= Token.RealLiteral;
-      PrimaryStart |= Token.HexFloatLiteral;
-      PrimaryStart |= Token.CharLiteral;
-      PrimaryStart |= Token.StringLiteral;
-      PrimaryStart |= Token.LeftParenthesis;
-      PrimaryStart |= Token.Unchecked;
+        EndOfFile = new TokenSet();
+        EndOfFile |= Token.EndOfFile;
 
-      RightParenthesisOrSemicolon = new TokenSet();
-      RightParenthesisOrSemicolon |= Token.RightParenthesis;
-      RightParenthesisOrSemicolon |= Token.Semicolon;
+        InfixOperators = new TokenSet();
+        InfixOperators |= Token.AddAssign;
+        InfixOperators |= Token.Assign;
+        InfixOperators |= Token.BitwiseAnd;
+        InfixOperators |= Token.BitwiseAndAssign;
+        InfixOperators |= Token.BitwiseOr;
+        InfixOperators |= Token.BitwiseOrAssign;
+        InfixOperators |= Token.BitwiseXor;
+        InfixOperators |= Token.BitwiseXorAssign;
+        InfixOperators |= Token.Conditional;
+        InfixOperators |= Token.Comma;
+        InfixOperators |= Token.Divide;
+        InfixOperators |= Token.DivideAssign;
+        InfixOperators |= Token.Equal;
+        InfixOperators |= Token.Explies;
+        InfixOperators |= Token.GreaterThan;
+        InfixOperators |= Token.GreaterThanOrEqual;
+        InfixOperators |= Token.IfAndOnlyIf;
+        InfixOperators |= Token.Implies;
+        InfixOperators |= Token.LeftShift;
+        InfixOperators |= Token.LeftShiftAssign;
+        InfixOperators |= Token.LessThan;
+        InfixOperators |= Token.LessThanOrEqual;
+        InfixOperators |= Token.LogicalAnd;
+        InfixOperators |= Token.LogicalOr;
+        InfixOperators |= Token.Multiply;
+        InfixOperators |= Token.MultiplyAssign;
+        InfixOperators |= Token.NotEqual;
+        InfixOperators |= Token.Plus;
+        InfixOperators |= Token.Remainder;
+        InfixOperators |= Token.RemainderAssign;
+        InfixOperators |= Token.RightShift;
+        InfixOperators |= Token.RightShiftAssign;
+        InfixOperators |= Token.Subtract;
+        InfixOperators |= Token.SubtractAssign;
+        InfixOperators |= Token.Arrow;
+        InfixOperators |= Token.ScopeResolution;
 
-      SpecifierThatCombinesWithTypedefName = new TokenSet();
-      SpecifierThatCombinesWithTypedefName |= Token.Auto;
-      SpecifierThatCombinesWithTypedefName |= Token.Register;
-      SpecifierThatCombinesWithTypedefName |= Token.Static;
-      SpecifierThatCombinesWithTypedefName |= Token.Extern;
-      SpecifierThatCombinesWithTypedefName |= Token.Typedef;
-      SpecifierThatCombinesWithTypedefName |= Token.Specification;
-      SpecifierThatCombinesWithTypedefName |= Token.Declspec;
-      SpecifierThatCombinesWithTypedefName |= Token.Short;
-      SpecifierThatCombinesWithTypedefName |= Token.Long;
-      SpecifierThatCombinesWithTypedefName |= Token.Signed;
-      SpecifierThatCombinesWithTypedefName |= Token.Unsigned;
-      SpecifierThatCombinesWithTypedefName |= Token.Const;
-      SpecifierThatCombinesWithTypedefName |= Token.Volatile;
-      //SpecifierThatCombinesWithTypedefName |= Token.Asm;
-      SpecifierThatCombinesWithTypedefName |= Token.Cdecl;
-      SpecifierThatCombinesWithTypedefName |= Token.Fastcall;
-      SpecifierThatCombinesWithTypedefName |= Token.Inline;
-      SpecifierThatCombinesWithTypedefName |= Token.Stdcall;
-      SpecifierThatCombinesWithTypedefName |= Token.Identifier;
-      //SpecifierThatCombinesWithTypedefName |= Token.LeftBracket;
-      SpecifierThatCombinesWithTypedefName |= Token.Multiply;
-      SpecifierThatCombinesWithTypedefName |= Token.Unaligned;
-      SpecifierThatCombinesWithTypedefName |= Token.ScopeResolution;
+        LoopContractStart = new TokenSet();
+        LoopContractStart |= Token.Invariant;
+        LoopContractStart |= Token.Writes;
 
-      StructFollowers = new TokenSet();
-      StructFollowers |= Token.Identifier;
-      StructFollowers |= Token.Semicolon;
-      StructFollowers |= Token.Multiply;
-      StructFollowers |= Token.BitwiseXor;
+        PrimaryStart = new TokenSet();
+        PrimaryStart |= Token.Identifier;
+        PrimaryStart |= Token.IntegerLiteral;
+        PrimaryStart |= Token.OctalLiteral;
+        PrimaryStart |= Token.HexLiteral;
+        PrimaryStart |= Token.RealLiteral;
+        PrimaryStart |= Token.HexFloatLiteral;
+        PrimaryStart |= Token.CharLiteral;
+        PrimaryStart |= Token.StringLiteral;
+        PrimaryStart |= Token.LeftParenthesis;
+        PrimaryStart |= Token.Unchecked;
 
-      TypeStart = new TokenSet();
-      TypeStart |= Token.Identifier;
-      TypeStart |= Token.Bool;
-      TypeStart |= Token.Short;
-      TypeStart |= Token.Int;
-      TypeStart |= Token.Long;
-      TypeStart |= Token.Char;
-      TypeStart |= Token.Float;
-      TypeStart |= Token.Double;
-      TypeStart |= Token.LeftBracket;
-      TypeStart |= Token.Void;
-      TypeStart |= Token.Int8;
-      TypeStart |= Token.Int16;
-      TypeStart |= Token.Int32;
-      TypeStart |= Token.Int64;
-      TypeStart |= Token.Signed;
-      TypeStart |= Token.Unsigned;
-      TypeStart |= Token.W64;
-      TypeStart |= Token.Struct;
-      TypeStart |= Token.Union;
-      TypeStart |= Token.Enum;
-      TypeStart |= Token.Const;
-      TypeStart |= Token.Volatile;
-      TypeStart |= Token.Axiom;
-      TypeStart |= Token.Unaligned;
+        RightParenthesisOrSemicolon = new TokenSet();
+        RightParenthesisOrSemicolon |= Token.RightParenthesis;
+        RightParenthesisOrSemicolon |= Token.Semicolon;
 
-      SpecifierStart = SpecifierThatCombinesWithTypedefName | TypeStart;
-      //SpecifierStart |= Token.Asm;
-      SpecifierStart |= Token.Cdecl;
-      SpecifierStart |= Token.Fastcall;
-      SpecifierStart |= Token.Inline;
-      SpecifierStart |= Token.Stdcall;
+        SpecifierThatCombinesWithTypedefName = new TokenSet();
+        SpecifierThatCombinesWithTypedefName |= Token.Auto;
+        SpecifierThatCombinesWithTypedefName |= Token.Register;
+        SpecifierThatCombinesWithTypedefName |= Token.Static;
+        SpecifierThatCombinesWithTypedefName |= Token.Extern;
+        SpecifierThatCombinesWithTypedefName |= Token.Typedef;
+        SpecifierThatCombinesWithTypedefName |= Token.Specification;
+        SpecifierThatCombinesWithTypedefName |= Token.Declspec;
+        SpecifierThatCombinesWithTypedefName |= Token.Short;
+        SpecifierThatCombinesWithTypedefName |= Token.Long;
+        SpecifierThatCombinesWithTypedefName |= Token.Signed;
+        SpecifierThatCombinesWithTypedefName |= Token.Unsigned;
+        SpecifierThatCombinesWithTypedefName |= Token.Const;
+        SpecifierThatCombinesWithTypedefName |= Token.Volatile;
+        //SpecifierThatCombinesWithTypedefName |= Token.Asm;
+        SpecifierThatCombinesWithTypedefName |= Token.Cdecl;
+        SpecifierThatCombinesWithTypedefName |= Token.Fastcall;
+        SpecifierThatCombinesWithTypedefName |= Token.Inline;
+        SpecifierThatCombinesWithTypedefName |= Token.Stdcall;
+        SpecifierThatCombinesWithTypedefName |= Token.Identifier;
+        //SpecifierThatCombinesWithTypedefName |= Token.LeftBracket;
+        SpecifierThatCombinesWithTypedefName |= Token.Multiply;
+        SpecifierThatCombinesWithTypedefName |= Token.Unaligned;
+        SpecifierThatCombinesWithTypedefName |= Token.ScopeResolution;
 
-      TypeOperator = new TokenSet();
-      TypeOperator |= Token.LeftBracket;
-      TypeOperator |= Token.Multiply;
-      TypeOperator |= Token.Plus;
-      TypeOperator |= Token.Conditional;
-      TypeOperator |= Token.LogicalNot;
-      TypeOperator |= Token.BitwiseAnd;
+        StructFollowers = new TokenSet();
+        StructFollowers |= Token.Identifier;
+        StructFollowers |= Token.Semicolon;
+        StructFollowers |= Token.Multiply;
+        StructFollowers |= Token.BitwiseXor;
 
-      UnaryStart = new TokenSet();
-      UnaryStart |= Token.Identifier;
-      UnaryStart |= Token.LeftParenthesis;
-      UnaryStart |= Token.LeftBracket;
-      UnaryStart |= Token.Lambda;
-      UnaryStart |= Token.AddOne;
-      UnaryStart |= Token.SubtractOne;
-      UnaryStart |= Token.AlignOf;
-      UnaryStart |= Token.Sizeof;
-      UnaryStart |= Token.Forall;
-      UnaryStart |= Token.Exists;
-      UnaryStart |= Token.Old;
-      UnaryStart |= Token.HexLiteral;
-      UnaryStart |= Token.IntegerLiteral;
-      UnaryStart |= Token.OctalLiteral;
-      UnaryStart |= Token.StringLiteral;
-      UnaryStart |= Token.CharLiteral;
-      UnaryStart |= Token.RealLiteral;
-      UnaryStart |= Token.Unchecked;
-      UnaryStart |= Token.Bool;
-      UnaryStart |= Token.Short;
-      UnaryStart |= Token.Int;
-      UnaryStart |= Token.Long;
-      UnaryStart |= Token.Char;
-      UnaryStart |= Token.Float;
-      UnaryStart |= Token.Double;
-      UnaryStart |= Token.Plus;
-      UnaryStart |= Token.BitwiseNot;
-      UnaryStart |= Token.LogicalNot;
-      UnaryStart |= Token.Multiply;
-      UnaryStart |= Token.Subtract;
-      UnaryStart |= Token.AddOne;
-      UnaryStart |= Token.SubtractOne;
-      UnaryStart |= Token.BitwiseAnd;
+        TypeStart = new TokenSet();
+        TypeStart |= Token.Identifier;
+        TypeStart |= Token.Bool;
+        TypeStart |= Token.Short;
+        TypeStart |= Token.Int;
+        TypeStart |= Token.Long;
+        TypeStart |= Token.Char;
+        TypeStart |= Token.Float;
+        TypeStart |= Token.Double;
+        TypeStart |= Token.LeftBracket;
+        TypeStart |= Token.Void;
+        TypeStart |= Token.Int8;
+        TypeStart |= Token.Int16;
+        TypeStart |= Token.Int32;
+        TypeStart |= Token.Int64;
+        TypeStart |= Token.Signed;
+        TypeStart |= Token.Unsigned;
+        TypeStart |= Token.W64;
+        TypeStart |= Token.Struct;
+        TypeStart |= Token.Union;
+        TypeStart |= Token.Enum;
+        TypeStart |= Token.Const;
+        TypeStart |= Token.Volatile;
+        TypeStart |= Token.Axiom;
+        TypeStart |= Token.Unaligned;
 
-      LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart = new TokenSet();
-      LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart |= Token.LeftBrace;
-      LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart |= Token.RightParenthesis;
-      LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart |= Token.Semicolon;
-      LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart |= Parser.UnaryStart;
+        SpecifierStart = SpecifierThatCombinesWithTypedefName | TypeStart;
+        //SpecifierStart |= Token.Asm;
+        SpecifierStart |= Token.Cdecl;
+        SpecifierStart |= Token.Fastcall;
+        SpecifierStart |= Token.Inline;
+        SpecifierStart |= Token.Stdcall;
 
-      StatementStart = new TokenSet();
-      StatementStart |= Parser.UnaryStart;
-      StatementStart |= Parser.DeclarationStart;
-      StatementStart |= Token.LeftBrace;
-      StatementStart |= Token.Semicolon;
-      StatementStart |= Token.If;
-      StatementStart |= Token.Switch;
-      StatementStart |= Token.While;
-      StatementStart |= Token.Do;
-      StatementStart |= Token.For;
-      StatementStart |= Token.While;
-      StatementStart |= Token.Assert;
-      StatementStart |= Token.Assume;
-      StatementStart |= Token.Break;
-      StatementStart |= Token.Continue;
-      StatementStart |= Token.Goto;
-      StatementStart |= Token.Return;
-      StatementStart |= Token.Const;
-      StatementStart |= Token.Void;
-      StatementStart |= Token.Unaligned;
-      StatementStart |= Token.Block;
+        TypeOperator = new TokenSet();
+        TypeOperator |= Token.LeftBracket;
+        TypeOperator |= Token.Multiply;
+        TypeOperator |= Token.Plus;
+        TypeOperator |= Token.Conditional;
+        TypeOperator |= Token.LogicalNot;
+        TypeOperator |= Token.BitwiseAnd;
 
-      Term = new TokenSet();
-      Term |= Token.AlignOf;
-      Term |= Token.Sizeof;
-      Term |= Token.Old;
-      Term |= Token.Identifier;
-      Term |= Token.IntegerLiteral;
-      Term |= Token.RealLiteral;
-      Term |= Token.StringLiteral;
-      Term |= Token.CharLiteral;
-      Term |= Token.LeftParenthesis;
-      Term |= Token.Unchecked;
+        UnaryStart = new TokenSet();
+        UnaryStart |= Token.Identifier;
+        UnaryStart |= Token.LeftParenthesis;
+        UnaryStart |= Token.LeftBracket;
+        UnaryStart |= Token.Lambda;
+        UnaryStart |= Token.AddOne;
+        UnaryStart |= Token.SubtractOne;
+        UnaryStart |= Token.AlignOf;
+        UnaryStart |= Token.Sizeof;
+        UnaryStart |= Token.Forall;
+        UnaryStart |= Token.Exists;
+        UnaryStart |= Token.Old;
+        UnaryStart |= Token.HexLiteral;
+        UnaryStart |= Token.IntegerLiteral;
+        UnaryStart |= Token.OctalLiteral;
+        UnaryStart |= Token.StringLiteral;
+        UnaryStart |= Token.CharLiteral;
+        UnaryStart |= Token.RealLiteral;
+        UnaryStart |= Token.Unchecked;
+        UnaryStart |= Token.Bool;
+        UnaryStart |= Token.Short;
+        UnaryStart |= Token.Int;
+        UnaryStart |= Token.Long;
+        UnaryStart |= Token.Char;
+        UnaryStart |= Token.Float;
+        UnaryStart |= Token.Double;
+        UnaryStart |= Token.Plus;
+        UnaryStart |= Token.BitwiseNot;
+        UnaryStart |= Token.LogicalNot;
+        UnaryStart |= Token.Multiply;
+        UnaryStart |= Token.Subtract;
+        UnaryStart |= Token.AddOne;
+        UnaryStart |= Token.SubtractOne;
+        UnaryStart |= Token.BitwiseAnd;
 
-      Predefined = new TokenSet();
-      Predefined |= Token.Bool;
-      Predefined |= Token.Short;
-      Predefined |= Token.Int;
-      Predefined |= Token.Long;
-      Predefined |= Token.Char;
-      Predefined |= Token.Float;
-      Predefined |= Token.Double;
-      Predefined |= Token.Void;
+        LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart = new TokenSet();
+        LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart |= Token.LeftBrace;
+        LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart |= Token.RightParenthesis;
+        LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart |= Token.Semicolon;
+        LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart |= TS.UnaryStart;
 
-      UnaryOperator = new TokenSet();
-      UnaryOperator |= Token.AlignOf;
-      UnaryOperator |= Token.Sizeof;
-      UnaryOperator |= Token.BitwiseAnd;
-      UnaryOperator |= Token.Plus;
-      UnaryOperator |= Token.Subtract;
-      UnaryOperator |= Token.Multiply;
-      UnaryOperator |= Token.BitwiseNot;
-      UnaryOperator |= Token.LogicalNot;
-      UnaryOperator |= Token.AddOne;
-      UnaryOperator |= Token.SubtractOne;
+        StatementStart = new TokenSet();
+        StatementStart |= TS.UnaryStart;
+        StatementStart |= TS.DeclarationStart;
+        StatementStart |= Token.LeftBrace;
+        StatementStart |= Token.Semicolon;
+        StatementStart |= Token.If;
+        StatementStart |= Token.Switch;
+        StatementStart |= Token.While;
+        StatementStart |= Token.Do;
+        StatementStart |= Token.For;
+        StatementStart |= Token.While;
+        StatementStart |= Token.Assert;
+        StatementStart |= Token.Assume;
+        StatementStart |= Token.Break;
+        StatementStart |= Token.Continue;
+        StatementStart |= Token.Goto;
+        StatementStart |= Token.Return;
+        StatementStart |= Token.Const;
+        StatementStart |= Token.Void;
+        StatementStart |= Token.Unaligned;
+        StatementStart |= Token.Block;
 
-      CastFollower = new TokenSet();
-      CastFollower |= Token.Identifier;
-      CastFollower |= Token.LeftParenthesis;
-      CastFollower |= Token.AddOne;
-      CastFollower |= Token.SubtractOne;
-      CastFollower |= Token.AlignOf;
-      CastFollower |= Token.Sizeof;
-      CastFollower |= Token.Old;
-      CastFollower |= Token.HexLiteral;
-      CastFollower |= Token.IntegerLiteral;
-      CastFollower |= Token.StringLiteral;
-      CastFollower |= Token.CharLiteral;
-      CastFollower |= Token.RealLiteral;
-      CastFollower |= Token.Bool;
-      CastFollower |= Token.Short;
-      CastFollower |= Token.Int;
-      CastFollower |= Token.Long;
-      CastFollower |= Token.Char;
-      CastFollower |= Token.Float;
-      CastFollower |= Token.Double;
-      CastFollower |= Token.BitwiseNot;
-      CastFollower |= Token.LogicalNot;
-      CastFollower |= Token.Unchecked;
+        Term = new TokenSet();
+        Term |= Token.AlignOf;
+        Term |= Token.Sizeof;
+        Term |= Token.Old;
+        Term |= Token.Identifier;
+        Term |= Token.IntegerLiteral;
+        Term |= Token.RealLiteral;
+        Term |= Token.StringLiteral;
+        Term |= Token.CharLiteral;
+        Term |= Token.LeftParenthesis;
+        Term |= Token.Unchecked;
+
+        Predefined = new TokenSet();
+        Predefined |= Token.Bool;
+        Predefined |= Token.Short;
+        Predefined |= Token.Int;
+        Predefined |= Token.Long;
+        Predefined |= Token.Char;
+        Predefined |= Token.Float;
+        Predefined |= Token.Double;
+        Predefined |= Token.Void;
+
+        UnaryOperator = new TokenSet();
+        UnaryOperator |= Token.AlignOf;
+        UnaryOperator |= Token.Sizeof;
+        UnaryOperator |= Token.BitwiseAnd;
+        UnaryOperator |= Token.Plus;
+        UnaryOperator |= Token.Subtract;
+        UnaryOperator |= Token.Multiply;
+        UnaryOperator |= Token.BitwiseNot;
+        UnaryOperator |= Token.LogicalNot;
+        UnaryOperator |= Token.AddOne;
+        UnaryOperator |= Token.SubtractOne;
+
+        CastFollower = new TokenSet();
+        CastFollower |= Token.Identifier;
+        CastFollower |= Token.LeftParenthesis;
+        CastFollower |= Token.AddOne;
+        CastFollower |= Token.SubtractOne;
+        CastFollower |= Token.AlignOf;
+        CastFollower |= Token.Sizeof;
+        CastFollower |= Token.Old;
+        CastFollower |= Token.HexLiteral;
+        CastFollower |= Token.IntegerLiteral;
+        CastFollower |= Token.StringLiteral;
+        CastFollower |= Token.CharLiteral;
+        CastFollower |= Token.RealLiteral;
+        CastFollower |= Token.Bool;
+        CastFollower |= Token.Short;
+        CastFollower |= Token.Int;
+        CastFollower |= Token.Long;
+        CastFollower |= Token.Char;
+        CastFollower |= Token.Float;
+        CastFollower |= Token.Double;
+        CastFollower |= Token.BitwiseNot;
+        CastFollower |= Token.LogicalNot;
+        CastFollower |= Token.Unchecked;
+      }
     }
-
+    
     private struct TokenSet { 
       private ulong bits0, bits1, bits2;
 

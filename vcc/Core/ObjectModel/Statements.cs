@@ -251,13 +251,14 @@ namespace Microsoft.Research.Vcc {
   }
 
   /// <summary>
-  /// A special kind of block introduced by the parser for atomic_op. It is used when infering the type
-  /// of the VccReturnValue expression.
+  /// A special kind of block introduced by the parser for blocks with associated contracts.
+  /// It is aware of these contracts and includes these contracts into the SetContainingBlock
+  /// operation.
   /// </summary>
   public sealed class VccBlockWithContracts : BlockStatement
   {
-    public VccBlockWithContracts(List<Statement> statements, BlockStatement.Options options, ISourceLocation sourceLocation)
-      : base(statements, options, sourceLocation) {
+    public VccBlockWithContracts(List<Statement> statements, ISourceLocation sourceLocation)
+      : base(statements, sourceLocation) {
     }
 
     private VccBlockWithContracts(BlockStatement containingBlock, VccBlockWithContracts template)
@@ -298,6 +299,20 @@ namespace Microsoft.Research.Vcc {
     {
       if (this.ContainingBlock == containingBlock) return this;
       return new VccBlockWithContracts(containingBlock, this);
+    }
+  }
+
+  public sealed class VccSpecBlock : BlockStatement
+  {
+    public VccSpecBlock(List<Statement> statements, ISourceLocation sourceLocation)
+      : base(statements, sourceLocation) { }
+
+    protected VccSpecBlock(BlockStatement containingBlock, VccSpecBlock template)
+      : base(containingBlock, template) { }
+
+    public override Statement MakeCopyFor(BlockStatement containingBlock) {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccSpecBlock(containingBlock, this);
     }
   }
 }
