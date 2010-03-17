@@ -113,6 +113,7 @@
     <Compile Include="Ast.fs" />
     <Compile Include="FromBoogie.fs" />
     <Compile Include="Z3Translator.fs" />
+    <Compile Include="Simplifier.fs" />
     <Compile Include="Plugin.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" />

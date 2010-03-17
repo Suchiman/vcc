@@ -102,8 +102,6 @@ type Z3Translator(pass:FromBoogie.Passyficator) =
       res.Add (z3.MkDistinct [| for g in globalsBySort.[s] -> this.Const g |])
     this.DeclareFunctions()
     numDeclaredFunctions <- pass.Functions.Count
-    for a in pass.Axioms do
-      res.Add (this.Expr (a.Body.Expand()))
       (*
       TODO:
     for f in pass.Functions do
