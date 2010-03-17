@@ -1,6 +1,8 @@
+-include Makefile.local
+
 D = tutorial
 
-CONV = ../../Tools/VccSyntaxCoverter/bin/Debug/VccSyntaxCoverter.exe
+CONV ?= ../../Tools/VccSyntaxCoverter/bin/Debug/VccSyntaxCoverter.exe
 
 all: build 
 #maybe-show
@@ -9,6 +11,8 @@ build: conv
 	pdflatex $(D).tex </dev/null
 	chmod +x $(D).pdf
 	rm c/*.c.out
+
+.PHONY: conv
 
 conv:
 	$(CONV) c/*.c
