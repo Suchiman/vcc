@@ -186,14 +186,7 @@ namespace Microsoft.Research.Vcc
 
       try {
         parent.swVerifyImpl.Start();
-        VCGenPlugin plugin = null;
-        if (parent.options.Vcc3) {
-          foreach (var p in parent.plugins)
-            if (p.Name == "Vcc3")
-              plugin = p;
-          if (plugin == null)
-            System.Console.WriteLine("Cannot find Vcc3 plugin");
-        }
+        VCGenPlugin plugin = parent.plugin;
         if (plugin != null)
           outcome = plugin.VerifyImpl(env, vcgen, impl, currentBoogie, reporter);
         else
@@ -305,7 +298,7 @@ namespace Microsoft.Research.Vcc
   {
     internal VccOptions options;
     internal string ModelFileName;
-    internal IEnumerable<VCGenPlugin> plugins;
+    internal VCGenPlugin plugin;
 
     Stopwatch swBoogieAST = new Stopwatch("Boogie AST");
     internal Stopwatch swBoogie = new Stopwatch("Boogie");
@@ -316,9 +309,9 @@ namespace Microsoft.Research.Vcc
     internal Stopwatch swVerifyImpl = new Stopwatch("Boogie Verify Impl.");
     Stopwatch swSaveBPL = new Stopwatch("Boogie Save BPL");
 
-    public VccPlugin(IEnumerable<VCGenPlugin> plugins)
+    public VccPlugin(VCGenPlugin plugin)
     {
-      this.plugins = plugins;
+      this.plugin = plugin;
     }
 
     private void RegisterStopwatches()

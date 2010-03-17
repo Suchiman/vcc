@@ -279,15 +279,21 @@ module FromBoogie =
       | :? Boogie.AssumeCmd as assu ->
         Command.Assume (BoogieToken.Strip assu.tok, unparse ctx assu.Expr)
       | :? Boogie.AssertCmd as asrt ->
-        let getCE trace =
+        let getCE retTok =
+          let trace = new Boogie.BlockSeq()
           match asrt with
             | :? Boogie.AssertEnsuresCmd as a ->
-              new Boogie.ReturnCounterexample (trace, new Boogie.ReturnCmd(asrt.tok), a.Ensures) :> Boogie.Counterexample
+              let tok =
+                match retTok with
+                  | Some t -> BoogieToken t :> Boogie.IToken
+                  | None -> asrt.tok
+              new Boogie.ReturnCounterexample (trace, new Boogie.ReturnCmd(tok), a.Ensures) :> Boogie.Counterexample
             | :? Boogie.AssertRequiresCmd as a ->
               new Boogie.CallCounterexample (trace, a.Call, a.Requires) :> Boogie.Counterexample
             | _ ->
               new Boogie.AssertCounterexample (trace, asrt) :> Boogie.Counterexample
-        Command.Assert (new CounterexampleToken (BoogieToken.Strip asrt.tok, getCE), unparse ctx asrt.Expr)
+        let body = unparse ctx asrt.Expr
+        Command.Assert (new CounterexampleToken (BoogieToken.Strip asrt.tok, getCE), body)
       | _ -> failwith ("unexpected boogie command in passified program " + cmd.ToString())
             
   let doBlock (ctx:Ctx) (b:Boogie.Block) =

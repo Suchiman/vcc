@@ -107,6 +107,7 @@ namespace Microsoft.Research.Vcc
       try {
         string pluginName = null;
         Plugin selectedPlugin = null;
+        VCGenPlugin vcgenPlugin = null;
 
         if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp || commandLineOptions.Vcc3) {
           pluginManager = new PluginManager(commandLineOptions);
@@ -123,6 +124,11 @@ namespace Microsoft.Research.Vcc
             }
           }
 
+          if (commandLineOptions.Vcc3 && pluginName == null) {
+            pluginName = "Vcc3";
+            commandLineOptions.PluginOptions[pluginName] = new List<string>();
+          }
+
           if (pluginName != null) {
             foreach (var plugin in pluginManager.Plugins) {
               if (string.Compare(pluginName, plugin.Name(), true) == 0) {
@@ -134,13 +140,25 @@ namespace Microsoft.Research.Vcc
               }
             }
             if (selectedPlugin == null) {
-              System.Console.WriteLine("Plugin '{0}' not found.", pluginName);
-              return null;
+              foreach (var plugin in pluginManager.VCGenPlugins) {
+                if (string.Compare(pluginName, plugin.Name, true) == 0) {
+                  if (vcgenPlugin != null) {
+                    System.Console.WriteLine("More than one VCGEN plugin matches '{0}'.", pluginName);
+                    return null;
+                  }
+                  vcgenPlugin = plugin;
+                }
+              }
+
+              if (vcgenPlugin == null) {
+                System.Console.WriteLine("Plugin '{0}' not found.", pluginName);
+                return null;
+              }
             }
           }
         }
 
-        if (selectedPlugin == null) selectedPlugin = new VccPlugin(commandLineOptions.Vcc3 ? pluginManager.VCGenPlugins : null); // the default
+        if (selectedPlugin == null) selectedPlugin = new VccPlugin(vcgenPlugin); // the default
 
         selectedPlugin.RegisterStopwatch(swTotal);
         selectedPlugin.RegisterStopwatch(swVisitor);

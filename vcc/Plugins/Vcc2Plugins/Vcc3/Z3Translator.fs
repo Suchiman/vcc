@@ -14,7 +14,7 @@ open Microsoft // for Boogie and Z3
 
 type Z3Translator(pass:FromBoogie.Passyficator) =
   let cfg = new Z3.Config()
-  let z3 = new Microsoft.Z3.Context(cfg)
+  let mutable z3 = null
   let mutable disposed = false
   let sorts = gdict()
   let functions = gdict()
@@ -58,6 +58,7 @@ type Z3Translator(pass:FromBoogie.Passyficator) =
     cfg.SetParamValue ("DELAY_UNITS_THRESHOLD", "16")
     cfg.SetParamValue ("TYPE_CHECK", "true")
     cfg.SetParamValue ("BV_REFLECT", "true")
+    z3 <- new Microsoft.Z3.Context(cfg)
   
   member this.Sort tp = 
     match tp with
@@ -219,12 +220,6 @@ type Z3Translator(pass:FromBoogie.Passyficator) =
     match stack with
       | (form :: a1) :: a2 ->
         List.iter (List.iter add) (a1 :: a2)
-        (*
-        for a in assumptions do
-          z3.Display (System.Console.Out, a)
-          System.Console.WriteLine()
-          z3.BenchmarkToSmtlib ("vcc3bench", "UFNIA", "unknown", null, [| |], a) |> ignore
-          *)
         z3.BenchmarkToSmtlib ("vcc3bench", "UFNIA", "unknown", null, assumptions.ToArray(), form)
       | _ -> failwith ""
     

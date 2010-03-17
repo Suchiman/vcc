@@ -48,6 +48,7 @@ namespace Microsoft.Research.Vcc
       | ArrayIndex of Expr * list<Expr>
       | ArrayUpdate of Expr * list<Expr> * Expr
       | Old of Expr
+      | Ite of Expr * Expr * Expr
       | Exists of Token * list<Var> * list<list<Expr>> * list<Attribute> * Expr // may generate warnings
       | Forall of Token * list<Var> * list<list<Expr>> * list<Attribute> * Expr // may generate warnings
       | Lambda of Token * list<Var> * list<Attribute> * Expr
@@ -117,6 +118,8 @@ namespace Microsoft.Research.Vcc
             wr "old("
             self e
             wr ")"
+          | Ite (c, t, e) ->
+            wr "if "; self c; wr " then "; self t; wr " else "; self e
           | Exists (_, vars, triggers, attrs, expr) ->
             wr "(exists "
             quant (vars, triggers, attrs, expr)
@@ -240,6 +243,8 @@ namespace Microsoft.Research.Vcc
           Microsoft.Boogie.NAryExpr (noToken, Boogie.MapStore (noToken, ie.Length), toExprSeq (a :: ie @ [v])) :> Microsoft.Boogie.Expr
         | Old e ->
           Microsoft.Boogie.OldExpr (noToken, trExpr e) :> Microsoft.Boogie.Expr // TODO: in AbsyExpr.scc we have OldExpr : Expr, AI.IFunApp // HACK ???
+        | Ite (c, t, e) ->
+          Microsoft.Boogie.NAryExpr (noToken, Boogie.IfThenElse (noToken), toExprSeq ([c; t; e])) :> Microsoft.Boogie.Expr
         | Exists (token, vl, tl, attrs, e) ->
           let vars = Boogie.VariableSeq(List.toArray (List.map (trBound (tok token)) vl))          
           let attrs = toAttributesList attrs
@@ -532,6 +537,7 @@ namespace Microsoft.Research.Vcc
               | ArrayIndex (e1, args) -> ArrayIndex (self e1, selfs args)
               | ArrayUpdate (e1, args, e2) -> ArrayUpdate (self e1, selfs args, self e2)
               | Old e -> Old (self e)
+              | Ite (c, t, e) -> Ite (self c, self t, self e)
               // Note that the map function is not applied to the attributes.
               // These are usually used for weights and similar stuff anyhow.
               | Exists (token, vars, triggers, attrs, body) ->

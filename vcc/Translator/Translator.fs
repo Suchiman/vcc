@@ -99,7 +99,6 @@ namespace Microsoft.Research.Vcc
       
         let tp = B.Type.Ref mapName
         let mapTypeName = (mapName.Replace ("$#", "")).Replace ("$", "")
-        let ite = "$ite." + mapTypeName
         let mapType = B.Type.Ref (mapName)
         let sel = "$select." + mapName
         let selMP = bCall sel [er "M"; er "p"]
@@ -164,7 +163,6 @@ namespace Microsoft.Research.Vcc
         let mpv = ["M", tp; "p", bt1; "v", bt2]
         let m1m2 = ["M1", tp; "M2", tp]
         [B.Decl.TypeDef mapName;
-           B.Decl.Function (mapType, [B.StringAttr("external", "ITE"); B.StringAttr("bvz", "ITE"); B.StringAttr("bvint", "ITE")], ite, ["c", B.Type.Bool; "a", mapType; "b", mapType]);           
            B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1]);
            B.Decl.Function (tp, [], stor, mpv);
            B.Decl.Function (B.Type.Bool, [], eq, m1m2);
@@ -523,19 +521,13 @@ namespace Microsoft.Research.Vcc
           | ("inv_check" | "token_holder" | "_vcc_bv_lemma"), [e] ->
             self e
           | "ite", ([cond; th; el] as args) ->
-            let name =
-              match trType th.Type with
-                | B.Type.Ref name -> (name.Replace ("$#", "")).Replace ("$", "")
-                | B.Type.Int ->
-                  if th.Type._IsPtr then "ptr" else "int"
-                | B.Type.Bool -> "bool"
-                | _ -> die()
-            let args =
-              match args with
-                | C.Expr.Ref (_, { Kind = C.QuantBound }) as first :: rest ->
-                  bCall "$bool_id" [self first] :: selfs rest
-                | _ -> selfs args
-            bCall ("$ite." + name) args
+            // TODO: check if this is still needed
+            let cond' =
+              match cond with
+                | C.Expr.Ref (_, { Kind = C.QuantBound }) ->
+                  bCall "$bool_id" [self cond]
+                | _ -> self cond
+            B.Ite (cond', self th, self el)
           | "can_use_frame_axiom_of", [C.Call (_, f, _, _)] ->
             bCall "$can_use_frame_axiom_of" [er ("cf#" + f.Name)]
           | "_vcc_typeof", [e] ->
@@ -1942,9 +1934,7 @@ namespace Microsoft.Research.Vcc
           | origname ->
             let name = "$#" + origname
             let t = B.Type.Ref name
-            let ite = B.Decl.Function (t, [B.StringAttr ("bvint", "ITE"); B.StringAttr ("bvz", "ITE"); B.StringAttr ("external", "ITE")], 
-                                       "$ite." + origname, [("cond", B.Type.Bool); ("th", t); ("el", t)])
-            let typeDef = [B.Decl.TypeDef name; ite]
+            let typeDef = [B.Decl.TypeDef name]
             let (additions, kind) = 
               match td.Kind with
                 | C.FunctDecl _ -> (typeDef, "fnptr")

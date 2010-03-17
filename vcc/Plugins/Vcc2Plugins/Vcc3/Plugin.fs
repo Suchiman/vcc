@@ -18,6 +18,8 @@ namespace Microsoft.Research.Vcc3
       
       override this.Name = "Vcc3"
       override this.VerifyImpl (helper, vcgen, impl, prog, handler) =
+        let tr = false
+        
         let wr (s:obj) = System.Console.WriteLine s
         
         
@@ -33,37 +35,59 @@ namespace Microsoft.Research.Vcc3
           
         let proc = opt.Passify impl
         
-        //for b in proc.Blocks do wr b
+        if tr then
+          for b in proc.Blocks do wr b
         
         use z3 = new Z3Translator(opt)
         z3.Init ()
         
-        let rec check (b:Ast.Block) =
+        let numErrs = ref 0
+        
+        let rec check retTok (b:Ast.Block) =
+          let mutable retTok = retTok
           for c in b.Cmds do
             match c with
               | Ast.Assert (tok, cond) ->
-                //wr (cond.ToString())
+                match cond with
+                  | Ast.App ({ Name = "$position_marker" }, [] ) -> retTok <- Some (tok :> Token)
+                  | _ -> ()
+                if tr then
+                  wr ("assert " + cond.ToString())
+                let cond' = cond.Expand()
                 z3.Push()
-                let res = z3.Assert (cond.Expand())
-                //let fn = z3.SmtToFile()
+                let res = z3.Assert (cond')
+                
                 if not res then
-                  handler.OnCounterexample (tok.GetCounterexample(new Microsoft.Boogie.BlockSeq()), null)
+                  if tr then
+                    wr ("DUMP " + z3.SmtToFile())
+                  handler.OnCounterexample (tok.GetCounterexample(retTok), null)
+                  incr numErrs
                 z3.Pop()
+                z3.Assume cond' // subsumption
               | Ast.Assume (_, cond) ->
+                if tr then
+                  wr ("assume " + cond.ToString())
                 z3.Assume (cond.Expand())
           
           match b.Exits with
             | [] -> ()
-            | [e] -> check e
+            | [e] -> check retTok e
             | _ ->
               for e in b.Exits do
+                if tr then
+                  wr ("{ Push")
                 z3.Push()
-                check e
+                check retTok e
                 z3.Pop()
+                if tr then
+                  wr ("Pop }")
         
         z3.BeginProc proc
-        check proc.Blocks.Head
+        check None proc.Blocks.Head
         z3.FinishProc ()
 
-        VC.VCGen.Outcome.Inconclusive
+        if !numErrs > 0 then
+          VC.VCGen.Outcome.Errors
+        else
+          VC.VCGen.Outcome.Correct
       

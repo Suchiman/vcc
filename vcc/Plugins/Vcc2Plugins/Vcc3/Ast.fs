@@ -168,9 +168,9 @@ namespace Microsoft.Research.Vcc3
       override this.ToString() =
         "axiom " + objConcat " " this.Attrs + this.Body.ToString()
       
-    type CounterexampleToken (t:Token, getCE:Microsoft.Boogie.BlockSeq -> Microsoft.Boogie.Counterexample) =
+    type CounterexampleToken (t:Token, getCE:option<Token> -> Microsoft.Boogie.Counterexample) =
       inherit ForwardingToken(t, fun () -> t.Value)
-      member this.GetCounterexample trace = getCE trace
+      member this.GetCounterexample tok = getCE tok
       
     type Command =
       | Assume of Token * Expr
