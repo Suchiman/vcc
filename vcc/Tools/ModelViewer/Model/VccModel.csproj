@@ -63,6 +63,7 @@
     <Compile Include="Model.cs" />
     <Compile Include="ModelController.cs" />
     <Compile Include="ModelPreprocessor.cs" />
+    <Compile Include="ModelValuePrinter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
