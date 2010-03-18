@@ -458,6 +458,8 @@ namespace VccModel.Controller
     public LocalVariables Locals = new LocalVariables();
     public GlobalVariables Globals = new GlobalVariables();
 
+    public ModelValuePrinter ValuePrinter = new ModelValuePrinter();
+
     public Dictionary<ExecutionState, List<FieldInfo>> models = new Dictionary<ExecutionState, List<FieldInfo>>();
     public Dictionary<ExecutionState, Dictionary<Partition, FieldInfo>> fieldNameDatabases = new Dictionary<ExecutionState, Dictionary<Partition, FieldInfo>>();
     public Dictionary<ExecutionState, List<FunctionInfo>> pureFunctions = new Dictionary<ExecutionState, List<FunctionInfo>>();
@@ -1122,7 +1124,7 @@ namespace VccModel.Controller
     PrimitiveFieldInfo LoadPrimitiveFieldInfo(Partition p, ExecutionState execState, string fieldName, Partition type)
     {
       PrimitiveFieldInfo result = new PrimitiveFieldInfo();
-      result.FieldValue = p.Value;
+      result.FieldValue = model.ValuePrinter.Lookup(type.Value, p.Value);
       result.FieldTypePartition = type;
       return result;
     }
@@ -1168,7 +1170,7 @@ namespace VccModel.Controller
             Partition valuePartition = GetContentInState(pfi.Dot.DotPartition, e);
             if (valuePartition != null)
             {
-              value = valuePartition.Value;
+              value = model.ValuePrinter.Lookup(pfi.FieldTypePartition.Value, valuePartition.Value);
               valueName = pfi.FieldName;
             }
           }
@@ -1187,7 +1189,7 @@ namespace VccModel.Controller
               newState.sourceInfo = location;
               newState.timestamp = e.timestamp;
               newState.good_state = e.good_state;
-              value = localVariablePartition.Value;
+              value = model.ValuePrinter.Lookup(pfi.FieldTypePartition.Value, localVariablePartition.Value);
               if (!result.ContainsKey(newState))
               {
                 result.Add(newState, value);
