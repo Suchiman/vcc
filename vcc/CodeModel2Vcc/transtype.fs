@@ -1179,8 +1179,80 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let flattenNestedArrays decls = 
+    
+      // compile nested, fixed-size arrays into flat arrays and re-write arrays accesses accordingly
+      // e.g.: int a[5][7] -> int a[35]; and
+      //           a[i][j] -> a[7*i + j]
+    
+      let varSubst = new Dict<Variable, Variable>()
+      let fieldSubst = new Dict<Field, (Field * Type)>()
+      let rec flatten = function
+        | Array(t, sz) -> 
+          let (t', sz') = flatten t
+          (t', sz * sz')
+        | t -> (t,1)
+      let flattenNestedArrays' self = function
+      | VarDecl(ec, v) ->
+        // re-type local variable
+        match v.Type with
+          | PtrSoP(Array _ as arr, isSpec) -> 
+            let (elType, _) = flatten arr
+            let v' = Variable.CreateUnique v.Name (Type.MkPtr(elType, isSpec)) v.Kind
+            varSubst.Add(v, v')
+            Some(VarDecl(ec, v'))
+          | _ -> None
+      | Ref(ec, v) ->
+        // fix-up references to locals
+        match varSubst.TryGetValue v with
+          | true, v' -> Some(Ref({ec with Type = v'.Type}, v'))
+          | _ -> None
+      | Index(ec, Macro(_, "&", [Deref(_, e)]), idx) ->
+        // fold nested Index operations
+        match e.Type with 
+          | PtrSoP(Array(t,sz), isSpec) ->
+            let sidx = self idx
+            match self e with
+              | Index(ec', e', idx') as e-> 
+                // found nested index operation; replace with single one
+                Some(Index({ec with Type = Type.MkPtr(t, isSpec)}, e', 
+                           Prim(sidx.Common, Op("+", Processed), [Prim(sidx.Common, Op("*", Processed), [idx'; mkInt sz]); sidx])))
+              | e -> Some(Index(ec, e, sidx))
+          | _ -> None
+      | Cast(ec, cs, Call(aec, ({Name = "_vcc_stack_alloc"} as fn), [arr], args)) ->
+        // fix the stack_alloc call for stack-allocated arrays
+        let (elType, sz) = flatten arr
+        Some(Cast({ec with Type = Type.RetypePtr(ec.Type, elType)}, cs, Call(aec, fn, [Array(elType, sz)], args)))
+      | Dot(ec, e, f) ->
+        // fix-up accesses to fields of nested-array types; the map has been populated for all types by calling 'flattenField' below
+        match fieldSubst.TryGetValue f with
+          | true, (f', elType) -> 
+            let res = Some(Expr.MkDot(self e, f'))
+            res
+          | _ -> None
+      | _ -> None
+      
+      let flattenFields (f:Field) =
+        match f.Type with 
+          | Array(Array(_, _), _) as arr -> 
+            let (elType, sz) = flatten arr
+            let f' = { f with Type = Array(elType, sz) }
+            fieldSubst.Add(f, (f', elType))
+            f'
+          | _ -> f
+      
+      for d in decls do
+        match d with 
+          | Top.TypeDecl(td) -> td.Fields <- List.map flattenFields td.Fields
+          | _ -> ()
+      
+      deepMapExpressions flattenNestedArrays' decls
+      
+    // ============================================================================================================
+
     helper.AddTransformer ("type-begin", Helper.DoNothing)
     helper.AddTransformer ("type-function-pointer", Helper.Decl handleFunctionPointers)
+    helper.AddTransformer ("type-flatten-arrays", Helper.Decl flattenNestedArrays)
     helper.AddTransformer ("type-groups", Helper.Decl liftGroups)
     helper.AddTransformer ("type-mark-nested", Helper.Decl markNestedAnonymousTypes)
     helper.AddTransformer ("type-remove-bitfields", Helper.Decl removeBitfields)

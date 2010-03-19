@@ -83,9 +83,6 @@ namespace Microsoft.Research.Vcc
  
     // ============================================================================================================
     
-    // It is likely that FELT is wrong here, in C there is no difference
-    // between passing int a[10] and int *a. Also it sometimes creates
-    // temproraries of such types.    
     let removeFixedSizeArraysAsParameters decls =
       let map = new Dict<_,_>()
       let replParm (p : Variable) =
@@ -718,7 +715,6 @@ namespace Microsoft.Research.Vcc
       | Deref(_, (Dot(_,_,f) as dot)) when f.Type._IsArray -> Some(self dot)
       | _ -> None
  
- 
     // ============================================================================================================
 
     let normalizeOnUnwrap = 
@@ -732,7 +728,6 @@ namespace Microsoft.Research.Vcc
          
       mapInvariants expandOne
                                            
-
     // ============================================================================================================
  
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
