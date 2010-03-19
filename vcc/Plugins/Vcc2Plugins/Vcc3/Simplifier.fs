@@ -16,18 +16,19 @@ type StackState =
     mutable RetTok : option<Token>
     mutable ErrorHandler : string -> unit
     mutable Final : bool
+    mutable DefiningAxioms : Map<int, QuantData>
   }
 
 exception ProvingFailure
  
 type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options) =
-  let z3 = new Z3Translator(helper, pass)
+  let smt = new Z3Translator(helper, pass)
   let mutable disposed = false
   let trLevel = options.GetInt "trace" 1
   let vcc2 = not helper.Options.Vcc3
   let wr = printfn
   let noErr s = failwith ("no error handler installed " + s)
-  let mutable stack = [ { RetTok = None; ErrorHandler = noErr ; Final = true } ]
+  let mutable stack = [ { RetTok = None; ErrorHandler = noErr ; Final = true ; DefiningAxioms = Map.empty } ]
   let mutable errCnt = 0
   let definingAxiom (q:QuantData) =
     List.tryPick (function ExprAttr ("vcc3def", e) -> Some e | _ -> None) q.Attrs  
@@ -36,36 +37,25 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     member this.Dispose() =
       if not disposed then
         disposed <- true
-        (z3 :> System.IDisposable).Dispose()
+        (smt :> System.IDisposable).Dispose()
   
   member private this.Cur = stack.Head    
   
   member private this.Push () =
     let c = this.Cur
     stack <- { c with RetTok = c.RetTok } :: stack
-    z3.Push()
+    smt.Push()
     if trLevel >= 2 then
       wr "{ Push"
     
   member private this.Pop () =
-    z3.Pop()
+    smt.Pop()
     stack <- stack.Tail
     if trLevel >= 2 then
       wr "Pop }"
   
-  member private this.ForProver (expr:Expr) =
-    let killBuiltin = function
-      | Binder q as t when (hasAttr "builtin" q.Attrs || hasAttr "todo" q.Attrs || (definingAxiom q).IsSome) ->
-        // wr "killing %O" t
-        Expr.True
-      | PApp (_, "==", [e; PLambda _]) 
-      | PApp (_, "==", [PLambda _; e]) ->
-        Expr.True
-      | e -> e
-    expr.Expand().Weaken killBuiltin
-  
   member private this.Dump () =
-    wr "DUMP %s" (z3.SmtToFile())
+    wr "DUMP %s" (smt.SmtToFile())
   
   member private this.Fail (expr:Expr, reason:string) =
     if this.Cur.Final then
@@ -77,7 +67,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       if trLevel >= 1 then
         wr "  Cannot prove %O%s" expr app
       if helper.Options.SaveModel then
-        z3.SaveModel "model.vccmodel"
+        smt.SaveModel "model.vccmodel"
     false
     
   member private this.Fail (expr:Expr) =
@@ -98,16 +88,51 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       this.LogAssume expr
     res
   
+  member private this.RemoveBuiltins (expr:Expr) =
+    let killBuiltin = function
+      | Binder q as t when (hasAttr "builtin" q.Attrs || hasAttr "todo" q.Attrs || (definingAxiom q).IsSome) ->
+        // wr "killing %O" t
+        Expr.True
+      | PApp (_, "==", [e; PLambda _]) 
+      | PApp (_, "==", [PLambda _; e]) ->
+        Expr.True
+      | e -> e
+    expr.Weaken killBuiltin
+  
+  member private this.IntAssume (expr:Expr) =
+    let exp = expr.Expand()
+    smt.Assume (this.RemoveBuiltins exp)
+    
   member private this.LogAssume (expr:Expr) =
     if trLevel >= 3 then
-      wr "[Z3] assume %O" expr
-    z3.Assume (this.ForProver expr)
+      wr "[SMT] assume %O" expr
+    this.IntAssume expr
     
   member private this.Assume (expr:Expr) =
     if trLevel >= 10 then
-      wr "[Z3] assume(any) %O" expr
-    z3.Assume (this.ForProver expr)
+      wr "[SMT] assume(any) %O" expr
+    this.IntAssume expr
     
+  member private this.SmtValid negate expr =
+    let expr = Expr.MkNotCond negate expr
+    if trLevel >= 3 then
+      wr "[SMT] assert %O" expr
+    smt.Push()
+    if smt.Assert (this.RemoveBuiltins (expr.Expand())) then
+      if trLevel >= 3 then
+        wr "[SMT] OK"
+      if trLevel >= 4 then
+        this.Dump()
+      smt.Pop()
+      this.Assume expr
+      this.Succeed()
+    else
+      if trLevel >= 3 then
+        wr "[SMT] Fail"
+      let res = this.Fail expr
+      smt.Pop()
+      res
+  
   member private this.Valid negate (expr:Expr) =
     let validOr a b =
       if this.NestedValid negate a then
@@ -116,25 +141,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         this.Assume (Expr.MkNotCond (not negate) a)
         this.Valid negate b
     
-    let passToZ3 expr =
-      let expr = Expr.MkNotCond negate expr
-      if trLevel >= 3 then
-        wr "[Z3] assert %O" expr
-      z3.Push()
-      if z3.Assert (this.ForProver expr) then
-        if trLevel >= 3 then
-          wr "[Z3] OK"
-        if trLevel >= 4 then
-          this.Dump()
-        z3.Pop()
-        this.Assume expr
-        this.Succeed()
-      else
-        if trLevel >= 3 then
-          wr "[Z3] Fail"
-        let res = this.Fail expr
-        z3.Pop()
-        res
+    let passToSMT expr = this.SmtValid negate expr
         
     match expr with      
       | PAnd (a, b) when not negate ->
@@ -171,23 +178,23 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
             this.Valid negate (expr.Apply())
           | DelayExpand _ ->
             if vcc2 then
-              passToZ3 expr
+              passToSMT expr
             else
               this.Valid negate (expr.Apply())
           | Uninterpreted ->
-            passToZ3 expr
+            passToSMT expr
             
       | Binder q ->
-        passToZ3 expr
+        passToSMT expr
         
       | Lit (Lit.Bool v) ->
         if v <> negate then
           this.Succeed ()
         else
-          passToZ3 expr
+          passToSMT expr
           
       | Ref v ->
-        passToZ3 expr
+        passToSMT expr
         
       // type error
       | Lit (Lit.Int _)
@@ -195,7 +202,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         failwith ""
         
   member this.Init () =
-    z3.Init()
+    smt.Init()
     
     let isBareVars vars args =
       let vv = gdict()
@@ -217,7 +224,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
           this.Assume a.Body
  
   member this.VerifyProc (proc:BlockProc, handler:Microsoft.Boogie.VerifierCallback) =
-    if trLevel >= 5 then
+    if trLevel >= 4 then
       for f in pass.Functions do wr "%O" f
       for f in pass.Axioms do wr "%O" f
         
@@ -262,9 +269,9 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
             check e
             this.Pop()
             
-    z3.BeginProc proc
+    smt.BeginProc proc
     check proc.Blocks.Head
-    z3.FinishProc ()
+    smt.FinishProc ()
     
     errCnt - prevErrs
     
