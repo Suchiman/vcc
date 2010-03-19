@@ -218,6 +218,12 @@ module Microsoft.Research.Vcc.CAST
     
     static member MkPtrToStruct (td:TypeDecl) = Type.MkPtr(Type.Ref(td), td.IsSpec)
     
+    static member RetypePtr(ptrType, newTgt) =
+      match ptrType with
+        | PhysPtr _ -> PhysPtr newTgt
+        | SpecPtr _ -> SpecPtr newTgt
+        | _ -> die()
+    
     member this._IsArray =
       match this with
         | Array _ -> true
