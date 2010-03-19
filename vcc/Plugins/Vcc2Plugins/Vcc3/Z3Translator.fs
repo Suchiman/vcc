@@ -12,7 +12,7 @@ open Ast
 open Microsoft // for Boogie and Z3
 
 
-type Z3Translator(pass:FromBoogie.Passyficator) =
+type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
   let cfg = new Z3.Config()
   let mutable z3 = null
   let mutable disposed = false
@@ -58,6 +58,8 @@ type Z3Translator(pass:FromBoogie.Passyficator) =
     cfg.SetParamValue ("DELAY_UNITS_THRESHOLD", "16")
     cfg.SetParamValue ("TYPE_CHECK", "true")
     cfg.SetParamValue ("BV_REFLECT", "true")
+    if helper.Options.SaveModel then
+      cfg.SetParamValue ("MODEL", "true")
     z3 <- new Microsoft.Z3.Context(cfg)
   
   member this.Sort tp = 
@@ -132,15 +134,15 @@ type Z3Translator(pass:FromBoogie.Passyficator) =
       | ">" -> z3.MkGt (a0, a1)
       | "==" -> z3.MkEq (a0, a1)
       | "!=" -> z3.MkNot (z3.MkEq (a0, a1))
-      | "&&" -> z3.MkAnd (a0, a1)
-      | "||" -> z3.MkOr (a0, a1)
+      //| "&&" -> z3.MkAnd (a0, a1)
+      //| "||" -> z3.MkOr (a0, a1)
       | "==>" -> z3.MkImplies (a0, a1)
       | "<==>" -> z3.MkIff (a0, a1)
       | _ ->
         let args = [| for a in args -> this.Expr a |]
         match f.Name with
           | "ite@" -> z3.MkIte (args.[0], args.[1], args.[2])
-          | "!" -> z3.MkNot args.[0]
+          //| "!" -> z3.MkNot args.[0]
           | _ -> z3.MkApp (this.Function f, args)
           
   member this.Expr e =
@@ -151,6 +153,9 @@ type Z3Translator(pass:FromBoogie.Passyficator) =
       | Lit (Lit.Bool false) -> z3.MkFalse()
       | Lit (Lit.Int n) -> z3.MkIntNumeral (n.ToString())
       | Lit (Lit.Bv (n, sz)) as e -> z3.MkNumeral (n.ToString(), this.Sort e.Type)
+      | PAnd (a, b) -> z3.MkAnd (this.Expr a, this.Expr b)
+      | POr (a, b) -> z3.MkOr (this.Expr a, this.Expr b)
+      | PNot (a) -> z3.MkNot (this.Expr a)
       | App (f, args) ->
         this.App (f, args)
       | Binder q ->
@@ -207,6 +212,14 @@ type Z3Translator(pass:FromBoogie.Passyficator) =
     z3.Pop()
     stack <- stack.Tail
   
+  member this.SaveModel(filename) =
+    let model = ref null
+    let res = z3.CheckAndGetModel model
+    if res = Z3.LBool.False then failwith ""    
+    use f = System.IO.File.CreateText(filename)
+    (!model).Display f
+    (!model).Dispose()
+    
   member this.Smt() =
     //System.Diagnostics.Debugger.Launch() |> ignore
     let assumptions = glist[]
@@ -218,6 +231,7 @@ type Z3Translator(pass:FromBoogie.Passyficator) =
     match stack with
       | (form :: a1) :: a2 ->
         List.iter (List.iter add) (a1 :: a2)
+        assumptions.Reverse()
         z3.BenchmarkToSmtlib ("vcc3bench", "UFNIA", "unknown", null, assumptions.ToArray(), form)
       | _ -> failwith ""
     
