@@ -64,7 +64,8 @@ namespace Z3AxiomProfiler
       if (e.ProgressPercentage != 0) {
         progressBar1.Style = ProgressBarStyle.Blocks;
         int perc = e.ProgressPercentage;
-        progressBar1.Value = perc;
+        if (perc <= progressBar1.Maximum)
+          progressBar1.Value = perc;
       }
       switch (a)
       {
