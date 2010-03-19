@@ -30,8 +30,11 @@ module FromBoogie =
     let funList = glist[]
     let typList = glist[]
     let mutable vars = Map.empty
-    let mutable id = 0
+    let mutable id = 100
     
+    member this.Init () =
+      this.DeclareFuncDecl Expr.Ite
+      
     member this.NextId () =
       id <- id + 1
       id
@@ -110,7 +113,7 @@ module FromBoogie =
     ctx.DeclareVar v vr
     vr
   
-  let rec unparse (ctx:Ctx) (expr:Microsoft.Boogie.Expr) =
+  let rec doUnparse (ctx:Ctx) (expr:Microsoft.Boogie.Expr) =
     match expr with
       | :? Microsoft.Boogie.IdentifierExpr as id -> 
         Expr.Ref (ctx.GetVar id.Decl)
@@ -127,10 +130,10 @@ module FromBoogie =
                | _ -> failwith ("cannot unparse lit " + lit.ToString())
                
       | :? Boogie.NAryExpr as nary when (nary.Fun :? Boogie.TypeCoercion) ->
-        unparse ctx nary.Args.[0]
+        doUnparse ctx nary.Args.[0]
 
       | :? Boogie.NAryExpr as nary ->
-        let args = [for e in nary.Args -> unparse ctx e]
+        let args = [for e in nary.Args -> doUnparse ctx e]
         let name, getfn =
           let predef name = name, fun () -> failwith (name + " should be predefined")
           let getSelStore sel = fun () ->
@@ -149,7 +152,8 @@ module FromBoogie =
               predef fcall.FunctionName
             | :? Boogie.BinaryOperator as binop ->
               match binop.FunctionName with
-                | "==" | "!=" as n ->
+                | "<==>" | "==" | "!=" as n ->
+                  let n = if n = "<==>" then "==" else n
                   let t = args.[0].Type
                   let getEq () =
                     { ctx.NewFunc n [t; t] Type.Bool with Qualifier = "@" + t.ToString() }
@@ -176,7 +180,7 @@ module FromBoogie =
             Expr.App (f, args)
                 
       | :? Boogie.BvConcatExpr as bvConcat ->
-        match [for e in bvConcat.Arguments -> unparse ctx (e :?> Microsoft.Boogie.Expr)] with
+        match [for e in bvConcat.Arguments -> doUnparse ctx (e :?> Microsoft.Boogie.Expr)] with
           | [arg1; arg2] as args ->
             match arg1.Type, arg2.Type with
               | Type.Bv l1, Type.Bv l2 ->
@@ -201,7 +205,7 @@ module FromBoogie =
             if t = null then []
             elif not t.Pos then
               failwith "negative triggers unsupported at this time"
-            else [for e in t.Tr -> unparse ctx e] :: doTrig t.Next
+            else [for e in t.Tr -> doUnparse ctx e] :: doTrig t.Next
           let triggers = 
             match quant with
               | :? Boogie.QuantifierExpr as quant -> doTrig quant.Triggers
@@ -216,7 +220,7 @@ module FromBoogie =
             {
               Vars = vars
               Triggers = triggers
-              Body = unparse ctx quant.Body
+              Body = doUnparse ctx quant.Body
               Attrs = unparseAttr ctx quant.Attributes
               Kind = kind
             }
@@ -228,6 +232,19 @@ module FromBoogie =
         //System.Console.WriteLine ("cannot unparse " + s.ToString())
         failwith ("cannot unparse " + s.ToString())
   
+  and unparse (ctx:Ctx) (expr:Microsoft.Boogie.Expr) =
+    let nf self = function
+      | PApp (_, "&&", [a; b]) ->
+        Some (Expr.MkAnd (self a, self b))
+      | PApp (_, "||", [a; b]) ->
+        Some (Expr.MkOr (self a, self b))
+      | PApp (_, "==>", [a; b]) ->
+        Some (Expr.MkImpl (self a, self b))
+      | PApp (_, "!", [a]) -> Some (Expr.MkNot (self a))
+      | _ -> None
+      
+    (doUnparse ctx expr).SelfMap nf
+      
   and unparseAttr (ctx:Ctx) (q:Boogie.QKeyValue) =
     if q = null then []
     else
@@ -265,7 +282,6 @@ module FromBoogie =
     addRel "&&" Type.Bool
     addRel "||" Type.Bool
     addRel "==>" Type.Bool
-    addRel "<==>" Type.Bool
     
     ctx.DeclareFuncDecl { makeBinary "!" Type.Bool with ArgTypes = [Type.Bool] }
   
@@ -313,6 +329,7 @@ module FromBoogie =
     inherit VC.VCGen(prog, null, false)
     
     let ctx = Ctx()
+    do ctx.Init()
     let axioms = glist[]
     let globals = glist[]
     

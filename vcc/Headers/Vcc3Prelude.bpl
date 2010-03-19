@@ -299,6 +299,7 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
     $field_offset(f) == off &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
     (forall S:$state, p:$ptr :: 
+      {:vcc3 "builtin"}
       {S[$dot($dot(p, f), $f_typed)]}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
@@ -312,6 +313,7 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
   { $is_base_field(f) && $field_parent_type(f) == partp &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f))) &&
     (forall S:$state, p:$ptr :: 
+      {:vcc3 "builtin"}
       {S[$dot($dot(p, f), $f_typed)]}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
@@ -324,6 +326,13 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
 function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
   { $is_base_field(f) && 
     (forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f)))
+  }
+
+function $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
+  {
+    (forall p:$ptr :: {:vcc3def S} {S[p]}
+      $ghost_path(p) == $f_typed ==>
+        $set_in($ghost_emb(p), ptrs) ==> $in_writes_at(time, $ghost_emb(p)) && $thread_owned_or_even_mutable(S, $ghost_emb(p)))
   }
 
 const unique $f_typed : $field;
@@ -356,6 +365,7 @@ function $is_volatile(S:$state, p:$ptr) returns(bool)
   { $int_to_bool(S[$dot(p, $f_is_volatile)]) }
 
 axiom (forall S:$state, p:$ptr ::
+  {:vcc3 "todo"}
   {$is_volatile(S, p)} $good_state(S) && $is_volatile(S, p) ==> $is_primitive_ch($typ(p)));
 
 // just tmp
@@ -363,7 +373,9 @@ function {:inline true} $is_malloc_root(S:$state, p:$ptr) returns(bool)
   { $is_object_root(S, p) }
 
 function $current_timestamp(S:$state) returns(int);
-axiom (forall S:$state, p:$ptr :: {:weight 0} {$timestamp(S, p)}
+axiom (forall S:$state, p:$ptr ::
+  {:vcc3 "todo"}
+  {:weight 0} {$timestamp(S, p)}
   $timestamp(S, p) <= $current_timestamp(S) ||
   !$typed(S, p)
   );
@@ -406,8 +418,8 @@ function $timestamp(S:$state, p:$ptr) : int
 function $typed(S:$state, p:$ptr) : bool
   { $int_to_bool(S[$dot(p, $f_typed)]) }
 
-function $position_marker() returns(bool);
-axiom $position_marker();
+function $position_marker() : bool
+  { true }
 
 function {:weight 0} $owns(S:$state, p:$ptr) : $ptrset
   { $int_to_ptrset(S[$dot(p, $f_owns)]) }
@@ -447,7 +459,9 @@ const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-
 function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) returns(bool)
   { $is(#p, #t) && $typed(S, #p) }
 
-axiom (forall S:$state, #r:int, #t:$ctype :: {$typed(S, $ptr(#t, #r))}
+axiom (forall S:$state, #r:int, #t:$ctype ::
+  {:vcc3 "todo"}
+  {$typed(S, $ptr(#t, #r))}
   $typed(S, $ptr(#t, #r)) && $in_range_phys_ptr(#r) ==> $in_range_phys_ptr(#r + $sizeof(#t) - 1));
 
 function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool)
@@ -526,10 +540,6 @@ function {:inline true} $inv(#s1:$state, #p:$ptr, typ:$ctype) returns (bool)
 function {:inline true} $inv2nt(S1:$state, S2:$state, p:$ptr) returns (bool)
   { $inv2(S1, S2, p, $typ(p)) }
 
-function $imply_inv(#s1:$state, #p:$ptr, typ:$ctype) returns (bool);
-axiom (forall #s1:$state, #p:$ptr, typ:$ctype :: {$inv(#s1, #p, typ)}
-  $imply_inv(#s1, #p, typ) ==> $inv(#s1, #p, typ));
-
 // We generate axioms like:
 //   inv2(S1,S2,p,T) <==> invariant of T
 // for each struct/union T.
@@ -558,7 +568,9 @@ axiom (forall S:$state :: {$invok_state(S)}
 
 function {:inline true} $closed_is_transitive(S:$state) returns (bool)
   { 
-    (forall #p:$ptr,#q:$ptr :: {$set_in(#p, $owns(S, #q))}
+    (forall #p:$ptr,#q:$ptr ::
+      {:vcc3 "todo"}
+      {$set_in(#p, $owns(S, #q))}
       $good_state(S) &&
       $set_in(#p, $owns(S, #q)) && $closed(S, #q) ==> $closed(S, #p)  && $ref(#p) != 0)
  } 
@@ -605,13 +617,19 @@ function {:inline true} $now_writable(S:$state, p:$ptr) returns(bool)
 
 function {:inline true} $timestamp_post(M1:$state, M2:$state) returns(bool)
   { $current_timestamp(M1) <= $current_timestamp(M2) &&
-    (forall p:$ptr :: {:weight 0} {$timestamp(M2, p)} $timestamp(M1, p) <= $timestamp(M2, p)) &&
+    (forall p:$ptr :: 
+      {:vcc3 "todo"} {:weight 0}
+      {$timestamp(M2, p)}
+      $timestamp(M1, p) <= $timestamp(M2, p)) &&
     $call_transition(M1, M2)
   }
 
 function {:inline true} $timestamp_post_strict(M1:$state, M2:$state) returns(bool)
   { $current_timestamp(M1) < $current_timestamp(M2) &&
-    (forall p:$ptr :: {:weight 0} {$timestamp(M2, p)} $timestamp(M1, p) <= $timestamp(M2, p)) &&
+    (forall p:$ptr ::
+      {:vcc3 "todo"} {:weight 0}
+      {$timestamp(M2, p)} 
+      $timestamp(M1, p) <= $timestamp(M2, p)) &&
     $call_transition(M1, M2)
   }
 
@@ -632,7 +650,9 @@ function {:inline true} $struct_extent(#p:$ptr) returns($ptrset)
   { $full_extent(#p) }
 
 function $volatile_span(S:$state, #p:$ptr) returns($ptrset);
-axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in(p, $volatile_span(S, q))}
+axiom (forall S:$state, p:$ptr, q:$ptr ::
+  {:vcc3 "todo"}
+  {$set_in(p, $volatile_span(S, q))}
   $set_in(p, $volatile_span(S, q)) <==> p == q || ($is_volatile(S, p) && $set_in(p, $span(S, q))));
 
 
@@ -642,32 +662,30 @@ axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in(p, $volatile_span(S, q))}
 
 type $ptrset = [$ptr]bool;
 
-function {:inline true} $set_in(p:$ptr,s:$ptrset) : bool { s[p] }
+function {:inline true} $set_in(p:$ptr,s:$ptrset) : bool
+  { s[p] }
 
-function $set_empty() returns($ptrset)
+function $set_empty() : $ptrset
   { (lambda o:$ptr :: false) }
 
-function $set_singleton(p:$ptr) returns ($ptrset)
+function $set_singleton(p:$ptr) : $ptrset
   { (lambda o:$ptr :: o == p) }
 
-function $non_null_set_singleton($ptr) returns ($ptrset);
-axiom (forall #r: $ptr, #o: $ptr :: {:weight 0} {$set_in(#o, $non_null_set_singleton(#r))} $set_in(#o, $non_null_set_singleton(#r)) <==> (#r == #o && $ptr_neq(#r, $null)));
+function $non_null_set_singleton(p:$ptr) : $ptrset
+  { (lambda o:$ptr :: $ptr_neq(p, $null) && p == o) }
 
-function $set_union($ptrset, $ptrset) returns ($ptrset);
-axiom (forall #a: $ptrset, #b: $ptrset, #o: $ptr :: {:weight 0} {$set_in(#o, $set_union(#a,#b))}
-  $set_in(#o, $set_union(#a,#b)) <==> $set_in(#o, #a) || $set_in(#o, #b));
+function $set_union(A:$ptrset, B:$ptrset) : $ptrset
+  { (lambda o:$ptr :: A[o] || B[o]) }
 
-function $set_difference($ptrset, $ptrset) returns ($ptrset);
-axiom (forall #a: $ptrset, #b: $ptrset, #o: $ptr :: {:weight 0} {$set_in(#o, $set_difference(#a,#b))}
-  $set_in(#o, $set_difference(#a,#b)) <==> $set_in(#o, #a) && !$set_in(#o, #b));
+function $set_difference(A:$ptrset, B:$ptrset) : $ptrset
+  { (lambda o:$ptr :: A[o] && !B[o]) }
 
-function $set_intersection($ptrset, $ptrset) returns ($ptrset);
-axiom (forall #a: $ptrset, #b: $ptrset, #o: $ptr :: {:weight 0} {$set_in(#o, $set_intersection(#a,#b))}
-  $set_in(#o, $set_intersection(#a,#b)) <==> $set_in(#o, #a) && $set_in(#o, #b));
-  
-function $set_subset($ptrset, $ptrset) returns (bool);
-axiom(forall #a: $ptrset, #b: $ptrset :: {:weight 0} {$set_subset(#a,#b)}
-  $set_subset(#a,#b) <==> (forall #o: $ptr :: {:weight 0} {$set_in(#o, #a)} {$set_in(#o, #b)} $set_in(#o, #a) ==> $set_in(#o, #b)));
+function $set_intersection(A:$ptrset, B:$ptrset) : $ptrset
+  { (lambda o:$ptr :: A[o] && B[o]) }
+
+// TODO: need to think about these
+function $set_subset(A:$ptrset, B:$ptrset) : bool
+  { (forall o:$ptr :: {$set_in(o, A)} {$set_in(o, B)} $set_in(o, A) ==> $set_in(o, B)) }
 
 // to be used only positively
 function $set_eq($ptrset, $ptrset) returns (bool);
@@ -734,25 +752,15 @@ function {:inline true} $in_range(min:int, val:int, max:int) returns(bool)
   { min <= val && val <= max }
 
 function {:inline true} $bool_to_int(v:bool) returns(int)
-  { $ite.int(v, 1, 0) }
+  { if v then 1 else 0 }
 
 function {:inline true} $int_to_bool(x:int) returns(bool)
   { x != 0 }
 
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.int(c:bool, t:int, e:int) returns(int);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.bool(c:bool, t:bool, e:bool) returns(bool);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.ptr(c:bool, t:$ptr, e:$ptr) returns($ptr);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.struct(bool, $struct, $struct) returns($struct);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.ptrset(bool, $ptrset, $ptrset) returns($ptrset);
-function {:external "ITE"} {:bvz "ITE"} {:bvint "ITE"} $ite.primitive(bool, $primitive, $primitive) returns($primitive);
-
+// TODO check if still needed
 // a hack, used when parameter to ITE is a quntified variable to prevent Z3 from crashing
 function {:weight 0} $bool_id(x:bool) returns(bool) { x }
 
-
-// --------------------------------------------------------------------------------
-// Arithmetic
-// --------------------------------------------------------------------------------
 
 const $min.i1:int;
 const $max.i1:int;
