@@ -11,6 +11,7 @@ namespace Microsoft.Research.Vcc
   {
     public abstract string Name { get; }
     public abstract VC.VCGen.Outcome VerifyImpl(Helper.Env env, VC.VCGen vcgen, Implementation impl, Program prog, VerifierCallback reporter);
+    public abstract void UseCommandLineOptions(List<string> opts);
   }
 
   class VccFunctionVerifier : FunctionVerifier
@@ -341,6 +342,8 @@ namespace Microsoft.Research.Vcc
 
     public override void UseCommandLineOptions(List<string> p1)
     {
+      if (plugin != null)
+        plugin.UseCommandLineOptions(p1);
     }
 
     public override void UseVccOptions(VccOptions opts)

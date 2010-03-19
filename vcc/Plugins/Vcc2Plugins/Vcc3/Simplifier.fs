@@ -20,10 +20,11 @@ type StackState =
 
 exception ProvingFailure
  
-type Simplifier(pass:FromBoogie.Passyficator) =
-  let z3 = new Z3Translator(pass)
+type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options) =
+  let z3 = new Z3Translator(helper, pass)
   let mutable disposed = false
-  let mutable trLevel = 0
+  let trLevel = options.GetInt "trace" 1
+  let vcc2 = not helper.Options.Vcc3
   let wr = printfn
   let noErr s = failwith ("no error handler installed " + s)
   let mutable stack = [ { RetTok = None; ErrorHandler = noErr ; Final = true } ]
@@ -63,14 +64,20 @@ type Simplifier(pass:FromBoogie.Passyficator) =
       | e -> e
     expr.Expand().Weaken killBuiltin
   
+  member private this.Dump () =
+    wr "DUMP %s" (z3.SmtToFile())
+  
   member private this.Fail (expr:Expr, reason:string) =
     if this.Cur.Final then
       let app = if reason = null || reason = "" then "" else ": " + reason
       errCnt <- errCnt + 1
       if trLevel >= 2 then
-         wr "DUMP %s" (z3.SmtToFile())
+        this.Dump()
       this.Cur.ErrorHandler null
-      wr "  Cannot prove %O%s" expr app
+      if trLevel >= 1 then
+        wr "  Cannot prove %O%s" expr app
+      if helper.Options.SaveModel then
+        z3.SaveModel "model.vccmodel"
     false
     
   member private this.Fail (expr:Expr) =
@@ -80,40 +87,79 @@ type Simplifier(pass:FromBoogie.Passyficator) =
   
   member private this.NestedValid negate expr =
     this.Push ()
-    try
-      this.Cur.Final <- false
-      this.Valid negate expr
-    finally
-      this.Pop()
+    let res =
+      try
+        this.Cur.Final <- false
+        this.Valid negate expr
+      finally
+        this.Pop()
+    if res then
+      let expr = Expr.MkNotCond negate expr
+      this.LogAssume expr
+    res
   
+  member private this.LogAssume (expr:Expr) =
+    if trLevel >= 3 then
+      wr "[Z3] assume %O" expr
+    z3.Assume (this.ForProver expr)
+    
   member private this.Assume (expr:Expr) =
+    if trLevel >= 10 then
+      wr "[Z3] assume(any) %O" expr
     z3.Assume (this.ForProver expr)
     
   member private this.Valid negate (expr:Expr) =
+    let validOr a b =
+      if this.NestedValid negate a then
+        true
+      else
+        this.Assume (Expr.MkNotCond (not negate) a)
+        this.Valid negate b
+    
+    let passToZ3 expr =
+      let expr = Expr.MkNotCond negate expr
+      if trLevel >= 3 then
+        wr "[Z3] assert %O" expr
+      z3.Push()
+      if z3.Assert (this.ForProver expr) then
+        if trLevel >= 3 then
+          wr "[Z3] OK"
+        if trLevel >= 4 then
+          this.Dump()
+        z3.Pop()
+        this.Assume expr
+        this.Succeed()
+      else
+        if trLevel >= 3 then
+          wr "[Z3] Fail"
+        let res = this.Fail expr
+        z3.Pop()
+        res
+        
     match expr with      
       | PAnd (a, b) when not negate ->
         this.Valid negate a && this.Valid negate b
       | POr (a, b) when negate ->
         this.Valid negate a && this.Valid negate b
       | PAnd (a, b) when negate ->
-        this.NestedValid negate a || this.NestedValid negate b
+        validOr a b
       | POr (a, b) when not negate ->
-        this.NestedValid negate a || this.NestedValid negate b
+        validOr a b
       | PNot (a) ->
         this.Valid (not negate) a
       | PIte (a, b, c) ->
-        if this.NestedValid false a then
+        if this.NestedValid false a then          
           this.Valid negate b
         else if this.NestedValid true b then
           this.Valid negate c
         else
           this.Push()
-          this.Assume a
+          this.LogAssume a
           let r1 = this.Valid negate b
           this.Pop()
           if r1 then
             this.Push()
-            this.Assume (Expr.MkNot a)
+            this.LogAssume (Expr.MkNot a)
             let r2 = this.Valid negate c
             this.Pop()
             r2
@@ -121,24 +167,28 @@ type Simplifier(pass:FromBoogie.Passyficator) =
           
       | App (fn, args) ->
         match fn.Body with
-          | DelayExpand _
           | Expand _ ->
             this.Valid negate (expr.Apply())
-          | Uninterpreted ->
-            if z3.Assert (this.ForProver expr) then
-              this.Succeed()
+          | DelayExpand _ ->
+            if vcc2 then
+              passToZ3 expr
             else
-              this.Fail expr
+              this.Valid negate (expr.Apply())
+          | Uninterpreted ->
+            passToZ3 expr
             
       | Binder q ->
-        this.Fail expr
+        passToZ3 expr
+        
       | Lit (Lit.Bool v) ->
         if v <> negate then
           this.Succeed ()
         else
-          this.Fail expr
+          passToZ3 expr
+          
       | Ref v ->
-        this.Fail expr
+        passToZ3 expr
+        
       // type error
       | Lit (Lit.Int _)
       | Lit (Lit.Bv _) ->
@@ -167,6 +217,10 @@ type Simplifier(pass:FromBoogie.Passyficator) =
           this.Assume a.Body
  
   member this.VerifyProc (proc:BlockProc, handler:Microsoft.Boogie.VerifierCallback) =
+    if trLevel >= 5 then
+      for f in pass.Functions do wr "%O" f
+      for f in pass.Axioms do wr "%O" f
+        
     if trLevel >= 3 then
       for b in proc.Blocks do wr "%O" b
                 
@@ -182,18 +236,21 @@ type Simplifier(pass:FromBoogie.Passyficator) =
                 cur.RetTok <- Some (tok :> Token)
               | _ -> ()
             if trLevel >= 2 then
-              wr "assert %O" cond
+              wr "*** assert %O" cond
             
+            let err0 = errCnt
             this.Push()
             this.Cur.ErrorHandler <- fun str -> handler.OnCounterexample (tok.GetCounterexample(cur.RetTok), str)            
             let valid = this.Valid false cond
             this.Pop()
             
-            // this.Assume cond // subsumption
+            if not valid && err0 = errCnt then failwith ""
+            
+            this.Assume cond // subsumption
             
           | Ast.Assume (_, cond) ->
             if trLevel >= 2 then
-              wr "assume %O" cond
+              wr "*** assume %O" cond
             this.Assume cond
       
       match b.Exits with

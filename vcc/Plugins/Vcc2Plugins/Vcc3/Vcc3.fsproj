@@ -111,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ast.fs" />
+    <Compile Include="Options.fs" />
     <Compile Include="FromBoogie.fs" />
     <Compile Include="Z3Translator.fs" />
     <Compile Include="Simplifier.fs" />

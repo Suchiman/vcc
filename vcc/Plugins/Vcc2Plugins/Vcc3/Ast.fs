@@ -84,13 +84,23 @@ namespace Microsoft.Research.Vcc3
       member this.WriteTo sb =
         let wr = wrb sb
         let self (p:Expr) = p.WriteTo sb
+        let bin n a b = 
+          wr "("; self a; wr (" " + n + " "); self b; wr ")"
         match this with
           | Ref n -> wr n.Name
           | Lit l -> wr (l.ToString())
           | App (f, [a;b]) when not (String.exists System.Char.IsLetterOrDigit f.Name) ->
-            wr "("; self a; wr (" " + f.Name + " "); self b; wr ")"
+            bin f.Name a b
           | App (n, args) ->
-            doArgsb sb self n.Name args
+            if n.Name = "ite@" && n.RetType = Type.Bool then
+              match args with
+                | [e; Lit (Bool false); Lit (Bool true)] -> wr "!"; self e
+                | [a; Lit (Bool true); b] -> bin "||" a b
+                | [a; b; Lit (Bool false)] -> bin "&&" a b
+                | _ ->
+                  doArgsb sb self n.Name args
+            else
+              doArgsb sb self n.Name args
           | Binder q ->
             wr "("
             wr (q.Kind.ToString())
@@ -154,7 +164,7 @@ namespace Microsoft.Research.Vcc3
           | DelayExpand (vars, body)
           | Expand (vars, body) ->
             pref + "(" + objConcat ", " vars + ") : " + this.RetType.ToString() + "\n" +
-              "{ " + body.ToString() + " }"              
+              "{ " + body.ToString() + " }" + (match this.Body with DelayExpand _ -> " (delay)" | _ -> "")
     
     and FuncBody =
       | Uninterpreted
@@ -303,6 +313,7 @@ namespace Microsoft.Research.Vcc3
       static member MkAnd (a, b) = App (Expr.Ite, [a; b; Expr.False])
       static member MkOr (a, b) = App (Expr.Ite, [a; Expr.True; b])
       static member MkImpl (a, b) = Expr.MkOr (Expr.MkNot(a), b)
+      static member MkNotCond c e = if c then Expr.MkNot e else e
       
       member this.Map (f : Expr -> option<Expr>) : Expr =
         let self (e:Expr) = e.Map f
