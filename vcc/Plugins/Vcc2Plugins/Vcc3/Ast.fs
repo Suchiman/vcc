@@ -151,6 +151,7 @@ namespace Microsoft.Research.Vcc3
         match this.Body with
           | Uninterpreted -> 
             pref + "(" + objConcat ", " this.ArgTypes + ") : " + this.RetType.ToString()
+          | DelayExpand (vars, body)
           | Expand (vars, body) ->
             pref + "(" + objConcat ", " vars + ") : " + this.RetType.ToString() + "\n" +
               "{ " + body.ToString() + " }"              
@@ -158,6 +159,7 @@ namespace Microsoft.Research.Vcc3
     and FuncBody =
       | Uninterpreted
       | Expand of list<Var> * Expr
+      | DelayExpand of list<Var> * Expr
           
     type Axiom =
       {
@@ -233,8 +235,75 @@ namespace Microsoft.Research.Vcc3
       }
           
     
+    let (|PForall|_|) = function
+      | Binder ({ Kind = Forall } as q) ->
+        Some (q, q.Vars, q.Body)
+      | _ -> None
     
+    let (|PExists|_|) = function
+      | Binder ({ Kind = Exists } as q) ->
+        Some (q, q.Vars, q.Body)
+      | _ -> None
+    
+    let (|PLambda|_|) = function
+      | Binder ({ Kind = Lambda } as q) ->
+        Some (q, q.Vars, q.Body)
+      | _ -> None
+    
+    let (|PApp|_|) = function
+      | App (f, a) -> Some (f, f.Name, a)
+      | _ -> None
+    
+    let (|PIte|_|) = function
+      | App ({ Name = "ite@"; RetType = Type.Bool }, [a; b; c]) -> Some (a, b, c)
+      | _ -> None
+    
+    let (|PTrue|_|) = function
+      | Lit (Lit.Bool true) -> Some ()
+      | _ -> None
+      
+    let (|PFalse|_|) = function
+      | Lit (Lit.Bool false) -> Some ()
+      | _ -> None
+      
+    let (|PAnd|_|) = function
+      | PIte (a, b, PFalse) -> Some (a, b)
+      | _ -> None
+    
+    let (|POr|_|) = function
+      | PIte (a, PTrue, b) -> Some (a, b)
+      | _ -> None
+    
+    let (|PNot|_|) = function
+      | PIte (a, PFalse, PTrue) -> Some a
+      | _ -> None
+    
+    let hasAttr n lst =
+      List.exists (function StringAttr ("vcc3", s) -> s = n | _ -> false) lst
+    
+    
+    let fnBoolIte =
+      {
+        Id = 1
+        Name = "ite@"
+        Qualifier = "bool"
+        RetType = Type.Bool
+        ArgTypes = [Type.Bool; Type.Bool; Type.Bool]
+        Attrs = []
+        Body = Uninterpreted
+      }
+
+        
     type Expr with
+      static member True = Lit (Lit.Bool true)
+      static member False = Lit (Lit.Bool false)      
+      static member Ite = fnBoolIte
+      static member MkIte (a, b, c) = App (Expr.Ite, [a; b; c])
+      static member MkNot (a) = App (Expr.Ite, [a; Expr.False; Expr.True])
+      static member MkAnd (a, b) = App (Expr.Ite, [a; b; Expr.False])
+      static member MkOr (a, b) = App (Expr.Ite, [a; Expr.True; b])
+      static member MkImpl (a, b) = Expr.MkOr (Expr.MkNot(a), b)
+      
       member this.Map (f : Expr -> option<Expr>) : Expr =
         let self (e:Expr) = e.Map f
         let selfs = List.map self
@@ -248,6 +317,31 @@ namespace Microsoft.Research.Vcc3
               | Binder q ->
                 Binder { q with Body = self q.Body ; Triggers = List.map selfs q.Triggers }
      
+      member this.SelfMap (f : (Expr -> Expr) -> Expr -> option<Expr>) : Expr =
+        let rec self (e:Expr) = e.Map (f self)
+        self this
+        
+      // Provided that f satisfies [e ==> f(e)], then [e ==> e.Weaken f]
+      member this.Weaken f =
+        let self (e:Expr) = e.Weaken f
+        match f this with
+          | PIte (a, PTrue, b) -> Expr.MkIte (self a, Expr.True, self b)
+          | PIte (a, b, PFalse) -> Expr.MkIte (self a, self b, Expr.False)
+          | PIte (a, b, c) -> Expr.MkIte (a, self b, self c)
+          | PForall (q, _, _) -> Binder { q with Body = self q.Body }
+          | e -> e
+            
+      member this.Apply () =
+        match this with
+          | App ({ Body = (Expand (formals, body) | DelayExpand (formals, body)) } as f, args) ->
+            let subst = List.fold2 (fun subst (f:Var) a -> Map.add f.Id a subst) Map.empty formals args
+            let sub = function
+              | Ref v when subst.ContainsKey v.Id ->
+                Some (subst.[v.Id])
+              | _ -> None
+            body.Map sub
+          | _ -> failwith ""
+      
       member this.Expand () =
         let expanding = gdict()
         let rec aux subst = function

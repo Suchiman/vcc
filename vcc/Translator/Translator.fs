@@ -951,10 +951,15 @@ namespace Microsoft.Research.Vcc
         let p = er "#p"
         let inWritesAt = bCall "$in_writes_at" [er name; p]
         let env = { env with Writes = wr; WritesTime = er name }
+        let defWrites =
+          if helper.Options.Vcc3 then
+            B.Stmt.Assume (bCall "$def_writes" [bState; er name; B.Expr.Lambda (Token.NoToken, [("#p", tpPtr)], [],  (isInWrites env p))])
+          else
+            B.Stmt.Assume (B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], [[inWritesAt]], weight "begin-writes", bEq inWritesAt (isInWrites env p)))
         let init =
           [B.Stmt.VarDecl ((name, B.Type.Int), None);
            B.Stmt.Assume (bEq (er name) (bCall "$current_timestamp" [bState]));
-           B.Stmt.Assume (B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], [[inWritesAt]], weight "begin-writes", bEq inWritesAt (isInWrites env p)))]
+           defWrites]
         (init, env)
                   
       let trUnclaim env tok = function
@@ -2108,7 +2113,7 @@ namespace Microsoft.Research.Vcc
                                  assumeSync env h.Token ::
                                  can_frame @
                                  init @
-                                 List.map assumeMutability h.Writes @
+                                 (if helper.Options.Vcc3 then [] else List.map assumeMutability h.Writes) @
                                  trStmt {env with FunctionCleanup = cleanup} s @ 
                                  [B.Stmt.Label (Token.NoToken, "#exit")] @
                                  (!cleanup |> List.map (trStmt env) |> List.concat) @

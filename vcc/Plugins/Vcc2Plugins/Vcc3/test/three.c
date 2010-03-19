@@ -8,8 +8,7 @@ struct A {
 void foo(struct A *x)
   writes(span(x))
 {
-  assert(mutable(&x->a));
-  assert(emb(&x->a) == x);
+  assert(true);
   x->a = 10;
   speconly( x->b = 20; )
   assert(false);
