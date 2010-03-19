@@ -22,8 +22,6 @@ module FromBoogie =
         dict.Add (name, v)
         v
     
-  type RoList<'a> = System.Collections.Generic.IList<'a>
-  
   type Ctx() =
     let types = gdict()
     let funs = gdict()
