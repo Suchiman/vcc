@@ -140,7 +140,7 @@ namespace Z3AxiomProfiler
               try {
                 using (var s = File.OpenText(args[idx])) {
                   var l = s.ReadLine();
-                  if (l.StartsWith("[mk-app]") || l.StartsWith("Z3 error model"))
+                  if (l.StartsWith("[mk-app]") || l.StartsWith("Z3 error model") || l.StartsWith("partitions:"))
                     isLogFile = true;
                 }
               } catch (Exception) {
