@@ -164,15 +164,13 @@ module Ast =
       match this.Body with
         | Uninterpreted -> 
           pref + "(" + objConcat ", " this.ArgTypes + ") : " + this.RetType.ToString()
-        | DelayExpand (vars, body)
         | Expand (vars, body) ->
           pref + "(" + objConcat ", " vars + ") : " + this.RetType.ToString() + "\n" +
-            "{ " + body.ToString() + " }" + (match this.Body with DelayExpand _ -> " (delay)" | _ -> "")
+            "{ " + body.ToString() + " }"
   
   and FuncBody =
     | Uninterpreted
     | Expand of list<Var> * Expr
-    | DelayExpand of list<Var> * Expr
         
   type Axiom =
     {
@@ -347,7 +345,7 @@ module Ast =
           
     member this.Apply () =
       match this with
-        | App ({ Body = (Expand (formals, body) | DelayExpand (formals, body)) } as f, args) ->
+        | App ({ Body = Expand (formals, body) } as f, args) ->
           let subst = List.fold2 (fun subst (f:Var) a -> Map.add f.Id a subst) Map.empty formals args
           let sub = function
             | Ref v when subst.ContainsKey v.Id ->
