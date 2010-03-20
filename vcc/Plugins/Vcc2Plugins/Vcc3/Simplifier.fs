@@ -100,8 +100,27 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     expr.Weaken killBuiltin
   
   member private this.IntAssume (expr:Expr) =
-    let exp = expr.Expand()
-    smt.Assume (this.RemoveBuiltins exp)
+    let expanded = expr.Expand()
+    
+    for expr in expanded.Conjuncts() do
+      wr "conjunct: %O" expr
+      match expr with
+        | Binder q ->
+          match definingAxiom q with
+            | Some s ->
+              match s with
+                | Ref v ->
+                  match q.Vars with
+                    | [_] ->
+                      if trLevel >= 3 then
+                        wr "DefiningAxiom: %O %O" v expr
+                      this.Cur.DefiningAxioms <- this.Cur.DefiningAxioms.Add (v.Id, q)
+                    | _ -> failwith "wrong number of quantified variables in vcc3def"                     
+                | _ -> failwith "wrong vcc3def"
+            | None -> ()
+        | _ -> ()
+        
+    smt.Assume (this.RemoveBuiltins expanded)
     
   member private this.LogAssume (expr:Expr) =
     if trLevel >= 3 then
@@ -113,11 +132,27 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       wr "[SMT] assume(any) %O" expr
     this.IntAssume expr
     
+  member private this.Simplify (expr:Expr) =
+    let aux self = function
+      | App ({ Name = "select@" }, [Ref v; idx]) ->
+        match this.Cur.DefiningAxioms.TryFind v.Id with
+          | Some q ->
+            let v0 = q.Vars.Head
+            let repl = function
+             | Ref v when v.Id = v0.Id -> Some idx
+             | _ -> None                         
+            this.LogAssume (q.Body.Map repl)
+            None
+          | None -> None
+      | _ -> None
+    expr.SelfMap aux            
+      
   member private this.SmtValid negate expr =
     let expr = Expr.MkNotCond negate expr
     if trLevel >= 3 then
       wr "[SMT] assert %O" expr
     smt.Push()
+    let expr = this.Simplify expr
     if smt.Assert (this.RemoveBuiltins (expr.Expand())) then
       if trLevel >= 3 then
         wr "[SMT] OK"
@@ -154,6 +189,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         validOr a b
       | PNot (a) ->
         this.Valid (not negate) a
+        
       | PIte (a, b, c) ->
         if this.NestedValid false a then          
           this.Valid negate b
@@ -176,11 +212,6 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         match fn.Body with
           | Expand _ ->
             this.Valid negate (expr.Apply())
-          | DelayExpand _ ->
-            if vcc2 then
-              passToSMT expr
-            else
-              this.Valid negate (expr.Apply())
           | Uninterpreted ->
             passToSMT expr
             
@@ -214,11 +245,11 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       
     for a in pass.Axioms do
       match a.Body with
-        | PForall (_, vars, PApp (_, "==", [App (fn, args); expr])) when isBareVars vars args ->
+        | PForall (_, vars, PApp (_, "==", [App (fn, args); expr])) when not vcc2 && isBareVars vars args ->
           let stripRef = function
             | Ref v -> v
             | _ -> failwith ""
-          fn.Body <- DelayExpand (List.map stripRef args, expr)
+          fn.Body <- Expand (List.map stripRef args, expr)
           this.Assume a.Body
         | _ ->
           this.Assume a.Body
