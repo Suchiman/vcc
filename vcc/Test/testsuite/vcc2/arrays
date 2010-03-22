@@ -824,3 +824,18 @@ void bar(struct S *s)
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
+#include <vcc.h>
+
+struct S {
+    int a[10];
+};
+
+void foo(struct S *s)
+    requires(typed(s))
+{
+    int *b = s->a+3; // okay for the C compiler
+    assert(s->a+3==&s->a[3]);
+}
+`
+Verification of foo succeeded.
+`

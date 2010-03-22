@@ -162,6 +162,31 @@ namespace Microsoft.Research.Vcc {
     {
     }
 
+    /// <summary>
+    /// Returns a collection of methods that represents the overloads for ptr + index.
+    /// </summary>
+    private IEnumerable<IMethodDefinition> GetLeftPointerAdditionMethods(ITypeDefinition pointerType) {
+      BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt32.ResolvedType);
+      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt32.ResolvedType);
+      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt64.ResolvedType);
+      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt64.ResolvedType);
+    }
+
+    /// <summary>
+    /// Returns a collection of methods that represents the overloads for index + ptr.
+    /// </summary>
+    private IEnumerable<IMethodDefinition> GetRightPointerAdditionMethods(ITypeDefinition pointerType) {
+      BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt32.ResolvedType, pointerType);
+      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt32.ResolvedType, pointerType);
+      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt64.ResolvedType, pointerType);
+      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt64.ResolvedType, pointerType);
+    }
+
+    ITypeDefinition/*?*/ LeftOperandFixedArrayElementType {
+      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.LeftOperand.Type); }
+    }
 
     /// <summary>
     /// Returns the user defined operator overload method, or a dummy method corresponding to an IL operation, that best
@@ -202,6 +227,27 @@ namespace Microsoft.Research.Vcc {
       if (containingBlock == this.ContainingBlock) return this;
       return new VccAddition(containingBlock, this);
     }
+
+    ITypeDefinition/*?*/ RightOperandFixedArrayElementType {
+      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.RightOperand.Type); }
+    }
+
+    /// <summary>
+    /// A list of dummy methods that correspond to operations that are built into IL. The dummy methods are used, via overload resolution,
+    /// to determine how the operands are to be converted before the operation is carried out.
+    /// </summary>
+    protected override IEnumerable<IMethodDefinition> StandardOperators {
+      get {
+        ITypeDefinition/*?*/ leftOperandFixedArrayElementType = this.LeftOperandFixedArrayElementType;
+        if (leftOperandFixedArrayElementType != null)
+          return this.GetLeftPointerAdditionMethods(PointerType.GetPointerType(leftOperandFixedArrayElementType, this.Compilation.HostEnvironment.InternFactory));
+        ITypeDefinition/*?*/ rightOperandFixedArrayElementType = this.RightOperandFixedArrayElementType;
+        if (rightOperandFixedArrayElementType != null)
+          return this.GetRightPointerAdditionMethods(PointerType.GetPointerType(rightOperandFixedArrayElementType, this.Compilation.HostEnvironment.InternFactory));
+        return base.StandardOperators;
+      }
+    }
+
   }
 
   /// <summary>
