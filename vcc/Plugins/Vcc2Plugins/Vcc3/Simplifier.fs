@@ -11,12 +11,19 @@ open Microsoft.Research.Vcc.Util
 open Microsoft.Research.Vcc3.Ast
 
 
+type Abstraction =
+  {
+    FunAsk : FuncDecl
+    FunDone : FuncDecl
+    Body : QuantData 
+  }
+  
 type StackState =
   {
     mutable RetTok : option<Token>
     mutable ErrorHandler : string -> unit
     mutable Final : bool
-    mutable DefiningAxioms : Map<int, QuantData>
+    mutable Abstractions : list<Abstraction>
   }
 
 exception ProvingFailure
@@ -27,11 +34,22 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
   let trLevel = options.GetInt "trace" 1
   let vcc2 = not helper.Options.Vcc3
   let wr = printfn
-  let noErr s = failwith ("no error handler installed " + s)
-  let mutable stack = [ { RetTok = None; ErrorHandler = noErr ; Final = true ; DefiningAxioms = Map.empty } ]
+  let mutable stack =
+    let noErr s = failwith ("no error handler installed " + s)
+    let emptyState =
+      {
+        RetTok = None
+        ErrorHandler = noErr
+        Final = true
+        Abstractions = []
+      }
+    [ emptyState ]
   let mutable errCnt = 0
-  let definingAxiom (q:QuantData) =
-    List.tryPick (function ExprAttr ("vcc3def", e) -> Some e | _ -> None) q.Attrs  
+  let mutable id = 1000000000
+      
+  member this.NextId () =
+    id <- id + 1
+    id
     
   interface System.IDisposable with
     member this.Dispose() =
@@ -90,7 +108,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
   
   member private this.RemoveBuiltins (expr:Expr) =
     let killBuiltin = function
-      | Binder q as t when (hasAttr "builtin" q.Attrs || hasAttr "todo" q.Attrs || (definingAxiom q).IsSome) ->
+      | Binder q as t when (hasAttr "builtin" q.Attrs || hasAttr "todo" q.Attrs || hasAttr "L1" q.Attrs) ->
         // wr "killing %O" t
         Expr.True
       | PApp (_, "==", [e; PLambda _]) 
@@ -98,29 +116,41 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         Expr.True
       | e -> e
     expr.Weaken killBuiltin
-  
+    
+  member private this.Abstract (expr:Expr) =
+    let aux = function
+      | Binder q when hasAttr "L1" q.Attrs ->
+        let id = this.NextId()
+        let fn = 
+          {
+            Id = id
+            Name = "inst@" + id.ToString()
+            Qualifier = ""
+            RetType = Type.Bool
+            ArgTypes = q.Vars |> List.map (fun v -> v.Typ)
+            Attrs = []
+            Body = Uninterpreted
+          }
+        let fnDone = 
+          { fn with
+              Id = this.NextId()
+              Name = "instDone@" + id.ToString()
+          }        
+        smt.DeclareTempFunction fn
+        smt.DeclareTempFunction fnDone
+        let abstraction = { FunAsk = fn ; FunDone = fnDone ; Body = q }
+        this.Cur.Abstractions <- abstraction :: this.Cur.Abstractions
+        let abstracted = Binder { q with Attrs = [] ; Body = App (fn, List.map Ref q.Vars) }
+        if trLevel >= 2 then
+          wr "  abstract %O -> %O" (Binder q) abstracted
+        Some abstracted 
+      | _ -> None
+    expr.Map aux
+    
   member private this.IntAssume (expr:Expr) =
     let expanded = expr.Expand()
-    
-    for expr in expanded.Conjuncts() do
-      wr "conjunct: %O" expr
-      match expr with
-        | Binder q ->
-          match definingAxiom q with
-            | Some s ->
-              match s with
-                | Ref v ->
-                  match q.Vars with
-                    | [_] ->
-                      if trLevel >= 3 then
-                        wr "DefiningAxiom: %O %O" v expr
-                      this.Cur.DefiningAxioms <- this.Cur.DefiningAxioms.Add (v.Id, q)
-                    | _ -> failwith "wrong number of quantified variables in vcc3def"                     
-                | _ -> failwith "wrong vcc3def"
-            | None -> ()
-        | _ -> ()
-        
-    smt.Assume (this.RemoveBuiltins expanded)
+    let abstracted = this.Abstract expanded        
+    smt.Assume (this.RemoveBuiltins abstracted)
     
   member private this.LogAssume (expr:Expr) =
     if trLevel >= 3 then
@@ -132,41 +162,29 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       wr "[SMT] assume(any) %O" expr
     this.IntAssume expr
     
-  member private this.Simplify (expr:Expr) =
-    let aux self = function
-      | App ({ Name = "select@" }, [Ref v; idx]) ->
-        match this.Cur.DefiningAxioms.TryFind v.Id with
-          | Some q ->
-            let v0 = q.Vars.Head
-            let repl = function
-             | Ref v when v.Id = v0.Id -> Some idx
-             | _ -> None                         
-            this.LogAssume (q.Body.Map repl)
-            None
-          | None -> None
-      | _ -> None
-    expr.SelfMap aux            
-      
   member private this.SmtValid negate expr =
     let expr = Expr.MkNotCond negate expr
     if trLevel >= 3 then
       wr "[SMT] assert %O" expr
     smt.Push()
-    let expr = this.Simplify expr
-    if smt.Assert (this.RemoveBuiltins (expr.Expand())) then
-      if trLevel >= 3 then
-        wr "[SMT] OK"
-      if trLevel >= 4 then
-        this.Dump()
-      smt.Pop()
-      this.Assume expr
-      this.Succeed()
-    else
-      if trLevel >= 3 then
-        wr "[SMT] Fail"
-      let res = this.Fail expr
-      smt.Pop()
-      res
+    match smt.AssertOrModel (this.RemoveBuiltins (expr.Expand())) with
+      | Some model ->
+        for abstr in this.Cur.Abstractions do
+          for args in smt.GetAppsExcluding (model, abstr.FunAsk, abstr.FunDone) do
+            ()            
+        if trLevel >= 3 then
+          wr "[SMT] Fail"
+        let res = this.Fail expr
+        smt.Pop()
+        res
+      | None ->
+        if trLevel >= 3 then
+          wr "[SMT] OK"
+        if trLevel >= 4 then
+          this.Dump()
+        smt.Pop()
+        this.Assume expr
+        this.Succeed()
   
   member private this.Valid negate (expr:Expr) =
     let validOr a b =
@@ -212,7 +230,9 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         match fn.Body with
           | Expand _ ->
             this.Valid negate (expr.Apply())
-          | Uninterpreted ->
+          | ImpliedBy _ when not negate ->
+            this.Valid negate (expr.Apply())
+          | _ ->
             passToSMT expr
             
       | Binder q ->
@@ -244,15 +264,18 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       List.length vars = List.length args && List.forall check args
       
     for a in pass.Axioms do
+      let stripRef = function
+        | Ref v -> v
+        | _ -> failwith ""
+      // TODO: handle more than a single implication axiom per function
       match a.Body with
         | PForall (_, vars, PApp (_, "==", [App (fn, args); expr])) when not vcc2 && isBareVars vars args ->
-          let stripRef = function
-            | Ref v -> v
-            | _ -> failwith ""
-          fn.Body <- Expand (List.map stripRef args, expr)
-          this.Assume a.Body
-        | _ ->
-          this.Assume a.Body
+          fn.Body <- ImpliedBy (List.map stripRef args, expr)
+        | PForall (_, vars, POr (expr, App (fn, args))) when not vcc2 && isBareVars vars args ->
+          fn.Body <- ImpliedBy (List.map stripRef args, Expr.MkNot expr)
+        | _ -> ()
+        
+      this.Assume a.Body
  
   member this.VerifyProc (proc:BlockProc, handler:Microsoft.Boogie.VerifierCallback) =
     if trLevel >= 4 then
