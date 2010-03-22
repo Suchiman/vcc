@@ -210,6 +210,16 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
     let term = this.Expr expr
     this.Save term
     z3.AssertCnstr term
+  
+  member this.AssumeSub (sub, expr) =
+    let add sub (k, v) =
+      Map.add k v sub
+    let back = boundVars
+    boundVars <- List.fold add boundVars sub
+    let term = this.Expr expr
+    boundVars <- back
+    this.Save term
+    z3.AssertCnstr term
     
   member this.Assert expr =
     let term = z3.MkNot (this.Expr expr)
@@ -250,6 +260,7 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
     assumedExprs <- st.assumedExprs
     tempFunctions <- st.tempFunctions
   
+  (*
   member this.Reflect (t:Z3.Term) =
     match t.GetKind() with
       | Z3.TermKind.Numeral ->
@@ -259,7 +270,13 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
           | Z3.SortKind.BitVector ->
             Expr.Lit (Lit.Bv (bigint.Parse (t.GetNumeralString()), (int)(z3.GetBvSortSize (t.GetSort()))))
           | _ -> failwith ""
+      | Z3.TermKind.App ->
+        let f = t.GetAppDecl()
+        match invFunctions.TryGetValue f with
+          | true, f ->
+            App (f, [])
       | _ -> failwith ""
+  *)
   
   member this.GetAppsExcluding (model:Z3.Model, fn, excl) =
     let res = glist[]
@@ -269,7 +286,7 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
         for e in graph.Entries do
           let maybeDone = model.Eval (this.Function excl, e.Arguments)
           if maybeDone <> null then
-            res.Add [for a in e.Arguments -> this.Reflect a]
+            res.Add [for a in e.Arguments -> a]
       | _ -> ()
     res
         

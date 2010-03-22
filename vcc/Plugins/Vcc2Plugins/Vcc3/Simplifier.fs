@@ -146,11 +146,28 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         Some abstracted 
       | _ -> None
     expr.Map aux
+  
+  member this.Simplify (expr:Expr) =
+    let aux (self: Expr -> Expr) = function
+      | Expr.App ({ Name = "select@" }, [Binder q; e]) ->
+        if q.Kind <> QuantKind.Lambda then failwith ""
+        match q.Vars with
+          | [v] ->
+            let repl = function
+              | Expr.Ref v' when v.Id = v'.Id -> Some e
+              | _ -> None
+            Some ((self q.Body).Map repl)
+          | _ -> None
+      | _ -> None
+    if trLevel >= 5 then
+      wr "[SIMPL] %O" expr
+    expr.SelfMap aux
+    
+  member this.ProverRewrites (expr:Expr) =
+    expr.Expand() |> this.Abstract |> this.RemoveBuiltins |> this.Simplify
     
   member private this.IntAssume (expr:Expr) =
-    let expanded = expr.Expand()
-    let abstracted = this.Abstract expanded        
-    smt.Assume (this.RemoveBuiltins abstracted)
+    smt.Assume (this.ProverRewrites expr)
     
   member private this.LogAssume (expr:Expr) =
     if trLevel >= 3 then
@@ -169,14 +186,29 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     smt.Push()
     match smt.AssertOrModel (this.RemoveBuiltins (expr.Expand())) with
       | Some model ->
+        let mutable numInst = 0
         for abstr in this.Cur.Abstractions do
           for args in smt.GetAppsExcluding (model, abstr.FunAsk, abstr.FunDone) do
-            ()            
-        if trLevel >= 3 then
-          wr "[SMT] Fail"
-        let res = this.Fail expr
-        smt.Pop()
-        res
+            numInst <- numInst + 1
+            let bindings = List.map2 (fun (v:Var) t -> (v.Id, t)) abstr.Body.Vars args
+            let varRefs = List.map Expr.Ref abstr.Body.Vars
+            let precond = Expr.App (abstr.FunAsk, varRefs)
+            let outcome = Expr.App (abstr.FunDone, varRefs)
+            if trLevel >= 4 then
+              wr "[INST] %O [%s]" (Binder abstr.Body) (objConcat ", " args)
+            let assump = Expr.MkImpl (precond, Expr.MkAnd (outcome, abstr.Body.Body))
+            smt.AssumeSub (bindings, assump |> this.ProverRewrites)
+        model.Dispose()
+        if numInst = 0 then
+          if trLevel >= 3 then
+            wr "[SMT] Fail"
+          let res = this.Fail expr
+          smt.Pop()
+          res
+        else
+          if trLevel >= 2 then
+            wr "[SMT] Instantiated %d" numInst
+          this.SmtValid negate expr
       | None ->
         if trLevel >= 3 then
           wr "[SMT] OK"
@@ -270,9 +302,11 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       // TODO: handle more than a single implication axiom per function
       match a.Body with
         | PForall (_, vars, PApp (_, "==", [App (fn, args); expr])) when not vcc2 && isBareVars vars args ->
-          fn.Body <- ImpliedBy (List.map stripRef args, expr)
+          if fn.Body = Uninterpreted then
+            fn.Body <- ImpliedBy (List.map stripRef args, expr)
         | PForall (_, vars, POr (expr, App (fn, args))) when not vcc2 && isBareVars vars args ->
-          fn.Body <- ImpliedBy (List.map stripRef args, Expr.MkNot expr)
+          if fn.Body = Uninterpreted then
+            fn.Body <- ImpliedBy (List.map stripRef args, Expr.MkNot expr)
         | _ -> ()
         
       this.Assume a.Body
