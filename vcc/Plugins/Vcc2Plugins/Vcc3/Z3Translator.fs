@@ -12,16 +12,25 @@ open Ast
 open Microsoft // for Boogie and Z3
 
 
+type TranslatorState =
+  {
+    assumedExprs : list<Z3.Term>
+    tempFunctions : list<FuncDecl>
+  }
+  
 type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
   let cfg = new Z3.Config()
   let mutable z3 = null
   let mutable disposed = false
   let sorts = gdict()
   let functions = gdict()
+  let invFunctions = gdict()
   let consts = gdict()
   let locals = gdict()
+  let mutable tempFunctions = []
   let mutable boundVars = Map.empty
-  let mutable stack = [[]]
+  let mutable stack = []
+  let mutable assumedExprs = []
   let mutable smtFileIdx = 0
   let mutable numDeclaredFunctions = 0
   
@@ -58,8 +67,7 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
     cfg.SetParamValue ("DELAY_UNITS_THRESHOLD", "16")
     cfg.SetParamValue ("TYPE_CHECK", "true")
     cfg.SetParamValue ("BV_REFLECT", "true")
-    if helper.Options.SaveModel then
-      cfg.SetParamValue ("MODEL", "true")
+    cfg.SetParamValue ("MODEL", "true")
     z3 <- new Microsoft.Z3.Context(cfg)
   
   member this.Sort tp = 
@@ -80,11 +88,18 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
           | false, _ ->
             failwith ("undeclared global " + v.ToString())
   
+  member private this.DeclareFunction (fn:FuncDecl) =
+    let decl = z3.MkFuncDecl (fn.Name + fn.Qualifier, [| for t in fn.ArgTypes -> this.Sort t |], this.Sort fn.RetType)
+    functions.Add (fn.Id, decl)
+    invFunctions.Add (decl, fn)
+  
+  member this.DeclareTempFunction (fn:FuncDecl) =
+    tempFunctions <- fn :: tempFunctions
+    this.DeclareFunction fn
+        
   member private this.DeclareFunctions () =
     for i = numDeclaredFunctions to pass.Functions.Count - 1 do
-      let fn = pass.Functions.[i]
-      let decl = z3.MkFuncDecl (fn.Name + fn.Qualifier, [| for t in fn.ArgTypes -> this.Sort t |], this.Sort fn.RetType)
-      functions.Add (fn.Id, decl)
+      this.DeclareFunction pass.Functions.[i]
     
   member this.BgAssumptions () =
     let res = glist[]
@@ -173,9 +188,7 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
         
       
   member private this.Save term =
-    match stack with
-      | x :: xs -> stack <- (term :: x) :: xs
-      | _ -> failwith ""
+    assumedExprs <- term :: assumedExprs
       
   member this.BeginProc (p:BlockProc) =
     this.Push()
@@ -204,14 +217,62 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
     z3.AssertCnstr term    
     z3.Check () = Z3.LBool.False
   
+  member this.AssertOrModel expr =
+    let term = z3.MkNot (this.Expr expr)
+    this.Save term
+    z3.AssertCnstr term
+    let model = ref null
+    match z3.CheckAndGetModel model with
+      | Z3.LBool.False -> None
+      | _ ->
+        if !model = null then failwith ""
+        Some !model
+  
   member this.Push() =
     z3.Push()
-    stack <- [] :: stack
+    let st =
+      {
+        assumedExprs = assumedExprs
+        tempFunctions = tempFunctions
+      }
+    tempFunctions <- []
+    stack <- st :: stack
   
   member this.Pop() =
+    let chk b = if not b then failwith ""
+    for f in tempFunctions do
+      let decl = functions.[f.Id]      
+      functions.Remove f.Id |> chk
+      invFunctions.Remove decl |> chk
     z3.Pop()
+    let st = stack.Head
     stack <- stack.Tail
+    assumedExprs <- st.assumedExprs
+    tempFunctions <- st.tempFunctions
   
+  member this.Reflect (t:Z3.Term) =
+    match t.GetKind() with
+      | Z3.TermKind.Numeral ->
+        match z3.GetSortKind (t.GetSort()) with
+          | Z3.SortKind.Int ->
+            Expr.Lit (Lit.Int (bigint.Parse (t.GetNumeralString())))
+          | Z3.SortKind.BitVector ->
+            Expr.Lit (Lit.Bv (bigint.Parse (t.GetNumeralString()), (int)(z3.GetBvSortSize (t.GetSort()))))
+          | _ -> failwith ""
+      | _ -> failwith ""
+  
+  member this.GetAppsExcluding (model:Z3.Model, fn, excl) =
+    let res = glist[]
+    let graphs = model.GetFunctionGraphs()
+    match graphs.TryGetValue (this.Function fn) with
+      | true, graph ->
+        for e in graph.Entries do
+          let maybeDone = model.Eval (this.Function excl, e.Arguments)
+          if maybeDone <> null then
+            res.Add [for a in e.Arguments -> this.Reflect a]
+      | _ -> ()
+    res
+        
   member this.SaveModel(filename) =
     let model = ref null
     let res = z3.CheckAndGetModel model
@@ -228,9 +289,9 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
         Seq.iter add (t.GetAppArgs())
       else
         assumptions.Add t
-    match stack with
-      | (form :: a1) :: a2 ->
-        List.iter (List.iter add) (a1 :: a2)
+    match assumedExprs with
+      | form :: rest ->
+        List.iter add rest
         assumptions.Reverse()
         z3.BenchmarkToSmtlib ("vcc3bench", "UFNIA", "unknown", null, assumptions.ToArray(), form)
       | _ -> failwith ""

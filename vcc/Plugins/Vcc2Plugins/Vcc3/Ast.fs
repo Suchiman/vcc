@@ -160,17 +160,22 @@ module Ast =
     }
     
     override this.ToString() =
-      let pref = "function " + objConcat " " this.Attrs + " " + this.Name         
+      let proto vars =
+        "function " + objConcat " " this.Attrs + " " + this.Name + "(" + objConcat ", " vars + ") : " + this.RetType.ToString()
       match this.Body with
         | Uninterpreted -> 
-          pref + "(" + objConcat ", " this.ArgTypes + ") : " + this.RetType.ToString()
+          proto this.ArgTypes
         | Expand (vars, body) ->
-          pref + "(" + objConcat ", " vars + ") : " + this.RetType.ToString() + "\n" +
-            "{ " + body.ToString() + " }"
+          proto vars +
+            "\n  { " + body.ToString() + " }"
+        | ImpliedBy (vars, body) ->
+          proto vars +
+            "\n  <==> " + body.ToString()
   
   and FuncBody =
     | Uninterpreted
     | Expand of list<Var> * Expr
+    | ImpliedBy of list<Var> * Expr
         
   type Axiom =
     {
@@ -309,8 +314,15 @@ module Ast =
     static member True = Lit (Lit.Bool true)
     static member False = Lit (Lit.Bool false)      
     static member Ite = fnBoolIte
-    static member MkIte (a, b, c) = App (Expr.Ite, [a; b; c])
-    static member MkNot (a) = App (Expr.Ite, [a; Expr.False; Expr.True])
+    static member MkIte = function
+      | PTrue, a, _ -> a
+      | PFalse, _, a -> a
+      | a, PTrue, PFalse -> a
+      | a, b, c when b = c -> b
+      | a, b, c -> App (Expr.Ite, [a; b; c])
+    static member MkNot = function
+      | PNot a -> a
+      | a -> App (Expr.Ite, [a; Expr.False; Expr.True])
     static member MkAnd (a, b) = App (Expr.Ite, [a; b; Expr.False])
     static member MkOr (a, b) = App (Expr.Ite, [a; Expr.True; b])
     static member MkImpl (a, b) = Expr.MkOr (Expr.MkNot(a), b)
@@ -345,7 +357,7 @@ module Ast =
           
     member this.Apply () =
       match this with
-        | App ({ Body = Expand (formals, body) } as f, args) ->
+        | App ({ Body = (Expand (formals, body) | ImpliedBy (formals, body)) } as f, args) ->
           let subst = List.fold2 (fun subst (f:Var) a -> Map.add f.Id a subst) Map.empty formals args
           let sub = function
             | Ref v when subst.ContainsKey v.Id ->
