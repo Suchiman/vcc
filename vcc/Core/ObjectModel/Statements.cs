@@ -37,28 +37,31 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
-  public class VccLocalDefinition : LocalDefinition
+  public class VccLocalDefinition : LocalDefinition, ISpecItem
   {
-    internal VccLocalDefinition(VccLocalDeclaration localDeclaration, List<Specifier> specifiers)
+    internal VccLocalDefinition(VccLocalDeclaration localDeclaration, List<Specifier> specifiers, bool isSpec)
       : base(localDeclaration) {
       this.specifiers = specifiers;
+      this.isSpec = isSpec;
     }
 
     private readonly List<Specifier> specifiers;
+    private readonly bool isSpec;
 
     public bool IsSpec {
-      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.specifiers, Token.Specification); }
+      get { return this.isSpec; }
     }
 
     public bool IsVolatile {
       get { return VccCompilationHelper.ContainsTypeQualifier(this.specifiers, Token.Volatile); }
     }
+
   }
 
   /// <summary>
   /// A local declaration that appears as part of a statement containing a collection of local declarations, all with the same type.
   /// </summary>
-  internal class VccLocalDeclaration : LocalDeclaration, ILocalDeclarationStatement {
+  internal class VccLocalDeclaration : LocalDeclaration, ILocalDeclarationStatement, ISpecItem {
 
     /// <summary>
     /// Allocates local declaration that appears as part of a statement containing a collection of local declarations, all with the same type.
@@ -66,10 +69,11 @@ namespace Microsoft.Research.Vcc {
     /// <param name="name">The name of the local.</param>
     /// <param name="initialValue">The value, if any, to assign to the local as its initial value. May be null.</param>
     /// <param name="sourceLocation">The source location corresponding to the newly allocated expression.</param>
-    public VccLocalDeclaration(NameDeclaration name, Expression/*?*/ initialValue, List<Specifier> specifiers, ISourceLocation sourceLocation)
+    public VccLocalDeclaration(NameDeclaration name, Expression/*?*/ initialValue, List<Specifier> specifiers, bool isSpec, ISourceLocation sourceLocation)
       : base(false, false, name, initialValue, sourceLocation)
     {
       this.specifiers = specifiers;
+      this.isSpec = isSpec;
     }
 
     /// <summary>
@@ -80,6 +84,7 @@ namespace Microsoft.Research.Vcc {
     protected VccLocalDeclaration(LocalDeclarationsStatement containingLocalDeclarationsStatement, VccLocalDeclaration template)
       : base(containingLocalDeclarationsStatement, template) {
       this.specifiers = new List<Specifier>(template.specifiers);
+      this.isSpec = template.isSpec;
     }
 
     private LanguageSpecificCompilationHelper Helper {
@@ -125,11 +130,13 @@ namespace Microsoft.Research.Vcc {
     }
 
     protected override LocalDefinition CreateLocalDefinition() {
-      return new VccLocalDefinition(this, this.specifiers);
+      return new VccLocalDefinition(this, this.specifiers, this.isSpec);
     }
 
+    private readonly bool isSpec;
+
     public bool IsSpec {
-      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.specifiers, Token.Specification); }
+      get { return this.isSpec; }
     }
 
     /// <summary>
@@ -182,8 +189,8 @@ namespace Microsoft.Research.Vcc {
   // to be a function type. 
   internal class VccLocalFunctionDeclaration : VccLocalDeclaration {
 
-    internal VccLocalFunctionDeclaration(NameDeclaration name, Expression/*?*/ initialValue, List<Specifier> specifiers, ISourceLocation sourceLocation, FunctionDeclaration mangledFunctionDeclaration)
-      : base (name, initialValue, specifiers, sourceLocation) {
+    internal VccLocalFunctionDeclaration(NameDeclaration name, Expression/*?*/ initialValue, List<Specifier> specifiers, bool isSpec, ISourceLocation sourceLocation, FunctionDeclaration mangledFunctionDeclaration)
+      : base (name, initialValue, specifiers, isSpec, sourceLocation) {
       this.mangledFunctionDeclaration = mangledFunctionDeclaration;
     }
 

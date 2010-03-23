@@ -15,6 +15,11 @@ using Microsoft.Research.Vcc.Parsing;
 
 namespace Microsoft.Research.Vcc {
 
+  public interface ISpecItem
+  {
+    bool IsSpec { get; }
+  }
+
   public sealed class AnonymousFieldDefinition : FieldDeclaration {
 
     public AnonymousFieldDefinition(FieldDeclaration.Flags flags, TypeExpression type, NameDeclaration name) :
@@ -112,11 +117,12 @@ namespace Microsoft.Research.Vcc {
     private BlockStatement/*?*/ dummyBlock;
   }
 
-  public sealed class FieldDefinition : FieldDeclaration {
+  public sealed class FieldDefinition : FieldDeclaration, ISpecItem {
 
-    public FieldDefinition(List<Specifier> extendedAttributes, FieldDeclaration.Flags flags, TypeExpression type, NameDeclaration name, Expression/*?*/ initializer, ISourceLocation sourceLocation)
+    public FieldDefinition(List<Specifier> extendedAttributes, FieldDeclaration.Flags flags, TypeExpression type, NameDeclaration name, Expression/*?*/ initializer, bool isSpec, ISourceLocation sourceLocation)
       : base(null, flags|FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Public, type, name, initializer, sourceLocation) {
       this.extendedAttributes = extendedAttributes;
+      this.isSpec = isSpec;
     }
 
     /// <summary>
@@ -130,6 +136,7 @@ namespace Microsoft.Research.Vcc {
       //^ ensures this.containingTypeDeclaration == containingTypeDeclaration;
     {
       this.extendedAttributes = template.extendedAttributes;
+      this.isSpec = template.isSpec;
     }
 
     /// <summary>
@@ -155,9 +162,9 @@ namespace Microsoft.Research.Vcc {
     }
 
     public bool IsSpec {
-      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.extendedAttributes, Token.Specification); }
+      get { return this.isSpec; }
     }
-
+    private readonly bool isSpec;
     private readonly IList<Specifier> extendedAttributes;
 
     private BlockStatement DummyBlock
@@ -182,16 +189,17 @@ namespace Microsoft.Research.Vcc {
 
   }
 
-  public sealed class FunctionDefinition : GlobalMethodDeclaration{
+  public sealed class FunctionDefinition : GlobalMethodDeclaration, ISpecItem {
 
     public FunctionDefinition(MethodDeclaration.Flags flags, IEnumerable<Specifier>/*?*/ specifiers,
       CallingConvention callingConvention, TypeMemberVisibility visibility, TypeExpression type, NameDeclaration name,
-      List<GenericMethodParameterDeclaration>/*?*/ genericParameters, List<ParameterDeclaration>/*?*/ parameters, BlockStatement/*?*/ body, ISourceLocation sourceLocation)
+      List<GenericMethodParameterDeclaration>/*?*/ genericParameters, List<ParameterDeclaration>/*?*/ parameters, BlockStatement/*?*/ body, bool isSpec, ISourceLocation sourceLocation)
       : base(null, flags|MethodDeclaration.Flags.Unsafe, visibility, type, name, genericParameters, parameters, body, sourceLocation)
     {
       this.specifiers = specifiers;
       this.callingConvention = callingConvention;
       this.parameters = parameters;
+      this.isSpec = isSpec;
     }
 
     /// <summary>
@@ -207,6 +215,7 @@ namespace Microsoft.Research.Vcc {
       this.specifiers = template.specifiers;
       this.callingConvention = template.CallingConvention;
       this.parameters = template.parameters;
+      this.isSpec = template.isSpec;
       //^ base;
     }
 
@@ -267,8 +276,10 @@ namespace Microsoft.Research.Vcc {
     }
 
     public bool IsSpec {
-      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.specifiers, Token.Specification); }
+      get { return this.isSpec; }
     }
+
+    private readonly bool isSpec;
 
     static private bool IsUnsupportedDeclspec(string spec) {
       if (spec[0] == 'n') {
@@ -316,9 +327,9 @@ namespace Microsoft.Research.Vcc {
 
   }
 
-  public sealed class FunctionDeclaration : SourceItem, ISignatureDeclaration, ITypeDeclarationMember, IAggregatableNamespaceDeclarationMember {
+  public sealed class FunctionDeclaration : SourceItem, ISignatureDeclaration, ITypeDeclarationMember, IAggregatableNamespaceDeclarationMember, ISpecItem {
     public FunctionDeclaration(bool acceptsExtraArguments, IEnumerable<Specifier>/*?*/ specifiers, bool isExternal, CallingConvention callingConvention, TypeMemberVisibility visibility, TypeExpression type, NameDeclaration name,
-      List<GenericMethodParameterDeclaration>/*?*/ templateParameters, List<ParameterDeclaration>/*?*/ parameters, ISourceLocation sourceLocation)
+      List<GenericMethodParameterDeclaration>/*?*/ templateParameters, List<ParameterDeclaration>/*?*/ parameters, bool isSpec, ISourceLocation sourceLocation)
       : base(sourceLocation){
       this.acceptsExtraArguments = acceptsExtraArguments;
       this.callingConvention = callingConvention;
@@ -329,6 +340,7 @@ namespace Microsoft.Research.Vcc {
       this.templateParameters = templateParameters;
       this.type = type;
       this.visibility = visibility;
+      this.isSpec = isSpec;
     }
 
     /// <summary>
@@ -397,7 +409,7 @@ namespace Microsoft.Research.Vcc {
       //TODO: if not compiling an object file give an error
       MethodDeclaration.Flags flags = MethodDeclaration.Flags.External;
       if (this.AcceptsExtraArguments) flags |= MethodDeclaration.Flags.AcceptsExtraArguments;
-      FunctionDefinition externFunc = new FunctionDefinition(flags, this.specifiers, this.CallingConvention, TypeMemberVisibility.Public, this.Type, this.Name, this.templateParameters, this.parameters, null, this.SourceLocation);
+      FunctionDefinition externFunc = new FunctionDefinition(flags, this.specifiers, this.CallingConvention, TypeMemberVisibility.Public, this.Type, this.Name, this.templateParameters, this.parameters, null, this.isSpec, this.SourceLocation);
       externFunc.SetContainingTypeDeclaration(this.CompilationPart.GlobalDeclarationContainer, false);
       if (this.templateParameters != null) {
         foreach (GenericMethodParameterDeclaration templatePar in this.templateParameters) templatePar.SetDeclaringMethod(externFunc);
@@ -505,6 +517,11 @@ namespace Microsoft.Research.Vcc {
       get { return this.isExternal; }
     }
     readonly bool isExternal;
+
+    public bool IsSpec {
+      get { return this.isSpec; }
+    }
+    readonly bool isSpec;
 
     public bool IsNew {
       get { return false; }
@@ -1222,16 +1239,17 @@ namespace Microsoft.Research.Vcc {
     }
   }
   
-  internal sealed class Parameter : SourceItem {
+  internal sealed class Parameter : SourceItem, ISpecItem {
 
-    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, ISourceLocation sourceLocation)
-      : this(typeSpecifiers, name, sourceLocation, false) {
+    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, ISourceLocation sourceLocation)
+      : this(typeSpecifiers, name, isSpec, sourceLocation, false) {
     }
 
-    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, ISourceLocation sourceLocation, bool isVarArgs)
+    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, ISourceLocation sourceLocation, bool isVarArgs)
       : base(sourceLocation) {
       this.typeSpecifiers = typeSpecifiers;
       this.Name = name;
+      this.isSpec = isSpec;
       IsVarArgs = isVarArgs;
     }
 
@@ -1242,6 +1260,12 @@ namespace Microsoft.Research.Vcc {
         return false;
       }
     }
+
+    public bool IsSpec {
+      get { return this.isSpec; }
+    }
+
+    private readonly bool isSpec;
 
     internal IEnumerable<Specifier> TypeSpecifiers {
       get {
@@ -1257,18 +1281,20 @@ namespace Microsoft.Research.Vcc {
     private readonly IEnumerable<Specifier> typeSpecifiers;
   }
 
-  public class VccParameterDeclaration : ParameterDeclaration
+  public class VccParameterDeclaration : ParameterDeclaration, ISpecItem
   {
-    public VccParameterDeclaration(TypeExpression type, NameDeclaration name, IEnumerable<Specifier> specifiers, ushort index, bool isOut, ISourceLocation sourceLocation)
+    public VccParameterDeclaration(TypeExpression type, NameDeclaration name, IEnumerable<Specifier> specifiers, ushort index, bool isOut, bool isSpec, ISourceLocation sourceLocation)
       : base(null, type, name, null, index, false, isOut, false, false, sourceLocation) 
       //^ requires isParameterArray ==> type is ArrayTypeExpression;
     {
       this.specifiers = specifiers;
+      this.isSpec = isSpec;
     }
 
     protected VccParameterDeclaration(ISignatureDeclaration containingSignature, BlockStatement containingBlock, VccParameterDeclaration template)
       : base(containingSignature, containingBlock, template) {
-        this.specifiers = new List<Specifier>(template.specifiers);
+      this.specifiers = new List<Specifier>(template.specifiers);
+      this.isSpec = template.isSpec;
     }
 
     public override ParameterDeclaration MakeShallowCopyFor(ISignatureDeclaration containingSignature, BlockStatement containingBlock)
@@ -1280,26 +1306,35 @@ namespace Microsoft.Research.Vcc {
 
     protected override ParameterDefinition CreateParameterDefinition()
     {
-      return new VccParameterDefinition(this, this.specifiers);
+      return new VccParameterDefinition(this, this.specifiers, this.isSpec);
     }
+
+    public bool IsSpec {
+      get { return this.isSpec; }
+    }
+
+    private readonly bool isSpec;
 
     readonly IEnumerable<Specifier> specifiers;
 
   }
 
-  public class VccParameterDefinition : ParameterDefinition
+  public class VccParameterDefinition : ParameterDefinition, ISpecItem
   {
-    protected internal VccParameterDefinition(VccParameterDeclaration declaration, IEnumerable<Specifier> specifiers)
+    protected internal VccParameterDefinition(VccParameterDeclaration declaration, IEnumerable<Specifier> specifiers, bool isSpec)
       : base(declaration)
     {
       this.specifiers = specifiers;
+      this.isSpec = isSpec;
     }
 
     readonly IEnumerable<Specifier> specifiers;
 
     public bool IsSpec {
-      get { return VccCompilationHelper.ContainsStorageClassSpecifier(this.specifiers, Token.Specification); }
+      get { return this.isSpec; }
     }
+
+    private readonly bool isSpec;
   }
 
   internal sealed class IdentifierDeclarator : Declarator {

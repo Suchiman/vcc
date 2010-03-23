@@ -1402,7 +1402,7 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
-  public class VccCreateStackArray : CreateStackArray
+  public class VccCreateStackArray : CreateStackArray, ISpecItem
   {
     public VccCreateStackArray(TypeExpression elementType, Expression size, bool isSpec, ISourceLocation sourceLocation)
       : base(elementType, size, sourceLocation) {
@@ -3298,7 +3298,7 @@ namespace Microsoft.Research.Vcc {
       BlockStatement containingBlock = containingExpression.ContainingBlock;
       VccFunctionTypeExpression/*?*/ ftExpr = this.ElementType as VccFunctionTypeExpression;
       if (ftExpr != null) {
-        FunctionDeclaration fdecl = new FunctionDeclaration(ftExpr.AcceptsExtraArguments, null, false, ftExpr.CallingConvention, TypeMemberVisibility.Public, ftExpr.ReturnType, ftExpr.Name, null, ftExpr.parameters, ftExpr.SourceLocation);
+        FunctionDeclaration fdecl = new FunctionDeclaration(ftExpr.AcceptsExtraArguments, null, false, ftExpr.CallingConvention, TypeMemberVisibility.Public, ftExpr.ReturnType, ftExpr.Name, null, ftExpr.parameters, false, ftExpr.SourceLocation);
         fdecl.SetContainingTypeDeclaration(containingBlock.CompilationPart.GlobalDeclarationContainer);
         foreach (ParameterDeclaration parameter in ftExpr.parameters)
           parameter.SetContainingSignatureAndExpression(fdecl, containingExpression);
