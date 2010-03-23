@@ -17,7 +17,7 @@ namespace Microsoft.Research.Vcc {
   /// <summary>
   /// Represents a global method in symbol table.
   /// </summary>
-  public class VccGlobalMethodDefinition : GlobalMethodDefinition, ISourceItem {
+  public class VccGlobalMethodDefinition : GlobalMethodDefinition, ISourceItem, ISpecItem {
 
     /// <summary>
     /// Allocates a global method definition to correspond to a given global method declaration.

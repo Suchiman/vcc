@@ -19,7 +19,7 @@ namespace Microsoft.Research.Vcc {
   /// that describe invariants, model variables and functions, as well as axioms.
   /// </summary>
   // ^ [Immutable]
-  public sealed class VccTypeContract : Contract, Microsoft.Cci.Contracts.ITypeContract {
+  public sealed class VccTypeContract : Contract, Microsoft.Cci.Contracts.ITypeContract, ISpecItem {
 
     /// <summary>
     /// Allocates a collection of collections of objects that augment the signature of a type with additional information

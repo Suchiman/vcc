@@ -230,8 +230,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.Skip(Token.LeftParenthesis);
         specifiers.AddRange(this.ParseSpecifiers(namespaceMembers, typeMembers, followers|TS.DeclaratorStart|Token.Semicolon|Token.Colon));
       }
-      if (this.inSpecCode)
-        specifiers.Add(new StorageClassSpecifier(Token.Specification, SourceDummy.SourceLocation));
       VccFunctionTypeExpression/*?*/ functionTypeExpression = null;
       TypedefNameSpecifier/*?*/ typeDefName = GetTypedefNameSpecifier(specifiers);
       if (typeDefName != null) {
@@ -427,7 +425,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<ParameterDeclaration> parameters = this.ConvertToParameterDeclarations(funcDeclarator.Parameters, out acceptsExtraArguments);
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters = Parser.ConvertToGenericMethodParameterDeclarations(funcDeclarator.TemplateParameters);
       CallingConvention callingConvention = GetCallingConvention(specifiers, acceptsExtraArguments);
-      FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments, specifiers, storageClass == Token.Extern, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, slb);
+      FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments, specifiers, storageClass == Token.Extern, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, this.inSpecCode, slb);
       this.AssociateContracts(fdecl, funcDeclarator);
       typeMembers.Add(fdecl);
     }
@@ -453,7 +451,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           //TODO: add a precondition requiring the array to be of at least array.ArraySize in length
         }
         TypeExpression type = this.GetTypeExpressionFor(p.TypeSpecifiers, name);
-        ParameterDeclaration pdecl = new VccParameterDeclaration(type, name.Identifier, p.TypeSpecifiers, i++, p.IsOut, p.SourceLocation);
+        ParameterDeclaration pdecl = new VccParameterDeclaration(type, name.Identifier, p.TypeSpecifiers, i++, p.IsOut, p.IsSpec, p.SourceLocation);
         result.Add(pdecl);
       }
       return result;
@@ -499,12 +497,9 @@ namespace Microsoft.Research.Vcc.Parsing {
         returnType = new VccPointerTypeExpression(returnType, null, returnType.SourceLocation);
       MethodDeclaration.Flags flags = 0;
       if (acceptsExtraArguments) flags |= MethodDeclaration.Flags.AcceptsExtraArguments;
-      FunctionDefinition func = new FunctionDefinition(flags, specifiers, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, body, slb);
+      FunctionDefinition func = new FunctionDefinition(flags, specifiers, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, body, this.inSpecCode, slb);
       typeMembers.Add(func);
-      if (storageClass == Token.Specification && IsInline(specifiers))
-        this.compilation.ContractProvider.AssociateMethodWithContract(func, new MethodContract()); //TODO: uncovered
-      else
-        this.AssociateContracts(func, funcDeclarator);
+      this.AssociateContracts(func, funcDeclarator);
       //TODO: complain if statements != null;
       if (this.currentToken == Token.Semicolon) this.GetNextToken();
       this.SkipTo(followers);
@@ -584,14 +579,12 @@ namespace Microsoft.Research.Vcc.Parsing {
           new FunctionDeclaration(cFuncTypeExp.AcceptsExtraArguments, specifiers, isExternal, 
           cFuncTypeExp.CallingConvention, visibility, cFuncTypeExp.ReturnType, 
           new NameDeclaration(this.GetNameFor(cFuncTypeExp.Name.Value + cFuncTypeExp.GetHashCode()), cFuncTypeExp.SourceLocation),
-          null, parameters, slb);
+          null, parameters, this.inSpecCode, slb);
         
         this.currentTypeMembers.Add(mangledFunc);
-        declarations.Add(new VccLocalFunctionDeclaration(declarator.Identifier, initializer, specifiers, slb, mangledFunc));
+        declarations.Add(new VccLocalFunctionDeclaration(declarator.Identifier, initializer, specifiers, this.inSpecCode, slb, mangledFunc));
       } else {
-        if (this.inSpecCode)
-          specifiers.Add(new StorageClassSpecifier(Token.Specification, SourceDummy.SourceLocation));
-        declarations.Add(new VccLocalDeclaration(declarator.Identifier, initializer, specifiers, slb));
+        declarations.Add(new VccLocalDeclaration(declarator.Identifier, initializer, specifiers, this.inSpecCode, slb));
       }
 
 
@@ -617,11 +610,10 @@ namespace Microsoft.Research.Vcc.Parsing {
         typeMembers.Add(typedefDecl);
       } else if (this.inSpecCode || IsAxiom(specifiers)) {
         Expression/*?*/ initializer = null;
-        specifiers.Add(new StorageClassSpecifier(Token.Specification, SourceDummy.SourceLocation));
         InitializedDeclarator/*?*/ initializedDeclarator = declarator as InitializedDeclarator;
         if (initializedDeclarator != null) initializer = initializedDeclarator.InitialValue;
         if (this.currentTypeName != null) {
-          FieldDefinition specField = new FieldDefinition(specifiers, flags, memberType, declarator.Identifier, initializer, slb);
+          FieldDefinition specField = new FieldDefinition(specifiers, flags, memberType, declarator.Identifier, initializer, this.inSpecCode, slb);
           if (this.currentSpecificationFields == null) this.currentSpecificationFields = new List<FieldDeclaration>();
           this.currentSpecificationFields.Add(specField);
         } else {
@@ -656,7 +648,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             if (bitFieldDeclarator != null)
               typeMembers.Add(new BitFieldDefinition(specifiers, bitFieldDeclarator.FieldSize, flags, memberType, declarator.Identifier, initializer, slb));
             else
-              typeMembers.Add(new FieldDefinition(specifiers, flags, memberType, declarator.Identifier, initializer, slb));
+              typeMembers.Add(new FieldDefinition(specifiers, flags, memberType, declarator.Identifier, initializer, this.inSpecCode, slb));
           }
         } else {
           flags |= FieldDeclaration.Flags.Static; //global fields are always static
@@ -688,7 +680,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       Token result = Token.None;
       foreach (Specifier specifier in specifiers) {
         StorageClassSpecifier/*?*/ scs = specifier as StorageClassSpecifier;
-        if (scs != null && scs.Token != Token.Specification) {
+        if (scs != null) {
           //TODO: give error if result != Token.None;
           result = scs.Token;
         }
@@ -1416,7 +1408,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       IName name = this.GetNameFor("__arglist");
       Declarator dec = new IdentifierDeclarator(new NameDeclaration(name, slb));
       slb.UpdateToSpan(dec.SourceLocation);
-      Parameter result = new Parameter(new List<Specifier>(0), dec, slb, true);
+      Parameter result = new Parameter(new List<Specifier>(0), dec, this.inSpecCode, slb, true);
       this.SkipTo(followers);
       return result;
     }
@@ -1457,12 +1449,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       List<Specifier> specifiers = this.ParseSpecifiers(null, null, followers | TS.DeclaratorStart);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[specifiers.Count-1].SourceLocation);
-      if (this.inSpecCode)
-        specifiers.Add(new StorageClassSpecifier(Token.Specification, SourceDummy.SourceLocation));
       Declarator declarator = this.ParseDeclarator(followers);
       declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
       slb.UpdateToSpan(declarator.SourceLocation);
-      var result = new Parameter(specifiers, declarator, slb);
+      var result = new Parameter(specifiers, declarator, this.inSpecCode, slb);
       this.SkipTo(followers);
       return result;
     }
