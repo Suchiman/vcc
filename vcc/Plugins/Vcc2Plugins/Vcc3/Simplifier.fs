@@ -190,14 +190,17 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         for abstr in this.Cur.Abstractions do
           for args in smt.GetAppsExcluding (model, abstr.FunAsk, abstr.FunDone) do
             numInst <- numInst + 1
-            let bindings = List.map2 (fun (v:Var) t -> (v.Id, t)) abstr.Body.Vars args
+            let sub = List.fold2 (fun sub (v:Var) t -> Map.add v.Id t sub) Map.empty abstr.Body.Vars args
+            let repl = function
+              | Ref v when sub.ContainsKey v.Id -> Some sub.[v.Id]
+              | _ -> None            
             let varRefs = List.map Expr.Ref abstr.Body.Vars
             let precond = Expr.App (abstr.FunAsk, varRefs)
             let outcome = Expr.App (abstr.FunDone, varRefs)
             if trLevel >= 4 then
               wr "[INST] %O [%s]" (Binder abstr.Body) (objConcat ", " args)
             let assump = Expr.MkImpl (precond, Expr.MkAnd (outcome, abstr.Body.Body))
-            smt.AssumeSub (bindings, assump |> this.ProverRewrites)
+            smt.Assume (assump.Map repl |> this.ProverRewrites)
         model.Dispose()
         if numInst = 0 then
           if trLevel >= 3 then
