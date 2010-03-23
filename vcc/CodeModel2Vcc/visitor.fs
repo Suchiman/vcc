@@ -289,7 +289,7 @@ namespace Microsoft.Research.Vcc
                                     
           // needs to be done first so they get into localsMap
           decl.TypeParameters <- [ for tp in genericPars -> { Name = tp.Name.Value } : C.TypeVariable ]
-          decl.Parameters <- [ for p in meth.Parameters -> parm p ]
+          decl.Parameters <- meth.Parameters |> Seq.toList |> List.filter (fun p -> p.Type.TypeCode <> PrimitiveTypeCode.Void) |> List.map parm
 
           // extract custom attributes
           match meth with
@@ -353,7 +353,10 @@ namespace Microsoft.Research.Vcc
       else
         stmtRes <- C.Expr.Bogus
         stmt.Dispatch(this)
-        let res = stmtRes
+        let res = 
+          match stmt with
+            | :? VccSpecStatement -> C.Macro(stmtRes.Common, "spec", [stmtRes])
+            | _ -> stmtRes
         stmtRes <- C.Expr.Bogus
         xassert (res <> C.Expr.Bogus)
         res
@@ -386,18 +389,22 @@ namespace Microsoft.Research.Vcc
      let block' = C.Expr.MkBlock (localVars @ stmts)
      localVars <- savedLocalVars
      let contract = contractProvider.GetMethodContractFor(block)
-     if (contract = null) then
-       block'
-     else 
-      // we introduce a helper function to place the contracts on
-      // it will be later expanded into a proper function
-      let ec = { Type = C.Type.Void; Token = token block } : C.ExprCommon
-      let mkPure (e : C.Expr) = C.Pure(e.Common, e)
-      let rqs = C.Macro(ec, "block_requires", [ for req in contract.Preconditions -> mkPure (this.DoPrecond req) ] )
-      let ens = C.Macro(ec, "block_ensures", [ for ens in contract.Postconditions -> mkPure (this.DoPostcond ens) ] )
-      let wrs = C.Macro(ec, "block_writes", [ for wr in contract.Writes -> mkPure (this.DoExpression wr) ] )
-      let rds = C.Macro(ec, "block_reads", [ for rd in contract.Reads -> mkPure (this.DoExpression rd) ] )
-      C.Expr.Macro(ec, "block", [block'; rqs; ens; wrs; rds])
+     let result = 
+       if (contract = null) then
+         block'
+       else 
+        // we introduce a helper function to place the contracts on
+        // it will be later expanded into a proper function
+        let ec = { Type = C.Type.Void; Token = token block } : C.ExprCommon
+        let mkPure (e : C.Expr) = C.Pure(e.Common, e)
+        let rqs = C.Macro(ec, "block_requires", [ for req in contract.Preconditions -> mkPure (this.DoPrecond req) ] )
+        let ens = C.Macro(ec, "block_ensures", [ for ens in contract.Postconditions -> mkPure (this.DoPostcond ens) ] )
+        let wrs = C.Macro(ec, "block_writes", [ for wr in contract.Writes -> mkPure (this.DoExpression wr) ] )
+        let rds = C.Macro(ec, "block_reads", [ for rd in contract.Reads -> mkPure (this.DoExpression rd) ] )
+        C.Expr.Macro(ec, "block", [block'; rqs; ens; wrs; rds])
+     match block with
+       //| :? VccSpecBlock -> C.Macro(result.Common, "spec", [result])
+       | _ -> result
 
     member this.DoUnary (op:string, bin:IUnaryOperation, ch) =
       exprRes <- C.Expr.Prim (this.ExprCommon bin, C.Op(op, checkedStatus ch), [this.DoExpression (bin.Operand)])
@@ -663,7 +670,7 @@ namespace Microsoft.Research.Vcc
                   //if (contract <> null) then contract.HasErrors |> ignore
 
                   match fields with
-                    | [] when not (VccScopedName.IsGroupType(typeDef)) ->
+                    | [] when not (VccScopedName.IsGroupType(typeDef)) && not td.IsSpec ->
                       if contract <> null && Seq.length contract.ContractFields > 0 then
                         helper.Error (tok, 9620, "need at least one physical field in structure, got only spec fields", None)
                       // forward declaration
@@ -1467,8 +1474,6 @@ namespace Microsoft.Research.Vcc
             let wrap = findFunctionOrDie "_vcc_wrap" whileDoStatement
             let unwrap = findFunctionOrDie "_vcc_unwrap" whileDoStatement
             stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" arg), unwrap, [], [arg]);  body; C.Expr.Call((stmtToken "wrap(@@)" arg), wrap, [], [arg]) ] )
-          | C.Call(_, { Name = "_vcc_spec_code" }, _, []) ->
-            stmtRes <- C.Expr.Macro(cmn, "spec", [body])
           | _ ->
             let contract = this.DoLoopContract whileDoStatement
             stmtRes <- C.Expr.Macro (cmn, "while", [contract; cond; body])

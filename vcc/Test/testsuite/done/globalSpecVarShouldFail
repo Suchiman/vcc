@@ -1,25 +1,25 @@
 #include <vcc2.h>
 
-__specification int x = 0;
-__specification int y = 0;
+spec(int x = 0;)
+spec(int y = 0;)
 
-__specification void foo()
+spec(void foo()
   writes(&x)
 {
   x = 1;
   assert(x == 0);
-}
+})
 
-__specification void foo2()
+spec(void foo2()
 {
   x = 1;
-}
+})
 
-__specification void foo3()
+spec(void foo3()
   writes(&x)
 {
   y = 1;
-}
+})
 `
 Verification of foo failed.
 testcase(10,12) : error VC9500: Assertion 'x == 0' did not verify.

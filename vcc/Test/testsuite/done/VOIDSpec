@@ -2,7 +2,7 @@
 
 typedef void VOID;
 
-VOID foo(VOID __specification int a)
+VOID foo(VOID spec(int a))
   requires(a > 10)
 {
 }

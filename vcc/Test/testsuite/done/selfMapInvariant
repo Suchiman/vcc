@@ -16,12 +16,12 @@ typedef union _PTE {
   };
 } PTE, *PPTE;
 
-ispure __specification bool InvSelfmapping()
+spec(ispure bool InvSelfmapping()
   reads(set_universe())
   ensures ( result == 
     ((((PPTE)PhysicalPages[23]) + 0x1FE)->Pfn == 23 && 
     (((PPTE)PhysicalPages[23]) + 0x1FE)->Present == 1 &&      
-    (((PPTE)PhysicalPages[23]) + 0x1FE)->ReadWrite == 1));
+    (((PPTE)PhysicalPages[23]) + 0x1FE)->ReadWrite == 1));)
 
 void foo()
   requires(InvSelfmapping())

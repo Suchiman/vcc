@@ -52,7 +52,7 @@ bool eq_T(struct T t1, struct T t2)
 }
 
 `
-testcase(21,3) : warning VC9108: structured type equality treats map equality as map identity
+testcase(21,19) : warning VC9108: structured type equality treats map equality as map identity
 Verification of U#adm succeeded.
 Verification of T#adm succeeded.
 Verification of eq_S succeeded.

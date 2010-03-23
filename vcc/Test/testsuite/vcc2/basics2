@@ -75,8 +75,8 @@ ptrset foo()
 )
 `
 Verification of foo failed.
-testcase(3,93) : error VC9501: Post condition '_vcc_set_eq(result,_vcc_set_singleton((void *)0))' did not verify.
-testcase(3,40) : error VC9599: (related information) Location of post condition.
+testcase(7,3) : error VC9501: Post condition '_vcc_set_eq(result,_vcc_set_singleton((void *)0))' did not verify.
+testcase(5,13) : error VC9599: (related information) Location of post condition.
 `
 #include "vcc.h"
 
@@ -242,7 +242,7 @@ Verification of set succeeded.
 void foo(spec(obj_t x)) { assert((int)x); } 
 `
 Verification of foo failed.
-testcase(3,51) : error VC9500: Assertion '(int)x' did not verify.
+testcase(3,52) : error VC9500: Assertion '(int)x' did not verify.
 `
 #include "vcc.h"
 #ifdef VERIFY
@@ -259,11 +259,11 @@ void foo()
 
 #endif
 `
-testcase(11,50) : error VC0000: Invalid expression term '{'.
-testcase(11,50) : error VC0000: ; expected.
-testcase(11,52) : error VC0000: Invalid expression term '.'.
-testcase(11,59) : error VC0000: ; expected.
-testcase(11,53) : error VC0000: The name 'a' does not exist in the current context.
+testcase(11,26) : error VC0000: Invalid expression term '{'.
+testcase(11,26) : error VC0000: ; expected.
+testcase(11,28) : error VC0000: Invalid expression term '.'.
+testcase(11,35) : error VC0000: ; expected.
+testcase(11,29) : error VC0000: The name 'a' does not exist in the current context.
 `
 #include "vcc.h"
 

@@ -118,7 +118,7 @@ Verification of foo succeeded.
 spec(struct X {
 	spec(state_t s;)
 	int a;
-});
+};)
 
 void foo(int *y)
 {

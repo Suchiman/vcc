@@ -13,9 +13,9 @@ typedef union _PTE {
   };
 } PTE, *PPTE;
 
-ispure __specification _Bool PteIsPresent(PPTE p)
+spec(ispure bool PteIsPresent(PPTE p)
   reads(p)
-  ensures(result == (p->Present));
+  ensures(result == (p->Present));)
 
  void foo(PPTE p)
     reads(p)

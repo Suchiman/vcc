@@ -30,6 +30,6 @@ spec(void foo(obj_t obj) {
 
 `
 Verification of foo failed.
-testcase(8,101) : error VC8534: Assertion 'obj is in spec pointer range (in cast)' did not verify.
-testcase(8,70) : error VC8535: Assertion 'obj is in physical pointer range (in cast)' did not verify.
+testcase(10,29) : error VC8534: Assertion 'obj is in spec pointer range (in cast)' did not verify.
+testcase(9,29) : error VC8535: Assertion 'obj is in physical pointer range (in cast)' did not verify.
 `

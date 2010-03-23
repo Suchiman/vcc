@@ -51,6 +51,6 @@ void foo() {
   assert(!bm[0]);
 }
 `
-testcase(20,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+testcase(20,17) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
 Verification of foo succeeded.
 `

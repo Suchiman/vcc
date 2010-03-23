@@ -18,8 +18,8 @@ Verification of foo succeeded.
 struct A {
   int a;
   int b;
-  __specification int x;
-  __specification int y;
+  spec(int x;)
+  spec(int y;)
 };
 
 void foo(struct A *p)

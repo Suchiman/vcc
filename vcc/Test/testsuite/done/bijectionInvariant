@@ -8,9 +8,9 @@ typedef unsigned __int64 UINT64, *PUINT64;
 typedef void VOID, *PVOID;
 
 
-ispure __specification bool IsBijectiveMap(UINT64 *map, UINT64 count)
+spec(ispure bool IsBijectiveMap(UINT64 *map, UINT64 count)
   reads(set_universe())
-  ensures(result == forall(UINT64 j; _vcc_match_ulong(j) && 0 <= j && j < count ==> exists(UINT64 k; _vcc_match_ulong(k) && map[k] == j)));
+  ensures(result == forall(UINT64 j; _vcc_match_ulong(j) && 0 <= j && j < count ==> exists(UINT64 k; _vcc_match_ulong(k) && map[k] == j)));)
 
 static UINT64 bij[10];
 

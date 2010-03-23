@@ -1,7 +1,7 @@
 #include <vcc2.h>
 
-ispure __specification _Bool foo()
-  ensures(result == forall(int i; i == i));
+spec(ispure bool foo()
+  ensures(result == forall(int i; i == i));)
 
 void bar()
   requires(foo())

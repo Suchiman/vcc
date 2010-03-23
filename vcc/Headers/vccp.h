@@ -13,7 +13,7 @@
 #define block __block
 #define assert __assert
 #define assume __assume
-#define axiom __axiom __specification a =
+#define axiom __axiom a =
 #define ensures __ensures
 #define exists __exists
 #define forall __forall
@@ -22,7 +22,7 @@
 #define old(address) __old(address)
 #define reads __reads
 #define requires __requires
-#define spec(...) __specification __VA_ARGS__
+#define spec __specification
 #define writes __writes
 #define unchecked(...) __unchecked(__VA_ARGS__)
 #define this __this
@@ -294,8 +294,7 @@ void _vcc_begin_update();
 bool _vcc_expose(obj_t);
 #define expose(obj) while(_vcc_expose(obj))
 
-bool _vcc_spec_code();
-#define speconly while(_vcc_spec_code()) __specification
+#define speconly __specification
 
 bool _vcc_skinny_expose(obj_t, ...);
 #define skinny_expose(...) while(_vcc_skinny_expose(__VA_ARGS__))
@@ -385,7 +384,7 @@ bool _vcc_inv_group(const char *, bool);
 #define always(c,e) \
   requires(wrapped(c) && valid_claim(c) && claims(c, e)) \
   ensures(wrapped(c) && valid_claim(c))
-#define claimp(n) __specification claim_t n
+#define claimp(n) __specification(claim_t n)
 #define maintains(...) requires(__VA_ARGS__) ensures(__VA_ARGS__)
 #define returns(...) ensures(result == (__VA_ARGS__))
 

@@ -1,13 +1,13 @@
 #include <vcc2.h>
 
-int f(__specification int n)
+int f(spec(int n))
 {
   return 0;
 }
 
-int g(__specification int n)
+int g(spec(int n))
 {
-  return f(__specification n);
+  return f(spec(n));
 }        
 
 `

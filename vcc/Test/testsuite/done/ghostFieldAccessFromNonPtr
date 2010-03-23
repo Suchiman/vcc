@@ -3,10 +3,10 @@
 typedef struct _ABS_LIST
 {
 	int Card;
-	__specification ptrset List;
+	spec(ptrset List;)
 } ABS_LIST, *PABS_LIST;
 
-ispure __specification bool IsEmptyAbsList(ABS_LIST AL) ensures(result == (AL.Card==0 && AL.List==set_empty()));
+spec(ispure bool IsEmptyAbsList(ABS_LIST AL) ensures(result == (AL.Card==0 && AL.List==set_empty()));)
 
 void foo() {
   ABS_LIST l;
@@ -22,7 +22,7 @@ typedef struct _S {
   unsigned __int32 a;
   unsigned __int32 b;
   unsigned __int64 padding;
-  __specification unsigned __int64 sum;
+  spec(unsigned __int64 sum;)
 } S;
 
 S foo(S s)
