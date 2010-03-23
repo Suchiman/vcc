@@ -16,6 +16,7 @@
 \definecolor{bgcode}{rgb}{0.92,0.92,0.92}
 
 \definecolor{todocolor}{rgb}{0.9,0.0,0.0}
+\definecolor{noteframe}{rgb}{0.5,0.5,0.5}
 \newcommand{\todo}[1]{\marginnote{\scriptsize {[\textcolor{red}{\textbf{TODO:} {#1}}]}}}
 \newcommand{\itodo}[1]{{[\textcolor{red}{\textbf{TODO:} {#1}}]}}
 %\renewcommand{\todo}[1]{}
@@ -39,6 +40,33 @@
 \newcommand{\eg}[0]{e.g.,{ }}
 \newcommand{\cf}[0]{cf.{ }}
 
+\newenvironment{note}{%
+  \noindent\hspace*{0.1\textwidth}%
+  \begin{minipage}{0.9\textwidth}%
+  \vspace{1.5mm}
+  \textcolor{noteframe}{\rule{\textwidth}{1pt}} \\
+  \small
+  \textbf{Note:}
+}{%
+  \vspace{-2mm} \\ 
+  \textcolor{noteframe}{\rule{\textwidth}{1pt}} 
+  \end{minipage}
+}
+
+\renewenvironment{note}{%
+\vspace{-3mm}
+\begin{list}{}%
+    {\setlength{\leftmargin}{0.1\textwidth}}%
+    \item[]%
+  \textcolor{noteframe}{\rule{0.9\textwidth}{1pt}} \\
+  \small
+  \textbf{Note:}
+}{%
+  \vspace{-2mm} \\ 
+  \textcolor{noteframe}{\rule{0.9\textwidth}{1pt}} 
+  \end{list}
+\vspace{-2mm}
+}
 
 \newcommand{\eqspc}[1]{\;\;{#1}\;\;}
 \setlength{\arraycolsep}{0mm}
