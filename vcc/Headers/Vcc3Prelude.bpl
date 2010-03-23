@@ -330,9 +330,13 @@ function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
   {
+    (forall p:$ptr :: {:vcc3 "L1"} {S[$dot(p, $f_typed)]}
+      $set_in(p, ptrs) ==> $in_writes_at(time, p) && $thread_owned_or_even_mutable(S, p))
+/*
     (forall p:$ptr :: {:vcc3 "L1"} {S[p]}
       $ghost_path(p) == $f_typed ==>
         $set_in($ghost_emb(p), ptrs) ==> $in_writes_at(time, $ghost_emb(p)) && $thread_owned_or_even_mutable(S, $ghost_emb(p)))
+        */
   }
 
 const unique $f_typed : $field;

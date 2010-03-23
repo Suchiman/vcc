@@ -17,6 +17,10 @@ type TranslatorState =
     assumedExprs : list<Z3.Term>
     tempFunctions : list<FuncDecl>
   }
+
+type TempBinding =
+  | TempApp of FuncDecl * array<Z3.Term>
+  | TempRef of Var
   
 type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
   let cfg = new Z3.Config()
@@ -26,13 +30,19 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
   let functions = gdict()
   let invFunctions = gdict()
   let consts = gdict()
+  let invConsts = gdict()
   let locals = gdict()
+  let invLoclas = gdict()
+  let namedSorts = gdict()
   let mutable tempFunctions = []
   let mutable boundVars = Map.empty
   let mutable stack = []
   let mutable assumedExprs = []
   let mutable smtFileIdx = 0
   let mutable numDeclaredFunctions = 0
+  let mutable id = 1500000000
+  let mutable modelInterpretation : option<Z3.Term -> option<Expr>> = None
+  let xassert b = if not b then failwith "assertion failed"
   
   let cache (dict:Dict<_,_>) f id =
     match dict.TryGetValue id with
@@ -75,8 +85,18 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
       | Type.Bool -> z3.MkBoolSort()
       | Type.Bv n -> z3.MkBvSort ((uint32)n)
       | Type.Int -> z3.MkIntSort()
-      | Type.Map (_, _) as m -> z3.MkSort(m.ToString())
-      | Type.Named td -> z3.MkSort(td.Name)
+      | Type.Map (_, _) as m ->
+        let name = m.ToString() 
+        let s = z3.MkSort name
+        if not (namedSorts.ContainsKey name) then
+          namedSorts.Add (name, m)
+        s
+      | Type.Named td as t ->
+        let name = td.Name
+        let s = z3.MkSort name
+        if not (namedSorts.ContainsKey name) then
+          namedSorts.Add (name, t)
+        s
   
   member this.Function (fn:FuncDecl) = functions.[fn.Id]
   member this.Const (v:Var) =
@@ -87,6 +107,10 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
           | true, t -> t
           | false, _ ->
             failwith ("undeclared global " + v.ToString())
+  
+  member private this.NextId () =
+    id <- id + 1
+    id
   
   member private this.DeclareFunction (fn:FuncDecl) =
     let decl = z3.MkFuncDecl (fn.Name + fn.Qualifier, [| for t in fn.ArgTypes -> this.Sort t |], this.Sort fn.RetType)
@@ -106,7 +130,9 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
     let sorts = glist[]
     let globalsBySort = gdict()
     for g in pass.Globals do
-      consts.Add (g.Id, z3.MkConst (g.Name, this.Sort g.Typ))
+      let c = z3.MkConst (g.Name, this.Sort g.Typ)
+      consts.Add (g.Id, c)
+      invConsts.Add (c.GetAppDecl(), g)
       match g.Kind with
         | VarKind.ConstUnique ->
           match globalsBySort.TryGetValue g.Typ with
@@ -195,7 +221,9 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
     this.DeclareFunctions()
     for l in p.Locals do
       if l.Kind <> VarKind.Local then failwith ""
-      locals.Add (l.Id, z3.MkConst (l.Name, this.Sort l.Typ))
+      let c = z3.MkConst (l.Name, this.Sort l.Typ)
+      locals.Add (l.Id, c)
+      invLoclas.Add (c.GetAppDecl(), l)
   
   member this.FinishProc () =
     this.Pop()
@@ -236,6 +264,7 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
       | Z3.LBool.False -> None
       | _ ->
         if !model = null then failwith ""
+        modelInterpretation <- None
         Some !model
   
   member this.Push() =
@@ -260,33 +289,153 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
     assumedExprs <- st.assumedExprs
     tempFunctions <- st.tempFunctions
   
-  (*
-  member this.Reflect (t:Z3.Term) =
-    match t.GetKind() with
-      | Z3.TermKind.Numeral ->
-        match z3.GetSortKind (t.GetSort()) with
-          | Z3.SortKind.Int ->
-            Expr.Lit (Lit.Int (bigint.Parse (t.GetNumeralString())))
-          | Z3.SortKind.BitVector ->
-            Expr.Lit (Lit.Bv (bigint.Parse (t.GetNumeralString()), (int)(z3.GetBvSortSize (t.GetSort()))))
-          | _ -> failwith ""
-      | Z3.TermKind.App ->
-        let f = t.GetAppDecl()
-        match invFunctions.TryGetValue f with
-          | true, f ->
-            App (f, [])
+  member this.ReflectSort (s:Z3.Sort) =
+    match z3.GetSortKind s with
+      | Z3.SortKind.Int -> Type.Int
+      | Z3.SortKind.Bool -> Type.Bool
+      | Z3.SortKind.Uninterpreted ->
+        namedSorts.[z3.GetSymbolString (z3.GetSortName s)]
+      | Z3.SortKind.BitVector -> Type.Bv ((int)(z3.GetBvSortSize s))
       | _ -> failwith ""
-  *)
-  
+      
+  member this.PopulateModel (model:Z3.Model) =
+    let definitions = gdict()
+    
+    let adddef t def =
+      match definitions.TryGetValue t with
+        | true, l -> definitions.[t] <- def :: l
+        | _ -> definitions.[t] <- [def]
+    
+    
+    for c in model.GetModelConstants() do
+      let t = model.Eval (c, [| |])
+      adddef t (c, [])
+      
+    let graphs = model.GetFunctionGraphs()
+    for f in graphs.Keys do
+      for e in graphs.[f].Entries do
+        let r = e.Result
+        adddef r (f, [for a in e.Arguments -> a])
+    
+    let fnFor f = 
+      {
+        Id = this.NextId()
+        Name = z3.GetSymbolString (z3.GetDeclName f)
+        Qualifier = ""
+        RetType = this.ReflectSort (z3.GetRange f)
+        ArgTypes = [for s in z3.GetDomain f -> this.ReflectSort s]
+        Attrs = []
+        Body = Uninterpreted
+      }
+      
+    let possiblyDeclare f =
+      match invFunctions.TryGetValue f with
+        | true, bf -> bf
+        | _ ->
+          let fn = fnFor f
+          this.DeclareTempFunction fn
+          fn
+    
+    let properDefs = gdict()
+    
+    let getApp f (args:list<_>) =
+      if args.IsEmpty then
+        match properDefs.TryGetValue (z3.MkConst f) with
+          | true, v -> v
+          | _ ->
+            match invLoclas.TryGetValue f with
+              | true, l -> Expr.Ref l
+              | _ ->
+                match invConsts.TryGetValue f with
+                  | true, g -> Expr.Ref g
+                  | _ -> App (possiblyDeclare f, [])
+      else
+        App (possiblyDeclare f, args)
+    
+    let isDefined t =
+      match z3.GetTermKind t with
+        | Z3.TermKind.Numeral -> true
+        | Z3.TermKind.App -> properDefs.ContainsKey t
+        | _ -> false
+        
+    let rec getDefinition t =
+      match properDefs.TryGetValue t with
+        | true, v -> v
+        | _ ->
+          match z3.GetTermKind t with
+            | Z3.TermKind.Numeral ->
+              match z3.GetSortKind (t.GetSort()) with
+                | Z3.SortKind.Int ->
+                  Expr.Lit (Lit.Int (bigint.Parse (t.GetNumeralString())))
+                | Z3.SortKind.BitVector ->
+                  Expr.Lit (Lit.Bv (bigint.Parse (t.GetNumeralString()), (int)(z3.GetBvSortSize (t.GetSort()))))
+                | _ -> failwith ""
+            | _ -> failwith ""
+        
+    let rec aux() =
+      let prevCount = properDefs.Count
+      let keys = definitions.Keys |> Seq.toList
+      for d in keys do
+        match List.tryFind (fun (_, args) -> List.forall properDefs.ContainsKey args) (List.rev definitions.[d]) with
+          | Some (f, args) ->
+            properDefs.Add (d, getApp f (List.map getDefinition args))
+            definitions.Remove d |> ignore
+          | None -> ()
+      if prevCount < properDefs.Count then aux()
+      elif definitions.Count > 0 then
+        let d = definitions.Keys |> Seq.head
+        if isDefined d then
+          properDefs.Add (d, getDefinition d)
+        else
+          properDefs.Add (d, getApp (d.GetAppDecl()) [])          
+        definitions.Remove d |> ignore
+        aux()
+      
+    properDefs.Add (z3.MkTrue(), Expr.True)
+    properDefs.Add (z3.MkFalse(), Expr.False)
+    definitions.Remove (z3.MkTrue()) |> ignore
+    definitions.Remove (z3.MkFalse()) |> ignore
+    aux()
+    
+    let interpret d =
+      if isDefined d then Some (getDefinition d)
+      else None
+    
+    interpret      
+                                    
   member this.GetAppsExcluding (model:Z3.Model, fn, excl) =
+    let interp = 
+      match modelInterpretation with
+        | Some f -> f
+        | None ->
+          let f = this.PopulateModel model
+          modelInterpretation <- Some f
+          f
+          
     let res = glist[]
     let graphs = model.GetFunctionGraphs()
     match graphs.TryGetValue (this.Function fn) with
       | true, graph ->
+        let excl = this.Function excl
+        //printf "valexcl %O\n" fn
+        let exclDict = gdict()
+        match graphs.TryGetValue excl with
+         | true, g ->
+           for e in g.Entries do
+             //printf "  existing %s\n" (objConcat ", " e.Arguments)           
+             exclDict.Add (Seq.toList e.Arguments, true)
+         | _ -> ()
         for e in graph.Entries do
-          let maybeDone = model.Eval (this.Function excl, e.Arguments)
-          if maybeDone <> null then
-            res.Add [for a in e.Arguments -> a]
+          if exclDict.ContainsKey (Seq.toList e.Arguments) then 
+            ()
+          else
+            let rec check acc = function
+              | x :: xs ->
+                match interp x with
+                  | Some y -> check (y :: acc) xs
+                  | None -> None
+              | [] -> Some (List.rev acc)
+            e.Arguments |> Seq.toList |> check [] |> Option.iter res.Add
       | _ -> ()
     res
         
