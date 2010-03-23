@@ -1,22 +1,22 @@
 #include <vcc2.h>
 
-__specification int x = 0;
-__specification int y = 0;
+spec(int x = 0;)
+spec(int y = 0;)
 
-__specification void foo() 
+spec(void foo() 
   writes(&x)
 {
   x = 1;
   assert(x == 1);
-}
+})
 
-__specification void bar() 
+spec(void bar() 
   writes(&x, &y)
 {
   y = 1;
   foo();
   assert(y == 1);
-}
+})
 
 void baz()
   requires(program_entry_point())

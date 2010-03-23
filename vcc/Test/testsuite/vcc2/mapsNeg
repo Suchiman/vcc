@@ -12,7 +12,7 @@ void foo(struct A *a)
 }
 `
 Verification of foo failed.
-testcase(11,44) : error VC8507: Assertion 'a->m is writable' did not verify.
+testcase(11,20) : error VC8507: Assertion 'a->m is writable' did not verify.
 `
 void oopsExample() 
 {
@@ -45,5 +45,5 @@ void bar(unsigned i) {
     speconly(a = lambda(unsigned j; true; i = 0);)
 }
 `
-testcase(5,81) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.
+testcase(5,57) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.
 `

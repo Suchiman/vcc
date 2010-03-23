@@ -246,7 +246,7 @@ void bar(int *p)
 Verification of bar succeeded.
 `
 #include "vcc.h"
-template<typename T> __specification ispure size_t check() ensures(result == sizeof(T));
+__specification(template<typename T> ispure size_t check() ensures(result == sizeof(T));)
 
 void foo() { 
   assert(check<int>() == 4); 

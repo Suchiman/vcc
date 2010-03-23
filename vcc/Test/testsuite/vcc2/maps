@@ -193,7 +193,7 @@ ispure BITMAP ToBitMap(UINT64 n);
 
 axiom(forall(UINT64 x; forall(UINT64 i; i < 64 ==> !ToBitMap(x)) ==> x == 0));
 `
-testcase(13,78) : error VC0000: Operator '!' cannot be applied to operand of type 'System.Diagnostics.Contracts.CodeContract.Map<ulong, bool>'.
+testcase(13,62) : error VC0000: Operator '!' cannot be applied to operand of type 'System.Diagnostics.Contracts.CodeContract.Map<ulong, bool>'.
 `
 #include <vcc.h>
 
@@ -365,7 +365,7 @@ spec(int map[int];)
 speconly(map = lambda(int , x; true; 42);)
 } 
 `
-testcase(5,60) : error VC0000: Identifier expected.
+testcase(5,36) : error VC0000: Identifier expected.
 `
 #include "vcc.h"
 
@@ -463,7 +463,7 @@ invariant(Sset == lambda(S_t s; true ; s.id < 42))
 } abs;
 ) 
 `
-testcase(3,25) : error VC9702: Illegal type 'struct S_str' in map domain.
+testcase(4,9) : error VC9702: Illegal type 'struct S_str' in map domain.
 `
 #include "vcc.h"
 
@@ -474,7 +474,7 @@ spec(struct S X[unsigned];)
 speconly(X[0].d = 42;)
 }
 `
-testcase(7,41) : error VC0000: Illegal update of map 'X'.
+testcase(7,17) : error VC0000: Illegal update of map 'X'.
 `
 #include <vcc.h>
 

@@ -42,7 +42,7 @@ Verification of nok1 failed.
 testcase(19,10) : error VC8512: Assertion 's is mutable (accessing volatile field vol)' did not verify.
 Verification of ok2 succeeded.
 Verification of nok2 failed.
-testcase(31,82) : error VC8512: Assertion 's is mutable (accessing volatile field specvol)' did not verify.
+testcase(35,10) : error VC8512: Assertion 's is mutable (accessing volatile field specvol)' did not verify.
 `
 #include "vcc.h"
 
@@ -175,12 +175,12 @@ testcase(59,5) : error VC8507: Assertion 'x->vol is writable' did not verify.
 Verification of specok1 succeeded.
 Verification of specok11 succeeded.
 Verification of nspecok2 failed.
-testcase(84,90) : error VC8527: Assertion 'x is closed (for atomic(...))' did not verify.
+testcase(89,21) : error VC8527: Assertion 'x is closed (for atomic(...))' did not verify.
 Verification of specok2 succeeded.
 Verification of nspecok3 failed.
-testcase(107,45) : error VC8507: Assertion 'x->specnonvol is writable' did not verify.
+testcase(107,21) : error VC8507: Assertion 'x->specnonvol is writable' did not verify.
 Verification of nspecok4 failed.
-testcase(115,45) : error VC8507: Assertion 'x->specvol is writable' did not verify.
+testcase(115,21) : error VC8507: Assertion 'x->specvol is writable' did not verify.
 `
 #include <vcc.h>
 

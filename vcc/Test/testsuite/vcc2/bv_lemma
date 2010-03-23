@@ -20,7 +20,7 @@ void foo()
   speconly( assert(_vcc_bv_lemma(forall(unsigned int x; x + x < 10))); )
 }
 `
-testcase(7,92) : error VC9659: operators in bv_lemma(...) need to be unchecked (expression: x + x)
+testcase(7,68) : error VC9659: operators in bv_lemma(...) need to be unchecked (expression: x + x)
 `
 #include "vcc.h"
 

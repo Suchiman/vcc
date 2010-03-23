@@ -123,7 +123,7 @@ void bar(unsigned i) {
    speconly(map = (lambda(unsigned j; true; (bool) ((i==j)? 1: (map[j]))));)
 }
 `
-testcase(5,91) : error VC0000: Type of conditional expression cannot be determined because there are implicit conversions between '__int32' and 'bool'; try adding an explicit cast to one of the arguments.
+testcase(5,67) : error VC0000: Type of conditional expression cannot be determined because there are implicit conversions between '__int32' and 'bool'; try adding an explicit cast to one of the arguments.
 `
 #include "vcc.h"
 
@@ -277,8 +277,9 @@ void foo() {
   speconly(m[(void *)0] = true;)
 }
 `
-testcase(6,43) : error VC0000: The best overloaded method match for 'System.Diagnostics.Contracts.CodeContract.Map<int, bool>.Item.get(int)' has some invalid arguments.
-testcase(6,45) : error VC0000: Argument '1': cannot convert from 'void*' to '__int32'.`
+testcase(6,19) : error VC0000: The best overloaded method match for 'System.Diagnostics.Contracts.CodeContract.Map<int, bool>.Item.get(int)' has some invalid arguments.
+testcase(6,21) : error VC0000: Argument '1': cannot convert from 'void*' to '__int32'.
+`
 void foo()
 {
   int x, *p;
@@ -322,7 +323,7 @@ struct Foo {
 
 void foo(struct Foo *s) {}
 `
-testcase(5,5) : error VC9677: 'a' : 'struct' member redefinition
+testcase(5,21) : error VC9677: 'a' : 'struct' member redefinition
 testcase(4,5)-(4,10) : (Location of symbol related to previous error.)
 `#include "vcc.h"
 

@@ -1,6 +1,7 @@
+#include <vcc.h>
 
 struct x {
-    __specification int Map2[int];
+    spec(int Map2[int];)
     int a;
 } z;
 
@@ -11,12 +12,13 @@ void foo() {
 }
 
 `
-testcase(10,5) : error VC0000: illegal index
-testcase(10,5) : error VC0000: left of '.Map2' must have struct/union type
+testcase(11,5) : error VC0000: illegal index
+testcase(11,5) : error VC0000: left of '.Map2' must have struct/union type
 `
+#include <vcc.h>
 
 struct x {
-    __specification int Map2[int];
+    spec(int Map2[int];)
     int a;
 } z;
 
@@ -25,6 +27,6 @@ void foo() {
     x.a = 10;
 }
 `
-testcase(9,5) : error VC0000: An object reference is required for the nonstatic field, method, or property 'a'.
-testcase(4,5)-(4,10) : (Location of symbol related to previous error.)
+testcase(10,5) : error VC0000: An object reference is required for the nonstatic field, method, or property 'a'.
+testcase(5,5)-(5,10) : (Location of symbol related to previous error.)
 `

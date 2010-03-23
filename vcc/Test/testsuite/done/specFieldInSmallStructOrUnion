@@ -3,12 +3,12 @@
 union X {
 	unsigned a;
 	int b;
-	__specification int c;
+	spec(int c;)
 };
 
 struct S {
   unsigned a;
-  __specification int b;
+  spec(int b;)
 };
 
 

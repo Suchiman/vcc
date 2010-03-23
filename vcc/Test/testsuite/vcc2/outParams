@@ -198,7 +198,7 @@ void bar()
   foo(1, 2 spec(out z) spec(out z));
 }
 `
-testcase(12,54) : error VC9676: duplicate out parameter 'z'
+testcase(12,55) : error VC9676: duplicate out parameter 'z'
 `
 #include <vcc.h>
 
@@ -260,17 +260,17 @@ testcase(6,27) : warning VC9304: [possible unsoundness]: physical location passe
 Verification of bar succeeded.
 `
 
-int foo(__specification int a);
+int foo(__specification(int a));
 void bar() {
-  __specification int x;
-  foo(__specification out x);
+  __specification(int x;)
+  foo(__specification(out x));
 }
 
 
-int fooOut(__specification out int a);
+int fooOut(__specification(out int a));
 void barOut() {
-  __specification int x;
-  fooOut(__specification x);
+  __specification(int x;)
+  fooOut(__specification(x));
 }
 `
 testcase(5,3) : error VC0000: The best overloaded method match for '__Globals__.foo(int)' has some invalid arguments.
@@ -288,7 +288,7 @@ void bar(struct X *x) {
     foo(spec(c) spec(out x->f/* should be e*/));
 }
 `
-testcase(9,47) : error VC0000: 'X' does not contain a definition for 'f'.
+testcase(9,48) : error VC0000: 'X' does not contain a definition for 'f'.
 `
 
 #include <vcc.h>

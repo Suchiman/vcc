@@ -19,7 +19,7 @@ struct StAbsT
 	sti el;
 };
 
-ispure __specification StAbsT AFStm(UINT64 b) ensures(result.el.b == b);
+spec(ispure StAbsT AFStm(UINT64 b) ensures(result.el.b == b);)
 
 void func(__in UINT64 b, PUINT64 Value)
   writes(Value)

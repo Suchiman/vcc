@@ -751,5 +751,5 @@ void foo(struct A *a)
 speconly( obj_t o = owner((struct B::C *)a); )
 }
 `
-testcase(7,76) : error VC0000: The name 'B' does not exist in the current context.
+testcase(7,52) : error VC0000: The name 'B' does not exist in the current context.
 `

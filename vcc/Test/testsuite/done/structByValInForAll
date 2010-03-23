@@ -15,12 +15,12 @@ typedef struct guest_t{
 } guest_t;
 
 
-ispure __specification bool proc_rel(proc_t p1, proc_t p2) 
-  ensures(result == (forall(UINT64 i; i < 17 ==> (p1.spr[i] == p2.spr[i]))));
+spec(ispure bool proc_rel(proc_t p1, proc_t p2) 
+  ensures(result == (forall(UINT64 i; i < 17 ==> (p1.spr[i] == p2.spr[i]))));)
 
-ispure __specification bool procs_rel(proc_t pcb[8], proc_t proc, guest_t gp[8], UINT32 n) 
+spec(ispure bool procs_rel(proc_t pcb[8], proc_t proc, guest_t gp[8], UINT32 n) 
   reads(set_universe())
-  ensures(result == (forall(UINT64 i; {gp[i].p} {pcb[i]} i < 8 ==> ((i == n) ==> proc_rel(gp[i].p, proc)))));
+  ensures(result == (forall(UINT64 i; {gp[i].p} {pcb[i]} i < 8 ==> ((i == n) ==> proc_rel(gp[i].p, proc)))));)
 
 void bar(proc_t pcb[8], proc_t proc, guest_t gp[8], UINT32 n)
   requires(n < 8)

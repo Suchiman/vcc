@@ -65,7 +65,7 @@ void bar(struct S *s spec(struct S ^t))
 }
 `
 Verification of foo#overload#void#struct_S. succeeded.
-Verification of foo#overload#void#struct_S^ succeeded.
+Verification of foo#overload#void#spec_struct_S^ succeeded.
 Verification of bar succeeded.
 `
 

@@ -302,17 +302,44 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
-  public sealed class VccSpecBlock : BlockStatement
+  public sealed class VccSpecStatement : Statement
   {
-    public VccSpecBlock(List<Statement> statements, ISourceLocation sourceLocation)
-      : base(statements, sourceLocation) { }
+    private readonly Statement wrappedStatement;
 
-    protected VccSpecBlock(BlockStatement containingBlock, VccSpecBlock template)
-      : base(containingBlock, template) { }
+    public VccSpecStatement(Statement statement, ISourceLocation sourceLocation)
+      : base(sourceLocation) { 
+      this.wrappedStatement = statement;
+    }
+
+    private VccSpecStatement(BlockStatement containingBlock, VccSpecStatement template)
+      : base(containingBlock, template) {
+      this.wrappedStatement = template.wrappedStatement.MakeCopyFor(containingBlock);
+    }
+
+    public Statement WrappedStatement {
+      get { return this.wrappedStatement; }
+    }
+
+    public override void Dispatch(ICodeVisitor visitor) {
+      this.WrappedStatement.Dispatch(visitor);
+    }
+
+    public override void Dispatch(SourceVisitor visitor) {
+      this.WrappedStatement.Dispatch(visitor);
+    }
+
+    public override void SetContainingBlock(BlockStatement containingBlock) {
+      base.SetContainingBlock(containingBlock);
+      this.WrappedStatement.SetContainingBlock(containingBlock);
+    }
 
     public override Statement MakeCopyFor(BlockStatement containingBlock) {
       if (containingBlock == this.ContainingBlock) return this;
-      return new VccSpecBlock(containingBlock, this);
+      return new VccSpecStatement(containingBlock, this);
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      return this.WrappedStatement.HasErrors;
     }
   }
 }

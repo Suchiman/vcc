@@ -22,7 +22,7 @@ Verification of A#adm succeeded.
 Verification of f2 succeeded.
 `
 struct Acct {
-  __specification volatile int baz;
+  __specification(volatile int baz;)
 };
 `
 testcase(1,1) : error VC9620: need at least one physical field in structure, got only spec fields

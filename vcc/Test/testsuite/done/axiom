@@ -1,8 +1,8 @@
 #include <vcc2.h>
 
-__specification const int foo;
+spec(const int foo;)
 
-__specification __axiom fooVal = foo == 1;
+axiom(foo == 1);
 
 void bar(){
 }

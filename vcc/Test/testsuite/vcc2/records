@@ -161,15 +161,15 @@ spec(struct S foo2(int k, struct S s0)
 )
 `
 Verification of foo failed.
-testcase(8,83) : error VC9501: Post condition 'result == s0 / { .a = 11 }' did not verify.
-testcase(8,53) : error VC9599: (related information) Location of post condition.
+testcase(11,3) : error VC9501: Post condition 'result == s0 / { .a = 11 }' did not verify.
+testcase(9,13) : error VC9599: (related information) Location of post condition.
 Verification of bar failed.
 testcase(18,12) : error VC9500: Assertion 's.a == 10' did not verify.
 Verification of baz failed.
 testcase(24,12) : error VC9500: Assertion 's.a <= 0x7ffffff0' did not verify.
 Verification of foo2 failed.
-testcase(28,153) : error VC9501: Post condition 'result == (k ? s0 / { .a = 10 } : s0 / { .b = 10 })' did not verify.
-testcase(28,61) : error VC9599: (related information) Location of post condition.
+testcase(34,5) : error VC9501: Post condition 'result == (k ? s0 / { .a = 10 } : s0 / { .b = 10 })' did not verify.
+testcase(29,13) : error VC9599: (related information) Location of post condition.
 `
 #include <vcc2test.h>
 
@@ -195,7 +195,7 @@ spec(struct S foo(struct A *a, struct S s0)
 )
 
 void bar() {
-  spec(struct S s = { 1 };)
+  spec(struct S s = { .dummy = 1 };)
   struct A a;
 
   assert(s.a == NULL);
@@ -630,8 +630,8 @@ spec(void foo(R abs, S conc)
     assert(abs == conc);
 })
 `
-testcase(11,52) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and '__int32'.
-testcase(11,74) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and 'S'.
+testcase(13,14) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and '__int32'.
+testcase(14,14) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and 'S'.
 `
 #include "vcc.h"
 
@@ -644,7 +644,7 @@ spec(void foo(R abs)
     assert(abs==abs.x);
 })
 `
-testcase(7,44) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and 'System.Diagnostics.Contracts.CodeContract.Map<int, int>'.
+testcase(9,14) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and 'System.Diagnostics.Contracts.CodeContract.Map<int, int>'.
 `#include "vcc.h"
 
 spec(typedef bool M[bool];)

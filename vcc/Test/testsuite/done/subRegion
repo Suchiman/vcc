@@ -9,7 +9,7 @@ void foo() {
   struct S s;
   struct S *p;
   p = &s;
-  __specification ptrset r;
+  spec(ptrset r;)
   assume(set_subset(extent(p), r)); 
   assert(set_subset(extent(&(p->b)), r));
 }
