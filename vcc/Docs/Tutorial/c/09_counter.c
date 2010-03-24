@@ -27,5 +27,26 @@ void create_reading(struct Counter *n claimp(c))
   unwrap(&k);
 }
 
+/*{readtwice}*/
+void readtwice(struct Counter *n)
+  requires(wrapped(n))
+  writes(n)
+{
+  unsigned int x, y;
+  spec(claim_t r;)
+
+  atomic (n) {
+    x = n->v;
+    speconly( r = claim(n, x <= n->v); )
+  }
+
+  atomic (n) {
+    y = n->v;
+    assert(valid_claim(r));
+    assert(x <= y);
+  }
+}
+/*{endreadtwice}*/
+
 /*`
 `*/
