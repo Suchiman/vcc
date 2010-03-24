@@ -112,7 +112,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     internal void ParseCompilationUnit(GlobalDeclarationContainerClass globalContainer, List<INamespaceDeclarationMember> members) {
       //^ assume this.currentToken != Token.EndOfFile; //assume this method is called directly after construction and then never again.
       this.GetNextToken(); //Get first token from scanner
-      this.ParseNamespaceMemberDeclarations(globalContainer, members, TS.EndOfFile);
+      this.ParseGlobalDeclarations(globalContainer, members, TS.EndOfFile);
       VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentTypeInvariants, false);
       this.compilation.ContractProvider.AssociateTypeWithContract(globalContainer, tc);
     }
@@ -202,28 +202,32 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     List<INamespaceDeclarationMember>/*?*/ namespaceDeclarationMembers;
 
-    private void ParseNamespaceMemberDeclarations(GlobalDeclarationContainerClass globalContainer, List<INamespaceDeclarationMember> members, TokenSet followers)
+    private void ParseGlobalDeclarations(GlobalDeclarationContainerClass globalContainer, List<INamespaceDeclarationMember> members, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       List<ITypeDeclarationMember> globalMembers = (List<ITypeDeclarationMember>)globalContainer.GlobalMembers;
 
       this.currentTypeMembers = globalMembers;
       this.namespaceDeclarationMembers = members;
-      TokenSet followersOrDeclarationStart = followers | TS.DeclarationStart;
-      while (followersOrDeclarationStart[this.currentToken] && this.currentToken != Token.EndOfFile) {
-        if (this.currentToken == Token.Specification)
-          this.ParseNonLocalSpecDeclaration(members, globalMembers, followersOrDeclarationStart, true);
-        else
-          this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
-      }
+      this.ParseGlobalDeclarationList(members, globalMembers, followers);
       this.SkipTo(followers);
     }
 
-    private void ParseNonLocalSpecDeclaration(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal) {
+    private void ParseGlobalDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
+      TokenSet followersOrDeclarationStart = followers | TS.DeclarationStart;
+      while (TS.DeclarationStart[this.currentToken] && this.currentToken != Token.EndOfFile) {
+        if (this.currentToken == Token.Specification)
+          this.ParseGlobalSpecDeclarationList(members, globalMembers, followersOrDeclarationStart);
+        else
+          this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
+      }
+    }
+
+    private void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis, isGlobal);
+      this.ParseGlobalDeclarationList(members, globalMembers, followers | Token.RightParenthesis);
       this.SkipOverTo(Token.RightParenthesis, followers);
       this.LeaveSpecBlock(savedInSpecCode);
     }
@@ -1729,18 +1733,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<ITypeDeclarationMember>/*?*/ savedCurrentTypeMembers = this.currentTypeMembers;
       this.currentTypeMembers = typeMembers;
       this.Skip(Token.LeftBrace);
-      TokenSet expectedTokens = TS.DeclarationStart | Token.Colon | Token.Invariant;
-      while (expectedTokens[this.currentToken]) {
-        if (this.currentToken == Token.Invariant) {
-          if (this.currentTypeInvariants == null)
-            this.currentTypeInvariants = new List<TypeInvariant>();
-          this.ParseTypeInvariant(this.currentTypeInvariants, fieldFollowers);
-        } else if (this.currentToken == Token.Specification) {
-          this.ParseNonLocalSpecDeclaration(namespaceMembers, typeMembers, fieldFollowers, false);
-        } else {
-          this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, fieldFollowers, false);
-        }
-      }
+      this.ParseTypeMemberDeclarationList(namespaceMembers, typeMembers, fieldFollowers);
       ISourceLocation tokLoc = this.scanner.SourceLocationOfLastScannedToken;
       //^ assume tokLoc.SourceDocument == sctx.SourceDocument;
       sctx.UpdateToSpan(tokLoc);
@@ -1749,6 +1742,31 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.currentTypeName = savedCurrentTypeName;
       this.currentTypeMembers = savedCurrentTypeMembers;
     }
+
+    private void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
+      TokenSet expectedTokens = TS.DeclarationStart | Token.Colon | Token.Invariant;
+      while (expectedTokens[this.currentToken]) {
+        if (this.currentToken == Token.Invariant) {
+          if (this.currentTypeInvariants == null)
+            this.currentTypeInvariants = new List<TypeInvariant>();
+          this.ParseTypeInvariant(this.currentTypeInvariants, followers);
+        } else if (this.currentToken == Token.Specification) {
+          this.ParseTypeSpecMemberDeclarationList(namespaceMembers, typeMembers, followers);
+        } else {
+          this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, false);
+        }
+      }
+    }
+
+    private void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
+      bool savedInSpecCode = this.EnterSpecBlock();
+      this.GetNextToken();
+      this.Skip(Token.LeftParenthesis);
+      this.ParseTypeMemberDeclarationList(namespaceMembers, typeMembers, followers | Token.RightParenthesis);
+      this.SkipOverTo(Token.RightParenthesis, followers);
+      this.LeaveSpecBlock(savedInSpecCode);
+    }
+
 
     private List<TypeQualifier>/*?*/ ParseTypeQualifiers() {
       List<TypeQualifier>/*?*/ result = null;
