@@ -441,17 +441,185 @@ Thus our previous notion of admissibility is no stronger than this one.
 Getting back to our \vcc{foo()} example, to deduce that \vcc{x <= y}, after
 the first read one could create a ghost \vcc{Reading} object, and
 use its invariant in the second action.
+While we need to say that \vcc{x <= y} is what's required,
+using a full-fledged object might seem like an overkill.
+Luckily, definitions of claims themselves can specify additional invariants.
 
-\subsection{Guaranteed properties}
+\subsection{Guaranteed properties in claims}
 
-When constructing a claim, one can specify additional invariants of the claim
-structure.
-Such invariants are subject to admissibility check as usual.
+When constructing a claim, one can specify additional invariants to put on
+the virtual definition of the claim structure.
+Let's have a look at annotated version of our previous \vcc{foo()} function.
 
-\itodo{explain claims about properties -- possibly use counter as an example,
-also for two-state invariants}
+\vccInput[linerange={readtwice-endreadtwice}]{c/09_counter.c}
+
+\noindent
+First, a high-level description of what's going on.
+Just after reading \vcc{n->v} we create a claim \vcc{r}, which guarantees
+that in every state, where \vcc{r} is consistent,
+the current value of \vcc{n->v} is no less than the value of \vcc{x}
+at the time when \vcc{r} was created.
+Then, after reading \vcc{n->v} for the second time, we tell VCC to
+make use of \vcc{r}'s guaranteed property, by asserting that it is ``active''.
+This makes VCC know \vcc{x <= n->v} in the current state, where also
+\vcc{y == n->v}.
+From these two facts VCC can conclude that \vcc{x <= y}.
+
+The general syntax for constructing a claim is:
+
+\begin{VCC}
+_(ghost c = \make_claim(S, P))
+\end{VCC}
+
+\noindent
+We already explained, that this requires that \vcc{\claim_count()}s of objects in the set \vcc{S} are writable.
+As for the property \vcc{P}, we pretend it forms the invariant of the claim.
+Because we're just constructing the claim, just like during regular object initialization,
+the invariant has to hold initially (\ie at the moment when the claim is created,
+that is wrapped).
+Moreover, the invariant has to be admissible, under the condition
+that all objects in \vcc{S} stay consistent as long as the claim itself
+stays consistent.
+
+But what about locals?
+Normally, object invariants are not allowed to reference locals.
+The idea is that when the claim is constructed, all the locals that the
+claim references are copied into fields the claim.
+The fields of the claim never change, once it is created.
+Therefore an assignment \vcc{x = MAX_UINT;} in between the atomic
+blocks would not invalidate the claim --- the claim would still
+refer to the old value of \vcc{x}.
+Of course, it would invalidate the final \vcc{x <= y} assert.
+
+\begin{note}
+For any expression \vcc{E} one can use \vcc{\at(\now, E)} in \vcc{P}
+in order to have the value of \vcc{E} be evaluated in the state
+when the claim is created, and stored in the field of the claim.
+\end{note}
+
+This copying business doesn't affect initial checking of the \vcc{P},
+\vcc{P} should just hold at the point when the claim is created.
+It does however affect the admissibility check for \vcc{P}:
+\begin{itemize}
+\item Consider an arbitrary legal action, from \vcc{s0} to \vcc{s1}.
+\item Assume that all invariants hold over \vcc{s0, s0}, including assuming \vcc{P} in \vcc{s0}.
+\item Assume that fields of \vcc{c} didn't change between \vcc{s0} and \vcc{s1}
+(in particular locals referenced by the claim are the same as at the moment of its creation).
+\item Assume all objects in \vcc{S} are consistent in both \vcc{s0} and \vcc{s1}.
+\item Assume that for all objects, fields of which are not the same in \vcc{s0} and \vcc{s1},
+their invariants hold over \vcc{s0, s1}.
+\item Check that \vcc{P} holds in \vcc{s1}.
+\end{itemize}
+
+To prove \vcc{\active_claim(c)} one needs to prove \vcc{\consistent(c)} and that
+the current state is a \Def{full-stop} state, \ie state where all invariants
+are guaranteed to hold.
+Any execution state outside of an atomic block is full-stop.
+The state right at the beginning of an atomic block is also full-stop.
+The states in the middle of it (\ie after some state updates) might not be
+(this isn't a soundness problem because they are not observable by other threads).
+
+The fact that \vcc{P} follows from \vcc{c}'s invariant after the construction
+is expressed using \vcc{\claims(c, P)}.
+\todo{explain \vcc@at()@ syntax before}
+It is roughly equivalent to saying:
+\begin{VCC}
+\forall \state s {\at(s, \active_claim(c))};
+  \at(s, \active_claim(c)) ==> \at(s, P)
+\end{VCC}
+Thus, after asserting \vcc{\active_claim(c)} in some state \vcc{s},
+\vcc{\at(s, P)} will be assumed, which means VCC will
+assume \vcc{P}, where all heap references are replaced by their values in
+\vcc{s}, and all locals are replaced by the values at the point
+when the claim was created.
+
+\itodo{I think we need more examples about that at() business,
+claim admissibility checks and so forth}
 
 \subsection{Dynamic claim management}
 
-\itodo{a rundown as a bigger example}
+So far we have only considered the case of creating claims to wrapped objects.
+In real systems some resources are managed dynamically:
+threads ask for ``handles'' to resources, operate on them,
+and give the handles back.
+These handles are usually purely virtual --- asking for a handle amounts to incrementing
+some counter.
+Only after all handles are given back the resource can be disposed.
+This is pretty much how claims work in VCC, and indeed they were modeled after this
+real-world scenario. 
+Below we have an example of prototypical reference counter.
+
+\vccInput[linerange={refcnt-init}]{c/10_rundown.c}
+
+\noindent
+Thus, a \vcc{struct RefCnt} owns a resource, and makes sure that the number of outstanding
+claims on the resource matches the physical counter stored in it.
+\vcc{\claimable(p)} means that the type of object pointed to by \vcc{p} was marked
+with \vcc{_(claimable)}.
+The lowest bit is used to disable giving out of new references
+(this is expressed in the last invariant).
+
+\vccInput[linerange={init-incr}]{c/10_rundown.c}
+
+\noindent
+Initialization shouldn't be very surprising:
+\vcc{\wrapped0(o)} means \vcc{\wrapped(o) && \claim_count(o) == 0},
+and thus on initialization we require a resource without any outstanding
+claims.
+\todo{out parameters should be explained before}
+
+\vccInput[linerange={incr-decr}]{c/10_rundown.c}
+
+\noindent
+First, let's have a look at the function contract.
+The syntax \vcc{_(always c, P)} is equivalent to:
+\begin{VCC}
+  _(requires \wrapped(c) && \claims(c, P))
+  _(ensures \wrapped(c))
+\end{VCC}
+Thus, instead of requiring \vcc{\claims_obj(c, r)}, we require that the claim
+guarantees \vcc{\consistent(r)}.
+One way of doing this is claiming \vcc{r}, but another is claiming the owner
+of \vcc{r}, as we will see shortly.
+
+As for the body, we assume our reference counter will never overflow.
+This clearly depends on the running time of the system and usage patterns,
+but in general it would be difficult to specify this, and thus we just
+hand-wave it.
+
+The new thing about the body is that we make a claim on the resource,
+even though it's not wrapped.
+There are two ways of obtaining write access to \vcc{\claim_count(p)}:
+either having \vcc{p} writable sequentially and wrapped,
+or in case \vcc{\owner(p)} is a non-thread object, checking
+invariant of \vcc{\owner(p)}.
+Thus, inside an atomic update on \vcc{\owner(p)} (which will check the invariant of \vcc{\owner(p)}) one can create
+claims on \vcc{p}.
+The same rule applies to claim destruction:
+
+\vccInput[linerange={decr-use}]{c/10_rundown.c}
+
+\noindent
+A little tricky thing here, is that we need to make use of the \vcc{handle} claim
+right after reading \vcc{r->cnt}. 
+Because this claim is valid, we know that the claim count on the resource
+is positive and therefore (by reference counter invariant) \vcc{v >= 2}.
+Without using the \vcc{handle} claim to deduce it we would get a complaint
+about overflow in \vcc{v - 2} in the second atomic block.
+
+Finally, let's have a look at a possible use scenario of our reference counter.
+
+\vccInput[linerange={use-enduse}]{c/10_rundown.c}
+
+\noindent
+The \vcc{struct B} contains a \vcc{struct A} governed by a reference counter.
+It owns the reference counter, but not \vcc{struct A} (which is owned by the reference
+counter).
+A claim guaranteeing consistency of \vcc{struct B} also guarantees
+consistency of its counter, so we can pass it to \vcc{try_incr()},
+which gives us a handle on \vcc{struct A}.
+
+Of course a question arises where one does get a claim on \vcc{struct B} from?
+In real systems the top-level claims come either from global objects that are
+always consistent, or from data passed when the thread is created.
 
