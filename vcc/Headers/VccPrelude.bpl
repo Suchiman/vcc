@@ -229,6 +229,7 @@ axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $is_primitive($map_t(#r,#d
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $is_primitive($ptr_to(#n)));
 axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $is_primitive($spec_ptr_to(#n)));
 axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claimable(#n));
+axiom (forall #n:$ctype :: {$is_claimable(#n)} $is_claimable(#n) ==> $is_composite(#n));
 axiom $is_primitive(^^void);
 axiom $is_primitive(^^bool);
 axiom $is_primitive(^^mathint);
