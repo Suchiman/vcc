@@ -53,6 +53,20 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.systemNs = new AliasQualifiedName(rootNs, this.GetSimpleNameFor("System"), SourceDummy.SourceLocation);
     }
 
+    private bool EnterSpecBlock() {
+      bool old = this.inSpecCode;
+      this.inSpecCode = true;
+      return old;
+    }
+
+    private void LeaveSpecBlock(bool previousState) {
+      this.inSpecCode = previousState;
+    }
+
+    private bool InSpecCode {
+      get { return this.inSpecCode; }
+    }
+
     private IName GetNameFor(string name)
       //^ ensures result.Value == name;
     {
@@ -206,13 +220,12 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private void ParseNonLocalSpecDeclaration(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal) {
+      bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
-      bool savedInSpecCode = this.inSpecCode;
-      this.inSpecCode = true;
       this.Skip(Token.LeftParenthesis);
       this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis, isGlobal);
       this.SkipOverTo(Token.RightParenthesis, followers);
-      this.inSpecCode = savedInSpecCode;
+      this.LeaveSpecBlock(savedInSpecCode);
     }
 
     private void ParseNonLocalDeclaration(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal)
@@ -221,10 +234,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       List<TemplateParameterDeclarator>/*?*/ templateParameters = this.ParseTemplateParameters(followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
       List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, followers|TS.DeclaratorStart|Token.Semicolon|Token.Colon);
-      bool savedInSpecCode = this.inSpecCode;
+      bool savedInSpecCode = this.InSpecCode;
       bool seenSpecToken = false;
       if (this.currentToken == Token.Specification) {
-        this.inSpecCode = true;
+        savedInSpecCode = this.EnterSpecBlock();
         seenSpecToken = true;
         followers |= Token.RightParenthesis;
         this.GetNextToken();
@@ -296,7 +309,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       if (seenSpecToken) {
         this.Skip(Token.RightParenthesis);
-        this.inSpecCode = savedInSpecCode;
+        this.LeaveSpecBlock(savedInSpecCode);
       }
     }
 
@@ -426,7 +439,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<ParameterDeclaration> parameters = this.ConvertToParameterDeclarations(funcDeclarator.Parameters, out acceptsExtraArguments);
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters = Parser.ConvertToGenericMethodParameterDeclarations(funcDeclarator.TemplateParameters);
       CallingConvention callingConvention = GetCallingConvention(specifiers, acceptsExtraArguments);
-      FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments, specifiers, storageClass == Token.Extern, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, this.inSpecCode, slb);
+      FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments, specifiers, storageClass == Token.Extern, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, this.InSpecCode, slb);
       this.AssociateContracts(fdecl, funcDeclarator);
       typeMembers.Add(fdecl);
     }
@@ -498,7 +511,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         returnType = new VccPointerTypeExpression(returnType, null, returnType.SourceLocation);
       MethodDeclaration.Flags flags = 0;
       if (acceptsExtraArguments) flags |= MethodDeclaration.Flags.AcceptsExtraArguments;
-      FunctionDefinition func = new FunctionDefinition(flags, specifiers, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, body, this.inSpecCode, slb);
+      FunctionDefinition func = new FunctionDefinition(flags, specifiers, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, body, this.InSpecCode, slb);
       typeMembers.Add(func);
       this.AssociateContracts(func, funcDeclarator);
       //TODO: complain if statements != null;
@@ -578,14 +591,14 @@ namespace Microsoft.Research.Vcc.Parsing {
         // create a unique mangled function declaration at the top level
         FunctionDeclaration mangledFunc = 
           new FunctionDeclaration(cFuncTypeExp.AcceptsExtraArguments, specifiers, isExternal, 
-          cFuncTypeExp.CallingConvention, visibility, cFuncTypeExp.ReturnType, 
-          new NameDeclaration(this.GetNameFor(cFuncTypeExp.Name.Value + cFuncTypeExp.GetHashCode()), cFuncTypeExp.SourceLocation),
-          null, parameters, this.inSpecCode, slb);
+            cFuncTypeExp.CallingConvention, visibility, cFuncTypeExp.ReturnType, 
+            new NameDeclaration(this.GetNameFor(cFuncTypeExp.Name.Value + cFuncTypeExp.GetHashCode()), cFuncTypeExp.SourceLocation),
+            null, parameters, this.InSpecCode, slb);
         
         this.currentTypeMembers.Add(mangledFunc);
-        declarations.Add(new VccLocalFunctionDeclaration(declarator.Identifier, initializer, specifiers, this.inSpecCode, slb, mangledFunc));
+        declarations.Add(new VccLocalFunctionDeclaration(declarator.Identifier, initializer, specifiers, this.InSpecCode, slb, mangledFunc));
       } else {
-        declarations.Add(new VccLocalDeclaration(declarator.Identifier, initializer, specifiers, this.inSpecCode, slb));
+        declarations.Add(new VccLocalDeclaration(declarator.Identifier, initializer, specifiers, this.InSpecCode, slb));
       }
 
 
@@ -609,12 +622,12 @@ namespace Microsoft.Research.Vcc.Parsing {
         var typedefDecl = new TypedefDeclaration(memberType, declarator.Identifier, specifiers, slb);
         this.typedefDecls[declarator.Identifier.Value] = typedefDecl;
         typeMembers.Add(typedefDecl);
-      } else if (this.inSpecCode || IsAxiom(specifiers)) {
+      } else if (this.InSpecCode || IsAxiom(specifiers)) {
         Expression/*?*/ initializer = null;
         InitializedDeclarator/*?*/ initializedDeclarator = declarator as InitializedDeclarator;
         if (initializedDeclarator != null) initializer = initializedDeclarator.InitialValue;
         if (this.currentTypeName != null) {
-          FieldDefinition specField = new FieldDefinition(specifiers, flags, memberType, declarator.Identifier, initializer, this.inSpecCode, slb);
+          FieldDefinition specField = new FieldDefinition(specifiers, flags, memberType, declarator.Identifier, initializer, this.InSpecCode, slb);
           if (this.currentSpecificationFields == null) this.currentSpecificationFields = new List<FieldDeclaration>();
           this.currentSpecificationFields.Add(specField);
         } else {
@@ -649,7 +662,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             if (bitFieldDeclarator != null)
               typeMembers.Add(new BitFieldDefinition(specifiers, bitFieldDeclarator.FieldSize, flags, memberType, declarator.Identifier, initializer, slb));
             else
-              typeMembers.Add(new FieldDefinition(specifiers, flags, memberType, declarator.Identifier, initializer, this.inSpecCode, slb));
+              typeMembers.Add(new FieldDefinition(specifiers, flags, memberType, declarator.Identifier, initializer, this.InSpecCode, slb));
           }
         } else {
           flags |= FieldDeclaration.Flags.Static; //global fields are always static
@@ -1280,7 +1293,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Parameter> parameters = new List<Parameter>();
       this.Skip(Token.LeftParenthesis);
       if (this.currentToken != Token.RightParenthesis)
-        this.ParseParameterList(parameters, followers);
+        this.ParseList(parameters, ts => this.ParseParameter(ts), followers);
       
       // If the declarator is a pointer to a function declarator, exchange the
       // parameters:
@@ -1410,21 +1423,22 @@ namespace Microsoft.Research.Vcc.Parsing {
       IName name = this.GetNameFor("__arglist");
       Declarator dec = new IdentifierDeclarator(new NameDeclaration(name, slb));
       slb.UpdateToSpan(dec.SourceLocation);
-      Parameter result = new Parameter(new List<Specifier>(0), dec, this.inSpecCode, slb, true);
+      Parameter result = new Parameter(new List<Specifier>(0), dec, this.InSpecCode, slb, true);
       this.SkipTo(followers);
       return result;
     }
 
-    private void ParseParameterList(List<Parameter> parameters, TokenSet followers) {
+
+    private void ParseList<T>(List<T> result, Func<TokenSet, T> parseElement, TokenSet followers) {
       TokenSet followersOrCommaOrRightParentesisOrSpecification = followers | Token.Comma | Token.RightParenthesis | Token.Specification;
       while (true) {
         if (this.currentToken == Token.Specification) {
-          this.ParseSpecParameterList(parameters, followersOrCommaOrRightParentesisOrSpecification);
+          this.ParseSpecList(result, parseElement, followersOrCommaOrRightParentesisOrSpecification);
           continue;
         }
         if (this.currentToken == Token.RightParenthesis)
           break;
-        parameters.Add(this.ParseParameter(followersOrCommaOrRightParentesisOrSpecification));
+        result.Add(parseElement(followersOrCommaOrRightParentesisOrSpecification));
         if (this.currentToken == Token.Comma) {
           this.GetNextToken();
           continue;
@@ -1435,14 +1449,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    private void ParseSpecParameterList(List<Parameter> parameters, TokenSet followers) {
-      bool savedInSpecCode = this.inSpecCode;
-      this.inSpecCode = true;
+    private void ParseSpecList<T>(List<T> list, Func<TokenSet, T> parseElement, TokenSet followers) {
+      bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      this.ParseParameterList(parameters, followers|Token.RightParenthesis);
+      this.ParseList(list, parseElement, followers | Token.RightParenthesis);
       this.SkipOverTo(Token.RightParenthesis, followers);
-      this.inSpecCode = savedInSpecCode;
+      this.LeaveSpecBlock(savedInSpecCode);
     }
 
     private Parameter ParseParameter(TokenSet followers) {
@@ -1455,7 +1468,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       Declarator declarator = this.ParseDeclarator(followers);
       declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
       slb.UpdateToSpan(declarator.SourceLocation);
-      var result = new Parameter(specifiers, declarator, this.inSpecCode, slb);
+      var result = new Parameter(specifiers, declarator, this.InSpecCode, slb);
       this.SkipTo(followers);
       return result;
     }
@@ -1540,7 +1553,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             this.GetNextToken();
             break;
           case Token.Identifier:
-            if (this.inSpecCode && this.scanner.GetIdentifierString() == "out") {
+            if (this.InSpecCode && this.scanner.GetIdentifierString() == "out") {
               result.Add(new OutSpecifier(this.scanner.SourceLocationOfLastScannedToken));
               this.GetNextToken();
               break;
@@ -1683,7 +1696,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         // see Microsoft.Cci.Ast.TypeDeclaration.SetMemberContainingTypeDeclaration for the supported classes
         newTypeMembers.RemoveAll(delegate(ITypeDeclarationMember member) { return !(member is TypeDeclarationMember || member is NestedTypeDeclaration); });
         if (this.currentSpecificationFields != null || this.currentTypeInvariants != null) {
-          VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentTypeInvariants, this.inSpecCode);
+          VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentTypeInvariants, this.InSpecCode);
           this.compilation.ContractProvider.AssociateTypeWithContract(type, tc);
         }
       } else if (noName) {
@@ -1866,8 +1879,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private Statement ParseSpecStatements(TokenSet followers) {
-      bool savedInSpecCode = this.inSpecCode;
-      this.inSpecCode = true;
+      bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
       List<Statement> statements = new List<Statement>();
@@ -1880,7 +1892,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         else
           specStatements.Add(new VccSpecStatement(stmt, stmt.SourceLocation));
       }
-      this.inSpecCode = savedInSpecCode;
+      this.LeaveSpecBlock(savedInSpecCode);
       this.SkipOverTo(Token.RightParenthesis, followers);
       return new StatementGroup(specStatements);
     }
@@ -3434,42 +3446,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    private void ParseArgumentList(List<Expression> arguments, TokenSet followers) {
-
-      TokenSet followersOrCommaOrRightParenthesisOrSpecification = followers | Token.Comma | Token.RightParenthesis | Token.Specification;
-      while (true) {
-        if (this.currentToken == Token.Specification) {
-          this.ParseSpecArgumentList(arguments, followersOrCommaOrRightParenthesisOrSpecification);
-          continue;
-        }
-        if (this.currentToken == Token.RightParenthesis)
-          break;
-        arguments.Add(this.ParseArgumentExpression(followersOrCommaOrRightParenthesisOrSpecification));
-        if (this.currentToken == Token.Comma) {
-          this.GetNextToken();
-          continue;
-        }
-        if (this.currentToken == Token.Specification)
-          continue;
-        break;
-      }
-    }
-
-    private void ParseSpecArgumentList(List<Expression> arguments,  TokenSet followers) {
-      bool savedInSpecCode = this.inSpecCode;
-      this.inSpecCode = true;
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      this.ParseArgumentList(arguments, followers | Token.RightParenthesis);
-      this.SkipOverTo(Token.RightParenthesis, followers);
-      this.inSpecCode = savedInSpecCode;
-    }
-
     private List<Expression> ParseArgumentList(SourceLocationBuilder slb, TokenSet followers) {
       List<Expression> arguments = new List<Expression>();
       this.Skip(Token.LeftParenthesis);
       if (this.currentToken != Token.RightParenthesis)
-        this.ParseArgumentList(arguments, followers);
+        this.ParseList(arguments, ts => this.ParseArgumentExpression(ts), followers);
       arguments.TrimExcess();
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       this.SkipOverTo(Token.RightParenthesis, followers);
@@ -3478,7 +3459,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     private Expression ParseArgumentExpression(TokenSet followers)
     {
-      if (this.inSpecCode && this.currentToken == Token.Identifier && this.scanner.GetIdentifierString() == "out") {
+      if (this.InSpecCode && this.currentToken == Token.Identifier && this.scanner.GetIdentifierString() == "out") {
         this.GetNextToken();
         var argExpr = this.ParseExpression(followers);
         var slb = new SourceLocationBuilder(argExpr.SourceLocation);
