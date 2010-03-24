@@ -1,0 +1,19 @@
+#include "vcc.h"
+
+spec(int a = 5; 
+     int b = 10; 
+     int foo() { }; 
+     void bar() { }; 
+     struct S { int a; int b; }; 
+)
+
+struct T {
+  spec(int a; int b;)
+  int c;
+  invariant(a+b == c)
+};
+`
+Verification of T#adm succeeded.
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
