@@ -81,3 +81,10 @@ Verification of foo#overload#void#int32_t#overload#void#int32_t succeeded.
 Verification of foo#overload#void#spec_int32_t succeeded.
 Verification of foo#overload#void#out_int32_t succeeded.
 `
+struct S { int a; };
+void overload(__specification(struct S *s)) { };
+void overload(struct S *s) { };
+`
+Verification of overload#overload#void#spec_struct_S. succeeded.
+Verification of overload#overload#void#struct_S. succeeded.
+`
