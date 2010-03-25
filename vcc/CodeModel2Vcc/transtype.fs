@@ -553,7 +553,7 @@ namespace Microsoft.Research.Vcc
                 let newFldType = match fld.Type with | Integer k -> Integer (Type.ToUnsigned k) | _ -> die()
                 let newFld = { fld with Name = "bitfield#" + byteOffset.ToString(); Offset = Normal(byteOffset); Type = newFldType }
                 addFieldSubst fld (Some newFld)
-                newFld :: (fieldsForBitfields' (currentOffset + newFld.Type.SizeOf) (Some newFld) flds)
+                newFld :: (fieldsForBitfields' (byteOffset + newFld.Type.SizeOf) (Some newFld) flds)
         fieldsForBitfields' 0 None td.Fields
 
       let fieldsForBitfieldsInUnion td =
