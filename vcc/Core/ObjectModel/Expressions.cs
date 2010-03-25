@@ -616,12 +616,10 @@ namespace Microsoft.Research.Vcc {
       public override void Visit(IBoundExpression boundExpression) {
         var typeAsPtr = boundExpression.Type as IPointerType;
         if (typeAsPtr != null && VccCompilationHelper.IsSpecPointer(typeAsPtr)) result = true;
-        else {
-          if (TypeHelper.GetTypeName(boundExpression.Type).Contains("._FixedArrayOfSize")) {
-            this.VisitDefinitionThenInstance(boundExpression.Definition, boundExpression.Instance);
-          }
-        }
+        else
+          this.VisitDefinitionThenInstance(boundExpression.Definition, boundExpression.Instance);
       }
+      
 
       public override void Visit(IAddressableExpression addressableExpression) {
         this.VisitDefinitionThenInstance(addressableExpression.Definition, addressableExpression.Instance);
