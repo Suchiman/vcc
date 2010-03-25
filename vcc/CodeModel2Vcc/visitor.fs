@@ -196,18 +196,24 @@ namespace Microsoft.Research.Vcc
           | _ when methodsMap.ContainsKey meth -> methodsMap.[meth]
           | _ ->
             let sanitizedTypeName (t : C.Type) = t.ToString().Replace(' ', '_').Replace('*', '.')
+            let parKind (p:IParameterTypeInformation) =
+              match p with
+                | :? Microsoft.Research.Vcc.VccParameterDefinition as vcp -> 
+                  if vcp.IsOut then "out_" elif vcp.IsSpec then "spec_" else ""
+                | _ -> ""
+            let parKind' (p:C.Variable) = 
+              match p.Kind with
+                | C.VarKind.Parameter -> ""
+                | C.VarKind.SpecParameter -> "spec_"
+                | C.VarKind.OutParameter -> "out_"
+                | _ -> die()
             let nameWhenOverloadsArePresent methName (meth : ISignature) =
               let typeName t = sanitizedTypeName (this.DoType(t))
-              let parKind (p:IParameterTypeInformation) =
-                match p with
-                  | :? Microsoft.Research.Vcc.VccParameterDefinition as vcp -> 
-                    if vcp.IsOut then "out_" elif vcp.IsSpec then "spec_" else ""
-                  | _ -> ""
               let parTypes = [| for p in meth.Parameters -> parKind p + typeName p.Type |]
               let parTypeString = if parTypes.Length = 0 then "" else "#" + System.String.Join("#", parTypes)
               methName + "#overload#" + (typeName meth.Type)  + parTypeString
             let updatedNameWhenOverloadsArePresent (fn : C.Function) =
-              let parTypes = [| for p in fn.Parameters -> sanitizedTypeName p.Type |]
+              let parTypes = [| for p in fn.Parameters -> (parKind' p) + (sanitizedTypeName p.Type) |]
               let parTypeString = if parTypes.Length = 0 then "" else "#" + System.String.Join("#", parTypes)
               fn.Name + "#overload#" + (sanitizedTypeName fn.RetType) + parTypeString
             let isSpec =
