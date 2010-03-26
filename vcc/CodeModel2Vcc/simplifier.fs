@@ -1013,6 +1013,9 @@ namespace Microsoft.Research.Vcc
          helper.GraveWarning(cmn.Token, 9304, "physical location passed as out parameter")
          false
        | CallMacro(_, "spec", _, args) -> List.iter (fun (e:Expr) -> e.SelfVisit(checkNoWritesToPhysicalFromSpec true)) args; false
+       | Call(ec, fn, _, _) when withinSpec && not fn.IsSpec && not fn.IsPure ->
+         helper.GraveWarning(ec.Token, 9313, "call to impure implementation function '" + fn.Name + "' from specification code")
+         false
        | _ -> true
 
       let rec checkAccessToSpecFields ctx self = function
