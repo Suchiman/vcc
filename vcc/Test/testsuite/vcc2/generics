@@ -152,7 +152,7 @@ struct T {
   spec(struct S *p;)
 };
 
-template<typename T> T *bar();
+spec(template<typename T> T *bar();)
 
 void foo() 
   writes(set_empty())
