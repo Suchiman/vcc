@@ -46,6 +46,7 @@
           this.splitContainer1 = new System.Windows.Forms.SplitContainer();
           this.z3AxiomTree = new System.Windows.Forms.TreeView();
           this.toolTipBox = new System.Windows.Forms.TextBox();
+          this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.menuStrip1.SuspendLayout();
           this.splitContainer1.Panel1.SuspendLayout();
           this.splitContainer1.Panel2.SuspendLayout();
@@ -70,6 +71,7 @@
             this.loadZ3TraceLogToolStripMenuItem,
             this.profileZ3TraceToolStripMenuItem,
             this.loadZ3FromBoogieToolStripMenuItem,
+            this.searchToolStripMenuItem,
             this.toolStripSeparator2,
             this.colorVisualizationToolStripMenuItem,
             this.toolStripSeparator1,
@@ -198,6 +200,7 @@
           this.z3AxiomTree.TabIndex = 1;
           this.z3AxiomTree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.HandleExpand);
           this.z3AxiomTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.SetTooltip);
+          this.z3AxiomTree.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.z3AxiomTree_KeyPress);
           // 
           // toolTipBox
           // 
@@ -213,6 +216,13 @@
           this.toolTipBox.Name = "toolTipBox";
           this.toolTipBox.Size = new System.Drawing.Size(741, 68);
           this.toolTipBox.TabIndex = 0;
+          // 
+          // searchToolStripMenuItem
+          // 
+          this.searchToolStripMenuItem.Name = "searchToolStripMenuItem";
+          this.searchToolStripMenuItem.Size = new System.Drawing.Size(268, 22);
+          this.searchToolStripMenuItem.Text = "&Search";
+          this.searchToolStripMenuItem.Click += new System.EventHandler(this.searchToolStripMenuItem_Click);
           // 
           // Z3AxiomProfiler
           // 
@@ -255,6 +265,7 @@
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.TreeView z3AxiomTree;
         private System.Windows.Forms.TextBox toolTipBox;
+        private System.Windows.Forms.ToolStripMenuItem searchToolStripMenuItem;
     }
 }
 
