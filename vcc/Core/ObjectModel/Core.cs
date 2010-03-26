@@ -32,6 +32,65 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
+  public class IsSpecVisitor : BaseCodeVisitor
+  {
+    private bool result;
+
+    public override void Visit(IExpression expr) {
+      expr.Dispatch(this);
+    }
+
+    public override void Visit(IAddressOf addressOf) {
+      this.Visit(addressOf.Expression);
+    }
+
+    private void VisitDefinitionThenInstance(object definition, IExpression instance) {
+      var localDef = definition as VccLocalDefinition;
+      if (localDef != null) {
+        if (localDef.IsSpec) result = true;
+      } else {
+        var field = definition as Cci.Ast.FieldDefinition;
+        if (field != null) {
+          var fieldDef = field.Declaration as Vcc.FieldDefinition;
+          if (fieldDef != null && fieldDef.IsSpec) result = true;
+          else {
+            var gVar = field.Declaration as GlobalVariableDeclaration;
+            if (gVar != null) {
+              var typeContract = gVar.Compilation.ContractProvider.GetTypeContractFor(gVar.ContainingTypeDeclaration);
+              foreach (var cField in typeContract.ContractFields) {
+                if (cField == field) {
+                  result = true;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (!result && instance != null) this.Visit(instance);
+    }
+
+    public override void Visit(IBoundExpression boundExpression) {
+      var typeAsPtr = boundExpression.Type as IPointerType;
+      if (typeAsPtr != null && VccCompilationHelper.IsSpecPointer(typeAsPtr)) result = true;
+      else
+        this.VisitDefinitionThenInstance(boundExpression.Definition, boundExpression.Instance);
+    }
+
+
+    public override void Visit(IAddressableExpression addressableExpression) {
+      this.VisitDefinitionThenInstance(addressableExpression.Definition, addressableExpression.Instance);
+    }
+
+    public static bool Check(IExpression expr) {
+      var visitor = new IsSpecVisitor();
+      visitor.Visit(expr);
+      return visitor.result;
+    }
+  }
+
+
   public sealed class VccCompilation : Compilation {
 
     /// <summary>
@@ -116,7 +175,6 @@ namespace Microsoft.Research.Vcc {
         result.SetContainingTypeDeclaration(this.GlobalDeclarationContainer, true);
         arrayTypeTable2.Add(elementType, result);
       }
-      this.VccHelper.AddFixedSizeArrayToPointerMapEntry(result.TypeDefinition, PointerType.GetPointerType(elementType, this.Compilation.HostEnvironment.InternFactory));
       this.GlobalDeclarationContainer.AddHelperMember(result);
       return result;
     }
@@ -290,14 +348,7 @@ namespace Microsoft.Research.Vcc {
     public static readonly string SystemDiagnosticsContractsCodeContractMapString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Map";
     static readonly string SystemDiagnosticsContractsCodeContractBigIntString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigInt";
 
-    internal void AddFixedSizeArrayToPointerMapEntry(ITypeDefinition fixedSizeArray, IPointerType pointerType) {
-      lock (this.arrayToPointerMap) {
-        this.arrayToPointerMap.Add(fixedSizeArray, pointerType);
-      }
-    }
-    private readonly Dictionary<ITypeDefinition, IPointerType> arrayToPointerMap = new Dictionary<ITypeDefinition, IPointerType>();
-
-    internal ITypeDefinition/*?*/ FixedArrayElementType(ITypeDefinition fixedSizeArray) {
+    internal ITypeDefinition/*?*/ GetFixedArrayElementType(ITypeDefinition fixedSizeArray) {
       if (fixedSizeArray.IsStruct && fixedSizeArray.SizeOf > 0) {
         IFieldDefinition field = TypeHelper.GetField(fixedSizeArray, this.NameTable.GetNameFor("_ElementType"));
         if (field != Dummy.Field) return field.Type.ResolvedType;
@@ -305,11 +356,13 @@ namespace Microsoft.Research.Vcc {
       return null;
     }
 
-    internal IPointerType/*?*/ ArrayPointerFor(ITypeDefinition fixedSizeArray) {
-      ITypeDefinition/*?*/ elementType = this.FixedArrayElementType(fixedSizeArray);
-      if (elementType != null)
+    internal IPointerType/*?*/ GetPointerForFixedSizeArray(ITypeDefinition fixedSizeArray, bool isSpec) {
+      ITypeDefinition/*?*/ elementType = this.GetFixedArrayElementType(fixedSizeArray);
+      if (elementType == null) return null;
+      if (isSpec)
+        return this.MakeSpecPointer(elementType);
+      else
         return PointerType.GetPointerType(elementType, this.Compilation.HostEnvironment.InternFactory);
-      return null;
     }
 
     private enum PtrConvKind
@@ -442,7 +495,7 @@ namespace Microsoft.Research.Vcc {
       } else {
         if (type is IFunctionPointer)
           return PtrConvKind.FuncP;
-        IPointerType arrayPtr = this.ArrayPointerFor(type);
+        IPointerType arrayPtr = this.GetPointerForFixedSizeArray(type, false);
         if (arrayPtr != null) {
           ptrTypeForArray = arrayPtr;
           return PtrConvKind.Array;
@@ -777,24 +830,19 @@ namespace Microsoft.Research.Vcc {
       return this.StripPointersThenInferTypesAndReturnTrueIfInferenceFails(inferredTypeArgumentFor, argumentType, parameterType);
     }
 
-
-
-    public override ITypeReference GetPointerTargetType(ITypeDefinition type)
-    {
-      NestedTypeDefinition/*?*/ nestedType = type as NestedTypeDefinition;
-      if (nestedType != null && nestedType.Name.Value.StartsWith("_FixedArrayOfSize", StringComparison.Ordinal)) {
-        return this.FixedArrayElementType(nestedType);
-      }
+    public override ITypeReference GetPointerTargetType(ITypeDefinition type) {
+      if (this.IsFixedSizeArrayType(type))
+        return this.GetFixedArrayElementType(type);
       return base.GetPointerTargetType(type);
     }
 
-    public override bool IsPointerType(ITypeDefinition type)
-    {
+    public override bool IsPointerType(ITypeDefinition type) {
+      return this.IsFixedSizeArrayType(type) || base.IsPointerType(type);
+    }
+
+    public bool IsFixedSizeArrayType(ITypeDefinition type) {
       NestedTypeDefinition/*?*/ nestedType = type as NestedTypeDefinition;
-      if (nestedType != null && nestedType.Name.Value.StartsWith("_FixedArrayOfSize", StringComparison.Ordinal)) {
-        return true;
-      }
-      return base.IsPointerType(type);
+      return nestedType != null && nestedType.Name.Value.StartsWith("_FixedArrayOfSize", StringComparison.Ordinal);
     }
 
     private bool IsIntOrBooleanType(ITypeDefinition type) {
@@ -898,6 +946,9 @@ namespace Microsoft.Research.Vcc {
           if (this.ResolveToMethod(expression) != null) return true;
         }
       }
+
+      if (IsFixedSizeArrayType(expression.Type) && IsSpecVisitor.Check(expression.ProjectAsIExpression()))
+        return this.ImplicitConversionExists(this.GetPointerForFixedSizeArray(expression.Type, true), targetType);
       return base.ImplicitConversionExists(expression, targetType);
     }
 

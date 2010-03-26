@@ -165,27 +165,19 @@ namespace Microsoft.Research.Vcc {
     /// <summary>
     /// Returns a collection of methods that represents the overloads for ptr + index.
     /// </summary>
-    private IEnumerable<IMethodDefinition> GetLeftPointerAdditionMethods(ITypeDefinition pointerType) {
+    private IEnumerable<IMethodDefinition> GetPointerAdditionMethods(ITypeDefinition pointerType, bool left) {
       BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
-      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt32.ResolvedType);
-      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt32.ResolvedType);
-      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt64.ResolvedType);
-      yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt64.ResolvedType);
-    }
-
-    /// <summary>
-    /// Returns a collection of methods that represents the overloads for index + ptr.
-    /// </summary>
-    private IEnumerable<IMethodDefinition> GetRightPointerAdditionMethods(ITypeDefinition pointerType) {
-      BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
-      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt32.ResolvedType, pointerType);
-      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt32.ResolvedType, pointerType);
-      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt64.ResolvedType, pointerType);
-      yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt64.ResolvedType, pointerType);
-    }
-
-    ITypeDefinition/*?*/ LeftOperandFixedArrayElementType {
-      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.LeftOperand.Type); }
+      if (left) {
+        yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt32.ResolvedType);
+        yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt32.ResolvedType);
+        yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt64.ResolvedType);
+        yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt64.ResolvedType);
+      } else {
+        yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt32.ResolvedType, pointerType);
+        yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt32.ResolvedType, pointerType);
+        yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt64.ResolvedType, pointerType);
+        yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt64.ResolvedType, pointerType);
+      }
     }
 
     /// <summary>
@@ -228,26 +220,22 @@ namespace Microsoft.Research.Vcc {
       return new VccAddition(containingBlock, this);
     }
 
-    ITypeDefinition/*?*/ RightOperandFixedArrayElementType {
-      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.RightOperand.Type); }
-    }
-
     /// <summary>
     /// A list of dummy methods that correspond to operations that are built into IL. The dummy methods are used, via overload resolution,
     /// to determine how the operands are to be converted before the operation is carried out.
     /// </summary>
     protected override IEnumerable<IMethodDefinition> StandardOperators {
       get {
-        ITypeDefinition/*?*/ leftOperandFixedArrayElementType = this.LeftOperandFixedArrayElementType;
-        if (leftOperandFixedArrayElementType != null)
-          return this.GetLeftPointerAdditionMethods(PointerType.GetPointerType(leftOperandFixedArrayElementType, this.Compilation.HostEnvironment.InternFactory));
-        ITypeDefinition/*?*/ rightOperandFixedArrayElementType = this.RightOperandFixedArrayElementType;
-        if (rightOperandFixedArrayElementType != null)
-          return this.GetRightPointerAdditionMethods(PointerType.GetPointerType(rightOperandFixedArrayElementType, this.Compilation.HostEnvironment.InternFactory));
+        VccCompilationHelper vccHelper = (VccCompilationHelper)this.Helper;
+        if (vccHelper.IsFixedSizeArrayType(this.LeftOperand.Type)) {
+          return this.GetPointerAdditionMethods(vccHelper.GetPointerForFixedSizeArray(this.LeftOperand.Type, IsSpecVisitor.Check(this.LeftOperand.ProjectAsIExpression())), true);
+        }
+        if (vccHelper.IsFixedSizeArrayType(this.RightOperand.Type)) {
+          return this.GetPointerAdditionMethods(vccHelper.GetPointerForFixedSizeArray(this.RightOperand.Type, IsSpecVisitor.Check(this.RightOperand.ProjectAsIExpression())),false);
+        }
         return base.StandardOperators;
       }
     }
-
   }
 
   /// <summary>
@@ -472,7 +460,7 @@ namespace Microsoft.Research.Vcc {
       if (result == Dummy.Type) {
         NestedTypeDefinition/*?*/ addressType = this.Address.Type as NestedTypeDefinition;
         if (addressType != null && addressType.Name.Value.StartsWith("_FixedArrayOfSize", StringComparison.Ordinal)) {
-          return ((VccCompilationHelper)this.Helper).FixedArrayElementType(addressType);
+          return ((VccCompilationHelper)this.Helper).GetFixedArrayElementType(addressType);
         }
       }
       return result;
@@ -533,11 +521,8 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
      public override ITypeDefinition InferType() {
        bool isSpec = IsSpecVisitor.Check(this.Address);
-       IPointerType/*?*/ pointerType = ((VccCompilationHelper)this.Helper).ArrayPointerFor(this.Address.Type);
-       if (pointerType != null) {
-         if (isSpec) return this.GetSpecPointerType(pointerType.TargetType.ResolvedType);
-         return pointerType;
-       }
+       IPointerType/*?*/ pointerType = ((VccCompilationHelper)this.Helper).GetPointerForFixedSizeArray(this.Address.Type, isSpec);
+       if (pointerType != null) return pointerType;
        if (this.Address.Type == Dummy.Type) return Dummy.Type;
        if (isSpec) return this.GetSpecPointerType(this.Address.Type);
        return PointerType.GetPointerType(this.Address.Type, this.Compilation.HostEnvironment.InternFactory);
@@ -574,63 +559,6 @@ namespace Microsoft.Research.Vcc {
       return new VccAddressOf(containingBlock, this);
     }
 
-    private class IsSpecVisitor : BaseCodeVisitor
-    {
-      private bool result;
-
-      public override void Visit(IExpression expr) {
-        expr.Dispatch(this);
-      }
-
-      public override void Visit(IAddressOf addressOf) {
-        this.Visit(addressOf.Expression);
-      }
-
-      private void VisitDefinitionThenInstance(object definition, IExpression instance) {
-        var localDef = definition as VccLocalDefinition;
-        if (localDef != null) {
-          if (localDef.IsSpec) result = true;
-        } else {
-          var field = definition as Cci.Ast.FieldDefinition;
-          if (field != null) {
-            var fieldDef = field.Declaration as Vcc.FieldDefinition;
-            if (fieldDef != null && fieldDef.IsSpec) result = true;
-            else {
-              var gVar = field.Declaration as GlobalVariableDeclaration;
-              if (gVar != null) {
-                var typeContract = gVar.Compilation.ContractProvider.GetTypeContractFor(gVar.ContainingTypeDeclaration);
-                foreach (var cField in typeContract.ContractFields) {
-                  if (cField == field) {
-                    result = true;
-                    break;
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        if (!result && instance != null)   this.Visit(instance);
-      }
-
-      public override void Visit(IBoundExpression boundExpression) {
-        var typeAsPtr = boundExpression.Type as IPointerType;
-        if (typeAsPtr != null && VccCompilationHelper.IsSpecPointer(typeAsPtr)) result = true;
-        else
-          this.VisitDefinitionThenInstance(boundExpression.Definition, boundExpression.Instance);
-      }
-      
-
-      public override void Visit(IAddressableExpression addressableExpression) {
-        this.VisitDefinitionThenInstance(addressableExpression.Definition, addressableExpression.Instance);
-      }
-
-      public static bool Check(IExpression expr) {
-        var visitor = new IsSpecVisitor();
-        visitor.Visit(expr);
-        return visitor.result;
-      }
-    }
   }
 
   /// <summary>
@@ -1914,7 +1842,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     ITypeDefinition/*?*/ FixedArrayElementType {
-      get { return ((VccCompilationHelper)this.Helper).FixedArrayElementType(this.IndexedObject.Type); }
+      get { return ((VccCompilationHelper)this.Helper).GetFixedArrayElementType(this.IndexedObject.Type); }
     }
 
     protected override void ComplainAboutCallee()

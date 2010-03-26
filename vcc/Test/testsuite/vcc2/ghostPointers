@@ -287,3 +287,14 @@ void test() {
 `
 Verification of test succeeded.
 `
+#include "vcc.h"
+
+struct vcc(dynamic_owns) wa {
+  int a[10];
+  invariant(*(a + 5) == 6) // works
+  spec(int sa[10];)
+  invariant(*(sa + 5) == 6) // fails
+}; 
+`
+Verification of wa#adm succeeded.
+`
