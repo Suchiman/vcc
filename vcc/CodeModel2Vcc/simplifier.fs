@@ -1022,10 +1022,10 @@ namespace Microsoft.Research.Vcc
         | _ when ctx.IsPure -> 
           false
         | CallMacro(_, "spec", _, _) 
-        | Call(_, {IsSpec = true}, _, _) 
-        | CallMacro(_, "_vcc_unwrap", _, _)
-        | CallMacro(_, "_vcc_wrap", _, _)
-        | CallMacro(_, "_vcc_wrap_non_owns", _, _)
+        | CallMacro(_, ("_vcc_unwrap"|"_vcc_wrap"|"_vcc_wrap_non_owns"|"_vcc_alloc"|"_vcc_free"|"_vcc_stack_alloc"), _, _)
+        | CallMacro(_, ("_vcc_containing_struct"|"_vcc_from_bytes"|"_vcc_to_bytes"|"_vcc_havoc_others"), _, _)
+        | CallMacro(_, ("_vcc_bump_volatile_version"|"_vcc_deep_unwrap"|"_vcc_union_reinterpret"|"_vcc_reads_havoc"),_ , _)
+        | CallMacro(_, ("_vcc_set_owns"|"_vcc_set_closed_owner"|"_vcc_set_closed_owns"|"_vcc_split_array"|"_vcc_join_arrays"),_ , _)
         | CallMacro(_, "unclaim", _, _) 
         | CallMacro(_, "by_claim", _, [_; _; _]) ->
           false
@@ -1033,6 +1033,9 @@ namespace Microsoft.Research.Vcc
           match exprDependsOnSpecExpr tgt with
             | Some _ -> false
             | _ -> true
+        | Call(cmn, ({IsSpec = true} as fn), _, args) ->
+          helper.GraveWarning(cmn.Token, 9301, "access to specification function '" + fn.Name + "' within non-specification code")
+          false
         | Call(_, f, _, args) ->
           let checkIfNotSpecPar (v : Variable) (expr : Expr) =
             if v.Kind <> VarKind.SpecParameter && v.Kind <> VarKind.OutParameter then expr.SelfCtxVisit(ctx.IsPure, checkAccessToSpecFields)
@@ -1046,9 +1049,6 @@ namespace Microsoft.Research.Vcc
           true
         | Ref(cmn, ({Kind = SpecParameter|OutParameter} as v)) ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification parameter '" + v.Name + "' within non-specification code")
-          true
-        | Call(cmn, ({IsSpec = true} as fn), _, args) ->
-          helper.GraveWarning(cmn.Token, 9301, "access to specification function '" + fn.Name + "' within non-specification code")
           true
         | _ -> true
         
