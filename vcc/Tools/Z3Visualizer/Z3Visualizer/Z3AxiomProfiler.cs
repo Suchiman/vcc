@@ -506,5 +506,31 @@ namespace Z3AxiomProfiler
         toolTipBox.Lines = c.ToolTip().Replace("\r","").Split('\n');
       }
     }
+
+    void Search()
+    {
+      var searchBox = new SearchBox(this);
+      searchBox.Populate(z3AxiomTree.Nodes);
+      searchBox.Show();
+    }
+
+    internal void Activate(TreeNode n)
+    {
+      z3AxiomTree.SelectedNode = n;
+    }
+
+    private void searchToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+      Search();
+    }
+
+    private void z3AxiomTree_KeyPress(object sender, KeyPressEventArgs e)
+    {
+      if (e.KeyChar == '/') {
+        e.Handled = true;
+        Search();
+      }
+
+    }
   }
 }
