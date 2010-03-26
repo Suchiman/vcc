@@ -21,7 +21,7 @@ spec(ispure bool bar(unsigned *map);)
 axiom(forall(unsigned *p; { bar(p) } foo(*p)));
 
 void f() {
-  foo(5);
+  spec(foo(5);)
  }
 `
 Verification of f succeeded.

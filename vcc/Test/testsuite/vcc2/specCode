@@ -69,3 +69,12 @@ struct X2 foo(unsigned x) ensures(result.Y == x)
 Verification of foo#overload#struct_X1#spec_uint32_t succeeded.
 Verification of foo#overload#struct_X2#uint32_t succeeded.
 `
+__specification(void foo();)
+
+void bar() {
+	foo();
+}
+`
+testcase(4,2) : warning VC9301: [possible unsoundness]: access to specification function 'foo' within non-specification code
+Verification of bar succeeded.
+`
