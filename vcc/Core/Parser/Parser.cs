@@ -1660,8 +1660,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       NameDeclaration mangledName = this.MangledStructuredName(name);
       NamedTypeExpression/*?*/ texpr = null;
       List<ITypeDeclarationMember> newTypeMembers = new List<ITypeDeclarationMember>();
+      object type = null;
+
       if (this.currentToken == Token.LeftBrace) {
-        object type;
         if (this.currentTypeName != null) {
           SimpleName nestedName = new VccSimpleName(name, name.SourceLocation);
           texpr = new VccNamedTypeExpression(new QualifiedName(this.currentTypeName, nestedName, name.SourceLocation));
@@ -1716,7 +1717,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           texpr = new VccNamedTypeExpression(simpleName);
       }
 
-      if (newTypeMembers.Count == 0)
+      if (newTypeMembers.Count == 0 && currentSpecificationFields == null)
         this.emptyStructuredTypes[texpr] = true;
 
       this.currentSpecificationFields = savedSpecificationFields;

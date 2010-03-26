@@ -655,14 +655,28 @@ namespace Microsoft.Research.Vcc {
       foreach (ITypeDefinitionMember anonMember in type.GetMembersNamed(Dummy.Name, false)) {
         IFieldDefinition/*?*/ anonField = anonMember as IFieldDefinition;
         if (anonField != null){
-          foreach (ITypeDefinitionMember member in anonField.Type.ResolvedType.GetMembersNamed(memberName, false))
+          foreach (ITypeDefinitionMember member in anonField.Type.ResolvedType.GetMembersNamed(memberName, ignoreCase))
             yield return member;
-          //^ assume anonField != null;
-          foreach (ITypeDefinitionMember member in this.GetExtensionMembers(anonField.Type.ResolvedType, memberName, false))
+          foreach (ITypeDefinitionMember member in this.GetExtensionMembers(anonField.Type.ResolvedType, memberName, ignoreCase))
             yield return member;
         }
       }
-      //TODO: for mapping to IL, as well as use of anon structs inside other structs, it is also necessary to override the Instance property of QualifiedName.
+      Microsoft.Cci.Contracts.ITypeContract tc = this.Compilation.ContractProvider.GetTypeContractFor(type);
+      if (tc != null) {
+        foreach (IFieldDefinition contractField in tc.ContractFields) {
+          if (ignoreCase) {
+            if (contractField.Name.UniqueKeyIgnoringCase == memberName.UniqueKeyIgnoringCase) yield return contractField;
+          } else {
+            if (contractField.Name.UniqueKey == memberName.UniqueKey) yield return contractField;
+          }
+          if (contractField.Name.UniqueKey == Dummy.Name.UniqueKey) {
+            foreach (ITypeDefinitionMember member in contractField.Type.ResolvedType.GetMembersNamed(memberName, ignoreCase))
+              yield return member;
+            foreach (ITypeDefinitionMember member in this.GetExtensionMembers(contractField.Type.ResolvedType, memberName, ignoreCase))
+              yield return member;
+          }
+        }
+      }
     }
 
     /// <summary>
