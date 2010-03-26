@@ -3,6 +3,7 @@
 struct vcc(dynamic_owns) A {
   int a;
   spec(int b; )
+  invariant(a < b)
 };
 
 void foo(struct A *x)

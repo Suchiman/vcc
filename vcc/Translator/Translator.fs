@@ -180,12 +180,10 @@ namespace Microsoft.Research.Vcc
         match t with
           | C.Ptr t ->
             bCall "$read_ptr" [s; p; toTypeId t]
-          | C.Integer k ->
-            bCall ("$read_" + C.Type.IntSuffix k) [s; p]
           | C.Bool ->
             bCall "$read_bool" [s; p]
           | t ->                
-            castFromInt (trType t) (bCall "$read_any" [s; p])
+            castFromInt (trType t) (bCall "$mem" [s; p])
 
       let varRef v = er (ctx.VarName v)
 
@@ -1498,10 +1496,10 @@ namespace Microsoft.Research.Vcc
                 | None -> fun v f -> bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]
                 | Some t -> fun v f -> bCall "$idx" [ bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]; idx; toTypeId t]
             function
-              | C.Integer k -> bCall ("$read_" + C.Type.IntSuffix k) [state; fldAccess v f]
-              | C.Ptr t -> bCall "$read_ptr" [state; fldAccess v f; toTypeId t]
               | C.Bool -> bCall "$read_bool" [state; fldAccess v f]
-              | C.Map(_,_) -> bCall "$read_any" [state; fldAccess v f]        
+              | C.Integer _
+              | C.Ptr _ // using $read_ptr() would add type information, but this isn't needed
+              | C.Map(_,_) -> bCall "$mem" [state; fldAccess v f]
               | C.Array(t, n) -> 
                 match arrayElementType with
                   | Some _ ->
@@ -1853,7 +1851,7 @@ namespace Microsoft.Research.Vcc
         
         let in_span_of = extentCall "$in_span_of" false false primFields   
         let ignorePrimField _ = bTrue     
-        let readAnyIsZero field = bEq (bCall "$read_any" [ er "#s1"; field ]) (bInt 0)
+        let readAnyIsZero field = bEq (bCall "$mem" [ er "#s1"; field ]) (bInt 0)
         let extentProps = List.map B.Decl.Axiom
                               [extentProp "mutable" false isUnion true ignorePrimField allFields;
                                extentProp "is_fresh" true isUnion true ignorePrimField allFields;
