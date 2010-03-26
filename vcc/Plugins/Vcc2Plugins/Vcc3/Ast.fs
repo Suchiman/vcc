@@ -12,6 +12,24 @@ open Util
 module Ast =
   type RoList<'a> = System.Collections.Generic.IList<'a>
 
+  // move this somewhere
+  type UniqueList<'a>
+    when 'a : equality () =
+    let l = glist[]
+    let d = gdict()
+    
+    member this.Add e =
+      if d.ContainsKey e then ()
+      else
+        d.Add (e, true)
+        l.Add e
+        
+    member this.Has e = d.ContainsKey e
+    
+    member this.Elts = l :> seq<'a>
+  
+  let ulist() = new UniqueList<_>() 
+
   let objConcat sep (l : seq<'a>) =
     String.concat sep [for e in l -> e.ToString()]
     
@@ -94,6 +112,8 @@ module Ast =
         | Lit l -> wr (l.ToString())
         | App (f, [a;b]) when not (String.exists System.Char.IsLetterOrDigit f.Name) ->
           bin f.Name a b
+        | App ({ Name = "select@" }, [a; b]) ->
+          self a; wr "["; self b; wr "]"
         | App (n, args) ->
           if n.Name = "ite@" && n.RetType = Type.Bool then
             match args with
@@ -110,6 +130,10 @@ module Ast =
           wr " "
           q.Vars |> commas sb (fun v -> wr (v.ToString()))
           wr (objConcat " " q.Attrs)
+          for t in q.Triggers do
+            wr " {"
+            commas sb self t
+            wr "}"
           wr " :: "
           // TODO triggers
           self q.Body
