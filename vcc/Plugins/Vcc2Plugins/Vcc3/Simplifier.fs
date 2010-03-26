@@ -272,7 +272,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         if numInst = 0 then
           if trLevel >= 3 then
             wr "[SMT] Fail"
-          let res = this.Fail (expr |> this.Goalize)
+          let res = this.Fail expr
           smt.Pop()
           res
         else
@@ -289,11 +289,12 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         this.Succeed()
   
   member private this.Valid negate (expr:Expr) =
+    let goalize (e:Expr) = e.Expand() |> this.Goalize
     let validOr a b =
       if this.NestedValid negate a then
         true
       else
-        this.Assume (Expr.MkNotCond (not negate) a)
+        this.LogAssume (Expr.MkNotCond (not negate) (goalize a))
         this.Valid negate b
     
     let passToSMT expr = this.SmtValid negate expr
@@ -317,12 +318,12 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
           this.Valid negate c
         else
           this.Push()
-          this.LogAssume a
+          this.LogAssume (goalize a)
           let r1 = this.Valid negate b
           this.Pop()
           if r1 then
             this.Push()
-            this.LogAssume (Expr.MkNot a)
+            this.LogAssume (Expr.MkNot (goalize a))
             let r2 = this.Valid negate c
             this.Pop()
             r2
@@ -332,13 +333,21 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         match fn.Body with
           | Expand _ ->
             this.Valid negate (expr.Apply())
-          | ImpliedBy _ when not negate ->
-            this.Valid negate (expr.Apply())
+          //| ImpliedBy _ when not negate ->
+          //  this.Valid negate (expr.Apply())
           | _ ->
             passToSMT expr
             
-      | Binder q ->
-        passToSMT expr
+      | Binder q ->        
+        if (negate && q.Kind = Exists) || (not negate && q.Kind = Forall) then
+          let vars = gdict()
+          for v in q.Vars do
+            let fn = this.MakeTempFun ("sk@" + v.Name) [] v.Typ
+            smt.DeclareTempFunction fn
+            vars.Add (v.Id, App (fn, []))
+          this.Valid negate (q.Body.Subst vars)
+        else
+          passToSMT expr
         
       | Lit (Lit.Bool v) ->
         if v <> negate then

@@ -43,13 +43,13 @@ namespace Z3AxiomProfiler
     {
       var words0 = s.Split(' ');
       var words = new List<string>();
-      foreach(var w in words0)if(w!="")words.Add(w.ToLower());
+      foreach (var w in words0) if (w != "") words.Add(w.ToLower());
       var objs = new List<object>();
-      foreach(var n in nodes) {
+      foreach (var n in nodes) {
         bool wrong = false;
         string x = n.ToString().ToLower();
         foreach (var w in words) {
-          if (!x.Contains(w)) {wrong = true; break;}
+          if (!x.Contains(w)) { wrong = true; break; }
         }
         if (!wrong) objs.Add(n);
       }
