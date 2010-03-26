@@ -322,6 +322,8 @@ namespace Microsoft.Research.Vcc
           helper.Error(ec.Token, 9703, "Writing memory location '" + loc.Token.Value + "' in pure context is not allowed."); false
         | Call(ec, fn, _, _) when ctx.IsPure && fn.Writes.Length > 0 -> 
           helper.Error(ec.Token, 9703, "Calling function '" + fn.Name + "' with non-empty writes clause in pure context is not allowed."); false
+        | Atomic(ec, _, _) when ctx.IsPure ->
+          helper.Error(ec.Token, 9703, "Atomic block in pure context is not allowed."); false
         | _ -> true
     
       let checkFunction (fn:Function) = 

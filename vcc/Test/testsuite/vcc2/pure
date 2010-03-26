@@ -1092,3 +1092,9 @@ testcase(7,3) : error VC8022: the pure function 'foo' is underspecified; please 
 Verification of bar failed.
 testcase(12,12) : error VC9500: Assertion 'foo(i) > 0' did not verify.
 `
+#include "vcc.h"
+struct S { volatile int a; };
+spec(ispure void foo(struct S *s) requires(wrapped(s)) { atomic (s) { } };)
+`
+testcase(3,130) : error VC9703: Atomic block in pure context is not allowed.
+`
