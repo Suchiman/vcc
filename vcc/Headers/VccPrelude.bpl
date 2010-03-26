@@ -295,8 +295,6 @@ function $statusmap(s:$state) returns($statusmap_t);
 
 function {:inline true} $mem(s:$state, p:$ptr) returns(int)
   { $select.mem($memory(s), p) }
-function {:inline true} $read_any(s:$state, p:$ptr) returns(int)
-  { $select.mem($memory(s), p) }
 function {:inline true} $mem_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
   { $mem(s1, p) == $mem(s2, p) }
 function {:inline true} $st_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
@@ -890,7 +888,7 @@ axiom (forall S:$state, T:$ctype, sz:int, r:int :: {$extent_mutable(S, $ptr($arr
 axiom (forall T:$ctype :: {$is_primitive(T)}
   $is_primitive(T) ==>
       (forall S:$state, r:int :: {$extent_zero(S, $ptr(T,r))}
-       $extent_zero(S, $ptr(T,r)) <==> $read_any(S, $ptr(T,r)) == 0 ));
+       $extent_zero(S, $ptr(T,r)) <==> $mem(S, $ptr(T,r)) == 0 ));
 
 axiom (forall S:$state, T:$ctype, sz:int, r:int :: {$extent_zero(S, $ptr($array(T, sz), r))}
   $extent_zero(S, $ptr($array(T, sz), r)) <==>
@@ -2491,15 +2489,6 @@ function {:inline true} $in_range_div_i1(x:int, y:int) returns(bool) { y != -1 |
 function {:inline true} $in_range_div_i2(x:int, y:int) returns(bool) { y != -1 || x != $min.i2 }
 function {:inline true} $in_range_div_i4(x:int, y:int) returns(bool) { y != -1 || x != $min.i4 }
 function {:inline true} $in_range_div_i8(x:int, y:int) returns(bool) { y != -1 || x != $min.i8 }
-
-function {:inline true} $read_i1(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:inline true} $read_i2(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:inline true} $read_i4(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:inline true} $read_i8(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:inline true} $read_u1(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:inline true} $read_u2(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:inline true} $read_u4(S:$state, p:$ptr) returns(int) { $mem(S, p) }
-function {:inline true} $read_u8(S:$state, p:$ptr) returns(int) { $mem(S, p) }
 
 function $ptr_to_u8($ptr) returns(int);
 function $ptr_to_i8($ptr) returns(int);
