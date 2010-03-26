@@ -157,6 +157,11 @@ function $map_range($ctype) returns($ctype);
 
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $map_domain($map_t(#r,#d)) == #d && $map_range($map_t(#r,#d)) == #r && $type_branch($map_t(#r,#d)) == $ctype_map);
 
+
+function $unghost($ctype) : $ctype;
+axiom (forall t:$ctype :: {$unghost($ghost(t))} $unghost($ghost(t)) == t);
+axiom (forall t:$ctype :: {$unghost(t)} $type_branch(t) != $ctype_ghost ==> $unghost(t) == t);
+
 // Lack of {:inline true} makes it possible to trigger on $is_primitive(...)
 // $is_primitive(t) should be only used when it is known that t is really
 // primitive, i.e. not in a precondition or in a premise of an implication
@@ -167,7 +172,7 @@ function {:weight 0} $is_primitive(t:$ctype) returns(bool)
   { $kind_of(t) == $kind_primitive }
 
 function {:inline true} $is_primitive_ch(t:$ctype) returns(bool)
-  { $kind_of(t) == $kind_primitive }
+  { $kind_of($unghost(t)) == $kind_primitive }
 
 function {:weight 0} $is_composite(t:$ctype) returns(bool)
   { $kind_of(t) == $kind_composite }
@@ -294,13 +299,18 @@ function {:inline false} $emb(S:$state,#p:$ptr) returns ($ptr)
 function {:inline true} $path(S:$state,#p:$ptr) returns($field)
   { $int_to_field(S[$dot(#p, $f_path)]) }
 
+// Pointers in the goal are supposed to be tagged with the $goal() function.
+function $goal(p:$ptr) : $ptr
+  { p }
+function {:inline true} $is_goal(p:$ptr) : bool
+  { $goal(p) == p }
+
 function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int) : bool
   { $is_base_field(f) && $field_parent_type(f) == partp &&
     $field_offset(f) == off &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
     (forall S:$state, p:$ptr :: 
-      {:vcc3 "builtin"}
-      {S[$dot($dot(p, f), $f_typed)]}
+      {S[$dot($goal($dot(p, f)), $f_typed)]}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
@@ -313,8 +323,7 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
   { $is_base_field(f) && $field_parent_type(f) == partp &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f))) &&
     (forall S:$state, p:$ptr :: 
-      {:vcc3 "builtin"}
-      {S[$dot($dot(p, f), $f_typed)]}
+      {S[$dot($goal($dot(p, f)), $f_typed)]}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
@@ -330,7 +339,7 @@ function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
   {
-    (forall p:$ptr :: {:vcc3 "L1"} {S[$dot(p, $f_typed)]}
+    (forall p:$ptr :: {S[$dot($goal(p), $f_typed)]}
       $set_in(p, ptrs) ==> $in_writes_at(time, p) && $thread_owned_or_even_mutable(S, p))
 /*
     (forall p:$ptr :: {:vcc3 "L1"} {S[p]}
@@ -436,11 +445,10 @@ function {:inline true} $irrelevant(S:$state, p:$ptr) returns(bool)
 
 function {:weight 0} $mutable(S:$state, p:$ptr) returns(bool)
   { $typed(S, p) && 
-    ($typed(S, p) ==>
-      if $is_primitive_ch($typ(p)) then 
-        $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
-      else
-        $owner(S, p) == $me() && !$closed(S, p))
+    if $is_primitive_ch($typ(p)) then 
+      $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
+    else
+      $owner(S, p) == $me() && !$closed(S, p)
   }
 
 function {:inline true} $thread_owned(S:$state, p:$ptr) returns(bool)

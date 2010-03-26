@@ -27,7 +27,7 @@ type StackState =
   }
 
 exception ProvingFailure
- 
+
 type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options) =
   let smt = new Z3Translator(helper, pass)
   let mutable disposed = false
@@ -46,10 +46,17 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     [ emptyState ]
   let mutable errCnt = 0
   let mutable id = 1000000000
+  let functions = gdict()
+  do 
+    for f in pass.Functions do
+      functions.Add (f.Name + f.Qualifier, f)
       
   member this.NextId () =
     id <- id + 1
     id
+  
+  member private this.Function name =
+    functions.[name]
     
   interface System.IDisposable with
     member this.Dispose() =
@@ -85,7 +92,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       if trLevel >= 1 then
         wr "  Cannot prove %O%s" expr app
       if helper.Options.SaveModel then
-        smt.SaveModel "model.vccmodel"
+        smt.SaveModel (sprintf "model%02d.vccmodel" (errCnt - 1))
     false
     
   member private this.Fail (expr:Expr) =
@@ -111,30 +118,29 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       | Binder q as t when (hasAttr "builtin" q.Attrs || hasAttr "todo" q.Attrs || hasAttr "L1" q.Attrs) ->
         // wr "killing %O" t
         Expr.True
-      | PApp (_, "==", [e; PLambda _]) 
-      | PApp (_, "==", [PLambda _; e]) ->
-        Expr.True
       | e -> e
     expr.Weaken killBuiltin
-    
+  
+  member private this.MakeTempFun basename argTypes retType =
+    let id = this.NextId()
+    {
+      Id = id
+      Name = basename + "@" + id.ToString()
+      Qualifier = ""
+      RetType = retType
+      ArgTypes = argTypes
+      Attrs = []
+      Body = Uninterpreted
+    }
+          
   member private this.Abstract (expr:Expr) =
     let aux = function
       | Binder q when hasAttr "L1" q.Attrs ->
-        let id = this.NextId()
-        let fn = 
-          {
-            Id = id
-            Name = "inst@" + id.ToString()
-            Qualifier = ""
-            RetType = Type.Bool
-            ArgTypes = q.Vars |> List.map (fun v -> v.Typ)
-            Attrs = []
-            Body = Uninterpreted
-          }
+        let fn = this.MakeTempFun "inst" (q.Vars |> List.map (fun v -> v.Typ)) Type.Bool
         let fnDone = 
           { fn with
               Id = this.NextId()
-              Name = "instDone@" + id.ToString()
+              Name = "instDone@" + fn.Id.ToString()
           }        
         smt.DeclareTempFunction fn
         smt.DeclareTempFunction fnDone
@@ -164,7 +170,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     expr.SelfMap aux
     
   member this.ProverRewrites (expr:Expr) =
-    expr.Expand() |> this.Abstract |> this.RemoveBuiltins |> this.Simplify
+    expr.Expand() |> this.Abstract |> this.RemoveBuiltins |> this.Simplify |> this.UnLambda
     
   member private this.IntAssume (expr:Expr) =
     smt.Assume (this.ProverRewrites expr)
@@ -178,13 +184,74 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     if trLevel >= 10 then
       wr "[SMT] assume(any) %O" expr
     this.IntAssume expr
+  
+  member private this.UnLambda (expr:Expr) =
+    let aux self = function 
+      | Expr.Binder ({ Kind = Lambda } as q) as expr ->
+        let typ = expr.Type
+        let vars = glist[]
+        let mapping = gdict()
+        let body:Expr = self q.Body
+        let freshen (v:Var) = 
+          let v' = { v with Id = this.NextId() }
+          mapping.Add (v.Id, v')
+          v'
+            
+        let idxs = [for v in q.Vars -> freshen v]
+        let replBound = function
+          | Expr.Ref v when mapping.ContainsKey v.Id ->
+            Some (Expr.Ref mapping.[v.Id])
+          | Expr.Ref ({ Kind = VarKind.Bound } as v) ->
+            vars.Add v
+            Some (Expr.Ref (freshen v))
+          | _ -> None
+        let body = body.Map replBound
+        let originals = [for v in vars -> Expr.Ref v]
+        let vars = [for v in vars -> mapping.[v.Id]]
+        let fn = this.MakeTempFun "lambda" (vars |> List.map (fun v -> v.Typ)) typ
+        let fnCall = App (fn, List.map Expr.Ref vars)
+        let sel = App (this.Function ("select@" + typ.ToString()), fnCall :: List.map Expr.Ref idxs)
+        let eq = App (this.Function ("==@" + body.Type.ToString()), [sel; body])
+        let axq =
+          {
+            Kind = Forall
+            Vars = vars @ idxs
+            Triggers = [[ sel ]]
+            Attrs = q.Attrs
+            Body = eq
+          }
+        smt.DeclareTempFunction fn
+        let expr = Expr.Binder axq
+        if trLevel >= 3 then
+          wr "[SMT] lambda assume %O" expr
+        smt.Assume expr
+        Some (App (fn, originals))
+      | _ -> None
+    let res = expr.SelfMap aux
+    res
+      
     
+  member private this.Goalize (expr:Expr) =    
+    let isPtr = function
+      | Type.Named { Name = "$ptr" } -> true
+      | _ -> false
+    let goal e = App (this.Function "$goal", [e])
+    let aux self (expr:Expr) =
+      if isPtr expr.Type then
+        match expr with
+          | Expr.Ref v -> Some (goal expr)
+          | Expr.App (f, args) -> Some (goal (Expr.App (f, List.map self args)))
+          | _ -> failwith ""
+      else None
+    expr.SelfMap aux
+        
   member private this.SmtValid negate expr =
     let expr = Expr.MkNotCond negate expr
-    if trLevel >= 3 then
-      wr "[SMT] assert %O" expr
     smt.Push()
-    match smt.AssertOrModel (this.RemoveBuiltins (expr.Expand())) with
+    let toCheck = expr.Expand() |> this.RemoveBuiltins |> this.Goalize
+    if trLevel >= 3 then
+      wr "[SMT] assert %O" toCheck
+    match smt.AssertOrModel toCheck with
       | Some model ->
         let mutable numInst = 0
         for abstr in this.Cur.Abstractions do
@@ -205,7 +272,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         if numInst = 0 then
           if trLevel >= 3 then
             wr "[SMT] Fail"
-          let res = this.Fail expr
+          let res = this.Fail (expr |> this.Goalize)
           smt.Pop()
           res
         else
@@ -349,6 +416,8 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
           | Ast.Assume (_, cond) ->
             if trLevel >= 2 then
               wr "*** assume %O" cond
+            if trLevel >= 3 then
+              wr "    -----> %O" (this.ProverRewrites cond)
             this.Assume cond
       
       match b.Exits with
