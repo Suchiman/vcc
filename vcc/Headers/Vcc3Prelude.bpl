@@ -157,11 +157,6 @@ function $map_range($ctype) returns($ctype);
 
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $map_domain($map_t(#r,#d)) == #d && $map_range($map_t(#r,#d)) == #r && $type_branch($map_t(#r,#d)) == $ctype_map);
 
-
-function $unghost($ctype) : $ctype;
-axiom (forall t:$ctype :: {$unghost($ghost(t))} $unghost($ghost(t)) == t);
-axiom (forall t:$ctype :: {$unghost(t)} $type_branch(t) != $ctype_ghost ==> $unghost(t) == t);
-
 // Lack of {:inline true} makes it possible to trigger on $is_primitive(...)
 // $is_primitive(t) should be only used when it is known that t is really
 // primitive, i.e. not in a precondition or in a premise of an implication
@@ -172,7 +167,7 @@ function {:weight 0} $is_primitive(t:$ctype) returns(bool)
   { $kind_of(t) == $kind_primitive }
 
 function {:inline true} $is_primitive_ch(t:$ctype) returns(bool)
-  { $kind_of($unghost(t)) == $kind_primitive }
+  { $kind_of(t) == $kind_primitive }
 
 function {:weight 0} $is_composite(t:$ctype) returns(bool)
   { $kind_of(t) == $kind_composite }
@@ -203,17 +198,19 @@ axiom (forall t:$ctype :: {:weight 0} {$is_composite(t)} $is_composite(t) ==> $i
 axiom (forall t:$ctype :: {:weight 0} {$is_arraytype(t)} $is_arraytype(t) ==> $is_non_primitive(t));
 axiom (forall t:$ctype :: {:weight 0} {$is_threadtype(t)} $is_threadtype(t) ==> $is_non_primitive(t));
 
-axiom (forall t:$ctype :: {$is_composite(t)} $is_composite(t) ==> $type_branch(t) == $ctype_flat);
-
 function {:inline true} $is_non_primitive_ch(t:$ctype) returns(bool)
   { $kind_of(t) != $kind_primitive }
 
 function {:inline true} $is_non_primitive_ptr(p:$ptr) returns(bool)
   { $is_non_primitive($typ(p)) }
 
+
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $is_primitive($map_t(#r,#d)));
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $is_primitive($ptr_to(#n)));
 axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $is_primitive($spec_ptr_to(#n)));
+
+axiom (forall #n:$ctype :: {$ghost(#n)} $kind_of(#n) == $kind_of($ghost(#n)));
+
 axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claimable(#n));
 
 const $me_ref : int;
@@ -399,11 +396,14 @@ function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) returns(bool)
 function $in_writes_at(time:int, p:$ptr) returns(bool);
 
 function {:inline true} $writable(S:$state, begin_time:int, p:$ptr) returns(bool)
-  { $mutable(S, p) && ($in_writes_at(begin_time, p) || $timestamp(S, p) >= begin_time) }
+  { $mutable(S, p) && ($in_writes_at(begin_time, p) || $timestamp(S, $object_of(S, p)) >= begin_time) }
 
 function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) returns(bool)
-  { ($in_writes_at(begin_time, p) || $timestamp(S, p) >= begin_time)
-    && $thread_owned_or_even_mutable(S, p) }
+  { if $is_primitive_ch($typ(p)) then
+      ($in_writes_at(begin_time, p) || $timestamp(S, $emb(S, p)) >= begin_time) && $mutable(S, p)
+    else
+      ($in_writes_at(begin_time, p) || $timestamp(S, p) >= begin_time) && $owner(S, p) == $me()
+  }     
 
 function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { S1 == (lambda p:$ptr :: if !W[p] && !$irrelevant(S0, p) then S0[p] else S1[p]) &&
@@ -421,12 +421,14 @@ function $invok_state($state) returns(bool);
 function $has_volatile_owns_set(t:$ctype) returns(bool);
 function $is_claimable($ctype) returns(bool);
 
-function $owner(S:$state, p:$ptr) : $ptr
+function {:inline true} $owner(S:$state, p:$ptr) : $ptr
   { $int_to_ptr(S[$dot(p, $f_owner)]) }
-function $closed(S:$state, p:$ptr) : bool
+function {:inline true} $closed(S:$state, p:$ptr) : bool
   { $int_to_bool(S[$dot(p, $f_closed)]) }
-function $timestamp(S:$state, p:$ptr) : int
+function {:inline true} $timestamp(S:$state, p:$ptr) : int
   { S[$dot(p, $f_timestamp)] }
+function {:inline true} $ref_cnt(S:$state, p:$ptr) : int
+  { S[$dot(p, $f_ref_cnt)] }
 
 function $typed(S:$state, p:$ptr) : bool
   { $int_to_bool(S[$dot(p, $f_typed)]) }
@@ -434,22 +436,27 @@ function $typed(S:$state, p:$ptr) : bool
 function $position_marker() : bool
   { true }
 
-function {:weight 0} $owns(S:$state, p:$ptr) : $ptrset
+function {:inline true} $owns(S:$state, p:$ptr) : $ptrset
   { $int_to_ptrset(S[$dot(p, $f_owns)]) }
 
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) returns(bool)
-  { $closed(S, #p) && $owner(S, #p) == $me() && $typed2(S, #p, #t) && $kind_of(#t) != $kind_primitive && $is_non_primitive(#t) }
+  { $closed(S, #p) && $owner(S, #p) == $me() && $typed2(S, #p, #t) && $is_non_primitive_ch(#t) }
 
 function {:inline true} $irrelevant(S:$state, p:$ptr) returns(bool)
   { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
 
 function {:weight 0} $mutable(S:$state, p:$ptr) returns(bool)
   { $typed(S, p) && 
-    if $is_primitive_ch($typ(p)) then 
-      $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
-    else
-      $owner(S, p) == $me() && !$closed(S, p)
+    ($typed(S,p)==>
+      if $is_primitive_ch($typ(p)) then 
+        $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
+      else
+        $owner(S, p) == $me() && !$closed(S, p))
   }
+
+function {:inline true} $object_of(S:$state, p:$ptr) : $ptr
+  { if $is_primitive_ch($typ(p)) then $emb(S, p)
+    else p }
 
 function {:inline true} $thread_owned(S:$state, p:$ptr) returns(bool)
   { $typed(S, p) && $owner(S, p) == $me() }
@@ -629,23 +636,114 @@ function {:inline true} $now_writable(S:$state, p:$ptr) returns(bool)
 
 function {:inline true} $timestamp_post(M1:$state, M2:$state) returns(bool)
   { $current_timestamp(M1) <= $current_timestamp(M2) &&
-    (forall p:$ptr :: 
+    /*(forall p:$ptr :: 
       {:vcc3 "todo"} {:weight 0}
       {$timestamp(M2, p)}
-      $timestamp(M1, p) <= $timestamp(M2, p)) &&
+      $timestamp(M1, p) <= $timestamp(M2, p)) &&*/
     $call_transition(M1, M2)
   }
 
 function {:inline true} $timestamp_post_strict(M1:$state, M2:$state) returns(bool)
-  { $current_timestamp(M1) < $current_timestamp(M2) &&
+  { $current_timestamp(M1) < $current_timestamp(M2)
+    /*&&
     (forall p:$ptr ::
       {:vcc3 "todo"} {:weight 0}
       {$timestamp(M2, p)} 
-      $timestamp(M1, p) <= $timestamp(M2, p)) &&
+      $timestamp(M1, p) <= $timestamp(M2, p))*/ &&
     $call_transition(M1, M2)
   }
 
+// ----------------------------------------------------------------------------
+// Wrap/unwrap
+// ----------------------------------------------------------------------------
 
+// These are only for triggering and consistency checking; they have no definitions
+function $pre_wrap($state) returns(bool);
+function $pre_unwrap($state) returns(bool);
+function $pre_static_wrap($state) returns(bool);
+function $pre_static_unwrap($state) returns(bool);
+function $post_unwrap(S1:$state, S2:$state) returns(bool);
+
+procedure $unwrap(o:$ptr, T:$ctype);
+  modifies $s;
+  // TOKEN: the object has no outstanding claims
+  requires ! $is_claimable(T) || $ref_cnt($s, o) == 0;
+  // TOKEN: OOPS: pre_unwrap holds
+  requires $pre_unwrap($s);
+
+  ensures (forall p:$ptr :: {$goal(p)}
+    old($s)[p] == $s[p] ||
+    p == $dot(o, $f_version) || p == $dot(o, $f_closed) || 
+    ($set_in($ghost_emb(p), $owns(old($s), o)) &&
+      ($ghost_path(p) == $f_owner || $ghost_path(p) == $f_timestamp)));
+
+  ensures $mutable($s, o) && $timestamp_is_now($s, o);
+
+  ensures (forall p:$ptr :: {$goal(p)}
+    $set_in(p, $owns(old($s), o)) ==>
+      $wrapped($s, p, $typ(p)) && $timestamp_is_now($s, p));
+
+  //ensures (forall #p:$ptr :: {$thread_local($s, #p)}
+  //  $thread_local(old($s), #p) ==> $thread_local($s, #p));
+
+  ensures $timestamp_post_strict(old($s), $s);
+  ensures $post_unwrap(old($s), $s);
+
+procedure $wrap(o:$ptr, T:$ctype);
+  // writes o, $owns($s, o)
+  modifies $s;
+  // TOKEN: OOPS: pre_wrap holds
+  requires $pre_wrap($s);
+  // TOKEN: the wrapped type is non primitive
+  requires $is_non_primitive_ch($typ(o));
+  // TOKEN: the object being wrapped is mutable
+  requires $mutable($s, o);
+  // TOKEN: everything in the owns set is wrapped
+  requires (forall p:$ptr :: {$dont_instantiate(p)} $is_goal(p) && $set_in0(p, $owns($s, o)) ==> $wrapped($s, p, $typ(p)));
+
+  ensures (forall p:$ptr :: {$goal(p)}
+    old($s)[p] == $s[p] ||
+    p == $dot(o, $f_version) || p == $dot(o, $f_closed) || 
+    ($set_in($ghost_emb(p), $owns(old($s), o)) &&
+      ($ghost_path(p) == $f_owner || $ghost_path(p) == $f_timestamp)));
+
+  ensures $wrapped($s, o, $typ(o)) && $timestamp_is_now($s, o);
+
+  ensures (forall p:$ptr :: {$goal(p)}
+    $set_in(p, $owns(old($s), o)) ==>
+      $owner($s, p) == o && $timestamp_is_now($s, p));
+
+  // ensures $set_in(o, $domain($s, o));
+  ensures $is_claimable(T) ==> old($ref_cnt($s, o)) == 0 && $ref_cnt($s, o) == 0;
+  //ensures (forall #p:$ptr :: {$thread_local($s, #p)}
+  //  $thread_local(old($s), #p) ==> $thread_local($s, #p));
+
+
+// -----------------------------------------------------------------------
+// Laballed invariants
+// -----------------------------------------------------------------------
+
+function $in_domain_lab(S:$state, p:$ptr, q:$ptr, l:$label) : bool
+  { $in_domain(S, p, q) }
+function $in_vdomain_lab(S:$state, p:$ptr, q:$ptr, l:$label) : bool
+  { $in_vdomain(S, p, q) }
+function $inv_lab(S:$state, p:$ptr, l:$label) : bool;
+
+axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_domain_lab(S, p, q, l)}
+  $in_domain_lab(S, p, q, l) ==> $inv_lab(S, p, l));
+
+axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_vdomain_lab(S, p, q, l)}
+  $in_vdomain_lab(S, p, q, l) ==> $inv_lab(S, p, l));
+
+// -----------------------------------------------------------------------
+// Domains
+// -----------------------------------------------------------------------
+
+function $in_domain(S:$state, p:$ptr, q:$ptr) : bool;
+function $in_vdomain(S:$state, p:$ptr, q:$ptr) : bool;
+
+axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, p)}
+  $full_stop(S) && $wrapped(S, p, $typ(p)) ==> $in_domain(S, p, p));
 
 // -----------------------------------------------------------------------
 // Span & extent

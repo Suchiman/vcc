@@ -415,5 +415,14 @@ module Ast =
         | _ -> None
         
       this.Map (aux Map.empty)
+    
+    member this.Subst (d:Dict<int,Expr>) =
+      let aux = function
+        | Expr.Ref v ->
+          match d.TryGetValue v.Id with
+            | true, e -> Some e
+            | _ -> None
+        | _ -> None
+      this.Map aux
               
 
