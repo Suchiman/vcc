@@ -47,7 +47,7 @@ type $label;
 // built-in types
 // ----------------------------------------------------------------------------
 
-function $kind_of($ctype) returns($kind);
+function $kind_of($ctype) : $kind;
 
 // these are the only possible kinds
 const unique $kind_composite : $kind;
@@ -55,19 +55,19 @@ const unique $kind_primitive : $kind;
 const unique $kind_array : $kind;
 const unique $kind_thread : $kind;
 
-function $sizeof($ctype)returns(int); // in bytes
+function $sizeof($ctype): int; // in bytes
 
 
 // for types for which $in_range_t(...) is defined
-function $as_in_range_t($ctype) returns($ctype);
+function $as_in_range_t($ctype) : $ctype;
 
-function {:inline true} $def_flat_type(t:$ctype, sz:int) returns(bool)
+function {:inline true} $def_flat_type(t:$ctype, sz:int) : bool
   { $sizeof(t) == sz && $type_branch(t) == $ctype_flat }
-function {:inline true} $def_primitive_type(t:$ctype, sz:int) returns(bool)
+function {:inline true} $def_primitive_type(t:$ctype, sz:int) : bool
   { $def_flat_type(t, sz) && $is_primitive(t) }
-function {:inline true} $def_composite_type(t:$ctype, sz:int, claimable:bool, has_volatile_owns:bool) returns(bool)
+function {:inline true} $def_composite_type(t:$ctype, sz:int, claimable:bool, has_volatile_owns:bool) : bool
   { $def_flat_type(t, sz) && $is_composite(t) && $is_claimable(t) == claimable && $has_volatile_owns_set(t) == has_volatile_owns }
-function {:inline true} $def_integer_type(t:$ctype, sz:int) returns(bool)
+function {:inline true} $def_integer_type(t:$ctype, sz:int) : bool
   { $def_primitive_type(t, sz) && $as_in_range_t(t) == t }
 
 //Notation: types get a ^ as prefix...
@@ -137,10 +137,10 @@ const unique $ctype_ghost : $ctype_branch;
 // so it knows that int*!=short*, i.e. * is injective
 
 // pointers to types
-function $ptr_to($ctype) returns($ctype);
+function $ptr_to($ctype) : $ctype;
 function $spec_ptr_to($ctype) returns ($ctype);
-function $ghost($ctype) returns($ctype);
-function $type_project_0($ctype) returns($ctype);
+function $ghost($ctype) : $ctype;
+function $type_project_0($ctype) : $ctype;
 
 const $arch_ptr_size : int; // arch-specific; to be defined by a compiler-generated axiom
 
@@ -151,9 +151,9 @@ axiom (forall #n:$ctype :: {$ghost(#n)} $type_project_0($ghost(#n)) == #n && $ty
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $sizeof($ptr_to(#n)) == $arch_ptr_size);
 axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $sizeof($ptr_to(#n)) == $arch_ptr_size);
 
-function $map_t($ctype, $ctype) returns($ctype);
-function $map_domain($ctype) returns($ctype);
-function $map_range($ctype) returns($ctype);
+function $map_t($ctype, $ctype) : $ctype;
+function $map_domain($ctype) : $ctype;
+function $map_range($ctype) : $ctype;
 
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $map_domain($map_t(#r,#d)) == #d && $map_range($map_t(#r,#d)) == #r && $type_branch($map_t(#r,#d)) == $ctype_map);
 
@@ -163,45 +163,45 @@ axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $map_domain($map_t(#r,#d))
 // (unless guarded by a trigger). If it is unknown, use $is_primitive_ch(...).
 // The same applies to $is_composite(...) and $is_arraytype(...).
 
-function {:weight 0} $is_primitive(t:$ctype) returns(bool)
+function $is_primitive(t:$ctype) : bool
   { $kind_of(t) == $kind_primitive }
 
-function {:inline true} $is_primitive_ch(t:$ctype) returns(bool)
+function {:inline true} $is_primitive_ch(t:$ctype) : bool
   { $kind_of(t) == $kind_primitive }
 
-function {:weight 0} $is_composite(t:$ctype) returns(bool)
+function $is_composite(t:$ctype) : bool
   { $kind_of(t) == $kind_composite }
 
-function {:inline true} $is_composite_ch(t:$ctype) returns(bool)
+function {:inline true} $is_composite_ch(t:$ctype) : bool
   { $kind_of(t) == $kind_composite }
 
-function {:weight 0} $is_arraytype(t:$ctype) returns(bool)
+function $is_arraytype(t:$ctype) : bool
   { $kind_of(t) == $kind_array }
 
-function {:inline true} $is_arraytype_ch(t:$ctype) returns(bool)
+function {:inline true} $is_arraytype_ch(t:$ctype) : bool
   { $kind_of(t) == $kind_array }
 
-function {:weight 0} $is_threadtype(t:$ctype) returns(bool)
+function $is_threadtype(t:$ctype) : bool
   { $kind_of(t) == $kind_thread }
 
-function {:inline true} $is_thread(p:$ptr) returns(bool)
+function {:inline true} $is_thread(p:$ptr) : bool
   { $is_threadtype($typ(p)) }
 
-function {:inline true} $is_ptr_to_composite(p:$ptr) returns(bool)
+function {:inline true} $is_ptr_to_composite(p:$ptr) : bool
   { $kind_of($typ(p)) == $kind_composite }
 
-function $field_offset($field) returns(int);
-function $field_parent_type($field) returns($ctype);
+function $field_offset($field) : int;
+function $field_parent_type($field) : $ctype;
 
-function $is_non_primitive(t:$ctype) returns(bool);
-axiom (forall t:$ctype :: {:weight 0} {$is_composite(t)} $is_composite(t) ==> $is_non_primitive(t));
-axiom (forall t:$ctype :: {:weight 0} {$is_arraytype(t)} $is_arraytype(t) ==> $is_non_primitive(t));
-axiom (forall t:$ctype :: {:weight 0} {$is_threadtype(t)} $is_threadtype(t) ==> $is_non_primitive(t));
+function $is_non_primitive(t:$ctype) : bool;
+axiom (forall t:$ctype :: {$is_composite(t)} $is_composite(t) ==> $is_non_primitive(t));
+axiom (forall t:$ctype :: {$is_arraytype(t)} $is_arraytype(t) ==> $is_non_primitive(t));
+axiom (forall t:$ctype :: {$is_threadtype(t)} $is_threadtype(t) ==> $is_non_primitive(t));
 
-function {:inline true} $is_non_primitive_ch(t:$ctype) returns(bool)
+function {:inline true} $is_non_primitive_ch(t:$ctype) : bool
   { $kind_of(t) != $kind_primitive }
 
-function {:inline true} $is_non_primitive_ptr(p:$ptr) returns(bool)
+function {:inline true} $is_non_primitive_ptr(p:$ptr) : bool
   { $is_non_primitive($typ(p)) }
 
 
@@ -214,62 +214,62 @@ axiom (forall #n:$ctype :: {$ghost(#n)} $kind_of(#n) == $kind_of($ghost(#n)));
 axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claimable(#n));
 
 const $me_ref : int;
-function $me() returns($ptr);
+function $me() : $ptr;
 axiom $in_range_spec_ptr($me_ref);
 axiom $me() == $ptr(^$#thread_id_t, $me_ref);
 
-function {:inline true} $current_state(s:$state) returns($state) { s }
+function {:inline true} $current_state(s:$state) : $state { s }
 
-function {:inline true} $mem(s:$state, p:$ptr) returns(int)
+function {:inline true} $mem(s:$state, p:$ptr) : int
   { s[p] }
-function {:inline true} $read_any(s:$state, p:$ptr) returns(int)
+function {:inline true} $read_any(s:$state, p:$ptr) : int
   { s[p] }
-function {:inline true} $mem_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
+function {:inline true} $mem_eq(s1:$state, s2:$state, p:$ptr) : bool
   { $mem(s1, p) == $mem(s2, p) }
 
 // ----------------------------------------------------------------------------
 // typed pointers
 // ----------------------------------------------------------------------------
 
-function $typ($ptr)returns($ctype);
-function $ref($ptr)returns(int);
-function $ptr($ctype,int)returns($ptr);
-axiom (forall #t:$ctype, #b:int :: {:weight 0} $typ($ptr(#t,#b))==#t);
-axiom (forall #t:$ctype, #b:int :: {:weight 0} $ref($ptr(#t,#b))==#b);
+function $typ($ptr): $ctype;
+function $ref($ptr): int;
+function $ptr($ctype,int): $ptr;
+axiom (forall #t:$ctype, #b:int :: $typ($ptr(#t,#b))==#t);
+axiom (forall #t:$ctype, #b:int :: $ref($ptr(#t,#b))==#b);
 //axiom (forall #p:$ptr :: {$typ(#p)} {$ref(#p)} $ptr($typ(#p), $ref(#p)) == #p);
 
 // Use for computing references for ghost fields, instead of saying p+$field_offset(f) we use
 // $ghost_ref(p,f). This has an added bonus that the embedding and path can be the same reagrdless
 // of the current $meta
-function $ghost_ref($ptr, $field) returns(int);
+function $ghost_ref($ptr, $field) : int;
 
 const unique $f_nonghost : $field;
-function $ghost_emb($ptr) returns($ptr);
-function $ghost_path($ptr) returns($field);
+function $ghost_emb($ptr) : $ptr;
+function $ghost_path($ptr) : $field;
 
-axiom (forall p:$ptr, f:$field, t:$ctype :: {:weight 0} {$ptr($ghost(t), $ghost_ref(p, f))}
+axiom (forall p:$ptr, f:$field, t:$ctype :: {$ptr($ghost(t), $ghost_ref(p, f))}
   $ghost_emb($ptr($ghost(t), $ghost_ref(p, f))) == p && 
   $ghost_path($ptr($ghost(t), $ghost_ref(p, f))) == f );
 
-axiom (forall r:int, t:$ctype :: {:weight 0} {$ptr(t, r)}
+axiom (forall r:int, t:$ctype :: {$ptr(t, r)}
   $type_branch(t) != $ctype_ghost ==> $ghost_path($ptr(t, r)) == $f_nonghost);
 
 axiom (forall p:$ptr, f:$field :: {$ghost_ref(p, f)}
   $in_range_spec_ptr($ghost_ref(p,f)));
 
-function $physical_ref(p:$ptr, f:$field) returns(int);
+function $physical_ref(p:$ptr, f:$field) : int;
 // Make the physical fields, when we do not generate offset axioms, behave like ghost fields
 //  (this is unsound, but not so much).
-//axiom (forall p:$ptr, f:$field :: {:weight 0} {$physical_ref(p, f)}
+//axiom (forall p:$ptr, f:$field :: {$physical_ref(p, f)}
 //  $ghost_emb($physical_ref(p, f)) == p && $ghost_path($physical_ref(p, f)) == f );
 
-function $array_path(basefield:$field, off:int) returns($field);
+function $array_path(basefield:$field, off:int) : $field;
 
-function $is_base_field($field) returns(bool);
+function $is_base_field($field) : bool;
 
-function $array_path_1($field) returns($field);
-function $array_path_2($field) returns(int);
-axiom (forall fld:$field, off:int :: {:weight 0} {$array_path(fld, off)}
+function $array_path_1($field) : $field;
+function $array_path_2($field) : int;
+axiom (forall fld:$field, off:int :: {$array_path(fld, off)}
   !$is_base_field($array_path(fld, off)) &&
   $array_path_1($array_path(fld, off)) == fld &&
   $array_path_2($array_path(fld, off)) == off);
@@ -278,22 +278,22 @@ const $null:$ptr;
 axiom $null == $ptr(^^void, 0);
 
 //typed pointer test
-function {:weight 0} $is(p:$ptr, t:$ctype) : bool
+function $is(p:$ptr, t:$ctype) : bool
   { $typ(p)==t }
 // create $ptr(...) function symbol, so later we have something to trigger on
 axiom (forall #p:$ptr, #t:$ctype :: {$is(#p, #t)} $is(#p, #t) ==> #p == $ptr(#t, $ref(#p)));
 
-function {:inline true} $ptr_cast(#p:$ptr,#t:$ctype) returns($ptr)
+function {:inline true} $ptr_cast(#p:$ptr,#t:$ctype) : $ptr
   { $ptr(#t, $ref(#p)) }
 
-function {:inline true} $read_ptr(S:$state, p:$ptr, t:$ctype) returns($ptr)
+function {:inline true} $read_ptr(S:$state, p:$ptr, t:$ctype) : $ptr
   { $ptr(t, $mem(S, p)) }
 
 //dot and (its "inverse") emb/path access
 function $dot($ptr,$field) returns ($ptr);
 function {:inline false} $emb(S:$state,#p:$ptr) returns ($ptr)
   { $int_to_ptr(S[$dot(#p, $f_emb)]) }
-function {:inline true} $path(S:$state,#p:$ptr) returns($field)
+function {:inline true} $path(S:$state,#p:$ptr) : $field
   { $int_to_field(S[$dot(#p, $f_path)]) }
 
 // Pointers in the goal are supposed to be tagged with the $goal() function.
@@ -368,10 +368,10 @@ axiom $def_common_field($f_closed, ^^bool);
 axiom $def_common_field($f_ref_cnt, ^^mathint);
 
 // it has no further embedding (not embedded inside another struct)
-function {:inline true} $is_object_root(S:$state, p:$ptr) returns(bool)
+function {:inline true} $is_object_root(S:$state, p:$ptr) : bool
   { $emb(S, p) == $ptr(^^root_emb, $ref(p)) }
 
-function $is_volatile(S:$state, p:$ptr) returns(bool)
+function $is_volatile(S:$state, p:$ptr) : bool
   { $int_to_bool(S[$dot(p, $f_is_volatile)]) }
 
 axiom (forall S:$state, p:$ptr ::
@@ -379,26 +379,26 @@ axiom (forall S:$state, p:$ptr ::
   {$is_volatile(S, p)} $good_state(S) && $is_volatile(S, p) ==> $is_primitive_ch($typ(p)));
 
 // just tmp
-function {:inline true} $is_malloc_root(S:$state, p:$ptr) returns(bool)
+function {:inline true} $is_malloc_root(S:$state, p:$ptr) : bool
   { $is_object_root(S, p) }
 
-function $current_timestamp(S:$state) returns(int);
+function $current_timestamp(S:$state) : int;
 axiom (forall S:$state, p:$ptr ::
   {:vcc3 "todo"}
-  {:weight 0} {$timestamp(S, p)}
+  {$timestamp(S, p)}
   $timestamp(S, p) <= $current_timestamp(S) ||
   !$typed(S, p)
   );
 
-function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) returns(bool)
+function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) : bool
   { $current_timestamp(M1) < $timestamp(M2, p) && $timestamp(M2, p) <= $current_timestamp(M2) }
 
-function $in_writes_at(time:int, p:$ptr) returns(bool);
+function $in_writes_at(time:int, p:$ptr) : bool;
 
-function {:inline true} $writable(S:$state, begin_time:int, p:$ptr) returns(bool)
+function {:inline true} $writable(S:$state, begin_time:int, p:$ptr) : bool
   { $mutable(S, p) && ($in_writes_at(begin_time, p) || $timestamp(S, $object_of(S, p)) >= begin_time) }
 
-function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) returns(bool)
+function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
   { if $is_primitive_ch($typ(p)) then
       ($in_writes_at(begin_time, p) || $timestamp(S, $emb(S, p)) >= begin_time) && $mutable(S, p)
     else
@@ -415,11 +415,11 @@ function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
 // ----------------------------------------------------------------------------
 var $s: $state;
 
-function $good_state($state) returns(bool);
-function $invok_state($state) returns(bool);
+function $good_state($state) : bool;
+function $invok_state($state) : bool;
 
-function $has_volatile_owns_set(t:$ctype) returns(bool);
-function $is_claimable($ctype) returns(bool);
+function $has_volatile_owns_set(t:$ctype) : bool;
+function $is_claimable($ctype) : bool;
 
 function {:inline true} $owner(S:$state, p:$ptr) : $ptr
   { $int_to_ptr(S[$dot(p, $f_owner)]) }
@@ -439,13 +439,13 @@ function $position_marker() : bool
 function {:inline true} $owns(S:$state, p:$ptr) : $ptrset
   { $int_to_ptrset(S[$dot(p, $f_owns)]) }
 
-function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) returns(bool)
+function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
   { $closed(S, #p) && $owner(S, #p) == $me() && $typed2(S, #p, #t) && $is_non_primitive_ch(#t) }
 
-function {:inline true} $irrelevant(S:$state, p:$ptr) returns(bool)
+function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
   { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
 
-function {:weight 0} $mutable(S:$state, p:$ptr) returns(bool)
+function $mutable(S:$state, p:$ptr) : bool
   { $typed(S, p) && 
     ($typed(S,p)==>
       if $is_primitive_ch($typ(p)) then 
@@ -458,10 +458,10 @@ function {:inline true} $object_of(S:$state, p:$ptr) : $ptr
   { if $is_primitive_ch($typ(p)) then $emb(S, p)
     else p }
 
-function {:inline true} $thread_owned(S:$state, p:$ptr) returns(bool)
+function {:inline true} $thread_owned(S:$state, p:$ptr) : bool
   { $typed(S, p) && $owner(S, p) == $me() }
 
-function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) returns(bool)
+function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
   { $typed(S, p) &&
     if $is_primitive_ch($typ(p)) then
       $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p))
@@ -469,13 +469,13 @@ function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) returns(
       $owner(S, p) == $me()
   }
 
-function $in_range_phys_ptr(#r:int) returns(bool)
+function $in_range_phys_ptr(#r:int) : bool
   { $in_range(0, #r, $arch_spec_ptr_start) }
-function $in_range_spec_ptr(#r:int) returns(bool)
+function $in_range_spec_ptr(#r:int) : bool
   { 0 == #r || #r > $arch_spec_ptr_start }
 const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
 
-function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) returns(bool)
+function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $typed(S, #p) }
 
 axiom (forall S:$state, #r:int, #t:$ctype ::
@@ -489,13 +489,13 @@ function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool
 function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) returns (bool)
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($ref(#p))) }
 
-function {:inline true} $ptr_eq(p1:$ptr,p2:$ptr) returns(bool)
+function {:inline true} $ptr_eq(p1:$ptr,p2:$ptr) : bool
   { $ref(p1) == $ref(p2) }
 
-function {:inline true} $ptr_neq(p1:$ptr,p2:$ptr) returns(bool)
+function {:inline true} $ptr_neq(p1:$ptr,p2:$ptr) : bool
   { $ref(p1) != $ref(p2) }
 
-function {:inline true} $is_primitive_field_of(S:$state, #f:$ptr, #o:$ptr) returns(bool)
+function {:inline true} $is_primitive_field_of(S:$state, #f:$ptr, #o:$ptr) : bool
   { $is_primitive_ch($typ(#f)) && $emb(S, #f) == #o }
 
 
@@ -504,10 +504,10 @@ function {:inline true} $is_primitive_field_of(S:$state, #f:$ptr, #o:$ptr) retur
 // ----------------------------------------------------------------------------
 
 // for model reading
-function $is_domain_root(S:$state, p:$ptr) returns(bool)
+function $is_domain_root(S:$state, p:$ptr) : bool
   { true }
 
-function $in_wrapped_domain(S:$state, p:$ptr) returns(bool);
+function $in_wrapped_domain(S:$state, p:$ptr) : bool;
 /*
   { (exists q:$ptr :: {$set_in2(p, $ver_domain($read_version(S, q)))} 
             $set_in(p, $ver_domain($read_version(S, q)))
@@ -516,19 +516,19 @@ function $in_wrapped_domain(S:$state, p:$ptr) returns(bool);
          ) }
 */
 
-function {:inline true} $thread_local_np(S:$state, p:$ptr) returns(bool)
+function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
   { !$is_primitive_ch($typ(p)) && 
     ($owner(S, p) == $me() || $in_wrapped_domain(S, p)) 
 //     ($wrapped(S, $root(S, p), $typ($root(S, p))) && $set_in(p, $domain(S, $root(S, p)))))
   }
 
 // required for reading
-function $thread_local(S:$state, p:$ptr) returns(bool)
+function $thread_local(S:$state, p:$ptr) : bool
   { $typed(S, p) &&
     (($is_primitive_ch($typ(p)) && (!$is_volatile(S, p) || !$closed(S, $emb(S, p))) && $thread_local_np(S, $emb(S, p))) ||
      $thread_local_np(S, p)) }
 
-function {:inline true} $thread_local2(S:$state, #p:$ptr, #t:$ctype) returns(bool)
+function {:inline true} $thread_local2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $thread_local(S, #p) }
  
 
@@ -539,15 +539,15 @@ function {:inline true} $thread_local2(S:$state, #p:$ptr, #t:$ctype) returns(boo
 // Used as a trigger when we don't want the quantifier to be instantiated at all
 //   (for example we just assert it or have it as a precondition)
 // It could be any symbol that is not used anywhere else.
-function $dont_instantiate($ptr) returns(bool);
-function $dont_instantiate_int(int) returns(bool);
-function $dont_instantiate_state($state) returns(bool);
+function $dont_instantiate($ptr) : bool;
+function $dont_instantiate_int(int) : bool;
+function $dont_instantiate_state($state) : bool;
 
 // Voodoo, don't read it.
-function $instantiate_int(int) returns(bool);
-function $instantiate_bool(bool) returns(bool);
-function $instantiate_ptr($ptr) returns(bool);
-function $instantiate_ptrset($ptrset) returns(bool);
+function $instantiate_int(int) : bool;
+function $instantiate_bool(bool) : bool;
+function $instantiate_ptr($ptr) : bool;
+function $instantiate_ptrset($ptrset) : bool;
 // Voodoo end.
 
 // ----------------------------------------------------------------------------
@@ -568,13 +568,13 @@ function $inv2(#s1:$state, #s2:$state, #p:$ptr, typ:$ctype) returns (bool);
 // $in_full_extent_of(...) assumes it can be any of the union fields, not only the selected one
 
 
-function $function_entry($state) returns(bool);
+function $function_entry($state) : bool;
 
-function $full_stop($state) returns(bool);
-function {:inline true} $full_stop_ext(t:$token, S:$state) returns(bool)
+function $full_stop($state) : bool;
+function {:inline true} $full_stop_ext(t:$token, S:$state) : bool
   { $good_state_ext(t, S) && $full_stop(S) }
 
-function $file_name_is(id:int, tok:$token) returns(bool);
+function $file_name_is(id:int, tok:$token) : bool;
 
 axiom (forall S:$state :: {$function_entry(S)}
   $function_entry(S) ==> $full_stop(S) && $current_timestamp(S) >= 0);
@@ -598,11 +598,11 @@ function {:inline true} $closed_is_transitive(S:$state) returns (bool)
 // 
 // ----------------------------------------------------------------------------
 
-function $call_transition(S1:$state, S2:$state) returns(bool);
+function $call_transition(S1:$state, S2:$state) : bool;
 
 // Assumed after each meta/state update, means that the meta corresponds to the state
 // and where in the source did the update happen.
-function $good_state_ext(id:$token, S:$state) returns(bool);
+function $good_state_ext(id:$token, S:$state) : bool;
 axiom (forall id:$token, S:$state :: {$good_state_ext(id, S)}
   $good_state_ext(id, S) ==> $good_state(S));
 
@@ -610,13 +610,13 @@ axiom (forall id:$token, S:$state :: {$good_state_ext(id, S)}
 // model-viewer support
 // ----------------------------------------------------------------------------
 
-function $local_value_is(S1:$state, pos:$token, local_name:$token, val:int, t:$ctype) returns(bool);
-function $local_value_is_ptr(S1:$state, pos:$token, local_name:$token, val:$ptr, t:$ctype) returns(bool);
-function $read_ptr_m(S:$state, p:$ptr, t:$ctype) returns($ptr);
+function $local_value_is(S1:$state, pos:$token, local_name:$token, val:int, t:$ctype) : bool;
+function $local_value_is_ptr(S1:$state, pos:$token, local_name:$token, val:$ptr, t:$ctype) : bool;
+function $read_ptr_m(S:$state, p:$ptr, t:$ctype) : $ptr;
 
-function $type_code_is(x:int, tp:$ctype) returns(bool);
+function $type_code_is(x:int, tp:$ctype) : bool;
 // idx==0 - return type
-function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) returns(bool);
+function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) : bool;
 
 
 // ----------------------------------------------------------------------------
@@ -628,13 +628,13 @@ procedure $write_int(p:$ptr, v:int);
   ensures $s == (lambda q:$ptr :: if p != q then old($s)[q] else v);
   ensures $timestamp_post_strict(old($s), $s);
 
-function {:inline true} $timestamp_is_now(S:$state, p:$ptr) returns(bool)
+function {:inline true} $timestamp_is_now(S:$state, p:$ptr) : bool
   { $timestamp(S, p) == $current_timestamp(S) }
 
-function {:inline true} $now_writable(S:$state, p:$ptr) returns(bool)
+function {:inline true} $now_writable(S:$state, p:$ptr) : bool
   { $timestamp_is_now(S, p) && $mutable(S, p) }
 
-function {:inline true} $timestamp_post(M1:$state, M2:$state) returns(bool)
+function {:inline true} $timestamp_post(M1:$state, M2:$state) : bool
   { $current_timestamp(M1) <= $current_timestamp(M2) &&
     /*(forall p:$ptr :: 
       {:vcc3 "todo"} {:weight 0}
@@ -643,7 +643,7 @@ function {:inline true} $timestamp_post(M1:$state, M2:$state) returns(bool)
     $call_transition(M1, M2)
   }
 
-function {:inline true} $timestamp_post_strict(M1:$state, M2:$state) returns(bool)
+function {:inline true} $timestamp_post_strict(M1:$state, M2:$state) : bool
   { $current_timestamp(M1) < $current_timestamp(M2)
     /*&&
     (forall p:$ptr ::
@@ -658,11 +658,11 @@ function {:inline true} $timestamp_post_strict(M1:$state, M2:$state) returns(boo
 // ----------------------------------------------------------------------------
 
 // These are only for triggering and consistency checking; they have no definitions
-function $pre_wrap($state) returns(bool);
-function $pre_unwrap($state) returns(bool);
-function $pre_static_wrap($state) returns(bool);
-function $pre_static_unwrap($state) returns(bool);
-function $post_unwrap(S1:$state, S2:$state) returns(bool);
+function $pre_wrap($state) : bool;
+function $pre_unwrap($state) : bool;
+function $pre_static_wrap($state) : bool;
+function $pre_static_unwrap($state) : bool;
+function $post_unwrap(S1:$state, S2:$state) : bool;
 
 procedure $unwrap(o:$ptr, T:$ctype);
   modifies $s;
@@ -729,10 +729,10 @@ function $in_vdomain_lab(S:$state, p:$ptr, q:$ptr, l:$label) : bool
   { $in_vdomain(S, p, q) }
 function $inv_lab(S:$state, p:$ptr, l:$label) : bool;
 
-axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_domain_lab(S, p, q, l)}
+axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {$in_domain_lab(S, p, q, l)}
   $in_domain_lab(S, p, q, l) ==> $inv_lab(S, p, l));
 
-axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {:weight 0} {$in_vdomain_lab(S, p, q, l)}
+axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {$in_vdomain_lab(S, p, q, l)}
   $in_vdomain_lab(S, p, q, l) ==> $inv_lab(S, p, l));
 
 // -----------------------------------------------------------------------
@@ -749,17 +749,17 @@ axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, p)}
 // Span & extent
 // -----------------------------------------------------------------------
 
-function $full_extent(#p:$ptr) returns($ptrset);
-function $extent(S:$state, #p:$ptr) returns($ptrset);
+function $full_extent(#p:$ptr) : $ptrset;
+function $extent(S:$state, #p:$ptr) : $ptrset;
 
-function $span(S:$state, o:$ptr) returns($ptrset)
+function $span(S:$state, o:$ptr) : $ptrset
   { (lambda p:$ptr :: o == p || $emb(S, p) == o) }
-function $first_option_typed(S:$state, #p:$ptr) returns(bool);
+function $first_option_typed(S:$state, #p:$ptr) : bool;
 
-function {:inline true} $struct_extent(#p:$ptr) returns($ptrset)
+function {:inline true} $struct_extent(#p:$ptr) : $ptrset
   { $full_extent(#p) }
 
-function $volatile_span(S:$state, #p:$ptr) returns($ptrset);
+function $volatile_span(S:$state, #p:$ptr) : $ptrset;
 axiom (forall S:$state, p:$ptr, q:$ptr ::
   {:vcc3 "todo"}
   {$set_in(p, $volatile_span(S, q))}
@@ -799,77 +799,77 @@ function $set_subset(A:$ptrset, B:$ptrset) : bool
 
 // to be used only positively
 function $set_eq($ptrset, $ptrset) returns (bool);
-axiom (forall #a: $ptrset, #b: $ptrset :: {:weight 0} {$set_eq(#a,#b)}
-  (forall #o: $ptr :: {:weight 0} {$dont_instantiate(#o)} $set_in(#o, #a) <==> $set_in(#o, #b)) ==> $set_eq(#a, #b));
-axiom (forall #a: $ptrset, #b: $ptrset :: {:weight 0} {$set_eq(#a,#b)}
+axiom (forall #a: $ptrset, #b: $ptrset :: {$set_eq(#a,#b)}
+  (forall #o: $ptr :: {$dont_instantiate(#o)} $set_in(#o, #a) <==> $set_in(#o, #b)) ==> $set_eq(#a, #b));
+axiom (forall #a: $ptrset, #b: $ptrset :: {$set_eq(#a,#b)}
   $set_eq(#a, #b) ==> #a == #b);
 
-function $set_cardinality($ptrset) returns(int);
+function $set_cardinality($ptrset) : int;
 
 axiom ($set_cardinality($set_empty()) == 0);
-axiom (forall p:$ptr :: {:weight 0} $set_cardinality($set_singleton(p)) == 1);
+axiom (forall p:$ptr :: $set_cardinality($set_singleton(p)) == 1);
 
-function $set_universe() returns($ptrset);
-axiom (forall #o: $ptr :: {:weight 0} {$set_in(#o, $set_universe())} $set_in(#o, $set_universe()));
+function $set_universe() : $ptrset;
+axiom (forall #o: $ptr :: {$set_in(#o, $set_universe())} $set_in(#o, $set_universe()));
 
-function $set_disjoint(s1:$ptrset, s2:$ptrset) returns(bool);
-function $id_set_disjoint(p:$ptr, s1:$ptrset, s2:$ptrset) returns(int);
+function $set_disjoint(s1:$ptrset, s2:$ptrset) : bool;
+function $id_set_disjoint(p:$ptr, s1:$ptrset, s2:$ptrset) : int;
 
-axiom (forall p:$ptr, s1:$ptrset, s2:$ptrset :: {:weight 0} {$set_disjoint(s1, s2), $set_in(p, s1)}
+axiom (forall p:$ptr, s1:$ptrset, s2:$ptrset :: {$set_disjoint(s1, s2), $set_in(p, s1)}
   $set_disjoint(s1, s2) && $set_in(p, s1) ==> 
     $id_set_disjoint(p, s1, s2) == 1);
-axiom (forall p:$ptr, s1:$ptrset, s2:$ptrset :: {:weight 0} {$set_disjoint(s1, s2), $set_in(p, s2)}
+axiom (forall p:$ptr, s1:$ptrset, s2:$ptrset :: {$set_disjoint(s1, s2), $set_in(p, s2)}
   $set_disjoint(s1, s2) && $set_in(p, s2) ==> 
     $id_set_disjoint(p, s1, s2) == 2);
 
-axiom (forall s1:$ptrset, s2:$ptrset :: {:weight 0} {$set_disjoint(s1, s2)}
+axiom (forall s1:$ptrset, s2:$ptrset :: {$set_disjoint(s1, s2)}
   (forall p:$ptr :: {$dont_instantiate(p)}
      ($set_in(p, s1) ==> !$set_in(p, s2)) && ($set_in(p, s2) ==> !$set_in(p, s1))) 
   ==> $set_disjoint(s1, s2));
 
 
-function $set_in3($ptr, $ptrset) returns(bool);
-function $set_in2($ptr, $ptrset) returns(bool);
+function $set_in3($ptr, $ptrset) : bool;
+function $set_in2($ptr, $ptrset) : bool;
 
-//function $in_some_owns($ptr) returns(bool);
+//function $in_some_owns($ptr) : bool;
 //axiom (forall p:$ptr, S1:$state, p1:$ptr :: 
-//  {:weight 0} {$set_in(p, $owns(S1, p1))}
+//  {$set_in(p, $owns(S1, p1))}
 //  $set_in(p, $owns(S1, p1)) ==> $in_some_owns(p));
 //
 //axiom (forall p:$ptr, S1:$state, p1:$ptr :: 
-//  {:weight 0} {$set_in2(p, $owns(S1, p1)), $in_some_owns(p)}
+//  {$set_in2(p, $owns(S1, p1)), $in_some_owns(p)}
 //  $set_in(p, $owns(S1, p1)) <==> $set_in2(p, $owns(S1, p1)));
 
-axiom (forall p:$ptr, s:$ptrset :: {:weight 0} {$set_in(p, s)}
+axiom (forall p:$ptr, s:$ptrset :: {$set_in(p, s)}
   $set_in(p, s) <==> $set_in2(p, s));
-axiom (forall p:$ptr, s:$ptrset :: {:weight 0} {$set_in(p, s)}
+axiom (forall p:$ptr, s:$ptrset :: {$set_in(p, s)}
   $set_in(p, s) <==> $set_in3(p, s));
 
-function $set_in0($ptr, $ptrset) returns(bool);
-axiom (forall p:$ptr, s:$ptrset :: {:weight 0} {$set_in0(p, s)}
+function $set_in0($ptr, $ptrset) : bool;
+axiom (forall p:$ptr, s:$ptrset :: {$set_in0(p, s)}
   $set_in(p, s) <==> $set_in0(p, s));
 
 
-function sk_hack(bool) returns(bool);
-function $start_here() returns(bool);
+function sk_hack(bool) : bool;
+function $start_here() : bool;
 
 
 // --------------------------------------------------------------------------------
 // Arithmetic
 // --------------------------------------------------------------------------------
 
-function {:inline true} $in_range(min:int, val:int, max:int) returns(bool)
+function {:inline true} $in_range(min:int, val:int, max:int) : bool
   { min <= val && val <= max }
 
-function {:inline true} $bool_to_int(v:bool) returns(int)
+function {:inline true} $bool_to_int(v:bool) : int
   { if v then 1 else 0 }
 
-function {:inline true} $int_to_bool(x:int) returns(bool)
+function {:inline true} $int_to_bool(x:int) : bool
   { x != 0 }
 
 // TODO check if still needed
 // a hack, used when parameter to ITE is a quntified variable to prevent Z3 from crashing
-function {:weight 0} $bool_id(x:bool) returns(bool) { x }
+function $bool_id(x:bool) : bool { x }
 
 
 const $min.i1:int;
@@ -898,24 +898,24 @@ axiom ($max.u2 ==  65535);
 axiom ($max.u4 ==  65536*65536-1);
 axiom ($max.u8 ==  65536*65536*65536*65536-1);
 
-function {:inline true} $in_range_i1(x:int) returns(bool) { $in_range($min.i1, x, $max.i1) }
-function {:inline true} $in_range_i2(x:int) returns(bool) { $in_range($min.i2, x, $max.i2) }
-function {:inline true} $in_range_i4(x:int) returns(bool) { $in_range($min.i4, x, $max.i4) }
-function {:inline true} $in_range_i8(x:int) returns(bool) { $in_range($min.i8, x, $max.i8) }
-function {:inline true} $in_range_u1(x:int) returns(bool) { $in_range(0, x, $max.u1) }
-function {:inline true} $in_range_u2(x:int) returns(bool) { $in_range(0, x, $max.u2) }
-function {:inline true} $in_range_u4(x:int) returns(bool) { $in_range(0, x, $max.u4) }
-function {:inline true} $in_range_u8(x:int) returns(bool) { $in_range(0, x, $max.u8) }
-function {:inline true} $in_range_ptr(p:$ptr) returns(bool) { $in_range_u8($ref(p)) }
+function {:inline true} $in_range_i1(x:int) : bool { $in_range($min.i1, x, $max.i1) }
+function {:inline true} $in_range_i2(x:int) : bool { $in_range($min.i2, x, $max.i2) }
+function {:inline true} $in_range_i4(x:int) : bool { $in_range($min.i4, x, $max.i4) }
+function {:inline true} $in_range_i8(x:int) : bool { $in_range($min.i8, x, $max.i8) }
+function {:inline true} $in_range_u1(x:int) : bool { $in_range(0, x, $max.u1) }
+function {:inline true} $in_range_u2(x:int) : bool { $in_range(0, x, $max.u2) }
+function {:inline true} $in_range_u4(x:int) : bool { $in_range(0, x, $max.u4) }
+function {:inline true} $in_range_u8(x:int) : bool { $in_range(0, x, $max.u8) }
+function {:inline true} $in_range_ptr(p:$ptr) : bool { $in_range_u8($ref(p)) }
 
-function {:inline true} $in_range_div_i1(x:int, y:int) returns(bool) { y != -1 || x != $min.i1 }
-function {:inline true} $in_range_div_i2(x:int, y:int) returns(bool) { y != -1 || x != $min.i2 }
-function {:inline true} $in_range_div_i4(x:int, y:int) returns(bool) { y != -1 || x != $min.i4 }
-function {:inline true} $in_range_div_i8(x:int, y:int) returns(bool) { y != -1 || x != $min.i8 }
+function {:inline true} $in_range_div_i1(x:int, y:int) : bool { y != -1 || x != $min.i1 }
+function {:inline true} $in_range_div_i2(x:int, y:int) : bool { y != -1 || x != $min.i2 }
+function {:inline true} $in_range_div_i4(x:int, y:int) : bool { y != -1 || x != $min.i4 }
+function {:inline true} $in_range_div_i8(x:int, y:int) : bool { y != -1 || x != $min.i8 }
 
-function {:weight 0} $byte_ptr_subtraction(p1:$ptr, p2:$ptr) returns(int)
+function $byte_ptr_subtraction(p1:$ptr, p2:$ptr) : int
   { $ref(p1) - $ref(p2) }
-function $_pow2(int) returns(int);
+function $_pow2(int) : int;
 axiom 
 $_pow2(0) == 1 && $_pow2(1) == 2 && $_pow2(2) == 4 && $_pow2(3) == 8 && $_pow2(4) == 16 && $_pow2(5) == 32 &&
 $_pow2(6) == 64 && $_pow2(7) == 128 && $_pow2(8) == 256 && $_pow2(9) == 512 && $_pow2(10) == 1024 && $_pow2(11) ==
@@ -934,41 +934,41 @@ $_pow2(26) == 67108864 && $_pow2(27) == 134217728 && $_pow2(28) == 268435456 && 
  576460752303423488 && $_pow2(60) == 1152921504606846976 && $_pow2(61) == 2305843009213693952 && $_pow2(62) ==
 4611686018427387904 && $_pow2(63) == 9223372036854775808;
 
-function $in_range_ubits(bits:int, v:int) returns(bool)
+function $in_range_ubits(bits:int, v:int) : bool
   { $in_range(0, v, $_pow2(bits) - 1) }
 
-function $unchecked_sbits(bits:int, v:int) returns(int);
+function $unchecked_sbits(bits:int, v:int) : int;
 axiom (forall bits:int, v:int :: {$unchecked_sbits(bits, v)}
   $in_range_sbits(bits, $unchecked_sbits(bits, v)) &&
   ($in_range_sbits(bits, v) ==> $unchecked_sbits(bits, v) == v));
 
-function $in_range_sbits(bits:int, v:int) returns(bool)
+function $in_range_sbits(bits:int, v:int) : bool
   { $in_range(-$_pow2(bits-1), v, $_pow2(bits-1) - 1) }
 
-function $unchecked_ubits(bits:int, v:int) returns(int);
+function $unchecked_ubits(bits:int, v:int) : int;
 axiom (forall bits:int, v:int :: {$unchecked_ubits(bits, v)}
   $in_range_ubits(bits, $unchecked_ubits(bits, v)) &&
   ($in_range_ubits(bits, v) ==> $unchecked_ubits(bits, v) == v));
 
-function $_or(t:$ctype, x:int, y:int) returns(int);
-function $_xor(t:$ctype, x:int, y:int) returns(int);
-function $_and(t:$ctype, x:int, y:int) returns(int);
-function $_not(t:$ctype, x:int) returns(int);
+function $_or(t:$ctype, x:int, y:int) : int;
+function $_xor(t:$ctype, x:int, y:int) : int;
+function $_and(t:$ctype, x:int, y:int) : int;
+function $_not(t:$ctype, x:int) : int;
 
-function {:weight 0} $unchk_add(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x + y) }
-function {:weight 0} $unchk_sub(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x - y) }
-function {:weight 0} $unchk_mul(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x * y) }
-function {:weight 0} $unchk_div(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x / y) }
-function {:weight 0} $unchk_mod(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x % y) }
+function $unchk_add(t:$ctype, x:int, y:int) : int { $unchecked(t, x + y) }
+function $unchk_sub(t:$ctype, x:int, y:int) : int { $unchecked(t, x - y) }
+function $unchk_mul(t:$ctype, x:int, y:int) : int { $unchecked(t, x * y) }
+function $unchk_div(t:$ctype, x:int, y:int) : int { $unchecked(t, x / y) }
+function $unchk_mod(t:$ctype, x:int, y:int) : int { $unchecked(t, x % y) }
 
-function {:weight 0} $_shl(t:$ctype, x:int, y:int) returns(int)
+function $_shl(t:$ctype, x:int, y:int) : int
   { $unchecked(t, x * $_pow2(y)) }
-function {:weight 0} $_shr(x:int, y:int) returns(int)
+function $_shr(x:int, y:int) : int
   { x / $_pow2(y) }
 
-function $bv_extract_signed(val:int, val_bitsize:int, from:int, to:int) returns(int);
-function $bv_extract_unsigned(val:int, val_bitsize:int, from:int, to:int) returns(int);
-function $bv_update(val:int, val_bitsize:int, from:int, to:int, repl:int) returns(int);
+function $bv_extract_signed(val:int, val_bitsize:int, from:int, to:int) : int;
+function $bv_extract_unsigned(val:int, val_bitsize:int, from:int, to:int) : int;
+function $bv_update(val:int, val_bitsize:int, from:int, to:int, repl:int) : int;
 
 axiom (forall x:int, from:int, to:int, xs:int, val:int :: 
  { $bv_update(x, xs, from, to, val) }
@@ -1061,8 +1061,8 @@ axiom (forall s1:int, s2: int :: {$bv_concat(0, s1, 0, s2)}
   $bv_concat(0, s1, 0, s2) == 0);
 */
 
-function $unchecked(t:$ctype, val:int) returns(int);
-function $in_range_t(t:$ctype, x:int) returns(bool);
+function $unchecked(t:$ctype, val:int) : int;
+function $in_range_t(t:$ctype, x:int) : bool;
 
 axiom (forall val:int :: {$in_range_t(^^i1, val)} $in_range_t(^^i1, val) <==> $in_range_i1(val));
 axiom (forall val:int :: {$in_range_t(^^i2, val)} $in_range_t(^^i2, val) <==> $in_range_i2(val));
@@ -1162,32 +1162,32 @@ axiom (forall t:$ctype, x: int, y: int :: { $_and(t, x, y) } $_and(t, x, y) == $
   
 
 // extra function symbol for multiplication to prevent z3 from applying commutativity half-heartedly
-function {:weight 0} $_mul(x:int, y:int) returns (int) { x * y }
+function $_mul(x:int, y:int) returns (int) { x * y }
 
 // --------------------------------------------------------------------------------
 // Conversion functions
 // --------------------------------------------------------------------------------
 
-function $ptr_to_int($ptr) returns(int);
-function $int_to_ptr(int) returns($ptr);
+function $ptr_to_int($ptr) : int;
+function $int_to_ptr(int) : $ptr;
 axiom (forall p:$ptr :: $int_to_ptr($ptr_to_int(p)) == p);
 
-function $field_to_int($field) returns(int);
-function $int_to_field(int) returns($field);
+function $field_to_int($field) : int;
+function $int_to_field(int) : $field;
 axiom (forall p:$field :: $int_to_field($field_to_int(p)) == p);
 
-function $ptrset_to_int($ptrset) returns(int);
-function $int_to_ptrset(int) returns($ptrset);
+function $ptrset_to_int($ptrset) : int;
+function $int_to_ptrset(int) : $ptrset;
 axiom (forall p:$ptrset :: $int_to_ptrset($ptrset_to_int(p)) == p);
 
-function $ptr_to_u8($ptr) returns(int);
-function $ptr_to_i8($ptr) returns(int);
-function $ptr_to_u4($ptr) returns(int);
-function $ptr_to_i4($ptr) returns(int);
-function $ptr_to_u2($ptr) returns(int);
-function $ptr_to_i2($ptr) returns(int);
-function $ptr_to_u1($ptr) returns(int);
-function $ptr_to_i1($ptr) returns(int);
+function $ptr_to_u8($ptr) : int;
+function $ptr_to_i8($ptr) : int;
+function $ptr_to_u4($ptr) : int;
+function $ptr_to_i4($ptr) : int;
+function $ptr_to_u2($ptr) : int;
+function $ptr_to_i2($ptr) : int;
+function $ptr_to_u1($ptr) : int;
+function $ptr_to_i1($ptr) : int;
 
 axiom ($ptr_to_u8($null) == 0);
 axiom ($ptr_to_i8($null) == 0);
@@ -1198,14 +1198,14 @@ axiom ($ptr_to_i2($null) == 0);
 axiom ($ptr_to_u1($null) == 0);
 axiom ($ptr_to_i1($null) == 0);
 
-function {:inline true} $u8_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
-function {:inline true} $i8_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
-function {:inline true} $u4_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
-function {:inline true} $i4_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
-function {:inline true} $u2_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
-function {:inline true} $i2_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
-function {:inline true} $u1_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
-function {:inline true} $i1_to_ptr(x : int) returns($ptr) { $ptr(^^void, x)  }
+function {:inline true} $u8_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
+function {:inline true} $i8_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
+function {:inline true} $u4_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
+function {:inline true} $i4_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
+function {:inline true} $u2_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
+function {:inline true} $i2_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
+function {:inline true} $u1_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
+function {:inline true} $i1_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
 
 axiom (forall p:$ptr :: { $ptr_to_u8(p) } $in_range_u8($ref(p)) ==> $ptr_to_u8(p) == $ref(p));
 axiom (forall p:$ptr :: { $ptr_to_i8(p) } $in_range_i8($ref(p)) ==> $ptr_to_i8(p) == $ref(p));
@@ -1220,24 +1220,24 @@ axiom (forall p:$ptr :: { $ptr_to_i1(p) } $in_range_i1($ref(p)) ==> $ptr_to_i1(p
 // Floating point arithmetic - currently uninterpreted
 // --------------------------------------------------------------------------------
 
-function $add_f4(x:$primitive, y:$primitive) returns($primitive);
-function $sub_f4(x:$primitive, y:$primitive) returns($primitive);
-function $mul_f4(x:$primitive, y:$primitive) returns($primitive);
-function $div_f4(x:$primitive, y:$primitive) returns($primitive);
-function $neg_f4(x:$primitive) returns($primitive);
-function $lt_f4(x:$primitive, y:$primitive) returns(bool);
-function $leq_f4(x:$primitive, y:$primitive) returns(bool);
-function $gt_f4(x:$primitive, y:$primitive) returns(bool);
-function $geq_f4(x:$primitive, y:$primitive) returns(bool);
-function $add_f8(x:$primitive, y:$primitive) returns($primitive);
-function $sub_f8(x:$primitive, y:$primitive) returns($primitive);
-function $mul_f8(x:$primitive, y:$primitive) returns($primitive);
-function $div_f8(x:$primitive, y:$primitive) returns($primitive);
-function $neg_f8(x:$primitive) returns($primitive);
-function $lt_f8(x:$primitive, y:$primitive) returns(bool);
-function $leq_f8(x:$primitive, y:$primitive) returns(bool);
-function $gt_f8(x:$primitive, y:$primitive) returns(bool);
-function $geq_f8(x:$primitive, y:$primitive) returns(bool);
+function $add_f4(x:$primitive, y:$primitive) : $primitive;
+function $sub_f4(x:$primitive, y:$primitive) : $primitive;
+function $mul_f4(x:$primitive, y:$primitive) : $primitive;
+function $div_f4(x:$primitive, y:$primitive) : $primitive;
+function $neg_f4(x:$primitive) : $primitive;
+function $lt_f4(x:$primitive, y:$primitive) : bool;
+function $leq_f4(x:$primitive, y:$primitive) : bool;
+function $gt_f4(x:$primitive, y:$primitive) : bool;
+function $geq_f4(x:$primitive, y:$primitive) : bool;
+function $add_f8(x:$primitive, y:$primitive) : $primitive;
+function $sub_f8(x:$primitive, y:$primitive) : $primitive;
+function $mul_f8(x:$primitive, y:$primitive) : $primitive;
+function $div_f8(x:$primitive, y:$primitive) : $primitive;
+function $neg_f8(x:$primitive) : $primitive;
+function $lt_f8(x:$primitive, y:$primitive) : bool;
+function $leq_f8(x:$primitive, y:$primitive) : bool;
+function $gt_f8(x:$primitive, y:$primitive) : bool;
+function $geq_f8(x:$primitive, y:$primitive) : bool;
 
 // --------------------------------------------------------------------------------
 // Counter Example Visualizer things
@@ -1259,12 +1259,12 @@ const unique cev_global : var_locglob;
 const unique cev_parameter : var_locglob;
 const unique cev_implicit : var_locglob;
 
-function #cev_init(n:int) returns(bool);
-function #cev_save_position(n:int) returns($token);
-function #cev_var_intro(n:int, locorglob:var_locglob, name:$token, val:int, typ: $ctype) returns(bool);
-function #cev_var_update(n:int, locorglob:var_locglob, name:$token, val:int) returns(bool);
-function #cev_control_flow_event(n:int, tag : cf_event) returns(bool);
-function #cev_function_call(n:int) returns(bool);
+function #cev_init(n:int) : bool;
+function #cev_save_position(n:int) : $token;
+function #cev_var_intro(n:int, locorglob:var_locglob, name:$token, val:int, typ: $ctype) : bool;
+function #cev_var_update(n:int, locorglob:var_locglob, name:$token, val:int) : bool;
+function #cev_control_flow_event(n:int, tag : cf_event) : bool;
+function #cev_function_call(n:int) : bool;
 
 var $cev_pc : int;
 
