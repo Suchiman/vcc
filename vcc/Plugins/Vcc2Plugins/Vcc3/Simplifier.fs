@@ -92,7 +92,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       if trLevel >= 1 then
         wr "  Cannot prove %O%s" expr app
       if helper.Options.SaveModel then
-        smt.SaveModel (sprintf "model%02d.vccmodel" (errCnt - 1))
+        smt.SaveModel (options.GetString "MODEL_FILE" "error.vccmodel")
     false
     
   member private this.Fail (expr:Expr) =

@@ -442,8 +442,8 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
   member this.SaveModel(filename) =
     let model = ref null
     let res = z3.CheckAndGetModel model
-    if res = Z3.LBool.False then failwith ""    
-    use f = System.IO.File.CreateText(filename)
+    if res = Z3.LBool.False then failwith ""
+    use f = System.IO.File.AppendText(filename)
     (!model).Display f
     (!model).Dispose()
     
