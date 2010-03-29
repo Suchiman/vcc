@@ -145,7 +145,7 @@ void setk4(int *p, size_t sz)
   writes(array_range(p, sz))
 {
   size_t i;
-  claim_t c;
+  spec(claim_t c;)
 
 
   i = 0;

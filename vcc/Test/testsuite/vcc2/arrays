@@ -211,7 +211,7 @@ void set0(int *arr, size_t sz)
   }
 }
 
-void set0Spec(int ^arr, size_t sz)
+spec(void set0Spec(int ^arr, size_t sz)
   requires(is_mutable_array(arr, sz))
   ensures(is_mutable_array(arr, sz))
   writes(array_range(arr, sz))
@@ -227,7 +227,7 @@ void set0Spec(int ^arr, size_t sz)
     i = i + 1;
     donothing();
   }
-}
+})
 
 void usex()
 {
@@ -407,8 +407,7 @@ struct DESC {
  invariant(this->c == this->abs.c)
 };
  
-#ifdef VERIFY
-ispure
+spec(ispure
 bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
  reads(abs, conc)
  returns(abs->a == conc->a &&
@@ -416,7 +415,7 @@ bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
    forall(uint64 i; i < 16 ==> abs->core.R[i] == conc->GPR[i]) &&
    forall(uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i])
    );
-#endif
+)
 `
 Verification of ABS#adm succeeded.
 Verification of DESC#adm succeeded.
@@ -451,7 +450,7 @@ struct DESC {
  invariant(this->c == this->abs.c)
 };
  
-#ifdef VERIFY
+spec(
 no_reads_check
 ispure bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
  reads(abs, conc)
@@ -460,7 +459,7 @@ ispure bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
    forall(uint64 i; i <= 16 ==> abs->core.R[i] == conc->GPR[i]) &&
    forall(uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i])
    );
-#endif
+)
 `
 Verification of ABS#adm succeeded.
 Verification of DESC#adm failed.

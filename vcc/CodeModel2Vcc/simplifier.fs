@@ -1018,6 +1018,17 @@ namespace Microsoft.Research.Vcc
          false
        | _ -> true
 
+      let rec isSpecType = function
+        | Type.Array(t, _) 
+        | Type.PhysPtr(t)
+        | Type.Volatile(t) -> isSpecType t
+        | Type.SpecPtr _
+        | Type.Map _
+        | Type.MathInteger _
+        | Type.TypeIdT -> true
+        | Type.Ref(td) -> td.IsSpec
+        | _ -> false
+
       let rec checkAccessToSpecFields ctx self = function
         | _ when ctx.IsPure -> 
           false
@@ -1026,6 +1037,7 @@ namespace Microsoft.Research.Vcc
         | CallMacro(_, ("_vcc_containing_struct"|"_vcc_from_bytes"|"_vcc_to_bytes"|"_vcc_havoc_others"), _, _)
         | CallMacro(_, ("_vcc_bump_volatile_version"|"_vcc_deep_unwrap"|"_vcc_union_reinterpret"|"_vcc_reads_havoc"),_ , _)
         | CallMacro(_, ("_vcc_set_owns"|"_vcc_set_closed_owner"|"_vcc_set_closed_owns"|"_vcc_split_array"|"_vcc_join_arrays"),_ , _)
+        | CallMacro(_, ("_vcc_giveup_closed_owner"), _, _)
         | CallMacro(_, "unclaim", _, _) 
         | CallMacro(_, "by_claim", _, [_; _; _]) ->
           false
@@ -1046,10 +1058,13 @@ namespace Microsoft.Research.Vcc
           true
         | Ref(cmn, ({Kind = SpecLocal} as v)) ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification variable '" + v.Name + "' within non-specification code")
-          true
+          false
         | Ref(cmn, ({Kind = SpecParameter|OutParameter} as v)) ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification parameter '" + v.Name + "' within non-specification code")
-          true
+          false
+        | VarDecl(cmn, ({Kind = VarKind.Local} as v)) when isSpecType v.Type ->
+          helper.GraveWarning(cmn.Token, 9301, "non-specification object '" + v.Name + "' has specification type")
+          false
         | _ -> true
         
       let errorForSecondPhysicalAccess (expr : Expr) =
@@ -1080,10 +1095,24 @@ namespace Microsoft.Research.Vcc
           false
         | _ -> true
       
-        
       let removeSpecMarker self = function
         | CallMacro(_, "spec", _, [body]) -> Some(self(body))
         | _ -> None
+      
+      let checkParameterTypes (fn:Function) =
+        let checkPar (v:Variable) =
+          if v.Kind = VarKind.Parameter && isSpecType v.Type then
+            helper.GraveWarning(fn.Token, 9301, "non-specification parameter '" + v.Name + "' of function '" + fn.Name + "' has specification type")
+        List.iter checkPar fn.Parameters
+
+      for d in decls do
+        match d with 
+          | Top.FunctionDecl({IsSpec = true}) -> ()
+          | Top.FunctionDecl(fn) -> 
+            if isSpecType fn.RetType then
+              helper.GraveWarning(fn.Token, 9301, "non-specification function '" + fn.Name + "' returns value of specification type")
+            checkParameterTypes fn
+          | _ -> ()
         
       for d in decls do
         match d with 
@@ -1091,7 +1120,6 @@ namespace Microsoft.Research.Vcc
           | _ -> [d] |> deepVisitExpressionsCtx checkAccessToSpecFields 
                  [d] |> deepVisitExpressions (checkNoWritesToPhysicalFromSpec false)
                  [d] |> deepVisitExpressions checkAtMostOnePhysicalAccessInAtomic
-        
         
       decls |> deepMapExpressions removeSpecMarker
 

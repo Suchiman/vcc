@@ -894,29 +894,29 @@ struct vcc(record) X2 {
   unsigned y;
 };
 
-ispure struct X2 bzzX(unsigned x)
-  ensures( result.x == x - 10 );
+spec(ispure struct X2 bzzX(unsigned x)
+  ensures( result.x == x - 10 );)
 
 
-void bzz2X()
+spec(void bzz2X()
 {
   struct X2 x;
   x = bzzX(0);
   assert(x.x >= 0);
   assert(false);
-}
+})
 
-ispure struct X2 bzzX2(unsigned x)
-  ensures( result == (struct X2) { .x = x - 10 } );
+spec(ispure struct X2 bzzX2(unsigned x)
+  ensures( result == (struct X2) { .x = x - 10 } );)
 
 
-void bzz2X2()
+spec(void bzz2X2()
 {
   struct X2 x;
   x = bzzX2(0);
   assert(x.x >= 0);
   assert(false);
-}
+})
 `
 Verification of bar failed.
 testcase(14,12) : error VC9500: Assertion '((bool)0)' did not verify.
