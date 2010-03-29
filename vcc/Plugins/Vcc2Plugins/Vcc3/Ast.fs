@@ -55,18 +55,11 @@ module Ast =
         | Named td -> td.Name
         | Bv n -> "bv" + n.ToString()
 
-  type VarKind =
-    | Const
-    | ConstUnique
-    | Bound
-    | Local
-    
   type Var =
     {
       Id : int
       Name : string
       Typ : Type
-      Kind : VarKind
     }
     
     override this.ToString() =
@@ -110,6 +103,8 @@ module Ast =
       match this with
         | Ref n -> wr n.Name
         | Lit l -> wr (l.ToString())
+        | App (f, []) ->
+          wr f.Name
         | App (f, [a;b]) when not (String.exists System.Char.IsLetterOrDigit f.Name) ->
           bin f.Name a b
         | App ({ Name = "select@" }, [a; b]) ->
@@ -270,7 +265,6 @@ module Ast =
   type BlockProc =
     {
       Name : string
-      Locals : list<Var>
       Blocks : list<Block>
     }
         

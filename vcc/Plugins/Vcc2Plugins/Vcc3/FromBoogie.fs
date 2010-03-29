@@ -43,11 +43,11 @@ module FromBoogie =
     member this.Push () = vars
     member this.Pop v = vars <- v
     
-    member this.DeclareVar (v:Boogie.Variable) vr =
+    member this.DeclareVar (v:Boogie.Variable) (vr:Var) =
       vars <- vars.Add (v.UniqueId, vr)
     
-    member this.GetVars () =
-      vars |> Map.fold (fun acc _ e -> e :: acc) []
+    //member this.GetVars () =
+    //  vars |> Map.fold (fun acc _ e -> e :: acc) []
       
     member this.DeclareFuncDecl (f:FuncDecl) =
       funList.Add f
@@ -59,10 +59,15 @@ module FromBoogie =
         | _ -> None
       
     member this.GetVar (v:Boogie.Variable) =
-      match vars.TryFind v.UniqueId with
-        | Some v -> v
-        | None ->
-          failwith ("unregistered variable " + v.Name + " [" + v.UniqueId.ToString() + "] : " + v.TypedIdent.Type.ToString())
+      match funs.TryGetValue v.Name with
+        | true, f ->
+          if not f.ArgTypes.IsEmpty then failwith ""
+          Expr.App (f, [])
+        | _ ->
+          match vars.TryFind v.UniqueId with
+            | Some v -> Expr.Ref v
+            | None ->
+              failwith ("unregistered variable " + v.Name + " [" + v.UniqueId.ToString() + "] : " + v.TypedIdent.Type.ToString())
       
     member this.GetType name = 
       cache typList types name 
@@ -100,21 +105,26 @@ module FromBoogie =
         | _ ->
           failwith ("cannot handle boogie type " + t.ToString() + " : " + t.GetType().ToString())
    
-  let addVar (ctx:Ctx) k (v:Boogie.Variable) =
+  let addVar (ctx:Ctx) (v:Boogie.Variable) =
     let vr =
       {
         Id = ctx.NextId()
         Name = v.Name
         Typ = unType ctx v.TypedIdent.Type
-        Kind = k
       }
     ctx.DeclareVar v vr
     vr
   
+  let mkFun0 (ctx:Ctx) (v:Boogie.Variable) =
+    ctx.NewFunc v.Name [] (unType ctx v.TypedIdent.Type)
+  
+  let addFun0 (ctx:Ctx) v =
+    ctx.DeclareFuncDecl (mkFun0 ctx v)
+    
   let rec doUnparse (ctx:Ctx) (expr:Microsoft.Boogie.Expr) =
     match expr with
       | :? Microsoft.Boogie.IdentifierExpr as id -> 
-        Expr.Ref (ctx.GetVar id.Decl)
+        ctx.GetVar id.Decl
       | :? Microsoft.Boogie.LiteralExpr as lit ->
         if lit.isBigNum then
           Expr.Lit (Lit.Int (bigint.Parse (lit.asBigNum.ToString())))
@@ -197,7 +207,7 @@ module FromBoogie =
       | :? Boogie.BinderExpr as quant ->
         let backup = ctx.Push()
         try 
-          let vars = [for v in quant.Dummies -> addVar ctx VarKind.Bound v]
+          let vars = [for v in quant.Dummies -> addVar ctx v]
           
           let rec doTrig (t:Boogie.Trigger) =
             if t = null then []
@@ -347,10 +357,12 @@ module FromBoogie =
       for d in prog.TopLevelDeclarations do
         match d with
           | :? Boogie.Constant as v ->
-            globals.Add (addVar ctx (if v.Unique then VarKind.ConstUnique else VarKind.Const) v)
+            let f = mkFun0 ctx v
+            let f = if v.Unique then { f with Attrs = Attribute.StringAttr ("vcc3", "unique") :: f.Attrs } else f
+            ctx.DeclareFuncDecl f
           | :? Boogie.GlobalVariable as v ->
             // it behaves like a local variable at this level
-            globals.Add (addVar ctx VarKind.Local v)
+            addFun0 ctx v
           | :? Boogie.Function as func ->
             declareFunction ctx func
           | _ -> ()
@@ -363,7 +375,7 @@ module FromBoogie =
             let fundecl = (ctx.TryGetFuncDecl func.Name).Value
             let backup = ctx.Push()
             try
-              let vars = [for v in func.InParams -> addVar ctx VarKind.Local v]
+              let vars = [for v in func.InParams -> addVar ctx v]
               let body = unparse ctx func.Body                 
               fundecl.Body <- Expand (vars, body)
             finally
@@ -379,10 +391,9 @@ module FromBoogie =
       this.ConvertCFG2DAG (impl, prog)
       this.PassifyImpl (impl, prog) |> ignore
       
-      let locals = glist[]
       let addVars (vs:Boogie.VariableSeq) =
         for v in vs do
-          locals.Add (addVar ctx VarKind.Local v)
+          addFun0 ctx v 
           
       let backup = ctx.Push ()
       let blocks =
@@ -418,6 +429,5 @@ module FromBoogie =
       {
         Blocks = blocks
         Name = impl.Name
-        Locals = Seq.toList locals
       }
    

@@ -201,7 +201,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         let replBound = function
           | Expr.Ref v when mapping.ContainsKey v.Id ->
             Some (Expr.Ref mapping.[v.Id])
-          | Expr.Ref ({ Kind = VarKind.Bound } as v) ->
+          | Expr.Ref v ->
             vars.Add v
             Some (Expr.Ref (freshen v))
           | _ -> None
