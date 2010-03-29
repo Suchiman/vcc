@@ -342,11 +342,11 @@ namespace Microsoft.Research.Vcc.Parsing {
     private LoopContract/*?*/ ParseLoopContract(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      if (this.currentToken != Token.Invariant && this.currentToken != Token.Writes) return null;
+      if (this.currentToken != TokenInvariant && this.currentToken != Token.Writes) return null;
       List<LoopInvariant> invariants = new List<LoopInvariant>();
       List<Expression> writes = new List<Expression>();
       LoopContract loopContract = new LoopContract(invariants, writes);
-      TokenSet loopContractFollowers = followers | Token.Invariant | Token.Writes;
+      TokenSet loopContractFollowers = followers | TokenInvariant | Token.Writes;
       while (TS.LoopContractStart[this.currentToken]) {
         switch (this.currentToken) {
           case Token.Invariant: invariants.Add(ParseLoopInvariant(loopContractFollowers)); break;
@@ -1728,7 +1728,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     private void ParseRestOfTypeDeclaration(SourceLocationBuilder sctx, List<INamespaceDeclarationMember>/*?*/ namespaceMembers, Expression typeName, List<ITypeDeclarationMember> typeMembers, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      TokenSet fieldFollowers = followers | Token.RightBrace | Token.Invariant | Token.Specification;
+      TokenSet fieldFollowers = followers | Token.RightBrace | Token.Specification | TokenInvariant;
       Expression/*?*/ savedCurrentTypeName = this.currentTypeName;
       this.currentTypeName = typeName;
       List<ITypeDeclarationMember>/*?*/ savedCurrentTypeMembers = this.currentTypeMembers;
@@ -1745,7 +1745,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     private void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
-      TokenSet expectedTokens = TS.DeclarationStart | Token.Colon | Token.Invariant;
+      TokenSet expectedTokens = TS.DeclarationStart | Token.Colon | TokenInvariant;
       while (expectedTokens[this.currentToken]) {
         if (this.currentToken == Token.Invariant) {
           if (this.currentTypeInvariants == null)
@@ -2071,10 +2071,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      TokenSet followersOrRightParenthesisOrSemicolon = followers | TS.RightParenthesisOrSemicolon | Token.Invariant | Token.Writes;
+      TokenSet followersOrRightParenthesisOrSemicolon = followers | TS.RightParenthesisOrSemicolon | TokenInvariant | Token.Writes;
       List<Statement> initStatements = this.ParseForInitializer(followersOrRightParenthesisOrSemicolon);
       Expression condition = this.ParseForCondition(followersOrRightParenthesisOrSemicolon);
-      List<Statement> incrementStatements = this.ParseForIncrementer(followers|Token.RightParenthesis|Token.Invariant|Token.Writes);
+      List<Statement> incrementStatements = this.ParseForIncrementer(followers | Token.RightParenthesis | TokenInvariant | Token.Writes);
       this.Skip(Token.RightParenthesis);
       LoopContract/*?*/ contract = this.ParseLoopContract(followers);
       Statement body = this.ParseStatement(followers);
@@ -2191,7 +2191,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
       this.GetNextToken();
-      Expression condition = this.ParseParenthesizedExpression(followers|Token.Invariant|Token.Semicolon|Token.Writes);
+      Expression condition = this.ParseParenthesizedExpression(followers | TokenInvariant | Token.Semicolon | Token.Writes);
       LoopContract/*?*/ contract = this.ParseLoopContract(followers);
       Statement body = this.ParseStatement(followers);
       slb.UpdateToSpan(body.SourceLocation);
@@ -3814,6 +3814,43 @@ namespace Microsoft.Research.Vcc.Parsing {
       return new VccSimpleName(name, this.scanner.SourceLocationOfLastScannedToken);
     }
 
+    private SpecToken CurrentSpecToken {
+      get {
+        if (this.currentToken == Token.Identifier) {
+          switch (this.scanner.GetIdentifierString()) {
+            case "ghost":
+              return SpecToken.Ghost;
+            case "invariant":
+              return SpecToken.Invariant;
+            default:
+              return SpecToken.None;
+          }
+        }
+        return SpecToken.None;
+      }
+    }
+
+    [DebuggerNonUserCode]
+    private bool NewSyntaxSupport {
+      get {
+        return ((VccOptions)this.compilation.Options).Vcc2;
+      }
+    }
+
+    private Token TokenInvariant {
+      get {
+        if (this.NewSyntaxSupport) return Token.None;
+        else return Token.Invariant;
+      }
+    }
+
+    private enum SpecToken
+    {
+      None,
+      Ghost,
+      Invariant,
+    }
+
     private static class TS
     {
 
@@ -4174,7 +4211,48 @@ namespace Microsoft.Research.Vcc.Parsing {
         CastFollower |= Token.Unchecked;
       }
     }
-    
+
+    private struct SpecTokenSet
+    {
+      private ulong bits;
+
+      public SpecTokenSet(SpecToken t1, SpecToken t2) {
+        this.bits = 0;
+        this.bits |= (1ul << (int)t1);
+        this.bits |= (1ul << (int)t2);
+      }
+
+      public SpecTokenSet(SpecToken t1, SpecToken t2, SpecToken t3) {
+        this.bits = 0;
+        this.bits |= (1ul << (int)t1);
+        this.bits |= (1ul << (int)t2);
+        this.bits |= (1ul << (int)t3);
+      }
+
+      [System.Diagnostics.DebuggerNonUserCode]
+      public static SpecTokenSet operator |(SpecTokenSet ts, SpecToken t) {
+        SpecTokenSet result = new SpecTokenSet();
+        int i = (int)t;
+        result.bits = ts.bits | (1ul << i);
+        return result;
+      }
+
+      [System.Diagnostics.DebuggerNonUserCode]
+      public static SpecTokenSet operator |(SpecTokenSet ts1, SpecTokenSet ts2) {
+        SpecTokenSet result = new SpecTokenSet();
+        result.bits = ts1.bits | ts2.bits;
+        return result;
+      }
+
+      internal bool this[SpecToken t] {
+        get {
+          int i = (int)t;
+          return (this.bits & (1ul << i)) != 0;
+        }
+      }
+    }
+
+
     private struct TokenSet { 
       private ulong bits0, bits1, bits2;
 

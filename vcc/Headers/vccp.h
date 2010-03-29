@@ -6,6 +6,13 @@
 #ifndef _VCCP_H
 #define _VCCP_H
 
+#ifdef VERIFY2
+
+#define spec __specification
+#define _ spec
+
+#else 
+
 /*** 
  *** Core annotation language
  ***/
@@ -507,6 +514,8 @@ bool _vcc_account_claim(claim_t, obj_t);
 
 template<typename T> T _vcc_known(T v, bool val);
 #define known _vcc_known
+
+#endif //VERIFY2
 
 // Misc
 char *get___FUNCTION__();
