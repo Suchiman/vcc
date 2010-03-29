@@ -102,10 +102,10 @@ void bar() {
   assert(s.b == 2);
 }
 
-void baz(struct S s)
+spec(void baz(struct S s)
 {
   assert(s.a <= 0x7fffffff);
-}
+})
 
 
 spec(struct S foo2(int k, struct S s0) 
@@ -144,10 +144,10 @@ void bar() {
   assert(s.b == 2);
 }
 
-void baz(struct S s)
+spec(void baz(struct S s)
 {
   assert(s.a <= 0x7ffffff0);
-}
+})
 
 
 spec(struct S foo2(int k, struct S s0) 
@@ -470,11 +470,11 @@ struct vcc(record) X {
     bool Y[unsigned];   
 }; 
 
-void foo() {
+spec(void foo() {
   struct X x;
   x.Y[5] = false;
   assert(x.Y[5] == false);
-}
+})
 `
 Verification of foo succeeded.
 `#include <vcc.h>
@@ -549,11 +549,11 @@ struct vcc(record) X {
   int b:22;
 }; 
 
-void foo() {
+spec(void foo() {
   struct X x;
   x.a = 5;
   assert(x.a == 5);
-} 
+})
 `
 Verification of foo succeeded.
 `
@@ -586,7 +586,7 @@ struct vcc(record) R {
 
 spec (typedef int M[int];)
 
-struct vcc(record) S {
+spec(struct vcc(record) S {
   int a;
   spec(mathint m0[int];)  
   spec(bool m1[int];)
@@ -597,9 +597,9 @@ struct vcc(record) S {
   spec(M m6[int];)
   spec(int m7[int][int];)
   spec(ptrset m8[int];)
-};
+};)
 
-void foo() {
+spec(void foo() {
   struct S a;
   assert(a.m0[0] == 0);
   assert(!a.m1[0]);
@@ -610,7 +610,7 @@ void foo() {
   assert(a.m6[0][0] == 0);
   assert(a.m7[0][0] == 0);
   assert(set_eq(a.m8[0], set_empty()));
-}
+})
 `
 Verification of foo succeeded.
 `

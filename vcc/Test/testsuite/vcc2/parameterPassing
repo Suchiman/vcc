@@ -62,11 +62,10 @@ Verification of UpperLevel succeeded.
 `
 #include "vcc.h"
 
-#ifdef VERIFY
+spec(
 no_reads_check
 ispure ptrset bar(int *p)
-  reads(p);
-#endif
+  reads(p);)
 
 void baz();
 

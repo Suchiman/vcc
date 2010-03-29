@@ -62,10 +62,10 @@ void bar(struct S *s) {
   p = &s->b;
 }
 
-void baz(struct S ^s) {
+spec(void baz(struct S ^s) {
   spec(int ^p;)
   p = &s->a;
-}
+})
 `
 Verification of foo succeeded.
 Verification of bar succeeded.
@@ -88,9 +88,9 @@ void foo(struct T *p) {
   spec(int ^i1 = &(p->r.a);)
 }
 
-void bar(struct T ^p) {
-  spec(int ^i1 = &(p->s.a);)
-}
+spec(void bar(struct T ^p) {
+  int ^i1 = &(p->s.a);
+})
 `
 Verification of foo succeeded.
 Verification of bar succeeded.
@@ -184,14 +184,18 @@ spec(struct S {
 `
 Verification of S#adm succeeded.
 `
+#include <vcc.h>
+
 int foo()
 {
-  int ^a = (void *)0;
+  spec(int ^a = (void *)0;)
 }
 `
 Verification of foo succeeded.
 `
-int foo()
+#include <vcc.h>
+
+spec(int foo()
 {
   int ^a;
   if (a == (void *)0) { 
@@ -199,7 +203,7 @@ int foo()
   
   if (a != (void *)0) { 
   }
-}
+})
 `
 Verification of foo succeeded.
 `
@@ -236,12 +240,12 @@ typedef struct _S {
   int y[5];
 } S;
 
-int bla(S ^s)
+spec(int bla(S ^s)
 {
   int ^x;
   x = &s->x;
   x = &(s->y[1]); 
-}
+})
 `
 Verification of bla succeeded.
 `
