@@ -236,13 +236,15 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       | Type.Named { Name = "$ptr" } -> true
       | _ -> false
     let goal e = App (this.Function "$goal", [e])
-    let aux self (expr:Expr) =
-      if isPtr expr.Type then
-        match expr with
-          | Expr.Ref v -> Some (goal expr)
-          | Expr.App (f, args) -> Some (goal (Expr.App (f, List.map self args)))
-          | _ -> failwith ""
-      else None
+    let aux self = function
+      | Binder _ as expr -> Some expr // don't go inside binders
+      | expr ->
+        if isPtr expr.Type then
+          match expr with
+            | Expr.Ref v -> Some (goal expr)
+            | Expr.App (f, args) -> Some (goal (Expr.App (f, List.map self args)))
+            | _ -> failwith ""
+        else None
     expr.SelfMap aux
         
   member private this.SmtValid negate expr =
