@@ -29,10 +29,6 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
   let sorts = gdict()
   let functions = gdict()
   let invFunctions = gdict()
-  let consts = gdict()
-  let invConsts = gdict()
-  let locals = gdict()
-  let invLoclas = gdict()
   let namedSorts = gdict()
   let mutable tempFunctions = []
   let mutable boundVars = Map.empty
@@ -99,14 +95,6 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
         s
   
   member this.Function (fn:FuncDecl) = functions.[fn.Id]
-  member this.Const (v:Var) =
-    match locals.TryGetValue v.Id with
-      | true, t -> t
-      | _ ->
-        match consts.TryGetValue v.Id with
-          | true, t -> t
-          | false, _ ->
-            failwith ("undeclared global " + v.ToString())
   
   member private this.NextId () =
     id <- id + 1
@@ -129,21 +117,17 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
     let res = glist[]
     let sorts = glist[]
     let globalsBySort = gdict()
-    for g in pass.Globals do
-      let c = z3.MkConst (g.Name, this.Sort g.Typ)
-      consts.Add (g.Id, c)
-      invConsts.Add (c.GetAppDecl(), g)
-      match g.Kind with
-        | VarKind.ConstUnique ->
-          match globalsBySort.TryGetValue g.Typ with
-            | false, _ ->
-              sorts.Add g.Typ
-              globalsBySort.Add (g.Typ, glist[g])
-            | true, l -> l.Add g
-        | _ -> ()
-    for s in sorts do
-      res.Add (z3.MkDistinct [| for g in globalsBySort.[s] -> this.Const g |])
     this.DeclareFunctions()
+    for g in pass.Functions do
+      if g.ArgTypes.IsEmpty && g.Attrs |> hasAttr "unique" then
+        let c = z3.MkConst (g.Name, this.Sort g.RetType)
+        match globalsBySort.TryGetValue g.RetType with
+          | false, _ ->
+            sorts.Add g.RetType
+            globalsBySort.Add (g.RetType, glist[g])
+          | true, l -> l.Add g
+    for s in sorts do
+      res.Add (z3.MkDistinct [| for g in globalsBySort.[s] -> this.App (g, []) |])
     numDeclaredFunctions <- pass.Functions.Count
       (*
       TODO:
@@ -188,8 +172,7 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
           
   member this.Expr e =
     match e with
-      | Ref v when boundVars.ContainsKey v.Id -> boundVars.[v.Id]
-      | Ref v -> this.Const v
+      | Ref v -> boundVars.[v.Id]
       | Lit (Lit.Bool true) -> z3.MkTrue()
       | Lit (Lit.Bool false) -> z3.MkFalse()
       | Lit (Lit.Int n) -> z3.MkIntNumeral (n.ToString())
@@ -219,11 +202,6 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
   member this.BeginProc (p:BlockProc) =
     this.Push()
     this.DeclareFunctions()
-    for l in p.Locals do
-      if l.Kind <> VarKind.Local then failwith ""
-      let c = z3.MkConst (l.Name, this.Sort l.Typ)
-      locals.Add (l.Id, c)
-      invLoclas.Add (c.GetAppDecl(), l)
   
   member this.FinishProc () =
     this.Pop()
@@ -342,13 +320,7 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
       if args.IsEmpty then
         match properDefs.TryGetValue (z3.MkConst f) with
           | true, v -> v
-          | _ ->
-            match invLoclas.TryGetValue f with
-              | true, l -> Expr.Ref l
-              | _ ->
-                match invConsts.TryGetValue f with
-                  | true, g -> Expr.Ref g
-                  | _ -> App (possiblyDeclare f, [])
+          | _ -> App (possiblyDeclare f, [])
       else
         App (possiblyDeclare f, args)
     
