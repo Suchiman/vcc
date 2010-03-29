@@ -192,6 +192,7 @@ function {:inline true} $is_ptr_to_composite(p:$ptr) : bool
 
 function $field_offset($field) : int;
 function $field_parent_type($field) : $ctype;
+function $is_ghost_field($field) : bool;
 
 function $is_non_primitive(t:$ctype) : bool;
 axiom (forall t:$ctype :: {$is_composite(t)} $is_composite(t) ==> $is_non_primitive(t));
@@ -317,7 +318,7 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
   }
 
 function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
-  { $is_base_field(f) && $field_parent_type(f) == partp &&
+  { $is_base_field(f) && $field_parent_type(f) == partp && $is_ghost_field(f) &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f))) &&
     (forall S:$state, p:$ptr :: 
       {S[$dot($goal($dot(p, f)), $f_typed)]}
@@ -330,7 +331,7 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
   }
 
 function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
-  { $is_base_field(f) && 
+  { $is_base_field(f) && $is_ghost_field(f) &&
     (forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f)))
   }
 
@@ -408,6 +409,17 @@ function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
 function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { S1 == (lambda p:$ptr :: if !W[p] && !$irrelevant(S0, p) then S0[p] else S1[p]) &&
     $timestamp_post(S0, S1) }
+
+function {:inline true} $preserves_thread_local(S0:$state, S1:$state) : bool
+  { (forall p:$ptr :: {$thread_local(S1, p)}
+       $thread_local(S0, p) ==> $thread_local(S1, p)) }
+
+function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
+  { S0 == (lambda p:$ptr :: if $thread_local(S0, p) then S0[p] else S0[p]) &&
+    $preserves_thread_local(S0, S1) &&
+    $timestamp_post(S0, S1) }
+
+
 
 
 // ----------------------------------------------------------------------------
@@ -664,6 +676,32 @@ function $pre_static_wrap($state) : bool;
 function $pre_static_unwrap($state) : bool;
 function $post_unwrap(S1:$state, S2:$state) : bool;
 
+function {:inline true} $wrap_writes(S1:$state, S2:$state, o:$ptr) : bool
+{
+  (forall p:$ptr :: {$goal(p)}
+    S1[p] == S2[p] ||
+    p == $dot(o, $f_version) || p == $dot(o, $f_closed) || 
+    ($set_in($ghost_emb(p), $owns(S1, o)) &&
+      ($ghost_path(p) == $f_owner || $ghost_path(p) == $f_timestamp)))
+}
+
+function {:inline true} $is_unwrapped(S1:$state, S2:$state, o:$ptr) : bool
+{
+  $wrap_writes(S1, S2, o) &&
+  $mutable(S2, o) && 
+  $timestamp_is_now(S2, o) &&
+
+  (forall p:$ptr :: {$goal(p)}
+    $set_in(p, $owns(S1, o)) ==>
+      $wrapped(S2, p, $typ(p)) && $timestamp_is_now(S2, p)) &&
+
+  //(forall #p:$ptr :: {$thread_local(S2, #p)}
+  //  $thread_local(S1, #p) ==> $thread_local(S2, #p));
+
+  $timestamp_post_strict(S1, S2) &&
+  $post_unwrap(S1, S2)
+}
+
 procedure $unwrap(o:$ptr, T:$ctype);
   modifies $s;
   // TOKEN: the object has no outstanding claims
@@ -671,23 +709,24 @@ procedure $unwrap(o:$ptr, T:$ctype);
   // TOKEN: OOPS: pre_unwrap holds
   requires $pre_unwrap($s);
 
-  ensures (forall p:$ptr :: {$goal(p)}
-    old($s)[p] == $s[p] ||
-    p == $dot(o, $f_version) || p == $dot(o, $f_closed) || 
-    ($set_in($ghost_emb(p), $owns(old($s), o)) &&
-      ($ghost_path(p) == $f_owner || $ghost_path(p) == $f_timestamp)));
+  ensures $is_unwrapped(old($s), $s, o);
 
-  ensures $mutable($s, o) && $timestamp_is_now($s, o);
+function $is_wrapped(S1:$state, S2:$state, o:$ptr) : bool
+{
+  $wrap_writes(S1, S2, o) &&
+  $wrapped(S2, o, $typ(o)) &&
+  $timestamp_is_now(S2, o) &&
 
-  ensures (forall p:$ptr :: {$goal(p)}
-    $set_in(p, $owns(old($s), o)) ==>
-      $wrapped($s, p, $typ(p)) && $timestamp_is_now($s, p));
+  (forall p:$ptr :: {$goal(p)}
+    $set_in(p, $owns(S1, o)) ==>
+      $owner(S2, p) == o && $timestamp_is_now(S2, p)) &&
 
-  //ensures (forall #p:$ptr :: {$thread_local($s, #p)}
-  //  $thread_local(old($s), #p) ==> $thread_local($s, #p));
+  ($is_claimable($typ(o)) ==> $ref_cnt(S1, o) == 0 && $ref_cnt(S2, o) == 0)
 
-  ensures $timestamp_post_strict(old($s), $s);
-  ensures $post_unwrap(old($s), $s);
+  //$set_in(o, $domain(S2, o));
+  //(forall #p:$ptr :: {$thread_local(S2, #p)}
+  //  $thread_local(S1, #p) ==> $thread_local(S2, #p));
+}
 
 procedure $wrap(o:$ptr, T:$ctype);
   // writes o, $owns($s, o)
@@ -701,22 +740,87 @@ procedure $wrap(o:$ptr, T:$ctype);
   // TOKEN: everything in the owns set is wrapped
   requires (forall p:$ptr :: {$dont_instantiate(p)} $is_goal(p) && $set_in0(p, $owns($s, o)) ==> $wrapped($s, p, $typ(p)));
 
-  ensures (forall p:$ptr :: {$goal(p)}
-    old($s)[p] == $s[p] ||
-    p == $dot(o, $f_version) || p == $dot(o, $f_closed) || 
-    ($set_in($ghost_emb(p), $owns(old($s), o)) &&
-      ($ghost_path(p) == $f_owner || $ghost_path(p) == $f_timestamp)));
+  ensures $is_wrapped(old($s), $s, o);
 
-  ensures $wrapped($s, o, $typ(o)) && $timestamp_is_now($s, o);
 
-  ensures (forall p:$ptr :: {$goal(p)}
-    $set_in(p, $owns(old($s), o)) ==>
-      $owner($s, p) == o && $timestamp_is_now($s, p));
+// ----------------------------------------------------------------------------
+// Admissibility
+// ----------------------------------------------------------------------------
 
-  // ensures $set_in(o, $domain($s, o));
-  ensures $is_claimable(T) ==> old($ref_cnt($s, o)) == 0 && $ref_cnt($s, o) == 0;
-  //ensures (forall #p:$ptr :: {$thread_local($s, #p)}
-  //  $thread_local(old($s), #p) ==> $thread_local($s, #p));
+function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
+  { (forall f:$field :: {$dot(p, f)}
+      ($is_ghost_field(f) || $field_parent_type(f) == t) ==>
+        S1[$dot(p, f)] == S2[$dot(p, f)] ||
+        f == $f_closed || f == $f_owner || f == $f_ref_cnt) }
+
+function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
+  { (forall f:$field :: {$dot(p, f)}
+      ($is_ghost_field(f) || $field_parent_type(f) == t) ==>
+        S1[$dot(p, f)] == S2[$dot(p, f)] ||
+        $is_volatile(S1, $dot(p, f)) ||
+        f == $f_closed || f == $f_owner || f == $f_ref_cnt) }
+
+function $good_for_admissibility(S:$state) : bool;
+function $good_for_post_admissibility(S:$state) : bool;
+
+function {:inline true} $stuttering_pre(S:$state, p:$ptr) : bool
+  { (forall q: $ptr :: {$goal(q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
+    $good_for_admissibility(S)
+  }
+
+function {:inline true} $admissibility_pre(S:$state, p:$ptr) : bool
+  { $closed(S, p) && $inv(S, p, $typ(p)) && $stuttering_pre(S, p) }
+
+procedure $havoc_others(p:$ptr, t:$ctype);
+  modifies $s;
+  // TOKEN: the state was not modified
+  requires $good_for_admissibility($s);
+  ensures $is_stuttering_check() || $spans_the_same(old($s), $s, p, t);
+  ensures $nonvolatile_spans_the_same(old($s), $s, p, t);
+  ensures $closed($s, p);
+  ensures $typed($s, p);
+  ensures $closed_is_transitive($s);
+  ensures $good_state($s);
+  ensures $good_for_post_admissibility($s);
+  ensures (forall q: $ptr :: {$goal(q)}
+    ($closed(old($s), q) || $closed($s, q)) && 
+    (!$spans_the_same(old($s), $s, q, $typ(q)) || $closed(old($s), q) != $closed($s, q)) 
+      ==> ($inv2(old($s), $s, q, $typ(q)) && $nonvolatile_spans_the_same(old($s), $s, q, $typ(q))));
+  ensures (forall q:$ptr :: {$goal(q)}// {$set_in(q, $owns(old($s), p))}
+            $set_in(q, $owns(old($s), p)) ==>
+              $ref_cnt(old($s), q) == $ref_cnt($s, q));
+  ensures $timestamp_post(old($s), $s);
+
+// ----------------------------------------------------------------------------
+// Can-unwrap checks
+// ----------------------------------------------------------------------------
+
+function $is_stuttering_check() : bool;
+function $is_unwrap_check() : bool;
+function {:inline true} $is_admissibility_check() : bool
+  { !$is_stuttering_check() && !$is_unwrap_check() }
+
+function $good_for_pre_can_unwrap(S:$state) : bool;
+function $good_for_post_can_unwrap(S:$state) : bool;
+
+function {:inline true} $unwrap_check_pre(S:$state, p:$ptr) : bool
+  { $wrapped(S, p, $typ(p)) && 
+    (! $is_claimable($typ(p)) || $ref_cnt(S, p) == 0) &&
+    $inv(S, p, $typ(p)) &&
+    (forall q: $ptr :: {$goal(q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
+    $good_for_pre_can_unwrap(S)
+  }
+
+procedure $unwrap_check(o:$ptr);
+  modifies $s;
+  // TOKEN: the state was not modified
+  requires $good_for_pre_can_unwrap($s);
+  ensures $good_state($s);
+  ensures $good_for_post_can_unwrap($s);
+
+  ensures $spans_the_same(old($s), $s, o, $typ(o));
+
+  ensures $is_unwrapped(old($s), $s, o);
 
 
 // -----------------------------------------------------------------------

@@ -15,4 +15,5 @@ void foo(struct A *x)
   x->a = 10;
   speconly( x->b = 20; )
   wrap(x);
+  assert(false);
 }
