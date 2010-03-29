@@ -407,15 +407,15 @@ function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
   }     
 
 function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
-  { S1 == (lambda p:$ptr :: if !W[p] && !$irrelevant(S0, p) then S0[p] else S1[p]) &&
+  { (forall p:$ptr :: {S1[$goal(p)]} S0[p] == S1[p] || W[p] || $irrelevant(S0, p)) &&
     $timestamp_post(S0, S1) }
 
 function {:inline true} $preserves_thread_local(S0:$state, S1:$state) : bool
-  { (forall p:$ptr :: {$thread_local(S1, p)}
+  { (forall p:$ptr :: {$thread_local(S1, $goal(p))}
        $thread_local(S0, p) ==> $thread_local(S1, p)) }
 
 function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
-  { S0 == (lambda p:$ptr :: if $thread_local(S0, p) then S0[p] else S0[p]) &&
+  { (forall p:$ptr :: {S1[$goal(p)]} S0[p] == S1[p] || !$thread_local(S0, p)) &&
     $preserves_thread_local(S0, S1) &&
     $timestamp_post(S0, S1) }
 
@@ -537,8 +537,10 @@ function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
 // required for reading
 function $thread_local(S:$state, p:$ptr) : bool
   { $typed(S, p) &&
-    (($is_primitive_ch($typ(p)) && (!$is_volatile(S, p) || !$closed(S, $emb(S, p))) && $thread_local_np(S, $emb(S, p))) ||
-     $thread_local_np(S, p)) }
+    if $is_primitive_ch($typ(p)) then
+      (!$is_volatile(S, p) || !$closed(S, $emb(S, p))) && $thread_local_np(S, $emb(S, p))
+    else
+      $thread_local_np(S, p) }
 
 function {:inline true} $thread_local2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $thread_local(S, #p) }
@@ -597,14 +599,40 @@ axiom (forall S:$state :: {$full_stop(S)}
 axiom (forall S:$state :: {$invok_state(S)}
   $invok_state(S) ==> $good_state(S));
 
+// ----------------------------------------------------------------------------
+// System invariants
+// ----------------------------------------------------------------------------
+
 function {:inline true} $closed_is_transitive(S:$state) returns (bool)
   { 
-    (forall #p:$ptr,#q:$ptr ::
-      {:vcc3 "todo"}
-      {$set_in(#p, $owns(S, #q))}
+    (forall p:$ptr,q:$ptr ::
+      {$set_in($goal(p), $owns(S, q))}
       $good_state(S) &&
-      $set_in(#p, $owns(S, #q)) && $closed(S, #q) ==> $closed(S, #p)  && $ref(#p) != 0)
- } 
+      $set_in(p, $owns(S, q)) && $closed(S, q) ==> $closed(S, p) && $ref(p) != 0)
+  } 
+
+/*
+axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in(p, $owns(S, q)), $is_non_primitive($typ(p))}
+  $good_state(S) &&
+  $closed(S, q) && $is_non_primitive($typ(p)) ==>
+      ($set_in(p, $owns(S, q)) <==> $owner(S, p) == q));
+
+axiom (forall S:$state, #r:int, #t:$ctype :: {$owns(S, $ptr(#t, #r)), $is_arraytype(#t)}
+  $good_state(S) ==>
+    $is_arraytype(#t) ==> $owns(S, $ptr(#t, #r)) == $set_empty());
+
+axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
+  $invok_state(S) && $closed(S, #p) ==> $inv(S, #p, #t));
+
+axiom (forall S:$state :: {$good_state(S)}
+  $good_state(S) ==> $closed_is_transitive(S));
+*/
+
+axiom (forall S:$state ::
+  $good_state(S) ==>
+    (forall p:$ptr :: {$goal(p)} $closed(S, p) ==> $typed(S, p)) &&
+    $closed_is_transitive(S)
+    );
         
 // ----------------------------------------------------------------------------
 // 
@@ -665,6 +693,36 @@ function {:inline true} $timestamp_post_strict(M1:$state, M2:$state) : bool
     $call_transition(M1, M2)
   }
 
+procedure $set_owns(p:$ptr, owns:$ptrset);
+  // writes p
+  modifies $s;
+  // TOKEN: the owner is non-primitive
+  requires $is_composite_ch($typ(p));
+  // TOKEN: the owner is mutable
+  requires $mutable($s, p);
+  ensures $s == (lambda q:$ptr :: if q != $dot(p, $f_owns) then old($s)[q] else $ptrset_to_int(owns));
+  ensures $timestamp_post_strict(old($s), $s);
+
+// ----------------------------------------------------------------------------
+// Allocation
+// ----------------------------------------------------------------------------
+
+procedure $spec_alloc(t:$ctype) returns(r:$ptr);
+  modifies $s;
+  ensures $typed2($s, r, t);
+  ensures $mutable($s, r);
+
+  ensures (forall p:$ptr :: {$goal(p)}
+    $set_in(p, $span($s, r)) ==> $timestamp_is_now($s, p));
+
+  ensures $writes_nothing(old($s), $s);
+
+  ensures !$typed(old($s), r);
+  ensures $is_malloc_root($s, r);
+  ensures $is_object_root($s, r);
+  ensures $first_option_typed($s, r);
+  ensures $in_range_spec_ptr($ref(r));
+
 // ----------------------------------------------------------------------------
 // Wrap/unwrap
 // ----------------------------------------------------------------------------
@@ -676,30 +734,30 @@ function $pre_static_wrap($state) : bool;
 function $pre_static_unwrap($state) : bool;
 function $post_unwrap(S1:$state, S2:$state) : bool;
 
-function {:inline true} $wrap_writes(S1:$state, S2:$state, o:$ptr) : bool
+function {:inline true} $wrap_writes(S0:$state, S2:$state, o:$ptr) : bool
 {
   (forall p:$ptr :: {$goal(p)}
-    S1[p] == S2[p] ||
+    S0[p] == S2[p] ||
     p == $dot(o, $f_version) || p == $dot(o, $f_closed) || 
-    ($set_in($ghost_emb(p), $owns(S1, o)) &&
+    ($set_in($ghost_emb(p), $owns(S0, o)) &&
       ($ghost_path(p) == $f_owner || $ghost_path(p) == $f_timestamp)))
 }
 
-function {:inline true} $is_unwrapped(S1:$state, S2:$state, o:$ptr) : bool
+function {:inline true} $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 {
-  $wrap_writes(S1, S2, o) &&
-  $mutable(S2, o) && 
-  $timestamp_is_now(S2, o) &&
+  $wrap_writes(S0, S, o) &&
+  $mutable(S, o) && 
+  $timestamp_is_now(S, o) &&
 
   (forall p:$ptr :: {$goal(p)}
-    $set_in(p, $owns(S1, o)) ==>
-      $wrapped(S2, p, $typ(p)) && $timestamp_is_now(S2, p)) &&
+    $set_in(p, $owns(S0, o)) ==>
+      $wrapped(S, p, $typ(p)) && $timestamp_is_now(S, p)) &&
 
-  //(forall #p:$ptr :: {$thread_local(S2, #p)}
-  //  $thread_local(S1, #p) ==> $thread_local(S2, #p));
+  //(forall #p:$ptr :: {$thread_local(S, #p)}
+  //  $thread_local(S0, #p) ==> $thread_local(S, #p));
 
-  $timestamp_post_strict(S1, S2) &&
-  $post_unwrap(S1, S2)
+  $timestamp_post_strict(S0, S) &&
+  $post_unwrap(S0, S)
 }
 
 procedure $unwrap(o:$ptr, T:$ctype);
@@ -711,21 +769,21 @@ procedure $unwrap(o:$ptr, T:$ctype);
 
   ensures $is_unwrapped(old($s), $s, o);
 
-function $is_wrapped(S1:$state, S2:$state, o:$ptr) : bool
+function $is_wrapped(S0:$state, S:$state, o:$ptr) : bool
 {
-  $wrap_writes(S1, S2, o) &&
-  $wrapped(S2, o, $typ(o)) &&
-  $timestamp_is_now(S2, o) &&
+  $wrap_writes(S0, S, o) &&
+  $wrapped(S, o, $typ(o)) &&
+  $timestamp_is_now(S, o) &&
 
   (forall p:$ptr :: {$goal(p)}
-    $set_in(p, $owns(S1, o)) ==>
-      $owner(S2, p) == o && $timestamp_is_now(S2, p)) &&
+    $set_in(p, $owns(S0, o)) ==>
+      $owner(S, p) == o && $timestamp_is_now(S, p)) &&
 
-  ($is_claimable($typ(o)) ==> $ref_cnt(S1, o) == 0 && $ref_cnt(S2, o) == 0)
+  ($is_claimable($typ(o)) ==> $ref_cnt(S0, o) == 0 && $ref_cnt(S, o) == 0)
 
-  //$set_in(o, $domain(S2, o));
-  //(forall #p:$ptr :: {$thread_local(S2, #p)}
-  //  $thread_local(S1, #p) ==> $thread_local(S2, #p));
+  //$set_in(o, $domain(S, o));
+  //(forall #p:$ptr :: {$thread_local(S, #p)}
+  //  $thread_local(S0, #p) ==> $thread_local(S, #p));
 }
 
 procedure $wrap(o:$ptr, T:$ctype);
@@ -783,9 +841,9 @@ procedure $havoc_others(p:$ptr, t:$ctype);
   ensures $good_state($s);
   ensures $good_for_post_admissibility($s);
   ensures (forall q: $ptr :: {$goal(q)}
-    ($closed(old($s), q) || $closed($s, q)) && 
-    (!$spans_the_same(old($s), $s, q, $typ(q)) || $closed(old($s), q) != $closed($s, q)) 
-      ==> ($inv2(old($s), $s, q, $typ(q)) && $nonvolatile_spans_the_same(old($s), $s, q, $typ(q))));
+    $closed(old($s), q) || $closed($s, q) ==>
+      ($spans_the_same(old($s), $s, q, $typ(q)) && $closed(old($s), q) == $closed($s, q)) || 
+      ($inv2(old($s), $s, q, $typ(q)) && $nonvolatile_spans_the_same(old($s), $s, q, $typ(q))));
   ensures (forall q:$ptr :: {$goal(q)}// {$set_in(q, $owns(old($s), p))}
             $set_in(q, $owns(old($s), p)) ==>
               $ref_cnt(old($s), q) == $ref_cnt($s, q));
@@ -868,6 +926,60 @@ axiom (forall S:$state, p:$ptr, q:$ptr ::
   {:vcc3 "todo"}
   {$set_in(p, $volatile_span(S, q))}
   $set_in(p, $volatile_span(S, q)) <==> p == q || ($is_volatile(S, p) && $set_in(p, $span(S, q))));
+
+
+// ----------------------------------------------------------------------------
+// Records
+// ----------------------------------------------------------------------------
+
+type $record;
+const $rec_zero : $record;
+function $rec_update(r:$record, f:$field, v:int) : $record;
+function $rec_fetch(r:$record, f:$field) : int;
+
+function {:inline true} $rec_update_bv(r:$record, f:$field, val_bitsize:int, from:int, to:int, repl:int) : $record
+  { $rec_update(r, f, $bv_update($rec_fetch(r, f), val_bitsize, from, to, repl)) }
+
+axiom (forall f:$field :: {$rec_fetch($rec_zero, f)} $rec_fetch($rec_zero, f) == 0);
+
+axiom (forall r:$record, f:$field, v:int :: {$rec_fetch($rec_update(r, f, v), f)}
+  $rec_fetch($rec_update(r, f, v), f) == $unchecked($record_field_int_kind(f), v));
+
+axiom (forall r:$record, f:$field :: {$rec_fetch(r, f)}
+  $in_range_t($record_field_int_kind(f), $rec_fetch(r, f)));
+
+axiom (forall r:$record, f1:$field, f2:$field, v:int :: {$rec_fetch($rec_update(r, f1, v), f2)}
+  $rec_fetch($rec_update(r, f1, v), f2) == $rec_fetch(r, f2) || f1 == f2);
+
+function $is_record_type(t:$ctype) : bool;
+function $is_record_field(parent:$ctype, field:$field, field_type:$ctype) : bool;
+
+axiom (forall t:$ctype :: {$is_record_type(t)} $is_record_type(t) ==> $is_primitive(t));
+
+function $as_record_record_field($field) : $field;
+axiom (forall p:$ctype, f:$field, ft:$ctype :: {$is_record_field(p, f, ft), $is_record_type(ft)}
+  $is_record_field(p, f, ft) && $is_record_type(ft) ==> $as_record_record_field(f) == f);
+
+function $record_field_int_kind(f:$field) : $ctype;
+
+function $rec_eq(r1:$record, r2:$record) : bool
+  { r1 == r2 }
+function $rec_base_eq(x:int, y:int) : bool
+  { x == y }
+
+function $int_to_record(x:int) : $record;
+function $record_to_int(r:$record) : int;
+
+axiom (forall r:$record :: {$record_to_int(r)} $int_to_record($record_to_int(r)) == r);
+
+axiom (forall r1:$record, r2:$record :: {$rec_eq(r1, r2)}
+  $rec_eq(r1, r2) <==
+  (forall f:$field :: $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f))));
+
+axiom (forall r1:$record, r2:$record, f:$field ::
+ {$rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, $as_record_record_field(f)))}
+ $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)) <==
+   $rec_eq($int_to_record($rec_fetch(r1, f)), $int_to_record($rec_fetch(r2, f))));
 
 
 // -----------------------------------------------------------------------

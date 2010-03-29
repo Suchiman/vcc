@@ -12,10 +12,13 @@ open Microsoft
 open Microsoft.Research.Vcc
 open Microsoft.Research.Vcc.Util
 
+open System.IO
+
 [<System.ComponentModel.Composition.Export("Microsoft.Research.Vcc.VCGenPlugin")>]
 type Vcc3Plugin() =
   inherit VCGenPlugin()
   let opts = Options()
+  let mutable methodNo = 0
   
   override this.Name = "Vcc3"
   
@@ -23,10 +26,17 @@ type Vcc3Plugin() =
     Seq.iter opts.Set o
   
   override this.VerifyImpl (helper, vcgen, impl, prog, handler) =
-    let tr = false
-    
-    let wr (s:obj) = System.Console.WriteLine s
-    
+      
+    if methodNo = 0 then
+      let filename =
+        if helper.Options.FileNames.Count = 0 then "testcase"
+        else helper.Options.FileNames.[0]
+      if helper.Options.SaveModel then
+        let name = Path.ChangeExtension (filename, "vccmodel")
+        if File.Exists name then
+          File.Delete name
+        opts.Set ("MODEL_FILE=" + name)        
+    methodNo <- methodNo + 1
     
     let pass = FromBoogie.Passyficator(prog, helper, [])
     pass.Init()

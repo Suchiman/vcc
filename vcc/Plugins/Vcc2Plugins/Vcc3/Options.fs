@@ -15,12 +15,12 @@ type Options() =
   let lower (s:string) = s.ToLower (System.Globalization.CultureInfo.InvariantCulture)
   
   member this.GetString name defl =
-    match opts.TryGetValue name with
+    match opts.TryGetValue (lower name) with
       | true, v -> v
       | _ -> defl
   
   member this.GetInt name defl =
-    match opts.TryGetValue name with
+    match opts.TryGetValue (lower name) with
       | true, v ->
         match System.Int32.TryParse v with
           | true, r -> r
@@ -28,7 +28,7 @@ type Options() =
       | _ -> defl
  
   member this.GetBool name defl =
-    match opts.TryGetValue name with
+    match opts.TryGetValue (lower name) with
       | true, v ->
         match lower v with
           | "true" | "t"
