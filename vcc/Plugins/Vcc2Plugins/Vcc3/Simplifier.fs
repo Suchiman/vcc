@@ -210,8 +210,8 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         let vars = [for v in vars -> mapping.[v.Id]]
         let fn = this.MakeTempFun "lambda" (vars |> List.map (fun v -> v.Typ)) typ
         let fnCall = App (fn, List.map Expr.Ref vars)
-        let sel = App (this.Function ("select@" + typ.ToString()), fnCall :: List.map Expr.Ref idxs)
-        let eq = App (this.Function ("==@" + body.Type.ToString()), [sel; body])
+        let sel = this.App ("select@" + typ.ToString()) (fnCall :: List.map Expr.Ref idxs)
+        let eq = this.Eq sel body
         let axq =
           {
             Kind = Forall
@@ -231,28 +231,48 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     res
       
     
+  member private this.App name args =
+    App (this.Function name, args)
+  
+  member private this.Const name =
+    this.App name []
+  
+  member private this.Eq (a:Expr) b =
+    this.App ("==@" + a.Type.ToString()) [a; b]
+  
   member private this.Goalize (expr:Expr) =    
     let isPtr = function
       | Type.Named { Name = "$ptr" } -> true
       | _ -> false
-    let goal e = App (this.Function "$goal", [e])
+      
+    let eq = this.Function "==@$ptr"
+    let goal = this.Function "$goal"
+    let dot = this.Function "$dot"
+    let doAssumeGoal e = 
+      if trLevel >= 4 then
+        wr "    [GOAL] %O" e
+      smt.Assume (this.Eq (this.App "$goal" [e]) e)
+    let assumeGoal = function
+      | App ({ Name = "$dot" }, [_; App ({ Name = "$f_typed" }, _)]) as e ->
+        doAssumeGoal e
+      | e ->
+        doAssumeGoal e
+        doAssumeGoal (this.App "$dot" [e; this.Const "$f_typed"])
     let aux self = function
       | Binder _ as expr -> Some expr // don't go inside binders
       | expr ->
         if isPtr expr.Type then
-          match expr with
-            | Expr.Ref v -> Some (goal expr)
-            | Expr.App (f, args) -> Some (goal (Expr.App (f, List.map self args)))
-            | _ -> failwith ""
-        else None
-    expr.SelfMap aux
+          assumeGoal expr
+        None
+    expr.SelfMap aux |> ignore
         
   member private this.SmtValid negate expr =
     let expr = Expr.MkNotCond negate expr
     smt.Push()
-    let toCheck = expr.Expand() |> this.RemoveBuiltins |> this.Goalize
+    let toCheck = expr.Expand() |> this.RemoveBuiltins
     if trLevel >= 3 then
       wr "[SMT] assert %O" toCheck
+    this.Goalize toCheck
     match smt.AssertOrModel toCheck with
       | Some model ->
         let mutable numInst = 0
@@ -292,12 +312,21 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
   
   member private this.Valid negate (expr:Expr) =
     let goalize (e:Expr) = e.Expand() |> this.Goalize
+    let neg = Expr.MkNotCond negate
     let validOr a b =
       if this.NestedValid negate a then
         true
       else
-        this.LogAssume (Expr.MkNotCond (not negate) (goalize a))
-        this.Valid negate b
+        this.Push()        
+        let res =
+          try
+            goalize a
+            this.LogAssume (Expr.MkNotCond (not negate) a)
+            this.Valid negate b
+          finally
+            this.Pop()
+        // if res then this.LogAssume (Expr.MkOr (neg a, neg b))
+        res
     
     let passToSMT expr = this.SmtValid negate expr
         
@@ -316,16 +345,18 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       | PIte (a, b, c) ->
         if this.NestedValid false a then          
           this.Valid negate b
-        else if this.NestedValid true b then
+        else if this.NestedValid true a then
           this.Valid negate c
         else
           this.Push()
-          this.LogAssume (goalize a)
+          this.LogAssume a
+          goalize a
           let r1 = this.Valid negate b
           this.Pop()
           if r1 then
             this.Push()
-            this.LogAssume (Expr.MkNot (goalize a))
+            this.LogAssume (Expr.MkNot a)
+            goalize a
             let r2 = this.Valid negate c
             this.Pop()
             r2
@@ -347,7 +378,24 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
             let fn = this.MakeTempFun ("sk@" + v.Name) [] v.Typ
             smt.DeclareTempFunction fn
             vars.Add (v.Id, App (fn, []))
-          this.Valid negate (q.Body.Subst vars)
+          let sk_hack = function
+            | [App ({ Name = "sk_hack" }, [arg])] -> [arg]
+            | _ -> []
+          let body = q.Body.Subst vars
+          match q.Triggers |> List.collect sk_hack with
+            | [] -> this.Valid negate body
+            | hacks ->          
+              this.Push()
+              try
+                for h in hacks do
+                  let body = (h.Subst vars).Expand()
+                  if trLevel >= 3 then
+                    wr "[SK_HACK] %O" body
+                  goalize body
+                  smt.Assume (this.App "$instantiate_bool" [body])
+                this.Valid negate body
+              finally
+                this.Pop()
         else
           passToSMT expr
         

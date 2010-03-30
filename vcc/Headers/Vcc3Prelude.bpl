@@ -303,6 +303,11 @@ function $goal(p:$ptr) : $ptr
 function {:inline true} $is_goal(p:$ptr) : bool
   { $goal(p) == p }
 
+axiom (forall p:$ptr, S:$state ::
+  {$goal($dot(p, $f_typed)), S[p]}
+  {$goal($dot(p, $f_typed)), S[$dot(p, $f_is_volatile)]}
+  $instantiate_int(S[$dot(p, $f_typed)]));
+
 function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int) : bool
   { $is_base_field(f) && $field_parent_type(f) == partp &&
     $field_offset(f) == off &&
@@ -529,8 +534,8 @@ function $in_wrapped_domain(S:$state, p:$ptr) : bool;
 */
 
 function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
-  { !$is_primitive_ch($typ(p)) && 
-    ($owner(S, p) == $me() || $in_wrapped_domain(S, p)) 
+  { !$is_primitive_ch($typ(p))
+  && ($owner(S, p) == $me() || $in_wrapped_domain(S, p)) 
 //     ($wrapped(S, $root(S, p), $typ($root(S, p))) && $set_in(p, $domain(S, $root(S, p)))))
   }
 
