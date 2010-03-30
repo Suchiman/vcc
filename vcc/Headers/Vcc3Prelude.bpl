@@ -337,7 +337,12 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
 
 function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
   { $is_base_field(f) && $is_ghost_field(f) &&
-    (forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f)))
+    (forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f))) &&
+    (forall p:$ptr, S:$state :: {S[$dot($goal(p), f)]}
+      if $is_primitive_ch($typ(p)) then
+        $emb(S, $dot(p, f)) == $emb(S, p)
+      else
+        $emb(S, $dot(p, f)) == p)
   }
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
@@ -462,9 +467,9 @@ function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
 function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
   { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
 
-function $mutable(S:$state, p:$ptr) : bool
+function {:inline true} $mutable(S:$state, p:$ptr) : bool
   { $typed(S, p) && 
-    ($typed(S,p)==>
+    ( // $typed(S,p)==>
       if $is_primitive_ch($typ(p)) then 
         $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
       else

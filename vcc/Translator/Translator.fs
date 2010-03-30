@@ -660,6 +660,7 @@ namespace Microsoft.Research.Vcc
           let tp =
             if helper.Options.RunTestSuite || helper.Options.Vcc3 then []
             else [cond codeTp ("{0} is typed" + suff) "_vcc_typed2" [cState;p] ]
+          let thloc = if helper.Options.Vcc3 then "_vcc_thread_local" else "_vcc_thread_local2"
           let th =
             match p with
               | C.Dot (_, p', f) when not f.Parent.IsUnion ->
@@ -674,7 +675,7 @@ namespace Microsoft.Research.Vcc
                   else
                     // This doesn't work with field inlining.
                     // cond codeTh ("{0} is thread local " + msg + "(accessing field " + f.Name + ")" + suff) "_vcc_thread_local2" p'
-                    cond codeTh ("{0} is thread local" + suff) "_vcc_thread_local2" [cState; p]
+                    cond codeTh ("{0} is thread local" + suff) thloc [cState; p]
                 tok, bMultiOr (prop :: isAtomic)
               | _ -> 
                 let msg, isAtomic =
@@ -683,7 +684,7 @@ namespace Microsoft.Research.Vcc
                     | _ ->
                       " or atomically updated", List.map (fun o -> bCall "$set_in" [trExpr env p; bCall "$span" [o]]) env.AtomicReads
                 let tok, prop =
-                  cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local2" [cState; p]
+                  cond codeTh ("{0} is thread local" + msg + suff) thloc [cState; p]
                 tok, bMultiOr (prop :: isAtomic)
           List.map B.Assert (tp @ [th])
       
