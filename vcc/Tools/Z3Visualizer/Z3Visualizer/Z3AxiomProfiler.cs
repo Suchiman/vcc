@@ -361,6 +361,7 @@ namespace Z3AxiomProfiler
       foreach (var c in nodeTag.Children())
         node.Nodes.Add(makeNode(c));
 
+      node.EnsureVisible();
       z3AxiomTree.EndUpdate();
     }
 
@@ -526,11 +527,25 @@ namespace Z3AxiomProfiler
 
     private void z3AxiomTree_KeyPress(object sender, KeyPressEventArgs e)
     {
-      if (e.KeyChar == '/') {
-        e.Handled = true;
-        Search();
+      switch (e.KeyChar) {
+        case '/':
+          e.Handled = true;
+          Search();
+          break;
+        case (char)27:
+          e.Handled = true;
+          this.Close();
+          break;
+        case '\r':
+          if (z3AxiomTree.SelectedNode != null)
+            z3AxiomTree.SelectedNode.Expand();
+          e.Handled = true;
+          break;
       }
+    }
 
+    private void Z3AxiomProfiler_KeyPress(object sender, KeyPressEventArgs e)
+    {
     }
   }
 }

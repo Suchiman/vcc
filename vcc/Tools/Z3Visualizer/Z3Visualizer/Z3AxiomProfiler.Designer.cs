@@ -33,6 +33,7 @@
           this.loadZ3TraceLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.profileZ3TraceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.loadZ3FromBoogieToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+          this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
           this.colorVisualizationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -46,7 +47,6 @@
           this.splitContainer1 = new System.Windows.Forms.SplitContainer();
           this.z3AxiomTree = new System.Windows.Forms.TreeView();
           this.toolTipBox = new System.Windows.Forms.TextBox();
-          this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.menuStrip1.SuspendLayout();
           this.splitContainer1.Panel1.SuspendLayout();
           this.splitContainer1.Panel2.SuspendLayout();
@@ -100,6 +100,13 @@
           this.loadZ3FromBoogieToolStripMenuItem.Size = new System.Drawing.Size(268, 22);
           this.loadZ3FromBoogieToolStripMenuItem.Text = "Profile Z3 Trace for &Boogie Execution";
           this.loadZ3FromBoogieToolStripMenuItem.Click += new System.EventHandler(this.LoadBoogie_Click);
+          // 
+          // searchToolStripMenuItem
+          // 
+          this.searchToolStripMenuItem.Name = "searchToolStripMenuItem";
+          this.searchToolStripMenuItem.Size = new System.Drawing.Size(268, 22);
+          this.searchToolStripMenuItem.Text = "&Search";
+          this.searchToolStripMenuItem.Click += new System.EventHandler(this.searchToolStripMenuItem_Click);
           // 
           // toolStripSeparator2
           // 
@@ -217,13 +224,6 @@
           this.toolTipBox.Size = new System.Drawing.Size(741, 68);
           this.toolTipBox.TabIndex = 0;
           // 
-          // searchToolStripMenuItem
-          // 
-          this.searchToolStripMenuItem.Name = "searchToolStripMenuItem";
-          this.searchToolStripMenuItem.Size = new System.Drawing.Size(268, 22);
-          this.searchToolStripMenuItem.Text = "&Search";
-          this.searchToolStripMenuItem.Click += new System.EventHandler(this.searchToolStripMenuItem_Click);
-          // 
           // Z3AxiomProfiler
           // 
           this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -234,6 +234,7 @@
           this.Name = "Z3AxiomProfiler";
           this.Text = "Z3 Axiom Profiler";
           this.Load += new System.EventHandler(this.Z3AxiomProfiler_OnLoadEvent);
+          this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.Z3AxiomProfiler_KeyPress);
           this.menuStrip1.ResumeLayout(false);
           this.menuStrip1.PerformLayout();
           this.splitContainer1.Panel1.ResumeLayout(false);
