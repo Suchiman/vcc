@@ -172,7 +172,10 @@ type Z3Translator(helper:Helper.Env, pass:FromBoogie.Passyficator) =
           
   member this.Expr e =
     match e with
-      | Ref v -> boundVars.[v.Id]
+      | Ref v -> 
+        match boundVars.TryFind v.Id with
+          | Some e -> e
+          | None -> failwith ("undeclared q-variable " + v.Name)        
       | Lit (Lit.Bool true) -> z3.MkTrue()
       | Lit (Lit.Bool false) -> z3.MkFalse()
       | Lit (Lit.Int n) -> z3.MkIntNumeral (n.ToString())
