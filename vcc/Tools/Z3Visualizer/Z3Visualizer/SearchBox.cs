@@ -77,6 +77,9 @@ namespace Z3AxiomProfiler
 
     private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
     {
+      if (e.KeyChar == (char)13 || e.KeyChar == (char)27)
+        e.Handled = true;
+
     }
 
     private void textBox1_KeyDown(object sender, KeyEventArgs e)
@@ -84,12 +87,22 @@ namespace Z3AxiomProfiler
       if (e.KeyCode == Keys.Down) {
         listBox1.SelectedIndex = 0;
         listBox1.Focus();
+        e.Handled = true;
+      } else if (e.KeyCode == Keys.Enter) {
+        Execute(true);
+        e.Handled = true;
+      } else if (e.KeyCode == Keys.Escape) {
+        this.Hide();
+        e.Handled = true;
       }
     }
 
-    private void Execute()
+    private void Execute(bool first)
     {
-      NodeText n = listBox1.SelectedItem as NodeText;
+      if (listBox1.Items.Count == 0) return;
+
+      NodeText n =
+        (first ? listBox1.Items[0] : listBox1.SelectedItem) as NodeText;
       if (n != null) {
         axprof.Activate(n.n);
         this.Hide();
@@ -98,13 +111,13 @@ namespace Z3AxiomProfiler
 
     private void listBox1_Click(object sender, EventArgs e)
     {
-      Execute();
+      Execute(false);
     }
 
     private void listBox1_KeyDown(object sender, KeyEventArgs e)
     {
       if (e.KeyCode == Keys.Enter) {
-        Execute();
+        Execute(false);
         e.Handled = true;
       }
     }
