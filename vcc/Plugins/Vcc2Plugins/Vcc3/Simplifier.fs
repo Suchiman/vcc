@@ -44,12 +44,16 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
         Abstractions = []
       }
     [ emptyState ]
+  let mutable totalOkTime = 0.0
+  let mutable totalFailTime = 0.0
   let mutable errCnt = 0
   let mutable id = 1000000000
   let functions = gdict()
+  let now() =
+    (double) (System.Diagnostics.Stopwatch.GetTimestamp()) / (double) System.Diagnostics.Stopwatch.Frequency
   do 
     for f in pass.Functions do
-      functions.Add (f.Name + f.Qualifier, f)
+      functions.Add (f.Name + f.Qualifier, f)  
       
   member this.NextId () =
     id <- id + 1
@@ -86,7 +90,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     if this.Cur.Final then
       let app = if reason = null || reason = "" then "" else ": " + reason
       errCnt <- errCnt + 1
-      if trLevel >= 2 then
+      if trLevel >= 2 && options.GetBool "smt_dump" false then
         this.Dump()
       this.Cur.ErrorHandler null
       if trLevel >= 1 then
@@ -265,14 +269,8 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
           assumeGoal expr
         None
     expr.SelfMap aux |> ignore
-        
-  member private this.SmtValid negate expr =
-    let expr = Expr.MkNotCond negate expr
-    smt.Push()
-    let toCheck = expr.Expand() |> this.RemoveBuiltins
-    if trLevel >= 3 then
-      wr "[SMT] assert %O" toCheck
-    this.Goalize toCheck
+
+  member private this.Instantiate toCheck =
     match smt.AssertOrModel toCheck with
       | Some model ->
         let mutable numInst = 0
@@ -292,24 +290,51 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
             smt.Assume (assump.Map repl |> this.ProverRewrites)
         model.Dispose()
         if numInst = 0 then
-          if trLevel >= 3 then
-            wr "[SMT] Fail"
-          let res = this.Fail expr
-          smt.Pop()
-          res
+          false
         else
           if trLevel >= 2 then
             wr "[SMT] Instantiated %d" numInst
-          this.SmtValid negate expr
+          this.Instantiate toCheck
       | None ->
-        if trLevel >= 3 then
-          wr "[SMT] OK"
-        if trLevel >= 4 then
-          this.Dump()
-        smt.Pop()
-        this.Assume expr
-        this.Succeed()
+        true
   
+  member private this.SmtValid negate expr =
+    let expr = Expr.MkNotCond negate expr
+    smt.Push()
+    let toCheck = expr.Expand() |> this.RemoveBuiltins
+    if trLevel >= 3 then
+      wr "[SMT] assert %O" toCheck
+    this.Goalize toCheck
+    
+    let prev = now()
+    let res =
+      if options.GetBool "custom_inst" false then
+        this.Instantiate toCheck
+      else
+        smt.Assert toCheck
+    let elapsed = now() - prev
+    if res then
+      totalOkTime <- elapsed + totalOkTime
+    else
+      totalFailTime <- elapsed + totalFailTime
+    if options.GetBool "time" false then
+      wr "    [TIME] %.4fs %s" elapsed (if res then "OK" else "FAIL")
+      
+    if res then
+      if trLevel >= 3 then
+        wr "[SMT] OK"
+      if trLevel >= 4 && options.GetBool "smt_dump" false then
+        this.Dump()
+      smt.Pop()
+      this.Assume expr
+      this.Succeed()
+    else
+      if trLevel >= 3 then
+        wr "[SMT] Fail"
+      let res = this.Fail expr
+      smt.Pop()
+      res
+      
   member private this.Valid negate (expr:Expr) =
     let goalize (e:Expr) = e.Expand() |> this.Goalize
     let neg = Expr.MkNotCond negate
@@ -491,6 +516,9 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     smt.BeginProc proc
     check proc.Blocks.Head
     smt.FinishProc ()
+    
+    if trLevel >= 2 || options.GetBool "time" false then
+      wr "[TOTAL] %.2fs ok / %.2fs fail (%.2fs total)" totalOkTime totalFailTime (totalFailTime + totalOkTime)
     
     errCnt - prevErrs
     

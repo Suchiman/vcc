@@ -128,6 +128,7 @@ speconly(
     ListManager->ListHead = ListHead;
     ListHead->Manager = ListManager;
     set_owns(ListManager,SET(ListHead));
+    set_owns(ListHead,SET());
     wrap(ListHead);
     wrap(ListManager);
     )
