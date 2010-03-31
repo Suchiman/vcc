@@ -522,7 +522,7 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override IEnumerable<Common> Children()
     {
-      yield return Callback("LITERALS", delegate() { return Literals; });
+      yield return Callback("LITERALS [" + Literals.Count + "]", delegate() { return Literals; });
       if (Conflict != null)
         yield return Conflict;
       foreach (var c in ChildrenScopes) {

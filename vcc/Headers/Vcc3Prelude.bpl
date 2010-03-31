@@ -256,7 +256,7 @@ axiom (forall r:int, t:$ctype :: {$ptr(t, r)}
   $type_branch(t) != $ctype_ghost ==> $ghost_path($ptr(t, r)) == $f_nonghost);
 
 axiom (forall p:$ptr, f:$field :: {$ghost_ref(p, f)}
-  $in_range_spec_ptr($ghost_ref(p,f)));
+  $ghost_ref(p,f) > $arch_spec_ptr_start);
 
 function $physical_ref(p:$ptr, f:$field) : int;
 // Make the physical fields, when we do not generate offset axioms, behave like ghost fields
@@ -618,7 +618,7 @@ function {:inline true} $closed_is_transitive(S:$state) returns (bool)
     (forall p:$ptr,q:$ptr ::
       {$set_in($goal(p), $owns(S, q))}
       $good_state(S) &&
-      $set_in(p, $owns(S, q)) && $closed(S, q) ==> $closed(S, p) && $ref(p) != 0)
+      $set_in(p, $owns(S, q)) && $closed(S, q) ==> $closed(S, p)) // && $ref(p) != 0)
   } 
 
 /*
@@ -640,7 +640,7 @@ axiom (forall S:$state :: {$good_state(S)}
 
 axiom (forall S:$state ::
   $good_state(S) ==>
-    (forall p:$ptr :: {$goal(p)} $closed(S, p) ==> $typed(S, p)) &&
+    (forall p:$ptr :: {S[$dot($goal(p), $f_closed)]} $closed(S, p) ==> $typed(S, p)) &&
     $closed_is_transitive(S)
     );
         
