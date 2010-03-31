@@ -99,6 +99,7 @@
     <Compile Include="ObjectModel\TypeDeclarations.cs" />
     <Compile Include="ObjectModel\Units.cs" />
     <Compile Include="Parser\Parser.cs" />
+    <Compile Include="Parser\ParserV2.cs" />
     <Compile Include="Parser\Preprocessor.cs" />
     <Compile Include="Parser\Scanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
