@@ -12,9 +12,9 @@ typedef struct _PAGE_SET
     PUINT64 Array;
 
     _(invariant PagesAllocated <= PageCount)
-    _(invariant keeps((UINT64[PageCount])(Array, PageCount)))
-    _(invariant typed(as_array(Array, PageCount)))
-
+    _(invariant \mine((UINT64[PageCount])Array))
+    _(invariant \valid((UINT64[PageCount])Array))
+    
 } PAGE_SET, *PPAGE_SET;
 
 #if 0
@@ -25,7 +25,7 @@ void Init(
     UINT64 Array[]
     )
     writes(extent(PageSet), as_array(Array, PageCount))
-    requires(wrapped(as_array(Array, PageCount)))
+    requires(wrapped(as_array(Array, PageCount)))	
     ensures(PageSet->PageCount == PageCount)
     ensures(PageSet->PagesAllocated == 0)
     ensures(PageSet->Array == Array)
