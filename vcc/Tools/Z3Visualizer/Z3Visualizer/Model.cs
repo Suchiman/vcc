@@ -29,8 +29,12 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public List<ScopeDesc> scopes = new List<ScopeDesc>();
 
+    internal static Literal MarkerLiteral = new Literal();
+
     public Model()
     {
+      MarkerLiteral.Id = -13;
+      MarkerLiteral.Term = new Term("marker", new Term[] { });
       PushScope();
     }
 
@@ -66,6 +70,7 @@ namespace Z3AxiomProfiler.QuantifierModel
       Debug.Assert(n <= scopes.Count - 1);
 
       Scope cur = new Scope();
+      cur.lev = -(scopes.Count - n - 1);
       cur.Conflict = cnfl;
       for (int i = scopes.Count - 1; i >= scopes.Count - n; --i) {
         if (scopes[i].Scope != null) {
@@ -83,9 +88,12 @@ namespace Z3AxiomProfiler.QuantifierModel
       scopes.RemoveRange(scopes.Count - n, n);
 
       int end = scopes.Count - 1;
-      if (scopes[end].Scope == null)
+      if (scopes[end].Scope == null) {
         scopes[end].Scope = new Scope();
+        scopes[end].Scope.lev = end;
+      }
       scopes[end].Scope.ChildrenScopes.Add(cur);
+      scopes[end].Implied.Add(MarkerLiteral);
     }
 
     public Common SetupImportantInstantiations()
@@ -430,8 +438,10 @@ namespace Z3AxiomProfiler.QuantifierModel
   public class Scope : Common
   {
     public List<Literal> Literals = new List<Literal>();
+    public Literal[] ImpliedAtParent;
     public Conflict Conflict;
     public List<Scope> ChildrenScopes = new List<Scope>();
+    public int lev;
     int recConflictCount = -1;
     int recInstanceCount = -1;
     bool recInstanceCountComputed;
@@ -476,7 +486,7 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override string ToString()
     {
-      string res = string.Format("Scope: {0} / {2} inst, {1} lits", InstanceCount, Literals.Count, OwnInstanceCount);
+      string res = string.Format("Scope: {0} / {2} inst, {1} lits [l:{3}]", InstanceCount, Literals.Count, OwnInstanceCount, lev);
       if(ChildrenScopes.Count > 0)
         res += string.Format(", {0} children [rec: {1}, {2} inst/cnfl]", 
                              ChildrenScopes.Count, RecConflictCount, 
@@ -490,6 +500,39 @@ namespace Z3AxiomProfiler.QuantifierModel
       if (Conflict != null)
         return Conflict.ToolTip();
       else return "No conflict";
+    }
+
+    public void PropagateImpliedByChildren()
+    {
+      if (Literals.Count > 0) {
+        int scopeNo = 0;
+        int firstMarker = -1;
+        int prevMarker = -1;
+        var last = Literals[0];
+        var lastImpl = last.Implied;
+
+        for (int idx = 0; idx <= lastImpl.Length; ++idx) {
+          if (idx == lastImpl.Length || lastImpl[idx] == Model.MarkerLiteral) {
+            if (firstMarker < 0) firstMarker = idx;
+            if (prevMarker >= 0) {
+              var arr = new Literal[idx - prevMarker - 1];
+              Array.Copy(lastImpl, prevMarker + 1, arr, 0, arr.Length);
+              ChildrenScopes[scopeNo++].ImpliedAtParent = arr;
+            }
+            prevMarker = idx;
+          }
+        }
+        if (!(scopeNo == ChildrenScopes.Count || scopeNo == ChildrenScopes.Count - 1))
+          Debug.Fail("");
+
+        if (scopeNo > 0) {
+          last.Implied = new Literal[firstMarker];
+          Array.Copy(lastImpl, last.Implied, firstMarker);
+        }
+      }
+
+      foreach (var v in ChildrenScopes)
+        v.PropagateImpliedByChildren();
     }
 
     public void AccountLastDecision(Model m)
@@ -525,6 +568,8 @@ namespace Z3AxiomProfiler.QuantifierModel
       yield return Callback("LITERALS [" + Literals.Count + "]", delegate() { return Literals; });
       if (Conflict != null)
         yield return Conflict;
+      if (ImpliedAtParent != null)
+        yield return Callback("AT PARENT [" + ImpliedAtParent.Length + "]", delegate() { return ImpliedAtParent; });
       foreach (var c in ChildrenScopes) {
         yield return c;
       }

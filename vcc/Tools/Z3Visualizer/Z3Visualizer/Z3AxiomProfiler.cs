@@ -315,7 +315,20 @@ namespace Z3AxiomProfiler
         AddTopNode(c);
 
       model.PopScopes(model.scopes.Count - 1, null);
-      Scope root = model.scopes[0].Scope;
+
+      var rootSD = model.scopes[0];
+      Scope root = rootSD.Scope;
+      if (rootSD.Literal == null) {
+        System.Diagnostics.Debug.Assert(rootSD.Implied.Count == 0);
+      } else {
+        var l = new Literal();
+        l.Id = -1;
+        l.Term = new Term("root", new Term[0]);
+        rootSD.Implied.Insert(0, rootSD.Literal);
+        l.Implied = rootSD.Implied.ToArray();
+        root.Literals.Add(l);
+      }
+      root.PropagateImpliedByChildren();
       root.ComputeConflictCost(new List<Conflict>());
       root.AccountLastDecision(model);
       
