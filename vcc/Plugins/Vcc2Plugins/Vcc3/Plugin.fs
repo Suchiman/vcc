@@ -17,7 +17,7 @@ open System.IO
 [<System.ComponentModel.Composition.Export("Microsoft.Research.Vcc.VCGenPlugin")>]
 type Vcc3Plugin() =
   inherit VCGenPlugin()
-  let opts = Options()
+  let opts = Options.Create()
   let mutable methodNo = 0
   
   override this.Name = "Vcc3"

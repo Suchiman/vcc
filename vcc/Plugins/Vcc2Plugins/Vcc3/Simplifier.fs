@@ -31,7 +31,7 @@ exception ProvingFailure
 type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options) =
   let smt = new Z3Translator(helper, pass)
   let mutable disposed = false
-  let trLevel = options.GetInt "trace" 1
+  let trLevel = options.trace
   let vcc2 = not helper.Options.Vcc3
   let wr = printfn
   let mutable stack =
@@ -83,20 +83,15 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     if trLevel >= 2 then
       wr "Pop }"
   
-  member private this.Dump () =
-    wr "DUMP %s" (smt.SmtToFile())
-  
   member private this.Fail (expr:Expr, reason:string) =
     if this.Cur.Final then
       let app = if reason = null || reason = "" then "" else ": " + reason
       errCnt <- errCnt + 1
-      if trLevel >= 2 && options.GetBool "smt_dump" false then
-        this.Dump()
       this.Cur.ErrorHandler null
       if trLevel >= 1 then
         wr "  Cannot prove %O%s" expr app
       if helper.Options.SaveModel then
-        smt.SaveModel (options.GetString "MODEL_FILE" "error.vccmodel")
+        smt.SaveModel options.model_file
     false
     
   member private this.Fail (expr:Expr) =
@@ -308,7 +303,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     
     let prev = now()
     let res =
-      if options.GetBool "custom_inst" false then
+      if options.custom_inst then
         this.Instantiate toCheck
       else
         smt.Assert toCheck
@@ -317,14 +312,17 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
       totalOkTime <- elapsed + totalOkTime
     else
       totalFailTime <- elapsed + totalFailTime
-    if options.GetBool "time" false then
-      wr "    [TIME] %.4fs %s" elapsed (if res then "OK" else "FAIL")
+    if options.time then
+      let add =
+        if options.smt_dump then
+          sprintf " (dumped to %s)" (smt.SmtToFile ())
+        else
+          ""                  
+      wr "    [TIME] %8.4fs %4s%s" elapsed (if res then "OK" else "FAIL") add
       
     if res then
       if trLevel >= 3 then
         wr "[SMT] OK"
-      if trLevel >= 4 && options.GetBool "smt_dump" false then
-        this.Dump()
       smt.Pop()
       this.Assume expr
       this.Succeed()
@@ -517,7 +515,7 @@ type Simplifier(helper:Helper.Env, pass:FromBoogie.Passyficator, options:Options
     check proc.Blocks.Head
     smt.FinishProc ()
     
-    if trLevel >= 2 || options.GetBool "time" false then
+    if trLevel >= 2 || options.time then
       wr "[TOTAL] %.2fs ok / %.2fs fail (%.2fs total)" totalOkTime totalFailTime (totalFailTime + totalOkTime)
     
     errCnt - prevErrs
