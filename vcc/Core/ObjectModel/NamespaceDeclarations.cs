@@ -35,7 +35,7 @@ namespace Microsoft.Research.Vcc {
         if (this.isInitialized) return;
         //^ assume this.CompilationPart is VccCompilationPart; //The constructor ensures this
         VccCompilationPart cp = (VccCompilationPart)this.CompilationPart;
-        Parser parser = new Parser(cp.Compilation, this.SourceLocation, cp.ScannerAndParserErrors); //TODO: get options from Compilation
+        Parser parser = Parser.Create(cp.Compilation, this.SourceLocation, cp.ScannerAndParserErrors); //TODO: get options from Compilation
         this.Parse(parser);
         this.SetContainingNodes();
         ErrorEventArgs errorEventArguments = new ErrorEventArgs(ErrorReporter.Instance, this.SourceLocation, cp.ScannerAndParserErrors.AsReadOnly());

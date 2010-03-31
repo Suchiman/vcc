@@ -224,7 +224,7 @@ namespace Microsoft.Research.Vcc {
       this.rootNamespace = result;
       List<IErrorMessage> scannerAndParserErrors = ((VccCompositeDocument)this.SourceLocation.SourceDocument).ScannerAndParserErrors;
       scannerAndParserErrors.Clear();
-      Parser parser = new Parser(this.Compilation, this.SourceLocation, scannerAndParserErrors); //TODO: get options from Compilation
+      Parser parser = Parser.Create(this.Compilation, this.SourceLocation, scannerAndParserErrors); //TODO: get options from Compilation
       result.Parse(parser, this);
       ErrorEventArgs errorEventArguments = new ErrorEventArgs(ErrorReporter.Instance, this.SourceLocation, scannerAndParserErrors.AsReadOnly());
       this.Compilation.HostEnvironment.ReportErrors(errorEventArguments);
