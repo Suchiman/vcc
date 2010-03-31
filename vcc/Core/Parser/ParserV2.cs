@@ -21,6 +21,52 @@ namespace Microsoft.Research.Vcc.Parsing
     : base(compilation, sourceLocation, scannerAndParserErrors) {
     }
 
+    override protected void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
+      TokenSet expectedTokens = TS.DeclarationStart | Token.Colon;
+      while (expectedTokens[this.currentToken]) {
+        if (this.currentToken == Token.Specification) {
+          this.ParseTypeSpecMemberDeclarationList(namespaceMembers, typeMembers, followers);
+        } else {
+          this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, false);
+        }
+      }
+    }
+
+    new protected void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
+      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Ghost, SpecToken.Invariant);
+      bool savedInSpecCode = this.EnterSpecBlock();
+      this.GetNextToken();
+      this.Skip(Token.LeftParenthesis);
+      while (expectedSpecTokens[this.CurrentSpecToken]) {
+        switch (this.CurrentSpecToken) {
+          case SpecToken.Invariant:
+            this.ParseTypeInvariant(followers | Token.RightParenthesis | Token.Identifier);
+            break;
+          case SpecToken.Ghost:
+            this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis | Token.Identifier, false);
+            break;
+        }
+        if (this.currentToken == Token.Semicolon) {
+          this.SkipOverTo(Token.Semicolon, followers);
+          continue;
+        }
+        break;
+      }
+      this.SkipOverTo(Token.RightParenthesis, followers);
+      this.LeaveSpecBlock(savedInSpecCode);
+    }
+
+    new protected void ParseTypeInvariant(TokenSet followers) {
+      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+      NameDeclaration nameDecl = null;
+      // TODO: labeled expressions
+      this.GetNextToken();
+      Expression condition = this.ParseExpression(followers);
+      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+      TypeInvariant typeInvariant = new TypeInvariant(nameDecl, new CheckedExpression(condition, condition.SourceLocation), false, slb);
+      this.AddTypeInvariantToCurrent(typeInvariant);
+    }
+
     private SpecToken CurrentSpecToken {
       get {
         if (this.currentToken == Token.Identifier) {
