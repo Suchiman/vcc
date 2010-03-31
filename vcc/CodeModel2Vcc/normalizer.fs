@@ -729,8 +729,34 @@ namespace Microsoft.Research.Vcc
       mapInvariants expandOne
                                            
     // ============================================================================================================
+    
+    let normalizeNewSyntax = 
+  
+      let newToOld = Map.ofList [ "\\mine", "_vcc_keeps";
+                                  "\\valid", "_vcc_typed2" ]
+
+      let normalizeCalls = function
+        | Top.TypeDecl(td) as decl ->
+          let normalizeCalls' self = function
+            | Call(ec, ({Name = "\\mine"} as fn), [], args) -> Some(Call(ec, fn, [], Expr.This({ec with Type = Type.MkPtrToStruct(td)}) :: List.map self args))
+            | _ -> None 
+          deepMapExpressions normalizeCalls' [decl] |> List.head
+        | decl -> decl
+
+      let mapFromNewSyntax = function
+        | Top.FunctionDecl(fn) -> 
+          match newToOld.TryFind fn.Name with
+            | Some oldName -> fn.Name <- oldName
+            | None -> ()
+          Top.FunctionDecl(fn)
+        | decl -> decl
+          
+      List.map normalizeCalls >> List.map mapFromNewSyntax
+    
+    // ============================================================================================================
  
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
+    helper.AddTransformer ("norm-new-syntax", Helper.Decl normalizeNewSyntax)
     helper.AddTransformer ("norm-initializers", Helper.Expr normalizeInitializers)
     helper.AddTransformer ("norm-use", Helper.Expr normalizeUse)
     helper.AddTransformer ("norm-fixed-array-parms", Helper.Decl removeFixedSizeArraysAsParameters)
@@ -752,5 +778,3 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-reintp", Helper.Expr normalizeReinterpretation)
     helper.AddTransformer ("norm-on-unwrap", Helper.Decl normalizeOnUnwrap)
     helper.AddTransformer ("norm-end", Helper.DoNothing)
-      
-    

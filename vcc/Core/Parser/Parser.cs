@@ -82,7 +82,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected void GetNextToken()
       //^ requires this.currentToken != Token.EndOfFile;
     {
-      this.currentToken = this.scanner.GetNextToken();
+      this.currentToken = this.scanner.GetNextToken(this.inSpecCode);
       if (this.currentToken == Token.Pragma) {
         this.ParsePragma();
       }
@@ -381,7 +381,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (this.currentToken == Token.Identifier) {
         string id = this.scanner.GetIdentifierString();
         Scanner.Snapshot snap = this.scanner.MakeSnapshot();
-        Token tok = scanner.GetNextToken();
+        Token tok = scanner.GetNextToken(false);
         if (tok == Token.Colon) {
           slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
           nameDecl = new NameDeclaration(this.GetNameFor(id), slb);
@@ -3461,11 +3461,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ requires this.currentToken == Token.Pragma;
     {
       //Just ignore the pragma for the time being.
-      Token tok = this.scanner.GetNextToken();
+      Token tok = this.scanner.GetNextToken(false);
       if (tok == Token.LeftParenthesis) {
         int count = 1;
         do {
-          tok = this.scanner.GetNextToken();
+          tok = this.scanner.GetNextToken(false);
           if (tok == Token.LeftParenthesis)
             count++;
           else if (tok == Token.RightParenthesis)

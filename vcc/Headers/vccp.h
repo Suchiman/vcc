@@ -6,10 +6,19 @@
 #ifndef _VCCP_H
 #define _VCCP_H
 
+typedef _Bool bool;
+#define false ((bool)0)
+#define true ((bool)1)
+
 #ifdef VERIFY2
 
 #define spec __specification
 #define _ spec
+
+_(typedef void *\object;)
+
+_(bool \mine(\object, ...);)
+_(bool \valid(\object);)
 
 #else 
 
@@ -58,10 +67,6 @@ typedef thread_id_t ^_vcc_thread_id;
 #define thread_id _vcc_thread_id
 
 typedef unsigned __int64 _vcc_size_t;
-
-typedef _Bool bool;
-#define false ((bool)0)
-#define true ((bool)1)
 
 /*** 
  *** Specification predicates and functions

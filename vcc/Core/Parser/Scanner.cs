@@ -204,7 +204,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return this.Substring(start, this.endPos-start);
     }
 
-    public Token GetNextToken() {
+    public Token GetNextToken(bool inSpecCode) {
       Token token = Token.None;
       this.tokenIsFirstAfterLineBreak = false;
     nextToken:
@@ -441,6 +441,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           this.ScanString(c, true);
           break;
         case '\\':
+          if (inSpecCode) goto default;
           this.endPos--;
           if (this.IsIdentifierStartChar(c)) {
             token = Token.Identifier;
@@ -501,6 +502,10 @@ namespace Microsoft.Research.Vcc.Parsing {
           } else if (Scanner.IsUnicodeLetter(c)) {
             token = Token.Identifier;
             //^ assume 0 < this.endPos && this.endPos < this.charsInBuffer; //otherwise c would be (char)0
+            this.ScanIdentifier();
+          } else if (inSpecCode && c == '\\') {
+            token = Token.Identifier;
+            this.endPos++;
             this.ScanIdentifier();
           } else
             token = Token.IllegalCharacter;
