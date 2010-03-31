@@ -12,7 +12,7 @@ typedef struct _PAGE_SET
     PUINT64 Array;
 
     _(invariant PagesAllocated <= PageCount)
-    _(invarian keeps(as_array(Array, PageCount)))
+    _(invariant keeps((UINT64[PageCount])(Array, PageCount)))
     _(invariant typed(as_array(Array, PageCount)))
 
 } PAGE_SET, *PPAGE_SET;

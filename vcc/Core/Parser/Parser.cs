@@ -370,7 +370,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return this.ParseExpressionWithParens(followers, (expr, slb) => new LoopInvariant(expr, slb));
     }
 
-    protected void ParseTypeInvariant(List<TypeInvariant> invariants, TokenSet followers)
+    protected void ParseTypeInvariant(TokenSet followers)
       //^ requires this.currentToken == Token.Invariant;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -394,9 +394,15 @@ namespace Microsoft.Research.Vcc.Parsing {
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       this.Skip(Token.RightParenthesis);
       TypeInvariant typeInvariant = new TypeInvariant(nameDecl, new CheckedExpression(condition, condition.SourceLocation), false, slb);
-      invariants.Add(typeInvariant);
+      this.AddTypeInvariantToCurrent(typeInvariant);
       if (this.currentToken == Token.Semicolon)
         this.SkipOverTo(Token.Semicolon, followers);
+    }
+
+    protected void AddTypeInvariantToCurrent(TypeInvariant typeInvariant) {
+      if (this.currentTypeInvariants == null)
+        this.currentTypeInvariants = new List<TypeInvariant>();
+      this.currentTypeInvariants.Add(typeInvariant);
     }
 
     protected void ParseFunctionDeclaration(List<Specifier> specifiers, List<ITypeDeclarationMember> typeMembers,
@@ -1750,13 +1756,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.currentTypeMembers = savedCurrentTypeMembers;
     }
 
-    protected void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
+    protected virtual void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       TokenSet expectedTokens = TS.DeclarationStart | Token.Colon | Token.Invariant;
       while (expectedTokens[this.currentToken]) {
         if (this.currentToken == Token.Invariant) {
-          if (this.currentTypeInvariants == null)
-            this.currentTypeInvariants = new List<TypeInvariant>();
-          this.ParseTypeInvariant(this.currentTypeInvariants, followers);
+          this.ParseTypeInvariant(followers);
         } else if (this.currentToken == Token.Specification) {
           this.ParseTypeSpecMemberDeclarationList(namespaceMembers, typeMembers, followers);
         } else {
