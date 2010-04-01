@@ -24,9 +24,21 @@ namespace Microsoft.Research.Vcc {
     IStatement WrappedStatement { get; }
   }
 
+  public interface IVccWrapStatement : IVccStatement
+  {
+    IExpression Object { get; }
+  }
+
+  public interface IVccUnwrapStatement : IVccStatement
+  {
+    IExpression Object { get; }
+  }
+
   public interface IVccCodeVisitor : ICodeVisitor
   {
     void Visit(IVccSpecStatement specStatement);
+    void Visit(IVccWrapStatement wrapStatement);
+    void Visit(IVccUnwrapStatement unwrapStatement);
   }
 
   internal class StatementGroup : Statement {
@@ -324,7 +336,7 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
-  public sealed class VccWrapStatement : Statement
+  public sealed class VccWrapStatement : Statement, IVccWrapStatement
   {
     public VccWrapStatement(Expression expr, ISourceLocation sourceLocation)
       : base(sourceLocation) {
@@ -341,6 +353,14 @@ namespace Microsoft.Research.Vcc {
     }
     private readonly Expression expression;
 
+    IExpression IVccWrapStatement.Object {
+      get { return this.expression.ProjectAsIExpression(); }
+    }
+
+    public void Dispatch(IVccCodeVisitor visitor) {
+      visitor.Visit(this);
+    }
+
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       return this.Expression.HasErrors || this.Expression.HasSideEffect(true);
     }
@@ -356,6 +376,47 @@ namespace Microsoft.Research.Vcc {
       return new VccWrapStatement(containingBlock, this);
     }
 
+  }
+
+  public sealed class VccUnwrapStatement : Statement, IVccUnwrapStatement
+  {
+    public VccUnwrapStatement(Expression expr, ISourceLocation sourceLocation)
+      : base(sourceLocation) {
+      this.expression = expr;
+    }
+
+    private VccUnwrapStatement(BlockStatement containingBlock, VccUnwrapStatement template)
+      : base(containingBlock, template) {
+      this.expression = template.expression.MakeCopyFor(containingBlock);
+    }
+
+    public Expression Expression {
+      get { return this.expression; }
+    }
+    private readonly Expression expression;
+
+    IExpression IVccUnwrapStatement.Object {
+      get { return this.expression.ProjectAsIExpression(); }
+    }
+
+    public void Dispatch(IVccCodeVisitor visitor) {
+      visitor.Visit(this);
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      return this.Expression.HasErrors || this.Expression.HasSideEffect(true);
+    }
+
+    public override void SetContainingBlock(BlockStatement containingBlock) {
+      base.SetContainingBlock(containingBlock);
+      DummyExpression containingExpression = new DummyExpression(containingBlock, SourceDummy.SourceLocation);
+      this.expression.SetContainingExpression(containingExpression);
+    }
+
+    public override Statement MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      return new VccUnwrapStatement(containingBlock, this);
+    }
   }
 
   public sealed class VccSpecStatement : Statement, IVccSpecStatement
