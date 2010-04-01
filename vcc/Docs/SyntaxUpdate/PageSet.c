@@ -17,25 +17,25 @@ typedef struct _PAGE_SET
     
 } PAGE_SET, *PPAGE_SET;
 
-#if 0
-
 void Init(
     PPAGE_SET PageSet,
     UINT32 PageCount,
     UINT64 Array[]
     )
-    writes(extent(PageSet), as_array(Array, PageCount))
-    requires(wrapped(as_array(Array, PageCount)))	
-    ensures(PageSet->PageCount == PageCount)
-    ensures(PageSet->PagesAllocated == 0)
-    ensures(PageSet->Array == Array)
-    ensures(wrapped(PageSet))
+    _(writes \extent(PageSet), (UINT64[PageCount])Array)
+    _(requires \wrapped((UINT64[PageCount])Array))
+    _(ensures PageSet->PageCount == PageCount)
+    _(ensures PageSet->PagesAllocated == 0)
+    _(ensures PageSet->Array == Array)
+    _(ensures \wrapped(PageSet))
 {
     PageSet->Array = Array;
     PageSet->PageCount = PageCount;
     PageSet->PagesAllocated = 0;
     wrap(PageSet);
 }
+
+#if 0
 
 void CallInit() {
   PAGE_SET *ps = (PAGE_SET *)malloc(sizeof(PAGE_SET));
