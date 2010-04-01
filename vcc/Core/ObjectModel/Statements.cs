@@ -14,6 +14,21 @@ using Microsoft.Research.Vcc.Parsing;
 
 namespace Microsoft.Research.Vcc {
 
+  public interface IVccStatement : IStatement
+  {
+    void Dispatch(IVccCodeVisitor visitor);
+  }
+
+  public interface IVccSpecStatement : IVccStatement
+  {
+    IStatement WrappedStatement { get; }
+  }
+
+  public interface IVccCodeVisitor : ICodeVisitor
+  {
+    void Visit(IVccSpecStatement specStatement);
+  }
+
   internal class StatementGroup : Statement {
 
     internal StatementGroup(List<Statement> statements)
@@ -316,7 +331,7 @@ namespace Microsoft.Research.Vcc {
       this.expression = expr;
     }
 
-    protected VccWrapStatement(BlockStatement containingBlock, VccWrapStatement template)
+    private VccWrapStatement(BlockStatement containingBlock, VccWrapStatement template)
       : base(containingBlock, template) {
       this.expression = template.expression.MakeCopyFor(containingBlock);
     }
@@ -343,7 +358,7 @@ namespace Microsoft.Research.Vcc {
 
   }
 
-  public sealed class VccSpecStatement : Statement
+  public sealed class VccSpecStatement : Statement, IVccSpecStatement
   {
     private readonly Statement wrappedStatement;
 
@@ -361,8 +376,16 @@ namespace Microsoft.Research.Vcc {
       get { return this.wrappedStatement; }
     }
 
+    IStatement IVccSpecStatement.WrappedStatement {
+      get { return this.wrappedStatement; }
+    }
+
     public override void Dispatch(ICodeVisitor visitor) {
       this.WrappedStatement.Dispatch(visitor);
+    }
+
+    public  void Dispatch(IVccCodeVisitor visitor) {
+      visitor.Visit(this);
     }
 
     public override void Dispatch(SourceVisitor visitor) {

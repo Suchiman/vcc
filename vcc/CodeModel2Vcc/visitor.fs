@@ -358,11 +358,10 @@ namespace Microsoft.Research.Vcc
         C.Comment (this.StmtCommon stmt, sprintf "statement %s had errors" (stmt.ToString()))
       else
         stmtRes <- C.Expr.Bogus
-        stmt.Dispatch(this)
-        let res = 
-          match stmt with
-            | :? VccSpecStatement -> C.Macro(stmtRes.Common, "spec", [stmtRes])
-            | _ -> stmtRes
+        match stmt with
+          | :? IVccStatement as stmt -> stmt.Dispatch(this)
+          | stmt -> stmt.Dispatch(this)
+        let res = stmtRes
         stmtRes <- C.Expr.Bogus
         xassert (res <> C.Expr.Bogus)
         res
@@ -838,7 +837,7 @@ namespace Microsoft.Research.Vcc
     // The idea is to only do dispatch into children, and not put any complicated
     // logic inside Visit(***) methods. The logic should be up, in the Do*** methods.
     // This is however not yet the case.
-    interface ICodeVisitor with    
+    interface IVccCodeVisitor with    
 
       member this.Visit (arrayTypeReference:IArrayTypeReference) : unit = assert false
 
@@ -1417,6 +1416,10 @@ namespace Microsoft.Research.Vcc
           exprRes <- C.Expr.SizeOf(ec, C.Type.TypeVar({ Name = tVar.Name.Value }))
          | _ ->  exprRes <- C.Expr.IntLiteral (this.ExprCommon sizeOf, 
                                                new bigint(int64 (TypeHelper.SizeOfType (sizeOf.TypeToSize.ResolvedType))))
+
+      member this.Visit (specStmt:IVccSpecStatement) : unit =
+        let stmt = this.DoStatement specStmt.WrappedStatement
+        stmtRes <- C.Macro(stmt.Common, "spec", [stmt])
 
       member this.Visit (stackArrayCreate:IStackArrayCreate) : unit = 
         match stackArrayCreate with
