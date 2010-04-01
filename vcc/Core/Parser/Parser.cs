@@ -356,7 +356,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       while (TS.LoopContractStart[this.currentToken]) {
         switch (this.currentToken) {
           case Token.Invariant: invariants.Add(ParseLoopInvariant(loopContractFollowers)); break;
-          case Token.Writes: this.ParseExpressionList(writes, true, Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, loopContractFollowers); break;
+          case Token.Writes: this.ParseExpressionListWithParens(writes, Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, loopContractFollowers); break;
         }
       }
       this.SkipTo(followers);
@@ -1355,42 +1355,44 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers)
+    protected Expression CheckedExpressionIfRequested(Expression expr) {
+      if (this.compilation.Options.CheckedArithmetic)
+        return new CheckedExpression(expr, expr.SourceLocation);
+      else
+        return expr;
+    }
+
+    protected virtual void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       TokenSet followersOrContractStart = followers|TS.ContractStart;
       while (TS.ContractStart[this.currentToken]){
+        Expression condition;
+        List<Expression> exprList;
         switch (this.currentToken) {
-          case Token.Ensures: this.ParseRequiresOrEnsures(contract, followersOrContractStart, false); break;
-          case Token.Reads: this.ParseReadsOrWrites(contract, followersOrContractStart, true); break;
-          case Token.Requires: this.ParseRequiresOrEnsures(contract, followersOrContractStart, true); break;
-          case Token.Writes: this.ParseReadsOrWrites(contract, followersOrContractStart, false); break;
+          case Token.Requires: 
+            condition = this.ParseExpressionWithParens(followersOrContractStart, (expr, slb) => expr);
+            condition = CheckedExpressionIfRequested(condition);
+            contract.AddPrecondition(new Precondition(condition, null, condition.SourceLocation));
+            break;
+          case Token.Ensures:
+            this.resultIsAKeyword = true;
+            condition = this.ParseExpressionWithParens(followersOrContractStart, (expr, slb) => expr);
+            this.resultIsAKeyword = false;
+            condition = CheckedExpressionIfRequested(condition);
+            contract.AddPostcondition(new Postcondition(condition, condition.SourceLocation));
+            break;
+          case Token.Reads: 
+            exprList = this.ParseExpressionListWithParens(Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, followersOrContractStart);
+            contract.AddReads(exprList);
+            break;
+          case Token.Writes:
+            exprList = this.ParseExpressionListWithParens(Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, followersOrContractStart);
+            contract.AddWrites(exprList);
+            break;
         }
       }
       this.SkipTo(followers);
-    }
-
-    protected void ParseRequiresOrEnsures(FunctionOrBlockContract contract, TokenSet followers, bool parseRequires) {
-      this.resultIsAKeyword = !parseRequires;
-      var condition = this.ParseExpressionWithParens(followers, (expr, slb) => expr);
-      if (this.compilation.Options.CheckedArithmetic)
-        condition = new CheckedExpression(condition, condition.SourceLocation);
-      if (parseRequires) {
-        Precondition preCondition = new Precondition(condition, null, condition.SourceLocation);
-        contract.AddPrecondition(preCondition);
-      } else {
-        Postcondition postCondition = new Postcondition(condition, condition.SourceLocation);
-        contract.AddPostcondition(postCondition);
-      }
-      this.resultIsAKeyword = false;
-    }
-
-    protected void ParseReadsOrWrites(FunctionOrBlockContract contract, TokenSet followers, bool parseReads) {
-      var exprList = this.ParseExpressionList(true, Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, followers);
-      if (parseReads)
-        contract.AddReads(exprList);
-      else
-        contract.AddWrites(exprList);
     }
 
     protected TypeExpression/*?*/ TypeExpressionHasPointerType(TypeExpression typeExpr)
@@ -2362,22 +2364,30 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected List<Expression> ParseExpressionList(bool checkedDefault, Token leftParen, Token separator, Token rightParen, TokenSet followers) {
-      return ParseExpressionList(new List<Expression>(), checkedDefault, leftParen, separator, rightParen, followers);
+    protected List<Expression> ParseExpressionList(Token separator, TokenSet followers) {
+      return this.ParseExpressionList(new List<Expression>(), separator, followers);
     }
 
-    protected List<Expression> ParseExpressionList(List<Expression> listToAddTo, bool checkedDefault, Token leftParen, Token separator, Token rightParen, TokenSet followers) {
-      TokenSet exprFollowers = followers | separator | rightParen;
-      this.GetNextToken();
-      this.Skip(leftParen);
+    protected List<Expression> ParseExpressionList(List<Expression> listToAddTo, Token separator, TokenSet followers) {
       while (true) {
-        Expression e = this.ParseExpression(exprFollowers);
-        if (this.compilation.Options.CheckedArithmetic)
-          e = new CheckedExpression(e, e.SourceLocation);
+        Expression e = this.ParseExpression(followers | separator);
+        e = this.CheckedExpressionIfRequested(e);
         listToAddTo.Add(e);
         if (this.currentToken != separator) break;
         this.GetNextToken();
       }
+      return listToAddTo;
+    }
+
+    protected List<Expression> ParseExpressionListWithParens(Token leftParen, Token separator, Token rightParen, TokenSet followers) {
+      return ParseExpressionListWithParens(new List<Expression>(), leftParen, separator, rightParen, followers);
+    }
+
+    protected List<Expression> ParseExpressionListWithParens(List<Expression> listToAddTo, Token leftParen, Token separator, Token rightParen, TokenSet followers) {
+      TokenSet exprFollowers = followers | rightParen;
+      this.GetNextToken();
+      this.Skip(leftParen);
+      this.ParseExpressionList(listToAddTo, separator, followers | rightParen);
       this.SkipOverTo(rightParen, followers);
       return listToAddTo;
     }

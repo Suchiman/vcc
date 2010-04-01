@@ -67,14 +67,60 @@ namespace Microsoft.Research.Vcc.Parsing
       this.AddTypeInvariantToCurrent(typeInvariant);
     }
 
+    override protected void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers) {
+      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Ensures, SpecToken.Maintains, SpecToken.Reads, SpecToken.Requires, SpecToken.Writes);
+      while (this.currentToken == Token.Specification) {
+        bool savedInSpecCode = this.EnterSpecBlock();
+        this.GetNextToken();
+        this.Skip(Token.LeftParenthesis);
+        while (expectedSpecTokens[this.CurrentSpecToken]) {
+          switch (this.CurrentSpecToken) {
+            case SpecToken.Requires:
+              this.GetNextToken();
+              var precond = this.ParseExpression(followers | Token.RightParenthesis);
+              precond = this.CheckedExpressionIfRequested(precond);
+              contract.AddPrecondition(new Precondition(precond, null, precond.SourceLocation));
+              break;
+            case SpecToken.Ensures:
+              this.GetNextToken();
+              this.resultIsAKeyword = true;
+              var postcond = this.ParseExpression(followers | Token.RightParenthesis);
+              this.resultIsAKeyword = false;
+              postcond = this.CheckedExpressionIfRequested(postcond);
+              contract.AddPostcondition(new Postcondition(postcond, postcond.SourceLocation));
+              break;
+            //case SpecToken.Ensures: this.ParseRequiresOrEnsures(contract, followers | Token.RightParenthesis, false); break;
+            //case SpecToken.Reads: this.ParseReadsOrWrites(contract, followers | Token.RightParenthesis, true); break;
+            //case SpecToken.Requires: this.ParseRequiresOrEnsures(contract, followers | Token.RightParenthesis, true); break;
+            case SpecToken.Writes:
+              this.GetNextToken();
+              var exprList = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+              contract.AddWrites(exprList);
+              break;
+          }
+        }
+        this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
+      }
+    }
+
     private SpecToken CurrentSpecToken {
       get {
         if (this.currentToken == Token.Identifier) {
           switch (this.scanner.GetIdentifierString()) {
+            case "ensures":
+              return SpecToken.Ensures;
             case "ghost":
               return SpecToken.Ghost;
             case "invariant":
               return SpecToken.Invariant;
+            case "maintains":
+              return SpecToken.Maintains;
+            case "reads":
+              return SpecToken.Reads;
+            case "requires":
+              return SpecToken.Requires;
+            case "writes":
+              return SpecToken.Writes;
             default:
               return SpecToken.None;
           }
@@ -86,8 +132,13 @@ namespace Microsoft.Research.Vcc.Parsing
     private enum SpecToken
     {
       None,
+      Ensures,
       Ghost,
       Invariant,
+      Maintains,
+      Reads,
+      Requires,
+      Writes,
     }
 
     private struct SpecTokenSet
@@ -105,6 +156,23 @@ namespace Microsoft.Research.Vcc.Parsing
         this.bits |= (1ul << (int)t1);
         this.bits |= (1ul << (int)t2);
         this.bits |= (1ul << (int)t3);
+      }
+
+      public SpecTokenSet(SpecToken t1, SpecToken t2, SpecToken t3, SpecToken t4) {
+        this.bits = 0;
+        this.bits |= (1ul << (int)t1);
+        this.bits |= (1ul << (int)t2);
+        this.bits |= (1ul << (int)t3);
+        this.bits |= (1ul << (int)t4);
+      }
+
+      public SpecTokenSet(SpecToken t1, SpecToken t2, SpecToken t3, SpecToken t4, SpecToken t5) {
+        this.bits = 0;
+        this.bits |= (1ul << (int)t1);
+        this.bits |= (1ul << (int)t2);
+        this.bits |= (1ul << (int)t3);
+        this.bits |= (1ul << (int)t4);
+        this.bits |= (1ul << (int)t5);
       }
 
       [System.Diagnostics.DebuggerNonUserCode]
@@ -129,8 +197,5 @@ namespace Microsoft.Research.Vcc.Parsing
         }
       }
     }
-
-
   }
-
 }

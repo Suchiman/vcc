@@ -10,15 +10,38 @@ typedef _Bool bool;
 #define false ((bool)0)
 #define true ((bool)1)
 
+#define this __this
+
+/*** 
+ *** Types
+ ***/
+
+#define _concat_identifiers2(a,b) a ## b
+#define _concat_identifiers(a,b) _concat_identifiers2(a,b)
+
+
 #ifdef VERIFY2
 
 #define spec __specification
 #define _ spec
 
+/***
+ *** Types
+ ***/
+
+#define SPEC_TYPE(name) typedef struct _concat_identifiers(_vcc_math_type_, name) {char _vcc_marker_for_math_type;} _concat_identifiers(\,name);
+
+
 _(typedef void *\object;)
+_(SPEC_TYPE(objset))
+_(SPEC_TYPE(thread))
+_(SPEC_TYPE(state))
 
 _(bool \mine(\object, ...);)
 _(bool \valid(\object);)
+_(bool \wrapped(\object);)
+_(\objset \extent(\object);)
+
 
 #else 
 
@@ -41,14 +64,7 @@ _(bool \valid(\object);)
 #define spec __specification
 #define writes __writes
 #define unchecked(...) __unchecked(__VA_ARGS__)
-#define this __this
 
-/*** 
- *** Types
- ***/
-
-#define _concat_identifiers2(a,b) a ## b
-#define _concat_identifiers(a,b) _concat_identifiers2(a,b)
 #define SPEC_TYPE(name) typedef struct _concat_identifiers(_vcc_math_type_, name) {char _vcc_marker_for_math_type;} name;
 
 typedef void *_vcc_obj_t;
@@ -90,7 +106,7 @@ ptrset _vcc_domain(obj_t q);
 #define domain(p) _vcc_domain(p)
 obj_t _vcc_emb(obj_t );
 #define emb(...) _vcc_emb(__VA_ARGS__)
-ptrset _vcc_extent(obj_t );
+ptrset _vcc_extent(obj_t);
 #define extent(...) _vcc_extent(__VA_ARGS__)
 ptrset _vcc_full_extent(obj_t );
 #define full_extent(...) _vcc_full_extent(__VA_ARGS__)
