@@ -35,21 +35,11 @@ void Init(
     _(wrap PageSet)
 }
 
-#if 0
-
 void CallInit() {
   PAGE_SET *ps = (PAGE_SET *)malloc(sizeof(PAGE_SET));
   PUINT64 arr = malloc(sizeof(UINT64) * 100);
   if (ps != NULL && arr != NULL) {
-    wrap(as_array(arr, 100));
+    _(wrap (UINT64[100])arr)
     Init(ps, 100, arr);
   }
 }
-
-/*`
-Verification of _PAGE_SET#adm succeeded.
-Verification of Init succeeded.
-Verification of CallInit succeeded.
-`*/
-
-#endif

@@ -31,12 +31,12 @@ typedef _Bool bool;
 
 #define SPEC_TYPE(name) typedef struct _concat_identifiers(_vcc_math_type_, name) {char _vcc_marker_for_math_type;} _concat_identifiers(\,name);
 
-
 _(typedef void *\object;)
 _(typedef __int64 \integer;)
 _(SPEC_TYPE(objset))
 _(SPEC_TYPE(thread))
 _(SPEC_TYPE(state))
+_(SPEC_TYPE(type))
 
 _(bool \mine(\object, ...);)
 _(bool \valid(\object);)
@@ -44,6 +44,7 @@ _(bool \wrapped(\object);)
 _(void \wrap(\object);)
 _(void \unwrap(\object);)
 _(\objset \extent(\object);)
+_(\object \alloc(\type);)
 
 
 #else 

@@ -736,10 +736,12 @@ namespace Microsoft.Research.Vcc
                                     "\\valid",   "_vcc_typed2";
                                     "\\wrap",    "_vcc_wrap";
                                     "\\wrapped", "_vcc_wrapped";
-                                    "\\extent",  "_vcc_extent" ]
+                                    "\\extent",  "_vcc_extent";
+                                    "\\alloc",   "_vcc_alloc" ]
 
       let newToOldType = Map.ofList [ "objset", "ptrset";
-                                      "state",  "state_t" ]
+                                      "state",  "state_t";
+                                      "type",   "typeid_t" ]
 
       let normalizeCalls = function
         | Top.TypeDecl(td) as decl ->
