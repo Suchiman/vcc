@@ -21,6 +21,23 @@ namespace Microsoft.Research.Vcc.Parsing
     : base(compilation, sourceLocation, scannerAndParserErrors) {
     }
 
+    override protected bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {
+      switch (typedefName.TypedefName.ToString()) {
+        case "\\object":
+          Expression typePtrRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "TypedPtr");
+          result = new VccNamedTypeExpression(typePtrRef);
+          return true;
+        case "\\integer":
+          Expression bigIntRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "BigInt");
+          result = new VccNamedTypeExpression(bigIntRef);
+          return true;
+        default:
+          result = null;
+          return false;
+      }
+    }
+
+
     override protected void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       TokenSet expectedTokens = TS.DeclarationStart | Token.Colon;
       while (expectedTokens[this.currentToken]) {
@@ -112,32 +129,41 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
-    //override protected Statement ParseSpecStatements(TokenSet followers) {
-    //  bool savedInSpecCode = this.EnterSpecBlock();
-    //  this.GetNextToken();
-    //  this.Skip(Token.LeftParenthesis);
-    //  List<Statement> statements = new List<Statement>();
-    //  SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost);
-    //  while (expectedSpecTokens[this.CurrentSpecToken]) {
-    //    switch (this.CurrentSpecToken) {
-
-    //    }
-    //  }
-
-
-    //  this.ParseStatementList(statements, followers | Token.RightParenthesis);
-    //  List<Statement> specStatements = new List<Statement>(statements.Count);
-    //  foreach (var stmt in statements) {
-    //    LocalDeclarationsStatement localDecl = stmt as LocalDeclarationsStatement;
-    //    if (localDecl != null)
-    //      specStatements.Add(localDecl);
-    //    else
-    //      specStatements.Add(new VccSpecStatement(stmt, stmt.SourceLocation));
-    //  }
-    //  this.LeaveSpecBlock(savedInSpecCode);
-    //  this.SkipOverTo(Token.RightParenthesis, followers);
-    //  return new StatementGroup(specStatements);
-    //}
+    override protected Statement ParseSpecStatements(TokenSet followers) {
+      bool savedInSpecCode = this.EnterSpecBlock();
+      this.GetNextToken();
+      this.Skip(Token.LeftParenthesis);
+      List<Statement> statements = new List<Statement>();
+      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost);
+      while (expectedSpecTokens[this.CurrentSpecToken]) {
+        SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+        switch (this.CurrentSpecToken) {
+          case SpecToken.Ghost:
+            this.GetNextToken();
+            var stmt = this.ParseStatement(followers | Token.RightParenthesis);
+            slb.UpdateToSpan(stmt.SourceLocation);
+            statements.Add(new VccSpecStatement(stmt, slb));
+            break;
+          case SpecToken.Wrap:
+            this.GetNextToken();
+            var expr = this.ParseExpression(followers| Token.RightParenthesis);
+            slb.UpdateToSpan(expr.SourceLocation);
+            statements.Add(new VccWrapStatement(expr, slb));
+            break;
+          case SpecToken.Unwrap:
+            this.GetNextToken();
+            expr = this.ParseExpression(followers | Token.RightParenthesis);
+            slb.UpdateToSpan(expr.SourceLocation);
+            statements.Add(new VccWrapStatement(expr, slb));
+            break;
+        }
+        if (this.currentToken == Token.Semicolon)
+          this.SkipOverTo(Token.Semicolon, followers | Token.Identifier);
+      }
+      this.LeaveSpecBlock(savedInSpecCode);
+      this.SkipOverTo(Token.RightParenthesis, followers);
+      return new StatementGroup(statements);
+    }
 
 
     private SpecToken CurrentSpecToken {

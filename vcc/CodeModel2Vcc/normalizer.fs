@@ -732,8 +732,14 @@ namespace Microsoft.Research.Vcc
     
     let normalizeNewSyntax = 
   
-      let newToOld = Map.ofList [ "\\mine", "_vcc_keeps";
-                                  "\\valid", "_vcc_typed2" ]
+      let newToOldFn = Map.ofList [ "\\mine",    "_vcc_keeps";
+                                    "\\valid",   "_vcc_typed2";
+                                    "\\wrap",    "_vcc_wrap";
+                                    "\\wrapped", "_vcc_wrapped";
+                                    "\\extent",  "_vcc_extent" ]
+
+      let newToOldType = Map.ofList [ "objset", "ptrset";
+                                      "state",  "state_t" ]
 
       let normalizeCalls = function
         | Top.TypeDecl(td) as decl ->
@@ -745,10 +751,15 @@ namespace Microsoft.Research.Vcc
 
       let mapFromNewSyntax = function
         | Top.FunctionDecl(fn) -> 
-          match newToOld.TryFind fn.Name with
+          match newToOldFn.TryFind fn.Name with
             | Some oldName -> fn.Name <- oldName
             | None -> ()
           Top.FunctionDecl(fn)
+        | Top.TypeDecl(td) ->
+          match newToOldType.TryFind td.Name with
+            | Some oldName -> td.Name <- oldName
+            | None -> ()
+          Top.TypeDecl(td)
         | decl -> decl
           
       List.map normalizeCalls >> List.map mapFromNewSyntax

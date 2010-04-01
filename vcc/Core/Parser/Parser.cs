@@ -885,6 +885,22 @@ namespace Microsoft.Research.Vcc.Parsing {
       return TypeExpression.For(Dummy.Type);
     }
 
+    protected virtual bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {
+      switch (typedefName.TypedefName.ToString()) {
+        case "_vcc_obj_t":
+          Expression typePtrRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "TypedPtr");
+          result = new VccNamedTypeExpression(typePtrRef);
+          return true;
+        case "_vcc_integer_t":
+          Expression bigIntRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "BigInt");
+          result = new VccNamedTypeExpression(bigIntRef);
+          return true;
+        default:
+          result = null;
+          return false;
+      }
+    }
+
     protected TypeExpression/*?*/ TryToGetTypeExpressionFor(IEnumerable<Specifier> specifiers) {
       TypeExpression/*?*/ result = null;
       PrimitiveTypeSpecifier/*?*/ sign = null;
@@ -912,15 +928,10 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
         TypedefNameSpecifier/*?*/ tdns = specifier as TypedefNameSpecifier;
         if (tdns != null) {
-          //TODO: if (result != null || sign != null || length != null || primitiveType != null) Error;
-          TypeExpression typeDefExpression;
-          if (tdns.TypedefName.ToString() == "_vcc_obj_t") {
-            Expression typePtrRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "TypedPtr");
-            result = new VccNamedTypeExpression(typePtrRef);
-          } else if (tdns.TypedefName.ToString() == "_vcc_integer_t") {
-            Expression bigIntRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "BigInt");
-            result = new VccNamedTypeExpression(bigIntRef);
+          if (this.TryToGetBuiltInSpecTypeName(tdns, out result)) {
+            // found - result is set as a side effect of the function call
           } else {
+            TypeExpression typeDefExpression;
             if (this.typedefExpressions.TryGetValue(tdns.TypedefName.ToString(), out typeDefExpression)) {
               NamedTypeExpression namedTypeExpression = typeDefExpression as NamedTypeExpression;
               if (namedTypeExpression != null) {
