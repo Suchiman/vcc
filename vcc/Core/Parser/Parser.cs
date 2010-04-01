@@ -1909,7 +1909,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected Statement ParseSpecStatements(TokenSet followers) {
+    protected virtual Statement ParseSpecStatements(TokenSet followers) {
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);

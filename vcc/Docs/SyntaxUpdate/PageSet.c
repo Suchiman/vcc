@@ -32,7 +32,7 @@ void Init(
     PageSet->Array = Array;
     PageSet->PageCount = PageCount;
     PageSet->PagesAllocated = 0;
-    wrap(PageSet);
+    _(wrap PageSet)
 }
 
 #if 0
