@@ -309,6 +309,40 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
+  public sealed class VccWrapStatement : Statement
+  {
+    public VccWrapStatement(Expression expr, ISourceLocation sourceLocation)
+      : base(sourceLocation) {
+      this.expression = expr;
+    }
+
+    protected VccWrapStatement(BlockStatement containingBlock, VccWrapStatement template)
+      : base(containingBlock, template) {
+      this.expression = template.expression.MakeCopyFor(containingBlock);
+    }
+
+    public Expression Expression {
+      get { return this.expression; }
+    }
+    private readonly Expression expression;
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      return this.Expression.HasErrors || this.Expression.HasSideEffect(true);
+    }
+
+    public override void SetContainingBlock(BlockStatement containingBlock) {
+      base.SetContainingBlock(containingBlock);
+      DummyExpression containingExpression = new DummyExpression(containingBlock, SourceDummy.SourceLocation);
+      this.expression.SetContainingExpression(containingExpression);
+    }
+
+    public override Statement MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      return new VccWrapStatement(containingBlock, this);
+    }
+
+  }
+
   public sealed class VccSpecStatement : Statement
   {
     private readonly Statement wrappedStatement;

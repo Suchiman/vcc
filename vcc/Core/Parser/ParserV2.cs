@@ -89,19 +89,56 @@ namespace Microsoft.Research.Vcc.Parsing
               postcond = this.CheckedExpressionIfRequested(postcond);
               contract.AddPostcondition(new Postcondition(postcond, postcond.SourceLocation));
               break;
-            //case SpecToken.Ensures: this.ParseRequiresOrEnsures(contract, followers | Token.RightParenthesis, false); break;
-            //case SpecToken.Reads: this.ParseReadsOrWrites(contract, followers | Token.RightParenthesis, true); break;
-            //case SpecToken.Requires: this.ParseRequiresOrEnsures(contract, followers | Token.RightParenthesis, true); break;
+            case SpecToken.Maintains:
+              this.GetNextToken();
+              var inv = this.ParseExpression(followers | Token.RightParenthesis);
+              inv = this.CheckedExpressionIfRequested(inv);
+              contract.AddPrecondition(new Precondition(inv, null, inv.SourceLocation));
+              contract.AddPostcondition(new Postcondition(inv, inv.SourceLocation));
+              break;
             case SpecToken.Writes:
               this.GetNextToken();
-              var exprList = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
-              contract.AddWrites(exprList);
+              var writes = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+              contract.AddWrites(writes);
+              break;
+            case SpecToken.Reads:
+              this.GetNextToken();
+              var reads = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+              contract.AddWrites(reads);
               break;
           }
         }
         this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
       }
     }
+
+    //override protected Statement ParseSpecStatements(TokenSet followers) {
+    //  bool savedInSpecCode = this.EnterSpecBlock();
+    //  this.GetNextToken();
+    //  this.Skip(Token.LeftParenthesis);
+    //  List<Statement> statements = new List<Statement>();
+    //  SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost);
+    //  while (expectedSpecTokens[this.CurrentSpecToken]) {
+    //    switch (this.CurrentSpecToken) {
+
+    //    }
+    //  }
+
+
+    //  this.ParseStatementList(statements, followers | Token.RightParenthesis);
+    //  List<Statement> specStatements = new List<Statement>(statements.Count);
+    //  foreach (var stmt in statements) {
+    //    LocalDeclarationsStatement localDecl = stmt as LocalDeclarationsStatement;
+    //    if (localDecl != null)
+    //      specStatements.Add(localDecl);
+    //    else
+    //      specStatements.Add(new VccSpecStatement(stmt, stmt.SourceLocation));
+    //  }
+    //  this.LeaveSpecBlock(savedInSpecCode);
+    //  this.SkipOverTo(Token.RightParenthesis, followers);
+    //  return new StatementGroup(specStatements);
+    //}
+
 
     private SpecToken CurrentSpecToken {
       get {
@@ -115,10 +152,14 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Invariant;
             case "maintains":
               return SpecToken.Maintains;
+            case "unwrap":
+              return SpecToken.Unwrap;
             case "reads":
               return SpecToken.Reads;
             case "requires":
               return SpecToken.Requires;
+            case "wrap":
+              return SpecToken.Wrap;
             case "writes":
               return SpecToken.Writes;
             default:
@@ -138,6 +179,8 @@ namespace Microsoft.Research.Vcc.Parsing
       Maintains,
       Reads,
       Requires,
+      Unwrap,
+      Wrap,
       Writes,
     }
 
