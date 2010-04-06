@@ -867,7 +867,7 @@ namespace Microsoft.Research.Vcc {
 
       public bool HasErrors {
         get {
-          return this.ValueToConvert.HasErrors;
+          return ((Expression)this.ValueToConvert).HasErrors;
         }
       }
 
@@ -1257,10 +1257,9 @@ namespace Microsoft.Research.Vcc {
       protected bool? hasErrors;
 
       protected virtual bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-        if (this.conversion.HasErrors || this.size.HasErrors) return true;
         // TODO: check that the size if of integer type and that the
         // type of the conversion and the to-be-converted object match
-        return false;
+        return ((Expression)this.conversion).HasErrors || ((Expression)this.size).HasErrors;
       }
 
       public IExpression ValueToConvert {
