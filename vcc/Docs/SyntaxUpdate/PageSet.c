@@ -1,5 +1,4 @@
 #include <stdlib.h>
-
 #include <vcc.h>
 
 typedef unsigned __int32 UINT32;

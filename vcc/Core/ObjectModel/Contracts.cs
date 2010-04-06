@@ -37,7 +37,7 @@ namespace Microsoft.Research.Vcc {
     {
       bool result = false;
       foreach (ITypeInvariant inv in this.Invariants)
-        result |= inv.HasErrors;
+        result |= ((Expression)inv.Condition).HasErrors;
       return result;
     }
 

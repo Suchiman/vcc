@@ -134,11 +134,39 @@ namespace Microsoft.Research.Vcc
         | _ -> yield! []
       ]
     
+    static member private CheckHasError(e : IExpression) =
+     match e with
+       | :? Expression as expr -> expr.HasErrors
+       | :? Addition.PointerAddition as ptrAdd -> ptrAdd.HasErrors
+       | :? Subtraction.PointerSubtraction as ptrSub -> ptrSub.HasErrors
+       | _ -> false
+    
+    static member private CheckHasError(c : ITypeContract) =
+     match c with
+       | :? IErrorCheckable as ec -> ec.HasErrors
+       | _ -> false
+    
+    static member private CheckHasError(s : IStatement) =
+     match s with
+       | :? Statement as stmt -> stmt.HasErrors
+       | :? LocalDeclaration as decl -> decl.HasErrors
+       | _ -> false
+    
+    static member private CheckHasError(c : IMethodContract) =
+     match c with
+       | :? IErrorCheckable as ec -> ec.HasErrors
+       | _ -> false
+    
+    static member private CheckHasError(c : ILoopContract) =
+     match c with
+       | :? IErrorCheckable as ec -> ec.HasErrors
+       | _ -> false
+    
     member private this.DoPrecond (p:IPrecondition) =
-      if p.HasErrors then oopsLoc p "precondition has errors"; cTrue
+      if Visitor.CheckHasError(p.Condition) then oopsLoc p "precondition has errors"; cTrue
       else this.DoExpression (p.Condition)
     member private this.DoPostcond (p:IPostcondition) =
-      if p.HasErrors then oopsLoc p "postcondition has errors"; cTrue
+      if Visitor.CheckHasError(p.Condition) then oopsLoc p "postcondition has errors"; cTrue
       else this.DoExpression (p.Condition)
         
     member this.GetResult () =
@@ -330,7 +358,7 @@ namespace Microsoft.Research.Vcc
 
           let contract = contractProvider.GetMethodContractFor(meth)     
           if contract <> null then
-            contract.HasErrors |> ignore
+            Visitor.CheckHasError(contract) |> ignore
             // reset localsMap to deal with renaming of contracts between definition and declaration          
             let savedLocalsMap = localsMap
             match contract with
@@ -353,7 +381,7 @@ namespace Microsoft.Research.Vcc
         
         
     member this.DoStatement (stmt:IStatement) : C.Expr =
-      if stmt.HasErrors then
+      if Visitor.CheckHasError(stmt) then
         oopsLoc stmt  "errors in stmt"
         C.Comment (this.StmtCommon stmt, sprintf "statement %s had errors" (stmt.ToString()))
       else
@@ -367,16 +395,12 @@ namespace Microsoft.Research.Vcc
         res
      
     member this.DoInvariant (inv:ITypeInvariant) : C.Expr =
-      if inv.Condition.HasErrors then
-        oopsLoc inv "error in invariant"
-        C.Expr.Bogus
-      else
-        let cond = this.DoExpression inv.Condition
-        let name =if inv.Name <> null then inv.Name.Value else "public"
-        C.Expr.Macro(cond.Common, "labeled_invariant", [C.Expr.Macro(C.bogusEC, name, []); cond])
+      let cond = this.DoExpression inv.Condition
+      let name =if inv.Name <> null then inv.Name.Value else "public"
+      C.Expr.Macro(cond.Common, "labeled_invariant", [C.Expr.Macro(C.bogusEC, name, []); cond])
      
     member this.DoExpression(expr:IExpression) : C.Expr =
-      if expr.HasErrors then
+      if Visitor.CheckHasError(expr) then
         oopsLoc expr "error in expr"
         C.Expr.Bogus
       else
@@ -689,7 +713,7 @@ namespace Microsoft.Research.Vcc
                                             
                       if contract <> null then
                         td.Fields <- td.Fields @ [ for f in contract.ContractFields -> trField true f ]
-                        if not (contract.HasErrors) then
+                        if not (Visitor.CheckHasError(contract)) then
                           finalActions.Enqueue (fun () ->
                             td.Invariants <- [ for inv in contract.Invariants -> this.DoInvariant inv])
                        
@@ -755,7 +779,7 @@ namespace Microsoft.Research.Vcc
             
             bindings <- var :: bindings
             let body = getReturnStmt(anonymousDelegate.Body)
-            if (body.HasErrors) then
+            if Visitor.CheckHasError(body) then
               oopsLoc body "found errors in quantifier body, faking it to be 'true'"
               (cTrue, bindings, [])
             else
@@ -799,7 +823,7 @@ namespace Microsoft.Research.Vcc
     
     member this.DoLoopContract (loop:IStatement) =
       let contract = contractProvider.GetLoopContractFor loop
-      if (contract <> null) then contract.HasErrors |> ignore
+      if (contract <> null) then Visitor.CheckHasError(contract) |> ignore
       let conds =
         if contract = null then []
         else [ for i in contract.Invariants -> C.Expr.MkAssert (this.DoExpression i.Condition) ] @
@@ -813,7 +837,7 @@ namespace Microsoft.Research.Vcc
       if globalsType <> null then
         let contract = contractProvider.GetTypeContractFor globalsType
         if contract <> null then
-          contract.HasErrors |> ignore
+          Visitor.CheckHasError(contract) |> ignore
           for inv in contract.Invariants do
             if inv.IsAxiom then
               topDecls <- C.Top.Axiom (this.DoExpression inv.Condition) :: topDecls
