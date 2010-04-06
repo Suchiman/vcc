@@ -1975,6 +1975,21 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+        var initializer = (VccInitializerBase)this.RightOperand;
+        if (initializer.structureTypeExpression == null && initializer.arrayTypeExpression == null) {
+          var vccHelper = (VccCompilationHelper)this.Helper;
+          var leftType = this.LeftOperand.Type.ResolvedType;
+          if (vccHelper.IsFixedSizeArrayType(leftType)) {
+            var elementType = vccHelper.GetFixedArrayElementType(leftType);
+            var elements = TypeHelper.SizeOfType(leftType) / TypeHelper.SizeOfType(elementType);
+            initializer.arrayTypeExpression =
+              new VccArrayTypeExpression(TypeExpression.For(elementType), new CompileTimeConstant(elements, this.LeftOperand.SourceLocation), this.LeftOperand.SourceLocation);
+          } else if (this.LeftOperand.Type.IsStruct) initializer.structureTypeExpression = TypeExpression.For(this.LeftOperand.Type.ResolvedType);
+        }
+      return base.CheckForErrorsAndReturnTrueIfAnyAreFound();
+    }
+
     public override Expression MakeCopyFor(BlockStatement containingBlock) {
       if (this.ContainingBlock == containingBlock) return this;
       return new VccInitializerAssignment(containingBlock, this);
@@ -2305,7 +2320,7 @@ namespace Microsoft.Research.Vcc {
     //^ [Once]
     private ITypeDefinition/*?*/ type;
     internal VccArrayTypeExpression/*?*/ arrayTypeExpression;
-    internal VccNamedTypeExpression/*?*/ structureTypeExpression;
+    internal TypeExpression/*?*/ structureTypeExpression;
   }
 
   /// <summary>
