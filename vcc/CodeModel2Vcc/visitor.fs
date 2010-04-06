@@ -137,8 +137,7 @@ namespace Microsoft.Research.Vcc
     static member private CheckHasError(e : IExpression) =
      match e with
        | :? Expression as expr -> expr.HasErrors
-       | :? Addition.PointerAddition as ptrAdd -> ptrAdd.HasErrors
-       | :? Subtraction.PointerSubtraction as ptrSub -> ptrSub.HasErrors
+       | :? IErrorCheckable as ec -> ec.HasErrors
        | _ -> false
     
     static member private CheckHasError(c : ITypeContract) =
