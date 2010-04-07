@@ -845,7 +845,7 @@ namespace Microsoft.Research.Vcc {
     }
     TargetExpression/*?*/ targetWithoutCasts;
 
-    class AssignmentConversion : IConversion {
+    class AssignmentConversion : IConversion, IErrorCheckable {
 
       internal AssignmentConversion(IExpression valueToConvert, ITypeDefinition type) {
         this.valueToConvert = valueToConvert;
@@ -867,7 +867,7 @@ namespace Microsoft.Research.Vcc {
 
       public bool HasErrors {
         get {
-          return ((Expression)this.ValueToConvert).HasErrors;
+          return ((IErrorCheckable)this.ValueToConvert).HasErrors;
         }
       }
 
@@ -1233,7 +1233,7 @@ namespace Microsoft.Research.Vcc {
     /// Marker class that allows the visitor to latch onto conversion of the kind '(int[2])p',
     /// which is a syntactic alternative to as_array(p,2) (if p is of type int *)
     /// </summary>
-    public class VccCastArrayConversion : IConversion {
+    public class VccCastArrayConversion : IConversion, IErrorCheckable {
 
       private readonly IConversion conversion;
       private readonly IExpression size;
@@ -1248,20 +1248,9 @@ namespace Microsoft.Research.Vcc {
       }
 
       public bool HasErrors {
-        get {
-          if (this.hasErrors == null)
-            this.hasErrors = this.CheckForErrorsAndReturnTrueIfAnyAreFound();
-          return this.hasErrors.Value;
-        }
+        get { return ((IErrorCheckable)this.conversion).HasErrors || ((IErrorCheckable)this.size).HasErrors; }
       }
-      protected bool? hasErrors;
-
-      protected virtual bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-        // TODO: check that the size if of integer type and that the
-        // type of the conversion and the to-be-converted object match
-        return ((Expression)this.conversion).HasErrors || ((Expression)this.size).HasErrors;
-      }
-
+        
       public IExpression ValueToConvert {
         get { return this.conversion.ValueToConvert; }
       }
