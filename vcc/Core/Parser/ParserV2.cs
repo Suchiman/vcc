@@ -129,36 +129,45 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
+    private Statement ParseSingleArgSpecStatement(TokenSet followers, Func<Expression, ISourceLocation, Statement> createStmt) {
+      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+      this.GetNextToken();
+      var expr = this.ParseExpression(followers);
+      slb.UpdateToSpan(expr.SourceLocation);
+      return createStmt(expr, slb);
+    }
+
     override protected Statement ParseSpecStatements(TokenSet followers) {
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
       List<Statement> statements = new List<Statement>();
-      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost);
+      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost, SpecToken.Assert, SpecToken.Assume);
+      TokenSet followersOrRightParen = followers | Token.RightParenthesis;
       while (expectedSpecTokens[this.CurrentSpecToken]) {
-        SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
         switch (this.CurrentSpecToken) {
           case SpecToken.Ghost:
+            SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
             this.GetNextToken();
             var stmt = this.ParseStatement(followers | Token.RightParenthesis);
             slb.UpdateToSpan(stmt.SourceLocation);
             statements.Add(new VccSpecStatement(stmt, slb));
             break;
           case SpecToken.Wrap:
-            this.GetNextToken();
-            var expr = this.ParseExpression(followers| Token.RightParenthesis);
-            slb.UpdateToSpan(expr.SourceLocation);
-            statements.Add(new VccWrapStatement(expr, slb));
+            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new VccWrapStatement(expr, sl)));
             break;
           case SpecToken.Unwrap:
-            this.GetNextToken();
-            expr = this.ParseExpression(followers | Token.RightParenthesis);
-            slb.UpdateToSpan(expr.SourceLocation);
-            statements.Add(new VccWrapStatement(expr, slb));
+            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new VccUnwrapStatement(expr, sl)));
+            break;
+          case SpecToken.Assert:
+            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new AssertStatement(expr, sl)));
+            break;
+          case SpecToken.Assume:
+            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new AssumeStatement(expr, sl)));
             break;
         }
         if (this.currentToken == Token.Semicolon)
-          this.SkipOverTo(Token.Semicolon, followers | Token.Identifier);
+          this.SkipOverTo(Token.Semicolon, followersOrRightParen | Token.Identifier);
       }
       this.LeaveSpecBlock(savedInSpecCode);
       this.SkipOverTo(Token.RightParenthesis, followers);
@@ -170,6 +179,10 @@ namespace Microsoft.Research.Vcc.Parsing
       get {
         if (this.currentToken == Token.Identifier) {
           switch (this.scanner.GetIdentifierString()) {
+            case "assert":
+              return SpecToken.Assert;
+            case "assume":
+              return SpecToken.Assume;
             case "ensures":
               return SpecToken.Ensures;
             case "ghost":
@@ -199,6 +212,8 @@ namespace Microsoft.Research.Vcc.Parsing
     private enum SpecToken
     {
       None,
+      Assert,
+      Assume,
       Ensures,
       Ghost,
       Invariant,
