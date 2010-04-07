@@ -17,8 +17,11 @@ namespace Microsoft.Research.Vcc.Parsing
 
   internal class ParserV2 : Parser
   {
+    readonly IName ResultKeyword;
+
     internal ParserV2(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) 
     : base(compilation, sourceLocation, scannerAndParserErrors) {
+      this.ResultKeyword = this.compilation.NameTable.GetNameFor("\\result");
     }
 
     override protected bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {
@@ -36,7 +39,6 @@ namespace Microsoft.Research.Vcc.Parsing
           return false;
       }
     }
-
 
     override protected void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       TokenSet expectedTokens = TS.DeclarationStart | Token.Colon;
@@ -174,6 +176,9 @@ namespace Microsoft.Research.Vcc.Parsing
       return new StatementGroup(statements);
     }
 
+    protected override bool IsResultKeyword(IName name) {
+      return name.UniqueKey == this.ResultKeyword.UniqueKey;
+    }
 
     private SpecToken CurrentSpecToken {
       get {

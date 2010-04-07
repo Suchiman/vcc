@@ -3114,6 +3114,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
+    protected virtual bool IsResultKeyword(IName name) {
+      return name.UniqueKey == this.compilation.NameTable.Result.UniqueKey;
+    }
+
     protected Expression ParsePrimaryExpression(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -3122,7 +3126,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       switch (this.currentToken) {
         case Token.Identifier:
           SimpleName name = this.ParseSimpleName(followers|Token.Dot);
-          if (this.resultIsAKeyword && name.Name.UniqueKey == this.compilation.NameTable.Result.UniqueKey)
+          if (this.resultIsAKeyword && IsResultKeyword(name.Name))
             expression = new VccReturnValue(name.SourceLocation);
           else if (name.Name.Value == "__this")
             expression = new VccThisReference(name.SourceLocation);
