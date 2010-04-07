@@ -327,7 +327,7 @@ namespace Microsoft.Research.Vcc {
 
   }
 
-  public sealed class FunctionDeclaration : SourceItem, ISignatureDeclaration, ITypeDeclarationMember, IAggregatableNamespaceDeclarationMember, ISpecItem, IErrorCheckable {
+  public sealed class FunctionDeclaration : CheckableSourceItem, ISignatureDeclaration, ITypeDeclarationMember, IAggregatableNamespaceDeclarationMember, ISpecItem  {
     public FunctionDeclaration(bool acceptsExtraArguments, IEnumerable<Specifier>/*?*/ specifiers, bool isExternal, CallingConvention callingConvention, TypeMemberVisibility visibility, TypeExpression type, NameDeclaration name,
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters, List<ParameterDeclaration>/*?*/ parameters, bool isSpec, ISourceLocation sourceLocation)
       : base(sourceLocation){
@@ -491,16 +491,11 @@ namespace Microsoft.Research.Vcc {
       return TypeMemberVisibility.Public;
     }
 
-    /// <summary>
-    /// Checks the member for errors and returns true if any were found.
-    /// </summary>
-    public bool HasErrors {
-      get {
-        bool result = this.Type.HasErrors;
-        //TODO: more checks
-        return result;
-      }
-    }
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      bool result = this.Type.HasErrors;
+      //TODO: more checks
+      return result;
+    }  
 
     public bool IsExternal {
       get { return this.isExternal; }
@@ -907,7 +902,7 @@ namespace Microsoft.Research.Vcc {
 
   }
 
-  public sealed class TypedefDeclaration : SourceItem, ITypeDeclarationMember, IErrorCheckable {
+  public sealed class TypedefDeclaration : CheckableSourceItem, ITypeDeclarationMember {
 
     public TypedefDeclaration(TypeExpression type, NameDeclaration name, IEnumerable<Specifier> specifiers, ISourceLocation sourceLocation)
       : base(sourceLocation) {
@@ -959,15 +954,10 @@ namespace Microsoft.Research.Vcc {
       return TypeMemberVisibility.Public;
     }
 
-    /// <summary>
-    /// Checks the member for errors and returns true if any were found.
-    /// </summary>
-    public bool HasErrors {
-      get {
-        bool result = this.Type.HasErrors;
-        //TODO: check that typedef name is unique 
-        return result;
-      }
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      bool result = this.Type.HasErrors;
+      //TODO: check that typedef name is unique 
+      return result;
     }
 
     public NameDeclaration Name {
