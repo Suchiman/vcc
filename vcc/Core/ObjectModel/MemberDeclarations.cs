@@ -327,7 +327,7 @@ namespace Microsoft.Research.Vcc {
 
   }
 
-  public sealed class FunctionDeclaration : SourceItem, ISignatureDeclaration, ITypeDeclarationMember, IAggregatableNamespaceDeclarationMember, ISpecItem {
+  public sealed class FunctionDeclaration : SourceItem, ISignatureDeclaration, ITypeDeclarationMember, IAggregatableNamespaceDeclarationMember, ISpecItem, IErrorCheckable {
     public FunctionDeclaration(bool acceptsExtraArguments, IEnumerable<Specifier>/*?*/ specifiers, bool isExternal, CallingConvention callingConvention, TypeMemberVisibility visibility, TypeExpression type, NameDeclaration name,
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters, List<ParameterDeclaration>/*?*/ parameters, bool isSpec, ISourceLocation sourceLocation)
       : base(sourceLocation){
@@ -382,16 +382,6 @@ namespace Microsoft.Research.Vcc {
       get { return this.callingConvention; }
     }
     CallingConvention callingConvention;
-
-    /// <summary>
-    /// Performs any error checks still needed and returns true if any errors were found in the method or a constituent part of the method.
-    /// Do not call this method directly, but evaluate the HasErrors property. The latter will cache the return value.
-    /// </summary>
-    private bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      bool result = this.Type.HasErrors;
-      //TODO: more checks
-      return result;
-    }
 
     public CompilationPart CompilationPart {
       get { return this.ContainingTypeDeclaration.CompilationPart; }
@@ -506,12 +496,11 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     public bool HasErrors {
       get {
-        if (this.hasErrors == null)
-          this.hasErrors = this.CheckForErrorsAndReturnTrueIfAnyAreFound();
-        return this.hasErrors.Value;
+        bool result = this.Type.HasErrors;
+        //TODO: more checks
+        return result;
       }
     }
-    bool? hasErrors;
 
     public bool IsExternal {
       get { return this.isExternal; }
@@ -918,7 +907,7 @@ namespace Microsoft.Research.Vcc {
 
   }
 
-  public sealed class TypedefDeclaration : SourceItem, ITypeDeclarationMember {
+  public sealed class TypedefDeclaration : SourceItem, ITypeDeclarationMember, IErrorCheckable {
 
     public TypedefDeclaration(TypeExpression type, NameDeclaration name, IEnumerable<Specifier> specifiers, ISourceLocation sourceLocation)
       : base(sourceLocation) {
@@ -936,16 +925,6 @@ namespace Microsoft.Research.Vcc {
       this.containingTypeDeclaration = containingTypeDeclaration;
       this.name = template.name;
       this.type = template.type;
-    }
-
-    /// <summary>
-    /// Performs any error checks still needed and returns true if any errors were found in the method or a constituent part of the method.
-    /// Do not call this method directly, but evaluate the HasErrors property. The latter will cache the return value.
-    /// </summary>
-    private bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      bool result = this.Type.HasErrors;
-      //TODO: check that typedef name is unique 
-      return result;
     }
 
     public CompilationPart CompilationPart {
@@ -985,12 +964,11 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     public bool HasErrors {
       get {
-        if (this.hasErrors == null)
-          this.hasErrors = this.CheckForErrorsAndReturnTrueIfAnyAreFound();
-        return this.hasErrors.Value;
+        bool result = this.Type.HasErrors;
+        //TODO: check that typedef name is unique 
+        return result;
       }
     }
-    bool? hasErrors;
 
     public NameDeclaration Name {
       get { return this.name; }

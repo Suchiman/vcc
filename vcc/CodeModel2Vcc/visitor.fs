@@ -54,10 +54,8 @@ namespace Microsoft.Research.Vcc
     let typesMap = new Dict<ITypeDefinition, C.TypeDecl>()
     let typeNameMap = new Dict<string, C.TypeDecl>()
     let fieldsMap = new Dict<IFieldDefinition, C.Field>()
-    let mutable doingEarlyPruning = false
     let mutable requestedFunctions = []
     let mutable currentFunctionName = ""
-    let mutable currentBlockId = 0
     
     let cTrue = C.Expr.BoolLiteral ( { Type = C.Type.Bool; Token = C.bogusToken }, true )
     let cFalse = C.Expr.BoolLiteral ( { Type = C.Type.Bool; Token = C.bogusToken }, false )
@@ -136,7 +134,6 @@ namespace Microsoft.Research.Vcc
     
     static member private CheckHasError(e : IExpression) =
      match e with
-       | :? Expression as expr -> expr.HasErrors
        | :? IErrorCheckable as ec -> ec.HasErrors
        | _ -> false
     
@@ -147,8 +144,7 @@ namespace Microsoft.Research.Vcc
     
     static member private CheckHasError(s : IStatement) =
      match s with
-       | :? Statement as stmt -> stmt.HasErrors
-       | :? LocalDeclaration as decl -> decl.HasErrors
+       | :? IErrorCheckable as ec -> ec.HasErrors
        | _ -> false
     
     static member private CheckHasError(c : IMethodContract) =
@@ -165,7 +161,7 @@ namespace Microsoft.Research.Vcc
       if Visitor.CheckHasError(p.Condition) then oopsLoc p "precondition has errors"; cTrue
       else this.DoExpression (p.Condition)
     member private this.DoPostcond (p:IPostcondition) =
-      if Visitor.CheckHasError(p.Condition) then oopsLoc p "postcondition has errors"; cTrue
+      if Visitor.CheckHasError(p.Condition) then oopsLoc p "postcondition has errors"; cFalse
       else this.DoExpression (p.Condition)
         
     member this.GetResult () =
@@ -174,11 +170,10 @@ namespace Microsoft.Research.Vcc
       topDecls
 
     member this.EnsureMethodIsVisited (m : IMethodDefinition) =
-      if doingEarlyPruning then 
-        match m with 
-          | :? IGlobalMethodDefinition -> this.DoMethod(m, true) 
-          | :? IGenericMethodInstance as gmi -> this.EnsureMethodIsVisited(gmi.GenericMethod.ResolvedMethod)
-          | _ -> ()
+      match m with 
+        | :? IGlobalMethodDefinition -> this.DoMethod(m, true) 
+        | :? IGenericMethodInstance as gmi -> this.EnsureMethodIsVisited(gmi.GenericMethod.ResolvedMethod)
+        | _ -> ()
     
     member this.DoType (typ:ITypeReference) =
       typeRes <- C.Type.Bogus
@@ -348,7 +343,6 @@ namespace Microsoft.Research.Vcc
             let savedLocalVars = localVars
             localVars <- []
             currentFunctionName <- decl.Name
-            currentBlockId <- 0
             let body = this.DoStatement body
             let locals = (List.map (fun v -> C.Expr.VarDecl (C.voidBogusEC(), v)) decl.InParameters) @ List.rev localVars
             decl.Body <- Some (C.Expr.MkBlock (locals @ [body]))
@@ -848,7 +842,6 @@ namespace Microsoft.Research.Vcc
         let syms = [ "malloc" ]
         List.exists (fun elem -> elem = sym) syms
       let ns = assembly.NamespaceRoot
-      doingEarlyPruning <- true
       requestedFunctions <- Seq.toList fnNames
       for n in ns.Members do 
         let ncmp s = s = n.Name.Value
