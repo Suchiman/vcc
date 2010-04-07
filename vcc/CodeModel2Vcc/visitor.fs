@@ -54,6 +54,7 @@ namespace Microsoft.Research.Vcc
     let typesMap = new Dict<ITypeDefinition, C.TypeDecl>()
     let typeNameMap = new Dict<string, C.TypeDecl>()
     let fieldsMap = new Dict<IFieldDefinition, C.Field>()
+    let mutable doingEarlyPruning = false
     let mutable requestedFunctions = []
     let mutable currentFunctionName = ""
     
@@ -170,10 +171,11 @@ namespace Microsoft.Research.Vcc
       topDecls
 
     member this.EnsureMethodIsVisited (m : IMethodDefinition) =
-      match m with 
-        | :? IGlobalMethodDefinition -> this.DoMethod(m, true) 
-        | :? IGenericMethodInstance as gmi -> this.EnsureMethodIsVisited(gmi.GenericMethod.ResolvedMethod)
-        | _ -> ()
+      if doingEarlyPruning then 
+        match m with 
+          | :? IGlobalMethodDefinition -> this.DoMethod(m, true) 
+          | :? IGenericMethodInstance as gmi -> this.EnsureMethodIsVisited(gmi.GenericMethod.ResolvedMethod)
+          | _ -> ()
     
     member this.DoType (typ:ITypeReference) =
       typeRes <- C.Type.Bogus
@@ -837,11 +839,12 @@ namespace Microsoft.Research.Vcc
               
       topDecls <- List.rev topDecls        
 
-    member this.Visit (assembly:IAssembly, fnNames) : unit =
+    member this.VisitOnly (assembly:IAssembly, fnNames) : unit =
       let isRequired sym =
         let syms = [ "malloc" ]
         List.exists (fun elem -> elem = sym) syms
       let ns = assembly.NamespaceRoot
+      doingEarlyPruning <- true
       requestedFunctions <- Seq.toList fnNames
       for n in ns.Members do 
         let ncmp s = s = n.Name.Value

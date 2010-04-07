@@ -300,7 +300,7 @@ namespace Microsoft.Research.Vcc
               var pruningRoots = new List<string>();
               pruningRoots.AddRange(commandLineOptions.Functions.ConvertAll<string>(FunctionOrTypeRoot));
               pruningRoots.AddRange(commandLineOptions.FunctionsWithExactName.ConvertAll<string>(FunctionOrTypeRoot));
-              visitor.Visit(assem, pruningRoots);
+              visitor.VisitOnly(assem, pruningRoots);
             } else
               ((ICodeVisitor)visitor).Visit(assem);
           } catch (Exception) {
