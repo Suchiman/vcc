@@ -162,19 +162,21 @@ ispure int f2(int x)
 {
   return f1(x);
 }
-ispure int g1(int x) { return g2(x); }
-ispure int g2(int x) { return g3(x); }
-ispure int g3(int x) { return g1(x); }
-
-// there should be no error for this one
-ispure int g0(int x) { return g2(x); }
-
 `
 testcase(5,1) : error VC9637: the pure function 'f2' calls 'f1' which is not pure
 testcase(3,1)-(3,14) : (Location of symbol related to previous error.)
-testcase(9,1) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g1 -> g2 -> g3 -> g1
-testcase(10,1) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g2 -> g3 -> g1 -> g2
-testcase(11,1) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g3 -> g1 -> g2 -> g3
+`
+#include <vcc.h>
+
+spec(ispure int g1(int x) ensures(result == g2(x));)
+spec(ispure int g2(int x) ensures(result == g3(x));)
+spec(ispure int g3(int x) ensures(result == g1(x));)
+spec(ispure int g0(int x) ensures(result == g2(x)) { return g2(x); })
+`
+testcase(3,17) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g1 -> g2 -> g3 -> g1
+testcase(4,17) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g2 -> g3 -> g1 -> g2
+testcase(5,17) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g3 -> g1 -> g2 -> g3
+Verification of g0 succeeded.
 `
 #include <vcc.h>
 
