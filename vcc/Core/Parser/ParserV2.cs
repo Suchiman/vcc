@@ -18,10 +18,12 @@ namespace Microsoft.Research.Vcc.Parsing
   internal class ParserV2 : Parser
   {
     readonly IName ResultKeyword;
+    readonly IName OldKeyword;
 
     internal ParserV2(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) 
     : base(compilation, sourceLocation, scannerAndParserErrors) {
       this.ResultKeyword = this.compilation.NameTable.GetNameFor("\\result");
+      this.OldKeyword = this.compilation.NameTable.GetNameFor("\\old");
     }
 
     override protected bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {
@@ -176,8 +178,21 @@ namespace Microsoft.Research.Vcc.Parsing
       return new StatementGroup(statements);
     }
 
-    protected override bool IsResultKeyword(IName name) {
-      return name.UniqueKey == this.ResultKeyword.UniqueKey;
+    protected override bool TryParseSpecialExpression(SimpleName name, TokenSet followers, out Expression expression) {
+      if (name.Name.UniqueKey == this.ResultKeyword.UniqueKey) {
+        expression = new ReturnValue(name.SourceLocation);
+        return true;
+      } else if (name.Name.UniqueKey == this.OldKeyword.UniqueKey) {
+        SourceLocationBuilder slb = new SourceLocationBuilder(name.SourceLocation);
+        this.Skip(Token.LeftParenthesis);
+        Expression expr = this.ParseExpression(followers | Token.RightParenthesis);
+        slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+        expression = new OldValue(expr, slb);
+        this.SkipOverTo(Token.RightParenthesis, followers);
+        return true;
+      }
+      expression = null;
+      return false;
     }
 
     private SpecToken CurrentSpecToken {

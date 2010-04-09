@@ -3114,8 +3114,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected virtual bool IsResultKeyword(IName name) {
-      return name.UniqueKey == this.compilation.NameTable.Result.UniqueKey;
+    protected virtual bool TryParseSpecialExpression(SimpleName name, TokenSet followers, out Expression expression) {
+      if (this.resultIsAKeyword && name.Name.UniqueKey == this.compilation.NameTable.Result.UniqueKey) {
+        expression = new VccReturnValue(name.SourceLocation);
+        return true;
+      }
+      expression = null;
+      return false;
     }
 
     protected Expression ParsePrimaryExpression(TokenSet followers)
@@ -3126,8 +3131,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       switch (this.currentToken) {
         case Token.Identifier:
           SimpleName name = this.ParseSimpleName(followers|Token.Dot);
-          if (this.resultIsAKeyword && IsResultKeyword(name.Name))
-            expression = new VccReturnValue(name.SourceLocation);
+          if (this.TryParseSpecialExpression(name, followers, out expression))
+            break;
           else if (name.Name.Value == "__this")
             expression = new VccThisReference(name.SourceLocation);
           else

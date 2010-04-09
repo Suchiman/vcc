@@ -45,6 +45,7 @@ _(void \wrap(\object);)
 _(void \unwrap(\object);)
 _(\objset \extent(\object);)
 _(\object \alloc(\type);)
+_(bool \thread_local(\object);)
 
 
 #else 
