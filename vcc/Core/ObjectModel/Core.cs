@@ -559,7 +559,7 @@ namespace Microsoft.Research.Vcc {
 
 
     //^ [Pure]
-    protected override Expression Conversion(Expression expression, ITypeDefinition targetType, bool isExplicitConversion) {
+    protected override Expression Conversion(Expression expression, ITypeDefinition targetType, bool isExplicitConversion, ISourceLocation sourceLocation) {
 
       // bool -> bool
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean) &&
@@ -568,20 +568,20 @@ namespace Microsoft.Research.Vcc {
 
       // * -> bool
       if (TypeHelper.TypesAreEquivalent(targetType, this.PlatformType.SystemBoolean))
-        return this.ConversionExpression(expression, this.PlatformType.SystemBoolean.ResolvedType);
+        return this.ConversionExpression(expression, this.PlatformType.SystemBoolean.ResolvedType, sourceLocation);
       
       // bool -> int
       if (TypeHelper.TypesAreEquivalent(expression.Type, this.PlatformType.SystemBoolean) &&
           TypeHelper.IsPrimitiveInteger(targetType))
-        return this.ConversionExpression(expression, targetType);
+        return this.ConversionExpression(expression, targetType, sourceLocation);
 
       // int -> enum
       if (targetType.IsEnum && TypeHelper.IsPrimitiveInteger(expression.Type))
-        return base.Conversion(expression, targetType, true);
+        return base.Conversion(expression, targetType, true, sourceLocation);
 
       // int -> mathint
       if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigIntString && TypeHelper.IsPrimitiveInteger(expression.Type))
-        return this.ConversionExpression(expression, targetType);
+        return this.ConversionExpression(expression, targetType, sourceLocation);
 
       IPointerType/*?*/ srcPointerType;
       IPointerType/*?*/ tgtPointerType;
@@ -593,7 +593,7 @@ namespace Microsoft.Research.Vcc {
         if (srcKind == PtrConvKind.Array) {
           AddressOf addressOf = new VccAddressOf(new AddressableExpression(expression), expression.SourceLocation);
           addressOf.SetContainingExpression(expression);
-          return this.Conversion(addressOf, targetType, isExplicitConversion);
+          return this.Conversion(addressOf, targetType, isExplicitConversion, sourceLocation);
         }
 
         var convKind = KindsToConvMethod(srcKind, tgtKind);
@@ -602,7 +602,7 @@ namespace Microsoft.Research.Vcc {
             convKind == ConvMethod.Explicit && isExplicitConversion ||
             convKind == ConvMethod.ExplicitAndImplicitIfZero && (isExplicitConversion || IsIntegralZero(expression)) ||
             convKind == ConvMethod.IncompatibleAndImplicitIfZero && IsZeroVisitor.IsZero(expression.ProjectAsIExpression()))
-          return this.ConversionExpression(expression, targetType);
+          return this.ConversionExpression(expression, targetType, sourceLocation);
 
         if (convKind == ConvMethod.Incompatible ||
             convKind == ConvMethod.IncompatibleAndImplicitIfZero) 
@@ -626,7 +626,7 @@ namespace Microsoft.Research.Vcc {
         }
       }
 
-      return base.Conversion(expression, targetType, isExplicitConversion);
+      return base.Conversion(expression, targetType, isExplicitConversion, sourceLocation);
     }
 
     private IMethodDefinition/*?*/ ResolveToMethod(Expression expression) {
