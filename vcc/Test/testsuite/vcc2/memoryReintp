@@ -90,7 +90,7 @@ void joinShouldFail2(int *p)
 Verification of f1 succeeded.
 Verification of flatten succeeded.
 Verification of shouldFail failed.
-testcase(38,3) : error VC8510: Assertion 'as_array((uint8_t*)p, 8) is writable in call to _vcc_from_bytes((struct A*)p, ((bool)0))' did not verify.
+testcase(38,3) : error VC8510: Assertion 'as_array((uint8_t*)(struct A*)p, 8) is writable in call to _vcc_from_bytes((struct A*)p, ((bool)0))' did not verify.
 Verification of flattenFail1 failed.
 testcase(50,3) : error VC8507: Assertion 'p[9] is writable' did not verify.
 Verification of flattenFail2 failed.
@@ -99,7 +99,7 @@ testcase(0,0) : error VC9599: (related information) Precondition: 'the reinterpr
 Verification of flattenFail3 failed.
 testcase(62,3) : error VC8510: Assertion 'a is writable in call to _vcc_to_bytes(a)' did not verify.
 Verification of joinShouldFail2 failed.
-testcase(70,3) : error VC8510: Assertion 'as_array((uint8_t*)p, 8) is writable in call to _vcc_from_bytes((struct A*)p, ((bool)0))' did not verify.
+testcase(70,3) : error VC8510: Assertion 'as_array((uint8_t*)(struct A*)p, 8) is writable in call to _vcc_from_bytes((struct A*)p, ((bool)0))' did not verify.
 `
 #include <vcc2test.h>
 

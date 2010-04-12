@@ -107,7 +107,7 @@ void no_chg(int* x)
         maintains(mutable(x) && is_object_root(x));
 
 int foo()
-writes(&S,&S.a,&S.b)
+writes(extent(&S))
 {
         int c;
 

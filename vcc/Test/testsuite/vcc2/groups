@@ -102,7 +102,7 @@ Verification of S#adm succeeded.
 Verification of S##G#adm succeeded.
 Verification of maintainGroupInvariant succeeded.
 Verification of destroyGroupInvariantShouldFail failed.
-testcase(37,28) : error VC8014: invariant(__this->a == __this->c) of S##G fails on wrap.
+testcase(37,13) : error VC8014: invariant(__this->a == __this->c) of S##G fails on wrap.
 testcase(6,36) : error VC9599: (related information) location of the invariant.
 `
 #include <vcc.h>

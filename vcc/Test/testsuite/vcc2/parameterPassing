@@ -119,6 +119,8 @@ Verification of foo failed.
 testcase(8,4) : error VC8507: Assertion '*p is writable' did not verify.
 Verification of foo2 failed.
 testcase(16,4) : error VC8507: Assertion '*p is writable' did not verify.
+testcase(17,1) : error VC8536: Post condition 'unchanged(emb(*p)) (inferred from writes clause)' did not verify.
+testcase(13,12) : error VC9599: (related information) Location of post condition.
 `
 #include <vcc.h>
 
