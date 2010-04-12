@@ -52,6 +52,7 @@ void testme(uint64* p)
   requires(typed(p))
   requires(thread_local(p))
   requires(mutable((uint64*)(*p)))
+  requires(p != (uint64 *)(*p))
   writes((uint64 *)*p)
 {
 

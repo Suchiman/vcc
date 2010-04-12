@@ -237,6 +237,7 @@ Verification of foo succeeded.
 template<typename T> bool foo(T *x)
     writes(array_range(x,sizeof(T)/4));
 
+vcc_attr("no_infer", "weak_out_param")
 void bar(int *p) 
   writes(p)
 { 

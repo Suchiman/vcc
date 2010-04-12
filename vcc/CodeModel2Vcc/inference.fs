@@ -13,7 +13,7 @@ namespace Microsoft.Research.Vcc
  open Microsoft.Research.Vcc.CAST
  
  module Inference =
-  let init helper =
+  let init (helper:Helper.Env) =
 
     let inferLoopInvariants self = function
       | Loop (comm, invs, writes, body) ->
@@ -85,6 +85,39 @@ namespace Microsoft.Research.Vcc
         td.Invariants <- doInferAlwaysByClaim td.Invariants
         decl
       | decl -> decl
+
+    let inferWeakOutParam = 
+      let isPtrToPrimitive =
+        let rec isPrimitive = function
+          | Type.Bool | Type.Integer _ | Type.Primitive _ | Type.PhysPtr _ | Type.SpecPtr _  -> true
+          | Type.Volatile t -> isPrimitive t
+          | _ -> false
+        function | Ptr t -> isPrimitive t | _ -> false
+      let extraEnsuresFor (e:Expr) =
+        if isPtrToPrimitive e.Type then 
+          let emb = Expr.Macro({e.Common with Type = Type.ObjectT}, "_vcc_emb", [e])
+          let mutableTok = {forwardingToken e.Token None (fun () -> afmt 8536 "mutable({0}) (inferred from writes clause)" [e.Token.Value]) with Type = Type.Bool }
+          let embTok = {forwardingToken e.Token None (fun () -> afmt 8536 "unchanged(emb({0})) (inferred from writes clause)" [e.Token.Value]) with Type = Type.Bool }
+          [ Expr.Macro(mutableTok, "_vcc_mutable", [e]);
+            Expr.Prim(embTok, Op.Op("==", CheckedStatus.Unchecked), [emb; (mkOld emb.Common "prestate" emb) ]) ]
+        else []
+      let ensuresForWrites = List.filter (fun (e:Expr) -> isPtrToPrimitive e.Type) >> List.map extraEnsuresFor >> List.concat
+      
+      let inferForBlocksWithContracts self = function
+        | Expr.Macro(ec, "block", [ b; req; Macro(eec, "block_ensures", ens); (Macro(_, "block_writes", writes) as ws); rds ]) ->
+          Some(Expr.Macro(ec, "block", [self b; req; Macro(eec, "block_ensures", ens @ (ensuresForWrites writes)); ws; rds]))
+        | _ -> None
+        
+      function
+        | Top.FunctionDecl(fn) as decl when fn.IsPure && fn.Writes <> [] ->
+          helper.Error (fn.Token, 9623, "writes specified on a pure function", None)
+          decl
+        | Top.FunctionDecl(fn) as decl ->
+           let extraEnsures = ensuresForWrites fn.Writes 
+           fn.Ensures <- fn.Ensures @ extraEnsures
+           fn.Body <- Option.map (fun (e:Expr) -> e.SelfMap(inferForBlocksWithContracts)) fn.Body
+           decl
+        | decl -> decl
 
     let shouldInfer attrs attr =
       let check = function
@@ -255,5 +288,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("infer-loop_invariants", Helper.Expr inferLoopInvariants)
     helper.AddTransformer ("infer-set_in", Helper.Decl (inferAny "set_in" inferSetIn))
     helper.AddTransformer ("infer-empty-owns", Helper.Decl (inferAny "empty_owns" inferEmptyOwns))
+    helper.AddTransformer ("infer-weak_out_param", Helper.Decl (inferAny "weak_out_param" inferWeakOutParam))
    
     helper.AddTransformer ("infer-end", Helper.DoNothing)

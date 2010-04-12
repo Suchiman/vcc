@@ -1299,7 +1299,7 @@ namespace Microsoft.Research.Vcc
         let ensures = List.rev ensures
         let stateCondition =
           if header.IsPure then
-            if writes <> [] then helper.Error (header.Token, 9623, "writes specified on a pure function", None)
+            if writes <> [] then die() // should have been caught earlier!
             []
           else
             [B.FreeEnsures (stateChanges { env with Writes = writes });                    
