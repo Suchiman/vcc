@@ -1518,3 +1518,9 @@ namespace Microsoft.Research.Vcc
       member this.Visit (yieldBreakStatement:IYieldBreakStatement) : unit = assert false
 
       member this.Visit (yieldReturnStatement:IYieldReturnStatement) : unit = assert false       
+
+      member this.Visit (dupValue:IDupValue) : unit = assert false
+
+      member this.Visit (popValue:IPopValue) : unit = assert false
+
+      member this.Visit (pushStmt:IPushStatement) : unit = assert false
