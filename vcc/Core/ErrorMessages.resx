@@ -3655,4 +3655,7 @@
   <data name="MapAccessAsOutArgument" xml:space="preserve">
     <value>A map access cannot be passed as an out parameter.</value>
   </data>
+  <data name="UnexpectedVccKeyword" xml:space="preserve">
+    <value>Did not expect VCC specification keyword '{0}'.</value>
+  </data>
 </root>

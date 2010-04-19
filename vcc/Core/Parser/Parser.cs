@@ -229,7 +229,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
+    protected virtual void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
@@ -648,8 +648,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           this.currentSpecificationFields.Add(specField);
         } else {
           if (initializer != null && IsAxiom(specifiers)) {
-            if (this.currentTypeInvariants == null) this.currentTypeInvariants = new List<TypeInvariant>();
-            this.currentTypeInvariants.Add(new TypeInvariant(declarator.Identifier, new CheckedExpression(initializer, initializer.SourceLocation), true, slb));
+            this.AddTypeInvariantToCurrent(new TypeInvariant(declarator.Identifier, new CheckedExpression(initializer, initializer.SourceLocation), true, slb));
           } else {
             if (this.currentSpecificationFields == null) this.currentSpecificationFields = new List<FieldDeclaration>();
             FieldDeclaration glob = new GlobalVariableDeclaration(flags, TypeMemberVisibility.Public, memberType, declarator.Identifier, initializer, slb);
