@@ -358,6 +358,7 @@ namespace Microsoft.Research.Vcc
             | C.VarKind.Parameter -> "P#" + v.Name
             | C.VarKind.SpecLocal -> "SL#" + v.Name
             | C.VarKind.Local -> "L#" + v.Name
+            | C.VarKind.SpecGlobal
             | C.VarKind.Global -> die()
       
       member this.VarRef n = er (this.VarName n)

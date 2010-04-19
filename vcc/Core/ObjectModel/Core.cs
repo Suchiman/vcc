@@ -48,6 +48,8 @@ namespace Microsoft.Research.Vcc {
       var localDef = definition as VccLocalDefinition;
       if (localDef != null) {
         if (localDef.IsSpec) result = true;
+        var containingMethod = localDef.ContainingBlock.ContainingMethodDefinition as Microsoft.Research.Vcc.VccGlobalMethodDefinition;
+        if (containingMethod != null && containingMethod.IsSpec) result = true;
       } else {
         var field = definition as Cci.Ast.FieldDefinition;
         if (field != null) {

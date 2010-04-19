@@ -346,8 +346,9 @@ namespace Microsoft.Research.Vcc
             localVars <- []
             currentFunctionName <- decl.Name
             let body = this.DoStatement body
+            let body' = if decl.IsSpec then C.Expr.Macro(body.Common, "spec", [body]) else body
             let locals = (List.map (fun v -> C.Expr.VarDecl (C.voidBogusEC(), v)) decl.InParameters) @ List.rev localVars
-            decl.Body <- Some (C.Expr.MkBlock (locals @ [body]))
+            decl.Body <- Some (C.Expr.MkBlock (locals @ [body']))
             localVars <- savedLocalVars
             topDecls <- C.Top.FunctionDecl decl :: topDecls
 
@@ -468,7 +469,7 @@ namespace Microsoft.Research.Vcc
       match specGlobalsMap.TryGetValue (g.Name.Value) with
         | (true, v) -> v
         | _ -> 
-          let var = C.Variable.CreateUnique g.Name.Value (this.DoType g.Type) C.VarKind.Global
+          let var = C.Variable.CreateUnique g.Name.Value (this.DoType g.Type) C.VarKind.SpecGlobal
           specGlobalsMap.Add (var.Name, var)
           topDecls <- C.Top.Global(var, None) :: topDecls
           var

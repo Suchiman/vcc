@@ -21,11 +21,12 @@ namespace Microsoft.Research.Vcc
         let str =
           match k with
             | C.Parameter -> "cev_parameter"
-            | C.SpecParameter -> "cev_local"
-            | C.OutParameter -> "cev_local"
-            | C.Local -> "cev_local"
+            | C.SpecParameter
+            | C.OutParameter
+            | C.Local
             | C.SpecLocal -> "cev_local"
-            | C.Global -> "cev_global"
+            | C.Global
+            | C.SpecGlobal
             | C.ConstGlobal -> "cev_global"
             | C.QuantBound -> "cev_implicit"
         er str

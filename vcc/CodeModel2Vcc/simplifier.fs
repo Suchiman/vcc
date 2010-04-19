@@ -475,7 +475,7 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================
     
-    let singleFieldStruct tok tp_name field_name (t:Type) =
+    let singleFieldStruct tok tp_name field_name isSpec (t:Type) =
       let td =
           { Token = tok
             Name = tp_name
@@ -489,7 +489,7 @@ namespace Microsoft.Research.Vcc
             GenerateFieldOffsetAxioms = false
             Parent = None
             IsVolatile = false 
-            IsSpec = false
+            IsSpec = isSpec
             UniqueId = CAST.unique() }
       let (t, vol) = match t with | Volatile(t) -> (t, true) | t -> (t, false)
       let singleField =
@@ -527,26 +527,27 @@ namespace Microsoft.Research.Vcc
         | t -> not t.IsComposite
       let handle = function
         | Top.Global (v, init) when isPrimitive v.Type ->
-          let (td, fld) = singleFieldStruct bogusToken ("swrap#" + v.Name) "data" v.Type
+          let isSpec = v.Kind = VarKind.SpecGlobal
+          let (td, fld) = singleFieldStruct bogusToken ("swrap#" + v.Name) "data"  isSpec v.Type 
           let approvesInv =
             match v.Type with 
               | Type.Volatile _ -> 
                 let ecObjT = { bogusEC with Type = Type.ObjectT }
-                let this = This( { bogusEC with Type = Type.PhysPtr(Type.Ref td) })
+                let this = This( { bogusEC with Type = Type.MkPtrToStruct td })
                 [Macro (boolBogusEC(), "approves", 
                   [ Macro( ecObjT, "_vcc_owner", [ this ]); 
                     Deref ({bogusEC with Type = v.Type}, 
                            Expr.MkDot (this, fld))])]
               | _ -> []
           td.Invariants <- approvesInv
-          let v' = Variable.CreateUnique ("wrap#" + v.Name) (Type.Ref td) VarKind.Global
+          let v' = Variable.CreateUnique ("wrap#" + v.Name) (Type.Ref td) v.Kind
           let repl ec =
             let inner = Macro ({ ec with Type = Type.MkPtrToStruct(td) }, "&", [Expr.Ref ({ ec with Type = Type.Ref td }, v')])
             match v.Type with
               | Array (t, _) ->
-                Deref ({ ec with Type = t }, Dot ({ ec with Type = PhysPtr t }, inner, fld))
+                Deref ({ ec with Type = t }, Dot ({ ec with Type = Type.MkPtr(t, isSpec)}, inner, fld))
               | _ ->
-                Deref (ec, Dot ({ ec with Type = PhysPtr ec.Type }, inner, fld))
+                Deref (ec, Dot ({ ec with Type = Type.MkPtr(ec.Type, isSpec) }, inner, fld))
           globalSubst.Add (v, repl)
           varSubst.Add(v, v')
           [Top.TypeDecl td; Top.Global (v', init)]
@@ -856,8 +857,8 @@ namespace Microsoft.Research.Vcc
           let is_global = Expr.Macro (boolBogusEC (), "_vcc_is_global_array", 
                                       [mkRef v'; mkInt sz])
           [Top.Global (v', init); Top.GeneratedAxiom(is_global, Top.Global(v', None))]
-        | Top.Global ({ Kind = VarKind.Global|VarKind.ConstGlobal } as v, init) ->
-          let v' = { v with Type = PhysPtr v.Type; Kind = VarKind.ConstGlobal }
+        | Top.Global ({ Kind = VarKind.Global|VarKind.ConstGlobal|VarKind.SpecGlobal } as v, init) ->
+          let v' = { v with Type = Type.MkPtr(v.Type, v.Kind = VarKind.SpecGlobal); Kind = VarKind.ConstGlobal }
           globalSubst.[v] <- (v', Expr.MkBlock [])
           let is_global = Expr.Macro (boolBogusEC (), "_vcc_is_global", 
                                       [mkRef v'])
@@ -1116,7 +1117,7 @@ namespace Microsoft.Research.Vcc
         
       for d in decls do
         match d with 
-          | Top.FunctionDecl({IsSpec = true}) -> ()
+          | Top.FunctionDecl({IsSpec = true}) as d -> deepVisitExpressions (checkNoWritesToPhysicalFromSpec true) [d]
           | _ -> [d] |> deepVisitExpressionsCtx checkAccessToSpecFields 
                  [d] |> deepVisitExpressions (checkNoWritesToPhysicalFromSpec false)
                  [d] |> deepVisitExpressions checkAtMostOnePhysicalAccessInAtomic

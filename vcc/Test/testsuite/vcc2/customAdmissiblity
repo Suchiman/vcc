@@ -13,7 +13,7 @@ void adm_A(struct A* x)
 `
 Verification of A#adm succeeded.
 Verification of adm_A failed.
-testcase(12,1) : error VC8002: state was altered after havoc_others().
+testcase(9,17) : error VC8002: state was altered after havoc_others().
 `
 #include <vcc.h>
 
@@ -40,9 +40,9 @@ struct A {
   int x;
 };
 
-void bar()
+spec(void bar()
 {
-}
+})
 
 spec(isadmissibilitycheck
 void adm_A(struct A* x)
@@ -55,7 +55,7 @@ void adm_A(struct A* x)
 `
 Verification of bar succeeded.
 Verification of adm_A failed.
-testcase(17,1) : error VC8002: state was altered after havoc_others().
+testcase(11,17) : error VC8002: state was altered after havoc_others().
 `
 #include <vcc.h>
 
@@ -79,7 +79,7 @@ void adm_A(struct A* x)
 `
 Verification of A#adm succeeded.
 Verification of adm_A failed.
-testcase(18,1) : error VC8012: invariant(__this->b.y > 0) of A is not admissible.
+testcase(11,15) : error VC8012: invariant(__this->b.y > 0) of A is not admissible.
 `
 #include <vcc.h>
 
