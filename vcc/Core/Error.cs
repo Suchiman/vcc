@@ -131,5 +131,10 @@ namespace Microsoft.Research.Vcc {
     /// A map access cannot be passed as an out parameter.
     /// </summary>
     MapAccessAsOutArgument,
+
+    /// <summary>
+    /// Did not expect VCC specification keyword '{0}'.
+    /// </summary>
+    UnexpectedVccKeyword,
   }
 }

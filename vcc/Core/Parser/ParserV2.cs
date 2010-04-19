@@ -42,6 +42,39 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
+    override protected void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
+      bool savedInSpecCode = this.EnterSpecBlock();
+      this.GetNextToken();
+      this.Skip(Token.LeftParenthesis);
+      SpecTokenSet allowedSpecTokens = new SpecTokenSet(SpecToken.Axiom, SpecToken.Ghost);
+      TokenSet followersOrDeclarationStart = followers | TS.DeclarationStart | Token.Semicolon | Token.RightParenthesis;
+      while ((TS.DeclarationStart[this.currentToken] || allowedSpecTokens[this.CurrentSpecToken]) && this.currentToken != Token.EndOfFile) {
+        switch (this.CurrentSpecToken) {
+          case SpecToken.Axiom:
+            SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+            this.GetNextToken();
+            var axiom = this.ParseExpression(followersOrDeclarationStart);
+            slb.UpdateToSpan(axiom.SourceLocation);
+            this.AddTypeInvariantToCurrent(new TypeInvariant(null, axiom, true, slb));
+            break;
+          case SpecToken.Ghost:
+            throw new Exception();
+          case SpecToken.None:
+            if (this.currentToken == Token.Specification)
+              this.ParseGlobalSpecDeclarationList(members, globalMembers, followersOrDeclarationStart);
+            else
+              this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
+            break;
+          default:
+            this.HandleError(Error.UnexpectedVccKeyword, this.scanner.GetIdentifierString());
+            break;
+        }
+        while (this.currentToken == Token.Semicolon) this.GetNextToken();
+      }
+      this.SkipOverTo(Token.RightParenthesis, followers);
+      this.LeaveSpecBlock(savedInSpecCode);
+    }
+
     override protected void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       TokenSet expectedTokens = TS.DeclarationStart | Token.Colon;
       while (expectedTokens[this.currentToken]) {
@@ -134,14 +167,6 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
-    private Statement ParseSingleArgSpecStatement(TokenSet followers, Func<Expression, ISourceLocation, Statement> createStmt) {
-      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
-      this.GetNextToken();
-      var expr = this.ParseExpression(followers);
-      slb.UpdateToSpan(expr.SourceLocation);
-      return createStmt(expr, slb);
-    }
-
     override protected Statement ParseSpecStatements(TokenSet followers) {
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
@@ -179,7 +204,7 @@ namespace Microsoft.Research.Vcc.Parsing
       return new StatementGroup(statements);
     }
 
-    protected override bool TryParseSpecialExpression(SimpleName name, TokenSet followers, out Expression expression) {
+    override protected bool TryParseSpecialExpression(SimpleName name, TokenSet followers, out Expression expression) {
       if (name.Name.UniqueKey == this.ResultKeyword.UniqueKey) {
         expression = new ReturnValue(name.SourceLocation);
         return true;
@@ -196,6 +221,14 @@ namespace Microsoft.Research.Vcc.Parsing
       return false;
     }
 
+    private Statement ParseSingleArgSpecStatement(TokenSet followers, Func<Expression, ISourceLocation, Statement> createStmt) {
+      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+      this.GetNextToken();
+      var expr = this.ParseExpression(followers);
+      slb.UpdateToSpan(expr.SourceLocation);
+      return createStmt(expr, slb);
+    }
+
     private SpecToken CurrentSpecToken {
       get {
         if (this.currentToken == Token.Identifier) {
@@ -204,6 +237,8 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Assert;
             case "assume":
               return SpecToken.Assume;
+            case "axiom":
+              return SpecToken.Axiom;
             case "ensures":
               return SpecToken.Ensures;
             case "ghost":
@@ -235,6 +270,7 @@ namespace Microsoft.Research.Vcc.Parsing
       None,
       Assert,
       Assume,
+      Axiom,
       Ensures,
       Ghost,
       Invariant,
