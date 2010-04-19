@@ -23,6 +23,7 @@ module Microsoft.Research.Vcc.CAST
     | SpecLocal
     | Global
     | ConstGlobal
+    | SpecGlobal
     | QuantBound
     
   type QuantKind =
@@ -432,6 +433,7 @@ module Microsoft.Research.Vcc.CAST
     
       member this.WriteTo b =
         match this.Kind with
+          | SpecGlobal
           | SpecLocal 
           | SpecParameter -> wrb b "spec "
           | ConstGlobal -> wrb b "const "
@@ -445,6 +447,7 @@ module Microsoft.Research.Vcc.CAST
           | SpecParameter
           | OutParameter
           | SpecLocal
+          | SpecGlobal
           | QuantBound -> true
           | _ -> false
 

@@ -380,6 +380,7 @@ namespace Microsoft.Research.Vcc
         for t in targs do walkType cb t
       | Expr.Ref (_, v) ->
         match v.Kind with
+          | VarKind.SpecGlobal
           | VarKind.ConstGlobal
           | VarKind.Global -> cb.UseGlobal v
           | VarKind.Local

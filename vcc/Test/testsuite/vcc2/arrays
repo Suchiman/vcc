@@ -193,6 +193,8 @@ void donothing()
 {
 }
 
+spec(void donothingSpec() { })
+
 void set0(int *arr, size_t sz)
   requires(is_mutable_array(arr, sz))
   ensures(is_mutable_array(arr, sz))
@@ -221,11 +223,11 @@ spec(void set0Spec(int ^arr, size_t sz)
   while (i < sz) 
     invariant(is_mutable_array(arr, sz))
   {
-    donothing();
+    donothingSpec();
     arr[i] = 0;
-    donothing();
+    donothingSpec();
     i = i + 1;
-    donothing();
+    donothingSpec();
   }
 })
 
@@ -271,13 +273,13 @@ void use1Safe()
   struct A ^a;
 
   a = spec_malloc<struct A>();
-  donothing();
+  donothingSpec();
   set0Spec(&a->x[0], 100);
-  donothing();
+  donothingSpec();
   set0Spec(&a->x[10], 90);
-  donothing();
+  donothingSpec();
   set0Spec(&a->x[0], 50);
-  donothing();
+  donothingSpec();
   free(a);
 }
 )
@@ -304,6 +306,7 @@ void use2()
 */
 `
 Verification of donothing succeeded.
+Verification of donothingSpec succeeded.
 Verification of set0 succeeded.
 Verification of set0Spec succeeded.
 Verification of usex succeeded.
