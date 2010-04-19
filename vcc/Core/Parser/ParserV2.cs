@@ -130,6 +130,7 @@ namespace Microsoft.Research.Vcc.Parsing
           }
         }
         this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
+        this.LeaveSpecBlock(savedInSpecCode);
       }
     }
 

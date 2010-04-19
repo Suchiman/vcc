@@ -2,9 +2,7 @@
 
 /*{swap}*/
 void swap(int *p, int *q)
-  // will be spec( writes p, q )
-  weak_out_param(p)
-  weak_out_param(q)
+  _(writes p,q)
   _(ensures *p == \old(*q) && *q == \old(*p))
 {
   int tmp;

@@ -848,7 +848,6 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     let handleGlobals decls =
-      // TODO Ptr kind for globals
       let globalSubst = new Dict<_,_>()
       let handle = function
         | Top.Global ({ Kind = VarKind.Global|VarKind.ConstGlobal; Type = Array (t, sz) } as v, init) ->
