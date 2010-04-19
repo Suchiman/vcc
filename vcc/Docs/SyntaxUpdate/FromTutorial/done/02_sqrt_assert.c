@@ -1,7 +1,7 @@
 #include <vcc.h>
 
 unsigned anything()
-  _(reads set_universe());
+  _(reads \universe());
 
 void isqrt(unsigned x)
   _(requires  x < 0xfffe0001)
