@@ -3,9 +3,7 @@
 #define writable(x) 1
 /*{swap}*/
 void swap(int *p, int *q)
-//--
-  weak_out_param(p)
-  weak_out_param(q) //--
+  _(writes p,q)
 {
   int tmp;
   _(assume writable(p) && writable(q)) // from the writes clause

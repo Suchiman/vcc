@@ -1,7 +1,7 @@
 #include <vcc.h>
 /*{beg}*/
 void boundedIncr(int *p)
-  weak_out_param(p) // will be just spec( writes p )
+  _(writes p)
   _(ensures \old(*p) < 100 ==> *p == \old(*p) + 1)
 {
   if (*p < 100)
