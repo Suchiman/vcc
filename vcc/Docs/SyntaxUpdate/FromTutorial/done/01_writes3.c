@@ -4,8 +4,7 @@
 
 /*{beg}*/
 void boundedIncr(int *p)
-//--
-weak_out_param(p)//--
+  _(writes p)
 {
   _(assume writable(p)) // from writes clause
 
