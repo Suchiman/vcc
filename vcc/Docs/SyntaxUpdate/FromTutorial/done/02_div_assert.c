@@ -1,9 +1,10 @@
 #include <vcc.h>
-//--
-axiom(\forall unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b);
-axiom(\forall unsigned a,b; a < b && b != 0 ==> a % b == a);
+_(axiom \forall unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b)
+_(axiom \forall unsigned a,b; a < b && b != 0 ==> a % b == a)
+
 unsigned anything()
-  _(reads set_universe()); //--
+  _(reads \universe()); //--
+
 unsigned mod(unsigned a, unsigned b)
 {
   unsigned res = a;
@@ -20,6 +21,7 @@ unsigned mod(unsigned a, unsigned b)
   _(assume false) // end of an iteration
 
 theEnd:
+  ; // so that we no longer attempt to parser loop contracts
   _(assert res == a % b) // translation of ensures
   return res;
 }

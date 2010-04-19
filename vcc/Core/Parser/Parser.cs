@@ -345,7 +345,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected LoopContract/*?*/ ParseLoopContract(TokenSet followers)
+    protected virtual LoopContract/*?*/ ParseLoopContract(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       if (this.currentToken != Token.Invariant && this.currentToken != Token.Writes) return null;

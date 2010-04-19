@@ -125,6 +125,36 @@ namespace Microsoft.Research.Vcc.Parsing
       this.AddTypeInvariantToCurrent(typeInvariant);
     }
 
+    protected override LoopContract ParseLoopContract(Parser.TokenSet followers) {
+      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Invariant, SpecToken.Writes);
+      List<LoopInvariant> invariants = new List<LoopInvariant>();
+      List<Expression> writes = new List<Expression>();
+      while (this.currentToken == Token.Specification) {
+        bool savedInSpecCode = this.EnterSpecBlock();
+        this.GetNextToken();
+        this.Skip(Token.LeftParenthesis);
+        while (expectedSpecTokens[this.CurrentSpecToken]) {
+          switch (this.CurrentSpecToken) {
+            case SpecToken.Invariant:
+              SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+              this.GetNextToken();
+              var inv = this.ParseExpression(followers | Token.RightParenthesis);
+              slb.UpdateToSpan(inv.SourceLocation);
+              invariants.Add(new LoopInvariant(inv, slb));
+              break;
+            case SpecToken.Writes:
+              this.GetNextToken();
+              this.ParseExpressionList(writes, Token.Comma, followers | Token.RightParenthesis);
+              break;
+          }
+        }
+        this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
+        this.LeaveSpecBlock(savedInSpecCode);
+      }
+      if (invariants.Count == 0 && writes.Count == 0) return null;
+      return new LoopContract(invariants, writes);
+    }
+
     override protected void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers) {
       SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Ensures, SpecToken.Maintains, SpecToken.Reads, SpecToken.Requires, SpecToken.Writes);
       while (this.currentToken == Token.Specification) {
@@ -162,7 +192,7 @@ namespace Microsoft.Research.Vcc.Parsing
             case SpecToken.Reads:
               this.GetNextToken();
               var reads = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
-              contract.AddWrites(reads);
+              contract.AddReads(reads);
               break;
           }
         }
