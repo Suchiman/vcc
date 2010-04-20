@@ -6,3 +6,6 @@ void foo()
 {
   _(assert false)
 }
+/*`
+Verification of foo succeeded.
+`*/

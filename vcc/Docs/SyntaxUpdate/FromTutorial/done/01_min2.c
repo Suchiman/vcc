@@ -18,5 +18,5 @@ int main()
 /*`
 Verification of min succeeded.
 Verification of main failed.
-testcase(14,12) : error VC9500: Assertion 'position <= 1000' did not verify.
+testcase(14,26) : error VC9500: Assertion 'position <= 1000' did not verify.
 `*/

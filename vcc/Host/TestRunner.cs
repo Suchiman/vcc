@@ -341,6 +341,7 @@ namespace Microsoft.Research.Vcc
       options.CheckedArithmetic = true;
       options.RunTestSuite = true;
       options.FileNames = new List<string> { fileNameC };
+      options.Vcc2 = commandLineOptions.Vcc2;
 
       if (compilerParameters != null) {
         for (int i = 0; i < compilerParameters.Count; i++) {
