@@ -224,7 +224,7 @@ namespace Microsoft.Research.Vcc.Parsing
             statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new VccUnwrapStatement(expr, sl)));
             break;
           case SpecToken.Assert:
-            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new AssertStatement(expr, sl)));
+            statements.Add(this.ParseAssert(followersOrRightParen));
             break;
           case SpecToken.Assume:
             statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new AssumeStatement(expr, sl)));
@@ -236,6 +236,19 @@ namespace Microsoft.Research.Vcc.Parsing
       this.LeaveSpecBlock(savedInSpecCode);
       this.SkipOverTo(Token.RightParenthesis, followers);
       return new StatementGroup(statements);
+    }
+
+    private AssertStatement ParseAssert(TokenSet followers) {
+      SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+      this.GetNextToken();
+      IEnumerable<IEnumerable<Expression>> triggers = null;
+      if (this.currentToken == Token.LeftBrace)
+        triggers = this.ParseQuantifierTriggers(followers | TS.UnaryStart);
+      var condition = this.ParseExpression(followers | Token.RightParenthesis);
+      slb.UpdateToSpan(condition.SourceLocation);
+      var result = new AssertStatement(condition, slb);
+      if (triggers != null) this.compilation.ContractProvider.AssociateTriggersWithQuantifier(result, triggers);
+      return result;
     }
 
     new protected List<LocalDeclarationsStatement> ParseQuantifierBoundVariables(TokenSet followers) {

@@ -8,3 +8,6 @@ int foo(int *i)
 {
   return *i;
 }
+/*`
+Verification of foo succeeded.
+`*/
