@@ -3333,6 +3333,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result.AsReadOnly();
     }
 
+    protected virtual Expression ParseLabeledExpression(TokenSet followers) {
+      return this.ParseExpression(followers); // this is purely a syntax refresh concept
+    }
+
     protected IEnumerable<Expression>/*?*/ ParseQuantifierTrigger(TokenSet followers) 
       //^ requires this.currentToken == Token.LeftBrace;
     {
@@ -3341,7 +3345,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Expression> result = new List<Expression>();
       TokenSet followersOrCommaOrRightBrace = followers | TS.CommaOrRightBrace;
       while (this.currentToken != Token.RightBrace) {
-        Expression e = this.ParseExpression(followersOrCommaOrRightBrace);
+        Expression e = this.ParseLabeledExpression(followersOrCommaOrRightBrace);
         result.Add(e);
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();

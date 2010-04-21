@@ -793,13 +793,24 @@ namespace Microsoft.Research.Vcc
                 localsMap.Remove v.Name |> ignore
               (resultExpr, bindings, triggers)
 
-    member this.GetTriggers (methodCall:IMethodCall) =
-      let triggers = contractProvider.GetTriggersFor(methodCall)
+    member this.GetTriggers (o:obj) =
+      let doTrigger (expr:Expression) = 
+        let ec = { Token = token expr; Type = this.DoType (expr.Type) } : C.ExprCommon
+        match expr with
+        | :? VccLabeledExpression as lblExpr ->
+          let lbl = C.Expr.Label(ec, {Name = lblExpr.Label.Name.Value})
+          match lblExpr.Expression with
+            | :? DummyExpression -> C.Expr.Macro(ec, "labeled_expr", [lbl])
+            | e -> 
+              let e' = this.DoExpression(e.ProjectAsIExpression())
+              C.Expr.Macro(ec, "labeled_expr", [lbl; e'])
+        | _ -> this.DoExpression(expr.ProjectAsIExpression())
+      let triggers = contractProvider.GetTriggersFor(o)
       match triggers with
         | null -> []
         | _ -> 
           [ for triggerExprs in triggers -> 
-            [ for triggerExpr in triggerExprs -> this.DoExpression (triggerExpr.ProjectAsIExpression())] ]
+            [ for triggerExpr in triggerExprs -> doTrigger triggerExpr] ]
     
     member this.DoQuant (methodCall:IMethodCall) = 
       let methodToCall = methodCall.MethodToCall.ResolvedMethod
@@ -1062,7 +1073,8 @@ namespace Microsoft.Research.Vcc
       member this.Visit (arrayIndexer:IArrayIndexer) : unit = assert false
 
       member this.Visit (assertStatement:IAssertStatement) : unit =
-        stmtRes <- C.Expr.MkAssert (this.DoExpression (assertStatement.Condition))
+        let cond = this.DoExpression (assertStatement.Condition)
+        stmtRes <- C.Expr.Assert({ cond.Common with Type = C.Type.Void }, cond, this.GetTriggers assertStatement)
 
       member this.Visit (assignment:IAssignment) : unit =
         let target = this.DoExpression (assignment.Target)

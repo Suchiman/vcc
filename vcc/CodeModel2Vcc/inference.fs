@@ -47,7 +47,7 @@ namespace Microsoft.Research.Vcc
       List.fold add [] lst
     
     let inferAssert tok (e:Expr) =
-      Expr.Assert({forwardingToken tok None (fun () -> afmt 8505 "inferred assertion: {0}" [e.ToString()]) with Type = Type.Void }, e)
+      Expr.Assert({forwardingToken tok None (fun () -> afmt 8505 "inferred assertion: {0}" [e.ToString()]) with Type = Type.Void }, e, [])
      
     let inferMacro name (args: list<Expr>) =
       inferAssert args.Head.Token (Macro (boolBogusEC(), name, args))

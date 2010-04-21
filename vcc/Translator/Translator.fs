@@ -1148,23 +1148,13 @@ namespace Microsoft.Research.Vcc
               List.concat (List.map self stmts)
             | C.Expr.Comment (_, s) -> 
               [B.Stmt.Comment s]
-            | C.Expr.Assert (_, C.Expr.Macro (_, "_vcc_bv_lemma", [e])) -> 
+            | C.Expr.Assert (_, C.Expr.Macro (_, "_vcc_bv_lemma", [e]), []) -> 
               [cmt (); B.Stmt.Assert (stmt.Token, bv.TrBvExpr env e)]
-  //          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_cond_wf", [cond; e])) ->
-  //            let addCond = function
-  //              | B.Assert (t, e) -> B.Assert (t, bImpl (trExpr env cond) e)
-  //              | _ -> die()
-  //            cmt () :: (List.map addCond (readsCheck env true e))
-  //          | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_wf", [e])) ->
-  //            cmt () :: readsCheck env true e
-            | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_normal", [e])) ->
+            | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_normal", [e]), []) ->
               cmt () :: readsCheck env false e            
-            | C.Expr.Assert (_, e) -> 
-              // In general this is a good idea, but FELT sometimes creates expressions
-              // with dummy tokens and we can do nothing about it
-              //if e.Token.line = 0 then
-              //  failwith ("trying to put dummy token on assertion " + e.ToString())
+            | C.Expr.Assert (_, e, []) -> 
               [cmt (); B.Stmt.Assert (stmt.Token, trExpr env e)]
+            | C.Expr.Assert(ec, e, trigs) -> helper.Oops(ec.Token, "non-empty triggers on assert"); trStmt env (C.Expr.Assert(ec, e, []))
             | C.Expr.Assume (_, e) -> 
               [cmt (); B.Stmt.Assume (trExpr env e)]
             | C.Expr.Return (c, s) ->
