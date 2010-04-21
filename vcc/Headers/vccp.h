@@ -47,7 +47,8 @@ _(\objset \extent(\object);)
 _(\object \alloc(\type);)
 _(\objset \universe();)
 _(bool \thread_local(\object);)
-
+_(bool \mutable(\object);)
+_(\objset \array_range(\object, unsigned __int64);)
 
 #else 
 

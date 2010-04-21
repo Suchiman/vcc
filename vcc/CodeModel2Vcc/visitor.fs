@@ -659,7 +659,6 @@ namespace Microsoft.Research.Vcc
                           helper.Error(tok, 9632, "fields of map type must be declared as specification fields", None)
                           true
                         | _ -> isSpec
-                    //dbgBreak()
                     let res =
                       { Name = f.Name.Value
                         Token = tok
