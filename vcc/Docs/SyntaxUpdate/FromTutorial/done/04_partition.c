@@ -1,12 +1,10 @@
 #include <vcc.h>
 
-#define my_mutable_array(arr, len) (forall(unsigned i; {arr + i} i < len ==> mutable(arr + i)))
+#define my_mutable_array(arr, len) (\forall unsigned i {arr + i}; i < len ==> \mutable(arr + i))
 
 /*{swap}*/
 void swap(int *p, int *q)
-  // will be spec( writes p, q )
-  weak_out_param(p)
-  weak_out_param(q)
+  _(writes p, q)
   _(ensures *p == \old(*q) && *q == \old(*p))
 {
   int tmp;
@@ -14,16 +12,17 @@ void swap(int *p, int *q)
   *p = *q;
   *q = tmp;
 }
+
 /*{partition}*/
 unsigned partition(int *arr, unsigned len, unsigned pivotIdx)
-  _(writes array_range(arr, len))
+  _(writes \array_range(arr, len))
   _(requires my_mutable_array(arr, len))
   _(requires pivotIdx < len)
   _(requires len > 0)
 
   _(ensures my_mutable_array(arr, len))
-  _(ensures \forall unsigned k; {arr[k]} k < \result ==> arr[k] <= \old(arr[pivotIdx]))
-  _(ensures \forall unsigned k; {arr[k]} \result < k && k < len ==> arr[k] >= \old(arr[pivotIdx]))
+  _(ensures \forall unsigned k {arr[k]}; k < \result ==> arr[k] <= \old(arr[pivotIdx]))
+  _(ensures \forall unsigned k {arr[k]}; \result < k && k < len ==> arr[k] >= \old(arr[pivotIdx]))
   _(ensures \result < len)
 {
   unsigned i, j;
@@ -34,10 +33,10 @@ unsigned partition(int *arr, unsigned len, unsigned pivotIdx)
   i = 0;
   j = len - 1;
   while (i < j)
-    _(writes array_range(arr, len))
+    _(writes \array_range(arr, len))
     _(invariant my_mutable_array(arr, len))
-    _(invariant \forall unsigned k; {arr[k]} k < i ==> arr[k] <= pivot)
-    _(invariant \forall unsigned k; {arr[k]} j < k && k < len ==> arr[k] >= pivot)
+    _(invariant \forall unsigned k {arr[k]}; k < i ==> arr[k] <= pivot)
+    _(invariant \forall unsigned k {arr[k]}; j < k && k < len ==> arr[k] >= pivot)
     _(invariant j < len)
   {
     if (arr[i] <= pivot) {
@@ -77,3 +76,7 @@ void qsort(int *arr, unsigned len)
     qsort(arr + idx + 1, len - idx - 1);
 }
 #endif
+/*`
+Verification of swap succeeded.
+Verification of partition succeeded.
+`*/
