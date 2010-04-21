@@ -246,7 +246,7 @@ namespace Microsoft.Research.Vcc.Parsing
         triggers = this.ParseQuantifierTriggers(followers | TS.UnaryStart);
       var condition = this.ParseExpression(followers | Token.RightParenthesis);
       slb.UpdateToSpan(condition.SourceLocation);
-      var result = new AssertStatement(condition, slb);
+      var result = new VccAssertStatement(condition, slb);
       if (triggers != null) this.compilation.ContractProvider.AssociateTriggersWithQuantifier(result, triggers);
       return result;
     }
@@ -272,6 +272,24 @@ namespace Microsoft.Research.Vcc.Parsing
         result.Add(locDecls);
       }
       return result;
+    }
+
+    protected override Expression ParseLabeledExpression(TokenSet followers) {
+      if (this.currentToken == Token.Colon) {
+        SourceLocationBuilder slb = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+        this.GetNextToken();
+        var label = this.ParseNameDeclaration(true);
+        Expression expr;
+        if (TS.UnaryStart[this.currentToken]) {
+          expr = this.ParseExpression(followers);
+          slb.UpdateToSpan(expr.SourceLocation);
+        } else {
+          slb.UpdateToSpan(label.SourceLocation);
+          expr = new DummyExpression(slb);
+          this.SkipTo(followers);
+        }
+        return new VccLabeledExpression(expr, label, slb);
+      } else return this.ParseExpression(followers);
     }
 
     private Expression ParseQuantifier(TokenSet followers, Token kind, SourceLocationBuilder slb) {

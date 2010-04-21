@@ -884,8 +884,8 @@ namespace Microsoft.Research.Vcc
         let break_lbl = { Name = "#break_" + unique } : LabelId
         let continue_lbl = { Name = "#continue_" + unique } : LabelId
         let rec aux invs writes = function
-          | Assert (_, Expr.Macro (_, "loop_writes", [e])) :: rest -> aux invs (e :: writes) rest
-          | Assert (_, e) :: rest -> aux (e :: invs) writes rest
+          | Assert (_, Expr.Macro (_, "loop_writes", [e]), _) :: rest -> aux invs (e :: writes) rest
+          | Assert (_, e, _) :: rest -> aux (e :: invs) writes rest
           | [] -> (List.rev invs, List.rev writes)
           | _ -> die()
         let (invs, writes) = aux [] [] contract

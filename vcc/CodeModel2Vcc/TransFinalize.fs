@@ -127,7 +127,7 @@ namespace Microsoft.Research.Vcc
         | Quant (c, q) -> Some (Quant (c, { q with Body = f q.Body; Condition = Option.map f q.Condition }))
         | If (c, cond, e1, e2) -> Some (If (c, f cond, self e1, self e2))
         | Loop (c, invs, writes, body) -> Some (Loop (c, fs invs, List.map self writes, self body))
-        | Assert (c, cond) -> Some (Assert (c, f cond))
+        | Assert (c, cond, trigs) -> Some (Assert (c, f cond, trigs))
         | Assume (c, cond) -> Some (Assume (c, f cond))
         | Atomic (c, objs, body) -> Some (Atomic (c, List.map self objs, self body))
 

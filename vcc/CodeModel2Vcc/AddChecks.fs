@@ -78,7 +78,7 @@ namespace Microsoft.Research.Vcc
           uncond obj
         | _ -> []
       let rec addToOwns acc = function
-        | Assert (_, e) -> addToOwns acc e
+        | Assert (_, e, _) -> addToOwns acc e
         | Macro (_, "inv_check", [e]) -> addToOwns acc e
         | Prim (_, Op (("<==>"|"=="), _), [cond; keeps]) ->
           let body = splitConjunction keeps |> List.map updateFor |> List.concat
@@ -401,7 +401,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let reportCheckedOpsInBvLemma self = function
-      | Expr.Assert (_, Expr.Macro (_, "_vcc_bv_lemma", [e])) -> 
+      | Expr.Assert (_, Expr.Macro (_, "_vcc_bv_lemma", [e]), _) -> 
         let reportCheckedOpsInBvLemma' self = function 
           | Expr.Prim (_, Op (("+"|"-"|"*"|"/"|"%"), Checked), _) as e ->
             helper.Error (e.Token, 9659, "operators in bv_lemma(...) need to be unchecked (expression: " + e.Token.Value + ")")

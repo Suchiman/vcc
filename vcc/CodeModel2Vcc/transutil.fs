@@ -56,7 +56,7 @@ namespace Microsoft.Research.Vcc
   
   let (|AssertAssume|_|) = function
     | Assume (ec, e) -> Some (ec, e)
-    | Assert (ec, e) -> Some (ec, e)
+    | Assert (ec, e, _) -> Some (ec, e)
     | _ -> None
 
   let (|BoolOp|_|) = function

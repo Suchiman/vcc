@@ -1343,6 +1343,86 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
+  public class VccLabeledExpression : Expression
+  {
+    private readonly Expression expression;
+    private readonly NameDeclaration label;
+
+    public VccLabeledExpression(Expression expression, NameDeclaration label, ISourceLocation sourceLocation)
+      : base(sourceLocation) {
+        this.expression = expression;
+        this.label = label;
+    }
+
+    protected VccLabeledExpression(BlockStatement containingBlock, VccLabeledExpression template) 
+      : base(containingBlock, template) {
+      this.expression = template.expression.MakeCopyFor(containingBlock);
+      this.label = (NameDeclaration)template.label.MakeCopyFor(containingBlock.Compilation);
+    }
+
+    public NameDeclaration Label { 
+      get { return this.label; } 
+    }
+
+    public Expression Expression {
+      get { return this.expression; }
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      return this.Expression.HasErrors;
+    }
+
+    public override bool CouldBeInterpretedAsNegativeSignedInteger {
+      get { return this.Expression.CouldBeInterpretedAsNegativeSignedInteger; }
+    }
+
+    public override bool IntegerConversionIsLossless(ITypeDefinition targetType) {
+      return this.Expression.IntegerConversionIsLossless(targetType);
+    }
+
+    protected override object/*?*/ GetValue() {
+      return this.Expression.Value;
+    }
+
+    public override bool HasSideEffect(bool reportError) {
+      return this.Expression.HasSideEffect(reportError);
+    }
+
+    protected override IExpression ProjectAsNonConstantIExpression() {
+      return this.Expression.ProjectAsIExpression(); ;
+    }
+
+    public override string ToString() {
+      return ":" + this.label.Name.Value + " " + this.Expression.ToString();
+    }
+
+    public override ITypeDefinition Type {
+      get { return this.Expression.Type; }
+    }
+
+    public override bool ValueIsPolymorphicCompileTimeConstant {
+      get { return this.Expression.ValueIsPolymorphicCompileTimeConstant; }
+    }
+
+    public override void Dispatch(ICodeVisitor visitor) {
+      this.Expression.Dispatch(visitor);
+    }
+
+    public override void Dispatch(SourceVisitor visitor) {
+      this.Expression.Dispatch(visitor);
+    }
+
+    public override void SetContainingExpression(Expression containingExpression) {
+      base.SetContainingExpression(containingExpression);
+      this.expression.SetContainingExpression(this);
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccLabeledExpression(containingBlock, this);
+    }
+  }
+
   public class VccLogicalOr : LogicalOr {
     /// <summary>
     /// Allocates an expression that results in true if both operands result in true. If the left operand results in false, the right operand is not evaluated.

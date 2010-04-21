@@ -419,6 +419,55 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
+  public class VccAssertStatement : AssertStatement
+  {
+    public VccAssertStatement(Expression condition, ISourceLocation sourceLocation)
+      : base(condition, sourceLocation) {
+    }
+
+    public VccAssertStatement(BlockStatement containingBlock, VccAssertStatement template) 
+      : base(containingBlock, template) {
+    }
+
+    private void CopyTriggersFromTemplate(VccAssertStatement template) {
+      IEnumerable<IEnumerable<Expression>>/*?*/ triggers = template.Compilation.ContractProvider.GetTriggersFor(template);
+      if (triggers != null) {
+        IEnumerable<IEnumerable<Expression>> copiedTriggers = this.CopyTriggers(triggers, this.ContainingBlock);
+        this.Compilation.ContractProvider.AssociateTriggersWithQuantifier(this, copiedTriggers);
+      }
+    }
+
+    private IEnumerable<IEnumerable<Expression>> CopyTriggers(IEnumerable<IEnumerable<Expression>> triggers, BlockStatement containingBlock) {
+      List<IEnumerable<Expression>> copiedTriggers = new List<IEnumerable<Expression>>();
+      foreach (IEnumerable<Expression> trigger in triggers) {
+        List<Expression> copiedTrigger = new List<Expression>();
+        foreach (Expression e in trigger) {
+          copiedTrigger.Add(e.MakeCopyFor(containingBlock));
+        }
+        copiedTriggers.Add(copiedTrigger.AsReadOnly());
+      }
+      return copiedTriggers.AsReadOnly();
+    }
+
+    public override void SetContainingBlock(BlockStatement containingBlock) {
+      base.SetContainingBlock(containingBlock);
+      IEnumerable<IEnumerable<Expression>>/*?*/ triggers = this.Compilation.ContractProvider.GetTriggersFor(this);
+      if (triggers != null) {
+        Expression dummyExpression = new DummyExpression(containingBlock, this.SourceLocation);
+        foreach (IEnumerable<Expression> trigger in triggers)
+          foreach (Expression e in trigger)
+            e.SetContainingExpression(dummyExpression);
+      }
+    }
+
+    public override Statement MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      var result = new VccAssertStatement(containingBlock, this);
+      result.CopyTriggersFromTemplate(this);
+      return result;
+    }
+  }
+
   public sealed class VccSpecStatement : Statement, IVccSpecStatement
   {
     private readonly Statement wrappedStatement;

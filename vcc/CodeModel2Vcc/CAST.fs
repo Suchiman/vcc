@@ -634,7 +634,7 @@ module Microsoft.Research.Vcc.CAST
     | Goto of ExprCommon * LabelId
     | Label of ExprCommon * LabelId
     // token is taken from expr
-    | Assert of ExprCommon * Expr
+    | Assert of ExprCommon * Expr * list<list<Expr>>
     | Assume of ExprCommon * Expr
     | Pure of ExprCommon * Expr
     | Block of ExprCommon * list<Expr>
@@ -690,7 +690,7 @@ module Microsoft.Research.Vcc.CAST
         | Loop (e, _, _, _)
         | Goto (e, _)
         | Label (e, _)
-        | Assert (e, _)
+        | Assert (e, _, _)
         | Assume (e, _)
         | Block (e, _)
         | Return (e, _)
@@ -732,8 +732,8 @@ module Microsoft.Research.Vcc.CAST
             | Return (_, Some e)
             | Cast (_, _, e) -> visit ctx e
             | Pure (_, e) 
-            | Assert (_, e) 
             | Assume (_, e) -> paux e
+            | Assert (_, e, trigs) -> List.iter pauxs trigs; paux e
             | MemoryWrite (_, e1, e2) 
             | Index (_, e1, e2) -> visit ctx e1; visit ctx e2
             | Old (_, e1, e2) -> paux e1; visit ctx e2
@@ -857,7 +857,11 @@ module Microsoft.Research.Vcc.CAST
                 else Some(Quant (c, { q with Triggers = triggers; Condition = cond; Body = body }))
               | VarWrite (c, v, e) -> construct1 (fun arg -> VarWrite (c, v, arg)) (map ctx e)
               | MemoryWrite (c, e1, e2) -> construct2 (fun arg1 arg2 -> MemoryWrite (c, arg1, arg2)) (map ctx e1) (map ctx e2) e1 e2
-              | Assert (c, e) -> construct1 (fun arg -> Assert (c, arg)) (paux e)
+              | Assert (c, e, trigs) -> 
+                let rTriggers, triggers = applyList paux trigs
+                let rCond, cond = match paux e with | None -> false, e | Some e' -> true, e'
+                if not rTriggers && not rCond then None
+                else Some(Assert(c, cond, triggers))
               | Assume (c, e) -> construct1 (fun arg -> Assume (c, arg)) (paux e)
               | Return (c, Some e) -> construct1 (fun arg -> Return (c, Some arg)) (map ctx e)
               | If (c, cond, s1, s2) -> construct3 (fun a1 a2 a3 -> If (c, a1, a2, a3)) (map ctx cond) (map ctx s1) (map ctx s2) cond s1 s2
@@ -966,6 +970,7 @@ module Microsoft.Research.Vcc.CAST
         let doArgs = doArgsb b fe
         let doInd ind = 
           if ind > 0 then wr (System.String(' ', ind))
+        let wrTriggers = List.iter (fun trigs -> wr "{ "; commas b fe trigs;  wr " } ")
         let showType = showTypes && e.Type <> Type.Bogus && e.Type <> Type.Void && e.Type <> outerType
         doInd ind
         if showType then wr "("
@@ -994,11 +999,7 @@ module Microsoft.Research.Vcc.CAST
               wr " "
               wr v.Name
               wr "; "
-            let wrTrigger trigs = 
-              wr "{ "
-              commas b fe trigs
-              wr " } "
-            List.iter wrTrigger q.Triggers
+            wrTriggers q.Triggers
             match q.Condition with
               | Some e -> fe e; wr "; "
               | None -> ()
@@ -1023,7 +1024,7 @@ module Microsoft.Research.Vcc.CAST
             wr "*"; fe d; wr " := "; fe s; wr ";\n"
           | Goto (_, l) -> wr "goto "; wr l.Name; wr ";\n"
           | Label (_, l) -> wr l.Name; wr ":\n"
-          | Assert (_, e) -> wr "assert "; fe e; wr ";\n"
+          | Assert (_, e, trigs) -> wr "assert "; fe e; wr ";\n"
           | Assume (_, e) -> wr "assume "; fe e; wr ";\n"
           | Return (_, Some (e)) -> wr "return "; fe e; wr ";\n"
           | Return (_, None) -> wr "return;\n"
@@ -1119,7 +1120,7 @@ module Microsoft.Research.Vcc.CAST
           Block ({ bogusEC with Type = lstmt.Type; Token = lstmt.Token }, stmts)
   
     static member MkAssert (expr:Expr) =
-      Assert ({ expr.Common with Type = Void }, expr)
+      Assert ({ expr.Common with Type = Void }, expr, [])
     
     static member MkAssume (expr:Expr) =
       Assume ({ expr.Common with Type = Void }, expr)

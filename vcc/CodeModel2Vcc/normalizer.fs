@@ -139,9 +139,9 @@ namespace Microsoft.Research.Vcc
         | _ -> None
           
       function 
-        | Assert (c, e) -> 
+        | Assert (c, e, trigs) -> 
           let e = self e 
-          Some (Expr.MkBlock [Assert (c, e); Assume (c, e.SelfMap(makeQuantifiedVarsUnique))])
+          Some (Expr.MkBlock [Assert (c, e, trigs); Assume (c, e.SelfMap(makeQuantifiedVarsUnique))])
         | Macro (_, "loop_contract", _) as expr -> Some expr
         | _ -> None      
          
@@ -499,7 +499,7 @@ namespace Microsoft.Research.Vcc
         let single e = Macro (ptrsetEC, "_vcc_set_singleton", [e])
         let union a b = Macro (ptrsetEC, "_vcc_set_union", [a; b])
         let extractWrites acc = function
-          | Assert (_, Macro (_, "loop_writes", [e])) -> e :: acc
+          | Assert (_, Macro (_, "loop_writes", [e]), []) -> e :: acc
           | e ->
             helper.Error (e.Token, 9674, "skinny_expose(...) does not allow invariants, only writes(...)")
             acc
@@ -765,8 +765,21 @@ namespace Microsoft.Research.Vcc
             | None -> ()
           Top.TypeDecl(td)
         | decl -> decl
+      
+      let rewriteBvAssertAsBvLemma self = function
+        | Assert(ec, expr, []) -> None
+        | Assert(ec, expr, [[Macro(_, "labeled_expr", [Label(_, {Name = "bv"})])]]) -> 
+          let makeUnchecked self = function
+            | Prim(ec, Op(_, CheckedStatus.Unchecked), _) -> None
+            | Prim(ec, Op(op, _), args) -> Some(Prim(ec, Op(op, CheckedStatus.Unchecked), List.map self args))
+            | _ -> None
+          Some(Assert(ec, Expr.Macro(expr.Common, "_vcc_bv_lemma", [expr.SelfMap(makeUnchecked)]), []))
+        | Assert(ec, expr, trigs) -> 
+          helper.Error(ec.Token, 9713, "unhandled triggers on assert")
+          Some(Assert(ec, expr, []))
+        | _ -> None
           
-      List.map normalizeCalls >> List.map mapFromNewSyntax
+      List.map normalizeCalls >> List.map mapFromNewSyntax >> deepMapExpressions rewriteBvAssertAsBvLemma
     
     // ============================================================================================================
  
