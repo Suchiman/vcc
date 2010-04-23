@@ -43,6 +43,6 @@ int sstr_index_of(struct SafeString *s, char c)
 /*`
 Verification of SafeString#adm succeeded.
 Verification of sstr_init succeeded.
-Verification of sstr_append succeeded.
+Verification of sstr_append_char succeeded.
 Verification of sstr_index_of succeeded.
 `*/
