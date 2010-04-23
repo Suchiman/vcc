@@ -73,5 +73,5 @@ type Options =
     
     if this.smt_dump then this.time <- true
     
-    if not !did then
-      failwith ("unknown option " + name)
+    if not !did && name <> "" then
+      failwith ("unknown option '" + name + "'")
