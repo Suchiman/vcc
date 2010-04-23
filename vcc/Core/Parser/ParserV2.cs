@@ -407,8 +407,6 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Unwrap;
             case "reads":
               return SpecToken.Reads;
-            case "variant":
-              return SpecToken.Variant;
             case "requires":
               return SpecToken.Requires;
             case "wrap":
