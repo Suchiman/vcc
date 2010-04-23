@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vcc3", "Vcc3.fsproj", "{FE8CF109-ADD4-49BB-B254-E18EF1E74FD6}"
 EndProject
 Global
