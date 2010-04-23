@@ -14,6 +14,12 @@ module Rules =
   let rec eatWs = function
     | Tok.Whitespace (_, _) :: rest -> eatWs rest
     | x -> x
+
+  let eatWsEx l = 
+    let rec aux acc = function
+      | Tok.Whitespace (_, _) as w :: rest -> aux (w :: acc) rest
+      | x -> (List.rev acc, x)
+    aux [] l
     
   let rules = gdict()
   
@@ -142,23 +148,42 @@ module Rules =
       | Tok.Op (_, ("*"|"^")) -> true
       | _ -> false
     List.forall isDeclTok toks
-    
+  
+  let rec getTriggers acc = function
+    | Tok.Op (_, ";") as h :: rest ->
+      match eatWs rest with
+        | (Tok.Group (_, "{", _) :: _) as lst ->
+          let rec aux acc l = 
+            match eatWsEx l with
+              | ws, (Tok.Group (_, "{", _) as t) :: rest ->
+                aux (acc @ ws @ [t]) rest
+              | _ -> (acc, l)
+          let (trig, lst) = aux [] lst
+          Some (List.rev acc, trig, lst)
+        | _ -> getTriggers (h :: acc) rest
+    | h :: rest -> getTriggers (h :: acc) rest
+    | [] -> None
+
   let quantRule name guardOp =
     let repl (toks, rest) =
       let p = poss toks
       let body =
-        if countSemicolons toks > 1 then
-          let body, defs =
-            match List.rev (splitAt ";" toks) with
-              | body :: guard :: defs ->
-                if looksLikeDecl guard then
-                  body, List.rev (guard :: defs)
-                else
-                  guard @ [Tok.Whitespace (p, " "); Tok.Op (p, guardOp)] @ body, List.rev defs
-              | _ -> failwith ""
-          joinWith "," defs @ [Tok.Op (p, ";")] @ body
-        else
-          toks
+        match getTriggers [] toks with
+          | Some (bindings, triggers, body) ->
+            bindings @ [Tok.Whitespace (p, " ")] @ triggers @ [Tok.Op (p, ";")] @ body
+          | None ->
+            if countSemicolons toks > 1 then
+              let body, defs =
+                match List.rev (splitAt ";" toks) with
+                  | body :: guard :: defs ->
+                    if looksLikeDecl guard then
+                      body, List.rev (guard :: defs)
+                    else
+                      guard @ [Tok.Whitespace (p, " "); Tok.Op (p, guardOp)] @ body, List.rev defs
+                  | _ -> failwith ""
+              joinWith "," defs @ [Tok.Op (p, ";")] @ body
+            else
+              toks
       let body = Tok.Id (p, "\\" + name) :: Tok.Whitespace (p, " ") :: body
       // stylistic: always place () around \forall ..., or only when neccessary?
       if (eatWs rest).IsEmpty then
