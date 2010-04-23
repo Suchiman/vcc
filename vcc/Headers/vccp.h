@@ -10,8 +10,6 @@ typedef _Bool bool;
 #define false ((bool)0)
 #define true ((bool)1)
 
-#define this __this
-
 /*** 
  *** Types
  ***/
@@ -69,6 +67,7 @@ _(\objset \array_range(\object, unsigned __int64);)
 #define reads __reads
 #define requires __requires
 #define spec __specification
+#define this __this
 #define writes __writes
 #define unchecked(...) __unchecked(__VA_ARGS__)
 

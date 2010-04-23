@@ -290,8 +290,8 @@ module Microsoft.Research.Vcc.CAST
     static member MathTd name = 
       match mathTypeCache.TryGetValue name with
         // if we get the type of the cache right, F# complains about invalid forward type references
-        | true, td -> (td :?> TypeDecl)
-        | false, _ ->
+        | true, td when name = (td :?> TypeDecl).Name -> (td :?> TypeDecl)
+        | _ ->
           let td =
             { 
               Token = bogusToken
@@ -309,7 +309,7 @@ module Microsoft.Research.Vcc.CAST
               IsSpec = true
               UniqueId = unique()
             }
-          mathTypeCache.Add (name, td)
+          mathTypeCache.[name] <- td
           td
  
     static member Math name = Type.Ref (Type.MathTd name)    

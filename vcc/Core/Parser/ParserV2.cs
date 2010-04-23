@@ -19,15 +19,17 @@ namespace Microsoft.Research.Vcc.Parsing
   {
     readonly IName ExistsKeyword;
     readonly IName ForallKeyword;
-    readonly IName ResultKeyword;
     readonly IName OldKeyword;
+    readonly IName ResultKeyword;
+    readonly IName ThisKeyword;
 
     internal ParserV2(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) 
     : base(compilation, sourceLocation, scannerAndParserErrors) {
       this.ExistsKeyword= this.compilation.NameTable.GetNameFor("\\exists");
       this.ForallKeyword = this.compilation.NameTable.GetNameFor("\\forall");
-      this.ResultKeyword = this.compilation.NameTable.GetNameFor("\\result");
       this.OldKeyword = this.compilation.NameTable.GetNameFor("\\old");
+      this.ResultKeyword = this.compilation.NameTable.GetNameFor("\\result");
+      this.ThisKeyword = this.compilation.NameTable.GetNameFor("\\this");
     }
 
     override protected bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {
@@ -352,7 +354,10 @@ namespace Microsoft.Research.Vcc.Parsing
       } else if (name.Name.UniqueKey == this.ExistsKeyword.UniqueKey) {
         expression = this.ParseQuantifier(followers, Token.Exists, new SourceLocationBuilder(name.SourceLocation));
         return true;
-      } 
+      } else if (name.Name.UniqueKey == this.ThisKeyword.UniqueKey) {
+        expression = new VccThisReference(name.SourceLocation);
+        return true;
+      }
       expression = null;
       return false;
     }
