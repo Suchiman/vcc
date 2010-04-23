@@ -740,6 +740,8 @@ namespace Microsoft.Research.Vcc
                                     "\\alloc",        "_vcc_alloc";
                                     "\\mutable",      "_vcc_mutable";
                                     "\\array_range",  "_vcc_array_range";
+                                    "\\span",         "_vcc_span";
+                                    "\\unwrap",       "_vcc_unwrap";
                                     "\\thread_local", "_vcc_thread_local2";
                                     "\\universe",     "_vcc_set_universe" ]
 

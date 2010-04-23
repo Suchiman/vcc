@@ -1,6 +1,4 @@
 #include <vcc.h>
-#define false 0
-#define true 1
 
 /*{obj}*/
 #define SSTR_MAXLEN 100
@@ -8,6 +6,7 @@ struct SafeString {
   unsigned len;
   char content[SSTR_MAXLEN + 1];
   int consistent;
+  _(bool consistencyFlag)
   _(invariant len < SSTR_MAXLEN)
   _(invariant content[len] == '\0')
 };
