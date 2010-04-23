@@ -526,7 +526,8 @@ namespace Z3AxiomProfiler
                   break;
                 case "justification": break;
                 default:
-                  l.Explanation = new Term[] { GetTerm(kw) };
+                  if (kw != "axiom") 
+                    l.Explanation = new Term[] { GetTerm(kw) };
                   break;
               }
             }

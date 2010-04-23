@@ -486,7 +486,8 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override string ToString()
     {
-      string res = string.Format("Scope: {0} / {2} inst, {1} lits [l:{3}]", InstanceCount, Literals.Count, OwnInstanceCount, lev);
+      string res = string.Format("Scope: {0} / {2} inst, {1} lits [{3}lev:{4}]", 
+        InstanceCount, Literals.Count, OwnInstanceCount, lev <0 ? "f" : "", lev < 0 ? -lev : lev);
       if(ChildrenScopes.Count > 0)
         res += string.Format(", {0} children [rec: {1}, {2} inst/cnfl]", 
                              ChildrenScopes.Count, RecConflictCount, 
@@ -1133,10 +1134,10 @@ namespace Z3AxiomProfiler.QuantifierModel
         yield return Common.Callback("EXPLANATION [" + Explanation.Length + "]", delegate() { return Explanation; });
       }
       if (Clause != null) {
-        yield return new LabelNode("From clause:");
+        yield return new LabelNode("FROM CLAUSE:");
         yield return Clause;
       }
-      if (Implied != null)
+      if (Implied != null && Implied.Length > 0)
         yield return Callback("IMPLIED [" + Implied.Length + "]", delegate() { return Implied; });
     }
 
@@ -1181,8 +1182,8 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override string ToString()
     {
-      return string.Format("{4:0} @{0}, {1} lits", LineNo, Literals.Count, Literals[0].ToString(), Cost/100.0, InstCost,
-          Cost/InstCost);
+      return string.Format("Confl. {0} lits, {1:0} ops {2:0} inst", Literals.Count, Cost / 100.0, InstCost);
+         
     }
 
     public override string ToolTip()
@@ -1197,7 +1198,8 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override IEnumerable<Common> Children()
     {
-      yield return Common.Callback("RESOLVED FROM", delegate() { return ResolutionLits; });
+      if (ResolutionLits.Length > 0)
+        yield return Common.Callback("RESOLVED FROM", delegate() { return ResolutionLits; });
       foreach (var l in Literals)
         yield return l;
     }
