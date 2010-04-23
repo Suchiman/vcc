@@ -1,0 +1,16 @@
+#include <vcc.h>
+
+void foo()
+decreases(0)
+ {
+  int x = 10;
+  while (x > 0)
+  writes(&x)
+  decreases(x)
+  {
+    x--;
+  }
+}
+`
+Verification of foo succeeded.
+`

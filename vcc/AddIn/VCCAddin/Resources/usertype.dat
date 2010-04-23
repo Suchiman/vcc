@@ -2,6 +2,7 @@ ensures
 old
 reads
 writes
+decreases
 requires
 forall
 invariant

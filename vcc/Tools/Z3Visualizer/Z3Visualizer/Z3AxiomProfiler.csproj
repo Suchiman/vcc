@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{29651769-4A5F-4C7F-BAA7-4064BA38324D}</ProjectGuid>
     <OutputType>Exe</OutputType>
@@ -154,6 +154,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="SearchBox.resx">
       <DependentUpon>SearchBox.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Z3AxiomProfiler.resx">
       <DependentUpon>Z3AxiomProfiler.cs</DependentUpon>

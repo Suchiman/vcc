@@ -164,6 +164,9 @@ namespace Microsoft.Research.Vcc
     member private this.DoPostcond (p:IPostcondition) =
       if Visitor.CheckHasError(p.Condition) then oopsLoc p "postcondition has errors"; cFalse
       else this.DoExpression (p.Condition)
+    member private this.DoMethodVariant (v:IMethodVariant) =
+      if Visitor.CheckHasError(v.Condition) then oopsLoc v "variant has errors"; cFalse
+      else this.DoExpression (v.Condition)
         
     member this.GetResult () =
       while finalActions.Count > 0 do      
@@ -256,6 +259,7 @@ namespace Microsoft.Research.Vcc
                 Requires        = []
                 Ensures         = []
                 Writes          = []
+                Variants        = []
                 Reads           = []
                 CustomAttr      = []
                 Body            = None
@@ -425,8 +429,9 @@ namespace Microsoft.Research.Vcc
         let rqs = C.Macro(ec, "block_requires", [ for req in contract.Preconditions -> mkPure (this.DoPrecond req) ] )
         let ens = C.Macro(ec, "block_ensures", [ for ens in contract.Postconditions -> mkPure (this.DoPostcond ens) ] )
         let wrs = C.Macro(ec, "block_writes", [ for wr in contract.Writes -> mkPure (this.DoExpression wr) ] )
+        let vrs = C.Macro(ec, "block_decreases", [ for vr in contract.Variants -> mkPure (this.DoMethodVariant vr) ] )
         let rds = C.Macro(ec, "block_reads", [ for rd in contract.Reads -> mkPure (this.DoExpression rd) ] )
-        C.Expr.Macro(ec, "block", [block'; rqs; ens; wrs; rds])
+        C.Expr.Macro(ec, "block", [block'; rqs; ens; wrs; vrs; rds])
      match block with
        //| :? VccSpecBlock -> C.Macro(result.Common, "spec", [result])
        | _ -> result

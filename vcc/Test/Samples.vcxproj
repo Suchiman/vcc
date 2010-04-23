@@ -298,6 +298,7 @@
     <None Include="testsuite\vcc2\structQuantifier">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="testsuite\vcc2\termination" />
     <None Include="testsuite\vcc2\thread_id">
       <DeploymentContent>true</DeploymentContent>
     </None>

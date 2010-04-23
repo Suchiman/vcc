@@ -1098,11 +1098,12 @@ namespace Microsoft.Research.Vcc {
       this.Reads = template.Reads;
       this.Writes = template.Writes;
       this.IsPure = template.IsPure;
+      this.Variants = template.Variants;
     }
 
     internal MethodContract ToMethodContract() {
       // TODO: leverage the IsPure flag
-      return new MethodContract(null, null, null, this.Postconditions, this.Preconditions, this.Reads, null, this.Writes, this.IsPure);
+      return new MethodContract(null, null, null, this.Postconditions, this.Preconditions, this.Reads, null, this.Writes, this.IsPure, this.Variants);
     }
 
     internal void AddPostcondition(Postcondition postcondition) {
@@ -1154,12 +1155,33 @@ namespace Microsoft.Research.Vcc {
       this.HasContract = true;
     }
 
+    internal void AddMethodVariant(MethodVariant variant)
+    {
+      if (this.Variants == null)
+      {
+        this.Variants = new List<MethodVariant>();
+      }
+      this.Variants.Add(variant);
+      this.HasContract = true;
+    }
+
+    internal void AddMethodVariants(IEnumerable<MethodVariant> variants)
+    {
+      if (this.Variants == null)
+      {
+        this.Variants = new List<MethodVariant>();
+      }
+      this.Variants.AddRange(variants);
+      this.HasContract = true;
+    }
+
     internal bool HasContract;
     internal bool IsPure;
     internal List<Postcondition>/*?*/ Postconditions;
     internal List<Precondition>/*?*/ Preconditions;
     internal List<Expression>/*?*/ Reads;
     internal List<Expression>/*?*/ Writes;
+    internal List<MethodVariant>/*?*/ Variants;
   }
 
   internal sealed class FunctionDeclarator : Declarator {

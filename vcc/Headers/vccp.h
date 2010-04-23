@@ -69,6 +69,7 @@ _(\objset \array_range(\object, unsigned __int64);)
 #define spec __specification
 #define this __this
 #define writes __writes
+#define decreases __decreases
 #define unchecked(...) __unchecked(__VA_ARGS__)
 
 #define SPEC_TYPE(name) typedef struct _concat_identifiers(_vcc_math_type_, name) {char _vcc_marker_for_math_type;} name;

@@ -1210,7 +1210,7 @@ namespace Microsoft.Research.Vcc
               prefix @
               [B.Stmt.Comment ("if (" + c.ToString() + ") ..."); 
                B.Stmt.If (trExpr env c, B.Stmt.Block (thenBranch @ trStmt env s1), B.Stmt.Block (elseBranch @ trStmt env s2))]
-            | C.Expr.Loop (comm, invs, writes, s) ->
+            | C.Expr.Loop (comm, invs, writes, variants, s) ->
               let (save, oldState) = saveState "loop"
               let env = { env with OldState = oldState }
               let regLoopBody, cevInv = cev.RegLoopBody stmt s

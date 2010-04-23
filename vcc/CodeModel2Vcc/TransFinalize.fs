@@ -126,7 +126,7 @@ namespace Microsoft.Research.Vcc
         
         | Quant (c, q) -> Some (Quant (c, { q with Body = f q.Body; Condition = Option.map f q.Condition }))
         | If (c, cond, e1, e2) -> Some (If (c, f cond, self e1, self e2))
-        | Loop (c, invs, writes, body) -> Some (Loop (c, fs invs, List.map self writes, self body))
+        | Loop (c, invs, writes, variants, body) -> Some (Loop (c, fs invs, List.map self writes, fs variants, self body)) //TODO check the treatment of the variants
         | Assert (c, cond, trigs) -> Some (Assert (c, f cond, trigs))
         | Assume (c, cond) -> Some (Assume (c, f cond))
         | Atomic (c, objs, body) -> Some (Atomic (c, List.map self objs, self body))
@@ -228,7 +228,7 @@ namespace Microsoft.Research.Vcc
           [decl; assign]
       function
         | If(ec, cond, e1, e2) -> Some(If(ec, self cond, Expr.MkBlock(stmtalize (self e1)), Expr.MkBlock(stmtalize (self e2))))
-        | Loop(ec, inv, writes, stmts) -> Some(Loop(ec, List.map self inv, List.map self writes, Expr.MkBlock(stmtalize (self stmts))))
+        | Loop(ec, inv, writes, variants, stmts) -> Some(Loop(ec, List.map self inv, List.map self writes, List.map self variants, Expr.MkBlock(stmtalize (self stmts))))
         | Stmt(ec, expr) when not (ignoreType expr.Type) -> Some(Expr.MkBlock(stmtalize (self expr)))
         | Atomic(ec, args, expr) -> Some(Atomic(ec, List.map self args, Expr.MkBlock(stmtalize (self expr))))
         | Block(ec, []) -> None
@@ -327,7 +327,7 @@ namespace Microsoft.Research.Vcc
         | _ -> true
     
       let checkFunction (fn:Function) = 
-        List.iter (fun (e:Expr) -> e.SelfCtxVisit(true, reportErrorForStateWriteInPureContext)) (fn.Requires @ fn.Ensures @ fn.Reads @ fn.Writes)
+        List.iter (fun (e:Expr) -> e.SelfCtxVisit(true, reportErrorForStateWriteInPureContext)) (fn.Requires @ fn.Ensures @ fn.Reads @ fn.Writes @ fn.Variants)
         Option.iter (fun (e:Expr) -> e.SelfCtxVisit(fn.IsPure, reportErrorForStateWriteInPureContext)) fn.Body
 
       for d in decls do

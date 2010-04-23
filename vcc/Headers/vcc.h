@@ -69,6 +69,7 @@ typedef int bool;
 #define nospeccast(_TYPE_, _EXPR_) ((_TYPE_)_EXPR_)
 #define speconly(...)
 #define writes(...)
+#define decreases(...)
 #define vcs_force_splits(n) 
 #define vcs_keep_going(n) 
 #define invariant(...)

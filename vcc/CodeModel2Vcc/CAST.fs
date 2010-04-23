@@ -481,6 +481,7 @@ module Microsoft.Research.Vcc.CAST
       mutable Ensures:list<Expr>;
       mutable Writes:list<Expr>;
       mutable Reads:list<Expr>;
+      mutable Variants:list<Expr>;
       mutable CustomAttr:list<CustomAttr>;
       mutable Body:option<Expr>;
       mutable IsProcessed:bool;
@@ -523,6 +524,7 @@ module Microsoft.Research.Vcc.CAST
                     Requires = ses this.Requires;
                     Ensures = ses this.Ensures;
                     Writes = ses this.Writes;
+                    Variants = ses this.Variants;
                     Reads = ses this.Reads;
                     TypeParameters = [];
                     Body = if includeBody then Option.map se this.Body else None }
@@ -543,6 +545,7 @@ module Microsoft.Research.Vcc.CAST
       doList "requires" (this.Requires)
       doList "ensures" (this.Ensures)
       doList "reads" (this.Reads)
+      doList "decreases" (this.Variants)
       doList "writes" (this.Writes)        
         
       b.ToString()              
@@ -629,8 +632,8 @@ module Microsoft.Research.Vcc.CAST
     | VarWrite of ExprCommon * list<Variable> * Expr
     | MemoryWrite of ExprCommon * Expr * Expr
     | If of ExprCommon * Expr * Expr * Expr
-    // invariants * writes * body
-    | Loop of ExprCommon * list<Expr> * list<Expr> * Expr // TODO use record
+    // invariants * writes * variants * body
+    | Loop of ExprCommon * list<Expr> * list<Expr> * list<Expr> * Expr // TODO use record
     | Goto of ExprCommon * LabelId
     | Label of ExprCommon * LabelId
     // token is taken from expr
@@ -687,7 +690,7 @@ module Microsoft.Research.Vcc.CAST
         | VarWrite (e, _, _)
         | MemoryWrite (e, _, _)
         | If (e, _, _, _)
-        | Loop (e, _, _, _)
+        | Loop (e, _, _, _, _)
         | Goto (e, _)
         | Label (e, _)
         | Assert (e, _, _)
@@ -739,7 +742,7 @@ module Microsoft.Research.Vcc.CAST
             | Old (_, e1, e2) -> paux e1; visit ctx e2
             | Quant (_, q) -> List.iter pauxs q.Triggers; Option.iter paux q.Condition; paux q.Body
             | If (_, cond, s1, s2) -> visit ctx cond; visit ctx s1; visit ctx s2
-            | Loop (_, invs, writes, s) -> pauxs invs; pauxs writes; visit ctx s
+            | Loop (_, invs, writes, variants, s) -> pauxs invs; pauxs writes; pauxs variants; visit ctx s
             | Atomic (c, exprs, s) -> pauxs exprs; visit ctx s
 
 
@@ -865,11 +868,12 @@ module Microsoft.Research.Vcc.CAST
               | Assume (c, e) -> construct1 (fun arg -> Assume (c, arg)) (paux e)
               | Return (c, Some e) -> construct1 (fun arg -> Return (c, Some arg)) (map ctx e)
               | If (c, cond, s1, s2) -> construct3 (fun a1 a2 a3 -> If (c, a1, a2, a3)) (map ctx cond) (map ctx s1) (map ctx s2) cond s1 s2
-              | Loop (c, invs, writes, s) -> 
+              | Loop (c, invs, writes, variants, s) -> 
                 let rInvs, invs' = apply paux invs
                 let rWrites, writes' = apply paux writes
+                let rVariants,variants' = apply paux variants
                 let rS, s' = match map ctx s with | None -> false, s | Some s' -> true, s'
-                if not rInvs && not rWrites && not rS then None else Some(Loop(c, invs', writes', s'))
+                if not rInvs && not rWrites && not rVariants && not rS then None else Some(Loop(c, invs', writes', variants', s'))
               | Atomic (c, exprs, s) -> 
                 let rExprs, exprs' = apply paux exprs
                 let rS, s' = match map ctx s with | None -> false, s | Some s' -> true, s'
@@ -1030,7 +1034,7 @@ module Microsoft.Research.Vcc.CAST
           | Return (_, None) -> wr "return;\n"
           | If (_, cond, th, el) ->
             wr "if ("; fe cond; wr ")\n"; f th; doInd ind; wr "else\n"; f el
-          | Loop (_, invs, writes, body) ->
+          | Loop (_, invs, writes, variants, body) ->
             wr "loop\n";
             for i in invs do
               doInd (ind + 4)
@@ -1041,6 +1045,11 @@ module Microsoft.Research.Vcc.CAST
               doInd (ind + 4)
               wr "writes ";
               fe w;
+              wr ";\n"
+            for r in variants do
+              doInd (ind + 4)
+              wr "decreases ";
+              fe r;
               wr ";\n"
             f body        
           | Atomic (c, args, body) ->
