@@ -128,9 +128,10 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     protected override LoopContract ParseLoopContract(Parser.TokenSet followers) {
-      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Invariant, SpecToken.Writes);
+      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Invariant, SpecToken.Writes, SpecToken.Variant);
       List<LoopInvariant> invariants = new List<LoopInvariant>();
       List<Expression> writes = new List<Expression>();
+      List<LoopVariant> variants = new List<LoopVariant>();
       while (this.currentToken == Token.Specification) {
         bool savedInSpecCode = this.EnterSpecBlock();
         this.GetNextToken();
@@ -148,13 +149,20 @@ namespace Microsoft.Research.Vcc.Parsing
               this.GetNextToken();
               this.ParseExpressionList(writes, Token.Comma, followers | Token.RightParenthesis);
               break;
+            case SpecToken.Variant:
+              SourceLocationBuilder slb2 = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+              this.GetNextToken();
+              var red = this.ParseExpression(followers | Token.RightParenthesis);
+              slb2.UpdateToSpan(red.SourceLocation);
+              variants.Add(new LoopVariant(red, slb2));
+              break;
           }
         }
         this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
         this.LeaveSpecBlock(savedInSpecCode);
       }
-      if (invariants.Count == 0 && writes.Count == 0) return null;
-      return new LoopContract(invariants, writes);
+      if (invariants.Count == 0 && writes.Count == 0 && variants.Count == 0) return null;
+      return new LoopContract(invariants, writes, variants);
     }
 
     override protected void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers) {
@@ -190,6 +198,11 @@ namespace Microsoft.Research.Vcc.Parsing
               this.GetNextToken();
               var writes = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
               contract.AddWrites(writes);
+              break;
+            case SpecToken.Variant:
+              this.GetNextToken();
+              var variant = this.ParseExpression(followers | Token.RightParenthesis);
+              contract.AddMethodVariant(new MethodVariant(variant, variant.SourceLocation));
               break;
             case SpecToken.Reads:
               this.GetNextToken();
@@ -380,6 +393,8 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Assume;
             case "axiom":
               return SpecToken.Axiom;
+            case "decreases":
+              return SpecToken.Variant;
             case "ensures":
               return SpecToken.Ensures;
             case "ghost":
@@ -392,6 +407,8 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Unwrap;
             case "reads":
               return SpecToken.Reads;
+            case "variant":
+              return SpecToken.Variant;
             case "requires":
               return SpecToken.Requires;
             case "wrap":
@@ -417,6 +434,7 @@ namespace Microsoft.Research.Vcc.Parsing
       Invariant,
       Maintains,
       Reads,
+      Variant,
       Requires,
       Unwrap,
       Wrap,

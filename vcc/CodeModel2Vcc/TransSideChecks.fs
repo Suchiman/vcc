@@ -102,6 +102,7 @@ namespace Microsoft.Research.Vcc
               Requires = []
               Ensures = post
               Writes = []
+              Variants = []
               Reads = []
               CustomAttr = [ IsAdmissibilityCheck ]
               Body = Some body
@@ -115,7 +116,7 @@ namespace Microsoft.Research.Vcc
     let errCheck (f:Function) cb =
       match f.Parameters with
         | [{ Type = Ptr (Type.Ref td) } as p] ->
-          if f.Requires <> [] || f.Ensures <> [] || f.Writes <> [] then
+          if f.Requires <> [] || f.Ensures <> [] || f.Writes <> [] || f.Variants <> [] then
             helper.Error (f.Token, 9624, "custom admissibility checks are not allowed to have explicit requires/ensures/writes", None)
           if f.Body.IsNone then
             helper.Error (f.Token, 9644, "the admissibility check is required to have a body", None)
@@ -366,6 +367,7 @@ namespace Microsoft.Research.Vcc
             Requires = []
             Ensures = []
             Writes = []
+            Variants = []
             Reads = []
             CustomAttr = [ ReadsCheck f ]
             Body = Some body

@@ -721,7 +721,7 @@ namespace Microsoft.Research.Vcc
         List.iter (fun v -> before.Add(v, true)) fn.Parameters
         (Option.get fn.Body).SelfVisit(findThem)
         match block with
-          | Expr.Macro(_, "block", [ _b; _r; Macro(_, "block_ensures", ensures); _w; _rd ]) ->
+          | Expr.Macro(_, "block", [ _b; _r; Macro(_, "block_ensures", ensures); _w; _v; _rd ]) ->
             List.iter (fun (e:Expr) -> e.SelfVisit(findThemInEnsures)) ensures
           | _ -> die()
         fVar before, fVar after
@@ -738,6 +738,7 @@ namespace Microsoft.Research.Vcc
                 Expr.Macro(_, "block_requires", rqs); 
                 Expr.Macro(_, "block_ensures", ens); 
                 Expr.Macro(_, "block_writes", wrs);
+                Expr.Macro(_, "block_decreases",vrs);
                 Expr.Macro(_, "block_reads", rds) ], localsThatGoIn, inMap, localsThatGoOut, outMap ->
               let mkSetOutPar (v : Variable) =
                 Expr.VarWrite(voidBogusEC(), [outMap v], mkRef (inMap v))
@@ -753,6 +754,7 @@ namespace Microsoft.Research.Vcc
                          Requires = stripInitialPure rqs
                          Ensures = stripInitialPure ens
                          Writes = stripInitialPure wrs
+                         Variants = stripInitialPure vrs
                          Reads = stripInitialPure rds
                          CustomAttr = []
                          Body = Some (Expr.MkBlock(body :: List.map mkSetOutPar localsThatGoOut))

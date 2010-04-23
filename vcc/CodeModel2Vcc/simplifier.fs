@@ -329,6 +329,7 @@ namespace Microsoft.Research.Vcc
               Requires        = []
               Ensures         = []
               Writes          = []
+              Variants        = []
               Reads           = if !isPure then [] else [Expr.Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_set_universe", [])]
               CustomAttr      = [VccAttr ("is_pure", "")]
               Body            = None
@@ -883,14 +884,14 @@ namespace Microsoft.Research.Vcc
         let unique = generateUnique().ToString()
         let break_lbl = { Name = "#break_" + unique } : LabelId
         let continue_lbl = { Name = "#continue_" + unique } : LabelId
-        let rec aux invs writes = function
-          | Assert (_, Expr.Macro (_, "loop_writes", [e]), _) :: rest -> aux invs (e :: writes) rest
-          | Assert (_, e, _) :: rest -> aux (e :: invs) writes rest
-          | [] -> (List.rev invs, List.rev writes)
+        let rec aux invs writes variants = function
+          | Assert (_, Expr.Macro (_, "loop_writes", [e]), _) :: rest -> aux invs (e :: writes) variants rest
+          | Assert (_, e, _) :: rest -> aux (e :: invs) writes variants rest
+          | [] -> (List.rev invs, List.rev writes, List.rev variants)
           | _ -> die()
-        let (invs, writes) = aux [] [] contract
+        let (invs, writes, variants) = aux [] [] [] contract
         let mkLoop stmts =
-          let loop = Loop ({ voidBogusEC() with Token = loopEc.Token }, invs, writes, Expr.MkBlock stmts)
+          let loop = Loop ({ voidBogusEC() with Token = loopEc.Token }, invs, writes, variants, Expr.MkBlock stmts)
           Some (Expr.MkBlock [loop; Label (loopEc, break_lbl)])
         let inBody (body:Expr) =
           body.SelfMap (loopAndSwitchDesugaring (Some (break_lbl, continue_lbl)))
@@ -1215,5 +1216,5 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("desugar-addressable-locals", Helper.Decl heapifyAddressedLocals)
     helper.AddTransformer ("desugar-globals", Helper.Decl handleGlobals)
     helper.AddTransformer ("desugar-loops", Helper.Expr (loopAndSwitchDesugaring None))
-    
+     
     helper.AddTransformer ("desugar-end", Helper.DoNothing)

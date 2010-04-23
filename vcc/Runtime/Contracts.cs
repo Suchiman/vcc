@@ -37,6 +37,8 @@ namespace System.Diagnostics.Contracts {
     public abstract class BigInt
     {
       UInt64 dummy; // ensures that sizeof(BigInt) == 8
+      // get rid of the warning about the variable above
+      private void Dummy() { dummy++; }
 
       public static bool operator ==(BigInt b1, BigInt b2) {
         throw new NotImplementedException();

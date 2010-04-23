@@ -16,7 +16,7 @@ namespace Microsoft.Research.Vcc
   let init (helper:Helper.Env) =
 
     let inferLoopInvariants self = function
-      | Loop (comm, invs, writes, body) ->
+      | Loop (comm, invs, writes, variants, body) ->
         let has_free = ref false
         let has_meta_write = ref false
         let checkFree _ = function
@@ -34,7 +34,7 @@ namespace Microsoft.Research.Vcc
         else 
           let incr = Expr.MkAssume (Macro (boolBogusEC(), (if not !has_meta_write then "_vcc_meta_eq" else "_vcc_mutable_increases"), []))
           let body = Expr.MkBlock [incr; self body]
-          Some (Loop (comm, invs, writes, body))
+          Some (Loop (comm, invs, writes, variants, body))
       | _ -> None
     
     let preconditions (f:Function) =
@@ -104,8 +104,8 @@ namespace Microsoft.Research.Vcc
       let ensuresForWrites = List.filter (fun (e:Expr) -> isPtrToPrimitive e.Type) >> List.map extraEnsuresFor >> List.concat
       
       let inferForBlocksWithContracts self = function
-        | Expr.Macro(ec, "block", [ b; req; Macro(eec, "block_ensures", ens); (Macro(_, "block_writes", writes) as ws); rds ]) ->
-          Some(Expr.Macro(ec, "block", [self b; req; Macro(eec, "block_ensures", ens @ (ensuresForWrites writes)); ws; rds]))
+        | Expr.Macro(ec, "block", [ b; req; Macro(eec, "block_ensures", ens); (Macro(_, "block_writes", writes) as ws); vrs; rds ]) ->
+          Some(Expr.Macro(ec, "block", [self b; req; Macro(eec, "block_ensures", ens @ (ensuresForWrites writes)); ws; vrs; rds]))
         | _ -> None
         
       function

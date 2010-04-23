@@ -1618,6 +1618,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     Declspec,
     /// <summary>
+    /// __decreases
+    /// </summary>
+    Decreases,
+    /// <summary>
     /// default
     /// </summary>
     Default,
@@ -2174,6 +2178,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.Unchecked, "__unchecked", keyword);
       keyword = new Keyword(Token.Unaligned, "__unaligned", keyword);
       keyword = new Keyword(Token.Invariant, "__invariant", keyword);
+      keyword = new Keyword(Token.Decreases, "__decreases", keyword);
       keyword = new Keyword(Token.Requires,  "__requires", keyword);
       keyword = new Keyword(Token.Fastcall,  "__fastcall", keyword);
       keyword = new Keyword(Token.Declspec,  "__declspec", keyword);
