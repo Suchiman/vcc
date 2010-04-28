@@ -90,8 +90,6 @@
     <Reference Include="Microsoft.VisualStudio.VCProject, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.VCProjectEngine, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Data" />
     <Reference Include="System.Design" />
     <Reference Include="System.Drawing" />
@@ -102,12 +100,6 @@
   <ItemGroup>
     <Compile Include="..\..\Common\Include\Version.cs">
       <Link>Build\Version.cs</Link>
-    </Compile>
-    <Compile Include="AddInInstaller.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="AddInInstaller.Designer.cs">
-      <DependentUpon>AddInInstaller.cs</DependentUpon>
     </Compile>
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
