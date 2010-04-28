@@ -422,16 +422,14 @@ namespace Microsoft.Research.Vcc
        if (contract = null) then
          block'
        else 
-        // we introduce a helper function to place the contracts on
-        // it will be later expanded into a proper function
-        let ec = { Type = C.Type.Void; Token = token block } : C.ExprCommon
-        let mkPure (e : C.Expr) = C.Pure(e.Common, e)
-        let rqs = C.Macro(ec, "block_requires", [ for req in contract.Preconditions -> mkPure (this.DoPrecond req) ] )
-        let ens = C.Macro(ec, "block_ensures", [ for ens in contract.Postconditions -> mkPure (this.DoPostcond ens) ] )
-        let wrs = C.Macro(ec, "block_writes", [ for wr in contract.Writes -> mkPure (this.DoExpression wr) ] )
-        let vrs = C.Macro(ec, "block_decreases", [ for vr in contract.Variants -> mkPure (this.DoMethodVariant vr) ] )
-        let rds = C.Macro(ec, "block_reads", [ for rd in contract.Reads -> mkPure (this.DoExpression rd) ] )
-        C.Expr.Macro(ec, "block", [block'; rqs; ens; wrs; vrs; rds])
+        let cs = {CAST.requires = [ for req in contract.Preconditions -> this.DoPrecond req ];
+                  CAST.ensures  = [ for ens in contract.Postconditions -> this.DoPostcond ens ];
+                  CAST.reads    = [ for rd in contract.Reads -> this.DoExpression rd ];
+                  CAST.writes   = [ for wr in contract.Writes -> this.DoExpression wr ];
+                  CAST.decreases= [ for vr in contract.Variants -> this.DoMethodVariant vr ]}
+        match block' with
+          | C.Expr.Block (ec,ss,_) -> C.Expr.Block (ec,ss, Some cs)
+          | _ -> C.Expr.Block ({ Type = block'.Type; Token = block'.Token }, [block'], Some cs)
      match block with
        //| :? VccSpecBlock -> C.Macro(result.Common, "spec", [result])
        | _ -> result
@@ -1099,7 +1097,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (blockExpression:IBlockExpression) : unit =
         exprRes <- C.Expr.Block (this.ExprCommon blockExpression, 
                                  [this.DoStatement blockExpression.BlockStatement; 
-                                  this.DoExpression blockExpression.Expression])
+                                  this.DoExpression blockExpression.Expression], None)
         
       
 
@@ -1527,7 +1525,7 @@ namespace Microsoft.Research.Vcc
           | C.Call (_, { Name = "_vcc_expose" }, _, [arg]) ->
             let wrap = findFunctionOrDie "_vcc_wrap" whileDoStatement
             let unwrap = findFunctionOrDie "_vcc_unwrap" whileDoStatement
-            stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" arg), unwrap, [], [arg]);  body; C.Expr.Call((stmtToken "wrap(@@)" arg), wrap, [], [arg]) ] )
+            stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" arg), unwrap, [], [arg]);  body; C.Expr.Call((stmtToken "wrap(@@)" arg), wrap, [], [arg]) ], None )
           | _ ->
             let contract = this.DoLoopContract whileDoStatement
             stmtRes <- C.Expr.Macro (cmn, "while", [contract; cond; body])

@@ -272,8 +272,7 @@ testcase(9,7) : error VC9705: Block with explicit contract must not contain retu
 `
 #include <vcc.h>
 
-void bar(int *p)
-  maintains(mutable(p)) 
+void bar(int *p) 
   writes(p)
 {
   *p = 5;
@@ -288,8 +287,7 @@ void foo(int x) {
     block 
       requires(i == 1)
       ensures (i == 2)
-      maintains(mutable(&l))
-      writes(&l)
+      writes(&l,&j)
     {
       bar(&j);
       bar(&l);
@@ -298,8 +296,7 @@ void foo(int x) {
     block 
       requires(i == 2)
       ensures (i == 3)
-      maintains(mutable(&l))
-      writes(&l)
+      writes(&l,&k)
     {
       bar(&k);
       bar(&l);
@@ -312,4 +309,35 @@ Verification of bar succeeded.
 Verification of foo succeeded.
 Verification of foo#block#0 succeeded.
 Verification of foo#block#1 succeeded.
+`
+#include <vcc.h>
+
+void bar(int *p)
+  writes(p)
+{
+  *p = 5;
+}
+
+void foo(int x) {
+  int i = 1;
+  int j;
+  int k;
+  int l;
+  if (x > 0) {
+    block
+      requires(i == 1)
+      ensures (i == 2)
+      writes(&l)
+    {
+      bar(&j);
+      bar(&l);
+      i = 2;
+    }
+  }
+}
+`
+Verification of bar succeeded.
+Verification of foo succeeded.
+Verification of foo#block#0 failed.
+testcase(20,7) : error VC8510: Assertion '&j is writable in call to bar(&j)' did not verify.
 `

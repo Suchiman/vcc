@@ -610,6 +610,15 @@ module Microsoft.Research.Vcc.CAST
       IsPure : bool;
     }
     static member PureCtx = { IsPure = true }
+
+  and BlockContract =
+    {
+      requires : list<Expr>;
+      ensures : list<Expr>;
+      reads : list<Expr>;
+      writes : list<Expr>;
+      decreases : list<Expr>;
+    }
     
   and Expr =
     | Ref of ExprCommon * Variable    
@@ -640,7 +649,7 @@ module Microsoft.Research.Vcc.CAST
     | Assert of ExprCommon * Expr * list<list<Expr>>
     | Assume of ExprCommon * Expr
     | Pure of ExprCommon * Expr
-    | Block of ExprCommon * list<Expr>
+    | Block of ExprCommon * list<Expr> * option<BlockContract>
     | Return of ExprCommon * option<Expr>
     | Atomic of ExprCommon * list<Expr> * Expr
     | Comment of ExprCommon * string
@@ -695,7 +704,7 @@ module Microsoft.Research.Vcc.CAST
         | Label (e, _)
         | Assert (e, _, _)
         | Assume (e, _)
-        | Block (e, _)
+        | Block (e, _, _)
         | Return (e, _)
         | Atomic (e, _, _)
         | Comment (e, _)
@@ -725,7 +734,7 @@ module Microsoft.Research.Vcc.CAST
             | This _
             | Result _ -> ()
             | Prim (_, _, es)
-            | Block (_, es) 
+            | Block (_, es, None)
             | Call (_, _, _, es)
             | Macro (_, _, es) -> List.iter (visit ctx) es
             | Deref (_, e)
@@ -744,6 +753,7 @@ module Microsoft.Research.Vcc.CAST
             | If (_, cond, s1, s2) -> visit ctx cond; visit ctx s1; visit ctx s2
             | Loop (_, invs, writes, variants, s) -> pauxs invs; pauxs writes; pauxs variants; visit ctx s
             | Atomic (c, exprs, s) -> pauxs exprs; visit ctx s
+            | Block (ec, es, Some cs) -> pauxs cs.requires; pauxs cs.ensures; pauxs cs.reads; pauxs cs.writes; pauxs cs.decreases; List.iter (visit ctx) es
 
 
       and paux = visit ExprCtx.PureCtx
@@ -878,7 +888,19 @@ module Microsoft.Research.Vcc.CAST
                 let rExprs, exprs' = apply paux exprs
                 let rS, s' = match map ctx s with | None -> false, s | Some s' -> true, s'
                 if not rExprs && not rS then None else Some(Atomic(c, exprs', s'))
-              | Block (c, ss) -> constructList (fun args-> Block (c, args)) (map ctx) ss
+              | Block (c, ss, None) as b -> constructList (fun args-> Block (c, args, None)) (map ctx) ss
+              | Block (c, ss, Some cs) as b ->
+                let rPres, pres' = apply paux cs.requires
+                let rPosts, posts' = apply paux cs.ensures
+                let rReads, reads' = apply paux cs.reads
+                let rWrites, writes' = apply paux cs.writes
+                let rDecreases, decreases' = apply paux cs.decreases
+                let cs' = {requires=pres'; ensures=posts'; reads=reads'; writes=writes'; decreases=decreases'}
+                let rSS, block'' =
+                    match  constructList (fun args -> Block (c, args, Some cs')) (map ctx) ss with
+                      | None -> false, Block (c,ss,Some cs')
+                      | Some x -> true, x
+                if not (rPres || rPosts || rReads || rWrites|| rDecreases || rSS) then None else Some block''
               | Stmt (c, e) -> construct1 (fun arg -> Stmt (c, arg)) (map ctx e)
               | Pure (c, e) -> construct1 (fun arg -> Pure (c, arg)) (paux e)
       and paux = map ExprCtx.PureCtx
@@ -956,7 +978,7 @@ module Microsoft.Research.Vcc.CAST
             match subst.TryGetValue v with
               | true, e -> Some (e)
               | _ -> None
-          | VarDecl (c, v) when subst.ContainsKey v -> Some (Block (c, []))
+          | VarDecl (c, v) when subst.ContainsKey v -> Some (Block (c, [], None))
           | VarWrite (c, v, e) -> Some (VarWrite (c, List.map substVar v, self e))
           | _ -> None
       this.SelfMap repl
@@ -1054,8 +1076,8 @@ module Microsoft.Research.Vcc.CAST
             f body        
           | Atomic (c, args, body) ->
             doArgs "atomic" args
-            f (Block (c, [body]))
-          | Block (_, stmts) ->
+            f (Block (c, [body], None))
+          | Block (_, stmts, None) ->
             wr "{\n";
             for s in stmts do 
               match s with
@@ -1063,6 +1085,28 @@ module Microsoft.Research.Vcc.CAST
                   f s
                   wr "\n"
                 | _ -> f s
+            doInd ind
+            wr "}\n"
+          | Block (_, stmts, Some cs) ->
+            wr "block // with contracts, not correct \n";
+            let MacroPrint prep s app =
+              match s with
+                | Macro(_, _, _) ->
+                  wr prep; f s; wr app
+                | _ -> wr prep; f s; wr app // Should do something else, too many line breaks.
+            for s in cs.requires do
+              MacroPrint "requires(" s ")\n"
+            for s in cs.ensures do
+              MacroPrint "ensures(" s ")\n"
+            for s in cs.reads do
+              MacroPrint "reads(" s ")\n"
+            for s in cs.writes do
+              MacroPrint "writes(" s ")\n"
+            for s in cs.decreases do
+              MacroPrint "variant(" s ")\n" // Is this right?
+            wr "{\n"
+            for s in stmts do
+              MacroPrint "" s "\n"
             doInd ind
             wr "}\n"
           | Stmt (_, e) ->
@@ -1123,10 +1167,10 @@ module Microsoft.Research.Vcc.CAST
         | [] -> die()
       match exprs with
         | [e] -> e
-        | [] -> Block (voidBogusEC(), [])
+        | [] -> Block (voidBogusEC(), [], None)
         | stmts -> 
           let lstmt = last stmts 
-          Block ({ bogusEC with Type = lstmt.Type; Token = lstmt.Token }, stmts)
+          Block ({ bogusEC with Type = lstmt.Type; Token = lstmt.Token }, stmts, None)
   
     static member MkAssert (expr:Expr) =
       Assert ({ expr.Common with Type = Void }, expr, [])

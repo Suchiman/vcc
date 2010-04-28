@@ -194,7 +194,7 @@ namespace Microsoft.Research.Vcc
         false
       | Old(_, (CallMacro(_, "_vcc_by_claim", _, _)), expr) -> self expr; false
       | Atomic(_, _, expr) -> self expr; false
-      | Block(_, exprs) ->
+      | Block(_, exprs, _) ->
         let rec checkLastExpr = function
           | [] -> ()
           | [x] -> self x
@@ -1148,9 +1148,13 @@ namespace Microsoft.Research.Vcc
           function 
             | Ref(_, v) -> insertOrJoin v; false
             | VarWrite(_, vs, _) -> List.iter insertOrJoin vs; true
-            | Macro(_, "block", bl :: contracts) as block -> 
-              List.iter self contracts // refs inside of the block's contract cannot be moved inside
-              bl.SelfVisit(findInnermostBlock (blocks @ [block])); false
+            | Block(ec,ss,Some cs) ->
+              List.iter self cs.requires
+              List.iter self cs.ensures
+              List.iter self cs.reads
+              List.iter self cs.writes
+              List.iter self cs.decreases
+              Block(ec,ss,None).SelfVisit(findInnermostBlock (blocks @ [block])); false
             | _ -> true
         block.SelfVisit(findInnermostBlock [block])
         
@@ -1160,7 +1164,7 @@ namespace Microsoft.Research.Vcc
           let last = List.rev >> List.head
           match last kvp.Value with
             // keep only those where the target is a block with contracts
-            | Macro(_,"block",_) as block -> result.Add(kvp.Key, block)
+            | Block(_,_,Some _) as block -> result.Add(kvp.Key, block)
             | _ -> ()
         result
         
@@ -1180,13 +1184,14 @@ namespace Microsoft.Research.Vcc
                    markForReInsertion tgt decl
                    Some(Comment(ec, "__vcc__ pushed decl into block"))
               | _ -> None
-          | Macro(ec, "block", bl :: contracts) as block ->
+          | Block (ec, ss, Some cs) as block ->
             let declsToMoveHere = 
               match declsToReinsert.TryGetValue block with
                 | true, decls -> decls
                 | _ -> []
-            let newBlock = Expr.MkBlock(declsToMoveHere @ [bl.SelfMap(moveDecls block)])
-            Some(Macro(ec, "block",  newBlock::contracts))
+            match Expr.MkBlock(declsToMoveHere @ [block.SelfMap (moveDecls block)]) with
+                | Block (ec,ss',None) -> Some (Block(ec,ss',Some cs))
+                | _ -> die()
           | _ -> None
         block.SelfMap(moveDecls Expr.Bogus)
             

@@ -214,10 +214,10 @@ namespace Microsoft.Research.Vcc
           | x::xs -> loop (x::acc) xs
         loop []
       let rec stmtalize = function
-        | Block(ec, []) -> [Block(ec, [])]
-        | Block(ec, stmts) ->
+        | Block(ec, [], cso) -> [Block(ec, [], cso)]
+        | Block(ec, stmts, cso) ->
           let last, stmts' = splitLast stmts
-          [Block({ec with Type = Type.Void}, stmts' @ stmtalize last)]
+          [Block({ec with Type = Type.Void}, stmts' @ stmtalize last, cso)]
         | expr when ignoreType expr.Type -> [expr]
         | expr ->
           let ecVoid = {expr.Common with Type = Type.Void}
@@ -231,10 +231,10 @@ namespace Microsoft.Research.Vcc
         | Loop(ec, inv, writes, variants, stmts) -> Some(Loop(ec, List.map self inv, List.map self writes, List.map self variants, Expr.MkBlock(stmtalize (self stmts))))
         | Stmt(ec, expr) when not (ignoreType expr.Type) -> Some(Expr.MkBlock(stmtalize (self expr)))
         | Atomic(ec, args, expr) -> Some(Atomic(ec, List.map self args, Expr.MkBlock(stmtalize (self expr))))
-        | Block(ec, []) -> None
-        | Block(ec, stmts) ->
+        | Block(ec, [], _) -> None
+        | Block(ec, stmts, cso) ->
           let last, stmts' = splitLast stmts
-          Some(Block(ec, (stmts' |> List.map self |> List.map stmtalize |> List.concat) @ [ self last ]))
+          Some(Block(ec, (stmts' |> List.map self |> List.map stmtalize |> List.concat) @ [ self last ], cso))
           
         | _ -> None
         
@@ -242,13 +242,13 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let flattenBlocks self = function
-      | Expr.Block(ec, stmts) ->
+      | Expr.Block(ec, stmts, cso) ->
         let rec loop acc = function
           | [] -> List.rev acc
-          | Expr.Block(_, nested) :: stmts -> loop acc (nested @ stmts)
+          | Expr.Block(_, nested, _) :: stmts -> loop acc (nested @ stmts)
           | Expr.Comment(_, comment) :: stmts when comment.StartsWith("__vcc__") -> loop acc stmts
           | stmt :: stmts -> loop (self stmt :: acc) stmts
-        Some(Expr.Block(ec, loop [] stmts))
+        Some(Expr.Block(ec, loop [] stmts, cso))
       | _ -> None
         
     // ============================================================================================================
@@ -256,11 +256,11 @@ namespace Microsoft.Research.Vcc
     let handleStackAllocations =
       
       let insertAfterVarDecls toInsert = function
-        | Expr.Block(ec, stmts) -> 
+        | Expr.Block(ec, stmts, cso) -> 
           let rec loop decls = function
             | (VarDecl _ as vd) :: stmts-> loop (vd::decls) stmts
             | stmts -> List.rev decls @ toInsert @ stmts
-          Expr.Block(ec, loop [] stmts)
+          Expr.Block(ec, loop [] stmts, cso)
         | e -> Expr.MkBlock(toInsert @ [e])
             
       let handleFunction (f : Function) =

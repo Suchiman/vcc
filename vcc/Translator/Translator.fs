@@ -987,7 +987,7 @@ namespace Microsoft.Research.Vcc
       let trAtomic trStmt env (ec:C.ExprCommon) objs body =
         let rec split acc = function
           | C.Stmt (_, C.Macro (_, "begin_update", [])) :: xs -> List.rev acc, xs
-          | C.Block (_, xs) :: xs' -> split acc (xs @ xs')
+          | C.Block (_, xs, _) :: xs' -> split acc (xs @ xs')
           | x :: xs -> split (x :: acc) xs
           | [] -> [], List.rev acc
         
@@ -1000,7 +1000,7 @@ namespace Microsoft.Research.Vcc
         let (objs, claims) = List.partition (fun (e:C.Expr) -> e.Type <> C.Type.SpecPtr C.Claim) objs
         let (before, after) =
           match body with
-            | C.Block (_, lst) -> split [] lst
+            | C.Block (_, lst, _) -> split [] lst
             | _ -> [], [body]
         let (save, oldState) = saveState "beforeAtomic"
         let ctx = { ClaimChecks = []; ClaimInits = [] }
@@ -1144,7 +1144,7 @@ namespace Microsoft.Research.Vcc
 
         try         
           match stmt with
-            | C.Expr.Block (_, stmts) -> 
+            | C.Expr.Block (_, stmts, _) -> 
               List.concat (List.map self stmts)
             | C.Expr.Comment (_, s) -> 
               [B.Stmt.Comment s]
