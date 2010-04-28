@@ -267,7 +267,9 @@
     <Content Include="Resources\VerifiedCCompilerAddin.AddIn">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="VccAddin.AddIn" />
+    <None Include="VccAddin.AddIn">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
