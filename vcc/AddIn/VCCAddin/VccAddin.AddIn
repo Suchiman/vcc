@@ -5,10 +5,10 @@
 		<Version>9.0</Version>
 	</HostApplication>
 	<Addin>
-		<FriendlyName>Vcc Add-in</FriendlyName>
-		<Description>Vcc Add-in</Description>
-		<AboutBoxDetails>PLACE HOLDER\r\nCopyright (C) Microsoft Corporation.  All Rights Reserved.</AboutBoxDetails>
-		<AboutIconData>@AboutIcon</AboutIconData>
+		<FriendlyName>Microsoft Research Vcc Addin</FriendlyName>
+		<Description>Microsoft Research Vcc Addin</Description>
+		<AboutBoxDetails>Copyright (c) Microsoft Corporation. All Rights Reserved.</AboutBoxDetails>
+		<AboutIconLocation>Icon.ico</AboutIconLocation>
 		<Assembly>VerifiedCCompilerAddin.dll</Assembly>
 		<FullClassName>VerifiedCCompilerAddin.VCCConnect</FullClassName>
 		<LoadBehavior>1</LoadBehavior>
