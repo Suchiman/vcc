@@ -104,8 +104,12 @@ namespace Microsoft.Research.Vcc
       let ensuresForWrites = List.filter (fun (e:Expr) -> isPtrToPrimitive e.Type) >> List.map extraEnsuresFor >> List.concat
       
       let inferForBlocksWithContracts self = function
-        | Expr.Macro(ec, "block", [ b; req; Macro(eec, "block_ensures", ens); (Macro(_, "block_writes", writes) as ws); vrs; rds ]) ->
-          Some(Expr.Macro(ec, "block", [self b; req; Macro(eec, "block_ensures", ens @ (ensuresForWrites writes)); ws; vrs; rds]))
+        | Expr.Block(ec, ss, Some cs) ->
+            Some (Expr.Block (ec, (List.map self ss), Some {requires = cs.requires;
+                                                            ensures = cs.ensures @ (ensuresForWrites cs.writes);
+                                                            reads = cs.reads;
+                                                            writes = cs.writes;
+                                                            decreases = cs.decreases;}))
         | _ -> None
         
       function
@@ -152,16 +156,16 @@ namespace Microsoft.Research.Vcc
           | Assume _ -> true
           | _ -> false
         let repl self = function
-          | Block (ec, stmts) ->
+          | Block (ec, stmts, cs) ->
             let rec aux env acc = function
               | AssertAssume (_, CallMacro (_, name', _, args)) as x :: xs when name' = name ->
                 aux (updateEnv env args) acc xs
-              | Block (_, stmts) :: xs when List.forall is_assert_assume stmts ->
+              | Block (_, stmts, _) :: xs when List.forall is_assert_assume stmts ->
                 aux env acc (stmts @ xs)                
               | x :: xs ->
                 aux env (apply doIt env x :: acc) xs
               | [] ->
-                Block (ec, List.rev acc)
+                Block (ec, List.rev acc, cs)
             Some (aux env [] stmts)
           | expr -> 
             if doIt then applyEnv env self expr

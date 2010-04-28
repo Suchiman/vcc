@@ -197,12 +197,12 @@ namespace Microsoft.Research.Vcc
     
   let ignoreEffects e =
     let aux self = function 
-      | Block (_, stmts) ->
+      | Block (_, stmts, _) ->
         let rec last = function
           | [x] -> x
           | _ :: xs -> last xs
           | [] -> die()
-        Some (self (last stmts)) 
+        Some (self (last stmts))
       | _ -> None
     (e:Expr).SelfMap aux 
     

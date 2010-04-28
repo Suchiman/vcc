@@ -94,7 +94,7 @@ namespace Microsoft.Research.Vcc
           | None -> pureCheck (); None
           | Some _ -> ret [selfs expr]      
         
-      | Block (c, stmts) ->
+      | Block (c, stmts, _) ->
         pureCheck ()
         match enclosing with
           | None -> None
@@ -458,7 +458,7 @@ namespace Microsoft.Research.Vcc
             | Type.Ref { Kind = (Struct|Union) } -> Some (Macro({ c with Type = Type.MathStruct}, "map_get", List.map self args))
             | _ -> None
             
-        | Block(_,_) -> None
+        | Block(_,_,_) -> None
 
         | e ->
           if isRefToStruct e.Type then
@@ -623,7 +623,7 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================    
 
-    let liftBlocksWithContracts decls = 
+    let liftBlocksWithContracts decls =
     
       let currentFunctionName = ref ""
       let blockFunctionDecls = ref []
@@ -642,7 +642,7 @@ namespace Microsoft.Research.Vcc
         block.SelfVisit(findLabels)
         block.SelfVisit(reportError)
         
-      let findLocalsAndTurnIntoParameters fBefore fAfter (exprs: list<Expr>) =
+      let findLocalsAndTurnIntoParameters fBefore fAfter (body : list<Expr>) (cs : BlockContract) =
         let inMap = new Dict<_,_>()
         let outMap = new Dict<_,_>()
         let localsThatGoIn = ref []
@@ -672,35 +672,45 @@ namespace Microsoft.Research.Vcc
           | VarWrite(_, vs, expr) -> List.iter addOut vs; true
           | Macro(_, "out", [Ref(_, v)]) -> addOut v; false
           | _ -> true
+
+        let replLocalsEnsures self (e : Expr) =
+          // inside of ensures, we need to replace references to in-parameters in the context of old
+          // to their out-parameters counter part
+          // if we find such an occurrence, we suppress warnings about old not referring to state
+          // as we leave old in because we don't know if it contains other references to state
+          let rec fixupLocalsInEnsures seenOld varReplaced self = function
+            | Expr.Old(ec, (Macro(_, "prestate", []) as ps), e) -> 
+              let varReplaced = ref false
+              let e' = e.SelfMap(fixupLocalsInEnsures true varReplaced)
+              let tok = if !varReplaced then new WarningSuppressingToken (e'.Token, 9106) :> Token else e'.Token
+              Some(Old({ec with Token = tok}, ps, e'))
+            | Expr.Ref(_, v) when not seenOld -> Some(v |> vMap outMap |> vMap inMap |> mkRef)
+            | Expr.Ref(_, v) when     seenOld -> 
+              let v' = vMap inMap v
+              if v <> v' then
+                varReplaced := true
+                Some(mkRef v')
+              else None
+            | _ -> None
+          let dummy = ref false
+          Some (e.SelfMap(fixupLocalsInEnsures false dummy));
+          //| Expr.Ref(ec, v) -> Some(Expr.Ref(ec, vMap inMap v))
+          //| Expr.VarWrite(ec, vs, e) -> Some(Expr.VarWrite(ec, List.map (vMap inMap) vs, self e))
+          //| _ -> None
                     
-        let replLocals self = function
-          | Expr.Macro(ec, "block_ensures", rqs) ->
-            // inside of ensures, we need to replace references to in-parameters in the context of old
-            // to their out-parameters counter part
-            // if we find such an occurrence, we suppress warnings about old not referring to state
-            // as we leave old in because we don't know if it contains other references to state
-            let rec fixupLocalsInRequires seenOld varReplaced self = function
-              | Expr.Old(ec, (Macro(_, "prestate", []) as ps), e) -> 
-                let varReplaced = ref false
-                let e' = e.SelfMap(fixupLocalsInRequires true varReplaced)
-                let tok = if !varReplaced then new WarningSuppressingToken (e'.Token, 9106) :> Token else e'.Token
-                Some(Old({ec with Token = tok}, ps, e'))
-              | Expr.Ref(_, v) when not seenOld -> Some(v |> vMap outMap |> vMap inMap |> mkRef)
-              | Expr.Ref(_, v) when     seenOld -> 
-                let v' = vMap inMap v
-                if v <> v' then
-                  varReplaced := true
-                  Some(mkRef v')
-                else None
-              | _ -> None
-            let dummy = ref false
-            Some(Expr.Macro(ec, "block_ensures", List.map (fun (e:Expr) -> e.SelfMap(fixupLocalsInRequires false dummy)) rqs))
+        let replLocalsNonEnsures self = function
           | Expr.Ref(ec, v) -> Some(Expr.Ref(ec, vMap inMap v))
           | Expr.VarWrite(ec, vs, e) -> Some(Expr.VarWrite(ec, List.map (vMap inMap) vs, self e))
           | _ -> None
           
-        List.iter (fun (e : Expr) -> e.SelfVisit findLocals) exprs
-        List.map (fun (e : Expr) -> e.SelfMap replLocals) exprs, !localsThatGoIn, vMap inMap, !localsThatGoOut, vMap outMap
+        List.iter (List.iter (fun (e : Expr) -> e.SelfVisit findLocals)) (body :: cs.requires :: cs.ensures :: cs.reads :: cs.writes :: [cs.decreases])
+        let body' = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) body
+        let contract = {requires = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.requires;
+                        ensures = List.map (fun (e : Expr) -> e.SelfMap replLocalsEnsures) cs.ensures;
+                        reads = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.reads;
+                        writes = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.writes;
+                        decreases = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.decreases}
+        body', contract, !localsThatGoIn, vMap inMap, !localsThatGoOut, vMap outMap
           
       let findReferencesBeforeAndAfter (fn : Function) block =
         let before = new Dict<_,_>()
@@ -721,51 +731,45 @@ namespace Microsoft.Research.Vcc
         List.iter (fun v -> before.Add(v, true)) fn.Parameters
         (Option.get fn.Body).SelfVisit(findThem)
         match block with
-          | Expr.Macro(_, "block", [ _b; _r; Macro(_, "block_ensures", ensures); _w; _v; _rd ]) ->
-            List.iter (fun (e:Expr) -> e.SelfVisit(findThemInEnsures)) ensures
+          | Expr.Block(_, ss, Some cs) ->
+            List.iter (fun (e:Expr) -> e.SelfVisit(findThemInEnsures)) cs.ensures
           | _ -> die()
         fVar before, fVar after
           
       let rec liftBlocks findRefs currentBlockId blockPrefix self = function
-        | Expr.Macro(ec, "block", block :: blockContracts) as b ->
+        | Expr.Block(ec, block, Some cs) as b ->
           let blockId = (!currentBlockId).ToString()
           incr currentBlockId
           reportErrorForJumpsOutOfBlock b
-          let block' = block.SelfMap(liftBlocks findRefs (ref 0) (blockPrefix + blockId + "#"))
+          let block' = List.map (fun (x : Expr) -> x.SelfMap(liftBlocks findRefs (ref 0) (blockPrefix + blockId + "#"))) block
           let fBefore, fAfter = findRefs b
-          match findLocalsAndTurnIntoParameters fBefore fAfter (block' :: blockContracts) with
-            | [ body; 
-                Expr.Macro(_, "block_requires", rqs); 
-                Expr.Macro(_, "block_ensures", ens); 
-                Expr.Macro(_, "block_writes", wrs);
-                Expr.Macro(_, "block_decreases",vrs);
-                Expr.Macro(_, "block_reads", rds) ], localsThatGoIn, inMap, localsThatGoOut, outMap ->
-              let mkSetOutPar (v : Variable) =
-                Expr.VarWrite(voidBogusEC(), [outMap v], mkRef (inMap v))
-              let stripInitialPure = List.map (function | Pure(_, e) -> e | e -> e)
-                
-              let fn = { Token = body.Token
-                         IsSpec = false
-                         OrigRetType = Type.Void
-                         RetType = Type.Void
-                         Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut
-                         TypeParameters = []
-                         Name = !currentFunctionName + "#block#" + blockPrefix + blockId
-                         Requires = stripInitialPure rqs
-                         Ensures = stripInitialPure ens
-                         Writes = stripInitialPure wrs
-                         Variants = stripInitialPure vrs
-                         Reads = stripInitialPure rds
-                         CustomAttr = []
-                         Body = Some (Expr.MkBlock(body :: List.map mkSetOutPar localsThatGoOut))
-                         IsProcessed = true
+          match findLocalsAndTurnIntoParameters fBefore fAfter block' cs with
+            | ss, cs', localsThatGoIn, inMap, localsThatGoOut, outMap ->
+                let mkSetOutPar (v : Variable) =
+                  Expr.VarWrite(voidBogusEC(), [outMap v], mkRef (inMap v))
+                let stripInitialPure = List.map (function | Pure(_, e) -> e | e -> e)
+
+                let fn = { Token = b.Token;
+                         IsSpec = false;
+                         OrigRetType = Type.Void;
+                         RetType = Type.Void;
+                         Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut;
+                         TypeParameters = [];
+                         Name = !currentFunctionName + "#block#" + blockPrefix + blockId;
+                         Requires = stripInitialPure cs'.requires;
+                         Ensures = stripInitialPure cs'.ensures;
+                         Writes = stripInitialPure cs'.writes;
+                         Variants = stripInitialPure cs'.decreases;
+                         Reads = stripInitialPure cs'.reads;
+                         CustomAttr = [];
+                         Body = Some (Expr.MkBlock(ss @ List.map mkSetOutPar localsThatGoOut));
+                         IsProcessed = true;
                          UniqueId = CAST.unique() } : Function
-              blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
-              let call = Expr.Call(ec, fn, [], List.map mkRef localsThatGoIn)
-              let result = if localsThatGoOut.Length = 0 then call else Expr.VarWrite(ec, localsThatGoOut, call)
-              Some(result)
-            | _ -> die()
-        | _ -> None  
+                blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
+                let call = Expr.Call(ec, fn, [], List.map mkRef localsThatGoIn)
+                let result = if localsThatGoOut.Length = 0 then call else Expr.VarWrite(ec, localsThatGoOut, call)
+                Some(result)
+        | _ as e -> None  
     
       for d in decls do
         match d with

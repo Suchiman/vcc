@@ -191,11 +191,11 @@ namespace Microsoft.Research.Vcc
       let doDecl = function
         | Top.FunctionDecl ({ RetType = Void; Body = Some b } as f) ->
           let rec addIt = function
-            | Block (c, lst) as e ->
+            | Block (c, lst, cs) as e ->
               let rec repl acc = function
-                | [x] -> Block (c, List.rev (addIt x :: acc))
+                | [x] -> Block (c, List.rev (addIt x :: acc), cs)
                 | x :: xs -> repl (x :: acc) xs
-                | [] -> Block (c, [])
+                | [] -> Block (c, [], cs)
               repl [] lst
             | Comment (c, "empty") -> Return (c, None)
             | x -> x
@@ -487,7 +487,7 @@ namespace Microsoft.Research.Vcc
                 | _ -> None
               [Macro(voidBogusEC(), "spec", [ghostUpdate.SelfMap fixupResult])]
         let stmts = VarDecl(cvoid, tmp) :: Atomic(cvoid, atomicParameters, Expr.MkBlock (op':: ghostUpdate')) :: [res]
-        Some(Block(ec, stmts))
+        Some(Block(ec, stmts, None))
       | _ -> None
     
     // ============================================================================================================
@@ -601,13 +601,13 @@ namespace Microsoft.Research.Vcc
           | Macro(_, "=", [Ref(_,v); e]) when v = tmp -> e
           | Macro(_, "=", [fieldExpr; e]) -> 
             Macro({tgt.Common with Type = tgt.Type}, "vs_updated", [buildDotExpr tgt fieldExpr; self e])
-          | Block(_, stmts) -> recurse tgt stmts
+          | Block(_, stmts, _) -> recurse tgt stmts
           | _ -> tgt
         and recurse = List.fold foldBackFieldAssignments' 
         recurse (Macro({ec with Type = Type.MathStruct}, "vs_zero",  []))
         
       function
-        | Block(ec, stmts) when shouldHandle (ec.Type) ->
+        | Block(ec, stmts, _) when shouldHandle (ec.Type) ->
             match splitOfLast stmts with 
               | Ref(ec, v), stmts' -> Some(foldBackFieldAssignments ec v stmts')
               | _ -> None        
