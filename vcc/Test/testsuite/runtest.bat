@@ -1,3 +1,4 @@
-echo "Refresh file to see test results" > ts.out
-start n ts.out
-..\..\Host\bin\debug\vcc.exe /b:/smoke /s vcc2 done examples > ts.out
+echo // Beginning of tests; refresh file to see test results > ts_out.txt
+start ts_out.txt
+..\..\Host\bin\debug\vcc.exe /smoke /s vcc2 done examples >> ts_out.txt
+echo // End of tests >> ts_out.txt
