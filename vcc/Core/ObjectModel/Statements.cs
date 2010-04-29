@@ -34,11 +34,18 @@ namespace Microsoft.Research.Vcc {
     IExpression Object { get; }
   }
 
+  public interface IVccUnwrappingStatement : IVccStatement
+  {
+    IExpression Object { get; }
+    IStatement Body { get; }
+  }
+
   public interface IVccCodeVisitor : ICodeVisitor
   {
     void Visit(IVccSpecStatement specStatement);
     void Visit(IVccWrapStatement wrapStatement);
     void Visit(IVccUnwrapStatement unwrapStatement);
+    void Visit(IVccUnwrappingStatement unwrappingStatment);
   }
 
   internal class StatementGroup : Statement {
@@ -514,6 +521,60 @@ namespace Microsoft.Research.Vcc {
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       return this.WrappedStatement.HasErrors;
+    }
+  }
+
+  public sealed class VccUnwrappingStatement : Statement, IVccUnwrappingStatement
+  {
+
+    public VccUnwrappingStatement(Statement body, Expression expr, ISourceLocation sourceLocation)
+      : base(sourceLocation) {
+      this.expression = expr;
+      this.body = body;
+    }
+
+    private VccUnwrappingStatement(BlockStatement containingBlock, VccUnwrappingStatement template)
+      : base(containingBlock, template) {
+      this.expression = template.expression.MakeCopyFor(containingBlock);
+      this.body = template.body.MakeCopyFor(containingBlock);
+    }
+
+    public Expression Expression {
+      get { return this.expression; }
+    }
+    private readonly Expression expression;
+
+    public Statement Body {
+      get { return this.body; }
+    }
+    private readonly Statement body;
+
+    public void Dispatch(IVccCodeVisitor visitor) {
+      visitor.Visit(this);
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      return this.Expression.HasErrors || this.Expression.HasSideEffect(true) || this.Body.HasErrors;
+    }
+
+    public override void SetContainingBlock(BlockStatement containingBlock) {
+      base.SetContainingBlock(containingBlock);
+      this.body.SetContainingBlock(containingBlock);
+      DummyExpression containingExpression = new DummyExpression(containingBlock, SourceDummy.SourceLocation);
+      this.expression.SetContainingExpression(containingExpression);
+    }
+
+    public override Statement MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      return new VccUnwrappingStatement(containingBlock, this);
+    }
+
+    IExpression IVccUnwrappingStatement.Object {
+      get { return this.expression.ProjectAsIExpression(); }
+    }
+
+    IStatement IVccUnwrappingStatement.Body {
+      get { return this.body; }
     }
   }
 }

@@ -1,3 +1,4 @@
+
 //-----------------------------------------------------------------------------
 //
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
@@ -39,8 +40,6 @@ _(SPEC_TYPE(type))
 _(bool \mine(\object, ...);)
 _(bool \valid(\object);)
 _(bool \wrapped(\object);)
-_(void \wrap(\object);)
-_(void \unwrap(\object);)
 _(\objset \extent(\object);)
 _(\object \alloc(\type);)
 _(\objset \universe();)
@@ -48,6 +47,12 @@ _(bool \thread_local(\object);)
 _(bool \mutable(\object);)
 _(\objset \array_range(\object, unsigned __int64);)
 _(\objset \span(\object);)
+
+// Internal functions - not meant to be called directly, unless you know what you are doing
+
+_(void \wrap(\object);)
+_(void \unwrap(\object);)
+_(void \free(\object p) _(writes p) _(writes \extent(p));)
 
 #else 
 
