@@ -1464,6 +1464,14 @@ namespace Microsoft.Research.Vcc
         let expr = this.DoExpression unwrapStmt.Object
         stmtRes <- C.Call(this.StmtCommon unwrapStmt, findFunctionOrDie "\\unwrap" unwrapStmt, [], [expr])
 
+      member this.Visit (unwrappingStmt:IVccUnwrappingStatement) : unit =
+        let wrap = findFunctionOrDie "\\wrap" unwrappingStmt
+        let unwrap = findFunctionOrDie "\\unwrap" unwrappingStmt
+        let cmn = this.StmtCommon unwrappingStmt
+        let expr = this.DoExpression(unwrappingStmt.Object)
+        let body = this.DoStatement(unwrappingStmt.Body)
+        stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" expr), unwrap, [], [expr]); body; C.Expr.Call((stmtToken "wrap(@@)" expr), wrap, [], [expr]) ], None )
+
       member this.Visit (stackArrayCreate:IStackArrayCreate) : unit = 
         match stackArrayCreate with
         | :? CreateStackArray as createStackArray -> 

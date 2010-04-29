@@ -217,16 +217,23 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     override protected Statement ParseSpecStatements(TokenSet followers) {
-      bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
+
+      if (this.CurrentSpecToken == SpecToken.Unwrapping) {
+        return this.ParseUnwrappingStatement(followers);
+      }
+      
+      bool savedInSpecCode = this.EnterSpecBlock();
       List<Statement> statements = new List<Statement>();
       SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost, SpecToken.Assert, SpecToken.Assume);
       TokenSet followersOrRightParen = followers | Token.RightParenthesis;
+      SourceLocationBuilder slb;
+
       while (expectedSpecTokens[this.CurrentSpecToken]) {
         switch (this.CurrentSpecToken) {
           case SpecToken.Ghost:
-            SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+            slb = this.GetSourceLocationBuilderForLastScannedToken();
             this.GetNextToken();
             var stmt = this.ParseStatement(followers | Token.RightParenthesis);
             slb.UpdateToSpan(stmt.SourceLocation);
@@ -248,9 +255,21 @@ namespace Microsoft.Research.Vcc.Parsing
         if (this.currentToken == Token.Semicolon)
           this.SkipOverTo(Token.Semicolon, followersOrRightParen | Token.Identifier);
       }
-      this.LeaveSpecBlock(savedInSpecCode);
       this.SkipOverTo(Token.RightParenthesis, followers);
+      this.LeaveSpecBlock(savedInSpecCode);
       return new StatementGroup(statements);
+    }
+
+    private Statement ParseUnwrappingStatement(TokenSet followers) {
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      this.GetNextToken();
+      bool savedInSpecCode = this.EnterSpecBlock();
+      var expr = this.ParseExpression(followers | Token.RightParenthesis);
+      this.Skip(Token.RightParenthesis);
+      this.LeaveSpecBlock(savedInSpecCode);
+      var body = this.ParseStatement(followers | Token.RightParenthesis);
+      slb.UpdateToSpan(body.SourceLocation);
+      return new VccUnwrappingStatement(body, expr, slb);
     }
 
     private AssertStatement ParseAssert(TokenSet followers) {
@@ -383,6 +402,14 @@ namespace Microsoft.Research.Vcc.Parsing
       return createStmt(expr, slb);
     }
 
+    protected override bool ReportErrorMoreSpecificErrorFor(Token token) {
+      if (this.InSpecCode && this.CurrentSpecToken != SpecToken.None) {
+        this.HandleError(Error.UnexpectedVccKeyword, this.scanner.GetIdentifierString());
+        return true;
+      }
+      return false;
+    }
+
     private SpecToken CurrentSpecToken {
       get {
         if (this.currentToken == Token.Identifier) {
@@ -405,6 +432,8 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Maintains;
             case "unwrap":
               return SpecToken.Unwrap;
+            case "unwrapping":
+              return SpecToken.Unwrapping;
             case "reads":
               return SpecToken.Reads;
             case "requires":
@@ -435,6 +464,7 @@ namespace Microsoft.Research.Vcc.Parsing
       Variant,
       Requires,
       Unwrap,
+      Unwrapping,
       Wrap,
       Writes,
     }
@@ -471,6 +501,16 @@ namespace Microsoft.Research.Vcc.Parsing
         this.bits |= (1ul << (int)t3);
         this.bits |= (1ul << (int)t4);
         this.bits |= (1ul << (int)t5);
+      }
+
+      public SpecTokenSet(SpecToken t1, SpecToken t2, SpecToken t3, SpecToken t4, SpecToken t5, SpecToken t6) {
+        this.bits = 0;
+        this.bits |= (1ul << (int)t1);
+        this.bits |= (1ul << (int)t2);
+        this.bits |= (1ul << (int)t3);
+        this.bits |= (1ul << (int)t4);
+        this.bits |= (1ul << (int)t5);
+        this.bits |= (1ul << (int)t6);
       }
 
       [System.Diagnostics.DebuggerNonUserCode]

@@ -7,8 +7,9 @@ struct SafeString {
   char *content;
   _(invariant len < capacity)
   _(invariant content[len] == '\0')
-  _(invariant \mine((\any[capacity])content))
+  _(invariant \mine((char[capacity])content))
 };
+
 /*{append}*/
 void sstr_append_char(struct SafeString *s, char c)
   _(requires \wrapped(s))
@@ -17,12 +18,13 @@ void sstr_append_char(struct SafeString *s, char c)
   _(writes s)
 {
   _(unwrapping s) {
-    _(unwrapping (\any[s->capacity])(s->content)) {
+    _(unwrapping (char[s->capacity])(s->content)) {
       s->content[s->len++] = c;
       s->content[s->len] = '\0';
     }
   }
 }
+
 /*{alloc}*/
 struct SafeString *sstr_alloc(unsigned capacity)
   _(requires capacity > 0)
@@ -43,22 +45,14 @@ struct SafeString *sstr_alloc(unsigned capacity)
   s->len = 0;
   s->content[0] = '\0';
 
-  _(wrap (\any[capacity])(s->content))
+  _(wrap (char[capacity])(s->content))
   _(wrap s)
 
   return s;
 }
 
-/*
-int sstr_index_of(struct SafeString *s, char c)
-  requires(wrapped(s))
-  ensures(result >= 0 ==> s->content[result] == c)
-{
-  unsigned i;
-  for (i = 0; i < s->len; ++i)
-    if (s->content[i] == c) return (int)i;
-  return -1;
-}
-*/
 /*`
+Verification of SafeString#adm succeeded.
+Verification of sstr_append_char succeeded.
+Verification of sstr_alloc succeeded.
 `*/

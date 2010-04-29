@@ -743,7 +743,8 @@ namespace Microsoft.Research.Vcc
                                     "\\span",         "_vcc_span";
                                     "\\unwrap",       "_vcc_unwrap";
                                     "\\thread_local", "_vcc_thread_local2";
-                                    "\\universe",     "_vcc_set_universe" ]
+                                    "\\free",         "_vcc_free";
+                                    "\\universe",     "_vcc_set_universe"; ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";
                                       "\\state",  "state_t";

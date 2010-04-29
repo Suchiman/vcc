@@ -3798,22 +3798,28 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.SkipTo(followers, Error.None);
     }
 
+    protected virtual bool ReportErrorMoreSpecificErrorFor(Token token) {
+      return false;
+    }
+
     protected void Skip(Token token) 
       //^ requires token != Token.EndOfFile;
     {
       if (this.currentToken == token)
         this.GetNextToken();
       else {
-        switch (token) {
-          case Token.Colon: this.HandleError(Error.SyntaxError, ":"); break;
-          case Token.Identifier: this.HandleError(Error.ExpectedIdentifier); break;
-          case Token.LeftBrace: this.HandleError(Error.ExpectedLeftBrace); break;
-          case Token.LeftParenthesis: this.HandleError(Error.SyntaxError, "("); break;
-          case Token.RightBrace: this.HandleError(Error.ExpectedRightBrace); break;
-          case Token.RightBracket: this.HandleError(Error.ExpectedRightBracket); break;
-          case Token.RightParenthesis: this.HandleError(Error.ExpectedRightParenthesis); break;
-          case Token.Semicolon: this.HandleError(Error.ExpectedSemicolon); break;
-          default: this.HandleError(Error.UnexpectedToken, this.scanner.GetTokenSource()); break;
+        if (!this.ReportErrorMoreSpecificErrorFor(token)) {
+          switch (token) {
+            case Token.Colon: this.HandleError(Error.SyntaxError, ":"); break;
+            case Token.Identifier: this.HandleError(Error.ExpectedIdentifier); break;
+            case Token.LeftBrace: this.HandleError(Error.ExpectedLeftBrace); break;
+            case Token.LeftParenthesis: this.HandleError(Error.SyntaxError, "("); break;
+            case Token.RightBrace: this.HandleError(Error.ExpectedRightBrace); break;
+            case Token.RightBracket: this.HandleError(Error.ExpectedRightBracket); break;
+            case Token.RightParenthesis: this.HandleError(Error.ExpectedRightParenthesis); break;
+            case Token.Semicolon: this.HandleError(Error.ExpectedSemicolon); break;
+            default: this.HandleError(Error.UnexpectedToken, this.scanner.GetTokenSource()); break;
+          }
         }
       }
     }
