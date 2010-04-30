@@ -703,13 +703,13 @@ namespace Microsoft.Research.Vcc
           | Expr.VarWrite(ec, vs, e) -> Some(Expr.VarWrite(ec, List.map (vMap inMap) vs, self e))
           | _ -> None
           
-        List.iter (List.iter (fun (e : Expr) -> e.SelfVisit findLocals)) (body :: cs.requires :: cs.ensures :: cs.reads :: cs.writes :: [cs.decreases])
+        List.iter (List.iter (fun (e : Expr) -> e.SelfVisit findLocals)) (body :: cs.Requires :: cs.Ensures :: cs.Reads :: cs.Writes :: [cs.Decreases])
         let body' = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) body
-        let contract = {requires = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.requires;
-                        ensures = List.map (fun (e : Expr) -> e.SelfMap replLocalsEnsures) cs.ensures;
-                        reads = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.reads;
-                        writes = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.writes;
-                        decreases = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.decreases}
+        let contract = {Requires = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Requires;
+                        Ensures = List.map (fun (e : Expr) -> e.SelfMap replLocalsEnsures) cs.Ensures;
+                        Reads = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Reads;
+                        Writes = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Writes;
+                        Decreases = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Decreases}
         body', contract, !localsThatGoIn, vMap inMap, !localsThatGoOut, vMap outMap
           
       let findReferencesBeforeAndAfter (fn : Function) block =
@@ -732,7 +732,7 @@ namespace Microsoft.Research.Vcc
         (Option.get fn.Body).SelfVisit(findThem)
         match block with
           | Expr.Block(_, ss, Some cs) ->
-            List.iter (fun (e:Expr) -> e.SelfVisit(findThemInEnsures)) cs.ensures
+            List.iter (fun (e:Expr) -> e.SelfVisit(findThemInEnsures)) cs.Ensures
           | _ -> die()
         fVar before, fVar after
           
@@ -756,11 +756,11 @@ namespace Microsoft.Research.Vcc
                          Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut;
                          TypeParameters = [];
                          Name = !currentFunctionName + "#block#" + blockPrefix + blockId;
-                         Requires = stripInitialPure cs'.requires;
-                         Ensures = stripInitialPure cs'.ensures;
-                         Writes = stripInitialPure cs'.writes;
-                         Variants = stripInitialPure cs'.decreases;
-                         Reads = stripInitialPure cs'.reads;
+                         Requires = stripInitialPure cs'.Requires;
+                         Ensures = stripInitialPure cs'.Ensures;
+                         Writes = stripInitialPure cs'.Writes;
+                         Variants = stripInitialPure cs'.Decreases;
+                         Reads = stripInitialPure cs'.Reads;
                          CustomAttr = [];
                          Body = Some (Expr.MkBlock(ss @ List.map mkSetOutPar localsThatGoOut));
                          IsProcessed = true;

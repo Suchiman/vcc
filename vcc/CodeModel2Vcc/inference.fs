@@ -105,11 +105,7 @@ namespace Microsoft.Research.Vcc
       
       let inferForBlocksWithContracts self = function
         | Expr.Block(ec, ss, Some cs) ->
-            Some (Expr.Block (ec, (List.map self ss), Some {requires = cs.requires;
-                                                            ensures = cs.ensures @ (ensuresForWrites cs.writes);
-                                                            reads = cs.reads;
-                                                            writes = cs.writes;
-                                                            decreases = cs.decreases;}))
+            Some (Expr.Block (ec, (List.map self ss), Some {cs with Ensures = cs.Ensures @ (ensuresForWrites cs.Writes)}))
         | _ -> None
         
       function
