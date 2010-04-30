@@ -422,11 +422,11 @@ namespace Microsoft.Research.Vcc
        if (contract = null) then
          block'
        else 
-        let cs = {CAST.requires = [ for req in contract.Preconditions -> this.DoPrecond req ];
-                  CAST.ensures  = [ for ens in contract.Postconditions -> this.DoPostcond ens ];
-                  CAST.reads    = [ for rd in contract.Reads -> this.DoExpression rd ];
-                  CAST.writes   = [ for wr in contract.Writes -> this.DoExpression wr ];
-                  CAST.decreases= [ for vr in contract.Variants -> this.DoMethodVariant vr ]}
+        let cs = {Requires = [ for req in contract.Preconditions -> this.DoPrecond req ];
+                  Ensures  = [ for ens in contract.Postconditions -> this.DoPostcond ens ];
+                  Reads    = [ for rd in contract.Reads -> this.DoExpression rd ];
+                  Writes   = [ for wr in contract.Writes -> this.DoExpression wr ];
+                  Decreases= [ for vr in contract.Variants -> this.DoMethodVariant vr ]} : CAST.BlockContract
         match block' with
           | C.Expr.Block (ec,ss,_) -> C.Expr.Block (ec,ss, Some cs)
           | _ -> C.Expr.Block ({ Type = block'.Type; Token = block'.Token }, [block'], Some cs)

@@ -1149,11 +1149,11 @@ namespace Microsoft.Research.Vcc
             | Ref(_, v) -> insertOrJoin v; false
             | VarWrite(_, vs, _) -> List.iter insertOrJoin vs; true
             | Block(ec,ss,Some cs) ->
-              List.iter self cs.requires
-              List.iter self cs.ensures
-              List.iter self cs.reads
-              List.iter self cs.writes
-              List.iter self cs.decreases
+              List.iter self cs.Requires
+              List.iter self cs.Ensures
+              List.iter self cs.Reads
+              List.iter self cs.Writes
+              List.iter self cs.Decreases
               Block(ec,ss,None).SelfVisit(findInnermostBlock (blocks @ [block])); false
             | _ -> true
         block.SelfVisit(findInnermostBlock [block])
