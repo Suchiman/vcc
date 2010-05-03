@@ -238,12 +238,14 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.LeaveSpecBlock(savedInSpecCode);
     }
 
-    protected void ParseNonLocalDeclaration(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal)
+    protected void ParseNonLocalDeclaration(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<Specifier> specSpecifiers = null)
       //^ requires this.currentToken != Token.EndOfFile;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       List<TemplateParameterDeclarator>/*?*/ templateParameters = this.ParseTemplateParameters(followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
-      List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, followers|TS.DeclaratorStart|Token.Semicolon|Token.Colon);
+      List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, specSpecifiers, followers | TS.DeclaratorStart | Token.Semicolon | Token.Colon);
+      if (specSpecifiers != null) specifiers.AddRange(specSpecifiers);
+
       bool savedInSpecCode = this.InSpecCode;
       bool seenSpecToken = false;
       if (this.currentToken == Token.Specification) {
@@ -252,7 +254,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         followers |= Token.RightParenthesis;
         this.GetNextToken();
         this.Skip(Token.LeftParenthesis);
-        specifiers.AddRange(this.ParseSpecifiers(namespaceMembers, typeMembers, followers|TS.DeclaratorStart|Token.Semicolon|Token.Colon));
+        specifiers.AddRange(this.ParseSpecifiers(namespaceMembers, typeMembers, null, followers|TS.DeclaratorStart|Token.Semicolon|Token.Colon));
       }
       VccFunctionTypeExpression/*?*/ functionTypeExpression = null;
       TypedefNameSpecifier/*?*/ typeDefName = GetTypedefNameSpecifier(specifiers);
@@ -326,7 +328,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected List<Statement> ParseLocalDeclaration(TokenSet followers) {
       // Because, in C, a local declaration may introduce a type definition to the global scope
       // pass in the namespace declaration members so that these definitions can be found later. 
-      List<Specifier> specifiers = this.ParseSpecifiers(this.namespaceDeclarationMembers, null, followers|Token.Semicolon|Token.BitwiseXor);
+      List<Specifier> specifiers = this.ParseSpecifiers(this.namespaceDeclarationMembers, null, null, followers|Token.Semicolon|Token.BitwiseXor);
       bool isLocalTypeDef = VccCompilationHelper.ContainsStorageClassSpecifier(specifiers, Token.Typedef);
       List<Statement> result = new List<Statement>();
       while (TS.DeclaratorStart[this.currentToken]) {
@@ -1141,7 +1143,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (this.currentToken == Token.LeftParenthesis){
         this.GetNextToken();
         if (!TS.DeclarationStart[this.currentToken])
-          specifiers = this.ParseSpecifiers(new List<INamespaceDeclarationMember>(), null, followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon); 
+          specifiers = this.ParseSpecifiers(new List<INamespaceDeclarationMember>(), null, null, followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon); 
         result = this.ParseDeclarator(followers|Token.RightParenthesis, requireIdentifier);
         this.Skip(Token.RightParenthesis);
       } else if (this.currentToken == Token.Colon) {
@@ -1506,7 +1508,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         return ParseVarArgsParameter(followers);
 
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
-      List<Specifier> specifiers = this.ParseSpecifiers(null, null, followers | TS.DeclaratorStart);
+      List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers | TS.DeclaratorStart);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[specifiers.Count-1].SourceLocation);
       Declarator declarator = this.ParseDeclarator(followers);
       declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
@@ -1524,11 +1526,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       return declarator;
     }
 
-    protected List<Specifier> ParseSpecifiers(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember>/*?*/ typeMembers, TokenSet followers) {
+    protected List<Specifier> ParseSpecifiers(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember>/*?*/ typeMembers, List<Specifier> initialSpecifiers, TokenSet followers) {
       List<Specifier> result = new List<Specifier>();
+      if (initialSpecifiers != null) result.AddRange(initialSpecifiers);
       bool typeDefNameIsAllowed = true;
       bool typeDefNameMustReferencePrimitive = false;
       TokenSet followersOrSpecifierStart = followers | TS.SpecifierStart;
+      IList<Specifier> misplacedSpecifiers;
       for (; ; ) {
         switch (this.currentToken) {
           case Token.Auto:
@@ -1568,17 +1572,17 @@ namespace Microsoft.Research.Vcc.Parsing {
             break;
           case Token.Struct:
             typeDefNameIsAllowed = false;
-            LookAndWarnForMisplacedDeclspec(result);
-            result.Add(new StructSpecifier(this.ParseStructuredDeclarationOrDefinition(namespaceMembers, typeMembers, followersOrSpecifierStart, true)));
+            misplacedSpecifiers = MoveMisplacedSpecifiers(result);
+            result.Add(new StructSpecifier(this.ParseStructuredDeclarationOrDefinition(namespaceMembers, typeMembers, followersOrSpecifierStart, misplacedSpecifiers, true)));
             goto default;
           case Token.Union:
             typeDefNameIsAllowed = false;
-            LookAndWarnForMisplacedDeclspec(result);
-            result.Add(new UnionSpecifier(this.ParseStructuredDeclarationOrDefinition(namespaceMembers, typeMembers, followersOrSpecifierStart, false)));
+            misplacedSpecifiers = MoveMisplacedSpecifiers(result);
+            result.Add(new UnionSpecifier(this.ParseStructuredDeclarationOrDefinition(namespaceMembers, typeMembers, followersOrSpecifierStart, misplacedSpecifiers, false)));
             goto default;
           case Token.Enum:
             typeDefNameIsAllowed = false;
-            LookAndWarnForMisplacedDeclspec(result);
+            misplacedSpecifiers = MoveMisplacedSpecifiers(result);
             result.Add(new EnumSpecifier(this.ParseEnumDeclarationOrDefinition(namespaceMembers, followersOrSpecifierStart)));
             goto default;
           case Token.Const:
@@ -1619,20 +1623,32 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected void LookAndWarnForMisplacedDeclspec(IList<Specifier> specifiers) {
+
+
+    protected IList<Specifier> MoveMisplacedSpecifiers(IList<Specifier> specifiers) {
+
+      List<Specifier> result = null;
+
       foreach (var specifier in specifiers) {
         DeclspecSpecifier declspec = specifier as DeclspecSpecifier;
         if (declspec != null) {
           var modEnum = declspec.Modifiers.GetEnumerator();
           if (modEnum.MoveNext()) {
-            if (modEnum.Current.ToString() == "Microsoft.Contracts.StringVccAttr" && modEnum.MoveNext()) {
+            if (modEnum.Current.ToString() == "System.Diagnostics.Contracts.CodeContract.StringVccAttr" && modEnum.MoveNext()) {
               VccByteStringLiteral str = modEnum.Current as VccByteStringLiteral;
-              if (str != null && (str.Value.ToString() == "dynamic_owns" || str.Value.ToString() == "volatile_owns"))
-                this.HandleError(declspec.SourceLocation, Error.VccAttributeOnTypeDef);
+              var val = str != null ? str.Value.ToString() : null;
+              if (val == "dynamic_owns" || val == "volatile_owns" || val == "claimable") {
+                if (result == null) result = new List<Specifier>();
+                result.Add(declspec);
+              }
             }
           }
+        } else if (specifier is SpecTypeSpecifier) {
+          if (result == null) result = new List<Specifier>();
+          result.Add(specifier);
         }
       }
+      return result;
     }
 
     protected DeclspecSpecifier ParseDeclspec(TokenSet followers)
@@ -1676,13 +1692,14 @@ namespace Microsoft.Research.Vcc.Parsing {
       return new NameDeclaration(this.nameTable.GetNameFor(newname), unmangeledName.SourceLocation);
     }
 
-    protected TypeExpression ParseStructuredDeclarationOrDefinition(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isStruct) 
+    protected TypeExpression ParseStructuredDeclarationOrDefinition(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, IList<Specifier> specifiers, bool isStruct) 
       //^ requires this.currentToken == Token.Struct || this.currentToken == Token.Union;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       List<FieldDeclaration>/*?*/ savedSpecificationFields = this.currentSpecificationFields;
       List<TypeInvariant>/*?*/ savedTypeInvariants = this.currentTypeInvariants;
-      List<DeclspecSpecifier> extendedAttributes = new List<DeclspecSpecifier>();
+      List<Specifier> extendedAttributes = new List<Specifier>();
+      if (specifiers != null) extendedAttributes.AddRange(specifiers);
       this.currentSpecificationFields = null;
       this.currentTypeInvariants = null;
       SourceLocationBuilder sctx = this.GetSourceLocationBuilderForLastScannedToken();
@@ -3382,7 +3399,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<LocalDeclarationsStatement> result = new List<LocalDeclarationsStatement>();
       TokenSet followersOrTypeStart = followers | TS.TypeStart;
       while (this.CurrentTokenStartsTypeExpression()) {
-        List<Specifier> specifiers = this.ParseSpecifiers(null, null, followers|Token.Semicolon);
+        List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers|Token.Semicolon);
         List<LocalDeclaration> declarations = new List<LocalDeclaration>(1);
         Declarator declarator = this.ParseDeclarator(followers|Token.Comma|Token.Semicolon, true);
         TypeExpression type = this.GetTypeExpressionFor(specifiers, declarator);
@@ -3460,7 +3477,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       List<INamespaceDeclarationMember> members = new List<INamespaceDeclarationMember>();
-      List<Specifier> specifiers = this.ParseSpecifiers(members, null, followers|Token.Multiply|Token.RightParenthesis|Token.LeftBracket);
+      List<Specifier> specifiers = this.ParseSpecifiers(members, null, null, followers|Token.Multiply|Token.RightParenthesis|Token.LeftBracket);
       Declarator declarator = this.ParseDeclarator(followers);
       slb.UpdateToSpan(declarator.SourceLocation);
       TypeExpression type = this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, (IdentifierDeclarator)null), declarator);

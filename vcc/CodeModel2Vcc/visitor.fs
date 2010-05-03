@@ -109,22 +109,22 @@ namespace Microsoft.Research.Vcc
         let attrName = getAttrTypeName attr
         match attrName with
         | "Microsoft.Cci.DummyType" -> yield! []   
-        | "Microsoft.Contracts.SkipVerification" -> yield C.SkipVerification
-        | "Microsoft.Contracts.NoAdmissibility" -> yield C.NoAdmissibility
-        | "Microsoft.Contracts.IsAdmissibilityCheck" -> yield C.IsAdmissibilityCheck
-        | "Microsoft.Contracts.BoolBoogieAttr" -> 
+        | "System.Diagnostics.Contracts.CodeContract.SkipVerification" -> yield C.SkipVerification
+        | "System.Diagnostics.Contracts.CodeContract.NoAdmissibility" -> yield C.NoAdmissibility
+        | "System.Diagnostics.Contracts.CodeContract.IsAdmissibilityCheck" -> yield C.IsAdmissibilityCheck
+        | "System.Diagnostics.Contracts.CodeContract.BoolBoogieAttr" -> 
           let (name, value) = getAttrArgs attr
           yield C.BoolBoogieAttr (name, (value :?> int) <> 0)
-        | "Microsoft.Contracts.StringVccAttr" ->
+        | "System.Diagnostics.Contracts.CodeContract.StringVccAttr" ->
           let (name, value) = getAttrArgs attr
           yield C.VccAttr (name, (value :?> string))
-        | "Microsoft.Contracts.IntBoogieAttr" ->
+        | "System.Diagnostics.Contracts.CodeContract.IntBoogieAttr" ->
           let (name, value) = getAttrArgs attr
           yield C.IntBoogieAttr (name, (value :?> int))
-        | "Microsoft.Contracts.GroupDeclAttr" ->
+        | "System.Diagnostics.Contracts.CodeContract.GroupDeclAttr" ->
           let (name, value) = getAttrArgs attr
           yield C.GroupDeclAttr (name)
-        | "Microsoft.Contracts.InGroupDeclAttr" ->
+        | "System.Diagnostics.Contracts.CodeContract.InGroupDeclAttr" ->
           let (name, value) = getAttrArgs attr
           yield C.InGroupDeclAttr (name)
         | other when other.StartsWith("Microsoft.Contracts") ->
@@ -563,7 +563,7 @@ namespace Microsoft.Research.Vcc
                   typeNameMap.Add(td.Name, td)
                   topDecls <- C.Top.TypeDecl (td) :: topDecls
                   C.Type.Ref td
-                else if name = "_vcc_claim_struct" then
+                else if name = "_vcc_claim_struct" || name = "\\claim_struct" then
                   C.Type.Claim
                 else if name.Contains ("._FixedArrayOfSize") then
                   match fields with

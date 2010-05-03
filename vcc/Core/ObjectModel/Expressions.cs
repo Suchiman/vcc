@@ -1626,7 +1626,7 @@ namespace Microsoft.Research.Vcc {
 
     static private bool IsRecordType(INamespaceTypeDefinition t) {
       foreach (ICustomAttribute attr in t.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "Microsoft.Contracts.StringVccAttr") {
+        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.StringVccAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
           if (args.Count == 2) {
             IMetadataConstant attrName = args[0] as IMetadataConstant;
@@ -3111,7 +3111,7 @@ namespace Microsoft.Research.Vcc {
 
     bool TypeIsMarkedAsGroup(ITypeDefinition type) {
       foreach (ICustomAttribute attr in type.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "Microsoft.Contracts.GroupDeclAttr") {
+        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.GroupDeclAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
           if (args.Count == 1) {
             IMetadataConstant groupName = args[0] as IMetadataConstant;
@@ -3124,7 +3124,7 @@ namespace Microsoft.Research.Vcc {
 
     bool TypeIsNamedMember(ITypeDefinition type) {
       foreach (ICustomAttribute attr in type.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "Microsoft.Contracts.StringVccAttr") {
+        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.StringVccAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
           if (args.Count == 2) {
             IMetadataConstant attrStr = args[0] as IMetadataConstant;
@@ -3413,7 +3413,7 @@ namespace Microsoft.Research.Vcc {
     public static bool IsGroupType(ITypeDefinition type)
     {
       foreach (ICustomAttribute attr in type.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "Microsoft.Contracts.GroupDeclAttr")
+        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.GroupDeclAttr")
           return true;
       }
       return false;
@@ -3422,7 +3422,7 @@ namespace Microsoft.Research.Vcc {
     bool TypeIsMarkedAsGroup(ITypeDefinition type)
     {
       foreach (ICustomAttribute attr in type.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "Microsoft.Contracts.GroupDeclAttr") {
+        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.GroupDeclAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
           if (args.Count == 1) {
             IMetadataConstant groupName = args[0] as IMetadataConstant;
@@ -4356,6 +4356,16 @@ namespace Microsoft.Research.Vcc {
     }
 
     public readonly IEnumerable<Expression> Modifiers;
+  }
+
+  public class SpecTypeSpecifier : Specifier
+  {
+    internal SpecTypeSpecifier(ParserV2.SpecToken token, ISourceLocation sourceLocation)
+      : base(sourceLocation) {
+        this.Token = token;
+    }
+
+    internal readonly ParserV2.SpecToken Token;
   }
 
   public class PrimitiveTypeSpecifier : Specifier {

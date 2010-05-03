@@ -1723,7 +1723,6 @@ namespace Microsoft.Research.Vcc {
       get {
         switch ((Error)this.Code) {
           case Error.PossibleMistakenNullStatement:
-          case Error.VccAttributeOnTypeDef:
           case Error.SizeOfUnknown:
           case Error.DiscardedContractAtDefinition:
           case Error.PotentialPrecedenceErrorInLogicalExpression:
