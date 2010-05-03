@@ -77,10 +77,11 @@ namespace Microsoft.Research.Vcc.Parsing
             break;
           default:
             this.HandleError(Error.UnexpectedVccKeyword, this.scanner.GetIdentifierString());
-            break;
+            goto exitLoop;
         }
         while (this.currentToken == Token.Semicolon) this.GetNextToken();
       }
+    exitLoop:
       this.SkipOverTo(Token.RightParenthesis, followers);
       this.LeaveSpecBlock(savedInSpecCode);
     }
@@ -244,6 +245,68 @@ namespace Microsoft.Research.Vcc.Parsing
         this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
         this.LeaveSpecBlock(savedInSpecCode);
       }
+    }
+
+    protected override List<Parameter> ParseParameterList(Parser.TokenSet followers) {
+      List<Parameter> result = new List<Parameter>();
+      this.Skip(Token.LeftParenthesis);
+      if (this.currentToken != Token.RightParenthesis) {
+        TokenSet followersOrCommaOrRightParentesisOrSpecification = followers | Token.Comma | Token.RightParenthesis | Token.Specification;
+        while (true) {
+          if (this.currentToken == Token.Specification) {
+            result.Add(this.ParseSpecParameter(followers | Token.RightParenthesis));
+            continue;
+          }
+          if (this.currentToken == Token.RightParenthesis)
+            break;
+          result.Add(this.ParseParameter(followersOrCommaOrRightParentesisOrSpecification));
+          if (this.currentToken == Token.Comma) {
+            this.GetNextToken();
+            continue;
+          }
+        }
+      }
+      return result;
+    }
+
+    private Parameter ParseParameter(TokenSet followers, bool isOut, SourceLocationBuilder slb) {
+      if (this.currentToken == Token.Range)
+        return ParseVarArgsParameter(followers);
+
+      List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers | TS.DeclaratorStart);
+      if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[specifiers.Count - 1].SourceLocation);
+      Declarator declarator = this.ParseDeclarator(followers);
+      declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
+      slb.UpdateToSpan(declarator.SourceLocation);
+      var result = new Parameter(specifiers, declarator, this.InSpecCode, isOut, slb);
+      this.SkipTo(followers);
+      return result;
+    }
+
+
+    private Parameter ParseSpecParameter(TokenSet followers) {
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      Parameter result;
+      this.GetNextToken();
+      bool savedInSpecCode = this.EnterSpecBlock();
+      this.Skip(Token.LeftParenthesis);
+      switch (this.CurrentSpecToken) {
+        case SpecToken.Ghost:
+          this.GetNextToken();
+          result = this.ParseParameter(followers|Token.RightParenthesis, false, slb);
+          break;
+        case SpecToken.Out:
+          this.GetNextToken();
+          result = this.ParseParameter(followers|Token.RightParenthesis, true, slb);
+          break;
+        default:
+          this.HandleError(Error.SyntaxError, "ghost or out");
+          result = this.ParseParameter(followers | Token.RightParenthesis);
+          break;
+      }
+      this.Skip(Token.RightParenthesis);
+      this.LeaveSpecBlock(savedInSpecCode);
+      return result;
     }
 
     override protected Statement ParseSpecStatements(TokenSet followers) {
@@ -446,6 +509,8 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Assert;
             case "assume":
               return SpecToken.Assume;
+            case "atomic":
+              return SpecToken.Atomic;
             case "axiom":
               return SpecToken.Axiom;
             case "claimable":
@@ -462,6 +527,8 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Invariant;
             case "maintains":
               return SpecToken.Maintains;
+            case "out":
+              return SpecToken.Out;
             case "unwrap":
               return SpecToken.Unwrap;
             case "unwrapping":
@@ -487,6 +554,7 @@ namespace Microsoft.Research.Vcc.Parsing
       None,
       Assert,
       Assume,
+      Atomic,
       Axiom,
       Claimable,
       DynamicOwns,
@@ -494,6 +562,7 @@ namespace Microsoft.Research.Vcc.Parsing
       Ghost,
       Invariant,
       Maintains,
+      Out,
       Reads,
       Variant,
       Requires,
@@ -511,6 +580,7 @@ namespace Microsoft.Research.Vcc.Parsing
       public static SpecTokenSet Contract = new SpecTokenSet(SpecToken.Ensures, SpecToken.Maintains, SpecToken.Reads, SpecToken.Requires, SpecToken.Writes);
       public static SpecTokenSet LoopContract = new SpecTokenSet(SpecToken.Invariant, SpecToken.Writes, SpecToken.Variant);
       public static SpecTokenSet TypeMember = new SpecTokenSet(SpecToken.Ghost, SpecToken.Invariant);
+      public static SpecTokenSet SpecParameter = new SpecTokenSet(SpecToken.Ghost, SpecToken.Out);
 
     }
 
