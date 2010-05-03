@@ -278,7 +278,7 @@ struct Foo {
 void foo(struct Foo *s) {}
 `
 testcase(6,5) : error VC9678: 'g' : group name redefinition
-testcase(4,5)-(4,89) : (Location of symbol related to previous error.)
+testcase(4,5)-(4,103) : (Location of symbol related to previous error.)
 `
 #include "vcc.h"
 
