@@ -1253,25 +1253,29 @@ namespace Microsoft.Research.Vcc {
   
   internal sealed class Parameter : SourceItem, ISpecItem {
 
-    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, ISourceLocation sourceLocation)
-      : this(typeSpecifiers, name, isSpec, sourceLocation, false) {
+    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, bool isOut, ISourceLocation sourceLocation)
+      : this(typeSpecifiers, name, isSpec, isOut, sourceLocation, false) {
     }
 
-    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, ISourceLocation sourceLocation, bool isVarArgs)
+    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, bool isOut, ISourceLocation sourceLocation, bool isVarArgs)
       : base(sourceLocation) {
       this.typeSpecifiers = typeSpecifiers;
       this.Name = name;
       this.isSpec = isSpec;
+      this.isOut = isOut;
       IsVarArgs = isVarArgs;
     }
 
     internal bool IsOut {
       get {
+        if (this.isOut) return true;
         foreach (var spec in this.typeSpecifiers)
           if (spec is OutSpecifier) return true;
         return false;
       }
     }
+    private readonly bool isOut;
+
 
     public bool IsSpec {
       get { return this.isSpec; }

@@ -1322,15 +1322,20 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
+    protected virtual List<Parameter> ParseParameterList(TokenSet followers) {
+      List<Parameter> result = new List<Parameter>();
+      this.Skip(Token.LeftParenthesis);
+      if (this.currentToken != Token.RightParenthesis)
+        this.ParseList(result, ts => this.ParseParameter(ts), followers);
+      return result;
+    }
+
     protected FunctionDeclarator ParseFunctionDeclarator(Declarator functionName, TokenSet followers)
       //^ requires this.currentToken == Token.LeftParenthesis;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(functionName.SourceLocation);
-      List<Parameter> parameters = new List<Parameter>();
-      this.Skip(Token.LeftParenthesis);
-      if (this.currentToken != Token.RightParenthesis)
-        this.ParseList(parameters, ts => this.ParseParameter(ts), followers);
+      List<Parameter> parameters = this.ParseParameterList(followers);
       
       // If the declarator is a pointer to a function declarator, exchange the
       // parameters:
@@ -1468,7 +1473,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       IName name = this.GetNameFor("__arglist");
       Declarator dec = new IdentifierDeclarator(new NameDeclaration(name, slb));
       slb.UpdateToSpan(dec.SourceLocation);
-      Parameter result = new Parameter(new List<Specifier>(0), dec, this.InSpecCode, slb, true);
+      Parameter result = new Parameter(new List<Specifier>(0), dec, this.InSpecCode, false, slb, true);
       this.SkipTo(followers);
       return result;
     }
@@ -1513,7 +1518,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       Declarator declarator = this.ParseDeclarator(followers);
       declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
       slb.UpdateToSpan(declarator.SourceLocation);
-      var result = new Parameter(specifiers, declarator, this.InSpecCode, slb);
+      var result = new Parameter(specifiers, declarator, this.InSpecCode, false, slb);
       this.SkipTo(followers);
       return result;
     }
