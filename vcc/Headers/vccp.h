@@ -32,6 +32,7 @@ typedef _Bool bool;
 
 _(typedef void *\object;)
 _(typedef __int64 \integer;)
+_(typedef struct \claim_struct { } ^\claim;)
 _(SPEC_TYPE(objset))
 _(SPEC_TYPE(thread))
 _(SPEC_TYPE(state))
@@ -47,12 +48,15 @@ _(bool \thread_local(\object);)
 _(bool \mutable(\object);)
 _(\objset \array_range(\object, unsigned __int64);)
 _(\objset \span(\object);)
+_(\type \typeof(\object);)
+_(bool \claims_obj(\claim, \object);)
+_(bool \is_claimable(\type);)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
 _(void \wrap(\object);)
 _(void \unwrap(\object);)
-_(void \free(\object p) _(writes p) _(writes \extent(p));)
+_(void \free(\object p) _(writes p, \extent(p));)
 
 #else 
 
@@ -367,15 +371,15 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
  ***/
 
 #define frameaxiom vcc_attr("frameaxiom", "")
-#define isadmissibilitycheck __declspec(Microsoft.Contracts.IsAdmissibilityCheck)
+#define isadmissibilitycheck __declspec(System.Diagnostics.Contracts.CodeContract.IsAdmissibilityCheck)
 #define ispure vcc_attr("is_pure", "")
 #define specmacro vcc_attr("specmacro", "")
 #define no_reads_check vcc_attr("no_reads_check", "")
 #define postconditionsanity vcc_attr("postcondition_sanity", "true")
 #define reads_check(f) vcc_attr("is_reads_check", #f)
-#define skipverification __declspec(Microsoft.Contracts.SkipVerification)
+#define skipverification __declspec(System.Diagnostics.Contracts.CodeContract.SkipVerification)
 #define usevccoptions(o) vcc_attr("extra_options", o)
-#define vcc_attr(k, v) __declspec(Microsoft.Contracts.StringVccAttr, k, v)
+#define vcc_attr(k, v) __declspec(System.Diagnostics.Contracts.CodeContract.StringVccAttr, k, v)
 #define _vcc_attr_asm_routine vcc_attr("asm_routine", "true")
 
 
@@ -384,7 +388,7 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
  ***/
 #define backing_member vcc_attr("backing_member", "")
 #define member_name(n) vcc_attr("member_name", #n)
-#define no_admissibility __declspec(Microsoft.Contracts.NoAdmissibility)
+#define no_admissibility __declspec(System.Diagnostics.Contracts.CodeContract.NoAdmissibility)
 #define register __specification
 
 #ifdef VCC_NO_SPLITS
@@ -392,10 +396,10 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
 #define vcs_keep_going(n)
 #else
 #define vcs_force_splits(n) \
-	__declspec(Microsoft.Contracts.IntBoogieAttr, "vcs_max_splits", n) \
-	__declspec(Microsoft.Contracts.IntBoogieAttr, "vcs_max_cost", 1)
+	__declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_splits", n) \
+	__declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_cost", 1)
 #define vcs_keep_going(n) \
-	__declspec(Microsoft.Contracts.IntBoogieAttr, "vcs_max_keep_going_splits", n)
+	__declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_keep_going_splits", n)
 #endif
 
 #define vcc(x) _concat_identifiers(_vcc_attr_, x)
@@ -413,8 +417,8 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
 
 
 /* Groups */
-#define in_group(n) __declspec(Microsoft.Contracts.InGroupDeclAttr, #n)
-#define def_group(n, ...) struct __VA_ARGS__ __declspec(Microsoft.Contracts.GroupDeclAttr, #n) { };
+#define in_group(n) __declspec(System.Diagnostics.Contracts.CodeContract.InGroupDeclAttr, #n)
+#define def_group(n, ...) struct __VA_ARGS__ __declspec(System.Diagnostics.Contracts.CodeContract.GroupDeclAttr, #n) { };
 bool _vcc_inv_group(const char *, bool);
 #define inv_group(n, i) __invariant (_vcc_inv_group(#n, i))
 

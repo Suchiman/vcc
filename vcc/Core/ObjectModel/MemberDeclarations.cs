@@ -246,18 +246,40 @@ namespace Microsoft.Research.Vcc {
       List<SourceCustomAttribute> result = new List<SourceCustomAttribute>(1);
       foreach (Specifier specifier in specifiers) {
         DeclspecSpecifier/*?*/ declSpec = specifier as DeclspecSpecifier;
-        if (declSpec == null) continue;
-        List<Expression> arguments = new List<Expression>(declSpec.Modifiers);
-        if (arguments.Count < 1) continue;
-        Expression attributeTypeName = arguments[0];
-        SimpleName/*?*/ simpleName = attributeTypeName as SimpleName;
-        if (!(simpleName != null || attributeTypeName is QualifiedName || attributeTypeName is AliasQualifiedName)) continue;
-        if (simpleName != null && IsUnsupportedDeclspec(simpleName.Name.Value)) continue;
-        AttributeTypeExpression attributeType = new AttributeTypeExpression(attributeTypeName);
-        arguments.RemoveAt(0);
-        SourceCustomAttribute custAttr = new SourceCustomAttribute(AttributeTargets.Method, attributeType, arguments, declSpec.SourceLocation);
-        custAttr.SetContainingExpression(containingExpression);
-        result.Add(custAttr);
+        if (declSpec != null) {
+          List<Expression> arguments = new List<Expression>(declSpec.Modifiers);
+          if (arguments.Count < 1) continue;
+          Expression attributeTypeName = arguments[0];
+          SimpleName/*?*/ simpleName = attributeTypeName as SimpleName;
+          if (!(simpleName != null || attributeTypeName is QualifiedName || attributeTypeName is AliasQualifiedName)) continue;
+          if (simpleName != null && IsUnsupportedDeclspec(simpleName.Name.Value)) continue;
+          AttributeTypeExpression attributeType = new AttributeTypeExpression(attributeTypeName);
+          arguments.RemoveAt(0);
+          SourceCustomAttribute custAttr = new SourceCustomAttribute(AttributeTargets.All, attributeType, arguments, declSpec.SourceLocation);
+          custAttr.SetContainingExpression(containingExpression);
+          result.Add(custAttr);
+        } else {
+          SpecTypeSpecifier specTypeSpec = specifier as SpecTypeSpecifier;
+          if (specTypeSpec != null) {
+            var attrTypeName = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(containingExpression.ContainingBlock.Compilation.NameTable, "StringVccAttr");
+            AttributeTypeExpression attrType = new AttributeTypeExpression(attrTypeName);
+            List<Expression> args = new List<Expression>();
+            switch (specTypeSpec.Token) {
+              case ParserV2.SpecToken.Claimable:
+                args.Add(new CompileTimeConstant("claimable", specTypeSpec.SourceLocation));
+                break;
+              case ParserV2.SpecToken.DynamicOwns:
+                args.Add(new CompileTimeConstant("dynamic_owns", specTypeSpec.SourceLocation));
+                break;
+              default:
+                throw new NotImplementedException();
+            }
+            args.Add(new CompileTimeConstant("true", specTypeSpec.SourceLocation));
+            SourceCustomAttribute custAttr = new SourceCustomAttribute(AttributeTargets.All, attrType, args, specTypeSpec.SourceLocation);
+            custAttr.SetContainingExpression(containingExpression);
+            result.Add(custAttr);
+          }
+        }
       }
       result.TrimExcess();
       return result;

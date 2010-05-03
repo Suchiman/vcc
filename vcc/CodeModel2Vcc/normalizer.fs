@@ -744,6 +744,9 @@ namespace Microsoft.Research.Vcc
                                     "\\unwrap",       "_vcc_unwrap";
                                     "\\thread_local", "_vcc_thread_local2";
                                     "\\free",         "_vcc_free";
+                                    "\\claims_obj",   "_vcc_claims_obj";
+                                    "\\is_claimable", "_vcc_is_claimable";
+                                    "\\typeof",       "_vcc_typeof";
                                     "\\universe",     "_vcc_set_universe"; ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";

@@ -122,20 +122,20 @@ namespace Microsoft.Research.Vcc {
 
   internal abstract class VccStructuredTypeDeclaration : NamespaceStructDeclaration, IDeclaration
   {
-    protected VccStructuredTypeDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<DeclspecSpecifier> extendedAttributes, ISourceLocation sourceLocation)
+    protected VccStructuredTypeDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<Specifier> extendedAttributes, ISourceLocation sourceLocation)
       : base(null, Flags.None, name, new List<GenericTypeParameterDeclaration>(0), new List<TypeExpression>(0), members, sourceLocation) {
       this.extendedAttributes = extendedAttributes;
     }
 
     protected VccStructuredTypeDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccStructuredTypeDeclaration template)
       : base(containingNamespaceDeclaration, template) {
-      this.extendedAttributes = new List<DeclspecSpecifier>(template.extendedAttributes);
+      this.extendedAttributes = new List<Specifier>(template.extendedAttributes);
     }
 
     protected override List<ICustomAttribute> GetAttributes() {
       var result = base.GetAttributes();
       IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
-        IteratorHelper.GetConversionEnumerable<DeclspecSpecifier, Specifier>(this.extendedAttributes),
+        this.extendedAttributes,
         new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
       foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
         result.Add(new CustomAttribute(extAttr));
@@ -155,7 +155,7 @@ namespace Microsoft.Research.Vcc {
       if (typeContract != null) typeContract.SetContainingType(this);
     }
 
-    readonly IEnumerable<DeclspecSpecifier> extendedAttributes;
+    readonly IEnumerable<Specifier> extendedAttributes;
 
     public override TypeMemberVisibility GetDefaultVisibility() {
       return TypeMemberVisibility.Public;
@@ -214,7 +214,7 @@ namespace Microsoft.Research.Vcc {
   }
 
   internal abstract class VccNestedStructuredTypeDeclaration : NestedStructDeclaration {
-    protected VccNestedStructuredTypeDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<DeclspecSpecifier> extendedAttributes, ISourceLocation sourceLocation)
+    protected VccNestedStructuredTypeDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<Specifier> extendedAttributes, ISourceLocation sourceLocation)
       : base(null, Flags.None|(Flags)TypeMemberVisibility.Public, name, new List<GenericTypeParameterDeclaration>(0), new List<TypeExpression>(0), members, sourceLocation)
     {
       this.extendedAttributes = extendedAttributes;
@@ -223,16 +223,16 @@ namespace Microsoft.Research.Vcc {
     protected VccNestedStructuredTypeDeclaration(TypeDeclaration containingTypeDeclaration, VccNestedStructuredTypeDeclaration template)
       : base(containingTypeDeclaration, template)
     {
-      this.extendedAttributes = new List<DeclspecSpecifier>(template.extendedAttributes);
+      this.extendedAttributes = new List<Specifier>(template.extendedAttributes);
     }
 
     protected VccNestedStructuredTypeDeclaration(TypeDeclaration containingTypeDeclaration, VccNestedStructuredTypeDeclaration template, List<ITypeDeclarationMember> members)
       : base(containingTypeDeclaration, template, members)
     {
-      this.extendedAttributes = new List<DeclspecSpecifier>(template.ExtendedAttributes);
+      this.extendedAttributes = new List<Specifier>(template.ExtendedAttributes);
     }
 
-    public IEnumerable<DeclspecSpecifier> ExtendedAttributes
+    public IEnumerable<Specifier> ExtendedAttributes
     {
       get
       {
@@ -240,12 +240,12 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
-    readonly IEnumerable<DeclspecSpecifier> extendedAttributes;
+    readonly IEnumerable<Specifier> extendedAttributes;
 
     protected override List<ICustomAttribute> GetAttributes() {
       var result = base.GetAttributes();
       IEnumerable<SourceCustomAttribute> attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(
-        IteratorHelper.GetConversionEnumerable<DeclspecSpecifier, Specifier>(this.extendedAttributes),
+        this.extendedAttributes,
         new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation));
       foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
         result.Add(new CustomAttribute(extAttr));
@@ -284,7 +284,7 @@ namespace Microsoft.Research.Vcc {
 
   internal class VccStructDeclaration : VccStructuredTypeDeclaration {
 
-    internal VccStructDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<DeclspecSpecifier> extendedAttributes, ISourceLocation sourceLocation)
+    internal VccStructDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<Specifier> extendedAttributes, ISourceLocation sourceLocation)
       : base(name, members, extendedAttributes, sourceLocation) {
     }
 
@@ -325,7 +325,7 @@ namespace Microsoft.Research.Vcc {
 
   internal class VccNestedStructDeclaration : VccNestedStructuredTypeDeclaration {
 
-    internal VccNestedStructDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<DeclspecSpecifier> extendedAttributes, ISourceLocation sourceLocation)
+    internal VccNestedStructDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<Specifier> extendedAttributes, ISourceLocation sourceLocation)
       : base(name, members, extendedAttributes, sourceLocation)
     {
     }
@@ -397,7 +397,7 @@ namespace Microsoft.Research.Vcc {
   }
 
   internal class VccUnionDeclaration : VccStructuredTypeDeclaration {
-    internal VccUnionDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<DeclspecSpecifier> extendedAttributes, ISourceLocation sourceLocation)
+    internal VccUnionDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<Specifier> extendedAttributes, ISourceLocation sourceLocation)
       : base(name, members, extendedAttributes, sourceLocation) 
     {
     }
@@ -459,7 +459,7 @@ namespace Microsoft.Research.Vcc {
 
   internal class VccNestedUnionDeclaration : VccNestedStructuredTypeDeclaration {
 
-    internal VccNestedUnionDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<DeclspecSpecifier> extendedAttributes, ISourceLocation sourceLocation)
+    internal VccNestedUnionDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<Specifier> extendedAttributes, ISourceLocation sourceLocation)
       : base(name, members, extendedAttributes, sourceLocation)
     {
     }

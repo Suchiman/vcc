@@ -8,27 +8,28 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Collections.Generic;
 
-namespace System.Diagnostics.Contracts {
+namespace System.Diagnostics.Contracts
+{
 
-  public static partial class CodeContract {
-    public class Pair<A, B> {
+  public static partial class CodeContract
+  {
+    public class Pair<A, B>
+    {
       public A a;
       public B b;
     }
 
-    public static bool InLambda<V>(bool cond, V res)
-    {
+    public static bool InLambda<V>(bool cond, V res) {
       return true;
     }
 
-    public static Map<K, V> Lambda<K, V>(Predicate<K> P)
-    {
+    public static Map<K, V> Lambda<K, V>(Predicate<K> P) {
       return null;
     }
 
-    public abstract class Map<Key, Value> {
-      abstract public Value this[Key k]
-      {
+    public abstract class Map<Key, Value>
+    {
+      abstract public Value this[Key k] {
         get;
         set;
       }
@@ -125,79 +126,77 @@ namespace System.Diagnostics.Contracts {
       }
     }
 
-    unsafe public struct TypedPtr {
+    unsafe public struct TypedPtr
+    {
       void* ptr;
 
-      public TypedPtr(void* p)
-      {
+      public TypedPtr(void* p) {
         ptr = p;
       }
 
-      public static bool operator ==(TypedPtr p1, TypedPtr p2)
-      {
+      public static bool operator ==(TypedPtr p1, TypedPtr p2) {
         return p1.ptr == p2.ptr;
       }
 
-      public static bool operator !=(TypedPtr p1, TypedPtr p2)
-      {
+      public static bool operator !=(TypedPtr p1, TypedPtr p2) {
         return p1.ptr != p2.ptr;
       }
 
-      public override int GetHashCode()
-      {
+      public override int GetHashCode() {
         return base.GetHashCode();
       }
 
-      public override bool Equals(object obj)
-      {
+      public override bool Equals(object obj) {
         return base.Equals(obj);
       }
     }
-  }
-}
 
-namespace Microsoft.Contracts {
-
-  [AttributeUsage(AttributeTargets.Class)]
-  public class NoAdmissibility : Attribute {
-  }
-
-  [AttributeUsage(AttributeTargets.Method)]
-  public sealed class SkipVerification : Attribute {
-  }
-
-  [AttributeUsage(AttributeTargets.Method)]
-  public sealed class IsAdmissibilityCheck : Attribute
-  {
-  }
-
-  [AttributeUsage(AttributeTargets.Method)]
-  public sealed class IntBoogieAttr : Attribute
-  {
-    public IntBoogieAttr(string name, int val) {
+    [AttributeUsage(AttributeTargets.Class)]
+    public class NoAdmissibility : Attribute
+    {
     }
-  }
 
-  [AttributeUsage(AttributeTargets.Method)]
-  public sealed class BoolBoogieAttr : Attribute
-  {
-    public BoolBoogieAttr(string name, int val) {
+    [AttributeUsage(AttributeTargets.Method)]
+    public sealed class SkipVerification : Attribute
+    {
     }
-  }
 
-  [AttributeUsage(AttributeTargets.Method)]
-  public sealed class StringVccAttr : Attribute {
-    public StringVccAttr(string name, string val) { }
-  }
+    [AttributeUsage(AttributeTargets.Method)]
+    public sealed class IsAdmissibilityCheck : Attribute
+    {
+    }
 
-  [AttributeUsage(AttributeTargets.Class)]
-  public sealed class GroupDeclAttr : Attribute {
-    public GroupDeclAttr(string name) { }
-  }
+    [AttributeUsage(AttributeTargets.Method)]
+    public sealed class IntBoogieAttr : Attribute
+    {
+      public IntBoogieAttr(string name, int val) {
+      }
+    }
 
-  [AttributeUsage(AttributeTargets.Class)]
-  public sealed class InGroupDeclAttr : Attribute {
-    public InGroupDeclAttr(string name) { }
+    [AttributeUsage(AttributeTargets.Method)]
+    public sealed class BoolBoogieAttr : Attribute
+    {
+      public BoolBoogieAttr(string name, int val) {
+      }
+    }
+
+    [AttributeUsage(AttributeTargets.All)]
+    public sealed class StringVccAttr : Attribute
+    {
+      public StringVccAttr(string name, string val) { }
+    }
+
+    [AttributeUsage(AttributeTargets.Class)]
+    public sealed class GroupDeclAttr : Attribute
+    {
+      public GroupDeclAttr(string name) { }
+    }
+
+    [AttributeUsage(AttributeTargets.Class)]
+    public sealed class InGroupDeclAttr : Attribute
+    {
+      public InGroupDeclAttr(string name) { }
+    }
   }
 }
 

@@ -3592,9 +3592,6 @@
   <data name="ExpectedConstantExpression" xml:space="preserve">
     <value>Expected constant expression</value>
   </data>
-  <data name="VccAttributeOnTypeDef" xml:space="preserve">
-    <value>Verification type attributes placed at this location are currently ignored; place them between the struct/union keyword and the type name.</value>
-  </data>
   <data name="ArgumentMustBePassedWithOutKeyword" xml:space="preserve">
     <value>Argument '{0}' must be passed with the 'out' keyword.</value>
   </data>

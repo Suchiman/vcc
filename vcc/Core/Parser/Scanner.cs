@@ -442,14 +442,11 @@ namespace Microsoft.Research.Vcc.Parsing {
           break;
         case '\\':
           if (inSpecCode) goto default;
-          this.endPos--;
           if (this.IsIdentifierStartChar(c)) {
             token = Token.Identifier;
-            this.endPos++;
             this.ScanIdentifier();
             break;
           }
-          this.endPos++;
           if (this.GetCurrentChar() == '\r') {
             c = this.GetNextCharAndIncrementEndPos();
             if (c == '\n') this.GetNextCharAndIncrementEndPos();
@@ -535,7 +532,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     internal string GetTokenSource() {
       int endPos = this.endPos;
-      return this.Substring(this.startPos, endPos - this.startPos);
+      return this.Substring(this.startPos, Math.Max(endPos - this.startPos, 1));
     }
 
     private void HandleError(Error error, params string[] messageParameters) {

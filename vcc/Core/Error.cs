@@ -45,7 +45,6 @@ namespace Microsoft.Research.Vcc {
     UnexpectedToken,
     WarningDirective,
     ExpectedConstantExpression, 
-    VccAttributeOnTypeDef,
     ArgumentShouldNotBePassedWithOutKeyword,
     ArgumentMustBePassedWithOutKeyword,
     IllegalIndirection,

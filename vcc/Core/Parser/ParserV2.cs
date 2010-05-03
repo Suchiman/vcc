@@ -49,12 +49,16 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     override protected void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
-      bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
+      bool savedInSpecCode = this.EnterSpecBlock();
       this.Skip(Token.LeftParenthesis);
-      SpecTokenSet allowedSpecTokens = new SpecTokenSet(SpecToken.Axiom, SpecToken.Ghost);
+
+      if (STS.SpecTypeModifiers[this.CurrentSpecToken]) {
+        this.ParseGlobalDeclarationWithSpecModifiers(members, globalMembers, followers, savedInSpecCode);
+        return;
+      }
       TokenSet followersOrDeclarationStart = followers | TS.DeclarationStart | Token.Semicolon | Token.RightParenthesis;
-      while ((TS.DeclarationStart[this.currentToken] || allowedSpecTokens[this.CurrentSpecToken]) && this.currentToken != Token.EndOfFile) {
+      while ((TS.DeclarationStart[this.currentToken] || STS.Global[this.CurrentSpecToken]) && this.currentToken != Token.EndOfFile) {
         switch (this.CurrentSpecToken) {
           case SpecToken.Axiom:
             SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
@@ -81,6 +85,34 @@ namespace Microsoft.Research.Vcc.Parsing
       this.LeaveSpecBlock(savedInSpecCode);
     }
 
+    private void ParseGlobalDeclarationWithSpecModifiers(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers, bool savedInSpecCode) {
+      List<Specifier> specifiers = new List<Specifier>();
+      TokenSet followersOrCommaOrRightParentesisOrSpecToken = followers | Token.Comma | Token.RightParenthesis | Token.Identifier;
+      while (true) {
+        if (this.currentToken == Token.RightParenthesis)
+          break;
+        if (this.currentToken == Token.Comma) {
+          this.GetNextToken();
+          continue;
+        }
+        switch (this.CurrentSpecToken) {
+          case SpecToken.DynamicOwns:
+          case SpecToken.Claimable:
+            specifiers.Add(new SpecTypeSpecifier(this.CurrentSpecToken, this.scanner.SourceLocationOfLastScannedToken));
+            this.GetNextToken();
+            this.SkipTo(followersOrCommaOrRightParentesisOrSpecToken);
+            continue;
+          case SpecToken.None:
+            this.SkipTo(followersOrCommaOrRightParentesisOrSpecToken);
+            break;
+        }
+      }
+
+      this.SkipOverTo(Token.RightParenthesis, followers);
+      this.LeaveSpecBlock(savedInSpecCode);
+      this.ParseNonLocalDeclaration(members, globalMembers, followers, true, specifiers);
+    }
+
     override protected void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       TokenSet expectedTokens = TS.DeclarationStart | Token.Colon;
       while (expectedTokens[this.currentToken]) {
@@ -93,16 +125,16 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     new protected void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
-      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Ghost, SpecToken.Invariant);
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      while (expectedSpecTokens[this.CurrentSpecToken]) {
+      while (STS.TypeMember[this.CurrentSpecToken]) {
         switch (this.CurrentSpecToken) {
           case SpecToken.Invariant:
             this.ParseTypeInvariant(followers | Token.RightParenthesis | Token.Identifier);
             break;
           case SpecToken.Ghost:
+            this.GetNextToken();
             this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis | Token.Identifier, false);
             break;
         }
@@ -128,7 +160,6 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     protected override LoopContract ParseLoopContract(Parser.TokenSet followers) {
-      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Invariant, SpecToken.Writes, SpecToken.Variant);
       List<LoopInvariant> invariants = new List<LoopInvariant>();
       List<Expression> writes = new List<Expression>();
       List<LoopVariant> variants = new List<LoopVariant>();
@@ -136,7 +167,7 @@ namespace Microsoft.Research.Vcc.Parsing
         bool savedInSpecCode = this.EnterSpecBlock();
         this.GetNextToken();
         this.Skip(Token.LeftParenthesis);
-        while (expectedSpecTokens[this.CurrentSpecToken]) {
+        while (STS.LoopContract[this.CurrentSpecToken]) {
           switch (this.CurrentSpecToken) {
             case SpecToken.Invariant:
               SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
@@ -166,12 +197,11 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     override protected void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers) {
-      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Ensures, SpecToken.Maintains, SpecToken.Reads, SpecToken.Requires, SpecToken.Writes);
       while (this.currentToken == Token.Specification) {
         bool savedInSpecCode = this.EnterSpecBlock();
         this.GetNextToken();
         this.Skip(Token.LeftParenthesis);
-        while (expectedSpecTokens[this.CurrentSpecToken]) {
+        while (STS.Contract[this.CurrentSpecToken]) {
           switch (this.CurrentSpecToken) {
             case SpecToken.Requires:
               this.GetNextToken();
@@ -218,19 +248,18 @@ namespace Microsoft.Research.Vcc.Parsing
 
     override protected Statement ParseSpecStatements(TokenSet followers) {
       this.GetNextToken();
+      bool savedInSpecCode = this.EnterSpecBlock();
       this.Skip(Token.LeftParenthesis);
 
       if (this.CurrentSpecToken == SpecToken.Unwrapping) {
-        return this.ParseUnwrappingStatement(followers);
+        return this.ParseUnwrappingStatement(followers, savedInSpecCode);
       }
       
-      bool savedInSpecCode = this.EnterSpecBlock();
       List<Statement> statements = new List<Statement>();
-      SpecTokenSet expectedSpecTokens = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost, SpecToken.Assert, SpecToken.Assume);
       TokenSet followersOrRightParen = followers | Token.RightParenthesis;
       SourceLocationBuilder slb;
 
-      while (expectedSpecTokens[this.CurrentSpecToken]) {
+      while (STS.SimpleStatement[this.CurrentSpecToken]) {
         switch (this.CurrentSpecToken) {
           case SpecToken.Ghost:
             slb = this.GetSourceLocationBuilderForLastScannedToken();
@@ -260,10 +289,9 @@ namespace Microsoft.Research.Vcc.Parsing
       return new StatementGroup(statements);
     }
 
-    private Statement ParseUnwrappingStatement(TokenSet followers) {
+    private Statement ParseUnwrappingStatement(TokenSet followers, bool savedInSpecCode) {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
-      bool savedInSpecCode = this.EnterSpecBlock();
       var expr = this.ParseExpression(followers | Token.RightParenthesis);
       this.Skip(Token.RightParenthesis);
       this.LeaveSpecBlock(savedInSpecCode);
@@ -289,7 +317,7 @@ namespace Microsoft.Research.Vcc.Parsing
       List<LocalDeclarationsStatement> result = new List<LocalDeclarationsStatement>();
       TokenSet followersOrTypeStart = followers | TS.TypeStart;
       while (this.CurrentTokenStartsTypeExpression()) {
-        List<Specifier> specifiers = this.ParseSpecifiers(null, null, followers);
+        List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers);
         List<LocalDeclaration> declarations = new List<LocalDeclaration>(1);
         Declarator declarator = this.ParseDeclarator(followers | Token.Comma, true);
         TypeExpression type = this.GetTypeExpressionFor(specifiers, declarator);
@@ -420,8 +448,12 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Assume;
             case "axiom":
               return SpecToken.Axiom;
+            case "claimable":
+              return SpecToken.Claimable;
             case "decreases":
               return SpecToken.Variant;
+            case "dynamic_owns":
+              return SpecToken.DynamicOwns;
             case "ensures":
               return SpecToken.Ensures;
             case "ghost":
@@ -450,12 +482,14 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
-    private enum SpecToken
+    public enum SpecToken
     {
       None,
       Assert,
       Assume,
       Axiom,
+      Claimable,
+      DynamicOwns,
       Ensures,
       Ghost,
       Invariant,
@@ -467,6 +501,17 @@ namespace Microsoft.Research.Vcc.Parsing
       Unwrapping,
       Wrap,
       Writes,
+    }
+
+
+    private static class STS {
+      public static SpecTokenSet SpecTypeModifiers = new SpecTokenSet(SpecToken.Claimable, SpecToken.DynamicOwns);
+      public static SpecTokenSet Global = new SpecTokenSet(SpecToken.Axiom, SpecToken.Ghost);
+      public static SpecTokenSet SimpleStatement = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost, SpecToken.Assert, SpecToken.Assume);
+      public static SpecTokenSet Contract = new SpecTokenSet(SpecToken.Ensures, SpecToken.Maintains, SpecToken.Reads, SpecToken.Requires, SpecToken.Writes);
+      public static SpecTokenSet LoopContract = new SpecTokenSet(SpecToken.Invariant, SpecToken.Writes, SpecToken.Variant);
+      public static SpecTokenSet TypeMember = new SpecTokenSet(SpecToken.Ghost, SpecToken.Invariant);
+
     }
 
     private struct SpecTokenSet
