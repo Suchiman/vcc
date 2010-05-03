@@ -49,6 +49,8 @@ namespace Microsoft.Research.Vcc
     
     let fieldName (f:C.Field) = f.Parent.Name + "." + f.Name
     
+    let hasCustomAttr n = List.exists (function C.VccAttr (n', _) -> n = n' | _ -> false)
+    
     let rec noUnions = function
       | C.Type.Ref td ->
         match td.Kind with           
@@ -1320,13 +1322,9 @@ namespace Microsoft.Research.Vcc
                   match attr with
                     | C.IntBoogieAttr (key, value) -> yield (B.ExprAttr (key, bInt value))
                     | C.BoolBoogieAttr (key, value) -> yield (B.ExprAttr (key, B.Expr.BoolLiteral value))
-                    | C.SkipVerification -> yield (B.ExprAttr ("verify", bFalse))
-                    | C.NoAdmissibility -> yield! []
-                    | C.IsAdmissibilityCheck -> yield! []
+                    | C.VccAttr(C.AttrSkipVerification, _) -> yield (B.ExprAttr ("verify", bFalse))
                     | C.VccAttr ("extra_options", o) -> yield (B.StringAttr ("vcc_extra_options", o))
                     | C.VccAttr _ -> yield! []
-                    | C.GroupDeclAttr _ -> yield! []
-                    | C.InGroupDeclAttr _ -> yield! []
                     | C.ReadsCheck _ -> yield! []
                      
               ] } : B.ProcData
@@ -1395,7 +1393,7 @@ namespace Microsoft.Research.Vcc
         let fieldoff = bEq (bCall "$field_offset" [fieldRef]) (bInt f.ByteOffset)
         
         let isActive = bEq (bCall "$active_option" [s; p]) fieldRef
-        let noInline = if TransUtil.hasBoolAttr "as_array" f.CustomAttr then "no_inline_" else ""
+        let noInline = if TransUtil.hasCustomAttr "as_array" f.CustomAttr then "no_inline_" else ""
         let emb =
           match f.Type with
             | C.Array (_, sz) -> 
@@ -1434,7 +1432,7 @@ namespace Microsoft.Research.Vcc
           B.Decl.Axiom (bCall "$static_field_properties" [fieldRef; we]) ::
             match f.Type with
               | C.Array (t, sz) when not t.IsComposite ->
-                if TransUtil.hasBoolAttr "as_array" f.CustomAttr then
+                if TransUtil.hasCustomAttr "as_array" f.CustomAttr then
                   []
                 elif f.IsVolatile then
                   [B.Decl.Axiom (bCall "$is_primitive_embedded_volatile_array" [fieldRef; bInt sz; dott])]
@@ -1623,7 +1621,7 @@ namespace Microsoft.Research.Vcc
         let isUnion = td.Kind = C.Union
         let isComp (f:C.Field) =
           match f.Type with
-            | C.Array _ when TransUtil.hasBoolAttr "as_array" f.CustomAttr -> true
+            | C.Array _ when TransUtil.hasCustomAttr "as_array" f.CustomAttr -> true
             | _ -> f.Type.IsComposite
 
         let p = er "#p"
@@ -1720,7 +1718,7 @@ namespace Microsoft.Research.Vcc
             match fld.Type with
               | C.Array (t, sz) -> 
                 let add = [toTypeId t; bInt sz]
-                if TransUtil.hasBoolAttr "as_array" fld.CustomAttr then
+                if TransUtil.hasCustomAttr "as_array" fld.CustomAttr then
                   let args = (if meta then [s] else []) @ [q; bCall "$as_array" (dot :: add)]
                   bCall extentName args
                 else
@@ -1769,7 +1767,7 @@ namespace Microsoft.Research.Vcc
           let hasProp (fld:C.Field) dot =
             match fld.Type with
               | C.Array (t, sz) ->
-                if TransUtil.hasBoolAttr "as_array" fld.CustomAttr then
+                if TransUtil.hasCustomAttr "as_array" fld.CustomAttr then
                   prop (bCall "$as_array" [dot; toTypeId t; bInt sz])
                 else 
                   let idx = bCall "$idx" [dot; er "#i"; toTypeId t]
@@ -1974,7 +1972,7 @@ namespace Microsoft.Research.Vcc
           let fnconst = "cf#" + h.Name
           let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$pure_function" }
           let frameAxiom =
-            let containsGenerateFrameAxiom = _list_mem (C.VccAttr("frameaxiom", "")) h.CustomAttr
+            let containsGenerateFrameAxiom = hasCustomAttr C.AttrFrameaxiom h.CustomAttr
             if (not containsGenerateFrameAxiom) || h.IsStateless then 
               []
             else
@@ -2002,7 +2000,7 @@ namespace Microsoft.Research.Vcc
 
       let sanityChecks env (h:C.Function) =
         // we disable that by default for now, it seems to be too much of a hassle
-        if not (_list_mem (C.CustomAttr.VccAttr ("postcondition_sanity", "true")) h.CustomAttr) then []
+        if not (hasCustomAttr "postcondition_sanity" h.CustomAttr) then []
         else
           let checks = List.map stripFreeFromEnsures h.Ensures
           match checks with

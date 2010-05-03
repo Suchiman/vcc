@@ -367,7 +367,7 @@ namespace Microsoft.Research.Vcc
       let inlines = gdict()
       let isntInline = function
         | Top.FunctionDecl fd ->
-          if hasBoolAttr "atomic_inline" fd.CustomAttr then
+          if hasCustomAttr "atomic_inline" fd.CustomAttr then
             if fd.IsPure then
               helper.Error(fd.Token, 9667, "Pure function '" + fd.Name + "' cannot be inlined.")
               true
@@ -588,7 +588,7 @@ namespace Microsoft.Research.Vcc
         e.SelfMap(doSubst)
         
       let shouldHandle = function
-        | Type.Ref(td) when hasBoolAttr "record" td.CustomAttr -> true
+        | Type.Ref(td) when hasCustomAttr "record" td.CustomAttr -> true
         | _ -> false
         
       let foldBackFieldAssignments ec tmp =

@@ -174,7 +174,7 @@ namespace Microsoft.Research.Vcc
                 ]
     dict
 
-  let isRecord (td : TypeDecl) = hasBoolAttr "record" td.CustomAttr
+  let isRecord (td : TypeDecl) = hasCustomAttr "record" td.CustomAttr
     
   let exprDependsOnSpecExpr (expr : Expr) = 
     let (specFound : string option ref) = ref None
@@ -256,7 +256,7 @@ namespace Microsoft.Research.Vcc
           
           let isPure = ref true         
           let rec checkForSideEffect _ = function
-            | Deref(_, Dot(_,e,f)) when hasBoolAttr "record" f.Parent.CustomAttr -> true
+            | Deref(_, Dot(_,e,f)) when hasCustomAttr "record" f.Parent.CustomAttr -> true
             | Deref _ ->
               isPure := false
               false
@@ -331,7 +331,7 @@ namespace Microsoft.Research.Vcc
               Writes          = []
               Variants        = []
               Reads           = if !isPure then [] else [Expr.Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_set_universe", [])]
-              CustomAttr      = [VccAttr ("is_pure", "")]
+              CustomAttr      = [VccAttr (AttrIsPure, "")]
               Body            = None
               IsProcessed     = true
               UniqueId = CAST.unique()
@@ -990,7 +990,7 @@ namespace Microsoft.Research.Vcc
           | Dot(_, ptr, _) -> isPhysicalLocation' ptr
           | Index(_, ptr, _) -> isPhysicalLocation' ptr
           | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> false        
-          | Ref(_, {Type = Type.Ref td }) when hasBoolAttr "record" td.CustomAttr -> false
+          | Ref(_, {Type = Type.Ref td }) when hasCustomAttr "record" td.CustomAttr -> false
           | Ref(_, {Name = name}) when name.StartsWith("__temp") -> false // introduced during IExpression projection; unclear status
           | Deref(_, expr) -> 
             match expr.Type with 

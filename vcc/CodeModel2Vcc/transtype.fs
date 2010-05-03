@@ -34,7 +34,7 @@ namespace Microsoft.Research.Vcc
       | _ -> ()
     markTypeDecl eqKind td
 
-  let isRecord (td : TypeDecl) = hasBoolAttr "record" td.CustomAttr
+  let isRecord (td : TypeDecl) = hasCustomAttr "record" td.CustomAttr
   
   // ============================================================================================================
   
@@ -122,17 +122,14 @@ namespace Microsoft.Research.Vcc
            
       let rec getGroupNameFromAttrs = function
         | [] -> None
-        | InGroupDeclAttr(name) :: _ -> 
+        | VccAttr(AttrInGroup, name) :: _ -> 
           Some name
-        | GroupDeclAttr(name) :: _ -> 
+        | VccAttr(AttrGroupDecl, name) :: _ -> 
           Some name
         | _ :: attrs -> getGroupNameFromAttrs attrs
         
       let removeGroupDeclAttrs =
-        let isNotGroupDeclAttr = function
-          | InGroupDeclAttr _ -> false
-          | GroupDeclAttr _ -> false
-          | _ -> true
+        let isNotGroupDeclAttr = function | VccAttr((AttrInGroup|AttrGroupDecl), _) -> false | _ -> true
         List.filter isNotGroupDeclAttr
 
       let makeTypeNameForGroup parentName groupName = parentName + "##" + groupName
@@ -365,7 +362,7 @@ namespace Microsoft.Research.Vcc
             | _ -> false
             isValidType' true
           (tdIsRecord || not fld.IsSpec) && fld.Type.SizeOf = td.SizeOf && isValidType fld.Type
-        match List.tryFind (fun (fld:Field) -> _list_mem (VccAttr("backing_member", "")) fld.CustomAttr) (td.Fields) with
+        match List.tryFind (fun (fld:Field) -> hasCustomAttr AttrBackingMember fld.CustomAttr) (td.Fields) with
         | Some fld ->
            if isValidField fld then 
              Some fld 
@@ -669,7 +666,7 @@ namespace Microsoft.Research.Vcc
             | "", Type.Ref(td') ->
               let rec findMemberNames acc = function
                 | [] -> List.rev acc
-                | CustomAttr.VccAttr("member_name", name) :: attrs -> findMemberNames (name :: acc) attrs
+                | CustomAttr.VccAttr(AttrMemberName, name) :: attrs -> findMemberNames (name :: acc) attrs
                 | _ :: attrs -> findMemberNames acc attrs
               match findMemberNames [] td'.CustomAttr with
                 | [] -> ()
@@ -754,7 +751,7 @@ namespace Microsoft.Research.Vcc
               | _ -> ()
           let trField (f:Field) =
             processType f.Type
-            if (not (hasBoolAttr "inline" f.CustomAttr)) then [f] else
+            if (not (hasCustomAttr "inline" f.CustomAttr)) then [f] else
               match f.Type with 
                 | Type.Ref td' when ((td.Kind = Struct && td'.Kind = Struct) || td'.Fields.Length <= 1) ->
                   let newFields = 
@@ -959,7 +956,7 @@ namespace Microsoft.Research.Vcc
           | false, _ ->
             let td' = { td with Name = "volatile#" + td.Name; 
                                 IsVolatile = true; 
-                                CustomAttr = CustomAttr.VccAttr("volatile_owns", "true") :: td.CustomAttr }
+                                CustomAttr = CustomAttr.VccAttr("volatile_owns", "") :: td.CustomAttr }
             typeToVolatileType.Add(td, td')
             typeToVolatileType.Add(td', td')
             let vFields = List.map (mkVolFld td') td'.Fields

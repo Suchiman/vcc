@@ -15,6 +15,36 @@ module Microsoft.Research.Vcc.CAST
   type Id = string
   type Unique = uint64
 
+  [<Literal>]
+  let AttrIsAdmissibility = "is_admissibilitycheck"
+
+  [<Literal>]
+  let AttrSkipVerification = "skip_verification"
+
+  [<Literal>]
+  let AttrNoAdmissibility = "no_admissibility"
+
+  [<Literal>]
+  let AttrInGroup = "in_group"
+
+  [<Literal>]
+  let AttrGroupDecl = "group_decl"
+
+  [<Literal>]
+  let AttrBackingMember = "backing_member"
+
+  [<Literal>]
+  let AttrMemberName = "member_name"
+
+  [<Literal>]
+  let AttrFrameaxiom = "frameaxiom"
+
+  [<Literal>]
+  let AttrIsPure = "is_pure"
+
+  [<Literal>]
+  let AttrNoReadsCheck = "no_reads_check"
+
   type VarKind =    
     | Parameter
     | SpecParameter
@@ -87,14 +117,9 @@ module Microsoft.Research.Vcc.CAST
     }
   
   type [<StructuralEquality; NoComparison>] CustomAttr =
-    | SkipVerification
-    | IsAdmissibilityCheck
-    | NoAdmissibility
     | IntBoogieAttr of string * int
     | BoolBoogieAttr of string * bool
     | VccAttr of string * string
-    | GroupDeclAttr of string
-    | InGroupDeclAttr of string
     | ReadsCheck of Function
 
   and [<StructuralEquality; NoComparison>] TypeKind =
@@ -501,7 +526,7 @@ module Microsoft.Research.Vcc.CAST
       //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
       //  true // HACK
       else
-        List.exists (function VccAttr(("frameaxiom"|"is_pure"|"specmacro"), "") -> true | _ -> false) this.CustomAttr 
+        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|"specmacro"), "") -> true | _ -> false) this.CustomAttr 
       
     member this.IsStateless =
       this.IsPure && this.Reads = []

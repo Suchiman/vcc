@@ -1634,7 +1634,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (declspec != null) {
           var modEnum = declspec.Modifiers.GetEnumerator();
           if (modEnum.MoveNext()) {
-            if (modEnum.Current.ToString() == "System.Diagnostics.Contracts.CodeContract.StringVccAttr" && modEnum.MoveNext()) {
+            if (modEnum.Current.ToString() == NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".StringVccAttr" && modEnum.MoveNext()) {
               VccByteStringLiteral str = modEnum.Current as VccByteStringLiteral;
               var val = str != null ? str.Value.ToString() : null;
               if (val == "dynamic_owns" || val == "volatile_owns" || val == "claimable") {

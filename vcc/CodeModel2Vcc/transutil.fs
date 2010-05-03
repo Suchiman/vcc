@@ -283,9 +283,9 @@ namespace Microsoft.Research.Vcc
   // ----------------------------------------------------------------------------- 
 
   let staticOwns (td:TypeDecl) = 
-    List.forall (function VccAttr ("dynamic_owns", "true") | VccAttr ("volatile_owns", "true") -> false | _ -> true) td.CustomAttr
+    List.forall (function VccAttr ("dynamic_owns", _) | VccAttr ("volatile_owns", _) -> false | _ -> true) td.CustomAttr
   
-  let hasBoolAttr n = List.exists (function VccAttr (n', "true") -> n = n' | _ -> false)
+  let hasCustomAttr n = List.exists (function VccAttr (n', _) -> n = n' | _ -> false)
 
   // Warning: this function gets rid of multiplication so possible overflow check is gone
   // This usually is OK in spec context.

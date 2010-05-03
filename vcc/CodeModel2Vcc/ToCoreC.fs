@@ -278,7 +278,7 @@ namespace Microsoft.Research.Vcc
     let handleRecords (decls:list<Top>) =
       for d in decls do
         match d with
-          | Top.TypeDecl td when hasBoolAttr "record" td.CustomAttr ->
+          | Top.TypeDecl td when hasCustomAttr "record" td.CustomAttr ->
             td.Kind <- TypeKind.Record
           | _ -> ()
       let isRecField (f:Field) = f.Parent.Kind = Record
