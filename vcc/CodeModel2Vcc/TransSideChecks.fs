@@ -44,7 +44,7 @@ namespace Microsoft.Research.Vcc
 
   let addDefaultAdmissibilityChecks (explicitAdm:Dict<_,_>) helper =
     let handleDecl = function
-      | Top.TypeDecl td as decl when not (_list_mem NoAdmissibility td.CustomAttr) ->
+      | Top.TypeDecl td as decl when not (hasCustomAttr AttrNoAdmissibility td.CustomAttr) ->
         let rec isTrivialInvariant = function
           | CallMacro(_, "_vcc_typed2", _, [_;  This(_)]) -> true
           | CallMacro(_, "_vcc_set_eq", _, [CallMacro(_, "_vcc_owns", _, [_; This(_)]); CallMacro(_, "_vcc_set_empty", _, [])]) -> true
@@ -104,7 +104,7 @@ namespace Microsoft.Research.Vcc
               Writes = []
               Variants = []
               Reads = []
-              CustomAttr = [ IsAdmissibilityCheck ]
+              CustomAttr = [ VccAttr(AttrIsAdmissibility, "") ]
               Body = Some body
               IsProcessed = true
               UniqueId = CAST.unique() } : Function
@@ -127,7 +127,7 @@ namespace Microsoft.Research.Vcc
     
     for d in decls do    
       match d with
-        | Top.FunctionDecl f when _list_mem IsAdmissibilityCheck f.CustomAttr ->
+        | Top.FunctionDecl f when hasCustomAttr AttrIsAdmissibility f.CustomAttr ->
           errCheck f (fun td p ->
             match explicitAdm.TryGetValue td with
               | true, (_, u, s) -> explicitAdm.[td] <- (true, u, s)
@@ -139,7 +139,7 @@ namespace Microsoft.Research.Vcc
             f.Requires <- pre :: f.Requires
             f.Ensures <- [good] @ admChecks helper p @ stuttChecks helper p @ f.Ensures)
             
-        | Top.FunctionDecl f when _list_mem (VccAttr ("is_unwrap_check", "true")) f.CustomAttr ->
+        | Top.FunctionDecl f when hasCustomAttr "is_unwrap_check" f.CustomAttr ->
           errCheck f (fun td p ->
             match explicitAdm.TryGetValue td with
               | true, (a, _, s) -> explicitAdm.[td] <- (a, true, s)
@@ -348,7 +348,7 @@ namespace Microsoft.Research.Vcc
       // if it's stateless then we have a separate check
       else if f.IsStateless then ()
       else if f.RetType = Type.Void then ()
-      else if _list_mem (VccAttr ("no_reads_check", "")) f.CustomAttr then ()
+      else if hasCustomAttr "no_reads_check" f.CustomAttr then ()
       // no point in checking
       else if List.exists (function Macro (_, "_vcc_set_universe", []) -> true | _ -> false) f.Reads then ()
       else

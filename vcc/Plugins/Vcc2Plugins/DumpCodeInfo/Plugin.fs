@@ -23,7 +23,7 @@ namespace Microsoft.Research.Vcc
 
       let die() = failwith "confused, will now die"
 
-      let hasBoolAttr n = List.exists (function VccAttr (n', "true") -> n = n' | _ -> false)
+      let hasCustomAttr n = List.exists (function VccAttr (n', _) -> n = n' | _ -> false)
 
       let commas (separator:string) p elems =
         let rec loop first = function
@@ -79,14 +79,9 @@ namespace Microsoft.Research.Vcc
             let wr' s = wr ("\t\t" + s + "\n")
             let wrVcc s (o:obj) = wr' ("vcc(" + s + "," + o.ToString() + ")")
             function
-              | SkipVerification -> wr' "skipverification"
-              | IsAdmissibilityCheck -> wr' "isadmissibilitycheck"
-              | NoAdmissibility -> wr' "no_admissibility"
               | IntBoogieAttr(s,n) -> wrVcc s n
               | BoolBoogieAttr(s,b) -> wrVcc s b
               | VccAttr(s,s1) -> wrVcc s s1
-              | GroupDeclAttr(g) -> wr' ("def_group(" + g + ")")
-              | InGroupDeclAttr(g) ->  wr' ("in_group(" + g + ")")
               | _ -> ()
 
           let wrDeps = function

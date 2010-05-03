@@ -1626,12 +1626,11 @@ namespace Microsoft.Research.Vcc {
 
     static private bool IsRecordType(INamespaceTypeDefinition t) {
       foreach (ICustomAttribute attr in t.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.StringVccAttr") {
+        if (TypeHelper.GetTypeName(attr.Type) == NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".StringVccAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
           if (args.Count == 2) {
             IMetadataConstant attrName = args[0] as IMetadataConstant;
-            IMetadataConstant attrVal = args[1] as IMetadataConstant;
-            if (attrName != null && attrVal != null && ((string)attrName.Value) == "record" && ((string)attrVal.Value) == "true")
+            if (attrName != null && ((string)attrName.Value) == "record")
               return true;
           }
         }
@@ -3102,20 +3101,22 @@ namespace Microsoft.Research.Vcc {
       ITypeDefinition type = pointerQualifyingType.TargetType.ResolvedType;
       foreach (ITypeDefinitionMember member in type.Members) {
         INestedTypeDefinition nestedType = member as INestedTypeDefinition;
-        if (nestedType != null && this.TypeIsMarkedAsGroup(nestedType.ResolvedType)) return nestedType;
+        if (nestedType != null && TypeIsMarkedAsGroup(nestedType.ResolvedType, this.SimpleName)) return nestedType;
         IFieldDefinition field = member as IFieldDefinition;
         if (field != null && this.TypeIsNamedMember(field.Type.ResolvedType)) return field;
       }
       return null;
     }
 
-    bool TypeIsMarkedAsGroup(ITypeDefinition type) {
+    public static bool TypeIsMarkedAsGroup(ITypeDefinition type, SimpleName groupName) {
       foreach (ICustomAttribute attr in type.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.GroupDeclAttr") {
+        if (TypeHelper.GetTypeName(attr.Type) == NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".StringVccAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
-          if (args.Count == 1) {
-            IMetadataConstant groupName = args[0] as IMetadataConstant;
-            if (groupName != null) return (this.NameTable.GetNameFor((string)groupName.Value) == this.SimpleName.Name);
+          if (args.Count == 2) {
+            IMetadataConstant groupDeclAttr = args[0] as IMetadataConstant;
+            IMetadataConstant groupNameAttr = args[1] as IMetadataConstant;
+            if (groupDeclAttr != null && (string)groupDeclAttr.Value == "group_decl" && groupName != null) 
+              return (groupName.ContainingBlock.Compilation.NameTable.GetNameFor((string)groupNameAttr.Value) == groupName.Name);
           }
         }
       }
@@ -3124,7 +3125,7 @@ namespace Microsoft.Research.Vcc {
 
     bool TypeIsNamedMember(ITypeDefinition type) {
       foreach (ICustomAttribute attr in type.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.StringVccAttr") {
+        if (TypeHelper.GetTypeName(attr.Type) == NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".StringVccAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
           if (args.Count == 2) {
             IMetadataConstant attrStr = args[0] as IMetadataConstant;
@@ -3404,7 +3405,7 @@ namespace Microsoft.Research.Vcc {
     {
       foreach (ITypeDefinitionMember member in type.Members) {
         INestedTypeDefinition nestedType = member as INestedTypeDefinition;
-        if (nestedType != null && this.TypeIsMarkedAsGroup(nestedType.ResolvedType)) return nestedType;
+        if (nestedType != null && VccPointerScopedName.TypeIsMarkedAsGroup(nestedType.ResolvedType, this.SimpleName)) return nestedType;
       }
 
       return null;
@@ -3413,20 +3414,12 @@ namespace Microsoft.Research.Vcc {
     public static bool IsGroupType(ITypeDefinition type)
     {
       foreach (ICustomAttribute attr in type.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.GroupDeclAttr")
-          return true;
-      }
-      return false;
-    }
-
-    bool TypeIsMarkedAsGroup(ITypeDefinition type)
-    {
-      foreach (ICustomAttribute attr in type.Attributes) {
-        if (TypeHelper.GetTypeName(attr.Type) == "System.Diagnostics.Contracts.CodeContract.GroupDeclAttr") {
+        if (TypeHelper.GetTypeName(attr.Type) == NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".StringVccAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
-          if (args.Count == 1) {
-            IMetadataConstant groupName = args[0] as IMetadataConstant;
-            if (groupName != null) return (this.NameTable.GetNameFor((string)groupName.Value) == this.SimpleName.Name);
+          if (args.Count == 2) {
+            IMetadataConstant groupDeclAttr = args[0] as IMetadataConstant;
+            if (groupDeclAttr != null && (string)groupDeclAttr.Value == "group_decl")
+              return true;
           }
         }
       }

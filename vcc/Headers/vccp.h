@@ -370,17 +370,17 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
  *** Function attributes 
  ***/
 
+#define vcc_attr(k, v) __declspec(System.Diagnostics.Contracts.CodeContract.StringVccAttr, k, v)
 #define frameaxiom vcc_attr("frameaxiom", "")
-#define isadmissibilitycheck __declspec(System.Diagnostics.Contracts.CodeContract.IsAdmissibilityCheck)
+#define isadmissibilitycheck vcc_attr("is_admissibilitycheck", "")
 #define ispure vcc_attr("is_pure", "")
 #define specmacro vcc_attr("specmacro", "")
 #define no_reads_check vcc_attr("no_reads_check", "")
-#define postconditionsanity vcc_attr("postcondition_sanity", "true")
+#define postconditionsanity vcc_attr("postcondition_sanity", "")
 #define reads_check(f) vcc_attr("is_reads_check", #f)
-#define skipverification __declspec(System.Diagnostics.Contracts.CodeContract.SkipVerification)
+#define skipverification vcc_attr("skip_verification", "")
 #define usevccoptions(o) vcc_attr("extra_options", o)
-#define vcc_attr(k, v) __declspec(System.Diagnostics.Contracts.CodeContract.StringVccAttr, k, v)
-#define _vcc_attr_asm_routine vcc_attr("asm_routine", "true")
+#define _vcc_attr_asm_routine vcc_attr("asm_routine", "")
 
 
 /*** 
@@ -388,7 +388,7 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
  ***/
 #define backing_member vcc_attr("backing_member", "")
 #define member_name(n) vcc_attr("member_name", #n)
-#define no_admissibility __declspec(System.Diagnostics.Contracts.CodeContract.NoAdmissibility)
+#define no_admissibility vcc_attr("no_admissibility", "")
 #define register __specification
 
 #ifdef VCC_NO_SPLITS
@@ -403,22 +403,22 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
 #endif
 
 #define vcc(x) _concat_identifiers(_vcc_attr_, x)
-#define _vcc_attr_volatile_owns vcc_attr("volatile_owns", "true")
-#define _vcc_attr_claimable vcc_attr("claimable", "true")
-#define _vcc_attr_inline vcc_attr("inline", "true")
-#define _vcc_attr_as_array vcc_attr("as_array", "true")
+#define _vcc_attr_volatile_owns vcc_attr("volatile_owns", "")
+#define _vcc_attr_claimable vcc_attr("claimable", "")
+#define _vcc_attr_inline vcc_attr("inline", "")
+#define _vcc_attr_as_array vcc_attr("as_array", "")
 #define _vcc_attr_no_inline #error "vcc(no_inline) has been renamed to vcc(as_array)"
-#define _vcc_attr_dynamic_owns vcc_attr("dynamic_owns", "true")
-#define _vcc_attr_atomic_inline vcc_attr("atomic_inline", "true")
-#define _vcc_attr_thread_local_storage vcc_attr("thread_local_storage", "true")
-#define _vcc_attr_record vcc_attr("record", "true")
+#define _vcc_attr_dynamic_owns vcc_attr("dynamic_owns", "")
+#define _vcc_attr_atomic_inline vcc_attr("atomic_inline", "")
+#define _vcc_attr_thread_local_storage vcc_attr("thread_local_storage", "")
+#define _vcc_attr_record vcc_attr("record", "")
 #define _vcc_attr_verified vcc_attr("status", "verified")
 #define _vcc_attr_specified vcc_attr("status", "specified")
 
 
 /* Groups */
-#define in_group(n) __declspec(System.Diagnostics.Contracts.CodeContract.InGroupDeclAttr, #n)
-#define def_group(n, ...) struct __VA_ARGS__ __declspec(System.Diagnostics.Contracts.CodeContract.GroupDeclAttr, #n) { };
+#define in_group(n) vcc_attr("in_group", #n)
+#define def_group(n, ...) struct __VA_ARGS__ vcc_attr("group_decl", #n) { };
 bool _vcc_inv_group(const char *, bool);
 #define inv_group(n, i) __invariant (_vcc_inv_group(#n, i))
 

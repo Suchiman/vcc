@@ -96,7 +96,7 @@ namespace Microsoft.Research.Vcc
             | false, _ -> elements.Add(x, true); x :: loop xs
       loop l
 
-    let hasBoolAttr n = List.exists (function C.VccAttr (n', "true") -> n = n' | _ -> false)
+    let hasCustomAttr n = List.exists (function C.VccAttr (n', _) -> n = n' | _ -> false)
 
     let convCustomAttributes tok (attrs : ICustomAttribute seq) = 
       let getAttrTypeName (attr:ICustomAttribute) = TypeHelper.GetTypeName(attr.Type.ResolvedType)
@@ -109,9 +109,6 @@ namespace Microsoft.Research.Vcc
         let attrName = getAttrTypeName attr
         match attrName with
         | "Microsoft.Cci.DummyType" -> yield! []   
-        | "System.Diagnostics.Contracts.CodeContract.SkipVerification" -> yield C.SkipVerification
-        | "System.Diagnostics.Contracts.CodeContract.NoAdmissibility" -> yield C.NoAdmissibility
-        | "System.Diagnostics.Contracts.CodeContract.IsAdmissibilityCheck" -> yield C.IsAdmissibilityCheck
         | "System.Diagnostics.Contracts.CodeContract.BoolBoogieAttr" -> 
           let (name, value) = getAttrArgs attr
           yield C.BoolBoogieAttr (name, (value :?> int) <> 0)
@@ -121,12 +118,6 @@ namespace Microsoft.Research.Vcc
         | "System.Diagnostics.Contracts.CodeContract.IntBoogieAttr" ->
           let (name, value) = getAttrArgs attr
           yield C.IntBoogieAttr (name, (value :?> int))
-        | "System.Diagnostics.Contracts.CodeContract.GroupDeclAttr" ->
-          let (name, value) = getAttrArgs attr
-          yield C.GroupDeclAttr (name)
-        | "System.Diagnostics.Contracts.CodeContract.InGroupDeclAttr" ->
-          let (name, value) = getAttrArgs attr
-          yield C.InGroupDeclAttr (name)
         | other when other.StartsWith("Microsoft.Contracts") ->
             do helper.Oops (tok, "unsupported custom attribute: " + other); die (); 
             yield! []
@@ -338,7 +329,7 @@ namespace Microsoft.Research.Vcc
             | _ -> ()
 
           let contractsOnly = contractsOnly && 
-                              not (hasBoolAttr "atomic_inline" decl.CustomAttr) && 
+                              not (hasCustomAttr "atomic_inline" decl.CustomAttr) && 
                               not (List.exists (fun n -> n = decl.Name) requestedFunctions)
           // make sure that if the current function is explicitly requested or atomic_inline, then process its body
           // coming here again to process the body in a second round does not work.
@@ -611,7 +602,7 @@ namespace Microsoft.Research.Vcc
                           | (true, parent) -> Some parent
                           | _ -> None
                         | _ -> None
-                      IsSpec = specFromContract || hasBoolAttr "record" customAttr
+                      IsSpec = specFromContract || hasCustomAttr "record" customAttr
                       IsVolatile = false
                       UniqueId = C.unique()
                     } : C.TypeDecl

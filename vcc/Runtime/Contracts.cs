@@ -151,21 +151,6 @@ namespace System.Diagnostics.Contracts
       }
     }
 
-    [AttributeUsage(AttributeTargets.Class)]
-    public class NoAdmissibility : Attribute
-    {
-    }
-
-    [AttributeUsage(AttributeTargets.Method)]
-    public sealed class SkipVerification : Attribute
-    {
-    }
-
-    [AttributeUsage(AttributeTargets.Method)]
-    public sealed class IsAdmissibilityCheck : Attribute
-    {
-    }
-
     [AttributeUsage(AttributeTargets.Method)]
     public sealed class IntBoogieAttr : Attribute
     {
@@ -184,18 +169,6 @@ namespace System.Diagnostics.Contracts
     public sealed class StringVccAttr : Attribute
     {
       public StringVccAttr(string name, string val) { }
-    }
-
-    [AttributeUsage(AttributeTargets.Class)]
-    public sealed class GroupDeclAttr : Attribute
-    {
-      public GroupDeclAttr(string name) { }
-    }
-
-    [AttributeUsage(AttributeTargets.Class)]
-    public sealed class InGroupDeclAttr : Attribute
-    {
-      public InGroupDeclAttr(string name) { }
     }
   }
 }
