@@ -4351,9 +4351,9 @@ namespace Microsoft.Research.Vcc {
     public readonly IEnumerable<Expression> Modifiers;
   }
 
-  public class SpecTypeSpecifier : Specifier
+  public class SpecTokenSpecifier : Specifier
   {
-    internal SpecTypeSpecifier(ParserV2.SpecToken token, ISourceLocation sourceLocation)
+    internal SpecTokenSpecifier(ParserV2.SpecToken token, ISourceLocation sourceLocation)
       : base(sourceLocation) {
         this.Token = token;
     }

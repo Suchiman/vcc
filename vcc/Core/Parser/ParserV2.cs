@@ -68,7 +68,15 @@ namespace Microsoft.Research.Vcc.Parsing
             this.AddTypeInvariantToCurrent(new TypeInvariant(null, axiom, true, slb));
             break;
           case SpecToken.Ghost:
-            throw new Exception();
+            this.GetNextToken();
+            this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
+            break;
+          case SpecToken.Pure:
+            List<Specifier> pureSpec = new List<Specifier>(1);
+            pureSpec.Add(new SpecTokenSpecifier(SpecToken.Pure, this.scanner.SourceLocationOfLastScannedToken));
+            this.GetNextToken();
+            this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true, pureSpec);
+            break;
           case SpecToken.None:
             if (this.currentToken == Token.Specification)
               this.ParseGlobalSpecDeclarationList(members, globalMembers, followersOrDeclarationStart);
@@ -99,7 +107,7 @@ namespace Microsoft.Research.Vcc.Parsing
         switch (this.CurrentSpecToken) {
           case SpecToken.DynamicOwns:
           case SpecToken.Claimable:
-            specifiers.Add(new SpecTypeSpecifier(this.CurrentSpecToken, this.scanner.SourceLocationOfLastScannedToken));
+            specifiers.Add(new SpecTokenSpecifier(this.CurrentSpecToken, this.scanner.SourceLocationOfLastScannedToken));
             this.GetNextToken();
             this.SkipTo(followersOrCommaOrRightParentesisOrSpecToken);
             continue;
@@ -599,6 +607,8 @@ namespace Microsoft.Research.Vcc.Parsing
               return SpecToken.Maintains;
             case "out":
               return SpecToken.Out;
+            case "pure":
+              return SpecToken.Pure;
             case "unwrap":
               return SpecToken.Unwrap;
             case "unwrapping":
@@ -632,6 +642,7 @@ namespace Microsoft.Research.Vcc.Parsing
       Ghost,
       Invariant,
       Maintains,
+      Pure,
       Out,
       Reads,
       Variant,
@@ -645,7 +656,7 @@ namespace Microsoft.Research.Vcc.Parsing
 
     private static class STS {
       public static SpecTokenSet SpecTypeModifiers = new SpecTokenSet(SpecToken.Claimable, SpecToken.DynamicOwns);
-      public static SpecTokenSet Global = new SpecTokenSet(SpecToken.Axiom, SpecToken.Ghost);
+      public static SpecTokenSet Global = new SpecTokenSet(SpecToken.Axiom, SpecToken.Ghost, SpecToken.Pure);
       public static SpecTokenSet SimpleStatement = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost, SpecToken.Assert, SpecToken.Assume);
       public static SpecTokenSet Contract = new SpecTokenSet(SpecToken.Ensures, SpecToken.Maintains, SpecToken.Reads, SpecToken.Requires, SpecToken.Writes);
       public static SpecTokenSet LoopContract = new SpecTokenSet(SpecToken.Invariant, SpecToken.Writes, SpecToken.Variant);
