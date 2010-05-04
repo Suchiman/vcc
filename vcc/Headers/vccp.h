@@ -51,12 +51,16 @@ _(\objset \span(\object);)
 _(\type \typeof(\object);)
 _(bool \claims_obj(\claim, \object);)
 _(bool \is_claimable(\type);)
+_(\claim \make_claim(\object, ...);)
+_(bool \active_claim(\claim);)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
 _(void \wrap(\object);)
 _(void \unwrap(\object);)
 _(void \free(\object p) _(writes p, \extent(p));)
+_(template<typename T> \object \stack_alloc(\integer, bool);)
+_(void _vcc_stack_free(\integer, \object);)
 
 #else 
 

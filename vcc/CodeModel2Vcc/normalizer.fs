@@ -746,7 +746,11 @@ namespace Microsoft.Research.Vcc
                                     "\\free",         "_vcc_free";
                                     "\\claims_obj",   "_vcc_claims_obj";
                                     "\\is_claimable", "_vcc_is_claimable";
+                                    "\\make_claim",   "_vcc_claim";
+                                    "\\active_claim", "_vcc_valid_claim";
                                     "\\typeof",       "_vcc_typeof";
+                                    "\\stack_alloc",  "_vcc_stack_alloc";
+                                    "\\stack_free",   "_vcc_stack_free";
                                     "\\universe",     "_vcc_set_universe"; ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";

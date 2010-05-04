@@ -1463,6 +1463,11 @@ namespace Microsoft.Research.Vcc
         let body = this.DoStatement(unwrappingStmt.Body)
         stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" expr), unwrap, [], [expr]); body; C.Expr.Call((stmtToken "wrap(@@)" expr), wrap, [], [expr]) ], None )
 
+      member this.Visit (atomicStmt : IVccAtomicStatement) : unit =
+        let args = [ for arg in atomicStmt.Objects -> this.DoExpression arg ]
+        let body = this.DoStatement atomicStmt.Body
+        stmtRes <- C.Expr.Atomic (this.StmtCommon atomicStmt, args, body)
+
       member this.Visit (stackArrayCreate:IStackArrayCreate) : unit = 
         match stackArrayCreate with
         | :? CreateStackArray as createStackArray -> 

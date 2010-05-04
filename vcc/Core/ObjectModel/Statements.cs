@@ -40,12 +40,19 @@ namespace Microsoft.Research.Vcc {
     IStatement Body { get; }
   }
 
+  public interface IVccAtomicStatement : IVccStatement
+  {
+    IEnumerable<IExpression> Objects { get; }
+    IStatement Body { get; }
+  }
+
   public interface IVccCodeVisitor : ICodeVisitor
   {
     void Visit(IVccSpecStatement specStatement);
     void Visit(IVccWrapStatement wrapStatement);
     void Visit(IVccUnwrapStatement unwrapStatement);
     void Visit(IVccUnwrappingStatement unwrappingStatment);
+    void Visit(IVccAtomicStatement atomicStatement);
   }
 
   internal class StatementGroup : Statement {
@@ -574,6 +581,71 @@ namespace Microsoft.Research.Vcc {
     }
 
     IStatement IVccUnwrappingStatement.Body {
+      get { return this.body; }
+    }
+  }
+
+  public sealed class VccAtomicStatement : Statement, IVccAtomicStatement
+  {
+
+    public VccAtomicStatement(Statement body, IEnumerable<Expression> exprs, ISourceLocation sourceLocation)
+      : base(sourceLocation) {
+      this.expressions = exprs;
+      this.body = body;
+    }
+
+    private VccAtomicStatement(BlockStatement containingBlock, VccAtomicStatement template)
+      : base(containingBlock, template) {
+      var exprs = new List<Expression>();
+      foreach (var expr in template.expressions)
+        exprs.Add(expr.MakeCopyFor(containingBlock));
+      exprs.TrimExcess();
+      this.expressions = exprs;
+      this.body = template.body.MakeCopyFor(containingBlock);
+    }
+
+    public IEnumerable<Expression> Expressions {
+      get { return this.expressions; }
+    }
+    private readonly IEnumerable<Expression> expressions;
+
+    public Statement Body {
+      get { return this.body; }
+    }
+    private readonly Statement body;
+
+    public void Dispatch(IVccCodeVisitor visitor) {
+      visitor.Visit(this);
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      bool result = false;
+      foreach (var expr in this.Expressions)
+        result |= expr.HasErrors || expr.HasSideEffect(true);
+      return result || this.Body.HasErrors;
+    }
+
+    public override void SetContainingBlock(BlockStatement containingBlock) {
+      base.SetContainingBlock(containingBlock);
+      this.body.SetContainingBlock(containingBlock);
+      DummyExpression containingExpression = new DummyExpression(containingBlock, SourceDummy.SourceLocation);
+      foreach (var expr in this.Expressions)
+        expr.SetContainingExpression(containingExpression);
+    }
+
+    public override Statement MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      return new VccAtomicStatement(containingBlock, this);
+    }
+
+    IEnumerable<IExpression> IVccAtomicStatement.Objects {
+      get {
+        foreach (var expr in this.Expressions)
+          yield return expr.ProjectAsIExpression();
+      }
+    }
+
+    IStatement IVccAtomicStatement.Body {
       get { return this.body; }
     }
   }
