@@ -283,7 +283,6 @@ namespace Microsoft.Research.Vcc.Parsing
       return result;
     }
 
-
     private Parameter ParseSpecParameter(TokenSet followers) {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       Parameter result;
@@ -306,6 +305,58 @@ namespace Microsoft.Research.Vcc.Parsing
       }
       this.Skip(Token.RightParenthesis);
       this.LeaveSpecBlock(savedInSpecCode);
+      this.SkipTo(followers);
+      return result;
+    }
+
+    protected override List<Expression> ParseArgumentList(SourceLocationBuilder slb, Parser.TokenSet followers) {
+      List<Expression> result = new List<Expression>();
+      this.Skip(Token.LeftParenthesis);
+      if (this.currentToken != Token.RightParenthesis) {
+        while (true) {
+          if (this.currentToken == Token.Specification) {
+            result.Add(this.ParseSpecArgument(followers | Token.RightParenthesis));
+            continue;
+          }
+          if (this.currentToken == Token.RightParenthesis)
+            break;
+          result.Add(this.ParseArgumentExpression(followers | Token.RightParenthesis));
+          if (this.currentToken == Token.Comma) {
+            this.GetNextToken();
+            continue;
+          }
+        }
+      }
+      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+      this.SkipOverTo(Token.RightParenthesis, followers);
+      return result;
+    }
+
+    private Expression ParseSpecArgument(TokenSet followers) {
+      Expression result;
+      bool savedInSpecCode = this.EnterSpecBlock();
+      this.GetNextToken();
+      this.Skip(Token.LeftParenthesis);
+      switch (this.CurrentSpecToken) {
+        case SpecToken.Ghost:
+          this.GetNextToken();
+          result = this.ParseExpression(followers | Token.RightParenthesis);
+          break;
+        case SpecToken.Out:
+          SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+          this.GetNextToken();
+          var outArg = this.ParseExpression(followers | Token.RightParenthesis);
+          slb.UpdateToSpan(outArg.SourceLocation);
+          result = new VccOutArgument(new TargetExpression(outArg), slb);
+          break;
+        default:
+          this.HandleError(Error.SyntaxError, "ghost or out");
+          result = this.ParseExpression(followers | Token.RightParenthesis);
+          break;
+      }
+      this.Skip(Token.RightParenthesis);
+      this.LeaveSpecBlock(savedInSpecCode);
+      this.SkipTo(followers);
       return result;
     }
 
@@ -329,7 +380,11 @@ namespace Microsoft.Research.Vcc.Parsing
             this.GetNextToken();
             var stmt = this.ParseStatement(followers | Token.RightParenthesis);
             slb.UpdateToSpan(stmt.SourceLocation);
-            statements.Add(new VccSpecStatement(stmt, slb));
+            LocalDeclarationsStatement localDecl = stmt as LocalDeclarationsStatement;
+            if (localDecl != null)
+              statements.Add(localDecl); // must not be wrapped
+            else 
+              statements.Add(new VccSpecStatement(stmt, slb));
             break;
           case SpecToken.Wrap:
             statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new VccWrapStatement(expr, sl)));

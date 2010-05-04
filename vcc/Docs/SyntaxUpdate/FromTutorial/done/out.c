@@ -6,10 +6,12 @@ void foo(_(out int o))
   o = 5;
 }		
 
-/*
 void bar() {
-  spec(int p;)
-  foo(spec(out p));
-  assert(p == 5);
+  _(ghost int p;)
+  foo(_(out p));
+  _(assert p == 5)
 }
-*/
+/*`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`*/
