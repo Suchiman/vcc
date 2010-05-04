@@ -368,6 +368,10 @@ namespace Microsoft.Research.Vcc.Parsing
       if (this.CurrentSpecToken == SpecToken.Unwrapping) {
         return this.ParseUnwrappingStatement(followers, savedInSpecCode);
       }
+
+      if (this.CurrentSpecToken == SpecToken.Atomic) {
+        return this.ParseAtomic(followers, savedInSpecCode);
+      }
       
       List<Statement> statements = new List<Statement>();
       TokenSet followersOrRightParen = followers | Token.RightParenthesis;
@@ -407,13 +411,24 @@ namespace Microsoft.Research.Vcc.Parsing
       return new StatementGroup(statements);
     }
 
+    private Statement ParseAtomic(TokenSet followers, bool savedInSpecCode) {
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      this.GetNextToken();
+      var exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+      this.Skip(Token.RightParenthesis);
+      this.LeaveSpecBlock(savedInSpecCode);
+      var body = this.ParseStatement(followers);
+      slb.UpdateToSpan(body.SourceLocation);
+      return new VccAtomicStatement(body, exprs, slb);
+    }
+
     private Statement ParseUnwrappingStatement(TokenSet followers, bool savedInSpecCode) {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
       var expr = this.ParseExpression(followers | Token.RightParenthesis);
       this.Skip(Token.RightParenthesis);
       this.LeaveSpecBlock(savedInSpecCode);
-      var body = this.ParseStatement(followers | Token.RightParenthesis);
+      var body = this.ParseStatement(followers);
       slb.UpdateToSpan(body.SourceLocation);
       return new VccUnwrappingStatement(body, expr, slb);
     }

@@ -37,7 +37,7 @@ void readtwice(struct Counter *n)
 
   _(atomic n) {
     x = n->v;
-    _(ghost  r = \make_claim({n}, x <= n->v);)
+    _(ghost  r = \make_claim(n, x <= n->v);)
   }
 
   _(atomic n) {
@@ -49,4 +49,8 @@ void readtwice(struct Counter *n)
 /*{endreadtwice}*/
 
 /*`
+Verification of Counter#adm succeeded.
+Verification of Reading#adm succeeded.
+Verification of create_reading succeeded.
+Verification of readtwice succeeded.
 `*/
