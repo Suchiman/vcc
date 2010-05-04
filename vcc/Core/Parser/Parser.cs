@@ -3553,7 +3553,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected List<Expression> ParseArgumentList(SourceLocationBuilder slb, TokenSet followers) {
+    protected virtual List<Expression> ParseArgumentList(SourceLocationBuilder slb, TokenSet followers) {
       List<Expression> arguments = new List<Expression>();
       this.Skip(Token.LeftParenthesis);
       if (this.currentToken != Token.RightParenthesis)
