@@ -1,6 +1,6 @@
 #include <vcc.h>
 
-__specification(axiom 1 != 1)
+_(axiom 1 != 1)
 
 void foo()
 {

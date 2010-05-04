@@ -748,6 +748,8 @@ namespace Microsoft.Research.Vcc
                                     "\\is_claimable", "_vcc_is_claimable";
                                     "\\make_claim",   "_vcc_claim";
                                     "\\active_claim", "_vcc_valid_claim";
+                                    "\\inv",          "_vcc_inv";
+                                    "\\inv2",         "_vcc_inv2";
                                     "\\typeof",       "_vcc_typeof";
                                     "\\stack_alloc",  "_vcc_stack_alloc";
                                     "\\stack_free",   "_vcc_stack_free";

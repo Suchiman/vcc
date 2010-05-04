@@ -259,23 +259,26 @@ namespace Microsoft.Research.Vcc {
           custAttr.SetContainingExpression(containingExpression);
           result.Add(custAttr);
         } else {
-          SpecTypeSpecifier specTypeSpec = specifier as SpecTypeSpecifier;
-          if (specTypeSpec != null) {
+          SpecTokenSpecifier specTokenSpec = specifier as SpecTokenSpecifier;
+          if (specTokenSpec != null) {
             var attrTypeName = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(containingExpression.ContainingBlock.Compilation.NameTable, "StringVccAttr");
             AttributeTypeExpression attrType = new AttributeTypeExpression(attrTypeName);
             List<Expression> args = new List<Expression>();
-            switch (specTypeSpec.Token) {
+            switch (specTokenSpec.Token) {
               case ParserV2.SpecToken.Claimable:
-                args.Add(new CompileTimeConstant("claimable", specTypeSpec.SourceLocation));
+                args.Add(new CompileTimeConstant("claimable", specTokenSpec.SourceLocation));
                 break;
               case ParserV2.SpecToken.DynamicOwns:
-                args.Add(new CompileTimeConstant("dynamic_owns", specTypeSpec.SourceLocation));
+                args.Add(new CompileTimeConstant("dynamic_owns", specTokenSpec.SourceLocation));
+                break;
+              case ParserV2.SpecToken.Pure:
+                args.Add(new CompileTimeConstant("is_pure", specTokenSpec.SourceLocation));
                 break;
               default:
                 throw new NotImplementedException();
             }
-            args.Add(new CompileTimeConstant("true", specTypeSpec.SourceLocation));
-            SourceCustomAttribute custAttr = new SourceCustomAttribute(AttributeTargets.All, attrType, args, specTypeSpec.SourceLocation);
+            args.Add(new CompileTimeConstant("", specTokenSpec.SourceLocation));
+            SourceCustomAttribute custAttr = new SourceCustomAttribute(AttributeTargets.All, attrType, args, specTokenSpec.SourceLocation);
             custAttr.SetContainingExpression(containingExpression);
             result.Add(custAttr);
           }

@@ -6,20 +6,21 @@ struct SafeString {
   char *content;
   _(invariant len < capacity)
   _(invariant content[len] == '\0')
-  _(invariant \mine((\any[capacity])content))
+  _(invariant \mine((char[capacity])content))
 };
 
 _(ghost typedef struct SafeString * sstr_map[unsigned];)
-
 _(ghost ispure bool match(unsigned i, unsigned j) returns(true);)
 _(ghost ispure \integer do_mod(\integer a, \integer b);)
 
-axiom(\forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 ==> 0 <= do_mod(a, b) && do_mod(a,b) < b);
-axiom(\forall \integer a; {do_mod(a,a)} a > 0 ==> do_mod(a, a) == 0);
-axiom(\forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 && do_mod(a, b) < b - 1 ==> 
-  do_mod(a + 1, b) == do_mod(a, b) + 1);
-axiom(\forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 && do_mod(a, b) == b - 1 ==> 
-  do_mod(a + 1, b) == 0);
+#if 0
+
+_(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 ==> 0 <= do_mod(a, b) && do_mod(a,b) < b)
+_(axiom \forall \integer a; {do_mod(a,a)} a > 0 ==> do_mod(a, a) == 0)
+_(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 && do_mod(a, b) < b - 1 ==> 
+  do_mod(a + 1, b) == do_mod(a, b) + 1)
+_(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 && do_mod(a, b) == b - 1 ==> 
+  do_mod(a + 1, b) == 0)
 
 #define mod(a,b) ((unsigned)(do_mod((mathint)(a), (mathint)(b))))
 
@@ -139,3 +140,4 @@ unsigned i, d;
 	}
 }
 
+#endif

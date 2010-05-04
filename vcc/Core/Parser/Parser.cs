@@ -1648,7 +1648,7 @@ namespace Microsoft.Research.Vcc.Parsing {
               }
             }
           }
-        } else if (specifier is SpecTypeSpecifier) {
+        } else if (specifier is SpecTokenSpecifier) {
           if (result == null) result = new List<Specifier>();
           result.Add(specifier);
         }

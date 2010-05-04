@@ -53,7 +53,8 @@ _(bool \claims_obj(\claim, \object);)
 _(bool \is_claimable(\type);)
 _(\claim \make_claim(\object, ...);)
 _(bool \active_claim(\claim);)
-
+_(bool \inv(\object);)
+_(bool \inv2(\object);)
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
 _(void \wrap(\object);)
