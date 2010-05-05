@@ -4,16 +4,13 @@
 //
 //-----------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using EnvDTE80;
 using EnvDTE;
-using VerifiedCCompilerAddin.Manager.Marker;
-using VerifiedCCompilerAddin.Manager.Commands;
+using EnvDTE80;
 using Microsoft.VisualStudio.CommandBars;
-using VerifiedCCompilerAddin.Forms;
 using VccModelViewer;
+using VerifiedCCompilerAddin.Forms;
+using VerifiedCCompilerAddin.Manager.Commands;
+using VerifiedCCompilerAddin.Manager.Marker;
 
 namespace VerifiedCCompilerAddin {
   public static class AddInGlobals {

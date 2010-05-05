@@ -5,11 +5,10 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Windows.Forms;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
-
+using System.Windows.Forms;
 using Z3AxiomProfiler.QuantifierModel;
 
 namespace Z3AxiomProfiler

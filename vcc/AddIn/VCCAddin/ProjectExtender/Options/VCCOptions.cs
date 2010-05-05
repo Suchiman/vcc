@@ -4,16 +4,9 @@
 //
 //-----------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel;
-using VerifiedCCompilerAddin.ProjectExtender.Options;
-using VerifiedCCompilerAddin.ProjectExtender.TypeConverter;
 using EnvDTE;
-using VerifiedCCompilerAddin.Manager.Settings;
-using Microsoft.VisualStudio.VCProjectEngine;
-using System.Diagnostics;
+using VerifiedCCompilerAddin.ProjectExtender.TypeConverter;
 
 namespace VerifiedCCompilerAddin.ProjectExtender.Options  {
 

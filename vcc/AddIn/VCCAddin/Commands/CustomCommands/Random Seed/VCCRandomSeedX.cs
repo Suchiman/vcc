@@ -4,11 +4,8 @@
 //
 //-----------------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
-using System.Text;
-using EnvDTE80;
 using EnvDTE;
-using System.Windows.Forms;
+using EnvDTE80;
 using VerifiedCCompilerAddin.Manager.Settings;
 using VerifiedCCompilerAddin.Manager.Verify;
 

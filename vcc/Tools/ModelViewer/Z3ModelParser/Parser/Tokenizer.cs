@@ -4,9 +4,8 @@
 //
 //-----------------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Z3Model.Parser {
   public enum Tokentype {

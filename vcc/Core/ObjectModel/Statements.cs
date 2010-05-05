@@ -4,10 +4,9 @@
 //
 //-----------------------------------------------------------------------------
 using System.Collections.Generic;
-using System.Resources;
-using Microsoft.Cci.Ast;
 using System.Diagnostics;
 using Microsoft.Cci;
+using Microsoft.Cci.Ast;
 using Microsoft.Research.Vcc.Parsing;
 
 //^ using Microsoft.Contracts;

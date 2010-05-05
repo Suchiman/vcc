@@ -6,7 +6,6 @@
 using EnvDTE;
 using EnvDTE80;
 using VerifiedCCompilerAddin.Manager.Verify;
-using VerifiedCCompilerAddin.Manager.Settings;
 
 namespace VerifiedCCompilerAddin.Commands {
   public class VCCSingleFileCommand : VCCCommand{

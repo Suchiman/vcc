@@ -4,12 +4,11 @@
 //
 //-----------------------------------------------------------------------------
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Windows.Forms;
-
-using Z3AxiomProfiler.QuantifierModel;
+using System.IO;
 using System.Text;
+using System.Windows.Forms;
+using Z3AxiomProfiler.QuantifierModel;
 
 namespace Z3AxiomProfiler
 {

@@ -5,12 +5,11 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Resources;
-using Microsoft.Cci.Ast;
 using System.Diagnostics;
-using IMethodContract=Microsoft.Cci.Contracts.IMethodContract;
 using Microsoft.Cci;
+using Microsoft.Cci.Ast;
 using Microsoft.Research.Vcc.Parsing;
+using IMethodContract = Microsoft.Cci.Contracts.IMethodContract;
 
 //^ using Microsoft.Contracts;
 

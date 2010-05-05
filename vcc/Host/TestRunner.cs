@@ -6,10 +6,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.Cci;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Cci;
 
 namespace Microsoft.Research.Vcc
 {

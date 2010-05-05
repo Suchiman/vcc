@@ -3,9 +3,6 @@
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
 //
 //-----------------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.Text;
 using EnvDTE;
 using EnvDTE80;
 using VerifiedCCompilerAddin.Forms.AddInSettings;

@@ -5,11 +5,9 @@
 //-----------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel;
-using EnvDTE;
 using System.IO;
+using EnvDTE;
 
 namespace VerifiedCCompilerAddin.ProjectExtender.Options {
   

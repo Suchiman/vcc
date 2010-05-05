@@ -6,11 +6,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
-using VerifiedCCompilerAddin.Commands;
-using EnvDTE80;
 using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio.CommandBars;
+using VerifiedCCompilerAddin.Commands;
 using VerifiedCCompilerAddin.Commands.CustomCommandBar;
 
 

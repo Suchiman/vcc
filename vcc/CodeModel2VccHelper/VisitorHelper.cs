@@ -3,10 +3,8 @@
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
 //
 //-----------------------------------------------------------------------------
-using System;
 using System.Collections.Generic;
 using Microsoft.Cci;
-using Microsoft.Boogie;
 
 namespace Microsoft.Research.Vcc
 {

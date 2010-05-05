@@ -6,13 +6,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using EnvDTE;
-using System.IO;
 using EnvDTE80;
 using VerifiedCCompilerAddin.Manager.Settings;
-using System.Diagnostics;
 
 namespace VerifiedCCompilerAddin {
   /// <summary>

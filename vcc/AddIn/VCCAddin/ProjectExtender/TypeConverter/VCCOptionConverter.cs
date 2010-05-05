@@ -5,11 +5,10 @@
 //-----------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel;
-using VerifiedCCompilerAddin.ProjectExtender.Options;
 using System.IO;
+using System.Text;
+using VerifiedCCompilerAddin.ProjectExtender.Options;
 
 namespace VerifiedCCompilerAddin.ProjectExtender.TypeConverter {
   

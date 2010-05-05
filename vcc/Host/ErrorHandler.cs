@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.Cci;
 using Microsoft.Boogie;
+using Microsoft.Cci;
 
 namespace Microsoft.Research.Vcc
 {

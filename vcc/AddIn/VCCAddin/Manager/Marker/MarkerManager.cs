@@ -5,19 +5,11 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-using Microsoft.VisualStudio.TextManager.Interop;
-using Microsoft.VisualStudio.TextManager;
-using Microsoft.VisualStudio.OLE.Interop;
-using Microsoft.VisualStudio.Shell.Interop;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Microsoft.VisualStudio;
-using EnvDTE80;
-using EnvDTE;
-using System.Reflection;
-using VerifiedCCompilerAddin.Resources;
-using Microsoft.VisualStudio.CommandBars;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace VerifiedCCompilerAddin.Manager.Marker {
 

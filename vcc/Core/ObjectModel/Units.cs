@@ -5,8 +5,8 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using Microsoft.Cci.Ast;
 using Microsoft.Cci;
+using Microsoft.Cci.Ast;
 
 //^ using Microsoft.Contracts;
 

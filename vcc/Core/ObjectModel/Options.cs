@@ -4,11 +4,10 @@
 //
 //-----------------------------------------------------------------------------
 using System;
-using Microsoft.Cci;
-using Microsoft.Cci.Ast;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using Microsoft.Cci;
+using Microsoft.Cci.Ast;
 
 namespace Microsoft.Research.Vcc
 {
