@@ -22,11 +22,13 @@ namespace Microsoft.Research.Vcc.Parsing
     readonly IName OldKeyword;
     readonly IName ResultKeyword;
     readonly IName ThisKeyword;
+    readonly IName LambdaKeyword;
 
     internal ParserV2(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) 
     : base(compilation, sourceLocation, scannerAndParserErrors) {
       this.ExistsKeyword= this.compilation.NameTable.GetNameFor("\\exists");
       this.ForallKeyword = this.compilation.NameTable.GetNameFor("\\forall");
+      this.LambdaKeyword = this.compilation.NameTable.GetNameFor("\\lambda");
       this.OldKeyword = this.compilation.NameTable.GetNameFor("\\old");
       this.ResultKeyword = this.compilation.NameTable.GetNameFor("\\result");
       this.ThisKeyword = this.compilation.NameTable.GetNameFor("\\this");
@@ -51,47 +53,41 @@ namespace Microsoft.Research.Vcc.Parsing
     override protected void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
       this.GetNextToken();
       bool savedInSpecCode = this.EnterSpecBlock();
-      this.Skip(Token.LeftParenthesis);
+      this.Skip(Token.LeftParenthesis, true);
 
-      if (STS.SpecTypeModifiers[this.CurrentSpecToken]) {
+      if (STS.SpecTypeModifiers[this.currentToken]) {
         this.ParseGlobalDeclarationWithSpecModifiers(members, globalMembers, followers, savedInSpecCode);
         return;
       }
       TokenSet followersOrDeclarationStart = followers | TS.DeclarationStart | Token.Semicolon | Token.RightParenthesis;
-      while ((TS.DeclarationStart[this.currentToken] || STS.Global[this.CurrentSpecToken]) && this.currentToken != Token.EndOfFile) {
-        switch (this.CurrentSpecToken) {
-          case SpecToken.Axiom:
+      while (TS.DeclarationStart[this.currentToken] || STS.Global[this.currentToken]) {
+        switch (this.currentToken) {
+          case Token.SpecAxiom:
             SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
             this.GetNextToken();
             var axiom = this.ParseExpression(followersOrDeclarationStart);
             slb.UpdateToSpan(axiom.SourceLocation);
             this.AddTypeInvariantToCurrent(new TypeInvariant(null, axiom, true, slb));
             break;
-          case SpecToken.Ghost:
+          case Token.SpecGhost:
             this.GetNextToken();
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
             break;
-          case SpecToken.Pure:
+          case Token.SpecPure:
             List<Specifier> pureSpec = new List<Specifier>(1);
-            pureSpec.Add(new SpecTokenSpecifier(SpecToken.Pure, this.scanner.SourceLocationOfLastScannedToken));
+            pureSpec.Add(new SpecTokenSpecifier(Token.SpecPure, this.scanner.SourceLocationOfLastScannedToken));
             this.GetNextToken();
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true, pureSpec);
             break;
-          case SpecToken.None:
-            if (this.currentToken == Token.Specification)
-              this.ParseGlobalSpecDeclarationList(members, globalMembers, followersOrDeclarationStart);
-            else
-              this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
-            break;
           default:
-            this.HandleError(Error.UnexpectedVccKeyword, this.scanner.GetIdentifierString());
-            goto exitLoop;
+            this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
+            break;
         }
-        while (this.currentToken == Token.Semicolon) this.GetNextToken();
+        while (this.currentToken == Token.Semicolon) this.GetNextToken(); // todo: handle next spec token
       }
-    exitLoop:
-      this.SkipOverTo(Token.RightParenthesis, followers);
+      this.Skip(Token.RightParenthesis);
       this.LeaveSpecBlock(savedInSpecCode);
+      this.SkipTo(followers);
     }
 
     private void ParseGlobalDeclarationWithSpecModifiers(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers, bool savedInSpecCode) {
@@ -104,14 +100,14 @@ namespace Microsoft.Research.Vcc.Parsing
           this.GetNextToken();
           continue;
         }
-        switch (this.CurrentSpecToken) {
-          case SpecToken.DynamicOwns:
-          case SpecToken.Claimable:
-            specifiers.Add(new SpecTokenSpecifier(this.CurrentSpecToken, this.scanner.SourceLocationOfLastScannedToken));
+        switch (this.currentToken) {
+          case Token.SpecDynamicOwns:
+          case Token.SpecClaimable:
+            specifiers.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
             this.GetNextToken();
             this.SkipTo(followersOrCommaOrRightParentesisOrSpecToken);
             continue;
-          case SpecToken.None:
+          default:
             this.SkipTo(followersOrCommaOrRightParentesisOrSpecToken);
             break;
         }
@@ -136,19 +132,19 @@ namespace Microsoft.Research.Vcc.Parsing
     new protected void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      while (STS.TypeMember[this.CurrentSpecToken]) {
-        switch (this.CurrentSpecToken) {
-          case SpecToken.Invariant:
+      this.Skip(Token.LeftParenthesis, true);
+      while (STS.TypeMember[this.currentToken]) {
+        switch (this.currentToken) {
+          case Token.SpecInvariant:
             this.ParseTypeInvariant(followers | Token.RightParenthesis | Token.Identifier);
             break;
-          case SpecToken.Ghost:
+          case Token.SpecGhost:
             this.GetNextToken();
             this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis | Token.Identifier, false);
             break;
         }
         if (this.currentToken == Token.Semicolon) {
-          this.SkipOverTo(Token.Semicolon, followers);
+          this.SkipOverTo(Token.Semicolon, followers); // todo: expect new spec token
           continue;
         }
         break;
@@ -175,21 +171,21 @@ namespace Microsoft.Research.Vcc.Parsing
       while (this.currentToken == Token.Specification) {
         bool savedInSpecCode = this.EnterSpecBlock();
         this.GetNextToken();
-        this.Skip(Token.LeftParenthesis);
-        while (STS.LoopContract[this.CurrentSpecToken]) {
-          switch (this.CurrentSpecToken) {
-            case SpecToken.Invariant:
+        this.Skip(Token.LeftParenthesis, true);
+        while (STS.LoopContract[this.currentToken]) {
+          switch (this.currentToken) {
+            case Token.SpecInvariant:
               SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
               this.GetNextToken();
               var inv = this.ParseExpression(followers | Token.RightParenthesis);
               slb.UpdateToSpan(inv.SourceLocation);
               invariants.Add(new LoopInvariant(inv, slb));
               break;
-            case SpecToken.Writes:
+            case Token.SpecWrites:
               this.GetNextToken();
               this.ParseExpressionList(writes, Token.Comma, followers | Token.RightParenthesis);
               break;
-            case SpecToken.Variant:
+            case Token.SpecDecreases:
               SourceLocationBuilder slb2 = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
               this.GetNextToken();
               var red = this.ParseExpression(followers | Token.RightParenthesis);
@@ -197,6 +193,7 @@ namespace Microsoft.Research.Vcc.Parsing
               variants.Add(new LoopVariant(red, slb2));
               break;
           }
+          // todo: deal with ';' and next spec token
         }
         this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
         this.LeaveSpecBlock(savedInSpecCode);
@@ -209,16 +206,16 @@ namespace Microsoft.Research.Vcc.Parsing
       while (this.currentToken == Token.Specification) {
         bool savedInSpecCode = this.EnterSpecBlock();
         this.GetNextToken();
-        this.Skip(Token.LeftParenthesis);
-        while (STS.Contract[this.CurrentSpecToken]) {
-          switch (this.CurrentSpecToken) {
-            case SpecToken.Requires:
+        this.Skip(Token.LeftParenthesis, true);
+        while (STS.FunctionOrBlockContract[this.currentToken]) {
+          switch (this.currentToken) {
+            case Token.SpecRequires:
               this.GetNextToken();
               var precond = this.ParseExpression(followers | Token.RightParenthesis);
               precond = this.CheckedExpressionIfRequested(precond);
               contract.AddPrecondition(new Precondition(precond, null, precond.SourceLocation));
               break;
-            case SpecToken.Ensures:
+            case Token.SpecEnsures:
               this.GetNextToken();
               this.resultIsAKeyword = true;
               var postcond = this.ParseExpression(followers | Token.RightParenthesis);
@@ -226,29 +223,30 @@ namespace Microsoft.Research.Vcc.Parsing
               postcond = this.CheckedExpressionIfRequested(postcond);
               contract.AddPostcondition(new Postcondition(postcond, postcond.SourceLocation));
               break;
-            case SpecToken.Maintains:
+            case Token.SpecMaintains:
               this.GetNextToken();
               var inv = this.ParseExpression(followers | Token.RightParenthesis);
               inv = this.CheckedExpressionIfRequested(inv);
               contract.AddPrecondition(new Precondition(inv, null, inv.SourceLocation));
               contract.AddPostcondition(new Postcondition(inv, inv.SourceLocation));
               break;
-            case SpecToken.Writes:
+            case Token.SpecWrites:
               this.GetNextToken();
               var writes = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
               contract.AddWrites(writes);
               break;
-            case SpecToken.Variant:
+            case Token.SpecDecreases:
               this.GetNextToken();
               var variant = this.ParseExpression(followers | Token.RightParenthesis);
               contract.AddMethodVariant(new MethodVariant(variant, variant.SourceLocation));
               break;
-            case SpecToken.Reads:
+            case Token.SpecReads:
               this.GetNextToken();
               var reads = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
               contract.AddReads(reads);
               break;
           }
+          // todo: deal with ';' and next annotation
         }
         this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
         this.LeaveSpecBlock(savedInSpecCode);
@@ -296,13 +294,13 @@ namespace Microsoft.Research.Vcc.Parsing
       Parameter result;
       this.GetNextToken();
       bool savedInSpecCode = this.EnterSpecBlock();
-      this.Skip(Token.LeftParenthesis);
-      switch (this.CurrentSpecToken) {
-        case SpecToken.Ghost:
+      this.Skip(Token.LeftParenthesis, true);
+      switch (this.currentToken) {
+        case Token.SpecGhost:
           this.GetNextToken();
           result = this.ParseParameter(followers|Token.RightParenthesis, false, slb);
           break;
-        case SpecToken.Out:
+        case Token.SpecOut:
           this.GetNextToken();
           result = this.ParseParameter(followers|Token.RightParenthesis, true, slb);
           break;
@@ -344,13 +342,13 @@ namespace Microsoft.Research.Vcc.Parsing
       Expression result;
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      switch (this.CurrentSpecToken) {
-        case SpecToken.Ghost:
+      this.Skip(Token.LeftParenthesis, true);
+      switch (this.currentToken) {
+        case Token.SpecGhost:
           this.GetNextToken();
           result = this.ParseExpression(followers | Token.RightParenthesis);
           break;
-        case SpecToken.Out:
+        case Token.SpecOut:
           SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
           this.GetNextToken();
           var outArg = this.ParseExpression(followers | Token.RightParenthesis);
@@ -371,13 +369,13 @@ namespace Microsoft.Research.Vcc.Parsing
     override protected Statement ParseSpecStatements(TokenSet followers) {
       this.GetNextToken();
       bool savedInSpecCode = this.EnterSpecBlock();
-      this.Skip(Token.LeftParenthesis);
+      this.Skip(Token.LeftParenthesis, true);
 
-      if (this.CurrentSpecToken == SpecToken.Unwrapping) {
+      if (this.currentToken == Token.SpecUnwrapping) {
         return this.ParseUnwrappingStatement(followers, savedInSpecCode);
       }
 
-      if (this.CurrentSpecToken == SpecToken.Atomic) {
+      if (this.currentToken == Token.SpecAtomic) {
         return this.ParseAtomic(followers, savedInSpecCode);
       }
       
@@ -385,9 +383,9 @@ namespace Microsoft.Research.Vcc.Parsing
       TokenSet followersOrRightParen = followers | Token.RightParenthesis;
       SourceLocationBuilder slb;
 
-      while (STS.SimpleStatement[this.CurrentSpecToken]) {
-        switch (this.CurrentSpecToken) {
-          case SpecToken.Ghost:
+      while (STS.SimpleSpecStatment[this.currentToken]) {
+        switch (this.currentToken) {
+          case Token.SpecGhost:
             slb = this.GetSourceLocationBuilderForLastScannedToken();
             this.GetNextToken();
             var stmt = this.ParseStatement(followers | Token.RightParenthesis);
@@ -398,24 +396,25 @@ namespace Microsoft.Research.Vcc.Parsing
             else 
               statements.Add(new VccSpecStatement(stmt, slb));
             break;
-          case SpecToken.Wrap:
+          case Token.SpecWrap:
             statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new VccWrapStatement(expr, sl)));
             break;
-          case SpecToken.Unwrap:
+          case Token.SpecUnwrap:
             statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new VccUnwrapStatement(expr, sl)));
             break;
-          case SpecToken.Assert:
+          case Token.SpecAssert:
             statements.Add(this.ParseAssert(followersOrRightParen));
             break;
-          case SpecToken.Assume:
+          case Token.SpecAssume:
             statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new AssumeStatement(expr, sl)));
             break;
         }
         if (this.currentToken == Token.Semicolon)
-          this.SkipOverTo(Token.Semicolon, followersOrRightParen | Token.Identifier);
+          this.SkipOverTo(Token.Semicolon, followersOrRightParen | STS.SimpleSpecStatment);
       }
-      this.SkipOverTo(Token.RightParenthesis, followers);
+      this.Skip(Token.RightParenthesis);
       this.LeaveSpecBlock(savedInSpecCode);
+      this.SkipTo(followers);
       return new StatementGroup(statements);
     }
 
@@ -530,9 +529,10 @@ namespace Microsoft.Research.Vcc.Parsing
         result = new Exists(boundVariables, condition, slb);
       else if (kind == Token.Forall)
         result = new Forall(boundVariables, condition, slb);
-      else {
-        result = null;
-      }
+      else if (kind == Token.Lambda)
+        result = new VccLambda(boundVariables, new CompileTimeConstant(true, SourceDummy.SourceLocation), condition, slb);
+      else
+        throw new InvalidOperationException();
       this.compilation.ContractProvider.AssociateTriggersWithQuantifier(result, triggers);
       return result;
     }
@@ -555,6 +555,10 @@ namespace Microsoft.Research.Vcc.Parsing
       } else if (name.Name.UniqueKey == this.ExistsKeyword.UniqueKey) {
         expression = this.ParseQuantifier(followers, Token.Exists, new SourceLocationBuilder(name.SourceLocation));
         return true;
+      } else if (name.Name.UniqueKey == this.LambdaKeyword.UniqueKey) {
+        var lambda = this.ParseQuantifier(followers | Token.LeftBracket, Token.Lambda, new SourceLocationBuilder(name.SourceLocation));
+        expression = this.ParsePostFix(lambda, followers);
+        return true;
       } else if (name.Name.UniqueKey == this.ThisKeyword.UniqueKey) {
         expression = new VccThisReference(name.SourceLocation);
         return true;
@@ -571,165 +575,14 @@ namespace Microsoft.Research.Vcc.Parsing
       return createStmt(expr, slb);
     }
 
-    protected override bool ReportErrorMoreSpecificErrorFor(Token token) {
-      if (this.InSpecCode && this.CurrentSpecToken != SpecToken.None) {
-        this.HandleError(Error.UnexpectedVccKeyword, this.scanner.GetIdentifierString());
-        return true;
-      }
-      return false;
-    }
-
-    private SpecToken CurrentSpecToken {
-      get {
-        if (this.currentToken == Token.Identifier) {
-          switch (this.scanner.GetIdentifierString()) {
-            case "assert":
-              return SpecToken.Assert;
-            case "assume":
-              return SpecToken.Assume;
-            case "atomic":
-              return SpecToken.Atomic;
-            case "axiom":
-              return SpecToken.Axiom;
-            case "claimable":
-              return SpecToken.Claimable;
-            case "decreases":
-              return SpecToken.Variant;
-            case "dynamic_owns":
-              return SpecToken.DynamicOwns;
-            case "ensures":
-              return SpecToken.Ensures;
-            case "ghost":
-              return SpecToken.Ghost;
-            case "invariant":
-              return SpecToken.Invariant;
-            case "maintains":
-              return SpecToken.Maintains;
-            case "out":
-              return SpecToken.Out;
-            case "pure":
-              return SpecToken.Pure;
-            case "unwrap":
-              return SpecToken.Unwrap;
-            case "unwrapping":
-              return SpecToken.Unwrapping;
-            case "reads":
-              return SpecToken.Reads;
-            case "requires":
-              return SpecToken.Requires;
-            case "wrap":
-              return SpecToken.Wrap;
-            case "writes":
-              return SpecToken.Writes;
-            default:
-              return SpecToken.None;
-          }
-        }
-        return SpecToken.None;
-      }
-    }
-
-    public enum SpecToken
-    {
-      None,
-      Assert,
-      Assume,
-      Atomic,
-      Axiom,
-      Claimable,
-      DynamicOwns,
-      Ensures,
-      Ghost,
-      Invariant,
-      Maintains,
-      Pure,
-      Out,
-      Reads,
-      Variant,
-      Requires,
-      Unwrap,
-      Unwrapping,
-      Wrap,
-      Writes,
-    }
-
-
     private static class STS {
-      public static SpecTokenSet SpecTypeModifiers = new SpecTokenSet(SpecToken.Claimable, SpecToken.DynamicOwns);
-      public static SpecTokenSet Global = new SpecTokenSet(SpecToken.Axiom, SpecToken.Ghost, SpecToken.Pure);
-      public static SpecTokenSet SimpleStatement = new SpecTokenSet(SpecToken.Wrap, SpecToken.Unwrap, SpecToken.Ghost, SpecToken.Assert, SpecToken.Assume);
-      public static SpecTokenSet Contract = new SpecTokenSet(SpecToken.Ensures, SpecToken.Maintains, SpecToken.Reads, SpecToken.Requires, SpecToken.Writes);
-      public static SpecTokenSet LoopContract = new SpecTokenSet(SpecToken.Invariant, SpecToken.Writes, SpecToken.Variant);
-      public static SpecTokenSet TypeMember = new SpecTokenSet(SpecToken.Ghost, SpecToken.Invariant);
-      public static SpecTokenSet SpecParameter = new SpecTokenSet(SpecToken.Ghost, SpecToken.Out);
-
-    }
-
-    private struct SpecTokenSet
-    {
-      ulong bits;
-
-      public SpecTokenSet(SpecToken t1, SpecToken t2) {
-        this.bits = 0;
-        this.bits |= (1ul << (int)t1);
-        this.bits |= (1ul << (int)t2);
-      }
-
-      public SpecTokenSet(SpecToken t1, SpecToken t2, SpecToken t3) {
-        this.bits = 0;
-        this.bits |= (1ul << (int)t1);
-        this.bits |= (1ul << (int)t2);
-        this.bits |= (1ul << (int)t3);
-      }
-
-      public SpecTokenSet(SpecToken t1, SpecToken t2, SpecToken t3, SpecToken t4) {
-        this.bits = 0;
-        this.bits |= (1ul << (int)t1);
-        this.bits |= (1ul << (int)t2);
-        this.bits |= (1ul << (int)t3);
-        this.bits |= (1ul << (int)t4);
-      }
-
-      public SpecTokenSet(SpecToken t1, SpecToken t2, SpecToken t3, SpecToken t4, SpecToken t5) {
-        this.bits = 0;
-        this.bits |= (1ul << (int)t1);
-        this.bits |= (1ul << (int)t2);
-        this.bits |= (1ul << (int)t3);
-        this.bits |= (1ul << (int)t4);
-        this.bits |= (1ul << (int)t5);
-      }
-
-      public SpecTokenSet(SpecToken t1, SpecToken t2, SpecToken t3, SpecToken t4, SpecToken t5, SpecToken t6) {
-        this.bits = 0;
-        this.bits |= (1ul << (int)t1);
-        this.bits |= (1ul << (int)t2);
-        this.bits |= (1ul << (int)t3);
-        this.bits |= (1ul << (int)t4);
-        this.bits |= (1ul << (int)t5);
-        this.bits |= (1ul << (int)t6);
-      }
-
-      [System.Diagnostics.DebuggerNonUserCode]
-      public static SpecTokenSet operator |(SpecTokenSet ts, SpecToken t) {
-        SpecTokenSet result = new SpecTokenSet();
-        int i = (int)t;
-        result.bits = ts.bits | (1ul << i);
-        return result;
-      }
-
-      [System.Diagnostics.DebuggerNonUserCode]
-      public static SpecTokenSet operator |(SpecTokenSet ts1, SpecTokenSet ts2) {
-        SpecTokenSet result = new SpecTokenSet();
-        result.bits = ts1.bits | ts2.bits;
-        return result;
-      }
-
-      internal bool this[SpecToken t] {
-        get {
-          int i = (int)t;
-          return (this.bits & (1ul << i)) != 0;
-        }
-      }
+      public static TokenSet SimpleSpecStatment = new TokenSet() | Token.SpecWrap | Token.SpecUnwrap | Token.SpecGhost | Token.SpecAssume | Token.SpecAssert;
+      public static TokenSet FunctionOrBlockContract = new TokenSet() | Token.SpecEnsures | Token.SpecMaintains | Token.SpecReads | Token.SpecRequires | Token.SpecDecreases | Token.SpecWrites;
+      public static TokenSet LoopContract = new TokenSet() | Token.SpecInvariant | Token.SpecWrites | Token.SpecDecreases;
+      public static TokenSet SpecParameter = new TokenSet() | Token.SpecGhost | Token.SpecOut;
+      public static TokenSet TypeMember = new TokenSet() | Token.SpecGhost | Token.SpecInvariant;
+      public static TokenSet Global = new TokenSet() | Token.SpecAxiom | Token.SpecGhost | Token.SpecPure;
+      public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns;
     }
   }
 }

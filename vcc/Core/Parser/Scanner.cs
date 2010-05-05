@@ -54,6 +54,9 @@ namespace Microsoft.Research.Vcc.Parsing {
     private static readonly Keyword/*?*/[] Keywords = Keyword.InitKeywords();
     // ^ invariant Keywords.Length == 26; //TODO: Boogie crashes on this invariant
 
+    /// <summary>An array of linked list of spec keywords that are allowed at the beginning of spec(...) code</summary>
+    private static readonly Keyword/*?*/[] SpecKeywords = Keyword.InitSpecKeywords();
+
     /// <summary>Keeps track of the end position of the last malformed token. Used to avoid repeating lexical error messages when the parser backtracks.</summary>
     private int lastReportedErrorPos;
 
@@ -204,7 +207,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return this.Substring(start, this.endPos-start);
     }
 
-    public Token GetNextToken(bool inSpecCode) {
+    public Token GetNextToken(bool inSpecCode, bool specKeywordExpected) {
       Token token = Token.None;
       this.tokenIsFirstAfterLineBreak = false;
     nextToken:
@@ -469,7 +472,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           goto nextToken;
         default:
           if ('a' <= c && c <= 'z') {
-            token = this.ScanKeyword(c);
+            token = this.ScanKeyword(c, specKeywordExpected);
           } else if (c == '_') {
             token = this.ScanExtendedKeyword();
           } else if ('A' <= c && c <= 'Z') {
@@ -964,7 +967,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    private Token ScanKeyword(char ch)
+    private Token ScanKeyword(char ch, bool specKeywordExpected)
       //^ requires 'a' <= ch && ch <= 'z';
       //^ requires this.startPos < this.endPos;
     {
@@ -997,10 +1000,17 @@ namespace Microsoft.Research.Vcc.Parsing {
         break;
       }
       this.endPos = i;
-      //^ assume Scanner.Keywords.Length == 26; //There should be an invariant to this effect, but Boogie chokes on it.
-      Keyword/*?*/ keyword = Scanner.Keywords[ch - 'a'];
-      if (keyword == null) return Token.Identifier;
-      return keyword.GetKeyword(this.buffer, this.startPos, this.endPos);
+
+      Token result = Token.Identifier;
+      if (specKeywordExpected) {
+        var specKeyword = Scanner.SpecKeywords[ch - 'a'];
+        if (specKeyword != null) result = specKeyword.GetKeyword(this.buffer, this.startPos, this.endPos);
+      }
+      if (result == Token.Identifier) {
+        Keyword/*?*/ keyword = Scanner.Keywords[ch - 'a'];
+        if (keyword != null) result = keyword.GetKeyword(this.buffer, this.startPos, this.endPos);
+      }
+      return result;
     }
 
     private Token ScanNumber(char leadChar)
@@ -2010,6 +2020,83 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// __writes
     /// </summary>
     Writes,
+
+    /// <summary>
+    /// assert, context-dependent
+    /// </summary>
+    SpecAssert,
+    /// <summary>
+    /// assume, context-dependent
+    /// </summary>
+    SpecAssume,
+    /// <summary>
+    /// atomic, context-dependent
+    /// </summary>
+    SpecAtomic,
+    /// <summary>
+    /// axiom, context-dependent
+    /// </summary>
+    SpecAxiom,
+    /// <summary>
+    /// claimable, context-dependent
+    /// </summary>
+    SpecClaimable,
+    /// <summary>
+    /// decreases, context-dependent
+    /// </summary>
+    SpecDecreases,
+    /// <summary>
+    /// dynamic_owns, context-dependent
+    /// </summary>
+    SpecDynamicOwns,
+    /// <summary>
+    /// ensures, context-dependent
+    /// </summary>
+    SpecEnsures,
+    /// <summary>
+    /// ghost, context-dependent
+    /// </summary>
+    SpecGhost,
+    /// <summary>
+    /// invariant, context-dependent
+    /// </summary>
+    SpecInvariant,
+    /// <summary>
+    /// maintains, context-dependent
+    /// </summary>
+    SpecMaintains,
+    /// <summary>
+    /// pure, context-dependent
+    /// </summary>
+    SpecPure,
+    /// <summary>
+    /// out, context-dependent
+    /// </summary>
+    SpecOut,
+    /// <summary>
+    /// reads, context-dependent
+    /// </summary>
+    SpecReads,
+    /// <summary>
+    /// requires, context-dependent
+    /// </summary>
+    SpecRequires,
+    /// <summary>
+    /// unwrap, context-dependent
+    /// </summary>
+    SpecUnwrap,
+    /// <summary>
+    /// unwrapping, context-dependent
+    /// </summary>
+    SpecUnwrapping,
+    /// <summary>
+    /// wrap, context-dependent
+    /// </summary>
+    SpecWrap,
+    /// <summary>
+    /// writes, context-dependent
+    /// </summary>
+    SpecWrites,
     /// <summary>
     /// A dummy token produced when the end of the file is reached.
     /// </summary>
@@ -2148,6 +2235,55 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.While, "while");
       keywords['w' - 'a'] = keyword;
 
+      return keywords;
+    }
+
+    internal static Keyword/*?*/[] InitSpecKeywords() {
+      Keyword/*?*/[] keywords = new Keyword/*?*/[26];
+      Keyword keyword;
+
+      keyword = new Keyword(Token.SpecAtomic, "atomic");
+      keyword = new Keyword(Token.SpecAssume, "assume", keyword);
+      keyword = new Keyword(Token.SpecAssert, "assert", keyword);
+      keyword = new Keyword(Token.SpecAxiom, "axiom", keyword); 
+      keywords['a' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecClaimable, "claimable");
+      keywords['c' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecDynamicOwns, "dynamic_owns");
+      keyword = new Keyword(Token.SpecDecreases, "decreases", keyword);
+      keywords['d' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecEnsures, "ensures");
+      keywords['e' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecGhost, "ghost");
+      keywords['g' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecInvariant, "invariant");
+      keywords['i' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecMaintains, "maintains");
+      keywords['m' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecPure, "pure");
+      keywords['p' - 'a'] = keyword;
+     
+      keyword = new Keyword(Token.SpecOut, "out");
+      keywords['o' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecRequires, "requires");
+      keyword = new Keyword(Token.SpecReads, "reads", keyword);
+      keywords['r' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecUnwrapping, "unwrapping");
+      keyword = new Keyword(Token.SpecUnwrap, "unwrap", keyword);
+      keywords['u' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecWrites, "writes");
+      keyword = new Keyword(Token.SpecWrap, "wrap", keyword);
+      keywords['w' - 'a'] = keyword;
       return keywords;
     }
 

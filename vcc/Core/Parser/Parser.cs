@@ -82,7 +82,16 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected void GetNextToken()
       //^ requires this.currentToken != Token.EndOfFile;
     {
-      this.currentToken = this.scanner.GetNextToken(this.inSpecCode);
+      this.currentToken = this.scanner.GetNextToken(this.inSpecCode, false);
+      if (this.currentToken == Token.Pragma) {
+        this.ParsePragma();
+      }
+    }
+
+    protected void GetNextToken(bool specKeywordExpected)
+      //^ requires this.currentToken != Token.EndOfFile;
+{
+      this.currentToken = this.scanner.GetNextToken(this.inSpecCode, specKeywordExpected);
       if (this.currentToken == Token.Pragma) {
         this.ParsePragma();
       }
@@ -392,7 +401,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (this.currentToken == Token.Identifier) {
         string id = this.scanner.GetIdentifierString();
         Scanner.Snapshot snap = this.scanner.MakeSnapshot();
-        Token tok = scanner.GetNextToken(false);
+        Token tok = scanner.GetNextToken(false, false);
         if (tok == Token.Colon) {
           slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
           nameDecl = new NameDeclaration(this.GetNameFor(id), slb);
@@ -3539,11 +3548,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ requires this.currentToken == Token.Pragma;
     {
       //Just ignore the pragma for the time being.
-      Token tok = this.scanner.GetNextToken(false);
+      Token tok = this.scanner.GetNextToken(false, false);
       if (tok == Token.LeftParenthesis) {
         int count = 1;
         do {
-          tok = this.scanner.GetNextToken(false);
+          tok = this.scanner.GetNextToken(false, false);
           if (tok == Token.LeftParenthesis)
             count++;
           else if (tok == Token.RightParenthesis)
@@ -3820,28 +3829,34 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.SkipTo(followers, Error.None);
     }
 
-    protected virtual bool ReportErrorMoreSpecificErrorFor(Token token) {
-      return false;
+    protected void SkipOverTo(Token token, TokenSet followers, bool specKeywordExpected)
+      //^ requires token != Token.EndOfFile;
+      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
+    {
+      this.Skip(token, specKeywordExpected);
+      this.SkipTo(followers, Error.None);
     }
 
-    protected void Skip(Token token) 
+    protected void Skip(Token token) {
+      this.Skip(token, false);
+    }
+
+    protected void Skip(Token token, bool specKeywordExpected)
       //^ requires token != Token.EndOfFile;
     {
       if (this.currentToken == token)
-        this.GetNextToken();
+        this.GetNextToken(specKeywordExpected);
       else {
-        if (!this.ReportErrorMoreSpecificErrorFor(token)) {
-          switch (token) {
-            case Token.Colon: this.HandleError(Error.SyntaxError, ":"); break;
-            case Token.Identifier: this.HandleError(Error.ExpectedIdentifier); break;
-            case Token.LeftBrace: this.HandleError(Error.ExpectedLeftBrace); break;
-            case Token.LeftParenthesis: this.HandleError(Error.SyntaxError, "("); break;
-            case Token.RightBrace: this.HandleError(Error.ExpectedRightBrace); break;
-            case Token.RightBracket: this.HandleError(Error.ExpectedRightBracket); break;
-            case Token.RightParenthesis: this.HandleError(Error.ExpectedRightParenthesis); break;
-            case Token.Semicolon: this.HandleError(Error.ExpectedSemicolon); break;
-            default: this.HandleError(Error.UnexpectedToken, this.scanner.GetTokenSource()); break;
-          }
+        switch (token) {
+          case Token.Colon: this.HandleError(Error.SyntaxError, ":"); break;
+          case Token.Identifier: this.HandleError(Error.ExpectedIdentifier); break;
+          case Token.LeftBrace: this.HandleError(Error.ExpectedLeftBrace); break;
+          case Token.LeftParenthesis: this.HandleError(Error.SyntaxError, "("); break;
+          case Token.RightBrace: this.HandleError(Error.ExpectedRightBrace); break;
+          case Token.RightBracket: this.HandleError(Error.ExpectedRightBracket); break;
+          case Token.RightParenthesis: this.HandleError(Error.ExpectedRightParenthesis); break;
+          case Token.Semicolon: this.HandleError(Error.ExpectedSemicolon); break;
+          default: this.HandleError(Error.UnexpectedToken, this.scanner.GetTokenSource()); break;
         }
       }
     }
