@@ -83,21 +83,20 @@ namespace Microsoft.Research.Vcc.Parsing
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
             break;
         }
-        while (this.currentToken == Token.Semicolon) this.GetNextToken(); // todo: handle next spec token
+        this.SkipSemicolonsInSpecBlock(TS.DeclarationStart | STS.Global | Token.RightParenthesis);
       }
-      this.Skip(Token.RightParenthesis);
-      this.LeaveSpecBlock(savedInSpecCode);
-      this.SkipTo(followers);
+
+      this.SkipOutOfSpecBlock(savedInSpecCode, followers);
     }
 
     private void ParseGlobalDeclarationWithSpecModifiers(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers, bool savedInSpecCode) {
       List<Specifier> specifiers = new List<Specifier>();
-      TokenSet followersOrCommaOrRightParentesisOrSpecToken = followers | Token.Comma | Token.RightParenthesis | Token.Identifier;
+      TokenSet followersOrCommaOrRightParenthesisOrSpecToken = followers | Token.Comma | Token.RightParenthesis | STS.SpecTypeModifiers;
       while (true) {
         if (this.currentToken == Token.RightParenthesis)
           break;
         if (this.currentToken == Token.Comma) {
-          this.GetNextToken();
+          this.GetNextToken(true);
           continue;
         }
         switch (this.currentToken) {
@@ -105,10 +104,10 @@ namespace Microsoft.Research.Vcc.Parsing
           case Token.SpecClaimable:
             specifiers.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
             this.GetNextToken();
-            this.SkipTo(followersOrCommaOrRightParentesisOrSpecToken);
+            this.SkipTo(followersOrCommaOrRightParenthesisOrSpecToken);
             continue;
           default:
-            this.SkipTo(followersOrCommaOrRightParentesisOrSpecToken);
+            this.SkipTo(followersOrCommaOrRightParenthesisOrSpecToken);
             break;
         }
       }
@@ -130,27 +129,24 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     new protected void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
-      bool savedInSpecCode = this.EnterSpecBlock();
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis, true);
-      while (STS.TypeMember[this.currentToken]) {
-        switch (this.currentToken) {
-          case Token.SpecInvariant:
-            this.ParseTypeInvariant(followers | Token.RightParenthesis | Token.Identifier);
-            break;
-          case Token.SpecGhost:
-            this.GetNextToken();
-            this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis | Token.Identifier, false);
-            break;
+      while (this.currentToken == Token.Specification) {
+        bool savedInSpecCode = this.EnterSpecBlock();
+        this.GetNextToken();
+        this.Skip(Token.LeftParenthesis, true);
+        while (STS.TypeMember[this.currentToken]) {
+          switch (this.currentToken) {
+            case Token.SpecInvariant:
+              this.ParseTypeInvariant(followers | Token.RightParenthesis);
+              break;
+            case Token.SpecGhost:
+              this.GetNextToken();
+              this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis, false);
+              break;
+          }
+          this.SkipSemicolonsInSpecBlock(STS.TypeMember | Token.RightParenthesis);
         }
-        if (this.currentToken == Token.Semicolon) {
-          this.SkipOverTo(Token.Semicolon, followers); // todo: expect new spec token
-          continue;
-        }
-        break;
+        this.SkipOutOfSpecBlock(savedInSpecCode, followers | Token.Specification);
       }
-      this.SkipOverTo(Token.RightParenthesis, followers);
-      this.LeaveSpecBlock(savedInSpecCode);
     }
 
     new protected void ParseTypeInvariant(TokenSet followers) {
@@ -193,10 +189,9 @@ namespace Microsoft.Research.Vcc.Parsing
               variants.Add(new LoopVariant(red, slb2));
               break;
           }
-          // todo: deal with ';' and next spec token
+          this.SkipSemicolonsInSpecBlock(STS.LoopContract | Token.RightParenthesis);
         }
-        this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
-        this.LeaveSpecBlock(savedInSpecCode);
+        this.SkipOutOfSpecBlock(savedInSpecCode, followers | Token.Specification);
       }
       if (invariants.Count == 0 && writes.Count == 0 && variants.Count == 0) return null;
       return new LoopContract(invariants, writes, variants);
@@ -246,10 +241,9 @@ namespace Microsoft.Research.Vcc.Parsing
               contract.AddReads(reads);
               break;
           }
-          // todo: deal with ';' and next annotation
+          this.SkipSemicolonsInSpecBlock(STS.FunctionOrBlockContract | Token.RightParenthesis);
         }
-        this.SkipOverTo(Token.RightParenthesis, followers | Token.Specification);
-        this.LeaveSpecBlock(savedInSpecCode);
+        this.SkipOutOfSpecBlock(savedInSpecCode, followers | Token.Specification);
       }
     }
 
@@ -309,9 +303,7 @@ namespace Microsoft.Research.Vcc.Parsing
           result = this.ParseParameter(followers | Token.RightParenthesis);
           break;
       }
-      this.Skip(Token.RightParenthesis);
-      this.LeaveSpecBlock(savedInSpecCode);
-      this.SkipTo(followers);
+      this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       return result;
     }
 
@@ -360,9 +352,7 @@ namespace Microsoft.Research.Vcc.Parsing
           result = this.ParseExpression(followers | Token.RightParenthesis);
           break;
       }
-      this.Skip(Token.RightParenthesis);
-      this.LeaveSpecBlock(savedInSpecCode);
-      this.SkipTo(followers);
+      this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       return result;
     }
 
@@ -409,12 +399,9 @@ namespace Microsoft.Research.Vcc.Parsing
             statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new AssumeStatement(expr, sl)));
             break;
         }
-        if (this.currentToken == Token.Semicolon)
-          this.SkipOverTo(Token.Semicolon, followersOrRightParen | STS.SimpleSpecStatment);
+        this.SkipSemicolonsInSpecBlock(STS.SimpleSpecStatment | Token.RightParenthesis);
       }
-      this.Skip(Token.RightParenthesis);
-      this.LeaveSpecBlock(savedInSpecCode);
-      this.SkipTo(followers);
+      this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       return new StatementGroup(statements);
     }
 
@@ -422,8 +409,7 @@ namespace Microsoft.Research.Vcc.Parsing
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
       var exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
-      this.Skip(Token.RightParenthesis);
-      this.LeaveSpecBlock(savedInSpecCode);
+      this.SkipOutOfSpecBlock(savedInSpecCode, TS.StatementStart | followers);
       var body = this.ParseStatement(followers);
       slb.UpdateToSpan(body.SourceLocation);
       return new VccAtomicStatement(body, exprs, slb);
@@ -433,8 +419,7 @@ namespace Microsoft.Research.Vcc.Parsing
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
       var expr = this.ParseExpression(followers | Token.RightParenthesis);
-      this.Skip(Token.RightParenthesis);
-      this.LeaveSpecBlock(savedInSpecCode);
+      this.SkipOutOfSpecBlock(savedInSpecCode, TS.StatementStart | followers);
       var body = this.ParseStatement(followers);
       slb.UpdateToSpan(body.SourceLocation);
       return new VccUnwrappingStatement(body, expr, slb);
@@ -565,6 +550,19 @@ namespace Microsoft.Research.Vcc.Parsing
       }
       expression = null;
       return false;
+    }
+
+    private void SkipOutOfSpecBlock(bool savedInSpecBlock, TokenSet followers) {
+      this.Skip(Token.RightParenthesis);
+      this.LeaveSpecBlock(savedInSpecBlock);
+      this.SkipTo(followers);
+    }
+
+    private void SkipSemicolonsInSpecBlock(TokenSet followers) {
+      if (this.currentToken == Token.RightParenthesis) return;
+      while (this.currentToken == Token.Semicolon)
+        this.Skip(Token.Semicolon, true);
+      this.SkipTo(followers);
     }
 
     private Statement ParseSingleArgSpecStatement(TokenSet followers, Func<Expression, ISourceLocation, Statement> createStmt) {
