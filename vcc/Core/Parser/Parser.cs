@@ -247,7 +247,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.LeaveSpecBlock(savedInSpecCode);
     }
 
-    protected void ParseNonLocalDeclaration(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<Specifier> specSpecifiers = null)
+    protected void ParseNonLocalDeclaration(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal) {
+      this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, isGlobal, null);
+    }
+
+    protected void ParseNonLocalDeclaration(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<Specifier> specSpecifiers)
       //^ requires this.currentToken != Token.EndOfFile;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
