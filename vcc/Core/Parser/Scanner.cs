@@ -39,6 +39,9 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// <summary>A linked list of keywords that start with "__".</summary>
     private static readonly Keyword MicrosoftKeywords = Keyword.InitMicrosoftKeywords();
 
+    /// <summary>A linked list of keywords that start with "\".</summary>
+    private static readonly Keyword ExtendedVccKeywords = Keyword.InitExtendedVccKeywords();
+
     /// <summary>
     /// Used to build the unescaped contents of an identifier when the identifier contains escape sequences. An instance variable because multiple methods are involved.
     /// </summary>
@@ -475,6 +478,8 @@ namespace Microsoft.Research.Vcc.Parsing {
             token = this.ScanKeyword(c, specKeywordExpected);
           } else if (c == '_') {
             token = this.ScanExtendedKeyword();
+          } else if (c == '\\') {
+            token = this.ScanExtendedVccKeyword();
           } else if ('A' <= c && c <= 'Z') {
             if (c == 'L'){
               char ch = this.PeekAheadBy(0);
@@ -925,6 +930,30 @@ namespace Microsoft.Research.Vcc.Parsing {
       Keyword extendedKeyword = microsoftKeyword ? Scanner.MicrosoftKeywords : Scanner.ExtendedKeywords;
       return extendedKeyword.GetKeyword(this.buffer, this.startPos, this.endPos);
     }
+
+    private Token ScanExtendedVccKeyword() {
+      for (; ; )
+      //^ invariant this.charsInBuffer > 0;
+      //^ invariant this.startPos < this.endPos;
+      {
+        char c = this.GetCurrentChar();
+        if ('a' <= c && c <= 'z' || c == 'B' || c == '_' || '0' <= c && c <= '9') {
+          this.endPos++;
+          continue;
+        } else {
+          if (this.endPos == this.charsInBuffer)
+            return Token.Identifier;
+          if (this.IsIdentifierPartChar(c)) {
+            this.endPos++;
+            this.ScanIdentifier();
+            return Token.Identifier;
+          }
+          break;
+        }
+      }
+      return ExtendedVccKeywords.GetKeyword(this.buffer, this.startPos, this.endPos);
+    }
+
 
     private void ScanIdentifier()
       //^ requires this.endPos > 0;
@@ -1885,6 +1914,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     Return,
     /// <summary>
+    /// \\result
+    /// </summary>
+    Result, 
+    /// <summary>
     /// } or :&gt;
     /// </summary>
     RightBrace,
@@ -1976,6 +2009,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// template
     /// </summary>
     Template,
+    /// <summary>
+    /// \\this
+    /// </summary>
+    This,
     /// <summary>
     /// typedef
     /// </summary>
@@ -2097,6 +2134,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// writes, context-dependent
     /// </summary>
     SpecWrites,
+
     /// <summary>
     /// A dummy token produced when the end of the file is reached.
     /// </summary>
@@ -2337,6 +2375,18 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.W64,       "__w64", keyword);
       keyword = new Keyword(Token.Old,       "__old", keyword);
 
+      return keyword;
+    }
+
+    internal static Keyword InitExtendedVccKeywords() {
+      Keyword keyword;
+
+      keyword = new Keyword(Token.Result, "\\result");
+      keyword = new Keyword(Token.Lambda, "\\lambda", keyword);
+      keyword = new Keyword(Token.Forall, "\\forall", keyword);
+      keyword = new Keyword(Token.Exists, "\\exists", keyword);
+      keyword = new Keyword(Token.This,   "\\this", keyword);
+      keyword = new Keyword(Token.Old,    "\\old", keyword);
       return keyword;
     }
   }

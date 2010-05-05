@@ -3166,27 +3166,19 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected virtual bool TryParseSpecialExpression(SimpleName name, TokenSet followers, out Expression expression) {
-      if (this.resultIsAKeyword && name.Name.UniqueKey == this.compilation.NameTable.Result.UniqueKey) {
-        expression = new VccReturnValue(name.SourceLocation);
-        return true;
-      }
-      expression = null;
-      return false;
-    }
-
     protected Expression ParsePrimaryExpression(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       ISourceLocation sctx = this.scanner.SourceLocationOfLastScannedToken;
       Expression expression = new DummyExpression(sctx);
+
       switch (this.currentToken) {
         case Token.Identifier:
           SimpleName name = this.ParseSimpleName(followers|Token.Dot);
-          if (this.TryParseSpecialExpression(name, followers, out expression))
-            break;
-          else if (name.Name.Value == "__this")
+          if (name.Name.Value == "__this")
             expression = new VccThisReference(name.SourceLocation);
+          else if (this.resultIsAKeyword && name.Name.UniqueKey == this.compilation.NameTable.Result.UniqueKey)
+            expression = new VccReturnValue(name.SourceLocation);
           else
             expression = name;
           break;
@@ -3232,6 +3224,15 @@ namespace Microsoft.Research.Vcc.Parsing {
           break;
         case Token.Unchecked:
           expression = this.ParseExpressionWithParens(followers, (expr, sl) => new UncheckedExpression(expr, sl));
+          break;
+          // the following ones will only occur in the next syntax
+        case Token.Result:
+          expression = new VccReturnValue(this.GetSourceLocationBuilderForLastScannedToken());
+          this.GetNextToken();
+          break;
+        case Token.This:
+          expression = new VccThisReference(this.GetSourceLocationBuilderForLastScannedToken());
+          this.GetNextToken();
           break;
         default:
           if (TS.InfixOperators[this.currentToken]) {
@@ -3329,7 +3330,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected Expression ParseQuantifier(TokenSet followers)
+    protected virtual Expression ParseQuantifier(TokenSet followers)
       //^ requires this.currentToken == Token.Exists || this.currentToken == Token.Forall || this.currentToken == Token.Lambda;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -4095,6 +4096,8 @@ namespace Microsoft.Research.Vcc.Parsing {
         PrimaryStart |= Token.StringLiteral;
         PrimaryStart |= Token.LeftParenthesis;
         PrimaryStart |= Token.Unchecked;
+        PrimaryStart |= Token.This;
+        PrimaryStart |= Token.Result;
 
         RightParenthesisOrSemicolon = new TokenSet();
         RightParenthesisOrSemicolon |= Token.RightParenthesis;
