@@ -17,21 +17,8 @@ namespace Microsoft.Research.Vcc.Parsing
 
   internal class ParserV2 : Parser
   {
-    readonly IName ExistsKeyword;
-    readonly IName ForallKeyword;
-    readonly IName OldKeyword;
-    readonly IName ResultKeyword;
-    readonly IName ThisKeyword;
-    readonly IName LambdaKeyword;
-
-    internal ParserV2(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) 
+     internal ParserV2(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) 
     : base(compilation, sourceLocation, scannerAndParserErrors) {
-      this.ExistsKeyword= this.compilation.NameTable.GetNameFor("\\exists");
-      this.ForallKeyword = this.compilation.NameTable.GetNameFor("\\forall");
-      this.LambdaKeyword = this.compilation.NameTable.GetNameFor("\\lambda");
-      this.OldKeyword = this.compilation.NameTable.GetNameFor("\\old");
-      this.ResultKeyword = this.compilation.NameTable.GetNameFor("\\result");
-      this.ThisKeyword = this.compilation.NameTable.GetNameFor("\\this");
     }
 
     override protected bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {
@@ -237,7 +224,6 @@ namespace Microsoft.Research.Vcc.Parsing
         this.SkipOutOfSpecBlock(savedInSpecCode, followers | Token.Specification);
       }
     }
-
 
     protected override List<Parameter> ParseParameterList(Parser.TokenSet followers) {
       List<Parameter> result = new List<Parameter>();
@@ -487,11 +473,14 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
-    private Expression ParseQuantifier(TokenSet followers, Token kind, SourceLocationBuilder slb) {
+    protected override Expression ParseQuantifier(TokenSet followers) {
+      Token kind = this.currentToken;
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      this.GetNextToken();
       TokenSet followersOrLeftBraceOrSemicolonOrUnaryStart = followers | Token.LeftBrace | Token.Semicolon | TS.UnaryStart;
       List<LocalDeclarationsStatement> boundVariables = this.ParseQuantifierBoundVariables(followersOrLeftBraceOrSemicolonOrUnaryStart);
       IEnumerable<IEnumerable<Expression>> triggers = this.ParseQuantifierTriggers(followers | Token.Semicolon | TS.UnaryStart);
-      this.SkipSemiColon(followers | TS.UnaryStart);
+      this.SkipSemiColon(followers | TS.UnaryStart | TS.PrimaryStart);
       Expression condition = this.ParseExpression(followers);
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       Expression result;
@@ -505,36 +494,6 @@ namespace Microsoft.Research.Vcc.Parsing
         throw new InvalidOperationException();
       this.compilation.ContractProvider.AssociateTriggersWithQuantifier(result, triggers);
       return result;
-    }
-
-    override protected bool TryParseSpecialExpression(SimpleName name, TokenSet followers, out Expression expression) {
-      if (name.Name.UniqueKey == this.ResultKeyword.UniqueKey) {
-        expression = new ReturnValue(name.SourceLocation);
-        return true;
-      } else if (name.Name.UniqueKey == this.OldKeyword.UniqueKey) {
-        SourceLocationBuilder slb = new SourceLocationBuilder(name.SourceLocation);
-        this.Skip(Token.LeftParenthesis);
-        Expression expr = this.ParseExpression(followers | Token.RightParenthesis);
-        slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-        expression = new OldValue(expr, slb);
-        this.SkipOverTo(Token.RightParenthesis, followers);
-        return true;
-      } else if (name.Name.UniqueKey == this.ForallKeyword.UniqueKey) {
-        expression = this.ParseQuantifier(followers, Token.Forall, new SourceLocationBuilder(name.SourceLocation));
-        return true;
-      } else if (name.Name.UniqueKey == this.ExistsKeyword.UniqueKey) {
-        expression = this.ParseQuantifier(followers, Token.Exists, new SourceLocationBuilder(name.SourceLocation));
-        return true;
-      } else if (name.Name.UniqueKey == this.LambdaKeyword.UniqueKey) {
-        var lambda = this.ParseQuantifier(followers | Token.LeftBracket, Token.Lambda, new SourceLocationBuilder(name.SourceLocation));
-        expression = this.ParsePostFix(lambda, followers);
-        return true;
-      } else if (name.Name.UniqueKey == this.ThisKeyword.UniqueKey) {
-        expression = new VccThisReference(name.SourceLocation);
-        return true;
-      }
-      expression = null;
-      return false;
     }
 
     private bool SkipIntoSpecBlock() {
