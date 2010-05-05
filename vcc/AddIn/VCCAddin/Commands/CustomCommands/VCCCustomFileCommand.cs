@@ -1,16 +1,12 @@
-﻿//-----------------------------------------------------------------------------
+﻿using EnvDTE;
+//-----------------------------------------------------------------------------
 //
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
 //
 //-----------------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.Text;
 using EnvDTE80;
-using EnvDTE;
 using VerifiedCCompilerAddin.Forms;
 using VerifiedCCompilerAddin.Manager.Verify;
-using VerifiedCCompilerAddin.Manager.Settings;
 
 namespace VerifiedCCompilerAddin.Commands {
   public class VCCCustomFileCommand : VCCCommand{

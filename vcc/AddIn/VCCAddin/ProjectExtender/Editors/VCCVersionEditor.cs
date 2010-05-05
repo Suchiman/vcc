@@ -5,11 +5,9 @@
 //-----------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Drawing.Design;
-using System.Windows.Forms.Design;
 using System.Windows.Forms;
+using System.Windows.Forms.Design;
 
 namespace VerifiedCCompilerAddin.ProjectExtender.TypeConverter {
   internal class VCCVersionEditor : UITypeEditor {

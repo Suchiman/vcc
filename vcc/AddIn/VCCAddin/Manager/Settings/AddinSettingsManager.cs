@@ -5,12 +5,9 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Text;
-using EnvDTE80;
-using EnvDTE;
-using System.IO.IsolatedStorage;
 using System.IO;
-using VerifiedCCompilerAddin.ProjectExtender.Options;
+using System.IO.IsolatedStorage;
+using EnvDTE;
 
 namespace VerifiedCCompilerAddin.Manager.Settings {
   public static class AddinSettingsManager {

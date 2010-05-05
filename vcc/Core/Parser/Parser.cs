@@ -4,11 +4,10 @@
 //
 //-----------------------------------------------------------------------------
 using System;
+using System.Collections.Generic;
+using System.Text;
 using Microsoft.Cci;
 using Microsoft.Cci.Ast;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
 
 //^ using Microsoft.Contracts;
 

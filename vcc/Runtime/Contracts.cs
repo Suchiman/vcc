@@ -3,9 +3,6 @@
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
 //
 //-----------------------------------------------------------------------------
-using System;
-using System.Diagnostics;
-using System.Runtime.Serialization;
 using System.Collections.Generic;
 
 namespace System.Diagnostics.Contracts

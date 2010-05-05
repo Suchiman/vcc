@@ -4,11 +4,10 @@
 //
 //-----------------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
 using System.Text;
+using System.Windows.Forms;
 using EnvDTE;
 using EnvDTE80;
-using System.Windows.Forms;
 using VerifiedCCompilerAddin.Manager.Verify;
 
 namespace VerifiedCCompilerAddin.Commands {

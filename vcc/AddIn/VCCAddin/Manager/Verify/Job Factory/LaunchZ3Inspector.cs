@@ -4,10 +4,6 @@
 //
 //-----------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using VerifiedCCompilerAddin.Manager.Settings;
 
 namespace VerifiedCCompilerAddin.Manager.Verify {
   internal sealed class LaunchZ3Inspector : VerifyJob {

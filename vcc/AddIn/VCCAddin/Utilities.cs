@@ -5,10 +5,9 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using EnvDTE;
@@ -21,7 +20,6 @@ using VerifiedCCompilerAddin.Manager.Marker;
 using VerifiedCCompilerAddin.Manager.Settings;
 using VerifiedCCompilerAddin.Manager.Verify;
 using VerifiedCCompilerAddin.Resources;
-using System.Diagnostics;
 
 namespace VerifiedCCompilerAddin {
 

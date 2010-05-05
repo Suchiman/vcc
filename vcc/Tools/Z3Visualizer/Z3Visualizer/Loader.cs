@@ -5,11 +5,9 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using System.Windows.Forms;
 using Z3AxiomProfiler.QuantifierModel;
 
 namespace Z3AxiomProfiler

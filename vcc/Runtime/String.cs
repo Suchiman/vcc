@@ -3,9 +3,6 @@
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
 //
 //-----------------------------------------------------------------------------
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
 
 namespace Microsoft.Research.Vcc {
   public static unsafe partial class Runtime {

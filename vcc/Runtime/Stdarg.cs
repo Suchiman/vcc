@@ -4,9 +4,6 @@
 //
 //-----------------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
-using System.Collections;
-using System.Text;
 
 namespace Microsoft.Research.Vcc {
   using va_list = ArgIterator;

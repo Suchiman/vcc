@@ -4,16 +4,10 @@
 //
 //-----------------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using System.IO;
-using EnvDTE80;
 using EnvDTE;
-using VccModelViewer;
+using EnvDTE80;
 using VerifiedCCompilerAddin.Manager.Marker;
 using VerifiedCCompilerAddin.Manager.Verify;
-using VerifiedCCompilerAddin.Manager.Settings;
 
 namespace VerifiedCCompilerAddin.Commands {
   public class VCCViewErrorModelFromErrorList : VCCCommand {

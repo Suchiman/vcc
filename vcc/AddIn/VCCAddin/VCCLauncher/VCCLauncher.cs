@@ -10,7 +10,6 @@ using System.IO;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using EnvDTE;
 using VerifiedCCompilerAddin.Manager.Marker;
 using VerifiedCCompilerAddin.Manager.Settings;
 using VerifiedCCompilerAddin.Manager.Verify;

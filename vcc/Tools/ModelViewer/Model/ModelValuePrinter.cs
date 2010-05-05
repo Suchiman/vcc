@@ -5,10 +5,6 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.IO;
-using Z3Model;
-using Z3Model.Parser;
-using VccModel.Controller;
 
 namespace VccModel.Preprocessor
 {

@@ -5,10 +5,8 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
-using Microsoft.Cci.Ast;
 using Microsoft.Cci;
 //^ using Microsoft.Contracts;
 

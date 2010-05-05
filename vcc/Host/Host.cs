@@ -8,12 +8,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Microsoft.Boogie;
-using Microsoft.Boogie.AbstractInterpretation;
-using Microsoft.Cci.Ast;
-using Microsoft.Research.Vcc;
-using Microsoft.Cci;
 using System.Text.RegularExpressions;
+using Microsoft.Boogie;
+using Microsoft.Cci;
 
 namespace Microsoft.Research.Vcc
 {

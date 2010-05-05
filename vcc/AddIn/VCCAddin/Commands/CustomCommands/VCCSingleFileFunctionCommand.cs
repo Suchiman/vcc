@@ -6,7 +6,6 @@
 using System;
 using EnvDTE;
 using EnvDTE80;
-using VerifiedCCompilerAddin.Manager.Settings;
 using VerifiedCCompilerAddin.Manager.Verify;
 
 namespace VerifiedCCompilerAddin.Commands  {

@@ -4,13 +4,6 @@
 //
 //-----------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using VerifiedCCompilerAddin.Forms;
-using System.IO;
-using VerifiedCCompilerAddin.Manager.Settings;
-using EnvDTE;
 
 namespace VerifiedCCompilerAddin.Manager.Verify {
 

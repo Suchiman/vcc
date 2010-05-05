@@ -5,18 +5,9 @@
 //-----------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel;
 using EnvDTE;
-using System.Drawing;
-using System.ComponentModel.Design;
-using System.Runtime.Serialization;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using VerifiedCCompilerAddin.ProjectExtender.Options;
-using EnvDTE80;
-using VerifiedCCompilerAddin.Manager.Settings;
 
 namespace VerifiedCCompilerAddin.ProjectExtender {
 

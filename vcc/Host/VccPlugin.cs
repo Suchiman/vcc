@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.Boogie;
 using System.IO;
+using Microsoft.Boogie;
 using Microsoft.Boogie.AbstractInterpretation;
 
 namespace Microsoft.Research.Vcc

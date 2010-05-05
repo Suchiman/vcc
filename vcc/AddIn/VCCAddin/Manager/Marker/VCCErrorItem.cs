@@ -4,9 +4,6 @@
 //
 //-----------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace VerifiedCCompilerAddin.Manager.Marker {
   public class VCCErrorItem {

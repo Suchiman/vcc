@@ -5,14 +5,14 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Resources;
-using Microsoft.Cci.Ast;
-using Microsoft.Research.Vcc.Preprocessing;
-using System.Text;
-using System.Diagnostics.SymbolStore;
-using Microsoft.Cci;
-using Microsoft.Research.Vcc.Parsing;
 using System.Diagnostics;
+using System.Diagnostics.SymbolStore;
+using System.Resources;
+using System.Text;
+using Microsoft.Cci;
+using Microsoft.Cci.Ast;
+using Microsoft.Research.Vcc.Parsing;
+using Microsoft.Research.Vcc.Preprocessing;
 
 //^ using Microsoft.Contracts;
 

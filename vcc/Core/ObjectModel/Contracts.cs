@@ -4,11 +4,9 @@
 //
 //-----------------------------------------------------------------------------
 using System.Collections.Generic;
-using System.Resources;
-using Microsoft.Cci.Ast;
-using Microsoft.Research.Vcc.Preprocessing;
-using ITypeInvariant=Microsoft.Cci.Contracts.ITypeInvariant;
 using Microsoft.Cci;
+using Microsoft.Cci.Ast;
+using ITypeInvariant = Microsoft.Cci.Contracts.ITypeInvariant;
 
 //^ using Microsoft.Contracts;
 

@@ -5,12 +5,10 @@
 //-----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
-using Microsoft.Cci.Ast;
-using Error = Microsoft.Research.Vcc.Error;
 using Microsoft.Cci;
+using Microsoft.Cci.Ast;
 using Microsoft.Research.Vcc.Parsing;
 //^ using Microsoft.Contracts;
 

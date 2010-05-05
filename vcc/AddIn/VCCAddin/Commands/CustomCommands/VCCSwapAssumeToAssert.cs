@@ -1,13 +1,10 @@
-﻿//-----------------------------------------------------------------------------
+﻿using EnvDTE;
+//-----------------------------------------------------------------------------
 //
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
 //
 //-----------------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.Text;
 using EnvDTE80;
-using EnvDTE;
 using VerifiedCCompilerAddin.Manager.Verify;
 
 namespace VerifiedCCompilerAddin.Commands {

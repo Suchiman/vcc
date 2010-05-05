@@ -4,10 +4,8 @@
 //
 //-----------------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
-using System.Text;
-using EnvDTE80;
 using EnvDTE;
+using EnvDTE80;
 using VerifiedCCompilerAddin.Manager.Verify;
 
 // This is in invisible command, that is used internaly for callback functionality

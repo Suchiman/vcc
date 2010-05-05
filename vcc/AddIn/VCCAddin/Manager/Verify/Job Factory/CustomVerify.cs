@@ -5,8 +5,6 @@
 //-----------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using VerifiedCCompilerAddin.Forms;
 
 namespace VerifiedCCompilerAddin.Manager.Verify {
