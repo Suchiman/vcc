@@ -4353,12 +4353,12 @@ namespace Microsoft.Research.Vcc {
 
   public class SpecTokenSpecifier : Specifier
   {
-    internal SpecTokenSpecifier(ParserV2.SpecToken token, ISourceLocation sourceLocation)
+    internal SpecTokenSpecifier(Token token, ISourceLocation sourceLocation)
       : base(sourceLocation) {
         this.Token = token;
     }
 
-    internal readonly ParserV2.SpecToken Token;
+    internal readonly Token Token;
   }
 
   public class PrimitiveTypeSpecifier : Specifier {

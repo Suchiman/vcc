@@ -265,13 +265,13 @@ namespace Microsoft.Research.Vcc {
             AttributeTypeExpression attrType = new AttributeTypeExpression(attrTypeName);
             List<Expression> args = new List<Expression>();
             switch (specTokenSpec.Token) {
-              case ParserV2.SpecToken.Claimable:
+              case Token.SpecClaimable:
                 args.Add(new CompileTimeConstant("claimable", specTokenSpec.SourceLocation));
                 break;
-              case ParserV2.SpecToken.DynamicOwns:
+              case Token.SpecDynamicOwns:
                 args.Add(new CompileTimeConstant("dynamic_owns", specTokenSpec.SourceLocation));
                 break;
-              case ParserV2.SpecToken.Pure:
+              case Token.SpecPure:
                 args.Add(new CompileTimeConstant("is_pure", specTokenSpec.SourceLocation));
                 break;
               default:
