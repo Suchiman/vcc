@@ -51,10 +51,7 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     override protected void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
-      this.GetNextToken();
-      bool savedInSpecCode = this.EnterSpecBlock();
-      this.Skip(Token.LeftParenthesis, true);
-
+      bool savedInSpecCode = this.SkipIntoSpecBlock();
       if (STS.SpecTypeModifiers[this.currentToken]) {
         this.ParseGlobalDeclarationWithSpecModifiers(members, globalMembers, followers, savedInSpecCode);
         return;
@@ -130,9 +127,7 @@ namespace Microsoft.Research.Vcc.Parsing
 
     new protected void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       while (this.currentToken == Token.Specification) {
-        bool savedInSpecCode = this.EnterSpecBlock();
-        this.GetNextToken();
-        this.Skip(Token.LeftParenthesis, true);
+        bool savedInSpecCode = this.SkipIntoSpecBlock();
         while (STS.TypeMember[this.currentToken]) {
           switch (this.currentToken) {
             case Token.SpecInvariant:
@@ -165,9 +160,7 @@ namespace Microsoft.Research.Vcc.Parsing
       List<Expression> writes = new List<Expression>();
       List<LoopVariant> variants = new List<LoopVariant>();
       while (this.currentToken == Token.Specification) {
-        bool savedInSpecCode = this.EnterSpecBlock();
-        this.GetNextToken();
-        this.Skip(Token.LeftParenthesis, true);
+        bool savedInSpecCode = this.SkipIntoSpecBlock();
         while (STS.LoopContract[this.currentToken]) {
           switch (this.currentToken) {
             case Token.SpecInvariant:
@@ -199,9 +192,7 @@ namespace Microsoft.Research.Vcc.Parsing
 
     override protected void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers) {
       while (this.currentToken == Token.Specification) {
-        bool savedInSpecCode = this.EnterSpecBlock();
-        this.GetNextToken();
-        this.Skip(Token.LeftParenthesis, true);
+        bool savedInSpecCode = SkipIntoSpecBlock();
         while (STS.FunctionOrBlockContract[this.currentToken]) {
           switch (this.currentToken) {
             case Token.SpecRequires:
@@ -247,6 +238,7 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
+
     protected override List<Parameter> ParseParameterList(Parser.TokenSet followers) {
       List<Parameter> result = new List<Parameter>();
       this.Skip(Token.LeftParenthesis);
@@ -286,9 +278,7 @@ namespace Microsoft.Research.Vcc.Parsing
     private Parameter ParseSpecParameter(TokenSet followers) {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       Parameter result;
-      this.GetNextToken();
-      bool savedInSpecCode = this.EnterSpecBlock();
-      this.Skip(Token.LeftParenthesis, true);
+      bool savedInSpecCode = this.SkipIntoSpecBlock();
       switch (this.currentToken) {
         case Token.SpecGhost:
           this.GetNextToken();
@@ -332,9 +322,7 @@ namespace Microsoft.Research.Vcc.Parsing
 
     private Expression ParseSpecArgument(TokenSet followers) {
       Expression result;
-      bool savedInSpecCode = this.EnterSpecBlock();
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis, true);
+      bool savedInSpecCode = this.SkipIntoSpecBlock();
       switch (this.currentToken) {
         case Token.SpecGhost:
           this.GetNextToken();
@@ -357,10 +345,7 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     override protected Statement ParseSpecStatements(TokenSet followers) {
-      this.GetNextToken();
-      bool savedInSpecCode = this.EnterSpecBlock();
-      this.Skip(Token.LeftParenthesis, true);
-
+      bool savedInSpecCode = this.SkipIntoSpecBlock();
       if (this.currentToken == Token.SpecUnwrapping) {
         return this.ParseUnwrappingStatement(followers, savedInSpecCode);
       }
@@ -550,6 +535,13 @@ namespace Microsoft.Research.Vcc.Parsing
       }
       expression = null;
       return false;
+    }
+
+    private bool SkipIntoSpecBlock() {
+      this.GetNextToken();
+      bool savedInSpecCode = this.EnterSpecBlock();
+      this.Skip(Token.LeftParenthesis, true);
+      return savedInSpecCode;
     }
 
     private void SkipOutOfSpecBlock(bool savedInSpecBlock, TokenSet followers) {
