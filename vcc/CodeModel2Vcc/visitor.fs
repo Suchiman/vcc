@@ -1086,12 +1086,13 @@ namespace Microsoft.Research.Vcc
         this.DoBinary ("|", bitwiseOr)
 
       member this.Visit (blockExpression:IBlockExpression) : unit =
-        exprRes <- C.Expr.Block (this.ExprCommon blockExpression, 
-                                 [this.DoStatement blockExpression.BlockStatement; 
-                                  this.DoExpression blockExpression.Expression], None)
+        let savedLocalVars = localVars
+        localVars <- []
+        let stmts = [for s in blockExpression.BlockStatement.Statements -> this.DoStatement s]
+        let expr = this.DoExpression blockExpression.Expression
+        exprRes <- C.Expr.Block (this.ExprCommon blockExpression, localVars @ stmts @ [expr], None)
+        localVars <- savedLocalVars
         
-      
-
       member this.Visit (block:IBlockStatement) : unit =
         stmtRes <- this.DoBlock(block) 
         
@@ -1258,7 +1259,7 @@ namespace Microsoft.Research.Vcc
           let assign = C.Expr.Macro (sc, "=", [C.Expr.Ref({ sc with Type = var.Type }, var); 
                                                             this.DoExpression init])
           let assign = if var.Kind = C.VarKind.SpecLocal then C.Expr.Macro(assign.Common, "spec", [assign]) else assign
-          stmtRes <- C.Expr.MkBlock [decl; assign]
+          stmtRes <- assign
 
       member this.Visit (lockStatement:ILockStatement) : unit = assert false
 

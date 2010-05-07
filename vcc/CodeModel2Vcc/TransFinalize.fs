@@ -245,6 +245,7 @@ namespace Microsoft.Research.Vcc
       | Expr.Block(ec, stmts, cso) ->
         let rec loop acc = function
           | [] -> List.rev acc
+          | Expr.Macro(_,"fake_block",nested)::stmts
           | Expr.Block(_, nested, _) :: stmts -> loop acc (nested @ stmts)
           | Expr.Comment(_, comment) :: stmts when comment.StartsWith("__vcc__") -> loop acc stmts
           | stmt :: stmts -> loop (self stmt :: acc) stmts
@@ -255,33 +256,109 @@ namespace Microsoft.Research.Vcc
 
     let handleStackAllocations =
       
-      let insertAfterVarDecls toInsert = function
-        | Expr.Block(ec, stmts, cso) -> 
-          let rec loop decls = function
-            | (VarDecl _ as vd) :: stmts-> loop (vd::decls) stmts
-            | stmts -> List.rev decls @ toInsert @ stmts
-          Expr.Block(ec, loop [] stmts, cso)
-        | e -> Expr.MkBlock(toInsert @ [e])
+      let rec findRealLocalLabels acc = function
+        | [] -> acc
+        | (Label (_,lbl)) :: es -> findRealLocalLabels (lbl::acc) es
+        | _ :: es -> findRealLocalLabels acc es
+      let rec findLocalLabels acc = function
+        | [] -> acc
+        | (Label (_,lbl)) :: es -> findLocalLabels (lbl::acc) es
+        | e :: es ->
+          let subLocalLabels =
+            match e with
+              | Prim (_,_,es')
+              | Call (_,_,_,es')
+              | Macro (_,_,es')
+              | Block (_,es',_) -> findLocalLabels acc es'
+              | Dot (_,e,_)
+              | Cast (_,_,e)
+              | VarWrite (_,_,e)
+              | Assume (_,e)
+              | Pure (_,e)
+              | Return (_,Some e)
+              | Stmt (_,e)
+              | Deref (_,e) -> findLocalLabels acc [e]
+              | Old (_,e1,e2)
+              | MemoryWrite(_,e1,e2)
+              | Index (_,e1,e2) -> findLocalLabels acc [e1;e2]
+              | If (_,cond,thenB,elseB) -> findLocalLabels acc [cond;thenB;elseB]
+              | Atomic (_,es',e) -> findLocalLabels acc (e::es')
+              | Assert (_,e,es') -> findLocalLabels acc (e::(List.concat es'))
+              | Label _ -> die()
+              | Loop _ // We know that we won't jump into loops, for now
+              | _ -> []
+          subLocalLabels@(findLocalLabels acc es)
+      let rec findLocalStackDeallocs acc = function
+        | [] -> acc
+        | (VarWrite(ec, [v], CallMacro(_,"_vcc_stack_alloc",_,_))) :: es ->
+          let vName = if v.Name.StartsWith "addr." then v.Name.Substring(5) else v.Name
+          let ec' = {forwardingToken (ec.Token) None (fun () -> "stack_free(&" + vName + ")") with Type = Void }
+          let vRef = Expr.Ref({forwardingToken (ec.Token) None (fun () -> "&" + vName) with Type = v.Type}, v)
+          let free = Expr.Call(ec',internalFunction helper "stack_free", [], [Expr.Macro(ec', "stackframe", []); vRef])
+          findLocalStackDeallocs (free::acc) es
+        | Macro (_,"fake_block",ss) :: es -> findLocalStackDeallocs acc (ss@es)
+        | _ :: es -> findLocalStackDeallocs acc es
+      let deallocStmtFromEcAndCall ec call = Expr.Stmt(ec,call)
+      let rec deallocsFromLbl acc lbl = function
+        | [] -> die()
+        | (lbls,deallocs)::scs ->
+          if (List.exists (fun x -> lbl = x) lbls) then acc
+                                                   else deallocsFromLbl (deallocs@acc) lbl scs
+      let rec pushFreesIn frees = function
+        | [] -> die()
+        | [x] -> frees@[x]
+        | x::xs -> x::(pushFreesIn frees xs)
+      let scopes = ref []
+
+      let rec handleBlocks self = function
+        | Block (ec, es, None) as b ->
+          let localLabels = findRealLocalLabels [] es
+          let subLocalLabels = findLocalLabels [] es
+          let localDeallocs = findLocalStackDeallocs [] es
+          let childrenChanges = ref false
+          let oldScopes = !scopes
+          scopes := (subLocalLabels,localDeallocs)::(!scopes)
+          let handleChildren self e =
+            match handleBlocks self e with
+              | None -> None
+              | Some e' -> childrenChanges := true; Some e'
+          let es' = List.map (fun (e : Expr) -> e.SelfMap(handleChildren)) es
+          let lds = List.map (deallocStmtFromEcAndCall ec) localDeallocs
+          scopes := oldScopes
+          match !childrenChanges,localDeallocs with
+            | false,[] -> Some b
+            | false,_ -> Some(Block(ec,es@(Comment(ec,"Block cleanup")::lds),None))
+            | true,[] -> Some(Block(ec,es',None))
+            | true,_ -> Some(Block(ec,es'@(Comment(ec,"Block cleanup")::lds),None))
+        | Goto (ec, lbl) as g ->
+          match deallocsFromLbl [] lbl (!scopes) with
+            | [] -> None
+            | ds -> 
+              let ds' = List.map (deallocStmtFromEcAndCall ec) ds
+              Some(Block(ec,ds'@[g],None))
+        | Return(ec,Some(Block(ec',es,None))) as r ->
+          match List.concat (List.map snd (!scopes)) with
+            | [] -> None
+            | ds -> 
+              let ds' = List.map (deallocStmtFromEcAndCall ec) ds
+              Some(Return(ec,Some(Block(ec',pushFreesIn ds' es,None))))
+        | Return (ec,_) as r ->
+          match List.concat (List.map snd (!scopes)) with
+            | [] -> None
+            | ds -> 
+              let ds' = List.map (deallocStmtFromEcAndCall ec) ds
+              Some(Block(ec,ds'@[r],None))
+        | _ -> None
             
       let handleFunction (f : Function) =
         match f.Body with
           | None -> f
           | Some body ->
-            let allocations = ref []         
-            let handleExpr self = function
-              | VarWrite(ec, [v], CallMacro(_, "_vcc_stack_alloc", _, _)) as vw -> 
-                let vName = if v.Name.StartsWith "addr." then v.Name.Substring(5) else v.Name
-                let ec' = {forwardingToken (ec.Token) None (fun () -> "stack_free(&" + vName + ")") with Type = Void }
-                let vRef = Expr.Ref({forwardingToken (ec.Token) None (fun () -> "&" + vName) with Type = v.Type} , v)
-                let free = Expr.Call(ec', internalFunction helper "stack_free", [], [Expr.Macro(ec', "stackframe", []); vRef])
-                let freeAtCleanup = Expr.Macro(ec, "function_cleanup", [Expr.Stmt(ec, free)])
-                allocations := vw :: !allocations
-                Some(freeAtCleanup)
-              | _ -> None
-            let body' = body.SelfMap(handleExpr) |> insertAfterVarDecls (List.rev !allocations)
+            scopes := []
+            let body' = (body.SelfMap(handleBlocks))
             f.Body <- Some(body')
             f
-            
+
       mapFunctions handleFunction
             
     // ============================================================================================================
@@ -409,8 +486,8 @@ namespace Microsoft.Research.Vcc
     
     helper.AddTransformer ("final-range-assumptions", Helper.Decl addRangeAssumptions)
     helper.AddTransformer ("final-return-conversions", Helper.Decl addReturnConversions)
-    helper.AddTransformer ("final-flatten-blocks", Helper.Expr flattenBlocks)
     helper.AddTransformer ("final-free-stack", Helper.Decl handleStackAllocations)
+    helper.AddTransformer ("final-flatten-blocks", Helper.Expr flattenBlocks)
     helper.AddTransformer ("final-stmt-expressions", Helper.Expr assignExpressionStmts)
     helper.AddTransformer ("final-linearize", Helper.Decl (ToCoreC.linearizeDecls helper))
     helper.AddTransformer ("final-keeps-warning", Helper.Decl (List.map theKeepsWarning))
