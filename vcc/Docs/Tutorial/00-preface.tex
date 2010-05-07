@@ -26,7 +26,8 @@ statements (called \emph{verification conditions}) whose proofs
 suffice to guarantee the program's correctness, and tries to prove
 these statements using an automatic theorem prover. If any of these
 proofs fail, VCC reflects these failures back to you in terms of the
-program itself. For example, if your program uses division
+program itself (as opposed to the formulas used in the theorem prover).
+For example, if your program uses division
 somewhere, and VCC is unable to prove (from what it thinks holds at the
 point at which the division is done) that the divisor is nonzero, it
 will report this to you as a program error at that point in the
@@ -52,7 +53,7 @@ acquire and release exclusive ownership of chunks of data, you will
 often write small bits of \emph{ghost} code to manipulate the
 ownership relation. (Ghost code is seen by VCC but not by the C
 compiler, and so introduces no runtime overhead.) This is part of the
-VCC philosophy -- \todo{missing stuff}
+VCC philosophy -- \todo{missing stuff; expand on the ghost stuff; maybe move it forward}
 
 This tutorial covers basics of VCC annotation language. By the time
 you have finished working through it, you should be able to use VCC to
@@ -105,6 +106,7 @@ into the VS\ include path, as follows:
 
 \section{Running VCC}
 \subsection{Running VCC from the command line}
+\itodo{Make sure about environment variables and paths.}
 The easiest way to call VCC on a set of files is
 \todo{I've added some options that currently exist only as options to
   be passed to Boogie. We should not be exposing Boogie to clients,
