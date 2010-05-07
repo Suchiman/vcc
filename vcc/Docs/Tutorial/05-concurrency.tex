@@ -28,8 +28,8 @@ If one wishes to protect multiple objects with a single lock, one can make
 the object referenced by \vcc{protected_obj} own them all.
 The \vcc{locked} filed is annotated with \vcc{volatile}.
 It has the usual meaning for the regular C compiler (\ie it makes the compiler
-assume that the environment might write to that field, while the compiler
-is not looking).
+assume that the environment might write to that field, outside the knowledge
+of the compiler).
 For VCC it means that the field can be written also when the object is
 consistent.
 The idea is that we will not unwrap the object, but write it atomically,
@@ -156,7 +156,7 @@ for multiple threads to compete for the lock.
 Let's then say, there is a thread which owns the lock.
 Assume some other thread got to know that the lock is consistent.
 How would it know that the owning thread won't unwrap (or worse yet, deallocate) the lock, just
-before the thread tries an atomic operation on the lock?
+before a thread tries an atomic operation on the lock?
 The owning thread thus needs to somehow promise the other thread
 that lock will stay consistent.
 In VCC such a promise takes form of a \Def{claim}.

@@ -173,18 +173,20 @@ It can be only used in specifications.
 The final issue to explain for the example above is the treatment of the \vcc{writes} clauses.
 The initialization function posses no problems: it lists all the fields is assigns to
 (the \vcc{\span(s)} notation is just syntactic sugar, as explained before).
-However, the \vcc{sstr_append_char()} declares that it will only write
-\vcc{s}, wheres it writes \vcc{s->content[...]} and \vcc{s->len}.
+However, the function \vcc{sstr_append_char()} declares that the
+only location it will write is
+\vcc{s}, whereas the function writes \vcc{s->content[...]} and \vcc{s->len}.
 Listing \vcc{s} allows one to unwrap \vcc{s}, and unwrapping \vcc{s}
 makes all its field writable. 
-The next section elaborates on why is it useful.
+The next section elaborates on why such generality in writes clauses is useful.
 
 \subsection{Ownership Trees}
 
 Often objects stand for abstractions that are implemented with
 more than just one object.
-For example a hash table will consist of a control object, an array of pointers,
+For example a hash table might consist of a control object, an array of pointers,
 and linked lists pointed to by those pointers.
+The control object might \emph{own} the array and the array might own the lists.
 However, before we get to hash tables, we shall first 
 reimplement our \vcc{SafeString} to have dynamically
 allocated buffer. The logical string consists of the control object holding the length
@@ -195,7 +197,8 @@ and the array of bytes holding the content.
 \noindent
 The type \vcc{char[10]} denotes an array with exactly 10 elements,
 and thus the type \vcc{char[capacity]} denotes an array with \vcc{capacity} elements.
-Such types can be only used in casts, as in \vcc{(char[capacity])content},
+Such types can be only used in casts, as in \vcc{(char[capacity])content}%
+\todo{make sure the example doesn't use \vcc{any[...]}},
 which means: take the pointer \vcc{content} and interpret it as an array
 of \vcc{capacity} elements of type \vcc{char}.
 This notation is used so we can think of arrays as objects (of some weird type).
@@ -248,12 +251,12 @@ that deals with ownership:
 \noindent
 To make it easier to read, we made it store the \vcc{s->content} pointer
 casted to an array into a temporary variable.
-Also, an invariant of \vcc{o} is referred to as \vcc{\inv(o)}
-(one can use that in regular VCC specifications).
+Also, an invariant of \vcc{o} is referred to as \vcc{\inv(o)}.
 As you can see there are two ownership transfers.
 The first one is kind of clear: when unwrapping an object everything that it used
 to own, will be now owned by the thread.
 The second one is much more tricky: 
+\todo{Penny: very unclear}
 in VCC the ownership relations are specified fully through invariants.
 Thus, when wrapping an object, we would need to give it ownership
 of \emph{some} other objects, to satisfy its invariant.
@@ -298,6 +301,8 @@ VCC maintains that:
 \forall object p, q; \consistent(p) ==> 
   (q \in \owns(p) <==> \owner(p) == q)
 \end{VCC}
+The operator \vcc{<==>} reads ``if and only if'', and is simply boolean
+equality (or implication both ways), with a binding priority lower than implication.
 That is, for consistent \vcc{p}, the set \vcc{\owns(p)} contains exactly
 the objects owned by \vcc{p}.
 Additionally, the unwrap operation does not touch the owns set,
@@ -397,8 +402,11 @@ But what about \vcc{r->f}?
 This depends on whether \vcc{r \in \domain(p)},
 because \vcc{f(p)} could have written everything
 in \vcc{\domain(p)} (according to its writes clause).
-Unfortunately, the concept of ownership domains involves a transitive
-closure property, which is not expressible in first order logic.
+The ownership domain is the transitive closure of the inverse of the
+owner field.
+\todo{explain transitive closure, logic and things}
+Unfortunately, the concept transitive
+closure is not expressible in first order logic.
 More precisely, we can (usually) prove that something \emph{is} in the ownership
 domain, but not (directly) that something \emph{is not}.
 Therefore, we need to hack our way around it: there are implicit

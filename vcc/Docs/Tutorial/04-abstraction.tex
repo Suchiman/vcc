@@ -14,7 +14,8 @@ abstractions of what they implement.
 It is only rarely the case that a simple C type, say \vcc{unsigned int}, would be suitable
 to store such abstraction (how would one store an unbounded set in some primitive C type?).
 To that end, VCC provides \Def{map types}.
-They can be used only in ghost code, and therefore the issue of memory consumption does not apply to them.
+They can be used only in ghost code, and therefore the issue of runtime memory layout does not apply to them.
+\todo{this is likely unclear}
 The syntax is similar to syntax of array types, \vcc{int m[T*]} defines a map \vcc{m} from \vcc{T*}
 to \vcc{int}.
 That is the type of expression \vcc{m[p]} is \vcc{int}, provided that \vcc{p} is a pointer
@@ -58,7 +59,7 @@ value if and only if it was already a member before or it is \vcc{k}.
 In other words, the new value of \vcc{l->val} will be the union of the old
 abstract value and the element \vcc{k}.
 
-This contract is hopefully all that the caller will need to know about that function:
+Ideally, this contract is all that the caller will need to know about that function:
 what kind of effect does it have on the abstract state. 
 It doesn't specify if the node will be appended at the beginning, or in the middle
 of the list.
@@ -71,7 +72,8 @@ Still, we want a concrete implementation, and here it goes:
 \noindent
 We allocate the node, unwrap the list, initialize the new node,
 wrap it (we want to wrap the list, and thus everything it is going to own will
-need to be wrapped beforehand), and
+need to be wrapped beforehand; the list is wrapped at the end of the 
+unwrapping block), and
 prepend the node at the beginning of the list.
 Then we update the owns set (we've also already seen that).
 Finally, we update the abstract value using a \Def{lambda expression}.
@@ -94,6 +96,7 @@ of the quantifier we have used in specification.
 It doesn't, however, have to be the same, in particular the quantifier
 may talk only about certain indices, while lambda expressions
 are always total.
+\todo{unclear}
 
 \subsection{Triggers}
 
@@ -209,7 +212,7 @@ notation, it uses explicit owns set membership.
 So the upside of the more restrictive explicit trigger is that it avoids
 excessive quantifier instantiations.
 The downside is that if the SMT solver is missing some instantiations,
-it might fail to out rule a model and report a bogus counterexample.
+it might fail to outrule a model and report a bogus counterexample.
 This doesn't happen in for our list, but we'll see such problems
 (but with solutions!) later.
 
@@ -231,7 +234,7 @@ set, then it can be reached from the \vcc{head}.
 Unfortunately, such property is not expressible in first-order
 logic (which is the underlaying logic of VCC specifications).
 To workaround this problem we associate with each node
-a set of values stored in that node, and all the following nodes.
+a set of value stored in that node, and the values stored in all the following nodes.
 In the invariant this is achieved by using a map from nodes
 to maps from integers to booleans (this is conceptually close
 to having a two-dimensional map).
