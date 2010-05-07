@@ -807,7 +807,7 @@ namespace Microsoft.Research.Vcc
               [Expr.Macro (fakeEC Void, "=", [Expr.Deref (fakeEC v.Type, Expr.Ref ({ comm with Type = v'.Type }, v')); mkRef v])]
             else []
           let def = VarDecl (fakeEC Void, v') :: assign :: init
-          addressableLocals.[v] <- (v', Expr.MkBlock def)
+          addressableLocals.[v] <- (v', Macro(fakeEC Void, "fake_block", def))
           
       let pointsToStruct = function
         | Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)})) -> true

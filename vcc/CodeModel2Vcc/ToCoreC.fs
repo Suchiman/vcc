@@ -15,8 +15,27 @@ namespace Microsoft.Research.Vcc
  open Microsoft.Research.Vcc.CAST
  
  module ToCoreC =
+  
+  // ============================================================================================================
+
+  let removeFakeBlocks self e =
+    let rec loop acc = function
+      | [] -> List.rev acc
+      | Expr.Macro(_,"fake_block",nested)::stmts -> loop acc (nested @ stmts)
+      | stmt :: stmts -> loop (self stmt :: acc) stmts
+    match e with
+      | Expr.Block(ec,stmts,None)
+      | Expr.Macro(ec,"fake_block",stmts) ->
+        match loop [] stmts with
+          | [e] -> Some e
+          | _ as es -> Some(Expr.Block(ec, es, None))
+      | Expr.Block(ec,stmts,c) ->
+        Some(Expr.Block(ec, loop [] stmts, c))
+      | _ -> None
+
  
   // ============================================================================================================
+
   let rec linearize (helper:Helper.Env) enclosing ctx _ (expr:Expr) = 
     let selfe prev (expr:Expr) =
       let enclosing = ref prev
@@ -34,7 +53,7 @@ namespace Microsoft.Research.Vcc
         | Some enc -> 
           enc := lst @ !enc
           Some (Macro (voidBogusEC(), "ignore_me", []))
-        | None -> Some (Expr.MkBlock (List.rev lst))
+        | None -> Some (Macro(voidBogusEC(), "fake_block", (List.rev lst)))
 
     match expr with
       | Macro(cmn, "inlined_atomic", [e]) ->
@@ -115,10 +134,11 @@ namespace Microsoft.Research.Vcc
     for d in decls do
       match d with
         | FunctionDecl ({ Body = Some b } as h) -> 
-          h.Body <- Some (b.SelfCtxMap (false, linearize helper None))
+          h.Body <- Some ((b.SelfCtxMap (false, linearize helper None)).SelfMap(removeFakeBlocks))
         | _ -> ()
     decls
-  // ============================================================================================================  
+
+ // ============================================================================================================  
 
   let handlePureCalls (helper : Helper.Env) self = 
   
@@ -817,7 +837,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("core-map-eq", Helper.Expr handleMapEquality)
     helper.AddTransformer ("core-map-init", Helper.Expr handleMapInit)
     helper.AddTransformer ("core-linearize", Helper.Decl (linearizeDecls helper))
-    
+
     helper.AddTransformer ("core-end", Helper.DoNothing)
     
       
