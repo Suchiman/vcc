@@ -6,8 +6,8 @@ only prerequisite is a working understanding of C.
 
 To use VCC, you must first \emph{annotate} your code to specify how
 your functions and data structures are meant to be used, and what your
-functions guarantee to their callers. (VCC requires additional
-annotations that we'll describe throughout the tutorial.) VCC then
+functions guarantee to their callers.
+VCC then
 takes your program and tries to \emph{prove} (mathematically) that
 your program meets these specifications.  Unlike most program
 analyzers, VCC doesn't look for bugs, or analyze an abstraction of
@@ -16,10 +16,13 @@ program really should be correct\footnote{In reality, this isn't
   really a guarantee, because VCC itself might have bugs. But in
   practice, this is unlikely to cause you to accidentally verify an
   incorrect program, unless you find and intentionally exploit such a
-  bug. In addition, VCC currently doesn't do the checks needed to
-  ignore memory system optimizations on multiprocessor machines, e.g.,
-  processor store buffering on x64 machines; this will be remedied in the near
-  future.}. 
+  bug. 
+  % This is way too arcane to be mentioned in the intro. --M
+  %In addition, VCC currently doesn't do the checks needed to
+  %ignore memory system optimizations on multiprocessor machines, e.g.,
+  %processor store buffering on x64 machines; this will be remedied in the near
+  %future.
+  }. 
 
 To check your program, VCC generates a number of mathematical
 statements (called \emph{verification conditions}) whose proofs
@@ -34,37 +37,45 @@ will report this to you as a program error at that point in the
 program. (If you use VCC from within Visual Studio, it will show in
 your program text the place where the error is, just like a syntax
 error.) This doesn't mean that your program is necessarily incorrect;
-most of the time, it is because your specifications aren't strong
+most of the time, especially when verifying code that is already well-tested,
+it is because your specifications aren't strong
 enough to guarantee that the suspected error doesn't occur.
 Typically, you fix this ``error'' by strengthening your
 specifications. This might lead to other error reports, necessitating
 the strengthening of other specifications, so verification is in
-practice an iterative process.  From time to time, however, depending on how
-robust and well-tested your code already is, genuine programming errors may be
-revealed during this process.
+practice an iterative process.  
+Sometimes (actually quite often for not well-tested code)
+a genuine programming errors will be revealed during this process.
 
-The important thing about this process is that you interact with VCC
+Sometimes, annotating your program requires doing some extra
+programming. 
+For example, you might need to talk about a set of users of a 
+data structure, where the implementation only maintains a count of them.
+You will need to include \emph{ghost field} to store this set
+and write small bits of \emph{ghost code} to update it.
+Ghost code is seen by VCC but not by the C
+compiler, and so introduces no runtime overhead.
+This is part of the VCC philosophy -- ghost code is used to communicate
+the intent of the program to VCC.
+VCC then transfers this knowledge to the theorem prover.
+As a consequence you interact with VCC
 entirely at the level of your program; you can safely ignore most of
 the mathematical reasoning going on ``under the hood''.
 
-Sometimes, annotating your program requires doing some extra
-programming. For example, in a concurrent program where threads
-acquire and release exclusive ownership of chunks of data, you will
-often write small bits of \emph{ghost} code to manipulate the
-ownership relation. (Ghost code is seen by VCC but not by the C
-compiler, and so introduces no runtime overhead.) This is part of the
-VCC philosophy -- \todo{missing stuff; expand on the ghost stuff; maybe move it forward}
 
 This tutorial covers basics of VCC annotation language. By the time
 you have finished working through it, you should be able to use VCC to
-verify interesting programs. It doesn't cover the theoretical
+verify interesting programs. \todo{this might be too much}
+It doesn't cover the theoretical
 background of VCC, implementation details, or advanced topics;
-information on these can be found on the \href{http://vcc.codeplex.com/}{VCC homepage}.
+information on these can be found on the VCC homepage\footnote{\url{http://vcc.codeplex.com/}}.
 
 %%  These topics are covered
 %% separately~\cite{lci}.  A high-level overview of the VCC tool chain is
 %% also available separately~\cite{Cohen:TPHOLs2009-23}.
 
+\itodo{We don't want to have this installation thing here, it should
+just point to the website, which should have instructions.}
 The following section covers the installation of VCC.
 After you're done you have two choices: one is to edit the tutorial examples
 using Visual Studio and verify them using VCC Visual Studio addin.
@@ -86,6 +97,8 @@ After installing VS, install VCC\ from the installer link on the
 VCC\ homepage. If you plan to build code verified with VCC (rather
 than just verifying it), you will also want to put the VCC headers
 into the VS\ include path, as follows:
+\todo{This is silly. Shouldn't we just install vcc.h into the VC
+include directory or something?}
 \begin{enumerate}
 \item In the VS\ menu bar, choose Tools$\rightarrow$Options
 \item On the left hand side of the Options dialog box, click on the
@@ -121,16 +134,13 @@ vcc [/f:funs] [/Inspector] [/Models] files
 \end{verbatim}
 Via the \verb!/f! switch a comma-separated list of functions to
 verify may be provided. The \verb!/Inspector! switch causes the VCC inspector to be
-displayed while the verification is running, top monitor what VCC is
+displayed while the verification is running, to monitor what VCC is
 trying to do. The \verb!/Models! switch causes VCC to display models for
 the errors that it finds.
  
 \subsection{Running VCC from VS}
-There are two ways to invoke VCC from within Visual
-Studio\todo{Should we bother with the VCC menu also?}. First,
-from the Verify tab at the top of the window, you can ask VCC verify
-% "Verify tab at the top of the window" -> "Verify menu in the menu bar" ?
-the current file. Second, if you right-click within a C source file,
+\itodo{this should be introduced along with the examples}
+If you right-click within a C source file,
 several VCC commands are made available, depending on what kind of
 construction IntelliSense thinks you are in the middle of. The choice
 of verifying the entire file is always available. If you click within
