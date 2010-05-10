@@ -318,7 +318,8 @@ namespace Z3AxiomProfiler
       var rootSD = model.scopes[0];
       Scope root = rootSD.Scope;
       if (rootSD.Literal == null) {
-        System.Diagnostics.Debug.Assert(rootSD.Implied.Count == 0);
+        System.Diagnostics.Debug.Assert(rootSD.Implied.Count == 0 ||
+            (rootSD.Implied.Count == 1 && rootSD.Implied[0].Id == -13));
       } else {
         var l = new Literal();
         l.Id = -1;
