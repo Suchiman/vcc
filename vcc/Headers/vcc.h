@@ -10,6 +10,9 @@
 
 #ifndef VERIFY
 
+// For the new syntax.
+#define _(...) /* nothing */
+
 #ifndef __cplusplus
 typedef int bool;
 #endif
