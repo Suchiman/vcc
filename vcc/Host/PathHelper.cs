@@ -10,6 +10,14 @@ namespace Microsoft.Research.Vcc
 {
   static class PathHelper
   {
+    public static string Quote(string path)
+    {
+      if (path.Contains(" "))
+        return "\"" + path + "\"";
+      else
+        return path;
+    }
+
     public static string/*?*/ GetVccHeaderDir(bool quoteResult) {
       if (cachedVccHeaderDirectory == null) {
         var dir = new FileInfo(typeof(PathHelper).Assembly.Location).Directory;
@@ -31,10 +39,35 @@ namespace Microsoft.Research.Vcc
     terminateSearch:
 
       if (cachedVccHeaderDirectory == null) return null;
-      if (quoteResult && cachedVccHeaderDirectory.FullName.Contains(" "))
-        return "\"" + cachedVccHeaderDirectory.FullName + "\"";
+      if (quoteResult)
+        return Quote(cachedVccHeaderDirectory.FullName);
       else
         return cachedVccHeaderDirectory.FullName;
+    }
+
+    private static string BinariesDirectory
+    {
+      get
+      {
+        var dir = new FileInfo(typeof(PathHelper).Assembly.Location).Directory;
+        return dir.FullName;
+      }
+    }
+
+    public static string InspectorOption
+    {
+      get
+      {        
+        return "/proverOpt:INSPECTOR=" + Quote(Path.Combine(BinariesDirectory, "Z3Inspector.exe"));
+      }
+    }
+
+    public static string ModelViewerPath
+    {
+      get
+      {
+        return Path.Combine(BinariesDirectory, "VccModelViewer.exe");
+      }
     }
 
     private static DirectoryInfo cachedVccHeaderDirectory;

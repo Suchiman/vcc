@@ -46,6 +46,8 @@ namespace Microsoft.Research.Vcc
     public int WarningLevel = 1;
     public bool DebugOnWarningOrError;
     public bool SaveModel;
+    public bool RunModelViewer;
+    public bool RunInspector;
     public bool DetailedTimes;
     public bool PrintCEVModel;
     public int PointerSize = 64;
@@ -197,9 +199,22 @@ namespace Microsoft.Research.Vcc
             }
           }
           return true;
+
+        case 'i':
+          if (this.ParseName(arg, "inspector", "i")) {
+            this.options.RunInspector = true;
+            return true;
+          }
+          return false;
+
         case 'm':
           if (this.ParseName(arg, "modifiedpreprocessorfile", "modifiedpreprocessorfile")) {
             this.options.ModifiedPreprocessorFiles = true;
+            return true;
+          }
+          if (this.ParseName(arg, "modelviewer", "mv")) {
+            this.options.SaveModel = true;
+            this.options.RunModelViewer = true;
             return true;
           }
           if (this.ParseName(arg, "model", "m")) {

@@ -21,6 +21,7 @@ namespace Microsoft.Research.Vcc
     Boogie.Program currentBoogie;
     VC.VCGen vcgen;
     bool errorMode;
+    int modelCount;
     VcOpt.Optimizer vcopt;
     VcOpt.DummyOpt dummyOpt;
     List<string> options = new List<string>();
@@ -56,6 +57,12 @@ namespace Microsoft.Research.Vcc
     {
       base.Close();
       CloseVcGen();
+      if (modelCount > 0 && parent.options.RunModelViewer && parent.ModelFileName != null) {
+        var p = new System.Diagnostics.Process();
+        p.StartInfo = new System.Diagnostics.ProcessStartInfo(PathHelper.ModelViewerPath, PathHelper.Quote(parent.ModelFileName));
+        p.StartInfo.UseShellExecute = false;
+        p.Start();
+      }
     }
 
     private static string/*?*/ GetExtraFunctionOptions(Implementation impl)
@@ -79,6 +86,9 @@ namespace Microsoft.Research.Vcc
         for (int i = 0; i < standardBoogieOptions.Length; ++i)
           if (standardBoogieOptions[i].StartsWith("/typeEncoding"))
             standardBoogieOptions[i] = "/monomorphize";
+
+      if (parent.options.RunInspector)
+        options.Add(PathHelper.InspectorOption);
 
       options.AddRange(standardBoogieOptions);
       if (parent.ModelFileName != null) {
@@ -200,6 +210,8 @@ namespace Microsoft.Research.Vcc
       }
 
       reporter.PrintSummary(outcome);
+
+      modelCount += reporter.modelCount;
 
       switch (outcome) {
         case VC.VCGen.Outcome.Correct: return VerificationResult.Succeeded;
@@ -437,6 +449,7 @@ namespace Microsoft.Research.Vcc
     string prevPhase;
     bool lineDirty;
     double prevTime;
+    internal int modelCount;
     VccOptions commandLineOptions;
     List<string> proverWarnings;
     VerificationErrorHandler errorHandler;
@@ -477,6 +490,7 @@ namespace Microsoft.Research.Vcc
 
     public override void OnCounterexample(Counterexample ce, string message)
     {
+      this.modelCount++;
       this.PrintSummary(VC.VCGen.Outcome.Errors);
       this.errorHandler.ReportCounterexample(ce, message);
     }
