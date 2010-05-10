@@ -128,7 +128,9 @@
 /Functions:&lt;function list&gt;     List of exact function names to verify (Short form: /F)
 /help                          Display this usage message (Short form: /?)
 /hide:&lt;warning list&gt;           Hide specified warnings (by number; short form: /h)
+/inspector                     Run Z3 Inspector to show progress of verification (Short form: /i)
 /model                         Save model to &lt;currentFile&gt;.vccmodel (Short form: /m)
+/modelviewer                   Run VCC Model Viewer in case models are available (implies /m; Short form: /mv)
 /modifiedpreprocessorfile      Save C preprocessor output to &lt;currentFile&gt;.i.&lt;PID&gt;
 /nopreprocessor                Do not invoke the C preprocessor on the input files (Short form: /n)
 /omitrw                        Omit reads/writes clause checking
