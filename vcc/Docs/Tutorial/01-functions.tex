@@ -1,22 +1,65 @@
 \section{Assert and Assume}
-\itodo{Penny: This section dives right into the meat. First, you need two things: 
-1. A general guide to annotation syntax
-2. A section that describes how to think in VCC terms is, you have to describe not only exactly what your code does at each step of the way, but what your program *doesnt* do. This latter point will nail people on loop verification every time. 
-After you do the how to think part, I suggest some simple exercises, if this is in fact to be a tutorial. The whole book can come later. 
-}
-\itodo{Michal: I'm not sure about 1., 2. might be good idea.}
+%\itodo{Penny: This section dives right into the meat. First, you need two things: 
+%1. A general guide to annotation syntax
+%2. A section that describes how to think in VCC terms is, you have to describe
+%not only exactly what your code does at each step of the way, but what your
+%program *doesnt* do. This latter point will nail people on loop verification
+%every time. 
+%After you do the how to think part, I suggest some simple exercises, if this is in fact to be a tutorial. The whole book can come later. 
+%}
+%\itodo{Michal: I'm not sure about 1., 2. might be good idea.}
+
 Let's begin with a simple example:
 
 \vccInputSC{c/01_minInline2.c}
 This program (internally) sets \vcc{z} to the minimum of \vcc{x} and
-\vcc{y}. An annotation of the form \vcc{_( assert E )} says that whenever
-control reaches the annotation, the asserted expression should hold (i.e.,
-evaluate to something other than 0), so the line 
-\vcc{_( assert z <= x && z <= y )} says that when control reaches the
-assertion, \vcc{z} is no larger than \vcc{x} or \vcc{y}. Go ahead and
-verify this function in VCC. 
+\vcc{y}. 
+An annotation of the form \vcc{_( assert E )} asks VCC to prove that whenever
+the program is executed, \vcc{E} would evaluate to something other than 0 at the point of the assertion.%
+\footnote{This is only partly true when \vcc{E} refers to memory locations shared by multiple
+threads.
+You can safely ignore that until \secref{concurrency}.
+}
+In a sense this is similar to the macro \lstinline|assert(E)| defined in the \lstinline|<assert.h>|
+header file --- the macro aborts the program when \vcc|E| evaluates to non-zero value.
+The difference is that the runtime macro works just for the particular input
+that you happen to supply when running your program, 
+whereas VCC will \emph{prove} that the assertion holds for \emph{all} executions.
 
-VCC verifies this function succesfully which means that this assertion
+Getting back to our example,
+the line \vcc{_( assert z <= x && z <= y )} says
+that when control reaches the assertion, \vcc{z} is no larger than \vcc{x} or
+\vcc{y}. 
+To verify this function using VCC save the source in a file called \verb|minimum.c|
+and then run:
+
+\begin{lstlisting}
+C:\Somewhere\VCC Tutorial> vcc.exe minimum.c
+Verification of main succeeded.
+C:\Somewhere\VCC Tutorial>
+\end{lstlisting}
+
+If you wish to use VCC Visual Studio plugin, load the solution \lstinline|VCCTutorial.sln|,
+locate the file with the example and right-click on the program text.
+You should get options to verify the file or just this function.
+Either one should work.
+
+\begin{note}
+If you right-click within a C source file,
+several VCC commands are made available, depending on what kind of
+construction IntelliSense thinks you are in the middle of. The choice
+of verifying the entire file is always available. If you click within
+the definition of a struct type, VCC will offer you the choice of
+checking admissibility for that type (a concept explained in \secref{admissibility0}).
+If you click within the body of a function, VCC should offer
+you the opportunity to verify just that function. However,
+IntelliSense often gets confused about the syntactic structure of
+VCC code, so it may not give these context-dependent
+options. However, if you select the name of a function and then right
+click, it will allow you to verify just that function.
+\end{note}
+
+VCC verifies this function successfully which means that this assertion
 is indeed correct (and that, in addition, the program cannot
 crash). If VCC is unable to prove such an assertion, it reports an
 error. Try changing the assertion in this program to something that
@@ -24,15 +67,7 @@ isn't true and see what happens.
 
 Assertions, like all VCC annotations, 
 are surrounded by \vcc{_( ... )} to indicate that they are
-only for VCC, and are not part of the program being verified\footnote{
-  The \vcc{<assert.h>} header file defines an \vcc{assert(E)} macro
-  with similar meaning, but a different implementation: 
-  \vcc{E} is evaluated at runtime (in checked builds) and
-  the program terminated if \vcc{E} is false.  The two fundamental
-  differences between these runtime assertions and VCC assertions are
-  (1) VCC assertions allow expressions that use additional constructs
-  (like quantification) that might not be executable, and (2) VCC
-  assertions are checked for \emph{all} possible program executions.}.  
+only for VCC, and are not part of the program being verified
 For the regular C compiler the \vcc{<vcc.h>} header file defines
 \begin{VCC}
 #define _(...) /* nothing */
@@ -44,14 +79,14 @@ annotations.%
   \vcc{__vcc_spec(...)}.
   This is controlled with \vcc{_VCC_DONT_USE_UNDERSCORE} macro-definition.}
 
-To understand how VCC works, and to use if succesfully, it is useful to
+To understand how VCC works, and to use it successfully, it is useful to
 think in terms of what VCC ``knows'' at various program points. In
 this example, VCC initially knows nothing about the variables (they
 can initially hold any value). Just before the first assignment, VCC knows that 
-\vcc{x  <= y} (because execution followed that branch of the conditional), and
+\vcc{x <= y} (because execution followed that branch of the conditional), and
 after the assignment, VCC knows additionally that \vcc{z} is equal to
 \vcc{x}, so it knows that \vcc{z <= x && z <= y}. Similar reasoning
-(with \vcc{x} and \vcc{y} reversed) hold in \vcc{else} branch, so VCC
+(with \vcc{x} and \vcc{y} reversed) holds in \vcc{else} branch, so VCC
 knows that the assertion holds when control reaches it. In general,
 VCC doesn't lose any information when reasoning about assignments and
 conditionals. We will see in subsequent sections, however, that VCC
