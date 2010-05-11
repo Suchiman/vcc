@@ -2,20 +2,24 @@
 
 Loops in VCC usually need to be annotated with invariants.
 A loop invariant is a condition that needs to hold before
-the loop starts executing, and then if the invariant holds
+the loop starts executing and then, assuming the invariant holds
 at the beginning of the loop, it should also hold at the
 end of the loop.
-Moreover the invariant is the only thing the verifier ``knows''
+Moreover the invariant is (almost) the only thing the verifier ``knows''
 at the beginning of a loop. 
 Let's then have a look at an example.
-
 
 \vccInput[]{c/02_div.c}
 
 \noindent
 The \vcc{mod()} function computes a reminder of a integer division
 using iterated subtraction.
-\todo{do we need to claim it makes sense?}
+This is a model of a situation where the specification
+language can express something directly (\eg \vcc{a % b}),
+but let's say we're running on a CPU which does not have the
+modulo operation.
+Later, we'll see similar examples with sets, which are built into
+the specification language, but not into C.
 The invariant is that the \vcc{res % a} stays unchanged,
 and equal to \vcc{a % b}.
 To make the invariant semantics clearer below
@@ -41,7 +45,7 @@ Then VCC checks the invariant after the arbitrary iteration.
 Finally, the iteration ends with an assumption that will never be satisfied.
 The idea is that we are verifying an arbitrary loop iteration,
 so verifying just one is enough, we do not need to have a jump
-at the end of the loop.
+back to the beginning of the loop.
 On the other hand, the only way to exit the loop is through the
 \vcc{break} statement, and this is why we assume the control never falls over the end of the loop.
 Thus, for the verifier, the only way to reach the \vcc{return} statement and 
@@ -60,6 +64,8 @@ while (res >= b)
 \end{VCC}
 the assert/assume translation would be exactly the same: the invariant would be assumed before
 checking the guard.
+Note that this is not what might be suggested by the notation,
+where the guard comes before the invariant.
 
 \subsection{Arrays}
 
@@ -72,19 +78,25 @@ the following function looking linearly for an integer in an array.
 \noindent
 The requirement \itodo{decide what do we put there}
 makes sure the array is readable.
-The \vcc{P ==> Q} formally means \vcc{!P || Q}, and is usually 
+As for the \vcc{==>} operator,
+\vcc{P ==> Q} formally means \vcc{!P || Q}, and is usually 
 read as ``\vcc{P} implies \vcc{Q}''.
 In particular note that \vcc{\false ==> P} is true for any \vcc{P}.
-However this specification is not full, what about the case when the result is not found?
+Thus, the postcondition guarantees that when the returned value
+is not \vcc{UINT_MAX}, then \vcc{elt} is indeed found at the returned
+index.
+This doesn't require an invariant, because the non-\vcc{UINT_MAX} index
+is returned only under that condition.
+However this specification is not full: what about the case when the result is not found?
 To express that an element is not in an array we will use a universal quantifier:
 
 \vccInput{c/03_lsearch_full.c}
 
 \noindent
-The syntax \vcc{\forall unsigned j; j < i; ar[j] != elt} means that 
-\vcc{ar[j] != elt} for all \vcc{j} between \vcc{0} and \vcc{i - 1}.
-The \vcc{0} bound comes from the fact that we're quantifying over an unsigned
-integer.
+The syntax \vcc{\forall unsigned j; j < i ==> ar[j] != elt} means that 
+\vcc{ar[j]} is not \vcc{elt} for all \vcc{j} between \vcc{0} and \vcc{i - 1}.
+In other words, take an arbitrary unsigned (and thus non-negative) integer \vcc{j}. 
+If it happens to be less than \vcc{i} then the value in \vcc{ar[j]} is not \vcc{elt}.
 Thus, the invariant says that the element was not found between \vcc{0}
 and \vcc{i - 1}.
 If the loop terminates with \vcc{i == sz}, then the postcondition follows.

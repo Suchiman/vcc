@@ -2,12 +2,11 @@
 
 int main()
 {
-  int x,y,z;
-  if (x <= y)
-    z = x;
-  else z = y;
+  int x, y, z;
+  if (x <= y) z = x;
+  else        z = y;
   assert(z <= x && z <= y);
-  return(0);
+  return 0;
 }
 /*`
 Verification of main succeeded.
