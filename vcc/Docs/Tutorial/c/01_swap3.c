@@ -4,8 +4,7 @@
 /*{swap}*/
 void swap(int *p, int *q)
 //--
-  weak_out_param(p)
-  weak_out_param(q) //--
+  writes(p,q) //--
 {
   int tmp;
   assume(writable(p) && writable(q)); // from the writes clause

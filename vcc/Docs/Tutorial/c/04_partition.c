@@ -5,8 +5,7 @@
 /*{swap}*/
 void swap(int *p, int *q)
   // will be spec( writes p, q )
-  weak_out_param(p)
-  weak_out_param(q)
+  writes(p,q)
   ensures(*p == old(*q) && *q == old(*p))
 {
   int tmp;
