@@ -19,7 +19,6 @@ void swap(int *p, int *q)
 
   assert(*p == old(*q) && *q == old(*p)); // ensures
 }
-/*{out}*/
 /*`
 Verification of swap succeeded.
 `*/
