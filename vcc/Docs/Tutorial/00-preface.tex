@@ -74,87 +74,47 @@ information on these can be found on the VCC homepage\footnote{\url{http://vcc.c
 %% separately~\cite{lci}.  A high-level overview of the VCC tool chain is
 %% also available separately~\cite{Cohen:TPHOLs2009-23}.
 
-\itodo{We don't want to have this installation thing here, it should
-just point to the website, which should have instructions.}
-The following section covers the installation of VCC.
-After you're done you have two choices: one is to edit the tutorial examples
-using Visual Studio and verify them using VCC Visual Studio addin.
-Alternatively, you can invoke the VCC verifier directly from command line,
-and use your favorite text editor to edit the examples.
-
-\section{Installing VCC} 
 You can use VCC either from the command line or from Visual Studio
-2008 (VS).  We recommend the VS interface, but the command line interface
-is sometimes useful for scripting.
+2008 (VS).
+The VS interface offers easy access to different components of
+VCC tool chain and is thus generally recommended,
+but invoking VCC from command line will be also covered.
+VCC can be downloaded from its homepage.
+Make sure to check out installation instructions\footnote{\url{http://vcc.codeplex.com/wikipage?title=Install}},
+as they contain important information about installation prerequisites 
+and setting include paths.
 
-If you are using VS, you should install it before
-installing VCC\footnote{Does this matter now?}. You can use any
-edition other than the express editions (which do not allow
-plugins). If you neither own nor wish to buy VS, you can download a
-free six month trial from the Microsoft web site.
 
-After installing VS, install VCC\ from the installer link on the
-VCC\ homepage. If you plan to build code verified with VCC (rather
-than just verifying it), you will also want to put the VCC headers
-into the VS\ include path, as follows:
-\todo{This is silly. Shouldn't we just install vcc.h into the VC
-include directory or something?}
-\begin{enumerate}
-\item In the VS\ menu bar, choose Tools$\rightarrow$Options
-\item On the left hand side of the Options dialog box, click on the
-  triangle next to Projects and Solutions, then click on the
-  subheading marked ``VC++ Directories''
-\item On the upper right hand corner of the dialog box, under the
-  label ``Show directories for'' click on the drop-down box and select
-  ``Include files''
-\item Below the drop-down box, click on the second box from the left
-  (the one with the folder icon, labelled ``New Line'').
-\item To the right of the text entry box that opens, click on the box
-  with labelled ``...''.
-\item In the file chooser that opens up, navigate to the \verb!\Headers!
-  subdirectory of the VCC installation directory (e.g., \verb!C:\Program Files\Microsoft Research\Vcc\Headers! is the default location for
-  installations on 32-bit Windows) and click ``select folder''.
-\item Close the options dialog box.
-\end{enumerate}
-
-\section{Running VCC}
-\subsection{Running VCC from the command line}
-\itodo{Make sure about environment variables and paths.}
-The easiest way to call VCC on a set of files is
-\todo{I've added some options that currently exist only as options to
-  be passed to Boogie. We should not be exposing Boogie to clients,
-  so we should really have separate options to call the proof
-  inspector and/or see error models (though I don't know which one we
-  would display for multiple errors).}
-\todo{More options}
-% Mark: there is /model as a switch but that would save a model to a file and
-% not display it.
-\begin{verbatim}
-vcc [/f:funs] [/Inspector] [/Models] files
-\end{verbatim}
-Via the \verb!/f! switch a comma-separated list of functions to
-verify may be provided. The \verb!/Inspector! switch causes the VCC inspector to be
-displayed while the verification is running, to monitor what VCC is
-trying to do. The \verb!/Models! switch causes VCC to display models for
-the errors that it finds.
- 
-\subsection{Running VCC from VS}
-\itodo{this should be introduced along with the examples}
-If you right-click within a C source file,
-several VCC commands are made available, depending on what kind of
-construction IntelliSense thinks you are in the middle of. The choice
-of verifying the entire file is always available. If you click within
-the definition of a struct type, VCC will offer you the choice of
-checking admissibility for that type (a concept explained in
-section \ref{}). If you click within the body of a function, VCC should offer
-you the opportunity to verify just that function. However,
-IntelliSense often gets confused about the syntactic structure of
-VCC code, so it may not give these context-dependent
-options. However, if you select the name of a function and then right
-click, it will allow you to verify just that function.
-
-If you want to run the VCC inspector during verification, this
-option can be selected from the Verify$\rightarrow$Settings menu. If you want
-to look at the error model for a particular error, right-click on
-error (in the source), and choose ``Show VCC error model''\todo{This
-  should really say ``VCC error model'', to not expose Z3.}
+%\subsection{Running VCC from the command line}
+%\todo{More options?}
+%The easiest way to call VCC on a set of files is
+%\begin{verbatim}
+%vcc [/f:funs] [/inspector] [/modelviewer] files
+%\end{verbatim}
+%Via the \verb!/f! switch a comma-separated list of functions to
+%verify may be provided. The \verb!/inspector! (or \verb|/i|) switch causes the Z3 Inspector to be
+%displayed while the verification is running, to monitor what VCC is
+%trying to do. The \verb!/modelviewer! (or \verb|/mv|) switch causes VCC to display models for
+%the errors that it finds.
+%If there is more than one error, the active model can be switched in the Model menu.
+% 
+%\subsection{Running VCC from VS}
+%\itodo{this should be introduced along with the examples}
+%If you right-click within a C source file,
+%several VCC commands are made available, depending on what kind of
+%construction IntelliSense thinks you are in the middle of. The choice
+%of verifying the entire file is always available. If you click within
+%the definition of a struct type, VCC will offer you the choice of
+%checking admissibility for that type (a concept explained in
+%section \ref{}). If you click within the body of a function, VCC should offer
+%you the opportunity to verify just that function. However,
+%IntelliSense often gets confused about the syntactic structure of
+%VCC code, so it may not give these context-dependent
+%options. However, if you select the name of a function and then right
+%click, it will allow you to verify just that function.
+%
+%If you want to run the VCC inspector during verification, this
+%option can be selected from the Verify$\rightarrow$Settings menu. If you want
+%to look at the error model for a particular error, right-click on
+%error (in the source), and choose ``Show VCC error model''\todo{This
+%  should really say ``VCC error model'', to not expose Z3.}
