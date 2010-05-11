@@ -411,3 +411,13 @@ void foo()
 `
 Verification of foo succeeded.
 `
+void bar() { }
+
+void foo() {
+  unsigned __int8 r = 5;
+  r |= (bar(), 6);
+}
+`
+Verification of bar succeeded.
+Verification of foo succeeded.
+`
