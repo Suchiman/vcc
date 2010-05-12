@@ -58,7 +58,7 @@ namespace VerifiedCCompilerAddin {
     internal static string getVCCPrelude() {
       string AddInAssemblyLocation = typeof(VCCLaunchZ3Visualizer).Assembly.Location;
       string AddInPath = Path.GetDirectoryName(AddInAssemblyLocation);
-      string HeadersPath = AddInPath.Replace("AddIn", "Headers");
+      string HeadersPath = AddInPath.ToUpperInvariant().Replace("ADDIN", "Headers");
       string PreludeFileName = "VccPrelude.bpl";
       return Path.Combine(HeadersPath, PreludeFileName);
     }
@@ -106,7 +106,7 @@ namespace VerifiedCCompilerAddin {
 
     internal static string GetIDEPath() {
       string VPath = GetVSCOMNTOOLS();
-      VPath = VPath.Replace("Tools", "IDE");
+      VPath = VPath.ToUpperInvariant().Replace("TOOLS", "IDE");
       return VPath;
     }
 
@@ -124,7 +124,7 @@ namespace VerifiedCCompilerAddin {
           CL = "VC\\bin\\cl.exe"; break;
       }
 
-      return VSDir.Replace("Common7\\Tools\\", CL);
+      return VSDir.ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
     }
        
     internal static string GetActiveConfigOfProject(Project prj) {
@@ -305,7 +305,7 @@ namespace VerifiedCCompilerAddin {
       string guidString = "{15032E00-DDC4-44d1-927B-2A08C23D3F8F}";
       Windows2 windows = (Windows2)application.Windows;
       Assembly asm = Assembly.GetExecutingAssembly();
-      string CodeBase = asm.CodeBase.Replace("VerifiedCCompilerAddin.dll", "VccModelViewer.exe");
+      string CodeBase = asm.CodeBase.ToUpperInvariant().Replace("VERIFIEDCCOMPILERADDIN.DLL", "VccModelViewer.exe");
 
       AddInGlobals.ModelViewerWindow = windows.CreateToolWindow2(addInInstance,
                                                       CodeBase,
