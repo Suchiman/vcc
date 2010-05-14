@@ -2739,7 +2739,68 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// returns true if opnd1 operator1 opnd2 operator2 opnd3 implicitly brackets as opnd1 operator1 (opnd2 operator2 opnd3)
     /// TODO: turn this mess into a table-driven function!!!
     /// </summary>
+
+    private class OperatorPrecedence
+    {
+      public readonly int Precendence;
+      public readonly bool IsLeftAssociative;
+
+      public OperatorPrecedence(int precedence, bool isLeftAssociative) {
+        this.Precendence = precedence;
+        this.IsLeftAssociative = isLeftAssociative;
+      }
+
+      public OperatorPrecedence(int precedence) 
+        :this(precedence, true) {
+      }
+    }
+
+    private static Dictionary<Token, OperatorPrecedence> operatorPrecedences;
+
+    private static void InitOperatorPrecedences() {
+      Dictionary<Token, OperatorPrecedence> precedences = new Dictionary<Token, OperatorPrecedence>();
+      precedences[Token.Divide] = precedences[Token.Multiply] = precedences[Token.Remainder] = new OperatorPrecedence(10);
+      precedences[Token.Plus] = precedences[Token.Subtract] = new OperatorPrecedence(20);
+      precedences[Token.LeftShift] = precedences[Token.RightShift] = new OperatorPrecedence(30);
+      precedences[Token.GreaterThan] = precedences[Token.GreaterThanOrEqual] = precedences[Token.LessThan] = precedences[Token.LessThanOrEqual] = new OperatorPrecedence(40);
+      precedences[Token.SetIntersection] = new OperatorPrecedence(40);
+      precedences[Token.SetDifference] = new OperatorPrecedence(41);
+      precedences[Token.SetUnion] = new OperatorPrecedence(42);
+      precedences[Token.SetIn] = new OperatorPrecedence(43);
+      precedences[Token.Equal] = precedences[Token.NotEqual] = new OperatorPrecedence(50);
+      precedences[Token.BitwiseAnd] = new OperatorPrecedence(60);
+      precedences[Token.BitwiseXor] = new OperatorPrecedence(61);
+      precedences[Token.BitwiseOr] = new OperatorPrecedence(62);
+      precedences[Token.LogicalAnd] = new OperatorPrecedence(70);
+      precedences[Token.LogicalOr] = new OperatorPrecedence(71);
+      precedences[Token.Explies] = new OperatorPrecedence(72);
+      precedences[Token.Implies] = new OperatorPrecedence(73, false);
+      precedences[Token.IfAndOnlyIf] = new OperatorPrecedence(74);
+      operatorPrecedences = precedences;
+    }
+
     protected static bool LowerPriority(Token operator1, Token operator2) {
+      if (operatorPrecedences == null) InitOperatorPrecedences();
+      bool oldValue = LowerPriorityOld(operator1, operator2);
+      bool newValue;
+      OperatorPrecedence prec1, prec2;
+      if (operatorPrecedences.TryGetValue(operator1, out prec1)) {
+        if (operatorPrecedences.TryGetValue(operator2, out prec2)) {
+          if (prec1.Precendence < prec2.Precendence) newValue = false;
+          else if (prec1.Precendence > prec2.Precendence) newValue = true;
+          else if (operator1 == operator2 && !prec1.IsLeftAssociative) newValue = true;
+          else newValue = false;
+        } else newValue = false; // should never happen!
+      } else newValue = false; // should never happen!
+
+      if (newValue != oldValue) {
+        throw new InvalidOperationException("Priority mismatch for " + operator1.ToString() + " and " + operator2.ToString());
+      }
+
+      return newValue;
+    }
+
+    protected static bool LowerPriorityOld(Token operator1, Token operator2) {
       switch (operator1) {
         case Token.Divide:
         case Token.Multiply:
