@@ -125,6 +125,7 @@ It returns the old value.
 The entire operation is performed atomically (and is also a write barrier).
 
 \subsection{Atomic inline}
+\label{sect:atomic-inline}
 
 VCC doesn't have all the primitives of all the C compilers predefined.
 One can define them by suppling a body.
@@ -145,6 +146,7 @@ The header files coming with VCC provide a handful of popular operations,
 you can just rename them to fit your compiler.
 
 \subsection{Using claims}
+\label{sect:using-claims}
 
 The contracts of functions operating on the lock require that the lock
 is wrapped.
@@ -226,6 +228,7 @@ For claims, it is just a hint, that it should use this claim when trying
 to prove that the object is consistent.
 
 \subsection{Creating claims}
+\label{sect:creating-claims}
 
 When creating (or destroying) a claim one needs to list the claimed objects.
 Let's have a look at an example.
@@ -279,6 +282,7 @@ This avoids the need to have write access to \vcc{o}, but on the other hand prev
 %why do we need them for destruction?
 
 \subsection{Two-state invariants}
+\label{sect:inv2}
 
 Sometimes it is not only important what are the valid states of objects,
 but also what are the allowed \emph{changes} to objects.
@@ -447,6 +451,7 @@ using a full-fledged object might seem like an overkill.
 Luckily, definitions of claims themselves can specify additional invariants.
 
 \subsection{Guaranteed properties in claims}
+\label{sect:claim-props}
 
 When constructing a claim, one can specify additional invariants to put on
 the virtual definition of the claim structure.
@@ -538,6 +543,7 @@ when the claim was created.
 claim admissibility checks and so forth}
 
 \subsection{Dynamic claim management}
+\label{sect:dynamic-claims}
 
 So far we have only considered the case of creating claims to wrapped objects.
 In real systems some resources are managed dynamically:
