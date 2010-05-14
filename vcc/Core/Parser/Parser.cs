@@ -2518,73 +2518,16 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       TokenSet unaryFollowers = followers | TS.InfixOperators;
       Expression expression;
-      switch (this.currentToken) {
-        case Token.Plus:
-        case Token.BitwiseAnd:
-        case Token.BitwiseOr:
-        case Token.BitwiseXor:
-        case Token.Divide:
-        case Token.Equal:
-        case Token.Explies:
-        case Token.GreaterThan:
-        case Token.GreaterThanOrEqual:
-        case Token.Implies:
-        case Token.IfAndOnlyIf:
-        case Token.LeftShift:
-        case Token.LessThan:
-        case Token.LessThanOrEqual:
-        case Token.LogicalAnd:
-        case Token.LogicalOr:
-        case Token.Multiply:
-        case Token.NotEqual:
-        case Token.Remainder:
-        case Token.RightShift:
-        case Token.Subtract:
-        case Token.SetDifference:
-        case Token.SetIn:
-        case Token.SetIntersection:
-        case Token.SetUnion:
-          Token operator1 = this.currentToken;
-          this.GetNextToken();
-          Expression operand2;
-          operand2 = this.ParseUnaryExpression(operator1 == Token.Divide, unaryFollowers);
-          switch (this.currentToken) {
-            case Token.Plus:
-            case Token.BitwiseAnd:
-            case Token.BitwiseOr:
-            case Token.BitwiseXor:
-            case Token.Divide:
-            case Token.Equal:
-            case Token.Explies:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.Implies:
-            case Token.IfAndOnlyIf:
-            case Token.LeftShift:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.LogicalAnd:
-            case Token.LogicalOr:
-            case Token.Multiply:
-            case Token.NotEqual:
-            case Token.Remainder:
-            case Token.RightShift:
-            case Token.Subtract:
-            case Token.SetDifference:
-            case Token.SetIn:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-              expression = this.ParseComplexExpression(Token.None, operand1, operator1, operand2, unaryFollowers);
-              break;
-            default:
-              expression = this.AllocateBinaryExpression(operand1, operand2, operator1);
-              break;
-          }
-          break;
-        default:
-          expression = operand1;
-          break;
-      }
+      if (TS.BinaryOperators[this.currentToken]) {
+        Token operator1 = this.currentToken;
+        this.GetNextToken();
+        Expression operand2;
+        operand2 = this.ParseUnaryExpression(operator1 == Token.Divide, unaryFollowers);
+        if (TS.BinaryOperators[this.currentToken])
+          expression = this.ParseComplexExpression(Token.None, operand1, operator1, operand2, unaryFollowers);
+        else
+          expression = this.AllocateBinaryExpression(operand1, operand2, operator1);
+      } else expression = operand1;
       this.SkipTo(followers);
       return expression;
     }
@@ -2656,44 +2599,17 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.GetNextToken();
       Expression operand3 = this.ParseUnaryExpression(operator2 == Token.Divide, followers);
       if (Parser.LowerPriority(operator1, operator2)) {
-        switch (this.currentToken) {
-          case Token.Plus:
-          case Token.BitwiseAnd:
-          case Token.BitwiseOr:
-          case Token.BitwiseXor:
-          case Token.Divide:
-          case Token.Equal:
-          case Token.Explies:
-          case Token.GreaterThan:
-          case Token.GreaterThanOrEqual:
-          case Token.Implies:
-          case Token.IfAndOnlyIf:
-          case Token.LeftShift:
-          case Token.LessThan:
-          case Token.LessThanOrEqual:
-          case Token.SetIn:
-          case Token.LogicalAnd:
-          case Token.LogicalOr:
-          case Token.Multiply:
-          case Token.NotEqual:
-          case Token.Remainder:
-          case Token.RightShift:
-          case Token.Subtract:
-            if (Parser.LowerPriority(operator2, this.currentToken)) {
-              //Can't reduce just operand2 op2 operand3 because there is an op3 with priority over op2
-              //^ assume this.currentToken != Token.EndOfFile; //follows from the switch logic
-              operand2 = this.ParseComplexExpression(operator1, operand2, operator2, operand3, followers); //reduce complex expression
-              //Now either at the end of the entire expression, or at an operator that is at the same or lower priority than op1
-              //Either way, operand2 op2 operand3 op3 ... has been reduced to just operand2 and the code below will
-              //either restart this procedure to parse the remaining expression or reduce operand1 op1 operand2 and return to the caller
-            } else
-              goto default;
-            break;
-          default:
-            //Reduce operand2 op2 operand3. There either is no further binary operator, or it does not take priority over op2.
-            operand2 = this.AllocateBinaryExpression(operand2, operand3, operator2);
-            //The code following this will reduce operand1 op1 operand2 and return to the caller
-            break;
+        if (TS.BinaryOperators[this.currentToken] && Parser.LowerPriority(operator2, this.currentToken)) {
+            //Can't reduce just operand2 op2 operand3 because there is an op3 with priority over op2
+            //^ assume this.currentToken != Token.EndOfFile; //follows from the switch logic
+            operand2 = this.ParseComplexExpression(operator1, operand2, operator2, operand3, followers); //reduce complex expression
+            //Now either at the end of the entire expression, or at an operator that is at the same or lower priority than op1
+            //Either way, operand2 op2 operand3 op3 ... has been reduced to just operand2 and the code below will
+            //either restart this procedure to parse the remaining expression or reduce operand1 op1 operand2 and return to the caller
+        } else {
+          //Reduce operand2 op2 operand3. There either is no further binary operator, or it does not take priority over op2.
+          operand2 = this.AllocateBinaryExpression(operand2, operand3, operator2);
+          //The code following this will reduce operand1 op1 operand2 and return to the caller
         }
       } else {
         operand1 = this.AllocateBinaryExpression(operand1, operand2, operator1);
@@ -2701,36 +2617,11 @@ namespace Microsoft.Research.Vcc.Parsing {
         operator1 = operator2;
       }
       //At this point either operand1 op1 operand2 has been reduced, or operand2 op2 operand3 .... has been reduced, so back to just two operands
-      switch (this.currentToken) {
-        case Token.Plus:
-        case Token.BitwiseAnd:
-        case Token.BitwiseOr:
-        case Token.BitwiseXor:
-        case Token.Divide:
-        case Token.Equal:
-        case Token.Explies:
-        case Token.GreaterThan:
-        case Token.GreaterThanOrEqual:
-        case Token.Implies:
-        case Token.IfAndOnlyIf:
-        case Token.LeftShift:
-        case Token.LessThan:
-        case Token.LessThanOrEqual:
-        case Token.SetIn:
-        case Token.LogicalAnd:
-        case Token.LogicalOr:
-        case Token.Multiply:
-        case Token.NotEqual:
-        case Token.Remainder:
-        case Token.RightShift:
-        case Token.Subtract:
-          if (operator0 == Token.None || Parser.LowerPriority(operator0, this.currentToken))
+      if (TS.BinaryOperators[this.currentToken] &&
+          (operator0 == Token.None || Parser.LowerPriority(operator0, this.currentToken))) {
             //The caller is not prepared to deal with the current token, go back to the start of this routine and consume some more tokens
             goto restart;
-          else
-            goto default; //Let the caller deal with the current token
-        default:
-          //reduce operand1 op1 operand2 and return to caller
+      } else {
           return this.AllocateBinaryExpression(operand1, operand2, operator1);
       }
     }
@@ -2781,359 +2672,15 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     protected static bool LowerPriority(Token operator1, Token operator2) {
       if (operatorPrecedences == null) InitOperatorPrecedences();
-      bool oldValue = LowerPriorityOld(operator1, operator2);
-      bool newValue;
       OperatorPrecedence prec1, prec2;
       if (operatorPrecedences.TryGetValue(operator1, out prec1)) {
         if (operatorPrecedences.TryGetValue(operator2, out prec2)) {
-          if (prec1.Precendence < prec2.Precendence) newValue = false;
-          else if (prec1.Precendence > prec2.Precendence) newValue = true;
-          else if (operator1 == operator2 && !prec1.IsLeftAssociative) newValue = true;
-          else newValue = false;
-        } else newValue = false; // should never happen!
-      } else newValue = false; // should never happen!
-
-      if (newValue != oldValue) {
-        throw new InvalidOperationException("Priority mismatch for " + operator1.ToString() + " and " + operator2.ToString());
-      }
-
-      return newValue;
-    }
-
-    protected static bool LowerPriorityOld(Token operator1, Token operator2) {
-      switch (operator1) {
-        case Token.Divide:
-        case Token.Multiply:
-        case Token.Remainder:
-          switch (operator2) {
-            default:
-              return false;
-          }
-        case Token.Plus:
-        case Token.Subtract:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-              return true;
-            default:
-              return false;
-          }
-        case Token.LeftShift:
-        case Token.RightShift:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-              return true;
-            default:
-              return false;
-          }
-        case Token.GreaterThan:
-        case Token.GreaterThanOrEqual:
-        case Token.LessThan:
-        case Token.LessThanOrEqual:
-        case Token.SetDifference:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-              return true;
-            default:
-              return false;
-          }
-        case Token.SetIntersection:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.SetDifference:
-              return true;
-            default:
-              return false;
-          }
-        case Token.SetUnion:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-              return true;
-            default:
-              return false;
-          }
-        case Token.SetIn:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-              return true;
-            default:
-              return false;
-          }
-        case Token.Equal:
-        case Token.NotEqual:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.SetIn:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-              return true;
-            default:
-              return false;
-          }
-        case Token.BitwiseAnd:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.SetIn:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-            case Token.Equal:
-            case Token.NotEqual:
-              return true;
-            default:
-              return false;
-          }
-        case Token.BitwiseXor:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.SetIn:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-            case Token.Equal:
-            case Token.NotEqual:
-            case Token.BitwiseAnd:
-              return true;
-            default:
-              return false;
-          }
-        case Token.BitwiseOr:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.SetIn:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-            case Token.Equal:
-            case Token.NotEqual:
-            case Token.BitwiseAnd:
-            case Token.BitwiseXor:
-              return true;
-            default:
-              return false;
-          }
-        case Token.LogicalAnd:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.SetIn:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-            case Token.Equal:
-            case Token.NotEqual:
-            case Token.BitwiseAnd:
-            case Token.BitwiseXor:
-            case Token.BitwiseOr:
-              return true;
-            default:
-              return false;
-          }
-        case Token.LogicalOr:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.SetIn:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-            case Token.Equal:
-            case Token.NotEqual:
-            case Token.BitwiseAnd:
-            case Token.BitwiseXor:
-            case Token.BitwiseOr:
-            case Token.LogicalAnd:
-              return true;
-            default:
-              return false;
-          }
-        case Token.Implies:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.SetIn:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-            case Token.Equal:
-            case Token.NotEqual:
-            case Token.BitwiseAnd:
-            case Token.BitwiseXor:
-            case Token.BitwiseOr:
-            case Token.LogicalAnd:
-            case Token.LogicalOr:
-            case Token.Explies:
-            case Token.Implies: // ==> is right associative
-              return true;
-            default:
-              return false;
-          }
-
-        case Token.Explies:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.SetIn:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-            case Token.Equal:
-            case Token.NotEqual:
-            case Token.BitwiseAnd:
-            case Token.BitwiseXor:
-            case Token.BitwiseOr:
-            case Token.LogicalAnd:
-            case Token.LogicalOr:
-              return true;
-            default:
-              // Explies is left-associative
-              return false;
-          }
-
-         case Token.IfAndOnlyIf:
-          switch (operator2) {
-            case Token.Divide:
-            case Token.Multiply:
-            case Token.Remainder:
-            case Token.Plus:
-            case Token.Subtract:
-            case Token.LeftShift:
-            case Token.RightShift:
-            case Token.GreaterThan:
-            case Token.GreaterThanOrEqual:
-            case Token.LessThan:
-            case Token.LessThanOrEqual:
-            case Token.SetIn:
-            case Token.SetDifference:
-            case Token.SetIntersection:
-            case Token.SetUnion:
-            case Token.Equal:
-            case Token.NotEqual:
-            case Token.BitwiseAnd:
-            case Token.BitwiseXor:
-            case Token.BitwiseOr:
-            case Token.LogicalAnd:
-            case Token.LogicalOr:
-            case Token.Implies:
-            case Token.Explies:
-              return true;
-            default:
-              return false;
-          }
-      }
-      //^ assume false;
-      return false;
+          if (prec1.Precendence < prec2.Precendence) return false;
+          else if (prec1.Precendence > prec2.Precendence) return true;
+          else if (operator1 == operator2 && !prec1.IsLeftAssociative) return true;
+          else return false;
+        } else return false; ; // should never happen!
+      } else return false; // should never happen!
     }
 
     protected Expression ParseConditional(Expression condition, TokenSet followers) 
@@ -4094,6 +3641,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       public static readonly TokenSet AddOneOrSubtractOne;
       public static readonly TokenSet AssignmentOperators;
+      public static readonly TokenSet BinaryOperators;
       public static readonly TokenSet CaseOrDefaultOrRightBrace;
       public static readonly TokenSet CaseOrColonOrDefaultOrRightBrace;
       public static readonly TokenSet CastFollower;
@@ -4135,6 +3683,33 @@ namespace Microsoft.Research.Vcc.Parsing {
         AssignmentOperators |= Token.RemainderAssign;
         AssignmentOperators |= Token.RightShiftAssign;
         AssignmentOperators |= Token.SubtractAssign;
+
+        BinaryOperators = new TokenSet();
+        BinaryOperators |= Token.Plus;
+        BinaryOperators |= Token.BitwiseAnd;
+        BinaryOperators |= Token.BitwiseOr;
+        BinaryOperators |= Token.BitwiseXor;
+        BinaryOperators |= Token.Divide;
+        BinaryOperators |= Token.Equal;
+        BinaryOperators |= Token.Explies;
+        BinaryOperators |= Token.GreaterThan;
+        BinaryOperators |= Token.GreaterThanOrEqual;
+        BinaryOperators |= Token.Implies;
+        BinaryOperators |= Token.IfAndOnlyIf;
+        BinaryOperators |= Token.LeftShift;
+        BinaryOperators |= Token.LessThan;
+        BinaryOperators |= Token.LessThanOrEqual;
+        BinaryOperators |= Token.LogicalAnd;
+        BinaryOperators |= Token.LogicalOr;
+        BinaryOperators |= Token.Multiply;
+        BinaryOperators |= Token.NotEqual;
+        BinaryOperators |= Token.Remainder;
+        BinaryOperators |= Token.RightShift;
+        BinaryOperators |= Token.Subtract;
+        BinaryOperators |= Token.SetDifference;
+        BinaryOperators |= Token.SetIn;
+        BinaryOperators |= Token.SetIntersection;
+        BinaryOperators |= Token.SetUnion;
 
         CaseOrDefaultOrRightBrace = new TokenSet();
         CaseOrDefaultOrRightBrace |= Token.Case;
@@ -4188,7 +3763,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         DeclarationStart |= Token.Identifier;
         DeclarationStart |= Token.Specification;
 
-
         DeclaratorStart = new TokenSet();
         DeclaratorStart |= Token.Multiply;
         DeclaratorStart |= Token.BitwiseXor;
@@ -4200,44 +3774,11 @@ namespace Microsoft.Research.Vcc.Parsing {
         EndOfFile |= Token.EndOfFile;
 
         InfixOperators = new TokenSet();
-        InfixOperators |= Token.AddAssign;
-        InfixOperators |= Token.Assign;
-        InfixOperators |= Token.BitwiseAnd;
-        InfixOperators |= Token.BitwiseAndAssign;
-        InfixOperators |= Token.BitwiseOr;
-        InfixOperators |= Token.BitwiseOrAssign;
-        InfixOperators |= Token.BitwiseXor;
-        InfixOperators |= Token.BitwiseXorAssign;
+        InfixOperators |= AssignmentOperators;
+        InfixOperators |= BinaryOperators;
         InfixOperators |= Token.Conditional;
         InfixOperators |= Token.Comma;
-        InfixOperators |= Token.Divide;
-        InfixOperators |= Token.DivideAssign;
         InfixOperators |= Token.Equal;
-        InfixOperators |= Token.Explies;
-        InfixOperators |= Token.GreaterThan;
-        InfixOperators |= Token.GreaterThanOrEqual;
-        InfixOperators |= Token.IfAndOnlyIf;
-        InfixOperators |= Token.Implies;
-        InfixOperators |= Token.LeftShift;
-        InfixOperators |= Token.LeftShiftAssign;
-        InfixOperators |= Token.LessThan;
-        InfixOperators |= Token.LessThanOrEqual;
-        InfixOperators |= Token.SetDifference;
-        InfixOperators |= Token.SetIn;
-        InfixOperators |= Token.SetIntersection;
-        InfixOperators |= Token.SetUnion;
-        InfixOperators |= Token.LogicalAnd;
-        InfixOperators |= Token.LogicalOr;
-        InfixOperators |= Token.Multiply;
-        InfixOperators |= Token.MultiplyAssign;
-        InfixOperators |= Token.NotEqual;
-        InfixOperators |= Token.Plus;
-        InfixOperators |= Token.Remainder;
-        InfixOperators |= Token.RemainderAssign;
-        InfixOperators |= Token.RightShift;
-        InfixOperators |= Token.RightShiftAssign;
-        InfixOperators |= Token.Subtract;
-        InfixOperators |= Token.SubtractAssign;
         InfixOperators |= Token.Arrow;
         InfixOperators |= Token.ScopeResolution;
 
