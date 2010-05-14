@@ -411,29 +411,6 @@ namespace Microsoft.Research.Vcc.Parsing
       return result;
     }
 
-    new protected List<LocalDeclarationsStatement> ParseQuantifierBoundVariables(TokenSet followers) {
-      List<LocalDeclarationsStatement> result = new List<LocalDeclarationsStatement>();
-      TokenSet followersOrTypeStart = followers | TS.TypeStart;
-      while (this.CurrentTokenStartsTypeExpression()) {
-        List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers);
-        List<LocalDeclaration> declarations = new List<LocalDeclaration>(1);
-        Declarator declarator = this.ParseDeclarator(followers | Token.Comma, true);
-        TypeExpression type = this.GetTypeExpressionFor(specifiers, declarator);
-        SourceLocationBuilder slb = new SourceLocationBuilder(type.SourceLocation);
-        slb.UpdateToSpan(declarator.SourceLocation);
-        declarations.Add(new LocalDeclaration(false, false, declarator.Identifier, null, slb));
-        while (this.currentToken == Token.Comma) {
-          this.GetNextToken();
-          declarator = this.ParseDeclarator(followers | Token.Comma, true);
-          slb.UpdateToSpan(declarator.SourceLocation);
-          declarations.Add(new LocalDeclaration(false, false, declarator.Identifier, null, slb));
-        }
-        LocalDeclarationsStatement locDecls = new LocalDeclarationsStatement(false, false, false, type, declarations, slb);
-        result.Add(locDecls);
-      }
-      return result;
-    }
-
     protected override Expression ParseLabeledExpression(TokenSet followers) {
       if (this.currentToken == Token.Colon) {
         SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
@@ -481,8 +458,7 @@ namespace Microsoft.Research.Vcc.Parsing
       this.GetNextToken();
       TokenSet followersOrLeftBraceOrSemicolonOrUnaryStart = followers | Token.LeftBrace | Token.Semicolon | TS.UnaryStart;
       List<LocalDeclarationsStatement> boundVariables = this.ParseQuantifierBoundVariables(followersOrLeftBraceOrSemicolonOrUnaryStart);
-      IEnumerable<IEnumerable<Expression>> triggers = this.ParseQuantifierTriggers(followers | Token.Semicolon | TS.UnaryStart);
-      this.SkipSemiColon(followers | TS.UnaryStart | TS.PrimaryStart);
+      IEnumerable<IEnumerable<Expression>> triggers = this.ParseQuantifierTriggers(followers | TS.UnaryStart | TS.PrimaryStart);
       Expression condition = this.ParseExpression(followers);
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       Expression result;
