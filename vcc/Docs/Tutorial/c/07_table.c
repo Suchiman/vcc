@@ -50,9 +50,11 @@ void use_case(struct SafeContainer *c, struct SafeString *s)
   struct SafeString *o;
   o = c->strings[5];
 
+  assert(wrapped(c)); // OK
   assert(wrapped(s)); // OK
   assert(wrapped(o)); // error
   sc_set(c, s, 5);
+  assert(wrapped(c)); // OK
   assert(wrapped(s)); // error
   assert(wrapped(o)); // OK
 }
