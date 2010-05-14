@@ -1912,7 +1912,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     Return,
     /// <summary>
-    /// \\result
+    /// \result
     /// </summary>
     Result, 
     /// <summary>
@@ -1947,6 +1947,22 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// ::
     /// </summary>
     ScopeResolution,
+    /// <summary>
+    /// \in
+    /// </summary>
+    SetIn,
+    /// <summary>
+    /// \union
+    /// </summary>
+    SetUnion,
+    /// <summary>
+    /// \inter
+    /// </summary>
+    SetIntersection,
+    /// <summary>
+    /// \difference
+    /// </summary>
+    SetDifference,
     /// <summary>
     /// __stdcall
     /// </summary>
@@ -2008,7 +2024,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     Template,
     /// <summary>
-    /// \\this
+    /// \this
     /// </summary>
     This,
     /// <summary>
@@ -2378,13 +2394,16 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     internal static Keyword InitExtendedVccKeywords() {
       Keyword keyword;
-
-      keyword = new Keyword(Token.Result, "\\result");
-      keyword = new Keyword(Token.Lambda, "\\lambda", keyword);
-      keyword = new Keyword(Token.Forall, "\\forall", keyword);
-      keyword = new Keyword(Token.Exists, "\\exists", keyword);
-      keyword = new Keyword(Token.This,   "\\this", keyword);
-      keyword = new Keyword(Token.Old,    "\\old", keyword);
+      keyword = new Keyword(Token.SetDifference,    "\\difference");
+      keyword = new Keyword(Token.Result,           "\\result", keyword);
+      keyword = new Keyword(Token.Lambda,           "\\lambda", keyword);
+      keyword = new Keyword(Token.Forall,           "\\forall", keyword);
+      keyword = new Keyword(Token.Exists,           "\\exists", keyword);
+      keyword = new Keyword(Token.SetUnion,         "\\union", keyword);
+      keyword = new Keyword(Token.SetIntersection,  "\\inter", keyword);
+      keyword = new Keyword(Token.This,             "\\this", keyword);
+      keyword = new Keyword(Token.Old,              "\\old", keyword);
+      keyword = new Keyword(Token.SetIn,            "\\in", keyword);
       return keyword;
     }
   }

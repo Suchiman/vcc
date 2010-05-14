@@ -29,6 +29,10 @@ namespace Microsoft.Research.Vcc.Parsing
           Expression bigIntRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "BigInt");
           result = new VccNamedTypeExpression(bigIntRef);
           return true;
+        case "\\objset":
+          Expression objsetRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "Objset");
+          result = new VccNamedTypeExpression(objsetRef);
+          return true;
         default:
           result = null;
           return false;

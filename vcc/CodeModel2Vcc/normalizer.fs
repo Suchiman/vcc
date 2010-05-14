@@ -732,28 +732,32 @@ namespace Microsoft.Research.Vcc
     
     let normalizeNewSyntax = 
   
-      let newToOldFn = Map.ofList [ "\\mine",         "_vcc_keeps";
-                                    "\\valid",        "_vcc_typed2";
-                                    "\\wrap",         "_vcc_wrap";
-                                    "\\wrapped",      "_vcc_wrapped";
-                                    "\\extent",       "_vcc_extent";
-                                    "\\alloc",        "_vcc_alloc";
-                                    "\\mutable",      "_vcc_mutable";
-                                    "\\array_range",  "_vcc_array_range";
-                                    "\\span",         "_vcc_span";
-                                    "\\unwrap",       "_vcc_unwrap";
-                                    "\\thread_local", "_vcc_thread_local2";
-                                    "\\free",         "_vcc_free";
-                                    "\\claims_obj",   "_vcc_claims_obj";
-                                    "\\is_claimable", "_vcc_is_claimable";
-                                    "\\make_claim",   "_vcc_claim";
-                                    "\\active_claim", "_vcc_valid_claim";
-                                    "\\inv",          "_vcc_inv";
-                                    "\\inv2",         "_vcc_inv2";
-                                    "\\typeof",       "_vcc_typeof";
-                                    "\\stack_alloc",  "_vcc_stack_alloc";
-                                    "\\stack_free",   "_vcc_stack_free";
-                                    "\\universe",     "_vcc_set_universe"; ]
+      let newToOldFn = Map.ofList [ "\\mine",               "_vcc_keeps";
+                                    "\\valid",              "_vcc_typed2";
+                                    "\\wrap",               "_vcc_wrap";
+                                    "\\wrapped",            "_vcc_wrapped";
+                                    "\\extent",             "_vcc_extent";
+                                    "\\alloc",              "_vcc_alloc";
+                                    "\\mutable",            "_vcc_mutable";
+                                    "\\array_range",        "_vcc_array_range";
+                                    "\\span",               "_vcc_span";
+                                    "\\unwrap",             "_vcc_unwrap";
+                                    "\\thread_local",       "_vcc_thread_local2";
+                                    "\\free",               "_vcc_free";
+                                    "\\claims_obj",         "_vcc_claims_obj";
+                                    "\\is_claimable",       "_vcc_is_claimable";
+                                    "\\make_claim",         "_vcc_claim";
+                                    "\\active_claim",       "_vcc_valid_claim";
+                                    "\\inv",                "_vcc_inv";
+                                    "\\inv2",               "_vcc_inv2";
+                                    "\\typeof",             "_vcc_typeof";
+                                    "\\stack_alloc",        "_vcc_stack_alloc";
+                                    "\\stack_free",         "_vcc_stack_free";
+                                    "\\set_in",             "_vcc_set_in";
+                                    "\\set_intersection",   "_vcc_set_intersection";
+                                    "\\set_union",          "_vcc_set_union";
+                                    "\\set_difference",     "_vcc_set_difference";
+                                    "\\universe",           "_vcc_set_universe"; ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";
                                       "\\state",  "state_t";

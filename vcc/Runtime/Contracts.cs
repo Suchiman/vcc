@@ -132,19 +132,42 @@ namespace System.Diagnostics.Contracts
       }
 
       public static bool operator ==(TypedPtr p1, TypedPtr p2) {
-        return p1.ptr == p2.ptr;
+        throw new NotImplementedException();
       }
 
       public static bool operator !=(TypedPtr p1, TypedPtr p2) {
-        return p1.ptr != p2.ptr;
+        throw new NotImplementedException();
       }
 
       public override int GetHashCode() {
-        return base.GetHashCode();
+        throw new NotImplementedException(); // is only here to suppress warnings
       }
 
       public override bool Equals(object obj) {
-        return base.Equals(obj);
+        throw new NotImplementedException(); // is only here to suppress warnings
+      }
+    }
+
+    public abstract class Objset
+    {
+      public static bool operator <=(TypedPtr elem, Objset set) {
+        throw new NotImplementedException();
+      }
+
+      public static bool operator >=(TypedPtr elem, Objset set) {
+        throw new NotImplementedException();
+      }
+
+      public static Objset operator |(Objset s1, Objset s2) {
+        throw new NotImplementedException();
+      }
+
+      public static Objset operator &(Objset s1, Objset s2) {
+        throw new NotImplementedException();
+      }
+
+      public static Objset operator ^(Objset s1, Objset s2) {
+        throw new NotImplementedException();
       }
     }
 

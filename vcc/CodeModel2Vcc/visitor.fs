@@ -28,6 +28,10 @@ namespace Microsoft.Research.Vcc
     [<Literal>]
     let SystemDiagnosticsContractsCodeContractBigInt = "System.Diagnostics.Contracts.CodeContract.BigInt"
 
+    [<Literal>]
+    let SystemDiagnosticsContractsCodeContractObjset = "System.Diagnostics.Contracts.CodeContract.Objset"
+
+
   open StringLiterals
 
   type Dict<'a, 'b> = System.Collections.Generic.Dictionary<'a, 'b>
@@ -567,6 +571,8 @@ namespace Microsoft.Research.Vcc
                   C.Type.ObjectT
                 else if name = SystemDiagnosticsContractsCodeContractBigInt then
                   C.Type.MathInteger
+                else if name = SystemDiagnosticsContractsCodeContractObjset then
+                  C.Type.Math "\\objset"
                 else              
                   let tok = token typeDef
                   let totalOffset f = MemberHelper.GetFieldBitOffset f + f.Offset
@@ -1304,6 +1310,13 @@ namespace Microsoft.Research.Vcc
           | "op_GreaterThanOrEqual" -> Some ()
           | _ -> None
 
+        let (|ObjsetOp|_|) = function
+          | "op_BitwiseAnd"
+          | "op_BitwiseOr"
+          | "op_ExclusiveOr"
+          | "op_LessThanOrEqual" -> Some ()
+          | _ -> None
+
         let oopsNumArgs() = oopsLoc methodCall ("unexpected number of arguments for "+ methodName); die ()
 
         let args() = [ for e in methodCall.Arguments -> this.DoExpression e]       
@@ -1315,6 +1328,17 @@ namespace Microsoft.Research.Vcc
               exprRes <- C.Expr.Prim (ec, C.Op(op, if isChecked then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked), [e1; e2])
             | _ -> oopsNumArgs()
             
+        let trSetOp methodName =
+          match args() with
+           | [e1; e2] ->
+             match methodName with
+               | "op_LessThanOrEqual" -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_in" methodCall, [], [e1; e2])
+               | "op_BitwiseAnd"      -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_intersection" methodCall, [], [e1; e2])
+               | "op_BitwiseOr"       -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_union" methodCall, [], [e1; e2])
+               | "op_ExclusiveOr"     -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_difference" methodCall, [], [e1; e2])
+               | _ -> die()
+           | _ -> oopsNumArgs()
+
         let trTrivialCast() =             
           match args() with
             | [e] -> exprRes <- e
@@ -1335,6 +1359,7 @@ namespace Microsoft.Research.Vcc
           | SystemDiagnosticsContractsCodeContractBigInt, "op_Implicit" -> trTrivialCast()
           | SystemDiagnosticsContractsCodeContractBigInt, "op_Explicit" -> trCast()
           | SystemDiagnosticsContractsCodeContractBigInt, BigIntOp -> trBigIntOp methodName
+          | SystemDiagnosticsContractsCodeContractObjset, ObjsetOp -> trSetOp methodName
           | "Microsoft.Research.Vcc.Runtime", "__noop" -> exprRes <- C.Expr.Macro (ec, "noop", [])
           | MapTypeString, "get_Item" ->
             let th = this.DoExpression methodCall.ThisArgument
