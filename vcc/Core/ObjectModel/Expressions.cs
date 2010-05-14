@@ -3537,7 +3537,104 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
-  public class VccSimpleName : SimpleName {
+  public class VccSetDifference : BinaryOperation
+  {
+    public VccSetDifference(Expression leftOperand, Expression rightOperand, ISourceLocation sourceLocation)
+      : base(leftOperand, rightOperand, sourceLocation) {
+    }
+
+    protected VccSetDifference(BlockStatement containingBlock, VccSetDifference template)
+      : base(containingBlock, template) {
+    }
+
+    protected override string OperationSymbolForErrorMessage {
+      get { return "\\difference"; }
+    }
+
+    protected override IName GetOperatorName() {
+      return this.NameTable.OpExclusiveOr;
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccSetDifference(containingBlock, this);
+    }
+  }
+
+  public class VccSetIntersection : BinaryOperation
+  {
+    public VccSetIntersection(Expression leftOperand, Expression rightOperand, ISourceLocation sourceLocation)
+      : base(leftOperand, rightOperand, sourceLocation) {
+    }
+
+    protected VccSetIntersection(BlockStatement containingBlock, VccSetIntersection template)
+      : base(containingBlock, template) {
+    }
+
+    protected override string OperationSymbolForErrorMessage {
+      get { return "\\inter"; }
+    }
+
+    protected override IName GetOperatorName() {
+      return this.NameTable.OpBitwiseAnd;
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccSetIntersection(containingBlock, this);
+    }
+  }
+
+  public class VccSetUnion : BinaryOperation
+  {
+    public VccSetUnion(Expression leftOperand, Expression rightOperand, ISourceLocation sourceLocation)
+      : base(leftOperand, rightOperand, sourceLocation) {
+    }
+
+    protected VccSetUnion(BlockStatement containingBlock, VccSetUnion template)
+      : base(containingBlock, template) {
+    }
+
+    protected override string OperationSymbolForErrorMessage {
+      get { return "\\union"; }
+    }
+
+    protected override IName GetOperatorName() {
+      return this.NameTable.OpBitwiseOr;
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccSetUnion(containingBlock, this);
+    }
+  }
+
+  public class VccSetMember : BinaryOperation
+  {
+    public VccSetMember(Expression leftOperand, Expression rightOperand, ISourceLocation sourceLocation)
+      : base(leftOperand, rightOperand, sourceLocation) {
+    }
+
+    protected VccSetMember(BlockStatement containingBlock, VccSetMember template)
+      : base(containingBlock, template) {
+    }
+
+    protected override string OperationSymbolForErrorMessage {
+      get { return "\\in"; }
+    }
+
+    protected override IName GetOperatorName() {
+      return this.NameTable.OpLessThanOrEqual;
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccSetMember(containingBlock, this);
+    }
+  }
+
+  public class VccSimpleName : SimpleName
+  {
     /// <summary>
     /// Constructs an expression consisting of a simple name, for example "SimpleName".
     /// Use this constructor when constructing a new simple name. Do not give out the resulting instance to client

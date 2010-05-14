@@ -2540,6 +2540,10 @@ namespace Microsoft.Research.Vcc.Parsing {
         case Token.Remainder:
         case Token.RightShift:
         case Token.Subtract:
+        case Token.SetDifference:
+        case Token.SetIn:
+        case Token.SetIntersection:
+        case Token.SetUnion:
           Token operator1 = this.currentToken;
           this.GetNextToken();
           Expression operand2;
@@ -2566,6 +2570,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.Remainder:
             case Token.RightShift:
             case Token.Subtract:
+            case Token.SetDifference:
+            case Token.SetIn:
+            case Token.SetIntersection:
+            case Token.SetUnion:
               expression = this.ParseComplexExpression(Token.None, operand1, operator1, operand2, unaryFollowers);
               break;
             default:
@@ -2611,6 +2619,10 @@ namespace Microsoft.Research.Vcc.Parsing {
           if (initializer != null)
             return new VccInitializerWithDefault(operand1, initializer, slb);
           return new VccDivision(operand1, operand2, slb);
+        case Token.SetIn: return new VccSetMember(operand1, operand2, slb);
+        case Token.SetIntersection: return new VccSetIntersection(operand1, operand2, slb);
+        case Token.SetUnion: return new VccSetUnion(operand1, operand2, slb);
+        case Token.SetDifference: return new VccSetDifference(operand1, operand2, slb);
         default:
           //^ assume false;
           goto case Token.Plus;
@@ -2659,6 +2671,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           case Token.LeftShift:
           case Token.LessThan:
           case Token.LessThanOrEqual:
+          case Token.SetIn:
           case Token.LogicalAnd:
           case Token.LogicalOr:
           case Token.Multiply:
@@ -2703,6 +2716,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         case Token.LeftShift:
         case Token.LessThan:
         case Token.LessThanOrEqual:
+        case Token.SetIn:
         case Token.LogicalAnd:
         case Token.LogicalOr:
         case Token.Multiply:
@@ -2723,6 +2737,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     /// <summary>
     /// returns true if opnd1 operator1 opnd2 operator2 opnd3 implicitly brackets as opnd1 operator1 (opnd2 operator2 opnd3)
+    /// TODO: turn this mess into a table-driven function!!!
     /// </summary>
     protected static bool LowerPriority(Token operator1, Token operator2) {
       switch (operator1) {
@@ -2759,6 +2774,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         case Token.GreaterThanOrEqual:
         case Token.LessThan:
         case Token.LessThanOrEqual:
+        case Token.SetDifference:
           switch (operator2) {
             case Token.Divide:
             case Token.Multiply:
@@ -2767,6 +2783,51 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.Subtract:
             case Token.LeftShift:
             case Token.RightShift:
+              return true;
+            default:
+              return false;
+          }
+        case Token.SetIntersection:
+          switch (operator2) {
+            case Token.Divide:
+            case Token.Multiply:
+            case Token.Remainder:
+            case Token.Plus:
+            case Token.Subtract:
+            case Token.LeftShift:
+            case Token.RightShift:
+            case Token.SetDifference:
+              return true;
+            default:
+              return false;
+          }
+        case Token.SetUnion:
+          switch (operator2) {
+            case Token.Divide:
+            case Token.Multiply:
+            case Token.Remainder:
+            case Token.Plus:
+            case Token.Subtract:
+            case Token.LeftShift:
+            case Token.RightShift:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+              return true;
+            default:
+              return false;
+          }
+        case Token.SetIn:
+          switch (operator2) {
+            case Token.Divide:
+            case Token.Multiply:
+            case Token.Remainder:
+            case Token.Plus:
+            case Token.Subtract:
+            case Token.LeftShift:
+            case Token.RightShift:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
               return true;
             default:
               return false;
@@ -2785,6 +2846,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.GreaterThanOrEqual:
             case Token.LessThan:
             case Token.LessThanOrEqual:
+            case Token.SetIn:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
               return true;
             default:
               return false;
@@ -2802,6 +2867,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.GreaterThanOrEqual:
             case Token.LessThan:
             case Token.LessThanOrEqual:
+            case Token.SetIn:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
             case Token.Equal:
             case Token.NotEqual:
               return true;
@@ -2821,6 +2890,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.GreaterThanOrEqual:
             case Token.LessThan:
             case Token.LessThanOrEqual:
+            case Token.SetIn:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
             case Token.Equal:
             case Token.NotEqual:
             case Token.BitwiseAnd:
@@ -2841,6 +2914,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.GreaterThanOrEqual:
             case Token.LessThan:
             case Token.LessThanOrEqual:
+            case Token.SetIn:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
             case Token.Equal:
             case Token.NotEqual:
             case Token.BitwiseAnd:
@@ -2862,6 +2939,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.GreaterThanOrEqual:
             case Token.LessThan:
             case Token.LessThanOrEqual:
+            case Token.SetIn:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
             case Token.Equal:
             case Token.NotEqual:
             case Token.BitwiseAnd:
@@ -2884,6 +2965,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.GreaterThanOrEqual:
             case Token.LessThan:
             case Token.LessThanOrEqual:
+            case Token.SetIn:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
             case Token.Equal:
             case Token.NotEqual:
             case Token.BitwiseAnd:
@@ -2907,6 +2992,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.GreaterThanOrEqual:
             case Token.LessThan:
             case Token.LessThanOrEqual:
+            case Token.SetIn:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
             case Token.Equal:
             case Token.NotEqual:
             case Token.BitwiseAnd:
@@ -2934,6 +3023,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.GreaterThanOrEqual:
             case Token.LessThan:
             case Token.LessThanOrEqual:
+            case Token.SetIn:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
             case Token.Equal:
             case Token.NotEqual:
             case Token.BitwiseAnd:
@@ -2960,6 +3053,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.GreaterThanOrEqual:
             case Token.LessThan:
             case Token.LessThanOrEqual:
+            case Token.SetIn:
+            case Token.SetDifference:
+            case Token.SetIntersection:
+            case Token.SetUnion:
             case Token.Equal:
             case Token.NotEqual:
             case Token.BitwiseAnd:
@@ -4064,6 +4161,10 @@ namespace Microsoft.Research.Vcc.Parsing {
         InfixOperators |= Token.LeftShiftAssign;
         InfixOperators |= Token.LessThan;
         InfixOperators |= Token.LessThanOrEqual;
+        InfixOperators |= Token.SetDifference;
+        InfixOperators |= Token.SetIn;
+        InfixOperators |= Token.SetIntersection;
+        InfixOperators |= Token.SetUnion;
         InfixOperators |= Token.LogicalAnd;
         InfixOperators |= Token.LogicalOr;
         InfixOperators |= Token.Multiply;
