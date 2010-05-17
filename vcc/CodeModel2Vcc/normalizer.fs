@@ -743,6 +743,7 @@ namespace Microsoft.Research.Vcc
                                     "\\span",               "_vcc_span";
                                     "\\unwrap",             "_vcc_unwrap";
                                     "\\thread_local",       "_vcc_thread_local2";
+                                    "\\thread_local_array", "_vcc_is_thread_local_array";
                                     "\\free",               "_vcc_free";
                                     "\\claims_obj",         "_vcc_claims_obj";
                                     "\\is_claimable",       "_vcc_is_claimable";
