@@ -1,3 +1,17 @@
 #!/bin/sh
 
-cp //risebuild/drops/z32/latest/release/z3.exe z3.exe
+dir=//risebuild/drops/z32
+
+echo Locating latest version in $dir
+src="$dir/$(ls $dir | grep ^2 | tail -1)/release/z3.exe"
+
+echo Getting $src
+cp $src z3.exe
+
+echo Increasing stack size	
+
+PATH=$PATH:/cygdrive/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/Common7/IDE:/cygdrive/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/BIN
+PATH=$PATH:/cygdrive/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 9.0/Common7/IDE:/cygdrive/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 9.0/VC/BIN
+editbin.exe /stack:0x8000000 z3.exe /nologo
+
+echo New z3 reports version: `./z3 -version`

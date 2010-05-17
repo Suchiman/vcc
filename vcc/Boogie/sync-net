@@ -1,7 +1,6 @@
 #!/bin/sh
 
-dir=//emicverisoft01/drops/boogie2
-src="$dir/$(ls $dir | tail -1)"
+src=//emicverisoft01/drops/boogie2/latest
 echo "Syncing from $src"
 
 rm -rf cache
