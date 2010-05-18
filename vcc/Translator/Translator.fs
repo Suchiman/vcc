@@ -32,7 +32,6 @@ namespace Microsoft.Research.Vcc
         AtomicObjects : list<B.Expr>;
         AtomicReads : list<B.Expr>;
         ClaimContext : option<ClaimContext>;
-        FunctionCleanup : List<C.Expr> ref;
       }
 
     let nestingExtents = false
@@ -44,7 +43,6 @@ namespace Microsoft.Research.Vcc
                        WritesState = bOld bState;  
                        WritesTime = er "$bogus";
                        ClaimContext = None;
-                       FunctionCleanup = ref []
                      }
     
     let fieldName (f:C.Field) = f.Parent.Name + "." + f.Name
@@ -1255,10 +1253,6 @@ namespace Microsoft.Research.Vcc
             | C.Expr.Macro (_, "ignore_me", []) -> []
             | C.Expr.Macro (_, "inlined_atomic", [C.Expr.Macro (_, "ignore_me", [])]) -> []
 
-            | C.Expr.Macro (_, "function_cleanup", args) ->
-              env.FunctionCleanup := !env.FunctionCleanup @ args
-              []
-            
             | e when not (hasSideEffect e) -> []
             
             | _ -> 
@@ -2094,16 +2088,14 @@ namespace Microsoft.Research.Vcc
                     [B.Stmt.Assume (bCall "$can_use_all_frame_axioms" [bState])]
                 
                 let doBody s =
-                  let cleanup = ref []
                   B.Stmt.Block (B.Stmt.Assume (bCall "$function_entry" [bState]) ::
                                  B.Stmt.VarDecl(("#stackframe", B.Type.Int), None) ::
                                  assumeSync env h.Token ::
                                  can_frame @
                                  init @
                                  (if helper.Options.Vcc3 then [] else List.map assumeMutability h.Writes) @
-                                 trStmt {env with FunctionCleanup = cleanup} s @ 
+                                 trStmt env s @ 
                                  [B.Stmt.Label (Token.NoToken, "#exit")] @
-                                 (!cleanup |> List.map (trStmt env) |> List.concat) @
                                  sanityChecks env h) 
                 let theBody =
                   if functionToVerify = null || functionToVerify = h.Name then h.Body
