@@ -1776,7 +1776,7 @@ namespace VccModel.Controller
 
     bool GetIsArrayElementStateOf(Partition p, ExecutionState execState)
     {
-      return EvalBooleanPartition(SelectResultFromTypedStateTag("$ts_is_array_elt", p, execState));
+      return false /* $ts_is_array_elt was removed: EvalBooleanPartition(SelectResultFromTypedStateTag("$ts_is_array_elt", p, execState))*/;
     }
 
     bool GetIsVolatileStateOf(Partition p, ExecutionState execState)

@@ -441,14 +441,12 @@ function {:inline true} $field_properties(S:$state, p:$ptr, f:$field, tp:$ctype,
   { $typed2(S, $dot(p, f), tp) &&
     $emb(S, $dot(p, f)) == p &&
     $path(S, $dot(p, f)) == f &&
-    !$is_array_elt(S, $dot(p, f)) &&
     $is_volatile(S, $dot(p, f)) == isvolatile 
   }
 
 function $ts_typed($type_state) returns(bool);
 function $ts_emb($type_state) returns($ptr);
 function $ts_path($type_state) returns($field);
-function $ts_is_array_elt($type_state) returns(bool);
 function $ts_is_volatile($type_state) returns(bool);
   
 axiom (forall ts:$type_state :: {$ts_emb(ts)} $kind_of($typ($ts_emb(ts))) != $kind_primitive && $is_non_primitive($typ($ts_emb(ts))) );
@@ -1897,7 +1895,6 @@ function {:inline true} $is_global_array(p:$ptr, T:$ctype, sz:int) returns(bool)
       $good_state(S) ==>
       0 <= i && i < sz ==> 
         !$is_volatile(S, $idx(p, i, T)) && 
-        $is_array_elt(S, $idx(p, i, T)) && 
         $typed(S, $idx(p, i, T)) &&
         ($program_entry_point_ch(S) ==> $mutable(S, $idx(p, i, T)))
         ) }
@@ -2219,9 +2216,6 @@ axiom (forall T:$ctype, s:int :: {$array(T, s)} $is_arraytype($array(T, s)));
 axiom (forall T:$ctype, s:int :: {$array(T, s)} !$is_claimable($array(T, s)));
 axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
 
-function {:inline true} $is_array_elt(S:$state, p:$ptr) returns(bool)
-  { $ts_is_array_elt($ts(S, p)) }
-
 function {:weight 0} $inlined_array(p:$ptr, T:$ctype) returns ($ptr)
   { p }
 
@@ -2248,13 +2242,13 @@ function {:weight 0} $is_array_vol_or_nonvol(S:$state, p:$ptr, T:$ctype, sz:int,
   { $is(p, T) && 
     (forall i:int :: {$st(S, $idx(p, i, T))} {$ts(S, $idx(p, i, T))} {$mem(S, $idx(p, i, T))}
       0 <= i && i < sz ==> 
-        ($is_volatile(S, $idx(p, i, T)) == vol) && $is_array_elt(S, $idx(p, i, T)) && $typed(S, $idx(p, i, T))) }
+        ($is_volatile(S, $idx(p, i, T)) == vol) && $typed(S, $idx(p, i, T))) }
 
 function {:weight 0} $is_array(S:$state, p:$ptr, T:$ctype, sz:int) returns(bool)
   { $is(p, T) && 
     (forall i:int :: {$st(S, $idx(p, i, T))} {$ts(S, $idx(p, i, T))} {$mem(S, $idx(p, i, T))}
       0 <= i && i < sz ==> 
-        $is_array_elt(S, $idx(p, i, T)) && $typed(S, $idx(p, i, T))) }
+        $typed(S, $idx(p, i, T))) }
 
 /*
 axiom (forall S:$state, p:$ptr, T:$ctype, sz:int ::
@@ -2269,7 +2263,6 @@ axiom (forall S:$state, p:$ptr, T:$ctype, sz:int ::
 function {:inline true} $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) returns(bool)
   { (forall i:int :: {$st(S, $idx(p, i, T))}  {$ts(S, $idx(p, i, T))}
       0 <= i && i < sz ==> 
-        $is_array_elt(S, $idx(p, i, T)) && 
         $thread_local2(S, $idx(p, i, T), T)) }
 
 function {:inline true} $is_mutable_array(S:$state, p:$ptr, T:$ctype, sz:int) returns(bool)
@@ -2296,7 +2289,6 @@ function {:inline true} $array_field_properties(f:$field, T:$ctype, sz:int, unio
        (!union || $active_option(S, p) == f) &&
        $typed2(S, p, $field_parent_type(f)) ==>
          $is_volatile(S, $idx($dot(p, f), i, T)) == vol &&
-         $is_array_elt(S, $idx($dot(p, f), i, T)) &&
          $typed(S, $idx($dot(p, f), i, T)) &&
          $emb(S, $idx($dot(p, f), i, T)) == p &&
          $path(S, $idx($dot(p, f), i, T)) == $array_path(f, i)
@@ -2329,7 +2321,7 @@ axiom (forall S:$state, p:$ptr, #r:int, T:$ctype, sz:int ::
       p == $ptr($array(T, sz), #r) || $in_array_extent_of(S, p, $ptr(T, #r), T, sz));
 
 function {:inline true} $array_elt_emb(S:$state, p:$ptr, emb:$ptr) returns(bool)
-    { $emb(S, p) == emb && !$is_volatile(S, p) && $is_array_elt(S, p) && $typed(S, p) }
+    { $emb(S, p) == emb && !$is_volatile(S, p) && $typed(S, p) }
 
 axiom (forall S:$state, #r:int, T:$ctype, sz:int, i:int :: 
       {$st(S, $idx($ptr(T, #r), i, T)), $ptr($array(T, sz), #r)} 
