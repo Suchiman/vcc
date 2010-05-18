@@ -325,11 +325,13 @@ namespace Microsoft.Research.Vcc
           let es' = List.map (fun (e : Expr) -> e.SelfMap(handleChildren)) es
           let lds = List.map (deallocStmtFromEcAndCall ec) localDeallocs
           scopes := oldScopes
-          match !childrenChanges,localDeallocs with
-            | false,[] -> Some b
-            | false,_ -> Some(Block(ec,es@(Comment(ec,"Block cleanup")::lds),None))
-            | true,[] -> Some(Block(ec,es',None))
-            | true,_ -> Some(Block(ec,es'@(Comment(ec,"Block cleanup")::lds),None))
+          match !childrenChanges,localDeallocs,!scopes with
+            | false,[],_
+            | false,_,[] -> Some b
+            | false,_,_ -> Some(Block(ec,es@(Comment(ec,"Block cleanup")::lds),None))
+            | true,[],_
+            | true,_,[] -> Some(Block(ec,es',None))
+            | true,_,_ -> Some(Block(ec,es'@(Comment(ec,"Block cleanup")::lds),None))
         | Goto (ec, lbl) as g ->
           match deallocsFromLbl [] lbl (!scopes) with
             | [] -> None
