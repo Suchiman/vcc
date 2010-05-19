@@ -251,3 +251,13 @@ Verification of fooShouldFail failed.
 testcase(15,12) : error VC9500: Assertion 'a == 10' did not verify.
 Verification of bar succeeded.
 `
+#include "vcc.h"
+
+int x, y;
+
+void foo() {
+  assert(gemb(&x)!=gemb(&y));
+}
+`
+Verification of foo succeeded.
+`
