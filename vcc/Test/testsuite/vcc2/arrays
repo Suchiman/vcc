@@ -841,3 +841,22 @@ void foo(struct S *s)
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+typedef struct A {
+  int x;
+} A;
+
+void bar(A *p)
+  writes(extent(p))
+  maintains(mutable(p));
+
+void foo(A*p)
+  maintains(is_mutable_array(p,5))
+  writes(array_range(p,5))
+{
+  bar(p+1);
+}
+`
+Verification of foo succeeded.
+`
