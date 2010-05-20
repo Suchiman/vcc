@@ -46,7 +46,7 @@ BITMAP PgBitmap(unsigned int Page[])
 void foo() {
   unsigned int P[1024];
   spec(BITMAP bm;)
-  speconly(bm = PgBitmap(P);)
+  spec(bm = PgBitmap(P);)
   assume(!ToBm64(P[0])[0]);
   assert(!bm[0]);
 }

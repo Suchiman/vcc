@@ -83,7 +83,7 @@ Verification of foo succeeded.
 
 void foo()
 {
-  speconly(
+  spec(
     ptrset s;
     obj_t x;
     assume(forall(obj_t p; set_in(p,s)==> is(p,int)));

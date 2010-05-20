@@ -60,7 +60,7 @@ void bar(struct S *s spec(struct S ^t))
 {
   foo(s);
   assert(s->a == 0);
-  speconly(foo(t);)
+  spec(foo(t);)
   assert(t->a == 1);
 }
 `

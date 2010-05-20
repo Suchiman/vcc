@@ -62,8 +62,8 @@ void bar(struct S *s)
   maintains(wrapped(s))
 {
   expose(s) {
-    if (s->a < 20000) { s->a++; speconly(s->c = s->c+1;) }
-    if (s->b < 20000) { s->b++; speconly(s->c = s->c+1;) }
+    if (s->a < 20000) { s->a++; spec(s->c = s->c+1;) }
+    if (s->b < 20000) { s->b++; spec(s->c = s->c+1;) }
   }
 }
 

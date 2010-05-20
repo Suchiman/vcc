@@ -19,7 +19,7 @@ int test(struct F *f)
 	
 	assert(closed((struct F::g*)f));
 	
-	speconly(c = claim((struct F::g*)f, closed((struct F::g*)f));)
+	spec(c = claim((struct F::g*)f, closed((struct F::g*)f));)
 }
 
 /*`

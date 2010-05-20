@@ -121,7 +121,7 @@ void InitializeListHead( PLIST_ENTRY ListHead )
     spec(LIST_MANAGER ^ListManager;)
     ListHead->Flink = ListHead->Blink = ListHead;
 
-speconly(
+spec(
     ListManager = spec_malloc<LIST_MANAGER>();
     ListManager->size = 1;
     ListManager->index[ListHead] = 0;
@@ -197,7 +197,7 @@ bool RemoveEntryList( PLIST_ENTRY Entry )
             Flink->Blink = Blink;
         }
 
-speconly(
+spec(
         ListManager->size = ListManager->size - 1;
         giveup_owner(Entry,ListManager);
         ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 
@@ -251,7 +251,7 @@ PLIST_ENTRY RemoveHeadList( PLIST_ENTRY ListHead )
             Flink->Blink = ListHead;
         }
 
-speconly(
+spec(
         ListManager->size = ListManager->size - 1;
         giveup_owner(Entry,ListManager);
         ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 
@@ -305,7 +305,7 @@ PLIST_ENTRY RemoveTailList( PLIST_ENTRY ListHead )
             Blink->Flink = ListHead;
         }
 
-speconly(
+spec(
         ListManager->size = ListManager->size - 1;
         giveup_owner(Entry,ListManager);
         ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 
@@ -354,7 +354,7 @@ void InsertTailList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
 
     Entry->Flink = ListHead;
     Entry->Blink = ListHead->Blink;
-    speconly(Entry->Manager = ListManager;)
+    spec(Entry->Manager = ListManager;)
 
     wrap(Entry);
     expose(ListManager) {
@@ -365,7 +365,7 @@ void InsertTailList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
             ListHead->Blink = Entry;
         }
 
-speconly(
+spec(
         ListManager->size = ListManager->size + 1;
         set_owner(Entry,ListManager);
 
@@ -418,7 +418,7 @@ void InsertHeadList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
 
     Entry->Blink = ListHead;
     Entry->Flink = ListHead->Flink;
-    speconly(Entry->Manager = ListManager;)
+    spec(Entry->Manager = ListManager;)
     wrap(Entry);
     expose(ListManager) {
         expose(ListHead->Flink) {
@@ -428,7 +428,7 @@ void InsertHeadList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
             ListHead->Flink = Entry;
         }
 
-speconly(
+spec(
         ListManager->size = ListManager->size + 1;
         set_owner(Entry,ListManager);
         ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager)); 

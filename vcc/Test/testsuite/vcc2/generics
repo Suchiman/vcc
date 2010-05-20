@@ -158,7 +158,7 @@ void foo()
   writes(set_empty())
 {
   struct T t;
-  speconly(t.p = bar<struct S>();)
+  spec(t.p = bar<struct S>();)
 }
 `
 Verification of foo succeeded.

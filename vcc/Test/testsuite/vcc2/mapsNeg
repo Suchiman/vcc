@@ -8,7 +8,7 @@ struct A {
 void foo(struct A *a)
   requires(thread_local(a))
 {
-  speconly( a->m[12] = 11; )
+  spec( a->m[12] = 11; )
 }
 `
 Verification of foo failed.
@@ -42,7 +42,7 @@ testcase(8,85) : error VC0000: Type of conditional expression cannot be determin
 
 void bar(unsigned i) {
     spec(unsigned a[unsigned];)
-    speconly(a = lambda(unsigned j; true; i = 0);)
+    spec(a = lambda(unsigned j; true; i = 0);)
 }
 `
 testcase(5,57) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.

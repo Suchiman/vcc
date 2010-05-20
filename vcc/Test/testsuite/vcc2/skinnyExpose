@@ -538,7 +538,7 @@ void foo(struct A *a)
 	writes(&a->c->y)
   {
     a->b->x = 12;
-	speconly(a->c->y = 12;)
+	spec(a->c->y = 12;)
   }
 }
 `

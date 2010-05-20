@@ -28,7 +28,7 @@ void incr(struct A *a, int *res claimp(c) claimp(out cres))
   }
   
   *res = val;
-  speconly( cres = claim(c, when_claimed(*res) <= a->x); )
+  spec( cres = claim(c, when_claimed(*res) <= a->x); )
 }
 
 void use_case()
@@ -43,7 +43,7 @@ void use_case()
   a->x = 0;
   wrap(a);
 
-  speconly( c = claim(a, true); )
+  spec( c = claim(a, true); )
   incr(a, &tmp spec(c) spec(out c2) );
   assert(wrapped(c));
  

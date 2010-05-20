@@ -25,7 +25,7 @@ void LockFreeIncr(struct A *a claimp(c))
 
   atomic(c,a) {
     y = a->x;
-    speconly( c1 = claim(c, y <= a->x); )
+    spec( c1 = claim(c, y <= a->x); )
   }
   
   if (y >= 0x7fffffff) {
@@ -35,7 +35,7 @@ void LockFreeIncr(struct A *a claimp(c))
 
   atomic(c, c1, a) {
     z = InterlockedCompareExchange(&a->x, y+1, y);
-    speconly( c2 = claim(c, y < a->x); )
+    spec( c2 = claim(c, y < a->x); )
   }
 
   atomic(c, c2, a) {

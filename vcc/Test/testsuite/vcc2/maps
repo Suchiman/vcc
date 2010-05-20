@@ -15,7 +15,7 @@ spec(int foo2(int map[obj_t], int* p)
 void bar(int* p)
 {
   spec(int map[pint];)
-  speconly(map[p] = 12;)
+  spec(map[p] = 12;)
 }
 
 struct A {
@@ -27,7 +27,7 @@ void baz(struct A *a)
   requires(thread_local(a))
   writes(&a->m)
 {
-  speconly(a->m[12] = 11;)
+  spec(a->m[12] = 11;)
 }
 `
 Verification of foo succeeded.
@@ -44,8 +44,8 @@ void foo()
   char arr[10];
   int x = 20;
 
-  speconly(xyz = lambda(char *c; c != 0; c + 1);)
-  speconly(foo = lambda(int *p; typed(p) && *p < 100; *p + 1);)
+  spec(xyz = lambda(char *c; c != 0; c + 1);)
+  spec(foo = lambda(int *p; typed(p) && *p < 100; *p + 1);)
   
   assert(xyz[&arr[1]] == &arr[2]);
   assert(foo[&x] == 21);
@@ -56,7 +56,7 @@ void fail1()
   spec(int foo[int*];)
   int x = 120;
 
-  speconly(foo = lambda(int *p; typed(p) && *p < 100; *p + 1);)
+  spec(foo = lambda(int *p; typed(p) && *p < 100; *p + 1);)
   assert(foo[&x] == 121);
 }
 
@@ -65,7 +65,7 @@ void fail2()
   spec(int foo[int*];)
   int x = 20;
 
-  speconly(foo = lambda(int *p; typed(p) && *p < 100; *p + 1);)
+  spec(foo = lambda(int *p; typed(p) && *p < 100; *p + 1);)
   assert(foo[&x] == 22);
 }
 
@@ -129,7 +129,7 @@ void foo(struct S *s, int j)
   ensures(s->m == lambda(int n; true; n == j ? 0 : old(s->m)[n]))
 {
   expose(s) {
-    speconly(s->m[j] = 0;)
+    spec(s->m[j] = 0;)
   }
 }
 `
@@ -156,7 +156,7 @@ void foo(struct S *s, int j)
   ensures(forall(int i; s->m[i] == MyLambda(old(s->m), j)[i]))
 {
   expose(s) {
-    speconly(s->m[j] = 0;)
+    spec(s->m[j] = 0;)
   }
 }
 `
@@ -173,7 +173,7 @@ void foo(struct S *s)
   writes(s)
   maintains(wrapped(s)) {
   expose(s) {
-    speconly((s->m[1]) = 2;)
+    spec((s->m[1]) = 2;)
   }
 }
 `
@@ -212,7 +212,7 @@ void foo(struct S *s, int j)
   ensures(forall(int i; s->m[i] == lambda(int n; true; n == j ? 0 : old(s->m)[n])[i]))
 {
   expose(s) {
-    speconly(s->m[j] = 0;)
+    spec(s->m[j] = 0;)
   }
 }
 `
@@ -236,19 +236,19 @@ Verification of foo succeeded.
 void xxx(unsigned i) {
    spec(bool map1[unsigned];) 
    spec(bool map2[unsigned];) 
-   speconly(map2 = ((i==2)? map1: map2);)
+   spec(map2 = ((i==2)? map1: map2);)
 }
 
 void bar(unsigned i) {
    spec(bool map[unsigned];) 
-   speconly(map = (lambda(unsigned j; true; i==j || map[j]));)
+   spec(map = (lambda(unsigned j; true; i==j || map[j]));)
    //error VC9600: OOPS: error in expr
 }
 
 
 void works(unsigned i) {
    spec(unsigned map[unsigned];) 
-   speconly(map = (lambda(unsigned j; true; ((i==j)? i: (map[j]))));)
+   spec(map = (lambda(unsigned j; true; ((i==j)? i: (map[j]))));)
 }
 `
 Verification of xxx succeeded.
@@ -259,7 +259,7 @@ Verification of works succeeded.
 
 void foo() {
     spec(bool map[unsigned][unsigned];)
-    speconly(map = (lambda(unsigned i; true; (lambda(unsigned j; true; j==i))));)
+    spec(map = (lambda(unsigned i; true; (lambda(unsigned j; true; j==i))));)
     assert(map[3][3]);
     assert(!map[3][2]);
     assert(forall(unsigned i; map[i][i]));
@@ -278,7 +278,7 @@ struct Foo {
 void foo(unsigned i) {
    spec(struct Foo map1[unsigned];) 
    spec(struct Foo map2[unsigned];) 
-   speconly(map2 = ((i==2)? map1: map2);)
+   spec(map2 = ((i==2)? map1: map2);)
 }
 `
 Verification of foo succeeded.
@@ -302,7 +302,7 @@ Verification of foo succeeded.
 
 void foo() {
     spec(int map[int][unsigned];)
-    speconly(map = lambda(int x; unsigned y; true; 42);)
+    spec(map = lambda(int x; unsigned y; true; 42);)
     assert(map[2][3] == 42);
 }
 `
@@ -342,7 +342,7 @@ void foo(int x) {
     spec(int i;)
     assume(forall(int j; (j|x)==42));
     assert((i|x)==42);
-    speconly(i = map[3];)
+    spec(i = map[3];)
     // We lose $in_range_i4() here, so the following assert doesn't verify...
     assert((i|x)==42);
 }
@@ -362,7 +362,7 @@ Verification of foo2 succeeded.
 
 void foo() {
 spec(int map[int];)
-speconly(map = lambda(int , x; true; 42);)
+spec(map = lambda(int , x; true; 42);)
 } 
 `
 testcase(5,36) : error VC0000: Identifier expected.
@@ -371,13 +371,13 @@ testcase(5,36) : error VC0000: Identifier expected.
 
 void foo() {
   spec(int XY[int][int];)
-  speconly(XY[3][4] = 42;)
+  spec(XY[3][4] = 42;)
   assert(XY[3][4] == 42);
 }
 
 void bar() {
   spec(int XY[int][int][int];)
-  speconly(XY[3][4][5] = 42;)
+  spec(XY[3][4][5] = 42;)
   assert(XY[3][4][5] == 42);
 }
 `
@@ -423,7 +423,7 @@ struct vcc(record) S {
 void foo()
 {
     spec(struct S map2[int];)
-    speconly(map2 = lambda(int x; true; (struct S) { .a = x });)
+    spec(map2 = lambda(int x; true; (struct S) { .a = x });)
     assert(map2[4].a == 4);
 }
 `
@@ -439,8 +439,8 @@ struct vcc(record) S {
 void foo()
 {
     spec(struct S t, map[int];)
-    speconly(t.b = 20;)
-    speconly(map = lambda(int x; true; t / { .a = x });)
+    spec(t.b = 20;)
+    spec(map = lambda(int x; true; t / { .a = x });)
     assert(map[4].a == 4);
     assert(map[4].b == 20);
 }
@@ -471,7 +471,7 @@ struct S { int d; };
 
 void foo() {
 spec(struct S X[unsigned];)
-speconly(X[0].d = 42;)
+spec(X[0].d = 42;)
 }
 `
 testcase(7,17) : error VC0000: Illegal update of map 'X'.
@@ -499,9 +499,9 @@ struct X { int a; };
 
 void foo() {
     spec(void *f[int];)
-    speconly(f[0] = (void*)0;)
+    spec(f[0] = (void*)0;)
     assert(f[0]==(void*)0);
-    speconly(f = lambda(int x; true; (void*)0);)
+    spec(f = lambda(int x; true; (void*)0);)
     assert(forall(int x; f[x] == (void*)0));
 }
 `
@@ -575,8 +575,8 @@ Verification of foo succeeded.
 
 void foo() {
     spec(int x[int], y[int];)
-    speconly(x = lambda(int i; 42);)
-    speconly(y = lambda(int i; true; 42);)
+    spec(x = lambda(int i; 42);)
+    spec(y = lambda(int i; true; 42);)
     assert(x==y);
 }
 `

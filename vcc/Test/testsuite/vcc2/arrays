@@ -361,7 +361,7 @@ ensures(forall(unsigned long i; i < width; a[i] == old(b[i]) && b[i] == old(a[i]
             tmp = *a;
             *a++ = *b;
             *b++ = tmp;
-            speconly(idx++;)
+            spec(idx++;)
         }
 }
 `
@@ -533,7 +533,7 @@ void SetConcGpr(struct DESC *desc, uint64 index, uint64 Value)
 {
 	unwrap(desc);
 	desc->GPR[index] = Value;
-	speconly(desc->R[index] = Value;);
+	spec(desc->R[index] = Value;);
 	wrap(desc);
 }
 `
@@ -762,11 +762,11 @@ struct S
 
 void foo() {
   struct S s;
-  speconly(s.a[0]= 5;)
-  speconly(s.a[1] = s.a[0] * 5;)
+  spec(s.a[0]= 5;)
+  spec(s.a[1] = s.a[0] * 5;)
   assert(s.a[1] == 25);
-  speconly(s.b[0] = false;)
-  speconly(s.b[1] = !s.b[0];)
+  spec(s.b[0] = false;)
+  spec(s.b[1] = !s.b[0];)
   assert(s.b[1]);
 }
 `
@@ -807,7 +807,7 @@ void foo() {
   int a[5][7][9];
   spec(int sa[2][4];)
   a[1][2][3] = 5;
-  speconly(sa[1][2] = 3;)
+  spec(sa[1][2] = 3;)
   assert(a[1][2][3] == 5);
   assert(a[0][0][84] == 5);
 } 

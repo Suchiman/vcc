@@ -62,7 +62,7 @@ void foo()
   int x = 20;
   char *p = (char *)malloc(10);
   assume(p != NULL);
-  speconly(xyz = lambda(char *c; c != 0; c + 1);)
+  spec(xyz = lambda(char *c; c != 0; c + 1);)
   assert(typed(&arr));
   assert(typed(&arr[1]));
   assert(typed_phys(&arr));
@@ -118,7 +118,7 @@ struct B {
 void foo()
 {
 spec( struct B ^b; )
-speconly(
+spec(
   b = spec_malloc<struct B>();
   b->a = spec_malloc<struct A>();
   b->a->x = 12;
@@ -157,7 +157,7 @@ void foo(struct S *s)
 {
   claimp(c;)
   wrap(s);
-  speconly(c = claim(s, true);)
+  spec(c = claim(s, true);)
   assert(typed_spec(c));
 }
 `

@@ -125,7 +125,7 @@ writes(p)
     writes(p)
   {
    spec(claim_t c;)
-   speconly( c = claim(p, closed(p));)
+   spec( c = claim(p, closed(p));)
   }
 }
 `

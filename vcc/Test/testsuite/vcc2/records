@@ -97,7 +97,7 @@ spec(struct S foo(struct S s0)
 
 void bar() {
   spec(struct S s = { 1, 2 };)
-  speconly(s = foo(s);)
+  spec(s = foo(s);)
   assert(s.a == 10);
   assert(s.b == 2);
 }
@@ -139,7 +139,7 @@ spec(struct S foo(struct S s0)
 
 void bar() {
   spec(struct S s = { 1, 2 };)
-  speconly(s = foo(s);)
+  spec(s = foo(s);)
   assert(s.a == 10);
   assert(s.b == 2);
 }
@@ -201,14 +201,14 @@ void bar() {
   assert(s.a == NULL);
   assert(s.b == 0);
 
-  speconly(s = foo(&a, s);)
+  spec(s = foo(&a, s);)
   assert(s.a == &a);
   assert(s.b == 0);
 
-  speconly( s = s / { .o = &a }; )
+  spec( s = s / { .o = &a }; )
   assert(s.o == &a);
 
-  speconly( s.map = lambda(int x; true; x + 1); )
+  spec( s.map = lambda(int x; true; x + 1); )
   assert(s.map[2] == 3);
 }
 `
@@ -234,7 +234,7 @@ struct vcc(record) T {
 void bar() {
   spec(struct T t;)
 
-  speconly(
+  spec(
     t.c = 10;
     t.s.a = 20;
     t.s.b = 21;
@@ -278,8 +278,8 @@ spec(union S foo(union S s0)
 
 void bar() {
   spec(union S s;)
-  speconly(s = (union S) { .b1 = 0, .b2 = 1, .b7 = 10 };)
-  speconly(s = foo(s);)
+  spec(s = (union S) { .b1 = 0, .b2 = 1, .b7 = 10 };)
+  spec(s = foo(s);)
 
   assert(s.b1 == 1);
   assert(s.b7 == 10);
@@ -413,7 +413,7 @@ void test(Container *c spec(claim_t claim))
         writes(c)
     {
         c->a = 0;
-        speconly(
+        spec(
             c->s = c->s / {.x = 1};
         )
     }
@@ -496,7 +496,7 @@ void test(struct Rc *s)
   ensures(unchanged(s->r))
 {
   expose(s) {
-    speconly(s->r = s->r / {.x = s->r.x };)
+    spec(s->r = s->r / {.x = s->r.x };)
 	}
 }
 `
@@ -514,7 +514,7 @@ struct vcc(record) T {
 
 void foo(spec(struct T t)) {
   spec(struct T s;)
-  speconly(s = t / { .s = t.s / { .a = 5 } };)
+  spec(s = t / { .s = t.s / { .a = 5 } };)
   assert(s == t / { .s = t.s / { .a = 5 } });
 }
 `
@@ -566,7 +566,7 @@ struct vcc(record) S {
 
 void foo() {
     spec(struct S wa = {.a = 5, .b = 10};)
-    speconly(wa /= { .a = 3 };)
+    spec(wa /= { .a = 3 };)
     assert(wa.a == 3 && wa.b == 10);
 }
 

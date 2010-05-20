@@ -14,7 +14,7 @@ void InitializeLock(LOCK *l spec(obj_t obj))
   ensures(wrapped(l) && l->protected_obj == obj)
 {
   l->locked = 0;
-  speconly(
+  spec(
     l->protected_obj = obj;
     set_owns(l, SET(obj));
     wrap(l);
@@ -39,7 +39,7 @@ void Acquire(LOCK *l claimp(c))
   do {
     atomic (c, l) {
       stop = InterlockedCompareExchange(&l->locked, 1, 0) == 0;
-      speconly(if (stop) giveup_closed_owner(l->protected_obj, l);)
+      spec(if (stop) giveup_closed_owner(l->protected_obj, l);)
     }
   } while (!stop);
 }
@@ -97,7 +97,7 @@ void boot()
   set_owner(&DataLock, &DataContainer);
   wrap(&DataContainer);
 
-  speconly(c = claim(&DataContainer, closed(&DataContainer)); )
+  spec(c = claim(&DataContainer, closed(&DataContainer)); )
   testit(spec(c));
 }
 

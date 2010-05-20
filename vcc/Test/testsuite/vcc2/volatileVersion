@@ -310,7 +310,7 @@ writes(p)
     {
 
         begin_update();
-        speconly(bump_volatile_version(p::A);)
+        spec(bump_volatile_version(p::A);)
         p->a = 0;
     }
     wrap(p);

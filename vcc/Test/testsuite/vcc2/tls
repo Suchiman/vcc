@@ -25,7 +25,7 @@ void foo()
   maintains(get_tls_data()->f1)
 {
   spec(struct TLS_DATA *d = get_tls_data();)
-  speconly(
+  spec(
     atomic (d) {
       //assume(get_tls_data()->f1);
       giveup_closed_owner(&g_FooBar, d);
@@ -36,7 +36,7 @@ void foo()
   g_FooBar.x = 10;
   wrap(&g_FooBar);
 
-  speconly(
+  spec(
     atomic (d) {
       set_closed_owner(&g_FooBar, d);
       get_tls_data()->f1 = true;
@@ -96,7 +96,7 @@ maintains(get_tls()->flag)
   atomic(get_tls()){
     assert(get_tls()->flag);
     begin_update();
-    speconly(temp = get_tls()->flag;)
+    spec(temp = get_tls()->flag;)
   }
 }
 
@@ -109,7 +109,7 @@ maintains(forall(unsigned int i; i < 3 ==> get_tls()->arr[i]))
     assert(get_tls()->flag);
     assert(forall(unsigned int i; i < 3 ==> get_tls()->arr[i]));
     begin_update();
-    speconly(temp = get_tls()->flag;)
+    spec(temp = get_tls()->flag;)
   }
 }
 

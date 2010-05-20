@@ -212,7 +212,7 @@ writes(cl,sc)
 {
 	atomic(sc,server,cl) {
 		// note: the verification goes through if waiting below is replaced with choosing
-		speconly(cl->waiting = 0;)
+		spec(cl->waiting = 0;)
 		bump_volatile_version(cl);
 	}
 }
