@@ -48,7 +48,7 @@ int writeStruct(struct ConcreteStruct *s, int v)
   // The claim holds after step of the machine, because the abs and its protector
   // stay closed, therefore abs->value cannot change.
   unwrap(s);
-  speconly(c = claim(&abs->protector, abs, abs->value == when_claimed(abs->value));)
+  spec(c = claim(&abs->protector, abs, abs->value == when_claimed(abs->value));)
 
   s->value = v;
 
@@ -73,7 +73,7 @@ int writeStruct(struct ConcreteStruct *s, int v)
     // the end of the atomic block. Otherwise it does not modify the
     // heap.
     begin_update();
-    speconly(s->abs->value = v;)
+    spec(s->abs->value = v;)
   }
   // We close the protector again.
   wrap(&abs->protector);

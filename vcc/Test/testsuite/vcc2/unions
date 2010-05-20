@@ -133,12 +133,12 @@ void foo(union A *a)
   spec(int tmp;)
 
   a->y = 12;
-  speconly( a->x = 11; )
-  speconly( a->x2 = 42; )
+  spec( a->x = 11; )
+  spec( a->x2 = 42; )
   assert(a->y == 12 && a->x == 11 && a->x2 == 42);
 
-  speconly( tmp = a->x; )
-  speconly( tmp = a->y; )
+  spec( tmp = a->x; )
+  spec( tmp = a->y; )
 }
 `
 Verification of foo succeeded.
@@ -314,7 +314,7 @@ void foo(union FOO *p)
 {
   expose(p) {
     p->AsUINT32 = 16;
-    speconly(p->age = 16;)
+    spec(p->age = 16;)
   }
 }
 
@@ -324,7 +324,7 @@ void fooShouldFail(union FOO *p)
 {
   expose(p) {
     p->AsUINT32 = 16;
-    speconly(p->age = 17;)
+    spec(p->age = 17;)
     assert(p->AsUINT32 == 16);
   }
 }

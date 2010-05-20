@@ -49,7 +49,7 @@ struct ArrayList *CreateArrayList(size_t InitialCapacity)
     A->array = malloc(sizeof(*A->array) * InitialCapacity);
     assume(A->array != NULL);
 
-    speconly(arr = as_array(A->array, InitialCapacity);)
+    spec(arr = as_array(A->array, InitialCapacity);)
     wrap(arr);
     set_owns(A, SET(arr));
     wrap(A);

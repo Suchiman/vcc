@@ -54,12 +54,12 @@ void InitializeRundown(Rundown *r spec(obj_t obj) claimp(out rdi))
   r->count = 0;
   set_owns(r, SET());
   set_owns(&r->enabled_protector, SET());
-  speconly( r->protected_obj = obj; r->alive = false; r->enabled = false; )
+  spec( r->protected_obj = obj; r->alive = false; r->enabled = false; )
   wrap(r);
 
   assert(not_shared(r));
 
-  speconly(
+  spec(
     atomic(r) {
       s1 = claim(r, true);
       begin_update();
@@ -89,7 +89,7 @@ void ReferenceRundown(Rundown *r claimp(out res) claimp(rdi))
   atomic(r, rdi) {
     assume(r->count < 0xffffffff);
     InterlockedIncrement(&r->count);
-    speconly( res = claim(r->self_claim, r->count > 0 && closed(r->protected_obj) && when_claimed(r->self_claim) == r->self_claim); )
+    spec( res = claim(r->self_claim, r->count > 0 && closed(r->protected_obj) && when_claimed(r->self_claim) == r->self_claim); )
   }
 }
 
@@ -153,7 +153,7 @@ void FinalizeRundownContainer(RundownContainer *cont)
 
   unwrap(cont);
   cont->enabled = 0;
-  speconly(
+  spec(
     rd = &cont->rsc->rd;
     atomic(rd) {
       assert(valid_claim(cont->rd_claim));
@@ -194,14 +194,14 @@ Resource *KillRundownContainerDead(RundownContainer *cont)
     {
       atomic (cont->rd_claim, rd) {
         cur_count = rd->count;
-        speconly(
+        spec(
            if (cur_count == 0) {
              is_zero = claim(cont->rd_claim, rd->count == 0);
            })
       }
     } while (cur_count != 0);
 
-    speconly(
+    spec(
       atomic(rd) {
         assert(valid_claim(is_zero));
         assert(valid_claim(cont->rd_claim));

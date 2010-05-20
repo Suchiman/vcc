@@ -25,7 +25,7 @@ void wrapped_use()
   struct Handle h;
   struct X x;
 
-  speconly(
+  spec(
 
   d.handles = lambda(struct Handle *h; true; false);
   assert(forall(struct Handle *h; h->data == &d ==> !inv(h)));
@@ -44,7 +44,7 @@ void wrapped_use()
 
   foo(&x);
 
-  speconly(
+  spec(
 
   atomic(&d) {
     unwrap(&h);
@@ -72,7 +72,7 @@ void init()
 {
   struct Container *c = (struct Container *)malloc(sizeof(struct Container));
   if (c != NULL) {
-    speconly( c->d.handles = lambda(struct Handle *h; true; false); )
+    spec( c->d.handles = lambda(struct Handle *h; true; false); )
     assert(forall(struct Handle *h; h->data == &c->d ==> !inv(h)));
     wrap(&c->d);
     wrap(c);
@@ -84,7 +84,7 @@ void closed_use(struct Container *c)
   requires(wrapped(c))
   ensures(wrapped(&c->h) && c->h.data == &c->d)
 {
-speconly(
+spec(
   atomic(&c->d) {
     assert(inv(c));
     c->d.handles = lambda(struct Handle *hh; true; hh == &c->h || c->d.handles[hh]);

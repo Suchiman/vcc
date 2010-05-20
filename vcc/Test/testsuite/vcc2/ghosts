@@ -13,7 +13,7 @@ void f2(struct A *a)
   assert(sizeof(struct A) == sizeof(int));
 
   unwrap(a);
-    speconly( a->b = a->b - 1;)
+    spec( a->b = a->b - 1;)
     a->a = a->a + 1;
   wrap(a);
 }
@@ -32,7 +32,7 @@ testcase(1,1) : error VC9620: need at least one physical field in structure, got
 void foo(unsigned int x)
   requires(x > 0 && x < 1000)
 {
-  speconly(
+  spec(
     spec(ptrset ^p = spec_malloc_array<ptrset>(x);)
     assert((char^)(p + 1) - (char^)p == 1);
     p[x + 1] = set_empty();
@@ -51,7 +51,7 @@ struct S {
 
 void foo() {
     struct S s;
-    speconly(unchecked(s.b++);)
+    spec(unchecked(s.b++);)
 }
 `
 Verification of foo succeeded.

@@ -5,7 +5,7 @@ void success1()
 	spec(int a[int][int];)
 	spec(int b[int];)
 	spec(int foo[int];)
-speconly(
+spec(
 	foo = lambda(int x; x > 0 && x<100; x*x);
 	a = lambda(int y; y>0; foo);
 	foo = lambda(int x; x > 0 && x<100; x*x*x);
@@ -27,7 +27,7 @@ void fail2()
 	spec(int a[int][int];)
 	spec(int b[int];)
 	spec(int foo[int];)
-speconly(
+spec(
 	foo = lambda(int x; x > 0 && x<100; x*x);
 	a = lambda(int y; y>0; foo);
 	foo = lambda(int x; x > 0 && x<100; x*x*x);

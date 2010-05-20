@@ -154,7 +154,7 @@ void adm_A(struct A* x);)
 
 void qux()
 {
-  speconly( adm_A((struct A*)0); )
+  spec( adm_A((struct A*)0); )
 }
 `
 testcase(9,17) : error VC9644: the admissibility check is required to have a body
@@ -175,7 +175,7 @@ void adm_A(struct A* x)
 
 void qux()
 {
-  speconly( adm_A((struct A*)0); )
+  spec( adm_A((struct A*)0); )
 }
 `
 Verification of A#adm succeeded.
@@ -307,7 +307,7 @@ void alice(struct Mut *m claimp(c))
 spec(claim_t c2;)
   assert(valid_claim(c));
   assert(closed(m));
-  speconly( c2 = claim(&m->afs, closed(m)); )
+  spec( c2 = claim(&m->afs, closed(m)); )
 }
 
 `

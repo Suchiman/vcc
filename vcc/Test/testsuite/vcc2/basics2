@@ -89,7 +89,7 @@ struct S {
 
 void foo() {
   struct S s;
-  speconly(s.x = &s;)
+  spec(s.x = &s;)
   s.y = &s;
   wrap(&s);
   unwrap(&s);
@@ -254,7 +254,7 @@ struct vcc(record) S {
 void foo()
 {
     spec(struct S x;)
-    speconly(x = /* missing: (struct S) */ { .a = 3 };)
+    spec(x = /* missing: (struct S) */ { .a = 3 };)
 }
 
 #endif

@@ -124,9 +124,9 @@ void InitializeSingleListHead( PSINGLE_LIST_ENTRY ListHead )
 {
     spec(SINGLE_LIST_MANAGER ^ListManager;)
     ListHead->Next = NULL;
-    speconly(ListHead->Back = NULL;)
+    spec(ListHead->Back = NULL;)
 
-speconly(
+spec(
     ListManager = spec_malloc<SINGLE_LIST_MANAGER>();
     ListManager->size = 1;
     ListManager->index[ListHead] = 0;
@@ -185,7 +185,7 @@ PSINGLE_LIST_ENTRY PopEntryList( PSINGLE_LIST_ENTRY ListHead )
         expose(ListManager) {
             expose(ListHead) {
                 ListHead->Next = FirstEntry->Next;
-speconly(
+spec(
                 if (ListHead->Next != NULL) {
                     expose(ListHead->Next) {
                         ListHead->Next->Back = ListHead;
@@ -193,7 +193,7 @@ speconly(
                 }
 )
             }
-speconly(
+spec(
             ListManager->size = ListManager->size - 1;
             giveup_owner(FirstEntry,ListManager);
             ListManager->index = lambda(PSINGLE_LIST_ENTRY x; set_in(x,owns(ListManager));
@@ -242,7 +242,7 @@ PushEntryList( PSINGLE_LIST_ENTRY ListHead, PSINGLE_LIST_ENTRY Entry )
     expose(ListManager) {
         Entry->Next = ListHead->Next;
 
-speconly(
+spec(
         set_owns(Entry, SET());
         Entry->Back = ListHead;
         Entry->Manager = ListManager;
@@ -258,7 +258,7 @@ speconly(
             ListHead->Next = Entry;
         }
 
-speconly(
+spec(
         ListManager->size = ListManager->size + 1;
         set_owner(Entry,ListManager);
         ListManager->index = lambda(PSINGLE_LIST_ENTRY x; set_in(x,owns(ListManager));

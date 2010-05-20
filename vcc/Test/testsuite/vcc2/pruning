@@ -184,7 +184,7 @@ Verification of bar2 succeeded.
 spec(bool ispure baz() ensures (result == true);)
 
 vcc(atomic_inline) int foo(spec(out int x)) {
-  speconly(x = 10;)
+  spec(x = 10;)
   assert(baz());
   return 1;
 };

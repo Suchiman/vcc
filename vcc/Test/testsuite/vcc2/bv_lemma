@@ -17,7 +17,7 @@ ispure unsigned int bar(unsigned int x);
 
 void foo()
 {
-  speconly( assert(_vcc_bv_lemma(forall(unsigned int x; x + x < 10))); )
+  spec( assert(_vcc_bv_lemma(forall(unsigned int x; x + x < 10))); )
 }
 `
 testcase(7,68) : error VC9659: operators in bv_lemma(...) need to be unchecked (expression: x + x)

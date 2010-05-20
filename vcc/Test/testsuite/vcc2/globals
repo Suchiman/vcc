@@ -65,7 +65,7 @@ void init()
   wrap(&GlobalOwner);
 
   a.y = 12;
-  speconly(  
+  spec(  
     c = claim(&GlobalOwner, true); 
     a.c = c;
     set_owns(&a, set_singleton(c));
@@ -165,7 +165,7 @@ f(claimp(c))
   {
   atomic(c, gemb(&global), &Globals){
         global = 5;
-        speconly(Globals.shadow = 5;)
+        spec(Globals.shadow = 5;)
      }    
   }
 

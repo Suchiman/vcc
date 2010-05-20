@@ -330,7 +330,7 @@ void fux()
 {
   int y;
   f1(&y);
-  speconly( f2(&y); )
+  spec( f2(&y); )
   f3(&y);
 }
 `
@@ -351,7 +351,7 @@ void r_f1(int *x);
 void fux()
 {
   int y;
-  speconly( r_f1(&y); )
+  spec( r_f1(&y); )
 }
 `
 testcase(7,1) : error VC9646: the reads check is required to have a body
@@ -373,7 +373,7 @@ void r_f1(int *x)
 void fux()
 {
   int y;
-  speconly( r_f1(&y); )
+  spec( r_f1(&y); )
 }
 `
 Verification of r_f1 succeeded.
@@ -792,7 +792,7 @@ void baz()
  spec( struct S s; )
  spec( struct T t; )
 
- speconly( s = foo(); t = foo2(s); t = foo3(s);  t = foo4(s); )
+ spec( s = foo(); t = foo2(s); t = foo3(s);  t = foo4(s); )
  assert(false);
 
 }
@@ -869,7 +869,7 @@ void bar(unsigned y)
 {
   spec( unsigned tmp; )
   assert(foo(y) >= 0);
-  speconly( tmp = foo(100); )
+  spec( tmp = foo(100); )
   assert(false);
 }
 

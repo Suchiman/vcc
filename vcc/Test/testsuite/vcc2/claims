@@ -15,10 +15,10 @@ int foo(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( x = claim(cl, cnt->count >= y);)
+    spec( x = claim(cl, cnt->count >= y);)
   }
 
-  speconly( *res = x; )
+  spec( *res = x; )
 
   return y;
 }
@@ -33,10 +33,10 @@ int fooFail1(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( x = claim(cl, cnt->count >= y);)
+    spec( x = claim(cl, cnt->count >= y);)
   }
 
-  speconly( *res = x; )
+  spec( *res = x; )
 
   return y;
 }
@@ -51,10 +51,10 @@ int fooFail2(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( x = claim(cl, cnt->count >= y);)
+    spec( x = claim(cl, cnt->count >= y);)
   }
 
-  speconly( *res = x; )
+  spec( *res = x; )
 
   return y;
 }
@@ -69,10 +69,10 @@ int fooFail3(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( x = claim(cl, cnt->count >= 0);)
+    spec( x = claim(cl, cnt->count >= 0);)
   }
 
-  speconly( *res = x; )
+  spec( *res = x; )
 
   return y;
 }
@@ -101,10 +101,10 @@ int fooFail5(struct Counter *cnt spec(claim_t cl) spec(claim_t ^res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( x = claim(cl, cnt->count == y);)
+    spec( x = claim(cl, cnt->count == y);)
   }
 
-  speconly( *res = x; )
+  spec( *res = x; )
 
   return y;
 }
@@ -151,14 +151,14 @@ void LockFreeIncr(struct A *a claimp(c))
 
   atomic(c,a) {
     y = a->x;
-    //speconly( c1 = claim(c, y <= a->x); )
+    //spec( c1 = claim(c, y <= a->x); )
   }
   
   if (y >= 0x7fffffff) return;
 
   atomic(c, a) {
     InterlockedCompareExchange(&a->x, y+1, y);
-    speconly( c2 = claim(c, y < a->x); )
+    spec( c2 = claim(c, y < a->x); )
   }
 }
 `
@@ -183,7 +183,7 @@ void LockFreeIncr(struct A *a claimp(c))
 
   atomic(c,a) {
     y = a->x;
-    speconly( c1 = claim(c, y <= a->x); )
+    spec( c1 = claim(c, y <= a->x); )
   }
   
   if (y >= 0x7fffffff) {
@@ -223,7 +223,7 @@ void LockFreeIncr(struct A *a claimp(c))
 
   atomic(c,a) {
     y = a->x;
-    speconly( c1 = claim(c, y <= a->x); )
+    spec( c1 = claim(c, y <= a->x); )
   }
   
   if (y >= 0x7fffffff) {
@@ -233,7 +233,7 @@ void LockFreeIncr(struct A *a claimp(c))
 
   atomic(c, c1, a) {
     InterlockedCompareExchange(&a->x, y+1, y);
-    speconly( c2 = claim(c, y < a->x); )
+    spec( c2 = claim(c, y < a->x); )
   }
 
   atomic(c, c2, a) {
@@ -527,7 +527,7 @@ void foo(struct A *a, struct A *b)
   writes(extent(a), extent(b))
   requires(a != b)
 {
-  speconly(
+  spec(
     set_owns(a, set_empty());
     wrap(a);
     b->c = claim(a, true);
@@ -611,7 +611,7 @@ writes(x)
 requires(mutable(x))
 {
         spec(claim_t tmp;)
-        speconly(
+        spec(
                 tmp = claim(x, x->a);
                 //tmp = claim(x, x->a && closed(x)); //is also accepted by vcc
         )
@@ -674,7 +674,7 @@ void foo(struct Foo *o claimp(c))
 {
   spec(claim_t c1;)
   atomic(c,o) {
-    speconly(c1 = claim(o, false);)
+    spec(c1 = claim(o, false);)
   }
   assert(false);
 }
@@ -697,7 +697,7 @@ void foo(struct Foo *o claimp(c))
 {
   spec(claim_t c1;)
 
-  speconly(c1 = claim(o, false);)
+  spec(c1 = claim(o, false);)
   assert(false);
 }
 `
@@ -720,7 +720,7 @@ void foo()
      wrap(sp);
      atomic(sp) {
        sp->x = 10;
-       speconly( c = claim(sp, sp->x > 0); )
+       spec( c = claim(sp, sp->x > 0); )
      }
    }
 }
@@ -738,7 +738,7 @@ void bar()
      atomic(sp) {
        q = 10;
        sp->x = 10;
-       speconly( c = claim(sp, q == 9 && sp->x > 0); )
+       spec( c = claim(sp, q == 9 && sp->x > 0); )
        q = 9;
      }
    }
@@ -774,7 +774,7 @@ GLOBAL_STATE SchGlobalState;
 	atomic(lh_nchange, &SchGlobalState)
 	{
 		begin_update();
-		speconly(SchGlobalState.ThreadState = lambda(PTH e; true; NULL);)
+		spec(SchGlobalState.ThreadState = lambda(PTH e; true; NULL);)
 	}
  }
 `
@@ -816,7 +816,7 @@ void f(struct FooBar *b claimp(cc))
 {
   spec(claim_t c;)
 
-  speconly(
+  spec(
     c = claim(b, true);
     assert(c != cc);
   )
@@ -957,11 +957,11 @@ void foo(struct S *s, int y claimp(c))
 {
     spec(claim_t d;)
     int x;
-    speconly(d = claim(c,closed(s) && s->one==1);)
-    speconly(d = claim(c,closed(s) && s->one==when_claimed(1));) // warn
+    spec(d = claim(c,closed(s) && s->one==1);)
+    spec(d = claim(c,closed(s) && s->one==when_claimed(1));) // warn
     x = 1;
-    speconly(d = claim(c,closed(s) && s->one==when_claimed(x));) // warn
-    speconly(d = claim(c,closed(s) && s->one==when_claimed(y));) // warn
+    spec(d = claim(c,closed(s) && s->one==when_claimed(x));) // warn
+    spec(d = claim(c,closed(s) && s->one==when_claimed(y));) // warn
 }
 `
 testcase(16,64) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '_vcc_in_state(_vcc_when_claimed(), 1)' has no effect
@@ -1028,7 +1028,7 @@ void succeeds(struct A *a, struct A *b claimp(d))
 {
   spec(claim_t c;)
   atomic(d, b) {
-    speconly(c = claim(a, claims_obj(c,a));)
+    spec(c = claim(a, claims_obj(c,a));)
   }
 }
 
@@ -1037,7 +1037,7 @@ void usedToFail(struct A *a)
   requires(wrapped(a))
 {
   spec(claim_t c;)
-  speconly(c = claim(a, claims_obj(c,a));)
+  spec(c = claim(a, claims_obj(c,a));)
 }
 `
 Verification of succeeds succeeded.
@@ -1060,7 +1060,7 @@ int foo(struct Counter *cnt spec(claim_t cl) spec(out claim_t res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( res = upgrade_claim(cl, cnt->count >= y);)
+    spec( res = upgrade_claim(cl, cnt->count >= y);)
   }
 
   return y;
@@ -1075,7 +1075,7 @@ int fooFail1(struct Counter *cnt spec(claim_t cl) spec(out claim_t res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( res = upgrade_claim(cl, cnt->count >= y);)
+    spec( res = upgrade_claim(cl, cnt->count >= y);)
   }
 
   return y;
@@ -1094,7 +1094,7 @@ int fooOk2(struct Counter *cnt spec(claim_t cl) spec(out claim_t res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( res = upgrade_claim(cl, cnt->count >= y);)
+    spec( res = upgrade_claim(cl, cnt->count >= y);)
   }
 
   return y;
@@ -1111,7 +1111,7 @@ int fooFail2(struct Counter *cnt spec(claim_t cl) spec(out claim_t res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( res = upgrade_claim(cl, cnt->count >= y);)
+    spec( res = upgrade_claim(cl, cnt->count >= y);)
   }
 
   assert(claims_obj(res, cnt));
@@ -1130,7 +1130,7 @@ int fooFail3(struct Counter *cnt spec(claim_t cl) spec(out claim_t res))
 
   atomic(cnt) {
     y = cnt->count;
-    speconly( res = upgrade_claim(cl, cnt->count >= y);)
+    spec( res = upgrade_claim(cl, cnt->count >= y);)
   }
 
   return y;
@@ -1145,7 +1145,7 @@ int fooFail4(struct Counter *cnt spec(claim_t cl) spec(out claim_t res))
 
   atomic(cl,cnt) {
     y = cnt->count;
-    speconly( res = upgrade_claim(cl, cnt->count >= y);)
+    spec( res = upgrade_claim(cl, cnt->count >= y);)
   }
 
   return y;
@@ -1160,7 +1160,7 @@ void two(struct Counter *cnt1, struct Counter *cnt2 spec(claim_t cl1) spec(claim
   int y;
   spec( claim_t x; )
 
-  speconly( res = upgrade_claim(cl1, cl2, cnt1->count + cnt2->count >= 0);)
+  spec( res = upgrade_claim(cl1, cl2, cnt1->count + cnt2->count >= 0);)
 }
 
 void twoFail1(struct Counter *cnt1, struct Counter *cnt2 spec(claim_t cl1) spec(claim_t cl2) spec(out claim_t res))
@@ -1172,7 +1172,7 @@ void twoFail1(struct Counter *cnt1, struct Counter *cnt2 spec(claim_t cl1) spec(
   int y;
   spec( claim_t x; )
 
-  speconly( res = upgrade_claim(cl1, cl2, cnt1->count + cnt2->count >= 0);)
+  spec( res = upgrade_claim(cl1, cl2, cnt1->count + cnt2->count >= 0);)
 }
 
 `
@@ -1203,7 +1203,7 @@ void foo(struct S *s)
 	writes(s)
 {
 	claimp(c;)
-	speconly(c = claim(s,1);)
+	spec(c = claim(s,1);)
 	unclaim(c,s);
 	assert(!closed(c));
 }
@@ -1237,7 +1237,7 @@ void middle(struct S *s)
     atomic(s) {
         assert(valid_claim(old(s->protector)));
         begin_update();
-        speconly(
+        spec(
 	  s->protected = 1;
           s->protector = upgrade_claim(s->protector, stays_unchanged(s->protector) && s->protected==1);
 	)
@@ -1290,8 +1290,8 @@ void foo(struct S *s)
 {
   claimp(c;)
   wrap(s);
-  speconly(c = claim(s);)
-  speconly(c = claim(s,s);)
+  spec(c = claim(s);)
+  spec(c = claim(s,s);)
   assert(typed_spec(c));
 }
 `

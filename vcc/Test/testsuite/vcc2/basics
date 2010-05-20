@@ -112,7 +112,7 @@ Verification of BarOK#adm succeeded.
 
 void bar(unsigned i) {
    spec(bool map[unsigned];) 
-   speconly(map = (lambda(unsigned j; true; i==j || map[j]));)
+   spec(map = (lambda(unsigned j; true; i==j || map[j]));)
 }
 `
 Verification of bar succeeded.
@@ -121,7 +121,7 @@ Verification of bar succeeded.
 
 void bar(unsigned i) {
    spec(bool map[unsigned];) 
-   speconly(map = (lambda(unsigned j; true; (bool) ((i==j)? 1: (map[j]))));)
+   spec(map = (lambda(unsigned j; true; (bool) ((i==j)? 1: (map[j]))));)
 }
 `
 testcase(5,67) : error VC0000: Type of conditional expression cannot be determined because there are implicit conversions between '__int32' and 'bool'; try adding an explicit cast to one of the arguments.
@@ -252,7 +252,7 @@ testcase(5,48) : error VC9675: Quantified variable 'i' clashes with earlier decl
 
 void foo() {
   spec(bool m[int];)
-  speconly(m[(void *)0] = true;)
+  spec(m[(void *)0] = true;)
 }
 `
 testcase(6,19) : error VC0000: The best overloaded method match for 'System.Diagnostics.Contracts.CodeContract.Map<int, bool>.Item.get(int)' has some invalid arguments.
@@ -796,7 +796,7 @@ void foo(PX P claimp(c))
   assume(y); // successful allocation
   y->x = P;
   assert(P->T==P->T); // TODO for triggering, find another way ?
-  speconly(y->xClaim = claim(P, closed(P));)
+  spec(y->xClaim = claim(P, closed(P));)
   wrap(y); // This fails to check inv2(y->x)
   assert(inv(P));
   assert(!P->T[y]);

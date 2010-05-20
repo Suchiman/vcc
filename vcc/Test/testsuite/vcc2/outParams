@@ -142,7 +142,7 @@ void foo(int * x spec(out int o))
   ensures(o == 5)
   out_param(x)
 {
-speconly(  o = 5; )
+spec(  o = 5; )
 }
 
 void bar()
@@ -174,7 +174,7 @@ testcase(4,14) : error VC0000: Reference to out parameter 'i' not allowed in thi
 void foo(spec(out int i)) 
   ensures(i == 17)
 {
-  speconly(i = 17;)
+  spec(i = 17;)
 }
 
 void bar(spec(int i)) {
@@ -189,7 +189,7 @@ Verification of bar succeeded.
 void foo(int x, int y spec(out int o1) spec(out int o2))
   ensures(o1 == x && o2 == y)
 {
-  speconly(o1 = x; o2 = y; )
+  spec(o1 = x; o2 = y; )
 }
 
 void bar()
@@ -205,7 +205,7 @@ testcase(12,55) : error VC9676: duplicate out parameter 'z'
 int foo(int x, int y spec(out int o1) spec(out int o2))
   ensures(o1 == x && o2 == y)
 {
-  speconly(o1 = x; o2 = y; )
+  spec(o1 = x; o2 = y; )
 }
 
 void bar()
@@ -239,7 +239,7 @@ void foo(spec(out int a)) {
   block 
     ensures(a == 10)
   {
-    speconly(a = 10;)
+    spec(a = 10;)
     assert(a == 10);
   }
   assert(a == 10);

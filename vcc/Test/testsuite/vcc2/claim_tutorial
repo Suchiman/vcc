@@ -22,12 +22,12 @@ void LockFreeIncr(struct A *a claimp(c))
   spec( claim_t c1, c2; )
   atomic(c,a) {
     y = a->x;
-    speconly( c1 = claim(c, y <= a->x); )
+    spec( c1 = claim(c, y <= a->x); )
   }
   if (y >= 0x7fffffff) return;
   atomic(c, c1, a) {
     InterlockedCompareExchange(&a->x, y+1, y);
-    speconly( c2 = claim(c, y < a->x); )
+    spec( c2 = claim(c, y < a->x); )
   }
   atomic(c, c2, a) {
     z = a->x;
@@ -55,8 +55,8 @@ void incr(struct A *a, int *res claimp(c) claimp(^cres))
     val = a->x;
   }
   *res = val;
-  speconly( c1 = claim(c, when_claimed(*res) <= a->x); )
-  speconly( *cres = c1; )
+  spec( c1 = claim(c, when_claimed(*res) <= a->x); )
+  spec( *cres = c1; )
 }
 `
 Verification of A#adm succeeded.
@@ -79,10 +79,10 @@ void incr(struct A *a, int *res claimp(c) claimp(^cres))
     val = a->x;
   }
   *res = val;
-  speconly( c1 = claim(c, when_claimed(*res) <= a->x); )
+  spec( c1 = claim(c, when_claimed(*res) <= a->x); )
 
   *res -= 1;
-  speconly( *cres = c1; )
+  spec( *cres = c1; )
 }
 `
 Verification of A#adm succeeded.
@@ -119,8 +119,8 @@ void incr(struct A *a, int *res claimp(c) claimp(^cres))
     val = a->x;
   }
   *res = val;
-  speconly( c1 = claim(c, when_claimed(*res) <= a->x); )
-  speconly( *cres = c1; )
+  spec( c1 = claim(c, when_claimed(*res) <= a->x); )
+  spec( *cres = c1; )
 }
 
 void use_case()
@@ -133,7 +133,7 @@ void use_case()
   if (a != 0) {
     a->x = 0;
     wrap(a);
-    speconly( c = claim(a, true); )
+    spec( c = claim(a, true); )
     incr(a, &tmp spec(c) spec( &c2) );
     assert(valid_claim(c2));
     assert(tmp <= a->x);

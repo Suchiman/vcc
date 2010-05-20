@@ -108,7 +108,7 @@ void test6()
     p->f = 2;
     wrap(p);
 
-    speconly( c = claim(p, true); )
+    spec( c = claim(p, true); )
 
     assert(not_shared(p)); // error, p has claims
   }

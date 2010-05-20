@@ -18,7 +18,7 @@ void foo(struct S *s)
   int tmp = s->a;
   s->a = s->b;
   s->b = tmp;
-  speconly(s1 = current_state();)
+  spec(s1 = current_state();)
   assert(in_state(s0, s->a) == in_state(s1, s->b));
   assert(in_state(s0, s->b) == in_state(s1, s->a));
   assert(swapped(s, s0, s1));
@@ -85,14 +85,14 @@ void foo()
   spec(state_t s1, s2; )
   spec(state_t s3, ^s3p; )
   p = &x;
-  speconly( s3p = &s3; )
+  spec( s3p = &s3; )
 
   *p = 1;
-  speconly(s3 = current_state();)
-  speconly(s1 = current_state();)
+  spec(s3 = current_state();)
+  spec(s1 = current_state();)
   *p = 2;
-  speconly(s3 = current_state();)
-  speconly(s2 = current_state();)
+  spec(s3 = current_state();)
+  spec(s2 = current_state();)
 
   assert(in_state(s1, in_state(s2, *p)) == 2);
   assert(in_state(s2, in_state(s1, *p)) == 1);

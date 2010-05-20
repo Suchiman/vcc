@@ -48,7 +48,7 @@ struct A foo()
  a.x = 12;
  a.y = 13;
  a.p = &x;
- speconly( a.pp = &x; )
+ spec( a.pp = &x; )
  return a;
 }
 

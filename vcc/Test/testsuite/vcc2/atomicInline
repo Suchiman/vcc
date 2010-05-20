@@ -31,7 +31,7 @@ void Acquire(LOCK *l claimp(c))
     atomic (c, l) {
       res = ICX(&l->locked, 0, 1);
 
-      speconly(
+      spec(
         if (res == 0) {
 	  giveup_closed_owner(l->protected_obj, l);
 	}
@@ -235,7 +235,7 @@ Verification of Acquire succeeded.
 
 vcc(atomic_inline)
 void foo(int a spec(out int c)) {
-    speconly(c = a;)
+    spec(c = a;)
 }
 
 void bar(int a) {
@@ -249,7 +249,7 @@ Verification of bar succeeded.
 #include <vcc.h>
 
 vcc(atomic_inline) int foo(spec(out int x)) {
-  speconly(x = 10;)
+  spec(x = 10;)
   return 1;
 };
 
@@ -299,7 +299,7 @@ testcase(24,31) : error VC8512: Assertion '&s.a is thread local or atomically up
 spec(vcc(atomic_inline) bool True() { return true; })
 void foo() {
     spec(bool f;)
-    speconly(f = True();)
+    spec(f = True();)
 }
 `
 Verification of foo succeeded.
@@ -336,7 +336,7 @@ int f(struct S *s spec(int ^x) claimp(c))
 {
   atomic(s, c) {
     s->a=5;
-    speconly(x!=0 && (s->b=*x);)
+    spec(x!=0 && (s->b=*x);)
   }
 }
 
@@ -369,8 +369,8 @@ void SetX(struct S *s) {
 void foo(struct S *s)
     requires(wrapped(s))
 {
-    atomic (s) { s->x = 1; speconly(s->y = 1;) } // no warning
-    atomic (s) { s->x = 1; speconly(SetX(s);) } // warning
+    atomic (s) { s->x = 1; spec(s->y = 1;) } // no warning
+    atomic (s) { s->x = 1; spec(SetX(s);) } // warning
 }
 `
 Verification of foo succeeded.

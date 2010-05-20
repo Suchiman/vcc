@@ -83,7 +83,7 @@ struct Stack *CreateStack(unsigned max_capacity)
         return NULL;
     }
 
-    speconly(
+    spec(
         S->elementsAsArray = as_array(S->elements, S->capacity);
         S->abs = spec_malloc<struct AbsStack>();
         S->abs->high_mark = S->topOfStack;
@@ -114,7 +114,7 @@ void MakeEmpty(struct Stack *S)
     unwrap(S);
     S->topOfStack = 0;
     unwrap(S->abs);
-    speconly(S->abs->high_mark = S->topOfStack;)
+    spec(S->abs->high_mark = S->topOfStack;)
     wrap(S->abs);
     wrap(S);
 }
@@ -140,7 +140,7 @@ void Pop(struct Stack *S)
     unwrap(S);
     S->topOfStack--;
     unwrap(S->abs);
-    speconly(S->abs->high_mark--;)
+    spec(S->abs->high_mark--;)
     wrap(S->abs);
     wrap(S);
 }
@@ -162,7 +162,7 @@ void Push(struct Stack *S, size_t X)
     wrap(S->elementsAsArray);
     S->topOfStack++;
     unwrap(S->abs);
-    speconly(
+    spec(
         S->abs->entries[S->abs->high_mark] = X;
         S->abs->high_mark++;
     )

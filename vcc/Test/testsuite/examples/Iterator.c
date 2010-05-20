@@ -24,7 +24,7 @@ void init()
     coll->arr = NULL;
     coll->ver = 0;
 
-    speconly(
+    spec(
       coll->shadow = current_state();
       wrap(coll::Shadow);
       wrap(coll);
@@ -45,7 +45,7 @@ void add(struct Collection *c)
     c->arr = &x;
     c->ver++;
     
-    speconly(
+    spec(
       atomic(c::Shadow) {
         c->shadow = current_state();
 	bump_volatile_version(c::Shadow);
@@ -73,9 +73,9 @@ void get_iter(struct Collection *c)
   if (iter != NULL) {
     iter->coll = c;
     iter->ver = c->ver;
-    speconly( iter->arr = c->arr; )
+    spec( iter->arr = c->arr; )
     atomic(c) {
-      speconly( iter->cl = claim(c::Shadow, true); )
+      spec( iter->cl = claim(c::Shadow, true); )
     }
 
     wrap(iter);
