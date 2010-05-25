@@ -69,7 +69,7 @@ namespace Microsoft.Research.Vcc
     /// Change if (cond) tmp = e1; else tmp = e2; into tmp = cond?e1:e2; (as there are no
     /// assertions associated with e1 and e2).
     let foldIteBack self = function
-      | If (c, cond, VarWrite (_, tmp, e1), VarWrite (_, tmp', e2)) when tmp = tmp' ->
+      | If (c, None, cond, VarWrite (_, tmp, e1), VarWrite (_, tmp', e2)) when tmp = tmp' ->
         Some (VarWrite (c, tmp, self (Expr.Macro (e1.Common, "ite", [cond; e1; e2]))))
       | _ -> None
       
@@ -125,7 +125,8 @@ namespace Microsoft.Research.Vcc
         | Comment _ -> None
         
         | Quant (c, q) -> Some (Quant (c, { q with Body = f q.Body; Condition = Option.map f q.Condition }))
-        | If (c, cond, e1, e2) -> Some (If (c, f cond, self e1, self e2))
+        | If (c, None, cond, e1, e2) -> Some (If (c, None, f cond, self e1, self e2))
+        | If (c, Some cl, cond, e1, e2) -> Some (If (c, Some(f cl), f cond, self e1, self e2))
         | Loop (c, invs, writes, variants, body) -> Some (Loop (c, fs invs, List.map self writes, fs variants, self body)) //TODO check the treatment of the variants
         | Assert (c, cond, trigs) -> Some (Assert (c, f cond, trigs))
         | Assume (c, cond) -> Some (Assume (c, f cond))
@@ -227,7 +228,7 @@ namespace Microsoft.Research.Vcc
           incr dummyId
           [decl; assign]
       function
-        | If(ec, cond, e1, e2) -> Some(If(ec, self cond, Expr.MkBlock(stmtalize (self e1)), Expr.MkBlock(stmtalize (self e2))))
+        | If(ec, cl, cond, e1, e2) -> Some(If(ec, cl, self cond, Expr.MkBlock(stmtalize (self e1)), Expr.MkBlock(stmtalize (self e2))))
         | Loop(ec, inv, writes, variants, stmts) -> Some(Loop(ec, List.map self inv, List.map self writes, List.map self variants, Expr.MkBlock(stmtalize (self stmts))))
         | Stmt(ec, expr) when not (ignoreType expr.Type) -> Some(Expr.MkBlock(stmtalize (self expr)))
         | Atomic(ec, args, expr) -> Some(Atomic(ec, List.map self args, Expr.MkBlock(stmtalize (self expr))))
@@ -281,7 +282,7 @@ namespace Microsoft.Research.Vcc
               | Old (_,e1,e2)
               | MemoryWrite(_,e1,e2)
               | Index (_,e1,e2) -> findLocalLabels acc [e1;e2]
-              | If (_,cond,thenB,elseB) -> findLocalLabels acc [cond;thenB;elseB]
+              | If (_,_,cond,thenB,elseB) -> findLocalLabels acc [cond;thenB;elseB]
               | Atomic (_,es',e) -> findLocalLabels acc (e::es')
               | Assert (_,e,es') -> findLocalLabels acc (e::(List.concat es'))
               | Label _ -> die()
@@ -484,6 +485,21 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================
     
+    let flattenTestClassifiers decls =
+      let rec moveTestClassifiers _ = function
+        | If(ec, None, Macro(_, "_vcc_test_classifier", [c;test]), t, e) -> Some (If(ec,Some(c.SelfMap(moveTestClassifiers)),test.SelfMap(moveTestClassifiers),t.SelfMap(moveTestClassifiers),e.SelfMap(moveTestClassifiers)))
+        | _ -> None
+      for d in decls do
+        match d with
+          | Top.FunctionDecl fn ->
+            match fn.Body with
+              | Some body -> fn.Body <- Some (body.SelfMap(moveTestClassifiers))
+              | None -> ()
+          | _ -> ()
+      decls
+
+    // ============================================================================================================
+
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
     helper.AddTransformer ("final-range-assumptions", Helper.Decl addRangeAssumptions)
@@ -497,6 +513,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-error-old", Helper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", Helper.Decl errorForStateWriteInPureContext)
     helper.AddTransformer ("final-error-when-claimed", Helper.Decl errorForWhenClaimedOutsideOfClaim)
+    helper.AddTransformer ("final-move-test-classifiers", Helper.Decl flattenTestClassifiers)
     helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
     // reads check goes here
     

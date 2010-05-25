@@ -288,6 +288,58 @@ axiom (forall M:$statusmap_t, p:$ptr, q:$ptr, v:$status :: {:weight 0}
   $select.sm($store.sm(M, p, v), q) == $select.sm(M, q)
   );
 
+type $seclabel = bool;
+function $set.secpc($memory_t, $seclabel) returns($memory_t);
+function $get.secpc($memory_t) returns($seclabel);
+axiom (forall M:$memory_t, v:$seclabel :: {:weight 0}
+  $get.secpc($set.secpc(M, v)) == v);
+
+function $set.seclabel($memory_t, $ptr, $seclabel) returns($memory_t);
+function $get.seclabel($memory_t, $ptr) returns($seclabel);
+axiom (forall M:$memory_t, p:$ptr, v:$seclabel :: {:weight 0}
+  $get.seclabel($set.seclabel(M, p, v), p) == v);
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}
+	p == q
+	||
+	$get.seclabel($set.seclabel(M,p,l), q) == $get.seclabel(M, q)
+	);
+
+function $set.metalabel($memory_t, $ptr, $seclabel) returns($memory_t);
+function $get.metalabel($memory_t, $ptr) returns($seclabel);
+axiom (forall M:$memory_t, p:$ptr, v:$seclabel :: {:weight 0}
+  $get.metalabel($set.metalabel(M, p, v), p) == v);
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}
+	p == q
+	||
+	$get.metalabel($set.metalabel(M,p,l), q) == $get.metalabel(M, q)
+	);
+
+// No interaction between memory and labels, and the various kinds of labels
+axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}
+	$get.secpc($set.seclabel(M,p,l)) == $get.secpc(M));
+axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}
+	$get.secpc($set.metalabel(M,p,l)) == $get.secpc(M));
+axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}
+	$get.seclabel($set.secpc(M,l), p) == $get.seclabel(M,p));
+axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}
+	$get.metalabel($set.secpc(M,l), p) == $get.metalabel(M,p));
+axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}
+	$get.metalabel($set.seclabel(M,p,l),p) == $get.metalabel(M,p));
+axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}
+	$get.seclabel($set.metalabel(M,p,l),p) == $get.seclabel(M,p));
+axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}
+	$get.secpc($store.mem(M,p,v)) == $get.secpc(M));
+axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}
+	$get.seclabel($store.mem(M,p,v), p) == $get.seclabel(M, p));
+axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}
+	$get.metalabel($store.mem(M,p,v), p) == $get.metalabel(M, p));
+axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}
+	$select.mem($set.secpc(M,l), p) == $select.mem(M, p));
+axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}
+	$select.mem($set.seclabel(M,p,l), p) == $select.mem(M, p));
+axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}
+	$select.mem($set.metalabel(M,p,l), p) == $select.mem(M, p));
+
 
 function $memory(s:$state) returns($memory_t);
 function $typemap(s:$state) returns($typemap_t);
@@ -1391,6 +1443,8 @@ function {:inline true} {:expand true} $keeps(S:$state, #l:$ptr, #p:$ptr) return
   { $set_in(#p, $owns(S, #l)) }
 
 function $expect_unreachable() returns(bool);
+function $expect_unreachable_master(id:int) returns(bool);
+function $expect_unreachable_child(id:int) returns(bool);
 
 function $taken_over(S:$state, #l:$ptr, #p:$ptr) returns($status);
 function $take_over(S:$state, #l:$ptr, #p:$ptr) returns($state);
@@ -1701,6 +1755,26 @@ procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
                                                 $ptrset_to_int($set_difference($owns(old($s), owner), $set_singleton(#p))));
   ensures $timestamp_post_strict(old($s), $s);
 
+procedure $set_pc(l:$seclabel);
+  modifies $s;
+  ensures $typemap($s) == $typemap(old($s));
+  ensures $statusmap($s) == $statusmap(old($s));
+  ensures $memory($s) == $set.secpc($memory(old($s)), l);
+  ensures $timestamp_post_strict(old($s), $s);
+
+procedure $set_label(p:$ptr, l:$seclabel);
+  modifies $s;
+  ensures $typemap($s) == $typemap(old($s));
+  ensures $statusmap($s) == $statusmap(old($s));
+  ensures $memory($s) == $set.seclabel($memory(old($s)), p, l);
+  ensures $timestamp_post_strict(old($s), $s);
+
+procedure $set_meta(p:$ptr, l:$seclabel);
+  modifies $s;
+  ensures $typemap($s) == $typemap(old($s));
+  ensures $statusmap($s) == $statusmap(old($s));
+  ensures $memory($s) == $set.metalabel($memory(old($s)), p, l);
+  ensures $timestamp_post_strict(old($s), $s);
 
 // -----------------------------------------------------------------------
 // Allocation

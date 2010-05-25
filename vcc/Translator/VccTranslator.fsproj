@@ -115,6 +115,7 @@
     <Compile Include="BoogieAST.fs" />
     <Compile Include="ToBoogieAST.fs" />
     <Compile Include="TranslatorUtils.fs" />
+    <Compile Include="InformationFlow.fs" />
     <Compile Include="CEV.fs" />
     <Compile Include="BvTranslator.fs" />
     <Compile Include="Translator.fs" />

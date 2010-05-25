@@ -453,6 +453,8 @@ namespace Microsoft.Research.Vcc
     VccOptions commandLineOptions;
     List<string> proverWarnings;
     VerificationErrorHandler errorHandler;
+    HashSet<IdentifierExpr> unreachableMasters = new HashSet<IdentifierExpr>();
+    HashSet<IdentifierExpr> unreachableChildren;
 
     public ErrorReporter(VccOptions opts, string name, double startTime, VerificationErrorHandler errorHandler)
     {
@@ -550,8 +552,51 @@ namespace Microsoft.Research.Vcc
       return true;
     }
 
+    private bool HasAssertFalse(Block b)
+    {
+        foreach (var cmd in b.Cmds) {
+          PredicateCmd pred = cmd as PredicateCmd;
+          if (pred != null) {
+            LiteralExpr f = pred.Expr as LiteralExpr;
+            if (f != null) {
+              if (f.IsFalse) return true;
+            }
+          }
+        }
+        return false;
+    }
+
     public override void OnUnreachableCode(Implementation impl)
     {
+      this.unreachableChildren = new HashSet<IdentifierExpr>();
+      for (int i = impl.Blocks.Count - 1; i >= 0; i--) {
+        Block b = impl.Blocks[i];
+        if (HasAssertFalse(b)) {
+            foreach (var cmd in b.Cmds) {
+                PredicateCmd pred = cmd as PredicateCmd;
+                if (pred != null) {
+                    NAryExpr nary = pred.Expr as NAryExpr;
+                    if (nary != null) {
+                        FunctionCall f = nary.Fun as FunctionCall;
+                        if (f != null && f.Func.Name == "$expect_unreachable_master")
+                            this.unreachableMasters.Add(f.Func.InParams.Last() as IdentifierExpr);
+                        else if (f != null && f.Func.Name == "$expect_unreachable_child")
+                            this.unreachableChildren.Add(f.Func.InParams.Last() as IdentifierExpr);
+                    }
+                }
+            }
+        }
+      }
+      bool hasRealUnreachable = false;
+      foreach (var id in this.unreachableChildren) {
+          if (!unreachableMasters.Contains(id))
+              hasRealUnreachable = true;
+      }
+      if (!hasRealUnreachable) {
+          PrintSummary(VC.VCGen.Outcome.Correct);
+          return;
+      }
+
       for (int i = impl.Blocks.Count - 1; i >= 0; i--) {
         Block b = impl.Blocks[i];
         foreach (var cmd in b.Cmds) {
@@ -560,7 +605,7 @@ namespace Microsoft.Research.Vcc
             NAryExpr nary = pred.Expr as NAryExpr;
             if (nary != null) {
               FunctionCall f = nary.Fun as FunctionCall;
-              if (f != null && f.Func.Name == "$expect_unreachable") return;
+              if (f != null && f.Func.Name == "$expect_unreachable") return;   // Just restoring what existed. This is keeping some potentially easy to let through soundness warnings...
             }
           }
         }

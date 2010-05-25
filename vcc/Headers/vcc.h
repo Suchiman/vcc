@@ -91,6 +91,9 @@ typedef int bool;
 #define SPEC_TYPE(name)
 #define generic_instance(_F_, ...) (_F_)
 #define known(_EXPR_, _KNOWN_VALUE_) (_EXPR_)
+#define is_low(_EXPR) (_EXPR_)
+#define test_classifier(_CLASSIF_, _EXPR_) (_EXPR_)
+#define current_context(...)
 
 #else
 
