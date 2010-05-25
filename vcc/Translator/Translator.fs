@@ -1218,6 +1218,16 @@ namespace Microsoft.Research.Vcc
                 [cmt (); B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e)); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
             | C.Expr.Macro (_, "havoc", [e ;t]) ->
               [cmt (); B.Stmt.Call (e.Token, [], "$havoc", [trExpr env e; trExpr env t]); assumeSync env e.Token] @ (cev.StateUpdate e.Token)
+            | C.Expr.Macro (_, "_vcc_downgrade_to", [C.Expr.Ref _ as v; e]) ->
+              let setLabels =
+                match v.Type with
+                  | C.Type.PhysPtr _ -> [B.Stmt.Call (stmt.Token, [], "$set_label", [trExpr env v; IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e)])
+                                         assumeSync env stmt.Token
+                                         B.Stmt.Call (stmt.Token, [], "$set_meta", [trExpr env v; B.Expr.BoolLiteral true])
+                                         assumeSync env stmt.Token]
+                  | _ -> [B.Stmt.Assign (B.Expr.Ref ("SecLabel#"+(trExpr env v).ToString()), IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e))
+                          B.Stmt.Assign (B.Expr.Ref ("SecMeta#"+(trExpr env v).ToString()), B.Expr.BoolLiteral true)]
+              [cmt(); B.Stmt.Assert (stmt.Token, B.Expr.Primitive("==", [trExpr env v; trExpr env e])); B.Stmt.Assert (stmt.Token, B.Expr.FunctionCall ("$get.secpc", [B.Expr.FunctionCall ("$memory", [bState])]))] @ setLabels
             | C.Expr.MemoryWrite (_, e1, e2) when (not env.hasIF) ->
               let e2' =
                 match e1.Type with

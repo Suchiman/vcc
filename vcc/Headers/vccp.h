@@ -571,6 +571,9 @@ template<typename T> bool _vcc_is_low(T v);
 bool _vcc_test_classifier(bool classifier, bool test);
 #define test_classifier _vcc_test_classifier
 
+template<typename T> void _vcc_downgrade_to(T v, T expr);
+#define downgrade_to _vcc_downgrade_to
+
 bool /*label_t*/ _vcc_current_context(void);
 #define current_context _vcc_current_context
 
