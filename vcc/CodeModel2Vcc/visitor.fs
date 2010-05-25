@@ -940,7 +940,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (globalMethodDefinition:IGlobalMethodDefinition) : unit =
         globalsType <- globalMethodDefinition.ContainingTypeDefinition
         match globalMethodDefinition.Name.Value with
-          | "_vcc_in_state" | "_vcc_approves" | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "_vcc_is_low" | "_vcc_test_classifier" | "_vcc_current_context" -> ()
+          | "_vcc_in_state" | "_vcc_approves" | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "_vcc_is_low" | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false)
 
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
@@ -1397,6 +1397,10 @@ namespace Microsoft.Research.Vcc
           | _, "_vcc_test_classifier" ->
             match args() with
               | [classif;cond] as args -> exprRes <- C.Expr.Macro (ec, "_vcc_test_classifier", args)
+              | _ -> oopsNumArgs()
+          | _, "_vcc_downgrade_to" ->
+            match args() with
+              | [var;expr] as args -> exprRes <- C.Expr.Macro (ec, "_vcc_downgrade_to", args)
               | _ -> oopsNumArgs()
           | _, "_vcc_current_context" ->
             match args() with

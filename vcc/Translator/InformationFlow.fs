@@ -139,6 +139,7 @@ namespace Microsoft.Research.Vcc
       let bodyHasIFAnnotations _ = function
         | C.Expr.If(_, Some _, _, _, _)
         | C.Expr.Macro(_, "_vcc_is_low", _)
+        | C.Expr.Macro(_, "_vcc_downgrade_to", _)
         | C.Expr.Macro(_, "_vcc_current_context", _) -> res := true; false
         | _ -> true
       match decl with
