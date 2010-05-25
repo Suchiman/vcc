@@ -644,6 +644,8 @@ module Microsoft.Research.Vcc.CAST
       Writes : list<Expr>;
       Decreases : list<Expr>;
     }
+
+  and TestClassifier = Expr
     
   and Expr =
     | Ref of ExprCommon * Variable    
@@ -665,7 +667,7 @@ module Microsoft.Research.Vcc.CAST
     | VarDecl of ExprCommon * Variable
     | VarWrite of ExprCommon * list<Variable> * Expr
     | MemoryWrite of ExprCommon * Expr * Expr
-    | If of ExprCommon * Expr * Expr * Expr
+    | If of ExprCommon * TestClassifier option * Expr * Expr * Expr
     // invariants * writes * variants * body
     | Loop of ExprCommon * list<Expr> * list<Expr> * list<Expr> * Expr // TODO use record
     | Goto of ExprCommon * LabelId
@@ -723,7 +725,7 @@ module Microsoft.Research.Vcc.CAST
         | Macro (e, _, _)
         | VarWrite (e, _, _)
         | MemoryWrite (e, _, _)
-        | If (e, _, _, _)
+        | If (e, _, _, _, _)
         | Loop (e, _, _, _, _)
         | Goto (e, _)
         | Label (e, _)
@@ -775,7 +777,8 @@ module Microsoft.Research.Vcc.CAST
             | Index (_, e1, e2) -> visit ctx e1; visit ctx e2
             | Old (_, e1, e2) -> paux e1; visit ctx e2
             | Quant (_, q) -> List.iter pauxs q.Triggers; Option.iter paux q.Condition; paux q.Body
-            | If (_, cond, s1, s2) -> visit ctx cond; visit ctx s1; visit ctx s2
+            | If (_, None, cond, s1, s2) -> visit ctx cond; visit ctx s1; visit ctx s2
+            | If (_, Some classif, cond, s1, s2) -> paux classif; visit ctx cond; visit ctx s1; visit ctx s2
             | Loop (_, invs, writes, variants, s) -> pauxs invs; pauxs writes; pauxs variants; visit ctx s
             | Atomic (c, exprs, s) -> pauxs exprs; visit ctx s
             | Block (ec, es, Some cs) -> pauxs cs.Requires; pauxs cs.Ensures; pauxs cs.Reads; pauxs cs.Writes; pauxs cs.Decreases; List.iter (visit ctx) es
@@ -902,7 +905,7 @@ module Microsoft.Research.Vcc.CAST
                 else Some(Assert(c, cond, triggers))
               | Assume (c, e) -> construct1 (fun arg -> Assume (c, arg)) (paux e)
               | Return (c, Some e) -> construct1 (fun arg -> Return (c, Some arg)) (map ctx e)
-              | If (c, cond, s1, s2) -> construct3 (fun a1 a2 a3 -> If (c, a1, a2, a3)) (map ctx cond) (map ctx s1) (map ctx s2) cond s1 s2
+              | If (c, cl, cond, s1, s2) -> construct3 (fun a1 a2 a3 -> If (c, cl, a1, a2, a3)) (map ctx cond) (map ctx s1) (map ctx s2) cond s1 s2
               | Loop (c, invs, writes, variants, s) -> 
                 let rInvs, invs' = apply paux invs
                 let rWrites, writes' = apply paux writes
@@ -1079,8 +1082,10 @@ module Microsoft.Research.Vcc.CAST
           | Assume (_, e) -> wr "assume "; fe e; wr ";\n"
           | Return (_, Some (e)) -> wr "return "; fe e; wr ";\n"
           | Return (_, None) -> wr "return;\n"
-          | If (_, cond, th, el) ->
+          | If (_, None, cond, th, el) ->
             wr "if ("; fe cond; wr ")\n"; f th; doInd ind; wr "else\n"; f el
+          | If (_, Some cl, cond, th, el) ->
+            wr "if as_high("; fe cl; wr ", "; fe cond;  wr ")\n"; f th; doInd ind; wr "else\n"; f el
           | Loop (_, invs, writes, variants, body) ->
             wr "loop\n";
             for i in invs do

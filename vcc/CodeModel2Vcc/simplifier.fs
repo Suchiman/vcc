@@ -391,15 +391,15 @@ namespace Microsoft.Research.Vcc
               helper.Oops(cond.Token, "unexpected use of known(...)"); die()
             | _ -> cond, thAssign, elAssign
             
-        let write = Expr.If (c', cond', th', el')
+        let write = Expr.If (c', None, cond', th', el')
         addStmtsOpt [VarDecl (c', tmp); self write] tmpRef
-      | If(c, cond, th, el) ->
+      | If(c, cl, cond, th, el) ->
           match cond with
             | Cast(_,_, Macro(_, "_vcc_known", [cond'; expectedValue]))
             | Macro(_, "_vcc_known", [cond'; expectedValue]) ->
               match expectedValue with 
-                | BoolLiteral(_, true) -> Some(If(c, cond', self th, assertFalse cond' expectedValue))
-                | BoolLiteral(_, false) -> Some(If(c, cond', assertFalse cond' expectedValue, self el))
+                | BoolLiteral(_, true) -> Some(If(c, cl, cond', self th, assertFalse cond' expectedValue))
+                | BoolLiteral(_, false) -> Some(If(c, cl, cond', assertFalse cond' expectedValue, self el))
                 | _ -> helper.Oops(expectedValue.Token, "unexpected value in known(...)"); die()
             | _ -> None     
       | Macro (wtok, "doUntil", [Macro (lc, "loop_contract", conds); body; cond]) ->
@@ -920,7 +920,7 @@ namespace Microsoft.Research.Vcc
             let gotoCase = Goto(token, case_lbl)
             match caseExpr with
             | None -> gotoCase
-            | Some(caseExpr) -> If(voidBogusEC(), Prim({condExpr.Common with Type = Bool}, Op("==", Processed), [condExpr; caseExpr]), gotoCase, Expr.MkBlock([]))
+            | Some(caseExpr) -> If(voidBogusEC(), None, Prim({condExpr.Common with Type = Bool}, Op("==", Processed), [condExpr; caseExpr]), gotoCase, Expr.MkBlock([]))
           let doneCaseBody = [Label(token, case_lbl)] @ (doCaseBody caseBody)
           (caseDispatch, doneCaseBody)
           
@@ -932,7 +932,7 @@ namespace Microsoft.Research.Vcc
       match s with
         | Macro (wtok, "while", [Macro (_, "loop_contract", conds); cond; body]) ->
           let (mkLoop, inBody, break_lbl, continue_lbl) = doLoop wtok conds
-          mkLoop [ If (wtok, cond, 
+          mkLoop [ If (wtok, None, cond, 
                           inBody body, 
                           Goto (wtok, break_lbl)); 
                    Label (wtok, continue_lbl)]
@@ -947,7 +947,7 @@ namespace Microsoft.Research.Vcc
               false
             | _ -> not !usedBreak // keep looking
           let body = inBody body
-          let branch = If (wtok, cond, Goto (wtok, break_lbl), Expr.MkBlock [])
+          let branch = If (wtok, None, cond, Goto (wtok, break_lbl), Expr.MkBlock [])
           let branch = branch.SelfCtxMap(false, doRemoveLazyOps false false)
           let res () = mkLoop [ body; Label (wtok, continue_lbl); branch ]
           match cond with
@@ -960,7 +960,7 @@ namespace Microsoft.Research.Vcc
         | Macro (wtok, "for", [Macro (_, "loop_contract", conds); init; cond; incr; body]) ->
           let (mkLoop, inBody, break_lbl, continue_lbl) = doLoop wtok conds
           let loop =
-            mkLoop [If (wtok, cond,
+            mkLoop [If (wtok, None, cond,
                          inBody body,
                          Goto (wtok, break_lbl));
                     Label (wtok, continue_lbl);

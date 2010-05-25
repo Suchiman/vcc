@@ -84,7 +84,7 @@ namespace Microsoft.Research.Vcc
           let body = splitConjunction keeps |> List.map updateFor |> List.concat
           if body.IsEmpty then acc
           else
-            If (bogusEC, pureEx cond, Expr.MkBlock (body @ [expectUnreach]), Expr.MkBlock [expectUnreach]) :: acc
+            If (bogusEC, None, pureEx cond, Expr.MkBlock (body @ [expectUnreach]), Expr.MkBlock [expectUnreach]) :: acc
         | e -> updateFor e @ acc
       List.fold addToOwns [] checks
     

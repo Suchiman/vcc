@@ -564,6 +564,16 @@ bool _vcc_account_claim(claim_t, obj_t);
 template<typename T> T _vcc_known(T v, bool val);
 #define known _vcc_known
 
+// Information Flow
+template<typename T> bool _vcc_is_low(T v);
+#define is_low _vcc_is_low
+
+bool _vcc_test_classifier(bool classifier, bool test);
+#define test_classifier _vcc_test_classifier
+
+bool /*label_t*/ _vcc_current_context(void);
+#define current_context _vcc_current_context
+
 #endif //VERIFY2
 
 // Misc

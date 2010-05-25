@@ -217,6 +217,7 @@
     <None Include="testsuite\vcc2\infer">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="testsuite\vcc2\informationFlow" />
     <None Include="testsuite\vcc2\ints">
       <DeploymentContent>true</DeploymentContent>
     </None>

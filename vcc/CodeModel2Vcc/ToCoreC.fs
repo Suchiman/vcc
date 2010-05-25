@@ -78,9 +78,9 @@ namespace Microsoft.Research.Vcc
       | This _
       | Macro _ -> None
       
-      | If (c, cond, th, el) ->
+      | If (c, cl, cond, th, el) ->
         let (prev, cond) = selfe [] cond
-        ret (If (c, cond, selfs th, selfs el) :: prev)
+        ret (If (c, cl, cond, selfs th, selfs el) :: prev)
       
       | Stmt (c, e) ->
         let (prev, e) = selfe [] e

@@ -70,7 +70,7 @@ namespace Microsoft.Research.Vcc
           let admBody    = Expr.MkBlock ( if explicitAdm then 
                                             [ assume "_vcc_stuttering_pre" ]
                                           else 
-                                            [ If (ec, isAdm, assume "_vcc_admissibility_pre", assume "_vcc_stuttering_pre");
+                                            [ If (ec, None, isAdm, assume "_vcc_admissibility_pre", assume "_vcc_stuttering_pre");
                                             Macro (ec, "_vcc_havoc_others", [mkRef parm; typeExpr (Type.Ref td)]);
                                             Expr.MkAssume (mkImpl isStutt (Macro (boolBogusEC(), "_vcc_inv2", [mkRef parm]))) ])
           let assumeNot cond name body =
@@ -79,7 +79,7 @@ namespace Microsoft.Research.Vcc
             
           let body = 
             if explicitUnwrap then admBody
-            else If (ec, isUnwrap, unwrapBody, admBody)
+            else If (ec, None, isUnwrap, unwrapBody, admBody)
           let body = 
               body |>
                 assumeNot explicitAdm isAdm |>

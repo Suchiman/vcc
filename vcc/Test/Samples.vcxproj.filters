@@ -263,5 +263,8 @@
     <None Include="testsuite\vcc2\termination">
       <Filter>Testsuite</Filter>
     </None>
+    <None Include="testsuite\vcc2\informationFlow">
+      <Filter>Testsuite</Filter>
+    </None>
   </ItemGroup>
 </Project>
