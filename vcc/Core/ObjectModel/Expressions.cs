@@ -2163,6 +2163,10 @@ namespace Microsoft.Research.Vcc {
       return new VccInitializerWithDesignators(containingBlock, this);
     }
 
+    protected override IExpression ProjectAsFiniteSet() {
+      throw new InvalidOperationException("Cannot use designator list to represent finite set");
+    }
+
     internal override void PropagateStructuredTypeToSubExpressions(VccStructuredTypeDeclaration typeDecl) {
       // read field->type map into a dictionary so that we do not run into quadratic behaviour 
       // (even though the number of fields should likely be small)
@@ -2304,6 +2308,10 @@ namespace Microsoft.Research.Vcc {
     protected override IExpression ProjectAsNonConstantIExpression() {
       if (cachedProjection != null) return cachedProjection;
       if (this.Type == Dummy.Type) return (cachedProjection = CodeDummy.Expression);
+      if (this.structureTypeExpression == null && this.arrayTypeExpression == null) {
+        this.cachedProjection = this.ProjectAsFiniteSet();
+        return this.cachedProjection;
+      }
 
       
       // create the value in a local and initialize its fields field-by-field
@@ -2328,6 +2336,8 @@ namespace Microsoft.Research.Vcc {
       bexpr.SetContainingExpression(this);
       return this.cachedProjection = bexpr.ProjectAsIExpression();
     }
+
+    protected abstract IExpression ProjectAsFiniteSet();
 
     IExpression cachedProjection = null;
 
@@ -2422,6 +2432,14 @@ namespace Microsoft.Research.Vcc {
       this.expressions = new List<Expression>(template.expressions.Count);
       foreach (var expr in template.expressions)
         this.expressions.Add(expr.MakeCopyFor(containingBlock));
+    }
+
+    protected override IExpression ProjectAsFiniteSet() {
+      Expression typePtrRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.Compilation.NameTable, "TypedPtr");
+      typePtrRef.SetContainingExpression(this);
+      var arr = new CreateArray(new VccNamedTypeExpression(typePtrRef).Resolve(0), this.Expressions, this.SourceLocation);
+      arr.SetContainingExpression(this);
+      return arr.ProjectAsIExpression();
     }
 
     internal override void AddInitializingElementAssignmentsTo(ICollection<Statement> statements, Expression array, VccArrayTypeExpression/*?*/ arrTypeExp) {

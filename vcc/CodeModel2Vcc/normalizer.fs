@@ -315,7 +315,7 @@ namespace Microsoft.Research.Vcc
           Some (Expr.Call (c, internalFunction "free", [], [self p]))
         | Expr.Macro (c, "&", [This(c')]) when not c'.Type._IsPtr ->
           Some (self (This(c)))
-        | Expr.Call (c, { Name = "_vcc_create_set" }, _, pars) ->
+        | CallMacro (c, "_vcc_create_set", _, pars) ->
           match pars with
             | [] 
             | [_] -> Some(Expr.Macro(c, "_vcc_set_empty", []))
@@ -783,6 +783,10 @@ namespace Microsoft.Research.Vcc
           deepMapExpressions normalizeCalls' [decl] |> List.head
         | decl -> decl
 
+      let normalizeFiniteSets self = function
+        | Macro(ec, "set", elems) -> Some(Macro(ec, "_vcc_create_set", Expr.Bogus :: (List.map self elems)))
+        | _ -> None
+
       let mapFromNewSyntax = function
         | Top.FunctionDecl(fn) -> 
           match newToOldFn.TryFind fn.Name with
@@ -809,7 +813,7 @@ namespace Microsoft.Research.Vcc
           Some(Assert(ec, expr, []))
         | _ -> None
           
-      List.map normalizeCalls >> List.map mapFromNewSyntax >> deepMapExpressions rewriteBvAssertAsBvLemma
+      List.map normalizeCalls >> List.map mapFromNewSyntax >> deepMapExpressions normalizeFiniteSets >> deepMapExpressions rewriteBvAssertAsBvLemma
     
     // ============================================================================================================
  

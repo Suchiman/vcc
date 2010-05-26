@@ -1154,7 +1154,11 @@ namespace Microsoft.Research.Vcc
       member this.Visit (continueStatement:IContinueStatement) : unit = 
         stmtRes <- C.Expr.Macro(this.StmtCommon continueStatement, "continue", [])
 
-      member this.Visit (createArray:ICreateArray) : unit = assert false
+      member this.Visit (createArray:ICreateArray) : unit = 
+        // this is how we project finite set expressions
+        let elems = [ for e in createArray.Initializers -> this.DoExpression e]
+        let ec = {Token = token createArray; Type = C.Type.Math "\\objset"} : C.ExprCommon
+        exprRes <- C.Expr.Macro(ec, "set", elems)
 
       member this.Visit (createDelegateInstance:ICreateDelegateInstance) : unit = assert false
 
