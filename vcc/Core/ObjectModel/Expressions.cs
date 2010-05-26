@@ -2117,7 +2117,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public VccInitializerWithDesignators(List<VccDesignatorExpressionPair> designatorsWithExpressions, ISourceLocation sourceLocation) 
-      : base(sourceLocation)
+      : base(false, sourceLocation)
     {
       this.designatorsWithExpressions = designatorsWithExpressions;
     }
@@ -2183,14 +2183,16 @@ namespace Microsoft.Research.Vcc {
 
   public abstract class VccInitializerBase : Expression
   {
-    protected VccInitializerBase(ISourceLocation sourceLocation)
+    protected VccInitializerBase(bool typeDefaultsToObjset, ISourceLocation sourceLocation)
       : base(sourceLocation) {
+        this.typeDefaultsToObjset = typeDefaultsToObjset;
     }
 
     protected VccInitializerBase(BlockStatement containingBlock, VccInitializerBase template) 
       : base(containingBlock, template) {
       this.structureTypeExpression = template.structureTypeExpression;
       this.arrayTypeExpression = template.arrayTypeExpression;
+      this.typeDefaultsToObjset = template.typeDefaultsToObjset;
     }
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
@@ -2267,7 +2269,7 @@ namespace Microsoft.Research.Vcc {
           if (ctc != null && unionType != null) {
             List<Expression> exprs = new List<Expression>();
             exprs.Add(ctc);
-            VccInitializer newInitializer = new VccInitializer(exprs, source.SourceLocation);
+            VccInitializer newInitializer = new VccInitializer(exprs, false, source.SourceLocation);
             newInitializer.SetContainingBlock(containingBlock);
             newInitializer.AddInitializingFieldAssignmentsTo(statements, target, unionType);
           } else {
@@ -2301,7 +2303,8 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     protected override IExpression ProjectAsNonConstantIExpression() {
       if (cachedProjection != null) return cachedProjection;
-      if (this.arrayTypeExpression == null && !this.IsOfStructuredType) return (cachedProjection = CodeDummy.Expression);
+      if (this.Type == Dummy.Type) return (cachedProjection = CodeDummy.Expression);
+
       
       // create the value in a local and initialize its fields field-by-field
       List<Statement> statements = new List<Statement>();
@@ -2378,6 +2381,10 @@ namespace Microsoft.Research.Vcc {
           } else if (this.arrayTypeExpression != null) {
             this.type = PointerType.GetPointerType(this.arrayTypeExpression.ElementType.ResolvedType, this.Compilation.HostEnvironment.InternFactory);
             this.PropagateArrayTypeToSubExpressions(this.arrayTypeExpression.ElementType);
+          } else if (this.typeDefaultsToObjset) {
+            Expression objsetRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.Compilation.NameTable, "Objset");
+            objsetRef.SetContainingExpression(this);
+            this.type = new VccNamedTypeExpression(objsetRef).Resolve(0);
           } else this.type = Dummy.Type;
         }
         return this.type;
@@ -2386,6 +2393,7 @@ namespace Microsoft.Research.Vcc {
 
     //^ [Once]
     private ITypeDefinition/*?*/ type;
+    private readonly bool typeDefaultsToObjset;
     internal VccArrayTypeExpression/*?*/ arrayTypeExpression;
     internal TypeExpression/*?*/ structureTypeExpression;
   }
@@ -2396,8 +2404,8 @@ namespace Microsoft.Research.Vcc {
   public class VccInitializer : VccInitializerBase
   {
 
-    public VccInitializer(List<Expression> expressions, ISourceLocation sourceLocation)
-      : base(sourceLocation) {
+    public VccInitializer(List<Expression> expressions, bool typeDefaultsToObjset, ISourceLocation sourceLocation)
+      : base(typeDefaultsToObjset, sourceLocation) {
       this.expressions = expressions;
     }
 
@@ -2453,7 +2461,7 @@ namespace Microsoft.Research.Vcc {
               exprs.Add(new CompileTimeConstant(0, this.SourceLocation));
             }
           }
-          initialValueForOneElement = new VccInitializer(exprs, this.SourceLocation);
+          initialValueForOneElement = new VccInitializer(exprs, false, this.SourceLocation);
         }
         //^ assert initialValueForOneElement != null;
         AddInitializationTo(statements, initialValueForOneElement, element, elemTypeExp, this.ContainingBlock);
@@ -2562,7 +2570,7 @@ namespace Microsoft.Research.Vcc {
       if (size <= 0) size = count;
       char[] charArr = initialValue.ToCharArray();
       List<Expression> exprs = new List<Expression>();
-      VccInitializer result = new VccInitializer(exprs, SourceDummy.SourceLocation);
+      VccInitializer result = new VccInitializer(exprs, false, SourceDummy.SourceLocation);
       for (uint i = 0; i < size; i++) {
         if (i < count) {
           sbyte val = (sbyte)charArr[i];

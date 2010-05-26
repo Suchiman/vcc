@@ -1274,7 +1274,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
       }
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      VccInitializer result = new VccInitializer(expressions, slb);
+      VccInitializer result = new VccInitializer(expressions, this.InSpecCode, slb);
       this.SkipOverTo(Token.RightBrace, followers);
       return result;
     }
@@ -1632,8 +1632,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             result.Add(ScopedTypeNameSpecifier.CreateForExpression(this.ParseSimpleOrScopedName(followers | TS.SpecifierThatCombinesWithTypedefName)));
             break;
           case Token.Specification:
-            this.ParseSpecTypeModifiers(result, followers);
-            break;
+            if (!this.ParseSpecTypeModifiers(result, followers))
+              goto default;
+            else 
+              break;
           default:
             this.SkipTo(followers);
             return result;
@@ -1641,8 +1643,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected virtual void ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {
-      this.SkipTo(TS.DeclarationStart);
+    protected virtual bool  ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {
+      return false;
     }
 
 
@@ -2770,7 +2772,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           return this.ParseSizeof(followers);
 
         case Token.LeftBrace:
-          if (allowInitializer) return this.ParseInitializer(followers);
+          if (allowInitializer || this.InSpecCode) return this.ParseInitializer(followers);
           else goto default;
 
         default:
