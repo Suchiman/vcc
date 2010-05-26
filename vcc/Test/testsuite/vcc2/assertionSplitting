@@ -130,3 +130,47 @@ testcase(86,110) : error VC9500: Assertion 'S[n] && n->prev != 0 ==> n->prev->d 
 testcase(86,24) : error VC9500: Assertion 'S[n] && n->next != 0 ==> S[n->next] in __forall(struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
 testcase(86,24) : error VC9500: Assertion 'S[n] && n->next != 0 ==> n->next->d < n->d in __forall(struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
 `
+#include <vcc.h>
+
+spec(
+vcc(specmacro) 
+bool And(bool a, bool b) ensures(a && b);
+)
+
+void foo2()
+{
+  int a, b, c;
+  assert(And(a > b, b > c && b > 0));
+}
+
+spec(
+vcc(specmacro) 
+bool And2(bool a, bool b) returns(a && b) ensures(a);
+)
+
+void foo3()
+{
+  int a, b, c;
+  assert(And2(a > b, b > c && b > 0));
+}
+
+
+spec(
+vcc(specmacro) 
+bool And3(bool a, bool b) returns(result == result && b);
+)
+
+void foo4()
+{
+  int a, b, c;
+  assert(And3(a > b, b > c && b > 0));
+}
+
+`
+testcase(4,1) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
+testcase(11,12)-(11,38) : (Location of symbol related to previous error.)
+testcase(15,1) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
+testcase(22,12)-(22,39) : (Location of symbol related to previous error.)
+testcase(27,1) : error VC9714: 'result' cannot be used recursively in a spec macro definition
+testcase(34,12)-(34,39) : (Location of symbol related to previous error.)
+`
