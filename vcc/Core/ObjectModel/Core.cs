@@ -349,6 +349,7 @@ namespace Microsoft.Research.Vcc {
     static readonly string SystemDiagnosticsContractsCodeContractTypedPtrString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".TypedPtr";
     public static readonly string SystemDiagnosticsContractsCodeContractMapString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Map";
     static readonly string SystemDiagnosticsContractsCodeContractBigIntString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigInt";
+    public static readonly string SystemDiagnosticsContractsCodeContractObjsetString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Objset";
 
     internal ITypeDefinition/*?*/ GetFixedArrayElementType(ITypeDefinition fixedSizeArray) {
       if (fixedSizeArray.IsStruct && fixedSizeArray.SizeOf > 0) {

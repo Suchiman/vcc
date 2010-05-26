@@ -2308,11 +2308,10 @@ namespace Microsoft.Research.Vcc {
     protected override IExpression ProjectAsNonConstantIExpression() {
       if (cachedProjection != null) return cachedProjection;
       if (this.Type == Dummy.Type) return (cachedProjection = CodeDummy.Expression);
-      if (this.structureTypeExpression == null && this.arrayTypeExpression == null) {
+      if (TypeHelper.GetTypeName(this.Type) == VccCompilationHelper.SystemDiagnosticsContractsCodeContractObjsetString) {
         this.cachedProjection = this.ProjectAsFiniteSet();
         return this.cachedProjection;
       }
-
       
       // create the value in a local and initialize its fields field-by-field
       List<Statement> statements = new List<Statement>();
