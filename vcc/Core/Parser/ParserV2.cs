@@ -76,10 +76,11 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
 
-    protected override void ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {
+    protected override bool ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {
       bool savedInSpecCode = this.SkipIntoSpecBlock();
       this.ParseSpecTypeModifierList(specifiers, followers);
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
+      return true;
     }
 
     private void ParseSpecTypeModifier(List<Specifier> specifiers, TokenSet followers) {
