@@ -82,26 +82,25 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
     }
 
-    private void ParseSpecTypeModifierList(List<Specifier> specifiers, TokenSet followers) {
-      TokenSet commaOrRightParenthesisOrSpecToken =  new TokenSet() | Token.Comma | Token.RightParenthesis | STS.SpecTypeModifiers;
-      while (true) {
-        if (this.currentToken == Token.RightParenthesis)
+    private void ParseSpecTypeModifier(List<Specifier> specifiers, TokenSet followers) {
+      switch (this.currentToken) {
+        case Token.SpecDynamicOwns:
+        case Token.SpecClaimable:
+        case Token.SpecVolatileOwns:
+          specifiers.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
+          this.GetNextToken();
           break;
-        if (this.currentToken == Token.Comma) {
-          this.GetNextToken(true);
-          continue;
-        }
-        switch (this.currentToken) {
-          case Token.SpecDynamicOwns:
-          case Token.SpecClaimable:
-          case Token.SpecVolatileOwns:
-            specifiers.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
-            this.GetNextToken();
-            continue;
-          default:
-            this.SkipTo(commaOrRightParenthesisOrSpecToken);
-            break;
-        }
+        default:
+          break;
+      }
+      this.SkipTo(followers);
+    }
+
+    private void ParseSpecTypeModifierList(List<Specifier> specifiers, TokenSet followers) {
+      while (this.currentToken != Token.RightParenthesis) {
+        this.ParseSpecTypeModifier(specifiers, followers | Token.Comma | Token.RightParenthesis);
+        if (this.currentToken != Token.Comma) break;
+        this.GetNextToken();
       }
     }
 
@@ -240,19 +239,20 @@ namespace Microsoft.Research.Vcc.Parsing
       List<Parameter> result = new List<Parameter>();
       this.Skip(Token.LeftParenthesis);
       if (this.currentToken != Token.RightParenthesis) {
-        TokenSet followersOrCommaOrRightParentesisOrSpecification = followers | Token.Comma | Token.RightParenthesis | Token.Specification;
-        while (true) {
+        TokenSet followersOrCommaOrRightParenthesisOrSpecification = followers | Token.Comma | Token.RightParenthesis | Token.Specification;
+        while (this.currentToken != Token.RightParenthesis) {
           if (this.currentToken == Token.Specification) {
             result.Add(this.ParseSpecParameter(followers | Token.RightParenthesis));
             continue;
           }
-          if (this.currentToken == Token.RightParenthesis)
-            break;
-          result.Add(this.ParseParameter(followersOrCommaOrRightParentesisOrSpecification));
+          result.Add(this.ParseParameter(followersOrCommaOrRightParenthesisOrSpecification));
           if (this.currentToken == Token.Comma) {
             this.GetNextToken();
             continue;
           }
+          if (this.currentToken == Token.Specification)
+            continue;
+          break;
         }
       }
       return result;
@@ -298,18 +298,14 @@ namespace Microsoft.Research.Vcc.Parsing
       List<Expression> result = new List<Expression>();
       this.Skip(Token.LeftParenthesis);
       if (this.currentToken != Token.RightParenthesis) {
-        while (true) {
+        while (this.currentToken != Token.RightParenthesis) {
           if (this.currentToken == Token.Specification) {
             result.Add(this.ParseSpecArgument(followers | Token.RightParenthesis));
             continue;
           }
-          if (this.currentToken == Token.RightParenthesis)
-            break;
           result.Add(this.ParseArgumentExpression(followers | Token.RightParenthesis));
-          if (this.currentToken == Token.Comma) {
-            this.GetNextToken();
-            continue;
-          }
+          if (this.currentToken != Token.Comma) break;
+          this.GetNextToken();
         }
       }
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
