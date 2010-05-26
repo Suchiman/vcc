@@ -114,8 +114,8 @@ namespace Microsoft.Research.Vcc
       
     // ============================================================================================================
     
-    let handleLemmas self = 
-      let makeQuantifiedVarsUnique self = function
+    let makeQuantifiedVarsUnique (expr:Expr) =
+      let aux self = function
         | Quant(ec, qd) ->
           let subst = new Dict<_,_>()
           let doSubst (v:Variable) =
@@ -137,12 +137,69 @@ namespace Microsoft.Research.Vcc
                               Body = replace qd.Body }
           Some(Quant(ec, qd'))
         | _ -> None
-          
+      expr.SelfMap aux
+
+    let handleLemmas self = 
       function 
         | Assert (c, e, trigs) -> 
           let e = self e 
-          Some (Expr.MkBlock [Assert (c, e, trigs); Assume (c, e.SelfMap(makeQuantifiedVarsUnique))])
+          Some (Expr.MkBlock [Assert (c, e, trigs); Assume (c, makeQuantifiedVarsUnique e)])
         | Macro (_, "loop_contract", _) as expr -> Some expr
+        | _ -> None      
+         
+    // ============================================================================================================
+    
+    let inlineSpecMacros decls =
+      let isSpecMacro (fn:Function) = hasCustomAttr AttrSpecMacro fn.CustomAttr
+      let doInline self =
+        function 
+          | Call (ec, fn, _, args) when isSpecMacro fn ->
+            match fn.Ensures with
+              | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))] ->
+                if e.HasSubexpr (function Result _ -> true | _ -> false) then
+                  helper.Error (fn.Token, 0, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
+                  None
+                else
+                  let subst = gdict()
+                  List.iter2 (fun f a -> subst.Add (f, a)) fn.Parameters args 
+                  let e' = e.Subst subst |> makeQuantifiedVarsUnique
+                  Some (e'.WithCommon { e'.Common with Token = ec.Token })
+              | _ ->
+                helper.Error (fn.Token, 0, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
+                None
+          | _ -> None
+      deepMapExpressions doInline decls |>
+        List.filter (function Top.FunctionDecl f when isSpecMacro f -> false | _ -> true)    
+
+    // ============================================================================================================
+
+    let deepSplitConjunctions self = 
+      let aux self = function
+        | Quant (ec, q) ->
+          let q = { q with Body = self q.Body }
+          let mkQ (e:Expr) = 
+            let t = forwardingToken ec.Token None (fun () -> e.Token.Value + " in " + ec.Token.Value)
+            let vars = gdict()
+            for v in q.Variables do
+              vars.Add (v.UniqueId, true)
+            let aux _ = function
+              | Expr.Ref (_, v) ->
+                vars.Remove v.UniqueId |> ignore
+                true
+              | _ -> true
+            e.SelfVisit aux
+            q.Triggers |> List.iter (fun l -> l |> List.iter (fun e -> e.SelfVisit aux))
+            let newVars = q.Variables |> List.filter (fun v -> not (vars.ContainsKey v.UniqueId))
+            makeQuantifiedVarsUnique (Quant ({ ec with Token = t.Token }, { q with Body = e ; Variables = newVars }))
+          match splitConjunctionEx true q.Body with
+            | [] -> die()
+            | [_] -> Some (Quant (ec, q))
+            | x :: xs -> 
+              Some (List.fold mkAnd (mkQ x) (List.map mkQ xs))
+        | _ -> None
+      function 
+        | CallMacro (_, "_vcc_split_conjunctions", [], [e]) ->
+          Some (e.SelfMap aux)
         | _ -> None      
          
     // ============================================================================================================
@@ -829,13 +886,15 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-generic-errors", Helper.Decl reportGenericsErrors) 
     helper.AddTransformer ("norm-containing-struct", Helper.Expr normalizeContainingStruct)
     helper.AddTransformer ("add-assume-to-assert", Helper.Expr handleLemmas)    
-    helper.AddTransformer ("split-assertions", Helper.Expr splitConjunctionsInAssertions)
     helper.AddTransformer ("fixup-old", Helper.ExprCtx fixupOld)    
     helper.AddTransformer ("fixup-claims", Helper.Expr handleClaims)    
     helper.AddTransformer ("add-explicit-return", Helper.Decl addExplicitReturn)
     helper.AddTransformer ("norm-atomic-ops", Helper.Expr normalizeAtomicOperations)
     helper.AddTransformer ("norm-skinny-expose", Helper.Expr normalizeSkinnyExpose)
     helper.AddTransformer ("norm-misc", Helper.Decl miscNorm)
+    helper.AddTransformer ("inline-spec-macros", Helper.Decl inlineSpecMacros)
+    helper.AddTransformer ("deep-split-conjunctions", Helper.Expr deepSplitConjunctions)
+    helper.AddTransformer ("split-assertions", Helper.Expr splitConjunctionsInAssertions)
     helper.AddTransformer ("norm-writes", Helper.Decl normalizeWrites)
     helper.AddTransformer ("norm-atomic-inline", Helper.Decl inlineAtomics)
     helper.AddTransformer ("norm-reintp", Helper.Expr normalizeReinterpretation)

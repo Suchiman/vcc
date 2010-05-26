@@ -45,6 +45,9 @@ module Microsoft.Research.Vcc.CAST
   [<Literal>]
   let AttrNoReadsCheck = "no_reads_check"
 
+  [<Literal>]
+  let AttrSpecMacro = "spec_macro"
+
   type VarKind =    
     | Parameter
     | SpecParameter
@@ -526,7 +529,7 @@ module Microsoft.Research.Vcc.CAST
       //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
       //  true // HACK
       else
-        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|"specmacro"), "") -> true | _ -> false) this.CustomAttr 
+        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro), "") -> true | _ -> false) this.CustomAttr 
       
     member this.IsStateless =
       this.IsPure && this.Reads = []
@@ -741,6 +744,40 @@ module Microsoft.Research.Vcc.CAST
         | UserData(e, _)
         | SizeOf(e, _)
           -> e
+
+    member x.WithCommon ec =
+      match x with
+        | Ref (_, r) -> Ref (ec, r)
+        | Prim (_, a, b) -> Prim (ec, a, b)
+        | Expr.Call (_, a, b, c) -> Expr.Call (ec, a, b, c)
+        | IntLiteral (_, a) -> IntLiteral (ec, a)
+        | BoolLiteral (_, a)  -> BoolLiteral (ec, a) 
+        | Deref (_, a) -> Deref (ec, a)
+        | Dot (_, a, b) -> Dot (ec, a, b)
+        | Index (_, a, b) -> Index (ec, a, b)
+        | Cast (_, a, b) -> Cast (ec, a, b)
+        | Quant (_, a) -> Quant (ec, a)
+        | Result (_) -> Result (ec)
+        | This (_) -> This (ec)
+        | Old (_, a, b) -> Old (ec, a, b)        
+        | Macro (_, a, b) -> Macro (ec, a, b)
+        | VarWrite (_, a, b) -> VarWrite (ec, a, b)
+        | MemoryWrite (_, a, b) -> MemoryWrite (ec, a, b)
+        | If (_, a, b, c, d) -> If (ec, a, b, c, d)
+        | Loop (_, a, b, c, d) -> Loop (ec, a, b, c, d)
+        | Goto (_, a) -> Goto (ec, a)
+        | Label (_, a) -> Label (ec, a)
+        | Assert (_, a, b) -> Assert (ec, a, b)
+        | Assume (_, a) -> Assume (ec, a)
+        | Block (_, a, b) -> Block (ec, a, b)
+        | Return (_, a) -> Return (ec, a)
+        | Atomic (_, a, b) -> Atomic (ec, a, b)
+        | Comment (_, a) -> Comment (ec, a)
+        | VarDecl (_, a) -> VarDecl (ec, a)
+        | Stmt (_, a) -> Stmt (ec, a)
+        | Pure (_, a) -> Pure (ec, a)
+        | UserData(_, a) -> UserData(ec, a)
+        | SizeOf(_, a) -> SizeOf (ec, a)
 
     member this.Visit (ispure : bool, f: ExprCtx -> Expr -> bool) : unit =
       let rec visit ctx e =

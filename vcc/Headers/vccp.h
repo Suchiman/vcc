@@ -385,7 +385,6 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
 #define frameaxiom vcc_attr("frameaxiom", "")
 #define isadmissibilitycheck vcc_attr("is_admissibilitycheck", "")
 #define ispure vcc_attr("is_pure", "")
-#define specmacro vcc_attr("specmacro", "")
 #define no_reads_check vcc_attr("no_reads_check", "")
 #define postconditionsanity vcc_attr("postcondition_sanity", "")
 #define reads_check(f) vcc_attr("is_reads_check", #f)
@@ -425,6 +424,7 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
 #define _vcc_attr_record vcc_attr("record", "")
 #define _vcc_attr_verified vcc_attr("status", "verified")
 #define _vcc_attr_specified vcc_attr("status", "specified")
+#define _vcc_attr_specmacro vcc_attr("spec_macro", "")
 
 
 /* Groups */
@@ -495,6 +495,9 @@ state_t _vcc_current_state();
 
 state_t _vcc_when_claimed();
 #define when_claimed(e) _vcc_in_state(_vcc_when_claimed(), e)
+
+bool _vcc_split_conjunctions(bool expr);
+#define split_conjunctions _vcc_split_conjunctions
 
 /*** 
  *** Triggering hacks
