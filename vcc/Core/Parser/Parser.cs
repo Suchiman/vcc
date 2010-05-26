@@ -1493,13 +1493,11 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     protected void ParseList<T>(List<T> result, Func<TokenSet, T> parseElement, TokenSet followers) {
       TokenSet followersOrCommaOrRightParentesisOrSpecification = followers | Token.Comma | Token.RightParenthesis | Token.Specification;
-      while (true) {
+      while (this.currentToken != Token.RightParenthesis) {
         if (this.currentToken == Token.Specification) {
           this.ParseSpecList(result, parseElement, followersOrCommaOrRightParentesisOrSpecification);
           continue;
         }
-        if (this.currentToken == Token.RightParenthesis)
-          break;
         result.Add(parseElement(followersOrCommaOrRightParentesisOrSpecification));
         if (this.currentToken == Token.Comma) {
           this.GetNextToken();
