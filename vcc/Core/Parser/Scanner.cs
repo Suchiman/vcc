@@ -2141,6 +2141,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SpecUnwrapping,
     /// <summary>
+    /// volatile_owns, context-dependent
+    /// </summary>
+    SpecVolatileOwns,
+    /// <summary>
     /// wrap, context-dependent
     /// </summary>
     SpecWrap,
@@ -2332,6 +2336,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.SpecUnwrapping, "unwrapping");
       keyword = new Keyword(Token.SpecUnwrap, "unwrap", keyword);
       keywords['u' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecVolatileOwns, "volatile_owns");
+      keywords['v' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecWrites, "writes");
       keyword = new Keyword(Token.SpecWrap, "wrap", keyword);

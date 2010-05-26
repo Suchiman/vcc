@@ -75,9 +75,15 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
     }
 
-    private void ParseGlobalDeclarationWithSpecModifiers(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers, bool savedInSpecCode) {
-      List<Specifier> specifiers = new List<Specifier>();
-      TokenSet followersOrCommaOrRightParenthesisOrSpecToken = followers | Token.Comma | Token.RightParenthesis | STS.SpecTypeModifiers;
+
+    protected override void ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {
+      bool savedInSpecCode = this.SkipIntoSpecBlock();
+      this.ParseSpecTypeModifierList(specifiers, followers);
+      this.SkipOutOfSpecBlock(savedInSpecCode, followers);
+    }
+
+    private void ParseSpecTypeModifierList(List<Specifier> specifiers, TokenSet followers) {
+      TokenSet commaOrRightParenthesisOrSpecToken =  new TokenSet() | Token.Comma | Token.RightParenthesis | STS.SpecTypeModifiers;
       while (true) {
         if (this.currentToken == Token.RightParenthesis)
           break;
@@ -88,18 +94,21 @@ namespace Microsoft.Research.Vcc.Parsing
         switch (this.currentToken) {
           case Token.SpecDynamicOwns:
           case Token.SpecClaimable:
+          case Token.SpecVolatileOwns:
             specifiers.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
             this.GetNextToken();
-            this.SkipTo(followersOrCommaOrRightParenthesisOrSpecToken);
             continue;
           default:
-            this.SkipTo(followersOrCommaOrRightParenthesisOrSpecToken);
+            this.SkipTo(commaOrRightParenthesisOrSpecToken);
             break;
         }
       }
+    }
 
-      this.SkipOverTo(Token.RightParenthesis, followers);
-      this.LeaveSpecBlock(savedInSpecCode);
+    private void ParseGlobalDeclarationWithSpecModifiers(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers, bool savedInSpecCode) {
+      List<Specifier> specifiers = new List<Specifier>();
+      this.ParseSpecTypeModifierList(specifiers, followers);
+      this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       this.ParseNonLocalDeclaration(members, globalMembers, followers, true, specifiers);
     }
 
