@@ -147,6 +147,16 @@ namespace Microsoft.Research.Vcc
          
     // ============================================================================================================
     
+    let splitConjunctionsInAssertions self = 
+      function 
+        | Assert (c, e, trigs) -> 
+          let exprs = splitConjunctionEx true (self e)
+          if exprs.IsEmpty then die()          
+          Some (Expr.MkBlock (exprs |> List.map (fun e -> Assert ({ e.Common with Type = Type.Void }, e, trigs))))
+        | _ -> None      
+         
+    // ============================================================================================================
+    
     let handleClaims self = function
       | Call (c, ({ Name = ("_vcc_claim"|"_vcc_upgrade_claim" as name) } as fn), _, args) ->
         match List.rev args with
@@ -815,6 +825,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-generic-errors", Helper.Decl reportGenericsErrors) 
     helper.AddTransformer ("norm-containing-struct", Helper.Expr normalizeContainingStruct)
     helper.AddTransformer ("add-assume-to-assert", Helper.Expr handleLemmas)    
+    helper.AddTransformer ("split-assertions", Helper.Expr splitConjunctionsInAssertions)
     helper.AddTransformer ("fixup-old", Helper.ExprCtx fixupOld)    
     helper.AddTransformer ("fixup-claims", Helper.Expr handleClaims)    
     helper.AddTransformer ("add-explicit-return", Helper.Decl addExplicitReturn)
