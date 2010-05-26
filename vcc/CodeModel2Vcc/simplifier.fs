@@ -885,6 +885,7 @@ namespace Microsoft.Research.Vcc
         let break_lbl = { Name = "#break_" + unique } : LabelId
         let continue_lbl = { Name = "#continue_" + unique } : LabelId
         let rec aux invs writes variants = function
+          | Block (_, exprs, _) :: rest -> aux invs writes variants (exprs @ rest)
           | Assert (_, Expr.Macro (_, "loop_writes", [e]), _) :: rest -> aux invs (e :: writes) variants rest
           | Assert (_, e, _) :: rest -> aux (e :: invs) writes variants rest
           | [] -> (List.rev invs, List.rev writes, List.rev variants)

@@ -43,8 +43,11 @@ namespace Microsoft.Research.Vcc
               match w.[1] with
                 | "before" -> 0
                 | "after" -> 1
+                | "around" -> 2
                 | _ -> pipeErr "dump expects 'before' or 'after'"
-            helper.AddTransformerAt ("dump", Helper.Decl (TransUtil.dumpDecls !showTypes), w.[2], off)
+            let add off = helper.AddTransformerAt ("dump", Helper.Decl (TransUtil.dumpDecls !showTypes), w.[2], off)
+            if off = 2 then add 0; add 1
+            else add off
           | "active" ->
             if w.Length <> 1 then pipeErr "active expects no parameters"
             helper.DumpTransformers()
