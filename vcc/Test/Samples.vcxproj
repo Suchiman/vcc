@@ -114,7 +114,9 @@
     <ClCompile Include="testsuite\examples\ClaimPassing.c">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="testsuite\examples\Handles.c" />
+    <ClCompile Include="testsuite\examples\Handles.c">
+      <DeploymentContent>true</DeploymentContent>
+    </ClCompile>
     <ClCompile Include="testsuite\examples\Iterator.c">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -133,7 +135,9 @@
     <ClCompile Include="testsuite\examples\PageSet.c">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
-    <ClCompile Include="testsuite\examples\Reserve.c" />
+    <ClCompile Include="testsuite\examples\Reserve.c">
+      <DeploymentContent>true</DeploymentContent>
+    </ClCompile>
     <ClCompile Include="testsuite\examples\Rundown.c">
       <DeploymentContent>true</DeploymentContent>
     </ClCompile>
@@ -155,6 +159,9 @@
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="testsuite\vcc2\arraysNeg">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="testsuite\vcc2\assertionSplitting">
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="testsuite\vcc2\atomicInline">
@@ -217,7 +224,9 @@
     <None Include="testsuite\vcc2\infer">
       <DeploymentContent>true</DeploymentContent>
     </None>
-    <None Include="testsuite\vcc2\informationFlow" />
+    <None Include="testsuite\vcc2\informationFlow">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="testsuite\vcc2\ints">
       <DeploymentContent>true</DeploymentContent>
     </None>
@@ -299,7 +308,9 @@
     <None Include="testsuite\vcc2\structQuantifier">
       <DeploymentContent>true</DeploymentContent>
     </None>
-    <None Include="testsuite\vcc2\termination" />
+    <None Include="testsuite\vcc2\termination" >
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="testsuite\vcc2\thread_id">
       <DeploymentContent>true</DeploymentContent>
     </None>
