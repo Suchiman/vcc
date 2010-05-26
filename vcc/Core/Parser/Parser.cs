@@ -1633,11 +1633,18 @@ namespace Microsoft.Research.Vcc.Parsing {
             typeDefNameIsAllowed = false;
             result.Add(ScopedTypeNameSpecifier.CreateForExpression(this.ParseSimpleOrScopedName(followers | TS.SpecifierThatCombinesWithTypedefName)));
             break;
+          case Token.Specification:
+            this.ParseSpecTypeModifiers(result, followers);
+            break;
           default:
             this.SkipTo(followers);
             return result;
         }
       }
+    }
+
+    protected virtual void ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {
+      this.SkipTo(TS.DeclarationStart);
     }
 
 

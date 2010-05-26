@@ -196,6 +196,10 @@
 				RelativePath=".\SpinLock.c"
 				>
 			</File>
+			<File
+				RelativePath=".\ssort.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

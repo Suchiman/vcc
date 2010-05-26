@@ -271,6 +271,9 @@ namespace Microsoft.Research.Vcc {
               case Token.SpecDynamicOwns:
                 args.Add(new CompileTimeConstant("dynamic_owns", specTokenSpec.SourceLocation));
                 break;
+              case Token.SpecVolatileOwns:
+                args.Add(new CompileTimeConstant("volatile_owns", specTokenSpec.SourceLocation));
+                break;
               case Token.SpecPure:
                 args.Add(new CompileTimeConstant("is_pure", specTokenSpec.SourceLocation));
                 break;
