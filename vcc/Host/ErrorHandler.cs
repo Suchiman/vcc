@@ -257,7 +257,7 @@ namespace Microsoft.Research.Vcc
       if (ErrorHasBeenReported(tok, code)) return false;
       string msg = string.Format("{0}({1},{2}) : error {3}: {4}.",
                                  commandLineOptions.RunTestSuite ? "testcase" : tok.filename, tok.line, tok.col,
-                                 ErrorCodeToString(code), string.Format(fmt, args));
+                                 ErrorCodeToString(code), Format(fmt, args));
       if (commandLineOptions.RunTestSuite)
         errors.Add(msg);
       else
@@ -268,11 +268,17 @@ namespace Microsoft.Research.Vcc
       return true;
     }
 
+    private static string Format(string fmt, string[] args)
+    {
+      if (args.Length == 0) return fmt;
+      else return string.Format(fmt, args);
+    }
+
     private void ReportRelated(IToken tok, string fmt, params string[] args) {
       string msg = string.Format("{0}({1},{2}) : error {3}: (related information) {4}.",
                                  commandLineOptions.RunTestSuite ? "testcase" : tok.filename, tok.line, tok.col,
                                  ErrorCodeToString(ErrorCode.RelatedInformation),
-                                 string.Format(fmt, args));
+                                 Format(fmt, args));
       if (commandLineOptions.RunTestSuite)
         errors[errors.Count - 1] = errors[errors.Count - 1] + "\r\n" + msg;
       else
