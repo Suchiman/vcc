@@ -453,8 +453,8 @@ namespace Microsoft.Research.Vcc
     VccOptions commandLineOptions;
     List<string> proverWarnings;
     VerificationErrorHandler errorHandler;
-    HashSet<IdentifierExpr> unreachableMasters = new HashSet<IdentifierExpr>();
-    HashSet<IdentifierExpr> unreachableChildren;
+    Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr> unreachableMasters = new Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr>(new List<IdentifierExpr>());
+    Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr> unreachableChildren;
 
     public ErrorReporter(VccOptions opts, string name, double startTime, VerificationErrorHandler errorHandler)
     {
@@ -568,7 +568,7 @@ namespace Microsoft.Research.Vcc
 
     public override void OnUnreachableCode(Implementation impl)
     {
-      this.unreachableChildren = new HashSet<IdentifierExpr>();
+      this.unreachableChildren = new Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr>(new List<IdentifierExpr>());
       for (int i = impl.Blocks.Count - 1; i >= 0; i--) {
         Block b = impl.Blocks[i];
         if (HasAssertFalse(b)) {
@@ -579,9 +579,9 @@ namespace Microsoft.Research.Vcc
                     if (nary != null) {
                         FunctionCall f = nary.Fun as FunctionCall;
                         if (f != null && f.Func.Name == "$expect_unreachable_master")
-                            this.unreachableMasters.Add(f.Func.InParams.Last() as IdentifierExpr);
+                            this.unreachableMasters = this.unreachableMasters.Add(f.Func.InParams.Last() as IdentifierExpr);
                         else if (f != null && f.Func.Name == "$expect_unreachable_child")
-                            this.unreachableChildren.Add(f.Func.InParams.Last() as IdentifierExpr);
+                            this.unreachableChildren = this.unreachableChildren.Add(f.Func.InParams.Last() as IdentifierExpr);
                     }
                 }
             }

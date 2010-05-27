@@ -1227,7 +1227,9 @@ namespace Microsoft.Research.Vcc
                                          assumeSync env stmt.Token]
                   | _ -> [B.Stmt.Assign (B.Expr.Ref ("SecLabel#"+(trExpr env v).ToString()), IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e))
                           B.Stmt.Assign (B.Expr.Ref ("SecMeta#"+(trExpr env v).ToString()), B.Expr.BoolLiteral true)]
-              [cmt(); B.Stmt.Assert (stmt.Token, B.Expr.Primitive("==", [trExpr env v; trExpr env e])); B.Stmt.Assert (stmt.Token, B.Expr.FunctionCall ("$get.secpc", [B.Expr.FunctionCall ("$memory", [bState])]))] @ setLabels
+              let tokNotEqual = afmte 0 "cannot verify that {0} = {1} in call to '{2}'." [v; e; stmt]
+              let tokHighCtxt = afmte 0 "cannot perform call '{0}' in a high context." [stmt]
+              [cmt(); B.Stmt.Assert (tokNotEqual, B.Expr.Primitive("==", [trExpr env v; trExpr env e])); B.Stmt.Assert (tokHighCtxt, B.Expr.FunctionCall ("$get.secpc", [B.Expr.FunctionCall ("$memory", [bState])]))] @ setLabels
             | C.Expr.MemoryWrite (_, e1, e2) when (not env.hasIF) ->
               let e2' =
                 match e1.Type with
@@ -1295,9 +1297,16 @@ namespace Microsoft.Research.Vcc
               let thenBranch = cev.BranchChoice c.Token (er "took_then_branch")
               let elseBranch = cev.BranchChoice c.Token (er "took_else_branch")
               if (env.hasIF)              
-                then let testClassifier = match cl with
+                then let explicitClass = ref false
+                     let testClassifier = match cl with
                                            | None -> B.Expr.BoolLiteral false
-                                           | Some cl -> trExpr env cl // We should generate a warning when expanding a user provided test classifier, to ease debugging
+                                           | Some cl -> explicitClass := true; trExpr env cl
+                     let tokLowCond = match cl with
+                                        | None -> afmte 0 "test expression '{0}' is low when the default test classifier is false." [c]
+                                        | Some cl' -> afmte 0 "test expression '{0}' is low when test classifier '{1}' is false." [c; cl']
+                     let tokLowClassif = match cl with
+                                           | None -> afmte 0 "default test classifier is low in {0}." [c]
+                                           | Some cl' -> afmte 0 "test classifier '{0}' is low." [cl']
                      let permissiveUpgradeClassifier = IF.makePermissiveUpgrade  (fun v -> fst(trVar v)) c testClassifier
                      let checkLevel = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel c)
                      let blockNum = !(env.IFBlockNum)
@@ -1306,7 +1315,7 @@ namespace Microsoft.Research.Vcc
                      let low = prefix @
                                [B.Stmt.Comment ("if (" + c.ToString() + ") ...")
                                 B.Stmt.If (trExpr env c, B.Stmt.Block (thenBranch @ childMark :: trStmt env s1), B.Stmt.Block (elseBranch @ childMark :: trStmt env s2))]
-                     let lowBranch = B.Stmt.Assert (ec.Token, checkLevel) ::
+                     let lowBranch = B.Stmt.Assert (tokLowCond, checkLevel) ::
                                      B.Stmt.Goto (ec.Token, ["low#1#"+(blockNum.ToString());"low#2#"+(blockNum.ToString())]) ::
                                      B.Stmt.Label (ec.Token, "low#1#"+(blockNum.ToString())) ::
                                      B.Stmt.Assume (B.Expr.FunctionCall ("$expect_unreachable_master", [B.Expr.IntLiteral (new bigint(blockNum))])) ::
@@ -1334,8 +1343,10 @@ namespace Microsoft.Research.Vcc
                      let adaptiveBranching = // Eliminates some dead code
                        match testClassifier with
                          | B.Expr.BoolLiteral true -> B.Stmt.Block highBranch
+                         | B.Expr.BoolLiteral false when !explicitClass -> B.Stmt.Block lowBranch
+                         | _ when !explicitClass -> B.Stmt.If (testClassifier, B.Stmt.Block highBranch, B.Stmt.Block lowBranch)
                          | _ -> B.Stmt.If (permissiveUpgradeClassifier, B.Stmt.Block highBranch, B.Stmt.Block lowBranch)
-                     [B.Stmt.Assert (ec.Token, IF.makeHazardousCheck testClassifier); adaptiveBranching]
+                     [B.Stmt.Assert (tokLowClassif, IF.makeHazardousCheck testClassifier); adaptiveBranching]
                 else prefix @
                      [B.Stmt.Comment ("if (" + c.ToString() + ") ...")
                       B.Stmt.If (trExpr env c, B.Stmt.Block (thenBranch @ trStmt env s1), B.Stmt.Block (elseBranch @ trStmt env s2))]
