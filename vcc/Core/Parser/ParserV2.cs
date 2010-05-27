@@ -76,6 +76,13 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
 
+    protected override void SkipSemiColonAfterDeclarationOrStatement(TokenSet followers) {
+      if (this.InSpecCode && this.currentToken == Token.RightParenthesis) {
+        // do nothing
+      } else this.SkipSemiColon(followers);
+
+    }
+
     protected override bool ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {
       bool savedInSpecCode = this.SkipIntoSpecBlock();
       this.ParseSpecTypeModifierList(specifiers, followers);
