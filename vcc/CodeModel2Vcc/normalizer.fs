@@ -804,6 +804,7 @@ namespace Microsoft.Research.Vcc
                                     "\\owner",              "_vcc_owner";
                                     "\\domain",             "_vcc_domain";
                                     "\\valid",              "_vcc_typed2";
+                                    "\\ghost",              "_vcc_is_ghost_ptr";
                                     "\\wrap",               "_vcc_wrap";
                                     "\\wrapped",            "_vcc_wrapped";
                                     "\\extent",             "_vcc_extent";

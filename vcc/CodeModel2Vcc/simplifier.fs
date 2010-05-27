@@ -171,6 +171,7 @@ namespace Microsoft.Research.Vcc
                   "new_ownees", "S..";
                   "rec_eq", "..";
                   "account_claim", "Spp";
+                  "is_ghost_ptr", "p";
                 ]
     dict
 
