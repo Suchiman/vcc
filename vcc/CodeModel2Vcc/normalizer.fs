@@ -761,15 +761,15 @@ namespace Microsoft.Research.Vcc
           | Cast(_, _, Macro(_, "&", [Macro(_, "string", [lbl])])) -> lbl
           | _ -> die()
         Some(Macro(ec, "_vcc_use", [normalizeLabel lbl; self e]))
-      | Call(ec, ({Name = "_vcc_in_domain"|"_vcc_in_vdomain"} as fn), targs, [e1; e2]) ->
+      | CallMacro(ec, ("_vcc_in_domain"|"_vcc_in_vdomain" as fn), [], [e1; e2]) ->
         let e2' = self e2
         match self e1 with
           | Macro(uc, "_vcc_use", [UserData(_, (:? string as lbl)); e1']) ->
             let lbls = [for s in lbl.Split('|') -> s]
-            let mkInDomain l = Call(ec, fn, targs, [Macro(uc, "_vcc_use", [Expr.ToUserData(l); e1']); e2'])
+            let mkInDomain l = Macro(ec, fn, [Macro(uc, "_vcc_use", [Expr.ToUserData(l); e1']); e2'])
             let mkAnd c1 c2 = Expr.Prim(ec, Op("&&", Unchecked), [c1; c2])
             Some(List.fold (fun expr l -> mkAnd expr (mkInDomain l)) (mkInDomain lbls.Head) lbls.Tail)
-          | e1' -> Some(Call(ec, fn, targs, [e1'; e2']))
+          | e1' -> Some(Macro(ec, fn, [e1'; e2']))
       | _ -> None
  
     // ============================================================================================================
@@ -843,6 +843,11 @@ namespace Microsoft.Research.Vcc
           deepMapExpressions normalizeCalls' [decl] |> List.head
         | decl -> decl
 
+      let normalizeInDomain self = function
+        | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\domain"}, [], [e2])])
+          -> Some(Macro(ec, "_vcc_in_domain", [self e1; self e2]))
+        | _ -> None
+
       let normalizeMisc self = 
         let selfs = List.map self
         function
@@ -876,7 +881,7 @@ namespace Microsoft.Research.Vcc
           Some(Assert(ec, expr, []))
         | _ -> None
           
-      List.map normalizeCalls >> List.map mapFromNewSyntax >> deepMapExpressions normalizeMisc >> deepMapExpressions rewriteBvAssertAsBvLemma
+      deepMapExpressions normalizeInDomain >> List.map normalizeCalls >> List.map mapFromNewSyntax >> deepMapExpressions normalizeMisc >> deepMapExpressions rewriteBvAssertAsBvLemma
     
     // ============================================================================================================
  
