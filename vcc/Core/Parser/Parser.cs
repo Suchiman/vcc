@@ -2528,12 +2528,20 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (TS.BinaryOperators[this.currentToken]) {
         Token operator1 = this.currentToken;
         this.GetNextToken();
-        Expression operand2;
-        operand2 = this.ParseUnaryExpression(operator1 == Token.Divide, unaryFollowers);
-        if (TS.BinaryOperators[this.currentToken])
-          expression = this.ParseComplexExpression(Token.None, operand1, operator1, operand2, unaryFollowers);
-        else
-          expression = this.AllocateBinaryExpression(operand1, operand2, operator1);
+        if (operator1 == Token.SpecIs) {
+          SourceLocationBuilder slb = new SourceLocationBuilder(operand1.SourceLocation);
+          var type = this.ParseTypeExpression(unaryFollowers);
+          slb.UpdateToSpan(type.SourceLocation);
+          expression = new CheckIfInstance(operand1, type, slb);
+          if (TS.BinaryOperators[this.currentToken])
+            expression = this.ParseBinaryExpression(expression, unaryFollowers);
+        } else {
+          Expression operand2 = this.ParseUnaryExpression(operator1 == Token.Divide, unaryFollowers);
+          if (TS.BinaryOperators[this.currentToken])
+            expression = this.ParseComplexExpression(Token.None, operand1, operator1, operand2, unaryFollowers);
+          else
+            expression = this.AllocateBinaryExpression(operand1, operand2, operator1);
+        }
       } else expression = operand1;
       this.SkipTo(followers);
       return expression;
@@ -2604,24 +2612,31 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ assume this.currentToken != Token.EndOfFile; //OK because of precondition and state at point where control comes back here
       Token operator2 = this.currentToken;
       this.GetNextToken();
-      Expression operand3 = this.ParseUnaryExpression(operator2 == Token.Divide, followers);
-      if (Parser.LowerPriority(operator1, operator2)) {
-        if (TS.BinaryOperators[this.currentToken] && Parser.LowerPriority(operator2, this.currentToken)) {
+      if (operator2 == Token.SpecIs) {
+        SourceLocationBuilder slb = new SourceLocationBuilder(operand2.SourceLocation);
+        var type = this.ParseTypeExpression(followers);
+        slb.UpdateToSpan(type.SourceLocation);
+        operand2 = new CheckIfInstance(operand2, type, slb);
+      } else {
+        Expression operand3 = this.ParseUnaryExpression(operator2 == Token.Divide, followers);
+        if (Parser.LowerPriority(operator1, operator2)) {
+          if (TS.BinaryOperators[this.currentToken] && Parser.LowerPriority(operator2, this.currentToken)) {
             //Can't reduce just operand2 op2 operand3 because there is an op3 with priority over op2
             //^ assume this.currentToken != Token.EndOfFile; //follows from the switch logic
             operand2 = this.ParseComplexExpression(operator1, operand2, operator2, operand3, followers); //reduce complex expression
             //Now either at the end of the entire expression, or at an operator that is at the same or lower priority than op1
             //Either way, operand2 op2 operand3 op3 ... has been reduced to just operand2 and the code below will
             //either restart this procedure to parse the remaining expression or reduce operand1 op1 operand2 and return to the caller
+          } else {
+            //Reduce operand2 op2 operand3. There either is no further binary operator, or it does not take priority over op2.
+            operand2 = this.AllocateBinaryExpression(operand2, operand3, operator2);
+            //The code following this will reduce operand1 op1 operand2 and return to the caller
+          }
         } else {
-          //Reduce operand2 op2 operand3. There either is no further binary operator, or it does not take priority over op2.
-          operand2 = this.AllocateBinaryExpression(operand2, operand3, operator2);
-          //The code following this will reduce operand1 op1 operand2 and return to the caller
+          operand1 = this.AllocateBinaryExpression(operand1, operand2, operator1);
+          operand2 = operand3;
+          operator1 = operator2;
         }
-      } else {
-        operand1 = this.AllocateBinaryExpression(operand1, operand2, operator1);
-        operand2 = operand3;
-        operator1 = operator2;
       }
       //At this point either operand1 op1 operand2 has been reduced, or operand2 op2 operand3 .... has been reduced, so back to just two operands
       if (TS.BinaryOperators[this.currentToken] &&
@@ -2661,6 +2676,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       precedences[Token.Plus] = precedences[Token.Subtract] = new OperatorPrecedence(20);
       precedences[Token.LeftShift] = precedences[Token.RightShift] = new OperatorPrecedence(30);
       precedences[Token.GreaterThan] = precedences[Token.GreaterThanOrEqual] = precedences[Token.LessThan] = precedences[Token.LessThanOrEqual] = new OperatorPrecedence(40);
+      precedences[Token.SpecIs] = new OperatorPrecedence(40);
       precedences[Token.SetIntersection] = new OperatorPrecedence(40);
       precedences[Token.SetDifference] = new OperatorPrecedence(41);
       precedences[Token.SetUnion] = new OperatorPrecedence(42);
@@ -3719,6 +3735,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         BinaryOperators |= Token.Subtract;
         BinaryOperators |= Token.SetDifference;
         BinaryOperators |= Token.SetIn;
+        BinaryOperators |= Token.SpecIs;
         BinaryOperators |= Token.SetIntersection;
         BinaryOperators |= Token.SetUnion;
 
