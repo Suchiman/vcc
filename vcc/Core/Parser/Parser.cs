@@ -329,7 +329,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
         this.SkipTo(followers);
       } else
-        this.SkipSemiColon(followers);
+        this.SkipSemiColonAfterDeclarationOrStatement(followers);
 
       if (seenSpecToken) {
         this.Skip(Token.RightParenthesis);
@@ -355,7 +355,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
       }
-      this.SkipSemiColon(followers);
+      this.SkipSemiColonAfterDeclarationOrStatement(followers);
       return result;
     }
 
@@ -2065,7 +2065,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           this.GetNextToken();
           this.SkipTo(followers);
         } else
-          this.SkipSemiColon(followers);
+          this.SkipSemiColonAfterDeclarationOrStatement(followers);
       }
       //^ assume followers[this.currentToken] || this.currentToken == Token.EndOfFile;
       return eStat;
@@ -3575,6 +3575,10 @@ namespace Microsoft.Research.Vcc.Parsing {
           default: this.HandleError(Error.UnexpectedToken, this.scanner.GetTokenSource()); break;
         }
       }
+    }
+
+    protected virtual void SkipSemiColonAfterDeclarationOrStatement(TokenSet followers) {
+      this.SkipSemiColon(followers);
     }
 
     protected void SkipSemiColon(TokenSet followers)
