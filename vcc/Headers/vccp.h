@@ -63,7 +63,7 @@ _(\object \owner(\object);)
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
 _(void \wrap(\object);)
-_(void \unwrap(\object);)
+_(void \unwrap(\object o) _(writes o);)
 _(void \free(\object p) _(writes p, \extent(p));)
 _(template<typename T> \object \stack_alloc(\integer, bool);)
 _(void _vcc_stack_free(\integer, \object);)
