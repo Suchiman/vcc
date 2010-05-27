@@ -33,14 +33,18 @@ typedef _Bool bool;
 _(typedef void *\object;)
 _(typedef __int64 \integer;)
 _(typedef struct \claim_struct { } ^\claim;)
+//_(typedef struct \thread_struct { }  ^\thread;)
 _(SPEC_TYPE(objset))
-_(SPEC_TYPE(thread))
 _(SPEC_TYPE(state))
 _(SPEC_TYPE(type))
+_(SPEC_TYPE(thread_id))
+
+_(typedef \thread_id ^\thread;)
 
 _(bool \mine(\object, ...);)
 _(bool \valid(\object);)
 _(bool \wrapped(\object);)
+_(bool \consistent(\object);)
 _(\objset \extent(\object);)
 _(\object \alloc(\type);)
 _(\objset \universe();)
@@ -59,7 +63,10 @@ _(bool \inv(\object);)
 _(bool \inv2(\object);)
 _(\objset \owns(\object);)
 _(\object \owner(\object);)
+_(\object \embedding(\object);)
 _(bool \ghost(\object);)
+
+_(ghost extern const \thread \me;)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
