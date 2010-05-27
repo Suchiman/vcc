@@ -707,6 +707,9 @@ axiom
 axiom
   (forall S:$state, #p:$ptr :: {$typed(S,#p)} $good_state(S) && $typed(S,#p) ==> $ref(#p) > 0);
 
+function {:inline} $is_ghost_ptr(p:$ptr) returns(bool)
+  { $in_range_spec_ptr($ref(p)) }
+
 function $in_range_phys_ptr(#r:int) returns(bool)
   { $in_range(0, #r, $arch_spec_ptr_start) }
 function $in_range_spec_ptr(#r:int) returns(bool)

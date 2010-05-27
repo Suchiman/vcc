@@ -59,6 +59,7 @@ _(bool \inv(\object);)
 _(bool \inv2(\object);)
 _(\objset \owns(\object);)
 _(\object \owner(\object);)
+_(bool \ghost(\object);)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
