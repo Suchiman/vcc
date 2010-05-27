@@ -1112,7 +1112,11 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (catchClause:ICatchClause) : unit = assert false
 
-      member this.Visit (checkIfInstance:ICheckIfInstance) : unit = assert false
+      member this.Visit (checkIfInstance:ICheckIfInstance) : unit = 
+        let typeToCheck = this.DoType checkIfInstance.TypeToCheck
+        // set also the type in ExprCommon so we prevent pruning of the type
+        let typeExpr = C.Expr.UserData({C.ExprCommon.Bogus with Type = typeToCheck}, typeToCheck ) 
+        exprRes <- C.Expr.Macro(this.ExprCommon checkIfInstance, "\\is", [this.DoExpression checkIfInstance.Operand; typeExpr ])
 
       member this.Visit (constant:ICompileTimeConstant) : unit =
         let ec = this.ExprCommon constant

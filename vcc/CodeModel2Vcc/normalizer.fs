@@ -800,6 +800,9 @@ namespace Microsoft.Research.Vcc
     let normalizeNewSyntax = 
   
       let newToOldFn = Map.ofList [ "\\mine",               "_vcc_keeps";
+                                    "\\owns",               "_vcc_owns";
+                                    "\\owner",              "_vcc_owner";
+                                    "\\domain",             "_vcc_domain";
                                     "\\valid",              "_vcc_typed2";
                                     "\\wrap",               "_vcc_wrap";
                                     "\\wrapped",            "_vcc_wrapped";
@@ -840,9 +843,12 @@ namespace Microsoft.Research.Vcc
           deepMapExpressions normalizeCalls' [decl] |> List.head
         | decl -> decl
 
-      let normalizeFiniteSets self = function
-        | Macro(ec, "set", elems) -> Some(Macro(ec, "_vcc_create_set", Expr.Bogus :: (List.map self elems)))
-        | _ -> None
+      let normalizeMisc self = 
+        let selfs = List.map self
+        function
+          | Macro(ec, "set", elems) -> Some(Macro(ec, "_vcc_create_set", Expr.Bogus :: selfs elems))
+          | Macro(ec, "\\is", [arg;UserData(_, (:? Type as t))]) -> Some(Macro(ec, "_vcc_is", [self arg; typeExpr t]))
+          | _ -> None
 
       let mapFromNewSyntax = function
         | Top.FunctionDecl(fn) -> 
@@ -870,7 +876,7 @@ namespace Microsoft.Research.Vcc
           Some(Assert(ec, expr, []))
         | _ -> None
           
-      List.map normalizeCalls >> List.map mapFromNewSyntax >> deepMapExpressions normalizeFiniteSets >> deepMapExpressions rewriteBvAssertAsBvLemma
+      List.map normalizeCalls >> List.map mapFromNewSyntax >> deepMapExpressions normalizeMisc >> deepMapExpressions rewriteBvAssertAsBvLemma
     
     // ============================================================================================================
  

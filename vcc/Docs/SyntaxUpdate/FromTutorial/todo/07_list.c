@@ -1,4 +1,5 @@
-#include <vcc2test.h>
+#include <vcc.h>
+#include <stdlib.h>
 
 struct Node {
   struct Node *next;
@@ -23,6 +24,8 @@ _(dynamic_owns) struct List {
                       followers[n][e] <==> 
                       followers[n->next][e] || e == n->data)
 };
+
+
 /*{init}*/
 struct List *mklist()
   _(ensures \result != NULL ==> \wrapped(\result) && \result->val == \lambda int k; false)
@@ -38,6 +41,8 @@ struct List *mklist()
   _(wrap l)
   return l;
 }
+
+#if 0
 
 int add(struct List *l, int k)
   _(requires \wrapped(l))
@@ -78,6 +83,9 @@ int member(struct List *l, int k)
   }
   return 0;
 }
+
+#endif
+
 /*{out}*/
 /*`
 Verification of List#adm succeeded.

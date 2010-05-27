@@ -49,6 +49,7 @@ _(bool \thread_local_array(\object, unsigned __int64);)
 _(bool \mutable(\object);)
 _(\objset \array_range(\object, unsigned __int64);)
 _(\objset \span(\object);)
+_(\objset \domain(\object);)
 _(\type \typeof(\object);)
 _(bool \claims_obj(\claim, \object);)
 _(bool \is_claimable(\type);)
@@ -56,6 +57,8 @@ _(\claim \make_claim(\object, ...);)
 _(bool \active_claim(\claim);)
 _(bool \inv(\object);)
 _(bool \inv2(\object);)
+_(\objset \owns(\object);)
+_(\object \owner(\object);)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 

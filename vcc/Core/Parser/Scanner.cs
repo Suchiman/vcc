@@ -2113,6 +2113,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SpecInvariant,
     /// <summary>
+    /// \is
+    /// </summary>
+    SpecIs,
+    /// <summary>
     /// maintains, context-dependent
     /// </summary>
     SpecMaintains,
@@ -2410,6 +2414,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.SetIntersection,  "\\inter", keyword);
       keyword = new Keyword(Token.This,             "\\this", keyword);
       keyword = new Keyword(Token.Old,              "\\old", keyword);
+      keyword = new Keyword(Token.SpecIs,           "\\is", keyword);
       keyword = new Keyword(Token.SetIn,            "\\in", keyword);
       return keyword;
     }
