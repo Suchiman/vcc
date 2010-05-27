@@ -157,7 +157,7 @@ namespace Microsoft.Research.Vcc
             match fn.Ensures with
               | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))] ->
                 if e.HasSubexpr (function Result _ -> true | _ -> false) then
-                  helper.Error (fn.Token, 0, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
+                  helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
                   None
                 else
                   let subst = gdict()
@@ -165,7 +165,7 @@ namespace Microsoft.Research.Vcc
                   let e' = e.Subst subst |> makeQuantifiedVarsUnique
                   Some (e'.WithCommon { e'.Common with Token = ec.Token })
               | _ ->
-                helper.Error (fn.Token, 0, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
+                helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
                 None
           | _ -> None
       deepMapExpressions doInline decls |>
