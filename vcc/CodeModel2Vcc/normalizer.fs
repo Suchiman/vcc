@@ -802,6 +802,7 @@ namespace Microsoft.Research.Vcc
       let newToOldFn = Map.ofList [ "\\mine",               "_vcc_keeps";
                                     "\\owns",               "_vcc_owns";
                                     "\\owner",              "_vcc_owner";
+                                    "\\embedding",          "_vcc_emb";
                                     "\\domain",             "_vcc_domain";
                                     "\\valid",              "_vcc_typed2";
                                     "\\ghost",              "_vcc_is_ghost_ptr";
@@ -810,6 +811,7 @@ namespace Microsoft.Research.Vcc
                                     "\\extent",             "_vcc_extent";
                                     "\\alloc",              "_vcc_alloc";
                                     "\\mutable",            "_vcc_mutable";
+                                    "\\consistent",         "_vcc_closed";
                                     "\\array_range",        "_vcc_array_range";
                                     "\\span",               "_vcc_span";
                                     "\\unwrap",             "_vcc_unwrap";
@@ -834,7 +836,7 @@ namespace Microsoft.Research.Vcc
       let newToOldType = Map.ofList [ "\\objset", "ptrset";
                                       "\\state",  "state_t";
                                       "\\type",   "typeid_t";
-                                      "\\thread", "thread_t" ]
+                                      "\\thread_id", "thread_id" ]
 
       let normalizeCalls = function
         | Top.TypeDecl(td) as decl ->
@@ -843,6 +845,10 @@ namespace Microsoft.Research.Vcc
             | _ -> None 
           deepMapExpressions normalizeCalls' [decl] |> List.head
         | decl -> decl
+
+      let removeGlobalMe = 
+        let isNotGlobalMe = function | Top.Global({Name = "\\me"}, _) -> false | _ -> true
+        List.filter isNotGlobalMe
 
       let normalizeInDomain self = function
         | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\domain"}, [], [e2])])
@@ -854,6 +860,7 @@ namespace Microsoft.Research.Vcc
         function
           | Macro(ec, "set", elems) -> Some(Macro(ec, "_vcc_create_set", Expr.Bogus :: selfs elems))
           | Macro(ec, "\\is", [arg;UserData(_, (:? Type as t))]) -> Some(Macro(ec, "_vcc_is", [self arg; typeExpr t]))
+          | Ref(ec, {Name = "\\me"}) -> Some(Macro(ec, "_vcc_me", []))
           | _ -> None
 
       let mapFromNewSyntax = function
@@ -882,7 +889,12 @@ namespace Microsoft.Research.Vcc
           Some(Assert(ec, expr, []))
         | _ -> None
           
-      deepMapExpressions normalizeInDomain >> List.map normalizeCalls >> List.map mapFromNewSyntax >> deepMapExpressions normalizeMisc >> deepMapExpressions rewriteBvAssertAsBvLemma
+      deepMapExpressions normalizeInDomain >> 
+      List.map normalizeCalls >> 
+      List.map mapFromNewSyntax >> 
+      removeGlobalMe >>
+      deepMapExpressions normalizeMisc >> 
+      deepMapExpressions rewriteBvAssertAsBvLemma
     
     // ============================================================================================================
  

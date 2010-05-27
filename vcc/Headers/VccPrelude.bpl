@@ -250,7 +250,7 @@ axiom $is_primitive(^^f8);
 
 const $me_ref : int;
 function $me() returns($ptr);
-axiom $in_range_spec_ptr($me_ref);
+axiom $in_range_spec_ptr($me_ref) && $me_ref != 0;
 axiom $me() == $ptr(^$#thread_id_t, $me_ref);
 
 function {:inline true} $current_state(s:$state) returns($state) { s }
