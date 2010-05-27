@@ -161,9 +161,17 @@ namespace Microsoft.Research.Vcc
                   None
                 else
                   let subst = gdict()
-                  List.iter2 (fun f a -> subst.Add (f, a)) fn.Parameters args 
+                  List.iter2 (fun f a -> subst.Add (f, self a)) fn.Parameters args 
                   let e' = e.Subst subst |> makeQuantifiedVarsUnique
-                  Some (e'.WithCommon { e'.Common with Token = ec.Token })
+                  let et = ec.Token
+                  let overrideLocation self (expr:Expr) =
+                    match expr.Token with
+                      | :? ForwardingToken as tok when tok.IsForwardedFrom et -> None
+                      | _ ->
+                        let orig = expr.Token
+                        let related = new ForwardingToken (orig, null, ForwardingToken.GetValue (fun () -> "from expansion of '" + et.Value + "'"))
+                        Some (self (expr.WithCommon { expr.Common with Token = new ForwardingToken (et, related, ForwardingToken.GetValue (fun () -> orig.Value)) }))
+                  Some (e'.SelfMap overrideLocation)
               | _ ->
                 helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
                 None
@@ -178,7 +186,11 @@ namespace Microsoft.Research.Vcc
         | Quant (ec, q) ->
           let q = { q with Body = self q.Body }
           let mkQ (e:Expr) = 
-            let t = forwardingToken ec.Token None (fun () -> e.Token.Value + " in " + ec.Token.Value)
+            let related = 
+              match ec.Token with
+                | :? ForwardingToken as t -> Some t.Related
+                | _ -> None
+            let t = forwardingToken ec.Token related (fun () -> e.Token.Value + " in " + ec.Token.Value)
             let vars = gdict()
             for v in q.Variables do
               vars.Add (v.UniqueId, true)

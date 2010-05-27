@@ -30,6 +30,11 @@ namespace Microsoft.Research.Vcc
       : this(tok, null, getval) {
     }
 
+    public bool IsForwardedFrom(Token t)
+    {
+      return t == tok;
+    }
+
     public override int Line
     {
       get { return tok.Line; }
