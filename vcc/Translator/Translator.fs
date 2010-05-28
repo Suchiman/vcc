@@ -1272,8 +1272,8 @@ namespace Microsoft.Research.Vcc
             | C.Expr.Stmt (_, C.Expr.Call (c, fn, targs, args))        -> 
               let cevList = cev.FunctionCall c.Token
               let stateUpdate = cev.StateUpdate c.Token
-              doCall c [] (Some fn) fn.Name targs args @ cevList @ stateUpdate         
-            | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|
+              doCall c [] (Some fn) fn.Name targs args @ cevList @ stateUpdate
+            | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|"_vcc_set_owns"|
                                   "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap") as name), args) -> 
               doCall c [] None name [] args
             | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_deep_unwrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->

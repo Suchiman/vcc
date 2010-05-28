@@ -17,7 +17,7 @@ namespace Microsoft.Research.Vcc {
   /// that describe invariants, model variables and functions, as well as axioms.
   /// </summary>
   // ^ [Immutable]
-  public sealed class VccTypeContract : Contract, Microsoft.Cci.Contracts.ITypeContract, ISpecItem {
+  public class VccTypeContract : Contract, Microsoft.Cci.Contracts.ITypeContract, ISpecItem {
 
     /// <summary>
     /// Allocates a collection of collections of objects that augment the signature of a type with additional information
@@ -39,22 +39,6 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
-    /// <summary>
-    /// A copy constructor that allocates an instance that is the same as the given template.
-    /// </summary>
-    /// <param name="template">The template to copy.</param>
-    private VccTypeContract(VccTypeContract template) {
-      if (template.contractFields != EmptyListOfFields)
-        this.contractFields = new List<FieldDeclaration>(template.contractFields);
-      else
-        this.contractFields = template.contractFields;
-      if (template.invariants != EmptyListOfInvariants)
-        this.invariants = new List<TypeInvariant>(template.invariants);
-      else
-        this.invariants = template.invariants;
-      this.isSpec = template.isSpec;
-    }
-
     readonly bool isSpec;
 
     public bool IsSpec {
@@ -64,7 +48,7 @@ namespace Microsoft.Research.Vcc {
     /// <summary>
     /// The type declaration that contains the type contract.
     /// </summary>
-    TypeDeclaration/*?*/ containingType;
+    protected TypeDeclaration/*?*/ containingType;
 
     /// <summary>
     /// A possibly empty list of contract fields. Contract fields can only be used inside contracts and are not available at runtime.
@@ -72,9 +56,16 @@ namespace Microsoft.Research.Vcc {
     public IEnumerable<IFieldDefinition> ContractFields {
       get {
         foreach (FieldDeclaration fieldDecl in this.contractFields) yield return fieldDecl.FieldDefinition;
+        foreach (FieldDeclaration builtInFieldDecl in this.BuiltInFields) yield return builtInFieldDecl.FieldDefinition;
       }
     }
     readonly IEnumerable<FieldDeclaration> contractFields;
+
+    protected virtual IEnumerable<FieldDeclaration> BuiltInFields {
+      get {
+        return IteratorHelper.GetEmptyEnumerable<FieldDeclaration>();
+      }
+    }
 
     /// <summary>
     /// A possibly empty list of contract methods. Contract methods have no bodies and can only be used inside contracts. The meaning of a contract
@@ -110,16 +101,6 @@ namespace Microsoft.Research.Vcc {
     IEnumerable<ITypeInvariant>/*?*/ invariantsAndAxiomsAboutConstantArraysAndStructs;
 
     /// <summary>
-    /// Makes a copy of this contract, changing the containing block to the given block.
-    /// </summary>
-    public VccTypeContract MakeCopyFor(TypeDeclaration containingType) {
-      if (this.containingType == containingType) return this;
-      VccTypeContract result = new VccTypeContract(this);
-      result.SetContainingType(containingType); 
-      return result;
-    }
-
-    /// <summary>
     /// Completes the two stage construction of this object. This allows bottom up parsers to construct an Expression before constructing the containing Expression.
     /// This method should be called once only and must be called before this object is made available to client code. The construction code itself should also take
     /// care not to call any other methods or property/event accessors on the object until after this method has been called.
@@ -147,4 +128,44 @@ namespace Microsoft.Research.Vcc {
     #endregion
   }
 
+  public class VccTypeContractV2 : VccTypeContract
+  {
+    public VccTypeContractV2(IEnumerable<FieldDeclaration>/*?*/ contractFields, IEnumerable<TypeInvariant>/*?*/ invariants, bool isSpec) :
+      base(contractFields, invariants, isSpec) {
+    }
+
+
+    private IEnumerable<FieldDeclaration> GenerateBuiltInFields() {
+      var compilation = this.containingType.Compilation;
+      var containingExpression = new DummyExpression(this.containingType.DummyBlock, SourceDummy.SourceLocation);
+      var setTypeName = new VccNamedTypeExpression(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(compilation.NameTable, "Objset"));
+      setTypeName.SetContainingExpression(containingExpression);
+      var objTypeName = new VccNamedTypeExpression(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(compilation.NameTable, "TypedPtr"));
+      objTypeName.SetContainingExpression(containingExpression);
+      var ownsField = this.GenerateBuiltInField("\\owner", objTypeName);
+      var ownerField = this.GenerateBuiltInField("\\owns", setTypeName);
+      var result = new List<FieldDeclaration>(2);
+      result.Add(ownerField);
+      result.Add(ownsField);
+      return result.AsReadOnly();
+    }
+
+    private  FieldDefinition GenerateBuiltInField(string name, VccNamedTypeExpression type) {
+      var result = new Vcc.FieldDefinition(new List<Specifier>(), (FieldDeclaration.Flags)0, type, new NameDeclaration(this.containingType.Compilation.NameTable.GetNameFor(name), SourceDummy.SourceLocation),
+        null,
+        true,
+        SourceDummy.SourceLocation);
+      result.SetContainingTypeDeclaration(this.containingType, false);
+      return result;
+    }
+
+    private IEnumerable<FieldDeclaration> builtInFields;
+
+    protected override IEnumerable<FieldDeclaration> BuiltInFields {
+      get {
+        if (builtInFields == null) builtInFields = GenerateBuiltInFields();
+        return builtInFields;
+      }
+    }
+  }
 }

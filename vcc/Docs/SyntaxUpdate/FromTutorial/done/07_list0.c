@@ -1,68 +1,57 @@
 #include <vcc.h>
 #include <stdlib.h>
 
+/*{types}*/
 struct Node {
   struct Node *next;
   int data;
 };
 
-/*{type}*/
 _(dynamic_owns) struct List {
-  _(ghost  bool val[int];)
   struct Node *head;
-  _(ghost  bool followers[struct Node *][int];)
-  _(invariant val == followers[head])
+  _(ghost  bool val[int];)
   _(invariant head != NULL ==> \mine(head))
-  _(invariant followers[NULL] == \lambda int k; false)
   _(invariant \forall struct Node *n;
-                {n->next \in \owns(\this)}
+                {n->next \in \this->\owns}
                 \mine(n) ==> n->next == NULL || \mine(n->next))
   _(invariant \forall struct Node *n; 
-                {n \in \owns(\this)}
-                \mine(n) ==> 
-                   \forall int e; 
-                      followers[n][e] <==> 
-                      followers[n->next][e] || e == n->data)
+                {n \in \this->\owns}
+                \mine(n) ==> val[n->data])
 };
-
-
 /*{init}*/
 struct List *mklist()
   _(ensures \result != NULL ==> \wrapped(\result) && \result->val == \lambda int k; false)
 {
   struct List *l = malloc(sizeof(*l));
-  if (l == NULL) return NULL;
+  if (l == NULL) return l;
   l->head = NULL;
   _(ghost {
-    \set(\owns(l), {});
-    l->followers = (\lambda struct Node *n, int k; false);
-    l->val = l->followers[l->head];
+    l->\owns = {};
+    l->val = (\lambda int k; false);
   })
   _(wrap l)
   return l;
 }
-
-#if 0
-
+/*{add}*/
 int add(struct List *l, int k)
   _(requires \wrapped(l))
   _(ensures \wrapped(l))
-  _(ensures \result == 0 ==> l->val == \lambda int p; \old(l->val)[p] || p == k)
   _(ensures \result != 0 ==> l->val == \old(l->val))
+  _(ensures \result == 0 ==>
+       \forall int p; l->val[p] == (\old(l->val)[p] || p == k))
   _(writes l)
+/*{endspec}*/
 {
   struct Node *n = malloc(sizeof(*n));
   if (n == NULL) return -1;
   _(unwrapping l) {
     n->next = l->head;
     n->data = k;
-    l->head = n;
     _(wrap n)
+    l->head = n;
     _(ghost {
-      \set(\owns(l), \union(\owns(l), {n})); /*{specupdate}*/
-      l->followers[n] = 
-        (\lambda int z; l->followers[n->next][z] || z == k);
-      l->val = l->followers[n]; /*{updateend}*/
+      l->\owns = l->\owns \union {n};
+      l->val = (\lambda int z; z == k || l->val[z]);
     })
   }
   return 0;
@@ -70,22 +59,26 @@ int add(struct List *l, int k)
 /*{member}*/
 int member(struct List *l, int k)
   _(requires \wrapped(l))
-  _(ensures \result != 0 <==> l->val[k])/*{endspec}*/
+  // partial specification, ==> instead of <==>
+  _(ensures \result != 0 ==> l->val[k])
 {
   struct Node *n;
 
-  for (n = l->head; n; n = n->next)
-    _(invariant n != NULL ==> n \in \owns(l))
-    _(invariant l->val[k] <==> l->followers[n][k])
+  n = l->head;
+
+  if (n == NULL)
+    return 0;
+
+  for (;;)
+    _(invariant n \in l->\owns)
   {
     if (n->data == k)
       return 1;
+    n = n->next;
+    if (n == NULL)
+      return 0;
   }
-  return 0;
 }
-
-#endif
-
 /*{out}*/
 /*`
 Verification of List#adm succeeded.

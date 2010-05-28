@@ -6,7 +6,7 @@ struct S { int a; _(invariant a > 0) };
 _(dynamic_owns) struct T {
   int x;
   struct S *s;
-  _(invariant x > 0 ==> s \in \owns(\this))
+  _(invariant x > 0 ==> s \in \this->\owns)
 };
 
 void foo(struct T *t)

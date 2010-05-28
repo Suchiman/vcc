@@ -812,8 +812,6 @@ namespace Microsoft.Research.Vcc
     let normalizeNewSyntax = 
   
       let newToOldFn = Map.ofList [ "\\mine",               "_vcc_keeps";
-                                    "\\owns",               "_vcc_owns";
-                                    "\\owner",              "_vcc_owner";
                                     "\\embedding",          "_vcc_emb";
                                     "\\domain",             "_vcc_domain";
                                     "\\valid",              "_vcc_typed2";
@@ -873,6 +871,7 @@ namespace Microsoft.Research.Vcc
           | Macro(ec, "set", elems) -> Some(Macro(ec, "_vcc_create_set", Expr.Bogus :: selfs elems))
           | Macro(ec, "\\is", [arg;UserData(_, (:? Type as t))]) -> Some(Macro(ec, "_vcc_is", [self arg; typeExpr t]))
           | Ref(ec, {Name = "\\me"}) -> Some(Macro(ec, "_vcc_me", []))
+          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); e2]) -> Some(Macro({ec with Type = Type.Bogus}, "_vcc_set_owns", [self e1; self e2]))
           | _ -> None
 
       let mapFromNewSyntax = function

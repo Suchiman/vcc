@@ -61,8 +61,6 @@ _(\claim \make_claim(\object, ...);)
 _(bool \active_claim(\claim);)
 _(bool \inv(\object);)
 _(bool \inv2(\object);)
-_(\objset \owns(\object);)
-_(\object \owner(\object);)
 _(\object \embedding(\object);)
 _(bool \ghost(\object);)
 
