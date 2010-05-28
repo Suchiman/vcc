@@ -660,7 +660,7 @@ namespace Microsoft.Research.Vcc
           | "_vcc_is_low", [e] -> IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e)
           | "_vcc_current_context", [] -> B.Expr.FunctionCall("$get.secpc",[B.Expr.FunctionCall("$memory",[bState])])
           | _ ->
-            helper.Oops (ec.Token, sprintf "unhandled macro %s\n" n)
+            helper.Oops (ec.Token, sprintf "unhandled macro %s" n)
             er "$bogus"                
 
 
