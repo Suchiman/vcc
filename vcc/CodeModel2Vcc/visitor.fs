@@ -506,17 +506,23 @@ namespace Microsoft.Research.Vcc
           | :? IAddressDereference as deref -> (this :> ICodeVisitor).Visit deref
           | :? IFieldDefinition as def ->
             let instance = this.DoExpression instance
-            if not (fieldsMap.ContainsKey def) then
-              oopsLoc def ("field " + def.Name.Value + " not found")
+
+            match def.Name.Value with 
+              | "\\owns" -> exprRes <- C.Expr.Macro({instance.Common with Type = this.DoType def.Type}, "_vcc_owns", [instance])
+              | "\\owner" -> exprRes <- C.Expr.Macro({instance.Common with Type = this.DoType def.Type}, "_vcc_owner", [instance])
+              | _ ->
+
+                if not (fieldsMap.ContainsKey def) then
+                  oopsLoc def ("field " + def.Name.Value + " not found")
             
-            let field = fieldsMap.[def]
-            let instance =
-              match instance.Type with
-               | C.Ptr _ -> instance
-               | t -> C.Expr.Macro ({ instance.Common with Type = C.PhysPtr t }, // TODO: Ptr kind
-                                    "&", [instance])
-            let dot =  C.Expr.MkDot(ec, instance, field)
-            exprRes <- C.Expr.Deref (ec, dot)
+                let field = fieldsMap.[def]
+                let instance =
+                  match instance.Type with
+                   | C.Ptr _ -> instance
+                   | t -> C.Expr.Macro ({ instance.Common with Type = C.PhysPtr t }, // TODO: Ptr kind
+                                        "&", [instance])
+                let dot =  C.Expr.MkDot(ec, instance, field)
+                exprRes <- C.Expr.Deref (ec, dot)
           | _ -> assert false
     
     member this.DoTypeDefinition (typeDef:ITypeDefinition) =

@@ -1780,10 +1780,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         // have been generated as artifacts of recovery from parse errors
         // see Microsoft.Cci.Ast.TypeDeclaration.SetMemberContainingTypeDeclaration for the supported classes
         newTypeMembers.RemoveAll(delegate(ITypeDeclarationMember member) { return !(member is TypeDeclarationMember || member is NestedTypeDeclaration); });
-        if (this.currentSpecificationFields != null || this.currentTypeInvariants != null) {
-          VccTypeContract tc = new VccTypeContract(this.currentSpecificationFields, this.currentTypeInvariants, this.InSpecCode);
-          this.compilation.ContractProvider.AssociateTypeWithContract(type, tc);
-        }
+        this.AssociateTypeWithTypeContract(type, this.currentSpecificationFields, this.currentTypeInvariants, this.InSpecCode);
       } else if (noName) {
         texpr = new VccNamedTypeExpression(new VccSimpleName(name, name.SourceLocation));
         this.HandleError(name.SourceLocation, Error.ExpectedIdentifier);
@@ -1803,6 +1800,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.currentSpecificationFields = savedSpecificationFields;
       this.currentTypeInvariants = savedTypeInvariants;
       return texpr;
+    }
+
+    protected virtual void AssociateTypeWithTypeContract(object type, List<FieldDeclaration> specFields, List<TypeInvariant> invariants, bool isSpecType) {
+      if (specFields != null || invariants != null || isSpecType) {
+        VccTypeContract tc = new VccTypeContract(specFields, invariants, isSpecType);
+        this.compilation.ContractProvider.AssociateTypeWithContract(type, tc);
+      }
     }
 
     protected void ParseRestOfTypeDeclaration(SourceLocationBuilder sctx, List<INamespaceDeclarationMember>/*?*/ namespaceMembers, Expression typeName, List<ITypeDeclarationMember> typeMembers, TokenSet followers)
