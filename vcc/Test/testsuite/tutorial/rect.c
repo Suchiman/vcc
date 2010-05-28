@@ -10,8 +10,8 @@ struct rect {
     struct point ur;
 	
     invariant( inv_rect(this) )
-    invariant( set_in( &ll, owns(this) ) )
-    invariant( set_in( &ur, owns(this) ) )
+    invariant( keeps( &ll ) )
+    invariant( keeps( &ur ) )
 };
 
 spec( ispure bool inv_rect(struct rect * r)
@@ -49,7 +49,7 @@ void move(__inout struct rect* r, int dx, int dy)
 }
 
 /*`
-Verification of $admissibility_rect succeeded.
+Verification of rect#adm succeeded.
 Verification of move succeeded.
 Verification of within_bounds#reads succeeded.
 Verification of inv_rect#reads succeeded.
