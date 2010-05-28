@@ -10,8 +10,8 @@ struct rect {
     struct point ur;
 	
     invariant( ll.x <= ur.x && ll.y <= ur.y )
-    invariant( set_in( &ll, owns(this) ) )
-    invariant( set_in( &ur, owns(this) ) )
+    invariant( keeps( &ll ) )
+    invariant( keeps( &ur ) )
 };
 
 isadmissibilitycheck
@@ -24,5 +24,6 @@ void custom_admissibility_check_rect( struct rect *r )
 }
 
 /*`
+Verification of rect#adm succeeded.
 Verification of custom_admissibility_check_rect succeeded.
 `*/
