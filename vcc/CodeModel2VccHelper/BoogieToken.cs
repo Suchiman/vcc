@@ -19,13 +19,10 @@ namespace Microsoft.Research.Vcc
       return Token.NoToken;
     }
 
-    public BoogieToken(Token tok) :
-      this(tok, null) {
-    }
-
-    public BoogieToken(Token tok, Token related) {
+    public BoogieToken(Token tok) {
       this.tok = tok;
-      this.related = related == null ? null : new BoogieToken(related, null);
+      if (tok.Related != null)
+        this.related = new BoogieToken(tok.Related);
     }
 
     public Microsoft.Boogie.IToken Related {

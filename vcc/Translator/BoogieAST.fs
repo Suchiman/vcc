@@ -170,10 +170,7 @@ namespace Microsoft.Research.Vcc
       member this.GetAddInfo () = ai           
       
     let noToken = Microsoft.Boogie.Token.NoToken
-    let tok (t : Token) = 
-      match t with
-        | :? ForwardingToken as fwd -> new BoogieToken(fwd, fwd.Related)
-        | _ -> new BoogieToken (t)
+    let tok t = new BoogieToken (t)
       
     let trIdent id =    
       let res = Microsoft.Boogie.Expr.Ident(id, Microsoft.Boogie.Type.Int)
