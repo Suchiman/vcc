@@ -23,6 +23,8 @@ namespace Microsoft.Research.Vcc
     {
       get { return DummyToken.Instance; }
     }
+
+    public Token Related { get; protected set; }
   }
 
   public class DummyToken : Token

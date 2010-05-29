@@ -18,8 +18,6 @@ namespace Microsoft.Research.Vcc
     GetValue getval;
     internal Token tok;
 
-    public Token Related { get; private set; }
-
     public ForwardingToken(Token tok, Token related, GetValue getval) {
       this.tok = tok;
       this.getval = getval;

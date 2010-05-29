@@ -149,21 +149,21 @@ namespace Microsoft.Research.Vcc
          
     // ============================================================================================================
     
-    let inlineCall self call =
+    let inlineCall pref self call =
       match call with
         | Call (ec, fn, _, args) ->
           let callTok = ec.Token
-          let inExpansion = ForwardingToken.GetValue (fun () -> "from expansion of '" + callTok.Value + "'")
+          let inExpansion = ForwardingToken.GetValue (fun () -> "from expansion of '" + pref + callTok.Value + "'")
           
           let overrideMacroLocation (expr:Expr) =
             let orig = expr.Token
-            let related = new ForwardingToken (orig, null, inExpansion)
+            let related = new ForwardingToken (orig, orig.Related, inExpansion)
             let primary = new ForwardingToken (callTok, related, ForwardingToken.GetValue (fun () -> orig.Value))
             expr.WithCommon { expr.Common with Token = primary }
 
           let updateArgLocation (expr:Expr) =
             let orig = expr.Token
-            let related = new ForwardingToken (fn.Token, null, inExpansion)
+            let related = new ForwardingToken (fn.Token, orig.Related, inExpansion)
             let primary = new ForwardingToken (orig, related, ForwardingToken.GetValue (fun () -> orig.Value))
             expr.WithCommon { expr.Common with Token = primary }
           let args = List.map (fun expr -> ((self expr) : Expr).DeepMap updateArgLocation) args
@@ -186,7 +186,7 @@ namespace Microsoft.Research.Vcc
                   helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
                   None
                 else
-                  Some (inlineCall self call e)
+                  Some (inlineCall "" self call e)
 
               | _ ->
                 helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
@@ -936,7 +936,7 @@ namespace Microsoft.Research.Vcc
           f.Requires <- reqs          
           let handleExpansion = function
             | Call (_, m, _, _) as call ->
-              let subst = inlineCall (fun x -> x) call
+              let subst = inlineCall "_(" (fun x -> x) call
               let substs = List.map subst
               f.Requires <- f.Requires @ substs m.Requires
               f.Ensures <- f.Ensures @ substs m.Ensures

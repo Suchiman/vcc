@@ -320,8 +320,10 @@ namespace Microsoft.Research.Vcc
       if (IsStandaloneError(errNo)) {
         ReportError(callTok, errNo, "{0} (in call '{1}'){2}", reqMsg, RemoveWhiteSpace(callTok.val), comment);
       } else {
-        if (ReportError(callTok, errNo, "Call '{0}' did not verify{1}", RemoveWhiteSpace(callTok.val), comment))
+        if (ReportError(callTok, errNo, "Call '{0}' did not verify{1}", RemoveWhiteSpace(callTok.val), comment)) {
           ReportRelated(reqTok, "Precondition: '{0}'", reqMsg);
+          ReportAllRelated(reqTok);
+        }
       }
     }
 
@@ -332,10 +334,16 @@ namespace Microsoft.Research.Vcc
         ReportError(assertTok, errNo, "{0}{1}", msg, comment);
       else
         ReportError(assertTok, errNo, "{0}{2} '{1}' did not verify", kind, msg, comment);
+      ReportAllRelated(assertTok);
+    }
 
-      BoogieToken btok = assertTok as BoogieToken;
-      if (btok != null && btok.Related != null)
+    private void ReportAllRelated(IToken tok)
+    {
+      BoogieToken btok = tok as BoogieToken;
+      if (btok != null && btok.Related != null) {
         ReportRelated(btok.Related, btok.Related.val);
+        ReportAllRelated(btok.Related);
+      }
     }
 
     private void ReportOutcomePostconditionFailed(IToken ensTok, IToken retTok, string comment) {
@@ -347,8 +355,10 @@ namespace Microsoft.Research.Vcc
       if (IsStandaloneError(errNo))
         ReportError(retTok, errNo, "{0}{1}", msg, comment);
       else {
-        if (ReportError(retTok, errNo, "Post condition{0} '{1}' did not verify", comment, msg) && retTok.line != 0)
+        if (ReportError(retTok, errNo, "Post condition{0} '{1}' did not verify", comment, msg) && retTok.line != 0) {
           ReportRelated(ensTok, "Location of post condition");
+          ReportAllRelated(ensTok);
+        }
       }
     }
 
