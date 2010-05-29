@@ -974,6 +974,7 @@ module Microsoft.Research.Vcc.CAST
         | None -> this
         | Some this' -> this'
     
+    // TODO: implement with DeepMap?
     member this.SubstType(typeSubst : Dict<TypeVariable, Type>, varSubst : Dict<Variable, Variable>) =
       let sc c = { c with Type = c.Type.Subst(typeSubst) } : ExprCommon
       let varSubst = new Dict<_,_>(varSubst) // we add to it, so make a copy first
@@ -1248,7 +1249,16 @@ module Microsoft.Research.Vcc.CAST
     static member ToUserData (o:obj) =
       assert (o <> null)
       UserData(ExprCommon.Bogus, o)
-      
+
+    // First computes "f this", and then applies itself recursively to all subexpressions of "f this".
+    member this.DeepMap (f : Expr -> Expr) : Expr =
+      let rec aux (prev:obj) (ctx:ExprCtx) (e:Expr) = 
+        if obj.ReferenceEquals (prev, e) then None
+        else 
+          let e = f e
+          Some (e.Map (ctx.IsPure, aux e))
+      this.Map (false, aux null)
+     
   let (|FunctionPtr|_|) = function
     | Ptr (Type.Ref { Kind = FunctDecl f }) -> Some f
     | _ -> None

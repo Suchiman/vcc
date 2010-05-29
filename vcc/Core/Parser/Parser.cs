@@ -22,6 +22,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected readonly Dictionary<string, TypeExpression> typedefExpressions;
     protected readonly Dictionary<string, TypedefDeclaration> typedefDecls;
     protected readonly Dictionary<string, bool> locallyDefinedNames;
+    protected readonly Dictionary<string, string> functionContractExtensions;
     protected readonly Dictionary<Expression, bool> emptyStructuredTypes;
     protected readonly Scanner scanner;
     protected readonly List<IErrorMessage> scannerAndParserErrors;
@@ -54,6 +55,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.typedefDecls = new Dictionary<string, TypedefDeclaration>();
       this.locallyDefinedNames = new Dictionary<string, bool>();
       this.emptyStructuredTypes = new Dictionary<Expression, bool>();
+      this.functionContractExtensions = new Dictionary<string, string>();
       this.rootNs = new RootNamespaceExpression(SourceDummy.SourceLocation);
       this.systemNs = new AliasQualifiedName(rootNs, this.GetSimpleNameFor("System"), SourceDummy.SourceLocation);
     }
@@ -1359,6 +1361,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.Skip(Token.RightParenthesis);
       this.InitializeLocallyDefinedNamesFromParameters(parameters);
       this.ParseFunctionOrBlockContract(result.Contract, followers);
+
+      var prefix = "\\macro_";
+      var nameString = functionName.Identifier.Value;
+      if (nameString.StartsWith(prefix)) {
+        this.functionContractExtensions[nameString.Substring(prefix.Length)] = nameString;
+      }
+
       return result;
     }
 
