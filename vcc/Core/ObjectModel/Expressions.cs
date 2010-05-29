@@ -2717,6 +2717,27 @@ namespace Microsoft.Research.Vcc {
       if (containingBlock == this.ContainingBlock) return this;
       return new VccMethodCall(containingBlock, this);
     }
+
+    /// <summary>
+    /// Checks if the expression has a side effect and reports an error unless told otherwise.
+    /// </summary>
+    /// <param name="reportError">If true, report an error if the expression has a side effect.</param>
+    public override bool HasSideEffect(bool reportError)
+    {
+      // Don't report errors for calls to methods with non-empty writes and the like,
+      // VCC will later give a better error message if needed.
+      if (this.hasSideEffect == null) {
+        bool parameterHasSideEffect = false;
+        foreach (Expression argument in this.ConvertedArguments)
+          parameterHasSideEffect |= argument.HasSideEffect(reportError);
+        if (reportError) {
+          this.hasSideEffect = parameterHasSideEffect;
+        }
+        return parameterHasSideEffect;
+      }
+      return this.hasSideEffect.Value;
+    }
+    bool? hasSideEffect;
   }
 
   public class VccReturnValue : ReturnValue

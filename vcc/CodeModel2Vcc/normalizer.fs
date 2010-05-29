@@ -149,29 +149,45 @@ namespace Microsoft.Research.Vcc
          
     // ============================================================================================================
     
+    let inlineCall self call =
+      match call with
+        | Call (ec, fn, _, args) ->
+          let callTok = ec.Token
+          let inExpansion = ForwardingToken.GetValue (fun () -> "from expansion of '" + callTok.Value + "'")
+          
+          let overrideMacroLocation (expr:Expr) =
+            let orig = expr.Token
+            let related = new ForwardingToken (orig, null, inExpansion)
+            let primary = new ForwardingToken (callTok, related, ForwardingToken.GetValue (fun () -> orig.Value))
+            expr.WithCommon { expr.Common with Token = primary }
+
+          let updateArgLocation (expr:Expr) =
+            let orig = expr.Token
+            let related = new ForwardingToken (fn.Token, null, inExpansion)
+            let primary = new ForwardingToken (orig, related, ForwardingToken.GetValue (fun () -> orig.Value))
+            expr.WithCommon { expr.Common with Token = primary }
+          let args = List.map (fun expr -> ((self expr) : Expr).DeepMap updateArgLocation) args
+
+          let subst = gdict()
+          List.iter2 (fun f a -> subst.Add (f, a)) fn.Parameters args 
+
+          (fun (expr:Expr) ->
+            (expr.DeepMap overrideMacroLocation).Subst subst |> makeQuantifiedVarsUnique)
+        | _ -> die()
+
     let inlineSpecMacros decls =
       let isSpecMacro (fn:Function) = hasCustomAttr AttrSpecMacro fn.CustomAttr
       let doInline self =
         function 
-          | Call (ec, fn, _, args) when isSpecMacro fn ->
+          | Call (ec, fn, _, _) as call when isSpecMacro fn ->
             match fn.Ensures with
               | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))] ->
                 if e.HasSubexpr (function Result _ -> true | _ -> false) then
                   helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
                   None
                 else
-                  let subst = gdict()
-                  List.iter2 (fun f a -> subst.Add (f, self a)) fn.Parameters args 
-                  let e' = e.Subst subst |> makeQuantifiedVarsUnique
-                  let et = ec.Token
-                  let overrideLocation self (expr:Expr) =
-                    match expr.Token with
-                      | :? ForwardingToken as tok when tok.IsForwardedFrom et -> None
-                      | _ ->
-                        let orig = expr.Token
-                        let related = new ForwardingToken (orig, null, ForwardingToken.GetValue (fun () -> "from expansion of '" + et.Value + "'"))
-                        Some (self (expr.WithCommon { expr.Common with Token = new ForwardingToken (et, related, ForwardingToken.GetValue (fun () -> orig.Value)) }))
-                  Some (e'.SelfMap overrideLocation)
+                  Some (inlineCall self call e)
+
               | _ ->
                 helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
                 None
@@ -906,11 +922,42 @@ namespace Microsoft.Research.Vcc
       removeGlobalMe >>
       deepMapExpressions normalizeMisc >> 
       deepMapExpressions rewriteBvAssertAsBvLemma
+
+    // ============================================================================================================
+ 
+    let expandContractMacros decls =
+      let isMacro (f:Function) = f.Name.StartsWith "\\macro_"
+      let isMacroCall = function
+        | Call (_, f, _, _) -> isMacro f
+        | _ -> false
+      let expand = function
+        | Top.FunctionDecl f ->
+          let (macros, reqs) = List.partition isMacroCall f.Requires
+          f.Requires <- reqs          
+          let handleExpansion = function
+            | Call (_, m, _, _) as call ->
+              let subst = inlineCall (fun x -> x) call
+              let substs = List.map subst
+              f.Requires <- f.Requires @ substs m.Requires
+              f.Ensures <- f.Ensures @ substs m.Ensures
+              f.Writes <- f.Writes @ substs m.Writes
+              f.Reads <- f.Reads @ substs m.Reads
+              f.Variants <- f.Variants @ substs m.Variants
+            | _ -> die()
+          List.iter handleExpansion macros
+        | _ -> ()
+      let isntMacro = function
+        | Top.FunctionDecl f when isMacro f -> false
+        | _ -> true
+      let decls = decls |> List.filter isntMacro
+      List.iter expand decls
+      decls
     
     // ============================================================================================================
  
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
     helper.AddTransformer ("norm-new-syntax", Helper.Decl normalizeNewSyntax)
+    helper.AddTransformer ("norm-expand-contract-macros", Helper.Decl expandContractMacros)
     helper.AddTransformer ("norm-initializers", Helper.Expr normalizeInitializers)
     helper.AddTransformer ("norm-use", Helper.Expr normalizeUse)
     helper.AddTransformer ("norm-fixed-array-parms", Helper.Decl removeFixedSizeArraysAsParameters)

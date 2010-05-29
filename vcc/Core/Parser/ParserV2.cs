@@ -203,7 +203,8 @@ namespace Microsoft.Research.Vcc.Parsing
     override protected void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers) {
       while (this.currentToken == Token.Specification) {
         bool savedInSpecCode = SkipIntoSpecBlock();
-        while (STS.FunctionOrBlockContract[this.currentToken]) {
+        while (STS.FunctionOrBlockContract[this.currentToken] || 
+               (this.currentToken == Token.Identifier && this.functionContractExtensions.ContainsKey(this.scanner.GetIdentifierString()))) {
           switch (this.currentToken) {
             case Token.SpecRequires:
               this.GetNextToken();
@@ -240,6 +241,16 @@ namespace Microsoft.Research.Vcc.Parsing
               this.GetNextToken();
               var reads = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
               contract.AddReads(reads);
+              break;
+            case Token.Identifier:
+              var keyword = this.scanner.GetIdentifierString();
+              var name = this.GetSimpleNameFor(this.functionContractExtensions[keyword]);
+              this.GetNextToken();
+              var slb = new SourceLocationBuilder(name.SourceLocation);
+              var parameters = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+              slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+              var call = new VccMethodCall(name, parameters.AsReadOnly(), slb);
+              contract.AddPrecondition(new Precondition(call, null, call.SourceLocation));
               break;
           }
           this.SkipSemicolonsInSpecBlock(STS.FunctionOrBlockContract | Token.RightParenthesis);
