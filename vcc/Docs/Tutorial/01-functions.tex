@@ -16,31 +16,44 @@ Let's begin with a simple example:
 \vccInputSC{c/01_minInline2.c}
 This program (internally) sets \vcc{z} to the minimum of \vcc{x} and
 \vcc{y}. 
-An annotation of the form \vcc{_( assert E )} asks VCC to prove that whenever
-the program is executed, \vcc{E} would evaluate to something other than 0 at the point of the assertion.%
-\footnote{This is only partly true when \vcc{E} refers to memory locations shared by multiple
-threads.
-You can safely ignore that until \secref{concurrency}, and even then it doesn't change much.
-}
-An \Def{execution} is a complete recording of all actions made by the program:
-which branches were taken, what values were read and stored in memory
-and so forth.
-For a deterministic program, once you fix input data (\eg by saying in this and that
-microsecond the user is going to click at that pixel and so forth),
-you fix the execution.
-An assertion causes VCC to try to \emph{prove} that \vcc{E} holds for \emph{all}
-executions.
-Compare that to the macro \lstinline|assert(E)| defined in the \lstinline|<assert.h>|
-header file --- the macro aborts the program when \vcc|E| evaluates to non-zero value.
-This works for the particular execution that happens when you test-run your program,
-whereas VCC assertions work for all executions.
-
-Getting back to our example,
-the line \vcc{_( assert z <= x && z <= y )} says
+An annotation of the form \vcc{_( assert E )}, called an \emph{assertion}, asks VCC to prove that
+\vcc{E} is guaranteed to hold\footnote{
+  In C parlance, this means evaluating to a value other than \vcc{0}.
+} whenever control reaches this assertion \footnote{
+  This interpretation changes slightly if \vcc{E} refers to
+  memory locations that might be concurrently written to by other
+  theads; see section \secref{concurrency}}.  
+Thus, the line \lstinline|_( assert z <= x && z <= y )| says
 that when control reaches the assertion, \vcc{z} is no larger than \vcc{x} or
-\vcc{y}. 
-To verify this function using VCC save the source in a file called \lstinline|minimum.c|
-and then run:
+\vcc{y}. If VCC verifies a program, it promises that all such assertions
+hold in \emph{every} possible execution of the program, considering all possible inputs,
+all possible ways of scheduling concurrent threads, etc. 
+% The following doesn't really clarify much
+%% An \Def{execution} is a complete recording of all actions made by the program:
+%% which branches were taken, what values were read and stored in memory
+%% and so forth.
+%% For a deterministic program, once you fix input data (\eg by saying in this and that
+%% microsecond the user is going to click at that pixel and so forth),
+%% you fix the execution.
+%% An assertion causes VCC to try to \emph{prove} that \vcc{E} holds for \emph{all}
+%% executions.
+\footnote{
+It is instructive to compare \vcc{_( assert E )} with the macro
+\lstinline|assert(E)| (defined in \lstinline|<assert.h>|), which
+evaluates \vcc{E}  at runtime and aborts execution if \vcc{E}
+doesn't hold. First, |assert(E)| requires runtime overhead (at least
+in builds where the check is made), whereas \vcc{_( assert E )} does
+not. Second, \lstinline|assert(E)| will catch failure of the 
+assertion only when it actually fails in an execution, whereas 
+\vcc{_( assert E )} is guaranteed to catch the failure if it is
+possible in \emph{any} execution. Third, because VCC doesn't have to
+actually execute \vcc{_( assert E )}, it allows \vcc{E} to include
+mathematical operations that cannot be executed, such as
+quantification over infinite domains.
+}.
+
+To verify this function using VCC from the command line, save the source in a file called \lstinline|minimum.c|
+and run VCC as follows:
 
 \begin{lstlisting}
 C:\Somewhere\VCC Tutorial> vcc.exe minimum.c
@@ -48,17 +61,16 @@ Verification of main succeeded.
 C:\Somewhere\VCC Tutorial>
 \end{lstlisting}
 
-If you wish to use VCC Visual Studio plugin, load the solution \lstinline|VCCTutorial.sln|
-(which is distributed with VCC),
+If instead you wish to use VCC Visual Studio plugin, load the solution \lstinline|VCCTutorial.sln|
+(distributed with VCC), 
 \itodo{
 This isn't yet true. The samples are available only with VCC sources, available from
 \url{http://vcc.codeplex.com/SourceControl/list/changesets}: click Download on the right,
 get the zip file and navigate to \lstinline|vcc/Docs/Tutorial/c|.
 }
 \todo{we need to package the examples, but only after it is clear which ones are included in the tutorial}
-locate the file with the example and right-click on the program text.
-You should get options to verify the file or just this function.
-Either one should work.
+locate the file with the example, and right-click on the program text.
+You should get options to verify the file or just this function (either will work).
 
 \begin{note}
 If you right-click within a C source file,
@@ -70,16 +82,18 @@ checking admissibility for that type (a concept explained in \secref{admissibili
 If you click within the body of a function, VCC should offer
 you the opportunity to verify just that function. However,
 IntelliSense often gets confused about the syntactic structure of
-VCC code, so it may not give these context-dependent
+VCC code, so it might not always present these context-dependent
 options. However, if you select the name of a function and then right
 click, it will allow you to verify just that function.
 \end{note}
 
-VCC verifies this function successfully which means that this assertion
-is indeed correct (and that, in addition, the program cannot
-crash). If VCC is unable to prove such an assertion, it reports an
-error. Try changing the assertion in this program to something that
-isn't true and see what happens.
+VCC verifies this function successfully, which means that its assertions
+are indeed guaranteed to hold (and that, in addition, the program cannot
+crash). If VCC is unable to prove an assertion, it reports an
+error.  Try changing the assertion in this program to something that
+isn't true and see what happens. (You might also want to try coming up
+with some complex assertion that is true, just to see whether VCC is
+smart enought to prove it.)
 
 Assertions, like all VCC annotations, 
 are surrounded by \vcc{_( ... )} to indicate that they are
@@ -111,8 +125,8 @@ which means additional annotations are necessary.
 
 When VCC surprises you by failing to verify something that you think
 it should be able to verify, it is usually because it doesn't know
-something you thought it should. An assertion provides a simple way to
-check whether VCC knows what you think it should know.
+something you thought it should. An assertion provides one way to
+check whether VCC knows what you think it should know.  
 
 You can add to what VCC knows at a particular point by adding an
 \emph{assumption}.
@@ -129,8 +143,10 @@ y = 100 / x;
 Without the assumption, VCC would complain about possible division by
 zero (it checks for division by zero because it would cause the
 program to crash).  With the assumption, this error cannot happen.
-In a sense, you can think that a failed assumption makes the program
-stop for the purpose of verification.
+An assumption essentially tells VCC to ignore all of those executions
+where the assumption fails to hold; thus, when VCC succesfully
+verifies a program, it promises that in every execution where no
+assumption fails, no assertion will fail either.
 Of course assumptions, like all annotations, are not included in the executable, so
 if an assumption fails the program doesn't stop and the following assertion might get violated.
 Thus, you normally want to verify your program without any assumptions.
@@ -193,7 +209,7 @@ succeeds would have no effect on whether later assertions succeed.
 VCC's ability to deduce consequences is indeed complete for many types
 of expressions (e.g. expressions that use only equalities,
 inequalities, addition, subtraction, multiplication by constants, and
-logical operators), but not for all expressions, and VCC will
+logical operators), but not for all expressions, so VCC will
 sometimes fail to prove an assertion, even though it ``knows'' enough
 to prove it.  
 
@@ -202,7 +218,7 @@ Because VCC's reasoning is incomplete\footnote{Note that this
   false failure reports, but cannot cause VCC to verify a program that
   is not correct.}, an assertion that succeeds can sometimes cause
 later assertions to succeed, by drawing VCC's attention to a crucial
-lemma it needs to prove the later assertion.  This is relatively rare,
+fact it needs to prove the later assertion.  This is relatively rare,
 and typically involves ``nonlinear arithmetic'' (e.g. where variables
 are multiplied together), bitvevtor reasoning, or quantifiers. We'll
 say more about these in \secref{TODO}.
@@ -228,13 +244,23 @@ and
 _( assume q ) _( assume p )
 \end{VCC}
 ? What about if the assumptions are replaced by assertions?
+\item
+Is there any difference between
+\begin{VCC}
+_( assume p ) _( assert q )
+\end{VCC}
+and 
+\begin{VCC}
+_( assert p ==> q )
+\end{VCC}
+? 
 \end{enumerate}
 
 
 \section{Function specifications}
 \label{sect:functions}
 
-Now we turn to the specification of functions. We'll take the example
+Next we turn to the specification of functions. We'll take the example
 from the previous section, and pull the computation of the miminum of
 two numbers out into a separate function:\todo{match with the previous programs}
 
@@ -245,14 +271,12 @@ of VCC, typeset in a different font and color, and
 the actual file name of the example is replaced with \vcc{/*`testcase`*/}.)
 VCC failed to prove our assertion, even though it's easy to see that
 it always holds. This is because the verification is modular: VCC
-doesn't look inside the body of \vcc{min()} when verifying \vcc{main()}.%
-\footnote{
-  If VCC did look into \vcc{min()} when verifying \vcc{main()}
-  then in general we would quickly run into scalability problems.
-  We will see later how to selectively override this default and perform such inlining during verification.
-}
-Or to put it differently, VCC doesn't know anything about what the
-\vcc{min()} function does, unless you specify it explicitly%
+doesn't look inside the body of a function (such as \vcc{min()}) 
+when verifying a function that calls it (such as \vcc{main()})%
+\footnote{We will see later how to selectively override this default
+  and perform such inlining during verification.}.  
+That is, VCC doesn't ``know'' anything about the effect of calling 
+\vcc{min()}, unless you specify it explicitly%
 \footnote{
   Actually, VCC does know one important thing from this specification
   of \vcc{min()}: it knows that a call do \vcc{min()} has no side
@@ -262,10 +286,24 @@ Or to put it differently, VCC doesn't know anything about what the
 Since the correctness of \vcc{main()} clearly depends on what \vcc{min()}
 does, we need to specify \vcc{min()} in order to verify \vcc{main()}.
 
+\begin{note}
+There are at least three good reasons to use modular
+verification. First, it allows verification to more easily scale to
+large programs. Second, it allows you to modify the implementation of
+a function like \vcc{min()} without having to worry about breaking the
+verification of functions that call it (as long as you don't change
+the specification of \vcc{min()}). This is especially important
+because these callers normally aren't in scope, and the person
+maintaining \vcc{min()} might not even know about them (e.g., if
+\vcc{min()} is in a library). Third, you can verify a function like
+\vcc{main()} even if the implementation of \vcc{min()} is unavailable, or
+perhaps hasn't even been written yet. 
+\end{note}
+
 The specification of a function is sometimes called a \emph{contract},
-because it specifies obligations on both the function and its caller:
+because it gives obligations on both the function and its callers:
 \begin{itemize}
-\item The requirement on the caller (sometimes called the
+\item The requirements on the caller (sometimes called the
   \emph{precondition} of the function) take the form 
   \vcc{_( requires E )}, 
   where \vcc{E} is an expression%
@@ -278,7 +316,7 @@ because it specifies obligations on both the function and its caller:
   implicitly asserts \vcc{E} (after the function arguments have been
   evaluated and bound to the parameter names).
 
-\item The requirement on the function (sometimes called the
+\item The requirement on the function  (sometimes called the
   \emph{postcondition} of the function) takes the form
   \vcc{_( ensures E )}, where \vcc{E} is an expression; this says that
   the function promises that \vcc{E} holds when control is returned to
@@ -296,17 +334,16 @@ For example, we can provide a suitable specification for \vcc{min()} as
 follows:
 \vccInput[linerange={min-endmin,out-}]{c/01_min3.c}
 \noindent
-The precondition \vcc{_( requires \true )} of \vcc{min()} really doesn't say
-\todo{Make sure the example says true with backslash}
-anything (since \vcc{\true} holds in every state), and is included
-only to emphasize that the function can be called from any state and
-with arbitrary input values.
+The precondition \vcc{_( requires \true )} of \vcc{min()} doesn't
+really say anything (since \vcc{\true} holds in every state), but is included
+to emphasize that the function can be called from any state and
+with arbitrary parameter values.
 The postcondition states that the value returned from \vcc{min()} 
 is no bigger than either of the inputs.
 Note that \vcc{\true} and \vcc{\result} are spelled with a backslash
 to avoid clash with C identifiers.
-All VCC keywords, which can be used in expressions, start with a backslash.
-This does not apply to the first keyword after \vcc{_}, because it cannot
+All VCC keywords start with a backslash.
+The backslash can optionally be omitted on the first keyword after \vcc{_}, because it cannot
 be confused with a C identifier (thus you are still free to have, \eg
 a function called \texttt{requires} or \texttt{assert}).
 
@@ -314,11 +351,12 @@ As described above, VCC translates the program roughly as follows:
 \vccInput{c/01_min_assert.c}
 
 \begin{note}
-The assumptions introduced implicitly by VCC are balanced by assertions
-introduced elsewhere.
-This is why they do not compromise soundness of the verifier,
-\ie the proof of correctness of the entire program implies
-that also the assumptions will never fail.
+The assumptions introduced implicitly by VCC at function entry and
+after the function return are justified by the assertions
+introduced before the function call and before the function return, respectively.
+This is why they do not compromise soundness of the verifier;
+\ie if the entire program verifies, then 
+these assumptions will never fail at runtime.
 \end{note}
 
 As for call itself, because the \vcc{min()} function above has no
@@ -337,82 +375,107 @@ position = anything();
 that is assigning an unspecified value to the variable \vcc{position}.
 The only knowledge about it comes from the following assumption.
 
-\todo{put this into an exercise}
-One way to illustrate that the verification of \vcc{main()} 
-depends only on the specification of \vcc{min()} is to 
-replace \vcc{<} with \vcc{>} in the return statement of \vcc{min()}.
-The output of verification shows that \vcc{main()} is still correct---only 
-\vcc{min()} is broken:
-\vccInput[linerange={out-}]{c/01_min4.c}
+\subsection{Exercises}
+\begin{enumerate}
+\item
+Try replacing the \vcc{<} in the return statement of \vcc{min()} with
+\vcc{>}. Before running the verifier, can you guess which parts of the
+verification will fail?
+%% One way to illustrate that the verification of \vcc{main()} 
+%% depends only on the specification of \vcc{min()} is to 
+%% replace \vcc{<} with \vcc{>} in the return statement of \vcc{min()}.
+%% The output of verification shows that \vcc{main()} is still correct---only 
+%% \vcc{min()} is broken:
+%% \vccInput[linerange={out-}]{c/01_min4.c}
 
-\todo{put this into an exercise also}
-Let's also consider the meaning of \vcc{_( requires \false )}.
-When verifying function body it translates to an assumption.
-As we have noted this will make the body of function verify,
-regardless what it contains.
-On the other hand, you will be unable to verify call to such a function
-from outside.
-Conversely, \vcc{_( ensures \false )} will prevent verification
-of the body of the function, but will make the function that calls
-it verify.
+\item
+What is the effect of giving a function the specification
+\vcc{_( requires \false )} ? How does it effect verification of
+the function itself? What about its callers? Can you think of a good 
+reason to use such a specification?
+%% When verifying function body it translates to an assumption.
+%% As we have noted this will make the body of function verify,
+%% regardless what it contains.
+%% On the other hand, you will be unable to verify call to such a function
+%% from outside.
+%% Conversely, \vcc{_( ensures \false )} will prevent verification
+%% of the body of the function, but will make the function that calls
+%% it verify.
 
-As we can see, in each case there is something that does not verify.
-However, because of this you should be careful when interpreting
-VCC answers: successful verification of a function is only meaningful
-if everything it calls was verified.
+%% As we can see, in each case there is something that does not verify.
+%% However, because of this you should be careful when interpreting
+%% VCC answers: successful verification of a function is only meaningful
+%% if everything it calls was verified.
 
+\item
+Can you see anything wrong with the above specification of\vcc{min()}?
+Can you give a simpler implementation than the one presented? Is this 
+specification strong enough to be useful? If not, how might it be
+strengthened to make it more useful?
+
+\item
+Specify a function that returns the (int) square root of its (int)
+argument. (You can try writing an implementation for the function, but
+won't be able to verify it until you've learned about loop
+invariants.)
+
+\item
+Can you think of useful functions in a real program that might
+legitimately guarantee only the trivial postcondition \vcc{_( ensures \true )}?
+\end{enumerate}
 \subsection{Write clauses}
 \label{sect:writes}
 
-So far, we have considered only functions without side effects; for
+So far, we have considered only functions without visible side edfects; for
 example, we assumed that the call to \vcc{min()} didn't have the side
 effect of changing the local variables of \vcc{main()}. The
 translation above captured this requirement implicitly, by allowing a
 \vcc{main()} to call \vcc{min()} without losing any of its prior
-knowledge. VCC requires that any side effects of a function that might
-be visible to the caller (in the sense of destroying knowledge that
-the caller might have) must be explicitly declared in the
-specification of the function. Side effects to state that the caller
-cannot possibly know about (e.g., local variables of the called function
-body) do not have to be reported. 
+knowledge. VCC requires each function specification to declare any side
+effects of the function that might destroy knowledge that
+the caller might have had coming into the call. However, it need not
+declare side effects to the state that the caller
+could not possibly know about (e.g., modification to data allocated
+after the beginning of the call). 
 %(We will see in section \ref{} that
 %VCC only allows the caller to know very specific things, which allows
 %the function to do other things with global side effects without
 %having to report them.)
 
-In VCC, you declare that a function might have a visible side effect
-by means of a \emph{writes clause}. 
+In VCC, the destruction of knowledge of the caller is specified 
+by means of \emph{writes clauses}. 
 Intuitively, a clause \vcc{_( writes p, q )} is equivalent to saying
-that the function is going to modify \emph{only} objects pointed to by \vcc{p}
-and objects pointed to by \vcc{q}.
+that of the memory objects ``local'' to the caller before the call,
+the function is going to modify \emph{only} the object pointed to by \vcc{p}
+and the object pointed to by \vcc{q}.
 In other words, it is the same as having an ensures clause
-saying that everything the caller might know about, other than 
-\vcc{*p} and \vcc{*q}, stays unchanged. VCC allows you
+saying that the values of all other objects local to the caller prior
+to the call remain unchanged.  VCC allows you
 to specify pointers in separate writes clauses, and implicitly
 combines them into a single set. If a function spec contains no writes clauses, 
-it is equivalent to specifying a writes clause with empty set of pointers.
+it is equivalent to specifying a writes clause with empty set of
+pointers.
 
 Here is a simple example of a function that has visible side effects:
 \vccInput[linerange={swap-partition}]{c/04_partition.c}
 
 \noindent
-The expression \vcc{\old(*p)}, when used in a postcondition of a function,
-returns the value of expression \vcc{*p}
+The expression \vcc{\old(E)}, when used in a postcondition of a function,
+returns the value of expression \vcc{E}
 as it was at just before the function was called. 
 Thus, the postcondition means that the value of \vcc{*p} after the call
-is the same as the value of \vcc{*q} before the call and \emph{vice versa}.
+is the same as the value of \vcc{*q} before the call, and \emph{vice versa}.
 
-Now, let's have a look at a function calling \vcc{swap()}.
+Now, let's have a look at a function calling \vcc{swap()}:
 
 \vccInput[linerange={foo-}]{c/01_swap1.c}
 
-Because global variables (like \vcc{x}) are visible to the possible callers
-of \vcc{foo()}, \vcc{foo()} needs to report that it is going to write
-them.
+Because global variables (like \vcc{x}) might be visible to callers
+of \vcc{foo()}, \vcc{foo()} needs to report that they might change.
 Note that the writes clause lists pointers to memory locations, not l-values
 (\ie \vcc{_(writes &x, &y, &z)} and not \vcc{_(writes x, y, z)}).
 Note also that because \vcc{&z} aliases neither \vcc{&x} nor \vcc{&y}, VCC can
-know that \vcc{swap(&x, &y)} does not change \vcc{z}.
+deduce that \vcc{swap(&x, &y)} does not change \vcc{z}.
 
 Had we left out the writes clause from the specification of
 \vcc{swap()}, VCC would report an error:
@@ -424,8 +487,8 @@ The complaints about thread-locality refer to the places where the function
 reads \vcc{*p} and \vcc{*q}. 
 Reading memory doesn't necessarily require a writes clause (since it can't
 destroy knowledge of the caller), but it can still be unsafe. 
-For example, the pointer might point to memory that has been freed, or to
-memory that is lock-protected or owned by another thread. 
+For example, the pointer might point to memory that has been freed, 
+lies outside of the address space of the program, or is owned by another thread. 
 For these (and other) reasons VCC implicitly
 asserts \vcc{\thread_local(p)} just before any read access to \vcc{*p};
 this predicate means that that the pointer points to an object that
@@ -443,7 +506,13 @@ the writes set as being the set of objects named in the writes clause,
 along with those objects that the thread has gotten control of since
 entry of the function; we will see how this can happen in \secref{invariants}.)
 \end{itemize}
-For example, the assert/assume translation of \vcc{swap()} is:
+For example, the assert/assume translation of \vcc{swap()} is%
+\footnote{
+  VCC does not generate the read and writes checks for the local variable
+  \vcc{tmp}. Because \vcc{tmp} is a local that never has its address
+  taken, it can be thought of as remaining in a register, where it is
+  guaranteed to remain in writable.
+}:
 
 \vccInput[linerange={swap-}]{c/01_swap3.c}
 
@@ -453,9 +522,11 @@ precondition \vcc{requires \writable(p) && \writable(q)}. Such precondition
 needs to be checked in \vcc{foo()}, at the place where it calls \vcc{swap()}.
 In other words, the called function can write at most what the caller can write.
 In particular if we forget to list \vcc{&x} in the writes
-clause of \vcc{foo()} we will get:
+clause of \vcc{foo()} we would get an error when it tries to call a
+function that possibly writes \vcc{&x}:
 
 \vccInput[linerange={out-}]{c/01_swap4.c}
+
 
 %% You might wonder why cannot we just have 
 %% \vcc{requires \writable(p)} and instead have the specialized writes clause.
