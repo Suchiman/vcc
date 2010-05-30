@@ -254,6 +254,8 @@ void heapSort(int *arr, unsigned len // R
   unsigned i; // R
   spec( idxseq_t indexes[int]; )
 
+  assert(forall(unsigned i; i < len; mutable(arr+i)));
+
   init(&h); // R
 
   for (i = 0; i < len; ++i) // R
@@ -266,8 +268,6 @@ void heapSort(int *arr, unsigned len // R
     insert(&h, arr[i]); // R
     speconly( indexes[arr[i]][h.abs[arr[i]] - 1] = i; )
   }
-
-  assume(is_mutable_array(arr, len)); // TODO // A
 
   for (i = 0; i < len; ++i) // R
     writes(&h, array_range(arr, len))
