@@ -4501,6 +4501,24 @@ namespace Microsoft.Research.Vcc {
     }
 
     internal readonly Token Token;
+
+    public string ToVccAttribute() {
+      switch (this.Token) {
+        case Parsing.Token.SpecClaimable:
+          return "claimable";
+        case Token.SpecDynamicOwns:
+          return "dynamic_owns";
+        case Token.SpecVolatileOwns:
+          return "volatile_owns";
+        case Token.SpecPure:
+          return "is_pure";
+        case Token.SpecAtomicInline:
+          return "atomic_inline";
+        default:
+          throw new NotImplementedException();
+      }
+    }
+
   }
 
   public class PrimitiveTypeSpecifier : Specifier {

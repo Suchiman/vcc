@@ -837,6 +837,7 @@ namespace Microsoft.Research.Vcc
                                     "\\extent",             "_vcc_extent";
                                     "\\alloc",              "_vcc_alloc";
                                     "\\mutable",            "_vcc_mutable";
+                                    "\\fresh",              "_vcc_is_fresh";
                                     "\\consistent",         "_vcc_closed";
                                     "\\array_range",        "_vcc_array_range";
                                     "\\span",               "_vcc_span";

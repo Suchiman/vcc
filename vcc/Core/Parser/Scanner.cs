@@ -2071,7 +2071,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// __writes
     /// </summary>
     Writes,
-
     /// <summary>
     /// assert, context-dependent
     /// </summary>
@@ -2084,6 +2083,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// atomic, context-dependent
     /// </summary>
     SpecAtomic,
+    /// <summary>
+    /// atomic_inline, context-dependent
+    /// </summary>
+    SpecAtomicInline,
     /// <summary>
     /// axiom, context-dependent
     /// </summary>
@@ -2302,7 +2305,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       Keyword/*?*/[] keywords = new Keyword/*?*/[26];
       Keyword keyword;
 
-      keyword = new Keyword(Token.SpecAtomic, "atomic");
+      keyword = new Keyword(Token.SpecAtomicInline, "atomic_inline");
+      keyword = new Keyword(Token.SpecAtomic, "atomic", keyword);
       keyword = new Keyword(Token.SpecAssume, "assume", keyword);
       keyword = new Keyword(Token.SpecAssert, "assert", keyword);
       keyword = new Keyword(Token.SpecAxiom, "axiom", keyword); 
