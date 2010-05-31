@@ -1,10 +1,10 @@
 #include <vcc.h>
 #include <limits.h>
 
-vcc(atomic_inline) unsigned InterlockedCompareExchange(volatile unsigned *Destination, unsigned Exchange, unsigned Comparand) {
+_(atomic_inline) unsigned InterlockedCompareExchange(volatile unsigned *Destination, unsigned Exchange, unsigned Comparand) {
   if (*Destination == Comparand) {
     *Destination = Exchange;
-    return Comparand;
+    return Comparand;	
   } else {
     return *Destination;
   }
@@ -23,7 +23,7 @@ struct RefCnt {
 /*{init}*/
 void init(struct RefCnt *r _(ghost \object rsc))
   _(writes \span(r), rsc)
-  _(requires \wrapped0(rsc) && \claimable(rsc))
+  _(requires \wrapped(rsc) && \claimable(rsc) && \claim_count(rsc) == 0)
   _(ensures \wrapped(r) && r->resource == rsc)
 {
   r->cnt = 0;
@@ -32,10 +32,10 @@ void init(struct RefCnt *r _(ghost \object rsc))
 }
 /*{incr}*/
 int try_incr(struct RefCnt *r _(ghost \claim c) 
-             _(ghost out \claim ret))
+             _(	out \claim ret))
   _(always c, \consistent(r))
   _(ensures \result == 0 ==> 
-     \claims_obj(ret, r->resource) && \wrapped0(ret) && 
+     \claims_obj(ret, r->resource) && \wrapped(ret) && \claim_count(ret) == 0 &&
      \fresh(ret))
 {
   unsigned v, n;
@@ -57,14 +57,14 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
 /*{decr}*/
 void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
   _(always c, \consistent(r))
-  _(requires \claims_obj(handle, r->resource) && \wrapped0(handle))
+  _(requires \claims_obj(handle, r->resource) && \wrapped(handle) && \claim_count(handle) == 0)
   _(requires c != handle)
   _(writes handle)
 {
   unsigned v, n;
 
   for (;;)
-    _(invariant \wrapped(c) && \wrapped0(handle))
+    _(invariant \wrapped(c) && \wrapped(handle) && \claim_count(handle) == 0)
   {
     _(atomic c, r) {
       v = r->cnt;
@@ -85,11 +85,11 @@ void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
 }
 /*{use}*/
 _(claimable) struct A {
-  volatile int x;
+  volatile int x;	
 };
 
 struct B {
-  struct RefCnt rc;
+  struct RefCnt rc;	
   struct A a;
   _(invariant \mine(&rc))
   _(invariant rc.resource == &a)
@@ -99,7 +99,7 @@ void useb(struct B *b _(ghost \claim c))
   _(always c, \consistent(b))
 {
   _(ghost \claim ac;)
-  if (try_incr(&b->rc _(ghost c) _(ghost out ac)) == 0) {
+  if (try_incr(&b->rc _(ghost c) _(out ac)) == 0) {
     _(atomic &b->a, ac) {
       b->a.x = 10;
     }
@@ -109,7 +109,7 @@ void useb(struct B *b _(ghost \claim c))
 /*{enduse}*/
 
 void initb(struct B *b)
-  _(writes extent(b))
+  _(writes \extent(b))
   _(ensures \wrapped(b))
 {
   b->a.x = 7;
@@ -120,4 +120,11 @@ void initb(struct B *b)
 
 /*{out}*/
 /*`
+Verification of RefCnt#adm succeeded.
+Verification of B#adm succeeded.
+Verification of init succeeded.
+Verification of try_incr succeeded.
+Verification of decr succeeded.
+Verification of useb succeeded.
+Verification of initb succeeded.
 `*/

@@ -13,9 +13,9 @@ typedef _(claimable) struct R
 
 void foo() {
   struct T *t = (struct T *)malloc(sizeof(struct T));
-  _(assert t == NULL || \is_claimable(\typeof(t)))
+  _(assert t == NULL || \claimable(t))
   struct R *r = (struct R *)malloc(sizeof(struct R));
-  _(assert r == NULL || \is_claimable(\typeof(r)))
+  _(assert r == NULL || \claimable(r))
 }
 /*`
 Verification of foo succeeded.
