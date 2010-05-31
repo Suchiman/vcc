@@ -67,6 +67,10 @@ _(bool \ghost(\object);)
 
 _(ghost extern const \thread \me;)
 
+// 'Built-in' spec macros
+
+_(bool \macro_maintains(bool cond) _(requires cond) _(ensures cond);)
+
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
 _(void \wrap(\object);)
