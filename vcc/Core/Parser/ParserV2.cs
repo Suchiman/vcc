@@ -100,6 +100,7 @@ namespace Microsoft.Research.Vcc.Parsing
         case Token.SpecDynamicOwns:
         case Token.SpecClaimable:
         case Token.SpecVolatileOwns:
+        case Token.SpecAtomicInline:
           specifiers.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
           this.GetNextToken();
           break;
@@ -113,7 +114,7 @@ namespace Microsoft.Research.Vcc.Parsing
       while (this.currentToken != Token.RightParenthesis) {
         this.ParseSpecTypeModifier(specifiers, followers | Token.Comma | Token.RightParenthesis);
         if (this.currentToken != Token.Comma) break;
-        this.GetNextToken();
+        this.GetNextToken(true);
       }
     }
 
@@ -219,13 +220,6 @@ namespace Microsoft.Research.Vcc.Parsing
               this.resultIsAKeyword = false;
               postcond = this.CheckedExpressionIfRequested(postcond);
               contract.AddPostcondition(new Postcondition(postcond, postcond.SourceLocation));
-              break;
-            case Token.SpecMaintains:
-              this.GetNextToken();
-              var inv = this.ParseExpression(followers | Token.RightParenthesis);
-              inv = this.CheckedExpressionIfRequested(inv);
-              contract.AddPrecondition(new Precondition(inv, null, inv.SourceLocation));
-              contract.AddPostcondition(new Postcondition(inv, inv.SourceLocation));
               break;
             case Token.SpecWrites:
               this.GetNextToken();
@@ -533,12 +527,12 @@ namespace Microsoft.Research.Vcc.Parsing
 
     private static class STS {
       public static TokenSet SimpleSpecStatment = new TokenSet() | Token.SpecWrap | Token.SpecUnwrap | Token.SpecGhost | Token.SpecAssume | Token.SpecAssert;
-      public static TokenSet FunctionOrBlockContract = new TokenSet() | Token.SpecEnsures | Token.SpecMaintains | Token.SpecReads | Token.SpecRequires | Token.SpecDecreases | Token.SpecWrites;
+      public static TokenSet FunctionOrBlockContract = new TokenSet() | Token.SpecEnsures | Token.SpecReads | Token.SpecRequires | Token.SpecDecreases | Token.SpecWrites;
       public static TokenSet LoopContract = new TokenSet() | Token.SpecInvariant | Token.SpecWrites | Token.SpecDecreases;
       public static TokenSet SpecParameter = new TokenSet() | Token.SpecGhost | Token.SpecOut;
       public static TokenSet TypeMember = new TokenSet() | Token.SpecGhost | Token.SpecInvariant;
       public static TokenSet Global = new TokenSet() | Token.SpecAxiom | Token.SpecGhost | Token.SpecPure;
-      public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns;
+      public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns | Token.SpecAtomicInline;
     }
   }
 }

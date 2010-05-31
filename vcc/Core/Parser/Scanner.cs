@@ -2120,10 +2120,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SpecIs,
     /// <summary>
-    /// maintains, context-dependent
-    /// </summary>
-    SpecMaintains,
-    /// <summary>
     /// pure, context-dependent
     /// </summary>
     SpecPure,
@@ -2327,9 +2323,6 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       keyword = new Keyword(Token.SpecInvariant, "invariant");
       keywords['i' - 'a'] = keyword;
-
-      keyword = new Keyword(Token.SpecMaintains, "maintains");
-      keywords['m' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecPure, "pure");
       keywords['p' - 'a'] = keyword;
