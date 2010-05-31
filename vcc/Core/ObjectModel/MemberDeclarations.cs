@@ -264,22 +264,7 @@ namespace Microsoft.Research.Vcc {
             var attrTypeName = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(containingExpression.ContainingBlock.Compilation.NameTable, "StringVccAttr");
             AttributeTypeExpression attrType = new AttributeTypeExpression(attrTypeName);
             List<Expression> args = new List<Expression>();
-            switch (specTokenSpec.Token) {
-              case Token.SpecClaimable:
-                args.Add(new CompileTimeConstant("claimable", specTokenSpec.SourceLocation));
-                break;
-              case Token.SpecDynamicOwns:
-                args.Add(new CompileTimeConstant("dynamic_owns", specTokenSpec.SourceLocation));
-                break;
-              case Token.SpecVolatileOwns:
-                args.Add(new CompileTimeConstant("volatile_owns", specTokenSpec.SourceLocation));
-                break;
-              case Token.SpecPure:
-                args.Add(new CompileTimeConstant("is_pure", specTokenSpec.SourceLocation));
-                break;
-              default:
-                throw new NotImplementedException();
-            }
+            args.Add(new CompileTimeConstant(specTokenSpec.ToVccAttribute(), specTokenSpec.SourceLocation));
             args.Add(new CompileTimeConstant("", specTokenSpec.SourceLocation));
             SourceCustomAttribute custAttr = new SourceCustomAttribute(AttributeTargets.All, attrType, args, specTokenSpec.SourceLocation);
             custAttr.SetContainingExpression(containingExpression);
@@ -1137,70 +1122,67 @@ namespace Microsoft.Research.Vcc {
     internal void AddPostcondition(Postcondition postcondition) {
       if (this.Postconditions == null) {
         this.Postconditions = new List<Postcondition>();
+        this.HasContract = true;
       }
       this.Postconditions.Add(postcondition);
-      this.HasContract = true;
     }
 
     internal void AddPrecondition(Precondition precondition) {
       if (this.Preconditions == null) {
         this.Preconditions = new List<Precondition>();
+        this.HasContract = true;
       }
       this.Preconditions.Add(precondition);
-      this.HasContract = true;
     }
 
     internal void AddReads(Expression reads) {
       if (this.Reads == null) {
         this.Reads = new List<Expression>();
+        this.HasContract = true;
       }
       this.Reads.Add(reads);
-      this.HasContract = true;
     }
 
     internal void AddReads(IEnumerable<Expression> reads) {
       if (this.Reads == null) {
         this.Reads = new List<Expression>();
+        this.HasContract = true;
       }
       this.Reads.AddRange(reads);
-      this.HasContract = true;
     }
-
 
     internal void AddWrites(Expression writes) {
       if (this.Writes == null) {
         this.Writes = new List<Expression>();
+        this.HasContract = true;
       }
       this.Writes.Add(writes);
-      this.HasContract = true;
     }
 
     internal void AddWrites(IEnumerable<Expression> writes) {
       if (this.Writes == null) {
         this.Writes = new List<Expression>();
+        this.HasContract = true;
       }
       this.Writes.AddRange(writes);
-      this.HasContract = true;
     }
 
     internal void AddMethodVariant(MethodVariant variant)
     {
-      if (this.Variants == null)
-      {
+      if (this.Variants == null)  {
         this.Variants = new List<MethodVariant>();
+        this.HasContract = true;
       }
       this.Variants.Add(variant);
-      this.HasContract = true;
     }
 
     internal void AddMethodVariants(IEnumerable<MethodVariant> variants)
     {
-      if (this.Variants == null)
-      {
+      if (this.Variants == null) {
         this.Variants = new List<MethodVariant>();
+        this.HasContract = true;
       }
       this.Variants.AddRange(variants);
-      this.HasContract = true;
     }
 
     internal bool HasContract;
