@@ -831,6 +831,7 @@ namespace Microsoft.Research.Vcc
                                     "\\embedding",          "_vcc_emb";
                                     "\\domain",             "_vcc_domain";
                                     "\\valid",              "_vcc_typed2";
+                                    "\\valid_claim",        "_vcc_valid_claim";
                                     "\\ghost",              "_vcc_is_ghost_ptr";
                                     "\\wrap",               "_vcc_wrap";
                                     "\\wrapped",            "_vcc_wrapped";
@@ -845,7 +846,9 @@ namespace Microsoft.Research.Vcc
                                     "\\thread_local",       "_vcc_thread_local2";
                                     "\\thread_local_array", "_vcc_is_thread_local_array";
                                     "\\free",               "_vcc_free";
+                                    "\\claims",             "_vcc_claims";
                                     "\\claims_obj",         "_vcc_claims_obj";
+                                    "\\claims_claim",       "_vcc_claims_claim";
                                     "\\is_claimable",       "_vcc_is_claimable";
                                     "\\make_claim",         "_vcc_claim";
                                     "\\active_claim",       "_vcc_valid_claim";
@@ -889,6 +892,13 @@ namespace Microsoft.Research.Vcc
           | Macro(ec, "\\is", [arg;UserData(_, (:? Type as t))]) -> Some(Macro(ec, "_vcc_is", [self arg; typeExpr t]))
           | Ref(ec, {Name = "\\me"}) -> Some(Macro(ec, "_vcc_me", []))
           | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); e2]) -> Some(Macro({ec with Type = Type.Bogus}, "_vcc_set_owns", [self e1; self e2]))
+          | Macro(ec, "=", [Macro(_, "_vcc_owner", [e]); Cast(_, _, Ref(_, {Name = "\\me"}))]) 
+          | Macro(ec, "=", [Macro(_, "_vcc_owner", [e]); Ref(_, {Name = "\\me"})]) -> 
+            let (init, tmp) = cache helper "setOwner" (self e) VarKind.Local
+            let stmts = init @ [ Macro({ec with Type = Type.Bogus}, "_vcc_giveup_closed_owner", [tmp; Macro({e.Common with Type = Type.ObjectT}, "_vcc_owner", [tmp])]) ]
+            Some(Expr.MkBlock stmts)
+          | Macro(ec, "=", [Macro(_, "_vcc_owner", [e1]); e2])  ->
+            Some(Macro({ec with Type = Type.Bogus}, "_vcc_set_closed_owner", [self e1; self e2]))
           | _ -> None
 
       let mapFromNewSyntax = function

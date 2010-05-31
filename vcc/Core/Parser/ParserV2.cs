@@ -19,11 +19,6 @@ namespace Microsoft.Research.Vcc.Parsing
     : base(compilation, sourceLocation, scannerAndParserErrors) {
     }
 
-     protected override void AssociateTypeWithTypeContract(object type, List<FieldDeclaration> specFields, List<TypeInvariant> invariants, bool isSpecType) {
-       var tc = new VccTypeContractV2(specFields, invariants, isSpecType);
-       this.compilation.ContractProvider.AssociateTypeWithContract(type, tc);
-     }
-
     override protected bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {
       switch (typedefName.TypedefName.ToString()) {
         case "\\object":
@@ -86,6 +81,11 @@ namespace Microsoft.Research.Vcc.Parsing
         // do nothing
       } else this.SkipSemiColon(followers);
 
+    }
+
+    internal override void ParseCompilationUnit(GlobalDeclarationContainerClass globalContainer, List<INamespaceDeclarationMember> members) {
+      base.ParseCompilationUnit(globalContainer, members);
+      members.Add(VccExtensionFields.CreateInstance((VccCompilation)this.compilation));
     }
 
     protected override bool ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {

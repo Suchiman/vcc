@@ -3108,6 +3108,31 @@ namespace Microsoft.Research.Vcc {
       }
       return false;
     }
+
+    public override Expression/*?*/ Instance {
+      get {
+        ITypeDefinition/*?*/ qualifierType = this.Qualifier.Type;
+        if (qualifierType != null && TypeHelper.GetTypeName(qualifierType) == VccCompilationHelper.SystemDiagnosticsContractsCodeContractTypedPtrString)
+          return this.Qualifier;
+        return base.Instance;
+      }
+    }
+
+
+    protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType, bool ignoreAccessibility) {
+
+      if (this.SimpleName.Name.Value == "\\owner") {
+        return ((VccCompilation)this.Compilation).ExtensionFields["\\owner"].TypeDefinitionMember;
+      } else if (this.SimpleName.Name.Value == "\\owns") {
+        return ((VccCompilation)this.Compilation).ExtensionFields["\\owns"].TypeDefinitionMember;
+      }
+
+      return base.ResolveTypeMember(qualifyingType, ignoreAccessibility);
+    }
+      
+    
+  
+
   }
 
   public class VccPointerScopedName : PointerQualifiedName

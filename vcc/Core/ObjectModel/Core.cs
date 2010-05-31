@@ -123,6 +123,15 @@ namespace Microsoft.Research.Vcc {
     }
     IMethodDefinition/*?*/ voidSpecPtrOpVoidSpecPtr;
 
+    internal VccExtensionFields ExtensionFields {
+      get { return this.extensionFields; }
+      set { if (this.extensionFields != null) throw new InvalidOperationException();
+        this.extensionFields = value;
+      }
+    }
+
+    VccExtensionFields extensionFields;
+
     protected override List<CompilationPart> GetPartList() {
       return new List<CompilationPart>(this.parts);
     }
@@ -346,9 +355,9 @@ namespace Microsoft.Research.Vcc {
       : base(targetCompilation, template) {
     }
 
-    static readonly string SystemDiagnosticsContractsCodeContractTypedPtrString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".TypedPtr";
+    public static readonly string SystemDiagnosticsContractsCodeContractTypedPtrString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".TypedPtr";
     public static readonly string SystemDiagnosticsContractsCodeContractMapString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Map";
-    static readonly string SystemDiagnosticsContractsCodeContractBigIntString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigInt";
+    public static readonly string SystemDiagnosticsContractsCodeContractBigIntString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigInt";
     public static readonly string SystemDiagnosticsContractsCodeContractObjsetString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Objset";
 
     internal ITypeDefinition/*?*/ GetFixedArrayElementType(ITypeDefinition fixedSizeArray) {
