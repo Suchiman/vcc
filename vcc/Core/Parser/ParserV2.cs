@@ -315,16 +315,19 @@ namespace Microsoft.Research.Vcc.Parsing
     protected override List<Expression> ParseArgumentList(SourceLocationBuilder slb, Parser.TokenSet followers) {
       List<Expression> result = new List<Expression>();
       this.Skip(Token.LeftParenthesis);
-      if (this.currentToken != Token.RightParenthesis) {
-        while (this.currentToken != Token.RightParenthesis) {
-          if (this.currentToken == Token.Specification) {
-            result.Add(this.ParseSpecArgument(followers | Token.RightParenthesis));
-            continue;
-          }
-          result.Add(this.ParseArgumentExpression(followers | Token.RightParenthesis));
-          if (this.currentToken != Token.Comma) break;
-          this.GetNextToken();
+      while (this.currentToken != Token.RightParenthesis) {
+        if (this.currentToken == Token.Specification) {
+          result.Add(this.ParseSpecArgument(followers | Token.RightParenthesis));
+          continue;
         }
+        result.Add(this.ParseArgumentExpression(followers | Token.RightParenthesis));
+        if (this.currentToken == Token.Comma) {
+          this.GetNextToken();
+          continue;
+        }
+        if (this.currentToken == Token.Specification)
+          continue;
+        break;
       }
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       this.SkipOverTo(Token.RightParenthesis, followers);

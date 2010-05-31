@@ -849,8 +849,10 @@ namespace Microsoft.Research.Vcc
                                     "\\claims",             "_vcc_claims";
                                     "\\claims_obj",         "_vcc_claims_obj";
                                     "\\claims_claim",       "_vcc_claims_claim";
-                                    "\\is_claimable",       "_vcc_is_claimable";
+                                    "\\claim_count",        "_vcc_ref_cnt";
+                                    "\\claimable",          "_vcc_is_claimable";
                                     "\\make_claim",         "_vcc_claim";
+                                    "\\destroy_claim",      "_vcc_unclaim";
                                     "\\active_claim",       "_vcc_valid_claim";
                                     "\\inv",                "_vcc_inv";
                                     "\\inv2",               "_vcc_inv2";
@@ -870,10 +872,10 @@ namespace Microsoft.Research.Vcc
 
       let normalizeCalls = function
         | Top.TypeDecl(td) as decl ->
-          let normalizeCalls' self = function
+          let normalizeMine self = function
             | Call(ec, ({Name = "\\mine"} as fn), [], args) -> Some(Call(ec, fn, [], Expr.This({ec with Type = Type.MkPtrToStruct(td)}) :: List.map self args))
-            | _ -> None 
-          deepMapExpressions normalizeCalls' [decl] |> List.head
+            | _ -> None
+          deepMapExpressions normalizeMine [decl] |> List.head
         | decl -> decl
 
       let removeGlobalMe = 
@@ -884,6 +886,14 @@ namespace Microsoft.Research.Vcc
         | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\domain"}, [], [e2])])
           -> Some(Macro(ec, "_vcc_in_domain", [self e1; self e2]))
         | _ -> None
+
+      let normalizeSignatures self =
+        let selfs = List.map self
+        function
+          | Call(ec, ({Name = "\make_claim"} as fn), [], [Macro(_, "set", elems); cond]) -> Some(Call(ec, fn, [], selfs elems @ [cond]))
+          | Call(ec, ({Name = "\destroy_claim"} as fn), [], [cl; Macro(_, "set", elems)]) -> Some(Call(ec, fn, [], selfs (cl :: elems)))
+          | Call(ec, ({Name = "\claimable"} as fn), [], [e]) -> Some(Call(ec, fn, [], [Macro({e.Common with Type = Type.TypeIdT}, "_vcc_typeof", [self e])]))
+          | _ -> None
 
       let normalizeMisc self = 
         let selfs = List.map self
@@ -929,6 +939,7 @@ namespace Microsoft.Research.Vcc
           
       deepMapExpressions normalizeInDomain >> 
       List.map normalizeCalls >> 
+      deepMapExpressions normalizeSignatures >>
       List.map mapFromNewSyntax >> 
       removeGlobalMe >>
       deepMapExpressions normalizeMisc >> 

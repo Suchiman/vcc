@@ -58,8 +58,10 @@ _(\objset \domain(\object);)
 _(\type \typeof(\object);)
 _(bool \claims_obj(\claim, \object);)
 _(bool \claims_claim(\claim, \claim);)
-_(bool \is_claimable(\type);)
-_(\claim \make_claim(\object, ...);)
+_(\integer \claim_count(\object);)
+_(bool \claimable(\object);)
+_(\claim \make_claim(\objset, bool);)
+_(void \destroy_claim(\claim, \objset);)
 _(bool \active_claim(\claim);)
 _(bool \inv(\object);)
 _(bool \inv2(\object);)
@@ -68,7 +70,10 @@ _(bool \ghost(\object);)
 _(bool \valid_claim(\claim);)
 _(bool \claims(\claim, bool);)
 
+// global variables
+
 _(ghost extern const \thread \me;)
+
 
 // 'Built-in' spec macros
 
