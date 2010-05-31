@@ -57,6 +57,7 @@ _(\objset \span(\object);)
 _(\objset \domain(\object);)
 _(\type \typeof(\object);)
 _(bool \claims_obj(\claim, \object);)
+_(bool \claims_claim(\claim, \claim);)
 _(bool \is_claimable(\type);)
 _(\claim \make_claim(\object, ...);)
 _(bool \active_claim(\claim);)
@@ -64,12 +65,18 @@ _(bool \inv(\object);)
 _(bool \inv2(\object);)
 _(\object \embedding(\object);)
 _(bool \ghost(\object);)
+_(bool \valid_claim(\claim);)
+_(bool \claims(\claim, bool);)
 
 _(ghost extern const \thread \me;)
 
 // 'Built-in' spec macros
 
 _(bool \macro_maintains(bool cond) _(requires cond) _(ensures cond);)
+
+_(bool \macro_always(\claim c, bool cond)
+  _(requires \wrapped(c) && \valid_claim(c) && \claims(c, cond))
+  _(ensures \wrapped(c) && \valid_claim(c));)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
@@ -556,7 +563,7 @@ void _vcc_unclaim(claim_t, ...);
 bool _vcc_claims_obj(claim_t, obj_t);
 #define claims_obj _vcc_claims_obj
 
-bool _vcc_claims_claim(claim_t, obj_t);
+bool _vcc_claims_claim(claim_t, claim_t);
 #define claims_claim _vcc_claims_claim
 
 _vcc_size_t _vcc_ref_cnt(obj_t);

@@ -1,11 +1,12 @@
-#include <vcc2test.h>
+#include <vcc.h>
+#include <stdlib.h>
 
 struct SafeString {
   unsigned capacity, len;
   char *content;
   _(invariant len < capacity)
   _(invariant content[len] == '\0')
-  _(invariant \mine((\any[capacity])content))
+  _(invariant \mine((char[capacity])content))
 };
 
 /*{obj}*/
@@ -13,12 +14,13 @@ _(dynamic_owns) struct SafeContainer {
   struct SafeString **strings;
   unsigned len;
 
-  _(invariant \mine((\any[len])strings))
+  _(invariant \mine((struct SafeString *[len])strings))
   _(invariant \forall unsigned i; i < len ==> 
       \mine(strings[i]))
   _(invariant \forall unsigned i, j; i < len && j < len ==>
       i != j ==> strings[i] != strings[j])
 };
+
 /*{set}*/
 void sc_set(struct SafeContainer *c, 
             struct SafeString *s, unsigned idx)
@@ -31,16 +33,17 @@ void sc_set(struct SafeContainer *c,
   _(writes c, s)
 {
   _(unwrapping c) {
-    _(unwrapping (\any[c->len])(c->strings)) {
+    _(unwrapping (struct SafeString *[c->len])(c->strings)) {
       c->strings[idx] = s;
     }
     _(ghost {
       // could be also done with one assignment
-      \set(\owns(c), \diff(\owns(c), {\old(c->strings[idx])}));
-      \set(\owns(c), \union(\owns(c), {s}));
+      c->\owns =  c->\owns \difference {\old(c->strings[idx])};
+      c->\owns =  c->\owns \union {s};
     })
   }
 }
+
 /*{use}*/
 void use_case(struct SafeContainer *c, struct SafeString *s)
   _(requires \wrapped(c) && \wrapped(s))
@@ -51,16 +54,14 @@ void use_case(struct SafeContainer *c, struct SafeString *s)
   o = c->strings[5];
 
   _(assert \wrapped(s)) // OK
-  _(assert \wrapped(o)) // error
   sc_set(c, s, 5);
-  _(assert \wrapped(s)) // error
   _(assert \wrapped(o)) // OK
 }
+
 /*{out}*/
 /*`
 Verification of SafeString#adm succeeded.
 Verification of SafeContainer#adm succeeded.
 Verification of sc_set succeeded.
-Verification of use_case failed.
-testcase(54,12) : error VC9500: Assertion '_vcc_wrapped(o)' did not verify.
+Verification of use_case succeeded.
 `*/

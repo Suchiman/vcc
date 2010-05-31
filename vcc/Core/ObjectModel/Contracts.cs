@@ -127,45 +127,4 @@ namespace Microsoft.Research.Vcc {
 
     #endregion
   }
-
-  public class VccTypeContractV2 : VccTypeContract
-  {
-    public VccTypeContractV2(IEnumerable<FieldDeclaration>/*?*/ contractFields, IEnumerable<TypeInvariant>/*?*/ invariants, bool isSpec) :
-      base(contractFields, invariants, isSpec) {
-    }
-
-
-    private IEnumerable<FieldDeclaration> GenerateBuiltInFields() {
-      var compilation = this.containingType.Compilation;
-      var containingExpression = new DummyExpression(this.containingType.DummyBlock, SourceDummy.SourceLocation);
-      var setTypeName = new VccNamedTypeExpression(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(compilation.NameTable, "Objset"));
-      setTypeName.SetContainingExpression(containingExpression);
-      var objTypeName = new VccNamedTypeExpression(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(compilation.NameTable, "TypedPtr"));
-      objTypeName.SetContainingExpression(containingExpression);
-      var ownsField = this.GenerateBuiltInField("\\owner", objTypeName);
-      var ownerField = this.GenerateBuiltInField("\\owns", setTypeName);
-      var result = new List<FieldDeclaration>(2);
-      result.Add(ownerField);
-      result.Add(ownsField);
-      return result.AsReadOnly();
-    }
-
-    private  FieldDefinition GenerateBuiltInField(string name, VccNamedTypeExpression type) {
-      var result = new Vcc.FieldDefinition(new List<Specifier>(), (FieldDeclaration.Flags)0, type, new NameDeclaration(this.containingType.Compilation.NameTable.GetNameFor(name), SourceDummy.SourceLocation),
-        null,
-        true,
-        SourceDummy.SourceLocation);
-      result.SetContainingTypeDeclaration(this.containingType, false);
-      return result;
-    }
-
-    private IEnumerable<FieldDeclaration> builtInFields;
-
-    protected override IEnumerable<FieldDeclaration> BuiltInFields {
-      get {
-        if (builtInFields == null) builtInFields = GenerateBuiltInFields();
-        return builtInFields;
-      }
-    }
-  }
 }

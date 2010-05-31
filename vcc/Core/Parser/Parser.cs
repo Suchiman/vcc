@@ -125,7 +125,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// <summary>
     /// Call this method only on a freshly allocated Parser instance and call it only once.
     /// </summary>
-    internal void ParseCompilationUnit(GlobalDeclarationContainerClass globalContainer, List<INamespaceDeclarationMember> members) {
+    internal virtual void ParseCompilationUnit(GlobalDeclarationContainerClass globalContainer, List<INamespaceDeclarationMember> members) {
       //^ assume this.currentToken != Token.EndOfFile; //assume this method is called directly after construction and then never again.
       this.GetNextToken(); //Get first token from scanner
       this.ParseGlobalDeclarations(globalContainer, members, TS.EndOfFile);
@@ -1811,7 +1811,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return texpr;
     }
 
-    protected virtual void AssociateTypeWithTypeContract(object type, List<FieldDeclaration> specFields, List<TypeInvariant> invariants, bool isSpecType) {
+    protected void AssociateTypeWithTypeContract(object type, List<FieldDeclaration> specFields, List<TypeInvariant> invariants, bool isSpecType) {
       if (specFields != null || invariants != null || isSpecType) {
         VccTypeContract tc = new VccTypeContract(specFields, invariants, isSpecType);
         this.compilation.ContractProvider.AssociateTypeWithContract(type, tc);

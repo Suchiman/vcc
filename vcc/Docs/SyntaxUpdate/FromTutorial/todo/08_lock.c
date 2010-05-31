@@ -1,11 +1,14 @@
 #include <vcc.h>
 
+#if 0
+
 /*{lock}*/
-_(claimable) _(volatile_owns) struct Lock {
+_(claimable, volatile_owns) struct Lock {
   volatile int locked;
   _(ghost  \object protected_obj;)
   _(invariant  locked == 0 ==> \mine(protected_obj))
 };
+
 /*{init}*/
 void InitializeLock(struct Lock *l _(ghost \object obj))
   _(writes \span(l), obj)
@@ -15,10 +18,13 @@ void InitializeLock(struct Lock *l _(ghost \object obj))
   l->locked = 0;
   _(ghost {
     l->protected_obj = obj;
-    \set(\owns(l), {obj});
+    l->\owns = {obj};
     _(wrap l)
   })
 }
+
+#endif
+
 /*{xchg}*/
 vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
   if (*Destination == Comparand) {
@@ -42,6 +48,10 @@ void Acquire(struct Lock *l _(ghost \claim c))
     }
   } while (!stop);
 }
+
+#if 0
+
+
 /*{release}*/
 void Release(struct Lock *l _(ghost \claim c))
   _(always c, \consistent(l))
@@ -98,6 +108,9 @@ void boot()
   _(ghost c = \make_claim({&DataContainer}, \consistent(&DataContainer));)
   testit(_(ghost c));
 }
+
+#endif
+
 /*{out}*/
 /*`
 `*/
