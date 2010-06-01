@@ -35,7 +35,7 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
              _(	out \claim ret))
   _(always c, \consistent(r))
   _(ensures \result == 0 ==> 
-     \claims_obj(ret, r->resource) && \wrapped0(ret) && \fresh(ret))
+     \claims_object(ret, r->resource) && \wrapped0(ret) && \fresh(ret))
 {
   unsigned v, n;
 
@@ -56,7 +56,7 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
 /*{decr}*/
 void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
   _(always c, \consistent(r))
-  _(requires \claims_obj(handle, r->resource) && \wrapped0(handle))
+  _(requires \claims_object(handle, r->resource) && \wrapped0(handle))
   _(requires c != handle)
   _(writes handle)
 {

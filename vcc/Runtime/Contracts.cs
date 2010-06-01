@@ -169,6 +169,14 @@ namespace System.Diagnostics.Contracts
       public static Objset operator ^(Objset s1, Objset s2) {
         throw new NotImplementedException();
       }
+
+      public static Objset operator -(Objset s, TypedPtr o) {
+        throw new NotImplementedException();
+      }
+
+      public static Objset operator +(Objset s, TypedPtr o) {
+        throw new NotImplementedException();
+      }
     }
 
     [AttributeUsage(AttributeTargets.Method)]

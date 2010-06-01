@@ -1,7 +1,5 @@
 #include <vcc.h>
 
-#if 0
-
 /*{lock}*/
 _(claimable, volatile_owns) struct Lock {
   volatile int locked;
@@ -23,10 +21,8 @@ void InitializeLock(struct Lock *l _(ghost \object obj))
   })
 }
 
-#endif
-
 /*{xchg}*/
-vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
+_(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
   if (*Destination == Comparand) {
     *Destination = Exchange;
     return Comparand;
@@ -44,13 +40,10 @@ void Acquire(struct Lock *l _(ghost \claim c))
   do {
     _(atomic c, l) {
       stop = InterlockedCompareExchange(&l->locked, 1, 0) == 0;
-      _(ghost if (stop) \diff_with(\owns(l),{l->protected_obj});)
+      _(ghost if (stop) l->\owns -= l->protected_obj)
     }
   } while (!stop);
 }
-
-#if 0
-
 
 /*{release}*/
 void Release(struct Lock *l _(ghost \claim c))
@@ -61,7 +54,7 @@ void Release(struct Lock *l _(ghost \claim c))
 {
   _(atomic c, l) {
     l->locked = 0;
-    \union_with(\owns(l),{l->protected_obj});
+    _(ghost l->\owns += l->protected_obj)
   }
 }
 /*{usage}*/
@@ -93,8 +86,8 @@ void testit(_(ghost \claim c))
 }
 
 void boot()
-  _(writes set_universe())
-  _(requires program_entry_point())
+  _(writes \universe())
+  _(requires \program_entry_point())
 {
   _(ghost \claim c;)
 
@@ -102,15 +95,21 @@ void boot()
   Data.b = 17;
   _(wrap &Data)
   InitializeLock(&DataLock _(ghost &Data));
-  set_owner(&DataLock, &DataContainer);
+  _(ghost (&DataContainer)->\owns = {&DataLock, &DataContainer})
   _(wrap &DataContainer)
 
   _(ghost c = \make_claim({&DataContainer}, \consistent(&DataContainer));)
   testit(_(ghost c));
 }
 
-#endif
-
 /*{out}*/
 /*`
+Verification of Lock#adm succeeded.
+Verification of _DATA#adm succeeded.
+Verification of _DATA_CONTAINER#adm succeeded.
+Verification of InitializeLock succeeded.
+Verification of Acquire succeeded.
+Verification of Release succeeded.
+Verification of testit succeeded.
+Verification of boot succeeded.
 `*/

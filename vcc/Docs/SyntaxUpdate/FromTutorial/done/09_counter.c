@@ -11,12 +11,12 @@ struct Reading {
   struct Counter *n;
   volatile unsigned r;
   _(ghost \claim c;)
-  _(invariant \mine(c) && \claims_obj(c, n))
+  _(invariant \mine(c) && \claims_object(c, n))
   _(invariant n->v >= r)
 };
 /*{endreading}*/
 void create_reading(struct Counter *n _(ghost \claim c))
-  _(requires \wrapped(c) && \claims_obj(c, n))
+  _(requires \wrapped(c) && \claims_object(c, n))
   _(writes c)
 {
   struct Reading k;

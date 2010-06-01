@@ -56,7 +56,7 @@ _(\objset \array_range(\object, unsigned __int64);)
 _(\objset \span(\object);)
 _(\objset \domain(\object);)
 _(\type \typeof(\object);)
-_(bool \claims_obj(\claim, \object);)
+_(bool \claims_object(\claim, \object);)
 _(bool \claims_claim(\claim, \claim);)
 _(\integer \claim_count(\object);)
 _(bool \claimable(\object);)
@@ -69,6 +69,7 @@ _(\object \embedding(\object);)
 _(bool \ghost(\object);)
 _(bool \valid_claim(\claim);)
 _(bool \claims(\claim, bool);)
+_(bool \program_entry_point();)
 
 // global variables
 
@@ -96,6 +97,13 @@ _(bool \set_in(\object, \objset);)
 _(\objset \set_union(\objset, \objset);)
 _(\objset \set_intersection(\objset, \objset);)
 _(\objset \set_difference(\objset, \objset);)
+_(\objset \set_add_element(\objset, \object);)
+_(\objset \set_remove_element(\objset, \object);)
+_(bool \atomic_object(unsigned __int64);)
+_(void \set_closed_owner(\object obj, \object owner)  _(writes obj) _(requires \atomic_object(1));)
+_(void \giveup_closed_owner(\object obj, \object owner)  _(requires \atomic_object(1));)
+_(void \set_owns(\object obj, \objset owns)  _(writes obj);)
+
 
 #else 
 
