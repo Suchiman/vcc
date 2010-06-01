@@ -282,13 +282,20 @@ namespace Microsoft.Research.Vcc
       if name = "_vcc_atomic_op_result" then ()
       else       
         let decl = this.LookupMethod (meth)
-        let body = 
-          match meth with
-            | :? IMethodDefinition as def ->
-              (def.Body :?> ISourceMethodBody).Block
-            | _ -> null
         if decl.IsProcessed then ()
         else
+          let expansion =
+            match meth with
+              | :? VccGlobalMethodDefinition as vccMeth -> 
+                match vccMeth.GlobalMethodDeclaration with 
+                  | :? Microsoft.Research.Vcc.FunctionDefinition as fDef -> fDef.Expansion
+                  | _ -> null
+              | _ -> null
+          let body = 
+            match meth with
+              | :? IMethodDefinition as def ->
+                (def.Body :?> ISourceMethodBody).Block
+              | _ -> null
           decl.IsProcessed <- true       
           let parm (p:IParameterTypeInformation) =
             let name =
@@ -373,7 +380,9 @@ namespace Microsoft.Research.Vcc
             decl.Writes     <- [ for e in contract.Writes -> this.DoExpression e ]
             decl.Reads      <- [ for e in contract.Reads -> this.DoExpression e ]
             localsMap <- savedLocalsMap
-        
+          else if expansion <> null then
+            let ex = this.DoExpression (expansion.ProjectAsIExpression())
+            decl.Ensures <- [ C.Expr.Prim({ex.Common with Type = C.Type.Bool}, C.Op("==", C.CheckedStatus.Unchecked), [C.Expr.Result(ex.Common); ex]) ]
         
     member this.DoStatement (stmt:IStatement) : C.Expr =
       if Visitor.CheckHasError(stmt) then

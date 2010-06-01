@@ -258,7 +258,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       List<TemplateParameterDeclarator>/*?*/ templateParameters = this.ParseTemplateParameters(followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
       List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, specSpecifiers, followers | TS.DeclaratorStart | Token.Semicolon | Token.Colon);
-      if (specSpecifiers != null) specifiers.AddRange(specSpecifiers);
 
       bool savedInSpecCode = this.InSpecCode;
       bool seenSpecToken = false;
@@ -480,7 +479,22 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<ParameterDeclaration> parameters = this.ConvertToParameterDeclarations(funcDeclarator.Parameters, out acceptsExtraArguments);
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters = Parser.ConvertToGenericMethodParameterDeclarations(funcDeclarator.TemplateParameters);
       CallingConvention callingConvention = GetCallingConvention(specifiers, acceptsExtraArguments);
-      FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments, specifiers, storageClass == Token.Extern, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, this.InSpecCode, slb);
+      Expression expansion = null;
+      LogicFunctionDeclarator logicFuncDecl = funcDeclarator as LogicFunctionDeclarator;
+      if (logicFuncDecl != null) expansion = logicFuncDecl.Expansion;
+
+      FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments, 
+          specifiers, 
+          storageClass == Token.Extern, 
+          callingConvention, 
+          visibility, 
+          returnType, 
+          funcDeclarator.Identifier, 
+          templateParameters, 
+          parameters, 
+          this.InSpecCode, 
+          expansion, 
+          slb);
       this.AssociateContracts(fdecl, funcDeclarator);
       typeMembers.Add(fdecl);
     }
@@ -552,7 +566,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         returnType = new VccPointerTypeExpression(returnType, null, returnType.SourceLocation);
       MethodDeclaration.Flags flags = 0;
       if (acceptsExtraArguments) flags |= MethodDeclaration.Flags.AcceptsExtraArguments;
-      FunctionDefinition func = new FunctionDefinition(flags, specifiers, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, body, this.InSpecCode, slb);
+      FunctionDefinition func = new FunctionDefinition(flags, specifiers, callingConvention, visibility, returnType, funcDeclarator.Identifier, templateParameters, parameters, body, this.InSpecCode, null, slb);
       typeMembers.Add(func);
       this.AssociateContracts(func, funcDeclarator);
       //TODO: complain if statements != null;
@@ -634,7 +648,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           new FunctionDeclaration(cFuncTypeExp.AcceptsExtraArguments, specifiers, isExternal, 
             cFuncTypeExp.CallingConvention, visibility, cFuncTypeExp.ReturnType, 
             new NameDeclaration(this.GetNameFor(cFuncTypeExp.Name.Value + cFuncTypeExp.GetHashCode()), cFuncTypeExp.SourceLocation),
-            null, parameters, this.InSpecCode, slb);
+            null, parameters, this.InSpecCode, null, slb);
         
         this.currentTypeMembers.Add(mangledFunc);
         declarations.Add(new VccLocalFunctionDeclaration(declarator.Identifier, initializer, specifiers, this.InSpecCode, slb, mangledFunc));
@@ -1209,15 +1223,18 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected InitializedDeclarator ParseInitializedDeclarator(Declarator declarator, TokenSet followers)       
+    protected Declarator ParseInitializedDeclarator(Declarator declarator, TokenSet followers)       
       //^ requires this.currentToken == Token.Assign;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(declarator.SourceLocation);
       this.GetNextToken();
       Expression initialValue = this.ParseInitializer(followers);
-      InitializedDeclarator result = new InitializedDeclarator(declarator, initialValue, slb);
-      slb.UpdateToSpan(result.InitialValue.SourceLocation);
+      Declarator result;
+      FunctionDeclarator funcDeclarator = declarator as FunctionDeclarator;
+      if (funcDeclarator != null) result = new LogicFunctionDeclarator(funcDeclarator.FunctionName, funcDeclarator.Parameters, initialValue, funcDeclarator.SourceLocation);
+      else result = new InitializedDeclarator(declarator, initialValue, slb);
+      slb.UpdateToSpan(initialValue.SourceLocation);
       this.SkipTo(followers);
       return result;
     }

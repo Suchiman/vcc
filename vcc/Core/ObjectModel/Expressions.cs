@@ -3378,7 +3378,7 @@ namespace Microsoft.Research.Vcc {
       BlockStatement containingBlock = containingExpression.ContainingBlock;
       VccFunctionTypeExpression/*?*/ ftExpr = this.ElementType as VccFunctionTypeExpression;
       if (ftExpr != null) {
-        FunctionDeclaration fdecl = new FunctionDeclaration(ftExpr.AcceptsExtraArguments, null, false, ftExpr.CallingConvention, TypeMemberVisibility.Public, ftExpr.ReturnType, ftExpr.Name, null, ftExpr.parameters, false, ftExpr.SourceLocation);
+        FunctionDeclaration fdecl = new FunctionDeclaration(ftExpr.AcceptsExtraArguments, null, false, ftExpr.CallingConvention, TypeMemberVisibility.Public, ftExpr.ReturnType, ftExpr.Name, null, ftExpr.parameters, false, null, ftExpr.SourceLocation);
         fdecl.SetContainingTypeDeclaration(containingBlock.CompilationPart.GlobalDeclarationContainer);
         foreach (ParameterDeclaration parameter in ftExpr.parameters)
           parameter.SetContainingSignatureAndExpression(fdecl, containingExpression);
@@ -4539,11 +4539,12 @@ namespace Microsoft.Research.Vcc {
           return "is_pure";
         case Token.SpecAtomicInline:
           return "atomic_inline";
+        case Token.SpecLogic:
+          return "spec_macro";
         default:
           throw new NotImplementedException();
       }
     }
-
   }
 
   public class PrimitiveTypeSpecifier : Specifier {
