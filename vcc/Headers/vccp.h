@@ -75,13 +75,15 @@ _(bool \claims(\claim, bool);)
 _(ghost extern const \thread \me;)
 
 
-// 'Built-in' spec macros
+// 'Built-in' spec macros and logic definitions
 
 _(bool \macro_maintains(bool cond) _(requires cond) _(ensures cond);)
 
 _(bool \macro_always(\claim c, bool cond)
   _(requires \wrapped(c) && \valid_claim(c) && \claims(c, cond))
   _(ensures \wrapped(c) && \valid_claim(c));)
+
+_(logic bool \wrapped0(\object o) = \wrapped(o) && \claim_count(o) == 0;)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 

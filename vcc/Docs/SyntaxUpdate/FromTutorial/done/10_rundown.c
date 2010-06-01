@@ -23,7 +23,7 @@ struct RefCnt {
 /*{init}*/
 void init(struct RefCnt *r _(ghost \object rsc))
   _(writes \span(r), rsc)
-  _(requires \wrapped(rsc) && \claimable(rsc) && \claim_count(rsc) == 0)
+  _(requires \wrapped0(rsc) && \claimable(rsc))
   _(ensures \wrapped(r) && r->resource == rsc)
 {
   r->cnt = 0;
@@ -35,8 +35,7 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
              _(	out \claim ret))
   _(always c, \consistent(r))
   _(ensures \result == 0 ==> 
-     \claims_obj(ret, r->resource) && \wrapped(ret) && \claim_count(ret) == 0 &&
-     \fresh(ret))
+     \claims_obj(ret, r->resource) && \wrapped0(ret) && \fresh(ret))
 {
   unsigned v, n;
 
@@ -57,14 +56,14 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
 /*{decr}*/
 void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
   _(always c, \consistent(r))
-  _(requires \claims_obj(handle, r->resource) && \wrapped(handle) && \claim_count(handle) == 0)
+  _(requires \claims_obj(handle, r->resource) && \wrapped0(handle))
   _(requires c != handle)
   _(writes handle)
 {
   unsigned v, n;
 
   for (;;)
-    _(invariant \wrapped(c) && \wrapped(handle) && \claim_count(handle) == 0)
+    _(invariant \wrapped(c) && \wrapped0(handle))
   {
     _(atomic c, r) {
       v = r->cnt;

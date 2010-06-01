@@ -2120,6 +2120,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SpecIs,
     /// <summary>
+    /// logic, context-dependent
+    /// </summary>
+    SpecLogic,
+    /// <summary>
     /// pure, context-dependent
     /// </summary>
     SpecPure,
@@ -2323,6 +2327,9 @@ namespace Microsoft.Research.Vcc.Parsing {
 
       keyword = new Keyword(Token.SpecInvariant, "invariant");
       keywords['i' - 'a'] = keyword;
+
+      keyword = new Keyword(Token.SpecLogic, "logic");
+      keywords['l' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecPure, "pure");
       keywords['p' - 'a'] = keyword;

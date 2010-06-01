@@ -193,13 +193,14 @@ namespace Microsoft.Research.Vcc {
 
     public FunctionDefinition(MethodDeclaration.Flags flags, IEnumerable<Specifier>/*?*/ specifiers,
       CallingConvention callingConvention, TypeMemberVisibility visibility, TypeExpression type, NameDeclaration name,
-      List<GenericMethodParameterDeclaration>/*?*/ genericParameters, List<ParameterDeclaration>/*?*/ parameters, BlockStatement/*?*/ body, bool isSpec, ISourceLocation sourceLocation)
+      List<GenericMethodParameterDeclaration>/*?*/ genericParameters, List<ParameterDeclaration>/*?*/ parameters, BlockStatement/*?*/ body, bool isSpec, Expression /*?*/ expansion, ISourceLocation sourceLocation)
       : base(null, flags|MethodDeclaration.Flags.Unsafe, visibility, type, name, genericParameters, parameters, body, sourceLocation)
     {
       this.specifiers = specifiers;
       this.callingConvention = callingConvention;
       this.parameters = parameters;
       this.isSpec = isSpec;
+      this.expansion = expansion;
     }
 
     /// <summary>
@@ -294,6 +295,12 @@ namespace Microsoft.Research.Vcc {
 
     private readonly bool isSpec;
 
+    public Expression /*?*/ Expansion {
+      get { return this.expansion; }
+    }
+
+    private readonly Expression/*?*/ expansion;
+
     static private bool IsUnsupportedDeclspec(string spec) {
       if (spec[0] == 'n') {
         return (spec == "naked" || spec == "noalias" || spec == "noinline" || spec == "noreturn" ||
@@ -323,6 +330,14 @@ namespace Microsoft.Research.Vcc {
       return new FunctionDefinition(targetTypeDeclaration, this);
     }
 
+    public override void SetContainingTypeDeclaration(TypeDeclaration containingTypeDeclaration, bool recurse) {
+      base.SetContainingTypeDeclaration(containingTypeDeclaration, recurse);
+      if (this.Expansion != null) {
+        var dummyExpression = new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation);
+        this.Expansion.SetContainingExpression(dummyExpression);
+      }
+    }
+
     private List<ParameterDeclaration>/*?*/ parameters;
 
     public override bool ReturnValueIsModified {
@@ -342,7 +357,7 @@ namespace Microsoft.Research.Vcc {
 
   public sealed class FunctionDeclaration : CheckableSourceItem, ISignatureDeclaration, ITypeDeclarationMember, IAggregatableNamespaceDeclarationMember, ISpecItem  {
     public FunctionDeclaration(bool acceptsExtraArguments, IEnumerable<Specifier>/*?*/ specifiers, bool isExternal, CallingConvention callingConvention, TypeMemberVisibility visibility, TypeExpression type, NameDeclaration name,
-      List<GenericMethodParameterDeclaration>/*?*/ templateParameters, List<ParameterDeclaration>/*?*/ parameters, bool isSpec, ISourceLocation sourceLocation)
+      List<GenericMethodParameterDeclaration>/*?*/ templateParameters, List<ParameterDeclaration>/*?*/ parameters, bool isSpec, Expression /*?*/ expansion, ISourceLocation sourceLocation)
       : base(sourceLocation){
       this.acceptsExtraArguments = acceptsExtraArguments;
       this.callingConvention = callingConvention;
@@ -354,6 +369,7 @@ namespace Microsoft.Research.Vcc {
       this.type = type;
       this.visibility = visibility;
       this.isSpec = isSpec;
+      this.expansion = expansion;
     }
 
     /// <summary>
@@ -412,7 +428,7 @@ namespace Microsoft.Research.Vcc {
       //TODO: if not compiling an object file give an error
       MethodDeclaration.Flags flags = MethodDeclaration.Flags.External;
       if (this.AcceptsExtraArguments) flags |= MethodDeclaration.Flags.AcceptsExtraArguments;
-      FunctionDefinition externFunc = new FunctionDefinition(flags, this.specifiers, this.CallingConvention, TypeMemberVisibility.Public, this.Type, this.Name, this.templateParameters, this.parameters, null, this.isSpec, this.SourceLocation);
+      FunctionDefinition externFunc = new FunctionDefinition(flags, this.specifiers, this.CallingConvention, TypeMemberVisibility.Public, this.Type, this.Name, this.templateParameters, this.parameters, null, this.isSpec, this.expansion, this.SourceLocation);
       externFunc.SetContainingTypeDeclaration(this.CompilationPart.GlobalDeclarationContainer, false);
       if (this.templateParameters != null) {
         foreach (GenericMethodParameterDeclaration templatePar in this.templateParameters) templatePar.SetDeclaringMethod(externFunc);
@@ -687,6 +703,14 @@ namespace Microsoft.Research.Vcc {
       get { return this.visibility; }
     }
     readonly TypeMemberVisibility visibility;
+
+    /// <summary>
+    /// The expansion of a logic function, or null for normal functions
+    /// </summary>
+    public Expression/*?*/ Expansion {
+      get { return this.expansion; }
+    }
+    readonly Expression/*?*/ expansion;
 
     #region IContainerMember<ITypeDeclaration> Members
 
@@ -1194,7 +1218,7 @@ namespace Microsoft.Research.Vcc {
     internal List<MethodVariant>/*?*/ Variants;
   }
 
-  internal sealed class FunctionDeclarator : Declarator {
+  internal class FunctionDeclarator : Declarator {
 
     internal FunctionDeclarator(Declarator functionName, List<Parameter> parameters, ISourceLocation sourceLocation)
       : base(sourceLocation)
@@ -1238,7 +1262,17 @@ namespace Microsoft.Research.Vcc {
       get { return this.FunctionName.Identifier; }
     }
   }
-  
+
+  internal class LogicFunctionDeclarator : FunctionDeclarator
+  {
+    public LogicFunctionDeclarator(Declarator functionName, List<Parameter> parameters, Expression expansion, ISourceLocation sourceLocation)
+      : base(functionName, parameters, sourceLocation) {
+      this.Expansion = expansion;
+    }
+
+    internal readonly Expression Expansion;
+  }
+
   internal sealed class Parameter : SourceItem, ISpecItem {
 
     internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, bool isOut, ISourceLocation sourceLocation)
