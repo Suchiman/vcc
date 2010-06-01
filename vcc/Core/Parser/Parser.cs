@@ -301,6 +301,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             arrayDeclarator = null;
           }
         }
+
         if (funcDeclarator != null) {
           funcDeclarator.TemplateParameters = templateParameters;
           //TODO: complain if not first declarator
@@ -480,8 +481,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters = Parser.ConvertToGenericMethodParameterDeclarations(funcDeclarator.TemplateParameters);
       CallingConvention callingConvention = GetCallingConvention(specifiers, acceptsExtraArguments);
       Expression expansion = null;
-      LogicFunctionDeclarator logicFuncDecl = funcDeclarator as LogicFunctionDeclarator;
-      if (logicFuncDecl != null) expansion = logicFuncDecl.Expansion;
 
       FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments, 
           specifiers, 
@@ -493,7 +492,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           templateParameters, 
           parameters, 
           this.InSpecCode, 
-          expansion, 
+          null, 
           slb);
       this.AssociateContracts(fdecl, funcDeclarator);
       typeMembers.Add(fdecl);
@@ -688,6 +687,14 @@ namespace Microsoft.Research.Vcc.Parsing {
         } else {
           if (initializer != null && IsAxiom(specifiers)) {
             this.AddTypeInvariantToCurrent(new TypeInvariant(declarator.Identifier, new CheckedExpression(initializer, initializer.SourceLocation), true, slb));
+          } else if (initializer != null && IsLogic(specifiers) && initializedDeclarator.Declarator is FunctionDeclarator) {
+            FunctionDeclarator funcDeclarator = initializedDeclarator.Declarator as FunctionDeclarator;
+            bool acceptsExtraArguments;
+            List<ParameterDeclaration> parameters = this.ConvertToParameterDeclarations(funcDeclarator.Parameters, out acceptsExtraArguments);
+            TypeExpression returnType = this.GetTypeExpressionFor(specifiers, funcDeclarator.FunctionName);
+            FunctionDeclaration fdecl = new FunctionDeclaration(false, specifiers, false, CallingConvention.C, TypeMemberVisibility.Public, returnType, funcDeclarator.Identifier, new List<GenericMethodParameterDeclaration>(0),
+              parameters, true, initializer, slb);
+            typeMembers.Add(fdecl);
           } else {
             if (this.currentSpecificationFields == null) this.currentSpecificationFields = new List<FieldDeclaration>();
             FieldDeclaration glob = new GlobalVariableDeclaration(flags, TypeMemberVisibility.Public, memberType, declarator.Identifier, initializer, slb);
@@ -769,6 +776,14 @@ namespace Microsoft.Research.Vcc.Parsing {
       foreach (Specifier specifier in specifiers) {
         PrimitiveTypeSpecifier/*?*/ pts = specifier as PrimitiveTypeSpecifier;
         if (pts != null && pts.Token == Token.Axiom) return true;
+      }
+      return false;
+    }
+
+    protected static bool IsLogic(List<Specifier> specifiers) {
+      foreach (Specifier specifier in specifiers) {
+        SpecTokenSpecifier/*?*/ sts = specifier as SpecTokenSpecifier;
+        if (sts != null && sts.Token == Token.SpecLogic) return true;
       }
       return false;
     }
@@ -1231,9 +1246,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.GetNextToken();
       Expression initialValue = this.ParseInitializer(followers);
       Declarator result;
-      FunctionDeclarator funcDeclarator = declarator as FunctionDeclarator;
-      if (funcDeclarator != null) result = new LogicFunctionDeclarator(funcDeclarator.FunctionName, funcDeclarator.Parameters, initialValue, funcDeclarator.SourceLocation);
-      else result = new InitializedDeclarator(declarator, initialValue, slb);
+      result = new InitializedDeclarator(declarator, initialValue, slb);
       slb.UpdateToSpan(initialValue.SourceLocation);
       this.SkipTo(followers);
       return result;

@@ -1263,16 +1263,6 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
-  internal class LogicFunctionDeclarator : FunctionDeclarator
-  {
-    public LogicFunctionDeclarator(Declarator functionName, List<Parameter> parameters, Expression expansion, ISourceLocation sourceLocation)
-      : base(functionName, parameters, sourceLocation) {
-      this.Expansion = expansion;
-    }
-
-    internal readonly Expression Expansion;
-  }
-
   internal sealed class Parameter : SourceItem, ISpecItem {
 
     internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, bool isOut, ISourceLocation sourceLocation)
