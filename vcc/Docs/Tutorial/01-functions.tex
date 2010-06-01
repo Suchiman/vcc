@@ -22,7 +22,7 @@ An annotation of the form \vcc{_( assert E )}, called an \emph{assertion}, asks 
 } whenever control reaches this assertion \footnote{
   This interpretation changes slightly if \vcc{E} refers to
   memory locations that might be concurrently written to by other
-  theads; see section \secref{concurrency}}.  
+  threads; see section \secref{concurrency}}.  
 Thus, the line \lstinline|_( assert z <= x && z <= y )| says
 that when control reaches the assertion, \vcc{z} is no larger than \vcc{x} or
 \vcc{y}. If VCC verifies a program, it promises that all such assertions
@@ -37,11 +37,12 @@ all possible ways of scheduling concurrent threads, etc.
 %% you fix the execution.
 %% An assertion causes VCC to try to \emph{prove} that \vcc{E} holds for \emph{all}
 %% executions.
-\footnote{
+
+\begin{note}
 It is instructive to compare \vcc{_( assert E )} with the macro
 \lstinline|assert(E)| (defined in \lstinline|<assert.h>|), which
 evaluates \vcc{E}  at runtime and aborts execution if \vcc{E}
-doesn't hold. First, |assert(E)| requires runtime overhead (at least
+doesn't hold. First, \lstinline|assert(E)| requires runtime overhead (at least
 in builds where the check is made), whereas \vcc{_( assert E )} does
 not. Second, \lstinline|assert(E)| will catch failure of the 
 assertion only when it actually fails in an execution, whereas 
@@ -50,7 +51,7 @@ possible in \emph{any} execution. Third, because VCC doesn't have to
 actually execute \vcc{_( assert E )}, it allows \vcc{E} to include
 mathematical operations that cannot be executed, such as
 quantification over infinite domains.
-}.
+\end{note}
 
 To verify this function using VCC from the command line, save the source in a file called \lstinline|minimum.c|
 and run VCC as follows:
@@ -93,7 +94,7 @@ crash). If VCC is unable to prove an assertion, it reports an
 error.  Try changing the assertion in this program to something that
 isn't true and see what happens. (You might also want to try coming up
 with some complex assertion that is true, just to see whether VCC is
-smart enought to prove it.)
+smart enough to prove it.)
 
 Assertions, like all VCC annotations, 
 are surrounded by \vcc{_( ... )} to indicate that they are
@@ -132,7 +133,7 @@ You can add to what VCC knows at a particular point by adding an
 \emph{assumption}.
 An assumption \vcc{_( assume E )} is a promise that you make to VCC
 that for whatever reasons \vcc{E} will always hold.
-Equivalently, VCC will just ignore the exeuctions where \vcc{E} doesn't hold.
+Equivalently, VCC will just ignore the executions where \vcc{E} doesn't hold.
 Operationally, the assumption simply adds \vcc{E} to what VCC
 knows, for subsequent reasoning. For example:
 \begin{VCC}
@@ -144,7 +145,7 @@ Without the assumption, VCC would complain about possible division by
 zero (it checks for division by zero because it would cause the
 program to crash).  With the assumption, this error cannot happen.
 An assumption essentially tells VCC to ignore all of those executions
-where the assumption fails to hold; thus, when VCC succesfully
+where the assumption fails to hold; thus, when VCC successfully
 verifies a program, it promises that in every execution where no
 assumption fails, no assertion will fail either.
 Of course assumptions, like all annotations, are not included in the executable, so
@@ -220,8 +221,8 @@ Because VCC's reasoning is incomplete\footnote{Note that this
 later assertions to succeed, by drawing VCC's attention to a crucial
 fact it needs to prove the later assertion.  This is relatively rare,
 and typically involves ``nonlinear arithmetic'' (e.g. where variables
-are multiplied together), bitvevtor reasoning, or quantifiers. We'll
-say more about these in \secref{TODO}.
+are multiplied together), bit-vector reasoning, or quantifiers. We'll
+say more about these in \secref{bv}.
 
 \subsection{Exercises}
 \begin{enumerate}
@@ -261,7 +262,7 @@ _( assert p ==> q )
 \label{sect:functions}
 
 Next we turn to the specification of functions. We'll take the example
-from the previous section, and pull the computation of the miminum of
+from the previous section, and pull the computation of the minimum of
 two numbers out into a separate function:\todo{match with the previous programs}
 
 \vccInput{c/01_min2.c}
@@ -426,7 +427,7 @@ legitimately guarantee only the trivial postcondition \vcc{_( ensures \true )}?
 \subsection{Write clauses}
 \label{sect:writes}
 
-So far, we have considered only functions without visible side edfects; for
+So far, we have considered only functions without visible side effects; for
 example, we assumed that the call to \vcc{min()} didn't have the side
 effect of changing the local variables of \vcc{main()}. The
 translation above captured this requirement implicitly, by allowing a
@@ -445,9 +446,9 @@ after the beginning of the call).
 In VCC, the destruction of knowledge of the caller is specified 
 by means of \emph{writes clauses}. 
 Intuitively, a clause \vcc{_( writes p, q )} is equivalent to saying
-that of the memory objects ``local'' to the caller before the call,
 the function is going to modify \emph{only} the object pointed to by \vcc{p}
-and the object pointed to by \vcc{q}.
+and the object pointed to by \vcc{q}
+(of the memory objects ``local'' to the caller before the call).
 In other words, it is the same as having an ensures clause
 saying that the values of all other objects local to the caller prior
 to the call remain unchanged.  VCC allows you
@@ -511,7 +512,7 @@ For example, the assert/assume translation of \vcc{swap()} is%
   VCC does not generate the read and writes checks for the local variable
   \vcc{tmp}. Because \vcc{tmp} is a local that never has its address
   taken, it can be thought of as remaining in a register, where it is
-  guaranteed to remain in writable.
+  guaranteed to remain writable.
 }:
 
 \vccInput[linerange={swap-}]{c/01_swap3.c}
