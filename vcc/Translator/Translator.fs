@@ -659,6 +659,7 @@ namespace Microsoft.Research.Vcc
             aux [] 0 args
           | "_vcc_is_low", [e] -> IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e)
           | "_vcc_current_context", [] -> B.Expr.FunctionCall("$get.secpc",[B.Expr.FunctionCall("$memory",[bState])])
+          | "_vcc_expect_unreachable_child", [e] -> B.Expr.FunctionCall("$expect_unreachable_child",[trExpr env e])
           | _ ->
             helper.Oops (ec.Token, sprintf "unhandled macro %s" n)
             er "$bogus"                
@@ -1244,7 +1245,8 @@ namespace Microsoft.Research.Vcc
                   | C.Ptr t -> trForWrite env t e2
                   | _ -> die()
               let memLoc = trExpr env e1
-              let secLabelExpr = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e2)
+              let secLabel = IF.contextify (IF.exprLevel e2)
+              let secLabelExpr = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) secLabel
               [cmt ();
                B.Stmt.Call (C.bogusToken, [], "$write_int", [memLoc; e2']); 
                assumeSync env e1.Token
@@ -1282,9 +1284,10 @@ namespace Microsoft.Research.Vcc
               
             | C.Expr.VarWrite (c, [v], e) when env.hasIF ->
               let (vname,_) = trVar v
+              let secLabel = IF.contextify (IF.exprLevel e)
               cmt () ::
               B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
-              B.Stmt.Assign (er ("SecLabel#"+vname), IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e)) ::
+              B.Stmt.Assign (er ("SecLabel#"+vname), IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) secLabel) ::
               B.Stmt.Assign (er ("SecMeta#"+vname), B.Expr.FunctionCall ("$get.secpc",[B.Expr.FunctionCall("$memory",[bState])]);) ::   // This could be more precise: we should check if the label was actually changed before setting the metalabel
               ctx.AssumeLocalIs c.Token v ::
               cev.VarUpdate c.Token true v
@@ -1308,7 +1311,7 @@ namespace Microsoft.Research.Vcc
                      let tokLowClassif = match cl with
                                            | None -> afmte 0 "default test classifier is low in {0}." [c]
                                            | Some cl' -> afmte 0 "test classifier '{0}' is low." [cl']
-                     let permissiveUpgradeClassifier = IF.makePermissiveUpgrade  (fun v -> fst(trVar v)) c testClassifier
+                     let permissiveUpgradeClassifier = IF.makePermissiveUpgrade  (fun v -> fst(trVar v)) toTypeId c testClassifier
                      let checkLevel = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel c)
                      let blockNum = !(env.IFBlockNum)
                      incr env.IFBlockNum
@@ -1330,6 +1333,7 @@ namespace Microsoft.Research.Vcc
                        [B.Stmt.Call (ec.Token, [], "$set_pc", [B.Expr.BoolLiteral false])
                         assumeSync env ec.Token]
                      let secLevelSuffix =
+                       childMark ::
                        [B.Stmt.Call (ec.Token, [], "$set_pc", [B.Expr.Ref (currentPC env')])
                         assumeSync env ec.Token]
                      let high = prefix @
