@@ -6,7 +6,7 @@
 /*
  * Required forward definitions/declarations.
  */
-#define MAXUINT 0x7FFFFFFF
+#define MAXUINT 0xFFFFFFFF
 
 /*
  * Forward declaration of ghost type _LIST_MANAGER.
