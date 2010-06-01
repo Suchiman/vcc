@@ -480,7 +480,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<ParameterDeclaration> parameters = this.ConvertToParameterDeclarations(funcDeclarator.Parameters, out acceptsExtraArguments);
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters = Parser.ConvertToGenericMethodParameterDeclarations(funcDeclarator.TemplateParameters);
       CallingConvention callingConvention = GetCallingConvention(specifiers, acceptsExtraArguments);
-      Expression expansion = null;
 
       FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments, 
           specifiers, 

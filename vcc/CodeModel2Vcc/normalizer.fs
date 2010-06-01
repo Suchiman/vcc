@@ -827,55 +827,65 @@ namespace Microsoft.Research.Vcc
     
     let normalizeNewSyntax = 
   
-      let newToOldFn = Map.ofList [ "\\mine",               "_vcc_keeps";
-                                    "\\embedding",          "_vcc_emb";
-                                    "\\domain",             "_vcc_domain";
-                                    "\\valid",              "_vcc_typed2";
-                                    "\\valid_claim",        "_vcc_valid_claim";
-                                    "\\ghost",              "_vcc_is_ghost_ptr";
-                                    "\\wrap",               "_vcc_wrap";
-                                    "\\wrapped",            "_vcc_wrapped";
-                                    "\\extent",             "_vcc_extent";
-                                    "\\alloc",              "_vcc_alloc";
-                                    "\\mutable",            "_vcc_mutable";
-                                    "\\fresh",              "_vcc_is_fresh";
-                                    "\\consistent",         "_vcc_closed";
-                                    "\\array_range",        "_vcc_array_range";
-                                    "\\span",               "_vcc_span";
-                                    "\\unwrap",             "_vcc_unwrap";
-                                    "\\thread_local",       "_vcc_thread_local2";
-                                    "\\thread_local_array", "_vcc_is_thread_local_array";
-                                    "\\free",               "_vcc_free";
-                                    "\\claims",             "_vcc_claims";
-                                    "\\claims_obj",         "_vcc_claims_obj";
-                                    "\\claims_claim",       "_vcc_claims_claim";
-                                    "\\claim_count",        "_vcc_ref_cnt";
-                                    "\\claimable",          "_vcc_is_claimable";
-                                    "\\make_claim",         "_vcc_claim";
-                                    "\\destroy_claim",      "_vcc_unclaim";
-                                    "\\active_claim",       "_vcc_valid_claim";
-                                    "\\inv",                "_vcc_inv";
-                                    "\\inv2",               "_vcc_inv2";
-                                    "\\typeof",             "_vcc_typeof";
-                                    "\\stack_alloc",        "_vcc_stack_alloc";
-                                    "\\stack_free",         "_vcc_stack_free";
-                                    "\\set_in",             "_vcc_set_in";
-                                    "\\set_intersection",   "_vcc_set_intersection";
-                                    "\\set_union",          "_vcc_set_union";
-                                    "\\set_difference",     "_vcc_set_difference";
-                                    "\\universe",           "_vcc_set_universe"; ]
+      let newToOldFn = Map.ofList [ "\\mine",                "_vcc_keeps";
+                                    "\\embedding",           "_vcc_emb";
+                                    "\\domain",              "_vcc_domain";
+                                    "\\valid",               "_vcc_typed2";
+                                    "\\valid_claim",         "_vcc_valid_claim";
+                                    "\\ghost",               "_vcc_is_ghost_ptr";
+                                    "\\wrap",                "_vcc_wrap";
+                                    "\\wrapped",             "_vcc_wrapped";
+                                    "\\extent",              "_vcc_extent";
+                                    "\\alloc",               "_vcc_alloc";
+                                    "\\mutable",             "_vcc_mutable";
+                                    "\\fresh",               "_vcc_is_fresh";
+                                    "\\consistent",          "_vcc_closed";
+                                    "\\array_range",         "_vcc_array_range";
+                                    "\\span",                "_vcc_span";
+                                    "\\unwrap",              "_vcc_unwrap";
+                                    "\\thread_local",        "_vcc_thread_local2";
+                                    "\\thread_local_array",  "_vcc_is_thread_local_array";
+                                    "\\free",                "_vcc_free";
+                                    "\\claims",              "_vcc_claims";
+                                    "\\claims_object",       "_vcc_claims_obj";
+                                    "\\claims_claim",        "_vcc_claims_claim";
+                                    "\\claim_count",         "_vcc_ref_cnt";
+                                    "\\claimable",           "_vcc_is_claimable";
+                                    "\\make_claim",          "_vcc_claim";
+                                    "\\destroy_claim",       "_vcc_unclaim";
+                                    "\\active_claim",        "_vcc_valid_claim";
+                                    "\\inv",                 "_vcc_inv";
+                                    "\\inv2",                "_vcc_inv2";
+                                    "\\typeof",              "_vcc_typeof";
+                                    "\\atomic_object",       "_vcc_is_atomic_obj";
+                                    "\\set_owns",            "_vcc_set_owns";
+                                    "\\set_closed_owner",    "_vcc_set_closed_owner";
+                                    "\\giveup_closed_owner", "_vcc_giveup_closed_owner";
+                                    "\\stack_alloc",         "_vcc_stack_alloc";
+                                    "\\stack_free",          "_vcc_stack_free";
+                                    "\\program_entry_point", "_vcc_program_entry_point";
+                                    "\\set_in",              "_vcc_set_in";
+                                    "\\set_intersection",    "_vcc_set_intersection";
+                                    "\\set_union",           "_vcc_set_union";
+                                    "\\set_difference",      "_vcc_set_difference";
+                                    "\\universe",            "_vcc_set_universe"; ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";
                                       "\\state",  "state_t";
                                       "\\type",   "typeid_t";
                                       "\\thread_id", "thread_id" ]
 
-      let normalizeCalls = function
+      let fnMap = new Dict<_,_>()
+
+      let normalizeCallsAndFindKeyFunctions = function
         | Top.TypeDecl(td) as decl ->
           let normalizeMine self = function
             | Call(ec, ({Name = "\\mine"} as fn), [], args) -> Some(Call(ec, fn, [], Expr.This({ec with Type = Type.MkPtrToStruct(td)}) :: List.map self args))
             | _ -> None
           deepMapExpressions normalizeMine [decl] |> List.head
+        | Top.FunctionDecl({Name = ("\\set_closed_owner"|"\\giveup_closed_owner"|"\\set_owns")} as fn) as decl -> 
+          fnMap.Add(fn.Name, fn)
+          decl
         | decl -> decl
 
       let removeGlobalMe = 
@@ -895,20 +905,24 @@ namespace Microsoft.Research.Vcc
           | Call(ec, ({Name = "\claimable"} as fn), [], [e]) -> Some(Call(ec, fn, [], [Macro({e.Common with Type = Type.TypeIdT}, "_vcc_typeof", [self e])]))
           | _ -> None
 
+      let rec normalizeOwnershipManipulation inAtomic self = 
+        let selfs = List.map self
+        function
+          | Atomic(ec, objs, body) -> Some(Atomic(ec, selfs objs, body.SelfMap(normalizeOwnershipManipulation true)))
+          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); 
+                            Call(_, {Name = ("\\set_add_element"|"\\set_remove_element" as setOp)}, [], 
+                                 [Macro(_, "_vcc_owns", [e1']); e2] )]) when inAtomic  -> 
+              let fn = if setOp = "\\set_add_element" then fnMap.["\\set_closed_owner"] else fnMap.["\\giveup_closed_owner"]
+              Some(Call({ec with Type = Type.Void}, fn, [], [self e2; self e1]))
+          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); e2]) -> Some(Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [self e1; self e2]))
+          | _ -> None
+
       let normalizeMisc self = 
         let selfs = List.map self
         function
           | Macro(ec, "set", elems) -> Some(Macro(ec, "_vcc_create_set", Expr.Bogus :: selfs elems))
           | Macro(ec, "\\is", [arg;UserData(_, (:? Type as t))]) -> Some(Macro(ec, "_vcc_is", [self arg; typeExpr t]))
           | Ref(ec, {Name = "\\me"}) -> Some(Macro(ec, "_vcc_me", []))
-          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); e2]) -> Some(Macro({ec with Type = Type.Bogus}, "_vcc_set_owns", [self e1; self e2]))
-          | Macro(ec, "=", [Macro(_, "_vcc_owner", [e]); Cast(_, _, Ref(_, {Name = "\\me"}))]) 
-          | Macro(ec, "=", [Macro(_, "_vcc_owner", [e]); Ref(_, {Name = "\\me"})]) -> 
-            let (init, tmp) = cache helper "setOwner" (self e) VarKind.Local
-            let stmts = init @ [ Macro({ec with Type = Type.Bogus}, "_vcc_giveup_closed_owner", [tmp; Macro({e.Common with Type = Type.ObjectT}, "_vcc_owner", [tmp])]) ]
-            Some(Expr.MkBlock stmts)
-          | Macro(ec, "=", [Macro(_, "_vcc_owner", [e1]); e2])  ->
-            Some(Macro({ec with Type = Type.Bogus}, "_vcc_set_closed_owner", [self e1; self e2]))
           | _ -> None
 
       let mapFromNewSyntax = function
@@ -938,7 +952,8 @@ namespace Microsoft.Research.Vcc
         | _ -> None
           
       deepMapExpressions normalizeInDomain >> 
-      List.map normalizeCalls >> 
+      List.map normalizeCallsAndFindKeyFunctions >> 
+      deepMapExpressions (normalizeOwnershipManipulation false) >>
       deepMapExpressions normalizeSignatures >>
       List.map mapFromNewSyntax >> 
       removeGlobalMe >>

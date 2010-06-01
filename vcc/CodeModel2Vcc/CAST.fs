@@ -524,7 +524,7 @@ module Microsoft.Research.Vcc.CAST
     member this.OutParameters = [ for p in this.Parameters do if p.Kind = VarKind.OutParameter then yield p ]
     
     member this.IsPure =
-      if this.Name.StartsWith "_vcc_" && this.Writes = [] then
+      if (this.Name.StartsWith "_vcc_"  || this.Name.StartsWith "\\") && this.Writes = [] then
         true
       //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
       //  true // HACK

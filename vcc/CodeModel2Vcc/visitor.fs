@@ -239,7 +239,7 @@ namespace Microsoft.Research.Vcc
               let parTypeString = if parTypes.Length = 0 then "" else "#" + System.String.Join("#", parTypes)
               fn.Name + "#overload#" + (sanitizedTypeName fn.RetType) + parTypeString
             let isSpec =
-              if name.StartsWith("_vcc") then true 
+              if name.StartsWith("_vcc") || name.StartsWith("\\") then true 
               else match meth with
                     | :? Microsoft.Research.Vcc.VccGlobalMethodDefinition as def -> def.IsSpec 
                     | _ -> false 
@@ -875,7 +875,7 @@ namespace Microsoft.Research.Vcc
       requestedFunctions <- Seq.toList fnNames
       for n in ns.Members do 
         let ncmp s = s = n.Name.Value
-        if n.Name.Value.StartsWith("_vcc") || List.exists ncmp requestedFunctions || isRequired n.Name.Value then
+        if n.Name.Value.StartsWith("_vcc") || n.Name.Value.StartsWith("\\") || List.exists ncmp requestedFunctions || isRequired n.Name.Value then
           n.Dispatch(this)
       this.DoneVisitingAssembly()
 
@@ -1335,6 +1335,8 @@ namespace Microsoft.Research.Vcc
           | _ -> None
 
         let (|ObjsetOp|_|) = function
+          | "op_Addition"
+          | "op_Subtraction"
           | "op_BitwiseAnd"
           | "op_BitwiseOr"
           | "op_ExclusiveOr"
@@ -1360,6 +1362,8 @@ namespace Microsoft.Research.Vcc
                | "op_BitwiseAnd"      -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_intersection" methodCall, [], [e1; e2])
                | "op_BitwiseOr"       -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_union" methodCall, [], [e1; e2])
                | "op_ExclusiveOr"     -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_difference" methodCall, [], [e1; e2])
+               | "op_Addition"        -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_add_element" methodCall, [], [e1; e2])
+               | "op_Subtraction"     -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_remove_element" methodCall, [], [e1; e2])
                | _ -> die()
            | _ -> oopsNumArgs()
 

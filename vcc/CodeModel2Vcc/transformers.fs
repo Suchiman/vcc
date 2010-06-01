@@ -130,6 +130,7 @@ namespace Microsoft.Research.Vcc
                   
           match h.Name with
             | "\\free" | "\\stack_free" | "\\alloc" | "\\stack_alloc"
+            | "\\set_owns" | "\\set_closed_owner" | "\\giveup_closed_owner"
             | "_vcc_free"
             | "_vcc_stack_free"
             | "_vcc_alloc"
