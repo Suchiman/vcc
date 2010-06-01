@@ -603,7 +603,7 @@ namespace Microsoft.Research.Vcc
       foreach (var id in this.unreachableChildren)
       {
           if (!unreachableMasters.Contains(id))
-             hasRealUnreachable = true;
+            hasRealUnreachable = true;
       }
       if (!hasRealUnreachable && hasIFUnreachable)
       {
