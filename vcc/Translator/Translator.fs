@@ -1413,7 +1413,12 @@ namespace Microsoft.Research.Vcc
               let curPC = currentPC env
               let targetPC = snd(List.find (fun (lbls,_) -> List.exists (fun lbl -> lbl = l) lbls) env.IFContexts)
               if curPC = targetPC then [cmt (); B.Stmt.Goto (c.Token, [trLabel l])]
-                                  else [cmt (); B.Stmt.Call (c.Token, [], "$set_pc", [B.Expr.Ref(targetPC)]); B.Stmt.Goto (c.Token, [trLabel l]); assumeSync env c.Token]
+                                  else [cmt()
+                                        B.Stmt.Block [B.Stmt.Assert (afmte 0 "the target label is in as low a context as the jump" [stmt],
+                                                                     B.Expr.Primitive("==>",
+                                                                                      [B.Expr.Ref(targetPC)
+                                                                                       B.Expr.FunctionCall("$get.secpc", [B.Expr.FunctionCall ("$memory", [bState])])]))
+                                                      B.Stmt.Goto (c.Token, [trLabel l])]]
             | C.Expr.Label (c, l) -> [B.Stmt.Label (c.Token, trLabel l)]
             
             | C.Expr.Macro (_, "ignore_me", []) -> []
