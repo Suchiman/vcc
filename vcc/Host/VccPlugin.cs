@@ -568,31 +568,45 @@ namespace Microsoft.Research.Vcc
 
     public override void OnUnreachableCode(Implementation impl)
     {
+      bool hasIFUnreachable = false;
       this.unreachableChildren = new Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr>(new List<IdentifierExpr>());
-      for (int i = impl.Blocks.Count - 1; i >= 0; i--) {
-        Block b = impl.Blocks[i];
-        if (HasAssertFalse(b)) {
-            foreach (var cmd in b.Cmds) {
-                PredicateCmd pred = cmd as PredicateCmd;
-                if (pred != null) {
-                    NAryExpr nary = pred.Expr as NAryExpr;
-                    if (nary != null) {
-                        FunctionCall f = nary.Fun as FunctionCall;
-                        if (f != null && f.Func.Name == "$expect_unreachable_master")
-                            this.unreachableMasters = this.unreachableMasters.Add(f.Func.InParams.Last() as IdentifierExpr);
-                        else if (f != null && f.Func.Name == "$expect_unreachable_child")
-                            this.unreachableChildren = this.unreachableChildren.Add(f.Func.InParams.Last() as IdentifierExpr);
-                    }
-                }
-            }
-        }
+      for (int i = impl.Blocks.Count - 1; i >= 0; i--)
+      {
+          Block b = impl.Blocks[i];
+          if (HasAssertFalse(b))
+          {
+              foreach (var cmd in b.Cmds)
+              {
+                  PredicateCmd pred = cmd as PredicateCmd;
+                  if (pred != null)
+                  {
+                      NAryExpr nary = pred.Expr as NAryExpr;
+                      if (nary != null)
+                      {
+                          FunctionCall f = nary.Fun as FunctionCall;
+                          if (f != null && f.Func.Name == "$expect_unreachable_master")
+                          {
+                              this.unreachableMasters = this.unreachableMasters.Add(f.Func.InParams.Last() as IdentifierExpr);
+                              hasIFUnreachable = true;
+                          }
+                          else if (f != null && f.Func.Name == "$expect_unreachable_child")
+                          {
+                              this.unreachableChildren = this.unreachableChildren.Add(f.Func.InParams.Last() as IdentifierExpr);
+                              hasIFUnreachable = true;
+                          }
+                      }
+                  }
+              }
+          }
       }
       bool hasRealUnreachable = false;
-      foreach (var id in this.unreachableChildren) {
+      foreach (var id in this.unreachableChildren)
+      {
           if (!unreachableMasters.Contains(id))
-              hasRealUnreachable = true;
+             hasRealUnreachable = true;
       }
-      if (!hasRealUnreachable) {
+      if (!hasRealUnreachable && hasIFUnreachable)
+      {
           PrintSummary(VC.VCGen.Outcome.Correct);
           return;
       }
