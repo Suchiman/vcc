@@ -13,12 +13,12 @@ void Release(struct Lock *l)
 {
   _(atomic l) {
     l->locked = 0;
-    _(ghost \union_with(\owns(l),{l->protected_obj});)
+    _(ghost l->\owns += l->protected_obj)
   }
 }
 /*{out}*/
 /*`
 Verification of Lock#adm succeeded.
 Verification of Release failed.
-testcase(16,45) : error VC8510: Assertion 'l->protected_obj is writable in call to _vcc_set_closed_owner(l->protected_obj, l)' did not verify.
+testcase(16,27) : error VC8510: Assertion 'l->protected_obj is writable in call to l->\owns += l->protected_obj' did not verify.
 `*/

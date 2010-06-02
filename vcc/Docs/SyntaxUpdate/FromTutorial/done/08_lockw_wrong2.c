@@ -20,5 +20,5 @@ void Release(struct Lock *l)
 /*`
 Verification of Lock#adm succeeded.
 Verification of Release failed.
-testcase(15,21) : error VC8524: Assertion 'chunk locked == 0 ==> _vcc_keeps(__this , protected_obj) of invariant of l holds after atomic' did not verify.
+testcase(15,26) : error VC8524: Assertion 'chunk locked == 0 ==> \mine(protected_obj) of invariant of l holds after atomic' did not verify.
 `*/

@@ -11,7 +11,7 @@ void foo() {
   _(assert o \in s1 \inter s2;)
   _(assert !(o \in s1 \inter s3);)
   _(assert o \in s1 \union s3;)
-  _(assert !(o \in s1 \difference s2);)
+  _(assert !(o \in s1 \diff s2);)
 }
 /*`
 Verification of foo succeeded.

@@ -170,7 +170,7 @@ module Rules =
       let body =
         match getTriggers [] toks with
           | Some (bindings, triggers, body) ->
-            bindings @ [Tok.Whitespace (p, " ")] @ triggers @ [Tok.Op (p, ";")] @ body
+            bindings @ [Tok.Op (p, ";")] @ [Tok.Whitespace (p, " ")] @ triggers  @ body
           | None ->
             if countSemicolons toks > 1 then
               let body, defs =
@@ -181,7 +181,7 @@ module Rules =
                     else
                       guard @ [Tok.Whitespace (p, " "); Tok.Op (p, guardOp)] @ body, List.rev defs
                   | _ -> failwith ""
-              joinWith "," defs @ [Tok.Op (p, ";")] @ body
+              joinWith ";" defs @ [Tok.Op (p, ";")] @ body
             else
               toks
       let body = Tok.Id (p, "\\" + name) :: Tok.Whitespace (p, " ") :: body
@@ -192,13 +192,20 @@ module Rules =
         [paren "(" body], rest
     parenRuleExt name repl    
     
+  let addSetOpRule name op =
+    let repl = function 
+      | [e1;e2] -> e1 @ [Tok.Op(fakePos, " " + op + " ")] @ eatWs e2
+      | _ -> failwith ""
+    addRule (parenRuleN name 2 repl)
+
   let init() =
     addStmtKwRule "assert" "assert"
-    addStmtKwRule "bv_lemma" "assert {bv}" // this is stretching it
+    addStmtKwRule "bv_lemma" "assert {:bv}" // this is stretching it
     addStmtKwRule "assume" "assume"
     addStmtKwRule "wrap" "wrap"
     addStmtKwRule "unwrap" "unwrap"
     addStmtKwRule "spec" "ghost"
+    addStmtKwRule "axiom" "axiom"
     
     //addKwRepl "true" "\\true"
     //addKwRepl "false" "\\false"
@@ -223,7 +230,7 @@ module Rules =
     addKwRule "reads" "reads"
     addKwRule "writes" "writes"
     addKwRule "always" "always"
-    
+
     addFnRule "valid_claim" "\\active_claim"
     addFnRule "ref_cnt" "\\claim_count"
     addFnRule "is_claimable" "\\claimable"
@@ -240,17 +247,18 @@ module Rules =
     addFnRule "inv" "\\inv"
     addFnRule "inv2" "\\inv2"
     addFnRule "keeps" "\\mine"
-    addFnRule "owns" "\\owns"
     addFnRule "old" "\\old"
-    addFnRule "set_union" "\\union"
-    addFnRule "set_difference" "\\diff"
-    addFnRule "set_intersection" "\\inter"
-    addFnRule "claims_obj" "\\claims_obj"
+    addFnRule "claims_obj" "\\claims_object"
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\claim ") :: toks)))
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
-    
+
+    addSetOpRule "set_union" "\\union"
+    addSetOpRule "set_difference" "\\diff"
+    addSetOpRule "set_intersection" "\\inter"
+    addSetOpRule "set_in" "\\in"
+
     let as_array = function
       | [arr; sz] ->
         let arr =
@@ -261,15 +269,14 @@ module Rules =
       | _ -> failwith ""
     addRule (parenRuleN "as_array" 2 as_array)
         
-    let set_in = function
-      | [e; s] ->
-        e @ [Tok.Id (fakePos, " \\in ")] @ eatWs s
+    let owns = function
+      | [e] -> e :: [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns")]
       | _ -> failwith ""
-    addRule (parenRuleN "set_in" 2 set_in)
+    addRule (parenRule false "owns" owns)
     
     let set_owns = function
       | [e; s] ->
-        fnApp "\\set" (fnApp "\\owns" e @ [Tok.Op (fakePos, ",")] @ s)
+        e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\owns"); Tok.Op(fakePos, " = ")] @ s
       | _ -> failwith ""
     addRule (parenRuleN "set_owns" 2 set_owns)
     
