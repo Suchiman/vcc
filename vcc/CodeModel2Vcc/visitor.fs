@@ -955,7 +955,8 @@ namespace Microsoft.Research.Vcc
       member this.Visit (globalMethodDefinition:IGlobalMethodDefinition) : unit =
         globalsType <- globalMethodDefinition.ContainingTypeDefinition
         match globalMethodDefinition.Name.Value with
-          | "_vcc_in_state" | "_vcc_approves" | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "_vcc_is_low" | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" -> ()
+          | "_vcc_in_state" | "\\in_state"
+          | "_vcc_approves" | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "_vcc_is_low" | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false)
 
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
@@ -1401,7 +1402,7 @@ namespace Microsoft.Research.Vcc
               | _ -> oopsNumArgs()
           | ( SystemDiagnosticsContractsCodeContract | SystemDiagnosticsContractsCodeContractTypedPtr | MapTypeString), _ ->
             oopsLoc methodCall ("unexpected method \'" + containingTypeDefinitionName + "." + methodName + "\'"); die()
-          | _, "_vcc_in_state" ->
+          | _, ("_vcc_in_state"|"\\in_state") ->
             match args() with
               | [e1; e2] -> exprRes <- C.Expr.Old ({ec with Type = e2.Type}, e1, e2)
               | _ -> oopsNumArgs()

@@ -311,6 +311,11 @@ namespace Microsoft.Research.Vcc.Parsing {
           } else
             this.ParseFunctionDeclaration(specifiers, typeMembers, declarator, funcDeclarator, followers|Token.Semicolon, isGlobal);
         } else {
+          InitializedDeclarator iDecl = declarator as InitializedDeclarator;
+          if (iDecl != null) {
+            FunctionDeclarator fDecl = iDecl.Declarator as FunctionDeclarator;
+            if (fDecl != null) fDecl.TemplateParameters = templateParameters;
+          }
           //TODO: complain if templateParameters are not null
           this.AddTypeDeclarationMember(specifiers, declarator, typeMembers);
         }
@@ -690,9 +695,10 @@ namespace Microsoft.Research.Vcc.Parsing {
             FunctionDeclarator funcDeclarator = initializedDeclarator.Declarator as FunctionDeclarator;
             bool acceptsExtraArguments;
             List<ParameterDeclaration> parameters = this.ConvertToParameterDeclarations(funcDeclarator.Parameters, out acceptsExtraArguments);
+            List<GenericMethodParameterDeclaration>/*?*/ templateParameters = Parser.ConvertToGenericMethodParameterDeclarations(funcDeclarator.TemplateParameters);
             TypeExpression returnType = this.GetTypeExpressionFor(specifiers, funcDeclarator.FunctionName);
-            FunctionDeclaration fdecl = new FunctionDeclaration(false, specifiers, false, CallingConvention.C, TypeMemberVisibility.Public, returnType, funcDeclarator.Identifier, new List<GenericMethodParameterDeclaration>(0),
-              parameters, true, initializer, slb);
+            FunctionDeclaration fdecl = new FunctionDeclaration(false, specifiers, false, CallingConvention.C, TypeMemberVisibility.Public, 
+              returnType, funcDeclarator.Identifier, templateParameters, parameters, true, initializer, slb);
             typeMembers.Add(fdecl);
           } else {
             if (this.currentSpecificationFields == null) this.currentSpecificationFields = new List<FieldDeclaration>();

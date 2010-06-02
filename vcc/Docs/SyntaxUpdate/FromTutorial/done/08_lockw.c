@@ -15,12 +15,12 @@ void InitializeLock(struct Lock *l _(ghost \object obj))
   l->locked = 0;
   _(ghost {
     l->protected_obj = obj;
-    \set(\owns(l), {obj});
+    l->\owns = {obj};
     _(wrap l)
   })
 }
 /*{xchg}*/
-vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
+_(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
   if (*Destination == Comparand) {
     *Destination = Exchange;
     return Comparand;
@@ -38,9 +38,7 @@ void Acquire(struct Lock *l)
   do {
     _(atomic l) {
       stop = InterlockedCompareExchange(&l->locked, 1, 0) == 0;
-      _(ghost 
-        if (stop) 
-          \diff_with(\owns(l),{l->protected_obj});)
+      _(ghost if (stop) l->\owns -= l->protected_obj)
     }
   } while (!stop);
 }
@@ -52,7 +50,7 @@ void Release(struct Lock *l)
 {
   _(atomic l) {
     l->locked = 0;
-    _(ghost \union_with(\owns(l),{l->protected_obj});)
+    _(ghost l->\owns += l->protected_obj)
   }
 }
 /*{out}*/
