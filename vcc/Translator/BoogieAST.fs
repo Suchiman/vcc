@@ -40,6 +40,7 @@ namespace Microsoft.Research.Vcc
       | Ref of Id // Bid Id from Microsoft.Boogie.hs
       | BoolLiteral of bool
       | IntLiteral of bigint
+      | SecLabelLiteral of string
       | BvLiteral of bigint * int
       | BvConcat of Expr * Expr
       | BvExtract of Expr * int * int
@@ -74,6 +75,7 @@ namespace Microsoft.Research.Vcc
           | BoolLiteral true -> wr "true"
           | BoolLiteral false -> wr "false"          
           | IntLiteral n -> wr (n.ToString())
+          | SecLabelLiteral l -> wr l
           | BvLiteral (k, sz) -> wr (k.ToString()); wr "bv"; wr (sz.ToString())
           | BvConcat (e1, e2) -> 
             wr "("
@@ -226,6 +228,11 @@ namespace Microsoft.Research.Vcc
           Microsoft.Boogie.LiteralExpr (noToken, b) :> Microsoft.Boogie.Expr
         | IntLiteral v ->
           Microsoft.Boogie.LiteralExpr (noToken, Microsoft.Basetypes.BigNum.FromBigInt v) :> Microsoft.Boogie.Expr
+        | SecLabelLiteral s ->
+          match s with
+            | "top" -> Microsoft.Boogie.LiteralExpr (noToken, false) :> Microsoft.Boogie.Expr
+            | "bot" -> Microsoft.Boogie.LiteralExpr (noToken, true) :> Microsoft.Boogie.Expr
+            | _ -> printf "unknown security label: %s" s; die()
         | BvLiteral (v, sz) ->
           Microsoft.Boogie.LiteralExpr (noToken, Microsoft.Basetypes.BigNum.FromBigInt v, sz) :> Microsoft.Boogie.Expr
         | BvConcat(e1, e2) ->
@@ -526,7 +533,8 @@ namespace Microsoft.Research.Vcc
               | Ref _
               | BoolLiteral _
               | BvLiteral _
-              | IntLiteral _ -> this
+              | IntLiteral _
+              | SecLabelLiteral _ -> this
               | BvConcat(e1, e2) -> BvConcat(self e1, self e2)
               | BvExtract(e, t, f) -> BvExtract(self e, t, f)
               | Primitive (n, args) -> Primitive (n, selfs args)
