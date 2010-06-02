@@ -377,6 +377,7 @@ module Microsoft.Research.Vcc.CAST
         | MathInteger -> 8
         | Bool
         | Void
+        | SecLabel _
         | Claim
         | SecLabel _
         | TypeIdT

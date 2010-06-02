@@ -37,7 +37,8 @@ namespace Microsoft.Research.Vcc
         hasIF : bool;
         IFPCNum : ref<int>;
         IFBlockNum : ref<int>;
-        IFContexts : list<list<C.LabelId>*string>
+        IFContexts : list<list<C.LabelId>*string>;
+        IFGrpID : ref<bigint>;
       }
 
     let nestingExtents = false
@@ -53,7 +54,8 @@ namespace Microsoft.Research.Vcc
                        hasIF = false
                        IFPCNum = ref 0;
                        IFBlockNum = ref 0;
-                       IFContexts = []
+                       IFContexts = [];
+                       IFGrpID = ref (bigint.Zero);
                      }
     
     let fieldName (f:C.Field) = f.Parent.Name + "." + f.Name
@@ -90,6 +92,7 @@ namespace Microsoft.Research.Vcc
       let newPC = "SecLabel#PC#"+(newPCNum.ToString())
       {env with IFContexts = (jmpContext,newPC)::env.IFContexts}
 
+    let freshGrpID (env:Env) = env.IFGrpID := (!env.IFGrpID) + bigint.One; !env.IFGrpID
 
     let hasCustomAttr n = List.exists (function C.VccAttr (n', _) -> n = n' | _ -> false)
     
@@ -1185,6 +1188,9 @@ namespace Microsoft.Research.Vcc
                     | _ -> die()
               let assign = B.Stmt.Assign (varRef resV, rs)
               let vname,_ = trVar resV
+              let setPtrGrp = if (env.hasIF && name'.Contains "alloc") then [B.Stmt.Call (stmt.Token, [], "$set_ptr_grp", [er tmp; B.Expr.IntLiteral (freshGrpID env)])
+                                                                             assumeSync env stmt.Token]
+                                                                       else []
               let setSecLabel = if (env.hasIF) then [B.Stmt.Call (stmt.Token, [], "$set_label", [er tmp; B.Expr.BoolLiteral false])
                                                      assumeSync env stmt.Token
                                                      B.Stmt.Call (stmt.Token, [], "$set_meta", [er tmp; B.FunctionCall ("$get.secpc", [B.Expr.FunctionCall ("$memory", [bState])])])
@@ -1192,8 +1198,17 @@ namespace Microsoft.Research.Vcc
                                                      B.Stmt.Assign (B.Expr.Ref ("SecLabel#"+vname), B.Expr.BoolLiteral false)
                                                      B.Stmt.Assign (B.Expr.Ref ("SecMeta#"+vname), B.Expr.FunctionCall("$get.secpc",[B.Expr.FunctionCall("$memory",[bState])]))] // TODO: The value here depends on the call, arguments and so on
                                                else []
-              [tmp], [vardecl; assign] @ setSecLabel
-            else List.map ctx.VarName res, []
+              [tmp], [vardecl; assign] @ setSecLabel @ setPtrGrp
+            else
+              let setSecLabel =
+                match res with
+                  | [] -> []
+                  | _ ->
+                    let vname,_ = trVar res.Head
+                    if (env.hasIF) then [B.Stmt.Assign (B.Expr.Ref ("SecLabel#"+vname), B.Expr.Ref ("SecLabel#special#result"))
+                                         B.Stmt.Assign (B.Expr.Ref ("SecMeta#"+vname), B.Expr.Ref ("SecMeta#special#result"))]
+                                   else []
+              List.map ctx.VarName res, setSecLabel
           let syncEnv =
             match name' with
               | "$wrap"
@@ -1404,11 +1419,11 @@ namespace Microsoft.Research.Vcc
                 let vname,_ = v'
                 cmt() ::
                 B.Stmt.VarDecl (v', w) ::
+                ctx.AssumeLocalIs b.Token v ::
                 B.Stmt.VarDecl (("SecLabel#"+vname,B.Type.Bool),None) ::
                 B.Stmt.VarDecl (("SecMeta#"+vname,B.Type.Bool),None) ::
                 B.Stmt.Assign (B.Expr.Ref("SecLabel#"+vname), B.Expr.BoolLiteral false) ::
                 B.Stmt.Assign (B.Expr.Ref("SecMeta#"+vname), B.Expr.BoolLiteral true) ::
-                ctx.AssumeLocalIs b.Token v ::
                 ls
             | C.Expr.VarDecl (b, v) when (not env.hasIF) ->
               let ls = if v.Kind = C.Parameter then cev.VarIntro b.Token true v else []
@@ -2261,8 +2276,10 @@ namespace Microsoft.Research.Vcc
                   B.Stmt.Assume assump
                   
                 let inParams = h.Parameters |> List.filter (fun v -> v.Kind <> C.VarKind.OutParameter)
-                let cevInit = cev.InitCall h.Token :: List.map (cev.VarIntro h.Token true) inParams |> List.concat 
-                let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ init @ cevInit                    
+                let cevInit = cev.InitCall h.Token :: List.map (cev.VarIntro h.Token true) inParams |> List.concat
+                let inParamLabels = if env.hasIF then List.collect (fun (v:CAST.Variable) -> [B.Stmt.VarDecl (("SecLabel#P#"+(v.Name),B.Type.Bool), None); B.Stmt.VarDecl (("SecMeta#P#"+(v.Name),B.Type.Bool), None)]) inParams
+                                                 else []
+                let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ inParamLabels @ init @ cevInit                    
                 
                 let can_frame =
                   if helper.Options.Vcc3 then []

@@ -26,6 +26,7 @@ namespace Microsoft.Research.Vcc
       | ProgramContext
       | VarLabel of C.Expr  // Label of a variable
       | MemLabel of C.Expr  // Label of a memory location
+      | PtrCompare of C.Expr*C.Expr // Level of a pointer comparison
       | Join of SecLabel*SecLabel
       | Meet of SecLabel*SecLabel
 
@@ -34,7 +35,8 @@ namespace Microsoft.Research.Vcc
       | Top
       | ProgramContext
       | VarLabel _
-      | MemLabel _ as l -> l
+      | MemLabel _
+      | PtrCompare _ as l -> l
       | Join(Bottom,l)
       | Join(l,Bottom)
       | Meet(Top,l)
@@ -61,7 +63,7 @@ namespace Microsoft.Research.Vcc
     let rec exprLevel (e:C.Expr) = 
       match e with
         | C.Expr.Prim(_,_,es) ->
-          let ugly = List.foldBack (fun e lbl -> Join (lbl,(exprLevel e))) es ProgramContext    // The arguments' labels are joined
+          let ugly = List.foldBack (fun e lbl -> Join (lbl,(exprLevel e))) es Bottom    // The arguments' labels are joined
           normaliseSecLabel ugly
         | C.Expr.IntLiteral _
         | C.Expr.BoolLiteral _
@@ -70,13 +72,14 @@ namespace Microsoft.Research.Vcc
         | C.Expr.Ref _ as e -> VarLabel e
         | C.Expr.Deref(_,e') -> MemLabel e'
         | C.Expr.Call (_, fn, [], []) when  fn.Name = "$current_context" -> ProgramContext
+        | C.Expr.Macro (_, "_vcc_ptr_eq", [p1;p2]) -> PtrCompare(p1,p2)
         | C.Expr.Call _    // First step: no function calls, ...
         | C.Expr.Dot _     // ... or structures, ...
         | C.Expr.Index _   // ... or arrays.
         | C.Expr.Old _     // Contracts are not supposed to cause
-        | C.Expr.Quant _   //  information-flow problems
-        | _ -> die()       // We limit ourselves to real expressions
-
+        | C.Expr.Quant _  -> die() //  information-flow problems
+        | _ -> failwith (sprintf "Incomplete implementation: Encountered an error while trying to take the expression level of %s." (e.ToString()))
+    
     let contextify = function
       | Bottom
       | ProgramContext -> ProgramContext
@@ -85,6 +88,8 @@ namespace Microsoft.Research.Vcc
 
     let rec secLabelToBoogie trExpr trVar = function
       | ProgramContext -> B.Expr.FunctionCall("$get.secpc",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"])])
+      | PtrCompare (p1,p2) -> B.Expr.Primitive ("==", [B.Expr.FunctionCall("$get.ptrgrp",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr p1])
+                                                       B.Expr.FunctionCall("$get.ptrgrp",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr p2])])   // This is too simple and can only be a default behaviour.
       | Meet (Bottom, _)
       | Meet (_, Bottom)
       | Bottom -> B.Expr.BoolLiteral true
@@ -94,6 +99,7 @@ namespace Microsoft.Research.Vcc
       | VarLabel e -> 
         match e with
           | C.Expr.Ref(_,v) -> B.Expr.Ref ("SecLabel#"+(trVar v))
+          | C.Expr.Result _ -> B.Expr.Ref ("SecLabel#special#result")
           | _ -> die()
       | MemLabel e ->
         match e with
@@ -106,6 +112,24 @@ namespace Microsoft.Research.Vcc
       | Join (l1, l2) -> B.Expr.Primitive ("&&", [secLabelToBoogie trExpr trVar l1;secLabelToBoogie trExpr trVar l2])
       | Meet (l1, l2) -> B.Expr.Primitive ("||", [secLabelToBoogie trExpr trVar l1;secLabelToBoogie trExpr trVar l2])
 
+    let scanForIFAnnotations (decl:C.Top) =
+      let res = ref false
+      let bodyHasIFAnnotations _ = function
+        | C.Expr.If(_, Some _, _, _, _)
+        | C.Expr.Macro(_, "_vcc_is_low", _)
+        | C.Expr.Macro(_, "_vcc_downgrade_to", _)
+        | C.Expr.Macro(_, "_vcc_current_context", _)
+        | C.Expr.Macro(_,"_vcc_label_of",_) -> res := true; false
+        | _ -> true
+      match decl with
+        | C.Top.FunctionDecl fn ->
+          match fn.Body with
+            | None -> false
+            | Some body -> body.SelfVisit(bodyHasIFAnnotations); !res
+        | _ -> false
+
+
+// Transformations for if statements
     let makePermissiveUpgrade trVar trType cExpr testClassif =
       let rec getFreeVars acc = function
         | C.Expr.Prim(_,_,es) -> List.foldBack (fun e (vars,types) -> let (vars',types') = getFreeVars [] e in Set.union vars' vars,types'@types) es (Set.empty,acc)
@@ -116,7 +140,7 @@ namespace Microsoft.Research.Vcc
         | C.Expr.Ref (_,v) -> Set.ofList [Local (trVar v)],acc
         | C.Expr.Deref (_,e) ->
           match e with
-            | C.Expr.Ref (_,p) -> Set.ofList [Pointer (trVar p)],(Pointer (trVar p),e.Type)::acc
+            | C.Expr.Ref (_,p) -> Set.ofList [Pointer (trVar p)], (Pointer (trVar p),e.Type)::acc
             | _ -> failwith (sprintf "Incomplete implementation: Encountered a deref with non-reference argument %s\n." (e.ToString()))
         | C.Expr.Call _
         | C.Expr.Dot _
@@ -124,7 +148,7 @@ namespace Microsoft.Research.Vcc
         | C.Expr.Old _
         | C.Expr.Quant _
         | _ -> die()
-      let freeVars,typeAssocs = getFreeVars [] cExpr
+      let (freeVars,typeAssocs) = getFreeVars [] cExpr
       let construct v expr =
         match v with
           | Local n ->  B.Expr.Primitive ("||",
@@ -173,19 +197,3 @@ namespace Microsoft.Research.Vcc
                   B.Expr.Primitive ("&&", [expr;B.Expr.FunctionCall ("$get.metalabel", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref v])])])
              else B.Expr.Primitive ("&&", [expr;B.Expr.Ref v])
       Set.foldBack construct varLevels (B.Expr.BoolLiteral true)
-
-    let scanForIFAnnotations (decl:C.Top) =
-      let res = ref false
-      let bodyHasIFAnnotations _ = function
-        | C.Expr.If(_, Some _, _, _, _)
-        | C.Expr.Macro(_, "_vcc_is_low", _)
-        | C.Expr.Macro(_, "_vcc_downgrade_to", _)
-        | C.Expr.Macro(_, "_vcc_current_context", _)
-        | C.Expr.Macro(_,"_vcc_label_of",_) -> res := true; false
-        | _ -> true
-      match decl with
-        | C.Top.FunctionDecl fn ->
-          match fn.Body with
-            | None -> false
-            | Some body -> body.SelfVisit(bodyHasIFAnnotations); !res
-        | _ -> false
