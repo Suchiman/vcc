@@ -588,6 +588,8 @@ namespace Microsoft.Research.Vcc
                   C.Type.MathInteger
                 else if name = SystemDiagnosticsContractsCodeContractObjset then
                   C.Type.Math "\\objset"
+                else if name = "_vcc_label_t" then
+                  C.Type.SecLabel None
                 else              
                   let tok = token typeDef
                   let totalOffset f = MemberHelper.GetFieldBitOffset f + f.Offset
@@ -1428,11 +1430,15 @@ namespace Microsoft.Research.Vcc
               | _ -> oopsNumArgs()
           | _, "_vcc_downgrade_to" ->
             match args() with
-              | [var;expr] as args -> exprRes <- C.Expr.Macro (ec, "_vcc_downgrade_to", args)
+              | [var;expr] as args -> exprRes <- C.Expr.Macro ({ ec with Type = CAST.Type.Void}, "_vcc_downgrade_to", args)
               | _ -> oopsNumArgs()
           | _, "_vcc_current_context" ->
             match args() with
-              | [] -> exprRes <- C.Expr.Macro (ec, "_vcc_current_context", [])
+              | [] -> exprRes <- C.Expr.Macro ({ ec with Type = CAST.Type.SecLabel None}, "_vcc_current_context", [])
+              | _ -> oopsNumArgs()
+          | _, "_vcc_label_of" ->
+            match args() with
+              | [expr] as args -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.SecLabel(Some expr)}, "_vcc_label_of", args)
               | _ -> oopsNumArgs()
           | _ ->
             let args = args()

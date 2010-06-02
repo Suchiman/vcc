@@ -216,6 +216,7 @@ module Microsoft.Research.Vcc.CAST
     | Ref of TypeDecl
     | Array of Type * int
     | TypeIdT
+    | SecLabel of Expr option
     | Claim                // the claim_t in C is actually Claim*
     | Map of Type * Type   // t1 -> t2
     | ObjectT
@@ -236,6 +237,7 @@ module Microsoft.Research.Vcc.CAST
         | Type.Ref d -> wr (d.ToString ())
         | Array (t, sz) -> t.WriteTo b; wr ("[" + sz.ToString() + "]")
         | Map (t1, t2) -> t2.WriteTo b; wr "["; t1.WriteTo b; wr "]"
+        | SecLabel _ -> wr "label_t"
         | Claim -> wr "claim_t"
         | ObjectT -> wr "obj_t"
         | MathInteger -> wr "mathint"
@@ -285,6 +287,7 @@ module Microsoft.Research.Vcc.CAST
         | TypeIdT
         | ObjectT
         | Type.Ref { Kind = (FunctDecl _|MathType|Record) }
+        | SecLabel _
         | Map _ -> false
         | TypeVar _
         | Claim
@@ -375,6 +378,7 @@ module Microsoft.Research.Vcc.CAST
         | Bool
         | Void
         | Claim
+        | SecLabel _
         | TypeIdT
         | Map _
         | TypeVar _ -> 1

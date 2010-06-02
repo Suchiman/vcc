@@ -363,6 +363,7 @@ namespace Microsoft.Research.Vcc
               | FunctDecl d -> cb.UseFunction d
               | _ -> ()
       | Type.Claim
+      | Type.SecLabel _
       | Type.TypeIdT
       | Type.Void
       | Type.Bool

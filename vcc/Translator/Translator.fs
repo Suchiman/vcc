@@ -317,6 +317,8 @@ namespace Microsoft.Research.Vcc
                   bCall "$ptr_neq" [self e'; er "$null"]
                 | C.Type.MathInteger _ ->
                   bCall "$int_to_bool" [self e']
+                | C.Type.SecLabel _ ->
+                  self e'
                 | _ -> die()
             | C.Cast ({ Type = C.Type.MathInteger }, _, e') when e'.Type._IsPtr ->
               bCall "$ref" [self e']
@@ -660,6 +662,15 @@ namespace Microsoft.Research.Vcc
           | "_vcc_is_low", [e] -> IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e)
           | "_vcc_current_context", [] -> B.Expr.FunctionCall("$get.secpc",[B.Expr.FunctionCall("$memory",[bState])])
           | "_vcc_expect_unreachable_child", [e] -> B.Expr.FunctionCall("$expect_unreachable_child",[trExpr env e])
+          | "_vcc_label_of", [e] ->
+            match e.Type with
+              | C.Type.SecLabel None -> B.Expr.BoolLiteral true
+              | C.Type.SecLabel (Some (C.Expr.Deref(_,e'))) -> B.Expr.FunctionCall("$get.metalabel",[B.Expr.FunctionCall("$memory",[bState]); trExpr env e'])
+              | C.Type.SecLabel (Some e') -> Console.WriteLine (sprintf "Failed when calling label_of twice on an expression of type: %s." (e'.Type.ToString())); die()
+              | _ ->
+                match e with
+                  | C.Expr.Deref (_,e') -> B.Expr.FunctionCall("$get.seclabel",[B.Expr.FunctionCall("$memory",[bState]); trExpr env e'])
+                  | _ -> die()
           | _ ->
             helper.Oops (ec.Token, sprintf "unhandled macro %s" n)
             er "$bogus"                
