@@ -215,6 +215,7 @@ module Rules =
     addKwRepl "threadid_t" "\\thread"
     addKwRepl "result" "\\result"
     addKwRepl "this" "\\this"
+    addKwRepl "ispure" "_(pure)"
     
     addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
     addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, "hint: "); paren "" toks]))
@@ -230,6 +231,8 @@ module Rules =
     addKwRule "reads" "reads"
     addKwRule "writes" "writes"
     addKwRule "always" "always"
+    addKwRule "maintains" "maintains"
+    addKwRule "returns" "returns"
 
     addFnRule "valid_claim" "\\active_claim"
     addFnRule "ref_cnt" "\\claim_count"
@@ -243,6 +246,7 @@ module Rules =
     addFnRule "owner" "\\owner"
     addFnRule "thread_local" "\\thread_local"
     addFnRule "span" "\\span"
+    addFnRule "extent" "\\extent"
     addFnRule "unchecked" "_(unchecked)"
     addFnRule "inv" "\\inv"
     addFnRule "inv2" "\\inv2"
@@ -253,7 +257,8 @@ module Rules =
     addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\claim ") :: toks)))
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
-
+  
+    addRule (parenRule false "vcc" (fnApp "_"))
     addSetOpRule "set_union" "\\union"
     addSetOpRule "set_difference" "\\diff"
     addSetOpRule "set_intersection" "\\inter"
