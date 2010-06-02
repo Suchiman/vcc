@@ -86,6 +86,9 @@ _(bool \macro_always(\claim c, bool cond)
   _(requires \wrapped(c) && \active_claim(c) && \claims(c, cond))
   _(ensures \wrapped(c) && \active_claim(c));)
 
+_(template<typename T> T \macro_returns(T expr)
+  _(ensures \result == expr);)
+
 _(logic bool \wrapped0(\object o) = \wrapped(o) && \claim_count(o) == 0;)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
