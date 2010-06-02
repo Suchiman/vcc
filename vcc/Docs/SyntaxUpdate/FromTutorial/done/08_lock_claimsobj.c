@@ -1,11 +1,12 @@
 #include <vcc.h>
 
 /*{lock}*/
-_(claimable) _(volatile_owns) struct Lock {
+_(claimable, volatile_owns) struct Lock {
   volatile int locked;
   _(ghost  \object protected_obj;)
   _(invariant  locked == 0 ==> \mine(protected_obj))
 };
+
 /*{init}*/
 void InitializeLock(struct Lock *l _(ghost \object obj))
   _(writes \span(l), obj)
@@ -15,12 +16,12 @@ void InitializeLock(struct Lock *l _(ghost \object obj))
   l->locked = 0;
   _(ghost {
     l->protected_obj = obj;
-    \set(\owns(l), {obj});
+    l->\owns = {obj};
     _(wrap l)
   })
 }
 /*{xchg}*/
-vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
+_(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
   if (*Destination == Comparand) {
     *Destination = Exchange;
     return Comparand;
@@ -38,24 +39,27 @@ void Acquire(struct Lock *l _(ghost \claim c))
   do {
     _(atomic c, l) {
       stop = InterlockedCompareExchange(&l->locked, 1, 0) == 0;
-      _(ghost if (stop) \diff_with(\owns(l),{l->protected_obj});)
+      _(ghost if (stop) l->\owns -= l->protected_obj)
     }
   } while (!stop);
 }
+
+
 /*{release}*/
 void Release(struct Lock *l _(ghost \claim c))
-  _(requires \wrapped(c) && \claims_obj(c, l))
+  _(requires \wrapped(c) && \claims_object(c, l))
   _(requires l->protected_obj != c)
   _(requires \wrapped(l->protected_obj))
   _(ensures \wrapped(c))
   _(writes l->protected_obj)
 {
   _(atomic c, l) {
-    _(assert by_claim(c, l->protected_obj) != c) // why do we need it?
+    _(assert \by_claim(c, l->protected_obj) != c) // why do we need it?
     l->locked = 0;
-    \union_with(\owns(l),{l->protected_obj});
+    _(ghost l->\owns += l->protected_obj)
   }
 }
+
 /*{struct_data}*/
 struct Data {
   int x;
@@ -76,4 +80,9 @@ void create_claim(struct Data *d)
 }
 /*{out}*/
 /*`
+Verification of Lock#adm succeeded.
+Verification of InitializeLock succeeded.
+Verification of Acquire succeeded.
+Verification of Release succeeded.
+Verification of create_claim succeeded.
 `*/

@@ -67,22 +67,24 @@ _(bool \inv(\object);)
 _(bool \inv2(\object);)
 _(\object \embedding(\object);)
 _(bool \ghost(\object);)
-_(bool \valid_claim(\claim);)
 _(bool \claims(\claim, bool);)
 _(bool \program_entry_point();)
+
+_(template<typename T> T \in_state(\state, T expr);)
+_(\state \current_state();)
+_(logic template<typename T> T \by_claim(\claim c, T expr) = \in_state(\by_claim_wrapper(c), expr);)
 
 // global variables
 
 _(ghost extern const \thread \me;)
-
 
 // 'Built-in' spec macros and logic definitions
 
 _(bool \macro_maintains(bool cond) _(requires cond) _(ensures cond);)
 
 _(bool \macro_always(\claim c, bool cond)
-  _(requires \wrapped(c) && \valid_claim(c) && \claims(c, cond))
-  _(ensures \wrapped(c) && \valid_claim(c));)
+  _(requires \wrapped(c) && \active_claim(c) && \claims(c, cond))
+  _(ensures \wrapped(c) && \active_claim(c));)
 
 _(logic bool \wrapped0(\object o) = \wrapped(o) && \claim_count(o) == 0;)
 
@@ -103,7 +105,7 @@ _(bool \atomic_object(unsigned __int64);)
 _(void \set_closed_owner(\object obj, \object owner)  _(writes obj) _(requires \atomic_object(1));)
 _(void \giveup_closed_owner(\object obj, \object owner)  _(requires \atomic_object(1));)
 _(void \set_owns(\object obj, \objset owns)  _(writes obj);)
-
+_(\state \by_claim_wrapper(\claim);)
 
 #else 
 

@@ -536,7 +536,7 @@ namespace Microsoft.Research.Vcc.Parsing
       public static TokenSet SpecParameter = new TokenSet() | Token.SpecGhost | Token.SpecOut;
       public static TokenSet TypeMember = new TokenSet() | Token.SpecGhost | Token.SpecInvariant;
       public static TokenSet Global = new TokenSet() | Token.SpecAxiom | Token.SpecGhost | Token.SpecPure | Token.SpecLogic;
-      public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns | Token.SpecAtomicInline;
+      public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns | Token.SpecAtomicInline | Token.SpecVolatileOwns;
     }
   }
 }

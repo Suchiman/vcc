@@ -179,15 +179,15 @@ namespace Microsoft.Research.Vcc
       let isSpecMacro (fn:Function) = hasCustomAttr AttrSpecMacro fn.CustomAttr
       let doInline self =
         function 
-          | Call (ec, fn, _, _) as call when isSpecMacro fn ->
-            match fn.Ensures with
+          | Call (ec, fn, targs, args) when isSpecMacro fn ->
+            let fn' = fn.Specialize(targs, false)
+            match fn'.Ensures with
               | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))] ->
                 if e.HasSubexpr (function Result _ -> true | _ -> false) then
                   helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
                   None
-                else
-                  Some (inlineCall "" self call e)
-
+                else                 
+                  Some (inlineCall "" self (Call({ec with Type = fn'.RetType}, fn', [], args)) e)
               | _ ->
                 helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
                 None
@@ -827,48 +827,56 @@ namespace Microsoft.Research.Vcc
     
     let normalizeNewSyntax = 
   
-      let newToOldFn = Map.ofList [ "\\mine",                "_vcc_keeps";
-                                    "\\embedding",           "_vcc_emb";
-                                    "\\domain",              "_vcc_domain";
-                                    "\\valid",               "_vcc_typed2";
-                                    "\\valid_claim",         "_vcc_valid_claim";
-                                    "\\ghost",               "_vcc_is_ghost_ptr";
-                                    "\\wrap",                "_vcc_wrap";
-                                    "\\wrapped",             "_vcc_wrapped";
-                                    "\\extent",              "_vcc_extent";
-                                    "\\alloc",               "_vcc_alloc";
-                                    "\\mutable",             "_vcc_mutable";
-                                    "\\fresh",               "_vcc_is_fresh";
-                                    "\\consistent",          "_vcc_closed";
-                                    "\\array_range",         "_vcc_array_range";
-                                    "\\span",                "_vcc_span";
-                                    "\\unwrap",              "_vcc_unwrap";
-                                    "\\thread_local",        "_vcc_thread_local2";
-                                    "\\thread_local_array",  "_vcc_is_thread_local_array";
-                                    "\\free",                "_vcc_free";
-                                    "\\claims",              "_vcc_claims";
-                                    "\\claims_object",       "_vcc_claims_obj";
-                                    "\\claims_claim",        "_vcc_claims_claim";
-                                    "\\claim_count",         "_vcc_ref_cnt";
-                                    "\\claimable",           "_vcc_is_claimable";
-                                    "\\make_claim",          "_vcc_claim";
-                                    "\\destroy_claim",       "_vcc_unclaim";
-                                    "\\active_claim",        "_vcc_valid_claim";
-                                    "\\inv",                 "_vcc_inv";
-                                    "\\inv2",                "_vcc_inv2";
-                                    "\\typeof",              "_vcc_typeof";
-                                    "\\atomic_object",       "_vcc_is_atomic_obj";
-                                    "\\set_owns",            "_vcc_set_owns";
-                                    "\\set_closed_owner",    "_vcc_set_closed_owner";
-                                    "\\giveup_closed_owner", "_vcc_giveup_closed_owner";
-                                    "\\stack_alloc",         "_vcc_stack_alloc";
-                                    "\\stack_free",          "_vcc_stack_free";
-                                    "\\program_entry_point", "_vcc_program_entry_point";
-                                    "\\set_in",              "_vcc_set_in";
-                                    "\\set_intersection",    "_vcc_set_intersection";
-                                    "\\set_union",           "_vcc_set_union";
-                                    "\\set_difference",      "_vcc_set_difference";
-                                    "\\universe",            "_vcc_set_universe"; ]
+      let n2o n = "\\" + n, "_vcc_" + n
+
+      let canonical = List.map n2o [ 
+                                      "domain"; 
+                                      "wrap";
+                                      "wrapped";
+                                      "unwrap";
+                                      "extent";
+                                      "alloc";
+                                      "free";
+                                      "stack_alloc";
+                                      "stack_free";
+                                      "program_entry_point";
+                                      "mutable";
+                                      "array_range";
+                                      "span";
+                                      "claims";
+                                      "claims_claim";
+                                      "inv";
+                                      "inv2";
+                                      "typeof";
+                                      "set_owns";
+                                      "set_closed_owner";
+                                      "giveup_closed_owner";
+                                      "set_in";
+                                      "set_union";
+                                      "set_intersection";
+                                      "set_difference";
+                                      "current_state";
+                                  ];
+
+      let newToOldFn = Map.ofList ( [ 
+                                      "\\mine",                "_vcc_keeps";
+                                      "\\embedding",           "_vcc_emb";
+                                      "\\valid",               "_vcc_typed2";
+                                      "\\ghost",               "_vcc_is_ghost_ptr";
+                                      "\\fresh",               "_vcc_is_fresh";
+                                      "\\consistent",          "_vcc_closed";
+                                      "\\thread_local",        "_vcc_thread_local2";
+                                      "\\thread_local_array",  "_vcc_is_thread_local_array";
+                                      "\\claims_object",       "_vcc_claims_obj";
+                                      "\\claim_count",         "_vcc_ref_cnt";
+                                      "\\claimable",           "_vcc_is_claimable";
+                                      "\\make_claim",          "_vcc_claim";
+                                      "\\destroy_claim",       "_vcc_unclaim";
+                                      "\\active_claim",        "_vcc_valid_claim";
+                                      "\\atomic_object",       "_vcc_is_atomic_obj";
+                                      "\\universe",            "_vcc_set_universe"; 
+                                      "\\by_claim_wrapper",    "_vcc_by_claim";
+                                    ] @ canonical )
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";
                                       "\\state",  "state_t";
@@ -1002,6 +1010,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-out-params", Helper.Expr removeDerefFromOutParams)
     helper.AddTransformer ("norm-comparison", Helper.Expr (doHandleComparison helper))
     helper.AddTransformer ("norm-conversions", Helper.Expr doHandleConversions)   
+    helper.AddTransformer ("inline-spec-macros", Helper.Decl inlineSpecMacros)
     helper.AddTransformer ("norm-generic-errors", Helper.Decl reportGenericsErrors) 
     helper.AddTransformer ("norm-containing-struct", Helper.Expr normalizeContainingStruct)
     helper.AddTransformer ("add-assume-to-assert", Helper.Expr handleLemmas)    
@@ -1011,7 +1020,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-atomic-ops", Helper.Expr normalizeAtomicOperations)
     helper.AddTransformer ("norm-skinny-expose", Helper.Expr normalizeSkinnyExpose)
     helper.AddTransformer ("norm-misc", Helper.Decl miscNorm)
-    helper.AddTransformer ("inline-spec-macros", Helper.Decl inlineSpecMacros)
     helper.AddTransformer ("deep-split-conjunctions", Helper.Expr deepSplitConjunctions)
     helper.AddTransformer ("split-assertions", Helper.Expr splitConjunctionsInAssertions)
     helper.AddTransformer ("norm-writes", Helper.Decl normalizeWrites)
