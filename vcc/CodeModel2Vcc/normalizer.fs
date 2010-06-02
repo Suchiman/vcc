@@ -827,56 +827,25 @@ namespace Microsoft.Research.Vcc
     
     let normalizeNewSyntax = 
   
-      let n2o n = "\\" + n, "_vcc_" + n
-
-      let canonical = List.map n2o [ 
-                                      "domain"; 
-                                      "wrap";
-                                      "wrapped";
-                                      "unwrap";
-                                      "extent";
-                                      "alloc";
-                                      "free";
-                                      "stack_alloc";
-                                      "stack_free";
-                                      "program_entry_point";
-                                      "mutable";
-                                      "array_range";
-                                      "span";
-                                      "claims";
-                                      "claims_claim";
-                                      "inv";
-                                      "inv2";
-                                      "typeof";
-                                      "set_owns";
-                                      "set_closed_owner";
-                                      "giveup_closed_owner";
-                                      "set_in";
-                                      "set_union";
-                                      "set_intersection";
-                                      "set_difference";
-                                      "current_state";
-                                  ];
-
-      let newToOldFn = Map.ofList ( [ 
-                                      "\\mine",                "_vcc_keeps";
-                                      "\\embedding",           "_vcc_emb";
-                                      "\\valid",               "_vcc_typed2";
-                                      "\\ghost",               "_vcc_is_ghost_ptr";
-                                      "\\fresh",               "_vcc_is_fresh";
-                                      "\\consistent",          "_vcc_closed";
-                                      "\\thread_local",        "_vcc_thread_local2";
-                                      "\\thread_local_array",  "_vcc_is_thread_local_array";
-                                      "\\claims_object",       "_vcc_claims_obj";
-                                      "\\claim_count",         "_vcc_ref_cnt";
-                                      "\\claimable",           "_vcc_is_claimable";
-                                      "\\make_claim",          "_vcc_claim";
-                                      "\\destroy_claim",       "_vcc_unclaim";
-                                      "\\active_claim",        "_vcc_valid_claim";
-                                      "\\atomic_object",       "_vcc_is_atomic_obj";
-                                      "\\universe",            "_vcc_set_universe"; 
-                                      "\\by_claim_wrapper",    "_vcc_by_claim";
-                                    ] @ canonical )
+      let newToOldFn = Map.ofList [ 
+                                    "\\mine",                "_vcc_keeps";
+                                    "\\embedding",           "_vcc_emb";
+                                    "\\valid",               "_vcc_typed2";
+                                    "\\ghost",               "_vcc_is_ghost_ptr";
+                                    "\\fresh",               "_vcc_is_fresh";
+                                    "\\consistent",          "_vcc_closed";
+                                    "\\thread_local",        "_vcc_thread_local2";
+                                    "\\thread_local_array",  "_vcc_is_thread_local_array";
+                                    "\\claims_object",       "_vcc_claims_obj";
+                                    "\\claim_count",         "_vcc_ref_cnt";
+                                    "\\claimable",           "_vcc_is_claimable";
+                                    "\\make_claim",          "_vcc_claim";
+                                    "\\destroy_claim",       "_vcc_unclaim";
+                                    "\\active_claim",        "_vcc_valid_claim";
+                                    "\\atomic_object",       "_vcc_is_atomic_obj";
+                                    "\\universe",            "_vcc_set_universe"; 
+                                    "\\by_claim_wrapper",    "_vcc_by_claim";
+                                  ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";
                                       "\\state",  "state_t";
@@ -934,17 +903,17 @@ namespace Microsoft.Research.Vcc
           | _ -> None
 
       let mapFromNewSyntax = function
-        | Top.FunctionDecl(fn) -> 
+        
+        | Top.FunctionDecl(fn) when fn.Name.StartsWith("\\macro") -> ()
+        | Top.FunctionDecl(fn) when fn.Name.StartsWith "\\" ->
           match newToOldFn.TryFind fn.Name with
             | Some oldName -> fn.Name <- oldName
-            | None -> ()
-          Top.FunctionDecl(fn)
+            | None -> fn.Name <- "_vcc_" + fn.Name.Substring(1)
         | Top.TypeDecl(td) ->
           match newToOldType.TryFind td.Name with
             | Some oldName -> td.Name <- oldName
             | None -> ()
-          Top.TypeDecl(td)
-        | decl -> decl
+        | _ -> ()
       
       let rewriteBvAssertAsBvLemma self = function
         | Assert(ec, expr, []) -> None
@@ -962,8 +931,8 @@ namespace Microsoft.Research.Vcc
       deepMapExpressions normalizeInDomain >> 
       List.map normalizeCallsAndFindKeyFunctions >> 
       deepMapExpressions (normalizeOwnershipManipulation false) >>
-      deepMapExpressions normalizeSignatures >>
-      List.map mapFromNewSyntax >> 
+      deepMapExpressions normalizeSignatures >> 
+      (fun decls -> List.iter mapFromNewSyntax decls; decls)>> 
       removeGlobalMe >>
       deepMapExpressions normalizeMisc >> 
       deepMapExpressions rewriteBvAssertAsBvLemma
