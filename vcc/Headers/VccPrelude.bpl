@@ -331,40 +331,40 @@ axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// PC and metas
 	$get.secpc($set.metalabel(M,p,l)) == $get.secpc(M));
 axiom (forall M:$memory_t, p:$ptr, i:int :: {:weight 0}			// PC and pointer groups
     $get.secpc($set.ptrgrp(M,p,i)) == $get.secpc(M));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Labels and PC
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Labels and PC
 	$get.seclabel($set.secpc(M,l), p) == $get.seclabel(M,p));
 axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Metas and PC
 	$get.metalabel($set.secpc(M,l), p) == $get.metalabel(M,p));
 axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and PC
 	$get.ptrgrp($set.secpc(M,l), p) == $get.ptrgrp(M,p));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Metas and labels
-	$get.metalabel($set.seclabel(M,p,l),p) == $get.metalabel(M,p));
-axiom (forall M:$memory_t, p:$ptr, i:int :: {:weight 0}			// Metas and pointer groups
-	$get.metalabel($set.ptrgrp(M,p,i),p) == $get.metalabel(M,p));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Labels and metas
-	$get.seclabel($set.metalabel(M,p,l),p) == $get.seclabel(M,p));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and metas
-	$get.ptrgrp($set.metalabel(M,p,l),p) == $get.ptrgrp(M,p));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and labels
-	$get.ptrgrp($set.seclabel(M,p,l),p) == $get.ptrgrp(M,p));
-axiom (forall M:$memory_t, p:$ptr, i:int :: {:weight 0}			// Labels and pointer groups
-	$get.seclabel($set.ptrgrp(M,p,i),p) == $get.seclabel(M,p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Metas and labels
+	$get.metalabel($set.seclabel(M,q,l),p) == $get.metalabel(M,p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}			// Metas and pointer groups
+	$get.metalabel($set.ptrgrp(M,q,i),p) == $get.metalabel(M,p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Labels and metas
+	$get.seclabel($set.metalabel(M,q,l),p) == $get.seclabel(M,p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and metas
+	$get.ptrgrp($set.metalabel(M,q,l),p) == $get.ptrgrp(M,p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and labels
+	$get.ptrgrp($set.seclabel(M,q,l),p) == $get.ptrgrp(M,p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}			// Labels and pointer groups
+	$get.seclabel($set.ptrgrp(M,q,i),p) == $get.seclabel(M,p));
 axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}			// PC and mem
 	$get.secpc($store.mem(M,p,v)) == $get.secpc(M));
-axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}			// Labels and mem
-	$get.seclabel($store.mem(M,p,v), p) == $get.seclabel(M, p));
-axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}			// Metas and mem
-	$get.metalabel($store.mem(M,p,v), p) == $get.metalabel(M, p));
-axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}			// Pointer groups and mem
-	$get.ptrgrp($store.mem(M,p,v), p) == $get.ptrgrp(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Labels and mem
+	$get.seclabel($store.mem(M,q,v), p) == $get.seclabel(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Metas and mem
+	$get.metalabel($store.mem(M,q,v), p) == $get.metalabel(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Pointer groups and mem
+	$get.ptrgrp($store.mem(M,q,v), p) == $get.ptrgrp(M, p));
 axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Mem and PC
 	$select.mem($set.secpc(M,l), p) == $select.mem(M, p));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Mem and labels
-	$select.mem($set.seclabel(M,p,l), p) == $select.mem(M, p));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Mem and metas
-	$select.mem($set.metalabel(M,p,l), p) == $select.mem(M, p));
-axiom (forall M:$memory_t, p:$ptr, i:int :: {:weight 0}			// Mem and pointer groups
-	$select.mem($set.ptrgrp(M,p,i), p) == $select.mem(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Mem and labels
+	$select.mem($set.seclabel(M,q,l), p) == $select.mem(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Mem and metas
+	$select.mem($set.metalabel(M,q,l), p) == $select.mem(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}			// Mem and pointer groups
+	$select.mem($set.ptrgrp(M,q,i), p) == $select.mem(M, p));
 
 
 function $memory(s:$state) returns($memory_t);
