@@ -606,6 +606,10 @@ template<typename T> T _vcc_known(T v, bool val);
 #define known _vcc_known
 
 // Information Flow
+struct _vcc_label_struct { };
+typedef struct _vcc_label_struct ^_vcc_label_t;
+#define label_t _vcc_label_t
+
 template<typename T> bool _vcc_is_low(T v);
 #define is_low _vcc_is_low
 
@@ -615,8 +619,11 @@ bool _vcc_test_classifier(bool classifier, bool test);
 template<typename T> void _vcc_downgrade_to(T v, T expr);
 #define downgrade_to _vcc_downgrade_to
 
-bool /*label_t*/ _vcc_current_context(void);
+label_t _vcc_current_context(void);
 #define current_context _vcc_current_context
+
+template<typename T> label_t _vcc_label_of(T e);
+#define label_of _vcc_label_of
 
 #endif //VERIFY2
 

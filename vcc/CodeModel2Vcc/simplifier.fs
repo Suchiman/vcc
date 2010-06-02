@@ -777,7 +777,7 @@ namespace Microsoft.Research.Vcc
          ( *s_).y = 12;
        }
      *)
-    let replaceWithPointers (subst:Dict<_,_>) _ = function
+    let rec replaceWithPointers (subst:Dict<_,_>) _ = function
       | Expr.Macro (c, "&", [Expr.Ref (_, v)]) ->
         match subst.TryGetValue v with
           | true, (v', _) -> Some (Expr.Ref (c, v'))
@@ -790,6 +790,9 @@ namespace Microsoft.Research.Vcc
         match subst.TryGetValue v with
           | true, (_, decl) -> Some(decl)
           | false, _ -> None
+      | Expr.Macro (ec, "_vcc_label_of", [e]) ->
+        let e' = e.SelfMap(replaceWithPointers subst)
+        Some(Expr.Macro ({ec with Type = SecLabel(Some(e'))}, "_vcc_label_of", [e']))
       | _ -> None
 
     let heapifyAddressedLocals decls =
@@ -814,21 +817,22 @@ namespace Microsoft.Research.Vcc
         | Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)})) -> true
         | _ -> false
           
-      let findThem inBody self = function
+      let rec findThem inBody inLabelOf self = function
          | Expr.Deref (_, dot) as expr ->
            let rec aux = function
              | Expr.Index (_, e, idx) -> 
                self idx
                aux e
              | Expr.Dot (_, e, _) -> aux e
-             | Expr.Macro (_, "&", [Expr.Ref _]) -> ()
+             | Expr.Macro (_, ("&" | "_vcc_label_of"), [Expr.Ref _]) -> ()
              | e -> self e
            aux dot
            false // don't recurse
          | Expr.Macro (_, "=", [Expr.Deref(_, e1); Expr.Deref(_, e2)]) when pointsToStruct e2.Type -> self e1; self e2; false            
-         | Expr.Macro (_, "&", [Expr.Ref (c, ({ Kind = (VarKind.Local|VarKind.Parameter|VarKind.SpecLocal|VarKind.SpecParameter|VarKind.OutParameter) } as v))]) when inBody ->
+         | Expr.Macro (_, ("&" | "_vcc_label_of"), [Expr.Ref (c, ({ Kind = (VarKind.Local|VarKind.Parameter|VarKind.SpecLocal|VarKind.SpecParameter|VarKind.OutParameter) } as v))]) when inBody ->
            pointernize c v
            true
+         | Expr.Macro (_, "_vcc_label_of", [e]) -> e.SelfVisit(findThem inBody true); false
          | Expr.Macro (cmn, "&", [Expr.Ref (c, ({ Kind = (VarKind.Parameter|VarKind.SpecParameter|VarKind.OutParameter) } as v))]) when not inBody ->
            helper.Error(cmn.Token, 9666, "Cannot take an parameter's address inside of function contracts")
            true
@@ -838,8 +842,8 @@ namespace Microsoft.Research.Vcc
         match d.Body with
           | Some b ->
             fnTok := { !fnTok with Token = d.Token }
-            List.iter (fun (e:Expr) -> e.SelfVisit (findThem false)) (d.Reads @ d.Writes @ d.Requires @ d.Ensures)
-            b.SelfVisit (findThem true)
+            List.iter (fun (e:Expr) -> e.SelfVisit (findThem false false)) (d.Reads @ d.Writes @ d.Requires @ d.Ensures)
+            b.SelfVisit (findThem true false)
             let b = b.SelfMap (replaceWithPointers addressableLocals)
             d.Body <- Some b
           | None -> ()

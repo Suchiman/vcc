@@ -94,6 +94,7 @@ typedef int bool;
 #define is_low(_EXPR) (_EXPR_)
 #define test_classifier(_CLASSIF_, _EXPR_) (_EXPR_)
 #define current_context(...)
+#define label_of(...)
 
 #else
 

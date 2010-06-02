@@ -208,6 +208,7 @@ namespace Microsoft.Research.Vcc
           | C.Type.Ref td -> er ("^" + td.Name)
           | C.Type.TypeIdT -> er "^$#typeid_t"
           | C.Type.Claim -> er "^^claim"
+          | C.Type.SecLabel _ -> er "^^label"
           | C.Type.TypeVar({Name = id}) -> er ("^^TV#" + id)
           | C.Type.Volatile(t) -> 
             helper.Panic("volatile type modifier survived")
@@ -266,6 +267,7 @@ namespace Microsoft.Research.Vcc
               | _ -> B.Type.Ref ("$#" + n)
           | C.Type.Volatile _
           | C.Type.Claim
+          | C.Type.SecLabel _
           | C.Type.Array _ 
           | C.Type.Void
           | C.Type.TypeVar _

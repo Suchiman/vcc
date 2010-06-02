@@ -180,7 +180,8 @@ namespace Microsoft.Research.Vcc
         | C.Expr.If(_, Some _, _, _, _)
         | C.Expr.Macro(_, "_vcc_is_low", _)
         | C.Expr.Macro(_, "_vcc_downgrade_to", _)
-        | C.Expr.Macro(_, "_vcc_current_context", _) -> res := true; false
+        | C.Expr.Macro(_, "_vcc_current_context", _)
+        | C.Expr.Macro(_,"_vcc_label_of",_) -> res := true; false
         | _ -> true
       match decl with
         | C.Top.FunctionDecl fn ->
