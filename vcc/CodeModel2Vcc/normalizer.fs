@@ -943,20 +943,24 @@ namespace Microsoft.Research.Vcc
       let isMacro (f:Function) = f.Name.StartsWith "\\macro_"
       let isMacroCall = function
         | Call (_, f, _, _) -> isMacro f
+        | Macro(_, "ite", [Cast(_, _, Call(_, f, _, _)); BoolLiteral(_, true); BoolLiteral(_, false)]) -> isMacro f
+          // this is how non-bool macros are projected
         | _ -> false
       let expand = function
         | Top.FunctionDecl f ->
           let (macros, reqs) = List.partition isMacroCall f.Requires
           f.Requires <- reqs          
           let handleExpansion = function
-            | Call (_, m, _, _) as call ->
-              let subst = inlineCall "_(" (fun x -> x) call
+            | Call (ec, m, targs, args) as call
+            | Macro(_, "ite", [Cast(_, _, (Call(ec, m, targs, args) as call)); BoolLiteral(_, true); BoolLiteral(_, false)]) ->
+              let m' = m.Specialize(targs, false)
+              let subst = inlineCall "_(" (fun x -> x) (Call({ec with Type=m'.RetType}, m', [], args))
               let substs = List.map subst
-              f.Requires <- f.Requires @ substs m.Requires
-              f.Ensures <- f.Ensures @ substs m.Ensures
-              f.Writes <- f.Writes @ substs m.Writes
-              f.Reads <- f.Reads @ substs m.Reads
-              f.Variants <- f.Variants @ substs m.Variants
+              f.Requires <- f.Requires @ substs m'.Requires
+              f.Ensures <- f.Ensures @ substs m'.Ensures
+              f.Writes <- f.Writes @ substs m'.Writes
+              f.Reads <- f.Reads @ substs m'.Reads
+              f.Variants <- f.Variants @ substs m'.Variants
             | _ -> die()
           List.iter handleExpansion macros
         | _ -> ()

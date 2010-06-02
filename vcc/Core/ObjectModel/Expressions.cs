@@ -1637,6 +1637,7 @@ namespace Microsoft.Research.Vcc {
       return false;
     }
 
+
     /// <summary>
     /// Performs any error checks still needed and returns true if any errors were found in the statement or a constituent part of the statement.
     /// </summary>
@@ -1644,6 +1645,11 @@ namespace Microsoft.Research.Vcc {
     {
       if (this.LeftOperand.HasErrors || this.RightOperand.HasErrors) return true;
       if (VccEquality.IsMathOrRecordTypeComparison(this.LeftOperand.Type, this.RightOperand.Type))
+        return false;
+
+      if (this.LeftOperand.Type is GenericMethodParameter &&
+          this.RightOperand.Type is GenericMethodParameter &&
+          ((GenericMethodParameter)this.LeftOperand.Type).Name == ((GenericMethodParameter)this.RightOperand.Type).Name)
         return false;
 
       return base.CheckForErrorsAndReturnTrueIfAnyAreFound();
@@ -1797,6 +1803,11 @@ namespace Microsoft.Research.Vcc {
       if (this.LeftOperand.HasErrors || this.RightOperand.HasErrors) return true;
 
       if (VccEquality.IsMathOrRecordTypeComparison(this.LeftOperand.Type, this.RightOperand.Type))
+        return false;
+
+      if (this.LeftOperand.Type is GenericMethodParameter &&
+          this.RightOperand.Type is GenericMethodParameter &&
+          ((GenericMethodParameter)this.LeftOperand.Type).Name == ((GenericMethodParameter)this.RightOperand.Type).Name)
         return false;
 
       return base.CheckForErrorsAndReturnTrueIfAnyAreFound();

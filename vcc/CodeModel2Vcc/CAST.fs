@@ -562,7 +562,7 @@ module Microsoft.Research.Vcc.CAST
                     TypeParameters = [];
                     Body = if includeBody then Option.map se this.Body else None }
 
-    override this.ToString () : string = 
+    member this.ToStringWT (showTypes) = 
       let b = StringBuilder()
       let wr (s:string) = b.Append s |> ignore
       if this.IsSpec then wr "spec " else ()
@@ -573,7 +573,7 @@ module Microsoft.Research.Vcc.CAST
       let doList pref lst =
         for (e:Expr) in lst do
           wr "  "; wr pref; wr " ";
-          e.WriteTo System.Int32.MinValue false b
+          e.WriteTo System.Int32.MinValue showTypes b
           wr ";\n";
       doList "requires" (this.Requires)
       doList "ensures" (this.Ensures)
@@ -582,6 +582,8 @@ module Microsoft.Research.Vcc.CAST
       doList "writes" (this.Writes)        
         
       b.ToString()              
+
+    override this.ToString () : string = this.ToStringWT(false)
       
   
   and QuantData = 
@@ -1297,7 +1299,7 @@ module Microsoft.Research.Vcc.CAST
         | Global (v, Some e) -> wr (v.ToString()); wr " = "; e.WriteTo System.Int32.MinValue false b; wr ";\n"
         | TypeDecl d -> wr (d.Declaration())
         | FunctionDecl d -> 
-          wr (d.ToString())
+          wr (d.ToStringWT(showTypes))
           match d.Body with
             | Some e ->
               e.WriteTo 0 showTypes b
