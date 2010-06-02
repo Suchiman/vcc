@@ -1,4 +1,5 @@
-#include <vcc2test.h>
+#include <vcc.h>
+#include <stdlib.h>
 
 struct SafeString {
   unsigned capacity, len;

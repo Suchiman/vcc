@@ -2371,9 +2371,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       // This is a linked list of keywords starting with __
       // In the list, the keywords are sorted first by length, and then lexicographically.
       // So the constructor invocations must occur in the opposite order.
-      Keyword keyword;
+      Keyword keyword = null;
       // __
-      keyword = new Keyword(Token.Specification, "__specification");
+      keyword = new Keyword(Token.Specification, "__specification", keyword);
       keyword = new Keyword(Token.Inline,        "__forceinline", keyword);
       keyword = new Keyword(Token.Unchecked, "__unchecked", keyword);
       keyword = new Keyword(Token.Unaligned, "__unaligned", keyword);
@@ -2408,8 +2408,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     internal static Keyword InitExtendedVccKeywords() {
-      Keyword keyword;
-      keyword = new Keyword(Token.SetDifference,    "\\difference");
+      Keyword keyword = null;
       keyword = new Keyword(Token.Result,           "\\result", keyword);
       keyword = new Keyword(Token.Lambda,           "\\lambda", keyword);
       keyword = new Keyword(Token.Forall,           "\\forall", keyword);
@@ -2417,6 +2416,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.SetUnion,         "\\union", keyword);
       keyword = new Keyword(Token.SetIntersection,  "\\inter", keyword);
       keyword = new Keyword(Token.This,             "\\this", keyword);
+      keyword = new Keyword(Token.SetDifference,    "\\diff", keyword);
       keyword = new Keyword(Token.Old,              "\\old", keyword);
       keyword = new Keyword(Token.SpecIs,           "\\is", keyword);
       keyword = new Keyword(Token.SetIn,            "\\in", keyword);
