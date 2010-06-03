@@ -3,9 +3,9 @@
 int min(int a, int b)
 {
   int res;
-  assume(true);
+  _(assume true)
   res = a < b ? a : b;
-  assert(res <= a && res <= b);
+  _(assert res <= a && res <= b)
 }
 
 #define LIMIT 1000
@@ -13,10 +13,10 @@ int main()
 {
   int position = 0, newPos;
   // ...
-  assert(true);
+  _(assert true)
   position = min(newPos, LIMIT);
-  assume(position <= newPos && position <= LIMIT);
-  assert(position <= LIMIT);
+  _(assume position <= newPos && position <= LIMIT)
+  _(assert position <= LIMIT)
   // ...
   return 0;
 }

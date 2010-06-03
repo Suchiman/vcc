@@ -1,19 +1,19 @@
 #include <vcc.h>
 
 void boundedIncr(int *p)
-  writes(p)
-  ensures(old(*p) < 100 ==> *p == old(*p) + 1);
+  _(writes p)
+  _(ensures \old(*p) < 100 ==> *p == \old(*p) + 1);
 
 int x, y;
 
 /*{foo}*/
 int foo()
-  requires(x == 12)
-  writes(&y)
+  _(requires x == 12)
+  _(writes &y)
 {
   y = 42;
   boundedIncr(&x);
-  assert(x == 13 && y == 42);
+  _(assert x == 13 && y == 42)
 }
 /*{out}*/
 /*`

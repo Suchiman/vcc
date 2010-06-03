@@ -1,52 +1,56 @@
 #include <vcc.h>
 
 /*{counter}*/
-struct vcc(claimable) Counter {
+_(claimable) struct Counter {
   volatile unsigned v;
-  invariant(v > 0)
-  invariant(v == old(v) || v == old(v) + 1)
+  _(invariant v > 0)
+  _(invariant v == \old(v) || v == \old(v) + 1)
 };
 /*{reading}*/
 struct Reading {
   struct Counter *n;
   volatile unsigned r;
-  spec(claim_t c;)
-  invariant(keeps(c) && claims_obj(c, n))
-  invariant(n->v >= r)
+  _(ghost \claim c;)
+  _(invariant \mine(c) && \claims_object(c, n))
+  _(invariant n->v >= r)
 };
 /*{endreading}*/
-void create_reading(struct Counter *n claimp(c))
-  requires(wrapped(c) && claims_obj(c, n))
-  writes(c)
+void create_reading(struct Counter *n _(ghost \claim c))
+  _(requires \wrapped(c) && \claims_object(c, n))
+  _(writes c)
 {
   struct Reading k;
   k.r = 0;
   k.n = n;
   k.c = c;
-  wrap(&k);
-  unwrap(&k);
+  _(wrap &k)
+  _(unwrap &k)
 }
 
 /*{readtwice}*/
 void readtwice(struct Counter *n)
-  requires(wrapped(n))
-  writes(n)
+  _(requires \wrapped(n))
+  _(writes n)
 {
   unsigned int x, y;
-  spec(claim_t r;)
+  _(ghost \claim r;)
 
-  atomic (n) {
+  _(atomic n) {
     x = n->v;
-    speconly( r = claim(n, x <= n->v); )
+    _(ghost  r = \make_claim({n}, x <= n->v);)
   }
 
-  atomic (n) {
+  _(atomic n) {
     y = n->v;
-    assert(valid_claim(r));
-    assert(x <= y);
+    _(assert \active_claim(r))
+    _(assert x <= y)
   }
 }
 /*{endreadtwice}*/
 
 /*`
+Verification of Counter#adm succeeded.
+Verification of Reading#adm succeeded.
+Verification of create_reading succeeded.
+Verification of readtwice succeeded.
 `*/
