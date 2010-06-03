@@ -38,8 +38,8 @@ void sc_set(struct SafeContainer *c,
     }
     _(ghost {
       // could be also done with one assignment
-      c->\owns =  c->\owns \diff {\old(c->strings[idx])};
-      c->\owns =  c->\owns \union {s};
+      c->\owns = c->\owns \diff {\old(c->strings[idx])};
+      c->\owns = c->\owns \union {s};
     })
   }
 }

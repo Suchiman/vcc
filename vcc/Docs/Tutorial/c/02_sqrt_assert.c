@@ -4,7 +4,7 @@ unsigned anything()
   _(reads \universe());
 
 void isqrt(unsigned x)
-  _(requires  x < 0xfffe0001)
+  _(requires x < 0xfffe0001)
 {
   unsigned r = 0, s;
   
@@ -16,7 +16,7 @@ void isqrt(unsigned x)
     _(assert r*r <= x)
     _(assume false)
   }
-  _(assert  r*r <= x && x < (r+1)*(r+1))
+  _(assert r*r <= x && x < (r+1)*(r+1))
 }
 /*`
 Verification of isqrt succeeded.

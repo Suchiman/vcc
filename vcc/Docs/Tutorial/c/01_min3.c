@@ -2,8 +2,8 @@
 #include <vcc.h>
 
 int min(int a, int b)
-  _(requires  true)
-  _(ensures  \result <= a && \result <= b)
+  _(requires true)
+  _(ensures \result <= a && \result <= b)
 {
   return a < b ? a : b;
 }

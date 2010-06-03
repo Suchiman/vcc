@@ -13,7 +13,7 @@ _(atomic_inline) unsigned InterlockedCompareExchange(volatile unsigned *Destinat
 
 /*{refcnt}*/
 struct RefCnt {
-  volatile unsigned  cnt;
+  volatile unsigned cnt;
   _(ghost \object resource;)
   _(invariant \mine(resource))
   _(invariant \claimable(resource))
@@ -27,7 +27,7 @@ void init(struct RefCnt *r _(ghost \object rsc))
   _(ensures \wrapped(r) && r->resource == rsc)
 {
   r->cnt = 0;
-  _(ghost  r->resource = rsc;)
+  _(ghost r->resource = rsc;)
   _(wrap r)
 }
 /*{incr}*/
