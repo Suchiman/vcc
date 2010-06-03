@@ -3,8 +3,8 @@
 /*{lock}*/
 _(claimable, volatile_owns) struct Lock {
   volatile int locked;
-  _(ghost  \object protected_obj;)
-  _(invariant  locked == 0 ==> \mine(protected_obj))
+  _(ghost \object protected_obj;)
+  _(invariant locked == 0 ==> \mine(protected_obj))
 };
 
 /*{init}*/
@@ -33,7 +33,7 @@ _(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int E
 /*{acquire}*/
 void Acquire(struct Lock *l _(ghost \claim c))
   _(always c, \consistent(l))
-  _(ensures  \wrapped(l->protected_obj) && \fresh(l->protected_obj))
+  _(ensures \wrapped(l->protected_obj) && \fresh(l->protected_obj))
 {
   int stop = 0;
 
@@ -49,8 +49,8 @@ void Acquire(struct Lock *l _(ghost \claim c))
 void Release(struct Lock *l _(ghost \claim c))
   _(always c, \consistent(l))
   _(requires l->protected_obj != c)
-  _(writes  l->protected_obj)
-  _(requires  \wrapped(l->protected_obj))
+  _(writes l->protected_obj)
+  _(requires \wrapped(l->protected_obj))
 {
   _(atomic c, l) {
     l->locked = 0;

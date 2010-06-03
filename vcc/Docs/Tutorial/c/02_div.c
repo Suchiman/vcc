@@ -9,7 +9,7 @@ unsigned mod(unsigned a, unsigned b)
   unsigned res = a;
 
   for (;;)
-    _(invariant  a % b == res % b)
+    _(invariant a % b == res % b)
   {
     if (res < b) break;
     res -= b;
