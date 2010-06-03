@@ -5,28 +5,30 @@
 struct SafeString {
   unsigned capacity, len;
   char *content;
-  invariant(len < capacity)
-  invariant(content[len] == '\0')
-  invariant(keeps(as_array(content, capacity)))
+  _(invariant len < capacity)
+  _(invariant content[len] == '\0')
+  _(invariant \mine((char[capacity])content))
 };
+
 /*{append}*/
 void sstr_append_char(struct SafeString *s, char c)
-  requires(wrapped(s))
-  requires(s->len < s->capacity - 1)
-  ensures(wrapped(s))
-  writes(s)
+  _(requires \wrapped(s))
+  _(requires s->len < s->capacity - 1)
+  _(ensures \wrapped(s))
+  _(writes s)
 {
-  expose(s) {
-    expose(as_array(s->content, s->capacity)) {
+  _(unwrapping s) {
+    _(unwrapping (char[s->capacity])(s->content)) {
       s->content[s->len++] = c;
       s->content[s->len] = '\0';
     }
   }
 }
+
 /*{alloc}*/
 struct SafeString *sstr_alloc(unsigned capacity)
-  requires(capacity > 0)
-  ensures(result != NULL ==> wrapped(result))
+  _(requires capacity > 0)
+  _(ensures \result != NULL ==> \wrapped(\result))
 {
   struct SafeString *s;
 
@@ -43,22 +45,14 @@ struct SafeString *sstr_alloc(unsigned capacity)
   s->len = 0;
   s->content[0] = '\0';
 
-  wrap(as_array(s->content, capacity));
-  wrap(s);
+  _(wrap (char[capacity])(s->content))
+  _(wrap s)
 
   return s;
 }
 
-/*
-int sstr_index_of(struct SafeString *s, char c)
-  requires(wrapped(s))
-  ensures(result >= 0 ==> s->content[result] == c)
-{
-  unsigned i;
-  for (i = 0; i < s->len; ++i)
-    if (s->content[i] == c) return (int)i;
-  return -1;
-}
-*/
 /*`
+Verification of SafeString#adm succeeded.
+Verification of sstr_append_char succeeded.
+Verification of sstr_alloc succeeded.
 `*/

@@ -7,10 +7,9 @@ CONV ?= ../../Tools/VccSyntaxCoverter/bin/Debug/VccSyntaxCoverter.exe
 all: build 
 #maybe-show
 
-build: conv
+build: 
 	pdflatex $(D).tex </dev/null
 	chmod +x $(D).pdf
-	rm c/*.c.out
 
 .PHONY: conv
 

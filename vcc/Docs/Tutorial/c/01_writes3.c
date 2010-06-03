@@ -4,18 +4,17 @@
 
 /*{beg}*/
 void boundedIncr(int *p)
-//--
-writes(p)//--
+  _(writes p)
 {
-  assume(writable(p)); // from writes clause
+  _(assume writable(p)) // from writes clause
 
-  assert(thread_local(p));
+  _(assert \thread_local(p))
   if (*p < 100) {
-    assert(writable(p));
+    _(assert writable(p))
     (*p)++;
   }
 
-  assert(old(*p) < 100 ==> *p == old(*p) + 1); // ensures
+  _(assert \old(*p) < 100 ==> *p == \old(*p) + 1) // ensures
 }
 /*`
 Verification of boundedIncr succeeded.

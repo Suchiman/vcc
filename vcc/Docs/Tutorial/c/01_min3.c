@@ -2,8 +2,8 @@
 #include <vcc.h>
 
 int min(int a, int b)
-  requires( true )
-  ensures( result <= a && result <= b )
+  _(requires  true)
+  _(ensures  \result <= a && \result <= b)
 {
   return a < b ? a : b;
 }
@@ -15,7 +15,7 @@ int main()
   int position = 0, newPos;
   // ...
   position = min(newPos, LIMIT);
-  assert(position <= LIMIT);
+  _(assert position <= LIMIT)
   // ...
   return 0;
 }

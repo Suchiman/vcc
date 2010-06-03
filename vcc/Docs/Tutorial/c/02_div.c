@@ -1,14 +1,15 @@
 #include <vcc.h>
 //--
-axiom(forall(unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b));
-axiom(forall(unsigned a,b; a < b && b != 0 ==> a % b == a));//--
+_(axiom \forall unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b)
+_(axiom \forall unsigned a,b; a < b && b != 0 ==> a % b == a)
+
 unsigned mod(unsigned a, unsigned b)
-  ensures(result == a % b)
+  _(ensures \result == a % b)
 {
   unsigned res = a;
 
   for (;;)
-    invariant( a % b == res % b )
+    _(invariant  a % b == res % b)
   {
     if (res < b) break;
     res -= b;

@@ -1,18 +1,18 @@
 #include <vcc.h>
 
 /*{lock}*/
-struct vcc(volatile_owns) Lock {
+_(volatile_owns) struct Lock {
   volatile int locked;
-  spec(obj_t protected_obj;)
-  invariant(locked == 0 ==> keeps(protected_obj))
+  _(ghost \object protected_obj;)
+  _(invariant locked == 0 ==> \mine(protected_obj))
 };
 /*{release}*/
 void Release(struct Lock *l)
-  requires(wrapped(l))
-  requires(wrapped(l->protected_obj))
-  writes(l->protected_obj)
+  _(requires \wrapped(l))
+  _(requires \wrapped(l->protected_obj))
+  _(writes l->protected_obj)
 {
-  atomic (l) {
+  _(atomic l) {
     l->locked = 0;
   }
 }
@@ -20,5 +20,5 @@ void Release(struct Lock *l)
 /*`
 Verification of Lock#adm succeeded.
 Verification of Release failed.
-testcase(15,21) : error VC8524: Assertion 'chunk locked == 0 ==> _vcc_keeps(__this , protected_obj) of invariant of l holds after atomic' did not verify.
+testcase(15,26) : error VC8524: Assertion 'chunk locked == 0 ==> \mine(protected_obj) of invariant of l holds after atomic' did not verify.
 `*/

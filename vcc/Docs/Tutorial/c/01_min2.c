@@ -11,12 +11,12 @@ int main()
   int position = 0, newPos;
   // ...
   position = min(newPos, LIMIT);
-  assert(position <= LIMIT);
+  _(assert position <= LIMIT)
   // ...
   return 0;
 }
 /*`
 Verification of min succeeded.
 Verification of main failed.
-testcase(14,12) : error VC9500: Assertion 'position <= 1000' did not verify.
+testcase(14,26) : error VC9500: Assertion 'position <= 1000' did not verify.
 `*/

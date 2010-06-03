@@ -2,8 +2,8 @@
 
 /*{swap}*/
 void swap(int *p, int *q)
-  writes(p,q)
-  ensures(*p == old(*q) && *q == old(*p))
+  _(writes p,q)
+  _(ensures *p == \old(*q) && *q == \old(*p))
 {
   int tmp;
   tmp = *p;

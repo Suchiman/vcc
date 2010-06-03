@@ -1,8 +1,8 @@
 #include <vcc.h>
 /*{beg}*/
 void boundedIncr(int *p)
-  writes(p)
-  ensures(old(*p) < 100 ==> *p == old(*p) + 1)
+  _(writes p)
+  _(ensures \old(*p) < 100 ==> *p == \old(*p) + 1)
 {
   if (*p < 100)
     (*p)++;
@@ -11,12 +11,12 @@ void boundedIncr(int *p)
 int x, y;
 
 int foo()
-  requires(x == 12)
-  writes(&x, &y)
+  _(requires x == 12)
+  _(writes &x, &y)
 {
   y = 42;
   boundedIncr(&x);
-  assert(x == 13 && y == 42);
+  _(assert x == 13 && y == 42)
 }
 /*`
 Verification of boundedIncr succeeded.
