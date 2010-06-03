@@ -1,10 +1,11 @@
 #include <vcc.h>
+
 _(axiom \forall unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b)
 _(axiom \forall unsigned a,b; a < b && b != 0 ==> a % b == a)
 
 unsigned anything()
-  _(reads \universe()); //--
-
+  _(reads \universe());
+/*{mod}*/
 unsigned mod(unsigned a, unsigned b)
 {
   unsigned res = a;

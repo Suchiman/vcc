@@ -174,7 +174,7 @@ predicate \wrapped(\object o) =
 predicate \unwrapped(\object o) =
   !\consistent(o) && \owner(o) == \me;
 \end{VCC}
-\vccInput[linerange={assert-999}]{c/05_safestring_assert.c}
+\vccInput[linerange={assert-out}]{c/05_safestring_assert.c}
 
 \noindent
 The definitions of \vcc{\wrapped(...)} and \vcc{\unwrapped(...)}
@@ -263,7 +263,7 @@ This transfers ownership of the content from the current thread to the string, s
 Let's then have a look at the part of the assert/assume translation
 that deals with ownership:
 
-\vccInput[linerange={append-999}]{c/06_safestring_dynamic_assert.c}
+\vccInput[linerange={append-out}]{c/06_safestring_dynamic_assert.c}
 
 \noindent
 To make it easier to read, we made it store the \vcc{s->content} pointer
