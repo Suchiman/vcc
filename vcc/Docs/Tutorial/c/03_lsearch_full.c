@@ -1,4 +1,4 @@
-#include "vcc.h"
+#include <vcc.h>
 #include <limits.h>
 
 unsigned lsearch(int elt, int *ar, unsigned sz)
