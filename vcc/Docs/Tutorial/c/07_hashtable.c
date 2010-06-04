@@ -10,8 +10,8 @@ struct SafeString {
 };
 
 _(ghost typedef struct SafeString * sstr_map[unsigned];)
-_(pure bool match(unsigned i, unsigned j) _(returns true);) // should use 'logic'
-_(pure \integer do_mod(\integer a, \integer b);)
+_(_(pure) bool match(unsigned i, unsigned j) _(returns \true);) // should use 'logic'
+_(_(pure)\integer do_mod(\integer a, \integer b);)
 
 _(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 ==> 0 <= do_mod(a, b) && do_mod(a,b) < b)
 _(axiom \forall \integer a; {do_mod(a,a)} a > 0 ==> do_mod(a, a) == 0)
@@ -132,7 +132,7 @@ unsigned i, d;
 	  d++;
 
 	  if (d >= h->size) { 
-	    _(assume false)
+	    _(assume \false)
 	    return NULL;
 	  }
 	}

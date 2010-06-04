@@ -12,7 +12,7 @@ module PostProcessor =
       | Tok.Comment(p, s) as tok :: rest when s.StartsWith("`") && s.[s.Length - 1] = '`' ->
         match Rules.eatWs rest with
          | [] -> apply' (tok :: acc) []
-         | rest -> apply' (nl :: Comment(fakePos, "`/newsyntax") :: nl :: tok :: acc) rest
+         | _ -> apply' (Comment(fakePos, "`/newsyntax") :: nl :: tok :: acc) rest
       | Tok.Group (p, s, toks) :: rest -> apply' (Tok.Group (p, s, apply' [] toks) :: acc) rest  
       | t :: rest -> apply' (t::acc) rest
       | [] -> List.rev acc
