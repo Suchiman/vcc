@@ -71,7 +71,7 @@ void qsort(int *arr, unsigned len)
 
   qsort(arr, idx);
   _(assert \forall unsigned k; {&arr[k]} {hint: iszero(arr[k])} k < len ==> \exists unsigned k0; k0 < len && arr[k] == \old(arr[k0]))
-  _(assume false)
+  _(assume \false)
   if (idx < len)
     qsort(arr + idx + 1, len - idx - 1);
 }

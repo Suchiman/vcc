@@ -3,7 +3,7 @@
 int min(int a, int b)
 {
   int res;
-  _(assume true)
+  _(assume \true)
   res = a < b ? a : b;
   _(assert res <= a && res <= b)
 }
@@ -13,7 +13,7 @@ int main()
 {
   int position = 0, newPos;
   // ...
-  _(assert true)
+  _(assert \true)
   position = min(newPos, LIMIT);
   _(assume position <= newPos && position <= LIMIT)
   _(assert position <= LIMIT)
