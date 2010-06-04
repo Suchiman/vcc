@@ -122,20 +122,19 @@ memory locations it can safely read or write. The computation of this
 knowledge can be summarized as follows:
 \begin{itemize}
 \item
-On entry to a function, we know the preconditions of the function. In
-addition, we know that all of the parameters are readable
-(``thread-local'') and any objects listed in the writes clause are
-writeable (``mutable'').
+On entry to a function, we know the preconditions of the function.
 \item
-A local variable is writable while it is in scope.
+A memory object is writable if it is unwrapped and is either listed in the 
+writes clause of the function or was unwrapped after the function was entered.
 \item
 After \vcc{_(assume E)}, we know what we knew before the assumption,
-and in addition we know \vcc{E}.
+and in addition we know \vcc{E != 0}.
 \item
-\vcc{_(assert E)} asks VCC to prove that what it knows just before the
+\vcc{_(assert E)} asks VCC to prove that what it knows before the
 assertion implies \vcc{E} (and report an error if it can't). 
 It also assumes \vcc{E} afterward.
 \item
+\todo{Break this up into variable assignment and memory assignment?}
 An assignment statement \vcc{v = E}, where \vcc{E} doesn't have a 
 function call and doesn't mention \vcc{v}%
 \footnote{
@@ -178,6 +177,17 @@ but forget what we knew about the variables that are written in the
 loop. At the end of the loop, we again assert the loop invariant.
 \end{itemize}
 
-\subsection{Exercises}
+\subsection*{Exercises}
 
-
+\begin{enumerate}
+\item
+Specify and verify an iterative program that copies an array from one
+location to another.
+\item
+Specify and verify an iterative program for binary search (a program
+that checks whether a sorted array contains a given value).
+\item
+Verify an iterative program that sorts an array of ints using
+bubblesort. You can assume that the input array contains pairwise
+distinct elements. 
+\end{enumerate}
