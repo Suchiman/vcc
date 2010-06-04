@@ -207,8 +207,6 @@ module Rules =
     addStmtKwRule "spec" "ghost"
     addStmtKwRule "axiom" "axiom"
     
-    //addKwRepl "true" "\\true"
-    //addKwRepl "false" "\\false"
     addKwRepl "mathint" "\\integer"
     addKwRepl "obj_t" "\\object"
     addKwRepl "claim_t" "\\claim"
