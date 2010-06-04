@@ -622,6 +622,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ requires this.endPos < this.charsInBuffer;
     {
       int escapeLength = 0;
+      int savedEndPos = this.endPos;
       UnicodeCategory ccat = 0;
       if (c == '\\') {
         this.endPos++;
@@ -658,7 +659,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if ('a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || c == '_')
         goto isIdentifierChar;
       if (c < 128) {
-        if (escapeLength > 0) this.endPos -= escapeLength + 1;
+        if (escapeLength > 0) this.endPos = savedEndPos;
         return false;
       }
       ccat = Char.GetUnicodeCategory(c);
