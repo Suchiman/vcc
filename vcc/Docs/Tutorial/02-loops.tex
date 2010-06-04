@@ -1,60 +1,69 @@
-\section{Loop invariants}
+\section{Loop Invariants}
 
-Loops in VCC usually need to be annotated with invariants.
-A loop invariant is a condition that needs to hold before
-the loop starts executing and then, assuming the invariant holds
-at the beginning of the loop, it should also hold at the
-end of the loop.
-Moreover the invariant is (almost) the only thing the verifier ``knows''
-at the beginning of a loop. 
-Let's then have a look at an example.
+We have talked about what VCC ``knows'' at each control point within a
+function. It is sometimes helpful to think of VCC as constructing
+choosing 
 
+
+For the most part, what VCC knows at a control point can be
+computed from what it knew at the immediately preceding control
+points. But when the control flow contains a loop, VCC faces a
+chicken-egg problem, since what it knows at the top of the loop (i.e.,
+at the beginning of each loop iteration) depends not only on what it
+knew just before the loop, but also on what it knew just before it
+jumped back to the top of the loop from the loop body.
+
+Rather than trying to guess what it should know at the top of a loop,
+VCC lets you tell it what it should know, by providing a \emph{loop
+  invariant}. To make sure that the loop invariant does indeed hold 
+whenever control reaches the top
+of the loop, VCC asserts that the invariant holds wherever control
+jumps to the top of the loop -- namely, on loop entry, at the end of
+the loop body, and at \vcc{continue} statements within the loop body.
+In addition, VCC knows at the top of a loop
+that any variable that is not modified in the loop has 
+the same value it had on entry to the loop%
+\footnote{ Because of aliasing, it is not always obvious to VCC that a
+  variable is not modified in the body of the loop. However, VCC can
+  check it syntactically for a local variable if you never take the
+  address of that variable.}. We simulate this by having VCC forget
+(at loop entry) everything it knew about variables that are modified
+in the loop body.
+
+Let's look at an example:
 \vccInput[]{c/02_div.c}
 
 \noindent
 The \vcc{mod()} function computes a reminder of a integer division
-using iterated subtraction.
-This is a model of a situation where the specification
-language can express something directly (\eg \vcc{a % b}),
-but let's say we're running on a CPU which does not have the
-modulo operation.
-Later, we'll see similar examples with sets, which are built into
-the specification language, but not into C.
-The invariant is that the \vcc{res % a} stays unchanged,
-and equal to \vcc{a % b}.
-To make the invariant semantics clearer below
-you can find the translation in terms of asserts
-and assumes.
-
+using iterated subtraction%
+\footnote{Of course C has a built-in operator to calculate this,
+but you can imagine that you are verifying code designed to execute on
+a machine that doesn't have the operator built-in.}
+%% (Later, we'll see similar examples with sets, which are built into
+%% the specification language, but not into C.)
+The loop invariant says that the \vcc{res % a} stays unchanged,
+and equal to \vcc{a % b}. 
+VCC translates this example roughly as follows:
 \vccInput[linerange={mod-999}]{c/02_div_assert.c}
 
 \noindent
-We can see that the invariant is first checked in the state before the
-loop iteration.
-Then we simulate an arbitrary loop iteration.
-Because the loop assigns to the variable \vcc{res},
-VCC doesn't know what value it might have.
-Thus it conservatively assigns it an arbitrary value.
-Should the loop assign more variables, they would all be assigned
-arbitrary values.
-Then it assumes the invariant, this places some constraints on
-the \vcc{res}.
-What follows is the loop body, where the \vcc{break} statement
-has been replaced by a \vcc{goto}.
-Then VCC checks the invariant after the arbitrary iteration.
-Finally, the iteration ends with an assumption that will never be satisfied.
-The idea is that we are verifying an arbitrary loop iteration,
-so verifying just one is enough, we do not need to have a jump
-back to the beginning of the loop.
-On the other hand, the only way to exit the loop is through the
-\vcc{break} statement, and this is why we assume the control never falls over the end of the loop.
-Thus, for the verifier, the only way to reach the \vcc{return} statement and 
-the associated assertion is through the \vcc{goto}. However, the \vcc{goto}
-only happens after the invariant was assumed and from the \vcc{if} statement
-we also know \vcc{res < b}.
-This is enough to show the postcondition assertion.
+The invariant is asserted wherever control moves to the top of the
+loop (here, on entry to the loop and at the end of the loop body). On
+loop entry, VCC forgets the value of each variable modified in the
+loop (in this case, \vcc{res}), and assumes the invariant (which
+places some constraints on \vcc{res}).  VCC doesn't have to consider
+the actual jump from the end of the loop iteration back to the top of
+the loop (since it has already checked the loop invariant), so further
+consideration of that branch is cut off with \vcc{assume(\false)}.
+The only way to exit this particular loop is through the
+\vcc{break} statement, (which is translated to a \vcc{goto}). At this
+control point, we know the loop invariant holds and that \vcc{res <  b}, 
+which together imply the postcondition of the function. Since this is
+the only location from which control jumps to \vcc{theEnd}, the
+postcondition is also known a \vcc{theEnd}, so the assertion generated
+by the postcondition follows.
 
-If the loop was of the form:
+If the loop had been of the form
 \begin{VCC}
 while (res >= b) 
   _( invariant a % b == res % b )
@@ -62,26 +71,21 @@ while (res >= b)
   res -= b;
 }
 \end{VCC}
-the assert/assume translation would be exactly the same: the invariant would be assumed before
-checking the guard.
-Note that this is not what might be suggested by the notation,
-where the guard comes before the invariant.
+the assert/assume translation would be exactly the same: the invariant
+would be assumed before checking the guard, despite the fact that
+guard syntactically precedes the invariant.
 
-\subsection{Arrays}
-
-Sometimes invariants are not required, in particular when the loop
-doesn't modify any interesting locations. For example, consider
-the following function looking linearly for an integer in an array.
-
+% This is still about array 
+% This example isn't really about the unnecessity of invariants
+%% Sometimes invariants are not required, in particular when the loop
+%% doesn't modify any interesting locations. 
+For a more interesting example of a loop, consider 
+the following function that uses linear search to determine if a value
+occurs within an array:
+\todo{Change the following to use \vcc{thread_local} instead of \vcc{wrapped}.}
 \vccInput{c/03_lsearch.c}
 
 \noindent
-The requirement \itodo{decide what do we put there}
-makes sure the array is readable.
-As for the \vcc{==>} operator,
-\vcc{P ==> Q} formally means \vcc{!P || Q}, and is usually 
-read as ``\vcc{P} implies \vcc{Q}''.
-In particular note that \vcc{\false ==> P} is true for any \vcc{P}.
 Thus, the postcondition guarantees that when the returned value
 is not \vcc{UINT_MAX}, then \vcc{elt} is indeed found at the returned
 index.
@@ -93,10 +97,87 @@ To express that an element is not in an array we will use a universal quantifier
 \vccInput{c/03_lsearch_full.c}
 
 \noindent
-The syntax \vcc{\forall unsigned j; j < i ==> ar[j] != elt} means that 
+The invariant \vcc{\forall unsigned j; j < i ==> ar[j] != elt} means that 
 \vcc{ar[j]} is not \vcc{elt} for all \vcc{j} between \vcc{0} and \vcc{i - 1}.
 In other words, take an arbitrary unsigned (and thus non-negative) integer \vcc{j}. 
 If it happens to be less than \vcc{i} then the value in \vcc{ar[j]} is not \vcc{elt}.
 Thus, the invariant says that the element was not found between \vcc{0}
 and \vcc{i - 1}.
 If the loop terminates with \vcc{i == sz}, then the postcondition follows.
+
+
+\subsection{Review}
+You have now learned just about everything you need to know to verify
+sequential programs that use only unstructured data (base types,
+arrays, and pointers). (One feature useful in this subset - ghost code
+- won't be introduced until section \secref{}, but you can get along
+without it for now.) This is already a very rich domain for
+programming, and you should take some time using VCC to verify some
+of the ``toy'' algorithms you learned in school. It's also a good
+opportunity to review what we've learned so far.
+
+At each control point within a function, VCC ``knows'' certain things
+about the state of the program. Included in this knowledge is what
+memory locations it can safely read or write. The computation of this
+knowledge can be summarized as follows:
+\begin{itemize}
+\item
+On entry to a function, we know the preconditions of the function. In
+addition, we know that all of the parameters are readable
+(``thread-local'') and any objects listed in the writes clause are
+writeable (``mutable'').
+\item
+A local variable is writable while it is in scope.
+\item
+After \vcc{_(assume E)}, we know what we knew before the assumption,
+and in addition we know \vcc{E}.
+\item
+\vcc{_(assert E)} asks VCC to prove that what it knows just before the
+assertion implies \vcc{E} (and report an error if it can't). 
+It also assumes \vcc{E} afterward.
+\item
+An assignment statement \vcc{v = E}, where \vcc{E} doesn't have a 
+function call and doesn't mention \vcc{v}%
+\footnote{
+  If \vcc{E} mentions \vcc{v}, we can imagine the value of \vcc{v} being
+  first copied into a fresh temporary variable, which is used in place
+  of \vcc{v} within \vcc{E}.
+}, asserts that the data needed to
+compute \vcc{E} is readable, and that \vcc{v} is writeable. After the
+assignment, it knows everything it knew before the assignment (except
+for what it knew about the value of \vcc{v}), and additionally knows
+that \vcc{v == E}. 
+\item 
+A function call \vcc{f(args)}, where \vcc{args} is a list of variables%
+\footnote{
+  If the arguments to the function call are expressions, we can think
+  of these expressions being evaluated and assigned to temporary
+  variables before the function call.
+}, asserts that the \vcc{args} are readable, asserts that the objects
+mentioned in the writes clauses of \vcc{f} are writeable,
+asserts the preconditions of \vcc{f} (with the actual parameters
+substituted for the formal parameters), forgets what it knew about
+\vcc{v} and any objects mentioned in the writes clause of \vcc{f}, and
+finally assumes the postconditions of \vcc{f}%
+\footnote{If these postconditions use \vcc{\\old} to refer to parts of
+  the state before the call, we can think of these parts of the state
+  as copied to temporary variables prior to the call. The result of
+  the function can be viewed as being put into a temporary variable of
+  the caller.}
+\item
+For a conditional \vcc{if (p) S1 else S2}, we first asserts that
+\vcc{p} is readable. At the beginning of \vcc{S1} (resp. \vcc{S2}), we
+know what we knew before the conditional, and in addition know 
+\vcc{p != 0} (resp. \vcc{p == 0}). After the conditional, we know the 
+disjunction (``or'') of what we know at the end of \vcc{S1} and what
+we know at the end of \vcc{S2}.
+\item
+Before entering a loop, we asserts the loop invariant. At the
+beginning of the loop body, we know what we knew just before the loop,
+but forget what we knew about the variables that are written in the
+loop. At the end of the loop, we again assert the loop invariant.
+\end{itemize}
+
+\subsection{Exercises}
+
+
