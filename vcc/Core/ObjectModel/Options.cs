@@ -51,7 +51,7 @@ namespace Microsoft.Research.Vcc
     public bool DetailedTimes;
     public bool PrintCEVModel;
     public int PointerSize = 64;
-    public bool Vcc2; // new syntax
+    public bool NewSyntax;
     public bool Vcc3;
     // we might want an option for setting it
     public string PreludPath = "VccPrelude.bpl";
@@ -86,7 +86,7 @@ namespace Microsoft.Research.Vcc
         case '2':
           bool? vcc2 = this.ParseNamedBoolean(arg, "2", "2");
           if (vcc2 != null) {
-            this.options.Vcc2 = vcc2.Value;
+            this.options.NewSyntax = vcc2.Value;
             return true;
           }
           return false;
@@ -226,6 +226,9 @@ namespace Microsoft.Research.Vcc
           if (this.ParseName(arg, "nopreprocessor", "n")) {
             this.options.NoPreprocessor = true;
             return true;
+          }
+          if (this.ParseName(arg, "newsyntax", "ns")) {
+            this.options.NewSyntax = true;
           }
           return false;
         case 'o':

@@ -47,7 +47,7 @@ namespace Microsoft.Research.Vcc
       StringBuilder args = new StringBuilder();
       args.Append("/nologo /TC");
       args.Append(" /E /D_PREFAST_ /DVERIFY /D_USE_DECLSPECS_FOR_SAL");
-      if (commandLineOptions.Vcc2) args.Append(" /DVERIFY2");
+      if (commandLineOptions.NewSyntax) args.Append(" /DVERIFY2");
 
       foreach (string ppOption in commandLineOptions.PreprocessorOptions) {
         args.Append(' ');

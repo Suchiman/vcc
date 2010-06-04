@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -6,46 +7,46 @@ struct S {
 };
 
 void foo(struct S *s)
-  maintains(wrapped(s))
-  writes(s)
+  _(maintains \wrapped(s))
+  _(writes s)
 {
-  expose(s) {
+  _(unwrapping s) {
     s->a = 4;
     s->b = 5;
   }
 }
 
 void fooShouldFail1(struct S *s)
-  maintains(wrapped(s))
-  writes(s)
+  _(maintains \wrapped(s))
+  _(writes s)
 {
-  expose(s) {
-    unwrap(s);
+  _(unwrapping s) {
+    _(unwrap s)
     s->a = 4;
     s->b = 5;
   }
 }
 
 void fooShouldFail2(struct S *s)
-  maintains(wrapped(s))
-  writes(s)
+  _(maintains \wrapped(s))
+  _(writes s)
 {
-  expose(s) {
+  _(unwrapping s) {
     s->a = 4;
     s->b = 5;
-    wrap(s);
+    _(wrap s)
   }
 }
 
 void bar(struct S *s, struct S *t)
-  maintains(wrapped(s))
-  writes(s)
-  maintains(wrapped(t))
-  writes(t)
-  requires(s != t)
+  _(maintains \wrapped(s))
+  _(writes s)
+  _(maintains \wrapped(t))
+  _(writes t)
+  _(requires s != t)
 {
-  expose(s) {
-  expose(t) {
+  _(unwrapping s) {
+  _(unwrapping t) {
     s->a = 4;
     s->b = 5;
     t->a = 4;
@@ -57,9 +58,8 @@ void bar(struct S *s, struct S *t)
 `
 Verification of foo succeeded.
 Verification of fooShouldFail1 failed.
-testcase(23,17) : error VC8016: 's' is not wrapped before unwrap.
+testcase(23,28) : error VC8016: 's' is not wrapped before unwrap.
 Verification of fooShouldFail2 failed.
-testcase(33,21) : error VC9502: Call 'wrap(s)' did not verify.
+testcase(33,30) : error VC9502: Call 'wrap(s)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped must not be closed'.
-Verification of bar succeeded.
-`
+Verification of bar succeeded.`

@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 struct Acct {
@@ -5,13 +6,13 @@ struct Acct {
 };
 
 void deposit(struct Acct *a, int x)
-  requires(wrapped(a))
-  ensures(wrapped(a))
-  writes(a)
+  _(requires \wrapped(a))
+  _(ensures \wrapped(a))
+  _(writes a)
 {
-  unwrap(a);
-  a->amount = unchecked( a->amount + x );
-  wrap(a);
+  _(unwrap a)
+  a->amount = _(unchecked)(a->amount + x);
+  _(wrap a)
 }
 `
 Verification of deposit succeeded.

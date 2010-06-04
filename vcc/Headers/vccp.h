@@ -75,6 +75,10 @@ _(template<typename T> T \in_state(\state, T expr);)
 _(\state \current_state();)
 _(logic template<typename T> T \by_claim(\claim c, T expr) = \in_state(\by_claim_wrapper(c), expr);)
 
+
+_(bool _(pure) \match_long(__int64 ) _(ensures \result == \true);)
+_(bool _(pure) \match_ulong(unsigned __int64) _(ensures \result == \true);)
+
 // global variables
 
 _(ghost extern const \thread \me;)
