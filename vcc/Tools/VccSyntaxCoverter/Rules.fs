@@ -216,6 +216,8 @@ module Rules =
     addKwRepl "ispure" "_(pure)"
     addKwRepl "true" "\\true"
     addKwRepl "false" "\\false"
+    addKwRepl "spec_malloc" "\\alloc"             // cannot use fnRule because of template paramters
+    addKwRepl "spec_alloc_array" "\\alloc_array"  // cannot use fnRule because of template paramters
     
     addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
     addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, "hint: "); paren "" toks]))
@@ -240,28 +242,36 @@ module Rules =
 
     addKwRule "expose" "unwrapping"
 
+    let canonicalFn = [
+                        "wrapped";
+                        "wrapped0";
+                        "thread_local";
+                        "span";
+                        "extent";
+                        "inv";
+                        "inv2";
+                        "old";
+                        "match_long";
+                        "match_ulong";                  
+                        "array_range";      
+                      ]
+
+    for cfn in canonicalFn do addFnRule cfn ("\\" + cfn)
+
     addFnRule "valid_claim" "\\active_claim"
     addFnRule "ref_cnt" "\\claim_count"
     addFnRule "is_claimable" "\\claimable"
     addFnRule "is_fresh" "\\fresh"
     addFnRule "mutable" "\\unwrapped"
-    addFnRule "wrapped" "\\wrapped"
-    addFnRule "wrapped0" "\\wrapped0"
     addFnRule "closed" "\\consistent"
     addFnRule "typed" "\\valid"
-    addFnRule "owner" "\\owner"
-    addFnRule "thread_local" "\\thread_local"
-    addFnRule "span" "\\span"
-    addFnRule "extent" "\\extent"
+    addFnRule "is_thread_local_array" "\\thread_local_array"
+    addFnRule "is_mutable_array" "\\mutable_array"
     addFnRule "unchecked" "_(unchecked)"
-    addFnRule "inv" "\\inv"
-    addFnRule "inv2" "\\inv2"
     addFnRule "keeps" "\\mine"
-    addFnRule "old" "\\old"
     addFnRule "set_universe" "\\universe"
     addFnRule "claims_obj" "\\claims_object"
-    addFnRule "match_long" "\\match_long"
-    addFnRule "match_ulong" "\\match_ulong"
+
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\claim ") :: toks)))
     
@@ -289,6 +299,11 @@ module Rules =
       | [e] -> e :: [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns")]
       | _ -> failwith ""
     addRule (parenRule false "owns" owns)
+
+    let owner = function
+      | [e] -> e :: [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owner")]
+      | _ -> failwith ""
+    addRule (parenRule false "owner" owns)
     
     let set_owns = function
       | [e; s] ->

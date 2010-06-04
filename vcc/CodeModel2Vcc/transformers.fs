@@ -129,7 +129,7 @@ namespace Microsoft.Research.Vcc
           h.CustomAttr <- List.map doAttr h.CustomAttr
                   
           match h.Name with
-            | "\\free" | "\\stack_free" | "\\alloc" | "\\stack_alloc"
+            | "\\free" | "\\stack_free" | "\\heap_alloc" | "\\stack_alloc"
             | "\\set_owns" | "\\set_closed_owner" | "\\giveup_closed_owner"
             | "_vcc_free"
             | "_vcc_stack_free"

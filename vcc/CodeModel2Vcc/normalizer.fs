@@ -836,6 +836,7 @@ namespace Microsoft.Research.Vcc
                                     "\\consistent",          "_vcc_closed";
                                     "\\thread_local",        "_vcc_thread_local2";
                                     "\\thread_local_array",  "_vcc_is_thread_local_array";
+                                    "\\mutable_array",       "_vcc_is_mutable_array";
                                     "\\claims_object",       "_vcc_claims_obj";
                                     "\\claim_count",         "_vcc_ref_cnt";
                                     "\\claimable",           "_vcc_is_claimable";
@@ -845,6 +846,10 @@ namespace Microsoft.Research.Vcc
                                     "\\atomic_object",       "_vcc_is_atomic_obj";
                                     "\\universe",            "_vcc_set_universe"; 
                                     "\\by_claim_wrapper",    "_vcc_by_claim";
+                                    "\\unwrapped",           "_vcc_mutable";
+                                    "\\alloc",               "_vcc_spec_alloc";
+                                    "\\alloc_array",         "_vcc_spec_alloc_array";
+                                    "\\heap_alloc",          "_vcc_alloc";
                                   ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";
