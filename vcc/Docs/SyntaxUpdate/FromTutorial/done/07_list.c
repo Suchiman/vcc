@@ -13,7 +13,7 @@ _(dynamic_owns) struct List {
   _(ghost  bool followers[struct Node *][int];)
   _(invariant val == followers[head])
   _(invariant head != NULL ==> \mine(head))
-  _(invariant followers[NULL] == \lambda int k; false)
+  _(invariant followers[NULL] == \lambda int k; \false)
   _(invariant \forall struct Node *n;
                 {n->next \in \this->\owns}
                 \mine(n) ==> n->next == NULL || \mine(n->next))
@@ -28,14 +28,14 @@ _(dynamic_owns) struct List {
 
 /*{init}*/
 struct List *mklist()
-  _(ensures \result != NULL ==> \wrapped(\result) && \result->val == \lambda int k; false)
+  _(ensures \result != NULL ==> \wrapped(\result) && \result->val == \lambda int k; \false)
 {
   struct List *l = malloc(sizeof(*l));
   if (l == NULL) return NULL;
   l->head = NULL;
   _(ghost {
     l->\owns =  {};
-    l->followers = \lambda struct Node *n; int k; false;
+    l->followers = \lambda struct Node *n; int k; \false;
     l->val = l->followers[l->head];
   })
   _(wrap l)
