@@ -216,6 +216,8 @@ module Rules =
     addKwRepl "result" "\\result"
     addKwRepl "this" "\\this"
     addKwRepl "ispure" "_(pure)"
+    addKwRepl "true" "\\true"
+    addKwRepl "false" "\\false"
     
     addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
     addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, "hint: "); paren "" toks]))
