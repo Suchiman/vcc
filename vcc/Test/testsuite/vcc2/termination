@@ -1,12 +1,13 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo()
-decreases(0)
+_(decreases 0)
  {
   int x = 10;
   while (x > 0)
-  writes(&x)
-  decreases(x)
+  _(writes &x)
+  _(decreases x)
   {
     x--;
   }

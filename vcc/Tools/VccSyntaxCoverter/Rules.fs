@@ -192,7 +192,7 @@ module Rules =
         [paren "(" body], rest
     parenRuleExt name repl    
     
-  let addSetOpRule name op =
+  let addInfixRule name op =
     let repl = function 
       | [e1;e2] -> e1 @ [Tok.Op(fakePos, " " + op + " ")] @ eatWs e2
       | _ -> failwith ""
@@ -210,7 +210,7 @@ module Rules =
     addKwRepl "mathint" "\\integer"
     addKwRepl "obj_t" "\\object"
     addKwRepl "claim_t" "\\claim"
-    addKwRepl "threadid_t" "\\thread"
+    addKwRepl "thread_id" "\\thread"
     addKwRepl "result" "\\result"
     addKwRepl "this" "\\this"
     addKwRepl "ispure" "_(pure)"
@@ -223,16 +223,22 @@ module Rules =
     addRule (quantRule "exists" "&&")
     addRule (quantRule "lambda" "###")
     
+    let canonicalKeywords = [
+                              "atomic";
+                              "invariant";
+                              "decreases";
+                              "ensures";
+                              "requires";
+                              "reads";
+                              "writes";
+                              "always";
+                              "maintains";
+                              "returns";
+                            ]
+
+    for cw in canonicalKeywords do addKwRule cw cw
+
     addKwRule "expose" "unwrapping"
-    addKwRule "atomic" "atomic"
-    addKwRule "invariant" "invariant"
-    addKwRule "ensures" "ensures"
-    addKwRule "requires" "requires"
-    addKwRule "reads" "reads"
-    addKwRule "writes" "writes"
-    addKwRule "always" "always"
-    addKwRule "maintains" "maintains"
-    addKwRule "returns" "returns"
 
     addFnRule "valid_claim" "\\active_claim"
     addFnRule "ref_cnt" "\\claim_count"
@@ -252,17 +258,22 @@ module Rules =
     addFnRule "inv2" "\\inv2"
     addFnRule "keeps" "\\mine"
     addFnRule "old" "\\old"
+    addFnRule "set_universe" "\\universe"
     addFnRule "claims_obj" "\\claims_object"
+    addFnRule "match_long" "\\match_long"
+    addFnRule "match_ulong" "\\match_ulong"
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\claim ") :: toks)))
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
   
     addRule (parenRule false "vcc" (fnApp "_"))
-    addSetOpRule "set_union" "\\union"
-    addSetOpRule "set_difference" "\\diff"
-    addSetOpRule "set_intersection" "\\inter"
-    addSetOpRule "set_in" "\\in"
+    addInfixRule "set_union" "\\union"
+    addInfixRule "set_difference" "\\diff"
+    addInfixRule "set_intersection" "\\inter"
+    addInfixRule "set_in" "\\in"
+    addInfixRule "is" "\\is"
+
 
     let as_array = function
       | [arr; sz] ->
@@ -328,6 +339,3 @@ module Rules =
     
     addRule { keyword = "struct"; replFn = struct_rule }
     addRule { keyword = "union"; replFn = struct_rule }
-    
-    
-      

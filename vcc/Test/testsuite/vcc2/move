@@ -1,27 +1,27 @@
+`/newsyntax
 #include "vcc.h"
 
 struct Point{int x; int y;};
 struct Rect{
   struct Point* ll;
   struct Point * ur;
-  invariant
-    (this->ll != this->ur && keeps(this->ll, this->ur))
+  _(invariant \this->ll != \this->ur && \mine(\this->ll, \this->ur))
 };
 
 void Move(struct Rect *r)
-  requires( wrapped(r) )
-  ensures( wrapped(r) )
-  writes( r )
+  _(requires  \wrapped(r))
+  _(ensures  \wrapped(r))
+  _(writes  r)
 {
   struct Point *tmp;
   struct Point *x;
 
-  unwrap(r);
+  _(unwrap r)
     tmp = r->ll;
-    unwrap(tmp);
+    _(unwrap tmp)
       tmp->x = 3;
-    wrap(tmp);
-  wrap(r);
+    _(wrap tmp)
+  _(wrap r)
 }
 `
 Verification of Rect#adm succeeded.

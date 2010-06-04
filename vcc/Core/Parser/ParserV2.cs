@@ -59,7 +59,6 @@ namespace Microsoft.Research.Vcc.Parsing
             this.GetNextToken();
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
             break;
-          case Token.SpecPure:
           case Token.SpecLogic:
             List<Specifier> specifier = new List<Specifier>(1);
             specifier.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
@@ -102,6 +101,7 @@ namespace Microsoft.Research.Vcc.Parsing
         case Token.SpecClaimable:
         case Token.SpecVolatileOwns:
         case Token.SpecAtomicInline:
+        case Token.SpecPure:
           specifiers.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
           this.GetNextToken();
           break;
@@ -535,8 +535,8 @@ namespace Microsoft.Research.Vcc.Parsing
       public static TokenSet LoopContract = new TokenSet() | Token.SpecInvariant | Token.SpecWrites | Token.SpecDecreases;
       public static TokenSet SpecParameter = new TokenSet() | Token.SpecGhost | Token.SpecOut;
       public static TokenSet TypeMember = new TokenSet() | Token.SpecGhost | Token.SpecInvariant;
-      public static TokenSet Global = new TokenSet() | Token.SpecAxiom | Token.SpecGhost | Token.SpecPure | Token.SpecLogic;
-      public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns | Token.SpecAtomicInline | Token.SpecVolatileOwns;
+      public static TokenSet Global = new TokenSet() | Token.SpecAxiom | Token.SpecGhost | Token.SpecLogic;
+      public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns | Token.SpecAtomicInline | Token.SpecVolatileOwns | Token.SpecPure;
     }
   }
 }

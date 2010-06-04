@@ -41,7 +41,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected bool inSpecCode;
 
     internal static Parser Create(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) {
-      if (((VccOptions)compilation.Options).Vcc2) return new ParserV2(compilation, sourceLocation, scannerAndParserErrors);
+      if (((VccOptions)compilation.Options).NewSyntax) return new ParserV2(compilation, sourceLocation, scannerAndParserErrors);
       else return new Parser(compilation, sourceLocation, scannerAndParserErrors);
     }
 

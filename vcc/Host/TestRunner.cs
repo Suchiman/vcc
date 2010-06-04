@@ -341,13 +341,14 @@ namespace Microsoft.Research.Vcc
       options.CheckedArithmetic = true;
       options.RunTestSuite = true;
       options.FileNames = new List<string> { fileNameC };
-      options.Vcc2 = commandLineOptions.Vcc2;
+      options.NewSyntax = commandLineOptions.NewSyntax;
 
       if (compilerParameters != null) {
         for (int i = 0; i < compilerParameters.Count; i++) {
           if (compilerParameters[i].StartsWith("/functions:")) options.Functions.AddRange(compilerParameters[i].Substring(11).Split(','));
           else if (compilerParameters[i] == "/a" || compilerParameters[i] == "/aggressivepruning") options.AggressivePruning = true;
           else if (compilerParameters[i] == "/keepppoutput") keepPreprocessorOutput = true;
+          else if (compilerParameters[i] == "/newsyntax") options.NewSyntax = true;
           else if (compilerParameters[i] =="/z:") { ++i; options.Z3Options.Add(compilerParameters[i]); } 
           else if (compilerParameters[i] == "/b:") { ++i; options.BoogieOptions.Add(compilerParameters[i]); } 
           else if (compilerParameters[i].StartsWith("/ps:")) { options.PointerSize = Int32.Parse(compilerParameters[i].Substring(4)); }

@@ -567,7 +567,7 @@ namespace Microsoft.Research.Vcc
                 
                 let mathPref = "_vcc_math_type_"
                 if name.StartsWith mathPref then
-                  let typeName = (if helper.Options.Vcc2 then "\\" else "") + (name.Substring (mathPref.Length))
+                  let typeName = (if helper.Options.NewSyntax then "\\" else "") + (name.Substring (mathPref.Length))
                   let td = C.Type.MathTd typeName
                   typesMap.Add(typeDef, td)
                   typeNameMap.Add(td.Name, td)
@@ -1477,7 +1477,7 @@ namespace Microsoft.Research.Vcc
           match typeNameMap.TryGetValue(name) with
             | (true, f) -> f
             | _ -> oopsLoc oldValue ("cannot find internal type " + name + ". Forgotten #include <vcc.h>?"); die()
-        let ts = findTypeOrDie (if helper.Options.Vcc2 then "\\state" else "state_t")
+        let ts = findTypeOrDie (if helper.Options.NewSyntax then "\\state" else "state_t")
         let expr = this.DoExpression oldValue.Expression
         // the type of expr and old(expr) may disagree in CCI, so we fix it up here
         exprRes <- C.Expr.Old ({ec with Type = expr.Type}, C.Expr.Macro ({ec with Type = C.Type.Ref(ts) }, "prestate", []), expr)
