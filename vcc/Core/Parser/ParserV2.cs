@@ -380,11 +380,7 @@ namespace Microsoft.Research.Vcc.Parsing
             this.GetNextToken();
             var stmt = this.ParseStatement(followers | Token.RightParenthesis);
             slb.UpdateToSpan(stmt.SourceLocation);
-            LocalDeclarationsStatement localDecl = stmt as LocalDeclarationsStatement;
-            if (localDecl != null)
-              statements.Add(localDecl); // must not be wrapped
-            else 
-              statements.Add(new VccSpecStatement(stmt, slb));
+            StatementGroup.AddStatementOrGroupToList(this.DeepWrapInSpecStmt(stmt, slb), statements);
             break;
           case Token.SpecWrap:
             statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new VccWrapStatement(expr, sl)));
@@ -527,6 +523,14 @@ namespace Microsoft.Research.Vcc.Parsing
       var expr = this.ParseExpression(followers);
       slb.UpdateToSpan(expr.SourceLocation);
       return createStmt(expr, slb);
+    }
+
+    private Statement DeepWrapInSpecStmt(Statement stmt, ISourceLocation slb) {
+      StatementGroup sg = stmt as StatementGroup;
+      if (sg != null) return new StatementGroup(sg.Statements.ConvertAll(s => DeepWrapInSpecStmt(s, s.SourceLocation)));
+      LocalDeclarationsStatement localDecl = stmt as LocalDeclarationsStatement;
+      if (localDecl != null) return localDecl;
+      return new VccSpecStatement(stmt, slb);
     }
 
     private static class STS {
