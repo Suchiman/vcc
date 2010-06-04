@@ -1,10 +1,5 @@
 \section{Loop Invariants}
 
-We have talked about what VCC ``knows'' at each control point within a
-function. It is sometimes helpful to think of VCC as constructing
-choosing 
-
-
 For the most part, what VCC knows at a control point can be
 computed from what it knew at the immediately preceding control
 points. But when the control flow contains a loop, VCC faces a
@@ -107,14 +102,14 @@ If the loop terminates with \vcc{i == sz}, then the postcondition follows.
 
 
 \subsection{Review}
-You have now learned just about everything you need to know to verify
-sequential programs that use only unstructured data (base types,
-arrays, and pointers). (One feature useful in this subset - ghost code
-- won't be introduced until section \secref{}, but you can get along
-without it for now.) This is already a very rich domain for
-programming, and you should take some time using VCC to verify some
-of the ``toy'' algorithms you learned in school. It's also a good
-opportunity to review what we've learned so far.
+\todo{Put in some way to get to the relevant info about quantifiers
+  and ghost data?}  
+
+You have now learned enough to verify some nontrivial sequential
+programs that use only base types and arrays.  This is already a very
+rich domain for programming, and you should take some time using VCC
+to verify some of the ``toy'' algorithms you learned in school. It's
+also a good opportunity to review what we've learned so far.
 
 At each control point within a function, VCC ``knows'' certain things
 about the state of the program. Included in this knowledge is what
@@ -122,13 +117,13 @@ memory locations it can safely read or write. The computation of this
 knowledge can be summarized as follows:
 \begin{itemize}
 \item
-On entry to a function, we know the preconditions of the function.
+On entry to a function, it knows the preconditions of the function.
 \item
 A memory object is writable if it is unwrapped and is either listed in the 
 writes clause of the function or was unwrapped after the function was entered.
 \item
-After \vcc{_(assume E)}, we know what we knew before the assumption,
-and in addition we know \vcc{E != 0}.
+After \vcc{_(assume E)}, it knows what it knew before the assumption,
+and in addition knows \vcc{E != 0}.
 \item
 \vcc{_(assert E)} asks VCC to prove that what it knows before the
 assertion implies \vcc{E} (and report an error if it can't). 
@@ -164,30 +159,38 @@ finally assumes the postconditions of \vcc{f}%
   the function can be viewed as being put into a temporary variable of
   the caller.}
 \item
-For a conditional \vcc{if (p) S1 else S2}, we first asserts that
-\vcc{p} is readable. At the beginning of \vcc{S1} (resp. \vcc{S2}), we
-know what we knew before the conditional, and in addition know 
-\vcc{p != 0} (resp. \vcc{p == 0}). After the conditional, we know the 
-disjunction (``or'') of what we know at the end of \vcc{S1} and what
+For a conditional \vcc{if (p) S1 else S2}, it first asserts that
+\vcc{p} is readable. At the beginning of \vcc{S1} (resp. \vcc{S2}), it
+knows what it knew before the conditional, and in addition knows
+\vcc{p != 0} (resp. \vcc{p == 0}). After the conditional, it knows the 
+disjunction (``or'') of what it knew at the end of \vcc{S1} and what
 we know at the end of \vcc{S2}.
 \item
-Before entering a loop, we asserts the loop invariant. At the
-beginning of the loop body, we know what we knew just before the loop,
-but forget what we knew about the variables that are written in the
-loop. At the end of the loop, we again assert the loop invariant.
+For a loop, it knows at the beginning of the loop body just what it
+knew just before the loop (except that it forgets what it knew about
+variables modified in the loop), and also knows the loop
+invariant. Just before the loop, and at any point in the loop body where
+control jumps back to the top of the loop (including the end of the
+loop body), it asserts the loop invariant.
 \end{itemize}
 
 \subsection*{Exercises}
 
 \begin{enumerate}
 \item
-Specify and verify an iterative program that copies an array from one
-location to another.
+Write and verify an iterative program that copies an array if ints from one
+location to another. Repeat with 2-dimensional arrays.
 \item
-Specify and verify an iterative program for binary search (a program
+Write and verify an iterative program for binary search (a program
 that checks whether a sorted array contains a given value).
 \item
-Verify an iterative program that sorts an array of ints using
+Write and verify an iterative program that sorts an array of ints using
 bubblesort. You can assume that the input array contains pairwise
-distinct elements. 
+distinct elements. You can also try selection sort.
+\item 
+Write and verify a program that takes a 2-dimensional array of ints in
+which every row and column is sorted, and checks whether a given int
+occurs in the array.
+\item 
+Write a program that 
 \end{enumerate}
