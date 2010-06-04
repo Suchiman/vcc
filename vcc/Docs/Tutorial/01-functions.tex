@@ -15,7 +15,15 @@ Let's begin with a simple example:
 
 \vccInputSC{c/01_minInline2.c}
 This program (internally) sets \vcc{z} to the minimum of \vcc{x} and
-\vcc{y}. 
+\vcc{y}. In addition to the ordinary C code, this program includes an
+\emph{annotation}, starting with \vcc{_(}, terminating with a closing
+parenthesis, with balanced parentheses inside. The first identifier
+after the opening parenthesis (\vcc{assert} in the assertion above)
+identifies the type of annotation provided (and hence its function)%
+\footnote{The identifier plays this assertion-specific role only 
+at the beginning of an assertion; elsewhere, it would be treated as
+an ordinary program identifier. }.
+
 An annotation of the form \vcc{_( assert E )}, called an \emph{assertion}, asks VCC to prove that
 \vcc{E} is guaranteed to hold\footnote{
   In C parlance, this means evaluating to a value other than \vcc{0}.
@@ -129,11 +137,15 @@ it should be able to verify, it is usually because it doesn't know
 something you thought it should. An assertion provides one way to
 check whether VCC knows what you think it should know.  
 
-You can add to what VCC knows at a particular point by adding an
-\emph{assumption}.
-An assumption \vcc{_( assume E )} is a promise that you make to VCC
-that for whatever reasons \vcc{E} will always hold.
-Equivalently, VCC will just ignore the executions where \vcc{E} doesn't hold.
+You can add to what VCC knows at a particular point by adding a second
+type of annotation, called an \emph{assumption}.
+The assumption \vcc{_( assume E )} can be viewed as telling VCC to ignore
+the rest of an execution if \vcc{E} fails to hold (\ie, where 
+\vcc{E} evaluates to \vcc{0}). To put it another way, if you verify a
+program with VCC, it guarantees that in any prefix of an execution
+where no (user-provided) assumption fails, no assertion will fail either%
+
+ 
 Operationally, the assumption simply adds \vcc{E} to what VCC
 knows, for subsequent reasoning. For example:
 \begin{VCC}
@@ -143,14 +155,15 @@ y = 100 / x;
 \end{VCC}
 Without the assumption, VCC would complain about possible division by
 zero (it checks for division by zero because it would cause the
-program to crash).  With the assumption, this error cannot happen.
-An assumption essentially tells VCC to ignore all of those executions
+program to crash).  With the assumption, this error cannot happen.  An
+assumption essentially tells VCC to ignore all of those executions
 where the assumption fails to hold; thus, when VCC successfully
 verifies a program, it promises that in every execution where no
-assumption fails, no assertion will fail either.
-Of course assumptions, like all annotations, are not included in the executable, so
-if an assumption fails the program doesn't stop and the following assertion might get violated.
-Thus, you normally want to verify your program without any assumptions.
+assumption fails, no assertion will fail either.  Of course
+assumptions, like all annotations, are not included in the executable,
+so if an assumption fails the program doesn't stop and the following
+assertion might get violated.  Thus, you normally want to verify your
+program without any assumptions.
 
 If assumptions are to be avoided, why are assumptions useful at
 all? They are useful in several ways:
@@ -224,7 +237,7 @@ and typically involves ``nonlinear arithmetic'' (e.g. where variables
 are multiplied together), bit-vector reasoning, or quantifiers. We'll
 say more about these in \secref{bv}.
 
-\subsection{Exercises}
+\subsection*{Exercises}
 \begin{enumerate}
 \item
 In the following program fragment, which assertions will fail?
@@ -256,7 +269,6 @@ _( assert p ==> q )
 \end{VCC}
 ? 
 \end{enumerate}
-
 
 \section{Function specifications}
 \label{sect:functions}
@@ -302,7 +314,8 @@ perhaps hasn't even been written yet.
 \end{note}
 
 The specification of a function is sometimes called a \emph{contract},
-because it gives obligations on both the function and its callers:
+because it gives obligations on both the function and its callers. It
+is based on two new kinds of annotations:
 \begin{itemize}
 \item The requirements on the caller (sometimes called the
   \emph{precondition} of the function) take the form 
@@ -368,7 +381,7 @@ concerned, the line:
 position = min(newPos, LIMIT);
 \end{VCC}
 \noindent
-could be replaced with:
+could be replaced with:\todo{Should we make \vcc{havoc} part of the language?}
 \begin{VCC}
 position = anything();
 \end{VCC}
@@ -376,7 +389,7 @@ position = anything();
 that is assigning an unspecified value to the variable \vcc{position}.
 The only knowledge about it comes from the following assumption.
 
-\subsection{Exercises}
+\subsection*{Exercises}
 \begin{enumerate}
 \item
 Try replacing the \vcc{<} in the return statement of \vcc{min()} with
@@ -424,27 +437,27 @@ invariants.)
 Can you think of useful functions in a real program that might
 legitimately guarantee only the trivial postcondition \vcc{_( ensures \true )}?
 \end{enumerate}
-\subsection{Write clauses}
+\subsection*{Reading and Writing}
 \label{sect:writes}
 
-So far, we have considered only functions without visible side effects; for
-example, we assumed that the call to \vcc{min()} didn't have the side
-effect of changing the local variables of \vcc{main()}. The
-translation above captured this requirement implicitly, by allowing a
-\vcc{main()} to call \vcc{min()} without losing any of its prior
-knowledge. VCC requires each function specification to declare any side
-effects of the function that might destroy knowledge that
-the caller might have had coming into the call. However, it need not
-declare side effects to the state that the caller
-could not possibly know about (e.g., modification to data allocated
-after the beginning of the call). 
+So far, we have considered functions that access only parameters and
+their own local variables. In an imperative language (particularly one
+like C that provides only call-by-value), most interesting functions
+have to read and/or write memory shared with its caller. A function
+can read a memory object only if the object is known to be valid and
+not concurrently modified by other threads; such an object is said to
+be \vcc{\thread_local}. Whenever a memory object is read, VCC adds an
+assertion to this effect. 
+
+Writing requires something more; by default, VCC assumes that a
+function call has no side effects on its caller; for example, we
 %(We will see in section \ref{} that
 %VCC only allows the caller to know very specific things, which allows
 %the function to do other things with global side effects without
 %having to report them.)
 
-In VCC, the destruction of knowledge of the caller is specified 
-by means of \emph{writes clauses}. 
+In VCC, the destruction of knowledge of the caller is specified by
+means of yet another form of annotation, called \emph{writes clauses}.
 Intuitively, a clause \vcc{_( writes p, q )} is equivalent to saying
 the function is going to modify \emph{only} the object pointed to by \vcc{p}
 and the object pointed to by \vcc{q}
@@ -457,56 +470,47 @@ combines them into a single set. If a function spec contains no writes clauses,
 it is equivalent to specifying a writes clause with empty set of
 pointers.
 
-Here is a simple example of a function that has visible side effects:
+At any control point, VCC can ``know'' that a particular memory object
+\vcc{*p} is writeable, in annotations, this is written as
+\vcc{\writeable(p)}. We give details later, but
+roughly speaking, this means
+\begin{itemize}
+\item \vcc{p} belongs to the current thread and is in a ``phase of
+  life'' where it can be written; such objects are said to be
+  ``unwrapped''. (Note that this also implies \vcc{\thread_local(p)}.)
+\item Either \vcc{p} was listed in the writes clause of the function,
+  or was unwrapped after the function was entered; this guarantees
+  that the caller is going to forget what he knew about the value of
+  \vcc{*p}%
+\end{itemize}
+In particular, formal function parameters and local parameters are
+writable as long as they are in scope and have not been explicitly
+made unwritable (using mechanisms to be described later). 
+VCC asserts \vcc{\writable(p)} on each attempt to write to \vcc{*p},
+as well as on each call to a function that lists \vcc{p} in a writes
+clause. 
+
+\todo{Change this to a function that just copies from one variable to
+  the other, so the copied variable can be required to be \vcc{thread_local}.}
+Here is a simple example of a function that visibly reads and writes
+memory; it simply copies data from one location to another
 \vccInput[linerange={swap-partition}]{c/04_partition.c}
-
-\noindent
-The expression \vcc{\old(E)}, when used in a postcondition of a function,
-returns the value of expression \vcc{E}
-as it was at just before the function was called. 
-Thus, the postcondition means that the value of \vcc{*p} after the call
-is the same as the value of \vcc{*q} before the call, and \emph{vice versa}.
-
-Now, let's have a look at a function calling \vcc{swap()}:
-
 \vccInput[linerange={foo-}]{c/01_swap1.c}
 
 Because global variables (like \vcc{x}) might be visible to callers
 of \vcc{foo()}, \vcc{foo()} needs to report that they might change.
-Note that the writes clause lists pointers to memory locations, not l-values
+Note that the writes clause lists pointers to memory locations, not lvalues
 (\ie \vcc{_(writes &x, &y, &z)} and not \vcc{_(writes x, y, z)}).
 Note also that because \vcc{&z} aliases neither \vcc{&x} nor \vcc{&y}, VCC can
 deduce that \vcc{swap(&x, &y)} does not change \vcc{z}.
 
 Had we left out the writes clause from the specification of
-\vcc{swap()}, VCC would report an error:
+\vcc{swap()}, VCC would report several errors:
 
 \vccInput[linerange={out-}]{c/01_swap2.c}
 
 \noindent
-The complaints about thread-locality refer to the places where the function
-reads \vcc{*p} and \vcc{*q}. 
-Reading memory doesn't necessarily require a writes clause (since it can't
-destroy knowledge of the caller), but it can still be unsafe. 
-For example, the pointer might point to memory that has been freed, 
-lies outside of the address space of the program, or is owned by another thread. 
-For these (and other) reasons VCC implicitly
-asserts \vcc{\thread_local(p)} just before any read access to \vcc{*p};
-this predicate means that that the pointer points to an object that
-``belongs'' to the current thread (much more about this later in the tutorial).
-In particular, if something is writable it is also thread local.
 
-Similarly, just before write access to \vcc{*p}, VCC inserts the
-assertion \vcc{\writable(p)}, which means:
-\begin{itemize}
-\item \vcc{\thread_local(p)} (the written memory needs to belong to the current thread),
-\item \vcc{*p} is in the ``phase of life'' where it can be modified (it is possible
-to specifically wrap objects to prevent modifications, more in \secref{invariants}),
-\item \vcc{p} is in the current ``writes set''. (You can think of
-the writes set as being the set of objects named in the writes clause,
-along with those objects that the thread has gotten control of since
-entry of the function; we will see how this can happen in \secref{invariants}.)
-\end{itemize}
 For example, the assert/assume translation of \vcc{swap()} is%
 \footnote{
   VCC does not generate the read and writes checks for the local variable
@@ -545,5 +549,71 @@ function that possibly writes \vcc{&x}:
 %one needs to know that \vcc{p} was listed in the writes clause \emph{and} \vcc{\mutable(p)}.
 %For example, if we remove the \vcc{_( writes ... )} clause from the
 %\vcc{boundedIncr()} we get the following output:
+
+\subsection*{Arrays and Quantifiers}
+VCC provides a number of C extensions that can be used within VCC
+annotations. These annotations are particularly useful when specifying
+programs that operate on arrays; we'll see many more applications of
+these extensions later.
+
+Within a VCC declaration, the type \lstinline|T[E]| where \vcc{T} is
+a type and \vcc{E} is an expression that is convertible to an
+\vcc{int}, is the type of arrays of \vcc{E} elements of type
+\vcc{T}. For example, the declaration
+\begin{lstlisting}
+void copyArray(int *from, int *to, int len)
+_(requires \\thread_local((int[len]) from))
+_(writes ((int[len]) to))
+...
+\end{lstlisting}
+defines a function that can read the first \vcc{len} elements of the
+array \vcc{from}, and read or write the first \vcc{len} elements of
+the array \vcc{to}.
+
+The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
+expression \vcc{E} evaluates to a nonzero value for every value 
+\vcc{v} of type \vcc{E}. For example, the expression 
+\lstinline|\forall int i; 1 < i && i < x ==> x % i != 0|
+says that \vcc{x} is a prime number.
+Here, \vcc{==>} denotes logical implication; formally,
+\vcc{P ==> Q} means \vcc{((!P) || (Q))}, and is usually 
+read as ``\vcc{P} implies \vcc{Q}''.
+
+Similarly, the expression \vcc{\exists T v; E} evaluates to \vcc{1} if there
+is some value of \vcc{v} of type \vcc{T} for which \vcc{E} evaluates
+to a nonzero value.
+
+The expression \vcc{\old(E)}, when used in a postcondition of a
+function, returns the value of expression \vcc{E} as it was at just
+before the function was called. For example, the postcondition 
+\vcc{*x == \old(*x) + 1} says that the function under consideration
+increments \vcc{*x}.
+
+\subsection*{Exercises}
+\begin{enumerate}
+\item
+Specify, write, and verify a function that swaps the values pointed to
+by two \vcc{int} pointers.
+\item
+Specify a function that takes a pointer to the first element of an
+array of distinct ints and sorts the array 
+in ascending order%
+\footnote{Specifying this for arrays with duplicates is somewhat more
+  involved.}. 
+\item
+Specify a function that takes a pointer to the first element of an
+array of distinct ints and the size of the array and finds an index of the
+smallest element occurring in the array. Write a recursive
+implementation of this function and verify that it satisfies your
+specification. 
+\item
+Use the last function and the swap function defined in the text to
+define and verify a recursive function that sorts an array. 
+\item 
+Verify recursive variants of other sorting routines.
+\item
+Write a recursive function that checks whether a given element occurs
+in a sorted array.
+\end{enumerate}
 
 
