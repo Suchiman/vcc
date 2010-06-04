@@ -2,12 +2,12 @@
 
 /*{obj}*/
 #define SSTR_MAXLEN 100
-struct SafeString {
+typedef struct SafeString {
   unsigned len;
   char content[SSTR_MAXLEN + 1];
   _(invariant \this->len < SSTR_MAXLEN)
   _(invariant content[len] == '\0')
-};
+} SafeString;
 /*{init}*/
 void sstr_init(struct SafeString *s)
   _(writes \span(s))

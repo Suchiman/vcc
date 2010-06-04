@@ -46,6 +46,7 @@ all possible ways of scheduling concurrent threads, etc.
 %% An assertion causes VCC to try to \emph{prove} that \vcc{E} holds for \emph{all}
 %% executions.
 
+\todo{should these notes be less prominent?}
 \begin{note}
 It is instructive to compare \vcc{_( assert E )} with the macro
 \lstinline|assert(E)| (defined in \lstinline|<assert.h>|), which
@@ -96,13 +97,19 @@ options. However, if you select the name of a function and then right
 click, it will allow you to verify just that function.
 \end{note}
 
-VCC verifies this function successfully, which means that its assertions
-are indeed guaranteed to hold (and that, in addition, the program cannot
-crash). If VCC is unable to prove an assertion, it reports an
-error.  Try changing the assertion in this program to something that
-isn't true and see what happens. (You might also want to try coming up
-with some complex assertion that is true, just to see whether VCC is
-smart enough to prove it.)
+VCC verifies this function successfully, which means that its
+assertions are indeed guaranteed to hold and that the program cannot
+crash (except perhaps by running out of stack space)%
+\footnote{
+  VCC currently doesn't check that your program doesn't run forever or
+  run out of stack space, but future versions will, at least for sequential
+  programs.  
+}). If VCC is unable
+to prove an assertion, it reports an error.  Try changing the
+assertion in this program to something that isn't true and see what
+happens. (You might also want to try coming up with some complex
+assertion that is true, just to see whether VCC is smart enough to
+prove it.)
 
 Assertions, like all VCC annotations, 
 are surrounded by \vcc{_( ... )} to indicate that they are
@@ -134,20 +141,18 @@ which means additional annotations are necessary.
 
 When VCC surprises you by failing to verify something that you think
 it should be able to verify, it is usually because it doesn't know
-something you thought it should. An assertion provides one way to
-check whether VCC knows what you think it should know.  
+something you think it should know. An assertion provides one way to
+check whether VCC knows what you think it knows.
 
 You can add to what VCC knows at a particular point by adding a second
 type of annotation, called an \emph{assumption}.
-The assumption \vcc{_( assume E )} can be viewed as telling VCC to ignore
-the rest of an execution if \vcc{E} fails to hold (\ie, where 
-\vcc{E} evaluates to \vcc{0}). To put it another way, if you verify a
+The assumption \vcc{_( assume E )} tells VCC to ignore
+the rest of an execution if \vcc{E} fails to hold (\ie if
+\vcc{E} evaluates to \vcc{0}). If you verify a
 program with VCC, it guarantees that in any prefix of an execution
-where no (user-provided) assumption fails, no assertion will fail either%
-
- 
-Operationally, the assumption simply adds \vcc{E} to what VCC
-knows, for subsequent reasoning. For example:
+where no (user-provided) assumption fails, no assertion will fail either.
+Reasoning-wise, assumption simply adds \vcc{E} to what VCC
+knows for subsequent reasoning. For example:
 \begin{VCC}
 int x, y;
 _( assume x != 0 )
@@ -159,16 +164,16 @@ program to crash).  With the assumption, this error cannot happen.  An
 assumption essentially tells VCC to ignore all of those executions
 where the assumption fails to hold; thus, when VCC successfully
 verifies a program, it promises that in every execution where no
-assumption fails, no assertion will fail either.  Of course
-assumptions, like all annotations, are not included in the executable,
-so if an assumption fails the program doesn't stop and the following
-assertion might get violated.  Thus, you normally want to verify your
-program without any assumptions.
+assumption fails, no assertion will fail either.  Since
+assumptions (like all annotations) are not seen by the compiler,
+assumption failure won't cause the program to stop, so subsequent
+assertions might be violated.  Thus, your goal should be to eliminate
+as many assumptions as possible, and preferably remove them altogether.
 
-If assumptions are to be avoided, why are assumptions useful at
-all? They are useful in several ways:
+Although assumptions are to be avoided, they are nevertheless
+sometimes useful:
 \begin{itemize}
-\item If a verification is not yet complete, assumptions can be used
+\item In an incomplete verification, assumptions can be used
   to mark the knowledge that VCC is missing, and guide further work.
   If you maintain the discipline of checking in your work only when
   everything verifies (but perhaps with assumptions), other people can
@@ -177,18 +182,22 @@ all? They are useful in several ways:
   itself.
 \item When debugging a failed verification, you can use assumptions to
   narrow down the failed verification to a more specific failure
-  scenario.
+  scenario, perhaps even all the way to a counterexample. You can then
+  add additional (non-assumption) annotations to eliminate the
+  counterexample, weaken assumptions until you either hit another
+  counterexample (or finish the verification), and repeat the process.
 \item Sometimes you want to assume something even though VCC can
   verify it, just to stop VCC from spending time proving it. For
-  example, assuming \vcc{0} (i.e., \vcc{\false}) allows VCC to prove
-  all subsequent assertions, effectively focussing its attention on
-  other parts of the program.
+  example, assuming \vcc{\false} (equivalently, \vcc{0}) allows VCC to 
+  easily prove subsequent assertions, effectively focussing its
+  attention on other parts of the function. This is a common tactic
+  when verifying long function bodies.
 \item Sometimes you will want to make assumptions about the operating
   environment of a program. For example, you might want to assume that
   a 64-bit counter doesn't overflow, but don't want to justify it
   formally because it depends on extra-logical assumptions (like the
-  speed of the hardware and the lifetime of the software). 
-\item Finally, assumptions provide a useful tool in explaining how VCC
+  speed of the hardware or the lifetime of the software). 
+\item Assumptions provide a useful tool in explaining how VCC
   reasons about your program. We'll see examples of this throughout
   this tutorial.
 \end{itemize}
@@ -257,7 +266,7 @@ and
 \begin{VCC}
 _( assume q ) _( assume p )
 \end{VCC}
-? What about if the assumptions are replaced by assertions?
+? What if the assumptions are replaced by assertions?
 \item
 Is there any difference between
 \begin{VCC}
@@ -268,6 +277,22 @@ and
 _( assert p ==> q )
 \end{VCC}
 ? 
+\item
+Given the assumptions preceding each of the assignments below to int
+variables, what are the strongest assertions that would be valid?
+\begin{lstlisting}
+_(assume x < 5) x += 5; _(assert ??)
+_(assume u < v) u = v;  _(assert ??)
+_(assume a < b && a < c) a = b;  _(assert ??)
+\end{lstlisting}
+\item
+Given the assertions following each of the assignments below, what is 
+the weakest preceding assumption that would allow the assertions to be
+valid?
+\begin{lstlisting}
+_(assume ??) x = y _(assert x < 10)
+_(assume ??) u += 3 _(assert 2*u == 3*v)
+\end{lstlisting}
 \end{enumerate}
 
 \section{Function specifications}
@@ -446,91 +471,96 @@ like C that provides only call-by-value), most interesting functions
 have to read and/or write memory shared with its caller. A function
 can read a memory object only if the object is known to be valid and
 not concurrently modified by other threads; such an object is said to
-be \vcc{\thread_local}. Whenever a memory object is read, VCC adds an
-assertion to this effect. 
+be \vcc{\thread_local}. 
 
 Writing requires something more; by default, VCC assumes that a
-function call has no side effects on its caller; for example, we
-%(We will see in section \ref{} that
-%VCC only allows the caller to know very specific things, which allows
-%the function to do other things with global side effects without
-%having to report them.)
-
-In VCC, the destruction of knowledge of the caller is specified by
-means of yet another form of annotation, called \emph{writes clauses}.
-Intuitively, a clause \vcc{_( writes p, q )} is equivalent to saying
-the function is going to modify \emph{only} the object pointed to by \vcc{p}
-and the object pointed to by \vcc{q}
-(of the memory objects ``local'' to the caller before the call).
-In other words, it is the same as having an ensures clause
-saying that the values of all other objects local to the caller prior
-to the call remain unchanged.  VCC allows you
+function call has no side effects on its caller; for example, in
+verifying \vcc{main()} above, VCC got to assume that the call of
+\vcc{min()} didn't change \vcc{newPos}. 
+In VCC, possible side effects are specified using 
+another form of annotation, called \emph{writes clauses}.
+Intuitively, the clause \vcc{_( writes p, q )} says that, 
+of the memory objects that are \vcc{\thread_local} to the caller before the call,
+the function is going to modify only the object pointed to by \vcc{p}
+and the object pointed to by \vcc{q}.
+In other words, it is roughly equivalent to a postcondition that \vcc{\ensures}
+that all other objects local to the caller prior
+to the call remain unchanged%
+\footnote{It's not quite the same when considering objects that are
+  wrapped; see section \secref{sect:invariants}.}.  VCC allows you
 to specify pointers in separate writes clauses, and implicitly
 combines them into a single set. If a function spec contains no writes clauses, 
 it is equivalent to specifying a writes clause with empty set of
 pointers.
 
 At any control point, VCC can ``know'' that a particular memory object
-\vcc{*p} is writeable, in annotations, this is written as
-\vcc{\writeable(p)}. We give details later, but
-roughly speaking, this means
+\vcc{*p} is writable; in annotations, this is written as
+\vcc{\writeable(p)}, and is defined as a a conjunction of two conditions:
 \begin{itemize}
 \item \vcc{p} belongs to the current thread and is in a ``phase of
-  life'' where it can be written; such objects are said to be
-  ``unwrapped''. (Note that this also implies \vcc{\thread_local(p)}.)
+  life'' where it can be written; in VCC, this is written as 
+  \vcc{\unwrapped(p)}. (Note that this also implies \vcc{\thread_local(p)}.)
 \item Either \vcc{p} was listed in the writes clause of the function,
-  or was unwrapped after the function was entered; this guarantees
-  that the caller is going to forget what he knew about the value of
-  \vcc{*p}%
+  or it was \vcc{\unwrapped} after the function was entered; the 
+  latter condition guarantees that either \vcc{p} was listed in the
+  writes clause or was not \vcc{\thread_local} in the caller.
 \end{itemize}
 In particular, formal function parameters and local parameters are
 writable as long as they are in scope and have not been explicitly
-made unwritable (using mechanisms to be described later). 
-VCC asserts \vcc{\writable(p)} on each attempt to write to \vcc{*p},
-as well as on each call to a function that lists \vcc{p} in a writes
-clause. 
+wrapped (section \secref{sect:invariants}) or reinterpreted to a
+different type (section \secref{sect:reinterpretation}).  VCC asserts
+\vcc{\writable(p)} on each attempt to write to \vcc{*p}, as well as on
+each call to a function that lists \vcc{p} in a writes clause.
 
-\todo{Change this to a function that just copies from one variable to
-  the other, so the copied variable can be required to be \vcc{thread_local}.}
 Here is a simple example of a function that visibly reads and writes
-memory; it simply copies data from one location to another
-\vccInput[linerange={swap-partition}]{c/04_partition.c}
-\vccInput[linerange={foo-}]{c/01_swap1.c}
+memory; it simply copies data from one location to another.
+\vccInput{c/01_copy1.c}
 
-Because global variables (like \vcc{x}) might be visible to callers
-of \vcc{foo()}, \vcc{foo()} needs to report that they might change.
-Note that the writes clause lists pointers to memory locations, not lvalues
-(\ie \vcc{_(writes &x, &y, &z)} and not \vcc{_(writes x, y, z)}).
-Note also that because \vcc{&z} aliases neither \vcc{&x} nor \vcc{&y}, VCC can
-deduce that \vcc{swap(&x, &y)} does not change \vcc{z}.
+%% \vccInput[linerange={swap-partition}]{c/04_partition.c}
+%% \vccInput[linerange={foo-}]{c/01_swap1.c}
 
-Had we left out the writes clause from the specification of
-\vcc{swap()}, VCC would report several errors:
+%% Because global variables (like \vcc{z}) might be visible to callers
+%% of \vcc{copy()}, \vcc{copy()} needs to report that they might change.
+%% Note that the writes clause lists pointers to memory locations, not lvalues
+%% (\ie \vcc{_(writes &x, &y, &z)} and not \vcc{_(writes x, y, z)}).
+%% Note also that because \vcc{&z} aliases neither \vcc{&x} nor \vcc{&y}, VCC can
+%% deduce that \vcc{swap(&x, &y)} does not change \vcc{z}.
 
-\vccInput[linerange={out-}]{c/01_swap2.c}
+%% Had we left out the writes clause from the specification of
+%% \vcc{swap()}, VCC would report several errors:
+%% \vccInput[linerange={out-}]{c/01_swap2.c}
+%% \noindent 
+Whenever a memory object is read, VCC asserts that it is
+\vcc{thread_local}; whenever a memory object is written or is
+mentioned in the writes clause of a function call, VCC asserts that it
+is \vcc{writable}. Try removing each of the function annotations in
+this example (one at a time) to see what error messages you get.
 
-\noindent
+While thread locality is what is checked on a read, in practice it is
+rarely used in preconditions, because it could be falsified by the
+unwrapping of other objects (section \secref{sect:invariants}). 
+More usual is to provide the stronger precondition of the object being
+\vcc{\unwrapped}; you should use this stronger condition in 
+%% For example, the assert/assume translation of \vcc{swap()} is%
+%% \footnote{
+%%   VCC does not generate the read and writes checks for the local variable
+%%   \vcc{tmp}. Because \vcc{tmp} is a local that never has its address
+%%   taken, it can be thought of as remaining in a register, where it is
+%%   guaranteed to remain writable.
+%% }:
 
-For example, the assert/assume translation of \vcc{swap()} is%
-\footnote{
-  VCC does not generate the read and writes checks for the local variable
-  \vcc{tmp}. Because \vcc{tmp} is a local that never has its address
-  taken, it can be thought of as remaining in a register, where it is
-  guaranteed to remain writable.
-}:
+%% \vccInput[linerange={swap-}]{c/01_swap3.c}
 
-\vccInput[linerange={swap-}]{c/01_swap3.c}
+%% \noindent
+%% As we can see, one effect of \vcc{writes p, q} is the implicit
+%% precondition \vcc{requires \writable(p) && \writable(q)}. Such precondition
+%% needs to be checked in \vcc{foo()}, at the place where it calls \vcc{swap()}.
+%% In other words, the called function can write at most what the caller can write.
+%% In particular if we forget to list \vcc{&x} in the writes
+%% clause of \vcc{foo()} we would get an error when it tries to call a
+%% function that possibly writes \vcc{&x}:
 
-\noindent
-As we can see, one effect of \vcc{writes p, q} is the implicit
-precondition \vcc{requires \writable(p) && \writable(q)}. Such precondition
-needs to be checked in \vcc{foo()}, at the place where it calls \vcc{swap()}.
-In other words, the called function can write at most what the caller can write.
-In particular if we forget to list \vcc{&x} in the writes
-clause of \vcc{foo()} we would get an error when it tries to call a
-function that possibly writes \vcc{&x}:
-
-\vccInput[linerange={out-}]{c/01_swap4.c}
+%% \vccInput[linerange={out-}]{c/01_swap4.c}
 
 
 %% You might wonder why cannot we just have 
@@ -550,11 +580,9 @@ function that possibly writes \vcc{&x}:
 %For example, if we remove the \vcc{_( writes ... )} clause from the
 %\vcc{boundedIncr()} we get the following output:
 
-\subsection*{Arrays and Quantifiers}
+\subsection*{More on expressions in annotations}
 VCC provides a number of C extensions that can be used within VCC
-annotations. These annotations are particularly useful when specifying
-programs that operate on arrays; we'll see many more applications of
-these extensions later.
+annotations. We describe some of them here.
 
 Within a VCC declaration, the type \lstinline|T[E]| where \vcc{T} is
 a type and \vcc{E} is an expression that is convertible to an
@@ -588,6 +616,58 @@ function, returns the value of expression \vcc{E} as it was at just
 before the function was called. For example, the postcondition 
 \vcc{*x == \old(*x) + 1} says that the function under consideration
 increments \vcc{*x}.
+
+\subsection*{Type Safety}
+We have been talked about typed memory ``objects'' as if this were a
+meaningful concept.  This typed view of memory is supported by most
+modern programming languages, like Java, C\#, and ML, where memory
+consists of a collection of typed objects. Programs in these languages
+don't allocate memory (on the stack or on the heap), they allocate
+objects, and the type of an object remains fixed until the object is
+destroyed. Morover, a non-null reference to an object is guaranteed to
+point to a ``valid'' object. But in C, a type simply provides a way to
+interpret a sequence of bytes; nothing prevents a program from having
+multiple pointers of different types pointing into the same memory, or
+even having two instances of the same \vcc{struct} type partially
+overlapping. Moreover, a non-null pointer might still point into an
+invalid region of memory.
+
+That said, most C functions really do access memory using a strict type
+discipline, most of the time, and tacitly assume that their callers do
+so also. For example, if the parameters of a function are a pointer to
+an \vcc{int} and a pointer to a \vcc{char}, we shouldn't have to worry
+about crazy possibilities like the \vcc{char} aliasing with the second
+half of the \vcc{int}. (Without such assumptions, we would have to
+provide explicit preconditions to this effect.)  On the other hand, if
+the second parameter is a pointer to an \vcc{int}, we do consider the
+possibility of aliasing (as we would in a strongly typed language).
+Moreover, since in C objects of structured types literally contain
+objects of other types, if the second argument were a struct that had
+a member of type \vcc{int}, we would have to consider the possibility
+of the first parameter aliasing that member. 
+
+To support this, VCC essentially maintains a typed view of memory; in
+any state, \vcc{\valid(p)} means that \vcc{p} points to memory that is
+currently ``has'' type \vcc{p}. The rules governing validity guarantee
+that in any state, the valid pointers contitute a typesafe view of
+memory.  In particular, if two valid pointers point to overlapping
+portions of memory, one of them is properly contained in the other; if
+a \vcc{struct} is typed, then each of its members is typed; and if a
+\vcc{union} is typed, then exactly one of its members is typed.  The
+definition of validity is is folded into the definitions of
+\vcc{\thread_local} and \vcc{\unwrapped}; these definitions check not
+only that the memory pointed to exists, but that the pointer to it is
+valid.
+
+There are rare situations where a program needs to change type
+assignment of a pointer.  The most common is in the memory allocator,
+which needs to create and destroy objects of arbitrary types from
+arrays of bytes in its memory pool. Therefore, VCC includes
+annotations (explained in \secref{reint}) that explicitly change the
+typestate.  Thus, while your program can access memory using pretty
+much arbitrary types and typecasting, doing so will require additional
+annotations. But for most programs, checking type safety is completely
+transparent, so you don't have to worry about it.
 
 \subsection*{Exercises}
 \begin{enumerate}
