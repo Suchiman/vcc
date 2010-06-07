@@ -260,6 +260,11 @@ module Rules =
                         "start_here";
                         "depends";
                         "not_shared";
+                        "claims";
+                        "unchanged";
+                        "claims_claim";
+                        "when_claimed";
+                        "account_claim";
                       ]
 
     for cfn in canonicalFn do addFnRule cfn ("\\" + cfn)
@@ -321,7 +326,7 @@ module Rules =
     let closed_owner_rule op = function
       | [ob; owner] ->
         let owns = fnApp "\\owns" owner
-        spec "ghost" (owner @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owner"); Tok.Op(fakePos, " " + op + " ") ] @ (eatWs ob))
+        spec "ghost" (owner @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns"); Tok.Op(fakePos, " " + op + " ") ] @ (eatWs ob))
       | _ -> failwith ""
 
     addRule (parenRuleN "set_closed_owner" 2 (closed_owner_rule "+="))
@@ -333,12 +338,14 @@ module Rules =
      | _ -> failwith ""
     addRule (parenRuleN "in_domain" 2 in_domain)
     
-    let reify toks = 
+    let reify fn toks = 
       match List.rev (splitAt "," toks) with 
         | prop :: objs ->
-          fnApp "\\make_claim" (paren "{" (joinWith "," (List.rev objs)) :: Tok.Op (fakePos, ",") :: prop)
+          fnApp fn (paren "{" (joinWith "," (List.rev objs)) :: Tok.Op (fakePos, ",") :: prop)
         | _ -> failwith ""
-    addRule (parenRule false "claim" reify)
+
+    addRule (parenRule false "claim" (reify "\\make_claim"))
+    addRule (parenRule false "upgrade_claim" (reify "\\upgrade_claim"))
             
     let unclaim toks = 
       match splitAt "," toks with 
@@ -347,6 +354,7 @@ module Rules =
         | _ -> failwith ""
     addRule (parenRule false "unclaim" unclaim)
             
+
     let struct_rule = function
       | hd :: rest ->
         match eatWs rest with

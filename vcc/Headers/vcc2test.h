@@ -8,7 +8,7 @@
 #ifdef VERIFY2
 
 void *malloc(unsigned __int64);
-void free(void);
+void free(void *p);
 
 #else 
 
