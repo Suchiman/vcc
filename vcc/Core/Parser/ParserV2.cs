@@ -41,8 +41,8 @@ namespace Microsoft.Research.Vcc.Parsing
 
     override protected void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
       bool savedInSpecCode = this.SkipIntoSpecBlock();
-      if (STS.SpecTypeModifiers[this.currentToken]) {
-        this.ParseGlobalDeclarationWithSpecModifiers(members, globalMembers, followers, savedInSpecCode);
+      if (this.currentToken == Token.Identifier && this.declspecExtensions.ContainsKey(this.scanner.GetIdentifierString())) {
+        this.ParseDeclarationWithSpecModifiers(members, globalMembers, followers, true, savedInSpecCode);
         return;
       }
       TokenSet followersOrDeclarationStart = followers | TS.DeclarationStart | Token.Semicolon | Token.RightParenthesis;
@@ -61,7 +61,7 @@ namespace Microsoft.Research.Vcc.Parsing
             break;
           case Token.SpecLogic:
             List<Specifier> specifier = new List<Specifier>(1);
-            specifier.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
+            specifier.Add(new SpecDeclspecSpecifier("spec_macro", this.scanner.SourceLocationOfLastScannedToken));
             this.GetNextToken();
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true, specifier);
             break;
@@ -114,17 +114,14 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     private void ParseSpecTypeModifier(List<Specifier> specifiers, TokenSet followers) {
-      switch (this.currentToken) {
-        case Token.SpecDynamicOwns:
-        case Token.SpecClaimable:
-        case Token.SpecVolatileOwns:
-        case Token.SpecAtomicInline:
-        case Token.SpecPure:
-          specifiers.Add(new SpecTokenSpecifier(this.currentToken, this.scanner.SourceLocationOfLastScannedToken));
+      if (this.currentToken == Token.Identifier) {
+        string id = this.scanner.GetIdentifierString();
+        string declspec;
+        if (this.declspecExtensions.TryGetValue(id, out declspec)) {
+          if (String.IsNullOrEmpty(declspec)) declspec = id;
+          specifiers.Add(new SpecDeclspecSpecifier(declspec, this.scanner.SourceLocationOfLastScannedToken));
           this.GetNextToken();
-          break;
-        default:
-          break;
+        }
       }
       this.SkipTo(followers);
     }
@@ -137,11 +134,11 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
-    private void ParseGlobalDeclarationWithSpecModifiers(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers, bool savedInSpecCode) {
+    private void ParseDeclarationWithSpecModifiers(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, bool savedInSpecCode) {
       List<Specifier> specifiers = new List<Specifier>();
       this.ParseSpecTypeModifierList(specifiers, followers);
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
-      this.ParseNonLocalDeclaration(members, globalMembers, followers, true, specifiers);
+      this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, isGlobal, specifiers);
     }
 
     override protected void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
@@ -156,22 +153,25 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     new protected void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
-      while (this.currentToken == Token.Specification) {
-        bool savedInSpecCode = this.SkipIntoSpecBlock();
-        while (STS.TypeMember[this.currentToken]) {
-          switch (this.currentToken) {
-            case Token.SpecInvariant:
-              this.ParseTypeInvariant(followers | Token.RightParenthesis);
-              break;
-            case Token.SpecGhost:
-              this.GetNextToken();
-              this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis, false);
-              break;
-          }
-          this.SkipSemicolonsInSpecBlock(STS.TypeMember | Token.RightParenthesis);
-        }
-        this.SkipOutOfSpecBlock(savedInSpecCode, followers | Token.Specification);
+      bool savedInSpecCode = this.SkipIntoSpecBlock();
+      if (this.currentToken == Token.Identifier && this.declspecExtensions.ContainsKey(this.scanner.GetIdentifierString())) {
+        this.ParseDeclarationWithSpecModifiers(namespaceMembers, typeMembers, followers, false, savedInSpecCode);
+        return;
       }
+
+      while (STS.TypeMember[this.currentToken]) {
+        switch (this.currentToken) {
+          case Token.SpecInvariant:
+            this.ParseTypeInvariant(followers | Token.RightParenthesis);
+            break;
+          case Token.SpecGhost:
+            this.GetNextToken();
+            this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis, false);
+            break;
+        }
+        this.SkipSemicolonsInSpecBlock(STS.TypeMember | Token.RightParenthesis);
+      }
+      this.SkipOutOfSpecBlock(savedInSpecCode, followers | Token.Specification);
     }
 
     new protected void ParseTypeInvariant(TokenSet followers) {
@@ -558,7 +558,7 @@ namespace Microsoft.Research.Vcc.Parsing
       public static TokenSet SpecParameter = new TokenSet() | Token.SpecGhost | Token.SpecOut;
       public static TokenSet TypeMember = new TokenSet() | Token.SpecGhost | Token.SpecInvariant;
       public static TokenSet Global = new TokenSet() | Token.SpecAxiom | Token.SpecGhost | Token.SpecLogic;
-      public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns | Token.SpecAtomicInline | Token.SpecVolatileOwns | Token.SpecPure;
+      //public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns | Token.SpecAtomicInline | Token.SpecVolatileOwns | Token.SpecPure;
     }
   }
 }

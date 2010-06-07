@@ -89,6 +89,19 @@ _(logic template<typename T> T \by_claim(\claim c, T expr) = \in_state(\by_claim
 _(logic template<typename T> T \when_claimed(T expr) = \in_state(\when_claimed_marker(), expr);)
 
 
+// '__declspec's
+
+_(const char * const \declspec_atomic_inline;)
+_(const char * const \declspec_backing_member;)
+_(const char * const \declspec_claimable;)
+_(const char * const \declspec_dynamic_owns;)
+_(const char * const \declspec_frameaxiom;)
+_(const char * const \declspec_no_admissibility;)
+_(const char * const \declspec_volatile_owns;)
+_(const char * const \declspec_pure = "is_pure";)
+
+// matching helper functions
+
 _(bool _(pure) \match_long(__int64 ) _(ensures \result == \true);)
 _(bool _(pure) \match_ulong(unsigned __int64) _(ensures \result == \true);)
 

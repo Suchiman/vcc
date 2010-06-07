@@ -2085,25 +2085,13 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SpecAtomic,
     /// <summary>
-    /// atomic_inline, context-dependent
-    /// </summary>
-    SpecAtomicInline,
-    /// <summary>
     /// axiom, context-dependent
     /// </summary>
     SpecAxiom,
     /// <summary>
-    /// claimable, context-dependent
-    /// </summary>
-    SpecClaimable,
-    /// <summary>
     /// decreases, context-dependent
     /// </summary>
     SpecDecreases,
-    /// <summary>
-    /// dynamic_owns, context-dependent
-    /// </summary>
-    SpecDynamicOwns,
     /// <summary>
     /// ensures, context-dependent
     /// </summary>
@@ -2125,10 +2113,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SpecLogic,
     /// <summary>
-    /// pure, context-dependent
-    /// </summary>
-    SpecPure,
-    /// <summary>
     /// out, context-dependent
     /// </summary>
     SpecOut,
@@ -2148,10 +2132,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// unwrapping, context-dependent
     /// </summary>
     SpecUnwrapping,
-    /// <summary>
-    /// volatile_owns, context-dependent
-    /// </summary>
-    SpecVolatileOwns,
     /// <summary>
     /// wrap, context-dependent
     /// </summary>
@@ -2306,18 +2286,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       Keyword/*?*/[] keywords = new Keyword/*?*/[26];
       Keyword keyword;
 
-      keyword = new Keyword(Token.SpecAtomicInline, "atomic_inline");
-      keyword = new Keyword(Token.SpecAtomic, "atomic", keyword);
+      keyword = new Keyword(Token.SpecAtomic, "atomic");
       keyword = new Keyword(Token.SpecAssume, "assume", keyword);
       keyword = new Keyword(Token.SpecAssert, "assert", keyword);
       keyword = new Keyword(Token.SpecAxiom, "axiom", keyword); 
       keywords['a' - 'a'] = keyword;
 
-      keyword = new Keyword(Token.SpecClaimable, "claimable");
-      keywords['c' - 'a'] = keyword;
-
-      keyword = new Keyword(Token.SpecDynamicOwns, "dynamic_owns");
-      keyword = new Keyword(Token.SpecDecreases, "decreases", keyword);
+      keyword = new Keyword(Token.SpecDecreases, "decreases");
       keywords['d' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecEnsures, "ensures");
@@ -2332,9 +2307,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.SpecLogic, "logic");
       keywords['l' - 'a'] = keyword;
 
-      keyword = new Keyword(Token.SpecPure, "pure");
-      keywords['p' - 'a'] = keyword;
-     
       keyword = new Keyword(Token.SpecOut, "out");
       keywords['o' - 'a'] = keyword;
 
@@ -2345,9 +2317,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.SpecUnwrapping, "unwrapping");
       keyword = new Keyword(Token.SpecUnwrap, "unwrap", keyword);
       keywords['u' - 'a'] = keyword;
-
-      keyword = new Keyword(Token.SpecVolatileOwns, "volatile_owns");
-      keywords['v' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecWrites, "writes");
       keyword = new Keyword(Token.SpecWrap, "wrap", keyword);
