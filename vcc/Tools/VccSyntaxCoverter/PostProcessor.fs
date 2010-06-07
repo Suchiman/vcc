@@ -6,13 +6,13 @@ module PostProcessor =
 
   let apply addCompilerOptionForTestSuite toks = 
     let nl = Tok.Whitespace(fakePos, "\n") 
-    let rec addNewSyntaxOption eatenWs = function
-      | Whitespace _ as ws :: rest -> addNewSyntaxOption true rest
+    let rec addNewSyntaxOption atStartOfFile = function
+      | Whitespace _ as ws :: rest -> addNewSyntaxOption atStartOfFile rest
       | Comment(p, s) :: rest when addCompilerOptionForTestSuite && s.StartsWith("`/") 
         -> Comment(p, s + "/newsyntax") :: nl :: rest
       | toks -> 
         let toks = Comment(fakePos, "`/newsyntax") :: nl :: toks
-        if eatenWs then nl :: toks else toks
+        if not atStartOfFile then nl :: toks else toks
     let rec apply' acc = function
       | Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p2, "ghost") :: Tok.Whitespace _ :: Tok.Id(p3, "out") :: gRest) :: rest ->
         apply' acc (Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p3, "out") :: gRest) :: rest)
@@ -24,5 +24,5 @@ module PostProcessor =
       | t :: rest -> apply' (t::acc) rest
       | [] -> List.rev acc
     let toks = apply' [] toks
-    if addCompilerOptionForTestSuite then addNewSyntaxOption false toks else toks
+    if addCompilerOptionForTestSuite then addNewSyntaxOption true toks else toks
       

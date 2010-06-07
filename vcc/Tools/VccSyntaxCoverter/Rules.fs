@@ -265,6 +265,10 @@ module Rules =
                         "claims_claim";
                         "when_claimed";
                         "account_claim";
+                        "extent_zero";
+                        "full_extent";
+                        "extent_mutable";
+                        "approves";
                       ]
 
     for cfn in canonicalFn do addFnRule cfn ("\\" + cfn)
@@ -282,9 +286,12 @@ module Rules =
     addFnRule "keeps" "\\mine"
     addFnRule "set_universe" "\\universe"
     addFnRule "claims_obj" "\\claims_object"
+    addFnRule "extent_is_fresh" "\\extent_fresh"
+    addFnRule "is_malloc_root" "\\malloc_root"
 
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))
+    addRule (parenRule false "set_empty" (fun toks -> [paren "{" []]))
     addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\claim ") :: toks)))
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
@@ -303,7 +310,7 @@ module Rules =
           match arr with
             | [Tok.Id _] -> arr
             | _ -> [paren "(" arr]
-        [paren "(" [Tok.Id (fakePos, "\\any"); paren "[" sz]] @ arr
+        [paren "(" [Tok.Id (fakePos, "void"); paren "[" sz]] @ arr
       | _ -> failwith ""
     addRule (parenRuleN "as_array" 2 as_array)
         

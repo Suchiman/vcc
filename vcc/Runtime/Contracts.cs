@@ -32,6 +32,10 @@ namespace System.Diagnostics.Contracts
       }
     }
 
+    public abstract class AnyType
+    {
+    }
+
     public abstract class BigInt
     {
       UInt64 dummy; // ensures that sizeof(BigInt) == 8

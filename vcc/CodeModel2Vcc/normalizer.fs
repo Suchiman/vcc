@@ -851,6 +851,8 @@ namespace Microsoft.Research.Vcc
                                     "\\alloc_array",         "_vcc_spec_alloc_array";
                                     "\\heap_alloc",          "_vcc_alloc";
                                     "\\when_claimed_marker", "_vcc_when_claimed";
+                                    "\\extent_fresh",        "_vcc_extent_is_fresh";
+                                    "\\malloc_root",         "_vcc_is_malloc_root";
                                   ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";
