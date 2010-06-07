@@ -1,3 +1,5 @@
 groups
 backing_member
 (proper) array_range
+lambda with guard
+on_unwrap (macro, which includes 'invariant' in its expansion)

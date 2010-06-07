@@ -101,7 +101,7 @@ testcase(12,10) : error VC9500: Assertion '((bool)0)' did not verify.
 
 void foo(int **p, int *q)
   requires (mutable(p) && mutable(*p) && typed(q))
-  writes(set_singleton(*p), set_singleton(p))
+  writes(*p, p)
 {
   *p = q;
   **p = 12;

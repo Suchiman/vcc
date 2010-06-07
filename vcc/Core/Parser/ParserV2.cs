@@ -79,8 +79,26 @@ namespace Microsoft.Research.Vcc.Parsing
     protected override void SkipSemiColonAfterDeclarationOrStatement(TokenSet followers) {
       if (this.InSpecCode && this.currentToken == Token.RightParenthesis) {
         // do nothing
-      } else this.SkipSemiColon(followers);
-
+      } else {
+        if (this.currentToken == Token.Semicolon) {
+          while (this.currentToken == Token.Semicolon) {
+            this.GetNextToken(this.InSpecCode);
+          }
+          this.SkipTo(followers);
+        } else {
+          this.Skip(Token.Semicolon);
+          while (!this.scanner.TokenIsFirstAfterLineBreak 
+            && this.currentToken != Token.Semicolon 
+            && this.currentToken != Token.RightBrace 
+            && this.currentToken != Token.RightParenthesis 
+            && this.currentToken != Token.EndOfFile 
+            && (this.currentToken != Token.LeftBrace || !followers[Token.LeftBrace]))
+            this.GetNextToken(this.InSpecCode);
+          if (this.currentToken == Token.Semicolon)
+            this.GetNextToken(this.InSpecCode);
+          this.SkipTo(followers);
+        }
+      }
     }
 
     internal override void ParseCompilationUnit(GlobalDeclarationContainerClass globalContainer, List<INamespaceDeclarationMember> members) {
@@ -370,7 +388,7 @@ namespace Microsoft.Research.Vcc.Parsing
       }
       
       List<Statement> statements = new List<Statement>();
-      TokenSet followersOrRightParen = followers | Token.RightParenthesis;
+      TokenSet followersOrRightParenOrSpecStmt = followers | Token.RightParenthesis | STS.SimpleSpecStatment;
       SourceLocationBuilder slb;
 
       while (STS.SimpleSpecStatment[this.currentToken]) {
@@ -378,21 +396,21 @@ namespace Microsoft.Research.Vcc.Parsing
           case Token.SpecGhost:
             slb = this.GetSourceLocationBuilderForLastScannedToken();
             this.GetNextToken();
-            var stmt = this.ParseStatement(followers | Token.RightParenthesis);
+            var stmt = this.ParseStatement(followersOrRightParenOrSpecStmt);
             slb.UpdateToSpan(stmt.SourceLocation);
             StatementGroup.AddStatementOrGroupToList(this.DeepWrapInSpecStmt(stmt, slb), statements);
             break;
           case Token.SpecWrap:
-            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new VccWrapStatement(expr, sl)));
+            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParenOrSpecStmt, (expr, sl) => new VccWrapStatement(expr, sl)));
             break;
           case Token.SpecUnwrap:
-            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new VccUnwrapStatement(expr, sl)));
+            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParenOrSpecStmt, (expr, sl) => new VccUnwrapStatement(expr, sl)));
             break;
           case Token.SpecAssert:
-            statements.Add(this.ParseAssert(followersOrRightParen));
+            statements.Add(this.ParseAssert(followersOrRightParenOrSpecStmt));
             break;
           case Token.SpecAssume:
-            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParen, (expr, sl) => new AssumeStatement(expr, sl)));
+            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParenOrSpecStmt, (expr, sl) => new AssumeStatement(expr, sl)));
             break;
         }
         this.SkipSemicolonsInSpecBlock(STS.SimpleSpecStatment | Token.RightParenthesis);
