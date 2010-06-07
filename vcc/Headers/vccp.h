@@ -73,6 +73,7 @@ _(bool \program_entry_point();)
 _(template<typename T> T ^\alloc();)
 _(template<typename T> T ^\alloc_array(unsigned int n);)
 _(bool \depends(\object, \object);)
+_(bool \not_shared(\object);)
 
 _(template<typename T> T \in_state(\state, T expr);)
 _(\state \current_state();)

@@ -259,6 +259,7 @@ module Rules =
                         "array_range";      
                         "start_here";
                         "depends";
+                        "not_shared";
                       ]
 
     for cfn in canonicalFn do addFnRule cfn ("\\" + cfn)
@@ -278,6 +279,7 @@ module Rules =
     addFnRule "claims_obj" "\\claims_object"
 
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
+    addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\claim ") :: toks)))
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
@@ -312,14 +314,14 @@ module Rules =
     
     let set_owns = function
       | [e; s] ->
-        e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\owns"); Tok.Op(fakePos, " = ")] @ s
+        spec "ghost" (e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\owns"); Tok.Op(fakePos, " = ")] @ s)
       | _ -> failwith ""
     addRule (parenRuleN "set_owns" 2 set_owns)
     
     let closed_owner_rule op = function
       | [ob; owner] ->
         let owns = fnApp "\\owns" owner
-        owner @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owner"); Tok.Op(fakePos, " " + op + " ") ] @ (eatWs ob)
+        spec "ghost" (owner @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owner"); Tok.Op(fakePos, " " + op + " ") ] @ (eatWs ob))
       | _ -> failwith ""
 
     addRule (parenRuleN "set_closed_owner" 2 (closed_owner_rule "+="))
