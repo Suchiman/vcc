@@ -208,6 +208,7 @@ module Rules =
     addStmtKwRule "axiom" "axiom"
     
     addKwRepl "mathint" "\\integer"
+    addKwRepl "state_t" "\\state"
     addKwRepl "obj_t" "\\object"
     addKwRepl "ptrset" "\\objset"
     addKwRepl "claim_t" "\\claim"
@@ -215,6 +216,7 @@ module Rules =
     addKwRepl "result" "\\result"
     addKwRepl "this" "\\this"
     addKwRepl "ispure" "_(pure)"
+    addKwRepl "backing_member" "_(backing_member)"
     addKwRepl "true" "\\true"
     addKwRepl "false" "\\false"
     addKwRepl "spec_malloc" "\\alloc"             // cannot use fnRule because of template paramters
@@ -269,6 +271,8 @@ module Rules =
                         "full_extent";
                         "extent_mutable";
                         "approves";
+                        "in_state";
+                        "current_state";
                       ]
 
     for cfn in canonicalFn do addFnRule cfn ("\\" + cfn)

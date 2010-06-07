@@ -4529,33 +4529,14 @@ namespace Microsoft.Research.Vcc {
     public readonly IEnumerable<Expression> Modifiers;
   }
 
-  public class SpecTokenSpecifier : Specifier
+  public class SpecDeclspecSpecifier : Specifier
   {
-    internal SpecTokenSpecifier(Token token, ISourceLocation sourceLocation)
+    internal SpecDeclspecSpecifier(string token, ISourceLocation sourceLocation)
       : base(sourceLocation) {
         this.Token = token;
     }
 
-    internal readonly Token Token;
-
-    public string ToVccAttribute() {
-      switch (this.Token) {
-        case Parsing.Token.SpecClaimable:
-          return "claimable";
-        case Token.SpecDynamicOwns:
-          return "dynamic_owns";
-        case Token.SpecVolatileOwns:
-          return "volatile_owns";
-        case Token.SpecPure:
-          return "is_pure";
-        case Token.SpecAtomicInline:
-          return "atomic_inline";
-        case Token.SpecLogic:
-          return "spec_macro";
-        default:
-          throw new NotImplementedException();
-      }
-    }
+    internal readonly string Token;
   }
 
   public class PrimitiveTypeSpecifier : Specifier {

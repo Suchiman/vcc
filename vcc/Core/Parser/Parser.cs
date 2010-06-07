@@ -23,6 +23,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected readonly Dictionary<string, TypedefDeclaration> typedefDecls;
     protected readonly Dictionary<string, bool> locallyDefinedNames;
     protected readonly Dictionary<string, string> functionContractExtensions;
+    protected readonly Dictionary<string, string> declspecExtensions;
     protected readonly Dictionary<Expression, bool> emptyStructuredTypes;
     protected readonly Scanner scanner;
     protected readonly List<IErrorMessage> scannerAndParserErrors;
@@ -56,6 +57,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.locallyDefinedNames = new Dictionary<string, bool>();
       this.emptyStructuredTypes = new Dictionary<Expression, bool>();
       this.functionContractExtensions = new Dictionary<string, string>();
+      this.declspecExtensions = new Dictionary<string, string>();
       this.rootNs = new RootNamespaceExpression(SourceDummy.SourceLocation);
       this.systemNs = new AliasQualifiedName(rootNs, this.GetSimpleNameFor("System"), SourceDummy.SourceLocation);
     }
@@ -704,6 +706,11 @@ namespace Microsoft.Research.Vcc.Parsing {
             if (this.currentSpecificationFields == null) this.currentSpecificationFields = new List<FieldDeclaration>();
             FieldDeclaration glob = new GlobalVariableDeclaration(flags, TypeMemberVisibility.Public, memberType, declarator.Identifier, initializer, slb);
             this.currentSpecificationFields.Add(glob);
+            if (declarator.Identifier.Name.Value.StartsWith("\\declspec_")) {
+              this.declspecExtensions.Add(declarator.Identifier.Name.Value.Substring(10), 
+                initializer == null ? String.Empty : (string)initializer.Value);
+            }
+
           }
         }
       } else {
@@ -787,8 +794,8 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     protected static bool IsLogic(List<Specifier> specifiers) {
       foreach (Specifier specifier in specifiers) {
-        SpecTokenSpecifier/*?*/ sts = specifier as SpecTokenSpecifier;
-        if (sts != null && sts.Token == Token.SpecLogic) return true;
+        SpecDeclspecSpecifier/*?*/ sts = specifier as SpecDeclspecSpecifier;
+        if (sts != null && sts.Token == "spec_macro") return true;
       }
       return false;
     }
@@ -1711,7 +1718,7 @@ namespace Microsoft.Research.Vcc.Parsing {
               }
             }
           }
-        } else if (specifier is SpecTokenSpecifier) {
+        } else if (specifier is SpecDeclspecSpecifier) {
           if (result == null) result = new List<Specifier>();
           result.Add(specifier);
         }

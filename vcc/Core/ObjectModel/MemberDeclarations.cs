@@ -260,12 +260,12 @@ namespace Microsoft.Research.Vcc {
           custAttr.SetContainingExpression(containingExpression);
           result.Add(custAttr);
         } else {
-          SpecTokenSpecifier specTokenSpec = specifier as SpecTokenSpecifier;
+          SpecDeclspecSpecifier specTokenSpec = specifier as SpecDeclspecSpecifier;
           if (specTokenSpec != null) {
             var attrTypeName = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(containingExpression.ContainingBlock.Compilation.NameTable, "StringVccAttr");
             AttributeTypeExpression attrType = new AttributeTypeExpression(attrTypeName);
             List<Expression> args = new List<Expression>();
-            args.Add(new CompileTimeConstant(specTokenSpec.ToVccAttribute(), specTokenSpec.SourceLocation));
+            args.Add(new CompileTimeConstant(specTokenSpec.Token, specTokenSpec.SourceLocation));
             args.Add(new CompileTimeConstant("", specTokenSpec.SourceLocation));
             SourceCustomAttribute custAttr = new SourceCustomAttribute(AttributeTargets.All, attrType, args, specTokenSpec.SourceLocation);
             custAttr.SetContainingExpression(containingExpression);
