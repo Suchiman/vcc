@@ -6,21 +6,23 @@ module PostProcessor =
 
   let apply addCompilerOptionForTestSuite toks = 
     let nl = Tok.Whitespace(fakePos, "\n") 
-    let rec addNewSyntaxOption  = function
-      | Whitespace _ as ws :: rest -> ws :: addNewSyntaxOption rest
+    let rec addNewSyntaxOption eatenWs = function
+      | Whitespace _ as ws :: rest -> addNewSyntaxOption true rest
       | Comment(p, s) :: rest when addCompilerOptionForTestSuite && s.StartsWith("`/") 
         -> Comment(p, s + "/newsyntax") :: nl :: rest
-      | toks -> Comment(fakePos, "`/newsyntax") :: nl :: toks
+      | toks -> 
+        let toks = Comment(fakePos, "`/newsyntax") :: nl :: toks
+        if eatenWs then nl :: toks else toks
     let rec apply' acc = function
       | Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p2, "ghost") :: Tok.Whitespace _ :: Tok.Id(p3, "out") :: gRest) :: rest ->
         apply' acc (Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p3, "out") :: gRest) :: rest)
       | Tok.Comment(p, s) as tok :: rest when s.StartsWith("`") && s.[s.Length - 1] = '`' ->
         match Rules.eatWs rest with
          | [] -> apply' (tok :: acc) []
-         | _ -> apply' (tok :: acc) (addNewSyntaxOption rest)
+         | _ -> apply' (tok :: acc) (addNewSyntaxOption false rest)
       | Tok.Group (p, s, toks) :: rest -> apply' (Tok.Group (p, s, apply' [] toks) :: acc) rest  
       | t :: rest -> apply' (t::acc) rest
       | [] -> List.rev acc
     let toks = apply' [] toks
-    if addCompilerOptionForTestSuite then addNewSyntaxOption toks else toks
+    if addCompilerOptionForTestSuite then addNewSyntaxOption false toks else toks
       

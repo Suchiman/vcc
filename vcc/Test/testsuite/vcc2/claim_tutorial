@@ -1,6 +1,7 @@
+`/newsyntax
 #include <vcc.h>
 
-vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
+_(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
   if (*Destination == Comparand) {
     *Destination = Exchange;
     return Comparand;
@@ -9,137 +10,139 @@ vcc(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int
   }
 }
 
-struct vcc(claimable) A {
+_(claimable) struct A {
   volatile int x;
-  invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
+  _(invariant  \old(\this->x) == \this->x || \old(\this->x) + 1 == \this->x)
 };
-void LockFreeIncr(struct A *a claimp(c))
-  writes(c)
-  always(c, closed(a))
+void LockFreeIncr(struct A *a _(ghost \claim c))
+  _(writes c)
+  _(always c, \consistent(a))
 {
   int y;
   int z;
-  spec( claim_t c1, c2; )
-  atomic(c,a) {
+  _(ghost  \claim c1, c2;)
+  _(atomic c,a) {
     y = a->x;
-    spec( c1 = claim(c, y <= a->x); )
+    _(ghost  c1 = \make_claim({c}, y <= a->x);)
   }
   if (y >= 0x7fffffff) return;
-  atomic(c, c1, a) {
+  _(atomic c, c1, a) {
     InterlockedCompareExchange(&a->x, y+1, y);
-    spec( c2 = claim(c, y < a->x); )
+    _(ghost  c2 = \make_claim({c}, y < a->x);)
   }
-  atomic(c, c2, a) {
+  _(atomic c, c2, a) {
     z = a->x;
   }
-  assert(y < z);
+  _(assert y < z)
 }
 `
 Verification of A#adm succeeded.
 Verification of LockFreeIncr succeeded.
 `
-
+`/newsyntax
 #include <vcc.h>
-struct vcc(claimable) A {
+_(claimable) struct A {
   volatile int x;
-  invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
+  _(invariant  \old(\this->x) == \this->x || \old(\this->x) + 1 == \this->x)
 };
-void incr(struct A *a, int *res claimp(c) claimp(^cres))
-  writes(c, res, cres)
-  always(c, closed(a))
-  ensures(claims(*cres, a->x >= when_claimed(*res)))
+void incr(struct A *a, int *res _(ghost \claim c) _(ghost \claim ^cres))
+  _(writes c, res, cres)
+  _(always c, \consistent(a))
+  _(ensures \claims(*cres, a->x >= \when_claimed(*res)))
 {
   int val;
-  spec( claim_t c1; )
-  atomic(c,a) {
+  _(ghost  \claim c1;)
+  _(atomic c,a) {
     val = a->x;
   }
   *res = val;
-  spec( c1 = claim(c, when_claimed(*res) <= a->x); )
-  spec( *cres = c1; )
+  _(ghost  c1 = \make_claim({c}, \when_claimed(*res) <= a->x);)
+  _(ghost  *cres = c1;)
 }
 `
 Verification of A#adm succeeded.
 Verification of incr succeeded.
 `
+`/newsyntax
 #include <vcc.h>
-struct vcc(claimable) A {
+_(claimable) struct A {
   volatile int x;
-  invariant( this->x > 0 && (old(this->x) == this->x || old(this->x) + 1 == this->x ))
+  _(invariant  \this->x > 0 && (\old(\this->x) == \this->x || \old(\this->x) + 1 == \this->x ))
 };
-void incr(struct A *a, int *res claimp(c) claimp(^cres))
-  writes(c, res, cres)
-  always(c, closed(a))
-  ensures(claims(*cres, a->x > when_claimed(*res)))
-  ensures(claims_obj(*cres, c))
+void incr(struct A *a, int *res _(ghost \claim c) _(ghost \claim ^cres))
+  _(writes c, res, cres)
+  _(always c, \consistent(a))
+  _(ensures \claims(*cres, a->x > \when_claimed(*res)))
+  _(ensures \claims_object(*cres, c))
 {
   int val;
-  spec( claim_t c1; )
-  atomic(c,a) {
+  _(ghost  \claim c1;)
+  _(atomic c,a) {
     val = a->x;
   }
   *res = val;
-  spec( c1 = claim(c, when_claimed(*res) <= a->x); )
+  _(ghost  c1 = \make_claim({c}, \when_claimed(*res) <= a->x);)
 
   *res -= 1;
-  spec( *cres = c1; )
+  _(ghost  *cres = c1;)
 }
 `
 Verification of A#adm succeeded.
 Verification of incr succeeded.
 `
+`/newsyntax
 #include <vcc2test.h>
 
-struct vcc(claimable) A {
+_(claimable) struct A {
   volatile int x;
-  invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
+  _(invariant  \old(\this->x) == \this->x || \old(\this->x) + 1 == \this->x)
 };
 
-void incr(struct A *a, int *res claimp(c) claimp(^cres))
-  writes(c, res, cres)
-  always(c, closed(a))
+void incr(struct A *a, int *res _(ghost \claim c) _(ghost \claim ^cres))
+  _(writes c, res, cres)
+  _(always c, \consistent(a))
   // there will be a single new child to c
-  ensures(ref_cnt(c) == old(ref_cnt(c)) + 1)
+  _(ensures \claim_count(c) == \old(\claim_count(c)) + 1)
   // the claim we return will be child of c
-  ensures(claims_obj(*cres, c))
+  _(ensures \claims_object(*cres, c))
   // it will be wrapped
-  ensures(wrapped(*cres))
+  _(ensures \wrapped(*cres))
   // it will be childless (so we'll be free to kill it)
-  ensures(ref_cnt(*cres) == 0)
+  _(ensures \claim_count(*cres) == 0)
   // and it will guarantee a condition about a->x
-  ensures(claims(*cres, a->x >= when_claimed(*res)))
+  _(ensures \claims(*cres, a->x >= \when_claimed(*res)))
   // and it was not allocated before
-  ensures(is_fresh(*cres))
+  _(ensures \fresh(*cres))
   // we don't free any of our out parameters
-  ensures(mutable(res) && mutable(cres))
+  _(ensures \unwrapped(res) && \unwrapped(cres))
 {
-  spec( claim_t c1; )
+  _(ghost  \claim c1;)
   int val;
-  atomic(c,a) {
+  _(atomic c,a) {
     val = a->x;
   }
   *res = val;
-  spec( c1 = claim(c, when_claimed(*res) <= a->x); )
-  spec( *cres = c1; )
+  _(ghost  c1 = \make_claim({c}, \when_claimed(*res) <= a->x);)
+  _(ghost  *cres = c1;)
 }
 
 void use_case()
 {
   struct A *a;
   int tmp;
-  spec( claim_t c; )
-  spec( claim_t c2; )
+  _(ghost  \claim c;)
+  _(ghost  \claim c2;)
   a = malloc(sizeof(*a));
   if (a != 0) {
     a->x = 0;
-    wrap(a);
-    spec( c = claim(a, true); )
-    incr(a, &tmp spec(c) spec( &c2) );
-    assert(valid_claim(c2));
-    assert(tmp <= a->x);
-    unclaim(c2, c);
-    unclaim(c, a);
-    unwrap(a);
+    _(wrap a)
+    _(ghost  c = \make_claim({a}, \true);)
+    incr(a, &tmp _(ghost c) _(ghost  &c2) );
+    _(assert \active_claim(c2))
+    _(assert tmp <= a->x)
+    _(ghost \destroy_claim(c2, {c}));
+    _(ghost \destroy_claim(c, {a}));
+    _(unwrap a)
     free(a);
   }
 }

@@ -850,6 +850,7 @@ namespace Microsoft.Research.Vcc
                                     "\\alloc",               "_vcc_spec_alloc";
                                     "\\alloc_array",         "_vcc_spec_alloc_array";
                                     "\\heap_alloc",          "_vcc_alloc";
+                                    "\\when_claimed_marker", "_vcc_when_claimed";
                                   ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";
@@ -884,6 +885,7 @@ namespace Microsoft.Research.Vcc
         function
           | Call(ec, ({Name = "\make_claim"} as fn), [], [Macro(_, "set", elems); cond]) -> Some(Call(ec, fn, [], selfs elems @ [cond]))
           | Call(ec, ({Name = "\destroy_claim"} as fn), [], [cl; Macro(_, "set", elems)]) -> Some(Call(ec, fn, [], selfs (cl :: elems)))
+          | Call(ec, ({Name = "\upgrade_claim"} as fn), [], [Macro(_, "set", claimsSet); prop]) -> Some(Call(ec, fn, [], selfs (claimsSet @ [prop])))
           | Call(ec, ({Name = "\claimable"} as fn), [], [e]) -> Some(Call(ec, fn, [], [Macro({e.Common with Type = Type.TypeIdT}, "_vcc_typeof", [self e])]))
           | _ -> None
 
