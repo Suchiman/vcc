@@ -20,6 +20,9 @@ namespace Microsoft.Research.Vcc
     | Pointer of string
 
   module InformationFlow =
+    let freshPG = ref (bigint.Zero)
+    let freshPtrGrp () = freshPG := bigint.op_Subtraction(!freshPG,bigint.One); !freshPG
+
     type SecLabel =
       | Bottom
       | Top
@@ -72,13 +75,43 @@ namespace Microsoft.Research.Vcc
         | C.Expr.Ref _ as e -> VarLabel e
         | C.Expr.Deref(_,e') -> MemLabel e'
         | C.Expr.Call (_, fn, [], []) when  fn.Name = "$current_context" -> ProgramContext
-        | C.Expr.Macro (_, "_vcc_ptr_eq", [p1;p2]) -> PtrCompare(p1,p2)
+        | C.Expr.Macro (_, ("_vcc_ptr_eq" | "_vcc_ptr_neq"), [p1;p2]) -> PtrCompare(p1,p2)
         | C.Expr.Call _    // First step: no function calls, ...
         | C.Expr.Dot _     // ... or structures, ...
         | C.Expr.Index _   // ... or arrays.
         | C.Expr.Old _     // Contracts are not supposed to cause
         | C.Expr.Quant _  -> die() //  information-flow problems
         | _ -> failwith (sprintf "Incomplete implementation: Encountered an error while trying to take the expression level of %s." (e.ToString()))
+
+    let rec exprPtrGroup trExpr (e:C.Expr) =
+      let doPtr = function
+        | C.Expr.Ref _ as e -> Some (B.Expr.FunctionCall ("$get.ptrgrp", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr e]))
+        | C.Expr.Prim (_, _, es) ->
+          let grps = List.map (exprPtrGroup trExpr) es
+          let mkCond grp (eqTest,init) =
+            match init,grp with
+              | _,None -> eqTest,init
+              | None,_ -> eqTest,grp
+              | Some i,Some g ->
+                match eqTest with
+                  | None -> Some(B.Expr.Primitive("==",[g;i])),init
+                  | Some t -> Some(B.Expr.Primitive("&&", [B.Expr.Primitive("==",[g;i]);t])),init
+          let cond,init = List.foldBack mkCond grps (None,None)
+          match cond,init with
+            | None,_
+            | _,None -> die()
+            | Some cond',Some init' ->
+              match cond' with
+                | B.Expr.Primitive ("&&", _) -> Some (B.Expr.Ite(cond',init',B.Expr.IntLiteral (freshPtrGrp ())))
+                | _ -> cond
+        | C.Expr.Index _ as e -> Some(B.Expr.FunctionCall ("$get.ptrgrp", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr e]))
+        | C.Expr.Macro (_,"null", []) -> Some (B.Expr.IntLiteral (bigint.Zero))
+        | C.Expr.Cast (_, _, e) -> exprPtrGroup trExpr e
+        | _ -> None
+      match e.Type with
+        | C.Type.PhysPtr _
+        | C.Type.SpecPtr _ -> doPtr e
+        | _ -> die()
     
     let contextify = function
       | Bottom
@@ -88,8 +121,14 @@ namespace Microsoft.Research.Vcc
 
     let rec secLabelToBoogie trExpr trVar = function
       | ProgramContext -> B.Expr.FunctionCall("$get.secpc",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"])])
-      | PtrCompare (p1,p2) -> B.Expr.Primitive ("==", [B.Expr.FunctionCall("$get.ptrgrp",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr p1])
-                                                       B.Expr.FunctionCall("$get.ptrgrp",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr p2])])   // This is too simple and can only be a default behaviour.
+      | PtrCompare (p1,p2) ->
+        match exprPtrGroup trExpr p1, exprPtrGroup trExpr p2 with
+          | None,_
+          | _,None -> die()
+          | Some pG1,Some pG2 -> B.Expr.Primitive ("==", [pG1; pG2])
+      (*| PtrCompare (p1,p2) -> B.Expr.Primitive ("==", [B.Expr.FunctionCall("$get.ptrgrp",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr p1])
+                                                         B.Expr.FunctionCall("$get.ptrgrp",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr p2])])   // This is too simple and can only be a default behaviour.
+      *)
       | Meet (Bottom, _)
       | Meet (_, Bottom)
       | Bottom -> B.Expr.BoolLiteral true
@@ -132,6 +171,7 @@ namespace Microsoft.Research.Vcc
 // Transformations for if statements
     let makePermissiveUpgrade trVar trType cExpr testClassif =
       let rec getFreeVars acc = function
+        | C.Expr.Macro (_,_,es)
         | C.Expr.Prim(_,_,es) -> List.foldBack (fun e (vars,types) -> let (vars',types') = getFreeVars [] e in Set.union vars' vars,types'@types) es (Set.empty,acc)
         | C.Expr.IntLiteral _
         | C.Expr.BoolLiteral _
