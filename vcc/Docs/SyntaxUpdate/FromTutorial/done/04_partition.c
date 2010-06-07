@@ -1,6 +1,6 @@
 #include <vcc.h>
 
-#define my_mutable_array(arr, len) (\forall unsigned i; {arr + i} i < len ==> \mutable(arr + i))
+#define my_mutable_array(arr, len) (\forall unsigned i; {arr + i} i < len ==> \unwrapped(arr + i))
 
 /*{swap}*/
 void swap(int *p, int *q)

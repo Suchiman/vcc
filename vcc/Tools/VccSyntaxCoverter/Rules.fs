@@ -209,6 +209,7 @@ module Rules =
     
     addKwRepl "mathint" "\\integer"
     addKwRepl "obj_t" "\\object"
+    addKwRepl "ptrset" "\\objset"
     addKwRepl "claim_t" "\\claim"
     addKwRepl "thread_id" "\\thread"
     addKwRepl "result" "\\result"
@@ -223,7 +224,7 @@ module Rules =
     addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, "hint: "); paren "" toks]))
     addRule (quantRule "forall" "==>")
     addRule (quantRule "exists" "&&")
-    addRule (quantRule "lambda" "###")
+    addRule (quantRule "lambda" ";")
     
     let canonicalKeywords = [
                               "atomic";
@@ -241,6 +242,8 @@ module Rules =
     for cw in canonicalKeywords do addKwRule cw cw
 
     addKwRule "expose" "unwrapping"
+    addKwRule "out_param" "writes"
+    addKwRule "weak_out_param" "writes"
 
     let canonicalFn = [
                         "wrapped";
@@ -254,6 +257,8 @@ module Rules =
                         "match_long";
                         "match_ulong";                  
                         "array_range";      
+                        "start_here";
+                        "depends";
                       ]
 
     for cfn in canonicalFn do addFnRule cfn ("\\" + cfn)
@@ -303,7 +308,7 @@ module Rules =
     let owner = function
       | [e] -> e :: [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owner")]
       | _ -> failwith ""
-    addRule (parenRule false "owner" owns)
+    addRule (parenRule false "owner" owner)
     
     let set_owns = function
       | [e; s] ->
@@ -311,21 +316,20 @@ module Rules =
       | _ -> failwith ""
     addRule (parenRuleN "set_owns" 2 set_owns)
     
-    let set_closed_owner = function
+    let closed_owner_rule op = function
       | [ob; owner] ->
         let owns = fnApp "\\owns" owner
-        //fnApp "\\set" (owns @ [Tok.Op (fakePos, ",")] @ (fnApp "\\union" (owns @ [Tok.Op(fakePos, ","); paren "{" ob])))
-        fnApp "\\union_with" (owns @ [Tok.Op (fakePos, ",")] @ [paren "{" ob])
+        owner @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owner"); Tok.Op(fakePos, " " + op + " ") ] @ (eatWs ob)
       | _ -> failwith ""
-    addRule (parenRuleN "set_closed_owner" 2 set_closed_owner)
-        
-    let giveup_closed_owner = function
-      | [ob; owner] ->
-        let owns = fnApp "\\owns" owner
-        //fnApp "\\set" (owns @ [Tok.Op (fakePos, ",")] @ (fnApp "\\union" (owns @ [Tok.Op(fakePos, ","); paren "{" ob])))
-        fnApp "\\diff_with" (owns @ [Tok.Op (fakePos, ",")] @ [paren "{" ob])
-      | _ -> failwith ""
-    addRule (parenRuleN "giveup_closed_owner" 2 giveup_closed_owner)
+
+    addRule (parenRuleN "set_closed_owner" 2 (closed_owner_rule "+="))
+    addRule (parenRuleN "giveup_closed_owner" 2 (closed_owner_rule "-="))
+
+    let in_domain = function
+     | [e1; e2] ->
+       e1 @ [ Tok.Op(fakePos, " \\in ") ] @ fnApp "\\domain" (eatWs e2)
+     | _ -> failwith ""
+    addRule (parenRuleN "in_domain" 2 in_domain)
     
     let reify toks = 
       match List.rev (splitAt "," toks) with 

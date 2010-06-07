@@ -13,17 +13,6 @@ testcase(8,38) : error VC9689: type 'uint32_t*' is not supported for bitvector t
 `
 #include "vcc.h"
 
-ispure unsigned int bar(unsigned int x);
-
-void foo()
-{
-  spec( assert(_vcc_bv_lemma(forall(unsigned int x; x + x < 10))); )
-}
-`
-testcase(7,68) : error VC9659: operators in bv_lemma(...) need to be unchecked (expression: x + x)
-`
-#include "vcc.h"
-
 typedef enum _REG_NAME
 {
     R1 = 0x00020000,
@@ -193,7 +182,6 @@ void foo() {
 `
 Verification of foo succeeded.
 `
-
 #include <vcc.h>
 
 struct S {

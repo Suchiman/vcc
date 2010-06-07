@@ -2107,13 +2107,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (this.currentToken == Token.Colon && acceptLabel && (id = e as VccSimpleName) != null)
         return this.ParseLabeledStatement(id, followers);
       if (!acceptComma || this.currentToken != Token.Comma) {
-        if (this.currentToken == Token.Semicolon) {
-          slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-          //^ assume this.currentToken == Token.Semicolon;
-          this.GetNextToken();
-          this.SkipTo(followers);
-        } else
-          this.SkipSemiColonAfterDeclarationOrStatement(followers);
+        this.SkipSemiColonAfterDeclarationOrStatement(followers);
       }
       //^ assume followers[this.currentToken] || this.currentToken == Token.EndOfFile;
       return eStat;

@@ -72,12 +72,11 @@ _(bool \claims(\claim, bool);)
 _(bool \program_entry_point();)
 _(template<typename T> T ^\alloc();)
 _(template<typename T> T ^\alloc_array(unsigned int n);)
-
+_(bool \depends(\object, \object);)
 
 _(template<typename T> T \in_state(\state, T expr);)
 _(\state \current_state();)
 _(logic template<typename T> T \by_claim(\claim c, T expr) = \in_state(\by_claim_wrapper(c), expr);)
-
 
 _(bool _(pure) \match_long(__int64 ) _(ensures \result == \true);)
 _(bool _(pure) \match_ulong(unsigned __int64) _(ensures \result == \true);)
@@ -118,6 +117,7 @@ _(void \giveup_closed_owner(\object obj, \object owner)  _(requires \atomic_obje
 _(void \set_owns(\object obj, \objset owns)  _(writes obj);)
 _(\state \by_claim_wrapper(\claim);)
 _(\object \heap_alloc(\type);)
+_(bool \start_here();)
 
 #else 
 
