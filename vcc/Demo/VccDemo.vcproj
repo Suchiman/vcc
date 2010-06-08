@@ -177,6 +177,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\BinarySearchNewSyntax.c"
+				>
+			</File>
+			<File
 				RelativePath=".\BitMap.c"
 				>
 			</File>
