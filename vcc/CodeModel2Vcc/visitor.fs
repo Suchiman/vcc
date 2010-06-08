@@ -1525,14 +1525,6 @@ namespace Microsoft.Research.Vcc
         let stmt = this.DoStatement specStmt.WrappedStatement
         stmtRes <- C.Macro(stmt.Common, "spec", [stmt])
 
-      member this.Visit (wrapStmt:IVccWrapStatement) : unit =
-        let expr = this.DoExpression wrapStmt.Object
-        stmtRes <- C.Call(this.StmtCommon wrapStmt, findFunctionOrDie "\\wrap" wrapStmt, [], [expr])
-
-      member this.Visit (unwrapStmt:IVccUnwrapStatement) : unit =
-        let expr = this.DoExpression unwrapStmt.Object
-        stmtRes <- C.Call(this.StmtCommon unwrapStmt, findFunctionOrDie "\\unwrap" unwrapStmt, [], [expr])
-
       member this.Visit (unwrappingStmt:IVccUnwrappingStatement) : unit =
         let wrap = findFunctionOrDie "\\wrap" unwrappingStmt
         let unwrap = findFunctionOrDie "\\unwrap" unwrappingStmt

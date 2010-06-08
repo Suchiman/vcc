@@ -2125,17 +2125,9 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SpecRequires,
     /// <summary>
-    /// unwrap, context-dependent
-    /// </summary>
-    SpecUnwrap,
-    /// <summary>
     /// unwrapping, context-dependent
     /// </summary>
     SpecUnwrapping,
-    /// <summary>
-    /// wrap, context-dependent
-    /// </summary>
-    SpecWrap,
     /// <summary>
     /// writes, context-dependent
     /// </summary>
@@ -2315,11 +2307,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       keywords['r' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecUnwrapping, "unwrapping");
-      keyword = new Keyword(Token.SpecUnwrap, "unwrap", keyword);
       keywords['u' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecWrites, "writes");
-      keyword = new Keyword(Token.SpecWrap, "wrap", keyword);
       keywords['w' - 'a'] = keyword;
       return keywords;
     }

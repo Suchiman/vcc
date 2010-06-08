@@ -391,7 +391,8 @@ namespace Microsoft.Research.Vcc.Parsing
       TokenSet followersOrRightParenOrSpecStmt = followers | Token.RightParenthesis | STS.SimpleSpecStatment;
       SourceLocationBuilder slb;
 
-      while (STS.SimpleSpecStatment[this.currentToken]) {
+      while (STS.SimpleSpecStatment[this.currentToken] || 
+        (this.currentToken == Token.Identifier &&  this.statementLikeFunctions.ContainsKey(this.scanner.GetIdentifierString()))) {
         switch (this.currentToken) {
           case Token.SpecGhost:
             slb = this.GetSourceLocationBuilderForLastScannedToken();
@@ -400,20 +401,27 @@ namespace Microsoft.Research.Vcc.Parsing
             slb.UpdateToSpan(stmt.SourceLocation);
             StatementGroup.AddStatementOrGroupToList(this.DeepWrapInSpecStmt(stmt, slb), statements);
             break;
-          case Token.SpecWrap:
-            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParenOrSpecStmt, (expr, sl) => new VccWrapStatement(expr, sl)));
-            break;
-          case Token.SpecUnwrap:
-            statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParenOrSpecStmt, (expr, sl) => new VccUnwrapStatement(expr, sl)));
-            break;
           case Token.SpecAssert:
             statements.Add(this.ParseAssert(followersOrRightParenOrSpecStmt));
             break;
           case Token.SpecAssume:
             statements.Add(this.ParseSingleArgSpecStatement(followersOrRightParenOrSpecStmt, (expr, sl) => new AssumeStatement(expr, sl)));
             break;
+          case Token.Identifier:
+            var keyword = this.scanner.GetIdentifierString();
+            var name = this.GetSimpleNameFor(this.statementLikeFunctions[keyword]);
+            this.GetNextToken();
+            slb = new SourceLocationBuilder(name.SourceLocation);
+            var parameters = new List<Expression>();
+            if (this.currentToken != Token.RightParenthesis)
+              this.ParseExpressionList(parameters, Token.Comma, followers | Token.RightParenthesis);
+            slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+            var call = new VccMethodCall(name, parameters.AsReadOnly(), slb);
+            var exprStmt = new ExpressionStatement(call);
+            statements.Add(this.DeepWrapInSpecStmt(exprStmt, slb));
+            break;
         }
-        this.SkipSemicolonsInSpecBlock(STS.SimpleSpecStatment | Token.RightParenthesis);
+        this.SkipSemicolonsInSpecBlock(STS.SimpleSpecStatment | Token.Identifier | Token.RightParenthesis);
       }
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       return new StatementGroup(statements);
@@ -552,7 +560,7 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     private static class STS {
-      public static TokenSet SimpleSpecStatment = new TokenSet() | Token.SpecWrap | Token.SpecUnwrap | Token.SpecGhost | Token.SpecAssume | Token.SpecAssert;
+      public static TokenSet SimpleSpecStatment = new TokenSet() | Token.SpecGhost | Token.SpecAssume | Token.SpecAssert;
       public static TokenSet FunctionOrBlockContract = new TokenSet() | Token.SpecEnsures | Token.SpecReads | Token.SpecRequires | Token.SpecDecreases | Token.SpecWrites;
       public static TokenSet LoopContract = new TokenSet() | Token.SpecInvariant | Token.SpecWrites | Token.SpecDecreases;
       public static TokenSet SpecParameter = new TokenSet() | Token.SpecGhost | Token.SpecOut;

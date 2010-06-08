@@ -24,6 +24,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected readonly Dictionary<string, bool> locallyDefinedNames;
     protected readonly Dictionary<string, string> functionContractExtensions;
     protected readonly Dictionary<string, string> declspecExtensions;
+    protected readonly Dictionary<string, string> statementLikeFunctions;
     protected readonly Dictionary<Expression, bool> emptyStructuredTypes;
     protected readonly Scanner scanner;
     protected readonly List<IErrorMessage> scannerAndParserErrors;
@@ -58,6 +59,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.emptyStructuredTypes = new Dictionary<Expression, bool>();
       this.functionContractExtensions = new Dictionary<string, string>();
       this.declspecExtensions = new Dictionary<string, string>();
+      this.statementLikeFunctions = new Dictionary<string, string>();
       this.rootNs = new RootNamespaceExpression(SourceDummy.SourceLocation);
       this.systemNs = new AliasQualifiedName(rootNs, this.GetSimpleNameFor("System"), SourceDummy.SourceLocation);
     }
@@ -502,6 +504,14 @@ namespace Microsoft.Research.Vcc.Parsing {
           slb);
       this.AssociateContracts(fdecl, funcDeclarator);
       typeMembers.Add(fdecl);
+
+      var prefix = "\\macro_";
+      var nameString = funcDeclarator.FunctionName.Identifier.Name.Value;
+      if (nameString.StartsWith(prefix)) {
+        this.functionContractExtensions[nameString.Substring(prefix.Length)] = nameString;
+      } else if (nameString.StartsWith("\\") && IsVoid(returnType)) {
+        this.statementLikeFunctions[nameString.Substring(1)] = nameString;
+      }
     }
     
 
@@ -998,13 +1008,9 @@ namespace Microsoft.Research.Vcc.Parsing {
           } else {
             TypeExpression typeDefExpression;
             if (this.typedefExpressions.TryGetValue(tdns.TypedefName.ToString(), out typeDefExpression)) {
-              NamedTypeExpression namedTypeExpression = typeDefExpression as NamedTypeExpression;
-              if (namedTypeExpression != null) {
-                QualifiedName qName = namedTypeExpression.Expression as QualifiedName;
-                if (qName != null && qName.Qualifier is AliasQualifiedName && qName.SimpleName.Name == this.nameTable.Void) {
-                  primitiveType = new PrimitiveTypeSpecifier(Token.Void, tdns.SourceLocation);
-                  continue;
-                }
+              if (IsVoid(typeDefExpression)) {
+                primitiveType = new PrimitiveTypeSpecifier(Token.Void, tdns.SourceLocation);
+                continue;
               }
             }
             result = new VccNamedTypeExpression(tdns.TypedefName, false);
@@ -1175,6 +1181,13 @@ namespace Microsoft.Research.Vcc.Parsing {
         return this.GetTypeExpressionFor(TypeCode.Int32, primitiveType.SourceLocation);
       }
       return null;
+    }
+
+    private bool IsVoid(TypeExpression typeExpr) {
+      NamedTypeExpression ntExpr = typeExpr as NamedTypeExpression;
+      if (ntExpr == null) return false;
+      QualifiedName qName = ntExpr.Expression as QualifiedName;
+      return qName != null && qName.Qualifier is AliasQualifiedName && qName.SimpleName.Name == this.nameTable.Void;
     }
 
     protected Declarator ParseDeclarator(TokenSet followers)
@@ -1403,13 +1416,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.Skip(Token.RightParenthesis);
       this.InitializeLocallyDefinedNamesFromParameters(parameters);
       this.ParseFunctionOrBlockContract(result.Contract, followers);
-
-      var prefix = "\\macro_";
-      var nameString = functionName.Identifier.Value;
-      if (nameString.StartsWith(prefix)) {
-        this.functionContractExtensions[nameString.Substring(prefix.Length)] = nameString;
-      }
-
       return result;
     }
 
