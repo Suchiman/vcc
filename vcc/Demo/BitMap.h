@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <vcc2.h>
+#include <vcc.h>
 #include "spec.h"
 
 // |-------------------------------------------------------|
