@@ -20,14 +20,14 @@ _(dynamic_owns) struct List {
 };
 /*{init}*/
 struct List *mklist()
-  _(ensures \result != NULL ==> \wrapped(\result) && \result->val == \lambda int k; false)
+  _(ensures \result != NULL ==> \wrapped(\result) && \result->val == \lambda int k; \false)
 {
   struct List *l = malloc(sizeof(*l));
   if (l == NULL) return l;
   l->head = NULL;
   _(ghost {
     l->\owns = {};
-    l->val = (\lambda int k; false);
+    l->val = (\lambda int k; \false);
   })
   _(wrap l)
   return l;

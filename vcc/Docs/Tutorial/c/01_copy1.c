@@ -23,4 +23,3 @@ _(writes &z)
 Verification of copy succeeded.
 Verification of main succeeded.
 `*/
- 

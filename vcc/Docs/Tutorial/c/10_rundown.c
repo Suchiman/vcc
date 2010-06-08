@@ -47,7 +47,7 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
     _(atomic c, r) {
       n = InterlockedCompareExchange(&r->cnt, v + 2, v);
       _(ghost 
-        if (v == n) ret = \make_claim({r->resource}, true);)
+        if (v == n) ret = \make_claim({r->resource}, \true);)
     }
 
     if (v == n) return 0;

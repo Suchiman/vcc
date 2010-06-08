@@ -23,24 +23,24 @@ void sstr_append_char(struct SafeString *s, char c)
     // unwrap s
     _(assert \wrapped(s))
     cont->theOwner = \me; // transfer 1
-    s->consistencyFlag = false;
+    s->consistencyFlag = \false;
     // unwrap cont
     _(assert \wrapped(cont))
-    c->consistencyFlag = false;
+    c->consistencyFlag = \false;
   })
   
   s->content[s->len++] = c;
   s->content[s->len] = '\0';
   _(ghost {
     // wrap c
-    _(assert \mutable(cont))
+    _(assert \unwrapped(cont))
     _(assert \inv(cont))
-    cont->consistencyFlag = true;
+    cont->consistencyFlag = \true;
     // wrap s
-    _(assert \mutable(s))
+    _(assert \unwrapped(s))
     cont->theOwner = s; // transfer 2
     _(assert \inv(s))
-    s->consistencyFlag = true;
+    s->consistencyFlag = \true;
     // ensures
     _(assert \wrapped(s))
   })

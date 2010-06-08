@@ -72,7 +72,7 @@ void create_claim(struct Data *d)
   _(ghost \claim c;)
   struct Lock l;
   InitializeLock(&l _(ghost d));
-  _(ghost c = \make_claim({&l}, true);)
+  _(ghost c = \make_claim({&l}, \true);)
   Acquire(&l _(ghost c));
   Release(&l _(ghost c));
   _(ghost \destroy_claim(c, {&l}));

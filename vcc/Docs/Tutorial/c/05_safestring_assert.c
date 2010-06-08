@@ -1,8 +1,4 @@
 #include <vcc.h>
-#ifndef false
-#define false 0
-#define true 1
-#endif
 
 /*{obj}*/
 #define SSTR_MAXLEN 100
@@ -24,15 +20,15 @@ void sstr_append_char(struct SafeString *s, char c)
   // _(unwrap s);
   _(assert \wrapped(s))
   _(assume s->len < SSTR_MAXLEN && s->content[s->len] == '\0')
-  _(ghost s->consistencyFlag = false;)
+  _(ghost s->consistencyFlag = \false;)
 
   s->content[s->len++] = c;
   s->content[s->len] = '\0';
   
   // _(wrap s);
-  _(assert \mutable(s))
+  _(assert \unwrapped(s))
   _(assert s->len < SSTR_MAXLEN && s->content[s->len] == '\0')
-  _(ghost s->consistencyFlag = true;)
+  _(ghost s->consistencyFlag = \true;)
   // ensures
   _(assert \wrapped(s))
 }
@@ -40,5 +36,4 @@ void sstr_append_char(struct SafeString *s, char c)
 /*`
 Verification of SafeString#adm succeeded.
 Verification of sstr_append_char failed.
-testcase(27,25) : error VC8507: Assertion 's->consistencyFlag is writable' did not verify.
-`*/
+testcase(23,25) : error VC8507: Assertion 's->consistencyFlag is writable' did not verify.`*/
