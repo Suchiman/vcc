@@ -33,6 +33,18 @@ namespace Microsoft.Research.Vcc
       | Join of SecLabel*SecLabel
       | Meet of SecLabel*SecLabel
 
+    let getLocal name = B.Expr.Ref name
+    let getPLabel bExpr = B.Expr.FunctionCall ("$get.seclabel", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); bExpr])
+    let getPMeta bExpr = B.Expr.FunctionCall ("$get.metalabel", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); bExpr])
+    let getPC = B.Expr.FunctionCall("$get.secpc",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"])])
+    let getPG bExpr = B.Expr.FunctionCall ("$get.ptrgrp", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); bExpr])
+
+    let setLocal name value = B.Stmt.Assign (getLocal name, value)
+    let setPLabel tok loc value = B.Stmt.Call (tok, [], "$set_label", [loc; value])
+    let setPMeta tok loc value = B.Stmt.Call (tok, [], "$set_meta", [loc; value])
+    let setPC tok value = B.Stmt.Call(tok, [], "$set_pc", [value]);
+    let setPG tok loc value = B.Stmt.Call(tok, [], "$set_ptr_grp", [loc; (B.Expr.IntLiteral value)])
+
     let rec normaliseSecLabel = function
       | Bottom
       | Top
@@ -85,7 +97,7 @@ namespace Microsoft.Research.Vcc
 
     let rec exprPtrGroup trExpr (e:C.Expr) =
       let doPtr = function
-        | C.Expr.Ref _ as e -> Some (B.Expr.FunctionCall ("$get.ptrgrp", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr e]))
+        | C.Expr.Ref _ as e -> Some (getPG (trExpr e))
         | C.Expr.Prim (_, _, es) ->
           let grps = List.map (exprPtrGroup trExpr) es
           let mkCond grp (eqTest,init) =
@@ -104,7 +116,7 @@ namespace Microsoft.Research.Vcc
               match cond' with
                 | B.Expr.Primitive ("&&", _) -> Some (B.Expr.Ite(cond',init',B.Expr.IntLiteral (freshPtrGrp ())))
                 | _ -> cond
-        | C.Expr.Index _ as e -> Some(B.Expr.FunctionCall ("$get.ptrgrp", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr e]))
+        | C.Expr.Index _ as e -> Some(getPG (trExpr e))
         | C.Expr.Macro (_,"null", []) -> Some (B.Expr.IntLiteral (bigint.Zero))
         | C.Expr.Cast (_, _, e) -> exprPtrGroup trExpr e
         | _ -> None
@@ -120,15 +132,12 @@ namespace Microsoft.Research.Vcc
       | l -> normaliseSecLabel(Join(l,ProgramContext))
 
     let rec secLabelToBoogie trExpr trVar = function
-      | ProgramContext -> B.Expr.FunctionCall("$get.secpc",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"])])
+      | ProgramContext -> getPC
       | PtrCompare (p1,p2) ->
         match exprPtrGroup trExpr p1, exprPtrGroup trExpr p2 with
           | None,_
           | _,None -> die()
           | Some pG1,Some pG2 -> B.Expr.Primitive ("==", [pG1; pG2])
-      (*| PtrCompare (p1,p2) -> B.Expr.Primitive ("==", [B.Expr.FunctionCall("$get.ptrgrp",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr p1])
-                                                         B.Expr.FunctionCall("$get.ptrgrp",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr p2])])   // This is too simple and can only be a default behaviour.
-      *)
       | Meet (Bottom, _)
       | Meet (_, Bottom)
       | Bottom -> B.Expr.BoolLiteral true
@@ -137,12 +146,12 @@ namespace Microsoft.Research.Vcc
       | Top -> B.Expr.BoolLiteral false
       | VarLabel e -> 
         match e with
-          | C.Expr.Ref(_,v) -> B.Expr.Ref ("SecLabel#"+(trVar v))
-          | C.Expr.Result _ -> B.Expr.Ref ("SecLabel#special#result")
+          | C.Expr.Ref(_,v) -> getLocal ("SecLabel#"+(trVar v))
+          | C.Expr.Result _ -> getLocal ("SecLabel#special#result")
           | _ -> die()
       | MemLabel e ->
         match e with
-          | C.Expr.Ref(_,v) -> match v.Type with | C.Type.PhysPtr _ -> B.Expr.FunctionCall ("$get.seclabel", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); trExpr e]) | _ -> die()
+          | C.Expr.Ref(_,v) -> match v.Type with | C.Type.PhysPtr _ -> getPLabel (trExpr e) | _ -> die()
           | _ -> failwith (sprintf "Incomplete implementation: Encountered a MemLabel with argument %s\n." (e.ToString()))
       | Meet (Top, l)
       | Meet (l, Top)
@@ -193,20 +202,19 @@ namespace Microsoft.Research.Vcc
         match v with
           | Local n ->  B.Expr.Primitive ("||",
                                           [B.Expr.Primitive ("&&",
-                                                             [B.Expr.Primitive ("!", [B.Expr.Ref ("SecLabel#"+n)])
-                                                              B.Expr.Primitive ("==>", [B.Expr.Primitive ("!", [B.Expr.Ref ("SecLabel#"+n)]);B.Expr.Ref ("SecMeta#"+n)])])
+                                                             [B.Expr.Primitive ("!", [getLocal ("SecLabel#"+n)])
+                                                              getLocal ("SecMeta#"+n)])
                                            expr])
           | Pointer p ->
             let bType = trType (snd(List.find (fun (var,typ) -> var = v) typeAssocs))
-            let getLabel = B.Expr.FunctionCall ("$get.seclabel", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); B.Expr.FunctionCall ("$ptr", [bType; B.Expr.Ref p])])
-            let getMeta = B.Expr.FunctionCall ("$get.metalabel", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); B.Expr.FunctionCall ("$ptr", [bType; B.Expr.Ref p])])
+            let getLabel = getPLabel (B.Expr.FunctionCall ("$ptr", [bType; B.Expr.Ref p]))
+            let getMeta = getPMeta (B.Expr.FunctionCall ("$ptr", [bType; B.Expr.Ref p]))
             B.Expr.Primitive ("||",
                               [B.Expr.Primitive ("&&",
                                                  [B.Expr.Primitive ("!", [getLabel])
-                                                  B.Expr.Primitive ("==>", [B.Expr.Primitive("!", [getLabel])
-                                                                            getMeta])])
+                                                  getMeta])
                                expr])
-      let newDisjuncts = Set.foldBack construct freeVars (B.Expr.Primitive ("!", [B.Expr.FunctionCall("$get.secpc",[B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"])])]))
+      let newDisjuncts = Set.foldBack construct freeVars (B.Expr.Primitive ("!", [getPC]))
       match testClassif with
         | B.Expr.BoolLiteral false -> newDisjuncts
         | B.Expr.BoolLiteral true -> testClassif
@@ -234,6 +242,6 @@ namespace Microsoft.Research.Vcc
       let (varLevels,types) = getVarLevels [] bExpr
       let construct (b,v) expr =
         if b then let t = snd(List.find (fun (var,_) -> var = v) types)
-                  B.Expr.Primitive ("&&", [expr;B.Expr.FunctionCall ("$get.metalabel", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref v])])])
-             else B.Expr.Primitive ("&&", [expr;B.Expr.Ref v])
+                  B.Expr.Primitive ("&&", [expr; getPMeta (B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref v]))])
+             else B.Expr.Primitive ("&&", [expr; getLocal v])
       Set.foldBack construct varLevels (B.Expr.BoolLiteral true)
