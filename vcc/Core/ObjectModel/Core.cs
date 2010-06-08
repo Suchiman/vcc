@@ -75,9 +75,9 @@ namespace Microsoft.Research.Vcc {
 
     public override void Visit(IBoundExpression boundExpression) {
       var typeAsPtr = boundExpression.Type as IPointerType;
-      if (typeAsPtr != null && VccCompilationHelper.IsSpecPointer(typeAsPtr)) result = true;
-      else
-        this.VisitDefinitionThenInstance(boundExpression.Definition, boundExpression.Instance);
+      if (typeAsPtr != null) {
+        if (VccCompilationHelper.IsSpecPointer(typeAsPtr)) result = true;
+      } else this.VisitDefinitionThenInstance(boundExpression.Definition, boundExpression.Instance);
     }
 
 
