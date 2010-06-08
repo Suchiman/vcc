@@ -413,9 +413,10 @@ namespace Microsoft.Research.Vcc.Parsing
             this.GetNextToken();
             slb = new SourceLocationBuilder(name.SourceLocation);
             var parameters = new List<Expression>();
-            if (this.currentToken != Token.RightParenthesis)
+            if (this.currentToken != Token.RightParenthesis) {
               this.ParseExpressionList(parameters, Token.Comma, followers | Token.RightParenthesis);
-            slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+              slb.UpdateToSpan(parameters[parameters.Count - 1].SourceLocation);
+            }
             var call = new VccMethodCall(name, parameters.AsReadOnly(), slb);
             var exprStmt = new ExpressionStatement(call);
             statements.Add(this.DeepWrapInSpecStmt(exprStmt, slb));
