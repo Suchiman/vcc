@@ -14,7 +14,7 @@ void isqrt(unsigned x)
   if ((r+1)*(r+1) <= x) {
     r++;
     _(assert r*r <= x)
-    _(assume false)
+    _(assume \false)
   }
   _(assert r*r <= x && x < (r+1)*(r+1))
 }

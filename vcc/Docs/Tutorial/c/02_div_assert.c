@@ -19,7 +19,7 @@ unsigned mod(unsigned a, unsigned b)
   if (res < b) goto theEnd;
   res -= b;
   _(assert a % b == res % b) // check the invariant
-  _(assume false) // end of an iteration
+  _(assume \false) // end of an iteration
 
 theEnd:
   ; // so that we no longer attempt to parser loop contracts

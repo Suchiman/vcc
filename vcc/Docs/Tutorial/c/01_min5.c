@@ -1,7 +1,7 @@
 #include <vcc.h>
 
 int min(int a, int b)
-  _(requires true)
+  _(requires \true)
   _(ensures \result <= a && \result <= b)
 {
   _(assert {:bv} \forall int x; (x & (-1)) == x)
