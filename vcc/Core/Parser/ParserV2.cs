@@ -425,6 +425,7 @@ namespace Microsoft.Research.Vcc.Parsing
         this.SkipSemicolonsInSpecBlock(STS.SimpleSpecStatment | Token.Identifier | Token.RightParenthesis);
       }
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
+      if (statements.Count == 1) return statements[0];
       return new StatementGroup(statements);
     }
 

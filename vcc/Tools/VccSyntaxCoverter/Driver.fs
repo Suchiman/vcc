@@ -5,7 +5,10 @@ let go filename =
   try
     let toks = Tokenizer.fromFile filename
     let toks = Rules.apply [] toks
-    let toks = PostProcessor.apply (System.IO.Path.GetExtension(filename) <> ".c") toks
+    let isTestSuiteSource = 
+      let extension = System.IO.Path.GetExtension(filename)
+      extension <> ".c" && extension <> ".h"
+    let toks = PostProcessor.apply isTestSuiteSource toks
     let outf = System.IO.File.CreateText (filename + ".out")
     let outs = (Tok.Group (fakePos, "", toks)).ToString()
     let outs = outs.Replace ("\n", "\r\n")
