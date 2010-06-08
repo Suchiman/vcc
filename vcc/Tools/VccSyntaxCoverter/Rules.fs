@@ -199,53 +199,18 @@ module Rules =
     addRule (parenRuleN name 2 repl)
 
   let init() =
-    addStmtKwRule "assert" "assert"
-    addStmtKwRule "bv_lemma" "assert {:bv}" // this is stretching it
-    addStmtKwRule "assume" "assume"
-    addStmtKwRule "wrap" "wrap"
-    addStmtKwRule "unwrap" "unwrap"
-    addStmtKwRule "spec" "ghost"
-    addStmtKwRule "axiom" "axiom"
-    
-    addKwRepl "mathint" "\\integer"
-    addKwRepl "state_t" "\\state"
-    addKwRepl "obj_t" "\\object"
-    addKwRepl "ptrset" "\\objset"
-    addKwRepl "claim_t" "\\claim"
-    addKwRepl "thread_id" "\\thread"
-    addKwRepl "result" "\\result"
-    addKwRepl "this" "\\this"
-    addKwRepl "ispure" "_(pure)"
-    addKwRepl "backing_member" "_(backing_member)"
-    addKwRepl "true" "\\true"
-    addKwRepl "false" "\\false"
-    addKwRepl "spec_malloc" "\\alloc"             // cannot use fnRule because of template paramters
-    addKwRepl "spec_alloc_array" "\\alloc_array"  // cannot use fnRule because of template paramters
-    
-    addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
-    addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, "hint: "); paren "" toks]))
-    addRule (quantRule "forall" "==>")
-    addRule (quantRule "exists" "&&")
-    addRule (quantRule "lambda" ";")
-    
-    let canonicalKeywords = [
-                              "atomic";
-                              "invariant";
-                              "decreases";
-                              "ensures";
-                              "requires";
-                              "reads";
-                              "writes";
-                              "always";
-                              "maintains";
-                              "returns";
-                            ]
-
-    for cw in canonicalKeywords do addKwRule cw cw
-
-    addKwRule "expose" "unwrapping"
-    addKwRule "out_param" "writes"
-    addKwRule "weak_out_param" "writes"
+    let canonicalKw = [
+                        "atomic";
+                        "invariant";
+                        "decreases";
+                        "ensures";
+                        "requires";
+                        "reads";
+                        "writes";
+                        "always";
+                        "maintains";
+                        "returns";
+                      ]
 
     let canonicalFn = [
                         "wrapped";
@@ -275,7 +240,55 @@ module Rules =
                         "current_state";
                       ]
 
-    for cfn in canonicalFn do addFnRule cfn ("\\" + cfn)
+    let canonicalSm = [
+                        "assert";
+                        "assume";
+                        "wrap";
+                        "unwrap";
+                        "deep_unwrap";
+                        "axiom";
+                        "reads_havoc";
+                        "set_closed_owns";
+                        "union_reinterpret";
+                        "bump_volatile_version";
+                        "begin_update";
+                        "join_arrays";
+                        "split_array";
+                        "from_bytes";
+                        "to_bytes";
+                      ]
+
+    for cw in canonicalKw do addKwRule cw cw
+    for cf in canonicalFn do addFnRule cf ("\\" + cf)
+    for cs in canonicalSm do addStmtKwRule cs cs
+
+    addStmtKwRule "bv_lemma" "assert {:bv}" // this is stretching it
+    addStmtKwRule "spec" "ghost"
+    
+    addKwRepl "mathint" "\\integer"
+    addKwRepl "state_t" "\\state"
+    addKwRepl "obj_t" "\\object"
+    addKwRepl "ptrset" "\\objset"
+    addKwRepl "claim_t" "\\claim"
+    addKwRepl "thread_id" "\\thread"
+    addKwRepl "result" "\\result"
+    addKwRepl "this" "\\this"
+    addKwRepl "ispure" "_(pure)"
+    addKwRepl "backing_member" "_(backing_member)"
+    addKwRepl "true" "\\true"
+    addKwRepl "false" "\\false"
+    addKwRepl "spec_malloc" "\\alloc"             // cannot use fnRule because of template paramters
+    addKwRepl "spec_alloc_array" "\\alloc_array"  // cannot use fnRule because of template paramters
+    
+    addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
+    addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, "hint: "); paren "" toks]))
+    addRule (quantRule "forall" "==>")
+    addRule (quantRule "exists" "&&")
+    addRule (quantRule "lambda" ";")
+    
+    addKwRule "expose" "unwrapping"
+    addKwRule "out_param" "writes"
+    addKwRule "weak_out_param" "writes"
 
     addFnRule "valid_claim" "\\active_claim"
     addFnRule "ref_cnt" "\\claim_count"
@@ -292,6 +305,7 @@ module Rules =
     addFnRule "claims_obj" "\\claims_object"
     addFnRule "extent_is_fresh" "\\extent_fresh"
     addFnRule "is_malloc_root" "\\malloc_root"
+    addFnRule "is_object_root" "\\object_root"
 
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))
@@ -307,7 +321,6 @@ module Rules =
     addInfixRule "set_in" "\\in"
     addInfixRule "is" "\\is"
 
-
     let as_array = function
       | [arr; sz] ->
         let arr =
@@ -318,15 +331,12 @@ module Rules =
       | _ -> failwith ""
     addRule (parenRuleN "as_array" 2 as_array)
         
-    let owns = function
-      | [e] -> e :: [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns")]
+    let ghostFieldRule fieldName = function
+      | [e] -> e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, fieldName)]
       | _ -> failwith ""
-    addRule (parenRule false "owns" owns)
 
-    let owner = function
-      | [e] -> e :: [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owner")]
-      | _ -> failwith ""
-    addRule (parenRule false "owner" owner)
+    addRule (parenRuleN "owns" 1 (ghostFieldRule "\\owns"))
+    addRule (parenRuleN "owner" 1 (ghostFieldRule "\\owner"))
     
     let set_owns = function
       | [e; s] ->

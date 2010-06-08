@@ -853,6 +853,7 @@ namespace Microsoft.Research.Vcc
                                     "\\when_claimed_marker", "_vcc_when_claimed";
                                     "\\extent_fresh",        "_vcc_extent_is_fresh";
                                     "\\malloc_root",         "_vcc_is_malloc_root";
+                                    "\\object_root",         "_vcc_is_object_root";
                                   ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset";

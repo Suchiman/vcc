@@ -4,3 +4,4 @@ backing_member
 lambda with guard
 on_unwrap (macro, which includes 'invariant' in its expansion)
 better way to declare new attributes (which does not require changes from the scanner up)
+skinny_expose
