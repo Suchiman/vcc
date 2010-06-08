@@ -505,10 +505,10 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
 #define vcs_keep_going(n)
 #else
 #define vcs_force_splits(n) \
-	__declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_splits", n) \
-	__declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_cost", 1)
+  __declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_splits", n) \
+  __declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_cost", 1)
 #define vcs_keep_going(n) \
-	__declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_keep_going_splits", n)
+  __declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_keep_going_splits", n)
 #endif
 
 #define vcc(x) _concat_identifiers(_vcc_attr_, x)
