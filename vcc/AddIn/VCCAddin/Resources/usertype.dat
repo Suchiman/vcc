@@ -105,3 +105,9 @@ is_claimable
 containing_struct
 havoc_others
 deep_unwrap
+claim
+object
+state
+type
+ghost
+span
