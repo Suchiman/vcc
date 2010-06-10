@@ -25,14 +25,14 @@ Thus, the following invariant should come as no surprise:
 \noindent
 We use a ghost field to hold a reference to the object meant to be protected
 by this lock.
-If one wishes to protect multiple objects with a single lock, one can make
+If you wish to protect multiple objects with a single lock, you can make
 the object referenced by \vcc{protected_obj} own them all.
 The \vcc{locked} filed is annotated with \vcc{volatile}.
 It has the usual meaning for the regular C compiler (\ie it makes the compiler
 assume that the environment might write to that field, outside the knowledge
 of the compiler).
 For VCC it means that the field can be written also when the object is
-consistent.
+consistent (that is after wrapping it).
 The idea is that we will not unwrap the object, but write it atomically,
 while preserving its invariant.
 The attribute
@@ -40,21 +40,24 @@ The attribute
 to be treated as a volatile field (\ie we want to be able to write
 it while to object is consistent; normally this is not possible).
 
-Now we can see how one operates on volatile fields.
-We shall start with the function releasing the lock, as it is simpler.
+Now we can see how we operate on volatile fields.
+We shall start with the function releasing the lock, as it is simpler,
+than the one acquiring it.
 
 \vccInput[linerange={release-out}]{c/08_lockw.c}
 
 \noindent
 First, let's have a look at the contract.
-\vcc{Release()} requires the lock to be wrapped.
-You might wonder how multiple threads can all own the lock (to have it
-wrapped), we will fix that later.
-Second, we require that the protected object is wrapped.
+\vcc{Release()} requires the lock to be wrapped.%
+\footnote{ You might wonder how multiple threads can all own the lock (to have it
+wrapped), we will fix that later. }
+Second, we require that the protected object is wrapped (recall that wrapped means consistent
+and owned by the current thread).
 We need it to be consistent because we will want to make the lock own it, and
 lock can only own consistent objects.
 We need the current thread to own it, because ownership transfer can
-only happen between the current thread and an object.
+only happen between the current thread and an object,
+and not for example some other thread and an object.
 Third, we say we're going to write the protected object.
 This allows for the transfer, and prevents the calling function from assuming
 that the object stays wrapped after the call.
@@ -68,10 +71,10 @@ The difference is that the entire update happens instantaneously from the point
 of view of other threads.
 We needed the unwrapping operation because we wanted to mark that we temporarily
 break the object invariants.
-Here, there is no point in time, where other threads can observe that the invariants
+Here, there is no point in time where other threads can observe that the invariants
 are broken.
 Invariants hold before the beginning of the atomic block (by our principal reasoning
-rule, \secref{TODO}), and we check the invariant at the end of the atomic block.
+rule, \secref{wrap-unwrap}), and we check the invariant at the end of the atomic block.
 
 The question arises, what guarantees that other threads won't interfere with the atomic
 action?
@@ -81,15 +84,17 @@ Here, that operation is writing to the \vcc{l->locked}.
 Other possibilities include reading from a volatile field, or a performing
 a primitive operation supported by the hardware, like interlocked
 compare-and-exchange.
-However, inside our atomic block we can also see the update of the owns set
-(remember that \vcc{\union_with(\owns(A), B)} is a shorthand for \vcc{\set(\owns(A), \union(\owns(A), B))}).
-\todo{need better explanation}
+However, inside our atomic block we can also see the update of the owns set.
 This is fine, because the ghost code is not executed by the actual hardware.
+
+\begin{note}
+\itodo{rewrite this:}
 If we were to imagine a VCC machine, which would actually execute the 
 ghost code, we could say that it blocks other threads when the ghost
 code is executing.
 Because the real machine doesn't execute any ghost code, it doesn't need to do
 any such blocking.
+\end{note}
 
 It is not particularly difficult to see that this atomic operation preserves the
 invariant of the lock.
@@ -124,9 +129,7 @@ If the memory location contains the first value, then it is replaced with the se
 It returns the old value.
 The entire operation is performed atomically (and is also a write barrier).
 
-\subsection{Atomic inline}
-\label{sect:atomic-inline}
-
+\begin{note}
 VCC doesn't have all the primitives of all the C compilers predefined.
 One can define them by suppling a body.
 It is presented only to the VCC compiler (it is enclosed in
@@ -143,7 +146,9 @@ Make sure to check with the regular C compiler manual for exact semantics
 of its built-in functions.
 
 The header files coming with VCC provide a handful of popular operations,
-you can just rename them to fit your compiler.
+you can just rename them to fit your compiler. 
+\itodo{we should actually do that}
+\end{note}
 
 \subsection{Using claims}
 \label{sect:using-claims}
@@ -157,10 +162,10 @@ However, wrapped means not only consistent, but also owned by the current thread
 which defeats the purpose of the lock --- it should be possible
 for multiple threads to compete for the lock.
 Let's then say, there is a thread which owns the lock.
-Assume some other thread got to know that the lock is consistent.
-How would it know that the owning thread won't unwrap (or worse yet, deallocate) the lock, just
-before a thread tries an atomic operation on the lock?
-The owning thread thus needs to somehow promise the other thread
+Assume some other thread \vcc|t| got to know that the lock is consistent.
+How would \vcc|t| know that the owning thread won't unwrap (or worse yet, deallocate) the lock, just
+before \vcc|t| tries an atomic operation on the lock?
+The owning thread thus needs to somehow promise \vcc|t|
 that lock will stay consistent.
 In VCC such a promise takes form of a \Def{claim}.
 Later we'll see that claims are more powerful, but for
@@ -181,12 +186,14 @@ Thus, a claim is an object, with an invariant stating that a number of other obj
 As this is stated in the invariant of the claim, it only needs to be true
 as long as the claim itself stays consistent.
 
-One will ask, how is this admissible
-\todo{probably insert some back-reference to admissibility;
-people will have forgotten it by here}
---- the claim doesn't own the claimed
-objects, so how should it know it will stay consistent?
-This is ensured by an implicit invariant, defined on all types
+Recall that what can be written in invariants is subject to the admissibility
+condition, which we have seen partially explained in \secref{admissibility0}.
+There we said that an invariant should talk only about things the object owns.
+But here the claim doesn't own the claimed objects,
+so how should the claim know the object will stay consistent?
+In general, an admissible invariant can depend on other objects invariants always being
+preserved (we'll see the precise rule in \secref{inv2}).
+So VCC adds an implicit invariant to all types
 marked with \vcc{_(claimable)} attribute.
 This invariant states that the object cannot be unwrapped when
 when there are consistent claims on it.
@@ -195,7 +202,7 @@ claims.
 The number of outstanding claim on object \vcc{o} is given by
 the \vcc{\claim_count(o)} function.
 
-Now we getting back to our lock example, the trick is that there can be
+Now, getting back to our lock example, the trick is that there can be
 multiple claims claiming the lock (note that this is orthogonal to
 the fact that a single claim can claim multiple objects).
 The thread that owns the lock will need to keep track of who's using
@@ -229,6 +236,8 @@ to prove that the object is consistent.
 
 \subsection{Creating claims}
 \label{sect:creating-claims}
+
+\itodo{XXX left-off here}
 
 When creating (or destroying) a claim one needs to list the claimed objects.
 Let's have a look at an example.

@@ -1,26 +1,27 @@
 \section{Abstraction}
 
 Usually there are many ways of implementing a given data structure.
-For example, a set might be implemented as a linked list, an array, linked list or a hash table.
+For example, a set might be implemented as a linked list, an array, linked list, or a hash table.
 
-The programmer using the data structure should not be concerned with implementation details
-when reasoning about correctness of his program.
-He should reason at somewhat higher, abstract level.
-For example, when he uses a linked list as a representation of a set, he should not be concerned
+When reasoning about a program using a data structure we don't want to be
+concerned with implementation details of the data structure.
+We should reason at somewhat higher, abstract level.
+For example, when we use a linked list as a representation of a set, we should not be concerned
 with how the list nodes are laid out in memory.
 
-In VCC one abstract over such details using ghost data: data-structures contain ghost fields with mathematical
+In VCC we abstract over such details using ghost data: data-structures contain ghost fields with mathematical
 abstractions of what they implement.
 It is only rarely the case that a simple C type, say \vcc{unsigned int}, would be suitable
 to store such abstraction (how would one store an unbounded set in some primitive C type?).
 To that end, VCC provides \Def{map types}.
-They can be used only in ghost code, and therefore the issue of runtime memory layout does not apply to them.
-\todo{this is likely unclear}
 The syntax is similar to syntax of array types, \vcc{int m[T*]} defines a map \vcc{m} from \vcc{T*}
 to \vcc{int}.
 That is the type of expression \vcc{m[p]} is \vcc{int}, provided that \vcc{p} is a pointer
 of type \vcc{T*}.
-A map \vcc{T* a[unsigned]} is similar to an array of pointers of length $2^{32}$.
+A map \vcc{T* a[unsigned]} is similar to an array of pointers of length $2^{32}$.%
+\footnote{
+  Because a map can be used only in ghost code, 
+  the issue of runtime memory consumption does not apply to it.}
 A map \vcc{bool s[int]} can be thought of as a set of \vcc{int}s: the operation
 \vcc{s[k]} will return true if and only if the element \vcc{k} is in the set \vcc{s}.
 
@@ -38,7 +39,7 @@ The invariant states that:
 \item if the list owns a node, then its data is present in the set \vcc{val};
       this binds the values stored in the implementation to the abstract representation
 \end{itemize}
-A careful reader will note that the set \vcc{val} is under-specified: 
+You may note that the set \vcc{val} is under-specified: 
 it might be that it has some elements not stored in the list.
 We'll get back to this issue later.
 Now let's have a look at the specification of a function adding a
@@ -53,12 +54,12 @@ Then, there are the contracts talking about the result value.
 This function might fail because there is not enough memory to allocate list node,
 in such case it will return a non-zero value (an error code perhaps),
 and the contracts guarantee that the set represented by the list will not be changed.
-However, if the function will succeed (and thus return zero), the contract specifies
-that if we take an arbitrary integer \vcc{p}, then it is member of the new abstract
+However, if the function succeeds (and thus returns zero), the contract specifies
+that if we take an arbitrary integer \vcc{p}, then it is a member of the new abstract
 value if and only if it was already a member before or it is \vcc{k}.
+
 In other words, the new value of \vcc{l->val} will be the union of the old
 abstract value and the element \vcc{k}.
-
 Ideally, this contract is all that the caller will need to know about that function:
 what kind of effect does it have on the abstract state. 
 It doesn't specify if the node will be appended at the beginning, or in the middle
@@ -81,7 +82,8 @@ Finally, we update the abstract value using a \Def{lambda expression}.
 The expression \vcc{\lambda T x; E} returns a map, which for
 any \vcc{x} returns the value of expression \vcc{E},
 which can use \vcc{x}.
-If the type of \vcc{E} is \vcc{S}, then the type of map is \vcc{S[T]}.
+If the type of \vcc{E} is \vcc{S}, then the type of map, returned by the
+lambda expression, is \vcc{S[T]}.
 The expression is evaluated in the state as it was
 when the lambda was first defined.
 One can imagine, that when this lambda expression is defined,
@@ -91,33 +93,47 @@ with the results.
 Lambda expressions are much like function values in functional
 languages or delegates in C\#.
 
+\begin{note}
+\todo{unclear}
 The body of our lambda expression shows similarity to the body
 of the quantifier we have used in specification.
 It doesn't, however, have to be the same, in particular the quantifier
 may talk only about certain indices, while lambda expressions
 are always total.
-\todo{unclear}
+\end{note}
+
+\begin{note}
+What follows, till the end of this chapter, is likely the most difficult part of this tutorial.
+It deals with two concepts: triggering and the reachable set
+bookkeeping, which are quite difficult to understand the first time.
+\end{note}
 
 \subsection{Triggers}
 
-SMT solvers, which are the underlaying VCC proving technology,
-prove that the program is correct by looking at possible counterexamples,
+SMT solvers, which are the underlaying VCC theorem proving technology,
+prove that the program is correct by looking for possible counterexamples,
 or \Def{models}, where your program goes wrong (\eg by violating an assertion).
-Usually the model is described only partially,
-by a set of statements about the state of the program.
+Once the solver goes through \emph{all} possible counterexamples, and finds them
+all to be inconsistent (\ie impossible),
+it considers the program to be correct.
+Normally, it would take virtually forever, for there is very large number of
+possible counterexamples, one for every input to the function (values stored in
+the heap also count as input).
+To workaround this problem, the SMT solver considers
+\Def{partial models}, \ie 
+sets of statements about the state of the program.
 For example, the model description may say \vcc{x == 7}, \vcc{y > x}
-and \vcc{*p == 12}.
-So the solver considers more than one model at a time (\eg the description
-above doesn't specify for example the value of variable \vcc{z}), and therefore
-we can hope that after a while it will finally go through all \emph{all}
-possible models, and say that your program is correct.
+and \vcc{*p == 12}, which describes all the concrete models, where
+these statements hold. There is great many such models,
+for example one for each different values \vcc{y} and other program variables,
+not even mentioned in the model.
 
 It is thus useful to think of the SMT solver as sitting there with
-a possible model, and seeing what it can do to out rule it.
+a possible model, and trying to find out whether the model is consistent or not.
 For example, if the description of the model says that \vcc{x > 7} and
 \vcc{x < 3}, then the solver can apply rules of arithmetic, conclude this is
 impossible, and move on to a next model.
-The SMT solvers are usually very good about out ruling the models
+The SMT solvers are usually very good in finding inconsistencies in models
 where the statements describing them do not involve universal quantifiers.
 With quantifiers things tend to get a bit tricky.
 
@@ -130,13 +146,20 @@ a[4] == 3
 The meaning of the universal quantifier is that it should hold
 not matter what we substitute for \vcc{i}, for example
 the universal quantifier above implies the following facts (which
-are called instances of the quantifier):
+are called \Def{instances} of the quantifier):
 \begin{VCC}
-4 < 10 ==> a[4] > 7
-11 < 10 ==> a[11] > 7
-k < 10 ==> a[k] > 7
+ 4 < 10 ==>  a[4] > 7  // for i == 4
 \end{VCC}
-where \vcc{k} is a program variable of type \vcc{unsigned}.
+which happens to be the one needed to refute our model,
+\begin{VCC}
+11 < 10 ==> a[11] > 7  // for i == 11
+\end{VCC}
+which is trivially true, because false implies everything, and
+\begin{VCC}
+ k < 10 ==>  a[k] > 7  // for i == k
+\end{VCC}
+where \vcc{k} is some program variable of type \vcc{unsigned}.
+
 However, there is potentially infinitely many such instances, and certainly too many
 to enumerate them all.
 Still, to prove that our model candidate is indeed contradictory
@@ -148,31 +171,99 @@ at the same time.
 
 The question remains: how does the SMT solver decide that the first
 instance is useful, and the other two are not?
-This is done through triggers.
-A trigger is a set of expressions, which together contain all variables
-that the particular formula quantifies over.
-For now we restrict our attention to single-element triggers.
-In case of our formula the default trigger is \vcc|{a[i]}|.
-The SMT solver will look at the model, and find all expressions
-of the form \vcc|a[...]|, and will then use them for instantiating
-the quantified formula.
-That is, it will instantiate it with \vcc{i == 4}, because
-if \vcc{i == 4} then \vcc{a[i] == a[4]}.
-Triggers can be specified explicitly, or one can let the SMT solver
-decide on triggers.
+This is done through so called \Def{triggers}.
+Triggers are either specified by the user or inferred automatically
+by the SMT solver.
+In all the examples before we just relied on the automatic trigger
+inference, but as we go to more complex examples, we'll need to consider
+explicit trigger specification.
+
+A trigger for a quantified formula is usually some subexpression 
+of that formula, which contains all the variables that the formula
+quantifies over.
+For example, in the following formula:
+\begin{VCC}
+\forall int i; int p[int]; is_pos(p, i) ==> f(i, p[i]) && g(i)
+\end{VCC}
+possible triggers include the following expressions
+\vcc|is_pos(p, i)|, \vcc|p[i]|, and also \vcc|f(i, p[i])|,
+whereas \vcc|g(i)| would not be a valid trigger, because
+it does not contain \vcc|p|.
+
+Let's assume that \vcc|is_pos(p, i)| is the trigger. 
+The basic idea is that when the SMT solvers considers a model,
+which mentions \vcc|is_pos(q, 7)| (where \vcc|q| is, \eg a local variable), then the formula
+should be instantiated with \vcc|q| and \vcc|7| substituted
+for \vcc|p| and \vcc|i| respectively.
+
+Note that the trigger \vcc|f(i, p[i])| is \Def{more restrictive} than
+\vcc|p[i]|: if the model contains \vcc|f(k, q[k])| it also contains \vcc|q[k]|.
+Thus, a ``bigger'' trigger will cause the formula to be instantiated less often,
+generally leading to better proof performance, but also possibly preventing
+VCC from proving some assertions.
+
+Triggers cannot contain boolean operators or the equality operator.
+As of the current release, arithmetic operators are allowed, but cause warnings
+and work unreliably, so you should avoid them.
+
+A formula can have more than one trigger.
+It is enough for one trigger to match in order for the formula
+to be instantiated.
+
 The explicit triggers are listed in \vcc|{...}|, after the quantified variables.
-
-\subsubsection{Default trigger selection}
-
-By default the SMT solver will select all smallest subexpressions, which
-contain all quantified variables.
-Each of these subexpressions will become a separate trigger.
-Z3 will not select triggers containing arithmetic operators (like \vcc{<}
-or \vcc{+}).
-
+They don't have to be subexpressions of the formula. 
+We'll see some examples of that later. 
+However, the implicit, solver-selected, triggers always are subexpressions of the formula.
+To select default triggers the SMT solver first considers all valid subexpression triggers,
+in the example above that would be:
+\vcc|is_pos(p, i)|, \vcc|p[i]|, and \vcc|f(i, p[i])|.
+Then, it looks if any of these is a subexpression of another.
+If it is so, the bigger of the two is discarded.
+This leads to discarding \vcc|f(i, p[i])|.
+Note that this is the \emph{least} restrictive set of
+triggers possible, that is one that will trigger \emph{most} often.
+Thus, specifying explicit triggers will usually make them more restrictive.%
+\footnote{ Unless you use a trigger which is not a subexpression of the formula. }
+Also, adding additional explicit triggers, will make the quantified formula trigger more often.
 In future, it will likely be VCC (which has a lot more information available),
 not the solver, who will decide on default triggers, but for now the SMT solver
 choices might not be what you want.
+
+\begin{note}
+\textbf{Multi-triggers}:
+Consider the following formula:
+\begin{VCC}
+\forall int a, b, c; P(a, b) && Q(b, c) ==> R(a, c)
+\end{VCC}
+There is no subexpression here, which would contain all the variables
+and not contain boolean operators.
+In such case we need to use a \Def{multi-trigger}, which
+is a set of expressions which together cover all variables.
+An example trigger here would be \vcc|{P(a, b), Q(b, c)}|.
+It means that for any model, which has both \vcc|P(a, b)|
+and \vcc|Q(b, c)| (for the same \vcc|b|!), the quantifier
+will be instantiated.
+In case a formula has multiple multi-triggers, \emph{all}
+expressions in at least \emph{one} of multi-triggers
+must match for the formula to be instantiated.
+
+If it is impossible to select any single-triggers in the formula,
+and none are specified explicitly, Z3 will select \emph{some}
+multi-trigger, which is usually not something that you want.
+\end{note}
+
+
+\subsubsection{Typical triggers}
+
+\itodo{maybe we want a section like that?}
+
+\begin{VCC}
+\forall unsigned i; {a[i]} i < 100 ==> a[i] > 0
+\end{VCC}
+
+\begin{VCC}
+\forall unsigned i, j; {f(i, j)} f(i, j) == i + j * 2
+\end{VCC}
 
 \subsubsection{Matching loops}
 
@@ -181,7 +272,7 @@ Consider a model description
 \forall struct Node *n; {\mine(n)} \mine(n) ==> \mine(n->next)
 \mine(a)
 \end{VCC}
-The SMT solver will instantiate the quantifier with \vcc{a}, yielding:
+Let's assume the SMT solver will instantiate the quantifier with \vcc{a}, yielding:
 \begin{VCC}
 \mine(a) ==> \mine(a->next)
 \end{VCC}
@@ -195,8 +286,8 @@ The SMT solver would usually cut such loop at a certain depth,
 but it might make the solver run out of time, memory, or both.
 
 Note that, if you skip the explicit trigger annotation, by the definition
-above, \vcc|{\mine(n)}| and \vcc|n->next| are still going to be default
-triggers of the formula above.
+above, \vcc|{\mine(n)}| and \vcc|{n->next}| are still going to be default
+triggers of the formula above, still leading to the matching loop.
 
 To avoid matching loop we need to use a different, more restrictive,
 trigger, for example \vcc|{\mine(n->next)}|.
@@ -212,7 +303,7 @@ notation, it uses explicit owns set membership.
 So the upside of the more restrictive explicit trigger is that it avoids
 excessive quantifier instantiations.
 The downside is that if the SMT solver is missing some instantiations,
-it might fail to outrule a model and report a bogus counterexample.
+it might fail to rule out a model and report a bogus counterexample.
 This doesn't happen in for our list, but we'll see such problems
 (but with solutions!) later.
 
@@ -224,25 +315,33 @@ for membership. For example, we would expect:
 \vccInput[linerange={member-endspec}]{c/07_list.c}
 
 \noindent
-Our list invariant only allows for showing
+Our current list invariant is strong enough only to show
 \vcc{\result != 0 ==> l->val[k]}, because it only says
 that if the list owns something, then it's in the \vcc{val}.
 It also says that if something can be reached by following
 the \vcc{next} field from the \vcc{head}, then it is owned.
-What we want to say is that if something is in the \vcc{val}
+What we want to additionally say is that if something is in the \vcc{val}
 set, then it can be reached from the \vcc{head}.
-Unfortunately, such property is not expressible in first-order
+Unfortunately, such property is not directly expressible in first-order
 logic (which is the underlaying logic of VCC specifications).
 To workaround this problem we associate with each node
-a set of value stored in that node, and the values stored in all the following nodes.
-In the invariant this is achieved by using a map from nodes
-to maps from integers to booleans (this is conceptually close
-to having a two-dimensional map).
+the set of values stored in all the following nodes and
+the current node.
+Additionally we say that the set for \vcc|NULL| node is empty.
+This way, as we walk down the \vcc|next| pointers we can keep
+track of all the elements that can be still reached.
+Once we reach the \vcc|NULL| pointer, we know that nothing
+more can be reached.
+The set of reachable nodes are stored as maps from
+\vcc|int| to \vcc|bool|.
+We need one such map per each node, so we just
+put a ghost map from \vcc|struct Node*| to the sets.
+Alternatively, we could store these sets as a field inside of each node,
+but maps gives more flexibility in updating it using lambda expressions.
 
 \vccInput[linerange={type-init}]{c/07_list.c}
 
 \noindent
-\itodo{more explanations}
 All these changes in the invariant do not affect
 the contract of \vcc{add()} function, and the only change in the body
 is that we need to replace the update of \vcc{l->val} with the following:
@@ -250,7 +349,8 @@ is that we need to replace the update of \vcc{l->val} with the following:
 \vccInput[linerange={specupdate-updateend}]{c/07_list.c}
 
 \noindent
-That is adding a node at the head only affect the followers set of the new head.
+That is adding a node at the head only affect the followers set of the new head,
+and the followers sets of all the other nodes remain unchanged.
 Now let us have a look at the \vcc{member()} function:
 
 \vccInput[linerange={member-out}]{c/07_list.c}
@@ -258,10 +358,16 @@ Now let us have a look at the \vcc{member()} function:
 \noindent
 The invariants of the \vcc{for} loop state that we only iterate over
 nodes owned by the list, and that at each iteration \vcc{k} is in the
-set of value represented by the list if and only if it is in the followers
+set of values represented by the list if and only if it is in the followers
 set of the current node.
-The followers set of the current node, and the next one differ only by
-the data stored in the current node, which is precisely what we check for.
+Both are trivially true for the head of the list, for the first iteration
+of the loop.
+For each next iteration, the invariant of the list tells us that by following
+the \vcc|next| pointer we stay in the owns set.
+It also tells us, that the \vcc|followers[n->next]| differs
+from \vcc|followers[n]| only by \vcc|n->data|.
+Thus, if \vcc|n->data| is not \vcc|val|, then the element,
+if it's in \vcc|followers[n]| must be also in \vcc|followers[n->next]|.
 
 %\subsection{Hinting triggers}
 %
