@@ -30,7 +30,7 @@ An annotation of the form \vcc{_( assert E )}, called an \emph{assertion}, asks 
 } whenever control reaches this assertion \footnote{
   This interpretation changes slightly if \vcc{E} refers to
   memory locations that might be concurrently written to by other
-  threads; see section \secref{concurrency}}.  
+  threads; see \secref{concurrency}}.  
 Thus, the line \lstinline|_( assert z <= x && z <= y )| says
 that when control reaches the assertion, \vcc{z} is no larger than \vcc{x} or
 \vcc{y}. If VCC verifies a program, it promises that all such assertions
@@ -487,7 +487,7 @@ In other words, it is roughly equivalent to a postcondition that \vcc{\ensures}
 that all other objects local to the caller prior
 to the call remain unchanged%
 \footnote{It's not quite the same when considering objects that are
-  wrapped; see section \secref{sect:invariants}.}.  VCC allows you
+  wrapped; see \secref{invariants}.}.  VCC allows you
 to specify pointers in separate writes clauses, and implicitly
 combines them into a single set. If a function spec contains no writes clauses, 
 it is equivalent to specifying a writes clause with empty set of
@@ -505,10 +505,10 @@ At any control point, VCC can ``know'' that a particular memory object
   latter condition guarantees that either \vcc{p} was listed in the
   writes clause or was not \vcc{\thread_local} in the caller.
 \end{itemize}
-In particular, formal function parameters and local parameters are
+In particular, formal function parameters and local variables are
 writable as long as they are in scope and have not been explicitly
-wrapped (section \secref{sect:invariants}) or reinterpreted to a
-different type (section \secref{sect:reinterpretation}).  VCC asserts
+wrapped (\secref{invariants}) or reinterpreted to a
+different type (\secref{reint}).  VCC asserts
 \vcc{\writable(p)} on each attempt to write to \vcc{*p}, as well as on
 each call to a function that lists \vcc{p} in a writes clause.
 
@@ -538,7 +538,7 @@ this example (one at a time) to see what error messages you get.
 
 While thread locality is what is checked on a read, in practice it is
 rarely used in preconditions, because it could be falsified by the
-unwrapping of other objects (section \secref{sect:invariants}). 
+unwrapping of other objects (\secref{invariants}). 
 More usual is to provide the stronger precondition of the object being
 \vcc{\unwrapped}; you should use this stronger condition in 
 %% For example, the assert/assume translation of \vcc{swap()} is%
