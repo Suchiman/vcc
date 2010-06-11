@@ -671,8 +671,10 @@ struct _vcc_label_struct { };
 typedef struct _vcc_label_struct ^_vcc_label_t;
 #define label_t _vcc_label_t
 
-template<typename T> bool _vcc_is_low(T v);
-#define is_low _vcc_is_low
+ispure label_t _vcc_seclabel_bot();
+ispure label_t _vcc_seclabel_top();
+#define seclabel_bot _vcc_seclabel_bot()
+#define seclabel_top _vcc_seclabel_top()
 
 bool _vcc_test_classifier(bool classifier, bool test);
 #define test_classifier _vcc_test_classifier
@@ -685,6 +687,14 @@ label_t _vcc_current_context(void);
 
 template<typename T> label_t _vcc_label_of(T e);
 #define label_of _vcc_label_of
+
+template<typename T> bool _vcc_is_lower(T, label_t);
+#define is_lower(_EXPR1_,_LEVEL_) _vcc_is_lower(_EXPR1_, _LEVEL_)
+
+#define is_low(_EXPR_) _vcc_is_lower(_EXPR_, seclabel_bot)
+
+bool _vcc_sec_leq(label_t, label_t);
+#define sec_leq _vcc_sec_leq
 
 #endif //VERIFY2
 

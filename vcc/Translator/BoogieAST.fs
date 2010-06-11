@@ -159,7 +159,8 @@ namespace Microsoft.Research.Vcc
          ("&&", Microsoft.Boogie.BinaryOperator.Opcode.And);
          ("||", Microsoft.Boogie.BinaryOperator.Opcode.Or);
          ("==>", Microsoft.Boogie.BinaryOperator.Opcode.Imp);
-         ("<==>", Microsoft.Boogie.BinaryOperator.Opcode.Iff)
+         ("<==>", Microsoft.Boogie.BinaryOperator.Opcode.Iff);
+         ("<:", Microsoft.Boogie.BinaryOperator.Opcode.Subtype)
       ]
 
     type AddCmdInfo =
