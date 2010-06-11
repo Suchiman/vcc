@@ -311,3 +311,21 @@ template<typename T> void foo(void **p)
 `
 Verification of foo succeeded.
 `
+#include"vcc.h"
+
+struct S {
+  unsigned n;
+};
+
+
+unsigned foo(struct S *T)
+requires(wrapped(T))
+{
+unsigned i;
+for(i=0; i<T->n; i++)
+
+return 0;
+}
+`
+Verification of foo succeeded.
+`
