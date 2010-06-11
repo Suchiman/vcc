@@ -1,4 +1,11 @@
+\newif\ifdense
+\densetrue
+
+\ifdense
+\documentclass[preprint,nocopyrightspace]{sigplanconf}
+\else
 \documentclass{article}
+\fi
 \bibliographystyle{plain}
 
 \usepackage{amsmath}
@@ -24,10 +31,14 @@
 \newcommand{\lines}[1]{\begin{array}{l}#1\end{array}}
 \newcommand{\linesi}[1]{\;\;\;\begin{array}{l}#1\end{array}}
 \newcommand{\tuple}[1]{{\langle}{#1}\rangle}
+
 \usepackage[OT1]{fontenc}
+\ifdense
+\else
 \usepackage{courier}
 %\usepackage[T1]{fontenc}
 %\usepackage[scaled=0.81]{luximono}
+\fi
 
 \newcommand{\secref}[1]{Section~\ref{sect:#1}}
 \newcommand{\figref}[1]{Figure~\ref{fig:#1}}
@@ -55,6 +66,24 @@
   \end{minipage}
 }
 
+\ifdense
+\renewenvironment{note}{%
+\vspace{-3mm}
+\begin{list}{}%
+    {\setlength{\leftmargin}{0.03\textwidth}}%
+    \item[]%
+  \textcolor{noteframe}{\rule{0.444\textwidth}{1pt}} \\
+  %\small
+  %\sffamily
+  \selectfont
+  \textbf{Note:}
+}{%
+  \vspace{-2mm} \\ 
+  \textcolor{noteframe}{\rule{0.444\textwidth}{1pt}} 
+  \end{list}
+\vspace{-2mm}
+}
+\else
 \renewenvironment{note}{%
 \vspace{-3mm}
 \begin{list}{}%
@@ -71,6 +100,7 @@
   \end{list}
 \vspace{-2mm}
 }
+\fi
 
 \newcommand{\eqspc}[1]{\;\;{#1}\;\;}
 \setlength{\arraycolsep}{0mm}
@@ -96,10 +126,15 @@
 
 \begin{document}
 
-\title{A VCC Tutorial}
+\title{Verifying Concurrent C Programs with VCC}
 %\title{Developing VCC Specifications \\ for Concurrent C Programs}
 
+\ifdense
+\authorinfo{VCC Team}{}{}
+\preprintfooter{VCC Tutorial Working Draft}
+\else
 \author{ }
+\fi
 
 
 %\msrtrno{MSR-TR-2010-9}
@@ -125,8 +160,18 @@
 %\end{abstract}
 
 
+\ifdense
+\lstset{
+  basicstyle=\small\sffamily,
+  columns=fullflexible,
+}
+\else
 \lstset{
   basicstyle=\small\ttfamily,
+}
+\fi
+
+\lstset{
   keywordstyle=\bfseries,
   breaklines=true,
   numberstyle=\tiny\sf,
@@ -140,8 +185,7 @@
 %  belowskip=2mm,
 %  xleftmargin=2mm,
 %  xrightmargin=2mm,
-  }
-
+}
 
 
 
