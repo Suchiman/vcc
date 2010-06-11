@@ -337,7 +337,7 @@ The syntax \vcc{\old(v)} is used to refer to value of \vcc{v} before
 an atomic update, and plain \vcc{v} is used for the value of \vcc{v}
 after the update.
 That is, when checking that an atomic update preserves the invariant
-of a counter \vcc{n}, we will take the state of the program right
+of a counter, we will take the state of the program right
 before the update, the state right after the update, and check
 that the invariant holds for that pair of states.
 
@@ -348,21 +348,22 @@ This is roughly what happens under the hood when a field is
 declared without the \vcc{volatile} modifier.
 \end{note}
 
-As we can see there is no syntactic distinction between single-
-and two-state invariants in VCC.
+As we can see the single- and two-state invariants are both defined
+using the \vcc{_(invariant ...)} syntax.
 The single-state invariants are just two-state invariants, which do not use
 \vcc{\old(...)}.
-However, we often need an interpretation of an object invariant in a single state \vcc{s}.
-For that we use the \Def{stuttering} transition from \vcc{s} to \vcc{s} itself.
+However, we often need an interpretation of an object invariant in a single state \vcc{S}.
+For that we use the \Def{stuttering} transition from \vcc{S} to \vcc{S} itself.
 VCC enforces that all invariants are \Def{reflexive} that is if they hold
-over a transition \vcc{s0, s1}, then they should hold in just \vcc{s1}
-(\ie over \vcc{s1, s1}).
+over a transition \vcc{S0, S1}, then they should hold in just \vcc{S1}
+(\ie over \vcc{S1, S1}).
 In practice,
 this means that \vcc{\old(...)} should be only used to describe
 how objects change, and not what are their proper values.
 In particular,
-all invariants of the form \vcc{\old(E) == E || ...}, for any expression \vcc{E}, are reflexive.
-On the other hand, the invariant \vcc{\old(f) < 7} is not reflexive.
+all invariants which do not use \vcc{\old(...)} are reflexive, and so
+are all invariants of the form \vcc{\old(E) == E || P}, for any expression \vcc{E} and condition \vcc{P}.
+On the other hand, the invariants \vcc{\old(f) < 7} and \vcc{x == \old(x) + 1} are not reflexive.
 
 Let's now discuss where can you actually rely on invariants being preserved.
 
@@ -381,7 +382,7 @@ The question is what do we know about \vcc{x} and \vcc{y}
 at the end of \vcc{foo()}.
 If we knew that nobody is updating \vcc{n->v} while \vcc{foo()}
 is running we would know \vcc{x == y}.
-This would be the case if \vcc{n} was mutable not wrapped.
+This would be the case if \vcc{n} was mutable, but it is wrapped.
 In our case, because \vcc{n} is consistent, other threads can update it,
 while \vcc{foo()} is running, but they will need to
 adhere to \vcc{n}'s invariant.
@@ -391,19 +392,19 @@ But this is incorrect: \vcc{n->v} might get incremented
 by more than one, in several steps.
 The correct answer is thus \vcc{x <= y}.
 Unfortunately, in general, such properties are very difficult to deduce
-automatically, which is why we use common object invariants and admissibility
+automatically, which is why we use plain object invariants and admissibility
 check to express such properties in VCC.
 
 \begin{note}
-An invariant is \emph{transitive} if it holds over states \vcc{s0, s2},
-provided that it holds over \vcc{s0, s1} and \vcc{s1, s2}.
+An invariant is \emph{transitive} if it holds over states \vcc{S0, S2},
+provided that it holds over \vcc{S0, S1} and \vcc{S1, S2}.
 Transitive invariants could be assumed over arbitrary
 pairs of states, provided that the object stays consistent
 in between them. 
 VCC does not require invariants to be transitive though.
 
 Some invariants are naturally transitive (\eg we could say
-\vcc{_(invariant old(x) <= x)} in \vcc{struct Counter},
+\vcc{_(invariant \old(x) <= x)} in \vcc{struct Counter},
 and it would be almost as good our current invariant).
 Some other invariants, especially the more complicated ones,
 are more difficult to make transitive.
@@ -428,8 +429,9 @@ It has a pointer to the counter, and a owns a claim, which
 claims the counter.
 So far, so good.
 It also states that the current value of the counter is no less than \vcc{r}.
-Clearly, the reading doesn't own the counter, so our previous rule
-that you can mention in your invariant everything that you own doesn't apply.
+Clearly, the \vcc{Reading} doesn't own the counter, so our previous rule
+from \secref{admissibility0}, which states
+that you can mention in your invariant everything that you own, doesn't apply.
 It would be tempting to extend that rule to say ``everything that you own
 or have a claim on'', but VCC actually uses a more general rule.
 In a nutshell, the rule says that every invariant should be preserved
@@ -448,50 +450,65 @@ When that field is set to false, we want to \emph{effectively} disable the invar
 which is the same as just forcing it to be true in that case.
 Alternatively, you might try to think of all objects as being consistent for a while.
 
-An atomic action, which updates state \vcc{s0} into \vcc{s1}, is \Def{legal} if and only if the invariants of
-objects that have changed between \vcc{s0} and \vcc{s1} hold over \vcc{s0, s1}.
+An atomic action, which updates state \vcc{S0} into \vcc{S1}, is \Def{legal} if and only if the invariants of
+objects that have changed between \vcc{S0} and \vcc{S1} hold over \vcc{S0, S1}.
 In other words, a legal action preservers invariants of updated objects.
 This should not come as a surprise: this is exactly what VCC checks
 for in atomic blocks.
 
 An invariant is \Def{stable} if and only if it cannot be broken by legal updates.
 More precisely, to prove that an invariant of \vcc{o} is stable,
-one needs to ``simulate'' an arbitrary legal update:
+VCC needs to ``simulate'' an arbitrary legal update:
 \begin{itemize}
-\item Take two arbitrary states \vcc{s0} and \vcc{s1}.
-\item Assume that all invariants (including \vcc{o}'s) hold over \vcc{s0, s0}.
-\item Assume that all fields of \vcc{o} are the same in \vcc{s0} and \vcc{s1}.
-\item Assume that for all objects, fields of which are not the same in \vcc{s0} and \vcc{s1},
-their invariants hold over \vcc{s0, s1}.
-\item Check that invariant of \vcc{o} holds over \vcc{s0, s1}.
+\item Take two arbitrary states \vcc{S0} and \vcc{S1}.
+\item Assume that all invariants (including \vcc{o}'s) hold over \vcc{S0, S0}.
+\item Assume that for all objects, some fields of which are not the same in \vcc{S0} and \vcc{S1},
+their invariants hold over \vcc{S0, S1}.
+\item Assume that all fields of \vcc{o} are the same in \vcc{S0} and \vcc{S1}.
+\item Check that invariant of \vcc{o} holds over \vcc{S0, S1}.
 \end{itemize}
 The first assumption comes from the fact that all invariants are reflexive.
+The second assumption is legality.
+The third assumption follows from the second (if \vcc{o} did change, its invariant would
+automatically hold).
 
 An invariant is \Def{admissible} if and only if its stable and reflexive.
 
 First, let's see how our previous notion of admissibility relates to this one.
-If \vcc{o} owns \vcc{p}, then \vcc{p \in \owns(o)}.
-By the second admissibility assumption, because \vcc{\owns(o)} resides
-in a field of \vcc{o}, after the simulated action \vcc{o} still owns \vcc{p}.
-Because of that, we know that \vcc{p} is consistent in both \vcc{s0} and \vcc{s1}.
-Therefore its non-volatile fields do not change between \vcc{s0} and \vcc{s1}.
-Additionally, if \vcc{p} owned \vcc{q} before the atomic action, and the owns set of \vcc{p} is non-volatile,
+If \vcc{o} owns \vcc{p}, then \vcc{p \in o->\owns}.
+By the third admissibility assumption, after the simulated action \vcc{o} still owns \vcc{p}.
+By the rules of ownership (\secref{wrap-unwrap}), only threads can own
+inconsistent objects, so we know that \vcc{p} is consistent in both \vcc{S0}
+and \vcc{S1}.
+Therefore non-volatile fields of \vcc{p} do not change between \vcc{S0} and \vcc{S1},
+and thus the invariant of \vcc{o} can freely talk about their values:
+whatever property of them was true in \vcc{S0}, will also be true in \vcc{S1}.
+Additionally, if \vcc{p} owned \vcc{q} before the atomic action, and the \vcc{p->\owns} is non-volatile,
 it will keep owning \vcc{q}, and thus non-volatile fields of \vcc{q}
 will stay unchanged.
-Thus our previous notion of admissibility is no stronger than this one.
+Thus our previous notion of admissibility is a special case of this one.
 
 Getting back to our \vcc{foo()} example, to deduce that \vcc{x <= y}, after
-the first read one could create a ghost \vcc{Reading} object, and
+the first read we could create a ghost \vcc{Reading} object, and
 use its invariant in the second action.
 While we need to say that \vcc{x <= y} is what's required,
 using a full-fledged object might seem like an overkill.
 Luckily, definitions of claims themselves can specify additional invariants.
 
+\begin{note}
+The admissibility condition above is semantic: it will be checked by the theorem
+prover. 
+This allows construction of the derived concepts like claims and ownership,
+and also escaping their limitations if needed.
+It is therefore the most central concept of VCC verification methodology,
+even if it doesn't look like much at the first sight.
+\end{note}
+
 \subsection{Guaranteed properties in claims}
 \label{sect:claim-props}
 
-When constructing a claim, one can specify additional invariants to put on
-the virtual definition of the claim structure.
+When constructing a claim, you can specify additional invariants to put on
+the imaginary definition of the claim structure.
 Let's have a look at annotated version of our previous \vcc{foo()} function.
 
 \vccInput[linerange={readtwice-endreadtwice}]{c/09_counter.c}
@@ -523,11 +540,13 @@ that is wrapped).
 Moreover, the invariant has to be admissible, under the condition
 that all objects in \vcc{S} stay consistent as long as the claim itself
 stays consistent.
+The claimed property cannot use \vcc{\old(...)}, and therefore it's automatically
+reflexive, thus it only needs to be stable to guarantee admissibility.
 
 But what about locals?
 Normally, object invariants are not allowed to reference locals.
 The idea is that when the claim is constructed, all the locals that the
-claim references are copied into fields the claim.
+claim references are copied into imaginary fields of the claim.
 The fields of the claim never change, once it is created.
 Therefore an assignment \vcc{x = MAX_UINT;} in between the atomic
 blocks would not invalidate the claim --- the claim would still
@@ -544,14 +563,14 @@ This copying business doesn't affect initial checking of the \vcc{P},
 \vcc{P} should just hold at the point when the claim is created.
 It does however affect the admissibility check for \vcc{P}:
 \begin{itemize}
-\item Consider an arbitrary legal action, from \vcc{s0} to \vcc{s1}.
-\item Assume that all invariants hold over \vcc{s0, s0}, including assuming \vcc{P} in \vcc{s0}.
-\item Assume that fields of \vcc{c} didn't change between \vcc{s0} and \vcc{s1}
+\item Consider an arbitrary legal action, from \vcc{S0} to \vcc{S1}.
+\item Assume that all invariants hold over \vcc{S0, S0}, including assuming \vcc{P} in \vcc{S0}.
+\item Assume that fields of \vcc{c} didn't change between \vcc{S0} and \vcc{S1}
 (in particular locals referenced by the claim are the same as at the moment of its creation).
-\item Assume all objects in \vcc{S} are consistent in both \vcc{s0} and \vcc{s1}.
-\item Assume that for all objects, fields of which are not the same in \vcc{s0} and \vcc{s1},
-their invariants hold over \vcc{s0, s1}.
-\item Check that \vcc{P} holds in \vcc{s1}.
+\item Assume all objects in \vcc{S} are consistent in both \vcc{S0} and \vcc{S1}.
+\item Assume that for all objects, fields of which are not the same in \vcc{S0} and \vcc{S1},
+their invariants hold over \vcc{S0, S1}.
+\item Check that \vcc{P} holds in \vcc{S1}.
 \end{itemize}
 
 To prove \vcc{\active_claim(c)} one needs to prove \vcc{\consistent(c)} and that
@@ -559,8 +578,12 @@ the current state is a \Def{full-stop} state, \ie state where all invariants
 are guaranteed to hold.
 Any execution state outside of an atomic block is full-stop.
 The state right at the beginning of an atomic block is also full-stop.
-The states in the middle of it (\ie after some state updates) might not be
-(this isn't a soundness problem because they are not observable by other threads).
+The states in the middle of it (\ie after some state updates) might not be.
+
+\begin{note}
+Such middle-of-the-atomic states are not observable by other threads, and therefore
+the fact that the invariants don't hold there does not create soundness problems.
+\end{note}
 
 The fact that \vcc{P} follows from \vcc{c}'s invariant after the construction
 is expressed using \vcc{\claims(c, P)}.
