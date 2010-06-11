@@ -193,7 +193,7 @@ namespace Microsoft.Research.Vcc
 
       
       VC.VCGen.Outcome outcome;
-
+      string extraInfo = null;
       try {
         parent.swVerifyImpl.Start();
         VCGenPlugin plugin = parent.plugin;
@@ -201,6 +201,9 @@ namespace Microsoft.Research.Vcc
           outcome = plugin.VerifyImpl(env, vcgen, impl, currentBoogie, reporter);
         else
           outcome = vcgen.VerifyImplementation(impl, currentBoogie, reporter);
+      } catch (UnexpectedProverOutputException exc) {
+        outcome = VC.ConditionGeneration.Outcome.OutOfMemory;
+        extraInfo = "caused an exception \"" + exc.Message + "\"";
       } finally {
         parent.swVerifyImpl.Stop();
       }
@@ -209,7 +212,7 @@ namespace Microsoft.Research.Vcc
         CloseVcGen();
       }
 
-      reporter.PrintSummary(outcome);
+      reporter.PrintSummary(outcome, extraInfo);
 
       modelCount += reporter.modelCount;
 
