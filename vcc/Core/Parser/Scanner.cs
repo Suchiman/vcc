@@ -2101,6 +2101,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SpecGhost,
     /// <summary>
+    /// group, context-dependent
+    /// </summary>
+    SpecGroup,
+    /// <summary>
     /// invariant, context-dependent
     /// </summary>
     SpecInvariant,
@@ -2290,7 +2294,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword = new Keyword(Token.SpecEnsures, "ensures");
       keywords['e' - 'a'] = keyword;
 
-      keyword = new Keyword(Token.SpecGhost, "ghost");
+      keyword = new Keyword(Token.SpecGroup, "group");
+      keyword = new Keyword(Token.SpecGhost, "ghost", keyword);
       keywords['g' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecInvariant, "invariant");

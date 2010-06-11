@@ -173,6 +173,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\10_rundown.c"
+				>
+			</File>
+			<File
 				RelativePath=".\BinarySearch.c"
 				>
 			</File>
@@ -206,6 +210,10 @@
 			</File>
 			<File
 				RelativePath=".\ssort.c"
+				>
+			</File>
+			<File
+				RelativePath=".\ssortNewSyntax.c"
 				>
 			</File>
 		</Filter>

@@ -12,4 +12,13 @@ _(atomic_inline) int __interlockedcompareexchange(volatile int *Destination, int
   }
 }
 
+_(atomic_inline) unsigned __interlockedcompareexchange(volatile unsigned *Destination, unsigned Exchange, unsigned Comparand) {
+  if (*Destination == Comparand) {
+    *Destination = Exchange;
+    return Comparand;
+  } else {
+    return *Destination;
+  }
+}
+
 
