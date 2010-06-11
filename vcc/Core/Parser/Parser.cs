@@ -560,7 +560,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(funcDeclarator.SourceLocation);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[0].SourceLocation);
-      InitializeLocallyDefinedNamesFromParameters(funcDeclarator.Parameters);
+      InitializeLocallyDefinedNamesFromParameters(funcDeclarator);
 
       this.currentLexicalScope = new LexicalScope(this.currentLexicalScope, slb);
       BlockStatement body = this.ParseBody(followers | Token.Semicolon);
@@ -589,10 +589,12 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.SkipTo(followers);
     }
 
-    protected void InitializeLocallyDefinedNamesFromParameters(IEnumerable<Parameter> parameters) {
+    protected void InitializeLocallyDefinedNamesFromParameters(FunctionDeclarator funcDecl) {
       this.locallyDefinedNames.Clear();
-      foreach (Parameter p in parameters)
+      foreach (Parameter p in funcDecl.Parameters)
         this.locallyDefinedNames[p.Name.Identifier.Name.Value] = true;
+      foreach (TemplateParameterDeclarator tp in funcDecl.TemplateParameters)
+        this.locallyDefinedNames[tp.Identifier.Name.Value] = false;
     }
 
     protected TypeExpression ApplyDeclarator(Declarator declarator, TypeExpression returnType) {
@@ -1254,7 +1256,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         slb.UpdateToSpan(parName.SourceLocation);
         result.Add(new TemplateParameterDeclarator(parName, slb));
         SimpleName simpleName = new SimpleName(parName.Name, slb, false);
-        this.typedefExpressions[parName.Value] = new VccTemplateTypeParameterExpression(simpleName);
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
       }
@@ -2880,7 +2881,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       slb.UpdateToSpan(expression.SourceLocation);
       this.GetNextToken();
-      if (TS.TypeStart[this.currentToken] && (this.currentToken != Token.Identifier || this.typedefExpressions.ContainsKey(this.scanner.GetIdentifierString()))) {
+      if (this.CurrentTokenStartsTypeExpression()) {
         TokenSet followersOrCommaOrGreaterThan = followers|Token.Comma|Token.GreaterThan;
         List<TypeExpression> arguments = new List<TypeExpression>();
         if (this.currentToken != Token.GreaterThan) {
@@ -3080,14 +3081,21 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     protected bool CurrentTokenStartsDeclaration() {
-      return TS.DeclarationStart[this.currentToken] && (this.currentToken != Token.Identifier || this.typedefExpressions.ContainsKey(this.scanner.GetIdentifierString()));
+      return CurrentTokenStartsXHelper(TS.DeclarationStart);
     }
 
     protected bool CurrentTokenStartsTypeExpression() {
-      return TS.TypeStart[this.currentToken] &&
-        (this.currentToken != Token.Identifier ||
-          (this.typedefExpressions.ContainsKey(this.scanner.GetIdentifierString()) &&
-           !this.locallyDefinedNames.ContainsKey(this.scanner.GetIdentifierString())));
+      return CurrentTokenStartsXHelper(TS.TypeStart);
+    }
+
+    private bool CurrentTokenStartsXHelper(TokenSet ts) {
+      if (!ts[this.currentToken]) return false;               // not even a superficial match
+      if (this.currentToken != Token.Identifier) return true; // non-identifier must start type
+      string id = this.scanner.GetIdentifierString();         // identifiers need closer inspection
+      bool localNameIsParOrDecl;
+      if (this.locallyDefinedNames.TryGetValue(id, out localNameIsParOrDecl))
+        return !localNameIsParOrDecl;                         // when locally defined, then only type parameters match
+      return this.typedefExpressions.ContainsKey(id);         // non-local - see if it is a known typedef'ed name
     }
 
     protected Expression ParseQualifiedName(Expression qualifier, TokenSet followers)
