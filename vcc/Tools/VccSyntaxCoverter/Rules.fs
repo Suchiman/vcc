@@ -375,6 +375,13 @@ module Rules =
         | _ -> failwith ""
     addRule (parenRule false "unclaim" unclaim)
             
+    let def_group toks = 
+      match splitAt "," toks with
+        | groupName :: groupSpecs ->
+          spec "group" ((joinWith " " groupSpecs) @ [Tok.Whitespace(fakePos, " ")] @ groupName)
+        | _ -> failwith ""
+    addRule (parenRule false "def_group" def_group)
+
 
     let struct_rule = function
       | hd :: rest ->

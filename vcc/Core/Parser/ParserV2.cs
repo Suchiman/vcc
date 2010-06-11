@@ -168,6 +168,21 @@ namespace Microsoft.Research.Vcc.Parsing
             this.GetNextToken();
             this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis, false);
             break;
+          case Token.SpecGroup:
+            var slb = this.GetSourceLocationBuilderForLastScannedToken();
+            this.GetNextToken();
+            List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers | Token.Identifier);
+            var groupName = this.ParseNameDeclaration(true);
+            slb.UpdateToSpan(groupName.SourceLocation);
+            var dummyName = this.GetNameFor(SanitizeString(slb.SourceDocument.Name.Value) + ((ISourceLocation)slb).StartIndex);
+            List<Expression> groupDeclSpecifiers = new List<Expression>(3);
+            groupDeclSpecifiers.Add(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.compilation.NameTable, "StringVccAttr"));
+            groupDeclSpecifiers.Add(new CompileTimeConstant("group_decl", groupName.SourceLocation));
+            groupDeclSpecifiers.Add(new CompileTimeConstant(groupName.Name.Value, groupName.SourceLocation));
+            specifiers.Add(new DeclspecSpecifier(groupDeclSpecifiers, groupName.SourceLocation));
+            var groupDecl = new VccNestedStructDeclaration(new NameDeclaration(dummyName, groupName.SourceLocation), new List<ITypeDeclarationMember>(0), specifiers, slb);
+            typeMembers.Add(groupDecl);
+            break;
         }
         this.SkipSemicolonsInSpecBlock(STS.TypeMember | Token.RightParenthesis);
       }
@@ -566,7 +581,7 @@ namespace Microsoft.Research.Vcc.Parsing
       public static TokenSet FunctionOrBlockContract = new TokenSet() | Token.SpecEnsures | Token.SpecReads | Token.SpecRequires | Token.SpecDecreases | Token.SpecWrites;
       public static TokenSet LoopContract = new TokenSet() | Token.SpecInvariant | Token.SpecWrites | Token.SpecDecreases;
       public static TokenSet SpecParameter = new TokenSet() | Token.SpecGhost | Token.SpecOut;
-      public static TokenSet TypeMember = new TokenSet() | Token.SpecGhost | Token.SpecInvariant;
+      public static TokenSet TypeMember = new TokenSet() | Token.SpecGhost | Token.SpecInvariant | Token.SpecGroup;
       public static TokenSet Global = new TokenSet() | Token.SpecAxiom | Token.SpecGhost | Token.SpecLogic;
       //public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns | Token.SpecAtomicInline | Token.SpecVolatileOwns | Token.SpecPure;
     }
