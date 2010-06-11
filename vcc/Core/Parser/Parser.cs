@@ -261,6 +261,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       List<TemplateParameterDeclarator>/*?*/ templateParameters = this.ParseTemplateParameters(followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
+      this.InitializeLocallyDefinedNamesFromParameters(templateParameters);
       List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, specSpecifiers, followers | TS.DeclaratorStart | Token.Semicolon | Token.Colon);
 
       bool savedInSpecCode = this.InSpecCode;
@@ -339,6 +340,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.SkipTo(followers);
       } else
         this.SkipSemiColonAfterDeclarationOrStatement(followers);
+
 
       if (seenSpecToken) {
         this.Skip(Token.RightParenthesis);
@@ -465,7 +467,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           this.typedefExpressions[funcDeclarator.Identifier.Value] = functionType;
           TypedefDeclaration typedef = new TypedefDeclaration(functionType, funcDeclarator.Identifier, slb);  //TODO: const and volatile
           this.typedefDecls[funcDeclarator.Identifier.Value] = typedef;
-          this.InitializeLocallyDefinedNamesFromParameters(funcDeclarator);
+          this.InitializeLocallyDefinedNamesFromParameters(funcDeclarator.Parameters);
           this.ParseFunctionOrBlockContract(funcDeclarator.Contract, followers);
           this.AssociateContracts(functionType, funcDeclarator);
           typeMembers.Add(typedef);
@@ -481,6 +483,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             typeMembers.Add(field);
           }
         }
+        this.locallyDefinedNames.Clear();
         return;
       }
       bool acceptsExtraArguments;
@@ -502,6 +505,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           slb);
       this.AssociateContracts(fdecl, funcDeclarator);
       typeMembers.Add(fdecl);
+      this.locallyDefinedNames.Clear();
 
       var prefix = "\\macro_";
       var nameString = funcDeclarator.FunctionName.Identifier.Name.Value;
@@ -558,7 +562,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder slb = new SourceLocationBuilder(funcDeclarator.SourceLocation);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[0].SourceLocation);
-      InitializeLocallyDefinedNamesFromParameters(funcDeclarator);
+      //InitializeLocallyDefinedNamesFromParameters(funcDeclarator.Parameters);
 
       this.currentLexicalScope = new LexicalScope(this.currentLexicalScope, slb);
       BlockStatement body = this.ParseBody(followers | Token.Semicolon);
@@ -584,18 +588,21 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.AssociateContracts(func, funcDeclarator);
       //TODO: complain if statements != null;
       if (this.currentToken == Token.Semicolon) this.GetNextToken();
+      this.locallyDefinedNames.Clear();
       this.SkipTo(followers);
     }
 
-    protected void InitializeLocallyDefinedNamesFromParameters(FunctionDeclarator funcDecl) {
-      this.locallyDefinedNames.Clear();
-      foreach (Parameter p in funcDecl.Parameters)
-        this.locallyDefinedNames[p.Name.Identifier.Name.Value] = true;
-      if (funcDecl.TemplateParameters != null)
-        foreach (TemplateParameterDeclarator tp in funcDecl.TemplateParameters)
-          this.locallyDefinedNames[tp.Identifier.Name.Value] = false;
+    protected void InitializeLocallyDefinedNamesFromParameters(IEnumerable<Parameter> parameters) {
+      if (parameters != null)
+        foreach (var p in parameters)
+          this.locallyDefinedNames[p.Name.Identifier.Name.Value] = true;
     }
 
+    protected void InitializeLocallyDefinedNamesFromParameters(IEnumerable<TemplateParameterDeclarator> parameters) {
+      if (parameters != null)
+        foreach (var p in parameters)
+          this.locallyDefinedNames[p.Identifier.Name.Value] = false;
+    }
     protected TypeExpression ApplyDeclarator(Declarator declarator, TypeExpression returnType) {
       PointerDeclarator/*?*/ pointerDeclarator = declarator as PointerDeclarator;
       FunctionDeclarator/*?*/ funcDeclarator = declarator as FunctionDeclarator;
@@ -1254,7 +1261,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         NameDeclaration parName = this.ParseNameDeclaration(false);
         slb.UpdateToSpan(parName.SourceLocation);
         result.Add(new TemplateParameterDeclarator(parName, slb));
-        this.locallyDefinedNames[parName.Name.Value] = false; // mark as template type
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
       }
@@ -1414,7 +1420,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       FunctionDeclarator result = new FunctionDeclarator(functionName, parameters, templateParameters, slb);
       this.Skip(Token.RightParenthesis);
-      this.InitializeLocallyDefinedNamesFromParameters(result);
+      this.InitializeLocallyDefinedNamesFromParameters(parameters);
       this.ParseFunctionOrBlockContract(result.Contract, followers);
       return result;
     }

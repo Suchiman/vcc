@@ -817,7 +817,7 @@ vcc(claimable) struct T
 };
 
 void foo() {
-  struct T *t = (struct T *)malloc(sizeof(T));
+  struct T *t = (struct T *)malloc(sizeof(struct T));
   assert(t == NULL || is_claimable(t));
 }
 `
