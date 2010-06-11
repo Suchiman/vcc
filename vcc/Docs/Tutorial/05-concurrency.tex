@@ -40,6 +40,31 @@ The attribute
 to be treated as a volatile field (\ie we want to be able to write
 it while to object is consistent; normally this is not possible).
 
+First, let's have a look at lock initialization:
+
+\vccInput[linerange={init-xchg}]{c/08_lockw.c}
+
+\noindent
+One new thing there is the use of \Def{ghost parameter}.
+The regular lock initialization function prototype does not say which
+object the lock is supposed to protect, but our lock invariant requires it.
+Thus, we introduce additional parameter for the purpose of verification.
+A call to the initialization will look like \vcc{InitiliazeLock(&l _(ghost o))}.
+
+Second, we require that the object to be protected is wrapped (recall that wrapped means consistent
+and owned by the current thread).
+We need it to be consistent because we will want to make the lock own it, and
+lock can only own consistent objects.
+We need the current thread to own it, because ownership transfer can
+only happen between the current thread and an object,
+and not for example some other thread and an object.
+Third, we say we're going to write the protected object.
+This allows for the transfer, and prevents the calling function from assuming
+that the object stays wrapped after the call.
+Note that this contract is much like the contract of the function
+adding an object to a container data-structure, like
+\vcc{sc_add()} from \secref{dynamic-ownership}.
+
 Now we can see how we operate on volatile fields.
 We shall start with the function releasing the lock, as it is simpler,
 than the one acquiring it.
@@ -51,18 +76,12 @@ First, let's have a look at the contract.
 \vcc{Release()} requires the lock to be wrapped.%
 \footnote{ You might wonder how multiple threads can all own the lock (to have it
 wrapped), we will fix that later. }
-Second, we require that the protected object is wrapped (recall that wrapped means consistent
-and owned by the current thread).
-We need it to be consistent because we will want to make the lock own it, and
-lock can only own consistent objects.
-We need the current thread to own it, because ownership transfer can
-only happen between the current thread and an object,
-and not for example some other thread and an object.
-Third, we say we're going to write the protected object.
-This allows for the transfer, and prevents the calling function from assuming
-that the object stays wrapped after the call.
-Note that this contract is much like the contract of the function
-adding an object to a container data-structure (see TODO).
+The preconditions on the protected object are very similar to the
+preconditions on the \vcc{InitiliazeLock()}.
+Note that the \vcc{Release()} does not mention the lock it its writes clause,
+this is because the write it performs is volatile.
+Intuitively, VCC needs to assume such writes can happen at any time, so one additional
+write from this function doesn't make a difference.
 
 The \vcc{atomic} block is similar in spirit to the \vcc{unwrapping} block ---
 it allows for modifications of listed objects and checks if their invariants
@@ -116,8 +135,9 @@ about the invariant of lock.
 Let's then move to \vcc{Acquire()}. 
 The specification is not very surprising: it requires the lock to be wrapped,
 and ensures that after the call the thread will own the protected object,
-and moreover, that the thread didn't own it before.
-\todo{is-fresh should be explained earlier}
+and moreover, that the thread didn't directly own it before.
+This is much like the postcondition on \vcc{sc_add()} function
+from \secref{dynamic-ownership}.
 
 \vccInput[linerange={acquire-release}]{c/08_lockw.c}
 
@@ -213,7 +233,6 @@ Thus, we need to add \vcc{_(claimable)} attribute to our lock
 definition, and change the contract on the functions operating
 on the lock. As the changes are vary similar we'll only
 show \vcc{Release()}.
-\todo{ghost parameters should be explained earlier}
 
 \vccInput[linerange={release-struct_data}]{c/08_lock_claimsobj.c}
 
@@ -234,19 +253,25 @@ going to modify the object.
 For claims, it is just a hint, that it should use this claim when trying
 to prove that the object is consistent.
 
+Additionally, the \vcc{InitiliazeLock()} needs to ensure \vcc{\claim_count(l) == 0}
+(\ie no claims on freshly initialized lock).
+VCC even provides a syntax to say something is wrapped and has no claims: \vcc{\wrapped0(l)}.
+
 \subsection{Creating claims}
 \label{sect:creating-claims}
-
-\itodo{XXX left-off here}
 
 When creating (or destroying) a claim one needs to list the claimed objects.
 Let's have a look at an example.
 
 \vccInput[linerange={create_claim-out}]{c/08_lock_claimsobj.c}
 
-We initialize the lock, which leaves the lock wrapped (we'll get to that in a minute),
-we create a claim on the lock, acquire it, release, destroy the claim, and unwrap the lock
-(which allows it to be destroyed when the function activation record is popped off the stack).
+This function tests that we can actually create a lock, create a claim on it,
+use the lock, and then destroy it.
+The \vcc{InitiliazeLock()} leaves the lock wrapped and writable by the current thread.
+This allows for creation of claim, which is then passed to \vcc{Acquire()} and \vcc{Release()}.
+Finally, we destroy the claim, which allows for unwrapping of the lock, and finally deallocating
+it when the function activation record is popped off the stack.
+
 The \vcc{\make_claim(...)} function takes the set of objects to be claimed
 and a property (an invariant of the claim, we'll get to that in the next section).
 Let us give desugaring of \vcc{\make_claim(...)} for a single object
@@ -255,7 +280,7 @@ in terms of the \vcc{\claim_struct} defined in the previous section.
 \begin{VCC}
 // c = \make_claim({o}, true) expands to
 \claim_count(o) = \claim_count(o) + 1;
-c = malloc(sizeof(\struct_claim));
+c = malloc(sizeof(\claim_struct));
 c->claimed = {o};
 _(wrap c);
 
@@ -272,13 +297,15 @@ Because creating or destroying a claim on \vcc{c} assigns to
 One way to obtain such access is getting sequential write access to \vcc{c} itself:
 in our example the lock is created on the stack and thus sequentially writable.
 We can thus create a claim and immediately use it.
-A more realistic scenario is when a thread creates an object, constructs
-a number of claims on it, and stores the claims in some shared, possibly global, data-structures
-(\eg a work-queue) where other threads can access them.
+A more realistic claim management scenario is described in \secref{dynamic-claims}.
+%when a thread creates an object, constructs
+%a number of claims on it, and stores the claims in some shared, possibly global, data-structures
+%(\eg a work-queue) where other threads can access them.
 
-The \vcc{true} in \vcc{\make_claim(...)} is the claimed property (an invariant
+The \vcc{\true} in \vcc{\make_claim(...)} is the claimed property (an invariant
 of the claim), which will be explained in the next section.
 
+\begin{note}
 The destruction can possibly leak claim counts, \ie one could say:
 \begin{VCC}
 \destroy_claim(c, {});
@@ -289,6 +316,7 @@ This avoids the need to have write access to \vcc{o}, but on the other hand prev
 \vcc{o} from unwrapping forever (which might be actually fine if \vcc{o} is a ghost object).
 %It seems clear why the claimed objects need to be listed when creating a claim, but
 %why do we need them for destruction?
+\end{note}
 
 \subsection{Two-state invariants}
 \label{sect:inv2}
