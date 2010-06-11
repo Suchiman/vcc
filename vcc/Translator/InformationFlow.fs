@@ -137,13 +137,15 @@ namespace Microsoft.Research.Vcc
         match exprPtrGroup trExpr p1, exprPtrGroup trExpr p2 with
           | None,_
           | _,None -> die()
-          | Some pG1,Some pG2 -> B.Expr.Primitive ("==", [pG1; pG2])
+          | Some pG1,Some pG2 -> B.Expr.Ite (B.Expr.Primitive ("==", [pG1; pG2]),
+                                             B.Expr.Ref "$sec.bot",
+                                             B.Expr.Ref "$sec.top")
       | Meet (Bottom, _)
       | Meet (_, Bottom)
-      | Bottom -> B.Expr.BoolLiteral true
+      | Bottom -> B.Expr.Ref "$sec.bot"
       | Join (Top, _)
       | Join (_, Top)
-      | Top -> B.Expr.BoolLiteral false
+      | Top -> B.Expr.Ref "$sec.top"
       | VarLabel e -> 
         match e with
           | C.Expr.Ref(_,v) -> getLocal ("SecLabel#"+(trVar v))
@@ -157,14 +159,15 @@ namespace Microsoft.Research.Vcc
       | Meet (l, Top)
       | Join (Bottom, l)
       | Join (l, Bottom) -> secLabelToBoogie trExpr trVar l
-      | Join (l1, l2) -> B.Expr.Primitive ("&&", [secLabelToBoogie trExpr trVar l1;secLabelToBoogie trExpr trVar l2])
-      | Meet (l1, l2) -> B.Expr.Primitive ("||", [secLabelToBoogie trExpr trVar l1;secLabelToBoogie trExpr trVar l2])
+      | Join (l1, l2) -> B.Expr.FunctionCall ("$sec.join", [secLabelToBoogie trExpr trVar l1;secLabelToBoogie trExpr trVar l2])
+      | Meet (l1, l2) -> B.Expr.FunctionCall ("$sec.meet", [secLabelToBoogie trExpr trVar l1;secLabelToBoogie trExpr trVar l2])
 
     let scanForIFAnnotations (decl:C.Top) =
       let res = ref false
       let bodyHasIFAnnotations _ = function
         | C.Expr.If(_, Some _, _, _, _)
-        | C.Expr.Macro(_, "_vcc_is_low", _)
+        | C.Expr.Macro(_, "_vcc_sec_leq", _)
+        | C.Expr.Macro(_, "_vcc_is_lower", _)
         | C.Expr.Macro(_, "_vcc_downgrade_to", _)
         | C.Expr.Macro(_, "_vcc_current_context", _)
         | C.Expr.Macro(_,"_vcc_label_of",_) -> res := true; false
@@ -176,6 +179,62 @@ namespace Microsoft.Research.Vcc
             | Some body -> body.SelfVisit(bodyHasIFAnnotations); !res
         | _ -> false
 
+    let mkSecLattice =
+      let mkConst n t = { Unique = true 
+                          Name = n
+                          Type = t } : B.ConstData
+      [B.Decl.Const (mkConst "$sec.top" (B.Type.Ref "$seclabel"))
+       B.Decl.Const (mkConst "$sec.bot" (B.Type.Ref "$seclabel"))
+       B.Decl.Axiom (B.Expr.Forall(Token.NoToken, [("l",B.Type.Ref "$seclabel")], [], [], B.Expr.Primitive ("<:", [B.Expr.Ref "l"; B.Expr.Ref "$sec.top"])))
+       B.Decl.Axiom (B.Expr.Forall(Token.NoToken, [("l",B.Type.Ref "$seclabel")], [], [], B.Expr.Primitive ("<:", [B.Expr.Ref "$sec.bot"; B.Expr.Ref "l"])))
+       B.Decl.Axiom (B.Expr.Primitive ("!", [B.Expr.Primitive ("<:", [B.Expr.Ref "$sec.top"; B.Expr.Ref "$sec.bot"])]))
+       
+       B.Decl.Function (B.Type.Ref "$seclabel", [], "$sec.meet", ["l1", B.Type.Ref "$seclabel";"l2", B.Type.Ref "$seclabel"])
+       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
+                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"],
+                                    [], [],
+                                    B.Expr.Primitive ("&&",
+                                                      [B.Expr.Primitive ("<:", [B.Expr.FunctionCall ("$sec.meet", [B.Expr.Ref "l1";B.Expr.Ref "l2"]); B.Expr.Ref "l1"])
+                                                       B.Expr.Primitive ("<:", [B.Expr.FunctionCall ("$sec.meet", [B.Expr.Ref "l1";B.Expr.Ref "l2"]); B.Expr.Ref "l2"])])))
+       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
+                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"; "l", B.Type.Ref "$seclabel"],
+                                    [], [],
+                                    B.Expr.Primitive ("==>", 
+                                                      [B.Expr.Primitive ("&&",
+                                                                         [B.Expr.Primitive ("<:", [B.Expr.Ref "l"; B.Expr.Ref "l1"])
+                                                                          B.Expr.Primitive ("<:", [B.Expr.Ref "l"; B.Expr.Ref "l2"])])
+                                                       B.Expr.Primitive ("<:",
+                                                                         [B.Expr.FunctionCall ("$sec.meet", [B.Expr.Ref "l1"; B.Expr.Ref "l2"])
+                                                                          B.Expr.Ref "l"])])))
+       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
+                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"],
+                                    [], [],
+                                    B.Expr.Primitive ("==", [B.Expr.FunctionCall ("$sec.meet", [B.Expr.Ref "l1"; B.Expr.Ref "l2"])
+                                                             B.Expr.FunctionCall ("$sec.meet", [B.Expr.Ref "l2"; B.Expr.Ref "l1"])])))
+       
+       B.Decl.Function (B.Type.Ref "$seclabel", [], "$sec.join", ["l1", B.Type.Ref "$seclabel";"l2", B.Type.Ref "$seclabel"])
+       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
+                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"],
+                                    [], [],
+                                    B.Expr.Primitive ("&&",
+                                                      [B.Expr.Primitive ("<:", [B.Expr.Ref "l1"; B.Expr.FunctionCall ("$sec.join", [B.Expr.Ref "l1";B.Expr.Ref "l2"])])
+                                                       B.Expr.Primitive ("<:", [B.Expr.Ref "l2"; B.Expr.FunctionCall ("$sec.join", [B.Expr.Ref "l1";B.Expr.Ref "l2"])])])))
+       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
+                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"; "l", B.Type.Ref "$seclabel"],
+                                    [], [],
+                                    B.Expr.Primitive ("==>", 
+                                                      [B.Expr.Primitive ("&&",
+                                                                         [B.Expr.Primitive ("<:", [B.Expr.Ref "l1"; B.Expr.Ref "l"])
+                                                                          B.Expr.Primitive ("<:", [B.Expr.Ref "l2"; B.Expr.Ref "l"])])
+                                                       B.Expr.Primitive ("<:",
+                                                                         [B.Expr.Ref "l"
+                                                                          B.Expr.FunctionCall ("$sec.join", [B.Expr.Ref "l1"; B.Expr.Ref "l2"])])])))
+       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
+                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"],
+                                    [], [],
+                                    B.Expr.Primitive ("==", [B.Expr.FunctionCall ("$sec.join", [B.Expr.Ref "l1"; B.Expr.Ref "l2"])
+                                                             B.Expr.FunctionCall ("$sec.join", [B.Expr.Ref "l2"; B.Expr.Ref "l1"])])))
+     ]
 
 // Transformations for if statements
     let makePermissiveUpgrade trVar trType cExpr testClassif =
@@ -202,8 +261,8 @@ namespace Microsoft.Research.Vcc
         match v with
           | Local n ->  B.Expr.Primitive ("||",
                                           [B.Expr.Primitive ("&&",
-                                                             [B.Expr.Primitive ("!", [getLocal ("SecLabel#"+n)])
-                                                              getLocal ("SecMeta#"+n)])
+                                                             [B.Expr.Primitive ("!", [B.Expr.Primitive ("<:", [getLocal ("SecLabel#"+n); B.Expr.Ref "$sec.bot"])])
+                                                              B.Expr.Primitive ("<:", [getLocal ("SecMeta#"+n); B.Expr.Ref "$sec.bot"])])
                                            expr])
           | Pointer p ->
             let bType = trType (snd(List.find (fun (var,typ) -> var = v) typeAssocs))
@@ -211,10 +270,10 @@ namespace Microsoft.Research.Vcc
             let getMeta = getPMeta (B.Expr.FunctionCall ("$ptr", [bType; B.Expr.Ref p]))
             B.Expr.Primitive ("||",
                               [B.Expr.Primitive ("&&",
-                                                 [B.Expr.Primitive ("!", [getLabel])
-                                                  getMeta])
+                                                 [B.Expr.Primitive ("!", [B.Expr.Primitive ("<:", [getLabel; B.Expr.Ref "$sec.bot"])])
+                                                  B.Expr.Primitive ("<:", [getMeta; B.Expr.Ref "$sec.bot"])])
                                expr])
-      let newDisjuncts = Set.foldBack construct freeVars (B.Expr.Primitive ("!", [getPC]))
+      let newDisjuncts = Set.foldBack construct freeVars (B.Expr.Primitive ("!", [B.Expr.Primitive ("<:", [getPC; B.Expr.Ref "$sec.bot"])]))
       match testClassif with
         | B.Expr.BoolLiteral false -> newDisjuncts
         | B.Expr.BoolLiteral true -> testClassif
@@ -242,6 +301,6 @@ namespace Microsoft.Research.Vcc
       let (varLevels,types) = getVarLevels [] bExpr
       let construct (b,v) expr =
         if b then let t = snd(List.find (fun (var,_) -> var = v) types)
-                  B.Expr.Primitive ("&&", [expr; getPMeta (B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref v]))])
-             else B.Expr.Primitive ("&&", [expr; getLocal v])
+                  B.Expr.FunctionCall ("&&", [expr; B.Expr.Primitive ("<:", [getPMeta (B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref v])); B.Expr.Ref "$sec.bot"])])
+             else B.Expr.Primitive ("&&", [expr; B.Expr.Primitive ("<:", [getLocal v; B.Expr.Ref "$sec.bot"])])
       Set.foldBack construct varLevels (B.Expr.BoolLiteral true)

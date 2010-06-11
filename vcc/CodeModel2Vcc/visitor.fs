@@ -959,7 +959,8 @@ namespace Microsoft.Research.Vcc
         match globalMethodDefinition.Name.Value with
           | "_vcc_in_state" | "\\in_state"
           | "_vcc_approves" | "\\approves"
-          | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "_vcc_is_low" | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" -> ()
+          | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known"
+          | "_vcc_is_lower" | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" | "_vcc_label_of" | "_vcc_sec_leq" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false)
 
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
@@ -1421,9 +1422,9 @@ namespace Microsoft.Research.Vcc
             exprRes <- C.Expr.Macro(ec, "atomic_op",  args())
           | _, "_vcc_atomic_op_result" ->
             exprRes <- C.Expr.Macro(ec, "atomic_op_result", [])
-          | _, "_vcc_is_low" ->
+          | _, "_vcc_is_lower" ->
             match args() with
-              | [e] as args -> exprRes <- C.Expr.Macro (ec, "_vcc_is_low", args)
+              | [e1; e2] as args -> exprRes <- C.Expr.Macro (ec, "_vcc_is_lower", args)
               | _ -> oopsNumArgs()
           | _, "_vcc_test_classifier" ->
             match args() with
@@ -1440,6 +1441,14 @@ namespace Microsoft.Research.Vcc
           | _, "_vcc_label_of" ->
             match args() with
               | [expr] as args -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.SecLabel(Some expr)}, "_vcc_label_of", args)
+              | _ -> oopsNumArgs()
+          | _, ("_vcc_seclabel_bot"|"_vcc_seclabel_top" as v) ->
+            match args() with
+              | [] -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.SecLabel(None)}, v, [])
+              | _ -> oopsNumArgs()
+          | _, "_vcc_sec_leq" ->
+            match args() with
+              | [l1;l2] as args -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.Bool}, "_vcc_sec_leq", args)
               | _ -> oopsNumArgs()
           | _ ->
             let args = args()

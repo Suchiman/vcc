@@ -288,7 +288,8 @@ axiom (forall M:$statusmap_t, p:$ptr, q:$ptr, v:$status :: {:weight 0}
   $select.sm($store.sm(M, p, v), q) == $select.sm(M, q)
   );
 
-type $seclabel = bool;
+type $seclabel;
+
 function $set.secpc($memory_t, $seclabel) returns($memory_t);
 function $get.secpc($memory_t) returns($seclabel);
 axiom (forall M:$memory_t, v:$seclabel :: {:weight 0}
