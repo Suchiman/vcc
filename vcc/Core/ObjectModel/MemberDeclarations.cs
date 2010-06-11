@@ -1220,12 +1220,13 @@ namespace Microsoft.Research.Vcc {
 
   internal class FunctionDeclarator : Declarator {
 
-    internal FunctionDeclarator(Declarator functionName, List<Parameter> parameters, ISourceLocation sourceLocation)
+    internal FunctionDeclarator(Declarator functionName, List<Parameter> parameters, List<TemplateParameterDeclarator> templateParameters, ISourceLocation sourceLocation)
       : base(sourceLocation)
     {
       this.Contract = new FunctionOrBlockContract();
       this.FunctionName = functionName;
       this.parameters = parameters;
+      this.templateParameters = templateParameters;
     }
 
     internal FunctionDeclarator(Declarator functionName, FunctionDeclarator template)
@@ -1233,17 +1234,22 @@ namespace Microsoft.Research.Vcc {
     {
       this.FunctionName = functionName;
       this.parameters = template.Parameters;
+      this.templateParameters = template.TemplateParameters;
       this.Specifiers = template.Specifiers;
       this.Contract = new FunctionOrBlockContract(template.Contract);
     }
 
     internal readonly Declarator FunctionName;
     internal List<Specifier>/*?*/ Specifiers;
-    internal List<TemplateParameterDeclarator>/*?*/ TemplateParameters;
     internal readonly FunctionOrBlockContract Contract;
 
     internal bool HasContract {
       get { return this.Contract.HasContract; }
+    }
+
+    private readonly List<TemplateParameterDeclarator> templateParameters;
+    internal List<TemplateParameterDeclarator> TemplateParameters {
+      get { return this.templateParameters; }
     }
 
     private List<Parameter> parameters;

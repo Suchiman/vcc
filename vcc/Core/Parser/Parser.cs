@@ -284,7 +284,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       TokenSet followersOrCommaOrLeftBraceOrSemicolon = followers|Token.Comma|Token.LeftBrace|Token.Semicolon;
       while (TS.DeclaratorStart[this.currentToken]) {
         foundNoDeclaration = false;
-        Declarator declarator = this.ParseDeclarator(followersOrCommaOrLeftBraceOrSemicolon);
+        Declarator declarator = this.ParseDeclarator(templateParameters, followersOrCommaOrLeftBraceOrSemicolon, false);
         if (functionTypeExpression != null && functionTypeExpression.declarator != null && declarator is IdentifierDeclarator)
           declarator = new FunctionDeclarator(declarator, functionTypeExpression.declarator);
         else {
@@ -307,7 +307,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
 
         if (funcDeclarator != null) {
-          funcDeclarator.TemplateParameters = templateParameters;
           //TODO: complain if not first declarator
           if (this.currentToken == Token.LeftBrace) {
             this.ParseFunctionDefinition(specifiers, typeMembers, declarator, funcDeclarator, followers|Token.Semicolon);
@@ -318,7 +317,6 @@ namespace Microsoft.Research.Vcc.Parsing {
           InitializedDeclarator iDecl = declarator as InitializedDeclarator;
           if (iDecl != null) {
             FunctionDeclarator fDecl = iDecl.Declarator as FunctionDeclarator;
-            if (fDecl != null) fDecl.TemplateParameters = templateParameters;
           }
           //TODO: complain if templateParameters are not null
           this.AddTypeDeclarationMember(specifiers, declarator, typeMembers);
@@ -467,7 +465,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           this.typedefExpressions[funcDeclarator.Identifier.Value] = functionType;
           TypedefDeclaration typedef = new TypedefDeclaration(functionType, funcDeclarator.Identifier, slb);  //TODO: const and volatile
           this.typedefDecls[funcDeclarator.Identifier.Value] = typedef;
-          this.InitializeLocallyDefinedNamesFromParameters(funcDeclarator.Parameters);
+          this.InitializeLocallyDefinedNamesFromParameters(funcDeclarator);
           this.ParseFunctionOrBlockContract(funcDeclarator.Contract, followers);
           this.AssociateContracts(functionType, funcDeclarator);
           typeMembers.Add(typedef);
@@ -593,8 +591,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.locallyDefinedNames.Clear();
       foreach (Parameter p in funcDecl.Parameters)
         this.locallyDefinedNames[p.Name.Identifier.Name.Value] = true;
-      foreach (TemplateParameterDeclarator tp in funcDecl.TemplateParameters)
-        this.locallyDefinedNames[tp.Identifier.Name.Value] = false;
+      if (funcDecl.TemplateParameters != null)
+        foreach (TemplateParameterDeclarator tp in funcDecl.TemplateParameters)
+          this.locallyDefinedNames[tp.Identifier.Name.Value] = false;
     }
 
     protected TypeExpression ApplyDeclarator(Declarator declarator, TypeExpression returnType) {
@@ -1197,11 +1196,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures result is IdentifierDeclarator || result is BitfieldDeclarator || result is ArrayDeclarator || result is FunctionDeclarator ||
       //^   result is PointerDeclarator || result is AbstractMapDeclarator || result is InitializedDeclarator;
     {
-      return this.ParseDeclarator(followers, false);
+      return this.ParseDeclarator(null, followers, false);
     }
 
 
-    protected Declarator ParseDeclarator(TokenSet followers, bool requireIdentifier)
+    protected Declarator ParseDeclarator(List<TemplateParameterDeclarator> templateParameters, TokenSet followers, bool requireIdentifier)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
       //^ ensures result is IdentifierDeclarator || result is BitfieldDeclarator || result is ArrayDeclarator || result is FunctionDeclarator ||
       //^   result is PointerDeclarator || result is AbstractMapDeclarator || result is InitializedDeclarator;
@@ -1213,8 +1212,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (this.currentToken == Token.LeftParenthesis){
         this.GetNextToken();
         if (!TS.DeclarationStart[this.currentToken])
-          specifiers = this.ParseSpecifiers(new List<INamespaceDeclarationMember>(), null, null, followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon); 
-        result = this.ParseDeclarator(followers|Token.RightParenthesis, requireIdentifier);
+          specifiers = this.ParseSpecifiers(new List<INamespaceDeclarationMember>(), null, null, followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
+        result = this.ParseDeclarator(templateParameters, followers | Token.RightParenthesis, requireIdentifier);
         this.Skip(Token.RightParenthesis);
       } else if (this.currentToken == Token.Colon) {
         result = this.ParseBitfieldDeclarator(null, followers|Token.LeftBracket|Token.LeftParenthesis);
@@ -1227,7 +1226,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (this.currentToken == Token.LeftBracket)
           result = this.ParseArrayDeclarator(result, followers|Token.LeftBracket|Token.LeftParenthesis|Token.Assign);
         else
-          result = this.ParseFunctionDeclarator(result, followers|Token.LeftParenthesis|Token.Assign);
+          result = this.ParseFunctionDeclarator(result, templateParameters, followers|Token.LeftParenthesis|Token.Assign);
       }
       if (pointers.Count > 0) {
         slb.UpdateToSpan(result.SourceLocation);
@@ -1255,7 +1254,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         NameDeclaration parName = this.ParseNameDeclaration(false);
         slb.UpdateToSpan(parName.SourceLocation);
         result.Add(new TemplateParameterDeclarator(parName, slb));
-        SimpleName simpleName = new SimpleName(parName.Name, slb, false);
+        this.locallyDefinedNames[parName.Name.Value] = false; // mark as template type
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
       }
@@ -1400,7 +1399,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected FunctionDeclarator ParseFunctionDeclarator(Declarator functionName, TokenSet followers)
+    protected FunctionDeclarator ParseFunctionDeclarator(Declarator functionName, List<TemplateParameterDeclarator> templateParameters, TokenSet followers)
       //^ requires this.currentToken == Token.LeftParenthesis;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -1413,9 +1412,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       parameters = this.OutermostFuncDeclaratorAdjustIfNecessary(functionName, parameters);
 
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      FunctionDeclarator result = new FunctionDeclarator(functionName, parameters, slb);
+      FunctionDeclarator result = new FunctionDeclarator(functionName, parameters, templateParameters, slb);
       this.Skip(Token.RightParenthesis);
-      this.InitializeLocallyDefinedNamesFromParameters(parameters);
+      this.InitializeLocallyDefinedNamesFromParameters(result);
       this.ParseFunctionOrBlockContract(result.Contract, followers);
       return result;
     }
@@ -1680,7 +1679,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             }
             if (!typeDefNameIsAllowed) goto default;
             TypeExpression/*?*/ referencedType;
-            if (!this.typedefExpressions.TryGetValue(this.scanner.GetIdentifierString(), out referencedType)) goto default;
+            if (!IdIsTypeDefNameOrTemplateParameter(this.scanner.GetIdentifierString(), out referencedType)) goto default;
             if (typeDefNameMustReferencePrimitive) {
               NamedTypeExpression/*?*/ nte = referencedType as NamedTypeExpression;
               if (nte == null) goto default;
@@ -3090,12 +3089,17 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     private bool CurrentTokenStartsXHelper(TokenSet ts) {
       if (!ts[this.currentToken]) return false;               // not even a superficial match
-      if (this.currentToken != Token.Identifier) return true; // non-identifier must start type
-      string id = this.scanner.GetIdentifierString();         // identifiers need closer inspection
+      if (this.currentToken != Token.Identifier) return true; // non-identifier must start type    
+      TypeExpression teDummy;
+      return IdIsTypeDefNameOrTemplateParameter(this.scanner.GetIdentifierString(), out teDummy);    // identifiers need closer inspection
+    }
+
+    private bool IdIsTypeDefNameOrTemplateParameter(string id, out TypeExpression typeDefExpression) {
       bool localNameIsParOrDecl;
+      typeDefExpression = null;
       if (this.locallyDefinedNames.TryGetValue(id, out localNameIsParOrDecl))
-        return !localNameIsParOrDecl;                         // when locally defined, then only type parameters match
-      return this.typedefExpressions.ContainsKey(id);         // non-local - see if it is a known typedef'ed name
+        return !localNameIsParOrDecl;                                                // when locally defined, then only type parameters match
+      return this.typedefExpressions.TryGetValue(id, out typeDefExpression);         // non-local - see if it is a known typedef'ed name
     }
 
     protected Expression ParseQualifiedName(Expression qualifier, TokenSet followers)
@@ -3210,14 +3214,14 @@ namespace Microsoft.Research.Vcc.Parsing {
       while (this.CurrentTokenStartsTypeExpression()) {
         List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers|Token.Semicolon);
         List<LocalDeclaration> declarations = new List<LocalDeclaration>(1);
-        Declarator declarator = this.ParseDeclarator(followers|Token.Comma|Token.Semicolon, true);
+        Declarator declarator = this.ParseDeclarator(null, followers|Token.Comma|Token.Semicolon, true);
         TypeExpression type = this.GetTypeExpressionFor(specifiers, declarator);
         SourceLocationBuilder slb = new SourceLocationBuilder(type.SourceLocation);
         slb.UpdateToSpan(declarator.SourceLocation);
         declarations.Add(new LocalDeclaration(false, false, declarator.Identifier, null, slb));
         while (this.currentToken == Token.Comma) {
           this.GetNextToken();
-          declarator = this.ParseDeclarator(followers|Token.Comma, true);
+          declarator = this.ParseDeclarator(null, followers|Token.Comma, true);
           slb.UpdateToSpan(declarator.SourceLocation);
           declarations.Add(new LocalDeclaration(false, false, declarator.Identifier, null, slb));
         }
