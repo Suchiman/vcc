@@ -308,6 +308,8 @@ Let's have a look at an example, which does perform an ownership transfer:
 The \vcc{sc_set()} function transfers ownership of \vcc{s} to \vcc{c},
 and additionally leaves object initially pointed to by \vcc{s->strings[idx]}
 wrapped, \ie owned by the current thread.
+Moreover, it promises that this object is \Def{fresh}, \ie the thread did not own
+it directly before.
 This can be used in the call site:
 
 \vccInput[linerange={use-out}]{c/07_table.c}
