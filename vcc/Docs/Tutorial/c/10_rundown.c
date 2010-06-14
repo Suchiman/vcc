@@ -2,7 +2,7 @@
 #include <limits.h>
 #include <IntrinsicsNewSyntax.h>
 
-
+/*{refcnt}*/
 struct RefCnt {
   volatile unsigned cnt;
   _(ghost \object resource;)
@@ -11,7 +11,7 @@ struct RefCnt {
   _(invariant \claim_count(resource) == cnt >> 1)
   _(invariant \old(cnt & 1) ==> \old(cnt) >= cnt)
 };
-
+/*{init}*/
 void init(struct RefCnt *r _(ghost \object rsc))
   _(writes \span(r), rsc)
   _(requires \wrapped0(rsc) && \claimable(rsc))
@@ -21,7 +21,7 @@ void init(struct RefCnt *r _(ghost \object rsc))
   _(ghost r->resource = rsc;)
   _(wrap r)
 }
-
+/*{incr}*/
 int try_incr(struct RefCnt *r _(ghost \claim c) 
              _(	out \claim ret))
   _(always c, \consistent(r))
@@ -44,7 +44,7 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
     if (v == n) return 0;
   }
 }
-
+/*{decr}*/
 void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
   _(always c, \consistent(r))
   _(requires \claims_object(handle, r->resource) && \wrapped0(handle))
@@ -73,7 +73,7 @@ void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
     if (v == n) break;
   }
 }
-
+/*{use}*/
 _(claimable) struct A {
   volatile int x;	
 };
@@ -106,3 +106,6 @@ void initb(struct B *b)
   init(&b->rc _(ghost &b->a));
   _(wrap b)
 }
+/*{enduse}*/
+/*`
+`*/
