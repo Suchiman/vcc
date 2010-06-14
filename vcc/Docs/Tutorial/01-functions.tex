@@ -18,20 +18,20 @@ This program (internally) sets \vcc{z} to the minimum of \vcc{x} and
 \vcc{y}. In addition to the ordinary C code, this program includes an
 \emph{annotation}, starting with \vcc{_(}, terminating with a closing
 parenthesis, with balanced parentheses inside. The first identifier
-after the opening parenthesis (\vcc{assert} in the assertion above)
-identifies the type of annotation provided (and hence its function)%
-\footnote{The identifier plays this assertion-specific role only 
+after the opening parenthesis (in the program above it's \vcc{assert})
+identifies the type of annotation provided (and hence its function).
+The identifier plays this assertion-specific role only 
 at the beginning of an assertion; elsewhere, it would be treated as
-an ordinary program identifier. }.
+an ordinary program identifier.
 
 An annotation of the form \vcc{_( assert E )}, called an \emph{assertion}, asks VCC to prove that
-\vcc{E} is guaranteed to hold\footnote{
-  In C parlance, this means evaluating to a value other than \vcc{0}.
-} whenever control reaches this assertion \footnote{
+\vcc{E} is guaranteed to hold (\ie, evaluate to a value other than \vcc{0})
+whenever control reaches this assertion%
+\footnote{
   This interpretation changes slightly if \vcc{E} refers to
   memory locations that might be concurrently written to by other
   threads; see \secref{concurrency}}.  
-Thus, the line \lstinline|_( assert z <= x && z <= y )| says
+Thus, the line \vcc|_( assert z <= x && z <= y )| says
 that when control reaches the assertion, \vcc{z} is no larger than \vcc{x} or
 \vcc{y}. If VCC verifies a program, it promises that all such assertions
 hold in \emph{every} possible execution of the program, considering all possible inputs,
@@ -99,12 +99,13 @@ click, it will allow you to verify just that function.
 
 VCC verifies this function successfully, which means that its
 assertions are indeed guaranteed to hold and that the program cannot
-crash (except perhaps by running out of stack space)%
+crash.%
 \footnote{
   VCC currently doesn't check that your program doesn't run forever or
   run out of stack space, but future versions will, at least for sequential
   programs.  
-}). If VCC is unable
+}
+If VCC is unable
 to prove an assertion, it reports an error.  Try changing the
 assertion in this program to something that isn't true and see what
 happens. (You might also want to try coming up with some complex
@@ -114,7 +115,7 @@ prove it.)
 Assertions, like all VCC annotations, 
 are surrounded by \vcc{_( ... )} to indicate that they are
 only for VCC, and are not part of the program being verified
-For the regular C compiler the \vcc{<vcc.h>} header file defines
+For the regular C compiler the \vcc{<vcc.h>} header file defines:
 \begin{VCC}
 #define _(...) /* nothing */
 \end{VCC}
@@ -584,7 +585,7 @@ More usual is to provide the stronger precondition of the object being
 VCC provides a number of C extensions that can be used within VCC
 annotations. We describe some of them here.
 
-Within a VCC declaration, the type \lstinline|T[E]| where \vcc{T} is
+Within a VCC declaration, the type \vcc|T[E]| where \vcc{T} is
 a type and \vcc{E} is an expression that is convertible to an
 \vcc{int}, is the type of arrays of \vcc{E} elements of type
 \vcc{T}. For example, the declaration
@@ -601,7 +602,7 @@ the array \vcc{to}.
 The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
 expression \vcc{E} evaluates to a nonzero value for every value 
 \vcc{v} of type \vcc{E}. For example, the expression 
-\lstinline|\forall int i; 1 < i && i < x ==> x % i != 0|
+\vcc|\forall int i; 1 < i && i < x ==> x % i != 0|
 says that \vcc{x} is a prime number.
 Here, \vcc{==>} denotes logical implication; formally,
 \vcc{P ==> Q} means \vcc{((!P) || (Q))}, and is usually 
