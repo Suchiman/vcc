@@ -1086,7 +1086,7 @@ namespace Microsoft.Research.Vcc
             | None -> foundInstances := Some token
             | Some otherToken -> 
               helper.GraveWarning(token, 9302, "more than one access to physical memory in atomic block ('" + 
-                                               token.Value + "' and '" + otherToken.Value + "'; extra accesses might be due to bitfield operations", otherToken)
+                                               token.Value + "' and '" + otherToken.Value + "'); extra accesses might be due to bitfield operations", otherToken)
        
         let countPhysicalAccesses' ctx self = function
           | Deref(_, ptr) when not ctx.IsPure && isHeapAllocatedParOrLocal ptr -> true
