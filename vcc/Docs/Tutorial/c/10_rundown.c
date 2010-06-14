@@ -1,7 +1,15 @@
 #include <vcc.h>
 #include <limits.h>
-#include <IntrinsicsNewSyntax.h>
 
+/*{xchg}*/
+_(atomic_inline) unsigned InterlockedCompareExchange(volatile unsigned *Destination, unsigned Exchange, unsigned Comparand) {
+  if (*Destination == Comparand) {
+    *Destination = Exchange;
+    return Comparand;
+  } else {
+    return *Destination;
+  }
+}
 /*{refcnt}*/
 struct RefCnt {
   volatile unsigned cnt;
@@ -108,4 +116,11 @@ void initb(struct B *b)
 }
 /*{enduse}*/
 /*`
+Verification of RefCnt#adm succeeded.
+Verification of B#adm succeeded.
+Verification of init succeeded.
+Verification of try_incr succeeded.
+Verification of decr succeeded.
+Verification of useb succeeded.
+Verification of initb succeeded.
 `*/
