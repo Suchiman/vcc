@@ -36,9 +36,17 @@
 \newcommand{\linesi}[1]{\;\;\;\begin{array}{l}#1\end{array}}
 \newcommand{\tuple}[1]{{\langle}{#1}\rangle}
 
-\usepackage[OT1]{fontenc}
 \ifdense
+\usepackage[T1]{fontenc}
+\usepackage{epigrafica}
+%\usepackage{iwona}
+%\usepackage[scaled]{berasans}
+%\usepackage{cmbright}
+%\usepackage{lxfonts}
+%\usepackage{kurier}
+\usepackage{times}
 \else
+\usepackage[OT1]{fontenc}
 \usepackage{courier}
 %\usepackage[T1]{fontenc}
 %\usepackage[scaled=0.81]{luximono}
@@ -80,7 +88,7 @@
   %\small
   %\sffamily
   \selectfont
-  \textbf{Note:}
+  %\textbf{Note:}
 }{%
   \vspace{-2mm} \\ 
   \textcolor{noteframe}{\rule{0.444\textwidth}{1pt}} 
@@ -97,7 +105,7 @@
   \small
   \sffamily
   \selectfont
-  \textbf{Note:}
+  %\textbf{Note:}
 }{%
   \vspace{-2mm} \\ 
   \textcolor{noteframe}{\rule{0.9\textwidth}{1pt}} 
