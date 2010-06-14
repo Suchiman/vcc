@@ -12,11 +12,16 @@ takes your program and tries to \emph{prove} (mathematically) that
 your program meets these specifications.  Unlike most program
 analyzers, VCC doesn't look for bugs, or analyze an abstraction of
 your program; if VCC certifies that your program is correct, then your
-program really should be correct\footnote{In reality, this isn't
+program really should be correct
+\footnote{
+  In reality, this isn't
   really a guarantee, because VCC itself might have bugs. But in
   practice, this is unlikely to cause you to accidentally verify an
   incorrect program, unless you find and intentionally exploit such a
   bug. 
+  Another source of bugs that could slip into verified software would be the compiler,
+  the operating system, and the hardware. 
+  These are generally more likely to introduce bug than VCC.
   % This is way too arcane to be mentioned in the intro. --M
   %In addition, VCC currently doesn't do the checks needed to
   %ignore memory system optimizations on multiprocessor machines, e.g.,
@@ -34,9 +39,12 @@ For example, if your program uses division
 somewhere, and VCC is unable to prove (from what it thinks holds at the
 point at which the division is done) that the divisor is nonzero, it
 will report this to you as a program error at that point in the
-program. (If you use VCC from within Visual Studio, it will show in
-your program text the place where the error is, just like a syntax
-error.) This doesn't mean that your program is necessarily incorrect;
+program. 
+% Seems like a redundant information.
+%(If you use VCC from within Visual Studio, it will show in
+%your program text the place where the error is, just like a syntax
+%error.) 
+This doesn't mean that your program is necessarily incorrect;
 most of the time, especially when verifying code that is already well-tested,
 it is because your specifications aren't strong
 enough to guarantee that the suspected error doesn't occur.
@@ -44,9 +52,9 @@ Typically, you fix this ``error'' by strengthening your
 specifications. This might lead to other error reports, necessitating
 the strengthening of other specifications, so verification is in
 practice an iterative process.  
-Sometimes (actually quite often for not-so-well-tested code)
-this process will reveal a genuine programming error.
+Quite often this process will reveal a genuine programming error.
 
+\itodo{the following paragraph should be moved out of here}
 Annotating your program sometimes requires doing some extra
 programming.  For example, your annotations might need to talk about a
 set of users of a data structure, where the implementation only
@@ -80,6 +88,17 @@ Make sure to check out installation instructions\footnote{\url{http://vcc.codepl
 as they contain important information about installation prerequisites 
 and setting include paths.
 
+%\subsection{Notational conventions}
+
+\begin{note}
+  Throughout the tutorial, we'll use notes like this one to discuss
+  topics, which can be skipped on the first reading, either because
+  they are somewhat more advanced, arcane, or not so important.%
+  \footnote{
+    Footnotes, on the other hand, will be usually used when something
+    stated in the main text is a simplification.
+  }
+\end{note}
 
 %\subsection{Running VCC from the command line}
 %\todo{More options?}
