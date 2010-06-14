@@ -15,7 +15,7 @@ threads. But these same mechanisms provide a way to minimize the
 amount of knowledge a thread needs at any program point.
 
 In VCC, this mechanisms is object invariants, which are associated
-with structured types (\vcc{struct}s and \vcc{union}s). The invariants
+with compound C types (\vcc{struct}s and \vcc{union}s). The invariants
 of a type describe how ``well-behaved'' objects of of that type
 behave. In this section, we consider only the static aspects of this
 behavior, namely what the ``consistent'' states of an object are. For
@@ -33,44 +33,58 @@ the (address of the) current instance of the type (as in the first
 invariant), but fields can also be referred to directly (as in the
 second invariant). 
 
+Because memory in C is allocated without initialization, no nontrivial
+object invariant could be enforced to hold at all times. Thus, in VCC
+the invariant of an object \vcc{o} is guaranteed to hold only when the
+object is marked as \vcc{\consistent}. A \vcc{\consistent} object that
+is 
+A thread can mark an object as
+\vcc{\consistent} by wrapping
+Wrapping an object involves checking that
+its invariants hold. Nonvolatile fields of an object can't change
+while the object is wrapped, so to change its fields, the object must
+first be unwrapped. 
 
-Let's then have a look at how do we initialize an instance of the \vcc{SafeString} struct.
-
+We can initialize a \vcc{SafeString} as follows:
 \vccInput[linerange={init-append}]{c/05_safestring.c}
 
 \noindent
-First, the function announces it will write the span of \vcc{s}. This is a shorthand
-for:
+For \vcc{p} a pointer to a structured type, we distinguish between
+writing \vcc{p} and writing the members (fields) of \vcc{p}; the former 
+allows only wrapping and unwrapping \vcc{p}. 
+\todo{Should talk about the array rules somewhere.}
+For a pointer \vcc{p} of structured type, \vcc{\span(p)} returns the
+set of pointers to members of \vcc{p}. Arrays of base types produce
+one pointer for each base type component, so in this example,
+\vcc{\span(s)} abbreviates the set
 \begin{VCC}
-  _(writes s, &s->len, &s->content[0], &s->content[1], ..., 
-           &s->content[SSTR_MAXLEN])
+  s, &s->len, &s->content[0], &s->content[1], ..., &s->content[SSTR_MAXLEN])
 \end{VCC}
 %pointers to all fields of \vcc{s}.%
 %\footnote{
 %  This is a bite more complicated when embedded structs are involved,
 %  see \secref{TODO}.
 %}
-Second, it announces that when it's done, \vcc{s} will be \Def{wrapped}, and indeed
-at the end it ``wraps'' \vcc{s}.
-This means, that at the end of the function the invariant of \vcc{s} holds.
-You could ask why wouldn't the invariant always hold? Already the \vcc{sstr_init()}
-function provides a good explanation: its whole purpose is to establish the invariant,
-for a freshly allocated object, for which the invariant (generally) doesn't yet hold
-(because it contains garbage).
-Similarly, sometimes one wants to perform a few updates on an object, and between
-them the invariant doesn't have to hold.
-Finally, most functions that only read an object, will require that it is wrapped.
-For example:
+Thus, the writes clause says that the function not only can wrap
+\vcc{s} but can also write the fields of \vcc{s}. 
+The postcondition says that the function returns with \vcc{s} wrapped,
+which implies also that the invariant of \vcc{s} holds; this invariant
+is checked when the object is wrapped.
+
+A function that modifies a wrapped object will first unwrap it, make
+the necessary updates, and wrap the object again (which causes another
+check of the object invariant). Unwrapping an object adds all of its
+members to the writes set of a function, so such a function has to
+report that it writes the object, but does not have to report writing
+the fields of the object.
+
+Finally, a function that only reads an object need not unwrap, and so
+will not list it in its writes clause. For example:
 
 \vccInput[linerange={append-out}]{c/05_safestring.c}
 
 \noindent
-A pattern emerges: an object comes from the memory allocator unwrapped, 
-we initialize and wrap it.
-When we want to read it, it should be wrapped, and we know its invariant holds.
-A function operating on an object unwraps it to temporarily suspend invariants, perform updates, and wraps it again.
 
-Let's then get a bit more precise about this wrap/unwrap protocol. 
 
 \subsection{Wrap/unwrap protocol}
 \label{sect:wrap-unwrap}
@@ -101,7 +115,7 @@ The \vcc{\thread} object representing it is referred to as \vcc{\me}.
 (Some of) the rules of ownership and consistency:
 \begin{enumerate}
 \item every atomic step of the program has to preserve invariants of all consistent objects 
-\item only the owning thread can modify inconsistent object
+\item a thread can only modify fields of in
 \item threads own themselves
 \item only threads can own inconsistent objects
 \end{enumerate}
