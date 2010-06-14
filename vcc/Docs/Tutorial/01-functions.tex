@@ -281,19 +281,19 @@ _( assert p ==> q )
 \item
 Given the assumptions preceding each of the assignments below to int
 variables, what are the strongest assertions that would be valid?
-\begin{lstlisting}
+\begin{VCC}
 _(assume x < 5) x += 5; _(assert ??)
 _(assume u < v) u = v;  _(assert ??)
 _(assume a < b && a < c) a = b;  _(assert ??)
-\end{lstlisting}
+\end{VCC}
 \item
 Given the assertions following each of the assignments below, what is 
 the weakest preceding assumption that would allow the assertions to be
 valid?
-\begin{lstlisting}
+\begin{VCC}
 _(assume ??) x = y _(assert x < 10)
 _(assume ??) u += 3 _(assert 2*u == 3*v)
-\end{lstlisting}
+\end{VCC}
 \end{enumerate}
 
 \section{Function specifications}
@@ -589,12 +589,12 @@ Within a VCC declaration, the type \vcc|T[E]| where \vcc{T} is
 a type and \vcc{E} is an expression that is convertible to an
 \vcc{int}, is the type of arrays of \vcc{E} elements of type
 \vcc{T}. For example, the declaration
-\begin{lstlisting}
+\begin{VCC}
 void copyArray(int *from, int *to, int len)
 _(requires \\thread_local((int[len]) from))
 _(writes ((int[len]) to))
 ...
-\end{lstlisting}
+\end{VCC}
 defines a function that can read the first \vcc{len} elements of the
 array \vcc{from}, and read or write the first \vcc{len} elements of
 the array \vcc{to}.
