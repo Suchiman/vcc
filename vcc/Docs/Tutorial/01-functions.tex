@@ -18,11 +18,11 @@ This program (internally) sets \vcc{z} to the minimum of \vcc{x} and
 \vcc{y}. In addition to the ordinary C code, this program includes an
 \emph{annotation}, starting with \vcc{_(}, terminating with a closing
 parenthesis, with balanced parentheses inside. The first identifier
-after the opening parenthesis (in the program above it's \vcc{assert})
+after the opening parenthesis (\vcc{assert} in the assertion above)
 identifies the type of annotation provided (and hence its function).
-The identifier plays this assertion-specific role only 
+(The identifier plays this assertion-specific role only 
 at the beginning of an assertion; elsewhere, it would be treated as
-an ordinary program identifier.
+an ordinary program identifier.)
 
 An annotation of the form \vcc{_( assert E )}, called an \emph{assertion}, asks VCC to prove that
 \vcc{E} is guaranteed to hold (\ie, evaluate to a value other than \vcc{0})
@@ -99,7 +99,7 @@ click, it will allow you to verify just that function.
 
 VCC verifies this function successfully, which means that its
 assertions are indeed guaranteed to hold and that the program cannot
-crash.%
+crash%
 \footnote{
   VCC currently doesn't check that your program doesn't run forever or
   run out of stack space, but future versions will, at least for sequential
@@ -237,15 +237,12 @@ logical operators), but not for all expressions, so VCC will
 sometimes fail to prove an assertion, even though it ``knows'' enough
 to prove it.  
 
-Because VCC's reasoning is incomplete\footnote{Note that this
-  incompleteness in no way makes VCC \emph{unsound}; it can cause
-  false failure reports, but cannot cause VCC to verify a program that
-  is not correct.}, an assertion that succeeds can sometimes cause
-later assertions to succeed, by drawing VCC's attention to a crucial
-fact it needs to prove the later assertion.  This is relatively rare,
-and typically involves ``nonlinear arithmetic'' (e.g. where variables
-are multiplied together), bit-vector reasoning, or quantifiers. We'll
-say more about these in \secref{bv}.
+An assertion that succeeds can sometimes cause later assertions that
+would otherwise fail to succeed, by drawing VCC's attention to a
+crucial fact it needs to prove the later assertion.  This is
+relatively rare, and typically involves ``nonlinear arithmetic''
+(e.g. where variables are multiplied together), bit-vector reasoning,
+or quantifiers. We'll say more about these in \secref{bv}.
 
 \subsection*{Exercises}
 \begin{enumerate}
@@ -677,13 +674,13 @@ Specify, write, and verify a function that swaps the values pointed to
 by two \vcc{int} pointers.
 \item
 Specify a function that takes a pointer to the first element of an
-array of distinct ints and sorts the array 
+array of distinct \vcc{int}s and sorts the array 
 in ascending order%
 \footnote{Specifying this for arrays with duplicates is somewhat more
   involved.}. 
 \item
 Specify a function that takes a pointer to the first element of an
-array of distinct ints and the size of the array and finds an index of the
+array of distinct \vcc{int}s and the size of the array and finds an index of the
 smallest element occurring in the array. Write a recursive
 implementation of this function and verify that it satisfies your
 specification. 
