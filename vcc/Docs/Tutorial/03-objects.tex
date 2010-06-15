@@ -5,21 +5,35 @@
 %% it not so much about loop invariants or functions contracts,
 %% as about object invariants. 
 
-When verifying a function, we are usually reasoning about only a very
-small part of the program state. This is particularly true for a
-concurrent program, where concurrency depends on minimizing the amount
-of state that a thread ``owns''. Since a thread only knows about data
-that it owns (and perhaps read-only data that it shares), another
-mechanism is needed to regulate data that is shared between
-threads. But these same mechanisms provide a way to minimize the
-amount of knowledge a thread needs at any program point.
+Pre- and postconditions allow for associating consistency conditions
+with code.
+However fairly often it is also possible to associate such consistency
+conditions with data and require all code operating on such data
+to obey them.
+As we will learn in \secref{concurrency} this is particularly important for
+data accessed concurrently by multiple threads,
+but even for sequential programs introducing consistency conditions
+on data reduces annotation clutter and allows for introduction of abstraction
+boundaries.
+
+% This is not a section about concurrency, thus we need a sequential
+% rationale. --M
+%When verifying a function, we are usually reasoning about only a very
+%small part of the program state. This is particularly true for a
+%concurrent program, where concurrency depends on minimizing the amount
+%of state that a thread ``owns''. Since a thread only knows about data
+%that it owns (and perhaps read-only data that it shares), another
+%mechanism is needed to regulate data that is shared between
+%threads. But these same mechanisms provide a way to minimize the
+%amount of knowledge a thread needs at any program point.
 
 In VCC, this mechanisms is object invariants, which are associated
 with compound C types (\vcc{struct}s and \vcc{union}s). The invariants
 of a type describe how ``well-behaved'' objects of of that type
 behave. In this section, we consider only the static aspects of this
-behavior, namely what the ``consistent'' states of an object are. For
-example, consider the following type definition of (\vcc{'\0'}-terminated)
+behavior, namely what the ``consistent'' states of an object are. 
+Dynamic aspects, \ie how objects can change, are covered in \secref{concurrency}.
+For example, consider the following type definition of (\vcc{'\0'}-terminated)
 safe strings implemented with statically allocated arrays (we'll see
 dynamic allocation later).
 
@@ -27,38 +41,54 @@ dynamic allocation later).
 
 \noindent
 The invariant of \vcc{SafeString} states that consistent
-\vcc{Safestring}s have length less than \vcc{SSTR_MAXLEN} and are
+\vcc{SafeString}s have length less than \vcc{SSTR_MAXLEN} and are
 \vcc{'\0'}-terminated.  Within a type invariant, \vcc{\this} refers to
-the (address of the) current instance of the type (as in the first
+(the address of) the current instance of the type (as in the first
 invariant), but fields can also be referred to directly (as in the
 second invariant). 
 
 Because memory in C is allocated without initialization, no nontrivial
-object invariant could be enforced to hold at all times. Thus, in VCC
-the invariant of an object \vcc{o} is guaranteed to hold only when the
-object is marked as \vcc{\consistent}. A \vcc{\consistent} object that
-is 
-A thread can mark an object as
-\vcc{\consistent} by wrapping
-Wrapping an object involves checking that
-its invariants hold. Nonvolatile fields of an object can't change
-while the object is wrapped, so to change its fields, the object must
-first be unwrapped. 
+object invariant could be enforced to hold at all times. 
+Thus, in VCC the invariants are only guaranteed to hold for
+\Def{consistent} objects. 
+Objects, which are consistent and owned by the current thread (and note that
+we're only talking about thread-owned objects in this section) are called
+\Def{wrapped}.
+After allocating an object we would usually wrap it to make sure its invariant holds:
 
-We can initialize a \vcc{SafeString} as follows:
 \vccInput[linerange={init-append}]{c/05_safestring.c}
 
-\noindent
-For \vcc{p} a pointer to a structured type, we distinguish between
-writing \vcc{p} and writing the members (fields) of \vcc{p}; the former 
-allows only wrapping and unwrapping \vcc{p}. 
 \todo{Should talk about the array rules somewhere.}
 For a pointer \vcc{p} of structured type, \vcc{\span(p)} returns the
 set of pointers to members of \vcc{p}. Arrays of base types produce
 one pointer for each base type component, so in this example,
 \vcc{\span(s)} abbreviates the set
 \begin{VCC}
-  s, &s->len, &s->content[0], &s->content[1], ..., &s->content[SSTR_MAXLEN])
+  { s, &s->len, &s->content[0], &s->content[1], ..., &s->content[SSTR_MAXLEN] }
+\end{VCC}
+%pointers to all fields of \vcc{s}.%
+%\footnote{
+%  This is a bite more complicated when embedded structs are involved,
+%  see \secref{TODO}.
+%}
+Thus, the writes clause says that the function 
+%not only can wrap \vcc{s} but can also 
+can write the fields of \vcc{s}. 
+The postcondition says that the function returns with \vcc{s} wrapped,
+which implies also that the invariant of \vcc{s} holds; this invariant
+is checked when the object is wrapped.
+
+\noindent
+\todo{}
+%For \vcc{p} a pointer to a structured type, we distinguish between
+%writing \vcc{p} and writing the members (fields) of \vcc{p}; the former 
+%allows only wrapping and unwrapping \vcc{p}. 
+For a pointer \vcc{p} of structured type, \vcc{\span(p)} returns the
+set of pointers to members of \vcc{p}. Arrays of base types produce
+one pointer for each base type component, so in this example,
+\vcc{\span(s)} abbreviates the set:
+\begin{VCC}
+  { s, &s->len, &s->content[0], &s->content[1], ..., &s->content[SSTR_MAXLEN] }
 \end{VCC}
 %pointers to all fields of \vcc{s}.%
 %\footnote{
@@ -82,8 +112,6 @@ Finally, a function that only reads an object need not unwrap, and so
 will not list it in its writes clause. For example:
 
 \vccInput[linerange={append-out}]{c/05_safestring.c}
-
-\noindent
 
 
 \subsection{Wrap/unwrap protocol}
@@ -115,7 +143,7 @@ The \vcc{\thread} object representing it is referred to as \vcc{\me}.
 (Some of) the rules of ownership and consistency:
 \begin{enumerate}
 \item every atomic step of the program has to preserve invariants of all consistent objects 
-\item a thread can only modify fields of in
+\item only the owning thread can modify fields of an inconsistent object
 \item threads own themselves
 \item only threads can own inconsistent objects
 \end{enumerate}
@@ -149,9 +177,9 @@ Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\unwra
 and at the assert/assume desugaring of \vcc{sstr_append_char()} function.
 
 \begin{VCC}
-predicate \wrapped(\object o) =
+logic bool \wrapped(\object o) =
   \consistent(o) && \owner(o) == \me;
-predicate \unwrapped(\object o) =
+logic bool \unwrapped(\object o) =
   !\consistent(o) && \owner(o) == \me;
 \end{VCC}
 \vccInput[linerange={assert-out}]{c/05_safestring_assert.c}
