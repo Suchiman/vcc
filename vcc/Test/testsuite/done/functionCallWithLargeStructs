@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct _LS {
   unsigned __int32 x;
@@ -190,7 +190,7 @@ Verification of lz succeeded.
 Verification of fz#reads succeeded.
 Verification of fy#reads succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct _LS {
   unsigned __int32 x;

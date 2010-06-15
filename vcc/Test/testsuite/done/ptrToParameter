@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo(_Bool i, _Bool j){
   _Bool* p = &i;
@@ -10,7 +10,7 @@ void foo(_Bool i, _Bool j){
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo(int i, int j){
   int* p = &i;

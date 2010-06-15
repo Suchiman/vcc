@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 __forceinline int f() { return 0; }
 `

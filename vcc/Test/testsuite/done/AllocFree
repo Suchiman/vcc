@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 extern void* malloc(unsigned int);
 extern void free(void*);
@@ -24,7 +24,7 @@ void FreeTestOk()
 Verification of AllocTestOk succeeded.
 Verification of FreeTestOk succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 extern void* malloc(unsigned int);
 extern void free(void*);

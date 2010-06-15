@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 #include <sal.h>
 
 _Bool f(int *x)
@@ -17,7 +17,7 @@ testcase(10,3) : error VC9501: Post condition 'result == 0' did not verify.
 testcase(5,11) : error VC9599: (related information) Location of post condition.
 `
 
-#include <Vcc2.h>
+#include <vcc.h>
 
 void foo(int a spec(int b))
   requires(a == b);

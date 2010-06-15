@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned __int8 UINT8;
 
@@ -9,7 +9,7 @@ UINT8 foo(UINT8 a, UINT8 b) {
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   unsigned int a : 4;  

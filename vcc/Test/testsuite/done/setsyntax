@@ -1,5 +1,5 @@
 
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo() {
   int a,b,c,d,e,f;
@@ -64,7 +64,7 @@ void foo() {
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;
@@ -84,7 +84,7 @@ void foo(struct T t) { }
 Verification of T#adm succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;

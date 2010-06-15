@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 #include <sal.h>
 
 typedef unsigned __int64 UINT64;

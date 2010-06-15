@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 // the current behavior is actually correct, loop invariants in Boogie are not supposed
 // to hold when the loop exits, only upon entrance and when jumping back to the top of

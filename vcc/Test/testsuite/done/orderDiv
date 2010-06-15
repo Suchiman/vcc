@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef long long __vcI8;
 typedef unsigned long long __vcU8;

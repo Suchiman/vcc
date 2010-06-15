@@ -322,7 +322,7 @@ testcase(64,3) : error VC8510: Assertion '_vcc_extent(arr2) is writable in call 
 Verification of foo2Fail7 failed.
 testcase(73,3) : error VC8510: Assertion '_vcc_extent(arr1) is writable in call to _vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int8 byte;
 
@@ -358,7 +358,7 @@ void foo ()
 Verification of foo succeeded.
 `
 #include <stdlib.h>
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int8 byte;
 

@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 const __int64 i = 0xFFFFF80080000000I64;
 const unsigned __int64 c = 0xFFFFF80080000000UI64;

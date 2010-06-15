@@ -1,5 +1,5 @@
 
-#include <vcc2.h>
+#include <vcc.h>
 
 
 typedef union bla {
@@ -30,7 +30,7 @@ void foo() {
 Verification of foo succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 
 typedef union bla {

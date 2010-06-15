@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 int aDoubleArr[3] = {3, 6, 9}; 
 

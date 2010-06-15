@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 // An unset memberbinding's Type causes wrong IL to be generated. For the repro, 
 // the order of foo1 and bla mattered. 

@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void f(unsigned k, unsigned l) {
   k = 0;

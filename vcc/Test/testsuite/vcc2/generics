@@ -1,4 +1,4 @@
-#include <Vcc2.h>
+#include <vcc.h>
 
 template<typename T> void foo(T* t)
   requires(wrapped(t));
@@ -16,7 +16,7 @@ void bar(struct S *s)
 Verification of bar succeeded.
 `
 
-#include <Vcc2.h>
+#include <vcc.h>
 
 template<typename T> void foo(T* t)
   requires(wrapped(t));
@@ -34,7 +34,7 @@ Verification of bar failed.
 testcase(13,3) : error VC9502: Call 'foo(s)' did not verify.
 testcase(5,14) : error VC9599: (related information) Precondition: '_vcc_wrapped(t)'.
 `
-#include <Vcc2.h>
+#include <vcc.h>
 
 template<typename T, typename S> void foo(T* t, S*s)
   requires(wrapped(t) && wrapped(s));
@@ -62,7 +62,7 @@ void bar1(struct Q *q, struct P *p)
 Verification of bar succeeded.
 Verification of bar1 succeeded.
 `
-#include <Vcc2.h>
+#include <vcc.h>
 
 template<typename T> void foo(T* t)
 {
@@ -73,7 +73,7 @@ template<typename T> void foo(T* t)
 testcase(6,3) : error VC9693: Cannot declare local 'q' of generic type 'T'
 testcase(6,9) : error VC9691: Expression '*s' is of generic type 'T'; only pointers to generic types are supported.
 `
-#include <Vcc2.h>
+#include <vcc.h>
 
 template<typename T> void foo(T t)
 {
@@ -82,7 +82,7 @@ template<typename T> void foo(T t)
 `
 testcase(3,22) : error VC9693: Cannot declare parameter 't' of generic type 'T'
 `
-#include <Vcc2.h>
+#include <vcc.h>
 
 template<typename T> void foo(T* t);
 
@@ -92,7 +92,7 @@ void bar(int *p) {
 `
 Verification of bar succeeded.
 `
-#include <Vcc2.h>
+#include <vcc.h>
 
 template<typename T> void foo(T* t);
 
@@ -102,7 +102,7 @@ void bar(int **p) {
 `
 Verification of bar succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B{ int x; };
 
@@ -125,7 +125,7 @@ void foo(struct A *a)
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct P { int a; };
 struct Q { int b; };

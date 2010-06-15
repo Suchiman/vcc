@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 struct Core {
   unsigned __int64 a;
@@ -19,7 +19,7 @@ void bar()
 `
 Verification of bar succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef 
   struct Bar {
@@ -38,7 +38,7 @@ int main() {
 `
 Verification of main succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct _X { int c; } X;
 typedef struct _Y { X z; int a; } Y;

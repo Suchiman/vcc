@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo() {
   while(1) 
@@ -11,7 +11,7 @@ testcase(5,19) : warning VC0000: Possible mistaken null statement.
 Verification of foo succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 void bar() {
   while(1) 

@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 #include <sal.h>
 
 void ArrayWriteInLoopTestOk(int a[], size_t size)

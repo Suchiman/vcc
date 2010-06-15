@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 union A {
 int a;
@@ -13,7 +13,7 @@ void foo()
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef __w64 unsigned int   size_t;
 
@@ -119,7 +119,7 @@ Verification of f7 succeeded.
 Verification of f8 succeeded.
 Verification of f9 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef __w64 unsigned int   size_t;
 
@@ -144,7 +144,7 @@ void f9()
 Verification of f8 succeeded.
 Verification of f9 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef __w64 unsigned int   size_t;
 
@@ -159,7 +159,7 @@ void foo()
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo ()
 {
@@ -175,7 +175,7 @@ testcase(7,3) : error VC8512: Assertion 'p[SizeInBytes - 1] is thread local' did
 testcase(7,5) : error VC8004: SizeInBytes - 1 might overflow.
 Verification of main succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 unsigned int rax;
 
@@ -193,7 +193,7 @@ testcase(7,11) : error VC8507: Assertion 'rax is writable' did not verify.
 testcase(8,4) : error VC8507: Assertion '(char*)rax is writable' did not verify.
 Verification of main succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 unsigned Bitcount (unsigned Target)
   requires (Target < 256)

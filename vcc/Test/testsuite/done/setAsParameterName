@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 short _InterlockedAnd16(short ptrset);
 
@@ -14,7 +14,7 @@ void main(){}
 Verification of InterlockedAnd16 succeeded.
 Verification of main succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 short _InterlockedAnd16a(unsigned ptrset);
 short _InterlockedAnd16b(signed ptrset);

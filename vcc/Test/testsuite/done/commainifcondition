@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 // should return 0... the tester wouldnt complain..
 int main() {

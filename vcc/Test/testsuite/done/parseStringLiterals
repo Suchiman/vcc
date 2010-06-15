@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned short wchar_t;
 typedef  const wchar_t* PCWSTR;

@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 const __int32 i32 = 0xFFFFF801I32;
 const unsigned __int32 u32 = 0xFFFFF801UI32;

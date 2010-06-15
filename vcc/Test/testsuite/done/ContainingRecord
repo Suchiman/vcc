@@ -1,4 +1,4 @@
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned char UINT8, *PUINT8;
 
@@ -34,7 +34,7 @@ void foo(A *a)
 Verification of initalizeA succeeded.
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned char UINT8, *PUINT8;
 

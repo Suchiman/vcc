@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned long long size_t;
 //static bool __vcModifies(void* p, size_t length){ return 0;  }

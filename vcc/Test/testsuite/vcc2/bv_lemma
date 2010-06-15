@@ -100,7 +100,7 @@ void foo(int j) {
 `
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int16 UINT16;
 typedef unsigned __int32 UINT32;
@@ -155,7 +155,7 @@ bv_lemma(forall(unsigned __int64 x; ((x >> 13) & 0xFF) == (x & 0x1FE000) >> 13))
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned __int64 UINT64;
 
