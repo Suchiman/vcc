@@ -134,7 +134,7 @@
 
 % -----------------------------------------------------
 
-\newcommand{\Def}[1]{{\em  #1}}
+\newcommand{\Def}[1]{\textit{\textbf{#1}}}
 
 \begin{document}
 
@@ -183,8 +183,10 @@
 }
 \fi
 
+\definecolor{kwColor}{rgb}{0.2,0.2,0.8}
+
 \lstset{
-  keywordstyle=\bfseries,
+  keywordstyle=\bfseries, %\textcolor{kwColor},
   breaklines=true,
   breakatwhitespace=true,
   numberstyle=\tiny\sf,

@@ -16,15 +16,16 @@ Let's begin with a simple example:
 \vccInputSC{c/01_minInline2.c}
 This program (internally) sets \vcc{z} to the minimum of \vcc{x} and
 \vcc{y}. In addition to the ordinary C code, this program includes an
-\emph{annotation}, starting with \vcc{_(}, terminating with a closing
+\Def{annotation}, starting with \vcc{_(}, terminating with a closing
 parenthesis, with balanced parentheses inside. The first identifier
 after the opening parenthesis (in the program above it's \vcc{assert})
+is called \Def{annotation tag} and
 identifies the type of annotation provided (and hence its function).
-(The identifier plays this assertion-specific role only 
-at the beginning of an assertion; elsewhere, it would be treated as
+(The tag plays this assertion-specific role only 
+at the beginning of an annotation; elsewhere, it would be treated as
 an ordinary program identifier.)
 
-An annotation of the form \vcc{_( assert E )}, called an \emph{assertion}, asks VCC to prove that
+An annotation of the form \vcc{_( assert E )}, called an \Def{assertion}, asks VCC to prove that
 \vcc{E} is guaranteed to hold (\ie, evaluate to a value other than \vcc{0})
 whenever control reaches this assertion%
 \footnote{
@@ -146,7 +147,7 @@ something you think it should know. An assertion provides one way to
 check whether VCC knows what you think it knows.
 
 You can add to what VCC knows at a particular point by adding a second
-type of annotation, called an \emph{assumption}.
+type of annotation, called an \Def{assumption}.
 The assumption \vcc{_( assume E )} tells VCC to ignore
 the rest of an execution if \vcc{E} fails to hold (\ie if
 \vcc{E} evaluates to \vcc{0}). If you verify a
@@ -336,12 +337,12 @@ maintaining \vcc{min()} might not even know about them (e.g., if
 perhaps hasn't even been written yet. 
 \end{note}
 
-The specification of a function is sometimes called a \emph{contract},
+The specification of a function is sometimes called a \Def{contract},
 because it gives obligations on both the function and its callers. It
 is based on two new kinds of annotations:
 \begin{itemize}
 \item The requirements on the caller (sometimes called the
-  \emph{precondition} of the function) take the form 
+  \Def{precondition} of the function) take the form 
   \vcc{_( requires E )}, 
   where \vcc{E} is an expression%
   \footnote{
@@ -354,7 +355,7 @@ is based on two new kinds of annotations:
   evaluated and bound to the parameter names).
 
 \item The requirement on the function  (sometimes called the
-  \emph{postcondition} of the function) takes the form
+  \Def{postcondition} of the function) takes the form
   \vcc{_( ensures E )}, where \vcc{E} is an expression; this says that
   the function promises that \vcc{E} holds when control is returned to
   the caller.  In the code of the caller, VCC implicitly assumes \vcc{E}
@@ -476,7 +477,7 @@ function call has no side effects on its caller; for example, in
 verifying \vcc{main()} above, VCC got to assume that the call of
 \vcc{min()} didn't change \vcc{newPos}. 
 In VCC, possible side effects are specified using 
-another form of annotation, called \emph{writes clauses}.
+another form of annotation, called \Def{writes clauses}.
 Intuitively, the clause \vcc{_( writes p, q )} says that, 
 of the memory objects that are \vcc{\thread_local} to the caller before the call,
 the function is going to modify only the object pointed to by \vcc{p}

@@ -30,7 +30,7 @@ program really should be correct
   }. 
 
 To check your program, VCC generates a number of mathematical
-statements (called \emph{verification conditions}) whose proofs
+statements (called \Def{verification conditions}) whose proofs
 suffice to guarantee the program's correctness, and tries to prove
 these statements using an automatic theorem prover. If any of these
 proofs fail, VCC reflects these failures back to you in terms of the
@@ -58,8 +58,8 @@ Quite often this process will reveal a genuine programming error.
 Annotating your program sometimes requires doing some extra
 programming.  For example, your annotations might need to talk about a
 set of users of a data structure, where the implementation only
-maintains a count of them.  You would then need to include \emph{ghost
-  data} to store this set and write small bits of \emph{ghost code} to
+maintains a count of them.  You would then need to include \Def{ghost
+  data} to store this set and write small bits of \Def{ghost code} to
 update it.  Ghost code is seen by VCC but not by the C compiler, and
 so introduces no runtime overhead. Part of the VCC philosophy is that
 programmers would rather do extra programming than drive interactive
