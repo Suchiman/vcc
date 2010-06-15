@@ -1212,10 +1212,17 @@ namespace Microsoft.Research.Vcc
                   | [] -> []
                   | _ ->
                     let vname,_ = trVar res.Head
-                    if (env.hasIF) then [IF.setLocal ("SecLabel#"+vname) (IF.getLocal "SecLabel#special#result")
+                    if (env.hasIF) then [IF.setPLabel stmt.Token (er vname) (B.Expr.Ref "$sec.top")
+                                         assumeSync env stmt.Token
+                                         IF.setPMeta stmt.Token (er vname) IF.getPC
+                                         assumeSync env stmt.Token
+                                         IF.setLocal ("SecLabel#"+vname) (IF.getLocal "SecLabel#special#result")
                                          IF.setLocal ("SecMeta#"+vname) (IF.getLocal "SecMeta#special#result")]
                                    else []
-              List.map ctx.VarName res, setSecLabel
+              let setPtrGrp = if (env.hasIF && name'.Contains "alloc") then [IF.setPG stmt.Token (er (fst(trVar res.Head))) (freshGrpID env)
+                                                                             assumeSync env stmt.Token]
+                                                                       else []
+              List.map ctx.VarName res, setSecLabel @ setPtrGrp
           let syncEnv =
             match name' with
               | "$wrap"
