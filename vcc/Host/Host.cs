@@ -18,6 +18,8 @@ namespace Microsoft.Research.Vcc
   public class VccCommandLineHost
   {
 
+    const string FsharpDownloadUrl = "http://www.microsoft.com/downloads/details.aspx?FamilyID=5f0a79f8-925f-4297-9ae2-86e2fdcff33c";
+
     /// <summary>
     /// The main entry point for the application.
     /// </summary>
@@ -47,10 +49,22 @@ namespace Microsoft.Research.Vcc
         return 0;
       }
 
+      if (!CheckPresenceOfFSharpRuntime()) {
+        Console.WriteLine("Error - F# runtime not installed. You can download the runtime from:\n\n" + FsharpDownloadUrl);
+        Console.WriteLine("\n\nGo to download page?");
+        string reply = Console.ReadLine();
+        if (reply.ToUpperInvariant().StartsWith("Y")) {
+          Process.Start(FsharpDownloadUrl);
+        }
+        Console.WriteLine("Exiting with -3");
+        return -4;
+      }
+
       if (errorCount > 0) {
         Console.WriteLine("Exiting with 1 - error parsing arguments.");
         return 1;
       }
+
 
       if ((currentPlugin = InitializePlugin(commandLineOptions)) == null) {
         Console.WriteLine("Exiting with 2 - error initializing plugin.");
@@ -79,6 +93,22 @@ namespace Microsoft.Research.Vcc
       }
 
       return retVal;
+    }
+
+    internal static bool CheckPresenceOfFSharpRuntime() {
+      try {
+        CheckPresenceOfFSharpRuntimeHelper();
+      } catch (TypeLoadException) {
+        return false;
+      } catch (FileNotFoundException) {
+        return false;
+      }
+      return true;
+    }
+
+    internal static void CheckPresenceOfFSharpRuntimeHelper() {
+      Microsoft.FSharp.Collections.FSharpList<int> l = new FSharp.Collections.FSharpList<int>(1, Microsoft.FSharp.Collections.FSharpList<int>.Empty);
+      Debug.Assert(l.Length == 1);
     }
 
     internal static VerificationErrorHandler ErrorHandler {
