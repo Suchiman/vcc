@@ -229,7 +229,7 @@ void foo(struct S *s)
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;

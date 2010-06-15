@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 spec(ispure bool foo()
   ensures(result == forall(int i; i == i));)

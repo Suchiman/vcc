@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void IfTest(int x, int y){ int z;
   z = 2;

@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo() {
   unsigned short i =0, j = 0;

@@ -358,7 +358,7 @@ Verification of C#adm succeeded.
 Verification of SetX succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct B { int x; invariant(x > 0) };
 

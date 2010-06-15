@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 union U {
   backing_member unsigned __int32 a[4];
@@ -14,7 +14,7 @@ void foo() {
 testcase(10,3) : error VC9654: Expression is invalid due to union flattening. Flattening of arrays requires the backing member to be of array type with same element size and alignment.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 union U {
   unsigned __int32 a[4];
@@ -29,7 +29,7 @@ void foo() {
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 union U {
   backing_member unsigned __int64 AsUINT64;
@@ -66,7 +66,7 @@ void foo(union V *v)
 `
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int16 UINT16;
 typedef unsigned __int32 UINT32;

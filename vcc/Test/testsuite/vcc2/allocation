@@ -1,6 +1,6 @@
 `/newsyntax
 #include <stdlib.h>
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int8 byte;
 
@@ -54,7 +54,7 @@ Verification of withStackAlloc succeeded.
 `
 `/newsyntax
 #include <stdlib.h>
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned __int8 byte;
 

@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 // specifiers together with func ptr typedef
 typedef int (__cdecl *func_type)(void);

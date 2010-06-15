@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void f() {
   unsigned __int64 x = (1UI64 << 16);

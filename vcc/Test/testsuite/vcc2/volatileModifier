@@ -299,7 +299,7 @@ Verification of _Foo#adm succeeded.
 Verification of foo succeeded.
 `
 
-#include <Vcc2.h>
+#include <vcc.h>
 
 spec(ispure int f(int a) ensures(result == (a == 0 ? 1 : -1));)
 

@@ -915,7 +915,7 @@ void foo(struct B *b)
 Verification of B#adm succeeded.
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 struct S {
 	def_group(G)

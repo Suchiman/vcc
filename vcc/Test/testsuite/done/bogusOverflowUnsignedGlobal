@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned int UINT32;
 typedef __int32 INT32;

@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 unsigned int foo() {
   unsigned int x = 5;
@@ -37,7 +37,7 @@ void main(){}
 testcase(24,7) : error VC0000: Operator '/' cannot be applied to operands of type '__int32' and 'unsigned __int32'.
 testcase(31,7) : error VC0000: Operator '/' cannot be applied to operands of type '__int64' and 'unsigned __int64'.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned long long U8;
 typedef unsigned char U1;

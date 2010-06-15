@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*foo)(int);
 
@@ -20,7 +20,7 @@ testcase(10,10) : error VC8504: Assertion 'fum is valid function pointer' did no
 Verification of baz succeeded.
 Verification of $fnptr_test_to_fnptr#1 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*foo)(int i)
   requires(i > 0)
@@ -48,7 +48,7 @@ Verification of bar succeeded.
 Verification of myn succeeded.
 Verification of $fnptr_test_to_fnptr#1 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*foo)(int i)
   requires(i > 0)
@@ -78,7 +78,7 @@ testcase(4,14) : error VC9599: (related information) Precondition: 'i > 0'.
 Verification of myn succeeded.
 Verification of $fnptr_test_to_fnptr#1 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*foo)(int i)
   requires(i > 0)
@@ -106,7 +106,7 @@ testcase(16,10) : error VC8504: Assertion 'fum is valid function pointer' did no
 Verification of myn succeeded.
 Verification of $fnptr_test_to_fnptr#1 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*foo)(int i)
   requires(i > 0)
@@ -135,7 +135,7 @@ Verification of $fnptr_test_to_fnptr#1 failed.
 testcase(20,19) : error VC9501: Post condition 'result > 0' did not verify.
 testcase(5,13) : error VC9599: (related information) Location of post condition.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*foo)(int i)
   requires(i > 0)
@@ -163,7 +163,7 @@ Verification of bar succeeded.
 Verification of myn succeeded.
 Verification of $fnptr_test_to_fnptr#1 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*foo)(int i)
   requires(i > 0)
@@ -193,7 +193,7 @@ Verification of $fnptr_test_to_fnptr#1 failed.
 testcase(21,19) : error VC9502: Call '&test' did not verify.
 testcase(8,14) : error VC9599: (related information) Precondition: 'i > 1'.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*foo)(int i);
 int test(int i)
@@ -216,7 +216,7 @@ Verification of bar succeeded.
 Verification of myn succeeded.
 Verification of $fnptr_test_to_fnptr#1 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef void (*foo)();
 void test()
@@ -238,7 +238,7 @@ Verification of bar succeeded.
 Verification of myn succeeded.
 Verification of $fnptr_test_to_fnptr#1 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef void (*foo)();
 
@@ -257,7 +257,7 @@ Verification of myn failed.
 testcase(12,10) : error VC9502: Call 'bar((foo)(void *)0)' did not verify.
 testcase(6,28) : error VC9599: (related information) Precondition: '_vcc_typed2(fum)'.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void f(void) {}
 int main() {
@@ -270,7 +270,7 @@ Verification of f succeeded.
 Verification of main succeeded.
 Verification of $fnptr_f_to_fnptr#1 succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef void (*ft)(int); 
 struct b {
@@ -283,7 +283,7 @@ void test() {
 `
 Verification of test succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef int (*FOO)(int i)
   ensures(result == i);

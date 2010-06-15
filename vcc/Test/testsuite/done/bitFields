@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 #include <sal.h>
 
 typedef unsigned long long int size_t;
@@ -93,7 +93,7 @@ Verification of BitfieldComplexFramingTestOk succeeded.
 Verification of BitfieldTestOk succeeded.
 Verification of BitFieldReadWriteTestOk succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct S {
   unsigned __int64 a:4;  

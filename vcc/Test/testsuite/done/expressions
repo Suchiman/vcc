@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned long long int size_t;
 typedef unsigned long long int   size_t;
@@ -222,7 +222,7 @@ Verification of BoolOperationsTestOk succeeded.
 Verification of DivisionByZeroTestFails failed.
 testcase(207,9) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 int add(int i, int j)
 {
@@ -232,7 +232,7 @@ int add(int i, int j)
 Verification of add failed.
 testcase(5,10) : error VC8004: i + j might overflow.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 int sub(int i, int j)
 {
@@ -242,7 +242,7 @@ int sub(int i, int j)
 Verification of sub failed.
 testcase(5,10) : error VC8004: i - j might overflow.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 int div(int i, int j)
   requires(j != 0)
@@ -253,7 +253,7 @@ int div(int i, int j)
 Verification of div failed.
 testcase(6,10) : error VC8003: i / j might overflow (in div/mod case).
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 int mul(int i)
 {
@@ -263,7 +263,7 @@ int mul(int i)
 Verification of mul failed.
 testcase(5,10) : error VC8004: i * 1000 might overflow.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 int mul(int i)
   requires(0 < i && i < 100)
@@ -273,7 +273,7 @@ int mul(int i)
 `
 Verification of mul succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo(unsigned a, unsigned b)
 {
@@ -311,7 +311,7 @@ Verification of foobar succeeded.
 Verification of foobar2 succeeded.
 Verification of baz succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 ispure
 int sin(int x);

@@ -126,7 +126,7 @@ testcase(0,0) : error VC9599: (related information) Precondition: 'the extent of
 Verification of bar succeeded.
 `
 `/newsyntax
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo() {
   int i;

@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct itype_instr_t {
   unsigned opc;
@@ -23,7 +23,7 @@ Verification of one_or_two succeeded.
 Verification of one_or_two_alternative succeeded.
 Verification of one_or_two#reads succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct S {
   unsigned __int8 a;  

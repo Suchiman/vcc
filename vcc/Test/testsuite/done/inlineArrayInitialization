@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef union _X86X_PAT_ATTRIBUTES
 {

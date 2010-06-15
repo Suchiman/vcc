@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef __int32 INT32;
 typedef unsigned __int8 UINT8;

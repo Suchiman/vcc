@@ -421,7 +421,7 @@ void test(Container *c spec(claim_t claim))
 `
 Verification of test succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 struct vcc(record) R
 {

@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 extern int perfect;
 
@@ -23,7 +23,7 @@ int foo()
 Verification of f succeeded.
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 int a;
 

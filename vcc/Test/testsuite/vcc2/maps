@@ -93,7 +93,7 @@ Verification of foo succeeded.
 Verification of bar failed.
 testcase(11,12) : error VC9500: Assertion '_vcc_is(map[3], (_vcc_typeof((int*)0)))' did not verify.
 `
-#include <Vcc2.h>
+#include <vcc.h>
 
 struct S {
   int a;

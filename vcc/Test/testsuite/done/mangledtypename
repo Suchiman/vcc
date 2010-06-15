@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct mystruct {
 	long lc_handle[6]; 

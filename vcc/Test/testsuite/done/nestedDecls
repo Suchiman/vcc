@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo() {
   int i = 0;
@@ -10,7 +10,7 @@ void foo() {
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 void foo() {
   int i = 0;

@@ -963,7 +963,7 @@ assert(foo(&x) != &x);
 `
 Verification of qux succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 union U {
   struct {
@@ -1031,7 +1031,7 @@ spec(ispure bool foo(int *arr, unsigned c)
 `
 Verification of foo succeeded.
 `
-#include "vcc2.h"
+#include "vcc.h"
 
 typedef unsigned int     uint;
 

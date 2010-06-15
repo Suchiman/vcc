@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef unsigned __int64 UINT64;
 
@@ -12,7 +12,7 @@ void foo(S s)
 `
 Verification of foo succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct {int i; } S;
 
@@ -26,7 +26,7 @@ void foo(S s)
 Verification of foo succeeded.
 `
 
-#include <vcc2.h>
+#include <vcc.h>
 
 typedef struct proc_t {
     unsigned int gpr[32];    

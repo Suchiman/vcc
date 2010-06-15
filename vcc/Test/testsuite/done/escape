@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 const char c = '\0';
 const char c1 = '\077';

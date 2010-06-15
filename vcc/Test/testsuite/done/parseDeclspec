@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 __declspec(align(2)) struct S { __int32 x; };
 struct __declspec(align(2)) T { __int32 x; };

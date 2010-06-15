@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 void WhileTest(int n)
   requires(0<=n)
@@ -15,7 +15,7 @@ void WhileTest(int n)
 `
 Verification of WhileTest succeeded.
 `
-#include <vcc2.h>
+#include <vcc.h>
 
 int foo(){
   int i = 0;

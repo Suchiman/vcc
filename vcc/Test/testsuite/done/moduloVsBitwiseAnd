@@ -1,4 +1,4 @@
-#include <vcc2.h>
+#include <vcc.h>
 
 unsigned int foo(unsigned int i)
   requires((i % 4)  == 0)
