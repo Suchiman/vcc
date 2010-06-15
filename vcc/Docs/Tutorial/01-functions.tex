@@ -18,7 +18,7 @@ This program (internally) sets \vcc{z} to the minimum of \vcc{x} and
 \vcc{y}. In addition to the ordinary C code, this program includes an
 \emph{annotation}, starting with \vcc{_(}, terminating with a closing
 parenthesis, with balanced parentheses inside. The first identifier
-after the opening parenthesis (\vcc{assert} in the assertion above)
+after the opening parenthesis (in the program above it's \vcc{assert})
 identifies the type of annotation provided (and hence its function).
 (The identifier plays this assertion-specific role only 
 at the beginning of an assertion; elsewhere, it would be treated as
@@ -382,7 +382,7 @@ to avoid clash with C identifiers.
 All VCC keywords start with a backslash.
 The backslash can optionally be omitted on the first keyword after \vcc{_}, because it cannot
 be confused with a C identifier (thus you are still free to have, \eg
-a function called \texttt{requires} or \texttt{assert}).
+a function called \lstinline{requires} or \lstinline{assert}).
 
 As described above, VCC translates the program roughly as follows:
 \vccInput{c/01_min_assert.c}
@@ -569,12 +569,12 @@ More usual is to provide the stronger precondition of the object being
 %% to \vcc{boundedIncr(&x)}. 
 
 
-%A predicate \vcc{\mutable(p)} states that the object pointed to by \vcc{p}
+%A predicate \vcc{\unwrapped(p)} states that the object pointed to by \vcc{p}
 %is allocated, ``belongs'' to the current thread, and is in a ``phase of life''
 %that allows for modification.
 %We will get into details all of these later.
 %For now we just need to know that in order to be able to write to \vcc{*p}
-%one needs to know that \vcc{p} was listed in the writes clause \emph{and} \vcc{\mutable(p)}.
+%one needs to know that \vcc{p} was listed in the writes clause \emph{and} \vcc{\unwrapped(p)}.
 %For example, if we remove the \vcc{_( writes ... )} clause from the
 %\vcc{boundedIncr()} we get the following output:
 

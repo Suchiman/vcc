@@ -382,7 +382,7 @@ The question is what do we know about \vcc{x} and \vcc{y}
 at the end of \vcc{foo()}.
 If we knew that nobody is updating \vcc{n->v} while \vcc{foo()}
 is running we would know \vcc{x == y}.
-This would be the case if \vcc{n} was mutable, but it is wrapped.
+This would be the case if \vcc{n} was unwrapped, but it is wrapped.
 In our case, because \vcc{n} is consistent, other threads can update it,
 while \vcc{foo()} is running, but they will need to
 adhere to \vcc{n}'s invariant.
