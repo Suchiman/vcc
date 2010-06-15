@@ -297,30 +297,30 @@ axiom (forall M:$memory_t, v:$seclabel :: {:weight 0}
 
 function $set.seclabel($memory_t, $ptr, $seclabel) returns($memory_t);
 function $get.seclabel($memory_t, $ptr) returns($seclabel);
-axiom (forall M:$memory_t, p:$ptr, v:$seclabel :: {:weight 0}
-  $get.seclabel($set.seclabel(M, p, v), p) == v);
+axiom (forall M:$memory_t, p,f:$ptr, v:$seclabel :: {:weight 0}
+  ($set_in(f, $full_extent(p)) ==> $get.seclabel($set.seclabel(M, p, v), f) == v));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}
-	p == q
+	$set_in(q, $full_extent(p))
 	||
 	$get.seclabel($set.seclabel(M,p,l), q) == $get.seclabel(M, q)
 	);
 
 function $set.metalabel($memory_t, $ptr, $seclabel) returns($memory_t);
 function $get.metalabel($memory_t, $ptr) returns($seclabel);
-axiom (forall M:$memory_t, p:$ptr, v:$seclabel :: {:weight 0}
-  $get.metalabel($set.metalabel(M, p, v), p) == v);
+axiom (forall M:$memory_t, p,f:$ptr, v:$seclabel :: {:weight 0}
+  ($set_in(f, $full_extent(p)) ==> $get.metalabel($set.metalabel(M, p, v), f) == v));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}
-	p == q
+	$set_in(q, $full_extent(p))
 	||
 	$get.metalabel($set.metalabel(M,p,l), q) == $get.metalabel(M, q)
 	);
 
 function $set.ptrgrp($memory_t, $ptr, int) returns($memory_t);
 function $get.ptrgrp($memory_t, $ptr) returns(int);
-axiom(forall M:$memory_t, p:$ptr, i:int :: {:weight 0}
-  $get.ptrgrp($set.ptrgrp(M, p, i), p) == i);
+axiom(forall M:$memory_t, p,f:$ptr, i:int :: {:weight 0}
+  ($set_in(f, $full_extent(p)) ==> $get.ptrgrp($set.ptrgrp(M, p, i), f) == i));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}
-  p == q
+  $set_in(q, $full_extent(p))
   ||
   $get.ptrgrp($set.ptrgrp(M,p,i), q) == $get.ptrgrp(M,q)
   );

@@ -28,7 +28,9 @@ namespace Microsoft.Research.Vcc
       | Top
       | ProgramContext
       | VarLabel of C.Expr  // Label of a variable
+      | VarMeta of C.Expr
       | MemLabel of C.Expr  // Label of a memory location
+      | MemMeta of C.Expr
       | PtrCompare of C.Expr*C.Expr // Level of a pointer comparison
       | Join of SecLabel*SecLabel
       | Meet of SecLabel*SecLabel
@@ -50,7 +52,9 @@ namespace Microsoft.Research.Vcc
       | Top
       | ProgramContext
       | VarLabel _
+      | VarMeta _
       | MemLabel _
+      | MemMeta _
       | PtrCompare _ as l -> l
       | Join(Bottom,l)
       | Join(l,Bottom)
@@ -83,14 +87,27 @@ namespace Microsoft.Research.Vcc
         | C.Expr.IntLiteral _
         | C.Expr.BoolLiteral _
         | C.Expr.SizeOf _ -> Bottom
-        | C.Expr.Cast (_,_,e) -> exprLevel e
-        | C.Expr.Ref _ as e -> VarLabel e
+        | C.Expr.Cast (_,_,e') -> exprLevel e'
+        | C.Expr.Ref _ as e' -> VarLabel e'
+        | C.Expr.Macro (_, "_vcc_as_array", _) as e'
         | C.Expr.Deref(_,e') -> MemLabel e'
-        | C.Expr.Call (_, fn, [], []) when  fn.Name = "$current_context" -> ProgramContext
+        | C.Expr.Macro (_, "_vcc_current_context", []) ->  ProgramContext
         | C.Expr.Macro (_, ("_vcc_ptr_eq" | "_vcc_ptr_neq"), [p1;p2]) -> PtrCompare(p1,p2)
-        | C.Expr.Call _    // First step: no function calls, ...
-        | C.Expr.Dot _     // ... or structures, ...
-        | C.Expr.Index _   // ... or arrays.
+        | C.Expr.Macro (_, "_vcc_label_of", [expr]) ->
+          let lblExpr = exprLevel expr
+          let rec getMeta lbl =
+            match lbl with
+              | Bottom | Top | ProgramContext -> Bottom
+              | VarMeta _ | MemMeta _ -> lbl
+              | VarLabel e' -> VarMeta e'
+              | MemLabel e' -> MemMeta e'
+              | PtrCompare _ -> die() // We probably want to figure something out here...
+              | Meet (l1, l2) -> Meet (getMeta l1, getMeta l2)
+              | Join (l1, l2) -> Join (getMeta l1, getMeta l2)
+          getMeta lblExpr
+        | C.Expr.Index _
+        | C.Expr.Dot _ -> Top // This is a memory address, and as such is always high
+        | C.Expr.Call _    // First step: no function calls
         | C.Expr.Old _     // Contracts are not supposed to cause
         | C.Expr.Quant _  -> die() //  information-flow problems
         | _ -> failwith (sprintf "Incomplete implementation: Encountered an error while trying to take the expression level of %s." (e.ToString()))
@@ -119,6 +136,7 @@ namespace Microsoft.Research.Vcc
         | C.Expr.Index _ as e -> Some(getPG (trExpr e))
         | C.Expr.Macro (_,"null", []) -> Some (B.Expr.IntLiteral (bigint.Zero))
         | C.Expr.Cast (_, _, e) -> exprPtrGroup trExpr e
+        | C.Expr.Dot _ as e -> Some (getPG (trExpr e))
         | _ -> None
       match e.Type with
         | C.Type.PhysPtr _
@@ -151,10 +169,25 @@ namespace Microsoft.Research.Vcc
           | C.Expr.Ref(_,v) -> getLocal ("SecLabel#"+(trVar v))
           | C.Expr.Result _ -> getLocal ("SecLabel#special#result")
           | _ -> die()
+      | VarMeta e ->
+        match e with
+          | C.Expr.Ref(_,v) -> getLocal ("SecMeta#"+(trVar v))
+          | C.Expr.Result _ -> getLocal ("SecMeta#special#result")
+          | _ -> die()
       | MemLabel e ->
         match e with
-          | C.Expr.Ref(_,v) -> match v.Type with | C.Type.PhysPtr _ -> getPLabel (trExpr e) | _ -> die()
+          | C.Expr.Ref(_, v) -> match v.Type with | C.Type.PhysPtr _ -> getPLabel (trExpr e) | _ -> die()
+          | C.Expr.Dot _
+          | C.Expr.Index _
+          | C.Expr.Macro (_, "_vcc_as_array", _) -> getPLabel (trExpr e)
           | _ -> failwith (sprintf "Incomplete implementation: Encountered a MemLabel with argument %s\n." (e.ToString()))
+      | MemMeta e ->
+        match e with
+          | C.Expr.Ref(_,v) -> match v.Type with | C.Type.PhysPtr _ -> getPMeta (trExpr e) | _ -> die()
+          | C.Expr.Dot _
+          | C.Expr.Index _
+          | C.Expr.Macro (_, "_vcc_as_array", _) -> getPMeta (trExpr e)
+          | _ -> failwith (sprintf "Incomplete implementation: Encountered a MemMeta with argument %s\n." (e.ToString()))
       | Meet (Top, l)
       | Meet (l, Top)
       | Join (Bottom, l)
