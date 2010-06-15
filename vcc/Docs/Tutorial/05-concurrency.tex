@@ -219,8 +219,8 @@ This invariant states that the object cannot be unwrapped when
 when there are consistent claims on it.
 More precisely, each claimable object keeps track of the count of outstanding
 claims.
-The number of outstanding claim on object \vcc{o} is given by
-the \vcc{\claim_count(o)} function.
+The number of outstanding claim on object \vcc{p} is given by
+the \vcc{\claim_count(p)} function.
 
 Now, getting back to our lock example, the trick is that there can be
 multiple claims claiming the lock (note that this is orthogonal to
@@ -312,8 +312,8 @@ The destruction can possibly leak claim counts, \ie one could say:
 \end{VCC}
 \noindent
 and it would verify just fine.
-This avoids the need to have write access to \vcc{o}, but on the other hand prevents
-\vcc{o} from unwrapping forever (which might be actually fine if \vcc{o} is a ghost object).
+This avoids the need to have write access to \vcc{p}, but on the other hand prevents
+\vcc{p} from unwrapping forever (which might be actually fine if \vcc{p} is a ghost object).
 %It seems clear why the claimed objects need to be listed when creating a claim, but
 %why do we need them for destruction?
 \end{note}
@@ -457,34 +457,34 @@ This should not come as a surprise: this is exactly what VCC checks
 for in atomic blocks.
 
 An invariant is \Def{stable} if and only if it cannot be broken by legal updates.
-More precisely, to prove that an invariant of \vcc{o} is stable,
+More precisely, to prove that an invariant of \vcc{p} is stable,
 VCC needs to ``simulate'' an arbitrary legal update:
 \begin{itemize}
 \item Take two arbitrary states \vcc{S0} and \vcc{S1}.
-\item Assume that all invariants (including \vcc{o}'s) hold over \vcc{S0, S0}.
+\item Assume that all invariants (including \vcc{p}'s) hold over \vcc{S0, S0}.
 \item Assume that for all objects, some fields of which are not the same in \vcc{S0} and \vcc{S1},
 their invariants hold over \vcc{S0, S1}.
-\item Assume that all fields of \vcc{o} are the same in \vcc{S0} and \vcc{S1}.
-\item Check that invariant of \vcc{o} holds over \vcc{S0, S1}.
+\item Assume that all fields of \vcc{p} are the same in \vcc{S0} and \vcc{S1}.
+\item Check that invariant of \vcc{p} holds over \vcc{S0, S1}.
 \end{itemize}
 The first assumption comes from the fact that all invariants are reflexive.
 The second assumption is legality.
-The third assumption follows from the second (if \vcc{o} did change, its invariant would
+The third assumption follows from the second (if \vcc{p} did change, its invariant would
 automatically hold).
 
 An invariant is \Def{admissible} if and only if its stable and reflexive.
 
 First, let's see how our previous notion of admissibility relates to this one.
-If \vcc{o} owns \vcc{p}, then \vcc{p \in o->\owns}.
-By the third admissibility assumption, after the simulated action \vcc{o} still owns \vcc{p}.
+If \vcc{p} owns \vcc{q}, then \vcc{q \in p->\owns}.
+By the third admissibility assumption, after the simulated action \vcc{p} still owns \vcc{q}.
 By the rules of ownership (\secref{wrap-unwrap}), only threads can own
-inconsistent objects, so we know that \vcc{p} is consistent in both \vcc{S0}
+inconsistent objects, so we know that \vcc{q} is consistent in both \vcc{S0}
 and \vcc{S1}.
-Therefore non-volatile fields of \vcc{p} do not change between \vcc{S0} and \vcc{S1},
-and thus the invariant of \vcc{o} can freely talk about their values:
+Therefore non-volatile fields of \vcc{q} do not change between \vcc{S0} and \vcc{S1},
+and thus the invariant of \vcc{p} can freely talk about their values:
 whatever property of them was true in \vcc{S0}, will also be true in \vcc{S1}.
-Additionally, if \vcc{p} owned \vcc{q} before the atomic action, and the \vcc{p->\owns} is non-volatile,
-it will keep owning \vcc{q}, and thus non-volatile fields of \vcc{q}
+Additionally, if \vcc{q} owned \vcc{r} before the atomic action, and the \vcc{q->\owns} is non-volatile,
+it will keep owning \vcc{r}, and thus non-volatile fields of \vcc{r}
 will stay unchanged.
 Thus our previous notion of admissibility is a special case of this one.
 

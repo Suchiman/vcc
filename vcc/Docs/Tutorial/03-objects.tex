@@ -131,10 +131,10 @@ In addition to the consistency flag each object has an \Def{owner field}.
 We also refer to it using a function, \vcc{\owner(...)}.
 The owner itself is also an object, but VCC provides objects, of \vcc{\thread}
 type, to represent threads of execution, so that threads can also own objects.
-The idea is that the owner of \vcc{o} should have some special rights to \vcc{o} that others do not.
-In particular, the owner of \vcc{o} can transfer ownership of \vcc{o} to
-another object (\eg a thread can transfer ownership of \vcc{o} from itself to the memory allocator, 
-in order to dispose of \vcc{o}).
+The idea is that the owner of \vcc{p} should have some special rights to \vcc{p} that others do not.
+In particular, the owner of \vcc{p} can transfer ownership of \vcc{p} to
+another object (\eg a thread can transfer ownership of \vcc{p} from itself to the memory allocator, 
+in order to dispose of \vcc{p}).
 
 When verifying a body of a function VCC assumes that it is being executed by some
 particular thread.
@@ -276,7 +276,7 @@ that deals with ownership:
 \noindent
 To make it easier to read, we made it store the \vcc{s->content} pointer
 casted to an array into a temporary variable.
-Also, an invariant of \vcc{o} is referred to as \vcc{\inv(o)}.
+Also, an invariant of \vcc{p} is referred to as \vcc{\inv(p)}.
 As you can see there are two ownership transfers.
 The first one is kind of clear: when unwrapping an object everything that it used
 to own, will be now owned by the thread.
@@ -320,7 +320,7 @@ After such operation, the container should own whatever it used
 to own minus \vcc{x} plus \vcc{y}.
 To facilitate such transfers VCC introduces the \Def{owns set}.
 It is essentially the inverse of the owner field.
-It is defined on every object \vcc{o} and referred to as \vcc{\owns(o)}.
+It is defined on every object \vcc{p} and referred to as \vcc{\owns(p)}.
 VCC maintains that:
 \begin{VCC}
 \forall object p, q; \consistent(p) ==> 
@@ -378,8 +378,8 @@ Additionally, \vcc{\wrapped(c)} holds before and after as expected.
 
 \subsection{Ownership domains}
 
-An ownership domain of an object \vcc{o} is the set of objects
-that it owns and their ownership domains, plus \vcc{o} itself.
+An ownership domain of an object \vcc{p} is the set of objects
+that it owns and their ownership domains, plus \vcc{p} itself.
 In other words, it's the set of objects that are transitively
 owned by a given object.
 
@@ -471,7 +471,7 @@ of that very object, not some other objects.
 However, for example the invariant of the \vcc{struct SafeString} 
 talks about the values stored in its underlaying array.
 This also seems natural: one should be able to mention things
-from the ownership domain of \vcc{o} in \vcc{o}'s invariant.
+from the ownership domain of \vcc{p} in \vcc{p}'s invariant.
 
 This is important, because VCC checks only invariants of objects
 that you actually modify, and as we recall the most important
