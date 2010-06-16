@@ -5,7 +5,7 @@
 typedef struct SafeString {
   unsigned len;
   char content[SSTR_MAXLEN + 1];
-  _(invariant \this->len < SSTR_MAXLEN)
+  _(invariant \this->len <= SSTR_MAXLEN)
   _(invariant content[len] == '\0')
 } SafeString;
 /*{init}*/
@@ -20,7 +20,7 @@ void sstr_init(struct SafeString *s)
 /*{append}*/
 void sstr_append_char(struct SafeString *s, char c)
   _(requires \wrapped(s))
-  _(requires s->len < SSTR_MAXLEN - 1)
+  _(requires s->len < SSTR_MAXLEN)
   _(ensures \wrapped(s))
   _(writes s)
 {

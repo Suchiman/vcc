@@ -45,17 +45,17 @@ VCC translates this example roughly as follows:
 The invariant is asserted wherever control moves to the top of the
 loop (here, on entry to the loop and at the end of the loop body). On
 loop entry, VCC forgets the value of each variable modified in the
-loop (in this case, \vcc{res}), and assumes the invariant (which
+loop (in this case just \vcc{res}), and assumes the invariant (which
 places some constraints on \vcc{res}).  VCC doesn't have to consider
 the actual jump from the end of the loop iteration back to the top of
 the loop (since it has already checked the loop invariant), so further
-consideration of that branch is cut off with \vcc{assume(\false)}.
+consideration of that branch is cut off with \vcc{_(assume \false)}.
 The only way to exit this particular loop is through the
 \vcc{break} statement, (which is translated to a \vcc{goto}). At this
 control point, we know the loop invariant holds and that \vcc{res <  b}, 
 which together imply the postcondition of the function. Since this is
 the only location from which control jumps to \vcc{theEnd}, the
-postcondition is also known a \vcc{theEnd}, so the assertion generated
+postcondition is also known at \vcc{theEnd}, so the assertion generated
 by the postcondition follows.
 
 If the loop had been of the form
@@ -104,6 +104,14 @@ If the loop terminates with \vcc{i == sz}, then the postcondition follows.
 \subsection{Review}
 \todo{Put in some way to get to the relevant info about quantifiers
   and ghost data?}  
+
+\itodo{I'm not sure how useful this review is. In particular the parts
+where we explain the semantics of if statements and assignments
+in terms of what VCC know just seem confusing. Programmers already
+know what if statement or assignment does. 
+I think it would be useful just to emphasize what VCC doesn't know,
+for loops and function calls.
+--M }
 
 You have now learned enough to verify some nontrivial sequential
 programs that use only base types and arrays.  This is already a very
@@ -184,6 +192,8 @@ location to another. Repeat with 2-dimensional arrays.
 Write and verify an iterative program for binary search (a program
 that checks whether a sorted array contains a given value).
 \item
+\itodo{we should implement one sort routine in the text, and ask for implementation
+of another}
 Write and verify an iterative program that sorts an array of ints using
 bubblesort. You can assume that the input array contains pairwise
 distinct elements. You can also try selection sort.
@@ -191,6 +201,4 @@ distinct elements. You can also try selection sort.
 Write and verify a program that takes a 2-dimensional array of ints in
 which every row and column is sorted, and checks whether a given int
 occurs in the array.
-\item 
-Write a program that 
 \end{enumerate}

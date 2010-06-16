@@ -123,9 +123,10 @@ For the regular C compiler the \vcc{<vcc.h>} header file defines:
 VCC does not use this definition, and instead parses the inside of \vcc{_( ... )}
 annotations.%
 \footnote{
-  One can prevent definition of \vcc{_}, and instead surround annotations with
+  You can prevent definition of \vcc{_}, and instead surround annotations with
   \vcc{__vcc_spec(...)}.
-  This is controlled with \vcc{_VCC_DONT_USE_UNDERSCORE} macro-definition.}
+  This is controlled with \vcc{_VCC_DONT_USE_UNDERSCORE} macro-definition.
+  \itodo{We should actually allow it.} }
 
 To understand how VCC works, and to use it successfully, it is useful to
 think in terms of what VCC ``knows'' at various program points. In
@@ -152,7 +153,7 @@ The assumption \vcc{_( assume E )} tells VCC to ignore
 the rest of an execution if \vcc{E} fails to hold (\ie if
 \vcc{E} evaluates to \vcc{0}). If you verify a
 program with VCC, it guarantees that in any prefix of an execution
-where no (user-provided) assumption fails, no assertion will fail either.
+where all (user-provided) assumptions hold, all assertions will also hold.
 Reasoning-wise, assumption simply adds \vcc{E} to what VCC
 knows for subsequent reasoning. For example:
 \begin{VCC}
@@ -162,38 +163,36 @@ y = 100 / x;
 \end{VCC}
 Without the assumption, VCC would complain about possible division by
 zero (it checks for division by zero because it would cause the
-program to crash).  With the assumption, this error cannot happen.  An
-assumption essentially tells VCC to ignore all of those executions
-where the assumption fails to hold; thus, when VCC successfully
-verifies a program, it promises that in every execution where no
-assumption fails, no assertion will fail either.  Since
-assumptions (like all annotations) are not seen by the compiler,
-assumption failure won't cause the program to stop, so subsequent
-assertions might be violated.  Thus, your goal should be to eliminate
-as many assumptions as possible, and preferably remove them altogether.
+program to crash).  With the assumption, this error cannot happen.  
+Since assumptions (like all annotations) are not seen by the compiler,
+assumption failure won't cause the program to stop, so subsequent assertions
+might be violated.  
+Thus, your goal should be to eliminate as many assumptions as possible, and
+preferably remove them altogether.
 
 Although assumptions are to be avoided, they are nevertheless
 sometimes useful:
 \begin{itemize}
 \item In an incomplete verification, assumptions can be used
-  to mark the knowledge that VCC is missing, and guide further work.
-  If you maintain the discipline of checking in your work only when
-  everything verifies (but perhaps with assumptions), other people can
-  read your annotated text and see how far away from complete your
-  verification is, without having to look at the verification output
-  itself.
+  to mark the knowledge that VCC is missing, and guide further verification
+  work possibly performed by different people.
+
 \item When debugging a failed verification, you can use assumptions to
   narrow down the failed verification to a more specific failure
-  scenario, perhaps even all the way to a counterexample. You can then
-  add additional (non-assumption) annotations to eliminate the
-  counterexample, weaken assumptions until you either hit another
-  counterexample (or finish the verification), and repeat the process.
+  scenario, perhaps even all the way to a counterexample counterexample. 
+% We should have chapter about it, not a cryptic mention here. --M
+%  You can then
+%  add additional (non-assumption) annotations to eliminate the
+%  counterexample, weaken assumptions until you either hit another
+%  counterexample (or finish the verification), and repeat the process.
+
 \item Sometimes you want to assume something even though VCC can
   verify it, just to stop VCC from spending time proving it. For
-  example, assuming \vcc{\false} (equivalently, \vcc{0}) allows VCC to 
+  example, assuming \vcc{\false} allows VCC to 
   easily prove subsequent assertions, effectively focussing its
-  attention on other parts of the function. This is a common tactic
-  when verifying long function bodies.
+  attention on other parts of the function. Temporarily adding assumptions
+  is a common tactic when developing annotations for complex functions.
+
 \item Sometimes you will want to make assumptions about the operating
   environment of a program. For example, you might want to assume that
   a 64-bit counter doesn't overflow, but don't want to justify it
@@ -220,11 +219,12 @@ sometimes useful:
 
 An assertion can also change what VCC knows after the assertion, if
 the assertion fails; even though VCC will report the failure as an error,
-it will assume the asserted fact holds afterward. For example
+it will assume the asserted fact holds afterward. For example, in the following
+VCC will only report an error for first assumption and no the second:
 \begin{VCC}
 int x;
-_( assert x == 0 ) // fails
-_( assert x == 0 ) // succeeds
+_( assert x == 0 )
+_( assert x == 0 )
 \end{VCC}
 
 When we talk about what VCC knows, we mean what it knows in an ideal
@@ -277,6 +277,8 @@ _( assert p ==> q )
 \end{VCC}
 ? 
 \item
+\itodo{I'm not sure if this and the following exercise give
+any insight. --M}
 Given the assumptions preceding each of the assignments below to int
 variables, what are the strongest assertions that would be valid?
 \begin{VCC}
@@ -307,19 +309,21 @@ two numbers out into a separate function:\todo{match with the previous programs}
 of VCC, typeset in a different font and color, and 
 the actual file name of the example is replaced with \vcc{/*`testcase`*/}.)
 VCC failed to prove our assertion, even though it's easy to see that
-it always holds. This is because the verification is modular: VCC
+it always holds. This is because the verification is \Def{modular}: VCC
 doesn't look inside the body of a function (such as \vcc{min()}) 
 when verifying a function that calls it (such as \vcc{main()})%
 \footnote{We will see later how to selectively override this default
   and perform such inlining during verification.}.  
-That is, VCC doesn't ``know'' anything about the effect of calling 
-\vcc{min()}, unless you specify it explicitly%
-\footnote{
-  Actually, VCC does know one important thing from this specification
-  of \vcc{min()}: it knows that a call do \vcc{min()} has no side
-  effects that are visible to the caller. We'll see in \secref{writes} that
-  any such side effects have to be explicitly specified.
-}.
+That is, VCC doesn't know anything about the effect of calling 
+\vcc{min()}, unless you specify it explicitly.
+%This is just because we have chosen the default to be so. It thus doesn't
+% contradict that specification needs to say everything --M
+%\footnote{
+%  Actually, VCC does know one important thing from this specification
+%  of \vcc{min()}: it knows that a call do \vcc{min()} has no side
+%  effects that are visible to the caller. We'll see in \secref{writes} that
+%  any such side effects have to be explicitly specified.
+%}.
 Since the correctness of \vcc{main()} clearly depends on what \vcc{min()}
 does, we need to specify \vcc{min()} in order to verify \vcc{main()}.
 
@@ -344,11 +348,12 @@ is based on two new kinds of annotations:
 \item The requirements on the caller (sometimes called the
   \Def{precondition} of the function) take the form 
   \vcc{_( requires E )}, 
-  where \vcc{E} is an expression%
-  \footnote{
-    \vcc{E} can mention only names that are in scope at the function entry, 
-    so it can mention parameters of the function, global variables, and
-    types.}.  
+  where \vcc{E} is an expression.
+  % This is commonsense, no need to drag attention to it. --M
+  %\footnote{
+  %  \vcc{E} can mention only names that are in scope at the function entry, 
+  %  so it can mention parameters of the function, global variables, and
+  %  types.}.  
   In verifying the function, VCC implicitly assumes
   \vcc{E} on function entry, and for each call to the function, VCC
   implicitly asserts \vcc{E} (after the function arguments have been
@@ -381,8 +386,10 @@ is no bigger than either of the inputs.
 Note that \vcc{\true} and \vcc{\result} are spelled with a backslash
 to avoid clash with C identifiers.
 All VCC keywords start with a backslash.
-The backslash can optionally be omitted on the first keyword after \vcc{_}, because it cannot
-be confused with a C identifier (thus you are still free to have, \eg
+This contrasts with annotation tags (like \vcc{requires}),
+which are only used at the beginning of annotation
+and therefore cannot be confused with C identifiers
+(and thus you are still free to have, \eg
 a function called \lstinline{requires} or \lstinline{assert}).
 
 As described above, VCC translates the program roughly as follows:
@@ -397,8 +404,9 @@ This is why they do not compromise soundness of the verifier;
 these assumptions will never fail at runtime.
 \end{note}
 
-As for call itself, because the \vcc{min()} function above has no
-visible specification, VCC doesn't know anything about the value it
+As for call itself, after the desugaring VCC forgets about
+specification of \vcc{min()}, so VCC doesn't know
+anything about the value the function
 might possibly return.  Therefore, as far as VCC's understanding is
 concerned, the line:
 \begin{VCC}
@@ -411,7 +419,7 @@ position = anything();
 \end{VCC}
 \noindent
 that is assigning an unspecified value to the variable \vcc{position}.
-The only knowledge about it comes from the following assumption.
+The only knowledge about it comes from the assumption that follows the assignment.
 
 \subsection*{Exercises}
 \begin{enumerate}
@@ -446,7 +454,7 @@ reason to use such a specification?
 %% if everything it calls was verified.
 
 \item
-Can you see anything wrong with the above specification of\vcc{min()}?
+Can you see anything wrong with the above specification of \vcc{min()}?
 Can you give a simpler implementation than the one presented? Is this 
 specification strong enough to be useful? If not, how might it be
 strengthened to make it more useful?
@@ -461,7 +469,8 @@ invariants.)
 Can you think of useful functions in a real program that might
 legitimately guarantee only the trivial postcondition \vcc{_( ensures \true )}?
 \end{enumerate}
-\subsection*{Reading and Writing}
+
+\subsection{Reading and Writing}
 \label{sect:writes}
 
 So far, we have considered functions that access only parameters and
@@ -470,7 +479,7 @@ like C that provides only call-by-value), most interesting functions
 have to read and/or write memory shared with its caller. A function
 can read a memory object only if the object is known to be valid and
 not concurrently modified by other threads; such an object is said to
-be \vcc{\thread_local}. 
+be \Def{thread-local}. 
 
 Writing requires something more; by default, VCC assumes that a
 function call has no side effects on its caller; for example, in
@@ -479,14 +488,14 @@ verifying \vcc{main()} above, VCC got to assume that the call of
 In VCC, possible side effects are specified using 
 another form of annotation, called \Def{writes clauses}.
 Intuitively, the clause \vcc{_( writes p, q )} says that, 
-of the memory objects that are \vcc{\thread_local} to the caller before the call,
+of the memory objects that are thread-local to the caller before the call,
 the function is going to modify only the object pointed to by \vcc{p}
 and the object pointed to by \vcc{q}.
-In other words, it is roughly equivalent to a postcondition that \vcc{\ensures}
+In other words, it is roughly equivalent to a postcondition that ensures
 that all other objects local to the caller prior
-to the call remain unchanged%
+to the call remain unchanged.%
 \footnote{It's not quite the same when considering objects that are
-  wrapped; see \secref{invariants}.}.  VCC allows you
+  wrapped; see \secref{invariants}.}  VCC allows you
 to specify pointers in separate writes clauses, and implicitly
 combines them into a single set. If a function spec contains no writes clauses, 
 it is equivalent to specifying a writes clause with empty set of
@@ -494,7 +503,7 @@ pointers.
 
 At any control point, VCC can ``know'' that a particular memory object
 \vcc{*p} is writable; in annotations, this is written as
-\vcc{\writeable(p)}, and is defined as a a conjunction of two conditions:
+\vcc{\writeable(p)}, and is defined as a conjunction of two conditions:
 \begin{itemize}
 \item \vcc{p} belongs to the current thread and is in a ``phase of
   life'' where it can be written; in VCC, this is written as 
@@ -513,6 +522,7 @@ each call to a function that lists \vcc{p} in a writes clause.
 
 Here is a simple example of a function that visibly reads and writes
 memory; it simply copies data from one location to another.
+\itodo{the example below should use \vcc{old}}
 \vccInput{c/01_copy1.c}
 
 %% \vccInput[linerange={swap-partition}]{c/04_partition.c}
@@ -539,7 +549,7 @@ While thread locality is what is checked on a read, in practice it is
 rarely used in preconditions, because it could be falsified by the
 unwrapping of other objects (\secref{invariants}). 
 More usual is to provide the stronger precondition of the object being
-\vcc{\unwrapped}; you should use this stronger condition in 
+\vcc{\unwrapped}; you should use this stronger condition in specifications.
 %% For example, the assert/assume translation of \vcc{swap()} is%
 %% \footnote{
 %%   VCC does not generate the read and writes checks for the local variable
@@ -579,120 +589,71 @@ More usual is to provide the stronger precondition of the object being
 %For example, if we remove the \vcc{_( writes ... )} clause from the
 %\vcc{boundedIncr()} we get the following output:
 
-\subsection*{More on expressions in annotations}
-VCC provides a number of C extensions that can be used within VCC
-annotations. We describe some of them here.
-
-Within a VCC declaration, the type \vcc|T[E]| where \vcc{T} is
-a type and \vcc{E} is an expression that is convertible to an
-\vcc{int}, is the type of arrays of \vcc{E} elements of type
-\vcc{T}. For example, the declaration
-\begin{VCC}
-void copyArray(int *from, int *to, int len)
-_(requires \\thread_local((int[len]) from))
-_(writes ((int[len]) to))
-...
-\end{VCC}
-defines a function that can read the first \vcc{len} elements of the
-array \vcc{from}, and read or write the first \vcc{len} elements of
-the array \vcc{to}.
-
-The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
-expression \vcc{E} evaluates to a nonzero value for every value 
-\vcc{v} of type \vcc{E}. For example, the expression 
-\vcc|\forall int i; 1 < i && i < x ==> x % i != 0|
-says that \vcc{x} is a prime number.
-Here, \vcc{==>} denotes logical implication; formally,
-\vcc{P ==> Q} means \vcc{((!P) || (Q))}, and is usually 
-read as ``\vcc{P} implies \vcc{Q}''.
-
-Similarly, the expression \vcc{\exists T v; E} evaluates to \vcc{1} if there
-is some value of \vcc{v} of type \vcc{T} for which \vcc{E} evaluates
-to a nonzero value.
-
-The expression \vcc{\old(E)}, when used in a postcondition of a
-function, returns the value of expression \vcc{E} as it was at just
-before the function was called. For example, the postcondition 
-\vcc{*x == \old(*x) + 1} says that the function under consideration
-increments \vcc{*x}.
-
-\subsection*{Type Safety}
-We have been talked about typed memory ``objects'' as if this were a
-meaningful concept.  This typed view of memory is supported by most
-modern programming languages, like Java, C\#, and ML, where memory
-consists of a collection of typed objects. Programs in these languages
-don't allocate memory (on the stack or on the heap), they allocate
-objects, and the type of an object remains fixed until the object is
-destroyed. Morover, a non-null reference to an object is guaranteed to
-point to a ``valid'' object. But in C, a type simply provides a way to
-interpret a sequence of bytes; nothing prevents a program from having
-multiple pointers of different types pointing into the same memory, or
-even having two instances of the same \vcc{struct} type partially
-overlapping. Moreover, a non-null pointer might still point into an
-invalid region of memory.
-
-That said, most C functions really do access memory using a strict type
-discipline, most of the time, and tacitly assume that their callers do
-so also. For example, if the parameters of a function are a pointer to
-an \vcc{int} and a pointer to a \vcc{char}, we shouldn't have to worry
-about crazy possibilities like the \vcc{char} aliasing with the second
-half of the \vcc{int}. (Without such assumptions, we would have to
-provide explicit preconditions to this effect.)  On the other hand, if
-the second parameter is a pointer to an \vcc{int}, we do consider the
-possibility of aliasing (as we would in a strongly typed language).
-Moreover, since in C objects of structured types literally contain
-objects of other types, if the second argument were a struct that had
-a member of type \vcc{int}, we would have to consider the possibility
-of the first parameter aliasing that member. 
-
-To support this, VCC essentially maintains a typed view of memory; in
-any state, \vcc{\valid(p)} means that \vcc{p} points to memory that is
-currently ``has'' type \vcc{p}. The rules governing validity guarantee
-that in any state, the valid pointers contitute a typesafe view of
-memory.  In particular, if two valid pointers point to overlapping
-portions of memory, one of them is properly contained in the other; if
-a \vcc{struct} is typed, then each of its members is typed; and if a
-\vcc{union} is typed, then exactly one of its members is typed.  The
-definition of validity is is folded into the definitions of
-\vcc{\thread_local} and \vcc{\unwrapped}; these definitions check not
-only that the memory pointed to exists, but that the pointer to it is
-valid.
-
-There are rare situations where a program needs to change type
-assignment of a pointer.  The most common is in the memory allocator,
-which needs to create and destroy objects of arbitrary types from
-arrays of bytes in its memory pool. Therefore, VCC includes
-annotations (explained in \secref{reint}) that explicitly change the
-typestate.  Thus, while your program can access memory using pretty
-much arbitrary types and typecasting, doing so will require additional
-annotations. But for most programs, checking type safety is completely
-transparent, so you don't have to worry about it.
+% Too much information, too few full examples in one place. --M
+%
+%\subsection*{More on expressions in annotations}
+%VCC provides a number of C extensions that can be used within VCC
+%annotations. We describe some of them here.
+%
+%Within a VCC declaration, the type \vcc|T[E]| where \vcc{T} is
+%a type and \vcc{E} is an expression that is convertible to an
+%\vcc{int}, is the type of arrays of \vcc{E} elements of type
+%\vcc{T}. For example, the declaration
+%\begin{VCC}
+%void copyArray(int *from, int *to, int len)
+%_(requires \\thread_local((int[len]) from))
+%_(writes ((int[len]) to))
+%...
+%\end{VCC}
+%defines a function that can read the first \vcc{len} elements of the
+%array \vcc{from}, and read or write the first \vcc{len} elements of
+%the array \vcc{to}.
+%
+%The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
+%expression \vcc{E} evaluates to a nonzero value for every value 
+%\vcc{v} of type \vcc{E}. For example, the expression 
+%\vcc|\forall int i; 1 < i && i < x ==> x % i != 0|
+%says that \vcc{x} is a prime number.
+%Here, \vcc{==>} denotes logical implication; formally,
+%\vcc{P ==> Q} means \vcc{((!P) || (Q))}, and is usually 
+%read as ``\vcc{P} implies \vcc{Q}''.
+%
+%Similarly, the expression \vcc{\exists T v; E} evaluates to \vcc{1} if there
+%is some value of \vcc{v} of type \vcc{T} for which \vcc{E} evaluates
+%to a nonzero value.
+%
+%The expression \vcc{\old(E)}, when used in a postcondition of a
+%function, returns the value of expression \vcc{E} as it was at just
+%before the function was called. For example, the postcondition 
+%\vcc{*x == \old(*x) + 1} says that the function under consideration
+%increments \vcc{*x}.
 
 \subsection*{Exercises}
 \begin{enumerate}
 \item
 Specify, write, and verify a function that swaps the values pointed to
 by two \vcc{int} pointers.
-\item
-Specify a function that takes a pointer to the first element of an
-array of distinct \vcc{int}s and sorts the array 
-in ascending order%
-\footnote{Specifying this for arrays with duplicates is somewhat more
-  involved.}. 
-\item
-Specify a function that takes a pointer to the first element of an
-array of distinct \vcc{int}s and the size of the array and finds an index of the
-smallest element occurring in the array. Write a recursive
-implementation of this function and verify that it satisfies your
-specification. 
-\item
-Use the last function and the swap function defined in the text to
-define and verify a recursive function that sorts an array. 
-\item 
-Verify recursive variants of other sorting routines.
-\item
-Write a recursive function that checks whether a given element occurs
-in a sorted array.
+% We did not explain anything about arrays at this point --M
+%\item
+%Specify a function that takes a pointer to the first element of an
+%array of distinct \vcc{int}s and sorts the array 
+%in ascending order%
+%\footnote{Specifying this for arrays with duplicates is somewhat more
+%  involved.}. 
+%\item
+%Specify a function that takes a pointer to the first element of an
+%array of distinct \vcc{int}s and the size of the array and finds an index of the
+%smallest element occurring in the array. Write a recursive
+%implementation of this function and verify that it satisfies your
+%specification. 
+%\item
+%Use the last function and the swap function defined in the text to
+%define and verify a recursive function that sorts an array. 
+%\item 
+%Verify recursive variants of other sorting routines.
+%\item
+%Write a recursive function that checks whether a given element occurs
+%in a sorted array.
 \end{enumerate}
 
 
