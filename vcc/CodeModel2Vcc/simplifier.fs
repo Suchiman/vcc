@@ -116,6 +116,8 @@ namespace Microsoft.Research.Vcc
                   "set_singleton",          "p";
                   "set_union",              "aa";
                   "set_universe",           "";
+                  "set_add_element",        "..";
+                  "set_remove_element",     "..";
                   "sk_hack",                ".";
                   "span",                   "p";
                   "volatile_span",          "Sp";

@@ -2212,6 +2212,12 @@ function $set_subset($ptrset, $ptrset) returns (bool);
 axiom(forall #a: $ptrset, #b: $ptrset :: {:weight 0} {$set_subset(#a,#b)}
   $set_subset(#a,#b) <==> (forall #o: $ptr :: {:weight 0} {$set_in(#o, #a)} {$set_in(#o, #b)} $set_in(#o, #a) ==> $set_in(#o, #b)));
 
+function {:inline true} $set_add_element(S:$ptrset, e:$ptr) : $ptrset
+  { $set_union(S, $set_singleton(e)) }
+
+function {:inline true} $set_remove_element(S:$ptrset, e:$ptr) : $ptrset
+  { $set_difference(S, $set_singleton(e)) }
+
 // to be used only positively
 function $set_eq($ptrset, $ptrset) returns (bool);
 axiom (forall #a: $ptrset, #b: $ptrset :: {:weight 0} {$set_eq(#a,#b)}
