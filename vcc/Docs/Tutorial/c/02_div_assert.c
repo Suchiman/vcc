@@ -22,7 +22,7 @@ unsigned mod(unsigned a, unsigned b)
   _(assume \false) // end of an iteration
 
 theEnd:
-  ; // so that we no longer attempt to parser loop contracts
+  ;
   _(assert res == a % b) // translation of ensures
   return res;
 }

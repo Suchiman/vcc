@@ -6,13 +6,13 @@
 %% as about object invariants. 
 
 Pre- and postconditions allow for associating consistency conditions
-with code.
-However fairly often it is also possible to associate such consistency
-conditions with data and require all code operating on such data
-to obey them.
+with the code.
+However, fairly often it is also possible to associate such consistency
+conditions with the data and require all the code operating on such data
+to obey the conditions.
 As we will learn in \secref{concurrency} this is particularly important for
 data accessed concurrently by multiple threads,
-but even for sequential programs introducing consistency conditions
+but even for sequential programs enforcing consistency conditions
 on data reduces annotation clutter and allows for introduction of abstraction
 boundaries.
 
@@ -27,13 +27,14 @@ boundaries.
 %threads. But these same mechanisms provide a way to minimize the
 %amount of knowledge a thread needs at any program point.
 
-In VCC, this mechanisms is object invariants, which are associated
-with compound C types (\vcc{struct}s and \vcc{union}s). The invariants
-of a type describe how ``well-behaved'' objects of of that type
-behave. In this section, we consider only the static aspects of this
+In VCC, the mechanisms for enforcing data consistency is \Def{object invariants}, which are conditions associated
+with compound C types (\vcc{struct}s and \vcc{union}s).
+The invariants of a type describe how ``proper'' objects of of that type
+behave. 
+In this, and the following, section, we consider only the static aspects of this
 behavior, namely what the ``consistent'' states of an object are. 
 Dynamic aspects, \ie how objects can change, are covered in \secref{concurrency}.
-For example, consider the following type definition of (\vcc{'\0'}-terminated)
+For example, consider the following type definition of \vcc{'\0'}-terminated
 safe strings implemented with statically allocated arrays (we'll see
 dynamic allocation later).
 
@@ -41,7 +42,7 @@ dynamic allocation later).
 
 \noindent
 The invariant of \vcc{SafeString} states that consistent
-\vcc{SafeString}s have length less than \vcc{SSTR_MAXLEN} and are
+\vcc{SafeString}s have length not more than \vcc{SSTR_MAXLEN} and are
 \vcc{'\0'}-terminated.  Within a type invariant, \vcc{\this} refers to
 (the address of) the current instance of the type (as in the first
 invariant), but fields can also be referred to directly (as in the
@@ -51,13 +52,13 @@ Because memory in C is allocated without initialization, no nontrivial
 object invariant could be enforced to hold at all times. 
 Thus, in VCC the invariants are only guaranteed to hold for
 \Def{consistent} objects. 
-Objects, which are consistent and owned by the current thread (and note that
-we're only talking about thread-owned objects in this section) are called
+Objects, which are consistent and owned by the current thread are called
 \Def{wrapped}.
 After allocating an object we would usually wrap it to make sure its invariant holds:
 
 \vccInput[linerange={init-append}]{c/05_safestring.c}
 
+\noindent
 \todo{Should talk about the array rules somewhere.}
 For a pointer \vcc{p} of structured type, \vcc{\span(p)} returns the
 set of pointers to members of \vcc{p}. Arrays of base types produce
@@ -78,29 +79,6 @@ The postcondition says that the function returns with \vcc{s} wrapped,
 which implies also that the invariant of \vcc{s} holds; this invariant
 is checked when the object is wrapped.
 
-\noindent
-\todo{}
-%For \vcc{p} a pointer to a structured type, we distinguish between
-%writing \vcc{p} and writing the members (fields) of \vcc{p}; the former 
-%allows only wrapping and unwrapping \vcc{p}. 
-For a pointer \vcc{p} of structured type, \vcc{\span(p)} returns the
-set of pointers to members of \vcc{p}. Arrays of base types produce
-one pointer for each base type component, so in this example,
-\vcc{\span(s)} abbreviates the set:
-\begin{VCC}
-  { s, &s->len, &s->content[0], &s->content[1], ..., &s->content[SSTR_MAXLEN] }
-\end{VCC}
-%pointers to all fields of \vcc{s}.%
-%\footnote{
-%  This is a bite more complicated when embedded structs are involved,
-%  see \secref{TODO}.
-%}
-Thus, the writes clause says that the function not only can wrap
-\vcc{s} but can also write the fields of \vcc{s}. 
-The postcondition says that the function returns with \vcc{s} wrapped,
-which implies also that the invariant of \vcc{s} holds; this invariant
-is checked when the object is wrapped.
-
 A function that modifies a wrapped object will first unwrap it, make
 the necessary updates, and wrap the object again (which causes another
 check of the object invariant). Unwrapping an object adds all of its
@@ -113,6 +91,7 @@ will not list it in its writes clause. For example:
 
 \vccInput[linerange={append-out}]{c/05_safestring.c}
 
+The following subsection explains this wrap/unwrap protocol in more details.
 
 \subsection{Wrap/unwrap protocol}
 \label{sect:wrap-unwrap}
@@ -125,11 +104,16 @@ let's call it the \Def{consistency flag}, defined on every object.
 The invariants need to hold only when consistency flag is true.
 When the flag is false they need not hold (but of course still can).
 The flag is initially (on newly allocated objects) false,
-and one needs to set it to false before disposing objects.
+and you need to set it to false before disposing objects.
 
 In addition to the consistency flag each object has an \Def{owner field}.
-We also refer to it using a function, \vcc{\owner(...)}.
-The owner itself is also an object, but VCC provides objects, of \vcc{\thread}
+While the consistency flag is always written to by the wrap
+and unwrap operations, the owner field can be under some
+conditions (\secref{dynamic-claims}) written to directly.
+Therefore instead of a function it is referred to with
+a field: the owner of \vcc{p} is \vcc{p->\owner}.
+This field is of pointer (object) type, but
+VCC provides objects, of \vcc{\thread}
 type, to represent threads of execution, so that threads can also own objects.
 The idea is that the owner of \vcc{p} should have some special rights to \vcc{p} that others do not.
 In particular, the owner of \vcc{p} can transfer ownership of \vcc{p} to
@@ -142,7 +126,7 @@ The \vcc{\thread} object representing it is referred to as \vcc{\me}.
 
 (Some of) the rules of ownership and consistency:
 \begin{enumerate}
-\item every atomic step of the program has to preserve invariants of all consistent objects 
+\item on every atomic step of the program the invariants of all the consistent objects have to hold
 \item only the owning thread can modify fields of an inconsistent object
 \item threads own themselves
 \item only threads can own inconsistent objects
@@ -155,24 +139,31 @@ Thus, by the first two rules, VCC allows updates of objects in the following two
 In the first case to ensure that an update is atomic, VCC requires that the
 updated field has a \vcc{volatile} modifier.
 There is a lot to be said about atomic updates in VCC, and we shall do
-that in \secref{TODO}, but for now we're only considering sequentially
-accessed objects, with no \vcc{volatile} modifiers.
+that in \secref{concurrency}, but for now we're only considering sequentially
+accessed objects, with no \vcc{volatile} modifiers on fields.
 For such objects we can assume that they \emph{do not change}
 when they are consistent, so the only way to change their fields is to
-first make them inconsistent, \ie via method 2.
+first make them inconsistent, \ie via method 2 above.
 
 So a thread needs to make the object inconsistent to update it.
 Because making it inconsistent counts as an update, the thread needs
 to own it first.
-This is performed by the unwrap operation, which translates to the following:
-(1) assert that the object wrapped (consistent and owned by the current thread), 
-(2) assume the invariant (as a consequence of rule 1, the invariant holds for every consistent object),
-and (3) set the consistent flag to false.
+This is performed by the unwrap operation, which translates to the following steps:
+\begin{enumerate}
+\item assert that the object is in the writes set
+\item assert that the object wrapped (consistent and owned by the current thread), 
+\item assume the invariant (as a consequence of rule 1, the invariant holds for every consistent object),
+\item set the consistent flag to false.
+\item add the span of the object (\ie all its fields) to the writes set
+\end{enumerate}
 The wrap operation does just the reverse:
-(1) assert that the object is unwrapped (inconsistent and owned by the current thread;
+\begin{enumerate}
+\item
+assert that the object is unwrapped (inconsistent and owned by the current thread;
 note that this does not mean ``not wrapped''),
-(2) assert the invariant, 
-and (3) set the consistent flag to true.
+\item assert the invariant, 
+\item set the consistent flag to true (this implicitly prevents further writes to the fields of the object)
+\end{enumerate}
 Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\unwrapped(...)}%
 and at the assert/assume desugaring of \vcc{sstr_append_char()} function.
 
@@ -191,21 +182,10 @@ It is much like \vcc{void*}, in the sense that it is a wildcard for any pointer 
 However, unlike \vcc{void*}, it also carries the dynamic information about the type of the pointer.
 It can be only used in specifications.
 
-\paragraph{The writes}
-
-The final issue to explain for the example above is the treatment of the \vcc{writes} clauses.
-The initialization function posses no problems: it lists all the fields it assigns to
-(the \vcc{\span(s)} notation is just syntactic sugar, as explained before).
-However, the function \vcc{sstr_append_char()} declares that the
-only location it will write is
-\vcc{s}, whereas the function writes also \vcc{s->content[...]} and \vcc{s->len}.
-Listing \vcc{s} in writes allows one to unwrap \vcc{s}, and unwrapping \vcc{s}
-makes all its field writable. 
-The next section elaborates on why such generality in writes clauses is useful.
-
 \subsection{Ownership trees}
+\label{sect:ownership}
 
-Often objects stand for abstractions that are implemented with
+Objects often stand for abstractions that are implemented with
 more than just one physical object.
 As a simple example, consider our \vcc{SafeString}, changed to have dynamically
 allocated buffer.
@@ -222,7 +202,6 @@ VCC extends that location to allow
 the type \vcc{char[capacity]} denoting an array with \vcc{capacity} elements
 (where \vcc{capacity} is a variable).
 Such types can be only used in casts, as in \vcc{(char[capacity])content}%
-\todo{make sure the example doesn't use \vcc{any[...]}},
 which means: take the pointer \vcc{content} and interpret it as an array
 of \vcc{capacity} elements of type \vcc{char}.
 This notation is used so we can think of arrays as objects (of some weird type).
@@ -509,4 +488,59 @@ it only makes full sense after we learn about two-state object invariants
 (see \secref{inv2}), but for sequential programs the useful approximation
 is that invariants that only talk about their ownership domains are admissible.
 
+
+\subsection{Type Safety}
+\label{sect:type-safety}
+
+Throughout this section
+we have been talking about typed memory ``objects'' as if this were a
+meaningful concept.  This typed view of memory is supported by most
+modern programming languages, like Java, C\#, and ML, where memory
+consists of a collection of typed objects. Programs in these languages
+don't allocate memory (on the stack or on the heap), they allocate
+objects, and the type of an object remains fixed until the object is
+destroyed. Morover, a non-null reference to an object is guaranteed to
+point to a ``valid'' object. But in C, a type simply provides a way to
+interpret a sequence of bytes; nothing prevents a program from having
+multiple pointers of different types pointing into the same memory, or
+even having two instances of the same \vcc{struct} type partially
+overlapping. Moreover, a non-null pointer might still point into an
+invalid region of memory.
+
+That said, most C functions really do access memory using a strict type
+discipline and tacitly assume that their callers do
+so also. For example, if the parameters of a function are a pointer to
+an \vcc{int} and a pointer to a \vcc{char}, we shouldn't have to worry
+about crazy possibilities like the \vcc{char} aliasing with the second
+half of the \vcc{int}. (Without such assumptions, we would have to
+provide explicit preconditions to this effect.)  On the other hand, if
+the second parameter is a pointer to an \vcc{int}, we do consider the
+possibility of aliasing (as we would in a strongly typed language).
+Moreover, since in C objects of structured types literally contain
+objects of other types, if the second argument were a struct that had
+a member of type \vcc{int}, we would have to consider the possibility
+of the first parameter aliasing that member. 
+
+To support this, VCC essentially maintains a typed view of memory; in
+any state, \vcc{\valid(p)} means that \vcc{p} points to memory that is
+currently ``has'' type \vcc{p}. The rules governing validity guarantee
+that in any state, the valid pointers constitute a typesafe view of
+memory.  In particular, if two valid pointers point to overlapping
+portions of memory, one of them is properly contained in the other; if
+a \vcc{struct} is typed, then each of its members is typed; and if a
+\vcc{union} is typed, then exactly one of its members is typed.  The
+definition of validity is folded into the definitions of
+\vcc{\thread_local} and \vcc{\unwrapped}; these definitions check not
+only that the memory pointed to exists, but that the pointer to it is
+valid.
+
+There are rare situations where a program needs to change type
+assignment of a pointer.  The most common is in the memory allocator,
+which needs to create and destroy objects of arbitrary types from
+arrays of bytes in its memory pool. Therefore, VCC includes
+annotations (explained in \secref{reint}) that explicitly change the
+typestate.  Thus, while your program can access memory using pretty
+much arbitrary types and typecasting, doing so will require additional
+annotations. But for most programs, checking type safety is completely
+transparent, so you don't have to worry about it.
 
