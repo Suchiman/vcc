@@ -823,3 +823,13 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+struct S { int a; };
+
+void foo(struct S *s) {
+	assert(s==&s->a);
+}
+`
+Verification of foo succeeded.
+`
