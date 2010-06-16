@@ -169,9 +169,9 @@ and at the assert/assume desugaring of \vcc{sstr_append_char()} function.
 
 \begin{VCC}
 logic bool \wrapped(\object o) =
-  \consistent(o) && \owner(o) == \me;
+  \consistent(o) && o->\owner == \me;
 logic bool \unwrapped(\object o) =
-  !\consistent(o) && \owner(o) == \me;
+  !\consistent(o) && o->\owner == \me;
 \end{VCC}
 \vccInput[linerange={assert-out}]{c/05_safestring_assert.c}
 
@@ -191,7 +191,8 @@ As a simple example, consider our \vcc{SafeString}, changed to have dynamically
 allocated buffer.
 The logical string object consists of the control object holding the length
 and the array of bytes holding the content.
-In reality such abstraction go further, \eg a hash table might consist of a control object, an array of buckets,
+In real programs such abstraction become hierarchical, \eg an address book might consists of a few hash tables, each
+of which consists of a control object, an array of buckets,
 and the attached linked lists.
 
 \vccInput[linerange={obj-append}]{c/06_safestring_dynamic.c}
@@ -207,39 +208,50 @@ of \vcc{capacity} elements of type \vcc{char}.
 This notation is used so we can think of arrays as objects (of some weird type).
 The other way to think about it is that \vcc{content} represents just
 one object of type \vcc{char}, whereas \vcc{(char[capacity])content}
-represents the array.
-\todo{can you?}
-\vcc{\any} can be used instead of \vcc{char} in the casts above, to let
-VCC infer the type.
+is an object representing the array.
 
-Now, that we've packed a bunch of characters into an object, we can make
-the \vcc{SafeString} own it.
-And indeed, this is what \vcc{SafeString} specifies in its invariant:
-the syntax \vcc{\mine(o1, ..., oN)} is roughly equivalent
-(the exact translation is provided later)
-to:
+The invariant of \vcc{SafeString} specifies that it \Def{owns} the
+array object.
+The syntax \vcc{\mine(o1, ..., oN)} is roughly equivalent
+(we'll get into details later) to:
 \begin{VCC}
-\owner(o1) == \this && ... && \owner(oN) == \this
+o1->\owner == \this && ... && oN->\owner == \this
 \end{VCC}
-
-OK, so what's the benefit of objects owning other objects?
-The main benefit is abstraction: the function operating on a string
-\vcc{s}, still need to only mention \vcc{s} in their \vcc{writes}
-clause, not \vcc{s->content} or any other objects the string might comprise of.
+Conceptually there isn't much difference between having the \vcc{char}
+array embedded and owning a pointer to it.
+In particular, the functions operating
+on some \vcc{s} of type \vcc{SafeString}
+should still list only \vcc{s} in their writes clauses,
+and not also \vcc{(char[s->capacity])s->content},
+or any other objects the string might comprise of.
+To achieve that VCC performs \Def{ownership transfers},
+\ie assignments to the \vcc{\owner} field,
+when unwrapping and wrapping objects.
+\begin{itemize}
+\item
+When object is unwrapped, in addition to five steps described in previous section,
+the \vcc{\owner} field of all objects owned by unwrapped object is set to \vcc{\me}.
+Additionally, these objects are added to the writes set.
+\item
+When object \vcc{p} is wrapped, in addition to previously described steps, for every object \vcc{q} that needs to be owned by \vcc{p}
+VCC asserts that \vcc{q} is wrapped and writable, and sets \vcc{q->\owner} to \vcc{p}.
+What \vcc{p} needs to own is is determined by \vcc{p}'s invariant, as you'll see in the next section.
+\end{itemize}
+Let's then have a look at an example:
 
 \vccInput[linerange={append-alloc}]{c/06_safestring_dynamic.c}
 
 \noindent
-First, the syntax:
+First, let's explain the syntax:
 \begin{VCC}
 _(unwrapping o) { ... }
 \end{VCC}
 is equivalent to:
 \begin{VCC}
-_(unwrap(o)); { ... } _(wrap(o));
+_(unwrap o) { ... } _(wrap o)
 \end{VCC}
 Thus, at the beginning of the function the string is owned by the current thread and consistent (\ie wrapped),
-whereas the content is owned by the string and consistent.
+whereas, by the string invariant, the content is owned by the string and consistent.
 After unwrapping the string, the ownership of the content goes to the current thread,
 but the content remains consistent.
 Thus, unwrapping the string makes the string unwrapped, and the content wrapped.
@@ -247,8 +259,7 @@ Then we unwrap the content (which doesn't own anything, so the thread gets no ne
 and wrap the content.
 Finally, we wrap the string.
 This transfers ownership of the content from the current thread to the string, so the content is no longer wrapped (but still consistent).
-Let's then have a look at the part of the assert/assume translation
-that deals with ownership:
+Let's then have a look at the assert/assume translation:
 
 \vccInput[linerange={append-out}]{c/06_safestring_dynamic_assert.c}
 
@@ -256,16 +267,11 @@ that deals with ownership:
 To make it easier to read, we made it store the \vcc{s->content} pointer
 casted to an array into a temporary variable.
 Also, an invariant of \vcc{p} is referred to as \vcc{\inv(p)}.
-As you can see there are two ownership transfers.
-The first one is kind of clear: when unwrapping an object everything that it used
-to own, will be now owned by the thread.
-The second one is much more tricky: 
-\todo{Penny: very unclear}
-in VCC the ownership relations are specified fully through invariants.
-Thus, when wrapping an object, we would need to give it ownership
-of \emph{some} other objects, such that its invariant is satisfied.
-Of course, in general the invariant might be such that the choice
-is unclear, for example:
+As you can see there are two ownership transfers
+of \vcc{cont} to and from \vcc{\me}.
+This happens because \vcc{s} owns \vcc{cont} beforehand,
+as specified in its invariant.
+However, let's say we had an invariant like:
 \begin{VCC}
 struct S {
   struct T *a, *b;
@@ -277,6 +283,7 @@ By default VCC will reject such invariants, and only allow \vcc{\mine(...)}
 as a top-level conjunct in an invariant.
 Invariants like the ones above are supported, but need additional annotation
 and manual ownership transfer when wrapping, see \secref{dynamic-ownership}.
+
 
 
 \subsection{Dynamic ownership}
@@ -299,18 +306,18 @@ After such operation, the container should own whatever it used
 to own minus \vcc{x} plus \vcc{y}.
 To facilitate such transfers VCC introduces the \Def{owns set}.
 It is essentially the inverse of the owner field.
-It is defined on every object \vcc{p} and referred to as \vcc{\owns(p)}.
+It is defined on every object \vcc{p} and referred to as \vcc{p->\owns}.
 VCC maintains that:
 \begin{VCC}
 \forall object p, q; \consistent(p) ==> 
-  (q \in \owns(p) <==> \owner(p) == q)
+  (q \in p->\owns <==> p->\owner == q)
 \end{VCC}
 The operator \vcc{<==>} reads ``if and only if'', and is simply boolean
 equality (or implication both ways), with a binding priority lower than implication.
-That is, for consistent \vcc{p}, the set \vcc{\owns(p)} contains exactly
+That is, for consistent \vcc{p}, the set \vcc{p->\owns} contains exactly
 the objects owned by \vcc{p}.
 Additionally, the unwrap operation does not touch the owns set,
-that is after unwrapping \vcc{p}, the \vcc{\owns(p)} still contains
+that is after unwrapping \vcc{p}, the \vcc{p->\owns} still contains
 all that objects that \vcc{p} used to own.
 Finally, the wrap operation will attempt to transfer ownership
 of everything in the owns set to the object being wrapped.
