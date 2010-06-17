@@ -122,6 +122,13 @@ namespace Microsoft.Research.Vcc.Parsing
           specifiers.Add(new SpecDeclspecSpecifier(declspec, this.scanner.SourceLocationOfLastScannedToken));
           this.GetNextToken();
         }
+      } else if (this.currentToken == Token.Colon) {
+        VccLabeledExpression groupLabel = (VccLabeledExpression)this.ParseLabeledExpression(followers);
+        List<Expression> inGroupSpecifiers = new List<Expression>(3);
+        inGroupSpecifiers.Add(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.compilation.NameTable, "StringVccAttr"));
+        inGroupSpecifiers.Add(new CompileTimeConstant("in_group", groupLabel.SourceLocation));
+        inGroupSpecifiers.Add(new CompileTimeConstant(groupLabel.Label.Name.Value, groupLabel.SourceLocation));
+        specifiers.Add(new DeclspecSpecifier(inGroupSpecifiers, groupLabel.SourceLocation));
       }
       this.SkipTo(followers);
     }
@@ -154,7 +161,8 @@ namespace Microsoft.Research.Vcc.Parsing
 
     new protected void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       bool savedInSpecCode = this.SkipIntoSpecBlock();
-      if (this.currentToken == Token.Identifier && this.declspecExtensions.ContainsKey(this.scanner.GetIdentifierString())) {
+      if (this.currentToken == Token.Colon ||
+        (this.currentToken == Token.Identifier && this.declspecExtensions.ContainsKey(this.scanner.GetIdentifierString()))) {
         this.ParseDeclarationWithSpecModifiers(namespaceMembers, typeMembers, followers, false, savedInSpecCode);
         return;
       }
@@ -169,19 +177,7 @@ namespace Microsoft.Research.Vcc.Parsing
             this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis, false);
             break;
           case Token.SpecGroup:
-            var slb = this.GetSourceLocationBuilderForLastScannedToken();
-            this.GetNextToken();
-            List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers | Token.Identifier);
-            var groupName = this.ParseNameDeclaration(true);
-            slb.UpdateToSpan(groupName.SourceLocation);
-            var dummyName = this.GetNameFor(SanitizeString(slb.SourceDocument.Name.Value) + ((ISourceLocation)slb).StartIndex);
-            List<Expression> groupDeclSpecifiers = new List<Expression>(3);
-            groupDeclSpecifiers.Add(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.compilation.NameTable, "StringVccAttr"));
-            groupDeclSpecifiers.Add(new CompileTimeConstant("group_decl", groupName.SourceLocation));
-            groupDeclSpecifiers.Add(new CompileTimeConstant(groupName.Name.Value, groupName.SourceLocation));
-            specifiers.Add(new DeclspecSpecifier(groupDeclSpecifiers, groupName.SourceLocation));
-            var groupDecl = new VccNestedStructDeclaration(new NameDeclaration(dummyName, groupName.SourceLocation), new List<ITypeDeclarationMember>(0), specifiers, slb);
-            typeMembers.Add(groupDecl);
+            ParseGroupDeclaration(typeMembers, followers);
             break;
         }
         this.SkipSemicolonsInSpecBlock(STS.TypeMember | Token.RightParenthesis);
@@ -189,12 +185,32 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, followers | Token.Specification);
     }
 
+    private void ParseGroupDeclaration(List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
+      var slb = this.GetSourceLocationBuilderForLastScannedToken();
+      this.GetNextToken();
+      List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers | Token.Identifier);
+      var groupName = this.ParseNameDeclaration(true);
+      slb.UpdateToSpan(groupName.SourceLocation);
+      var dummyName = this.GetNameFor(SanitizeString(slb.SourceDocument.Name.Value) + ((ISourceLocation)slb).StartIndex);
+      List<Expression> groupDeclSpecifiers = new List<Expression>(3);
+      groupDeclSpecifiers.Add(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.compilation.NameTable, "StringVccAttr"));
+      groupDeclSpecifiers.Add(new CompileTimeConstant("group_decl", groupName.SourceLocation));
+      groupDeclSpecifiers.Add(new CompileTimeConstant(groupName.Name.Value, groupName.SourceLocation));
+      specifiers.Add(new DeclspecSpecifier(groupDeclSpecifiers, groupName.SourceLocation));
+      var groupDecl = new VccNestedStructDeclaration(new NameDeclaration(dummyName, groupName.SourceLocation), new List<ITypeDeclarationMember>(0), specifiers, slb);
+      typeMembers.Add(groupDecl);
+    }
+
     new protected void ParseTypeInvariant(TokenSet followers) {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       NameDeclaration nameDecl = null;
-      // TODO: labeled expressions
       this.GetNextToken();
-      Expression condition = this.ParseExpression(followers);
+      Expression condition = this.ParseLabeledExpression(followers);
+      var labeledInvariant = condition as VccLabeledExpression;
+      if (labeledInvariant != null) {
+        nameDecl = labeledInvariant.Label;
+        condition = labeledInvariant.Expression;
+      }
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       TypeInvariant typeInvariant = new TypeInvariant(nameDecl, new CheckedExpression(condition, condition.SourceLocation), false, slb);
       this.AddTypeInvariantToCurrent(typeInvariant);
@@ -483,7 +499,7 @@ namespace Microsoft.Research.Vcc.Parsing
         this.GetNextToken();
         var label = this.ParseNameDeclaration(true);
         Expression expr;
-        if (TS.UnaryStart[this.currentToken]) {
+        if (TS.UnaryStart[this.currentToken] || TS.PrimaryStart[this.currentToken]) {
           expr = this.ParseExpression(followers);
           slb.UpdateToSpan(expr.SourceLocation);
         } else {
@@ -583,7 +599,6 @@ namespace Microsoft.Research.Vcc.Parsing
       public static TokenSet SpecParameter = new TokenSet() | Token.SpecGhost | Token.SpecOut;
       public static TokenSet TypeMember = new TokenSet() | Token.SpecGhost | Token.SpecInvariant | Token.SpecGroup;
       public static TokenSet Global = new TokenSet() | Token.SpecAxiom | Token.SpecGhost | Token.SpecLogic;
-      //public static TokenSet SpecTypeModifiers = new TokenSet() | Token.SpecClaimable | Token.SpecDynamicOwns | Token.SpecAtomicInline | Token.SpecVolatileOwns | Token.SpecPure;
     }
   }
 }

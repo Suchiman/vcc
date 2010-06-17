@@ -70,6 +70,7 @@ namespace Microsoft.Research.Vcc
           | _, Type.Ref { Name = "#Object" } -> Some (self e')
           | t, t' when t = t' -> Some (self e')
           | _ -> None
+      | Expr.Macro(c, "group_invariant", args) -> Some(Expr.Macro(c, "group_invariant", List.map (fun (e:Expr) -> e.SelfMap(doHandleConversions' true)) args))
       | Expr.Call(c, ({Name = "_vcc_inv_group"} as fn), targs, args) -> Some(Expr.Call(c, fn, targs, List.map (fun (e:Expr) -> e.SelfMap(doHandleConversions' true)) args))
       | _ -> None
     doHandleConversions' false
@@ -938,8 +939,43 @@ namespace Microsoft.Research.Vcc
           Some(Assert(ec, expr, []))
         | _ -> None
           
+      let normalizeGroupInvariants decls = 
+
+        let addGroupToMap (map : Map<_,_>) = 
+          let rec getGroupNameFromAttrs = function
+          | [] -> None
+          | VccAttr(AttrGroupDecl, name) :: _ -> 
+            Some name
+          | _ :: attrs -> getGroupNameFromAttrs attrs
+
+          function
+          | Top.TypeDecl(td) ->
+            match getGroupNameFromAttrs td.CustomAttr with
+              | Some name -> 
+                let parent = td.Parent.Value.UniqueId
+                match map.TryFind parent with
+                  | None -> map.Add(parent, Set.singleton name)
+                  | Some groups -> map.Add(parent, Set.add name groups)
+              | None -> map
+          | _ -> map
+                
+        let groups = List.fold addGroupToMap Map.empty decls
+      
+        let doIt = function
+          | Top.TypeDecl(td) as top -> 
+            let groupsOfTd = match groups.TryFind td.UniqueId with | Some groupsOfTd -> groupsOfTd | None -> Set.empty
+            let ngi (groupsOfTd : Set<_>) self = function
+              | Macro(ec, "labeled_invariant", ([Macro(_, lbl, _); i] as args)) when groupsOfTd.Contains lbl -> Some(Macro(ec, "group_invariant", args))
+              | _ -> None
+            td.Invariants <- List.map (fun (expr:Expr) -> expr.SelfMap (ngi groupsOfTd)) td.Invariants
+          | top -> ()
+
+        List.iter doIt decls
+        decls
+
       deepMapExpressions normalizeInDomain >> 
       List.map normalizeCallsAndFindKeyFunctions >> 
+      normalizeGroupInvariants >>
       deepMapExpressions (normalizeOwnershipManipulation false) >>
       deepMapExpressions normalizeSignatures >> 
       (fun decls -> List.iter mapFromNewSyntax decls; decls)>> 

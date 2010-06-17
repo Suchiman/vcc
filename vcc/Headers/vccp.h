@@ -164,6 +164,7 @@ _(\state \when_claimed_marker();)
 _(\object \heap_alloc(\type);)
 _(bool \start_here();)
 _(\objset \new_ownees(\object, \objset);)
+_(bool \inv_group(const char *, bool);)
 
 #else 
 
@@ -530,7 +531,6 @@ void _vcc_from_bytes(obj_t obj, bool preserve_zero)
 #define in_group(n) vcc_attr("in_group", #n)
 #define def_group(n, ...) struct __VA_ARGS__ vcc_attr("group_decl", #n) { };
 bool _vcc_inv_group(const char *, bool);
-#define inv_group(n, i) __invariant (_vcc_inv_group(#n, i))
 
 /*** 
  *** Helper macros

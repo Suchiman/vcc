@@ -6,6 +6,11 @@ module PostProcessor =
 
   let apply addCompilerOptionForTestSuite toks = 
     let nl = Tok.Whitespace(fakePos, "\n") 
+    let rec coalesceWhitespace acc = function
+      | [] -> List.rev acc
+      | Tok.Whitespace(p0, ws0) :: Tok.Whitespace(p1, ws1) :: rest -> coalesceWhitespace acc (Tok.Whitespace(p0, ws0 + ws1) :: rest)
+      | Tok.Group (p, s, toks) :: rest -> coalesceWhitespace (Tok.Group(p, s, coalesceWhitespace [] toks) :: acc) rest
+      | tok :: rest -> coalesceWhitespace (tok :: acc) rest
     let rec addNewSyntaxOption atStartOfFile = function
       | Whitespace _ as ws :: rest -> addNewSyntaxOption atStartOfFile rest
       | Comment(p, s) :: rest when addCompilerOptionForTestSuite && s.StartsWith("`/") 
@@ -14,8 +19,13 @@ module PostProcessor =
         let toks = Comment(fakePos, "`/newsyntax") :: nl :: toks
         if not atStartOfFile then nl :: toks else toks
     let rec apply' acc = function
+      // _(ghost out ...) ==> _(out ...)
       | Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p2, "ghost") :: Tok.Whitespace _ :: Tok.Id(p3, "out") :: gRest) :: rest ->
         apply' acc (Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p3, "out") :: gRest) :: rest)
+      // _(:G) _(ghost ...) ==> _(ghost _(:G) ...)
+      |  Tok.Id(_, "_") :: (Tok.Group(_, "(", Tok.Op(_, ":") :: Tok.Id(_, _) :: _) as groupName) :: Tok.Whitespace _ :: 
+         Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p2, "ghost") :: gRest) :: rest ->
+         apply' acc (Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p2, "ghost") :: Tok.Whitespace(fakePos, " ")  :: Tok.Id(fakePos, "_") :: groupName :: gRest) :: rest)
       | Tok.Comment(p, s) as tok :: rest when s.StartsWith("`") && s.[s.Length - 1] = '`' ->
         match Rules.eatWs rest with
          | [] -> apply' (tok :: acc) []
@@ -23,6 +33,6 @@ module PostProcessor =
       | Tok.Group (p, s, toks) :: rest -> apply' (Tok.Group (p, s, apply' [] toks) :: acc) rest  
       | t :: rest -> apply' (t::acc) rest
       | [] -> List.rev acc
-    let toks = apply' [] toks
+    let toks = toks |> coalesceWhitespace [] |> apply' [] 
     if addCompilerOptionForTestSuite then addNewSyntaxOption true toks else toks
       
