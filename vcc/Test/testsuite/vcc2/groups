@@ -137,10 +137,10 @@ void bar(struct T *t) {
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
-
+#include <vcc.h>
 struct S {  
   int a;
-  __invariant((struct S::G *)__this == (void *)0)
+  invariant((struct S::G *)this == (void *)0)
 };
 
 void foo(struct S *s) { }
@@ -452,10 +452,10 @@ void bar(struct T *t) {
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
-
+#include <vcc.h>
 struct S {  
   int a;
-  __invariant(__this::G == (void *)0)
+  invariant(this::G == (void *)0)
 };
 
 void foo(struct S *s) { }

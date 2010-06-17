@@ -201,7 +201,6 @@ module Rules =
   let init() =
     let canonicalKw = [
                         "atomic";
-                        "invariant";
                         "decreases";
                         "ensures";
                         "requires";
@@ -377,11 +376,26 @@ module Rules =
             
     let def_group toks = 
       match splitAt "," toks with
-        | groupName :: groupSpecs ->
-          spec "group" ((joinWith " " groupSpecs) @ [Tok.Whitespace(fakePos, " ")] @ groupName)
+        | [groupName] -> spec "group" groupName
+        | groupName :: groupSpecs -> spec "group" ((joinWith " " groupSpecs) @ [Tok.Whitespace(fakePos, " ")] @ groupName)
         | _ -> failwith ""
     addRule (parenRule false "def_group" def_group)
 
+    let in_group = function
+      | [toks] -> fnApp "_" (Tok.Op(fakePos, ":") :: toks)
+      | _ -> failwith ""    
+    addRule (parenRuleN "in_group" 1 in_group)
+
+    let inv_group = function
+      | [groupName; invariant] -> spec "invariant" (Tok.Op(fakePos, ":") :: groupName @ (Tok.Whitespace(fakePos, " ") :: eatWs invariant))
+      | _ -> failwith ""
+    addRule (parenRuleN "inv_group" 2 inv_group)
+
+    let invariant toks = 
+      match eatWs toks with
+        | (Tok.Id(_, lbl) as id) :: Tok.Op(_, ":") :: invariant ->  spec "invariant" (Tok.Op(fakePos, ":") :: id :: (Tok.Whitespace(fakePos, " ") :: eatWs invariant))
+        | invariant -> spec "invariant" (eatWs invariant)
+    addRule (parenRule true "invariant" invariant)
 
     let struct_rule = function
       | hd :: rest ->
