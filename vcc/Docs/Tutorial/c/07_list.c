@@ -57,7 +57,7 @@ int add(struct List *l, int k)
     l->head = n;
     _(wrap n)
     _(ghost {
-      l->\owns = l->\owns \union {n}; /*{specupdate}*/
+      l->\owns += n; /*{specupdate}*/
       l->followers[n] = 
         (\lambda int z; l->followers[n->next][z] || z == k);
       l->val = l->followers[n]; /*{updateend}*/

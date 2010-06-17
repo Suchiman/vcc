@@ -253,7 +253,7 @@ going to modify the object.
 For claims, it is just a hint, that it should use this claim when trying
 to prove that the object is consistent.
 
-Additionally, the \vcc{InitiliazeLock()} needs to ensure \vcc{\claim_count(l) == 0}
+Additionally, the \vcc{InitiliazeLock()} needs to ensure \vcc{\claim_count(l)} \vcc{== 0}
 (\ie no claims on freshly initialized lock).
 VCC even provides a syntax to say something is wrapped and has no claims: \vcc{\wrapped0(l)}.
 

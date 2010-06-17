@@ -1,18 +1,18 @@
 \section{Abstraction}
 
 Usually there are many ways of implementing a given data structure.
-For example, a set might be implemented as a linked list, an array, linked list, or a hash table.
+For example, a set might be implemented as a linked list, an array, or a hash table.
 
-When reasoning about a program using a data structure we don't want to be
+When reasoning about a program which uses a data structure we don't want to be
 concerned with implementation details of the data structure.
 We should reason at somewhat higher, abstract level.
 For example, when we use a linked list as a representation of a set, we should not be concerned
 with how the list nodes are laid out in memory.
 
 In VCC we abstract over such details using ghost data: data-structures contain ghost fields with mathematical
-abstractions of what they implement.
+abstractions of what they represent.
 It is only rarely the case that a simple C type, say \vcc{unsigned int}, would be suitable
-to store such abstraction (how would one store an unbounded set in some primitive C type?).
+to store such abstraction (how would one store an unbounded set in a primitive C type?).
 To that end, VCC provides \Def{map types}.
 The syntax is similar to syntax of array types, \vcc{int m[T*]} defines a map \vcc{m} from \vcc{T*}
 to \vcc{int}.
@@ -31,7 +31,7 @@ Let's then have a look at an example of a list abstracted as a set:
 
 \noindent
 The expressions inside \vcc|{...}| after the quantified variables are hints for
-the theorem prover called triggers, ignore them for a moment.
+the theorem prover called triggers. Ignore them for a moment.
 The invariant states that:
 \begin{itemize}
 \item the list owns the head node (if it's non-null)
@@ -66,13 +66,13 @@ It doesn't specify if the node will be appended at the beginning, or in the midd
 of the list.
 It doesn't talk about possible duplicates or memory allocation.
 Everything about implementation is completely abstracted away.
-Still, we want a concrete implementation, and here it goes:
+Still, we need a concrete implementation, and here it goes:
 
 \vccInput[linerange={endspec-member}]{c/07_list0.c}
 
 \noindent
-We allocate the node, unwrap the list, initialize the new node,
-wrap it (we want to wrap the list, and thus everything it is going to own will
+We allocate the node, unwrap the list, initialize the new node
+and wrap it (we want to wrap the list, and thus everything it is going to own will
 need to be wrapped beforehand; the list is wrapped at the end of the 
 unwrapping block), and
 prepend the node at the beginning of the list.
@@ -81,25 +81,45 @@ Finally, we update the abstract value using a \Def{lambda expression}.
 %\subsection{Lambda expressions}
 The expression \vcc{\lambda T x; E} returns a map, which for
 any \vcc{x} returns the value of expression \vcc{E},
-which can use \vcc{x}.
+which can reference \vcc{x}.
 If the type of \vcc{E} is \vcc{S}, then the type of map, returned by the
 lambda expression, is \vcc{S[T]}.
-The expression is evaluated in the state as it was
-when the lambda was first defined.
+An assignment \vcc{m = \lambda T x; E} has a similar effect to
+the following assumption (note that \vcc{E} will most likely reference \vcc{x}):
+\begin{VCC}
+_(assume \forall T x; m[x] == E)
+\end{VCC}
+\noindent
+Unlike assumptions, lambda expressions do not compromise 
+soundness of the verifier.
+Just like for assumptions,
+the expression is always evaluated in the state as it was
+when the lambda was first defined, for example:
+\begin{VCC}
+int x = 1;
+int m[int] = \lambda int y; y + x;
+_(assert m[0] == 1) // succeeds
+x = 2;
+_(assert m[0] == 1) // still succeeds
+\end{VCC}
 One can imagine, that when this lambda expression is defined,
 VCC will iterate over all possible values of \vcc{x},
-evaluate \vcc{E} for them, and create a giant mapping
-with the results.
+and store the value of \vcc{E} in \vcc{m[x]}.
 Lambda expressions are much like function values in functional
 languages or delegates in C\#.
 
 \begin{note}
-\todo{unclear}
 The body of our lambda expression shows similarity to the body
 of the quantifier we have used in specification.
-It doesn't, however, have to be the same, in particular the quantifier
-may talk only about certain indices, while lambda expressions
-are always total.
+It doesn't, however, have to be the same:
+\begin{VCC}
+int[int] foo(int v)
+  _(ensures \forall int x; x >= 7 ==> \result[x] >= v)
+{
+  return \lambda int y; (y&1) == 0 ? INTMAX : v;
+}
+\end{VCC}
+Thus, the specifications for lambda expressions can hide information.
 \end{note}
 
 \begin{note}

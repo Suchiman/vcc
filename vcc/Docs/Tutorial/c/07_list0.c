@@ -50,7 +50,7 @@ int add(struct List *l, int k)
     _(wrap n)
     l->head = n;
     _(ghost {
-      l->\owns = l->\owns \union {n};
+      l->\owns += n;
       l->val = (\lambda int z; z == k || l->val[z]);
     })
   }
