@@ -309,7 +309,7 @@ It is essentially the inverse of the owner field.
 It is defined on every object \vcc{p} and referred to as \vcc{p->\owns}.
 VCC maintains that:
 \begin{VCC}
-\forall object p, q; \consistent(p) ==> 
+\forall \object p, q; \consistent(p) ==> 
   (q \in p->\owns <==> p->\owner == q)
 \end{VCC}
 The operator \vcc{<==>} reads ``if and only if'', and is simply boolean
@@ -350,6 +350,20 @@ On the other hand, asserting \vcc{\wrapped(o)} fails before the call,
 but succeeds afterwards.
 Additionally, \vcc{\wrapped(c)} holds before and after as expected.
 
+\begin{note}
+\textbf{How is the write set updated?} \\
+Before allowing a write to \vcc{*p} VCC will assert \vcc{\unwrapped(p)}.
+Additionally, it will assert that either \vcc{p} is in the writes
+clause, or the consistency or ownership of \vcc{p} was updated after the current
+function started executing.
+Thus, after you unwrap an object, you modify consistency of all its fields,
+which provides the write access to them.
+Also, you modify ownership of all the objects that it used to own, providing
+write access to unwrap these objects.
+In case a write clause is specified on a loop, think of an implicit function
+definition around the loop.
+\end{note}
+
 %This effectively tells the call site that it no longer has ownership of \vcc{s}.
 %Additionally, when we look at the invariant of \vcc{c}, we can even figure out
 %that \vcc{s} is indeed no longer wrapped.
@@ -364,11 +378,12 @@ Additionally, \vcc{\wrapped(c)} holds before and after as expected.
 
 \subsection{Ownership domains}
 
-An ownership domain of an object \vcc{p} is the set of objects
+An \Def{ownership domain} of an object \vcc{p} is the set of objects
 that it owns and their ownership domains, plus \vcc{p} itself.
 In other words, it's the set of objects that are transitively
 owned by a given object.
 
+\begin{note}
 \todo{this remark might be confusing, and possibly no longer true}
 In general there can be cycles in the ownership graph,
 and so the definition above should be understood in the least fix point sense.
@@ -377,10 +392,14 @@ and thus anything that
 is owned by a thread will have a ownership domain that is a tree.
 It is most useful to think about ownership as trees, and disregard
 the degenerate cycle case.
+\end{note}
 
-Thus, the current thread will own a number of objects, some of them
+Let's then take a look at an ownership graph:
+we will have a bunch of threads as roots.
+In particular,
+the current thread will own a number of objects, some of them
 unwrapped (inconsistent and thus not owning anything), but other wrapped (consistent and
-so with possibly large ownership domains).
+so with possibly large ownership trees (domains) hanging off them).
 The ownership domains of the wrapped objects are disjoint
 (in the grand ownership tree of the thread they are all at the same level).
 
@@ -398,9 +417,9 @@ T *p, *q, *r;
 _(assert \wrapped(p) && \wrapped(q) && p != q);
 _(assert q \in \domain(q))
 _(assert r \in \domain(q))
-_(assert q->f == 1 && r->f == 1);
+_(assert q->f == 1 && r->f == 2);
 f(p);
-_(assert q->f == 1 && r->f == 1);
+_(assert q->f == 1 && r->f == 2);
 \end{VCC}
 
 \noindent
@@ -412,40 +431,27 @@ We now want to know if the values of the other two are preserved.
 Clearly, because \vcc{p != q} and both are wrapped, then
 \vcc{q} is not in the ownership domain of \vcc{p},
 so value of \vcc{q->f} should be preserved by the call.
-But what about \vcc{r->f}?
-This depends on whether \vcc{r \in \domain(p)},
+The value of \vcc{r->f} will be preserved unless
+\vcc{r \in \domain(p)},
 because \vcc{f(p)} could have written everything
 in \vcc{\domain(p)} (according to its writes clause).
-The ownership domain is the transitive closure of the inverse of the
-owner field.
-\todo{explain transitive closure, logic and things}
-Unfortunately, the concept transitive
-closure is not expressible in first order logic.
-More precisely, we can (usually) prove that something \emph{is} in the ownership
-domain, but not (directly) that something \emph{is not}.
-Therefore, we need to hack our way around it: there are implicit
-assumptions in VCC about the ownership domains not overlapping.
-Once we prove \vcc{p != q} and \vcc{r \in \domain(q)}
-when VCC knows that functions not writing \vcc{q} are not
-going to touch \vcc{r}.
+Unfortunately, the underlaying logic used by VCC
+is not strong enough to show this directly
+(technically: the transitive closure of a relation, ownership in this case, is not
+expressible in first-order logic).
+However, VCC knows that there is no way to change anything in an ownership
+domain without writing its root.
+This is because we always enforce that ownership domains are disjoint.
+For example, the only way for \vcc{f(p)} to write something in \vcc{\domain(q)}
+would be to list \vcc{q} in \vcc{f()}'s writes clause, which is not the case.
+Thus, if VCC knows that \vcc{r \in \domain(q)}, and it knows that
+\vcc{f(p)} couldn't have written \vcc{q}, then it also knows that \vcc{r->f} is unchanged.
 Unfortunately, we need to explicitly tell VCC in
 which ownership domain \vcc{r} is to make use of that.
 This is what the assertion \vcc{r \in \domain(q)} is doing.
-\itodo{say something about the other in domain assertion;
-it would be best if we didn't need it}
-
-\begin{note}
-Before allowing a write to \vcc{*p} VCC will assert \vcc{\unwrapped(p)}.
-Additionally, it will assert that either \vcc{p} is in the writes
-clause, or the consistency or ownership of \vcc{p} was updated after the current
-function started executing.
-Thus, after you unwrap an object, you modify consistency of all its fields,
-which provides the write access to them.
-Also, you modify ownership of all the objects that it used to own, providing
-write access to unwrap these objects.
-In case a write clause is specified on a loop, think of an implicit function
-definition around the loop.
-\end{note}
+We currently also need to assert \vcc{q \in \domain(q)} to help VCC with reasoning. 
+This is because it treats the fields of \vcc{q} similarly to objects owned by \vcc{q}.
+We plan to fix that in future.
 
 \subsection{Simple sequential admissibility}
 \label{sect:admissibility0}
@@ -463,24 +469,21 @@ This is important, because VCC checks only invariants of objects
 that you actually modify, and as we recall the most important
 verification property we want to enforce (and which we rely on in our
 verifications) is that all invariant of all (consistent) objects 
-are always preserved.
+are always preserved (\secref{wrap-unwrap}).
 For example, consider:
 
 \begin{VCC}
-struct A { 
-  int x;
-};
+struct A { int x; };
 struct A *a; // global variable
 struct B {
   int y;
   _(invariant a->x == y)
 };
 void foo()
+  _(requires \wrapped(a))
   _(writes a)
 {
-  _(unwrapping a) {
-    a->x = 7;
-  }
+  _(unwrapping a) { a->x = 7; }
 }
 \end{VCC}
 
@@ -489,7 +492,15 @@ In \vcc{foo()}, when wrapping \vcc{a} we would only check invariant
 of \vcc{a}, not all \vcc{struct B}s that could possibly depend on it.
 Thus, an action which preserves invariant of modified object breaks invariant of another object.
 For this reason VCC makes the invariant of \vcc{struct B} inadmissible.
-In fact, for all invariant VCC will check that they are admissible.
+In fact, for all invariants VCC will check that they are admissible.
+Admissibility of type \vcc{T} is checked by verifying VCC-generated
+function called \vcc{T#adm}.
+You can see messages about them when you verify files with type
+invariants.
+%In the VS interface you can check admissibility by right-clicking
+%on type definitions, while in the command line you can provide
+%\lstinline|/f:T#adm| parameter.
+
 We shall refrain now from giving a full definition of admissibility, as 
 it only makes full sense after we learn about two-state object invariants
 (see \secref{inv2}), but for sequential programs the useful approximation
@@ -506,7 +517,7 @@ modern programming languages, like Java, C\#, and ML, where memory
 consists of a collection of typed objects. Programs in these languages
 don't allocate memory (on the stack or on the heap), they allocate
 objects, and the type of an object remains fixed until the object is
-destroyed. Morover, a non-null reference to an object is guaranteed to
+destroyed. Moreover, a non-null reference to an object is guaranteed to
 point to a ``valid'' object. But in C, a type simply provides a way to
 interpret a sequence of bytes; nothing prevents a program from having
 multiple pointers of different types pointing into the same memory, or

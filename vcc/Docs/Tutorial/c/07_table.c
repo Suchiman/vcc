@@ -38,7 +38,6 @@ void sc_set(struct SafeContainer *c,
       c->strings[idx] = s;
     }
     _(ghost {
-      // could be also done with one assignment
       c->\owns -= \old(c->strings[idx]);
       c->\owns += s;
     })
@@ -57,6 +56,7 @@ void use_case(struct SafeContainer *c, struct SafeString *s)
   _(assert \wrapped(s)) // OK
   _(assert \wrapped(o)) // error
   sc_set(c, s, 5);
+  _(assert o != s) // OK
   _(assert \wrapped(c)) // OK
   _(assert \wrapped(s)) // error
   _(assert \wrapped(o)) // OK
