@@ -236,9 +236,6 @@
     <None Include="testsuite\vcc2\thread_id">
       <Filter>Testsuite</Filter>
     </None>
-    <None Include="testsuite\vcc2\tls">
-      <Filter>Testsuite</Filter>
-    </None>
     <None Include="testsuite\vcc2\unions">
       <Filter>Testsuite</Filter>
     </None>

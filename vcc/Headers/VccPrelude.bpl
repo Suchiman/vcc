@@ -300,20 +300,20 @@ function $get.seclabel($memory_t, $ptr) returns($seclabel);
 axiom (forall M:$memory_t, p,f:$ptr, v:$seclabel :: {:weight 0}
   ($set_in(f, $full_extent(p)) ==> $get.seclabel($set.seclabel(M, p, v), f) == v));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}
-	$set_in(q, $full_extent(p))
-	||
-	$get.seclabel($set.seclabel(M,p,l), q) == $get.seclabel(M, q)
-	);
+  $set_in(q, $full_extent(p))
+  ||
+  $get.seclabel($set.seclabel(M,p,l), q) == $get.seclabel(M, q)
+  );
 
 function $set.metalabel($memory_t, $ptr, $seclabel) returns($memory_t);
 function $get.metalabel($memory_t, $ptr) returns($seclabel);
 axiom (forall M:$memory_t, p,f:$ptr, v:$seclabel :: {:weight 0}
   ($set_in(f, $full_extent(p)) ==> $get.metalabel($set.metalabel(M, p, v), f) == v));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}
-	$set_in(q, $full_extent(p))
-	||
-	$get.metalabel($set.metalabel(M,p,l), q) == $get.metalabel(M, q)
-	);
+  $set_in(q, $full_extent(p))
+  ||
+  $get.metalabel($set.metalabel(M,p,l), q) == $get.metalabel(M, q)
+  );
 
 function $set.ptrgrp($memory_t, $ptr, int) returns($memory_t);
 function $get.ptrgrp($memory_t, $ptr) returns(int);
@@ -327,45 +327,45 @@ axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}
 
 // No interaction between memory and labels, and the various kinds of labels
 axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// PC and labels
-	$get.secpc($set.seclabel(M,p,l)) == $get.secpc(M));
+  $get.secpc($set.seclabel(M,p,l)) == $get.secpc(M));
 axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// PC and metas
-	$get.secpc($set.metalabel(M,p,l)) == $get.secpc(M));
+  $get.secpc($set.metalabel(M,p,l)) == $get.secpc(M));
 axiom (forall M:$memory_t, p:$ptr, i:int :: {:weight 0}			// PC and pointer groups
     $get.secpc($set.ptrgrp(M,p,i)) == $get.secpc(M));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Labels and PC
-	$get.seclabel($set.secpc(M,l), p) == $get.seclabel(M,p));
+  $get.seclabel($set.secpc(M,l), p) == $get.seclabel(M,p));
 axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Metas and PC
-	$get.metalabel($set.secpc(M,l), p) == $get.metalabel(M,p));
+  $get.metalabel($set.secpc(M,l), p) == $get.metalabel(M,p));
 axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and PC
-	$get.ptrgrp($set.secpc(M,l), p) == $get.ptrgrp(M,p));
+  $get.ptrgrp($set.secpc(M,l), p) == $get.ptrgrp(M,p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Metas and labels
-	$get.metalabel($set.seclabel(M,q,l),p) == $get.metalabel(M,p));
+  $get.metalabel($set.seclabel(M,q,l),p) == $get.metalabel(M,p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}			// Metas and pointer groups
-	$get.metalabel($set.ptrgrp(M,q,i),p) == $get.metalabel(M,p));
+  $get.metalabel($set.ptrgrp(M,q,i),p) == $get.metalabel(M,p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Labels and metas
-	$get.seclabel($set.metalabel(M,q,l),p) == $get.seclabel(M,p));
+  $get.seclabel($set.metalabel(M,q,l),p) == $get.seclabel(M,p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and metas
-	$get.ptrgrp($set.metalabel(M,q,l),p) == $get.ptrgrp(M,p));
+  $get.ptrgrp($set.metalabel(M,q,l),p) == $get.ptrgrp(M,p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and labels
-	$get.ptrgrp($set.seclabel(M,q,l),p) == $get.ptrgrp(M,p));
+  $get.ptrgrp($set.seclabel(M,q,l),p) == $get.ptrgrp(M,p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}			// Labels and pointer groups
-	$get.seclabel($set.ptrgrp(M,q,i),p) == $get.seclabel(M,p));
+  $get.seclabel($set.ptrgrp(M,q,i),p) == $get.seclabel(M,p));
 axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}			// PC and mem
-	$get.secpc($store.mem(M,p,v)) == $get.secpc(M));
+  $get.secpc($store.mem(M,p,v)) == $get.secpc(M));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Labels and mem
-	$get.seclabel($store.mem(M,q,v), p) == $get.seclabel(M, p));
+  $get.seclabel($store.mem(M,q,v), p) == $get.seclabel(M, p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Metas and mem
-	$get.metalabel($store.mem(M,q,v), p) == $get.metalabel(M, p));
+  $get.metalabel($store.mem(M,q,v), p) == $get.metalabel(M, p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Pointer groups and mem
-	$get.ptrgrp($store.mem(M,q,v), p) == $get.ptrgrp(M, p));
+  $get.ptrgrp($store.mem(M,q,v), p) == $get.ptrgrp(M, p));
 axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Mem and PC
-	$select.mem($set.secpc(M,l), p) == $select.mem(M, p));
+  $select.mem($set.secpc(M,l), p) == $select.mem(M, p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Mem and labels
-	$select.mem($set.seclabel(M,q,l), p) == $select.mem(M, p));
+  $select.mem($set.seclabel(M,q,l), p) == $select.mem(M, p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Mem and metas
-	$select.mem($set.metalabel(M,q,l), p) == $select.mem(M, p));
+  $select.mem($set.metalabel(M,q,l), p) == $select.mem(M, p));
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}			// Mem and pointer groups
-	$select.mem($set.ptrgrp(M,q,i), p) == $select.mem(M, p));
+  $select.mem($set.ptrgrp(M,q,i), p) == $select.mem(M, p));
 
 
 function $memory(s:$state) returns($memory_t);
@@ -3010,19 +3010,6 @@ axiom (forall S:$state, p:$ptr :: {$invok_state(S), $claimed_closed(S, p)}
 procedure $atomic_havoc();
   modifies $s;
   ensures $writes_nothing(old($s), $s);
-  ensures (forall r:int, t:$ctype, f:$field :: 
-              {$is_thread_local_storage(t), $select.mem($memory($s), $dot($ptr(t, r), f))}
-              $is_thread_local_storage(t) &&
-              $owner(old($s), $ptr(t, r)) == $me() ==>
-                $mem_eq(old($s), $s, $dot($ptr(t, r), f)));
-
-  ensures (forall r:int, t:$ctype, f:$field, i:int, sz:int, t2:$ctype :: 
-              {$is_thread_local_storage(t), $is_primitive_embedded_volatile_array(f, sz, t2), $select.mem($memory($s), $idx($dot($ptr(t, r), f), i, t2))}
-              $is_thread_local_storage(t) &&
-              $is_primitive_embedded_volatile_array(f, sz, t2) &&
-              0 <= i && i < sz &&
-              $owner(old($s), $ptr(t, r)) == $me() ==>
-                $mem_eq(old($s), $s, $idx($dot($ptr(t, r), f), i, t2)));
 
   ensures (forall p:$ptr, f:$field ::
     {$not_shared(old($s), p), $select.mem($memory($s), $dot(p, f))}
@@ -3078,9 +3065,6 @@ function {:weight 0} $ref_cnt(S:$state, p:$ptr) returns(int)
 
 function $is_claimable($ctype) returns(bool);
 axiom $is_claimable(^^claim);
-
-function $is_thread_local_storage($ctype) returns (bool);
-
 
 function $account_claim(S:$state, c:$ptr, o:$ptr) returns(bool)
   { $good_state(S) && $closed(S, c) && $claims_obj(c, o) }
