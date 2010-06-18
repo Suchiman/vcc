@@ -875,9 +875,12 @@ namespace Microsoft.Research.Vcc
           decl
         | decl -> decl
 
-      let removeGlobalMe = 
-        let isNotGlobalMe = function | Top.Global({Name = "\\me"}, _) -> false | _ -> true
-        List.filter isNotGlobalMe
+      let removeMagicEntities = 
+        let isNotMagic = function 
+          | Top.Global({Name = "\\me"}, _) 
+          | Top.TypeDecl({Name = "\\TypeState"}) -> false
+          | _ -> true
+        List.filter isNotMagic
 
       let normalizeInDomain self = function
         | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\domain"}, [], [e2])])
@@ -979,7 +982,7 @@ namespace Microsoft.Research.Vcc
       deepMapExpressions (normalizeOwnershipManipulation false) >>
       deepMapExpressions normalizeSignatures >> 
       (fun decls -> List.iter mapFromNewSyntax decls; decls)>> 
-      removeGlobalMe >>
+      removeMagicEntities >>
       deepMapExpressions normalizeMisc >> 
       deepMapExpressions rewriteBvAssertAsBvLemma
 

@@ -135,5 +135,11 @@ namespace Microsoft.Research.Vcc {
     /// Did not expect VCC specification keyword '{0}'.
     /// </summary>
     UnexpectedVccKeyword,
+
+    /// <summary>
+    /// Could not find built-in types and functions. Missing #include <vcc.h>?
+    /// </summary>
+    MissingIncludeOfVccH,
+
   }
 }

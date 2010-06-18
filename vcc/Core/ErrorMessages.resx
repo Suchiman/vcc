@@ -3655,4 +3655,7 @@
   <data name="UnexpectedVccKeyword" xml:space="preserve">
     <value>Did not expect VCC specification keyword '{0}'.</value>
   </data>
+  <data name="MissingIncludeOfVccH" xml:space="preserve">
+    <value>Could not find built-in types or functions. Missing #include &lt;vcc.h&gt;?</value>
+  </data>
 </root>
