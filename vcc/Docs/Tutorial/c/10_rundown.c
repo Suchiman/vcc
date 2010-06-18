@@ -16,7 +16,7 @@ struct RefCnt {
   _(ghost \object resource;)
   _(invariant \mine(resource))
   _(invariant \claimable(resource))
-  _(invariant \claim_count(resource) == cnt >> 1)
+  _(invariant resource->\claim_count == cnt >> 1)
   _(invariant \old(cnt & 1) ==> \old(cnt) >= cnt)
 };
 /*{init}*/
@@ -32,7 +32,7 @@ void init(struct RefCnt *r _(ghost \object rsc))
 /*{incr}*/
 int try_incr(struct RefCnt *r _(ghost \claim c) 
              _(	out \claim ret))
-  _(always c, \consistent(r))
+  _(always c, r->\consistent)
   _(ensures \result == 0 ==> 
      \claims_object(ret, r->resource) && \wrapped0(ret) && \fresh(ret))
 {
@@ -54,7 +54,7 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
 }
 /*{decr}*/
 void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
-  _(always c, \consistent(r))
+  _(always c, r->\consistent)
   _(requires \claims_object(handle, r->resource) && \wrapped0(handle))
   _(requires c != handle)
   _(writes handle)
@@ -94,7 +94,7 @@ struct B {
 };
 
 void useb(struct B *b _(ghost \claim c))
-  _(always c, \consistent(b))
+  _(always c, b->\consistent)
 {
   _(ghost \claim ac;)
   if (try_incr(&b->rc _(ghost c) _(out ac)) == 0) {

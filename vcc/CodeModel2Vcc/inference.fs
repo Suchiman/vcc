@@ -42,7 +42,7 @@ namespace Microsoft.Research.Vcc
     
     let allOnWhichCalled name f lst =
       let add acc = function
-        | Call (_, { Name = name' }, _, [p]) when name = name' -> f p :: acc
+        | CallMacro (_, name', _, [p]) when name = name' -> f p :: acc
         | _ -> acc      
       List.fold add [] lst
     

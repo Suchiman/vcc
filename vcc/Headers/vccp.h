@@ -44,10 +44,8 @@ _(SPEC_TYPE(thread_id))
 _(typedef \thread_id ^\thread;)
 
 _(bool \mine(\object, ...);)
-_(bool \valid(\object);)
 _(bool \wrapped(\object);)
 _(bool \fresh(\object);)
-_(bool \consistent(\object);)
 _(\objset \extent(\object);)
 _(\objset \full_extent(\object);)
 _(bool \extent_mutable(\object);)
@@ -65,7 +63,6 @@ _(\type \typeof(\object);)
 _(bool \claims(\claim, bool);)
 _(bool \claims_object(\claim, \object);)
 _(bool \claims_claim(\claim, \claim);)
-_(\integer \claim_count(\object);)
 _(bool \claimable(\object);)
 _(\claim \make_claim(\objset, bool);)
 _(\claim \upgrade_claim(\objset, bool);)
@@ -92,8 +89,11 @@ _(logic template<typename T> T \when_claimed(T expr) = \in_state(\when_claimed_m
 // built-in fields
 
 _(struct \TypeState {
+  _(ghost \integer \claim_count;)
+  _(ghost bool \consistent;)
   _(ghost \objset \owns;)
   _(ghost \object \owner;)
+  _(ghost bool \valid;)
 };)
 
 // Statement-like functions
@@ -147,7 +147,7 @@ _(bool \macro_always(\claim c, bool cond)
 _(template<typename T> T \macro_returns(T expr)
   _(ensures \result == expr);)
 
-_(logic bool \wrapped0(\object o) = \wrapped(o) && \claim_count(o) == 0;)
+_(logic bool \wrapped0(\object o) = \wrapped(o) && o->\claim_count == 0;)
 _(logic template<typename T> bool \unchanged(T expr) = expr == \old(expr);)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing

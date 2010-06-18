@@ -444,7 +444,7 @@ namespace Microsoft.Research.Vcc
           | Ptr _ -> e         
           | _ ->
             match e with
-              | Call (c, { Name = ("_vcc_ref_cnt") }, _, [p]) ->
+              | CallMacro (c, "_vcc_ref_cnt", _, [p]) ->
                 //helper.Error (c.Token, 9999, "the ref_cnt(...) no longer resides in memory and cannot be written to", None)
                 p
               | _ -> e // we will catch this error later
@@ -831,15 +831,12 @@ namespace Microsoft.Research.Vcc
       let newToOldFn = Map.ofList [ 
                                     "\\mine",                "_vcc_keeps";
                                     "\\embedding",           "_vcc_emb";
-                                    "\\valid",               "_vcc_typed2";
                                     "\\ghost",               "_vcc_is_ghost_ptr";
                                     "\\fresh",               "_vcc_is_fresh";
-                                    "\\consistent",          "_vcc_closed";
                                     "\\thread_local",        "_vcc_thread_local2";
                                     "\\thread_local_array",  "_vcc_is_thread_local_array";
                                     "\\mutable_array",       "_vcc_is_mutable_array";
                                     "\\claims_object",       "_vcc_claims_obj";
-                                    "\\claim_count",         "_vcc_ref_cnt";
                                     "\\claimable",           "_vcc_is_claimable";
                                     "\\make_claim",          "_vcc_claim";
                                     "\\destroy_claim",       "_vcc_unclaim";
