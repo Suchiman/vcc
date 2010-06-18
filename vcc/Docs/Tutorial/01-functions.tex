@@ -32,9 +32,9 @@ whenever control reaches this assertion%
   This interpretation changes slightly if \vcc{E} refers to
   memory locations that might be concurrently written to by other
   threads; see \secref{concurrency}}.  
-Thus, the line \vcc|_( assert z <= x && z <= y )| says
-that when control reaches the assertion, \vcc{z} is no larger than \vcc{x} or
-\vcc{y}. If VCC verifies a program, it promises that all such assertions
+Thus, the line \vcc|_( assert z <= x )| says
+that when control reaches the assertion, \vcc{z} is no larger than \vcc{x}.
+If VCC verifies a program, it promises that all such assertions
 hold in \emph{every} possible execution of the program, considering all possible inputs,
 all possible ways of scheduling concurrent threads, etc. 
 % The following doesn't really clarify much
@@ -131,10 +131,12 @@ annotations.%
 To understand how VCC works, and to use it successfully, it is useful to
 think in terms of what VCC ``knows'' at various program points. In
 this example, VCC initially knows nothing about the variables (they
-can initially hold any value). Just before the first assignment, VCC knows that 
+can initially hold any value). 
+\todo{make sure this makes sense:}
+Just before the first assignment, VCC knows that 
 \vcc{x <= y} (because execution followed that branch of the conditional), and
 after the assignment, VCC knows additionally that \vcc{z} is equal to
-\vcc{x}, so it knows that \vcc{z <= x && z <= y}. Similar reasoning
+\vcc{x}, so it knows that \vcc{z <= x}. Similar reasoning
 (with \vcc{x} and \vcc{y} reversed) holds in \vcc{else} branch, so VCC
 knows that the assertion holds when control reaches it. In general,
 VCC doesn't lose any information when reasoning about assignments and
@@ -511,7 +513,7 @@ At any control point, VCC can ``know'' that a particular memory object
 \item Either \vcc{p} was listed in the writes clause of the function,
   or it was \vcc{\unwrapped} after the function was entered; the 
   latter condition guarantees that either \vcc{p} was listed in the
-  writes clause or was not \vcc{\thread_local} in the caller.
+  writes clause or was not thread-local in the caller.
 \end{itemize}
 In particular, formal function parameters and local variables are
 writable as long as they are in scope and have not been explicitly
@@ -540,9 +542,9 @@ memory; it simply copies data from one location to another.
 %% \vccInput[linerange={out-}]{c/01_swap2.c}
 %% \noindent 
 Whenever a memory object is read, VCC asserts that it is
-\vcc{thread_local}; whenever a memory object is written or is
+thread-local; whenever a memory object is written or is
 mentioned in the writes clause of a function call, VCC asserts that it
-is \vcc{writable}. Try removing each of the function annotations in
+is writable. Try removing each of the function annotations in
 this example (one at a time) to see what error messages you get.
 
 While thread locality is what is checked on a read, in practice it is
