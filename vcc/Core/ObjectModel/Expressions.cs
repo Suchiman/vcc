@@ -3129,21 +3129,21 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
-
     protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType, bool ignoreAccessibility) {
-
-      if (this.SimpleName.Name.Value == "\\owner") {
-        return ((VccCompilation)this.Compilation).ExtensionFields["\\owner"].TypeDefinitionMember;
-      } else if (this.SimpleName.Name.Value == "\\owns") {
-        return ((VccCompilation)this.Compilation).ExtensionFields["\\owns"].TypeDefinitionMember;
+      // when using the new syntax, \owns, \owner, etc. are defined as fields;
+      // these are supplied via a magic struct \TypeState in vccp.h
+      var typeStateFields = ((VccCompilation)this.Compilation).TypeStateFields;
+      if (typeStateFields != null) {
+        var typeContract = this.Compilation.ContractProvider.GetTypeContractFor(typeStateFields);
+        if (typeContract != null) {
+          foreach (var field in typeContract.ContractFields) {
+            if (field.Name.UniqueKey == this.SimpleName.Name.UniqueKey)
+              return field;
+          }
+        }
       }
-
       return base.ResolveTypeMember(qualifyingType, ignoreAccessibility);
     }
-      
-    
-  
-
   }
 
   public class VccPointerScopedName : PointerQualifiedName

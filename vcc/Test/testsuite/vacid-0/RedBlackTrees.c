@@ -1,4 +1,5 @@
-#include <vcc2test.h>
+#include <vcc.h>
+#include <stdlib.h>
 
 typedef struct Node {
   bool red;

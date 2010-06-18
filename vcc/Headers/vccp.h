@@ -89,6 +89,13 @@ _(\state \current_state();)
 _(logic template<typename T> T \by_claim(\claim c, T expr) = \in_state(\by_claim_wrapper(c), expr);)
 _(logic template<typename T> T \when_claimed(T expr) = \in_state(\when_claimed_marker(), expr);)
 
+// built-in fields
+
+_(struct \TypeState {
+  _(ghost \objset \owns;)
+  _(ghost \object \owner;)
+};)
+
 // Statement-like functions
 
 _(void \wrap(\object);)

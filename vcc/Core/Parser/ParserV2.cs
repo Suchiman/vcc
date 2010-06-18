@@ -103,7 +103,19 @@ namespace Microsoft.Research.Vcc.Parsing
 
     internal override void ParseCompilationUnit(GlobalDeclarationContainerClass globalContainer, List<INamespaceDeclarationMember> members) {
       base.ParseCompilationUnit(globalContainer, members);
-      members.Add(VccExtensionFields.CreateInstance((VccCompilation)this.compilation));
+      bool found = false;
+      int typeStateFieldsKey = this.GetNameFor("\\TypeState").UniqueKey;
+      foreach (var member in members) {
+        if (member.Name.UniqueKey == typeStateFieldsKey) {
+          VccStructDeclaration typeStateFieldsStruct = member as VccStructDeclaration;
+          if (typeStateFieldsStruct != null) {
+            ((VccCompilation)this.compilation).TypeStateFields = typeStateFieldsStruct;
+            found = true;
+            break;
+          }
+        }
+      }
+      if (!found) this.HandleError(Error.MissingIncludeOfVccH);
     }
 
     protected override bool ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {

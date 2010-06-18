@@ -123,14 +123,15 @@ namespace Microsoft.Research.Vcc {
     }
     IMethodDefinition/*?*/ voidSpecPtrOpVoidSpecPtr;
 
-    internal VccExtensionFields ExtensionFields {
-      get { return this.extensionFields; }
-      set { if (this.extensionFields != null) throw new InvalidOperationException();
-        this.extensionFields = value;
+    internal VccStructDeclaration TypeStateFields {
+      get { return this.typeStateFields; }
+      set {
+        if (this.typeStateFields != null) throw new InvalidOperationException();
+        this.typeStateFields = value;
       }
     }
 
-    VccExtensionFields extensionFields;
+    VccStructDeclaration typeStateFields;
 
     protected override List<CompilationPart> GetPartList() {
       return new List<CompilationPart>(this.parts);
