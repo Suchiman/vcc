@@ -8,9 +8,9 @@ struct S {
 void foo() {
   struct S s;
   struct S *p = &s;
-  _(assert \valid(p) && !\ghost(p))
-  _(assert \valid(&p->a) && !\ghost(&p->a))
-  _(assert \valid(&p->b) && \ghost(&p->b))
+  _(assert p->\valid && !\ghost(p))
+  _(assert (&p->a)->\valid && !\ghost(&p->a))
+  _(assert (&p->b)->\valid && \ghost(&p->b))
 }
 /*`
 Verification of foo succeeded.

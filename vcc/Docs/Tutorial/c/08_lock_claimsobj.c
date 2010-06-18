@@ -31,7 +31,7 @@ _(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int E
 }
 /*{acquire}*/
 void Acquire(struct Lock *l _(ghost \claim c))
-  _(always c, \consistent(l))
+  _(always c, l->\consistent)
   _(ensures \wrapped(l->protected_obj) && \fresh(l->protected_obj))
 {
   int stop = 0;

@@ -61,7 +61,15 @@ namespace Microsoft.Research.Vcc
     let mutable doingEarlyPruning = false
     let mutable requestedFunctions = []
     let mutable currentFunctionName = ""
-    
+
+    let typestateFieldsMap = Map.ofList [ 
+                                          "\\claim_count",  "_vcc_ref_cnt"
+                                          "\\consistent",   "_vcc_closed"
+                                          "\\owns",         "_vcc_owns"
+                                          "\\owner",        "_vcc_owner"
+                                          "\\valid",        "_vcc_typed2"
+                                        ]
+       
     let cTrue = C.Expr.BoolLiteral ( { Type = C.Type.Bool; Token = C.bogusToken }, true )
     let cFalse = C.Expr.BoolLiteral ( { Type = C.Type.Bool; Token = C.bogusToken }, false )
 
@@ -516,10 +524,9 @@ namespace Microsoft.Research.Vcc
           | :? IFieldDefinition as def ->
             let instance = this.DoExpression instance
 
-            match def.Name.Value with 
-              | "\\owns" -> exprRes <- C.Expr.Macro({instance.Common with Type = this.DoType def.Type}, "_vcc_owns", [instance])
-              | "\\owner" -> exprRes <- C.Expr.Macro({instance.Common with Type = this.DoType def.Type}, "_vcc_owner", [instance])
-              | _ ->
+            match typestateFieldsMap.TryFind def.Name.Value with
+              | Some v1Fn -> exprRes <- C.Expr.Macro({instance.Common with Type = this.DoType def.Type}, v1Fn, [instance])           
+              | None ->
 
                 if not (fieldsMap.ContainsKey def) then
                   oopsLoc def ("field " + def.Name.Value + " not found")

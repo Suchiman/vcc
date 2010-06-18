@@ -743,6 +743,20 @@ namespace Microsoft.Research.Vcc {
           }
         }
       }
+
+      //var typeStateFields = ((VccCompilation)this.Compilation).TypeStateFields;
+      //if (typeStateFields != null) {
+      //  var typeContract = this.Compilation.ContractProvider.GetTypeContractFor(typeStateFields);
+      //  if (typeContract != null) {
+      //    foreach (var typeStateField in typeContract.ContractFields) {
+      //      if (ignoreCase) {
+      //        if (typeStateField.Name.UniqueKeyIgnoringCase == memberName.UniqueKeyIgnoringCase) yield return typeStateField;
+      //      } else {
+      //        if (typeStateField.Name.UniqueKey == memberName.UniqueKey) yield return typeStateField;
+      //      }
+      //    }
+      //  }
+      //}
     }
 
     /// <summary>

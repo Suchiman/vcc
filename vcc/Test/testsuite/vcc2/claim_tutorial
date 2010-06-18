@@ -16,7 +16,7 @@ _(claimable) struct A {
 };
 void LockFreeIncr(struct A *a _(ghost \claim c))
   _(writes c)
-  _(always c, \consistent(a))
+  _(always c, a->\consistent)
 {
   int y;
   int z;
@@ -47,7 +47,7 @@ _(claimable) struct A {
 };
 void incr(struct A *a, int *res _(ghost \claim c) _(ghost \claim ^cres))
   _(writes c, res, cres)
-  _(always c, \consistent(a))
+  _(always c, a->\consistent)
   _(ensures \claims(*cres, a->x >= \when_claimed(*res)))
 {
   int val;
@@ -71,7 +71,7 @@ _(claimable) struct A {
 };
 void incr(struct A *a, int *res _(ghost \claim c) _(ghost \claim ^cres))
   _(writes c, res, cres)
-  _(always c, \consistent(a))
+  _(always c, a->\consistent)
   _(ensures \claims(*cres, a->x > \when_claimed(*res)))
   _(ensures \claims_object(*cres, c))
 {
@@ -100,15 +100,15 @@ _(claimable) struct A {
 
 void incr(struct A *a, int *res _(ghost \claim c) _(ghost \claim ^cres))
   _(writes c, res, cres)
-  _(always c, \consistent(a))
+  _(always c, a->\consistent)
   // there will be a single new child to c
-  _(ensures \claim_count(c) == \old(\claim_count(c)) + 1)
+  _(ensures c->\claim_count == \old(c->\claim_count) + 1)
   // the claim we return will be child of c
   _(ensures \claims_object(*cres, c))
   // it will be wrapped
   _(ensures \wrapped(*cres))
   // it will be childless (so we'll be free to kill it)
-  _(ensures \claim_count(*cres) == 0)
+  _(ensures (*cres)->\claim_count == 0)
   // and it will guarantee a condition about a->x
   _(ensures \claims(*cres, a->x >= \when_claimed(*res)))
   // and it was not allocated before

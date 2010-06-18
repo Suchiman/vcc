@@ -290,12 +290,9 @@ module Rules =
     addKwRule "weak_out_param" "writes"
 
     addFnRule "valid_claim" "\\active_claim"
-    addFnRule "ref_cnt" "\\claim_count"
     addFnRule "is_claimable" "\\claimable"
     addFnRule "is_fresh" "\\fresh"
     addFnRule "mutable" "\\unwrapped"
-    addFnRule "closed" "\\consistent"
-    addFnRule "typed" "\\valid"
     addFnRule "is_thread_local_array" "\\thread_local_array"
     addFnRule "is_mutable_array" "\\mutable_array"
     addFnRule "unchecked" "_(unchecked)"
@@ -320,6 +317,18 @@ module Rules =
     addInfixRule "set_in" "\\in"
     addInfixRule "is" "\\is"
 
+    let addGhostFieldRule fn fld = 
+      let ghostFieldRule fieldName = function
+        | [e] -> e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, fieldName)]
+        | _ -> failwith ""
+      addRule (parenRuleN fn 1 (ghostFieldRule fld))
+
+    addGhostFieldRule "owns"    "\\owns"
+    addGhostFieldRule "owner"   "\\owner"
+    addGhostFieldRule "typed"   "\\valid"
+    addGhostFieldRule "closed"  "\\consistent"
+    addGhostFieldRule "ref_cnt" "\\claim_count"
+    
     let as_array = function
       | [arr; sz] ->
         let arr =
@@ -330,13 +339,6 @@ module Rules =
       | _ -> failwith ""
     addRule (parenRuleN "as_array" 2 as_array)
         
-    let ghostFieldRule fieldName = function
-      | [e] -> e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, fieldName)]
-      | _ -> failwith ""
-
-    addRule (parenRuleN "owns" 1 (ghostFieldRule "\\owns"))
-    addRule (parenRuleN "owner" 1 (ghostFieldRule "\\owner"))
-    
     let set_owns = function
       | [e; s] ->
         spec "ghost" (e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\owns"); Tok.Op(fakePos, " = ")] @ s)
