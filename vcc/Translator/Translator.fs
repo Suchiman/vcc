@@ -1852,17 +1852,11 @@ namespace Microsoft.Research.Vcc
         
         let is_claimable = ref false
         let owns_set_is_volatile = ref false
-        let is_thread_local = ref false
           
         List.iter (function C.VccAttr ("claimable", _) -> is_claimable := true
                           | C.VccAttr ("volatile_owns", _) -> owns_set_is_volatile := true
-                          | C.VccAttr ("thread_local_storage", _) -> is_thread_local := true
                           | _ -> ()) td.CustomAttr
-                                             
-        if !is_claimable && !is_thread_local then
-          helper.Error(tok, 9665, "Type '" + td.Name + "' cannot be marked as both claimable and thread_local_storage")
-                                             
-           
+                                                        
         let stripLabel = function
           | C.Macro(_, "labeled_invariant", [_; i]) -> i                  
           | i -> i
@@ -2082,9 +2076,6 @@ namespace Microsoft.Research.Vcc
            
         let volatile_owns = B.Decl.Axiom (bEq (bCall "$has_volatile_owns_set" [we]) (B.Expr.BoolLiteral !owns_set_is_volatile))
         let claimable = B.Decl.Axiom (bEq (bCall "$is_claimable" [we]) (B.Expr.BoolLiteral !is_claimable))
-        let threadLocal = 
-          if !is_thread_local then [B.Decl.Axiom (bCall "$is_thread_local_storage" [we])]
-          else []
            
         let forward = 
           match td.GenerateEquality with
@@ -2108,8 +2099,7 @@ namespace Microsoft.Research.Vcc
                  B.Decl.Axiom state_nonvolatile_spans_the_same;
                  claimable;
                  volatile_owns
-                 ] @ threadLocal 
-                   @ extentProps 
+                 ] @ extentProps 
                    @ List.concat (List.map (trField td) allFields)
       
       let trRecord (td:C.TypeDecl) =
