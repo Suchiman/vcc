@@ -4,20 +4,19 @@ int min(int a, int b)
 {
   int res;
   _(assume \true)
-  res = a < b ? a : b;
+  if (a <= b) 
+    res = a;
+  else res = b;
   _(assert res <= a && res <= b)
 }
 
-#define LIMIT 1000
 int main()
 {
-  int position = 0, newPos;
-  // ...
+  int x, y, z;
   _(assert \true)
-  position = min(newPos, LIMIT);
-  _(assume position <= newPos && position <= LIMIT)
-  _(assert position <= LIMIT)
-  // ...
+  z = min(x, y);
+  _(assume z <= x && z <= y)
+  _(assert z <= x)
   return 0;
 }
 
