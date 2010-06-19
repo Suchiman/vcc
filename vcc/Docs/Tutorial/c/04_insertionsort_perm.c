@@ -12,6 +12,9 @@ _(logic bool is_permutation(perm_t perm, unsigned len) =
 _(logic bool is_permuted(\state s, int *buf, unsigned len, perm_t perm) =
   \forall unsigned i; {perm[i]} i < len ==> perm[i] < len && \in_state(s, buf[ perm[i] ]) == buf[i])
 
+_(_(pure) perm_t swap(perm_t p, unsigned i, unsigned j)
+  _(ensures \result == \lambda unsigned k; k == i ? p[j] : k == j ? p[i] : p[k]); )
+
 void insertion_sort(int *buf, unsigned len _(out perm_t perm))
   _(writes \array_range(buf, len))
   _(ensures sorted(buf, len))
@@ -48,9 +51,7 @@ void insertion_sort(int *buf, unsigned len _(out perm_t perm))
       if (buf[j] > v) {
         buf[j + 1] = buf[j];
         _(ghost perm[j + 1] = perm[j] )
-        _(assert perm2[j + 1] == tmp)
-        _(ghost perm2[j + 1] = perm2[j] )
-        _(ghost perm2[j] = tmp )
+        _(ghost perm2 = swap(perm2, j, j + 1) )
         if (_(unchecked)(j--) == 0) break;
       } else 
         break;
