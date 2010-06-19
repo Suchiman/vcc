@@ -33,3 +33,7 @@ void insertion_sort(int *buf, unsigned len)
     buf[_(unchecked)(j + 1)] = v;
   }
 }
+
+/*`
+Verification of insertion_sort succeeded.
+`*/
