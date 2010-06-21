@@ -68,5 +68,5 @@ Verification of SafeString#adm succeeded.
 Verification of SafeContainer#adm succeeded.
 Verification of sc_set succeeded.
 Verification of use_case failed.
-testcase(58,26) : error VC9500: Assertion '\wrapped(o)' did not verify.
+testcase(57,26) : error VC9500: Assertion '\wrapped(o)' did not verify.
 `*/
