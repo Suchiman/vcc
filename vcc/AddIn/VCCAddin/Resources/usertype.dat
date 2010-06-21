@@ -102,7 +102,6 @@ set_closed_owner
 giveup_closed_owner
 thread_local
 is_claimable
-containing_struct
 havoc_others
 deep_unwrap
 claim

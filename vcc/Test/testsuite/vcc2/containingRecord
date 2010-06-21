@@ -1,15 +1,8 @@
 #include <vcc.h>
 
 typedef unsigned char *PUINT8;
-
-#ifdef VERIFY
-#define CONTAINING_RECORD(_Address_, _Type_, _Field_) \
-  (containing_struct(_Address_, _Type_, _Field_))
-#else
 #define CONTAINING_RECORD(_Address_, _Type_, _Field_) \
     ((_Type_ *)( (PUINT8)(_Address_) - (PUINT8)(&((_Type_ *)0)->_Field_)))
-#endif
-
 
 typedef struct A_ {
   int x;
@@ -33,13 +26,8 @@ Verification of bar succeeded.
 #include "vcc.h"
 typedef unsigned char *PUINT8;
 
-#ifdef VERIFY
-#define CONTAINING_RECORD(_Address_, _Type_, _Field_) \
-  (containing_struct(_Address_, _Type_, _Field_))
-#else
 #define CONTAINING_RECORD(_Address_, _Type_, _Field_) \
     ((_Type_ *)( (PUINT8)(_Address_) - (PUINT8)(&((_Type_ *)0)->_Field_)))
-#endif
 
 typedef struct _A
 {
