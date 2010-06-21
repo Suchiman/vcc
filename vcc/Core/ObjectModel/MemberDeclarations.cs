@@ -298,8 +298,11 @@ namespace Microsoft.Research.Vcc {
         if (p.Type.HasErrors)
           result = true;
         else if (p.Type.ResolvedType.TypeCode == PrimitiveTypeCode.Void) {
-          if (physParCount != 1 || !(p.Name is VccNameDeclaration) || !((VccNameDeclaration)p.Name).IsCompilerGenerated || p.IsSpec) {
-            this.Helper.ReportError(new AstErrorMessage(p, Microsoft.Cci.Ast.Error.IllegalUseOfType, p.Name.Value,  this.Helper.GetTypeName(this.PlatformType.SystemVoid.ResolvedType)));
+          VccNameDeclaration vccParName = p.Name as VccNameDeclaration;
+          if (physParCount != 1 || vccParName == null || !vccParName.IsCompilerGenerated || p.IsSpec) {
+            string parNameToReport = p.Name.Value;
+            if (vccParName != null && vccParName.IsCompilerGenerated) parNameToReport = String.Empty;
+            this.Helper.ReportError(new AstErrorMessage(p, Microsoft.Cci.Ast.Error.IllegalUseOfType, parNameToReport,  this.Helper.GetTypeName(this.PlatformType.SystemVoid.ResolvedType)));
             result = true;
           }
         }
