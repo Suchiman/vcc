@@ -399,6 +399,9 @@ namespace Microsoft.Research.Vcc
       else
         stmtRes <- C.Expr.Bogus
         match stmt with
+          | :? LocalDeclarationsStatement as stmt ->
+            oopsLoc stmt "unexpected LocalDeclarationsStatement"
+            stmtRes <- C.Comment (this.StmtCommon stmt, sprintf "unexpected statement %s" (stmt.ToString()))
           | :? IVccStatement as stmt -> stmt.Dispatch(this)
           | stmt -> stmt.Dispatch(this)
         let res = stmtRes
