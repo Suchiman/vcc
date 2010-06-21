@@ -156,11 +156,12 @@ namespace Microsoft.Research.Vcc
         let eq = "$eq." + mapName
         let v = er "v"
         let v, inRange =
+          let rangeAxiom rangeFn args = [B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["M", tp; "p", bt1], [], weight "select-map-eq", bCall rangeFn args))]
           match t2 with
-            | C.Type.Integer _ -> 
-              bCall "$unchecked" [toTypeId t2; v], 
-                [B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["M", tp; "p", bt1], [], weight "select-map-eq", 
-                                              bCall "$in_range_t" [toTypeId t2; selMP]))]
+            | C.Type.Integer _ -> bCall "$unchecked" [toTypeId t2; v], rangeAxiom "$in_range_t" [toTypeId t2; selMP]
+            | C.Type.Claim
+            | C.Type.SpecPtr _ -> v, rangeAxiom "$in_range_spec_ptr" [selMP]
+            | C.Type.PhysPtr _ -> v, rangeAxiom "$in_range_phys_ptr" [selMP]
             | _ -> v, []
         let argRange = 
           match t1 with
