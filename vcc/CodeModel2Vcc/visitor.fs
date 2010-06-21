@@ -561,6 +561,8 @@ namespace Microsoft.Research.Vcc
             | PrimitiveTypeCode.Void -> C.Type.Void
             | PrimitiveTypeCode.Float32 -> C.Type.Primitive C.PrimKind.Float32
             | PrimitiveTypeCode.Float64 -> C.Type.Primitive C.PrimKind.Float64
+            | PrimitiveTypeCode.UIntPtr
+            | PrimitiveTypeCode.IntPtr -> C.Type.PhysPtr(C.Type.Void)
             | PrimitiveTypeCode.NotPrimitive ->
               let (hasit, ret) = typesMap.TryGetValue(typeDef)
               if hasit then C.Type.Ref (ret)
@@ -1159,6 +1161,13 @@ namespace Microsoft.Research.Vcc
             | C.Type.Bool      -> C.Expr.BoolLiteral (ec, unbox (constant.Value))
             | C.Type.Primitive _ -> C.Expr.Macro(ec, "float_literal", [C.Expr.UserData(ec, constant.Value)])
             | C.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.ToUserData(constant.Value)])
+            | C.Ptr (C.Type.Void) -> 
+              let ptrVal = 
+                let ecInt = {ec with Type = C.Type.Integer C.IntKind.Int64}
+                match constant.Value with
+                  | :? System.IntPtr as ptr ->  C.Expr.IntLiteral(ecInt, new bigint(ptr.ToInt64()))
+                  | _ -> C.Expr.IntLiteral(ecInt, bigint.Parse(constant.Value.ToString()))
+              C.Expr.Cast(ec, C.CheckedStatus.Unchecked, ptrVal)
             | _ -> die()
 
       member this.Visit (conversion:IConversion) : unit =
