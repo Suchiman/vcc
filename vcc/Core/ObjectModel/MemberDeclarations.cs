@@ -277,6 +277,38 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      bool result = false;
+      var parameters = IteratorHelper.GetFilterEnumerable<ParameterDeclaration, VccParameterDeclaration>(this.Parameters);
+      int physParCount = 0;
+
+      foreach (var p in parameters) {
+        if (!p.IsSpec) ++physParCount;
+      }
+
+      // check for duplicate parameter names or parameters of type void
+      Dictionary<int, bool> seenParameters = new Dictionary<int, bool>();
+      foreach (var p in parameters) {
+        if (seenParameters.ContainsKey(p.Name.Name.UniqueKey)) {
+          this.Helper.ReportError(new VccErrorMessage(p.SourceLocation, Error.DuplicateParameterName, p.Name.Value));
+          result = true;
+        } else
+          seenParameters.Add(p.Name.UniqueKey, true);
+
+        if (p.Type.HasErrors)
+          result = true;
+        else if (p.Type.ResolvedType.TypeCode == PrimitiveTypeCode.Void) {
+          if (physParCount != 1 || !(p.Name is VccNameDeclaration) || !((VccNameDeclaration)p.Name).IsCompilerGenerated || p.IsSpec) {
+            this.Helper.ReportError(new AstErrorMessage(p, Microsoft.Cci.Ast.Error.IllegalUseOfType, p.Name.Value,  this.Helper.GetTypeName(this.PlatformType.SystemVoid.ResolvedType)));
+            result = true;
+          }
+        }
+      }
+      return result;
+
+      // do not recurse to the body because we trigger that check separately and checking it here would interfere with pruning
+    }
+
     internal bool HasSingleVoidParameter {
       get {
         if (this.parameters != null && this.parameters.Count == 1)
@@ -522,7 +554,6 @@ namespace Microsoft.Research.Vcc {
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       bool result = this.Type.HasErrors;
-      //TODO: more checks
       return result;
     }  
 
@@ -585,7 +616,7 @@ namespace Microsoft.Research.Vcc {
       if (this.ResolvedMember.IsGeneric) return this.ResolvedMember;
       List<ITypeReference> parameterTypes = new List<ITypeReference>(this.parameters == null ? 0 : this.parameters.Count);
       foreach (ParameterDeclaration parDec in this.Parameters) parameterTypes.Add(parDec.Type.ResolvedType);
-      if (parameterTypes.Count == 1 && TypeHelper.TypesAreEquivalent(parameterTypes[0], this.CompilationPart.Compilation.PlatformType.SystemVoid))
+      if (parameterTypes.Count == 1 && parameterTypes[0].TypeCode == PrimitiveTypeCode.Void)
         parameterTypes.Clear();
       IMethodDefinition result = TypeHelper.GetMethod(this.VccCompilationHelper.Runtime, this.Name, parameterTypes.ToArray());
       if (result == Dummy.Method) {
@@ -627,7 +658,7 @@ namespace Microsoft.Research.Vcc {
       if (this.templateParameters == null) {
         List<ITypeReference> parameterTypes = new List<ITypeReference>(this.parameters == null ? 0 : this.parameters.Count);
         foreach (ParameterDeclaration parDec in this.Parameters) parameterTypes.Add(parDec.Type.ResolvedType);
-        if (parameterTypes.Count == 1 && TypeHelper.TypesAreEquivalent(parameterTypes[0], this.CompilationPart.Compilation.PlatformType.SystemVoid)) {
+        if (parameterTypes.Count == 1 && parameterTypes[0].TypeCode == PrimitiveTypeCode.Void) {
           parameterTypes.Clear();
           //^ assert this.parameters != null;
           this.parameters.Clear();

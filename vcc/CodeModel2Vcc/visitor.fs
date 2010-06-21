@@ -292,13 +292,13 @@ namespace Microsoft.Research.Vcc
         let decl = this.LookupMethod (meth)
         if decl.IsProcessed then ()
         else
-          let expansion =
+          let expansion, hasErrors =
             match meth with
               | :? VccGlobalMethodDefinition as vccMeth -> 
                 match vccMeth.GlobalMethodDeclaration with 
-                  | :? Microsoft.Research.Vcc.FunctionDefinition as fDef -> fDef.Expansion
-                  | _ -> null
-              | _ -> null
+                  | :? Microsoft.Research.Vcc.FunctionDefinition as fDef -> fDef.Expansion, fDef.HasErrors
+                  | _ -> null, false
+              | _ -> null, false
           let body = 
             match meth with
               | :? IMethodDefinition as def ->
@@ -321,9 +321,7 @@ namespace Microsoft.Research.Vcc
                 | false, false -> C.VarKind.Parameter
                 | _ -> die() // out param must always also be a spec parameter
             let v = C.Variable.CreateUnique name (this.DoType (p.Type)) varKind
-            if localsMap.ContainsKey p || localsMap.ContainsKey ((p.ContainingSignature, v.Name)) then
-              helper.Error(decl.Token, 9707, "'" + v.Name + "' : parameter redefinition")
-            else 
+            if not (localsMap.ContainsKey p) && not (localsMap.ContainsKey ((p.ContainingSignature, v.Name))) then
               localsMap.Add (p, v)
               // this is SO WRONG, however it seems that sometimes different instances
               // of IParameterDefinition are referenced from code (does it have to do with
