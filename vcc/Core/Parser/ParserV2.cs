@@ -209,7 +209,7 @@ namespace Microsoft.Research.Vcc.Parsing
       groupDeclSpecifiers.Add(new CompileTimeConstant("group_decl", groupName.SourceLocation));
       groupDeclSpecifiers.Add(new CompileTimeConstant(groupName.Name.Value, groupName.SourceLocation));
       specifiers.Add(new DeclspecSpecifier(groupDeclSpecifiers, groupName.SourceLocation));
-      var groupDecl = new VccNestedStructDeclaration(new NameDeclaration(dummyName, groupName.SourceLocation), new List<ITypeDeclarationMember>(0), specifiers, slb);
+      var groupDecl = new VccNestedStructDeclaration(new VccNameDeclaration(dummyName, true, groupName.SourceLocation), new List<ITypeDeclarationMember>(0), specifiers, slb);
       typeMembers.Add(groupDecl);
     }
 

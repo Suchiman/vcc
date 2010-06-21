@@ -141,5 +141,10 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     MissingIncludeOfVccH,
 
+    /// <summary>
+    /// The parameter name '{0}' is a duplicate.
+    /// </summary>
+    DuplicateParameterName,
+
   }
 }

@@ -140,14 +140,16 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected NameDeclaration ParseNameDeclaration(bool requireIdentifier) {
       IName name;
       ISourceLocation sourceLocation = this.scanner.SourceLocationOfLastScannedToken;
+      bool compilerGenerated = false;
       if (this.currentToken == Token.Identifier) {
         name = this.GetNameFor(this.scanner.GetIdentifierString());
         this.GetNextToken();
       } else {
         if (requireIdentifier) this.HandleError(Error.ExpectedIdentifier);
         name = this.GetNameFor(SanitizeString(sourceLocation.SourceDocument.Name.Value)+sourceLocation.StartIndex);
+        compilerGenerated = true;
       }
-      return new NameDeclaration(name, sourceLocation);
+      return new VccNameDeclaration(name, compilerGenerated, sourceLocation);
     }
 
     protected static string SanitizeString(string str) {
@@ -418,7 +420,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         Token tok = scanner.GetNextToken(false, false);
         if (tok == Token.Colon) {
           slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-          nameDecl = new NameDeclaration(this.GetNameFor(id), slb);
+          nameDecl = new VccNameDeclaration(this.GetNameFor(id), slb);
           this.GetNextToken();
         } else {
           this.scanner.RevertToSnapshot(snap);
@@ -670,7 +672,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         FunctionDeclaration mangledFunc = 
           new FunctionDeclaration(cFuncTypeExp.AcceptsExtraArguments, specifiers, isExternal, 
             cFuncTypeExp.CallingConvention, visibility, cFuncTypeExp.ReturnType, 
-            new NameDeclaration(this.GetNameFor(cFuncTypeExp.Name.Value + cFuncTypeExp.GetHashCode()), cFuncTypeExp.SourceLocation),
+            new VccNameDeclaration(this.GetNameFor(cFuncTypeExp.Name.Value + cFuncTypeExp.GetHashCode()), true, cFuncTypeExp.SourceLocation),
             null, parameters, this.InSpecCode, null, slb);
         
         this.currentTypeMembers.Add(mangledFunc);
@@ -1347,7 +1349,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       if (fieldDeclarator == null)
-        fieldDeclarator = new IdentifierDeclarator(new NameDeclaration(this.ParseNameDeclaration(false), this.scanner.SourceLocationOfLastScannedToken));
+        fieldDeclarator = new IdentifierDeclarator(new VccNameDeclaration(this.ParseNameDeclaration(false), this.scanner.SourceLocationOfLastScannedToken));
       SourceLocationBuilder slb = new SourceLocationBuilder(fieldDeclarator.SourceLocation);
       this.GetNextToken();
       BitfieldDeclarator result = new BitfieldDeclarator(fieldDeclarator, this.ParseExpression(followers), slb);
@@ -1546,7 +1548,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
       IName name = this.GetNameFor("__arglist");
-      Declarator dec = new IdentifierDeclarator(new NameDeclaration(name, slb));
+      Declarator dec = new IdentifierDeclarator(new VccNameDeclaration(name, true, slb));
       slb.UpdateToSpan(dec.SourceLocation);
       Parameter result = new Parameter(new List<Specifier>(0), dec, this.InSpecCode, false, slb, true);
       this.SkipTo(followers);
@@ -1775,7 +1777,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       string newname;
       if (String.IsNullOrEmpty(seg2)) newname = seg1;
       else newname = seg1 + "^" + seg2;
-      return new NameDeclaration(this.nameTable.GetNameFor(newname), unmangeledName.SourceLocation);
+      return new VccNameDeclaration(this.nameTable.GetNameFor(newname), true, unmangeledName.SourceLocation);
     }
 
     protected TypeExpression ParseStructuredDeclarationOrDefinition(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, IList<Specifier> specifiers, bool isStruct) 
@@ -1797,7 +1799,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       NameDeclaration name = this.ParseNameDeclaration(false);
       if (name.Name == this.nameTable.System) {
         this.HandleError(name.SourceLocation, Error.ReservedName, name.Name.Value, "type name");
-        name = new NameDeclaration(this.GetNameFor(SanitizeString(name.SourceLocation.SourceDocument.Name.Value) + name.SourceLocation.StartIndex), name.SourceLocation);
+        name = new VccNameDeclaration(this.GetNameFor(SanitizeString(name.SourceLocation.SourceDocument.Name.Value) + name.SourceLocation.StartIndex), true, name.SourceLocation);
       }
       NameDeclaration mangledName = this.MangledStructuredName(name);
       NamedTypeExpression/*?*/ texpr = null;
@@ -2147,7 +2149,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       //^ assert followers[this.currentToken] || this.currentToken == Token.EndOfFile;
       slb.UpdateToSpan(statement.SourceLocation);
-      LabeledStatement result = new LabeledStatement(new NameDeclaration(label.Name, label.SourceLocation), statement, slb);
+      LabeledStatement result = new LabeledStatement(new VccNameDeclaration(label.Name, label.SourceLocation), statement, slb);
       if (contract != null)
         this.compilation.ContractProvider.AssociateLoopWithContract(result, contract);
       //^ assume followers[this.currentToken] || this.currentToken == Token.EndOfFile;
