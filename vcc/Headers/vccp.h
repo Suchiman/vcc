@@ -231,8 +231,6 @@ bool _vcc_in_array(obj_t, obj_t, _vcc_size_t);
 #define in_array(ptr, arr, sz) _vcc_in_array(ptr, arr, sz)
 bool _vcc_closed(obj_t );
 #define closed(...) _vcc_closed(__VA_ARGS__)
-obj_t _vcc_containing_struct(obj_t p, obj_t fld);
-#define containing_struct(p, t, f) ((t *)_vcc_containing_struct(p, &(((t*)0)->f)))
 bool _vcc_depends(obj_t , obj_t );
 #define depends(...) _vcc_depends(__VA_ARGS__)
 ptrset _vcc_domain(obj_t q);

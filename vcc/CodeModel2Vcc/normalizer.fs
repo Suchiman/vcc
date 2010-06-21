@@ -543,23 +543,6 @@ namespace Microsoft.Research.Vcc
    
     // ============================================================================================================
    
-    // normalize expressions of the form CONTAINING_RECORD(addr, T, f1.f2) into
-    // CONTAINING_RECORD(CONTAINING_RECORD(addr, T0, f2), T, f1)
-   
-    let normalizeContainingStruct self = function
-      | Call(ec, ({Name = "_vcc_containing_struct"} as f), _, [addr; df]) ->
-        match df with
-          | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, Expr.Cast(_, _, Expr.Macro(_, "null", [])),fld) as dot))]) ->
-            None
-          | Expr.Macro(_, "&", [Expr.Deref(_, (Expr.Dot(_, e, fld) as dot))])->
-            let mkFieldExpr ec (f : Field) = Expr.MkDot(Expr.Macro({ec with Type = PhysPtr(Type.Ref(f.Parent))}, "null", []), f)             
-            let result = Some (self (Call(ec, f, [], [Call({ec with Type = PhysPtr(Type.Ref(fld.Parent))}, f, [], [addr; mkFieldExpr ec fld]); e])))
-            result
-          | _ -> None
-      | _ -> None
-   
-    // ============================================================================================================
-
     let normalizeAtomicOperations self = function
       | Macro(ec, "atomic_op", args) -> 
         let splitLastTwo = 
@@ -1031,7 +1014,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-conversions", Helper.Expr doHandleConversions)   
     helper.AddTransformer ("inline-spec-macros", Helper.Decl inlineSpecMacros)
     helper.AddTransformer ("norm-generic-errors", Helper.Decl reportGenericsErrors) 
-    helper.AddTransformer ("norm-containing-struct", Helper.Expr normalizeContainingStruct)
     helper.AddTransformer ("add-assume-to-assert", Helper.Expr handleLemmas)    
     helper.AddTransformer ("fixup-old", Helper.ExprCtx fixupOld)    
     helper.AddTransformer ("fixup-claims", Helper.Expr handleClaims)    

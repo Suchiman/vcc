@@ -581,8 +581,6 @@ namespace Microsoft.Research.Vcc
             bCall "$can_use_frame_axiom_of" [er ("cf#" + f.Name)]
           | "_vcc_typeof", [e] ->
             typeOf env e                
-          | "_vcc_containing_struct", [p; C.Dot (_, _, f)] ->
-            bCall "$containing_struct" [self p; er (fieldName f)]
           | "_vcc_obj_eq", [e1; e2] ->
             bEq (self e1) (self e2)
           | "_vcc_obj_neq", [e1; e2] ->

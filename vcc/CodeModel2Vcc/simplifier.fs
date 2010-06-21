@@ -44,7 +44,6 @@ namespace Microsoft.Research.Vcc
                   "not_shared",             "Sp";
                   "ref_cnt",                "Sp";
                   "valid_claim",            "Sp";
-                  "containing_struct",      "pp";
                   "depends",                "sSpp";
                   "dont_instantiate",       "p";
                   "dont_instantiate_int",   "i";
@@ -187,7 +186,6 @@ namespace Microsoft.Research.Vcc
       | Ref(_, ({Kind = SpecLocal} as v)) -> specFound := Some("variable '" + v.Name + "'"); false
       | Ref(_, ({Kind = SpecParameter|OutParameter} as v)) -> specFound := Some("parameter '" + v.Name + "'"); false
       | CallMacro(_, ("_vcc_alloc" | "_vcc_stack_alloc"), _, _) -> false
-      | Call(_, ({Name = "_vcc_containing_struct"}), _, [addr; df]) ->  self addr; self df; false
       | Macro(_, "by_claim", [_; obj; ptr]) -> self obj; self ptr; false
       | Call(_, ({IsSpec = true} as f), _, _) -> specFound := Some("function '" + f.Name + "'"); false
       | Call(_, fn, _, args) ->
@@ -1043,7 +1041,7 @@ namespace Microsoft.Research.Vcc
           false
         | CallMacro(_, "spec", _, _) 
         | CallMacro(_, ("_vcc_unwrap"|"_vcc_wrap"|"_vcc_wrap_non_owns"|"_vcc_alloc"|"_vcc_free"|"_vcc_stack_alloc"), _, _)
-        | CallMacro(_, ("_vcc_containing_struct"|"_vcc_from_bytes"|"_vcc_to_bytes"|"_vcc_havoc_others"), _, _)
+        | CallMacro(_, ("_vcc_from_bytes"|"_vcc_to_bytes"|"_vcc_havoc_others"), _, _)
         | CallMacro(_, ("_vcc_bump_volatile_version"|"_vcc_deep_unwrap"|"_vcc_union_reinterpret"|"_vcc_reads_havoc"),_ , _)
         | CallMacro(_, ("_vcc_set_owns"|"_vcc_set_closed_owner"|"_vcc_set_closed_owns"|"_vcc_split_array"|"_vcc_join_arrays"),_ , _)
         | CallMacro(_, ("_vcc_giveup_closed_owner"), _, _)

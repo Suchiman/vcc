@@ -489,22 +489,6 @@ function {:inline true} $emb(S:$state,#p:$ptr) returns ($ptr)
 function {:inline true} $path(S:$state,#p:$ptr) returns($field)
   { $ts_path($ts(S, #p)) }
 
-function $containing_struct(p:$ptr, f:$field) returns($ptr);
-function $containing_struct_ref(p:$ptr, f:$field) returns(int);
-
-axiom (forall r:int, f:$field :: 
-  { $containing_struct($dot($ptr($field_parent_type(f), r), f), f) } 
-  $containing_struct($dot($ptr($field_parent_type(f), r), f), f) == $ptr($field_parent_type(f), r));
-
-axiom (forall p:$ptr, f:$field :: 
-  {$containing_struct(p, f)}
-  $containing_struct(p, f) == $ptr($field_parent_type(f), $containing_struct_ref(p, f)));
-
-axiom (forall p:$ptr, f:$field :: 
-  {$dot($containing_struct(p, f), f)}
-  $field_offset(f) >= 0 ==> // only for physical fields
-  $ref($dot($containing_struct(p, f), f)) == $ref(p));
-
 // assumed by the compiler in struct translation
 function $is_primitive_non_volatile_field($field) returns(bool);
 function $is_primitive_volatile_field($field) returns(bool);
