@@ -2805,6 +2805,11 @@ axiom (forall val:int :: { $unchecked(^^i2, $unchecked(^^u2, val)) } $in_range_i
 axiom (forall val:int :: { $unchecked(^^i4, $unchecked(^^u4, val)) } $in_range_i4(val) ==> $unchecked(^^i4, $unchecked(^^u4, val)) == val);
 axiom (forall val:int :: { $unchecked(^^i8, $unchecked(^^u8, val)) } $in_range_i8(val) ==> $unchecked(^^i8, $unchecked(^^u8, val)) == val);
 
+axiom $unchecked(^^u4, -1) == $max.u4;
+axiom $unchecked(^^u4, $max.u4 + 1) == 0;
+axiom $unchecked(^^u8, -1) == $max.u8;
+axiom $unchecked(^^u8, $max.u8 + 1) == 0;
+
 // The semantics of $_and/$_or/...
 //   Clip the number given to the appropriate range (i.e. take the lowest N bits) and perform the operation.
 
