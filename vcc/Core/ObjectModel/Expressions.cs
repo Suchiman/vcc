@@ -3055,6 +3055,7 @@ namespace Microsoft.Research.Vcc {
           else
             DidSilentlyResolveToVoid = true;
           result = this.Compilation.PlatformType.SystemVoid.ResolvedType;
+          resolvedToVoidDueToError = true;
         }
         //^ assume result == Dummy.Type || result.GenericParameterCount == numberOfTypeParameters;
         return result;
@@ -3068,6 +3069,12 @@ namespace Microsoft.Research.Vcc {
     }
 
     public bool DidSilentlyResolveToVoid { get; private set; }
+
+    bool resolvedToVoidDueToError = false;
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      return base.CheckForErrorsAndReturnTrueIfAnyAreFound() || this.resolvedToVoidDueToError;     
+    }
   }
 
   public class VccOutArgument : OutArgument
