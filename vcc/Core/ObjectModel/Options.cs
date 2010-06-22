@@ -53,10 +53,9 @@ namespace Microsoft.Research.Vcc
     public int PointerSize = 64;
     public bool NewSyntax;
     public bool Vcc3;
-    // we might want an option for setting it
-    public string PreludePath = "VccPrelude.bpl";
+    public string PreludePath = "VccPrelude.bpl"; // we might want an option for setting it
     public bool InferTriggers;
-    public bool DumpTriggers;
+    public int DumpTriggers; // 0-none, 1-C syntax, 2-C+Boogie syntax
   }
 
   public class OptionParser : OptionParser<VccOptions>
@@ -83,6 +82,18 @@ namespace Microsoft.Research.Vcc
       bool? res = this.ParseNamedBoolean(arg, longName, shortName);
       if (res != null) {
         flag = res.Value;
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    private bool TryParseNamedInteger(string arg, string longName, string shortName, ref int flag)
+    {
+      int tmp;
+      string value = this.ParseNamedArgument(arg, longName, shortName);
+      if (value != null && Int32.TryParse(value, out tmp)) {
+        flag = tmp;
         return true;
       } else {
         return false;
@@ -168,7 +179,7 @@ namespace Microsoft.Research.Vcc
 
           return
             this.TryParseNamedBoolean(arg, "dumpboogie", "db", ref this.options.DumpBoogie) ||
-            this.TryParseNamedBoolean(arg, "dumptriggers", "dt", ref this.options.DumpTriggers);
+            this.TryParseNamedInteger(arg, "dumptriggers", "dt", ref this.options.DumpTriggers);
 
         case 'e':
           bool? eager = this.ParseNamedBoolean(arg, "eager", "e");
@@ -265,10 +276,8 @@ namespace Microsoft.Research.Vcc
             return true;
           }
 
-          string pointerSizeStr = this.ParseNamedArgument(arg, "pointersize", "ps");
-          if (pointerSizeStr != null) {
-            int pointerSize;
-            if (!Int32.TryParse(pointerSizeStr, out pointerSize) || (pointerSize != 32 && pointerSize != 64)) return false;
+          int pointerSize = 0;
+          if (this.TryParseNamedInteger(arg, "pointersize", "ps", ref pointerSize) && (pointerSize == 32 || pointerSize == 64)) {
             this.options.PointerSize = pointerSize;
             return true;
           }
@@ -330,16 +339,8 @@ namespace Microsoft.Research.Vcc
           this.options.BoogieOptions.Add("/smoke");
           return true;
         } else {
-          string mt = this.ParseNamedArgument(arg, "suitemt", "smt");
-          int threads = 0;
-          if (!String.IsNullOrEmpty(mt)) {
-            if (Int32.TryParse(mt, out threads)) {
-              this.options.RunTestSuiteMultiThreaded = threads;
-              return true;
-            } else {
-              return false;
-            }
-          }
+          if (this.TryParseNamedInteger(arg, "suitemt", "smt", ref this.options.RunTestSuiteMultiThreaded))
+            return true;
           if (this.ParseName(arg, "suitemt", "smt")) {
             this.options.RunTestSuiteMultiThreaded = 0;
             return true;
@@ -391,13 +392,11 @@ namespace Microsoft.Research.Vcc
         return false;
 
         case 'w':
-        string warnLevelStr = this.ParseNamedArgument(arg, "warn", "w");
-        if (warnLevelStr != null) {
-          int warnLevel;
-          if (!Int32.TryParse(warnLevelStr, out warnLevel) || (warnLevel < 0 || warnLevel > 2)) return false;
-          this.options.WarningLevel = warnLevel;
-          return true;
-        }
+          int warnLevel = -1;
+          if (this.TryParseNamedInteger(arg, "warn", "w", ref warnLevel) && warnLevel >= 0 && warnLevel <= 2) {
+            this.options.WarningLevel = warnLevel;
+            return true;
+          }
         bool? wx = this.ParseNamedBoolean(arg, "warningsaserrors", "wx");
         if (wx != null) {
           this.options.WarningsAsErrors = wx.Value;
