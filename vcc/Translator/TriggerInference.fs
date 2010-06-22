@@ -59,7 +59,7 @@ module TriggerInference =
       expr.Map aux |> ignore
       !allowed && List.forall res.ContainsKey vars
         
-  let inferTriggers (helper:Helper.Env) tok vars body triggers = 
+  let inferTriggers (helper:Helper.Env) tok (invMapping:Dict<B.Expr,list<C.Expr>>) vars body triggers = 
     let vars = List.map fst vars // we don't care about the type
     // the nested ptr_cast(ptr(...)) gets into triggers and causes trouble later
     let rec stripPtrCast (expr:B.Expr) = 
@@ -136,10 +136,16 @@ module TriggerInference =
                 for superTerm in candidatesSuperterms.[tr] do
                   candidatesSuperterms.Remove superTerm |> ignore
           if helper.Options.DumpTriggers then
-            let trToString = function
-              | [t] -> t.ToString()
-              | _ -> "multitrigger!"
-            helper.Warning (tok, 0, "inferred triggers: " + String.concat "; " (Seq.map trToString resTrig))
+            let trToRawString tr = "{" + (List.map (fun t -> t.ToString ()) tr |> String.concat ", ") + "}"
+            let trToString tr = 
+              let exprToStr e =
+                match invMapping.TryGetValue e with
+                  | true, x :: _ ->
+                    x.Token.Value
+                  | _ -> "???"
+              "{" + (List.map exprToStr tr |> String.concat ", ") + "}"
+            helper.Warning (tok, 0, "inferred triggers: " + String.concat " " (Seq.map trToString resTrig) + " for " + tok.Value)
+            helper.Warning (tok, 0, "raw inferred triggers: " + String.concat " " (Seq.map trToRawString resTrig))
           triggers @ Seq.toList resTrig
         else
           triggers
