@@ -35,6 +35,7 @@ namespace Microsoft.Research.Vcc
         AtomicObjects : list<B.Expr>
         AtomicReads : list<B.Expr>
         ClaimContext : option<ClaimContext>
+        InverseTranslation : Dict<B.Expr, list<C.Expr>>
 
         hasIF : bool
         IFPCNum : ref<int>
@@ -52,6 +53,7 @@ namespace Microsoft.Research.Vcc
                        WritesState = bOld bState
                        WritesTime = er "$bogus"
                        ClaimContext = None
+                       InverseTranslation = null
 
                        hasIF = false
                        IFPCNum = ref 0
@@ -301,140 +303,147 @@ namespace Microsoft.Research.Vcc
         let selfs = List.map self
         let isFloatingPoint = function | C.Type.Primitive _ -> true | _ -> false
         try
-          match expr with
-            | C.Expr.Cast ({ Type = C.Type.Integer k }, _, e') ->
-              match e'.Type with
-                | C.Type.Bool ->
-                  bCall "$bool_to_int" [self e']
-                | C.Type.Integer _ -> self e'
-                | C.Type.MathInteger -> self e'
-                | C.Type.ObjectT
-                | C.Ptr _ -> // TODO insert checks for casts here
-                  bCall ("$ptr_to_" + C.Type.IntSuffix k) [self e']
-                | _ -> die()
-            | C.Expr.Cast ({ Type = C.Type.Bool }, _, e') ->
-              match e'.Type with
-                | C.Type.Integer _ ->
-                  match e' with
-                    | C.IntLiteral (_, ZeroBigInt) -> bFalse
-                    | C.IntLiteral (_, OneBigInt) -> bTrue
-                    | _ -> bCall "$int_to_bool" [self e']
-                | C.ObjectT
-                | C.Ptr _ ->
-                  bCall "$ptr_neq" [self e'; er "$null"]
-                | C.Type.MathInteger _ ->
-                  bCall "$int_to_bool" [self e']
-                | C.Type.SecLabel _ ->
-                  self e'
-                | _ -> die()
-            | C.Cast ({ Type = C.Type.MathInteger }, _, e') when e'.Type._IsPtr ->
-              bCall "$ref" [self e']
-            | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
-              bCall "$ptr_cast" [self e'; ptrType expr]
-            | C.Expr.Cast ({ Type = C.Type.ObjectT }, _, C.Expr.IntLiteral(_, z)) when z = bigint.Zero -> er "$null"
-            | C.Expr.Pure (_, e') -> self e'
-            | C.Expr.Macro (c1, name, [C.Expr.Prim (c2, C.Op(_, C.Unchecked), _) as inner]) 
-                when name.StartsWith "unchecked" && c1.Type = c2.Type -> trExpr env inner
-            | C.Expr.Prim (c, C.Op(opName, _), args) when isFloatingPoint c.Type ->
-              let suffix = match c.Type with | C.Type.Primitive k -> C.Type.PrimSuffix k | _ -> die()
-              let opName' = if args.Length = 1 then "u" + opName else opName
-              let funcNameTbl = Map.ofList [ "+", "$add"; "-", "$sub"; "*", "$mul"; "/", "$div"; "u-", "$neg";
-                                           "<", "$lt"; "<=", "$leq"; ">", "$gt"; ">=", "$geq" ]
-              match funcNameTbl.TryFind opName' with
-                | Some(fName) -> bCall (fName + "_" + suffix)(selfs args)
-                | None -> 
-                  helper.Error(expr.Token, 9701, "Operator '" + opName + "' not supported for floating point values")
-                  bTrue
-            | C.Expr.Prim (c, C.Op(opName, ch), args) ->
-              let args = selfs args
-              let targs = toTypeId c.Type :: args
-              match opName with
-                | "&" -> bCall "$_and" targs
-                | "|" -> bCall "$_or" targs
-                | ">>" -> bCall "$_shr" args
-                | "<<" -> bCall "$_shl" targs
-                | "~" -> bCall "$_not" targs
-                | "^" -> bCall "$_xor" targs 
-                | "*" when ch <> C.Unchecked -> bCall "$_mul" args
-                | _ -> 
-                  if ch = C.Unchecked then
-                    match opName with
-                      | "+" -> bCall "$unchk_add" targs
-                      | "-" -> bCall "$unchk_sub" targs
-                      | "*" -> bCall "$unchk_mul" targs
-                      | "/" -> bCall "$unchk_div" targs
-                      | "%" -> bCall "$unchk_mod" targs
-                      | _ -> B.Expr.Primitive (opName, args)
-                  else
-                    B.Expr.Primitive (opName, args)
-            | C.Expr.Ref (_, v) -> 
-              addType v.Type (varRef v)
-            | C.Expr.IntLiteral (_, v) ->
-              B.Expr.IntLiteral v
-            | C.Expr.BoolLiteral (_, v) ->
-              B.Expr.BoolLiteral v
-            | C.Macro(ec, n, args) -> trMacro env ec n args    
-            | C.Expr.Dot (c, o, f) ->
-              if f.Parent.Kind = C.Record then
-                helper.Oops (c.Token, "record dot found " + expr.ToString())
-              bCall "$dot" [self o; er (fieldName f)]
-            | C.Expr.Index (_, arr, idx) ->
-              bCall "$idx" [self arr; self idx; ptrType arr]
-            | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
-            | C.Expr.Call (_, fn, targs, args) ->
-              let args =  List.map ctx.ToTypeIdArraysAsPtrs targs @ convertArgs fn (selfs args)
-              let args =
-                if fn.IsStateless then args
-                else bState :: args
-              addType fn.RetType (bCall ("#" + fn.Name) args)
-            // TODO this is wrong for loop invariants and stuff (but the legacy vcc doesn't handle that correctly as well)
-            | C.Expr.Old (ec, C.Macro (_, "_vcc_when_claimed", []), e) ->
-              warnForIneffectiveOld ec.Token (self e)
-              bSubst [("$s", er "$when_claimed_state")] (self e)
-            | C.Expr.Old (ec, state, e) ->
-              let be = self e
-              warnForIneffectiveOld ec.Token be
-              match state with 
-                | C.Macro (_, "prestate", []) -> bSubst [("$s", env.OldState)] be
-                | _ -> 
-                  let state = state |> self |> bSubst [("$s", er "$$s")]
-                  bSubst [("$s", state)] be
-            | C.Expr.Result c ->
-              addType c.Type (er "$result")
-            | C.Expr.Quant (c, q) ->
-              for v in q.Variables do
-                ctx.QuantVarTokens.[v] <- c.Token
-              let body = self q.Body
-              let body =
-                match q.Condition, q.Kind with
-                  | Some e, C.Forall -> bImpl (self e) body
-                  | Some e, C.Exists -> bAnd (self e) body
-                  | _, C.Lambda -> die()
-                  | None, _ -> body                
-              let supportedTypeForQuantification (v : C.Variable) =
-                match v.Type with
-                  | C.Type.Ref({Kind = C.TypeKind.Struct|C.TypeKind.Union})
-                  | C.Array _ ->
-                    helper.Error(c.Token, 9696, "Cannot quantify over type '" + v.Type.ToString() + "' (bound variable is '" + v.Name + "').")
-                    false
-                  | _ -> true
-              let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
-              let (body, triggers) = TriggerInference.inferTriggers helper c.Token vars body (List.map selfs q.Triggers)
-              match q.Kind with
-                | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", body)
-                | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", body)
-                | C.Lambda -> die()
+          let res =
+            match expr with
+              | C.Expr.Cast ({ Type = C.Type.Integer k }, _, e') ->
+                match e'.Type with
+                  | C.Type.Bool ->
+                    bCall "$bool_to_int" [self e']
+                  | C.Type.Integer _ -> self e'
+                  | C.Type.MathInteger -> self e'
+                  | C.Type.ObjectT
+                  | C.Ptr _ -> // TODO insert checks for casts here
+                    bCall ("$ptr_to_" + C.Type.IntSuffix k) [self e']
+                  | _ -> die()
+              | C.Expr.Cast ({ Type = C.Type.Bool }, _, e') ->
+                match e'.Type with
+                  | C.Type.Integer _ ->
+                    match e' with
+                      | C.IntLiteral (_, ZeroBigInt) -> bFalse
+                      | C.IntLiteral (_, OneBigInt) -> bTrue
+                      | _ -> bCall "$int_to_bool" [self e']
+                  | C.ObjectT
+                  | C.Ptr _ ->
+                    bCall "$ptr_neq" [self e'; er "$null"]
+                  | C.Type.MathInteger _ ->
+                    bCall "$int_to_bool" [self e']
+                  | C.Type.SecLabel _ ->
+                    self e'
+                  | _ -> die()
+              | C.Cast ({ Type = C.Type.MathInteger }, _, e') when e'.Type._IsPtr ->
+                bCall "$ref" [self e']
+              | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
+                bCall "$ptr_cast" [self e'; ptrType expr]
+              | C.Expr.Cast ({ Type = C.Type.ObjectT }, _, C.Expr.IntLiteral(_, z)) when z = bigint.Zero -> er "$null"
+              | C.Expr.Pure (_, e') -> self e'
+              | C.Expr.Macro (c1, name, [C.Expr.Prim (c2, C.Op(_, C.Unchecked), _) as inner]) 
+                  when name.StartsWith "unchecked" && c1.Type = c2.Type -> trExpr env inner
+              | C.Expr.Prim (c, C.Op(opName, _), args) when isFloatingPoint c.Type ->
+                let suffix = match c.Type with | C.Type.Primitive k -> C.Type.PrimSuffix k | _ -> die()
+                let opName' = if args.Length = 1 then "u" + opName else opName
+                let funcNameTbl = Map.ofList [ "+", "$add"; "-", "$sub"; "*", "$mul"; "/", "$div"; "u-", "$neg";
+                                             "<", "$lt"; "<=", "$leq"; ">", "$gt"; ">=", "$geq" ]
+                match funcNameTbl.TryFind opName' with
+                  | Some(fName) -> bCall (fName + "_" + suffix)(selfs args)
+                  | None -> 
+                    helper.Error(expr.Token, 9701, "Operator '" + opName + "' not supported for floating point values")
+                    bTrue
+              | C.Expr.Prim (c, C.Op(opName, ch), args) ->
+                let args = selfs args
+                let targs = toTypeId c.Type :: args
+                match opName with
+                  | "&" -> bCall "$_and" targs
+                  | "|" -> bCall "$_or" targs
+                  | ">>" -> bCall "$_shr" args
+                  | "<<" -> bCall "$_shl" targs
+                  | "~" -> bCall "$_not" targs
+                  | "^" -> bCall "$_xor" targs 
+                  | "*" when ch <> C.Unchecked -> bCall "$_mul" args
+                  | _ -> 
+                    if ch = C.Unchecked then
+                      match opName with
+                        | "+" -> bCall "$unchk_add" targs
+                        | "-" -> bCall "$unchk_sub" targs
+                        | "*" -> bCall "$unchk_mul" targs
+                        | "/" -> bCall "$unchk_div" targs
+                        | "%" -> bCall "$unchk_mod" targs
+                        | _ -> B.Expr.Primitive (opName, args)
+                    else
+                      B.Expr.Primitive (opName, args)
+              | C.Expr.Ref (_, v) -> 
+                addType v.Type (varRef v)
+              | C.Expr.IntLiteral (_, v) ->
+                B.Expr.IntLiteral v
+              | C.Expr.BoolLiteral (_, v) ->
+                B.Expr.BoolLiteral v
+              | C.Macro(ec, n, args) -> trMacro env ec n args    
+              | C.Expr.Dot (c, o, f) ->
+                if f.Parent.Kind = C.Record then
+                  helper.Oops (c.Token, "record dot found " + expr.ToString())
+                bCall "$dot" [self o; er (fieldName f)]
+              | C.Expr.Index (_, arr, idx) ->
+                bCall "$idx" [self arr; self idx; ptrType arr]
+              | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
+              | C.Expr.Call (_, fn, targs, args) ->
+                let args =  List.map ctx.ToTypeIdArraysAsPtrs targs @ convertArgs fn (selfs args)
+                let args =
+                  if fn.IsStateless then args
+                  else bState :: args
+                addType fn.RetType (bCall ("#" + fn.Name) args)
+              // TODO this is wrong for loop invariants and stuff (but the legacy vcc doesn't handle that correctly as well)
+              | C.Expr.Old (ec, C.Macro (_, "_vcc_when_claimed", []), e) ->
+                warnForIneffectiveOld ec.Token (self e)
+                bSubst [("$s", er "$when_claimed_state")] (self e)
+              | C.Expr.Old (ec, state, e) ->
+                let be = self e
+                warnForIneffectiveOld ec.Token be
+                match state with 
+                  | C.Macro (_, "prestate", []) -> bSubst [("$s", env.OldState)] be
+                  | _ -> 
+                    let state = state |> self |> bSubst [("$s", er "$$s")]
+                    bSubst [("$s", state)] be
+              | C.Expr.Result c ->
+                addType c.Type (er "$result")
+              | C.Expr.Quant (c, q) ->
+                for v in q.Variables do
+                  ctx.QuantVarTokens.[v] <- c.Token
+                let invMapping = gdict()
+                let body = trExpr { env with InverseTranslation = invMapping } q.Body
+                let body =
+                  match q.Condition, q.Kind with
+                    | Some e, C.Forall -> bImpl (self e) body
+                    | Some e, C.Exists -> bAnd (self e) body
+                    | _, C.Lambda -> die()
+                    | None, _ -> body                
+                let supportedTypeForQuantification (v : C.Variable) =
+                  match v.Type with
+                    | C.Type.Ref({Kind = C.TypeKind.Struct|C.TypeKind.Union})
+                    | C.Array _ ->
+                      helper.Error(c.Token, 9696, "Cannot quantify over type '" + v.Type.ToString() + "' (bound variable is '" + v.Name + "').")
+                      false
+                    | _ -> true
+                let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
+                let (body, triggers) = TriggerInference.inferTriggers helper c.Token invMapping vars body (List.map selfs q.Triggers)
+                match q.Kind with
+                  | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", body)
+                  | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", body)
+                  | C.Lambda -> die()
             
-            | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
-            | C.Expr.SizeOf(_, t) -> bInt t.SizeOf
-            | C.Expr.This _ -> er "$_this"
-            | _ ->         
-              helper.Oops (expr.Token, "unhandled expr " + expr.ToString())
-              er "$bogus"
-          with 
-            | Failure _ -> 
-              helper.Error(expr.Token, 9600, "OOPS for expression " + expr.ToString())
-              reraise()
+              | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
+              | C.Expr.SizeOf(_, t) -> bInt t.SizeOf
+              | C.Expr.This _ -> er "$_this"
+              | _ ->         
+                helper.Oops (expr.Token, "unhandled expr " + expr.ToString())
+                er "$bogus"
+
+          if env.InverseTranslation <> null then
+            let cur = lookupWithDefault env.InverseTranslation [] res
+            env.InverseTranslation.[res] <- expr :: cur
+          res
+        with 
+          | Failure _ -> 
+            helper.Error(expr.Token, 9600, "OOPS for expression " + expr.ToString())
+            reraise()
 
       and trMacro env (ec : C.ExprCommon) n args = 
         let self = trExpr env
