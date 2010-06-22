@@ -54,7 +54,9 @@ namespace Microsoft.Research.Vcc
     public bool NewSyntax;
     public bool Vcc3;
     // we might want an option for setting it
-    public string PreludPath = "VccPrelude.bpl";
+    public string PreludePath = "VccPrelude.bpl";
+    public bool InferTriggers;
+    public bool DumpTriggers;
   }
 
   public class OptionParser : OptionParser<VccOptions>
@@ -76,6 +78,17 @@ namespace Microsoft.Research.Vcc
       return parser.options;
     }
 
+    private bool TryParseNamedBoolean(string arg, string longName, string shortName, ref bool flag)
+    {
+      bool? res = this.ParseNamedBoolean(arg, longName, shortName);
+      if (res != null) {
+        flag = res.Value;
+        return true;
+      } else {
+        return false;
+      }
+    }
+
     protected override bool ParseCompilerOption(string arg) {
       int n = arg.Length;
       if (n <= 1) return false;
@@ -94,7 +107,7 @@ namespace Microsoft.Research.Vcc
           bool? vcc3 = this.ParseNamedBoolean(arg, "3", "3");
           if (vcc3 != null) {
             this.options.Vcc3 = vcc3.Value;
-            this.options.PreludPath = "Vcc3Prelude.bpl";
+            this.options.PreludePath = "Vcc3Prelude.bpl";
             return true;
           }
           return false;
@@ -152,12 +165,11 @@ namespace Microsoft.Research.Vcc
             this.options.PipeOperations.Add("dump before begin");
             return true;
           }
-          dump = this.ParseNamedBoolean(arg, "dumpboogie", "db");
-          if (dump != null) {
-            this.options.DumpBoogie = dump.Value;
-            return true;
-          }
-          return false;
+
+          return
+            this.TryParseNamedBoolean(arg, "dumpboogie", "db", ref this.options.DumpBoogie) ||
+            this.TryParseNamedBoolean(arg, "dumptriggers", "dt", ref this.options.DumpTriggers);
+
         case 'e':
           bool? eager = this.ParseNamedBoolean(arg, "eager", "e");
           if (eager != null) {
@@ -205,7 +217,7 @@ namespace Microsoft.Research.Vcc
             this.options.RunInspector = true;
             return true;
           }
-          return false;
+          return this.TryParseNamedBoolean(arg, "infertriggers", "it", ref this.options.InferTriggers);
 
         case 'm':
           if (this.ParseName(arg, "modifiedpreprocessorfile", "modifiedpreprocessorfile")) {

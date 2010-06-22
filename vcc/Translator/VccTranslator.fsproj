@@ -118,6 +118,7 @@
     <Compile Include="InformationFlow.fs" />
     <Compile Include="CEV.fs" />
     <Compile Include="BvTranslator.fs" />
+    <Compile Include="TriggerInference.fs" />
     <Compile Include="Translator.fs" />
     <Compile Include="VcOpt.fs" />
     <Compile Include="..\Common\Include\version.fs">

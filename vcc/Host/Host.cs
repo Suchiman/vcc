@@ -36,7 +36,7 @@ namespace Microsoft.Research.Vcc
       dummyHostEnvironment.Errors += cciErrorHandler.HandleErrors;
       var commandLineOptions = OptionParser.ParseCommandLineArguments(dummyHostEnvironment, args);
       commandLineOptions.RunningFromCommandLine = true;
-      standardPreludePath = commandLineOptions.PreludPath;
+      standardPreludePath = commandLineOptions.PreludePath;
       cciErrorHandler.CommandLineOptions = commandLineOptions;
       verificationErrorHandler = new VerificationErrorHandler(commandLineOptions);
       

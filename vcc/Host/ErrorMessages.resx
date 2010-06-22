@@ -146,7 +146,9 @@
 /warningsaserrors              Treat warnings as errors (Short form: /wx)
 /warn:&lt;n&gt;                      Set warning level (0-2), default is 1 (Short form: /w)
 /xml                           Use XML format output.
-/z3:&lt;z3 option list&gt;           Options to pass on to Z3 (Short form: /z)</value>
+/z3:&lt;z3 option list&gt;           Options to pass on to Z3 (Short form: /z)
+/infertriggers[+|-]            Infer quantifier trigger annotations in VCC, not in SMT solver (Short form: /it)
+/dumptriggers                  Report on inferred triggers (Short form: /dt)</value>
   </data>
   <data name="Version" xml:space="preserve">
     <value>Microsoft Research Vcc Version {0}

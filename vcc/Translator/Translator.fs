@@ -28,36 +28,36 @@ namespace Microsoft.Research.Vcc
 
     type Env =
       {
-        OldState : B.Expr;
-        WritesState : B.Expr;
-        Writes : list<C.Expr>;
-        WritesTime : B.Expr;
-        AtomicObjects : list<B.Expr>;
-        AtomicReads : list<B.Expr>;
-        ClaimContext : option<ClaimContext>;
+        OldState : B.Expr
+        WritesState : B.Expr
+        Writes : list<C.Expr>
+        WritesTime : B.Expr
+        AtomicObjects : list<B.Expr>
+        AtomicReads : list<B.Expr>
+        ClaimContext : option<ClaimContext>
 
-        hasIF : bool;
-        IFPCNum : ref<int>;
-        IFBlockNum : ref<int>;
-        IFContexts : list<list<C.LabelId>*string>;
-        IFGrpID : ref<bigint>;
+        hasIF : bool
+        IFPCNum : ref<int>
+        IFBlockNum : ref<int>
+        IFContexts : list<list<C.LabelId>*string>
+        IFGrpID : ref<bigint>
       }
 
     let nestingExtents = false
     
-    let initialEnv = { OldState = bOld bState;
-                       Writes = []; 
-                       AtomicObjects = []; 
-                       AtomicReads = [];
-                       WritesState = bOld bState;  
-                       WritesTime = er "$bogus";
-                       ClaimContext = None;
+    let initialEnv = { OldState = bOld bState
+                       Writes = []
+                       AtomicObjects = []
+                       AtomicReads = []
+                       WritesState = bOld bState
+                       WritesTime = er "$bogus"
+                       ClaimContext = None
 
                        hasIF = false
-                       IFPCNum = ref 0;
-                       IFBlockNum = ref 0;
-                       IFContexts = [];
-                       IFGrpID = ref (bigint.Zero);
+                       IFPCNum = ref 0
+                       IFBlockNum = ref 0
+                       IFContexts = []
+                       IFGrpID = ref (bigint.Zero)
                      }
     
     let fieldName (f:C.Field) = f.Parent.Name + "." + f.Name
@@ -294,12 +294,13 @@ namespace Microsoft.Research.Vcc
           helper.Warning (token, 9106, "'old', 'in_state', or 'when_claimed' in '" + token.Value + "' has no effect")
 
       let claimStateId = ref 0
-          
+
+
       let rec trExpr (env:Env) expr =
         let self = trExpr env
         let selfs = List.map self
         let isFloatingPoint = function | C.Type.Primitive _ -> true | _ -> false
-        try 
+        try
           match expr with
             | C.Expr.Cast ({ Type = C.Type.Integer k }, _, e') ->
               match e'.Type with
@@ -418,17 +419,10 @@ namespace Microsoft.Research.Vcc
                     false
                   | _ -> true
               let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
-              let triggers = List.map selfs q.Triggers
-              // the nested ptr_cast(ptr(...)) gets into triggers and causes trouble later
-              let rec stripPtrCast (expr:B.Expr) = 
-                let aux = function
-                  | B.FunctionCall ("$ptr_cast", [B.FunctionCall ("$ptr", [_; r]); t]) ->
-                    Some (stripPtrCast (bCall "$ptr" [t; r]))
-                  | _ -> None
-                expr.Map aux              
+              let (body, triggers) = TriggerInference.inferTriggers helper c.Token vars body (List.map selfs q.Triggers)
               match q.Kind with
-                | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", stripPtrCast body)
-                | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", stripPtrCast body)
+                | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", body)
+                | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", body)
                 | C.Lambda -> die()
             
             | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
