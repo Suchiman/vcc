@@ -9,5 +9,4 @@ testcase(3,10) : error VC0000: Did not expect 'one'.
 void bar(one two){}
 `
 testcase(3,10) : error VC0000: The type or namespace name 'one' could not be found (are you missing a using directive or an assembly reference?)
-testcase(3,10) : error VC0000: 'two' : illegal use of type 'void'.
 `
