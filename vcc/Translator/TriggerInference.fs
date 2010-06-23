@@ -18,7 +18,7 @@ module C = Microsoft.Research.Vcc.CAST
 module B = Microsoft.Research.Vcc.BoogieAST
 
 type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,list<C.Expr>>, quantVars:list<B.Var>) =
-  let dbg = helper.Options.DumpTriggers >= 3
+  let dbg = helper.Options.DumpTriggers >= 4
   let maxQuality = 3
   let quantVars = List.map fst quantVars // we don't care about the type
   let quantVarSet = gdict()
@@ -214,7 +214,7 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
 
   let dumpTriggers = function
     | [] ->
-      helper.Warning (quantTok, 0, "failed to infer triggers for '" + quantTok.Value + "'")
+      helper.Warning (quantTok, 9121, "failed to infer triggers for '" + quantTok.Value + "'")
     | newTrig when helper.Options.DumpTriggers >= 1 ->
       let trToRawString tr = "{" + (List.map (fun t -> t.ToString ()) tr |> String.concat ", ") + "}"
       let trToString tr = 
@@ -228,9 +228,10 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
                 | _ -> x.Token.Value
             | _ -> "<<" + e.ToString() + ">>" // this shouldn't happen
         "{" + (List.map exprToStr tr |> String.concat ", ") + "}"
-      helper.Warning (quantTok, 0, "inferred triggers: " + String.concat " " (Seq.map trToString newTrig) + " for '" + quantTok.Value + "'")
-      if helper.Options.DumpTriggers >= 2 then
-        helper.Warning (quantTok, 0, "raw inferred triggers: " + String.concat " " (Seq.map trToRawString newTrig))
+      // this isn't really a warning, but this way it will automatically show up in VS and friends
+      helper.Warning (quantTok, 9122, "inferred triggers: " + String.concat " " (Seq.map trToString newTrig) + " for '" + quantTok.Value + "'")
+      if helper.Options.DumpTriggers >= 3 then
+        helper.Warning (quantTok, 9123, "raw inferred triggers: " + String.concat " " (Seq.map trToRawString newTrig))
     | _ -> ()
   
   // TODO we probably want to run that on triggers only, not before inference
@@ -255,6 +256,9 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
           dumpTriggers newTrig
           triggers @ newTrig
         else
+          if helper.Options.DumpTriggers >= 2 then
+            // still infer and ignore the results
+            dumpTriggers (doInfer body)
           triggers
       else
         triggers
