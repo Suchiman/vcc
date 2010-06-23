@@ -15,12 +15,21 @@ namespace Microsoft.Research.Vcc.Parsing {
 
   internal class Parser {
 
+    struct TypedefInfo
+    {
+      public TypedefInfo(TypeExpression typeExpr, TypedefDeclaration typedefDecl) {
+        this.TypeExpression = typeExpr;
+        this.TypedefDecl = typedefDecl;
+      }
+
+      public TypeExpression TypeExpression;
+      public TypedefDeclaration TypedefDecl;
+    }
+
     protected delegate TResult Func<T, TResult>(T arg);
     protected delegate TResult Func<T1, T2, TResult>(T1 arg1, T2 arg2);
 
     protected readonly Compilation compilation;
-    protected readonly Dictionary<string, TypeExpression> typedefExpressions;
-    protected readonly Dictionary<string, TypedefDeclaration> typedefDecls;
     protected readonly Dictionary<string, bool> locallyDefinedNames;
     protected readonly Dictionary<string, string> functionContractExtensions;
     protected readonly Dictionary<string, string> declspecExtensions;
@@ -30,6 +39,8 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected readonly List<IErrorMessage> scannerAndParserErrors;
     protected readonly RootNamespaceExpression rootNs;
     protected readonly AliasQualifiedName systemNs;
+
+    private readonly Dictionary<string, TypedefInfo> typedefs;
 
     protected readonly INameTable nameTable;
 
@@ -53,8 +64,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.nameTable = compilation.NameTable;
       this.scannerAndParserErrors = scannerAndParserErrors;
       this.scanner = new Scanner(scannerAndParserErrors, sourceLocation, true);
-      this.typedefExpressions = new Dictionary<string, TypeExpression>();
-      this.typedefDecls = new Dictionary<string, TypedefDeclaration>();
+      this.typedefs = new Dictionary<string, TypedefInfo>();
       this.locallyDefinedNames = new Dictionary<string, bool>();
       this.emptyStructuredTypes = new Dictionary<Expression, bool>();
       this.functionContractExtensions = new Dictionary<string, string>();
@@ -279,9 +289,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       VccFunctionTypeExpression/*?*/ functionTypeExpression = null;
       TypedefNameSpecifier/*?*/ typeDefName = GetTypedefNameSpecifier(specifiers);
       if (typeDefName != null) {
-        TypeExpression/*?*/ typeDefExpr;
-        this.typedefExpressions.TryGetValue(typeDefName.TypedefName.Name.Value, out typeDefExpr);
-        functionTypeExpression = typeDefExpr as VccFunctionTypeExpression;
+        TypedefInfo/*?*/ typeDefDecl;
+        this.typedefs.TryGetValue(typeDefName.TypedefName.Name.Value, out typeDefDecl);
+        functionTypeExpression = typeDefDecl.TypeExpression as VccFunctionTypeExpression;
       }
       bool foundNoDeclaration = true;
       TokenSet followersOrCommaOrLeftBraceOrSemicolon = followers|Token.Comma|Token.LeftBrace|Token.Semicolon;
@@ -466,13 +476,12 @@ namespace Microsoft.Research.Vcc.Parsing {
         TypeExpression functionType = this.GetTypeExpressionFor(returnType, funcDeclarator);
         if (storageClass == Token.Typedef) {
           if (pointerToFunc == null) funcDeclarator.Specifiers = specifiers;
-          this.typedefExpressions[funcDeclarator.Identifier.Value] = functionType;
-          TypedefDeclaration typedef = new TypedefDeclaration(functionType, funcDeclarator.Identifier, slb);  //TODO: const and volatile
-          this.typedefDecls[funcDeclarator.Identifier.Value] = typedef;
+          var typedefDecl = new TypedefDeclaration(functionType, funcDeclarator.Identifier, slb);
+          this.typedefs[funcDeclarator.Identifier.Value] = new TypedefInfo(functionType, typedefDecl ); //TODO: const and volatile;
           this.InitializeLocallyDefinedNamesFromParameters(funcDeclarator.Parameters);
           this.ParseFunctionOrBlockContract(funcDeclarator.Contract, followers);
           this.AssociateContracts(functionType, funcDeclarator);
-          typeMembers.Add(typedef);
+          typeMembers.Add(typedefDecl);
         } else {
           //^ assert pointerToFunc != null;
           // Distinguish between whether this function pointer is inside a type definition
@@ -698,9 +707,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       // cannot initialize it.
       Token sct = GetStorageClassToken(specifiers);
       if (sct == Token.Typedef) {
-        this.typedefExpressions[declarator.Identifier.Value] = memberType;
         var typedefDecl = new TypedefDeclaration(memberType, declarator.Identifier, specifiers, slb);
-        this.typedefDecls[declarator.Identifier.Value] = typedefDecl;
+        this.typedefs[declarator.Identifier.Value] = new TypedefInfo(memberType, typedefDecl);
         typeMembers.Add(typedefDecl);
       } else if (this.InSpecCode || IsAxiom(specifiers)) {
         Expression/*?*/ initializer = null;
@@ -863,10 +871,10 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
         TypedefNameSpecifier tdn = specifier as TypedefNameSpecifier;
         if (tdn != null) {
-          TypedefDeclaration typedefDecl;
-          if (this.typedefDecls.TryGetValue(tdn.TypedefName.Name.Value, out typedefDecl)) {
-            if (typedefDecl.IsConst) result |= FieldDeclaration.Flags.ReadOnly;
-            if (typedefDecl.IsVolatile) result |= FieldDeclaration.Flags.Volatile;
+          TypedefInfo typedefInfo;
+          if (this.typedefs.TryGetValue(tdn.TypedefName.Name.Value, out typedefInfo)) {
+            if (typedefInfo.TypedefDecl.IsConst) result |= FieldDeclaration.Flags.ReadOnly;
+            if (typedefInfo.TypedefDecl.IsVolatile) result |= FieldDeclaration.Flags.Volatile;
           }
         }
       }
@@ -1015,9 +1023,9 @@ namespace Microsoft.Research.Vcc.Parsing {
           if (this.TryToGetBuiltInSpecTypeName(tdns, out result)) {
             // found - result is set as a side effect of the function call
           } else {
-            TypeExpression typeDefExpression;
-            if (this.typedefExpressions.TryGetValue(tdns.TypedefName.ToString(), out typeDefExpression)) {
-              if (IsVoid(typeDefExpression)) {
+            TypedefInfo typedefInfo;
+            if (this.typedefs.TryGetValue(tdns.TypedefName.ToString(), out typedefInfo)) {
+              if (IsVoid(typedefInfo.TypeExpression)) {
                 primitiveType = new PrimitiveTypeSpecifier(Token.Void, tdns.SourceLocation);
                 continue;
               }
@@ -1526,10 +1534,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (namedTypeExpr != null) {
         SimpleName simpleName = namedTypeExpr.Expression as SimpleName;
         if (simpleName != null) {
-          TypeExpression referencedType;
-          if (this.typedefExpressions.TryGetValue(simpleName.ToString(), out referencedType)) {
+          TypedefInfo typedefInfo;
+          if (this.typedefs.TryGetValue(simpleName.ToString(), out typedefInfo)) {
             visitedTypes.Add(typeExpr);
-            return TypeExpressionHasPointerType(referencedType, visitedTypes);
+            return TypeExpressionHasPointerType(typedefInfo.TypeExpression, visitedTypes);
           }
         }
         return null;
@@ -3105,7 +3113,14 @@ namespace Microsoft.Research.Vcc.Parsing {
       typeDefExpression = null;
       if (this.locallyDefinedNames.TryGetValue(id, out localNameIsParOrDecl))
         return !localNameIsParOrDecl;                                                // when locally defined, then only type parameters match
-      return this.typedefExpressions.TryGetValue(id, out typeDefExpression);         // non-local - see if it is a known typedef'ed name
+      TypedefInfo typedefInfo;
+      // non-local - see if it is a known typedef'ed name
+      if (this.typedefs.TryGetValue(id, out typedefInfo)) {
+        typeDefExpression = typedefInfo.TypeExpression;
+        return true;
+      }
+
+      return false;
     }
 
     protected Expression ParseQualifiedName(Expression qualifier, TokenSet followers)
