@@ -700,6 +700,10 @@ namespace Microsoft.Research.Vcc {
     }
 
     protected override ITypeDefinition Resolve() {
+      if (TypeHelper.SizeOfType(this.ElementType.ResolvedType) == 0) {
+        this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.ArrayOfEmptyType, this.Helper.GetTypeName(this.ElementType.ResolvedType)));
+        return this.Compilation.PlatformType.SystemVoid.ResolvedType;
+      }
       if (this.Size == null || this.SizeAsInt32 == 0)
         return PointerType.GetPointerType(this.ElementType.ResolvedType, this.Compilation.HostEnvironment.InternFactory);
       return this.VccCompilationPart.GetFixedSizeArrayType(this.ElementType.ResolvedType, (uint)this.SizeAsInt32).TypeDefinition;
