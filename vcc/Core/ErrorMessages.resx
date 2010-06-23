@@ -3662,7 +3662,7 @@
     <value>The parameter name '{0}' is a duplicate.</value>
   </data>
   <data name="ArrayOfEmptyType" xml:space="preserve">
-    <value>Cannot declare array of type '{0}' because it hase size 0.</value>
+    <value>Cannot declare array of type '{0}' because it has size 0.</value>
   </data>
   <data name="IllegalTypeInMap" xml:space="preserve">
     <value>Illegal type '{0}' in map {1}.</value>

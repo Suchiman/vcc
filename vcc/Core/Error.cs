@@ -147,7 +147,7 @@ namespace Microsoft.Research.Vcc {
     DuplicateParameterName,
 
     /// <summary>
-    /// Cannot declare array of type '{0}' because it hase size 0.
+    /// Cannot declare array of type '{0}' because it has size 0.
     /// </summary>
     ArrayOfEmptyType,
 
