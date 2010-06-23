@@ -56,6 +56,71 @@ namespace Microsoft.Research.Vcc
     public string PreludePath = "VccPrelude.bpl"; // we might want an option for setting it
     public bool InferTriggers;
     public int DumpTriggers; // 0-none, 1-C syntax, 2-C+Boogie syntax
+    public bool KeepPreprocessorFiles;
+
+    public void CopyFrom(VccOptions other)
+    {
+      // base class:
+      this.CheckedArithmetic = other.CheckedArithmetic;
+      this.CodePage = other.CodePage;
+      this.DisplayCommandLineHelp = other.DisplayCommandLineHelp;
+      this.DisplayVersion = other.DisplayVersion;
+      this.OutputFileName = other.OutputFileName;
+
+      this.FileNames.Clear(); this.FileNames.AddRange(other.FileNames);
+      this.ReferencedAssemblies.Clear(); this.ReferencedAssemblies.AddRange(other.ReferencedAssemblies);
+
+      // this class
+      this.BoogieOptions.Clear(); this.BoogieOptions.AddRange(other.BoogieOptions);
+      this.PreprocessorOptions.Clear(); this.PreprocessorOptions.AddRange(other.PreprocessorOptions);
+      this.Z3Options.Clear(); this.Z3Options.AddRange(other.Z3Options);
+      this.Functions.Clear(); this.Functions.AddRange(other.Functions);
+      this.FunctionsWithExactName.Clear(); this.FunctionsWithExactName.AddRange(other.FunctionsWithExactName);
+      this.PipeOperations.Clear(); this.PipeOperations.AddRange(other.PipeOperations);
+      this.VcOpt.Clear(); this.VcOpt.AddRange(other.VcOpt);
+
+      this.DisabledWarnings.Clear();
+      foreach (var kv in other.DisabledWarnings)
+        this.DisabledWarnings[kv.Key] = kv.Value;
+      this.PluginOptions.Clear();
+      foreach (var kv in other.PluginOptions)
+        this.PluginOptions[kv.Key] = new List<string>(kv.Value);
+
+      this.NoPreprocessor = other.NoPreprocessor;
+      this.RunTestSuite = other.RunTestSuite;
+      this.RunTestSuiteMultiThreaded = other.RunTestSuiteMultiThreaded;
+      this.TranslateToBPL = other.TranslateToBPL;
+      this.VCLikeErrorMessages = other.VCLikeErrorMessages;
+      this.TimeStats = other.TimeStats;
+      this.TimeStatsForVs = other.TimeStatsForVs;
+      this.XmlFormatOutput = other.XmlFormatOutput;
+      this.ClPath = other.ClPath;
+      this.RunningFromCommandLine = other.RunningFromCommandLine;
+      this.VerifyUpToLine = other.VerifyUpToLine;
+      this.PauseBeforeExit = other.PauseBeforeExit;
+      this.EagerTranslation = other.EagerTranslation;
+      this.OmitReadWriteChecking = other.OmitReadWriteChecking;
+      this.RunInBatchMode = other.RunInBatchMode;
+      this.ModifiedPreprocessorFiles = other.ModifiedPreprocessorFiles;
+      this.AggressivePruning = other.AggressivePruning;
+      this.DumpBoogie = other.DumpBoogie;
+      this.GenerateFieldOffsetAxioms = other.GenerateFieldOffsetAxioms;
+      this.WarningsAsErrors = other.WarningsAsErrors;
+      this.WarningLevel = other.WarningLevel;
+      this.DebugOnWarningOrError = other.DebugOnWarningOrError;
+      this.SaveModel = other.SaveModel;
+      this.RunModelViewer = other.RunModelViewer;
+      this.RunInspector = other.RunInspector;
+      this.DetailedTimes = other.DetailedTimes;
+      this.PrintCEVModel = other.PrintCEVModel;
+      this.PointerSize = other.PointerSize;
+      this.NewSyntax = other.NewSyntax;
+      this.Vcc3 = other.Vcc3;
+      this.PreludePath = other.PreludePath;
+      this.InferTriggers = other.InferTriggers;
+      this.DumpTriggers = other.DumpTriggers;
+      this.KeepPreprocessorFiles = other.KeepPreprocessorFiles;
+    }
   }
 
   public class OptionParser : OptionParser<VccOptions>
@@ -74,6 +139,14 @@ namespace Microsoft.Research.Vcc
     public static VccOptions ParseCommandLineArguments(MetadataHostEnvironment hostEnvironment, IEnumerable<string> arguments, bool oneOrMoreSourceFilesExpected) {
       OptionParser parser = new OptionParser(hostEnvironment);
       parser.ParseCommandLineArguments(arguments, oneOrMoreSourceFilesExpected);
+      return parser.options;
+    }
+
+    public static VccOptions ParseCommandLineArguments(MetadataHostEnvironment hostEnvironment, IEnumerable<string> arguments, VccOptions template)
+    {
+      OptionParser parser = new OptionParser(hostEnvironment);
+      parser.options.CopyFrom(template);
+      parser.ParseCommandLineArguments(arguments, false);
       return parser.options;
     }
 
@@ -230,6 +303,9 @@ namespace Microsoft.Research.Vcc
           }
           return this.TryParseNamedBoolean(arg, "infertriggers", "it", ref this.options.InferTriggers);
 
+        case 'k':
+          return this.TryParseNamedBoolean(arg, "keepppoutput", "keepppoutput", ref this.options.KeepPreprocessorFiles);
+
         case 'm':
           if (this.ParseName(arg, "modifiedpreprocessorfile", "modifiedpreprocessorfile")) {
             this.options.ModifiedPreprocessorFiles = true;
@@ -252,6 +328,7 @@ namespace Microsoft.Research.Vcc
           }
           if (this.ParseName(arg, "newsyntax", "ns")) {
             this.options.NewSyntax = true;
+            return true;
           }
           return false;
         case 'o':
