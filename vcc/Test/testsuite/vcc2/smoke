@@ -1,0 +1,11 @@
+`/smoke /newsyntax
+#include "vcc.h"
+
+void nosmoke() { }
+void smoke() _(requires 0) { }
+`
+Verification of nosmoke succeeded.
+Verification of smoke succeeded.
+testcase(4): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+Found unreachable code, but cannot figure out where it is.
+`
