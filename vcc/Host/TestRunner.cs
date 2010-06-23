@@ -143,7 +143,10 @@ namespace Microsoft.Research.Vcc
               do {
                 cParam.Append((char)ch);
                 ch = instream.Read();
-              } while (ch != '/' && ch != 0 && ch != 10 && ch != 13);
+              } while (ch != ' ' && ch != 0 && ch != 10 && ch != 13);
+              while (ch == ' ') {
+                ch = instream.Read();
+              }
               for (int i = cParam.Length - 1; i >= 0; i--) {
                 if (!Char.IsWhiteSpace(cParam[i])) break;
                 cParam.Length = i;
@@ -329,40 +332,25 @@ namespace Microsoft.Research.Vcc
                                string test, StringBuilder actualOutput, VccOptions commandLineOptions, List<string> compilerParameters, List<string> testCaseParameters) {
 
       VccCommandLineHost.ErrorCount = 0;
-      bool keepPreprocessorOutput = false;
       string fileNameC = fileNameWithoutExt + ".c";
       string fileNameI = fileNameWithoutExt + ".i";
       StreamWriter tempStreamWriter = new StreamWriter(fileNameC);
       tempStreamWriter.Write(test);
       tempStreamWriter.Close();
+
       VccOptions options = new VccOptions();
-      options.DumpBoogie = commandLineOptions.DumpBoogie;
+      options.CopyFrom(commandLineOptions);
+
+      if (compilerParameters != null)
+        options = OptionParser.ParseCommandLineArguments(VccCommandLineHost.dummyHostEnvironment, compilerParameters, options);
+
       options.NoPreprocessor = false;
       options.CheckedArithmetic = true;
       options.RunTestSuite = true;
       options.FileNames = new List<string> { fileNameC };
-      options.NewSyntax = commandLineOptions.NewSyntax;
-
-      if (compilerParameters != null) {
-        for (int i = 0; i < compilerParameters.Count; i++) {
-          if (compilerParameters[i].StartsWith("/functions:")) options.Functions.AddRange(compilerParameters[i].Substring(11).Split(','));
-          else if (compilerParameters[i] == "/a" || compilerParameters[i] == "/aggressivepruning") options.AggressivePruning = true;
-          else if (compilerParameters[i] == "/keepppoutput") keepPreprocessorOutput = true;
-          else if (compilerParameters[i] == "/newsyntax") options.NewSyntax = true;
-          else if (compilerParameters[i] =="/z:") { ++i; options.Z3Options.Add(compilerParameters[i]); } 
-          else if (compilerParameters[i] == "/b:") { ++i; options.BoogieOptions.Add(compilerParameters[i]); } 
-          else if (compilerParameters[i].StartsWith("/ps:")) { options.PointerSize = Int32.Parse(compilerParameters[i].Substring(4)); }
-        }
-      }
 
       HostEnvironment hostEnvironment = new HostEnvironment(options.PointerSize);
       hostEnvironment.Errors += errorHandler.HandleErrors;
-
-      // TODO maybe copy more stuff
-      options.Z3Options.AddRange(commandLineOptions.Z3Options);
-      options.BoogieOptions.AddRange(commandLineOptions.BoogieOptions);
-      options.TimeStats = commandLineOptions.TimeStats;
-      options.VcOpt.AddRange(commandLineOptions.VcOpt);
 
       bool errorsInPreprocessor;
       CCompilerHelper.Preprocess(options, out errorsInPreprocessor);
@@ -370,7 +358,7 @@ namespace Microsoft.Research.Vcc
       test = tempStreamReader.ReadToEnd();
       tempStreamReader.Close();
       File.Delete(fileNameC);
-      if (!keepPreprocessorOutput) File.Delete(fileNameI);
+      if (!options.KeepPreprocessorFiles) File.Delete(fileNameI);
 
       IName name = hostEnvironment.NameTable.GetNameFor(suiteName);
       List<IAssemblyReference> assemblyReferences = new List<IAssemblyReference>();
