@@ -209,7 +209,7 @@ void foo() {
     assert(x.t[42]);
 }
 `
-testcase(6,14) : error VC0000: illegal index
+testcase(6,14) : error VC0000: Illegal index.
 `
 #include <vcc.h>
 
@@ -478,6 +478,19 @@ spec(bool f(Perm p) ensures (forall(int i; p[0][i] == i ));)
 
 `
 testcase(5,25) : error VC0000: Cannot declare array of type 'System.Diagnostics.Contracts.CodeContract.Map<int, int>' because it hase size 0.
-testcase(6,59) : error VC0000: illegal index
+testcase(6,59) : error VC0000: Illegal index.
 testcase(6,59) : error VC0000: The name 'p' does not exist in the current context.
+`
+#include "vcc.h"
+typedef struct Foo {
+int x;
+spec(int y[int][5];)
+} Foo;
+
+void bar(Foo *f) {
+assert(f->y[0][0]);
+}
+`
+testcase(4,17) : error VC0000: Illegal type 'int[5]' in map domain.
+testcase(8,10) : error VC0000: Illegal index.
 `

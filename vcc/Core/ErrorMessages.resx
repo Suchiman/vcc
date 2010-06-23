@@ -3626,7 +3626,7 @@
     <value>Unexpected '{0}'. Did you forget a ';'?</value>
   </data>
   <data name="IllegalIndex" xml:space="preserve">
-    <value>illegal index</value>
+    <value>Illegal index.</value>
   </data>
   <data name="SubscriptNotOfIntegralType" xml:space="preserve">
     <value>subscript is not of integral type</value>
@@ -3663,5 +3663,8 @@
   </data>
   <data name="ArrayOfEmptyType" xml:space="preserve">
     <value>Cannot declare array of type '{0}' because it hase size 0.</value>
+  </data>
+  <data name="IllegalTypeInMap" xml:space="preserve">
+    <value>Illegal type '{0}' in map {1}.</value>
   </data>
 </root>

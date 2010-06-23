@@ -150,5 +150,10 @@ namespace Microsoft.Research.Vcc {
     /// Cannot declare array of type '{0}' because it hase size 0.
     /// </summary>
     ArrayOfEmptyType,
+
+    /// <summary>
+    /// Illegal type '{0}' in map {1}.
+    /// </summary>
+    IllegalTypeInMap,
   }
 }

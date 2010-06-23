@@ -907,8 +907,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             arraySize = new CompileTimeConstant(vcInitializer.ExpressionCount, array.SourceLocation);
         }
         if (arraySize is TypeExpression) {
-          Expression mapRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "Map");
-          elementType = new GenericTypeInstanceExpression(new NamedTypeExpression(mapRef), new TypeExpression[] { (TypeExpression)arraySize, elementType }, slb);
+          elementType = new VccMapTypeExpressions((TypeExpression)arraySize, elementType, this.nameTable, slb);
         } else
           elementType = new VccArrayTypeExpression(elementType, arraySize, slb);
         TypeExpression result = this.GetTypeExpressionFor(elementType, nestedDeclarator);
