@@ -36,6 +36,7 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
 
     // good patterns:
     | B.Expr.FunctionCall ("$set_in", _) -> 3
+    | B.Expr.FunctionCall ("$keeps", _) -> 3
 
     | B.Expr.FunctionCall (name, _) when name.StartsWith "$select.$map" ->
       if name.EndsWith ".^^bool" then 3
@@ -59,8 +60,9 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
 
     // Boogie doesn't allow comparisons
     | B.Expr.Primitive (("<"|">"|"<="|">="), _) -> true
-    // We don't want this one.
+    // We don't want these.
     | B.Expr.FunctionCall (name, _) when name.StartsWith "$in_range" -> true
+    | B.Expr.FunctionCall (("$ptr_eq"|"$ptr_neq"), _) -> true
 
     | B.Expr.Primitive _ 
     | B.Expr.ArrayIndex _
@@ -104,23 +106,36 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
         if !hasArithmetic then Some (res, 0)
         else Some (res, topTriggerQuality expr)
       else None
-        
-  let rec matchExpr (sub : Map<_,_>) = function
-    | B.Expr.FunctionCall ("$mem", [s1; p1]), B.Expr.FunctionCall ("$mem", [s2; p2]) when matchExpr sub (s1, s2) = None -> 
-      matchExpr sub (p1, p2) // ignore failure in state
-    | B.Expr.FunctionCall (id1, e1), B.Expr.FunctionCall (id2, e2) when id1 = id2 -> matchExprs sub e1 e2
-    | B.Expr.Primitive (id1, e1), B.Expr.Primitive (id2, e2) when id1 = id2 -> matchExprs sub e1 e2
-    | B.Expr.ArrayIndex (e1, es1), B.Expr.ArrayIndex (e2, es2) -> matchExprs sub (e1 :: es1) (e2 :: es2)
-    | B.Expr.ArrayUpdate (e1, es1, ee1), B.Expr.ArrayUpdate (e2, es2, ee2) -> matchExprs sub (ee1 :: e1 :: es1) (ee2 :: e2 :: es2)
-    | B.Expr.BvConcat (e1, ee1), B.Expr.BvConcat (e2, ee2) -> matchExprs sub [e1; ee1] [e2; ee2]
-    | B.Expr.BvExtract (e1, x1, y1), B.Expr.BvExtract (e2, x2, y2) when x1 = x2 && y1 = y2 -> matchExpr sub (e1, e2)
-    | B.Expr.Old e1, e2 -> matchExpr sub (e1, e2)
-    | e1, B.Expr.Old e2 -> matchExpr sub (e1, e2)
-    | B.Expr.Ref i1, e2 when sub.ContainsKey i1 ->
-      if sub.[i1] = e2 then Some sub else None
-    | B.Expr.Ref i1, e2 when quantVarSet.ContainsKey i1 ->
-      Some (sub.Add (i1, e2))
-    | e1, e2 -> if e1 = e2 then Some sub else None
+  
+  let substToString = function
+    | Some m -> Map.fold (fun acc k v -> String.Format ("{0} -> {1}", k, v) :: acc) [] m |> listToString
+    | None -> "None"
+
+  let rec matchExpr (sub : Map<_,_>) (a, b) = 
+    if helper.Options.DumpTriggers >= 10 then
+      Console.WriteLine ("  (((")
+    let res =
+      match a, b with
+        | B.Expr.FunctionCall ("$mem", [s1; p1]), B.Expr.FunctionCall ("$mem", [s2; p2]) when matchExpr sub (s1, s2) = None -> 
+          matchExpr sub (p1, p2) // ignore failure in state
+        | B.Expr.FunctionCall (id1, e1), B.Expr.FunctionCall (id2, e2) when id1 = id2 -> matchExprs sub e1 e2
+        | B.Expr.FunctionCall ("$ptr", [_; p]), e2 ->
+          matchExpr sub (p, e2)
+        | B.Expr.Primitive (id1, e1), B.Expr.Primitive (id2, e2) when id1 = id2 -> matchExprs sub e1 e2
+        | B.Expr.ArrayIndex (e1, es1), B.Expr.ArrayIndex (e2, es2) -> matchExprs sub (e1 :: es1) (e2 :: es2)
+        | B.Expr.ArrayUpdate (e1, es1, ee1), B.Expr.ArrayUpdate (e2, es2, ee2) -> matchExprs sub (ee1 :: e1 :: es1) (ee2 :: e2 :: es2)
+        | B.Expr.BvConcat (e1, ee1), B.Expr.BvConcat (e2, ee2) -> matchExprs sub [e1; ee1] [e2; ee2]
+        | B.Expr.BvExtract (e1, x1, y1), B.Expr.BvExtract (e2, x2, y2) when x1 = x2 && y1 = y2 -> matchExpr sub (e1, e2)
+        | B.Expr.Old e1, e2 -> matchExpr sub (e1, e2)
+        | e1, B.Expr.Old e2 -> matchExpr sub (e1, e2)
+        | B.Expr.Ref i1, e2 when sub.ContainsKey i1 ->
+          if sub.[i1] = e2 then Some sub else None
+        | B.Expr.Ref i1, e2 when quantVarSet.ContainsKey i1 ->
+          Some (sub.Add (i1, e2))
+        | e1, e2 -> if e1 = e2 then Some sub else None
+    if helper.Options.DumpTriggers >= 10 then
+      Console.WriteLine ("  unify: {0} / {1} ?= {2} -> {3} )))", a, substToString (Some sub), b, substToString res)
+    res
   and matchExprs sub e1 e2 = 
     let rec aux s = function
       | e1 :: ee1, e2 :: ee2 ->
@@ -151,7 +166,9 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
 
     let willLoop tr =
       let isHigh = function
-        | Some m -> Map.exists (fun _ -> function B.Expr.Ref _ -> false | _ -> true) m
+        | Some m ->
+          if dbg then Console.WriteLine ("check subst: " + substToString (Some m))
+          Map.exists (fun _ -> function B.Expr.Ref _ -> false | _ -> true) m
         | None -> false
       Seq.exists (fun (t, _, _) -> isHigh (matchExpr Map.empty (tr, t))) candidates
       
@@ -222,10 +239,12 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
           match invMapping.TryGetValue e with
             | true, x :: _ ->
               match e with 
-                | B.Expr.FunctionCall ("$idx", _) ->
+                | B.Expr.FunctionCall (("$idx"|"$dot"), _) ->
                   // this is going to be wrong when user writes *(a+i) instead of a[i]
                   "(&)" + x.Token.Value
-                | _ -> x.Token.Value
+                | _ -> 
+                  let v = x.Token.Value
+                  if v = "" then "<<" + e.ToString() + ">>" else v
             | _ -> "<<" + e.ToString() + ">>" // this shouldn't happen
         "{" + (List.map exprToStr tr |> String.concat ", ") + "}"
       // this isn't really a warning, but this way it will automatically show up in VS and friends
@@ -246,6 +265,7 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
   let isntSkHack = function
     | [B.Expr.FunctionCall ("sk_hack", _)] -> false
     | _ -> true
+
 
   member this.Run (body, triggers) = 
     let body = stripPtrCast body
