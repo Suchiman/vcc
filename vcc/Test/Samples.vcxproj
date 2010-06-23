@@ -314,6 +314,7 @@
     <None Include="testsuite\vcc2\thread_id">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="testsuite\vcc2\triggerInference" />
     <None Include="testsuite\vcc2\unions">
       <DeploymentContent>true</DeploymentContent>
     </None>

@@ -36,6 +36,7 @@ namespace Microsoft.Research.Vcc
 
     type Var = Id * Type
     
+    [<StructuralEquality;NoComparison>] 
     type Expr =
       | Ref of Id // Bid Id from Microsoft.Boogie.hs
       | BoolLiteral of bool

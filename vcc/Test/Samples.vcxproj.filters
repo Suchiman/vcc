@@ -266,5 +266,8 @@
     <None Include="testsuite\vcc2\assertionSplitting">
       <Filter>Testsuite</Filter>
     </None>
+    <None Include="testsuite\vcc2\triggerInference">
+      <Filter>Testsuite</Filter>
+    </None>
   </ItemGroup>
 </Project>
