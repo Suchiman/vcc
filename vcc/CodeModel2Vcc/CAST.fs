@@ -236,7 +236,7 @@ module Microsoft.Research.Vcc.CAST
         | Volatile t -> wr "volatile "; t.WriteTo b
         | Type.Ref d -> wr (d.ToString ())
         | Array (t, sz) -> t.WriteTo b; wr ("[" + sz.ToString() + "]")
-        | Map (t1, t2) -> t2.WriteTo b; wr "["; t1.WriteTo b; wr "]"
+        | Map (t1, t2) -> wr "("; t1.WriteTo b; wr " -> "; t2.WriteTo b; wr ")"
         | SecLabel _ -> wr "label_t"
         | Claim -> wr "claim_t"
         | ObjectT -> wr "obj_t"

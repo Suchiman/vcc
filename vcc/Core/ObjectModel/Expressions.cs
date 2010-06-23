@@ -771,6 +771,41 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
+  public class VccMapTypeExpressions : GenericTypeInstanceExpression
+  {
+    public VccMapTypeExpressions(TypeExpression rangeType, TypeExpression domainType, INameTable nameTable, ISourceLocation sourceLocation)
+      : base(new NamedTypeExpression(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(nameTable, "Map")),
+             new TypeExpression[] { rangeType, domainType }, sourceLocation) {
+    }
+
+    protected VccMapTypeExpressions(BlockStatement containingBlock, VccMapTypeExpressions template)
+      : base(containingBlock, template) {
+    }
+
+    protected override ITypeDefinition Resolve() {
+      bool foundError = false;
+      var argumentTypeEnum = this.ArgumentTypes.GetEnumerator();
+
+      foreach (var rngOrDom in new string[] { "range", "domain" }) {
+        argumentTypeEnum.MoveNext();
+        var te = argumentTypeEnum.Current;
+        if (te is ArrayTypeExpression) {
+          foundError = true;
+          this.Helper.ReportError(new VccErrorMessage(te.SourceLocation, Error.IllegalTypeInMap, this.Helper.GetTypeName(te.ResolvedType), rngOrDom));
+        }
+      }
+
+      if (foundError) return this.Compilation.PlatformType.SystemVoid.ResolvedType;
+      else return base.Resolve();
+    }
+
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock) {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccMapTypeExpressions(containingBlock, this);
+    }
+  }
+
   /// <summary>
   /// An expression that assigns the value of the source (right) operand to the location represented by the target (left) operand.
   /// The expression result is the value of the source expression.
@@ -4677,7 +4712,6 @@ namespace Microsoft.Research.Vcc {
     readonly Expression lambdaExpr;
 
     private ITypeDefinition CreateTypeForLambda() {
-      Expression SysDiagContractsMap = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.NameTable, "Map");
       var localDeclStmts = new List<LocalDeclarationsStatement>(this.BoundVariables);
       localDeclStmts.Reverse();
 
@@ -4686,9 +4720,7 @@ namespace Microsoft.Research.Vcc {
       foreach (var localDeclStmt in localDeclStmts) {
         foreach (var dummy in localDeclStmt.Declarations) // we care only about the number of variables of this type
           targetType = texpr; // keep track of the previous type because it is required for 
-          texpr = new GenericTypeInstanceExpression(new NamedTypeExpression(SysDiagContractsMap),
-                                                    new TypeExpression[] { localDeclStmt.TypeExpression, texpr },
-                                                    SourceDummy.SourceLocation);
+        texpr = new VccMapTypeExpressions(localDeclStmt.TypeExpression, texpr, this.NameTable, SourceDummy.SourceLocation);
       }
       texpr = (TypeExpression)texpr.MakeCopyFor(this.ContainingBlock);
       return texpr.ResolvedType;
