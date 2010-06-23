@@ -74,6 +74,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\FSharp-1.9.7.8\\bin\FSharp.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Provers.Isabelle">
+      <HintPath>..\Boogie\Provers.Isabelle.dll</HintPath>
+    </Reference>
     <Reference Include="Provers.Simplify, Version=1.0.10512.1, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Boogie\Provers.Simplify.dll</HintPath>
