@@ -469,3 +469,15 @@ void foo() {
 testcase(4,2) : error VC0000: 'x' : illegal use of type 'void'.
 testcase(4,2) : error VC0000: 'y' : illegal use of type 'void'.
 `
+
+#include <vcc.h>
+
+
+spec(typedef int Perm[1][int];)
+spec(bool f(Perm p) ensures (forall(int i; p[0][i] == i ));)
+
+`
+testcase(5,25) : error VC0000: Cannot declare array of type 'System.Diagnostics.Contracts.CodeContract.Map<int, int>' because it hase size 0.
+testcase(6,59) : error VC0000: illegal index
+testcase(6,59) : error VC0000: The name 'p' does not exist in the current context.
+`
