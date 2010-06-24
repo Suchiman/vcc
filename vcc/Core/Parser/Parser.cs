@@ -325,7 +325,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.GetNextToken();
       }
       if (specifiers.Count > 0 && specifiers[specifiers.Count-1] is CompositeTypeSpecifier) {
-        while (this.currentToken == Token.Semicolon) this.GetNextToken();
         if (this.currentTypeName != null && foundNoDeclaration) {
           StructSpecifier structSpecifier = specifiers[specifiers.Count - 1] as StructSpecifier;
           UnionSpecifier unionSpecifier = specifiers[specifiers.Count - 1] as UnionSpecifier;
@@ -336,11 +335,9 @@ namespace Microsoft.Research.Vcc.Parsing {
             }
           }
         }
-        this.SkipTo(followers);
-      } else
-        this.SkipSemiColonAfterDeclarationOrStatement(followers);
-
-
+      }
+        
+      this.SkipSemiColonAfterDeclarationOrStatement(followers);
       if (seenSpecToken) {
         this.Skip(Token.RightParenthesis);
         this.LeaveSpecBlock(savedInSpecCode);
@@ -1248,6 +1245,21 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
+    protected Declarator ParseDeclaratorInQuantifier(TokenSet followers)
+      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
+      //^ ensures result is IdentifierDeclarator || result is PointerDeclarator;
+{
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      List<Pointer> pointers = this.ParsePointers();
+      Declarator result = new IdentifierDeclarator(this.ParseNameDeclaration(true));
+      if (pointers.Count > 0) {
+        slb.UpdateToSpan(result.SourceLocation);
+        result = new PointerDeclarator(pointers, result, slb);
+      }
+      this.SkipTo(followers);
+      return result;
+    }
+
     protected List<TemplateParameterDeclarator>/*?*/ ParseTemplateParameters(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -1832,10 +1844,9 @@ namespace Microsoft.Research.Vcc.Parsing {
 
         //TODO: else give error
         this.ParseRestOfTypeDeclaration(sctx, namespaceMembers, texpr.Expression, newTypeMembers, followers);
-        if (!TS.StructFollowers[this.currentToken]) {
+        if (this.currentToken == Token.EndOfFile) {
           ISourceLocation errorLocation = this.scanner.SourceLocationOfLastScannedToken;
-          string errorToken = this.currentToken == Token.EndOfFile ? "end-of-file" : errorLocation.Source;
-          this.HandleError(errorLocation, Error.MissingSemicolonAfterStruct, errorToken);
+          this.HandleError(errorLocation, Error.MissingSemicolonAfterStruct, "end-of-file");
         }   
         this.SkipTo(followers);
         // filter out unexpected constructs that cannot have they CompilationPart setup properly, they may
@@ -3225,7 +3236,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       while (this.CurrentTokenStartsTypeExpression()) {
         List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers|Token.Semicolon);
         List<LocalDeclaration> declarations = new List<LocalDeclaration>(1);
-        Declarator declarator = this.ParseDeclarator(null, followers|Token.Comma|Token.Semicolon, true);
+        Declarator declarator = this.ParseDeclaratorInQuantifier(followers | Token.Comma | Token.Semicolon);
         TypeExpression type = this.GetTypeExpressionFor(specifiers, declarator);
         SourceLocationBuilder slb = new SourceLocationBuilder(type.SourceLocation);
         slb.UpdateToSpan(declarator.SourceLocation);
@@ -3682,7 +3693,9 @@ namespace Microsoft.Research.Vcc.Parsing {
         while (this.currentToken == Token.Semicolon) {
           this.GetNextToken();
         }
-        this.SkipTo(followers);
+        this.SkipTo(followers|Token.EndOfFile);
+      } else if (this.currentToken == Token.EndOfFile) {
+        return;
       } else {
         this.Skip(Token.Semicolon);
         while (!this.scanner.TokenIsFirstAfterLineBreak && this.currentToken != Token.Semicolon && this.currentToken != Token.RightBrace && this.currentToken != Token.EndOfFile
@@ -3690,7 +3703,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           this.GetNextToken();
         if (this.currentToken == Token.Semicolon) 
           this.GetNextToken();
-        this.SkipTo(followers);
+        this.SkipTo(followers|Token.EndOfFile);
       }
     }
 
