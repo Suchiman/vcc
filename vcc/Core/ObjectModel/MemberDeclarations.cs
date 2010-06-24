@@ -302,8 +302,8 @@ namespace Microsoft.Research.Vcc {
           if (physParCount != 1 || vccParName == null || !vccParName.IsCompilerGenerated || p.IsSpec) {
             string parNameToReport = p.Name.Value;
             if (vccParName != null && vccParName.IsCompilerGenerated) parNameToReport = String.Empty;
-            NamedTypeExpression namedType = p.Type as NamedTypeExpression;
-            if (namedType != null && namedType.HasErrors)
+            VccNamedTypeExpression namedType = p.Type as VccNamedTypeExpression;
+            if (namedType != null && (namedType.HasErrors || namedType.DidSilentlyResolveToVoid))
               this.Helper.ReportError(new VccErrorMessage(p.SourceLocation, Error.IllegalUseOfUndefinedType, parNameToReport, namedType.Expression.SourceLocation.Source));
             else
               this.Helper.ReportError(new AstErrorMessage(p, Microsoft.Cci.Ast.Error.IllegalUseOfType, parNameToReport, this.Helper.GetTypeName(this.PlatformType.SystemVoid.ResolvedType)));
