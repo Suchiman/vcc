@@ -4,6 +4,5 @@ void foo(struct S *x, struct T y) {
 	struct V a;
 }
 `
-testcase(3,23) : error VC0000: 'y' : Illegal use of undefined type 'T'
-testcase(4,9) : error VC0000: 'a' : illegal use of type 'void'.
-`
+testcase(3,23) : error VC0000: 'y' : illegal use of undefined type 'T'.
+testcase(4,9) : error VC0000: 'a' : illegal use of type 'void'.`
