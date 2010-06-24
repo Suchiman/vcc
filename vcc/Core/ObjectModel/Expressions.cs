@@ -3089,12 +3089,12 @@ namespace Microsoft.Research.Vcc {
         result = this.Resolve(simpleName.ResolveAsNamespaceOrType(), numberOfTypeParameters);
         //^ assert result == Dummy.Type || result.GenericParameterCount == numberOfTypeParameters;
         if (result == Dummy.Type) {
-          if (!silentlyResolveToVoid)
+          if (!silentlyResolveToVoid) {
             this.Helper.ReportError(new AstErrorMessage(this, Microsoft.Cci.Ast.Error.SingleTypeNameNotFound, simpleName.Name.Value));
-          else
+            resolvedToVoidDueToError = true;
+          } else
             DidSilentlyResolveToVoid = true;
           result = this.Compilation.PlatformType.SystemVoid.ResolvedType;
-          resolvedToVoidDueToError = true;
         }
         //^ assume result == Dummy.Type || result.GenericParameterCount == numberOfTypeParameters;
         return result;
