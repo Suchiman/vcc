@@ -206,26 +206,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override INamespaceDeclarationMember/*?*/ ParseAsNamespaceDeclarationMember(ISourceLocation sourceLocationBeforeEdit, ISourceDocumentEdit edit)
-      //^^ requires this.SourceLocation.SourceDocument == sourceLocationBeforeEdit.SourceDocument;
-      //^^ requires this.SourceLocation.SourceDocument == edit.SourceLocation.SourceDocument;
-      //^^ requires sourceLocationBeforeEdit.Contains(edit.SourceLocation);
-      //^^ requires edit.SourceDocumentAfterEdit.IsUpdatedVersionOf(sourceLocationBeforeEdit.SourceDocument);
-      //^^ ensures result == null || result is NamespaceDeclarationMember || result is NamespaceTypeDeclaration || result is NestedNamespaceDeclaration;
     {
-      //VccCompositeDocument/*?*/ updatedDoc = edit.SourceDocumentAfterEdit as VccCompositeDocument;
-      ////^ assume updatedDoc != null; //follows from constructor precondition and immutability of this.SourceLocation
-      ////^ assume updatedDoc.IsUpdatedVersionOf(sourceLocationBeforeEdit.SourceDocument); //follows from precondition
-      //ISourceLocation updatedSourceLocation = updatedDoc.GetCorrespondingSourceLocation(sourceLocationBeforeEdit);
-      //List<IErrorMessage> scannerAndParserErrors = updatedDoc.ScannerAndParserErrors;
-      //Parser parser = new Parser(this.Compilation, updatedSourceLocation, scannerAndParserErrors);
-      //INamespaceDeclarationMember/*?*/ result = null; // parser.ParseNamespaceDeclarationMember();
-      //if (result != null) {
-      //  ErrorEventArgs errorEventArguments = new ErrorEventArgs(ErrorReporter.Instance, updatedDoc.UnpreprocessedDocument.SourceLocation, updatedDoc.PreprocessorErrors.AsReadOnly());
-      //  this.Compilation.HostEnvironment.ReportErrors(errorEventArguments);
-      //  errorEventArguments = new ErrorEventArgs(ErrorReporter.Instance, updatedSourceLocation, scannerAndParserErrors.AsReadOnly());
-      //  this.Compilation.HostEnvironment.ReportErrors(errorEventArguments);
-      //}
-      //return result;
       return null;
     }
 
@@ -246,24 +227,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override ITypeDeclarationMember/*?*/ ParseAsTypeDeclarationMember(ISourceLocation sourceLocationBeforeEdit, ISourceDocumentEdit edit, IName typeName)
-      //^^ requires this.SourceLocation.SourceDocument == sourceLocationBeforeEdit.SourceDocument;
-      //^^ requires this.SourceLocation.SourceDocument == edit.SourceLocation.SourceDocument;
-      //^^ requires sourceLocationBeforeEdit.Contains(edit.SourceLocation);
-      //^^ requires edit.SourceDocumentAfterEdit.IsUpdatedVersionOf(sourceLocationBeforeEdit.SourceDocument);
-      //^^ ensures result == null || result is TypeDeclarationMember || result is NestedTypeDeclaration;
     {
-      //ISourceLocation updatedSourceLocation = edit.SourceDocumentAfterEdit.GetCorrespondingSourceLocation(sourceLocationBeforeEdit); //unsatisfied precondition: requires this.IsUpdatedVersionOf(sourceLocationInPreviousVersionOfDocument.SourceDocument);
-      //List<IErrorMessage> scannerAndParserErrors = ((VccCompositeDocument)edit.SourceDocumentAfterEdit).ScannerAndParserErrors;
-      //Parser parser = new Parser(this.Compilation, updatedSourceLocation, scannerAndParserErrors);
-      //ITypeDeclarationMember/*?*/ result = null; // parser.ParseTypeDeclarationMember(typeName);
-      //if (result != null) {
-      //  VccCompositeDocument sdoc = (VccCompositeDocument)edit.SourceDocumentAfterEdit;
-      //  ErrorEventArgs errorEventArguments = new ErrorEventArgs(ErrorReporter.Instance, sdoc.UnpreprocessedDocument.SourceLocation, sdoc.PreprocessorErrors.AsReadOnly());
-      //  this.Compilation.HostEnvironment.ReportErrors(errorEventArguments);
-      //  errorEventArguments = new ErrorEventArgs(ErrorReporter.Instance, updatedSourceLocation, scannerAndParserErrors.AsReadOnly());
-      //  this.Compilation.HostEnvironment.ReportErrors(errorEventArguments);
-      //}
-      //return result;
       return null;
     }
 

@@ -1069,6 +1069,13 @@ namespace Microsoft.Research.Vcc
       member this.Visit (resourceReference:IResourceReference) : unit = assert false
 
       member this.Visit (rootUnitNamespace:IRootUnitNamespace) : unit =
+        match rootUnitNamespace with
+          | :? UnitNamespace as unitNs ->
+            for nsDecl in unitNs.NamespaceDeclarations do
+              match nsDecl with
+                | :? Microsoft.Research.Vcc.VccRootNamespaceDeclaration as rootNsDecl -> rootNsDecl.ReportDuplicateIncompatibleTypedefs()
+                | _ -> ()
+          | _ -> ()
         Seq.iter (fun (m : INamespaceMember) -> m.Dispatch(this)) rootUnitNamespace.Members
 
       member this.Visit (rootUnitNamespaceReference:IRootUnitNamespaceReference) : unit = assert false

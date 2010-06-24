@@ -1,7 +1,7 @@
 #include <vcc.h>
 
-typedef unsigned long long int size_t;
-typedef unsigned long long int   size_t;
+
+
 
 void AllIntegralOperationsTestOk() {
   signed char i1; 

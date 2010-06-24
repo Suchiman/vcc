@@ -1,7 +1,5 @@
 #include <vcc.h>
 
-typedef unsigned long long   size_t;
-
 typedef __int64 INT64, *PINT64;
 
 void foo(PINT64 ptrs[]) 

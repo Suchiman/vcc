@@ -1,7 +1,5 @@
 #include <vcc.h>
 
-typedef unsigned long long int size_t;
-
 int global;
 
 void foo()

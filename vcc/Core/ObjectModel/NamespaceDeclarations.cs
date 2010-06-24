@@ -12,7 +12,7 @@ using Microsoft.Research.Vcc.Parsing;
 
 namespace Microsoft.Research.Vcc {
 
-  internal sealed class VccRootNamespaceDeclaration : RootNamespaceDeclaration {
+  public sealed class VccRootNamespaceDeclaration : RootNamespaceDeclaration {
 
     internal VccRootNamespaceDeclaration(VccCompilationPart compilationPart, ISourceLocation sourceLocation)
       : base(compilationPart, sourceLocation) 
@@ -42,6 +42,22 @@ namespace Microsoft.Research.Vcc {
         errorEventArguments = new ErrorEventArgs(ErrorReporter.Instance, cp.UnpreprocessedDocument.SourceLocation, cp.PreprocessorErrors);
         this.Compilation.HostEnvironment.ReportErrors(errorEventArguments);
         this.isInitialized = true;
+      }
+    }
+
+    public void ReportDuplicateIncompatibleTypedefs() {
+      Dictionary<int, TypedefDeclaration> seenTypedefs = new Dictionary<int, TypedefDeclaration>();
+      foreach (var typedef in IteratorHelper.GetFilterEnumerable<ITypeDeclarationMember, TypedefDeclaration>(this.CompilationPart.GlobalDeclarationContainer.TypeDeclarationMembers)) {
+        TypedefDeclaration seenTypedef;
+        if (seenTypedefs.TryGetValue(typedef.Name.UniqueKey , out seenTypedef)) {
+          if (!TypeHelper.TypesAreEquivalent(typedef.Type.ResolvedType, seenTypedef.Type.ResolvedType)) {
+            this.Helper.ReportError(
+              new VccErrorMessage(typedef.SourceLocation, Error.DuplicateTypedef, typedef.Name.Value, 
+                this.Helper.GetTypeName(seenTypedef.Type.ResolvedType), this.Helper.GetTypeName(typedef.Type.ResolvedType)));
+          }
+        } else {
+          seenTypedefs.Add(typedef.Name.UniqueKey, typedef);
+        }
       }
     }
     bool isInitialized;

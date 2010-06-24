@@ -1,6 +1,6 @@
 #include <vcc.h>
 
-typedef unsigned long long size_t;
+
 //static bool __vcModifies(void* p, size_t length){ return 0;  }
 
 void CorExpressionTestOk(int a,int b) { int result;

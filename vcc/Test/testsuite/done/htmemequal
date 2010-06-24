@@ -2,9 +2,6 @@
 
 typedef unsigned __int8 BOOLEAN;
 typedef const void *PCVOID;
-typedef unsigned __int64 size_t;
-typedef size_t SIZE_T;
-
 
 int
 __cdecl
@@ -18,7 +15,7 @@ BOOLEAN
 HtEqualMemory(
      PCVOID Buffer1,
      PCVOID Buffer2,
-     SIZE_T CountOfBytes
+     size_t CountOfBytes
     )
 {
     return (BOOLEAN)(memcmp(Buffer1, Buffer2, CountOfBytes) == 0);

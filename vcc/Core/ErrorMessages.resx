@@ -3667,4 +3667,7 @@
   <data name="IllegalTypeInMap" xml:space="preserve">
     <value>Illegal type '{0}' in map {1}.</value>
   </data>
+  <data name="DuplicateTypedef" xml:space="preserve">
+    <value>Incompatible redefinition of type '{0}' from '{1}' to '{2}'.</value>
+  </data>
 </root>
