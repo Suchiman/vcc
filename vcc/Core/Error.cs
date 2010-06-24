@@ -161,5 +161,10 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     DuplicateTypedef,
 
+    /// <summary>
+    /// '{0}' : illegal use of undefined type '{1}'.
+    /// </summary>
+    IllegalUseOfUndefinedType,
+
   }
 }

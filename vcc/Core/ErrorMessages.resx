@@ -3670,4 +3670,7 @@
   <data name="DuplicateTypedef" xml:space="preserve">
     <value>Incompatible redefinition of type '{0}' from '{1}' to '{2}'.</value>
   </data>
+  <data name="IllegalUseOfUndefinedType" xml:space="preserve">
+    <value>'{0}' : illegal use of undefined type '{1}'.</value>
+  </data>
 </root>
