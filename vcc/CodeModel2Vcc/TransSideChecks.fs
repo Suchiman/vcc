@@ -463,7 +463,7 @@ namespace Microsoft.Research.Vcc
                       let setIn = Expr.Macro(boolBogusEC(), "_vcc_set_in", [pRef; subst (mkOld expr.Common "prestate" expr)])
                       let allInSetReadsSame = Expr.Quant(boolBogusEC(), { Kind = QuantKind.Forall;
                                                                           Variables = [p];
-                                                                          Triggers = [];
+                                                                          Triggers = [[Deref ({pRef.Common with Type = p.Type.Deref }, pRef)]];
                                                                           Condition = Some(setIn);
                                                                           Body = Macro (boolBogusEC(), "reads_same", [pRef]) })
                       Expr.MkAssume allInSetReadsSame

@@ -19,7 +19,7 @@ module B = Microsoft.Research.Vcc.BoogieAST
 
 type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,list<C.Expr>>, quantVars:list<B.Var>) =
   let dbg = helper.Options.DumpTriggers >= 4
-  let maxQuality = 3
+  let maxQuality = 4
   let quantVars = List.map fst quantVars // we don't care about the type
   let quantVarSet = gdict()
   do for v in quantVars do quantVarSet.[v] <- true
@@ -27,20 +27,21 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
   // -1 : never use it
   //  0 : uses arithmetic (see below)
   //  1 : only as last resort
-  //  2 : normal
-  //  3 : good pattern
+  //  2 : everything else
+  //  3 : maps, sets, user functions
+  //  4 : ownership
   let topTriggerQuality = function
-    // list of bad patterns: 
-    | B.Expr.FunctionCall ("$ref", [B.Expr.FunctionCall ("$ptr", [_; B.Expr.Ref _])]) -> -1
-    | B.Expr.FunctionCall ("$ptr", [_; B.Expr.Ref _]) -> 1 
+    // level 4
+    | B.Expr.FunctionCall (("$keeps"|"$set_in0"), _) -> 4
+    | B.Expr.FunctionCall ("$set_in", [_; B.Expr.FunctionCall ("$owns", _)]) -> 4
 
-    // good patterns:
+    // level 3
     | B.Expr.FunctionCall ("$set_in", _) -> 3
-    | B.Expr.FunctionCall ("$keeps", _) -> 3
+    | B.Expr.FunctionCall (name, _) when name.StartsWith "$select.$map" -> 3
 
-    | B.Expr.FunctionCall (name, _) when name.StartsWith "$select.$map" ->
-      if name.EndsWith ".^^bool" then 3
-      else 2
+    // list of bad patterns: 
+    | B.Expr.FunctionCall ("$ptr", [_; B.Expr.Ref _]) -> 1 
+    | B.Expr.FunctionCall ("$ref", [B.Expr.FunctionCall ("$ptr", [_; B.Expr.Ref _])]) -> -1
 
     // all the rest:
     | expr ->
@@ -50,6 +51,11 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
       let orig = lookupWithDefault invMapping [] expr
       if List.exists isUserFun orig then 3
       else 2
+
+  // this is very arbitrary; keep in mind that sk_hack has type bool->bool, so don't use it on terms of non-bool type
+  let shouldAddSkHack = function
+    | B.Expr.FunctionCall (("$keeps"|"$set_in"|"$set_in0"), _) as expr -> topTriggerQuality expr = 4
+    | _ -> false
 
   let isForbiddenInTrigger = function
     | B.Expr.Exists _
@@ -107,6 +113,29 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
         else Some (res, topTriggerQuality expr)
       else None
   
+  let removeSubsumed resTrig =
+    let trigs = gdict()
+    let shouldKeep = function
+      | [(t:B.Expr)] ->
+        let res = ref true
+        let checkSubterm expr =
+          if expr <> t && trigs.ContainsKey expr then
+            res := false
+            Some expr
+          else None
+        t.Map checkSubterm |> ignore
+        !res
+      | _ -> true
+
+    Seq.iter (function [t] -> trigs.Add (t, true) | _ -> ()) resTrig
+    Seq.filter shouldKeep resTrig
+
+  let addSkHack resTrig =
+    let checkOne = function
+      | [t] when shouldAddSkHack t -> [[t]; [B.Expr.FunctionCall ("sk_hack", [t])]]
+      | e -> [e]
+    Seq.collect checkOne resTrig
+
   let substToString = function
     | Some m -> Map.fold (fun acc k v -> String.Format ("{0} -> {1}", k, v) :: acc) [] m |> listToString
     | None -> "None"
@@ -147,18 +176,22 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
     if List.length e1 <> List.length e2 then None
     else aux sub (e1, e2)
   
+  let transformGList f (l:GList<_>) =
+    let tmp = f l |> Seq.toList
+    l.Clear()
+    l.AddRange tmp
+
   let doInfer (body:B.Expr) =
     let resTrig = glist[]
 
     let candidates = glist[]
-    let candidatesSuperterms = gdict()
-    let rec checkOne bigger (expr:B.Expr) =
-      if candidatesSuperterms.ContainsKey expr then
+    let candidatesSet = gdict()
+    let rec getSubterms (expr:B.Expr) =
+      if candidatesSet.ContainsKey expr then
         None
       else
-        candidatesSuperterms.[expr] <- bigger
-        let newTr = expr :: bigger
-        expr.Map (checkOne newTr) |> ignore
+        candidatesSet.[expr] <- true
+        expr.Map getSubterms |> ignore
         match getTriggerScore expr with
           | Some (vs, q) -> candidates.Add ((expr, vs, q))
           | None -> ()
@@ -173,20 +206,18 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
       Seq.exists (fun (t, _, _) -> isHigh (matchExpr Map.empty (tr, t))) candidates
       
     let rec inferAtQual qual =
-      body.Map (checkOne []) |> ignore
+      body.Map getSubterms |> ignore
       if dbg then Console.WriteLine ("infer: {0} @{1}", quantTok.Value, qual)
-      let disabled = gdict()
       for (tr, vs, q) in candidates do
         if List.forall vs.ContainsKey quantVars && q >= qual then
-          if dbg then Console.WriteLine ("cand: {0} {1} sub:{2}", tr, disabled.ContainsKey tr, candidatesSuperterms.[tr] |> listToString)
-          if not (disabled.ContainsKey tr) then
-            if willLoop tr then ()
-            else
-              resTrig.Add [tr]
-              for superTerm in candidatesSuperterms.[tr] do
-                disabled.[superTerm] <- true
+          if dbg then Console.WriteLine ("cand: {0}", tr)
+          if willLoop tr then ()
+          else
+            resTrig.Add [tr]
       if resTrig.Count = 0 && qual > 1 then // exclude arithmetic here
         inferAtQual (qual - 1)
+      else
+        transformGList (removeSubsumed >> addSkHack) resTrig
     inferAtQual maxQuality
 
     let usedQualZero = ref false
@@ -229,31 +260,6 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
     else
       finalRes
 
-  let dumpTriggers = function
-    | [] ->
-      helper.Warning (quantTok, 9121, "failed to infer triggers for '" + quantTok.Value + "'")
-    | newTrig when helper.Options.DumpTriggers >= 1 ->
-      let trToRawString tr = "{" + (List.map (fun t -> t.ToString ()) tr |> String.concat ", ") + "}"
-      let trToString tr = 
-        let exprToStr e =
-          match invMapping.TryGetValue e with
-            | true, x :: _ ->
-              match e with 
-                | B.Expr.FunctionCall (("$idx"|"$dot"), _) ->
-                  // this is going to be wrong when user writes *(a+i) instead of a[i]
-                  "(&)" + x.Token.Value
-                | _ -> 
-                  let v = x.Token.Value
-                  if v = "" then "<<" + e.ToString() + ">>" else v
-            | _ -> "<<" + e.ToString() + ">>" // this shouldn't happen
-        "{" + (List.map exprToStr tr |> String.concat ", ") + "}"
-      // this isn't really a warning, but this way it will automatically show up in VS and friends
-      helper.Warning (quantTok, 9122, "inferred triggers: " + String.concat " " (Seq.map trToString newTrig) + " for '" + quantTok.Value + "'")
-      if helper.Options.DumpTriggers >= 3 then
-        helper.Warning (quantTok, 9123, "raw inferred triggers: " + String.concat " " (Seq.map trToRawString newTrig))
-    | _ -> ()
-  
-  // TODO we probably want to run that on triggers only, not before inference
   // the nested ptr_cast(ptr(...)) gets into triggers and causes trouble later
   let rec stripPtrCast (expr:B.Expr) = 
     let aux = function
@@ -261,20 +267,54 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
         Some (stripPtrCast (bCall "$ptr" [t; r]))
       | _ -> None
     expr.Map aux
+
+  let fixupTrigger trigger =
+    let rec doFixupTrigger expr =
+      let self (expr:B.Expr) = expr.Map doFixupTrigger
+      match expr with
+        | B.Expr.FunctionCall ("$typed2", [S; p; _]) -> Some (self (B.Expr.FunctionCall ("$typed", [S; p])))
+        | _ -> None
+    List.map (fun expr -> (stripPtrCast expr).Map doFixupTrigger) trigger
    
+  let dumpTriggers = function
+    | [] ->
+      helper.Warning (quantTok, 9121, "failed to infer triggers for '" + quantTok.Value + "'")
+    | newTrig when helper.Options.DumpTriggers >= 1 ->
+      let trToRawString tr = "{" + (List.map (fun t -> t.ToString ()) (fixupTrigger tr) |> String.concat ", ") + "}"
+      let trToString tr = 
+        let rec exprToStr = function
+          | B.Expr.FunctionCall ("sk_hack", [e]) ->
+            ":lemma " + exprToStr e
+          | e ->
+            match invMapping.TryGetValue e with
+              | true, x :: _ ->
+                match e with 
+                  | B.Expr.FunctionCall (("$idx"|"$dot"), _) ->
+                    // this is going to be wrong when user writes *(a+i) instead of a[i]
+                    "(&)" + x.Token.Value
+                  | _ -> 
+                    let v = x.Token.Value
+                    if v = "" then "<<" + e.ToString() + ">>" else v
+              | _ -> "<<" + (fixupTrigger [e]).Head.ToString() + ">>" // this shouldn't happen
+        "{" + (List.map exprToStr tr |> String.concat ", ") + "}"
+      // this isn't really a warning, but this way it will automatically show up in VS and friends
+      helper.Warning (quantTok, 9122, "inferred triggers: " + String.concat " " (Seq.map trToString newTrig) + " for '" + quantTok.Value + "'")
+      if helper.Options.DumpTriggers >= 3 then
+        helper.Warning (quantTok, 9123, "raw inferred triggers: " + String.concat " " (Seq.map trToRawString newTrig))
+    | _ -> ()
+  
   let isntSkHack = function
     | [B.Expr.FunctionCall ("sk_hack", _)] -> false
     | _ -> true
 
-
   member this.Run (body, triggers) = 
-    let body = stripPtrCast body
+    let newBody = stripPtrCast body
     let triggers =
       if helper.Options.InferTriggers then
         if (List.filter isntSkHack triggers).IsEmpty then
           let newTrig = doInfer body
           dumpTriggers newTrig
-          triggers @ newTrig
+          triggers @ List.map fixupTrigger newTrig
         else
           if helper.Options.DumpTriggers >= 2 then
             // still infer and ignore the results
@@ -282,5 +322,5 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
           triggers
       else
         triggers
-    body, triggers
+    newBody, triggers
           
