@@ -155,5 +155,11 @@ namespace Microsoft.Research.Vcc {
     /// Illegal type '{0}' in map {1}.
     /// </summary>
     IllegalTypeInMap,
+
+    /// <summary>
+    /// Incompatible redefinition of type '{0}' from '{1}' to '{2}'.
+    /// </summary>
+    DuplicateTypedef,
+
   }
 }

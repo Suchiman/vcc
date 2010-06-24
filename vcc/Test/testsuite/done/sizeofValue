@@ -1,7 +1,5 @@
 #include <vcc.h>
 
-typedef unsigned long long int size_t;
-
 typedef struct _S { 
   __int64 a;
   __int64 b; 
