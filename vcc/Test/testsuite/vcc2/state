@@ -7,20 +7,20 @@ struct S {
 };
 
 _(ghost bool _(pure) swapped(struct S *s, \state s1, \state s2)
-  _(returns \in_state(s1, s->a) == \in_state(s2, s->b) && \in_state(s2, s->a) == \in_state(s1, s->b));)
+  _(returns \at(s1, s->a) == \at(s2, s->b) && \at(s2, s->a) == \at(s1, s->b));)
 
 void foo(struct S *s)
   _(requires \unwrapped(s))
   _(writes \extent(s))
 {
-  _(ghost \state s0 = \current_state();)
+  _(ghost \state s0 = \now();)
   _(ghost \state s1;)
   int tmp = s->a;
   s->a = s->b;
   s->b = tmp;
-  _(ghost s1 = \current_state();)
-  _(assert \in_state(s0, s->a) == \in_state(s1, s->b))
-  _(assert \in_state(s0, s->b) == \in_state(s1, s->a))
+  _(ghost s1 = \now();)
+  _(assert \at(s0, s->a) == \at(s1, s->b))
+  _(assert \at(s0, s->b) == \at(s1, s->a))
   _(assert swapped(s, s0, s1))
 }
 `
@@ -90,37 +90,37 @@ void foo()
   _(ghost  s3p = &s3;)
 
   *p = 1;
-  _(ghost s3 = \current_state();)
-  _(ghost s1 = \current_state();)
+  _(ghost s3 = \now();)
+  _(ghost s1 = \now();)
   *p = 2;
-  _(ghost s3 = \current_state();)
-  _(ghost s2 = \current_state();)
+  _(ghost s3 = \now();)
+  _(ghost s2 = \now();)
 
-  _(assert \in_state(s1, \in_state(s2, *p)) == 2)
-  _(assert \in_state(s2, \in_state(s1, *p)) == 1)
-  _(assert \in_state(s1, \in_state(\current_state(), *p)) == 2)
+  _(assert \at(s1, \at(s2, *p)) == 2)
+  _(assert \at(s2, \at(s1, *p)) == 1)
+  _(assert \at(s1, \at(\now(), *p)) == 2)
 
 
-  _(assert \in_state(s1, \in_state(s3, *p)) == 2)
-  _(assert \in_state(\in_state(s1, s3), *p) == 1)
-  _(assert \in_state(s1, \in_state(\in_state(\current_state(),s3), *p)) == 2)
+  _(assert \at(s1, \at(s3, *p)) == 2)
+  _(assert \at(\at(s1, s3), *p) == 1)
+  _(assert \at(s1, \at(\at(\now(),s3), *p)) == 2)
 }
 `
-testcase(18,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\in_state(s1, \in_state(s2, *p))' has no effect
-testcase(19,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\in_state(s2, \in_state(s1, *p))' has no effect
-testcase(20,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\in_state(s1, \in_state(\current_state(), *p))' has no effect
-testcase(23,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\in_state(s1, \in_state(s3, *p))' has no effect
-testcase(25,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\in_state(s1, \in_state(\in_state(\current_state(),s3), *p))' has no effect
+testcase(18,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(s2, *p))' has no effect
+testcase(19,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s2, \at(s1, *p))' has no effect
+testcase(20,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(\now(), *p))' has no effect
+testcase(23,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(s3, *p))' has no effect
+testcase(25,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(\at(\now(),s3), *p))' has no effect
 Verification of foo succeeded.
 `
 `/newsyntax
 #include "vcc.h"
 
-#define unchanged_s(s,e) (\in_state((s),e)==(e))
+#define unchanged_s(s,e) (\at((s),e)==(e))
 
 _(ghost struct X {
-	_(ghost \state s;)
-	int a;
+  _(ghost \state s;)
+  int a;
 };)
 
 void foo(int *y)
@@ -131,7 +131,7 @@ void foo(int *y)
 
 `
 Verification of foo failed.
-testcase(13,29) : error VC9500: Assertion '\in_state((x.s),*y)==(*y)' did not verify.
+testcase(13,29) : error VC9500: Assertion '\at((x.s),*y)==(*y)' did not verify.
 `
 `/newsyntax
 #include <vcc.h>

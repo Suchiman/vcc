@@ -99,7 +99,7 @@ void commonHandledPatterns(struct Mgr *m)
   _(assert \forall unsigned i; i < len ==> perm[i] < len && buf2[perm[i]] == buf[i])
 
   // buf@s0*perm = buf
-  _(assert \forall unsigned i; i < len ==> perm[i] < len && \in_state(s0, buf[perm[i]]) == buf[i])
+  _(assert \forall unsigned i; i < len ==> perm[i] < len && \at(s0, buf[perm[i]]) == buf[i])
 
   // uniqueness, for map and array
   _(assert \forall unsigned i, j; i < j && j < len ==> perm[i] != perm[j])
@@ -131,7 +131,7 @@ testcase(15,29) : warning VC9122: inferred triggers: {\mine(n)} {:lemma \mine(n)
 testcase(30,26) : warning VC9122: inferred triggers: {(&)buf[i], (&)buf[j]} for '\forall unsigned i, j; i < j && j < len ==> buf[i] <= buf[j])'
 testcase(31,26) : warning VC9122: inferred triggers: {perm[i], perm[j]} for '\forall unsigned i, j; i < j && j < len ==> perm[i] <= perm[j])'
 testcase(34,26) : warning VC9122: inferred triggers: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len && buf2[perm[i]] == buf[i])'
-testcase(37,26) : warning VC9122: inferred triggers: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len && \in_state(s0, buf[perm[i]]) == buf[i])'
+testcase(37,26) : warning VC9122: inferred triggers: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len && \at(s0, buf[perm[i]]) == buf[i])'
 testcase(40,26) : warning VC9122: inferred triggers: {perm[i], perm[j]} for '\forall unsigned i, j; i < j && j < len ==> perm[i] != perm[j])'
 testcase(41,26) : warning VC9122: inferred triggers: {(&)buf[i], (&)buf[j]} for '\forall unsigned i, j; i < j && j < len ==> buf[i] != buf[j])'
 testcase(44,26) : warning VC9122: inferred triggers: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len)'

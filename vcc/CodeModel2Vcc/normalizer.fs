@@ -812,34 +812,36 @@ namespace Microsoft.Research.Vcc
     let normalizeNewSyntax = 
   
       let newToOldFn = Map.ofList [ 
-                                    "\\mine",                "_vcc_keeps";
-                                    "\\embedding",           "_vcc_emb";
-                                    "\\ghost",               "_vcc_is_ghost_ptr";
-                                    "\\fresh",               "_vcc_is_fresh";
-                                    "\\thread_local",        "_vcc_thread_local2";
-                                    "\\thread_local_array",  "_vcc_is_thread_local_array";
-                                    "\\mutable_array",       "_vcc_is_mutable_array";
-                                    "\\claims_object",       "_vcc_claims_obj";
-                                    "\\claimable",           "_vcc_is_claimable";
-                                    "\\make_claim",          "_vcc_claim";
-                                    "\\destroy_claim",       "_vcc_unclaim";
-                                    "\\active_claim",        "_vcc_valid_claim";
-                                    "\\atomic_object",       "_vcc_is_atomic_obj";
-                                    "\\universe",            "_vcc_set_universe"; 
-                                    "\\by_claim_wrapper",    "_vcc_by_claim";
-                                    "\\unwrapped",           "_vcc_mutable";
-                                    "\\alloc",               "_vcc_spec_alloc";
-                                    "\\alloc_array",         "_vcc_spec_alloc_array";
-                                    "\\heap_alloc",          "_vcc_alloc";
-                                    "\\when_claimed_marker", "_vcc_when_claimed";
-                                    "\\extent_fresh",        "_vcc_extent_is_fresh";
-                                    "\\malloc_root",         "_vcc_is_malloc_root";
-                                    "\\object_root",         "_vcc_is_object_root";
+                                    "\\at",                  "_vcc_in_state"
+                                    "\\now",                 "_vcc_current_state"
+                                    "\\mine",                "_vcc_keeps"
+                                    "\\embedding",           "_vcc_emb"
+                                    "\\ghost",               "_vcc_is_ghost_ptr"
+                                    "\\fresh",               "_vcc_is_fresh"
+                                    "\\thread_local",        "_vcc_thread_local2"
+                                    "\\thread_local_array",  "_vcc_is_thread_local_array"
+                                    "\\mutable_array",       "_vcc_is_mutable_array"
+                                    "\\claims_object",       "_vcc_claims_obj"
+                                    "\\claimable",           "_vcc_is_claimable"
+                                    "\\make_claim",          "_vcc_claim"
+                                    "\\destroy_claim",       "_vcc_unclaim"
+                                    "\\active_claim",        "_vcc_valid_claim"
+                                    "\\atomic_object",       "_vcc_is_atomic_obj"
+                                    "\\universe",            "_vcc_set_universe" 
+                                    "\\by_claim_wrapper",    "_vcc_by_claim"
+                                    "\\unwrapped",           "_vcc_mutable"
+                                    "\\alloc",               "_vcc_spec_alloc"
+                                    "\\alloc_array",         "_vcc_spec_alloc_array"
+                                    "\\heap_alloc",          "_vcc_alloc"
+                                    "\\when_claimed_marker", "_vcc_when_claimed"
+                                    "\\extent_fresh",        "_vcc_extent_is_fresh"
+                                    "\\malloc_root",         "_vcc_is_malloc_root"
+                                    "\\object_root",         "_vcc_is_object_root"
                                   ]
 
-      let newToOldType = Map.ofList [ "\\objset", "ptrset";
-                                      "\\state",  "state_t";
-                                      "\\type",   "typeid_t";
+      let newToOldType = Map.ofList [ "\\objset", "ptrset"
+                                      "\\state",  "state_t"
+                                      "\\type",   "typeid_t"
                                       "\\thread_id", "thread_id" ]
 
       let fnMap = new Dict<_,_>()

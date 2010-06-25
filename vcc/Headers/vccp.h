@@ -81,10 +81,10 @@ _(bool \not_shared(\object);)
 _(bool \malloc_root(\object);)
 _(bool \object_root(\object);)
 
-_(template<typename T> T \in_state(\state, T expr);)
-_(\state \current_state();)
-_(logic template<typename T> T \by_claim(\claim c, T expr) = \in_state(\by_claim_wrapper(c), expr);)
-_(logic template<typename T> T \when_claimed(T expr) = \in_state(\when_claimed_marker(), expr);)
+_(template<typename T> T \at(\state, T expr);)
+_(\state \now();)
+_(logic template<typename T> T \by_claim(\claim c, T expr) = \at(\by_claim_wrapper(c), expr);)
+_(logic template<typename T> T \when_claimed(T expr) = \at(\when_claimed_marker(), expr);)
 
 // built-in fields
 
