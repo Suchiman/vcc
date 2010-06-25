@@ -24,6 +24,8 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
   let quantVarSet = gdict()
   do for v in quantVars do quantVarSet.[v] <- true
 
+  // TODO: It would be good to make this match the {:level ...} directive.
+
   // -1 : never use it
   //  0 : uses arithmetic (see below)
   //  1 : only as last resort
