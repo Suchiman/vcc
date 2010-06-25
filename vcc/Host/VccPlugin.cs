@@ -107,12 +107,12 @@ namespace Microsoft.Research.Vcc
 
       if (parent.options.AggressivePruning) {
         var decls = TransUtil.pruneBy(env, funcName, currentDecls);
-        var boogieDecls = Translator.translate(funcName, env, decls);
+        var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude, decls);
         if (!env.ShouldContinue) return VerificationResult.UserError;
         PrepareBoogie(boogieDecls);
       } else {
         if (currentBoogie == null) {
-          var boogieDecls = Translator.translate(null, env, currentDecls);
+          var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
           if (!env.ShouldContinue) return VerificationResult.UserError;
           PrepareBoogie(boogieDecls);
         }
@@ -241,7 +241,7 @@ namespace Microsoft.Research.Vcc
 
     public override void DumpInternalsToFile(string fn, bool generate) {
       if (generate) {
-        var boogieDecls = Translator.translate(null, env, currentDecls);
+        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
         PrepareBoogie(boogieDecls);
       }
       using (TokenTextWriter writer = new TokenTextWriter(Path.ChangeExtension(fn, (bplFileCounter++).ToString() + ".bpl")))
@@ -380,7 +380,7 @@ namespace Microsoft.Research.Vcc
         if (env.Options.AggressivePruning && env.Options.Functions.Count > 0) {
           decls = TransUtil.pruneBy(env, env.Options.Functions[0], decls);
         }
-        var boogieDecls = Translator.translate(null, env, decls);
+        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, decls);
         var p = TranslateToBoogie(env, boogieDecls);
         if (env.ShouldContinue) {
           try {

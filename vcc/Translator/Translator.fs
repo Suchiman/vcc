@@ -17,6 +17,8 @@ namespace Microsoft.Research.Vcc
   module B = Microsoft.Research.Vcc.BoogieAST
   module IF = Microsoft.Research.Vcc.InformationFlow
   
+  type MyFunc<'a> = delegate of unit -> 'a
+
   module Translator =
     type ClaimContext =
       {
@@ -117,12 +119,13 @@ namespace Microsoft.Research.Vcc
       stateId <- stateId + 1
       ([B.Stmt.VarDecl ((oldState, tpState), None);
         B.Stmt.Assign (er oldState, bState)], er oldState)
-    
-    let translate functionToVerify (helper:Helper.Env) decls =
+
+    let translate functionToVerify (helper:Helper.Env) (getPrelude:MyFunc<Microsoft.Boogie.Program>) decls =
       let ctx = TranslationState(helper)
       let helper = ctx.Helper
       let cev = CEV(ctx)
       let bv = BvTranslator(ctx)
+      let preludeBodies = lazy (ToBoogieAST.getFunctionExapnsions (getPrelude.Invoke()))
       
       let toTypeId = ctx.ToTypeId
       let castFromInt = ctx.CastFromInt
@@ -423,7 +426,7 @@ namespace Microsoft.Research.Vcc
                       false
                     | _ -> true
                 let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
-                let (body, triggers) = TriggerInference(helper, c.Token, invMapping, vars).Run (body, List.map selfs q.Triggers)
+                let (body, triggers) = TriggerInference(helper, preludeBodies, c.Token, invMapping, vars).Run (body, List.map selfs q.Triggers)
                 match q.Kind with
                   | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", body)
                   | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", body)
@@ -549,6 +552,12 @@ namespace Microsoft.Research.Vcc
               bCall "$in_vdomain_lab" ((selfs args) @ [er (trInvLabel "public")])
           | "_vcc_sk_hack", [e] ->
             bCall "sk_hack" [self e]
+          | "trigger_hint", [e] ->
+            bCall "sk_hack" [bCall "$instantiate_int" [ctx.CastToInt (ctx.TrType e.Type) (self e)]]
+
+          // trigger inference will delete this guy
+          | "trigger_level", [e] ->
+            bCall "trigger_level" [self e]
             
           | ("_vcc_set_in"|"_vcc_set_in0"), [p; C.Macro (_, "_vcc_owns", _)] ->
             match p.Type with

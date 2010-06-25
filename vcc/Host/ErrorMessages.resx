@@ -148,7 +148,7 @@
 /xml                           Use XML format output.
 /z3:&lt;z3 option list&gt;           Options to pass on to Z3 (Short form: /z)
 /infertriggers[+|-]            Infer quantifier trigger annotations in VCC, not in SMT solver (Short form: /it)
-/dumptriggers:&lt;n&gt;              1-report inferred triggers, 2-report also when explicit triggers are present, 3-include Boogie form, 4-debug (Short form: /dt)</value>
+/dumptriggers:&lt;n&gt;              1-report inferred triggers, 2-report results for different {:level}s, 3-report also when explicit triggers are present, 4-include Boogie form, 5-debug (Short form: /dt)</value>
   </data>
   <data name="Version" xml:space="preserve">
     <value>Microsoft Research Vcc Version {0}
