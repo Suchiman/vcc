@@ -166,5 +166,10 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     IllegalUseOfUndefinedType,
 
+    /// <summary>
+    /// Quantifier without variables.
+    /// </summary>
+    NoQuantifiedVariables,
+
   }
 }
