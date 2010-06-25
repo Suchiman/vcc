@@ -434,6 +434,34 @@ namespace Microsoft.Research.Vcc
       deepMapExpressions doFixQuantifiers
         
     // ============================================================================================================
+
+    let handleTriggerHints self = 
+      let getLabel = function
+        | Macro (_, "labeled_expr", [Label (_, n); e]) -> Some (n.Name, e)
+        | _ -> None
+      let isLabeled = getLabel >> Option.isSome
+      let fixOneTrigger = function
+        | x :: xs ->
+          if List.exists isLabeled xs then
+            helper.Error (x.Token, 0, "only the first expression in trigger is allowed to have label")
+          match getLabel x with
+            | Some ("hint", x) ->
+              (x :: xs) |> List.map (fun e -> [Expr.Macro (e.Common, "trigger_hint", [e])])
+            | Some ("level", (IntLiteral (_, n) as e)) when xs.IsEmpty ->
+              [[Expr.Macro (x.Common, "trigger_level", [e])]]
+            | Some (name, e) ->
+              helper.Error (x.Token, 0, "unrecongized quantifier trigger hint")
+              []
+            | None ->
+              [x :: xs]
+        | [] -> die()
+              
+      function
+        | Expr.Quant (ec, q) ->
+          Some (Expr.Quant (ec, { q with Triggers = List.collect fixOneTrigger q.Triggers; Body = self q.Body}))
+        | _ -> None
+
+    // ============================================================================================================
     
     let normalizeWrites decls =
       let fixOne (e:Expr) =
@@ -1023,6 +1051,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-atomic-ops", Helper.Expr normalizeAtomicOperations)
     helper.AddTransformer ("norm-skinny-expose", Helper.Expr normalizeSkinnyExpose)
     helper.AddTransformer ("norm-misc", Helper.Decl miscNorm)
+    helper.AddTransformer ("norm-quant-triggers", Helper.Expr handleTriggerHints)
     helper.AddTransformer ("deep-split-conjunctions", Helper.Expr deepSplitConjunctions)
     helper.AddTransformer ("split-assertions", Helper.Expr splitConjunctionsInAssertions)
     helper.AddTransformer ("norm-writes", Helper.Decl normalizeWrites)

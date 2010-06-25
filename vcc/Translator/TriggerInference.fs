@@ -17,8 +17,8 @@ open System
 module C = Microsoft.Research.Vcc.CAST
 module B = Microsoft.Research.Vcc.BoogieAST
 
-type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,list<C.Expr>>, quantVars:list<B.Var>) =
-  let dbg = helper.Options.DumpTriggers >= 4
+type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>, quantTok:Token, invMapping:Dict<B.Expr,list<C.Expr>>, quantVars:list<B.Var>) =
+  let dbg = helper.Options.DumpTriggers >= 5
   let maxQuality = 4
   let quantVars = List.map fst quantVars // we don't care about the type
   let quantVarSet = gdict()
@@ -181,7 +181,31 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
     l.Clear()
     l.AddRange tmp
 
+  let expandBody (expr:B.Expr) =
+    let functions = gdict()
+    for f in bodies.Value do
+      functions.[f.Name] <- f
+
+    let visited = gdict()
+    let rec visit expr =
+      let rec self (expr:B.Expr) = expr.Map visit
+      if visited.ContainsKey expr then
+        match expr with
+          | B.Expr.FunctionCall (name, args) ->
+            match functions.TryGetValue name with
+              | true, f -> Some (f.Expand (List.map self args))
+              | _ -> None
+          | _ -> None
+      else
+        visited.Add (expr, true)
+        let res = self expr
+        invMapping.[res] <- (lookupWithDefault invMapping [] res) @ (lookupWithDefault invMapping [] expr)
+        Some res
+
+    expr.Map visit
+       
   let doInfer (body:B.Expr) =
+    let body = expandBody body
     let resTrig = glist[]
 
     let candidates = glist[]
@@ -200,33 +224,30 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
     let willLoop tr =
       let isHigh = function
         | Some m ->
-          if dbg then Console.WriteLine ("check subst: " + substToString (Some m))
+          if helper.Options.DumpTriggers >= 10 then Console.WriteLine ("check subst: " + substToString (Some m))
           Map.exists (fun _ -> function B.Expr.Ref _ -> false | _ -> true) m
         | None -> false
       Seq.exists (fun (t, _, _) -> isHigh (matchExpr Map.empty (tr, t))) candidates
       
-    let rec inferAtQual qual =
-      body.Map getSubterms |> ignore
-      if dbg then Console.WriteLine ("infer: {0} @{1}", quantTok.Value, qual)
-      for (tr, vs, q) in candidates do
-        if List.forall vs.ContainsKey quantVars && q >= qual then
-          if dbg then Console.WriteLine ("cand: {0}", tr)
-          if willLoop tr then ()
-          else
-            resTrig.Add [tr]
-      if resTrig.Count = 0 && qual > 1 then // exclude arithmetic here
-        inferAtQual (qual - 1)
-      else
-        transformGList (removeSubsumed >> addSkHack) resTrig
-    inferAtQual maxQuality
+    body.Map getSubterms |> ignore
+    if dbg then Console.WriteLine ("infer: {0}", quantTok.Value)
+    for (tr, vs, q) in candidates do
+      if List.forall vs.ContainsKey quantVars then
+        if dbg then Console.WriteLine ("  cand: {0} q:{1}", tr, q)
+        if willLoop tr then ()
+        elif q >= 0 then
+          resTrig.Add (q, [tr])
 
-    let usedQualZero = ref false
-    if resTrig.Count = 0 then
+    let strigQual = 
+      if resTrig.Count = 0 then -1
+      else fst (Seq.maxBy fst resTrig)
+
+    if strigQual <= 0 then
       let coveredVars = gdict()
 
       let rec loop mtrig =
         if coveredVars.Count = quantVarSet.Count then
-          resTrig.Add (List.rev mtrig)
+          resTrig.Add (1, List.rev mtrig)
         else
           let checkCandidate cur (tr, (vs:Dict<_,_>), q) =
             let addedVars = Seq.filter (fun v -> not (coveredVars.ContainsKey v)) vs.Keys |> Seq.length
@@ -239,26 +260,20 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
             else cur
           match Seq.fold checkCandidate None candidates with
             | Some (tr, q, av, vs) ->
-              if q = 0 then usedQualZero := true
-              if dbg then Console.WriteLine ("add multi: {0} q:{1} v:{2}", tr, q, av)
-              for k in vs.Keys do coveredVars.[k] <- true
-              loop (tr :: mtrig)
+              if q <= strigQual then ()
+              else
+                if dbg then Console.WriteLine ("add multi: {0} q:{1} v:{2}", tr, q, av)
+                for k in vs.Keys do coveredVars.[k] <- true
+                loop (tr :: mtrig)
             | None -> ()
       loop []
 
-    let finalRes = resTrig |> Seq.toList
-
-    // if the multi-trigger used some bad term inside, try to see if there are any single-triggers
-    // with bad terms
-    if !usedQualZero then
-      resTrig.Clear()
-      inferAtQual 0
-      if resTrig.Count > 0 then
-        resTrig |> Seq.toList
-      else
-        finalRes
-    else
-      finalRes
+    resTrig |> 
+      Seq.groupBy fst |> 
+      Seq.map (fun (q, l) -> (q, l |> Seq.map snd |> removeSubsumed |> addSkHack |> Seq.toList)) |> 
+      Seq.sortBy fst |>       
+      Seq.toList |>
+      List.rev
 
   // the nested ptr_cast(ptr(...)) gets into triggers and causes trouble later
   let rec stripPtrCast (expr:B.Expr) = 
@@ -269,22 +284,17 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
     expr.Map aux
 
   let fixupTrigger trigger =
-    let rec doFixupTrigger expr =
-      let self (expr:B.Expr) = expr.Map doFixupTrigger
-      match expr with
-        | B.Expr.FunctionCall ("$typed2", [S; p; _]) -> Some (self (B.Expr.FunctionCall ("$typed", [S; p])))
-        | _ -> None
-    List.map (fun expr -> (stripPtrCast expr).Map doFixupTrigger) trigger
+    List.map stripPtrCast trigger
    
-  let dumpTriggers = function
-    | [] ->
+  let dumpTriggers  = function
+    | ((_, []), _) ->
       helper.Warning (quantTok, 9121, "failed to infer triggers for '" + quantTok.Value + "'")
-    | newTrig when helper.Options.DumpTriggers >= 1 ->
+    | ((qual, chosen), rest) when helper.Options.DumpTriggers >= 1 ->
       let trToRawString tr = "{" + (List.map (fun t -> t.ToString ()) (fixupTrigger tr) |> String.concat ", ") + "}"
       let trToString tr = 
         let rec exprToStr = function
           | B.Expr.FunctionCall ("sk_hack", [e]) ->
-            ":lemma " + exprToStr e
+            ":hint " + exprToStr e
           | e ->
             match invMapping.TryGetValue e with
               | true, x :: _ ->
@@ -297,28 +307,54 @@ type TriggerInference(helper:Helper.Env, quantTok:Token, invMapping:Dict<B.Expr,
                     if v = "" then "<<" + e.ToString() + ">>" else v
               | _ -> "<<" + (fixupTrigger [e]).Head.ToString() + ">>" // this shouldn't happen
         "{" + (List.map exprToStr tr |> String.concat ", ") + "}"
+      let lev n = " at {:level " + (maxQuality - n).ToString() + "}"
       // this isn't really a warning, but this way it will automatically show up in VS and friends
-      helper.Warning (quantTok, 9122, "inferred triggers: " + String.concat " " (Seq.map trToString newTrig) + " for '" + quantTok.Value + "'")
-      if helper.Options.DumpTriggers >= 3 then
-        helper.Warning (quantTok, 9123, "raw inferred triggers: " + String.concat " " (Seq.map trToRawString newTrig))
+      let spConcat f l = String.concat " " (Seq.map f l)
+      helper.Warning (quantTok, 9122, "inferred triggers" + lev qual + ": " + spConcat trToString chosen + " for '" + quantTok.Value + "'")
+      if helper.Options.DumpTriggers >= 2 && rest <> [] then
+        let possibly = List.map (fun (q, trigs) -> lev q + ": " + spConcat trToString trigs) rest
+        helper.Warning (quantTok, 9122, "could have inferred" + String.concat ", " possibly)
+      if helper.Options.DumpTriggers >= 4 then
+        helper.Warning (quantTok, 9123, "raw inferred triggers: " + spConcat trToRawString chosen)
     | _ -> ()
   
-  let isntSkHack = function
+  let isRealTrigger = function
     | [B.Expr.FunctionCall ("sk_hack", _)] -> false
     | _ -> true
 
   member this.Run (body, triggers) = 
+    let level = ref 0
+    let shouldKeep = function
+      | [B.Expr.FunctionCall ("trigger_level", [B.Expr.IntLiteral n])] ->
+        level := (int) n
+        false
+      | _ -> true
+    let triggers = List.filter shouldKeep triggers
+    let selected = 
+      let minQuality = maxQuality - !level
+      function
+        | [] -> (-1, []), []
+        // these don't meet the criteria, but we have to select something
+        | (n, lst) :: rest when n <= minQuality ->
+          (n, lst), rest
+        | lst ->
+          let rec aux n acc = function
+            | (n, lst) :: rest when n >= minQuality ->
+              aux n (acc @ lst) rest
+            | rest -> (n, acc), rest
+          aux 0 [] lst
+
     let newBody = stripPtrCast body
     let triggers =
       if helper.Options.InferTriggers then
-        if (List.filter isntSkHack triggers).IsEmpty then
-          let newTrig = doInfer body
-          dumpTriggers newTrig
+        if (List.filter isRealTrigger triggers).IsEmpty then
+          let ((_, newTrig), _) as toDump = selected (doInfer body)
+          dumpTriggers toDump
           triggers @ List.map fixupTrigger newTrig
         else
-          if helper.Options.DumpTriggers >= 2 then
+          if helper.Options.DumpTriggers >= 3 then
             // still infer and ignore the results
-            dumpTriggers (doInfer body)
+            dumpTriggers (selected (doInfer body))
           triggers
       else
         triggers

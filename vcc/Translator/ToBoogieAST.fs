@@ -139,6 +139,8 @@ namespace Microsoft.Research.Vcc
             | :? Boogie.MapStore -> 
               let ri = List.rev args.Tail
               ArrayUpdate (args.Head, List.rev ri.Tail, ri.Head)
+            | :? Boogie.IfThenElse ->
+              Ite (args.[0], args.[1], args.[2])
             | _ -> failwith ("wrong nary " + nary.ToString())
         | :? Boogie.BvConcatExpr as bvConcat ->
           match [for e in bvConcat.Arguments -> unparse(e :?> Microsoft.Boogie.Expr)] with
@@ -337,3 +339,31 @@ namespace Microsoft.Research.Vcc
             this.Dump "vcopt-bug.bpl" decls
             failwith "something went wrong"
           
+
+
+    type Function =
+      {
+        Name : string
+        Parameters : list<Var>
+        Body : Expr
+      }
+
+      member this.Expand actuals =
+        let subst = gdict()
+        List.iter2 (fun f a -> subst.Add (fst f, a)) this.Parameters actuals
+        this.Body.Map
+          (function
+            | Expr.Ref v when subst.ContainsKey v -> Some subst.[v]
+            | _ -> None)
+              
+    let getFunctionExapnsions (prog:Boogie.Program) =
+      let getBody : Boogie.Declaration -> _ = function
+        | :? Boogie.Function as fn ->
+          if fn.Body <> null then
+            [{ Name = fn.Name
+               Parameters = unVars fn.InParams
+               Body = unparse fn.Body }]
+          else
+            []
+        | _ -> []
+      Seq.collect getBody prog.TopLevelDeclarations |> Seq.toList
