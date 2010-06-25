@@ -3156,6 +3156,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.Skip(Token.LeftParenthesis);
       TokenSet followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart = followers | TS.LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart;
       List<LocalDeclarationsStatement> boundVariables = this.ParseQuantifierBoundVariables(followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart);
+      if (boundVariables.Count == 0) this.HandleError(slb, Error.NoQuantifiedVariables);
       IEnumerable<IEnumerable<Expression>> triggers = this.ParseQuantifierTriggers(followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart);
       Expression condition = this.ParseExpression(followers|Token.RightParenthesis|Token.Semicolon);
       Expression body = null;

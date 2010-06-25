@@ -5,4 +5,15 @@ void foo(struct S *x, struct T y) {
 }
 `
 testcase(3,23) : error VC0000: 'y' : illegal use of undefined type 'T'.
-testcase(4,9) : error VC0000: 'a' : illegal use of type 'void'.`
+testcase(4,9) : error VC0000: 'a' : illegal use of type 'void'.
+`
+#include "vcc.h"
+
+struct Foo {
+   unsigned N;
+   invariant(0 < N);
+   invariant(forall(true)); 
+};
+`
+testcase(6,16) : error VC0000: Quantifier without variables.
+`

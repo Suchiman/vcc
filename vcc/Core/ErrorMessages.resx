@@ -3673,4 +3673,7 @@
   <data name="IllegalUseOfUndefinedType" xml:space="preserve">
     <value>'{0}' : illegal use of undefined type '{1}'.</value>
   </data>
+  <data name="NoQuantifiedVariables" xml:space="preserve">
+    <value>Quantifier without variables.</value>
+  </data>
 </root>
