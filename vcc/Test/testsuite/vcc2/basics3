@@ -17,3 +17,23 @@ struct Foo {
 `
 testcase(6,16) : error VC0000: Quantifier without variables.
 `
+#include <vcc.h>
+
+void foo() {
+  const int y;
+  y = 1;
+}
+`
+testcase(5,3) : error VC0000: The left-hand side of an assignment must be a variable, property or indexer.
+`
+#include <vcc.h>
+
+void foo() {
+  int x;
+  const int y = x;
+  x = y;
+  assert(x == y);
+}
+`
+Verification of foo succeeded.
+`
