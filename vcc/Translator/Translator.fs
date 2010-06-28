@@ -2094,7 +2094,7 @@ namespace Microsoft.Research.Vcc
           | C.StructEqualityKind.ShallowEq -> (trStructEq false td) @ forward
           | C.StructEqualityKind.DeepEq -> (trStructEq true td) @ (trStructEq false td) @ forward
         match td.Fields with
-          | [] -> forward
+          //| [] -> forward
           | _ when vcc3 ->
             forward @ 
                [ B.Decl.Axiom inv ] 
