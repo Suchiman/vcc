@@ -200,61 +200,60 @@ module Rules =
 
   let init() =
     let canonicalKw = [
-                        "atomic";
-                        "decreases";
-                        "ensures";
-                        "requires";
-                        "reads";
-                        "writes";
-                        "always";
-                        "maintains";
-                        "returns";
+                        "atomic"
+                        "decreases"
+                        "ensures"
+                        "requires"
+                        "reads"
+                        "writes"
+                        "always"
+                        "maintains"
+                        "returns"
                       ]
 
     let canonicalFn = [
-                        "wrapped";
-                        "wrapped0";
-                        "thread_local";
-                        "span";
-                        "extent";
-                        "inv";
-                        "inv2";
-                        "old";
-                        "match_long";
-                        "match_ulong";                  
-                        "array_range";      
-                        "start_here";
-                        "depends";
-                        "not_shared";
-                        "claims";
-                        "unchanged";
-                        "claims_claim";
-                        "when_claimed";
-                        "account_claim";
-                        "extent_zero";
-                        "full_extent";
-                        "extent_mutable";
-                        "approves";
-                        "in_state";
-                        "current_state";
+                        "wrapped"
+                        "wrapped0"
+                        "thread_local"
+                        "span"
+                        "extent"
+                        "inv"
+                        "inv2"
+                        "old"
+                        "match_long"
+                        "match_ulong"
+                        "array_range"
+                        "start_here"
+                        "depends"
+                        "not_shared"
+                        "claims"
+                        "unchanged"
+                        "claims_claim"
+                        "when_claimed"
+                        "account_claim"
+                        "extent_zero"
+                        "full_extent"
+                        "mutable"
+                        "extent_mutable"
+                        "approves"
                       ]
 
     let canonicalSm = [
-                        "assert";
-                        "assume";
-                        "wrap";
-                        "unwrap";
-                        "deep_unwrap";
-                        "axiom";
-                        "reads_havoc";
-                        "set_closed_owns";
-                        "union_reinterpret";
-                        "bump_volatile_version";
-                        "begin_update";
-                        "join_arrays";
-                        "split_array";
-                        "from_bytes";
-                        "to_bytes";
+                        "assert"
+                        "assume"
+                        "wrap"
+                        "unwrap"
+                        "deep_unwrap"
+                        "axiom"
+                        "reads_havoc"
+                        "set_closed_owns"
+                        "union_reinterpret"
+                        "bump_volatile_version"
+                        "begin_update"
+                        "join_arrays"
+                        "split_array"
+                        "from_bytes"
+                        "to_bytes"
                       ]
 
     for cw in canonicalKw do addKwRule cw cw
@@ -292,7 +291,6 @@ module Rules =
     addFnRule "valid_claim" "\\active_claim"
     addFnRule "is_claimable" "\\claimable"
     addFnRule "is_fresh" "\\fresh"
-    addFnRule "mutable" "\\unwrapped"
     addFnRule "is_thread_local_array" "\\thread_local_array"
     addFnRule "is_mutable_array" "\\mutable_array"
     addFnRule "unchecked" "_(unchecked)"
@@ -302,6 +300,8 @@ module Rules =
     addFnRule "extent_is_fresh" "\\extent_fresh"
     addFnRule "is_malloc_root" "\\malloc_root"
     addFnRule "is_object_root" "\\object_root"
+    addFnRule "in_state" "\\at"
+    addFnRule "current_state" "\\now"
 
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))

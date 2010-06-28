@@ -10,7 +10,7 @@ _(ghost bool _(pure) swapped(struct S *s, \state s1, \state s2)
   _(returns \at(s1, s->a) == \at(s2, s->b) && \at(s2, s->a) == \at(s1, s->b));)
 
 void foo(struct S *s)
-  _(requires \unwrapped(s))
+  _(requires \mutable(s))
   _(writes \extent(s))
 {
   _(ghost \state s0 = \now();)
@@ -70,7 +70,7 @@ _(assert sf(i).b == 5)
 }
 
 void test3(unsigned int *i)
-_(requires \unwrapped(i) && *i == 5)
+_(requires \mutable(i) && *i == 5)
 {
 _(assert sf(*i).b == 5)
 }

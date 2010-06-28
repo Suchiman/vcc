@@ -114,7 +114,7 @@ void incr(struct A *a, int *res _(ghost \claim c) _(ghost \claim ^cres))
   // and it was not allocated before
   _(ensures \fresh(*cres))
   // we don't free any of our out parameters
-  _(ensures \unwrapped(res) && \unwrapped(cres))
+  _(ensures \mutable(res) && \mutable(cres))
 {
   _(ghost  \claim c1;)
   int val;

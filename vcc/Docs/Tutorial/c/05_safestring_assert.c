@@ -32,7 +32,7 @@ void sstr_append_char(struct SafeString *s, char c)
   s->content[s->len] = '\0';
   
   // _(wrap s), steps 1-3
-  _(assert \unwrapped(s))
+  _(assert \mutable(s))
   _(assert s->len <= SSTR_MAXLEN &&
            s->content[s->len] == '\0')
   _(ghost s->consistencyFlag = \true;)
@@ -41,4 +41,4 @@ void sstr_append_char(struct SafeString *s, char c)
 /*`
 Verification of SafeString#adm succeeded.
 Verification of sstr_append_char failed.
-testcase(23,25) : error VC8507: Assertion 's->consistencyFlag is writable' did not verify.`*/
+testcase(28,25) : error VC8507: Assertion 's->consistencyFlag is writable' did not verify.`*/
