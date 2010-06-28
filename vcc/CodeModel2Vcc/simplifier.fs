@@ -364,84 +364,69 @@ namespace Microsoft.Research.Vcc
      
     /// Get rid of &&, || -- operators that alter control flow.
     /// Actually FELT translates them all to "ite" (IConditional) nodes.
-    let rec doRemoveLazyOps inSpecBlock keepKnown ctx self = 
-      let assertFalse cond expectedValue = Expr.MkAssert (Expr.BoolLiteral (afmte 8533 "{0} has the value {1} specified by known(...)" [cond; expectedValue], false))
-      let selfs = List.map self
-      function
-      | Macro (c, "ite", [cond; th; el]) when not ctx.IsPure ->
-        let varKind =
-          match exprDependsOnSpecExpr th, exprDependsOnSpecExpr el with
-            | None, None when not inSpecBlock  -> VarKind.Local
-            | _,_ -> VarKind.SpecLocal
-        
-        let c' = { c with Type = Void }
-        let tmp = getTmp helper "ite" c.Type varKind
-        let tmpRef = Expr.Ref (c, tmp)
-        let thAssign = Macro (c', "=", [tmpRef; th])
-        let elAssign = Macro (c', "=", [tmpRef; el])
+    let removeLazyOps = 
 
-        let cond', th', el' =
-          match cond with
-            | Cast(_,_, Macro(_, "_vcc_known", [cond'; expectedValue]))
-            | Macro(_, "_vcc_known", [cond'; expectedValue]) ->
-              match expectedValue with 
-                | BoolLiteral(_, true) -> cond', thAssign, assertFalse cond' expectedValue
-                | BoolLiteral(_, false) -> cond', assertFalse cond' expectedValue, elAssign
-                | _ -> helper.Oops(expectedValue.Token, "unexpected value in known(...)"); die()
-            | Macro(_, "_vcc_known", _) ->
-              helper.Oops(cond.Token, "unexpected use of known(...)"); die()
-            | _ -> cond, thAssign, elAssign
-            
-        let write = Expr.If (c', None, cond', th', el')
-        addStmtsOpt [VarDecl (c', tmp); self write] tmpRef
-      | If(c, cl, cond, th, el) ->
-          match cond with
-            | Cast(_,_, Macro(_, "_vcc_known", [cond'; expectedValue]))
-            | Macro(_, "_vcc_known", [cond'; expectedValue]) ->
-              match expectedValue with 
-                | BoolLiteral(_, true) -> Some(If(c, cl, cond', self th, assertFalse cond' expectedValue))
-                | BoolLiteral(_, false) -> Some(If(c, cl, cond', assertFalse cond' expectedValue, self el))
-                | _ -> helper.Oops(expectedValue.Token, "unexpected value in known(...)"); die()
+      let splitKnown = function
+        | Expr.Macro(_, "_vcc_known'", expr :: asserts) -> expr, asserts
+        | Expr.Cast(c, cs, Expr.Macro(_, "_vcc_known'", expr :: asserts)) -> expr, asserts
+        | expr -> expr, []
+
+      let rec doRemoveLazyOps inSpecBlock keepKnown ctx self = 
+        let selfs = List.map self
+        function
+        | Macro (c, "ite", [cond; th; el]) when not ctx.IsPure ->
+          let varKind =
+            match exprDependsOnSpecExpr th, exprDependsOnSpecExpr el with
+              | None, None when not inSpecBlock  -> VarKind.Local
+              | _,_ -> VarKind.SpecLocal
+        
+          let c' = { c with Type = Void }
+          let tmp = getTmp helper "ite" c.Type varKind
+          let tmpRef = Expr.Ref (c, tmp)
+          let thAssign = Macro (c', "=", [tmpRef; th])
+          let elAssign = Macro (c', "=", [tmpRef; el])          
+          let write = Expr.If (c', None, cond, thAssign, elAssign)
+          addStmtsOpt [VarDecl (c', tmp); self write] tmpRef
+        | If(c, cl, cond, th, el) ->
+          match splitKnown cond with
+            | (Cast(_, _, BoolLiteral(_, true))  | BoolLiteral(_, true)),  asserts -> Some(Expr.MkBlock(asserts @  [self th]))
+            | (Cast(_, _, BoolLiteral(_, false)) | BoolLiteral(_, false)), asserts -> Some(Expr.MkBlock(asserts @  [self el]))
             | _ -> None     
-      | Macro (wtok, "doUntil", [Macro (lc, "loop_contract", conds); body; cond]) ->
-        // special treatment for the condition of doUntil so that we re-visit the 'known' annotation once we have desugared the loop 
-        Some(Macro(wtok, "doUntil", [Macro(lc, "loop_contract", selfs conds); self body; cond.SelfCtxMap(false, doRemoveLazyOps false true)]))
-      | Macro(_, "_vcc_known", [e; _]) when not keepKnown -> Some(self e)
-      | Macro(ec, "spec", args) -> Some(Macro(ec, "spec", List.map (fun (e:Expr) -> e.SelfCtxMap(ctx.IsPure, doRemoveLazyOps true false)) args))
-      | _ -> None
+        | Macro (wtok, "doUntil", [Macro (lc, "loop_contract", conds); body; cond]) ->
+          // special treatment for the condition of doUntil so that we re-visit the 'known' annotation once we have desugared the loop 
+          Some(Macro(wtok, "doUntil", [Macro(lc, "loop_contract", selfs conds); self body; cond.SelfCtxMap(false, doRemoveLazyOps false true)]))
+        | Macro(ec, "spec", args) -> Some(Macro(ec, "spec", List.map (fun (e:Expr) -> e.SelfCtxMap(ctx.IsPure, doRemoveLazyOps true false)) args))
+        | _ -> None
     
-    let propagateKnownValue ctx self = function
-      | Expr.Macro(c, "ite", [cond; th; el]) when not ctx.IsPure ->
-        let cond' = self cond
-        let ite = Expr.Macro(c, "ite", [cond'; self th; self el])
-        match cond' with
-          | Cast(_,_, Macro(_, "_vcc_known", [cond'; expectedValue]))
-          | Macro(_, "_vcc_known", [cond'; expectedValue]) ->
-            let knownValue = 
-              match expectedValue with 
-                | BoolLiteral(_, true) -> 
-                  match th with
-                    | Cast(_,_, ((BoolLiteral _) as b))
-                    | (BoolLiteral(_, _) as b) -> Some b
-                    | _ -> None
-                | BoolLiteral(_, false) ->
-                  match el with
-                    | Cast(_,_, ((BoolLiteral _) as b))
-                    | (BoolLiteral(_, _) as b) -> Some b
-                    | _ -> None
-                | _ -> helper.Oops(expectedValue.Token, "unexpected value in known(...)"); die()
-            
-            match knownValue with
-              | None -> Some(ite)
-              | Some b -> Some(Expr.Macro(c, "_vcc_known", [ite; b]))
-          | _ -> Some(ite)
-      | Expr.Prim(ec, (Op("!", _) as op), [expr]) ->
-        match self expr with
-          | Macro(ec, "_vcc_known", [e; BoolLiteral(bc, bv)]) -> Some(Macro(ec, "_vcc_known", [Expr.Prim(e.Common, op, [e]); BoolLiteral(bc, not bv)]))
-          | expr' -> Some(Expr.Prim(ec, op, [expr']))
-      | _ -> None
+      let propagateKnownValue ctx self = 
+        let assertEq cond expectedValue = Expr.MkAssert (Expr.Prim (afmte 8533 "{0} has the value {1} specified by known(...)" [cond; expectedValue], Op("==", CheckedStatus.Unchecked), [cond; expectedValue]))
+        function
+        | Expr.Macro(c, "_vcc_known", [expr; knownValue]) when not ctx.IsPure ->
+          let e, ea = splitKnown (self expr)
+          let k, ka = splitKnown (self knownValue)
+          let e' = if e.Type = Type.Bool then e else Expr.Cast({e.Common with Type = Type.Bool}, CheckedStatus.Unchecked, e)
+          let k' = if k.Type = c.Type then k else Expr.Cast(c, CheckedStatus.Unchecked, k)
+          Some(Expr.Macro(c, "_vcc_known'", k' :: assertEq e' k :: (ea @ ka)))
+        | Expr.Prim(c, (Op("!", _) as op), [arg]) when not ctx.IsPure ->
+          let arg' = self arg
+          match splitKnown arg' with
+            | (Cast(_, _, BoolLiteral(ec, b)) | BoolLiteral(ec, b)), asserts -> Some(Expr.Macro(c, "_vcc_known'", BoolLiteral(ec, not b) :: asserts))
+            | _ -> Some(Expr.Prim(c, op, [arg']))
+        | Expr.Macro(c, "ite", [cond; th; el]) when not ctx.IsPure ->
+          let cond' = self cond
+          let pick e asserts =
+            let e', eAsserts = splitKnown (self e)
+            Some(Expr.Macro(c, "_vcc_known'", Expr.Cast(c, CheckedStatus.Unchecked, e') :: (asserts @ eAsserts)))
+          match splitKnown cond' with
+            | (Cast(_,_, BoolLiteral(_, b)) | BoolLiteral(_, b)), asserts -> if b then pick th asserts else pick el asserts
+            | _ -> Some(Expr.Macro(c, "ite", [cond'; self th; self el]))
+        | _ -> None
                   
-    let removeLazyOps = deepMapExpressionsCtx propagateKnownValue >> deepMapExpressionsCtx (doRemoveLazyOps false false)
+      let eliminateKnown self = function
+        | Expr.Macro(c, "_vcc_known'", e :: asserts) -> Some(self (Expr.MkBlock (asserts @ [e])))
+        | _ -> None
+
+      deepMapExpressionsCtx propagateKnownValue >> deepMapExpressionsCtx (doRemoveLazyOps false false) >> deepMapExpressions eliminateKnown 
     
     // ============================================================================================================
 
@@ -954,7 +939,7 @@ namespace Microsoft.Research.Vcc
             | _ -> not !usedBreak // keep looking
           let body = inBody body
           let branch = If (wtok, None, cond, Goto (wtok, break_lbl), Expr.MkBlock [])
-          let branch = branch.SelfCtxMap(false, doRemoveLazyOps false false)
+          //let branch = branch.SelfCtxMap(false, doRemoveLazyOps false false)
           let res () = mkLoop [ body; Label (wtok, continue_lbl); branch ]
           match cond with
             | Expr.BoolLiteral (_, true) ->

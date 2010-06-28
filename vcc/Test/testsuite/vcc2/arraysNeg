@@ -162,8 +162,7 @@ void setk4(int *p, size_t sz)
 Verification of foo succeeded.
 Verification of setk2 failed.
 testcase(17,5) : error VC8507: Assertion 'p[i] is writable' did not verify.
-Verification of setk4 failed.
-testcase(36,5) : error VC8507: Assertion 'p[i] is writable' did not verify.
+Verification of setk4 succeeded.
 `
 #include "vcc2test.h"
 
@@ -187,8 +186,7 @@ void setk3(int *p, size_t sz)
 }
 
 `
-Verification of setk3 failed.
-testcase(16,5) : error VC8507: Assertion 'p[i] is writable' did not verify.
+Verification of setk3 succeeded.
 `
 #include "vcc.h"
 
