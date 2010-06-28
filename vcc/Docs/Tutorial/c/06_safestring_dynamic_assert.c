@@ -35,10 +35,10 @@ void sstr_append_char(struct SafeString *s, char c)
   s->content[s->len] = '\0';
 
   // _(wrap cont) steps 1-3
-  _(assert \unwrapped(cont) && \inv(cont))
+  _(assert \mutable(cont) && \inv(cont))
   _(ghost cont->consistencyFlag = \true; )
   // _(wrap s) steps 1-3, with transfer in the middle
-  _(assert \unwrapped(s))
+  _(assert \mutable(s))
   _(ghost cont->\owner = s; )
   _(assert \inv(s))
   _(ghost s->consistencyFlag = \true; )

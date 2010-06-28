@@ -857,7 +857,6 @@ namespace Microsoft.Research.Vcc
                                     "\\atomic_object",       "_vcc_is_atomic_obj"
                                     "\\universe",            "_vcc_set_universe" 
                                     "\\by_claim_wrapper",    "_vcc_by_claim"
-                                    "\\unwrapped",           "_vcc_mutable"
                                     "\\alloc",               "_vcc_spec_alloc"
                                     "\\alloc_array",         "_vcc_spec_alloc_array"
                                     "\\heap_alloc",          "_vcc_alloc"
