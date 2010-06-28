@@ -24,18 +24,18 @@ void withSpecAlloc ()
 {
     _(ghost gA^ a;)
     _(ghost a = \alloc<gA>();)
-    _(assert \unwrapped(&a->g[0]))
-    _(assert \unwrapped(&a->g[0].b))
-    _(assert \unwrapped(&a->g[0].b.c)) 
+    _(assert \mutable(&a->g[0]))
+    _(assert \mutable(&a->g[0].b))
+    _(assert \mutable(&a->g[0].b.c)) 
 }
 
 void withMalloc ()
 {
     gA* a = (gA*) malloc(sizeof(gA));
     if (a != NULL) {
-      _(assert \unwrapped(&a->g[0])) 
-      _(assert \unwrapped(&a->g[0].b)) 
-      _(assert \unwrapped(&a->g[0].b.c))
+      _(assert \mutable(&a->g[0])) 
+      _(assert \mutable(&a->g[0].b)) 
+      _(assert \mutable(&a->g[0].b.c))
     }
 }
 
@@ -43,9 +43,9 @@ void withStackAlloc ()
 {
     gA g;
     gA* a = &g;
-    _(assert \unwrapped(&a->g[0]))
-    _(assert \unwrapped(&a->g[0].b))
-    _(assert \unwrapped(&a->g[0].b.c))
+    _(assert \mutable(&a->g[0]))
+    _(assert \mutable(&a->g[0].b))
+    _(assert \mutable(&a->g[0].b.c))
 }
 `
 Verification of withSpecAlloc succeeded.
