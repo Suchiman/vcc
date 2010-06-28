@@ -155,12 +155,15 @@ namespace Microsoft.Research.Vcc
             else [for e in t.Tr -> unparse e] :: doTrig t.Next
           let triggers = doTrig quant.Triggers
           let body = unparse quant.Body
+          let attrs = unparseAttr quant.Attributes
+          let tok = BoogieToken.Strip quant.tok
           if (quant :? Boogie.ExistsExpr) then
-            Exists (BoogieToken.Strip quant.tok, dummies, triggers, unparseAttr quant.Attributes, body)
+            Exists (tok, dummies, triggers, attrs, body)
           else
-            Forall (BoogieToken.Strip quant.tok, dummies, triggers, unparseAttr quant.Attributes, body)
+            Forall (tok, dummies, triggers, attrs, body)
+        | :? Boogie.LambdaExpr as lambda ->
+          Lambda(BoogieToken.Strip lambda.tok, unVars lambda.Dummies, unparseAttr lambda.Attributes, unparse lambda.Body)
         | s -> 
-          //System.Console.WriteLine ("cannot unparse " + s.ToString())
           failwith ("cannot unparse " + s.ToString())
           Expr.Ref "###"      
     

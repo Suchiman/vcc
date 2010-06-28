@@ -108,61 +108,6 @@ void bar()
 `
 testcase(6,12) : error VC0000: The left of '->b' must point to a struct or union.
 `
-#include <vcc.h>
-
-int foo(int i, int j) 
-  requires(i)
-  requires(!j)
-{
-  int k = known(i,true) && known(j,false);
-  return k;
-}
-
-int bar(int i, int j) 
-  requires(!j)
-{
-  int k = known(i,true) && known(j,false);
-  return k;
-}
-
-int baz(int i, int j) 
-  requires(!i)
-  requires(!j)
-{
-  int k = known(i,true) && known(j,false);
-  return k;
-}
-
-int qux(int i, int j)
-  requires(i && !j)
-{
-  int k = known(i, true) && !(known(j, false));
-  assert(k);
-}
-`
-Verification of foo succeeded.
-Verification of bar failed.
-testcase(14,22) : error VC8533: Assertion 'i has the value ((bool)1) specified by known(...)' did not verify.
-Verification of baz failed.
-testcase(22,22) : error VC8533: Assertion 'i has the value ((bool)1) specified by known(...)' did not verify.
-Verification of qux succeeded.
-`
-#include <vcc.h>
-
-void foo() {
-int i = 0;
-do { } while(known(i, false));
-} 
-
-void bar() {
-int i = 1;
-do { } while(known(i, false));
-} 
-`
-Verification of foo succeeded.
-Verification of bar failed.
-testcase(10,25) : error VC8533: Assertion 'i has the value ((bool)0) specified by known(...)' did not verify.
-`
 
 #include <vcc2test.h>
 
