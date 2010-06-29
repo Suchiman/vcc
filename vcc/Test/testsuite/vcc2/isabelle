@@ -1,4 +1,4 @@
-`/b:/prover:Isabelle /b:/proverOpt:ISABELLE_INPUT=dummy.b2i
+`/b:/prover:Isabelle /b:/proverOpt:ISABELLE_INPUT=..\dummy.b2i
 #include <vcc.h>
 void foo() { }
 `
