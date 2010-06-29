@@ -2424,6 +2424,11 @@ axiom (forall S:$state, p:$ptr, #r:int, T:$ctype, sz:int ::
     $in_extent_of(S, p, $ptr($array(T, sz), #r)) <==> 
       p == $ptr($array(T, sz), #r) || $in_array_extent_of(S, p, $ptr(T, #r), T, sz));
 
+axiom (forall p:$ptr, #r:int, T:$ctype, sz:int ::
+   { $in_span_of(p, $ptr($array(T, sz), #r)), $is_primitive(T)}
+    $is_primitive(T) ==>
+      ($in_span_of(p, $ptr($array(T, sz), #r)) <==> $in_array(p, $ptr(T, #r), T, sz)));
+
 function {:inline true} $array_elt_emb(S:$state, p:$ptr, emb:$ptr) returns(bool)
     { $emb(S, p) == emb && !$is_volatile(S, p) && $typed(S, p) }
 
