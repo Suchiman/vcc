@@ -3,10 +3,15 @@
 dir=//risebuild/drops/z32
 
 echo Locating latest version in $dir
-src="$dir/$(ls $dir | grep ^2 | tail -1)/release/z3.exe"
 
-echo Getting $src
-cp $src z3.exe
+latest="$dir/$(ls $dir | grep ^2 | tail -1)"
+z3="$latest/release/z3.exe"
+pdb="$latest/release/z3.pdb"
+
+echo Getting $z3
+cp $z3 z3.exe
+echo Getting $pdb
+cp $pdb z3.pdb
 
 echo Increasing stack size	
 
