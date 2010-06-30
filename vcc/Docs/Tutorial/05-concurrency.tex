@@ -27,7 +27,7 @@ We use a ghost field to hold a reference to the object meant to be protected
 by this lock.
 If you wish to protect multiple objects with a single lock, you can make
 the object referenced by \vcc{protected_obj} own them all.
-The \vcc{locked} filed is annotated with \vcc{volatile}.
+The \vcc{locked} field is annotated with \vcc{volatile}.
 It has the usual meaning for the regular C compiler (\ie it makes the compiler
 assume that the environment might write to that field, outside the knowledge
 of the compiler).

@@ -297,7 +297,7 @@ quantifier.
 \vccInput[linerange={obj-set}]{c/07_table.c}
 
 \noindent
-The invariant of \vcc{struct SafeContainer} states that it owns its underlaying array,
+The invariant of \vcc{struct SafeContainer} states that it owns its underlying array,
 as well as all elements pointed to from it.
 It also states that there are no duplicates in that array.
 Let's now say we want to change a pointer in that array,
@@ -435,7 +435,7 @@ The value of \vcc{r->f} will be preserved unless
 \vcc{r \in \domain(p)},
 because \vcc{f(p)} could have written everything
 in \vcc{\domain(p)} (according to its writes clause).
-Unfortunately, the underlaying logic used by VCC
+Unfortunately, the underlying logic used by VCC
 is not strong enough to show this directly
 (technically: the transitive closure of a relation, ownership in this case, is not
 expressible in first-order logic).
@@ -461,7 +461,7 @@ mention in an invariant.
 Intuitively the invariant of an object should talk about consistent states
 of that very object, not some other objects.
 However, for example the invariant of the \vcc{struct SafeString} 
-talks about the values stored in its underlaying array.
+talks about the values stored in its underlying array.
 This also seems natural: one should be able to mention things
 from the ownership domain of \vcc{p} in \vcc{p}'s invariant.
 
