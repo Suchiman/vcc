@@ -704,3 +704,13 @@ void trg2(unsigned *m, unsigned z)
 Verification of trg succeeded.
 Verification of trg2 succeeded.
 `
+#include "vcc.h"
+
+spec(struct vcc(record) R { int a; };)
+
+void foo() {
+	spec(struct R s = ((struct R) {});)
+}
+`
+Verification of foo succeeded.
+`
