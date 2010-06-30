@@ -25,7 +25,7 @@ void foo(struct A *p)
   writes(&p->a, &p->x)
 {
   p->a = 12;
-  p->x = 13;
+  spec(p->x = 13;)
 }
 `
 Verification of foo succeeded.

@@ -1021,6 +1021,10 @@ namespace Microsoft.Research.Vcc
         | Type.Ref(td) -> td.IsSpec
         | _ -> false
 
+
+      let checkFieldType (f:Field) =
+        if not f.IsSpec && isSpecType f.Type then helper.GraveWarning(f.Token, 9301, "non-specification field '" + f.Name + "' has specification type '" + f.Type.ToString() + "'"); 
+
       let rec checkAccessToSpecFields ctx self = function
         | _ when ctx.IsPure -> 
           false
@@ -1035,7 +1039,7 @@ namespace Microsoft.Research.Vcc
           false
         | Macro(_, "=", [tgt; src]) as assign ->
           match exprDependsOnSpecExpr tgt with
-            | Some _ -> false
+            | Some specThing -> helper.GraveWarning(tgt.Token, 9301, "write to specification " + specThing + " from non-specification code"); false
             | _ -> true
         | Call(cmn, ({IsSpec = true} as fn), _, args) ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification function '" + fn.Name + "' within non-specification code")
@@ -1104,6 +1108,8 @@ namespace Microsoft.Research.Vcc
             if isSpecType fn.RetType then
               helper.GraveWarning(fn.Token, 9301, "non-specification function '" + fn.Name + "' returns value of specification type")
             checkParameterTypes fn
+          | Top.TypeDecl(td) when not td.IsSpec ->
+            List.iter checkFieldType td.Fields
           | _ -> ()
         
       for d in decls do

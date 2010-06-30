@@ -716,6 +716,8 @@ module Microsoft.Research.Vcc.CAST
       Expr.Dot({ec with Type = Type.MkPtr(t, isSpec)}, expr, field)
   
     static member MkDot(expr:Expr, field:Field) = Expr.MkDot(expr.Common, expr, field)
+
+    static member SpecCode(stmt:Expr) = Expr.Macro(stmt.Common, "spec", [stmt])
   
     member x.Common =
       match x with

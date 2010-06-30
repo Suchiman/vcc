@@ -3,7 +3,7 @@
 void foo(spec(out int o)) 
   ensures(o == 5)
 {
-  o = 5;
+  spec(o = 5;)
 }		
 
 void bar() {
@@ -22,7 +22,7 @@ int foo(spec(out int o))
   ensures(o == 5)
   ensures(result == 6)
 {
-  o = 5;
+  spec(o = 5;)
   return 6;
 }		
 
@@ -44,7 +44,7 @@ int foo(int i spec(out int o))
   ensures(o == i)
   ensures(result == 6)
 {
-  o = i;
+  spec(o = i;)
   return 6;
 }		
 
@@ -67,8 +67,8 @@ int foo(spec(out int o) spec(out int o1))
   ensures(o1 == 7)
   ensures(result == 6)
 {
-  o = 5;
-  o1 = 7;
+  spec(o = 5;)
+  spec(o1 = 7;)
   return 6;
 }		
 
@@ -92,7 +92,7 @@ Verification of bar succeeded.
 void foo(spec(out int o)) 
   ensures(o == 5)
 {
-  o = 5;
+  spec(o = 5;)
 }
 
 void bar(spec(out int o)) 
@@ -142,7 +142,7 @@ void foo(int * x spec(out int o))
   ensures(o == 5)
   out_param(x)
 {
-spec(  o = 5; )
+  spec(o = 5;)
 }
 
 void bar()
@@ -202,20 +202,20 @@ testcase(12,55) : error VC9676: duplicate out parameter 'z'
 `
 #include <vcc.h>
 
-int foo(int x, int y spec(out int o1) spec(out int o2))
-  ensures(o1 == x && o2 == y)
+spec(int foo(int x, int y spec(out int o1) spec(out int o2))
+  ensures(o1 == x && o2 == y && result == 0)
 {
-  spec(o1 = x; o2 = y; )
-}
+  spec(o1 = x; o2 = y;)
+})
 
 void bar()
 {
   spec(int z;)
   spec(int y;)
-  z = foo(1, 2 spec(out z) spec(out y));
+  spec(z = foo(1, 2 spec(out z) spec(out y));)
 }
 `
-testcase(13,36) : error VC9676: duplicate out parameter 'z'
+testcase(13,52) : error VC9676: duplicate out parameter 'z'
 `
 #include <vcc.h>
 
