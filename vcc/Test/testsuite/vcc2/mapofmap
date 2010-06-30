@@ -79,7 +79,7 @@ void foo(struct T *t)
     writes(t)
 {
     unwrap(t);
-    t->map=lambda(int i; int j; int k; true; false);
+    spec(t->map=lambda(int i; int j; int k; true; false);)
 }
 `
 Verification of foo succeeded.

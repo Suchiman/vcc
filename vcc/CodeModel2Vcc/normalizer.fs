@@ -378,14 +378,10 @@ namespace Microsoft.Research.Vcc
         // this is an easy one ;-)
         | Expr.Prim (_, Op ("+", _), [e]) -> Some (self e)
         | Expr.Macro (c, "stack_allocate_array", [s; isSpec]) -> 
-          match c.Type with 
-          | Ptr elemType ->
-            let arrTy = 
-              match s with
-              | Expr.IntLiteral(_, sz) -> Type.Array(elemType, (int)sz)
-              | _ -> die()
+          match c.Type, s with 
+          | Ptr elemType, Expr.IntLiteral(_, sz) ->
             Some (Expr.Cast(c, Processed, 
-                            Expr.Call({ c with Type = PhysPtr Void }, internalFunction "stack_alloc", [arrTy], [Expr.Macro(bogusEC, "stackframe", []); isSpec]))) 
+                            Expr.Call({ c with Type = PhysPtr Void }, internalFunction "stack_alloc", [Type.Array(elemType, (int)sz)], [Expr.Macro(bogusEC, "stackframe", []); isSpec]))) 
           | _ -> die()        
         | Expr.Cast ({ Type = Ptr t } as c, _, Expr.Call (_, { Name = "malloc" }, _, [sz])) as expr ->
           match extractArraySize helper expr t sz with
@@ -525,7 +521,7 @@ namespace Microsoft.Research.Vcc
               let cvoid = { c with Type = Void }
               let tmp = getTmp helper formal.Name formal.Type VarKind.SpecLocal
               map.Add (formal, Ref (c, tmp))
-              VarDecl (cvoid, tmp), Macro(cvoid, "spec", [Macro (cvoid, "=", [ actual; Ref ({ c with Type = tmp.Type }, tmp)])])
+              VarDecl (cvoid, tmp), Expr.SpecCode(Macro (cvoid, "=", [ actual; Ref ({ c with Type = tmp.Type }, tmp)]))
             | _ -> die()
           let inPars, inActuals, outPars, outActuals = 
             let rec loop (formals:Variable list) actuals fiAcc aiAcc foAcc aoAcc = 
@@ -592,7 +588,7 @@ namespace Microsoft.Research.Vcc
               let fixupResult self = function
                 | Result _ -> Some(res)
                 | _ -> None
-              [Macro(voidBogusEC(), "spec", [ghostUpdate.SelfMap fixupResult])]
+              [Expr.SpecCode(ghostUpdate.SelfMap fixupResult)]
         let stmts = VarDecl(cvoid, tmp) :: Atomic(cvoid, atomicParameters, Expr.MkBlock (op':: ghostUpdate')) :: [res]
         Some(Block(ec, stmts, None))
       | _ -> None
@@ -632,10 +628,10 @@ namespace Microsoft.Research.Vcc
         let prestateVar = getTmp helper "prestate" Type.MathState VarKind.SpecLocal
         let nowstate = Expr.Macro ({ bogusEC with Type = Type.MathState }, "_vcc_current_state", [])        
         let prestate = mkRef prestateVar
-        let saveState = [VarDecl (bogusEC, prestateVar); Macro (bogusEC, "=", [prestate; nowstate])]
+        let saveState = [VarDecl (bogusEC, prestateVar); Expr.SpecCode(Macro (bogusEC, "=", [prestate; nowstate]))]
         let postUnwrapVar = getTmp helper "postUnwrap" Type.MathState VarKind.SpecLocal
         let postUnwrap = mkRef postUnwrapVar
-        let savePostUnwrapState = [VarDecl (bogusEC, postUnwrapVar); Macro (bogusEC, "=", [postUnwrap; nowstate])]
+        let savePostUnwrapState = [VarDecl (bogusEC, postUnwrapVar); Expr.SpecCode(Macro (bogusEC, "=", [postUnwrap; nowstate]))]
         let old (e:Expr) = Old ({ e.Common with Token = new WarningSuppressingToken (e.Token, 9106) }, prestate, e)
         
         let writeSet = old (setify writes)

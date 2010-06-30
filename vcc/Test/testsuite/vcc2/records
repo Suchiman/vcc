@@ -318,7 +318,7 @@ void foo(struct S *s)
     int tmp = s->data;
     s->data = s->data2;
     s->data2 = tmp;
-    s->rec = s->rec / { .Register0 = s->rec.Register1, .Register1 = s->rec.Register0 };
+    spec(s->rec = s->rec / { .Register0 = s->rec.Register1, .Register1 = s->rec.Register0 };)
   }
 }
 `
@@ -430,7 +430,8 @@ struct vcc(record) R
 
 struct S
 {
-	volatile struct R r;
+	spec(volatile struct R r;)
+	int dummy;
 
 	invariant(approves(owner(this),r))
 };
@@ -443,7 +444,7 @@ writes(s)
 	atomic(s)
 	{
 		bump_volatile_version(s);
-		s->r.x = 2;
+		spec(s->r.x = 2;)
 	}
 }
 `

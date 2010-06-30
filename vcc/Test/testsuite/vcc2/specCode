@@ -78,3 +78,57 @@ void bar() {
 testcase(4,2) : warning VC9301: [possible unsoundness]: access to specification function 'foo' within non-specification code
 Verification of bar succeeded.
 `
+#include "vcc.h"
+
+
+struct S {
+  int a;
+  spec(int b;)
+};
+
+struct T {
+  int a;
+  struct S ^s;
+  invariant(keeps(s))
+};
+
+void foo(spec(struct S ^p)) 
+  writes(extent(p))
+  requires(mutable(p))
+{
+  p->a = 5;
+  p->b = 3;
+  spec(p->a = 7;)
+  spec(p->b = 10;)
+}
+
+void bar(struct T *t)
+  writes(t)
+  requires(wrapped(t))
+{
+  unwrap(t);
+  unwrap(t->s);
+  t->s->a = 5;
+}
+`
+testcase(11,10) : warning VC9301: [possible unsoundness]: non-specification field 's' has specification type 'struct S^'
+testcase(19,3) : warning VC9301: [possible unsoundness]: write to specification parameter 'p' from non-specification code
+testcase(20,3) : warning VC9301: [possible unsoundness]: write to specification field 'b' from non-specification code
+Verification of T#adm succeeded.
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+typedef struct Foo {
+int x;
+} Foo;
+
+void foo() {
+spec(Foo f;)
+f.x = 3;
+}
+`
+testcase(9,1) : warning VC9301: [possible unsoundness]: write to specification variable 'f' from non-specification code
+Verification of foo succeeded.
+`

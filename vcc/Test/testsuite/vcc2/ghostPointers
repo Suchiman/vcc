@@ -54,12 +54,12 @@ struct S {
 void foo() {
   spec(int i;)
   spec(int ^p;)
-  p = &i;
+  spec(p = &i;)
 }
 
 void bar(struct S *s) {
   spec(int ^p;)
-  p = &s->b;
+  spec(p = &s->b;)
 }
 
 spec(void baz(struct S ^s) {

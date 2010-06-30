@@ -39,7 +39,7 @@ void bar() {
   S s;
   s.a = 10;
   s.b = 10;
-  s.sum = 20;
+  spec(s.sum = 20;)
   s = foo(s);
 }
 `

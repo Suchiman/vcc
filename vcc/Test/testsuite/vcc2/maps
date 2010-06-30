@@ -409,7 +409,7 @@ void foo(struct T *t)
 {
     spec(bool Z[int];)
     spec(bool Y[int];)
-    Z = lambda(int l; true; t->Y[l] || takes_quantified_variable(l));
+    spec(Z = lambda(int l; true; t->Y[l] || takes_quantified_variable(l));)
 }
 `
 Verification of foo succeeded.

@@ -358,7 +358,7 @@ namespace Microsoft.Research.Vcc
             localVars <- []
             currentFunctionName <- decl.Name
             let body = this.DoStatement body
-            let body' = if decl.IsSpec then C.Expr.Macro(body.Common, "spec", [body]) else body
+            let body' = if decl.IsSpec then C.Expr.SpecCode(body) else body
             let locals = (List.map (fun v -> C.Expr.VarDecl (C.voidBogusEC(), v)) decl.InParameters) @ List.rev localVars
             decl.Body <- Some (C.Expr.MkBlock (locals @ [body']))
             localVars <- savedLocalVars
@@ -1317,7 +1317,7 @@ namespace Microsoft.Research.Vcc
         else
           let assign = C.Expr.Macro (sc, "=", [C.Expr.Ref({ sc with Type = var.Type }, var); 
                                                             this.DoExpression init])
-          let assign = if var.Kind = C.VarKind.SpecLocal then C.Expr.Macro(assign.Common, "spec", [assign]) else assign
+          let assign = if var.Kind = C.VarKind.SpecLocal then C.Expr.SpecCode(assign) else assign
           stmtRes <- assign
 
       member this.Visit (lockStatement:ILockStatement) : unit = assert false
@@ -1556,7 +1556,7 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (specStmt:IVccSpecStatement) : unit =
         let stmt = this.DoStatement specStmt.WrappedStatement
-        stmtRes <- C.Macro(stmt.Common, "spec", [stmt])
+        stmtRes <- C.Expr.SpecCode(stmt)
 
       member this.Visit (unwrappingStmt:IVccUnwrappingStatement) : unit =
         let wrap = findFunctionOrDie "\\wrap" unwrappingStmt
