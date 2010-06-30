@@ -353,6 +353,7 @@ namespace Microsoft.Research.Vcc
                 helper.Error (c.Token, 9686, "invalid record field in-place update")
                 Expr.MkBlock []
           Some (self res)
+        | VarWrite(c, [v], Macro(_, "vs_zero", [])) when isRecType v.Type -> Some(VarWrite(c, [v], Macro({c with Type = v.Type}, "rec_zero", [])))
         | _ -> None
         
       decls |> deepMapExpressions replNestedUpdates |> deepMapExpressions replNestedDots |> deepMapExpressions replAccess
