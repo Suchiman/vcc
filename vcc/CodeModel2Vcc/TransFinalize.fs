@@ -454,31 +454,41 @@ namespace Microsoft.Research.Vcc
 
     let errorForInvWithNegativPolarity decls =
     
+      let polarityStatus polarity = if polarity = 0 then "unknown" else "negative"
+
       // polarity: -1, 1, and 0 for unknown 
       // once we are 'unknown', only search for invariants and report errors
-      let rec checkPolarity polarity _ = function
+ 
+      let rec checkPolarity seenFunctions polarity  _ = function
         | CallMacro(ec, ("_vcc_inv"|"_vcc_inv2"), _, _) ->
           if (polarity <= 0) then
-            let polarityStatus = if polarity = 0 then "unknown" else "negative"
-            helper.Error(ec.Token, 9712, "Use of 'inv(...)' or 'inv2(...)' with " + polarityStatus + " polarity.")
+            helper.Error(ec.Token, 9712, "Use of 'inv(...)' or 'inv2(...)' with " + polarityStatus polarity + " polarity.")
           true
+        | Call(ec, fn, _, args) -> 
+          checkPolarities seenFunctions 0 args
+          if Set.contains fn.UniqueId seenFunctions then
+            helper.Error(ec.Token, 9712, "Encountered cyclic dependency for function '" + fn.Name + "' when checking for legal use of inv(...) or inv2(...)")
+          else checkPolarities (Set.add fn.UniqueId seenFunctions) polarity fn.Ensures
+          false
         | _ when polarity = 0 -> true // stick on unknown
+        | Prim(_, Op(("=="|"<==>"), _), [Expr.Result _; e]) -> true
         | Macro(_, "labeled_invariant", _)
         | Prim(_, Op(("||"|"&&"), _), _)
         | Quant _
         | Old _ -> true // these do not change polarity
-        | Prim(_, Op("!", _), [e]) -> e.SelfVisit (checkPolarity (-polarity)); false
+        | Prim(_, Op("!", _), [e]) -> e.SelfVisit (checkPolarity seenFunctions (-polarity)); false
         | Prim(_, Op("<==", _), [e2; e1])
-        | Prim(_, Op("==>", _), [e1; e2]) -> e1.SelfVisit (checkPolarity (-polarity)); e2.SelfVisit (checkPolarity polarity); false
+        | Prim(_, Op("==>", _), [e1; e2]) -> e1.SelfVisit (checkPolarity seenFunctions (-polarity)); e2.SelfVisit (checkPolarity seenFunctions polarity); false
         | Macro(_, "ite", [cond; e1; e2]) -> // (cond ==> e1) && (!cond ==> e2)
-          cond.SelfVisit (checkPolarity 0); e1.SelfVisit (checkPolarity polarity); e2.SelfVisit (checkPolarity polarity); false
-        | e -> e.SelfVisit (checkPolarity 0); false // AST node with unknown effect on polarity, switch to unknown polarity
+          cond.SelfVisit (checkPolarity seenFunctions 0); e1.SelfVisit (checkPolarity seenFunctions polarity); e2.SelfVisit (checkPolarity seenFunctions polarity); false
+        | e -> e.SelfVisit (checkPolarity seenFunctions 0); false // AST node with unknown effect on polarity, switch to unknown polarity
+      and checkPolarities seenFunctions polarity = List.iter (fun (e:Expr) -> e.SelfVisit(checkPolarity seenFunctions polarity))
         
       for d in decls do
         match d with 
-          | Top.TypeDecl(td) -> List.iter (fun (e:Expr) -> e.SelfVisit(checkPolarity 1)) td.Invariants
+          | Top.TypeDecl(td) -> checkPolarities Set.empty 1 td.Invariants
           | Top.Axiom(e)
-          | Top.GeneratedAxiom(e,_) -> e.SelfVisit(checkPolarity 1)
+          | Top.GeneratedAxiom(e,_) -> e.SelfVisit(checkPolarity Set.empty 1)
           | _ -> ()
           
       decls
