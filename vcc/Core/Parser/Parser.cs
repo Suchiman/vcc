@@ -38,6 +38,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected Token currentToken;
     protected Expression/*?*/ currentTypeName;
     protected bool resultIsAKeyword;
+    protected bool outIsAKeyword;
     protected bool inSpecCode;
 
     internal static Parser Create(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) {
@@ -1598,7 +1599,9 @@ namespace Microsoft.Research.Vcc.Parsing {
         return ParseVarArgsParameter(followers);
 
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      if (this.InSpecCode) this.outIsAKeyword = true;
       List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers | TS.DeclaratorStart);
+      if (this.InSpecCode) this.outIsAKeyword = false;
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[specifiers.Count-1].SourceLocation);
       Declarator declarator = this.ParseDeclarator(followers);
       declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
@@ -1690,7 +1693,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             this.GetNextToken();
             break;
           case Token.Identifier:
-            if (this.InSpecCode && this.scanner.GetIdentifierString() == "out") {
+            if (this.InSpecCode && this.outIsAKeyword && this.scanner.GetIdentifierString() == "out") {
               result.Add(new OutSpecifier(this.scanner.SourceLocationOfLastScannedToken));
               this.GetNextToken();
               break;
