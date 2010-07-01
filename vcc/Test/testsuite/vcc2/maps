@@ -634,3 +634,14 @@ void ss(struct Actor *a)
 Verification of Actor#adm succeeded.
 Verification of ss succeeded.
 `
+#include <vcc.h>
+
+void foo(spec(int m[int]))
+  requires(forall(int i; m[i] == i))
+{
+  spec(int k[int] = lambda(int i; i);)
+  assert(k == m);
+}
+`
+Verification of foo succeeded.
+`
