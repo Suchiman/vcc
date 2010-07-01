@@ -273,8 +273,13 @@ namespace Microsoft.Research.Vcc
             else
               match methodNameMap.TryGetValue(decl.Name) with
                 | true, clashingDecl ->
-                  decl.Name <- nameWhenOverloadsArePresent decl.Name meth
-                  clashingDecl.Name <- updatedNameWhenOverloadsArePresent clashingDecl
+                  let declName = nameWhenOverloadsArePresent decl.Name meth
+                  let clashingName = updatedNameWhenOverloadsArePresent clashingDecl
+                  if declName = clashingName then
+                    helper.Error(decl.Token, 9717, "function '" + decl.Name + "' already has a body", Some clashingDecl.Token)
+                  else
+                    decl.Name <- declName
+                    clashingDecl.Name <- clashingName
                 | _ ->
                   methodNameMap.Add(decl.Name, decl)
             methodsMap.Add(meth, decl)
