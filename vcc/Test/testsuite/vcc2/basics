@@ -526,14 +526,14 @@ void baz(void *f) {
   void *p = 3 + f;
 } 
 
-void bar(void *f) { 
+void qux(void *f) { 
   void *p = 100 - f;
 } 
 `
 testcase(2,13) : error VC0000: The operation in question is undefined on void pointers.
 testcase(6,13) : error VC0000: The operation in question is undefined on void pointers.
-testcase(14,13) : error VC0000: Operator '-' cannot be applied to operands of type '__int32' and 'void*'.
 testcase(10,13) : error VC0000: Operator '+' cannot be applied to operands of type '__int32' and 'void*'.
+testcase(14,13) : error VC0000: Operator '-' cannot be applied to operands of type '__int32' and 'void*'.
 `
 #include <vcc.h>
 
