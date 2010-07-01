@@ -325,6 +325,18 @@ namespace Microsoft.Research.Vcc {
     public static readonly string SystemDiagnosticsContractsCodeContractBigIntString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigInt";
     public static readonly string SystemDiagnosticsContractsCodeContractObjsetString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Objset";
 
+    static internal VccNamedTypeExpression GetBigIntType(INameTable nameTable) {
+      var bigIntRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(nameTable, "BigInt");
+      return new VccNamedTypeExpression(bigIntRef);
+    }
+
+    static internal VccNamedTypeExpression GetBigIntType(INameTable nameTable, Expression containingExpression) {
+      var result = GetBigIntType(nameTable);
+      result.SetContainingExpression(containingExpression);
+      return result;
+    }
+
+
     internal ITypeDefinition/*?*/ GetFixedArrayElementType(ITypeDefinition fixedSizeArray) {
       if (fixedSizeArray.IsStruct && fixedSizeArray.SizeOf > 0) {
         IFieldDefinition field = TypeHelper.GetField(fixedSizeArray, this.NameTable.GetNameFor("_ElementType"));

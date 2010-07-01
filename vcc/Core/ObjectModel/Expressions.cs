@@ -166,16 +166,19 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     private IEnumerable<IMethodDefinition> GetPointerAdditionMethods(ITypeDefinition pointerType, bool left) {
       BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+      var bigIntType = VccCompilationHelper.GetBigIntType(this.Compilation.NameTable, this);
       if (left) {
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt32.ResolvedType);
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt32.ResolvedType);
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt64.ResolvedType);
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt64.ResolvedType);
+        yield return dummyMethods.GetDummyOp(pointerType, pointerType, bigIntType.ResolvedType);
       } else {
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt32.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt32.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt64.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt64.ResolvedType, pointerType);
+        yield return dummyMethods.GetDummyOp(pointerType, bigIntType.ResolvedType, pointerType);
       }
     }
 
@@ -231,7 +234,13 @@ namespace Microsoft.Research.Vcc {
         }
         if (vccHelper.IsFixedSizeArrayType(this.RightOperand.Type)) {
           return this.GetPointerAdditionMethods(vccHelper.GetPointerForFixedSizeArray(this.RightOperand.Type, IsSpecVisitor.Check(this.RightOperand.ProjectAsIExpression())),false);
+        } 
+        if (this.Helper.IsPointerType(this.LeftOperand.Type)) {
+          return this.GetPointerAdditionMethods(this.LeftOperand.Type, true);
+        } else if (this.Helper.IsPointerType(this.RightOperand.Type)) {
+          return this.GetPointerAdditionMethods(this.LeftOperand.Type, false);
         }
+
         return base.StandardOperators;
       }
     }
@@ -1997,6 +2006,14 @@ namespace Microsoft.Research.Vcc {
     protected override IEnumerable<IMethodDefinition> GetCandidateMethods(bool allowMethodParameterInferencesToFail) {
       if (this.FixedArrayElementType != null) return this.GetPointerAdditionMethods(FixedArrayElementType);
       return base.GetCandidateMethods(allowMethodParameterInferencesToFail);
+    }
+
+    protected override IEnumerable<IMethodDefinition> GetPointerAdditionMethods(ITypeDefinition indexedObjectElementType) {
+      foreach (var m in base.GetPointerAdditionMethods(indexedObjectElementType))
+        yield return m;
+
+      var bigIntType = VccCompilationHelper.GetBigIntType(this.Compilation.NameTable, this);
+      yield return this.Compilation.BuiltinMethods.GetDummyIndexerOp(indexedObjectElementType, bigIntType.ResolvedType);
     }
 
     /// <summary>

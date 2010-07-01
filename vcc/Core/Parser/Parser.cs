@@ -973,8 +973,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           result = new VccNamedTypeExpression(typePtrRef);
           return true;
         case "_vcc_integer_t":
-          Expression bigIntRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "BigInt");
-          result = new VccNamedTypeExpression(bigIntRef);
+          result = VccCompilationHelper.GetBigIntType(this.nameTable);
           return true;
         default:
           result = null;
