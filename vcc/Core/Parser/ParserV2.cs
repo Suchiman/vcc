@@ -133,6 +133,9 @@ namespace Microsoft.Research.Vcc.Parsing
           specifiers.Add(new SpecDeclspecSpecifier(declspec, this.scanner.SourceLocationOfLastScannedToken));
           this.GetNextToken();
         }
+      } else if (this.currentToken == Token.Inline) {       
+        specifiers.Add(new SpecDeclspecSpecifier("inline", this.scanner.SourceLocationOfLastScannedToken));
+        this.GetNextToken();
       } else if (this.currentToken == Token.Colon) {
         VccLabeledExpression groupLabel = (VccLabeledExpression)this.ParseLabeledExpression(followers);
         List<Expression> inGroupSpecifiers = new List<Expression>(3);
@@ -172,7 +175,7 @@ namespace Microsoft.Research.Vcc.Parsing
 
     new protected void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       bool savedInSpecCode = this.SkipIntoSpecBlock();
-      if (this.currentToken == Token.Colon ||
+      if (this.currentToken == Token.Colon || this.currentToken == Token.Inline ||
         (this.currentToken == Token.Identifier && this.declspecExtensions.ContainsKey(this.scanner.GetIdentifierString()))) {
         this.ParseDeclarationWithSpecModifiers(namespaceMembers, typeMembers, followers, false, savedInSpecCode);
         return;

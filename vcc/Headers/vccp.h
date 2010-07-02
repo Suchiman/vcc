@@ -126,6 +126,8 @@ _(const char * const \declspec_frameaxiom;)
 _(const char * const \declspec_no_admissibility;)
 _(const char * const \declspec_volatile_owns;)
 _(const char * const \declspec_pure = "is_pure";)
+_(const char * const \declspec_as_array;)
+// _(inline) is also supported, but becaue 'inline' is a keyword, we special-case _(inline) in the parser
 
 // matching helper functions
 
