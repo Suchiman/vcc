@@ -555,6 +555,10 @@ namespace Microsoft.Research.Vcc {
       return base.CheckForErrorsAndReturnTrueIfAnyAreFound();
     }
 
+    public override string ToString() {
+      return "&" + this.Address.ToString();
+    }
+
     /// <summary>
     /// Makes a copy of this expression, changing the ContainingBlock to the given block.
     /// </summary>
@@ -3186,6 +3190,11 @@ namespace Microsoft.Research.Vcc {
     public override Expression/*?*/ Instance {
       get {
         ITypeDefinition/*?*/ qualifierType = this.Qualifier.Type;
+        if (qualifierType == Dummy.Type) return null;
+        IPointerTypeReference/*?*/ ptr = qualifierType as IPointerTypeReference;
+        if (ptr != null && (ptr.TargetType.IsValueType || ((VccCompilationHelper)this.Helper).IsPointerType(ptr.TargetType.ResolvedType)))
+          return this.Qualifier;
+
         if (qualifierType != null && TypeHelper.GetTypeName(qualifierType) == VccCompilationHelper.SystemDiagnosticsContractsCodeContractTypedPtrString)
           return this.Qualifier;
         return base.Instance;

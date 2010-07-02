@@ -531,7 +531,7 @@ namespace Microsoft.Research.Vcc
             let instance = this.DoExpression instance
 
             match typestateFieldsMap.TryFind def.Name.Value with
-              | Some v1Fn -> exprRes <- C.Expr.Macro({instance.Common with Type = this.DoType def.Type}, v1Fn, [instance])           
+              | Some v1Fn -> exprRes <- C.Expr.Macro({ec with Type = this.DoType def.Type}, v1Fn, [instance])           
               | None ->
 
                 if not (fieldsMap.ContainsKey def) then
