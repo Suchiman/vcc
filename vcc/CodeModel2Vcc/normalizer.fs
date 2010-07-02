@@ -899,6 +899,9 @@ namespace Microsoft.Research.Vcc
           | Call(ec, ({Name = "\destroy_claim"} as fn), [], [cl; Macro(_, "set", elems)]) -> Some(Call(ec, fn, [], selfs (cl :: elems)))
           | Call(ec, ({Name = "\upgrade_claim"} as fn), [], [Macro(_, "set", claimsSet); prop]) -> Some(Call(ec, fn, [], selfs (claimsSet @ [prop])))
           | Call(ec, ({Name = "\claimable"} as fn), [], [e]) -> Some(Call(ec, fn, [], [Macro({e.Common with Type = Type.TypeIdT}, "_vcc_typeof", [self e])]))
+          | Call(ec, ({Name = "\havoc_others"} as fn), [], [e]) -> 
+            let e' = self e
+            Some(Macro(ec, "_vcc_havoc_others", [e'; Macro({e'.Common with Type = Type.TypeIdT}, "_vcc_typeof", [e'])]))
           | _ -> None
 
       let rec normalizeOwnershipManipulation inAtomic self = 

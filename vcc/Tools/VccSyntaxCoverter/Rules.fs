@@ -286,6 +286,7 @@ module Rules =
                         "split_array"
                         "from_bytes"
                         "to_bytes"
+                        "havoc_others"
                       ]
 
     for cw in canonicalKw do addKwRule cw cw
@@ -303,6 +304,7 @@ module Rules =
     addKwRepl "thread_id" "\\thread"
     addKwRepl "this" "\\this"
     addKwRepl "ispure" "_(pure)"
+    addKwRepl "isadmissibilitycheck" "_(admissibility)"
     addKwRepl "backing_member" "_(backing_member)"
     addKwRepl "true" "\\true"
     addKwRepl "false" "\\false"
@@ -313,7 +315,7 @@ module Rules =
     addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, "hint: "); paren "" toks]))
     addRule (quantRule "forall" "==>")
     addRule (quantRule "exists" "&&")
-    addRule (quantRule "lambda" ";")
+    addRule (quantRule "lambda" "### /* range restriction ignored */")
     
     addKwRule "expose" "unwrapping"
     addKwRule "out_param" "writes"
@@ -357,7 +359,7 @@ module Rules =
 
     let addGhostFieldRule fn fld = 
       let ghostFieldRule fieldName = function
-        | [e] -> e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, fieldName)]
+        | [e] -> parenOpt e :: [Tok.Op(fakePos, "->"); Tok.Id(fakePos, fieldName)]
         | _ -> failwith ""
       addRule (parenRuleN fn 1 (ghostFieldRule fld))
 
