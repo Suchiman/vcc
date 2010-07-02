@@ -62,4 +62,5 @@ testcase(23,28) : error VC8016: 's' is not wrapped before unwrap.
 Verification of fooShouldFail2 failed.
 testcase(33,30) : error VC9502: Call 'wrap(s)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped must not be closed'.
-Verification of bar succeeded.`
+Verification of bar succeeded.
+`

@@ -72,7 +72,8 @@ Verification of foo succeeded.
 Verification of fooShouldFail failed.
 testcase(14,1) : error VC9502: Call 'stack_free(&s)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the extent of the object being reclaimed is mutable'.
-Verification of bar succeeded.`
+Verification of bar succeeded.
+`
 `/newsyntax
 #include <vcc.h>
 
