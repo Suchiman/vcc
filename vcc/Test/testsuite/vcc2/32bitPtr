@@ -9,7 +9,8 @@ void foo() {
 }
 `
 Verification of foo succeeded.
-``/ps:32 /newsyntax
+`
+`/ps:32 /newsyntax
 
 
 #include <vcc.h>
@@ -26,7 +27,8 @@ void foo(struct S *x) {
 }
 `
 Verification of foo succeeded.
-``/ps:32 /newsyntax
+`
+`/ps:32 /newsyntax
 
 
 #include <vcc.h>
@@ -43,7 +45,8 @@ void foo(struct S *x) {
 }
 `
 Verification of foo succeeded.
-``/ps:32 /newsyntax
+`
+`/ps:32 /newsyntax
 
 
 #include <vcc.h>
@@ -64,7 +67,8 @@ void foo(struct S *x) {
 }
 `
 Verification of foo succeeded.
-``/ps:32 /newsyntax
+`
+`/ps:32 /newsyntax
 
 
 #include <vcc.h>
@@ -83,7 +87,8 @@ void foo(struct S *x) {
 }
 `
 Verification of foo succeeded.
-``/ps:32 /newsyntax
+`
+`/ps:32 /newsyntax
 
 
 #include <vcc.h>
@@ -117,7 +122,8 @@ void foo() {
 }
 `
 Verification of foo succeeded.
-``/ps:32 /newsyntax
+`
+`/ps:32 /newsyntax
 
 
 #include <vcc.h>
@@ -147,7 +153,8 @@ void foo() {
 }
 `
 Verification of foo succeeded.
-``/ps:32 /newsyntax
+`
+`/ps:32 /newsyntax
 
 
 #include <vcc.h>
@@ -171,7 +178,8 @@ void foo() {
 }
 `
 Verification of foo succeeded.
-``/ps:32 /newsyntax
+`
+`/ps:32 /newsyntax
 
 #include "vcc.h"
 

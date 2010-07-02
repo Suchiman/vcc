@@ -838,7 +838,9 @@ void foo() {
 testcase(7,14) : error VC0000: The best overloaded method match for '__Globals__._vcc_claims(_vcc_claim_struct*, bool)' has some invalid arguments.
 testcase(7,26) : error VC0000: Argument '1': cannot convert from '_vcc_claim_struct^^' to '_vcc_claim_struct^'.
 testcase(8,14) : error VC0000: The best overloaded method match for '__Globals__._vcc_claims(_vcc_claim_struct*, bool)' has some invalid arguments.
-testcase(8,26) : error VC0000: Argument '1': cannot convert from 'uint*' to '_vcc_claim_struct^'.`#include <vcc.h>
+testcase(8,26) : error VC0000: Argument '1': cannot convert from 'uint*' to '_vcc_claim_struct^'.
+`
+#include <vcc.h>
 
 #define NULL ((void *)0)
 
