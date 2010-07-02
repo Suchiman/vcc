@@ -5,12 +5,22 @@ open Microsoft.Research.Vcc.SyntaxConverter.Ast
 module Rules =
   let gdict() = new System.Collections.Generic.Dictionary<_,_>()
   
+  type ctx = 
+    {
+      in_ensures : bool
+    }
+
   type rule =
     {
       keyword : string
-      replFn : list<Tok> -> list<Tok> * list<Tok>
+      replFn : ctx -> list<Tok> -> ctx * list<Tok> * list<Tok>
+
     }
-  
+
+  let ctxFreeRule rule ctx toks = let (l1, l2) = rule toks in ctx, l1, l2
+    
+  let space = Tok.Whitespace(fakePos, " ")
+
   let rec eatWs = function
     | Tok.Whitespace (_, _) :: rest -> eatWs rest
     | x -> x
@@ -20,7 +30,7 @@ module Rules =
       | Tok.Whitespace (_, _) as w :: rest -> aux (w :: acc) rest
       | x -> (List.rev acc, x)
     aux [] l
-    
+  
   let rules = gdict()
   
   let rev_append a b =
@@ -29,16 +39,17 @@ module Rules =
       | [] -> acc
     aux b a
     
-  let rec apply acc = function
+  let rec apply' ctx acc = function
     | Tok.Id (_, s) as t :: rest ->
       match rules.TryGetValue s with
         | true, r ->
-          let (res, rest) = (r:rule).replFn (t :: rest)
-          apply (rev_append res acc) rest
-        | _ -> apply (t :: acc) rest
-    | Tok.Group (p, s, toks) :: rest -> apply (Tok.Group (p, s, apply [] toks) :: acc) rest    
-    | t :: rest -> apply (t :: acc) rest
+          let ctx', res, rest = (r:rule).replFn ctx (t :: rest)
+          apply' ctx' (rev_append res acc) rest
+        | _ -> apply' ctx (t :: acc) rest
+    | Tok.Group (p, s, toks) :: rest -> apply' ctx (Tok.Group (p, s, apply' ctx [] toks) :: acc) rest    
+    | t :: rest -> apply' ctx (t :: acc) rest
     | [] -> List.rev acc
+
 
   let replRule kw fn =
     let repl = function
@@ -46,27 +57,41 @@ module Rules =
         fn (), toks
       | _ -> failwith ""
     { keyword = kw
-      replFn = repl }
+      replFn = ctxFreeRule repl }
     
   let parenRuleExt kw fn =
-    let repl = function
+    let repl ctx = function
       | id :: toks ->
         match eatWs toks with
           | Tok.Group (_, "(", toks) :: rest ->
-            let toks = apply [] toks
-            fn (toks, rest)
-          | _ -> [id], toks
+            let toks = apply' ctx [] toks
+            let l1, l2 = fn (toks, rest) in ctx, l1, l2
+          | _ -> ctx, [id], toks
+      | _ -> failwith ""
+    { keyword = kw
+      replFn = repl }
+
+  let parenRuleExtCtx kw fn fnCtx =
+    let repl ctx = function
+      | id :: toks ->
+        match eatWs toks with
+          | Tok.Group (_, "(", toks) :: rest ->
+            let toks = apply' (fnCtx ctx) [] toks
+            let l1, l2 = fn (toks, rest) in ctx, l1, l2
+          | _ -> ctx, [id], toks
       | _ -> failwith ""
     { keyword = kw
       replFn = repl }
   
-  let parenRule eatSemi kw fn =
+  let parenRuleCtx eatSemi kw fn =
     let repl (toks, rest) =
       match eatWs rest with
         | Tok.Op (_, ";") :: rest when eatSemi -> fn toks, rest
         | _ -> fn toks, rest            
-    parenRuleExt kw repl
+    parenRuleExtCtx kw repl
   
+  let parenRule eatSemi kw fn = parenRuleCtx eatSemi kw fn (fun x -> x)
+
   let splitAt op toks =
     let rec aux acc locAcc = function
       | Tok.Op (_, n) :: rest when n = op ->
@@ -79,13 +104,13 @@ module Rules =
     aux [] [] toks
   
   let parenRuleN kw n fn =
-    let repl = function
+    let repl ctx = function
       | id :: toks ->
         match eatWs toks with
           | Tok.Group (_, "(", toks) :: rest when (splitAt "," (eatWs toks)).Length = n ->
-            let args = splitAt "," (apply [] toks)
-            fn args, rest
-          | _ -> [id], toks
+            let args = splitAt "," (apply' ctx [] toks)
+            ctx, fn args, rest
+          | _ -> ctx, [id], toks
       | _ -> failwith ""
     { keyword = kw
       replFn = repl }
@@ -101,6 +126,12 @@ module Rules =
   let paren p toks =
     Tok.Group (fakePos, p, trim toks)
     
+  let parenOpt toks =
+    match trim toks with
+      | [] -> Tok.Whitespace(fakePos, "")
+      | [tok] -> tok
+      | toks -> paren "(" toks
+
   let fnApp fnName toks = 
     let p = poss toks 
     [Tok.Id (p, fnName); paren "(" toks]
@@ -202,7 +233,6 @@ module Rules =
     let canonicalKw = [
                         "atomic"
                         "decreases"
-                        "ensures"
                         "requires"
                         "reads"
                         "writes"
@@ -223,6 +253,7 @@ module Rules =
                         "match_long"
                         "match_ulong"
                         "array_range"
+                        "array_members"
                         "start_here"
                         "depends"
                         "not_shared"
@@ -236,6 +267,7 @@ module Rules =
                         "mutable"
                         "extent_mutable"
                         "approves"
+                        "union_active"
                       ]
 
     let canonicalSm = [
@@ -269,7 +301,6 @@ module Rules =
     addKwRepl "ptrset" "\\objset"
     addKwRepl "claim_t" "\\claim"
     addKwRepl "thread_id" "\\thread"
-    addKwRepl "result" "\\result"
     addKwRepl "this" "\\this"
     addKwRepl "ispure" "_(pure)"
     addKwRepl "backing_member" "_(backing_member)"
@@ -310,6 +341,13 @@ module Rules =
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
   
+    let typed_phys_or_spec isSpec toks = 
+      let optNot = if isSpec then [] else [Tok.Op(fakePos, "!")]
+      [paren "(" ([parenOpt toks; Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\valid"); space; Tok.Op(fakePos, "&&"); space] @ optNot @ (fnApp "\\ghost" toks))]
+
+    addRule (parenRule false "typed_phys" (typed_phys_or_spec false))
+    addRule (parenRule false "typed_spec" (typed_phys_or_spec true))
+
     addRule (parenRule false "vcc" (fnApp "_"))
     addInfixRule "set_union" "\\union"
     addInfixRule "set_difference" "\\diff"
@@ -328,6 +366,15 @@ module Rules =
     addGhostFieldRule "typed"   "\\valid"
     addGhostFieldRule "closed"  "\\consistent"
     addGhostFieldRule "ref_cnt" "\\claim_count"
+
+    let result_rule ctx = function
+      | (id:Tok) :: rest when ctx.in_ensures -> ctx, [Tok.Id(id.Pos, "\\result")], rest
+      | id :: rest -> ctx, [id], rest
+      | _ -> failwith ""
+
+    addRule { keyword = "result"; replFn = result_rule }
+    addRule (parenRuleCtx true "ensures" (fun toks -> spec "ensures" toks) (fun (c:ctx) -> { c with in_ensures = true}) )
+
     
     let as_array = function
       | [arr; sz] ->
@@ -379,7 +426,7 @@ module Rules =
     let def_group toks = 
       match splitAt "," toks with
         | [groupName] -> spec "group" groupName
-        | groupName :: groupSpecs -> spec "group" ((joinWith " " groupSpecs) @ [Tok.Whitespace(fakePos, " ")] @ groupName)
+        | groupName :: groupSpecs -> spec "group" ((joinWith " " groupSpecs) @ (space ::  groupName))
         | _ -> failwith ""
     addRule (parenRule false "def_group" def_group)
 
@@ -389,13 +436,13 @@ module Rules =
     addRule (parenRuleN "in_group" 1 in_group)
 
     let inv_group = function
-      | [groupName; invariant] -> spec "invariant" (Tok.Op(fakePos, ":") :: groupName @ (Tok.Whitespace(fakePos, " ") :: eatWs invariant))
+      | [groupName; invariant] -> spec "invariant" (Tok.Op(fakePos, ":") :: groupName @ (space :: eatWs invariant))
       | _ -> failwith ""
     addRule (parenRuleN "inv_group" 2 inv_group)
 
     let invariant toks = 
       match eatWs toks with
-        | (Tok.Id(_, lbl) as id) :: Tok.Op(_, ":") :: invariant ->  spec "invariant" (Tok.Op(fakePos, ":") :: id :: (Tok.Whitespace(fakePos, " ") :: eatWs invariant))
+        | (Tok.Id(_, lbl) as id) :: Tok.Op(_, ":") :: invariant ->  spec "invariant" (Tok.Op(fakePos, ":") :: id :: (space :: eatWs invariant))
         | invariant -> spec "invariant" (eatWs invariant)
     addRule (parenRule true "invariant" invariant)
 
@@ -405,10 +452,12 @@ module Rules =
           | Tok.Id (_, "vcc") :: args ->
             match eatWs args with
               | Tok.Group (_, "(", toks) :: rest ->
-                fnApp "_" toks @ [Tok.Whitespace (fakePos, " ")], hd :: rest
+                fnApp "_" toks @ [space], hd :: rest
               | _ -> [hd], rest
           | _ -> [hd], rest
       | _ -> failwith ""
     
-    addRule { keyword = "struct"; replFn = struct_rule }
-    addRule { keyword = "union"; replFn = struct_rule }
+    addRule { keyword = "struct"; replFn = ctxFreeRule struct_rule }
+    addRule { keyword = "union"; replFn = ctxFreeRule struct_rule }
+
+  let apply = apply' { in_ensures = false }  []

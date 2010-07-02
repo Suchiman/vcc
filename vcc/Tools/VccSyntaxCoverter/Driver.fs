@@ -4,7 +4,7 @@ open Microsoft.Research.Vcc.SyntaxConverter.Ast
 let go filename = 
   try
     let toks = Tokenizer.fromFile filename
-    let toks = Rules.apply [] toks
+    let toks = Rules.apply toks
     let isTestSuiteSource = 
       let extension = System.IO.Path.GetExtension(filename)
       extension <> ".c" && extension <> ".h"
