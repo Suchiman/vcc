@@ -1,4 +1,4 @@
-#include <vcc2test.h>
+#include <vcc.h>
 
 void foo0(int *p)
   requires(mutable(p))
@@ -60,7 +60,37 @@ Verification of foo4 succeeded.
 Verification of foo5 failed.
 testcase(45,15) : error VC8021: 'a' is not writable before unwrapping it.
 `
-#include <vcc2test.h>
+`/omitrw
+#include <vcc.h>
+
+void foo0(int *p)
+  requires(mutable(p))
+{
+  *p = 7;
+}
+
+struct A {
+  int x;
+};
+
+void foo1(struct A *a)
+  requires(mutable(a))
+{
+  a->x = 7;
+}
+
+void foo2(struct A *a)
+  writes(a)
+  requires(mutable(a))
+{
+  a->x = 7;
+}
+`
+Verification of foo0 succeeded.
+Verification of foo1 succeeded.
+Verification of foo2 succeeded.
+`
+#include <vcc.h>
 
 struct A {
   int x;
@@ -118,7 +148,8 @@ testcase(32,17) : error VC8021: 'a' is not writable before unwrapping it.
 Verification of foo6 failed.
 testcase(43,14) : error VC8011: writes clause of the loop might not be included writes clause of the function.
 `
-#include <vcc2test.h>
+#include <stdlib.h>
+#include <vcc.h>
 
 typedef struct A {
   int x,y,z;
@@ -488,7 +519,8 @@ void foo(int *a, int *b)
 Verification of bar succeeded.
 Verification of foo succeeded.
 `
-#include <vcc2test.h>
+#include <stdlib.h>
+#include <vcc.h>
 
 struct A { int x,y; };
 
@@ -568,7 +600,7 @@ Verification of baz succeeded.
 Verification of alloc_C succeeded.
 Verification of baz_C succeeded.
 Verification of fail failed.
-testcase(58,12) : error VC9500: Assertion '_vcc_mutable(b) ==> _vcc_extent_mutable(b)' did not verify.
+testcase(59,12) : error VC9500: Assertion '_vcc_mutable(b) ==> _vcc_extent_mutable(b)' did not verify.
 Verification of ok succeeded.
 Verification of ok2 succeeded.
 `
