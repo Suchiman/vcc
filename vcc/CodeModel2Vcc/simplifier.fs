@@ -48,6 +48,7 @@ namespace Microsoft.Research.Vcc
                   "dont_instantiate",       "p";
                   "dont_instantiate_int",   "i";
                   "emb",                    "Sp";
+                  "simple_emb",             "p";
                   "extent",                 "Sp";
                   "full_extent",            "p";
                   "get_fnptr",              "i.";

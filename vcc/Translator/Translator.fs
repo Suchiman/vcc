@@ -604,7 +604,7 @@ namespace Microsoft.Research.Vcc
             bCall "$struct_extent" [self arg]              
           | "_vcc_thread_local", [C.Dot (_, p, f)] when not f.IsVolatile && not f.Type.IsComposite && f.Parent.Kind = C.Struct ->
             self (C.Macro (ec, n, [p]))
-          | "_vcc_union_active", [p; C.Dot (_, _, f)] ->
+          | "_vcc_union_active", [C.Dot (_, p, f)] ->
             bCall "$union_active" [bState; self p; er (fieldName f)]
           // avoid warning 9106
           | "keeps_stable", [C.Old (_, _, e1); e2] when not (bContains "$s" (self e1)) ->
@@ -1188,7 +1188,7 @@ namespace Microsoft.Research.Vcc
               | _ -> false
           let args =
             match args, name' with
-              | [p; B.Expr.FunctionCall ("$dot", [_; f])], "$union_reinterpret" -> [p; f]
+              | [B.Expr.FunctionCall ("$dot", [p; f])], "$union_reinterpret" -> [p; f]
               | _ -> args
           let resBuf, tail = 
             if resultIsObjT <> varIsObjT then
