@@ -514,6 +514,10 @@ function $ts_is_volatile($type_state) returns(bool);
   
 axiom (forall ts:$type_state :: {$ts_emb(ts)} $kind_of($typ($ts_emb(ts))) != $kind_primitive && $is_non_primitive($typ($ts_emb(ts))) );
 
+function $simple_emb(p:$ptr) returns($ptr);
+
+axiom (forall p:$ptr, f:$field :: {$simple_emb($dot(p, f))} $simple_emb($dot(p, f)) == p);
+
 //V2:
 axiom (forall S:$state, p:$ptr :: {$typed(S, p), $ts(S, $emb(S, p))} $typed(S, p) ==> $typed(S, $emb(S, p)));
 //axiom (forall S:$state, p:$ptr :: {$typed(S, p), $typed(S, $emb(S, p))} $typed(S, p) ==> $typed(S, $emb(S, p)));

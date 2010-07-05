@@ -73,6 +73,7 @@ _(bool \inv(\object);)
 _(bool \inv2(\object);)
 _(template<typename T> bool \approves(\object approver, T expr);)
 _(\object \embedding(\object);)
+_(\object \simple_embedding(\object);)
 _(bool \ghost(\object);)
 _(bool \program_entry_point();)
 _(template<typename T> T ^\alloc();)
@@ -81,6 +82,7 @@ _(bool \depends(\object, \object);)
 _(bool \not_shared(\object);)
 _(bool \malloc_root(\object);)
 _(bool \object_root(\object);)
+_(bool \union_active(\object);)
 
 _(template<typename T> T \at(\state, T expr);)
 _(\state \now();)
@@ -103,12 +105,11 @@ _(void \wrap(\object);)
 _(void \unwrap(\object o) _(writes o);)
 _(void \destroy_claim(\claim, \objset);)
 _(void \reads_havoc();)
-_(void \havoc_others(\object p);) // TODO signature
+_(void \havoc_others(\object p);)
 _(void \set_closed_owns(\object owner, \objset owns) 
   _(writes \new_ownees(owner, owns))
   _(requires \atomic_object(1));)
-_(void \union_reinterpret(\object u, \object fld)
-  _(writes \extent(u));) // TODO signature
+_(void \union_reinterpret(\object fld) _(writes \extent(\simple_embedding(fld)));)
 _(void \deep_unwrap(\object o) _(writes o);)
 _(void \bump_volatile_version(\object o) _(writes o);)
 _(void \begin_update();)
@@ -241,6 +242,8 @@ ptrset _vcc_domain(obj_t q);
 #define domain(p) _vcc_domain(p)
 obj_t _vcc_emb(obj_t );
 #define emb(...) _vcc_emb(__VA_ARGS__)
+obj_t _vcc_simple_emb(obj_t );
+#define simple_emb(...) _vcc_simple_emb(__VA_ARGS__)
 ptrset _vcc_extent(obj_t);
 #define extent(...) _vcc_extent(__VA_ARGS__)
 ptrset _vcc_full_extent(obj_t );
@@ -307,9 +310,9 @@ bool _vcc_wrapped(obj_t );
 #define wrapped(x) _vcc_wrapped(x)
 bool _vcc_not_shared(obj_t);
 #define not_shared _vcc_not_shared
-bool _vcc_union_active(obj_t,obj_t);
-#define union_active(u,f) _vcc_union_active((u),&((u)->f))
-#define union_active_anon(u,f) _vcc_union_active((u), (u)::f)
+bool _vcc_union_active(obj_t);
+#define union_active(u,f) _vcc_union_active(&((u)->f))
+#define union_active_anon(u,f) _vcc_union_active((u)::f)
 bool _vcc_program_entry_point();
 #define program_entry_point _vcc_program_entry_point
 obj_t _vcc_gemb(obj_t);
@@ -407,9 +410,9 @@ void _vcc_set_owns(obj_t obj, ptrset owns)
   writes (obj);
 #define set_owns(x, y) _vcc_set_owns(x, y)
 
-void _vcc_union_reinterpret(obj_t u, obj_t fld)
-  writes (extent(u));
-#define union_reinterpret(u,f) _vcc_union_reinterpret(u,&((u)->f))
+void _vcc_union_reinterpret(obj_t fld)
+  writes (extent(simple_emb(fld)));
+#define union_reinterpret(u,f) _vcc_union_reinterpret(&((u)->f))
 
 void _vcc_unwrap(obj_t p)
   writes (p);

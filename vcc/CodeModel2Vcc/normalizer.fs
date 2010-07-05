@@ -840,6 +840,7 @@ namespace Microsoft.Research.Vcc
                                     "\\now",                 "_vcc_current_state"
                                     "\\mine",                "_vcc_keeps"
                                     "\\embedding",           "_vcc_emb"
+                                    "\\simple_embedding",    "_vcc_simple_emb"
                                     "\\ghost",               "_vcc_is_ghost_ptr"
                                     "\\fresh",               "_vcc_is_fresh"
                                     "\\thread_local",        "_vcc_thread_local2"
@@ -895,11 +896,11 @@ namespace Microsoft.Research.Vcc
       let normalizeSignatures self =
         let selfs = List.map self
         function
-          | Call(ec, ({Name = "\make_claim"} as fn), [], [Macro(_, "set", elems); cond]) -> Some(Call(ec, fn, [], selfs elems @ [cond]))
-          | Call(ec, ({Name = "\destroy_claim"} as fn), [], [cl; Macro(_, "set", elems)]) -> Some(Call(ec, fn, [], selfs (cl :: elems)))
-          | Call(ec, ({Name = "\upgrade_claim"} as fn), [], [Macro(_, "set", claimsSet); prop]) -> Some(Call(ec, fn, [], selfs (claimsSet @ [prop])))
-          | Call(ec, ({Name = "\claimable"} as fn), [], [e]) -> Some(Call(ec, fn, [], [Macro({e.Common with Type = Type.TypeIdT}, "_vcc_typeof", [self e])]))
-          | Call(ec, ({Name = "\havoc_others"} as fn), [], [e]) -> 
+          | Call(ec, ({Name = "\\make_claim"} as fn), [], [Macro(_, "set", elems); cond]) -> Some(Call(ec, fn, [], selfs elems @ [cond]))
+          | Call(ec, ({Name = "\\destroy_claim"} as fn), [], [cl; Macro(_, "set", elems)]) -> Some(Call(ec, fn, [], selfs (cl :: elems)))
+          | Call(ec, ({Name = "\\upgrade_claim"} as fn), [], [Macro(_, "set", claimsSet); prop]) -> Some(Call(ec, fn, [], selfs (claimsSet @ [prop])))
+          | Call(ec, ({Name = "\\claimable"} as fn), [], [e]) -> Some(Call(ec, fn, [], [Macro({e.Common with Type = Type.TypeIdT}, "_vcc_typeof", [self e])]))
+          | Call(ec, ({Name = "\\havoc_others"} as fn), [], [e]) -> 
             let e' = self e
             Some(Macro(ec, "_vcc_havoc_others", [e'; Macro({e'.Common with Type = Type.TypeIdT}, "_vcc_typeof", [e'])]))
           | _ -> None

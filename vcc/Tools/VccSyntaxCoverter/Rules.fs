@@ -267,7 +267,6 @@ module Rules =
                         "mutable"
                         "extent_mutable"
                         "approves"
-                        "union_active"
                       ]
 
     let canonicalSm = [
@@ -279,7 +278,6 @@ module Rules =
                         "axiom"
                         "reads_havoc"
                         "set_closed_owns"
-                        "union_reinterpret"
                         "bump_volatile_version"
                         "begin_update"
                         "join_arrays"
@@ -388,6 +386,17 @@ module Rules =
       | _ -> failwith ""
     addRule (parenRuleN "as_array" 2 as_array)
         
+    let union_active = function
+      | [u; fld] -> fnApp "\\union_active" (Tok.Op(fakePos, "&") :: parenOpt u :: Tok.Op(fakePos, "->") :: eatWs fld)
+      | _ -> failwith ""
+    addRule (parenRuleN "union_active" 2 union_active)
+        
+    let union_reinterpret = function
+      | [u; fld] ->  spec "union_reinterpret" (Tok.Op(fakePos, "&") :: parenOpt u :: Tok.Op(fakePos, "->") :: eatWs fld)
+      | _ -> failwith ""
+    addRule (parenRuleN "union_reinterpret" 2 union_reinterpret)
+
+
     let set_owns = function
       | [e; s] ->
         spec "ghost" (e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\owns"); Tok.Op(fakePos, " = ")] @ s)
