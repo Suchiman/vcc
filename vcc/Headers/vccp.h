@@ -677,34 +677,44 @@ template<typename T> T _vcc_known(T v, bool val);
 #define known _vcc_known
 
 // Information Flow
-struct _vcc_label_struct { };
-typedef struct _vcc_label_struct ^_vcc_label_t;
-#define label_t _vcc_label_t
+#define classifier_t(_VARNAME)	bool _VARNAME[obj_t]
+
+bool _vcc_test_classifier(classifier_t(cl), bool test);
+#define test_classifier _vcc_test_classifier
+
+template<typename T> void _vcc_downgrade_to(T v, T expr);
+#define downgrade_to _vcc_downgrade_to
+
+SPEC_TYPE(label_t)
 
 ispure label_t _vcc_seclabel_bot();
 ispure label_t _vcc_seclabel_top();
 #define seclabel_bot _vcc_seclabel_bot()
 #define seclabel_top _vcc_seclabel_top()
 
-bool _vcc_test_classifier(bool classifier, bool test);
-#define test_classifier _vcc_test_classifier
-
-template<typename T> void _vcc_downgrade_to(T v, T expr);
-#define downgrade_to _vcc_downgrade_to
-
 label_t _vcc_current_context(void);
 #define current_context _vcc_current_context
 
 template<typename T> label_t _vcc_label_of(T e);
 #define label_of _vcc_label_of
+#define meta_of(_EXPR_)	_vcc_label_of(_vcc_label_of(_EXPR_))
 
-template<typename T> bool _vcc_is_lower(T, label_t);
-#define is_lower(_EXPR1_,_LEVEL_) _vcc_is_lower(_EXPR1_, _LEVEL_)
+bool _vcc_lblset_leq(label_t, label_t);
+#define lblset_leq _vcc_lblset_leq
 
-#define is_low(_EXPR_) _vcc_is_lower(_EXPR_, seclabel_bot)
+#define is_lower(_EXPR1_,_LEVEL_) lblset_leq(label_of(_EXPR1_), _LEVEL_)
+#define is_low(_EXPR_) is_lower(_EXPR_, seclabel_bot)
 
-bool _vcc_sec_leq(label_t, label_t);
-#define sec_leq _vcc_sec_leq
+SPEC_TYPE(club_t)
+
+club_t _vcc_new_club(label_t);
+#define new_club	_vcc_new_club
+
+void _vcc_add_member(obj_t, club_t);
+#define add_member	_vcc_add_member
+
+bool _vcc_is_member(obj_t, club_t);
+#define is_member	_vcc_is_member
 
 #endif //VERIFY2
 

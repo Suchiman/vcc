@@ -288,86 +288,6 @@ axiom (forall M:$statusmap_t, p:$ptr, q:$ptr, v:$status :: {:weight 0}
   $select.sm($store.sm(M, p, v), q) == $select.sm(M, q)
   );
 
-type $seclabel;
-
-function $set.secpc($memory_t, $seclabel) returns($memory_t);
-function $get.secpc($memory_t) returns($seclabel);
-axiom (forall M:$memory_t, v:$seclabel :: {:weight 0}
-  $get.secpc($set.secpc(M, v)) == v);
-
-function $set.seclabel($memory_t, $ptr, $seclabel) returns($memory_t);
-function $get.seclabel($memory_t, $ptr) returns($seclabel);
-axiom (forall M:$memory_t, p,f:$ptr, v:$seclabel :: {:weight 0}
-  ($set_in(f, $full_extent(p)) ==> $get.seclabel($set.seclabel(M, p, v), f) == v));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}
-  $set_in(q, $full_extent(p))
-  ||
-  $get.seclabel($set.seclabel(M,p,l), q) == $get.seclabel(M, q)
-  );
-
-function $set.metalabel($memory_t, $ptr, $seclabel) returns($memory_t);
-function $get.metalabel($memory_t, $ptr) returns($seclabel);
-axiom (forall M:$memory_t, p,f:$ptr, v:$seclabel :: {:weight 0}
-  ($set_in(f, $full_extent(p)) ==> $get.metalabel($set.metalabel(M, p, v), f) == v));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}
-  $set_in(q, $full_extent(p))
-  ||
-  $get.metalabel($set.metalabel(M,p,l), q) == $get.metalabel(M, q)
-  );
-
-function $set.ptrgrp($memory_t, $ptr, int) returns($memory_t);
-function $get.ptrgrp($memory_t, $ptr) returns(int);
-axiom(forall M:$memory_t, p,f:$ptr, i:int :: {:weight 0}
-  ($set_in(f, $full_extent(p)) ==> $get.ptrgrp($set.ptrgrp(M, p, i), f) == i));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}
-  $set_in(q, $full_extent(p))
-  ||
-  $get.ptrgrp($set.ptrgrp(M,p,i), q) == $get.ptrgrp(M,q)
-  );
-
-// No interaction between memory and labels, and the various kinds of labels
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// PC and labels
-  $get.secpc($set.seclabel(M,p,l)) == $get.secpc(M));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// PC and metas
-  $get.secpc($set.metalabel(M,p,l)) == $get.secpc(M));
-axiom (forall M:$memory_t, p:$ptr, i:int :: {:weight 0}			// PC and pointer groups
-    $get.secpc($set.ptrgrp(M,p,i)) == $get.secpc(M));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Labels and PC
-  $get.seclabel($set.secpc(M,l), p) == $get.seclabel(M,p));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Metas and PC
-  $get.metalabel($set.secpc(M,l), p) == $get.metalabel(M,p));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and PC
-  $get.ptrgrp($set.secpc(M,l), p) == $get.ptrgrp(M,p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Metas and labels
-  $get.metalabel($set.seclabel(M,q,l),p) == $get.metalabel(M,p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}			// Metas and pointer groups
-  $get.metalabel($set.ptrgrp(M,q,i),p) == $get.metalabel(M,p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Labels and metas
-  $get.seclabel($set.metalabel(M,q,l),p) == $get.seclabel(M,p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and metas
-  $get.ptrgrp($set.metalabel(M,q,l),p) == $get.ptrgrp(M,p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Pointer groups and labels
-  $get.ptrgrp($set.seclabel(M,q,l),p) == $get.ptrgrp(M,p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}			// Labels and pointer groups
-  $get.seclabel($set.ptrgrp(M,q,i),p) == $get.seclabel(M,p));
-axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}			// PC and mem
-  $get.secpc($store.mem(M,p,v)) == $get.secpc(M));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Labels and mem
-  $get.seclabel($store.mem(M,q,v), p) == $get.seclabel(M, p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Metas and mem
-  $get.metalabel($store.mem(M,q,v), p) == $get.metalabel(M, p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Pointer groups and mem
-  $get.ptrgrp($store.mem(M,q,v), p) == $get.ptrgrp(M, p));
-axiom (forall M:$memory_t, p:$ptr, l:$seclabel :: {:weight 0}	// Mem and PC
-  $select.mem($set.secpc(M,l), p) == $select.mem(M, p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Mem and labels
-  $select.mem($set.seclabel(M,q,l), p) == $select.mem(M, p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$seclabel :: {:weight 0}	// Mem and metas
-  $select.mem($set.metalabel(M,q,l), p) == $select.mem(M, p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, i:int :: {:weight 0}			// Mem and pointer groups
-  $select.mem($set.ptrgrp(M,q,i), p) == $select.mem(M, p));
-
-
 function $memory(s:$state) returns($memory_t);
 function $typemap(s:$state) returns($typemap_t);
 function $statusmap(s:$state) returns($statusmap_t);
@@ -1773,37 +1693,6 @@ procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
                                                 $ptrset_to_int($set_difference($owns(old($s), owner), $set_singleton(#p))));
   ensures $timestamp_post_strict(old($s), $s);
 
-var SecLabel#special#result:$seclabel;
-var SecMeta#special#result:$seclabel;
-
-procedure $set_pc(l:$seclabel);
-  modifies $s;
-  ensures $typemap($s) == $typemap(old($s));
-  ensures $statusmap($s) == $statusmap(old($s));
-  ensures $memory($s) == $set.secpc($memory(old($s)), l);
-  ensures $timestamp_post_strict(old($s), $s);
-
-procedure $set_label(p:$ptr, l:$seclabel);
-  modifies $s;
-  ensures $typemap($s) == $typemap(old($s));
-  ensures $statusmap($s) == $statusmap(old($s));
-  ensures $memory($s) == $set.seclabel($memory(old($s)), p, l);
-  ensures $timestamp_post_strict(old($s), $s);
-
-procedure $set_meta(p:$ptr, l:$seclabel);
-  modifies $s;
-  ensures $typemap($s) == $typemap(old($s));
-  ensures $statusmap($s) == $statusmap(old($s));
-  ensures $memory($s) == $set.metalabel($memory(old($s)), p, l);
-  ensures $timestamp_post_strict(old($s), $s);
-
-procedure $set_ptr_grp(p:$ptr, i:int);
-  modifies $s;
-  ensures $typemap($s) == $typemap(old($s));
-  ensures $statusmap($s) == $statusmap(old($s));
-  ensures $memory($s) == $set.ptrgrp($memory(old($s)), p, i);
-  ensures $timestamp_post_strict(old($s), $s);
-
 // -----------------------------------------------------------------------
 // Allocation
 // -----------------------------------------------------------------------
@@ -3189,6 +3078,163 @@ function $lt_f8(x:$primitive, y:$primitive) returns(bool);
 function $leq_f8(x:$primitive, y:$primitive) returns(bool);
 function $gt_f8(x:$primitive, y:$primitive) returns(bool);
 function $geq_f8(x:$primitive, y:$primitive) returns(bool);
+
+// --------------------------------------------------------------------------------
+// Information flow types and functions
+// --------------------------------------------------------------------------------
+
+// Individual labels
+	// Boolean instantiation
+	type $seclabel = bool;
+
+	const $seclbl.top: $seclabel;
+	axiom $seclbl.top == true;
+	const $seclbl.bot: $seclabel;
+	axiom $seclbl.bot == false;
+
+	function {:inline true} $seclbl.leq(l1:$seclabel, l2:$seclabel) returns(bool)
+		{ l1 ==> l2 }
+
+	function {:inline true} $seclbl.meet(l1:$seclabel, l2:$seclabel) returns($seclabel)
+		{ l1 && l2 }
+	function {:inline true} $seclbl.join(l1:$seclabel, l2:$seclabel) returns($seclabel)
+		{ l1 || l2 }
+
+// Label sets
+	// Generic type and operations
+	type $labelset = [$ptr] $seclabel;
+
+	function {:inline true} $lblset.proj(l:$labelset, p:$ptr) returns($seclabel)
+		{ l[p] }
+	function {:inline true} $lblset.inj(l:$labelset, p:$ptr, b:$seclabel) returns($labelset)
+		{ l[p := b] }
+
+	const $lblset.top: $labelset;
+	axiom(forall p:$ptr :: $lblset.top[p] == $seclbl.top);
+	const $lblset.bot: $labelset;
+	axiom(forall p:$ptr ::$lblset.bot[p] == $seclbl.bot);
+
+	function {:inline true} $lblset.leq(l1:$labelset, l2:$labelset) returns(bool)
+		{ (forall p:$ptr :: $seclbl.leq(l1[p], l2[p])) }
+
+	function $lblset.meet($labelset, $labelset) returns($labelset);
+	axiom(forall l1,l2:$labelset, p:$ptr :: $lblset.meet(l1,l2)[p] == $seclbl.meet(l1[p], l2[p]));
+
+	function $lblset.join($labelset, $labelset) returns($labelset);
+	axiom(forall l1,l2:$labelset, p:$ptr :: $lblset.join(l1,l2)[p] == $seclbl.join(l1[p], l2[p]));
+
+	// Labels and meta-labels of memory locations (we want them in $memory so they get havoc()-ed at the same time as the memory locations they correspond to)
+	function $select.sec.label($memory_t, $ptr) returns($labelset);
+	function $store.sec.label($memory_t, $ptr, $labelset) returns($memory_t);
+
+	axiom(forall M:$memory_t, p,q:$ptr, l:$labelset ::
+	  $in_full_extent_of(q, p) ==> $select.sec.label($store.sec.label(M, p, l), q) == l);
+	axiom(forall M:$memory_t, p,q:$ptr, l:$labelset ::
+	      $in_full_extent_of(q, p)
+		  ||
+		  $select.sec.label($store.sec.label(M, p, l), q) == $select.sec.label(M, q));
+
+	function $select.sec.meta($memory_t, $ptr) returns($labelset);
+	function $store.sec.meta($memory_t, $ptr, $labelset) returns($memory_t);
+
+	axiom(forall M:$memory_t, p,q:$ptr, l:$labelset ::
+	  $in_full_extent_of(q, p) ==> $select.sec.meta($store.sec.meta(M, p, l), q) == l);
+	axiom(forall M:$memory_t, p,q:$ptr, l:$labelset ::
+	      $in_full_extent_of(q, p)
+		  ||
+		  $select.sec.label($store.sec.meta(M, p, l), q) == $select.sec.meta(M, q));
+
+// Test classifiers
+	// Default classifier
+	type $map_t..$ptr_to..^^void.^^bool;
+
+	function $select.$map_t..$ptr_to..^^void.^^bool(M: $map_t..$ptr_to..^^void.^^bool, p: $ptr) : bool;
+	function $store.$map_t..$ptr_to..^^void.^^bool(M: $map_t..$ptr_to..^^void.^^bool, p: $ptr, v: bool) : $map_t..$ptr_to..^^void.^^bool;
+	function $eq.$map_t..$ptr_to..^^void.^^bool(M1: $map_t..$ptr_to..^^void.^^bool, M2: $map_t..$ptr_to..^^void.^^bool) : bool;
+
+	const $zero.$map_t..$ptr_to..^^void.^^bool: $map_t..$ptr_to..^^void.^^bool;
+
+	axiom (forall M: $map_t..$ptr_to..^^void.^^bool, p: $ptr, v: bool :: {:weight 0} $select.$map_t..$ptr_to..^^void.^^bool($store.$map_t..$ptr_to..^^void.^^bool(M, p, v), p) == v);
+	axiom (forall M: $map_t..$ptr_to..^^void.^^bool, p: $ptr, v: bool, q: $ptr :: {:weight 0} p != q ==> $select.$map_t..$ptr_to..^^void.^^bool($store.$map_t..$ptr_to..^^void.^^bool(M, q, v), p) == $select.$map_t..$ptr_to..^^void.^^bool(M, p));
+	axiom (forall M1: $map_t..$ptr_to..^^void.^^bool, M2: $map_t..$ptr_to..^^void.^^bool :: {:weight 0} { $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2) } (forall p: $ptr :: {:weight 0} $select.$map_t..$ptr_to..^^void.^^bool(M1, p) == $select.$map_t..$ptr_to..^^void.^^bool(M2, p)) ==> $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2));
+	axiom (forall M1: $map_t..$ptr_to..^^void.^^bool, M2: $map_t..$ptr_to..^^void.^^bool :: {:weight 0} { $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2) } $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2) ==> M1 == M2);
+	axiom $int_to_map_t..ptr_to..^^void.^^bool(0) == $zero.$map_t..$ptr_to..^^void.^^bool;
+	axiom (forall p: $ptr :: {:weight 0} $select.$map_t..$ptr_to..^^void.^^bool($zero.$map_t..$ptr_to..^^void.^^bool, p) == false);
+	axiom (forall r1: $record, r2: $record, f: $field, R: $ctype :: {:weight 0} { $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)), $is_record_field(R, f, $map_t($ptr_to(^^void), ^^bool)) } $eq.$map_t..$ptr_to..^^void.^^bool($int_to_map_t..ptr_to..^^void.^^bool($rec_fetch(r1, f)), $int_to_map_t..ptr_to..^^void.^^bool($rec_fetch(r2, f))) ==> $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)));
+
+	function $map_t..ptr_to..^^void.^^bool_to_int(x: $map_t..$ptr_to..^^void.^^bool) : int;
+	function $int_to_map_t..ptr_to..^^void.^^bool(x: int) : $map_t..$ptr_to..^^void.^^bool;
+	axiom (forall #x: $map_t..$ptr_to..^^void.^^bool :: #x == $int_to_map_t..ptr_to..^^void.^^bool($map_t..ptr_to..^^void.^^bool_to_int(#x)));
+
+	function #classifier#default() : $map_t..$ptr_to..^^void.^^bool;
+
+	const unique cf#classifier#default: $pure_function;
+	axiom $function_arg_type(cf#classifier#default, 0, $map_t($ptr_to(^^void), ^^bool));
+	axiom (forall p: $ptr :: { $select.$map_t..$ptr_to..^^void.^^bool(#classifier#default(), p) } $select.$map_t..$ptr_to..^^void.^^bool(#classifier#default(), p) == false);
+
+	procedure classifier#default() returns ($result: $map_t..$ptr_to..^^void.^^bool);
+		ensures $result == #classifier#default();
+		free ensures $call_transition(old($s), $s);
+
+// Pointer clubs
+	// Generic type and operations
+	type $ptrclub;
+	const $ptrclub.empty: [$ptr] bool;
+	axiom(forall p: $ptr :: $ptrclub.empty[p] == false);
+
+	function is_active_ptrclub(c: $ptrclub) returns(bool);
+
+	function $ptrclub.construct(c: [$ptr] bool, l: $labelset) returns($ptrclub);
+	function $ptrclub.members(c: $ptrclub) returns([$ptr] bool);
+	function $ptrclub.bound(c: $ptrclub) returns($labelset);
+	function $ptrclub.addMember(p: $ptr, c: $ptrclub) returns($ptrclub);
+	function {:inline true} $ptrclub.isMember(p: $ptr, c: $ptrclub) returns(bool)
+		{ $ptrclub.members(c)[p] }
+	
+	axiom(forall c: [$ptr] bool, l: $labelset ::
+	  $ptrclub.members($ptrclub.construct(c, l)) == c);
+	axiom(forall c: [$ptr] bool, l: $labelset ::
+	  $ptrclub.bound($ptrclub.construct(c, l)) == l);
+
+	axiom(forall c: $ptrclub, p: $ptr ::
+	     $ptrclub.members($ptrclub.addMember(p, c))
+	  == $ptrclub.members(c)[p := true]);
+	axiom(forall c: $ptrclub, p: $ptr ::
+	  $ptrclub.bound($ptrclub.addMember(p,c)) == $ptrclub.bound(c));
+
+	function $ptrclub.compare($ptr, $ptr) returns($labelset);
+	axiom(forall p1,p2: $ptr :: $ptr_eq(p1, p2) ==> $lblset.leq($ptrclub.compare(p1, p2), $lblset.bot));	// If the pointers are provably equal, we don't even bother computing a lub
+	axiom(forall p1,p2:$ptr, c:$ptrclub :: $ptrclub.isMember(p1, c) && $ptrclub.isMember(p2,c) && is_active_ptrclub(c)
+	                                             ==> $lblset.leq($ptrclub.compare(p1,p2), $ptrclub.bound(c)));	// The comparison label is a lower bound
+	// And we shouldn't need the fact that the glb is the greatest lower bound
+
+// No interaction between memory and labels, and the various kinds of labels
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$labelset :: {:weight 0}	// Metas and labels
+  $select.sec.meta($store.sec.label(M,q,l),p) == $select.sec.meta(M,p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$labelset :: {:weight 0}	// Labels and metas
+  $select.sec.label($store.sec.meta(M,q,l),p) == $select.sec.label(M,p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Labels and mem
+  $select.sec.label($store.mem(M,q,v), p) == $select.sec.label(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Metas and mem
+  $select.sec.meta($store.mem(M,q,v), p) == $select.sec.meta(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$labelset :: {:weight 0}	// Mem and labels
+  $select.mem($store.sec.label(M,q,l), p) == $select.mem(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$labelset :: {:weight 0}	// Mem and metas
+  $select.mem($store.sec.meta(M,q,l), p) == $select.mem(M, p));
+
+procedure $store_sec_label(p:$ptr, l:$labelset);
+  modifies $s;
+  ensures $typemap($s) == $typemap(old($s));
+  ensures $statusmap($s) == $statusmap(old($s));
+  ensures $memory($s) == $store.sec.label($memory(old($s)), p, l);
+  ensures $timestamp_post_strict(old($s), $s);
+
+procedure $store_sec_meta(p:$ptr, l:$labelset);
+  modifies $s;
+  ensures $typemap($s) == $typemap(old($s));
+  ensures $statusmap($s) == $statusmap(old($s));
+  ensures $memory($s) == $store.sec.meta($memory(old($s)), p, l);
+  ensures $timestamp_post_strict(old($s), $s);
 
 // --------------------------------------------------------------------------------
 // Counter Example Visualizer things

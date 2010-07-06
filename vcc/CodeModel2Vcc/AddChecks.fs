@@ -213,7 +213,7 @@ namespace Microsoft.Research.Vcc
       else expr
 
     /// Add checks for writability/readability of memory
-    let addMemoryChecks ctx self = function
+    let rec addMemoryChecks ctx self = function
       | MemoryWrite (c, p, expr) ->
         if expr.Type.IsComposite then helper.Oops (expr.Token, "non primitive type in memory write")
         let istyped = propAssert 8506 "{0} is typed" "_vcc_typed2" p
@@ -271,6 +271,18 @@ namespace Microsoft.Research.Vcc
         match List.fold check_req wrasserts f'.Requires with
           | [] -> None
           | checks -> Some (Expr.MkBlock (checks @ [Call (c, f, targs, List.map self args)]))          
+      
+      | Macro (ec, "_vcc_downgrade_to", [orig; dest]) ->
+        let rec removeOuterBlock = function
+          | Block (ec, es, None) -> es
+          | e -> [e]
+        let rec last acc = function
+          | [] -> die()
+          | [e] -> acc,e
+          | x::xs -> last (x::acc) xs
+        let checksO,orig' = last [] (removeOuterBlock (orig.SelfMap(addMemoryChecks ctx).SelfMap(ToCoreC.removeFakeBlocks)))
+        let checksD,dest' = last [] (removeOuterBlock (dest.SelfMap(addMemoryChecks ctx).SelfMap(ToCoreC.removeFakeBlocks)))
+        Some (Expr.Macro(ec, "fake_block", checksO @ checksD @ [Macro(ec, "_vcc_downgrade_to", [orig'; dest'])]))
         
       | Deref (c, p) when not ctx.IsPure ->
         let rd = Expr.MkAssert (Macro ({c with Type = Bool}, "reads_check_normal", [ignoreEffects p]))

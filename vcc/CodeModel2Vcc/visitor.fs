@@ -582,12 +582,15 @@ namespace Microsoft.Research.Vcc
                 
                 let mathPref = "_vcc_math_type_"
                 if name.StartsWith mathPref then
-                  let typeName = (if helper.Options.NewSyntax then "\\" else "") + (name.Substring (mathPref.Length))
-                  let td = C.Type.MathTd typeName
-                  typesMap.Add(typeDef, td)
-                  typeNameMap.Add(td.Name, td)
-                  topDecls <- C.Top.TypeDecl (td) :: topDecls
-                  C.Type.Ref td
+                  if name.Substring(mathPref.Length) = "label_t"
+                    then C.Type.SecLabel None
+                    else
+                      let typeName = (if helper.Options.NewSyntax then "\\" else "") + (name.Substring (mathPref.Length))
+                      let td = C.Type.MathTd typeName
+                      typesMap.Add(typeDef, td)
+                      typeNameMap.Add(td.Name, td)
+                      topDecls <- C.Top.TypeDecl (td) :: topDecls
+                      C.Type.Ref td
                 else if name = "_vcc_claim_struct" || name = "\\claim_struct" then
                   C.Type.Claim
                 else if name.Contains ("._FixedArrayOfSize") then
@@ -603,8 +606,6 @@ namespace Microsoft.Research.Vcc
                   C.Type.MathInteger
                 else if name = SystemDiagnosticsContractsCodeContractObjset then
                   C.Type.Math "\\objset"
-                else if name = "_vcc_label_t" then
-                  C.Type.SecLabel None
                 else              
                   let tok = token typeDef
                   let totalOffset f = MemberHelper.GetFieldBitOffset f + f.Offset
@@ -975,7 +976,8 @@ namespace Microsoft.Research.Vcc
           | "_vcc_in_state" | "\\at"
           | "_vcc_approves" | "\\approves"
           | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known"
-          | "_vcc_is_lower" | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" | "_vcc_label_of" | "_vcc_sec_leq" -> ()
+          | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" | "_vcc_label_of" | "_vcc_lblset_leq"
+          | "_vcc_new_club" | "_vcc_add_member" | "_vcc_is_member" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false)
 
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
@@ -1451,33 +1453,41 @@ namespace Microsoft.Research.Vcc
             exprRes <- C.Expr.Macro(ec, "atomic_op",  args())
           | _, "_vcc_atomic_op_result" ->
             exprRes <- C.Expr.Macro(ec, "atomic_op_result", [])
-          | _, "_vcc_is_lower" ->
-            match args() with
-              | [e1; e2] as args -> exprRes <- C.Expr.Macro (ec, "_vcc_is_lower", args)
-              | _ -> oopsNumArgs()
           | _, "_vcc_test_classifier" ->
             match args() with
-              | [classif;cond] as args -> exprRes <- C.Expr.Macro (ec, "_vcc_test_classifier", args)
+              | [classif;cond] as args -> exprRes <- C.Expr.Macro ({ ec with Type = cond.Type }, methodName, args)
               | _ -> oopsNumArgs()
           | _, "_vcc_downgrade_to" ->
             match args() with
-              | [var;expr] as args -> exprRes <- C.Expr.Macro ({ ec with Type = CAST.Type.Void}, "_vcc_downgrade_to", args)
+              | [var;expr] as args -> exprRes <- C.Expr.Macro ({ ec with Type = CAST.Type.Void }, methodName, args)
               | _ -> oopsNumArgs()
           | _, "_vcc_current_context" ->
             match args() with
-              | [] -> exprRes <- C.Expr.Macro ({ ec with Type = CAST.Type.SecLabel None}, "_vcc_current_context", [])
+              | [] -> exprRes <- C.Expr.Macro ({ ec with Type = CAST.Type.SecLabel None }, methodName, [])
               | _ -> oopsNumArgs()
           | _, "_vcc_label_of" ->
             match args() with
-              | [expr] as args -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.SecLabel(Some expr)}, "_vcc_label_of", args)
+              | [expr] as args -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.SecLabel(Some expr) }, methodName, args)
               | _ -> oopsNumArgs()
-          | _, ("_vcc_seclabel_bot"|"_vcc_seclabel_top" as v) ->
+          | _, ("_vcc_seclabel_bot"|"_vcc_seclabel_top") ->
             match args() with
-              | [] -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.SecLabel(None)}, v, [])
+              | [] -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.SecLabel(None) }, methodName, [])
               | _ -> oopsNumArgs()
-          | _, "_vcc_sec_leq" ->
+          | _, "_vcc_lblset_leq" ->
             match args() with
-              | [l1;l2] as args -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.Bool}, "_vcc_sec_leq", args)
+              | [l1;l2] as args -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.Bool }, methodName, args)
+              | _ -> oopsNumArgs()
+          | _, "_vcc_new_club" ->
+            match args() with
+              | [l] as args -> exprRes <- C.Expr.Macro({ec with Type = C.Type.Math "club_t"}, methodName, args)
+              | _ -> oopsNumArgs()
+          | _, "_vcc_add_member" ->
+            match args() with
+              | [p; c] as args -> exprRes <- C.Expr.Macro({ec with Type = C.Type.Void}, methodName, args)
+              | _ -> oopsNumArgs()
+          | _, "_vcc_is_member" ->
+            match args() with
+              | [p; c] as args -> exprRes <- C.Expr.Macro({ec with Type = C.Type.Bool}, methodName, args)
               | _ -> oopsNumArgs()
           | _ ->
             let args = args()
