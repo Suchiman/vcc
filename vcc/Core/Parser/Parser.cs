@@ -327,7 +327,9 @@ namespace Microsoft.Research.Vcc.Parsing {
             }
           }
         }
-      }        
+      }
+
+      this.SkipSemiColonAfterDeclarationOrStatement(followers);
     }
 
     protected List<Statement> ParseLocalDeclaration(TokenSet followers) {
