@@ -154,7 +154,8 @@ namespace Microsoft.Research.Vcc
           | "ptr"
           | "bool"
           | "int"
-          | "ptrset" -> suff
+          | "ptrset"
+          | "map_t..ptr_to..^^void.^^bool" -> suff
           // possible need to generate conversion function
           | _ ->
             if not (conversionTypes.ContainsKey suff) then
@@ -254,9 +255,10 @@ namespace Microsoft.Research.Vcc
             let bt2 = trType t2
             let mapName = typeIdToName (toTypeId t)
             let mapType = B.Type.Ref mapName
-            if not (mapTypes.ContainsKey mapName) then
-              mapTypeList.Add t
-              mapTypes.Add (mapName, true)
+            if not (t1 = C.Type.ObjectT && t2 = C.Type.Bool) then
+              if not (mapTypes.ContainsKey mapName) then
+                mapTypeList.Add t
+                mapTypes.Add (mapName, true)
             mapType
           | C.Type.Ref ({ Kind = C.Record }) -> B.Type.Ref "$record"
           | C.Type.Ref ({ Name = n; Kind = (C.MathType|C.FunctDecl _) }) ->
@@ -264,6 +266,7 @@ namespace Microsoft.Research.Vcc
               | "ptrset" -> tpPtrset
               | "struct" -> tpStruct
               | "state_t" -> tpState
+              | "club_t" -> B.Type.Ref "$ptrclub"
               | _ -> B.Type.Ref ("$#" + n)
           | C.Type.Volatile _
           | C.Type.Claim

@@ -105,6 +105,8 @@ namespace Microsoft.Research.Vcc
             Type.Ref u.Name
           | :? Boogie.MapType as a ->
             Type.Map ([for a in a.Arguments -> unType a], unType a.Result)
+          | :? Boogie.TypeSynonymAnnotation as u ->
+            Type.Ref u.Decl.Name
           | _ ->
             failwith ("cannot handle boogie type " + t.ToString() + " : " + t.GetType().ToString())
      

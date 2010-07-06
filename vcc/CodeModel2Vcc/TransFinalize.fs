@@ -126,7 +126,7 @@ namespace Microsoft.Research.Vcc
         
         | Quant (c, q) -> Some (Quant (c, { q with Body = f q.Body; Condition = Option.map f q.Condition }))
         | If (c, None, cond, e1, e2) -> Some (If (c, None, f cond, self e1, self e2))
-        | If (c, Some cl, cond, e1, e2) -> Some (If (c, Some(f cl), f cond, self e1, self e2))
+        | If (c, cl, cond, e1, e2) -> Some (If (c, cl, f cond, self e1, self e2))
         | Loop (c, invs, writes, variants, body) -> Some (Loop (c, fs invs, List.map self writes, fs variants, self body)) //TODO check the treatment of the variants
         | Assert (c, cond, trigs) -> Some (Assert (c, f cond, trigs))
         | Assume (c, cond) -> Some (Assume (c, f cond))

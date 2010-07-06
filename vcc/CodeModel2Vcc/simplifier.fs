@@ -228,6 +228,24 @@ namespace Microsoft.Research.Vcc
   
     // ============================================================================================================
     
+    let classifierValidityChecks decls =
+      let rec addCheck self = function
+        | If(ec, None, (Macro(_, "_vcc_test_classifier", [Quant(ec', ({Kind = Lambda} as qd)); cond]) as c), iB, tB) as e ->
+          let cond,body =
+            match qd.Body with
+              | Macro(_, "in_lambda", [c;b]) -> c,b
+              | _ -> die()
+          let iB' = iB.SelfMap(addCheck)
+          let tB' = tB.SelfMap(addCheck)
+          Some(Macro(ec, "fake_block", [Macro({ec' with Type = Void}, "test_classifier_validity_check", [Quant({ec' with Type = Bool}, {qd with Kind = Forall; Condition = Some cond; Body = body})]); If(ec, None, c, iB', tB')]))
+        | _ -> None
+      let doFunction = function
+        | FunctionDecl ({Body = Some b} as fn) ->
+          fn.Body <- Some(b.SelfMap(addCheck))
+          FunctionDecl fn
+        | _ as d -> d
+      List.map (doFunction) decls
+    
     let desugarLambdas decls =
       let defs = ref []
       
@@ -357,7 +375,7 @@ namespace Microsoft.Research.Vcc
           
         | _ -> None   
                    
-      let decls = decls |> deepMapExpressions (addNestedInLambdas None) |> deepMapExpressions expand 
+      let decls = decls |> classifierValidityChecks |> deepMapExpressions (addNestedInLambdas None) |> deepMapExpressions expand 
       decls @ !defs    
     
     // ============================================================================================================
@@ -1037,6 +1055,9 @@ namespace Microsoft.Research.Vcc
         | CallMacro(_, ("_vcc_giveup_closed_owner"), _, _)
         | CallMacro(_, "unclaim", _, _) 
         | CallMacro(_, "by_claim", _, [_; _; _]) ->
+          false
+        | CallMacro(_, "_vcc_test_classifier", _, [_; cond]) ->
+          cond.SelfVisit(checkAccessToSpecFields ctx);
           false
         | Macro(_, "=", [tgt; src]) as assign ->
           match exprDependsOnSpecExpr tgt with
