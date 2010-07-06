@@ -264,16 +264,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.InitializeLocallyDefinedNamesFromParameters(templateParameters);
       List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, specSpecifiers, followers | TS.DeclaratorStart | Token.Semicolon | Token.Colon);
 
-      bool savedInSpecCode = this.InSpecCode;
-      bool seenSpecToken = false;
-      if (this.currentToken == Token.Specification) {
-        savedInSpecCode = this.EnterSpecBlock();
-        seenSpecToken = true;
-        followers |= Token.RightParenthesis;
-        this.GetNextToken();
-        this.Skip(Token.LeftParenthesis);
-        specifiers.AddRange(this.ParseSpecifiers(namespaceMembers, typeMembers, null, followers|TS.DeclaratorStart|Token.Semicolon|Token.Colon));
-      }
       VccFunctionTypeExpression/*?*/ functionTypeExpression = null;
       TypedefNameSpecifier/*?*/ typeDefName = GetTypedefNameSpecifier(specifiers);
       if (typeDefName != null) {
@@ -325,6 +315,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
       }
+
       if (specifiers.Count > 0 && specifiers[specifiers.Count-1] is CompositeTypeSpecifier) {
         if (this.currentTypeName != null && foundNoDeclaration) {
           StructSpecifier structSpecifier = specifiers[specifiers.Count - 1] as StructSpecifier;
@@ -336,13 +327,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             }
           }
         }
-      }
-        
-      this.SkipSemiColonAfterDeclarationOrStatement(followers);
-      if (seenSpecToken) {
-        this.Skip(Token.RightParenthesis);
-        this.LeaveSpecBlock(savedInSpecCode);
-      }
+      }        
     }
 
     protected List<Statement> ParseLocalDeclaration(TokenSet followers) {

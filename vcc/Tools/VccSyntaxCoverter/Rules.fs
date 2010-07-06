@@ -390,6 +390,7 @@ module Rules =
       | [u; fld] -> fnApp "\\union_active" (Tok.Op(fakePos, "&") :: parenOpt u :: Tok.Op(fakePos, "->") :: eatWs fld)
       | _ -> failwith ""
     addRule (parenRuleN "union_active" 2 union_active)
+    addRule (parenRuleN "union_active_anon" 2 union_active)
         
     let union_reinterpret = function
       | [u; fld] ->  spec "union_reinterpret" (Tok.Op(fakePos, "&") :: parenOpt u :: Tok.Op(fakePos, "->") :: eatWs fld)
@@ -456,6 +457,17 @@ module Rules =
         | (Tok.Id(_, lbl) as id) :: Tok.Op(_, ":") :: invariant ->  spec "invariant" (Tok.Op(fakePos, ":") :: id :: (space :: eatWs invariant))
         | invariant -> spec "invariant" (eatWs invariant)
     addRule (parenRule true "invariant" invariant)
+
+    let member_name = function
+      | hd :: rest ->
+        match eatWs rest with
+          | Tok.Group(_, "(", memName) :: rest ->
+            match eatWs rest with 
+              | (Tok.Group(_, "{", _) as tp) :: rest -> [], (tp :: space :: fnApp "_" memName) @ rest
+              | _ -> [hd], rest
+          | _ -> failwith ""
+      | _ -> failwith ""
+    addRule { keyword = "member_name"; replFn = ctxFreeRule member_name }
 
     let struct_rule = function
       | hd :: rest ->
