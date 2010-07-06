@@ -81,10 +81,10 @@ typedef struct vcc(dynamic_owns) p
     invariant(claims(IpiClaim, closed(this::Ipi) && closed(&ghost))) 
     in_group(Ipi)
     UINT64 CpuNumber;
-    in_group(Ipi)
-    spec( rwkey read[64];)
-    in_group(Ipi)
-    spec( rwkey write[64];)
+    
+    spec(in_group(Ipi) rwkey read[64];)
+    
+    spec(in_group(Ipi) rwkey write[64];)
 
     invariant(forall(UINT64 i; i < 64; set_in(&read[i], owns(this))))
     invariant(forall(UINT64 i; i < 64; set_in(&write[i], owns(this))))

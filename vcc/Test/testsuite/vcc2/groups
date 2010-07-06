@@ -225,8 +225,8 @@ Verification of B##D#adm succeeded.
    in_group(g)
    volatile int v;
 
-   in_group(g)
-   spec(volatile bool map[unsigned int];)
+   
+   spec(in_group(g) volatile bool map[unsigned int];)
 
    invariant(keeps((struct Struct::g*)this))
    
@@ -540,8 +540,8 @@ Verification of B##D#adm succeeded.
    in_group(g)
    volatile int v;
 
-   in_group(g)
-   spec(volatile bool map[unsigned int];)
+   
+   spec(in_group(g) volatile bool map[unsigned int];)
 
    invariant(keeps(this::g))
    
