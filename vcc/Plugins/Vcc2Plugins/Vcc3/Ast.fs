@@ -267,6 +267,11 @@ module Ast =
       Name : string
       Blocks : list<Block>
     }
+
+    override this.ToString() =
+     "procedure " + this.Name + "()\n{\n" +
+       (this.Blocks |> List.map (fun b -> b.ToString()) |> String.concat "\n") +
+       "\n}\n"
         
   
   let (|PForall|_|) = function

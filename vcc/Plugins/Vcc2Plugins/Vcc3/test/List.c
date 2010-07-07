@@ -92,7 +92,7 @@ struct vcc(dynamic_owns) _LIST_MANAGER
 
 };)
 
-typedef struct _LIST_MANAGER LIST_MANAGER, PLIST_MANAGER;
+typedef struct _LIST_MANAGER LIST_MANAGER, *PLIST_MANAGER;
 
 #endif
 
