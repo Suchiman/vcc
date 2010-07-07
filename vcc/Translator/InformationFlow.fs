@@ -36,12 +36,12 @@ namespace Microsoft.Research.Vcc
     let getLocal name = B.Expr.Ref name
     let getPLabel bExpr = B.Expr.FunctionCall ("$select.sec.label", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); bExpr])
     let getPMeta bExpr = B.Expr.FunctionCall ("$select.sec.meta", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); bExpr])
-    let getPC = B.Expr.Ref "$sec.pc"
+    let getPC = B.Expr.FunctionCall ("$select.sec.pc", [B.Expr.Ref "$s"])
 
     let setLocal name value = B.Stmt.Assign (getLocal name, value)
     let setPLabel tok loc value = B.Stmt.Call (tok, [], "$store_sec_label", [loc; value])
     let setPMeta tok loc value = B.Stmt.Call (tok, [], "$store_sec_meta", [loc; value])
-    let setPC value = B.Stmt.Assign (B.Expr.Ref "$sec.pc", value)
+    let setPC tok value = B.Stmt.Call (tok, [], "$store_sec_pc", [value])
 
     let rec normaliseSecLabel = function
       | Bottom
@@ -328,7 +328,7 @@ namespace Microsoft.Research.Vcc
         | B.Expr.Ref (vname) when vname.StartsWith "SecMeta#" -> Set.ofList [false,vname],acc
         | B.Expr.Ref (vname) when vname.StartsWith "L#" -> Set.ofList[false,"SecLabel#"+vname],acc
         | B.Expr.Ref (vname) -> Set.ofList [false,"SecLabel#"+vname],acc
-        | B.Expr.Ref "$sec.pc" -> Set.empty,acc
+        | B.Expr.FunctionCall ("$select.sec.pc", _) -> Set.empty,acc
         | B.Expr.FunctionCall ("$select.sec.label", [_;B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref p])]) -> Set.ofList [true,p],(p,t)::acc
         | B.Expr.FunctionCall ("$select.sec.meta", [_;B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref p])]) -> Set.ofList [true,p],(p,t)::acc
         | B.Expr.BoolLiteral _

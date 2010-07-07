@@ -1123,6 +1123,7 @@ axiom (forall S:$state, p:$ptr, c:$ptr, i:int, sz:int, t:$ctype ::
 
 procedure $write_ref_cnt(p:$ptr, v:int);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures old($typemap($s)) == $typemap($s);
   ensures old($memory($s)) == $memory($s);
   ensures (forall q:$ptr :: {$st($s, q)} q == p || $st_eq(old($s), $s, q));
@@ -1195,6 +1196,7 @@ function {:inline true} $inv_is_owner_approved(S1:$state, S2:$state, this:$ptr, 
 
 procedure $bump_volatile_version(p:$ptr);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $typemap($s) == $typemap(old($s));
   ensures $statusmap($s) == $statusmap(old($s));
   ensures (forall q:$ptr :: {$mem($s, q)} q == p || $mem_eq(old($s), $s, q));
@@ -1248,6 +1250,7 @@ function {:inline true} $admissibility_pre(S:$state, p:$ptr) returns(bool)
 
 procedure $havoc_others(p:$ptr, t:$ctype);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the state was not modified
   requires $good_for_admissibility($s);
   ensures $is_stuttering_check() || $spans_the_same(old($s), $s, p, t);
@@ -1296,6 +1299,7 @@ function {:inline true} $unwrap_check_pre(S:$state, p:$ptr) returns(bool)
 
 procedure $unwrap_check(#l:$ptr);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the state was not modified
   requires $good_for_pre_can_unwrap($s);
   ensures $good_state($s);
@@ -1329,6 +1333,7 @@ procedure $unwrap_check(#l:$ptr);
 
 procedure $write_int(p:$ptr, v:int);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $typemap($s) == $typemap(old($s));
   ensures $statusmap($s) == $statusmap(old($s));
   ensures $memory($s) == $store.mem($memory(old($s)), p, v);
@@ -1419,6 +1424,7 @@ function $post_unwrap(S1:$state, S2:$state) returns(bool);
 procedure $static_unwrap(#l:$ptr, S:$state);
   // writes #l
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the object has no outstanding claims
   requires ! $is_claimable($typ(#l)) || $ref_cnt($s, #l) == 0;
   // TOKEN: OOPS: pre_static_unwrap holds
@@ -1438,6 +1444,7 @@ procedure $static_unwrap(#l:$ptr, S:$state);
 procedure $static_wrap(#l:$ptr, S:$state, owns:$ptrset);
   // writes #l, $owns($s, #l)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: OOPS: pre_static_wrap must hold
   requires $pre_static_wrap($s);
   // TOKEN: the wrapped type must not be primitive
@@ -1470,6 +1477,7 @@ procedure $static_wrap(#l:$ptr, S:$state, owns:$ptrset);
 procedure $static_wrap_non_owns(#l:$ptr, S:$state);
   // writes #l, $owns($s, #l)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: OOPS: pre_static_wrap holds
   requires $pre_static_wrap($s);
   // TOKEN: the wrapped type is non primitive
@@ -1496,6 +1504,7 @@ procedure $static_wrap_non_owns(#l:$ptr, S:$state);
 procedure $unwrap(#l:$ptr, T:$ctype);
   // writes #l
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the object has no outstanding claims
   requires ! $is_claimable(T) || $ref_cnt($s, #l) == 0;
   // TOKEN: OOPS: pre_unwrap holds
@@ -1533,6 +1542,7 @@ procedure $unwrap(#l:$ptr, T:$ctype);
 procedure $wrap(#l:$ptr, T:$ctype);
   // writes #l, $owns($s, #l)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: OOPS: pre_wrap holds
   requires $pre_wrap($s);
   // TOKEN: the wrapped type is non primitive
@@ -1568,6 +1578,7 @@ procedure $wrap(#l:$ptr, T:$ctype);
 
 procedure $bump_timestamp();
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $memory($s) == $memory(old($s));
   ensures $typemap($s) == $typemap(old($s));
   ensures (exists x:$status :: $statusmap($s) == $store.sm($statusmap(old($s)), $null, x));
@@ -1577,6 +1588,7 @@ procedure $bump_timestamp();
 procedure $deep_unwrap(#l:$ptr, T:$ctype);
   // writes #l
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   requires $wrapped($s, #l, T);
   requires $inv($s, #l, T) ==> $set_eq($owns($s, #l), $set_empty());
   ensures $inv($s,#l,T); // do we need it?
@@ -1607,6 +1619,7 @@ procedure $deep_unwrap(#l:$ptr, T:$ctype);
 procedure $set_owns(#p:$ptr, owns:$ptrset);
   // writes #p
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the owner is non-primitive
   requires $is_composite_ch($typ(#p));
   // TOKEN: the owner is mutable
@@ -1619,6 +1632,7 @@ procedure $set_owns(#p:$ptr, owns:$ptrset);
 procedure $set_closed_owner(#p:$ptr, owner:$ptr);
   // writes #p, owner
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the owner is composite
   requires $is_composite_ch($typ(owner));
   // TOKEN: the object is non-primitive
@@ -1645,6 +1659,7 @@ function {:inline true} $new_ownees(S:$state, o:$ptr, owns:$ptrset) returns($ptr
 procedure $set_closed_owns(owner:$ptr, owns:$ptrset);
   // writes owner, $new_ownees(owner, owns)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the owner is composite
   requires $is_composite_ch($typ(owner));
   // TOKEN: all newly owned objects are wrapped
@@ -1675,6 +1690,7 @@ procedure $set_closed_owns(owner:$ptr, owns:$ptrset);
 procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
   // writes owner
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the owner is composite
   requires $is_composite_ch($typ(owner));
   // TOKEN: the object is owned by the owner
@@ -1706,6 +1722,7 @@ axiom $ptr_level($memory_allocator_type) == 0;
 
 procedure $stack_alloc(#t:$ctype, #sf:int, #spec:bool) returns (#r:$ptr);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $typed2($s, #r, #t);
   ensures $extent_mutable($s, #r);
   ensures $extent_is_fresh(old($s), $s, #r);
@@ -1741,6 +1758,7 @@ procedure $stack_alloc(#t:$ctype, #sf:int, #spec:bool) returns (#r:$ptr);
 procedure $stack_free(#sf:int, #x:$ptr);
   // writes extent(#x)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the extent of the object being reclaimed is mutable
   requires $extent_mutable($s, #x);
   // TOKEN: the pointer being reclaimed was returned by stack_alloc()
@@ -1755,6 +1773,7 @@ procedure $stack_free(#sf:int, #x:$ptr);
 
 procedure $spec_alloc(#t:$ctype) returns(#r:$ptr);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $typed2($s, #r, #t);
   ensures $extent_mutable($s, #r);
   ensures $extent_is_fresh(old($s), $s, #r);
@@ -1787,6 +1806,7 @@ procedure $spec_alloc(#t:$ctype) returns(#r:$ptr);
 
 procedure $spec_alloc_array(#t:$ctype, sz:int) returns(#r:$ptr);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $typed2($s, #r, $array(#t, sz));
   ensures $extent_mutable($s, #r);
   ensures $extent_is_fresh(old($s), $s, #r);
@@ -1820,6 +1840,7 @@ procedure $spec_alloc_array(#t:$ctype, sz:int) returns(#r:$ptr);
 
 procedure $alloc(#t:$ctype) returns(#r:$ptr);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $ref(#r) == 0 || $typed2($s, #r, #t);
   ensures $ref(#r) == 0 || $extent_mutable($s, #r);
   ensures $ref(#r) == 0 || $extent_is_fresh(old($s), $s, #r);
@@ -1854,6 +1875,7 @@ procedure $alloc(#t:$ctype) returns(#r:$ptr);
 procedure $free(#x:$ptr);
   // writes extent(#x)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the object being reclaimed is typed
   requires $typed($s, #x);
   // TOKEN: the pointer being reclaimed was returned by malloc()
@@ -1893,6 +1915,7 @@ function {:inline true} $is_global_array(p:$ptr, T:$ctype, sz:int) returns(bool)
 // typedness and writes check are handled by the assignment translation
 procedure $havoc(o:$ptr, t:$ctype);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   requires $is(o, t);
   ensures $typemap($s) == $typemap(old($s));
   ensures $statusmap($s) == $statusmap(old($s));
@@ -1914,6 +1937,7 @@ function {:inline true} $union_active(S:$state, u:$ptr, f:$field) returns(bool)
 procedure $union_reinterpret(#x:$ptr, #off:$field);
   // writes extent(#x)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the reinterpretation target field comes from a proper union
   requires $is_union_field($typ(#x), #off);
   // TOKEN: the reinterpretation target union is typed
@@ -1974,6 +1998,7 @@ function {:inline true} $mutable_root(S:$state, p:$ptr) returns(bool)
 procedure $split_array(a:$ptr, i:int);
   // writes extent(a)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the array is split at positive index
   requires 0 < i;
   // TOKEN: the split-point is within the array
@@ -1995,6 +2020,7 @@ procedure $split_array(a:$ptr, i:int);
 procedure $join_arrays(a1:$ptr, a2:$ptr);
   // writes extent(a1,a2)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the first array to join is not embedded inside of another object
   requires $is_object_root($s, a1);
   // TOKEN: the second array to join is not embedded inside of another object
@@ -2018,6 +2044,7 @@ procedure $join_arrays(a1:$ptr, a2:$ptr);
 procedure $to_bytes(a:$ptr);
   // writes extent(a)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the reinterpreted object is not embedded inside of another object
   requires $is_object_root($s, a);
   ensures $mutable_root($s, $as_array(a, ^^u1, $sizeof($typ(a))));
@@ -2035,6 +2062,7 @@ procedure $to_bytes(a:$ptr);
 procedure $from_bytes(a:$ptr, t:$ctype, preserve_zero:bool);
   // writes extent(a)
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the reinterpreted array is not embedded inside of another object
   requires $is_object_root($s, a);
   // TOKEN: the reinterpreted array is array of bytes
@@ -2896,6 +2924,7 @@ axiom (forall S:$state, p:$ptr :: {$invok_state(S), $claimed_closed(S, p)}
 // called at the beginning of an atomic block to simulate other threads
 procedure $atomic_havoc();
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $writes_nothing(old($s), $s);
 
   ensures (forall p:$ptr, f:$field ::
@@ -2908,6 +2937,7 @@ axiom $no_claim == $ptr(^^claim, 0);
 
 procedure $alloc_claim() returns(#r:$ptr);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $owns($s, #r) == $set_empty();
   ensures $memory($s) == $memory(old($s));
   ensures $typemap($s) == $typemap(old($s));
@@ -2924,6 +2954,7 @@ procedure $alloc_claim() returns(#r:$ptr);
 // FIXME should it havoc non thread local state?
 procedure $unclaim(c:$ptr);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: the claim is wrapped
   requires $wrapped($s, c, ^^claim);
   // TOKEN: the claim has no outstanding references
@@ -2937,6 +2968,7 @@ procedure $unclaim(c:$ptr);
 
 procedure $kill_claim(c:$ptr);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures (forall p:$ptr :: {$st($s, p)} $st_eq(old($s), $s, p) || p == c);
   ensures $typemap(old($s)) == $typemap($s);
   ensures $memory(old($s)) == $memory($s);
@@ -2987,6 +3019,7 @@ function $reads_check_pre(s:$state) returns(bool);
 function $reads_check_post(s:$state) returns(bool);
 procedure $reads_havoc();
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   // TOKEN: called nothing before reads_havoc()
   requires $reads_check_pre($s);
   ensures $reads_check_post($s);
@@ -3144,6 +3177,9 @@ function $geq_f8(x:$primitive, y:$primitive) returns(bool);
 		  ||
 		  $select.sec.label($store.sec.meta(M, p, l), q) == $select.sec.meta(M, q));
 
+	// Program Context (is a top-level state member)
+	function $select.sec.pc($state) returns($labelset);
+
 // Test classifiers
 	// Default classifier
 	type $map_t..$ptr_to..^^void.^^bool;
@@ -3224,6 +3260,7 @@ axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$labelset :: {:weight 0}	// Mem and
 
 procedure $store_sec_label(p:$ptr, l:$labelset);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $typemap($s) == $typemap(old($s));
   ensures $statusmap($s) == $statusmap(old($s));
   ensures $memory($s) == $store.sec.label($memory(old($s)), p, l);
@@ -3231,9 +3268,18 @@ procedure $store_sec_label(p:$ptr, l:$labelset);
 
 procedure $store_sec_meta(p:$ptr, l:$labelset);
   modifies $s;
+  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $typemap($s) == $typemap(old($s));
   ensures $statusmap($s) == $statusmap(old($s));
   ensures $memory($s) == $store.sec.meta($memory(old($s)), p, l);
+  ensures $timestamp_post_strict(old($s), $s);
+
+procedure $store_sec_pc(l:$labelset);
+  modifies $s;
+  ensures $typemap($s) == $typemap(old($s));
+  ensures $statusmap($s) == $statusmap(old($s));
+  ensures $memory($s) == $memory(old($s));
+  ensures $select.sec.pc($s) == l;
   ensures $timestamp_post_strict(old($s), $s);
 
 // --------------------------------------------------------------------------------

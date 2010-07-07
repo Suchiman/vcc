@@ -28,8 +28,9 @@ namespace Microsoft.Research.Vcc
     string[] standardBoogieOptions = new string[] { 
       // report up to 10 errors
       "/errorLimit:10", 
-      // use the default (predicates) type encoding
+      // use the default (predicates) type encoding, but monomorphize map types for efficiency
       "/typeEncoding:p",
+      "/monomorphize",
       // this defaults to 100 and causes Boogie to kill the prover after it is done, but has exceeded 100M; we instead use the /memory: switch to Z3
       "/proverMemoryLimit:0",
       // print prover warnings to stdout
