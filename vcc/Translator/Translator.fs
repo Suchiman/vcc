@@ -1402,13 +1402,16 @@ namespace Microsoft.Research.Vcc
                       let env' = newIFContext env stmt
                       let setPC = [B.Stmt.VarDecl((currentPC env', B.Type.Ref "$labelset"), None)
                                    B.Stmt.Assign(B.Expr.Ref (currentPC env'), IF.getPC)
-                                   IF.setPC (B.Expr.Lambda(Token.NoToken,
+                                   IF.setPC (stmt.Token)
+                                            (B.Expr.Lambda(Token.NoToken,
                                                            ["ptr#setPC", B.Type.Ref "$ptr"],
                                                            [],
                                                            B.Expr.Ite(getMapElement classifier (B.Expr.Ref "ptr#setPC"),
                                                                       B.Expr.Ref "$seclbl.top",
-                                                                      B.Expr.Ref "$seclbl.bot")))]
-                      let resetPC = [IF.setPC (B.Expr.Ref (currentPC env'))]
+                                                                      B.Expr.Ref "$seclbl.bot")))
+                                   assumeSync env stmt.Token]
+                      let resetPC = [IF.setPC (stmt.Token) (B.Expr.Ref (currentPC env'))
+                                     assumeSync env stmt.Token]
                       condLevelCheck :: setPC, resetPC, env'
                 else [],[],env
               B.Stmt.Comment ("if (" + c.ToString() + ") ...") ::
@@ -2305,7 +2308,7 @@ namespace Microsoft.Research.Vcc
                 let cevInit = cev.InitCall h.Token :: List.map (cev.VarIntro h.Token true) inParams |> List.concat
                 let inParamLabels = if env.hasIF then List.collect (fun (v:CAST.Variable) -> [B.Stmt.VarDecl (("SecLabel#P#"+(v.Name),B.Type.Ref "$seclabel"), None); B.Stmt.VarDecl (("SecMeta#P#"+(v.Name),B.Type.Ref "$seclabel"), None)]) inParams
                                                  else []
-                let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ (B.Stmt.VarDecl(("$sec.pc", B.Type.Ref "$labelset"), None) :: inParamLabels) @ init @ cevInit                    
+                let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ inParamLabels @ init @ cevInit                    
                 
                 let can_frame =
                   if helper.Options.Vcc3 then []
@@ -2317,7 +2320,7 @@ namespace Microsoft.Research.Vcc
                   let secDecls =
                     if (env.hasIF) then [B.Stmt.VarDecl(("SecLabel#initPC", B.Type.Ref "$labelset"), None)
                                          IF.setLocal "SecLabel#initPC" (B.Expr.Ref "$lblset.bot")
-                                         IF.setPC (IF.getLocal "SecLabel#initPC")
+                                         IF.setPC (s.Token) (IF.getLocal "SecLabel#initPC")
                                          assumeSync env s.Token]
                                    else []
                   B.Stmt.Block (B.Stmt.Assume (bCall "$function_entry" [bState]) ::
