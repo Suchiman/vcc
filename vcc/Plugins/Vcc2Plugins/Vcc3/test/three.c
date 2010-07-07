@@ -1,18 +1,19 @@
 #include <vcc.h>
 
-struct A {
+struct vcc(dynamic_owns) A {
   int a;
   spec(int b; )
 };
 
 void foo(struct A *x)
-  writes(span(x))
+  requires(wrapped(x))
+  writes(x)
 {
   spec(  int k; )
 
-  assert(true);
+  unwrap(x);
+  speconly( k = x->b; )
   x->a = 10;
   speconly( x->b = 20; )
-  speconly( k = x->b; )
-  assert(false);
+  wrap(x);
 }

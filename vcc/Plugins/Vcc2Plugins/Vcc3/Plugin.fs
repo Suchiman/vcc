@@ -44,6 +44,10 @@ type Vcc3Plugin() =
     use simpl = new Simplifier (helper, pass, opts)
     simpl.Init ()
     let proc = pass.Passify impl
+
+    if opts.dump_boogie then
+      System.Console.Write (proc)
+
     let numErrs = simpl.VerifyProc (proc, handler)
     
     if numErrs > 0 then
