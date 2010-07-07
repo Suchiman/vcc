@@ -43,6 +43,8 @@ type $pure_function;
 // For labeled contracts.
 type $label;
 
+type $labelset; // TODO remove that
+
 // ----------------------------------------------------------------------------
 // built-in types
 // ----------------------------------------------------------------------------
@@ -190,6 +192,9 @@ function {:inline true} $is_thread(p:$ptr) : bool
 function {:inline true} $is_ptr_to_composite(p:$ptr) : bool
   { $kind_of($typ(p)) == $kind_composite }
 
+function $is_math_type(t:$ctype) returns(bool);
+axiom (forall t:$ctype :: {$is_math_type(t)} $is_math_type(t) ==> $is_primitive(t));
+
 function $field_offset($field) : int;
 function $field_parent_type($field) : $ctype;
 function $is_ghost_field($field) : bool;
@@ -216,7 +221,7 @@ axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claima
 
 const $me_ref : int;
 function $me() : $ptr;
-axiom $in_range_spec_ptr($me_ref);
+axiom $in_range_spec_ptr($me_ref) && $me_ref != 0;
 axiom $me() == $ptr(^$#thread_id_t, $me_ref);
 
 function {:inline true} $current_state(s:$state) : $state { s }
@@ -318,7 +323,6 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
       $path(S, $dot(p, f)) == f &&
-      //!$is_array_elt(S, $dot(p, f)) &&
       $is_volatile(S, $dot(p, f)) == isvolatile )
   }
 
@@ -331,7 +335,6 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
       $path(S, $dot(p, f)) == f &&
-      //!$is_array_elt(S, $dot(p, f)) &&
       $is_volatile(S, $dot(p, f)) == isvolatile )
   }
 
@@ -496,6 +499,9 @@ function $in_range_phys_ptr(#r:int) : bool
 function $in_range_spec_ptr(#r:int) : bool
   { 0 == #r || #r > $arch_spec_ptr_start }
 const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
+
+function {:inline true} $is_ghost_ptr(p:$ptr) returns(bool)
+  { $in_range_spec_ptr($ref(p)) }
 
 function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $typed(S, #p) }
@@ -1023,6 +1029,12 @@ function $set_intersection(A:$ptrset, B:$ptrset) : $ptrset
 function $set_subset(A:$ptrset, B:$ptrset) : bool
   { (forall o:$ptr :: {$set_in(o, A)} {$set_in(o, B)} $set_in(o, A) ==> $set_in(o, B)) }
 
+function {:inline true} $set_add_element(S:$ptrset, e:$ptr) : $ptrset
+  { $set_union(S, $set_singleton(e)) }
+
+function {:inline true} $set_remove_element(S:$ptrset, e:$ptr) : $ptrset
+  { $set_difference(S, $set_singleton(e)) }
+
 // to be used only positively
 function $set_eq($ptrset, $ptrset) returns (bool);
 axiom (forall #a: $ptrset, #b: $ptrset :: {$set_eq(#a,#b)}
@@ -1159,6 +1171,11 @@ $_pow2(26) == 67108864 && $_pow2(27) == 134217728 && $_pow2(28) == 268435456 && 
 == 72057594037927936 && $_pow2(57) == 144115188075855872 && $_pow2(58) == 288230376151711744 && $_pow2(59) ==
  576460752303423488 && $_pow2(60) == 1152921504606846976 && $_pow2(61) == 2305843009213693952 && $_pow2(62) ==
 4611686018427387904 && $_pow2(63) == 9223372036854775808;
+
+axiom $unchecked(^^u4, -1) == $max.u4;
+axiom $unchecked(^^u4, $max.u4 + 1) == 0;
+axiom $unchecked(^^u8, -1) == $max.u8;
+axiom $unchecked(^^u8, $max.u8 + 1) == 0;
 
 function $in_range_ubits(bits:int, v:int) : bool
   { $in_range(0, v, $_pow2(bits) - 1) }
