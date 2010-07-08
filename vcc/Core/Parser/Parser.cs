@@ -264,6 +264,23 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.InitializeLocallyDefinedNamesFromParameters(templateParameters);
       List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, specSpecifiers, followers | TS.DeclaratorStart | Token.Semicolon | Token.Colon);
 
+      if (this.currentToken == Token.Specification) 
+        ParseNonLocalDeclarationInSpecBlock(namespaceMembers, typeMembers, followers, isGlobal, templateParameters, specifiers);
+      else 
+        ParseNonLocalDeclaration(typeMembers, followers, isGlobal, templateParameters, specifiers);
+    }
+
+    private void ParseNonLocalDeclarationInSpecBlock(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
+      bool savedInSpecCode = this.EnterSpecBlock();
+      this.GetNextToken();
+      this.Skip(Token.LeftParenthesis);
+      specifiers.AddRange(this.ParseSpecifiers(namespaceMembers, typeMembers, null, followers | TS.DeclaratorStart | Token.Semicolon | Token.Colon | Token.RightParenthesis));
+      ParseNonLocalDeclaration(typeMembers, followers | Token.RightParenthesis, isGlobal, templateParameters, specifiers);
+      this.Skip(Token.RightParenthesis);
+      this.LeaveSpecBlock(savedInSpecCode);
+    }
+
+    private void ParseNonLocalDeclaration(List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
       VccFunctionTypeExpression/*?*/ functionTypeExpression = null;
       TypedefNameSpecifier/*?*/ typeDefName = GetTypedefNameSpecifier(specifiers);
       if (typeDefName != null) {
@@ -272,7 +289,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           functionTypeExpression = typeDefDecl.Type as VccFunctionTypeExpression;
       }
       bool foundNoDeclaration = true;
-      TokenSet followersOrCommaOrLeftBraceOrSemicolon = followers|Token.Comma|Token.LeftBrace|Token.Semicolon;
+      TokenSet followersOrCommaOrLeftBraceOrSemicolon = followers | Token.Comma | Token.LeftBrace | Token.Semicolon;
       while (TS.DeclaratorStart[this.currentToken]) {
         foundNoDeclaration = false;
         Declarator declarator = this.ParseDeclarator(templateParameters, followersOrCommaOrLeftBraceOrSemicolon, false);
@@ -300,10 +317,10 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (funcDeclarator != null) {
           //TODO: complain if not first declarator
           if (this.currentToken == Token.LeftBrace) {
-            this.ParseFunctionDefinition(specifiers, typeMembers, declarator, funcDeclarator, followers|Token.Semicolon);
+            this.ParseFunctionDefinition(specifiers, typeMembers, declarator, funcDeclarator, followers | Token.Semicolon);
             return;
           } else
-            this.ParseFunctionDeclaration(specifiers, typeMembers, declarator, funcDeclarator, followers|Token.Semicolon, isGlobal);
+            this.ParseFunctionDeclaration(specifiers, typeMembers, declarator, funcDeclarator, followers | Token.Semicolon, isGlobal);
         } else {
           InitializedDeclarator iDecl = declarator as InitializedDeclarator;
           if (iDecl != null) {
@@ -315,8 +332,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
       }
-
-      if (specifiers.Count > 0 && specifiers[specifiers.Count-1] is CompositeTypeSpecifier) {
+      if (specifiers.Count > 0 && specifiers[specifiers.Count - 1] is CompositeTypeSpecifier) {
         if (this.currentTypeName != null && foundNoDeclaration) {
           StructSpecifier structSpecifier = specifiers[specifiers.Count - 1] as StructSpecifier;
           UnionSpecifier unionSpecifier = specifiers[specifiers.Count - 1] as UnionSpecifier;
