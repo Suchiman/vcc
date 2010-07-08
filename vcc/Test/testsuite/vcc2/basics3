@@ -80,3 +80,15 @@ void foo(spec(struct Output o))
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+typedef struct vcc(claimable) X {
+  int dummy;
+
+  def_group(R)
+  in_group(R) claimp(c;)
+  inv_group(R,c)
+};
+`
+Verification of X##R#adm succeeded.
+`
