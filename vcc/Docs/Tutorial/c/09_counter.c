@@ -22,7 +22,7 @@ void create_reading(struct Counter *n _(ghost \claim c))
   struct Reading k;
   k.r = 0;
   k.n = n;
-  k.c = c;
+  _(ghost k.c = c)
   _(wrap &k)
   _(unwrap &k)
 }
