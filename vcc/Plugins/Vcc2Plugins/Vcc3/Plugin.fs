@@ -40,18 +40,18 @@ type Vcc3Plugin() =
     
     let pass = FromBoogie.Passyficator(prog, helper, [])
     pass.Init()
-      
-    use simpl = new Simplifier (helper, pass, opts)
-    simpl.Init ()
     let proc = pass.Passify impl
 
-    if opts.dump_boogie then
-      System.Console.Write (proc)
+    if opts.simplify then
+      use simpl = new Simplifier (helper, pass, opts)
+      simpl.Init ()
+      let numErrs = simpl.VerifyProc (proc, handler)
 
-    let numErrs = simpl.VerifyProc (proc, handler)
-    
-    if numErrs > 0 then
-      VC.VCGen.Outcome.Errors
+      if numErrs > 0 then
+        VC.VCGen.Outcome.Correct
+      else
+        VC.VCGen.Outcome.Errors
     else
-      VC.VCGen.Outcome.Correct
+      let prog', impl = ToBoogie.Translate (pass, proc, opts.boogie_file)
+      vcgen.VerifyImplementation (impl, prog', handler)
   
