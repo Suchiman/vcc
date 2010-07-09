@@ -463,8 +463,12 @@ module Rules =
         match eatWs rest with
           | Tok.Group(_, "(", memName) :: rest ->
             match eatWs rest with 
+              | (Tok.Id _ as tName) :: rest ->
+                match eatWs rest with
+                  | (Tok.Group(_, "{", _) as tp) :: rest -> [], (tName :: space :: tp :: space :: fnApp "_" memName) @ rest
+                  | _ -> [], tName :: space :: rest
               | (Tok.Group(_, "{", _) as tp) :: rest -> [], (tp :: space :: fnApp "_" memName) @ rest
-              | _ -> [hd], rest
+              | _ -> [], rest
           | _ -> failwith ""
       | _ -> failwith ""
     addRule { keyword = "member_name"; replFn = ctxFreeRule member_name }
