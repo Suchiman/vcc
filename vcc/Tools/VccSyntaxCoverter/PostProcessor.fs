@@ -12,7 +12,7 @@ module PostProcessor =
       | Tok.Group (p, s, toks) :: rest -> coalesceWhitespace (Tok.Group(p, s, coalesceWhitespace [] toks) :: acc) rest
       | tok :: rest -> coalesceWhitespace (tok :: acc) rest
     let rec addNewSyntaxOption atStartOfFile = function
-      | Whitespace _ as ws :: rest -> addNewSyntaxOption atStartOfFile rest
+      | Whitespace _ :: rest -> addNewSyntaxOption atStartOfFile rest
       | Comment(p, s) :: rest when addCompilerOptionForTestSuite && s.StartsWith("`/") 
         -> Comment(p, s + "/newsyntax") :: nl :: rest
       | toks -> 
