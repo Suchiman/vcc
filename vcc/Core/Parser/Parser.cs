@@ -270,7 +270,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         ParseNonLocalDeclaration(typeMembers, followers, isGlobal, templateParameters, specifiers);
     }
 
-    private void ParseNonLocalDeclarationInSpecBlock(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
+    protected virtual void ParseNonLocalDeclarationInSpecBlock(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
@@ -749,7 +749,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           if (sct == Token.Static) flags |= FieldDeclaration.Flags.Static;
           AnonymousFieldDeclarator/*?*/ anonymousFieldDeclarator = declarator as AnonymousFieldDeclarator;
           if (anonymousFieldDeclarator != null) {
-            typeMembers.Add(new AnonymousFieldDefinition(flags, memberType, anonymousFieldDeclarator.Identifier));
+            typeMembers.Add(new AnonymousFieldDefinition(flags, memberType, anonymousFieldDeclarator));
           } else {
             BitfieldDeclarator/*?*/ bitFieldDeclarator = declarator as BitfieldDeclarator;
             if (bitFieldDeclarator != null)

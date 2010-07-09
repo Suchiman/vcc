@@ -138,11 +138,7 @@ namespace Microsoft.Research.Vcc.Parsing
         this.GetNextToken();
       } else if (this.currentToken == Token.Colon) {
         VccLabeledExpression groupLabel = (VccLabeledExpression)this.ParseLabeledExpression(followers);
-        List<Expression> inGroupSpecifiers = new List<Expression>(3);
-        inGroupSpecifiers.Add(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.compilation.NameTable, "StringVccAttr"));
-        inGroupSpecifiers.Add(new CompileTimeConstant("in_group", groupLabel.SourceLocation));
-        inGroupSpecifiers.Add(new CompileTimeConstant(groupLabel.Label.Name.Value, groupLabel.SourceLocation));
-        specifiers.Add(new DeclspecSpecifier(inGroupSpecifiers, groupLabel.SourceLocation));
+        specifiers.Add(this.CreateAttribute("in_group", groupLabel.Label.Name.Value, groupLabel.SourceLocation));
       }
       this.SkipTo(followers);
     }
@@ -160,6 +156,14 @@ namespace Microsoft.Research.Vcc.Parsing
       this.ParseSpecTypeModifierList(specifiers, followers);
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, isGlobal, specifiers);
+    }
+
+    protected override void ParseNonLocalDeclarationInSpecBlock(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, Parser.TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
+      bool savedInSpecCode = this.SkipIntoSpecBlock();
+      var name = this.ParseNameDeclaration(true);
+      this.SkipOutOfSpecBlock(savedInSpecCode, followers);
+      this.AddTypeDeclarationMember(specifiers, new AnonymousFieldDeclarator(name), typeMembers);
+      this.SkipSemiColonAfterDeclarationOrStatement(followers);
     }
 
     override protected void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
@@ -206,13 +210,17 @@ namespace Microsoft.Research.Vcc.Parsing
       var groupName = this.ParseNameDeclaration(true);
       slb.UpdateToSpan(groupName.SourceLocation);
       var dummyName = this.GetNameFor(SanitizeString(slb.SourceDocument.Name.Value) + ((ISourceLocation)slb).StartIndex);
-      List<Expression> groupDeclSpecifiers = new List<Expression>(3);
-      groupDeclSpecifiers.Add(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.compilation.NameTable, "StringVccAttr"));
-      groupDeclSpecifiers.Add(new CompileTimeConstant("group_decl", groupName.SourceLocation));
-      groupDeclSpecifiers.Add(new CompileTimeConstant(groupName.Name.Value, groupName.SourceLocation));
-      specifiers.Add(new DeclspecSpecifier(groupDeclSpecifiers, groupName.SourceLocation));
+      specifiers.Add(this.CreateAttribute("group_decl", groupName.Name.Value, groupName.SourceLocation));
       var groupDecl = new VccNestedStructDeclaration(new VccNameDeclaration(dummyName, true, groupName.SourceLocation), new List<ITypeDeclarationMember>(0), specifiers, slb);
       typeMembers.Add(groupDecl);
+    }
+
+    private Specifier CreateAttribute(string attrName, string attrVal, ISourceLocation sourceLocation) {
+      List<Expression> groupDeclSpecifiers = new List<Expression>(3);
+      groupDeclSpecifiers.Add(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.compilation.NameTable, "StringVccAttr"));
+      groupDeclSpecifiers.Add(new CompileTimeConstant(attrName, sourceLocation));
+      groupDeclSpecifiers.Add(new CompileTimeConstant(attrVal, sourceLocation));
+      return new DeclspecSpecifier(groupDeclSpecifiers, sourceLocation);
     }
 
     new protected void ParseTypeInvariant(TokenSet followers) {

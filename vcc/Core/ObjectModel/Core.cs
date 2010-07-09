@@ -697,6 +697,12 @@ namespace Microsoft.Research.Vcc {
       foreach (ITypeDefinitionMember anonMember in type.GetMembersNamed(Dummy.Name, false)) {
         IFieldDefinition/*?*/ anonField = anonMember as IFieldDefinition;
         if (anonField != null){
+          var fieldDef = anonField as Microsoft.Cci.Ast.FieldDefinition;
+          if (fieldDef != null) {
+            var anonFieldDecl = fieldDef.FieldDeclaration as AnonymousFieldDefinition;
+            if (anonFieldDecl != null && anonFieldDecl.SpecMemberName != null && anonFieldDecl.SpecMemberName.Name.UniqueKey == memberName.UniqueKey)
+              yield return anonField;
+          }
           foreach (ITypeDefinitionMember member in anonField.Type.ResolvedType.GetMembersNamed(memberName, ignoreCase))
             yield return member;
           foreach (ITypeDefinitionMember member in this.GetExtensionMembers(anonField.Type.ResolvedType, memberName, ignoreCase))
