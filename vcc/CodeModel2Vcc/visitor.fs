@@ -679,6 +679,14 @@ namespace Microsoft.Research.Vcc
                       if fldDeclaredAsPointer then (ptrDeclaredAsVolatile, fldMarkedVolatile)
                       else (fldMarkedVolatile, ptrDeclaredAsVolatile)
                       
+                    let name =
+                      match f with
+                        | :? Microsoft.Cci.Ast.FieldDefinition as fd ->
+                          match fd.FieldDeclaration with
+                            | :? Microsoft.Research.Vcc.AnonymousFieldDefinition as anonFd when anonFd.SpecMemberName <> null -> "#" + anonFd.SpecMemberName.Name.Value
+                            | _ -> f.Name.Value
+                        | _ -> f.Name.Value
+
                     let t = 
                       match this.DoType (f.Type) with
                         | C.PtrSoP(typ, isSpec) when pointsToVolatile -> C.Type.MkPtr(C.Type.Volatile(typ), isSpec)
@@ -693,7 +701,7 @@ namespace Microsoft.Research.Vcc
                           true
                         | _ -> isSpec
                     let res =
-                      { Name = f.Name.Value
+                      { Name = name
                         Token = tok
                         Type = t
                         Parent = td

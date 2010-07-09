@@ -22,12 +22,9 @@ namespace Microsoft.Research.Vcc {
 
   public sealed class AnonymousFieldDefinition : FieldDeclaration {
 
-    public AnonymousFieldDefinition(FieldDeclaration.Flags flags, TypeExpression type, NameDeclaration name) :
-      base(null, flags | FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Public, type, name, null, type.SourceLocation) {
-    }
-
-    public AnonymousFieldDefinition(TypeExpression type, NameDeclaration name)
-      : this(0, type, name){
+    internal AnonymousFieldDefinition(FieldDeclaration.Flags flags, TypeExpression type, AnonymousFieldDeclarator fieldDeclarator) :
+      base(null, flags | FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Public, type, fieldDeclarator.Identifier, null, type.SourceLocation) {
+        this.specMemberName = fieldDeclarator.SpecMemberName;
     }
 
     /// <summary>
@@ -40,7 +37,15 @@ namespace Microsoft.Research.Vcc {
       : base(containingTypeDeclaration, template)
       //^ ensures this.containingTypeDeclaration == containingTypeDeclaration;
     {
-      //^ base;
+      this.specMemberName = template.SpecMemberName;
+    }
+
+    private readonly NameDeclaration specMemberName;
+
+    public NameDeclaration SpecMemberName {
+      get {
+        return specMemberName;
+      }
     }
 
     /// <summary>
@@ -1118,12 +1123,23 @@ namespace Microsoft.Research.Vcc {
 
   internal sealed class AnonymousFieldDeclarator : Declarator {
 
+    internal AnonymousFieldDeclarator(NameDeclaration specMemberName)
+      : base(specMemberName.SourceLocation) {
+        this.specMemberName = specMemberName;
+        this.identifier = new NameDeclaration(Dummy.Name, specMemberName.SourceLocation);
+    }
+
     internal AnonymousFieldDeclarator()
       : base(SourceDummy.SourceLocation)
     {
       this.identifier = new NameDeclaration(Dummy.Name, SourceDummy.SourceLocation);
     }
 
+    private readonly NameDeclaration specMemberName;
+
+    public NameDeclaration SpecMemberName {
+      get { return specMemberName; }
+    }
     internal override NameDeclaration Identifier {
       get { return this.identifier; }
     }

@@ -301,10 +301,9 @@ namespace Microsoft.Research.Vcc
         match d with
           | Top.TypeDecl td ->
             for f in td.Fields do
-              if f.Name = "" then
-                let isAnonymousSubtypeName (name :string) = name.StartsWith (td.Name + ".") 
+              if f.Name = "" || f.Name.StartsWith "#" then
                 match f.Type with
-                  | Type.Ref td' when isAnonymousSubtypeName td'.Name ->
+                  | Type.Ref td' when td'.Name.StartsWith(td.Name + ".")  ->
                     td'.IsNestedAnon <- true
                   | _ -> ()
           | _ -> ()
@@ -639,7 +638,7 @@ namespace Microsoft.Research.Vcc
             let trField (f:Field) =
               processType f.Type
               match f.Type with 
-                | Type.Ref td' when td'.IsNestedAnon && ((td.Kind = Struct && td'.Kind = Struct) || td'.Fields.Length <= 1) ->
+                | Type.Ref td' when f.Name = "" && td'.IsNestedAnon && ((td.Kind = Struct && td'.Kind = Struct) || td'.Fields.Length <= 1) ->
                   fieldsToRemove.Add (f, true)
                   [for f' in td'.Fields -> 
                      let newf' =
