@@ -17,7 +17,8 @@ type Options =
     mutable time : bool
     mutable model_file : string
     mutable trace : int
-    mutable dump_boogie : bool
+    mutable boogie_file : string option
+    mutable simplify : bool
   }
   
   static member Create () =
@@ -27,7 +28,8 @@ type Options =
       time = false
       model_file = "error.vccmodel"
       trace = 1
-      dump_boogie = false
+      boogie_file = None
+      simplify = false
     }
     
   member private this.Lower (s:string) =
@@ -70,7 +72,8 @@ type Options =
     boolOpt "time" (fun v -> this.time <- v)
     boolOpt "smtdump" (fun v -> this.smt_dump <- v)
     boolOpt "custominst" (fun v -> this.custom_inst <- v)
-    boolOpt "boogie" (fun v -> this.dump_boogie <- v)
+    boolOpt "simplify" (fun v -> this.simplify <- v)
+    stringOpt "boogie" (fun v -> this.boogie_file <- Some v)
     stringOpt "modelfile" (fun v -> this.model_file <- v)
     intOpt "trace" (fun v -> this.trace <- v)
     
