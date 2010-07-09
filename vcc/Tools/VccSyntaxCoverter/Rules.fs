@@ -373,7 +373,7 @@ module Rules =
       | _ -> failwith ""
 
     addRule { keyword = "result"; replFn = result_rule }
-    addRule (parenRuleCtx true "ensures" (fun toks -> spec "ensures" toks) (fun (c:ctx) -> { c with in_ensures = true}) )
+    addRule (parenRuleCtx false "ensures" (fun toks -> spec "ensures" toks) (fun (c:ctx) -> { c with in_ensures = true}) )
 
     
     let as_array = function
