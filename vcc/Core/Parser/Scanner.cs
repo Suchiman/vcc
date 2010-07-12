@@ -1953,6 +1953,10 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SetIn,
     /// <summary>
+    /// \in0
+    /// </summary>
+    SetIn0,
+    /// <summary>
     /// \union
     /// </summary>
     SetUnion,
@@ -2374,17 +2378,18 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     internal static Keyword InitExtendedVccKeywords() {
       Keyword keyword = null;
-      keyword = new Keyword(Token.Result,           "\\result", keyword);
-      keyword = new Keyword(Token.Lambda,           "\\lambda", keyword);
-      keyword = new Keyword(Token.Forall,           "\\forall", keyword);
-      keyword = new Keyword(Token.Exists,           "\\exists", keyword);
-      keyword = new Keyword(Token.SetUnion,         "\\union", keyword);
-      keyword = new Keyword(Token.SetIntersection,  "\\inter", keyword);
-      keyword = new Keyword(Token.This,             "\\this", keyword);
-      keyword = new Keyword(Token.SetDifference,    "\\diff", keyword);
-      keyword = new Keyword(Token.Old,              "\\old", keyword);
-      keyword = new Keyword(Token.SpecIs,           "\\is", keyword);
-      keyword = new Keyword(Token.SetIn,            "\\in", keyword);
+      keyword         = new Keyword(Token.Result,           "\\result", keyword);
+      keyword         = new Keyword(Token.Lambda,           "\\lambda", keyword);
+      keyword         = new Keyword(Token.Forall,           "\\forall", keyword);
+      keyword         = new Keyword(Token.Exists,           "\\exists", keyword);
+      keyword         = new Keyword(Token.SetUnion,         "\\union", keyword);
+      keyword         = new Keyword(Token.SetIntersection,  "\\inter", keyword);
+      keyword         = new Keyword(Token.This,             "\\this", keyword);
+      keyword         = new Keyword(Token.SetDifference,    "\\diff", keyword);
+      keyword         = new Keyword(Token.Old,              "\\old", keyword);
+      keyword         = new Keyword(Token.SetIn0,          "\\in0", keyword);
+      keyword         = new Keyword(Token.SpecIs,           "\\is", keyword);
+      keyword         = new Keyword(Token.SetIn,            "\\in", keyword);
       return keyword;
     }
   }

@@ -2653,7 +2653,8 @@ namespace Microsoft.Research.Vcc.Parsing {
           if (initializer != null)
             return new VccInitializerWithDefault(operand1, initializer, slb);
           return new VccDivision(operand1, operand2, slb);
-        case Token.SetIn: return new VccSetMember(operand1, operand2, slb);
+        case Token.SetIn: return new VccSetMember(operand1, operand2, false, slb);
+        case Token.SetIn0: return new VccSetMember(operand1, operand2, true, slb);
         case Token.SetIntersection: return new VccSetIntersection(operand1, operand2, slb);
         case Token.SetUnion: return new VccSetUnion(operand1, operand2, slb);
         case Token.SetDifference: return new VccSetDifference(operand1, operand2, slb);
@@ -2756,7 +2757,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       precedences[Token.SetIntersection] = new OperatorPrecedence(40);
       precedences[Token.SetDifference] = new OperatorPrecedence(41);
       precedences[Token.SetUnion] = new OperatorPrecedence(42);
-      precedences[Token.SetIn] = new OperatorPrecedence(43);
+      precedences[Token.SetIn] = precedences[Token.SetIn0] = new OperatorPrecedence(43);
       precedences[Token.Equal] = precedences[Token.NotEqual] = new OperatorPrecedence(50);
       precedences[Token.BitwiseAnd] = new OperatorPrecedence(60);
       precedences[Token.BitwiseXor] = new OperatorPrecedence(61);
@@ -3832,6 +3833,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         BinaryOperators |= Token.Subtract;
         BinaryOperators |= Token.SetDifference;
         BinaryOperators |= Token.SetIn;
+        BinaryOperators |= Token.SetIn0;
         BinaryOperators |= Token.SpecIs;
         BinaryOperators |= Token.SetIntersection;
         BinaryOperators |= Token.SetUnion;

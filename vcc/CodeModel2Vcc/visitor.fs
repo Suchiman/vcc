@@ -1384,6 +1384,7 @@ namespace Microsoft.Research.Vcc
           | "op_BitwiseAnd"
           | "op_BitwiseOr"
           | "op_ExclusiveOr"
+          | "op_LessThan"
           | "op_LessThanOrEqual" -> Some ()
           | _ -> None
 
@@ -1403,6 +1404,7 @@ namespace Microsoft.Research.Vcc
            | [e1; e2] ->
              match methodName with
                | "op_LessThanOrEqual" -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_in" methodCall, [], [e1; e2])
+               | "op_LessThan"        -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_in0" methodCall, [], [e1; e2])
                | "op_BitwiseAnd"      -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_intersection" methodCall, [], [e1; e2])
                | "op_BitwiseOr"       -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_union" methodCall, [], [e1; e2])
                | "op_ExclusiveOr"     -> exprRes <- C.Call(ec, findFunctionOrDie "\\set_difference" methodCall, [], [e1; e2])

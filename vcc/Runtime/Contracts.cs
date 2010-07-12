@@ -162,6 +162,14 @@ namespace System.Diagnostics.Contracts
         throw new NotImplementedException();
       }
 
+      public static bool operator <(TypedPtr elem, Objset set) {
+        throw new NotImplementedException();
+      }
+
+      public static bool operator >(TypedPtr elem, Objset set) {
+        throw new NotImplementedException();
+      }
+
       public static Objset operator |(Objset s1, Objset s2) {
         throw new NotImplementedException();
       }
