@@ -1,65 +1,68 @@
+`/newsyntax
 #include "vcc.h"
 
-spec(int a = 5; 
-     int b = 10; 
-     int foo() { }; 
-     void bar() { }; 
-     struct S { int a; int b; }; 
-)
+_(ghost int a = 5;) 
+     _(ghost int b = 10;) 
+     _(ghost int foo() { };) 
+     _(ghost void bar() { };) 
+     _(ghost struct S { int a; int b; };) 
+
 
 struct T {
-  spec(int a; int b;)
+  _(ghost int a;) _(ghost int b)
   int c;
-  invariant(a+b == c)
+  _(invariant a+b == c)
 };
 `
 Verification of T#adm succeeded.
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
+`/newsyntax
 #include <vcc.h>
 
 void foo() {}
 
 void test() {
-  spec(foo();)
+  _(ghost foo())
 } 
 `
-testcase(6,19) : warning VC9313: [possible unsoundness]: call to impure implementation function 'foo' from specification code
+testcase(6,25) : warning VC9313: [possible unsoundness]: call to impure implementation function 'foo' from specification code
 Verification of foo succeeded.
 Verification of test succeeded.
 `
+`/newsyntax
 #include <vcc.h>
 
-int ispure foo(int i);
+int _(pure) foo(int i);
 
 void test() {
-  spec(int i = foo(5);)
+  _(ghost int i = foo(5))
 } 
 `
 Verification of test succeeded.
 `
+`/newsyntax
 #include "vcc.h"
 
-spec(struct X1 {
+_(ghost struct X1 {
     struct { unsigned Y; };
     unsigned Z;
-};)
+})
 
-spec(struct X1 foo(unsigned x) ensures(result.Y == x)
+_(ghost struct X1 foo(unsigned x) _(ensures \result.Y == x)
 {
   struct X1 x1;
   x1.Y = x;
   return x1;
 
-}
-)
+})
 struct X2 {
     struct { unsigned Y; };
     unsigned Z;
 };
 
-struct X2 foo(unsigned x) ensures(result.Y == x)
+struct X2 foo(unsigned x) _(ensures \result.Y == x)
 {
   struct X2 x2;
   x2.Y = x;
@@ -69,47 +72,49 @@ struct X2 foo(unsigned x) ensures(result.Y == x)
 Verification of foo#overload#struct_X1#spec_uint32_t succeeded.
 Verification of foo#overload#struct_X2#uint32_t succeeded.
 `
+`/newsyntax
 #include <vcc.h>
 
-spec(void foo();)
+_(ghost void foo())
 
 void bar() {
 	foo();
 }
 `
-testcase(4,2) : warning VC9301: [possible unsoundness]: access to specification function 'foo' within non-specification code
+testcase(6,2) : warning VC9301: [possible unsoundness]: access to specification function 'foo' within non-specification code
 Verification of bar succeeded.
 `
+`/newsyntax
 #include "vcc.h"
 
 
 struct S {
   int a;
-  spec(int b;)
+  _(ghost int b)
 };
 
 struct T {
   int a;
   struct S ^s;
-  invariant(keeps(s))
+  _(invariant \mine(s))
 };
 
-void foo(spec(struct S ^p)) 
-  writes(extent(p))
-  requires(mutable(p))
+void foo(_(ghost struct S ^p)) 
+  _(writes \extent(p))
+  _(requires \mutable(p))
 {
   p->a = 5;
   p->b = 3;
-  spec(p->a = 7;)
-  spec(p->b = 10;)
+  _(ghost p->a = 7)
+  _(ghost p->b = 10)
 }
 
 void bar(struct T *t)
-  writes(t)
-  requires(wrapped(t))
+  _(writes t)
+  _(requires \wrapped(t))
 {
-  unwrap(t);
-  unwrap(t->s);
+  _(unwrap t)
+  _(unwrap t->s)
   t->s->a = 5;
 }
 `
@@ -120,6 +125,7 @@ Verification of T#adm succeeded.
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
+`/newsyntax
 #include <vcc.h>
 
 typedef struct Foo {
@@ -127,7 +133,7 @@ int x;
 } Foo;
 
 void foo() {
-spec(Foo f;)
+_(ghost Foo f)
 f.x = 3;
 }
 `
