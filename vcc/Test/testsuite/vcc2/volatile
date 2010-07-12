@@ -91,7 +91,7 @@ typedef struct vcc(claimable) vcc(dynamic_owns) Bakery {
 
 #define cl (&server->c[idx])	// defined rather than declared as a local so we can use it in the contract (replace with let someday)
 
-void BakeryAcquire(Bakery *server, UINT idx spec(claimp(sc)))
+void BakeryAcquire(Bakery *server, UINT idx claimp(sc))
 requires(wrapped(sc) && claims(sc,closed(server)))  // need evidence that nobody will destroy the server
 requires(idx < server->N && wrapped(cl))			// must own a client of the server
 writes(cl)
