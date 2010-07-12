@@ -339,7 +339,7 @@ module Rules =
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_empty" (fun toks -> [paren "{" []]))
-    addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\claim ") :: toks)))
+    addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\\claim ") :: toks)))
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
   
@@ -399,10 +399,14 @@ module Rules =
       | _ -> failwith ""
     addRule (parenRuleN "union_reinterpret" 2 union_reinterpret)
 
+    let on_unwrap = function
+      | [ cond ] -> spec "invariant" (fnApp "\\on_unwrap" (Tok.Id(fakePos, "\\this") :: Tok.Op(fakePos, ",") :: space :: cond))
+      | _ -> failwith ""
+    addRule (parenRuleN "on_unwrap" 1 on_unwrap)
 
     let set_owns = function
       | [e; s] ->
-        spec "ghost" (e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\owns"); Tok.Op(fakePos, " = ")] @ s)
+        spec "ghost" (e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns"); Tok.Op(fakePos, " = ")] @ s)
       | _ -> failwith ""
     addRule (parenRuleN "set_owns" 2 set_owns)
     
