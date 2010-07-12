@@ -861,6 +861,8 @@ namespace Microsoft.Research.Vcc
                                     "\\extent_fresh",        "_vcc_extent_is_fresh"
                                     "\\malloc_root",         "_vcc_is_malloc_root"
                                     "\\object_root",         "_vcc_is_object_root"
+                                    "\\deep_eq",             "_vcc_deep_struct_eq"
+                                    "\\shallow_eq",          "_vcc_shallow_struct_eq"
                                   ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset"
@@ -924,6 +926,13 @@ namespace Microsoft.Research.Vcc
           | Macro(ec, "\\is", [arg;UserData(_, (:? Type as t))]) -> Some(Macro(ec, "_vcc_is", [self arg; typeExpr t]))
           | Ref(ec, {Name = "\\me"}) -> Some(Macro(ec, "_vcc_me", []))
           | _ -> None
+
+      let normalizeMacros self = function
+        | Macro(ec, m, args) -> 
+          match Map.tryFind m newToOldFn with
+            | Some m' -> Some(Macro(ec, m', List.map self args))
+            | None -> None
+        | _ -> None
 
       let mapFromNewSyntax = function
         
@@ -991,6 +1000,7 @@ namespace Microsoft.Research.Vcc
       deepMapExpressions (normalizeOwnershipManipulation false) >>
       deepMapExpressions normalizeSignatures >> 
       (fun decls -> List.iter mapFromNewSyntax decls; decls)>> 
+      deepMapExpressions normalizeMacros >>
       removeMagicEntities >>
       deepMapExpressions normalizeMisc >> 
       deepMapExpressions rewriteBvAssertAsBvLemma

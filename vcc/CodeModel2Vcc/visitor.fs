@@ -983,7 +983,7 @@ namespace Microsoft.Research.Vcc
         match globalMethodDefinition.Name.Value with
           | "_vcc_in_state" | "\\at"
           | "_vcc_approves" | "\\approves"
-          | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known"
+          | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq"
           | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" | "_vcc_label_of" | "_vcc_lblset_leq"
           | "_vcc_new_club" | "_vcc_add_member" | "_vcc_is_member" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false)
@@ -1455,7 +1455,7 @@ namespace Microsoft.Research.Vcc
             match args() with
               | [e1; e2] -> exprRes <- C.Expr.Macro (ec, "approves", [e1; e2])
               | _ -> oopsNumArgs() 
-          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known") ->
+          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq") ->
             match args() with
               | [e1; e2] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
               | _ -> oopsNumArgs()
