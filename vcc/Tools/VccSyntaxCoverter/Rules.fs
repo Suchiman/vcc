@@ -302,6 +302,8 @@ module Rules =
     addKwRepl "thread_id" "\\thread"
     addKwRepl "this" "\\this"
     addKwRepl "ispure" "_(pure)"
+    addKwRepl "no_reads_check" "_(no_reads_check)"
+    addKwRepl "frameaxiom" "_(frameaxiom)"
     addKwRepl "isadmissibilitycheck" "_(admissibility)"
     addKwRepl "backing_member" "_(backing_member)"
     addKwRepl "true" "\\true"
