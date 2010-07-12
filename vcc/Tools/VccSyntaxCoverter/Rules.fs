@@ -292,7 +292,6 @@ module Rules =
     for cs in canonicalSm do addStmtKwRule cs cs
 
     addStmtKwRule "bv_lemma" "assert {:bv}" // this is stretching it
-    addStmtKwRule "spec" "ghost"
     
     addKwRepl "mathint" "\\integer"
     addKwRepl "state_t" "\\state"
@@ -478,6 +477,20 @@ module Rules =
           | _ -> failwith ""
       | _ -> failwith ""
     addRule { keyword = "member_name"; replFn = ctxFreeRule member_name }
+
+    let spec_code =
+      let rec map_with_last f = function
+        | [] -> []
+        | [x] -> [f true x]
+        | x :: xs -> f false x :: map_with_last f xs
+
+      let  doStmt isLast stmt =
+        let semi = if isLast then [] else [Tok.Op(fakePos, ";")]
+        match eatWsEx stmt with
+          | ws, [] -> ws
+          | ws, stmt' ->  ws @ spec "ghost" (stmt' @ semi)
+      splitAt ";"  >> map_with_last doStmt >> List.concat
+    addRule (parenRule false "spec" spec_code)
 
     let struct_rule = function
       | hd :: rest ->
