@@ -335,6 +335,8 @@ module Rules =
     addFnRule "is_object_root" "\\object_root"
     addFnRule "in_state" "\\at"
     addFnRule "current_state" "\\now"
+    addFnRule "deep_eq"  "\\deep_eq"
+    addFnRule "shallow_eq" "\\shallow_eq"
 
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))

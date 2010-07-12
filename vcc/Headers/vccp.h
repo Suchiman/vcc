@@ -85,6 +85,9 @@ _(bool \malloc_root(\object);)
 _(bool \object_root(\object);)
 _(bool \union_active(\object);)
 
+_(template<typename T> bool \shallow_eq(T s, T t);)
+_(template<typename T> bool \deep_eq(T s, T t);)
+
 _(template<typename T> T \at(\state, T expr);)
 _(\state \now();)
 _(logic template<typename T> T \by_claim(\claim c, T expr) = \at(\by_claim_wrapper(c), expr);)
