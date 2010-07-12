@@ -244,6 +244,7 @@ module Rules =
     let canonicalFn = [
                         "wrapped"
                         "wrapped0"
+                        "nested"
                         "thread_local"
                         "span"
                         "extent"
@@ -354,6 +355,7 @@ module Rules =
     addInfixRule "set_difference" "\\diff"
     addInfixRule "set_intersection" "\\inter"
     addInfixRule "set_in" "\\in"
+    addInfixRule "set_in0" "\\in0"
     addInfixRule "is" "\\is"
 
     let addGhostFieldRule fn fld = 

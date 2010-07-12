@@ -3765,20 +3765,27 @@ namespace Microsoft.Research.Vcc {
 
   public class VccSetMember : BinaryOperation
   {
-    public VccSetMember(Expression leftOperand, Expression rightOperand, ISourceLocation sourceLocation)
+    public VccSetMember(Expression leftOperand, Expression rightOperand, bool isSetInZero, ISourceLocation sourceLocation)
       : base(leftOperand, rightOperand, sourceLocation) {
+        this.isSetInZero = isSetInZero;
     }
 
     protected VccSetMember(BlockStatement containingBlock, VccSetMember template)
       : base(containingBlock, template) {
+        this.isSetInZero = template.IsSetInZero;
     }
 
+    readonly bool isSetInZero;
+
+    internal bool IsSetInZero {
+      get { return isSetInZero;}
+    }
     protected override string OperationSymbolForErrorMessage {
-      get { return "\\in"; }
+      get { return isSetInZero ? "\\in0" : "\\in"; }
     }
 
     protected override IName GetOperatorName() {
-      return this.NameTable.OpLessThanOrEqual;
+      return isSetInZero ? this.NameTable.OpLessThan : this.NameTable.OpLessThanOrEqual;
     }
 
     public override Expression MakeCopyFor(BlockStatement containingBlock) {
