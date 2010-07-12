@@ -130,6 +130,7 @@ _(const char * const \declspec_volatile_owns;)
 _(const char * const \declspec_pure = "is_pure";)
 _(const char * const \declspec_as_array;)
 _(const char * const \declspec_admissibility = "is_admissibilitycheck";)
+_(const char * const \declspec_no_reads_check;)
 // _(inline) is also supported, but becaue 'inline' is a keyword, we special-case _(inline) in the parser
 
 // matching helper functions
