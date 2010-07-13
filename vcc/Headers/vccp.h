@@ -136,6 +136,7 @@ _(const char * const \declspec_pure = "is_pure";)
 _(const char * const \declspec_as_array;)
 _(const char * const \declspec_admissibility = "is_admissibilitycheck";)
 _(const char * const \declspec_no_reads_check;)
+_(const char * const \declspec_record;)
 // _(inline) is also supported, but becaue 'inline' is a keyword, we special-case _(inline) in the parser
 
 // matching helper functions
@@ -155,8 +156,8 @@ _(bool \macro_always(\claim c, bool cond)
   _(requires \wrapped(c) && \active_claim(c) && \claims(c, cond))
   _(ensures \wrapped(c) && \active_claim(c));)
 
-_(template<typename T> T \macro_returns(T expr)
-  _(ensures \result == expr);)
+_(template<typename T> bool \macro_returns(T expr)
+  _(ensures \static_cast<T,bool>(\result) == expr);)
 
 _(logic bool \wrapped0(\object o) = \wrapped(o) && o->\claim_count == 0;)
 _(logic template<typename T> bool \unchanged(T expr) = expr == \old(expr);)
@@ -182,6 +183,7 @@ _(\state \when_claimed_marker();)
 _(\object \heap_alloc(\type);)
 _(bool \start_here();)
 _(\objset \new_ownees(\object, \objset);)
+_(template<typename T, typename S> T \static_cast(S expr);)
 
 #else 
 

@@ -208,7 +208,7 @@ void bar() {
   spec( s = s / { .o = &a }; )
   assert(s.o == &a);
 
-  spec( s.map = lambda(int x; true; x + 1); )
+  spec( s.map = lambda(int x; x + 1); )
   assert(s.map[2] == 3);
 }
 `
@@ -348,7 +348,7 @@ ispure Core mov_reg(uint regidx, uint64 data, Core c)
     requires (!mov_reg_excp(regidx, data, c))
     ensures
     (
-        let (c1, Core, c / {.R = lambda(uint i; i < 8 ; i == regidx ? data : c.R[i])},
+        let (c1, Core, c / {.R = lambda(uint i; i == regidx ? data : c.R[i])},
         result == c1)
     )
 ;
@@ -410,7 +410,6 @@ void test(Container *c spec(claim_t claim))
     requires (claims (claim, closed(c)))
 {
     atomic(c, claim)
-        writes(c)
     {
         c->a = 0;
         spec(
@@ -655,9 +654,9 @@ spec(typedef struct vcc(record) R {
 } R;)
 
 spec(R foo(R r)
-  returns(r / { .m = lambda(bool j; true; true)})
+  returns(r / { .m = lambda(bool j; true)})
 {
-  return r / { .m = lambda(bool j; true; true)};
+  return r / { .m = lambda(bool j; true)};
 };)
 `
 Verification of foo succeeded.
@@ -667,11 +666,11 @@ Verification of foo succeeded.
 spec(typedef unsigned map_t[unsigned];)
 
 spec(ispure map_t upd(map_t m,unsigned y)
-    returns(lambda(unsigned x; true; x==y ? 0 : m[x]));)
+    returns(lambda(unsigned x; x==y ? 0 : m[x]));)
 
 spec(ispure map_t abs(unsigned *m, unsigned z)
     reads(set_universe())
-    returns(lambda(unsigned x; true; x < z ? m[x] : 0));)
+    returns(lambda(unsigned x; x < z ? m[x] : 0));)
 
 void trg(unsigned *m, unsigned z)
     requires(z)
@@ -685,11 +684,11 @@ void trg(unsigned *m, unsigned z)
 spec(typedef struct vcc(record) x { map_t m; } rec_t;)
 
 spec(ispure rec_t rec_upd(rec_t r,unsigned y)
-    returns(r / { .m = lambda(unsigned x; true; x==y ? 0 : r.m[x]) });)
+    returns(r / { .m = lambda(unsigned x; x==y ? 0 : r.m[x]) });)
 
 spec(ispure rec_t rec_abs(unsigned *m, unsigned z)
     reads(set_universe())
-    returns((rec_t) { .m = lambda(unsigned x; true; x < z ? m[x] : 0) });)
+    returns((rec_t) { .m = lambda(unsigned x; x < z ? m[x] : 0) });)
 
 void trg2(unsigned *m, unsigned z)
     requires(z)
