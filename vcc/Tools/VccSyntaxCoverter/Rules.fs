@@ -223,9 +223,9 @@ module Rules =
         [paren "(" body], rest
     parenRuleExt name repl    
     
-  let addInfixRule name op =
+  let addInfixRule name tok =
     let repl = function 
-      | [e1;e2] -> e1 @ [Tok.Op(fakePos, " " + op + " ")] @ eatWs e2
+      | [e1;e2] -> e1 @ (space :: tok :: space :: eatWs e2)
       | _ -> failwith ""
     addRule (parenRuleN name 2 repl)
 
@@ -343,6 +343,7 @@ module Rules =
     addRule (parenRule false "set_empty" (fun toks -> [paren "{" []]))
     addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\\claim ") :: toks)))
     
+    
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
   
     let typed_phys_or_spec isSpec toks = 
@@ -353,12 +354,15 @@ module Rules =
     addRule (parenRule false "typed_spec" (typed_phys_or_spec true))
 
     addRule (parenRule false "vcc" (fnApp "_"))
-    addInfixRule "set_union" "\\union"
-    addInfixRule "set_difference" "\\diff"
-    addInfixRule "set_intersection" "\\inter"
-    addInfixRule "set_in" "\\in"
-    addInfixRule "set_in0" "\\in0"
-    addInfixRule "is" "\\is"
+
+    addInfixRule "set_union" (Tok.Op(fakePos, "\\union"))
+    addInfixRule "set_difference" (Tok.Op(fakePos, "\\diff"))
+    addInfixRule "set_intersection" (Tok.Op(fakePos, "\\inter"))
+    addInfixRule "set_eq" (Tok.Op(fakePos, "=="))
+    addInfixRule "set_equal" (Tok.Op(fakePos, "=="))
+    addInfixRule "set_in" (Tok.Op(fakePos, "\\in"))
+    addInfixRule "set_in0" (Tok.Op(fakePos, "\\in0"))
+    addInfixRule "is" (Tok.Op(fakePos, "\\is"))
 
     let addGhostFieldRule fn fld = 
       let ghostFieldRule fieldName = function
