@@ -33,16 +33,28 @@ namespace Microsoft.Research.Vcc
       | Join of SecLabel*SecLabel
       | Meet of SecLabel*SecLabel
 
-    let getLocal name = B.Expr.Ref name
-    let getPLabel bExpr = B.Expr.FunctionCall ("$select.sec.label", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); bExpr])
-    let getPMeta bExpr = B.Expr.FunctionCall ("$select.sec.meta", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); bExpr])
+// Gets
+    let getLData name = B.Expr.Ref name
+    let getPData bExpr = B.Expr.FunctionCall ("$select.flow.data", [B.Expr.FunctionCall("$memory",[B.Expr.Ref "$s"]); bExpr])
+
+    let getLabel bExpr = B.Expr.FunctionCall ("$select.flow.label", [bExpr])
+    let getMeta  bExpr = B.Expr.FunctionCall ("$select.flow.meta", [bExpr])
+
     let getPC = B.Expr.FunctionCall ("$select.sec.pc", [B.Expr.Ref "$s"])
 
-    let setLocal name value = B.Stmt.Assign (getLocal name, value)
-    let setPLabel tok loc value = B.Stmt.Call (tok, [], "$store_sec_label", [loc; value])
-    let setPMeta tok loc value = B.Stmt.Call (tok, [], "$store_sec_meta", [loc; value])
+// Sets
+    let setLData name value = B.Stmt.Assign (getLData name, value)
+    let setPData tok loc value = B.Stmt.Call (tok, [], "$store_flow_data", [loc; value])
+
+    let setPLabel tok loc value = setPData tok loc (B.Expr.FunctionCall("$store.flow.label", [getPData loc; value]))
+    let setPMeta tok loc value = setPData tok loc (B.Expr.FunctionCall("$store.flow.meta", [getPData loc; value]))
+
+    let setLLabel name value = setLData name (B.Expr.FunctionCall("$store.flow.label", [getLData name; value]))
+    let setLMeta name value = setLData name (B.Expr.FunctionCall("$store.flow.meta", [getLData name; value]))
+
     let setPC tok value = B.Stmt.Call (tok, [], "$store_sec_pc", [value])
 
+// Generic Functions on SecLabels
     let rec normaliseSecLabel = function
       | Bottom
       | Top
@@ -51,10 +63,12 @@ namespace Microsoft.Research.Vcc
       | MemLabel _ | MemMeta _
       | StructLabel _ | StructMeta _
       | PtrCompare _ as l -> l
+
       | Join(Bottom,l)
       | Join(l,Bottom)
       | Meet(Top,l)
       | Meet(l,Top) -> normaliseSecLabel l
+
       | Join(l1,l2) ->
         let l1' = normaliseSecLabel l1
         let l2' = normaliseSecLabel l2
@@ -74,24 +88,30 @@ namespace Microsoft.Research.Vcc
           | l,Top -> l
           | _,_ -> Meet(l1',l2')
 
-    let rec exprLevel (e:C.Expr) = 
+
+// Level of a C expression
+    let rec exprLevel asPointer (e:C.Expr) = 
       match e with
-        | C.Expr.Prim(_,_,es) ->
-          let ugly = List.foldBack (fun e lbl -> Join (lbl,(exprLevel e))) es Bottom    // The arguments' labels are joined
-          normaliseSecLabel ugly
+        // Constants
         | C.Expr.Macro(_, "null", _)
         | C.Expr.Macro(_, "_vcc_set_empty", _)
         | C.Expr.IntLiteral _
         | C.Expr.BoolLiteral _
         | C.Expr.SizeOf _ -> Bottom
-        | C.Expr.Cast (_,_,e') -> exprLevel e'
-        | C.Expr.Ref _ as e' -> VarLabel e'
-        | C.Expr.Macro (_, "_vcc_as_array", _) as e'
-        | C.Expr.Deref(_,e') -> MemLabel e'
+        // Casts (care is needed when casting a pointer value to raw data)
+        | C.Expr.Cast ({ Type = (C.Type.PhysPtr _ | C.Type.SpecPtr _)},_,e') -> exprLevel true e'
+        | C.Expr.Cast (_,_,e') -> exprLevel false e'
+        // Base Cases
+        | C.Expr.Ref _ as e' ->
+          match e'.Type with
+            | C.Type.PhysPtr _ | C.Type.SpecPtr _ when not asPointer -> Top // We need to be much more conservative here... which types could actually be pointers?
+            | _ -> VarLabel e'
+        | C.Expr.Deref(_,e') -> Join(exprLevel true e', MemLabel e')
+        | C.Expr.Macro (_, "_vcc_as_array", _) as e' -> MemLabel e'
         | C.Expr.Macro (_, "_vcc_current_context", []) ->  ProgramContext
         | C.Expr.Macro (_, ("_vcc_ptr_eq" | "_vcc_ptr_neq"), [C.Expr.Cast(_, _, p1);C.Expr.Cast(_, _, p2)]) -> PtrCompare(p1,p2)
         | C.Expr.Macro (_, "_vcc_label_of", [expr]) ->
-          let lblExpr = exprLevel expr
+          let lblExpr = exprLevel asPointer expr
           let rec getMeta lbl =
             match lbl with
               | Bottom | Top | ProgramContext -> Bottom
@@ -99,15 +119,20 @@ namespace Microsoft.Research.Vcc
               | VarLabel e' -> VarMeta e'
               | MemLabel e' -> MemMeta e'
               | StructLabel(s,h) -> StructMeta(s,h)
-              | PtrCompare _ -> die() // We probably want to figure something out here...
+              | PtrCompare _ -> Top // We probably want to figure something out here...
               | Meet (l1, l2) -> Meet (getMeta l1, getMeta l2)
               | Join (l1, l2) -> Join (getMeta l1, getMeta l2)
           getMeta lblExpr
         | C.Expr.Macro (_, "_vcc_vs_ctor", [s;h]) -> StructLabel(s,h)
         | C.Expr.Macro (_, "_vcc_current_state", _) -> Top
-        | C.Expr.Index _
-        | C.Expr.Dot _ -> Top
-        | _ when e.Type = C.Type.Math "club_t" -> Top   // Those are memory addresses and information flow spec objects. We probably want them to always be high in a first approach.
+        | _ when e.Type = C.Type.Math "club_t" -> Top
+        // Recursive Cases
+        | C.Expr.Prim(_,_,es) ->
+          let ugly = List.foldBack (fun e lbl -> Join (lbl,(exprLevel asPointer e))) es Bottom    // The arguments' labels are joined
+          normaliseSecLabel ugly
+        | C.Expr.Index (_, arr, idx) -> Join(exprLevel asPointer arr, exprLevel false idx)
+        | C.Expr.Dot (_, s, _) -> exprLevel asPointer s
+        // The rest
         | C.Expr.Call _    // First step: no function calls
         | C.Expr.Old _     // Contracts are not supposed to cause
         | C.Expr.Quant _  -> die() //  information-flow problems
@@ -155,48 +180,57 @@ namespace Microsoft.Research.Vcc
           B.Expr.FunctionCall("$set_difference", [B.Expr.FunctionCall("$full_extent", [bPtr]); minus])
         | _ -> System.Console.WriteLine("Type: {0}", ptr.Type); die()
 
+// Translating a label expression into a Boogie expression
     let rec secLabelToBoogie trExpr trVar = function
       | ProgramContext -> getPC
+
       | PtrCompare (p1, p2) ->
         B.Expr.FunctionCall("$ptrclub.compare", [trExpr p1; trExpr p2])
+      
       | Meet (Bottom, _)
       | Meet (_, Bottom)
       | Bottom -> B.Expr.Ref "$lblset.bot"
+      
       | Join (Top, _)
       | Join (_, Top)
       | Top -> B.Expr.Ref "$lblset.top"
+      
       | VarLabel e -> 
         match e with
-          | C.Expr.Ref(_,v) -> getLocal ("SecLabel#"+(trVar v))
-          | C.Expr.Result _ -> getLocal ("SecLabel#special#result")
+          | C.Expr.Ref(_,v) -> getLabel (getLData ("FlowData#"+(trVar v)))
+          | C.Expr.Result _ -> getLabel (getLData "FlowData#special#result")
           | _ -> die()
       | VarMeta e ->
         match e with
-          | C.Expr.Ref(_,v) -> getLocal ("SecMeta#"+(trVar v))
-          | C.Expr.Result _ -> getLocal ("SecMeta#special#result")
+          | C.Expr.Ref(_,v) -> getMeta (getLData ("FlowData#"+(trVar v)))
+          | C.Expr.Result _ -> getMeta (getLData "FlowData#special#result")
           | _ -> die()
+
       | MemLabel e ->
         match e with
-          | C.Expr.Ref(_, v) -> match v.Type with | C.Type.PhysPtr _ -> getPLabel (trExpr e) | _ -> die()
+          | C.Expr.Ref(_, v) -> getLabel (getPData (trExpr e))
           | C.Expr.Dot _
           | C.Expr.Index _
-          | C.Expr.Macro (_, "_vcc_as_array", _) -> getPLabel (trExpr e)
-          | C.Expr.Deref(_, e') -> getPLabel (trExpr e')
+          | C.Expr.Macro (_, "_vcc_as_array", _) -> getLabel (getPData (trExpr e))
+          | C.Expr.Deref(_, e') -> getLabel (getPData (trExpr e'))
           | _ -> failwith (sprintf "Incomplete implementation: Encountered a MemLabel with argument %s\n." (e.ToString()))
       | MemMeta e ->
         match e with
-          | C.Expr.Ref(_,v) -> match v.Type with | C.Type.PhysPtr _ -> getPMeta (trExpr e) | _ -> die()
+          | C.Expr.Ref(_,v) -> getMeta (getPData (trExpr e))
           | C.Expr.Dot _
           | C.Expr.Index _
-          | C.Expr.Macro (_, "_vcc_as_array", _) -> getPMeta (trExpr e)
-          | C.Expr.Deref(_, e') -> getPMeta (trExpr e')
+          | C.Expr.Macro (_, "_vcc_as_array", _) -> getMeta (getPData (trExpr e))
+          | C.Expr.Deref(_, e') -> getMeta (getPData (trExpr e'))
           | _ -> failwith (sprintf "Incomplete implementation: Encountered a MemMeta with argument %s\n." (e.ToString()))
+
       | StructLabel(s,h) -> B.Expr.FunctionCall ("$get.seclabel.lub", [B.Expr.FunctionCall("$memory", [trExpr s]); physicalFullExtent trExpr h])
       | StructMeta(s,h) -> B.Expr.FunctionCall ("$get.metalabel.lub", [B.Expr.FunctionCall("$memory", [trExpr s]); physicalFullExtent trExpr h])
+
       | Meet (Top, l)
       | Meet (l, Top)
       | Join (Bottom, l)
       | Join (l, Bottom) -> secLabelToBoogie trExpr trVar l
+
       | Join (l1, l2) -> B.Expr.FunctionCall ("$lblset.join", [secLabelToBoogie trExpr trVar l1;secLabelToBoogie trExpr trVar l2])
       | Meet (l1, l2) -> B.Expr.FunctionCall ("$lblset.meet", [secLabelToBoogie trExpr trVar l1;secLabelToBoogie trExpr trVar l2])
 
@@ -216,134 +250,44 @@ namespace Microsoft.Research.Vcc
             | Some body -> body.SelfVisit(bodyHasIFAnnotations); !res
         | _ -> false
 
-    let mkSecLattice = []
-//      let mkConst n t = { Unique = true 
-//                          Name = n
-//                          Type = t } : B.ConstData
-//      [B.Decl.Const (mkConst "$lblset.top" (B.Type.Ref "$seclabel"))
-//       B.Decl.Const (mkConst "$lblset.bot" (B.Type.Ref "$seclabel"))
-//       B.Decl.Axiom (B.Expr.Forall(Token.NoToken, [("l",B.Type.Ref "$seclabel")], [], [], B.Expr.FunctionCall("$lblset.leq",  [B.Expr.Ref "l"; B.Expr.Ref "$lblset.top"])))
-//       B.Decl.Axiom (B.Expr.Forall(Token.NoToken, [("l",B.Type.Ref "$seclabel")], [], [], B.Expr.FunctionCall("$lblset.leq",  [B.Expr.Ref "$lblset.bot"; B.Expr.Ref "l"])))
-//       B.Decl.Axiom (B.Expr.Primitive ("!", [B.Expr.FunctionCall("$lblset.leq",  [B.Expr.Ref "$lblset.top"; B.Expr.Ref "$lblset.bot"])]))
-//       
-//       B.Decl.Function (B.Type.Ref "$seclabel", [], "$lblset.meet", ["l1", B.Type.Ref "$seclabel";"l2", B.Type.Ref "$seclabel"])
-//       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
-//                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"],
-//                                    [], [],
-//                                    B.Expr.Primitive ("&&",
-//                                                      [B.Expr.FunctionCall("$lblset.leq",  [B.Expr.FunctionCall ("$lblset.meet", [B.Expr.Ref "l1";B.Expr.Ref "l2"]); B.Expr.Ref "l1"])
-//                                                       B.Expr.FunctionCall("$lblset.leq",  [B.Expr.FunctionCall ("$lblset.meet", [B.Expr.Ref "l1";B.Expr.Ref "l2"]); B.Expr.Ref "l2"])])))
-//       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
-//                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"; "l", B.Type.Ref "$seclabel"],
-//                                    [], [],
-//                                    B.Expr.Primitive ("==>", 
-//                                                      [B.Expr.Primitive ("&&",
-//                                                                         [B.Expr.FunctionCall("$lblset.leq",  [B.Expr.Ref "l"; B.Expr.Ref "l1"])
-//                                                                          B.Expr.FunctionCall("$lblset.leq",  [B.Expr.Ref "l"; B.Expr.Ref "l2"])])
-//                                                       B.Expr.FunctionCall("$lblset.leq", 
-//                                                                         [B.Expr.Ref "l"
-//                                                                          B.Expr.FunctionCall ("$lblset.meet", [B.Expr.Ref "l1"; B.Expr.Ref "l2"])])])))
-//       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
-//                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"],
-//                                    [], [],
-//                                    B.Expr.Primitive ("==", [B.Expr.FunctionCall ("$lblset.meet", [B.Expr.Ref "l1"; B.Expr.Ref "l2"])
-//                                                             B.Expr.FunctionCall ("$lblset.meet", [B.Expr.Ref "l2"; B.Expr.Ref "l1"])])))
-//       
-//       B.Decl.Function (B.Type.Ref "$seclabel", [], "$lblset.join", ["l1", B.Type.Ref "$seclabel";"l2", B.Type.Ref "$seclabel"])
-//       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
-//                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"],
-//                                    [], [],
-//                                    B.Expr.Primitive ("&&",
-//                                                      [B.Expr.FunctionCall("$lblset.leq",  [B.Expr.Ref "l1"; B.Expr.FunctionCall ("$lblset.join", [B.Expr.Ref "l1";B.Expr.Ref "l2"])])
-//                                                       B.Expr.FunctionCall("$lblset.leq",  [B.Expr.Ref "l2"; B.Expr.FunctionCall ("$lblset.join", [B.Expr.Ref "l1";B.Expr.Ref "l2"])])])))
-//       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
-//                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"; "l", B.Type.Ref "$seclabel"],
-//                                    [], [],
-//                                    B.Expr.Primitive ("==>", 
-//                                                      [B.Expr.Primitive ("&&",
-//                                                                         [B.Expr.FunctionCall("$lblset.leq",  [B.Expr.Ref "l1"; B.Expr.Ref "l"])
-//                                                                          B.Expr.FunctionCall("$lblset.leq",  [B.Expr.Ref "l2"; B.Expr.Ref "l"])])
-//                                                       B.Expr.FunctionCall("$lblset.leq", 
-//                                                                         [B.Expr.FunctionCall ("$lblset.join", [B.Expr.Ref "l1"; B.Expr.Ref "l2"])
-//                                                                          B.Expr.Ref "l"])])))
-//       B.Decl.Axiom (B.Expr.Forall (Token.NoToken,
-//                                    ["l1", B.Type.Ref "$seclabel"; "l2", B.Type.Ref "$seclabel"],
-//                                    [], [],
-//                                    B.Expr.Primitive ("==", [B.Expr.FunctionCall ("$lblset.join", [B.Expr.Ref "l1"; B.Expr.Ref "l2"])
-//                                                             B.Expr.FunctionCall ("$lblset.join", [B.Expr.Ref "l2"; B.Expr.Ref "l1"])])))
-//     ]
-
 // Transformations for if statements
     let rec insert acc e = function
       | [] -> e :: acc
       | e'::_ as es when e' = e -> es @ acc
       | e'::es -> insert (e'::acc) e es
     let union es es' = List.foldBack (insert []) es es'
-
+    
     let makePermissiveUpgrade trExpr trVar trType cExpr testClassif =
-      let rec getFreeVars acc = function
-        | C.Expr.Ref _
-        | C.Expr.Deref (_,(C.Expr.Ref _|C.Expr.Dot _)) as e -> [e] // Base cases
-        | C.Expr.Macro (_,_,es)
-        | C.Expr.Prim(_,_,es) -> List.foldBack (fun e vars -> let vars' = getFreeVars [] e in union vars' vars) es ([])
-        | C.Expr.IntLiteral _
-        | C.Expr.BoolLiteral _
-        | C.Expr.SizeOf _ -> []
-        | C.Expr.Cast (_,_,e) -> getFreeVars acc e
-        | C.Expr.Call _
-        | C.Expr.Dot _
-        | C.Expr.Index _
-        | C.Expr.Old _
-        | C.Expr.Quant _
-        | _ -> die()
-      let freeVars = getFreeVars [] cExpr
-      let ptr = B.Expr.Ref "PU#CLS#ptr"
-      let construct v expr =
-        match v with
-          | C.Expr.Ref (_,v) ->  B.Expr.Primitive ("||",
-                                                   [B.Expr.Primitive ("&&",
-                                                                      [B.Expr.Primitive ("!", [B.Expr.FunctionCall("$seclbl.leq",  [B.Expr.ArrayIndex (getLocal ("SecLabel#"+trVar v), [ptr]); B.Expr.Ref "$seclbl.bot"])])
-                                                                       B.Expr.FunctionCall("$seclbl.leq",  [B.Expr.ArrayIndex (getLocal ("SecMeta#"+trVar v), [ptr]); B.Expr.Ref "$seclbl.bot"])])
-                                                    expr])
-          | C.Expr.Deref (_,e) ->
-            let bType = trType (v.Type)
-            let getLabel = getPLabel (trExpr e)
-            let getMeta = getPMeta (trExpr e)
-            B.Expr.Primitive ("||",
-                              [B.Expr.Primitive ("&&",
-                                                 [B.Expr.Primitive ("!", [B.Expr.FunctionCall("$seclbl.leq",  [B.Expr.ArrayIndex (getLabel, [ptr]); B.Expr.Ref "$seclbl.bot"])])
-                                                  B.Expr.FunctionCall("$seclbl.leq",  [B.Expr.ArrayIndex (getMeta, [ptr]); B.Expr.Ref "$seclbl.bot"])])
-                               expr])
-          | _ -> die()
+      let cLevel = secLabelToBoogie trExpr trVar (exprLevel false cExpr)
+      let cMeta  = secLabelToBoogie trExpr trVar (exprLevel false (C.Expr.Macro({cExpr.Common with Type = C.Type.SecLabel(Some cExpr)}, "_vcc_label_of", [cExpr])))
       B.Expr.Lambda (Token.NoToken,
                      ["PU#CLS#ptr",B.Type.Ref "$ptr"],
                      [],
                      B.Expr.Primitive("||",
-                                      [B.Expr.FunctionCall("$select.$map_t..$ptr_to..^^void.^^bool", [testClassif; ptr])
-                                       List.foldBack construct freeVars (B.Expr.Primitive ("!", [B.Expr.FunctionCall("$seclbl.leq",  [B.Expr.ArrayIndex (getPC, [ptr]); B.Expr.Ref "$seclbl.bot"])]))]))
+                                      [B.Expr.FunctionCall("$select.$map_t..$ptr_to..^^void.^^bool", [testClassif; B.Expr.Ref "PU#CLS#ptr"])
+                                       B.Expr.Primitive("||",
+                                                        [B.Expr.ArrayIndex(getPC, [B.Expr.Ref "PU#CLS#ptr"])
+                                                         B.Expr.Primitive("&&",
+                                                                          [B.Expr.ArrayIndex(cLevel, [B.Expr.Ref "PU#CLS#ptr"])
+                                                                           B.Expr.Primitive("!", [B.Expr.ArrayIndex(cMeta, [B.Expr.Ref "PU#CLS#ptr"])])])])]))
 
     let bExprLevel bExpr =
-      let rec getVarLevels acc = function
-        | B.Expr.Ref (vname) when vname.StartsWith "SecLabel#" -> Set.ofList [false,"SecMeta#"+vname.Substring 9],acc
-        | B.Expr.Ref (vname) when vname.StartsWith "SecMeta#" -> Set.ofList [false,vname],acc
-        | B.Expr.Ref (vname) when vname.StartsWith "L#" -> Set.ofList[false,"SecLabel#"+vname],acc
-        | B.Expr.Ref (vname) -> Set.ofList [false,"SecLabel#"+vname],acc
-        | B.Expr.FunctionCall ("$select.sec.pc", _) -> Set.empty,acc
-        | B.Expr.FunctionCall ("$select.sec.label", [_;B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref p])]) -> Set.ofList [true,p],(p,t)::acc
-        | B.Expr.FunctionCall ("$select.sec.meta", [_;B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref p])]) -> Set.ofList [true,p],(p,t)::acc
+      let rec getVarLevels = function
+        | B.Expr.Ref (vname) as v -> [v]
+        | B.Expr.FunctionCall ("$select.sec.pc", _) -> []
+        | B.Expr.FunctionCall ("$select.flow.label", [fd]) -> [getMeta fd]
+        | B.Expr.FunctionCall ("$select.flow.meta", _) as l -> [l]
         | B.Expr.BoolLiteral _
         | B.Expr.IntLiteral _
-        | B.Expr.BvLiteral _ -> Set.empty,acc
+        | B.Expr.BvLiteral _ -> []
         | B.Expr.BvConcat (e1,e2) ->
-          let (v1,t1) = getVarLevels [] e1
-          let (v2,t2) = getVarLevels [] e2
-          Set.union v1 v2,t1@t2@acc
-        | B.Expr.BvExtract (e,_,_) -> getVarLevels acc e
-        | B.Expr.Primitive (_,es) -> List.fold (fun (vs,ts) e -> let v,t = getVarLevels [] e in Set.union vs v,t@ts) (Set.empty,acc) es
+          let v1 = getVarLevels e1
+          let v2 = getVarLevels e2
+          union v1 v2
+        | B.Expr.BvExtract (e,_,_) -> getVarLevels e
+        | B.Expr.Primitive (_,es) -> List.fold (fun vs e -> let v = getVarLevels e in union vs v) [] es
         | _ as e -> failwith (sprintf "Incomplete implementation: Failed on making hazardous check for expression %s\n." (e.ToString()))
-      let (varLevels,types) = getVarLevels [] bExpr
-      let construct (b,v) expr =
-        if b then let t = snd(List.find (fun (var,_) -> var = v) types)
-                  B.Expr.FunctionCall ("&&", [expr; B.Expr.FunctionCall("$lblset.leq",  [getPMeta (B.Expr.FunctionCall ("$ptr", [t;B.Expr.Ref v])); B.Expr.Ref "$lblset.bot"])])
-             else B.Expr.Primitive ("&&", [expr; B.Expr.FunctionCall("$lblset.leq",  [getLocal v; B.Expr.Ref "$lblset.bot"])])
-      Set.foldBack construct varLevels (B.Expr.BoolLiteral true)
+      let varLevels = getVarLevels bExpr
+      let construct bExpr expr =
+        B.Expr.Primitive ("&&", [expr; B.Expr.FunctionCall("$lblset.leq",  [bExpr; B.Expr.Ref "$lblset.bot"])])
+      List.foldBack construct varLevels (B.Expr.BoolLiteral true)

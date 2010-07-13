@@ -95,7 +95,7 @@ namespace Microsoft.Research.Vcc
           | C.Expr.Loop(_,_,_,_,e) -> getLocalLabels e
           | _ -> die()
       let newPCNum = incr env.IFPCNum; !(env.IFPCNum)
-      let newPC = "SecLabel#PC#"+(newPCNum.ToString())
+      let newPC = "FlowData#PC#"+(newPCNum.ToString())
       {env with IFContexts = (jmpContext,newPC)::env.IFContexts}
 
     let freshGrpID (env:Env) = env.IFGrpID := (!env.IFGrpID) + bigint.One; !env.IFGrpID
@@ -678,12 +678,7 @@ namespace Microsoft.Research.Vcc
             aux [] 0 args
           | "_vcc_current_context", [] -> IF.getPC
           | "_vcc_expect_unreachable_child", [e] -> B.Expr.FunctionCall("$expect_unreachable_child",[trExpr env e])
-          | "_vcc_label_of", [e] ->
-            match e.Type with
-              | C.Type.SecLabel None -> B.Expr.Ref "$lblset.bot"
-              | C.Type.SecLabel (Some (C.Expr.Deref(_,e'))) -> IF.getPMeta (trExpr env e')
-              | C.Type.SecLabel (Some e') -> Console.WriteLine (sprintf "Failed when calling label_of twice on an expression of type: %s." (e'.Type.ToString())); die()
-              | _ -> IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e)
+          | "_vcc_label_of", [e] -> IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel false e)
           | "_vcc_seclabel_bot", [] -> B.Expr.Ref "$lblset.bot"
           | "_vcc_seclabel_top", [] -> B.Expr.Ref "$lblset.top"
           | "_vcc_lblset_leq", [l1;l2] -> B.Expr.FunctionCall ("$lblset.leq", [trExpr env l1; trExpr env l2])
@@ -1205,17 +1200,28 @@ namespace Microsoft.Research.Vcc
               let setSecLabel = if (env.hasIF) then
                                   match name' with
                                     | ("$stack_alloc"|"$alloc"|"$spec_alloc"|"$spec_alloc_array"|"$alloc_claim") ->
-                                     [IF.setPLabel stmt.Token (er tmp) (B.Expr.Ref "$lblset.top")
+                                     [IF.setPLabel stmt.Token (er tmp) (B.Expr.Ref "$lblset.top")   // Uninitialised memory is high
                                       assumeSync env stmt.Token
                                       IF.setPMeta stmt.Token (er tmp) IF.getPC
                                       assumeSync env stmt.Token
-                                      IF.setLocal ("SecLabel#"+vname) (B.Expr.Ref "$lblset.top")
-                                      IF.setLocal ("SecMeta#"+vname) IF.getPC]
+                                      IF.setLLabel ("FlowData#"+vname) (B.Expr.Ref "$lblset.bot")   // This is the label of the pointer, not the raw data
+                                      IF.setLMeta ("FlowData#"+vname) IF.getPC]
                                     | _ -> []
                                 else []
               [tmp], [vardecl; assign] @ setSecLabel
             else
-              List.map ctx.VarName res, []
+              let setSecLabel = if (env.hasIF) then
+                                  match name' with
+                                    | ("$stack_alloc"|"$alloc"|"$spec_alloc"|"$spec_alloc_array"|"$alloc_claim") ->
+                                     [IF.setPLabel stmt.Token (er (fst (trVar res.Head))) (B.Expr.Ref "$lblset.top")   // Uninitialised memory is high
+                                      assumeSync env stmt.Token
+                                      IF.setPMeta stmt.Token (er (fst (trVar res.Head))) IF.getPC
+                                      assumeSync env stmt.Token
+                                      IF.setLLabel ("FlowData#"+(fst (trVar res.Head))) (B.Expr.Ref "$lblset.bot")   // This is the label of the pointer, not the raw data
+                                      IF.setLMeta ("FlowData#"+(fst (trVar res.Head))) IF.getPC]
+                                    | _ -> []
+                                else []
+              List.map ctx.VarName res, setSecLabel
           let syncEnv =
             match name' with
               | "$wrap"
@@ -1257,14 +1263,14 @@ namespace Microsoft.Research.Vcc
               [B.Stmt.Assign(bClub, B.Expr.FunctionCall("$ptrclub.addMember", [trExpr env p; bClub]))
                B.Stmt.Assume(B.Expr.FunctionCall("is_active_ptrclub", [bClub]))]
             | C.Expr.Macro (_, "_vcc_downgrade_to", [C.Expr.Ref _ as v; e]) ->
-              let setLabels = [IF.setLocal ("SecLabel#"+(trExpr env v).ToString()) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e))
-                               IF.setLocal ("SecMeta#"+(trExpr env v).ToString()) (B.Expr.Ref "$lblset.bot")]
+              let setLabels = [IF.setLLabel ("FlowData#"+(trExpr env v).ToString()) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel false e))
+                               IF.setLMeta ("FlowData#"+(trExpr env v).ToString()) (B.Expr.Ref "$lblset.bot")]
               let tokNotEqual = afmte 9717 "{0} == {1}" [v; e]
               let tokHighCtxt = afmte 9718 "context is low" [stmt]
               [cmt(); B.Stmt.Assert (tokNotEqual, B.Expr.Primitive("==", [trExpr env v; trExpr env e])); B.Stmt.Assert (tokHighCtxt, B.Expr.FunctionCall("$lblset.leq",  [IF.getPC; B.Expr.Ref "$lblset.bot"]))] @ setLabels
             | C.Expr.Macro (_, "_vcc_downgrade_to", [C.Expr.Deref (_, var) as v; e]) ->
               let setLabels =
-                [IF.setPLabel stmt.Token (trExpr env var) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel e))
+                [IF.setPLabel stmt.Token (trExpr env var) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel false e))
                  assumeSync env stmt.Token
                  IF.setPMeta stmt.Token (trExpr env var) (B.Expr.Ref "$lblset.bot")
                  assumeSync env stmt.Token]
@@ -1273,7 +1279,7 @@ namespace Microsoft.Research.Vcc
               [cmt(); B.Stmt.Assert (tokNotEqual, B.Expr.Primitive("==", [trExpr env v; trExpr env e])); B.Stmt.Assert (tokHighCtxt, B.Expr.FunctionCall("$lblset.leq",  [IF.getPC; B.Expr.Ref "$lblset.bot"]))] @ setLabels
             | C.Macro(_, "test_classifier_validity_check", [C.Expr.Quant(ec, {Kind = C.QuantKind.Forall; Variables = [p]; Triggers = trigs; Condition = cond; Body = body})]) ->
               let tokClass = afmte 0000 "the provided test classifier is valid" [stmt]
-              let bodyLabel = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel body)
+              let bodyLabel = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel false body)
               ctx.QuantVarTokens.[p] <- ec.Token
               let p,pt = trVar p
               let bodyCheck = B.Expr.FunctionCall("$seclbl.leq", [B.Expr.ArrayIndex(bodyLabel, [B.Expr.Ref p]); B.Expr.Ref "$seclbl.bot"])
@@ -1300,7 +1306,11 @@ namespace Microsoft.Research.Vcc
                   | C.Ptr t -> trForWrite env t e2
                   | _ -> die()
               let memLoc = trExpr env e1
-              let secLabel = IF.contextify (IF.exprLevel e2)
+              let asPointer =
+                match e1.Type with
+                  | C.Type.PhysPtr (C.Type.PhysPtr _ | C.Type.SpecPtr _) -> true
+                  | _ -> false
+              let secLabel = IF.contextify (IF.exprLevel asPointer e2)
               let secLabelExpr = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) secLabel
               [cmt ();
                B.Stmt.Call (C.bogusToken, [], "$write_int", [memLoc; e2']); 
@@ -1359,11 +1369,15 @@ namespace Microsoft.Research.Vcc
                   cev.VarUpdate c.Token true v
                 | _ ->
                   let (vname,_) = trVar v
-                  let secLabel = IF.contextify (IF.exprLevel e)
+                  let asPointer =
+                    match v.Type with
+                      | C.Type.PhysPtr _ | C.Type.SpecPtr _ -> true
+                      | _ -> false
+                  let secLabel = IF.contextify (IF.exprLevel asPointer e)
                   cmt () ::
                   B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
-                  IF.setLocal ("SecLabel#"+vname) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) secLabel) ::
-                  IF.setLocal ("SecMeta#"+vname) IF.getPC ::   // This could be more precise: we should check if the label was actually changed before setting the metalabel
+                  IF.setLLabel ("FlowData#"+vname) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) secLabel) ::
+                  IF.setLMeta ("FlowData#"+vname) IF.getPC ::
                   ctx.AssumeLocalIs c.Token v ::
                   cev.VarUpdate c.Token true v
             | C.Expr.If (ec, cl, c, s1, s2) ->
@@ -1382,7 +1396,7 @@ namespace Microsoft.Research.Vcc
                           | Some cl -> cl
                       let tokHighClassif = afmte 9720 "test classifier is low" [cl]
                       let tokHighCondition = afmte 9719 "test condition is as low as specified by the test classifier" [c; cl]
-                      let condLevel = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel c)
+                      let condLevel = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel false c)
                       let classifier = if (!explicitClassif) then B.Expr.Lambda(Token.NoToken, ["CLS#ptr",B.Type.Ref "$ptr"], [], B.Expr.FunctionCall("$select.$map_t..$ptr_to..^^void.^^bool", [classifier; B.Expr.Ref "CLS#ptr"]))
                                                              else IF.makePermissiveUpgrade (trExpr env) (fun v -> fst(trVar v)) trType c classifier
                       let getMapElement map index =
@@ -1457,10 +1471,9 @@ namespace Microsoft.Research.Vcc
                 cmt() ::
                 B.Stmt.VarDecl (v', w) ::
                 ctx.AssumeLocalIs b.Token v ::
-                B.Stmt.VarDecl (("SecLabel#"+vname,B.Type.Ref "$labelset"),None) ::
-                B.Stmt.VarDecl (("SecMeta#"+vname,B.Type.Ref "$labelset"),None) ::
-                IF.setLocal ("SecLabel#"+vname) (B.Expr.Ref "$lblset.top") ::
-                IF.setLocal ("SecMeta#"+vname) (B.Expr.Ref "$lblset.bot") ::
+                B.Stmt.VarDecl (("FlowData#"+vname,B.Type.Ref "$flowdata"),None) ::
+                IF.setLLabel ("FlowData#"+vname) (B.Expr.Ref "$lblset.top") ::
+                IF.setLMeta ("FlowData#"+vname) (B.Expr.Ref "$lblset.bot") ::
                 ls
             | C.Expr.VarDecl (b, v) when (not env.hasIF) ->
               let ls = if v.Kind = C.Parameter then cev.VarIntro b.Token true v else []
@@ -1480,7 +1493,7 @@ namespace Microsoft.Research.Vcc
                                         B.Stmt.Block [B.Stmt.Assert (afmte 9716 "the target label's context is at least as high as the jump's" [stmt],
                                                                      B.Expr.FunctionCall("$lblset.leq",
                                                                                          [IF.getPC
-                                                                                          B.Expr.Ref(targetPC)]))
+                                                                                          IF.getLabel (B.Expr.Ref(targetPC))]))
                                                       B.Stmt.Goto (c.Token, [trLabel l])]]
             | C.Expr.Label (c, l) -> [B.Stmt.Label (c.Token, trLabel l)]
             
@@ -2306,7 +2319,7 @@ namespace Microsoft.Research.Vcc
                   
                 let inParams = h.Parameters |> List.filter (fun v -> v.Kind <> C.VarKind.OutParameter)
                 let cevInit = cev.InitCall h.Token :: List.map (cev.VarIntro h.Token true) inParams |> List.concat
-                let inParamLabels = if env.hasIF then List.collect (fun (v:CAST.Variable) -> [B.Stmt.VarDecl (("SecLabel#P#"+(v.Name),B.Type.Ref "$seclabel"), None); B.Stmt.VarDecl (("SecMeta#P#"+(v.Name),B.Type.Ref "$seclabel"), None)]) inParams
+                let inParamLabels = if env.hasIF then List.collect (fun (v:CAST.Variable) -> [B.Stmt.VarDecl (("FlowData#P#"+(v.Name),B.Type.Ref "$flowdata"), None)]) inParams
                                                  else []
                 let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ inParamLabels @ init @ cevInit                    
                 
@@ -2318,9 +2331,9 @@ namespace Microsoft.Research.Vcc
                 
                 let doBody (s:CAST.Expr) =
                   let secDecls =
-                    if (env.hasIF) then [B.Stmt.VarDecl(("SecLabel#initPC", B.Type.Ref "$labelset"), None)
-                                         IF.setLocal "SecLabel#initPC" (B.Expr.Ref "$lblset.bot")
-                                         IF.setPC (s.Token) (IF.getLocal "SecLabel#initPC")
+                    if (env.hasIF) then [B.Stmt.VarDecl(("FlowData#initPC", B.Type.Ref "$flowdata"), None)
+                                         IF.setLLabel "FlowData#initPC" (B.Expr.Ref "$lblset.bot")
+                                         IF.setPC (s.Token) (IF.getLabel (IF.getLData "FlowData#initPC"))
                                          assumeSync env s.Token]
                                    else []
                   B.Stmt.Block (B.Stmt.Assume (bCall "$function_entry" [bState]) ::
@@ -2330,7 +2343,7 @@ namespace Microsoft.Research.Vcc
                                  can_frame @
                                  init @
                                  (if helper.Options.Vcc3 then [] else List.map assumeMutability h.Writes) @
-                                 trStmt {env with IFContexts = (getLocalLabels s,"SecLabel#initPC")::(env.IFContexts)} s @ 
+                                 trStmt {env with IFContexts = (getLocalLabels s,"FlowData#initPC")::(env.IFContexts)} s @ 
                                  [B.Stmt.Label (Token.NoToken, "#exit")] @
                                  sanityChecks env h))
                 let theBody =
@@ -2394,8 +2407,6 @@ namespace Microsoft.Research.Vcc
                                      | _ -> acc) [] decls
         let tn = if nestingExtents then typeNesting types else []
 
-        let secLattice = if !globalHasIF then IF.mkSecLattice
-                                         else []
-        List.concat (archSpecific() @ [secLattice] @ res @ [tn; ctx.FlushDecls mapEqAxioms])
+        List.concat (archSpecific() @ res @ [tn; ctx.FlushDecls mapEqAxioms])
         
       helper.SwTranslator.Run main ()
