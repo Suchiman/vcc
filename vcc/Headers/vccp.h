@@ -106,7 +106,7 @@ _(struct \TypeState {
 
 // Statement-like functions
 
-_(void \wrap(\object);)
+_(void \wrap(\object o) _(writes o, o->\owns);)
 _(void \unwrap(\object o) _(writes o);)
 _(void \destroy_claim(\claim, \objset);)
 _(void \reads_havoc();)
@@ -160,7 +160,7 @@ _(template<typename T> bool \macro_returns(T expr)
   _(ensures \static_cast<T,bool>(\result) == expr);)
 
 _(logic bool \wrapped0(\object o) = \wrapped(o) && o->\claim_count == 0;)
-_(logic template<typename T> bool \unchanged(T expr) = expr == \old(expr);)
+_(logic template<typename T> bool \unchanged(T expr) = \old(expr) == expr;)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 

@@ -201,7 +201,13 @@ module Rules =
       let body =
         match getTriggers [] toks with
           | Some (bindings, triggers, body) ->
-            bindings @ [Tok.Op (p, ";")] @ [Tok.Whitespace (p, " ")] @ triggers  @ body
+            let body' =
+              if countSemicolons body > 0 then
+                match List.rev (splitAt ";" body) with
+                  | [body; guard] -> guard @ [Tok.Whitespace (p, " "); Tok.Op (p, guardOp)] @ [space; Tok.Group(fakePos, "(", eatWs body)]
+                  | _ -> failwith ""
+              else body
+            bindings @ [Tok.Op (p, ";")] @ [Tok.Whitespace (p, " ")] @ triggers @ body'
           | None ->
             if countSemicolons toks > 1 then
               let body, defs =
@@ -210,7 +216,7 @@ module Rules =
                     if looksLikeDecl guard then
                       body, List.rev (guard :: defs)
                     else
-                      guard @ [Tok.Whitespace (p, " "); Tok.Op (p, guardOp)] @ body, List.rev defs
+                      guard @ [Tok.Whitespace (p, " "); Tok.Op (p, guardOp)] @ [space; Tok.Group(fakePos, "(", eatWs body)], List.rev defs
                   | _ -> failwith ""
               joinWith ";" defs @ [Tok.Op (p, ";")] @ body
             else
@@ -312,7 +318,7 @@ module Rules =
     addKwRepl "spec_alloc_array" "\\alloc_array"  // cannot use fnRule because of template paramters
     
     addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
-    addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, "hint: "); paren "" toks]))
+    addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, ":hint"); space; paren "" toks]))
     addRule (quantRule "forall" "==>")
     addRule (quantRule "exists" "&&")
     addRule (quantRule "lambda" "### /* range restriction ignored */")
