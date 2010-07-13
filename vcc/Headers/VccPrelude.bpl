@@ -3137,11 +3137,6 @@ function $geq_f8(x:$primitive, y:$primitive) returns(bool);
 	// Generic type and operations
 	type $labelset = [$ptr] $seclabel;
 
-	function {:inline true} $lblset.proj(l:$labelset, p:$ptr) returns($seclabel)
-		{ l[p] }
-	function {:inline true} $lblset.inj(l:$labelset, p:$ptr, b:$seclabel) returns($labelset)
-		{ l[p := b] }
-
 	const $lblset.top: $labelset;
 	axiom(forall p:$ptr :: $lblset.top[p] == $seclbl.top);
 	const $lblset.bot: $labelset;
@@ -3157,25 +3152,31 @@ function $geq_f8(x:$primitive, y:$primitive) returns(bool);
 	axiom(forall l1,l2:$labelset, p:$ptr :: $lblset.join(l1,l2)[p] == $seclbl.join(l1[p], l2[p]));
 
 	// Labels and meta-labels of memory locations (we want them in $memory so they get havoc()-ed at the same time as the memory locations they correspond to)
-	function $select.sec.label($memory_t, $ptr) returns($labelset);
-	function $store.sec.label($memory_t, $ptr, $labelset) returns($memory_t);
+	type $flowdata;
 
-	axiom(forall M:$memory_t, p,q:$ptr, l:$labelset ::
-	  $in_full_extent_of(q, p) ==> $select.sec.label($store.sec.label(M, p, l), q) == l);
-	axiom(forall M:$memory_t, p,q:$ptr, l:$labelset ::
+	function $select.flow.label($flowdata) returns($labelset);
+	function $store.flow.label($flowdata, $labelset) returns($flowdata);
+	function $select.flow.meta($flowdata) returns($labelset);
+	function $store.flow.meta($flowdata, $labelset) returns($flowdata);
+
+	axiom(forall fd:$flowdata, l:$labelset :: {:weight 0}
+		$select.flow.label($store.flow.label(fd, l)) == l);
+	axiom(forall fd:$flowdata, l:$labelset :: {:weight 0} 
+		$select.flow.meta($store.flow.meta(fd, l)) == l);
+	axiom(forall fd:$flowdata, l:$labelset :: {:weight 0}
+		$select.flow.label($store.flow.meta(fd, l)) == $select.flow.label(fd));
+	axiom(forall fd:$flowdata, l:$labelset :: {:weight 0}
+		$select.flow.meta($store.flow.label(fd, l)) == $select.flow.meta(fd));
+
+	function $select.flow.data($memory_t, $ptr) returns($flowdata);
+	function $store.flow.data($memory_t, $ptr, $flowdata) returns($memory_t);
+
+	axiom(forall M:$memory_t, p,q:$ptr, fd:$flowdata :: {:weight 0}
+	  $in_full_extent_of(q, p) ==> $select.flow.data($store.flow.data(M, p, fd), q) == fd);
+	axiom(forall M:$memory_t, p,q:$ptr, fd:$flowdata :: {:weight 0}
 	      $in_full_extent_of(q, p)
 		  ||
-		  $select.sec.label($store.sec.label(M, p, l), q) == $select.sec.label(M, q));
-
-	function $select.sec.meta($memory_t, $ptr) returns($labelset);
-	function $store.sec.meta($memory_t, $ptr, $labelset) returns($memory_t);
-
-	axiom(forall M:$memory_t, p,q:$ptr, l:$labelset ::
-	  $in_full_extent_of(q, p) ==> $select.sec.meta($store.sec.meta(M, p, l), q) == l);
-	axiom(forall M:$memory_t, p,q:$ptr, l:$labelset ::
-	      $in_full_extent_of(q, p)
-		  ||
-		  $select.sec.label($store.sec.meta(M, p, l), q) == $select.sec.meta(M, q));
+		  $select.flow.data($store.flow.data(M, p, fd), q) == $select.flow.data(M, q));
 
 	// Program Context (is a top-level state member)
 	function $select.sec.pc($state) returns($labelset);
@@ -3227,15 +3228,15 @@ function $geq_f8(x:$primitive, y:$primitive) returns(bool);
 	function {:inline true} $ptrclub.isMember(p: $ptr, c: $ptrclub) returns(bool)
 		{ $ptrclub.members(c)[p] }
 	
-	axiom(forall c: [$ptr] bool, l: $labelset ::
+	axiom(forall c: [$ptr] bool, l: $labelset :: {:weight 0}
 	  $ptrclub.members($ptrclub.construct(c, l)) == c);
-	axiom(forall c: [$ptr] bool, l: $labelset ::
+	axiom(forall c: [$ptr] bool, l: $labelset :: {:weight 0}
 	  $ptrclub.bound($ptrclub.construct(c, l)) == l);
 
-	axiom(forall c: $ptrclub, p: $ptr ::
+	axiom(forall c: $ptrclub, p: $ptr :: {:weight 0}
 	     $ptrclub.members($ptrclub.addMember(p, c))
 	  == $ptrclub.members(c)[p := true]);
-	axiom(forall c: $ptrclub, p: $ptr ::
+	axiom(forall c: $ptrclub, p: $ptr :: {:weight 0}
 	  $ptrclub.bound($ptrclub.addMember(p,c)) == $ptrclub.bound(c));
 
 	function $ptrclub.compare($ptr, $ptr) returns($labelset);
@@ -3245,33 +3246,17 @@ function $geq_f8(x:$primitive, y:$primitive) returns(bool);
 	// And we shouldn't need the fact that the glb is the greatest lower bound
 
 // No interaction between memory and labels, and the various kinds of labels
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$labelset :: {:weight 0}	// Metas and labels
-  $select.sec.meta($store.sec.label(M,q,l),p) == $select.sec.meta(M,p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$labelset :: {:weight 0}	// Labels and metas
-  $select.sec.label($store.sec.meta(M,q,l),p) == $select.sec.label(M,p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Labels and mem
-  $select.sec.label($store.mem(M,q,v), p) == $select.sec.label(M, p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}			// Metas and mem
-  $select.sec.meta($store.mem(M,q,v), p) == $select.sec.meta(M, p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$labelset :: {:weight 0}	// Mem and labels
-  $select.mem($store.sec.label(M,q,l), p) == $select.mem(M, p));
-axiom (forall M:$memory_t, p:$ptr, q:$ptr, l:$labelset :: {:weight 0}	// Mem and metas
-  $select.mem($store.sec.meta(M,q,l), p) == $select.mem(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}
+  $select.flow.data($store.mem(M,q,v), p) == $select.flow.data(M, p));
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, fd:$flowdata :: {:weight 0}
+  $select.mem($store.flow.data(M,q,fd), p) == $select.mem(M, p));
 
-procedure $store_sec_label(p:$ptr, l:$labelset);
+procedure $store_flow_data(p:$ptr, fd:$flowdata);
   modifies $s;
   ensures $select.sec.pc($s) == $select.sec.pc(old($s));
   ensures $typemap($s) == $typemap(old($s));
   ensures $statusmap($s) == $statusmap(old($s));
-  ensures $memory($s) == $store.sec.label($memory(old($s)), p, l);
-  ensures $timestamp_post_strict(old($s), $s);
-
-procedure $store_sec_meta(p:$ptr, l:$labelset);
-  modifies $s;
-  ensures $select.sec.pc($s) == $select.sec.pc(old($s));
-  ensures $typemap($s) == $typemap(old($s));
-  ensures $statusmap($s) == $statusmap(old($s));
-  ensures $memory($s) == $store.sec.meta($memory(old($s)), p, l);
+  ensures $memory($s) == $store.flow.data($memory(old($s)), p, fd);
   ensures $timestamp_post_strict(old($s), $s);
 
 procedure $store_sec_pc(l:$labelset);
