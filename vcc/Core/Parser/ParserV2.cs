@@ -560,7 +560,7 @@ namespace Microsoft.Research.Vcc.Parsing
       Token kind = this.currentToken;
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
-      TokenSet followersOrLeftBraceOrSemicolonOrUnaryStart = followers | Token.LeftBrace | Token.Semicolon | TS.UnaryStart;
+      TokenSet followersOrLeftBraceOrSemicolonOrUnaryStart = followers | TS.LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart | TS.PrimaryStart;
       List<LocalDeclarationsStatement> boundVariables = this.ParseQuantifierBoundVariables(followersOrLeftBraceOrSemicolonOrUnaryStart);
       IEnumerable<IEnumerable<Expression>> triggers = this.ParseQuantifierTriggers(followers | TS.UnaryStart | TS.PrimaryStart);
       Expression condition = this.ParseExpression(followers);
