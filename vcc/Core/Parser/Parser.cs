@@ -13,6 +13,7 @@ using Microsoft.Cci.Ast;
 
 namespace Microsoft.Research.Vcc.Parsing {
 
+  [System.Diagnostics.DebuggerDisplay("CurrentToken = {this.currentToken}, {this.scanner.GetIdentifierString()}")]
   internal class Parser {
 
     protected delegate TResult Func<T, TResult>(T arg);
