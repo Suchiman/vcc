@@ -97,21 +97,20 @@ The following subsection explains this wrap/unwrap protocol in more details.
 \label{sect:wrap-unwrap}
 
 Because invariants do not always hold,
-in VCC one needs to explicitly state which objects are consistent.
-This is expressed with \vcc{\consistent(...)} function.
-Think of this function as returning a value of special ghost field,
-let's call it the \Def{consistency flag}, defined on every object.
-The invariants need to hold only when consistency flag is true.
-When the flag is false they need not hold (but of course still can).
-The flag is initially (on newly allocated objects) false,
+in VCC one needs to explicitly state which objects are consistent,
+using a ghost field \vcc{\consistent} which is defined on every object.
+The invariants need to hold only when the \vcc{\consistent} field is true.
+When the field is false they need not hold (but of course still can).
+The field is initially (on newly allocated objects) false,
 and you need to set it to false before disposing objects.
 
-In addition to the consistency flag each object has an \Def{owner field}.
-While the consistency flag is always written to by the wrap
-and unwrap operations, the owner field can be under some
-conditions (\secref{dynamic-claims}) written to directly.
-Therefore instead of a function it is referred to with
-a field: the owner of \vcc{p} is \vcc{p->\owner}.
+In addition to the \vcc{\consistent} field each object has an \Def{owner field}.
+The owner of \vcc{p} is \vcc{p->\owner}.
+%While the consistency flag is always written to by the wrap
+%and unwrap operations, the owner field can be under some
+%conditions (\secref{dynamic-claims}) written to directly.
+%Therefore instead of a function it is referred to with
+%a field: the owner of \vcc{p} is \vcc{p->\owner}.
 This field is of pointer (object) type, but
 VCC provides objects, of \vcc{\thread}
 type, to represent threads of execution, so that threads can also own objects.
@@ -153,7 +152,7 @@ This is performed by the unwrap operation, which translates to the following ste
 \item assert that the object is in the writes set
 \item assert that the object wrapped (consistent and owned by the current thread), 
 \item assume the invariant (as a consequence of rule 1, the invariant holds for every consistent object),
-\item set the consistent flag to false.
+\item set the \vcc{\consistent} field to false.
 \item add the span of the object (\ie all its fields) to the writes set
 \end{enumerate}
 The wrap operation does just the reverse:
@@ -162,16 +161,16 @@ The wrap operation does just the reverse:
 assert that the object is unwrapped (inconsistent and owned by the current thread;
 note that this does not mean ``not wrapped''),
 \item assert the invariant, 
-\item set the consistent flag to true (this implicitly prevents further writes to the fields of the object)
+\item set the \vcc{\consistent} field to true (this implicitly prevents further writes to the fields of the object)
 \end{enumerate}
 Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\unwrapped(...)}%
 and at the assert/assume desugaring of \vcc{sstr_append_char()} function.
 
 \begin{VCC}
 logic bool \wrapped(\object o) =
-  \consistent(o) && o->\owner == \me;
+  o->\consistent && o->\owner == \me;
 logic bool \unwrapped(\object o) =
-  !\consistent(o) && o->\owner == \me;
+  !o->\consistent && o->\owner == \me;
 \end{VCC}
 \vccInput[linerange={assert-out}]{c/05_safestring_assert.c}
 
@@ -309,7 +308,7 @@ It is essentially the inverse of the owner field.
 It is defined on every object \vcc{p} and referred to as \vcc{p->\owns}.
 VCC maintains that:
 \begin{VCC}
-\forall \object p, q; \consistent(p) ==> 
+\forall \object p, q; p->\consistent ==> 
   (q \in p->\owns <==> p->\owner == q)
 \end{VCC}
 The operator \vcc{<==>} reads ``if and only if'', and is simply boolean
@@ -540,7 +539,7 @@ a member of type \vcc{int}, we would have to consider the possibility
 of the first parameter aliasing that member. 
 
 To support this, VCC essentially maintains a typed view of memory; in
-any state, \vcc{\valid(p)} means that \vcc{p} points to memory that is
+any state, \vcc{p->\valid} means that \vcc{p} points to memory that is
 currently ``has'' type \vcc{p}. The rules governing validity guarantee
 that in any state, the valid pointers constitute a typesafe view of
 memory.  In particular, if two valid pointers point to overlapping

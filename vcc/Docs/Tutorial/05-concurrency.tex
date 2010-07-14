@@ -195,7 +195,7 @@ now consider the following to be the definition of a claim:
 _(ghost 
 typedef struct {
   \ptrset claimed;
-  _(invariant \forall \object o; o \in claimed ==> \consistent(o))
+  _(invariant \forall \object o; o \in claimed ==> o->\consistent)
 } \claim_struct, *\claim;
 )
 \end{VCC}
@@ -219,8 +219,8 @@ This invariant states that the object cannot be unwrapped when
 when there are consistent claims on it.
 More precisely, each claimable object keeps track of the count of outstanding
 claims.
-The number of outstanding claim on object \vcc{p} is given by
-the \vcc{\claim_count(p)} function.
+The number of outstanding claim on an object is stored in
+\vcc{\claim_count} field.
 
 Now, getting back to our lock example, the trick is that there can be
 multiple claims claiming the lock (note that this is orthogonal to
@@ -253,7 +253,7 @@ going to modify the object.
 For claims, it is just a hint, that it should use this claim when trying
 to prove that the object is consistent.
 
-Additionally, the \vcc{InitiliazeLock()} needs to ensure \vcc{\claim_count(l)} \vcc{== 0}
+Additionally, the \vcc{InitiliazeLock()} needs to ensure \vcc{l->\claim_count} \vcc{== 0}
 (\ie no claims on freshly initialized lock).
 VCC even provides a syntax to say something is wrapped and has no claims: \vcc{\wrapped0(l)}.
 
@@ -279,21 +279,21 @@ in terms of the \vcc{\claim_struct} defined in the previous section.
 
 \begin{VCC}
 // c = \make_claim({o}, true) expands to
-\claim_count(o) = \claim_count(o) + 1;
+o->\claim_count += 1;
 c = malloc(sizeof(\claim_struct));
 c->claimed = {o};
 _(wrap c);
 
 // \destroy_claim(c, {o}) expands to
 assert(o \in c->claimed);
-\claim_count(o) = \claim_count(o) - 1;
+o->\claim_count -= 1;
 _(unwrap c);
 free(c);
 \end{VCC}
 
 
 Because creating or destroying a claim on \vcc{c} assigns to
-\vcc{\claim_count(c)}, it requires write access to that memory ``location''.
+\vcc{c->\claim_count}, it requires write access to that memory location.
 One way to obtain such access is getting sequential write access to \vcc{c} itself:
 in our example the lock is created on the stack and thus sequentially writable.
 We can thus create a claim and immediately use it.
@@ -532,7 +532,7 @@ _(ghost c = \make_claim(S, P))
 \end{VCC}
 
 \noindent
-We already explained, that this requires that \vcc{\claim_count()}s of objects in the set \vcc{S} are writable.
+We already explained, that this requires that \vcc{s->\claim_count} is writable for \vcc{s \in S}.
 As for the property \vcc{P}, we pretend it forms the invariant of the claim.
 Because we're just constructing the claim, just like during regular object initialization,
 the invariant has to hold initially (\ie at the moment when the claim is created,
@@ -573,7 +573,7 @@ their invariants hold over \vcc{S0, S1}.
 \item Check that \vcc{P} holds in \vcc{S1}.
 \end{itemize}
 
-To prove \vcc{\active_claim(c)} one needs to prove \vcc{\consistent(c)} and that
+To prove \vcc{\active_claim(c)} one needs to prove \vcc{c->\consistent} and that
 the current state is a \Def{full-stop} state, \ie state where all invariants
 are guaranteed to hold.
 Any execution state outside of an atomic block is full-stop.
@@ -630,7 +630,7 @@ The lowest bit is used to disable giving out of new references
 
 \noindent
 Initialization shouldn't be very surprising:
-\vcc{\wrapped0(o)} means \vcc{\wrapped(o) && \claim_count(o) == 0},
+\vcc{\wrapped0(o)} means \vcc{\wrapped(o) && o->\claim_count == 0},
 and thus on initialization we require a resource without any outstanding
 claims.
 \todo{out parameters should be explained before}
@@ -645,7 +645,7 @@ The syntax \vcc{_(always c, P)} is equivalent to:
   _(ensures \wrapped(c))
 \end{VCC}
 Thus, instead of requiring \vcc{\claims_obj(c, r)}, we require that the claim
-guarantees \vcc{\consistent(r)}.
+guarantees \vcc{r->\consistent}.
 One way of doing this is claiming \vcc{r}, but another is claiming the owner
 of \vcc{r}, as we will see shortly.
 
@@ -656,11 +656,11 @@ hand-wave it.
 
 The new thing about the body is that we make a claim on the resource,
 even though it's not wrapped.
-There are two ways of obtaining write access to \vcc{\claim_count(p)}:
+There are two ways of obtaining write access to \vcc{p->\claim_count}:
 either having \vcc{p} writable sequentially and wrapped,
-or in case \vcc{\owner(p)} is a non-thread object, checking
-invariant of \vcc{\owner(p)}.
-Thus, inside an atomic update on \vcc{\owner(p)} (which will check the invariant of \vcc{\owner(p)}) one can create
+or in case \vcc{p->\owner} is a non-thread object, checking
+invariant of \vcc{p->\owner}.
+Thus, inside an atomic update on \vcc{p->\owner} (which will check the invariant of \vcc{p->\owner}) one can create
 claims on \vcc{p}.
 The same rule applies to claim destruction:
 
