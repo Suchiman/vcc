@@ -25,14 +25,14 @@ identifies the type of annotation provided (and hence its function).
 at the beginning of an annotation; elsewhere, it would be treated as
 an ordinary program identifier.)
 
-An annotation of the form \vcc{_( assert E )}, called an \Def{assertion}, asks VCC to prove that
+An annotation of the form \vcc{_(assert E)}, called an \Def{assertion}, asks VCC to prove that
 \vcc{E} is guaranteed to hold (\ie, evaluate to a value other than \vcc{0})
 whenever control reaches this assertion%
 \footnote{
   This interpretation changes slightly if \vcc{E} refers to
   memory locations that might be concurrently written to by other
   threads; see \secref{concurrency}}.  
-Thus, the line \vcc|_( assert z <= x )| says
+Thus, the line \vcc|_(assert z <= x)| says
 that when control reaches the assertion, \vcc{z} is no larger than \vcc{x}.
 If VCC verifies a program, it promises that all such assertions
 hold in \emph{every} possible execution of the program, considering all possible inputs,
@@ -49,16 +49,16 @@ all possible ways of scheduling concurrent threads, etc.
 
 \todo{should these notes be less prominent?}
 \begin{note}
-It is instructive to compare \vcc{_( assert E )} with the macro
+It is instructive to compare \vcc{_(assert E)} with the macro
 \lstinline|assert(E)| (defined in \lstinline|<assert.h>|), which
 evaluates \vcc{E}  at runtime and aborts execution if \vcc{E}
 doesn't hold. First, \lstinline|assert(E)| requires runtime overhead (at least
-in builds where the check is made), whereas \vcc{_( assert E )} does
+in builds where the check is made), whereas \vcc{_(assert E)} does
 not. Second, \lstinline|assert(E)| will catch failure of the 
 assertion only when it actually fails in an execution, whereas 
-\vcc{_( assert E )} is guaranteed to catch the failure if it is
+\vcc{_(assert E)} is guaranteed to catch the failure if it is
 possible in \emph{any} execution. Third, because VCC doesn't have to
-actually execute \vcc{_( assert E )}, it allows \vcc{E} to include
+actually execute \vcc{_(assert E)}, it allows \vcc{E} to include
 mathematical operations that cannot be executed, such as
 quantification over infinite domains.
 \end{note}
@@ -126,7 +126,7 @@ annotations.%
   You can prevent definition of \vcc{_}, and instead surround annotations with
   \vcc{__vcc_spec(...)}.
   This is controlled with \vcc{_VCC_DONT_USE_UNDERSCORE} macro-definition.
-  \itodo{We should actually allow it.} }
+  \itodo{This doesn't work at the moment.} }
 
 To understand how VCC works, and to use it successfully, it is useful to
 think in terms of what VCC ``knows'' at various program points. In
@@ -151,7 +151,7 @@ check whether VCC knows what you think it knows.
 
 You can add to what VCC knows at a particular point by adding a second
 type of annotation, called an \Def{assumption}.
-The assumption \vcc{_( assume E )} tells VCC to ignore
+The assumption \vcc{_(assume E)} tells VCC to ignore
 the rest of an execution if \vcc{E} fails to hold (\ie if
 \vcc{E} evaluates to \vcc{0}). If you verify a
 program with VCC, it guarantees that in any prefix of an execution
@@ -160,7 +160,7 @@ Reasoning-wise, assumption simply adds \vcc{E} to what VCC
 knows for subsequent reasoning. For example:
 \begin{VCC}
 int x, y;
-_( assume x != 0 )
+_(assume x != 0)
 y = 100 / x;
 \end{VCC}
 Without the assumption, VCC would complain about possible division by
@@ -225,8 +225,8 @@ it will assume the asserted fact holds afterward. For example, in the following
 VCC will only report an error for first assumption and no the second:
 \begin{VCC}
 int x;
-_( assert x == 0 )
-_( assert x == 0 )
+_(assert x == 0)
+_(assert x == 0)
 \end{VCC}
 
 When we talk about what VCC knows, we mean what it knows in an ideal
@@ -253,49 +253,54 @@ or quantifiers. We'll say more about these in \secref{bv}.
 In the following program fragment, which assertions will fail?
 \begin{VCC}
 int x,y; 
-_( assert x > 5 ) 
-_( assert x > 3 ) 
-_( assert x < 2 ) 
-_( assert y < 3 )
+_(assert x > 5) 
+_(assert x > 3) 
+_(assert x < 2) 
+_(assert y < 3)
 \end{VCC}
 \item
 Is there any difference between 
 \begin{VCC}
-_( assume p ) _( assume q  )
+_(assume p)
+_(assume q)
 \end{VCC}
 and 
 \begin{VCC}
-_( assume q ) _( assume p )
+_(assume q) 
+_(assume p)
 \end{VCC}
 ? What if the assumptions are replaced by assertions?
 \item
 Is there any difference between
 \begin{VCC}
-_( assume p ) _( assert q )
+_(assume p)
+_(assert q)
 \end{VCC}
 and 
 \begin{VCC}
-_( assert p ==> q )
+_(assert p ==> q)
 \end{VCC}
 ? 
-\item
-\itodo{I'm not sure if this and the following exercise give
-any insight. --M}
-Given the assumptions preceding each of the assignments below to int
-variables, what are the strongest assertions that would be valid?
-\begin{VCC}
-_(assume x < 5) x += 5; _(assert ??)
-_(assume u < v) u = v;  _(assert ??)
-_(assume a < b && a < c) a = b;  _(assert ??)
-\end{VCC}
-\item
-Given the assertions following each of the assignments below, what is 
-the weakest preceding assumption that would allow the assertions to be
-valid?
-\begin{VCC}
-_(assume ??) x = y _(assert x < 10)
-_(assume ??) u += 3 _(assert 2*u == 3*v)
-\end{VCC}
+\itodo{The implication should be introduced earlier.}
+\vcc{p ==> q} means \vcc{p} implies \vcc{q}, and formally \vcc{!p || q}.
+%\item
+%\itodo{I'm not sure if this and the following exercise give
+%any insight. --M}
+%Given the assumptions preceding each of the assignments below to int
+%variables, what are the strongest assertions that would be valid?
+%\begin{VCC}
+%_(assume x < 5) x += 5; _(assert ??)
+%_(assume u < v) u = v;  _(assert ??)
+%_(assume a < b && a < c) a = b;  _(assert ??)
+%\end{VCC}
+%\item
+%Given the assertions following each of the assignments below, what is 
+%the weakest preceding assumption that would allow the assertions to be
+%valid?
+%\begin{VCC}
+%_(assume ??) x = y _(assert x < 10)
+%_(assume ??) u += 3 _(assert 2*u == 3*v)
+%\end{VCC}
 \end{enumerate}
 
 \section{Function specifications}
@@ -303,7 +308,7 @@ _(assume ??) u += 3 _(assert 2*u == 3*v)
 
 Next we turn to the specification of functions. We'll take the example
 from the previous section, and pull the computation of the minimum of
-two numbers out into a separate function:\todo{match with the previous programs}
+two numbers out into a separate function:
 
 \vccInput{c/01_min2.c}
 
@@ -349,7 +354,7 @@ is based on two new kinds of annotations:
 \begin{itemize}
 \item The requirements on the caller (sometimes called the
   \Def{precondition} of the function) take the form 
-  \vcc{_( requires E )}, 
+  \vcc{_(requires E)}, 
   where \vcc{E} is an expression.
   % This is commonsense, no need to drag attention to it. --M
   %\footnote{
@@ -363,7 +368,7 @@ is based on two new kinds of annotations:
 
 \item The requirement on the function  (sometimes called the
   \Def{postcondition} of the function) takes the form
-  \vcc{_( ensures E )}, where \vcc{E} is an expression; this says that
+  \vcc{_(ensures E)}, where \vcc{E} is an expression; this says that
   the function promises that \vcc{E} holds when control is returned to
   the caller.  In the code of the caller, VCC implicitly assumes \vcc{E}
   just after the call returns (but
@@ -379,7 +384,7 @@ For example, we can provide a suitable specification for \vcc{min()} as
 follows:
 \vccInput[linerange={min-endmin,out-}]{c/01_min3.c}
 \noindent
-The precondition \vcc{_( requires \true )} of \vcc{min()} doesn't
+The precondition \vcc{_(requires \true)} of \vcc{min()} doesn't
 really say anything (since \vcc{\true} holds in every state), but is included
 to emphasize that the function can be called from any state and
 with arbitrary parameter values.
@@ -438,7 +443,7 @@ verification will fail?
 
 \item
 What is the effect of giving a function the specification
-\vcc{_( requires \false )} ? How does it effect verification of
+\vcc{_(requires \false)} ? How does it effect verification of
 the function itself? What about its callers? Can you think of a good 
 reason to use such a specification?
 %% When verifying function body it translates to an assumption.
@@ -446,7 +451,7 @@ reason to use such a specification?
 %% regardless what it contains.
 %% On the other hand, you will be unable to verify call to such a function
 %% from outside.
-%% Conversely, \vcc{_( ensures \false )} will prevent verification
+%% Conversely, \vcc{_(ensures \false)} will prevent verification
 %% of the body of the function, but will make the function that calls
 %% it verify.
 
@@ -469,7 +474,7 @@ invariants.)
 
 \item
 Can you think of useful functions in a real program that might
-legitimately guarantee only the trivial postcondition \vcc{_( ensures \true )}?
+legitimately guarantee only the trivial postcondition \vcc{_(ensures \true)}?
 \end{enumerate}
 
 \subsection{Reading and Writing}
@@ -489,7 +494,7 @@ verifying \vcc{main()} above, VCC got to assume that the call of
 \vcc{min()} didn't change \vcc{newPos}. 
 In VCC, possible side effects are specified using 
 another form of annotation, called \Def{writes clauses}.
-Intuitively, the clause \vcc{_( writes p, q )} says that, 
+Intuitively, the clause \vcc{_(writes p, q)} says that, 
 of the memory objects that are thread-local to the caller before the call,
 the function is going to modify only the object pointed to by \vcc{p}
 and the object pointed to by \vcc{q}.
@@ -524,8 +529,14 @@ each call to a function that lists \vcc{p} in a writes clause.
 
 Here is a simple example of a function that visibly reads and writes
 memory; it simply copies data from one location to another.
-\itodo{the example below should use \vcc{old}}
 \vccInput{c/01_copy1.c}
+In the postcondition the syntax \vcc{\old(E)} returns value
+of expression \vcc{E} as if it was evaluated before the function
+started, in the so-called \Def{pre-state} of the call.
+Thus, our postcondition states that the new value of \vcc{*to}
+equals the value of \vcc{*from} before the call.
+In fact, the postcondition \vcc{*to == *from} is equivalent,
+because the function does not write \vcc{*from}.
 
 %% \vccInput[linerange={swap-partition}]{c/04_partition.c}
 %% \vccInput[linerange={foo-}]{c/01_swap1.c}
@@ -588,7 +599,7 @@ More usual is to provide the stronger precondition of the object being
 %We will get into details all of these later.
 %For now we just need to know that in order to be able to write to \vcc{*p}
 %one needs to know that \vcc{p} was listed in the writes clause \emph{and} \vcc{\unwrapped(p)}.
-%For example, if we remove the \vcc{_( writes ... )} clause from the
+%For example, if we remove the \vcc{_(writes ...)} clause from the
 %\vcc{boundedIncr()} we get the following output:
 
 % Too much information, too few full examples in one place. --M
@@ -634,7 +645,7 @@ More usual is to provide the stronger precondition of the object being
 \begin{enumerate}
 \item
 Specify, write, and verify a function that swaps the values pointed to
-by two \vcc{int} pointers.
+by two \vcc{int} pointers. Hint: use \vcc{\old(...)} in the postcondition.
 % We did not explain anything about arrays at this point --M
 %\item
 %Specify a function that takes a pointer to the first element of an
