@@ -292,7 +292,7 @@ namespace VerifiedCCompilerAddin {
                                                       guidString,
                                                       ref programmableObject);
 
-      AddInGlobals.VCCWindow.SetTabPicture(Microsoft.VisualBasic.Compatibility.VB6.Support.ImageToIPicture(ImageResources._9999));
+      AddInGlobals.VCCWindow.SetTabPicture(ImageConverter.Convert(ImageResources._9999));
       AddInGlobals.VCCPane = (VCCPane)AddInGlobals.VCCWindow.Object;
       AddInGlobals.VCCPane.ApplicationObject = application;
       AddInGlobals.VCCPane.RefreshData();
@@ -314,7 +314,7 @@ namespace VerifiedCCompilerAddin {
                                                       guidString,
                                                       ref programmableObject);
 
-      AddInGlobals.ModelViewerWindow.SetTabPicture(Microsoft.VisualBasic.Compatibility.VB6.Support.ImageToIPicture(ImageResources._9890));
+      AddInGlobals.ModelViewerWindow.SetTabPicture(ImageConverter.Convert(ImageResources._9890));
       AddInGlobals.ModelViewerObj = (ModelViewer)AddInGlobals.ModelViewerWindow.Object;
       AddInGlobals.ModelViewerObj.LineColumnChanged += new EventHandler<LineColumnChangedEventArgs>(ModelViewerObj_LineColumnChanged);
     }
@@ -596,4 +596,17 @@ namespace VerifiedCCompilerAddin {
     VCCRandomSeed,
     VCCMoreCommands
   }
+
+  /// <summary>
+  /// Helper class to allow access to the protected static AxHost.GetIPictureDispFromPicture method
+  /// </summary>
+  internal class ImageConverter : AxHost {
+
+    private ImageConverter () : base(null) { }
+
+    internal static object Convert(System.Drawing.Image image) {
+      return AxHost.GetIPictureDispFromPicture(image);
+    }
+  }
+
 }
