@@ -3,7 +3,7 @@
 void copy(int *from, int *to)
   _(requires \thread_local(from))
   _(writes to)
-  _(ensures *to == *from)
+  _(ensures *to == \old(*from))
 {
   *to = *from;
 }
