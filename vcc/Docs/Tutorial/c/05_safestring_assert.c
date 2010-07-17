@@ -5,8 +5,6 @@
 struct SafeString {
   unsigned len;
   char content[SSTR_MAXLEN + 1];
-  int consistent;
-  _(ghost bool consistencyFlag;)
   _(invariant len <= SSTR_MAXLEN)
   _(invariant content[len] == '\0')
 };
@@ -25,7 +23,7 @@ void sstr_append_char(struct SafeString *s, char c)
   _(assert \wrapped(s))
   _(assume s->len <= SSTR_MAXLEN &&
            s->content[s->len] == '\0')
-  _(ghost s->consistencyFlag = \false;)
+  _(ghost s->\consistent = \false;)
   _(assume \writable(\span(s)))
 
   s->content[s->len++] = c;
@@ -35,10 +33,12 @@ void sstr_append_char(struct SafeString *s, char c)
   _(assert \mutable(s))
   _(assert s->len <= SSTR_MAXLEN &&
            s->content[s->len] == '\0')
-  _(ghost s->consistencyFlag = \true;)
+  _(ghost s->\consistent = \true;)
 }
 /*{out}*/
 /*`
-Verification of SafeString#adm succeeded.
-Verification of sstr_append_char failed.
-testcase(28,25) : error VC8507: Assertion 's->consistencyFlag is writable' did not verify.`*/
+testcase(26,25) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(36,25) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(26,25) : error VC9612: don't know how to write to @_vcc_closed(s)
+testcase(36,25) : error VC9612: don't know how to write to @_vcc_closed(s)
+`*/

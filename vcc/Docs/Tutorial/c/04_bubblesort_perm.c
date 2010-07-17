@@ -1,5 +1,4 @@
 #include <vcc.h>
-#include <stdlib.h>
 
 _(logic bool sorted(int *buf, unsigned len) =
   \forall unsigned i, j; i < j && j < len ==> buf[i] <= buf[j])
@@ -16,42 +15,49 @@ _(logic bool is_permuted(\state s, int *buf, unsigned len, perm_t perm) =
 _(_(pure) perm_t swap(perm_t p, unsigned i, unsigned j)
   _(ensures \result == \lambda unsigned k; k == i ? p[j] : k == j ? p[i] : p[k]); )
 
-void bozo_sort(int *buf, unsigned len _(out perm_t perm))
+void bubble_sort(int *buf, unsigned len _(out perm_t perm))
   _(writes \array_range(buf, len))
   _(ensures sorted(buf, len))
   _(ensures is_permutation(perm, len))
   _(ensures is_permuted(\old(\now()), buf, len, perm))
 {
+  int swapped;
   _(ghost \state s0 = \now() )
 
   _(ghost perm = \lambda unsigned i; i) 
 
   if (len == 0) return;
 
-  for (;;)
+  do
     _(invariant \mutable_array(buf, len))
     _(invariant is_permutation(perm, len))
     _(invariant is_permuted(s0, buf, len, perm))
   {
     int tmp;
-    unsigned i = _(unchecked)((unsigned)rand()) % len; 
-    unsigned j = _(unchecked)((unsigned)rand()) % len; 
-
-    tmp = buf[i];
-    buf[i] = buf[j];
-    buf[j] = tmp;
-    _(ghost perm = swap(perm, i, j) )
-
+    unsigned i;
+  
+    swapped = 0;
     for (i = 0; i < len - 1; ++i)
-      _(invariant sorted(buf, i + 1))
+      _(invariant !swapped ==> sorted(buf, i + 1))
+      _(invariant \mutable_array(buf, len))
+      _(invariant is_permutation(perm, len))
+      _(invariant is_permuted(s0, buf, len, perm))
     {
-      if (buf[i] > buf[i + 1]) break;
+      if (buf[i] > buf[i + 1]) {
+        tmp = buf[i + 1];
+        buf[i + 1] = buf[i];
+        buf[i] = tmp;
+        _(ghost perm = swap(perm, i, i + 1) )
+        swapped = 1;
+      }
     }
 
-    if (i == len - 1) break;
   }
+  while (swapped);
 }
 
+
+
 /*`
-Verification of bozo_sort succeeded.
+Verification of bubble_sort succeeded.
 `*/

@@ -69,4 +69,5 @@ Verification of SafeContainer#adm succeeded.
 Verification of sc_set succeeded.
 Verification of use_case failed.
 testcase(57,26) : error VC9500: Assertion '\wrapped(o)' did not verify.
+testcase(59,26) : error VC9500: Assertion 'o != s' did not verify.
 `*/

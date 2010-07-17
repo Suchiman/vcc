@@ -1,25 +1,21 @@
 #include <vcc.h>
+#include <stdlib.h>
 
 _(logic bool sorted(int *buf, unsigned len) =
   \forall unsigned i, j; i < j && j < len ==> buf[i] <= buf[j])
-
-unsigned random();
 
 void bozo_sort(int *buf, unsigned len)
   _(writes \array_range(buf, len))
   _(ensures sorted(buf, len))
 {
-  unsigned i, j;
-  int v;
-
   if (len == 0) return;
 
   for (;;)
     _(invariant \mutable_array(buf, len))
   {
     int tmp;
-    unsigned i = random() % len; 
-    unsigned j = random() % len; 
+    unsigned i = _(unchecked)((unsigned)rand()) % len; 
+    unsigned j = _(unchecked)((unsigned)rand()) % len; 
 
     tmp = buf[i];
     buf[i] = buf[j];
