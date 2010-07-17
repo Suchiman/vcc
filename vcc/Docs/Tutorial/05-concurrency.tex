@@ -554,7 +554,7 @@ refer to the old value of \vcc{x}.
 Of course, it would invalidate the final \vcc{x <= y} assert.
 
 \begin{note}
-For any expression \vcc{E} one can use \vcc{\at(\now, E)} in \vcc{P}
+For any expression \vcc{E} you can use \vcc{\at(\now(), E)} in \vcc{P}
 in order to have the value of \vcc{E} be evaluated in the state
 when the claim is created, and stored in the field of the claim.
 \end{note}
@@ -587,7 +587,6 @@ the fact that the invariants don't hold there does not create soundness problems
 
 The fact that \vcc{P} follows from \vcc{c}'s invariant after the construction
 is expressed using \vcc{\claims(c, P)}.
-\todo{explain \vcc@at()@ syntax before}
 It is roughly equivalent to saying:
 \begin{VCC}
 \forall \state s {\at(s, \active_claim(c))};
@@ -633,7 +632,6 @@ Initialization shouldn't be very surprising:
 \vcc{\wrapped0(o)} means \vcc{\wrapped(o) && o->\claim_count == 0},
 and thus on initialization we require a resource without any outstanding
 claims.
-\todo{out parameters should be explained before}
 
 \vccInput[linerange={incr-decr}]{c/10_rundown.c}
 
