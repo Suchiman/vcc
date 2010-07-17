@@ -182,23 +182,89 @@ control jumps back to the top of the loop (including the end of the
 loop body), it asserts the loop invariant.
 \end{itemize}
 
+
+\subsection{Sorting}
+\label{sect:sorting}
+
+%\Def{Ghost data} contains auxiliary information needed to convince VCC about correctness of a program.
+%You can think of it as data that the program maintains for the purpose of debugging.
+%An example might be a program which only keeps track of count of foobars, whereas
+%the specifications of that program also need to use the set of these foobars.
+%\Def{Ghost code} is code which manipulates such data (\ie when you increment the count of foobars
+%you need to add the specific foobar to the set). Ghost variables are just pieces of local ghost
+%data, and ghost functions are functions, which can be only used in specifications and ghost code.
+%
+%The regular C compiler doesn't see the ghost code.
+%Therefore it has no runtime effect, it's only there to help VCC understand why the program works.
+
+%We shall start with ghost functions, which in this case is just a macro for another formula.
+The function below implements the bozo-sort algorithm.
+The algorithm works by swapping two random elements in an array, checking if the resulting array
+is sorted, and repeating otherwise.
+We do not recommend using it in production code:
+it's not stable, and moreover has a fairly bad time complexity.
+Still, it will serve us to illustrate the use of ghost functions, and later data.
+
+\vccInput{c/04_bozosort.c}
+
+The meaning of \vcc{_(logic F(A) = E)} is similar to \vcc{#define F(A) E}, except that it prevents
+name capture and gives better error messages (\ie ones which mention both \vcc{E} and \vcc{F(A)}).
+
+The specification that we use is that the output of the sorting routine is sorted.
+Unfortunately, we do not say that it's actually a permutation of the input.
+We'll show how to do that in \secref{TODO}.
+
+We use the \vcc{rand()} function declared in \vcc{<stdlib.h>}.
+VCC currently does not come with specifications for C standard library functions
+(there \todo{will be} is an ongoing project, where you can actually contribute specifications!).
+According to the standard library documentation the specification of \vcc{rand()} should be:
+\begin{VCC}
+int rand(void)
+  _(ensures 0 <= \result && \result <= RAND_MAX);
+\end{VCC}
+It is unclear why does it return a signed integer, only to ensure that the return value
+is never negative.
+Anyway, we do not actually use this postcondition in our example.
+In fact we explicitly cast the value returned \vcc{rand()} to \vcc{unsigned}.
+VCC does not know the value cannot be negative, and therefore would normally
+complain, that such a cast might underflow.
+
+\itodo{The following paragraph should have it's own section.}
+To indicate that this underflow behavior is desired we use \vcc{_(unchecked)}.
+This annotation applies to the following expression, and indicates that
+you expect that there might be overflows in there.
+For example consider:
+\begin{VCC}
+int a, b;
+// ...
+a = b + 1;
+_(assert a < b)
+\end{VCC}
+This will either complain about possible overflow of \vcc{b + 1} or succeed.
+However, the following might complain about \vcc{a < b}, if VCC does not know
+that \vcc{b + 1} doesn't overflow.
+\begin{VCC}
+int a, b;
+// ...
+a = _(unchecked)(b + 1);
+_(assert a < b)
+\end{VCC}
+
 \subsection*{Exercises}
 
 \begin{enumerate}
 \item
 Write and verify an iterative program that copies an array if ints from one
-location to another. Repeat with 2-dimensional arrays.
+location to another.% Repeat with 2-dimensional arrays.
 \item
 Write and verify an iterative program for binary search (a program
 that checks whether a sorted array contains a given value).
 \item
-\itodo{we should implement one sort routine in the text, and ask for implementation
-of another}
 Write and verify an iterative program that sorts an array of ints using
-bubblesort. You can assume that the input array contains pairwise
-distinct elements. You can also try selection sort.
-\item 
-Write and verify a program that takes a 2-dimensional array of ints in
-which every row and column is sorted, and checks whether a given int
-occurs in the array.
+bubblesort. The specification should be the same as for bozo-sort above.
+%\item 
+%Write and verify a program that takes a 2-dimensional array of ints in
+%which every row and column is sorted, and checks whether a given int
+%occurs in the array.
 \end{enumerate}
+
