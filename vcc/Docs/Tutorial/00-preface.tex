@@ -104,12 +104,21 @@ and setting include paths.
 
   Definitions will be introduced with \Def{italic boldface}.
 
+\subsection{Notes on VCC Invocation}
+
+To enable the VCC syntax which is described in this tutorial you need
+to use the flag \texttt{/2}.
+Additionally, the trigger inference, which we rely upon for
+the more complex invariant is enabled by the \texttt{/it}
+flag.
+Both will be on by default soon, but for now, please supply them.
+
 \subsection{Top-level To-Do}
 
 \begin{itemize}
 \item get rid of inline axioms in \vcc{mod()}
 \item fix the \vcc{lsearch()} array readability annotations
-\item add bubble-sort example; add another sort as exercise
+\item explain the default trigger selection algorithm and command line switches for it
 \item explain \vcc{\at()}
 \item explain out parameters
 \end{itemize}
