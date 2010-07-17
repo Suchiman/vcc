@@ -15,10 +15,8 @@ _(dynamic_owns) struct List {
   _(invariant head != NULL ==> \mine(head))
   _(invariant followers[NULL] == \lambda int k; \false)
   _(invariant \forall struct Node *n;
-                {n->next \in \this->\owns}
                 \mine(n) ==> n->next == NULL || \mine(n->next))
   _(invariant \forall struct Node *n; 
-                {n \in \this->\owns}
                 \mine(n) ==> 
                    \forall int e; 
                       followers[n][e] <==> 

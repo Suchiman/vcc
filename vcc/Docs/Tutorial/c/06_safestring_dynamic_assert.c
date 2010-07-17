@@ -2,6 +2,7 @@
 #include <vcc.h>
 #include <stdlib.h>
 /*{obj}*/
+_(logic bool \writable(\object o) = \true; )
 struct SafeString {
   unsigned capacity, len;
   char *content;
@@ -20,15 +21,15 @@ void sstr_append_char(struct SafeString *s, char c)
   _(ghost \object cont = (char[s->capacity]) s->content; )
   // _(unwrap s) steps 1-5
   _(assert \writable(s) && \wrapped(s))
-  _(assume \writable(span(s)) && \inv(s))
-  _(ghost s->consistencyFlag = \false; )
+  _(assume \writable(\span(s)) && \inv(s))
+  _(ghost s->\consistent = \false; )
   // and the transfer:
   _(ghost cont->\owner = \me; )
   _(assume \writable(cont))
   // _(unwrap cont) steps 1-5
   _(assert \writable(cont) && \wrapped(cont))
-  _(ghost cont->consistencyFlag = \false; )
-  _(assume \writable(span(cont)) && \inv(cont))
+  _(ghost cont->\consistent = \false; )
+  _(assume \writable(\span(cont)) && \inv(cont))
   // no transfer here
   
   s->content[s->len++] = c;
@@ -36,18 +37,18 @@ void sstr_append_char(struct SafeString *s, char c)
 
   // _(wrap cont) steps 1-3
   _(assert \mutable(cont) && \inv(cont))
-  _(ghost cont->consistencyFlag = \true; )
+  _(ghost cont->\consistent = \true; )
   // _(wrap s) steps 1-3, with transfer in the middle
   _(assert \mutable(s))
   _(ghost cont->\owner = s; )
   _(assert \inv(s))
-  _(ghost s->consistencyFlag = \true; )
+  _(ghost s->\consistent = \true; )
 }
 /*{out}*/
 // Not that the output makes so much sense, but at least there are no parse errors.
 /*`
-testcase(25,5) : error VC0000: The left of '->theOwner' must point to a struct or union.
-testcase(29,5) : error VC0000: The left of '->consistencyFlag' must point to a struct or union.
-testcase(38,5) : error VC0000: The left of '->consistencyFlag' must point to a struct or union.
-testcase(41,5) : error VC0000: The left of '->theOwner' must point to a struct or union.
+testcase(24,26) : error VC0000: The best overloaded method match for '__Globals__.\writable(System.Diagnostics.Contracts.CodeContract.TypedPtr)' has some invalid arguments.
+testcase(24,36) : error VC0000: Argument '1': cannot convert from 'System.Diagnostics.Contracts.CodeContract.Objset' to 'obj_t'.
+testcase(32,26) : error VC0000: The best overloaded method match for '__Globals__.\writable(System.Diagnostics.Contracts.CodeContract.TypedPtr)' has some invalid arguments.
+testcase(32,36) : error VC0000: Argument '1': cannot convert from 'System.Diagnostics.Contracts.CodeContract.Objset' to 'obj_t'.
 `*/
