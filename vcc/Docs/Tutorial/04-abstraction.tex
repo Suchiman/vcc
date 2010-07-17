@@ -204,3 +204,38 @@ that the sorting algorithm produced.
 
 \vccInput{c/04_bozosort_perm.c}
 
+This sample introduces two new features.
+First is the output ghost parameter \vcc{_(out perm_t perm)}.
+We use it when we need a function to return something in addition to what it normally returns.
+To call \vcc{bozo_sort()} you need to supply a local variable to hold
+the permutation when the function exits, as in:
+\begin{VCC}
+void f(int *buf, unsigned len)
+  // ...
+{
+  _(ghost perm_t myperm; )
+  // ...
+  bozo_sort(buf, len _(out myperm));
+}
+\end{VCC}
+The value is only copied on exit of \vcc{bozo_sort()}, thought its execution 
+it has its own copy.
+It is thus different than passing a pointer to the local.
+It is also more efficient for the verifier.
+
+The other, somewhat more advanced, feature is explicit state manipulation.
+The function \vcc{\now()} returns the current state of the heap (\ie dynamically
+allocated memory; in future it will also work for locals, but for now it only applied
+to memory location, address of which was taken). 
+The state is encapsulated in a value of type \vcc{\state}.
+The expression \vcc{\at(s, E)} returns value of expression
+\vcc{E} as evaluated in state \vcc{s}. 
+You can see  \vcc{\old(...)} as a special case of this.
+
+Thus, the algorithm maintains the map containing the current permutation of
+the data, with respect to the initial data (we store the initial state in
+\vcc{s0}).
+The initial permutation is just identity, and whenever we swap elements of
+the array, we also swap elements of the permutation.
+
+`
