@@ -103,18 +103,129 @@ Thus, the invariant says that the element was not found between \vcc{0}
 and \vcc{i - 1}.
 If the loop terminates with \vcc{i == sz}, then the postcondition follows.
 
+\subsection{Overflows and unchecked arithmetic}
+
+This topic is not really related to loops, but you're very likely to run into it
+while verifying loops operating on integers.
+Let's have a look at an example:
+
+\vccInput{c/02_hash_fail.c}
+
+\noindent
+VCC complains that the hash-computing operation might overflow.
+Normally, this is not something to be expected (integer overflows
+are a common source of security vulnerabilities nowadays),
+which is why VCC warns about it by default.
+However, we do expect this in a function computing a hash of a buffer.
+To indicate that this overflow behavior is desired we use \vcc{_(unchecked)},
+with syntax similar to a regular C type-cast.
+This annotation applies to the following expression, and indicates that
+you expect that there might be overflows in there.
+Thus, replacing the body of the loop with the following
+makes the program verify:
+
+\vccInput[linerange={update-endupdate}]{c/02_hash.c}
+
+Note that ``unchecked'' does not mean ``unsafe''.
+The C standard mandates modulo interpretation for unsigned overflows,
+and signed overflows are usually implementation-defined to use two-complement.
+It just means that VCC will loose information about the operation.
+For example consider:
+\begin{VCC}
+int a, b;
+// ...
+a = b + 1;
+_(assert a < b)
+\end{VCC}
+This will either complain about possible overflow of \vcc{b + 1} or succeed.
+However, the following might complain about \vcc{a < b}, if VCC does not know
+that \vcc{b + 1} doesn't overflow.
+\begin{VCC}
+int a, b;
+// ...
+a = _(unchecked)(b + 1);
+_(assert a < b)
+\end{VCC}
+Think of \vcc{_(unchecked)E} as computing the expression using mathematical 
+integers, which never overflow, and then casting the result to the desired range.
+VCC knows that \vcc{_(unchecked)E == E} if \vcc{E} fits in the proper range,
+and some other basic facts about \vcc{(unsigned)-1}.
+If you need anything else, you will need to resort to bit-vector
+reasoning (\secref{bv}).
+
+Let's have a look at another example:
+\vccInput{c/02_rand.c}
+\noindent
+The reason we needed to use unchecked cast here, is that the C library
+\vcc{rand()} function is specified to return a signed integer.
+
+\begin{note}
+In fact, the C standard, mandates the following specification:
+\begin{VCC}
+int rand(void)
+  _(ensures 0 <= \result && \result <= RAND_MAX);
+\end{VCC}
+Thus, in principle the \vcc{_(unchecked)} shouldn't be required in the
+example above. 
+However,
+VCC currently does not come with specifications for C standard library functions.
+We plan to setup a open-source project, where you'll be able to contribute such
+specifications.
+It is indeed unclear why does it return a signed integer, only to ensure that the return value
+is never negative.
+\end{note}
+
+\subsection{Sorting}
+\label{sect:sorting}
+
+%\Def{Ghost data} contains auxiliary information needed to convince VCC about correctness of a program.
+%You can think of it as data that the program maintains for the purpose of debugging.
+%An example might be a program which only keeps track of count of foobars, whereas
+%the specifications of that program also need to use the set of these foobars.
+%\Def{Ghost code} is code which manipulates such data (\ie when you increment the count of foobars
+%you need to add the specific foobar to the set). Ghost variables are just pieces of local ghost
+%data, and ghost functions are functions, which can be only used in specifications and ghost code.
+%
+%The regular C compiler doesn't see the ghost code.
+%Therefore it has no runtime effect, it's only there to help VCC understand why the program works.
+
+%We shall start with ghost functions, which in this case is just a macro for another formula.
+The function below implements the bozo-sort algorithm.
+The algorithm works by swapping two random elements in an array, checking if the resulting array
+is sorted, and repeating otherwise.
+We do not recommend using it in production code:
+it's not stable, and moreover has a fairly bad time complexity.
+Still, it will serve us to illustrate the use of logic functions, and later (\secref{sorting-perm}) ghost data.
+
+\vccInput[linerange={begin-out}]{c/04_bozosort.c}
+
+\noindent
+The meaning of:
+\begin{VCC}
+_(logic F(A) = E)
+\end{VCC}
+is similar to:
+\begin{VCC}
+#define F(A) E
+\end{VCC}
+except that it prevents
+name capture and gives better error messages (\ie ones which mention both \vcc{E} and \vcc{F(A)}).
+
+The specification that we use is that the output of the sorting routine is sorted.
+Unfortunately, we do not say that it's actually a permutation of the input.
+We'll show how to do that in \secref{sorintg-perm}.
 
 \subsection{Review}
-\todo{Put in some way to get to the relevant info about quantifiers
-  and ghost data?}  
-
-\itodo{I'm not sure how useful this review is. In particular the parts
-where we explain the semantics of if statements and assignments
-in terms of what VCC know just seem confusing. Programmers already
-know what if statement or assignment does. 
-I think it would be useful just to emphasize what VCC doesn't know,
-for loops and function calls.
---M }
+%\todo{Put in some way to get to the relevant info about quantifiers
+%  and ghost data?}  
+%
+%\itodo{I'm not sure how useful this review is. In particular the parts
+%where we explain the semantics of if statements and assignments
+%in terms of what VCC know just seem confusing. Programmers already
+%know what if statement or assignment does. 
+%I think it would be useful just to emphasize what VCC doesn't know,
+%for loops and function calls.
+%--M }
 
 You have now learned enough to verify some nontrivial sequential
 programs that use only base types and arrays.  This is already a very
@@ -139,43 +250,45 @@ and in addition knows \vcc{E != 0}.
 \vcc{_(assert E)} asks VCC to prove that what it knows before the
 assertion implies \vcc{E} (and report an error if it can't). 
 It also assumes \vcc{E} afterward.
-\item
-\todo{Break this up into variable assignment and memory assignment?}
-An assignment statement \vcc{v = E}, where \vcc{E} doesn't have a 
-function call and doesn't mention \vcc{v}%
-\footnote{
-  If \vcc{E} mentions \vcc{v}, we can imagine the value of \vcc{v} being
-  first copied into a fresh temporary variable, which is used in place
-  of \vcc{v} within \vcc{E}.
-}, asserts that the data needed to
-compute \vcc{E} is readable, and that \vcc{v} is writeable. After the
-assignment, it knows everything it knew before the assignment (except
-for what it knew about the value of \vcc{v}), and additionally knows
-that \vcc{v == E}. 
+%\item
+%\todo{Break this up into variable assignment and memory assignment?}
+%An assignment statement \vcc{v = E}, where \vcc{E} doesn't have a 
+%function call and doesn't mention \vcc{v}%
+%\footnote{
+%  If \vcc{E} mentions \vcc{v}, we can imagine the value of \vcc{v} being
+%  first copied into a fresh temporary variable, which is used in place
+%  of \vcc{v} within \vcc{E}.
+%}, asserts that the data needed to
+%compute \vcc{E} is readable, and that \vcc{v} is writeable. After the
+%assignment, it knows everything it knew before the assignment (except
+%for what it knew about the value of \vcc{v}), and additionally knows
+%that \vcc{v == E}. 
 \item 
-A function call \vcc{f(args)}, where \vcc{args} is a list of variables%
-\footnote{
-  If the arguments to the function call are expressions, we can think
-  of these expressions being evaluated and assigned to temporary
-  variables before the function call.
-}, asserts that the \vcc{args} are readable, asserts that the objects
+A function call \vcc{f(args)}, 
+%where \vcc{args} is a list of variables
+%\footnote{
+%  If the arguments to the function call are expressions, we can think
+%  of these expressions being evaluated and assigned to temporary
+%  variables before the function call.
+%}, 
+asserts that the \vcc{args} are readable, asserts that the objects
 mentioned in the writes clauses of \vcc{f} are writeable,
 asserts the preconditions of \vcc{f} (with the actual parameters
 substituted for the formal parameters), forgets what it knew about
 \vcc{v} and any objects mentioned in the writes clause of \vcc{f}, and
-finally assumes the postconditions of \vcc{f}%
-\footnote{If these postconditions use \vcc{\\old} to refer to parts of
-  the state before the call, we can think of these parts of the state
-  as copied to temporary variables prior to the call. The result of
-  the function can be viewed as being put into a temporary variable of
-  the caller.}
-\item
-For a conditional \vcc{if (p) S1 else S2}, it first asserts that
-\vcc{p} is readable. At the beginning of \vcc{S1} (resp. \vcc{S2}), it
-knows what it knew before the conditional, and in addition knows
-\vcc{p != 0} (resp. \vcc{p == 0}). After the conditional, it knows the 
-disjunction (``or'') of what it knew at the end of \vcc{S1} and what
-we know at the end of \vcc{S2}.
+finally assumes the postconditions of \vcc{f}.
+If these postconditions use \vcc{\\old} to refer to parts of
+the state before the call, we can think of these parts of the state
+as copied to temporary variables prior to the call. The result of
+the function can be viewed as being put into a temporary variable of
+the caller.
+%\item
+%For a conditional \vcc{if (p) S1 else S2}, it first asserts that
+%\vcc{p} is readable. At the beginning of \vcc{S1} (resp. \vcc{S2}), it
+%knows what it knew before the conditional, and in addition knows
+%\vcc{p != 0} (resp. \vcc{p == 0}). After the conditional, it knows the 
+%disjunction (``or'') of what it knew at the end of \vcc{S1} and what
+%we know at the end of \vcc{S2}.
 \item
 For a loop, it knows at the beginning of the loop body just what it
 knew just before the loop (except that it forgets what it knew about
@@ -186,72 +299,6 @@ loop body), it asserts the loop invariant.
 \end{itemize}
 
 
-\subsection{Sorting}
-\label{sect:sorting}
-
-%\Def{Ghost data} contains auxiliary information needed to convince VCC about correctness of a program.
-%You can think of it as data that the program maintains for the purpose of debugging.
-%An example might be a program which only keeps track of count of foobars, whereas
-%the specifications of that program also need to use the set of these foobars.
-%\Def{Ghost code} is code which manipulates such data (\ie when you increment the count of foobars
-%you need to add the specific foobar to the set). Ghost variables are just pieces of local ghost
-%data, and ghost functions are functions, which can be only used in specifications and ghost code.
-%
-%The regular C compiler doesn't see the ghost code.
-%Therefore it has no runtime effect, it's only there to help VCC understand why the program works.
-
-%We shall start with ghost functions, which in this case is just a macro for another formula.
-The function below implements the bozo-sort algorithm.
-The algorithm works by swapping two random elements in an array, checking if the resulting array
-is sorted, and repeating otherwise.
-We do not recommend using it in production code:
-it's not stable, and moreover has a fairly bad time complexity.
-Still, it will serve us to illustrate the use of ghost functions, and later data.
-
-\vccInput{c/04_bozosort.c}
-
-The meaning of \vcc{_(logic F(A) = E)} is similar to \vcc{#define F(A) E}, except that it prevents
-name capture and gives better error messages (\ie ones which mention both \vcc{E} and \vcc{F(A)}).
-
-The specification that we use is that the output of the sorting routine is sorted.
-Unfortunately, we do not say that it's actually a permutation of the input.
-We'll show how to do that in \secref{TODO}.
-
-We use the \vcc{rand()} function declared in \vcc{<stdlib.h>}.
-VCC currently does not come with specifications for C standard library functions
-(there \todo{will be} is an ongoing project, where you can actually contribute specifications!).
-According to the standard library documentation the specification of \vcc{rand()} should be:
-\begin{VCC}
-int rand(void)
-  _(ensures 0 <= \result && \result <= RAND_MAX);
-\end{VCC}
-It is unclear why does it return a signed integer, only to ensure that the return value
-is never negative.
-Anyway, we do not actually use this postcondition in our example.
-In fact we explicitly cast the value returned \vcc{rand()} to \vcc{unsigned}.
-VCC does not know the value cannot be negative, and therefore would normally
-complain, that such a cast might underflow.
-
-\itodo{The following paragraph should have it's own section.}
-To indicate that this underflow behavior is desired we use \vcc{_(unchecked)}.
-This annotation applies to the following expression, and indicates that
-you expect that there might be overflows in there.
-For example consider:
-\begin{VCC}
-int a, b;
-// ...
-a = b + 1;
-_(assert a < b)
-\end{VCC}
-This will either complain about possible overflow of \vcc{b + 1} or succeed.
-However, the following might complain about \vcc{a < b}, if VCC does not know
-that \vcc{b + 1} doesn't overflow.
-\begin{VCC}
-int a, b;
-// ...
-a = _(unchecked)(b + 1);
-_(assert a < b)
-\end{VCC}
 
 \subsection*{Exercises}
 

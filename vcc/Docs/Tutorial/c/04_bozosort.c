@@ -1,6 +1,6 @@
-#include <vcc.h>
-#include <stdlib.h>
+#include "02_rand.c"
 
+/*{begin}*/
 _(logic bool sorted(int *buf, unsigned len) =
   \forall unsigned i, j; i < j && j < len ==> buf[i] <= buf[j])
 
@@ -14,8 +14,7 @@ void bozo_sort(int *buf, unsigned len)
     _(invariant \mutable_array(buf, len))
   {
     int tmp;
-    unsigned i = _(unchecked)((unsigned)rand()) % len; 
-    unsigned j = _(unchecked)((unsigned)rand()) % len; 
+    unsigned i = random(len), j = random(len);
 
     tmp = buf[i];
     buf[i] = buf[j];
@@ -30,7 +29,8 @@ void bozo_sort(int *buf, unsigned len)
     if (i == len - 1) break;
   }
 }
-
+/*{out}*/
 /*`
+Verification of random succeeded.
 Verification of bozo_sort succeeded.
 `*/
