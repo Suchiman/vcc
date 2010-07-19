@@ -104,6 +104,7 @@ and \vcc{i - 1}.
 If the loop terminates with \vcc{i == sz}, then the postcondition follows.
 
 \subsection{Overflows and unchecked arithmetic}
+\label{sect:overflows}
 
 This topic is not really related to loops, but you're very likely to run into it
 while verifying loops operating on integers.
@@ -211,9 +212,26 @@ is similar to:
 except that it prevents
 name capture and gives better error messages (\ie ones which mention both \vcc{E} and \vcc{F(A)}).
 
+The other novel thing about this function is the writes clause on the array.
+Indeed, all previous examples were only reading arrays, and this one is actually writing
+the array.
+The notation \vcc{\array_range(arr, len)} refers to all pointers into array
+of size \vcc{len} pointed to by \vcc{arr}.
+When \vcc{arr} is a pointer to non-struct type (as in the example above),
+it expands to \vcc@{ &arr[0], &arr[1], ..., &arr[len-1] }@.
+In addition to specifying the writes clause on the function, we also specify it on
+the loop.
+This is common for loops, which write the heap.
+Generally, a writes clause on the loop is the same as the writes clause you would need to
+write on a function which contained \emph{only} that loop.
+If there is no writes clauses on the loop, VCC takes the writes clause from the 
+function, but interprets it with respect to the beginning of the function,
+and not beginning of the loop.
+Thus, in general, when the loop writes the heap, you will want to specify a writes clause on it.
+
 The specification that we use is that the output of the sorting routine is sorted.
 Unfortunately, we do not say that it's actually a permutation of the input.
-We'll show how to do that in \secref{sorintg-perm}.
+We'll show how to do that in \secref{sorting-perm}.
 
 \subsection{Review}
 %\todo{Put in some way to get to the relevant info about quantifiers
