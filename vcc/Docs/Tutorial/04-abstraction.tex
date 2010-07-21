@@ -8,11 +8,24 @@ concerned with implementation details of the data structure.
 We should reason at somewhat higher, abstract level.
 For example, when we use a linked list as a representation of a set, we should not be concerned
 with how the list nodes are laid out in memory.
+You would then need to include \Def{ghost data} to store this set and write small bits of \Def{ghost code} to
+update it.  
+Ghost code is seen by VCC but not by the C compiler, and
+so introduces no runtime overhead. Part of the VCC philosophy is that
+programmers would rather do extra programming than drive interactive
+theorem provers, so ghost code is the preferred way to help VCC
+understand why your program works.  
+%Thus, you interact with VCC entirely at the level of code and program states;
+%usually, you can safely ignore the mathematical reasoning going on ``under the
+%hood''.
 
-In VCC we abstract over such details using ghost data: data-structures contain ghost fields with mathematical
-abstractions of what they represent.
+In fact we have already used ghost data, which VCC introduced: \vcc{\consistent},
+\vcc{\owner}, and friends are all ghost fields, not seen by the C compiler.
+The \vcc{_(wrap ...)} and \vcc{_(unwrap ...)} operations are ghost code.
+In this section we're just going to introduce some ghost data and code ourselves.
+
 It is only rarely the case that a simple C type, say \vcc{unsigned int}, would be suitable
-to store such abstraction (how would one store an unbounded set in a primitive C type?).
+to store such a data-structure abstraction (how would one store an unbounded set in a primitive C type?).
 To that end, VCC provides \Def{map types}.
 The syntax is similar to syntax of array types, \vcc{int m[T*]} defines a map \vcc{m} from \vcc{T*}
 to \vcc{int}.
@@ -30,8 +43,6 @@ Let's then have a look at an example of a list abstracted as a set:
 \vccInput[linerange={types-init}]{c/07_list0.c}
 
 \noindent
-The expressions inside \vcc|{...}| after the quantified variables are hints for
-the theorem prover called triggers. Ignore them for a moment.
 The invariant states that:
 \begin{itemize}
 \item the list owns the head node (if it's non-null)
