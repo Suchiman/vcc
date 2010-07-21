@@ -80,11 +80,13 @@ guard syntactically precedes the invariant.
 For a more interesting example of a loop, consider 
 the following function that uses linear search to determine if a value
 occurs within an array:
-\todo{Change the following to use \vcc{thread_local} instead of \vcc{wrapped}.}
 \vccInput{c/03_lsearch.c}
 
 \noindent
-Thus, the postcondition guarantees that when the returned value
+The syntax \vcc{\thread_local_array(ar, sz)} means that the
+array pointed to by \vcc{ar}, with \vcc{sz} elements is thread-local.
+This is required so that the function can read the array.
+The postcondition guarantees that when the returned value
 is not \vcc{UINT_MAX}, then \vcc{elt} is indeed found at the returned
 index.
 This doesn't require an invariant, because the non-\vcc{UINT_MAX} index

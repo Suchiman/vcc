@@ -98,7 +98,7 @@ The following subsection explains this wrap/unwrap protocol in more details.
 
 Because invariants do not always hold,
 in VCC one needs to explicitly state which objects are consistent,
-using a ghost field \vcc{\consistent} which is defined on every object.
+using a field \vcc{\consistent} which is defined on every object.
 The invariants need to hold only when the \vcc{\consistent} field is true.
 When the field is false they need not hold (but of course still can).
 The field is initially (on newly allocated objects) false,

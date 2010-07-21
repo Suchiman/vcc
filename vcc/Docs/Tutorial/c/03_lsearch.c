@@ -2,7 +2,7 @@
 #include <limits.h>
 
 unsigned lsearch(int elt, int *ar, unsigned sz)
-  _(requires \wrapped((int[sz])(ar)))
+  _(requires \thread_local_array(ar, sz))
   _(ensures \result != UINT_MAX ==> ar[\result] == elt)
 {
   unsigned i;

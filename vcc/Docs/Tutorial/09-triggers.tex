@@ -1,8 +1,11 @@
 \section{Triggers}
 
+\itodo{The current VCC version needs to be told to infer triggers, see \secref{todo-invoke}}
+
 The triggers are likely the most difficult part of this tutorial.
 As of July 2010, the trigger inference algorithm in VCC
-has been improved, so triggers need to be used less often.
+(as opposed to the SMT solver)
+has been implemented, so triggers need to be used less often.
 Thus, we didn't need any trigger annotations for the examples
 in the tutorial.
 Still, you'll need them to deal with more complex VCC verification
@@ -166,8 +169,6 @@ For example consider the following, where \vcc{f} is a user-defined function.
 
 \subsection{Trigger selection}
 \label{sect:trigger-inference}
-
-\itodo{The current VCC version does not infer triggers by default. Please pass \texttt{/it} option to enable that.}
 
 The explicit triggers are listed in \vcc|{...}|, after the quantified variables.
 They don't have to be subexpressions of the formula. 
