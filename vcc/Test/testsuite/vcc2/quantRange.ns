@@ -54,10 +54,6 @@ void bar(int *arr, unsigned a, unsigned b)
 }
 `
 Verification of fill succeeded.
-Verification of foo failed.
-testcase(26,1) : error VC9501: Post condition '\forall unsigned j; {:hint \match_ulong(j)} j < 100 ==> (j < a ? \unchanged(arr[j]) : arr[j]==42))' did not verify.
-testcase(18,29) : error VC9599: (related information) Location of post condition.
-Verification of bar failed.
-testcase(38,1) : error VC9501: Post condition '\forall unsigned j; {:hint \match_ulong(j)} j < 100 ==> (a <= j && j < b ? arr[j]==42 : \unchanged(arr[j])))' did not verify.
-testcase(32,29) : error VC9599: (related information) Location of post condition.
+Verification of foo succeeded.
+Verification of bar succeeded.
 `
