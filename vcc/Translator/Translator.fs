@@ -554,7 +554,10 @@ namespace Microsoft.Research.Vcc
           | "_vcc_sk_hack", [e] ->
             bCall "sk_hack" [self e]
           | "trigger_hint", [e] ->
-            bCall "sk_hack" [bCall "$instantiate_int" [ctx.CastToInt (ctx.TrType e.Type) (self e)]]
+            if e.Type = C.Type.Bool then
+              bCall "sk_hack" [self e]
+            else
+              bCall "sk_hack" [bCall "$instantiate_int" [ctx.CastToInt (ctx.TrType e.Type) (self e)]]
 
           // trigger inference will delete this guy
           | "trigger_level", [e] ->
