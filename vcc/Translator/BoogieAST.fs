@@ -445,7 +445,7 @@ namespace Microsoft.Research.Vcc
 
     type Decl =
       | Const of ConstData
-      | Function of Type * list<Attribute> * Id * list<Var>
+      | Function of Type * list<Attribute> * Id * list<Var> * option<Expr>
       | Axiom of Expr
       | Proc of ProcData
       | TypeDef of Id
@@ -455,11 +455,14 @@ namespace Microsoft.Research.Vcc
       match d with
         | Const c -> 
           [(trConstant (c.Name, c.Type) c.Unique :> Microsoft.Boogie.Declaration)]
-        | Function (t, attrs, f, vars) ->
-          [(Microsoft.Boogie.Function (noToken, f, 
+        | Function (t, attrs, f, vars, body) ->
+          let fdecl =
+            Microsoft.Boogie.Function (noToken, f, 
               Boogie.TypeVariableSeq [| |],
               Microsoft.Boogie.VariableSeq ([| for (n, t) in vars -> trFormal (n, t) false |]),
-              trFormal (Microsoft.Boogie.TypedIdent.NoName, t) false, null, toAttributesList attrs) :> Microsoft.Boogie.Declaration)]
+              trFormal (Microsoft.Boogie.TypedIdent.NoName, t) false, null, toAttributesList attrs)
+          if body.IsSome then fdecl.Body <- trExpr body.Value
+          [fdecl :> Microsoft.Boogie.Declaration]
         | Axiom e ->
           [(Microsoft.Boogie.Axiom(noToken, trExpr e) :> Microsoft.Boogie.Declaration)]
         | Proc p -> 

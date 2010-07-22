@@ -34,7 +34,7 @@ namespace Microsoft.Research.Vcc
         generatedBvOps.Add(boogieName, true)
         let retTp = B.Type.Bv toBits
         let fromTp = B.Type.Bv fromBits
-        let fn = B.Decl.Function (retTp, [B.Attribute.StringAttr("bvbuiltin", "sign_extend " + (toBits - fromBits).ToString())], boogieName, [("p", fromTp)])
+        let fn = B.Decl.Function (retTp, [B.Attribute.StringAttr("bvbuiltin", "sign_extend " + (toBits - fromBits).ToString())], boogieName, [("p", fromTp)], None)
         ctx.AddDecls [fn]
         boogieName
     
@@ -98,7 +98,7 @@ namespace Microsoft.Research.Vcc
         let bvt = B.Type.Bv sz
         let parms = [for i = 1 to nargs do yield ("p" + i.ToString(), bvt)]
         let retTp = if boolRes then B.Type.Bool else bvt
-        let fn = B.Decl.Function (retTp, [B.Attribute.StringAttr ("bvbuiltin", bvname)], boogieName, parms)
+        let fn = B.Decl.Function (retTp, [B.Attribute.StringAttr ("bvbuiltin", bvname)], boogieName, parms, None)
         ctx.AddDecls [fn]
         boogieName
 

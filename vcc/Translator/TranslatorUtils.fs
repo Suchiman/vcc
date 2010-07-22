@@ -161,9 +161,9 @@ namespace Microsoft.Research.Vcc
             if not (conversionTypes.ContainsKey suff) then
               conversionTypes.Add (suff, true)
               let toIntName = "$" + suff + "_to_int"
-              let toInt = B.Decl.Function (B.Type.Int, [], toIntName, [("x", t)])
+              let toInt = B.Decl.Function (B.Type.Int, [], toIntName, [("x", t)], None)
               let fromIntName = "$int_to_" + suff
-              let fromInt = B.Decl.Function (t, [], fromIntName, [("x", B.Type.Int)])
+              let fromInt = B.Decl.Function (t, [], fromIntName, [("x", B.Type.Int)], None)
               let both = bCall fromIntName [bCall toIntName [er "#x"]]
               let ax1 = B.Decl.Axiom (B.Expr.Forall (Token.NoToken, [("#x", t)], [], weight "conversion", bEq (er "#x") both))
               addDecls [toInt; fromInt; ax1]

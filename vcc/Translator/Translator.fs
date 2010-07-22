@@ -219,9 +219,9 @@ namespace Microsoft.Research.Vcc
         let mpv = ["M", tp; "p", bt1; "v", bt2]
         let m1m2 = ["M1", tp; "M2", tp]
         [B.Decl.TypeDef mapName;
-         B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1]);
-         B.Decl.Function (tp, [], stor, mpv);
-         B.Decl.Function (B.Type.Bool, [], eq, m1m2);
+         B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1], None);
+         B.Decl.Function (tp, [], stor, mpv, None);
+         B.Decl.Function (B.Type.Bool, [], eq, m1m2, None);
          B.Decl.Const({Unique = false; Name = zero; Type = mapType});
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", selStorPP));
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
@@ -1719,7 +1719,7 @@ namespace Microsoft.Research.Vcc
         let s2 = er "#p2"
         let idx = er "#i"
         let eqFunName typeName deep = "_vcc_" + deep + "_struct_eq." + typeName
-        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars)
+        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars, None)
         let typeRef = toTypeId (C.Type.Ref td)
         let fldEqual inUnion (f : C.Field) =
           let rec read arrayElementType v = 
@@ -2222,7 +2222,7 @@ namespace Microsoft.Research.Vcc
                     (bTrue, er "$bogus", tpVersion)
               let (conds, refs, types) = List.unzip3 (List.map readsRef h.Reads)
               let framename = fname + "#frame"
-              let framedecl = B.Decl.Function (retType, [], framename, List.map (fun t -> ("", t)) types)
+              let framedecl = B.Decl.Function (retType, [], framename, List.map (fun t -> ("", t)) types, None)
               
               let pre = bMultiAnd (bCall "$full_stop" [er "#s"] :: bCall "$can_use_frame_axiom_of" [er fnconst] :: conds)
               let post = bEq fappl (bCall framename refs)
@@ -2230,7 +2230,7 @@ namespace Microsoft.Research.Vcc
           let typeInfo =
             let arg i t = B.Decl.Axiom (bCall "$function_arg_type" [er fnconst; bInt i; toTypeId t])
             arg 0 h.RetType :: (h.Parameters |> List.mapi (fun i v -> arg (i + 1) v.Type))
-          [B.Decl.Function (retType, [], fname, qargs); defconst] @ defAxiom @ frameAxiom @ typeInfo
+          [B.Decl.Function (retType, [], fname, qargs, None); defconst] @ defAxiom @ frameAxiom @ typeInfo
 
       let sanityChecks env (h:C.Function) =
         // we disable that by default for now, it seems to be too much of a hassle
