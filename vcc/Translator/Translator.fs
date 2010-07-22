@@ -125,7 +125,7 @@ namespace Microsoft.Research.Vcc
       let helper = ctx.Helper
       let cev = CEV(ctx)
       let bv = BvTranslator(ctx)
-      let preludeBodies = lazy (ToBoogieAST.getFunctionExapnsions (getPrelude.Invoke()))
+      let preludeBodies = lazy (ToBoogieAST.getFunctionExpansions (getPrelude.Invoke()))
       
       let toTypeId = ctx.ToTypeId
       let castFromInt = ctx.CastFromInt
