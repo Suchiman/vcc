@@ -342,9 +342,6 @@ module FromBoogie =
     let globals = glist[]
     
     member this.Init () =
-      if helper.Options.Vcc3 then
-        Boogie.CommandLineOptions.Clo.ExpandLambdas <- false
-      
       declareBuiltins ctx
       
       for d in prog.TopLevelDeclarations do

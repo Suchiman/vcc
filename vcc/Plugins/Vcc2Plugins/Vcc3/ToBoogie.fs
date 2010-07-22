@@ -125,11 +125,18 @@ module ToBoogie =
         Type = trType fd.RetType
       }
     else
+      let dest_var (v: Var) = (Rename v.Name, trType v.Typ)
+      let mk_var i ty = ("x" + (i+1).ToString(), trType ty)
+      let vars, body =
+        match fd.Body with
+          | Expand (vars, body) -> List.map dest_var vars, Some (trExpr body)
+          | _ -> List.mapi mk_var fd.ArgTypes, None
       BoogieAST.Function (
         trType fd.RetType,
         List.map trAttribute fd.Attrs,
         Rename fd.Name,
-        List.mapi (fun i -> fun ty -> ("x" + (i+1).ToString(), trType ty)) fd.ArgTypes)
+        vars,
+        body)
 
   let private trAxiom ax = BoogieAST.Axiom (trExpr ax.Body)
 
@@ -152,20 +159,21 @@ module ToBoogie =
     |> Append [for d in pass.Axioms -> trAxiom d]
     |> List.rev
 
-  let Translate (pass: FromBoogie.Passyficator, proc: BlockProc, dump: string option) =
-    let decls = TranslateDeclarations pass
-    let proc' = trProc proc
-    let impl = 
-      match BoogieAST.trDecl proc' with
-        // this matching relies on the way 'BoogieAST.trDecl' is implemented ...
-        | [:? Boogie.Procedure as p; :? Boogie.Implementation as impl] ->
-          impl.Proc <- p  // for some reason, Boogie likes to refer to the procedure
-          impl
-        | _ -> failwith "bad procedure declaration"
+  let Translate (pass: FromBoogie.Passyficator, proc: BlockProc, dump: option<string>) =
+    let prog = BoogieAST.trProgram (TranslateDeclarations pass)
+    prog.TopLevelDeclarations.AddRange (BoogieAST.trDecl (trProc proc))
+
+    prog.Resolve () |> ignore    // FIXME: check outcome for errors
+    prog.Typecheck () |> ignore  // FIXME: check outcome for errors
 
     if dump.IsSome then
-      using (new Microsoft.Boogie.TokenTextWriter (dump.Value)) (fun wr ->
-        (BoogieAST.trProgram (List.append decls [proc'])).Emit (wr))
+      using (new System.IO.StreamWriter (dump.Value)) (fun tw ->
+        using (new Microsoft.Boogie.TokenTextWriter (dump.Value, tw, false)) (fun wr ->
+          prog.Emit (wr)))
 
-    BoogieAST.trProgram decls, impl
+    let impl = prog.TopLevelDeclarations.Find (function
+      | :? Boogie.Implementation as impl -> true
+      | _ -> false) :?> Boogie.Implementation
+
+    prog, impl
     
