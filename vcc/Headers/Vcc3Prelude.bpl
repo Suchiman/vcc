@@ -302,15 +302,9 @@ function {:inline false} $emb(S:$state,#p:$ptr) returns ($ptr)
 function {:inline true} $path(S:$state,#p:$ptr) : $field
   { $int_to_field(S[$dot(#p, $f_path)]) }
 
-// Pointers in the goal are supposed to be tagged with the $goal() function.
-function $goal(p:$ptr) : $ptr
-  { p }
-function {:inline true} $is_goal(p:$ptr) : bool
-  { $goal(p) == p }
-
 axiom (forall p:$ptr, S:$state ::
-  {$goal($dot(p, $f_typed)), S[p]}
-  {$goal($dot(p, $f_typed)), S[$dot(p, $f_is_volatile)]}
+  {$dot(p, $f_typed), S[p]}
+  {$dot(p, $f_typed), S[$dot(p, $f_is_volatile)]}
   $instantiate_int(S[$dot(p, $f_typed)]));
 
 function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int) : bool
@@ -318,7 +312,7 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
     $field_offset(f) == off &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
     (forall S:$state, p:$ptr :: 
-      {S[$dot($goal($dot(p, f)), $f_typed)]}
+      {S[$dot($dot(p, f), $f_typed)]}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
@@ -330,7 +324,7 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
   { $is_base_field(f) && $field_parent_type(f) == partp && $is_ghost_field(f) &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f))) &&
     (forall S:$state, p:$ptr :: 
-      {S[$dot($goal($dot(p, f)), $f_typed)]}
+      {S[$dot($dot(p, f), $f_typed)]}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
@@ -341,7 +335,7 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
 function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
   { $is_base_field(f) && $is_ghost_field(f) &&
     (forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f))) &&
-    (forall p:$ptr, S:$state :: {S[$dot($goal(p), f)]}
+    (forall p:$ptr, S:$state :: {S[$dot(p, f)]}
       if $is_primitive_ch($typ(p)) then
         $emb(S, $dot(p, f)) == $emb(S, p)
       else
@@ -350,7 +344,7 @@ function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
   {
-    (forall p:$ptr :: {S[$dot($goal(p), $f_typed)]}
+    (forall p:$ptr :: {S[$dot(p, $f_typed)]}
       $set_in(p, ptrs) ==> $in_writes_at(time, p) && $thread_owned_or_even_mutable(S, p))
 /*
     (forall p:$ptr :: {:vcc3 "L1"} {S[p]}
@@ -420,15 +414,15 @@ function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
   }     
 
 function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
-  { (forall p:$ptr :: {S1[$goal(p)]} S0[p] == S1[p] || W[p] || $irrelevant(S0, p)) &&
+  { (forall p:$ptr :: {S1[p]} S0[p] == S1[p] || W[p] || $irrelevant(S0, p)) &&
     $timestamp_post(S0, S1) }
 
 function {:inline true} $preserves_thread_local(S0:$state, S1:$state) : bool
-  { (forall p:$ptr :: {$thread_local(S1, $goal(p))}
+  { (forall p:$ptr :: {$thread_local(S1, p)}
        $thread_local(S0, p) ==> $thread_local(S1, p)) }
 
 function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
-  { (forall p:$ptr :: {S1[$goal(p)]} S0[p] == S1[p] || !$thread_local(S0, p)) &&
+  { (forall p:$ptr :: {S1[p]} S0[p] == S1[p] || !$thread_local(S0, p)) &&
     $preserves_thread_local(S0, S1) &&
     $timestamp_post(S0, S1) }
 
@@ -622,7 +616,7 @@ axiom (forall S:$state :: {$invok_state(S)}
 function {:inline true} $closed_is_transitive(S:$state) returns (bool)
   { 
     (forall p:$ptr,q:$ptr ::
-      {$set_in($goal(p), $owns(S, q))}
+      {$set_in(p, $owns(S, q))}
       $good_state(S) &&
       $set_in(p, $owns(S, q)) && $closed(S, q) ==> $closed(S, p)) // && $ref(p) != 0)
   } 
@@ -646,7 +640,7 @@ axiom (forall S:$state :: {$good_state(S)}
 
 axiom (forall S:$state ::
   $good_state(S) ==>
-    (forall p:$ptr :: {S[$dot($goal(p), $f_closed)]} $closed(S, p) ==> $typed(S, p)) &&
+    (forall p:$ptr :: {S[$dot(p, $f_closed)]} $closed(S, p) ==> $typed(S, p)) &&
     $closed_is_transitive(S)
     );
         
@@ -728,7 +722,7 @@ procedure $spec_alloc(t:$ctype) returns(r:$ptr);
   ensures $typed2($s, r, t);
   ensures $mutable($s, r);
 
-  ensures (forall p:$ptr :: {$goal(p)}
+  ensures (forall p:$ptr :: // TODO
     $set_in(p, $span($s, r)) ==> $timestamp_is_now($s, p));
 
   ensures $writes_nothing(old($s), $s);
@@ -752,7 +746,7 @@ function $post_unwrap(S1:$state, S2:$state) : bool;
 
 function {:inline true} $wrap_writes(S0:$state, S2:$state, o:$ptr) : bool
 {
-  (forall p:$ptr :: {$goal(p)}
+  (forall p:$ptr :: {S2[p]}
     S0[p] == S2[p] ||
     p == $dot(o, $f_version) || p == $dot(o, $f_closed) || 
     ($set_in($ghost_emb(p), $owns(S0, o)) &&
@@ -765,7 +759,7 @@ function {:inline true} $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   $mutable(S, o) && 
   $timestamp_is_now(S, o) &&
 
-  (forall p:$ptr :: {$goal(p)}
+  (forall p:$ptr :: {$set_in(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==>
       $wrapped(S, p, $typ(p)) && $timestamp_is_now(S, p)) &&
 
@@ -791,7 +785,7 @@ function $is_wrapped(S0:$state, S:$state, o:$ptr) : bool
   $wrapped(S, o, $typ(o)) &&
   $timestamp_is_now(S, o) &&
 
-  (forall p:$ptr :: {$goal(p)}
+  (forall p:$ptr :: {$set_in(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==>
       $owner(S, p) == o && $timestamp_is_now(S, p)) &&
 
@@ -812,7 +806,7 @@ procedure $wrap(o:$ptr, T:$ctype);
   // TOKEN: the object being wrapped is mutable
   requires $mutable($s, o);
   // TOKEN: everything in the owns set is wrapped
-  requires (forall p:$ptr :: {$dont_instantiate(p)} $is_goal(p) && $set_in0(p, $owns($s, o)) ==> $wrapped($s, p, $typ(p)));
+  requires (forall p:$ptr :: {$dont_instantiate(p)} $set_in0(p, $owns($s, o)) ==> $wrapped($s, p, $typ(p)));
 
   ensures $is_wrapped(old($s), $s, o);
 
@@ -838,7 +832,7 @@ function $good_for_admissibility(S:$state) : bool;
 function $good_for_post_admissibility(S:$state) : bool;
 
 function {:inline true} $stuttering_pre(S:$state, p:$ptr) : bool
-  { (forall q: $ptr :: {$goal(q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
+  { (forall q: $ptr :: {$closed(S, q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
     $good_for_admissibility(S)
   }
 
@@ -856,11 +850,11 @@ procedure $havoc_others(p:$ptr, t:$ctype);
   ensures $closed_is_transitive($s);
   ensures $good_state($s);
   ensures $good_for_post_admissibility($s);
-  ensures (forall q: $ptr :: {$goal(q)}
+  ensures (forall q: $ptr :: {$closed($s, q)}
     $closed(old($s), q) || $closed($s, q) ==>
       ($spans_the_same(old($s), $s, q, $typ(q)) && $closed(old($s), q) == $closed($s, q)) || 
       ($inv2(old($s), $s, q, $typ(q)) && $nonvolatile_spans_the_same(old($s), $s, q, $typ(q))));
-  ensures (forall q:$ptr :: {$goal(q)}// {$set_in(q, $owns(old($s), p))}
+  ensures (forall q:$ptr ::  {$set_in(q, $owns(old($s), p))}
             $set_in(q, $owns(old($s), p)) ==>
               $ref_cnt(old($s), q) == $ref_cnt($s, q));
   ensures $timestamp_post(old($s), $s);
@@ -881,7 +875,7 @@ function {:inline true} $unwrap_check_pre(S:$state, p:$ptr) : bool
   { $wrapped(S, p, $typ(p)) && 
     (! $is_claimable($typ(p)) || $ref_cnt(S, p) == 0) &&
     $inv(S, p, $typ(p)) &&
-    (forall q: $ptr :: {$goal(q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
+    (forall q: $ptr :: {$closed(S, q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
     $good_for_pre_can_unwrap(S)
   }
 

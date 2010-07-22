@@ -53,5 +53,6 @@ type Vcc3Plugin() =
         VC.VCGen.Outcome.Errors
     else
       let prog', impl = ToBoogie.Translate (pass, proc, opts.boogie_file)
+      vcgen.program <- prog'
       vcgen.VerifyImplementation (impl, prog', handler)
   
