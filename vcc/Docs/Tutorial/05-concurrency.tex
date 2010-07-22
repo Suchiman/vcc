@@ -106,13 +106,16 @@ compare-and-exchange.
 However, inside our atomic block we can also see the update of the owns set.
 This is fine, because the ghost code is not executed by the actual hardware.
 
+% I'm not sure if we need this...
 \begin{note}
-\itodo{rewrite this:}
-If we were to imagine a VCC machine, which would actually execute the 
-ghost code, we could say that it blocks other threads when the ghost
-code is executing.
-Because the real machine doesn't execute any ghost code, it doesn't need to do
-any such blocking.
+The reason we can use ghost code is a simulation relation between two machines.
+Machine A executes the program with ghost code, and machine B executes the program
+without ghost code.
+Because ghost code cannot write physical data or influence the control flow of physical code
+in any way, the contents of physical memory of machines A and B is the same.
+Therefore any property we prove about physical memory of A also holds for B.
+Now, if we imagine that both machines are multi-threaded, and the machine A blocks
+other threads when it's executing ghost code, the same simulation property will still hold.
 \end{note}
 
 It is not particularly difficult to see that this atomic operation preserves the
@@ -165,9 +168,8 @@ the semantics of your regular C compiler.
 Make sure to check with the regular C compiler manual for exact semantics
 of its built-in functions.
 
-The header files coming with VCC provide a handful of popular operations,
-you can just rename them to fit your compiler. 
-\itodo{we should actually do that}
+We plan to include a header file with VCC containing a handful of popular operations,
+so you can just rename them to fit your compiler. 
 \end{note}
 
 \subsection{Using claims}
@@ -247,7 +249,6 @@ This is the kind of weird corner case that VCC is very good catching
 (even if it's bogus in this context).
 Other than the contract, the only change is that we list the claim
 as parameter to the atomic block.
-\todo{our current syntax is horrible, we need something different}
 Listing a normal object as parameter to the atomic makes VCC know you're
 going to modify the object.
 For claims, it is just a hint, that it should use this claim when trying
