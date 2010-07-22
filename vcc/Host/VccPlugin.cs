@@ -253,9 +253,6 @@ namespace Microsoft.Research.Vcc
 
     private void PrepareBoogie(Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
     {
-      if (parent.options.Vcc3)
-        Boogie.CommandLineOptions.Clo.ExpandLambdas = false;
-
       currentBoogie = parent.GetBoogieProgram(boogieDecls);
       CloseVcGen();
       CommandLineOptions.Clo.Parse(standardBoogieOptions);
