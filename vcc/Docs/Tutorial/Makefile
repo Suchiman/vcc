@@ -63,3 +63,17 @@ show-ac:
 clean:
 	rm -f *.log *.dvi *.ps *.aux *.pdf *.bbl *.blg *.out
 
+both:
+	perl -p -i -e 's/.*(\\densetrue)/$$1/' tutorial.tex
+	$(MAKE) build
+	$(MAKE) build
+	$(MAKE) build
+	cp tutorial.pdf vcc-tutorial-2col.pdf
+	perl -p -i -e 's/.*(\\densetrue)/%$$1/' tutorial.tex
+	$(MAKE) build
+	$(MAKE) build
+	$(MAKE) build
+	cp tutorial.pdf vcc-tutorial-1col.pdf
+
+send: both
+	$(WEBCP) vcc-tutorial-{1,2}col.pdf 
