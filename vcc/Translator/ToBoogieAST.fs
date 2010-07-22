@@ -361,7 +361,7 @@ namespace Microsoft.Research.Vcc
             | Expr.Ref v when subst.ContainsKey v -> Some subst.[v]
             | _ -> None)
               
-    let getFunctionExapnsions (prog:Boogie.Program) =
+    let getFunctionExpansions (prog:Boogie.Program) =
       let getBody : Boogie.Declaration -> _ = function
         | :? Boogie.Function as fn ->
           if fn.Body <> null then
