@@ -132,7 +132,6 @@ To understand how VCC works, and to use it successfully, it is useful to
 think in terms of what VCC ``knows'' at various program points. In
 this example, VCC initially knows nothing about the variables (they
 can initially hold any value). 
-\todo{make sure this makes sense:}
 Just before the first assignment, VCC knows that 
 \vcc{x <= y} (because execution followed that branch of the conditional), and
 after the assignment, VCC knows additionally that \vcc{z} is equal to
@@ -420,7 +419,8 @@ concerned, the line:
 position = min(newPos, LIMIT);
 \end{VCC}
 \noindent
-could be replaced with:\todo{Should we make \vcc{havoc} part of the language?}
+\todo{Should we make \vcc{havoc} part of the language?}
+could be replaced with:
 \begin{VCC}
 position = anything();
 \end{VCC}
