@@ -2,25 +2,34 @@
 
 int min(int a, int b)
 {
-  int res;
+  int \result; 
+  // assume precondition of min(a,b)
   _(assume \true)
   if (a <= b) 
-    res = a;
-  else res = b;
-  _(assert res <= a && res <= b)
+    \result = a;
+  else \result = b;
+  // assert postcondition of min(a,b)
+  _(assert \result <= a && \result <= b)
 }
 
 int main()
 {
-  int x, y, z;
+  int \result;
+  // assume precondition of main()
   _(assert \true)
-  z = min(x, y);
-  _(assume z <= x && z <= y)
+  int x, y, z;
+  // z = min(x,y);
+  {
+    int _res; 
+    // assert precondition of min(x,y)
+    _(assert \true)
+    // assume postcondition of min(x,y) 
+    _(assume _res <= x && _res <= y)
+    z = _res;
+  }
   _(assert z <= x)
-  return 0;
+  \result = 0;
+  // assert postcondition of main()
+  _(assert \true)
 }
 
-/*`
-Verification of min succeeded.
-Verification of main succeeded.
-`*/
