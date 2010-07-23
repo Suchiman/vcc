@@ -52,7 +52,9 @@ type Vcc3Plugin() =
       else
         VC.VCGen.Outcome.Errors
     else
-      let prog', impl = ToBoogie.Translate (pass, proc, opts.boogie_file)
+      let proc' = RewriteMemoryModel.Rewrite (RewriteMemoryModel.MkContext pass) proc
+      let prog', impl = ToBoogie.Translate (pass, proc', opts.boogie_file)
+      Boogie.LambdaHelper.ExpandLambdas(prog')
       vcgen.program <- prog'
       vcgen.VerifyImplementation (impl, prog', handler)
   

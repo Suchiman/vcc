@@ -235,6 +235,8 @@ function $roots(s:$state) : $roots;
 function $embs(s:$state) : $embs;
 function $heap(s:$state) : $heap;
 
+function $mem(s:$state, p:$ptr) : int;  // FIXME
+
 function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int
   { $heap(s)[$roots(s)[p]][f][p] }
 
@@ -338,6 +340,7 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
     (forall S:$state, p:$ptr :: 
       {$rd(S, $dot(p, f), $f_typed)}
+	  {$emb(S, $dot(p, f))}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
@@ -350,6 +353,7 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f))) &&
     (forall S:$state, p:$ptr :: 
       {$rd(S, $dot(p, f), $f_typed)}
+	  {$emb(S, $dot(p, f))}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
@@ -459,7 +463,7 @@ function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
 */
 
 function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
-  { $modifies(S0, S1, (lambda p:$ptr :: false)) &&
+  { $modifies(S0, S1, $set_empty()) &&
     $preserves_thread_local(S0, S1) }
 
 
@@ -710,6 +714,7 @@ function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) : bool;
 function {:inline true} $update(h:$heap, r:$ptr, f:$field, p:$ptr, v:int) : $heap
   { h[ r := h[r][ f := h[r][f][ p := v ] ] ] }
 
+
 procedure $write_int(p:$ptr, f:$field, v:int);
   modifies $s;
   ensures $embs($s) == $embs(old($s));
@@ -785,7 +790,7 @@ function $pre_static_wrap($state) : bool;
 function $pre_static_unwrap($state) : bool;
 function $post_unwrap(S1:$state, S2:$state) : bool;
 
-function {:inline true} $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
+function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
 {
   // TODO this takes the entire current heap, maybe restrict it to the owns set?
   $heap(S) == $heap(S0)[ o := (lambda f:$field :: 
@@ -793,7 +798,7 @@ function {:inline true} $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
       $heap(S)[o][f]
     else
       (lambda p:$ptr :: 
-        if p == o || f == $f_closed then 1
+        if p == o && f == $f_closed then 1
         else $rd(S0, p, f))) ]
   && $embs(S0) == $embs(S)
   &&
@@ -802,7 +807,7 @@ function {:inline true} $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
                     then o else $roots(S0)[p])
 }
 
-function {:inline true} $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
+function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 {
   $mutable(S, o) && 
   $timestamp_is_now(S, o) &&
@@ -830,6 +835,9 @@ function {:inline true} $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   $timestamp_post_strict(S0, S) &&
   $post_unwrap(S0, S)
 }
+
+axiom(forall s: $state, p: $ptr :: {$owner(s, p)}
+  $owner(s, p) == $me() ==> $roots(s)[p] == p);
 
 procedure $unwrap(o:$ptr, T:$ctype);
   modifies $s;
