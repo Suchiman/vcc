@@ -185,7 +185,10 @@ bool RemoveEntryList( PLIST_ENTRY Entry )
     spec(LIST_MANAGER ^ListManager = Entry->Manager;)
 
     assert(in_domain(Entry,ListManager));
+	assert(inv(ListManager));
+	assert(set_in(Entry->Blink,owns(ListManager)));
     assert(in_domain(Entry->Blink,ListManager));
+	assert(set_in(Entry->Flink,owns(ListManager)));
     assert(in_domain(Entry->Flink,ListManager));
 
     Blink = Entry->Blink;
