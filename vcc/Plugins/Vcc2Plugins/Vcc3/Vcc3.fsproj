@@ -116,6 +116,7 @@
     <Compile Include="FromBoogie.fs" />
     <Compile Include="Z3Translator.fs" />
     <Compile Include="Simplifier.fs" />
+    <Compile Include="RewriteMemoryModel.fs" />
     <Compile Include="ToBoogie.fs" />
     <Compile Include="Plugin.fs" />
   </ItemGroup>

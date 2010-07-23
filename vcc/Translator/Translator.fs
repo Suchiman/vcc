@@ -1300,8 +1300,17 @@ namespace Microsoft.Research.Vcc
                 match e1.Type with
                   | C.Ptr t -> trForWrite env t e2
                   | _ -> die()
+              let e1' = trExpr env e1
+              let write_call_args =
+                if helper.Options.Vcc3 then
+                  match e1' with
+                    | B.Expr.FunctionCall ("$dot", [p;f]) ->
+                      [p; f; e2']
+                    | _ ->
+                      [] // TODO
+                else [e1'; e2']
               [cmt (); 
-               B.Stmt.Call (C.bogusToken, [], "$write_int", [trExpr env e1; e2']); 
+               B.Stmt.Call (C.bogusToken, [], "$write_int", write_call_args); 
                assumeSync env e1.Token] @ (cev.StateUpdate e1.Token)
             | C.Expr.MemoryWrite (_, e1, e2) when env.hasIF ->
               let e2' =
