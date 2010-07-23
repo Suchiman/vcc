@@ -1,35 +1,28 @@
 \section{Introduction}
 This tutorial is an introduction to verifying C code with VCC. Our
-primary audience is programmers who want to write correct code and
-verification engineers who want to check code for correctness.%
-\footnote{
-  If you're instead looking for a high-level overview of VCC are
-  referred to our system description \cite{vcc}.
-  If you interested in the VCC concurrency verification
-  methodology (as opposed to verifying concurrent programs with VCC),
-  please see our CAV 2010 paper \cite{lci}.
-}
-The
-only prerequisite is a working understanding of C. 
+primary audience is software engineers who want to write correct code
+and verification engineers who want to check code for correctness.
+The only prerequisite is a working knowledge of C.
 
 To use VCC, you must first \emph{annotate} your code to specify how
-your functions and data structures are meant to be used, and what your
-functions guarantee to their callers.
-VCC then
-takes your program and tries to \emph{prove} (mathematically) that
+your functions and data structures are meant to be used.
+VCC then tries to \emph{prove} (mathematically) that
 your program meets these specifications.  Unlike most program
 analyzers, VCC doesn't look for bugs, or analyze an abstraction of
 your program; if VCC certifies that your program is correct, then your
-program really should be correct
+program really should be correct%
 \footnote{
   In reality, this isn't
-  really a guarantee, because VCC itself might have bugs. But in
+  really a guarantee, because VCC itself might have bugs. In
   practice, this is unlikely to cause you to accidentally verify an
   incorrect program, unless you find and intentionally exploit such a
   bug. 
-  Another source of bugs that could slip into verified software would be the compiler,
-  the operating system, and the hardware. 
-  These are generally more likely to introduce bug than VCC.
+  % These don't constitute software bugs. --E
+  %Another source of bugs that could slip into verified software would be the compiler,
+  %the operating system, and the hardware. 
+  % I wouldn't bet on this. --E
+  %These are generally more likely to introduce bug than VCC.
+
   % This is way too arcane to be mentioned in the intro. --M
   %In addition, VCC currently doesn't do the checks needed to
   %ignore memory system optimizations on multiprocessor machines, e.g.,
@@ -38,11 +31,14 @@ program really should be correct
   }. 
 
 To check your program, VCC generates a number of mathematical
-statements (called \Def{verification conditions}) whose proofs
-suffice to guarantee the program's correctness, and tries to prove
-these statements using an automatic theorem prover. If any of these
-proofs fail, VCC reflects these failures back to you in terms of the
-program itself (as opposed to the formulas used in the theorem prover).
+statements (called \Def{verification conditions}), the validity of
+which suffices to guarantee the program's correctness, and tries to
+prove these statements using an automatic theorem prover. If any of
+these proofs fail, VCC reflects these failures back to you in terms of
+the program itself (as opposed to the formulas seen by the theorem
+prover). Thus, you normally interact with VCC entirely at the level of
+code and program states; you can usually ignore the mathematical
+reasoning going on ``under the hood''.
 For example, if your program uses division
 somewhere, and VCC is unable to prove (from what it thinks holds at the
 point at which the division is done) that the divisor is nonzero, it
@@ -56,16 +52,36 @@ This doesn't mean that your program is necessarily incorrect;
 most of the time, especially when verifying code that is already well-tested,
 it is because your specifications aren't strong
 enough to guarantee that the suspected error doesn't occur.
+(For example, you might have forgotten to specify that some function
+parameter is required to be nonzero.)
 Typically, you fix this ``error'' by strengthening your
 specifications. This might lead to other error reports, necessitating
 the strengthening of other specifications, so verification is in
 practice an iterative process.  
-Quite often this process will reveal a genuine programming error.
+Often this process will reveal a genuine programming error.
+Moreover, this process pays the extra dividend of producing precise
+specifications for your functions and data structures - a very useful
+form of documentation. 
+
+%\itodo{the following paragraph should be moved out of here}
+%% Annotating your program sometimes requires some extra
+%% programming.  For example, a common way to keep threads
+%% from interfering with each other is to allow each thread to access
+%% only those shared resources that it ``owns''. The movement of 
+%% ownership during program execution is an implicit part of the 
+%% program design; this movement can be made explicit by maintaining the
+%% ownership relation explicitly with \Def{ghost data}, and updating it
+%% with \Def{ghost code}. Ghost code is seen by VCC but not by the C compiler, and
+%% so introduces no runtime overhead. Part of the VCC philosophy is that
+%% programmers would rather do extra programming than drive interactive
+%% theorem provers, so ghost code is the preferred way to help VCC
+%% understand why your program works.  
 
 This tutorial covers basics of VCC annotation language. By the time
 you have finished working through it, you should be able to use VCC to
 verify some nontrivial programs. It doesn't cover the theoretical
-background of VCC, implementation details, or advanced topics;
+background of VCC \cite{lci}, implementation details \cite{vcc}
+or advanced topics;
 information on these can be found on the VCC
 homepage\footnote{\url{http://vcc.codeplex.com/}}.
 
@@ -73,42 +89,50 @@ homepage\footnote{\url{http://vcc.codeplex.com/}}.
 %% separately~\cite{lci}.  A high-level overview of the VCC tool chain is
 %% also available separately~\cite{Cohen:TPHOLs2009-23}.
 
+The examples in this tutorial are currently distributed with the VCC sources
+available from \url{http://vcc.codeplex.com/SourceControl/list/changesets}: click Download on the right,
+get the zip file and navigate to \lstinline|vcc/Docs/Tutorial/c|. (In
+future, these will form part of the distribution.)
+
 You can use VCC either from the command line or from Visual Studio
-2008 (VS).
-The VS interface offers easy access to different components of
-VCC tool chain and is thus generally recommended,
-but invoking VCC from command line will be also covered.
-VCC can be downloaded from its homepage.
-Make sure to check out installation instructions\footnote{\url{http://vcc.codeplex.com/wikipage?title=Install}},
-as they contain important information about installation prerequisites 
-and setting include paths.
+2008 (VS); the VS interface offers easy access to different components of
+VCC tool chain and is thus generally recommended.
+VCC can be downloaded from the VCC homepage; 
+be sure to read the installation instructions\footnote{\url{http://vcc.codeplex.com/wikipage?title=Install}},
+which provide important information about installation prerequisites 
+and how to set up tool paths.
 
 %\subsection{Notational conventions}
 
-\begin{note}
-  Throughout the tutorial, we'll use notes like this one to discuss
-  topics, which can be skipped on the first reading, either because
-  they are somewhat more advanced, arcane, or not so important.
-\end{note}
+% How about keeping these things in footnotes? -E
+%% \begin{note}
+%%   Throughout the tutorial, we'll use notes like this one to discuss
+%%   topics, which can be skipped on the first reading, either because
+%%   they are somewhat more advanced, arcane, or not so important.
+%% \end{note}
 
-  Because this is a tutorial, we will occasionally provide a simplified (and
-  therefore not strictly correct) explanation of what is going on, providing
-  some additional clarification in the footnotes,\footnote{Like this one.}
-  which can be skipped on first reading.
+Because this is a tutorial, we will occasionally provide simplified (and
+therefore not strictly correct) explanations, providing
+additional clarification in the footnotes\footnote{Like this one.},
+which can be skipped on first reading. 
+% Don't need this -E
+%Definitions  be introduced with \Def{italic boldface}.
 
-  Definitions will be introduced with \Def{italic boldface}.
+\subsection{A Note on VCC Invocation}
+This tutorial uses a new revision of the VCC annotation syntax, which
+is incompatible with the previous syntax.  To enable the use of the
+new syntax, to use the flag \texttt{/2}.  Additionally, the trigger
+inference, needed to check some of the more complex invariants, is
+enabled by the \texttt{/it} flag. Both will be the default soon, but
+please supply them for now.
 
 \subsection{Notes on VCC invocation}
 \label{sect:todo-invoke}
 
-To enable the VCC syntax which is described in this tutorial you need
-to use the flag \texttt{/2}.
-Additionally, the trigger inference, which we rely upon for
-the more complex invariant is enabled by the \texttt{/it}
-flag.
-Both will be on by default soon, but for now, please supply them.
+%% \subsection{Top-level To-Do}
 
-\subsection{What's new in this document?}
+%% \noindent \textbf{Version 0.1}
+%% Added \secref{overflows}, and explanations about arrays writes in \secref{sorting}.
 
 \noindent \textbf{Version 0.1, July 21 2010}
 Added \secref{overflows} about overflows, and explanations about arrays writes in \secref{sorting}.
