@@ -14,12 +14,6 @@ module RewriteMemoryModel =
     | App ({ Name = "$mem" }, [h; App ({ Name = "$dot" }, [p; f])]) -> Some (h, p, f)
     | _ -> None
 
-(*
-  let (|PWriteInt|_|) = function
-    | App ({ Name = "$mem" }, [h; App ({ Name = "$dot", [p; f])]) -> Some (h, p, f)
-    | _ -> None
-*)
-
   let MkContext (pass: FromBoogie.Passyficator) =
     [for d in pass.Functions do if d.Name = "$rd" then yield d].Head
 
