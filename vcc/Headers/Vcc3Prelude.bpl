@@ -578,7 +578,7 @@ function $in_wrapped_domain(S:$state, p:$ptr) : bool;
 
 function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
   { !$is_primitive_ch($typ(p))
-  && ($owner(S, p) == $me() || $in_wrapped_domain(S, p)) 
+  && $owner(S, $roots(S)[p]) == $me()
 //     ($wrapped(S, $root(S, p), $typ($root(S, p))) && $set_in(p, $domain(S, $root(S, p)))))
   }
 
@@ -659,7 +659,6 @@ function {:inline true} $closed_is_transitive(S:$state) returns (bool)
       $set_in(p, $owns(S, q)) && $closed(S, q) ==> $closed(S, p)) // && $ref(p) != 0)
   } 
 
-/*
 axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in(p, $owns(S, q)), $is_non_primitive($typ(p))}
   $good_state(S) &&
   $closed(S, q) && $is_non_primitive($typ(p)) ==>
@@ -674,7 +673,6 @@ axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
 
 axiom (forall S:$state :: {$good_state(S)}
   $good_state(S) ==> $closed_is_transitive(S));
-*/
 
 axiom (forall S:$state ::
   $good_state(S) ==>
@@ -805,6 +803,7 @@ function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
   $roots(S) == (lambda p:$ptr :: 
                     if p == o || $set_in($roots(S0)[p], $owns(S0, o)) 
                     then o else $roots(S0)[p])
+  && $timestamp_post_strict(S0, S)
 }
 
 function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
@@ -824,6 +823,14 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
         (lambda f:$field :: if f == $f_owner || f == $f_timestamp then $heap(S)[o][f] else $heap(S0)[o][f])
       else
         $heap(S0)[p])
+
+  && $embs(S0) == $embs(S)
+  &&
+  $roots(S) == (lambda p:$ptr :: 
+                    if $roots(S0)[p] == o then
+					   if $owner(S0, p) == o then p
+					   else $roots(S)[p]
+                    else $roots(S0)[p])
   &&
   (forall p:$ptr :: {$set_in(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==>
@@ -838,6 +845,10 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 
 axiom(forall s: $state, p: $ptr :: {$owner(s, p)}
   $owner(s, p) == $me() ==> $roots(s)[p] == p);
+
+axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
+  $is_composite_ch($typ($owner(S, r))) ==>
+    $roots(S)[r] == $roots(S)[$owner(S, r)]);
 
 procedure $unwrap(o:$ptr, T:$ctype);
   modifies $s;
@@ -983,8 +994,8 @@ axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {$in_vdomain_lab(S, p, q, l)
 function $in_domain(S:$state, p:$ptr, q:$ptr) : bool;
 function $in_vdomain(S:$state, p:$ptr, q:$ptr) : bool;
 
-axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, p)}
-  $full_stop(S) && $wrapped(S, p, $typ(p)) ==> $in_domain(S, p, p));
+axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $roots(S)[p])}
+  $full_stop(S) && $wrapped(S, $roots(S)[p], $typ($roots(S)[p])) ==> $in_domain(S, p, $roots(S)[p]));
 
 // -----------------------------------------------------------------------
 // Span & extent
