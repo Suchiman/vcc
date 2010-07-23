@@ -233,13 +233,19 @@ namespace Microsoft.Research.Vcc
         ] @ inRange
       
       let typedRead s p t =
-        match t with
-          | C.Ptr t ->
-            bCall "$read_ptr" [s; p; toTypeId t]
-          | C.Bool ->
-            bCall "$read_bool" [s; p]
-          | t ->                
-            castFromInt (trType t) (bCall "$mem" [s; p])
+        if helper.Options.Vcc3 then
+          match p with
+            | B.Expr.FunctionCall ("$dot", [p; f]) ->
+              castFromInt (trType t) (bCall "$rd" [s; p; f])
+            | _ -> failwith "indirect read" // FIXME
+        else
+          match t with
+            | C.Ptr t ->
+              bCall "$read_ptr" [s; p; toTypeId t]
+            | C.Bool ->
+              bCall "$read_bool" [s; p]
+            | t ->                
+              castFromInt (trType t) (bCall "$mem" [s; p])
 
       let varRef v = er (ctx.VarName v)
 
@@ -1307,7 +1313,7 @@ namespace Microsoft.Research.Vcc
                     | B.Expr.FunctionCall ("$dot", [p;f]) ->
                       [p; f; e2']
                     | _ ->
-                      [] // TODO
+                      [] // FIXME
                 else [e1'; e2']
               [cmt (); 
                B.Stmt.Call (C.bogusToken, [], "$write_int", write_call_args); 
