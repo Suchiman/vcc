@@ -234,9 +234,13 @@ namespace Microsoft.Research.Vcc
       
       let typedRead s p t =
         if helper.Options.Vcc3 then
+          let cast e =
+            match t with
+              | C.Ptr t -> bCall "$ptr" [toTypeId t; e]
+              | _ -> castFromInt (trType t) e
           match p with
             | B.Expr.FunctionCall ("$dot", [p; f]) ->
-              castFromInt (trType t) (bCall "$rd" [s; p; f])
+              cast (bCall "$rd" [s; p; f])
             | _ -> failwith "indirect read" // FIXME
         else
           match t with
