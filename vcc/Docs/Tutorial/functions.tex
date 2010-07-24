@@ -1,0 +1,379 @@
+\section{Function Contracts}
+\label{sect:functions}
+
+Next we turn to the specification of functions. We'll take the example
+from the previous section, and pull the computation of the minimum of
+two numbers out into a separate function:
+
+\vccInput{c/01_min2.c}
+
+(The listing above presents both the source code and the output
+of VCC, typeset in a different fonts, and 
+the actual file name of the example is replaced with \vcc{/*`testcase`*/}.)
+VCC failed to prove our assertion, even though it's easy to see that
+it always holds. This is because verification in VCC is \Def{modular}: 
+VCC doesn't look inside the body of a function (such as \vcc{min()}) 
+when understanding the effect of a call to the function (such as 
+the call from \vcc{main()})%
+\footnote{We will see later how to selectively override this default
+  and perform such inlining during verification.}; 
+all it knows about the effect of calling \vcc{min()} is that the call 
+satisfies the specification of \vcc{min()}. 
+%This is just because we have chosen the default to be so. It thus doesn't
+% contradict that specification needs to say everything --M
+%\footnote{
+%  Actually, VCC does know one important thing from this specification
+%  of \vcc{min()}: it knows that a call do \vcc{min()} has no side
+%  effects that are visible to the caller. We'll see in \secref{writes} that
+%  any such side effects have to be explicitly specified.
+%}.
+Since the correctness of \vcc{main()} clearly depends on what \vcc{min()}
+does, we need to specify \vcc{min()} in order to verify \vcc{main()}.
+
+%%\begin{note}
+% This is important enough to put in the main text -E
+Modular verification brings several benefits. 
+First, it allows verification to more easily scale to
+large programs. Second, by providing a precise interface between
+caller and callee, it allows you to modify the implementation of
+a function like \vcc{min()} without having to worry about breaking the
+verifications of functions that call it (as long as you don't change
+the specification of \vcc{min()}). This is especially important
+because these callers normally aren't in scope, and the person
+maintaining \vcc{min()} might not even know about them (e.g., if
+\vcc{min()} is in a library). Third, you can verify a function like
+\vcc{main()} even if the implementation of \vcc{min()} is unavailable
+(\eg if it hasn't been written yet). 
+%%\end{note}
+
+The specification of a function is sometimes called its \Def{contract},
+because it gives obligations on both the function and its callers. It
+is provided by three types of annotations:
+\begin{itemize}
+\item A requirement on the caller (sometimes called the
+  \Def{precondition} of the function) take the form \vcc{_(requires E)}, 
+  where \vcc{E} is an expression. It says that callers of the
+  function promise that \vcc{E} will hold on function entry. 
+
+\item A requirement on the function (sometimes called a
+  \Def{postcondition} of the function) takes the form \vcc{_(ensures E)}, 
+  where \vcc{E} is an expression. It says that the function
+  promises that \vcc{E} holds just before control exits the
+  function. 
+
+\item The third type of annotation, a \Def{writes clause}, is described
+  in the next section.
+\end{itemize}
+
+For example, we can provide a suitable specification for \vcc{min()} as
+follows:
+\vccInput[linerange={min-endmin,out-}]{c/01_min3.c}
+\noindent
+(Note that the specification of the function comes after the header and
+before the function body; you can also put specifications on function
+declarations (\eg in header files).)
+The precondition \vcc{_(requires \true)} of \vcc{min()} doesn't
+really say anything (since \vcc{\true} holds in every state), but is included
+to emphasize that the function can be called from any state and
+with arbitrary parameter values.
+The postcondition states that the value returned from \vcc{min()} 
+is no bigger than either of the inputs.
+Note that \vcc{\true} and \vcc{\result} are spelled with a backslash
+to avoid clash with C identifiers\footnote{
+  All VCC keywords start with a backslash; 
+  this contrasts with annotation tags (like \vcc{requires}),
+  which are only used at the beginning of annotation
+  and therefore cannot be confused with C identifiers
+  (and thus you are still free to have, \eg
+  a function called \lstinline{requires} or \lstinline{assert}).}.
+
+VCC uses function specs as follows. When verifying the body of a
+function, VCC implicitly assumes each precondition of the function on
+function entry, and implicitly asserts each postcondition of the
+function (with \vcc{\result} bound to the return value and each
+parameter bound to its value on function entry) just before the
+function returns. For every call to the function, VCC replaces the
+call with assertion of the preconditions of the function, sets the
+return value to an arbitrary value, and finally assumes each
+postcondition of the function. 
+For example, VCC translates the program above roughly as follows:
+\vccInput{c/01_min_assert.c}
+
+Note that the assumption of a precondition on function entry could
+fail in an execution only if the corresponding assertion of the
+precondition (in the caller) failed first. Similarly, the
+postconditions assumed on return from a function could fail only if
+the corresponding assertion in the called function failed first. Thus,
+in a verified program, these assumptions can never fail.
+
+\subsection*{Exercises}
+\begin{enumerate}
+\item
+Try replacing the \vcc{<} in the return statement of \vcc{min()} with
+\vcc{>}. Before running VCC, can you guess which parts of the
+verification will fail?
+%% One way to illustrate that the verification of \vcc{main()} 
+%% depends only on the specification of \vcc{min()} is to 
+%% replace \vcc{<} with \vcc{>} in the return statement of \vcc{min()}.
+%% The output of verification shows that \vcc{main()} is still correct---only 
+%% \vcc{min()} is broken:
+%% \vccInput[linerange={out-}]{c/01_min4.c}
+
+\item
+What is the effect of giving a function the specification
+\vcc{_(requires \false)} ? How does it effect verification of
+the function itself? What about its callers? Can you think of a good 
+reason to use such a specification?
+%% When verifying function body it translates to an assumption.
+%% As we have noted this will make the body of function verify,
+%% regardless what it contains.
+%% On the other hand, you will be unable to verify call to such a function
+%% from outside.
+%% Conversely, \vcc{_(ensures \false)} will prevent verification
+%% of the body of the function, but will make the function that calls
+%% it verify.
+
+%% As we can see, in each case there is something that does not verify.
+%% However, because of this you should be careful when interpreting
+%% VCC answers: successful verification of a function is only meaningful
+%% if everything it calls was verified.
+
+\item
+Can you see anything wrong with the above specification of \vcc{min()}?
+Can you give a simpler implementation than the one presented? Is this 
+specification strong enough to be useful? If not, how might it be
+strengthened to make it more useful?
+
+\item
+Specify a function that returns the (int) square root of its (int)
+argument. (You can try writing an implementation for the function, but
+won't be able to verify it until you've learned about loop
+invariants.)
+
+\item
+Can you think of useful functions in a real program that might
+legitimately guarantee only the trivial postcondition \vcc{_(ensures \true)}?
+\end{enumerate}
+
+\subsection{Reading and writing}
+\label{sect:writes}
+When programming in C, it is important to distinguish two kinds of
+memory access. \Def{Sequential} access, which is the default, is appropriate when
+interference from other threads (or the outside world) is not an
+issue, \eg when accessing unshared memory. Sequential accesses can be
+safely optimized by the compiler by breaking it up into multiple
+operations, caching reads, reordering operations, etc. 
+\Def{Atomic} access is required when the access might race with other
+threads, \eg a write to memory that is concurrently read or written,
+or a read to memory that is concurrently written. In this section, we
+consider only sequential access to memory, atomic access is considered
+in \secref{concurrency}. 
+
+For each memory access within a program, VCC checks that the access is accessing a 
+\Def{valid} memory object. Validity implies that the object address
+points to memory that is actually in the address space of the program
+(i.e., it has been allocated, either on the stack or on the heap, and
+has not been freed). (Validity in VCC additionally requires that the
+access is appropriately typed; this aspect is 
+described in more detail in \secref{type-safety}). 
+
+To safely read memory, we additionally need to know that the memory
+is not concurrently modified by other threads; such an object is said
+to be \Def{readable}. In general, readability can depend on complex
+program reasoning (and perhaps hints from the user), so by default,
+VCC checks a stronger condition, called \Def{thread
+  locality}. The precise definition of thread localility is given in 
+\secref{ownership}, but intuitively, an object is
+considered thread-local if it is controlled by the thread under
+consideration. For sequential programs, readability essentially
+reduces to simple validity; we point out thread-locality only because
+if VCC is unable to check that a read is safe, it will report that it
+was unable to show that the object read was thread-local.
+
+While thread locality is what is checked on a read, in practice it is
+not often used in the specifications of functions with side effects%
+\footnote{This is because the thread-locality of an object could be
+  falsified by the unwrapping of other objects; see
+  \secref{invariants}).}.  More usual is to provide the stronger
+precondition of the object being \vcc{\mutable} (also described in
+\secref{ownership}), which essentially says that object is
+private to the current thread; you should generally use this stronger
+condition in specifications%
+\footnote{The other useful idiom is to require that the read object
+  lies in the sequential ownership domain of some object that is
+  wrapped, but not written, in the function, which guarantees that it
+  remains thread-local throughout the function; see \secref{ownership}.}
+
+When a program writes to an object, that object must be
+\Def{writable}. Writability requires the object to be \vcc{\mutable}
+(because a sequential write can in general cause unpredictable results
+for a concurrent read to the same memory in another thread). 
+However, a stronger check is needed because, by default, VCC assumes that a
+function call has no side effects on its caller; for example, in
+verifying \vcc{main()} above, VCC assumed that the call of
+\vcc{min()} didn't change \vcc{newPos}. 
+In VCC, possible side effects are specified using 
+another form of function specification, called \Def{writes clauses}.
+Intuitively, the clause \vcc{_(writes p, q)} says that, 
+of the memory objects that are thread-local to the caller before the call,
+the function is going to modify only the object pointed to by \vcc{p}
+and the object pointed to by \vcc{q}%
+\footnote{More precisely, the function can modify objects that were in
+  the sequential ownership domains of \vcc{p} and \vcc{q}; see 
+  \secref{ownership}.}.
+In other words, it is roughly equivalent to a postcondition that ensures
+that all other objects local to the caller prior
+to the call remain unchanged.%
+\footnote{It's not quite the same when considering objects that are
+  wrapped; see \secref{invariants}.}  VCC allows you
+to write multiple writes clauses, and implicitly
+combines them into a single set. If a function spec contains no writes clauses, 
+it is equivalent to specifying a writes clause with empty set of
+pointers.
+
+More precisely, an object is \vcc{\writable} if it is \vcc{\mutable} and 
+it is either listed in a writes clause of the function,
+or it became \vcc{\mutable} sometime after the function was entered; the 
+latter condition guarantees that either \vcc{p} was listed in the
+writes clause or was not thread-local in the caller when the call to
+the function was made. 
+In particular, formal function parameters and local variables are
+writable as long as they are in scope and have not been explicitly
+wrapped (\secref{invariants}) or reinterpreted to a
+different type (\secref{reint}).  VCC asserts
+\vcc{\writable(p)} on each attempt to write to \vcc{*p}, as well as on
+each call to a function that lists \vcc{p} in a writes clause.
+
+Here is a simple example of a function that visibly reads and writes
+memory; it simply copies data from one location to another.
+\vccInput{c/01_copy1.c}
+In the postcondition the expression \vcc{\old(E)} returns the value
+the expression \vcc{E} had on function entry.
+Thus, our postcondition states that the new value of \vcc{*to}
+equals the value \vcc{*from} had on call entry. 
+VCC translates the function call \vcc{copy(&x,&y)} approximately as
+follows:
+\begin{VCC}
+_(assert \thread_local(&x))
+_(assert \mutable(&y))
+// record the value of x
+int _old_x = x;
+// havoc the written variables
+havoc(y);
+// assume the postcondition
+_(assume y == _old_x)
+\end{VCC}
+
+\subsection{Pure Functions}
+\label{sect:pureFunctions}
+A \Def{pure function} is one that has no side effects on the program
+state. In VCC, pure functions are not allowed to allocate memory, and can
+write only to local variables. Only pure functions can be called within VCC
+annotations. The function \vcc{min()} from \secref{functions} is an
+example of a function that can be declared to be pure; this is done by
+adding the modifier \vcc{_(vcc ispure)} to the function specification,
+\eg
+\begin{VCC}
+_(vcc ispure) min(int x, int y) ...
+\end{VCC}
+
+Being pure is a stronger condition that simply having an empty writes
+clause. This is because a writes clause has only to mention those side
+effects that might cause the caller to lose information (\ie
+knowledge) about the state, and as we have seen, VCC takes advantage
+of the kind of information callers maintain to limit the kinds of side
+effects that have to be reported.
+
+
+%% \vccInput[linerange={swap-partition}]{c/04_partition.c}
+%% \vccInput[linerange={foo-}]{c/01_swap1.c}
+
+%% Because global variables (like \vcc{z}) might be visible to callers
+%% of \vcc{copy()}, \vcc{copy()} needs to report that they might change.
+%% Note that the writes clause lists pointers to memory locations, not lvalues
+%% (\ie \vcc{_(writes &x, &y, &z)} and not \vcc{_(writes x, y, z)}).
+%% Note also that because \vcc{&z} aliases neither \vcc{&x} nor \vcc{&y}, VCC can
+%% deduce that \vcc{swap(&x, &y)} does not change \vcc{z}.
+
+%% Had we left out the writes clause from the specification of
+%% \vcc{swap()}, VCC would report several errors:
+%% \vccInput[linerange={out-}]{c/01_swap2.c}
+%% \noindent 
+
+%% Whenever a memory object is read, VCC asserts that it is
+%% thread-local; whenever a memory object is written or is
+%% mentioned in the writes clause of a function call, VCC asserts that it
+%% is writable. Try removing each of the function annotations in
+%% this example (one at a time) to see what error messages you get.
+
+%% For example, the assert/assume translation of \vcc{swap()} is%
+%% \footnote{
+%%   VCC does not generate the read and writes checks for the local variable
+%%   \vcc{tmp}. Because \vcc{tmp} is a local that never has its address
+%%   taken, it can be thought of as remaining in a register, where it is
+%%   guaranteed to remain writable.
+%% }:
+
+%% \vccInput[linerange={swap-}]{c/01_swap3.c}
+
+%% \noindent
+%% As we can see, one effect of \vcc{writes p, q} is the implicit
+%% precondition \vcc{requires \writable(p) && \writable(q)}. Such precondition
+%% needs to be checked in \vcc{foo()}, at the place where it calls \vcc{swap()}.
+%% In other words, the called function can write at most what the caller can write.
+%% In particular if we forget to list \vcc{&x} in the writes
+%% clause of \vcc{foo()} we would get an error when it tries to call a
+%% function that possibly writes \vcc{&x}:
+
+%% \vccInput[linerange={out-}]{c/01_swap4.c}
+
+
+%% You might wonder why cannot we just have 
+%% \vcc{requires \writable(p)} and instead have the specialized writes clause.
+%% The reason is that the writes clause also specifies that nothing
+%% outside of the writes clause will be changed.
+%% This is why we can prove that \vcc{y} is still \vcc{42} after the call
+%% to \vcc{boundedIncr(&x)}. 
+
+
+%A predicate \vcc{\mutable(p)} states that the object pointed to by \vcc{p}
+%is allocated, ``belongs'' to the current thread, and is in a ``phase of life''
+%that allows for modification.
+%We will get into details all of these later.
+%For now we just need to know that in order to be able to write to \vcc{*p}
+%one needs to know that \vcc{p} was listed in the writes clause \emph{and} \vcc{\mutable(p)}.
+%For example, if we remove the \vcc{_(writes ...)} clause from the
+%\vcc{boundedIncr()} we get the following output:
+
+\subsection*{Exercises}
+\begin{enumerate}
+\item
+Could the postcondition of \vcc{copy} have been written equivalently
+as the simpler \vcc{*to == *from}? If not, why not?
+\item
+Specify, write, and verify a function that swaps the values pointed to
+by two \vcc{int} pointers. Hint: use \vcc{\old(...)} in the postcondition.
+% We did not explain anything about arrays at this point --M
+%\item
+%Specify a function that takes a pointer to the first element of an
+%array of distinct \vcc{int}s and sorts the array 
+%in ascending order%
+%\footnote{Specifying this for arrays with duplicates is somewhat more
+%  involved.}. 
+%\item
+%Specify a function that takes a pointer to the first element of an
+%array of distinct \vcc{int}s and the size of the array and finds an index of the
+%smallest element occurring in the array. Write a recursive
+%implementation of this function and verify that it satisfies your
+%specification. 
+%\item
+%Use the last function and the swap function defined in the text to
+%define and verify a recursive function that sorts an array. 
+%\item 
+%Verify recursive variants of other sorting routines.
+%\item
+%Write a recursive function that checks whether a given element occurs
+%in a sorted array.
+\end{enumerate}
+
+

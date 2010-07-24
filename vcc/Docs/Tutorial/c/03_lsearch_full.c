@@ -4,8 +4,7 @@
 unsigned lsearch(int elt, int *ar, unsigned sz)
   _(requires \thread_local_array(ar, sz))
   _(ensures \result != UINT_MAX ==> ar[\result] == elt)
-  _(ensures \result == UINT_MAX ==> 
-            \forall unsigned i; i < sz ==> ar[i] != elt)
+  _(ensures \forall unsigned i; i < sz && i < \result ==> ar[i] != elt)
 {
   unsigned i;
   for (i = 0; i < sz; i++)
