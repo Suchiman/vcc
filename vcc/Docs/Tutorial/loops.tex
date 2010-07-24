@@ -144,36 +144,31 @@ that checks whether a sorted array contains a given value).
 %We shall start with ghost functions, which in this case is just a
 %macro for another formula.
 
-% SHould we have a simpler example?
-\subsection{Writes clauses for loops}
-\label{sect:sorting}
-
-VCC treats loops almost like functions, in that it abstracts the
-behavior of all but the last iteration of the loop into a havoc of the
-variables modified by the loop and the assumption of the loop
-invariant. VCC lets you provide more precise specifications for loops
-by providing writes clauses.
+% SHould we have a simpler example? -E
+% This is a bad example, since it verifies without the loop invariant! -E
+%% \subsection{Writes clauses for loops}
+%% \label{sect:sorting}
 
 
-The function below implements the bozo-sort algorithm.
-The algorithm works by swapping two random elements in an array, checking if the resulting array
-is sorted, and repeating otherwise.
-We do not recommend using it in production code:
-it's not stable, and moreover has a fairly bad time complexity.
-Still, it will serve us to illustrate the use of logic functions, and later (\secref{sorting-perm}) ghost data.
+%% The function below implements the bozo-sort algorithm.
+%% The algorithm works by swapping two random elements in an array, checking if the resulting array
+%% is sorted, and repeating otherwise.
+%% We do not recommend using it in production code:
+%% it's not stable, and moreover has a fairly bad time complexity.
+%% Still, it will serve us to illustrate the use of logic functions, and later (\secref{sorting-perm}) ghost data.
 
-\vccInput[linerange={begin-out}]{c/04_bozosort.c}
+%% \vccInput[linerange={begin-out}]{c/04_bozosort.c}
 
-In addition to specifying the writes clause on the function, we also specify it on
-the loop.
-This is common for loops that write the heap.
-Typically, the writes clause for a loop is the same clause you would need 
-on a function whose body was the loop body. 
-% todo: this is rather cryptoc -E
-If there is no writes clauses on the loop, VCC takes the writes clause from the 
-function, but interprets it with respect to the beginning of the function,
-and not beginning of the loop.
-Thus, in general, when the loop writes the heap, you will want to specify a writes clause on it.
+%% In addition to specifying the writes clause on the function, we also specify it on
+%% the loop; this is common for loops that write the heap.
+%% Typically, the writes clause for a loop is the same clause you would need 
+%% on a function whose body was the loop body. 
+%% % todo: this is rather cryptoc -E
+%% If there is no writes clauses on the loop, VCC takes the writes clause from the 
+%% function, but interprets it with respect to the beginning of the function,
+%% and not beginning of the loop.
+%% Thus, in general, when the loop writes the heap, you will want to specify a writes clause on it.
+% todo: should we discuss the framing aspect?
 
 %% The specification that we use is that the output of the sorting routine is sorted.
 %% Unfortunately, we do not say that it's actually a permutation of the input.
