@@ -192,8 +192,8 @@ was unable to show that the object read was thread-local.
 
 You can specify that an object (pointed to by) a pointer \vcc{p} is
 thread-local by the expression \vcc{\thread_local(p)}. 
-The expression \vcc{\thread_local_array(ar, sz)} essentially translates to 
-the the conjunction of \vcc{\thread_local(ar[i])} for each \vcc{i<sz}. 
+The expression \vcc{\thread_local_array(ar, sz)} is
+syntactic sugar for \vcc{\forall unsigned i; i < sz ==> \thread_local(&ar[i])}.
 
 While thread locality is what is checked on a read, in practice it is
 not often used in the specifications of functions with side effects%
@@ -207,7 +207,11 @@ condition in specifications%
 \footnote{The other useful idiom is to require that the read object
   lies in the sequential ownership domain of some object that is
   wrapped, but not written, in the function, which guarantees that it
-  remains thread-local throughout the function; see \secref{ownership}.}
+  remains thread-local throughout the function; see
+  \secref{ownership}.} Similar to \vcc{\thread_local_array},
+\vcc{\mutable_array(ar,sz)} is defined as
+\vcc{\forall unsigned i; i < sz ==> \mutable(&ar[i])}.
+
 
 When a program writes to an object, that object must be
 \Def{writable}. Writability requires the object to be \vcc{\mutable}
