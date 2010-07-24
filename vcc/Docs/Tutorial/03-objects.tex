@@ -158,24 +158,24 @@ This is performed by the unwrap operation, which translates to the following ste
 The wrap operation does just the reverse:
 \begin{enumerate}
 \item
-assert that the object is unwrapped (inconsistent and owned by the current thread;
+assert that the object is mutable (inconsistent and owned by the current thread;
 note that this does not mean ``not wrapped''),
 \item assert the invariant, 
 \item set the \vcc{\consistent} field to true (this implicitly prevents further writes to the fields of the object)
 \end{enumerate}
-Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\unwrapped(...)}%
+Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\mutable(...)}%
 and at the assert/assume desugaring of \vcc{sstr_append_char()} function.
 
 \begin{VCC}
 logic bool \wrapped(\object o) =
   o->\consistent && o->\owner == \me;
-logic bool \unwrapped(\object o) =
+logic bool \mutable(\object o) =
   !o->\consistent && o->\owner == \me;
 \end{VCC}
 \vccInput[linerange={assert-out}]{c/05_safestring_assert.c}
 
 \noindent
-The definitions of \vcc{\wrapped(...)} and \vcc{\unwrapped(...)}
+The definitions of \vcc{\wrapped(...)} and \vcc{\mutable(...)}
 use the \vcc{\object} type.
 It is much like \vcc{void*}, in the sense that it is a wildcard for any pointer type.
 However, unlike \vcc{void*}, it also carries the dynamic information about the type of the pointer.
@@ -228,8 +228,8 @@ To achieve that VCC performs \Def{ownership transfers},
 when unwrapping and wrapping objects.
 \begin{itemize}
 \item
-When object is unwrapped, in addition to five steps described in previous section,
-the \vcc{\owner} field of all objects owned by unwrapped object is set to \vcc{\me}.
+When object is mutable, in addition to five steps described in previous section,
+the \vcc{\owner} field of all objects owned by mutable object is set to \vcc{\me}.
 Additionally, these objects are added to the writes set.
 \item
 When object \vcc{p} is wrapped, in addition to previously described steps, for every object \vcc{q} that needs to be owned by \vcc{p}
@@ -253,7 +253,7 @@ Thus, at the beginning of the function the string is owned by the current thread
 whereas, by the string invariant, the content is owned by the string and consistent.
 After unwrapping the string, the ownership of the content goes to the current thread,
 but the content remains consistent.
-Thus, unwrapping the string makes the string unwrapped, and the content wrapped.
+Thus, unwrapping the string makes the string mutable, and the content wrapped.
 Then we unwrap the content (which doesn't own anything, so the thread gets no new wrapped objects), perform the changes,
 and wrap the content.
 Finally, we wrap the string.
@@ -351,7 +351,7 @@ Additionally, \vcc{\wrapped(c)} holds before and after as expected.
 
 \begin{note}
 \textbf{How is the write set updated?} \\
-Before allowing a write to \vcc{*p} VCC will assert \vcc{\unwrapped(p)}.
+Before allowing a write to \vcc{*p} VCC will assert \vcc{\mutable(p)}.
 Additionally, it will assert that either \vcc{p} is in the writes
 clause, or the consistency or ownership of \vcc{p} was updated after the current
 function started executing.
@@ -397,7 +397,7 @@ Let's then take a look at an ownership graph:
 we will have a bunch of threads as roots.
 In particular,
 the current thread will own a number of objects, some of them
-unwrapped (inconsistent and thus not owning anything), but other wrapped (consistent and
+mutable (inconsistent and thus not owning anything), but other wrapped (consistent and
 so with possibly large ownership trees (domains) hanging off them).
 The ownership domains of the wrapped objects are disjoint
 (in the grand ownership tree of the thread they are all at the same level).
@@ -547,7 +547,7 @@ portions of memory, one of them is properly contained in the other; if
 a \vcc{struct} is typed, then each of its members is typed; and if a
 \vcc{union} is typed, then exactly one of its members is typed.  The
 definition of validity is folded into the definitions of
-\vcc{\thread_local} and \vcc{\unwrapped}; these definitions check not
+\vcc{\thread_local} and \vcc{\mutable}; these definitions check not
 only that the memory pointed to exists, but that the pointer to it is
 valid.
 

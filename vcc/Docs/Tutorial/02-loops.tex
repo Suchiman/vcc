@@ -261,8 +261,8 @@ knowledge can be summarized as follows:
 \item
 On entry to a function, it knows the preconditions of the function.
 \item
-A memory object is writable if it is unwrapped and is either listed in the 
-writes clause of the function or was unwrapped after the function was entered.
+A memory object is writable if it is mutable and is either listed in the 
+writes clause of the function or was mutable after the function was entered.
 \item
 After \vcc{_(assume E)}, it knows what it knew before the assumption,
 and in addition knows \vcc{E != 0}.
