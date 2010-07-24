@@ -1,0 +1,257 @@
+\section{Ghosts}
+
+Usually there are many ways of implementing a given data structure.
+For example, a set might be implemented as a linked list, an array, or a hash table.
+
+When reasoning about a program which uses a data structure we don't want to be
+concerned with implementation details of the data structure.
+We should reason at somewhat higher, abstract level.
+For example, when we use a linked list as a representation of a set, we should not be concerned
+with how the list nodes are laid out in memory.
+You would then need to include \Def{ghost data} to store this set and write small bits of \Def{ghost code} to
+update it.  
+Ghost code is seen by VCC but not by the C compiler, and
+so introduces no runtime overhead. Part of the VCC philosophy is that
+programmers would rather do extra programming than drive interactive
+theorem provers, so ghost code is the preferred way to help VCC
+understand why your program works.  
+%Thus, you interact with VCC entirely at the level of code and program states;
+%usually, you can safely ignore the mathematical reasoning going on ``under the
+%hood''.
+
+In fact we have already used ghost data, which VCC introduced: \vcc{\consistent},
+\vcc{\owner}, and friends are all ghost fields, not seen by the C compiler.
+The \vcc{_(wrap ...)} and \vcc{_(unwrap ...)} operations are ghost code.
+In this section we're just going to introduce some ghost data and code ourselves.
+
+It is only rarely the case that a simple C type, say \vcc{unsigned int}, would be suitable
+to store such a data-structure abstraction (how would one store an unbounded set in a primitive C type?).
+To that end, VCC provides \Def{map types}.
+The syntax is similar to syntax of array types, \vcc{int m[T*]} defines a map \vcc{m} from \vcc{T*}
+to \vcc{int}.
+That is the type of expression \vcc{m[p]} is \vcc{int}, provided that \vcc{p} is a pointer
+of type \vcc{T*}.
+A map \vcc{T* a[unsigned]} is similar to an array of pointers of length $2^{32}$.%
+\footnote{
+  Because a map can be used only in ghost code, 
+  the issue of runtime memory consumption does not apply to it.}
+A map \vcc{bool s[int]} can be thought of as a set of \vcc{int}s: the operation
+\vcc{s[k]} will return true if and only if the element \vcc{k} is in the set \vcc{s}.
+
+Let's then have a look at an example of a list abstracted as a set:
+
+\vccInput[linerange={types-init}]{c/07_list0.c}
+
+\noindent
+The invariant states that:
+\begin{itemize}
+\item the list owns the head node (if it's non-null)
+\item if the list owns a node, it also owns the next node (provided it's non-null)
+\item if the list owns a node, then its data is present in the set \vcc{val};
+      this binds the values stored in the implementation to the abstract representation
+\end{itemize}
+You may note that the set \vcc{val} is under-specified: 
+it might be that it has some elements not stored in the list.
+We'll get back to this issue later.
+Now let's have a look at the specification of a function adding a
+node to the list:
+
+\vccInput[linerange={add-endspec}]{c/07_list0.c}
+
+\noindent
+The writes-clause and contracts about the list being wrapped are similar to what
+we've seen before.
+Then, there are the contracts talking about the result value.
+This function might fail because there is not enough memory to allocate list node,
+in such case it will return a non-zero value (an error code perhaps),
+and the contracts guarantee that the set represented by the list will not be changed.
+However, if the function succeeds (and thus returns zero), the contract specifies
+that if we take an arbitrary integer \vcc{p}, then it is a member of the new abstract
+value if and only if it was already a member before or it is \vcc{k}.
+
+In other words, the new value of \vcc{l->val} will be the union of the old
+abstract value and the element \vcc{k}.
+Ideally, this contract is all that the caller will need to know about that function:
+what kind of effect does it have on the abstract state. 
+It doesn't specify if the node will be appended at the beginning, or in the middle
+of the list.
+It doesn't talk about possible duplicates or memory allocation.
+Everything about implementation is completely abstracted away.
+Still, we need a concrete implementation, and here it goes:
+
+\vccInput[linerange={endspec-member}]{c/07_list0.c}
+
+\noindent
+We allocate the node, unwrap the list, initialize the new node
+and wrap it (we want to wrap the list, and thus everything it is going to own will
+need to be wrapped beforehand; the list is wrapped at the end of the 
+unwrapping block), and
+prepend the node at the beginning of the list.
+Then we update the owns set (we've also already seen that).
+Finally, we update the abstract value using a \Def{lambda expression}.
+%\subsection{Lambda expressions}
+The expression \vcc{\lambda T x; E} returns a map, which for
+any \vcc{x} returns the value of expression \vcc{E},
+which can reference \vcc{x}.
+If the type of \vcc{E} is \vcc{S}, then the type of map, returned by the
+lambda expression, is \vcc{S[T]}.
+An assignment \vcc{m = \lambda T x; E} has a similar effect to
+the following assumption (note that \vcc{E} will most likely reference \vcc{x}):
+\begin{VCC}
+_(assume \forall T x; m[x] == E)
+\end{VCC}
+\noindent
+Unlike assumptions, lambda expressions do not compromise 
+soundness of the verifier.
+Just like for assumptions,
+the expression is always evaluated in the state as it was
+when the lambda was first defined, for example:
+\begin{VCC}
+int x = 1;
+int m[int] = \lambda int y; y + x;
+_(assert m[0] == 1) // succeeds
+x = 2;
+_(assert m[0] == 1) // still succeeds
+\end{VCC}
+One can imagine, that when this lambda expression is defined,
+VCC will iterate over all possible values of \vcc{x},
+and store the value of \vcc{E} in \vcc{m[x]}.
+Lambda expressions are much like function values in functional
+languages or delegates in C\#.
+
+\begin{note}
+The body of our lambda expression shows similarity to the body
+of the quantifier we have used in specification.
+It doesn't, however, have to be the same:
+\begin{VCC}
+int[int] foo(int v)
+  _(ensures \forall int x; x >= 7 ==> \result[x] >= v)
+{
+  return \lambda int y; (y&1) == 0 ? INTMAX : v;
+}
+\end{VCC}
+Thus, the specifications for lambda expressions can hide information.
+\end{note}
+
+
+\subsection{Expressing reachability}
+
+\begin{note}
+The following subsection, till the beginning of \secref{concurrency} (which is
+about concurrency), might be somewhat difficult upon first reading of this
+tutorial.
+It is not required to understand \secref{concurrency}.
+\end{note}
+
+At minimum the list should support adding elements and checking
+for membership. For example, we would expect:
+
+\vccInput[linerange={member-endspec}]{c/07_list.c}
+
+\noindent
+Our current list invariant is strong enough only to show
+\vcc{\result != 0 ==> l->val[k]}, because it only says
+that if the list owns something, then it's in the \vcc{val}.
+It also says that if something can be reached by following
+the \vcc{next} field from the \vcc{head}, then it is owned.
+What we want to additionally say is that if something is in the \vcc{val}
+set, then it can be reached from the \vcc{head}.
+Unfortunately, such property is not directly expressible in first-order
+logic (which is the underlying logic of VCC specifications).
+To workaround this problem we associate with each node
+the set of values stored in all the following nodes and
+the current node.
+Additionally we say that the set for \vcc|NULL| node is empty.
+This way, as we walk down the \vcc|next| pointers we can keep
+track of all the elements that can be still reached.
+Once we reach the \vcc|NULL| pointer, we know that nothing
+more can be reached.
+The set of reachable nodes are stored as maps from
+\vcc|int| to \vcc|bool|.
+We need one such map per each node, so we just
+put a ghost map from \vcc|struct Node*| to the sets.
+Alternatively, we could store these sets as a field inside of each node,
+but maps gives more flexibility in updating it using lambda expressions.
+
+\vccInput[linerange={type-init}]{c/07_list.c}
+
+\noindent
+All these changes in the invariant do not affect
+the contract of \vcc{add()} function, and the only change in the body
+is that we need to replace the update of \vcc{l->val} with the following:
+
+\vccInput[linerange={specupdate-updateend}]{c/07_list.c}
+
+\noindent
+That is adding a node at the head only affect the followers set of the new head,
+and the followers sets of all the other nodes remain unchanged.
+Now let us have a look at the \vcc{member()} function:
+
+\vccInput[linerange={member-out}]{c/07_list.c}
+
+\noindent
+The invariants of the \vcc{for} loop state that we only iterate over
+nodes owned by the list, and that at each iteration \vcc{k} is in the
+set of values represented by the list if and only if it is in the followers
+set of the current node.
+Both are trivially true for the head of the list, for the first iteration
+of the loop.
+For each next iteration, the invariant of the list tells us that by following
+the \vcc|next| pointer we stay in the owns set.
+It also tells us, that the \vcc|followers[n->next]| differs
+from \vcc|followers[n]| only by \vcc|n->data|.
+Thus, if \vcc|n->data| is not \vcc|val|, then the element,
+if it's in \vcc|followers[n]| must be also in \vcc|followers[n->next]|.
+
+\subsection{Sorting revisited}
+\label{sect:sorting-perm}
+
+In \secref{sorting} we have considered the bozo-sort algorithm. 
+We have verified that the array after it returns is sorted.
+But we would also like to know that it's a permutation of the input array.
+To do that we will return a ghost map, which states the exact permutation
+that the sorting algorithm produced.
+
+\vccInput[linerange={begin-out}]{c/04_bozosort_perm.c}
+
+This sample introduces two new features.
+First is the output ghost parameter \vcc{_(out perm_t perm)}.
+We use it when we need a function to return something in addition to what it normally returns.
+To call \vcc{bozo_sort()} you need to supply a local variable to hold
+the permutation when the function exits, as in:
+\begin{VCC}
+void f(int *buf, unsigned len)
+  // ...
+{
+  _(ghost perm_t myperm; )
+  // ...
+  bozo_sort(buf, len _(out myperm));
+}
+\end{VCC}
+The value is only copied on exit of \vcc{bozo_sort()}, thought its execution 
+it has its own copy.
+It is thus different than passing a pointer to the local.
+It is also more efficient for the verifier.
+
+The other, somewhat more advanced, feature is explicit state manipulation.
+The function \vcc{\now()} returns the current state of the heap (\ie dynamically
+allocated memory; in future it will also work for locals, but for now it only applied
+to memory location, address of which was taken). 
+The state is encapsulated in a value of type \vcc{\state}.
+The expression \vcc{\at(s, E)} returns value of expression
+\vcc{E} as evaluated in state \vcc{s}. 
+You can see  \vcc{\old(...)} as a special case of this.
+
+Thus, the algorithm maintains the map containing the current permutation of
+the data, with respect to the initial data (we store the initial state in
+\vcc{s0}).
+The initial permutation is just identity, and whenever we swap elements of
+the array, we also swap elements of the permutation.
+
+\subsection*{Exercises}
+\begin{enumerate}
+\item
+Write and verify an iterative program that sorts an array of ints using
+bubblesort. The specification should be the same as for bozo-sort above.
+\end{enumerate}
+
