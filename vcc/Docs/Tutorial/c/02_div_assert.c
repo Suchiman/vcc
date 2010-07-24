@@ -1,31 +1,37 @@
 #include <vcc.h>
 
-_(axiom \forall unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b)
-_(axiom \forall unsigned a,b; a < b && b != 0 ==> a % b == a)
+typedef unsigned int UINT;
 
-unsigned anything()
-  _(reads \universe());
-/*{mod}*/
-unsigned mod(unsigned a, unsigned b)
+void divide(UINT x, UINT d, UINT *q, UINT *r)
 {
-  unsigned res = a;
+  // assume the precondition
+  _(assume d > 0 && q != r)
+  UINT lq = 0;
+  UINT lr = x;
 
-  // check that invariant initially holds
-  _(assert a % b == res % b)
+  // check that the invariant holds on loop entry
+  _(assert x == d*lq + lr)
+  
+  // start an arbitrary iteration
+  // havoc variables modified in the loop  
+  havoc(lq);
+  havoc(lr);
+  // assume that the loop invariant holds
+  _(assume x == d*lq + lr)
+  // jump out if the loop terminated
+  if (!(lr >= d) goto loopExit;
+  {
+    lq++;
+    lr -= d;
+  }
+  // check that the loop preserves the invariant
+  _(assert x == d*lq + lr)
+  // end of the loop
+  _(assume \false)
 
-  // start an arbitrary loop iteration
-  res = anything();
-  _(assume a % b == res % b) // assume the invariant
-  if (res < b) goto theEnd;
-  res -= b;
-  _(assert a % b == res % b) // check the invariant
-  _(assume \false) // end of an iteration
-
-theEnd:
-  ;
-  _(assert res == a % b) // translation of ensures
-  return res;
+  loopExit:
+  *q = lq;
+  *r = lr;
+  // assert postcondition
+  _(assert x == d*(*q) + *r && *r < d)
 }
-/*`
-Verification of mod succeeded.
-`*/
