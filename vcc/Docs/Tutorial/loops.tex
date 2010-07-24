@@ -106,7 +106,7 @@ The loop invariant says that \vcc{elt}  does not occur in \vcc{ar[0]}\dots
 \vcc{ar[i - 1]}.
 
 \subsection*{Exercises}
-\begin{itemize}
+\begin{enumerate}
 \item
 Write and verify a program that takes two arrays and checks whether
 the arrays are equal (\ie, whether they contain the same sequence of
@@ -128,7 +128,18 @@ contain a common element.
 \item
 Write and verify a program for binary search (a program
 that checks whether a sorted array contains a given value).
-\end{itemize}
+\item
+Write and verify an iterative program that copies an array if ints from one
+location to another.% Repeat with 2-dimensional arrays.
+\item
+Write and verify an iterative program that sorts an array of ints using
+bubblesort. The specification should be the same as for bozo-sort above.
+\item 
+Write and verify a program that takes a 2-dimensional array of ints in
+which every row and column is sorted, and checks whether a given int
+occurs in the array.
+\end{enumerate}
+
 
 %\Def{Ghost data} contains auxiliary information needed to convince VCC about correctness of a program.
 %You can think of it as data that the program maintains for the purpose of debugging.
@@ -257,19 +268,4 @@ that checks whether a sorted array contains a given value).
 %% control jumps back to the top of the loop (including the end of the
 %% loop body), it asserts the loop invariant.
 %% \end{itemize}
-
-\subsection*{Exercises}
-
-\begin{enumerate}
-\item
-Write and verify an iterative program that copies an array if ints from one
-location to another.% Repeat with 2-dimensional arrays.
-\item
-Write and verify an iterative program that sorts an array of ints using
-bubblesort. The specification should be the same as for bozo-sort above.
-%\item 
-%Write and verify a program that takes a 2-dimensional array of ints in
-%which every row and column is sorted, and checks whether a given int
-%occurs in the array.
-\end{enumerate}
 

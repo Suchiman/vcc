@@ -283,6 +283,74 @@ Thus, a writes clause of the form
 \vcc{_(writes(\array_range(arr,len)))}
 allows writing to all elements of the array.
 
+\subsection{Exercises}
+\begin{enumerate}
+\item
+Could the postcondition of \vcc{copy} have been written equivalently
+as the simpler \vcc{*to == *from}? If not, why not?
+\item
+Specify a program that takes two arrays and checks whether
+the arrays are equal (\ie, whether they contain the same sequence of
+elements).
+\item
+Specify a program that takes an array and checks whether it
+contains any duplicate elements.
+\item
+Specify a program that checks whether a given array
+is a palindrome.
+\item
+Specify a program that checks whether two arrays contain a
+common element.
+\item
+Specify, write, and verify a function that swaps the values pointed to
+by two \vcc{int} pointers. Hint: use \vcc{\old(...)} in the
+postcondition.
+\item
+Specify a function that copies one array to annother array of the same
+size. (Don't worry about array aliasing.)
+\item 
+Specify a function that takes a text (stored in an array) and a string
+(stored in an array) and checks whether the string occors within the
+text.
+\end{enumerate}
+
+\subsection{Contracts on Blocks} 
+
+Sometimes, a large function will contain an inner block that
+implements some simple functionality, but you don't want to refactor
+it into a separate function (\eg because you don't want to bother with
+having to pass in a bunch of parameters, or because you want to verify
+code without rewriting it). VCC lets you conduct your verification as
+if you had done so, by putting a function-like specification on the
+block%
+\footnote{
+  This feature has not yet been implemented in the new VCC syntax.
+}. This is done by simply writing function specifications in the
+preceding the block, \eg
+\begin{VCC}
+...
+x = 5;
+_(requires x == 5)
+_(writes &x)
+_(ensures x == 6)
+{
+  x++;
+}
+...
+\end{VCC}
+VCC translates this by (internally) refactoring the block into a
+function, the parameters of which are the variables from the
+surrounding scope that are mentioned within the block (or the block
+specs). The advantages of this separation is that within the block,
+VCC can ignore what it knows about the preceding context, and
+following the block, VCC can ``forget'' what it knew inside the block
+(other than what escapes through the \vcc{ensures} clauses); in each
+case, this results in less distracting irrelevant detail for the
+theorem prover.
+
+Block contracts are not allowed if the block contains a \vcc{return},
+or a \vcc{goto} to a label outside the block.
+
 \subsection{Pure Functions and Logic Functions}
 \label{sect:pureFunctions}
 A \Def{pure function} is one that has no side effects on the program
@@ -328,7 +396,12 @@ void sort(int *buf, unsigned len)
   _(writes \array_range(buf, len))
   _(ensures sorted(buf, len));
 \end{VCC}
+\
 
+\noindent Note that this specification says that the buffer is
+sorted in the poststate, but does not say that it is a permutation of
+the elements that it had in the prestate; we address this in
+\secref{ghosts}.
 
 %% \vccInput[linerange={swap-partition}]{c/04_partition.c}
 %% \vccInput[linerange={foo-}]{c/01_swap1.c}
@@ -393,41 +466,18 @@ void sort(int *buf, unsigned len)
 \subsection*{Exercises}
 \begin{enumerate}
 \item
-Could the postcondition of \vcc{copy} have been written equivalently
-as the simpler \vcc{*to == *from}? If not, why not?
-\item
-Specify, write, and verify a function that swaps the values pointed to
-by two \vcc{int} pointers. Hint: use \vcc{\old(...)} in the
-postcondition.
-\item
-Specify a function that copies one array to annother array of the same
-size. (Don't worry about array aliasing.)
-\item
-Extend the specification of array sorting to guarantee that the sort
+Extend the specification of sorting to guarantee that the sort
 is stable (i.e., it shouldn't change the array if it is already
 sorted).  
 \item
-% We did not explain anything about arrays at this point --M
-%\item
-%Specify a function that takes a pointer to the first element of an
-%array of distinct \vcc{int}s and sorts the array 
-%in ascending order%
-%\footnote{Specifying this for arrays with duplicates is somewhat more
-%  involved.}. 
-%\item
-%Specify a function that takes a pointer to the first element of an
-%array of distinct \vcc{int}s and the size of the array and finds an index of the
-%smallest element occurring in the array. Write a recursive
-%implementation of this function and verify that it satisfies your
-%specification. 
-%\item
-%Use the last function and the swap function defined in the text to
-%define and verify a recursive function that sorts an array. 
-%\item 
-%Verify recursive variants of other sorting routines.
-%\item
-%Write a recursive function that checks whether a given element occurs
-%in a sorted array.
+Extend the specification of sorting to guarantee that the sorting
+doesn't change the set of numbers occurring in the array (though it
+might change their multiplicities). 
+\item
+Write, without using the \vcc{\%} operator, logic functions that
+specify (1) that one number (\vcc{unsigned int}) divides another
+evenly, (2) that a number is prime, (3) that two numbers are
+relatively prime, (4) the greatest common divisor of two numbers.
 \end{enumerate}
 
 
