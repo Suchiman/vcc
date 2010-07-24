@@ -513,13 +513,13 @@ rarely used in preconditions%
 \footnote{This is because the thread-locality of an object could be
   falsified by the unwrapping of other objects; see
   \secref{invariants}).}  More usual is to provide the stronger
-precondition of the object being \vcc{\unwrapped} (also described in
+precondition of the object being \vcc{\mutable} (also described in
 \secref{ownership}), which essentially says that object is
 private to the current thread; you should generally use this stronger
 condition in specifications.
 
 When a program writes to an object, that object must be
-\Def{writable}. Writability requires the object to be \vcc{\unwrapped}
+\Def{writable}. Writability requires the object to be \vcc{\mutable}
 (because a sequential write can in general cause unpredictable results
 for a concurrent read to the same memory in another thread). 
 However, a stronger check is needed because, by default, VCC assumes that a
@@ -545,9 +545,9 @@ combines them into a single set. If a function spec contains no writes clauses,
 it is equivalent to specifying a writes clause with empty set of
 pointers.
 
-More precisely, an object is \vcc{\writable} if it is \vcc{\unwrapped} and 
+More precisely, an object is \vcc{\writable} if it is \vcc{\mutable} and 
 it is either listed in a writes clause of the function,
-or it became \vcc{\unwrapped} sometime after the function was entered; the 
+or it became \vcc{\mutable} sometime after the function was entered; the 
 latter condition guarantees that either \vcc{p} was listed in the
 writes clause or was not thread-local in the caller when the call to
 the function was made. 
@@ -617,12 +617,12 @@ equals the value \vcc{*from} had on call entry.
 %% to \vcc{boundedIncr(&x)}. 
 
 
-%A predicate \vcc{\unwrapped(p)} states that the object pointed to by \vcc{p}
+%A predicate \vcc{\mutable(p)} states that the object pointed to by \vcc{p}
 %is allocated, ``belongs'' to the current thread, and is in a ``phase of life''
 %that allows for modification.
 %We will get into details all of these later.
 %For now we just need to know that in order to be able to write to \vcc{*p}
-%one needs to know that \vcc{p} was listed in the writes clause \emph{and} \vcc{\unwrapped(p)}.
+%one needs to know that \vcc{p} was listed in the writes clause \emph{and} \vcc{\mutable(p)}.
 %For example, if we remove the \vcc{_(writes ...)} clause from the
 %\vcc{boundedIncr()} we get the following output:
 
