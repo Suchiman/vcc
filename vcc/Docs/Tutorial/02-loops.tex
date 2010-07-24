@@ -27,57 +27,54 @@ in the loop body.
 
 Let's look at an example:
 \vccInput[]{c/02_div.c}
-
 \noindent
-\itodo{This example currently requires axioms about arithmetic that should actually
-come by default with VCC.
-This will be fixed soon.}
-The \vcc{mod()} function computes a reminder of a integer division
-using iterated subtraction%
-\footnote{Of course C has a built-in operator to calculate this,
-but you can imagine that you are verifying code designed to execute on
-a machine that doesn't have the operator built-in.}
+
+The \vcc{divide()} function computes the quotient and reminder of integer division
+of \vcc{x} by \vcc{d} using the classic division algorithm.
 %% (Later, we'll see similar examples with sets, which are built into
 %% the specification language, but not into C.)
-The loop invariant says that the \vcc{res % a} stays unchanged,
-and equal to \vcc{a % b}. 
-VCC translates this example roughly as follows:
-\vccInput[linerange={mod-999}]{c/02_div_assert.c}
+The loop invariant says that we have a suitable answer, except with a
+remainder that is possibly too big. VCC translates this example roughly as follows:
+\vccInput[]{c/02_div_assert.c}
 
 \noindent
-The invariant is asserted wherever control moves to the top of the
+Note that this translation has removed all cycles from the control
+flow graph of the function (even though it has gotos); this means that
+VCC can use the rules of the previous sections to reason about the
+program. In VCC, all program reasoning is reduced to reasoning about
+acyclic chunks of code in this way.
+
+Note that the invariant is asserted wherever control moves to the top of the
 loop (here, on entry to the loop and at the end of the loop body). On
 loop entry, VCC forgets the value of each variable modified in the
-loop (in this case just \vcc{res}), and assumes the invariant (which
-places some constraints on \vcc{res}).  VCC doesn't have to consider
-the actual jump from the end of the loop iteration back to the top of
-the loop (since it has already checked the loop invariant), so further
-consideration of that branch is cut off with \vcc{_(assume \false)}.
-The only way to exit this particular loop is through the
-\vcc{break} statement, (which is translated to a \vcc{goto}). At this
-control point, we know the loop invariant holds and that \vcc{res <  b}, 
-which together imply the postcondition of the function. Since this is
-the only location from which control jumps to \vcc{theEnd}, the
-postcondition is also known at \vcc{theEnd}, so the assertion generated
-by the postcondition follows.
+loop (in this case just the local variables \vcc{lr} and \vcc{ld}),
+and assumes the invariant (which places some constraints on these
+variables).  VCC doesn't have to consider the actual jump from the end
+of the loop iteration back to the top of the loop (since it has
+already checked the loop invariant), so further consideration of that
+branch is cut off with \vcc{_(assume \false)}.  Each loop exit is
+translated into a \vcc{goto} that jumps to just beyond the loop (to
+\vcc{loopExit}). At this control point, we know the loop invariant
+holds and that \vcc{lr < d}, which together imply that we have
+computed the quotient and remainder.
 
-If the loop had been of the form
-\begin{VCC}
-while (res >= b) 
-  _( invariant a % b == res % b )
-{
-  res -= b;
-}
-\end{VCC}
-the assert/assume translation would be exactly the same: the invariant
-would be assumed before checking the guard, despite the fact that
-guard syntactically precedes the invariant.
+%% If the loop had been of the form
+%% \begin{VCC}
+%% while (res >= b) 
+%%   _( invariant a % b == res % b )
+%% {
+%%   res -= b;
+%% }
+%% \end{VCC}
+%% the assert/assume translation would be exactly the same: the invariant
+%% would be assumed before checking the guard, despite the fact that
+%% guard syntactically precedes the invariant.
 
 % This is still about array 
 % This example isn't really about the unnecessity of invariants
 %% Sometimes invariants are not required, in particular when the loop
 %% doesn't modify any interesting locations. 
-For a more interesting example of a loop, consider 
+For another, more typical example of a loop, consider 
 the following function that uses linear search to determine if a value
 occurs within an array:
 \vccInput{c/03_lsearch.c}

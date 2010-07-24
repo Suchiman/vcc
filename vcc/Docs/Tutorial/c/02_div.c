@@ -1,20 +1,24 @@
 #include <vcc.h>
-//--
-_(axiom \forall unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b)
-_(axiom \forall unsigned a,b; a < b && b != 0 ==> a % b == a)//--
-unsigned mod(unsigned a, unsigned b)
-  _(ensures \result == a % b)
-{
-  unsigned res = a;
 
-  for (;;)
-    _(invariant a % b == res % b)
+typedef unsigned int UINT;
+
+void divide(UINT x, UINT d, UINT *q, UINT *r)
+_(requires d > 0 && q != r)
+_(writes q,r)
+_(ensures x == d*(*q) + *r && *r < d)
+{
+  UINT lq = 0;
+  UINT lr = x;
+  while (lr >= d)
+  _(invariant x == d*lq + lr)
   {
-    if (res < b) break;
-    res -= b;
+    lq++;
+    lr -= d;
   }
-  return res;
+  *q = lq;
+  *r = lr;
 }
+
 /*`
-Verification of mod succeeded.
+Verification of divide succeeded.
 `*/
