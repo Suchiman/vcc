@@ -1,0 +1,88 @@
+
+%% Can the following section move to the appendix? -E
+\section{Overflows and unchecked arithmetic}
+\label{sect:overflows}
+
+Consider the C expression \vcc{a+b}, when \vcc{a} and \vcc{b} are,
+say, \vcc{UINT}s. This might represent one of two programmer
+intentions. Most of the time, it is intended to mean ordinary
+arithemetic addition on numbers; program correctness is then likely to
+depend on this addition not causing an overflow. However, sometimes
+the program is designed to cope with overflow, so the programmer means
+\vcc{(a + b) \% UINT_MAX+1}. It is always sound to use this
+second interpretation, but VCC nevertheless assumes the first by
+default, for several reasons:
+\begin{itemize}
+\item The first interpretation is much more common.
+\item The second interpretation introduces an implicit \vcc{\%}
+  operator, turning linear arithmetic into nonlinear arithmetic and
+  making subsequent reasoning much more difficult.
+\item If the first interpretation is intended but the addition can in
+  fact overflow, this potential error will only manifest later in the
+  code, making the source of the error harder to track down.
+\end{itemize}
+
+Here is an example where the second interpretation is intended, but
+VCC complains because it assumes the first:
+\vccInput{c/02_hash_fail.c}
+
+\noindent
+VCC complains that the hash-computing operation might overflow.
+To indicate that this possible overflow behavior is desired we use \vcc{_(unchecked)},
+with syntax similar to a regular C type-cast.
+This annotation applies to the following expression, and indicates that
+you expect that there might be overflows in there.
+Thus, replacing the body of the loop with the following
+makes the program verify:
+
+\vccInput[linerange={update-endupdate}]{c/02_hash.c}
+
+Note that ``unchecked'' does not mean ``unsafe''.
+The C standard mandates the second interpretation for unsigned overflows,
+and signed overflows are usually implementation-defined to use two-complement.
+It just means that VCC will loose information about the operation.
+For example consider:
+\begin{VCC}
+int a, b;
+// ...
+a = b + 1;
+_(assert a < b)
+\end{VCC}
+This will either complain about possible overflow of \vcc{b + 1} or succeed.
+However, the following might complain about \vcc{a < b}, if VCC does not know
+that \vcc{b + 1} doesn't overflow.
+\begin{VCC}
+int a, b;
+// ...
+a = _(unchecked)(b + 1);
+_(assert a < b)
+\end{VCC}
+Think of \vcc{_(unchecked)E} as computing the expression using mathematical 
+integers, which never overflow, and then casting the result to the desired range.
+VCC knows that \vcc{_(unchecked)E == E} if \vcc{E} fits in the proper range,
+and some other basic facts about \vcc{(unsigned)-1}.
+If you need anything else, you will need to resort to bit-vector
+reasoning (\secref{bv}).
+
+%% I don't think the following example is worth the trouble -E
+%% Let's have a look at another example:
+%% \vccInput{c/02_rand.c}
+%% \noindent
+%% The reason we needed to use unchecked cast here, is that the C library
+%% \vcc{rand()} function is specified to return a signed integer.
+
+%% \begin{note}
+%% In fact, the C standard, mandates the following specification:
+%% \begin{VCC}
+%% int rand(void)
+%%   _(ensures 0 <= \result && \result <= RAND_MAX);
+%% \end{VCC}
+%% Thus, in principle the \vcc{_(unchecked)} shouldn't be required in the
+%% example above. 
+%% However,
+%% VCC currently does not come with specifications for C standard library functions.
+%% We plan to setup a open-source project, where you'll be able to contribute such
+%% specifications.
+%% It is indeed unclear why does it return a signed integer, only to ensure that the return value
+%% is never negative.
+%% \end{note}
