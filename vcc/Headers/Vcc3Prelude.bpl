@@ -820,7 +820,7 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
     else
       // if $owner(S0, p) == o then // TODO: check if this is faster
       if $roots(S0)[p] == o then
-        (lambda f:$field :: if f == $f_owner || f == $f_timestamp then $heap(S)[o][f] else $heap(S0)[o][f])
+        (lambda f:$field :: if f == $f_owner || f == $f_timestamp then $heap(S)[p][f] else $heap(S0)[o][f])
       else
         $heap(S0)[p])
 
