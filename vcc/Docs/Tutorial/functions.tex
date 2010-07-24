@@ -190,6 +190,11 @@ reduces to simple validity; we point out thread-locality only because
 if VCC is unable to check that a read is safe, it will report that it
 was unable to show that the object read was thread-local.
 
+You can specify that an object (pointed to by) a pointer \vcc{p} is
+thread-local by the expression \vcc{\thread_local(p)}. 
+The expression \vcc{\thread_local_array(ar, sz)} essentially translates to 
+the the conjunction of \vcc{\thread_local(ar[i])} for each \vcc{i<sz}. 
+
 While thread locality is what is checked on a read, in practice it is
 not often used in the specifications of functions with side effects%
 \footnote{This is because the thread-locality of an object could be
@@ -264,7 +269,17 @@ havoc(y);
 _(assume y == _old_x)
 \end{VCC}
 
-\subsection{Pure Functions}
+% Shouldn't \array_range be allowed for arrays of non-primitives also?
+Programs that manipulate arrays often write to multiple array
+locations. Writes clauses actually allow sets of pointers, rather than
+individual pointers. We'll introduce sets in full generality later, but
+note one special case: the expression \vcc{\array_range(arr, len)}
+denotes the set of pointers \vcc@{&arr[0], &arr[1], ..., &arr[len-1]}@. 
+Thus, a writes clause of the form
+\vcc{_(writes(\array_range(arr,len)))}
+allows writing to all elements of the array.
+
+\subsection{Pure Functions and Logic Functions}
 \label{sect:pureFunctions}
 A \Def{pure function} is one that has no side effects on the program
 state. In VCC, pure functions are not allowed to allocate memory, and can
@@ -283,6 +298,32 @@ effects that might cause the caller to lose information (\ie
 knowledge) about the state, and as we have seen, VCC takes advantage
 of the kind of information callers maintain to limit the kinds of side
 effects that have to be reported.
+
+Sometimes you want a spec function that performs a logical operation
+that cannot be performed easily with C, such as a quantification. (Of
+course such functions can only be used in annotations, not in actual
+code.) VCC lets you define such \Def{logic functions} using the syntax
+
+\begin{VCC}
+_(logic F(A) = E)
+\end{VCC}
+which is roughly equivalent to 
+\begin{VCC}
+#define F(A) E
+\end{VCC}
+except that it prevents
+name capture and gives better error messages (\ie ones which mention
+both \vcc{E} and \vcc{F(A)}). 
+ 
+For example, you can specify a sorting function as follows:
+\begin{VCC}
+_(logic bool sorted(int *buf, unsigned len) =
+  \forall unsigned i, j; i <= j && j < len ==> buf[i] <= buf[j])
+
+void sort(int *buf, unsigned len)
+  _(writes \array_range(buf, len))
+  _(ensures sorted(buf, len));
+\end{VCC}
 
 
 %% \vccInput[linerange={swap-partition}]{c/04_partition.c}
@@ -352,7 +393,16 @@ Could the postcondition of \vcc{copy} have been written equivalently
 as the simpler \vcc{*to == *from}? If not, why not?
 \item
 Specify, write, and verify a function that swaps the values pointed to
-by two \vcc{int} pointers. Hint: use \vcc{\old(...)} in the postcondition.
+by two \vcc{int} pointers. Hint: use \vcc{\old(...)} in the
+postcondition.
+\item
+Specify a function that copies one array to annother array of the same
+size. (Don't worry about array aliasing.)
+\item
+Extend the specification of array sorting to guarantee that the sort
+is stable (i.e., it shouldn't change the array if it is already
+sorted).  
+\item
 % We did not explain anything about arrays at this point --M
 %\item
 %Specify a function that takes a pointer to the first element of an

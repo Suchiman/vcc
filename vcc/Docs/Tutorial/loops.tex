@@ -81,7 +81,6 @@ For another, more typical example of a loop, consider
 the following function that uses linear search to determine if a value
 occurs within an array:
 
-
 %% \vccInput{c/03_lsearch.c}
 
 %% \noindent
@@ -101,9 +100,6 @@ occurs within an array:
 %% assertions; this just isn't an appropriate place to talk about
 %% quantifiers, because they are not specific to loop invariants. -E
 \noindent
-The expression \vcc{\thread_local_array(ar, sz)} essentially translates to 
-the thread locality of \vcc{ar[i]} for each \vcc{i<sz}; 
-this allows the array elements to be read.
 The postconditions say that the returned value is the minimal array
 index at which \vcc{elt} occurs (or \vcc{UINT_MAX} if it does not occur).
 The loop invariant says that \vcc{elt}  does not occur in \vcc{ar[0]}\dots
@@ -134,96 +130,6 @@ Write and verify a program for binary search (a program
 that checks whether a sorted array contains a given value).
 \end{itemize}
 
-%% Can the following section move to the appendix? -E
-\subsection{Overflows and unchecked arithmetic}
-\label{sect:overflows}
-
-Consider the C expression \vcc{a+b}, when \vcc{a} and \vcc{b} are,
-say, \vcc{UINT}s. This might represent one of two programmer
-intentions. Most of the time, it is intended to mean ordinary
-arithemetic addition on numbers; program correctness is then likely to
-depend on this addition not causing an overflow. However, sometimes
-the program is designed to cope with overflow, so the programmer means
-\vcc{(a + b) \% UINT_MAX+1}. It is always sound to use this
-second interpretation, but VCC nevertheless assumes the first by
-default, for several reasons:
-\begin{itemize}
-\item The first interpretation is much more common.
-\item The second interpretation introduces an implicit \vcc{\%}
-  operator, turning linear arithmetic into nonlinear arithmetic and
-  making subsequent reasoning much more difficult.
-\item If the first interpretation is intended but the addition can in
-  fact overflow, this potential error will only manifest later in the
-  code, making the source of the error harder to track down.
-\end{itemize}
-
-Here is an example where the second interpretation is intended, but
-VCC complains because it assumes the first:
-\vccInput{c/02_hash_fail.c}
-
-\noindent
-VCC complains that the hash-computing operation might overflow.
-To indicate that this possible overflow behavior is desired we use \vcc{_(unchecked)},
-with syntax similar to a regular C type-cast.
-This annotation applies to the following expression, and indicates that
-you expect that there might be overflows in there.
-Thus, replacing the body of the loop with the following
-makes the program verify:
-
-\vccInput[linerange={update-endupdate}]{c/02_hash.c}
-
-Note that ``unchecked'' does not mean ``unsafe''.
-The C standard mandates the second interpretation for unsigned overflows,
-and signed overflows are usually implementation-defined to use two-complement.
-It just means that VCC will loose information about the operation.
-For example consider:
-\begin{VCC}
-int a, b;
-// ...
-a = b + 1;
-_(assert a < b)
-\end{VCC}
-This will either complain about possible overflow of \vcc{b + 1} or succeed.
-However, the following might complain about \vcc{a < b}, if VCC does not know
-that \vcc{b + 1} doesn't overflow.
-\begin{VCC}
-int a, b;
-// ...
-a = _(unchecked)(b + 1);
-_(assert a < b)
-\end{VCC}
-Think of \vcc{_(unchecked)E} as computing the expression using mathematical 
-integers, which never overflow, and then casting the result to the desired range.
-VCC knows that \vcc{_(unchecked)E == E} if \vcc{E} fits in the proper range,
-and some other basic facts about \vcc{(unsigned)-1}.
-If you need anything else, you will need to resort to bit-vector
-reasoning (\secref{bv}).
-
-Let's have a look at another example:
-\vccInput{c/02_rand.c}
-\noindent
-The reason we needed to use unchecked cast here, is that the C library
-\vcc{rand()} function is specified to return a signed integer.
-
-\begin{note}
-In fact, the C standard, mandates the following specification:
-\begin{VCC}
-int rand(void)
-  _(ensures 0 <= \result && \result <= RAND_MAX);
-\end{VCC}
-Thus, in principle the \vcc{_(unchecked)} shouldn't be required in the
-example above. 
-However,
-VCC currently does not come with specifications for C standard library functions.
-We plan to setup a open-source project, where you'll be able to contribute such
-specifications.
-It is indeed unclear why does it return a signed integer, only to ensure that the return value
-is never negative.
-\end{note}
-
-\subsection{Sorting}
-\label{sect:sorting}
-
 %\Def{Ghost data} contains auxiliary information needed to convince VCC about correctness of a program.
 %You can think of it as data that the program maintains for the purpose of debugging.
 %An example might be a program which only keeps track of count of foobars, whereas
@@ -235,7 +141,20 @@ is never negative.
 %The regular C compiler doesn't see the ghost code.
 %Therefore it has no runtime effect, it's only there to help VCC understand why the program works.
 
-%We shall start with ghost functions, which in this case is just a macro for another formula.
+%We shall start with ghost functions, which in this case is just a
+%macro for another formula.
+
+% SHould we have a simpler example?
+\subsection{Writes clauses for loops}
+\label{sect:sorting}
+
+VCC treats loops almost like functions, in that it abstracts the
+behavior of all but the last iteration of the loop into a havoc of the
+variables modified by the loop and the assumption of the loop
+invariant. VCC lets you provide more precise specifications for loops
+by providing writes clauses.
+
+
 The function below implements the bozo-sort algorithm.
 The algorithm works by swapping two random elements in an array, checking if the resulting array
 is sorted, and repeating otherwise.
@@ -245,40 +164,23 @@ Still, it will serve us to illustrate the use of logic functions, and later (\se
 
 \vccInput[linerange={begin-out}]{c/04_bozosort.c}
 
-\noindent
-The meaning of:
-\begin{VCC}
-_(logic F(A) = E)
-\end{VCC}
-is similar to:
-\begin{VCC}
-#define F(A) E
-\end{VCC}
-except that it prevents
-name capture and gives better error messages (\ie ones which mention both \vcc{E} and \vcc{F(A)}).
-
-The other novel thing about this function is the writes clause on the array.
-Indeed, all previous examples were only reading arrays, and this one is actually writing
-the array.
-The notation \vcc{\array_range(arr, len)} refers to all pointers into array
-of size \vcc{len} pointed to by \vcc{arr}.
-When \vcc{arr} is a pointer to non-struct type (as in the example above),
-it expands to \vcc@{ &arr[0], &arr[1], ..., &arr[len-1] }@.
 In addition to specifying the writes clause on the function, we also specify it on
 the loop.
-This is common for loops, which write the heap.
-Generally, a writes clause on the loop is the same as the writes clause you would need to
-write on a function which contained \emph{only} that loop.
+This is common for loops that write the heap.
+Typically, the writes clause for a loop is the same clause you would need 
+on a function whose body was the loop body. 
+% todo: this is rather cryptoc -E
 If there is no writes clauses on the loop, VCC takes the writes clause from the 
 function, but interprets it with respect to the beginning of the function,
 and not beginning of the loop.
 Thus, in general, when the loop writes the heap, you will want to specify a writes clause on it.
 
-The specification that we use is that the output of the sorting routine is sorted.
-Unfortunately, we do not say that it's actually a permutation of the input.
-We'll show how to do that in \secref{sorting-perm}.
+%% The specification that we use is that the output of the sorting routine is sorted.
+%% Unfortunately, we do not say that it's actually a permutation of the input.
+%% We'll show how to do that in \secref{sorting-perm}.
 
-\subsection{Review}
+% Let's leave this out for now -E
+%\subsection{Review}
 %\todo{Put in some way to get to the relevant info about quantifiers
 %  and ghost data?}  
 %
@@ -290,78 +192,76 @@ We'll show how to do that in \secref{sorting-perm}.
 %for loops and function calls.
 %--M }
 
-You have now learned enough to verify some nontrivial sequential
-programs that use only base types and arrays.  This is already a very
-rich domain for programming, and you should take some time using VCC
-to verify some of the ``toy'' algorithms you learned in school. It's
-also a good opportunity to review what we've learned so far.
+%% You have now learned enough to verify some nontrivial sequential
+%% programs that use only base types and arrays.  This is already a very
+%% rich domain for programming, and you should take some time using VCC
+%% to verify some of the ``toy'' algorithms you learned in school. It's
+%% also a good opportunity to review what we've learned so far.
 
-At each control point within a function, VCC ``knows'' certain things
-about the state of the program. Included in this knowledge is what
-memory locations it can safely read or write. The computation of this
-knowledge can be summarized as follows:
-\begin{itemize}
-\item
-On entry to a function, it knows the preconditions of the function.
-\item
-A memory object is writable if it is mutable and is either listed in the 
-writes clause of the function or was mutable after the function was entered.
-\item
-After \vcc{_(assume E)}, it knows what it knew before the assumption,
-and in addition knows \vcc{E != 0}.
-\item
-\vcc{_(assert E)} asks VCC to prove that what it knows before the
-assertion implies \vcc{E} (and report an error if it can't). 
-It also assumes \vcc{E} afterward.
-%\item
-%\todo{Break this up into variable assignment and memory assignment?}
-%An assignment statement \vcc{v = E}, where \vcc{E} doesn't have a 
-%function call and doesn't mention \vcc{v}%
-%\footnote{
-%  If \vcc{E} mentions \vcc{v}, we can imagine the value of \vcc{v} being
-%  first copied into a fresh temporary variable, which is used in place
-%  of \vcc{v} within \vcc{E}.
-%}, asserts that the data needed to
-%compute \vcc{E} is readable, and that \vcc{v} is writeable. After the
-%assignment, it knows everything it knew before the assignment (except
-%for what it knew about the value of \vcc{v}), and additionally knows
-%that \vcc{v == E}. 
-\item 
-A function call \vcc{f(args)}, 
-%where \vcc{args} is a list of variables
-%\footnote{
-%  If the arguments to the function call are expressions, we can think
-%  of these expressions being evaluated and assigned to temporary
-%  variables before the function call.
-%}, 
-asserts that the \vcc{args} are readable, asserts that the objects
-mentioned in the writes clauses of \vcc{f} are writeable,
-asserts the preconditions of \vcc{f} (with the actual parameters
-substituted for the formal parameters), forgets what it knew about
-\vcc{v} and any objects mentioned in the writes clause of \vcc{f}, and
-finally assumes the postconditions of \vcc{f}.
-If these postconditions use \vcc{\\old} to refer to parts of
-the state before the call, we can think of these parts of the state
-as copied to temporary variables prior to the call. The result of
-the function can be viewed as being put into a temporary variable of
-the caller.
-%\item
-%For a conditional \vcc{if (p) S1 else S2}, it first asserts that
-%\vcc{p} is readable. At the beginning of \vcc{S1} (resp. \vcc{S2}), it
-%knows what it knew before the conditional, and in addition knows
-%\vcc{p != 0} (resp. \vcc{p == 0}). After the conditional, it knows the 
-%disjunction (``or'') of what it knew at the end of \vcc{S1} and what
-%we know at the end of \vcc{S2}.
-\item
-For a loop, it knows at the beginning of the loop body just what it
-knew just before the loop (except that it forgets what it knew about
-variables modified in the loop), and also knows the loop
-invariant. Just before the loop, and at any point in the loop body where
-control jumps back to the top of the loop (including the end of the
-loop body), it asserts the loop invariant.
-\end{itemize}
-
-
+%% At each control point within a function, VCC ``knows'' certain things
+%% about the state of the program. Included in this knowledge is what
+%% memory locations it can safely read or write. The computation of this
+%% knowledge can be summarized as follows:
+%% \begin{itemize}
+%% \item
+%% On entry to a function, it knows the preconditions of the function.
+%% \item
+%% A memory object is writable if it is mutable and is either listed in the 
+%% writes clause of the function or was mutable after the function was entered.
+%% \item
+%% After \vcc{_(assume E)}, it knows what it knew before the assumption,
+%% and in addition knows \vcc{E != 0}.
+%% \item
+%% \vcc{_(assert E)} asks VCC to prove that what it knows before the
+%% assertion implies \vcc{E} (and report an error if it can't). 
+%% It also assumes \vcc{E} afterward.
+%% %\item
+%% %\todo{Break this up into variable assignment and memory assignment?}
+%% %An assignment statement \vcc{v = E}, where \vcc{E} doesn't have a 
+%% %function call and doesn't mention \vcc{v}%
+%% %\footnote{
+%% %  If \vcc{E} mentions \vcc{v}, we can imagine the value of \vcc{v} being
+%% %  first copied into a fresh temporary variable, which is used in place
+%% %  of \vcc{v} within \vcc{E}.
+%% %}, asserts that the data needed to
+%% %compute \vcc{E} is readable, and that \vcc{v} is writeable. After the
+%% %assignment, it knows everything it knew before the assignment (except
+%% %for what it knew about the value of \vcc{v}), and additionally knows
+%% %that \vcc{v == E}. 
+%% \item 
+%% A function call \vcc{f(args)}, 
+%% %where \vcc{args} is a list of variables
+%% %\footnote{
+%% %  If the arguments to the function call are expressions, we can think
+%% %  of these expressions being evaluated and assigned to temporary
+%% %  variables before the function call.
+%% %}, 
+%% asserts that the \vcc{args} are readable, asserts that the objects
+%% mentioned in the writes clauses of \vcc{f} are writeable,
+%% asserts the preconditions of \vcc{f} (with the actual parameters
+%% substituted for the formal parameters), forgets what it knew about
+%% \vcc{v} and any objects mentioned in the writes clause of \vcc{f}, and
+%% finally assumes the postconditions of \vcc{f}.
+%% If these postconditions use \vcc{\\old} to refer to parts of
+%% the state before the call, we can think of these parts of the state
+%% as copied to temporary variables prior to the call. The result of
+%% the function can be viewed as being put into a temporary variable of
+%% the caller.
+%% %\item
+%% %For a conditional \vcc{if (p) S1 else S2}, it first asserts that
+%% %\vcc{p} is readable. At the beginning of \vcc{S1} (resp. \vcc{S2}), it
+%% %knows what it knew before the conditional, and in addition knows
+%% %\vcc{p != 0} (resp. \vcc{p == 0}). After the conditional, it knows the 
+%% %disjunction (``or'') of what it knew at the end of \vcc{S1} and what
+%% %we know at the end of \vcc{S2}.
+%% \item
+%% For a loop, it knows at the beginning of the loop body just what it
+%% knew just before the loop (except that it forgets what it knew about
+%% variables modified in the loop), and also knows the loop
+%% invariant. Just before the loop, and at any point in the loop body where
+%% control jumps back to the top of the loop (including the end of the
+%% loop body), it asserts the loop invariant.
+%% \end{itemize}
 
 \subsection*{Exercises}
 
