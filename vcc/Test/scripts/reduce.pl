@@ -7,7 +7,7 @@ $div = 3;
 $mul = 2;
 
 $pat = '^\s*(assume|axiom) ';
-$cmd = "any-ok";
+$cmd = "./any-ok";
 
 sub dmp(){
   my $k = 0;
