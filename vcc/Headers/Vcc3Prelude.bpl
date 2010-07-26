@@ -137,7 +137,6 @@ const unique $ctype_flat : $ctype_branch;
 const unique $ctype_ptr : $ctype_branch;
 const unique $ctype_spec_ptr : $ctype_branch;
 const unique $ctype_map : $ctype_branch;
-const unique $ctype_ghost : $ctype_branch;
 
 // inverse functions here (unptr_to, map_domain, map_range) are for the prover
 // so it knows that int*!=short*, i.e. * is injective
@@ -145,14 +144,12 @@ const unique $ctype_ghost : $ctype_branch;
 // pointers to types
 function $ptr_to($ctype) : $ctype;
 function $spec_ptr_to($ctype) returns ($ctype);
-function $ghost($ctype) : $ctype;
 function $type_project_0($ctype) : $ctype;
 
 const $arch_ptr_size : int; // arch-specific; to be defined by a compiler-generated axiom
 
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $type_project_0($ptr_to(#n)) == #n && $type_branch($ptr_to(#n)) == $ctype_ptr);
 axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $type_project_0($spec_ptr_to(#n)) == #n && $type_branch($spec_ptr_to(#n)) == $ctype_spec_ptr);
-axiom (forall #n:$ctype :: {$ghost(#n)} $type_project_0($ghost(#n)) == #n && $type_branch($ghost(#n)) == $ctype_ghost);
 
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $sizeof($ptr_to(#n)) == $arch_ptr_size);
 axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $sizeof($ptr_to(#n)) == $arch_ptr_size);
@@ -220,8 +217,6 @@ axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $is_primitive($map_t(#r,#d
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $is_primitive($ptr_to(#n)));
 axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $is_primitive($spec_ptr_to(#n)));
 
-axiom (forall #n:$ctype :: {$ghost(#n)} $kind_of(#n) == $kind_of($ghost(#n)));
-
 axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claimable(#n));
 
 const $me_ref : int;
@@ -272,16 +267,12 @@ axiom (forall #t:$ctype, #b:int :: $ref($ptr(#t,#b))==#b);
 // of the current $meta
 function $ghost_ref($ptr, $field) : int;
 
-const unique $f_nonghost : $field;
 function $ghost_emb($ptr) : $ptr;
 function $ghost_path($ptr) : $field;
 
-axiom (forall p:$ptr, f:$field, t:$ctype :: {$ptr($ghost(t), $ghost_ref(p, f))}
-  $ghost_emb($ptr($ghost(t), $ghost_ref(p, f))) == p && 
-  $ghost_path($ptr($ghost(t), $ghost_ref(p, f))) == f );
-
-axiom (forall r:int, t:$ctype :: {$ptr(t, r)}
-  $type_branch(t) != $ctype_ghost ==> $ghost_path($ptr(t, r)) == $f_nonghost);
+axiom (forall p:$ptr, f:$field, t:$ctype :: {$ptr(t, $ghost_ref(p, f))}
+  $ghost_emb($ptr(t, $ghost_ref(p, f))) == p && 
+  $ghost_path($ptr(t, $ghost_ref(p, f))) == f );
 
 axiom (forall p:$ptr, f:$field :: {$ghost_ref(p, f)}
   $ghost_ref(p,f) > $arch_spec_ptr_start);
@@ -344,31 +335,32 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
-      $path(S, $dot(p, f)) == f &&
+      // $path(S, $dot(p, f)) == f &&
       $is_volatile(S, $dot(p, f)) == isvolatile )
   }
 
 function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
   { $is_base_field(f) && $field_parent_type(f) == partp && $is_ghost_field(f) &&
-    (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f))) &&
+    (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ghost_ref(p, f))) &&
     (forall S:$state, p:$ptr :: 
       {$rd(S, $dot(p, f), $f_typed)}
 	  {$emb(S, $dot(p, f))}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
       $emb(S, $dot(p, f)) == p &&
-      $path(S, $dot(p, f)) == f &&
+      // $path(S, $dot(p, f)) == f &&
       $is_volatile(S, $dot(p, f)) == isvolatile )
   }
 
 function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
   { $is_base_field(f) && $is_ghost_field(f) &&
-    (forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr($ghost(tp), $ghost_ref(p, f))) &&
+    (forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr(tp, $ghost_ref(p, f)))
+    /*&&
     (forall p:$ptr, S:$state :: {$rd(S, p, f)}
       if $is_primitive_ch($typ(p)) then
         $emb(S, $dot(p, f)) == $emb(S, p)
       else
-        $emb(S, $dot(p, f)) == p)
+        $emb(S, $dot(p, f)) == p)*/
   }
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
@@ -384,7 +376,6 @@ function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
 
 const unique $f_typed : $field;
 const unique $f_emb : $field;
-const unique $f_path : $field;
 const unique $f_is_volatile : $field;
 const unique $f_timestamp : $field;
 const unique $f_owns : $field;
@@ -395,7 +386,6 @@ const unique $f_ref_cnt : $field;
 
 axiom $def_common_field($f_typed, ^^bool);
 axiom $def_common_field($f_emb, ^^object);
-axiom $def_common_field($f_path, ^^field);
 axiom $def_common_field($f_is_volatile, ^^bool);
 axiom $def_common_field($f_timestamp, ^^mathint);
 axiom $def_common_field($f_owns, ^$#ptrset);
@@ -1140,8 +1130,8 @@ axiom (forall s1:$ptrset, s2:$ptrset :: {$set_disjoint(s1, s2)}
   ==> $set_disjoint(s1, s2));
 
 
-function $set_in3($ptr, $ptrset) : bool;
-function $set_in2($ptr, $ptrset) : bool;
+//function $set_in3($ptr, $ptrset) : bool;
+//function $set_in2($ptr, $ptrset) : bool;
 
 //function $in_some_owns($ptr) : bool;
 //axiom (forall p:$ptr, S1:$state, p1:$ptr :: 
@@ -1152,14 +1142,13 @@ function $set_in2($ptr, $ptrset) : bool;
 //  {$set_in2(p, $owns(S1, p1)), $in_some_owns(p)}
 //  $set_in(p, $owns(S1, p1)) <==> $set_in2(p, $owns(S1, p1)));
 
-axiom (forall p:$ptr, s:$ptrset :: {$set_in(p, s)}
-  $set_in(p, s) <==> $set_in2(p, s));
-axiom (forall p:$ptr, s:$ptrset :: {$set_in(p, s)}
-  $set_in(p, s) <==> $set_in3(p, s));
+//axiom (forall p:$ptr, s:$ptrset :: {$set_in(p, s)}
+//  $set_in(p, s) <==> $set_in2(p, s));
+//axiom (forall p:$ptr, s:$ptrset :: {$set_in(p, s)}
+//  $set_in(p, s) <==> $set_in3(p, s));
 
-function $set_in0($ptr, $ptrset) : bool;
-axiom (forall p:$ptr, s:$ptrset :: {$set_in0(p, s)}
-  $set_in(p, s) <==> $set_in0(p, s));
+function $set_in0(p:$ptr, s:$ptrset) : bool
+  { $set_in(p, s) }
 
 
 function sk_hack(bool) : bool;
