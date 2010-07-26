@@ -219,7 +219,7 @@ namespace Z3AxiomProfiler.QuantifierModel
             return 100;
           if (fn.StartsWith("val!") || IsV1Part(fn))
             return 200;
-          if (fn.StartsWith("call") && fn.Contains("formal@"))
+          if (fn.StartsWith("call") && (fn.Contains("formal@") || fn.Contains("formal_")))
             return 100;
 
           if (f.Args.Length == 0) return 20;
