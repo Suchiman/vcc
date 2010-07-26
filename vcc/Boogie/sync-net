@@ -1,6 +1,6 @@
 #!/bin/sh
 
-src=//emicverisoft01/drops/boogie2/latest
+src=//emicvccbld/drops/boogie/latest
 echo "Syncing from $src"
 
 rm -rf cache
