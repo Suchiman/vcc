@@ -325,8 +325,11 @@ axiom (forall p:$ptr, S:$state ::
   $instantiate_int(S[$dot(p, $f_typed)]));
 */
 
+function $is_sequential_field($field) : bool;
+
 function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int) : bool
   { $is_base_field(f) && $field_parent_type(f) == partp &&
+    (!isvolatile ==> $is_sequential_field(f)) &&
     $field_offset(f) == off &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
     (forall S:$state, p:$ptr :: 
@@ -341,6 +344,7 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
 
 function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
   { $is_base_field(f) && $field_parent_type(f) == partp && $is_ghost_field(f) &&
+    (!isvolatile ==> $is_sequential_field(f)) &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ghost_ref(p, f))) &&
     (forall S:$state, p:$ptr :: 
       {$rd(S, $dot(p, f), $f_typed)}
@@ -644,12 +648,12 @@ axiom (forall S:$state :: {$invok_state(S)}
 function {:inline true} $closed_is_transitive(S:$state) returns (bool)
   { 
     (forall p:$ptr,q:$ptr ::
-      {$set_in(p, $owns(S, q))}
+      {$set_in_pos(p, $owns(S, q))}
       $good_state(S) &&
       $set_in(p, $owns(S, q)) && $closed(S, q) ==> $closed(S, p)) // && $ref(p) != 0)
   } 
 
-axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in(p, $owns(S, q)), $is_non_primitive($typ(p))}
+axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in_pos(p, $owns(S, q)), $is_non_primitive($typ(p))}
   $good_state(S) &&
   $closed(S, q) && $is_non_primitive($typ(p)) ==>
       ($set_in(p, $owns(S, q)) <==> $owner(S, p) == q));
@@ -780,7 +784,12 @@ function $post_unwrap(S1:$state, S2:$state) : bool;
 
 function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
 {
-  // TODO this takes the entire current heap, maybe restrict it to the owns set?
+  // TODO both of these takes the entire current heap, maybe restrict it to the owns set?
+  (forall q:$ptr, f:$field :: {$heap(S)[o][f][q]}
+     $heap(S)[o][f][q] == $heap(S0)[$roots(S0)[q]][f][q] ||
+     f == $f_owner || f == $f_timestamp || f == $f_version || (q == o && f == $f_closed))
+  && (forall p:$ptr :: $heap(S)[p] == $heap(S0)[p] || p == o)
+  /*
   $heap(S) == $heap(S0)[ o := (lambda f:$field :: 
     if f == $f_owner || f == $f_timestamp || f == $f_version then
       $heap(S)[o][f]
@@ -788,11 +797,19 @@ function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
       (lambda p:$ptr :: 
         if p == o && f == $f_closed then 1
         else $rd(S0, p, f))) ]
+        */
   && $embs(S0) == $embs(S)
   &&
+
+
+  (forall p:$ptr :: {$roots(S)[p]}
+     $roots(S)[p] == $roots(S0)[p] ||
+     ($roots(S)[p] == o && (p == o || $set_in($roots(S0)[p], $owns(S0, o)))))
+  /*
   $roots(S) == (lambda p:$ptr :: 
                     if p == o || $set_in($roots(S0)[p], $owns(S0, o)) 
                     then o else $roots(S0)[p])
+                    */
   && $timestamp_post_strict(S0, S)
 }
 
@@ -800,6 +817,22 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 {
   $mutable(S, o) && 
   $timestamp_is_now(S, o) &&
+
+  (forall p:$ptr :: {$heap(S)[p]}
+    // the alternative check ($owner(S0, p) == o) seems slower
+    //($roots(S0)[p] != o && $heap(S0)[p] == $heap(S)[p]) ||
+    //($roots(S0)[p] == o && (forall f:$field :: {$heap(S)[p][f]} f == $f_owner || f == $f_timestamp || $heap(S)[p][f] == $heap(S0)[o][f])) ||
+    (if $roots(S0)[p] == o then
+       (forall f:$field :: {$heap(S)[p][f]} f == $f_owner || f == $f_timestamp || $heap(S)[p][f] == $heap(S0)[o][f])
+     else 
+       $heap(S0)[p] == $heap(S)[p]) ||
+    p == o)
+  &&
+  (forall f:$field, q:$ptr :: {$heap(S)[o][f][q]}
+     $heap(S)[o][f][q] == $heap(S0)[o][f][q] ||
+     (q == o && (f == $f_closed || f == $f_version || f == $f_timestamp))
+     )
+  /*
   $heap(S) == (lambda p:$ptr ::
     if p == o then
       (lambda f:$field :: (lambda q:$ptr ::
@@ -813,7 +846,7 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
         (lambda f:$field :: if f == $f_owner || f == $f_timestamp then $heap(S)[p][f] else $heap(S0)[o][f])
       else
         $heap(S0)[p])
-
+  */
   && $embs(S0) == $embs(S)
   &&
   $roots(S) == (lambda p:$ptr :: 
@@ -822,12 +855,11 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 					   else $roots(S)[p]
                     else $roots(S0)[p])
   &&
-  (forall p:$ptr :: {$set_in(p, $owns(S0, o))}
+  (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==>
       $wrapped(S, p, $typ(p)) && $timestamp_is_now(S, p)) &&
 
-  //(forall #p:$ptr :: {$thread_local(S, #p)}
-  //  $thread_local(S0, #p) ==> $thread_local(S, #p));
+  // $preserves_thread_local(S0, S)
 
   $timestamp_post_strict(S0, S) &&
   $post_unwrap(S0, S)
@@ -855,15 +887,14 @@ function $is_wrapped(S0:$state, S:$state, o:$ptr) : bool
   $wrapped(S, o, $typ(o)) &&
   $timestamp_is_now(S, o) &&
 
-  (forall p:$ptr :: {$set_in(p, $owns(S0, o))}
+  (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==>
       $owner(S, p) == o && $timestamp_is_now(S, p)) &&
 
   ($is_claimable($typ(o)) ==> $ref_cnt(S0, o) == 0 && $ref_cnt(S, o) == 0)
 
-  //$set_in(o, $domain(S, o));
-  //(forall #p:$ptr :: {$thread_local(S, #p)}
-  //  $thread_local(S0, #p) ==> $thread_local(S, #p));
+  // $set_in(o, $domain(S, o))
+  // $preserves_thread_local(S0, S)
 }
 
 procedure $wrap(o:$ptr, T:$ctype);
@@ -924,7 +955,7 @@ procedure $havoc_others(p:$ptr, t:$ctype);
     $closed(old($s), q) || $closed($s, q) ==>
       ($spans_the_same(old($s), $s, q, $typ(q)) && $closed(old($s), q) == $closed($s, q)) || 
       ($inv2(old($s), $s, q, $typ(q)) && $nonvolatile_spans_the_same(old($s), $s, q, $typ(q))));
-  ensures (forall q:$ptr ::  {$set_in(q, $owns(old($s), p))}
+  ensures (forall q:$ptr ::  {$set_in_pos(q, $owns(old($s), p))}
             $set_in(q, $owns(old($s), p)) ==>
               $ref_cnt(old($s), q) == $ref_cnt($s, q));
   ensures $timestamp_post(old($s), $s);
@@ -1129,6 +1160,9 @@ axiom (forall s1:$ptrset, s2:$ptrset :: {$set_disjoint(s1, s2)}
      ($set_in(p, s1) ==> !$set_in(p, s2)) && ($set_in(p, s2) ==> !$set_in(p, s1))) 
   ==> $set_disjoint(s1, s2));
 
+function $set_in_pos($ptr, $ptrset) : bool;
+axiom (forall p:$ptr, s:$ptrset :: {$set_in(p, s)}
+  $set_in(p, s) ==> $set_in_pos(p, s));
 
 //function $set_in3($ptr, $ptrset) : bool;
 //function $set_in2($ptr, $ptrset) : bool;
