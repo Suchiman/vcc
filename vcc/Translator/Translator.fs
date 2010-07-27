@@ -232,16 +232,19 @@ namespace Microsoft.Research.Vcc
          B.Decl.Axiom eqRecAx
         ] @ inRange
       
+      let decomposeDot = function
+        | B.Expr.FunctionCall ("$dot", [p; f]) ->
+          [p; f]
+        | p ->
+          [bCall "$emb" [bState; p]; bCall "$path" [bState; p]]
+
       let typedRead s p t =
         if helper.Options.Vcc3 then
           let cast e =
             match t with
               | C.Ptr t -> bCall "$ptr" [toTypeId t; e]
               | _ -> castFromInt (trType t) e
-          match p with
-            | B.Expr.FunctionCall ("$dot", [p; f]) ->
-              cast (bCall "$rd" [s; p; f])
-            | _ -> failwith "indirect read" // FIXME
+          cast (bCall "$rd" (s :: decomposeDot p))
         else
           match t with
             | C.Ptr t ->
@@ -743,7 +746,6 @@ namespace Microsoft.Research.Vcc
           let tp =
             if helper.Options.RunTestSuite || helper.Options.Vcc3 then []
             else [cond codeTp ("{0} is typed" + suff) "_vcc_typed2" [cState;p] ]
-          let thloc = if helper.Options.Vcc3 then "_vcc_thread_local" else "_vcc_thread_local2"
           let th =
             match p with
               | C.Dot (_, p', f) when not f.Parent.IsUnion ->
@@ -756,9 +758,11 @@ namespace Microsoft.Research.Vcc
                   if f.IsVolatile then
                     cond codeTh ("{0} is mutable " + msg + "(accessing volatile field " + f.Name + ")" + suff) "_vcc_mutable" [cState; p']
                   else
-                    // This doesn't work with field inlining.
-                    // cond codeTh ("{0} is thread local " + msg + "(accessing field " + f.Name + ")" + suff) "_vcc_thread_local2" p'
-                    cond codeTh ("{0} is thread local" + suff) thloc [cState; p]
+                    if helper.Options.Vcc3 then
+                      // Old comment: This doesn't work with field inlining.
+                      cond codeTh ("{0} is thread local " + msg + "(accessing field " + f.Name + ")" + suff) "_vcc_thread_local" [cState; p']
+                    else
+                      cond codeTh ("{0} is thread local" + suff) "_vcc_thread_local2" [cState; p]
                 tok, bMultiOr (prop :: isAtomic)
               | _ -> 
                 let msg, isAtomic =
@@ -767,7 +771,10 @@ namespace Microsoft.Research.Vcc
                     | _ ->
                       " or atomically updated", List.map (fun o -> bCall "$set_in" [trExpr env p; bCall "$span" [o]]) env.AtomicReads
                 let tok, prop =
-                  cond codeTh ("{0} is thread local" + msg + suff) thloc [cState; p]
+                  if helper.Options.Vcc3 then
+                    failwith "FIXME"
+                  else
+                    cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local2" [cState; p]
                 tok, bMultiOr (prop :: isAtomic)
           List.map B.Assert (tp @ [th])
       
@@ -1313,11 +1320,7 @@ namespace Microsoft.Research.Vcc
               let e1' = trExpr env e1
               let write_call_args =
                 if helper.Options.Vcc3 then
-                  match e1' with
-                    | B.Expr.FunctionCall ("$dot", [p;f]) ->
-                      [p; f; e2']
-                    | _ ->
-                      [] // FIXME
+                  decomposeDot e1' @ [e2']
                 else [e1'; e2']
               [cmt (); 
                B.Stmt.Call (C.bogusToken, [], "$write_int", write_call_args); 

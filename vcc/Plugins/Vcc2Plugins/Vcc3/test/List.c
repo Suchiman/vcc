@@ -194,6 +194,7 @@ bool RemoveEntryList( PLIST_ENTRY Entry )
     Blink = Entry->Blink;
     Flink = Entry->Flink;
     expose(ListManager) {
+
         expose(Blink) {
             Blink->Flink = Flink;
         }
@@ -209,6 +210,18 @@ speconly(
                 ? ListManager->index[x]
                 : ListManager->index[x] - 1);
         )
+
+#if 1
+    assert(
+    forall(PLIST_ENTRY p; {set_in(p->Flink, owns(ListManager))} {sk_hack(set_in(p->Flink, owns(ListManager)))}
+        set_in(p,owns(ListManager)) ==> set_in(p->Flink,owns(ListManager)) && p->Flink->Blink == p));
+
+    assert(forall(PLIST_ENTRY p; {set_in(p->Blink, owns(ListManager))} {sk_hack(set_in(p->Blink, owns(ListManager)))}
+        set_in(p,owns(ListManager)) ==> set_in(p->Blink,owns(ListManager)) && p->Blink->Flink == p));
+
+assume(false);
+#endif
+
     }
 
     return Flink == Blink;
