@@ -733,7 +733,9 @@ namespace Microsoft.Research.Vcc
             | _ -> 
               helper.Error (e.Token, 9617, "unsupported thing passed to writes check (" + e.ToString() + ")", None)
               er "$bogus"
-      
+
+      and writesInclusion env env'  = ()
+
       and readsCheck env isWf (p:C.Expr) =
         if helper.Options.OmitReadWriteChecking then
           [B.Assert (afmte 8511 "disabled reads check of {0}" [p], bTrue)]
@@ -795,11 +797,20 @@ namespace Microsoft.Research.Vcc
               List.map (fun o -> bCall "$set_in" [e; bCall "$volatile_span" [bState; o]]) |>
               bMultiOr
           else bFalse
-        (*match origPrim with
-            | Some (C.Dot (_, p, f)) when f.Parent.Kind = C.Struct ->
-              trExpr env p*)
         let pred = if prim || use_wr then "$writable" else "$top_writable"
-        bOr atomicWr (bCall pred [bState; env.WritesTime; e])
+        if helper.Options.Vcc3 then
+          let ch = 
+            if prim then
+              bCall "$writable_prim" (bState :: env.WritesTime :: decomposeDot e)
+            else
+              bCall pred (bState :: env.WritesTime :: [e])
+          bOr atomicWr ch
+          (*
+          match origPrim with
+            | Some (C.Dot (_, p, f)) when f.Parent.Kind = C.Struct ->
+            | _ -> *)
+        else
+          bOr atomicWr (bCall pred [bState; env.WritesTime; e])
         
       and isInWrites (env:Env) (p:B.Expr) =
         let trWrites acc (e:C.Expr) =
@@ -878,7 +889,7 @@ namespace Microsoft.Research.Vcc
       let typeOf env e = repl (typeOf env e)
       let readsCheck env isWf p = 
         List.map (function B.Stmt.Assert (t, e) -> B.Stmt.Assert (t, repl e) | _ -> die()) (readsCheck env isWf p)
-      let inWritesOrIrrelevant env expr o = repl (inWritesOrIrrelevant false env expr o)
+      let objectWritesCheck env expr = repl (inWritesOrIrrelevant false env expr None)
       let claimIn env claim s expr = repl (claimIn env claim s expr)
       let claims env claim expr = repl (claims env claim expr)
       let trForWrite env t e2 = repl (trForWrite env t e2)
@@ -887,6 +898,7 @@ namespace Microsoft.Research.Vcc
       let writesCheck env tok prim (e:C.Expr) = ()
       let writesMultiCheck env tok f = ()
       let vsTrans env p = ()
+      let inWritesOrIrrelevant = ()
       
       
       
@@ -923,7 +935,7 @@ namespace Microsoft.Research.Vcc
         
       let claimedObjCheck env tok doClaim obj =
         let bobj = trExpr env obj
-        let wr = inWritesOrIrrelevant env bobj None
+        let wr = objectWritesCheck env bobj
         let own = List.map (bEq (bCall "$owner" [bState; bobj])) env.AtomicObjects
         let ref_cnt = bCall "$ref_cnt" [bState; bobj]
         let ref_cnt_plus_one =
@@ -971,7 +983,7 @@ namespace Microsoft.Research.Vcc
               let tokRef = afmtet tok 8025 "the claim {0} has outstanding claims" [obj]
               [B.Assert (tokWrap, bCall "$wrapped" [bState; obj'; er "^^claim"]);
                B.Assert (tokRef, bEq (bCall "$ref_cnt" [bState; obj']) (bInt 0));
-               B.Assert (tokWrite, inWritesOrIrrelevant env obj' None)]
+               B.Assert (tokWrite, objectWritesCheck env obj')]
             
             let killClaim obj =
               B.Call (C.bogusToken, [], "$kill_claim", [trExpr env obj])
@@ -1067,7 +1079,7 @@ namespace Microsoft.Research.Vcc
               different (List.map mkDiff xs @ acc) xs
             | [] -> acc
           let allowWrite = 
-            B.Stmt.Assert (afmtet tok 8523 "the disposed claim {0} is writable" [claim], inWritesOrIrrelevant env claim' None)
+            B.Stmt.Assert (afmtet tok 8523 "the disposed claim {0} is writable" [claim], objectWritesCheck env claim')
           let different = different [] objects
           let decrements = List.map doObj objects |> List.concat
           let call = B.Stmt.Call (tok, [], "$unclaim", [claim'])
@@ -1469,7 +1481,10 @@ namespace Microsoft.Research.Vcc
                     let (init, env') = setWritesTime fst.Token env' writes
                     let name = "#loopWrites^" + (ctx.TokSuffix fst.Token)
                     let p = er name
-                    let impl = bImpl (inWritesOrIrrelevant env' p None) (inWritesOrIrrelevant env p None)
+                    let impl = 
+                      if helper.Options.Vcc3 then failwith "FIXME"
+                      else
+                         bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
                     let tok = afmtet fst.Common.Token 8011 "writes clause of the loop might not be included writes clause of the function" []
                     let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
                     let check = [B.Stmt.Assert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
