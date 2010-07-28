@@ -238,8 +238,10 @@ function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int
 function $relative_field_of(p:$ptr, q:$ptr) : $field;
 function $container(p:$ptr, f:$field) : $ptr;
 
+function $dot2($ptr,$field) : $ptr;
+
 axiom (forall p, q: $ptr :: {$relative_field_of(p, q)}
-  $dot(p, $relative_field_of(p, q)) == q &&
+  $dot2(p, $relative_field_of(p, q)) == q &&
   $container(q, $relative_field_of(p, q)) == p);
 
 /* NMM
@@ -427,14 +429,15 @@ function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) : bool
 function $in_writes_at(time:int, p:$ptr) : bool;
 
 function {:inline true} $writable(S:$state, begin_time:int, p:$ptr) : bool
-  { $mutable(S, p) && ($in_writes_at(begin_time, p) || $timestamp(S, $object_of(S, p)) >= begin_time) }
+  { $is_non_primitive_ch($typ(p)) &&
+    ($mutable(S, p) && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
+
+function {:inline true} $writable_prim(S:$state, begin_time:int, p:$ptr, f:$field) : bool
+  { $writable(S, begin_time, p) }
 
 function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
-  { if $is_primitive_ch($typ(p)) then
-      ($in_writes_at(begin_time, p) || $timestamp(S, $emb(S, p)) >= begin_time) && $mutable(S, p)
-    else
-      ($in_writes_at(begin_time, p) || $timestamp(S, p) >= begin_time) && $owner(S, p) == $me()
-  }     
+  { $is_non_primitive_ch($typ(p)) &&
+    ($owner(S, p) == $me() && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $in(p:$ptr, s:$ptrset) : bool
   { s[p] } 
@@ -703,9 +706,16 @@ function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) : bool;
 // Procedures
 // ----------------------------------------------------------------------------
 
-function {:inline true} $update(h:$heap, r:$ptr, f:$field, p:$ptr, v:int) : $heap
-  { h[ r := h[r][ f := h[r][f][ p := v ] ] ] }
+function $update(h:$heap, r:$ptr, f:$field, p:$ptr, v:int) : $heap;
+  // { h[ r := h[r][ f := h[r][f][ p := v ] ] ] }
 
+axiom 
+   (forall h:$heap, r:$ptr, f:$field, p:$ptr, v:int :: {$update(h,r,f,p,v)}
+     (forall r2:$ptr, f2:$field, p2:$ptr :: {$update(h,r,f,p,v)[r2][f2][p2]}
+        if r == r2 && f == f2 && p == p2 then
+          $update(h,r,f,p,v)[r2][f2][p2] == v
+        else
+          h[r2][f2][p2] == $update(h,r,f,p,v)[r2][f2][p2]));
 
 procedure $write_int(p:$ptr, f:$field, v:int);
   modifies $s;
@@ -820,18 +830,14 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 
   (forall p:$ptr :: {$heap(S)[p]}
     // the alternative check ($owner(S0, p) == o) seems slower
-    //($roots(S0)[p] != o && $heap(S0)[p] == $heap(S)[p]) ||
-    //($roots(S0)[p] == o && (forall f:$field :: {$heap(S)[p][f]} f == $f_owner || f == $f_timestamp || $heap(S)[p][f] == $heap(S0)[o][f])) ||
+    p == o ||
     (if $roots(S0)[p] == o then
-       (forall f:$field :: {$heap(S)[p][f]} f == $f_owner || f == $f_timestamp || $heap(S)[p][f] == $heap(S0)[o][f])
-     else 
-       $heap(S0)[p] == $heap(S)[p]) ||
-    p == o)
+       (forall f:$field :: {$heap(S)[p][f]} $heap(S)[p][f] == $heap(S0)[o][f] || f == $f_owner || f == $f_timestamp)
+     else $heap(S0)[p] == $heap(S)[p]))
   &&
   (forall f:$field, q:$ptr :: {$heap(S)[o][f][q]}
      $heap(S)[o][f][q] == $heap(S0)[o][f][q] ||
-     (q == o && (f == $f_closed || f == $f_version || f == $f_timestamp))
-     )
+     (q == o && (f == $f_closed || f == $f_version || f == $f_timestamp)))
   /*
   $heap(S) == (lambda p:$ptr ::
     if p == o then
@@ -849,11 +855,17 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   */
   && $embs(S0) == $embs(S)
   &&
+  (forall p:$ptr :: {$roots(S)[p]}
+     ($roots(S0)[p] != o && $roots(S0)[p] == $roots(S)[p]) ||
+     ($roots(S0)[p] == o && ($roots(S)[p] == p || $owner(S0, p) != o))
+     )
+    /*
   $roots(S) == (lambda p:$ptr :: 
                     if $roots(S0)[p] == o then
 					   if $owner(S0, p) == o then p
 					   else $roots(S)[p]
                     else $roots(S0)[p])
+  */
   &&
   (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==>
