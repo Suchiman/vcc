@@ -1011,14 +1011,21 @@ namespace Z3AxiomProfiler.QuantifierModel
       else if (Sig == "$index_within/2" && Args[0].Sig == "$idx/3" && Args[0].Args[0] == Args[1] && Args[0].Args[2].Sig == "$typ/1" && Args[0].Args[2].Args[0] == Args[1])
       {
         Args[0].Args[1].CWriteTo(s, states);
-      }
-      else
-      {
+      } else if (Sig.StartsWith("MapType") && Sig.Contains("Select/")) {
+        Args[0].CWriteTo(s, states);
+        s.Append("[");
+        for (int i = 1; i < Args.Length; ++i) {
+          if (i != 1) s.Append(", ");
+          Args[i].CWriteTo(s, states);
+        }
+        s.Append("]");
+      } else if (Sig.EndsWith("/1") && Name.StartsWith("U_2_")) {
+        Args[0].CWriteTo(s, states);
+      } else {
         s.Append(Name);
         if (Args.Length == 0) return;
         s.Append('(');
-        for (int i = 0; i < Args.Length; ++i)
-        {
+        for (int i = 0; i < Args.Length; ++i) {
           if (i != 0) s.Append(", ");
           Args[i].CWriteTo(s, states);
         }
