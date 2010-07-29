@@ -16,6 +16,7 @@ namespace Z3AxiomProfiler
   {
     readonly bool launchedFromAddin;
     readonly Control ctrl;
+    public string SearchText = "";
 
     public Z3AxiomProfiler()
       : this(false, null)
@@ -402,7 +403,11 @@ namespace Z3AxiomProfiler
 
     internal TreeNode makeNode(Common common)
     {
-      TreeNode cNode = new TreeNode(common.ToString());
+      var label = common.ToString();
+      var n = 100;
+      if(label.Length > n)
+        label = label.Substring(0,n) + "...";
+      TreeNode cNode = new TreeNode(label);
       cNode.Tag = common;
       cNode.ToolTipText = ToolTipProcessor(common.ToolTip());
       if (common.ForeColor() != 0)
@@ -480,7 +485,7 @@ namespace Z3AxiomProfiler
         sum += c.InstCost;
 
       int id = 0;
-      Random r = new Random();
+      Random r = new Random(0);
       while (id++ < n) {
         int line = r.Next((int)sum);
         double s = 0;

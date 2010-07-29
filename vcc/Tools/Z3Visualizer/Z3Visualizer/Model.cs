@@ -83,6 +83,8 @@ namespace Z3AxiomProfiler.QuantifierModel
           l.Implied = new Literal[scopes[i].Implied.Count];
           scopes[i].Implied.CopyTo(l.Implied);
           cur.Literals.Add(l);
+          foreach (var x in l.Implied)
+            x.Cause = l;
         }
       }
       scopes.RemoveRange(scopes.Count - n, n);
@@ -444,7 +446,10 @@ namespace Z3AxiomProfiler.QuantifierModel
     public int lev;
     int recConflictCount = -1;
     int recInstanceCount = -1;
+    int maxConflictSize = 0;
     bool recInstanceCountComputed;
+    int id = -1;
+    int subid = 0;
 
     public int OwnInstanceCount;
 
@@ -476,8 +481,12 @@ namespace Z3AxiomProfiler.QuantifierModel
       {
         if (recConflictCount >= 0) return recConflictCount;
         recConflictCount = 0;
+        if (Conflict != null)
+          maxConflictSize = Conflict.Literals.Count;
         foreach (var c in ChildrenScopes) {
           recConflictCount += c.RecConflictCount;
+          if (c.maxConflictSize > maxConflictSize)
+            maxConflictSize = c.maxConflictSize;
         }
         if (Conflict != null) recConflictCount++;
         return recConflictCount;
@@ -486,13 +495,31 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override string ToString()
     {
-      string res = string.Format("Scope: {0} / {2} inst, {1} lits [{3}lev:{4}]", 
-        InstanceCount, Literals.Count, OwnInstanceCount, lev <0 ? "f" : "", lev < 0 ? -lev : lev);
+      if (id == -1) {
+        if (Conflict == null) {
+          if (ChildrenScopes != null && ChildrenScopes.Count > 0) {
+            ChildrenScopes[0].ToString();
+            id = ChildrenScopes[0].id;
+            subid = ChildrenScopes[0].subid + 1;
+          } else {
+            id = 0;
+          }
+        } else {
+          id = Conflict.Id;
+        }
+      }
+
+      string res = string.Format("Scope#{5}: {0} / {2} inst, {1} lits [{3}lev:{4}]", 
+        InstanceCount, Literals.Count, OwnInstanceCount, lev <0 ? "f" : "", lev < 0 ? -lev : lev, 
+        string.Format("{0}.{1}",id,subid));
       if(ChildrenScopes.Count > 0)
         res += string.Format(", {0} children [rec: {1}, {2} inst/cnfl]", 
                              ChildrenScopes.Count, RecConflictCount, 
                              (RecConflictCount == 0)? "inf" :
                              (InstanceCount/RecConflictCount).ToString());
+      var dummy = RecConflictCount;
+      if (maxConflictSize > 0)
+        res += string.Format(" maxCnflSz: {0}", maxConflictSize);
       return res;
     }
 
@@ -518,7 +545,10 @@ namespace Z3AxiomProfiler.QuantifierModel
             if (prevMarker >= 0) {
               var arr = new Literal[idx - prevMarker - 1];
               Array.Copy(lastImpl, prevMarker + 1, arr, 0, arr.Length);
-              ChildrenScopes[scopeNo++].ImpliedAtParent = arr;
+              var scope = ChildrenScopes[scopeNo++];
+              scope.ImpliedAtParent = arr;
+              foreach (var l in arr)
+                l.Cause = scope;
             }
             prevMarker = idx;
           }
@@ -1101,6 +1131,8 @@ namespace Z3AxiomProfiler.QuantifierModel
     public int Id;
     public Term Clause;
     public Term[] Explanation;
+    public Common Cause;
+    public Literal Inverse;
     public Literal[] Implied;
 
     public override string ToString()
@@ -1138,14 +1170,18 @@ namespace Z3AxiomProfiler.QuantifierModel
       if (Term != null) 
         yield return Term;
       if (Explanation != null) {
-        yield return Common.Callback("EXPLANATION [" + Explanation.Length + "]", delegate() { return Explanation; });
+        yield return Common.Callback("EXPLANATION [" + Explanation.Length + "]", () => Explanation);
       }
       if (Clause != null) {
         yield return new LabelNode("FROM CLAUSE:");
         yield return Clause;
       }
+      if (Cause != null)
+        yield return Callback("CAUSE", () => new Common[] { Cause });
+      if (Inverse != null)
+        yield return Callback("INVERSE", () => new Common[] { Inverse });
       if (Implied != null && Implied.Length > 0)
-        yield return Callback("IMPLIED [" + Implied.Length + "]", delegate() { return Implied; });
+        yield return Callback("IMPLIED [" + Implied.Length + "]", () => Implied);
     }
 
     public override int ForeColor()
@@ -1161,6 +1197,7 @@ namespace Z3AxiomProfiler.QuantifierModel
     public List<Literal> Literals = new List<Literal>();
     public Literal[] ResolutionLits;
     public int LineNo;
+    public int Id;
     public int Cost;
     public double InstCost;
 
@@ -1189,7 +1226,7 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public override string ToString()
     {
-      return string.Format("Confl. {0} lits, {1:0} ops {2:0} inst", Literals.Count, Cost / 100.0, InstCost);
+      return string.Format("Confl#{3} {0} lits, {1:0} ops {2:0} inst", Literals.Count, Cost / 100.0, InstCost, Id);
          
     }
 
@@ -1206,7 +1243,19 @@ namespace Z3AxiomProfiler.QuantifierModel
     public override IEnumerable<Common> Children()
     {
       if (ResolutionLits.Length > 0)
-        yield return Common.Callback("RESOLVED FROM", delegate() { return ResolutionLits; });
+        yield return Common.Callback("RESOLVED FROM", () => ResolutionLits);
+      yield return Common.Callback("CAUSES", delegate() {
+        var r = new List<Common>();
+        foreach (var l in Literals) {
+          if (l.Inverse != null) {
+            if (l.Inverse.Clause != null)
+              r.Add(l.Inverse);
+            else if (l.Inverse.Cause != null)
+              r.Add(l.Inverse.Cause);
+          }
+        }
+        return r;
+      });
       foreach (var l in Literals)
         yield return l;
     }
