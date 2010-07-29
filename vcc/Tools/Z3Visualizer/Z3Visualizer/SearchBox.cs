@@ -10,6 +10,7 @@ namespace Z3AxiomProfiler
     {
       this.axprof = a;
       InitializeComponent();
+      this.textBox1.Text = a.SearchText;
     }
 
     class NodeText
@@ -37,6 +38,7 @@ namespace Z3AxiomProfiler
 
     public void SetFilter(string s)
     {
+      axprof.SearchText = this.textBox1.Text;
       var words0 = s.Split(' ');
       var words = new List<string>();
       foreach (var w in words0) if (w != "") words.Add(w.ToLower());
@@ -59,7 +61,7 @@ namespace Z3AxiomProfiler
     {
       nodes.Clear();
       AddNodes(coll);
-      SetFilter("");
+      SetFilter(this.textBox1.Text);
     }
 
     private void textBox1_TextChanged(object sender, EventArgs e)
@@ -69,6 +71,7 @@ namespace Z3AxiomProfiler
 
     private void SearchBox_FormClosing(object sender, FormClosingEventArgs e)
     {
+      
     }
 
     private void textBox1_KeyPress(object sender, KeyPressEventArgs e)

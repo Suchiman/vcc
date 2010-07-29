@@ -27,7 +27,9 @@ namespace Z3AxiomProfiler
     private Term[] EmptyTerms = new Term[0];
     private Dictionary<string, List<string>> boogieFiles = new Dictionary<string, List<string>>();
     private Dictionary<string, string> shortnameMap = new Dictionary<string, string>();
+    private Dictionary<int, Literal> literalById = new Dictionary<int, Literal>();
     private FunSymbol currentFun;
+    private int cnflCount;
 
     public LogProcessor(List<FileInfo> bplFileInfos, bool skipDecisions, int cons)
     {
@@ -405,7 +407,7 @@ namespace Z3AxiomProfiler
               } 
              */
 
-            Term t = new Term("FORALL", args);
+            Term t = new Term("FORALL" + words[1], args);
             model.terms[words[1]] = t;
 
             if (args.Length != 0)
@@ -505,7 +507,7 @@ namespace Z3AxiomProfiler
             if (!interestedInCurrentCheck) break;
             if (skipDecisions || words.Length < 2) break;
             ScopeDesc d = model.scopes[model.scopes.Count - 1];
-            Literal l = GetLiteral(words[1]);
+            Literal l = GetLiteral(words[1], false);
             if (d.Literal == null)
               d.Literal = l;
             else
@@ -563,13 +565,14 @@ namespace Z3AxiomProfiler
         case "[conflict-resolve]":
           if (!interestedInCurrentCheck) break;
           if (skipDecisions) break;
-          cnflResolveLits.Add(GetLiteral(words[1]));
+          cnflResolveLits.Add(GetLiteral(words[1],true));
           break;
 
         case "[conflict]":
           if (!interestedInCurrentCheck) break;
           if (skipDecisions) break;
           curConfl = new Conflict();
+          curConfl.Id = cnflCount++;
           curConfl.ResolutionLits = cnflResolveLits.ToArray();
           cnflResolveLits.Clear();
           curConfl.LineNo = curlineNo;
@@ -580,7 +583,7 @@ namespace Z3AxiomProfiler
 
           for (int i = 1; i < words.Length; ++i) {
             string w = words[i];
-            Literal lit = GetLiteral(w);
+            Literal lit = GetLiteral(w,false);
             if (lit != null)
               curConfl.Literals.Add(lit);
           }
@@ -732,7 +735,7 @@ namespace Z3AxiomProfiler
       }
     }
 
-    private Literal GetLiteral(string w)
+    private Literal GetLiteral(string w, bool reuse)
     {
       if (w.Length < 2) return null;
       Literal lit = new Literal();
@@ -755,6 +758,20 @@ namespace Z3AxiomProfiler
       lit.Term = GetTerm(w);
       if (w[0] == '#')
         lit.Id = int.Parse(w.Substring(1));
+
+      var id = lit.Id;
+      if (lit.Negated) id = -id;
+
+      if (reuse) {
+        Literal tmp;
+        if (literalById.TryGetValue(id, out tmp))
+          return tmp;
+      }
+
+      literalById.TryGetValue(-id, out lit.Inverse);
+      if (lit.Inverse != null && lit.Inverse.Inverse == null) lit.Inverse.Inverse = lit;
+      literalById[id] = lit;
+
       lit.Clause = this.decideClause;
       this.decideClause = null;
       return lit;
@@ -762,7 +779,7 @@ namespace Z3AxiomProfiler
 
     private Term GetLiteralTerm(string w)
     {
-      Literal l = GetLiteral(w);
+      Literal l = GetLiteral(w, true);
       if (l.Negated) {
         if (l.Term.NegatedVersion == null)
           l.Term.NegatedVersion = new Term("not", new Term[] { l.Term });
