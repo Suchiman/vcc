@@ -28,6 +28,7 @@ namespace Z3AxiomProfiler.QuantifierModel
     public Dictionary<long, Common> proofSteps = new Dictionary<long, Common>();
 
     public List<ScopeDesc> scopes = new List<ScopeDesc>();
+    public Scope rootScope;
 
     internal static Literal MarkerLiteral = new Literal();
 
@@ -446,6 +447,7 @@ namespace Z3AxiomProfiler.QuantifierModel
     public int lev;
     int recConflictCount = -1;
     int recInstanceCount = -1;
+    int recInstanceDepth = -1;
     int maxConflictSize = 0;
     bool recInstanceCountComputed;
     int id = -1;
@@ -475,6 +477,15 @@ namespace Z3AxiomProfiler.QuantifierModel
       return qid;
     }
 
+    public int RecInstanceDepth
+    {
+      get
+      {
+        var dummy = RecConflictCount;
+        return recInstanceDepth;
+      }
+    }
+
     public int RecConflictCount
     {
       get
@@ -487,7 +498,10 @@ namespace Z3AxiomProfiler.QuantifierModel
           recConflictCount += c.RecConflictCount;
           if (c.maxConflictSize > maxConflictSize)
             maxConflictSize = c.maxConflictSize;
+          if (c.recInstanceDepth > recInstanceDepth)
+            recInstanceDepth = c.recInstanceDepth;
         }
+        recInstanceDepth += OwnInstanceCount;
         if (Conflict != null) recConflictCount++;
         return recConflictCount;
       }
