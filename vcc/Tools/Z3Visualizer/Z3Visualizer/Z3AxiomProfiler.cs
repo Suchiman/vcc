@@ -332,6 +332,7 @@ namespace Z3AxiomProfiler
       root.PropagateImpliedByChildren();
       root.ComputeConflictCost(new List<Conflict>());
       root.AccountLastDecision(model);
+      model.rootScope = root;
       
       List<Quantifier> quantByCnfls = new List<Quantifier>();
       foreach (var q in model.quantifiers.Values) {
@@ -554,6 +555,10 @@ namespace Z3AxiomProfiler
           e.Handled = true;
           this.Close();
           break;
+        case 'v':
+          e.Handled = true;
+          ShowTree();
+          break;
         case '\r':
           if (z3AxiomTree.SelectedNode != null)
             z3AxiomTree.SelectedNode.Expand();
@@ -564,6 +569,17 @@ namespace Z3AxiomProfiler
 
     private void Z3AxiomProfiler_KeyPress(object sender, KeyPressEventArgs e)
     {
+    }
+
+    private void searchTreeVisualizationToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+      ShowTree();
+    }
+
+    private void ShowTree()
+    {
+      var s = new SearchTree(model);
+      s.Show();
     }
   }
 }

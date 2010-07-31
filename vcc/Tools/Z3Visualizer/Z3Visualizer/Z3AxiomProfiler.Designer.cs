@@ -47,6 +47,7 @@
           this.splitContainer1 = new System.Windows.Forms.SplitContainer();
           this.z3AxiomTree = new System.Windows.Forms.TreeView();
           this.toolTipBox = new System.Windows.Forms.TextBox();
+          this.searchTreeVisualizationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
           this.menuStrip1.SuspendLayout();
           this.splitContainer1.Panel1.SuspendLayout();
           this.splitContainer1.Panel2.SuspendLayout();
@@ -74,6 +75,7 @@
             this.searchToolStripMenuItem,
             this.toolStripSeparator2,
             this.colorVisualizationToolStripMenuItem,
+            this.searchTreeVisualizationToolStripMenuItem,
             this.toolStripSeparator1,
             this.exitToolStripMenuItem});
           this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
@@ -224,6 +226,13 @@
           this.toolTipBox.Size = new System.Drawing.Size(741, 68);
           this.toolTipBox.TabIndex = 0;
           // 
+          // searchTreeVisualizationToolStripMenuItem
+          // 
+          this.searchTreeVisualizationToolStripMenuItem.Name = "searchTreeVisualizationToolStripMenuItem";
+          this.searchTreeVisualizationToolStripMenuItem.Size = new System.Drawing.Size(268, 22);
+          this.searchTreeVisualizationToolStripMenuItem.Text = "Search &Tree Visualization";
+          this.searchTreeVisualizationToolStripMenuItem.Click += new System.EventHandler(this.searchTreeVisualizationToolStripMenuItem_Click);
+          // 
           // Z3AxiomProfiler
           // 
           this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -267,6 +276,7 @@
         private System.Windows.Forms.TreeView z3AxiomTree;
         private System.Windows.Forms.TextBox toolTipBox;
         private System.Windows.Forms.ToolStripMenuItem searchToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem searchTreeVisualizationToolStripMenuItem;
     }
 }
 

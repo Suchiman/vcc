@@ -116,6 +116,12 @@
     <Compile Include="SearchBox.Designer.cs">
       <DependentUpon>SearchBox.cs</DependentUpon>
     </Compile>
+    <Compile Include="SearchTree.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SearchTree.Designer.cs">
+      <DependentUpon>SearchTree.cs</DependentUpon>
+    </Compile>
     <Compile Include="Z3AxiomProfiler.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -155,6 +161,9 @@
     <EmbeddedResource Include="SearchBox.resx">
       <DependentUpon>SearchBox.cs</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SearchTree.resx">
+      <DependentUpon>SearchTree.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Z3AxiomProfiler.resx">
       <DependentUpon>Z3AxiomProfiler.cs</DependentUpon>
