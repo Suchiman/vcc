@@ -60,16 +60,41 @@ namespace Z3AxiomProfiler
 
     float scale = 1.0f;
     float offX = 0, offY = 0;
+    Scope selectedScope;
+
+    float lastMouseX, lastMouseY;
+    float closestsDistance;
+    Scope closestsScope;
+    bool needSelect;
 
     private PointF ToScreen(PointF p)
     {
       return new PointF(p.X * scale + offX, p.Y * scale + offY);
     }
 
-    private void PaintSubtree(PointF ourPos, float ourAng, Scope s)
+    private float Distance(float dx, float dy) { return dx * dx + dy * dy; }
+
+    private void PaintSubtree(PointF ourPos, float ourAng, Scope s, bool selected)
     {
       const float maxTotal = (float)(2 * Math.PI / 3);
       const float maxOne = (float)(Math.PI / 20);
+
+      var pp = ToScreen(ourPos);
+
+      var dist = Distance(pp.X - lastMouseX, pp.Y - lastMouseY);
+      if (dist < closestsDistance) {
+        closestsDistance = dist;
+        closestsScope = s;
+      }
+
+      var br = Brushes.Blue;
+      if (s == selectedScope) {
+        selected = true;
+        br = Brushes.Yellow;
+      }
+
+      float sz = 4;
+      gfx.FillEllipse(br, pp.X - sz, pp.Y - sz, sz * 2, sz * 2);
 
       int n = s.ChildrenScopes.Count;
       if (n > 0) {
@@ -79,12 +104,15 @@ namespace Z3AxiomProfiler
         if (n == 1) angStep = 0;
         float curAng = ourAng - angStep * n / 2;
         foreach (var c in s.ChildrenScopes) {
+          if (c.OwnInstanceCount == 0) continue;
           PointF t = ourPos;
           var len = c.OwnInstanceCount * step;
           t.X += (float)(Math.Sin(curAng) * len);
           t.Y -= (float)(Math.Cos(curAng) * len);
-          gfx.DrawLine(Pens.Black, ToScreen(ourPos), ToScreen(t));
-          PaintSubtree(t, curAng, c);
+          var pen = Pens.Black;
+          if (selected) pen = Pens.Red;
+          gfx.DrawLine(pen, ToScreen(ourPos), ToScreen(t));
+          PaintSubtree(t, curAng, c, selected);
           curAng += angStep;
         }
       }
@@ -96,14 +124,21 @@ namespace Z3AxiomProfiler
       while (root.ChildrenScopes.Count == 1)
         root = root.ChildrenScopes[0];
 
+      closestsScope = null;
+      closestsDistance = 50;
+
       gfx = e.Graphics;
-      step = gfx.ClipBounds.Height /  (root.RecInstanceDepth - root.OwnInstanceCount);
-      step *= 1.5f;
+      step = 1000f /  (root.RecInstanceDepth - root.OwnInstanceCount);
       var r = gfx.ClipBounds;
       gfx.FillRectangle(Brushes.White, r);
       //r = new RectangleF(0, 0, pictureBox1.Width, pictureBox1.Height);
       //gfx.Clip = new Region(r);
-      PaintSubtree(new PointF(r.X + r.Width / 2, r.Bottom), 0, root);
+      PaintSubtree(new PointF(r.X + r.Width / 2, r.Bottom), 0, root, false);
+      if (needSelect) {
+        selectedScope = closestsScope;
+        needSelect = false;
+        pictureBox1.Invalidate();
+      }
     }
 
     private void pictureBox1_Resize(object sender, EventArgs e)
@@ -117,6 +152,10 @@ namespace Z3AxiomProfiler
 
     private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
     {
+      if (e.Button == System.Windows.Forms.MouseButtons.Right) {
+        needSelect = true;
+        pictureBox1.Invalidate();
+      }
     }
 
     private void pictureBox1_MouseWheel(object sender, MouseEventArgs e)
@@ -128,8 +167,11 @@ namespace Z3AxiomProfiler
 
         scale *= f;
 
-        offX = (1 - f) * pictureBox1.Width/2 + offX * f;
-        offY = (1 - f) * pictureBox1.Height/2 + offY * f;
+        var x = e.X - pictureBox1.Left;
+        var y = e.Y - pictureBox1.Top;
+
+        offX = (1 - f) * x + offX * f;
+        offY = (1 - f) * y + offY * f;
         pictureBox1.Invalidate();
       }
     }
@@ -138,6 +180,9 @@ namespace Z3AxiomProfiler
     int prevX=-1, prevY;
     private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
     {
+      lastMouseX = e.X;
+      lastMouseY = e.Y;
+
       if (e.Button == System.Windows.Forms.MouseButtons.Left) {
         if (prevX != -1) {
           offX += e.X - prevX;
