@@ -11,18 +11,16 @@ namespace Z3AxiomProfiler
 {
   public partial class SearchTree : Form
   {
-    Model m;
-
-    public SearchTree(Model m)
+    public SearchTree(Model model, Z3AxiomProfiler z3AxiomProfiler)
     {
-      this.m = m;
+      this.model = model;
       InitializeComponent();
       this.pictureBox1.Paint += this.PaintTree;
       this.MouseWheel += this.pictureBox1_MouseWheel;
+      this.z3AxiomProfiler = z3AxiomProfiler;
     }
 
     Graphics gfx;
-    float step;
 
 #if false
     private void PaintSubtree(RectangleF r, Scope s)
@@ -58,7 +56,7 @@ namespace Z3AxiomProfiler
     }
 #endif
 
-    float scale = 1.0f;
+    float scale = -1;
     float offX = 0, offY = 0;
     Scope selectedScope;
 
@@ -66,22 +64,30 @@ namespace Z3AxiomProfiler
     float closestsDistance;
     Scope closestsScope;
     bool needSelect;
+    PointF middle;
+    float radius;
 
     private PointF ToScreen(PointF p)
     {
       return new PointF(p.X * scale + offX, p.Y * scale + offY);
     }
 
-    private float Distance(float dx, float dy) { return dx * dx + dy * dy; }
+    private float Distance2(float dx, float dy) { return dx * dx + dy * dy; }
 
-    private void PaintSubtree(PointF ourPos, float ourAng, Scope s, bool selected)
+    private PointF LineAtAng(Pen pen, PointF p, float len, float ang)
     {
-      const float maxTotal = (float)(2 * Math.PI / 3);
-      const float maxOne = (float)(Math.PI / 20);
+      PointF t = p;
+      t.X += (float)(Math.Sin(ang) * len);
+      t.Y -= (float)(Math.Cos(ang) * len);
+      gfx.DrawLine(pen, ToScreen(p), ToScreen(t));
+      return t;
+    }
 
+    private void PaintSubtree(PointF ourPos, float leftAng, float rightAng, Scope s, bool selected)
+    {
       var pp = ToScreen(ourPos);
 
-      var dist = Distance(pp.X - lastMouseX, pp.Y - lastMouseY);
+      var dist = Distance2(pp.X - lastMouseX, pp.Y - lastMouseY);
       if (dist < closestsDistance) {
         closestsDistance = dist;
         closestsScope = s;
@@ -97,45 +103,72 @@ namespace Z3AxiomProfiler
       gfx.FillEllipse(br, pp.X - sz, pp.Y - sz, sz * 2, sz * 2);
 
       int n = s.ChildrenScopes.Count;
+      float radiusLeft = radius - (float)Math.Sqrt(Distance2(middle.X - ourPos.X, middle.X - ourPos.X));
+
       if (n > 0) {
-        float angStep = maxTotal / n;
-        if (angStep > maxOne)
-          angStep = maxOne;
-        if (n == 1) angStep = 0;
-        float curAng = ourAng - angStep * n / 2;
+        float angStep = (rightAng - leftAng) / (s.InstanceCount - s.OwnInstanceCount);
+        float curAng = leftAng;
+
         foreach (var c in s.ChildrenScopes) {
-          if (c.OwnInstanceCount == 0) continue;
-          PointF t = ourPos;
-          var len = c.OwnInstanceCount * step;
-          t.X += (float)(Math.Sin(curAng) * len);
-          t.Y -= (float)(Math.Cos(curAng) * len);
-          var pen = Pens.Black;
-          if (selected) pen = Pens.Red;
-          gfx.DrawLine(pen, ToScreen(ourPos), ToScreen(t));
-          PaintSubtree(t, curAng, c, selected);
-          curAng += angStep;
+          if (c.InstanceCount == 0) continue;
+          float nextAng = curAng + angStep * c.InstanceCount;
+          float midAng = (curAng + nextAng) / 2;
+
+          var len = c.OwnInstanceCount;
+          PointF t = LineAtAng(selected ? Pens.Red : Pens.Black, ourPos, len, midAng);
+
+          float alpha = (nextAng - curAng) / 2;
+          float beta = alpha;
+
+          if (alpha < 0.4 * Math.PI) {
+            float nextLeft = radiusLeft - len;
+            if (nextLeft < radiusLeft / 4)
+              nextLeft = radiusLeft / 4;
+            beta = (float)Math.Atan(radiusLeft * Math.Tan(alpha) / nextLeft);
+          }
+
+          PaintSubtree(t, midAng - beta, midAng + beta, c, selected);
+
+          if (alpha > Math.PI * 0.05) {
+            var len2 = 0.9f * len;
+            LineAtAng(Pens.Orange, ourPos, len2, midAng - alpha);
+            LineAtAng(Pens.Orange, ourPos, len2, midAng + alpha);
+          }
+
+          curAng = nextAng;
         }
       }
     }
 
     private void PaintTree(object sender, PaintEventArgs e)
     {
-      var root = m.rootScope;
-      while (root.ChildrenScopes.Count == 1)
-        root = root.ChildrenScopes[0];
+      var root = model.rootScope;
+      //while (root.ChildrenScopes.Count == 1)
+      //  root = root.ChildrenScopes[0];
 
       closestsScope = null;
       closestsDistance = 50;
 
       gfx = e.Graphics;
-      step = 1000f /  (root.RecInstanceDepth - root.OwnInstanceCount);
+      radius = root.RecInstanceDepth - root.OwnInstanceCount;
       var r = gfx.ClipBounds;
       gfx.FillRectangle(Brushes.White, r);
       //r = new RectangleF(0, 0, pictureBox1.Width, pictureBox1.Height);
       //gfx.Clip = new Region(r);
-      PaintSubtree(new PointF(r.X + r.Width / 2, r.Bottom), 0, root, false);
+
+      middle = new PointF(0,0);
+
+      if (scale < 0) {
+        scale = pictureBox1.Height / radius;
+        offX = r.X + r.Width/2;
+        offY = r.Bottom - 10;
+      }
+
+      PaintSubtree(middle, (float)(-0.8*Math.PI), (float)(+0.8*Math.PI), root, false);
       if (needSelect) {
         selectedScope = closestsScope;
+        if (selectedScope != null)
+          z3AxiomProfiler.ExpandScope(selectedScope);
         needSelect = false;
         pictureBox1.Invalidate();
       }
@@ -167,6 +200,15 @@ namespace Z3AxiomProfiler
 
         scale *= f;
 
+        string sc;
+        if (scale > 0.1) {
+          sc= string.Format("{0:0.000}", scale);
+        } else {
+          sc = string.Format("1 / {0}", (int)(1/scale));
+        }
+
+        this.Text = string.Format("Search Tree [zoom: {0}]", sc);
+
         var x = e.X - pictureBox1.Left;
         var y = e.Y - pictureBox1.Top;
 
@@ -178,6 +220,8 @@ namespace Z3AxiomProfiler
 
 
     int prevX=-1, prevY;
+    private Model model;
+    private Z3AxiomProfiler z3AxiomProfiler;
     private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
     {
       lastMouseX = e.X;
@@ -194,6 +238,18 @@ namespace Z3AxiomProfiler
       } else {
         prevX = -1;
       }
+    }
+
+    private void SearchTree_FormClosing(object sender, FormClosingEventArgs e)
+    {
+      e.Cancel = true;
+      this.Hide();
+    }
+
+    public void SelectScope(Scope scope)
+    {
+      selectedScope = scope;
+      pictureBox1.Invalidate();
     }
   }
 }

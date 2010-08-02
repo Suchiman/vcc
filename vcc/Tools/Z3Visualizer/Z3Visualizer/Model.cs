@@ -75,7 +75,7 @@ namespace Z3AxiomProfiler.QuantifierModel
       cur.Conflict = cnfl;
       for (int i = scopes.Count - 1; i >= scopes.Count - n; --i) {
         if (scopes[i].Scope != null) {
-          scopes[i].Scope.ChildrenScopes.Add(cur);
+          scopes[i].Scope.AddChildScope(cur);
           cur = scopes[i].Scope;
         }
         cur.OwnInstanceCount += scopes[i].InstanceCount;
@@ -95,7 +95,7 @@ namespace Z3AxiomProfiler.QuantifierModel
         scopes[end].Scope = new Scope();
         scopes[end].Scope.lev = end;
       }
-      scopes[end].Scope.ChildrenScopes.Add(cur);
+      scopes[end].Scope.AddChildScope(cur);
       scopes[end].Implied.Add(MarkerLiteral);
     }
 
@@ -440,11 +440,12 @@ namespace Z3AxiomProfiler.QuantifierModel
 
   public class Scope : Common
   {
-    public List<Literal> Literals = new List<Literal>();
+    public readonly List<Literal> Literals = new List<Literal>();
     public Literal[] ImpliedAtParent;
     public Conflict Conflict;
-    public List<Scope> ChildrenScopes = new List<Scope>();
+    public readonly List<Scope> ChildrenScopes = new List<Scope>();
     public int lev;
+    public Scope parentScope;
     int recConflictCount = -1;
     int recInstanceCount = -1;
     int recInstanceDepth = -1;
@@ -475,6 +476,12 @@ namespace Z3AxiomProfiler.QuantifierModel
       if (l.Clause == null || l.Clause.Name != "or" || l.Clause.Args[0].Name != "not") return null;
       string qid = l.Clause.Args[0].Args[0].Name;
       return qid;
+    }
+
+    internal void AddChildScope(Scope s)
+    {
+      ChildrenScopes.Add(s);
+      s.parentScope = this;
     }
 
     public int RecInstanceDepth
