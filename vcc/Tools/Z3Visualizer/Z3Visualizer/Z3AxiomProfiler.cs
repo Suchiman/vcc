@@ -17,6 +17,7 @@ namespace Z3AxiomProfiler
     readonly bool launchedFromAddin;
     readonly Control ctrl;
     public string SearchText = "";
+    SearchTree searchTree;
 
     public Z3AxiomProfiler()
       : this(false, null)
@@ -402,6 +403,26 @@ namespace Z3AxiomProfiler
       return tt;
     }
 
+    public TreeNode ExpandScope(Scope s)
+    {
+      var coll = z3AxiomTree.Nodes;
+      if (s.parentScope != null) {
+        var p = ExpandScope(s.parentScope);
+        if (p == null) return null;
+        coll = p.Nodes;
+      }
+
+      foreach (TreeNode n in coll) {
+        if (n.Tag == s) {
+          n.Expand();
+          z3AxiomTree.SelectedNode = n;
+          return n;
+        }
+      }
+
+      return null;
+    }
+
     internal TreeNode makeNode(Common common)
     {
       var label = common.ToString();
@@ -525,6 +546,10 @@ namespace Z3AxiomProfiler
       if (c != null) {
         toolTipBox.Lines = c.ToolTip().Replace("\r","").Split('\n');
       }
+
+      if (c is Scope && searchTree != null) {
+        searchTree.SelectScope((Scope)c);
+      }
     }
 
     void Search()
@@ -578,8 +603,9 @@ namespace Z3AxiomProfiler
 
     private void ShowTree()
     {
-      var s = new SearchTree(model);
-      s.Show();
+      if(searchTree == null)
+        searchTree = new SearchTree(model, this);
+      searchTree.Show();
     }
   }
 }
