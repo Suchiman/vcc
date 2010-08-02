@@ -96,7 +96,7 @@ namespace Z3AxiomProfiler
       var br = Brushes.Blue;
       if (s == selectedScope) {
         selected = true;
-        br = Brushes.Yellow;
+        br = Brushes.Orange;
       }
 
       float sz = 4;
@@ -115,7 +115,7 @@ namespace Z3AxiomProfiler
           float midAng = (curAng + nextAng) / 2;
 
           var len = c.OwnInstanceCount;
-          PointF t = LineAtAng(selected ? Pens.Red : c == selectedScope ? Pens.Yellow : Pens.Black, ourPos, len, midAng);
+          PointF t = LineAtAng(selected ? Pens.Red : c == selectedScope ? Pens.Orange : Pens.Black, ourPos, len, midAng);
 
           float alpha = (nextAng - curAng) / 2;
           float beta = alpha;
@@ -131,8 +131,8 @@ namespace Z3AxiomProfiler
 
           if (alpha > Math.PI * 0.05) {
             var len2 = 0.9f * len;
-            LineAtAng(Pens.Orange, ourPos, len2, midAng - alpha);
-            LineAtAng(Pens.Orange, ourPos, len2, midAng + alpha);
+            LineAtAng(Pens.Lime, ourPos, len2, midAng - alpha);
+            LineAtAng(Pens.Lime, ourPos, len2, midAng + alpha);
           }
 
           curAng = nextAng;
