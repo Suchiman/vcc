@@ -115,7 +115,7 @@ namespace Z3AxiomProfiler
           float midAng = (curAng + nextAng) / 2;
 
           var len = c.OwnInstanceCount;
-          PointF t = LineAtAng(selected ? Pens.Red : Pens.Black, ourPos, len, midAng);
+          PointF t = LineAtAng(selected ? Pens.Red : c == selectedScope ? Pens.Yellow : Pens.Black, ourPos, len, midAng);
 
           float alpha = (nextAng - curAng) / 2;
           float beta = alpha;
@@ -162,6 +162,7 @@ namespace Z3AxiomProfiler
         scale = pictureBox1.Height / radius;
         offX = r.X + r.Width/2;
         offY = r.Bottom - 10;
+        SetTitle();
       }
 
       PaintSubtree(middle, (float)(-0.8*Math.PI), (float)(+0.8*Math.PI), root, false);
@@ -199,15 +200,7 @@ namespace Z3AxiomProfiler
           f = 1 / f;
 
         scale *= f;
-
-        string sc;
-        if (scale > 0.1) {
-          sc= string.Format("{0:0.000}", scale);
-        } else {
-          sc = string.Format("1 / {0}", (int)(1/scale));
-        }
-
-        this.Text = string.Format("Search Tree [zoom: {0}]", sc);
+        SetTitle();
 
         var x = e.X - pictureBox1.Left;
         var y = e.Y - pictureBox1.Top;
@@ -216,6 +209,19 @@ namespace Z3AxiomProfiler
         offY = (1 - f) * y + offY * f;
         pictureBox1.Invalidate();
       }
+    }
+
+    private void SetTitle()
+    {
+
+      string sc;
+      if (scale > 0.1) {
+        sc = string.Format("{0:0.000}", scale);
+      } else {
+        sc = string.Format("1 / {0}", (int)(1 / scale));
+      }
+
+      this.Text = string.Format("Search Tree [zoom: {0}]", sc);
     }
 
 
