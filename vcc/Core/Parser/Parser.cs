@@ -3655,7 +3655,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
       this.Skip(token);
-      this.SkipTo(followers, Error.None);
+      this.SkipTo(followers);
     }
 
     protected void SkipOverTo(Token token, TokenSet followers, bool specKeywordExpected)
