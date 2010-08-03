@@ -18,6 +18,9 @@ type $ptr;
 //   like A.b for field b of struct A.
 type $field; 
 
+// special field, owner,closed and friends. Given special treatement in the prelude
+type $sfield; 
+
 // describes a kind of a C type:
 //  - primitive (includes mathematical types (sequences, maps, sets) and pointers)
 //  - array
@@ -38,6 +41,7 @@ type $token;
 type $state;
 
 type $heap = [$ptr][$field][$ptr]int;
+type $sheap = [$sfield][$ptr][$ptr]int;
 type $roots = [$ptr]$ptr;
 type $embs = [$ptr]$ptr;
 
@@ -229,11 +233,15 @@ function {:inline true} $current_state(s:$state) : $state { s }
 function $roots(s:$state) : $roots;
 function $embs(s:$state) : $embs;
 function $heap(s:$state) : $heap;
+function $specials(s:$state) : $sheap;
 
 function $mem(s:$state, p:$ptr) : int;  // FIXME
 
 function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int
   { $heap(s)[$roots(s)[p]][f][p] }
+
+function {:inline true} $rds(s:$state, p:$ptr, f:$sfield) : int
+  { $specials(s)[f][$roots(s)[p]][p] }
 
 function $relative_field_of(p:$ptr, q:$ptr) : $field;
 function $container(p:$ptr, f:$field) : $ptr;
@@ -335,7 +343,7 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
     $field_offset(f) == off &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
     (forall S:$state, p:$ptr :: 
-      {$rd(S, $dot(p, f), $f_typed)}
+      {$rds(S, $dot(p, f), $f_typed)}
 	  {$emb(S, $dot(p, f))}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
@@ -349,7 +357,7 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
     (!isvolatile ==> $is_sequential_field(f)) &&
     (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ghost_ref(p, f))) &&
     (forall S:$state, p:$ptr :: 
-      {$rd(S, $dot(p, f), $f_typed)}
+      {$rds(S, $dot(p, f), $f_typed)}
 	  {$emb(S, $dot(p, f))}
     $typed2(S, p, partp) ==>
       $typed(S, $dot(p, f)) &&
@@ -371,7 +379,7 @@ function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
   {
-    (forall p:$ptr :: {$rd(S, p, $f_typed)}
+    (forall p:$ptr :: {$rds(S, p, $f_typed)}
       $set_in(p, ptrs) ==> $in_writes_at(time, p) && $thread_owned_or_even_mutable(S, p))
 /*
     (forall p:$ptr :: {:vcc3 "L1"} {S[p]}
@@ -380,24 +388,26 @@ function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
         */
   }
 
-const unique $f_typed : $field;
-const unique $f_emb : $field;
-const unique $f_is_volatile : $field;
-const unique $f_timestamp : $field;
+function {:inline true} $def_special_field(f:$sfield, tp:$ctype) : bool
+  { true }
+
+
+const unique $f_typed : $sfield;
+const unique $f_is_volatile : $sfield;
+const unique $f_timestamp : $sfield;
+const unique $f_owner : $sfield;
+const unique $f_closed : $sfield;
+
+axiom $def_special_field($f_typed, ^^bool);
+axiom $def_special_field($f_is_volatile, ^^bool);
+axiom $def_special_field($f_timestamp, ^^mathint);
+axiom $def_special_field($f_owner, ^^object);
+axiom $def_special_field($f_closed, ^^bool);
+
 const unique $f_owns : $field;
-const unique $f_owner : $field;
-const unique $f_version : $field;
-const unique $f_closed : $field;
 const unique $f_ref_cnt : $field;
 
-axiom $def_common_field($f_typed, ^^bool);
-axiom $def_common_field($f_emb, ^^object);
-axiom $def_common_field($f_is_volatile, ^^bool);
-axiom $def_common_field($f_timestamp, ^^mathint);
 axiom $def_common_field($f_owns, ^$#ptrset);
-axiom $def_common_field($f_owner, ^^object);
-axiom $def_common_field($f_version, ^^mathint);
-axiom $def_common_field($f_closed, ^^bool);
 axiom $def_common_field($f_ref_cnt, ^^mathint);
 
 // it has no further embedding (not embedded inside another struct)
@@ -405,7 +415,7 @@ function {:inline true} $is_object_root(S:$state, p:$ptr) : bool
   { $emb(S, p) == $ptr(^^root_emb, $ref(p)) }
 
 function $is_volatile(S:$state, p:$ptr) : bool
-  { $int_to_bool($rd(S, p, $f_is_volatile)) }
+  { $int_to_bool($rds(S, p, $f_is_volatile)) }
 
 axiom (forall S:$state, p:$ptr ::
   {:vcc3 "todo"}
@@ -476,16 +486,16 @@ function $has_volatile_owns_set(t:$ctype) : bool;
 function $is_claimable($ctype) : bool;
 
 function {:inline true} $owner(S:$state, p:$ptr) : $ptr
-  { $int_to_ptr($rd(S, p, $f_owner)) }
+  { $int_to_ptr($rds(S, p, $f_owner)) }
 function {:inline true} $closed(S:$state, p:$ptr) : bool
-  { $int_to_bool($rd(S, p, $f_closed)) }
+  { $int_to_bool($rds(S, p, $f_closed)) }
 function {:inline true} $timestamp(S:$state, p:$ptr) : int
-  { $rd(S, p, $f_timestamp) }
+  { $rds(S, p, $f_timestamp) }
 function {:inline true} $ref_cnt(S:$state, p:$ptr) : int
   { $rd(S, p, $f_ref_cnt) }
 
 function $typed(S:$state, p:$ptr) : bool
-  { $int_to_bool($rd(S, p, $f_typed)) }
+  { $int_to_bool($rds(S, p, $f_typed)) }
 
 function $position_marker() : bool
   { true }
@@ -673,7 +683,7 @@ axiom (forall S:$state :: {$good_state(S)}
 
 axiom (forall S:$state ::
   $good_state(S) ==>
-    (forall p:$ptr :: {$rd(S, p, $f_closed)} $closed(S, p) ==> $typed(S, p)) &&
+    (forall p:$ptr :: {$rds(S, p, $f_closed)} $closed(S, p) ==> $typed(S, p)) &&
     $closed_is_transitive(S)
     );
         
@@ -706,9 +716,10 @@ function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) : bool;
 // Procedures
 // ----------------------------------------------------------------------------
 
-function $update(h:$heap, r:$ptr, f:$field, p:$ptr, v:int) : $heap;
-  // { h[ r := h[r][ f := h[r][f][ p := v ] ] ] }
+function $update(h:$heap, r:$ptr, f:$field, p:$ptr, v:int) : $heap
+  { h[ r := h[r][ f := h[r][f][ p := v ] ] ] }
 
+/*
 axiom 
    (forall h:$heap, r:$ptr, f:$field, p:$ptr, v:int :: {$update(h,r,f,p,v)}
      (forall r2:$ptr, f2:$field, p2:$ptr :: {$update(h,r,f,p,v)[r2][f2][p2]}
@@ -716,11 +727,13 @@ axiom
           $update(h,r,f,p,v)[r2][f2][p2] == v
         else
           h[r2][f2][p2] == $update(h,r,f,p,v)[r2][f2][p2]));
+*/
 
 procedure $write_int(p:$ptr, f:$field, v:int);
   modifies $s;
   ensures $embs($s) == $embs(old($s));
   ensures $roots($s) == $roots(old($s));
+  ensures $specials($s) == $specials(old($s));
   ensures $heap($s) == $update($heap(old($s)), $roots(old($s))[p], f, p, v);
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -759,6 +772,7 @@ procedure $set_owns(p:$ptr, owns:$ptrset);
   ensures $embs($s) == $embs(old($s));
   ensures $roots($s) == $roots(old($s));
   ensures $heap($s) == $update($heap(old($s)), $roots(old($s))[p], $f_owns, p, $ptrset_to_int(owns));
+  ensures $specials($s) == $specials(old($s));
   ensures $timestamp_post_strict(old($s), $s);
 
 // ----------------------------------------------------------------------------
@@ -792,80 +806,55 @@ function $pre_static_wrap($state) : bool;
 function $pre_static_unwrap($state) : bool;
 function $post_unwrap(S1:$state, S2:$state) : bool;
 
+function {:inline true} $spec_eq(S0:$state, S:$state, f:$sfield) : bool
+  { $specials(S0)[f] == $specials(S)[f] }
+
+function {:inline true} $spec_update(S0:$state, S:$state, f:$sfield, r:$ptr, p:$ptr, v:int) : bool
+  { $specials(S)[f] == $specials(S0)[f][ r := $specials(S0)[f][r][p := v]] }
+
 function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
 {
   // TODO both of these takes the entire current heap, maybe restrict it to the owns set?
   (forall q:$ptr, f:$field :: {$heap(S)[o][f][q]}
-     $heap(S)[o][f][q] == $heap(S0)[$roots(S0)[q]][f][q] ||
-     f == $f_owner || f == $f_timestamp || f == $f_version || (q == o && f == $f_closed))
+     $heap(S)[o][f][q] == $heap(S0)[$roots(S0)[q]][f][q])
   && (forall p:$ptr :: $heap(S)[p] == $heap(S0)[p] || p == o)
-  /*
-  $heap(S) == $heap(S0)[ o := (lambda f:$field :: 
-    if f == $f_owner || f == $f_timestamp || f == $f_version then
-      $heap(S)[o][f]
-    else
-      (lambda p:$ptr :: 
-        if p == o && f == $f_closed then 1
-        else $rd(S0, p, f))) ]
-        */
+  && $spec_eq(S0, S, $f_typed)
+  && $spec_eq(S0, S, $f_is_volatile)
+  && $spec_update(S0, S, $f_closed, o, o, 1)
+  && $spec_update(S0, S, $f_timestamp, o, o, $current_timestamp(S))
+  && $specials(S)[$f_owner] == 
+     (lambda r:$ptr :: 
+        if $set_in(r, $owns(S0, o)) then 
+          (lambda p:$ptr :: $ptr_to_int(if p == r then o else $owner(S0, p)))
+        else $specials(S0)[$f_owner][r])
   && $embs(S0) == $embs(S)
   &&
-
-
   (forall p:$ptr :: {$roots(S)[p]}
      $roots(S)[p] == $roots(S0)[p] ||
      ($roots(S)[p] == o && (p == o || $set_in($roots(S0)[p], $owns(S0, o)))))
-  /*
-  $roots(S) == (lambda p:$ptr :: 
-                    if p == o || $set_in($roots(S0)[p], $owns(S0, o)) 
-                    then o else $roots(S0)[p])
-                    */
   && $timestamp_post_strict(S0, S)
 }
 
 function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 {
   $mutable(S, o) && 
-  $timestamp_is_now(S, o) &&
 
-  (forall p:$ptr :: {$heap(S)[p]}
-    // the alternative check ($owner(S0, p) == o) seems slower
-    p == o ||
-    (if $roots(S0)[p] == o then
-       (forall f:$field :: {$heap(S)[p][f]} $heap(S)[p][f] == $heap(S0)[o][f] || f == $f_owner || f == $f_timestamp)
-     else $heap(S0)[p] == $heap(S)[p]))
-  &&
-  (forall f:$field, q:$ptr :: {$heap(S)[o][f][q]}
-     $heap(S)[o][f][q] == $heap(S0)[o][f][q] ||
-     (q == o && (f == $f_closed || f == $f_version || f == $f_timestamp)))
-  /*
-  $heap(S) == (lambda p:$ptr ::
-    if p == o then
-      (lambda f:$field :: (lambda q:$ptr ::
-         if q == o && (f == $f_closed || f == $f_version || f == $f_timestamp) then
-           $heap(S)[o][f][q]
-         else 
-           $heap(S0)[o][f][q]))
-    else
-      // if $owner(S0, p) == o then // TODO: check if this is faster
-      if $roots(S0)[p] == o then
-        (lambda f:$field :: if f == $f_owner || f == $f_timestamp then $heap(S)[p][f] else $heap(S0)[o][f])
-      else
-        $heap(S0)[p])
-  */
+  (forall p:$ptr :: {$heap(S)[p]} $heap(S)[p] == $heap(S0)[$roots(S0)[p]])
+  && $spec_eq(S0, S, $f_typed)
+  && $spec_eq(S0, S, $f_is_volatile)
+  && $spec_update(S0, S, $f_closed, o, o, 0)
+  && $spec_update(S0, S, $f_timestamp, o, o, $current_timestamp(S))
+  && $specials(S)[$f_owner] == 
+     (lambda r:$ptr :: 
+        if $roots(S0)[r] == o then 
+          (lambda p:$ptr :: $ptr_to_int(if p == r then $me() else $owner(S0, p)))
+        else $specials(S0)[$f_owner][r])
   && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$roots(S)[p]}
      ($roots(S0)[p] != o && $roots(S0)[p] == $roots(S)[p]) ||
      ($roots(S0)[p] == o && ($roots(S)[p] == p || $owner(S0, p) != o))
      )
-    /*
-  $roots(S) == (lambda p:$ptr :: 
-                    if $roots(S0)[p] == o then
-					   if $owner(S0, p) == o then p
-					   else $roots(S)[p]
-                    else $roots(S0)[p])
-  */
   &&
   (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==>
@@ -900,8 +889,7 @@ function $is_wrapped(S0:$state, S:$state, o:$ptr) : bool
   $timestamp_is_now(S, o) &&
 
   (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
-    $set_in(p, $owns(S0, o)) ==>
-      $owner(S, p) == o && $timestamp_is_now(S, p)) &&
+    $set_in(p, $owns(S0, o)) ==> $owner(S, p) == o) &&
 
   ($is_claimable($typ(o)) ==> $ref_cnt(S0, o) == 0 && $ref_cnt(S, o) == 0)
 
@@ -931,15 +919,13 @@ procedure $wrap(o:$ptr, T:$ctype);
 function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { (forall f:$field :: {$dot(p, f)}
       ($is_ghost_field(f) || $field_parent_type(f) == t) ==>
-        $rd(S1, p, f) == $rd(S2, p, f) ||
-        f == $f_closed || f == $f_owner || f == $f_ref_cnt) }
+        $rd(S1, p, f) == $rd(S2, p, f) || f == $f_ref_cnt) }
 
 function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { (forall f:$field :: {$dot(p, f)}
       ($is_ghost_field(f) || $field_parent_type(f) == t) ==>
         $rd(S1, p, f) == $rd(S2, p, f) ||
-        $is_volatile(S1, $dot(p, f)) ||
-        f == $f_closed || f == $f_owner || f == $f_ref_cnt) }
+        $is_volatile(S1, $dot(p, f)) || f == $f_ref_cnt) }
 
 function $good_for_admissibility(S:$state) : bool;
 function $good_for_post_admissibility(S:$state) : bool;
