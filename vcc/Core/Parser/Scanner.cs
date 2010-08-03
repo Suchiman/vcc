@@ -2316,6 +2316,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       keywords['r' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecUnwrapping, "unwrapping");
+      keyword = new Keyword(Token.Unchecked, "unchecked", keyword);
       keywords['u' - 'a'] = keyword;
 
       keyword = new Keyword(Token.SpecWrites, "writes");

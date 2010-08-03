@@ -16,8 +16,8 @@ namespace Microsoft.Research.Vcc.Parsing {
   [System.Diagnostics.DebuggerDisplay("CurrentToken = {this.currentToken}, {this.scanner.GetIdentifierString()}")]
   internal class Parser {
 
-    protected delegate TResult Func<T, TResult>(T arg);
-    protected delegate TResult Func<T1, T2, TResult>(T1 arg1, T2 arg2);
+    protected delegate TResult Func<in T, out TResult>(T arg);
+    protected delegate TResult Func<in T1, in T2, out TResult>(T1 arg1, T2 arg2);
 
     protected readonly Compilation compilation;
     protected readonly Dictionary<string, TypedefDeclaration> typedefs;
@@ -2138,7 +2138,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       Expression e = this.ParseExpression(!acceptComma, false, followersOrCommaOrColonOrSemicolon);
       SourceLocationBuilder slb = new SourceLocationBuilder(e.SourceLocation);
       ExpressionStatement eStat = new ExpressionStatement(e, slb);
-      VccSimpleName/*?*/ id = null;
+      VccSimpleName/*?*/ id;
       if (this.currentToken == Token.Colon && acceptLabel && (id = e as VccSimpleName) != null)
         return this.ParseLabeledStatement(id, followers);
       if (!acceptComma || this.currentToken != Token.Comma) {
@@ -2527,7 +2527,6 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     protected List<Expression> ParseExpressionListWithParens(List<Expression> listToAddTo, Token leftParen, Token separator, Token rightParen, TokenSet followers) {
-      TokenSet exprFollowers = followers | rightParen;
       this.GetNextToken();
       this.Skip(leftParen);
       this.ParseExpressionList(listToAddTo, separator, followers | rightParen);
@@ -3323,7 +3322,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Specifier> specifiers = this.ParseSpecifiers(members, null, null, followers|Token.Multiply|Token.RightParenthesis|Token.LeftBracket);
       Declarator declarator = this.ParseDeclarator(followers);
       slb.UpdateToSpan(declarator.SourceLocation);
-      TypeExpression type = this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, (IdentifierDeclarator)null), declarator);
+      TypeExpression type = this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, null), declarator);
       this.SkipTo(followers);
       return type;
     }
@@ -3608,8 +3607,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       TypeCode tc = this.scanner.ScanNumberSuffix(false);
       ctx.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       CompileTimeConstant result;
-      string/*?*/
-      typeName = null;
+      string/*?*/ typeName;
       switch (tc) {
         case TypeCode.Single:
           typeName = "float";
@@ -4217,14 +4215,12 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// <returns></returns>
     public static string LexicalScopeOf(string mangledName) {
       int firstpos = mangledName.IndexOf('^');
-      string result = "";
       //^ assert firstpos >=0 ;
       try {
-        result = mangledName.Substring(firstpos + 1, mangledName.Length - firstpos - 1);
+        return mangledName.Substring(firstpos + 1, mangledName.Length - firstpos - 1);
       } catch (ArgumentOutOfRangeException) {
         return "";
       }
-      return result;
     }
 
     /// <summary>

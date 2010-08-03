@@ -70,7 +70,7 @@ namespace Microsoft.Research.Vcc {
     RedefinitionOfFormalParameter,
 
     /// <summary>
-    /// The size of '{0}' is unknown in the current context; note that the use of sizeof may be due to SAL __in ,__inout, or __out annotations.
+    /// The size of '{0}' is unknown in the current context.
     /// </summary>
     SizeOfUnknown,
 
@@ -137,7 +137,7 @@ namespace Microsoft.Research.Vcc {
     UnexpectedVccKeyword,
 
     /// <summary>
-    /// Could not find built-in types and functions. Missing #include <vcc.h>?
+    /// Could not find built-in types and functions. Missing #include &lt;vcc.h&gt;?
     /// </summary>
     MissingIncludeOfVccH,
 
