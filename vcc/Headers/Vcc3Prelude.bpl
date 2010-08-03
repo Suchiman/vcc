@@ -42,6 +42,7 @@ type $state;
 
 type $heap = [$ptr][$field][$ptr]int;
 type $sheap = [$sfield][$ptr][$ptr]int;
+
 type $roots = [$ptr]$ptr;
 type $embs = [$ptr]$ptr;
 
@@ -237,11 +238,14 @@ function $specials(s:$state) : $sheap;
 
 function $mem(s:$state, p:$ptr) : int;  // FIXME
 
+function {:inline true} $root(s:$state, p:$ptr) : $ptr
+  { $roots(s)[p] }
+
 function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int
   { $heap(s)[$roots(s)[p]][f][p] }
 
 function {:inline true} $rds(s:$state, p:$ptr, f:$sfield) : int
-  { $specials(s)[f][$roots(s)[p]][p] }
+  { $specials(s)[f][$root(s, p)][p] }
 
 function $relative_field_of(p:$ptr, q:$ptr) : $field;
 function $container(p:$ptr, f:$field) : $ptr;
@@ -426,12 +430,14 @@ function {:inline true} $is_malloc_root(S:$state, p:$ptr) : bool
   { $is_object_root(S, p) }
 
 function $current_timestamp(S:$state) : int;
+/*
 axiom (forall S:$state, p:$ptr ::
   {:vcc3 "todo"}
   {$timestamp(S, p)}
   $timestamp(S, p) <= $current_timestamp(S) ||
   !$typed(S, p)
   );
+*/
 
 function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) : bool
   { $current_timestamp(M1) < $timestamp(M2, p) && $timestamp(M2, p) <= $current_timestamp(M2) }
@@ -453,8 +459,8 @@ function {:inline true} $in(p:$ptr, s:$ptrset) : bool
   { s[p] } 
 
 function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
-  { (forall p:$ptr :: {$roots(S1)[p]} $owner(S0, p) == $me() ==> $roots(S0)[p] == $roots(S1)[p] || $in($roots(S0)[p], W)) &&
-    (forall p:$ptr :: {$embs(S1)[p]} $owner(S0, $embs(S0)[p]) == $me() ==> $embs(S0)[p] == $embs(S1)[p] || $in($roots(S0)[$embs(S0)[p]], W)) &&
+  { (forall p:$ptr :: {$root(S1, p)} $owner(S0, p) == $me() ==> $root(S0, p) == $root(S1, p) || $in($root(S0, p), W)) &&
+    (forall p:$ptr :: {$embs(S1)[p]} $owner(S0, $embs(S0)[p]) == $me() ==> $embs(S0)[p] == $embs(S1)[p] || $in($root(S0, $embs(S0)[p]), W)) &&
     (forall p:$ptr :: {$heap(S1)[p]} $owner(S0, p) == $me() ==> $heap(S0)[p] == $heap(S1)[p] || $in(p, W)) &&
     $timestamp_post(S0, S1) }
 
@@ -500,7 +506,7 @@ function $typed(S:$state, p:$ptr) : bool
 function $position_marker() : bool
   { true }
 
-function {:inline true} $owns(S:$state, p:$ptr) : $ptrset
+function $owns(S:$state, p:$ptr) : $ptrset
   { $int_to_ptrset($rd(S, p, $f_owns)) }
 
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
@@ -585,7 +591,7 @@ function $in_wrapped_domain(S:$state, p:$ptr) : bool;
 
 function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
   { !$is_primitive_ch($typ(p))
-  && $owner(S, $roots(S)[p]) == $me()
+  && $owner(S, $root(S, p)) == $me()
 //     ($wrapped(S, $root(S, p), $typ($root(S, p))) && $set_in(p, $domain(S, $root(S, p)))))
   }
 
@@ -816,7 +822,7 @@ function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
 {
   // TODO both of these takes the entire current heap, maybe restrict it to the owns set?
   (forall q:$ptr, f:$field :: {$heap(S)[o][f][q]}
-     $heap(S)[o][f][q] == $heap(S0)[$roots(S0)[q]][f][q])
+     $heap(S)[o][f][q] == $heap(S0)[$root(S0, q)][f][q])
   && (forall p:$ptr :: $heap(S)[p] == $heap(S0)[p] || p == o)
   && $spec_eq(S0, S, $f_typed)
   && $spec_eq(S0, S, $f_is_volatile)
@@ -829,9 +835,9 @@ function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
         else $specials(S0)[$f_owner][r])
   && $embs(S0) == $embs(S)
   &&
-  (forall p:$ptr :: {$roots(S)[p]}
-     $roots(S)[p] == $roots(S0)[p] ||
-     ($roots(S)[p] == o && (p == o || $set_in($roots(S0)[p], $owns(S0, o)))))
+  (forall p:$ptr :: {$root(S, p)}
+     $root(S, p) == $root(S0, p) ||
+     ($root(S, p) == o && (p == o || $set_in($root(S0, p), $owns(S0, o)))))
   && $timestamp_post_strict(S0, S)
 }
 
@@ -839,21 +845,21 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 {
   $mutable(S, o) && 
 
-  (forall p:$ptr :: {$heap(S)[p]} $heap(S)[p] == $heap(S0)[$roots(S0)[p]])
+  (forall p:$ptr :: {$heap(S)[p]} $heap(S)[p] == $heap(S0)[$root(S0, p)])
   && $spec_eq(S0, S, $f_typed)
   && $spec_eq(S0, S, $f_is_volatile)
   && $spec_update(S0, S, $f_closed, o, o, 0)
   && $spec_update(S0, S, $f_timestamp, o, o, $current_timestamp(S))
   && $specials(S)[$f_owner] == 
      (lambda r:$ptr :: 
-        if $roots(S0)[r] == o then 
+        if $root(S0, r) == o then 
           (lambda p:$ptr :: $ptr_to_int(if p == r then $me() else $owner(S0, p)))
         else $specials(S0)[$f_owner][r])
   && $embs(S0) == $embs(S)
   &&
-  (forall p:$ptr :: {$roots(S)[p]}
-     ($roots(S0)[p] != o && $roots(S0)[p] == $roots(S)[p]) ||
-     ($roots(S0)[p] == o && ($roots(S)[p] == p || $owner(S0, p) != o))
+  (forall p:$ptr :: {$root(S, p)}
+     ($root(S0, p) != o && $root(S0, p) == $root(S, p)) ||
+     ($root(S0, p) == o && ($root(S, p) == p || $owner(S0, p) != o))
      )
   &&
   (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
@@ -867,11 +873,11 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 }
 
 axiom(forall s: $state, p: $ptr :: {$owner(s, p)}
-  $owner(s, p) == $me() ==> $roots(s)[p] == p);
+  $owner(s, p) == $me() ==> $root(s, p) == p);
 
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
   $is_composite_ch($typ($owner(S, r))) ==>
-    $roots(S)[r] == $roots(S)[$owner(S, r)]);
+    $root(S, r) == $root(S, $owner(S, r)));
 
 procedure $unwrap(o:$ptr, T:$ctype);
   modifies $s;
@@ -1013,8 +1019,8 @@ axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {$in_vdomain_lab(S, p, q, l)
 function $in_domain(S:$state, p:$ptr, q:$ptr) : bool;
 function $in_vdomain(S:$state, p:$ptr, q:$ptr) : bool;
 
-axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $roots(S)[p])}
-  $full_stop(S) && $wrapped(S, $roots(S)[p], $typ($roots(S)[p])) ==> $in_domain(S, p, $roots(S)[p]));
+axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $root(S, p))}
+  $full_stop(S) && $wrapped(S, $root(S, p), $typ($root(S, p))) ==> $in_domain(S, p, $root(S, p)));
 
 // -----------------------------------------------------------------------
 // Span & extent
