@@ -59,8 +59,7 @@ namespace Microsoft.Research.Vcc.Parsing
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
             break;
           case Token.SpecLogic:
-            List<Specifier> specifier = new List<Specifier>(1);
-            specifier.Add(new SpecDeclspecSpecifier("spec_macro", this.scanner.SourceLocationOfLastScannedToken));
+            List<Specifier> specifier = new List<Specifier>(1) { new SpecDeclspecSpecifier("spec_macro", this.scanner.SourceLocationOfLastScannedToken) };
             this.GetNextToken();
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true, specifier);
             break;
@@ -158,7 +157,7 @@ namespace Microsoft.Research.Vcc.Parsing
       this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, isGlobal, specifiers);
     }
 
-    protected override void ParseNonLocalDeclarationInSpecBlock(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, Parser.TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
+    protected override void ParseNonLocalDeclarationInSpecBlock(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
       bool savedInSpecCode = this.SkipIntoSpecBlock();
       var name = this.ParseNameDeclaration(true);
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
@@ -216,10 +215,13 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     private Specifier CreateAttribute(string attrName, string attrVal, ISourceLocation sourceLocation) {
-      List<Expression> groupDeclSpecifiers = new List<Expression>(3);
-      groupDeclSpecifiers.Add(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.compilation.NameTable, "StringVccAttr"));
-      groupDeclSpecifiers.Add(new CompileTimeConstant(attrName, sourceLocation));
-      groupDeclSpecifiers.Add(new CompileTimeConstant(attrVal, sourceLocation));
+      List<Expression> groupDeclSpecifiers = new List<Expression>(3)
+                                               {
+                                                 NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(
+                                                   this.compilation.NameTable, "StringVccAttr"),
+                                                 new CompileTimeConstant(attrName, sourceLocation),
+                                                 new CompileTimeConstant(attrVal, sourceLocation)
+                                               };
       return new DeclspecSpecifier(groupDeclSpecifiers, sourceLocation);
     }
 
@@ -238,7 +240,7 @@ namespace Microsoft.Research.Vcc.Parsing
       this.AddTypeInvariantToCurrent(typeInvariant);
     }
 
-    protected override LoopContract ParseLoopContract(Parser.TokenSet followers) {
+    protected override LoopContract ParseLoopContract(TokenSet followers) {
       List<LoopInvariant> invariants = new List<LoopInvariant>();
       List<Expression> writes = new List<Expression>();
       List<LoopVariant> variants = new List<LoopVariant>();
@@ -325,7 +327,7 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
-    protected override List<Parameter> ParseParameterList(Parser.TokenSet followers) {
+    protected override List<Parameter> ParseParameterList(TokenSet followers) {
       List<Parameter> result = new List<Parameter>();
       this.Skip(Token.LeftParenthesis);
       if (this.currentToken != Token.RightParenthesis) {
@@ -384,7 +386,7 @@ namespace Microsoft.Research.Vcc.Parsing
       return result;
     }
 
-    protected override List<Expression> ParseArgumentList(SourceLocationBuilder slb, Parser.TokenSet followers) {
+    protected override List<Expression> ParseArgumentList(SourceLocationBuilder slb, TokenSet followers) {
       List<Expression> result = new List<Expression>();
       this.Skip(Token.LeftParenthesis);
       while (this.currentToken != Token.RightParenthesis) {
@@ -432,14 +434,18 @@ namespace Microsoft.Research.Vcc.Parsing
 
     override protected Statement ParseSpecStatements(TokenSet followers) {
       bool savedInSpecCode = this.SkipIntoSpecBlock();
-      if (this.currentToken == Token.SpecUnwrapping) {
-        return this.ParseUnwrappingStatement(followers, savedInSpecCode);
+
+      switch (this.currentToken) {
+        case Token.SpecUnwrapping:
+          return this.ParseUnwrappingStatement(followers, savedInSpecCode);
+        case Token.SpecAtomic:
+          return this.ParseAtomic(followers, savedInSpecCode);
+        case Token.Unchecked:
+          return this.ParseUncheckedExpressionStatement(followers, savedInSpecCode);
+        default:
+          break;
       }
 
-      if (this.currentToken == Token.SpecAtomic) {
-        return this.ParseAtomic(followers, savedInSpecCode);
-      }
-      
       List<Statement> statements = new List<Statement>();
       TokenSet followersOrRightParenOrSpecStmt = followers | Token.RightParenthesis | STS.SimpleSpecStatment;
       SourceLocationBuilder slb;
@@ -452,7 +458,7 @@ namespace Microsoft.Research.Vcc.Parsing
             this.GetNextToken();
             var stmt = this.ParseStatement(followersOrRightParenOrSpecStmt);
             slb.UpdateToSpan(stmt.SourceLocation);
-            StatementGroup.AddStatementOrGroupToList(this.DeepWrapInSpecStmt(stmt, slb), statements);
+            StatementGroup.AddStatementOrGroupToList(DeepWrapInSpecStmt(stmt, slb), statements);
             break;
           case Token.SpecAssert:
             statements.Add(this.ParseAssert(followersOrRightParenOrSpecStmt));
@@ -472,7 +478,7 @@ namespace Microsoft.Research.Vcc.Parsing
             }
             var call = new VccMethodCall(name, parameters.AsReadOnly(), slb);
             var exprStmt = new ExpressionStatement(call);
-            statements.Add(this.DeepWrapInSpecStmt(exprStmt, slb));
+            statements.Add(DeepWrapInSpecStmt(exprStmt, slb));
             break;
         }
         this.SkipSemicolonsInSpecBlock(STS.SimpleSpecStatment | Token.Identifier | Token.RightParenthesis);
@@ -480,6 +486,15 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       if (statements.Count == 1) return statements[0];
       return new StatementGroup(statements);
+    }
+
+    private Statement ParseUncheckedExpressionStatement(TokenSet followers, bool savedInSpecCode) {
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      this.GetNextToken();
+      this.SkipOutOfSpecBlock(savedInSpecCode, TS.StatementStart | followers);
+      var expr = this.ParseExpression(true, false, followers);
+      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+      return new ExpressionStatement(new UncheckedExpression(expr, slb), slb);
     }
 
     private Statement ParseAtomic(TokenSet followers, bool savedInSpecCode) {
@@ -533,17 +548,17 @@ namespace Microsoft.Research.Vcc.Parsing
       } else return this.ParseExpression(followers);
     }
 
-    protected override Expression ParseSpecCastExpression(Parser.TokenSet followers) {
+    protected override Expression ParseSpecCastExpression(TokenSet followers) {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
+      this.Skip(Token.LeftParenthesis, true);
       if (this.CurrentTokenStartsTypeExpression()) {
         TypeExpression targetType = this.ParseTypeExpression(followers | Token.RightParenthesis);
         this.Skip(Token.RightParenthesis);
         var valueToCast = this.ParseUnaryExpression(followers);
         slb.UpdateToSpan(valueToCast.SourceLocation);
         return new VccCast(valueToCast, targetType, slb);
-      } else if (this.currentToken == Token.Identifier && this.scanner.GetIdentifierString() == "unchecked") {
+      } else if (this.currentToken == Token.Unchecked) {
         this.GetNextToken();
         this.Skip(Token.RightParenthesis);
         var uncheckedExpr = this.ParseUnaryExpression(followers);
@@ -606,7 +621,7 @@ namespace Microsoft.Research.Vcc.Parsing
       return createStmt(expr, slb);
     }
 
-    private Statement DeepWrapInSpecStmt(Statement stmt, ISourceLocation slb) {
+    private static Statement DeepWrapInSpecStmt(Statement stmt, ISourceLocation slb) {
       StatementGroup sg = stmt as StatementGroup;
       if (sg != null) return new StatementGroup(sg.Statements.ConvertAll(s => DeepWrapInSpecStmt(s, s.SourceLocation)));
       LocalDeclarationsStatement localDecl = stmt as LocalDeclarationsStatement;
@@ -618,7 +633,6 @@ namespace Microsoft.Research.Vcc.Parsing
       public static TokenSet SimpleSpecStatment = new TokenSet() | Token.SpecGhost | Token.SpecAssume | Token.SpecAssert;
       public static TokenSet FunctionOrBlockContract = new TokenSet() | Token.SpecEnsures | Token.SpecReads | Token.SpecRequires | Token.SpecDecreases | Token.SpecWrites;
       public static TokenSet LoopContract = new TokenSet() | Token.SpecInvariant | Token.SpecWrites | Token.SpecDecreases;
-      public static TokenSet SpecParameter = new TokenSet() | Token.SpecGhost | Token.SpecOut;
       public static TokenSet TypeMember = new TokenSet() | Token.SpecGhost | Token.SpecInvariant | Token.SpecGroup;
       public static TokenSet Global = new TokenSet() | Token.SpecAxiom | Token.SpecGhost | Token.SpecLogic;
     }
