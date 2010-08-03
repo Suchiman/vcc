@@ -40,11 +40,16 @@ type $token;
 
 type $state;
 
-type $heap = [$ptr][$field][$ptr]int;
-type $sheap = [$sfield][$ptr][$ptr]int;
+type $heap; // = [$ptr][$field][$ptr]int;
+type $object; // = [$field][$ptr]int;
+type $sub_object; // = [$ptr]int;
 
-type $roots = [$ptr]$ptr;
-type $embs = [$ptr]$ptr;
+type $sheap; // = [$sfield][$ptr][$ptr]int;
+type $sheap_prop2; // = [$ptr][$ptr]int;
+type $sheap_prop1; // = [$ptr]int;
+
+type $roots; // = [$ptr]$ptr;
+type $embs; // = [$ptr]$ptr;
 
 // A constant is generated for each pure function, used for ordering frame axioms.
 type $pure_function;
@@ -239,13 +244,21 @@ function $specials(s:$state) : $sheap;
 function $mem(s:$state, p:$ptr) : int;  // FIXME
 
 function {:inline true} $root(s:$state, p:$ptr) : $ptr
-  { $roots(s)[p] }
+  { $rd.$roots($roots(s), p) }
 
-function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int
-  { $heap(s)[$roots(s)[p]][f][p] }
+// TODO merge with $emb() ? 
+function {:inline true} $remb(s:$state, p:$ptr) : $ptr
+  { $rd.$embs($embs(s), p) }
 
-function {:inline true} $rds(s:$state, p:$ptr, f:$sfield) : int
-  { $specials(s)[f][$root(s, p)][p] }
+function {:inline true} $rd1(s:$state, p:$ptr) : $object { $rd.$heap($heap(s), p) }
+function {:inline true} $rd2(s:$state, p:$ptr, f:$field) : $sub_object { $rd.$object($rd1(s, p), f) }
+function {:inline true} $rd3(s:$state, p:$ptr, f:$field, q:$ptr) : int { $rd.$sub_object($rd2(s, p, f), q) }
+function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int { $rd3(s, $root(s, p), f, p) }
+
+function {:inline true} $rds1(s:$state, f:$sfield) : $sheap_prop2 { $rd.$sheap($specials(s), f) }
+function {:inline true} $rds2(s:$state, f:$sfield, p:$ptr) : $sheap_prop1 { $rd.$sheap_prop2($rds1(s, f), p) }
+function {:inline true} $rds3(s:$state, f:$sfield, p:$ptr, q:$ptr) : int { $rd.$sheap_prop1($rds2(s, f, p), q) }
+function {:inline true} $rds(s:$state, p:$ptr, f:$sfield) : int { $rds3(s, f, $root(s, p), p)  }
 
 function $relative_field_of(p:$ptr, q:$ptr) : $field;
 function $container(p:$ptr, f:$field) : $ptr;
@@ -328,7 +341,7 @@ function {:inline true} $read_ptr(S:$state, p:$ptr, t:$ctype) : $ptr
 //dot and (its "inverse") emb/path access
 function $dot($ptr,$field) returns ($ptr);
 function {:inline false} $emb(S:$state,p:$ptr) returns ($ptr)
-  { $embs(S)[p] }
+  { $rd.$embs($embs(S), p) }
 function {:inline true} $path(S:$state,p:$ptr) : $field
   { $relative_field_of($emb(S, p), p) }
 
@@ -460,8 +473,8 @@ function {:inline true} $in(p:$ptr, s:$ptrset) : bool
 
 function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { (forall p:$ptr :: {$root(S1, p)} $owner(S0, p) == $me() ==> $root(S0, p) == $root(S1, p) || $in($root(S0, p), W)) &&
-    (forall p:$ptr :: {$embs(S1)[p]} $owner(S0, $embs(S0)[p]) == $me() ==> $embs(S0)[p] == $embs(S1)[p] || $in($root(S0, $embs(S0)[p]), W)) &&
-    (forall p:$ptr :: {$heap(S1)[p]} $owner(S0, p) == $me() ==> $heap(S0)[p] == $heap(S1)[p] || $in(p, W)) &&
+    (forall p:$ptr :: {$remb(S1,p)} $owner(S0, $remb(S0, p)) == $me() ==> $remb(S0, p) == $remb(S1, p) || $in($root(S0, $remb(S0, p)), W)) &&
+    (forall p:$ptr :: {$rd1(S1, p)} $owner(S0, p) == $me() ==> $rd1(S0, p) == $rd1(S1, p) || $in(p, W)) &&
     $timestamp_post(S0, S1) }
 
 function {:inline true} $preserves_thread_local(S0:$state, S1:$state) : bool
@@ -723,7 +736,8 @@ function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) : bool;
 // ----------------------------------------------------------------------------
 
 function $update(h:$heap, r:$ptr, f:$field, p:$ptr, v:int) : $heap
-  { h[ r := h[r][ f := h[r][f][ p := v ] ] ] }
+  { $wr.$heap( h, r, $wr.$object( $rd.$heap(h, r), f, $wr.$sub_object($rd.$object($rd.$heap(h, r), f), p, v) ) ) }  
+//  { h[ r := h[r][ f := h[r][f][ p := v ] ] ] }
 
 /*
 axiom 
@@ -740,7 +754,7 @@ procedure $write_int(p:$ptr, f:$field, v:int);
   ensures $embs($s) == $embs(old($s));
   ensures $roots($s) == $roots(old($s));
   ensures $specials($s) == $specials(old($s));
-  ensures $heap($s) == $update($heap(old($s)), $roots(old($s))[p], f, p, v);
+  ensures $heap($s) == $update($heap(old($s)), $root(old($s), p), f, p, v);
   ensures $timestamp_post_strict(old($s), $s);
 
 function {:inline true} $timestamp_is_now(S:$state, p:$ptr) : bool
@@ -777,7 +791,7 @@ procedure $set_owns(p:$ptr, owns:$ptrset);
   requires $mutable($s, p);
   ensures $embs($s) == $embs(old($s));
   ensures $roots($s) == $roots(old($s));
-  ensures $heap($s) == $update($heap(old($s)), $roots(old($s))[p], $f_owns, p, $ptrset_to_int(owns));
+  ensures $heap($s) == $update($heap(old($s)), $root(old($s), p), $f_owns, p, $ptrset_to_int(owns));
   ensures $specials($s) == $specials(old($s));
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -813,27 +827,27 @@ function $pre_static_unwrap($state) : bool;
 function $post_unwrap(S1:$state, S2:$state) : bool;
 
 function {:inline true} $spec_eq(S0:$state, S:$state, f:$sfield) : bool
-  { $specials(S0)[f] == $specials(S)[f] }
+  { $rds1(S0, f) == $rds1(S, f) }
 
 function {:inline true} $spec_update(S0:$state, S:$state, f:$sfield, r:$ptr, p:$ptr, v:int) : bool
-  { $specials(S)[f] == $specials(S0)[f][ r := $specials(S0)[f][r][p := v]] }
+  { $rds1(S, f) == $wr.$sheap_prop2($rds1(S0, f), r, $wr.$sheap_prop1( $rds2(S0, f, r), p, v ) ) }
 
 function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
 {
   // TODO both of these takes the entire current heap, maybe restrict it to the owns set?
-  (forall q:$ptr, f:$field :: {$heap(S)[o][f][q]}
-     $heap(S)[o][f][q] == $heap(S0)[$root(S0, q)][f][q])
-  && (forall p:$ptr :: $heap(S)[p] == $heap(S0)[p] || p == o)
+  (forall q:$ptr, f:$field :: {$rd3(S, o, f, q)}
+     $rd3(S, o, f, q) == $rd3(S0, $root(S0, q), f, q))
+  && (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, p) || p == o)
   && $spec_eq(S0, S, $f_typed)
   && $spec_eq(S0, S, $f_is_volatile)
   && $spec_update(S0, S, $f_closed, o, o, 1)
   && $spec_update(S0, S, $f_timestamp, o, o, $current_timestamp(S))
-  && (forall r:$ptr :: {$specials(S)[$f_owner][r]}
+  && (forall r:$ptr :: {$rds2(S, $f_owner, r)}
         if $set_in(r, $owns(S0, o)) then 
-          (forall p:$ptr :: {$specials(S)[$f_owner][r][p]}
-             $specials(S)[$f_owner][r][p] == $ptr_to_int(if p == r then o else $owner(S0, p)))
+          (forall p:$ptr :: {$rds3(S, $f_owner, r, p)}
+             $rds3(S, $f_owner, r, p) == $ptr_to_int(if p == r then o else $owner(S0, p)))
         else 
-          $specials(S)[$f_owner][r] == $specials(S0)[$f_owner][r])
+          $rds2(S, $f_owner, r) == $rds2(S0, $f_owner, r))
   && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
@@ -846,16 +860,17 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 {
   $mutable(S, o) && 
 
-  (forall p:$ptr :: {$heap(S)[p]} $heap(S)[p] == $heap(S0)[$root(S0, p)])
+  (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, $root(S0, p)))
   && $spec_eq(S0, S, $f_typed)
   && $spec_eq(S0, S, $f_is_volatile)
   && $spec_update(S0, S, $f_closed, o, o, 0)
   && $spec_update(S0, S, $f_timestamp, o, o, $current_timestamp(S))
-  && (forall r:$ptr :: {$specials(S)[$f_owner][r]}
+  && (forall r:$ptr :: {$rds2(S, $f_owner, r)}
         if $root(S0, r) == o then
-          (forall p:$ptr :: {$specials(S)[$f_owner][r][p]}
-             $specials(S)[$f_owner][r][p] == $ptr_to_int(if p == r then $me() else $owner(S0, p)))
-        else $specials(S)[$f_owner][r] == $specials(S0)[$f_owner][r])
+          (forall p:$ptr :: {$rds3(S, $f_owner, r, p)}
+             $rds3(S, $f_owner, r, p) == $ptr_to_int(if p == r then $me() else $owner(S0, p)))
+        else 
+          $rds2(S, $f_owner, r) == $rds2(S0, $f_owner, r))
   && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
@@ -1623,5 +1638,56 @@ procedure $cev_pre_loop(pos: $token) returns (oldPC: int);
   ensures #cev_control_flow_event(old($cev_pc), conditional_moment);
   ensures #cev_save_position(old($cev_pc)) == pos;
   ensures oldPC == old($cev_pc) && $cev_pc == old($cev_pc) + 1;
+
+// --------------------------------------------------------------------------------
+// Map axioms
+// --------------------------------------------------------------------------------
+
+/*
+function $rd.MAP(m:MAP, p:PTR) : VAL;
+function $wr.MAP(m:MAP, p:PTR, v:VAL) : MAP;
+axiom (forall m:MAP, p:PTR, v:VAL :: $rd.MAP($wr.MAP(m, p, v), p) == v);
+axiom (forall m:MAP, p1,p2:PTR, v:VAL :: $rd.MAP($wr.MAP(m, p1, v), p2) == $rd.MAP(m, p2) || p1 == p2);
+*/
+
+function $rd.$heap(m:$heap, p:$ptr) : $object;
+function $wr.$heap(m:$heap, p:$ptr, v:$object) : $heap;
+axiom (forall m:$heap, p:$ptr, v:$object :: $rd.$heap($wr.$heap(m, p, v), p) == v);
+axiom (forall m:$heap, p1,p2:$ptr, v:$object :: $rd.$heap($wr.$heap(m, p1, v), p2) == $rd.$heap(m, p2) || p1 == p2);
+
+function $rd.$object(m:$object, p:$field) : $sub_object;
+function $wr.$object(m:$object, p:$field, v:$sub_object) : $object;
+axiom (forall m:$object, p:$field, v:$sub_object :: $rd.$object($wr.$object(m, p, v), p) == v);
+axiom (forall m:$object, p1,p2:$field, v:$sub_object :: $rd.$object($wr.$object(m, p1, v), p2) == $rd.$object(m, p2) || p1 == p2);
+
+function $rd.$sub_object(m:$sub_object, p:$ptr) : int;
+function $wr.$sub_object(m:$sub_object, p:$ptr, v:int) : $sub_object;
+axiom (forall m:$sub_object, p:$ptr, v:int :: $rd.$sub_object($wr.$sub_object(m, p, v), p) == v);
+axiom (forall m:$sub_object, p1,p2:$ptr, v:int :: $rd.$sub_object($wr.$sub_object(m, p1, v), p2) == $rd.$sub_object(m, p2) || p1 == p2);
+
+function $rd.$roots(m:$roots, p:$ptr) : $ptr;
+function $wr.$roots(m:$roots, p:$ptr, v:$ptr) : $roots;
+axiom (forall m:$roots, p:$ptr, v:$ptr :: $rd.$roots($wr.$roots(m, p, v), p) == v);
+axiom (forall m:$roots, p1,p2:$ptr, v:$ptr :: $rd.$roots($wr.$roots(m, p1, v), p2) == $rd.$roots(m, p2) || p1 == p2);
+
+function $rd.$embs(m:$embs, p:$ptr) : $ptr;
+function $wr.$embs(m:$embs, p:$ptr, v:$ptr) : $embs;
+axiom (forall m:$embs, p:$ptr, v:$ptr :: $rd.$embs($wr.$embs(m, p, v), p) == v);
+axiom (forall m:$embs, p1,p2:$ptr, v:$ptr :: $rd.$embs($wr.$embs(m, p1, v), p2) == $rd.$embs(m, p2) || p1 == p2);
+
+function $rd.$sheap(m:$sheap, p:$sfield) : $sheap_prop2;
+function $wr.$sheap(m:$sheap, p:$sfield, v:$sheap_prop2) : $sheap;
+axiom (forall m:$sheap, p:$sfield, v:$sheap_prop2 :: $rd.$sheap($wr.$sheap(m, p, v), p) == v);
+axiom (forall m:$sheap, p1,p2:$sfield, v:$sheap_prop2 :: $rd.$sheap($wr.$sheap(m, p1, v), p2) == $rd.$sheap(m, p2) || p1 == p2);
+
+function $rd.$sheap_prop2(m:$sheap_prop2, p:$ptr) : $sheap_prop1;
+function $wr.$sheap_prop2(m:$sheap_prop2, p:$ptr, v:$sheap_prop1) : $sheap_prop2;
+axiom (forall m:$sheap_prop2, p:$ptr, v:$sheap_prop1 :: $rd.$sheap_prop2($wr.$sheap_prop2(m, p, v), p) == v);
+axiom (forall m:$sheap_prop2, p1,p2:$ptr, v:$sheap_prop1 :: $rd.$sheap_prop2($wr.$sheap_prop2(m, p1, v), p2) == $rd.$sheap_prop2(m, p2) || p1 == p2);
+
+function $rd.$sheap_prop1(m:$sheap_prop1, p:$ptr) : int;
+function $wr.$sheap_prop1(m:$sheap_prop1, p:$ptr, v:int) : $sheap_prop1;
+axiom (forall m:$sheap_prop1, p:$ptr, v:int :: $rd.$sheap_prop1($wr.$sheap_prop1(m, p, v), p) == v);
+axiom (forall m:$sheap_prop1, p1,p2:$ptr, v:int :: $rd.$sheap_prop1($wr.$sheap_prop1(m, p1, v), p2) == $rd.$sheap_prop1(m, p2) || p1 == p2);
 
 // That's all folks.
