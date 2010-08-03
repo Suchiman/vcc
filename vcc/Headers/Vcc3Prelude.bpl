@@ -828,11 +828,12 @@ function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
   && $spec_eq(S0, S, $f_is_volatile)
   && $spec_update(S0, S, $f_closed, o, o, 1)
   && $spec_update(S0, S, $f_timestamp, o, o, $current_timestamp(S))
-  && $specials(S)[$f_owner] == 
-     (lambda r:$ptr :: 
+  && (forall r:$ptr :: {$specials(S)[$f_owner][r]}
         if $set_in(r, $owns(S0, o)) then 
-          (lambda p:$ptr :: $ptr_to_int(if p == r then o else $owner(S0, p)))
-        else $specials(S0)[$f_owner][r])
+          (forall p:$ptr :: {$specials(S)[$f_owner][r][p]}
+             $specials(S)[$f_owner][r][p] == $ptr_to_int(if p == r then o else $owner(S0, p)))
+        else 
+          $specials(S)[$f_owner][r] == $specials(S0)[$f_owner][r])
   && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
@@ -850,11 +851,11 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   && $spec_eq(S0, S, $f_is_volatile)
   && $spec_update(S0, S, $f_closed, o, o, 0)
   && $spec_update(S0, S, $f_timestamp, o, o, $current_timestamp(S))
-  && $specials(S)[$f_owner] == 
-     (lambda r:$ptr :: 
-        if $root(S0, r) == o then 
-          (lambda p:$ptr :: $ptr_to_int(if p == r then $me() else $owner(S0, p)))
-        else $specials(S0)[$f_owner][r])
+  && (forall r:$ptr :: {$specials(S)[$f_owner][r]}
+        if $root(S0, r) == o then
+          (forall p:$ptr :: {$specials(S)[$f_owner][r][p]}
+             $specials(S)[$f_owner][r][p] == $ptr_to_int(if p == r then $me() else $owner(S0, p)))
+        else $specials(S)[$f_owner][r] == $specials(S0)[$f_owner][r])
   && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
