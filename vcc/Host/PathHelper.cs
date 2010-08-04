@@ -75,7 +75,7 @@ namespace Microsoft.Research.Vcc
     public static string/*?*/ PluginDir {
       get {
         PathHelper.GetVccHeaderDir(false);
-        if (cachedVccHeaderDirectory == null) return null;
+        if (cachedVccHeaderDirectory == null || cachedVccHeaderDirectory.Parent == null) return null;
         DirectoryInfo[] candidates = cachedVccHeaderDirectory.Parent.GetDirectories("Plugins");
         if (candidates.Length > 0) return candidates[0].FullName;
         return null;
