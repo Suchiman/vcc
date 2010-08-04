@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Cci;
@@ -28,13 +29,11 @@ namespace Microsoft.Research.Vcc
     private static double methodVerificationTime;
 
     public static int RunTestSuite(VccOptions commandLineOptions) {
-      int errs = 0;
+      int errs;
       if (commandLineOptions.TimeStats)
         Console.WriteLine("<![CDATA[");
       try {
-        foreach (string fileName in commandLineOptions.FileNames)
-          if (!RunTestSuite(fileName, commandLineOptions))
-            errs++;
+        errs = commandLineOptions.FileNames.Count(fileName => !RunTestSuite(fileName, commandLineOptions));
       } finally {
         if (commandLineOptions.TimeStats)
           Console.WriteLine("]]>");
@@ -120,7 +119,7 @@ namespace Microsoft.Research.Vcc
       StringBuilder expectedOutput = null;
       StringBuilder actualOutput = null;
       List<string> suiteParameters = new List<string>();
-      List<string> compilerParameters = null;
+      List<string> compilerParameters;
       List<string> testCaseParameters = null;
       int errors = 0;
       int testCaseCount = 0;
@@ -129,7 +128,6 @@ namespace Microsoft.Research.Vcc
         int line = 1;
         while (ch >= 0) {
           compilerParameters = new List<string>(suiteParameters);
-          bool skipTest = false;
           if (ch == '`') {
             ch = instream.Read();
             bool parametersAreForEntireSuite = false;
@@ -240,7 +238,6 @@ namespace Microsoft.Research.Vcc
             ch = instream.Read();
             line++;
           }
-          if (skipTest) continue;
           actualOutput = new StringBuilder();
           TextWriter savedOut = Console.Out;
           Console.SetOut(new StringWriter(actualOutput));
@@ -258,7 +255,7 @@ namespace Microsoft.Research.Vcc
           else
             testrunTimeStats = null;
           try {
-            int returnCode = RunTest(errorHandler, suiteNameWithoutExt, fileNameWithoutExt, source.ToString(), actualOutput, commandLineOptions, compilerParameters, testCaseParameters);
+            int returnCode = RunTest(errorHandler, suiteNameWithoutExt, fileNameWithoutExt, source.ToString(), commandLineOptions, compilerParameters);
             if (returnCode != 0)
               actualOutput.Append("Non zero return code: " + returnCode);
           } catch (System.Reflection.TargetInvocationException e) {
@@ -274,7 +271,6 @@ namespace Microsoft.Research.Vcc
 
           errorHandler.Reset();
           VccCommandLineHost.ErrorHandler.ResetReportedErrors();
-          compilerParameters = null;
           testCaseParameters = null;
           Console.SetOut(savedOut);
           System.Diagnostics.Debug.Listeners.Remove(myWriter);
@@ -329,7 +325,7 @@ namespace Microsoft.Research.Vcc
     }
 
     private static int RunTest(CciErrorHandler errorHandler, string suiteName, string fileNameWithoutExt,
-                               string test, StringBuilder actualOutput, VccOptions commandLineOptions, List<string> compilerParameters, List<string> testCaseParameters) {
+                               string test, VccOptions commandLineOptions, List<string> compilerParameters) {
 
       VccCommandLineHost.ErrorCount = 0;
       string fileNameC = fileNameWithoutExt + ".c";
@@ -365,18 +361,14 @@ namespace Microsoft.Research.Vcc
       List<IModuleReference> moduleReferences = new List<IModuleReference>();
       assemblyReferences.Add(hostEnvironment.LoadAssembly(hostEnvironment.CoreAssemblySymbolicIdentity));
       assemblyReferences.Add(hostEnvironment.LoadAssembly(hostEnvironment.VccRuntimeAssemblyIdentity));
-      IUnit unit;
-      VccAssembly/*?*/ assem = null;
-      VccCompilationHelper helper;
-      if (hostEnvironment.previousDocument != null && compilerParameters.Contains("/incremental")) {
-        unit = hostEnvironment.GetIncrementalUnit(test);
-        helper = (VccCompilationHelper)hostEnvironment.previousDocument.VccCompilationPart.Helper;
-      } else {
+      VccAssembly/*?*/ assem = null;    
+      if (hostEnvironment.previousDocument == null || compilerParameters == null ||
+          !compilerParameters.Contains("/incremental"))
+      {
         List<VccSourceDocument> programSources = new List<VccSourceDocument>(1);
         assem = new VccAssembly(name, "", hostEnvironment, options, assemblyReferences, moduleReferences, programSources);
-        helper = new VccCompilationHelper(assem.Compilation);
+        var helper = new VccCompilationHelper(assem.Compilation);
         programSources.Add(hostEnvironment.previousDocument = new VccSourceDocument(helper, name, "", test));
-        unit = assem;
       }
       VccCommandLineHost.ResetStartTime();
       return VccCommandLineHost.Felt2Cast2Plugin("testcase", options, hostEnvironment, assem);
@@ -388,9 +380,9 @@ namespace Microsoft.Research.Vcc
     {
       readonly VccOptions commandLineOptions;
       readonly int threadCount;
-      Queue<FileInfo> queue = new Queue<FileInfo>();
-      private object lkQueue = new object();
-      private object lkOutput = new object();
+      readonly Queue<FileInfo> queue = new Queue<FileInfo>();
+      readonly object lkQueue = new object();
+      readonly object lkOutput = new object();
       int errorCount;
       int runningThreadCount;
 
@@ -404,8 +396,7 @@ namespace Microsoft.Research.Vcc
       }
 
       private System.Diagnostics.ProcessStartInfo VccStartInfo(IEnumerable<FileInfo> jobs) {
-        System.Diagnostics.ProcessStartInfo result = new System.Diagnostics.ProcessStartInfo();
-        result.Arguments = "/s";
+        System.Diagnostics.ProcessStartInfo result = new System.Diagnostics.ProcessStartInfo {Arguments = "/s"};
         foreach (var job in jobs) { result.Arguments += " \"" + job.FullName + "\""; }
         foreach (var boogieOption in this.commandLineOptions.BoogieOptions) { result.Arguments += " /b:" + boogieOption; }
         result.CreateNoWindow = true;
@@ -416,12 +407,12 @@ namespace Microsoft.Research.Vcc
         return result;
       }
 
-      private void CopyFileToStream(string path, TextWriter writer) {
+      private static void CopyFileToStream(string path, TextWriter writer) {
         string[] lines = File.ReadAllLines(path);
         foreach (var line in lines) { writer.WriteLine(line); }
       }
 
-      private static Regex TestPassed = new Regex("^\\w+ passed$");
+      private static readonly Regex TestPassed = new Regex("^\\w+ passed$");
 
       private void RunJobSequence(IEnumerable<FileInfo> jobs) {
         using (System.CodeDom.Compiler.TempFileCollection tempFiles = new System.CodeDom.Compiler.TempFileCollection()) {

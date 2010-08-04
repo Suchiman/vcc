@@ -11,8 +11,6 @@ namespace Microsoft.Research.Vcc
 {
   class PluginManager
   {
-    VccOptions options;
-
     [Import]
     public IEnumerable<Plugin> Plugins { get; set; }
     [Import]
@@ -20,15 +18,14 @@ namespace Microsoft.Research.Vcc
 
     public PluginManager(VccOptions options)
     {
-      this.options = options;
-      List<string> directories;
-      if (options.PluginOptions.TryGetValue("dir", out directories)) {
-        foreach (var d in directories)
+      List<string> dirs;
+      if (options.PluginOptions.TryGetValue("dir", out dirs)) {
+        foreach (var d in dirs)
           AddPluginDirectory(d);
       }
     }
 
-    AggregateCatalog directories = new AggregateCatalog();
+    readonly AggregateCatalog directories = new AggregateCatalog();
     public void AddPluginDirectory(string dir)
     {
       directories.Catalogs.Add(new DirectoryCatalog(dir));

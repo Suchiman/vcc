@@ -233,7 +233,7 @@ namespace Microsoft.Research.Vcc
         if (cce != null)
           ReportOutcomePreconditionFailed(cce.FailingCall.tok, cce.FailingRequires, message);
       } finally {
-        if (commandLineOptions.PrintCEVModel) {
+        if (commandLineOptions != null && commandLineOptions.PrintCEVModel) {
           cevModelWriter.WriteLine("END_OF_ERROR");
           cevModelWriter.Flush();
           cevModelWriter = null;
