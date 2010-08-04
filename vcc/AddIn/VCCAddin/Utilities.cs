@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
@@ -59,8 +60,7 @@ namespace VerifiedCCompilerAddin {
       string AddInAssemblyLocation = typeof(VCCLaunchZ3Visualizer).Assembly.Location;
       string AddInPath = Path.GetDirectoryName(AddInAssemblyLocation);
       string HeadersPath = AddInPath.ToUpperInvariant().Replace("ADDIN", "Headers");
-      string PreludeFileName = "VccPrelude.bpl";
-      return Path.Combine(HeadersPath, PreludeFileName);
+      return Path.Combine(HeadersPath, "VccPrelude.bpl");
     }
 
     internal static bool SaveAllOpenDocuments() {
@@ -111,20 +111,8 @@ namespace VerifiedCCompilerAddin {
     }
 
     internal static string GetCLPath(string ActivePlattform) {
-      string CLPath = String.Empty;
-      string VSDir = GetVSCOMNTOOLS();
-
-      string CL = String.Empty;
-
-      switch (ActivePlattform) {
-        case "x64":
-          CL = "VC\\bin\\x86_amd64\\cl.exe"; break;
-
-        default:
-          CL = "VC\\bin\\cl.exe"; break;
-      }
-
-      return VSDir.ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
+      string CL = (ActivePlattform ==  "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
+      return GetVSCOMNTOOLS().ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
     }
        
     internal static string GetActiveConfigOfProject(Project prj) {
@@ -215,12 +203,9 @@ namespace VerifiedCCompilerAddin {
       }
     }
 
-    internal static bool ContainsVCPrjType(Projects projects) {
-      foreach (Project prj in projects) {
-        if (IsVCPrj(prj))
-          return true;
-      }
-      return false;
+    internal static bool ContainsVCPrjType(Projects projects)
+    {
+      return projects.Cast<Project>().Any(IsVCPrj);
     }
 
     internal static bool IsVCPrj(Project prj) {
@@ -281,7 +266,7 @@ namespace VerifiedCCompilerAddin {
    
     internal static void InstallVCCWindow(DTE2 application, AddIn addInInstance, WindowEvents winEvents) {
       object programmableObject = null;
-      string guidString = "{9FFC9D9B-1F39-4763-A2AF-66AED06C799E}";
+      const string guidString = "{9FFC9D9B-1F39-4763-A2AF-66AED06C799E}";
       Windows2 windows = (Windows2)application.Windows;
       Assembly asm = Assembly.GetExecutingAssembly();
 
@@ -297,12 +282,12 @@ namespace VerifiedCCompilerAddin {
       AddInGlobals.VCCPane.ApplicationObject = application;
       AddInGlobals.VCCPane.RefreshData();
 
-      winEvents.WindowActivated += new _dispWindowEvents_WindowActivatedEventHandler(AddInGlobals.VCCPane.OnWindowActivated);
+      winEvents.WindowActivated += AddInGlobals.VCCPane.OnWindowActivated;
     }
 
     internal static void InstallModelViewerWindow(DTE2 application, AddIn addInInstance) {
       object programmableObject = null;
-      string guidString = "{15032E00-DDC4-44d1-927B-2A08C23D3F8F}";
+      const string guidString = "{15032E00-DDC4-44d1-927B-2A08C23D3F8F}";
       Windows2 windows = (Windows2)application.Windows;
       Assembly asm = Assembly.GetExecutingAssembly();
       string CodeBase = asm.CodeBase.ToUpperInvariant().Replace("VERIFIEDCCOMPILERADDIN.DLL", "VccModelViewer.exe");
@@ -316,14 +301,11 @@ namespace VerifiedCCompilerAddin {
 
       AddInGlobals.ModelViewerWindow.SetTabPicture(ImageConverter.Convert(ImageResources._9890));
       AddInGlobals.ModelViewerObj = (ModelViewer)AddInGlobals.ModelViewerWindow.Object;
-      AddInGlobals.ModelViewerObj.LineColumnChanged += new EventHandler<LineColumnChangedEventArgs>(ModelViewerObj_LineColumnChanged);
+      AddInGlobals.ModelViewerObj.LineColumnChanged += ModelViewerObj_LineColumnChanged;
     }
 
     static void ModelViewerObj_LineColumnChanged(object sender, LineColumnChangedEventArgs e) {
       try {
-        LineColumnChangedEventArgs EventArgs = e as LineColumnChangedEventArgs;
-        
-        // ToDo: Handle new Event Handler to get file
         string FileNameFromModelViewer = e.fileName;
         if (!File.Exists(e.fileName)) {
           FileNameFromModelViewer = EvaluateRelativePath(AddInGlobals.LastestWorkDir, e.fileName);
@@ -340,12 +322,12 @@ namespace VerifiedCCompilerAddin {
         Document Doc = wnd.Document;
         TextDocument textDocument = Doc.Object(null) as TextDocument;
         int tabsize = Doc.TabSize;
-        textDocument.Selection.MoveTo(EventArgs.lineNumber, EventArgs.columnNumber, false);
+        textDocument.Selection.MoveTo(e.lineNumber, e.columnNumber, false);
         textDocument.Selection.SelectLine();
         string Text = textDocument.Selection.Text;
 
         int newcolumn = 0;
-        for (int idx = 0; idx < EventArgs.columnNumber; idx++) {
+        for (int idx = 0; idx < e.columnNumber; idx++) {
           if (Text[idx] == '\t') {
             newcolumn += tabsize - (newcolumn % tabsize);
           } else {
@@ -353,7 +335,7 @@ namespace VerifiedCCompilerAddin {
           }
         }
 
-        textDocument.Selection.MoveTo(EventArgs.lineNumber, newcolumn, false);
+        textDocument.Selection.MoveTo(e.lineNumber, newcolumn);
 
       } catch {
         return;
@@ -384,7 +366,7 @@ namespace VerifiedCCompilerAddin {
       StringBuilder Arguments = new StringBuilder();
 
       //Read Settings for CommandLine from ProjectExtender
-      if (Utilities.ActiveProject().Globals.get_VariableExists("VCCCmdArgs")) {
+      if (Utilities.ActiveProject().Globals.VariableExists["VCCCmdArgs"]) {
         string ArgumentsFromProject = (string)Utilities.ActiveProject().Globals["VCCCmdArgs"];
         if (ArgumentsFromProject != null) {
           if (ArgumentsFromProject != String.Empty) {
@@ -555,7 +537,7 @@ namespace VerifiedCCompilerAddin {
 
       NotifyIcon.Visible = true;
       NotifyIcon.Icon = Resources.ImageResources.VccIcon;
-      NotifyIcon.Text = "VCC Notifications";
+      NotifyIcon.Text = "Vcc " + System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Utilities).Assembly.Location).FileVersion;
     }
 
     internal static void ReportSuccess(string message)
