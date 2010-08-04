@@ -166,6 +166,8 @@ namespace Microsoft.Research.Vcc
         | C.Expr.IntLiteral (c, v) when v < bigint.Zero ->
           self (C.Expr.Prim(c, C.Op("-", C.CheckedStatus.Processed), [C.Expr.IntLiteral(c, -v)]))
         
+        | C.Expr.Macro (_, "ite", [c; e1; e2]) -> B.Expr.Ite(self c, self e1, self e2)
+
         | C.Expr.Macro (_, "in_range_u1", [e])
         | C.Expr.Macro (_, "in_range_i1", [e]) when e.Type.SizeOf <= 1 ->
           bTrue
@@ -217,6 +219,7 @@ namespace Microsoft.Research.Vcc
               er "$err"
         
         | _ ->
+          dbgBreak()
           helper.Error (expr.Token, 9660, "unsupported expression in bv_lemma(...): " + expr.Token.Value + " (" + expr.ToString() + ")")
           er "$err"
     
