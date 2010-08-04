@@ -358,7 +358,9 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
   { $is_base_field(f) && $field_parent_type(f) == partp &&
     (!isvolatile ==> $is_sequential_field(f)) &&
     $field_offset(f) == off &&
-    (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
+    true
+    //(forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
+    /*
     (forall S:$state, p:$ptr :: 
       {$rds(S, $dot(p, f), $f_typed)}
 	  {$emb(S, $dot(p, f))}
@@ -367,12 +369,15 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
       $emb(S, $dot(p, f)) == p &&
       // $path(S, $dot(p, f)) == f &&
       $is_volatile(S, $dot(p, f)) == isvolatile )
+      */
   }
 
 function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
   { $is_base_field(f) && $field_parent_type(f) == partp && $is_ghost_field(f) &&
     (!isvolatile ==> $is_sequential_field(f)) &&
-    (forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ghost_ref(p, f))) &&
+    true
+    //(forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ghost_ref(p, f))) &&
+    /*
     (forall S:$state, p:$ptr :: 
       {$rds(S, $dot(p, f), $f_typed)}
 	  {$emb(S, $dot(p, f))}
@@ -381,11 +386,13 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
       $emb(S, $dot(p, f)) == p &&
       // $path(S, $dot(p, f)) == f &&
       $is_volatile(S, $dot(p, f)) == isvolatile )
+      */
   }
 
 function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
   { $is_base_field(f) && $is_ghost_field(f) &&
-    (forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr(tp, $ghost_ref(p, f)))
+    true
+    //(forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr(tp, $ghost_ref(p, f)))
     /*&&
     (forall p:$ptr, S:$state :: {$rd(S, p, f)}
       if $is_primitive_ch($typ(p)) then
@@ -442,13 +449,16 @@ axiom (forall S:$state, p:$ptr ::
 function {:inline true} $is_malloc_root(S:$state, p:$ptr) : bool
   { $is_object_root(S, p) }
 
+
 function $current_timestamp(S:$state) : int;
 /*
+function foobar($state,$ptr) : bool;
 axiom (forall S:$state, p:$ptr ::
   {:vcc3 "todo"}
   {$timestamp(S, p)}
-  $timestamp(S, p) <= $current_timestamp(S) ||
-  !$typed(S, p)
+  foobar(S,p)
+//  $timestamp(S, p) <= $current_timestamp(S) ||
+//  !$typed(S, p)
   );
 */
 
@@ -504,13 +514,13 @@ function $invok_state($state) : bool;
 function $has_volatile_owns_set(t:$ctype) : bool;
 function $is_claimable($ctype) : bool;
 
-function {:inline true} $owner(S:$state, p:$ptr) : $ptr
+function {:inline false} $owner(S:$state, p:$ptr) : $ptr
   { $int_to_ptr($rds(S, p, $f_owner)) }
-function {:inline true} $closed(S:$state, p:$ptr) : bool
+function {:inline false} $closed(S:$state, p:$ptr) : bool
   { $int_to_bool($rds(S, p, $f_closed)) }
-function {:inline true} $timestamp(S:$state, p:$ptr) : int
+function {:inline false} $timestamp(S:$state, p:$ptr) : int
   { $rds(S, p, $f_timestamp) }
-function {:inline true} $ref_cnt(S:$state, p:$ptr) : int
+function {:inline false} $ref_cnt(S:$state, p:$ptr) : int
   { $rd(S, p, $f_ref_cnt) }
 
 function $typed(S:$state, p:$ptr) : bool
@@ -564,10 +574,12 @@ function {:inline true} $is_ghost_ptr(p:$ptr) returns(bool)
 function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $typed(S, #p) }
 
+/*
 axiom (forall S:$state, #r:int, #t:$ctype ::
   {:vcc3 "todo"}
   {$typed(S, $ptr(#t, #r))}
   $typed(S, $ptr(#t, #r)) && $in_range_phys_ptr(#r) ==> $in_range_phys_ptr(#r + $sizeof(#t) - 1));
+*/
 
 function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool)
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_phys_ptr($ref(#p))) }
@@ -700,9 +712,9 @@ axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
 axiom (forall S:$state :: {$good_state(S)}
   $good_state(S) ==> $closed_is_transitive(S));
 
-axiom (forall S:$state ::
+axiom (forall S:$state :: {$good_state(S)}
   $good_state(S) ==>
-    (forall p:$ptr :: {$rds(S, p, $f_closed)} $closed(S, p) ==> $typed(S, p)) &&
+    (forall p:$ptr :: {$typed(S,p)} /*{$rds(S, p, $f_closed)}*/ $closed(S, p) ==> $typed(S, p)) &&
     $closed_is_transitive(S)
     );
         
