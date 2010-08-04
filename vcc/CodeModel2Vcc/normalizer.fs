@@ -315,8 +315,6 @@ namespace Microsoft.Research.Vcc
                                                      Triggers = []; 
                                                      Variables = vars2 } as q)) } ) when k1 = k2 ->
           Some (self (Expr.Quant (ec, { q with Variables = vars1 @ vars2; Triggers = triggers })))
-        | Expr.Call (c, { Name = "_vcc_boogie" }, _, [Expr.Cast (_, _, EString (c', v))]) ->
-          Some (Expr.Macro (c, "boogie_quote", [Expr.Macro (c', v, [])]))
         | Expr.Call (c, { Name = "_vcc_inv_group"}, _, [Expr.Cast (_, _, EString (c', v)); groupInv]) ->
           Some (Expr.Macro (c, "group_invariant", [Expr.Macro (c', v, []); self groupInv]))
         | EString (c, v) ->      

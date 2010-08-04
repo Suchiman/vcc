@@ -71,18 +71,14 @@ namespace Microsoft.Research.Vcc
           Console.WriteLine(error.Message);
           continue;
         }
-        string docName = primarySourceLocation.SourceDocument.Location;
-        if (docName == null) docName = primarySourceLocation.SourceDocument.Name.Value;
+        string docName = primarySourceLocation.SourceDocument.Location ?? primarySourceLocation.SourceDocument.Name.Value;
         int startLine = primarySourceLocation.StartLine;
         int startColumn = primarySourceLocation.StartColumn;
-        int endLine = primarySourceLocation.EndLine;
-        int endColumn = primarySourceLocation.EndColumn;
         IncludedSourceLocation/*?*/ includedSourceLocation = primarySourceLocation as IncludedSourceLocation;
         if (includedSourceLocation != null) {
           docName = includedSourceLocation.OriginalSourceDocumentName;
           if (docName != null) docName = docName.Replace("\\\\", "\\");
           startLine = includedSourceLocation.OriginalStartLine;
-          endLine = includedSourceLocation.OriginalEndLine;
         }
         long id = error.IsWarning ? ErrorToId(error.Code) : error.Code;
         if (WarningIsDisabled(id)) return;
@@ -113,12 +109,11 @@ namespace Microsoft.Research.Vcc
             }
             primarySourceLocation = sloc as IPrimarySourceLocation;
             if (primarySourceLocation == null) continue;
-            docName = primarySourceLocation.SourceDocument.Location;
-            if (docName == null) docName = primarySourceLocation.SourceDocument.Name.Value;
+            docName = primarySourceLocation.SourceDocument.Location ?? primarySourceLocation.SourceDocument.Name.Value;
             startLine = primarySourceLocation.StartLine;
             startColumn = primarySourceLocation.StartColumn;
-            endLine = primarySourceLocation.EndLine;
-            endColumn = primarySourceLocation.EndColumn;
+            int endLine = primarySourceLocation.EndLine;
+            int endColumn = primarySourceLocation.EndColumn;
             includedSourceLocation = primarySourceLocation as IncludedSourceLocation;
             if (includedSourceLocation != null) {
               docName = includedSourceLocation.OriginalSourceDocumentName;
@@ -180,8 +175,8 @@ namespace Microsoft.Research.Vcc
     }
 
     private readonly VccOptions commandLineOptions;
-    private Dictionary<IToken, List<ErrorCode>> reportedVerificationErrors = new Dictionary<IToken, List<ErrorCode>>();
-    private List<string> errors = new List<string>();
+    private readonly Dictionary<IToken, List<ErrorCode>> reportedVerificationErrors = new Dictionary<IToken, List<ErrorCode>>();
+    private readonly List<string> errors = new List<string>();
 
     public void ResetReportedErrors() {
       reportedVerificationErrors.Clear();
@@ -201,7 +196,7 @@ namespace Microsoft.Research.Vcc
       if (message != null) message = " (" + message + ")";
       else message = "";
 
-      if (commandLineOptions.PrintCEVModel) {
+      if (commandLineOptions != null && commandLineOptions.PrintCEVModel) {
         cevModelWriter = VC.VCGen.ErrorReporter.ModelWriter;
         cevModelWriter.WriteLine("BEGINNING_OF_ERROR");
       }
@@ -302,10 +297,7 @@ namespace Microsoft.Research.Vcc
         } else {
           line = VccCommandLineHost.StandardPreludeLines[reqTok.line - 1];
           idx = line.IndexOf("requires");
-          if (idx >= 0)
-            reqTok.val = line.Substring(idx + 8);
-          else
-            reqTok.val = line;
+          reqTok.val = idx >= 0 ? line.Substring(idx + 8) : line;
         }
       }
       if (commandLineOptions != null && commandLineOptions.RunTestSuite && isPrelude) {
@@ -362,17 +354,17 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    public void ReportOutcomeMethodSummary(VC.VCGen.Outcome outcome, string addInfo, string methodName, double startTime, IEnumerable<string> proverWarnings) {
-      if (outcome != VC.VCGen.Outcome.Correct) VccCommandLineHost.ErrorCount++;
+    public void ReportOutcomeMethodSummary(VC.ConditionGeneration.Outcome outcome, string addInfo, string methodName, double startTime, IEnumerable<string> proverWarnings) {
+      if (outcome != VC.ConditionGeneration.Outcome.Correct) VccCommandLineHost.ErrorCount++;
       if (!commandLineOptions.XmlFormatOutput) {
         string result = OutcomeToDescription(outcome);
         if (addInfo != null)
           result = addInfo;
         if (commandLineOptions != null && commandLineOptions.VCLikeErrorMessages) {
-          if (outcome == VC.VCGen.Outcome.Correct)
-            Console.Write("vcc : Verification of {0} {1}.", methodName, result);
-          else
-            Console.Write("vcc : error : Verification of {0} {1}.", methodName, result);
+          Console.Write(
+            outcome == VC.ConditionGeneration.Outcome.Correct
+              ? "vcc : Verification of {0} {1}."
+              : "vcc : error : Verification of {0} {1}.", methodName, result);
           if (commandLineOptions.TimeStats)
             Console.Write(" [{0:0.00}]", GetTime() - startTime);
           Console.WriteLine();
@@ -409,7 +401,7 @@ namespace Microsoft.Research.Vcc
     }
 
     public static string RemoveWhiteSpace(string str) {
-      return String.Join(" ", Array.FindAll(str.Split(new char[] { '\n', '\r', '\t', ' ' }), s => !String.IsNullOrEmpty(s)));
+      return String.Join(" ", Array.FindAll(str.Split(new[] { '\n', '\r', '\t', ' ' }), s => !String.IsNullOrEmpty(s)));
     }
 
     private static ErrorCode GetErrorNumber(ref string msg, ErrorCode def) {
@@ -445,17 +437,17 @@ namespace Microsoft.Research.Vcc
       return "VC" + id.ToString("0000");
     }
 
-    private static string OutcomeToDescription(VC.VCGen.Outcome outcome) {
+    private static string OutcomeToDescription(VC.ConditionGeneration.Outcome outcome) {
       switch (outcome) {
-        case VC.VCGen.Outcome.Correct:
+        case VC.ConditionGeneration.Outcome.Correct:
           return "succeeded";
-        case VC.VCGen.Outcome.Inconclusive:
+        case VC.ConditionGeneration.Outcome.Inconclusive:
           return "was inconclusive";
-        case VC.VCGen.Outcome.TimedOut:
+        case VC.ConditionGeneration.Outcome.TimedOut:
           return "timed out";
-        case VC.VCGen.Outcome.Errors:
+        case VC.ConditionGeneration.Outcome.Errors:
           return "failed";
-        case VC.VCGen.Outcome.OutOfMemory:
+        case VC.ConditionGeneration.Outcome.OutOfMemory:
           return "ran out of memory";
         default:
           return "returned an unknown result";

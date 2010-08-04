@@ -29,7 +29,9 @@ namespace Microsoft.Research.Vcc
       swTotal.Start();
 
       // reference symbol from Z3 so it gets copied
+#pragma warning disable 168
       Microsoft.Boogie.Z3.Factory x = new Microsoft.Boogie.Z3.Factory();
+#pragma warning restore 168
 
       startTime = GetTime();
       cciErrorHandler = new CciErrorHandler();
@@ -53,7 +55,7 @@ namespace Microsoft.Research.Vcc
         Console.WriteLine("Error - F# runtime not installed. You can download the runtime from:\n\n" + FsharpDownloadUrl);
         Console.WriteLine("\n\nGo to download page?");
         string reply = Console.ReadLine();
-        if (reply.ToUpperInvariant().StartsWith("Y")) {
+        if (reply != null && reply.ToUpperInvariant().StartsWith("Y")) {
           Process.Start(FsharpDownloadUrl);
         }
         Console.WriteLine("Exiting with -3");
@@ -124,10 +126,10 @@ namespace Microsoft.Research.Vcc
       Console.Write(message);
     }
 
-    static Stopwatch swVisitor = new Stopwatch("FELT Visitor");
-    static Stopwatch swPlugin = new Stopwatch("Total Plugin");
-    static Stopwatch swPrelude = new Stopwatch("Prelude");
-    static Stopwatch swTotal = new Stopwatch("Total");
+    static readonly Stopwatch swVisitor = new Stopwatch("FELT Visitor");
+    static readonly Stopwatch swPlugin = new Stopwatch("Total Plugin");
+    static readonly Stopwatch swPrelude = new Stopwatch("Prelude");
+    static readonly Stopwatch swTotal = new Stopwatch("Total");
 
     private static Plugin InitializePlugin(VccOptions commandLineOptions)
     {
@@ -191,7 +193,7 @@ namespace Microsoft.Research.Vcc
         selectedPlugin.RegisterStopwatch(swVisitor);
         selectedPlugin.RegisterStopwatch(swPlugin);
         selectedPlugin.RegisterStopwatch(swPrelude);
-        selectedPlugin.MessageHandler.AddHandler(new Microsoft.FSharp.Control.FSharpHandler<string>(PrintPluginMessage));
+        selectedPlugin.MessageHandler.AddHandler(PrintPluginMessage);
 
         try {
           swPlugin.Start();
@@ -231,10 +233,7 @@ namespace Microsoft.Research.Vcc
     }
 
     private static string GetZ3Version() {
-      ProcessStartInfo z3Psi = new ProcessStartInfo("z3.exe", "/version");
-      z3Psi.CreateNoWindow = true;
-      z3Psi.UseShellExecute = false;
-      z3Psi.RedirectStandardOutput = true;
+      ProcessStartInfo z3Psi = new ProcessStartInfo("z3.exe", "/version") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true };
       try {
         using (Process z3Proc = Process.Start(z3Psi)) {
           z3Proc.WaitForExit();
@@ -259,7 +258,9 @@ namespace Microsoft.Research.Vcc
         Console.WriteLine("<version>Vcc " + vccVersionString + ", Boogie " + boogieVersionString + ", Z3 " + z3VersionString + "</version>");
       } else {
         System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
+        // ReSharper disable AssignNullToNotNullAttribute
         Console.WriteLine(rm.GetString("Version"), vccVersionString, boogieVersionString, z3VersionString);
+        // ReSharper restore AssignNullToNotNullAttribute
       }
     }
 
@@ -325,8 +326,8 @@ namespace Microsoft.Research.Vcc
           try {
             if (commandLineOptions.AggressivePruning && (commandLineOptions.Functions.Count > 0 || commandLineOptions.FunctionsWithExactName.Count > 0)) {
               var pruningRoots = new List<string>();
-              pruningRoots.AddRange(commandLineOptions.Functions.ConvertAll<string>(FunctionOrTypeRoot));
-              pruningRoots.AddRange(commandLineOptions.FunctionsWithExactName.ConvertAll<string>(FunctionOrTypeRoot));
+              pruningRoots.AddRange(commandLineOptions.Functions.ConvertAll(FunctionOrTypeRoot));
+              pruningRoots.AddRange(commandLineOptions.FunctionsWithExactName.ConvertAll(FunctionOrTypeRoot));
               visitor.VisitOnly(assem, pruningRoots);
             } else
               ((ICodeVisitor)visitor).Visit(assem);
@@ -440,7 +441,7 @@ namespace Microsoft.Research.Vcc
                             now - startTime, beforeBoogie - startTime,
                             beforeMethods - beforeBoogie,
                             now - beforeMethods);
-        xmlReport += "\r\n" + "<errors>" + numErrors.ToString() + "</errors>\r\n";
+        xmlReport += "\r\n" + "<errors>" + numErrors + "</errors>\r\n";
         if (commandLineOptions.RunTestSuite) {
           if (TestRunner.testrunTimeStats != null)
             TestRunner.testrunTimeStats.Append(xmlReport);
@@ -495,18 +496,18 @@ namespace Microsoft.Research.Vcc
     static string standardPreludePath;
 
     private static Program GetStandardPrelude() {
-      string preludePath = PathHelper.PreludePath(standardPreludePath);
+      string _preludePath = PathHelper.PreludePath(standardPreludePath);
       if (standardPreludeLines == null) {
-        var lines = File.ReadAllLines(preludePath, Encoding.UTF8);
+        var lines = File.ReadAllLines(_preludePath, Encoding.UTF8);
         standardPreludeLines = new List<string>(lines);
         standardPreludeString = String.Join(Environment.NewLine, lines);
       }
 
       BoogiePL.Buffer.Fill(standardPreludeString);
-      BoogiePL.Scanner.Init(preludePath);
+      BoogiePL.Scanner.Init(_preludePath);
       Program prelude;
-      int errorCount = BoogiePL.Parser.Parse(out prelude);
-      if (prelude == null || errorCount > 0) {
+      int _errorCount = BoogiePL.Parser.Parse(out prelude);
+      if (prelude == null || _errorCount > 0) {
         System.Console.WriteLine("There were errors parsing VccPrelude.bpl.");
         return new Program();
       } else {
@@ -546,13 +547,11 @@ namespace Microsoft.Research.Vcc
       : base(new NameTable(), (byte)(pointerSizeInBits / 8)) {
       Debug.Assert(pointerSizeInBits == 32 || pointerSizeInBits == 64);
       this.peReader = new PeReader(this);
-      string/*?*/ loc = typeof(object).Assembly.Location;
-      if (loc == null) loc = "";
+      string loc = typeof (object).Assembly.Location;
       System.Reflection.AssemblyName mscorlibName = new System.Reflection.AssemblyName(typeof(object).Assembly.FullName);
       var tempMscorlibIdentity = new AssemblyIdentity(this.NameTable.GetNameFor(mscorlibName.Name), "", mscorlibName.Version, mscorlibName.GetPublicKeyToken(), loc);
       this.RegisterAsLatest(this.peReader.OpenAssembly(BinaryDocument.GetBinaryDocumentForFile(tempMscorlibIdentity.Location, this), out this.mscorlibIdentity));
-      loc = typeof(Microsoft.Research.Vcc.Runtime).Assembly.Location;
-      if (loc == null) loc = "";
+      loc = typeof (Microsoft.Research.Vcc.Runtime).Assembly.Location;
       System.Reflection.AssemblyName runtimeName = new System.Reflection.AssemblyName(typeof(Microsoft.Research.Vcc.Runtime).Assembly.FullName);
       var tempVccRuntimeAssemblyIdentity = new AssemblyIdentity(this.NameTable.GetNameFor(runtimeName.Name), "", runtimeName.Version, runtimeName.GetPublicKeyToken(), loc);
       this.RegisterAsLatest(this.peReader.OpenAssembly(BinaryDocument.GetBinaryDocumentForFile(tempVccRuntimeAssemblyIdentity.Location, this), out this.vccRuntimeAssemblyIdentity));
@@ -586,7 +585,7 @@ namespace Microsoft.Research.Vcc
       return result;
     }
 
-    Microsoft.Cci.PeReader peReader;
+    readonly Microsoft.Cci.PeReader peReader;
 
     public override void ReportErrors(Microsoft.Cci.ErrorEventArgs errorEventArguments) {
       this.SynchronousReportErrors(errorEventArguments);

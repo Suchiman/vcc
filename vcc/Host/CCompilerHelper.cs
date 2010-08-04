@@ -77,7 +77,7 @@ namespace Microsoft.Research.Vcc
     private static string RunPreprocessor(string fileName, VccOptions commandLineOptions) {
       string args = GenerateClArgs(fileName, commandLineOptions);
       string outExtension = ".i";
-      if (commandLineOptions.ModifiedPreprocessorFiles) outExtension += "." + System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+      if (commandLineOptions.ModifiedPreprocessorFiles) outExtension += "." + System.Diagnostics.Process.GetCurrentProcess().Id;
       string outFileName = Path.ChangeExtension(fileName, outExtension);
       if (StartClProcessAndReturnTrueIfErrorsAreFound(fileName, args, outFileName, commandLineOptions))
         return null;
