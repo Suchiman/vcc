@@ -18,9 +18,6 @@ type $ptr;
 //   like A.b for field b of struct A.
 type $field; 
 
-// special field, owner,closed and friends. Given special treatement in the prelude
-type $sfield; 
-
 // describes a kind of a C type:
 //  - primitive (includes mathematical types (sequences, maps, sets) and pointers)
 //  - array
@@ -44,9 +41,10 @@ type $heap; // = [$ptr][$field][$ptr]int;
 type $object; // = [$field][$ptr]int;
 type $sub_object; // = [$ptr]int;
 
-type $sheap; // = [$sfield][$ptr][$ptr]int;
-type $sheap_prop2; // = [$ptr][$ptr]int;
-type $sheap_prop1; // = [$ptr]int;
+type $owner;
+type $closed;
+type $timestamps;
+type $typed;
 
 type $roots; // = [$ptr]$ptr;
 type $embs; // = [$ptr]$ptr;
@@ -239,7 +237,6 @@ function {:inline true} $current_state(s:$state) : $state { s }
 function $roots(s:$state) : $roots;
 function $embs(s:$state) : $embs;
 function $heap(s:$state) : $heap;
-function $specials(s:$state) : $sheap;
 
 function $mem(s:$state, p:$ptr) : int;  // FIXME
 
@@ -254,11 +251,6 @@ function {:inline true} $rd1(s:$state, p:$ptr) : $object { $rd.$heap($heap(s), p
 function {:inline true} $rd2(s:$state, p:$ptr, f:$field) : $sub_object { $rd.$object($rd1(s, p), f) }
 function {:inline true} $rd3(s:$state, p:$ptr, f:$field, q:$ptr) : int { $rd.$sub_object($rd2(s, p, f), q) }
 function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int { $rd3(s, $root(s, p), f, p) }
-
-function {:inline true} $rds1(s:$state, f:$sfield) : $sheap_prop2 { $rd.$sheap($specials(s), f) }
-function {:inline true} $rds2(s:$state, f:$sfield, p:$ptr) : $sheap_prop1 { $rd.$sheap_prop2($rds1(s, f), p) }
-function {:inline true} $rds3(s:$state, f:$sfield, p:$ptr, q:$ptr) : int { $rd.$sheap_prop1($rds2(s, f, p), q) }
-function {:inline true} $rds(s:$state, p:$ptr, f:$sfield) : int { $rds3(s, f, $root(s, p), p)  }
 
 function $relative_field_of(p:$ptr, q:$ptr) : $field;
 function $container(p:$ptr, f:$field) : $ptr;
@@ -403,7 +395,7 @@ function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
   {
-    (forall p:$ptr :: {$rds(S, p, $f_typed)}
+    (forall p:$ptr :: {$rd.$typed($f_typed(S), $root(S, p), p)}
       $set_in(p, ptrs) ==> $in_writes_at(time, p) && $thread_owned_or_even_mutable(S, p))
 /*
     (forall p:$ptr :: {:vcc3 "L1"} {S[p]}
@@ -412,21 +404,10 @@ function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
         */
   }
 
-function {:inline true} $def_special_field(f:$sfield, tp:$ctype) : bool
-  { true }
-
-
-const unique $f_typed : $sfield;
-const unique $f_is_volatile : $sfield;
-const unique $f_timestamp : $sfield;
-const unique $f_owner : $sfield;
-const unique $f_closed : $sfield;
-
-axiom $def_special_field($f_typed, ^^bool);
-axiom $def_special_field($f_is_volatile, ^^bool);
-axiom $def_special_field($f_timestamp, ^^mathint);
-axiom $def_special_field($f_owner, ^^object);
-axiom $def_special_field($f_closed, ^^bool);
+function $f_typed($state) : $typed;
+function $f_timestamp($state) : $timestamps;
+function $f_owner($state) : $owner;
+function $f_closed($state) : $closed;
 
 const unique $f_owns : $field;
 const unique $f_ref_cnt : $field;
@@ -438,12 +419,11 @@ axiom $def_common_field($f_ref_cnt, ^^mathint);
 function {:inline true} $is_object_root(S:$state, p:$ptr) : bool
   { $emb(S, p) == $ptr(^^root_emb, $ref(p)) }
 
-function $is_volatile(S:$state, p:$ptr) : bool
-  { $int_to_bool($rds(S, p, $f_is_volatile)) }
-
+/*
 axiom (forall S:$state, p:$ptr ::
   {:vcc3 "todo"}
   {$is_volatile(S, p)} $good_state(S) && $is_volatile(S, p) ==> $is_primitive_ch($typ(p)));
+*/
 
 // just tmp
 function {:inline true} $is_malloc_root(S:$state, p:$ptr) : bool
@@ -515,16 +495,15 @@ function $has_volatile_owns_set(t:$ctype) : bool;
 function $is_claimable($ctype) : bool;
 
 function {:inline false} $owner(S:$state, p:$ptr) : $ptr
-  { $int_to_ptr($rds(S, p, $f_owner)) }
+  { $rd.$owner($f_owner(S), $root(S, p), p) }
 function {:inline false} $closed(S:$state, p:$ptr) : bool
-  { $int_to_bool($rds(S, p, $f_closed)) }
+  { $rd.$closed($f_closed(S), $root(S, p), p) }
 function {:inline false} $timestamp(S:$state, p:$ptr) : int
-  { $rds(S, p, $f_timestamp) }
+  { $rd.$timestamps($f_timestamp(S), $root(S, p), p) }
+function {:inline false} $typed(S:$state, p:$ptr) : bool
+  { $rd.$typed($f_typed(S), $root(S, p), p) }
 function {:inline false} $ref_cnt(S:$state, p:$ptr) : int
   { $rd(S, p, $f_ref_cnt) }
-
-function $typed(S:$state, p:$ptr) : bool
-  { $int_to_bool($rds(S, p, $f_typed)) }
 
 function $position_marker() : bool
   { true }
@@ -624,7 +603,7 @@ function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
 function $thread_local(S:$state, p:$ptr) : bool
   { $typed(S, p) &&
     if $is_primitive_ch($typ(p)) then
-      (!$is_volatile(S, p) || !$closed(S, $emb(S, p))) && $thread_local_np(S, $emb(S, p))
+      /*(!$is_volatile(S, p) || !$closed(S, $emb(S, p))) &&*/ $thread_local_np(S, $emb(S, p))
     else
       $thread_local_np(S, p) }
 
@@ -761,11 +740,19 @@ axiom
           h[r2][f2][p2] == $update(h,r,f,p,v)[r2][f2][p2]));
 */
 
+function $specials_eq(S0:$state, S:$state) : bool
+  { 
+    $f_typed(S0) == $f_typed(S) &&
+    $f_timestamp(S0) == $f_timestamp(S) &&
+    $f_closed(S0) == $f_closed(S) &&
+    $f_owner(S0) == $f_owner(S) &&
+    $embs(S0) == $embs(S) &&
+    $roots(S0) == $roots(S)
+  }
+
 procedure $write_int(p:$ptr, f:$field, v:int);
   modifies $s;
-  ensures $embs($s) == $embs(old($s));
-  ensures $roots($s) == $roots(old($s));
-  ensures $specials($s) == $specials(old($s));
+  ensures $specials_eq(old($s), $s);
   ensures $heap($s) == $update($heap(old($s)), $root(old($s), p), f, p, v);
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -801,10 +788,8 @@ procedure $set_owns(p:$ptr, owns:$ptrset);
   requires $is_composite_ch($typ(p));
   // TOKEN: the owner is mutable
   requires $mutable($s, p);
-  ensures $embs($s) == $embs(old($s));
-  ensures $roots($s) == $roots(old($s));
   ensures $heap($s) == $update($heap(old($s)), $root(old($s), p), $f_owns, p, $ptrset_to_int(owns));
-  ensures $specials($s) == $specials(old($s));
+  ensures $specials_eq(old($s), $s);
   ensures $timestamp_post_strict(old($s), $s);
 
 // ----------------------------------------------------------------------------
@@ -838,28 +823,20 @@ function $pre_static_wrap($state) : bool;
 function $pre_static_unwrap($state) : bool;
 function $post_unwrap(S1:$state, S2:$state) : bool;
 
-function {:inline true} $spec_eq(S0:$state, S:$state, f:$sfield) : bool
-  { $rds1(S0, f) == $rds1(S, f) }
-
-function {:inline true} $spec_update(S0:$state, S:$state, f:$sfield, r:$ptr, p:$ptr, v:int) : bool
-  { $rds1(S, f) == $wr.$sheap_prop2($rds1(S0, f), r, $wr.$sheap_prop1( $rds2(S0, f, r), p, v ) ) }
-
 function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
 {
   // TODO both of these takes the entire current heap, maybe restrict it to the owns set?
   (forall q:$ptr, f:$field :: {$rd3(S, o, f, q)}
      $rd3(S, o, f, q) == $rd3(S0, $root(S0, q), f, q))
   && (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, p) || p == o)
-  && $spec_eq(S0, S, $f_typed)
-  && $spec_eq(S0, S, $f_is_volatile)
-  && $spec_update(S0, S, $f_closed, o, o, 1)
-  && $spec_update(S0, S, $f_timestamp, o, o, $current_timestamp(S))
-  && (forall r:$ptr :: {$rds2(S, $f_owner, r)}
+  && $f_typed(S) == $f_typed(S0)
+  && $f_closed(S) == $wr.$closed($f_closed(S0), o, o, true)
+  && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, o, $current_timestamp(S))
+  && (forall r,p:$ptr :: {$rd.$owner($f_owner(S), r, p)}
         if $set_in(r, $owns(S0, o)) then 
-          (forall p:$ptr :: {$rds3(S, $f_owner, r, p)}
-             $rds3(S, $f_owner, r, p) == $ptr_to_int(if p == r then o else $owner(S0, p)))
+          $rd.$owner($f_owner(S), r, p) == if p == r then o else $owner(S0, p)
         else 
-          $rds2(S, $f_owner, r) == $rds2(S0, $f_owner, r))
+          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
   && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
@@ -873,16 +850,14 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   $mutable(S, o) && 
 
   (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, $root(S0, p)))
-  && $spec_eq(S0, S, $f_typed)
-  && $spec_eq(S0, S, $f_is_volatile)
-  && $spec_update(S0, S, $f_closed, o, o, 0)
-  && $spec_update(S0, S, $f_timestamp, o, o, $current_timestamp(S))
-  && (forall r:$ptr :: {$rds2(S, $f_owner, r)}
+  && $f_typed(S) == $f_typed(S0)
+  && $f_closed(S) == $wr.$closed($f_closed(S0), o, o, false)
+  && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, o, $current_timestamp(S))
+  && (forall r,p:$ptr :: {$rd.$owner($f_owner(S), r, p)}
         if $root(S0, r) == o then
-          (forall p:$ptr :: {$rds3(S, $f_owner, r, p)}
-             $rds3(S, $f_owner, r, p) == $ptr_to_int(if p == r then $me() else $owner(S0, p)))
+          $rd.$owner($f_owner(S), r, p) == if p == r then $me() else $owner(S0, p)
         else 
-          $rds2(S, $f_owner, r) == $rds2(S0, $f_owner, r))
+          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
   && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
@@ -959,7 +934,7 @@ function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : b
   { (forall f:$field :: {$dot(p, f)}
       ($is_ghost_field(f) || $field_parent_type(f) == t) ==>
         $rd(S1, p, f) == $rd(S2, p, f) ||
-        $is_volatile(S1, $dot(p, f)) || f == $f_ref_cnt) }
+        /*$is_volatile(S1, $dot(p, f)) ||*/ f == $f_ref_cnt) }
 
 function $good_for_admissibility(S:$state) : bool;
 function $good_for_post_admissibility(S:$state) : bool;
@@ -1064,12 +1039,13 @@ function $first_option_typed(S:$state, #p:$ptr) : bool;
 function {:inline true} $struct_extent(#p:$ptr) : $ptrset
   { $full_extent(#p) }
 
+/*
 function $volatile_span(S:$state, #p:$ptr) : $ptrset;
 axiom (forall S:$state, p:$ptr, q:$ptr ::
   {:vcc3 "todo"}
   {$set_in(p, $volatile_span(S, q))}
   $set_in(p, $volatile_span(S, q)) <==> p == q || ($is_volatile(S, p) && $set_in(p, $span(S, q))));
-
+*/
 
 // ----------------------------------------------------------------------------
 // Records
@@ -1687,19 +1663,31 @@ function $wr.$embs(m:$embs, p:$ptr, v:$ptr) : $embs;
 axiom (forall m:$embs, p:$ptr, v:$ptr :: $rd.$embs($wr.$embs(m, p, v), p) == v);
 axiom (forall m:$embs, p1,p2:$ptr, v:$ptr :: $rd.$embs($wr.$embs(m, p1, v), p2) == $rd.$embs(m, p2) || p1 == p2);
 
-function $rd.$sheap(m:$sheap, p:$sfield) : $sheap_prop2;
-function $wr.$sheap(m:$sheap, p:$sfield, v:$sheap_prop2) : $sheap;
-axiom (forall m:$sheap, p:$sfield, v:$sheap_prop2 :: $rd.$sheap($wr.$sheap(m, p, v), p) == v);
-axiom (forall m:$sheap, p1,p2:$sfield, v:$sheap_prop2 :: $rd.$sheap($wr.$sheap(m, p1, v), p2) == $rd.$sheap(m, p2) || p1 == p2);
+/*
+function $rd.MAP(m:MAP, p1,p2:$ptr) : VAL;
+function $wr.MAP(m:MAP, p1,p2:$ptr, v:VAL) : MAP;
+axiom (forall m:MAP, p1,p2:$ptr, v:VAL :: $rd.MAP($wr.MAP(m, p1, p2, v), p1, p2) == v);
+axiom (forall m:MAP, p1,p2,q1,q2:$ptr, v:VAL :: $rd.MAP($wr.MAP(m, p1, p2, v), q1, q2) == $rd.MAP(m, q1, q2) || (p1 == q1 && p2 == q2));
+*/
 
-function $rd.$sheap_prop2(m:$sheap_prop2, p:$ptr) : $sheap_prop1;
-function $wr.$sheap_prop2(m:$sheap_prop2, p:$ptr, v:$sheap_prop1) : $sheap_prop2;
-axiom (forall m:$sheap_prop2, p:$ptr, v:$sheap_prop1 :: $rd.$sheap_prop2($wr.$sheap_prop2(m, p, v), p) == v);
-axiom (forall m:$sheap_prop2, p1,p2:$ptr, v:$sheap_prop1 :: $rd.$sheap_prop2($wr.$sheap_prop2(m, p1, v), p2) == $rd.$sheap_prop2(m, p2) || p1 == p2);
+function $rd.$timestamps(m:$timestamps, p1,p2:$ptr) : int;
+function $wr.$timestamps(m:$timestamps, p1,p2:$ptr, v:int) : $timestamps;
+axiom (forall m:$timestamps, p1,p2:$ptr, v:int :: $rd.$timestamps($wr.$timestamps(m, p1, p2, v), p1, p2) == v);
+axiom (forall m:$timestamps, p1,p2,q1,q2:$ptr, v:int :: $rd.$timestamps($wr.$timestamps(m, p1, p2, v), q1, q2) == $rd.$timestamps(m, q1, q2) || (p1 == q1 && p2 == q2));
 
-function $rd.$sheap_prop1(m:$sheap_prop1, p:$ptr) : int;
-function $wr.$sheap_prop1(m:$sheap_prop1, p:$ptr, v:int) : $sheap_prop1;
-axiom (forall m:$sheap_prop1, p:$ptr, v:int :: $rd.$sheap_prop1($wr.$sheap_prop1(m, p, v), p) == v);
-axiom (forall m:$sheap_prop1, p1,p2:$ptr, v:int :: $rd.$sheap_prop1($wr.$sheap_prop1(m, p1, v), p2) == $rd.$sheap_prop1(m, p2) || p1 == p2);
+function $rd.$typed(m:$typed, p1,p2:$ptr) : bool;
+function $wr.$typed(m:$typed, p1,p2:$ptr, v:bool) : $typed;
+axiom (forall m:$typed, p1,p2:$ptr, v:bool :: $rd.$typed($wr.$typed(m, p1, p2, v), p1, p2) == v);
+axiom (forall m:$typed, p1,p2,q1,q2:$ptr, v:bool :: $rd.$typed($wr.$typed(m, p1, p2, v), q1, q2) == $rd.$typed(m, q1, q2) || (p1 == q1 && p2 == q2));
+
+function $rd.$owner(m:$owner, p1,p2:$ptr) : $ptr;
+function $wr.$owner(m:$owner, p1,p2:$ptr, v:$ptr) : $owner;
+axiom (forall m:$owner, p1,p2:$ptr, v:$ptr :: $rd.$owner($wr.$owner(m, p1, p2, v), p1, p2) == v);
+axiom (forall m:$owner, p1,p2,q1,q2:$ptr, v:$ptr :: $rd.$owner($wr.$owner(m, p1, p2, v), q1, q2) == $rd.$owner(m, q1, q2) || (p1 == q1 && p2 == q2));
+
+function $rd.$closed(m:$closed, p1,p2:$ptr) : bool;
+function $wr.$closed(m:$closed, p1,p2:$ptr, v:bool) : $closed;
+axiom (forall m:$closed, p1,p2:$ptr, v:bool :: $rd.$closed($wr.$closed(m, p1, p2, v), p1, p2) == v);
+axiom (forall m:$closed, p1,p2,q1,q2:$ptr, v:bool :: $rd.$closed($wr.$closed(m, p1, p2, v), q1, q2) == $rd.$closed(m, q1, q2) || (p1 == q1 && p2 == q2));
 
 // That's all folks.
