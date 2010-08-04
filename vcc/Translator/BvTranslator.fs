@@ -219,7 +219,6 @@ namespace Microsoft.Research.Vcc
               er "$err"
         
         | _ ->
-          dbgBreak()
           helper.Error (expr.Token, 9660, "unsupported expression in bv_lemma(...): " + expr.Token.Value + " (" + expr.ToString() + ")")
           er "$err"
     
