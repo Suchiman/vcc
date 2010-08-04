@@ -595,9 +595,6 @@ template<typename T> bool _vcc_shallow_struct_eq(T s, T t);
 template<typename T> bool _vcc_deep_struct_eq(T s, T t);
 #define deep_eq(s1, s2) _vcc_deep_struct_eq(s1, s2)
 
-bool _vcc_boogie(const char*);
-#define boogie(...) _vcc_boogie(__VA_ARGS__)
-
 bool _vcc_bv_lemma(bool);
 #define bv_lemma(e) assert(_vcc_bv_lemma(unchecked( e )))
 

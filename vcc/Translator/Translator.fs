@@ -593,10 +593,7 @@ namespace Microsoft.Research.Vcc
               | C.Ptr t when not t.IsComposite ->
                 helper.Warning (p2.Token, 9104, "primitive pointers are unlikely to be in the owns set")
               | _ -> ()
-            bCall "$keeps" [bState; self p1; self p2]
-          
-          | "boogie_quote", [C.Macro (_, s, [])] ->
-            ToBoogieAST.parse s
+            bCall "$keeps" [bState; self p1; self p2]         
           | ("inv_check" | "token_holder" | "_vcc_bv_lemma"), [e] ->
             self e
           | "ite", ([cond; th; el] as args) ->

@@ -179,12 +179,6 @@ namespace Microsoft.Research.Vcc
             | x -> failwith ("wrong attribute value " + x.ToString())
         cur :: unparseAttr q.Next
             
-
-    let parse s =
-      match BoogiePL.Parser.ParseProposition s with
-        | (0, e) -> unparse e
-        | _ -> failwith "cannot parse boogie expression"
-
     let doCommand (cmd:obj) =
       match cmd with
         | :? Boogie.PredicateCmd as asrt ->
