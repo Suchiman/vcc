@@ -29,6 +29,7 @@ namespace Z3AxiomProfiler.QuantifierModel
 
     public List<ScopeDesc> scopes = new List<ScopeDesc>();
     public Scope rootScope;
+    public string LogFileName;
 
     internal static Literal MarkerLiteral = new Literal();
 

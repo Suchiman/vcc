@@ -169,6 +169,7 @@ namespace Z3AxiomProfiler
       long curPos = 0;
       int lineNo = 0;
       int oldperc = 0;
+      processor.model.LogFileName = logFile;
       using (var rd = File.OpenText(logFile))
       {
         string l;

@@ -298,6 +298,7 @@ namespace Z3AxiomProfiler
 
     private void loadTree()
     {
+      this.Text = model.LogFileName + ": Z3 Axiom Profiler";
       z3AxiomTree.Nodes.Clear();
 
       if (model.conflicts.Count > 0)
