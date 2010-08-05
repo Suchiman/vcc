@@ -276,8 +276,16 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     override protected void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers) {
-      while (this.currentToken == Token.Specification) {
-        bool savedInSpecCode = SkipIntoSpecBlock();
+      this.ParseFunctionOrBlockContract(contract, followers, false, false);
+    }
+
+    private void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers, bool alreadyInContract, bool savedInSpecCode) {
+      while (this.currentToken == Token.Specification || alreadyInContract) {
+        if (alreadyInContract) {
+          alreadyInContract = false;
+        } else{
+          savedInSpecCode = SkipIntoSpecBlock();
+        }
         while (STS.FunctionOrBlockContract[this.currentToken] || 
                (this.currentToken == Token.Identifier && this.functionContractExtensions.ContainsKey(this.scanner.GetIdentifierString()))) {
           switch (this.currentToken) {
@@ -442,6 +450,12 @@ namespace Microsoft.Research.Vcc.Parsing
           return this.ParseAtomic(followers, savedInSpecCode);
         case Token.Unchecked:
           return this.ParseUncheckedExpressionStatement(followers, savedInSpecCode);
+        case Token.SpecEnsures:
+        case Token.SpecReads:
+        case Token.SpecRequires:
+        case Token.SpecDecreases:
+        case Token.SpecWrites:
+          return this.ParseBlockWithContracts(followers, savedInSpecCode);
         default:
           break;
       }
@@ -486,6 +500,18 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       if (statements.Count == 1) return statements[0];
       return new StatementGroup(statements);
+    }
+
+    private Statement ParseBlockWithContracts(TokenSet followers, bool savedInSpecCode)
+    {
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      FunctionOrBlockContract contract = new FunctionOrBlockContract();
+      this.ParseFunctionOrBlockContract(contract, followers, true, savedInSpecCode);
+      Statement stmt = this.ParseStatement(followers);
+      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+      VccBlockWithContracts blockWithContracts = new VccBlockWithContracts(new List<Statement>(1){stmt}, slb);
+      this.compilation.ContractProvider.AssociateMethodWithContract(blockWithContracts, contract.ToMethodContract());
+      return blockWithContracts;
     }
 
     private Statement ParseUncheckedExpressionStatement(TokenSet followers, bool savedInSpecCode) {
