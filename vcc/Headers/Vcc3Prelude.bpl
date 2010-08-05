@@ -42,6 +42,8 @@ type $object; // = [$field][$ptr]int;
 type $sub_object; // = [$ptr]int;
 
 type $owner;
+type $owner1;
+type $owner2;
 type $closed;
 type $timestamps;
 type $typed;
@@ -406,7 +408,7 @@ function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
 
 function $f_typed($state) : $typed;
 function $f_timestamp($state) : $timestamps;
-function $f_owner($state) : $owner;
+function $f_owner($state) : $owner2;
 function $f_closed($state) : $closed;
 
 const unique $f_owns : $field;
@@ -495,7 +497,8 @@ function $has_volatile_owns_set(t:$ctype) : bool;
 function $is_claimable($ctype) : bool;
 
 function {:inline false} $owner(S:$state, p:$ptr) : $ptr
-  { $rd.$owner($f_owner(S), $root(S, p), p) }
+  { $rd.$owner1($rd.$owner2($f_owner(S), $root(S, p)), p) }
+  //{ $rd.$owner($f_owner(S), $root(S, p), p) }
 function {:inline false} $closed(S:$state, p:$ptr) : bool
   { $rd.$closed($f_closed(S), $root(S, p), p) }
 function {:inline false} $timestamp(S:$state, p:$ptr) : int
@@ -832,11 +835,20 @@ function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
   && $f_typed(S) == $f_typed(S0)
   && $f_closed(S) == $wr.$closed($f_closed(S0), o, o, true)
   && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, o, $current_timestamp(S))
-  && (forall r,p:$ptr :: {$rd.$owner($f_owner(S), r, p)}
-        if $set_in(r, $owns(S0, o)) then 
-          $rd.$owner($f_owner(S), r, p) == if p == r then o else $owner(S0, p)
+
+  && (forall r:$ptr :: {$rd.$owner2($f_owner(S), r)}
+        if $set_in(r, $owns(S0, o)) then
+          (forall p:$ptr :: {$rd.$owner1($rd.$owner2($f_owner(S), r), p)}
+             $rd.$owner1($rd.$owner2($f_owner(S), r), p) == if p == r then o else $owner(S0, p))
         else 
-          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
+          $rd.$owner2($f_owner(S), r) == $rd.$owner2($f_owner(S0), r))
+
+//  && (forall r,p:$ptr :: {$rd.$owner($f_owner(S), r, p)}
+//        if $set_in(r, $owns(S0, o)) then 
+//          $rd.$owner($f_owner(S), r, p) == if p == r then o else $owner(S0, p)
+//        else 
+//          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
+
   && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
@@ -853,11 +865,17 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   && $f_typed(S) == $f_typed(S0)
   && $f_closed(S) == $wr.$closed($f_closed(S0), o, o, false)
   && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, o, $current_timestamp(S))
-  && (forall r,p:$ptr :: {$rd.$owner($f_owner(S), r, p)}
+  && (forall r:$ptr :: {$rd.$owner2($f_owner(S), r)}
         if $root(S0, r) == o then
-          $rd.$owner($f_owner(S), r, p) == if p == r then $me() else $owner(S0, p)
+          (forall p:$ptr :: {$rd.$owner1($rd.$owner2($f_owner(S), r), p)}
+             $rd.$owner1($rd.$owner2($f_owner(S), r), p) == if p == r then $me() else $owner(S0, p))
         else 
-          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
+          $rd.$owner2($f_owner(S), r) == $rd.$owner2($f_owner(S0), r))
+//  && (forall r,p:$ptr :: {$rd.$owner($f_owner(S), r, p)}
+//        if $root(S0, r) == o then
+//          $rd.$owner($f_owner(S), r, p) == if p == r then $me() else $owner(S0, p)
+//        else 
+//          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
   && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
@@ -1689,5 +1707,15 @@ function $rd.$closed(m:$closed, p1,p2:$ptr) : bool;
 function $wr.$closed(m:$closed, p1,p2:$ptr, v:bool) : $closed;
 axiom (forall m:$closed, p1,p2:$ptr, v:bool :: $rd.$closed($wr.$closed(m, p1, p2, v), p1, p2) == v);
 axiom (forall m:$closed, p1,p2,q1,q2:$ptr, v:bool :: $rd.$closed($wr.$closed(m, p1, p2, v), q1, q2) == $rd.$closed(m, q1, q2) || (p1 == q1 && p2 == q2));
+
+function $rd.$owner2(m:$owner2, p:$ptr) : $owner1;
+function $wr.$owner2(m:$owner2, p:$ptr, v:$owner1) : $owner2;
+axiom (forall m:$owner2, p:$ptr, v:$owner1 :: $rd.$owner2($wr.$owner2(m, p, v), p) == v);
+axiom (forall m:$owner2, p1,p2:$ptr, v:$owner1 :: $rd.$owner2($wr.$owner2(m, p1, v), p2) == $rd.$owner2(m, p2) || p1 == p2);
+
+function $rd.$owner1(m:$owner1, p:$ptr) : $ptr;
+function $wr.$owner1(m:$owner1, p:$ptr, v:$ptr) : $owner1;
+axiom (forall m:$owner1, p:$ptr, v:$ptr :: $rd.$owner1($wr.$owner1(m, p, v), p) == v);
+axiom (forall m:$owner1, p1,p2:$ptr, v:$ptr :: $rd.$owner1($wr.$owner1(m, p1, v), p2) == $rd.$owner1(m, p2) || p1 == p2);
 
 // That's all folks.
