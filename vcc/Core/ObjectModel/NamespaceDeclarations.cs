@@ -83,9 +83,8 @@ namespace Microsoft.Research.Vcc {
       //^^ requires edit.SourceDocumentAfterEdit.IsUpdatedVersionOf(this.SourceLocation.SourceDocument);
       //^^ ensures result.GetType() == this.GetType();
     {
-      VccRootNamespaceDeclaration result = new VccRootNamespaceDeclaration(edit.SourceDocumentAfterEdit.GetCorrespondingSourceLocation(this.SourceLocation));
-      result.members = members;
-      result.isInitialized = true;
+      VccRootNamespaceDeclaration result = 
+        new VccRootNamespaceDeclaration(edit.SourceDocumentAfterEdit.GetCorrespondingSourceLocation(this.SourceLocation)) { members = members, isInitialized = true };
       result.compilationPart = this.CompilationPart.UpdateRootNamespace(result);
       return result;
     }

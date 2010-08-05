@@ -181,8 +181,7 @@ namespace Microsoft.Research.Vcc {
         NameDeclaration typeName = new NameDeclaration(this.Helper.NameTable.GetNameFor("_FixedArrayOfSize"+arraySizeInBytes+"_"+ elementType), SourceDummy.SourceLocation);
         FieldDeclaration dummyField = 
           new FieldDeclaration(null, FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Private, TypeExpression.For(elementType), fieldName, null, SourceDummy.SourceLocation);
-        List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>(1);
-        members.Add(dummyField);
+        List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>(1) {dummyField};
         result = new VccArray(typeName, members, arraySizeInBytes);
         result.SetContainingTypeDeclaration(this.GlobalDeclarationContainer, true);
         arrayTypeTable2.Add(elementType, result);
@@ -285,8 +284,7 @@ namespace Microsoft.Research.Vcc {
       //^ assume rootNamespace is VccRootNamespaceDeclaration; //follows from the precondition and the post condition of this.RootNamespace.
       ISourceLocation sloc = rootNamespace.SourceLocation;
       //^ assume sloc.SourceDocument is VccCompositeDocument; //follows from the precondition of the constructors of VccRootNamespaceDeclaration.
-      VccCompilationPart result = new VccCompilationPart(helper, sloc);
-      result.rootNamespace = rootNamespace;
+      VccCompilationPart result = new VccCompilationPart(helper, sloc) {rootNamespace = rootNamespace};
       for (int i = 0, n = newParts.Count; i < n; i++) {
         if (newParts[i] == this) { newParts[i] = result; break; }
       }
@@ -501,7 +499,7 @@ namespace Microsoft.Research.Vcc {
 
     private class IsZeroVisitor : BaseCodeVisitor
     {
-      private bool result = false;
+      private bool result;
 
       public override void Visit(ICompileTimeConstant constant) {
         result = ExpressionHelper.IsIntegralZero(constant);
@@ -751,7 +749,7 @@ namespace Microsoft.Research.Vcc {
       return base.GetMethodGroupMethods(methodGroupRepresentative, argumentCount);
     }
 
-    private IEnumerable<IMethodDefinition> GetMatchingForwardDeclarations(IMethodDefinition methodGroupRepresentative, uint argumentCount) {
+    private static IEnumerable<IMethodDefinition> GetMatchingForwardDeclarations(IMethodDefinition methodGroupRepresentative, uint argumentCount) {
       // forward declarations cannot be found with 'GetMembersNamed'; thus we have to go looking for them the long way
       IName methodName = methodGroupRepresentative.Name;
       foreach (var member in methodGroupRepresentative.ContainingTypeDefinition.Members) {
@@ -810,7 +808,7 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
-    private bool IsGenericTypeOrPointerToOne(ITypeDefinition type) {
+    private static bool IsGenericTypeOrPointerToOne(ITypeDefinition type) {
       while (true) {
         if (type is IGenericMethodParameter) return true;
         IPointerType ptr = type as IPointerType;
@@ -1358,6 +1356,7 @@ namespace Microsoft.Research.Vcc {
     /// <param name="position">The position in this.DocumentToPreprocess, of the first character to be replaced by this edit.</param>
     /// <param name="length">The number of characters in this.DocumentToPreprocess that will be replaced by this edit.</param>
     /// <param name="updatedText">The replacement string.</param>
+    /// <param name="version">The document's version</param>
     protected IVccSourceDocument GetUpdatedDocument(int position, int length, string updatedText, TVersion version)
       //^ requires 0 <= position && position < this.DocumentToPreprocess.Length;
       //^ requires 0 <= length && length <= this.DocumentToPreprocess.Length;
@@ -1543,7 +1542,9 @@ namespace Microsoft.Research.Vcc {
             if (this.preprocessor == null || !this.preprocessor.PreprocessingIsComplete) {
               Preprocessor preprocessor = this.GetAndCacheNewPreprocessor();
               //^ assert this.preprocessor != null;
+#pragma warning disable 642
               for (IEnumerator<ISourceLocation> includedSectionEnumerator = preprocessor.GetIncludedSections().GetEnumerator(); includedSectionEnumerator.MoveNext(); ) ;
+#pragma warning restore 642
               //^ assume this.preprocessor.PreprocessingIsComplete;
             }
           }
@@ -1553,7 +1554,7 @@ namespace Microsoft.Research.Vcc {
     }
     private Preprocessor/*?*/ preprocessor;
 
-    IDictionary<string, string>/*?*/ preprocessorDefinedSymbols;
+    readonly IDictionary<string, string>/*?*/ preprocessorDefinedSymbols;
 
     internal override List<IErrorMessage> PreprocessorErrors {
       get {

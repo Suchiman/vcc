@@ -18,16 +18,16 @@ namespace Microsoft.Research.Vcc {
   /// </summary>
   // ^ [Immutable]
   public class VccTypeContract : Contract, Microsoft.Cci.Contracts.ITypeContract, ISpecItem {
-
     /// <summary>
     /// Allocates a collection of collections of objects that augment the signature of a type with additional information
     /// that describe invariants, model variables and functions, as well as axioms.
     /// </summary>
     /// <param name="contractFields">A possibly empty list of contract fields. Contract fields can only be used inside contracts and are not available at runtime.</param>
     /// <param name="invariants">A possibly empty list of type invariants. Axioms are a special type of invariant.</param>
+    /// <param name="isSpec">A flag that indicates if this type is a specification or implementation type</param>
     public VccTypeContract(IEnumerable<FieldDeclaration>/*?*/ contractFields, IEnumerable<TypeInvariant>/*?*/ invariants, bool isSpec) {
-      this.contractFields = contractFields==null ? EmptyListOfFields:contractFields;
-      this.invariants = invariants==null ? EmptyListOfInvariants:invariants;
+      this.contractFields = contractFields ?? EmptyListOfFields;
+      this.invariants = invariants ?? EmptyListOfInvariants;
       this.isSpec = isSpec;
     }
 

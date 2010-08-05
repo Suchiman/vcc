@@ -90,13 +90,14 @@ namespace Microsoft.Research.Vcc {
   /// A local declaration that appears as part of a statement containing a collection of local declarations, all with the same type.
   /// </summary>
   internal class VccLocalDeclaration : LocalDeclaration, ILocalDeclarationStatement, ISpecItem {
-
     /// <summary>
     /// Allocates local declaration that appears as part of a statement containing a collection of local declarations, all with the same type.
     /// </summary>
     /// <param name="name">The name of the local.</param>
     /// <param name="initialValue">The value, if any, to assign to the local as its initial value. May be null.</param>
+    /// <param name="isSpec">A flag that indicates if this declaration is spec code</param>
     /// <param name="sourceLocation">The source location corresponding to the newly allocated expression.</param>
+    /// <param name="specifiers">The specifiers of this declaration</param>
     public VccLocalDeclaration(NameDeclaration name, Expression/*?*/ initialValue, List<Specifier> specifiers, bool isSpec, ISourceLocation sourceLocation)
       : base(false, false, name, initialValue, sourceLocation)
     {
@@ -186,10 +187,7 @@ namespace Microsoft.Research.Vcc {
           ITypeDefinition result;
           VccArrayTypeExpression/*?*/ arrayTypeExpression = this.ContainingLocalDeclarationsStatement.TypeExpression as VccArrayTypeExpression;
           if (arrayTypeExpression != null && arrayTypeExpression.Size != null) {
-            if (this.IsSpec)
-              result = ((VccCompilationHelper)this.Helper).MakeSpecPointer(arrayTypeExpression.ElementType.ResolvedType);
-            else
-              result = PointerType.GetPointerType(arrayTypeExpression.ElementType.ResolvedType, this.Helper.Compilation.HostEnvironment.InternFactory);
+            result = this.IsSpec ? ((VccCompilationHelper)this.Helper).MakeSpecPointer(arrayTypeExpression.ElementType.ResolvedType) : PointerType.GetPointerType(arrayTypeExpression.ElementType.ResolvedType, this.Helper.Compilation.HostEnvironment.InternFactory);
           } else
             result = this.ContainingLocalDeclarationsStatement.Type;
           this.type = result;
@@ -359,12 +357,12 @@ namespace Microsoft.Research.Vcc {
     private void CopyTriggersFromTemplate(VccAssertStatement template) {
       IEnumerable<IEnumerable<Expression>>/*?*/ triggers = template.Compilation.ContractProvider.GetTriggersFor(template);
       if (triggers != null) {
-        IEnumerable<IEnumerable<Expression>> copiedTriggers = this.CopyTriggers(triggers, this.ContainingBlock);
+        IEnumerable<IEnumerable<Expression>> copiedTriggers = CopyTriggers(triggers, this.ContainingBlock);
         this.Compilation.ContractProvider.AssociateTriggersWithQuantifier(this, copiedTriggers);
       }
     }
 
-    private IEnumerable<IEnumerable<Expression>> CopyTriggers(IEnumerable<IEnumerable<Expression>> triggers, BlockStatement containingBlock) {
+    private static IEnumerable<IEnumerable<Expression>> CopyTriggers(IEnumerable<IEnumerable<Expression>> triggers, BlockStatement containingBlock) {
       List<IEnumerable<Expression>> copiedTriggers = new List<IEnumerable<Expression>>();
       foreach (IEnumerable<Expression> trigger in triggers) {
         List<Expression> copiedTrigger = new List<Expression>();

@@ -19,13 +19,11 @@ namespace Microsoft.Research.Vcc {
   /// A polymorphic compile constant that should be interpreted as either signed or unsigned, depending on the type of another expression with which it is combined in a binary operator expression.
   /// </summary>
   class VccCompileTimeConstantWhoseSignDependsOnAnotherExpression : CompileTimeConstant {
-
     /// <summary>
     /// Initializes a numeric literal that could be interpreted as either signed or unsigned, depending on the type of another expression with which it is combined in a binary operator expression.
     /// </summary>
     /// <param name="compileTimeConstant">A polymorphic compile time constant.</param>
     /// <param name="expression">An expression that determines which sign this polymorhpic sign agnostic constant will assume when asked what its type is.</param>
-    /// <param name="sourceLocation">The location in the source text of the expression that corresponds to this constant.</param>
     public VccCompileTimeConstantWhoseSignDependsOnAnotherExpression(CompileTimeConstant compileTimeConstant, Expression expression)
       : base(null, true, compileTimeConstant.SourceLocation)
       //^ requires compileTimeConstant.ValueIsPolymorhpicCompileTimeConstant;
@@ -51,7 +49,7 @@ namespace Microsoft.Research.Vcc {
     /// <summary>
     /// A polymorphic compile time constant.
     /// </summary>
-    CompileTimeConstant compileTimeConstant;
+    readonly CompileTimeConstant compileTimeConstant;
 
     /// <summary>
     /// True if the constant is a positive integer that could be interpreted as a negative signed integer.
@@ -72,7 +70,7 @@ namespace Microsoft.Research.Vcc {
     /// <summary>
     /// An expression that determines which sign this polymorhpic sign agnostic constant will assume when asked what its type is.
     /// </summary>
-    Expression expression;
+    readonly Expression expression;
 
     /// <summary>
     /// Computes the compile time value of the expression. Can be null.
@@ -326,6 +324,7 @@ namespace Microsoft.Research.Vcc {
     /// Allocates an expression that denotes a value that has an address in memory, such as a local variable, parameter, field, array element, pointer target, or method.
     /// </summary>
     /// <param name="expression">An expression that is expected to denote a value that has an address in memory.</param>
+    /// <param name="fromProjectionOfFixedSizeArray">A flag that indicates that this expression is the result of the projection of a fixes-size array expression</param>
     internal VccAddressableExpression(Expression expression, bool fromProjectionOfFixedSizeArray)
       : base(expression)
     {
@@ -356,8 +355,7 @@ namespace Microsoft.Research.Vcc {
     public override object Resolve()
     {
       if (this.fromProjectionOfFixedSizeArray) {
-        object baseResolve = base.Resolve();
-        return (baseResolve != null) ? baseResolve : this.Expression;
+        return base.Resolve() ?? this.Expression;
       }
       else {
         return base.Resolve();
@@ -556,7 +554,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override string ToString() {
-      return "&" + this.Address.ToString();
+      return "&" + this.Address;
     }
 
     /// <summary>
@@ -581,7 +579,7 @@ namespace Microsoft.Research.Vcc {
     /// <summary>
     /// Allocates an expression that computes the memory size of instances of a given type at runtime.
     /// </summary>
-    /// <param name="expression">The type to size, or the value to size.</param>
+    /// <param name="type">The type whose alignment to get.</param>
     /// <param name="sourceLocation">The source location corresponding to the newly allocated expression.</param>
     public VccAlignOf(TypeExpression type, ISourceLocation sourceLocation)
       : base(sourceLocation)
@@ -682,7 +680,7 @@ namespace Microsoft.Research.Vcc {
     /// Allocates an expression that denotes an array type.
     /// </summary>
     /// <param name="elementType">The type of the elements of this array.</param>
-    /// <param name="rank">The number of array dimensions.</param>
+    /// <param name="size">The number of elements in the array.</param>
     /// <param name="sourceLocation">The source location corresponding to the newly allocated expression.</param>
     public VccArrayTypeExpression(TypeExpression elementType, Expression/*?*/ size, ISourceLocation sourceLocation)
       : base(elementType, 1, sourceLocation)
@@ -788,7 +786,7 @@ namespace Microsoft.Research.Vcc {
   {
     public VccMapTypeExpressions(TypeExpression rangeType, TypeExpression domainType, INameTable nameTable, ISourceLocation sourceLocation)
       : base(new NamedTypeExpression(NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(nameTable, "Map")),
-             new TypeExpression[] { rangeType, domainType }, sourceLocation) {
+             new[] { rangeType, domainType }, sourceLocation) {
     }
 
     protected VccMapTypeExpressions(BlockStatement containingBlock, VccMapTypeExpressions template)
@@ -799,7 +797,7 @@ namespace Microsoft.Research.Vcc {
       bool foundError = false;
       var argumentTypeEnum = this.ArgumentTypes.GetEnumerator();
 
-      foreach (var rngOrDom in new string[] { "range", "domain" }) {
+      foreach (var rngOrDom in new[] { "range", "domain" }) {
         argumentTypeEnum.MoveNext();
         var te = argumentTypeEnum.Current;
         if (te is ArrayTypeExpression) {
@@ -926,10 +924,11 @@ namespace Microsoft.Research.Vcc {
         get { return this.ValueToConvert.Locations; }
       }
 
-      public ITypeDefinition Type {
+      private ITypeDefinition Type {
         get { return this.type; }
       }
-      ITypeDefinition type;
+
+      readonly ITypeDefinition type;
 
        public ITypeReference TypeAfterConversion {
         get { return this.Type; }
@@ -1408,7 +1407,7 @@ namespace Microsoft.Research.Vcc {
     protected VccLabeledExpression(BlockStatement containingBlock, VccLabeledExpression template) 
       : base(containingBlock, template) {
       this.expression = template.expression.MakeCopyFor(containingBlock);
-      this.label = (NameDeclaration)template.label.MakeCopyFor(containingBlock.Compilation);
+      this.label = template.label.MakeCopyFor(containingBlock.Compilation);
     }
 
     public NameDeclaration Label { 
@@ -1440,11 +1439,11 @@ namespace Microsoft.Research.Vcc {
     }
 
     protected override IExpression ProjectAsNonConstantIExpression() {
-      return this.Expression.ProjectAsIExpression(); ;
+      return this.Expression.ProjectAsIExpression();
     }
 
     public override string ToString() {
-      return ":" + this.label.Name.Value + " " + this.Expression.ToString();
+      return ":" + this.label.Name.Value + " " + this.Expression;
     }
 
     public override ITypeDefinition Type {
@@ -2012,8 +2011,12 @@ namespace Microsoft.Research.Vcc {
       return base.GetCandidateMethods(allowMethodParameterInferencesToFail);
     }
 
+    private IEnumerable<IMethodDefinition> BaseGetPointerAdditionMethods(ITypeDefinition indexedObjectElementType) {
+      return base.GetPointerAdditionMethods(indexedObjectElementType);
+    }
+
     protected override IEnumerable<IMethodDefinition> GetPointerAdditionMethods(ITypeDefinition indexedObjectElementType) {
-      foreach (var m in base.GetPointerAdditionMethods(indexedObjectElementType))
+      foreach (var m in this.BaseGetPointerAdditionMethods(indexedObjectElementType))
         yield return m;
 
       var bigIntType = VccCompilationHelper.GetBigIntType(this.Compilation.NameTable, this);
@@ -2309,8 +2312,7 @@ namespace Microsoft.Research.Vcc {
     protected static void AddInitializationTo(ICollection<Statement> statements, Expression source, Expression target, TypeExpression targetType, BlockStatement containingBlock) {
       VccInitializer initializer = source as VccInitializer;
       if (initializer != null) {
-        VccArrayTypeExpression arrayType = initializer.arrayTypeExpression;
-        if (arrayType == null) arrayType = targetType as VccArrayTypeExpression;
+        VccArrayTypeExpression arrayType = initializer.arrayTypeExpression ?? targetType as VccArrayTypeExpression;
         if (arrayType != null) {
           initializer.AddInitializingElementAssignmentsTo(statements, target, arrayType);
         } else if (initializer.IsOfStructuredType) {
@@ -2342,8 +2344,7 @@ namespace Microsoft.Research.Vcc {
           CompileTimeConstant ctc = source as CompileTimeConstant;
           VccUnionDeclaration unionType = MiniResolve(containingBlock.ContainingNamespaceDeclaration, targetType as VccNamedTypeExpression) as VccUnionDeclaration;
           if (ctc != null && unionType != null) {
-            List<Expression> exprs = new List<Expression>();
-            exprs.Add(ctc);
+            List<Expression> exprs = new List<Expression> {ctc};
             VccInitializer newInitializer = new VccInitializer(exprs, false, source.SourceLocation);
             newInitializer.SetContainingBlock(containingBlock);
             newInitializer.AddInitializingFieldAssignmentsTo(statements, target, unionType);
@@ -2361,8 +2362,7 @@ namespace Microsoft.Research.Vcc {
       IName dummyName = this.ContainingBlock.Helper.NameTable.GetNameFor("__temp" + this.SourceLocation.StartIndex);
       NameDeclaration tempName = new NameDeclaration(dummyName, this.SourceLocation);
       LocalDeclaration temp = new LocalDeclaration(false, false, tempName, null, this.SourceLocation);
-      List<LocalDeclaration> declarations = new List<LocalDeclaration>(1);
-      declarations.Add(temp);
+      List<LocalDeclaration> declarations = new List<LocalDeclaration>(1) {temp};
       LocalDeclarationsStatement statement = new LocalDeclarationsStatement(false, false, false, TypeExpression.For(this.structureTypeExpression.ResolvedType), declarations, this.SourceLocation);
       statements.Add(statement);
       statement.SetContainingBlock(this.ContainingBlock);
@@ -2409,7 +2409,7 @@ namespace Microsoft.Research.Vcc {
 
     protected abstract IExpression ProjectAsFiniteSet();
 
-    IExpression cachedProjection = null;
+    IExpression cachedProjection;
 
     internal abstract int ExpressionCount { get; }
 
@@ -2529,8 +2529,7 @@ namespace Microsoft.Research.Vcc {
       // i may be increased by the total number of embedded array elements per loop, rownum always by 1. 
       while (i < n){
         Expression arrayLine = array;  
-        List<Expression> indices = new List<Expression>(1);
-        indices.Add(new CompileTimeConstant(rownum++, true, SourceDummy.SourceLocation));
+        List<Expression> indices = new List<Expression>(1) {new CompileTimeConstant(rownum++, true, SourceDummy.SourceLocation)};
         VccIndexer element = new VccIndexer(arrayLine, indices.AsReadOnly(), SourceDummy.SourceLocation);
         // Construct the initial value for one element of the array. 
         Expression/*?*/ initialValueForOneElement = null;
@@ -2543,11 +2542,7 @@ namespace Microsoft.Research.Vcc {
         } else {
           List<Expression> exprs = new List<Expression>(sizeOfEmbeddedArrays);
           for (int j = 0; j < sizeOfEmbeddedArrays; j++) {
-            if (i < n) {
-              exprs.Add(expressions[i++]);
-            } else { // Patching Zeros, which in general are not really needed. 
-              exprs.Add(new CompileTimeConstant(0, this.SourceLocation));
-            }
+            exprs.Add(i < n ? expressions[i++] : new CompileTimeConstant(0, this.SourceLocation));
           }
           initialValueForOneElement = new VccInitializer(exprs, false, this.SourceLocation);
         }
@@ -2649,8 +2644,9 @@ namespace Microsoft.Research.Vcc {
     /// unless if size is zero or less, in which case, the count number of chars will be
     /// converted.
     /// </summary>
-    /// <param name="initialValue"></param>
-    /// <param name="size"></param>
+    /// <param name="initialValue">The initial string</param>
+    /// <param name="size">The target size</param>
+    /// <param name="parent">The parent expression</param>
     /// <returns></returns>
     public static VccInitializer fromStringWithPatchedZeros(string initialValue, int size, Expression parent) {
       if (initialValue == null) return null;
@@ -3059,6 +3055,7 @@ namespace Microsoft.Research.Vcc {
     /// <param name="expression">An expression that names a type. 
     /// <param name="silentlyResolveToVoid">When the expression cannot be resolved to a type, silently resolve it to Void</param>
     /// Must be an instance of SimpleName, QualifiedName or AliasQualifiedName.</param>
+    /// <param name="silentlyResolveToVoid"></param>
     public VccNamedTypeExpression(Expression expression, bool silentlyResolveToVoid)
       : base(expression)
       //^ requires expression is SimpleName || expression is QualifiedName || expression is AliasQualifiedName;
@@ -3130,7 +3127,7 @@ namespace Microsoft.Research.Vcc {
 
     public bool DidSilentlyResolveToVoid { get; private set; }
 
-    bool resolvedToVoidDueToError = false;
+    bool resolvedToVoidDueToError;
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
       return base.CheckForErrorsAndReturnTrueIfAnyAreFound() || this.resolvedToVoidDueToError;     
@@ -3192,7 +3189,7 @@ namespace Microsoft.Research.Vcc {
         ITypeDefinition/*?*/ qualifierType = this.Qualifier.Type;
         if (qualifierType == Dummy.Type) return null;
         IPointerTypeReference/*?*/ ptr = qualifierType as IPointerTypeReference;
-        if (ptr != null && (ptr.TargetType.IsValueType || ((VccCompilationHelper)this.Helper).IsPointerType(ptr.TargetType.ResolvedType)))
+        if (ptr != null && (ptr.TargetType.IsValueType || this.Helper.IsPointerType(ptr.TargetType.ResolvedType)))
           return this.Qualifier;
 
         if (qualifierType != null && TypeHelper.GetTypeName(qualifierType) == VccCompilationHelper.SystemDiagnosticsContractsCodeContractTypedPtrString)
@@ -3283,7 +3280,7 @@ namespace Microsoft.Research.Vcc {
           if (args.Count == 2) {
             IMetadataConstant attrStr = args[0] as IMetadataConstant;
             IMetadataConstant name = args[1] as IMetadataConstant;
-            if (attr != null && name != null && (string)attrStr.Value == "member_name" && this.NameTable.GetNameFor((string)name.Value) == this.SimpleName.Name)
+            if (name != null && (string)attrStr.Value == "member_name" && this.NameTable.GetNameFor((string)name.Value) == this.SimpleName.Name)
               return true;
           }
         }
@@ -3319,7 +3316,7 @@ namespace Microsoft.Research.Vcc {
       return this.cachedProjection;
     }
 
-    IExpression cachedProjection = null;
+    IExpression cachedProjection;
 
     public override ITypeDefinition InferType() {
       object member = this.ResolveAsValueContainer(true);
@@ -3339,7 +3336,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override string ToString() {
-      return this.Qualifier.ToString() + "::" + this.SimpleName.ToString();
+      return this.Qualifier + "::" + this.SimpleName;
     }
 
     private class ProjectionHelper : PointerQualifiedName
@@ -3370,6 +3367,7 @@ namespace Microsoft.Research.Vcc {
     /// Allocates an expression that denotes a pointer type.
     /// </summary>
     /// <param name="elementType">The type of value that the pointer points to.</param>
+    /// <param name="qualifiers"></param>
     /// <param name="sourceLocation">The source location corresponding to the newly allocated expression.</param>
     public VccPointerTypeExpression(TypeExpression elementType, List<TypeQualifier>/*?*/ qualifiers, ISourceLocation sourceLocation)
       : base(elementType, sourceLocation) {
@@ -3427,7 +3425,7 @@ namespace Microsoft.Research.Vcc {
           return ModifiedPointerType.GetModifiedPointerType(this.ElementType.ResolvedType, modifiers, this.Compilation.HostEnvironment.InternFactory);
       }
 
-      ITypeDefinition resolvedElementType = this.ElementType.ResolvedType;
+      ITypeDefinition resolvedElementType = this.ElementType.ResolvedType; // !!! We need the side effect of resolving the type !!!
       VccNamedTypeExpression namedType = this.ElementType as VccNamedTypeExpression;
       if (namedType != null && namedType.DidSilentlyResolveToVoid) {
         // turn forward-declated pointers into obj_t
@@ -3599,7 +3597,7 @@ namespace Microsoft.Research.Vcc {
 
     public override string ToString()
     {
-      return this.Qualifier.ToString() + "::" + this.SimpleName.ToString();
+      return this.Qualifier + "::" + this.SimpleName;
     }
   }
 
@@ -3854,7 +3852,7 @@ namespace Microsoft.Research.Vcc {
       // we find a match at the top level. 
       // The function has some replicate code as the one it overrides. 
       if (!restrictToNamespacesAndTypes) {
-        for (BlockStatement b = block; b.ContainingSignatureDeclaration == block.ContainingSignatureDeclaration && b.ContainingBlock != b && b.Scope is StatementScope; b = b.ContainingBlock) {
+        for (BlockStatement b = block; b.ContainingSignatureDeclaration == block.ContainingSignatureDeclaration && b.ContainingBlock != b && b.Scope != null; b = b.ContainingBlock) {
           IEnumerator<LocalDeclaration> locals = b.Scope.GetMembersNamed(this.Name, false).GetEnumerator();
           if (locals.MoveNext()) {
             LocalDeclaration localVarDecl = locals.Current;
@@ -3863,7 +3861,7 @@ namespace Microsoft.Research.Vcc {
             }
             VccLocalFunctionDeclaration/*?*/ localFunc = localVarDecl as VccLocalFunctionDeclaration;
             if (localFunc != null) {
-              return this.ResolveUsing(localFunc.MangledFunctionDeclaration.ContainingTypeDeclaration, restrictToNamespacesAndTypes);
+              return this.ResolveUsing(localFunc.MangledFunctionDeclaration.ContainingTypeDeclaration, false);
             }
             if (this.SourceLocation.StartIndex < localVarDecl.SourceLocation.StartIndex)
               this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.LocalUsedBeforeDeclaration, this.Name.Value));
@@ -3982,12 +3980,7 @@ namespace Microsoft.Research.Vcc {
         // Test to see if we have reached the outermost scope, in which case lookupNameString
         // is not a mangled one. 
         if (!lookupNameString.Contains("^")) break;
-        if (LexicalScope.LexicalScopeOf(lookupNameString) == "") {
-          // outermost scope, generate an unmangled name for a last try. 
-          lookupNameString = LexicalScope.UnmangledName(lookupNameString);
-        } else {
-          lookupNameString = LexicalScope.MangledNameWithOuterLexcialScope(lookupNameString);
-        }
+        lookupNameString = LexicalScope.LexicalScopeOf(lookupNameString) == "" ? LexicalScope.UnmangledName(lookupNameString) : LexicalScope.MangledNameWithOuterLexcialScope(lookupNameString);
       }
       // The following (looking the name up in the nested namespace)
       // may not apply to the C case. Keep it here anyway. 
@@ -4089,7 +4082,7 @@ namespace Microsoft.Research.Vcc {
       bool result = this.Expression.HasErrors;
       if (!result && this.Expression.Type.TypeCode == PrimitiveTypeCode.Void) {
         this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.SizeOfUnknown, this.Expression.SourceLocation.Source));
-        result = false;
+        result = true;
       }
       return result;
     }
@@ -4129,13 +4122,13 @@ namespace Microsoft.Research.Vcc {
             LocalDeclaration locDecl = loc.LocalDeclaration;
             VccInitializer/*?*/ initializer = locDecl.InitialValue as VccInitializer;
             if (initializer != null)
-              return (uint)(TypeHelper.SizeOfType(((IPointerType)type).TargetType.ResolvedType) * IteratorHelper.EnumerableCount(initializer.Expressions));
+              return TypeHelper.SizeOfType(((IPointerType)type).TargetType.ResolvedType) * IteratorHelper.EnumerableCount(initializer.Expressions);
             else
               type = locDecl.ContainingLocalDeclarationsStatement.Type;
           }
         }
       }
-      uint result = (uint)TypeHelper.SizeOfType(type);
+      uint result = TypeHelper.SizeOfType(type);
       if (result > 0) return result;
       return null;
     }
@@ -4786,7 +4779,7 @@ namespace Microsoft.Research.Vcc {
       {
         if (cachedCondition != null) return cachedCondition;
         Expression inLambdaRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.NameTable, "InLambda");
-        Expression[] args = new Expression[] { base.Condition, this.lambdaExpr };
+        Expression[] args = new[] { base.Condition, this.lambdaExpr };
         cachedCondition = new MethodCall(inLambdaRef, args, SourceDummy.SourceLocation);
         cachedCondition.SetContainingExpression(this);
         return cachedCondition;

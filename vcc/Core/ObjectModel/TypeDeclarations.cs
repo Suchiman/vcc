@@ -120,7 +120,7 @@ namespace Microsoft.Research.Vcc {
     }
    }
 
-  internal abstract class VccStructuredTypeDeclaration : NamespaceStructDeclaration, IDeclaration
+  internal abstract class VccStructuredTypeDeclaration : NamespaceStructDeclaration
   {
     protected VccStructuredTypeDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<Specifier> extendedAttributes, ISourceLocation sourceLocation)
       : base(null, Flags.None, name, new List<GenericTypeParameterDeclaration>(0), new List<TypeExpression>(0), members, sourceLocation) {
@@ -169,7 +169,7 @@ namespace Microsoft.Research.Vcc {
       return VccStructuredTypeDeclaration.HasTypeCycle(type, null, new Stack<ITypeReference>(), helper);
     }
 
-    private static Dictionary<ITypeReference, bool> typesWithKnownLoops = new Dictionary<ITypeReference, bool>();
+    private static readonly Dictionary<ITypeReference, bool> typesWithKnownLoops = new Dictionary<ITypeReference, bool>();
 
     private static bool HasTypeCycle(ITypeReference type, IFieldDefinition/*?*/ offendingField, Stack<ITypeReference> seenTypes, LanguageSpecificCompilationHelper helper) {
 
@@ -187,7 +187,7 @@ namespace Microsoft.Research.Vcc {
             var locations = new List<IPrimarySourceLocation>(helper.Compilation.SourceLocationProvider.GetPrimarySourceLocationsFor(type.Locations));
             helper.ReportError(
               new VccErrorMessage(locations[0],
-                Error.ValueTypeLayoutCycle, offendingField.Name.Value.ToString(), helper.GetTypeName(type.ResolvedType)));
+                Error.ValueTypeLayoutCycle, offendingField.Name.Value, helper.GetTypeName(type.ResolvedType)));
           }
         }
         return true;
@@ -260,10 +260,6 @@ namespace Microsoft.Research.Vcc {
     }
 
     // to prevent warning about unverifiable code
-    private IEnumerable<ICustomAttribute> BaseAttributes
-    {
-      get { return base.Attributes; }
-    }
 
     public override TypeMemberVisibility GetDefaultVisibility()
     {
@@ -349,13 +345,9 @@ namespace Microsoft.Research.Vcc {
 
     public override uint GetFieldOffset(object item)
     {
-      uint result;
       FieldDeclaration field = item as FieldDeclaration;
       INestedTypeDefinition nestedTypeDef = item as INestedTypeDefinition;
-      if (field != null)
-        result = MemberHelper.ComputeFieldOffset(field.FieldDefinition, field.FieldDefinition.ContainingTypeDefinition);
-      else
-        result = MemberHelper.ComputeFieldOffset(nestedTypeDef, this.TypeDefinition);
+      uint result = field != null ? MemberHelper.ComputeFieldOffset(field.FieldDefinition, field.FieldDefinition.ContainingTypeDefinition) : MemberHelper.ComputeFieldOffset(nestedTypeDef, this.TypeDefinition);
 
       // This distinguishes between anonymous nested types, where we need to walk upwards to the surrounding type,
       // and nested types that have their own field name, where we must not do this
@@ -435,7 +427,7 @@ namespace Microsoft.Research.Vcc {
         }
         FieldDefinition/*?*/ fieldDef = member as FieldDefinition;
         if (fieldDef != null && !fieldDef.IsStatic && !fieldDef.IsCompileTimeConstant) {
-          uint memberSize = 0;
+          uint memberSize;
           VccArrayTypeExpression/*?*/ arrayType = fieldDef.Type as VccArrayTypeExpression;
           if (arrayType != null && arrayType.Size != null) {
             uint numElements = (uint)arrayType.SizeAsInt32;
