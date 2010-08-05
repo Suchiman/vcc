@@ -252,7 +252,7 @@ namespace Microsoft.Research.Vcc
 
     private static void DisplayVersion(bool formatAsXml) {
       string vccVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location).FileVersion;
-      string boogieVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(BoogiePL.Parser).Assembly.Location).FileVersion;
+      string boogieVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Boogie.Parser).Assembly.Location).FileVersion;
       string z3VersionString = GetZ3Version();
       if (formatAsXml) {
         Console.WriteLine("<version>Vcc " + vccVersionString + ", Boogie " + boogieVersionString + ", Z3 " + z3VersionString + "</version>");
@@ -492,7 +492,6 @@ namespace Microsoft.Research.Vcc
     }
 
     static List<String> standardPreludeLines;
-    static string standardPreludeString;
     static string standardPreludePath;
 
     private static Program GetStandardPrelude() {
@@ -500,13 +499,10 @@ namespace Microsoft.Research.Vcc
       if (standardPreludeLines == null) {
         var lines = File.ReadAllLines(_preludePath, Encoding.UTF8);
         standardPreludeLines = new List<string>(lines);
-        standardPreludeString = String.Join(Environment.NewLine, lines);
       }
 
-      BoogiePL.Buffer.Fill(standardPreludeString);
-      BoogiePL.Scanner.Init(_preludePath);
       Program prelude;
-      int _errorCount = BoogiePL.Parser.Parse(out prelude);
+      int _errorCount = Boogie.Parser.Parse(_preludePath, new List<string>(), out prelude);
       if (prelude == null || _errorCount > 0) {
         System.Console.WriteLine("There were errors parsing VccPrelude.bpl.");
         return new Program();
