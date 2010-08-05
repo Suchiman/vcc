@@ -316,6 +316,7 @@ module Rules =
     addKwRepl "false" "\\false"
     addKwRepl "spec_malloc" "\\alloc"             // cannot use fnRule because of template paramters
     addKwRepl "spec_alloc_array" "\\alloc_array"  // cannot use fnRule because of template paramters
+    addKwRepl "block" ""                          // has become superfluous in the new syntax
     
     addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
     addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, ":hint"); space; paren "" toks]))
