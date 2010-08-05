@@ -19,7 +19,7 @@ namespace Microsoft.Research.Vcc {
       this.entryPoints = new List<IMethodDefinition>();
     }
 
-    ICompilation compilation;
+    readonly ICompilation compilation;
     internal readonly List<IMethodDefinition> entryPoints;
 
     public override void Visit(IGlobalMethodDefinition method) {
@@ -69,11 +69,7 @@ namespace Microsoft.Research.Vcc {
         if (this.compilation == null) {
           lock (GlobalLock.LockingObject) {
             if (this.compilation == null) {
-              if (this.compilationParts == null) {
-                //^ assume this.programSources != null;
-                this.compilation = new VccCompilation(this.hostEnvironment, this, this.options, this.ProvideCompilationParts());
-              } else
-                this.compilation = new VccCompilation(this.hostEnvironment, this, this.options, this.compilationParts);
+              this.compilation = new VccCompilation(this.hostEnvironment, this, this.options, this.compilationParts ?? this.ProvideCompilationParts());
               //TODO: construct unit sets from references. Associate these with the compilation.
             }
           }
@@ -217,17 +213,13 @@ namespace Microsoft.Research.Vcc {
         //^ ensures result is Compilation;
       {
         if (this.compilation == null) {
-          if (this.compilationParts == null) {
-            //^ assume this.programSources != null;
-            this.compilation = new VccCompilation(this.hostEnvironment, this, this.options, this.ProvideCompilationParts());
-          }else
-            this.compilation = new VccCompilation(this.hostEnvironment, this, this.options, this.compilationParts);
+          this.compilation = new VccCompilation(this.hostEnvironment, this, this.options, this.compilationParts ?? this.ProvideCompilationParts());
           //TODO: construct unit sets from references. Associate these with the compilation.
         }
         return this.compilation;
       }
     }
-    VccCompilation/*?*/ compilation = null;
+    VccCompilation/*?*/ compilation;
 
     readonly IEnumerable<CompilationPart>/*?*/ compilationParts;
 

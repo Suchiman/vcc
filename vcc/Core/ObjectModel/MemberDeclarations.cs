@@ -228,7 +228,8 @@ namespace Microsoft.Research.Vcc {
     public override CallingConvention CallingConvention {
       get { return this.callingConvention; }
     }
-    CallingConvention callingConvention;
+
+    readonly CallingConvention callingConvention;
 
     protected override GlobalMethodDefinition CreateGlobalMethodDefinition() {
       VccGlobalMethodDefinition globalMethodDefinition = new VccGlobalMethodDefinition(this);
@@ -269,9 +270,7 @@ namespace Microsoft.Research.Vcc {
           if (specTokenSpec != null) {
             var attrTypeName = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(containingExpression.ContainingBlock.Compilation.NameTable, "StringVccAttr");
             AttributeTypeExpression attrType = new AttributeTypeExpression(attrTypeName);
-            List<Expression> args = new List<Expression>();
-            args.Add(new CompileTimeConstant(specTokenSpec.Token, specTokenSpec.SourceLocation));
-            args.Add(new CompileTimeConstant("", specTokenSpec.SourceLocation));
+            List<Expression> args = new List<Expression> { new CompileTimeConstant(specTokenSpec.Token, specTokenSpec.SourceLocation), new CompileTimeConstant("", specTokenSpec.SourceLocation) };
             SourceCustomAttribute custAttr = new SourceCustomAttribute(AttributeTargets.All, attrType, args, specTokenSpec.SourceLocation);
             custAttr.SetContainingExpression(containingExpression);
             result.Add(custAttr);
@@ -382,13 +381,13 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
-    private List<ParameterDeclaration>/*?*/ parameters;
+    private readonly List<ParameterDeclaration>/*?*/ parameters;
 
     public override bool ReturnValueIsModified {
       get { return false; }
     }
 
-    IEnumerable<Specifier>/*?*/ specifiers;
+    readonly IEnumerable<Specifier>/*?*/ specifiers;
 
     public override IEnumerable<ICustomModifier> ReturnValueCustomModifiers {
       get {
@@ -449,12 +448,14 @@ namespace Microsoft.Research.Vcc {
     public bool AcceptsExtraArguments {
       get { return this.acceptsExtraArguments; }
     }
-    bool acceptsExtraArguments;
+
+    readonly bool acceptsExtraArguments;
 
     public CallingConvention CallingConvention {
       get { return this.callingConvention; }
     }
-    CallingConvention callingConvention;
+
+    readonly CallingConvention callingConvention;
 
     public CompilationPart CompilationPart {
       get { return this.ContainingTypeDeclaration.CompilationPart; }
@@ -703,7 +704,7 @@ namespace Microsoft.Research.Vcc {
         contract.SetContainingBlock(this.DummyBlock);
     }
 
-    IEnumerable<Specifier>/*?*/ specifiers;
+    readonly IEnumerable<Specifier>/*?*/ specifiers;
 
     internal List<GenericMethodParameterDeclaration>/*?*/ templateParameters;
 
@@ -823,7 +824,7 @@ namespace Microsoft.Research.Vcc {
       //^^ ensures result.ContainingNamespaceDeclaration == targetNamespaceDeclaration;
     {
       if (targetNamespaceDeclaration == this.CompilationPart.RootNamespace) return this;
-      return (INamespaceDeclarationMember)this.MakeShallowCopyFor(((CompilationPart)targetNamespaceDeclaration.CompilationPart).GlobalDeclarationContainer);
+      return (INamespaceDeclarationMember)this.MakeShallowCopyFor(targetNamespaceDeclaration.CompilationPart.GlobalDeclarationContainer);
     }
 
     #endregion
@@ -1066,7 +1067,8 @@ namespace Microsoft.Research.Vcc {
     public TypeExpression Type {
       get { return this.type; }
     }
-    TypeExpression type;
+
+    readonly TypeExpression type;
 
     public ITypeDefinitionMember/*?*/ TypeDefinitionMember {
       get { return null; }
@@ -1143,7 +1145,8 @@ namespace Microsoft.Research.Vcc {
     internal override NameDeclaration Identifier {
       get { return this.identifier; }
     }
-    NameDeclaration identifier;
+
+    readonly NameDeclaration identifier;
   }
 
   internal sealed class ArrayDeclarator : Declarator {
@@ -1325,11 +1328,11 @@ namespace Microsoft.Research.Vcc {
 
   internal sealed class Parameter : SourceItem, ISpecItem {
 
-    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, bool isOut, ISourceLocation sourceLocation)
+    internal Parameter(IEnumerable<Specifier> typeSpecifiers, Declarator name, bool isSpec, bool isOut, ISourceLocation sourceLocation)
       : this(typeSpecifiers, name, isSpec, isOut, sourceLocation, false) {
     }
 
-    internal Parameter(List<Specifier> typeSpecifiers, Declarator name, bool isSpec, bool isOut, ISourceLocation sourceLocation, bool isVarArgs)
+    internal Parameter(IEnumerable<Specifier> typeSpecifiers, Declarator name, bool isSpec, bool isOut, ISourceLocation sourceLocation, bool isVarArgs)
       : base(sourceLocation) {
       this.typeSpecifiers = typeSpecifiers;
       this.Name = name;
@@ -1394,7 +1397,7 @@ namespace Microsoft.Research.Vcc {
 
     protected override ParameterDefinition CreateParameterDefinition()
     {
-      return new VccParameterDefinition(this, this.specifiers, this.isSpec);
+      return new VccParameterDefinition(this, this.isSpec);
     }
 
     public bool IsSpec {
@@ -1409,14 +1412,11 @@ namespace Microsoft.Research.Vcc {
 
   public class VccParameterDefinition : ParameterDefinition, ISpecItem
   {
-    protected internal VccParameterDefinition(VccParameterDeclaration declaration, IEnumerable<Specifier> specifiers, bool isSpec)
+    protected internal VccParameterDefinition(VccParameterDeclaration declaration, bool isSpec)
       : base(declaration)
     {
-      this.specifiers = specifiers;
       this.isSpec = isSpec;
     }
-
-    readonly IEnumerable<Specifier> specifiers;
 
     public bool IsSpec {
       get { return this.isSpec; }
