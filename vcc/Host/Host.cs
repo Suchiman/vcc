@@ -518,21 +518,18 @@ namespace Microsoft.Research.Vcc
     internal static double GetTime() {
       return System.Environment.TickCount / 1000.0;
     }
-
   }
 
   class BoogieErrorSink : IErrorSink
   {
 
-    public BoogieErrorSink(bool noPreprocessor)
-    {
+    public BoogieErrorSink(bool noPreprocessor) {
       this.noPreprocessor = noPreprocessor;
     }
 
     readonly bool noPreprocessor;
 
-    public void Error(IToken tok, string msg)
-    {
+    public void Error(IToken tok, string msg) {
       if (this.noPreprocessor)
         Console.Out.WriteLine("({0},{1}): verification: {2}", tok.line, tok.col, msg);
       else
