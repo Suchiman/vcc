@@ -221,7 +221,7 @@ namespace Z3AxiomProfiler
         sc = string.Format("1 / {0}", (int)(1 / scale));
       }
 
-      this.Text = string.Format("Search Tree [zoom: {0}]", sc);
+      this.Text = string.Format("{0} [zoom: {1}]", model.LogFileName, sc);
     }
 
 
