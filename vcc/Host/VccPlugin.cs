@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.Boogie;
 using Microsoft.Boogie.AbstractInterpretation;
 
@@ -9,23 +10,23 @@ namespace Microsoft.Research.Vcc
   public abstract class VCGenPlugin
   {
     public abstract string Name { get; }
-    public abstract VC.VCGen.Outcome VerifyImpl(Helper.Env env, VC.VCGen vcgen, Implementation impl, Program prog, VerifierCallback reporter);
+    public abstract VC.ConditionGeneration.Outcome VerifyImpl(Helper.Env env, VC.VCGen vcgen, Implementation impl, Program prog, VerifierCallback reporter);
     public abstract void UseCommandLineOptions(List<string> opts);
   }
 
   class VccFunctionVerifier : FunctionVerifier
   {
-    Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls;
-    VccPlugin parent;
-    Helper.Env env;
+    readonly Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls;
+    readonly VccPlugin parent;
+    readonly Helper.Env env;
     Boogie.Program currentBoogie;
     VC.VCGen vcgen;
     bool errorMode;
     int modelCount;
     VcOpt.Optimizer vcopt;
     VcOpt.DummyOpt dummyOpt;
-    List<string> options = new List<string>();
-    string[] standardBoogieOptions = new string[] { 
+    readonly List<string> options = new List<string>();
+    readonly string[] standardBoogieOptions = new[] { 
       // report up to 10 errors
       "/errorLimit:10", 
       // use the default (predicates) type encoding, but monomorphize map types for efficiency
@@ -66,18 +67,22 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private static string/*?*/ GetExtraFunctionOptions(Implementation impl)
-    {
-      string res = impl.FindStringAttribute("vcc_extra_options");
-      if (res == null)
-        res = impl.Proc.FindStringAttribute("vcc_extra_options");
-      return res;
+    private static string/*?*/ GetStringAttrValue(Implementation impl, string attrName) {
+      return impl.FindStringAttribute(attrName) ?? impl.Proc.FindStringAttribute(attrName);
     }
 
-    private bool ReParseBoogieOptions(List<string> options, bool runningFromCommandLine)
+    private static string/*?*/ GetExtraFunctionOptions(Implementation impl) {
+      return GetStringAttrValue(impl, "vcc_extra_options");
+    }
+
+    private static bool/*?*/ IsBvLemmaCheck(Implementation impl)
     {
-      CommandLineOptions.Clo = new CommandLineOptions();
-      CommandLineOptions.Clo.RunningBoogieFromCommandLine = runningFromCommandLine;
+      return GetStringAttrValue(impl, "vcc_bv_lemma_check") != null;
+    }
+
+    private static bool ReParseBoogieOptions(List<string> options, bool runningFromCommandLine)
+    {
+      CommandLineOptions.Clo = new CommandLineOptions { RunningBoogieFromCommandLine = runningFromCommandLine };
       return CommandLineOptions.Clo.Parse(options.ToArray()) == 1;
     }
 
@@ -146,13 +151,15 @@ namespace Microsoft.Research.Vcc
       }
 
       string extraFunctionOptions = null;
-      if (parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) {
+      bool isBvLemmaCheck = IsBvLemmaCheck(impl);
+      if ((parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) || isBvLemmaCheck) {
         CloseVcGen();
+        extraFunctionOptions = extraFunctionOptions ?? ""; // this prevents parsing errors in case of bv_lemma checks and will also cause the VcGen to be closed later
         VccOptions extraCommandLineOptions = OptionParser.ParseCommandLineArguments(VccCommandLineHost.dummyHostEnvironment, extraFunctionOptions.Split(' ', '\t'), false);
         List<string> effectiveOptions = new List<string>(extraCommandLineOptions.BoogieOptions);
-        foreach (string z3option in extraCommandLineOptions.Z3Options)
-          effectiveOptions.Add("/z3opt:" + z3option);
+        effectiveOptions.AddRange(extraCommandLineOptions.Z3Options.Select(z3option => "/z3opt:" + z3option));
         effectiveOptions.AddRange(options);
+        if (isBvLemmaCheck) effectiveOptions.Add("/z3bv");
         if (!ReParseBoogieOptions(effectiveOptions, parent.options.RunningFromCommandLine)) {
           Console.WriteLine("Error parsing extra options '{0}' for function '{1}'", extraFunctionOptions, impl.Name);
           return VerificationResult.UserError;
@@ -193,15 +200,12 @@ namespace Microsoft.Research.Vcc
       }
 
       
-      VC.VCGen.Outcome outcome;
+      VC.ConditionGeneration.Outcome outcome;
       string extraInfo = null;
       try {
         parent.swVerifyImpl.Start();
         VCGenPlugin plugin = parent.plugin;
-        if (plugin != null)
-          outcome = plugin.VerifyImpl(env, vcgen, impl, currentBoogie, reporter);
-        else
-          outcome = vcgen.VerifyImplementation(impl, currentBoogie, reporter);
+        outcome = plugin != null ? plugin.VerifyImpl(env, vcgen, impl, currentBoogie, reporter) : vcgen.VerifyImplementation(impl, currentBoogie, reporter);
       } catch (UnexpectedProverOutputException exc) {
         outcome = VC.ConditionGeneration.Outcome.OutOfMemory;
         extraInfo = "caused an exception \"" + exc.Message + "\"";
@@ -218,11 +222,11 @@ namespace Microsoft.Research.Vcc
       modelCount += reporter.modelCount;
 
       switch (outcome) {
-        case VC.VCGen.Outcome.Correct: return VerificationResult.Succeeded;
-        case VC.VCGen.Outcome.Errors: return VerificationResult.Failed;
-        case VC.VCGen.Outcome.Inconclusive: return VerificationResult.Inconclusive;
-        case VC.VCGen.Outcome.OutOfMemory: return VerificationResult.Crashed;
-        case VC.VCGen.Outcome.TimedOut: return VerificationResult.Crashed;
+        case VC.ConditionGeneration.Outcome.Correct: return VerificationResult.Succeeded;
+        case VC.ConditionGeneration.Outcome.Errors: return VerificationResult.Failed;
+        case VC.ConditionGeneration.Outcome.Inconclusive: return VerificationResult.Inconclusive;
+        case VC.ConditionGeneration.Outcome.OutOfMemory: return VerificationResult.Crashed;
+        case VC.ConditionGeneration.Outcome.TimedOut: return VerificationResult.Crashed;
         default: return VerificationResult.Crashed;
       }
     }
@@ -245,7 +249,7 @@ namespace Microsoft.Research.Vcc
         var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
         PrepareBoogie(boogieDecls);
       }
-      using (TokenTextWriter writer = new TokenTextWriter(Path.ChangeExtension(fn, (bplFileCounter++).ToString() + ".bpl")))
+      using (TokenTextWriter writer = new TokenTextWriter(Path.ChangeExtension(fn, (bplFileCounter++) + ".bpl")))
         currentBoogie.Emit(writer);
     }
 
@@ -316,14 +320,14 @@ namespace Microsoft.Research.Vcc
     internal string ModelFileName;
     internal VCGenPlugin plugin;
 
-    Stopwatch swBoogieAST = new Stopwatch("Boogie AST");
+    readonly Stopwatch swBoogieAST = new Stopwatch("Boogie AST");
     internal Stopwatch swBoogie = new Stopwatch("Boogie");
     internal Stopwatch swBoogieAI = new Stopwatch("Boogie AI");
     internal Stopwatch swBoogieResolve = new Stopwatch("Boogie Resolve");
     internal Stopwatch swBoogieTypecheck = new Stopwatch("Boogie Typecheck");
     internal Stopwatch swVcOpt = new Stopwatch("VC Optimizer");
     internal Stopwatch swVerifyImpl = new Stopwatch("Boogie Verify Impl.");
-    Stopwatch swSaveBPL = new Stopwatch("Boogie Save BPL");
+    readonly Stopwatch swSaveBPL = new Stopwatch("Boogie Save BPL");
 
     public VccPlugin(VCGenPlugin plugin)
     {
@@ -379,7 +383,7 @@ namespace Microsoft.Research.Vcc
           decls = TransUtil.pruneBy(env, env.Options.Functions[0], decls);
         }
         var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, decls);
-        var p = TranslateToBoogie(env, boogieDecls);
+        var p = TranslateToBoogie(boogieDecls);
         if (env.ShouldContinue) {
           try {
             swSaveBPL.Start();
@@ -393,7 +397,7 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private Program TranslateToBoogie(Helper.Env env, Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
+    private Program TranslateToBoogie(Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
     {
       try {
         swBoogieAST.Start();
@@ -412,11 +416,7 @@ namespace Microsoft.Research.Vcc
       Transformers.init(env);
       Transformers.processPipeOptions(env);
       options = env.Options;
-      if (options.SaveModel) {
-        ModelFileName = Path.ChangeExtension(filename, "vccmodel");
-      } else {
-        ModelFileName = null;
-      }
+      ModelFileName = options.SaveModel ? Path.ChangeExtension(filename, "vccmodel") : null;
     }
 
     public override FunctionVerifier GetFunctionVerifier(string fileName, Helper.Env env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
@@ -445,15 +445,15 @@ namespace Microsoft.Research.Vcc
   internal class ErrorReporter : Microsoft.Boogie.VerifierCallback
   {
     bool outcomeReported;
-    string name;
-    double startTime;
+    readonly string name;
+    readonly double startTime;
     string prevPhase;
     bool lineDirty;
     double prevTime;
     internal int modelCount;
-    VccOptions commandLineOptions;
-    List<string> proverWarnings;
-    VerificationErrorHandler errorHandler;
+    readonly VccOptions commandLineOptions;
+    readonly List<string> proverWarnings;
+    readonly VerificationErrorHandler errorHandler;
     Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr> unreachableMasters = new Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr>(new List<IdentifierExpr>());
     Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr> unreachableChildren;
 
@@ -467,12 +467,12 @@ namespace Microsoft.Research.Vcc
       this.errorHandler = errorHandler;
     }
 
-    public void PrintSummary(VC.VCGen.Outcome outcome)
+    public void PrintSummary(VC.ConditionGeneration.Outcome outcome)
     {
       PrintSummary(outcome, null);
     }
 
-    public void PrintSummary(VC.VCGen.Outcome outcome, string addInfo)
+    public void PrintSummary(VC.ConditionGeneration.Outcome outcome, string addInfo)
     {
       if (!this.outcomeReported) {
         this.outcomeReported = true;
@@ -488,19 +488,19 @@ namespace Microsoft.Research.Vcc
 
     public override void OnTimeout(string reason)
     {
-      this.PrintSummary(VC.VCGen.Outcome.TimedOut, reason);
+      this.PrintSummary(VC.ConditionGeneration.Outcome.TimedOut, reason);
     }
 
     public override void OnCounterexample(Counterexample ce, string message)
     {
       this.modelCount++;
-      this.PrintSummary(VC.VCGen.Outcome.Errors);
+      this.PrintSummary(VC.ConditionGeneration.Outcome.Errors);
       this.errorHandler.ReportCounterexample(ce, message);
     }
 
     public override void OnOutOfMemory(string reason)
     {
-      this.PrintSummary(VC.VCGen.Outcome.OutOfMemory, null);
+      this.PrintSummary(VC.ConditionGeneration.Outcome.OutOfMemory, null);
     }
 
     public override void OnWarning(string msg) {
@@ -546,14 +546,14 @@ namespace Microsoft.Research.Vcc
 
     private bool ReportUnreachable(IToken tok)
     {
-      if (tok.filename == null || tok.filename == "") return false;
-      PrintSummary(VC.VCGen.Outcome.Correct); // it is correct, but
+      if (string.IsNullOrEmpty(tok.filename)) return false;
+      PrintSummary(VC.ConditionGeneration.Outcome.Correct); // it is correct, but
       Console.WriteLine("{0}: found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)", 
                         TokenLocation(tok));
       return true;
     }
 
-    private bool HasAssertFalse(Block b)
+    private static bool HasAssertFalse(Block b)
     {
         foreach (var cmd in b.Cmds) {
           PredicateCmd pred = cmd as PredicateCmd;
@@ -608,7 +608,7 @@ namespace Microsoft.Research.Vcc
       }
       if (!hasRealUnreachable && hasIFUnreachable)
       {
-          PrintSummary(VC.VCGen.Outcome.Correct);
+          PrintSummary(VC.ConditionGeneration.Outcome.Correct);
           return;
       }
 
@@ -629,7 +629,7 @@ namespace Microsoft.Research.Vcc
           if (this.ReportUnreachable(b.Cmds[j].tok)) goto outer;
         }
       }
-      PrintSummary(VC.VCGen.Outcome.Correct); // it is correct, but
+      PrintSummary(VC.ConditionGeneration.Outcome.Correct); // it is correct, but
       Console.WriteLine("Found unreachable code, but cannot figure out where it is.");
     outer: ;
     }
