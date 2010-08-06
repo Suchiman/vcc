@@ -1038,7 +1038,47 @@ namespace Microsoft.Research.Vcc
       decls
     
     // ============================================================================================================
- 
+
+    let normalizeBvLemma decls =
+
+      let lemmaCheckFunctionDecls = ref []
+
+      let extractBvLemmas (fn : Function) = 
+        let idCount = ref -1
+        let checkFunctionFor (lemma:Expr) = 
+          { Token = lemma.Token
+            IsSpec = true
+            OrigRetType = Type.Void
+            RetType = Type.Void
+            Parameters = []
+            TypeParameters = []
+            Name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
+            Requires = []
+            Ensures = []
+            Writes = []
+            Variants = []
+            Reads = []
+            CustomAttr = [VccAttr (AttrIsPure, ""); VccAttr(AttrBvLemmaCheck, "true")]
+            Body = Some (Expr.Block(lemma.Common, [lemma], None))
+            IsProcessed = true
+            UniqueId = CAST.unique() } : Function
+        let findAmdExtractThem _ = function
+          | Expr.Assert(ec, CallMacro(_, "_vcc_bv_lemma", _, _), _) as _assert ->
+            let checkFn = checkFunctionFor _assert
+            lemmaCheckFunctionDecls := Top.FunctionDecl(checkFn) :: !lemmaCheckFunctionDecls
+            Some(Expr.Comment(ec, "bv_lemma extracted into " + checkFn.Name))
+          | _ -> None
+        fn.Body <- Option.map (fun (e : Expr) -> e.SelfMap(findAmdExtractThem)) fn.Body
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl f -> extractBvLemmas f
+          | _ -> ()
+
+      decls @ List.sortBy (fun top -> match top with | Top.FunctionDecl(fn) -> fn.Name | _ -> die()) !lemmaCheckFunctionDecls
+
+    // ============================================================================================================
+
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
     helper.AddTransformer ("norm-new-syntax", Helper.Decl normalizeNewSyntax)
     helper.AddTransformer ("norm-expand-contract-macros", Helper.Decl expandContractMacros)
@@ -1057,6 +1097,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("add-explicit-return", Helper.Decl addExplicitReturn)
     helper.AddTransformer ("norm-atomic-ops", Helper.Expr normalizeAtomicOperations)
     helper.AddTransformer ("norm-skinny-expose", Helper.Expr normalizeSkinnyExpose)
+    helper.AddTransformer ("norm-bv_lemma", Helper.Decl normalizeBvLemma)
     helper.AddTransformer ("norm-misc", Helper.Decl miscNorm)
     helper.AddTransformer ("norm-quant-triggers", Helper.Expr handleTriggerHints)
     helper.AddTransformer ("deep-split-conjunctions", Helper.Expr deepSplitConjunctions)

@@ -43,6 +43,9 @@ module Microsoft.Research.Vcc.CAST
   let AttrIsPure = "is_pure"
 
   [<Literal>]
+  let AttrBvLemmaCheck = "bv_lemma_check"
+
+  [<Literal>]
   let AttrNoReadsCheck = "no_reads_check"
 
   [<Literal>]

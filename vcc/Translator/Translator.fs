@@ -1602,6 +1602,7 @@ namespace Microsoft.Research.Vcc
                     | C.BoolBoogieAttr (key, value) -> yield (B.ExprAttr (key, B.Expr.BoolLiteral value))
                     | C.VccAttr(C.AttrSkipVerification, _) -> yield (B.ExprAttr ("verify", bFalse))
                     | C.VccAttr ("extra_options", o) -> yield (B.StringAttr ("vcc_extra_options", o))
+                    | C.VccAttr (C.AttrBvLemmaCheck, o) -> yield (B.StringAttr ("vcc_bv_lemma_check", o))
                     | C.VccAttr _ -> yield! []
                     | C.ReadsCheck _ -> yield! []
                      
