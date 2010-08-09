@@ -19,7 +19,7 @@ namespace VerifiedCCompilerAddin.Commands {
       return true;
     }
 
-    private void ReplaceAssumeToAssert() {
+    private static void ReplaceAssumeToAssert() {
       AddInGlobals.ActiveDocument.replaceSelectedText("assume", "assert");
     }
 

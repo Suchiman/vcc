@@ -5,23 +5,17 @@
 //
 //-----------------------------------------------------------------------------
 using EnvDTE80;
-using VerifiedCCompilerAddin.Forms;
 using VerifiedCCompilerAddin.Manager.Verify;
 
 namespace VerifiedCCompilerAddin.Commands {
   public class VCCCustomFileCommand : VCCCommand{
-    CustomVerifyForm frm;
-      
-    
     public VCCCustomFileCommand(DTE2 dte, AddIn addin) :
       base(dte, addin, "cmdVCCCustomSingleFile", "Verify single File", "Verifies a single file", (int)VCCMenuIcons.CustomSingleFile, VCCBindings.CustomSingleFile, CommandBarName.CodeWindow) {
-      frm = new CustomVerifyForm();
-    }
+      }
 
     public override bool Exec(vsCommandExecOption executeOption, ref object varIn, ref object varOut, ref bool handled) {
       
       handled = true;
-      
       VerifyManager.Init();
       VerifyManager.AddJob(JobFactory.CreateJob(JobType.CustomVerify));
       VerifyManager.Execute();

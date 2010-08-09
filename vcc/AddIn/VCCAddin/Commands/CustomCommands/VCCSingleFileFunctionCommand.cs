@@ -26,7 +26,6 @@ namespace VerifiedCCompilerAddin.Commands  {
     }
 
     public override void QueryStatus(vsCommandStatusTextWanted neededText, ref vsCommandStatus status, ref object commandText) {
-      string FunctionName = String.Empty;
       if (AddInGlobals.ActiveDocument.IsInFunction && (!VerifyManager.isRunning)) {
         commandText = "Verify function '" + AddInGlobals.ActiveDocument.CurrentFunctionName + "'";
         status = vsCommandStatus.vsCommandStatusEnabled | vsCommandStatus.vsCommandStatusSupported;

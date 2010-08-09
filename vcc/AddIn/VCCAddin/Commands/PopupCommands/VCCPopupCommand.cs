@@ -9,11 +9,10 @@ using Microsoft.VisualStudio.CommandBars;
 
 namespace VerifiedCCompilerAddin.Commands.CustomCommandBar {
   public class VCCPopupCommand {
-    private string caption;
-    private string name;
-    private int position;
-    private CommandBarName parentCmdBarName;
-    private CommandBarPopup cmdBarPopup;
+    private readonly string caption;
+    private readonly string name;
+    private readonly int position;
+    private readonly CommandBarName parentCmdBarName;
 
     public string Caption {
       get { return caption; }
@@ -28,10 +27,9 @@ namespace VerifiedCCompilerAddin.Commands.CustomCommandBar {
     public CommandBarName ParentCmdBarName {
     get { return parentCmdBarName;}
     }
-    public CommandBarPopup Control {
-      get { return cmdBarPopup; }
-      set { cmdBarPopup = value; }
-    }
+
+    public CommandBarPopup Control { get; set; }
+
     private CommandBarPopup FindExistingPopUpControl() {
       CommandBar cmdBar = Utilities.GetCommandBar(ParentCmdBarName);
       CommandBarPopup popup = null;
@@ -57,59 +55,43 @@ namespace VerifiedCCompilerAddin.Commands.CustomCommandBar {
 
     private CommandBarPopup CreatePopUpControl() {
       CommandBar cmdBar = Utilities.GetCommandBar(ParentCmdBarName);
-      CommandBarPopup popup = null;
 
-      popup = cmdBar.Controls.Add(MsoControlType.msoControlPopup,
-                                      System.Type.Missing,
-                                      System.Type.Missing,
-                                      Position,
-                                      true) as CommandBarPopup;
-      return popup;
+      return cmdBar.Controls.Add(MsoControlType.msoControlPopup,
+                                                  System.Type.Missing,
+                                                  System.Type.Missing,
+                                                  Position,
+                                                  true) as CommandBarPopup;
     }
 
     private CommandBarPopup CreatePopUpControl(CommandBar cmdBar)
     {
-        CommandBarPopup popup = null;
-
-        popup = cmdBar.Controls.Add(MsoControlType.msoControlPopup,
-                                        System.Type.Missing,
-                                        System.Type.Missing,
-                                        Position,
-                                        true) as CommandBarPopup;
-
-        return popup;
+      return cmdBar.Controls.Add(MsoControlType.msoControlPopup,
+                                 System.Type.Missing,
+                                 System.Type.Missing,
+                                 Position,
+                                 true) as CommandBarPopup;
     }
 
     public VCCPopupCommand(string Caption, string Name, int Position, CommandBar cmdBar)
     {
-        this.name = Name;
-        this.caption = Caption;
-        this.position = Position;
-      
-        Control = FindExistingPopUpControl(cmdBar);
-        if (Control == null)
-        {
-            Control = CreatePopUpControl(cmdBar);
-        }
+      this.name = Name;
+      this.caption = Caption;
+      this.position = Position;
 
-        Control.Caption = this.Caption;
-     
+      Control = FindExistingPopUpControl(cmdBar) ?? CreatePopUpControl(cmdBar);
+      Control.Caption = this.Caption;
     }
-    
+
     public VCCPopupCommand(string Caption, string Name, int Position, CommandBarName cmdBarName ) {
       this.name = Name;
       this.caption = Caption;
       this.position = Position;
       this.parentCmdBarName = cmdBarName;
 
-      Control = FindExistingPopUpControl();
-      if (Control == null) {
-        Control = CreatePopUpControl();
-      }
-
-      Control.Caption = this.Caption;
-     
+      Control = FindExistingPopUpControl() ?? CreatePopUpControl();
+      Control.Caption = this.Caption;    
     }
+    
     public void Delete()
     {
       try {

@@ -29,7 +29,6 @@ namespace VerifiedCCompilerAddin.Commands {
 
 
     public override void QueryStatus(EnvDTE.vsCommandStatusTextWanted neededText, ref EnvDTE.vsCommandStatus status, ref object commandText) {
-      string FunctionName = String.Empty;
       if ((!VerifyManager.isRunning) && Utilities.isVCCErrorHere(AddInGlobals.ActiveDocument.CurrentLine, AddInGlobals.ActiveDocument.FullFileName)) {
         commandText = "Show Z3 error model";
         status = vsCommandStatus.vsCommandStatusEnabled | vsCommandStatus.vsCommandStatusSupported;

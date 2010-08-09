@@ -17,7 +17,7 @@ namespace VerifiedCCompilerAddin.Commands {
       base(dte, addin, "cmdVCCAssertSelection", "Asser&t selection to clipboard", "Assert selection to clipboard", (int)VCCMenuIcons.AssertSelection, VCCBindings.AssertSelection, CommandBarName.VCCMoreCommands) { 
     }
 
-    private string getAssertString(string Code) {
+    private static string getAssertString(string Code) {
       //Parse string!
       int open = 0;
       int close = 0;
@@ -82,7 +82,7 @@ namespace VerifiedCCompilerAddin.Commands {
       return toClip.ToString();
     }
 
-    private void CopySelectionAsAssertToClipboard()
+    private static void CopySelectionAsAssertToClipboard()
     {
         try {
 

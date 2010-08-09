@@ -14,25 +14,17 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
   /// Represents a single verification job
   /// </summary>
   public class VerifyJob {
-    string _fullFileName;
     string _functionToVerify = string.Empty;
-    string _plattform;
     string _additionalParameter = string.Empty;
-    VCCSettings _settings;
-    
-    bool _invalidJob = false;
 
-    VerifyManager.VoidAction _AfterExecuteDelegate = delegate() { };
+    VerifyManager.VoidAction _AfterExecuteDelegate = delegate { };
     
     #region Properties
 
     /// <summary>
     /// True when a job is invalid, set via specific jobs like CustomVerify
     /// </summary>
-    public bool InvalidJob {
-      get { return _invalidJob; }
-      set { _invalidJob = value; }
-    }
+    public bool InvalidJob { get; set; }
 
     /// <summary>
     /// Delegate is executed after vcc run is finished
@@ -45,26 +37,17 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     /// <summary>
     /// Full filename of document like c:\\sample\sample.c
     /// </summary>
-    public string FullFileName {
-      get { return _fullFileName; }
-      set { _fullFileName = value; }
-    }
+    public string FullFileName { get; set; }
 
     /// <summary>
     /// Contains the current plattform, like x64, win32 ...
     /// </summary>
-    public string Plattform {
-      get { return _plattform; }
-      set { _plattform = value; }
-    }
+    public string Plattform { get; set; }
 
     /// <summary>
     /// Current VCCSettings
     /// </summary>
-    public VCCSettings Settings {
-      get { return _settings; }
-      set { _settings = value; }
-    }
+    public VCCSettings Settings { get; set; }
 
     /// <summary>
     /// Name of the function to verify (uses /f:{0})
@@ -108,7 +91,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     }
 
     public VerifyJob(string FullFileName, VCCSettings Settings, string Plattform)
-    : base() {
+    {
       this.FullFileName = FullFileName;
       this.Settings = Settings;
       this.Plattform = Plattform;
@@ -234,43 +217,29 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
       return exitcode;
     }
 
-    private bool CheckForVCCHeader(string workDir, VCCSettings settings) {
-      FileInfo fi;
-      string vccHeaderFileName = "vcc.h";
+    private static bool CheckForVCCHeader(string workDir, VCCSettings settings) {
+      const string vccHeaderFileName = "vcc.h";
       bool vccfound = false;
 
-      if (!workDir.EndsWith("\\")) {
-        fi = new FileInfo(workDir.Replace("\"", "").ToLower() + "\\" + vccHeaderFileName);
-      }
-      else {
-        fi = new FileInfo(workDir.Replace("\"", "").ToLower() + vccHeaderFileName);
-      }
+      FileInfo fi = !workDir.EndsWith("\\") ? new FileInfo(workDir.Replace("\"", "").ToLower() + "\\" + vccHeaderFileName) : new FileInfo(workDir.Replace("\"", "").ToLower() + vccHeaderFileName);
       vccfound |= fi.Exists;
 
-      foreach (string DirName in settings.AdditionalIncludeDirectories.Split(';')) {
-        if (!DirName.EndsWith("\\")) {
-          fi = new FileInfo(DirName.Replace("\"", "").ToLower() + "\\" + vccHeaderFileName);
-        }
-        else {
-          fi = new FileInfo(DirName.Replace("\"", "").ToLower() + vccHeaderFileName);
-        }
+      foreach (string DirName in settings.AdditionalIncludeDirectories.Split(';'))
+      {
+        fi = !DirName.EndsWith("\\") ? new FileInfo(DirName.Replace("\"", "").ToLower() + "\\" + vccHeaderFileName) : new FileInfo(DirName.Replace("\"", "").ToLower() + vccHeaderFileName);
         vccfound |= fi.Exists;
       }
 
-      foreach (string DirName in settings.ForcedIncludeFiles.Split(';')) {
-        if (!DirName.EndsWith("\\")) {
-          fi = new FileInfo(DirName.Replace("\"", "").ToLower() + "\\" + vccHeaderFileName);
-        }
-        else {
-          fi = new FileInfo(DirName.Replace("\"", "").ToLower() + vccHeaderFileName);
-        }
+      foreach (string DirName in settings.ForcedIncludeFiles.Split(';'))
+      {
+        fi = !DirName.EndsWith("\\") ? new FileInfo(DirName.Replace("\"", "").ToLower() + "\\" + vccHeaderFileName) : new FileInfo(DirName.Replace("\"", "").ToLower() + vccHeaderFileName);
         vccfound |= fi.Exists;
       }
 
       if (!vccfound) {
         return AbortVerificationQuestion(settings, vccHeaderFileName);
       }
-      return vccfound;
+      return true;
     }
     delegate bool AbortVerifivationQuestionDelegate(VCCSettings settings, string vccHeaderFileName);
 
@@ -290,7 +259,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     }
 
     public override string ToString() {
-      return _fullFileName;
+      return FullFileName;
     }
   }
 }

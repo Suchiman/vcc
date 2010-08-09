@@ -35,19 +35,19 @@ namespace VerifiedCCompilerAddin {
     /// </summary>
     static private DTE2 addinDTE;
 
-    static private Regex StructMatch = new Regex(@"\s*(struct|union)\s*(vcc\(\w*\)\s*)*(?<Name>\w+)\s*{");
+    static private readonly Regex StructMatch = new Regex(@"\s*(struct|union)\s*(vcc\(\w*\)\s*)*(?<Name>\w+)\s*{");
     
     #region private properties
     /// <summary>
     /// Returns the active document from the addinDTE object.
     /// </summary>
-    private Document _Document {
+    private static Document _Document {
       get { return addinDTE.ActiveDocument; }
     }
     /// <summary>
     /// Returns a TextDocument cast from _Document
     /// </summary>
-    private TextDocument _TextDocument {
+    private static TextDocument _TextDocument {
       get { if (_Document == null)  return null;
       return (TextDocument)_Document.Object(null);
       }
@@ -55,7 +55,7 @@ namespace VerifiedCCompilerAddin {
     /// <summary>
     /// Returns the current projectItem object.
     /// </summary>
-    private ProjectItem _ProjectItem {
+    private static ProjectItem _ProjectItem {
       get { return _Document.ProjectItem; }
     }
     #endregion
@@ -187,16 +187,13 @@ namespace VerifiedCCompilerAddin {
     /// Returns the current GroupName (caret position)
     /// </summary>
     /// <returns></returns>
-    private string getCurrentGroupName() {
-      string GroupName = String.Empty;
+    private static string getCurrentGroupName() {
       string Text = getCodeForCurrentLine(1);
 
       //Where is the right click in the document?
       int click_pos = getCurrentColumn();
       
       if (Text.Contains("def_group") || Text.Contains("in_group") || Text.Contains("inv_group")) {
-
-        int count =click_pos;
         int last_in_group_def = Utilities.GetLastIndexBefore(Text, "in_group", click_pos);
         int last_def_group_def = Utilities.GetLastIndexBefore(Text, "def_group", click_pos);
         int last_inv_group_def = Utilities.GetLastIndexBefore(Text, "inv_group", click_pos);
@@ -209,11 +206,7 @@ namespace VerifiedCCompilerAddin {
         List<string> Args = Utilities.GetArgumentsInLine(Substring);
 
         if (Args.Count > 0)
-        {
-        GroupName = Args[0];
-        return GroupName;
-        }
-
+          return Args[0];
       }
       return null;
     }
@@ -222,17 +215,16 @@ namespace VerifiedCCompilerAddin {
     /// Returns only the filename, without path
     /// </summary>
     /// <returns></returns>
-    private string getFileName() {
-      string FileName = String.Empty;
-      FileName = Path.GetFileName(_Document.FullName);
-      return FileName;
+    private static string getFileName()
+    {
+      return Path.GetFileName(_Document.FullName);
     }
 
     /// <summary>
    /// Returns the full path within the filename
    /// </summary>
    /// <returns></returns>
-    private string getFullFileName() {
+    private static string getFullFileName() {
       string FullFileName = String.Empty;
       if (_Document != null) {
         FullFileName = _Document.FullName;
@@ -244,7 +236,7 @@ namespace VerifiedCCompilerAddin {
     /// Returns active line (caret position)
     /// </summary>
     /// <returns></returns>
-    private int getCurrentLine() {
+    private static int getCurrentLine() {
       if (_TextDocument != null) {
         return _TextDocument.Selection.ActivePoint.Line;
       } else {
@@ -256,7 +248,7 @@ namespace VerifiedCCompilerAddin {
     /// Returns active Column (caret position)
     /// </summary>
     /// <returns></returns>
-    private int getCurrentColumn() {
+    private static int getCurrentColumn() {
       if (_TextDocument != null) {
         return _TextDocument.Selection.ActivePoint.DisplayColumn;
       } else {
@@ -268,7 +260,7 @@ namespace VerifiedCCompilerAddin {
     /// Retruns the current function name (caret position)
     /// </summary>
     /// <returns></returns>
-    private string getCurrentFunctionName() {
+    private static string getCurrentFunctionName() {
       CodeElement Element = getActivePointCodeElement(vsCMElement.vsCMElementFunction);
       if (Element != null) {
         return Element.Name;
@@ -301,7 +293,7 @@ namespace VerifiedCCompilerAddin {
     /// Checks is document a C/C++ file
     /// </summary>
     /// <returns></returns>
-    private bool isCodeFile() {
+    private static bool isCodeFile() {
       if (_Document == null)
         return false;
 
@@ -321,23 +313,11 @@ namespace VerifiedCCompilerAddin {
     }
 
     /// <summary>
-    /// Returns the CodeBlock for a given codeElement
-    /// </summary>
-    /// <param name="codeElement"></param>
-    /// <returns></returns>
-    private string getCodeBlockForElement(CodeElement codeElement)
-    {
-       EditPoint p = codeElement.StartPoint.CreateEditPoint();
-       string CodeBlock = p.GetLines(p.Line, codeElement.EndPoint.Line);
-       return CodeBlock;
-    }
-
-    /// <summary>
     /// Returns the code in current line
     /// </summary>
     /// <param name="Lines">Lines to get</param>
     /// <returns></returns>
-    private string getCodeForCurrentLine(int Lines) {
+    private static string getCodeForCurrentLine(int Lines) {
       if (_TextDocument != null) {
         EditPoint p = _TextDocument.Selection.ActivePoint.CreateEditPoint();
         string CodeBlock = p.GetLines(p.Line, p.Line + Lines);
@@ -345,39 +325,6 @@ namespace VerifiedCCompilerAddin {
       } else {
         return String.Empty;
       }
-    }
-
-    /// <summary>
-    /// Gets a list of CodeElements that are equal to requestetElements.
-    /// </summary>
-    /// <param name="requestetElements">List of CMElements, to search for. If null, it returns all CodeElements</param>
-    /// <returns></returns>
-    private List<CodeElement> getCodeElements(params vsCMElement[] requestetElements)
-    {
-      try {
-        
-        if (_ProjectItem.FileCodeModel == null)
-          return null;
-
-        CodeElements codeElements = _ProjectItem.FileCodeModel.CodeElements;
-        List<CodeElement> filteredCodeElementList = new List<CodeElement>();
-
-        foreach (CodeElement codeElement in codeElements) {
-          if (requestetElements == null) {
-            filteredCodeElementList.Add(codeElement);
-          } else {
-            foreach (vsCMElement vsCodeElement in requestetElements) {
-              if (codeElement.Kind == vsCodeElement) {
-                filteredCodeElementList.Add(codeElement);
-              }
-            }
-          }
-        }
-        return filteredCodeElementList;
-      } catch {
-        return null;
-      }
-      
     }
 
 
@@ -388,7 +335,7 @@ namespace VerifiedCCompilerAddin {
     /// <param name="Code">SourceCode as string</param>
     /// <param name="start">Startposition</param>
     /// <returns>The Length of the Codeblock</returns>
-    private int FindEndOfBlock(string Code, int start) {
+    private static int FindEndOfBlock(string Code, int start) {
       int auff = 1;
       int zu = 0;
       int chars = 0;
@@ -416,7 +363,7 @@ namespace VerifiedCCompilerAddin {
     /// <param name="Collection">RegEx Match collection</param>
     /// <param name="Position">Current Source Position</param>
     /// <returns></returns>
-    private Match FindMatch(MatchCollection Collection, int Position) {
+    private static Match FindMatch(MatchCollection Collection, int Position) {
       Match candidate = null;
       foreach (Match m in Collection) {
         if (m.Index > Position)
@@ -432,10 +379,9 @@ namespace VerifiedCCompilerAddin {
     /// </summary>
     /// <param name="ActivePoint">Active Position of Carret</param>
     /// <returns>Returns the name of the union or struct</returns>
-    private string FindStructOrUnionViaRegEx(VirtualPoint ActivePoint) {
+    private static string FindStructOrUnionViaRegEx(VirtualPoint ActivePoint) {
 
-      int CurrentMousePosition = ActivePoint.AbsoluteCharOffset + ActivePoint.Line;      
-      List<CodeElement> Elements = getCodeElements(vsCMElement.vsCMElementStruct, vsCMElement.vsCMElementUnion);
+      int CurrentMousePosition = ActivePoint.AbsoluteCharOffset + ActivePoint.Line;
 
       EditPoint p = _TextDocument.StartPoint.CreateEditPoint();
       string SourceCode = p.GetLines(p.Line, p.Line + _TextDocument.EndPoint.Line);
@@ -459,29 +405,19 @@ namespace VerifiedCCompilerAddin {
         return null;
       }
 
-      }
-
-    private void DoThat() {
-      Debug.WriteLine("Function List:");
-      List<CodeElement> Elements =  getCodeElements(vsCMElement.vsCMElementFunction);
-      
-      foreach (CodeElement element in Elements) {
-        Debug.WriteLine(element.Name);
-      }
     }
-    
-   
-        
+
+
     /// <summary>
     /// Returns the CodeElement from ActivePoint of document, with scope
     /// First element wins.
     /// </summary>
-    /// <param name="scopeElement"></param>
+    /// <param name="scopeElements"></param>
     /// <returns>Current codeElement or null</returns>
-    private CodeElement getActivePointCodeElement(params vsCMElement[] scopeElements) {      
+    private static CodeElement getActivePointCodeElement(params vsCMElement[] scopeElements) {      
       if (_TextDocument != null) {
         foreach (vsCMElement scope in scopeElements) {
-          CodeElement Element = _TextDocument.Selection.ActivePoint.get_CodeElement(scope);
+          CodeElement Element = _TextDocument.Selection.ActivePoint.CodeElement[scope];
           return Element;
         }
       }
@@ -494,7 +430,7 @@ namespace VerifiedCCompilerAddin {
     /// <param name="Pattern">String with search pattern</param>
     /// <param name="Replace">String to replace string-pattern</param>
     internal void replaceSelectedText(string Pattern, string Replace) {
-      _TextDocument.Selection.ReplaceText(Pattern, Replace, (int)vsFindOptions.vsFindOptionsNone);
+      _TextDocument.Selection.ReplaceText(Pattern, Replace);
     }
 
     /// <summary>

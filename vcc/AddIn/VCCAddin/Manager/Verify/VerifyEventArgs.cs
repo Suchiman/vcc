@@ -19,7 +19,8 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
         return (result);
       }
     }
-    int result;
+
+    readonly int result;
   }
 
   public class JobsDoneEventArgs : JobDoneEventArgs {
@@ -37,7 +38,8 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
         return jobPipe;
       }
     }
-    List<VerifyJob> jobPipe;
+
+    readonly List<VerifyJob> jobPipe;
   }
 
 
@@ -55,8 +57,8 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
       get { return FktName; }
     }
 
-    int progress;
-    string FktName;
+    readonly int progress;
+    readonly string FktName;
   }
   public class FunctionValidatedEventArgs : EventArgs {
     public FunctionValidatedEventArgs(bool State, string FunctionName) {
@@ -72,8 +74,8 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
       get { return FktName; }
     }
 
-    bool state;
-    string FktName;
+    readonly bool state;
+    readonly string FktName;
   }
   #endregion
 }
