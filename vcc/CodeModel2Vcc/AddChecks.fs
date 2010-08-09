@@ -335,7 +335,7 @@ namespace Microsoft.Research.Vcc
       | _ -> None
 
     /// For a(checked+)b add assertion $check.add(a,b).
-    let addOverflowChecks ctx self = function
+    let rec addOverflowChecks ctx self = function
       | Cast (c, Checked, e') when not ctx.IsPure ->
         let types = (e'.Type, c.Type)
         let newe = Cast (c, Processed, self e')
@@ -345,7 +345,7 @@ namespace Microsoft.Research.Vcc
           addStmtsOpt [Expr.MkAssert (inRange comm (ignoreEffects newe))] newe      
                        
       | Prim (c, Op(opName, Checked) , args) when c.Type = Type.MathInteger ->
-        Some(Prim(c, Op(opName, Processed), List.map self args))
+        Some(Prim(c, Op(opName, Processed), List.map (fun (e:Expr) -> e.SelfCtxMap(ctx.IsPure, addOverflowChecks)) args))
       | Prim (c, (Op(opName, Checked) as op), args) as e when not ctx.IsPure ->
         let args = List.map self args
         let newop = Prim (c, Op(opName, Processed), args)
