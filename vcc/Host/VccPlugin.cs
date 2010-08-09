@@ -159,7 +159,7 @@ namespace Microsoft.Research.Vcc
         List<string> effectiveOptions = new List<string>(extraCommandLineOptions.BoogieOptions);
         effectiveOptions.AddRange(extraCommandLineOptions.Z3Options.Select(z3option => "/z3opt:" + z3option));
         effectiveOptions.AddRange(options);
-        if (isBvLemmaCheck) effectiveOptions.Add("/z3bv");
+        if (isBvLemmaCheck) effectiveOptions.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
         if (!ReParseBoogieOptions(effectiveOptions, parent.options.RunningFromCommandLine)) {
           Console.WriteLine("Error parsing extra options '{0}' for function '{1}'", extraFunctionOptions, impl.Name);
           return VerificationResult.UserError;

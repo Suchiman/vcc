@@ -12,9 +12,9 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
 
    public static class VerifyManager {
     private static volatile List<VerifyJob> JobPipe;
-    private static bool bCancel = false;
-    private static bool bRunning = false;
-    private static int activeJobNr = 0;
+    private static bool bCancel;
+    private static bool bRunning;
+    private static int activeJobNr;
 
     #region Events
     /************* PROGRESS UPDATE ********************/
@@ -123,7 +123,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
 
       if (Data.Contains("%")) {
         Data = Data.Substring(Data.IndexOf("Verification"), Data.Length - Data.IndexOf("Verification"));
-        AddInGlobals.DTE.StatusBar.Progress(true, Data + " in " + JobPipe[activeJobNr].ToString(), activeJobNr + 1, JobPipe.Count);
+        AddInGlobals.DTE.StatusBar.Progress(true, Data + " in " + JobPipe[activeJobNr], activeJobNr + 1, JobPipe.Count);
       }
       
       return;
@@ -177,7 +177,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
         activeJobNr = i;
         if (bCancel || MaxErrorsReached())
           break;
-        AddInGlobals.DTE.StatusBar.Progress(true, "Verifying: " + JobPipe[i].ToString(), i + 1, JobPipe.Count);
+        AddInGlobals.DTE.StatusBar.Progress(true, "Verifying: " + JobPipe[i], i + 1, JobPipe.Count);
 
         //Probe seed 0.1.2.3.4
         if (AddinSettingsManager.RandomSeedEnabled && AddinSettingsManager.RandomSeed == 9) {
@@ -205,12 +205,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
       }
       catch
       {}
-      if (errorEncountered) {
-        AddInGlobals.DTE.StatusBar.Text = "Verification failed.";
-      }
-      else {
-        AddInGlobals.DTE.StatusBar.Text = "Verification succeeded.";
-      }
+      AddInGlobals.DTE.StatusBar.Text = errorEncountered ? "Verification failed." : "Verification succeeded.";
       bRunning = false;
       NotifyJobsDone(Convert.ToInt32(errorEncountered));
     }

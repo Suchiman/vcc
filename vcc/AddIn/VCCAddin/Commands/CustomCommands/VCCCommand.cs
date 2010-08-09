@@ -8,38 +8,29 @@ using EnvDTE80;
 
 namespace VerifiedCCompilerAddin.Commands {
   public abstract class VCCCommand {
-    private string m_caption;
-    private string m_description;
-    private string m_commandName;
-    private int m_iconIndex;
-    private DTE2 m_dte;
-    private AddIn m_addin;
-    private string m_VCCBindingString;
-    private CommandBarName[] m_CommandBarNames;
+    private readonly string m_caption;
+    private readonly string m_description;
+    private readonly int m_iconIndex;
+    private readonly AddIn m_addin;
+    private readonly string m_VCCBindingString;
+    private readonly CommandBarName[] m_CommandBarNames;
 
     public string Caption {
       get { return m_caption; }
     }
 
-    private Command m_command = null;
-    public Command Command {
-      get { return m_command; }
-      set { m_command = value; }
-    }
+    public Command Command { get; set; }
 
-    public DTE2 DTE {
-      get { return m_dte; }
-    }
+    public DTE2 DTE { get; private set; }
 
-    public string Name {
-      get { return m_commandName; }
-    }
+    public string Name { get; private set; }
 
 
     protected VCCCommand(DTE2 dte, AddIn addin, string CommandName, string Caption, string Description, int IconIndex, string VCCBindingString, params CommandBarName[] cmdBarNames) {
+      Command = null;
       m_addin = addin;
-      m_dte = dte;
-      m_commandName = CommandName;
+      DTE = dte;
+      Name = CommandName;
       m_caption = Caption;
       m_description = Description;
       m_iconIndex = IconIndex;
@@ -49,7 +40,7 @@ namespace VerifiedCCompilerAddin.Commands {
 
     //Add to cmdBarName Menu
     public void AddToVSCommandBar(CommandBarName cmdBarName) {
-      Command.AddControl(Utilities.GetCommandBar(cmdBarName), 1);
+      Command.AddControl(Utilities.GetCommandBar(cmdBarName));
     }
 
     //Install Keybinding
@@ -62,19 +53,19 @@ namespace VerifiedCCompilerAddin.Commands {
     public virtual void Install() {
       object[] contextGUIDS = new object[] { };
 
-      string CommandName = m_addin.ProgID + "." + m_commandName;
+      string CommandName = m_addin.ProgID + "." + Name;
 
       //if command exists use it!
-      foreach (Command cmd in m_dte.Commands) {
+      foreach (Command cmd in DTE.Commands) {
         if (cmd.Name == CommandName)
           Command = cmd;
       }
 
       // *** If not create it!
       if (Command == null) {
-        Command = this.m_dte.Commands.AddNamedCommand(
+        Command = this.DTE.Commands.AddNamedCommand(
                   this.m_addin,
-                  m_commandName, m_caption, m_description,
+                  Name, m_caption, m_description,
                   m_iconIndex == 0 ? true : false, m_iconIndex,
                   ref contextGUIDS,
                   (int)vsCommandStatus.vsCommandStatusSupported +

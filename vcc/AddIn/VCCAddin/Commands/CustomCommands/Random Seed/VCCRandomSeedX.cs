@@ -12,7 +12,7 @@ using VerifiedCCompilerAddin.Manager.Verify;
 namespace VerifiedCCompilerAddin.Commands {
   class VCCRandomSeedX  : VCCCommand {
 
-    private int seed;
+    private readonly int seed;
 
     public VCCRandomSeedX(DTE2 dte, AddIn addin, int seed) :
       base(dte, addin, String.Format("cmdVCCRandomSeed{0}", seed), CommandCaption(seed), "Init Z3 with Seed X", 0, null, CommandBarName.VCCRandomSeed) {
@@ -21,7 +21,7 @@ namespace VerifiedCCompilerAddin.Commands {
 
     private static string CommandCaption(int seed) {
       if (seed == 9 )
-        return  String.Format("Try 0...4", seed);
+        return  String.Format("Try 0...4");
       else
         return String.Format("Random seed &{0}", seed);   
     }

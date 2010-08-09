@@ -15,12 +15,11 @@ using VerifiedCCompilerAddin.Commands.CustomCommandBar;
 
 namespace VerifiedCCompilerAddin.Manager.Commands {
   public class CommandManager {
-
-    Dictionary<string, VCCCommand> Commands = new Dictionary<string, VCCCommand>();
+    readonly Dictionary<string, VCCCommand> Commands = new Dictionary<string, VCCCommand>();
     List<VCCPopupCommand> CommandBarPopups;
-    private string _addInNameSpace;
-    private DTE2 _applicationObject;
-    private AddIn _addInInstance;
+    private readonly string _addInNameSpace;
+    private readonly DTE2 _applicationObject;
+    private readonly AddIn _addInInstance;
 
     public CommandManager(string AddInNameSpace, DTE2 applicationObject, AddIn addInInstance) {
       this._addInInstance = addInInstance;
@@ -64,10 +63,7 @@ namespace VerifiedCCompilerAddin.Manager.Commands {
       AddInGlobals.VCCToolsMenu = VCCToolsMenu.Control;
       VCCRandomSeedMenu.Control.BeginGroup = true;
 
-      CommandBarPopups = new List<VCCPopupCommand>();
-      CommandBarPopups.Add(VCCRandomSeedMenu);
-      CommandBarPopups.Add(VCCMainMenu);
-      CommandBarPopups.Add(VCCToolsMenu);
+      CommandBarPopups = new List<VCCPopupCommand> {VCCRandomSeedMenu, VCCMainMenu, VCCToolsMenu};
     }
     private void InstallVCCCommands() {
       VCCCommand cmdVerifyCancel = new VCCCancelCommand(_applicationObject, _addInInstance);
