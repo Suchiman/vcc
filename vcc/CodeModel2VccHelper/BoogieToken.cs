@@ -9,8 +9,8 @@ namespace Microsoft.Research.Vcc
 {
   public class BoogieToken : Microsoft.Boogie.IToken
   {
-    Token tok;
-    Microsoft.Boogie.IToken related;
+    readonly Token tok;
+    readonly Microsoft.Boogie.IToken related;
 
     public static Token Strip(Microsoft.Boogie.IToken t)
     {

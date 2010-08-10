@@ -15,7 +15,7 @@ namespace Microsoft.Research.Vcc
       return string.Format(s, args);
     }
 
-    GetValue getval;
+    readonly GetValue getval;
     internal Token tok;
 
     public ForwardingToken(Token tok, Token related, GetValue getval) {
@@ -61,10 +61,10 @@ namespace Microsoft.Research.Vcc
 
   public class WarningSuppressingToken : ForwardingToken
   {
-    int suppressCode;
+    readonly int suppressCode;
 
     public WarningSuppressingToken(Token tok, int warning)
-      : base(tok, delegate() { return tok.Value; })
+      : base(tok, () => tok.Value)
     {
       suppressCode = warning;
     }
