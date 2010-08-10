@@ -10,11 +10,11 @@ namespace Microsoft.Research.Vcc
 {
   public class TranslationMessage : ISourceErrorMessage
   {
-    private long code;
-    private string msg;
-    private bool isWarning;
-    private ISourceLocation loc;
-    private IEnumerable<ISourceLocation> relatedLocs;
+    private readonly long code;
+    private readonly string msg;
+    private readonly bool isWarning;
+    private readonly ISourceLocation loc;
+    private readonly IEnumerable<ISourceLocation> relatedLocs;
 
     public TranslationMessage(ISourceLocation loc, int code, string msg, bool isWarning)
     {
@@ -82,7 +82,7 @@ namespace Microsoft.Research.Vcc
         if (this.relatedLocs == null) yield return loc;
         else
         {
-          foreach (ILocation rLoc in this.relatedLocs)
+          foreach (ISourceLocation rLoc in this.relatedLocs)
             yield return rLoc;
         }
       }
