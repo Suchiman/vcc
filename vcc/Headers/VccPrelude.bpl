@@ -3117,133 +3117,133 @@ function $geq_f8(x:$primitive, y:$primitive) returns(bool);
 // --------------------------------------------------------------------------------
 
 // Individual labels
-	// Boolean instantiation
-	type $seclabel = bool;
+  // Boolean instantiation
+  type $seclabel = bool;
 
-	const $seclbl.top: $seclabel;
-	axiom $seclbl.top == true;
-	const $seclbl.bot: $seclabel;
-	axiom $seclbl.bot == false;
+  const $seclbl.top: $seclabel;
+  axiom $seclbl.top == true;
+  const $seclbl.bot: $seclabel;
+  axiom $seclbl.bot == false;
 
-	function {:inline true} $seclbl.leq(l1:$seclabel, l2:$seclabel) returns(bool)
-		{ l1 ==> l2 }
+  function {:inline true} $seclbl.leq(l1:$seclabel, l2:$seclabel) returns(bool)
+    { l1 ==> l2 }
 
-	function {:inline true} $seclbl.meet(l1:$seclabel, l2:$seclabel) returns($seclabel)
-		{ l1 && l2 }
-	function {:inline true} $seclbl.join(l1:$seclabel, l2:$seclabel) returns($seclabel)
-		{ l1 || l2 }
+  function {:inline true} $seclbl.meet(l1:$seclabel, l2:$seclabel) returns($seclabel)
+    { l1 && l2 }
+  function {:inline true} $seclbl.join(l1:$seclabel, l2:$seclabel) returns($seclabel)
+    { l1 || l2 }
 
 // Label sets
-	// Generic type and operations
-	type $labelset = [$ptr] $seclabel;
+  // Generic type and operations
+  type $labelset = [$ptr] $seclabel;
 
-	const $lblset.top: $labelset;
-	axiom(forall p:$ptr :: $lblset.top[p] == $seclbl.top);
-	const $lblset.bot: $labelset;
-	axiom(forall p:$ptr ::$lblset.bot[p] == $seclbl.bot);
+  const $lblset.top: $labelset;
+  axiom(forall p:$ptr :: $lblset.top[p] == $seclbl.top);
+  const $lblset.bot: $labelset;
+  axiom(forall p:$ptr ::$lblset.bot[p] == $seclbl.bot);
 
-	function {:inline true} $lblset.leq(l1:$labelset, l2:$labelset) returns(bool)
-		{ (forall p:$ptr :: $seclbl.leq(l1[p], l2[p])) }
+  function {:inline true} $lblset.leq(l1:$labelset, l2:$labelset) returns(bool)
+    { (forall p:$ptr :: $seclbl.leq(l1[p], l2[p])) }
 
-	function $lblset.meet($labelset, $labelset) returns($labelset);
-	axiom(forall l1,l2:$labelset, p:$ptr :: $lblset.meet(l1,l2)[p] == $seclbl.meet(l1[p], l2[p]));
+  function $lblset.meet($labelset, $labelset) returns($labelset);
+  axiom(forall l1,l2:$labelset, p:$ptr :: $lblset.meet(l1,l2)[p] == $seclbl.meet(l1[p], l2[p]));
 
-	function $lblset.join($labelset, $labelset) returns($labelset);
-	axiom(forall l1,l2:$labelset, p:$ptr :: $lblset.join(l1,l2)[p] == $seclbl.join(l1[p], l2[p]));
+  function $lblset.join($labelset, $labelset) returns($labelset);
+  axiom(forall l1,l2:$labelset, p:$ptr :: $lblset.join(l1,l2)[p] == $seclbl.join(l1[p], l2[p]));
 
-	// Labels and meta-labels of memory locations (we want them in $memory so they get havoc()-ed at the same time as the memory locations they correspond to)
-	type $flowdata;
+  // Labels and meta-labels of memory locations (we want them in $memory so they get havoc()-ed at the same time as the memory locations they correspond to)
+  type $flowdata;
 
-	function $select.flow.label($flowdata) returns($labelset);
-	function $store.flow.label($flowdata, $labelset) returns($flowdata);
-	function $select.flow.meta($flowdata) returns($labelset);
-	function $store.flow.meta($flowdata, $labelset) returns($flowdata);
+  function $select.flow.label($flowdata) returns($labelset);
+  function $store.flow.label($flowdata, $labelset) returns($flowdata);
+  function $select.flow.meta($flowdata) returns($labelset);
+  function $store.flow.meta($flowdata, $labelset) returns($flowdata);
 
-	axiom(forall fd:$flowdata, l:$labelset :: {:weight 0}
-		$select.flow.label($store.flow.label(fd, l)) == l);
-	axiom(forall fd:$flowdata, l:$labelset :: {:weight 0} 
-		$select.flow.meta($store.flow.meta(fd, l)) == l);
-	axiom(forall fd:$flowdata, l:$labelset :: {:weight 0}
-		$select.flow.label($store.flow.meta(fd, l)) == $select.flow.label(fd));
-	axiom(forall fd:$flowdata, l:$labelset :: {:weight 0}
-		$select.flow.meta($store.flow.label(fd, l)) == $select.flow.meta(fd));
+  axiom(forall fd:$flowdata, l:$labelset :: {:weight 0}
+    $select.flow.label($store.flow.label(fd, l)) == l);
+  axiom(forall fd:$flowdata, l:$labelset :: {:weight 0} 
+    $select.flow.meta($store.flow.meta(fd, l)) == l);
+  axiom(forall fd:$flowdata, l:$labelset :: {:weight 0}
+    $select.flow.label($store.flow.meta(fd, l)) == $select.flow.label(fd));
+  axiom(forall fd:$flowdata, l:$labelset :: {:weight 0}
+    $select.flow.meta($store.flow.label(fd, l)) == $select.flow.meta(fd));
 
-	function $select.flow.data($memory_t, $ptr) returns($flowdata);
-	function $store.flow.data($memory_t, $ptr, $flowdata) returns($memory_t);
+  function $select.flow.data($memory_t, $ptr) returns($flowdata);
+  function $store.flow.data($memory_t, $ptr, $flowdata) returns($memory_t);
 
-	axiom(forall M:$memory_t, p,q:$ptr, fd:$flowdata :: {:weight 0}
-	  $in_full_extent_of(q, p) ==> $select.flow.data($store.flow.data(M, p, fd), q) == fd);
-	axiom(forall M:$memory_t, p,q:$ptr, fd:$flowdata :: {:weight 0}
-	      $in_full_extent_of(q, p)
-		  ||
-		  $select.flow.data($store.flow.data(M, p, fd), q) == $select.flow.data(M, q));
+  axiom(forall M:$memory_t, p,q:$ptr, fd:$flowdata :: {:weight 0}
+    $in_full_extent_of(q, p) ==> $select.flow.data($store.flow.data(M, p, fd), q) == fd);
+  axiom(forall M:$memory_t, p,q:$ptr, fd:$flowdata :: {:weight 0}
+        $in_full_extent_of(q, p)
+      ||
+      $select.flow.data($store.flow.data(M, p, fd), q) == $select.flow.data(M, q));
 
-	// Program Context (is a top-level state member)
-	function $select.sec.pc($state) returns($labelset);
+  // Program Context (is a top-level state member)
+  function $select.sec.pc($state) returns($labelset);
 
 // Test classifiers
-	// Default classifier
-	type $map_t..$ptr_to..^^void.^^bool;
+  // Default classifier
+  type $map_t..$ptr_to..^^void.^^bool;
 
-	function $select.$map_t..$ptr_to..^^void.^^bool(M: $map_t..$ptr_to..^^void.^^bool, p: $ptr) : bool;
-	function $store.$map_t..$ptr_to..^^void.^^bool(M: $map_t..$ptr_to..^^void.^^bool, p: $ptr, v: bool) : $map_t..$ptr_to..^^void.^^bool;
-	function $eq.$map_t..$ptr_to..^^void.^^bool(M1: $map_t..$ptr_to..^^void.^^bool, M2: $map_t..$ptr_to..^^void.^^bool) : bool;
+  function $select.$map_t..$ptr_to..^^void.^^bool(M: $map_t..$ptr_to..^^void.^^bool, p: $ptr) : bool;
+  function $store.$map_t..$ptr_to..^^void.^^bool(M: $map_t..$ptr_to..^^void.^^bool, p: $ptr, v: bool) : $map_t..$ptr_to..^^void.^^bool;
+  function $eq.$map_t..$ptr_to..^^void.^^bool(M1: $map_t..$ptr_to..^^void.^^bool, M2: $map_t..$ptr_to..^^void.^^bool) : bool;
 
-	const $zero.$map_t..$ptr_to..^^void.^^bool: $map_t..$ptr_to..^^void.^^bool;
+  const $zero.$map_t..$ptr_to..^^void.^^bool: $map_t..$ptr_to..^^void.^^bool;
 
-	axiom (forall M: $map_t..$ptr_to..^^void.^^bool, p: $ptr, v: bool :: {:weight 0} $select.$map_t..$ptr_to..^^void.^^bool($store.$map_t..$ptr_to..^^void.^^bool(M, p, v), p) == v);
-	axiom (forall M: $map_t..$ptr_to..^^void.^^bool, p: $ptr, v: bool, q: $ptr :: {:weight 0} p != q ==> $select.$map_t..$ptr_to..^^void.^^bool($store.$map_t..$ptr_to..^^void.^^bool(M, q, v), p) == $select.$map_t..$ptr_to..^^void.^^bool(M, p));
-	axiom (forall M1: $map_t..$ptr_to..^^void.^^bool, M2: $map_t..$ptr_to..^^void.^^bool :: {:weight 0} { $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2) } (forall p: $ptr :: {:weight 0} $select.$map_t..$ptr_to..^^void.^^bool(M1, p) == $select.$map_t..$ptr_to..^^void.^^bool(M2, p)) ==> $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2));
-	axiom (forall M1: $map_t..$ptr_to..^^void.^^bool, M2: $map_t..$ptr_to..^^void.^^bool :: {:weight 0} { $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2) } $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2) ==> M1 == M2);
-	axiom $int_to_map_t..ptr_to..^^void.^^bool(0) == $zero.$map_t..$ptr_to..^^void.^^bool;
-	axiom (forall p: $ptr :: {:weight 0} $select.$map_t..$ptr_to..^^void.^^bool($zero.$map_t..$ptr_to..^^void.^^bool, p) == false);
-	axiom (forall r1: $record, r2: $record, f: $field, R: $ctype :: {:weight 0} { $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)), $is_record_field(R, f, $map_t($ptr_to(^^void), ^^bool)) } $eq.$map_t..$ptr_to..^^void.^^bool($int_to_map_t..ptr_to..^^void.^^bool($rec_fetch(r1, f)), $int_to_map_t..ptr_to..^^void.^^bool($rec_fetch(r2, f))) ==> $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)));
+  axiom (forall M: $map_t..$ptr_to..^^void.^^bool, p: $ptr, v: bool :: {:weight 0} $select.$map_t..$ptr_to..^^void.^^bool($store.$map_t..$ptr_to..^^void.^^bool(M, p, v), p) == v);
+  axiom (forall M: $map_t..$ptr_to..^^void.^^bool, p: $ptr, v: bool, q: $ptr :: {:weight 0} p != q ==> $select.$map_t..$ptr_to..^^void.^^bool($store.$map_t..$ptr_to..^^void.^^bool(M, q, v), p) == $select.$map_t..$ptr_to..^^void.^^bool(M, p));
+  axiom (forall M1: $map_t..$ptr_to..^^void.^^bool, M2: $map_t..$ptr_to..^^void.^^bool :: {:weight 0} { $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2) } (forall p: $ptr :: {:weight 0} $select.$map_t..$ptr_to..^^void.^^bool(M1, p) == $select.$map_t..$ptr_to..^^void.^^bool(M2, p)) ==> $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2));
+  axiom (forall M1: $map_t..$ptr_to..^^void.^^bool, M2: $map_t..$ptr_to..^^void.^^bool :: {:weight 0} { $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2) } $eq.$map_t..$ptr_to..^^void.^^bool(M1, M2) ==> M1 == M2);
+  axiom $int_to_map_t..ptr_to..^^void.^^bool(0) == $zero.$map_t..$ptr_to..^^void.^^bool;
+  axiom (forall p: $ptr :: {:weight 0} $select.$map_t..$ptr_to..^^void.^^bool($zero.$map_t..$ptr_to..^^void.^^bool, p) == false);
+  axiom (forall r1: $record, r2: $record, f: $field, R: $ctype :: {:weight 0} { $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)), $is_record_field(R, f, $map_t($ptr_to(^^void), ^^bool)) } $eq.$map_t..$ptr_to..^^void.^^bool($int_to_map_t..ptr_to..^^void.^^bool($rec_fetch(r1, f)), $int_to_map_t..ptr_to..^^void.^^bool($rec_fetch(r2, f))) ==> $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)));
 
-	function $map_t..ptr_to..^^void.^^bool_to_int(x: $map_t..$ptr_to..^^void.^^bool) : int;
-	function $int_to_map_t..ptr_to..^^void.^^bool(x: int) : $map_t..$ptr_to..^^void.^^bool;
-	axiom (forall #x: $map_t..$ptr_to..^^void.^^bool :: #x == $int_to_map_t..ptr_to..^^void.^^bool($map_t..ptr_to..^^void.^^bool_to_int(#x)));
+  function $map_t..ptr_to..^^void.^^bool_to_int(x: $map_t..$ptr_to..^^void.^^bool) : int;
+  function $int_to_map_t..ptr_to..^^void.^^bool(x: int) : $map_t..$ptr_to..^^void.^^bool;
+  axiom (forall #x: $map_t..$ptr_to..^^void.^^bool :: #x == $int_to_map_t..ptr_to..^^void.^^bool($map_t..ptr_to..^^void.^^bool_to_int(#x)));
 
-	function #classifier#default() : $map_t..$ptr_to..^^void.^^bool;
+  function #classifier#default() : $map_t..$ptr_to..^^void.^^bool;
 
-	const unique cf#classifier#default: $pure_function;
-	axiom $function_arg_type(cf#classifier#default, 0, $map_t($ptr_to(^^void), ^^bool));
-	axiom (forall p: $ptr :: { $select.$map_t..$ptr_to..^^void.^^bool(#classifier#default(), p) } $select.$map_t..$ptr_to..^^void.^^bool(#classifier#default(), p) == false);
+  const unique cf#classifier#default: $pure_function;
+  axiom $function_arg_type(cf#classifier#default, 0, $map_t($ptr_to(^^void), ^^bool));
+  axiom (forall p: $ptr :: { $select.$map_t..$ptr_to..^^void.^^bool(#classifier#default(), p) } $select.$map_t..$ptr_to..^^void.^^bool(#classifier#default(), p) == false);
 
-	procedure classifier#default() returns ($result: $map_t..$ptr_to..^^void.^^bool);
-		ensures $result == #classifier#default();
-		free ensures $call_transition(old($s), $s);
+  procedure classifier#default() returns ($result: $map_t..$ptr_to..^^void.^^bool);
+    ensures $result == #classifier#default();
+    free ensures $call_transition(old($s), $s);
 
 // Pointer clubs
-	// Generic type and operations
-	type $ptrclub;
-	const $ptrclub.empty: [$ptr] bool;
-	axiom(forall p: $ptr :: $ptrclub.empty[p] == false);
+  // Generic type and operations
+  type $ptrclub;
+  const $ptrclub.empty: [$ptr] bool;
+  axiom(forall p: $ptr :: $ptrclub.empty[p] == false);
 
-	function is_active_ptrclub(c: $ptrclub) returns(bool);
+  function is_active_ptrclub(c: $ptrclub) returns(bool);
 
-	function $ptrclub.construct(c: [$ptr] bool, l: $labelset) returns($ptrclub);
-	function $ptrclub.members(c: $ptrclub) returns([$ptr] bool);
-	function $ptrclub.bound(c: $ptrclub) returns($labelset);
-	function $ptrclub.addMember(p: $ptr, c: $ptrclub) returns($ptrclub);
-	function {:inline true} $ptrclub.isMember(p: $ptr, c: $ptrclub) returns(bool)
-		{ $ptrclub.members(c)[p] }
-	
-	axiom(forall c: [$ptr] bool, l: $labelset :: {:weight 0}
-	  $ptrclub.members($ptrclub.construct(c, l)) == c);
-	axiom(forall c: [$ptr] bool, l: $labelset :: {:weight 0}
-	  $ptrclub.bound($ptrclub.construct(c, l)) == l);
+  function $ptrclub.construct(c: [$ptr] bool, l: $labelset) returns($ptrclub);
+  function $ptrclub.members(c: $ptrclub) returns([$ptr] bool);
+  function $ptrclub.bound(c: $ptrclub) returns($labelset);
+  function $ptrclub.addMember(p: $ptr, c: $ptrclub) returns($ptrclub);
+  function {:inline true} $ptrclub.isMember(p: $ptr, c: $ptrclub) returns(bool)
+    { $ptrclub.members(c)[p] }
+  
+  axiom(forall c: [$ptr] bool, l: $labelset :: {:weight 0}
+    $ptrclub.members($ptrclub.construct(c, l)) == c);
+  axiom(forall c: [$ptr] bool, l: $labelset :: {:weight 0}
+    $ptrclub.bound($ptrclub.construct(c, l)) == l);
 
-	axiom(forall c: $ptrclub, p: $ptr :: {:weight 0}
-	     $ptrclub.members($ptrclub.addMember(p, c))
-	  == $ptrclub.members(c)[p := true]);
-	axiom(forall c: $ptrclub, p: $ptr :: {:weight 0}
-	  $ptrclub.bound($ptrclub.addMember(p,c)) == $ptrclub.bound(c));
+  axiom(forall c: $ptrclub, p: $ptr :: {:weight 0}
+       $ptrclub.members($ptrclub.addMember(p, c))
+    == $ptrclub.members(c)[p := true]);
+  axiom(forall c: $ptrclub, p: $ptr :: {:weight 0}
+    $ptrclub.bound($ptrclub.addMember(p,c)) == $ptrclub.bound(c));
 
-	function $ptrclub.compare($ptr, $ptr) returns($labelset);
-	axiom(forall p1,p2: $ptr :: $ptr_eq(p1, p2) ==> $lblset.leq($ptrclub.compare(p1, p2), $lblset.bot));	// If the pointers are provably equal, we don't even bother computing a lub
-	axiom(forall p1,p2:$ptr, c:$ptrclub :: $ptrclub.isMember(p1, c) && $ptrclub.isMember(p2,c) && is_active_ptrclub(c)
-	                                             ==> $lblset.leq($ptrclub.compare(p1,p2), $ptrclub.bound(c)));	// The comparison label is a lower bound
-	// And we shouldn't need the fact that the glb is the greatest lower bound
+  function $ptrclub.compare($ptr, $ptr) returns($labelset);
+  axiom(forall p1,p2: $ptr :: $ptr_eq(p1, p2) ==> $lblset.leq($ptrclub.compare(p1, p2), $lblset.bot));	// If the pointers are provably equal, we don't even bother computing a lub
+  axiom(forall p1,p2:$ptr, c:$ptrclub :: $ptrclub.isMember(p1, c) && $ptrclub.isMember(p2,c) && is_active_ptrclub(c)
+                                               ==> $lblset.leq($ptrclub.compare(p1,p2), $ptrclub.bound(c)));	// The comparison label is a lower bound
+  // And we shouldn't need the fact that the glb is the greatest lower bound
 
 // No interaction between memory and labels, and the various kinds of labels
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}
