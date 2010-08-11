@@ -2600,11 +2600,15 @@ function $_xor(t:$ctype, x:int, y:int) returns(int);
 function $_and(t:$ctype, x:int, y:int) returns(int);
 function $_not(t:$ctype, x:int) returns(int);
 
-function {:inline true} $unchk_add(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x + y) }
-function {:inline true} $unchk_sub(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x - y) }
+function {:weight 0} $unchk_add(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x + y) }
+function {:weight 0} $unchk_sub(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x - y) }
 function {:weight 0} $unchk_mul(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x * y) }
-function {:weight 0} $unchk_div(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x / y) }
-function {:weight 0} $unchk_mod(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x % y) }
+function {:inline true} $unchk_div(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x / y) }
+function {:inline true} $unchk_mod(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x % y) }
+
+//axiom(forall x:int, y:int :: {$unchk_add(^^u8, x, y), $in_range_u8(x), $in_range_u8(y)} 
+//  $in_range_u8(x) && $in_range_u8(y) && !$in_range_u8(x + y) ==> $unchk_add(^^u8, x, y) == x + y - $max.u8 - 1
+//);
 
 function {:weight 0} $_shl(t:$ctype, x:int, y:int) returns(int)
   { $unchecked(t, x * $_pow2(y)) }
