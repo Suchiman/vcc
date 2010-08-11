@@ -2600,8 +2600,8 @@ function $_xor(t:$ctype, x:int, y:int) returns(int);
 function $_and(t:$ctype, x:int, y:int) returns(int);
 function $_not(t:$ctype, x:int) returns(int);
 
-function {:weight 0} $unchk_add(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x + y) }
-function {:weight 0} $unchk_sub(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x - y) }
+function {:inline true} $unchk_add(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x + y) }
+function {:inline true} $unchk_sub(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x - y) }
 function {:weight 0} $unchk_mul(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x * y) }
 function {:weight 0} $unchk_div(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x / y) }
 function {:weight 0} $unchk_mod(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x % y) }

@@ -335,64 +335,70 @@ namespace Microsoft.Research.Vcc
       | _ -> None
 
     /// For a(checked+)b add assertion $check.add(a,b).
-    let rec addOverflowChecks ctx self = function
-      | Cast (c, Checked, e') when not ctx.IsPure ->
-        let types = (e'.Type, c.Type)
-        let newe = Cast (c, Processed, self e')
-        if Type.ConversionIsLossless types then Some newe
-        else
-          let comm = afmte 8518 ("{0} fits range of " + c.Type.ToString()) [e']
-          addStmtsOpt [Expr.MkAssert (inRange comm (ignoreEffects newe))] newe      
-                       
-      | Prim (c, Op(opName, Checked) , args) when c.Type = Type.MathInteger ->
-        Some(Prim(c, Op(opName, Processed), List.map (fun (e:Expr) -> e.SelfCtxMap(ctx.IsPure, addOverflowChecks)) args))
-      | Prim (c, (Op(opName, Checked) as op), args) as e when not ctx.IsPure ->
-        let args = List.map self args
-        let newop = Prim (c, Op(opName, Processed), args)
-        let checks =
-          match opName with
-            | ("/"|"%") ->
-              match args with
-              | [arg1; arg2] ->
-                let arg1 = ignoreEffects arg1
-                let arg2 = ignoreEffects arg2
-                let overflow =
-                  if e.Type.IsSignedInteger then // div and mod overflow iff parameters are minint and -1 or dividing by zero)
-                    let comm = afmte 8003 "{0} might overflow (in div/mod case)" [e]
-                    [inRangeDiv comm e.Type [arg1;arg2]]
-                  else []
-                overflow
-              | _ -> failwith "binary operation expected"
-            | _  -> 
-              let comm = afmte 8004 "{0} might overflow" [e]
-              [inRange comm (ignoreEffects newop)]
-        addStmtsOpt (List.map Expr.MkAssert checks) newop
+    let rec addOverflowChecks ctx _ = 
+      let self (e:Expr) = e.SelfCtxMap(ctx.IsPure, addOverflowChecks)
+      let selfs = List.map self
+      function
+        | Cast (c, Checked, e') when not ctx.IsPure ->
+          let types = (e'.Type, c.Type)
+          let newe = Cast (c, Processed, self e')
+          if Type.ConversionIsLossless types then Some newe
+          else
+            let comm = afmte 8518 ("{0} fits range of " + c.Type.ToString()) [e']
+            addStmtsOpt [Expr.MkAssert (inRange comm (ignoreEffects newe))] newe      
+            
+        | Prim (c, Op("=="|"!="|"<"|"<="|">"|">=" as opName, (Checked|Unchecked)), args) ->
+          Some(Prim(c, Op(opName, Processed), selfs args))                      
+        | Prim (c, Op(opName, (Checked|Unchecked)), args) when c.Type = Type.MathInteger ->
+          Some(Prim(c, Op(opName, Processed), selfs args))
+        | Prim (c, (Op(opName, Checked) as op), args) as e when not ctx.IsPure ->
+          let args = selfs args
+          let newop = Prim (c, Op(opName, Processed), args)
+          let checks =
+            match opName with
+              | ("/"|"%") ->
+                match args with
+                | [arg1; arg2] ->
+                  let arg1 = ignoreEffects arg1
+                  let arg2 = ignoreEffects arg2
+                  let overflow =
+                    if e.Type.IsSignedInteger then // div and mod overflow iff parameters are minint and -1 or dividing by zero)
+                      let comm = afmte 8003 "{0} might overflow (in div/mod case)" [e]
+                      [inRangeDiv comm e.Type [arg1;arg2]]
+                    else []
+                  overflow
+                | _ -> failwith "binary operation expected"
+              | _  -> 
+                let comm = afmte 8004 "{0} might overflow" [e]
+                [inRange comm (ignoreEffects newop)]
+          addStmtsOpt (List.map Expr.MkAssert checks) newop
       
-      | _ -> None
+        | _ -> None
 
-    let unchecked (newop:Expr) =
-      match newop.Type with
-        | Type.Integer k ->
-          Expr.Macro (newop.Common, "unchecked_" + Type.IntSuffix k, [newop])  
-        | Type.MathInteger -> newop            
-        | _ -> failwith ("non-integer primitive operation " + newop.ToString())
-    
-    let stripRemainingChecked self = function
-      | Prim (c, Op(opName, st), args) as e when st <> Processed ->
-        let newop = self (Expr.Prim (c, Op(opName, Processed), args))
-        let newop =
-          if st = Unchecked && _list_mem opName checkableOps then
-            unchecked newop
-          else newop
-        Some newop
-      | Cast (c, st, e') when st <> Processed ->
-        let newop = self (Cast (c, Processed, e'))
-        let newop =
-          if st = Unchecked && not (Type.ConversionIsLossless (e'.Type, c.Type)) then
-            unchecked newop
-          else newop
-        Some newop            
-      | _ -> None
+    let stripRemainingChecked self = 
+      let unchecked (newop:Expr) =
+        match newop.Type with
+          | Type.Integer k ->
+            Expr.Macro (newop.Common, "unchecked_" + Type.IntSuffix k, [newop])  
+          | Type.MathInteger -> newop            
+          | _ -> failwith ("non-integer primitive operation " + newop.ToString())
+
+      function
+        | Prim (c, Op(opName, Checked), args) ->
+          Some (self (Expr.Prim (c, Op(opName, Processed), args)))
+//          let newop =
+//            if st = Unchecked && _list_mem opName checkableOps then
+//              unchecked newop
+//            else newop
+//          Some newop
+        | Cast (c, st, e') when st <> Processed ->
+          let newop = self (Cast (c, Processed, e'))
+          let newop =
+            if st = Unchecked && not (Type.ConversionIsLossless (e'.Type, c.Type)) then
+              unchecked newop
+            else newop
+          Some newop            
+        | _ -> None
       
 
     // ============================================================================================================
