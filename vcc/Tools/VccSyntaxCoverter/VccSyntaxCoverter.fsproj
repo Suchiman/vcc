@@ -22,6 +22,7 @@
     <WarningLevel>3</WarningLevel>
     <StartWorkingDirectory>C:\dev\felt\vcc\Test\testsuite\tmp</StartWorkingDirectory>
     <StartArguments>a.c</StartArguments>
+    <OtherFlags>--keyfile:..\..\Common\InterimKey.snk</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -55,6 +56,9 @@
     <Compile Include="Tokenizer.fs" />
     <Compile Include="Rules.fs" />
     <Compile Include="PostProcessor.fs" />
+    <Compile Include="..\..\Common\Include\version.fs">
+      <Link>version.fs</Link>
+    </Compile>
     <Compile Include="Driver.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll')" />
