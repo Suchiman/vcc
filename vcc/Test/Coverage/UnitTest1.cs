@@ -8,26 +8,11 @@ namespace Coverage
   [TestClass]
   public class UnitTest1
   {
-    public UnitTest1() {
-      //
-      // TODO: Add constructor logic here
-      //
-    }
-
-    private TestContext testContextInstance;
-
     /// <summary>
     ///Gets or sets the test context which provides
     ///information about and functionality for the current test run.
     ///</summary>
-    public TestContext TestContext {
-      get {
-        return testContextInstance;
-      }
-      set {
-        testContextInstance = value;
-      }
-    }
+    public TestContext TestContext { get; set; }
 
     #region Additional test attributes
     //
@@ -56,7 +41,7 @@ namespace Coverage
     [DeploymentItem("src\\vcc\\boogie\\TypedUnivBackPred2.sx")]
     public void RunSuite() {
       Assert.IsTrue(System.IO.File.Exists("z3.exe"));
-      Assert.IsTrue(Microsoft.Research.Vcc.VccCommandLineHost.Main(new string[] { "/s", "done", "vcc2", "examples" }) == 0);
+      Assert.IsTrue(Microsoft.Research.Vcc.VccCommandLineHost.Main(new[] { "/s", "done", "vcc2", "examples" }) == 0);
     }
   }
 }
