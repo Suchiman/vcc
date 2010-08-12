@@ -2606,9 +2606,14 @@ function {:weight 0} $unchk_mul(t:$ctype, x:int, y:int) returns(int) { $unchecke
 function {:inline true} $unchk_div(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x / y) }
 function {:inline true} $unchk_mod(t:$ctype, x:int, y:int) returns(int) { $unchecked(t, x % y) }
 
-//axiom(forall x:int, y:int :: {$unchk_add(^^u8, x, y), $in_range_u8(x), $in_range_u8(y)} 
-//  $in_range_u8(x) && $in_range_u8(y) && !$in_range_u8(x + y) ==> $unchk_add(^^u8, x, y) == x + y - $max.u8 - 1
-//);
+axiom(forall x:int, y:int :: {$unchk_add(^^u8, x, y)} 
+  $in_range_u8(x) && $in_range_u8(y) && x + y > $max.u8 ==> $unchk_add(^^u8, x, y) == x + y - $max.u8 - 1
+);
+
+axiom(forall x:int, y:int :: {$unchk_add(^^u4, x, y)} 
+  $in_range_u4(x) && $in_range_u4(y) && x + y > $max.u8 ==> $unchk_add(^^u4, x, y) == x + y - $max.u4 - 1
+);
+
 
 function {:weight 0} $_shl(t:$ctype, x:int, y:int) returns(int)
   { $unchecked(t, x * $_pow2(y)) }
