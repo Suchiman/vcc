@@ -35,11 +35,13 @@
           this.modelView = new System.Windows.Forms.TreeView();
           this.imageList1 = new System.Windows.Forms.ImageList(this.components);
           this.executionStatesComboBox = new System.Windows.Forms.ComboBox();
-          this.stateValueTextBox = new System.Windows.Forms.TextBox();
           this.stateValueView = new System.Windows.Forms.ListView();
-          this.lineno = new System.Windows.Forms.ColumnHeader();
-          this.state = new System.Windows.Forms.ColumnHeader();
-          this.value = new System.Windows.Forms.ColumnHeader();
+          this.lineno = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+          this.state = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+          this.value = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+          this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+          this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+          this.stateValueTextBox = new System.Windows.Forms.TextBox();
           this.menuStrip1 = new System.Windows.Forms.MenuStrip();
           this.fileMenuStrip = new System.Windows.Forms.ToolStripMenuItem();
           this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -68,6 +70,7 @@
           this.splitContainerLeftRight.Panel2.SuspendLayout();
           this.splitContainerLeftRight.SuspendLayout();
           this.leftPanel.SuspendLayout();
+          this.contextMenuStrip1.SuspendLayout();
           this.menuStrip1.SuspendLayout();
           this.toolStripContainer1.ContentPanel.SuspendLayout();
           this.toolStripContainer1.TopToolStripPanel.SuspendLayout();
@@ -154,21 +157,13 @@
           this.executionStatesComboBox.TabIndex = 1;
           this.executionStatesComboBox.SelectedIndexChanged += new System.EventHandler(this.executionStatesComboBox_SelectedIndexChanged);
           // 
-          // stateValueTextBox
-          // 
-          this.stateValueTextBox.Dock = System.Windows.Forms.DockStyle.Top;
-          this.stateValueTextBox.Location = new System.Drawing.Point(0, 0);
-          this.stateValueTextBox.Name = "stateValueTextBox";
-          this.stateValueTextBox.ReadOnly = true;
-          this.stateValueTextBox.Size = new System.Drawing.Size(247, 20);
-          this.stateValueTextBox.TabIndex = 1;
-          // 
           // stateValueView
           // 
           this.stateValueView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.lineno,
             this.state,
             this.value});
+          this.stateValueView.ContextMenuStrip = this.contextMenuStrip1;
           this.stateValueView.Dock = System.Windows.Forms.DockStyle.Fill;
           this.stateValueView.FullRowSelect = true;
           this.stateValueView.GridLines = true;
@@ -180,6 +175,7 @@
           this.stateValueView.TabIndex = 0;
           this.stateValueView.UseCompatibleStateImageBehavior = false;
           this.stateValueView.View = System.Windows.Forms.View.Details;
+          this.stateValueView.SelectedIndexChanged += new System.EventHandler(this.stateValueView_SelectedIndexChanged);
           this.stateValueView.DoubleClick += new System.EventHandler(this.stateValueView_DoubleClick);
           // 
           // lineno
@@ -197,6 +193,30 @@
           // 
           this.value.Text = "Value";
           this.value.Width = 120;
+          // 
+          // contextMenuStrip1
+          // 
+          this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItem1});
+          this.contextMenuStrip1.Name = "contextMenuStrip1";
+          this.contextMenuStrip1.Size = new System.Drawing.Size(153, 48);
+          // 
+          // toolStripMenuItem1
+          // 
+          this.toolStripMenuItem1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+          this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+          this.toolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
+          this.toolStripMenuItem1.Text = "&Copy value";
+          this.toolStripMenuItem1.Click += new System.EventHandler(this.toolStripMenuItem1_Click);
+          // 
+          // stateValueTextBox
+          // 
+          this.stateValueTextBox.Dock = System.Windows.Forms.DockStyle.Top;
+          this.stateValueTextBox.Location = new System.Drawing.Point(0, 0);
+          this.stateValueTextBox.Name = "stateValueTextBox";
+          this.stateValueTextBox.ReadOnly = true;
+          this.stateValueTextBox.Size = new System.Drawing.Size(247, 20);
+          this.stateValueTextBox.TabIndex = 1;
           // 
           // menuStrip1
           // 
@@ -226,20 +246,20 @@
           // openToolStripMenuItem
           // 
           this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-          this.openToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
           this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
+          this.openToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
           this.openToolStripMenuItem.Text = "&Open...";
           this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
           // 
           // toolStripSeparator1
           // 
           this.toolStripSeparator1.Name = "toolStripSeparator1";
-          this.toolStripSeparator1.Size = new System.Drawing.Size(109, 6);
+          this.toolStripSeparator1.Size = new System.Drawing.Size(152, 6);
           // 
           // exitToolStripMenuItem
           // 
           this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-          this.exitToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
+          this.exitToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
           this.exitToolStripMenuItem.Text = "Exit";
           this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
           // 
@@ -266,7 +286,7 @@
           this.filterFunctionsToolStripMenuItem.CheckOnClick = true;
           this.filterFunctionsToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
           this.filterFunctionsToolStripMenuItem.Name = "filterFunctionsToolStripMenuItem";
-          this.filterFunctionsToolStripMenuItem.Size = new System.Drawing.Size(224, 22);
+          this.filterFunctionsToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
           this.filterFunctionsToolStripMenuItem.Text = "&Filter visualized function";
           this.filterFunctionsToolStripMenuItem.Click += new System.EventHandler(this.filterOptionsMenuItem_Click);
           // 
@@ -276,7 +296,7 @@
           this.filterInconsistentStatesToolStripMenuItem.CheckOnClick = true;
           this.filterInconsistentStatesToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
           this.filterInconsistentStatesToolStripMenuItem.Name = "filterInconsistentStatesToolStripMenuItem";
-          this.filterInconsistentStatesToolStripMenuItem.Size = new System.Drawing.Size(224, 22);
+          this.filterInconsistentStatesToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
           this.filterInconsistentStatesToolStripMenuItem.Text = "F&ilter inconsistent states";
           this.filterInconsistentStatesToolStripMenuItem.Click += new System.EventHandler(this.filterOptionsMenuItem_Click);
           // 
@@ -286,7 +306,7 @@
           this.filterInternalVccVariablesToolStripMenuItem.CheckOnClick = true;
           this.filterInternalVccVariablesToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
           this.filterInternalVccVariablesToolStripMenuItem.Name = "filterInternalVccVariablesToolStripMenuItem";
-          this.filterInternalVccVariablesToolStripMenuItem.Size = new System.Drawing.Size(224, 22);
+          this.filterInternalVccVariablesToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
           this.filterInternalVccVariablesToolStripMenuItem.Text = "Filter internal VCC variables";
           this.filterInternalVccVariablesToolStripMenuItem.Click += new System.EventHandler(this.filterOptionsMenuItem_Click);
           // 
@@ -303,7 +323,7 @@
           this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
           this.aboutToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
           this.aboutToolStripMenuItem.Text = "About";
-          this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
+          this.aboutToolStripMenuItem.Click += new System.EventHandler(aboutToolStripMenuItem_Click);
           // 
           // toolStripContainer1
           // 
@@ -452,6 +472,7 @@
           this.splitContainerLeftRight.Panel2.PerformLayout();
           this.splitContainerLeftRight.ResumeLayout(false);
           this.leftPanel.ResumeLayout(false);
+          this.contextMenuStrip1.ResumeLayout(false);
           this.menuStrip1.ResumeLayout(false);
           this.menuStrip1.PerformLayout();
           this.toolStripContainer1.ContentPanel.ResumeLayout(false);
@@ -507,6 +528,8 @@
         private System.Windows.Forms.ToolStripButton toolStripButton_filterFunctions;
         private System.Windows.Forms.ToolStripLabel toolStripLabel1;
         private System.Windows.Forms.ToolStripLabel labelCurrentModel;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
     }
 }
 

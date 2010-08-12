@@ -149,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="Properties\DataSources\ModelViewerMainForm.datasource" />
     <None Include="Properties\ModelViewerSettings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>ModelViewerSettings.Designer.cs</LastGenOutput>
