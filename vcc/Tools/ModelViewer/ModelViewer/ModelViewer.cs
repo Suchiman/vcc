@@ -18,12 +18,12 @@ namespace VccModelViewer
 {
   [ComVisible(true)]
   [Guid("15032E00-DDC4-44d1-927B-2A08C23D3F8F")]
-  public partial class ModelViewer : UserControl
+  public sealed partial class ModelViewer : UserControl
   {
     ModelController modelController;
     readonly bool launchedFromAddin;
 
-    private bool inhibitTriggerUpdate = false;
+    private bool inhibitTriggerUpdate;
 
     private bool filterFunctions;
     public bool FilterFunctions
@@ -293,7 +293,7 @@ namespace VccModelViewer
     private TreeNode oldSelectedNode;
     private TreeNode newSelectedNode;
 
-    private void UnfoldOldRootTreeNodes(List<TreeNode> oldRootNodes, TreeNodeCollection currentNodes)
+    private void UnfoldOldRootTreeNodes(IEnumerable<TreeNode> oldRootNodes, TreeNodeCollection currentNodes)
     {
 
       foreach (TreeNode node in oldRootNodes)
@@ -475,12 +475,12 @@ namespace VccModelViewer
       return aliases;
     }
 
-    void AddDummyNodeTo(TreeNode node)
+    static void AddDummyNodeTo(TreeNode node)
     {
       node.Nodes.Add(new TreeNode("Dummy node"));
     }
 
-    TreeNode CreateDotContainerNode(DotContainerInfo o)
+    static TreeNode CreateDotContainerNode(DotContainerInfo o)
     {
       string type_info = "";
       string deref_value = "";
@@ -492,8 +492,7 @@ namespace VccModelViewer
       }
       TreeNode objectNode = new TreeNode(String.Format("{0}{3} : {2}{1} {4}",
         o.FieldName, o.FieldType, type_info, deref_value, GetAliasesList(o, o.FieldName)), 
-        (int)Icons.Field, (int)Icons.Field);
-      objectNode.Tag = o;
+        (int)Icons.Field, (int)Icons.Field) {Tag = o};
       AddDummyNodeTo(objectNode);
       return objectNode;
     }
@@ -505,25 +504,25 @@ namespace VccModelViewer
       result += text;
     }
 
-    TreeNode UnfoldFieldInfoHelper(TreeNode objectNode, FieldInfo o)
+    static TreeNode UnfoldFieldInfoHelper(TreeNode objectNode, FieldInfo o)
     {
       TreeNode statusNode = new TreeNode("Status", (int)Icons.FolderOpen, (int)Icons.FolderOpen);
       string typed_state = "";
       string status_tag = "";
 
-      if ((o.HeapAddress != null) && (o.HeapAddress.Value != null) && (o.HeapAddress.Value != ""))
+      if ((o.HeapAddress != null) && (!string.IsNullOrEmpty(o.HeapAddress.Value)))
       {
         statusNode.Nodes.Add(new TreeNode(String.Format("Heap address: {0}", o.HeapAddress.Value), (int)Icons.Properties, (int)Icons.Properties));
       }
-      if ((o.TimeStamp != null) && (o.TimeStamp.Value != null) && (o.TimeStamp.Value != ""))
+      if ((o.TimeStamp != null) && (!string.IsNullOrEmpty(o.TimeStamp.Value)))
       {
         statusNode.Nodes.Add(new TreeNode(String.Format("Timestamp: {0}", o.TimeStamp.Value), (int)Icons.Properties, (int)Icons.Properties));
       }
-      if ((o.Owner != null) && (o.Owner.Value != null) && (o.Owner.Value != ""))
+      if ((o.Owner != null) && (!string.IsNullOrEmpty(o.Owner.Value)))
       {
         statusNode.Nodes.Add(new TreeNode(String.Format("Owner: {0}", o.Owner.Value), (int)Icons.Properties, (int)Icons.Properties));
       }
-      if ((o.ThreadOwner != null) && (o.ThreadOwner.Value != null) && (o.ThreadOwner.Value != ""))
+      if ((o.ThreadOwner != null) && (!string.IsNullOrEmpty(o.ThreadOwner.Value)))
       {
         statusNode.Nodes.Add(new TreeNode(String.Format("Thread Owner: {0}", o.ThreadOwner.Value), (int)Icons.Properties, (int)Icons.Properties));
       }
@@ -605,7 +604,7 @@ namespace VccModelViewer
       UnfoldDotContainerNodeHelper(objectNode, o);
     }
 
-    TreeNode CreateDotNode(DotInfo o)
+    static TreeNode CreateDotNode(DotInfo o)
     {
       string type_info = "";
       if (o.Volatile) type_info += "volatile ";
@@ -630,8 +629,7 @@ namespace VccModelViewer
         node_info += " " + aliases;
       }
 
-      TreeNode result = new TreeNode(node_info, (int)Icons.TypeDef, (int)Icons.TypeDef);
-      result.Tag = o;
+      TreeNode result = new TreeNode(node_info, (int)Icons.TypeDef, (int)Icons.TypeDef) {Tag = o};
       AddDummyNodeTo(result);
       return result;
     }
@@ -673,10 +671,9 @@ namespace VccModelViewer
       }
     }
 
-    TreeNode CreateArrayInfoNode(ArrayInfo arrayInfo)
+    static TreeNode CreateArrayInfoNode(ArrayInfo arrayInfo)
     {
-      TreeNode result = new TreeNode(arrayInfo.FieldName, (int)Icons.Structure, (int)Icons.Structure);
-      result.Tag = arrayInfo;
+      TreeNode result = new TreeNode(arrayInfo.FieldName, (int)Icons.Structure, (int)Icons.Structure) {Tag = arrayInfo};
       AddDummyNodeTo(result);
 
       return result;
@@ -742,24 +739,14 @@ namespace VccModelViewer
           value_string = String.Format(" = {0}", o.FieldValue);
         field_node = String.Format("{0}{1} : {3}{2}", o.FieldName, value_string, o.FieldType, type_info);
       }
-      TreeNode result = new TreeNode(field_node, (int)Icons.ValueType, (int)Icons.ValueType);
-      result.Tag = o;
+      TreeNode result = new TreeNode(field_node, (int)Icons.ValueType, (int)Icons.ValueType) {Tag = o};
       return result;
     }
 
     TreeNode CreatePtrSetEntryNode(PtrSetEntry o)
     {
-      string entry_name;
-      if (o.TypePartition != null)
-      {
-        entry_name = String.Format("{0} : {1}", o.FieldName, o.TypePartition.DisplayValue);
-      }
-      else
-      {
-        entry_name = o.FieldName;
-      }
-      TreeNode result = new TreeNode(entry_name, (int)Icons.Field, (int)Icons.Field);
-      result.Tag = o;
+      string entry_name = o.TypePartition != null ? String.Format("{0} : {1}", o.FieldName, o.TypePartition.DisplayValue) : o.FieldName;
+      TreeNode result = new TreeNode(entry_name, (int)Icons.Field, (int)Icons.Field) {Tag = o};
       if (o.Field.Type != PartitionType.Value)
       {
         UnfoldPtrSetEntryNode(result, o);
@@ -776,7 +763,7 @@ namespace VccModelViewer
       }
     }
 
-    TreeNode CreatePtrSetFieldInfoNode(PtrSetFieldInfo o)
+    static TreeNode CreatePtrSetFieldInfoNode(PtrSetFieldInfo o)
     {
       string type_info = "";
       if (o.Volatile) type_info += "volatile ";
@@ -789,8 +776,7 @@ namespace VccModelViewer
         type_info += o.FieldType;
       }
 
-      TreeNode result = new TreeNode(String.Format("{0} : {1}", o.FieldName, type_info), (int)Icons.Set, (int)Icons.Set);
-      result.Tag = o;
+      TreeNode result = new TreeNode(String.Format("{0} : {1}", o.FieldName, type_info), (int)Icons.Set, (int)Icons.Set) {Tag = o};
       AddDummyNodeTo(result);
       return result;
     }
@@ -837,8 +823,7 @@ namespace VccModelViewer
       foreach (MapEntry e in m.Entries)
       {
         string nodeText = String.Format("{0} --> {1}", e.KeyName, e.ValueName);
-        TreeNode eNode = new TreeNode(nodeText, (int)Icons.MapItem, (int)Icons.MapItem);
-        eNode.Tag = e;
+        TreeNode eNode = new TreeNode(nodeText, (int)Icons.MapItem, (int)Icons.MapItem) {Tag = e};
         if ((e.KeyField != null) || (e.ValueField != null))
         {
           AddDummyNodeTo(eNode);
@@ -849,36 +834,20 @@ namespace VccModelViewer
       return result;
     }
 
-    void UnfoldMapFieldEntryNode(TreeNode node, MapEntry mi)
+    static void UnfoldMapFieldEntryNode(TreeNode node, MapEntry mi)
     {
       string nodeName;
       if (mi.KeyField != null)
       {
-        if (mi.KeyField.FieldName.Equals(mi.KeyName))
-        {
-          nodeName = String.Format("{0} : {1}", mi.KeyField.FieldName, mi.KeyField.FieldType);
-        }
-        else
-        {
-          nodeName = String.Format("({1}*){2} == {0} : {1}", mi.KeyField.FieldName, mi.KeyField.FieldType, mi.KeyName);
-        }
-        TreeNode tn = new TreeNode(nodeName, (int)Icons.MapItem, (int)Icons.MapItem);
-        tn.Tag = mi.KeyField;
+        nodeName = mi.KeyField.FieldName.Equals(mi.KeyName) ? String.Format("{0} : {1}", mi.KeyField.FieldName, mi.KeyField.FieldType) : String.Format("({1}*){2} == {0} : {1}", mi.KeyField.FieldName, mi.KeyField.FieldType, mi.KeyName);
+        TreeNode tn = new TreeNode(nodeName, (int)Icons.MapItem, (int)Icons.MapItem) {Tag = mi.KeyField};
         AddDummyNodeTo(tn);
         node.Nodes.Add(tn);
       }
       if (mi.ValueField != null)
       {
-        if (mi.ValueField.FieldName.Equals(mi.ValueName))
-        {
-          nodeName = String.Format("{0} : {1}", mi.ValueField.FieldName, mi.ValueField.FieldType);
-        }
-        else
-        {
-          nodeName = String.Format("({1}*){2} == {0} : {1}", mi.ValueField.FieldName, mi.ValueField.FieldType, mi.ValueName);
-        }
-        TreeNode tn = new TreeNode(nodeName, (int)Icons.MapItem, (int)Icons.MapItem);
-        tn.Tag = mi.ValueField;
+        nodeName = mi.ValueField.FieldName.Equals(mi.ValueName) ? String.Format("{0} : {1}", mi.ValueField.FieldName, mi.ValueField.FieldType) : String.Format("({1}*){2} == {0} : {1}", mi.ValueField.FieldName, mi.ValueField.FieldType, mi.ValueName);
+        TreeNode tn = new TreeNode(nodeName, (int)Icons.MapItem, (int)Icons.MapItem) {Tag = mi.ValueField};
         AddDummyNodeTo(tn);
         node.Nodes.Add(tn);
       }
@@ -888,8 +857,8 @@ namespace VccModelViewer
     {
       if (!isHiddenFunction(o.Function, dependingPartition))
       {
-        TreeNode result = new TreeNode(modelController.GetStateStrippedFunctionStringWithResult(o.Function, fieldName, getCurrentExecutionState()), (int)Icons.Method, (int)Icons.Method);
-        result.Tag = o;
+        TreeNode result = new TreeNode(modelController.GetStateStrippedFunctionStringWithResult(o.Function, fieldName, getCurrentExecutionState()), (int)Icons.Method, (int)Icons.Method)
+                            {Tag = o};
         return result;
       }
       return null;
@@ -952,11 +921,13 @@ namespace VccModelViewer
 
     private void openToolStripMenuItem_Click(object sender, EventArgs e)
     {
-      OpenFileDialog openDialog = new OpenFileDialog();
-
-      openDialog.Filter = "VCC Model (*.vccmodel)|*.vccmodel|Text Files (*.txt)|*.txt|AllFiles (*.*)|*.*";
-      openDialog.FilterIndex = 0;
-      openDialog.RestoreDirectory = true;
+      OpenFileDialog openDialog = new OpenFileDialog
+                                    {
+                                      Filter =
+                                        "VCC Model (*.vccmodel)|*.vccmodel|Text Files (*.txt)|*.txt|AllFiles (*.*)|*.*",
+                                      FilterIndex = 0,
+                                      RestoreDirectory = true
+                                    };
 
       if (openDialog.ShowDialog() == DialogResult.OK)
       {
@@ -1043,9 +1014,7 @@ namespace VccModelViewer
               lviTexts[1] = exec.state.Value;
               lviTexts[2] = valueInState;
 
-              ListViewItem lvi = new ListViewItem(lviTexts);
-              lvi.Tag = exec;
-              lvi.ToolTipText = valueInState;
+              ListViewItem lvi = new ListViewItem(lviTexts) {Tag = exec, ToolTipText = valueInState};
               if (lastValueInState != null && lastValueInState != valueInState)
               {
                 Font bold = new Font(lvi.Font, FontStyle.Bold);
@@ -1153,7 +1122,7 @@ namespace VccModelViewer
       }
     }
 
-    private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+    private static void aboutToolStripMenuItem_Click(object sender, EventArgs e)
     {
       new AboutBox().Show();
     }
@@ -1244,6 +1213,21 @@ namespace VccModelViewer
       {
         eventHandler(this, new ModelInformationChangedEventArgs(fileName, selectedModel, numberOfModels));
       }
+    }
+
+    private void toolStripMenuItem1_Click(object sender, EventArgs e)
+    {
+      var items = this.stateValueView.SelectedItems;
+      if (items.Count == 1) {
+        var item = items[0];
+        if (item.SubItems.Count >= 3)
+          Clipboard.SetText(item.SubItems[2].Text);
+      }
+    }
+
+    private void stateValueView_SelectedIndexChanged(object sender, EventArgs e)
+    {
+      this.contextMenuStrip1.Enabled = (this.stateValueView.SelectedItems.Count == 1);
     }
 
   }
