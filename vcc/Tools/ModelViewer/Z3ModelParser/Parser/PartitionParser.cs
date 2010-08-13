@@ -20,9 +20,9 @@ namespace Z3Model.Parser
 
   public class PartitionParser
   {
-    Tokenizer Tokenizer;
+    readonly Tokenizer Tokenizer;
     PartitionParserStages Stage;
-    Dictionary<int, Partition> _PartitionMap;
+    readonly Dictionary<int, Partition> _PartitionMap;
 
     public Dictionary<int, Partition> getPartitionMap()
     {
