@@ -504,7 +504,7 @@ namespace VccModelViewer
       result += text;
     }
 
-    static TreeNode UnfoldFieldInfoHelper(TreeNode objectNode, FieldInfo o)
+    static void UnfoldFieldInfoHelper(TreeNode objectNode, FieldInfo o)
     {
       TreeNode statusNode = new TreeNode("Status", (int)Icons.FolderOpen, (int)Icons.FolderOpen);
       string typed_state = "";
@@ -552,7 +552,7 @@ namespace VccModelViewer
       {
         statusNode.Nodes.Add(new TreeNode("Ghost field", (int)Icons.Properties, (int)Icons.Properties));
       }
-      return statusNode;
+      return;
     }
 
     void UnfoldObjectNode(TreeNode objectNode, DotContainerInfo o)
@@ -1177,18 +1177,12 @@ namespace VccModelViewer
 
     void TriggerUpdate()
     {
-      if (toolStripButton_filterStates.Checked != FilterStates)
-        toolStripButton_filterStates.Checked = FilterStates;
-      if (toolStripButton_filterFunctions.Checked != FilterFunctions)
-        toolStripButton_filterFunctions.Checked = FilterFunctions;
-      if (toolStripButton_filterVariables.Checked != FilterBoogieVariables)
-        toolStripButton_filterVariables.Checked = FilterBoogieVariables;
-      if (filterInconsistentStatesToolStripMenuItem.Checked != FilterStates)
-        filterInconsistentStatesToolStripMenuItem.Checked = FilterStates;
-      if (filterFunctionsToolStripMenuItem.Checked != FilterFunctions)
-        filterFunctionsToolStripMenuItem.Checked = FilterFunctions;
-      if (filterInternalVccVariablesToolStripMenuItem.Checked != FilterBoogieVariables)
-        filterInternalVccVariablesToolStripMenuItem.Checked = FilterBoogieVariables;
+      toolStripButton_filterStates.Checked = FilterStates;
+      toolStripButton_filterFunctions.Checked = FilterFunctions;
+      toolStripButton_filterVariables.Checked = FilterBoogieVariables;
+      filterInconsistentStatesToolStripMenuItem.Checked = FilterStates;
+      filterFunctionsToolStripMenuItem.Checked = FilterFunctions;
+      filterInternalVccVariablesToolStripMenuItem.Checked = FilterBoogieVariables;
 
       if ((!inhibitTriggerUpdate) && (executionStatesComboBox.SelectedIndex >= 0))
       {

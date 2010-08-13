@@ -22,8 +22,8 @@ namespace Z3Model.Parser {
 
   public class Token
   {
-    string _content;
-    Tokentype _type;
+    readonly string _content;
+    readonly Tokentype _type;
 
     public Token (string Content, Tokentype Type){
       _content = Content;
@@ -43,8 +43,8 @@ namespace Z3Model.Parser {
 
 
   public class Tokenizer : IEnumerable , IEnumerator {
-    string Data;
-    List<Token> Tokenlist;
+    readonly string Data;
+    readonly List<Token> Tokenlist;
 
     public Token this[int i] {
       get { return Tokenlist[i]; }
