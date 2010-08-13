@@ -323,7 +323,7 @@
           this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
           this.aboutToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
           this.aboutToolStripMenuItem.Text = "About";
-          this.aboutToolStripMenuItem.Click += new System.EventHandler(aboutToolStripMenuItem_Click);
+          this.aboutToolStripMenuItem.Click += new System.EventHandler(ModelViewer.aboutToolStripMenuItem_Click);
           // 
           // toolStripContainer1
           // 
