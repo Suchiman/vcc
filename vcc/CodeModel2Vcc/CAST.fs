@@ -320,6 +320,15 @@ module Microsoft.Research.Vcc.CAST
       | PhysPtr t -> t, false  
       | t -> t, false
     
+    member private this.IsMathType name =
+      match this with
+      | Type.Ref({Kind = MathType; Name = name'}) when name = name' -> true
+      | _ -> false
+
+    member this.IsPtrSet = this.IsMathType "ptrset"
+    member this.IsMathStruct = this.IsMathType "struct"
+    member this.IsMathState = this.IsMathType "state_t"
+
     // those should be treated as immutable
     static member MathTd name = 
       match mathTypeCache.TryGetValue name with
