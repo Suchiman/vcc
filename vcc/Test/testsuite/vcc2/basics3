@@ -117,3 +117,15 @@ void foo(unsigned int x)
 `
 Verification of foo succeeded.
 `
+`/newsyntax
+#include <vcc.h>
+
+_(logic \integer \plus(\integer a, \integer b) = a + b)
+
+void foo() {
+  unsigned a,b;
+  _(assert \plus(_(unchecked)(a+0),b) == \plus(_(\integer)a, _(\integer)b))
+}
+`
+Verification of foo succeeded.
+`

@@ -376,6 +376,7 @@ namespace Microsoft.Research.Vcc.Parsing
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       Parameter result;
       bool savedInSpecCode = this.SkipIntoSpecBlock();
+
       switch (this.currentToken) {
         case Token.SpecGhost:
           this.GetNextToken();
@@ -399,10 +400,10 @@ namespace Microsoft.Research.Vcc.Parsing
       this.Skip(Token.LeftParenthesis);
       while (this.currentToken != Token.RightParenthesis) {
         if (this.currentToken == Token.Specification) {
-          result.Add(this.ParseSpecArgument(followers | Token.RightParenthesis));
+          result.Add(this.ParseSpecArgument(followers | Token.Comma | Token.Specification | Token.RightParenthesis));
           continue;
         }
-        result.Add(this.ParseArgumentExpression(followers | Token.RightParenthesis));
+        result.Add(this.ParseArgumentExpression(followers | Token.Comma | Token.Specification | Token.RightParenthesis));
         if (this.currentToken == Token.Comma) {
           this.GetNextToken();
           continue;
@@ -418,6 +419,7 @@ namespace Microsoft.Research.Vcc.Parsing
 
     private Expression ParseSpecArgument(TokenSet followers) {
       Expression result;
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       bool savedInSpecCode = this.SkipIntoSpecBlock();
       switch (this.currentToken) {
         case Token.SpecGhost:
@@ -425,16 +427,16 @@ namespace Microsoft.Research.Vcc.Parsing
           result = this.ParseExpression(followers | Token.RightParenthesis);
           break;
         case Token.SpecOut:
-          SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
           this.GetNextToken();
           var outArg = this.ParseExpression(followers | Token.RightParenthesis);
           slb.UpdateToSpan(outArg.SourceLocation);
           result = new VccOutArgument(new TargetExpression(outArg), slb);
           break;
         default:
-          this.HandleError(Error.SyntaxError, "ghost or out");
-          result = this.ParseExpression(followers | Token.RightParenthesis);
-          break;
+          result = this.ParseSpecCastExpression(followers, savedInSpecCode, slb);
+          // we need to add the comma here because our caller is not prepared to deal with it
+          if (this.currentToken == Token.Comma) this.GetNextToken(); 
+          return result;
       }
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       return result;
@@ -574,27 +576,32 @@ namespace Microsoft.Research.Vcc.Parsing
       } else return this.ParseExpression(followers);
     }
 
-    protected override Expression ParseSpecCastExpression(TokenSet followers) {
-      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis, true);
+    private Expression ParseSpecCastExpression(TokenSet followers, bool savedInSpecCode, SourceLocationBuilder slb)
+    {
       if (this.CurrentTokenStartsTypeExpression()) {
         TypeExpression targetType = this.ParseTypeExpression(followers | Token.RightParenthesis);
-        this.Skip(Token.RightParenthesis);
+        this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);
         var valueToCast = this.ParseUnaryExpression(followers);
         slb.UpdateToSpan(valueToCast.SourceLocation);
         return new VccCast(valueToCast, targetType, slb);
       } else if (this.currentToken == Token.Unchecked) {
         this.GetNextToken();
-        this.Skip(Token.RightParenthesis);
+        this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);
         var uncheckedExpr = this.ParseUnaryExpression(followers);
         slb.UpdateToSpan(uncheckedExpr.SourceLocation);
         return new UncheckedExpression(uncheckedExpr, slb);
       } else {
         this.HandleError(Error.SyntaxError, this.scanner.GetTokenSource());
-        this.SkipTo(followers);
+        this.SkipOutOfSpecBlock(savedInSpecCode, followers);
         return new DummyExpression(slb);
       }
+    }
+
+    protected override Expression ParseSpecCastExpression(TokenSet followers)
+    {
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      bool savedInSpecCode = this.SkipIntoSpecBlock();
+      return this.ParseSpecCastExpression(followers, savedInSpecCode, slb);
     }
 
     protected override Expression ParseQuantifier(TokenSet followers) {
