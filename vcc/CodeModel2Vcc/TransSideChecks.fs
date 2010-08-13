@@ -454,7 +454,7 @@ namespace Microsoft.Research.Vcc
                   Expr.MkBlock []
                 | Ptr _ ->
                   Expr.MkAssume (Macro (boolBogusEC(), "reads_same", [subst expr]))
-                | t when t = Type.PtrSet ->
+                | t when t.IsPtrSet ->
                   match expr with
                     | Macro(_, "_vcc_set_empty", _) -> Expr.MkBlock []
                     | Macro(_, "_vcc_array_range", [_; ptr; _]) ->
@@ -470,8 +470,7 @@ namespace Microsoft.Research.Vcc
                     | _ -> helper.Error (expr.Token, 9648, "unsupported pointer set in reads clauses", None)
                            Expr.MkBlock []
                 | _ ->
-                  match expr with
-                    | _ -> helper.Error (expr.Token, 9648, "non-pointers are not supported in reads clauses", None)
+                  helper.Error (expr.Token, 9648, "non-pointers are not supported in reads clauses", None)
                   Expr.MkBlock []
             Some (Expr.MkBlock ([Macro (ec, "_vcc_reads_havoc", [])] @ List.map isSame f.Reads @ preconds))
           | _ -> None
