@@ -19,7 +19,7 @@ void divide(UINT x, UINT d, UINT *q, UINT *r)
   // assume that the loop invariant holds
   _(assume x == d*lq + lr)
   // jump out if the loop terminated
-  if (!(lr >= d) goto loopExit;
+  if (!(lr >= d)) goto loopExit;
   {
     lq++;
     lr -= d;

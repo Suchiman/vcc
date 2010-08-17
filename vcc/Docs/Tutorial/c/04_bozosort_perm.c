@@ -54,5 +54,6 @@ void bozo_sort(int *buf, unsigned len _(out perm_t perm))
 }
 /*{out}*/
 /*`
+Verification of random succeeded.
 Verification of bozo_sort succeeded.
 `*/
