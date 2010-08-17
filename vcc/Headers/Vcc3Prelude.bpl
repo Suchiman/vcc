@@ -1709,45 +1709,45 @@ procedure $cev_pre_loop(pos: $token) returns (oldPC: int);
 function $rd.MAP(m:MAP, p:PTR) : VAL;
 function $wr.MAP(m:MAP, p:PTR, v:VAL) : MAP;
 axiom (forall m:MAP, p:PTR, v:VAL :: $rd.MAP($wr.MAP(m, p, v), p) == v);
-axiom (forall m:MAP, p1,p2:PTR, v:VAL :: $rd.MAP($wr.MAP(m, p1, v), p2) == $rd.MAP(m, p2) || p1 == p2);
+axiom (forall m:MAP, p1,p2:PTR, v:VAL :: p1 == p2 || $rd.MAP($wr.MAP(m, p1, v), p2) == $rd.MAP(m, p2));
 */
 
 function $rd.$heap(m:$heap, p:$ptr) : $object;
 function $wr.$heap(m:$heap, p:$ptr, v:$object) : $heap;
 axiom (forall m:$heap, p:$ptr, v:$object :: $rd.$heap($wr.$heap(m, p, v), p) == v);
-axiom (forall m:$heap, p1,p2:$ptr, v:$object :: $rd.$heap($wr.$heap(m, p1, v), p2) == $rd.$heap(m, p2) || p1 == p2);
+axiom (forall m:$heap, p1,p2:$ptr, v:$object :: p1 == p2 || $rd.$heap($wr.$heap(m, p1, v), p2) == $rd.$heap(m, p2));
 
 function $rd.$object(m:$object, p:$field) : $sub_object;
 function $wr.$object(m:$object, p:$field, v:$sub_object) : $object;
 axiom (forall m:$object, p:$field, v:$sub_object :: $rd.$object($wr.$object(m, p, v), p) == v);
-axiom (forall m:$object, p1,p2:$field, v:$sub_object :: $rd.$object($wr.$object(m, p1, v), p2) == $rd.$object(m, p2) || p1 == p2);
+axiom (forall m:$object, p1,p2:$field, v:$sub_object :: p1 == p2 || $rd.$object($wr.$object(m, p1, v), p2) == $rd.$object(m, p2));
 
 function $rd.$sub_object(m:$sub_object, p:$ptr) : int;
 function $wr.$sub_object(m:$sub_object, p:$ptr, v:int) : $sub_object;
 axiom (forall m:$sub_object, p:$ptr, v:int :: $rd.$sub_object($wr.$sub_object(m, p, v), p) == v);
-axiom (forall m:$sub_object, p1,p2:$ptr, v:int :: $rd.$sub_object($wr.$sub_object(m, p1, v), p2) == $rd.$sub_object(m, p2) || p1 == p2);
+axiom (forall m:$sub_object, p1,p2:$ptr, v:int :: p1 == p2 || $rd.$sub_object($wr.$sub_object(m, p1, v), p2) == $rd.$sub_object(m, p2));
 
 function $rd.$roots(m:$roots, p:$ptr) : $ptr;
 function $wr.$roots(m:$roots, p:$ptr, v:$ptr) : $roots;
 axiom (forall m:$roots, p:$ptr, v:$ptr :: $rd.$roots($wr.$roots(m, p, v), p) == v);
-axiom (forall m:$roots, p1,p2:$ptr, v:$ptr :: $rd.$roots($wr.$roots(m, p1, v), p2) == $rd.$roots(m, p2) || p1 == p2);
+axiom (forall m:$roots, p1,p2:$ptr, v:$ptr :: p1 == p2 || $rd.$roots($wr.$roots(m, p1, v), p2) == $rd.$roots(m, p2));
 
 function $rd.$embs(m:$embs, p:$ptr) : $ptr;
 function $wr.$embs(m:$embs, p:$ptr, v:$ptr) : $embs;
 axiom (forall m:$embs, p:$ptr, v:$ptr :: $rd.$embs($wr.$embs(m, p, v), p) == v);
-axiom (forall m:$embs, p1,p2:$ptr, v:$ptr :: $rd.$embs($wr.$embs(m, p1, v), p2) == $rd.$embs(m, p2) || p1 == p2);
+axiom (forall m:$embs, p1,p2:$ptr, v:$ptr :: p1 == p2 || $rd.$embs($wr.$embs(m, p1, v), p2) == $rd.$embs(m, p2));
 
 /*
 function $rd.MAP(m:MAP, p1,p2:$ptr) : VAL;
 function $wr.MAP(m:MAP, p1,p2:$ptr, v:VAL) : MAP;
 axiom (forall m:MAP, p1,p2:$ptr, v:VAL :: $rd.MAP($wr.MAP(m, p1, p2, v), p1, p2) == v);
-axiom (forall m:MAP, p1,p2,q1,q2:$ptr, v:VAL :: $rd.MAP($wr.MAP(m, p1, p2, v), q1, q2) == $rd.MAP(m, q1, q2) || (p1 == q1 && p2 == q2));
+axiom (forall m:MAP, p1,p2,q1,q2:$ptr, v:VAL :: (p1 == q1 && p2 == q2) || $rd.MAP($wr.MAP(m, p1, p2, v), q1, q2) == $rd.MAP(m, q1, q2));
 */
 
 function $rd.$timestamps(m:$timestamps, p1,p2:$ptr) : int;
 function $wr.$timestamps(m:$timestamps, p1,p2:$ptr, v:int) : $timestamps;
 axiom (forall m:$timestamps, p1,p2:$ptr, v:int :: $rd.$timestamps($wr.$timestamps(m, p1, p2, v), p1, p2) == v);
-axiom (forall m:$timestamps, p1,p2,q1,q2:$ptr, v:int :: $rd.$timestamps($wr.$timestamps(m, p1, p2, v), q1, q2) == $rd.$timestamps(m, q1, q2) || (p1 == q1 && p2 == q2));
+axiom (forall m:$timestamps, p1,p2,q1,q2:$ptr, v:int :: (p1 == q1 && p2 == q2) || $rd.$timestamps($wr.$timestamps(m, p1, p2, v), q1, q2) == $rd.$timestamps(m, q1, q2));
 
 function $rd.$typed(m:$typed, p1,p2:$ptr) : bool;
 function $wr.$typed(m:$typed, p1,p2:$ptr, v:bool) : $typed;
@@ -1762,7 +1762,7 @@ axiom (forall m:$owner, p1,p2,q1,q2:$ptr, v:$ptr :: $rd.$owner($wr.$owner(m, p1,
 function $rd.$closed(m:$closed, p1,p2:$ptr) : bool;
 function $wr.$closed(m:$closed, p1,p2:$ptr, v:bool) : $closed;
 axiom (forall m:$closed, p1,p2:$ptr, v:bool :: $rd.$closed($wr.$closed(m, p1, p2, v), p1, p2) == v);
-axiom (forall m:$closed, p1,p2,q1,q2:$ptr, v:bool :: $rd.$closed($wr.$closed(m, p1, p2, v), q1, q2) == $rd.$closed(m, q1, q2) || (p1 == q1 && p2 == q2));
+axiom (forall m:$closed, p1,p2,q1,q2:$ptr, v:bool :: (p1 == q1 && p2 == q2) || $rd.$closed($wr.$closed(m, p1, p2, v), q1, q2) == $rd.$closed(m, q1, q2));
 
 function $rd.$owner2(m:$owner2, p:$ptr) : $owner1;
 function $wr.$owner2(m:$owner2, p:$ptr, v:$owner1) : $owner2;
