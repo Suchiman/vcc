@@ -10,4 +10,6 @@ int min(int a, int b)
 }
 /*`
 Verification of min succeeded.
+Verification of min#bv_lemma#0 succeeded.
+Verification of min#bv_lemma#1 succeeded.
 `*/
