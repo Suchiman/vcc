@@ -153,10 +153,12 @@ namespace Microsoft.Research.Vcc
             }
           }
 
+          /*
           if (commandLineOptions.Vcc3 && pluginName == null) {
             pluginName = "Vcc3";
             commandLineOptions.PluginOptions[pluginName] = new List<string>();
           }
+           */
 
           if (pluginName != null) {
             foreach (var plugin in pluginManager.Plugins) {
