@@ -30,6 +30,7 @@ namespace Z3AxiomProfiler
     private Dictionary<int, Literal> literalById = new Dictionary<int, Literal>();
     private FunSymbol currentFun;
     private int cnflCount;
+    private ResolutionLiteral currResRoot, currResNode;
 
     public LogProcessor(List<FileInfo> bplFileInfos, bool skipDecisions, int cons)
     {
@@ -472,10 +473,15 @@ namespace Z3AxiomProfiler
             if (!interestedInCurrentCheck) break;
             Instantiation inst;
             if (!model.fingerprints.TryGetValue(words[1], out inst)) {
-              System.Console.WriteLine("fingerprint not found {0}", words[0]);
+              System.Console.WriteLine("fingerprint not found {0} {1}", words[0], words[1]);
               break;
             }
-            model.fingerprints.Remove(words[1]);
+            // model.fingerprints.Remove(words[1]);
+            if (inst.LineNo != 0) {
+              var tmp = new Instantiation();
+              inst.CopyTo(tmp);
+              inst = tmp;
+            }
             AddInstance(inst);
             int pos = 2;
             if (words.Length > pos && words[pos] != ";") {
@@ -562,10 +568,31 @@ namespace Z3AxiomProfiler
           eofSeen++;
           break;
 
-        case "[conflict-resolve]":
+        case "[resolve-process]":
           if (!interestedInCurrentCheck) break;
-          if (skipDecisions) break;
-          cnflResolveLits.Add(GetLiteral(words[1],true));
+          if (skipDecisions || words.Length < 2) break;
+          currResNode = new ResolutionLiteral();
+          currResNode.Term = GetLiteralTerm(words[1], out currResNode.Negated, out currResNode.Id);
+          if (currResRoot == null) {
+            currResRoot = currResNode;
+          } else {
+            var t = currResRoot.Find(currResNode.Id);
+            if (t != null)
+              currResNode = t;
+            else
+              Console.WriteLine("cannot attach to conflict {0}", words[1]);
+          }
+          break;
+
+        case "[resolve-lit]":
+          if (!interestedInCurrentCheck) break;
+          if (skipDecisions || words.Length < 3 || currResNode == null) break; 
+          {
+            var l = new ResolutionLiteral();
+            l.Term = GetLiteralTerm(words[2], out l.Negated, out l.Id);
+            l.LevelDifference = int.Parse(words[1]);
+            currResNode.Results.Add(l);
+          }
           break;
 
         case "[conflict]":
@@ -580,7 +607,9 @@ namespace Z3AxiomProfiler
           if (model.conflicts.Count > 0)
             curConfl.Cost -= model.conflicts[model.conflicts.Count - 1].LineNo;
           model.conflicts.Add(curConfl);
-
+          curConfl.ResolutionRoot = currResRoot;
+          currResRoot = null;
+          currResNode = null;
           for (int i = 1; i < words.Length; ++i) {
             string w = words[i];
             Literal lit = GetLiteral(w,false);
@@ -645,6 +674,11 @@ namespace Z3AxiomProfiler
               words[i] = words[i].Substring(words[i].IndexOf(':') + 1);
             inst.Bindings = GetArgs(4, words);
           } break;
+        case "[conflict-resolve]":
+          if (!interestedInCurrentCheck) break;
+          if (skipDecisions) break;
+          cnflResolveLits.Add(GetLiteral(words[1], true));
+          break;
         case "[conflict-lit]":
           if (curConfl != null && words.Length >= 2) {
             Literal lit = new Literal();
@@ -735,13 +769,15 @@ namespace Z3AxiomProfiler
       }
     }
 
-    private Literal GetLiteral(string w, bool reuse)
+    private Term GetLiteralTerm(string w, out bool negated, out int id)
     {
+      id = 0;
+      negated = false;
       if (w.Length < 2) return null;
-      Literal lit = new Literal();
+
       switch (w[0]) {
         case '-':
-          lit.Negated = true;
+          negated = true;
           goto case '+';
         case '+':
           w = w.Substring(1);
@@ -751,13 +787,19 @@ namespace Z3AxiomProfiler
         case '(':
           if (w.StartsWith("(not_#")) {
             w = w.Substring(5, w.Length - 6);
-            lit.Negated = true;
+            negated = true;
           }
           break;
       }
-      lit.Term = GetTerm(w);
       if (w[0] == '#')
-        lit.Id = int.Parse(w.Substring(1));
+        id = int.Parse(w.Substring(1));
+      return GetTerm(w);
+    }
+
+    private Literal GetLiteral(string w, bool reuse)
+    {
+      Literal lit = new Literal();
+      lit.Term = GetLiteralTerm(w, out lit.Negated, out lit.Id);
 
       var id = lit.Id;
       if (lit.Negated) id = -id;

@@ -806,6 +806,13 @@ namespace Z3AxiomProfiler.QuantifierModel
     //    }
     //}
 
+    public void CopyTo(Instantiation inst)
+    {
+      inst.Quant = Quant;
+      inst.Bindings = (Term[])Bindings.Clone();
+      inst.Responsible = (Term[])Responsible.Clone();
+    }
+
     public int Depth
     {
       get
@@ -1214,6 +1221,39 @@ namespace Z3AxiomProfiler.QuantifierModel
     }
   }
 
+  public class ResolutionLiteral : Literal
+  {
+    public List<ResolutionLiteral> Results = new List<ResolutionLiteral>();
+    public int LevelDifference;
+
+    public override IEnumerable<Common> Children()
+    {
+      //foreach (var e in base.Children()) yield return e;
+      foreach (var e in Results) yield return e;
+    }
+
+    public override int ForeColor()
+    {
+      if (LevelDifference == 0)
+        return 0x995555;
+      else return base.ForeColor();
+    }
+
+    public override bool HasChildren()
+    {
+      return Results.Count > 0;
+    }
+    public ResolutionLiteral Find(int id)
+    {
+      if (this.Id == id) return this;
+      foreach (var c in Results) {
+        var r = c.Find(id);
+        if (r != null) return r;
+      }
+      return null;
+    }
+  }
+
   public class Conflict : Common
   {
     public List<Literal> Literals = new List<Literal>();
@@ -1222,6 +1262,7 @@ namespace Z3AxiomProfiler.QuantifierModel
     public int Id;
     public int Cost;
     public double InstCost;
+    public ResolutionLiteral ResolutionRoot;
 
     public bool Useful
     {
@@ -1266,7 +1307,10 @@ namespace Z3AxiomProfiler.QuantifierModel
     {
       if (ResolutionLits.Length > 0)
         yield return Common.Callback("RESOLVED FROM", () => ResolutionLits);
-      yield return Common.Callback("CAUSES", delegate() {
+      if (ResolutionRoot != null)
+        yield return Common.Callback("RESOLVED FROM", () => new Common[] { ResolutionRoot });
+      yield return Common.Callback("CAUSES", delegate()
+      {
         var r = new List<Common>();
         foreach (var l in Literals) {
           if (l.Inverse != null) {
