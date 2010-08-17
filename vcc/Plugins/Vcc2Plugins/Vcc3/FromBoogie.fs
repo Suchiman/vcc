@@ -13,6 +13,7 @@ open Microsoft // for Boogie
 
 
 module FromBoogie =
+
   let cache (lst:GList<_>) (dict:Dict<_,_>) name f =
     match dict.TryGetValue name with
       | true, res -> res
@@ -292,11 +293,6 @@ module FromBoogie =
     addRel "==>" Type.Bool
     
     ctx.DeclareFuncDecl { makeBinary "!" Type.Bool with ArgTypes = [Type.Bool] }
-  
-  let parse ctx s =
-    match BoogiePL.Parser.ParseProposition s with
-      | (0, e) -> unparse ctx e
-      | _ -> failwith "cannot parse boogie expression"
 
   let doCommand (ctx:Ctx) (cmd:obj) =
     match cmd with
