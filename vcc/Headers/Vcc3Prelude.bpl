@@ -254,6 +254,11 @@ function {:inline true} $rd2(s:$state, p:$ptr, f:$field) : $sub_object { $rd.$ob
 function {:inline true} $rd3(s:$state, p:$ptr, f:$field, q:$ptr) : int { $rd.$sub_object($rd2(s, p, f), q) }
 function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int { $rd3(s, $root(s, p), f, p) }
 
+axiom (forall S:$state, q:$ptr, p:$ptr, f:$field, t:$ctype ::
+  {$rd3(S, q, $as_field_with_type(f, $as_in_range_t(t)), p)}
+  $good_state(S) ==>
+    $in_range_t(t, $rd3(S, q, $as_field_with_type(f, $as_in_range_t(t)), p)));
+
 function $relative_field_of(p:$ptr, q:$ptr) : $field;
 function $container(p:$ptr, f:$field) : $ptr;
 
@@ -348,9 +353,12 @@ axiom (forall p:$ptr, S:$state ::
 
 function $is_sequential_field($field) : bool;
 
+function $as_field_with_type($field,$ctype) : $field;
+
 function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int) : bool
   { $is_base_field(f) && $field_parent_type(f) == partp &&
     (!isvolatile ==> $is_sequential_field(f)) &&
+    $as_field_with_type(f, tp) == f &&
     $field_offset(f) == off &&
     true
     //(forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
@@ -369,6 +377,7 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
 function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
   { $is_base_field(f) && $field_parent_type(f) == partp && $is_ghost_field(f) &&
     (!isvolatile ==> $is_sequential_field(f)) &&
+    $as_field_with_type(f, tp) == f &&
     true
     //(forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ghost_ref(p, f))) &&
     /*
@@ -467,6 +476,20 @@ function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { (forall p:$ptr :: {$root(S1, p)} $owner(S0, p) == $me() ==> $root(S0, p) == $root(S1, p) || $in($root(S0, p), W)) &&
     (forall p:$ptr :: {$remb(S1,p)} $owner(S0, $remb(S0, p)) == $me() ==> $remb(S0, p) == $remb(S1, p) || $in($root(S0, $remb(S0, p)), W)) &&
     (forall p:$ptr :: {$rd1(S1, p)} $owner(S0, p) == $me() ==> $rd1(S0, p) == $rd1(S1, p) || $in(p, W)) &&
+
+    (forall p,q:$ptr :: {$rd.$typed($f_typed(S1), p, q)} $owner(S0, p) == $me() ==> $rd.$typed($f_typed(S1), p, q) == $rd.$typed($f_typed(S0), p, q) || $in(p, W)) &&
+    (forall p,q:$ptr :: {$rd.$timestamps($f_timestamp(S1), p, q)} $owner(S0, p) == $me() ==> 
+      $rd.$timestamps($f_timestamp(S1), p, q) == $rd.$timestamps($f_timestamp(S0), p, q) || 
+        ($in(p, W) && $rd.$timestamps($f_timestamp(S1), p, q) >= $rd.$timestamps($f_timestamp(S0), p, q))) &&
+    (forall p,q:$ptr :: {$rd.$closed($f_closed(S1), p, q)} $owner(S0, p) == $me() ==> $rd.$closed($f_closed(S1), p, q) == $rd.$closed($f_closed(S0), p, q) || $in(p, W)) &&
+    (forall p,q:$ptr :: {$rd.$owner1($rd.$owner2($f_owner(S1), p), q)} $owner(S0, p) == $me() ==> 
+    $rd.$owner1($rd.$owner2($f_owner(S1), p), q) == $rd.$owner1($rd.$owner2($f_owner(S0), p), q) || $in(p, W)) &&
+/*
+    $f_typed(S0) == $f_typed(S) &&
+    $f_timestamp(S0) == $f_timestamp(S) &&
+    $f_closed(S0) == $f_closed(S) &&
+    $f_owner(S0) == $f_owner(S) &&
+*/
     $timestamp_post(S0, S1) }
 
 function {:inline true} $preserves_thread_local(S0:$state, S1:$state) : bool
@@ -545,9 +568,11 @@ function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
   }
 
 function $in_range_phys_ptr(#r:int) : bool
-  { $in_range(0, #r, $arch_spec_ptr_start) }
+  { true }
+//  { $in_range(0, #r, $arch_spec_ptr_start) }
 function $in_range_spec_ptr(#r:int) : bool
-  { 0 == #r || #r > $arch_spec_ptr_start }
+  { true }
+//  { 0 == #r || #r > $arch_spec_ptr_start }
 const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
 
 function {:inline true} $is_ghost_ptr(p:$ptr) returns(bool)
@@ -743,7 +768,7 @@ axiom
           h[r2][f2][p2] == $update(h,r,f,p,v)[r2][f2][p2]));
 */
 
-function $specials_eq(S0:$state, S:$state) : bool
+function {:inline true} $specials_eq(S0:$state, S:$state) : bool
   { 
     $f_typed(S0) == $f_typed(S) &&
     $f_timestamp(S0) == $f_timestamp(S) &&
@@ -752,6 +777,22 @@ function $specials_eq(S0:$state, S:$state) : bool
     $embs(S0) == $embs(S) &&
     $roots(S0) == $roots(S)
   }
+
+function {:inline true} $meta_eq(s1:$state, s2:$state) : bool
+  { $specials_eq(s1, s2) }
+
+procedure $bump_timestamp();
+  modifies $s;
+  ensures
+    $f_typed($s) == $f_typed(old($s)) &&
+    $f_closed($s) == $f_closed(old($s)) &&
+    $f_owner($s) == $f_owner(old($s)) &&
+    $embs($s) == $embs(old($s)) &&
+    $roots($s) == $roots(old($s)) &&
+    $heap($s) == $heap(old($s));
+  // I'm not sure if this is neccessary
+  ensures $f_timestamp($s) == $wr.$timestamps($f_timestamp(old($s)), $null, $null, $current_timestamp($s));
+  ensures $current_timestamp(old($s)) < $current_timestamp($s);
 
 procedure $write_int(p:$ptr, f:$field, v:int);
   modifies $s;
@@ -828,18 +869,23 @@ function $post_unwrap(S1:$state, S2:$state) : bool;
 
 function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
 {
+  /*
   // TODO both of these takes the entire current heap, maybe restrict it to the owns set?
   (forall q:$ptr, f:$field :: {$rd3(S, o, f, q)}
      $rd3(S, o, f, q) == $rd3(S0, $root(S0, q), f, q))
   && (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, p) || p == o)
+*/
+   (forall p:$ptr, f:$field :: {$rd(S, p, f)} $rd(S, p, f) == $rd(S0, p, f))
   && $f_typed(S) == $f_typed(S0)
   && $f_closed(S) == $wr.$closed($f_closed(S0), o, o, true)
   && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, o, $current_timestamp(S))
-
   && (forall r:$ptr :: {$rd.$owner2($f_owner(S), r)}
-        if $set_in(r, $owns(S0, o)) then
+        if r == o then
           (forall p:$ptr :: {$rd.$owner1($rd.$owner2($f_owner(S), r), p)}
-             $rd.$owner1($rd.$owner2($f_owner(S), r), p) == if p == r then o else $owner(S0, p))
+             $rd.$owner1($rd.$owner2($f_owner(S), r), p) == 
+               if p == o then $me()
+               else if $set_in(p, $owns(S0, o)) then o
+               else $owner(S0, p))
         else 
           $rd.$owner2($f_owner(S), r) == $rd.$owner2($f_owner(S0), r))
 
@@ -859,9 +905,10 @@ function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
 
 function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 {
-  $mutable(S, o) && 
+  $mutable(S, o)
 
-  (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, $root(S0, p)))
+//  && (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, $root(S0, p)))
+  && (forall p:$ptr, f:$field :: {$rd(S, p, f)} $rd(S, p, f) == $rd(S0, p, f))
   && $f_typed(S) == $f_typed(S0)
   && $f_closed(S) == $wr.$closed($f_closed(S0), o, o, false)
   && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, o, $current_timestamp(S))
@@ -893,12 +940,20 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   $post_unwrap(S0, S)
 }
 
-axiom(forall s: $state, p: $ptr :: {$owner(s, p)}
-  $owner(s, p) == $me() ==> $root(s, p) == p);
+// Root axioms
+
+axiom(forall S: $state, p: $ptr :: {$owner(S, p)}
+  $good_state(S) ==>
+  $owner(S, p) == $me() ==> $root(S, p) == p);
 
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
+  $good_state(S) ==>
   $is_composite_ch($typ($owner(S, r))) ==>
     $root(S, r) == $root(S, $owner(S, r)));
+
+axiom (forall S:$state, p:$ptr ::
+  {$root(S, $root(S, p))}
+  $good_state(S) ==> $root(S, $root(S, p)) == $root(S, p));
 
 procedure $unwrap(o:$ptr, T:$ctype);
   modifies $s;
@@ -913,10 +968,11 @@ function $is_wrapped(S0:$state, S:$state, o:$ptr) : bool
 {
   $wrap_writes(S0, S, o) &&
   $wrapped(S, o, $typ(o)) &&
+/*
   $timestamp_is_now(S, o) &&
-
   (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==> $owner(S, p) == o) &&
+*/
 
   ($is_claimable($typ(o)) ==> $ref_cnt(S0, o) == 0 && $ref_cnt(S, o) == 0)
 
@@ -1166,7 +1222,7 @@ axiom (forall #a: $ptrset, #b: $ptrset :: {$set_eq(#a,#b)}
 function $set_cardinality($ptrset) : int;
 
 axiom ($set_cardinality($set_empty()) == 0);
-axiom (forall p:$ptr :: $set_cardinality($set_singleton(p)) == 1);
+axiom (forall p:$ptr :: {$set_singleton(p)} $set_cardinality($set_singleton(p)) == 1);
 
 function $set_universe() : $ptrset;
 axiom (forall #o: $ptr :: {$set_in(#o, $set_universe())} $set_in(#o, $set_universe()));
