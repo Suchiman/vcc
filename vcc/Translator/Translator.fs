@@ -1479,7 +1479,10 @@ namespace Microsoft.Research.Vcc
                     let name = "#loopWrites^" + (ctx.TokSuffix fst.Token)
                     let p = er name
                     let impl = 
-                      if helper.Options.Vcc3 then failwith "FIXME"
+                      if helper.Options.Vcc3 then 
+                        //bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
+                        bTrue
+                        // failwith "FIXME"
                       else
                          bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
                     let tok = afmtet fst.Common.Token 8011 "writes clause of the loop might not be included writes clause of the function" []
