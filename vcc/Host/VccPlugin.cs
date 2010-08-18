@@ -29,9 +29,8 @@ namespace Microsoft.Research.Vcc
     readonly string[] standardBoogieOptions = new[] { 
       // report up to 10 errors
       "/errorLimit:10", 
-      // use the default (predicates) type encoding, but monomorphize map types for efficiency
-      "/typeEncoding:p",
-      "/monomorphize",
+      // use the monomorphic type encoding
+      "/typeEncoding:m",
       // this defaults to 100 and causes Boogie to kill the prover after it is done, but has exceeded 100M; we instead use the /memory: switch to Z3
       "/proverMemoryLimit:0",
       // print prover warnings to stdout
@@ -88,11 +87,6 @@ namespace Microsoft.Research.Vcc
 
     private bool InitBoogie()
     {
-      if (parent.options.Vcc3)
-        for (int i = 0; i < standardBoogieOptions.Length; ++i)
-          if (standardBoogieOptions[i].StartsWith("/typeEncoding"))
-            standardBoogieOptions[i] = "/monomorphize";
-
       if (parent.options.RunInspector)
         options.Add(PathHelper.InspectorOption);
 

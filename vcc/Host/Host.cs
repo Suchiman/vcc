@@ -136,7 +136,7 @@ namespace Microsoft.Research.Vcc
       try {
         string pluginName = null;
         Plugin selectedPlugin = null;
-        VCGenPlugin vcgenPlugin = null;
+        VCGenPlugin vcgenPlugin = null; 
 
         if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp || commandLineOptions.Vcc3) {
           pluginManager = new PluginManager(commandLineOptions);

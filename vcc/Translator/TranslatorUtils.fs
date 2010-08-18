@@ -125,7 +125,7 @@ namespace Microsoft.Research.Vcc
       
       let addDecls lst = tokenConstants := lst @ !tokenConstants
     
-      let defaultWeights = [("writes", 0); ("select", 0); ("def-field-dot", 0); ("", 1)]
+      let defaultWeights = [("user-forall", 10); ("user-exists", 10); ("", 1)]
     
       let weights = defaultWeights
       let weight (id:string) =
