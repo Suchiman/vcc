@@ -163,7 +163,6 @@ const unique ^$#vol_version : $ctype;
 axiom $def_primitive_type(^^mathint, 1);
 axiom $def_composite_type(^^claim, ^claim.#root, 1, true, false);
 axiom $def_primitive_type(^$#ptrset, 1);
-axiom $def_flat_type(^$#thread_id_t, 1) && $is_threadtype(^$#thread_id_t);
 axiom $def_primitive_type(^$#state_t, 1);
 axiom $def_primitive_type(^$#struct, 1);
 
@@ -262,6 +261,9 @@ const ^$thread_id#root: $field;
 function $me() : $ptr;
 axiom $in_range_spec_ptr($me_ref) && $me_ref != 0;
 axiom $me() == $ptr(^$thread_id#root, $me_ref);
+axiom $def_flat_type(^$#thread_id_t, 1) && $is_threadtype(^$#thread_id_t);
+axiom $root_field(^$#thread_id_t) == ^$thread_id#root;
+axiom $def_ghost_field(^$#thread_id_t, ^$thread_id#root, ^$#thread_id_t, false);
 
 function {:inline true} $current_state(s:$state) : $state { s }
 
@@ -347,7 +349,10 @@ axiom $null == $ptr(^^null_field, 0);
 
 //typed pointer test
 function $is(p:$ptr, t:$ctype) : bool
-  { $typ(p)==t }
+  { if $is_composite_ch(t) then
+      $field(p) == $root_field(t)
+    else
+      $typ(p) == t }
 
 function {:inline true} $ptr_cast(#p:$ptr,#t:$ctype) : $ptr
   { $ptr($root_field(#t), $base(#p)) }
@@ -419,7 +424,10 @@ function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
   {
     (forall p:$ptr :: {$rd.$owner($f_owner(S), p)}
-      $set_in(p, ptrs) ==> $in_writes_at(time, p) && $thread_owned_or_even_mutable(S, p))
+      $set_in(p, ptrs) <==> $in_writes_at(time, p))
+    &&
+    (forall p:$ptr :: {$rd.$owner($f_owner(S), p)}
+      $set_in(p, ptrs) ==> $thread_owned_or_even_mutable(S, p))
 /*
     (forall p:$ptr :: {:vcc3 "L1"} {S[p]}
       $ghost_path(p) == $f_typed ==>
@@ -529,11 +537,14 @@ function {:inline false} $ref_cnt(S:$state, p:$ptr) : int
 function $position_marker() : bool
   { true }
 
-function $owns(S:$state, p:$ptr) : $ptrset
+function {:inline true} $owns_inline(S:$state, p:$ptr) : $ptrset
   { $int_to_ptrset($rd(S, p, $f_owns)) }
 
+function $owns(S:$state, p:$ptr) : $ptrset
+  { $owns_inline(S, p) }
+
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
-  { $typ(#p) == #t && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive_ch(#t) }
+  { $is(#p,#t) && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive_ch(#t) }
 
 function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
   { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
@@ -686,15 +697,24 @@ axiom (forall S:$state :: {$invok_state(S)}
 function {:inline true} $closed_is_transitive(S:$state) returns (bool)
   { 
     (forall p:$ptr,q:$ptr ::
-      {$set_in_pos(p, $owns(S, q))}
+      {$set_in_pos(p, $owns_inline(S, q))}
       $good_state(S) &&
-      $set_in(p, $owns(S, q)) && $closed(S, q) ==> $closed(S, p) && $base(p) != 0)
+      $set_in(p, $owns_inline(S, q)) && $closed(S, q) ==> 
+         $is_non_primitive_ch($typ(p)) && 
+         $field(p) == $root_field($typ(p)) &&
+         $owner(S, p) == q &&
+         $closed(S, p) && 
+         $base(p) != 0 &&
+         true
+         )
   } 
 
+/*
 axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in_pos(p, $owns(S, q)), $is_non_primitive($typ(p))}
   $good_state(S) &&
   $closed(S, q) && $is_non_primitive($typ(p)) ==>
       ($set_in(p, $owns(S, q)) <==> $owner(S, p) == q));
+*/
 
 axiom (forall S:$state, #r:int, #t:$ctype, #f:$field :: {$owns(S, $ptr($as_field_with_type(#f,#t), #r)), $is_arraytype(#t)}
   $good_state(S) ==>
@@ -824,7 +844,7 @@ procedure $set_owns(p:$ptr, owns:$ptrset);
 
 procedure $spec_alloc(t:$ctype) returns(r:$ptr);
   modifies $s;
-  ensures $typ(r) == t;
+  ensures $is(r, t);
   ensures $mutable($s, r);
 
   ensures (forall p:$ptr :: // TODO add trigger
@@ -882,7 +902,9 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 //  && (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, $root(S0, p)))
   && $heap(S) == $heap(S0)
   && $f_closed(S) == $wr.$closed($f_closed(S0), o, false)
-  && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, $current_timestamp(S))
+  && (forall r:$ptr :: {$rd.$timestamps($f_timestamp(S), r)}
+        if $owner(S0, r) == o then $rd.$timestamps($f_timestamp(S), r) == $current_timestamp(S)
+        else $rd.$timestamps($f_timestamp(S), r) == $rd.$timestamps($f_timestamp(S0), r))
   && (forall r:$ptr :: {$rd.$owner($f_owner(S), r)}
         if $owner(S0, r) == o then $rd.$owner($f_owner(S), r) == $me()
         else $rd.$owner($f_owner(S), r) == $rd.$owner($f_owner(S0), r))
@@ -897,11 +919,13 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
      ($root(S0, p) != o && $root(S0, p) == $root(S, p)) ||
      ($root(S0, p) == o && ($root(S, p) == p || $owner(S0, p) != o))
      )
+   /*
   &&
   (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==>
-      $wrapped(S, p, $typ(p)) && $timestamp_is_now(S, p)) &&
-
+      $wrapped(S, p, $typ(p)) && $timestamp_is_now(S, p))
+*/
+  &&
   // $preserves_thread_local(S0, S)
 
   $timestamp_post_strict(S0, S) &&
@@ -910,7 +934,7 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 
 // Root axioms
 
-axiom(forall S: $state, p: $ptr :: {$owner(S, p)}
+axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$root(S, p)}
   $good_state(S) ==>
   $owner(S, p) == $me() ==> $root(S, p) == p);
 
