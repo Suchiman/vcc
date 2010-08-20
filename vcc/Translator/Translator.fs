@@ -132,6 +132,7 @@ namespace Microsoft.Research.Vcc
       let castToInt = ctx.CastToInt
       let trType = ctx.TrType
       let weight = ctx.Weight
+      let vcc3 = helper.Options.Vcc3
       
       let assumeSync (env:Env) tok =
         let name = ctx.GetTokenConst tok
@@ -239,7 +240,7 @@ namespace Microsoft.Research.Vcc
           [bCall "$emb" [bState; p]; bCall "$path" [bState; p]]
 
       let typedRead s p t =
-        if helper.Options.Vcc3 then
+        if vcc3 then
           let cast e =
             match t with
               | C.Ptr t -> bCall "$ptr" [toTypeId t; e]
@@ -743,7 +744,7 @@ namespace Microsoft.Research.Vcc
             if isWf then (8501, 8502, " (in well-formedness check)")
             else         (8511, 8512, "")
           let tp =
-            if helper.Options.RunTestSuite || helper.Options.Vcc3 then []
+            if helper.Options.RunTestSuite || vcc3 then []
             else [cond codeTp ("{0} is typed" + suff) "_vcc_typed2" [cState;p] ]
           let th =
             match p with
@@ -757,7 +758,7 @@ namespace Microsoft.Research.Vcc
                   if f.IsVolatile then
                     cond codeTh ("{0} is mutable " + msg + "(accessing volatile field " + f.Name + ")" + suff) "_vcc_mutable" [cState; p']
                   else
-                    if helper.Options.Vcc3 then
+                    if vcc3 then
                       // Old comment: This doesn't work with field inlining.
                       cond codeTh ("{0} is thread local " + msg + "(accessing field " + f.Name + ")" + suff) "_vcc_thread_local" [cState; p']
                     else
@@ -770,7 +771,7 @@ namespace Microsoft.Research.Vcc
                     | _ ->
                       " or atomically updated", List.map (fun o -> bCall "$set_in" [trExpr env p; bCall "$span" [o]]) env.AtomicReads
                 let tok, prop =
-                  if helper.Options.Vcc3 then
+                  if vcc3 then
                     failwith "FIXME"
                   else
                     cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local2" [cState; p]
@@ -795,7 +796,7 @@ namespace Microsoft.Research.Vcc
               bMultiOr
           else bFalse
         let pred = if prim || use_wr then "$writable" else "$top_writable"
-        if helper.Options.Vcc3 then
+        if vcc3 then
           let ch = 
             if prim then
               bCall "$writable_prim" (bState :: env.WritesTime :: decomposeDot e)
@@ -904,7 +905,7 @@ namespace Microsoft.Research.Vcc
       let stateChanges (env:Env) =
         if env.Writes = [] then
           bCall "$writes_nothing" [env.WritesState; bState]
-        else if helper.Options.Vcc3 then
+        else if vcc3 then
           let inWr = isInWrites env (er "#p") |> bSubst [("$s", env.WritesState)]
           let wrSet = B.Lambda (Token.NoToken, [("#p", tpPtr)], [], inWr)
           bCall "$modifies" [env.WritesState; bState; wrSet]
@@ -1050,7 +1051,7 @@ namespace Microsoft.Research.Vcc
         let inWritesAt = bCall "$in_writes_at" [er name; p]
         let env = { env with Writes = wr; WritesTime = er name }
         let defWrites =
-          if helper.Options.Vcc3 then
+          if vcc3 then
             B.Stmt.Assume (bCall "$def_writes" [bState; er name; B.Expr.Lambda (Token.NoToken, [("#p", tpPtr)], [],  (isInWrites env p))])
           else
             B.Stmt.Assume (B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], [[inWritesAt]], weight "begin-writes", bEq inWritesAt (isInWrites env p)))
@@ -1328,7 +1329,7 @@ namespace Microsoft.Research.Vcc
                   | _ -> die()
               let e1' = trExpr env e1
               let write_call_args =
-                if helper.Options.Vcc3 then
+                if vcc3 then
                   decomposeDot e1' @ [e2']
                 else [e1'; e2']
               [cmt (); 
@@ -1479,7 +1480,7 @@ namespace Microsoft.Research.Vcc
                     let name = "#loopWrites^" + (ctx.TokSuffix fst.Token)
                     let p = er name
                     let impl = 
-                      if helper.Options.Vcc3 then 
+                      if vcc3 then 
                         //bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
                         bTrue
                         // failwith "FIXME"
@@ -2059,8 +2060,6 @@ namespace Microsoft.Research.Vcc
           let bExtentCall = prop (auxPtr r)
           B.Forall (Token.NoToken, qvars, [[bExtentCall]], weight "eqdef-extentprop", bEq bExtentCall body)
         
-        let vcc3 = helper.Options.Vcc3
-                
         let allFields = 
           match td.Fields with
             | x when vcc3 -> x
@@ -2336,10 +2335,10 @@ namespace Microsoft.Research.Vcc
                           let p = er "#p"
                           let triggers =
                             match extOf with
-                              | Some q when not helper.Options.Vcc3 ->
+                              | Some q when not vcc3 ->
                                 [[bCall "$extent_hint" [p; q]]]
                               | _ ->
-                                if helper.Options.Vcc3 then
+                                if vcc3 then
                                   List.map (fun n -> [bCall n [bState; p]]) ["$typed"; "$owner"; "$closed"]
                                 else
                                   List.map (fun n -> [bCall n [bState; p]]) ["$st"; "$ts"]
@@ -2365,7 +2364,7 @@ namespace Microsoft.Research.Vcc
                 let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ inParamLabels @ init @ cevInit                    
                 
                 let can_frame =
-                  if helper.Options.Vcc3 then []
+                  if vcc3 then []
                   else if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
                   else
                     [B.Stmt.Assume (bCall "$can_use_all_frame_axioms" [bState])]
@@ -2383,7 +2382,7 @@ namespace Microsoft.Research.Vcc
                                 (assumeSync env h.Token ::
                                  can_frame @
                                  init @
-                                 (if helper.Options.Vcc3 then [] else List.map assumeMutability h.Writes) @
+                                 (if vcc3 then [] else List.map assumeMutability h.Writes) @
                                  trStmt {env with IFContexts = (getLocalLabels s,"FlowData#initPC")::(env.IFContexts)} s @ 
                                  [B.Stmt.Label (Token.NoToken, "#exit")] @
                                  sanityChecks env h))
