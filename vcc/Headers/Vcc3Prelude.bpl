@@ -259,7 +259,7 @@ axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claima
 const $me_ref : int;
 const ^$thread_id#root: $field;
 function $me() : $ptr;
-axiom $in_range_spec_ptr($me_ref) && $me_ref != 0;
+axiom $in_range_spec_ptr($me()) && $me_ref != 0;
 axiom $me() == $ptr(^$thread_id#root, $me_ref);
 axiom $def_flat_type(^$#thread_id_t, 1) && $is_threadtype(^$#thread_id_t);
 axiom $root_field(^$#thread_id_t) == ^$thread_id#root;
@@ -316,7 +316,7 @@ function $field($ptr) : $field;
 function $ptr($field,int): $ptr;
 axiom (forall t:$field, b:int :: $field($ptr(t,b))==t);
 axiom (forall t:$field, b:int :: $base($ptr(t,b))==b);
-//axiom (forall p:$ptr :: {$base(p)} {$field(#p)} $ptr($field(#p), $base(#p)) == #p);
+axiom (forall p:$ptr :: {$base(p)} {$field(p)} $ptr($field(p), $base(p)) == p);
 
 // Use for computing references for ghost fields, instead of saying p+$field_offset(f) we use
 // $ghost_ref(p,f). This has an added bonus that the embedding and path can be the same reagrdless
@@ -359,7 +359,7 @@ function {:inline true} $ptr_cast(#p:$ptr,#t:$ctype) : $ptr
 
 //dot and (its "inverse") emb/path access
 function $dot($ptr,$field) returns ($ptr);
-function {:inline true} $emb(S:$state,p:$ptr) returns ($ptr)
+function $emb(S:$state,p:$ptr) returns ($ptr)
   { $ptr($root_field($field_parent_type($field(p))), $base(p)) }
 
 function $is_sequential_field($field) : bool;
@@ -565,16 +565,23 @@ function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
       $owner(S, p) == $me()
   }
 
-function $in_range_phys_ptr(#r:int) : bool
+//TODO
+function $in_range_phys_ptr(p:$ptr) : bool
   { true }
 //  { $in_range(0, #r, $arch_spec_ptr_start) }
-function $in_range_spec_ptr(#r:int) : bool
+function $in_range_spec_ptr(p:$ptr) : bool
   { true }
 //  { 0 == #r || #r > $arch_spec_ptr_start }
 const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
 
 function {:inline true} $is_ghost_ptr(p:$ptr) returns(bool)
-  { $in_range_spec_ptr($addr(p)) }
+  { $in_range_spec_ptr(p) }
+
+function {:inline true} $is_spec_ptr(p:$ptr, t:$ctype) : bool
+  { $is(p, t) && $in_range_spec_ptr(p) }
+
+function {:inline true} $is_phys_ptr(p:$ptr, t:$ctype) : bool
+  { $is(p, t) && $in_range_phys_ptr(p) }
 
 
 /*
@@ -854,7 +861,7 @@ procedure $spec_alloc(t:$ctype) returns(r:$ptr);
 
   ensures $is_malloc_root($s, r);
   ensures $first_option_typed($s, r);
-  ensures $in_range_spec_ptr($base(r));
+  ensures $in_range_spec_ptr(r);
 
 // ----------------------------------------------------------------------------
 // Wrap/unwrap

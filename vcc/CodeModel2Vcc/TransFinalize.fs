@@ -23,7 +23,7 @@ namespace Microsoft.Research.Vcc
         match parm.Type with
           | Ptr _
           | Integer _ ->
-            [inRange (boolBogusEC ()) (mkRef parm)]
+            [inRange helper (boolBogusEC ()) (mkRef parm)]
           | _ ->
             []                    
 
@@ -44,7 +44,7 @@ namespace Microsoft.Research.Vcc
           h.Ensures <- List.map mkFreeEnsures (List.concat (List.map rangeAssumptions h.OutParameters)) @ h.Ensures
         if h.RetType._IsInteger || h.RetType._IsPtr then
           let ec = { boolBogusEC() with Token = h.Token }
-          h.Ensures <- (mkFreeEnsures (inRange ec (Expr.Result({bogusEC with Type = h.RetType})))) :: h.Ensures
+          h.Ensures <- (mkFreeEnsures (inRange helper ec (Expr.Result({bogusEC with Type = h.RetType})))) :: h.Ensures
         h
       mapFunctions aux >> deepMapExpressions quantRange
       

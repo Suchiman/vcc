@@ -109,7 +109,7 @@ namespace Microsoft.Research.Vcc
         | C.Expr.Deref(_,e') -> Join(exprLevel true e', MemLabel e')
         | C.Expr.Macro (_, "_vcc_as_array", _) as e' -> MemLabel e'
         | C.Expr.Macro (_, "_vcc_current_context", []) ->  ProgramContext
-        | C.Expr.Macro (_, ("_vcc_ptr_eq" | "_vcc_ptr_neq"), [C.Expr.Cast(_, _, p1);C.Expr.Cast(_, _, p2)]) -> PtrCompare(p1,p2)
+        | C.Expr.Macro (_, ("_vcc_ptr_eq" | "_vcc_ptr_neq"), [p1; p2]) -> PtrCompare(p1, p2)
         | C.Expr.Macro (_, "_vcc_label_of", [expr]) ->
           let lblExpr = exprLevel asPointer expr
           let rec getMeta lbl =

@@ -313,7 +313,13 @@ module Microsoft.Research.Vcc.CAST
       | SpecPtr t 
       | PhysPtr t -> t
       | t -> t
-      
+     
+    member this.IsPtr =
+      match this with
+      | SpecPtr _
+      | PhysPtr _ -> true
+      | _ -> false
+
     member this.DerefSoP =
       match this with
       | SpecPtr t -> t, true
