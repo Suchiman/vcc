@@ -8,7 +8,7 @@
     <ProjectGuid>{adb80db3-762b-4b3f-aca9-a99812af2078}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>VccSyntaxCoverter</RootNamespace>
-    <AssemblyName>VccSyntaxCoverter</AssemblyName>
+    <AssemblyName>VccSyntaxConverter</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <Name>VccSyntaxCoverter</Name>
   </PropertyGroup>
