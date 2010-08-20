@@ -43,7 +43,6 @@ type $sub_object; // = [$ptr]int;
 type $owner;
 type $closed;
 type $timestamps;
-type $typed;
 
 type $roots; // = [$ptr]$ptr;
 type $embs; // = [$ptr]$ptr;
@@ -401,7 +400,7 @@ function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
   {
-    (forall p:$ptr :: {$rd.$typed($f_typed(S), p)}
+    (forall p:$ptr :: {$rd.$owner($f_owner(S), p)}
       $set_in(p, ptrs) ==> $in_writes_at(time, p) && $thread_owned_or_even_mutable(S, p))
 /*
     (forall p:$ptr :: {:vcc3 "L1"} {S[p]}
@@ -410,7 +409,6 @@ function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
         */
   }
 
-function $f_typed($state) : $typed;
 function $f_timestamp($state) : $timestamps;
 function $f_owner($state) : $owner;
 function $f_closed($state) : $closed;
@@ -476,7 +474,6 @@ function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
     (forall p:$ptr :: {$remb(S1,p)} $not_written(S0, $remb(S0, p), W) ==> $remb(S0, p) == $remb(S1, p)) &&
     (forall p:$ptr, f:$field :: {$rd(S1, p, f)} $not_written(S0, p, W) ==> $rd(S0, p, f) == $rd(S1, p, f)) &&
 
-    (forall p:$ptr :: {$rd.$typed($f_typed(S1), p)} $not_written(S0, p, W) ==> $rd.$typed($f_typed(S1), p) == $rd.$typed($f_typed(S0), p)) &&
     (forall p:$ptr :: {$rd.$timestamps($f_timestamp(S1), p)} 
       ($not_written(S0, p, W) ==>
         $rd.$timestamps($f_timestamp(S1), p) == $rd.$timestamps($f_timestamp(S0), p)) &&
@@ -519,8 +516,6 @@ function {:inline false} $closed(S:$state, p:$ptr) : bool
   { $rd.$closed($f_closed(S), p) }
 function {:inline false} $timestamp(S:$state, p:$ptr) : int
   { $rd.$timestamps($f_timestamp(S), p) }
-function {:inline false} $typed(S:$state, p:$ptr) : bool
-  { $rd.$typed($f_typed(S), p) }
 function {:inline false} $ref_cnt(S:$state, p:$ptr) : int
   { $rd(S, p, $f_ref_cnt) }
 
@@ -531,18 +526,17 @@ function $owns(S:$state, p:$ptr) : $ptrset
   { $int_to_ptrset($rd(S, p, $f_owns)) }
 
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
-  { $closed(S, #p) && $owner(S, #p) == $me() && $typed2(S, #p, #t) && $is_non_primitive_ch(#t) }
+  { $typ(#p) == #t && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive_ch(#t) }
 
 function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
   { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
 
 function {:inline true} $mutable(S:$state, p:$ptr) : bool
-  { $typed(S, p) && 
-    ( // $typed(S,p)==>
+  { 
       if $is_primitive_ch($typ(p)) then 
         $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
       else
-        $owner(S, p) == $me() && !$closed(S, p))
+        $owner(S, p) == $me() && !$closed(S, p)
   }
 
 function {:inline true} $object_of(S:$state, p:$ptr) : $ptr
@@ -550,10 +544,10 @@ function {:inline true} $object_of(S:$state, p:$ptr) : $ptr
     else p }
 
 function {:inline true} $thread_owned(S:$state, p:$ptr) : bool
-  { $typed(S, p) && $owner(S, p) == $me() }
+  { $owner(S, p) == $me() }
 
 function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
-  { $typed(S, p) &&
+  {
     if $is_primitive_ch($typ(p)) then
       $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p))
     else
@@ -571,8 +565,6 @@ const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-
 function {:inline true} $is_ghost_ptr(p:$ptr) returns(bool)
   { $in_range_spec_ptr($ref(p)) }
 
-function {:inline true} $typed2(S:$state, #p:$ptr, #t:$ctype) : bool
-  { $is(#p, #t) && $typed(S, #p) }
 
 /*
 axiom (forall S:$state, #r:int, #t:$ctype ::
@@ -581,11 +573,13 @@ axiom (forall S:$state, #r:int, #t:$ctype ::
   $typed(S, $ptr(#t, #r)) && $in_range_phys_ptr(#r) ==> $in_range_phys_ptr(#r + $sizeof(#t) - 1));
 */
 
+/*
 function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool)
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_phys_ptr($ref(#p))) }
 
 function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) returns (bool)
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($ref(#p))) }
+*/
 
 function {:inline true} $ptr_eq(p1:$ptr,p2:$ptr) : bool
   { $ref(p1) == $ref(p2) }
@@ -622,7 +616,7 @@ function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
 
 // required for reading
 function $thread_local(S:$state, p:$ptr) : bool
-  { $typed(S, p) &&
+  { 
     if $is_primitive_ch($typ(p)) then
       /*(!$is_volatile(S, p) || !$closed(S, $emb(S, p))) &&*/ $thread_local_np(S, $emb(S, p))
     else
@@ -714,7 +708,6 @@ axiom (forall S:$state :: {$good_state(S)}
 
 axiom (forall S:$state :: {$good_state(S)}
   $good_state(S) ==>
-    (forall p:$ptr :: {$typed(S,p)} /*{$rds(S, p, $f_closed)}*/ $closed(S, p) ==> $typed(S, p)) &&
     $closed_is_transitive(S)
     );
         
@@ -763,7 +756,6 @@ axiom
 
 function {:inline true} $specials_eq(S0:$state, S:$state) : bool
   { 
-    $f_typed(S0) == $f_typed(S) &&
     $f_timestamp(S0) == $f_timestamp(S) &&
     $f_closed(S0) == $f_closed(S) &&
     $f_owner(S0) == $f_owner(S) &&
@@ -777,7 +769,6 @@ function {:inline true} $meta_eq(s1:$state, s2:$state) : bool
 procedure $bump_timestamp();
   modifies $s;
   ensures
-    $f_typed($s) == $f_typed(old($s)) &&
     $f_closed($s) == $f_closed(old($s)) &&
     $f_owner($s) == $f_owner(old($s)) &&
     $embs($s) == $embs(old($s)) &&
@@ -835,7 +826,7 @@ procedure $set_owns(p:$ptr, owns:$ptrset);
 
 procedure $spec_alloc(t:$ctype) returns(r:$ptr);
   modifies $s;
-  ensures $typed2($s, r, t);
+  ensures $typ(r) == t;
   ensures $mutable($s, r);
 
   ensures (forall p:$ptr :: // TODO add trigger
@@ -843,7 +834,6 @@ procedure $spec_alloc(t:$ctype) returns(r:$ptr);
 
   ensures $writes_nothing(old($s), $s);
 
-  ensures !$typed(old($s), r);
   ensures $is_malloc_root($s, r);
   ensures $is_object_root($s, r);
   ensures $first_option_typed($s, r);
@@ -869,7 +859,6 @@ function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
   && (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, p) || p == o)
 */
      $heap(S) == $heap(S0)
-  && $f_typed(S) == $f_typed(S0)
   && $f_closed(S) == $wr.$closed($f_closed(S0), o, true)
   && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, $current_timestamp(S))
   && (forall r:$ptr :: {$rd.$owner($f_owner(S), r)}
@@ -895,8 +884,7 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   $mutable(S, o)
 
 //  && (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, $root(S0, p)))
-  && (forall p:$ptr, f:$field :: {$rd(S, p, f)} $rd(S, p, f) == $rd(S0, p, f))
-  && $f_typed(S) == $f_typed(S0)
+  && $heap(S) == $heap(S0)
   && $f_closed(S) == $wr.$closed($f_closed(S0), o, false)
   && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, $current_timestamp(S))
   && (forall r:$ptr :: {$rd.$owner($f_owner(S), r)}
@@ -1013,7 +1001,6 @@ procedure $havoc_others(p:$ptr, t:$ctype);
   ensures $is_stuttering_check() || $spans_the_same(old($s), $s, p, t);
   ensures $nonvolatile_spans_the_same(old($s), $s, p, t);
   ensures $closed($s, p);
-  ensures $typed($s, p);
   ensures $closed_is_transitive($s);
   ensures $good_state($s);
   ensures $good_for_post_admissibility($s);
@@ -1728,11 +1715,6 @@ function $rd.$timestamps(m:$timestamps, p2:$ptr) : int;
 function $wr.$timestamps(m:$timestamps, p2:$ptr, v:int) : $timestamps;
 axiom (forall m:$timestamps, p1:$ptr, v:int :: $rd.$timestamps($wr.$timestamps(m, p1, v), p1) == v);
 axiom (forall m:$timestamps, p1,q1:$ptr, v:int :: p1 == q1  || $rd.$timestamps($wr.$timestamps(m, p1, v), q1) == $rd.$timestamps(m, q1));
-
-function $rd.$typed(m:$typed, p1:$ptr) : bool;
-function $wr.$typed(m:$typed, p1:$ptr, v:bool) : $typed;
-axiom (forall m:$typed, p1:$ptr, v:bool :: $rd.$typed($wr.$typed(m, p1, v), p1) == v);
-axiom (forall m:$typed, p1,q1:$ptr, v:bool :: p1 == q1 || $rd.$typed($wr.$typed(m, p1, v), q1) == $rd.$typed(m, q1));
 
 function $rd.$closed(m:$closed, p1:$ptr) : bool;
 function $wr.$closed(m:$closed, p1:$ptr, v:bool) : $closed;
