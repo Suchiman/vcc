@@ -571,6 +571,10 @@ namespace Microsoft.Research.Vcc
               bCall "$in_vdomain_lab" ((selfs args) @ [er (trInvLabel "public")])
           | "_vcc_sk_hack", [e] ->
             bCall "sk_hack" [self e]
+          | "_vcc_ptr_eq", [e1; e2]
+          | "_vcc_ptr_neq", [e1; e2] when vcc3 && e1.Type.Deref.IsComposite && e2.Type.Deref.IsComposite ->
+            xassert (e1.Type = e2.Type)
+            bEq (self e1) (self e2)
           | "trigger_hint", [e] ->
             if e.Type = C.Type.Bool then
               bCall "sk_hack" [self e]
@@ -2221,6 +2225,10 @@ namespace Microsoft.Research.Vcc
         else
           let env = { initialEnv with Writes = h.Writes }
           let te e = trExpr env e
+          // it is unsound to include these in the axiom
+          let tens = function
+            | C.Macro (_, ("in_range_phys_ptr"|"in_range_spec_ptr"), [_]) -> bTrue
+            | e -> trExpr env e
           let fname = "#" + h.Name
           let retType = trType h.RetType
           let parameters =  List.map trTypeVar h.TypeParameters @ List.map trVar h.Parameters
@@ -2234,7 +2242,7 @@ namespace Microsoft.Research.Vcc
             | lst ->
               helper.Warning (h.Token, 0, "wrong " + String.concat "; " (lst |> List.map (fun e -> e.ToString())))
             *)  
-          let ensures = bMultiAnd (List.map (stripFreeFromEnsures>> te) h.Ensures)
+          let ensures = bMultiAnd (List.map (stripFreeFromEnsures >> tens) h.Ensures)
           let requires = bMultiAnd (List.map te h.Requires)
           let qargs = (if h.IsStateless then [] else [("#s", tpState)]) @ parameters
           let fappl = bCall fname (List.map (fun ((vi,vt):B.Var) -> er vi) qargs)
