@@ -599,11 +599,11 @@ function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) returns (bool
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($addr(#p))) }
 */
 
-function {:inline true} $ptr_eq(p1:$ptr,p2:$ptr) : bool
+function {:inline true} $ptr_eq(p1:$ptr, p2:$ptr) : bool
   { $addr(p1) == $addr(p2) }
 
 function {:inline true} $ptr_neq(p1:$ptr,p2:$ptr) : bool
-  { $addr(p1) != $addr(p2) }
+  { !$ptr_eq(p1, p2) }
 
 function {:inline true} $is_primitive_field_of(S:$state, #f:$ptr, #o:$ptr) : bool
   { $is_primitive_ch($typ(#f)) && $emb(S, #f) == #o }
