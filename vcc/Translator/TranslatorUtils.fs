@@ -123,6 +123,8 @@ namespace Microsoft.Research.Vcc
       let invLabelConstants = ref []
       let floatLiterals = new Dict<_,_>()
       
+      let vcc3 = helper.Options.Vcc3
+
       let addDecls lst = tokenConstants := lst @ !tokenConstants
     
       let defaultWeights = [("user-forall", 10); ("user-exists", 10); ("", 1)]
@@ -241,9 +243,13 @@ namespace Microsoft.Research.Vcc
       let rec trType (t:C.Type) : B.Type = 
         match t with
           | C.Type.MathInteger
-          | C.Type.Integer _ 
+          | C.Type.Integer _  -> B.Type.Int
           | C.Type.SpecPtr _
-          | C.Type.PhysPtr _ -> B.Type.Int
+          | C.Type.PhysPtr _ -> 
+            if vcc3 then
+              tpPtr
+            else
+              B.Type.Int
           | C.Type.Primitive _ -> tpPrimitive
           | C.Type.Bool -> B.Type.Bool
           | C.Type.ObjectT -> tpPtr
@@ -385,7 +391,7 @@ namespace Microsoft.Research.Vcc
         let valIs suff v = bCall ("$local_value_is" + suff) [bState; er pos; er name; v; toTypeId l.Type]
         let cond =
           match l.Type with
-            | C.Ptr _ -> 
+            | C.Ptr _ when not vcc3 -> 
               let v' = this.AddType l.Type (this.VarRef l)
               bAnd (valIs "" (bCall "$ptr_to_int" [v'])) (valIs "_ptr" v')
             | _ -> valIs "" (this.CastToInt (trType l.Type) (this.VarRef l))
