@@ -1,3 +1,29 @@
+/*
+ref(<r,f>) = r
+field(<r,f>) = f
+
+addr(<r,f>) = r + offset(f)
+
+dot_prim(p, f) = <ref(p), f>
+dot_nested(p, f) = <ref(p) + offset(f), T#root>
+  where T is type of f, and T#root is a special field
+
+is_array_field(arr(f, i))
+index_of(arr(f,  i)) = i
+field_of(arr(f, i)) = f
+
+// for each regular field f we generate
+index_of(f) = 0
+field_of(f) = f
+!is_array_field(f)
+
+idx_prim(<r,f>, i) = <r, arr(field_of(f), index_of(f) + i)>
+idx_nested(p, i) = <addr(p) + i * sizeof(T), T#root>
+  where T = typeof(field(p))
+
+span(p) = { <p,f> | f in fields }
+*/
+
 //-----------------------------------------------------------------------------
 //
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
@@ -11,7 +37,7 @@
 // for each C type there is a value of $ctype Boogie type
 type $ctype; 
 
-// a typed pointer -- i.e. a pair of a $ctype and an int
+// a typed pointer -- i.e. a pair of a $field and an int
 type $ptr;
 
 // name of a C field -- each field of a C struct gets a constant of this type
@@ -45,7 +71,6 @@ type $closed;
 type $timestamps;
 
 type $roots; // = [$ptr]$ptr;
-type $embs; // = [$ptr]$ptr;
 
 // A constant is generated for each pure function, used for ordering frame axioms.
 type $pure_function;
@@ -68,7 +93,7 @@ const unique $kind_array : $kind;
 const unique $kind_thread : $kind;
 
 function $sizeof($ctype): int; // in bytes
-
+function $root_field($ctype) : $field;
 
 // for types for which $in_range_t(...) is defined
 function $as_in_range_t($ctype) : $ctype;
@@ -77,8 +102,15 @@ function {:inline true} $def_flat_type(t:$ctype, sz:int) : bool
   { $sizeof(t) == sz && $type_branch(t) == $ctype_flat }
 function {:inline true} $def_primitive_type(t:$ctype, sz:int) : bool
   { $def_flat_type(t, sz) && $is_primitive(t) }
-function {:inline true} $def_composite_type(t:$ctype, sz:int, claimable:bool, has_volatile_owns:bool) : bool
-  { $def_flat_type(t, sz) && $is_composite(t) && $is_claimable(t) == claimable && $has_volatile_owns_set(t) == has_volatile_owns }
+function {:inline true} $def_composite_type(t:$ctype, rootField:$field, sz:int, claimable:bool, has_volatile_owns:bool) : bool
+  { 
+     $def_flat_type(t, sz) && 
+     $is_composite(t) && 
+     $is_claimable(t) == claimable && 
+     $has_volatile_owns_set(t) == has_volatile_owns &&
+     $root_field(t) == rootField &&
+     $def_ghost_field(t, rootField, t, false) &&
+     true }
 function {:inline true} $def_integer_type(t:$ctype, sz:int) : bool
   { $def_primitive_type(t, sz) && $as_in_range_t(t) == t }
 
@@ -116,7 +148,7 @@ axiom $def_primitive_type(^^object, 1);
 axiom $def_primitive_type(^^field, 1);
 
 const unique ^^claim: $ctype;
-const unique ^^root_emb: $ctype;
+const unique ^claim.#root: $field;
 const unique ^^mathint: $ctype;
 const unique ^$#thread_id_t: $ctype;
 const unique ^$#ptrset : $ctype;
@@ -129,8 +161,7 @@ const unique ^$#vol_version : $ctype;
 // wrap writes owner & closed of different objects
 
 axiom $def_primitive_type(^^mathint, 1);
-axiom $def_composite_type(^^claim, 1, true, false);
-axiom $def_composite_type(^^root_emb, 1, false, false);
+axiom $def_composite_type(^^claim, ^claim.#root, 1, true, false);
 axiom $def_primitive_type(^$#ptrset, 1);
 axiom $def_flat_type(^$#thread_id_t, 1) && $is_threadtype(^$#thread_id_t);
 axiom $def_primitive_type(^$#state_t, 1);
@@ -206,6 +237,7 @@ axiom (forall t:$ctype :: {$is_math_type(t)} $is_math_type(t) ==> $is_primitive(
 function $field_offset($field) : int;
 function $field_parent_type($field) : $ctype;
 function $is_ghost_field($field) : bool;
+function $is_phys_field($field) : bool;
 
 function $is_non_primitive(t:$ctype) : bool;
 axiom (forall t:$ctype :: {$is_composite(t)} $is_composite(t) ==> $is_non_primitive(t));
@@ -226,24 +258,20 @@ axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $is_primitive($spec_ptr_to(#n)));
 axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claimable(#n));
 
 const $me_ref : int;
+const ^$thread_id#root: $field;
 function $me() : $ptr;
 axiom $in_range_spec_ptr($me_ref) && $me_ref != 0;
-axiom $me() == $ptr(^$#thread_id_t, $me_ref);
+axiom $me() == $ptr(^$thread_id#root, $me_ref);
 
 function {:inline true} $current_state(s:$state) : $state { s }
 
 function $roots(s:$state) : $roots;
-function $embs(s:$state) : $embs;
 function $heap(s:$state) : $object;
 
 function $mem(s:$state, p:$ptr) : int;  // FIXME
 
 function {:inline true} $root(s:$state, p:$ptr) : $ptr
   { $rd.$roots($roots(s), p) }
-
-// TODO merge with $emb() ? 
-function {:inline true} $remb(s:$state, p:$ptr) : $ptr
-  { $rd.$embs($embs(s), p) }
 
 function {:inline true} $rdf(s:$state, f:$field) : $sub_object { $rd.$object($heap(s), f) }
 function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int { $rd.$sub_object($rdf(s, f), p) }
@@ -275,24 +303,23 @@ function {:inline true} $mem_eq(s1:$state, s2:$state, p:$ptr) : bool
 // typed pointers
 // ----------------------------------------------------------------------------
 
-function $typ($ptr): $ctype;
-function $ref($ptr): int;
-function $ptr($ctype,int): $ptr;
-axiom (forall #t:$ctype, #b:int :: $typ($ptr(#t,#b))==#t);
-axiom (forall #t:$ctype, #b:int :: $ref($ptr(#t,#b))==#b);
-//axiom (forall #p:$ptr :: {$typ(#p)} {$ref(#p)} $ptr($typ(#p), $ref(#p)) == #p);
+function $typ(p:$ptr): $ctype
+  { $field_type($field(p)) }
+function $addr($ptr): int;
+axiom (forall p:$ptr :: {$addr(p)}
+  $is_phys_field($field(p)) ==> $addr(p) == $base(p) + $field_offset($field(p)));
+
+function $base($ptr): int;
+function $field($ptr) : $field;
+function $ptr($field,int): $ptr;
+axiom (forall t:$field, b:int :: $field($ptr(t,b))==t);
+axiom (forall t:$field, b:int :: $base($ptr(t,b))==b);
+//axiom (forall p:$ptr :: {$base(p)} {$field(#p)} $ptr($field(#p), $base(#p)) == #p);
 
 // Use for computing references for ghost fields, instead of saying p+$field_offset(f) we use
 // $ghost_ref(p,f). This has an added bonus that the embedding and path can be the same reagrdless
 // of the current $meta
 function $ghost_ref($ptr, $field) : int;
-
-function $ghost_emb($ptr) : $ptr;
-function $ghost_path($ptr) : $field;
-
-axiom (forall p:$ptr, f:$field, t:$ctype :: {$ptr(t, $ghost_ref(p, f))}
-  $ghost_emb($ptr(t, $ghost_ref(p, f))) == p && 
-  $ghost_path($ptr(t, $ghost_ref(p, f))) == f );
 
 axiom (forall p:$ptr, f:$field :: {$ghost_ref(p, f)}
   $ghost_ref(p,f) > $arch_spec_ptr_start);
@@ -315,47 +342,39 @@ axiom (forall fld:$field, off:int :: {$array_path(fld, off)}
   $array_path_2($array_path(fld, off)) == off);
 
 const $null:$ptr;
-axiom $null == $ptr(^^void, 0);
+const unique ^^null_field : $field;
+axiom $null == $ptr(^^null_field, 0);
 
 //typed pointer test
 function $is(p:$ptr, t:$ctype) : bool
   { $typ(p)==t }
-// create $ptr(...) function symbol, so later we have something to trigger on
-axiom (forall #p:$ptr, #t:$ctype :: {$is(#p, #t)} $is(#p, #t) ==> #p == $ptr(#t, $ref(#p)));
 
 function {:inline true} $ptr_cast(#p:$ptr,#t:$ctype) : $ptr
-  { $ptr(#t, $ref(#p)) }
-
-/* NMM
-function {:inline true} $read_ptr(S:$state, p:$ptr, t:$ctype) : $ptr
-  { $ptr(t, $mem(S, p)) }
-*/
+  { $ptr($root_field(#t), $base(#p)) }
 
 //dot and (its "inverse") emb/path access
 function $dot($ptr,$field) returns ($ptr);
-function {:inline false} $emb(S:$state,p:$ptr) returns ($ptr)
-  { $rd.$embs($embs(S), p) }
-function {:inline true} $path(S:$state,p:$ptr) : $field
-  { $relative_field_of($emb(S, p), p) }
-
-/* NMM
-axiom (forall p:$ptr, S:$state ::
-  {$dot(p, $f_typed), S[p]}
-  {$dot(p, $f_typed), S[$dot(p, $f_is_volatile)]}
-  $instantiate_int(S[$dot(p, $f_typed)]));
-*/
+function {:inline true} $emb(S:$state,p:$ptr) returns ($ptr)
+  { $ptr($root_field($field_parent_type($field(p))), $base(p)) }
 
 function $is_sequential_field($field) : bool;
-
 function $as_field_with_type($field,$ctype) : $field;
+function $field_type($field) : $ctype;
+
+function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
+  { $is_base_field(f) && 
+    $field_parent_type(f) == partp &&
+    (!isvolatile ==> $is_sequential_field(f)) &&
+    $field_type(f) == tp &&
+    $as_field_with_type(f, tp) == f &&
+    true
+  }
 
 function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int) : bool
-  { $is_base_field(f) && $field_parent_type(f) == partp &&
-    (!isvolatile ==> $is_sequential_field(f)) &&
-    $as_field_with_type(f, tp) == f &&
+  { $def_field(partp, f, tp, isvolatile) &&
     $field_offset(f) == off &&
+    $is_phys_field(f) &&
     true
-    //(forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ref(p) + off)) &&
     /*
     (forall S:$state, p:$ptr :: 
       {$rds(S, $dot(p, f), $f_typed)}
@@ -369,9 +388,8 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
   }
 
 function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
-  { $is_base_field(f) && $field_parent_type(f) == partp && $is_ghost_field(f) &&
-    (!isvolatile ==> $is_sequential_field(f)) &&
-    $as_field_with_type(f, tp) == f &&
+  { $def_field(partp, f, tp, isvolatile) &&
+    $is_ghost_field(f) &&
     true
     //(forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ghost_ref(p, f))) &&
     /*
@@ -419,20 +437,10 @@ const unique $f_ref_cnt : $field;
 axiom $def_common_field($f_owns, ^$#ptrset);
 axiom $def_common_field($f_ref_cnt, ^^mathint);
 
-// it has no further embedding (not embedded inside another struct)
-function {:inline true} $is_object_root(S:$state, p:$ptr) : bool
-  { $emb(S, p) == $ptr(^^root_emb, $ref(p)) }
-
-/*
-axiom (forall S:$state, p:$ptr ::
-  {:vcc3 "todo"}
-  {$is_volatile(S, p)} $good_state(S) && $is_volatile(S, p) ==> $is_primitive_ch($typ(p)));
-*/
-
 // just tmp
 function {:inline true} $is_malloc_root(S:$state, p:$ptr) : bool
-  { $is_object_root(S, p) }
-
+  { $is_malloc_root_ptr(p) }
+function $is_malloc_root_ptr(p:$ptr) : bool;
 
 function $current_timestamp(S:$state) : int;
 /*
@@ -471,7 +479,6 @@ function {:inline true} $not_written(S0:$state, p:$ptr, W:$ptrset) : bool
 
 function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { (forall p:$ptr :: {$root(S1, p)} $not_written(S0, p, W) ==> $root(S0, p) == $root(S1, p)) &&
-    (forall p:$ptr :: {$remb(S1,p)} $not_written(S0, $remb(S0, p), W) ==> $remb(S0, p) == $remb(S1, p)) &&
     (forall p:$ptr, f:$field :: {$rd(S1, p, f)} $not_written(S0, p, W) ==> $rd(S0, p, f) == $rd(S1, p, f)) &&
 
     (forall p:$ptr :: {$rd.$timestamps($f_timestamp(S1), p)} 
@@ -533,15 +540,8 @@ function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
 
 function {:inline true} $mutable(S:$state, p:$ptr) : bool
   { 
-      if $is_primitive_ch($typ(p)) then 
-        $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
-      else
-        $owner(S, p) == $me() && !$closed(S, p)
+     $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
   }
-
-function {:inline true} $object_of(S:$state, p:$ptr) : $ptr
-  { if $is_primitive_ch($typ(p)) then $emb(S, p)
-    else p }
 
 function {:inline true} $thread_owned(S:$state, p:$ptr) : bool
   { $owner(S, p) == $me() }
@@ -563,7 +563,7 @@ function $in_range_spec_ptr(#r:int) : bool
 const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
 
 function {:inline true} $is_ghost_ptr(p:$ptr) returns(bool)
-  { $in_range_spec_ptr($ref(p)) }
+  { $in_range_spec_ptr($addr(p)) }
 
 
 /*
@@ -575,17 +575,17 @@ axiom (forall S:$state, #r:int, #t:$ctype ::
 
 /*
 function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool)
-  { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_phys_ptr($ref(#p))) }
+  { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_phys_ptr($addr(#p))) }
 
 function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) returns (bool)
-  { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($ref(#p))) }
+  { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($addr(#p))) }
 */
 
 function {:inline true} $ptr_eq(p1:$ptr,p2:$ptr) : bool
-  { $ref(p1) == $ref(p2) }
+  { $addr(p1) == $addr(p2) }
 
 function {:inline true} $ptr_neq(p1:$ptr,p2:$ptr) : bool
-  { $ref(p1) != $ref(p2) }
+  { $addr(p1) != $addr(p2) }
 
 function {:inline true} $is_primitive_field_of(S:$state, #f:$ptr, #o:$ptr) : bool
   { $is_primitive_ch($typ(#f)) && $emb(S, #f) == #o }
@@ -618,7 +618,7 @@ function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
 function $thread_local(S:$state, p:$ptr) : bool
   { 
     if $is_primitive_ch($typ(p)) then
-      /*(!$is_volatile(S, p) || !$closed(S, $emb(S, p))) &&*/ $thread_local_np(S, $emb(S, p))
+      ($is_sequential_field($field(p)) || !$closed(S, $emb(S, p))) && $thread_local_np(S, $emb(S, p))
     else
       $thread_local_np(S, p) }
 
@@ -688,7 +688,7 @@ function {:inline true} $closed_is_transitive(S:$state) returns (bool)
     (forall p:$ptr,q:$ptr ::
       {$set_in_pos(p, $owns(S, q))}
       $good_state(S) &&
-      $set_in(p, $owns(S, q)) && $closed(S, q) ==> $closed(S, p)) // && $ref(p) != 0)
+      $set_in(p, $owns(S, q)) && $closed(S, q) ==> $closed(S, p) && $base(p) != 0)
   } 
 
 axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in_pos(p, $owns(S, q)), $is_non_primitive($typ(p))}
@@ -696,9 +696,9 @@ axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in_pos(p, $owns(S, q)), $is_non_
   $closed(S, q) && $is_non_primitive($typ(p)) ==>
       ($set_in(p, $owns(S, q)) <==> $owner(S, p) == q));
 
-axiom (forall S:$state, #r:int, #t:$ctype :: {$owns(S, $ptr(#t, #r)), $is_arraytype(#t)}
+axiom (forall S:$state, #r:int, #t:$ctype, #f:$field :: {$owns(S, $ptr($as_field_with_type(#f,#t), #r)), $is_arraytype(#t)}
   $good_state(S) ==>
-    $is_arraytype(#t) ==> $owns(S, $ptr(#t, #r)) == $set_empty());
+    $is_arraytype(#t) ==> $owns(S, $ptr(#f, #r)) == $set_empty());
 
 axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
   $invok_state(S) && $closed(S, #p) ==> $inv(S, #p, #t));
@@ -759,7 +759,6 @@ function {:inline true} $specials_eq(S0:$state, S:$state) : bool
     $f_timestamp(S0) == $f_timestamp(S) &&
     $f_closed(S0) == $f_closed(S) &&
     $f_owner(S0) == $f_owner(S) &&
-    $embs(S0) == $embs(S) &&
     $roots(S0) == $roots(S)
   }
 
@@ -771,7 +770,6 @@ procedure $bump_timestamp();
   ensures
     $f_closed($s) == $f_closed(old($s)) &&
     $f_owner($s) == $f_owner(old($s)) &&
-    $embs($s) == $embs(old($s)) &&
     $roots($s) == $roots(old($s)) &&
     $heap($s) == $heap(old($s));
   // I'm not sure if this is neccessary
@@ -835,9 +833,8 @@ procedure $spec_alloc(t:$ctype) returns(r:$ptr);
   ensures $writes_nothing(old($s), $s);
 
   ensures $is_malloc_root($s, r);
-  ensures $is_object_root($s, r);
   ensures $first_option_typed($s, r);
-  ensures $in_range_spec_ptr($ref(r));
+  ensures $in_range_spec_ptr($base(r));
 
 // ----------------------------------------------------------------------------
 // Wrap/unwrap
@@ -871,7 +868,6 @@ function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
 //        else 
 //          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
 
-  && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
      $root(S, p) == $root(S0, p) ||
@@ -896,7 +892,6 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
 //          $rd.$owner($f_owner(S), r, p) == if p == r then $me() else $owner(S0, p)
 //        else 
 //          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
-  && $embs(S0) == $embs(S)
   &&
   (forall p:$ptr :: {$root(S, p)}
      ($root(S0, p) != o && $root(S0, p) == $root(S, p)) ||
@@ -1079,7 +1074,7 @@ function $full_extent(#p:$ptr) : $ptrset;
 function $extent(S:$state, #p:$ptr) : $ptrset;
 
 function $span(S:$state, o:$ptr) : $ptrset
-  { (lambda p:$ptr :: o == p || $emb(S, p) == o) }
+  { (lambda p:$ptr :: $emb(S, p) == o) }
 function $first_option_typed(S:$state, #p:$ptr) : bool;
 
 function {:inline true} $struct_extent(#p:$ptr) : $ptrset
@@ -1295,7 +1290,7 @@ function {:inline true} $in_range_u1(x:int) : bool { $in_range(0, x, $max.u1) }
 function {:inline true} $in_range_u2(x:int) : bool { $in_range(0, x, $max.u2) }
 function {:inline true} $in_range_u4(x:int) : bool { $in_range(0, x, $max.u4) }
 function {:inline true} $in_range_u8(x:int) : bool { $in_range(0, x, $max.u8) }
-function {:inline true} $in_range_ptr(p:$ptr) : bool { $in_range_u8($ref(p)) }
+function {:inline true} $in_range_ptr(p:$ptr) : bool { $in_range_u8($addr(p)) }
 
 function {:inline true} $in_range_div_i1(x:int, y:int) : bool { y != -1 || x != $min.i1 }
 function {:inline true} $in_range_div_i2(x:int, y:int) : bool { y != -1 || x != $min.i2 }
@@ -1303,7 +1298,7 @@ function {:inline true} $in_range_div_i4(x:int, y:int) : bool { y != -1 || x != 
 function {:inline true} $in_range_div_i8(x:int, y:int) : bool { y != -1 || x != $min.i8 }
 
 function $byte_ptr_subtraction(p1:$ptr, p2:$ptr) : int
-  { $ref(p1) - $ref(p2) }
+  { $addr(p1) - $addr(p2) }
 function $_pow2(int) : int;
 axiom 
 $_pow2(0) == 1 && $_pow2(1) == 2 && $_pow2(2) == 4 && $_pow2(3) == 8 && $_pow2(4) == 16 && $_pow2(5) == 32 &&
@@ -1592,23 +1587,19 @@ axiom ($ptr_to_i2($null) == 0);
 axiom ($ptr_to_u1($null) == 0);
 axiom ($ptr_to_i1($null) == 0);
 
-function {:inline true} $u8_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
-function {:inline true} $i8_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
-function {:inline true} $u4_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
-function {:inline true} $i4_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
-function {:inline true} $u2_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
-function {:inline true} $i2_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
-function {:inline true} $u1_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
-function {:inline true} $i1_to_ptr(x : int) : $ptr { $ptr(^^void, x)  }
+function {:inline true} $u8_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
+function {:inline true} $i8_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
+function {:inline true} $u4_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
+function {:inline true} $i4_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
+function {:inline true} $u2_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
+function {:inline true} $i2_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
+function {:inline true} $u1_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
+function {:inline true} $i1_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
 
-axiom (forall p:$ptr :: { $ptr_to_u8(p) } $in_range_u8($ref(p)) ==> $ptr_to_u8(p) == $ref(p));
-axiom (forall p:$ptr :: { $ptr_to_i8(p) } $in_range_i8($ref(p)) ==> $ptr_to_i8(p) == $ref(p));
-axiom (forall p:$ptr :: { $ptr_to_u4(p) } $in_range_u4($ref(p)) ==> $ptr_to_u4(p) == $ref(p));
-axiom (forall p:$ptr :: { $ptr_to_i4(p) } $in_range_i4($ref(p)) ==> $ptr_to_i4(p) == $ref(p));
-axiom (forall p:$ptr :: { $ptr_to_u2(p) } $in_range_u2($ref(p)) ==> $ptr_to_u2(p) == $ref(p));
-axiom (forall p:$ptr :: { $ptr_to_i2(p) } $in_range_i2($ref(p)) ==> $ptr_to_i2(p) == $ref(p));
-axiom (forall p:$ptr :: { $ptr_to_u1(p) } $in_range_u1($ref(p)) ==> $ptr_to_u1(p) == $ref(p));
-axiom (forall p:$ptr :: { $ptr_to_i1(p) } $in_range_i1($ref(p)) ==> $ptr_to_i1(p) == $ref(p));
+axiom (forall p:$ptr :: { $ptr_to_u8(p) } $in_range_u8($addr(p)) ==> $ptr_to_u8(p) == $addr(p));
+axiom (forall p:$ptr :: { $ptr_to_i8(p) } $in_range_i8($addr(p)) ==> $ptr_to_i8(p) == $addr(p));
+axiom (forall p:$ptr :: { $ptr_to_u4(p) } $in_range_u4($addr(p)) ==> $ptr_to_u4(p) == $addr(p));
+axiom (forall p:$ptr :: { $ptr_to_i4(p) } $in_range_i4($addr(p)) ==> $ptr_to_i4(p) == $addr(p));
 
 // --------------------------------------------------------------------------------
 // Floating point arithmetic - currently uninterpreted
@@ -1698,11 +1689,6 @@ function $rd.$roots(m:$roots, p:$ptr) : $ptr;
 function $wr.$roots(m:$roots, p:$ptr, v:$ptr) : $roots;
 axiom (forall m:$roots, p:$ptr, v:$ptr :: $rd.$roots($wr.$roots(m, p, v), p) == v);
 axiom (forall m:$roots, p1,p2:$ptr, v:$ptr :: p1 == p2 || $rd.$roots($wr.$roots(m, p1, v), p2) == $rd.$roots(m, p2));
-
-function $rd.$embs(m:$embs, p:$ptr) : $ptr;
-function $wr.$embs(m:$embs, p:$ptr, v:$ptr) : $embs;
-axiom (forall m:$embs, p:$ptr, v:$ptr :: $rd.$embs($wr.$embs(m, p, v), p) == v);
-axiom (forall m:$embs, p1,p2:$ptr, v:$ptr :: p1 == p2 || $rd.$embs($wr.$embs(m, p1, v), p2) == $rd.$embs(m, p2));
 
 /*
 function $rd.MAP(m:MAP, p1,p2:$ptr) : VAL;

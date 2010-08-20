@@ -237,15 +237,11 @@ namespace Microsoft.Research.Vcc
         | B.Expr.FunctionCall ("$dot", [p; f]) ->
           [p; f]
         | p ->
-          [bCall "$emb" [bState; p]; bCall "$path" [bState; p]]
+          [bCall "$base" [bState; p]; bCall "$field" [bState; p]]
 
       let typedRead s p t =
         if vcc3 then
-          let cast e =
-            match t with
-              | C.Ptr t -> bCall "$ptr" [toTypeId t; e]
-              | _ -> castFromInt (trType t) e
-          cast (bCall "$rd" (s :: decomposeDot p))
+          castFromInt (trType t) (bCall "$rd" (s :: decomposeDot p))
         else
           match t with
             | C.Ptr t ->
@@ -282,14 +278,14 @@ namespace Microsoft.Research.Vcc
       let addType t e =
         match t with
           | C.Type.SpecPtr t
-          | C.Type.PhysPtr t ->
+          | C.Type.PhysPtr t when not vcc3 ->
             bCall "$ptr" [toTypeId t; e]
           | _ -> e
       
       let stripType t e =
         match t with
           | C.Type.SpecPtr t
-          | C.Type.PhysPtr t ->
+          | C.Type.PhysPtr t when not vcc3 ->
             bCall "$ref" [e]
           | _ -> e
         
@@ -349,7 +345,10 @@ namespace Microsoft.Research.Vcc
                     self e'
                   | _ -> die()
               | C.Cast ({ Type = C.Type.MathInteger }, _, e') when e'.Type._IsPtr ->
-                bCall "$ref" [self e']
+                if vcc3 then                
+                  bCall "$addr" [self e']
+                else
+                  bCall "$ref" [self e']
               | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
                 bCall "$ptr_cast" [self e'; ptrType expr]
               | C.Expr.Cast ({ Type = C.Type.ObjectT }, _, C.Expr.IntLiteral(_, z)) when z = bigint.Zero -> er "$null"
@@ -498,11 +497,11 @@ namespace Microsoft.Research.Vcc
             match f.Type with
               | C.Type.Integer _ ->
                 bCall "$unchecked" [toTypeId f.Type; fetch]
-              | C.Ptr t ->
+              | C.Ptr t when not vcc3 ->
                 bCall "$ptr" [toTypeId t; fetch]
               | C.Bool ->
                 bNeq fetch (bInt 0)
-              | t ->                
+              | t ->
                 castFromInt (trType t) fetch
             
           | "rec_update", [r; C.UserData(_, ( :? C.Field as f) ); v] ->
@@ -1015,7 +1014,7 @@ namespace Microsoft.Research.Vcc
             let claims_obj = List.map (fun e -> B.Stmt.Assume (bCall (if upgrade then "$claims_upgrade" else "$claims_obj") [er claim; trExpr env e])) objects 
             
             let assign = 
-              [B.Stmt.Assign (varRef local, bCall "$ref" [er claim]);
+              [B.Stmt.Assign (varRef local, if vcc3 then er claim else bCall "$ref" [er claim]);
                ctx.AssumeLocalIs tok local;
                assumeSync env tok]
                                       
@@ -1212,7 +1211,7 @@ namespace Microsoft.Research.Vcc
               | [B.Expr.FunctionCall ("$dot", [p; f])], "$union_reinterpret" -> [p; f]
               | _ -> args
           let resBuf, tail = 
-            if resultIsObjT <> varIsObjT then
+            if not vcc3 && resultIsObjT <> varIsObjT then
               let tmp = "#callConv#" + (!callConvCnt).ToString()
               incr callConvCnt
               let vardecl = B.Stmt.VarDecl ((tmp, if resultIsObjT then tpPtr else B.Type.Int), None)
@@ -1965,7 +1964,7 @@ namespace Microsoft.Research.Vcc
             trExpr initialEnv |>
             substOld [("$s", s1)] |>
             bSubst [("$_this", p); ("$s", s2)]
-        let inv exprs = bMultiAnd (bCall "$typed" [s2; p] :: (exprs |> List.map doInv) ) 
+        let inv exprs = bMultiAnd ((if vcc3 then bTrue else bCall "$typed" [s2; p]) :: (exprs |> List.map doInv) ) 
         let invcall = bCall "$inv2" s1s2pwe
         let typedPtr = bCall "$ptr" [we; r]
         let invlabcall lbl = bCall "$inv_lab" [s2; typedPtr; er (ctx.TrInvLabel lbl)]
@@ -2142,8 +2141,10 @@ namespace Microsoft.Research.Vcc
                           
         let forward =
           if vcc3 then
+            let rootName = td.Name + ".#root"
             forward @ 
-              [B.Decl.Axiom (bCall "$def_composite_type" [we; bInt td.SizeOf; B.Expr.BoolLiteral !owns_set_is_volatile; B.Expr.BoolLiteral !is_claimable])]
+              [B.Decl.Const { Unique = true ; Type = tpField ; Name = rootName };
+               B.Decl.Axiom (bCall "$def_composite_type" [we; er rootName; bInt td.SizeOf; B.Expr.BoolLiteral !owns_set_is_volatile; B.Expr.BoolLiteral !is_claimable])]
           else
             forward @ 
               [B.Decl.Axiom (bCall "$is_composite" [we]);
