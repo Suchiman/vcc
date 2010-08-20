@@ -22,17 +22,13 @@ namespace Microsoft.Research.Vcc
     | Expr.Prim ({ Type = Type.Integer _ } as c, op, args) when op.IsEqOrIneq ->
       Some (self (Expr.Cast (c, Processed, Expr.Prim ({ c with Type = Type.Bool }, op, args))))
     | Expr.Prim (c, op, [a1; a2]) when op.IsEqOrIneq ->
-      let toGenericPtr (e:Expr) isSpec =
-        Expr.Cast ({ e.Common with Type = Type.MkPtr(Integer IntKind.UInt8, isSpec) }, Processed, e)
       match a1.Type, a2.Type with
         | PtrSoP(t, isSpec), PtrSoP(t', isSpec') ->
           if isSpec <> isSpec' then die()
-          if (t = Void) || (t' = Void) then 
+          if t = Void || t' = Void || t <> t' then
             let macro = if op.IsEq then "_vcc_ptr_eq" else "_vcc_ptr_neq"
-            Some (self (Expr.Macro (c, macro, [toGenericPtr a1 isSpec; toGenericPtr a2 isSpec])))
-          elif t = t' then None
-          else 
-            Some (self (Expr.Prim (c, op, [toGenericPtr a1 isSpec; toGenericPtr a2 isSpec])))
+            Some (self (Expr.Macro (c, macro, [a1; a2])))
+          else None
         | _ -> None
     | Expr.Dot (c, e, ({ Type = Array (t, _) } as f)) when c.Type <> SpecPtr t && c.Type <> PhysPtr t ->
       Some (self (Expr.MkDot (c, e, f)))

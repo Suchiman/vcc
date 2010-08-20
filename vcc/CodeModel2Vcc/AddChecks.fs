@@ -345,7 +345,7 @@ namespace Microsoft.Research.Vcc
           if Type.ConversionIsLossless types then Some newe
           else
             let comm = afmte 8518 ("{0} fits range of " + c.Type.ToString()) [e']
-            addStmtsOpt [Expr.MkAssert (inRange comm (ignoreEffects newe))] newe      
+            addStmtsOpt [Expr.MkAssert (inRange helper comm (ignoreEffects newe))] newe      
             
         | Prim (c, Op("=="|"!="|"<"|"<="|">"|">=" as opName, (Checked|Unchecked)), args) ->
           Some(Prim(c, Op(opName, Processed), selfs args))                      
@@ -370,7 +370,7 @@ namespace Microsoft.Research.Vcc
                 | _ -> failwith "binary operation expected"
               | _  -> 
                 let comm = afmte 8004 "{0} might overflow" [e]
-                [inRange comm (ignoreEffects newop)]
+                [inRange helper comm (ignoreEffects newop)]
           addStmtsOpt (List.map Expr.MkAssert checks) newop
       
         | _ -> None

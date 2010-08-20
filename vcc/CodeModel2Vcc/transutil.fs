@@ -218,11 +218,14 @@ namespace Microsoft.Research.Vcc
       | Integer k -> Type.IntSuffix k
       | _ -> failwith "integer type expected"
   
-  let inRange ec (expr:Expr) =
+  let inRange (helper:Helper.Env) ec (expr:Expr) =
+    let castToInt expr =
+      if helper.Options.Vcc3 then expr
+      else Expr.Cast({expr.Common with Type= Type.MathInteger}, CheckedStatus.Processed, expr)
     match expr.Type with
       | Integer k -> Expr.Macro (ec, "in_range_" + Type.IntSuffix k, [expr])
-      | PhysPtr _ -> Expr.Macro (ec, "in_range_phys_ptr", [Expr.Cast({expr.Common with Type= Type.MathInteger}, CheckedStatus.Processed, expr)])
-      | SpecPtr _ -> Expr.Macro (ec, "in_range_spec_ptr", [Expr.Cast({expr.Common with Type= Type.MathInteger}, CheckedStatus.Processed, expr)])
+      | PhysPtr _ -> Expr.Macro (ec, "in_range_phys_ptr", [castToInt expr])
+      | SpecPtr _ -> Expr.Macro (ec, "in_range_spec_ptr", [castToInt expr])
       | ObjectT
       | Primitive _ -> Expr.True
       | _ -> failwith "integer or float type expected"

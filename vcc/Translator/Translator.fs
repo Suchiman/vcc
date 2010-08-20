@@ -265,6 +265,8 @@ namespace Microsoft.Research.Vcc
         let v' = trVar v
         match v.Type with
           | C.Type.Integer k -> (v', Some (bCall ("$in_range_" + C.Type.IntSuffix k) [varRef v]))
+          | C.Type.PhysPtr t when vcc3 -> (v', Some (bCall "$is_phys_ptr" [varRef v; toTypeId t]))
+          | C.Type.SpecPtr t when vcc3 -> (v', Some (bCall "$is_spac_ptr" [varRef v; toTypeId t]))
           | C.Type.PhysPtr _ -> (v', Some (bCall "$in_range_phys_ptr" [varRef v]))
           | C.Type.SpecPtr _ -> (v', Some (bCall "$in_range_spec_ptr" [varRef v]))
           | _ -> (v', None)
@@ -469,6 +471,9 @@ namespace Microsoft.Research.Vcc
         match n, args with
           | "writes_check", [a] -> writesCheck env ec.Token false a
           | "prim_writes_check", [a] -> writesCheck env ec.Token true a
+          | ("in_range_phys_ptr"|"in_range_spec_ptr") as in_range, [p] when vcc3 ->
+            let name = if in_range.Contains "spec" then "$is_spec_ptr" else "$is_phys_ptr"
+            bCall name [self p; toTypeId p.Type.Deref]
           | in_range, args when in_range.StartsWith ("in_range") -> bCall ("$" + in_range) (selfs args)
           | ("unchecked_sbits"|"unchecked_ubits"), args ->
             bCall ("$" + n) (selfs args)
@@ -873,7 +878,7 @@ namespace Microsoft.Research.Vcc
         match e2.Type with
           | C.Ptr _ ->
             match t with 
-              | C.Ptr _ -> e2'
+              | C.Ptr _ when not vcc3 -> e2'
               | _ -> bCall "$ptr_to_int" [e2']
           | C.Type.Integer _ -> e2'
           | _ ->
