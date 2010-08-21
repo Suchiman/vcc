@@ -37,12 +37,14 @@ span(p) = { <p,f> | f in fields }
 // for each C type there is a value of $ctype Boogie type
 type $ctype; 
 
-// a typed pointer -- i.e. a pair of a $field and an int
+// a typed pointer -- i.e. a pair of a $field and a $base
 type $ptr;
 
 // name of a C field -- each field of a C struct gets a constant of this type
 //   like A.b for field b of struct A.
 type $field; 
+
+type $base;
 
 // describes a kind of a C type:
 //  - primitive (includes mathematical types (sequences, maps, sets) and pointers)
@@ -256,14 +258,15 @@ axiom (forall #n:$ctype :: {$spec_ptr_to(#n)} $is_primitive($spec_ptr_to(#n)));
 
 axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claimable(#n));
 
-const $me_ref : int;
+const $me_ref : $base;
 const ^$thread_id#root: $field;
 function $me() : $ptr;
-axiom $in_range_spec_ptr($me()) && $me_ref != 0;
+axiom $in_range_spec_ptr($me());
 axiom $me() == $ptr(^$thread_id#root, $me_ref);
 axiom $def_flat_type(^$#thread_id_t, 1) && $is_threadtype(^$#thread_id_t);
 axiom $root_field(^$#thread_id_t) == ^$thread_id#root;
 axiom $def_ghost_field(^$#thread_id_t, ^$thread_id#root, ^$#thread_id_t, false);
+axiom $non_null($me());
 
 function {:inline true} $current_state(s:$state) : $state { s }
 
@@ -311,11 +314,11 @@ function $addr($ptr): int;
 axiom (forall p:$ptr :: {$addr(p), $addr($emb0(p))}
   $is_phys_field($field(p)) ==> $addr(p) == $addr($emb0(p)) + $field_offset($field(p)));
 
-function $base($ptr): int;
+function $base($ptr): $base;
 function $field($ptr) : $field;
-function $ptr($field,int): $ptr;
-axiom (forall t:$field, b:int :: $field($ptr(t,b))==t);
-axiom (forall t:$field, b:int :: $base($ptr(t,b))==b);
+function $ptr($field,$base): $ptr;
+axiom (forall t:$field, b:$base :: $field($ptr(t,b))==t);
+axiom (forall t:$field, b:$base :: $base($ptr(t,b))==b);
 axiom (forall p:$ptr :: {$base(p)} {$field(p)} $ptr($field(p), $base(p)) == p);
 
 function {:inline true} $non_null(p:$ptr) : bool
@@ -350,7 +353,7 @@ axiom (forall fld:$field, off:int :: {$array_path(fld, off)}
 
 const $null:$ptr;
 const unique ^^null_field : $field;
-axiom $null == $ptr(^^null_field, 0);
+//axiom $null == $ptr(^^null_field, 0);
 axiom $addr($null) == 0;
 
 //typed pointer test
@@ -365,7 +368,7 @@ function $ptr_cast(#p:$ptr,#t:$ctype) : $ptr;
 
 axiom (forall p:$ptr, t:$ctype :: {$ptr_cast(p, t)}
   $typ($ptr_cast(p, t)) == t &&
-  ($is_null(p) ==> $ptr_cast(p, t) == $ptr($root_field(t), 0)));
+  ($is_null(p) ==> $ptr_cast(p, t) == $ptr($root_field(t), $base($null))));
 
 axiom (forall p:$ptr, t:$ctype :: {$addr($ptr_cast(p, t))}
   $addr($ptr_cast(p, t)) == $addr(p));
@@ -743,7 +746,7 @@ axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in_pos(p, $owns(S, q)), $is_non_
       ($set_in(p, $owns(S, q)) <==> $owner(S, p) == q));
 */
 
-axiom (forall S:$state, #r:int, #t:$ctype, #f:$field :: {$owns(S, $ptr($as_field_with_type(#f,#t), #r)), $is_arraytype(#t)}
+axiom (forall S:$state, #r:$base, #t:$ctype, #f:$field :: {$owns(S, $ptr($as_field_with_type(#f,#t), #r)), $is_arraytype(#t)}
   $good_state(S) ==>
     $is_arraytype(#t) ==> $owns(S, $ptr(#f, #r)) == $set_empty());
 
@@ -1637,14 +1640,14 @@ axiom ($ptr_to_i2($null) == 0);
 axiom ($ptr_to_u1($null) == 0);
 axiom ($ptr_to_i1($null) == 0);
 
-function {:inline true} $u8_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
-function {:inline true} $i8_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
-function {:inline true} $u4_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
-function {:inline true} $i4_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
-function {:inline true} $u2_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
-function {:inline true} $i2_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
-function {:inline true} $u1_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
-function {:inline true} $i1_to_ptr(x : int) : $ptr { $ptr(^^null_field, x)  }
+function $u8_to_ptr(x : int) : $ptr;
+function $i8_to_ptr(x : int) : $ptr;
+function $u4_to_ptr(x : int) : $ptr;
+function $i4_to_ptr(x : int) : $ptr;
+function $u2_to_ptr(x : int) : $ptr;
+function $i2_to_ptr(x : int) : $ptr;
+function $u1_to_ptr(x : int) : $ptr;
+function $i1_to_ptr(x : int) : $ptr;
 
 axiom (forall p:$ptr :: { $ptr_to_u8(p) } $in_range_u8($addr(p)) ==> $ptr_to_u8(p) == $addr(p));
 axiom (forall p:$ptr :: { $ptr_to_i8(p) } $in_range_i8($addr(p)) ==> $ptr_to_i8(p) == $addr(p));
