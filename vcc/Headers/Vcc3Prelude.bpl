@@ -78,7 +78,7 @@ type $pure_function;
 // For labeled contracts.
 type $label;
 
-type $labelset; // TODO remove that
+type $labelset;
 
 // ----------------------------------------------------------------------------
 // built-in types
@@ -308,8 +308,8 @@ function {:inline true} $mem_eq(s1:$state, s2:$state, p:$ptr) : bool
 function $typ(p:$ptr): $ctype
   { $field_type($field(p)) }
 function $addr($ptr): int;
-axiom (forall p:$ptr :: {$addr(p)}
-  $is_phys_field($field(p)) ==> $addr(p) == $base(p) + $field_offset($field(p)));
+axiom (forall p:$ptr :: {$addr(p), $addr($emb0(p))}
+  $is_phys_field($field(p)) ==> $addr(p) == $addr($emb0(p)) + $field_offset($field(p)));
 
 function $base($ptr): int;
 function $field($ptr) : $field;
@@ -317,6 +317,11 @@ function $ptr($field,int): $ptr;
 axiom (forall t:$field, b:int :: $field($ptr(t,b))==t);
 axiom (forall t:$field, b:int :: $base($ptr(t,b))==b);
 axiom (forall p:$ptr :: {$base(p)} {$field(p)} $ptr($field(p), $base(p)) == p);
+
+function {:inline true} $non_null(p:$ptr) : bool
+  { !$is_null(p) }
+function $is_null(p:$ptr) : bool;
+axiom (forall p:$ptr :: {$addr(p)} $addr(p) == 0 <==> $is_null(p));
 
 // Use for computing references for ghost fields, instead of saying p+$field_offset(f) we use
 // $ghost_ref(p,f). This has an added bonus that the embedding and path can be the same reagrdless
@@ -346,6 +351,7 @@ axiom (forall fld:$field, off:int :: {$array_path(fld, off)}
 const $null:$ptr;
 const unique ^^null_field : $field;
 axiom $null == $ptr(^^null_field, 0);
+axiom $addr($null) == 0;
 
 //typed pointer test
 function $is(p:$ptr, t:$ctype) : bool
@@ -354,12 +360,26 @@ function $is(p:$ptr, t:$ctype) : bool
     else
       $typ(p) == t }
 
-function {:inline true} $ptr_cast(#p:$ptr,#t:$ctype) : $ptr
-  { $ptr($root_field(#t), $base(#p)) }
+// it cannot preserve the base, nor the field.
+function $ptr_cast(#p:$ptr,#t:$ctype) : $ptr;
+
+axiom (forall p:$ptr, t:$ctype :: {$ptr_cast(p, t)}
+  $typ($ptr_cast(p, t)) == t &&
+  ($is_null(p) ==> $ptr_cast(p, t) == $ptr($root_field(t), 0)));
+
+axiom (forall p:$ptr, t:$ctype :: {$addr($ptr_cast(p, t))}
+  $addr($ptr_cast(p, t)) == $addr(p));
+
+axiom (forall p:$ptr, t:$ctype :: {$ptr_cast($ptr_cast(p, t), $typ(p))}
+  $non_null(p) ==> $ptr_cast($ptr_cast(p, t), $typ(p)) == p);
+
+
 
 //dot and (its "inverse") emb/path access
 function $dot($ptr,$field) returns ($ptr);
 function $emb(S:$state,p:$ptr) returns ($ptr)
+  { $emb0(p) }
+function {:inline true} $emb0(p:$ptr) returns ($ptr)
   { $ptr($root_field($field_parent_type($field(p))), $base(p)) }
 
 function $is_sequential_field($field) : bool;
@@ -711,7 +731,7 @@ function {:inline true} $closed_is_transitive(S:$state) returns (bool)
          $field(p) == $root_field($typ(p)) &&
          $owner(S, p) == q &&
          $closed(S, p) && 
-         $base(p) != 0 &&
+         $non_null(p) &&
          true
          )
   } 
@@ -733,11 +753,25 @@ axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
 axiom (forall S:$state :: {$good_state(S)}
   $good_state(S) ==> $closed_is_transitive(S));
 
-axiom (forall S:$state :: {$good_state(S)}
+axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
   $good_state(S) ==>
-    $closed_is_transitive(S)
-    );
-        
+    $closed(S, p) ==> $non_null(p));
+
+// Root axioms
+
+axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$root(S, p)}
+  $good_state(S) ==>
+  $owner(S, p) == $me() ==> $non_null(p) && $root(S, p) == p);
+
+axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
+  $good_state(S) ==>
+  $is_composite_ch($typ($owner(S, r))) ==>
+    $root(S, r) == $root(S, $owner(S, r)));
+
+axiom (forall S:$state, p:$ptr ::
+  {$root(S, $root(S, p))}
+  $good_state(S) ==> $root(S, $root(S, p)) == $root(S, p));
+
 // ----------------------------------------------------------------------------
 // 
 // ----------------------------------------------------------------------------
@@ -938,21 +972,6 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   $timestamp_post_strict(S0, S) &&
   $post_unwrap(S0, S)
 }
-
-// Root axioms
-
-axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$root(S, p)}
-  $good_state(S) ==>
-  $owner(S, p) == $me() ==> $root(S, p) == p);
-
-axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
-  $good_state(S) ==>
-  $is_composite_ch($typ($owner(S, r))) ==>
-    $root(S, r) == $root(S, $owner(S, r)));
-
-axiom (forall S:$state, p:$ptr ::
-  {$root(S, $root(S, p))}
-  $good_state(S) ==> $root(S, $root(S, p)) == $root(S, p));
 
 procedure $unwrap(o:$ptr, T:$ctype);
   modifies $s;
