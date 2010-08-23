@@ -237,7 +237,7 @@ namespace Microsoft.Research.Vcc
         | B.Expr.FunctionCall ("$dot", [p; f]) ->
           [p; f]
         | p ->
-          [bCall "$base" [bState; p]; bCall "$field" [bState; p]]
+          [bCall "$emb0" [p]; bCall "$field" [p]]
 
       let typedRead s p t =
         if vcc3 then
@@ -767,7 +767,6 @@ namespace Microsoft.Research.Vcc
                     cond codeTh ("{0} is mutable " + msg + "(accessing volatile field " + f.Name + ")" + suff) "_vcc_mutable" [cState; p']
                   else
                     if vcc3 then
-                      // Old comment: This doesn't work with field inlining.
                       cond codeTh ("{0} is thread local " + msg + "(accessing field " + f.Name + ")" + suff) "_vcc_thread_local" [cState; p']
                     else
                       cond codeTh ("{0} is thread local" + suff) "_vcc_thread_local2" [cState; p]
@@ -780,7 +779,7 @@ namespace Microsoft.Research.Vcc
                       " or atomically updated", List.map (fun o -> bCall "$set_in" [trExpr env p; bCall "$span" [o]]) env.AtomicReads
                 let tok, prop =
                   if vcc3 then
-                    failwith "FIXME"
+                    cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local" [cState; p]
                   else
                     cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local2" [cState; p]
                 tok, bMultiOr (prop :: isAtomic)
