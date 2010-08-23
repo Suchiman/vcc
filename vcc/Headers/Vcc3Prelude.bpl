@@ -263,7 +263,7 @@ function {:inline true} $is_non_primitive_ch(t:$ctype) : bool
   { $kind_of(t) != $kind_primitive }
 
 function {:inline true} $is_non_primitive_ptr(p:$ptr) : bool
-  { $is_non_primitive($typ(p)) }
+  { $is_non_primitive_ch($typ(p)) }
 
 
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $is_primitive($map_t(#r,#d)));
@@ -579,6 +579,9 @@ function {:inline true} $owns_inline(S:$state, p:$ptr) : $ptrset
 
 function $owns(S:$state, p:$ptr) : $ptrset
   { $owns_inline(S, p) }
+
+function {:inline true} $keeps(S:$state, #l:$ptr, #p:$ptr) : bool
+  { $set_in(#p, $owns(S, #l)) }
 
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p,#t) && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive_ch(#t) }
@@ -1091,18 +1094,19 @@ procedure $wrap(o:$ptr, T:$ctype);
 // ----------------------------------------------------------------------------
 
 function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
-  { (forall f:$field :: {$dot(p, f)}
-      ($is_ghost_field(f) || $field_parent_type(f) == t) ==>
-        $rd(S1, p, f) == $rd(S2, p, f) || f == $f_ref_cnt) }
+  { (forall f:$field :: {$rd(S2, p, f)}
+      $field_parent_type(f) == t || f == $f_owns ==> $rd(S1, p, f) == $rd(S2, p, f)) }
 
 function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
-  { (forall f:$field :: {$dot(p, f)}
-      ($is_ghost_field(f) || $field_parent_type(f) == t) ==>
-        $rd(S1, p, f) == $rd(S2, p, f) ||
-        /*$is_volatile(S1, $dot(p, f)) ||*/ f == $f_ref_cnt) }
+  { (forall f:$field :: {$rd(S2, p, f)}
+      ($field_parent_type(f) == t && $is_sequential_field(f)) ||
+      (!$has_volatile_owns_set(t) && f == $f_owns) 
+        ==> $rd(S1, p, f) == $rd(S2, p, f)) }
 
 function $good_for_admissibility(S:$state) : bool;
 function $good_for_post_admissibility(S:$state) : bool;
+function $admissibility_start(p:$ptr, t:$ctype) : bool
+  { $is(p, t) }
 
 function {:inline true} $stuttering_pre(S:$state, p:$ptr) : bool
   { (forall q: $ptr :: {$closed(S, q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
@@ -1116,12 +1120,16 @@ procedure $havoc_others(p:$ptr, t:$ctype);
   modifies $s;
   // TOKEN: the state was not modified
   requires $good_for_admissibility($s);
-  ensures $is_stuttering_check() || $spans_the_same(old($s), $s, p, t);
-  ensures $nonvolatile_spans_the_same(old($s), $s, p, t);
+  ensures 
+    if $is_stuttering_check() then 
+      $nonvolatile_spans_the_same(old($s), $s, p, t)
+    else
+      $spans_the_same(old($s), $s, p, t);
   ensures $closed($s, p);
   ensures $closed_is_transitive($s);
   ensures $good_state($s);
   ensures $good_for_post_admissibility($s);
+
   ensures (forall q: $ptr :: {$closed($s, q)}
     $closed(old($s), q) || $closed($s, q) ==>
       ($spans_the_same(old($s), $s, q, $typ(q)) && $closed(old($s), q) == $closed($s, q)) || 
