@@ -42,7 +42,7 @@ namespace Microsoft.Research.Vcc
     let td = match p.Type with Ptr (Type.Ref td) -> td | _ -> die()
     List.map stutteringCheck (AddChecks.invariantsOf td) |> List.concat
 
-  let addDefaultAdmissibilityChecks (explicitAdm:Dict<_,_>) helper =
+  let addDefaultAdmissibilityChecks (explicitAdm:Dict<_,_>) (helper:Helper.Env) =
     let handleDecl = function
       | Top.TypeDecl td as decl when not (hasCustomAttr AttrNoAdmissibility td.CustomAttr) ->
         let rec isTrivialInvariant = function
@@ -85,6 +85,10 @@ namespace Microsoft.Research.Vcc
                 assumeNot explicitAdm isAdm |>
                 assumeNot explicitStutt isStutt |>
                 assumeNot explicitUnwrap isUnwrap
+          let body =
+            if helper.Options.Vcc3 then
+              Expr.MkBlock [assume "_vcc_admissibility_start"; body]
+            else body
           let post = 
             List.map (mkImpl isAdm) (admChecks helper parm) @
             List.map (mkImpl isStutt) (stuttChecks helper parm) @

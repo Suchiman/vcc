@@ -174,6 +174,7 @@ namespace Microsoft.Research.Vcc
                   "rec_eq", "..";
                   "account_claim", "Spp";
                   "is_ghost_ptr", "p";
+                  "admissibility_start", "t";
                 ]
     dict
 
