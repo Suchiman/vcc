@@ -175,6 +175,7 @@ const unique $ctype_flat : $ctype_branch;
 const unique $ctype_ptr : $ctype_branch;
 const unique $ctype_spec_ptr : $ctype_branch;
 const unique $ctype_map : $ctype_branch;
+const unique $ctype_array : $ctype_branch;
 
 // inverse functions here (unptr_to, map_domain, map_range) are for the prover
 // so it knows that int*!=short*, i.e. * is injective
@@ -197,6 +198,19 @@ function $map_domain($ctype) : $ctype;
 function $map_range($ctype) : $ctype;
 
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $map_domain($map_t(#r,#d)) == #d && $map_range($map_t(#r,#d)) == #r && $type_branch($map_t(#r,#d)) == $ctype_map);
+
+// to be used when you allocate just the array itself
+function $array($ctype, int) returns($ctype);
+function $element_type($ctype) returns($ctype);
+function $array_length($ctype) returns(int);
+axiom (forall T:$ctype, s:int :: {$array(T, s)} 
+     true
+  && $element_type($array(T, s)) == T 
+  && $array_length($array(T, s)) == s 
+  && $is_arraytype($array(T, s))
+  && $type_branch($array(T, s)) == $ctype_array
+);
+axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
 
 // Lack of {:inline true} makes it possible to trigger on $is_primitive(...)
 // $is_primitive(t) should be only used when it is known that t is really
@@ -532,8 +546,8 @@ function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
 */
 
 function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
-  { $modifies(S0, S1, $set_empty()) &&
-    $preserves_thread_local(S0, S1) }
+  { $modifies(S0, S1, $set_empty()) }
+  //  $preserves_thread_local(S0, S1) }
 
 
 // ----------------------------------------------------------------------------
@@ -886,19 +900,75 @@ procedure $set_owns(p:$ptr, owns:$ptrset);
 // Allocation
 // ----------------------------------------------------------------------------
 
+function $extent_mutable(S:$state, r:$ptr) : bool
+  { $mutable(S, r) && 
+    (forall p:$ptr :: {$in(p, $extent(S, r))} $in(p, $extent(S, r)) ==> $mutable(S, p)) }
+  
+function $extent_is_fresh(S:$state, r:$ptr) : bool
+  { $timestamp_is_now(S, r) &&
+    (forall p:$ptr :: {$in(p, $extent(S, r))} $in(p, $extent(S, r)) ==> $timestamp_is_now(S, p)) }
+
+function $is_in_stackframe(#sf:int, p:$ptr) : bool;
+
+function $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
+{    true
+  && $is(r, t)
+  && $extent_mutable(S, r)
+  && $extent_is_fresh(S, r)
+  && $writes_nothing(S0, S)
+  && $heap(S) == $heap(S0)
+  && $timestamp_post_strict(S0, S)
+  && $owner(S0, r) != $me()
+  && $first_option_typed(S, r)
+}
+
+
+procedure $stack_alloc(t:$ctype, sf:int, spec:bool) returns (r:$ptr);
+  modifies $s;
+  ensures $is_allocated(old($s), $s, r, t);
+  ensures $is_in_stackframe(sf, r);
+  ensures spec ==> $in_range_spec_ptr(r);
+  ensures !spec ==> $in_range_phys_ptr(r);
+
+procedure $stack_free(sf:int, x:$ptr);
+  modifies $s;
+  // TOKEN: the extent of the object being reclaimed is mutable
+  requires $extent_mutable($s, x);
+  // TOKEN: the pointer being reclaimed was returned by stack_alloc()
+  requires $is_in_stackframe(sf, x);
+
+  ensures $modifies(old($s), $s, $extent(old($s), x));
+  ensures $heap($s) == $heap(old($s));
+
 procedure $spec_alloc(t:$ctype) returns(r:$ptr);
   modifies $s;
-  ensures $is(r, t);
-  ensures $mutable($s, r);
-
-  ensures (forall p:$ptr :: // TODO add trigger
-    $set_in(p, $span($s, r)) ==> $timestamp_is_now($s, p));
-
-  ensures $writes_nothing(old($s), $s);
-
-  ensures $is_malloc_root($s, r);
-  ensures $first_option_typed($s, r);
+  ensures $is_allocated(old($s), $s, r, t);
   ensures $in_range_spec_ptr(r);
+
+procedure $spec_alloc_array(t:$ctype, sz:int) returns(r:$ptr);
+  modifies $s;
+  ensures $is_allocated(old($s), $s, r, $array(t, sz));
+  ensures $in_range_spec_ptr(r);
+
+procedure $alloc(t:$ctype) returns(r:$ptr);
+  modifies $s;
+  ensures $non_null(r) ==>
+            $is_allocated(old($s), $s, r, t) && 
+            $in_range_phys_ptr(r) && 
+            $is_malloc_root($s, r);
+  ensures $is_null(r) ==>
+            $writes_nothing(old($s), $s) && $heap(old($s)) == $heap($s);
+
+procedure $free(x:$ptr);
+  // writes extent(x)
+  modifies $s;
+  // TOKEN: the extent of the object being reclaimed is mutable
+  requires $extent_mutable($s, x);
+  // TOKEN: the pointer being reclaimed was returned by malloc()
+  requires $is_malloc_root($s, x);
+
+  ensures $modifies(old($s), $s, $extent(old($s), x));
+  ensures $heap($s) == $heap(old($s));
 
 // ----------------------------------------------------------------------------
 // Wrap/unwrap
