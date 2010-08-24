@@ -318,7 +318,7 @@ function {:inline true} $mem_eq(s1:$state, s2:$state, p:$ptr) : bool
 */
 
 // ----------------------------------------------------------------------------
-// typed pointers
+// Typed pointers
 // ----------------------------------------------------------------------------
 
 function $typ(p:$ptr): $ctype
@@ -339,30 +339,7 @@ function {:inline true} $non_null(p:$ptr) : bool
 function $is_null(p:$ptr) : bool;
 axiom (forall p:$ptr :: {$addr(p)} $addr(p) == 0 <==> $is_null(p));
 
-// Use for computing references for ghost fields, instead of saying p+$field_offset(f) we use
-// $ghost_ref(p,f). This has an added bonus that the embedding and path can be the same reagrdless
-// of the current $meta
-function $ghost_ref($ptr, $field) : int;
-
-axiom (forall p:$ptr, f:$field :: {$ghost_ref(p, f)}
-  $ghost_ref(p,f) > $arch_spec_ptr_start);
-
-function $physical_ref(p:$ptr, f:$field) : int;
-// Make the physical fields, when we do not generate offset axioms, behave like ghost fields
-//  (this is unsound, but not so much).
-//axiom (forall p:$ptr, f:$field :: {$physical_ref(p, f)}
-//  $ghost_emb($physical_ref(p, f)) == p && $ghost_path($physical_ref(p, f)) == f );
-
-function $array_path(basefield:$field, off:int) : $field;
-
 function $is_base_field($field) : bool;
-
-function $array_path_1($field) : $field;
-function $array_path_2($field) : int;
-axiom (forall fld:$field, off:int :: {$array_path(fld, off)}
-  !$is_base_field($array_path(fld, off)) &&
-  $array_path_1($array_path(fld, off)) == fld &&
-  $array_path_2($array_path(fld, off)) == off);
 
 const $null:$ptr;
 const unique ^^null_field : $field;
@@ -390,12 +367,11 @@ axiom (forall p:$ptr, t:$ctype :: {$ptr_cast($ptr_cast(p, t), $typ(p))}
   $non_null(p) ==> $ptr_cast($ptr_cast(p, t), $typ(p)) == p);
 
 
-
-//dot and (its "inverse") emb/path access
-function $dot($ptr,$field) returns ($ptr);
-function $emb(S:$state,p:$ptr) returns ($ptr)
+function {:inline true} $dot(p:$ptr,f:$field) : $ptr
+  { $ptr(f, $base(p)) }
+function $emb(S:$state,p:$ptr) : $ptr
   { $emb0(p) }
-function {:inline true} $emb0(p:$ptr) returns ($ptr)
+function {:inline true} $emb0(p:$ptr) : $ptr
   { $ptr($root_field($field_parent_type($field(p))), $base(p)) }
 
 axiom (forall t:$ctype :: {$root_field(t)}
@@ -404,13 +380,13 @@ axiom (forall t:$ctype :: {$root_field(t)}
 function $is_sequential_field($field) : bool;
 function $as_field_with_type($field,$ctype) : $field;
 function $field_type($field) : $ctype;
-
 function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
-  { $is_base_field(f) && 
+  { 
     $field_parent_type(f) == partp &&
     (!isvolatile ==> $is_sequential_field(f)) &&
     $field_type(f) == tp &&
     $as_field_with_type(f, tp) == f &&
+    $field_arr_index(f) == 0 &&
     true
   }
 
@@ -418,11 +394,13 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
   { $def_field(partp, f, tp, isvolatile) &&
     $field_offset(f) == off &&
     $is_phys_field(f) &&
+    $is_base_field(f) && 
     true
   }
 
 function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
   { $def_field(partp, f, tp, isvolatile) &&
+    $is_base_field(f) && 
     $is_ghost_field(f) &&
     true
   }
@@ -431,6 +409,62 @@ function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
   { $is_base_field(f) && $is_ghost_field(f) &&
     true
   }
+
+// ----------------------------------------------------------------------------
+// Arrays
+// ----------------------------------------------------------------------------
+
+function $field_arr_index($field) : int;
+function $field_arr_root($field) : $field;
+function $field_arr_size($field) : int;
+
+function $field_arr_ctor($field, int) : $field;
+axiom (forall f:$field :: {$field_arr_root(f)}
+  f == $field_arr_ctor($field_arr_root(f), $field_arr_index(f)));
+axiom (forall f:$field, i:int :: {$field_arr_ctor(f, i)}
+  $field_arr_root($field_arr_ctor(f, i)) == f && $field_arr_index($field_arr_ctor(f, i)) == i);
+
+function {:inline true} $def_phys_arr_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int, sz:int) : bool
+  { $def_field(partp, f, tp, isvolatile) &&
+    $field_offset(f) == off &&
+    $is_phys_field(f) &&
+    $field_arr_size(f) == sz &&
+    $field_arr_root(f) == f &&
+    !$is_base_field(f) && 
+    true
+  }
+
+function {:inline true} $def_ghost_arr_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, sz:int) : bool
+  { $def_field(partp, f, tp, isvolatile) &&
+    $is_ghost_field(f) &&
+    $field_arr_size(f) == sz &&
+    $field_arr_root(f) == f &&
+    !$is_base_field(f) && 
+    true
+  }
+
+function $idx_nested(p:$ptr, i:int) : $ptr;
+function $idx_prim(p:$ptr, i:int) : $ptr
+  {
+    $ptr($field_plus($field(p), i), $base(p))
+  }
+
+function $field_plus($field, int) : $field;
+axiom (forall f:$field, i:int :: {$field_plus(f, i)}
+  !$is_base_field($field_plus(f, i)) &&
+  $field_arr_root($field_plus(f, i)) == $field_arr_root(f) &&
+  $field_arr_index($field_plus(f, i)) == $field_arr_index(f) + i &&
+  $field_arr_size($field_plus(f, i)) == $field_arr_size(f) &&
+  $field_type($field_plus(f, i)) == $field_type(f) &&
+  $is_sequential_field($field_plus(f, i)) == $is_sequential_field($field_plus(f, i)) &&
+  ($in_range(0, $field_arr_index(f) + i, $field_arr_size(f) - 1) ==> 
+    $field_parent_type($field_plus(f, i)) == $field_parent_type($field_arr_root(f))) &&
+  true
+  );
+
+// ----------------------------------------------------------------------------
+// Writes
+// ----------------------------------------------------------------------------
 
 function $writes_at(time:int) : $ptrset;
 
@@ -996,7 +1030,7 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   && $heap(S) == $heap(S0)
   && $f_closed(S) == $wr.$closed($f_closed(S0), o, false)
   && (forall r:$ptr :: {$rd.$timestamps($f_timestamp(S), r)}
-        if $owner(S0, r) == o then $rd.$timestamps($f_timestamp(S), r) == $current_timestamp(S)
+        if $owner(S0, r) == o || r == o then $rd.$timestamps($f_timestamp(S), r) == $current_timestamp(S)
         else $rd.$timestamps($f_timestamp(S), r) == $rd.$timestamps($f_timestamp(S0), r))
   && (forall r:$ptr :: {$rd.$owner($f_owner(S), r)}
         if $owner(S0, r) == o then $rd.$owner($f_owner(S), r) == $me()
