@@ -404,7 +404,16 @@ namespace Microsoft.Research.Vcc
                   helper.Oops (c.Token, "record dot found " + expr.ToString())
                 bCall "$dot" [self o; er (fieldName f)]
               | C.Expr.Index (_, arr, idx) ->
-                bCall "$idx" [self arr; self idx; ptrType arr]
+                if vcc3 then
+                  match arr.Type with
+                    | C.Type.PhysPtr t ->
+                      if t.IsComposite then
+                        bCall "$idx_nested" [self arr; self idx]
+                      else
+                        bCall "$idx_prim" [self arr; self idx]
+                    | _ -> die()
+                else
+                  bCall "$idx" [self arr; self idx; ptrType arr]
               | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
               | C.Expr.Call (_, fn, targs, args) ->
                 let args =  List.map ctx.ToTypeIdArraysAsPtrs targs @ convertArgs fn (selfs args)
@@ -1629,33 +1638,31 @@ namespace Microsoft.Research.Vcc
         let fieldRef = er (fieldName f)
         fieldRef
         
-
+      let toBaseType (f:C.Field) =
+        let baset = 
+          match f.Type with
+            | C.Array (t, _) -> t
+            | t -> t
+        baset
+          
       let trField3 (td:C.TypeDecl) (f:C.Field) =
         xassert (td.Kind <> C.Union)
-        match f.Type with
-          | C.Array _ -> die()
-          | _ -> ()
         let tdname = er ("^" + td.Name)
         let def =
           [B.Decl.Const ({ Name = fieldName f
                            Type = B.Type.Ref "$field"
                            Unique = true } : B.ConstData)]
-        let args = [tdname; toFieldRef f; toTypeId f.Type; bBool f.IsVolatile]
+        let args = [tdname; toFieldRef f; toTypeId (toBaseType f); bBool f.IsVolatile]
+        let args = if f.IsSpec then args else args @ [bInt f.ByteOffset]
         let axs =
-          if f.IsSpec then
-            [B.Decl.Axiom (bCall "$def_ghost_field" args)]
-          else
-            [B.Decl.Axiom (bCall "$def_phys_field" (args @ [bInt f.ByteOffset]))]
+          match f.Type with
+            | C.Array (_, sz) ->              
+              [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_arr_field" else "$def_phys_arr_field") (args @ [bInt sz]))]
+            | _ -> 
+              [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_field" else "$def_phys_field") args)]
         def @ axs
         
       let trField (td:C.TypeDecl) (f:C.Field) =
-        let toBaseType (f:C.Field) =
-          let baset = 
-            match f.Type with
-              | C.Array (t, _) -> t
-              | t -> t
-          baset
-          
         let tok = td.Token
         let we = er ("^" + td.Name)
         let isUnion = td.Kind = C.Union
