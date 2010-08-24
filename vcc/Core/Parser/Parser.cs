@@ -1606,7 +1606,15 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers | TS.DeclaratorStart);
       if (this.InSpecCode) this.outIsAKeyword = false;
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[specifiers.Count-1].SourceLocation);
-      Declarator declarator = this.ParseDeclarator(followers);
+      Declarator declarator;
+      if (this.currentToken != Token.Identifier && specifiers.Count > 0 && specifiers[specifiers.Count - 1] is OutSpecifier) {
+        // turn out specifier back into identifier
+        Specifier o = specifiers[specifiers.Count - 1];
+        specifiers.RemoveAt(specifiers.Count - 1);
+        declarator = new IdentifierDeclarator(new NameDeclaration(this.GetNameFor("out"), o.SourceLocation));
+
+      } else 
+        declarator = this.ParseDeclarator(followers);
       declarator = this.UseDeclaratorAsTypeDefNameIfThisSeemsIntended(specifiers, declarator, followers);
       slb.UpdateToSpan(declarator.SourceLocation);
       var result = new Parameter(specifiers, declarator, this.InSpecCode, false, slb);
