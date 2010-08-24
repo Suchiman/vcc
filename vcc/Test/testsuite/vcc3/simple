@@ -12,3 +12,33 @@ void foo(struct A *a) {
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 `
+#include <vcc.h>
+
+struct vcc(dynamic_owns) A {
+  int x;
+  invariant(x > 0)
+};
+
+struct vcc(dynamic_owns) B {
+  struct A *a;
+  int y;
+  invariant(keeps(a))
+  invariant(a->x > y)
+};
+
+struct vcc(dynamic_owns) C {
+  struct A *a;
+  int y;
+  invariant(a->x > y)
+};
+
+
+void foo(struct B *a, struct C *c) {
+}
+`
+Verification of A#adm succeeded.
+Verification of B#adm succeeded.
+Verification of C#adm failed.
+testcase(18,15) : error VC8012: invariant(a->x > y) of C is not admissible.
+Verification of foo succeeded.
+`
