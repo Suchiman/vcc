@@ -300,14 +300,13 @@ axiom (forall S:$state, p:$ptr, f:$field, t:$ctype ::
   $good_state(S) ==>
     $in_range_t(t, $rd(S, p, $as_field_with_type(f, $as_in_range_t(t)))));
 
-function $relative_field_of(p:$ptr, q:$ptr) : $field;
-function $container(p:$ptr, f:$field) : $ptr;
+axiom (forall S:$state, p:$ptr, f:$field, t:$ctype ::
+  {$int_to_ptr($rd(S, p, $as_field_with_type(f, $ptr_to(t))))}
+  $good_state(S) ==> $is_spec_ptr($int_to_ptr($rd(S, p, f)), t));
 
-function $dot2($ptr,$field) : $ptr;
-
-axiom (forall p, q: $ptr :: {$relative_field_of(p, q)}
-  $dot2(p, $relative_field_of(p, q)) == q &&
-  $container(q, $relative_field_of(p, q)) == p);
+axiom (forall S:$state, p:$ptr, f:$field, t:$ctype ::
+  {$int_to_ptr($rd(S, p, $as_field_with_type(f, $spec_ptr_to(t))))}
+  $good_state(S) ==> $is_phys_ptr($int_to_ptr($rd(S, p, f)), t));
 
 /* NMM
 function {:inline true} $mem(s:$state, p:$ptr) : int
