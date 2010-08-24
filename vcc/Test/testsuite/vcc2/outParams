@@ -314,3 +314,24 @@ assert(x >= 0);
 `
 Verification of foo succeeded.
 `
+
+#include <vcc.h>
+
+void foo(spec(int out)) 
+  requires(out == 5)
+{
+  assert(out == 5);
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+typedef struct S { int a; } S, *PS;
+
+void foo(spec(PS out) claimp(c))
+    always(c,closed(out))
+{ }
+`
+Verification of foo succeeded.
+`
