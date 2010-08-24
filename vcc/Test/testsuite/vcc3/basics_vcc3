@@ -1,0 +1,63 @@
+#include <vcc.h>
+
+void foo(int *a) {
+	int b = *a;
+}
+`
+Verification of foo failed.
+testcase(4,11) : error VC8512: Assertion 'a is thread local' did not verify.
+`
+`/omitrw
+#include <vcc.h>
+
+void foo(int *a) {
+	int b = *a;
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+bool _vcc_full_stop();
+
+struct foo {
+  int x;
+  invariant(_vcc_full_stop())
+  invariant(x > 0)
+};
+`
+Verification of foo#adm failed.
+testcase(7,15) : error VC8012: invariant(_vcc_full_stop()) of foo is not admissible.
+testcase(7,15) : error VC8018: invariant(_vcc_full_stop()) of foo forbids unwrapping.
+`
+#include "vcc.h"
+
+typedef unsigned __int64 uint64;
+
+void testme(uint64* p)
+  requires(thread_local(p))
+  requires(mutable((uint64*)(*p)))
+  requires(p != (uint64 *)(*p))
+  writes((uint64 *)*p)
+{
+
+    *((uint64*)(*p)) = 5;
+}
+`
+Verification of testme succeeded.
+`
+#include "vcc.h"
+
+struct x {
+  int dummy;
+};
+
+struct y {
+  int dummy;
+  struct x *xp;
+  invariant(closed(xp)) 
+};
+`
+Verification of y#adm failed.
+testcase(10,15) : error VC8012: invariant(_vcc_closed(xp)) of y is not admissible.
+`
