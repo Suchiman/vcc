@@ -196,24 +196,34 @@
   </Target>
   -->
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <PostBuildEvent>set PATH=%25PATH%25;c:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE;c:\Program Files\Microsoft Visual Studio 9.0\VC\BIN
-set PATH=%25PATH%25;c:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\IDE;c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\BIN
-set PATH=%25PATH%25;$(DevEnvDir);$(DevEnvDir)..\..\VC\BIN
-set PATH=%25PATH%25;C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin\
-set PATH=%25PATH%25;C:\Program Files (x86)\Microsoft 
-
+    <PostBuildEvent>
+if NOT "%VS100COMNTOOLS%"=="" (
+  call "%VS100COMNTOOLS%\..\..\VC\vcvarsall.bat" x86
+) else (
+  if NOT "%VS90COMNTOOLS%"=="" (
+    call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat" x86
+  ) else (
+    echo Cannot find Visual Studio's vcvarsall.bat, tried VS100COMNTOOLS and VS90COMNTOOLS.
+    exit /b 1
+  )
+)
 editbin /nologo /STACK:0x2000000 $(TargetPath)
 editbin /nologo /STACK:0x2000000 $(ProjectDir)obj\$(ConfigurationName)\$(TargetFileName)
 sn -q -R  $(TargetPath) $(ProjectDir)\..\Common\InterimKey.snk
 sn -q -R  $(ProjectDir)obj\$(ConfigurationName)\$(TargetFileName) $(ProjectDir)\..\Common\InterimKey.snk</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>set PATH=%25PATH%25;c:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE;c:\Program Files\Microsoft Visual Studio 9.0\VC\BIN
-set PATH=%25PATH%25;c:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\IDE;c:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\BIN
-set PATH=%25PATH%25;$(DevEnvDir);$(DevEnvDir)..\..\VC\BIN
-set PATH=%25PATH%25;C:\Program Files\Microsoft SDKs\Windows\v6.0A\bin\
-set PATH=%25PATH%25;C:\Program Files (x86)\Microsoft 
-
+    <PostBuildEvent>
+if NOT "%VS100COMNTOOLS%"=="" (
+  call "%VS100COMNTOOLS%\..\..\VC\vcvarsall.bat" x86
+) else (
+  if NOT "%VS90COMNTOOLS%"=="" (
+    call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat" x86
+  ) else (
+    echo Cannot find Visual Studio's vcvarsall.bat, tried VS100COMNTOOLS and VS90COMNTOOLS.
+    exit /b 1
+  )
+)
 editbin /nologo /STACK:0x2000000 "$(TargetPath)"
 editbin /nologo /STACK:0x2000000 "$(ProjectDir)obj\$(ConfigurationName)\$(TargetFileName)"
 sn -q -R  "$(TargetPath)" "$(ProjectDir)\..\Common\InterimKey.snk"
