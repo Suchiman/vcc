@@ -398,6 +398,9 @@ function $emb(S:$state,p:$ptr) returns ($ptr)
 function {:inline true} $emb0(p:$ptr) returns ($ptr)
   { $ptr($root_field($field_parent_type($field(p))), $base(p)) }
 
+axiom (forall t:$ctype :: {$root_field(t)}
+  $field_parent_type($root_field(t)) == t);
+
 function $is_sequential_field($field) : bool;
 function $as_field_with_type($field,$ctype) : $field;
 function $field_type($field) : $ctype;
@@ -416,52 +419,27 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
     $field_offset(f) == off &&
     $is_phys_field(f) &&
     true
-    /*
-    (forall S:$state, p:$ptr :: 
-      {$rds(S, $dot(p, f), $f_typed)}
-	  {$emb(S, $dot(p, f))}
-    $typed2(S, p, partp) ==>
-      $typed(S, $dot(p, f)) &&
-      $emb(S, $dot(p, f)) == p &&
-      // $path(S, $dot(p, f)) == f &&
-      $is_volatile(S, $dot(p, f)) == isvolatile )
-      */
   }
 
 function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
   { $def_field(partp, f, tp, isvolatile) &&
     $is_ghost_field(f) &&
     true
-    //(forall p:$ptr :: {$dot(p, f)} $is(p, partp) ==> $dot(p, f) == $ptr(tp, $ghost_ref(p, f))) &&
-    /*
-    (forall S:$state, p:$ptr :: 
-      {$rds(S, $dot(p, f), $f_typed)}
-	  {$emb(S, $dot(p, f))}
-    $typed2(S, p, partp) ==>
-      $typed(S, $dot(p, f)) &&
-      $emb(S, $dot(p, f)) == p &&
-      // $path(S, $dot(p, f)) == f &&
-      $is_volatile(S, $dot(p, f)) == isvolatile )
-      */
   }
 
 function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
   { $is_base_field(f) && $is_ghost_field(f) &&
     true
-    //(forall p:$ptr :: {$dot(p, f)} $dot(p, f) == $ptr(tp, $ghost_ref(p, f)))
-    /*&&
-    (forall p:$ptr, S:$state :: {$rd(S, p, f)}
-      if $is_primitive_ch($typ(p)) then
-        $emb(S, $dot(p, f)) == $emb(S, p)
-      else
-        $emb(S, $dot(p, f)) == p)*/
   }
+
+function $writes_at(time:int) : $ptrset;
+
+function {:inline true} $in_writes_at(time:int, p:$ptr) : bool
+  { $in(p, $writes_at(time)) }
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
   {
-    (forall p:$ptr :: {$rd.$owner($f_owner(S), p)}
-      $set_in(p, ptrs) <==> $in_writes_at(time, p))
-    &&
+    $writes_at(time) == ptrs &&
     (forall p:$ptr :: {$rd.$owner($f_owner(S), p)}
       $set_in(p, ptrs) ==> $thread_owned_or_even_mutable(S, p))
 /*
@@ -501,14 +479,13 @@ axiom (forall S:$state, p:$ptr ::
 function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) : bool
   { $current_timestamp(M1) < $timestamp(M2, p) && $timestamp(M2, p) <= $current_timestamp(M2) }
 
-function $in_writes_at(time:int, p:$ptr) : bool;
-
 function {:inline true} $writable(S:$state, begin_time:int, p:$ptr) : bool
   { $is_non_primitive_ch($typ(p)) &&
     ($mutable(S, p) && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
 
-function {:inline true} $writable_prim(S:$state, begin_time:int, p:$ptr, f:$field) : bool
-  { $writable(S, begin_time, p) }
+function {:inline true} $writable_prim(S:$state, begin_time:int, p:$ptr) : bool
+  { $is_primitive_ch($typ(p)) &&
+    ($mutable(S, $emb0(p)) && ($timestamp(S, $emb0(p)) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
   { $is_non_primitive_ch($typ(p)) &&

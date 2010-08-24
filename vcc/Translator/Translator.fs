@@ -233,11 +233,14 @@ namespace Microsoft.Research.Vcc
          B.Decl.Axiom eqRecAx
         ] @ inRange
       
-      let decomposeDot = function
-        | B.Expr.FunctionCall ("$dot", [p; f]) ->
-          [p; f]
-        | p ->
-          [bCall "$emb0" [p]; bCall "$field" [p]]
+      let tryDecomposeDot = function
+        | B.Expr.FunctionCall ("$dot", [p; f]) -> Some [p; f]
+        | _ -> None
+
+      let decomposeDot e = 
+        match tryDecomposeDot e with
+          | Some r -> r
+          | None -> [bCall "$emb0" [e]; bCall "$field" [e]]
 
       let typedRead s p t =
         if vcc3 then
@@ -806,7 +809,9 @@ namespace Microsoft.Research.Vcc
         if vcc3 then
           let ch = 
             if prim then
-              bCall "$writable_prim" (bState :: env.WritesTime :: decomposeDot e)
+              match tryDecomposeDot e with
+                | Some [p; _] -> bCall "$writable" [bState; env.WritesTime; p]
+                | _ -> bCall "$writable_prim" [bState; env.WritesTime; e]
             else
               bCall pred (bState :: env.WritesTime :: [e])
           bOr atomicWr ch
