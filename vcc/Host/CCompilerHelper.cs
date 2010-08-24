@@ -34,7 +34,7 @@ namespace Microsoft.Research.Vcc
         if (commandLineOptions.ClPath != null)
           Console.WriteLine("Error while running preprocessor " + commandLineOptions.ClPath);
         else
-          Console.WriteLine("Please install Microsoft VC++ before using VCC. If already installed, please ensure that the VS80COMNTOOLS or VS90COMNTOOLS environment variable is set.");
+          Console.WriteLine("Please install Microsoft VC++ before using VCC. If already installed, please ensure that the VS100COMNTOOLS or VS90COMNTOOLS environment variable is set.");
         hasErrors = true;
       } finally {
         Directory.SetCurrentDirectory(savedCurentDir);
@@ -46,7 +46,7 @@ namespace Microsoft.Research.Vcc
     private static string GenerateClArgs(string fileName, VccOptions commandLineOptions) {
       StringBuilder args = new StringBuilder();
       args.Append("/nologo /TC");
-      args.Append(" /E /D_PREFAST_ /DVERIFY /D_USE_DECLSPECS_FOR_SAL");
+      args.Append(" /E /DVERIFY /D_PREFAST_/D_USE_DECLSPECS_FOR_SAL /DSAL_NO_ATTRIBUTE_DECLARATIONS"); // TODO revisit these
       if (commandLineOptions.NewSyntax) args.Append(" /DVERIFY2");
 
       foreach (string ppOption in commandLineOptions.PreprocessorOptions) {
@@ -87,7 +87,7 @@ namespace Microsoft.Research.Vcc
     private static bool StartClProcessAndReturnTrueIfErrorsAreFound(string fileName, string arguments, string outFileName, VccOptions commandLineOptions) {
 
       StringBuilder errors = new StringBuilder();
-      ProcessStartInfo info = ConfigureStartInfoForClVersion9Or8(commandLineOptions);
+      ProcessStartInfo info = ConfigureStartInfoForClVersion10Or9(commandLineOptions);
       info.Arguments = arguments;
       info.CreateNoWindow = true;
       info.RedirectStandardOutput = true;
@@ -113,11 +113,11 @@ namespace Microsoft.Research.Vcc
     
 
     /// <summary>
-    /// Determine the install location of cl.exe via the environment variables VS90COMNTOOLS
-    /// and setup the start info to invoke the found instance of cl, unless an explicit 
+    /// Determine the install location of cl.exe via the environment variables VS100COMNTOOLS or
+    /// VS90COMNTOOLS and setup the start info to invoke the found instance of cl, unless an explicit 
     /// location has been given as command line option.
     /// </summary>
-    private static ProcessStartInfo ConfigureStartInfoForClVersion9Or8(VccOptions commandLineOptions) {
+    private static ProcessStartInfo ConfigureStartInfoForClVersion10Or9(VccOptions commandLineOptions) {
       if (!String.IsNullOrEmpty(commandLineOptions.ClPath)) {
         ProcessStartInfo result = new ProcessStartInfo("\"" + commandLineOptions.ClPath + "\"");
         try {
@@ -133,7 +133,8 @@ namespace Microsoft.Research.Vcc
         } catch (Exception) { } // we only do a best effort to set the path
         return result;
       } else {
-        string VSCOMNTOOLS = Environment.GetEnvironmentVariable("VS90COMNTOOLS");
+        string VSCOMNTOOLS = Environment.GetEnvironmentVariable("VS100COMNTOOLS");
+        if (VSCOMNTOOLS == null) VSCOMNTOOLS = Environment.GetEnvironmentVariable("VS90COMNTOOLS");
         if (VSCOMNTOOLS == null) throw new FileNotFoundException();
         string vsDir = new DirectoryInfo(VSCOMNTOOLS).Parent.Parent.FullName;
         ProcessStartInfo info = new ProcessStartInfo(Path.Combine(vsDir, @"vc\bin\cl.exe"));
