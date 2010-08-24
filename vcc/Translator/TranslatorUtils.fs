@@ -198,7 +198,11 @@ namespace Microsoft.Research.Vcc
             internalizeType t (bCall "$ptr_to" [toTypeId' false tp])
           | C.Type.SpecPtr tp ->
             internalizeType t (bCall "$spec_ptr_to" [toTypeId' false tp])
-          | C.Type.ObjectT -> toTypeId' false (C.Type.PhysPtr C.Void)
+          | C.Type.ObjectT ->
+            if vcc3 then
+              er "^^object"
+            else
+              toTypeId' false (C.Type.PhysPtr C.Void)
           | C.Type.Array (tp, _) when translateArrayAsPtr ->
             internalizeType (C.Type.PhysPtr tp) (bCall "$ptr_to" [toTypeId' translateArrayAsPtr tp])
           | C.Type.Array (tp, sz) ->
