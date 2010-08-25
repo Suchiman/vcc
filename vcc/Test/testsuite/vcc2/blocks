@@ -341,3 +341,37 @@ Verification of foo succeeded.
 Verification of foo#block#0 failed.
 testcase(20,7) : error VC8510: Assertion '&j is writable in call to bar(&j)' did not verify.
 `
+#include <vcc.h>
+
+int foo(int i)
+  requires(i < 10)
+  ensures(result == i + 4)
+{
+  i++;
+  block
+    requires(i < 11)
+    ensures(i == old(i) + 3)
+  {
+    i++;
+    block
+      requires(i < 12)
+      ensures(i == old(i) + 1)
+    {
+      i++;
+    }
+    block
+      requires(i < 13)
+      ensures(i == old(i) + 1)
+    {
+      i++;
+    }
+  }
+  assert(i < 14);
+  return i;
+}
+`
+Verification of foo succeeded.
+Verification of foo#block#0 succeeded.
+Verification of foo#block#0#0 succeeded.
+Verification of foo#block#0#1 succeeded.
+`
