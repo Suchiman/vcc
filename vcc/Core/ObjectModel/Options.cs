@@ -14,6 +14,7 @@ namespace Microsoft.Research.Vcc
 
   public sealed class VccOptions : FrameworkOptions
   {
+    public List<string> HandledOptions = new List<string>();
     public List<string> BoogieOptions = new List<string>();
     public bool NoPreprocessor;
     public List<string> PreprocessorOptions = new List<string>();
@@ -71,6 +72,7 @@ namespace Microsoft.Research.Vcc
       this.ReferencedAssemblies.Clear(); this.ReferencedAssemblies.AddRange(other.ReferencedAssemblies);
 
       // this class
+      this.HandledOptions.Clear(); this.HandledOptions.AddRange(other.HandledOptions);
       this.BoogieOptions.Clear(); this.BoogieOptions.AddRange(other.BoogieOptions);
       this.PreprocessorOptions.Clear(); this.PreprocessorOptions.AddRange(other.PreprocessorOptions);
       this.Z3Options.Clear(); this.Z3Options.AddRange(other.Z3Options);
@@ -178,6 +180,7 @@ namespace Microsoft.Research.Vcc
       if (n <= 1) return false;
       char ch = arg[0];
       if (ch != '/' && ch != '-') return false;
+      this.options.HandledOptions.Add(arg);
       ch = arg[1];
       switch (ch) {
         case '2':

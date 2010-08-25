@@ -278,7 +278,7 @@ namespace Microsoft.Research.Vcc
             actualOutput.Length -= 1;
           if (actualOutput.Length > 0 && actualOutput[actualOutput.Length - 1] == 13)
             actualOutput.Length -= 1;
-          Regex rx = new Regex(@"[a-zA-Z]:\\.*?\\(.*)" + vccSplitSuffix + @"[0-9]*.c\(");
+          Regex rx = new Regex(@"[a-zA-Z]:\\.*?\\(.*)" + vccSplitSuffix + @"[0-9_]*.c\(");
           string actualOutputRepl = rx.Replace(actualOutput.ToString(), "testcase(");
           if (!expectedOutput.ToString().Equals(actualOutputRepl)) {
             ReportError(suiteName, source, expectedOutput, actualOutputRepl, errLine, errors++ == 0);
@@ -383,6 +383,7 @@ namespace Microsoft.Research.Vcc
       readonly Queue<FileInfo> queue = new Queue<FileInfo>();
       readonly object lkQueue = new object();
       readonly object lkOutput = new object();
+      long maxBytesPerProcess;
       int errorCount;
       int runningThreadCount;
 
@@ -396,9 +397,13 @@ namespace Microsoft.Research.Vcc
       }
 
       private System.Diagnostics.ProcessStartInfo VccStartInfo(IEnumerable<FileInfo> jobs) {
-        System.Diagnostics.ProcessStartInfo result = new System.Diagnostics.ProcessStartInfo {Arguments = "/s"};
-        foreach (var job in jobs) { result.Arguments += " \"" + job.FullName + "\""; }
-        foreach (var boogieOption in this.commandLineOptions.BoogieOptions) { result.Arguments += " /b:" + boogieOption; }
+        System.Diagnostics.ProcessStartInfo result = new System.Diagnostics.ProcessStartInfo ();
+        foreach (var arg in this.commandLineOptions.HandledOptions) {
+          var opt = arg.Substring(1);
+          if (opt.StartsWith("smt") || opt.StartsWith("suitemt")) continue;
+          result.Arguments += " " + arg;
+        }
+        foreach (var job in jobs) { result.Arguments += " \"" + job.FullName + "\""; }        
         result.CreateNoWindow = true;
         result.FileName = typeof(TestRunnerMT).Assembly.Location;
         result.UseShellExecute = false;
@@ -412,7 +417,7 @@ namespace Microsoft.Research.Vcc
         foreach (var line in lines) { writer.WriteLine(line); }
       }
 
-      private static readonly Regex TestPassed = new Regex("^\\w+ passed$");
+      private static readonly Regex TestPassed = new Regex("^\\S+ passed$");
 
       private void RunJobSequence(IEnumerable<FileInfo> jobs) {
         using (System.CodeDom.Compiler.TempFileCollection tempFiles = new System.CodeDom.Compiler.TempFileCollection()) {
@@ -451,21 +456,26 @@ namespace Microsoft.Research.Vcc
       private void RunJobs() {
         System.Threading.Interlocked.Increment(ref this.runningThreadCount);
         while (true) {
-          List<FileInfo> jobSequence = null;
+          var jobSequence = new List<FileInfo>();
+          long totalSize = 0;
           lock (lkQueue) {
-            if (queue.Count > 0) {
-              int targetNumber = Math.Max(1, Math.Min(20, queue.Count / this.threadCount));
-              jobSequence = new List<FileInfo>(targetNumber);
-              for (int i = 0; i < targetNumber; i++)
-                jobSequence.Add(queue.Dequeue());
+            while (queue.Count > 0) {
+              var job = queue.Peek();
+              if (jobSequence.Count > 0 && totalSize + job.Length > maxBytesPerProcess)
+                break;
+              if (jobSequence.Count > 50)
+                break;
+              queue.Dequeue();
+              totalSize += job.Length;
+              jobSequence.Add(job);
             }
           }
-          if (jobSequence == null) return;
+          if (jobSequence.Count == 0) return;
           RunJobSequence(jobSequence);
         }
       }
 
-      private void SpanwRunAndJoin() {
+      private void SpawnRunAndJoin() {
         List<System.Threading.Thread> threads = new List<System.Threading.Thread>(this.threadCount);
         for (int i = 0; i < this.threadCount; i++) {
           System.Threading.Thread thread = new System.Threading.Thread(RunJobs);
@@ -483,7 +493,14 @@ namespace Microsoft.Research.Vcc
       public int Run() {
         errorCount = 0;
         runningThreadCount = 0;
-        SpanwRunAndJoin();
+        long totalBytes = 0;
+        foreach (var job in queue) {
+          totalBytes += job.Length;
+        }
+        maxBytesPerProcess = totalBytes / this.threadCount;
+        if (maxBytesPerProcess > 40000)
+          maxBytesPerProcess /= 4;
+        SpawnRunAndJoin();
         return errorCount;
       }
     }
