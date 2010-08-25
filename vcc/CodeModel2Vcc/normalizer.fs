@@ -13,6 +13,8 @@ namespace Microsoft.Research.Vcc
  open Microsoft.Research.Vcc.CAST
  
  module Normalizer =
+
+  type StackArrayDetails = SAR of Variable * Type * int * bool
  
   // ============================================================================================================          
   let rec doHandleComparison helper self = function
@@ -94,7 +96,7 @@ namespace Microsoft.Research.Vcc
               | _ -> p       
               
       let replRef self = function
-        | VarDecl (c, v) when replParm v <> v -> Some (VarDecl (c, replParm v))
+        | VarDecl (c, v, attr) when replParm v <> v -> Some (VarDecl (c, replParm v, attr))
         | Macro (c, "=", [Expr.Ref (c', v); Expr.Deref (_, e)]) when map.ContainsKey v ->
           Some (Macro (c, "=", [Expr.Ref ({c' with Type = map.[v].Type }, map.[v]); self e]))
         | Macro (c, "&", [Expr.Ref (_, v)]) when map.ContainsKey v -> Some (Expr.Ref ({ c with Type = map.[v].Type }, map.[v]))
@@ -507,7 +509,7 @@ namespace Microsoft.Research.Vcc
               let cvoid = { c with Type = Void }
               let tmp = getTmp helper formal.Name formal.Type VarKind.Local
               map.Add (formal, Ref (c, tmp))
-              [VarDecl (cvoid, tmp);
+              [VarDecl (cvoid, tmp, []);
                Macro (cvoid, "=", [ Ref ({ c with Type = tmp.Type }, tmp); actual ])]
           let bindOut (formal:Variable) = function
             | Macro(_, "out", [actual]) ->
@@ -515,7 +517,7 @@ namespace Microsoft.Research.Vcc
               let cvoid = { c with Type = Void }
               let tmp = getTmp helper formal.Name formal.Type VarKind.SpecLocal
               map.Add (formal, Ref (c, tmp))
-              VarDecl (cvoid, tmp), Expr.SpecCode(Macro (cvoid, "=", [ actual; Ref ({ c with Type = tmp.Type }, tmp)]))
+              VarDecl (cvoid, tmp, []), Expr.SpecCode(Macro (cvoid, "=", [ actual; Ref ({ c with Type = tmp.Type }, tmp)]))
             | _ -> die()
           let inPars, inActuals, outPars, outActuals = 
             let rec loop (formals:Variable list) actuals fiAcc aiAcc foAcc aoAcc = 
@@ -535,7 +537,7 @@ namespace Microsoft.Research.Vcc
               match map.TryGetValue(v) with
                 | true, v' -> Some (map.[v])
                 | false, _ -> None
-            | VarDecl (_, v) when map.ContainsKey v ->
+            | VarDecl (_, v, _) when map.ContainsKey v ->
               Some (Expr.MkBlock [])
             | Return (c, Some e) ->              
               Some (Macro (c, "=", [Ref (c, resVar); self e]))
@@ -552,7 +554,7 @@ namespace Microsoft.Research.Vcc
             if f.RetType = Void then
               body :: outParAssignmentOnExit
             else
-              [VarDecl ({c with Type = Void}, resVar); body] @ outParAssignmentOnExit @ [Ref (c, resVar)]
+              [VarDecl ({c with Type = Void}, resVar, []); body] @ outParAssignmentOnExit @ [Ref (c, resVar)]
           Some (Expr.MkBlock (inits @ declsForOutPars @ body))
         | d -> None
               
@@ -583,7 +585,7 @@ namespace Microsoft.Research.Vcc
                 | Result _ -> Some(res)
                 | _ -> None
               [Expr.SpecCode(ghostUpdate.SelfMap fixupResult)]
-        let stmts = VarDecl(cvoid, tmp) :: Atomic(cvoid, atomicParameters, Expr.MkBlock (op':: ghostUpdate')) :: [res]
+        let stmts = VarDecl(cvoid, tmp, []) :: Atomic(cvoid, atomicParameters, Expr.MkBlock (op':: ghostUpdate')) :: [res]
         Some(Block(ec, stmts, None))
       | _ -> None
     
@@ -622,10 +624,10 @@ namespace Microsoft.Research.Vcc
         let prestateVar = getTmp helper "prestate" Type.MathState VarKind.SpecLocal
         let nowstate = Expr.Macro ({ bogusEC with Type = Type.MathState }, "_vcc_current_state", [])        
         let prestate = mkRef prestateVar
-        let saveState = [VarDecl (bogusEC, prestateVar); Expr.SpecCode(Macro (bogusEC, "=", [prestate; nowstate]))]
+        let saveState = [VarDecl (bogusEC, prestateVar, []); Expr.SpecCode(Macro (bogusEC, "=", [prestate; nowstate]))]
         let postUnwrapVar = getTmp helper "postUnwrap" Type.MathState VarKind.SpecLocal
         let postUnwrap = mkRef postUnwrapVar
-        let savePostUnwrapState = [VarDecl (bogusEC, postUnwrapVar); Expr.SpecCode(Macro (bogusEC, "=", [postUnwrap; nowstate]))]
+        let savePostUnwrapState = [VarDecl (bogusEC, postUnwrapVar, []); Expr.SpecCode(Macro (bogusEC, "=", [postUnwrap; nowstate]))]
         let old (e:Expr) = Old ({ e.Common with Token = new WarningSuppressingToken (e.Token, 9106) }, prestate, e)
         
         let writeSet = old (setify writes)
@@ -762,7 +764,7 @@ namespace Microsoft.Research.Vcc
                 Some(bogusExpr)
               | _ -> None
         function
-          | Expr.VarDecl(ec, {Name = name; Type = TypeVar({Name = tvName}); Kind = (Local|SpecLocal) }) ->
+          | Expr.VarDecl(ec, {Name = name; Type = TypeVar({Name = tvName}); Kind = (Local|SpecLocal) }, _) ->
             helper.Error(ec.Token, 9693, "Cannot declare local '" + name + "' of generic type '" + tvName + "'")
             Some(bogusExpr)
           | Expr.Call(ec,{TypeParameters = tpars}, targs, _) as e -> 
@@ -1075,6 +1077,121 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let embedStackArrays decls =
+
+      let embeddingStructs = ref []
+
+      
+
+      let findStackArrays stmts =
+        let stackArrays = ref []
+        let findStackArraysInBlock' self = function
+          | Expr.Macro(_, "=", [Expr.Ref(_,var); Macro(_, "stack_allocate_array", [IntLiteral(_, size); BoolLiteral(_, isSpec)])]) -> 
+            match var.Type with
+              | Ptr t -> stackArrays := SAR(var, t, (int)size, isSpec) :: !stackArrays; true
+              | _ -> false
+          | Expr.Block _ -> false
+          | _ -> true
+        List.iter (fun (e:Expr) -> e.SelfVisit(findStackArraysInBlock')) stmts
+        !stackArrays
+
+      let doFunction (fn:Function) =
+        let embCount = ref 0
+        let varToDeclMap = new Dict<_,_>()
+
+        let fillVarToDeclMap self = function
+          | VarDecl(_,v,_) as decl -> varToDeclMap.Add(v, decl); false
+          | _ -> true
+             
+        let findAndEmbedStackArrays self = function
+          | Expr.Block(ec, stmts, bc) ->
+            let stackArrays = findStackArrays stmts
+            if stackArrays.Length = 0 then None
+            else
+              let fieldMap = new Dict<_,_>()
+              let createField (td:TypeDecl) offset = function
+                | SAR(var, t, size, isSpec) ->
+                  let asArray =
+                    match varToDeclMap.TryGetValue var with
+                      | true, VarDecl(_,_,attr) when hasCustomAttr "as_array" attr -> [VccAttr("as_array", "")]
+                      | _ -> []
+                  let f = { Token = td.Token
+                            Name = var.Name
+                            Type = Type.Array(t, size)
+                            Parent = td
+                            IsSpec = isSpec
+                            IsVolatile = false
+                            Offset = FieldOffset.Normal(offset)
+                            CustomAttr = asArray
+                            UniqueId = CAST.unique() } : Field
+                  fieldMap.Add(var, f)
+                  f
+
+              let rec createFields td offset acc = function
+                | [] -> List.rev acc
+                | sad :: sads ->
+                  let f = createField td offset sad
+                  createFields td (offset + f.Type.SizeOf) (f::acc) sads 
+
+              let embTd = { 
+                Token = fn.Token
+                Kind = TypeKind.Struct
+                Name = fn.Name + "stackframe#" + (!embCount).ToString()
+                Fields = []
+                Invariants = []
+                CustomAttr = []
+                SizeOf = 0
+                IsNestedAnon = false
+                GenerateEquality = StructEqualityKind.NoEq
+                GenerateFieldOffsetAxioms = false
+                IsSpec = false
+                Parent = None
+                IsVolatile = false
+                UniqueId = CAST.unique() } : TypeDecl
+
+              let fields = createFields embTd 0 [] (List.rev stackArrays)
+              let sizeof = List.fold (fun size (f:Field) -> size + f.Type.SizeOf) 0 fields
+              embTd.Fields <- fields
+              embTd.SizeOf <- sizeof
+              embeddingStructs := Top.TypeDecl(embTd) :: !embeddingStructs
+
+              let embVar = { Name = "#stackframe#" + (!embCount).ToString()
+                             Type = Type.Ref(embTd)
+                             Kind = VarKind.Local
+                             UniqueId = CAST.unique() } : Variable
+              let embVarDecl = Expr.VarDecl(bogusEC, embVar, [])
+              let embVarPtr = Expr.Macro({bogusEC with Type = Type.PhysPtr (embVar.Type)}, "&", [Expr.Ref({bogusEC with Type = embVar.Type}, embVar)])
+              incr embCount
+
+              let addAssignments self =  function
+                | Expr.Macro(ec, "=", [Expr.Ref(_,var) as vr; Macro(_, "stack_allocate_array", _)]) ->
+                  match fieldMap.TryGetValue var with
+                    | true, f -> Some(Expr.Macro(ec, "=", [vr; Expr.MkDot(vr.Common, embVarPtr, f)]))
+                    | _ -> None
+                | _ -> None
+
+              let stmts' = stmts |> List.map self |> List.map (fun (e:Expr) -> e.SelfMap(addAssignments))
+
+              Some(Expr.Block(ec, embVarDecl :: stmts', bc))
+
+          | _ -> None
+
+        match fn.Body with
+          | Some body -> 
+            body.SelfVisit(fillVarToDeclMap)
+            fn.Body <- Some(body.SelfMap(findAndEmbedStackArrays))
+          | None -> ()
+          
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl fn -> doFunction fn
+          | _ -> ()
+
+      decls @ !embeddingStructs
+
+    // ============================================================================================================
+
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
     helper.AddTransformer ("norm-new-syntax", Helper.Decl normalizeNewSyntax)
     helper.AddTransformer ("norm-expand-contract-macros", Helper.Decl expandContractMacros)
@@ -1091,6 +1208,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("fixup-old", Helper.ExprCtx fixupOld)    
     helper.AddTransformer ("fixup-claims", Helper.Expr handleClaims)    
     helper.AddTransformer ("add-explicit-return", Helper.Decl addExplicitReturn)
+    helper.AddTransformer ("norm-embed-stack-arrays", Helper.Decl embedStackArrays)
     helper.AddTransformer ("norm-atomic-ops", Helper.Expr normalizeAtomicOperations)
     helper.AddTransformer ("norm-skinny-expose", Helper.Expr normalizeSkinnyExpose)
     helper.AddTransformer ("norm-bv_lemma", Helper.Decl normalizeBvLemma)

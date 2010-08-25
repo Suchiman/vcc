@@ -458,6 +458,14 @@ namespace Microsoft.Research.Vcc.Parsing
         case Token.SpecDecreases:
         case Token.SpecWrites:
           return this.ParseBlockWithContracts(followers, savedInSpecCode);
+        case Token.Identifier:
+          if (this.declspecExtensions.ContainsKey(this.scanner.GetIdentifierString())) {
+            var specifiers = new List<Specifier>();
+            this.ParseSpecTypeModifierList(specifiers, followers | Token.RightParenthesis);
+            this.SkipOutOfSpecBlock(savedInSpecCode, followers | TS.DeclaratorStart);
+            return StatementGroup.Create(this.ParseLocalDeclaration(specifiers, followers));
+          }
+          break;
         default:
           break;
       }
@@ -500,8 +508,7 @@ namespace Microsoft.Research.Vcc.Parsing
         this.SkipSemicolonsInSpecBlock(STS.SimpleSpecStatment | Token.Identifier | Token.RightParenthesis);
       }
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
-      if (statements.Count == 1) return statements[0];
-      return new StatementGroup(statements);
+      return StatementGroup.Create(statements);
     }
 
     private Statement ParseBlockWithContracts(TokenSet followers, bool savedInSpecCode)

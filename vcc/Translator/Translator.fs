@@ -1524,7 +1524,7 @@ namespace Microsoft.Research.Vcc
                               trStmt env s))
               bump @ save @ wrCheck @ regLoopBody @ [body; assumeSync env comm.Token]
                 
-            | C.Expr.VarDecl (b, v) when env.hasIF ->
+            | C.Expr.VarDecl (b, v, _) when env.hasIF ->
               let ls = if v.Kind = C.Parameter then cev.VarIntro b.Token true v else []
               if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then []
               else
@@ -1537,7 +1537,7 @@ namespace Microsoft.Research.Vcc
                 IF.setLLabel ("FlowData#"+vname) (B.Expr.Ref "$lblset.top") ::
                 IF.setLMeta ("FlowData#"+vname) (B.Expr.Ref "$lblset.bot") ::
                 ls
-            | C.Expr.VarDecl (b, v) when (not env.hasIF) ->
+            | C.Expr.VarDecl (b, v, _) when (not env.hasIF) ->
               let ls = if v.Kind = C.Parameter then cev.VarIntro b.Token true v else []
               if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then []
               else

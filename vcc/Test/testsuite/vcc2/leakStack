@@ -83,19 +83,19 @@ void foo() {
 
 
 void fooShouldFail() {
-  int a[5];
+  _(as_array) int a[5];
   _(wrap (int[5])a)
 }
 
 void bar() {
-  int a[5];
+  _(as_array) int a[5];
   _(wrap (int[5])a)
   _(unwrap (int[5])a)
 }
 `
 Verification of foo succeeded.
 Verification of fooShouldFail failed.
-testcase(9,9) : error VC9502: Call 'stack_free(&res__vcc_stack_alloc#2)' did not verify.
+testcase(8,1) : error VC9502: Call 'stack_free(&#stackframe#0)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the extent of the object being reclaimed is mutable'.
 Verification of bar succeeded.
 `
@@ -122,7 +122,7 @@ void bar() {
 `
 Verification of foo succeeded.
 Verification of fooShouldFail failed.
-testcase(10,14) : error VC9502: Call 'stack_free(&res__vcc_stack_alloc#2)' did not verify.
+testcase(9,1) : error VC9502: Call 'stack_free(&#stackframe#0)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the extent of the object being reclaimed is mutable'.
 Verification of bar succeeded.
 `

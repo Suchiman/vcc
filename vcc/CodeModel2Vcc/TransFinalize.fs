@@ -223,7 +223,7 @@ namespace Microsoft.Research.Vcc
         | expr ->
           let ecVoid = {expr.Common with Type = Type.Void}
           let dummy = getTmp helper ("stmtexpr" + ((!dummyId).ToString())) expr.Type VarKind.Local
-          let decl = VarDecl(ecVoid, dummy)
+          let decl = VarDecl(ecVoid, dummy, [])
           let assign = VarWrite(ecVoid, [dummy], expr)
           incr dummyId
           [decl; assign]

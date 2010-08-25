@@ -193,7 +193,7 @@ namespace Microsoft.Research.Vcc
         if not (mapping.ContainsKey v) then
           let v' = { v with Name = "local." + v.Name; Kind = Local }
           mapping.Add (v, v')
-          inits := VarDecl (voidBogusEC(), v') :: VarWrite(voidBogusEC(), [v'], mkRef v) :: !inits
+          inits := VarDecl (voidBogusEC(), v', []) :: VarWrite(voidBogusEC(), [v'], mkRef v) :: !inits
           
       let isInParKind = function
         | VarKind.Parameter | VarKind.SpecParameter -> true
@@ -332,7 +332,7 @@ namespace Microsoft.Research.Vcc
           | e -> e
           
         function
-        | VarDecl(ec, v) as decl when (v.Kind = VarKind.SpecLocal  || v.Kind = VarKind.Local) && isRecType v.Type ->
+        | VarDecl(ec, v, _) as decl when (v.Kind = VarKind.SpecLocal  || v.Kind = VarKind.Local) && isRecType v.Type ->
           Some(Expr.MkBlock([decl; Expr.VarWrite(ec, [v], Macro({ec with Type = v.Type}, "rec_zero", []))]))
         | Deref (c, (Dot (_, p, f) as dot)) when isRecField f ->
           Some (self (Macro (c, "rec_fetch", [normalizeRecord (Type.Ref(f.Parent)) p; Expr.ToUserData(f)])))
@@ -433,8 +433,8 @@ namespace Microsoft.Research.Vcc
                     } : QuantData
           localsMapping := savedLocalsMapping
           Some(Quant(c, qd'))
-        | VarDecl (c, ({ Kind = Parameter|SpecParameter|OutParameter } as v)) -> Some (VarDecl (c, mapLocal v))
-        | VarDecl (c, ({ Kind = Local|SpecLocal } as v)) -> Some (VarDecl (c, doVar v))
+        | VarDecl (c, ({ Kind = Parameter|SpecParameter|OutParameter } as v), attr) -> Some (VarDecl (c, mapLocal v, attr))
+        | VarDecl (c, ({ Kind = Local|SpecLocal } as v), attr) -> Some (VarDecl (c, doVar v, attr))
         | Deref (c, e) as expr -> 
           match underDeref e with
             | Some e ->               
@@ -587,7 +587,7 @@ namespace Microsoft.Research.Vcc
               let call' = Call (c, fn, targs, checkArgs args)
               let c' = { c with Type = Void }
               let tmpRef = Expr.Ref (c, tmp)
-              addStmtsOpt [VarDecl (c', tmp); VarWrite (c', [tmp], call')] tmpRef
+              addStmtsOpt [VarDecl (c', tmp, []); VarWrite (c', [tmp], call')] tmpRef
               
         | VarWrite (c, v, Macro (c', ("claim"|"upgrade_claim" as name), args)) ->
           Some (VarWrite (c, v, Macro (c', name, List.map self args)))
@@ -599,7 +599,7 @@ namespace Microsoft.Research.Vcc
           let call' = Macro (c, name, List.map self args)
           let c' = { c with Type = Void }
           let tmpRef = Expr.Ref (c, tmp)
-          addStmtsOpt [VarDecl (c', tmp); VarWrite (c', [tmp], call')] tmpRef
+          addStmtsOpt [VarDecl (c', tmp, []); VarWrite (c', [tmp], call')] tmpRef
     
         | Expr.Macro (_, "noop", _) -> Some (Expr.MkBlock [])
         | _ -> None
@@ -623,7 +623,7 @@ namespace Microsoft.Research.Vcc
             splitByOut' (v::outAcc) nonOutAcc decls assigns exprs
           | Macro(_, "out", [Deref(ec, mem)]) :: exprs ->
             let tmp = getTmp helper "outpar" ec.Type VarKind.Local
-            let decl = VarDecl(voidBogusEC(), tmp)
+            let decl = VarDecl(voidBogusEC(), tmp, [])
             let assign = MemoryWrite(voidBogusEC(), mem, Ref(ec, tmp))
             splitByOut' (tmp::outAcc) nonOutAcc (decl::decls) (assign::assigns) exprs
           | e :: exprs -> splitByOut' outAcc (e::nonOutAcc) decls assigns exprs
@@ -740,7 +740,7 @@ namespace Microsoft.Research.Vcc
         let fVar (d:Dict<_,_>) v = d.ContainsKey(v)
 
         let findThem _ = function
-          | VarDecl(_, v) when not !seenBlock -> before.[v] <- true; false
+          | VarDecl(_, v, _) when not !seenBlock -> before.[v] <- true; false
           | Ref(_, v) when !seenBlock -> after.[v] <- true; false
           | e when e = block -> seenBlock := true; false
           | _ -> true
@@ -813,7 +813,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================    
 
     let handleMapInit self = function
-      | VarDecl(ec, v) as decl when (v.Kind = VarKind.SpecLocal  || v.Kind = VarKind.Local) && v.Type._IsMap ->
+      | VarDecl(ec, v, _) as decl when (v.Kind = VarKind.SpecLocal  || v.Kind = VarKind.Local) && v.Type._IsMap ->
         Some(Expr.MkBlock([decl; Expr.VarWrite(ec, [v], Macro({ec with Type = v.Type}, "map_zero", []))]))
       | _ -> None
 

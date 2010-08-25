@@ -188,7 +188,7 @@ void foo(struct S *p)
 `
 testcase(20,3) : error VC9679: Field 'u' has been inlined and cannot be referred to as such; refer to its nested fields instead
 `
-#include <vcc.h>
+#include <vcc2test.h>
 typedef unsigned __int8 byte;
 struct S1 { 
   int A1;
@@ -201,22 +201,20 @@ struct S1 {
 }; 
 
 void foo1() {
-    byte x[sizeof(struct S1)];
-    from_bytes((struct S1*)x, false);
-    assume(0); // avoid stack-free check here
+    byte x[] = (byte*)malloc(sizeof(struct S1));
+    if (x != NULL) from_bytes((struct S1*)x, false);
 }
 
 
 void foo3() {
-    byte x[sizeof(struct S3)];
-    from_bytes((struct S3*)x, false);
-    assume(0); // avoid stack-free check here
+    byte x[] = (byte*)malloc(sizeof(struct S3));
+    if (x != NULL) from_bytes((struct S3*)x, false);
 }
 `
 Verification of foo1 succeeded.
 Verification of foo3 succeeded.
 `
-#include <vcc.h>
+#include <vcc2test.h>
 typedef unsigned __int8 byte;
 struct S1 { 
   int A1;
@@ -229,16 +227,14 @@ struct S1 {
 }; 
 
 void foo1() {
-    byte x[sizeof(struct S1)];
-    from_bytes((struct S1*)x, false);
-    assume(0); // avoid stack-free check here
+    byte x[] = (byte*)malloc(sizeof(struct S1));
+    if (x != NULL) from_bytes((struct S1*)x, false);
 }
 
 
 void foo3() {
-    byte x[sizeof(struct S3)];
-    from_bytes((struct S3*)x, false);
-    assume(0); // avoid stack-free check here
+    byte x[] = (byte*)malloc(sizeof(struct S3));
+    if (x != NULL) from_bytes((struct S3*)x, false);
 }
 `
 Verification of foo1 succeeded.

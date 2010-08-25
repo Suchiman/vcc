@@ -1004,9 +1004,9 @@ namespace Microsoft.Research.Vcc
         | _ -> false
         
       let subsFields self = function
-        | VarDecl(ec, v) ->
+        | VarDecl(ec, v, _) ->
           match volatileVars.TryGetValue(v) with
-            | true, v' -> Some(VarDecl(ec, v'))
+            | true, v' -> Some(VarDecl(ec, v', []))
             | _ -> None
         | Expr.Ref(ec, v) ->
           match volatileVars.TryGetValue(v) with
@@ -1062,11 +1062,11 @@ namespace Microsoft.Research.Vcc
           | Top.TypeDecl(td) -> pushDownOne true td
           | Top.FunctionDecl({Body = Some(body)}) ->
             let pdLocalDecls self = function
-              | VarDecl(_, ({Type = PtrSoP(Volatile(Type.Ref(td)), isSpec)} as v)) -> 
+              | VarDecl(_, ({Type = PtrSoP(Volatile(Type.Ref(td)), isSpec)} as v), _) -> 
                 let td' = mkVolTd td
                 volatileVars.Add(v, {v with Type = Type.MkPtr(Type.Ref(td'), isSpec || td'.IsSpec)})
                 false
-              | VarDecl(_, ({Type = PtrSoP(Volatile(t), isSpec)} as v)) ->
+              | VarDecl(_, ({Type = PtrSoP(Volatile(t), isSpec)} as v), _) ->
                 helper.Warning(d.Token, 9120, "Ignoring volatile modifier on pointer to non-structured type '" + t.ToString() + "'")
                 volatileVars.Add(v, {v with Type = Type.MkPtr(t, isSpec)})
                 false
@@ -1189,14 +1189,14 @@ namespace Microsoft.Research.Vcc
           (t', sz * sz')
         | t -> (t,1)
       let flattenNestedArrays' self = function
-      | VarDecl(ec, v) ->
+      | VarDecl(ec, v, attr) ->
         // re-type local variable
         match v.Type with
           | PtrSoP(Array _ as arr, isSpec) -> 
             let (elType, _) = flatten arr
             let v' = Variable.CreateUnique v.Name (Type.MkPtr(elType, isSpec)) v.Kind
             varSubst.Add(v, v')
-            Some(VarDecl(ec, v'))
+            Some(VarDecl(ec, v', attr))
           | _ -> None
       | Ref(ec, v) ->
         // fix-up references to locals

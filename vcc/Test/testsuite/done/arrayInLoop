@@ -3,7 +3,7 @@
 void foo() {
 
   int i;
-  int a[1024];
+  vcc(as_array) int a[1024];
   
   for (i = 0; i < 1024; i++) 
     invariant(0 <= i && i <= 1024)

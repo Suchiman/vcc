@@ -350,9 +350,15 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     protected List<Statement> ParseLocalDeclaration(TokenSet followers) {
+      return this.ParseLocalDeclaration(new Specifier[] { }, followers);
+    }
+
+    protected List<Statement> ParseLocalDeclaration(IEnumerable<Specifier> previousSpecifiers, TokenSet followers) {  
       // Because, in C, a local declaration may introduce a type definition to the global scope
       // pass in the namespace declaration members so that these definitions can be found later. 
-      List<Specifier> specifiers = this.ParseSpecifiers(this.namespaceDeclarationMembers, null, null, followers|Token.Semicolon|Token.BitwiseXor);
+      var specifiers = new List<Specifier>(previousSpecifiers);
+      var additionalSpecifiers = this.ParseSpecifiers(this.namespaceDeclarationMembers, null, null, followers|Token.Semicolon|Token.BitwiseXor);
+      specifiers.AddRange(additionalSpecifiers);
       bool isLocalTypeDef = VccCompilationHelper.ContainsStorageClassSpecifier(specifiers, Token.Typedef);
       List<Statement> result = new List<Statement>();
       while (TS.DeclaratorStart[this.currentToken]) {
@@ -2082,7 +2088,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       this.LeaveSpecBlock(savedInSpecCode);
       this.SkipOverTo(Token.RightParenthesis, followers);
-      return new StatementGroup(specStatements);
+      return StatementGroup.Create(specStatements);
     }
 
     protected void ParseStatementList(List<Statement> statements, TokenSet followers)
@@ -2137,10 +2143,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       if (this.CurrentTokenStartsDeclaration()) {
         List<Statement> statements = this.ParseLocalDeclaration(followers);
-        if (statements.Count == 1)
-          return statements[0];
-        else
-          return new StatementGroup(statements);
+        return StatementGroup.Create(statements);
       }
       TokenSet followersOrCommaOrColonOrSemicolon = followers|Token.Comma|Token.Colon|Token.Semicolon;
       Expression e = this.ParseExpression(!acceptComma, false, followersOrCommaOrColonOrSemicolon);

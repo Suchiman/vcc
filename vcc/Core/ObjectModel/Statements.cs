@@ -63,6 +63,11 @@ namespace Microsoft.Research.Vcc {
       else
         statements.Add(s);
     }
+
+    internal static Statement Create(List<Statement> stmts) {
+      if (stmts.Count == 1) return stmts[0];
+      return new StatementGroup(stmts);
+    }
   }
 
   public class VccLocalDefinition : LocalDefinition, ISpecItem
@@ -84,6 +89,25 @@ namespace Microsoft.Research.Vcc {
       get { return VccCompilationHelper.ContainsTypeQualifier(this.specifiers, Token.Volatile); }
     }
 
+    private List<ICustomAttribute> GetAttributes() {
+      var attributesFromDeclSpec = FunctionDefinition.ConvertSpecifiersIntoAttributes(this.specifiers, new DummyExpression(this.ContainingBlock, SourceDummy.SourceLocation));
+      var result = new List<ICustomAttribute>();
+      foreach (SourceCustomAttribute extAttr in attributesFromDeclSpec)
+        result.Add(new CustomAttribute(extAttr));
+      return result;
+    }
+
+    public IEnumerable<ICustomAttribute> Attributes {
+      get {
+        if (this.attributes == null) {
+          List<ICustomAttribute> attrs = this.GetAttributes();
+          attrs.TrimExcess();
+          this.attributes = attrs.AsReadOnly();
+        }
+        return this.attributes;
+      }
+    }
+    IEnumerable<ICustomAttribute>/*?*/ attributes;
   }
 
   /// <summary>

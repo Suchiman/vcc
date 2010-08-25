@@ -364,7 +364,7 @@ namespace Microsoft.Research.Vcc
             currentFunctionName <- decl.Name
             let body = this.DoStatement body
             let body' = if decl.IsSpec then C.Expr.SpecCode(body) else body
-            let locals = (List.map (fun v -> C.Expr.VarDecl (C.voidBogusEC(), v)) decl.InParameters) @ List.rev localVars
+            let locals = (List.map (fun v -> C.Expr.VarDecl (C.voidBogusEC(), v, [])) decl.InParameters) @ List.rev localVars
             decl.Body <- Some (C.Expr.MkBlock (locals @ [body']))
             localVars <- savedLocalVars
             topDecls <- C.Top.FunctionDecl decl :: topDecls
@@ -1306,22 +1306,21 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (localDeclarationStatement:ILocalDeclarationStatement) : unit =
         let loc = localDeclarationStatement.LocalVariable
-        let declaredAsVolatile = 
+        let sc = this.StmtCommon localDeclarationStatement
+        let declaredAsVolatile, varkind, attrs = 
           match loc with 
-            | :? Microsoft.Research.Vcc.VccLocalDefinition as vcLoc -> vcLoc.IsVolatile
-            | _ -> false
+            | :? Microsoft.Research.Vcc.VccLocalDefinition as vcLoc -> 
+                ( vcLoc.IsVolatile,  
+                  (if vcLoc.IsSpec then C.VarKind.SpecLocal else C.VarKind.Local),
+                  convCustomAttributes sc.Token vcLoc.Attributes )
+            | _ -> false, C.VarKind.Local, []
         let t = 
           match this.DoType (loc.Type) with
             | C.PtrSoP(t, isSpec) when declaredAsVolatile -> C.Type.MkPtr(C.Volatile(t), isSpec)
             | t -> t
-        let varkind =             
-          match loc with
-            | :?  Microsoft.Research.Vcc.VccLocalDefinition as vcl -> if vcl.IsSpec then C.VarKind.SpecLocal else C.VarKind.Local
-            | _ -> C.VarKind.Local
         let var = C.Variable.CreateUnique loc.Name.Value t varkind
         localsMap.Add(loc, var)
-        let sc = this.StmtCommon localDeclarationStatement
-        let decl = C.Expr.VarDecl (sc, var)
+        let decl = C.Expr.VarDecl (sc, var, attrs) 
         localVars <- decl :: localVars
         // it seems that if there is an initalizer, it sometimes
         // gets called separatly and the node returned from here is gone.
