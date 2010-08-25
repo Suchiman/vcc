@@ -315,8 +315,9 @@ namespace Microsoft.Research.Vcc {
           }
         }
       }
-      return result;
+      result |= (this.expansion != null && (this.Expansion is DummyExpression || this.Expansion.HasErrors));
 
+      return result;
       // do not recurse to the body because we trigger that check separately and checking it here would interfere with pruning
     }
 
@@ -339,10 +340,24 @@ namespace Microsoft.Research.Vcc {
     private readonly bool isSpec;
 
     public Expression /*?*/ Expansion {
-      get { return this.expansion; }
+      get {
+        if (this.expansion == null) return null;
+        if (this.convertedExpansion == null)
+          this.convertedExpansion = GetConvertedExpansion();
+        return convertedExpansion;
+      }
+    }
+
+    private Expression GetConvertedExpansion() {
+      if (this.expansion == null) return new DummyExpression(this.SourceLocation);
+      var result = this.Helper.ImplicitConversionInAssignmentContext(this.expansion, this.Type.ResolvedType);
+      if (result is DummyExpression && !this.expansion.HasErrors)
+        this.Helper.ReportFailedImplicitConversion(this.expansion, this.Type.ResolvedType);
+      return result;
     }
 
     private readonly Expression/*?*/ expansion;
+    private Expression/*?*/ convertedExpansion;
 
     static private bool IsUnsupportedDeclspec(string spec) {
       if (spec[0] == 'n') {
@@ -375,9 +390,9 @@ namespace Microsoft.Research.Vcc {
 
     public override void SetContainingTypeDeclaration(TypeDeclaration containingTypeDeclaration, bool recurse) {
       base.SetContainingTypeDeclaration(containingTypeDeclaration, recurse);
-      if (this.Expansion != null) {
+      if (this.expansion != null) {
         var dummyExpression = new DummyExpression(this.DummyBlock, SourceDummy.SourceLocation);
-        this.Expansion.SetContainingExpression(dummyExpression);
+        this.expansion.SetContainingExpression(dummyExpression);
       }
     }
 

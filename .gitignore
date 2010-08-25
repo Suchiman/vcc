@@ -30,3 +30,4 @@ vcc/Tools/Z3Visualizer/Z3Visualizer/bin/
 vcc/Tools/Z3Visualizer/Z3Visualizer/obj/
 vcc/Translator/bin/
 vcc/Translator/obj/
+vcc/Test/testsuite/ts_out.txt
