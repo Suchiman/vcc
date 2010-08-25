@@ -105,3 +105,32 @@ testcase(47,3) : error VC8507: Assertion 'x->b[10] is writable' did not verify.
 testcase(48,3) : error VC8507: Assertion 'x->b[11] is writable' did not verify.
 testcase(49,3) : error VC8507: Assertion 'x->b[-1] is writable' did not verify.
 `
+#include <vcc.h>
+
+struct A {
+  int a;
+  int b;
+};
+
+struct B {
+  struct A x;
+  struct A y;
+  int z;
+};
+
+void foo()
+{
+  struct B *b, *c;
+
+  assert(set_in(&b->z, extent(b)));
+  assert(set_in(&b->x, extent(b)));
+  assert(set_in(&b->x.a, extent(b)));
+  assert(set_in(&b->y, extent(b)));
+  assert(set_in(&b->y.b, extent(b)));
+
+  assert(set_in(&b->y.b, extent(c)));
+}
+`
+Verification of foo failed.
+testcase(24,12) : error VC9500: Assertion '_vcc_set_in(&b->y.b,_vcc_extent(c))' did not verify.
+`

@@ -885,14 +885,6 @@ function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
 // Allocation
 // ----------------------------------------------------------------------------
 
-function $extent_mutable(S:$state, r:$ptr) : bool
-  { $mutable(S, r) && 
-    (forall p:$ptr :: {$in(p, $extent(S, r))} $in(p, $extent(S, r)) ==> $mutable(S, p)) }
-  
-function $extent_is_fresh(S:$state, r:$ptr) : bool
-  { $timestamp_is_now(S, r) &&
-    (forall p:$ptr :: {$in(p, $extent(S, r))} $in(p, $extent(S, r)) ==> $timestamp_is_now(S, p)) }
-
 function $is_in_stackframe(#sf:int, p:$ptr) : bool;
 
 function $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
@@ -1179,8 +1171,11 @@ axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $root(S, p))}
 // Span & extent
 // -----------------------------------------------------------------------
 
+function $composite_extent(S:$state, r:$ptr, t:$ctype) : $ptrset;
 function $full_extent(#p:$ptr) : $ptrset;
-function $extent(S:$state, #p:$ptr) : $ptrset;
+
+function $extent(S:$state, r:$ptr) : $ptrset
+  { (lambda p:$ptr :: $composite_extent(S, r, $typ(r))[$emb0(p)]) }
 
 function $span(S:$state, o:$ptr) : $ptrset
   { (lambda p:$ptr :: $emb(S, p) == o) }
@@ -1188,6 +1183,14 @@ function $first_option_typed(S:$state, #p:$ptr) : bool;
 
 function {:inline true} $struct_extent(#p:$ptr) : $ptrset
   { $full_extent(#p) }
+
+function $extent_mutable(S:$state, r:$ptr) : bool
+  { $mutable(S, r) && 
+    (forall p:$ptr :: {$in(p, $composite_extent(S, r, $typ(r)))} $in(p, $composite_extent(S, r, $typ(r))) ==> $mutable(S, p)) }
+  
+function $extent_is_fresh(S:$state, r:$ptr) : bool
+  { $timestamp_is_now(S, r) &&
+    (forall p:$ptr :: {$in(p, $extent(S, r))} $in(p, $extent(S, r)) ==> $timestamp_is_now(S, p)) }
 
 /*
 function $volatile_span(S:$state, #p:$ptr) : $ptrset;

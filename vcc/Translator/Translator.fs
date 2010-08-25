@@ -1661,7 +1661,19 @@ namespace Microsoft.Research.Vcc
             | _ -> 
               [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_field" else "$def_phys_field") args)]
         def @ axs
-        
+      
+      let trCompositeExtent (td:C.TypeDecl) =
+        xassert (not td.IsUnion)
+        let we = er ("^" + td.Name)
+        let s = er "s"
+        let forallRM id trig body = B.Expr.Forall (Token.NoToken, [("p", tpPtr); ("q", tpPtr); ("s", tpState)], trig, weight id, body)
+        let eq = bEq (er "q")
+        let eqs = td.Fields |> List.map (fun f -> if f.Type.IsComposite then eq (bCall "$dot" [er "p"; er (fieldName f)]) else bFalse)
+        let eqs = (eq (er "p")) :: eqs
+        let inExt = bCall "$in" [er "q"; bCall "$composite_extent" [er "s"; er "p"; er ("^" + td.Name)]]
+        let body = bEq inExt (bMultiOr eqs)          
+        forallRM "composite-extent-def" [[inExt]] body        
+
       let trField (td:C.TypeDecl) (f:C.Field) =
         let tok = td.Token
         let we = er ("^" + td.Name)
@@ -2182,7 +2194,7 @@ namespace Microsoft.Research.Vcc
           //| [] -> forward
           | _ when vcc3 ->
             forward @ 
-               [ B.Decl.Axiom inv ] 
+               [ B.Decl.Axiom inv; B.Decl.Axiom (trCompositeExtent td) ] 
                  @ List.concat (List.map (trField3 td) allFields)
           | _ -> 
             forward @ 
