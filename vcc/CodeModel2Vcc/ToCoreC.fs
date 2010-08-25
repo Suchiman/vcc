@@ -762,7 +762,8 @@ namespace Microsoft.Research.Vcc
           let blockId = (!currentBlockId).ToString()
           incr currentBlockId
           reportErrorForJumpsOutOfBlock b
-          let block' = List.map (fun (x : Expr) -> x.SelfMap(liftBlocks findRefs (ref 0) (blockPrefix + blockId + "#"))) block
+          let nestedBlockId = ref 0
+          let block' = List.map (fun (x : Expr) -> x.SelfMap(liftBlocks findRefs nestedBlockId (blockPrefix + blockId + "#"))) block
           let fBefore, fAfter = findRefs b
           match findLocalsAndTurnIntoParameters fBefore fAfter block' cs with
             | ss, cs', localsThatGoIn, inMap, localsThatGoOut, outMap ->
