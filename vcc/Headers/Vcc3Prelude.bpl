@@ -197,9 +197,6 @@ axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claima
 function $typ(p:$ptr): $ctype
   { $field_type($field(p)) }
 function $addr($ptr): int;
-axiom (forall p:$ptr :: {$addr(p), $addr($emb0(p))}
-  $is_phys_field($field(p)) ==> $addr(p) == $addr($emb0(p)) + $field_offset($field(p)));
-
 function $base($ptr): $base;
 function $field($ptr) : $field;
 function $ptr($field,$base): $ptr;
@@ -238,8 +235,22 @@ axiom (forall p:$ptr, t:$ctype :: {$addr($ptr_cast(p, t))}
 axiom (forall p:$ptr, t:$ctype :: {$ptr_cast($ptr_cast(p, t), $typ(p))}
   $non_null(p) ==> $ptr_cast($ptr_cast(p, t), $typ(p)) == p);
 
-function {:inline true} $dot(p:$ptr,f:$field) : $ptr
-  { $ptr(f, $base(p)) }
+function $dot(p:$ptr, f:$field) : $ptr
+  { if $is_primitive_field(f) then
+      $ptr(f, $base(p)) 
+    else
+      $ptr($root_field($field_type(f)), $base_plus($base(p), f))
+  }
+
+function $base_plus(p:$base, f:$field) : $base;
+function $base_plus_inv(p:$base, f:$base) : $field;
+axiom (forall p:$base, f:$field :: {$base_plus(p, f)}
+  $base_plus_inv(p, $base_plus(p, f)) == f);
+
+axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
+  $is_phys_field(f) && $field_parent_type(f) == $typ(p) ==> 
+     $addr($dot(p, f)) == $addr(p) + $field_offset(f));
+
 function $emb(S:$state,p:$ptr) : $ptr
   { $emb0(p) }
 function {:inline true} $emb0(p:$ptr) : $ptr
@@ -249,6 +260,7 @@ axiom (forall t:$ctype :: {$root_field(t)}
   $field_parent_type($root_field(t)) == t);
 
 function $is_sequential_field($field) : bool;
+function $is_primitive_field($field) : bool;
 function $as_field_with_type($field,$ctype) : $field;
 function $field_type($field) : $ctype;
 function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
@@ -257,6 +269,7 @@ function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile
     (!isvolatile ==> $is_sequential_field(f)) &&
     $field_type(f) == tp &&
     $as_field_with_type(f, tp) == f &&
+    ($is_primitive_ch(tp) <==> $is_primitive_field(f)) &&
     $field_arr_index(f) == 0 &&
     true
   }
@@ -395,6 +408,9 @@ function $idx_prim(p:$ptr, i:int) : $ptr
     $ptr($field_plus($field(p), i), $base(p))
   }
 
+axiom (forall p:$ptr, i:int :: {$addr($idx_prim(p, i))}
+  $addr($idx_prim(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
+
 function $field_plus($field, int) : $field;
 axiom (forall f:$field, i:int :: {$field_plus(f, i)}
   !$is_base_field($field_plus(f, i)) &&
@@ -527,6 +543,9 @@ function {:inline true} $ptr_eq(p1:$ptr, p2:$ptr) : bool
 
 function {:inline true} $ptr_neq(p1:$ptr,p2:$ptr) : bool
   { !$ptr_eq(p1, p2) }
+
+function $byte_ptr_subtraction(p1:$ptr, p2:$ptr) : int
+  { $addr(p1) - $addr(p2) }
 
 function {:inline true} $is_primitive_field_of(S:$state, #f:$ptr, #o:$ptr) : bool
   { $is_primitive_ch($typ(#f)) && $emb(S, #f) == #o }
@@ -1387,8 +1406,6 @@ function {:inline true} $in_range_div_i2(x:int, y:int) : bool { y != -1 || x != 
 function {:inline true} $in_range_div_i4(x:int, y:int) : bool { y != -1 || x != $min.i4 }
 function {:inline true} $in_range_div_i8(x:int, y:int) : bool { y != -1 || x != $min.i8 }
 
-function $byte_ptr_subtraction(p1:$ptr, p2:$ptr) : int
-  { $addr(p1) - $addr(p2) }
 function $_pow2(int) : int;
 axiom 
 $_pow2(0) == 1 && $_pow2(1) == 2 && $_pow2(2) == 4 && $_pow2(3) == 8 && $_pow2(4) == 16 && $_pow2(5) == 32 &&
