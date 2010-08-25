@@ -406,7 +406,7 @@ namespace Microsoft.Research.Vcc
           let thAssign = Macro (c', "=", [tmpRef; th])
           let elAssign = Macro (c', "=", [tmpRef; el])          
           let write = Expr.If (c', None, cond, thAssign, elAssign)
-          addStmtsOpt [VarDecl (c', tmp); self write] tmpRef
+          addStmtsOpt [VarDecl (c', tmp, []); self write] tmpRef
         | If(c, cl, cond, th, el) ->
           match splitKnown cond with
             | (Cast(_, _, BoolLiteral(_, true))  | BoolLiteral(_, true)),  asserts -> Some(Expr.MkBlock(asserts @  [self th]))
@@ -467,7 +467,7 @@ namespace Microsoft.Research.Vcc
           v 
 
       let rnExpr self = function
-        | Expr.VarDecl (ce, var) -> Some(Expr.VarDecl (ce, renameVar var))
+        | Expr.VarDecl (ce, var, attr) -> Some(Expr.VarDecl (ce, renameVar var, attr))
         | Expr.Ref(ce, var) ->
           match subst.TryGetValue(var) with
             | true, substName -> Some(Expr.Ref(ce, substName)) 
@@ -791,7 +791,7 @@ namespace Microsoft.Research.Vcc
         match subst.TryGetValue v with
           | true, (v', _) -> Some (Expr.Deref (c, Expr.Ref ({ c with Type = v'.Type }, v')))
           | _ -> None
-      | Expr.VarDecl (_, v) ->
+      | Expr.VarDecl (_, v, _) ->
         match subst.TryGetValue v with
           | true, (_, decl) -> Some(decl)
           | false, _ -> None
@@ -812,7 +812,7 @@ namespace Microsoft.Research.Vcc
             if v.Kind = VarKind.Parameter || v.Kind = VarKind.SpecParameter || v.Kind = VarKind.OutParameter then
               [Expr.Macro (fakeEC Void, "=", [Expr.Deref (fakeEC v.Type, Expr.Ref ({ comm with Type = v'.Type }, v')); mkRef v])]
             else []
-          let def = VarDecl (fakeEC Void, v') :: assign :: init
+          let def = VarDecl (fakeEC Void, v', []) :: assign :: init
           addressableLocals.[v] <- (v', Macro(fakeEC Void, "fake_block", def))
           
       let pointsToStruct = function
@@ -1077,7 +1077,7 @@ namespace Microsoft.Research.Vcc
         | Ref(cmn, ({Kind = SpecParameter|OutParameter} as v)) ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification parameter '" + v.Name + "' within non-specification code")
           false
-        | VarDecl(cmn, ({Kind = VarKind.Local} as v)) when isSpecType v.Type ->
+        | VarDecl(cmn, ({Kind = VarKind.Local} as v), _) when isSpecType v.Type ->
           helper.GraveWarning(cmn.Token, 9301, "non-specification object '" + v.Name + "' has specification type")
           false
         | _ -> true
@@ -1191,7 +1191,7 @@ namespace Microsoft.Research.Vcc
             | true, others -> declsToReinsert.[block] <- decl::others
             | _ -> declsToReinsert.Add(block, [decl])
         let rec moveDecls (currentBlock : Expr) _ = function
-          | VarDecl(ec, v) as decl ->
+          | VarDecl(ec, v, []) as decl ->
             match targetMap.TryGetValue v with
               | true, tgt -> 
                 targetMap.Remove(v) |> ignore

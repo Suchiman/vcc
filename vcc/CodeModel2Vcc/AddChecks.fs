@@ -57,7 +57,7 @@ namespace Microsoft.Research.Vcc
     let this = ignoreEffects this
     let prestate = getTmp helper "prestate" Type.MathState VarKind.SpecLocal
     let nowstate = Expr.Macro ({ bogusEC with Type = Type.MathState }, "_vcc_current_state", [])
-    let saveState = [VarDecl (bogusEC, prestate); VarWrite (bogusEC, [prestate], nowstate)]
+    let saveState = [VarDecl (bogusEC, prestate, []); VarWrite (bogusEC, [prestate], nowstate)]
     let check = invariantCheck helper cond errno suffix (mkRef prestate) this
     (saveState, List.map Expr.MkAssert check)  
     
@@ -97,7 +97,7 @@ namespace Microsoft.Research.Vcc
     let handleSpecialCalls self = 
       let genTmpOwns() = 
         let tmp = getTmp helper "owns" Type.PtrSet VarKind.SpecLocal
-        [VarDecl (bogusEC, tmp); 
+        [VarDecl (bogusEC, tmp, []); 
          VarWrite (bogusEC, [tmp], Macro (bogusSet, "_vcc_set_empty", []))], tmp
          
       let addToOwns tmpowns obj =
@@ -126,7 +126,7 @@ namespace Microsoft.Research.Vcc
                 pureEx (Macro (bogusState, "_vcc_take_over", [mkRef curstate; this; obj])))]
             let addOwnees = extractKeeps updateFor checks
             let ownSave =
-                  [VarDecl (bogusEC, curstate); 
+                  [VarDecl (bogusEC, curstate, []); 
                    VarWrite (bogusEC, [curstate], Macro (bogusState, "_vcc_current_state", [])); 
                    ] @ initOwns
             let pre = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_pre_static_wrap", []))
@@ -170,7 +170,7 @@ namespace Microsoft.Research.Vcc
             let pre = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_pre_static_unwrap", []))
             
             match saveAndCheckInvariant helper (fun e -> not (isOnUnwrap e)) 0 "OOPS" this with
-              | (VarDecl (_, curstate) :: _) as save2, props -> 
+              | (VarDecl (_, curstate, _) :: _) as save2, props -> 
                 let now = Macro (bogusState, "_vcc_current_state", [])
                 let updateFor obj =
                   [VarWrite (bogusEC, [curstate], 

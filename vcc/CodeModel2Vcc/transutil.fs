@@ -251,7 +251,7 @@ namespace Microsoft.Research.Vcc
   // Caching
   // ----------------------------------------------------------------------------- 
 
-  let getTmp (helper:Helper.Env) name = Variable.CreateUnique (name + "#" + (helper.UniqueId()).ToString()) 
+  let getTmp (helper:Helper.Env) name = Variable.CreateUnique (name + "#" + (helper.UniqueId()).ToString())
      
   let cacheEx helper assign name expr varKind = 
     let rec isSimple = function
@@ -263,7 +263,7 @@ namespace Microsoft.Research.Vcc
     if isSimple expr then ([], expr) // no need to cache
     else
       let tmp = getTmp helper name expr.Type varKind
-      ([ Expr.VarDecl (voidBogusEC(), tmp);
+      ([ Expr.VarDecl (voidBogusEC(), tmp, []);
          assign tmp expr ],
        Expr.Ref (expr.Common, tmp))
 
@@ -396,7 +396,7 @@ namespace Microsoft.Research.Vcc
       | Expr.Quant (_, qd) ->
         for v in qd.Variables do
           walkType cb v.Type
-      | Expr.VarDecl (_, v) -> walkType cb v.Type
+      | Expr.VarDecl (_, v, _) -> walkType cb v.Type
       | Expr.Dot (_, _, f) ->
         cb.UseTypeDecl f.Parent
       | _ -> ()

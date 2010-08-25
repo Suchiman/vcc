@@ -473,10 +473,10 @@ module Microsoft.Research.Vcc.CAST
       override this.GetHashCode () = int this.UniqueId
       override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
     
-      static member CreateUnique name _type kind = 
-        { Name = name; 
-          Type = _type;
-          Kind = kind;
+      static member CreateUnique name _type kind  = 
+        { Name = name 
+          Type = _type
+          Kind = kind
           UniqueId = unique()
         } : Variable
     
@@ -692,7 +692,7 @@ module Microsoft.Research.Vcc.CAST
     | SizeOf of ExprCommon * Type
     
     // stmt-like expressions
-    | VarDecl of ExprCommon * Variable
+    | VarDecl of ExprCommon * Variable * list<CustomAttr>
     | VarWrite of ExprCommon * list<Variable> * Expr
     | MemoryWrite of ExprCommon * Expr * Expr
     | If of ExprCommon * TestClassifier option * Expr * Expr * Expr
@@ -765,7 +765,7 @@ module Microsoft.Research.Vcc.CAST
         | Return (e, _)
         | Atomic (e, _, _)
         | Comment (e, _)
-        | VarDecl (e, _)
+        | VarDecl (e, _, _)
         | Stmt (e, _)
         | Pure (e, _)
         | UserData(e, _)
@@ -800,7 +800,7 @@ module Microsoft.Research.Vcc.CAST
         | Return (_, a) -> Return (ec, a)
         | Atomic (_, a, b) -> Atomic (ec, a, b)
         | Comment (_, a) -> Comment (ec, a)
-        | VarDecl (_, a) -> VarDecl (ec, a)
+        | VarDecl (_, a, attr) -> VarDecl (ec, a, attr)
         | Stmt (_, a) -> Stmt (ec, a)
         | Pure (_, a) -> Pure (ec, a)
         | UserData(_, a) -> UserData(ec, a)
@@ -1032,7 +1032,7 @@ module Microsoft.Research.Vcc.CAST
           | Atomic _
           | Loop _  -> None
           | Ref(c, v) -> Some(Ref(sc c, sv v))
-          | VarDecl(c, v) -> Some(VarDecl(c, sv v))
+          | VarDecl(c, v, attr) -> Some(VarDecl(c, sv v, attr))
           | Result c -> Some(Result(sc c))
           | This c -> Some(This(sc c))
           | Prim (c, op, es) ->  Some(Prim(sc c, op, selfs es))
@@ -1071,7 +1071,7 @@ module Microsoft.Research.Vcc.CAST
             match subst.TryGetValue v with
               | true, e -> Some (e)
               | _ -> None
-          | VarDecl (c, v) when subst.ContainsKey v -> Some (Block (c, [], None))
+          | VarDecl (c, v, _) when subst.ContainsKey v -> Some (Block (c, [], None))
           | VarWrite (c, v, e) -> Some (VarWrite (c, List.map substVar v, self e))
           | _ -> None
       this.SelfMap repl
@@ -1132,7 +1132,7 @@ module Microsoft.Research.Vcc.CAST
               match args with 
                   | [] -> wr "@"; wr op
                   | _ -> doArgs ("@" + op) args
-          | VarDecl (_, v) ->
+          | VarDecl (_, v, _) ->
             wr (v.Type.ToString()); wr " "; wr v.Name; wr ";\n"
           | VarWrite (_, [v], e) ->
             wr v.Name; wr " := "; fe e; wr ";\n"
