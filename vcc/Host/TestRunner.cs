@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using Microsoft.Cci;
 
 namespace Microsoft.Research.Vcc
@@ -386,6 +387,10 @@ namespace Microsoft.Research.Vcc
       long maxBytesPerProcess;
       int errorCount;
       int runningThreadCount;
+      int totalTestCount;
+      int failedTestCount;
+      int passedTestCount;
+      StreamWriter globalLogFile;
 
       public TestRunnerMT(int threadCount, VccOptions commandLineOptions) {
         this.threadCount = threadCount;
@@ -417,40 +422,88 @@ namespace Microsoft.Research.Vcc
         foreach (var line in lines) { writer.WriteLine(line); }
       }
 
-      private static readonly Regex TestPassed = new Regex("^\\S+ passed$");
+      class Runner
+      {
+        private static readonly Regex TestPassed = new Regex("^\\S+ passed$");
+        private static readonly Regex TestFailed = new Regex("--- \\S+ failed ---");
+        private List<string> stdout = new List<string>();
+        private List<string> stderr = new List<string>();
+        private TestRunnerMT parent;
+        private int needFlush;
+        private object dataLock = new object();
 
-      private void RunJobSequence(IEnumerable<FileInfo> jobs) {
-        using (System.CodeDom.Compiler.TempFileCollection tempFiles = new System.CodeDom.Compiler.TempFileCollection()) {
-          string stdOutFileName = tempFiles.AddExtension("out", false);
-          string stdErrFileName = tempFiles.AddExtension("err", false);
-          using (var outWriter = new StreamWriter(stdOutFileName))
-          using (var errWriter = new StreamWriter(stdErrFileName))
-          using (var vccProc = System.Diagnostics.Process.Start(VccStartInfo(jobs))) {
+        public Runner(TestRunnerMT p)
+        {
+          parent = p;
+        }
+
+        private void Flush()
+        {
+          if (needFlush == 0) return;
+          lock (parent.globalLogFile) {
+            foreach (var v in stderr)
+              parent.globalLogFile.WriteLine(v);
+            foreach (var v in stdout)
+              parent.globalLogFile.WriteLine(v);
+            stderr.Clear();
+            stdout.Clear();
+            parent.globalLogFile.Flush();
+            needFlush = 0;
+          }
+        }
+
+        private void GotStdout(object sender, System.Diagnostics.DataReceivedEventArgs data)
+        {
+          var line = data.Data;
+
+          if (String.IsNullOrEmpty(data.Data)) return;
+
+          lock (dataLock) {
+            if (TestPassed.IsMatch(line)) {
+              Flush();
+              Interlocked.Increment(ref parent.passedTestCount);
+            } else if (TestFailed.IsMatch(line)) {
+              Flush();
+              Interlocked.Increment(ref parent.failedTestCount);
+              needFlush++;
+              lock (parent.lkOutput)
+                Console.WriteLine(line);
+            }
+            stdout.Add(line);
+          }
+        }
+
+        private void GotStderr(object sender, System.Diagnostics.DataReceivedEventArgs data)
+        {
+          var line = data.Data;
+          if (String.IsNullOrEmpty(line)) return;
+          lock (dataLock) {
+            stderr.Add(line);
+            needFlush++;
+          }
+        }
+
+        public void Run(IEnumerable<FileInfo> jobs)
+        {
+          using (var vccProc = System.Diagnostics.Process.Start(parent.VccStartInfo(jobs))) {
             vccProc.PriorityClass = System.Diagnostics.ProcessPriorityClass.AboveNormal;
-            vccProc.OutputDataReceived += delegate(object sender, System.Diagnostics.DataReceivedEventArgs data) {
-              if (!String.IsNullOrEmpty(data.Data)) {
-                // write 'passed' message out immediately so we show progress
-                if (TestPassed.IsMatch(data.Data)) { lock (lkOutput) { Console.WriteLine(data.Data); } }
-                else outWriter.WriteLine(data.Data);
-              }
-            };
-            vccProc.ErrorDataReceived += delegate(object sender, System.Diagnostics.DataReceivedEventArgs data) {
-              if (!String.IsNullOrEmpty(data.Data)) 
-                errWriter.WriteLine(data.Data);
-            };
+            vccProc.OutputDataReceived += this.GotStdout;
+            vccProc.ErrorDataReceived += this.GotStderr;
 
             vccProc.BeginOutputReadLine();
             vccProc.BeginErrorReadLine();
             vccProc.WaitForExit();
 
-            if (vccProc.ExitCode != 0) System.Threading.Interlocked.Increment(ref this.errorCount);
-          }
+            needFlush++;
+            Flush();
 
-          lock (lkOutput) {
-            CopyFileToStream(stdOutFileName, System.Console.Out);
-            CopyFileToStream(stdErrFileName, System.Console.Error);
+            if (vccProc.ExitCode != 0) System.Threading.Interlocked.Increment(ref parent.errorCount);
           }
         }
+      }
+
+      private void RunJobSequence(IEnumerable<FileInfo> jobs) {
+        new Runner(this).Run(jobs);
       }
 
       private void RunJobs() {
@@ -470,8 +523,22 @@ namespace Microsoft.Research.Vcc
               jobSequence.Add(job);
             }
           }
-          if (jobSequence.Count == 0) return;
+          if (jobSequence.Count == 0) break;
           RunJobSequence(jobSequence);
+        }
+      }
+
+      private void Report(string app)
+      {
+        lock(lkOutput)
+          System.Console.Write("Passed {0}, failed {1}, total {2}{3}", this.passedTestCount, this.failedTestCount, this.totalTestCount, app);
+      }
+
+      private void Reporter()
+      {
+        while (true) {
+          Report("\r");
+          Thread.Sleep(500);
         }
       }
 
@@ -486,8 +553,16 @@ namespace Microsoft.Research.Vcc
         // wait for all threads to come up becaue attempting to join them before will raise an exception
         while (this.runningThreadCount < this.threadCount) System.Threading.Thread.Sleep(50);
 
+        var reporter = new Thread(Reporter);
+        reporter.Start();
+
         for (int i = 0; i < this.threadCount; i++)
           threads[i].Join();
+
+        reporter.Abort();
+        reporter.Join();
+
+        Report("\r\n");
       }
 
       public int Run() {
@@ -497,10 +572,13 @@ namespace Microsoft.Research.Vcc
         foreach (var job in queue) {
           totalBytes += job.Length;
         }
+        totalTestCount = queue.Count;
         maxBytesPerProcess = totalBytes / this.threadCount;
-        if (maxBytesPerProcess > 40000)
+        if (maxBytesPerProcess > 10000)
           maxBytesPerProcess /= 4;
-        SpawnRunAndJoin();
+        using (globalLogFile = new StreamWriter("testsuite.log")) {
+          SpawnRunAndJoin();
+        }
         return errorCount;
       }
     }
