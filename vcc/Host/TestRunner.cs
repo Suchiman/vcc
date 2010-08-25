@@ -246,7 +246,7 @@ namespace Microsoft.Research.Vcc
 
           ++testCaseCount;
           string suiteNameWithoutExt = Path.GetFileNameWithoutExtension(suiteName);
-          string fileNameWithoutExt = directoryName + Path.DirectorySeparatorChar + suiteNameWithoutExt + vccSplitSuffix + testCaseCount;
+          string fileNameWithoutExt = directoryName + Path.DirectorySeparatorChar + suiteNameWithoutExt + vccSplitSuffix + testCaseCount + "_" + System.Diagnostics.Process.GetCurrentProcess().Id;
           currentTestcaseName = Path.GetFileName(string.Format("{0}.{1:00}", suiteNameWithoutExt, testCaseCount));
 
           StringBuilder backupTimeStats = testrunTimeStats;
