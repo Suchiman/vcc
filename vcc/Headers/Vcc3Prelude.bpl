@@ -97,19 +97,6 @@ function $map_range($ctype) : $ctype;
 
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $map_domain($map_t(#r,#d)) == #d && $map_range($map_t(#r,#d)) == #r && $type_branch($map_t(#r,#d)) == $ctype_map);
 
-// to be used when you allocate just the array itself
-function $array($ctype, int) returns($ctype);
-function $element_type($ctype) returns($ctype);
-function $array_length($ctype) returns(int);
-axiom (forall T:$ctype, s:int :: {$array(T, s)} 
-     true
-  && $element_type($array(T, s)) == T 
-  && $array_length($array(T, s)) == s 
-  && $is_arraytype($array(T, s))
-  && $type_branch($array(T, s)) == $ctype_array
-);
-axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
-
 // ----------------------------------------------------------------------------
 // Type properties
 // ----------------------------------------------------------------------------
@@ -213,7 +200,16 @@ axiom (forall p:$ptr :: {$addr(p)} $addr(p) == 0 <==> $is_null(p));
 // Field algebra
 // ----------------------------------------------------------------------------
 
-function $is_base_field($field) : bool;
+type $field_kind;
+const unique $fk_base : $field_kind;
+const unique $fk_emb_array : $field_kind;
+const unique $fk_as_array_root : $field_kind;
+const unique $fk_as_array_emb : $field_kind;
+
+function $field_kind($field) : $field_kind;
+
+function {:inline true} $is_base_field(f:$field) : bool
+  { $field_kind(f) == $fk_base }
 
 //typed pointer test
 function $is(p:$ptr, t:$ctype) : bool
@@ -227,7 +223,7 @@ function $ptr_cast(#p:$ptr,#t:$ctype) : $ptr;
 
 axiom (forall p:$ptr, t:$ctype :: {$ptr_cast(p, t)}
   $typ($ptr_cast(p, t)) == t &&
-  ($is_null(p) ==> $ptr_cast(p, t) == $ptr($root_field(t), $base($null))));
+  ($is_null(p) ==> $is_null($ptr_cast(p, t)) && $ptr_cast(p, t) == $ptr($root_field(t), $base($null))));
 
 axiom (forall p:$ptr, t:$ctype :: {$addr($ptr_cast(p, t))}
   $addr($ptr_cast(p, t)) == $addr(p));
@@ -389,7 +385,7 @@ function {:inline true} $def_phys_arr_field(partp:$ctype, f:$field, tp:$ctype, i
     $is_phys_field(f) &&
     $field_arr_size(f) == sz &&
     $field_arr_root(f) == f &&
-    !$is_base_field(f) && 
+    $field_kind(f) == $fk_emb_array &&
     true
   }
 
@@ -398,7 +394,7 @@ function {:inline true} $def_ghost_arr_field(partp:$ctype, f:$field, tp:$ctype, 
     $is_ghost_field(f) &&
     $field_arr_size(f) == sz &&
     $field_arr_root(f) == f &&
-    !$is_base_field(f) && 
+    $field_kind(f) == $fk_emb_array &&
     true
   }
 
@@ -413,7 +409,7 @@ axiom (forall p:$ptr, i:int :: {$addr($idx_prim(p, i))}
 
 function $field_plus($field, int) : $field;
 axiom (forall f:$field, i:int :: {$field_plus(f, i)}
-  !$is_base_field($field_plus(f, i)) &&
+  $field_kind($field_plus(f, i)) == $field_kind(f) &&
   $field_arr_root($field_plus(f, i)) == $field_arr_root(f) &&
   $field_arr_index($field_plus(f, i)) == $field_arr_index(f) + i &&
   $field_arr_size($field_plus(f, i)) == $field_arr_size(f) &&
@@ -423,6 +419,59 @@ axiom (forall f:$field, i:int :: {$field_plus(f, i)}
     $field_parent_type($field_plus(f, i)) == $field_parent_type($field_arr_root(f))) &&
   true
   );
+
+
+// ----------------------------------------------------------------------------
+// As-array
+// ----------------------------------------------------------------------------
+
+// to be used when you allocate just the array itself
+function $array($ctype, int) : $ctype;
+function $element_type($ctype) returns($ctype);
+function $array_length($ctype) returns(int);
+axiom (forall T:$ctype, s:int :: {$array(T, s)} 
+     true
+  && $element_type($array(T, s)) == T 
+  && $array_length($array(T, s)) == s 
+  && $is_arraytype($array(T, s))
+  && !$is_claimable($array(T, s))
+  && !$has_volatile_owns_set($array(T, s))
+  && $type_branch($array(T, s)) == $ctype_array
+);
+axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
+
+function $array_root($ctype, int) : $field;
+function $array_emb($ctype, int) : $field;
+function $array_root_tp($field) : $ctype;
+function $array_root_sz($field) : int;
+
+axiom (forall t:$ctype, sz:int :: {$array_root(t, sz)} {$array(t, sz)}
+  $array_root_tp($array_root(t, sz)) == t &&
+  $array_root_sz($array_root(t, sz)) == sz &&
+  $root_field($array(t, sz)) == $array_root(t, sz) &&
+  $field_kind($array_root(t, sz)) == $fk_as_array_root &&
+  $def_field($array(t, sz), $array_root(t, sz), $array(t, sz), false) &&
+  $is_ghost_field($array_root(t, sz)) &&
+  true);
+
+axiom (forall t:$ctype, sz:int :: {$array_emb(t, sz)} {$array(t, sz)}
+  $array_root_tp($array_emb(t, sz)) == t &&
+  $array_root_sz($array_emb(t, sz)) == sz &&
+  $field_kind($array_emb(t, sz)) == $fk_as_array_emb &&
+  $def_field($array(t, sz), $array_emb(t, sz), t, false) &&
+  $is_phys_field($array_emb(t, sz)) &&
+  $field_offset($array_emb(t, sz)) == 0 &&
+  $field_arr_size($array_emb(t, sz)) == sz &&
+  $field_arr_root($array_emb(t, sz)) == $array_emb(t, sz) &&
+  true);
+
+function $as_array(p:$ptr, T:$ctype, sz:int) returns($ptr)
+  {
+      if $field(p) == $array_emb(T, sz) then
+        $ptr($array_root(T, sz), $base(p))
+      else
+        $ptr_cast($null, $array(T, sz))
+  }
 
 // ----------------------------------------------------------------------------
 // Global state components
