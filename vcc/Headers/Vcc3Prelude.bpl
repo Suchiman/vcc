@@ -223,10 +223,10 @@ function $is(p:$ptr, t:$ctype) : bool
 function {:inline true} $is_proper(p:$ptr) : bool
   { $is_non_primitive_ch($typ(p)) ==> $field(p) == $f_root($typ(p)) }
 
-function $to_phys_base($base) : $base;
-function $to_spec_base($base) : $base;
-axiom (forall b:$base :: {$to_phys_base(b)} $in_range_spec_base($to_spec_base(b)) && ($in_range_spec_base(b) ==> $to_phys_base(b) == b));
-axiom (forall b:$base :: {$to_spec_base(b)} $in_range_phys_base($to_phys_base(b)) && ($in_range_phys_base(b) ==> $to_phys_base(b) == b));
+function $to_phys_base(b:$base) : $base;
+function $to_spec_base(b:$base) : $base; 
+axiom (forall b:$base :: {$to_spec_base(b)} $in_range_spec_base($to_spec_base(b)) && ($in_range_spec_base(b) ==> $to_spec_base(b) == b));
+axiom (forall b:$base :: {$to_phys_base(b)} $in_range_phys_base($to_phys_base(b)) && ($in_range_phys_base(b) ==> $to_phys_base(b) == b));
 
 function $spec_ptr_cast(p:$ptr, t:$ctype) : $ptr
   { $ptr($f_casted(t, $field(p)), $to_spec_base($base(p))) }
@@ -580,7 +580,7 @@ function $in_range_spec_base(b:$base) : bool;
 
 function {:inline true} $in_range_phys_ptr(p:$ptr) : bool
   { $in_range_phys_base($base(p)) }
-function $in_range_spec_ptr(p:$ptr) : bool
+function {:inline true} $in_range_spec_ptr(p:$ptr) : bool
   { $in_range_spec_base($base(p)) }
 
 const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
