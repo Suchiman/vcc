@@ -914,9 +914,14 @@ function {:inline true} $writable_prim(S:$state, begin_time:int, p:$ptr) : bool
   { $is_primitive_ch($typ(p)) &&
     ($mutable(S, $emb0(p)) && ($timestamp(S, $emb0(p)) >= begin_time || $in_writes_at(begin_time, p))) }
 
+function {:inline true} $listed_in_writes(S:$state, begin_time:int, p:$ptr) : bool
+  { $in_writes_at(begin_time, p) }
+
 function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
-  { $is_non_primitive_ch($typ(p)) &&
-    ($owner(S, p) == $me() && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
+  { if $is_primitive_ch($typ(p)) then
+      $writable_prim(S, begin_time, p)
+    else
+      ($owner(S, p) == $me() && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $not_written(S0:$state, p:$ptr, W:$ptrset) : bool
   { $owner(S0, $root(S0, p)) == $me() && !$in($root(S0, p), W) }

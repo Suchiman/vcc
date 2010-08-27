@@ -835,9 +835,7 @@ namespace Microsoft.Research.Vcc
         if vcc3 then
           let ch = 
             if prim then
-              match tryDecomposeDot e with
-                | Some [p; _] -> bCall "$writable" [bState; env.WritesTime; p]
-                | _ -> bCall "$writable_prim" [bState; env.WritesTime; e]
+              bCall "$writable_prim" [bState; env.WritesTime; e]
             else
               bCall pred (bState :: env.WritesTime :: [e])
           bOr atomicWr ch
@@ -1518,10 +1516,13 @@ namespace Microsoft.Research.Vcc
                     let name = "#loopWrites^" + (ctx.TokSuffix fst.Token)
                     let p = er name
                     let impl = 
-                      if vcc3 then 
-                        bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
+                      if vcc3 then
+                        let repl = function
+                          | B.FunctionCall ("$top_writable", args) -> Some (bCall "$listed_in_writes" args)
+                          | _ -> None
+                        bImpl ((objectWritesCheck env' p).Map repl) (objectWritesCheck env p)
                       else
-                         bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
+                        bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
                     let tok = afmtet fst.Common.Token 8011 "writes clause of the loop might not be included writes clause of the function" []
                     let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
                     let check = [B.Stmt.Assert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
