@@ -122,6 +122,8 @@ void foo()
 {
   struct B *b, *c;
 
+  assume(mutable(b) && mutable(c));
+
   assert(set_in(&b->z, extent(b)));
   assert(set_in(&b->x, extent(b)));
   assert(set_in(&b->x.a, extent(b)));
@@ -132,5 +134,5 @@ void foo()
 }
 `
 Verification of foo failed.
-testcase(24,12) : error VC9500: Assertion '_vcc_set_in(&b->y.b,_vcc_extent(c))' did not verify.
+testcase(26,12) : error VC9500: Assertion '_vcc_set_in(&b->y.b,_vcc_extent(c))' did not verify.
 `

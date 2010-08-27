@@ -244,7 +244,13 @@ namespace Microsoft.Research.Vcc
 
       let typedRead s p t =
         if vcc3 then
-          castFromInt (trType t) (bCall "$rd" (s :: decomposeDot p))
+          match t with
+            | C.SpecPtr t ->
+              bCall "$rd_spec_ptr" (s :: decomposeDot p @ [toTypeId t])
+            | C.PhysPtr t ->
+              bCall "$rd_phys_ptr" (s :: decomposeDot p @ [toTypeId t])
+            | _ ->
+              castFromInt (trType t) (bCall "$rd" (s :: decomposeDot p))
         else
           match t with
             | C.Ptr t ->
@@ -268,8 +274,8 @@ namespace Microsoft.Research.Vcc
         let v' = trVar v
         match v.Type with
           | C.Type.Integer k -> (v', Some (bCall ("$in_range_" + C.Type.IntSuffix k) [varRef v]))
-          | C.Type.PhysPtr t when vcc3 -> (v', Some (bCall "$is_phys_ptr" [varRef v; toTypeId t]))
-          | C.Type.SpecPtr t when vcc3 -> (v', Some (bCall "$is_spac_ptr" [varRef v; toTypeId t]))
+          | C.Type.PhysPtr t when vcc3 -> (v', None) // (v', Some (bCall "$is_phys_ptr" [varRef v; toTypeId t]))
+          | C.Type.SpecPtr t when vcc3 -> (v', None) // (v', Some (bCall "$is_spac_ptr" [varRef v; toTypeId t]))
           | C.Type.PhysPtr _ -> (v', Some (bCall "$in_range_phys_ptr" [varRef v]))
           | C.Type.SpecPtr _ -> (v', Some (bCall "$in_range_spec_ptr" [varRef v]))
           | _ -> (v', None)
@@ -281,11 +287,16 @@ namespace Microsoft.Research.Vcc
           | _ -> failwith ("pointer type expected " + expr.ToString())        
       
       let addType t e =
-        match t with
-          | C.Type.SpecPtr t
-          | C.Type.PhysPtr t when not vcc3 ->
-            bCall "$ptr" [toTypeId t; e]
-          | _ -> e
+        if vcc3 then
+          match t with
+            | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [e; toTypeId t]
+            | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [e; toTypeId t]
+            | _ -> e
+        else
+          match t with
+            | C.Type.SpecPtr t
+            | C.Type.PhysPtr t -> bCall "$ptr" [toTypeId t; e]
+            | _ -> e
       
       let stripType t e =
         match t with
@@ -355,7 +366,13 @@ namespace Microsoft.Research.Vcc
                 else
                   bCall "$ref" [self e']
               | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
-                bCall "$ptr_cast" [self e'; ptrType expr]
+                if vcc3 then
+                  match expr.Type with
+                    | C.SpecPtr _ -> bCall "$spec_ptr_cast" [self e'; ptrType expr]
+                    | C.PhysPtr _ -> bCall "$phys_ptr_cast" [self e'; ptrType expr]
+                    | _ -> die()
+                else
+                  bCall "$ptr_cast" [self e'; ptrType expr]
               | C.Expr.Cast ({ Type = C.Type.ObjectT }, _, C.Expr.IntLiteral(_, z)) when z = bigint.Zero -> er "$null"
               | C.Expr.Pure (_, e') -> self e'
               | C.Expr.Macro (c1, name, [C.Expr.Prim (c2, C.Op(_, C.Unchecked), _) as inner]) 
@@ -2166,17 +2183,17 @@ namespace Microsoft.Research.Vcc
             | Some f when isUnion -> [firstOptionTypedAxiom f]
             | _ -> []
         
+        let declConst tp name = B.Decl.Const { Unique = true; Type = tp; Name = name }
         let forward =
-          [B.Decl.Const { Unique = true
-                          Type = tpCtype
-                          Name = "^" + td.Name }] @ firstOptionTyped
+          [declConst tpCtype ("^" + td.Name)] @ firstOptionTyped
                           
         let forward =
           if vcc3 then
-            let rootName = td.Name + ".#root"
-            forward @ 
-              [B.Decl.Const { Unique = true ; Type = tpField ; Name = rootName };
-               B.Decl.Axiom (bCall "$def_composite_type" [we; er rootName; bInt td.SizeOf; B.Expr.BoolLiteral !owns_set_is_volatile; B.Expr.BoolLiteral !is_claimable])]
+            let fieldNames = [td.Name + ".#root"; td.Name + ".#owns"; td.Name + ".#ref_cnt"]
+            let fieldDecls = List.map (declConst tpField) fieldNames
+            let fieldRefs = List.map er fieldNames
+            let defAx = bCall "$def_composite_type" (we :: fieldRefs @ [bInt td.SizeOf; B.Expr.BoolLiteral !owns_set_is_volatile; B.Expr.BoolLiteral !is_claimable])
+            forward @ fieldDecls @ [B.Decl.Axiom defAx]
           else
             forward @ 
               [B.Decl.Axiom (bCall "$is_composite" [we]);

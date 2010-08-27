@@ -280,7 +280,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
   // the nested ptr_cast(ptr(...)) gets into triggers and causes trouble later
   let rec stripPtrCast (expr:B.Expr) = 
     let aux = function
-      | B.FunctionCall ("$ptr_cast", [B.FunctionCall ("$ptr", [_; r]); t]) ->
+      | B.FunctionCall (("$ptr_cast"|"$spec_ptr_cast"|"$phys_ptr_cast"), [B.FunctionCall ("$ptr", [_; r]); t]) ->
         Some (stripPtrCast (bCall "$ptr" [t; r]))
       | _ -> None
     expr.Map aux
