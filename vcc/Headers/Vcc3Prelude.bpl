@@ -215,13 +215,13 @@ function {:inline true} $is_base_field(f:$field) : bool
 
 //typed pointer test
 function $is(p:$ptr, t:$ctype) : bool
-  { if $is_composite_ch(t) then
+  { if $is_non_primitive_ch(t) then
       $field(p) == $f_root(t)
     else
       $typ(p) == t }
 
 function {:inline true} $is_proper(p:$ptr) : bool
-  { $is_composite_ch($typ(p)) ==> $field(p) == $f_root($typ(p)) }
+  { $is_non_primitive_ch($typ(p)) ==> $field(p) == $f_root($typ(p)) }
 
 function $to_phys_base($base) : $base;
 function $to_spec_base($base) : $base;
@@ -763,7 +763,7 @@ axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
 
 axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$root(S, p)}
   $good_state(S) ==>
-  $owner(S, p) == $me() ==> $non_null(p) && $is_composite_ch($typ(p)) && $is_proper(p) && $root(S, p) == p);
+  $owner(S, p) == $me() ==> $non_null(p) && $is_non_primitive_ch($typ(p)) && $is_proper(p) && $root(S, p) == p);
 
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
   $good_state(S) ==>
