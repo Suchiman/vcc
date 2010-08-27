@@ -1519,9 +1519,7 @@ namespace Microsoft.Research.Vcc
                     let p = er name
                     let impl = 
                       if vcc3 then 
-                        //bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
-                        bTrue
-                        // failwith "FIXME"
+                        bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
                       else
                          bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
                     let tok = afmtet fst.Common.Token 8011 "writes clause of the loop might not be included writes clause of the function" []
