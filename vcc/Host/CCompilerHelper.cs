@@ -46,7 +46,7 @@ namespace Microsoft.Research.Vcc
     private static string GenerateClArgs(string fileName, VccOptions commandLineOptions) {
       StringBuilder args = new StringBuilder();
       args.Append("/nologo /TC");
-      args.Append(" /E /DVERIFY /D_PREFAST_/D_USE_DECLSPECS_FOR_SAL /DSAL_NO_ATTRIBUTE_DECLARATIONS"); // TODO revisit these
+      args.Append(" /E /DVERIFY /D_PREFAST_ /D_USE_DECLSPECS_FOR_SAL:1 /DSAL_NO_ATTRIBUTE_DECLARATIONS"); // TODO revisit these
       if (commandLineOptions.NewSyntax) args.Append(" /DVERIFY2");
 
       foreach (string ppOption in commandLineOptions.PreprocessorOptions) {
