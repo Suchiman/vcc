@@ -2393,7 +2393,7 @@ namespace Microsoft.Research.Vcc
                                 [[bCall "$extent_hint" [p; q]]]
                               | _ ->
                                 if vcc3 then
-                                  List.map (fun n -> [bCall n [bState; p]]) ["$typed"; "$owner"; "$closed"]
+                                  List.map (fun n -> [bCall n [bState; p]]) ["$owner"; "$closed"]
                                 else
                                   List.map (fun n -> [bCall n [bState; p]]) ["$st"; "$ts"]
                           B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], triggers,
@@ -2405,6 +2405,11 @@ namespace Microsoft.Research.Vcc
                             // writes(set_universe()) is for debugging, so disable the immediate false that we could conclude
                             // writes(set_empty()) doesn't mean anything, so also ignore it
                             bTrue
+                          | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent"), args) when vcc3 ->
+                            let args = if args.Length = 1 then bState :: args else args
+                            bCall "$extent_mutable" args
+                          | B.Expr.FunctionCall ("$span", args) when vcc3 ->
+                            bCall "$mutable" args
                           | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent" | "$span"), args) ->
                             mut (Some (List.head (List.rev args))) "$mutable"
                           | _ -> mut None "$thread_owned_or_even_mutable"
@@ -2436,7 +2441,7 @@ namespace Microsoft.Research.Vcc
                                 (assumeSync env h.Token ::
                                  can_frame @
                                  init @
-                                 (if vcc3 then [] else List.map assumeMutability h.Writes) @
+                                 List.map assumeMutability h.Writes @
                                  trStmt {env with IFContexts = (getLocalLabels s,"FlowData#initPC")::(env.IFContexts)} s @ 
                                  [B.Stmt.Label (Token.NoToken, "#exit")] @
                                  sanityChecks env h))

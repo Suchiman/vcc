@@ -557,6 +557,9 @@ function {:inline true} $keeps(S:$state, #l:$ptr, #p:$ptr) : bool
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p,#t) && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive_ch(#t) }
 
+function {:inline true} $nested(S:$state, p:$ptr) returns(bool)
+  { $kind_of($typ($owner(S, p))) != $kind_thread }
+
 function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
   { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
 
@@ -1023,69 +1026,65 @@ function $pre_static_wrap($state) : bool;
 function $pre_static_unwrap($state) : bool;
 function $post_unwrap(S1:$state, S2:$state) : bool;
 
-function $wrap_writes(S0:$state, S:$state, o:$ptr) : bool
+function $is_unwrapped_dynamic(S0:$state, S:$state, o:$ptr) : bool
 {
-  /*
-  // TODO both of these takes the entire current heap, maybe restrict it to the owns set?
-  (forall q:$ptr, f:$field :: {$rd3(S, o, f, q)}
-     $rd3(S, o, f, q) == $rd3(S0, $root(S0, q), f, q))
-  && (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, p) || p == o)
-*/
-     $heap(S) == $heap(S0)
-  && $f_closed(S) == $wr.$closed($f_closed(S0), o, true)
-  && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, $current_timestamp(S))
-  && (forall r:$ptr :: {$rd.$owner($f_owner(S), r)}
-        if $set_in(r, $owns(S0, o)) then $rd.$owner($f_owner(S), r) == o
-        else $rd.$owner($f_owner(S), r) == $rd.$owner($f_owner(S0), r))
-
-//  && (forall r,p:$ptr :: {$rd.$owner($f_owner(S), r, p)}
-//        if $set_in(r, $owns(S0, o)) then 
-//          $rd.$owner($f_owner(S), r, p) == if p == r then o else $owner(S0, p)
-//        else 
-//          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
-
-  &&
-  (forall p:$ptr :: {$root(S, p)}
-     $root(S, p) == $root(S0, p) ||
-     ($root(S, p) == o && (p == o || $set_in($root(S0, p), $owns(S0, o)))))
-  && $timestamp_post_strict(S0, S)
-}
-
-function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
-{
-  $mutable(S, o)
-
-//  && (forall p:$ptr :: {$rd1(S, p)} $rd1(S, p) == $rd1(S0, $root(S0, p)))
-  && $heap(S) == $heap(S0)
-  && $f_closed(S) == $wr.$closed($f_closed(S0), o, false)
+     $is_unwrapped(S0, S, o)
   && (forall r:$ptr :: {$rd.$timestamps($f_timestamp(S), r)}
         if $owner(S0, r) == o || r == o then $rd.$timestamps($f_timestamp(S), r) == $current_timestamp(S)
         else $rd.$timestamps($f_timestamp(S), r) == $rd.$timestamps($f_timestamp(S0), r))
   && (forall r:$ptr :: {$rd.$owner($f_owner(S), r)}
         if $owner(S0, r) == o then $rd.$owner($f_owner(S), r) == $me()
         else $rd.$owner($f_owner(S), r) == $rd.$owner($f_owner(S0), r))
+}
 
-//  && (forall r,p:$ptr :: {$rd.$owner($f_owner(S), r, p)}
-//        if $root(S0, r) == o then
-//          $rd.$owner($f_owner(S), r, p) == if p == r then $me() else $owner(S0, p)
-//        else 
-//          $rd.$owner($f_owner(S), r, p) == $rd.$owner($f_owner(S0), r, p))
-  &&
-  (forall p:$ptr :: {$root(S, p)}
-     ($root(S0, p) != o && $root(S0, p) == $root(S, p)) ||
-     ($root(S0, p) == o && ($root(S, p) == p || $owner(S0, p) != o))
-     )
+function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
+{
+     true
+  && $mutable(S, o)
+  && $heap(S) == $heap(S0)
+  && (forall p:$ptr :: {$root(S, p)}
+        ($root(S0, p) != o && $root(S0, p) == $root(S, p)) ||
+        ($root(S0, p) == o && ($root(S, p) == p || $owner(S0, p) != o)))
+  && $f_closed(S) == $wr.$closed($f_closed(S0), o, false)
+  && $timestamp_post_strict(S0, S)
+  && $post_unwrap(S0, S)
    /*
   &&
   (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
     $set_in(p, $owns(S0, o)) ==>
       $wrapped(S, p, $typ(p)) && $timestamp_is_now(S, p))
-*/
-  &&
   // $preserves_thread_local(S0, S)
+*/
+}
 
-  $timestamp_post_strict(S0, S) &&
-  $post_unwrap(S0, S)
+function $is_wrapped_dynamic(S0:$state, S:$state, o:$ptr) : bool
+{
+     $is_wrapped(S0, S, o, $owns(S0, o))
+  && $heap(S) == $heap(S0)
+  && (forall r:$ptr :: {$rd.$owner($f_owner(S), r)}
+        if $set_in(r, $owns(S0, o)) then $rd.$owner($f_owner(S), r) == o
+        else $rd.$owner($f_owner(S), r) == $rd.$owner($f_owner(S0), r))
+}
+
+function $is_wrapped(S0:$state, S:$state, o:$ptr, owns:$ptrset) : bool
+{
+     true
+  && $f_closed(S) == $wr.$closed($f_closed(S0), o, true)
+  && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, $current_timestamp(S))
+  && (forall p:$ptr :: {$root(S, p)}
+        $root(S, p) == $root(S0, p) ||
+        ($root(S, p) == o && (p == o || $set_in($root(S0, p), owns))))
+  && $wrapped(S, o, $typ(o))
+  && ($is_claimable($typ(o)) ==> $ref_cnt(S0, o) == 0 && $ref_cnt(S, o) == 0)
+  && $timestamp_post_strict(S0, S)
+
+/*
+  $timestamp_is_now(S, o) &&
+  (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
+    $set_in(p, $owns(S0, o)) ==> $owner(S, p) == o) &&
+  // $set_in(o, $domain(S, o))
+  // $preserves_thread_local(S0, S)
+*/
 }
 
 procedure $unwrap(o:$ptr, T:$ctype);
@@ -1095,23 +1094,7 @@ procedure $unwrap(o:$ptr, T:$ctype);
   // TOKEN: OOPS: pre_unwrap holds
   requires $pre_unwrap($s);
 
-  ensures $is_unwrapped(old($s), $s, o);
-
-function $is_wrapped(S0:$state, S:$state, o:$ptr) : bool
-{
-  $wrap_writes(S0, S, o) &&
-  $wrapped(S, o, $typ(o)) &&
-/*
-  $timestamp_is_now(S, o) &&
-  (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
-    $set_in(p, $owns(S0, o)) ==> $owner(S, p) == o) &&
-*/
-
-  ($is_claimable($typ(o)) ==> $ref_cnt(S0, o) == 0 && $ref_cnt(S, o) == 0)
-
-  // $set_in(o, $domain(S, o))
-  // $preserves_thread_local(S0, S)
-}
+  ensures $is_unwrapped_dynamic(old($s), $s, o);
 
 procedure $wrap(o:$ptr, T:$ctype);
   // writes o, $owns($s, o)
@@ -1125,8 +1108,59 @@ procedure $wrap(o:$ptr, T:$ctype);
   // TOKEN: everything in the owns set is wrapped
   requires (forall p:$ptr :: {$dont_instantiate(p)} $set_in0(p, $owns($s, o)) ==> $wrapped($s, p, $typ(p)));
 
-  ensures $is_wrapped(old($s), $s, o);
+  ensures $is_wrapped_dynamic(old($s), $s, o);
 
+///////
+
+function $take_over(S:$state, l:$ptr, o:$ptr) returns($state);
+function $release(S0:$state, S:$state, #l:$ptr, #p:$ptr) returns($state);
+
+axiom (forall S:$state, l:$ptr, p:$ptr :: {$take_over(S, l, p)}
+  $f_owner($take_over(S, l, p)) == $wr.$owner($f_owner(S), p, l));
+
+axiom (forall S0,S:$state, l:$ptr, p:$ptr :: {$release(S0, S, l, p)}
+  $f_owner($release(S0, S, l, p)) == $wr.$owner($f_owner(S), p, $me()) &&
+  $f_timestamp($release(S0, S, l, p)) == $wr.$timestamps($f_timestamp(S), p, $current_timestamp(S0))
+  );
+
+procedure $static_unwrap(o:$ptr, S:$state);
+  modifies $s;
+  // TOKEN: the object has no outstanding claims
+  requires ! $is_claimable($typ(o)) || $ref_cnt($s, o) == 0;
+  // TOKEN: OOPS: pre_static_unwrap holds
+  requires $pre_static_unwrap($s);
+
+  ensures $is_unwrapped(old($s), $s, o);
+  ensures $f_owner($s) == $f_owner(S);
+  ensures $f_timestamp($s) == $wr.$timestamps($f_timestamp(S), o, $current_timestamp(S));
+
+
+procedure $static_wrap(o:$ptr, S:$state, owns:$ptrset);
+  modifies $s;
+  // TOKEN: OOPS: pre_static_wrap must hold
+  requires $pre_static_wrap($s);
+  // TOKEN: the wrapped type is non primitive
+  requires $is_non_primitive_ch($typ(o));
+  // TOKEN: the object being wrapped is mutable
+  requires $mutable($s, o);
+
+  ensures $is_wrapped(old($s), $s, o, owns);
+  ensures $heap($s) == $update($heap(old($s)), o, $f_owns($typ(o)), $ptrset_to_int(owns));
+  ensures $f_owner($s) == $f_owner(S);
+
+
+procedure $static_wrap_non_owns(o:$ptr, S:$state);
+  modifies $s;
+  // TOKEN: OOPS: pre_static_wrap must hold
+  requires $pre_static_wrap($s);
+  // TOKEN: the wrapped type is non primitive
+  requires $is_non_primitive_ch($typ(o));
+  // TOKEN: the object being wrapped is mutable
+  requires $mutable($s, o);
+
+  ensures $is_wrapped(old($s), $s, o, $owns(old($s), o));
+  ensures $heap($s) == $heap(old($s));
+  ensures $f_owner($s) == $f_owner(S);
 
 // ----------------------------------------------------------------------------
 // Admissibility & unwrap checks
