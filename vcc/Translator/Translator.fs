@@ -2252,11 +2252,12 @@ namespace Microsoft.Research.Vcc
                 | C.FunctDecl _ -> (typeDef, "fnptr")
                 | C.Record -> (trRecord td, "record")
                 | _ -> (typeDef, "math")
+            let def = if vcc3 then "$def_" else "$is_"
                         
             [B.Decl.Const { Unique = true
                             Name = "^" + name
                             Type = tpCtype };           
-             B.Decl.Axiom (bCall ("$is_" + kind + "_type") [er ("^" + name)])
+             B.Decl.Axiom (bCall (def + kind + "_type") [er ("^" + name)])
              ] @ additions
 
       let trPureFunction (h:C.Function) =

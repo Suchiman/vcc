@@ -108,8 +108,19 @@ function $as_in_range_t($ctype) : $ctype;
 
 function {:inline true} $def_flat_type(t:$ctype, sz:int) : bool
   { $sizeof(t) == sz && $type_branch(t) == $ctype_flat }
+
 function {:inline true} $def_primitive_type(t:$ctype, sz:int) : bool
-  { $def_flat_type(t, sz) && $is_primitive(t) }
+  { $def_flat_type(t, sz) && $is_primitive(t) && $field_type($f_root(t)) == t }
+
+function {:inline true} $def_math_type(t:$ctype) : bool
+  { $def_primitive_type(t, 1) && $is_math_type(t) }
+
+function {:inline true} $def_fnptr_type(t:$ctype) : bool
+  { $def_primitive_type(t, $arch_ptr_size) && $is_fnptr_type(t) }
+
+function {:inline true} $def_record_type(t:$ctype) : bool
+  { $def_primitive_type(t, 1) && $is_record_type(t) }
+
 function {:inline true} $def_composite_type(t:$ctype, rootField:$field, ownsField:$field, ref_cntField:$field, sz:int, claimable:bool, has_volatile_owns:bool) : bool
   { 
      $def_flat_type(t, sz) && 
@@ -160,7 +171,8 @@ function {:inline true} $is_ptr_to_composite(p:$ptr) : bool
   { $kind_of($typ(p)) == $kind_composite }
 
 function $is_math_type(t:$ctype) returns(bool);
-axiom (forall t:$ctype :: {$is_math_type(t)} $is_math_type(t) ==> $is_primitive(t));
+function $is_fnptr_type(t:$ctype) returns(bool);
+function $is_record_type(t:$ctype) returns(bool);
 
 function $is_non_primitive(t:$ctype) : bool;
 axiom (forall t:$ctype :: {$is_composite(t)} $is_composite(t) ==> $is_non_primitive(t));
@@ -341,8 +353,8 @@ axiom $def_primitive_type(^^f4, 4);
 axiom $def_primitive_type(^^f8, 8);
 axiom $def_primitive_type(^^bool, 1);
 axiom $def_primitive_type(^^void, 1);
-axiom $def_primitive_type(^^object, 1);
-axiom $def_primitive_type(^^field, 1);
+axiom $def_math_type(^^object);
+axiom $def_math_type(^^field);
 
 const unique ^^claim: $ctype;
 const unique ^claim.#root: $field;
@@ -357,11 +369,11 @@ const unique ^$#struct : $ctype;
 const unique ^$#seq_version : $ctype;
 const unique ^$#vol_version : $ctype;
 
-axiom $def_primitive_type(^^mathint, 1);
 axiom $def_composite_type(^^claim, ^claim.#root, ^claim.#owns, ^claim.#ref_cnt, 1, true, false);
-axiom $def_primitive_type(^$#ptrset, 1);
-axiom $def_primitive_type(^$#state_t, 1);
-axiom $def_primitive_type(^$#struct, 1);
+axiom $def_math_type(^^mathint);
+axiom $def_math_type(^$#ptrset);
+axiom $def_math_type(^$#state_t);
+axiom $def_math_type(^$#struct);
 
 function $field_offset($field) : int;
 function $field_parent_type($field) : $ctype;
@@ -1328,10 +1340,7 @@ axiom (forall r:$record, f:$field :: {$rec_fetch(r, f)}
 axiom (forall r:$record, f1:$field, f2:$field, v:int :: {$rec_fetch($rec_update(r, f1, v), f2)}
   $rec_fetch($rec_update(r, f1, v), f2) == $rec_fetch(r, f2) || f1 == f2);
 
-function $is_record_type(t:$ctype) : bool;
 function $is_record_field(parent:$ctype, field:$field, field_type:$ctype) : bool;
-
-axiom (forall t:$ctype :: {$is_record_type(t)} $is_record_type(t) ==> $is_primitive(t));
 
 function $as_record_record_field($field) : $field;
 axiom (forall p:$ctype, f:$field, ft:$ctype :: {$is_record_field(p, f, ft), $is_record_type(ft)}
@@ -1454,6 +1463,22 @@ function $set_in0(p:$ptr, s:$ptrset) : bool
   { $set_in(p, s) }
 
 
+// --------------------------------------------------------------------------------
+// Function pointers
+// --------------------------------------------------------------------------------
+
+function $get_fnptr(no:int, t:$ctype) returns($ptr)
+  { $ptr($f_root(t), $get_fnptr_ref(no)) }
+
+function $get_fnptr_ref(no:int) : $base;
+function $get_fnptr_inv(rf:$base) : int;
+axiom (forall no:int :: $get_fnptr_inv($get_fnptr_ref(no)) == no);
+
+// TODO: this is unsound.
+axiom (forall S:$state, no:int, t:$ctype :: 
+  {$owner(S, $get_fnptr(no, t))} {$closed(S, $get_fnptr(no, t))}
+  $is_fnptr_type(t) &&
+  $good_state(S) ==> $mutable(S, $get_fnptr(no, t)));
 
 // --------------------------------------------------------------------------------
 // Arithmetic
