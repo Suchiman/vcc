@@ -278,6 +278,7 @@ axiom (forall t:$ctype :: {$f_root(t)}
   $field_parent_type($f_root(t)) == t);
 
 function $is_sequential_field($field) : bool;
+function $is_volatile_field($field) : bool;
 function $is_primitive_field($field) : bool;
 function $as_field_with_type($field,$ctype) : $field;
 function $field_type($field) : $ctype;
@@ -290,6 +291,7 @@ function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile
   { 
     $field_parent_type(f) == partp &&
     (!isvolatile ==> $is_sequential_field(f)) &&
+    (isvolatile ==> $is_volatile_field(f)) &&
     $field_type(f) == tp &&
     $as_field_with_type(f, tp) == f &&
     ($is_primitive_ch(tp) <==> $is_primitive_field(f)) &&
@@ -671,7 +673,12 @@ function $thread_local(S:$state, p:$ptr) : bool
 
 function {:inline true} $thread_local2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $thread_local(S, #p) }
- 
+
+function {:inline true} $typed2(S:$state, p:$ptr, t:$ctype) : bool
+  { $thread_local2(S, p, t) }
+
+function {:inline true} $typed(S:$state, p:$ptr) : bool
+  { $thread_local(S, p) }
 
 // ----------------------------------------------------------------------------
 // Boogie/Z3 hacks
@@ -1309,13 +1316,8 @@ function $extent_is_fresh(S:$state, r:$ptr) : bool
   { $timestamp_is_now(S, r) &&
     (forall p:$ptr :: {$in(p, $extent(S, r))} $in(p, $extent(S, r)) ==> $timestamp_is_now(S, p)) }
 
-/*
-function $volatile_span(S:$state, #p:$ptr) : $ptrset;
-axiom (forall S:$state, p:$ptr, q:$ptr ::
-  {:vcc3 "todo"}
-  {$set_in(p, $volatile_span(S, q))}
-  $set_in(p, $volatile_span(S, q)) <==> p == q || ($is_volatile(S, p) && $set_in(p, $span(S, q))));
-*/
+function $volatile_span(S:$state, q:$ptr) : $ptrset
+  { (lambda p:$ptr :: $is_volatile_field($field(p)) && $emb0(p) == q) }
 
 // ----------------------------------------------------------------------------
 // Records
