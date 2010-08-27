@@ -248,10 +248,10 @@ function $dot(p:$ptr, f:$field) : $ptr
   }
 
 function $base_plus(p:$base, f:$field) : $base;
-function $base_plus_inv(p:$base, f:$base) : $field;
+function $base_plus_inv(p:$base, f:$field) : $base;
 axiom (forall p:$base, f:$field :: {$base_plus(p, f)}
   ($field_offset(f) == 0 ==> $base_plus(p, f) == p) &&
-  $base_plus_inv(p, $base_plus(p, f)) == f);
+  $base_plus_inv($base_plus(p, f), f) == p);
 
 axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
   $is_phys_field(f) && $field_parent_type(f) == $typ(p) ==> 
