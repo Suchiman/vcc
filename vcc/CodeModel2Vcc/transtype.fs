@@ -191,7 +191,8 @@ namespace Microsoft.Research.Vcc
                                UniqueId = CAST.unique() }
               typeDecls.[groupName] <- (td, newField)
               groupParent.[td] <- (parent, newField)
-              groupAxioms := genGroupAxiom td parent newField :: !groupAxioms
+              if not helper.Options.Vcc3 then
+                groupAxioms := genGroupAxiom td parent newField :: !groupAxioms
               (true, td, newField)
             | _ -> 
               helper.Oops(parent.Token, "Unknown group \"" + groupName + "\" in field declaration.")

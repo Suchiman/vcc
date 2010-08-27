@@ -250,6 +250,7 @@ function $dot(p:$ptr, f:$field) : $ptr
 function $base_plus(p:$base, f:$field) : $base;
 function $base_plus_inv(p:$base, f:$base) : $field;
 axiom (forall p:$base, f:$field :: {$base_plus(p, f)}
+  ($field_offset(f) == 0 ==> $base_plus(p, f) == p) &&
   $base_plus_inv(p, $base_plus(p, f)) == f);
 
 axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
@@ -1161,7 +1162,8 @@ procedure $havoc_others(p:$ptr, t:$ctype);
   ensures 
     if $is_stuttering_check() then 
       $nonvolatile_spans_the_same(old($s), $s, p, t)
-    else
+    else 
+      $owns(old($s), p) == $owns($s, p) &&
       $spans_the_same(old($s), $s, p, t);
   ensures $closed($s, p);
   ensures $closed_is_transitive($s);
