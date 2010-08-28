@@ -600,10 +600,12 @@ namespace Microsoft.Research.Vcc
               bCall "$in_vdomain_lab" ((selfs args) @ [er (trInvLabel "public")])
           | "_vcc_sk_hack", [e] ->
             bCall "sk_hack" [self e]
-          | "_vcc_ptr_eq", [e1; e2]
-          | "_vcc_ptr_neq", [e1; e2] when vcc3 && e1.Type.Deref.IsComposite && e2.Type.Deref.IsComposite ->
+          | "_vcc_ptr_eq", [e1; e2] when vcc3 && e1.Type.Deref.IsComposite && e2.Type.Deref.IsComposite ->
             xassert (e1.Type = e2.Type)
             bEq (self e1) (self e2)
+          | "_vcc_ptr_neq", [e1; e2] when vcc3 && e1.Type.Deref.IsComposite && e2.Type.Deref.IsComposite ->
+            xassert (e1.Type = e2.Type)
+            bNeq (self e1) (self e2)
           | "trigger_hint", [e] ->
             if e.Type = C.Type.Bool then
               bCall "sk_hack" [self e]
