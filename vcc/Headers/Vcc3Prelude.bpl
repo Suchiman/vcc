@@ -295,7 +295,7 @@ function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile
     $field_type(f) == tp &&
     $as_field_with_type(f, tp) == f &&
     ($is_primitive_ch(tp) <==> $is_primitive_field(f)) &&
-    $field_arr_index(f) == 0 &&
+    $field_arr_root(f) == f &&
     $f_casted(tp, f) == f &&
     true
   }
@@ -407,7 +407,7 @@ function $field_arr_root($field) : $field;
 function $field_arr_size($field) : int;
 
 function $field_arr_ctor($field, int) : $field;
-axiom (forall f:$field :: {$field_arr_root(f)}
+axiom (forall f:$field :: {$field_arr_index(f)}
   f == $field_arr_ctor($field_arr_root(f), $field_arr_index(f)));
 axiom (forall f:$field, i:int :: {$field_arr_ctor(f, i)}
   $field_arr_root($field_arr_ctor(f, i)) == f && $field_arr_index($field_arr_ctor(f, i)) == i);
@@ -417,7 +417,7 @@ function {:inline true} $def_phys_arr_field(partp:$ctype, f:$field, tp:$ctype, i
     $field_offset(f) == off &&
     $is_phys_field(f) &&
     $field_arr_size(f) == sz &&
-    $field_arr_root(f) == f &&
+    $field_arr_index(f) == 0 &&
     $field_kind(f) == $fk_emb_array &&
     true
   }
@@ -426,7 +426,7 @@ function {:inline true} $def_ghost_arr_field(partp:$ctype, f:$field, tp:$ctype, 
   { $def_field(partp, f, tp, isvolatile) &&
     $is_ghost_field(f) &&
     $field_arr_size(f) == sz &&
-    $field_arr_root(f) == f &&
+    $field_arr_index(f) == 0 &&
     $field_kind(f) == $fk_emb_array &&
     true
   }
@@ -453,6 +453,45 @@ axiom (forall f:$field, i:int :: {$field_plus(f, i)}
   true
   );
 
+function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
+{   
+   $is(p, T)
+  && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
+  && ($is_primitive_ch(T) ==> $field_kind($field(p)) != $fk_base)
+  && $field_arr_index($field(p)) >= 0
+}
+
+function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
+{
+     $is_array(S, p, T, sz)
+  && $thread_local_np(S, $emb0(p))
+}
+
+function $is_mutable_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
+{
+     $is_array(S, p, T, sz)
+  && $mutable(S, $emb0(p))
+}
+
+function $array_range(S:$state, p:$ptr, T:$ctype, sz:int) : $ptrset
+  { $array_range_no_state(p, T, sz) }
+
+// $index_within(p, arr) = ($ref(p) - $ref(arr)) / $sizeof($typ(arr))
+// To avoid using division, we define a category of simple indices. 
+//   $simple_index(p, arr) iff p == arr[k].f1.f2.f3...fN, where N >= 0.
+// We're only interested in simple indices for verification.
+function $index_within(p:$ptr, arr:$ptr) returns(int);
+function $simple_index(p:$ptr, arr:$ptr) returns(bool);
+
+function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
+  { if $is_primitive_ch(T) then
+      (lambda q:$ptr :: $emb0(q) == $emb0(p) &&
+                        $field_arr_root($field(q)) == $field_arr_root($field(p)) &&
+                        $field_arr_index($field(q)) - $field_arr_index($field(p)) < sz &&
+                        $field_kind($field(q)) != $fk_base)
+    else
+      (lambda q:$ptr :: $in(q, $full_extent($idx_nested(p, $index_within(q, p)))))
+  }
 
 // ----------------------------------------------------------------------------
 // As-array
@@ -1296,10 +1335,13 @@ axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $root(S, p))}
 // -----------------------------------------------------------------------
 
 function $composite_extent(S:$state, r:$ptr, t:$ctype) : $ptrset;
-function $full_extent(#p:$ptr) : $ptrset;
 
 function $extent(S:$state, r:$ptr) : $ptrset
   { (lambda p:$ptr :: $composite_extent(S, r, $typ(r))[$emb0(p)]) }
+
+const $full_extent_state : $state;
+function $full_extent(r:$ptr) : $ptrset
+  { (lambda p:$ptr :: $composite_extent($full_extent_state, r, $typ(r))[$emb0(p)]) }
 
 function $span(S:$state, o:$ptr) : $ptrset
   { (lambda p:$ptr :: $emb(S, p) == o) }
