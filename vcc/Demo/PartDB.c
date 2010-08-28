@@ -116,10 +116,10 @@ uint64_t add_to_db(PartitionDB *db, Partition *part claimp(c))
 }
 
 /*`
-testcase(137,67) : warning VC9302: [possible unsoundness]: more then one access to physical memory in atomic block; extra accesses might be due to bitfield operations
 Verification of _Partition#adm succeeded.
 Verification of _PartitionDB#adm succeeded.
 Verification of part_send_signal succeeded.
 Verification of remove_from_db succeeded.
 Verification of add_to_db succeeded.
+Verification of part_send_signal#bv_lemma#0 succeeded.
 `*/

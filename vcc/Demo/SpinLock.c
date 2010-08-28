@@ -53,3 +53,11 @@ void Release(SPIN_LOCK *SpinLock claimp(access_claim))
 }
 
 #endif
+
+// Note: expected output only applies if SIMPLE_SPIN_LOCKS is defined
+/*`
+Verification of _SPIN_LOCK#adm succeeded.
+Verification of InitializeSpinLock succeeded.
+Verification of Acquire succeeded.
+Verification of Release succeeded.
+`*/

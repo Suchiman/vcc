@@ -22,3 +22,7 @@ unsigned binary_search(int val, int *buf, unsigned len)
   if (low < len && buf[low] == val) return low;
   else                              return UINT_MAX;
 }
+
+/*`
+Verification of binary_search succeeded.
+`*/
