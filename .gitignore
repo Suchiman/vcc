@@ -10,6 +10,7 @@ vcc/CodeModel2VccHelper/bin/
 vcc/CodeModel2VccHelper/obj/
 vcc/Core/bin/
 vcc/Core/obj/
+vcc/Demo/*.i
 vcc/Docs/Tutorial/c/*.i
 vcc/Docs/Tutorial/tutorial.aux
 vcc/Docs/Tutorial/tutorial.log

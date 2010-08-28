@@ -34,3 +34,14 @@ int check_parity_b(A *a spec(claim_t c) spec(out claim_t p))
   }
   return (tmp & 1);
 }
+
+// TODO is this expected?
+/*`
+Verification of _A#adm succeeded.
+Verification of check_parity failed.
+testcase(18,25) : error VC8521: Assertion 'chunk (a->f & 1) == (tmp & 1) of the claim holds after a step of the machine' did not verify.
+Verification of check_parity_b failed.
+testcase(33,25) : error VC8521: Assertion 'chunk (a->f & 1) == (tmp & 1) of the claim holds after a step of the machine' did not verify.
+Verification of check_parity#bv_lemma#0 succeeded.
+Verification of check_parity_b#bv_lemma#0 succeeded.
+`*/

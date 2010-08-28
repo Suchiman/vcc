@@ -28,3 +28,8 @@ void foo() {
   ssort(a, 10);
   assert(a[2] <= a[4]);
 }
+
+/*`
+Verification of ssort succeeded.
+Verification of foo succeeded.
+`*/

@@ -20,3 +20,10 @@ void SetBit (BITMAP *BitMap, unsigned int BitNumber)
        lambda(unsigned int i; true; i == BitNumber ? true : BitMap->BM[i]);)
   }}
 }
+
+/*`
+Verification of _BITMAP#adm succeeded.
+Verification of InitializeBitMap succeeded.
+Verification of SetBit succeeded.
+Verification of TestBit#reads succeeded.
+`*/

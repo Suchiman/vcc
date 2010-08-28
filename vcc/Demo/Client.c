@@ -11,7 +11,7 @@
 
 struct _claimable_ LockContainer {
   BITMAP bitmap;
-  vcc(no_inline) unsigned int buffer[10];
+  vcc(as_array) unsigned int buffer[10];
   SPIN_LOCK Lock;
 
   invariant(keeps(&Lock))
@@ -82,3 +82,13 @@ void UseConcurrentOwner(struct ConcurrentUser *cu)
 }
 
 #endif
+
+// Note: expected output only applies if SIMPLE_SPIN_LOCKS is defined
+/*`
+Verification of _SPIN_LOCK#adm succeeded.
+Verification of _BITMAP#adm succeeded.
+Verification of LockContainer#adm succeeded.
+Verification of InitContainer succeeded.
+Verification of UseContainer succeeded.
+Verification of TestBit#reads succeeded.
+`*/

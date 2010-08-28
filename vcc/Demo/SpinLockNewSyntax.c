@@ -27,3 +27,10 @@ void Release(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
     _(ghost  SpinLock->\owns += SpinLock->protected_obj);
   }
 }
+
+/*`
+Verification of _SPIN_LOCK#adm succeeded.
+Verification of InitializeSpinLock succeeded.
+Verification of Acquire succeeded.
+Verification of Release succeeded.
+`*/
