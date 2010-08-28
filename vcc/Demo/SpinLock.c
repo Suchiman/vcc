@@ -5,7 +5,7 @@
 void InitializeSpinLock(SPIN_LOCK *SpinLock spec(obj_t obj))
 {
   SpinLock->Lock = 0;
-  speconly(SpinLock->protected_obj = obj;)
+  spec(SpinLock->protected_obj = obj;)
   set_owns(SpinLock,SET(obj));
   wrap(SpinLock);
 }
@@ -18,7 +18,7 @@ void Acquire(SPIN_LOCK *SpinLock)
   do  {
     atomic(SpinLock) {
       stop = (__interlockedcompareexchange(&SpinLock->Lock, 1, 0) == 0);
-      speconly(if (stop) giveup_closed_owner(SpinLock->protected_obj, SpinLock);)
+      spec(if (stop) giveup_closed_owner(SpinLock->protected_obj, SpinLock);)
     }
   } while (!stop);
 }
@@ -39,7 +39,7 @@ void Acquire(SPIN_LOCK *SpinLock claimp(access_claim))
   do {
     atomic(access_claim, SpinLock) {
       stop = (__interlockedcompareexchange(&SpinLock->Lock, 1, 0) == 0);
-      speconly(if (!stop) giveup_closed_owner(SpinLock->protected_obj, SpinLock);)
+      spec(if (!stop) giveup_closed_owner(SpinLock->protected_obj, SpinLock);)
     }
   } while (!stop);
 }

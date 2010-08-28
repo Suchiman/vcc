@@ -67,7 +67,7 @@ void InitializeConcurrentUser(struct ConcurrentUser *cu, struct LockContainer *l
   ensures(wrapped(cu))
   ensures(cu->lc == lc)
 {
-  speconly(cu->cont_claim = claim(lc, closed(lc));)
+  spec(cu->cont_claim = claim(lc, closed(lc));)
   cu->lc = lc;
   wrap(cu);
 }
