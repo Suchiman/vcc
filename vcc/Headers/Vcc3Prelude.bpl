@@ -1330,6 +1330,16 @@ function $in_vdomain(S:$state, p:$ptr, q:$ptr) : bool;
 axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $root(S, p))}
   $full_stop(S) && $wrapped(S, $root(S, p), $typ($root(S, p))) ==> $in_domain(S, p, $root(S, p)));
 
+axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
+  $full_stop(S) && $in_domain(S, p, q) ==> 
+    $inv(S, p, $typ(p)) && $set_in0(p, $owns(S, $owner(S, p))));
+
+axiom (forall S:$state, q,r:$ptr :: { $in_domain(S, r, $root(S, q)) }
+     $in_domain(S, q, $root(S, q)) && $set_in0(r, $owns(S, q)) ==>
+        $owner(S, r) == q && 
+        $root(S, r) == $root(S, q) && 
+        $in_domain(S, r, $root(S, q)));
+
 // -----------------------------------------------------------------------
 // Span & extent
 // -----------------------------------------------------------------------
