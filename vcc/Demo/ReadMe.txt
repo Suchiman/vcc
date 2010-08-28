@@ -21,7 +21,7 @@ Concurrency:
   - spec fields
   - spec parameters
   - atomic writes (which do not require an unwrap)
-  - ghost updates that happen instantaneous; this lattern can be shown by moving the set_closed_owner outside 
+  - ghost updates that happen instantaneous; the latter can be shown by moving the set_closed_owner outside 
     of the atomic block in the Release function, which shows that the invariant is violated at the end of the
     atomic block, which also shows up nicely in the error model
   
@@ -33,7 +33,7 @@ Concurrency:
   structure that we are interested in as its protected_obj
   - show initialization of the thing
   - Using the thing does work but requires ownership of the LockContainer, which makes is unsuitable for the
-    concurrent calse
+    concurrent case
       
 Claims:      
       
