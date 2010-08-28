@@ -47,7 +47,7 @@ void part_send_signal(Partition *part spec(claim_t c))
     i != j ==> (ISSET(j, v) <==> ISSET(j, v | (1ULL << i)))));
   
   atomic(part, db, c) {
-    speconly(part->signaled = true;)
+    spec(part->signaled = true;)
     InterlockedBitSet(&db->allSignaled, idx);
   }
 }
@@ -97,11 +97,11 @@ uint64_t add_to_db(PartitionDB *db, Partition *part claimp(c))
   if (i < MAXPART) {
     part->db = db;
     part->idx = i;
-    speconly(part->db_claim = claim(db, true);)
+    spec(part->db_claim = claim(db, true);)
     atomic (db, c) {
       old_value = InterlockedCompareExchange(&db->partitions[i], part, NULL);
       // TODO: vcc complains here about multiple accesses, this should be fine in ghost code
-      speconly(part->signaled = ISSET(i, db->allSignaled);)
+      spec(part->signaled = ISSET(i, db->allSignaled);)
     }
     // if the entry was still NULL, we could stick our partition in there
     // and can now wrap it

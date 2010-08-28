@@ -15,7 +15,7 @@ int check_parity(A *a spec(out claim_t p))
   atomic (a) {
     tmp = a->f;
     bv_lemma(forall (int x; (x&1) == ((x+2) & 1))); 
-    speconly(p = claim(a, (a->f & 1) == (tmp & 1));)
+    spec(p = claim(a, (a->f & 1) == (tmp & 1));)
   }
   return (tmp & 1);
 }
@@ -30,7 +30,7 @@ int check_parity_b(A *a spec(claim_t c) spec(out claim_t p))
   atomic (a, c) {
     tmp = a->f;
     bv_lemma(forall (int x; (x&1) == ((x+2) & 1))); 
-    speconly(p = claim(c, (a->f & 1) == (tmp & 1));)
+    spec(p = claim(c, (a->f & 1) == (tmp & 1));)
   }
   return (tmp & 1);
 }
