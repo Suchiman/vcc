@@ -80,7 +80,7 @@ programs. \Todo{review of other techniques somewhere}
 
 \subsection{Alternatives to Verification are Expensive}
 If you are in the business of manufacturing software, you may find
-this argument inconvincing. Bugs have costs. Verification removes
+this argument unconvincing. Bugs have costs. Verification removes
 these costs, but introduces other costs. Perhaps you don't care about
 having assurance that your software works; you are satisfied if your
 customers are sufficiently satisfied. So, you ask, how can
@@ -88,8 +88,8 @@ verification make the building of software more cost effective?  Here
 are some of the ways.
 
 
-\subsubsection{Software Maintainance}
-Software maintainance is expensive.  As systems grow, they become more
+\subsubsection{Software Maintenance}
+Software maintenance is expensive.  As systems grow, they become more
 fragile; because of the number of components to worry about breaking,
 the software becomes harder and harder to safely change. Moreover, it
 becomes increasingly dangerous for developers to modify such systems,
@@ -115,7 +115,7 @@ tests are difficult to synthesize and to set up. Concurrency testing
 is particularly hard; the state of the art today in concurrent testing
 of real software amounts to running stress tests on a functioning
 system. There are many concurrency bugs that are unlikely to be
-cauight this way. Moreover, those that are caught are likely to be
+caught this way. Moreover, those that are caught are likely to be
 difficult to reproduce. Finally, there is no good way to judge when
 such testing is complete.
 
@@ -263,7 +263,7 @@ When using \VCC, you usually start out by providing annotations for
 part or all of your program. You then ask \VCC\ to verify some portion
 of your code (say, the body of some function). Much of the time, this
 will fail (especially if you are a new user or if you are verifying a hard
-program). At this point, there are several posibilities.
+program). At this point, there are several possibilities.
 
 First, you might recognize some piece of information
 that \VCC\ needs that you haven't put into your annotations. For
@@ -326,7 +326,7 @@ into the \VS\ include path, as follows: under the \VS\ menu,
 
 \section{Running \VCC}
 \subsection{Running \VCC\ from the command line}
-The easiest way to call vcc on a set of files is
+The easiest way to call VCC on a set of files is
 \Todo{I've added some options that currently exist only as options to
   be passed to Boogie. We should not be exposing boogie to clients,
   so we should really have separate options to call the proof
@@ -337,7 +337,7 @@ The easiest way to call vcc on a set of files is
 vcc [/f:funs] [/Inspector] [/Models] files
 \end{lstlisting}
 The \Q{/f} switch provides a comma-separate list of functions to
-verify. The \Q{/Inspector} switch causes the \VCC\ inspector to br
+verify. The \Q{/Inspector} switch causes the \VCC\ inspector to be
 displayed while the verification is running, top monitor what \VCC\ is
 trying to do. The \Q{/Models} switch causes \VCC to display models for
 the errors that it finds.
@@ -425,7 +425,7 @@ the newly allocated stack variable \Q{x} happens to have this value,
 incrementing \Q{x} will cause arithmetic overflow. You'll learn more
 about the Model Viewer in \Ref{}.
 
-So the program as is can result in an erithmetic overflow. One way to
+So the program as is can result in an arithmetic overflow. One way to
 fix this would be to test the value of \Q{x} before incrementing it
 and do something else (like returning \Q{x} unmodified) if it is equal
 to \Q{INT_MAX}. For example, you could change \Q{inc} as follows:
@@ -439,7 +439,7 @@ int inc(int x)
 }
 \end{lstlisting}
 (Remember to include \Q{<vcc.h>} also.) You will find that this
-function verifies succesfully: the output window reports
+function verifies successfully: the output window reports
 \begin{lstlisting}
 verification of inc succeeded.
 \end{lstlisting}
@@ -505,7 +505,7 @@ ensures(*y == old(*x))
 The argument to \Q{ensures} is basically a \C\ expression that is
 supposed to hold\footnote{I.e., it should evaluate to a nonzero
   value.} when evaluated in poststate of a call to \Q{swap} (except
-that subsexpressions surrounded with \Q{old} are evaluated in the
+that subexpressions surrounded with \Q{old} are evaluated in the
 prestate).
 
 Now, does the function above satisfy this spec? Not in general.
@@ -596,7 +596,7 @@ model is fundamentally untyped; it is easy to get around the
 typesystem in various ways.  For example, it is common to use a common
 routine to copy memory objects as byte arrays, even though these
 arrays are simultaneously storing an object of some other type.
-Neverhteless, essentially all software is in fact well-typed or nearly
+Nevertheless, essentially all software is in fact well-typed or nearly
 so. 
 
 In \VCC, we avoid partial overlap by imposing a typed interpretation
@@ -645,7 +645,7 @@ here?
 
 The problem is that when reasoning about a call to \Q{inc},
 \VCC\ doesn't look at the code of \Q{inc} at all; it only looks at its
-specificication (stuff that appears before the function body). When
+specification (stuff that appears before the function body). When
 verifying \Q{inc2}, \VCC\ knows nothing about the value returned from
 the first call to \Q{inc}, because the specification of \Q{inc}
 doesn't say anything about what \Q{inc} actually does.
@@ -761,7 +761,7 @@ information only about certain state objects; we refer to such objects
 as \Q{mutable}. (Mutability is with respect to a particular thread; we
 will see that data can only be mutable in at most one thread.) An
 object that is writeable is necessarily mutable, but not vice-versa.
-In \Ref{}, we will see that this allows functions oeprating
+In \Ref{}, we will see that this allows functions operating
 on a large data structure to appear to operate on one object.
 
 We can now say what a function call looks like to a caller: a function
@@ -1019,7 +1019,7 @@ assert(exists(int x; 1)); //fails; talk about /z3:SATURATE=true
 linear arithmetic. What that means is that if \Z\ has a bunch of linear
 equalities or inequalities where the terms on either size are sums,
 and each summand is an unknown (possibly multiplied by a known integer
-constant), \Z\ is good at proving that there is no way to simultanously
+constant), \Z\ is good at proving that there is no way to simultaneously
 satisfy all of these (in)equations.
 \item
 \VCC\ knows a little about nonlinear arithmetic -- formulas where
@@ -1134,7 +1134,7 @@ requires(0 <= x)
 ensures((sqr(result) <= x) && (sqr(result + 1) > x));
 \end{lstlisting}
 (This is how a specification might appear in a header file; the
-semicolon would be ommitted if this declaration contained a body
+semicolon would be omitted if this declaration contained a body
 also. )
 
 \VCC\ translates these specs as assuming the preconditions at the
@@ -1146,7 +1146,7 @@ post-conditions after the call.
 
 For C functions with side effects, we often need to talk about both
 the state before the call and the state after the call. To allow this,
-within a psotcondition, \Q{old(e)} gives the value that the expression \Q{e}
+within a postcondition, \Q{old(e)} gives the value that the expression \Q{e}
 had at the beginning of the function (after assignment to the formal
 parameters). For example,
 
@@ -1170,5 +1170,3 @@ parameters). Note, however, that e can also contain variables that are
 in scope but were not in scope at function entry; for such variables,
 the current value is used. (For variables not bound within the
 assertion/assumption, \VCC\ will produce a warning.)
-
-

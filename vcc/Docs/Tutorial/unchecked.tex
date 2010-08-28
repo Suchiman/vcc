@@ -6,7 +6,7 @@
 Consider the C expression \vcc{a+b}, when \vcc{a} and \vcc{b} are,
 say, \vcc{UINT}s. This might represent one of two programmer
 intentions. Most of the time, it is intended to mean ordinary
-arithemetic addition on numbers; program correctness is then likely to
+arithmetic addition on numbers; program correctness is then likely to
 depend on this addition not causing an overflow. However, sometimes
 the program is designed to cope with overflow, so the programmer means
 \vcc{(a + b) \% UINT_MAX+1}. It is always sound to use this

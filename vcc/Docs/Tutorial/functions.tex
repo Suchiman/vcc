@@ -182,7 +182,7 @@ is not concurrently modified by other threads; such an object is said
 to be \Def{readable}. In general, readability can depend on complex
 program reasoning (and perhaps hints from the user), so by default,
 VCC checks a stronger condition, called \Def{thread
-  locality}. The precise definition of thread localility is given in 
+  locality}. The precise definition of thread locality is given in 
 \secref{ownership}, but intuitively, an object is
 considered thread-local if it is controlled by the thread under
 consideration. For sequential programs, readability essentially
@@ -306,11 +306,11 @@ Specify, write, and verify a function that swaps the values pointed to
 by two \vcc{int} pointers. Hint: use \vcc{\old(...)} in the
 postcondition.
 \item
-Specify a function that copies one array to annother array of the same
+Specify a function that copies one array to another array of the same
 size. (Don't worry about array aliasing.)
 \item 
 Specify a function that takes a text (stored in an array) and a string
-(stored in an array) and checks whether the string occors within the
+(stored in an array) and checks whether the string occurs within the
 text.
 \end{enumerate}
 
@@ -475,9 +475,7 @@ doesn't change the set of numbers occurring in the array (though it
 might change their multiplicities). 
 \item
 Write, without using the \vcc{\%} operator, logic functions that
-specify (1) that one number (\vcc{unsigned int}) divides another
-evenly, (2) that a number is prime, (3) that two numbers are
-relatively prime, (4) the greatest common divisor of two numbers.
+specify (1)~that one number (\vcc{unsigned int}) divides another
+evenly, (2)~that a number is prime, (3)~that two numbers are
+relatively prime, (4)~the greatest common divisor of two numbers.
 \end{enumerate}
-
-
