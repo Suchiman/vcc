@@ -30,12 +30,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <vcc2test.h>
 
-typedef struct vcc(dynamic_owns) Node {
+typedef struct Node {
   bool red;
   int key, value;
   struct Node *left, *right, *parent;
 
-  invariant(owns(this) == SET())
 } Node, *PNode;
 
 spec(ispure bool intToBool(int ) returns(true); )
@@ -137,21 +136,16 @@ void tree_insert(struct Tree *t, PNode x)
 {
   PNode p, n;
 
-  assume(mutable(x) && x != NULL);
   unwrap(t);
 
   x->left = x->right = x->parent = NULL;
-  set_owns(x,SET());
 
   p = t->root;
 
   assert(doMark(p));
   spec( t->abs = lambda(int k; k == x->key ? x->value : t->abs[k]); )
   set_owns(t, set_union(owns(t), SET(x)));
-  //assert(!t->R[p->left][x]);
-  //assert(p->left != x);
   spec( t->R[x] = lambda(PNode n; n == x); )
-  //assert(!t->R[p->left][x]);
 
   if (p == NULL) {
     t->root = x;
@@ -165,12 +159,9 @@ void tree_insert(struct Tree *t, PNode x)
   assert(t->R[t->root][x]);
 
   while (1) 
-    writes(set_difference(owns(t),SET(x)), t)
-    //writes(set_difference(owns(t),SET(x)), t, &t->R)
-
-    invariant(mutable(t))
+    writes(set_difference(owns(t), SET(x)), &t->R)
     invariant(forall(obj_t p; set_in(p,owns(t)) ==> p == x || wrapped(p)) && mutable(x))
-    invariant(unchanged(t->R[t->root]) && unchanged(t->R[NULL]) && unchanged(t->R[x]) && unchanged(owns(t)))
+    invariant(unchanged(t->R[t->root]) && unchanged(t->R[NULL]) && unchanged(t->R[x]))
     invariant(rb_istree(t))
     invariant(rb_abs(t))
     invariant(rb_lrclosed(t, p, x))
@@ -198,7 +189,7 @@ void tree_insert(struct Tree *t, PNode x)
     p = n;
   }
 
-  set_owns(x,SET());
+
   x->parent = p;
   wrap(x);  
   assert(forall(obj_t p; set_in(p,owns(t)) ==> p == x || wrapped(p)) && wrapped(x));
