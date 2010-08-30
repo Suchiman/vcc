@@ -212,7 +212,7 @@ namespace BenchmarkVis
           var ll = ScreenCoord(r.Min, l.Max);
           var rr = ScreenCoord(r.Max, l.Min);
           var r2 = new Rectangle(ll.X, ll.Y, rr.X - ll.X, rr.Y - ll.Y);
-          gfx.DrawRectangle(Pens.LightPink, r2);
+            gfx.DrawRectangle(i == IdUnderMouse ? Pens.Crimson : Pens.LightPink, r2);
           var mid = ScreenCoord(r.Avg, l.Avg);
           r2 = new Rectangle(mid.X - 1, mid.Y - 1, 3, 3);
           gfx.FillRectangle(i == IdUnderMouse ? Brushes.Red : Brushes.Blue, r2);
