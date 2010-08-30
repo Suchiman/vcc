@@ -387,6 +387,9 @@ const unique ^^null_field : $field;
 //axiom $null == $ptr(^^null_field, 0);
 axiom $addr($null) == 0;
 axiom (forall t:$ctype :: {$f_root(t)} $is_null($ptr($f_root(t), $base($null))));
+axiom (forall f:$field, t:$ctype, b:$base :: {$ptr($f_casted(t, f), b)}
+  $is_null($ptr($f_casted(t, f), b)) <==> $is_null($ptr(f, b)));
+axiom $in_range_spec_ptr($null) && $in_range_phys_ptr($null);
 
 const $me_ref : $base;
 const ^$thread_id#root: $field;
