@@ -209,13 +209,24 @@ namespace BenchmarkVis
         var l = LeftDS.Values[i];
         var r = RightDS.Values[i];
         if (l != null && r != null) {
+          var selected = i == IdUnderMouse;
           var ll = ScreenCoord(r.Min, l.Max);
           var rr = ScreenCoord(r.Max, l.Min);
           var r2 = new Rectangle(ll.X, ll.Y, rr.X - ll.X, rr.Y - ll.Y);
-            gfx.DrawRectangle(i == IdUnderMouse ? Pens.Crimson : Pens.LightPink, r2);
+          if (selected) {
+            for (int j = 1; j < r.Values.Count - 1; ++j) {
+              var v = r.Values[j];
+              gfx.DrawLine(Pens.LightGray, ScreenCoord(v, l.Min), ScreenCoord(v, l.Max));
+            }
+            for (int j = 1; j < l.Values.Count - 1; ++j) {
+              var v = l.Values[j];
+              gfx.DrawLine(Pens.LightGray, ScreenCoord(r.Min,v), ScreenCoord(r.Max,v));
+            }
+          }
+          gfx.DrawRectangle(selected ? Pens.Crimson : Pens.LightPink, r2);
           var mid = ScreenCoord(r.Avg, l.Avg);
           r2 = new Rectangle(mid.X - 1, mid.Y - 1, 3, 3);
-          gfx.FillRectangle(i == IdUnderMouse ? Brushes.Red : Brushes.Blue, r2);
+          gfx.FillRectangle(selected ? Brushes.Red : Brushes.Blue, r2);
         }
       }
 
