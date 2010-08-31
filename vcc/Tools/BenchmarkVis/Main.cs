@@ -324,6 +324,11 @@ namespace BenchmarkVis
 
     public int Avg
     {
+        get { return Median; }
+    }
+
+    public int Average
+    {
       get
       {
         if(Values.Count == 0) return 0;
@@ -333,6 +338,20 @@ namespace BenchmarkVis
         }
         return s / Values.Count;
       }
+    }
+
+    public int Median
+    {
+        get
+        {
+            if (Values.Count == 0) return 0;
+            Values.Sort();
+            var n =Values.Count;
+            if (n % 2 == 0)
+                return (Values[n / 2] + Values[n / 2 - 1]) / 2;
+            else
+                return Values[n / 2];
+        }
     }
   }
 
