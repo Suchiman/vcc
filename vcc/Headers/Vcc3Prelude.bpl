@@ -869,16 +869,6 @@ axiom (forall S:$state, p:$ptr, f:$field, t:$ctype ::
 function $update(h:$object, r:$ptr, f:$field, v:int) : $object
   { h[ f := h[f][ r := v ] ] }
 
-/*
-axiom 
-   (forall h:$heap, r:$ptr, f:$field, p:$ptr, v:int :: {$update(h,r,f,p,v)}
-     (forall r2:$ptr, f2:$field, p2:$ptr :: {$update(h,r,f,p,v)[r2][f2][p2]}
-        if r == r2 && f == f2 && p == p2 then
-          $update(h,r,f,p,v)[r2][f2][p2] == v
-        else
-          h[r2][f2][p2] == $update(h,r,f,p,v)[r2][f2][p2]));
-*/
-
 function {:inline true} $specials_eq(S0:$state, S:$state) : bool
   { 
     $f_timestamp(S0) == $f_timestamp(S) &&
@@ -2002,15 +1992,14 @@ function {:inline true} $wr.$closed(m:$closed, p:$ptr, v:bool) : $closed { m[p :
 function {:inline true} $rd.$owner(m:$owner, p:$ptr) : $ptr { m[p] }
 function {:inline true} $wr.$owner(m:$owner, p:$ptr, v:$ptr) : $owner { m[p := v] }
 
-/*
 function {:inline true} $rd.$timestamps(m:$timestamps, p:$ptr) : int { m[p] }
 function {:inline true} $wr.$timestamps(m:$timestamps, p:$ptr, v:int) : $timestamps { m[p := v] }
 function {:inline true} $rd.$roots(m:$roots, p:$ptr) : $ptr { m[p] }
 function {:inline true} $wr.$roots(m:$roots, p:$ptr, v:$ptr) : $roots { m[p := v] }
 type $timestamps = [$ptr]int;
 type $roots = [$ptr]$ptr;
-*/
 
+/*
 type $timestamps;
 type $roots;
 function $rd.$roots(m:$roots, p:$ptr) : $ptr;
@@ -2021,5 +2010,6 @@ function $rd.$timestamps(m:$timestamps, p2:$ptr) : int;
 function $wr.$timestamps(m:$timestamps, p2:$ptr, v:int) : $timestamps;
 axiom (forall m:$timestamps, p1:$ptr, v:int :: $rd.$timestamps($wr.$timestamps(m, p1, v), p1) == v);
 axiom (forall m:$timestamps, p1,q1:$ptr, v:int :: p1 == q1  || $rd.$timestamps($wr.$timestamps(m, p1, v), q1) == $rd.$timestamps(m, q1));
+*/
 
 // That's all folks.

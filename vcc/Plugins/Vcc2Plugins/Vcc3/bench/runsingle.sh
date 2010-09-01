@@ -7,7 +7,8 @@ thr="$2"
 SX_DIR="$3"
 test -d "$SX_DIR" || exit 1
 
-log="`date +%Y.%m.%d.%H.%M.%S`-th$thr.log"
+mkdir -p tmplog
+log="tmplog/`date +%Y.%m.%d.%H.%M.%S`-th$thr.log"
 
 echo "ALL_OPTIONS $*" > $log
 echo "THREAD $thr" >> $log
@@ -29,3 +30,4 @@ for run in 0 1 ; do
 done
 
 echo "DONE" >> $log
+mv $log .

@@ -3,12 +3,14 @@
 . config.sh
 
 VERSION_OPTS=-3
-SX_DIR=sx-vcc3
 
 if [ "$1" = "-2" ] ; then
   VERSION_OPTS=
-  SX_DIR=sx-vcc2
+  shift
 fi
+SX_DIR="$1"
+
+[ "X$SX_DIR" = X ] && exit 1
 
 rm -rf $SX_DIR
 mkdir $SX_DIR
