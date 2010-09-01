@@ -207,6 +207,11 @@ namespace Z3AxiomProfiler.QuantifierModel
         case "$array":
         case "$ptr":
           return 40;
+        case "$phys_ptr_cast":
+        case "$spec_ptr_cast":
+        case "$field_plus":
+          return 35;
+        case "$idx_prim":
         case "$dot":
           return 30;
         case "$read_ptr_m":
@@ -1587,7 +1592,7 @@ namespace Z3AxiomProfiler.QuantifierModel
         return shortName;
 
       FunApp best = BestApp();
-      shortName = "*SELF";
+      shortName = Id;
       shortName = best.ShortName();
 
       return shortName;
