@@ -1233,6 +1233,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (defaultValue:IDefaultValue) : unit = assert false
 
       member this.Visit (division:IDivision) : unit =
+        // TODO: the IDivision no longer has CheckOverflow
         this.DoBinary ("/", division, true)
       
       member this.Visit (doUntilStatement:IDoUntilStatement) : unit =
