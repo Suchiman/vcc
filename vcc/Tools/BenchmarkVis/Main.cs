@@ -98,11 +98,14 @@ namespace BenchmarkVis
       string options = "";
       int testId = -1;
       bool replaced = false;
+      bool seenUnsat = false;
+      int currentValue = int.MaxValue;
 
       for (; ; ) {
         var l = rd.ReadLine();
         if (l == null) break;
         var words = l.Split(seps);
+        if (l.StartsWith("unsat")) seenUnsat = true;
         if (words.Length < 2) continue;
         switch (words[0]) {
           case "SX_DIR": sx_dir = words[1]; break;
@@ -120,12 +123,17 @@ namespace BenchmarkVis
             options = l.Replace("OPTIONS ", "").Replace("\n", "").Replace("\r", "");
             break;
           case "FILE":
+            if (testId != -1) {
+              if (!seenUnsat) currentValue = int.MaxValue;
+              var dp = d.CreateDataPoint(testId);
+              dp.AddValue(currentValue);
+            }
             testId = GetTestcaseId(words[1]);
+            currentValue = int.MaxValue;
+            seenUnsat = false;
             break;
           case "TIME":
-            var n = (int)(double.Parse(words[1]) * 1000);
-            var dp = d.CreateDataPoint(testId);
-            dp.Values.Add(n);
+            currentValue = (int)(double.Parse(words[1]) * 1000);
             break;
         }
       }
@@ -161,6 +169,8 @@ namespace BenchmarkVis
       var sum1 = 0;
       var sum2 = 0;
 
+      LeftDS.TimeoutValue = RightDS.TimeoutValue = 0;
+
       for (var i = 0; i < len; ++i) {
         var l = LeftDS.Values[i];
         var r = RightDS.Values[i];
@@ -174,18 +184,28 @@ namespace BenchmarkVis
 
       if (MaxScale == int.MinValue) return;
 
-      MaxScale += MaxScale / 3;
+      LeftDS.TimeoutValue = RightDS.TimeoutValue = MaxScale + MaxScale / 3;
+      MaxScale += MaxScale ;
 
       Brush texts = new SolidBrush(Color.FromArgb(150, 150, 150));
       var font = groupBox1.Font;
 
-      for (int scale = 10; scale < MaxScale; scale *= 10) {
+      int scale = 10;
+      bool to = false;
+      while(true) {
         var p = ScreenCoord(scale, scale);
         gfx.DrawLine(Pens.LightGray, p.X, 0, p.X, panel1.Height);
         gfx.DrawLine(Pens.LightGray, 0, p.Y, panel1.Width, p.Y);
-        var s = string.Format("{0:0.00}", scale / 1000.0);
+        var s = string.Format("{0:0.00}{1}", scale / 1000.0, to? " (timeout)": "");
         gfx.DrawString(s, font, texts, p.X, panel1.Height - 15);
         gfx.DrawString(s, font, texts, 3, p.Y + 2);
+
+        scale *= 10;
+        if (scale > LeftDS.TimeoutValue) {
+          if (to) break;
+          scale = LeftDS.TimeoutValue;
+          to = true;
+        }
       }
 
       gfx.DrawLine(Pens.LightGray, 0, panel1.Height, panel1.Width, 0);
@@ -214,12 +234,10 @@ namespace BenchmarkVis
           var rr = ScreenCoord(r.Max, l.Min);
           var r2 = new Rectangle(ll.X, ll.Y, rr.X - ll.X, rr.Y - ll.Y);
           if (selected) {
-            for (int j = 1; j < r.Values.Count - 1; ++j) {
-              var v = r.Values[j];
+            foreach (var v in r.NormValues) {
               gfx.DrawLine(Pens.LightGray, ScreenCoord(v, l.Min), ScreenCoord(v, l.Max));
             }
-            for (int j = 1; j < l.Values.Count - 1; ++j) {
-              var v = l.Values[j];
+            foreach (var v in l.NormValues) {
               gfx.DrawLine(Pens.LightGray, ScreenCoord(r.Min,v), ScreenCoord(r.Max,v));
             }
           }
@@ -296,14 +314,31 @@ namespace BenchmarkVis
 
   class DataPoint
   {
-    public List<int> Values = new List<int>();
+    private List<int> values = new List<int>();
+    public DataSet Parent;
+
+    public IEnumerable<int> NormValues
+    {
+      get
+      {
+        foreach (var v in values) {
+          if (v == int.MaxValue) yield return Parent.TimeoutValue;
+          else yield return v;
+        }
+      }
+    }
+
+    public void AddValue(int i)
+    {
+      values.Add(i);
+    }
 
     public int Min
     {
       get
       {
         var m = int.MaxValue;
-        foreach (var v in Values) {
+        foreach (var v in values) {
           if (v < m) m = v;
         }
         return m;
@@ -315,7 +350,7 @@ namespace BenchmarkVis
       get
       {
         var m = int.MinValue;
-        foreach (var v in Values) {
+        foreach (var v in NormValues) {
           if (v > m) m = v;
         }
         return m;
@@ -331,12 +366,12 @@ namespace BenchmarkVis
     {
       get
       {
-        if(Values.Count == 0) return 0;
+        if(values.Count == 0) return 0;
         var s = 0;
-        foreach (var v in Values) {
+        foreach (var v in NormValues) {
           s += v;
         }
-        return s / Values.Count;
+        return s / values.Count;
       }
     }
 
@@ -344,13 +379,15 @@ namespace BenchmarkVis
     {
         get
         {
-            if (Values.Count == 0) return 0;
-            Values.Sort();
-            var n =Values.Count;
+            if (values.Count == 0) return 0;
+            var arr = new List<int>();
+            arr.AddRange(NormValues);
+            arr.Sort();
+            var n = arr.Count;
             if (n % 2 == 0)
-                return (Values[n / 2] + Values[n / 2 - 1]) / 2;
+                return (arr[n / 2] + arr[n / 2 - 1]) / 2;
             else
-                return Values[n / 2];
+                return arr[n / 2];
         }
     }
   }
@@ -363,6 +400,7 @@ namespace BenchmarkVis
     public string LongName;
     public Main parent;
     public List<DataPoint> Values = new List<DataPoint>();
+    public int TimeoutValue;
 
     public DataPoint GetDataPoint(int id)
     {
@@ -378,6 +416,7 @@ namespace BenchmarkVis
       while (Values.Count <= id)
         Values.Add(null);
       Values[id] = new DataPoint();
+      Values[id].Parent = this;
       return Values[id];
     }
 
