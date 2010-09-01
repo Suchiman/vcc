@@ -48,6 +48,7 @@ namespace Microsoft.Research.Vcc
       args.Append("/nologo /TC");
       // VCC doesn't like /D_PREFAST_ with VS2010
       args.Append(" /E /DVERIFY /D_USE_DECLSPECS_FOR_SAL /DSAL_NO_ATTRIBUTE_DECLARATIONS"); // TODO revisit these
+      if (commandLineOptions.Vcc3) args.Append(" /DVERIFY3");
       if (commandLineOptions.NewSyntax) args.Append(" /DVERIFY2");
 
       foreach (string ppOption in commandLineOptions.PreprocessorOptions) {
