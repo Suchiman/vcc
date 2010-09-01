@@ -1446,6 +1446,9 @@ namespace Z3AxiomProfiler.QuantifierModel
       }
     }
 
+    static long[] maxValues = new long[] { short.MaxValue, int.MaxValue, long.MaxValue };
+    static string[] maxValueNames = new string[] { "INT16", "INT32", "INT64" };
+
     string cachedDisplayName;
     public string DisplayName
     {
@@ -1462,10 +1465,45 @@ namespace Z3AxiomProfiler.QuantifierModel
             if (end == Name.Length)
               cachedDisplayName = Name.Substring(0, idx);
           }
+
+          long v;
+          if (long.TryParse(cachedDisplayName, out v)) {
+            for (int i = 0; i < maxValues.Length; ++i) {
+              long diff = v - maxValues[i];
+              if (Math.Abs((double)diff) < maxValues[i] / 100) {
+                cachedDisplayName = MaxValueName("MAX", i, diff);
+                break;
+              }
+            }
+
+            for (int i = 0; i < maxValues.Length; ++i) {
+              long diff = v - (-maxValues[i]-1);
+              if (Math.Abs((double)diff) < maxValues[i] / 100) {
+                cachedDisplayName = MaxValueName("MIN", i, diff);
+                break;
+              }
+            }
+
+            // TODO: should use bignums to handle MAXUINT64+/-
+            for (int i = 0; i < maxValues.Length - 1; ++i) {
+              long diff = v - (maxValues[i] + maxValues[i]);
+              if (Math.Abs((double)diff) < maxValues[i] / 100) {
+                cachedDisplayName = MaxValueName("MAXU", i, diff);                
+                break;
+              }
+            }
+          }
         }
 
         return cachedDisplayName;
       }
+    }
+
+    private string MaxValueName(string pref, int i, long diff)
+    {
+      pref += maxValueNames[i];
+      if (diff == 0) return pref;
+      return string.Format("{0}{1}{2}", pref, diff >= 0 ? "+" : "", diff);
     }
 
     public override string ToString()
