@@ -219,6 +219,7 @@ const unique $fk_base : $field_kind;
 const unique $fk_emb_array : $field_kind;
 const unique $fk_as_array_root : $field_kind;
 const unique $fk_as_array_emb : $field_kind;
+const unique $fk_allocated : $field_kind;
 
 function $field_kind($field) : $field_kind;
 
@@ -269,11 +270,18 @@ axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
   $is_phys_field(f) && $field_parent_type(f) == $typ(p) ==> 
      $addr($dot(p, f)) == $addr(p) + $field_offset(f));
 
-function $emb(S:$state,p:$ptr) : $ptr
+function {:inline true} $emb(S:$state,p:$ptr) : $ptr
   { $emb0(p) }
-function {:inline true} $emb0(p:$ptr) : $ptr
-  { $ptr($f_root($field_parent_type($field(p))), $base(p)) }
+function $emb0(p:$ptr) : $ptr
+  { if $is_primitive_ch($typ(p)) then
+      $ptr($f_root($field_parent_type($field(p))), $base(p)) 
+    else p }
 
+/*
+axiom (forall f:$field :: {$field_parent_type(f)}
+  $is_non_primitive_ch($field_type(f)) ==>
+    $field_parent_type(f) == $field_type(f));
+    */
 axiom (forall t:$ctype :: {$f_root(t)}
   $field_parent_type($f_root(t)) == t);
 
@@ -287,6 +295,15 @@ axiom (forall t1, t2:$ctype, f:$field :: {$f_casted(t1, $f_casted(t2, f))}
   $f_casted(t1, $f_casted(t2, f)) == $f_casted(t1, f));
 axiom (forall t:$ctype, f:$field :: {$f_casted(t, f)}
   $field_type($f_casted(t, f)) == t);
+
+function $f_allocated($ctype) : $field;
+axiom (forall t:$ctype :: {$f_allocated(t)}
+  $field_kind($f_allocated(t)) == $fk_allocated &&
+  $field_type($f_allocated(t)) == t &&
+  $f_casted(t, $f_allocated(t)) == $f_allocated(t) &&
+  $is_phys_field($f_allocated(t)) &&
+  $field_offset($f_allocated(t)) == 0);
+
 function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
   { 
     $field_parent_type(f) == partp &&
@@ -450,6 +467,7 @@ axiom (forall f:$field, i:int :: {$field_plus(f, i)}
   $field_arr_index($field_plus(f, i)) == $field_arr_index(f) + i &&
   $field_arr_size($field_plus(f, i)) == $field_arr_size(f) &&
   $field_type($field_plus(f, i)) == $field_type(f) &&
+  $as_field_with_type($field_plus(f, i), $field_type(f)) == $field_plus(f, i) &&
   $is_sequential_field($field_plus(f, i)) == $is_sequential_field($field_plus(f, i)) &&
   ($in_range(0, $field_arr_index(f) + i, $field_arr_size(f) - 1) ==> 
     $field_parent_type($field_plus(f, i)) == $field_parent_type($field_arr_root(f))) &&
@@ -458,10 +476,12 @@ axiom (forall f:$field, i:int :: {$field_plus(f, i)}
 
 function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {   
-   $is(p, T)
+     $is(p, T)
   && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
+  && $field(p) == $field_plus($field_arr_root($field(p)), $field_arr_index($field(p)))
   && ($is_primitive_ch(T) ==> $field_kind($field(p)) != $fk_base)
   && $field_arr_index($field(p)) >= 0
+  && $is_non_primitive_ch($typ($emb(S, p)))
 }
 
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
@@ -1024,13 +1044,19 @@ function $is_in_stackframe(#sf:int, p:$ptr) : bool;
 function $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
 {    true
   && $is(r, t)
-  && $extent_mutable(S, r)
-  && $extent_is_fresh(S, r)
   && $writes_nothing(S0, S)
   && $heap(S) == $heap(S0)
   && $timestamp_post_strict(S0, S)
   && $owner(S0, r) != $me()
-  && $first_option_typed(S, r)
+  && 
+    if $is_primitive_ch(t) then
+      (   $field(r) == $f_allocated(t)
+       && $mutable(S, $emb0(r))
+       && $timestamp_is_now(S, $emb0(r)))
+    else
+      (    $extent_mutable(S, r)
+        && $extent_is_fresh(S, r)
+        && $first_option_typed(S, r))
 }
 
 
@@ -1044,11 +1070,11 @@ procedure $stack_alloc(t:$ctype, sf:int, spec:bool) returns (r:$ptr);
 procedure $stack_free(sf:int, x:$ptr);
   modifies $s;
   // TOKEN: the extent of the object being reclaimed is mutable
-  requires $extent_mutable($s, x);
+  requires if $is_primitive_ch($typ(x)) then $mutable($s, x) else $extent_mutable($s, x);
   // TOKEN: the pointer being reclaimed was returned by stack_alloc()
   requires $is_in_stackframe(sf, x);
 
-  ensures $modifies(old($s), $s, $extent(old($s), x));
+  ensures if $is_primitive_ch($typ(x)) then $modifies(old($s), $s, $set_singleton($emb0(x))) else $modifies(old($s), $s, $extent(old($s), x));
   ensures $heap($s) == $heap(old($s));
 
 procedure $spec_alloc(t:$ctype) returns(r:$ptr);
