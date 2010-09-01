@@ -197,6 +197,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let deepSplitConjunctions self = 
+      // TODO: support in new syntax
       let aux self = function
         | Quant (ec, q) ->
           let q = { q with Body = self q.Body }
@@ -223,6 +224,7 @@ namespace Microsoft.Research.Vcc
             | [_] -> Some (Quant (ec, q))
             | x :: xs -> 
               Some (List.fold mkAnd (mkQ x) (List.map mkQ xs))
+        | CallMacro (_, "_vcc_split_conjunctions", [], [e]) -> Some(e) // strip nested occurrences of split_conjunctions
         | _ -> None
       function 
         | CallMacro (_, "_vcc_split_conjunctions", [], [e]) ->

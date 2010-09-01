@@ -212,3 +212,16 @@ testcase(11,34) : error VC9500: Assertion 'b > 0' did not verify.
 testcase(4,1) : error VC9599: (related information) from expansion of 'And(a > b, And(b > c, b > 0))'.
 testcase(4,1) : error VC9599: (related information) from expansion of 'And(b > c, b > 0)'.
 `
+#include "vcc.h"
+
+spec(ispure bool foo(bool b[int], int c)
+  returns(split_conjunctions(split_conjunctions(forall(int x; c <= b[x] && b[x] <= c))));)
+
+void baz() {
+	spec(bool b[int];)
+	assert(foo(b,4711));
+}
+`
+Verification of baz failed.
+testcase(8,11) : error VC9500: Assertion 'foo(b,4711)' did not verify.
+`
