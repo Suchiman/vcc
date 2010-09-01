@@ -91,6 +91,9 @@ namespace Microsoft.Research.Vcc
         options.Add(PathHelper.InspectorOption);
 
       options.AddRange(standardBoogieOptions);
+      if (parent.options.Vcc3) {
+        options.Add("/z3opt:QI_EAGER_THRESHOLD=1000");
+      }
       if (parent.ModelFileName != null) {
         options.Add("/printModel:1");
         options.Add("/printModelToFile:" + parent.ModelFileName);
