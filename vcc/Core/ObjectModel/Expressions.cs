@@ -4243,6 +4243,10 @@ namespace Microsoft.Research.Vcc {
       if (containingBlock == this.ContainingBlock) return this;
       return new VccDivision(containingBlock, this);
     }
+
+    public bool CheckOverflow {
+      get { return this.ContainingBlock.UseCheckedArithmetic; }
+    }
   }
 
   public class VccLeftShift : LeftShift {
