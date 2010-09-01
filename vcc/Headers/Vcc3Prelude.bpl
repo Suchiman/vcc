@@ -79,7 +79,7 @@ const unique $ctype_array : $ctype_branch;
 
 // pointers to types
 function $ptr_to($ctype) : $ctype;
-function $spec_ptr_to($ctype) returns ($ctype);
+function $spec_ptr_to($ctype) : $ctype;
 function $type_project_0($ctype) : $ctype;
 
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $type_project_0($ptr_to(#n)) == #n && $type_branch($ptr_to(#n)) == $ctype_ptr);
@@ -167,9 +167,9 @@ function {:inline true} $is_thread(p:$ptr) : bool
 function {:inline true} $is_ptr_to_composite(p:$ptr) : bool
   { $kind_of($typ(p)) == $kind_composite }
 
-function $is_math_type(t:$ctype) returns(bool);
-function $is_fnptr_type(t:$ctype) returns(bool);
-function $is_record_type(t:$ctype) returns(bool);
+function $is_math_type(t:$ctype) : bool;
+function $is_fnptr_type(t:$ctype) : bool;
+function $is_record_type(t:$ctype) : bool;
 
 function $is_non_primitive(t:$ctype) : bool;
 axiom (forall t:$ctype :: {$is_composite(t)} $is_composite(t) ==> $is_non_primitive(t));
@@ -500,8 +500,8 @@ function $array_range(S:$state, p:$ptr, T:$ctype, sz:int) : $ptrset
 // To avoid using division, we define a category of simple indices. 
 //   $simple_index(p, arr) iff p == arr[k].f1.f2.f3...fN, where N >= 0.
 // We're only interested in simple indices for verification.
-function $index_within(p:$ptr, arr:$ptr) returns(int);
-function $simple_index(p:$ptr, arr:$ptr) returns(bool);
+function $index_within(p:$ptr, arr:$ptr) : int;
+function $simple_index(p:$ptr, arr:$ptr) : bool;
 
 function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
   { if $is_primitive_ch(T) then
@@ -519,8 +519,8 @@ function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
 
 // to be used when you allocate just the array itself
 function $array($ctype, int) : $ctype;
-function $element_type($ctype) returns($ctype);
-function $array_length($ctype) returns(int);
+function $element_type($ctype) : $ctype;
+function $array_length($ctype) : int;
 axiom (forall T:$ctype, s:int :: {$array(T, s)} 
      true
   && $element_type($array(T, s)) == T 
@@ -557,7 +557,7 @@ axiom (forall t:$ctype, sz:int :: {$array_emb(t, sz)} {$array(t, sz)}
   $field_arr_root($array_emb(t, sz)) == $array_emb(t, sz) &&
   true);
 
-function $as_array(p:$ptr, T:$ctype, sz:int) returns($ptr)
+function $as_array(p:$ptr, T:$ctype, sz:int) : $ptr
   {
       if $field(p) == $array_emb(T, sz) then
         $ptr($array_root(T, sz), $base(p))
@@ -628,7 +628,7 @@ function {:inline true} $keeps(S:$state, #l:$ptr, #p:$ptr) : bool
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p,#t) && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive_ch(#t) }
 
-function {:inline true} $nested(S:$state, p:$ptr) returns(bool)
+function {:inline true} $nested(S:$state, p:$ptr) : bool
   { $kind_of($typ($owner(S, p))) != $kind_thread }
 
 function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
@@ -660,7 +660,7 @@ function {:inline true} $in_range_spec_ptr(p:$ptr) : bool
 
 const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
 
-function {:inline true} $is_ghost_ptr(p:$ptr) returns(bool)
+function {:inline true} $is_ghost_ptr(p:$ptr) : bool
   { $in_range_spec_ptr(p) }
 
 function {:inline true} $is_spec_ptr(p:$ptr, t:$ctype) : bool
@@ -677,10 +677,10 @@ axiom (forall S:$state, #r:int, #t:$ctype ::
 */
 
 /*
-function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) returns (bool)
+function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) : bool
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_phys_ptr($addr(#p))) }
 
-function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) returns (bool)
+function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) : bool
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($addr(#p))) }
 */
 
@@ -758,9 +758,9 @@ function $instantiate_ptrset($ptrset) : bool;
 function sk_hack(bool) : bool;
 function $start_here() : bool;
 
-function $expect_unreachable() returns(bool);
-function $expect_unreachable_master(id:int) returns(bool);
-function $expect_unreachable_child(id:int) returns(bool);
+function $expect_unreachable() : bool;
+function $expect_unreachable_master(id:int) : bool;
+function $expect_unreachable_child(id:int) : bool;
 
 // ----------------------------------------------------------------------------
 // System invariants
@@ -771,16 +771,16 @@ function $good_state($state) : bool;
 function $invok_state($state) : bool;
 function $full_stop($state) : bool;
 
-function {:inline true} $inv(#s1:$state, #p:$ptr, typ:$ctype) returns (bool)
+function {:inline true} $inv(#s1:$state, #p:$ptr, typ:$ctype) : bool
   { $inv2(#s1, #s1, #p, typ) }
 
-function {:inline true} $inv2nt(S1:$state, S2:$state, p:$ptr) returns (bool)
+function {:inline true} $inv2nt(S1:$state, S2:$state, p:$ptr) : bool
   { $inv2(S1, S2, p, $typ(p)) }
 
 // We generate axioms like:
 //   inv2(S1,S2,p,T) <==> invariant of T
 // for each struct/union T.
-function $inv2(#s1:$state, #s2:$state, #p:$ptr, typ:$ctype) returns (bool);
+function $inv2(#s1:$state, #s2:$state, #p:$ptr, typ:$ctype) : bool;
 
 function {:inline true} $full_stop_ext(t:$token, S:$state) : bool
   { $good_state_ext(t, S) && $full_stop(S) }
@@ -803,7 +803,7 @@ function $good_state_ext(id:$token, S:$state) : bool;
 axiom (forall id:$token, S:$state :: {$good_state_ext(id, S)}
   $good_state_ext(id, S) ==> $good_state(S));
 
-function {:inline true} $closed_is_transitive(S:$state) returns (bool)
+function {:inline true} $closed_is_transitive(S:$state) : bool
   { 
     (forall p:$ptr,q:$ptr ::
       {$set_in_pos(p, $owns_inline(S, q))}
@@ -1185,8 +1185,8 @@ procedure $wrap(o:$ptr, T:$ctype);
 
 ///////
 
-function $take_over(S:$state, l:$ptr, o:$ptr) returns($state);
-function $release(S0:$state, S:$state, #l:$ptr, #p:$ptr) returns($state);
+function $take_over(S:$state, l:$ptr, o:$ptr) : $state;
+function $release(S0:$state, S:$state, #l:$ptr, #p:$ptr) : $state;
 
 axiom (forall S:$state, l:$ptr, p:$ptr :: {$take_over(S, l, p)}
   $f_owner($take_over(S, l, p)) == $f_owner(S)[p := l]);
@@ -1473,7 +1473,7 @@ function {:inline true} $set_remove_element(S:$ptrset, e:$ptr) : $ptrset
   { $set_difference(S, $set_singleton(e)) }
 
 // to be used only positively
-function $set_eq($ptrset, $ptrset) returns (bool);
+function $set_eq($ptrset, $ptrset) : bool;
 axiom (forall #a: $ptrset, #b: $ptrset :: {$set_eq(#a,#b)}
   (forall #o: $ptr :: {$dont_instantiate(#o)} $set_in(#o, #a) <==> $set_in(#o, #b)) ==> $set_eq(#a, #b));
 axiom (forall #a: $ptrset, #b: $ptrset :: {$set_eq(#a,#b)}
@@ -1531,7 +1531,7 @@ function $set_in0(p:$ptr, s:$ptrset) : bool
 // Function pointers
 // --------------------------------------------------------------------------------
 
-function $get_fnptr(no:int, t:$ctype) returns($ptr)
+function $get_fnptr(no:int, t:$ctype) : $ptr
   { $ptr($f_root(t), $get_fnptr_ref(no)) }
 
 function $get_fnptr_ref(no:int) : $base;
@@ -1855,7 +1855,7 @@ axiom (forall t:$ctype, x: int, y: int :: { $_and(t, x, y) } $_and(t, x, y) == $
   
 
 // extra function symbol for multiplication to prevent z3 from applying commutativity half-heartedly
-function $_mul(x:int, y:int) returns (int) { x * y }
+function $_mul(x:int, y:int) : int { x * y }
 
 // --------------------------------------------------------------------------------
 // Conversion functions
