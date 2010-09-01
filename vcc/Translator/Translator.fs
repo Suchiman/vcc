@@ -1665,6 +1665,8 @@ namespace Microsoft.Research.Vcc
           
       let trField3 (td:C.TypeDecl) (f:C.Field) =
         xassert (td.Kind <> C.Union)
+        if TransUtil.hasCustomAttr "as_array" f.CustomAttr then
+          failwith "as_array fields not supported yet in vcc3"
         let tdname = er ("^" + td.Name)
         let def =
           [B.Decl.Const ({ Name = fieldName f

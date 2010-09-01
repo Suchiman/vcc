@@ -1233,7 +1233,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (defaultValue:IDefaultValue) : unit = assert false
 
       member this.Visit (division:IDivision) : unit =
-        this.DoBinary ("/", division, division.CheckOverflow)
+        this.DoBinary ("/", division, true)
       
       member this.Visit (doUntilStatement:IDoUntilStatement) : unit =
         stmtRes <- C.Expr.Macro (this.StmtCommon doUntilStatement,
