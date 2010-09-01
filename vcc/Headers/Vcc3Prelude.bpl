@@ -42,6 +42,8 @@ type $state;
 type $object = [$field][$ptr]int;
 type $owner = [$ptr]$ptr;
 type $closed = [$ptr]bool;
+type $timestamps = [$ptr]int;
+type $roots = [$ptr]$ptr;
 
 // A constant is generated for each pure function, used for ordering frame axioms.
 type $pure_function;
@@ -587,7 +589,7 @@ function $is_malloc_root_ptr(p:$ptr) : bool;
 function $mem(s:$state, p:$ptr) : int;  // FIXME
 
 function {:inline true} $root(s:$state, p:$ptr) : $ptr
-  { $rd.$roots($roots(s), p) }
+  { $roots(s)[p] }
 
 function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int { $heap(s)[f][p] }
 
@@ -603,12 +605,11 @@ function $has_volatile_owns_set(t:$ctype) : bool;
 function $is_claimable($ctype) : bool;
 
 function {:inline false} $owner(S:$state, p:$ptr) : $ptr
-  { $rd.$owner($f_owner(S), p) }
-  //{ $rd.$owner($f_owner(S), $root(S, p), p) }
+  { $f_owner(S)[p] }
 function {:inline false} $closed(S:$state, p:$ptr) : bool
-  { $rd.$closed($f_closed(S), p) }
+  { $f_closed(S)[p] }
 function {:inline false} $timestamp(S:$state, p:$ptr) : int
-  { $rd.$timestamps($f_timestamp(S), p) }
+  { $f_timestamp(S)[p] }
 function {:inline false} $ref_cnt(S:$state, p:$ptr) : int
   { $rd(S, p, $f_ref_cnt($typ(p))) }
 
@@ -935,7 +936,7 @@ function {:inline true} $in_writes_at(time:int, p:$ptr) : bool
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
   {
     $writes_at(time) == ptrs &&
-    (forall p:$ptr :: {$rd.$owner($f_owner(S), p)}
+    (forall p:$ptr :: {$f_owner(S)[p]}
       $set_in(p, ptrs) ==> $thread_owned_or_even_mutable(S, p))
 /*
     (forall p:$ptr :: {:vcc3 "L1"} {S[p]}
@@ -964,7 +965,7 @@ procedure $bump_timestamp();
     $roots($s) == $roots(old($s)) &&
     $heap($s) == $heap(old($s));
   // I'm not sure if this is neccessary
-  ensures $f_timestamp($s) == $wr.$timestamps($f_timestamp(old($s)), $null, $current_timestamp($s));
+  ensures $f_timestamp($s) == $f_timestamp(old($s))[$null := $current_timestamp($s)];
   ensures $current_timestamp(old($s)) < $current_timestamp($s);
 
 function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) : bool
@@ -995,12 +996,12 @@ function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { (forall p:$ptr :: {$root(S1, p)} $not_written(S0, p, W) ==> $root(S0, p) == $root(S1, p)) &&
     (forall p:$ptr, f:$field :: {$rd(S1, p, f)} $not_written(S0, p, W) && !$in($dot(p, f), W) ==> $rd(S0, p, f) == $rd(S1, p, f)) &&
 
-    (forall p:$ptr :: {$rd.$timestamps($f_timestamp(S1), p)} 
+    (forall p:$ptr :: {$f_timestamp(S1)[p]} 
       ($not_written(S0, p, W) ==>
-        $rd.$timestamps($f_timestamp(S1), p) == $rd.$timestamps($f_timestamp(S0), p)) &&
-      ($rd.$timestamps($f_timestamp(S1), p) >= $rd.$timestamps($f_timestamp(S0), p))) &&
-    (forall p:$ptr :: {$rd.$closed($f_closed(S1), p)} $not_written(S0, p, W) ==> $rd.$closed($f_closed(S1), p) == $rd.$closed($f_closed(S0), p)) &&
-    (forall p:$ptr :: {$rd.$owner($f_owner(S1), p)} $not_written(S0, p, W) ==> $rd.$owner($f_owner(S0), p) == $rd.$owner($f_owner(S1), p)) &&
+        $f_timestamp(S1)[p] == $f_timestamp(S0)[p]) &&
+      ($f_timestamp(S1)[p] >= $f_timestamp(S0)[p])) &&
+    (forall p:$ptr :: {$f_closed(S1)[p]} $not_written(S0, p, W) ==> $f_closed(S1)[p] == $f_closed(S0)[p]) &&
+    (forall p:$ptr :: {$f_owner(S1)[p]} $not_written(S0, p, W) ==> $f_owner(S0)[p] == $f_owner(S1)[p]) &&
     $timestamp_post(S0, S1) }
 
 function {:inline true} $preserves_thread_local(S0:$state, S1:$state) : bool
@@ -1104,12 +1105,10 @@ function $post_unwrap(S1:$state, S2:$state) : bool;
 function $is_unwrapped_dynamic(S0:$state, S:$state, o:$ptr) : bool
 {
      $is_unwrapped(S0, S, o)
-  && (forall r:$ptr :: {$rd.$timestamps($f_timestamp(S), r)}
-        if $owner(S0, r) == o || r == o then $rd.$timestamps($f_timestamp(S), r) == $current_timestamp(S)
-        else $rd.$timestamps($f_timestamp(S), r) == $rd.$timestamps($f_timestamp(S0), r))
-  && (forall r:$ptr :: {$rd.$owner($f_owner(S), r)}
-        if $owner(S0, r) == o then $rd.$owner($f_owner(S), r) == $me()
-        else $rd.$owner($f_owner(S), r) == $rd.$owner($f_owner(S0), r))
+  && $f_timestamp(S) == 
+       (lambda r:$ptr :: if $owner(S0, r) == o || r == o then $current_timestamp(S) else $f_timestamp(S0)[r])
+  && $f_owner(S) == 
+       (lambda r:$ptr :: if $owner(S0, r) == o then $me() else $f_owner(S0)[r])
 }
 
 function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
@@ -1120,7 +1119,7 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   && (forall p:$ptr :: {$root(S, p)}
         ($root(S0, p) != o && $root(S0, p) == $root(S, p)) ||
         ($root(S0, p) == o && ($root(S, p) == p || $owner(S0, p) != o)))
-  && $f_closed(S) == $wr.$closed($f_closed(S0), o, false)
+  && $f_closed(S) == $f_closed(S0)[o := false]
   && $timestamp_post_strict(S0, S)
   && $post_unwrap(S0, S)
    /*
@@ -1136,16 +1135,15 @@ function $is_wrapped_dynamic(S0:$state, S:$state, o:$ptr) : bool
 {
      $is_wrapped(S0, S, o, $owns(S0, o))
   && $heap(S) == $heap(S0)
-  && (forall r:$ptr :: {$rd.$owner($f_owner(S), r)}
-        if $set_in(r, $owns(S0, o)) then $rd.$owner($f_owner(S), r) == o
-        else $rd.$owner($f_owner(S), r) == $rd.$owner($f_owner(S0), r))
+  && $f_owner(S) == 
+       (lambda r:$ptr :: if $set_in(r, $owns(S0, o)) then o else $f_owner(S0)[r])
 }
 
 function $is_wrapped(S0:$state, S:$state, o:$ptr, owns:$ptrset) : bool
 {
      true
-  && $f_closed(S) == $wr.$closed($f_closed(S0), o, true)
-  && $f_timestamp(S) == $wr.$timestamps($f_timestamp(S0), o, $current_timestamp(S))
+  && $f_closed(S) == $f_closed(S0)[o := true]
+  && $f_timestamp(S) == $f_timestamp(S0)[o := $current_timestamp(S)]
   && (forall p:$ptr :: {$root(S, p)}
         $root(S, p) == $root(S0, p) ||
         ($root(S, p) == o && (p == o || $set_in($root(S0, p), owns))))
@@ -1191,11 +1189,11 @@ function $take_over(S:$state, l:$ptr, o:$ptr) returns($state);
 function $release(S0:$state, S:$state, #l:$ptr, #p:$ptr) returns($state);
 
 axiom (forall S:$state, l:$ptr, p:$ptr :: {$take_over(S, l, p)}
-  $f_owner($take_over(S, l, p)) == $wr.$owner($f_owner(S), p, l));
+  $f_owner($take_over(S, l, p)) == $f_owner(S)[p := l]);
 
 axiom (forall S0,S:$state, l:$ptr, p:$ptr :: {$release(S0, S, l, p)}
-  $f_owner($release(S0, S, l, p)) == $wr.$owner($f_owner(S), p, $me()) &&
-  $f_timestamp($release(S0, S, l, p)) == $wr.$timestamps($f_timestamp(S), p, $current_timestamp(S0))
+  $f_owner($release(S0, S, l, p)) == $f_owner(S)[p := $me()] &&
+  $f_timestamp($release(S0, S, l, p)) == $f_timestamp(S)[p := $current_timestamp(S0)]
   );
 
 procedure $static_unwrap(o:$ptr, S:$state);
@@ -1207,7 +1205,7 @@ procedure $static_unwrap(o:$ptr, S:$state);
 
   ensures $is_unwrapped(old($s), $s, o);
   ensures $f_owner($s) == $f_owner(S);
-  ensures $f_timestamp($s) == $wr.$timestamps($f_timestamp(S), o, $current_timestamp(S));
+  ensures $f_timestamp($s) == $f_timestamp(S)[o := $current_timestamp(S)];
 
 
 procedure $static_wrap(o:$ptr, S:$state, owns:$ptrset);
@@ -1981,35 +1979,5 @@ function $read_ptr_m(S:$state, p:$ptr, t:$ctype) : $ptr;
 function $type_code_is(x:int, tp:$ctype) : bool;
 // idx==0 - return type
 function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) : bool;
-
-// --------------------------------------------------------------------------------
-// Map axioms
-// --------------------------------------------------------------------------------
-
-function {:inline true} $rd.$closed(m:$closed, p:$ptr) : bool { m[p] }
-function {:inline true} $wr.$closed(m:$closed, p:$ptr, v:bool) : $closed { m[p := v] }
-
-function {:inline true} $rd.$owner(m:$owner, p:$ptr) : $ptr { m[p] }
-function {:inline true} $wr.$owner(m:$owner, p:$ptr, v:$ptr) : $owner { m[p := v] }
-
-function {:inline true} $rd.$timestamps(m:$timestamps, p:$ptr) : int { m[p] }
-function {:inline true} $wr.$timestamps(m:$timestamps, p:$ptr, v:int) : $timestamps { m[p := v] }
-function {:inline true} $rd.$roots(m:$roots, p:$ptr) : $ptr { m[p] }
-function {:inline true} $wr.$roots(m:$roots, p:$ptr, v:$ptr) : $roots { m[p := v] }
-type $timestamps = [$ptr]int;
-type $roots = [$ptr]$ptr;
-
-/*
-type $timestamps;
-type $roots;
-function $rd.$roots(m:$roots, p:$ptr) : $ptr;
-function $wr.$roots(m:$roots, p:$ptr, v:$ptr) : $roots;
-axiom (forall m:$roots, p:$ptr, v:$ptr :: $rd.$roots($wr.$roots(m, p, v), p) == v);
-axiom (forall m:$roots, p1,p2:$ptr, v:$ptr :: p1 == p2 || $rd.$roots($wr.$roots(m, p1, v), p2) == $rd.$roots(m, p2));
-function $rd.$timestamps(m:$timestamps, p2:$ptr) : int;
-function $wr.$timestamps(m:$timestamps, p2:$ptr, v:int) : $timestamps;
-axiom (forall m:$timestamps, p1:$ptr, v:int :: $rd.$timestamps($wr.$timestamps(m, p1, v), p1) == v);
-axiom (forall m:$timestamps, p1,q1:$ptr, v:int :: p1 == q1  || $rd.$timestamps($wr.$timestamps(m, p1, v), q1) == $rd.$timestamps(m, q1));
-*/
 
 // That's all folks.
