@@ -30,4 +30,5 @@ for run in 0 1 ; do
 done
 
 echo "DONE" >> $log
-mv $log .
+mkdir -p logs
+mv $log logs/
