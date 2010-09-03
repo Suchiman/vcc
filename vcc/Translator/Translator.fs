@@ -244,13 +244,14 @@ namespace Microsoft.Research.Vcc
 
       let typedRead s p t =
         if vcc3 then
+          let decomp p = List.rev (decomposeDot p)
           match t with
             | C.SpecPtr t ->
-              bCall "$rd_spec_ptr" (s :: decomposeDot p @ [toTypeId t])
+              bCall "$rd_spec_ptr" (s :: decomp p @ [toTypeId t])
             | C.PhysPtr t ->
-              bCall "$rd_phys_ptr" (s :: decomposeDot p @ [toTypeId t])
+              bCall "$rd_phys_ptr" (s :: decomp p @ [toTypeId t])
             | _ ->
-              castFromInt (trType t) (bCall "$rd" (s :: decomposeDot p))
+              castFromInt (trType t) (bCall "$rd_inv" (s :: decomp p))
         else
           match t with
             | C.Ptr t ->
@@ -600,12 +601,14 @@ namespace Microsoft.Research.Vcc
               bCall "$in_vdomain_lab" ((selfs args) @ [er (trInvLabel "public")])
           | "_vcc_sk_hack", [e] ->
             bCall "sk_hack" [self e]
-          | "_vcc_ptr_eq", [e1; e2] when vcc3 && e1.Type.Deref.IsComposite && e2.Type.Deref.IsComposite ->
-            xassert (e1.Type = e2.Type)
+          | "_vcc_ptr_eq_pure", [e1; e2] ->
             bEq (self e1) (self e2)
-          | "_vcc_ptr_neq", [e1; e2] when vcc3 && e1.Type.Deref.IsComposite && e2.Type.Deref.IsComposite ->
-            xassert (e1.Type = e2.Type)
+          | "_vcc_ptr_neq_pure", [e1; e2] ->
             bNeq (self e1) (self e2)
+          | "_vcc_ptr_eq_null", [e1] ->
+            bCall "$is_null" [self e1]
+          | "_vcc_ptr_neq_null", [e1] ->
+            bCall "$non_null" [self e1]
           | "trigger_hint", [e] ->
             if e.Type = C.Type.Bool then
               bCall "sk_hack" [self e]
@@ -1368,7 +1371,7 @@ namespace Microsoft.Research.Vcc
               let e1' = trExpr env e1
               let write_call_args =
                 if vcc3 then
-                  decomposeDot e1' @ [e2']
+                  (List.rev (decomposeDot e1')) @ [e2']
                 else [e1'; e2']
               [cmt (); 
                B.Stmt.Call (C.bogusToken, [], "$write_int", write_call_args); 
