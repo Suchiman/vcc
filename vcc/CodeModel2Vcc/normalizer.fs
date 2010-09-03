@@ -27,10 +27,8 @@ namespace Microsoft.Research.Vcc
       match a1.Type, a2.Type with
         | PtrSoP(t, isSpec), PtrSoP(t', isSpec') ->
           if isSpec <> isSpec' then die()
-          if t = Void || t' = Void || t <> t' then
-            let macro = if op.IsEq then "_vcc_ptr_eq" else "_vcc_ptr_neq"
-            Some (self (Expr.Macro (c, macro, [a1; a2])))
-          else None
+          let macro = if op.IsEq then "_vcc_ptr_eq" else "_vcc_ptr_neq"
+          Some (self (Expr.Macro (c, macro, [self a1; self a2])))
         | _ -> None
     | Expr.Dot (c, e, ({ Type = Array (t, _) } as f)) when c.Type <> SpecPtr t && c.Type <> PhysPtr t ->
       Some (self (Expr.MkDot (c, e, f)))
