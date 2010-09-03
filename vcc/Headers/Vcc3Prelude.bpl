@@ -20,14 +20,6 @@ type $field;
 
 type $base;
 
-// describes a kind of a C type:
-//  - primitive (includes mathematical types (sequences, maps, sets) and pointers)
-//  - array
-//  - composite
-//  - thread_id_t
-//  - claim
-type $kind; 
-
 // for float and double
 type $primitive;
 
@@ -56,14 +48,6 @@ type $labelset;
 // ----------------------------------------------------------------------------
 // Type algebra
 // ----------------------------------------------------------------------------
-
-function $kind_of($ctype) : $kind;
-
-// these are the only possible kinds
-const unique $kind_composite : $kind;
-const unique $kind_primitive : $kind;
-const unique $kind_array : $kind;
-const unique $kind_thread : $kind;
 
 type $ctype_branch;
 function $type_branch($ctype) : $ctype_branch;
@@ -121,7 +105,7 @@ function {:inline true} $def_record_type(t:$ctype) : bool
 function {:inline true} $def_composite_type(t:$ctype, rootField:$field, ownsField:$field, ref_cntField:$field, sz:int, claimable:bool, has_volatile_owns:bool) : bool
   { 
      $def_flat_type(t, sz) && 
-     $is_composite(t) && 
+     $is_non_primitive(t) && 
      $is_claimable(t) == claimable && 
      $f_root(t) == rootField &&
      $f_owns(t) == ownsField &&
@@ -133,54 +117,18 @@ function {:inline true} $def_composite_type(t:$ctype, rootField:$field, ownsFiel
 function {:inline true} $def_integer_type(t:$ctype, sz:int) : bool
   { $def_primitive_type(t, sz) && $as_in_range_t(t) == t }
 
-// Lack of {:inline true} makes it possible to trigger on $is_primitive(...)
-// $is_primitive(t) should be only used when it is known that t is really
-// primitive, i.e. not in a precondition or in a premise of an implication
-// (unless guarded by a trigger). If it is unknown, use $is_primitive_ch(...).
-// The same applies to $is_composite(...) and $is_arraytype(...).
+function $is_primitive(t:$ctype) : bool;
+function {:inline true} $is_non_primitive(t:$ctype) : bool
+  { !$is_primitive(t) }
+function {:inline true} $is_non_primitive_ptr(p:$ptr) : bool
+  { $is_non_primitive($typ(p)) }
 
-function $is_primitive(t:$ctype) : bool
-  { $kind_of(t) == $kind_primitive }
+function $is_claimable($ctype) : bool;
 
-// TODO: look for occurences and see if the value can be determined at VC generetion time
-function {:inline true} $is_primitive_ch(t:$ctype) : bool
-  { $kind_of(t) == $kind_primitive }
-
-function $is_composite(t:$ctype) : bool
-  { $kind_of(t) == $kind_composite }
-
-function {:inline true} $is_composite_ch(t:$ctype) : bool
-  { $kind_of(t) == $kind_composite }
-
-function $is_arraytype(t:$ctype) : bool
-  { $kind_of(t) == $kind_array }
-
-function {:inline true} $is_arraytype_ch(t:$ctype) : bool
-  { $kind_of(t) == $kind_array }
-
-function $is_threadtype(t:$ctype) : bool
-  { $kind_of(t) == $kind_thread }
-
-function {:inline true} $is_thread(p:$ptr) : bool
-  { $is_threadtype($typ(p)) }
-
-function {:inline true} $is_ptr_to_composite(p:$ptr) : bool
-  { $kind_of($typ(p)) == $kind_composite }
-
+// These three are not really used for anything, get rid of them?
 function $is_math_type(t:$ctype) : bool;
 function $is_fnptr_type(t:$ctype) : bool;
 function $is_record_type(t:$ctype) : bool;
-
-function $is_non_primitive(t:$ctype) : bool;
-axiom (forall t:$ctype :: {$is_composite(t)} $is_composite(t) ==> $is_non_primitive(t));
-axiom (forall t:$ctype :: {$is_arraytype(t)} $is_arraytype(t) ==> $is_non_primitive(t));
-axiom (forall t:$ctype :: {$is_threadtype(t)} $is_threadtype(t) ==> $is_non_primitive(t));
-
-function {:inline true} $is_non_primitive_ch(t:$ctype) : bool
-  { $kind_of(t) != $kind_primitive }
-
-function {:inline true} $is_non_primitive_ptr(p:$ptr) : bool
-  { $is_non_primitive_ch($typ(p)) }
 
 axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $is_primitive($map_t(#r,#d)));
 axiom (forall #n:$ctype :: {$ptr_to(#n)} $is_primitive($ptr_to(#n)));
@@ -225,13 +173,13 @@ function {:inline true} $is_base_field(f:$field) : bool
 
 //typed pointer test
 function $is(p:$ptr, t:$ctype) : bool
-  { if $is_non_primitive_ch(t) then
+  { if $is_non_primitive(t) then
       $field(p) == $f_root(t)
     else
       $typ(p) == t }
 
 function {:inline true} $is_proper(p:$ptr) : bool
-  { $is_non_primitive_ch($typ(p)) ==> $field(p) == $f_root($typ(p)) }
+  { $is_non_primitive($typ(p)) ==> $field(p) == $f_root($typ(p)) }
 
 function $to_phys_base(b:$base) : $base;
 function $to_spec_base(b:$base) : $base; 
@@ -270,13 +218,13 @@ axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
 function {:inline true} $emb(S:$state,p:$ptr) : $ptr
   { $emb0(p) }
 function $emb0(p:$ptr) : $ptr
-  { if $is_primitive_ch($typ(p)) then
+  { if $is_primitive($typ(p)) then
       $ptr($f_root($field_parent_type($field(p))), $base(p)) 
     else p }
 
 /*
 axiom (forall f:$field :: {$field_parent_type(f)}
-  $is_non_primitive_ch($field_type(f)) ==>
+  $is_non_primitive($field_type(f)) ==>
     $field_parent_type(f) == $field_type(f));
     */
 axiom (forall t:$ctype :: {$f_root(t)}
@@ -308,7 +256,7 @@ function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile
     (isvolatile ==> $is_volatile_field(f)) &&
     $field_type(f) == tp &&
     $as_field_with_type(f, tp) == f &&
-    ($is_primitive_ch(tp) <==> $is_primitive_field(f)) &&
+    ($is_primitive(tp) <==> $is_primitive_field(f)) &&
     $field_arr_root(f) == f &&
     $f_casted(tp, f) == f &&
     true
@@ -377,7 +325,6 @@ const unique ^claim.#root: $field;
 const unique ^claim.#owns: $field;
 const unique ^claim.#ref_cnt: $field;
 const unique ^^mathint: $ctype;
-const unique ^$#thread_id_t: $ctype;
 const unique ^$#ptrset : $ctype;
 const unique ^$#state_t : $ctype;
 const unique ^$#struct : $ctype;
@@ -408,14 +355,16 @@ axiom (forall f:$field, t:$ctype, b:$base :: {$ptr($f_casted(t, f), $to_phys_bas
 axiom $in_range_spec_ptr($null) && $in_range_phys_ptr($null);
 
 const $me_ref : $base;
-const ^$thread_id#root: $field;
+const unique ^$thread_id#root: $field;
+const unique ^$thread_id#owns: $field;
+const unique ^$thread_id#ref_cnt: $field;
+const unique ^$#thread_id_t: $ctype;
+
 function $me() : $ptr;
-axiom $in_range_spec_ptr($me());
+axiom $def_composite_type(^$#thread_id_t, ^$thread_id#root, ^$thread_id#owns, ^$thread_id#ref_cnt, 1, false, true);
+
 axiom $me() == $ptr(^$thread_id#root, $me_ref);
-axiom $def_flat_type(^$#thread_id_t, 1) && $is_threadtype(^$#thread_id_t);
-axiom $f_root(^$#thread_id_t) == ^$thread_id#root;
-axiom $f_casted(^$#thread_id_t, ^$thread_id#root) == ^$thread_id#root;
-axiom $def_ghost_field(^$#thread_id_t, ^$thread_id#root, ^$#thread_id_t, false);
+axiom $in_range_spec_ptr($me());
 axiom $non_null($me());
 
 // ----------------------------------------------------------------------------
@@ -479,9 +428,9 @@ function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
      $is(p, T)
   && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
   && $field(p) == $field_plus($field_arr_root($field(p)), $field_arr_index($field(p)))
-  && ($is_primitive_ch(T) ==> $field_kind($field(p)) != $fk_base)
+  && ($is_primitive(T) ==> $field_kind($field(p)) != $fk_base)
   && $field_arr_index($field(p)) >= 0
-  && $is_non_primitive_ch($typ($emb(S, p)))
+  && $is_non_primitive($typ($emb(S, p)))
 }
 
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
@@ -507,7 +456,7 @@ function $index_within(p:$ptr, arr:$ptr) : int;
 function $simple_index(p:$ptr, arr:$ptr) : bool;
 
 function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
-  { if $is_primitive_ch(T) then
+  { if $is_primitive(T) then
       (lambda q:$ptr :: $emb0(q) == $emb0(p) &&
                         $field_arr_root($field(q)) == $field_arr_root($field(p)) &&
                         $field_arr_index($field(q)) - $field_arr_index($field(p)) < sz &&
@@ -528,9 +477,8 @@ axiom (forall T:$ctype, s:int :: {$array(T, s)}
      true
   && $element_type($array(T, s)) == T 
   && $array_length($array(T, s)) == s 
-  && $is_arraytype($array(T, s))
+  && $is_non_primitive($array(T, s))
   && !$is_claimable($array(T, s))
-  && !$has_volatile_owns_set($array(T, s))
   && $type_branch($array(T, s)) == $ctype_array
 );
 axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
@@ -605,9 +553,6 @@ function {:inline true} $rd_phys_ptr(s:$state, f:$field, p:$ptr, t:$ctype) : $pt
 
 function {:inline true} $current_state(s:$state) : $state { s }
 
-function $has_volatile_owns_set(t:$ctype) : bool;
-function $is_claimable($ctype) : bool;
-
 function {:inline false} $owner(S:$state, p:$ptr) : $ptr
   { $f_owner(S)[p] }
 function {:inline false} $closed(S:$state, p:$ptr) : bool
@@ -630,13 +575,13 @@ function {:inline true} $keeps(S:$state, #l:$ptr, #p:$ptr) : bool
   { $set_in(#p, $owns(S, #l)) }
 
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
-  { $is(#p,#t) && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive_ch(#t) }
+  { $is(#p,#t) && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive(#t) }
 
 function {:inline true} $nested(S:$state, p:$ptr) : bool
-  { $kind_of($typ($owner(S, p))) != $kind_thread }
+  { $typ($owner(S, p)) != ^$#thread_id_t }
 
 function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
-  { $owner(S, p) != $me() || ($is_primitive_ch($typ(p)) && $closed(S, p)) }
+  { $owner(S, p) != $me() || ($is_primitive($typ(p)) && $closed(S, p)) }
 
 function {:inline true} $mutable(S:$state, p:$ptr) : bool
   {  $is_proper(p) &&
@@ -648,7 +593,7 @@ function {:inline true} $thread_owned(S:$state, p:$ptr) : bool
 
 function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
   {
-    if $is_primitive_ch($typ(p)) then
+    if $is_primitive($typ(p)) then
       $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p))
     else
       $owner(S, p) == $me()
@@ -705,7 +650,7 @@ function $byte_ptr_subtraction(p1:$ptr, p2:$ptr) : int
   { $addr(p1) - $addr(p2) }
 
 function {:inline true} $is_primitive_field_of(S:$state, #f:$ptr, #o:$ptr) : bool
-  { $is_primitive_ch($typ(#f)) && $emb(S, #f) == #o }
+  { $is_primitive($typ(#f)) && $emb(S, #f) == #o }
 
 
 // ----------------------------------------------------------------------------
@@ -726,7 +671,7 @@ function $in_wrapped_domain(S:$state, p:$ptr) : bool;
 */
 
 function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
-  { !$is_primitive_ch($typ(p))
+  { !$is_primitive($typ(p))
   && $owner(S, $root(S, p)) == $me()
 //     ($wrapped(S, $root(S, p), $typ($root(S, p))) && $set_in(p, $domain(S, $root(S, p)))))
   }
@@ -734,7 +679,7 @@ function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
 // required for reading
 function $thread_local(S:$state, p:$ptr) : bool
   { 
-    if $is_primitive_ch($typ(p)) then
+    if $is_primitive($typ(p)) then
       ($is_sequential_field($field(p)) || !$closed(S, $emb(S, p))) && $thread_local_np(S, $emb(S, p))
     else
       $thread_local_np(S, p) }
@@ -820,7 +765,7 @@ function {:inline true} $closed_is_transitive(S:$state) : bool
       {$set_in_pos(p, $owns_inline(S, q))}
       $good_state(S) &&
       $set_in(p, $owns_inline(S, q)) && $closed(S, q) ==> 
-         $is_non_primitive_ch($typ(p)) && 
+         $is_non_primitive($typ(p)) && 
          $field(p) == $f_root($typ(p)) &&
          $owner(S, p) == q &&
          $closed(S, p) && 
@@ -836,9 +781,9 @@ axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in_pos(p, $owns(S, q)), $is_non_
       ($set_in(p, $owns(S, q)) <==> $owner(S, p) == q));
 */
 
-axiom (forall S:$state, #r:$base, #t:$ctype, #f:$field :: {$owns(S, $ptr($as_field_with_type(#f,#t), #r)), $is_arraytype(#t)}
+axiom (forall S:$state, #r:$base, #t:$ctype, #f:$field, #sz:int :: {$owns(S, $ptr($as_field_with_type(#f,$array(#t,#sz)), #r))}
   $good_state(S) ==>
-    $is_arraytype(#t) ==> $owns(S, $ptr(#f, #r)) == $set_empty());
+    $owns(S, $ptr(#f, #r)) == $set_empty());
 
 axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
   $invok_state(S) && $closed(S, #p) ==> $inv(S, #p, #t));
@@ -854,11 +799,10 @@ axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
 
 axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$root(S, p)}
   $good_state(S) ==>
-  $owner(S, p) == $me() ==> $non_null(p) && $is_non_primitive_ch($typ(p)) && $is_proper(p) && $root(S, p) == p);
+  $owner(S, p) == $me() ==> $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $root(S, p) == p);
 
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
-  $good_state(S) ==>
-  $is_composite_ch($typ($owner(S, r))) ==>
+  $good_state(S) && $typ($owner(S, r)) != ^$#thread_id_t ==>
     $root(S, r) == $root(S, $owner(S, r)));
 
 axiom (forall S:$state, p:$ptr ::
@@ -922,7 +866,7 @@ procedure $set_owns(p:$ptr, owns:$ptrset);
   // writes p
   modifies $s;
   // TOKEN: the owner is non-primitive
-  requires $is_composite_ch($typ(p));
+  requires $is_non_primitive($typ(p));
   // TOKEN: the owner is mutable
   requires $mutable($s, p);
   ensures $heap($s) == $update($heap(old($s)), p, $f_owns($typ(p)), $ptrset_to_int(owns));
@@ -1002,18 +946,18 @@ function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) : bool
   { $current_timestamp(M1) < $timestamp(M2, p) && $timestamp(M2, p) <= $current_timestamp(M2) }
 
 function {:inline true} $writable(S:$state, begin_time:int, p:$ptr) : bool
-  { $is_non_primitive_ch($typ(p)) &&
+  { $is_non_primitive($typ(p)) &&
     ($mutable(S, p) && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $writable_prim(S:$state, begin_time:int, p:$ptr) : bool
-  { $is_primitive_ch($typ(p)) &&
+  { $is_primitive($typ(p)) &&
     ($mutable(S, $emb0(p)) && ($timestamp(S, $emb0(p)) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $listed_in_writes(S:$state, begin_time:int, p:$ptr) : bool
   { $in_writes_at(begin_time, p) }
 
 function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
-  { if $is_primitive_ch($typ(p)) then
+  { if $is_primitive($typ(p)) then
       $writable_prim(S, begin_time, p)
     else
       ($owner(S, p) == $me() && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
@@ -1063,7 +1007,7 @@ function $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
   && $timestamp_post_strict(S0, S)
   && $owner(S0, r) != $me()
   && 
-    if $is_primitive_ch(t) then
+    if $is_primitive(t) then
       (   $field(r) == $f_allocated(t)
        && $mutable(S, $emb0(r))
        && $timestamp_is_now(S, $emb0(r)))
@@ -1084,11 +1028,11 @@ procedure $stack_alloc(t:$ctype, sf:int, spec:bool) returns (r:$ptr);
 procedure $stack_free(sf:int, x:$ptr);
   modifies $s;
   // TOKEN: the extent of the object being reclaimed is mutable
-  requires if $is_primitive_ch($typ(x)) then $mutable($s, x) else $extent_mutable($s, x);
+  requires if $is_primitive($typ(x)) then $mutable($s, x) else $extent_mutable($s, x);
   // TOKEN: the pointer being reclaimed was returned by stack_alloc()
   requires $is_in_stackframe(sf, x);
 
-  ensures if $is_primitive_ch($typ(x)) then $modifies(old($s), $s, $set_singleton($emb0(x))) else $modifies(old($s), $s, $extent(old($s), x));
+  ensures if $is_primitive($typ(x)) then $modifies(old($s), $s, $set_singleton($emb0(x))) else $modifies(old($s), $s, $extent(old($s), x));
   ensures $heap($s) == $heap(old($s));
 
 procedure $spec_alloc(t:$ctype) returns(r:$ptr);
@@ -1206,7 +1150,7 @@ procedure $wrap(o:$ptr, T:$ctype);
   // TOKEN: OOPS: pre_wrap holds
   requires $pre_wrap($s);
   // TOKEN: the wrapped type is non primitive
-  requires $is_non_primitive_ch($typ(o));
+  requires $is_non_primitive($typ(o));
   // TOKEN: the object being wrapped is mutable
   requires $mutable($s, o);
   // TOKEN: everything in the owns set is wrapped
@@ -1244,7 +1188,7 @@ procedure $static_wrap(o:$ptr, S:$state, owns:$ptrset);
   // TOKEN: OOPS: pre_static_wrap must hold
   requires $pre_static_wrap($s);
   // TOKEN: the wrapped type is non primitive
-  requires $is_non_primitive_ch($typ(o));
+  requires $is_non_primitive($typ(o));
   // TOKEN: the object being wrapped is mutable
   requires $mutable($s, o);
 
@@ -1258,7 +1202,7 @@ procedure $static_wrap_non_owns(o:$ptr, S:$state);
   // TOKEN: OOPS: pre_static_wrap must hold
   requires $pre_static_wrap($s);
   // TOKEN: the wrapped type is non primitive
-  requires $is_non_primitive_ch($typ(o));
+  requires $is_non_primitive($typ(o));
   // TOKEN: the object being wrapped is mutable
   requires $mutable($s, o);
 
