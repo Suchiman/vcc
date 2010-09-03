@@ -597,6 +597,16 @@ namespace Microsoft.Research.Vcc.Parsing
         var uncheckedExpr = this.ParseUnaryExpression(followers);
         slb.UpdateToSpan(uncheckedExpr.SourceLocation);
         return new UncheckedExpression(uncheckedExpr, slb);
+      } else if (this.currentToken == Token.Identifier && this.scanner.GetIdentifierString() == "\\by_claim") {
+        this.GetNextToken();
+        var claim = this.ParseUnaryExpression(followers | Token.RightParenthesis);
+        this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);
+        var value = this.ParseUnaryExpression(followers);
+        slb.UpdateToSpan(value.SourceLocation);
+        var byClaimWrapper = this.GetSimpleNameFor("\\by_claim_wrapper");
+        var byClaimCall = new VccMethodCall(byClaimWrapper, new Expression[] {claim}, slb);
+        var atName = this.GetSimpleNameFor("\\at");
+        return new VccMethodCall(atName, new Expression[] {byClaimCall, value}, slb);
       } else {
         this.HandleError(Error.SyntaxError, this.scanner.GetTokenSource());
         this.SkipOutOfSpecBlock(savedInSpecCode, followers);

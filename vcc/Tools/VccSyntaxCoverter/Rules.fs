@@ -257,10 +257,12 @@ module Rules =
                         "inv"
                         "inv2"
                         "old"
+                        "gemb"
                         "match_long"
                         "match_ulong"
                         "array_range"
                         "array_members"
+                        "is_array"
                         "start_here"
                         "depends"
                         "not_shared"
@@ -269,6 +271,7 @@ module Rules =
                         "claims_claim"
                         "when_claimed"
                         "account_claim"
+                        "always_by_claim"
                         "extent_zero"
                         "full_extent"
                         "mutable"
@@ -444,6 +447,11 @@ module Rules =
         | prop :: objs ->
           fnApp fn (paren "{" (joinWith "," (List.rev objs)) :: Tok.Op (fakePos, ",") :: prop)
         | _ -> failwith ""
+
+    let by_claim = function
+      | [claim; expr] -> [paren "(" (spec "\\by_claim" claim @ [paren "(" expr])]
+      | _ -> failwith ""
+    addRule (parenRuleN "by_claim" 2 by_claim)
 
     addRule (parenRule false "claim" (reify "\\make_claim"))
     addRule (parenRule false "upgrade_claim" (reify "\\upgrade_claim"))
