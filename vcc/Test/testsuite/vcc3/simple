@@ -193,3 +193,49 @@ Verification of fooOkWrap succeeded.
 Verification of fooFailWrap failed.
 testcase(44,15) : error VC8011: writes clause of the loop might not be included writes clause of the function.
 `
+#include <vcc.h>
+struct S { int a; };
+struct T { int b; };
+
+void foo()
+{
+  struct S *s, *s2;
+  struct T *t;
+  int *i;
+  
+
+  if (s == i) { 
+  }
+
+  if (s == t) { 
+  }
+
+  if (s == s2) { 
+  }
+
+  assert(s == t);
+  assert((void*)s == (void*)t);
+  assert(s == i);
+
+  assert(s == (struct S*)t);
+  assert((char*)s == (char*)t);
+  assert(s == s2);
+
+  // comparing against null shouldn't produce warnings
+  assert(s == (void*)0);
+  assert(s == (struct S*)0);
+  assert((void*)0 == s);
+  assert((struct S*)0 == s);
+  // these should be also translated as comparing against null
+  assert(s);
+  assert(!s);
+  assert(s ==> 1 > 0);
+}
+
+`
+testcase(21,12) : warning VC9124: pointers of different types (struct S and struct T) are never equal in pure context
+testcase(22,12) : warning VC9124: pointers of different types (struct S and struct T) are never equal in pure context
+testcase(23,12) : warning VC9124: pointers of different types (struct S and int32_t) are never equal in pure context
+Verification of foo failed.
+testcase(21,12) : error VC9500: Assertion 's == t' did not verify.
+`

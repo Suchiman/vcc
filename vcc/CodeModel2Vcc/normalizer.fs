@@ -34,7 +34,6 @@ namespace Microsoft.Research.Vcc
       Some (self (Expr.MkDot (c, e, f)))
     | _ -> None
   
-  
   let doHandleConversions = 
     let rec doHandleConversions' inGroupInvariant self = function
       | Expr.Cast ({ Type = ObjectT}, _, e) -> 
@@ -71,6 +70,33 @@ namespace Microsoft.Research.Vcc
       | _ -> None
     doHandleConversions' false
     
+  let handlePurePtrEq (helper:Helper.Env) decls =
+    let rec isNull = function
+      | Expr.Cast (_, _, e) -> isNull e
+      | Expr.Macro (_, "null", []) -> true
+      | _ -> false
+
+    let aux (ctx:ExprCtx) self = function
+      | Expr.Cast (c, _, p) when c.Type = Type.Bool && p.Type.IsPtr ->
+        Some (Expr.Macro (c, "_vcc_ptr_neq_null", [self p]))
+      | Expr.Macro (c, ("_vcc_ptr_eq"|"_vcc_ptr_neq" as name), [p1; p2]) ->
+        if isNull p1 then
+          Some (Expr.Macro (c, name + "_null", [self p2]))
+        else if isNull p2 then
+          Some (Expr.Macro (c, name + "_null", [self p1]))
+        else if ctx.IsPure then
+          match p1.Type, p2.Type with
+            | Ptr(t1), Ptr(t2) ->
+              if t1 <> t2 then
+                helper.Warning (c.Token, 9124, "pointers of different types (" + t1.ToString() + " and " + t2.ToString() + ") are never equal in pure context")
+              Some (Expr.Macro (c, name + "_pure", [self p1; self p2]))
+            | _ -> die()
+        else None
+      | _ -> None
+    if helper.Options.Vcc3 then
+      deepMapExpressionsCtx aux decls
+    else decls
+
   let handleConversions helper = deepMapExpressions (doHandleComparison helper) >> deepMapExpressions doHandleConversions
     
   // ============================================================================================================      
@@ -1202,6 +1228,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-out-params", Helper.Expr removeDerefFromOutParams)
     helper.AddTransformer ("norm-comparison", Helper.Expr (doHandleComparison helper))
     helper.AddTransformer ("norm-conversions", Helper.Expr doHandleConversions)   
+    helper.AddTransformer ("norm-ptr-comparison", Helper.Decl (handlePurePtrEq helper))
     helper.AddTransformer ("inline-spec-macros", Helper.Decl inlineSpecMacros)
     helper.AddTransformer ("norm-generic-errors", Helper.Decl reportGenericsErrors) 
     helper.AddTransformer ("add-assume-to-assert", Helper.Expr handleLemmas)    

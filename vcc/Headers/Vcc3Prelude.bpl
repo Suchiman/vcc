@@ -401,8 +401,10 @@ const unique ^^null_field : $field;
 //axiom $null == $ptr(^^null_field, 0);
 axiom $addr($null) == 0;
 axiom (forall t:$ctype :: {$f_root(t)} $is_null($ptr($f_root(t), $base($null))));
-axiom (forall f:$field, t:$ctype, b:$base :: {$ptr($f_casted(t, f), b)}
-  $is_null($ptr($f_casted(t, f), b)) <==> $is_null($ptr(f, b)));
+axiom (forall f:$field, t:$ctype, b:$base :: {$ptr($f_casted(t, f), $to_spec_base(b))}
+  $is_null($ptr($f_casted(t, f), $to_spec_base(b))) <==> $is_null($ptr(f, b)));
+axiom (forall f:$field, t:$ctype, b:$base :: {$ptr($f_casted(t, f), $to_phys_base(b))}
+  $is_null($ptr($f_casted(t, f), $to_phys_base(b))) <==> $is_null($ptr(f, b)));
 axiom $in_range_spec_ptr($null) && $in_range_phys_ptr($null);
 
 const $me_ref : $base;
@@ -412,6 +414,7 @@ axiom $in_range_spec_ptr($me());
 axiom $me() == $ptr(^$thread_id#root, $me_ref);
 axiom $def_flat_type(^$#thread_id_t, 1) && $is_threadtype(^$#thread_id_t);
 axiom $f_root(^$#thread_id_t) == ^$thread_id#root;
+axiom $f_casted(^$#thread_id_t, ^$thread_id#root) == ^$thread_id#root;
 axiom $def_ghost_field(^$#thread_id_t, ^$thread_id#root, ^$#thread_id_t, false);
 axiom $non_null($me());
 
@@ -591,12 +594,13 @@ function $mem(s:$state, p:$ptr) : int;  // FIXME
 function {:inline true} $root(s:$state, p:$ptr) : $ptr
   { $roots(s)[p] }
 
+function {:inline true} $rd_inv(s:$state, f:$field, p:$ptr) : int { $rd(s,p,f) }
 function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int { $heap(s)[f][p] }
 
-function {:inline true} $rd_spec_ptr(s:$state, p:$ptr, f:$field, t:$ctype) : $ptr
+function {:inline true} $rd_spec_ptr(s:$state, f:$field, p:$ptr, t:$ctype) : $ptr
   { $spec_ptr_cast($int_to_ptr($rd(s, p, f)), t) }
 
-function {:inline true} $rd_phys_ptr(s:$state, p:$ptr, f:$field, t:$ctype) : $ptr
+function {:inline true} $rd_phys_ptr(s:$state, f:$field, p:$ptr, t:$ctype) : $ptr
   { $phys_ptr_cast($int_to_ptr($rd(s, p, f)), t) }
 
 function {:inline true} $current_state(s:$state) : $state { s }
@@ -684,7 +688,14 @@ function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) : bool
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($addr(#p))) }
 */
 
-function {:inline true} $ptr_eq(p1:$ptr, p2:$ptr) : bool
+axiom (forall S:$state, p,q:$ptr :: {$ptr_eq(p, q), $owner(S, $root(S, p)), $owner(S, $root(S, q))} 
+  $good_state(S) &&
+  $ptr_eq(p, q) &&
+  $typ(p) == $typ(q) &&
+  $owner(S, $root(S, p)) == $me() &&
+  $owner(S, $root(S, q)) == $me() ==> p == q);
+
+function $ptr_eq(p1:$ptr, p2:$ptr) : bool
   { $addr(p1) == $addr(p2) }
 
 function {:inline true} $ptr_neq(p1:$ptr,p2:$ptr) : bool
@@ -882,11 +893,30 @@ function {:inline true} $specials_eq(S0:$state, S:$state) : bool
 function {:inline true} $meta_eq(s1:$state, s2:$state) : bool
   { $specials_eq(s1, s2) }
 
-procedure $write_int(p:$ptr, f:$field, v:int);
+procedure $write_int(f:$field, p:$ptr, v:int);
   modifies $s;
   ensures $specials_eq(old($s), $s);
   ensures $heap($s) == $update($heap(old($s)), p, f, v);
   ensures $timestamp_post_strict(old($s), $s);
+
+procedure $write_int_local(h0:[$ptr]int, f:$field, p:$ptr, v:int) returns(h:[$ptr]int);
+  modifies $s;
+  ensures $specials_eq(old($s), $s);
+  ensures $heap($s) == $update($heap(old($s)), p, f, v);
+  ensures $timestamp_post_strict(old($s), $s);
+  ensures h == h0[p := v];
+  ensures old($heap($s))[f] == h0;
+  ensures $heap($s)[f] == h;
+
+function {:inline true} $rd_local(h:[$ptr]int, f:$field, p:$ptr) : int
+  { h[p] }
+
+function {:inline true} $rd_spec_ptr_local(h:[$ptr]int, f:$field, p:$ptr, t:$ctype) : $ptr
+  { $spec_ptr_cast($int_to_ptr(h[p]), t) }
+
+function {:inline true} $rd_phys_ptr_local(h:[$ptr]int, f:$field, p:$ptr, t:$ctype) : $ptr
+  { $phys_ptr_cast($int_to_ptr(h[p]), t) }
+
 
 procedure $set_owns(p:$ptr, owns:$ptrset);
   // writes p
@@ -1078,6 +1108,7 @@ procedure $alloc(t:$ctype) returns(r:$ptr);
             $in_range_phys_ptr(r) && 
             $is_malloc_root($s, r);
   ensures $is_null(r) ==>
+            $is(r, t) &&
             $writes_nothing(old($s), $s) && $heap(old($s)) == $heap($s);
 
 procedure $free(x:$ptr);
