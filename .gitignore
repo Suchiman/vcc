@@ -1,6 +1,8 @@
 Vcc.opensdf
 Vcc.sdf
 Vcc.suo
+Vcc.5.1.ReSharper.user
+_ReSharper.Vcc/
 cci/
 vcc/AddIn/VCCAddin/bin/
 vcc/AddIn/VCCAddin/obj/
@@ -11,6 +13,10 @@ vcc/CodeModel2VccHelper/obj/
 vcc/Core/bin/
 vcc/Core/obj/
 vcc/Demo/*.i
+vcc/Demo/*.vccmodel
+vcc/Demo/*.ncb
+vcc/Demo/*.suo
+vcc/Demo/*.user
 vcc/Docs/Tutorial/c/*.i
 vcc/Docs/Tutorial/tutorial.aux
 vcc/Docs/Tutorial/tutorial.log
@@ -37,8 +43,9 @@ vcc/Tools/ModelViewer/ModelViewer/bin/
 vcc/Tools/ModelViewer/ModelViewer/obj/
 vcc/Tools/ModelViewer/Z3ModelParser/bin/
 vcc/Tools/ModelViewer/Z3ModelParser/obj/
+vcc/Tools/VccSyntaxCoverter/_ReSharper.VccSyntaxCoverter/
 vcc/Tools/VccSyntaxCoverter/Lexer.fs
-vcc/Tools/VccSyntaxCoverter/VccSyntaxCoverter.suo
+vcc/Tools/VccSyntaxCoverter/*.suo
 vcc/Tools/VccSyntaxCoverter/bin/
 vcc/Tools/VccSyntaxCoverter/obj/
 vcc/Tools/Z3Visualizer/Z3Visualizer/bin/
