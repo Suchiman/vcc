@@ -527,6 +527,8 @@ function $f_owner($state) : $owner;
 function $f_closed($state) : $closed;
 function $roots(s:$state) : $roots;
 function $heap(s:$state) : $object;
+// returns a pointer for a given address and type
+function $typemap($owner) : [int, $ctype]$ptr;
 
 function $f_root($ctype) : $field;
 function $f_owns($ctype) : $field;
@@ -633,12 +635,10 @@ function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) : bool
   { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($addr(#p))) }
 */
 
-axiom (forall S:$state, p,q:$ptr :: {$ptr_eq(p, q), $owner(S, $root(S, p)), $owner(S, $root(S, q))} 
-  $good_state(S) &&
-  $ptr_eq(p, q) &&
-  $typ(p) == $typ(q) &&
-  $owner(S, $root(S, p)) == $me() &&
-  $owner(S, $root(S, q)) == $me() ==> p == q);
+axiom (forall S:$state, p:$ptr :: {$addr(p), $owner(S, $root(S, p))}
+  $good_state(S) ==>
+    $owner(S, $root(S, p)) == $me() ==>
+      $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
 
 function $ptr_eq(p1:$ptr, p2:$ptr) : bool
   { $addr(p1) == $addr(p2) }
@@ -1097,6 +1097,7 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   && $f_closed(S) == $f_closed(S0)[o := false]
   && $timestamp_post_strict(S0, S)
   && $post_unwrap(S0, S)
+  && $typemap($f_owner(S0)) == $typemap($f_owner(S))
    /*
   &&
   (forall p:$ptr :: {$set_in_pos(p, $owns(S0, o))}
@@ -1125,6 +1126,7 @@ function $is_wrapped(S0:$state, S:$state, o:$ptr, owns:$ptrset) : bool
   && $wrapped(S, o, $typ(o))
   && ($is_claimable($typ(o)) ==> $ref_cnt(S0, o) == 0 && $ref_cnt(S, o) == 0)
   && $timestamp_post_strict(S0, S)
+  && $typemap($f_owner(S0)) == $typemap($f_owner(S))
 
 /*
   $timestamp_is_now(S, o) &&
