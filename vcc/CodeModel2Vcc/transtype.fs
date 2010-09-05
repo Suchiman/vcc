@@ -143,6 +143,7 @@ namespace Microsoft.Research.Vcc
               | Some parent -> 
                 td.Name <- makeTypeNameForGroup parent.Name groupName
                 td.SizeOf <- parent.SizeOf
+                td.CustomAttr <- VccAttr("__vcc_group", "") :: td.CustomAttr
                 match groupTypes.TryGetValue ((parent, groupName)) with
                   | true, td' ->
                     let msg = "'" + groupName + "' : group name redefinition"

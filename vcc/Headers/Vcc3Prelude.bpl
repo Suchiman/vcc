@@ -11,14 +11,14 @@
 // for each C type there is a value of $ctype Boogie type
 type $ctype; 
 
-// a typed pointer -- i.e. a pair of a $field and a $base
+// a typed pointer -- i.e. a pair of a $field and a $ptr
 type $ptr;
 
 // name of a C field -- each field of a C struct gets a constant of this type
 //   like A.b for field b of struct A.
 type $field; 
 
-type $base;
+type $base = $ptr;
 
 // for float and double
 type $primitive;
@@ -91,7 +91,7 @@ function {:inline true} $def_flat_type(t:$ctype, sz:int) : bool
   { $sizeof(t) == sz && $type_branch(t) == $ctype_flat }
 
 function {:inline true} $def_primitive_type(t:$ctype, sz:int) : bool
-  { $def_flat_type(t, sz) && $is_primitive(t) && $field_type($f_root(t)) == t }
+  { $def_flat_type(t, sz) && $is_primitive(t) }
 
 function {:inline true} $def_math_type(t:$ctype) : bool
   { $def_primitive_type(t, 1) && $is_math_type(t) }
@@ -102,17 +102,12 @@ function {:inline true} $def_fnptr_type(t:$ctype) : bool
 function {:inline true} $def_record_type(t:$ctype) : bool
   { $def_primitive_type(t, 1) && $is_record_type(t) }
 
-function {:inline true} $def_composite_type(t:$ctype, rootField:$field, ownsField:$field, ref_cntField:$field, sz:int, claimable:bool, has_volatile_owns:bool) : bool
+function {:inline true} $def_composite_type(t:$ctype, sz:int, claimable:bool, has_volatile_owns:bool) : bool
   { 
      $def_flat_type(t, sz) && 
      $is_non_primitive(t) && 
      $is_claimable(t) == claimable && 
-     $f_root(t) == rootField &&
-     $f_owns(t) == ownsField &&
-     $f_ref_cnt(t) == ref_cntField &&
-     $def_ghost_field(t, $f_root(t), t, false) &&
-     $def_ghost_field(t, $f_owns(t), ^$#ptrset, has_volatile_owns) &&
-     $def_ghost_field(t, $f_ref_cnt(t), ^^mathint, true) &&
+     (if has_volatile_owns then $is_volatile_field($f_owns(t)) else $is_sequential_field($f_owns(t))) &&
      true }
 function {:inline true} $def_integer_type(t:$ctype, sz:int) : bool
   { $def_primitive_type(t, sz) && $as_in_range_t(t) == t }
@@ -124,6 +119,7 @@ function {:inline true} $is_non_primitive_ptr(p:$ptr) : bool
   { $is_non_primitive($typ(p)) }
 
 function $is_claimable($ctype) : bool;
+function $is_group_type($ctype) : bool;
 
 // These three are not really used for anything, get rid of them?
 function $is_math_type(t:$ctype) : bool;
@@ -140,7 +136,7 @@ axiom (forall #n:$ctype :: {$is_primitive(#n)} $is_primitive(#n) ==> !$is_claima
 // Pointers
 // ----------------------------------------------------------------------------
 
-function $typ(p:$ptr): $ctype
+function {:inline true} $typ(p:$ptr): $ctype
   { $field_type($field(p)) }
 function $addr($ptr): int;
 function $base($ptr): $base;
@@ -161,104 +157,115 @@ axiom (forall p:$ptr :: {$addr(p)} $addr(p) == 0 <==> $is_null(p));
 
 type $field_kind;
 const unique $fk_base : $field_kind;
+const unique $fk_owns : $field_kind;
+const unique $fk_ref_cnt : $field_kind;
+const unique $fk_as_array_first : $field_kind;
+const unique $fk_allocation_root : $field_kind;
 const unique $fk_emb_array : $field_kind;
-const unique $fk_as_array_root : $field_kind;
-const unique $fk_as_array_emb : $field_kind;
-const unique $fk_allocated : $field_kind;
 
 function $field_kind($field) : $field_kind;
 
 function {:inline true} $is_base_field(f:$field) : bool
   { $field_kind(f) == $fk_base }
 
+// Meaning it's not some pointer casted to an unrelated type.
+// When casting to something odd, the field_parent_type() will point
+// to something that no field_type() returns. TODO what about f_root(something) ?
+function {:inline true} $is_proper(p:$ptr) : bool
+  { $field_parent_type($field(p)) == $typ($base(p)) }
+
 //typed pointer test
 function $is(p:$ptr, t:$ctype) : bool
-  { if $is_non_primitive(t) then
-      $field(p) == $f_root(t)
-    else
-      $typ(p) == t }
+  { $typ(p) == t }
 
-function {:inline true} $is_proper(p:$ptr) : bool
-  { $is_non_primitive($typ(p)) ==> $field(p) == $f_root($typ(p)) }
+function $spec_ptr_cast(p:$ptr, t:$ctype) : $ptr;
+function $phys_ptr_cast(p:$ptr, t:$ctype) : $ptr;
 
-function $to_phys_base(b:$base) : $base;
-function $to_spec_base(b:$base) : $base; 
-axiom (forall b:$base :: {$to_spec_base(b)} $in_range_spec_base($to_spec_base(b)) && ($in_range_spec_base(b) ==> $to_spec_base(b) == b));
-axiom (forall b:$base :: {$to_phys_base(b)} $in_range_phys_base($to_phys_base(b)) && ($in_range_phys_base(b) ==> $to_phys_base(b) == b));
-
-function $spec_ptr_cast(p:$ptr, t:$ctype) : $ptr
-  { $ptr($f_casted(t, $field(p)), $to_spec_base($base(p))) }
-
-function $phys_ptr_cast(p:$ptr, t:$ctype) : $ptr
-  { $ptr($f_casted(t, $field(p)), $to_phys_base($base(p))) }
-
+axiom (forall p:$ptr :: {$spec_ptr_cast(p, $typ(p))}
+  $in_range_spec_ptr(p) ==> $spec_ptr_cast(p, $typ(p)) == p);
+axiom (forall p:$ptr :: {$phys_ptr_cast(p, $typ(p))}
+  $in_range_phys_ptr(p) ==> $phys_ptr_cast(p, $typ(p)) == p);
 axiom (forall p:$ptr, t:$ctype :: {$addr($spec_ptr_cast(p, t))}
   $addr($spec_ptr_cast(p, t)) == $addr(p));
-
 axiom (forall p:$ptr, t:$ctype :: {$addr($phys_ptr_cast(p, t))}
   $addr($phys_ptr_cast(p, t)) == $addr(p));
+function {:inline true} $cast_props(p:$ptr, t:$ctype, c:$ptr) : bool
+  { $typ(c) == t && $is_null(c) == $is_null(p) && $field(c) == $as_field_with_type($field(c), t) }
+axiom (forall p:$ptr, t:$ctype :: {$spec_ptr_cast(p, t)}
+  $cast_props(p, t, $spec_ptr_cast(p, t)) && $in_range_spec_ptr($spec_ptr_cast(p, t)));
+axiom (forall p:$ptr, t:$ctype :: {$phys_ptr_cast(p, t)}
+  $cast_props(p, t, $phys_ptr_cast(p, t)) && $in_range_phys_ptr($phys_ptr_cast(p, t)));
+
+/*
+Doesn't seem needed.
+
+axiom (forall p:$ptr, f:$field :: {$has_field_at0($typ(p), f), $phys_ptr_cast(p, $field_type(f))}
+   $is_proper(p) &&
+   $in_range_phys_ptr(p) &&
+   $has_field_at0($typ(p), f) ==>
+     $phys_ptr_cast(p, $field_type(f)) == $dot(p, f));
+
+axiom (forall p:$ptr, f:$field :: {$has_field_at0($typ(p), f), $spec_ptr_cast(p, $field_type(f))}
+   $is_proper(p) &&
+   $in_range_spec_ptr(p) &&
+   $has_field_at0($typ(p), f) ==>
+     $spec_ptr_cast(p, $field_type(f)) == $dot(p, f));
+*/
+
+axiom (forall p:$ptr :: 
+   {$spec_ptr_cast(p, $field_parent_type($field(p))), $has_field_at0($field_parent_type($field(p)), $field(p))}
+   $is_proper(p) && $in_range_phys_ptr(p) && $has_field_at0($field_parent_type($field(p)), $field(p)) ==>
+     $phys_ptr_cast(p, $field_parent_type($field(p))) == $emb1(p));
+
+// This may be unsound.
+//axiom (forall p:$ptr :: {$is_group_type($field_type($field(p)))}
+//  $is_proper(p) && $is_group_type($field_type($field(p))) ==>
+//    $field(p) == $f_group_root($field_type($field(p))));
 
 function $dot(p:$ptr, f:$field) : $ptr
-  { if $is_primitive_field(f) then
-      $ptr(f, $base(p)) 
-    else
-      $ptr($f_root($field_type(f)), $base_plus($base(p), f))
-  }
-
-function $base_plus(p:$base, f:$field) : $base;
-function $base_plus_inv(p:$base, f:$field) : $base;
-axiom (forall p:$base, f:$field :: {$base_plus(p, f)}
-  ($field_offset(f) == 0 ==> $base_plus(p, f) == p) &&
-  $base_plus_inv($base_plus(p, f), f) == p);
+  { $ptr(f, p) }
 
 axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
-  $is_phys_field(f) && $field_parent_type(f) == $typ(p) ==> 
+  $is_phys_field(f) && $is_proper($dot(p, f)) ==>
      $addr($dot(p, f)) == $addr(p) + $field_offset(f));
 
+axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
+     ($in_range_spec_ptr(p) || $is_ghost_field(f) ==> $in_range_spec_ptr($dot(p, f)))
+  && ($in_range_phys_ptr(p) && $is_phys_field(f) ==> $in_range_phys_ptr($dot(p, f))));
+
+function {:inline true} $emb1(p:$ptr) : $ptr
+  { $base(p) }
 function {:inline true} $emb(S:$state,p:$ptr) : $ptr
   { $emb0(p) }
 function $emb0(p:$ptr) : $ptr
-  { if $is_primitive($typ(p)) then
-      $ptr($f_root($field_parent_type($field(p))), $base(p)) 
-    else p }
-
-/*
-axiom (forall f:$field :: {$field_parent_type(f)}
-  $is_non_primitive($field_type(f)) ==>
-    $field_parent_type(f) == $field_type(f));
-    */
-axiom (forall t:$ctype :: {$f_root(t)}
-  $field_parent_type($f_root(t)) == t);
+  { if $is_primitive($typ(p)) then $base(p) else p }
 
 function $is_sequential_field($field) : bool;
 function $is_volatile_field($field) : bool;
 function $is_primitive_field($field) : bool;
 function $as_field_with_type($field,$ctype) : $field;
+function {:inline true} $as_ptr_with_type(p:$ptr, t:$ctype) : $ptr
+  { $ptr($as_field_with_type($field(p), t), $base(p)) }
 function $field_type($field) : $ctype;
-function $f_casted($ctype, $field) : $field;
-axiom (forall t1, t2:$ctype, f:$field :: {$f_casted(t1, $f_casted(t2, f))}
-  $f_casted(t1, $f_casted(t2, f)) == $f_casted(t1, f));
-axiom (forall t:$ctype, f:$field :: {$f_casted(t, f)}
-  $field_type($f_casted(t, f)) == t);
+function $has_field_at0($ctype, $field) : bool;
 
-function $f_allocated($ctype) : $field;
-axiom (forall t:$ctype :: {$f_allocated(t)}
-  $field_kind($f_allocated(t)) == $fk_allocated &&
-  $field_type($f_allocated(t)) == t &&
-  $f_casted(t, $f_allocated(t)) == $f_allocated(t) &&
-  $is_phys_field($f_allocated(t)) &&
-  $field_offset($f_allocated(t)) == 0);
+axiom (forall f:$field :: {$field_parent_type(f)} $is_non_primitive($field_parent_type(f)));
 
-function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
+function {:inline true} $def_field_family(partp:$ctype, f:$field, tp:$ctype) : bool
   { 
     $field_parent_type(f) == partp &&
-    (!isvolatile ==> $is_sequential_field(f)) &&
-    (isvolatile ==> $is_volatile_field(f)) &&
     $field_type(f) == tp &&
     $as_field_with_type(f, tp) == f &&
     ($is_primitive(tp) <==> $is_primitive_field(f)) &&
     $field_arr_root(f) == f &&
-    $f_casted(tp, f) == f &&
+    true
+  }
+
+function {:inline true} $def_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool) : bool
+  { 
+    $def_field_family(partp, f, tp) &&
+    (!isvolatile ==> $is_sequential_field(f)) &&
+    (isvolatile ==> $is_volatile_field(f)) &&
     true
   }
 
@@ -267,6 +274,7 @@ function {:inline true} $def_phys_field(partp:$ctype, f:$field, tp:$ctype, isvol
     $field_offset(f) == off &&
     $is_phys_field(f) &&
     $is_base_field(f) && 
+    (off == 0 ==> $has_field_at0(partp, f)) &&
     true
   }
 
@@ -277,10 +285,42 @@ function {:inline true} $def_ghost_field(partp:$ctype, f:$field, tp:$ctype, isvo
     true
   }
 
-function {:inline true} $def_common_field(f:$field, tp:$ctype) : bool
-  { $is_base_field(f) && $is_ghost_field(f) &&
+function {:inline true} $def_group(partp:$ctype, f:$field, tp:$ctype) : bool
+  { $def_phys_field(partp, f, tp, false, 0) &&
+    $f_group_root(tp) == f &&
+    $is_group_type(tp) &&
     true
   }
+
+function $f_group_root($ctype) : $field;
+function $f_root($ctype) : $field;
+function $f_owns($ctype) : $field;
+function $f_ref_cnt($ctype) : $field;
+
+function {:inline true} $def_special_field(partp:$ctype, f:$field, tp:$ctype, fk:$field_kind) : bool
+  {
+    $def_field_family(partp, f, tp) &&
+    $field_kind(f) == fk &&
+    $is_ghost_field(f) &&
+    true
+  }
+
+const unique $primitive_emb_type : $ctype;
+
+axiom (forall t:$ctype :: {$f_root(t)}
+  if $is_non_primitive(t) then
+    $def_special_field(t, $f_root(t), t, $fk_allocation_root)
+  else
+    $def_special_field($primitive_emb_type, $f_root(t), t, $fk_allocation_root) &&
+    $is_sequential_field($f_root(t))
+    );
+axiom (forall t:$ctype :: {$f_owns(t)} 
+  $is_non_primitive(t) ==>
+    $def_special_field(t, $f_owns(t), ^$#ptrset, $fk_owns));
+axiom (forall t:$ctype :: {$f_ref_cnt(t)} 
+  $is_non_primitive(t) ==>
+    $def_special_field(t, $f_ref_cnt(t), ^$#ptrset, $fk_ref_cnt) &&
+    $is_volatile_field($f_ref_cnt(t)));
 
 // ----------------------------------------------------------------------------
 // Built-in types and constants
@@ -321,9 +361,6 @@ axiom $def_math_type(^^object);
 axiom $def_math_type(^^field);
 
 const unique ^^claim: $ctype;
-const unique ^claim.#root: $field;
-const unique ^claim.#owns: $field;
-const unique ^claim.#ref_cnt: $field;
 const unique ^^mathint: $ctype;
 const unique ^$#ptrset : $ctype;
 const unique ^$#state_t : $ctype;
@@ -332,7 +369,7 @@ const unique ^$#struct : $ctype;
 const unique ^$#seq_version : $ctype;
 const unique ^$#vol_version : $ctype;
 
-axiom $def_composite_type(^^claim, ^claim.#root, ^claim.#owns, ^claim.#ref_cnt, 1, true, false);
+axiom $def_composite_type(^^claim, 1, true, false);
 axiom $def_math_type(^^mathint);
 axiom $def_math_type(^$#ptrset);
 axiom $def_math_type(^$#state_t);
@@ -344,28 +381,16 @@ function $is_ghost_field($field) : bool;
 function $is_phys_field($field) : bool;
 
 const $null:$ptr;
-const unique ^^null_field : $field;
-//axiom $null == $ptr(^^null_field, 0);
 axiom $addr($null) == 0;
-axiom (forall t:$ctype :: {$f_root(t)} $is_null($ptr($f_root(t), $base($null))));
-axiom (forall f:$field, t:$ctype, b:$base :: {$ptr($f_casted(t, f), $to_spec_base(b))}
-  $is_null($ptr($f_casted(t, f), $to_spec_base(b))) <==> $is_null($ptr(f, b)));
-axiom (forall f:$field, t:$ctype, b:$base :: {$ptr($f_casted(t, f), $to_phys_base(b))}
-  $is_null($ptr($f_casted(t, f), $to_phys_base(b))) <==> $is_null($ptr(f, b)));
 axiom $in_range_spec_ptr($null) && $in_range_phys_ptr($null);
 
-const $me_ref : $base;
-const unique ^$thread_id#root: $field;
-const unique ^$thread_id#owns: $field;
-const unique ^$thread_id#ref_cnt: $field;
 const unique ^$#thread_id_t: $ctype;
-
 function $me() : $ptr;
-axiom $def_composite_type(^$#thread_id_t, ^$thread_id#root, ^$thread_id#owns, ^$thread_id#ref_cnt, 1, false, true);
-
-axiom $me() == $ptr(^$thread_id#root, $me_ref);
+axiom $def_composite_type(^$#thread_id_t, 1, false, true);
+axiom $field($me()) == $f_root(^$#thread_id_t);
 axiom $in_range_spec_ptr($me());
 axiom $non_null($me());
+axiom $is_proper($me());
 
 // ----------------------------------------------------------------------------
 // Arrays
@@ -400,14 +425,13 @@ function {:inline true} $def_ghost_arr_field(partp:$ctype, f:$field, tp:$ctype, 
     true
   }
 
-function $idx_nested(p:$ptr, i:int) : $ptr;
-function $idx_prim(p:$ptr, i:int) : $ptr
+function $idx(p:$ptr, i:int) : $ptr
   {
-    $ptr($field_plus($field(p), i), $base(p))
+    $dot($base(p), $field_plus($field(p), i))
   }
 
-axiom (forall p:$ptr, i:int :: {$addr($idx_prim(p, i))}
-  $addr($idx_prim(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
+axiom (forall p:$ptr, i:int :: {$addr($idx(p, i))}
+  $addr($idx(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
 
 function $field_plus($field, int) : $field;
 axiom (forall f:$field, i:int :: {$field_plus(f, i)}
@@ -418,17 +442,19 @@ axiom (forall f:$field, i:int :: {$field_plus(f, i)}
   $field_type($field_plus(f, i)) == $field_type(f) &&
   $as_field_with_type($field_plus(f, i), $field_type(f)) == $field_plus(f, i) &&
   $is_sequential_field($field_plus(f, i)) == $is_sequential_field($field_plus(f, i)) &&
+  $is_phys_field($field_plus(f, i)) == $is_phys_field(f) &&
   ($in_range(0, $field_arr_index(f) + i, $field_arr_size(f) - 1) ==> 
-    $field_parent_type($field_plus(f, i)) == $field_parent_type($field_arr_root(f))) &&
+     $field_parent_type($field_plus(f, i)) == $field_parent_type($field_arr_root(f))) &&
   true
   );
 
 function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {   
      $is(p, T)
+  && $is_proper(p)
   && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
   && $field(p) == $field_plus($field_arr_root($field(p)), $field_arr_index($field(p)))
-  && ($is_primitive(T) ==> $field_kind($field(p)) != $fk_base)
+  && $field_kind($field(p)) != $fk_base
   && $field_arr_index($field(p)) >= 0
   && $is_non_primitive($typ($emb(S, p)))
 }
@@ -436,13 +462,15 @@ function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {
      $is_array(S, p, T, sz)
-  && $thread_local_np(S, $emb0(p))
+  && if $is_primitive(T) then $thread_local_np(S, $emb0(p))
+     else (forall i:int :: {$owner(S, $idx(p, i))} 0 <= i && i < sz ==> $thread_local(S, $idx(p, i)))
 }
 
 function $is_mutable_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {
      $is_array(S, p, T, sz)
-  && $mutable(S, $emb0(p))
+  && if $is_primitive(T) then $mutable(S, $emb0(p))
+     else (forall i:int :: {$owner(S, $idx(p, i))} 0 <= i && i < sz ==> $mutable(S, $idx(p, i)))
 }
 
 function $array_range(S:$state, p:$ptr, T:$ctype, sz:int) : $ptrset
@@ -457,12 +485,13 @@ function $simple_index(p:$ptr, arr:$ptr) : bool;
 
 function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
   { if $is_primitive(T) then
-      (lambda q:$ptr :: $emb0(q) == $emb0(p) &&
+      (lambda q:$ptr :: $is_proper(q) &&
+                        $emb0(q) == $emb0(p) &&
                         $field_arr_root($field(q)) == $field_arr_root($field(p)) &&
                         $field_arr_index($field(q)) - $field_arr_index($field(p)) < sz &&
                         $field_kind($field(q)) != $fk_base)
     else
-      (lambda q:$ptr :: $in(q, $full_extent($idx_nested(p, $index_within(q, p)))))
+      (lambda q:$ptr :: $is_proper(q) && $in(q, $full_extent($idx(p, $index_within(q, p)))))
   }
 
 // ----------------------------------------------------------------------------
@@ -480,38 +509,26 @@ axiom (forall T:$ctype, s:int :: {$array(T, s)}
   && $is_non_primitive($array(T, s))
   && !$is_claimable($array(T, s))
   && $type_branch($array(T, s)) == $ctype_array
+  && !$is_volatile_field($f_owns($array(T, s)))
 );
 axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
 
-function $array_root($ctype, int) : $field;
 function $array_emb($ctype, int) : $field;
-function $array_root_tp($field) : $ctype;
-function $array_root_sz($field) : int;
-
-axiom (forall t:$ctype, sz:int :: {$array_root(t, sz)} {$array(t, sz)}
-  $array_root_tp($array_root(t, sz)) == t &&
-  $array_root_sz($array_root(t, sz)) == sz &&
-  $f_root($array(t, sz)) == $array_root(t, sz) &&
-  $field_kind($array_root(t, sz)) == $fk_as_array_root &&
-  $def_field($array(t, sz), $array_root(t, sz), $array(t, sz), false) &&
-  $is_ghost_field($array_root(t, sz)) &&
-  true);
 
 axiom (forall t:$ctype, sz:int :: {$array_emb(t, sz)} {$array(t, sz)}
-  $array_root_tp($array_emb(t, sz)) == t &&
-  $array_root_sz($array_emb(t, sz)) == sz &&
-  $field_kind($array_emb(t, sz)) == $fk_as_array_emb &&
-  $def_field($array(t, sz), $array_emb(t, sz), t, false) &&
+  $def_field_family($array(t, sz), $array_emb(t, sz), t) &&
+  $field_kind($array_emb(t, sz)) == $fk_as_array_first &&
   $is_phys_field($array_emb(t, sz)) &&
   $field_offset($array_emb(t, sz)) == 0 &&
   $field_arr_size($array_emb(t, sz)) == sz &&
-  $field_arr_root($array_emb(t, sz)) == $array_emb(t, sz) &&
+  $is_sequential_field($array_emb(t, sz)) &&
   true);
 
 function $as_array(p:$ptr, T:$ctype, sz:int) : $ptr
   {
-      if $field(p) == $array_emb(T, sz) then
-        $ptr($array_root(T, sz), $base(p))
+      if $field($emb1(p)) == $f_root($array(T, sz)) &&
+         $field(p) == $array_emb(T, sz) then
+        $emb1(p)
       else
         $phys_ptr_cast($null, $array(T, sz))
   }
@@ -529,10 +546,6 @@ function $roots(s:$state) : $roots;
 function $heap(s:$state) : $object;
 // returns a pointer for a given address and type
 function $typemap($owner) : [int, $ctype]$ptr;
-
-function $f_root($ctype) : $field;
-function $f_owns($ctype) : $field;
-function $f_ref_cnt($ctype) : $field;
 
 // just tmp
 function {:inline true} $is_malloc_root(S:$state, p:$ptr) : bool
@@ -558,7 +571,7 @@ function {:inline true} $current_state(s:$state) : $state { s }
 function {:inline false} $owner(S:$state, p:$ptr) : $ptr
   { $f_owner(S)[p] }
 function {:inline false} $closed(S:$state, p:$ptr) : bool
-  { $f_closed(S)[p] }
+  { $is_proper(p) && $f_closed(S)[p] }
 function {:inline false} $timestamp(S:$state, p:$ptr) : int
   { $f_timestamp(S)[p] }
 function {:inline false} $ref_cnt(S:$state, p:$ptr) : int
@@ -577,7 +590,7 @@ function {:inline true} $keeps(S:$state, #l:$ptr, #p:$ptr) : bool
   { $set_in(#p, $owns(S, #l)) }
 
 function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
-  { $is(#p,#t) && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive(#t) }
+  { $is(#p,#t) && $is_proper(#p) && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive(#t) }
 
 function {:inline true} $nested(S:$state, p:$ptr) : bool
   { $typ($owner(S, p)) != ^$#thread_id_t }
@@ -601,13 +614,8 @@ function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
       $owner(S, p) == $me()
   }
 
-function $in_range_phys_base(b:$base) : bool;
-function $in_range_spec_base(b:$base) : bool;
-
-function {:inline true} $in_range_phys_ptr(p:$ptr) : bool
-  { $in_range_phys_base($base(p)) }
-function {:inline true} $in_range_spec_ptr(p:$ptr) : bool
-  { $in_range_spec_base($base(p)) }
+function $in_range_phys_ptr(p:$ptr) : bool;
+function $in_range_spec_ptr(p:$ptr) : bool;
 
 const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-generated axiom
 
@@ -672,6 +680,7 @@ function $in_wrapped_domain(S:$state, p:$ptr) : bool;
 
 function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
   { !$is_primitive($typ(p))
+  && $is_proper(p)
   && $owner(S, $root(S, p)) == $me()
 //     ($wrapped(S, $root(S, p), $typ($root(S, p))) && $set_in(p, $domain(S, $root(S, p)))))
   }
@@ -679,6 +688,7 @@ function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
 // required for reading
 function $thread_local(S:$state, p:$ptr) : bool
   { 
+    $is_proper(p) &&
     if $is_primitive($typ(p)) then
       ($is_sequential_field($field(p)) || !$closed(S, $emb(S, p))) && $thread_local_np(S, $emb(S, p))
     else
@@ -766,7 +776,6 @@ function {:inline true} $closed_is_transitive(S:$state) : bool
       $good_state(S) &&
       $set_in(p, $owns_inline(S, q)) && $closed(S, q) ==> 
          $is_non_primitive($typ(p)) && 
-         $field(p) == $f_root($typ(p)) &&
          $owner(S, p) == q &&
          $closed(S, p) && 
          $non_null(p) &&
@@ -783,7 +792,7 @@ axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in_pos(p, $owns(S, q)), $is_non_
 
 axiom (forall S:$state, #r:$base, #t:$ctype, #f:$field, #sz:int :: {$owns(S, $ptr($as_field_with_type(#f,$array(#t,#sz)), #r))}
   $good_state(S) ==>
-    $owns(S, $ptr(#f, #r)) == $set_empty());
+    $owns(S, $ptr($as_field_with_type(#f,$array(#t,#sz)), #r)) == $set_empty());
 
 axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
   $invok_state(S) && $closed(S, #p) ==> $inv(S, #p, #t));
@@ -799,11 +808,14 @@ axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
 
 axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$root(S, p)}
   $good_state(S) ==>
-  $owner(S, p) == $me() ==> $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $root(S, p) == p);
+  $owner(S, p) == $me() ==> $is_proper(p) && $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $root(S, p) == p);
 
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
-  $good_state(S) && $typ($owner(S, r)) != ^$#thread_id_t ==>
-    $root(S, r) == $root(S, $owner(S, r)));
+  $good_state(S) ==>
+    $non_null($owner(S, r)) && $is_proper($owner(S, r)) &&
+    ($typ($owner(S, r)) != ^$#thread_id_t ==>
+      $is_proper(r) && $non_null(r) && $is_non_primitive($typ(r)) &&
+      $root(S, r) == $root(S, $owner(S, r))));
 
 axiom (forall S:$state, p:$ptr ::
   {$root(S, $root(S, p))}
@@ -946,11 +958,11 @@ function {:inline true} $is_fresh(M1:$state, M2:$state, p:$ptr) : bool
   { $current_timestamp(M1) < $timestamp(M2, p) && $timestamp(M2, p) <= $current_timestamp(M2) }
 
 function {:inline true} $writable(S:$state, begin_time:int, p:$ptr) : bool
-  { $is_non_primitive($typ(p)) &&
+  { $is_non_primitive($typ(p)) && $is_proper(p) &&
     ($mutable(S, p) && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $writable_prim(S:$state, begin_time:int, p:$ptr) : bool
-  { $is_primitive($typ(p)) &&
+  { $is_primitive($typ(p)) && $is_proper(p) &&
     ($mutable(S, $emb0(p)) && ($timestamp(S, $emb0(p)) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $listed_in_writes(S:$state, begin_time:int, p:$ptr) : bool
@@ -1002,13 +1014,14 @@ function $is_in_stackframe(#sf:int, p:$ptr) : bool;
 function $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
 {    true
   && $is(r, t)
+  && $is_proper(r)
   && $writes_nothing(S0, S)
   && $heap(S) == $heap(S0)
   && $timestamp_post_strict(S0, S)
   && $owner(S0, r) != $me()
   && 
     if $is_primitive(t) then
-      (   $field(r) == $f_allocated(t)
+      (   $field(r) == $f_root(t)
        && $mutable(S, $emb0(r))
        && $timestamp_is_now(S, $emb0(r)))
     else
@@ -1218,18 +1231,18 @@ procedure $static_wrap_non_owns(o:$ptr, S:$state);
 
 function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { (forall f:$field :: {$rd(S2, p, f)}
-      $field_parent_type(f) == t && f != $f_ref_cnt(t) ==> $rd(S1, p, f) == $rd(S2, p, f)) }
+      $is_proper($dot(p, f)) && f != $f_ref_cnt(t) ==> $rd(S1, p, f) == $rd(S2, p, f)) }
 
 function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { (forall f:$field :: {$rd(S2, p, f)}
       // ref_cnt is always volatile
-      $field_parent_type(f) == t && $is_sequential_field(f)
+      $is_proper($dot(p, f)) && $is_sequential_field(f)
         ==> $rd(S1, p, f) == $rd(S2, p, f)) }
 
 function $good_for_admissibility(S:$state) : bool;
 function $good_for_post_admissibility(S:$state) : bool;
 function $admissibility_start(p:$ptr, t:$ctype) : bool
-  { $is(p, t) }
+  { $is(p, t) && $is_proper(p) }
 
 function {:inline true} $stuttering_pre(S:$state, p:$ptr) : bool
   { (forall q: $ptr :: {$closed(S, q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
@@ -1334,14 +1347,14 @@ axiom (forall S:$state, q,r:$ptr :: { $in_domain(S, r, $root(S, q)) }
 function $composite_extent(S:$state, r:$ptr, t:$ctype) : $ptrset;
 
 function $extent(S:$state, r:$ptr) : $ptrset
-  { (lambda p:$ptr :: $composite_extent(S, r, $typ(r))[$emb0(p)]) }
+  { (lambda p:$ptr :: $is_proper(p) && $composite_extent(S, r, $typ(r))[$emb0(p)]) }
 
 const $full_extent_state : $state;
 function $full_extent(r:$ptr) : $ptrset
   { (lambda p:$ptr :: $composite_extent($full_extent_state, r, $typ(r))[$emb0(p)]) }
 
 function $span(S:$state, o:$ptr) : $ptrset
-  { (lambda p:$ptr :: $emb(S, p) == o) }
+  { (lambda p:$ptr :: $is_proper(p) && $emb0(p) == o) }
 function $first_option_typed(S:$state, #p:$ptr) : bool;
 
 function {:inline true} $struct_extent(#p:$ptr) : $ptrset

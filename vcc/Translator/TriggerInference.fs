@@ -36,13 +36,16 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
     // level 4
     | B.Expr.FunctionCall (("$keeps"|"$set_in0"), _) -> 4
     | B.Expr.FunctionCall ("$set_in", [_; B.Expr.FunctionCall ("$owns", _)]) -> 4
+    | B.Expr.ArrayIndex (B.Expr.FunctionCall ("$owns", _), _) -> 4
 
     // level 3
     | B.Expr.FunctionCall ("$set_in", _) -> 3
     | B.Expr.FunctionCall (name, _) when name.StartsWith "$select.$map" -> 3
+    | B.Expr.ArrayIndex (_, _) -> 3
 
     // list of bad patterns: 
     | B.Expr.FunctionCall ("$ptr", [_; B.Expr.Ref _]) -> 1 
+    | B.Expr.FunctionCall (("$field_parent_type"|"$field_type"|"$base"|"$is_primitive"|"$is"|"$addr"|"$field"|"$is_null"), _) -> -1 
     | B.Expr.FunctionCall (("$ref"|"$base"|"$addr"), [B.Expr.FunctionCall ("$ptr", [_; B.Expr.Ref _])]) -> -1
 
     // all the rest:
@@ -64,7 +67,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
     | B.Expr.Forall _
     | B.Expr.Lambda _
     | B.Expr.Ite _
-    | B.Expr.Primitive (("&&"|"||"|"=="|"!="|"==>"|"<==>"), _) -> true
+    | B.Expr.Primitive (("&&"|"||"|"=="|"!="|"==>"|"<==>"|"!"|"anyEqual"), _) -> true
 
     // Boogie doesn't allow comparisons
     | B.Expr.Primitive (("<"|">"|"<="|">="), _) -> true
@@ -195,7 +198,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
         match expr with
           | B.Expr.FunctionCall (name, args) ->
             match functions.TryGetValue name with
-              | true, f -> Some (f.Expand (List.map self args))
+              | true, f -> Some (self (f.Expand args))
               | _ -> None
           | _ -> None
       else
