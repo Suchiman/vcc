@@ -423,13 +423,7 @@ namespace Microsoft.Research.Vcc
                 bCall "$dot" [self o; er (fieldName f)]
               | C.Expr.Index (_, arr, idx) ->
                 if vcc3 then
-                  match arr.Type with
-                    | C.Type.PhysPtr t ->
-                      if t.IsComposite then
-                        bCall "$idx_nested" [self arr; self idx]
-                      else
-                        bCall "$idx_prim" [self arr; self idx]
-                    | _ -> die()
+                  bCall "$idx" [self arr; self idx]
                 else
                   bCall "$idx" [self arr; self idx; ptrType arr]
               | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
@@ -1681,6 +1675,9 @@ namespace Microsoft.Research.Vcc
           match f.Type with
             | C.Array (_, sz) ->              
               [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_arr_field" else "$def_phys_arr_field") (args @ [bInt sz]))]
+            | C.Type.Ref (td) when td.Name.Contains "##" && f.ByteOffset = 0 ->
+              let args = args |> Seq.take 3 |> Seq.toList
+              [B.Decl.Axiom (bCall "$def_group" args)]
             | _ -> 
               [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_field" else "$def_phys_field") args)]
         def @ axs
@@ -2195,11 +2192,8 @@ namespace Microsoft.Research.Vcc
                           
         let forward =
           if vcc3 then
-            let fieldNames = [td.Name + ".#root"; td.Name + ".#owns"; td.Name + ".#ref_cnt"]
-            let fieldDecls = List.map (declConst tpField) fieldNames
-            let fieldRefs = List.map er fieldNames
-            let defAx = bCall "$def_composite_type" (we :: fieldRefs @ [bInt td.SizeOf; B.Expr.BoolLiteral !owns_set_is_volatile; B.Expr.BoolLiteral !is_claimable])
-            forward @ fieldDecls @ [B.Decl.Axiom defAx]
+            let defAx = bCall "$def_composite_type" [we; bInt td.SizeOf; B.Expr.BoolLiteral !owns_set_is_volatile; B.Expr.BoolLiteral !is_claimable]
+            forward @ [B.Decl.Axiom defAx]
           else
             forward @ 
               [B.Decl.Axiom (bCall "$is_composite" [we]);

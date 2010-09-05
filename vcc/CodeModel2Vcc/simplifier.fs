@@ -1222,6 +1222,24 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================\
     
+    let fixGroupCasts self = 
+      function
+        | Expr.Cast ({ Type = PtrSoP (Type.Ref td, spec)} as c1, ch, e) when td.IsGroup ->
+          let par = td.Parent.Value
+          let isUs (f:Field) = f.Type = Type.Ref td
+          let f = List.find isUs par.Fields
+          let res e = Some (Expr.Dot (c1, e, f))
+          match e.Type with
+            | Ptr (Type.Ref sub) ->
+              if sub = par then res e
+              else if sub.IsGroup && sub.Parent.Value = par then
+                res (Expr.Cast ({ c1 with Type = Type.MkPtr (Type.Ref par, spec) }, ch, e))
+              else None
+            | _ -> None
+        | _ -> None
+    
+    // ============================================================================================================\
+    
     helper.AddTransformer ("desugar-begin", Helper.DoNothing)
     
     helper.AddTransformer ("desugar-ite", Helper.Decl removeLazyOps)
@@ -1237,5 +1255,8 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("desugar-addressable-locals", Helper.Decl heapifyAddressedLocals)
     helper.AddTransformer ("desugar-globals", Helper.Decl handleGlobals)
     helper.AddTransformer ("desugar-loops", Helper.Expr (loopAndSwitchDesugaring None))
+
+    if helper.Options.Vcc3 then
+      helper.AddTransformer ("fix-group-casts", Helper.Expr fixGroupCasts)
      
     helper.AddTransformer ("desugar-end", Helper.DoNothing)

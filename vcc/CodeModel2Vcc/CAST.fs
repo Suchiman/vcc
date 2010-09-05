@@ -197,6 +197,7 @@ module Microsoft.Research.Vcc.CAST
         | MathType -> "_math "
         | FunctDecl d -> "_fnptr ") + this.Name
     
+    member this.IsGroup = List.exists (function VccAttr ("__vcc_group", "") -> true | _ -> false) this.CustomAttr
     member this.IsUnion = this.Kind = Union
     
     member this.Declaration () =
