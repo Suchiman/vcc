@@ -549,10 +549,6 @@ function $heap(s:$state) : $object;
 // returns a pointer for a given address and type
 function $typemap($owner) : [int, $ctype]$ptr;
 
-// just tmp
-function {:inline true} $is_malloc_root(S:$state, p:$ptr) : bool
-  { $is_malloc_root_ptr(p) }
-function $is_malloc_root_ptr(p:$ptr) : bool;
 
 function {:inline true} $root(s:$state, p:$ptr) : $ptr
   { $roots(s)[p] }
@@ -873,6 +869,11 @@ function {:inline true} $rd_spec_ptr_local(h:[$ptr]int, f:$field, p:$ptr, t:$cty
 function {:inline true} $rd_phys_ptr_local(h:[$ptr]int, f:$field, p:$ptr, t:$ctype) : $ptr
   { $phys_ptr_cast($int_to_ptr(h[p]), t) }
 
+procedure $write_ref_cnt(p:$ptr, v:int);
+  modifies $s;
+  ensures $specials_eq(old($s), $s);
+  ensures $heap($s) == $update($heap(old($s)), p, $f_ref_cnt($typ(p)), v);
+  ensures $timestamp_post_strict(old($s), $s);
 
 procedure $set_owns(p:$ptr, owns:$ptrset);
   // writes p
@@ -1011,7 +1012,7 @@ function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
 
 function $is_in_stackframe(#sf:int, p:$ptr) : bool;
 
-function $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
+function {:inline true} $is_allocated0(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
 {    true
   && $is(r, t)
   && $is_proper(r)
@@ -1019,6 +1020,11 @@ function $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
   && $heap(S) == $heap(S0)
   && $timestamp_post_strict(S0, S)
   && $owner(S0, r) != $me()
+  && $is_malloc_root(S, r)
+}
+
+function {:inline true} $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
+{    $is_allocated0(S0, S, r, t)
   && 
     if $is_primitive(t) then
       (   $field(r) == $f_root(t)
@@ -1030,6 +1036,12 @@ function $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
         && $first_option_typed(S, r))
 }
 
+// just tmp
+function {:inline true} $is_malloc_root(S:$state, p:$ptr) : bool
+  { $is_object_root(S, p) }
+function {:inline true} $is_object_root(S:$state, p:$ptr) : bool
+  { $is_object_root_ptr(p) }
+function $is_object_root_ptr(p:$ptr) : bool;
 
 procedure $stack_alloc(t:$ctype, sf:int, spec:bool) returns (r:$ptr);
   modifies $s;
@@ -1304,6 +1316,138 @@ procedure $unwrap_check(o:$ptr);
   ensures $is_unwrapped(old($s), $s, o);
 
 
+// --------------------------------------------------------------------------------
+// Claims
+// --------------------------------------------------------------------------------
+
+function $claims_obj(claim:$ptr, obj:$ptr) : bool;
+function $valid_claim(S:$state, claim:$ptr) : bool;
+
+axiom (forall S:$state, c:$ptr :: {$full_stop(S), $valid_claim(S, c)}
+  $full_stop(S) && $closed(S, c) ==> $valid_claim(S, c));
+
+axiom (forall S:$state, c:$ptr :: {$valid_claim(S, c)}
+  $valid_claim(S, c) ==> $closed(S, c) && $invok_state(S));
+
+function {:inline true} $claim_initial_assumptions(#s1:$state, c:$ptr, tok:$token) : bool
+  { $good_state_ext(tok, #s1) &&
+    $closed_is_transitive(#s1) &&
+    true
+  }
+
+function {:inline true} $inv2_when_closed(#s1:$state, #s2:$state, #p:$ptr, typ:$ctype) returns (bool)
+  { (!$closed(#s1, #p) && !$closed(#s2, #p)) || ($inv2(#s1, #s2, #p, typ) && $nonvolatile_spans_the_same(#s1, #s2, #p, typ)) }
+
+function {:inline true} $claim_transitivity_assumptions(#s1:$state, #s2:$state, c:$ptr, tok:$token) : bool
+  { $full_stop_ext(tok, #s1) &&
+    $good_state_ext(tok, #s2) &&
+    $closed_is_transitive(#s1) &&
+    $closed_is_transitive(#s2) &&
+    (forall #p:$ptr :: {$closed(#s1,#p)} {$closed(#s2,#p)} $inv2_when_closed(#s1,#s2,#p,$typ(#p))) &&
+    $valid_claim(#s1, c) &&
+    $closed(#s2, c) &&
+    true
+    }
+
+function {:inline true} $valid_claim_impl(S0:$state, S1:$state) : bool
+  { (forall r:$ptr, f:$field :: {$closed(S1, $ptr($as_field_with_type(f, ^^claim), r))}
+       $is($ptr(f, r), ^^claim) ==> 
+       $closed(S0, $ptr(f, r)) && $closed(S1, $ptr(f, r)) ==> $valid_claim(S1, $ptr(f, r))) }
+
+function $claims_claim(c1:$ptr, c2:$ptr) : bool;
+axiom (forall c1:$ptr, c2:$ptr :: {$claims_claim(c1, c2)}
+  $is(c1, ^^claim) && $is(c2, ^^claim) &&
+  (forall S:$state :: $valid_claim(S, c1) ==> $closed(S, c2)) 
+  ==>
+  $claims_claim(c1, c2));
+
+axiom (forall S:$state, c1:$ptr, c2:$ptr :: {$valid_claim(S, c1), $claims_claim(c1, c2)}
+  $valid_claim(S, c1) && $claims_claim(c1, c2) ==> $valid_claim(S, c2));
+
+axiom (forall S:$state, c:$ptr, o:$ptr ::
+    {$closed(S, c), $claims_obj(c, o)}
+    $good_state(S) ==>
+      $claims_obj(c, o) && $closed(S, c) ==> $instantiate_ptrset($owns(S, o)) && $closed(S, o) && $ref_cnt(S, o) > 0);
+
+axiom (forall S:$state, c:$ptr, o:$ptr ::
+    {$valid_claim(S, c), $claims_obj(c, o)}
+    $valid_claim(S, c) && $claims_obj(c, o) ==> $inv(S, o, $typ(o)));
+
+axiom (forall S:$state, c:$ptr, r:$ptr, f:$field ::
+    {$valid_claim(S, c), $claims_obj(c, $ptr($as_field_with_type(f, ^^claim), r))}
+    $is($ptr(f, r), ^^claim) ==>
+    $valid_claim(S, c) && $claims_obj(c, $ptr(f, r)) ==>
+      $valid_claim(S, $ptr(f, r)));
+
+function {:weight 0} $not_shared(S:$state, p:$ptr) returns(bool)
+  { $wrapped(S, p, $typ(p)) && (!$is_claimable($typ(p)) || $ref_cnt(S, p) == 0) }
+
+function {:weight 0} $claimed_closed(s:$state, p:$ptr) returns(bool)
+  { $closed(s, p) }
+
+axiom (forall S:$state, p:$ptr :: {$invok_state(S), $claimed_closed(S, p)}
+  $invok_state(S) && $claimed_closed(S, p) ==> $inv(S, p, $typ(p)));
+
+// called at the beginning of an atomic block to simulate other threads
+procedure $atomic_havoc();
+  modifies $s;
+  ensures $writes_nothing(old($s), $s);
+
+  ensures (forall p:$ptr, f:$field ::
+    {$not_shared(old($s), p), $rd($s, p, f)}
+    $not_shared(old($s), p) ==> $rd($s, p, f) == $rd(old($s), p, f));
+  ensures $timestamp_post_strict(old($s), $s);
+
+const unique $no_claim : $ptr;
+axiom $no_claim == $spec_ptr_cast($null, ^^claim);
+
+procedure $alloc_claim() returns(r:$ptr);
+  modifies $s;
+  ensures $is_allocated0(old($s), $s, r, ^^claim);
+  ensures $timestamp_is_now($s, r);
+  ensures $wrapped($s, r, ^^claim);
+  ensures $in_range_spec_ptr(r);
+  ensures $owns($s, r) == $set_empty();
+  ensures $ref_cnt($s, r) == 0;
+  ensures r != $no_claim;
+
+function {:inline true} $claim_killed(S0:$state, S:$state, c:$ptr) : bool
+{
+  $f_closed(S) == $f_closed(S0)[ c := false ] &&
+  $f_timestamp(S) == $f_timestamp(S0) &&
+  $f_owner(S) == $f_owner(S0) &&
+  $heap(S) == $heap(S0) &&
+  $good_state(S)
+}
+
+// FIXME should it havoc non thread local state?
+procedure $unclaim(c:$ptr);
+  modifies $s;
+  // TOKEN: the claim is wrapped
+  requires $wrapped($s, c, ^^claim);
+  // TOKEN: the claim has no outstanding references
+  requires $ref_cnt($s, c) == 0;
+  ensures $claim_killed(old($s), $s, c);
+
+procedure $kill_claim(c:$ptr);
+  modifies $s;
+  ensures $claim_killed(old($s), $s, c);
+
+function $claims_upgrade(the_new:$ptr, the_old:$ptr) : bool
+  { (forall o:$ptr :: $claims_obj(the_old, o) ==> $claims_obj(the_new, o)) }
+
+function $account_claim(S:$state, c:$ptr, o:$ptr) : bool
+  { $good_state(S) && $closed(S, c) && $claims_obj(c, o) }
+
+function $claim_no(S:$state, o:$ptr, idx:int) : $ptr;
+function $claim_idx(o:$ptr, c:$ptr) : int;
+
+axiom (forall S:$state, c:$ptr, o:$ptr :: {$account_claim(S, c, o)}
+  $account_claim(S, c, o) ==>
+    $claim_no(S, o, $claim_idx(o, c)) == c &&
+    0 <= $claim_idx(o, c) && $claim_idx(o, c) < $ref_cnt(S, o));
+    
+
 // -----------------------------------------------------------------------
 // Laballed invariants
 // -----------------------------------------------------------------------
@@ -1331,14 +1475,82 @@ axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $root(S, p))}
   $full_stop(S) && $wrapped(S, $root(S, p), $typ($root(S, p))) ==> $in_domain(S, p, $root(S, p)));
 
 axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
-  $full_stop(S) && $in_domain(S, p, q) ==> 
-    $inv(S, p, $typ(p)) && $set_in0(p, $owns(S, $owner(S, p))));
+  $in_domain(S, p, q) ==> 
+    $root(S, p) == q &&
+    $wrapped(S, q, $typ(q)) &&
+    $closed(S, p) &&
+    $set_in(p, $domain(S, q)) &&
+    $inv(S, p, $typ(p)) && 
+    $set_in0(p, $owns(S, $owner(S, p))));
+
+axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
+  $full_stop(S) && $set_in(p, $domain(S, q)) && $wrapped(S, q, $typ(q)) ==> $in_domain(S, p, q));
 
 axiom (forall S:$state, q,r:$ptr :: { $in_domain(S, r, $root(S, q)) }
-     $in_domain(S, q, $root(S, q)) && $set_in0(r, $owns(S, q)) ==>
+     $in_domain(S, q, $root(S, q)) && 
+     !$is_volatile_field($f_owns($typ(q))) &&
+     $set_in0(r, $owns(S, q)) ==>
         $owner(S, r) == q && 
         $root(S, r) == $root(S, q) && 
         $in_domain(S, r, $root(S, q)));
+
+type $version;
+function $ver_domain($version) : $ptrset;
+function $int_to_version(int) : $version;
+function {:inline true} $read_version(S:$state, p:$ptr) : $version
+  { $int_to_version($f_timestamp(S)[p]) }
+function {:inline true} $domain(S:$state, p:$ptr) : $ptrset
+  { $ver_domain($read_version(S, p)) }
+
+axiom (forall S:$state, p:$ptr, q:$ptr, r:$ptr :: 
+  { $set_in(q, $domain(S, p)), $in_vdomain(S, r, p) }
+  $is_volatile_field($f_owns($typ(q))) && 
+  $set_in(q, $domain(S, p)) &&
+  (forall S1:$state :: 
+      $inv(S1, q, $typ(q)) && 
+      $read_version(S1, p) == $read_version(S, p) &&
+      $domain(S1, p) == $domain(S, p)
+      ==> $set_in0(r, $owns(S1, q)))
+    ==> $in_vdomain(S, r, p) && $set_in0(r, $owns(S, q)));
+
+axiom (forall S:$state, p:$ptr, q:$ptr :: 
+  { $in_vdomain(S, p, q) } $in_vdomain(S, p, q) ==> $in_domain(S, p, q));
+
+function $fetch_from_domain(v:$version, p:$ptr, f:$field) : int;
+
+axiom (forall S:$state, p:$ptr, d:$ptr, f:$field ::
+  { $set_in(p, $domain(S, d)), $rd(S, p, f), $is_sequential_field(f) }
+  $set_in(p, $domain(S, d)) && $is_sequential_field(f) ==>
+    $rd(S, p, f) == $fetch_from_domain($read_version(S, d), p, f));
+
+/*
+axiom (forall p:$ptr, S1:$state, S2:$state, q:$ptr :: 
+  {:weight 0} {$set_in(q, $domain(S1, p)), $call_transition(S1, S2)}
+    $instantiate_bool($set_in(q, $domain(S2, p))));
+    
+axiom (forall p:$ptr, S1:$state, S2:$state, q:$ptr :: 
+  {:weight 0} {$set_in(q, $ver_domain($read_version(S1, p))), $call_transition(S1, S2)}
+    $instantiate_bool($set_in(q, $ver_domain($read_version(S2, p)))));
+*/
+
+function $in_claim_domain(p:$ptr, c:$ptr) : bool;
+axiom (forall p:$ptr, c:$ptr :: {$in_claim_domain(p, c)}
+  (forall s:$state :: {$dont_instantiate_state(s)} $valid_claim(s, c) ==> $closed(s, p)) ==>
+    $in_claim_domain(p, c));
+
+function $by_claim(S:$state, c:$ptr, obj:$ptr, ptr:$ptr) : $ptr
+  { ptr }
+
+function $claim_version($ptr) : $version;
+
+axiom (forall S:$state, p:$ptr, c:$ptr, f:$field :: 
+  {$in_claim_domain(p, c), $rd(S, p, f)}
+  {$by_claim(S, c, p, $dot(p, f))}
+  $good_state(S) &&
+  $closed(S, c) && $in_claim_domain(p, c) && $is_sequential_field(f) ==>
+    $in_claim_domain(p, c) &&
+    $rd(S, p, f) == $fetch_from_domain($claim_version(c), p, f)
+    );
 
 // -----------------------------------------------------------------------
 // Span & extent
