@@ -242,7 +242,8 @@ function $emb0(p:$ptr) : $ptr
 
 function $is_sequential_field($field) : bool;
 function $is_volatile_field($field) : bool;
-function $is_primitive_field($field) : bool;
+function $as_primitive_field($field) : $field;
+function $as_composite_field($field) : $field;
 function $as_field_with_type($field,$ctype) : $field;
 function {:inline true} $as_ptr_with_type(p:$ptr, t:$ctype) : $ptr
   { $ptr($as_field_with_type($field(p), t), $base(p)) }
@@ -256,7 +257,8 @@ function {:inline true} $def_field_family(partp:$ctype, f:$field, tp:$ctype) : b
     $field_parent_type(f) == partp &&
     $field_type(f) == tp &&
     $as_field_with_type(f, tp) == f &&
-    ($is_primitive(tp) <==> $is_primitive_field(f)) &&
+    ($is_primitive(tp) ==> $as_primitive_field(f) == f) &&
+    (!$is_primitive(tp) ==> $as_composite_field(f) == f) &&
     $field_arr_root(f) == f &&
     true
   }
@@ -551,8 +553,6 @@ function $typemap($owner) : [int, $ctype]$ptr;
 function {:inline true} $is_malloc_root(S:$state, p:$ptr) : bool
   { $is_malloc_root_ptr(p) }
 function $is_malloc_root_ptr(p:$ptr) : bool;
-
-function $mem(s:$state, p:$ptr) : int;  // FIXME
 
 function {:inline true} $root(s:$state, p:$ptr) : $ptr
   { $roots(s)[p] }
@@ -1351,7 +1351,7 @@ function $extent(S:$state, r:$ptr) : $ptrset
 
 const $full_extent_state : $state;
 function $full_extent(r:$ptr) : $ptrset
-  { (lambda p:$ptr :: $composite_extent($full_extent_state, r, $typ(r))[$emb0(p)]) }
+  { (lambda p:$ptr :: $is_proper(p) && $composite_extent($full_extent_state, r, $typ(r))[$emb0(p)]) }
 
 function $span(S:$state, o:$ptr) : $ptrset
   { (lambda p:$ptr :: $is_proper(p) && $emb0(p) == o) }
@@ -1362,14 +1362,60 @@ function {:inline true} $struct_extent(#p:$ptr) : $ptrset
 
 function $extent_mutable(S:$state, r:$ptr) : bool
   { $mutable(S, r) && 
-    (forall p:$ptr :: {$in(p, $composite_extent(S, r, $typ(r)))} $in(p, $composite_extent(S, r, $typ(r))) ==> $mutable(S, p)) }
+    (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $mutable(S, p)) }
   
 function $extent_is_fresh(S:$state, r:$ptr) : bool
   { $timestamp_is_now(S, r) &&
-    (forall p:$ptr :: {$in(p, $extent(S, r))} $in(p, $extent(S, r)) ==> $timestamp_is_now(S, p)) }
+    (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $timestamp_is_now(S, p)) }
 
 function $volatile_span(S:$state, q:$ptr) : $ptrset
-  { (lambda p:$ptr :: $is_volatile_field($field(p)) && $emb0(p) == q) }
+  { (lambda p:$ptr :: $is_proper(p) && $is_volatile_field($field(p)) && $emb0(p) == q) }
+
+function $extent_hint(p:$ptr, q:$ptr) : bool;
+axiom (forall p:$ptr, q:$ptr, r:$ptr :: {$extent_hint(p, q), $extent_hint(q, r)}
+  $extent_hint(p, q) && $extent_hint(q, r) ==> $extent_hint(p, r));
+axiom (forall p:$ptr, f:$field :: {$dot(p, $as_composite_field(f))}
+  $extent_hint($dot(p, $as_composite_field(f)), p));
+axiom (forall p:$ptr :: {$typ(p)} !$is_primitive($typ(p)) ==> $extent_hint(p, p));
+
+// ----------------------------------------------------------------------------
+// Value structs
+// ----------------------------------------------------------------------------
+
+const $struct_zero : $struct;
+
+axiom $good_state($vs_state($struct_zero));
+
+function {:inline true} $vs_base(s:$struct, t:$ctype) : $ptr
+  { $phys_ptr_cast($vs_base_ref(s), t) }
+function $vs_base_ref($struct) : $ptr;
+
+function $vs_state($struct) : $state;
+axiom (forall s:$struct :: $good_state($vs_state(s)));
+
+function $vs_ctor(S:$state, p:$ptr) : $struct;
+axiom (forall S:$state, p:$ptr :: {$vs_ctor(S, p)}
+  $good_state(S) ==>
+    $phys_ptr_cast($vs_base_ref($vs_ctor(S, p)), $typ(p)) == p && $vs_state($vs_ctor(S, p)) == S);
+
+axiom (forall f:$field, t:$ctype :: { $rd($vs_state($struct_zero), $vs_base($struct_zero, t), f) }
+  $rd($vs_state($struct_zero), $vs_base($struct_zero, t), f) == 0);
+
+function {:inline true} $mem(s:$state, p:$ptr) : int
+  { $rd(s, $base(p), $field(p)) }
+
+function $update_int(S:$state, p:$ptr, v:int) returns ($state);
+axiom (forall S:$state, p:$ptr, v:int :: {$update_int(S, p, v)}
+  $specials_eq(S, $update_int(S, p, v)) &&
+  $heap($update_int(S, p, v)) == $update($heap(S), $base(p), $field(p), v));
+
+// typedness and writes check are handled by the assignment translation
+procedure $havoc(o:$ptr, t:$ctype);
+  modifies $s;
+  requires $is(o, t);
+  ensures $specials_eq(old($s), $s);
+  ensures (forall p:$ptr, f:$field :: {$rd($s, p, f)}  
+    $composite_extent(old($s), o, t)[p] || $rd(old($s), p, f) == $rd($s, p, f));
 
 // ----------------------------------------------------------------------------
 // Records

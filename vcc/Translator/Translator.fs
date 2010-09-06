@@ -2192,7 +2192,7 @@ namespace Microsoft.Research.Vcc
                           
         let forward =
           if vcc3 then
-            let defAx = bCall "$def_composite_type" [we; bInt td.SizeOf; B.Expr.BoolLiteral !owns_set_is_volatile; B.Expr.BoolLiteral !is_claimable]
+            let defAx = bCall "$def_composite_type" [we; bInt td.SizeOf; B.Expr.BoolLiteral !is_claimable; B.Expr.BoolLiteral !owns_set_is_volatile]
             forward @ [B.Decl.Axiom defAx]
           else
             forward @ 
