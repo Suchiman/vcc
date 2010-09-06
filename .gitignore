@@ -28,8 +28,14 @@ vcc/Headers/Headers.vcxproj.user
 vcc/Host/VccHost.csproj.user
 vcc/Host/bin/
 vcc/Host/obj/
+vcc/Plugins/Microsoft.Z3.dll
+vcc/Plugins/Vcc3.dll
+vcc/Plugins/Vcc3.pdb
 vcc/Plugins/Vcc2Plugins/DumpCodeInfo/bin/
 vcc/Plugins/Vcc2Plugins/DumpCodeInfo/obj/
+vcc/Plugins/Vcc2Plugins/Vcc3/*.suo
+vcc/Plugins/Vcc2Plugins/Vcc3/bin/
+vcc/Plugins/Vcc2Plugins/Vcc3/obj/
 vcc/Runtime/bin/
 vcc/Runtime/obj/
 vcc/Test/Coverage/obj/
@@ -37,6 +43,9 @@ vcc/Test/Samples.vcxproj.user
 vcc/Test/dummy.b2i
 vcc/Test/testsuite/testsuite.log
 vcc/Test/testsuite/ts_out.txt
+vcc/Tools/BenchmarkVis/*.suo
+vcc/Tools/BenchmarkVis/bin/
+vcc/Tools/BenchmarkVis/obj/
 vcc/Tools/ModelViewer/Model/bin/
 vcc/Tools/ModelViewer/Model/obj/
 vcc/Tools/ModelViewer/ModelViewer/bin/
