@@ -2186,9 +2186,8 @@ namespace Microsoft.Research.Vcc
             | Some f when isUnion -> [firstOptionTypedAxiom f]
             | _ -> []
         
-        let declConst tp name = B.Decl.Const { Unique = true; Type = tp; Name = name }
         let forward =
-          [declConst tpCtype ("^" + td.Name)] @ firstOptionTyped
+          [bDeclUnique tpCtype ("^" + td.Name)] @ firstOptionTyped
                           
         let forward =
           if vcc3 then
@@ -2485,7 +2484,11 @@ namespace Microsoft.Research.Vcc
                     B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
               [B.Decl.Axiom res]
             | C.Top.Global ({ Kind = C.ConstGlobal ; Type = C.Ptr t } as v, _) ->
-              [B.Decl.Const ({ Unique = true; Name = ctx.VarName v; Type = B.Type.Int })]
+              if vcc3 then
+                [bDeclUnique tpPtr (ctx.VarName v);
+                 B.Decl.Axiom (bCall "$def_global" [varRef v; toTypeId t])]
+              else
+                [bDeclUnique B.Type.Int (ctx.VarName v)]
             | C.Top.Global _ -> die()
           with
             | Failure _ ->
