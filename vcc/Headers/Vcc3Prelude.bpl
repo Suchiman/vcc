@@ -921,16 +921,7 @@ function {:inline true} $in_writes_at(time:int, p:$ptr) : bool
   { $in(p, $writes_at(time)) }
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
-  {
-    $writes_at(time) == ptrs &&
-    (forall p:$ptr :: {$f_owner(S)[p]}
-      $set_in(p, ptrs) ==> $thread_owned_or_even_mutable(S, p))
-/*
-    (forall p:$ptr :: {:vcc3 "L1"} {S[p]}
-      $ghost_path(p) == $f_typed ==>
-        $set_in($ghost_emb(p), ptrs) ==> $in_writes_at(time, $ghost_emb(p)) && $thread_owned_or_even_mutable(S, $ghost_emb(p)))
-        */
-  }
+  { $writes_at(time) == ptrs }
 
 function $current_timestamp(S:$state) : int;
 /*
@@ -1679,6 +1670,31 @@ axiom (forall r1:$record, r2:$record, f:$field ::
  $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)) <==
    $rec_eq($int_to_record($rec_fetch(r1, f)), $int_to_record($rec_fetch(r2, f))));
 
+// -----------------------------------------------------------------------
+// Globals
+// -----------------------------------------------------------------------
+
+function $program_entry_point(s:$state) returns(bool);
+function $program_entry_point_ch(s:$state) returns(bool);
+
+axiom (forall S:$state :: {$program_entry_point(S)} $program_entry_point(S) ==> $program_entry_point_ch(S));
+
+function {:inline true} $def_global(p:$ptr, t:$ctype) : bool
+  { $is(p, t) &&
+    $is_object_root_ptr(p) &&
+    true }
+
+function {:inline true} $is_global(p:$ptr, t:$ctype) returns(bool)
+  { 
+    (forall S:$state :: {$program_entry_point(S)} $program_entry_point(S) ==> 
+      $extent_mutable(S, p) && $owns(S, p) == $set_empty())
+  }
+
+function {:inline true} $is_global_array(p:$ptr, T:$ctype, sz:int) returns(bool)
+  { 
+    (forall S:$state :: {$program_entry_point(S)} $program_entry_point(S) ==> 
+      $is_mutable_array(S, p, T, sz))
+  }
 
 // -----------------------------------------------------------------------
 // Sets of pointers

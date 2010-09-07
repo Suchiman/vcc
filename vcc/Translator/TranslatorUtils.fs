@@ -42,6 +42,8 @@ namespace Microsoft.Research.Vcc
     let bCall a b = B.Expr.FunctionCall (a, b)
     let bInt (n : int32) = B.IntLiteral (new bigint(n))
     let bBool v = B.BoolLiteral v
+    let bDeclUnique tp name = B.Decl.Const { Unique = true; Type = tp; Name = name }
+
     let dont_inst p = [[bCall "$dont_instantiate" [p]]]
     
     let bContains name (expr:B.Expr) = 
