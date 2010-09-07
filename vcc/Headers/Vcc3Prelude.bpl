@@ -195,6 +195,8 @@ axiom (forall p:$ptr, t:$ctype :: {$spec_ptr_cast(p, t)}
   $cast_props(p, t, $spec_ptr_cast(p, t)) && $in_range_spec_ptr($spec_ptr_cast(p, t)));
 axiom (forall p:$ptr, t:$ctype :: {$phys_ptr_cast(p, t)}
   $cast_props(p, t, $phys_ptr_cast(p, t)) && $in_range_phys_ptr($phys_ptr_cast(p, t)));
+axiom (forall p:$ptr :: {$in_range_phys_ptr(p)}
+  !$in_range_phys_ptr(p) ==> $in_range_spec_ptr(p));
 
 /*
 Doesn't seem needed.
@@ -303,9 +305,11 @@ function {:inline true} $def_special_field(partp:$ctype, f:$field, tp:$ctype, fk
   {
     $def_field_family(partp, f, tp) &&
     $field_kind(f) == fk &&
-    $is_ghost_field(f) &&
     true
   }
+
+function {:inline true} $def_special_ghost_field(partp:$ctype, f:$field, tp:$ctype, fk:$field_kind) : bool
+  { $def_special_field(partp, f, tp, fk) && $is_ghost_field(f) }
 
 const unique $primitive_emb_type : $ctype;
 
@@ -318,10 +322,10 @@ axiom (forall t:$ctype :: {$f_root(t)}
     );
 axiom (forall t:$ctype :: {$f_owns(t)} 
   $is_non_primitive(t) ==>
-    $def_special_field(t, $f_owns(t), ^$#ptrset, $fk_owns));
+    $def_special_ghost_field(t, $f_owns(t), ^$#ptrset, $fk_owns));
 axiom (forall t:$ctype :: {$f_ref_cnt(t)} 
   $is_non_primitive(t) ==>
-    $def_special_field(t, $f_ref_cnt(t), ^$#ptrset, $fk_ref_cnt) &&
+    $def_special_ghost_field(t, $f_ref_cnt(t), ^$#ptrset, $fk_ref_cnt) &&
     $is_volatile_field($f_ref_cnt(t)));
 
 // ----------------------------------------------------------------------------
@@ -434,6 +438,10 @@ function $idx(p:$ptr, i:int) : $ptr
 
 axiom (forall p:$ptr, i:int :: {$addr($idx(p, i))}
   $addr($idx(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
+
+axiom (forall p:$ptr, i:int :: {$idx(p, i)}
+  ($in_range_phys_ptr(p) || $in_range_phys_ptr($base(p)))
+  && $is_proper($idx(p, i)) ==> $in_range_phys_ptr($idx(p, i)));
 
 function $field_plus($field, int) : $field;
 axiom (forall f:$field, i:int :: {$field_plus(f, i)}
@@ -970,7 +978,7 @@ function {:inline true} $not_written(S0:$state, p:$ptr, W:$ptrset) : bool
   { $owner(S0, $root(S0, p)) == $me() && !$in($root(S0, p), W) }
 // TODO: { if $closed(S0, p) then $in($root(S0, p), W) else $in(p, W) }
 
-function {:inline true} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
+function {:inline false} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { (forall p:$ptr :: {$root(S1, p)} $not_written(S0, p, W) ==> $root(S0, p) == $root(S1, p)) &&
     (forall p:$ptr, f:$field :: {$rd(S1, p, f)} $not_written(S0, p, W) && !$in($dot(p, f), W) ==> $rd(S0, p, f) == $rd(S1, p, f)) &&
 
