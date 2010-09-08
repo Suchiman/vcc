@@ -497,8 +497,9 @@ function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
   { if $is_primitive(T) then
       (lambda q:$ptr :: $is_proper(q) &&
                         $emb0(q) == $emb0(p) &&
+                        $typ(q) == T &&
                         $field_arr_root($field(q)) == $field_arr_root($field(p)) &&
-                        $field_arr_index($field(q)) - $field_arr_index($field(p)) < sz &&
+                        $in_range(0, $field_arr_index($field(q)) - $field_arr_index($field(p)), sz - 1) &&
                         $field_kind($field(q)) != $fk_base)
     else
       (lambda q:$ptr :: $is_proper(q) && $in(q, $full_extent($idx(p, $index_within(q, p)))))
