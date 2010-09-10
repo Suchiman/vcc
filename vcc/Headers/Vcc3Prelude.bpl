@@ -854,6 +854,10 @@ function {:inline true} $specials_eq(S0:$state, S:$state) : bool
 function {:inline true} $meta_eq(s1:$state, s2:$state) : bool
   { $specials_eq(s1, s2) }
 
+function {:inline true} $mutable_increases(s1:$state, s2:$state) : bool
+  { (forall p:$ptr :: {$owner(s2, p)} {$closed(s2, p)} {$root(s2, p)}
+        $mutable(s1, p) ==> $mutable(s2, p)) }
+
 procedure $write_int(f:$field, p:$ptr, v:int);
   modifies $s;
   ensures $specials_eq(old($s), $s);
@@ -884,6 +888,9 @@ procedure $write_ref_cnt(p:$ptr, v:int);
   ensures $heap($s) == $update($heap(old($s)), p, $f_ref_cnt($typ(p)), v);
   ensures $timestamp_post_strict(old($s), $s);
 
+function $updated_owns(S0:$state, S:$state, o:$ptr, owns:$ptrset) : bool
+  { $heap(S) == $update($heap(S0), o, $f_owns($typ(o)), $ptrset_to_int(owns)) }
+
 procedure $set_owns(p:$ptr, owns:$ptrset);
   // writes p
   modifies $s;
@@ -891,7 +898,7 @@ procedure $set_owns(p:$ptr, owns:$ptrset);
   requires $is_non_primitive($typ(p));
   // TOKEN: the owner is mutable
   requires $mutable($s, p);
-  ensures $heap($s) == $update($heap(old($s)), p, $f_owns($typ(p)), $ptrset_to_int(owns));
+  ensures $updated_owns(old($s), $s, p, owns);
   ensures $specials_eq(old($s), $s);
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -1447,6 +1454,72 @@ axiom (forall S:$state, c:$ptr, o:$ptr :: {$account_claim(S, c, o)}
     $claim_no(S, o, $claim_idx(o, c)) == c &&
     0 <= $claim_idx(o, c) && $claim_idx(o, c) < $ref_cnt(S, o));
     
+// --------------------------------------------------------------------------------
+// Ownership transfers with closed objects
+// --------------------------------------------------------------------------------
+
+procedure $set_closed_owner(#p:$ptr, owner:$ptr);
+  // writes #p, owner
+  modifies $s;
+  // TOKEN: the owner is composite
+  requires $is_non_primitive($typ(owner));
+  // TOKEN: the object is non-primitive
+  requires $is_non_primitive($typ(#p));
+  // TOKEN: the object is owned by the current thread
+  requires $owner($s, #p) == $me();
+  // TOKEN: the object is closed
+  requires $closed($s, #p);
+  // TOKEN: the owner is closed
+  requires $closed($s, owner);
+  // TOKEN: the owner has volatile owns set
+  requires $is_volatile_field($f_owns($typ(owner)));
+
+  ensures $f_closed($s) == $f_closed(old($s));
+  ensures $f_timestamp($s) == $f_timestamp(old($s));
+  ensures $f_owner($s) == $f_owner(old($s))[ #p := owner ];
+  ensures $roots($s) == (lambda q:$ptr :: if $root(old($s), q) == #p then $root($s, q) else $root(old($s), q));
+  ensures $updated_owns(old($s), $s, owner, $set_union($set_singleton(#p), $owns(old($s), owner)));
+  ensures $set_in(#p, $owns($s, owner));
+
+function {:inline true} $new_ownees(S:$state, o:$ptr, owns:$ptrset) returns($ptrset)
+  { $set_difference(owns, $owns(S, o)) }
+
+procedure $set_closed_owns(owner:$ptr, owns:$ptrset);
+  // writes owner, $new_ownees(owner, owns)
+  modifies $s;
+  // TOKEN: the owner is composite
+  requires $is_non_primitive($typ(owner));
+  // TOKEN: all newly owned objects are wrapped
+  requires (forall p:$ptr :: {$dont_instantiate(p)} {sk_hack($set_in0(p, $owns($s, owner)))}
+    $set_in(p, $new_ownees($s, owner, owns)) ==> $wrapped($s, p, $typ(p)));
+  // TOKEN: the owner is closed
+  requires $closed($s, owner);
+  // TOKEN: the owner has volatile owns set
+  requires $is_volatile_field($f_owns($typ(owner)));
+
+  ensures $f_closed($s) == $f_closed(old($s));
+  ensures $f_timestamp($s) == $f_timestamp(old($s));
+  ensures $f_owner($s) == (lambda q:$ptr :: if $in(q, owns) then owner else $f_owner(old($s))[q]);
+  ensures $roots($s) == (lambda q:$ptr :: if $in($root(old($s), q), owns) then $root($s, q) else $root(old($s), q));
+  ensures $updated_owns(old($s), $s, owner, owns);
+
+procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
+  // writes owner
+  modifies $s;
+  // TOKEN: the owner is composite
+  requires $is_non_primitive($typ(owner));
+  // TOKEN: the object is owned by the owner
+  requires $set_in(#p, $owns($s, owner));
+  // TOKEN: the owner is closed
+  requires $closed($s, owner);
+  // TOKEN: the owner has volatile owns set
+  requires $is_volatile_field($f_owns($typ(owner)));
+
+  ensures $f_closed($s) == $f_closed(old($s));
+  ensures $f_timestamp($s) == $f_timestamp(old($s));
+  ensures $f_owner($s) == $f_owner(old($s))[ #p := $me() ];
+  ensures $roots($s) == (lambda q:$ptr :: if $root(old($s), q) == $root(old($s), owner) then $root($s, q) else $root(old($s), q));
+  ensures $updated_owns(old($s), $s, owner, $set_difference($owns(old($s), owner), $set_singleton(#p)));
 
 // -----------------------------------------------------------------------
 // Laballed invariants
@@ -1504,7 +1577,7 @@ function {:inline true} $domain(S:$state, p:$ptr) : $ptrset
 
 axiom (forall S:$state, p:$ptr, q:$ptr, r:$ptr :: 
   { $set_in(q, $domain(S, p)), $in_vdomain(S, r, p) }
-  $is_sequential_field($f_owns($typ(q))) && 
+  $is_volatile_field($f_owns($typ(q))) && 
   $set_in(q, $domain(S, p)) &&
   (forall S1:$state :: 
       $inv(S1, q, $typ(q)) && 

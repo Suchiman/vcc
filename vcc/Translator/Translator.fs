@@ -804,6 +804,7 @@ namespace Microsoft.Research.Vcc
                   match env.AtomicReads with
                     | [] -> "", []
                     | _ ->
+                       // TODO: shouldn't that be $volatile_span()?
                       " or atomically updated", List.map (fun o -> bCall "$set_in" [trExpr env p; bCall "$span" [o]]) env.AtomicReads
                 let tok, prop =
                   if vcc3 then
