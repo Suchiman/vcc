@@ -520,7 +520,7 @@ axiom (forall T:$ctype, s:int :: {$array(T, s)}
   && $is_non_primitive($array(T, s))
   && !$is_claimable($array(T, s))
   && $type_branch($array(T, s)) == $ctype_array
-  && !$is_volatile_field($f_owns($array(T, s)))
+  && $is_sequential_field($f_owns($array(T, s)))
 );
 axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
 
@@ -1488,7 +1488,7 @@ axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
 
 axiom (forall S:$state, q,r:$ptr :: { $in_domain(S, r, $root(S, q)) }
      $in_domain(S, q, $root(S, q)) && 
-     !$is_volatile_field($f_owns($typ(q))) &&
+     $is_sequential_field($f_owns($typ(q))) &&
      $set_in0(r, $owns(S, q)) ==>
         $owner(S, r) == q && 
         $root(S, r) == $root(S, q) && 
@@ -1504,7 +1504,7 @@ function {:inline true} $domain(S:$state, p:$ptr) : $ptrset
 
 axiom (forall S:$state, p:$ptr, q:$ptr, r:$ptr :: 
   { $set_in(q, $domain(S, p)), $in_vdomain(S, r, p) }
-  $is_volatile_field($f_owns($typ(q))) && 
+  $is_sequential_field($f_owns($typ(q))) && 
   $set_in(q, $domain(S, p)) &&
   (forall S1:$state :: 
       $inv(S1, q, $typ(q)) && 
