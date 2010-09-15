@@ -33,11 +33,46 @@ namespace BenchmarkVis
 
     }
 
+    private void DumpData(DataSet selDs)
+    {
+      using (var sw = new StreamWriter("data.csv", true)) {
+        foreach (var ds in this.data) {
+          if (selDs != null && selDs != ds) continue;
+          sw.WriteLine("DATASET {0}", ds.LongName);
+          for (int i = 0; i < testcaseNames.Count; ++i) {
+            var dp = ds.GetDataPoint(i);
+            if (dp != null) {
+              sw.Write("{0};", testcaseNames[i]);
+              var med = dp.Median;
+              if (med == ds.TimeoutValue)
+                med = -1;
+              PrintIntCsv(sw, med);
+              foreach (var v_ in dp.RawValues) {
+                var v = v_;
+                if (v == int.MaxValue)
+                  v = -1;
+                PrintIntCsv(sw, v);
+              }
+              sw.WriteLine();
+            }
+          }
+        }
+      }
+
+      this.toolStripStatusLabel1.Text = string.Format("Dumped {0} to data.csv.", selDs == null ? "all" : selDs.Name);
+    }
+
+    private static void PrintIntCsv(StreamWriter sw, int v)
+    {
+      sw.Write("{0};", v);
+    }
+
     private void SetCommonRadio(RadioButton r, DataSet s)
     {
       r.AutoSize = true;
       r.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
       r.CheckedChanged += s.CheckedChanged;
+      r.KeyPress += Main_KeyPress;
     }
 
     private void AddDataSet(DataSet s)
@@ -99,6 +134,7 @@ namespace BenchmarkVis
       int testId = -1;
       bool replaced = false;
       bool seenUnsat = false;
+      bool seenSat = false;
       int currentValue = int.MaxValue;
 
       for (; ; ) {
@@ -106,6 +142,7 @@ namespace BenchmarkVis
         if (l == null) break;
         var words = l.Split(seps);
         if (l.StartsWith("unsat")) seenUnsat = true;
+        if (l.StartsWith("sat")) seenSat = true;
         if (words.Length < 2) continue;
         switch (words[0]) {
           case "SX_DIR": sx_dir = words[1]; break;
@@ -124,13 +161,14 @@ namespace BenchmarkVis
             break;
           case "FILE":
             if (testId != -1) {
-              if (!seenUnsat) currentValue = int.MaxValue;
+              if (!seenUnsat || seenSat) currentValue = int.MaxValue;
               var dp = d.CreateDataPoint(testId);
               dp.AddValue(currentValue);
             }
             testId = GetTestcaseId(words[1]);
             currentValue = int.MaxValue;
             seenUnsat = false;
+            seenSat = false;
             break;
           case "TIME":
             currentValue = (int)(double.Parse(words[1]) * 1000);
@@ -310,6 +348,34 @@ namespace BenchmarkVis
         Flush();
       }
     }
+
+    private void dumpDataTodatacsvToolStripMenuItem_Click_1(object sender, EventArgs e)
+    {
+      DumpData(null);
+    }
+
+    private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+      this.Close();
+    }
+
+    private void DumpLeft()
+    {
+      if (LeftDS != null)
+        DumpData(LeftDS);
+    }
+
+    private void Main_KeyPress(object sender, KeyPressEventArgs e)
+    {
+      if (e.KeyChar == 'd') {
+        DumpLeft();
+      }
+    }
+
+    private void dumpCurrentLeftTodatacsvToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+      DumpLeft();
+    }
   }
 
   class DataPoint
@@ -325,6 +391,14 @@ namespace BenchmarkVis
           if (v == int.MaxValue) yield return Parent.TimeoutValue;
           else yield return v;
         }
+      }
+    }
+
+    public IEnumerable<int> RawValues
+    {
+      get
+      {
+        return values;
       }
     }
 
