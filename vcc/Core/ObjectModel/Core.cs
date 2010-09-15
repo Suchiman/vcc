@@ -744,9 +744,9 @@ namespace Microsoft.Research.Vcc {
     /// and that might be called with the given number of arguments.
     /// </summary>
     //^ [Pure]
-    public override IEnumerable<IMethodDefinition> GetMethodGroupMethods(IMethodDefinition methodGroupRepresentative, uint argumentCount) {
+    public override IEnumerable<IMethodDefinition> GetMethodGroupMethods(IMethodDefinition methodGroupRepresentative, uint argumentCount, bool argumentListIsIncomplete) {
       if (methodGroupRepresentative.IsForwardReference) return GetMatchingForwardDeclarations(methodGroupRepresentative, argumentCount);
-      return base.GetMethodGroupMethods(methodGroupRepresentative, argumentCount);
+      return base.GetMethodGroupMethods(methodGroupRepresentative, argumentCount, argumentListIsIncomplete);
     }
 
     private static IEnumerable<IMethodDefinition> GetMatchingForwardDeclarations(IMethodDefinition methodGroupRepresentative, uint argumentCount) {

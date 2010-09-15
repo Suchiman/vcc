@@ -17,6 +17,7 @@ vcc/Demo/*.vccmodel
 vcc/Demo/*.ncb
 vcc/Demo/*.suo
 vcc/Demo/*.user
+vcc/Demo/_ReSharper.VccDemo/
 vcc/Docs/Tutorial/c/*.i
 vcc/Docs/Tutorial/tutorial.aux
 vcc/Docs/Tutorial/tutorial.log

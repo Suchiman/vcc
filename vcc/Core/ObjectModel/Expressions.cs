@@ -2006,7 +2006,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     /// <param name="allowMethodParameterInferencesToFail">If this flag is true, 
     /// generic methods should be included in the collection if their method parameter types could not be inferred from the argument types.</param>
-    protected override IEnumerable<IMethodDefinition> GetCandidateMethods(bool allowMethodParameterInferencesToFail) {
+    public override IEnumerable<IMethodDefinition> GetCandidateMethods(bool allowMethodParameterInferencesToFail) {
       if (this.FixedArrayElementType != null) return this.GetPointerAdditionMethods(FixedArrayElementType);
       return base.GetCandidateMethods(allowMethodParameterInferencesToFail);
     }
