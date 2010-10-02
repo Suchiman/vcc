@@ -144,7 +144,7 @@ function $field($ptr) : $field;
 function $ptr($field,$base): $ptr;
 axiom (forall t:$field, b:$base :: $field($ptr(t,b))==t);
 axiom (forall t:$field, b:$base :: $base($ptr(t,b))==b);
-axiom (forall p:$ptr :: {$base(p)} {$field(p)} $ptr($field(p), $base(p)) == p);
+axiom (forall p:$ptr :: {$base(p)} {$field(p)} $ptr($field(p), $base(p)) == p); // PERF 6.7%
 
 function {:inline true} $non_null(p:$ptr) : bool
   { !$is_null(p) }
@@ -231,6 +231,7 @@ axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
   $is_phys_field(f) && $is_proper($dot(p, f)) ==>
      $addr($dot(p, f)) == $addr(p) + $field_offset(f));
 
+// PERF 5.7%
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
      ($in_range_spec_ptr(p) || $is_ghost_field(f) ==> $in_range_spec_ptr($dot(p, f)))
   && ($in_range_phys_ptr(p) && $is_phys_field(f) ==> $in_range_phys_ptr($dot(p, f))));
@@ -239,7 +240,7 @@ function {:inline true} $emb1(p:$ptr) : $ptr
   { $base(p) }
 function {:inline true} $emb(S:$state,p:$ptr) : $ptr
   { $emb0(p) }
-function $emb0(p:$ptr) : $ptr
+function {:inline true} $emb0(p:$ptr) : $ptr
   { if $is_primitive($typ(p)) then $base(p) else p }
 
 function $is_sequential_field($field) : bool;
@@ -252,7 +253,8 @@ function {:inline true} $as_ptr_with_type(p:$ptr, t:$ctype) : $ptr
 function $field_type($field) : $ctype;
 function $has_field_at0($ctype, $field) : bool;
 
-axiom (forall f:$field :: {$field_parent_type(f)} $is_non_primitive($field_parent_type(f)));
+
+axiom (forall f:$field :: {$field_parent_type(f)} $is_non_primitive($field_parent_type(f)));// PERF 0.6%
 
 function {:inline true} $def_field_family(partp:$ctype, f:$field, tp:$ctype) : bool
   { 
@@ -810,11 +812,11 @@ axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
     $closed(S, p) ==> $non_null(p));
 
 // Root axioms
-
 axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$root(S, p)}
   $good_state(S) ==>
   $owner(S, p) == $me() ==> $is_proper(p) && $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $root(S, p) == p);
 
+// PERF 3.2%
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
   $good_state(S) ==>
     $non_null($owner(S, r)) && $is_proper($owner(S, r)) &&
@@ -839,7 +841,7 @@ axiom (forall S:$state, p:$ptr, f:$field, t:$ctype ::
 // State updates
 // ----------------------------------------------------------------------------
 
-function $update(h:$object, r:$ptr, f:$field, v:int) : $object
+function {:inline true} $update(h:$object, r:$ptr, f:$field, v:int) : $object
   { h[ f := h[f][ r := v ] ] }
 
 function {:inline true} $specials_eq(S0:$state, S:$state) : bool
@@ -1591,8 +1593,8 @@ axiom (forall S:$state, p:$ptr, q:$ptr ::
 
 function $fetch_from_domain(v:$version, p:$ptr, f:$field) : int;
 
-axiom (forall S:$state, p:$ptr, d:$ptr, f:$field ::
-  { $set_in(p, $domain(S, d)), $rd(S, p, f), $is_sequential_field(f) }
+axiom (forall S:$state, p:$ptr, d:$ptr, f:$field :: // PERF 17.5%
+  { $rd(S, p, f), $set_in(p, $domain(S, d)), $is_sequential_field(f) }
   $set_in(p, $domain(S, d)) && $is_sequential_field(f) ==>
     $rd(S, p, f) == $fetch_from_domain($read_version(S, d), p, f));
 
@@ -1661,7 +1663,7 @@ axiom (forall p:$ptr, q:$ptr, r:$ptr :: {$extent_hint(p, q), $extent_hint(q, r)}
   $extent_hint(p, q) && $extent_hint(q, r) ==> $extent_hint(p, r));
 axiom (forall p:$ptr, f:$field :: {$dot(p, $as_composite_field(f))}
   $extent_hint($dot(p, $as_composite_field(f)), p));
-axiom (forall p:$ptr :: {$typ(p)} !$is_primitive($typ(p)) ==> $extent_hint(p, p));
+// axiom (forall p:$ptr :: {$typ(p)} !$is_primitive($typ(p)) ==> $extent_hint(p, p));
 
 // ----------------------------------------------------------------------------
 // Value structs
@@ -1848,9 +1850,8 @@ axiom (forall s1:$ptrset, s2:$ptrset :: {$set_disjoint(s1, s2)}
      ($set_in(p, s1) ==> !$set_in(p, s2)) && ($set_in(p, s2) ==> !$set_in(p, s1))) 
   ==> $set_disjoint(s1, s2));
 
-function $set_in_pos($ptr, $ptrset) : bool;
-axiom (forall p:$ptr, s:$ptrset :: {$set_in(p, s)}
-  $set_in(p, s) ==> $set_in_pos(p, s));
+function {:inline false} $set_in_pos(p:$ptr, s:$ptrset) : bool; // { $set_in(p, s) }
+axiom (forall p:$ptr, s:$ptrset :: {$set_in(p, s)} $set_in(p, s) ==> $set_in_pos(p, s));
 
 //function $set_in3($ptr, $ptrset) : bool;
 //function $set_in2($ptr, $ptrset) : bool;
