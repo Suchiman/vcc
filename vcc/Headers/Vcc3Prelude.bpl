@@ -567,6 +567,11 @@ function {:inline true} $root(s:$state, p:$ptr) : $ptr
 function {:inline true} $rd_inv(s:$state, f:$field, p:$ptr) : int { $rd(s,p,f) }
 function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int { $heap(s)[f][p] }
 
+function {:inline true} $rdtrig(s:$state, p:$ptr, f:$field) : int { $rd(s, p, f) }
+//function $rdtrig(s:$state, p:$ptr, f:$field) : bool;
+//function $rdtrigX(s:$state, p:$ptr, f:$field) : bool;
+//axiom (forall s:$state, p:$ptr, f:$field :: {$rd(s, p, f)} $rdtrigX(s, p, f));
+
 function {:inline true} $rd_spec_ptr(s:$state, f:$field, p:$ptr, t:$ctype) : $ptr
   { $spec_ptr_cast($int_to_ptr($rd(s, p, f)), t) }
 
@@ -833,7 +838,7 @@ function $call_transition(S1:$state, S2:$state) : bool;
 // Type-system-derived
 // TODO: this one should also go, we should always use $unchecked(...) when reading from memory
 axiom (forall S:$state, p:$ptr, f:$field, t:$ctype ::
-  {$rd(S, p, $as_field_with_type(f, $as_in_range_t(t)))}
+  {$rdtrig(S, p, $as_field_with_type(f, $as_in_range_t(t)))}
   $good_state(S) ==>
     $in_range_t(t, $rd(S, p, $as_field_with_type(f, $as_in_range_t(t)))));
 
@@ -990,7 +995,7 @@ function {:inline true} $not_written(S0:$state, p:$ptr, W:$ptrset) : bool
 
 function {:inline false} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { (forall p:$ptr :: {$root(S1, p)} $not_written(S0, p, W) ==> $root(S0, p) == $root(S1, p)) &&
-    (forall p:$ptr, f:$field :: {$rd(S1, p, f)} $not_written(S0, p, W) && !$in($dot(p, f), W) ==> $rd(S0, p, f) == $rd(S1, p, f)) &&
+    (forall p:$ptr, f:$field :: {$rdtrig(S1, p, f)} $not_written(S0, p, W) && !$in($dot(p, f), W) ==> $rd(S0, p, f) == $rd(S1, p, f)) &&
 
     (forall p:$ptr :: {$f_timestamp(S1)[p]} 
       ($not_written(S0, p, W) ==>
@@ -1251,11 +1256,11 @@ procedure $static_wrap_non_owns(o:$ptr, S:$state);
 // ----------------------------------------------------------------------------
 
 function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
-  { (forall f:$field :: {$rd(S2, p, f)}
+  { (forall f:$field :: {$rdtrig(S2, p, f)}
       $is_proper($dot(p, f)) && f != $f_ref_cnt(t) ==> $rd(S1, p, f) == $rd(S2, p, f)) }
 
 function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
-  { (forall f:$field :: {$rd(S2, p, f)}
+  { (forall f:$field :: {$rdtrig(S2, p, f)}
       // ref_cnt is always volatile
       $is_proper($dot(p, f)) && $is_sequential_field(f)
         ==> $rd(S1, p, f) == $rd(S2, p, f)) }
@@ -1403,7 +1408,7 @@ procedure $atomic_havoc();
   ensures $writes_nothing(old($s), $s);
 
   ensures (forall p:$ptr, f:$field ::
-    {$not_shared(old($s), p), $rd($s, p, f)}
+    {$not_shared(old($s), p), $rdtrig($s, p, f)}
     $not_shared(old($s), p) ==> $rd($s, p, f) == $rd(old($s), p, f));
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -1594,7 +1599,7 @@ axiom (forall S:$state, p:$ptr, q:$ptr ::
 function $fetch_from_domain(v:$version, p:$ptr, f:$field) : int;
 
 axiom (forall S:$state, p:$ptr, d:$ptr, f:$field :: // PERF 17.5%
-  { $rd(S, p, f), $set_in(p, $domain(S, d)), $is_sequential_field(f) }
+  { $rdtrig(S, p, f), $set_in(p, $domain(S, d)), $is_sequential_field(f) }
   $set_in(p, $domain(S, d)) && $is_sequential_field(f) ==>
     $rd(S, p, f) == $fetch_from_domain($read_version(S, d), p, f));
 
@@ -1619,7 +1624,7 @@ function $by_claim(S:$state, c:$ptr, obj:$ptr, ptr:$ptr) : $ptr
 function $claim_version($ptr) : $version;
 
 axiom (forall S:$state, p:$ptr, c:$ptr, f:$field :: 
-  {$in_claim_domain(p, c), $rd(S, p, f)}
+  {$in_claim_domain(p, c), $rdtrig(S, p, f)}
   {$by_claim(S, c, p, $dot(p, f))}
   $good_state(S) &&
   $closed(S, c) && $in_claim_domain(p, c) && $is_sequential_field(f) ==>
@@ -1685,7 +1690,7 @@ axiom (forall S:$state, p:$ptr :: {$vs_ctor(S, p)}
   $good_state(S) ==>
     $phys_ptr_cast($vs_base_ref($vs_ctor(S, p)), $typ(p)) == p && $vs_state($vs_ctor(S, p)) == S);
 
-axiom (forall f:$field, t:$ctype :: { $rd($vs_state($struct_zero), $vs_base($struct_zero, t), f) }
+axiom (forall f:$field, t:$ctype :: { $rdtrig($vs_state($struct_zero), $vs_base($struct_zero, t), f) }
   $rd($vs_state($struct_zero), $vs_base($struct_zero, t), f) == 0);
 
 function {:inline true} $mem(s:$state, p:$ptr) : int
@@ -1701,7 +1706,7 @@ procedure $havoc(o:$ptr, t:$ctype);
   modifies $s;
   requires $is(o, t);
   ensures $specials_eq(old($s), $s);
-  ensures (forall p:$ptr, f:$field :: {$rd($s, p, f)}  
+  ensures (forall p:$ptr, f:$field :: {$rdtrig($s, p, f)}  
     $composite_extent(old($s), o, t)[p] || $rd(old($s), p, f) == $rd($s, p, f));
 
 // ----------------------------------------------------------------------------
