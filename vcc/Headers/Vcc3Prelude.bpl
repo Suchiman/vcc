@@ -240,7 +240,7 @@ function {:inline true} $emb1(p:$ptr) : $ptr
   { $base(p) }
 function {:inline true} $emb(S:$state,p:$ptr) : $ptr
   { $emb0(p) }
-function {:inline true} $emb0(p:$ptr) : $ptr
+function $emb0(p:$ptr) : $ptr
   { if $is_primitive($typ(p)) then $base(p) else p }
 
 function $is_sequential_field($field) : bool;
