@@ -995,7 +995,8 @@ function {:inline true} $not_written(S0:$state, p:$ptr, W:$ptrset) : bool
 
 function {:inline false} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { (forall p:$ptr :: {$root(S1, p)} $not_written(S0, p, W) ==> $root(S0, p) == $root(S1, p)) &&
-    (forall p:$ptr, f:$field :: {$rdtrig(S1, p, f)} $not_written(S0, p, W) && !$in($dot(p, f), W) ==> $rd(S0, p, f) == $rd(S1, p, f)) &&
+    (forall p:$ptr, f:$field :: {$rdtrig(S1, p, f)} $not_written(S0, p, W) && !$in($dot(p, f), W) ==> 
+           ($is_sequential_field(f) || !$closed(S0, p) ==> $rd(S0, p, f) == $rd(S1, p, f))) &&
 
     (forall p:$ptr :: {$f_timestamp(S1)[p]} 
       ($not_written(S0, p, W) ==>
