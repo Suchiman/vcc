@@ -1307,7 +1307,7 @@ procedure $havoc_others(p:$ptr, t:$ctype);
   ensures $good_state($s);
   ensures $good_for_post_admissibility($s);
 
-  ensures (forall q: $ptr :: {$closed($s, q)}
+  ensures (forall q: $ptr :: {$closed($s, q)} {$closed(old($s), q)}
     $closed(old($s), q) || $closed($s, q) ==>
       ($spans_the_same(old($s), $s, q, $typ(q)) && $closed(old($s), q) == $closed($s, q)) || 
       ($inv2(old($s), $s, q, $typ(q)) && $nonvolatile_spans_the_same(old($s), $s, q, $typ(q))));
