@@ -2387,7 +2387,7 @@ namespace Microsoft.Research.Vcc
                   let assump =
                     match e.Type with
                       | C.Ptr t ->                      
-                        bCall (if t.IsComposite || t.IsVolVersion then "$thread_owned" else "$mutable") [bState; e']
+                        bCall (if t.IsComposite then "$thread_owned" else "$mutable") [bState; e']
                       | C.ObjectT ->
                         bCall "$thread_owned_or_even_mutable" [bState; e']
                       | C.MathTypeRef "ptrset" ->
