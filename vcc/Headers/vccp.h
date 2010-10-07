@@ -40,6 +40,7 @@ _(SPEC_TYPE(objset))
 _(SPEC_TYPE(state))
 _(SPEC_TYPE(type))
 _(SPEC_TYPE(thread_id))
+_(SPEC_TYPE(vversion))
 
 _(typedef \thread_id ^\thread;)
 
@@ -105,6 +106,7 @@ _(struct \TypeState {
   _(ghost \objset \owns;)
   _(ghost \object \owner;)
   _(ghost bool \valid;)
+  _(ghost \vversion \volatile_version;)
 };)
 
 // Statement-like functions
@@ -119,7 +121,7 @@ _(void \set_closed_owns(\object owner, \objset owns)
   _(requires \atomic_object(0));)
 _(void \union_reinterpret(\object fld) _(writes \extent(\simple_embedding(fld)));)
 _(void \deep_unwrap(\object o) _(writes o);)
-_(void \bump_volatile_version(\object o) _(writes o);)
+_(void \bump_volatile_version(\object o) _(writes &o->\volatile_version);)
 _(void \begin_update();)
 _(void \join_arrays(\object arr1, \object arr2) _(writes \extent(arr1), \extent(arr2));)
 _(void \split_array(\object arr, \size_t sz) _(writes \extent(arr));)
@@ -229,6 +231,7 @@ SPEC_TYPE(ptrset)
 SPEC_TYPE(typeid_t)
 SPEC_TYPE(thread_id_t)
 SPEC_TYPE(state_t) // for in_state
+SPEC_TYPE(volatile_version_t) // for in_state
 
 
 typedef thread_id_t ^_vcc_thread_id;
@@ -441,7 +444,7 @@ void _vcc_deep_unwrap(obj_t p)
 #define deep_unwrap _vcc_deep_unwrap
 
 void _vcc_bump_volatile_version(obj_t p)
-  writes (p);
+  writes (&volatile_version(p));
 #define bump_volatile_version(x) _vcc_bump_volatile_version(x)
 
 void _vcc_free(obj_t p)
@@ -667,6 +670,9 @@ bool _vcc_claims_claim(claim_t, claim_t);
 
 _vcc_size_t _vcc_ref_cnt(obj_t);
 #define ref_cnt _vcc_ref_cnt
+
+volatile_version_t _vcc_volatile_version(obj_t);
+#define volatile_version _vcc_volatile_version
 
 
 bool _vcc_valid_claim(claim_t);

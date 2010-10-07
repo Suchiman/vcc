@@ -482,18 +482,26 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     let normalizeWrites decls =
-      let fixOne (e:Expr) =
-        match e.Type with
-          | MathTypeRef "ptrset"
-          | ObjectT
-          | Array _
-          | Ptr _ -> e         
-          | _ ->
-            match e with
-              | CallMacro (c, "_vcc_ref_cnt", _, [p]) ->
-                //helper.Error (c.Token, 9999, "the ref_cnt(...) no longer resides in memory and cannot be written to", None)
-                p
-              | _ -> e // we will catch this error later
+      let fixOne = function
+        | Macro (c, "&", [CallMacro (_, "_vcc_volatile_version", _, [p])]) ->
+          let arg =
+            match p with
+              | Macro (_, "&", [e]) when e.Type = ObjectT -> e
+              | p -> p
+          if helper.Options.Vcc3 then Macro (c, "_vcc_volatile_version_addr", [arg])
+          else arg
+        | e ->
+          match e.Type with
+            | MathTypeRef "ptrset"
+            | ObjectT
+            | Array _
+            | Ptr _ -> e         
+            | _ ->
+              match e with
+                | CallMacro (c, "_vcc_ref_cnt", _, [p]) ->
+                  //helper.Error (c.Token, 9999, "the ref_cnt(...) no longer resides in memory and cannot be written to", None)
+                  p
+                | _ -> e // we will catch this error later
                 
       let fixWrites = function
         | Top.FunctionDecl f ->
@@ -890,7 +898,8 @@ namespace Microsoft.Research.Vcc
       let newToOldType = Map.ofList [ "\\objset", "ptrset"
                                       "\\state",  "state_t"
                                       "\\type",   "typeid_t"
-                                      "\\thread_id", "thread_id" ]
+                                      "\\thread_id", "thread_id"
+                                      "\\vversion", "volatile_version_t" ]
 
       let fnMap = new Dict<_,_>()
 

@@ -568,7 +568,7 @@ namespace Microsoft.Research.Vcc
               | B.FunctionCall ("$vs_ctor", [arr; _]) ->
                 bCall "$good_state" [arr]
               | _ -> helper.Panic("wrong thing in vs_can_update")
-            
+          
           | "by_claim", args ->
             self (C.Expr.Deref (ec, C.Expr.Macro (ec, "by_claim_ptr", args)))
           | "by_claim_ptr", [c; obj; ptr] ->
@@ -824,7 +824,11 @@ namespace Microsoft.Research.Vcc
         B.Expr.Forall (Token.NoToken, [(name, tpPtr)], dont_inst p, weight "dont-inst", bImpl precond (inWritesOrIrrelevant use_wr env p None))
          
       and inWritesOrIrrelevant use_wr env (e:B.Expr) (origPrim:option<C.Expr>) =
-        let prim = origPrim.IsSome
+        let prim =
+          match origPrim with
+            | Some e when e.Type.Deref.IsVolVersion -> false
+            | Some _ -> true
+            | None -> false
         let atomicWr =
           if prim then
             env.AtomicObjects |>
@@ -2239,6 +2243,7 @@ namespace Microsoft.Research.Vcc
         
       let trMathType (td:C.TypeDecl) =
         match td.Name with
+          | "volatile_version_t"
           | "state_t"
           | "thread_id_t"
           | "tptr"
@@ -2382,7 +2387,7 @@ namespace Microsoft.Research.Vcc
                   let assump =
                     match e.Type with
                       | C.Ptr t ->                      
-                        bCall (if t.IsComposite then "$thread_owned" else "$mutable") [bState; e']
+                        bCall (if t.IsComposite || t.IsVolVersion then "$thread_owned" else "$mutable") [bState; e']
                       | C.ObjectT ->
                         bCall "$thread_owned_or_even_mutable" [bState; e']
                       | C.MathTypeRef "ptrset" ->
