@@ -453,7 +453,7 @@ axiom (forall f:$field, i:int :: {$field_plus(f, i)}
   $field_arr_size($field_plus(f, i)) == $field_arr_size(f) &&
   $field_type($field_plus(f, i)) == $field_type(f) &&
   $as_field_with_type($field_plus(f, i), $field_type(f)) == $field_plus(f, i) &&
-  $is_sequential_field($field_plus(f, i)) == $is_sequential_field($field_plus(f, i)) &&
+  $is_sequential_field($field_plus(f, i)) == $is_sequential_field(f) &&
   $is_phys_field($field_plus(f, i)) == $is_phys_field(f) &&
   ($in_range(0, $field_arr_index(f) + i, $field_arr_size(f) - 1) ==> 
      $field_parent_type($field_plus(f, i)) == $field_parent_type($field_arr_root(f))) &&
