@@ -40,7 +40,6 @@ _(SPEC_TYPE(objset))
 _(SPEC_TYPE(state))
 _(SPEC_TYPE(type))
 _(SPEC_TYPE(thread_id))
-_(SPEC_TYPE(vversion))
 
 _(typedef \thread_id ^\thread;)
 
@@ -99,6 +98,10 @@ _(logic template<typename T> T \when_claimed(T expr) = \at(\when_claimed_marker(
 _(logic bool \on_unwrap(\object o, bool expr) = \old(o->\consistent) && !o->\consistent ==> expr;)
 
 // built-in fields
+
+_(typedef struct \vversion {
+  _(ghost \integer dummy;)
+  } \vversion; )
 
 _(struct \TypeState {
   _(ghost \integer \claim_count;)
@@ -231,7 +234,11 @@ SPEC_TYPE(ptrset)
 SPEC_TYPE(typeid_t)
 SPEC_TYPE(thread_id_t)
 SPEC_TYPE(state_t) // for in_state
-SPEC_TYPE(volatile_version_t) // for in_state
+
+spec(
+typedef struct volatile_version_t {
+  _(spec mathint dummy; )
+} volatile_version_t;)
 
 
 typedef thread_id_t ^_vcc_thread_id;

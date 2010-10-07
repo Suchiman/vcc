@@ -385,10 +385,10 @@ const unique ^$#seq_version : $ctype;
 const unique ^$#vol_version : $ctype;
 
 axiom $def_composite_type(^^claim, 1, true, false);
+axiom $def_composite_type(^$#volatile_version_t, 1, false, false);
 axiom $def_math_type(^^mathint);
 axiom $def_math_type(^$#ptrset);
 axiom $def_math_type(^$#state_t);
-axiom $def_math_type(^$#volatile_version_t);
 axiom $def_math_type(^$#struct);
 
 function $field_offset($field) : int;
