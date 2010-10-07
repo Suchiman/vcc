@@ -69,6 +69,7 @@ namespace Microsoft.Research.Vcc
     let tpField = B.Type.Ref "$field"
     let tpState = B.Type.Ref "$state"
     let tpVersion = B.Type.Ref "$version"
+    let tpVolVersion = B.Type.Ref "$vol_version"
     let tpToken = B.Type.Ref "$token"
     let tpLabel = B.Type.Ref "$label"
     
@@ -278,6 +279,7 @@ namespace Microsoft.Research.Vcc
               | "ptrset" -> tpPtrset
               | "struct" -> tpStruct
               | "state_t" -> tpState
+              | "volatile_version_t" -> tpVolVersion
               | "club_t" -> B.Type.Ref "$ptrclub"
               | _ -> B.Type.Ref ("$#" + n)
           | C.Type.Volatile _

@@ -175,6 +175,7 @@ namespace Microsoft.Research.Vcc
                   "account_claim", "Spp";
                   "is_ghost_ptr", "p";
                   "admissibility_start", "t";
+                  "volatile_version_addr", "p";
                 ]
     dict
 

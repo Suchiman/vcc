@@ -68,6 +68,7 @@ namespace Microsoft.Research.Vcc
                                           "\\owns",         "_vcc_owns"
                                           "\\owner",        "_vcc_owner"
                                           "\\valid",        "_vcc_typed2"
+                                          "\\volatile_version", "_vcc_volatile_version"
                                         ]
        
     let cTrue = C.Expr.BoolLiteral ( { Type = C.Type.Bool; Token = C.bogusToken }, true )
