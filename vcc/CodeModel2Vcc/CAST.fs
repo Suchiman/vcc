@@ -335,10 +335,6 @@ module Microsoft.Research.Vcc.CAST
     member this.IsPtrSet = this.IsMathType "ptrset"
     member this.IsMathStruct = this.IsMathType "struct"
     member this.IsMathState = this.IsMathType "state_t"
-    member this.IsVolVersion =
-      match this with
-        | Type.Ref ( { Name = "volatile_version_t" } ) -> true
-        | _ -> false
 
     // those should be treated as immutable
     static member MathTd name = 

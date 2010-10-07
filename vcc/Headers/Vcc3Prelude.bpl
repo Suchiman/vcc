@@ -159,7 +159,6 @@ type $field_kind;
 const unique $fk_base : $field_kind;
 const unique $fk_owns : $field_kind;
 const unique $fk_ref_cnt : $field_kind;
-const unique $fk_vol_version : $field_kind;
 const unique $fk_as_array_first : $field_kind;
 const unique $fk_allocation_root : $field_kind;
 const unique $fk_emb_array : $field_kind;
@@ -303,7 +302,6 @@ function $f_group_root($ctype) : $field;
 function $f_root($ctype) : $field;
 function $f_owns($ctype) : $field;
 function $f_ref_cnt($ctype) : $field;
-function $f_vol_version($ctype) : $field;
 
 function {:inline true} $def_special_field(partp:$ctype, f:$field, tp:$ctype, fk:$field_kind) : bool
   {
@@ -329,12 +327,8 @@ axiom (forall t:$ctype :: {$f_owns(t)}
     $def_special_ghost_field(t, $f_owns(t), ^$#ptrset, $fk_owns));
 axiom (forall t:$ctype :: {$f_ref_cnt(t)} 
   $is_non_primitive(t) ==>
-    $def_special_ghost_field(t, $f_ref_cnt(t), ^^mathint, $fk_ref_cnt) &&
+    $def_special_ghost_field(t, $f_ref_cnt(t), ^$#ptrset, $fk_ref_cnt) &&
     $is_volatile_field($f_ref_cnt(t)));
-axiom (forall t:$ctype :: {$f_vol_version(t)} 
-  $is_non_primitive(t) ==>
-    $def_special_ghost_field(t, $f_vol_version(t), ^$#volatile_version_t, $fk_vol_version) &&
-    $is_sequential_field($f_vol_version(t)));
 
 // ----------------------------------------------------------------------------
 // Built-in types and constants
@@ -378,14 +372,12 @@ const unique ^^claim: $ctype;
 const unique ^^mathint: $ctype;
 const unique ^$#ptrset : $ctype;
 const unique ^$#state_t : $ctype;
-const unique ^$#volatile_version_t : $ctype;
 const unique ^$#struct : $ctype;
 
 const unique ^$#seq_version : $ctype;
 const unique ^$#vol_version : $ctype;
 
 axiom $def_composite_type(^^claim, 1, true, false);
-axiom $def_composite_type(^$#volatile_version_t, 1, false, false);
 axiom $def_math_type(^^mathint);
 axiom $def_math_type(^$#ptrset);
 axiom $def_math_type(^$#state_t);
@@ -407,7 +399,6 @@ axiom $field($me()) == $f_root(^$#thread_id_t);
 axiom $in_range_spec_ptr($me());
 axiom $non_null($me());
 axiom $is_proper($me());
-function $is_threadtype(t:$ctype) : bool { t == ^$#thread_id_t }
 
 // ----------------------------------------------------------------------------
 // Arrays
@@ -625,7 +616,7 @@ function {:inline true} $mutable(S:$state, p:$ptr) : bool
   }
 
 function {:inline true} $thread_owned(S:$state, p:$ptr) : bool
-  { $owner(S, $emb(S, p)) == $me() }
+  { $owner(S, p) == $me() }
 
 function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
   {
@@ -857,9 +848,6 @@ axiom (forall S:$state, p:$ptr, f:$field, t:$ctype ::
 
 function {:inline true} $update(h:$object, r:$ptr, f:$field, v:int) : $object
   { h[ f := h[f][ r := v ] ] }
-
-function {:inline true} $havoc_at(S0:$state, S:$state, p:$ptr, f:$field) : bool
-  { $heap(S) == $update($heap(S0), p, f, $rd(S, p, f)) }
 
 function {:inline true} $specials_eq(S0:$state, S:$state) : bool
   { 
@@ -1644,79 +1632,6 @@ axiom (forall S:$state, p:$ptr, c:$ptr, f:$field ::
     $in_claim_domain(p, c) &&
     $rd(S, p, f) == $fetch_from_domain($claim_version(c), p, f)
     );
-
-// -------------------------------------------------------------------------------------
-// the volatile domain
-// -------------------------------------------------------------------------------------
-
-type $vol_version;
-
-function $int_to_vol_version(int) : $vol_version;
-
-function {:inline true} $volatile_version_addr(p:$ptr) : $ptr { $dot(p, $f_vol_version($typ(p))) }
-
-function $read_vol_version(S:$state, p:$ptr) : $vol_version
-  { $int_to_vol_version($rd(S, p, $f_vol_version($typ(p)))) }
-
-function $fetch_from_vv(v:$vol_version, p:$ptr, f:$field) : int;
-
-function {:inline true} $fetch_vol_field(S:$state, p:$ptr, f:$field) : int
-  { $fetch_from_vv($read_vol_version(S, p), p, f) }
-
-// the approver always needs to approve itself and be of obj_t type
-// TODO drop "t" from both
-function $is_approved_by(t:$ctype, approver:$field, subject:$field) : bool;
-function $is_owner_approved(t:$ctype, subject:$field) returns(bool);
-
-axiom (forall S:$state, t:$ctype, p:$ptr, approver:$field, subject:$field ::
-  { $is_approved_by(t, approver, subject), $rd(S, p, subject) }
-  $full_stop(S) &&
-  $is_approved_by(t, approver, subject) &&
-  $closed(S, p) &&
-  ($int_to_ptr($rd(S, p, approver)) == $me() ||
-   $int_to_ptr($fetch_vol_field(S, p, approver)) == $me()) ==>
-    $rd(S, p, subject) == $fetch_vol_field(S, p, subject)
-    );
-
-function {:inline true} $inv_is_approved_by_ptr(S1:$state, S2:$state, this:$ptr, approver:$ptr, subject:$field) returns(bool)
-{
-  $rd(S1, this, subject) == $rd(S2, this, subject) ||
-  $is_null(approver) ||
-  (!$is_threadtype($typ(approver)) && $inv2nt(S1, S2, approver) ) ||
-  ($is_threadtype($typ(approver)) && $read_vol_version(S1, this) != $read_vol_version(S2, this) )
-}
-
-function {:inline true} $inv_is_approved_by(S1:$state, S2:$state, this:$ptr, approver:$field, subject:$field) returns(bool)
-{
-  $inv_is_approved_by_ptr(S1, S2, this, $int_to_ptr($rd(S1, this, approver)), subject)
-}
-
-axiom (forall S:$state, p:$ptr, t:$ctype, subject:$field ::
-  { $is_owner_approved(t, subject), $rd(S, p, subject) }
-  $full_stop(S) &&
-  $closed(S, p) &&
-  $is_owner_approved(t, subject) &&
-  $owner(S, p) == $me() ==>
-    $rd(S, p, subject) == $fetch_vol_field(S, p, subject));
-
-/*
-axiom (forall S1:$state, S2:$state, p:$ptr, t:$ctype, subject:$field ::
-  { $is_owner_approved(t, subject), $post_unwrap(S1, S2), $rd(S1, p, subject) }
-  $instantiate_int($rd(S2, p, subject)));
-*/
-
-function {:inline true} $inv_is_owner_approved(S1:$state, S2:$state, this:$ptr, subject:$field) returns(bool)
-{
-  $inv_is_approved_by_ptr(S1, S2, this, $owner(S1, this), subject)
-}
-
-procedure $bump_volatile_version(p:$ptr);
-  modifies $s;
-  ensures $specials_eq(old($s), $s);
-  ensures $havoc_at(old($s), $s, p, $f_vol_version($typ(p)));
-  ensures $timestamp_post_strict(old($s), $s);
-  ensures $read_vol_version(old($s), p) != $read_vol_version($s, p);
-  ensures $timestamp_post_strict(old($s), $s);
 
 // -----------------------------------------------------------------------
 // Span & extent
