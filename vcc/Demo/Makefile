@@ -1,5 +1,5 @@
 TARGETS = $(wildcard *.c)
-NEWSYNTAX_TARGETS = $(wildcard *NewSyntax.c)
+NEWSYNTAX_TARGETS = $(wildcard *NewSyntax.c) bakery.c
 STD_TARGETS = $(filter-out $(NEWSYNTAX_TARGETS),$(TARGETS))
 
 default: verify
