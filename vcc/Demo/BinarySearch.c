@@ -1,25 +1,25 @@
-#include <vcc.h>
 #include <limits.h>
+#include <vcc.h>
 
-unsigned binary_search(int val, int *arr, unsigned len) 
-  requires(is_mutable_array(arr, len))
-  requires(forall(unsigned i,j; i < j && j < len ==> arr[i] <= arr[j]))
-  ensures(result != UINT_MAX ==> arr[result] == val)
-  ensures(result == UINT_MAX ==> forall(unsigned i; i < len ==> arr[i] != val))
+unsigned binary_search(int val, int *buf, unsigned len)
+  requires(is_thread_local_array(buf, len))                                     // buf[0..len] is valid, locally owned
+  requires(forall(unsigned i,j; i < j && j < len ==> buf[i] <= buf[j]))         // buffer is sorted
+  ensures(result != UINT_MAX ==> buf[result] == val)                            // val found
+  ensures(result == UINT_MAX ==> forall(unsigned i; i < len ==> buf[i] != val)) // val not found
 {
   unsigned low, high, mid;
   low = 0; high = len;
   while (low < high)
     invariant(high <= len)
-    invariant(forall(unsigned i; i < low              ==> arr[i] <  val))
-    invariant(forall(unsigned i; high <= i && i < len ==> arr[i] >= val))
+    invariant(forall(unsigned i; i < low              ==> buf[i] <  val))       // val isn't to the left of low
+    invariant(forall(unsigned i; high <= i && i < len ==> buf[i] >= val))       // val isn't to the right of high
   {
     mid = low + (high - low) / 2;
-    if (arr[mid] < val)             low = mid + 1;
+    if (buf[mid] < val)             low = mid + 1;
     else                            high = mid;
   }
 
-  if (low < len && arr[low] == val) return low;
+  if (low < len && buf[low] == val) return low;
   else                              return UINT_MAX;
 }
 

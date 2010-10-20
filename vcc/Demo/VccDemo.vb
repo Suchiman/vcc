@@ -75,6 +75,16 @@ Public Module VccDemo
         DTE.ActiveDocument.Selection.NewLine()
         DTE.ActiveDocument.Save()
     End Sub
+    Sub VccDemo8()
+        DTE.ActiveDocument.Selection.EndOfDocument()
+        DTE.ActiveDocument.Selection.NewLine()
+        DTE.ActiveDocument.Selection.Text = "/*`"
+        DTE.ActiveDocument.Selection.NewLine()
+        DTE.ActiveDocument.Selection.Text = "Verification of binary_search succeeded."
+        DTE.ActiveDocument.Selection.NewLine()
+        DTE.ActiveDocument.Selection.Text = "`*/"
+        DTE.ActiveDocument.Save()
+    End Sub
     Sub ResetDemo()
         DTE.ActiveDocument.Selection.SelectAll()
         DTE.ActiveDocument.Selection.Text = "#include <limits.h>"
