@@ -99,13 +99,13 @@ namespace VccModel.Preprocessor
 
                 if (signed)
                 {
+                    bits--; // adjust exponent
                     // Min value
-                    value = ((ulong)1 << (bits - 1));
+                    value = ((ulong)1 << bits);
                     valueName = String.Format("{0}.MinValue", typeDescr);
                     valueString = String.Format("-{0}", value);
                     renameMap[typeName][valueString] = valueName;
                     CreateOffsetValues(typeName, valueName, true, value, 0, 4);
-		    bits--;
                 }
 
                 // Max value
