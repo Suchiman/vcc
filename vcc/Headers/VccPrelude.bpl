@@ -279,6 +279,7 @@ axiom (forall M:$typemap_t, p:$ptr, q:$ptr, v:$type_state :: {:weight 0}
 
 type $statusmap_t;
 function $select.sm($statusmap_t, $ptr) returns($status);
+function $select_range.mem($memory_t, $ptr, $ptr) returns([$ptr]int);
 function $store.sm($statusmap_t, $ptr, $status) returns($statusmap_t);
 axiom (forall M:$statusmap_t, p:$ptr, v:$status :: {:weight 0}
   $select.sm($store.sm(M, p, v), p) == v);
@@ -287,6 +288,11 @@ axiom (forall M:$statusmap_t, p:$ptr, q:$ptr, v:$status :: {:weight 0}
   ||
   $select.sm($store.sm(M, p, v), q) == $select.sm(M, q)
   );
+axiom (forall M:$memory_t, p:$ptr, top:$ptr, bottom:$ptr, v:int :: {:weight 0}
+  ($ref(bottom) <= $ref(p) && $ref(p) < $ref(top))
+  ||
+  $select_range.mem($store.mem(M, p, v), bottom, top) == $select_range.mem(M, bottom, top)
+  );
 
 function $memory(s:$state) returns($memory_t);
 function $typemap(s:$state) returns($typemap_t);
@@ -294,6 +300,8 @@ function $statusmap(s:$state) returns($statusmap_t);
 
 function {:inline true} $mem(s:$state, p:$ptr) returns(int)
   { $select.mem($memory(s), p) }
+function {:inline true} $mem_range(s:$state, bottom:$ptr, top:$ptr) returns([$ptr]int)
+  { $select_range.mem($memory(s), bottom, top) }
 function {:inline true} $mem_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
   { $mem(s1, p) == $mem(s2, p) }
 function {:inline true} $st_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
