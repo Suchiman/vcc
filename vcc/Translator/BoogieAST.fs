@@ -289,8 +289,8 @@ namespace Microsoft.Research.Vcc
 
 
     type Stmt =
-      | Assert of Token * Expr // can generate errors
-      | Assume of Expr
+      | Assert of list<Attribute> * Token * Expr // can generate errors
+      | Assume of list<Attribute> * Expr
       | Havoc of list<Id>
       | Assign of Expr * Expr
       | Call of Token * list<Id> * Id * list<Expr> // can generate errors
@@ -302,6 +302,9 @@ namespace Microsoft.Research.Vcc
       | VarDecl of Var * option<Expr>
       | Comment of string    
       | Return of Token
+
+      static member MkAssume e = Assume ([], e)
+      static member MkAssert (t, e) = Assert ([], t, e)
       
     let rec mapStmt f s =
       match f s with
@@ -362,24 +365,27 @@ namespace Microsoft.Research.Vcc
 
     let rec trStmt s =
       match s with
-        | Assert (token, e) ->
+        | Assert (attrs, token, e) ->
           let cmd =
             match token with
               | :? TokenWithAddCmdInfo as twaci ->
                 match twaci.GetAddInfo() with
-                  | AddNothing -> Boogie.AssertCmd (tok token, trExpr e) :> Boogie.Cmd
+                  | AddNothing -> Boogie.AssertCmd (tok token, trExpr e)
                   | AddEnsures ens -> 
                     let res = Boogie.AssertEnsuresCmd ens
                     res.Expr <- trExpr e
-                    res :> Boogie.Cmd
+                    res :> Boogie.AssertCmd
                   | AddRequires (c, r) ->
                     let res = Boogie.AssertRequiresCmd (c, r)
                     res.Expr <- trExpr e
-                    res :> Boogie.Cmd
-              | _ -> Boogie.AssertCmd (tok token, trExpr e) :> Boogie.Cmd
+                    res :> Boogie.AssertCmd
+              | _ -> Boogie.AssertCmd (tok token, trExpr e)          
+          cmd.Attributes <- toAttributesList attrs
           [Cmd cmd]
-        | Assume e -> 
-          [Cmd (Microsoft.Boogie.AssumeCmd (noToken, trExpr e) :> Microsoft.Boogie.Cmd)]
+        | Assume (attrs, e) -> 
+          let assump = Boogie.AssumeCmd (noToken, trExpr e) :> Microsoft.Boogie.Cmd
+          // assump.Attributes <- toAttributesList attrs
+          [Cmd assump]
         | Havoc il ->
           [Cmd (Microsoft.Boogie.HavocCmd (noToken, toIdentifierExprSeq il) :> Microsoft.Boogie.Cmd)]
         | Assign (lhs, rhs) ->

@@ -27,9 +27,9 @@ namespace Microsoft.Research.Vcc
       
       member this.ToStmt () =
         if this.IsAssert then
-          Assert (this.Token, this.Condition) 
+          Assert ([], this.Token, this.Condition) 
         else 
-          Assume this.Condition
+          Assume ([], this.Condition)
       
     type 
       [<NoComparison>] [<ReferenceEquality>] 

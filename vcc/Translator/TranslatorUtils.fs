@@ -401,7 +401,7 @@ namespace Microsoft.Research.Vcc
               let v' = this.AddType l.Type (this.VarRef l)
               bAnd (valIs "" (bCall "$ptr_to_int" [v'])) (valIs "_ptr" v')
             | _ -> valIs "" (this.CastToInt (trType l.Type) (this.VarRef l))
-        B.Stmt.Assume cond
+        B.Stmt.MkAssume cond
         
       member this.TrInvLabel (lbl:string) =
         let result = "l#" + lbl;
