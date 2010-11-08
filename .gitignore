@@ -55,7 +55,10 @@ vcc/Test/testsuite/fix
 vcc/Test/testsuite/add-testcase.sh
 vcc/Test/testsuite/cmpout
 vcc/Test/testsuite/vcopt-bug.bpl
-vcc/Tools/BenchmarkVis/*.suo
+vcc/Tools/*/*.suo
+vcc/Tools/*/*.user
+vcc/Tools/*/*/*.suo
+vcc/Tools/*/*/*.user
 vcc/Tools/BenchmarkVis/bin/
 vcc/Tools/BenchmarkVis/obj/
 vcc/Tools/ModelViewer/Model/bin/
@@ -66,7 +69,6 @@ vcc/Tools/ModelViewer/Z3ModelParser/bin/
 vcc/Tools/ModelViewer/Z3ModelParser/obj/
 vcc/Tools/VccSyntaxCoverter/_ReSharper.VccSyntaxCoverter/
 vcc/Tools/VccSyntaxCoverter/Lexer.fs
-vcc/Tools/VccSyntaxCoverter/*.suo
 vcc/Tools/VccSyntaxCoverter/bin/
 vcc/Tools/VccSyntaxCoverter/obj/
 vcc/Tools/Z3Visualizer/Z3Visualizer/bin/
