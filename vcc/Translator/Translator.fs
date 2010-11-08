@@ -2309,6 +2309,12 @@ namespace Microsoft.Research.Vcc
                       (bTrue, te (C.Deref ({ e.Common with Type = t }, e)), trType t)
                     else
                       (bCall "$closed" [er "#s"; te e], bCall "$read_version" [er "#s"; te e], tpVersion)
+                  | C.MathTypeRef "ptrset" ->
+                    match e with 
+                      | C.Macro(_, "_vcc_array_range", [_; ptr; length]) -> 
+                        (bTrue, bCall "$mem_range" [er "#s"; te ptr; bCall "$idx" [te ptr; te length; ptrType ptr]], B.Type.Map([tpPtr], B.Type.Int))
+                      | _ -> helper.Error(e.Token, 9619, "ptrset in reads clause must be an array_range")
+                             (bTrue, er "$bogus", tpVersion)
                   | _ ->
                     helper.Error (e.Token, 9619, "non-pointer reads clauses are not supported", None)
                     (bTrue, er "$bogus", tpVersion)
