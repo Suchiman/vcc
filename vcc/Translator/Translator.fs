@@ -123,7 +123,6 @@ namespace Microsoft.Research.Vcc
     let translate functionToVerify (helper:Helper.Env) (getPrelude:MyFunc<Microsoft.Boogie.Program>) decls =
       let ctx = TranslationState(helper)
       let helper = ctx.Helper
-      let cev = CEV(ctx)
       let bv = BvTranslator(ctx)
       let preludeBodies = lazy (ToBoogieAST.getFunctionExpansions (getPrelude.Invoke()))
       
@@ -140,7 +139,7 @@ namespace Microsoft.Research.Vcc
           match env.AtomicObjects with
             | [] -> "$full_stop_ext"
             | _ -> "$good_state_ext"
-        B.Stmt.Assume (bCall pred [er name; bState])
+        B.Stmt.MkAssume (bCall pred [er name; bState])
 
       let mapEqAxioms t =
         let t1, t2 =
@@ -772,7 +771,7 @@ namespace Microsoft.Research.Vcc
 
       and readsCheck env isWf (p:C.Expr) =
         if helper.Options.OmitReadWriteChecking then
-          [B.Assert (afmte 8511 "disabled reads check of {0}" [p], bTrue)]
+          [B.Stmt.MkAssert (afmte 8511 "disabled reads check of {0}" [p], bTrue)]
         else
           let cond id msg name (args : C.Expr list) = 
             (afmte id msg args.Tail, trExpr env (C.Macro ({p.Common with Type = C.Bool }, name, args)))
@@ -812,7 +811,7 @@ namespace Microsoft.Research.Vcc
                   else
                     cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local2" [cState; p]
                 tok, bMultiOr (prop :: isAtomic)
-          List.map B.Assert (tp @ [th])
+          List.map B.Stmt.MkAssert (tp @ [th])
       
       and writesMultiCheck use_wr env tok f =
         let name = "#writes" + ctx.TokSuffix tok
@@ -922,7 +921,7 @@ namespace Microsoft.Research.Vcc
       let isInWrites e p = repl (isInWrites e p)
       let typeOf env e = repl (typeOf env e)
       let readsCheck env isWf p = 
-        List.map (function B.Stmt.Assert (t, e) -> B.Stmt.Assert (t, repl e) | _ -> die()) (readsCheck env isWf p)
+        List.map (function B.Stmt.Assert (_, t, e) -> B.Stmt.MkAssert (t, repl e) | _ -> die()) (readsCheck env isWf p)
       let objectWritesCheck env expr = repl (inWritesOrIrrelevant false env expr None)
       let claimIn env claim s expr = repl (claimIn env claim s expr)
       let claims env claim expr = repl (claims env claim expr)
@@ -933,8 +932,6 @@ namespace Microsoft.Research.Vcc
       let writesMultiCheck env tok f = ()
       let vsTrans env p = ()
       let inWritesOrIrrelevant = ()
-      
-      
       
       let trLabel (label:C.LabelId) = label.Name
 
@@ -979,10 +976,10 @@ namespace Microsoft.Research.Vcc
           afmtet tok 8008 ("{0} is non-writable and its owner is not listed in atomic(...) (and thus is impossible to " + cl_or_uncl + ")") [obj]
         let tok2 = 
           afmtet tok 8009 "type of object {0} was not marked with vcc(claimable)" [obj]
-        [B.Stmt.Assert (tok, bMultiOr (wr :: own));
-         B.Stmt.Assert (tok2, bCall "$is_claimable" [typeOf env obj]);
+        [B.Stmt.MkAssert (tok, bMultiOr (wr :: own));
+         B.Stmt.MkAssert (tok2, bCall "$is_claimable" [typeOf env obj]);
          B.Stmt.Call (C.bogusToken, [], "$write_ref_cnt", [bobj; ref_cnt_plus_one]);
-         B.Stmt.Assume (B.Expr.Primitive (">=", [ref_cnt; B.Expr.IntLiteral (bigint.Zero)]))]
+         B.Stmt.MkAssume (B.Expr.Primitive (">=", [ref_cnt; B.Expr.IntLiteral (bigint.Zero)]))]
                
       let claimId = ref 0            
       
@@ -997,27 +994,27 @@ namespace Microsoft.Research.Vcc
             let didAlloc = bImpl (bNeq (er claim) (er "$no_claim"))
             let mkInitAssert s (expr:C.Expr) =
               let tok = afmtet tok 8520 "chunk {0} of the claim initially holds" [expr]
-              B.Stmt.Assert (tok, didAlloc (inState s expr))
+              B.Stmt.MkAssert (tok, didAlloc (inState s expr))
               
             let mkAdmAssert s (expr:C.Expr) =
               let tok = afmtet tok 8521 "chunk {0} of the claim holds after a step of the machine" [expr]
-              B.Stmt.Assert (tok, inState s expr)
+              B.Stmt.MkAssert (tok, inState s expr)
             
             let rf n = er (claim + n)
             
             let doObj obj =
               let obj' = trExpr env obj
               let tok' = afmtet tok 8528 "object {0} is closed before claiming it" [obj]
-              B.Stmt.Assert (tok', bCall "$closed" [bState; obj']) :: claimedObjCheck env tok true obj
+              B.Stmt.MkAssert (tok', bCall "$closed" [bState; obj']) :: claimedObjCheck env tok true obj
             
             let doClaim (obj:C.Expr) =
               let obj' = trExpr env obj
               let tokWrite = afmtet tok 8023 ("{0} is non-writable and (and thus is impossible to upgrade)") [obj]
               let tokWrap = afmtet tok 8024 "the claim {0} is not wrapped before upgrade" [obj]
               let tokRef = afmtet tok 8025 "the claim {0} has outstanding claims" [obj]
-              [B.Assert (tokWrap, bCall "$wrapped" [bState; obj'; er "^^claim"]);
-               B.Assert (tokRef, bEq (bCall "$ref_cnt" [bState; obj']) (bInt 0));
-               B.Assert (tokWrite, objectWritesCheck env obj')]
+              [B.Stmt.MkAssert (tokWrap, bCall "$wrapped" [bState; obj'; er "^^claim"]);
+               B.Stmt.MkAssert (tokRef, bEq (bCall "$ref_cnt" [bState; obj']) (bInt 0));
+               B.Stmt.MkAssert (tokWrite, objectWritesCheck env obj')]
             
             let killClaim obj =
               B.Call (C.bogusToken, [], "$kill_claim", [trExpr env obj])
@@ -1032,23 +1029,23 @@ namespace Microsoft.Research.Vcc
                 List.map doObj objects |> List.concat
             
             let claimAdm =
-              [B.Stmt.Assume (inState (rf "s1") expr);
-               B.Stmt.Assume (bCall "$valid_claim_impl" [rf "s0"; rf "s2"]);
-               B.Stmt.Assume (bCall "$claim_transitivity_assumptions" ([rf "s1"; rf "s2"; er claim; er (ctx.GetTokenConst tok)]));
+              [B.Stmt.MkAssume (inState (rf "s1") expr);
+               B.Stmt.MkAssume (bCall "$valid_claim_impl" [rf "s0"; rf "s2"]);
+               B.Stmt.MkAssume (bCall "$claim_transitivity_assumptions" ([rf "s1"; rf "s2"; er claim; er (ctx.GetTokenConst tok)]));
                ] @
                List.map (mkAdmAssert (rf "s2")) conditions @
-               [B.Stmt.Assume bFalse]
+               [B.Stmt.MkAssume bFalse]
             let rand = claim + "doAdm"
             let claimAdm cond =
               [B.Stmt.If (bAnd cond (er rand), B.Stmt.Block (B.Stmt.VarDecl ((rand, B.Type.Bool), None) :: claimAdm), B.Stmt.Block [])]
                
             let initial cond = 
-              [B.Stmt.Assume (didAlloc (bCall "$claim_initial_assumptions" [bState; er claim; er (ctx.GetTokenConst tok)]))] @
+              [B.Stmt.MkAssume (didAlloc (bCall "$claim_initial_assumptions" [bState; er claim; er (ctx.GetTokenConst tok)]))] @
               List.map (mkInitAssert bState) conditions @
               claimAdm cond @
-              [B.Stmt.Assume (didAlloc (claims env (er claim) expr))]
+              [B.Stmt.MkAssume (didAlloc (claims env (er claim) expr))]
             
-            let claims_obj = List.map (fun e -> B.Stmt.Assume (bCall (if upgrade then "$claims_upgrade" else "$claims_obj") [er claim; trExpr env e])) objects 
+            let claims_obj = List.map (fun e -> B.Stmt.MkAssume (bCall (if upgrade then "$claims_upgrade" else "$claims_obj") [er claim; trExpr env e])) objects 
             
             let assign = 
               [B.Stmt.Assign (varRef local, if vcc3 then er claim else bCall "$ref" [er claim]);
@@ -1062,7 +1059,7 @@ namespace Microsoft.Research.Vcc
                   let ctx = env.ClaimContext.Value
                   let cond = bNeq (er claim) (er "$no_claim")
                   ctx.ClaimChecks <- initial cond @ ctx.ClaimChecks
-                  ctx.ClaimInits <- B.Stmt.Assume (bEq (er claim) (er "$no_claim")) :: ctx.ClaimInits 
+                  ctx.ClaimInits <- B.Stmt.MkAssume (bEq (er claim) (er "$no_claim")) :: ctx.ClaimInits 
                   []
                   
             [B.Stmt.VarDecl ((claim, tpPtr), None);
@@ -1088,12 +1085,12 @@ namespace Microsoft.Research.Vcc
         let env = { env with Writes = wr; WritesTime = er name }
         let defWrites =
           if vcc3 then
-            B.Stmt.Assume (bCall "$def_writes" [bState; er name; B.Expr.Lambda (Token.NoToken, [("#p", tpPtr)], [],  (isInWrites env p))])
+            B.Stmt.MkAssume (bCall "$def_writes" [bState; er name; B.Expr.Lambda (Token.NoToken, [("#p", tpPtr)], [],  (isInWrites env p))])
           else
-            B.Stmt.Assume (B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], [[inWritesAt]], weight "begin-writes", bEq inWritesAt (isInWrites env p)))
+            B.Stmt.MkAssume (B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], [[inWritesAt]], weight "begin-writes", bEq inWritesAt (isInWrites env p)))
         let init =
           [B.Stmt.VarDecl ((name, B.Type.Int), None);
-           B.Stmt.Assume (bEq (er name) (bCall "$current_timestamp" [bState]));
+           B.Stmt.MkAssume (bEq (er name) (bCall "$current_timestamp" [bState]));
            defWrites]
         (init, env)
                   
@@ -1103,17 +1100,17 @@ namespace Microsoft.Research.Vcc
           let doObj obj =
             let obj' = trExpr env obj
             let tok = afmtet tok 8522 "object {0} was claimed by {1}" [obj; claim]
-            B.Stmt.Assert (tok, bCall "$claims_obj" [claim'; obj']) :: claimedObjCheck env tok false obj
+            B.Stmt.MkAssert (tok, bCall "$claims_obj" [claim'; obj']) :: claimedObjCheck env tok false obj
           let tr = trExpr env
           let rec different acc = function
             | x :: xs ->
               let mkDiff y =
                 let tok = afmtet tok 8010 "object {0} might equal {1}" [x; y]
-                B.Stmt.Assert (tok, bNeq (tr x) (tr y))
+                B.Stmt.MkAssert (tok, bNeq (tr x) (tr y))
               different (List.map mkDiff xs @ acc) xs
             | [] -> acc
           let allowWrite = 
-            B.Stmt.Assert (afmtet tok 8523 "the disposed claim {0} is writable" [claim], objectWritesCheck env claim')
+            B.Stmt.MkAssert (afmtet tok 8523 "the disposed claim {0} is writable" [claim], objectWritesCheck env claim')
           let different = different [] objects
           let decrements = List.map doObj objects |> List.concat
           let call = B.Stmt.Call (tok, [], "$unclaim", [claim'])
@@ -1160,16 +1157,16 @@ namespace Microsoft.Research.Vcc
             | C.Ptr (C.Type.Ref td) -> 
               let mkAssert (e:C.Expr) =
                 let tok = afmtet obj.Token 8524 "chunk {0} of invariant of {1} holds after atomic" [e; obj]
-                B.Stmt.Assert (tok, trExpr env' e |> bSubst [("$_this", bobj)])
+                B.Stmt.MkAssert (tok, trExpr env' e |> bSubst [("$_this", bobj)])
               td.Invariants |> List.map TransUtil.splitConjunction |> List.concat |> List.map mkAssert
             | _ ->
-              [B.Stmt.Assert (afmte 8525 "invariant of {0} holds after atomic" [obj],
+              [B.Stmt.MkAssert (afmte 8525 "invariant of {0} holds after atomic" [obj],
                               bCall "$inv2" [oldState; bState; bobj; getType obj bobj])]
         
         let valid_claims =
           [for c in claims ->
-            B.Stmt.Assert (afmte 8526 "claim {0} is valid" [c],
-                           bCall "$valid_claim" [bState; trExpr env c])]
+            B.Stmt.MkAssert (afmte 8526 "claim {0} is valid" [c],
+                             bCall "$valid_claim" [bState; trExpr env c])]
                            
         let before =
           if before = [] then []
@@ -1184,8 +1181,8 @@ namespace Microsoft.Research.Vcc
         before @
         valid_claims @
         [for (bobj, obj) in atomicObjs do
-             yield B.Stmt.Assert (afmte 8527 "{0} is closed (for atomic(...))" [obj], bCall "$closed" [bState; bobj])
-             yield B.Stmt.Assume (bCall "$inv" [bState; bobj; getType obj bobj])
+             yield B.Stmt.MkAssert (afmte 8527 "{0} is closed (for atomic(...))" [obj], bCall "$closed" [bState; bobj])
+             yield B.Stmt.MkAssume (bCall "$inv" [bState; bobj; getType obj bobj])
              ] @
         save @
         ctx.ClaimInits @
@@ -1309,31 +1306,31 @@ namespace Microsoft.Research.Vcc
             | C.Expr.Comment (_, s) -> 
               [B.Stmt.Comment s]
             | C.Expr.Assert (_, C.Expr.Macro (_, "_vcc_bv_lemma", [e]), []) -> 
-              [cmt (); B.Stmt.Assert (stmt.Token, bv.TrBvExpr env e)]
+              [cmt (); B.Stmt.MkAssert (stmt.Token, bv.TrBvExpr env e)]
             | C.Expr.Assert (_, C.Expr.Macro (_, "reads_check_normal", [e]), []) ->
               cmt () :: readsCheck env false e            
             | C.Expr.Assert (_, e, []) -> 
-              [cmt (); B.Stmt.Assert (stmt.Token, trExpr env e)]
+              [cmt (); B.Stmt.MkAssert (stmt.Token, trExpr env e)]
             | C.Expr.Assert(ec, e, trigs) -> helper.Oops(ec.Token, "non-empty triggers on assert"); trStmt env (C.Expr.Assert(ec, e, []))
             | C.Expr.Assume (_, e) -> 
-              [cmt (); B.Stmt.Assume (trExpr env e)]
+              [cmt (); B.Stmt.MkAssume (trExpr env e)]
             | C.Expr.Return (c, s) ->
               match s with
-              | None -> [cmt (); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
+              | None -> [cmt (); B.Stmt.MkAssert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
               | (Some e) -> 
-                [cmt (); B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e)); B.Stmt.Assert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
+                [cmt (); B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e)); B.Stmt.MkAssert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
             | C.Expr.Macro (_, "havoc", [e ;t]) ->
-              [cmt (); B.Stmt.Call (e.Token, [], "$havoc", [trExpr env e; trExpr env t]); assumeSync env e.Token] @ (cev.StateUpdate e.Token)
+              [cmt (); B.Stmt.Call (e.Token, [], "$havoc", [trExpr env e; trExpr env t]); assumeSync env e.Token]
             | C.Expr.Macro (_, "_vcc_add_member", [p; c]) ->
               let bClub = trExpr env c
               [B.Stmt.Assign(bClub, B.Expr.FunctionCall("$ptrclub.addMember", [trExpr env p; bClub]))
-               B.Stmt.Assume(B.Expr.FunctionCall("is_active_ptrclub", [bClub]))]
+               B.Stmt.MkAssume(B.Expr.FunctionCall("is_active_ptrclub", [bClub]))]
             | C.Expr.Macro (_, "_vcc_downgrade_to", [C.Expr.Ref _ as v; e]) ->
               let setLabels = [IF.setLLabel ("FlowData#"+(trExpr env v).ToString()) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel false e))
                                IF.setLMeta ("FlowData#"+(trExpr env v).ToString()) (B.Expr.Ref "$lblset.bot")]
               let tokNotEqual = afmte 9717 "{0} == {1}" [v; e]
               let tokHighCtxt = afmte 9718 "context is low" [stmt]
-              [cmt(); B.Stmt.Assert (tokNotEqual, B.Expr.Primitive("==", [trExpr env v; trExpr env e])); B.Stmt.Assert (tokHighCtxt, B.Expr.FunctionCall("$lblset.leq",  [IF.getPC; B.Expr.Ref "$lblset.bot"]))] @ setLabels
+              [cmt(); B.Stmt.MkAssert (tokNotEqual, B.Expr.Primitive("==", [trExpr env v; trExpr env e])); B.Stmt.MkAssert (tokHighCtxt, B.Expr.FunctionCall("$lblset.leq",  [IF.getPC; B.Expr.Ref "$lblset.bot"]))] @ setLabels
             | C.Expr.Macro (_, "_vcc_downgrade_to", [C.Expr.Deref (_, var) as v; e]) ->
               let setLabels =
                 [IF.setPLabel stmt.Token (trExpr env var) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel false e))
@@ -1342,7 +1339,7 @@ namespace Microsoft.Research.Vcc
                  assumeSync env stmt.Token]
               let tokNotEqual = afmte 9717 "{0} = {1}" [v; e]
               let tokHighCtxt = afmte 9718 "context is low" [stmt]
-              [cmt(); B.Stmt.Assert (tokNotEqual, B.Expr.Primitive("==", [trExpr env v; trExpr env e])); B.Stmt.Assert (tokHighCtxt, B.Expr.FunctionCall("$lblset.leq",  [IF.getPC; B.Expr.Ref "$lblset.bot"]))] @ setLabels
+              [cmt(); B.Stmt.MkAssert (tokNotEqual, B.Expr.Primitive("==", [trExpr env v; trExpr env e])); B.Stmt.MkAssert (tokHighCtxt, B.Expr.FunctionCall("$lblset.leq",  [IF.getPC; B.Expr.Ref "$lblset.bot"]))] @ setLabels
             | C.Macro(_, "test_classifier_validity_check", [C.Expr.Quant(ec, {Kind = C.QuantKind.Forall; Variables = [p]; Triggers = trigs; Condition = cond; Body = body})]) ->
               let tokClass = afmte 0000 "the provided test classifier is valid" [stmt]
               let bodyLabel = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel false body)
@@ -1353,11 +1350,11 @@ namespace Microsoft.Research.Vcc
                 match cond with
                   | None -> bodyCheck
                   | Some c -> B.Primitive("==>", [trExpr env c; bodyCheck])
-              [B.Stmt.Assert (tokClass,
-                              B.Expr.Forall(Token.NoToken,
-                                            [p,pt],
-                                            [], [],
-                                            conditioned))]
+              [B.Stmt.MkAssert (tokClass,
+                                B.Expr.Forall(Token.NoToken,
+                                              [p,pt],
+                                              [], [],
+                                              conditioned))]
             | C.Expr.MemoryWrite (_, e1, e2) when (not env.hasIF) ->
               let e2' =
                 match e1.Type with
@@ -1370,7 +1367,7 @@ namespace Microsoft.Research.Vcc
                 else [e1'; e2']
               [cmt (); 
                B.Stmt.Call (C.bogusToken, [], "$write_int", write_call_args); 
-               assumeSync env e1.Token] @ (cev.StateUpdate e1.Token)
+               assumeSync env e1.Token]
             | C.Expr.MemoryWrite (_, e1, e2) when env.hasIF ->
               let e2' =
                 match e1.Type with
@@ -1391,10 +1388,10 @@ namespace Microsoft.Research.Vcc
                IF.setPMeta C.bogusToken (memLoc) (IF.getPC);
                assumeSync env e1.Token]
             | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "claim", args)) ->
-              cmt() :: trClaim env false c.Token v args @ (cev.VarUpdate c.Token true v)
+              cmt() :: trClaim env false c.Token v args
               
             | C.Expr.VarWrite (_, [v], C.Expr.Macro (c, "upgrade_claim", args)) ->
-              cmt() :: trClaim env true c.Token v args @ (cev.VarUpdate c.Token true v)
+              cmt() :: trClaim env true c.Token v args
               
             | C.Expr.Stmt (_, C.Expr.Macro (c, "unclaim", args)) ->
               cmt() :: trUnclaim env c.Token args
@@ -1403,14 +1400,10 @@ namespace Microsoft.Research.Vcc
               trAtomic trStmt env ec objs body
               
             | C.Expr.VarWrite (_, vs, C.Expr.Call (c, fn, targs, args)) -> 
-              let cevlist = cev.FunctionCall c.Token
-              let cevlist = if List.isEmpty vs then cevlist else cevlist @ (cev.VarUpdateList c.Token vs) @ (cev.StateUpdate c.Token)
-              doCall c vs (Some fn) fn.Name targs args @ List.map (fun v -> ctx.AssumeLocalIs c.Token v) vs @ cevlist
+              doCall c vs (Some fn) fn.Name targs args @ List.map (fun v -> ctx.AssumeLocalIs c.Token v) vs
               
             | C.Expr.Stmt (_, C.Expr.Call (c, fn, targs, args))        -> 
-              let cevList = cev.FunctionCall c.Token
-              let stateUpdate = cev.StateUpdate c.Token
-              doCall c [] (Some fn) fn.Name targs args @ cevList @ stateUpdate
+              doCall c [] (Some fn) fn.Name targs args
             | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|"_vcc_set_owns"|
                                   "_vcc_giveup_closed_owner"|"_vcc_set_closed_owner"| 
                                   "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap") as name), args) -> 
@@ -1424,20 +1417,17 @@ namespace Microsoft.Research.Vcc
             | C.Expr.VarWrite (c, [v], e) when (not env.hasIF) ->
               cmt () ::
               B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
-              ctx.AssumeLocalIs c.Token v ::
-              cev.VarUpdate c.Token true v
+              ctx.AssumeLocalIs c.Token v :: []
             | C.Expr.VarWrite (c, [v], e) when env.hasIF ->
               match v.Type with
                 | C.Type.Ref s when s.Name.StartsWith("$map_t.") ->
                   cmt () ::
                   B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
-                  ctx.AssumeLocalIs c.Token v ::
-                  cev.VarUpdate c.Token true v
+                  ctx.AssumeLocalIs c.Token v :: []
                 | C.Type.Map _ ->
                   cmt () ::
                   B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
-                  ctx.AssumeLocalIs c.Token v ::
-                  cev.VarUpdate c.Token true v
+                  ctx.AssumeLocalIs c.Token v :: []
                 | _ ->
                   let (vname,_) = trVar v
                   let asPointer =
@@ -1449,12 +1439,8 @@ namespace Microsoft.Research.Vcc
                   B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
                   IF.setLLabel ("FlowData#"+vname) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) secLabel) ::
                   IF.setLMeta ("FlowData#"+vname) IF.getPC ::
-                  ctx.AssumeLocalIs c.Token v ::
-                  cev.VarUpdate c.Token true v
+                  ctx.AssumeLocalIs c.Token v :: []
             | C.Expr.If (ec, cl, c, s1, s2) ->
-              let prefix = cev.CondMoment c.Token
-              let thenBranch = cev.BranchChoice c.Token (er "took_then_branch")
-              let elseBranch = cev.BranchChoice c.Token (er "took_else_branch")
               let prefix,suffix,innerEnv = 
                 if (env.hasIF)              
                  then let explicitClassif = ref false;
@@ -1472,7 +1458,7 @@ namespace Microsoft.Research.Vcc
                                                              else IF.makePermissiveUpgrade (trExpr env) (fun v -> fst(trVar v)) trType c classifier
                       let getMapElement map index =
                         B.Expr.ArrayIndex(map, [index])
-                      let condLevelCheck = B.Stmt.Assert(tokHighCondition,
+                      let condLevelCheck = B.Stmt.MkAssert(tokHighCondition,
                                                          B.Expr.Forall(Token.NoToken,
                                                                        ["ptr#CLC",B.Type.Ref "$ptr"],
                                                                        [],
@@ -1501,12 +1487,11 @@ namespace Microsoft.Research.Vcc
                 else [],[],env
               B.Stmt.Comment ("if (" + c.ToString() + ") ...") ::
               prefix @
-              [B.Stmt.If (trExpr env c, B.Stmt.Block (thenBranch @ trStmt innerEnv s1), B.Stmt.Block (elseBranch @ trStmt innerEnv s2))] @
+              [B.Stmt.If (trExpr env c, B.Stmt.Block (trStmt innerEnv s1), B.Stmt.Block (trStmt innerEnv s2))] @
               suffix
             | C.Expr.Loop (comm, invs, writes, variants, s) ->
               let (save, oldState) = saveState "loop"
               let env = { env with OldState = oldState }
-              let regLoopBody, cevInv = cev.RegLoopBody stmt s
               let (bump, wrCheck, env) =
                 match writes with
                   | [] -> ([], [], env)
@@ -1525,23 +1510,19 @@ namespace Microsoft.Research.Vcc
                         bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
                     let tok = afmtet fst.Common.Token 8011 "writes clause of the loop might not be included writes clause of the function" []
                     let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
-                    let check = [B.Stmt.Assert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
+                    let check = [B.Stmt.MkAssert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
                     (bump, init @ check, env')
-              let arbitraryLoopIter = cev.UpdateLastStmtVars comm.Token stmt
               let body =
                 B.Stmt.While (bTrue, 
                   List.map (fun (e:C.Expr) -> (e.Token, trExpr env e)) invs,
-                  B.Stmt.Block (B.Stmt.Assume (stateChanges env) :: 
-                    B.Stmt.Assume (bCall "$timestamp_post" [env.OldState; bState]) ::
-                      B.Stmt.Assume cevInv ::
+                  B.Stmt.Block (B.Stmt.MkAssume (stateChanges env) :: 
+                    B.Stmt.MkAssume (bCall "$timestamp_post" [env.OldState; bState]) ::
                         assumeSync env comm.Token :: 
                           List.map (ctx.AssumeLocalIs comm.Token) ctx.SoFarAssignedLocals @
-                            arbitraryLoopIter @
                               trStmt env s))
-              bump @ save @ wrCheck @ regLoopBody @ [body; assumeSync env comm.Token]
+              bump @ save @ wrCheck @ [body; assumeSync env comm.Token]
                 
             | C.Expr.VarDecl (b, v, _) when env.hasIF ->
-              let ls = if v.Kind = C.Parameter then cev.VarIntro b.Token true v else []
               if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then []
               else
                 let (v', w) = trWhereVar v
@@ -1551,24 +1532,21 @@ namespace Microsoft.Research.Vcc
                 ctx.AssumeLocalIs b.Token v ::
                 B.Stmt.VarDecl (("FlowData#"+vname,B.Type.Ref "$flowdata"),None) ::
                 IF.setLLabel ("FlowData#"+vname) (B.Expr.Ref "$lblset.top") ::
-                IF.setLMeta ("FlowData#"+vname) (B.Expr.Ref "$lblset.bot") ::
-                ls
+                IF.setLMeta ("FlowData#"+vname) (B.Expr.Ref "$lblset.bot") :: []
             | C.Expr.VarDecl (b, v, _) when (not env.hasIF) ->
-              let ls = if v.Kind = C.Parameter then cev.VarIntro b.Token true v else []
               if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then []
               else
                 let (v', w) = trWhereVar v
                 cmt() ::
                 B.Stmt.VarDecl (v', w) ::
-                ctx.AssumeLocalIs b.Token v ::
-                ls
+                ctx.AssumeLocalIs b.Token v :: []
             | C.Expr.Goto (c, l) when (not env.hasIF) -> [cmt (); B.Stmt.Goto (c.Token, [trLabel l])]
             | C.Expr.Goto (c,l) when (env.hasIF) ->
               let curPC = currentPC env
               let targetPC = snd(List.find (fun (lbls,_) -> List.exists (fun lbl -> lbl = l) lbls) env.IFContexts)
               if curPC = targetPC then [cmt (); B.Stmt.Goto (c.Token, [trLabel l])]
                                   else [cmt()
-                                        B.Stmt.Block [B.Stmt.Assert (afmte 9716 "the target label's context is at least as high as the jump's" [stmt],
+                                        B.Stmt.Block [B.Stmt.MkAssert (afmte 9716 "the target label's context is at least as high as the jump's" [stmt],
                                                                      B.Expr.FunctionCall("$lblset.leq",
                                                                                          [IF.getPC
                                                                                           IF.getLabel (B.Expr.Ref(targetPC))]))
@@ -2348,21 +2326,21 @@ namespace Microsoft.Research.Vcc
                 match e with
                   | C.Macro (_, "reads_check_wf", [a]) -> 
                     match readsCheck env true a |> List.rev with
-                      | B.Stmt.Assert (t, e) :: _ -> B.Stmt.Assert (t, e |> subst)
+                      | B.Stmt.Assert (_, t, e) :: _ -> B.Stmt.MkAssert (t, e |> subst)
                       | _ -> die()
-                  | _ -> B.Stmt.Assert (e.Token, trExpr env e |> subst)
-              let assumes = h.Ensures |> List.map (stripFreeFromEnsures>> trExpr env >> subst >> B.Stmt.Assume)
-              let state = B.Assume (stateChanges env |> subst)
-              let goodstuff = B.Assume (bCall "$full_stop" [bState] |> subst)
+                  | _ -> B.Stmt.MkAssert (e.Token, trExpr env e |> subst)
+              let assumes = h.Ensures |> List.map (stripFreeFromEnsures>> trExpr env >> subst >> B.Stmt.MkAssume)
+              let state = B.Stmt.MkAssume (stateChanges env |> subst)
+              let goodstuff = B.Stmt.MkAssume (bCall "$full_stop" [bState] |> subst)
               [B.Stmt.VarDecl ((var, B.Type.Bool), None);
                B.Stmt.VarDecl (("#sanityState", tpState), None);
                B.Stmt.If (er var, B.Stmt.Block (assumes @ state :: goodstuff :: List.map mkAssert lst), B.Stmt.Block []);
-               B.Stmt.Assume (bNot (er var))]
+               B.Stmt.MkAssume (bNot (er var))]
         
       let hasStartHere (stmt:B.Stmt) =
         let found = ref false
         let repl = function
-          | B.Assume (B.FunctionCall ("$start_here", [])) ->
+          | B.Stmt.Assume (_, B.FunctionCall ("$start_here", [])) ->
             found := true
             None          
           | _ -> None
@@ -2421,19 +2399,18 @@ namespace Microsoft.Research.Vcc
                             mut (Some (List.head (List.rev args))) "$mutable"
                           | _ -> mut None "$thread_owned_or_even_mutable"
                       | _ -> bTrue
-                  B.Stmt.Assume assump
+                  B.Stmt.MkAssume assump
                   
                 let inParams = h.Parameters |> List.filter (fun v -> v.Kind <> C.VarKind.OutParameter)
-                let cevInit = cev.InitCall h.Token :: List.map (cev.VarIntro h.Token true) inParams |> List.concat
                 let inParamLabels = if env.hasIF then List.collect (fun (v:CAST.Variable) -> [B.Stmt.VarDecl (("FlowData#P#"+(v.Name),B.Type.Ref "$flowdata"), None)]) inParams
                                                  else []
-                let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ inParamLabels @ init @ cevInit                    
+                let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ inParamLabels @ init                    
                 
                 let can_frame =
                   if vcc3 then []
                   else if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
                   else
-                    [B.Stmt.Assume (bCall "$can_use_all_frame_axioms" [bState])]
+                    [B.Stmt.MkAssume (bCall "$can_use_all_frame_axioms" [bState])]
                 
                 let doBody (s:CAST.Expr) =
                   let secDecls =
@@ -2442,7 +2419,7 @@ namespace Microsoft.Research.Vcc
                                          IF.setPC (s.Token) (IF.getLabel (IF.getLData "FlowData#initPC"))
                                          assumeSync env s.Token]
                                    else []
-                  B.Stmt.Block (B.Stmt.Assume (bCall "$function_entry" [bState]) ::
+                  B.Stmt.Block (B.Stmt.MkAssume (bCall "$function_entry" [bState]) ::
                                 B.Stmt.VarDecl(("#stackframe", B.Type.Int), None) ::
                                 secDecls @
                                 (assumeSync env h.Token ::
