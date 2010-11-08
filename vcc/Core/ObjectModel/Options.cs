@@ -233,7 +233,7 @@ namespace Microsoft.Research.Vcc
           string filename = this.ParseNamedArgument(arg, "cevprint", "cev");
           if (filename != null) {
               this.options.PrintCEVModel = true;
-              this.options.BoogieOptions.Add("/cev:" + filename);
+              this.options.BoogieOptions.Add("/mv:" + filename);
               return true;
           }
           return false;

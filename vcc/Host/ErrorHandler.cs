@@ -196,10 +196,12 @@ namespace Microsoft.Research.Vcc
       if (message != null) message = " (" + message + ")";
       else message = "";
 
+      /*
       if (commandLineOptions != null && commandLineOptions.PrintCEVModel) {
         cevModelWriter = VC.VCGen.ErrorReporter.ModelWriter;
         cevModelWriter.WriteLine("BEGINNING_OF_ERROR");
       }
+       */
 
       try {
         ReturnCounterexample/*?*/ rce = ce as ReturnCounterexample;
@@ -233,11 +235,13 @@ namespace Microsoft.Research.Vcc
         if (cce != null)
           ReportOutcomePreconditionFailed(cce.FailingCall.tok, cce.FailingRequires, message);
       } finally {
+        /*
         if (commandLineOptions != null && commandLineOptions.PrintCEVModel) {
           cevModelWriter.WriteLine("END_OF_ERROR");
           cevModelWriter.Flush();
           cevModelWriter = null;
         }
+         */
       }
     }
 
