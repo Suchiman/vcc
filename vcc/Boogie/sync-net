@@ -1,6 +1,11 @@
 #!/bin/sh
 
-src=//emicvccbld/drops/boogie/latest
+if [ "X$1" = X ] ; then
+  src=//emicvccbld/drops/boogie/latest
+else
+  src="$1"
+fi
+
 echo "Syncing from $src"
 
 rm -rf cache
