@@ -258,6 +258,8 @@ namespace Z3AxiomProfiler
       }
     }
 
+    bool modelInState = false;
+
     private bool ParseModelLine(string[] words)
     {
       if (words.Length == 1) {
@@ -277,6 +279,23 @@ namespace Z3AxiomProfiler
         if (model.IsV1Part(words[0])) return true;
         return false;
       }
+
+      if (words[0] == "***") {
+        switch (words[1]) {
+          case "MODEL":
+            model.NewModel();
+            return true;
+          case "END_MODEL":
+            eofSeen++;
+            modelInState = false;
+            return true;
+          case "STATE":
+            modelInState = true;
+            return true;
+        }
+      }
+
+      if (modelInState) return true;
 
       switch (words[0]) {
         case "labels:":
