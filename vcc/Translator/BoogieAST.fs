@@ -383,8 +383,8 @@ namespace Microsoft.Research.Vcc
           cmd.Attributes <- toAttributesList attrs
           [Cmd cmd]
         | Assume (attrs, e) -> 
-          let assump = Boogie.AssumeCmd (noToken, trExpr e) :> Microsoft.Boogie.Cmd
-          // assump.Attributes <- toAttributesList attrs
+          let assump = Boogie.AssumeCmd (noToken, trExpr e)
+          assump.Attributes <- toAttributesList attrs
           [Cmd assump]
         | Havoc il ->
           [Cmd (Microsoft.Boogie.HavocCmd (noToken, toIdentifierExprSeq il) :> Microsoft.Boogie.Cmd)]

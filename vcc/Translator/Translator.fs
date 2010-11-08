@@ -139,7 +139,11 @@ namespace Microsoft.Research.Vcc
           match env.AtomicObjects with
             | [] -> "$full_stop_ext"
             | _ -> "$good_state_ext"
-        B.Stmt.MkAssume (bCall pred [er name; bState])
+        let attrs = 
+          if helper.Options.PrintCEVModel then 
+            [B.StringAttr ("captureState", String.Format ("{0}({1},{2})", tok.Filename, tok.Line, tok.Column))]
+          else []
+        B.Stmt.Assume (attrs, bCall pred [er name; bState])
 
       let mapEqAxioms t =
         let t1, t2 =
