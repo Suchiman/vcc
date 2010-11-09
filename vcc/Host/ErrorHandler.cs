@@ -248,12 +248,12 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private System.IO.TextWriter cevModelWriter;
-    private void WriteCevError(string msg)
-    {
-        if (cevModelWriter != null)
-            cevModelWriter.WriteLine(msg);
-    }
+    //private System.IO.TextWriter cevModelWriter;
+    //private void WriteCevError(string msg)
+    //{
+    //    if (cevModelWriter != null)
+    //        cevModelWriter.WriteLine(msg);
+    //}
 
     private bool ReportError(IToken tok, VerificationErrorHandler.ErrorCode code, string fmt, params string[] args) {
       if (ErrorHasBeenReported(tok, code)) return false;
@@ -265,7 +265,7 @@ namespace Microsoft.Research.Vcc
       else
         Console.WriteLine(msg);
 
-      WriteCevError(msg);
+      //WriteCevError(msg);
 
       return true;
     }
