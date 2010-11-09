@@ -265,6 +265,11 @@ axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}
   ||
   $select.mem($store.mem(M, p, v), q) == $select.mem(M, q)
   );
+axiom (forall M:$memory_t, p:$ptr, bottom:$ptr, top:$ptr, v:int :: {:weight 0}
+  ($ref(bottom) <= $ref(p) && $ref(p) < $ref(top))
+  ||
+  $select_range.mem($store.mem(M, p, v), bottom, top) == $select_range.mem(M, bottom, top)
+  );
 
 type $typemap_t;
 function $select.tm($typemap_t, $ptr) returns($type_state);
@@ -288,12 +293,6 @@ axiom (forall M:$statusmap_t, p:$ptr, q:$ptr, v:$status :: {:weight 0}
   ||
   $select.sm($store.sm(M, p, v), q) == $select.sm(M, q)
   );
-axiom (forall M:$memory_t, p:$ptr, top:$ptr, bottom:$ptr, v:int :: {:weight 0}
-  ($ref(bottom) <= $ref(p) && $ref(p) < $ref(top))
-  ||
-  $select_range.mem($store.mem(M, p, v), bottom, top) == $select_range.mem(M, bottom, top)
-  );
-
 function $memory(s:$state) returns($memory_t);
 function $typemap(s:$state) returns($typemap_t);
 function $statusmap(s:$state) returns($statusmap_t);
