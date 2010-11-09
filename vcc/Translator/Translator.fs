@@ -435,7 +435,7 @@ namespace Microsoft.Research.Vcc
                 let args =
                   if fn.IsStateless then args
                   else bState :: args
-                addType fn.RetType (bCall ("#" + fn.Name) args)
+                addType fn.RetType (bCall ("F#" + fn.Name) args)
               // TODO this is wrong for loop invariants and stuff (but the legacy vcc doesn't handle that correctly as well)
               | C.Expr.Old (ec, C.Macro (_, "_vcc_when_claimed", []), e) ->
                 warnForIneffectiveOld ec.Token (self e)
@@ -1579,7 +1579,7 @@ namespace Microsoft.Research.Vcc
               (if header.IsStateless then [] else [bState]) @ [for tv in header.TypeParameters -> typeVarRef tv] 
                                                             @ [for v in header.Parameters -> varRef v]
             let tok = TransUtil.afmtt header.Token 8022 "the pure function '{0}' is underspecified; please supply ensures(result == ...) contract matching the implementation" [header.Name]
-            [B.Ensures (tok.Token, bEq (er "$result") (bCall ("#" + header.Name) parms))]
+            [B.Ensures (tok.Token, bEq (er "$result") (bCall ("F#" + header.Name) parms))]
           else []
         let (writes, ensures) =
           let check (writes, ensures) = function
@@ -2252,7 +2252,7 @@ namespace Microsoft.Research.Vcc
           let tens = function
             | C.Macro (_, ("in_range_phys_ptr"|"in_range_spec_ptr"), [_]) -> bTrue
             | e -> trExpr env e
-          let fname = "#" + h.Name
+          let fname = "F#" + h.Name
           let retType = trType h.RetType
           let parameters =  List.map trTypeVar h.TypeParameters @ List.map trVar h.Parameters
           (*
