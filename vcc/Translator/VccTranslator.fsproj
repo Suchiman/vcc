@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Translator</RootNamespace>
     <AssemblyName>Microsoft.Research.Vcc.Translator</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Name>Vcc2Translator</Name>
     <SccProjectName>
@@ -20,6 +20,7 @@
     </SccAuxPath>
     <SccLocalPath>
     </SccLocalPath>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
