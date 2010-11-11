@@ -2294,7 +2294,7 @@ namespace Microsoft.Research.Vcc
                   | C.MathTypeRef "ptrset" ->
                     match e with 
                       | C.Macro(_, "_vcc_array_range", [_; ptr; length]) -> 
-                        (bTrue, bCall "$mem_range" [er "#s"; te ptr; bCall "$idx" [te ptr; te length; ptrType ptr]], B.Type.Int)
+                        (bTrue, bCall "$mem_range" [er "#s"; ptrType ptr; stripType ptr.Type (te ptr); stripType ptr.Type (bCall "$idx" [te ptr; te length; ptrType ptr]) ], B.Type.Int)
                       | _ -> helper.Error(e.Token, 9619, "ptrset in reads clause must be an array_range")
                              (bTrue, er "$bogus", tpVersion)
                   | _ ->
