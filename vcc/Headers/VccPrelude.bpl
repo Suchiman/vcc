@@ -258,7 +258,7 @@ function {:inline true} $current_state(s:$state) returns($state) { s }
 type $memory_t;
 function $select.mem($memory_t, $ptr) returns(int);
 function $store.mem($memory_t, $ptr, int) returns($memory_t);
-function $select_range.mem($memory_t, $ptr, $ptr) returns(int);
+function $select_range.mem($memory_t, $ctype, int, int) returns(int);
 axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}
   $select.mem($store.mem(M, p, v), p) == v);
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}
@@ -266,10 +266,10 @@ axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}
   ||
   $select.mem($store.mem(M, p, v), q) == $select.mem(M, q)
   );
-axiom (forall M:$memory_t, p:$ptr, bottom:$ptr, top:$ptr, v:int :: {:weight 0}
-  ($ref(bottom) <= $ref(p) && $ref(p) < $ref(top))
+axiom (forall M:$memory_t, t:$ctype, p:$ptr, bottom:int, top:int, v:int :: {:weight 0}
+  ($typ(p) == t && bottom <= $ref(p) && $ref(p) < top)
   ||
-  $select_range.mem($store.mem(M, p, v), bottom, top) == $select_range.mem(M, bottom, top)
+  $select_range.mem($store.mem(M, p, v), t, bottom, top) == $select_range.mem(M, t, bottom, top)
   );
 
 type $typemap_t;
@@ -299,14 +299,19 @@ function $statusmap(s:$state) returns($statusmap_t);
 
 function {:inline true} $mem(s:$state, p:$ptr) returns(int)
   { $select.mem($memory(s), p) }
-function {:inline true} $mem_range(s:$state, bottom:$ptr, top:$ptr) returns(int)
-  { $select_range.mem($memory(s), bottom, top) }
+function {:inline true} $mem_range(s:$state, t:$ctype, bottom:int, top:int) returns(int)
+  { $select_range.mem($memory(s), t, bottom, top) }
 function {:inline true} $mem_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
   { $mem(s1, p) == $mem(s2, p) }
 function {:inline true} $st_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
   { $st(s1, p) == $st(s2, p) }
 function {:inline true} $ts_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
   { $ts(s1, p) == $ts(s2, p) }
+
+axiom (forall S1:$state, S2:$state, t:$ctype, bottom:int, top:int :: 
+  {$call_transition(S1, S2), $mem_range(S2, t, bottom, top) }
+  (forall r:int :: bottom <= r && r < top ==> $mem(S1, $ptr(t,r)) == $mem(S2, $ptr(t,r))) ==>
+  $mem_range(S1,t,bottom,top) == $mem_range(S2,t,bottom,top));
 
 // ----------------------------------------------------------------------------
 // nesting of structs
