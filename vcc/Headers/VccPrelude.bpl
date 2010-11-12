@@ -258,7 +258,7 @@ function {:inline true} $current_state(s:$state) returns($state) { s }
 type $memory_t;
 function $select.mem($memory_t, $ptr) returns(int);
 function $store.mem($memory_t, $ptr, int) returns($memory_t);
-function $select_range.mem($memory_t, $ctype, int, int) returns(int);
+function $select_range.mem($memory_t, $ptr, int) returns(int);
 axiom (forall M:$memory_t, p:$ptr, v:int :: {:weight 0}
   $select.mem($store.mem(M, p, v), p) == v);
 axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}
@@ -266,10 +266,10 @@ axiom (forall M:$memory_t, p:$ptr, q:$ptr, v:int :: {:weight 0}
   ||
   $select.mem($store.mem(M, p, v), q) == $select.mem(M, q)
   );
-axiom (forall M:$memory_t, t:$ctype, p:$ptr, bottom:int, top:int, v:int :: {:weight 0}
-  ($typ(p) == t && bottom <= $ref(p) && $ref(p) < top)
+axiom (forall M:$memory_t, p:$ptr, q:$ptr, sz:int, v:int :: {:weight 0}
+  ($typ(p) == $typ(q) && $ref(q) <= $ref(p) && $ref(p) < $ref($idx(q, sz, $typ(q))))
   ||
-  $select_range.mem($store.mem(M, p, v), t, bottom, top) == $select_range.mem(M, t, bottom, top)
+  $select_range.mem($store.mem(M, p, v), q, sz) == $select_range.mem(M, q, sz)
   );
 
 type $typemap_t;
@@ -299,8 +299,8 @@ function $statusmap(s:$state) returns($statusmap_t);
 
 function {:inline true} $mem(s:$state, p:$ptr) returns(int)
   { $select.mem($memory(s), p) }
-function {:inline true} $mem_range(s:$state, t:$ctype, bottom:int, top:int) returns(int)
-  { $select_range.mem($memory(s), t, bottom, top) }
+function {:inline true} $mem_range(s:$state, p:$ptr, sz:int) returns(int)
+  { $select_range.mem($memory(s), p, sz) }
 function {:inline true} $mem_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
   { $mem(s1, p) == $mem(s2, p) }
 function {:inline true} $st_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
@@ -308,10 +308,10 @@ function {:inline true} $st_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
 function {:inline true} $ts_eq(s1:$state, s2:$state, p:$ptr) returns(bool)
   { $ts(s1, p) == $ts(s2, p) }
 
-axiom (forall S1:$state, S2:$state, t:$ctype, bottom:int, top:int :: 
-  {$call_transition(S1, S2), $mem_range(S2, t, bottom, top) }
-  (forall r:int :: bottom <= r && r < top ==> $mem(S1, $ptr(t,r)) == $mem(S2, $ptr(t,r))) ==>
-  $mem_range(S1,t,bottom,top) == $mem_range(S2,t,bottom,top));
+axiom (forall S1:$state, S2:$state, p:$ptr, sz:int :: 
+  {$call_transition(S1, S2), $mem_range(S2, p, sz) }
+  (forall i:int :: 0 <= i && i < sz ==> $mem(S1, $idx(p, i, $typ(p))) == $mem(S2, $idx(p, i, $typ(p)))) ==>
+  $mem_range(S1,p,sz) == $mem_range(S2,p,sz));
 
 // ----------------------------------------------------------------------------
 // nesting of structs
