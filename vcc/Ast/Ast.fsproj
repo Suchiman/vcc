@@ -8,7 +8,7 @@
     <ProjectGuid>{c5203b00-b561-48f9-b56d-c4477a27ea01}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Ast</RootNamespace>
-    <AssemblyName>Ast</AssemblyName>
+    <AssemblyName>Microsoft.Research.Vcc.Ast</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <Name>Ast</Name>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
@@ -31,7 +31,9 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Ast.XML</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
+    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
