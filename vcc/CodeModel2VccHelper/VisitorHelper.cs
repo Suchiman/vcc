@@ -43,7 +43,7 @@ namespace Microsoft.Research.Vcc
     public static Token GetTokenFor(IEnumerable<ILocation> locations)
     {
       if (IteratorHelper.EnumerableIsEmpty(locations)) return Token.NoToken;
-      return new LazyToken(new DeferredToken(locations).GetToken);
+      return LazyToken.Create(new DeferredToken(locations).GetToken);
     }
 
     public static ISourceLocation LocationFromToken(Token tok)
@@ -51,7 +51,7 @@ namespace Microsoft.Research.Vcc
       SourceLocationWrapper wrap = tok as SourceLocationWrapper;
       if (wrap != null) return wrap.sourceLocation;
       ForwardingToken fwd = tok as ForwardingToken;
-      if (fwd != null) return LocationFromToken(fwd.tok);
+      if (fwd != null) return LocationFromToken(fwd.WrappedToken);
       LazyToken lazyToken = tok as LazyToken;
       if (lazyToken != null) return LocationFromToken(lazyToken.DelayedToken);
       return SourceDummy.SourceLocation;

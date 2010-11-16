@@ -62,6 +62,11 @@
     <Compile Include="Plugin.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Ast\Ast.fsproj">
+      <Name>Ast</Name>
+      <Project>{c5203b00-b561-48f9-b56d-c4477a27ea01}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\CodeModel2VccHelper\CodeModel2VccHelper.csproj">
       <Name>CodeModel2VccHelper</Name>
       <Project>{b2144fb2-68ad-4f94-b53e-dccf827115c8}</Project>

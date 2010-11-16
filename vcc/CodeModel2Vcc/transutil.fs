@@ -18,16 +18,12 @@ namespace Microsoft.Research.Vcc
   // -----------------------------------------------------------------------------
  
   let forwardingToken tok related (getmsg : unit -> string) =
-    let related' = 
-      match related with
-        | None -> null
-        | Some tok -> tok
-    { Token = (new ForwardingToken (tok, related', ForwardingToken.GetValue getmsg) :> Token)
+    { Token = (new ForwardingToken (tok, related, getmsg) :> Token)
       Type = Type.Bool } : ExprCommon
         
   let afmt (id:int) fmt (args : list<string>) =
     System.String.Format ("#VCCERR:{0:0000}#", id) +
-      ForwardingToken.StringFormat (fmt, [| for a in args -> (a :> obj) |])
+      System.String.Format (fmt, [| for a in args -> (a :> obj) |])
 
   let afmtt tok id fmt args = forwardingToken tok None (fun () -> afmt id fmt args)
   

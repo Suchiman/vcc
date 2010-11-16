@@ -3,7 +3,7 @@
 [<AbstractClass>]
 type public Token() =
   
-  let mutable related : Token = Token.NoToken
+  let mutable related : Token option = None
 
   abstract Line : int with get
   abstract Column : int with get
@@ -38,6 +38,10 @@ and public LazyToken(getToken : unit -> Token) =
 
   let token = lazy getToken()
 
+  static member Create(getToken : System.Func<Token>) = 
+    let f() = getToken.Invoke()
+    LazyToken(f : unit -> Token)
+
   override this.Line = token.Value.Line
   override this.Column = token.Value.Column
   override this.Byte = token.Value.Byte
@@ -45,3 +49,24 @@ and public LazyToken(getToken : unit -> Token) =
   override this.Value = token.Value.Value
   override this.SuppressWarning(code) = token.Value.SuppressWarning(code)
 
+  member this.DelayedToken with get() = token.Value
+
+and public ForwardingToken(tok : Token, related, getValue) as this =
+  inherit Token()
+
+  do this.Related <- related
+
+  override this.Line = tok.Line
+  override this.Column = tok.Column
+  override this.Byte = tok.Byte
+  override this.Filename = tok.Filename
+  override this.Value = getValue()
+
+  member this.WrappedToken with get() = tok
+
+  new(tok, getValue) = ForwardingToken(tok, None, getValue)
+
+and WarningSuppressingToken(tok, warning) =
+  inherit ForwardingToken(tok, None, fun () -> tok.Value)
+
+  override this.SuppressWarning code = code = warning || base.SuppressWarning(code)

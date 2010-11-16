@@ -146,6 +146,11 @@
       <Project>{035fea7f-0d36-4ae4-b694-ec45191b9af2}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Name>Ast</Name>
+      <Project>{c5203b00-b561-48f9-b56d-c4477a27ea01}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\CodeModel2VccHelper\CodeModel2VccHelper.csproj">
       <Name>CodeModel2VccHelper</Name>
       <Project>{b2144fb2-68ad-4f94-b53e-dccf827115c8}</Project>
