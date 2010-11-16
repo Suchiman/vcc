@@ -2301,11 +2301,13 @@ namespace Microsoft.Research.Vcc
                     helper.Error (e.Token, 9619, "non-pointer reads clauses are not supported", None)
                     (bTrue, er "$bogus", tpVersion)
               let (conds, refs, types) = List.unzip3 (List.map readsRef h.Reads)
+              let pTypes = List.map snd parameters
+              let pRefs = List.map (fun ((vi,vt):B.Var) -> er vi) parameters
               let framename = fname + "#frame"
-              let framedecl = B.Decl.Function (retType, [], framename, List.map (fun t -> ("", t)) types, None)
+              let framedecl = B.Decl.Function (retType, [], framename, List.map (fun t -> ("", t)) (pTypes @ types), None)
               
               let pre = bMultiAnd (bCall "$full_stop" [er "#s"] :: bCall "$can_use_frame_axiom_of" [er fnconst] :: conds)
-              let post = bEq fappl (bCall framename refs)
+              let post = bEq fappl (bCall framename (pRefs @ refs))
               [framedecl; B.Decl.Axiom (B.Expr.Forall(Token.NoToken, qargs, [[fappl]], weight "frameaxiom", subst (bImpl pre post)))]
           let typeInfo =
             let arg i t = B.Decl.Axiom (bCall "$function_arg_type" [er fnconst; bInt i; toTypeId t])
