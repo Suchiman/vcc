@@ -22,7 +22,7 @@ namespace Microsoft.Research.Vcc
     public BoogieToken(Token tok) {
       this.tok = tok;
       if (tok.Related != null)
-        this.related = new BoogieToken(tok.Related);
+        this.related = new BoogieToken(tok.Related.Value);
     }
 
     public Microsoft.Boogie.IToken Related {

@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>CodeModel2Vcc</RootNamespace>
     <AssemblyName>Microsoft.Research.Vcc.CodeModel</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Name>CodeModel2Vcc</Name>
     <SccProjectName>
@@ -20,6 +20,7 @@
     </SccAuxPath>
     <SccLocalPath>
     </SccLocalPath>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,8 +55,6 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Util.fs" />
-    <Compile Include="CAST.fs" />
     <Compile Include="Helper.fs" />
     <Compile Include="Visitor.fs" />
     <Compile Include="TransUtil.fs" />
@@ -103,6 +102,11 @@
     <ProjectReference Include="..\..\cci\Sources\MutableCodeModel\MutableCodeModel.csproj">
       <Name>MutableCodeModel</Name>
       <Project>{319e150c-8f33-49e7-81ca-30f02f9ba90a}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Name>Ast</Name>
+      <Project>{c5203b00-b561-48f9-b56d-c4477a27ea01}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\CodeModel2VccHelper\CodeModel2VccHelper.csproj">

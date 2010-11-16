@@ -94,7 +94,7 @@ namespace Microsoft.Research.Vcc
   
     let stmtToken (msg:string) (e:C.Expr) =
       let forwardingToken tok (getmsg : unit -> string) =
-        { Token = (new ForwardingToken (tok, ForwardingToken.GetValue getmsg) :> Token);
+        { Token = (new ForwardingToken (tok, getmsg) :> Token);
           Type = C.Type.Void } : C.ExprCommon
       forwardingToken e.Token (fun () -> msg.Replace ("@@", e.Token.Value))
 

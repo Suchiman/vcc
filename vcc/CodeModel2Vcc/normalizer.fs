@@ -176,18 +176,18 @@ namespace Microsoft.Research.Vcc
       match call with
         | Call (ec, fn, _, args) ->
           let callTok = ec.Token
-          let inExpansion = ForwardingToken.GetValue (fun () -> "from expansion of '" + pref + callTok.Value + "'")
+          let inExpansion = fun () -> "from expansion of '" + pref + callTok.Value + "'"
           
           let overrideMacroLocation (expr:Expr) =
             let orig = expr.Token
-            let related = new ForwardingToken (orig, orig.Related, inExpansion)
-            let primary = new ForwardingToken (callTok, related, ForwardingToken.GetValue (fun () -> orig.Value))
+            let related = new ForwardingToken (orig, orig.Related, inExpansion) :> Token
+            let primary = new ForwardingToken (callTok, Some related, fun () -> orig.Value)
             expr.WithCommon { expr.Common with Token = primary }
 
           let updateArgLocation (expr:Expr) =
             let orig = expr.Token
-            let related = new ForwardingToken (fn.Token, orig.Related, inExpansion)
-            let primary = new ForwardingToken (orig, related, ForwardingToken.GetValue (fun () -> orig.Value))
+            let related = new ForwardingToken (fn.Token, orig.Related, inExpansion) :> Token
+            let primary = new ForwardingToken (orig, Some related, fun () -> orig.Value)
             expr.WithCommon { expr.Common with Token = primary }
           let args = List.map (fun expr -> ((self expr) : Expr).DeepMap updateArgLocation) args
 
@@ -228,7 +228,7 @@ namespace Microsoft.Research.Vcc
           let mkQ (e:Expr) = 
             let related = 
               match ec.Token with
-                | :? ForwardingToken as t -> Some t.Related
+                | :? ForwardingToken as t -> t.Related
                 | _ -> None
             let t = forwardingToken ec.Token related (fun () -> e.Token.Value + " in " + ec.Token.Value)
             let vars = gdict()

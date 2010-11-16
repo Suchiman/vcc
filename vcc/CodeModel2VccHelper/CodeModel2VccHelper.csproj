@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Microsoft.Research.Vcc.CodeModel2Vcc2Helper</RootNamespace>
     <AssemblyName>Microsoft.Research.Vcc.CodeModelHelper</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>
     </SccProjectName>
@@ -22,8 +22,7 @@
     </SccProvider>
     <TargetFrameworkSubset>
     </TargetFrameworkSubset>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -59,10 +58,8 @@
       <Link>Build\Version.cs</Link>
     </Compile>
     <Compile Include="BoogieToken.cs" />
-    <Compile Include="ForwardingToken.cs" />
     <Compile Include="ObjectEqualityComparer.cs" />
     <Compile Include="SourceLocationWrapper.cs" />
-    <Compile Include="Token.cs" />
     <Compile Include="TranslationMessage.cs" />
     <Compile Include="VisitorHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -96,6 +93,10 @@
       <Project>{035FEA7F-0D36-4AE4-B694-EC45191B9AF2}</Project>
       <Name>CodeModel</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Project>{C5203B00-B561-48F9-B56D-C4477A27EA01}</Project>
+      <Name>Ast %28Vcc\Ast%29</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Core\VccCore.csproj">
       <Project>{B855D039-8A27-419D-9A81-86FF93227E31}</Project>
       <Name>VccCore</Name>
@@ -104,6 +105,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Boogie\Core.dll</HintPath>
     </Reference>
+    <Reference Include="FSharp.Core, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
