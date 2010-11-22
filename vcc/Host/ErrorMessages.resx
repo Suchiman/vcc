@@ -133,6 +133,7 @@
 /modelviewer                   Run VCC Model Viewer in case models are available (implies /m; Short form: /mv)
 /modifiedpreprocessorfile      Save C preprocessor output to &lt;currentFile&gt;.i.&lt;PID&gt;
 /nopreprocessor                Do not invoke the C preprocessor on the input files (Short form: /n)
+/opsasfuncs                    Translate arithmetic operations into Boogie functions (Short form: /oaf)
 /omitrw                        Omit reads/writes clause checking
 /preprocessor:&lt;pp option list&gt; Options to pass on to the C preprocessor (Short form: /p)
 /pause                         Wait for a key press before terminating

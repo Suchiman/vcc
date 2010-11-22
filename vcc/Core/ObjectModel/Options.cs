@@ -58,6 +58,7 @@ namespace Microsoft.Research.Vcc
     public bool InferTriggers;
     public int DumpTriggers; // 0-none, 1-C syntax, 2-C+Boogie syntax
     public bool KeepPreprocessorFiles;
+    public bool OpsAsFunctions;
 
     public void CopyFrom(VccOptions other)
     {
@@ -122,6 +123,7 @@ namespace Microsoft.Research.Vcc
       this.InferTriggers = other.InferTriggers;
       this.DumpTriggers = other.DumpTriggers;
       this.KeepPreprocessorFiles = other.KeepPreprocessorFiles;
+      this.OpsAsFunctions = other.OpsAsFunctions;
     }
   }
 
@@ -347,6 +349,10 @@ namespace Microsoft.Research.Vcc
           bool? fieldOffsetAxioms = this.ParseNamedBoolean(arg, "offsetaxioms", "offsetaxioms");
           if (fieldOffsetAxioms.HasValue) {
             this.options.GenerateFieldOffsetAxioms = fieldOffsetAxioms.Value;
+            return true;
+          }
+          if (this.ParseName(arg, "opsasfuncs", "oaf")) {
+            this.options.OpsAsFunctions = true;
             return true;
           }
           return false;
