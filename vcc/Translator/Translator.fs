@@ -401,7 +401,7 @@ namespace Microsoft.Research.Vcc
                   | "<<" -> bCall "$_shl" targs
                   | "~" -> bCall "$_not" targs
                   | "^" -> bCall "$_xor" targs 
-                  | "*" when ch <> C.Unchecked -> bCall "$_mul" args
+                  | "*" when ch <> C.Unchecked -> bCall "$op_mul" args
                   | _ -> 
                     if ch = C.Unchecked then
                       match opName with
@@ -411,8 +411,18 @@ namespace Microsoft.Research.Vcc
                         | "/" -> bCall "$unchk_div" targs
                         | "%" -> bCall "$unchk_mod" targs
                         | _ -> B.Expr.Primitive (opName, args)
-                    else
-                      B.Expr.Primitive (opName, args)
+                    else if helper.Options.OpsAsFunctions then
+                      match opName with
+                        | "+" -> bCall "$op_add" targs
+                        | "-" -> bCall "$op_sub" targs
+                        // * is always translated like this
+                        | "/" -> bCall "$op_div" targs
+                        | "<" -> bCall "$op_lt" targs
+                        | "<=" -> bCall "$op_le" targs
+                        | ">" -> bCall "$op_gt" targs
+                        | ">=" -> bCall "$op_ge" targs
+                        | _ -> B.Expr.Primitive (opName, args)
+                    else B.Expr.Primitive (opName, args)
               | C.Expr.Ref (_, v) -> 
                 addType v.Type (varRef v)
               | C.Expr.IntLiteral (_, v) ->
