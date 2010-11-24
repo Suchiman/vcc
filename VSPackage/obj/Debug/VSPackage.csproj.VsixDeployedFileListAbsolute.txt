@@ -1,0 +1,4 @@
+C:\Users\t-chworr\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\Microsoft Research\VSPackage\1.0\\VSPackage.dll
+C:\Users\t-chworr\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\Microsoft Research\VSPackage\1.0\\VSPackage.pkgdef
+C:\Users\t-chworr\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\Microsoft Research\VSPackage\1.0\\extension.vsixmanifest
+C:\Users\t-chworr\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\Microsoft Research\VSPackage\1.0\\VSPackage.pdb
