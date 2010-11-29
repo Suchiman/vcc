@@ -6,6 +6,8 @@ _ReSharper.Vcc/
 cci/
 vcc/AddIn/VCCAddin/bin/
 vcc/AddIn/VCCAddin/obj/
+vcc/Ast/bin/
+vcc/Ast/obj/
 vcc/CodeModel2Vcc/bin/
 vcc/CodeModel2Vcc/obj/
 vcc/CodeModel2VccHelper/bin/
