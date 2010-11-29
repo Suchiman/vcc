@@ -8,6 +8,8 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
+using EnvDTE;
+using System.Windows.Forms;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -34,6 +36,10 @@ namespace MicrosoftResearch.VSPackage
     [Guid(GuidList.guidVSPackagePkgString)]
     public sealed class VSPackagePackage : Package
     {
+
+        private string vccPath = @"C:\Users\t-chworr\VCC\vcc\Host\bin\Debug\vcc.exe";
+        private IVsOutputWindowPane pane;
+
         /// <summary>
         /// Default constructor of the package.
         /// Inside this method you can place any initialization code that does not require 
@@ -66,6 +72,52 @@ namespace MicrosoftResearch.VSPackage
         }
 
 
+        private void VerifyActiveFile(object sender, EventArgs e)
+        {
+            DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
+            
+            //// Prepare VCC-Process, execute it and read its Output
+            ProcessStartInfo psi = new ProcessStartInfo(vccPath, dte.ActiveDocument.FullName);
+            psi.UseShellExecute = false;
+            psi.RedirectStandardOutput = true;
+            psi.CreateNoWindow = true;
+            System.Diagnostics.Process vccProcess = new System.Diagnostics.Process();
+            vccProcess.StartInfo = psi;
+            vccProcess.Start();
+            vccProcess.BeginOutputReadLine();
+            vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
+        }
+
+        private void VerifyActiveFunction(object sender, EventArgs e)
+        {
+            DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
+
+            //// Prepare VCC-Process, execute it and read its Output
+            string arguments = String.Format("/F:{0} {1}", dte.ActiveDocument.Selection.ToString() ,dte.ActiveDocument.FullName);
+            ProcessStartInfo psi = new ProcessStartInfo(vccPath, dte.ActiveDocument.FullName);
+            psi.UseShellExecute = false;
+            psi.RedirectStandardOutput = true;
+            psi.CreateNoWindow = true;
+            System.Diagnostics.Process vccProcess = new System.Diagnostics.Process();
+            vccProcess.StartInfo = psi;
+            vccProcess.Start();
+            vccProcess.BeginOutputReadLine();
+            vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
+            
+
+        }
+
+
+
+        void vccProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (pane != null)
+            {
+                pane.OutputString(String.Format("{0}\n",e.Data));
+            }
+        }
+
+
         /////////////////////////////////////////////////////////////////////////////
         // Overriden Package Implementation
         #region Package Members
@@ -79,6 +131,17 @@ namespace MicrosoftResearch.VSPackage
             Trace.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
 
+
+            //// Prepare Outputpane "Verification"
+
+            IVsOutputWindow outputwindow = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
+            Guid guidVerificationPane = new Guid("{1EE5916F-A3C7-403C-89D8-58C61285688F}");
+
+            outputwindow.CreatePane(ref guidVerificationPane, "Verification", 1, 1);
+
+            outputwindow.GetPane(ref guidVerificationPane, out pane);
+
+
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if ( null != mcs )
@@ -87,7 +150,11 @@ namespace MicrosoftResearch.VSPackage
                 CommandID menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMyCommand);
                 MenuCommand menuItem = new MenuCommand(ShowToolWindow, menuCommandID );
                 mcs.AddCommand( menuItem );
-                
+
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);
+                menuItem = new MenuCommand(VerifyActiveFile, menuCommandID);
+                mcs.AddCommand(menuItem);
+
             }
         }
         #endregion
