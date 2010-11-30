@@ -1,28 +1,23 @@
 #include <vcc.h>
 
-
-
-
 void AllIntegralOperationsTestOk() {
-  signed char i1; 
-  unsigned char u1; 
-  signed short i2; 
-  unsigned short u2; 
-  signed int i4; 
-  unsigned int u4; 
+  signed char i1;
+  unsigned char u1;
+  signed short i2;
+  unsigned short u2;
+  signed int i4;
+  unsigned int u4;
   signed __int64 i8;
   unsigned __int64 u8;
   bool b;
-  u8= unchecked((unsigned __int64)i8);
-  u4= unchecked((unsigned int)i4);
-  u2= unchecked((unsigned short)i2);
-  u1= unchecked((unsigned char)i1);
-  b=1;
+  u8 = unchecked((unsigned __int64)i8);
+  u4 = unchecked((unsigned int)i4);
+  u2 = unchecked((unsigned short)i2);
+  u1 = unchecked((unsigned char)i1);
+  b = 1;
 }
 
-
-
-void IntOperationsTestOk(int a, int b) 
+void IntOperationsTestOk(int a, int b)
   requires(0 < a && a < 100)
   requires(0 < b  && b < 100)
 {
@@ -39,24 +34,24 @@ void IntOperationsTestOk(int a, int b)
   z = a % 4;
 
   y = !y;
-  y = a < b;    
+  y = a < b;
   y = a > b;
   y = a <= b;
   y = a >= b;
 
   y = a == b;
   y = a != b;
-  
+
   z = ~a;
   z = a & b;
   z = a | b;
   z = a ^ b;
   z = 1;
   z = 0xFFFF;
-  z =077;
+  z = 077;
 }
 
-void IntShiftOperationsTestOk(int a, int b) 
+void IntShiftOperationsTestOk(int a, int b)
   requires(0 < a && a < 100)
   requires(0 <= b  && b < 32)
 {
@@ -67,11 +62,11 @@ void IntShiftOperationsTestOk(int a, int b)
 
 }
 
-void ShortOperationsTestOk(short a, short b) 
+void ShortOperationsTestOk(short a, short b)
   requires(0 < a && a < 100)
   requires(0 < b  && b < 100)
 {
-  short z = 1; 
+  short z = 1;
   bool y;
 
   z = (short)-z;
@@ -91,28 +86,25 @@ void ShortOperationsTestOk(short a, short b)
 
   y = a == b;
   y = a != b;
-  
+
   z = unchecked((short)(~a));
   z = unchecked((short)(a & b));
   z = unchecked((short)(a | b));
   z = unchecked((short)(a ^ b));
-
 }
 
-void ShortShiftOperationsTestOk(short a, short b) 
+void ShortShiftOperationsTestOk(short a, short b)
   requires(0 < a && a < 100)
   requires(0 <= b  && b < 16)
 {
-  short z = 1; 
+  short z = 1;
   bool y;
 
   z = unchecked((short)(a >> b));
   z = unchecked((short)(a << b));
-
 }
 
-
-void CharOperationsTestOk(char a, char b) 
+void CharOperationsTestOk(char a, char b)
   requires(0 < a && a < 50)
   requires(0 < b  && b < 50)
 {
@@ -133,7 +125,7 @@ void CharOperationsTestOk(char a, char b)
 
   y = a == b;
   y = a != b;
-  
+
   z = unchecked((char)~a);
   z = unchecked((char)(a & b));
   z = unchecked((char)(a | b));
@@ -142,7 +134,7 @@ void CharOperationsTestOk(char a, char b)
   z = unchecked((char)0xFF);
 }
 
-void CharShiftOperationsTestOk(char a, char b) 
+void CharShiftOperationsTestOk(char a, char b)
   requires(0 < a && a < 50)
   requires(0 <= b  && b < 8)
 {
@@ -152,8 +144,7 @@ void CharShiftOperationsTestOk(char a, char b)
   z = unchecked((char)(a << b));
 }
 
-
-void LongOperationsTestOk(__int64 a, __int64 b) 
+void LongOperationsTestOk(__int64 a, __int64 b)
   requires(0 < a && a < 100)
   requires(0 < b  && b < 100)
 {
@@ -174,7 +165,7 @@ void LongOperationsTestOk(__int64 a, __int64 b)
 
   y = a == b;
   y = a != b;
-  
+
   z = ~a;
   z = a & b;
   z = a | b;
@@ -182,7 +173,7 @@ void LongOperationsTestOk(__int64 a, __int64 b)
   z = 0x7FFFFFFF;
 }
 
-void LongShiftOperationsTestOk(__int64 a, __int64 b) 
+void LongShiftOperationsTestOk(__int64 a, __int64 b)
   requires(0 < a && a < 100)
   requires(0 <= b  && b < 64)
 {
@@ -192,20 +183,19 @@ void LongShiftOperationsTestOk(__int64 a, __int64 b)
   z = a << (int)b;
 }
 
-
 void BoolOperationsTestOk(bool a, bool b) {
   bool y;
-  y = a && b;        
-  y = a || b;        
-  y = !a || b;      
+  y = a && b;
+  y = a || b;
+  y = !a || b;
   y = !y;
 }
 
-
-int DivisionByZeroTestFails(){ int zero, x, result;
+int DivisionByZeroTestFails() {
+  int zero, x, result;
   zero = 0;
-  x = 1/zero;  
-  x = 1/(zero+zero);  
+  x = 1/zero;
+  x = 1/(zero+zero);
   return x;
 }
 `
@@ -220,7 +210,7 @@ Verification of LongOperationsTestOk succeeded.
 Verification of LongShiftOperationsTestOk succeeded.
 Verification of BoolOperationsTestOk succeeded.
 Verification of DivisionByZeroTestFails failed.
-testcase(207,9) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
+testcase(197,9) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
 `
 #include <vcc.h>
 
@@ -321,7 +311,7 @@ axiom(forall(int x; (-1 <= sin(x)) && (sin(x) <= 1)));
 #define RHS sin(a)*b
 #define LHS c
 
-void test006a(int a, int b, int c2) 
+void test006a(int a, int b, int c2)
 {
     int LHS;
     int tmpRHS = unchecked(RHS);
@@ -329,7 +319,7 @@ void test006a(int a, int b, int c2)
     assert(LHS == tmpRHS);
 }
 
-void test006b(int a, int b, int c2) 
+void test006b(int a, int b, int c2)
 {
     int LHS;
     LHS = unchecked(RHS);
