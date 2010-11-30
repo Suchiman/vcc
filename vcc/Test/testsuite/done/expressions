@@ -191,10 +191,16 @@ void BoolOperationsTestOk(bool a, bool b) {
   y = !y;
 }
 
-int DivisionByZeroTestFails() {
+int DivisionByZeroTestFails1() {
   int zero, x, result;
   zero = 0;
   x = 1/zero;
+  return x;
+}
+
+int DivisionByZeroTestFails2() {
+  int zero, x, result;
+  zero = 0;
   x = 1/(zero+zero);
   return x;
 }
@@ -209,8 +215,10 @@ Verification of CharShiftOperationsTestOk succeeded.
 Verification of LongOperationsTestOk succeeded.
 Verification of LongShiftOperationsTestOk succeeded.
 Verification of BoolOperationsTestOk succeeded.
-Verification of DivisionByZeroTestFails failed.
+Verification of DivisionByZeroTestFails1 failed.
 testcase(197,9) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
+Verification of DivisionByZeroTestFails2 failed.
+testcase(204,10) : error VC8519: Assertion 'zero+zero != 0 (in division by zero)' did not verify.
 `
 #include <vcc.h>
 
