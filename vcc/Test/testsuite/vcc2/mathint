@@ -17,9 +17,19 @@ void foo2(spec(mathint i)) {
   spec(mathint b = a / i;)
 }
 
+void foo2unchk(spec(mathint i)) {
+  spec(mathint a = 10;)
+  spec(mathint b = unchecked(a / i);)
+}
+
 void foo3(spec(mathint i)) {
   spec(mathint a = 10;)
   spec(mathint b = a % i;)
+}
+
+void foo3unchk(spec(mathint i)) {
+  spec(mathint a = 10;)
+  spec(mathint b = unchecked(a % i);)
 }
 
 void foo4(spec(mathint i)) 
@@ -73,13 +83,17 @@ Verification of foo succeeded.
 Verification of foo1 succeeded.
 Verification of foo2 failed.
 testcase(17,42) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
+Verification of foo2unchk failed.
+testcase(22,54) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
 Verification of foo3 failed.
-testcase(22,42) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
+testcase(27,42) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
+Verification of foo3unchk failed.
+testcase(32,54) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
 Verification of foo4 succeeded.
 Verification of foo5 failed.
-testcase(35,52) : error VC8518: Assertion 'sum fits range of uint32_t' did not verify.
+testcase(45,52) : error VC8518: Assertion 'sum fits range of uint32_t' did not verify.
 Verification of foo5_1 failed.
-testcase(39,40) : error VC8004: a + b might overflow.
+testcase(49,40) : error VC8004: a + b might overflow.
 Verification of foo6 succeeded.
 Verification of bar succeeded.
 `
