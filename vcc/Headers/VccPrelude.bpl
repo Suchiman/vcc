@@ -2066,7 +2066,7 @@ procedure $to_bytes(a:$ptr);
      $set_in(p, $extent($s, $as_array(a, ^^u1, $sizeof($typ(a))))) ||
      ($st_eq(old($s), $s, p) && $ts_eq(old($s), $s, p))));
   ensures (forall p:$ptr :: {$mem($s, p)}
-    ($set_in(p, $full_extent(a)) && !$in_range_spec_ptr($ref(p))) ||
+    $set_in(p, $full_extent(a)) ||
     $set_in(p, $full_extent($as_array(a, ^^u1, $sizeof($typ(a))))) ||
     ($st_eq(old($s), $s, p) && $ts_eq(old($s), $s, p) && $mem_eq(old($s), $s, p)));
   ensures $timestamp_post_strict(old($s), $s);
@@ -2090,9 +2090,9 @@ procedure $from_bytes(a:$ptr, t:$ctype, preserve_zero:bool);
      $set_in(p, $extent($s, $ptr(t, $ref(a)))) ||
      ($st_eq(old($s), $s, p) && $ts_eq(old($s), $s, p))));
   ensures (forall p:$ptr :: {$mem($s, p)}
-    $set_in(p, $full_extent(a)) ||
-    ($set_in(p, $full_extent($ptr(t, $ref(a)))) && !$in_range_spec_ptr($ref(p))) ||
-    ($st_eq(old($s), $s, p) && $ts_eq(old($s), $s, p) && $mem_eq(old($s), $s, p)));
+    !$set_in(p, $full_extent(a)) &&
+    !$set_in(p, $full_extent($ptr(t, $ref(a)))) ==>
+        $st_eq(old($s), $s, p) && $ts_eq(old($s), $s, p) && $mem_eq(old($s), $s, p));
   ensures $timestamp_post_strict(old($s), $s);
   ensures preserve_zero ==> $extent_zero($s, $ptr(t, $ref(a)));
 

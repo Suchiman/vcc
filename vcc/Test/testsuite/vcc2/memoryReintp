@@ -434,7 +434,8 @@ void f1()
 Verification of f1 failed.
 testcase(18,3) : error VC9502: Call '_vcc_from_bytes(a, ((bool)1))' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'extent_zero holds for the reinterpreted array'.
-`#include "vcc.h"
+`
+#include "vcc.h"
 
 typedef struct A_str {
 
@@ -457,9 +458,46 @@ requires(is_object_root(a))
     wrap(a);
     assert(in_domain(a,a));
     assert(is_object_root(a));
+    // This used to work, but was relying on unsoundness in
+    // the prelude. We need a better solution for preserving
+    // values of reinterpretation anyhow.
     assert(a->ghost == 7); 
 
 }
 `
-Verification of test succeeded.
+Verification of test failed.
+testcase(27,14) : error VC9500: Assertion 'a->ghost == 7' did not verify.
+`
+#include "vcc.h"
+
+spec (
+typedef vcc(dynamic_owns) struct x_str {
+} x_t;
+)
+
+typedef struct big_str {
+    spec (x_t x;)
+    int dummy; 
+} big_t;
+
+int test(unsigned char *u) 
+    requires(is_object_root(as_array(u, sizeof(big_t))))
+    requires(wrapped(as_array(u, sizeof(big_t))))
+    writes(as_array(u, sizeof(big_t)))
+{
+   big_t *b;
+//assert(in_domain(as_array(u, sizeof(big_t)), as_array(u, sizeof(big_t))));
+   unwrap(as_array(u, sizeof(big_t)));
+   b = (big_t *)u;
+
+   from_bytes(b, false);
+   assume(owns(&b->x) == set_empty());
+   wrap(&b->x);
+   assert(false);
+   return 1;
+}
+
+`
+Verification of test failed.
+testcase(26,13) : error VC9500: Assertion '((bool)0)' did not verify.
 `
