@@ -82,19 +82,27 @@
 
       <Button guid="guidVerifyCmdSet" id="cmdidVCCOptions" priority="0x0100" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidSubMenuGroup" />
-        <Icon guid="guidImages" id="bmpPic1" />
+        <Icon guid="guidImages" id="bmpPicSearch" />
         <Strings>
           <ButtonText>VCC Options</ButtonText>
         </Strings>
       </Button>
+      
       <Button guid="guidVerifyCmdSet" id="cmdidVerifyActiveFile" priority="0x0102" type ="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
-        <Icon guid="guidImages" id ="bmpPic2"/>
+        <Icon guid="guidImages" id ="bmpPic1"/>
         <Strings>
           <ButtonText>Verify Active File</ButtonText>
         </Strings>
       </Button>
       
+      <Button guid ="guidVerifyCmdSet" id ="cmdidVerifyCurrentFunction" priority ="0x0104" type ="Button">
+        <Parent guid ="guidVerifyCmdSet" id ="cmdidMyMenuGroup"/>
+        <Icon guid="guidImages" id ="bmpPic2"/>
+        <Strings>
+          <ButtonText>Verify Current Function</ButtonText>
+        </Strings>
+      </Button>
       
     </Buttons>
 
@@ -126,7 +134,8 @@
       <IDSymbol name="cmdidMyMenuGroup" value="0x1020" />
       <IDSymbol name="cmdidVCCOptions" value="0x0100" />
       <IDSymbol name="cmdidVerifyActiveFile" value="0x0102" />
-
+      <IDSymbol name="cmdidVerifyCurrentFunction" value ="0x0104" />
+      
       <IDSymbol name="cmdidSubMenu" value="0x1100"/>
       <IDSymbol name="cmdidSubMenuGroup" value="0x1150"/>
 
