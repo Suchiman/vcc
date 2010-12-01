@@ -3,10 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
-using Microsoft.Win32;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using EnvDTE;
 using System.Windows.Forms;
@@ -71,12 +68,14 @@ namespace MicrosoftResearch.VSPackage
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
 
-
         private void VerifyActiveFile(object sender, EventArgs e)
         {
+            //// get the toplevel object for interaction with VS
             DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
-            
+
             //// Prepare VCC-Process, execute it and read its Output
+
+            string arguments = dte.ActiveDocument.FullName;
             ProcessStartInfo psi = new ProcessStartInfo(vccPath, dte.ActiveDocument.FullName);
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
@@ -85,16 +84,29 @@ namespace MicrosoftResearch.VSPackage
             vccProcess.StartInfo = psi;
             vccProcess.Start();
             vccProcess.BeginOutputReadLine();
+
+            //// Clear Verification Outputpane
+            pane.Clear();
+
+            //// Get notified when VCC sends Output Data
             vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
         }
 
-        private void VerifyActiveFunction(object sender, EventArgs e)
+        private void VerifyCurrentFunction(object sender, EventArgs e)
         {
+
+            MessageBox.Show(string.Format("Current Function is: {0}", GetCurrentFunctionName()));
+            
+            /*
+            //// get the toplevel object for interaction with VS
             DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
 
             //// Prepare VCC-Process, execute it and read its Output
-            string arguments = String.Format("/F:{0} {1}", dte.ActiveDocument.Selection.ToString() ,dte.ActiveDocument.FullName);
-            ProcessStartInfo psi = new ProcessStartInfo(vccPath, dte.ActiveDocument.FullName);
+            
+            string arguments = String.Format("/F:{0} {1}", GetCurrentFunctionName(), dte.ActiveDocument.FullName);
+            ProcessStartInfo psi = new ProcessStartInfo(vccPath, arguments);
+            //// Write Commandline-Command to Verification Outputpane
+            pane.OutputString(string.Format("{0} {1}", vccPath, arguments));
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.CreateNoWindow = true;
@@ -102,15 +114,31 @@ namespace MicrosoftResearch.VSPackage
             vccProcess.StartInfo = psi;
             vccProcess.Start();
             vccProcess.BeginOutputReadLine();
-            vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
-            
 
+            //// Clear Verification Outputpane
+            pane.Clear();
+
+            //// Get notified when VCC sends Output Data
+            vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
+            */
+        }
+
+        private string GetCurrentFunctionName()
+        {
+            DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
+
+            //// Get CodeElement which represents the current function
+            TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
+            VirtualPoint currentFunctionActivePoint = textDocument.Selection.ActivePoint;
+            CodeElement currentFunctionCodeElement = currentFunctionActivePoint.CodeElement[vsCMElement.vsCMElementFunction];
+            return currentFunctionCodeElement.Name;
         }
 
 
 
         void vccProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
+            // Write Output from VCC to Verification Outputpane
             if (pane != null)
             {
                 pane.OutputString(String.Format("{0}\n",e.Data));
@@ -146,15 +174,18 @@ namespace MicrosoftResearch.VSPackage
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if ( null != mcs )
             {
-                // Create the command for the menu item.
+                // Create the command for the menu items.
                 CommandID menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMyCommand);
                 MenuCommand menuItem = new MenuCommand(ShowToolWindow, menuCommandID );
-                mcs.AddCommand( menuItem );
+                mcs.AddCommand(menuItem);
 
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);
                 menuItem = new MenuCommand(VerifyActiveFile, menuCommandID);
                 mcs.AddCommand(menuItem);
 
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyCurrentFunction);
+                menuItem = new MenuCommand(VerifyCurrentFunction, menuCommandID);
+                mcs.AddCommand(menuItem);
             }
         }
         #endregion
