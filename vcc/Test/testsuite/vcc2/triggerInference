@@ -202,3 +202,14 @@ testcase(27,26) : warning VC9122: could have inferred at {:level 2}: {(&)n->idx}
 testcase(28,26) : warning VC9122: inferred triggers at {:level 2}: {n \in q->\owns} {:hint n \in q->\owns} {perm[n->idx]} {(&)n->idx} for '\forall struct Node *n; {:level 2} n \in q->\owns ==> perm[n->idx] == 0)'
 Verification of levels succeeded.
 `
+`/newsyntax /dt:1 /it
+#include <vcc.h>
+
+void foo()
+{
+  _(assert \forall int x; \forall int *p; {p[x]} p[x] > 0)
+}
+`
+Verification of foo failed.
+testcase(5,26) : error VC9500: Assertion '\forall int x; \forall int *p; {p[x]} p[x] > 0)' did not verify.
+`
