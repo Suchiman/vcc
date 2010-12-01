@@ -333,12 +333,16 @@ namespace Microsoft.Research.Vcc
       let doFixQuantifiers self = function
         | Expr.Quant (ec, { Kind = k1;
                             Variables = vars1;
-                            Triggers = triggers;      
+                            Triggers = triggers1;      
                             Condition = None;
                             Body = Expr.Quant (_, ({ Kind = k2;                                                   
-                                                     Triggers = []; 
-                                                     Variables = vars2 } as q)) } ) when k1 = k2 ->
-          Some (self (Expr.Quant (ec, { q with Variables = vars1 @ vars2; Triggers = triggers })))
+                                                     Triggers = triggers2; 
+                                                     Variables = vars2 } as q)) } ) when k1 = k2 ->          
+          match triggers1, triggers2 with
+            | [], t
+            | t, [] -> Some (self (Expr.Quant (ec, { q with Variables = vars1 @ vars2; Triggers = t })))
+            | _ -> None
+
         | Expr.Call (c, { Name = "_vcc_inv_group"}, _, [Expr.Cast (_, _, EString (c', v)); groupInv]) ->
           Some (Expr.Macro (c, "group_invariant", [Expr.Macro (c', v, []); self groupInv]))
         | EString (c, v) ->      
