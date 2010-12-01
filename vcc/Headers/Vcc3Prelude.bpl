@@ -2294,7 +2294,18 @@ axiom (forall t:$ctype, x: int, y: int :: { $_and(t, x, y) } $_and(t, x, y) == $
   
 
 // extra function symbol for multiplication to prevent z3 from applying commutativity half-heartedly
-function $_mul(x:int, y:int) : int { x * y }
+function $op_mul(x:int, y:int) : int { x * y }
+
+// extra function symbols for arithmetic operations to allow triggering and congruence closure on
+// arithmetic expressions - use of these in the generated Boogie has to be requeste explicitly
+
+function $op_add(t:$ctype, x:int, y:int) : int { x + y }
+function $op_sub(t:$ctype, x:int, y:int) : int { x - y }
+function $op_div(t:$ctype, x:int, y:int) : int { x / y }
+function $op_lt(t:$ctype, x:int, y:int) : bool { x < y }
+function $op_le(t:$ctype, x:int, y:int) : bool { x <= y }
+function $op_gt(t:$ctype, x:int, y:int) : bool { x > y }
+function $op_ge(t:$ctype, x:int, y:int) : bool { x >= y }
 
 // --------------------------------------------------------------------------------
 // Conversion functions
