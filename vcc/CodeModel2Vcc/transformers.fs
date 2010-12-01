@@ -29,8 +29,8 @@ namespace Microsoft.Research.Vcc
     let pipeErr msg =
       failwith ("/pipe: error: " + msg)
     let showTypes = ref false
-    for w in helper.Options.PipeOperations do
-      let w = w.Replace('.', ' ').Replace('+', ' ')
+    for origw in helper.Options.PipeOperations do
+      let w = origw.Replace('.', ' ').Replace('+', ' ')
       let w = w.Split ([| ' ' |])
       if w.Length > 0 then
         match w.[0] with
@@ -45,9 +45,16 @@ namespace Microsoft.Research.Vcc
                 | "after" -> 1
                 | "around" -> 2
                 | _ -> pipeErr "dump expects 'before' or 'after'"
-            let add off = helper.AddTransformerAt ("dump", Helper.Decl (TransUtil.dumpDecls !showTypes), w.[2], off)
+            let add off = helper.AddTransformerAt ("dump", Helper.Decl (TransUtil.dumpDecls origw !showTypes), w.[2], off)
             if off = 2 then add 0; add 1
             else add off
+          | "dump-all" ->
+            if w.Length <> 1 then pipeErr "dump-all expects no parameters"
+            let mk (t:Helper.TransDesc) =
+              let name = "after " + t.Name
+              let dump = Helper.TransDesc.Mk ("dump-all " + name, Helper.Decl (TransUtil.dumpDecls name !showTypes))
+              [t; dump]
+            helper.InterleaveTransformers mk
           | "active" ->
             if w.Length <> 1 then pipeErr "active expects no parameters"
             helper.DumpTransformers()

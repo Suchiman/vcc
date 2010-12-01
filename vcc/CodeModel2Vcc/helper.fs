@@ -62,6 +62,9 @@ namespace Microsoft.Research.Vcc
         Func : Transformer;
         mutable Enabled : bool;
       }
+
+      static member Mk (name : string, f : Transformer) =
+        { Name = name; Func = f; Enabled = true }
       
     type Env (hostEnv:ISourceEditHost, opts:VccOptions) =
       let stopwatches = ref []
@@ -193,7 +196,7 @@ namespace Microsoft.Research.Vcc
 
       // the extension interface
       member this.AddTransformerAt (name : string, func : Transformer, after : string, off : int) =
-        let td = { Name = name; Func = func; Enabled = true } : TransDesc
+        let td = TransDesc.Mk (name, func)
         let rec add i =
           if i >= transformers.Count then
             failwith ("transformer not found " + after)
@@ -201,6 +204,11 @@ namespace Microsoft.Research.Vcc
             transformers.Insert (i + off, td)
           else add (i + 1)
         add 0
+
+      member this.InterleaveTransformers f =
+        let newTrans = transformers |> Seq.map f |> List.concat
+        transformers.Clear ()
+        transformers.AddRange newTrans
         
       member this.AddTransformerAfter (name : string, func : Transformer, after : string) =
         this.AddTransformerAt (name, func, after, 1)
