@@ -853,3 +853,18 @@ void foo(struct S *s) {
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+void write_parm1(int n)
+{
+  n = 1;
+}
+
+void write_parm2(bool a, int n)
+{
+  a && (n = 1);
+}
+`
+Verification of write_parm1 succeeded.
+Verification of write_parm2 succeeded.
+`

@@ -202,7 +202,7 @@ namespace Microsoft.Research.Vcc
       let identify _ = function
         | VarWrite (_, vs, _) ->
           vs |> List.filter (fun v -> isInParKind v.Kind) |> List.iter handleVar
-          false
+          true
         | Macro(_, "out", [Expr.Ref(_, v)]) when isInParKind v.Kind -> handleVar v; false
         | _ -> true
 
