@@ -18,9 +18,19 @@ void foo2(_(ghost \integer i)) {
   _(ghost \integer b = a / i;)
 }
 
+void foo2unchk(_(ghost \integer i)) {
+  _(ghost \integer a = 10;)
+  _(ghost \integer b = _(unchecked) (a / i);)
+}
+
 void foo3(_(ghost \integer i)) {
   _(ghost \integer a = 10;)
   _(ghost \integer b = a % i;)
+}
+
+void foo3unchk(_(ghost \integer i)) {
+  _(ghost \integer a = 10;)
+  _(ghost \integer b = _(unchecked) (a % i);)
 }
 
 void foo4(_(ghost \integer i)) 
@@ -74,13 +84,17 @@ Verification of foo succeeded.
 Verification of foo1 succeeded.
 Verification of foo2 failed.
 testcase(17,42) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
+Verification of foo2unchk failed.
+testcase(22,70) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
 Verification of foo3 failed.
-testcase(22,42) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
+testcase(27,42) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
+Verification of foo3unchk failed.
+testcase(32,70) : error VC8519: Assertion 'i != 0 (in division by zero)' did not verify.
 Verification of foo4 succeeded.
 Verification of foo5 failed.
-testcase(35,58) : error VC8518: Assertion 'sum fits range of uint32_t' did not verify.
+testcase(45,58) : error VC8518: Assertion 'sum fits range of uint32_t' did not verify.
 Verification of foo5_1 failed.
-testcase(39,40) : error VC8004: a + b might overflow.
+testcase(49,40) : error VC8004: a + b might overflow.
 Verification of foo6 succeeded.
 Verification of bar succeeded.
 `
