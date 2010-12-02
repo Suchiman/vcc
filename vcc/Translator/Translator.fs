@@ -2423,8 +2423,7 @@ namespace Microsoft.Research.Vcc
                 let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ inParamLabels @ init                    
                 
                 let can_frame =
-                  if vcc3 then []
-                  else if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
+                  if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
                   else
                     [B.Stmt.MkAssume (bCall "$can_use_all_frame_axioms" [bState])]
                 
