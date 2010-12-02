@@ -160,8 +160,8 @@ const unique $fk_base : $field_kind;
 const unique $fk_owns : $field_kind;
 const unique $fk_ref_cnt : $field_kind;
 const unique $fk_vol_version : $field_kind;
-const unique $fk_as_array_first : $field_kind;
 const unique $fk_allocation_root : $field_kind;
+const unique $fk_as_array_first : $field_kind;
 const unique $fk_emb_array : $field_kind;
 
 function $field_kind($field) : $field_kind;
@@ -497,6 +497,27 @@ function $is_mutable_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 
 function $array_range(S:$state, p:$ptr, T:$ctype, sz:int) : $ptrset
   { $array_range_no_state(p, T, sz) }
+
+function {:inline true} $mem_range(s:$state, p:$ptr, sz:int) : int
+  { $mem_range_heap($heap(s), p, sz) }
+function  $mem_range_heap(s:$object, p:$ptr, sz:int) : int;
+
+function $guess_index(p:$ptr, r:$ptr) : int;
+
+axiom (forall p:$ptr, n:int :: {$guess_index(p, $idx(p, n))}
+  $guess_index(p, $idx(p, n)) == n);
+
+axiom (forall h:$object, r:$ptr, f:$field, v:int, p:$ptr, sz:int ::
+      !$in_range(0, $guess_index(p, $ptr(f, r)), sz - 1) ||
+      $ptr(f, r) != $idx(p, $guess_index(p, $ptr(f, r))) ==>
+         $mem_range_heap($update(h, r, f, v), p, sz) == $mem_range_heap(h, p, sz));
+
+axiom (forall S0, S1:$state, p:$ptr, sz:int ::
+  {$call_transition(S0, S1), $mem_range(S1, p, sz)}
+  $call_transition(S0, S1) &&
+  (forall i:int :: {$dont_instantiate_int(i)} 
+    $in_range(0, i, sz - 1) ==> $mem(S0, $idx(p, i)) == $mem(S1, $idx(p, i))) ==>
+  $mem_range(S0, p, sz) == $mem_range(S1, p, sz));
 
 // $index_within(p, arr) = ($ref(p) - $ref(arr)) / $sizeof($typ(arr))
 // To avoid using division, we define a category of simple indices. 
@@ -1033,6 +1054,34 @@ function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
 function {:inline true} $writes_nothing(S0:$state, S1:$state) : bool
   { $modifies(S0, S1, $set_empty()) }
   //  $preserves_thread_local(S0, S1) }
+
+// --------------------------------------------------------------------------------
+// Frame axiom ordering
+// --------------------------------------------------------------------------------
+
+function $frame_level($pure_function) : int;
+const $current_frame_level : int;
+
+// assumed at the beginning of all ``normal'' functions (i.e., not frame axiom read checks)
+// the $state is there only as a placeholder
+function {:inline true} $can_use_all_frame_axioms(s:$state) returns(bool)
+  { (forall f:$pure_function :: {$frame_level(f)} $frame_level(f) < $current_frame_level) }
+
+function {:inline true} $can_use_frame_axiom_of(f:$pure_function) returns(bool)
+  { $frame_level(f) < $current_frame_level }
+
+
+// reads checking
+
+function $reads_check_pre(s:$state) returns(bool);
+function $reads_check_post(s:$state) returns(bool);
+procedure $reads_havoc();
+  modifies $s;
+  // TOKEN: called nothing before reads_havoc()
+  requires $reads_check_pre($s);
+  ensures $reads_check_post($s);
+  ensures $call_transition(old($s), $s);
+
 
 // ----------------------------------------------------------------------------
 // Allocation
