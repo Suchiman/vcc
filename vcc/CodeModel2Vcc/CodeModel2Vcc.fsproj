@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>CodeModel2Vcc</RootNamespace>
     <AssemblyName>Microsoft.Research.Vcc.CodeModel</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Name>CodeModel2Vcc</Name>
     <SccProjectName>
@@ -53,6 +53,7 @@
     <Reference Include="FSharp.Core" />
     <Reference Include="mscorlib" />
     <Reference Include="System" />
+    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helper.fs" />
