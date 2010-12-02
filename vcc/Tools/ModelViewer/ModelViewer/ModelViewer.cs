@@ -458,13 +458,15 @@ namespace VccModelViewer
   
       foreach (string alias in fi.Aliases)
       {
-        if (!alias.Equals(excludeName))
+        string displayAlias = ModelController.GetVariableDisplayName(alias);
+
+        if (!displayAlias.Equals(excludeName))
         {
           if (aliases.Length > 0)
           {
             aliases += ", ";
           }
-          aliases += alias;
+          aliases += displayAlias;
         }
       }
 
