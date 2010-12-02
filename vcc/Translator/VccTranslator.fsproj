@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Translator</RootNamespace>
     <AssemblyName>Microsoft.Research.Vcc.Translator</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Name>Vcc2Translator</Name>
     <SccProjectName>
@@ -20,7 +20,7 @@
     </SccAuxPath>
     <SccLocalPath>
     </SccLocalPath>
-    <TargetFrameworkProfile />
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -96,6 +96,7 @@
       <HintPath>..\Boogie\System.Compiler.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Numerics" />
     <Reference Include="VCExpr, Version=2.0.10514.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
       <Name>VCExpr</Name>
       <AssemblyName>VCExpr.dll</AssemblyName>

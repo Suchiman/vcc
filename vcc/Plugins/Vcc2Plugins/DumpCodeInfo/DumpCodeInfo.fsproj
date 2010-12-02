@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>DumpCodeInfo</RootNamespace>
     <AssemblyName>codeinfo</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Name>DumpCodeInfo</Name>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
@@ -54,6 +54,7 @@
       <HintPath>..\..\..\CodeModel2VccHelper\System.ComponentModel.Composition.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\..\Common\Include\version.fs">
