@@ -537,6 +537,15 @@ namespace VccModel.Controller
       return ModelPreprocessor.FindNumberOfModelsInFile(modelFileName);
     }
 
+    public static string GetVariableDisplayName(string variableName)
+    {
+        if (variableName.StartsWith("addr."))
+        {
+            return "&" + variableName.Substring(5);
+        }
+        return variableName;
+    }
+
     void populateModels()
     {
       int numberOfStates = model.ExecutionStates.Count;
@@ -552,7 +561,9 @@ namespace VccModel.Controller
 
         foreach (Partition variable in model.Variables)
         {
-          FieldInfo modelInfo = LoadFieldInfo(variable, exec, variable.Value);
+          string name = ModelController.GetVariableDisplayName(variable.Value);
+
+          FieldInfo modelInfo = LoadFieldInfo(variable, exec, name);
           newModel.Add(modelInfo);
         }
 
