@@ -82,6 +82,9 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
+    <Reference Include="ParserHelper">
+      <HintPath>..\Boogie\ParserHelper.dll</HintPath>
+    </Reference>
     <Reference Include="System.Compiler.Framework, Version=1.0.20411.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
       <Name>System.Compiler.Framework</Name>
       <AssemblyName>System.Compiler.Framework.dll</AssemblyName>
