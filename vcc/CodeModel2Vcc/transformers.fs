@@ -44,7 +44,7 @@ namespace Microsoft.Research.Vcc
                 | "before" -> 0
                 | "after" -> 1
                 | "around" -> 2
-                | _ -> pipeErr "dump expects 'before' or 'after'"
+                | _ -> pipeErr "dump expects 'before', 'after', or 'around'"
             let add off = helper.AddTransformerAt ("dump", Helper.Decl (TransUtil.dumpDecls origw !showTypes), w.[2], off)
             if off = 2 then add 0; add 1
             else add off
