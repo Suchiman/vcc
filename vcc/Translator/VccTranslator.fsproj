@@ -85,20 +85,6 @@
     <Reference Include="ParserHelper">
       <HintPath>..\Boogie\ParserHelper.dll</HintPath>
     </Reference>
-    <Reference Include="System.Compiler.Framework, Version=1.0.20411.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
-      <Name>System.Compiler.Framework</Name>
-      <AssemblyName>System.Compiler.Framework.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Boogie\System.Compiler.Framework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Compiler.Runtime, Version=1.0.20411.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
-      <Name>System.Compiler.Runtime</Name>
-      <AssemblyName>System.Compiler.Runtime.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Boogie\System.Compiler.Runtime.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System.Numerics" />
     <Reference Include="VCExpr, Version=2.0.10514.0, Culture=neutral, PublicKeyToken=736440c9b414ea16">
       <Name>VCExpr</Name>
