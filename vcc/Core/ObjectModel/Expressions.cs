@@ -1632,6 +1632,15 @@ namespace Microsoft.Research.Vcc {
       return new VccEquality(containingBlock, this);
     }
 
+    protected override IEnumerable<IMethodDefinition> GetUserDefinedOperators(ITypeDefinition type)
+    {
+      if (type.ResolvedType.TypeCode == PrimitiveTypeCode.Float32 || type.ResolvedType.TypeCode == PrimitiveTypeCode.Float64) {
+        return this.StandardOperators;
+      } else {
+        return base.GetUserDefinedOperators(type);
+      }
+    }
+
     /// <summary>
     /// A list of dummy methods that correspond to operations that are built into IL. The dummy methods are used, via overload resolution,
     /// to determine how the operands are to be converted before the operation is carried out.
