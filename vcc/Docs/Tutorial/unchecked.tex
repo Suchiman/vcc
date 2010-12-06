@@ -9,12 +9,12 @@ intentions. Most of the time, it is intended to mean ordinary
 arithmetic addition on numbers; program correctness is then likely to
 depend on this addition not causing an overflow. However, sometimes
 the program is designed to cope with overflow, so the programmer means
-\vcc{(a + b) \% UINT_MAX+1}. It is always sound to use this
+\vcc{(a + b) % UINT_MAX+1}. It is always sound to use this
 second interpretation, but VCC nevertheless assumes the first by
 default, for several reasons:
 \begin{itemize}
 \item The first interpretation is much more common.
-\item The second interpretation introduces an implicit \vcc{\%}
+\item The second interpretation introduces an implicit \vcc{%}
   operator, turning linear arithmetic into nonlinear arithmetic and
   making subsequent reasoning much more difficult.
 \item If the first interpretation is intended but the addition can in

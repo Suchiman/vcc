@@ -104,7 +104,7 @@ code; you only have to look at the specifications of old functions
 that you call and the old data structures you use - even if your new
 code has nontrivial concurrent interactions with your old code. You
 can also modify old code without having to look at any code outside
-the function you are editing (and the specs of functions you call and
+the function you are editing (and the specifications of functions you call and
 data structures that you use). (Modification of an old data structure
 may, however, require rechecking code that uses this data structure in
 certain ways.)
@@ -236,7 +236,7 @@ using only the headers of those functions that it calls,
 \VCC\ verifies the code of a function using only the
 specifications\footnote{For \Q{spec-inline}d functions, the code is the
   spec.} of those functions called in the function
-body\footnote{Currently, \VCC\ also uses the specs of pure functions
+body\footnote{Currently, \VCC\ also uses the specifications of pure functions
   in scope, even if they are not called in the body of the function,
   as these are sometimes used to express lemmas.\todo{Is this
     correct?}} and the definitions/specifications of types used in the
@@ -760,7 +760,7 @@ memory it allocated. The reason for this is that callers carry
 information only about certain state objects; we refer to such objects
 as \Q{mutable}. (Mutability is with respect to a particular thread; we
 will see that data can only be mutable in at most one thread.) An
-object that is writeable is necessarily mutable, but not vice-versa.
+object that is writable is necessarily mutable, but not vice-versa.
 In \Ref{}, we will see that this allows functions operating
 on a large data structure to appear to operate on one object.
 
@@ -1137,7 +1137,7 @@ ensures((sqr(result) <= x) && (sqr(result + 1) > x));
 semicolon would be omitted if this declaration contained a body
 also. )
 
-\VCC\ translates these specs as assuming the preconditions at the
+\VCC\ translates these specifications as assuming the preconditions at the
 beginning of the function and asserting the post-conditions at each
 return point. At any call site (including recursive calls), \VCC\
 asserts the preconditions before the call (after assigning the

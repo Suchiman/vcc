@@ -189,7 +189,7 @@ The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
 expression \vcc{E} evaluates to a nonzero value for every value 
 \vcc{v} of type \vcc{E}. For example, the assertion
 \begin{VCC}
-_(assert x > 1 && \forall int i; 1 < i && i < x ==> x \% i != 0)
+_(assert x > 1 && \forall int i; 1 < i && i < x ==> x % i != 0)
 \end{VCC}
 \noindent says that (\vcc{int}) \vcc{x} is a prime number. If \vcc{b}
 is an \vcc{int} array of size \vcc{N},
@@ -212,7 +212,7 @@ asserts that  \vcc{b} contains a zero element.
 \Def{quantifiers}. 
 
 \item
-VCC also provides some mathematical types that cannot be used on
+VCC also provides some mathematical types that cannot be used in
 ordinary C code (because they are too big to fit in memory);
 these include mathematical integers and maps. They are described in
 \secref{mathTypes}.
@@ -339,7 +339,7 @@ sometimes useful:
 An assertion can also change what VCC knows after the assertion, if
 the assertion fails to verify: although VCC will report the failure as an error,
 it will assume the asserted fact holds afterward. For example, in the following
-VCC will only report an error for first assumption and no the second:
+VCC will only report an error for the first assumption and not the second:
 \begin{VCC}
 int x;
 _(assert x == 0)

@@ -27,11 +27,11 @@ boundaries.
 %threads. But these same mechanisms provide a way to minimize the
 %amount of knowledge a thread needs at any program point.
 
-In VCC, the mechanisms for enforcing data consistency is \Def{object invariants}, which are conditions associated
+In VCC, the mechanism for enforcing data consistency is \Def{object invariants}, which are conditions associated
 with compound C types (\vcc{struct}s and \vcc{union}s).
-The invariants of a type describe how ``proper'' objects of of that type
+The invariants of a type describe how ``proper'' objects of that type
 behave. 
-In this, and the following, section, we consider only the static aspects of this
+In this and the following section, we consider only the static aspects of this
 behavior, namely what the ``consistent'' states of an object are. 
 Dynamic aspects, \ie how objects can change, are covered in \secref{concurrency}.
 For example, consider the following type definition of \vcc{'\0'}-terminated
@@ -91,7 +91,7 @@ will not list it in its writes clause. For example:
 
 \vccInput[linerange={append-out}]{c/05_safestring.c}
 
-The following subsection explains this wrap/unwrap protocol in more details.
+The following subsection explains this wrap\slash unwrap protocol in more details.
 
 \subsection{Wrap/unwrap protocol}
 \label{sect:wrap-unwrap}
@@ -164,7 +164,7 @@ note that this does not mean ``not wrapped''),
 \item set the \vcc{\consistent} field to true (this implicitly prevents further writes to the fields of the object)
 \end{enumerate}
 Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\mutable(...)}%
-and at the assert/assume desugaring of \vcc{sstr_append_char()} function.
+and at the assert\slash assume desugaring of \vcc{sstr_append_char()} function.
 
 \begin{VCC}
 logic bool \wrapped(\object o) =
@@ -201,7 +201,7 @@ In C the type \vcc{char[10]} denotes an array with exactly 10 elements.
 VCC extends that location to allow
 the type \vcc{char[capacity]} denoting an array with \vcc{capacity} elements
 (where \vcc{capacity} is a variable).
-Such types can be only used in casts, as in \vcc{(char[capacity])content}%
+Such types can be only used in casts, as in \vcc{(char[capacity])content}
 which means: take the pointer \vcc{content} and interpret it as an array
 of \vcc{capacity} elements of type \vcc{char}.
 This notation is used so we can think of arrays as objects (of some weird type).
@@ -228,15 +228,15 @@ To achieve that VCC performs \Def{ownership transfers},
 when unwrapping and wrapping objects.
 \begin{itemize}
 \item
-When object is mutable, in addition to five steps described in previous section,
+When object is mutable, in addition to the five steps described in the previous section,
 the \vcc{\owner} field of all objects owned by mutable object is set to \vcc{\me}.
 Additionally, these objects are added to the writes set.
 \item
-When object \vcc{p} is wrapped, in addition to previously described steps, for every object \vcc{q} that needs to be owned by \vcc{p}
+When object \vcc{p} is wrapped, in addition to the previously described steps, for every object \vcc{q} that needs to be owned by \vcc{p}
 VCC asserts that \vcc{q} is wrapped and writable, and sets \vcc{q->\owner} to \vcc{p}.
 What \vcc{p} needs to own is is determined by \vcc{p}'s invariant, as you'll see in the next section.
 \end{itemize}
-Let's then have a look at an example:
+Let's have a look at an example:
 
 \vccInput[linerange={append-alloc}]{c/06_safestring_dynamic.c}
 
@@ -258,7 +258,7 @@ Then we unwrap the content (which doesn't own anything, so the thread gets no ne
 and wrap the content.
 Finally, we wrap the string.
 This transfers ownership of the content from the current thread to the string, so the content is no longer wrapped (but still consistent).
-Let's then have a look at the assert/assume translation:
+Second, let's have a look at the assert\slash assume translation:
 
 \vccInput[linerange={append-out}]{c/06_safestring_dynamic_assert.c}
 

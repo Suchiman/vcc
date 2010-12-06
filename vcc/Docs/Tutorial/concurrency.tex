@@ -5,15 +5,15 @@ Writing concurrent programs is generally considered to be harder than writing
 sequential programs.
 Similar opinions are held about verification.
 Surprisingly, in VCC the leap from verifying sequential programs to
-verifying fancy lock-free stuff is not that big.
+verifying fancy lock-free code is not that big.
 This is because the verification in VCC is inherently based on invariants:
-conditions that attached to data and need hold \emph{no matter which thread}
+conditions that are attached to data and need to hold \emph{no matter which thread}
 accesses it.
 
 But let us move from words to actions, and verify a canonical example
 of a lock-free algorithm, which is the implementation of a spin-lock itself.
 The spin-lock data-structure is really simple -- it contains just a single
-field, meant to be interpreted as a boolean stating whether the spin-lock
+boolean field, meant to indicate whether the spin-lock
 is currently acquired.
 However, in VCC we would like to attach some formal meaning to this boolean.
 We do that through ownership -- the spin-lock will protect some object,
@@ -123,15 +123,15 @@ invariant of the lock.
 But this isn't the only condition imposed by VCC here.
 To transfer ownership of \vcc{l->protected_obj} to the lock, we also need
 write permission to the object being transferred, and
-we need to know its consistent.
+we need to know it is consistent.
 For example, should we forget to mention \vcc{l->protected_obj}
 in the writes clause VCC will complain about:
 
 \vccInput[linerange={out-999}]{c/08_lockw_wrong.c}
 
 \noindent
-Should we forget to perform the ownership transfer inside of \vcc{Release()}, we'll get complain
-about the invariant of lock.
+As another example, should we forget to perform the ownership transfer inside of \vcc{Release()}, VCC will complain
+about the invariant of the lock:
 
 \vccInput[linerange={out-999}]{c/08_lockw_wrong2.c}
 
@@ -146,7 +146,7 @@ from \secref{dynamic-ownership}.
 
 \noindent
 The \vcc{InterlockedCompareAndExchange()} function is a compiler built-in,
-which on the x86/x64 hardware translates to \vcc{cmpxchg} assembly instruction.
+which on the x86/x64 hardware translates to the \vcc{cmpxchg} assembly instruction.
 It takes a memory location and two values.
 If the memory location contains the first value, then it is replaced with the second.
 It returns the old value.
@@ -179,7 +179,7 @@ The contracts of functions operating on the lock require that the lock
 is wrapped.
 This is because one can only perform atomic operations on objects
 that are consistent. 
-If object is inconsistent, then the owning thread is in full control of it.
+If an object is inconsistent, then the owning thread is in full control of it.
 However, wrapped means not only consistent, but also owned by the current thread,
 which defeats the purpose of the lock --- it should be possible
 for multiple threads to compete for the lock.
@@ -189,7 +189,7 @@ How would \vcc|t| know that the owning thread won't unwrap (or worse yet, deallo
 before \vcc|t| tries an atomic operation on the lock?
 The owning thread thus needs to somehow promise \vcc|t|
 that lock will stay consistent.
-In VCC such a promise takes form of a \Def{claim}.
+In VCC such a promise takes the form of a \Def{claim}.
 Later we'll see that claims are more powerful, but for
 now consider the following to be the definition of a claim:
 
@@ -233,7 +233,7 @@ The owner won't be able to destroy the lock (which requires unwrapping it),
 before it makes sure there is no one using the lock.
 Thus, we need to add \vcc{_(claimable)} attribute to our lock
 definition, and change the contract on the functions operating
-on the lock. As the changes are vary similar we'll only
+on the lock. As the changes are very similar we'll only
 show \vcc{Release()}.
 
 \vccInput[linerange={release-struct_data}]{c/08_lock_claimsobj.c}
@@ -269,8 +269,8 @@ Let's have a look at an example.
 This function tests that we can actually create a lock, create a claim on it,
 use the lock, and then destroy it.
 The \vcc{InitializeLock()} leaves the lock wrapped and writable by the current thread.
-This allows for creation of claim, which is then passed to \vcc{Acquire()} and \vcc{Release()}.
-Finally, we destroy the claim, which allows for unwrapping of the lock, and finally deallocating
+This allows for the creation of an appropriate claim, which is then passed to \vcc{Acquire()} and \vcc{Release()}.
+Finally, we destroy the claim, which allows for unwrapping of the lock, and subsequently deallocating
 it when the function activation record is popped off the stack.
 
 The \vcc{\make_claim(...)} function takes the set of objects to be claimed
@@ -330,13 +330,14 @@ since the beginning of the program.
 \vccInput[linerange={counter-reading}]{c/09_counter.c}
 
 \noindent
-Its first invariant is plain single-state invariant -- for some reason
+Its first invariant is a plain single-state invariant -- for some reason
 we decided to exclude zero as the valid count.
 The second invariant says that for any atomic update of (consistent)
 counter, \vcc{v} can either stay unchanged or increment by exactly one.
 The syntax \vcc{\old(v)} is used to refer to value of \vcc{v} before
 an atomic update, and plain \vcc{v} is used for the value of \vcc{v}
 after the update.
+(Note that the argument to \vcc{\old(...)} can be an arbitrary expression.)
 That is, when checking that an atomic update preserves the invariant
 of a counter, we will take the state of the program right
 before the update, the state right after the update, and check
@@ -354,7 +355,7 @@ using the \vcc{_(invariant ...)} syntax.
 The single-state invariants are just two-state invariants, which do not use
 \vcc{\old(...)}.
 However, we often need an interpretation of an object invariant in a single state \vcc{S}.
-For that we use the \Def{stuttering} transition from \vcc{S} to \vcc{S} itself.
+For that we use the \Def{stuttering transition} from \vcc{S} to \vcc{S} itself.
 VCC enforces that all invariants are \Def{reflexive} that is if they hold
 over a transition \vcc{S0, S1}, then they should hold in just \vcc{S1}
 (\ie over \vcc{S1, S1}).
@@ -363,7 +364,7 @@ this means that \vcc{\old(...)} should be only used to describe
 how objects change, and not what are their proper values.
 In particular,
 all invariants which do not use \vcc{\old(...)} are reflexive, and so
-are all invariants of the form \vcc{\old(E) == E || P}, for any expression \vcc{E} and condition \vcc{P}.
+are all invariants of the form \vcc{\old(E) == (E) || (P)}, for any expression \vcc{E} and condition \vcc{P}.
 On the other hand, the invariants \vcc{\old(f) < 7} and \vcc{x == \old(x) + 1} are not reflexive.
 
 Let's now discuss where can you actually rely on invariants being preserved.
@@ -402,7 +403,7 @@ provided that it holds over \vcc{S0, S1} and \vcc{S1, S2}.
 Transitive invariants could be assumed over arbitrary
 pairs of states, provided that the object stays consistent
 in between them. 
-VCC does not require invariants to be transitive though.
+VCC does not require invariants to be transitive, though.
 
 Some invariants are naturally transitive (\eg we could say
 \vcc{_(invariant \old(x) <= x)} in \vcc{struct Counter},
@@ -473,9 +474,9 @@ The second assumption is legality.
 The third assumption follows from the second (if \vcc{p} did change, its invariant would
 automatically hold).
 
-An invariant is \Def{admissible} if and only if its stable and reflexive.
+An invariant is \Def{admissible} if and only if it is stable and reflexive.
 
-First, let's see how our previous notion of admissibility relates to this one.
+Let's see how our previous notion of admissibility relates to this one.
 If \vcc{p} owns \vcc{q}, then \vcc{q \in p->\owns}.
 By the third admissibility assumption, after the simulated action \vcc{p} still owns \vcc{q}.
 By the rules of ownership (\secref{wrap-unwrap}), only threads can own
@@ -515,7 +516,7 @@ Let's have a look at annotated version of our previous \vcc{foo()} function.
 \vccInput[linerange={readtwice-endreadtwice}]{c/09_counter.c}
 
 \noindent
-First, a high-level description of what's going on.
+Let's give a high-level description of what's going on.
 Just after reading \vcc{n->v} we create a claim \vcc{r}, which guarantees
 that in every state, where \vcc{r} is consistent,
 the current value of \vcc{n->v} is no less than the value of \vcc{x}
