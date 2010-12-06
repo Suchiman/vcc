@@ -9,5 +9,7 @@ namespace MicrosoftResearch.VSPackage
         public const uint cmdidMyCommand =        0x100;
         public const uint cmdidVerifyActiveFile = 0x102;
         public const uint cmdidVerifyCurrentFunction = 0x0104;
+        public const uint cmdidVerifyMenu = 0x1021;
+
     };
 }

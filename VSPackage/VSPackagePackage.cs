@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
 using EnvDTE;
 using System.Windows.Forms;
+using MicrosoftResearch.VSPackage.Visual_Studio_Integration;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -30,6 +31,7 @@ namespace MicrosoftResearch.VSPackage
     [ProvideMenuResource("Menus.ctmenu", 1)]
     // This attribute registers a tool window exposed by this package.
     [ProvideToolWindow(typeof(MyToolWindow))]
+    [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
     [Guid(GuidList.guidVSPackagePkgString)]
     public sealed class VSPackagePackage : Package
     {
@@ -71,7 +73,7 @@ namespace MicrosoftResearch.VSPackage
         private void VerifyActiveFile(object sender, EventArgs e)
         {
             //// get the toplevel object for interaction with VS
-            DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
+            DTE dte = MyDTE.Instance;
 
             //// Prepare VCC-Process, execute it and read its Output
 
@@ -95,18 +97,14 @@ namespace MicrosoftResearch.VSPackage
         private void VerifyCurrentFunction(object sender, EventArgs e)
         {
 
-            MessageBox.Show(string.Format("Current Function is: {0}", GetCurrentFunctionName()));
-            
-            /*
             //// get the toplevel object for interaction with VS
-            DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
+            DTE dte = MyDTE.Instance;
 
             //// Prepare VCC-Process, execute it and read its Output
             
             string arguments = String.Format("/F:{0} {1}", GetCurrentFunctionName(), dte.ActiveDocument.FullName);
             ProcessStartInfo psi = new ProcessStartInfo(vccPath, arguments);
-            //// Write Commandline-Command to Verification Outputpane
-            pane.OutputString(string.Format("{0} {1}", vccPath, arguments));
+            
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.CreateNoWindow = true;
@@ -117,10 +115,13 @@ namespace MicrosoftResearch.VSPackage
 
             //// Clear Verification Outputpane
             pane.Clear();
+            
+            //// Write Commandline-Command to Verification Outputpane
+            pane.OutputString(string.Format("{0} {1}\n", vccPath, arguments));
 
             //// Get notified when VCC sends Output Data
             vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
-            */
+            
         }
 
         private string GetCurrentFunctionName()
@@ -131,7 +132,14 @@ namespace MicrosoftResearch.VSPackage
             TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
             VirtualPoint currentFunctionActivePoint = textDocument.Selection.ActivePoint;
             CodeElement currentFunctionCodeElement = currentFunctionActivePoint.CodeElement[vsCMElement.vsCMElementFunction];
-            return currentFunctionCodeElement.Name;
+            if (currentFunctionCodeElement != null)
+            {
+                return currentFunctionCodeElement.Name;
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
 
 
@@ -156,6 +164,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         protected override void Initialize()
         {
+
             Trace.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
 
@@ -184,8 +193,50 @@ namespace MicrosoftResearch.VSPackage
                 mcs.AddCommand(menuItem);
 
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyCurrentFunction);
-                menuItem = new MenuCommand(VerifyCurrentFunction, menuCommandID);
-                mcs.AddCommand(menuItem);
+                OleMenuCommand OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(OleMenuItem_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyMenu);
+                OleMenuItem = new OleMenuCommand(VerivyMenuDoNothing, menuCommandID);
+                OleMenuItem.BeforeQueryStatus +=new EventHandler(OleMenuItem_BeforeQueryStatusMenu);
+                mcs.AddCommand(OleMenuItem);
+
+            }
+        }
+
+
+        void VerivyMenuDoNothing(object sender, EventArgs e)
+        {
+        }
+
+        void OleMenuItem_BeforeQueryStatusMenu(object sender, EventArgs e)
+        {
+            DTE dte = MyDTE.Instance;
+            Document document = (Document)dte.ActiveDocument;
+            if (document.Language == "C/C++")
+            {
+                ((MenuCommand)sender).Visible = true;
+            }
+            else
+            {
+                ((MenuCommand)sender).Visible = false;
+            }
+        }
+
+        void OleMenuItem_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                if (GetCurrentFunctionName() == string.Empty)
+                {
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+                else
+                {
+                    ((OleMenuCommand)sender).Enabled = true;
+                    ((OleMenuCommand)sender).Text = string.Format("Verify function '{0}'",GetCurrentFunctionName());
+                }
             }
         }
         #endregion
