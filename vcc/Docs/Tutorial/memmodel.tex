@@ -12,7 +12,7 @@ For any state of program execution, VCC maintains the set of \Def{proper pointer
 Only proper pointers can be accessed (read or written).
 There are rules on changing the proper pointer set --- \eg one can remove
 a pointer \vcc{(T*)a}, and add pointers \vcc{(char*)a}, \vcc{(char*)(a+1)},
-..., \vcc{(char*)(a+sizeof(T))}, or \textit{vice versa}.
+\dots, \vcc{(char*)(a+sizeof(T))}, or \textit{vice versa}.
 These rules make sure that at any given time, representations of two
 unrelated proper pointers do not overlap, which greatly simplifies reasoning.
 Note that given a \vcc{struct SafeString *p}, when \vcc{\proper(p)}

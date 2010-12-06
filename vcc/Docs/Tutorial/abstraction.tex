@@ -5,7 +5,7 @@ For example, a set might be implemented as a linked list, an array, or a hash ta
 
 When reasoning about a program which uses a data structure we don't want to be
 concerned with implementation details of the data structure.
-We should reason at somewhat higher, abstract level.
+We should reason at a somewhat higher, abstract level.
 For example, when we use a linked list as a representation of a set, we should not be concerned
 with how the list nodes are laid out in memory.
 You would then need to include \Def{ghost data} to store this set and write small bits of \Def{ghost code} to
@@ -98,7 +98,7 @@ lambda expression, is \vcc{S[T]}.
 An assignment \vcc{m = \lambda T x; E} has a similar effect to
 the following assumption (note that \vcc{E} will most likely reference \vcc{x}):
 \begin{VCC}
-_(assume \forall T x; m[x] == E)
+_(assume \forall T x; m[x] == (E))
 \end{VCC}
 \noindent
 Unlike assumptions, lambda expressions do not compromise 
@@ -158,7 +158,7 @@ What we want to additionally say is that if something is in the \vcc{val}
 set, then it can be reached from the \vcc{head}.
 Unfortunately, such property is not directly expressible in first-order
 logic (which is the underlying logic of VCC specifications).
-To workaround this problem we associate with each node
+To work around this problem we associate with each node
 the set of values stored in all the following nodes and
 the current node.
 Additionally we say that the set for \vcc|NULL| node is empty.
@@ -215,7 +215,7 @@ that the sorting algorithm produced.
 \vccInput[linerange={begin-out}]{c/04_bozosort_perm.c}
 
 This sample introduces two new features.
-First is the output ghost parameter \vcc{_(out perm_t perm)}.
+The first is the output ghost parameter \vcc{_(out perm_t perm)}.
 We use it when we need a function to return something in addition to what it normally returns.
 To call \vcc{bozo_sort()} you need to supply a local variable to hold
 the permutation when the function exits, as in:
@@ -228,24 +228,24 @@ void f(int *buf, unsigned len)
   bozo_sort(buf, len _(out myperm));
 }
 \end{VCC}
-The value is only copied on exit of \vcc{bozo_sort()}, thought its execution 
+The value is only copied on exit of \vcc{bozo_sort()}, though during its execution 
 it has its own copy.
 It is thus different than passing a pointer to the local.
 It is also more efficient for the verifier.
 
-The other, somewhat more advanced, feature is explicit state manipulation.
+The second, somewhat more advanced, feature is explicit state manipulation.
 The function \vcc{\now()} returns the current state of the heap (\ie dynamically
 allocated memory; in future it will also work for locals, but for now it only applied
 to memory location, address of which was taken). 
 The state is encapsulated in a value of type \vcc{\state}.
-The expression \vcc{\at(s, E)} returns value of expression
+The expression \vcc{\at(s, E)} returns the value of expression
 \vcc{E} as evaluated in state \vcc{s}. 
 You can see  \vcc{\old(...)} as a special case of this.
 
 Thus, the algorithm maintains the map containing the current permutation of
 the data, with respect to the initial data (we store the initial state in
 \vcc{s0}).
-The initial permutation is just identity, and whenever we swap elements of
+The initial permutation is just the identity, and whenever we swap elements of
 the array, we also swap elements of the permutation.
 
 \subsection*{Exercises}

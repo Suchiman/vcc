@@ -12,7 +12,7 @@ of VCC, typeset in a different fonts, and
 the actual file name of the example is replaced with \vcc{/*`testcase`*/}.)
 VCC failed to prove our assertion, even though it's easy to see that
 it always holds. This is because verification in VCC is \Def{modular}: 
-VCC doesn't look inside the body of a function (such as \vcc{min()}) 
+VCC doesn't look inside the body of a function (such as the definition of \vcc{min()}) 
 when understanding the effect of a call to the function (such as 
 the call from \vcc{main()})%
 \footnote{We will see later how to selectively override this default
@@ -51,7 +51,7 @@ because it gives obligations on both the function and its callers. It
 is provided by three types of annotations:
 \begin{itemize}
 \item A requirement on the caller (sometimes called the
-  \Def{precondition} of the function) take the form \vcc{_(requires E)}, 
+  \Def{precondition} of the function) takes the form \vcc{_(requires E)}, 
   where \vcc{E} is an expression. It says that callers of the
   function promise that \vcc{E} will hold on function entry. 
 
@@ -61,7 +61,7 @@ is provided by three types of annotations:
   promises that \vcc{E} holds just before control exits the
   function. 
 
-\item The third type of annotation, a \Def{writes clause}, is described
+\item The third type of contract annotation, a \Def{writes clause}, is described
   in the next section.
 \end{itemize}
 
@@ -79,7 +79,7 @@ with arbitrary parameter values.
 The postcondition states that the value returned from \vcc{min()} 
 is no bigger than either of the inputs.
 Note that \vcc{\true} and \vcc{\result} are spelled with a backslash
-to avoid clash with C identifiers\footnote{
+to avoid name clashes with C identifiers\footnote{
   All VCC keywords start with a backslash; 
   this contrasts with annotation tags (like \vcc{requires}),
   which are only used at the beginning of annotation
@@ -87,13 +87,13 @@ to avoid clash with C identifiers\footnote{
   (and thus you are still free to have, \eg
   a function called \lstinline{requires} or \lstinline{assert}).}.
 
-VCC uses function specs as follows. When verifying the body of a
+VCC uses function specifications as follows. When verifying the body of a
 function, VCC implicitly assumes each precondition of the function on
 function entry, and implicitly asserts each postcondition of the
 function (with \vcc{\result} bound to the return value and each
 parameter bound to its value on function entry) just before the
 function returns. For every call to the function, VCC replaces the
-call with assertion of the preconditions of the function, sets the
+call with an assertion of the preconditions of the function, sets the
 return value to an arbitrary value, and finally assumes each
 postcondition of the function. 
 For example, VCC translates the program above roughly as follows:
@@ -277,10 +277,10 @@ _(assume y == _old_x)
 Programs that manipulate arrays often write to multiple array
 locations. Writes clauses actually allow sets of pointers, rather than
 individual pointers. We'll introduce sets in full generality later, but
-note one special case: the expression \vcc{\array_range(arr, len)}
-denotes the set of pointers \vcc@{&arr[0], &arr[1], ..., &arr[len-1]}@. 
+note one special case: the expression \vcc{\array_range(ar, len)}
+denotes the set of pointers \vcc@{&ar[0], &ar[1], ..., &ar[len-1]}@. 
 Thus, a writes clause of the form
-\vcc{_(writes(\array_range(arr,len)))}
+\vcc{_(writes \array_range(ar,len))}
 allows writing to all elements of the array.
 
 \subsection{Exercises}
@@ -290,7 +290,7 @@ Could the postcondition of \vcc{copy} have been written equivalently
 as the simpler \vcc{*to == *from}? If not, why not?
 \item
 Specify a program that takes two arrays and checks whether
-the arrays are equal (\ie, whether they contain the same sequence of
+the arrays are equal (\ie whether they contain the same sequence of
 elements).
 \item
 Specify a program that takes an array and checks whether it
@@ -325,7 +325,7 @@ if you had done so, by putting a function-like specification on the
 block%
 \footnote{
   This feature has not yet been implemented in the new VCC syntax.
-}. This is done by simply writing function specifications in the
+}. This is done by simply writing function specifications
 preceding the block, \eg
 \begin{VCC}
 ...
@@ -341,7 +341,7 @@ _(ensures x == 6)
 VCC translates this by (internally) refactoring the block into a
 function, the parameters of which are the variables from the
 surrounding scope that are mentioned within the block (or the block
-specs). The advantages of this separation is that within the block,
+specifications). The advantages of this separation is that within the block,
 VCC can ignore what it knows about the preceding context, and
 following the block, VCC can ``forget'' what it knew inside the block
 (other than what escapes through the \vcc{ensures} clauses); in each
@@ -358,7 +358,7 @@ state. In VCC, pure functions are not allowed to allocate memory, and can
 write only to local variables. Only pure functions can be called within VCC
 annotations. The function \vcc{min()} from \secref{functions} is an
 example of a function that can be declared to be pure; this is done by
-adding the modifier \vcc{_(vcc ispure)} to the function specification,
+adding the modifier \vcc{_(vcc ispure)} to the beginning of the function specification,
 \eg
 \begin{VCC}
 _(vcc ispure) min(int x, int y) ...
@@ -381,7 +381,7 @@ _(logic F(A) = E)
 \end{VCC}
 which is roughly equivalent to 
 \begin{VCC}
-#define F(A) E
+#define F(A) (E)
 \end{VCC}
 except that it prevents
 name capture and gives better error messages (\ie ones which mention
@@ -474,7 +474,7 @@ Extend the specification of sorting to guarantee that the sorting
 doesn't change the set of numbers occurring in the array (though it
 might change their multiplicities). 
 \item
-Write, without using the \vcc{\%} operator, logic functions that
+Write, without using the \vcc{%} operator, logic functions that
 specify (1)~that one number (\vcc{unsigned int}) divides another
 evenly, (2)~that a number is prime, (3)~that two numbers are
 relatively prime, (4)~the greatest common divisor of two numbers.
