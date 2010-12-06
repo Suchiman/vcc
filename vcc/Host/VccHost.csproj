@@ -89,10 +89,6 @@
       <HintPath>..\Boogie\Provers.Z3.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Compiler.Runtime, Version=1.0.20411.0, Culture=neutral, PublicKeyToken=736440c9b414ea16, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Boogie\System.Compiler.Runtime.dll</HintPath>
-    </Reference>
     <Reference Include="System.ComponentModel.Composition, Version=2008.11.24.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\CodeModel2VccHelper\System.ComponentModel.Composition.dll</HintPath>

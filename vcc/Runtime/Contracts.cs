@@ -219,9 +219,9 @@ namespace System.Diagnostics.Contracts {
   /// <summary>
   /// Methods and classes marked with this attribute can be used within calls to Contract methods. Such methods not make any visible state changes.
   /// </summary>
-  [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Event | AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-  public sealed class PureAttribute : Attribute {
-  }
+  //[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Event | AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+  //public sealed class PureAttribute : Attribute {
+  //}
 
   /// <summary>
   /// Types marked with this attribute specify that a separate type contains the contracts for this type.
