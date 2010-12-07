@@ -338,3 +338,14 @@ _(requires \forall int i; i >= 0 && i < 3 ==> &dd->iarr[i] \in dd->\owns)
 Verification of d#adm succeeded.
 Verification of foo succeeded.
 `
+`/newsyntax
+#include <vcc.h>
+
+struct Perm {
+int op;
+_(invariant \forall struct Perm ^p; (\object) p == \this)
+};
+
+`
+Verification of Perm#adm succeeded.
+`
