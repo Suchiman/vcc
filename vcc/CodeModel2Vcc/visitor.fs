@@ -1357,7 +1357,8 @@ namespace Microsoft.Research.Vcc
         let opMap = Map.ofList [ "op_Equality", ("==", false) ; "op_Inequality", ("!=", false); "op_Addition", ("+", false);
                                  "op_Subtraction", ("-", false); "op_Division", ("/", true); "op_Modulus", ("%", true);
                                  "op_Multiply", ("*", false); "op_LessThan", ("<", false); "op_LessThanOrEqual", ("<=", false);
-                                 "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false)
+                                 "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false);
+                                 "op_UnaryNegation", ("-", false);
                                ]
 
         this.EnsureMethodIsVisited(methodToCall)
@@ -1371,6 +1372,7 @@ namespace Microsoft.Research.Vcc
           | "op_Inequality" 
           | "op_Addition" 
           | "op_Subtraction" 
+          | "op_UnaryNegation"
           | "op_Division" 
           | "op_Modulus" 
           | "op_Multiply" 
@@ -1396,6 +1398,9 @@ namespace Microsoft.Research.Vcc
 
         let trBigIntOp methodName = 
           match args() with
+            | [e1] when methodName = "op_UnaryNegation" ->
+              let op, isChecked = opMap.[methodName]
+              exprRes <- C.Expr.Prim (ec, C.Op(op, if isChecked then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked), [e1])
             | [e1; e2] -> 
               let op, isChecked = opMap.[methodName]
               exprRes <- C.Expr.Prim (ec, C.Op(op, if isChecked then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked), [e1; e2])
