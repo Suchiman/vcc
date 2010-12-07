@@ -510,6 +510,23 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let checkTriggerOps _ = function
+      | Expr.Quant(_, ({Kind = (QuantKind.Forall|QuantKind.Exists)} as qd)) ->
+        let reportErrorForUnallowedOperations _ = function
+          | Expr.Prim(ec, Op(("=="|"!"|"&&"|"||" as op), _), _) ->
+            helper.Error(ec.Token, 9718, "operator \'" + op + "\' not allowed in triggers")
+            false
+          | Expr.Prim(ec, Op(("<"|"<="|">"|">=" as op), _), _) when not helper.Options.OpsAsFunctions ->
+            helper.Error(ec.Token, 9718, "operator \'" + op + "\' not allowed in triggers when /opsasfuncs is not set")
+            false
+          | _ -> true
+        List.iter (List.iter (fun (e:Expr) -> e.SelfVisit(reportErrorForUnallowedOperations))) qd.Triggers
+        None          
+      | _ -> None
+
+    // ============================================================================================================
+
+
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
     helper.AddTransformer ("final-range-assumptions", Helper.Decl addRangeAssumptions)
@@ -523,6 +540,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-error-old", Helper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", Helper.Decl errorForStateWriteInPureContext)
     helper.AddTransformer ("final-error-when-claimed", Helper.Decl errorForWhenClaimedOutsideOfClaim)
+    helper.AddTransformer ("final-error-arithmetic-in-trigger", Helper.Expr checkTriggerOps)
     helper.AddTransformer ("final-move-test-classifiers", Helper.Decl flattenTestClassifiers)
     helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
     // reads check goes here

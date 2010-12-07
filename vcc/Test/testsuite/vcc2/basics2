@@ -474,3 +474,11 @@ typedef struct S { } S
 `
 testcase(4,1) : error VC0000: ; expected.
 `
+`/newsyntax
+#include <vcc.h>
+
+_(axiom \forall int x,y; { x < y } \true)
+int foo() {}
+`
+testcase(3,42) : error VC9718: operator '<' not allowed in triggers when /opsasfuncs is not set
+`
