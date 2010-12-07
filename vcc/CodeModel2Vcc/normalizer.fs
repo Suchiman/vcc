@@ -25,8 +25,7 @@ namespace Microsoft.Research.Vcc
       Some (self (Expr.Cast (c, Processed, Expr.Prim ({ c with Type = Type.Bool }, op, args))))
     | Expr.Prim (c, op, [a1; a2]) when op.IsEqOrIneq ->
       match a1.Type, a2.Type with
-        | PtrSoP(t, isSpec), PtrSoP(t', isSpec') ->
-          if isSpec <> isSpec' then die()
+        | PtrSoP(t, _), PtrSoP(t', _) ->
           let macro = if op.IsEq then "_vcc_ptr_eq" else "_vcc_ptr_neq"
           Some (self (Expr.Macro (c, macro, [self a1; self a2])))
         | _ -> None
