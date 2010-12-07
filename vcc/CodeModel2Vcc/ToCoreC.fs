@@ -606,7 +606,7 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
       
-    let handleOutParameters ctx self =
+    let handleOutParameters self =
       let splitByOut vs = 
         let seenVars = new Dict<_,_>()
         let addAndComplainForDuplicateVar tok (v:Variable) =
@@ -634,7 +634,8 @@ namespace Microsoft.Research.Vcc
           match splitByOut vs args with
             | [], _, _, _ -> None
             | outArgs, nonOutArgs, decls, assigns -> 
-              Some(Expr.MkBlock(decls @ ( VarWrite(voidBogusEC(), vs @ outArgs, Call(c, fn, targs, nonOutArgs)) :: assigns)))
+              let nonOutArgs' = List.map self nonOutArgs
+              Some(Expr.MkBlock(decls @ ( VarWrite(voidBogusEC(), vs @ outArgs, Call(c, fn, targs, nonOutArgs')) :: assigns)))
         | _ -> die()
 
       function
@@ -835,7 +836,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("core-value-structs", Helper.Decl removeStructsPassedByValue)
     helper.AddTransformer ("core-parm-writes", Helper.Decl removeWritesToParameters)
     helper.AddTransformer ("core-pull-out-calls", Helper.ExprCtx pullOutCalls)
-    helper.AddTransformer ("core-out-parameters", Helper.ExprCtx handleOutParameters)
+    helper.AddTransformer ("core-out-parameters", Helper.Expr handleOutParameters)
     helper.AddTransformer ("core-map-eq", Helper.Expr handleMapEquality)
     helper.AddTransformer ("core-map-init", Helper.Expr handleMapInit)
     helper.AddTransformer ("core-linearize", Helper.Decl (linearizeDecls helper))
