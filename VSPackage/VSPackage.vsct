@@ -93,6 +93,8 @@
       <Button guid="guidVerifyCmdSet" id="cmdidVerifyActiveFile" priority="0x0102" type ="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
         <Icon guid="guidImages" id ="bmpPic1"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>DefaultDisabled</CommandFlag>
         <Strings>
           <ButtonText>Verify Active File</ButtonText>
         </Strings>
