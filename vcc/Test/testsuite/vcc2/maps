@@ -645,3 +645,9 @@ void foo(spec(int m[int]))
 `
 Verification of foo succeeded.
 `
+#include "vcc.h"
+
+void bar() { spec(void f[int];) }
+`
+Illegal type 'void' in map range.
+`
