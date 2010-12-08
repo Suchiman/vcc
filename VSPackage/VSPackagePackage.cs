@@ -6,8 +6,6 @@ using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
 using EnvDTE;
-using System.Windows.Forms;
-using MicrosoftResearch.VSPackage.Visual_Studio_Integration;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -31,14 +29,11 @@ namespace MicrosoftResearch.VSPackage
     [ProvideMenuResource("Menus.ctmenu", 1)]
     // This attribute registers a tool window exposed by this package.
     [ProvideToolWindow(typeof(MyToolWindow))]
+    // This attribute makes sure this package is loaded and initialized when a solution exists
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
     [Guid(GuidList.guidVSPackagePkgString)]
     public sealed class VSPackagePackage : Package
     {
-
-        private string vccPath = @"C:\Users\t-chworr\VCC\vcc\Host\bin\Debug\vcc.exe";
-        private IVsOutputWindowPane pane;
-
         /// <summary>
         /// Default constructor of the package.
         /// Inside this method you can place any initialization code that does not require 
@@ -70,89 +65,91 @@ namespace MicrosoftResearch.VSPackage
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
 
+        /// <summary>
+        ///     Launches VCC.exe to verify the active file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void VerifyActiveFile(object sender, EventArgs e)
         {
-            //// get the toplevel object for interaction with VS
-            DTE dte = MyDTE.Instance;
-
-            //// Prepare VCC-Process, execute it and read its Output
-
-            string arguments = dte.ActiveDocument.FullName;
-            ProcessStartInfo psi = new ProcessStartInfo(vccPath, dte.ActiveDocument.FullName);
-            psi.UseShellExecute = false;
-            psi.RedirectStandardOutput = true;
-            psi.CreateNoWindow = true;
-            System.Diagnostics.Process vccProcess = new System.Diagnostics.Process();
-            vccProcess.StartInfo = psi;
-            vccProcess.Start();
-            vccProcess.BeginOutputReadLine();
-
-            //// Clear Verification Outputpane
-            pane.Clear();
-
-            //// Get notified when VCC sends Output Data
-            vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
+            VCCLauncher.LaunchVCC(String.Format("\"{0}\"", VSIntegration.GetActiveFileFullName()));
         }
 
+        /// <summary>
+        ///     Launches VCC.exe to verify the current function
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void VerifyCurrentFunction(object sender, EventArgs e)
         {
-
-            //// get the toplevel object for interaction with VS
-            DTE dte = MyDTE.Instance;
-
-            //// Prepare VCC-Process, execute it and read its Output
-            
-            string arguments = String.Format("/F:{0} {1}", GetCurrentFunctionName(), dte.ActiveDocument.FullName);
-            ProcessStartInfo psi = new ProcessStartInfo(vccPath, arguments);
-            
-            psi.UseShellExecute = false;
-            psi.RedirectStandardOutput = true;
-            psi.CreateNoWindow = true;
-            System.Diagnostics.Process vccProcess = new System.Diagnostics.Process();
-            vccProcess.StartInfo = psi;
-            vccProcess.Start();
-            vccProcess.BeginOutputReadLine();
-
-            //// Clear Verification Outputpane
-            pane.Clear();
-            
-            //// Write Commandline-Command to Verification Outputpane
-            pane.OutputString(string.Format("{0} {1}\n", vccPath, arguments));
-
-            //// Get notified when VCC sends Output Data
-            vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
-            
+            VCCLauncher.LaunchVCC(String.Format("/F:\"{0}\" \"{1}\"", VSIntegration.GetCurrentFunctionName(), VSIntegration.GetActiveFileFullName()));
         }
 
-        private string GetCurrentFunctionName()
+        /// <summary>
+        ///     Hides/Shows the VerifyMenu
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void VerifyMenu_BeforeQueryStatus(object sender, EventArgs e)
         {
-            DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
-
-            //// Get CodeElement which represents the current function
-            TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
-            VirtualPoint currentFunctionActivePoint = textDocument.Selection.ActivePoint;
-            CodeElement currentFunctionCodeElement = currentFunctionActivePoint.CodeElement[vsCMElement.vsCMElementFunction];
-            if (currentFunctionCodeElement != null)
+            if (sender != null)
             {
-                return currentFunctionCodeElement.Name;
-            }
-            else
-            {
-                return string.Empty;
+                if (VSIntegration.IsCodeFile())
+                {
+                    //// active document is in C or C++ => show menu
+                    ((MenuCommand)sender).Visible = true;
+                }
+                else
+                {
+                    //// there is no active document or it is not in C or C++ => hide menu
+                    ((MenuCommand)sender).Visible = false;
+                }
             }
         }
 
-
-
-        void vccProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        /// <summary>
+        ///     Disables/Enables and renames the VerifyFile-Command
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void VerifyFile_BeforeQueryStatus(object sender, EventArgs e)
         {
-            // Write Output from VCC to Verification Outputpane
-            if (pane != null)
+            if (sender != null)
             {
-                pane.OutputString(String.Format("{0}\n",e.Data));
+                if (VSIntegration.IsCodeFile())
+                {
+                    ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.GetActiveFileName());
+                    ((OleMenuCommand)sender).Enabled = true;
+                }
+                else
+                {
+                    ((OleMenuCommand)sender).Text = "Verify Active File";
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
             }
         }
 
+        /// <summary>
+        ///     Disables/Enables and renames the VerifyFunction-Command
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void VerifyFunction_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                if (VSIntegration.GetCurrentFunctionName() != null)
+                {
+                    ((OleMenuCommand)sender).Text = string.Format("Verify Function '{0}'", VSIntegration.GetCurrentFunctionName());
+                    ((OleMenuCommand)sender).Enabled = true;
+                }
+                else
+                {
+                    ((OleMenuCommand)sender).Text = "Verify Current Function";
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+            }
+        }
 
         /////////////////////////////////////////////////////////////////////////////
         // Overriden Package Implementation
@@ -169,76 +166,41 @@ namespace MicrosoftResearch.VSPackage
             base.Initialize();
 
 
-            //// Prepare Outputpane "Verification"
-
-            IVsOutputWindow outputwindow = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
-            Guid guidVerificationPane = new Guid("{1EE5916F-A3C7-403C-89D8-58C61285688F}");
-
-            outputwindow.CreatePane(ref guidVerificationPane, "Verification", 1, 1);
-
-            outputwindow.GetPane(ref guidVerificationPane, out pane);
-
-
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if ( null != mcs )
             {
-                // Create the command for the menu items.
-                CommandID menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMyCommand);
-                MenuCommand menuItem = new MenuCommand(ShowToolWindow, menuCommandID );
+                //// Create the command for the menu items.
+
+                CommandID menuCommandID;
+                MenuCommand menuItem;
+                OleMenuCommand OleMenuItem;
+
+                //// VCC Options
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMyCommand);
+                menuItem = new MenuCommand(ShowToolWindow, menuCommandID );
                 mcs.AddCommand(menuItem);
 
+                //// Verify File
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);
-                menuItem = new MenuCommand(VerifyActiveFile, menuCommandID);
-                mcs.AddCommand(menuItem);
+                OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
+                OleMenuItem.BeforeQueryStatus +=new EventHandler(VerifyFile_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
 
+                //// Verify Function
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyCurrentFunction);
-                OleMenuCommand OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(OleMenuItem_BeforeQueryStatus);
+                OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
+                //// Verifymenu
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyMenu);
-                OleMenuItem = new OleMenuCommand(VerivyMenuDoNothing, menuCommandID);
-                OleMenuItem.BeforeQueryStatus +=new EventHandler(OleMenuItem_BeforeQueryStatusMenu);
+                OleMenuItem = new OleMenuCommand(null, menuCommandID);
+                OleMenuItem.BeforeQueryStatus +=new EventHandler(VerifyMenu_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
-
             }
         }
 
-
-        void VerivyMenuDoNothing(object sender, EventArgs e)
-        {
-        }
-
-        void OleMenuItem_BeforeQueryStatusMenu(object sender, EventArgs e)
-        {
-            DTE dte = MyDTE.Instance;
-            Document document = (Document)dte.ActiveDocument;
-            if (document.Language == "C/C++")
-            {
-                ((MenuCommand)sender).Visible = true;
-            }
-            else
-            {
-                ((MenuCommand)sender).Visible = false;
-            }
-        }
-
-        void OleMenuItem_BeforeQueryStatus(object sender, EventArgs e)
-        {
-            if (sender != null)
-            {
-                if (GetCurrentFunctionName() == string.Empty)
-                {
-                    ((OleMenuCommand)sender).Enabled = false;
-                }
-                else
-                {
-                    ((OleMenuCommand)sender).Enabled = true;
-                    ((OleMenuCommand)sender).Text = string.Format("Verify function '{0}'",GetCurrentFunctionName());
-                }
-            }
-        }
         #endregion
     }
 }
