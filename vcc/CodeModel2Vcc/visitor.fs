@@ -997,14 +997,23 @@ namespace Microsoft.Research.Vcc
           | C.Array _
           | C.Void -> false
           | _ -> true
+        let rec isAdmissibleMapRangeType = function
+          | C.Volatile t -> isAdmissibleMapRangeType t
+          | C.Void -> false
+          | _ -> true
 
         if genericTypeInstanceReference.GenericType.ToString () = SystemDiagnosticsContractsCodeContractMap then
           match [ for t in genericTypeInstanceReference.GenericArguments -> this.DoType t ] with
             | [t1; t2] ->
-              let domainType = [ for t in genericTypeInstanceReference.GenericArguments -> t ].Head
+              let mapTypes = [ for t in genericTypeInstanceReference.GenericArguments -> t ]
+
               let t1 = if isAdmissibleMapDomainType t1 then t1
                        else 
-                         helper.Error(token domainType, 9702, "Illegal type '" + t1.ToString() + "' in map domain.")
+                         helper.Error(token (mapTypes.Item(0)), 9702, "Illegal type '" + t1.ToString() + "' in map domain.")
+                         C.Type.Bogus
+              let t2 = if isAdmissibleMapRangeType t2 then t2
+                       else 
+                         helper.Error(token (mapTypes.Item(0)), 9721, "Illegal type '" + t2.ToString() + "' in map range.")
                          C.Type.Bogus
               typeRes <- C.Type.Map (t1, t2)
             | _ -> assert false
