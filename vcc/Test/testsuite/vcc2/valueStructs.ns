@@ -91,8 +91,7 @@ _(ghost _(pure) struct A abs(struct C *c)
 })
 `
 Verification of A#adm succeeded.
-Verification of abs failed.
-testcase(29,3) : error VC8022: the pure function 'abs' is underspecified; please supply ensures(result == ...) contract matching the implementation.
+Verification of abs succeeded.
 `
 `/newsyntax
 #include <vcc.h>

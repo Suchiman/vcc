@@ -1589,7 +1589,7 @@ namespace Microsoft.Research.Vcc
               (if header.IsStateless then [] else [bState]) @ [for tv in header.TypeParameters -> typeVarRef tv] 
                                                             @ [for v in header.Parameters -> varRef v]
             let tok = TransUtil.afmtt header.Token 8022 "the pure function '{0}' is underspecified; please supply ensures(result == ...) contract matching the implementation" [header.Name]
-            [B.Ensures (tok.Token, bEq (er "$result") (bCall ("F#" + header.Name) parms))]
+            [B.FreeEnsures (bEq (er "$result") (bCall ("F#" + header.Name) parms))]
           else []
         let (writes, ensures) =
           let check (writes, ensures) = function

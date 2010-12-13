@@ -199,7 +199,7 @@ namespace Microsoft.Research.Vcc
     expr.HasSubexpr (function Result (_) -> true | _ -> false)          
       
   let checkPurePostconditionForm (helper:Helper.Env) = function
-    | Top.FunctionDecl f when f.IsPure ->
+    | Top.FunctionDecl f when f.IsPure && f.Body.IsNone ->
       let paths = gdict()
       
       let rec checkOne = function
