@@ -945,8 +945,7 @@ void bar()
   assert(t1 == t2);
 }
 `
-Verification of foo failed.
-testcase(7,3) : error VC8022: the pure function 'foo' is underspecified; please supply ensures(result == ...) contract matching the implementation.
+Verification of foo succeeded.
 Verification of bar succeeded.
 `
 #include <vcc.h>
@@ -1078,10 +1077,7 @@ testcase(2,132) : error VC9697: old(...) is allowed only in two-state contexts
 
 spec(ispure int foo(int a)
   requires(a > 0)
-  ensures(result > 0)
-{
-  return a;
-}
+  ensures(result > 0);
 )
 void bar(int i)
 {
@@ -1089,10 +1085,8 @@ void bar(int i)
 }
 `
 testcase(3,17) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
-Verification of foo failed.
-testcase(7,3) : error VC8022: the pure function 'foo' is underspecified; please supply ensures(result == ...) contract matching the implementation.
 Verification of bar failed.
-testcase(12,12) : error VC9500: Assertion 'foo(i) > 0' did not verify.
+testcase(9,12) : error VC9500: Assertion 'foo(i) > 0' did not verify.
 `
 #include "vcc.h"
 struct S { volatile int a; };
