@@ -6,6 +6,8 @@ using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
 using EnvDTE;
+using System.ComponentModel;
+using System.Windows.Forms;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -30,6 +32,7 @@ namespace MicrosoftResearch.VSPackage
     // This attribute registers a tool window exposed by this package.
     [ProvideToolWindow(typeof(MyToolWindow))]
     // This attribute makes sure this package is loaded and initialized when a solution exists
+    [ProvideOptionPage(typeof(VCCOptionPage), "VCC", "General", 101, 106, true)]
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
     [Guid(GuidList.guidVSPackagePkgString)]
     public sealed class VSPackagePackage : Package
@@ -45,6 +48,7 @@ namespace MicrosoftResearch.VSPackage
         {
             Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
         }
+
 
         /// <summary>
         /// This function is called when the user clicks the menu item that shows the 
@@ -72,7 +76,11 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         private void VerifyActiveFile(object sender, EventArgs e)
         {
-            VCCLauncher.LaunchVCC(String.Format("\"{0}\"", VSIntegration.GetActiveFileFullName()));
+            VCCOptionPage options = this.GetAutomationObject("VCC.General") as VCCOptionPage;
+            if (options != null)
+            {
+                VCCLauncher.VerifyFile(VSIntegration.GetActiveFileFullName(), options.AdditionalCommandlineArguments);
+            }
         }
 
         /// <summary>
@@ -82,7 +90,13 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         private void VerifyCurrentFunction(object sender, EventArgs e)
         {
-            VCCLauncher.LaunchVCC(String.Format("/F:\"{0}\" \"{1}\"", VSIntegration.GetCurrentFunctionName(), VSIntegration.GetActiveFileFullName()));
+            VCCOptionPage options = this.GetAutomationObject("VCC.General") as VCCOptionPage;
+            if (options != null)
+            {
+                VCCLauncher.VerifyFunction( VSIntegration.GetActiveFileFullName(),
+                                            VSIntegration.GetCurrentFunctionName(),
+                                            options.AdditionalCommandlineArguments);
+            }
         }
 
         /// <summary>
@@ -98,6 +112,7 @@ namespace MicrosoftResearch.VSPackage
                 {
                     //// active document is in C or C++ => show menu
                     ((MenuCommand)sender).Visible = true;
+                    
                 }
                 else
                 {
@@ -108,7 +123,7 @@ namespace MicrosoftResearch.VSPackage
         }
 
         /// <summary>
-        ///     Disables/Enables and renames the VerifyFile-Command
+        ///     Renames the VerifyFile-Command
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -116,16 +131,7 @@ namespace MicrosoftResearch.VSPackage
         {
             if (sender != null)
             {
-                if (VSIntegration.IsCodeFile())
-                {
-                    ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.GetActiveFileName());
-                    ((OleMenuCommand)sender).Enabled = true;
-                }
-                else
-                {
-                    ((OleMenuCommand)sender).Text = "Verify Active File";
-                    ((OleMenuCommand)sender).Enabled = false;
-                }
+                ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.GetActiveFileName());
             }
         }
 
@@ -161,16 +167,15 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         protected override void Initialize()
         {
-
             Trace.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
-
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if ( null != mcs )
             {
-                //// Create the command for the menu items.
+                
+                //// Create the commands for the menu items.
 
                 CommandID menuCommandID;
                 MenuCommand menuItem;
@@ -189,6 +194,18 @@ namespace MicrosoftResearch.VSPackage
 
                 //// Verify Function
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyCurrentFunction);
+                OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
+                //// Verify File Context Menu
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
+                OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
+                //// Verify Function Context Menu
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyCurrentFunction);
                 OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);

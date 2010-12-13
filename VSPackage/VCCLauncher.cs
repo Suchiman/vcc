@@ -26,13 +26,24 @@ namespace MicrosoftResearch.VSPackage
         {
             get { return _pane.Value; }
         }
-        
+
+        public static void VerifyFile(string filename, string addArguments)
+        {
+            LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
+        }
+
+        public static void VerifyFunction(string filename, string function, string addArguments)
+        {
+            LaunchVCC(String.Format("{0} /F:\"{1}\" \"{2}\"", addArguments, function, filename));
+        }
+
         public static void LaunchVCC(string arguments)
         {
             //// get the toplevel object for interaction with VS
             DTE dte = VSIntegration.dte;
-
+            
             //// Prepare VCC-Process, execute it and read its Output
+                        
             ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"",vccPath), arguments);
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
@@ -44,7 +55,7 @@ namespace MicrosoftResearch.VSPackage
             pane.Clear();
             pane.OutputString("===VCC started.===\n");
             //// Write Commandline-Command to Verification Outputpane
-            pane.OutputString(string.Format("Command Line: {0} {1}\n\n", vccPath, arguments));
+            pane.OutputString(string.Format("Command Line: \"{0}\" {1}\n\n", vccPath, arguments));
             //// Get notified when VCC sends Output or Error Data
             vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
             vccProcess.ErrorDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);

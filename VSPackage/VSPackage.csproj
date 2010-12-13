@@ -113,6 +113,9 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VCCOptionPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="VCCLauncher.cs" />
     <Compile Include="MyControl.xaml.cs">
       <DependentUpon>MyControl.xaml</DependentUpon>

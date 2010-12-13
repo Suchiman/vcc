@@ -1,6 +1,7 @@
 ﻿using System;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
+using System.Windows.Forms;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -66,22 +67,30 @@ namespace MicrosoftResearch.VSPackage
         }
         
         /// <summary>
-        ///     Returns the name of the function surrounding the cursor
+        ///     Returns the selected Text or (if nothing's selected) the name of the function surrounding the cursor
         /// </summary>
-        /// <returns>the name of the function surrounding the cursor, null if the cursor is not in a function</returns>
+        /// <returns>the selected Text or (if nothing's selected) the name of the function surrounding the cursor</returns>
         public static string GetCurrentFunctionName()
         {
             //// Get CodeElement which represents the current function
             TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
-            VirtualPoint currentFunctionActivePoint = textDocument.Selection.ActivePoint;
-            CodeElement currentFunctionCodeElement = currentFunctionActivePoint.CodeElement[vsCMElement.vsCMElementFunction];
-            if (currentFunctionCodeElement != null)
+            CodeElement currentFunctionCodeElement = textDocument.Selection.ActivePoint.CodeElement[vsCMElement.vsCMElementFunction];
+            if (textDocument.Selection.Text != string.Empty)
             {
-                return currentFunctionCodeElement.Name;
+                return textDocument.Selection.Text;
             }
             else
             {
-                return null;
+                //// This second check is necessary because ActivePoint's CodeElement-Property unexpectedly
+                //// returns CodeElements that are not functions
+                if (currentFunctionCodeElement != null && currentFunctionCodeElement.Kind == vsCMElement.vsCMElementFunction)
+                {
+                    return currentFunctionCodeElement.Name;
+                }
+                else
+                {
+                    return null;
+                }
             }
         }
     }

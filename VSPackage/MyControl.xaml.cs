@@ -19,10 +19,13 @@ namespace MicrosoftResearch.VSPackage
     /// </summary>
     public partial class MyControl : UserControl
     {
+
         public MyControl()
         {
             InitializeComponent();
         }
+
+
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1300:SpecifyMessageBoxOptions")]
         private void button1_Click(object sender, RoutedEventArgs e)
