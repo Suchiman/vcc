@@ -67,6 +67,9 @@
         <Parent guid="guidVerifyCmdSet" id="cmdidSubMenu"/>
       </Group>
 
+      <Group guid="guidVerifyCmdSet" id="cmdidContextMenuGroup" priority="0x0000">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
 
     </Groups>
 
@@ -94,7 +97,6 @@
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
         <Icon guid="guidImages" id ="bmpPic1"/>
         <CommandFlag>TextChanges</CommandFlag>
-        <CommandFlag>DefaultDisabled</CommandFlag>
         <Strings>
           <ButtonText>Verify Active File</ButtonText>
         </Strings>
@@ -107,6 +109,24 @@
         <CommandFlag>DefaultDisabled</CommandFlag>
         <Strings>
           <CommandName>cmdidVerifyCurrentFunction</CommandName>
+          <ButtonText>Verify Current Function</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVerifyCmdSet" id="cmdidContextVerifyActiveFile" priority="0x0100" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
+        <Icon guid="guidImages" id ="bmpPic1"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Verify Active File</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVerifyCmdSet" id="cmdidContextVerifyCurrentFunction" priority="0x0102" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
+        <Icon guid="guidImages" id ="bmpPic2"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
           <ButtonText>Verify Current Function</ButtonText>
         </Strings>
       </Button>
@@ -138,13 +158,18 @@
     <GuidSymbol name="guidVerifyCmdSet" value="{7c3dd686-d502-4019-8b44-67b2efb94304}">
 
       <IDSymbol name="cmdidVerifyMenu" value="0x1021"/>
+      <IDSymbol name="cmdidSubMenu" value="0x1100"/>
+      
       <IDSymbol name="cmdidMyMenuGroup" value="0x1020" />
+      <IDSymbol name="cmdidContextMenuGroup" value="0x1022" />
+      <IDSymbol name="cmdidSubMenuGroup" value="0x1150"/>
+      
       <IDSymbol name="cmdidVCCOptions" value="0x0100" />
       <IDSymbol name="cmdidVerifyActiveFile" value="0x0102" />
       <IDSymbol name="cmdidVerifyCurrentFunction" value ="0x0104" />
-      
-      <IDSymbol name="cmdidSubMenu" value="0x1100"/>
-      <IDSymbol name="cmdidSubMenuGroup" value="0x1150"/>
+
+      <IDSymbol name="cmdidContextVerifyActiveFile" value="0x0106"/>
+      <IDSymbol name="cmdidContextVerifyCurrentFunction" value ="0x0108"/>
 
     </GuidSymbol>
 
