@@ -331,6 +331,7 @@ module Rules =
     addKwRule "out_param" "writes"
     addKwRule "weak_out_param" "writes"
 
+    addFnRule "emb" ("\\embedding")
     addFnRule "valid_claim" "\\active_claim"
     addFnRule "is_claimable" "\\claimable"
     addFnRule "is_fresh" "\\fresh"
