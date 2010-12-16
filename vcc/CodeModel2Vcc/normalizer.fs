@@ -96,7 +96,10 @@ namespace Microsoft.Research.Vcc
       deepMapExpressionsCtx aux decls
     else decls
 
-  let handleConversions helper = deepMapExpressions (doHandleComparison helper) >> deepMapExpressions doHandleConversions
+  let handleConversions helper = 
+    deepMapExpressions (doHandleComparison helper) >> 
+    deepMapExpressions doHandleConversions >>
+    handlePurePtrEq helper
     
   // ============================================================================================================      
   
