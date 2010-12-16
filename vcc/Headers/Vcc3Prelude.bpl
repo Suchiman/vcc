@@ -709,13 +709,13 @@ axiom (forall S:$state, #r:int, #t:$ctype ::
   $typed(S, $ptr(#t, #r)) && $in_range_phys_ptr(#r) ==> $in_range_phys_ptr(#r + $sizeof(#t) - 1));
 */
 
-/*
+
+// This was often used in invariants. Typed now means thread-local, so it doesn't work in invariants.
 function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) : bool
-  { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_phys_ptr($addr(#p))) }
+  { $is_phys_ptr(#p, #t) }
 
 function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) : bool
-  { $typed2(S, #p, #t) && ($typed2(S, #p, #t) ==> $in_range_spec_ptr($addr(#p))) }
-*/
+  { $is_spec_ptr(#p, #t) }
 
 axiom (forall S:$state, p:$ptr :: {$addr(p), $owner(S, $root(S, p))}
   $good_state(S) ==>
@@ -1224,6 +1224,7 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
      true
   && $mutable(S, o)
   && $heap(S) == $heap(S0)
+  && $owns(S0, o) == $owns(S, o)
   && (forall p:$ptr :: {$root(S, p)}
         ($root(S0, p) != o && $root(S0, p) == $root(S, p)) ||
         ($root(S0, p) == o && ($root(S, p) == p || $owner(S0, p) != o)))
@@ -1244,6 +1245,7 @@ function $is_wrapped_dynamic(S0:$state, S:$state, o:$ptr) : bool
 {
      $is_wrapped(S0, S, o, $owns(S0, o))
   && $heap(S) == $heap(S0)
+  && $owns(S0, o) == $owns(S, o)
   && $f_owner(S) == 
        (lambda r:$ptr :: if $set_in(r, $owns(S0, o)) then o else $f_owner(S0)[r])
 }
@@ -1350,7 +1352,8 @@ procedure $static_wrap_non_owns(o:$ptr, S:$state);
 // ----------------------------------------------------------------------------
 
 function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
-  { (forall f:$field :: {$rdtrig(S2, p, f)}
+  { $owns(S1, p) == $owns(S2, p) &&
+    (forall f:$field :: {$rdtrig(S2, p, f)}
       $is_proper($dot(p, f)) && f != $f_ref_cnt(t) ==> $rd(S1, p, f) == $rd(S2, p, f)) }
 
 function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
