@@ -239,6 +239,8 @@ PushEntryList( PSINGLE_LIST_ENTRY ListHead, PSINGLE_LIST_ENTRY Entry )
     assert(in_domain(ListHead, ListManager));
     assert(ListHead->Next != NULL ==> in_domain(ListHead->Next, ListManager));
 
+    // assert(!set_in(Entry, owns(ListManager)));
+
     expose(ListManager) {
         Entry->Next = ListHead->Next;
 
