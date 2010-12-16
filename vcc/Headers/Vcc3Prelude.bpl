@@ -2422,15 +2422,6 @@ function $ptr_to_i2($ptr) : int;
 function $ptr_to_u1($ptr) : int;
 function $ptr_to_i1($ptr) : int;
 
-axiom ($ptr_to_u8($null) == 0);
-axiom ($ptr_to_i8($null) == 0);
-axiom ($ptr_to_u4($null) == 0);
-axiom ($ptr_to_i4($null) == 0);
-axiom ($ptr_to_u2($null) == 0);
-axiom ($ptr_to_i2($null) == 0);
-axiom ($ptr_to_u1($null) == 0);
-axiom ($ptr_to_i1($null) == 0);
-
 function $u8_to_ptr(x : int) : $ptr;
 function $i8_to_ptr(x : int) : $ptr;
 function $u4_to_ptr(x : int) : $ptr;
@@ -2440,10 +2431,19 @@ function $i2_to_ptr(x : int) : $ptr;
 function $u1_to_ptr(x : int) : $ptr;
 function $i1_to_ptr(x : int) : $ptr;
 
+axiom (forall k:int :: { $u8_to_ptr(k) } $addr($u8_to_ptr(k)) == k);
+axiom (forall k:int :: { $u4_to_ptr(k) } $addr($u4_to_ptr(k)) == k);
+axiom (forall k:int :: { $u2_to_ptr(k) } $addr($u2_to_ptr(k)) == k);
+axiom (forall k:int :: { $u1_to_ptr(k) } $addr($u1_to_ptr(k)) == k);
+
 axiom (forall p:$ptr :: { $ptr_to_u8(p) } $in_range_u8($addr(p)) ==> $ptr_to_u8(p) == $addr(p));
 axiom (forall p:$ptr :: { $ptr_to_i8(p) } $in_range_i8($addr(p)) ==> $ptr_to_i8(p) == $addr(p));
 axiom (forall p:$ptr :: { $ptr_to_u4(p) } $in_range_u4($addr(p)) ==> $ptr_to_u4(p) == $addr(p));
 axiom (forall p:$ptr :: { $ptr_to_i4(p) } $in_range_i4($addr(p)) ==> $ptr_to_i4(p) == $addr(p));
+axiom (forall p:$ptr :: { $ptr_to_u2(p) } $in_range_u2($addr(p)) ==> $ptr_to_u2(p) == $addr(p));
+axiom (forall p:$ptr :: { $ptr_to_i2(p) } $in_range_i2($addr(p)) ==> $ptr_to_i2(p) == $addr(p));
+axiom (forall p:$ptr :: { $ptr_to_u1(p) } $in_range_u1($addr(p)) ==> $ptr_to_u1(p) == $addr(p));
+axiom (forall p:$ptr :: { $ptr_to_i1(p) } $in_range_i1($addr(p)) ==> $ptr_to_i1(p) == $addr(p));
 
 // --------------------------------------------------------------------------------
 // Floating point arithmetic - currently uninterpreted
