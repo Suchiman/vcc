@@ -182,9 +182,9 @@ function $is(p:$ptr, t:$ctype) : bool
 function $spec_ptr_cast(p:$ptr, t:$ctype) : $ptr;
 function $phys_ptr_cast(p:$ptr, t:$ctype) : $ptr;
 
-axiom (forall p:$ptr :: {$spec_ptr_cast(p, $typ(p))}
+axiom (forall p:$ptr :: {$spec_ptr_cast(p, $typ(p))} {$in_range_spec_ptr(p)}
   $in_range_spec_ptr(p) ==> $spec_ptr_cast(p, $typ(p)) == p);
-axiom (forall p:$ptr :: {$phys_ptr_cast(p, $typ(p))}
+axiom (forall p:$ptr :: {$phys_ptr_cast(p, $typ(p))} {$in_range_phys_ptr(p)}
   $in_range_phys_ptr(p) ==> $phys_ptr_cast(p, $typ(p)) == p);
 axiom (forall p:$ptr, t:$ctype :: {$addr($spec_ptr_cast(p, t))}
   $addr($spec_ptr_cast(p, t)) == $addr(p));
@@ -235,7 +235,8 @@ axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
 // PERF 5.7%
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
      ($in_range_spec_ptr(p) || $is_ghost_field(f) ==> $in_range_spec_ptr($dot(p, f)))
-  && ($in_range_phys_ptr(p) && $is_phys_field(f) ==> $in_range_phys_ptr($dot(p, f))));
+  && ($in_range_phys_ptr(p) && $is_phys_field(f) ==> $in_range_phys_ptr($dot(p, f))) 
+  && ($is_proper($dot(p, f)) ==> $non_null(p) ==> $non_null($dot(p, f))));
 
 function {:inline true} $emb1(p:$ptr) : $ptr
   { $base(p) }
@@ -450,7 +451,11 @@ function $idx(p:$ptr, i:int) : $ptr
   }
 
 axiom (forall p:$ptr, i:int :: {$addr($idx(p, i))}
-  $addr($idx(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
+  $is_proper($idx(p, i)) ==>
+    $addr($idx(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
+axiom (forall p:$ptr, i:int :: {$idx(p, i)}
+  $is_proper($idx(p, i)) ==>
+    $non_null(p) ==> $non_null($idx(p, i)));
 
 axiom (forall p:$ptr, i:int :: {$idx(p, i)}
   ($in_range_phys_ptr(p) || $in_range_phys_ptr($base(p)))
