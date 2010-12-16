@@ -145,6 +145,18 @@ namespace Microsoft.Research.Vcc
           else []
         B.Stmt.Assume (attrs, bCall pred [er name; bState])
 
+      let addType t e =
+        if vcc3 then
+          match t with
+            | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [e; toTypeId t]
+            | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [e; toTypeId t]
+            | _ -> e
+        else
+          match t with
+            | C.Type.SpecPtr t
+            | C.Type.PhysPtr t -> bCall "$ptr" [toTypeId t; e]
+            | _ -> e
+      
       let mapEqAxioms t =
         let t1, t2 =
           match t with
@@ -186,8 +198,10 @@ namespace Microsoft.Research.Vcc
         let selZero =
           let zeroVal = 
             match t2 with
+              | C.Ptr _ ->
+                if vcc3 then addType t2 (er "$null")
+                else bInt 0              
               | C.Type.Claim
-              | C.Ptr _
               | C.Type.MathInteger
               | C.Type.Integer _ -> bInt 0
               | C.Type.ObjectT _ -> er "$null"
@@ -289,18 +303,6 @@ namespace Microsoft.Research.Vcc
           | C.Ptr C.Void -> failwith ("void* not supported " + expr.ToString())
           | C.Ptr t -> toTypeId t
           | _ -> failwith ("pointer type expected " + expr.ToString())        
-      
-      let addType t e =
-        if vcc3 then
-          match t with
-            | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [e; toTypeId t]
-            | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [e; toTypeId t]
-            | _ -> e
-        else
-          match t with
-            | C.Type.SpecPtr t
-            | C.Type.PhysPtr t -> bCall "$ptr" [toTypeId t; e]
-            | _ -> e
       
       let stripType t e =
         match t with
