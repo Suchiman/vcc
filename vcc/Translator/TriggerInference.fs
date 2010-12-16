@@ -44,8 +44,9 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
     | B.Expr.ArrayIndex (_, _) -> 3
 
     // list of bad patterns: 
-    | B.Expr.FunctionCall ("$ptr", [_; B.Expr.Ref _]) -> 1 
-    | B.Expr.FunctionCall (("$field_parent_type"|"$field_type"|"$base"|"$is_primitive"|"$is"|"$addr"|"$field"|"$is_null"), _) -> -1 
+    | B.Expr.FunctionCall (("$ptr"|"$phys_ptr_cast"|"$spec_ptr_cast"), [_; B.Expr.Ref _]) -> 1 
+    | B.Expr.FunctionCall (("$field_parent_type"|"$field_type"|"$base"|"$is_primitive"|"$is"|"$addr"|"$field"
+                           |"$is_null"), _) -> -1 
     | B.Expr.FunctionCall (("$ref"|"$base"|"$addr"), [B.Expr.FunctionCall ("$ptr", [_; B.Expr.Ref _])]) -> -1
 
     // all the rest:
@@ -155,6 +156,8 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
         | B.Expr.FunctionCall (id1, e1), B.Expr.FunctionCall (id2, e2) when id1 = id2 -> matchExprs sub e1 e2
         | B.Expr.FunctionCall ("$ptr", [_; p]), e2 ->
           matchExpr sub (p, e2)
+        | B.Expr.FunctionCall (("$phys_ptr_cast"|"$spec_ptr_cast"), [p; _]), e2 ->
+          matchExpr sub (p, e2)
         | B.Expr.Primitive (id1, e1), B.Expr.Primitive (id2, e2) when id1 = id2 -> matchExprs sub e1 e2
         | B.Expr.ArrayIndex (e1, es1), B.Expr.ArrayIndex (e2, es2) -> matchExprs sub (e1 :: es1) (e2 :: es2)
         | B.Expr.ArrayUpdate (e1, es1, ee1), B.Expr.ArrayUpdate (e2, es2, ee2) -> matchExprs sub (ee1 :: e1 :: es1) (ee2 :: e2 :: es2)
@@ -192,15 +195,27 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
       functions.[f.Name] <- f
 
     let visited = gdict()
+
+    let rec booleanTrigger expr =
+      isForbiddenInTrigger expr ||
+        match expr with
+          | B.Expr.FunctionCall (name, _) ->
+            match functions.TryGetValue name with
+              | true, f -> booleanTrigger f.Body
+              | _ -> false
+          | _ -> false
+
     let rec visit expr =
       let rec self (expr:B.Expr) = expr.Map visit
       if visited.ContainsKey expr then
-        match expr with
-          | B.Expr.FunctionCall (name, args) ->
-            match functions.TryGetValue name with
-              | true, f -> Some (self (f.Expand args))
-              | _ -> None
-          | _ -> None
+        if helper.Options.Vcc3 && not (booleanTrigger expr) then None
+        else
+          match expr with
+            | B.Expr.FunctionCall (name, args) ->
+              match functions.TryGetValue name with
+                | true, f -> Some (self (f.Expand args))
+                | _ -> None
+            | _ -> None
       else
         visited.Add (expr, true)
         let res = self expr
