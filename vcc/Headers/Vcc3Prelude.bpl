@@ -657,6 +657,21 @@ function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
       $owner(S, p) == $me()
   }
 
+function {:inline true} $initially_mutable(S:$state, W:$ptrset) : bool
+  {
+    (forall p: $ptr ::
+       { $owner(S, p) } { $closed(S, p) } { $owner(S, $emb0(p)) } { $closed(S, $emb0(p)) }
+       $set_in(p, W) ==> $mutable(S, p))
+  }
+
+function {:inline true} $initially_thread_owned_or_mutable(S:$state, W:$ptrset) : bool
+  {
+    (forall p: $ptr :: 
+       { $owner(S, p) } { $closed(S, p) } { $owner(S, $emb0(p)) } { $closed(S, $emb0(p)) }
+       $set_in(p, W) ==> $thread_owned_or_even_mutable(S, p))
+  }
+
+
 function $in_range_phys_ptr(p:$ptr) : bool;
 function $in_range_spec_ptr(p:$ptr) : bool;
 
