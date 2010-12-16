@@ -325,6 +325,7 @@ axiom (forall t:$ctype :: {$f_root(t)}
     $def_special_field($primitive_emb_type, $f_root(t), t, $fk_allocation_root) &&
     $is_sequential_field($f_root(t))
     );
+
 axiom (forall t:$ctype :: {$f_owns(t)} 
   $is_non_primitive(t) ==>
     $def_special_ghost_field(t, $f_owns(t), ^$#ptrset, $fk_owns));
@@ -484,7 +485,7 @@ function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {
      $is_array(S, p, T, sz)
-  && if $is_primitive(T) then $thread_local_np(S, $emb0(p))
+  && if $is_primitive(T) then $thread_local(S, p)
      else (forall i:int :: {$owner(S, $idx(p, i))} 0 <= i && i < sz ==> $thread_local(S, $idx(p, i)))
 }
 
@@ -557,7 +558,17 @@ axiom (forall T:$ctype, s:int :: {$array(T, s)}
 );
 axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
 
+// the first fields of as_array
 function $array_emb($ctype, int) : $field;
+
+function {:inline true} $as_array_first_index(p:$ptr) : $ptr
+  { $dot(p, $array_emb($element_type($typ(p)), $array_length($typ(p)))) }
+
+axiom (forall p:$ptr, t:$ctype, sz:int :: {$phys_ptr_cast($as_ptr_with_type(p, $array(t, sz)), t)}
+  $phys_ptr_cast($as_ptr_with_type(p, $array(t, sz)), t) == $as_array_first_index(p));
+
+axiom (forall p:$ptr, t:$ctype, sz:int :: {$spec_ptr_cast($as_ptr_with_type(p, $array(t, sz)), t)}
+  $spec_ptr_cast($as_ptr_with_type(p, $array(t, sz)), t) == $as_array_first_index(p));
 
 axiom (forall t:$ctype, sz:int :: {$array_emb(t, sz)} {$array(t, sz)}
   $def_field_family($array(t, sz), $array_emb(t, sz), t) &&
@@ -641,7 +652,7 @@ function {:inline true} $nested(S:$state, p:$ptr) : bool
 function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
   { $owner(S, p) != $me() || ($is_primitive($typ(p)) && $closed(S, p)) }
 
-function {:inline true} $mutable(S:$state, p:$ptr) : bool
+function $mutable(S:$state, p:$ptr) : bool
   {  $is_proper(p) &&
      $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
   }
@@ -1113,14 +1124,14 @@ function {:inline true} $is_allocated0(S0:$state, S:$state, r:$ptr, t:$ctype) : 
   && $timestamp_post_strict(S0, S)
   && $owner(S0, r) != $me()
   && $is_malloc_root(S, r)
+  && $field(r) == $f_root(t)
 }
 
 function {:inline true} $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : bool
 {    $is_allocated0(S0, S, r, t)
-  && 
+  &&
     if $is_primitive(t) then
-      (   $field(r) == $f_root(t)
-       && $mutable(S, $emb0(r))
+      (   $mutable(S, $emb0(r))
        && $timestamp_is_now(S, $emb0(r)))
     else
       (    $extent_mutable(S, r)
@@ -1807,6 +1818,13 @@ function $extent_mutable(S:$state, r:$ptr) : bool
   { $mutable(S, r) && 
     (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $mutable(S, p)) }
   
+axiom (forall S:$state, T:$ctype, sz:int, p:$ptr :: {$extent_mutable(S, $as_ptr_with_type(p, $array(T, sz)))}
+  $extent_mutable(S, $as_ptr_with_type(p, $array(T, sz))) ==> $is_mutable_array(S, $as_array_first_index(p), T, sz));
+
+axiom (forall S:$state, T:$ctype, sz:int, p:$ptr :: {$mutable(S, $as_ptr_with_type(p, $array(T, sz)))}
+  $in_range_phys_ptr(p) ==>
+  $is_primitive(T) && $mutable(S, $as_ptr_with_type(p, $array(T, sz))) ==> $is_mutable_array(S, $as_array_first_index(p), T, sz));
+
 function $extent_is_fresh(S:$state, r:$ptr) : bool
   { $timestamp_is_now(S, r) &&
     (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $timestamp_is_now(S, p)) }
