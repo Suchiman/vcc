@@ -605,6 +605,34 @@ namespace Microsoft.Research.Vcc
         | _ -> None
 
     // ============================================================================================================
+
+    let pullOutOutpars =
+      let outparAssignments = ref []
+      let skipNextNode = ref false
+
+      let pullOutOutpars' self = function
+        | (expr:Expr) when !skipNextNode -> skipNextNode := false; None
+        | expr when expr.Type = Type.Bool ->
+          skipNextNode := true
+          let expr' = self expr
+          let result = Some(List.fold mkAnd expr' !outparAssignments)
+          outparAssignments := []
+          result
+        | Expr.Block(ec, (Expr.Macro(_, "pure_outpar", _) :: _ as exprs), None) ->
+          let rec splitList acc = function
+            | [] -> die()
+            | [x] -> x, List.rev acc
+            | x::xs -> splitList (x::acc) xs
+          let call, eqs = splitList [] exprs
+          let call' = self call
+          outparAssignments := !outparAssignments @ eqs
+          Some (call')
+
+        | _ -> None
+
+      pullOutOutpars'
+        
+    // ============================================================================================================
       
     let handleOutParameters self =
       let splitByOut vs = 
@@ -638,9 +666,34 @@ namespace Microsoft.Research.Vcc
               Some(Expr.MkBlock(decls @ ( VarWrite(voidBogusEC(), vs @ outArgs, Call(c, fn, targs, nonOutArgs')) :: assigns)))
         | _ -> die()
 
+      let splitByOutForPure fn =          
+        let rec splitByOut' nonOutAcc eqsAcc pars = function
+          | [] -> 
+            if not (List.isEmpty pars) then die()
+            List.rev nonOutAcc, List.rev eqsAcc
+          | Macro(_, "out", [arg]) :: exprs -> 
+            if List.isEmpty pars then die()
+            let eq = [ Expr.Ref(arg.Common, pars.Head); arg ]
+            splitByOut' nonOutAcc (eq::eqsAcc) pars.Tail exprs
+          | e :: exprs -> splitByOut' (e::nonOutAcc) eqsAcc pars.Tail exprs
+        splitByOut' [] [] fn.Parameters
+
+      let processPureCall = function
+        | Call(c, fn, targs, args) ->
+          match splitByOutForPure fn args with
+           | [], _-> None
+           | nonOutArgs, eqs ->
+            let nonOutArgs' = List.map self nonOutArgs
+            let call = Call(c, fn, targs, nonOutArgs')
+            let eqs' = List.map (fun args -> Expr.Macro({c with Type = Type.Bool}, "pure_outpar", call :: args)) eqs
+            Some(Expr.MkBlock(eqs' @ [call]))
+        | _ -> die()
+
       function
-        | Stmt(_, (Call(_,_,_, _) as c)) -> processCall [] c
+        | Stmt(_, (Call(_,_,_,_) as c)) -> processCall [] c
         | VarWrite(_, vs, (Call(_, _, _, _) as c)) -> processCall vs c
+        | Call (_, {Name = "_vcc_from_bytes"}, _, _) -> None // do not process those
+        | Call _ as c -> processPureCall c
         | _ -> None
     
     // ============================================================================================================    
@@ -789,9 +842,10 @@ namespace Microsoft.Research.Vcc
                          IsProcessed = true;
                          UniqueId = CAST.unique() } : Function
                 blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
-                let call = Expr.Call(ec, fn, [], List.map mkRef localsThatGoIn)
-                let result = if localsThatGoOut.Length = 0 then call else Expr.VarWrite(ec, localsThatGoOut, call)
-                Some(result)
+                let inArgs = List.map mkRef localsThatGoIn 
+                let outArgs = List.map (fun (v:Variable) -> Expr.Macro({bogusEC with Type = v.Type}, "out", [mkRef v])) localsThatGoOut
+                let call = Expr.Call(ec, fn, [], inArgs @ outArgs)
+                Some(Expr.Stmt(ec, call))
         | _ as e -> None  
     
       for d in decls do
@@ -837,6 +891,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("core-parm-writes", Helper.Decl removeWritesToParameters)
     helper.AddTransformer ("core-pull-out-calls", Helper.ExprCtx pullOutCalls)
     helper.AddTransformer ("core-out-parameters", Helper.Expr handleOutParameters)
+    helper.AddTransformer ("core-out-parameters-pull-out-from-pure-call",  Helper.Expr pullOutOutpars)
     helper.AddTransformer ("core-map-eq", Helper.Expr handleMapEquality)
     helper.AddTransformer ("core-map-init", Helper.Expr handleMapInit)
     helper.AddTransformer ("core-linearize", Helper.Decl (linearizeDecls helper))

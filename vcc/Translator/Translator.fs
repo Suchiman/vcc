@@ -694,6 +694,12 @@ namespace Microsoft.Research.Vcc
           | "is_atomic_obj", [e] ->
             let e = self e
             bMultiOr (List.map (bEq e) env.AtomicObjects)
+          | "pure_outpar", [ C.Expr.Call(_, fn, targs, args); C.Expr.Ref(_, v); arg] ->
+            let args =  List.map ctx.ToTypeIdArraysAsPtrs targs @ convertArgs fn (selfs args)
+            let args =
+              if fn.IsStateless then args
+              else bState :: args
+            bEq (addType v.Type (bCall ("F#" + fn.Name + "#OP#" + v.Name) args)) (self arg)
           | "stackframe", [] -> er "#stackframe"
           | "map_eq", [e1; e2] -> bCall ("$eq." + (ctx.TypeIdToName (toTypeId e1.Type))) [self e1; self e2]
           | "float_literal", [C.Expr.UserData(_, f)] ->
@@ -1589,7 +1595,7 @@ namespace Microsoft.Research.Vcc
           if header.IsPure && header.RetType <> C.Void then 
             let parms = 
               (if header.IsStateless then [] else [bState]) @ [for tv in header.TypeParameters -> typeVarRef tv] 
-                                                            @ [for v in header.Parameters -> varRef v]
+                                                            @ [for v in header.InParameters -> varRef v]
             let tok = TransUtil.afmtt header.Token 8022 "the pure function '{0}' is underspecified; please supply ensures(result == ...) contract matching the implementation" [header.Name]
             [B.FreeEnsures (bEq (er "$result") (bCall ("F#" + header.Name) parms))]
           else []
@@ -2258,15 +2264,25 @@ namespace Microsoft.Research.Vcc
       let trPureFunction (h:C.Function) =
         if not h.IsPure || h.RetType = C.Void then []
         else
+          let parameters =  List.map trTypeVar h.TypeParameters @ List.map trVar h.InParameters
+          let qargs = (if h.IsStateless then [] else [("#s", tpState)]) @ parameters
+          let fForPureContext (t, suffix) =
+            let suffix = if suffix = "" then "" else "#" + suffix
+            let fname = "F#" + h.Name + suffix
+            let retType = trType t
+            let fappl = bCall fname (List.map (fun ((vi,vt):B.Var) -> er vi) qargs)
+            let fdecl = B.Decl.Function (retType, [], fname, qargs, None)
+            (fappl, fdecl)
           let env = { initialEnv with Writes = h.Writes }
           let te e = trExpr env e
           // it is unsound to include these in the axiom
           let tens = function
             | C.Macro (_, ("in_range_phys_ptr"|"in_range_spec_ptr"), [_]) -> bTrue
             | e -> trExpr env e
+          let ensures = bMultiAnd (List.map (stripFreeFromEnsures >> tens) h.Ensures)
+          let requires = bMultiAnd (List.map te h.Requires)
           let fname = "F#" + h.Name
           let retType = trType h.RetType
-          let parameters =  List.map trTypeVar h.TypeParameters @ List.map trVar h.Parameters
           (*
           match h.Ensures with
             // note that it is in general unsafe to strip casts from "result", e.g. this:
@@ -2277,18 +2293,17 @@ namespace Microsoft.Research.Vcc
             | lst ->
               helper.Warning (h.Token, 0, "wrong " + String.concat "; " (lst |> List.map (fun e -> e.ToString())))
             *)  
-          let ensures = bMultiAnd (List.map (stripFreeFromEnsures >> tens) h.Ensures)
-          let requires = bMultiAnd (List.map te h.Requires)
-          let qargs = (if h.IsStateless then [] else [("#s", tpState)]) @ parameters
-          let fappl = bCall fname (List.map (fun ((vi,vt):B.Var) -> er vi) qargs)
-          let subst = bSubst [("$result", fappl); ("$s", er "#s")]
+          let (fappls, fdecls) = (h.RetType, "") :: List.map (fun (v:C.Variable) -> (v.Type, "OP#" + v.Name)) h.OutParameters |> List.map fForPureContext |> List.unzip
+
+          let fappl  = fappls.Head
+          let subst = bSubst (("$s", er "#s") :: List.zip ("$result" :: List.map (fun (v:C.Variable) -> "OP#" + v.Name) h.OutParameters)  fappls )
           let defBody = subst (bImpl requires ensures)
           if h.IsStateless && bContains "#s" defBody then
             helper.Error (h.Token, 9650, "the specification refers to memory, but function is missing a reads clause", None)
           let defAxiom =
             if (defBody = bTrue) then [] 
             else if qargs = [] then [B.Decl.Axiom defBody]
-            else [B.Decl.Axiom (B.Expr.Forall(Token.NoToken, qargs, [[fappl]], weight "eqdef-userfun", defBody))]
+            else [B.Decl.Axiom (B.Expr.Forall(Token.NoToken, qargs, List.map (fun x -> [x]) fappls, weight "eqdef-userfun", defBody))]
           let fnconst = "cf#" + h.Name
           let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$pure_function" }
           let frameAxiom =
@@ -2324,7 +2339,7 @@ namespace Microsoft.Research.Vcc
           let typeInfo =
             let arg i t = B.Decl.Axiom (bCall "$function_arg_type" [er fnconst; bInt i; toTypeId t])
             arg 0 h.RetType :: (h.Parameters |> List.mapi (fun i v -> arg (i + 1) v.Type))
-          [B.Decl.Function (retType, [], fname, qargs, None); defconst] @ defAxiom @ frameAxiom @ typeInfo
+          fdecls @ [defconst] @ defAxiom @ frameAxiom @ typeInfo
 
       let sanityChecks env (h:C.Function) =
         // we disable that by default for now, it seems to be too much of a hassle

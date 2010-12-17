@@ -996,7 +996,7 @@ namespace Microsoft.Research.Vcc
           | Dot(_, _, f) when triggerOnlyOnVolatileFields && not f.IsVolatile -> false
           | Dot(_, ptr, _) -> isPhysicalLocation' ptr
           | Index(_, ptr, _) -> isPhysicalLocation' ptr
-          | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> false        
+          | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter|QuantBound}) -> false        
           | Ref(_, {Type = Type.Ref td }) when hasCustomAttr "record" td.CustomAttr -> false
           | Ref(_, {Name = name}) when name.StartsWith("__temp") -> false // introduced during IExpression projection; unclear status
           | Deref(_, expr) -> 
