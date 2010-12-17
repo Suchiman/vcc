@@ -107,6 +107,9 @@
     <ClInclude Include="vccp.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Vcc3Prelude.bpl">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="VccPrelude.bpl">
       <DeploymentContent>true</DeploymentContent>
     </None>
