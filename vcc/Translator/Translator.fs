@@ -2358,12 +2358,13 @@ namespace Microsoft.Research.Vcc
       let hasStartHere (stmt:B.Stmt) =
         let found = ref false
         let repl = function
-          | B.Stmt.Assume (_, B.FunctionCall ("$start_here", [])) ->
+          | B.Stmt.Assume (_, (B.FunctionCall ("$start_here", []) as call)) ->
             found := true
-            None          
+            Some (B.Stmt.Assume ([B.ExprAttr ("start_checking_here", bTrue)], call))
           | _ -> None
-        B.mapStmt repl stmt |> ignore
-        !found
+        let newBody = B.mapStmt repl stmt
+        if !found then Some newBody
+        else None        
       
       let trTop decl =
         try 
@@ -2452,8 +2453,11 @@ namespace Microsoft.Research.Vcc
                 let proc = { proc with Body = Option.map doBody theBody }
                 let proc =
                   match proc.Body with
-                    | Some b when hasStartHere b ->
-                      { proc with Attributes = B.Attribute.ExprAttr ("has_start_here", bTrue) :: proc.Attributes }
+                    | Some b ->
+                      match hasStartHere b with
+                        | Some newBody ->
+                          { proc with Body = Some newBody; Attributes = B.Attribute.ExprAttr ("selective_checking", bTrue) :: proc.Attributes }
+                        | None -> proc
                     | _ -> proc
                 trPureFunction h @ [B.Decl.Proc proc]
             | C.Top.TypeDecl td ->

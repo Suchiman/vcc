@@ -279,18 +279,6 @@ namespace Microsoft.Research.Vcc
         let vars = unVars impl.InParams @ unVars impl.OutParams @ unVars impl.LocVars
         let res = ref false        
         
-        let rec handleStartHere (block:Block) =
-          let found = ref false
-          let doCmd = function 
-            | { Condition = FunctionCall ("$start_here", []) } as c -> found := true; c
-            | c when not !found -> { c with IsAssert = false }
-            | c -> c
-          block.Cmds <- block.Cmds |> List.map doCmd
-          if not !found then
-            List.iter handleStartHere block.Exits            
-        if impl.Proc.CheckBooleanAttribute ("has_start_here", res) && !res then
-          handleStartHere blocks.Head
-          
         let proc =
           { Name = impl.Name
             Blocks = blocks
