@@ -134,6 +134,9 @@ namespace Microsoft.Research.Vcc
         | :? Boogie.NAryExpr as nary ->
           let args = [for e in nary.Args -> unparse e]
           match nary.Fun with
+            | :? Boogie.TypeCoercion ->
+              if args.Length <> 1 then failwith "wrong coercion"
+              args.Head
             | :? Boogie.FunctionCall as fcall -> FunctionCall (fcall.FunctionName, args)
             | :? Boogie.BinaryOperator as binop -> Primitive (binop.FunctionName, args)
             | :? Boogie.UnaryOperator as unop -> Primitive (unop.FunctionName, args)
@@ -143,7 +146,7 @@ namespace Microsoft.Research.Vcc
               ArrayUpdate (args.Head, List.rev ri.Tail, ri.Head)
             | :? Boogie.IfThenElse ->
               Ite (args.[0], args.[1], args.[2])
-            | _ -> failwith ("wrong nary " + nary.ToString())
+            | _ -> failwith ("wrong nary " + nary.ToString() + " / " + nary.Fun.GetType().ToString())
         | :? Boogie.BvConcatExpr as bvConcat ->
           match [for e in bvConcat.Arguments -> unparse(e :?> Microsoft.Boogie.Expr)] with
             | [arg1; arg2] -> BvConcat(arg1, arg2)
