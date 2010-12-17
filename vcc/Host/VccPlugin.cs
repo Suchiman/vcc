@@ -189,12 +189,6 @@ namespace Microsoft.Research.Vcc
         parent.swVcOpt.Start();
         if (vcopt != null) {
           impl = vcopt.RoundTrip(impl);
-        } else if (parent.plugin == null && impl.Proc.CheckBooleanAttribute("has_start_here", ref hasStartHere) && hasStartHere) {
-          if (dummyOpt == null) {
-            dummyOpt = new VcOpt.DummyOpt(currentBoogie, env, Microsoft.FSharp.Collections.ListModule.OfSeq(parent.options.VcOpt));
-            dummyOpt.RemoveExpansionAxioms();
-          }
-          impl = dummyOpt.RoundTrip(impl);
         }
       } finally {
         parent.swVcOpt.Stop();
