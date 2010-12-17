@@ -24,7 +24,6 @@ namespace Microsoft.Research.Vcc
     bool errorMode;
     int modelCount;
     VcOpt.Optimizer vcopt;
-    VcOpt.DummyOpt dummyOpt;
     readonly List<string> options = new List<string>();
     readonly string[] standardBoogieOptions = new[] { 
       // report up to 10 errors
@@ -181,10 +180,9 @@ namespace Microsoft.Research.Vcc
           parent.swBoogie.Stop();
         }
       }
-
+       
       var reporter = new ErrorReporter(parent.options, impl.Proc.Name, start, VccCommandLineHost.ErrorHandler);
 
-      bool hasStartHere = false;
       try {
         parent.swVcOpt.Start();
         if (vcopt != null) {
@@ -304,7 +302,6 @@ namespace Microsoft.Research.Vcc
             parent.swVcOpt.Stop();
           }
         }
-        dummyOpt = null;
       }
     }
   }
