@@ -2424,8 +2424,8 @@ namespace Microsoft.Research.Vcc
                           | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent"), args) when vcc3 ->
                             let args = if args.Length = 1 then bState :: args else args
                             bCall "$extent_mutable" args
-                          | B.Expr.FunctionCall ("$span", args) when vcc3 ->
-                            bCall "$mutable" args
+                          | B.Expr.FunctionCall ("$span", [o]) when vcc3 ->
+                            bCall "$mutable" [bState; o]
                           | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent" | "$span"), args) ->
                             if vcc3 then bCall "$initially_mutable" [bState; e']
                             else mut (Some (List.head (List.rev args))) "$mutable"

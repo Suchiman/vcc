@@ -1770,6 +1770,12 @@ function {:inline true} $inv_is_approved_by_ptr(S1:$state, S2:$state, this:$ptr,
   ($is_threadtype($typ(approver)) && $read_vol_version(S1, this) != $read_vol_version(S2, this) )
 }
 
+// poor-man's version of approvals (used in some testcases)
+function $depends(S1:$state, S2:$state, dependant:$ptr, this:$ptr) : bool
+  { $spans_the_same(S1, S2, this, $typ(this)) || 
+    $inv2_when_closed(S1, S2, dependant, $typ(dependant)) ||
+    $is_threadtype($typ(dependant)) }
+
 function {:inline true} $inv_is_approved_by(S1:$state, S2:$state, this:$ptr, approver:$field, subject:$field) returns(bool)
 {
   $inv_is_approved_by_ptr(S1, S2, this, $int_to_ptr($rd(S1, this, approver)), subject)
@@ -1815,7 +1821,7 @@ const $full_extent_state : $state;
 function $full_extent(r:$ptr) : $ptrset
   { (lambda p:$ptr :: $is_proper(p) && $composite_extent($full_extent_state, r, $typ(r))[$emb0(p)]) }
 
-function $span(S:$state, o:$ptr) : $ptrset
+function $span(o:$ptr) : $ptrset
   { (lambda p:$ptr :: $is_proper(p) && $emb0(p) == o) }
 function $first_option_typed(S:$state, #p:$ptr) : bool;
 
