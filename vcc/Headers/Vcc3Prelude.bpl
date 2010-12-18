@@ -1140,7 +1140,7 @@ function {:inline true} $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : b
        && $timestamp_is_now(S, $emb0(r)))
     else
       (    $extent_mutable(S, r)
-        && $extent_is_fresh(S, r)
+        && $extent_is_fresh(S0, S, r)
         && $first_option_typed(S, r))
 }
 
@@ -1839,7 +1839,7 @@ axiom (forall S:$state, T:$ctype, sz:int, p:$ptr :: {$mutable(S, $as_ptr_with_ty
   $in_range_phys_ptr(p) ==>
   $is_primitive(T) && $mutable(S, $as_ptr_with_type(p, $array(T, sz))) ==> $is_mutable_array(S, $as_array_first_index(p), T, sz));
 
-function $extent_is_fresh(S:$state, r:$ptr) : bool
+function $extent_is_fresh(S0:$state, S:$state, r:$ptr) : bool
   { $timestamp_is_now(S, r) &&
     (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $timestamp_is_now(S, p)) }
 
@@ -2073,11 +2073,11 @@ function $get_fnptr_ref(no:int) : $base;
 function $get_fnptr_inv(rf:$base) : int;
 axiom (forall no:int :: $get_fnptr_inv($get_fnptr_ref(no)) == no);
 
-// TODO: this is unsound.
-axiom (forall S:$state, no:int, t:$ctype :: 
-  {$owner(S, $get_fnptr(no, t))} {$closed(S, $get_fnptr(no, t))}
-  $is_fnptr_type(t) &&
-  $good_state(S) ==> $mutable(S, $get_fnptr(no, t)));
+function $valid_fnptr($ptr) : bool;
+
+axiom (forall no:int, t:$ctype :: {$get_fnptr(no, t)}
+  $is_fnptr_type(t) ==> 
+    $in_range_phys_ptr($get_fnptr(no, t)) && $valid_fnptr($get_fnptr(no, t)));
 
 // --------------------------------------------------------------------------------
 // Arithmetic

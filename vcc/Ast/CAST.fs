@@ -298,7 +298,7 @@ module Microsoft.Research.Vcc.CAST
         | Type.Ref { Kind = (Struct|Union) } -> true
         | Volatile(t)
         | Array (t, _) -> t.IsComposite
-
+    
     member this._IsInteger =
       match this with 
       | Integer _ -> true
@@ -1291,6 +1291,12 @@ module Microsoft.Research.Vcc.CAST
     | Ptr (Type.Ref { Kind = FunctDecl f }) -> Some f
     | _ -> None
   
+  type Type with
+    member this.IsFunctionPtr =
+      match this with
+        | FunctionPtr _ -> true
+        | _ -> false
+
   type [<ReferenceEquality>] Top =
     | Global of Variable * Expr option
     | TypeDecl of TypeDecl
