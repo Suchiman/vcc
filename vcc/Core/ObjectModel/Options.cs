@@ -197,6 +197,8 @@ namespace Microsoft.Research.Vcc
           if (vcc3 != null) {
             this.options.Vcc3 = vcc3.Value;
             this.options.PreludePath = "Vcc3Prelude.bpl";
+            this.options.InferTriggers = true;
+            this.options.Z3Options.Add("CASE_SPLIT=5");
             return true;
           }
           return false;
