@@ -59,6 +59,7 @@ vcc/Test/testsuite/fix
 vcc/Test/testsuite/t3
 vcc/Test/testsuite/tmp/
 vcc/Test/testsuite/todo3/
+vcc/Test/testsuite/later3/
 vcc/Test/testsuite/ts_out.txt
 vcc/Test/testsuite/vcopt-bug.bpl
 vcc/Tools/*/*.suo
