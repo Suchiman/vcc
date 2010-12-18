@@ -516,6 +516,8 @@ namespace Microsoft.Research.Vcc
           | in_range, args when in_range.StartsWith ("in_range") -> bCall ("$" + in_range) (selfs args)
           | ("unchecked_sbits"|"unchecked_ubits"), args ->
             bCall ("$" + n) (selfs args)
+          | "_vcc_typed2", [_; a] when vcc3 && a.Type.IsFunctionPtr ->
+            bCall "$valid_fnptr" [self a]
           | unchecked, args when unchecked.StartsWith ("unchecked_") -> bCall "$unchecked" (er ("^^" + unchecked.Substring (unchecked.IndexOf '_' + 1)) :: selfs args)
           | ("map_get"|"map_get_trig"), [a; b] ->
             match a.Type with
