@@ -101,6 +101,16 @@
           <ButtonText>Verify Active File</ButtonText>
         </Strings>
       </Button>
+
+      <Button guid="guidVerifyCmdSet" id="cmdidCheckAdmissibilityOfCurrentStruct" priority="0x0103" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup"/>
+        <Icon guid="guidImages" id ="bmpPicArrows"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>DefaultDisabled</CommandFlag>
+        <Strings>
+          <ButtonText>Check Admissibility of Current Struct</ButtonText>
+        </Strings>
+      </Button>
       
       <Button guid ="guidVerifyCmdSet" id ="cmdidVerifyCurrentFunction" priority ="0x0104" type ="Button">
         <Parent guid ="guidVerifyCmdSet" id ="cmdidMyMenuGroup"/>
@@ -108,7 +118,6 @@
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>DefaultDisabled</CommandFlag>
         <Strings>
-          <CommandName>cmdidVerifyCurrentFunction</CommandName>
           <ButtonText>Verify Current Function</ButtonText>
         </Strings>
       </Button>
@@ -131,6 +140,18 @@
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Verify Active File</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVerifyCmdSet" id="cmdidContextCheckAdmissibilityOfCurrentStruct" priority="0x0101" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
+        <Icon guid="guidImages" id ="bmpPicArrows"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>DefaultDisabled</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Check Admissibility of Current Struct</ButtonText>
         </Strings>
       </Button>
 
@@ -190,10 +211,12 @@
       
       <IDSymbol name="cmdidVCCOptions" value="0x0100" />
       <IDSymbol name="cmdidVerifyActiveFile" value="0x0102" />
+      <IDSymbol name="cmdidCheckAdmissibilityOfCurrentStruct" value="0x0103"/>
       <IDSymbol name="cmdidVerifyCurrentFunction" value ="0x0104" />
       <IDSymbol name="cmdidCancel" value ="0x0105" />
 
       <IDSymbol name="cmdidContextVerifyActiveFile" value="0x0106"/>
+      <IDSymbol name="cmdidContextCheckAdmissibilityOfCurrentStruct" value="0x0107"/>
       <IDSymbol name="cmdidContextVerifyCurrentFunction" value ="0x0108"/>
       <IDSymbol name="cmdidContextCancel" value ="0x0110"/>
 

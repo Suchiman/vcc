@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
-using System.Windows.Forms;
 using Microsoft.VisualStudio;
 
 namespace MicrosoftResearch.VSPackage
@@ -75,33 +74,25 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         private void VerifyActiveFile(object sender, EventArgs e)
         {
-            if (!VSIntegration.ProjectSaved())
-            {
-                DialogResult dialogResult =
-                    MessageBox.Show("There are unsaved documents. Would you like to save all documents before proceding?",
-                                        "Unsaved Items",
-                                        MessageBoxButtons.YesNoCancel,
-                                        MessageBoxIcon.Question,
-                                        MessageBoxDefaultButton.Button3);
-
-                switch (dialogResult)
-                {
-                    case DialogResult.Cancel:
-                        return;
-                    case DialogResult.Yes:
-                        VSIntegration.SaveAll();
-                        break;
-                    case DialogResult.No:
-                    default:
-                        break;
-                }
-
-            }
+            VSIntegration.DocumentsSavedCheck();
             
             VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
             if (options != null)
             {
                 VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, options);
+            }
+        }
+
+        private void CheckAdmissiblityOfStruct(object sender, EventArgs e)
+        {
+            VSIntegration.DocumentsSavedCheck();
+            
+            VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
+            if (options != null)
+            {
+                VCCLauncher.VerifyFunction( VSIntegration.ActiveFileFullName,
+                                            VSIntegration.CurrentStructName,
+                                            options);
             }
         }
 
@@ -112,7 +103,9 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         private void VerifyCurrentFunction(object sender, EventArgs e)
         {
-            VccOptionPage options = this.GetAutomationObject("VCC.General") as VccOptionPage;
+            VSIntegration.DocumentsSavedCheck();
+                        
+            VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
             if (options != null)
             {
                 VCCLauncher.VerifyFunction( VSIntegration.ActiveFileFullName,
@@ -201,6 +194,32 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        void CheckAdmissiblityOfStruct_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                if (VSIntegration.CurrentStructName != string.Empty)
+                {
+                    //// Name of current struct is known.
+                    ((OleMenuCommand)sender).Text = string.Format("Check Admissibility of Struct '{0}'", VSIntegration.CurrentStructName);
+                    if (VCCLauncher.VCCRunning())
+                    {
+                        ((OleMenuCommand)sender).Enabled = false;
+                    }
+                    else
+                    {
+                        ((OleMenuCommand)sender).Enabled = true;
+                    }
+                }
+                else
+                {
+                    //// There is no current function.
+                    ((OleMenuCommand)sender).Text = "Check Admissibility of Current Struct";
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+            }
+        }
+
         void Cancel_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
@@ -282,6 +301,44 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        void ContextCheckAdmissibilityOfStruct_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                if (VSIntegration.CurrentStructName != string.Empty)
+                {
+                    //// Name of current struct is known.
+                    ((OleMenuCommand)sender).Text = string.Format("Check Admissibility of Struct '{0}'", VSIntegration.CurrentStructName);
+                    if (VCCLauncher.VCCRunning())
+                    {
+                        ((OleMenuCommand)sender).Enabled = false;
+                    }
+                    else
+                    {
+                        ((OleMenuCommand)sender).Enabled = true;
+                    }
+                }
+                else
+                {
+                    //// There is no current struct.
+                    ((OleMenuCommand)sender).Text = "Check Admissibility of Current Struct";
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+
+                if (VSIntegration.IsCodeFile)
+                {
+                    //// active document is in C or C++ => show entry
+                    ((MenuCommand)sender).Visible = true;
+
+                }
+                else
+                {
+                    //// there is no active document or it is not in C or C++ => hide entry
+                    ((MenuCommand)sender).Visible = false;
+                }
+            }
+        }
+
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -314,6 +371,12 @@ namespace MicrosoftResearch.VSPackage
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
+                //// Check Admissibility of struct
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCheckAdmissibilityOfCurrentStruct);
+                OleMenuItem = new OleMenuCommand(CheckAdmissiblityOfStruct, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(CheckAdmissiblityOfStruct_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
                 //// Verify Function
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyCurrentFunction);
                 OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
@@ -330,6 +393,12 @@ namespace MicrosoftResearch.VSPackage
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
                 OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += new EventHandler(ContextVerifyFile_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
+                //// Check Admissibility of struct (Context Menu)
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCheckAdmissibilityOfCurrentStruct);
+                OleMenuItem = new OleMenuCommand(CheckAdmissiblityOfStruct, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(ContextCheckAdmissibilityOfStruct_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
                 //// Verify Function (Context Menu)
@@ -352,6 +421,11 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        /// <summary>
+        ///     is called when VS closes. Overridden to cancel VCC, if it's still running.
+        /// </summary>
+        /// <param name="canClose"></param>
+        /// <returns></returns>
         protected override int QueryClose(out bool canClose)
         {
             VCCLauncher.Cancel();
