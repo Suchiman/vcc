@@ -6,6 +6,7 @@ using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
 using System.Windows.Forms;
+using Microsoft.VisualStudio;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -77,7 +78,7 @@ namespace MicrosoftResearch.VSPackage
             if (!VSIntegration.ProjectSaved())
             {
                 DialogResult dialogResult =
-                    MessageBox.Show (   "There are unsaved documents. Would you like to save all documents before proceding?",
+                    MessageBox.Show("There are unsaved documents. Would you like to save all documents before proceding?",
                                         "Unsaved Items",
                                         MessageBoxButtons.YesNoCancel,
                                         MessageBoxIcon.Question,
@@ -349,6 +350,13 @@ namespace MicrosoftResearch.VSPackage
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyMenu_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
             }
+        }
+
+        protected override int QueryClose(out bool canClose)
+        {
+            VCCLauncher.Cancel();
+            canClose = true;
+            return VSConstants.S_OK;
         }
     }
 }
