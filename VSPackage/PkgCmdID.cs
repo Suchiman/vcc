@@ -16,5 +16,6 @@ namespace MicrosoftResearch.VSPackage
 
         public const uint cmdidVerifyMenu =                     0x1021;
 
+        public const uint cmdidContextMenuGroup =               0x1022;
     };
 }

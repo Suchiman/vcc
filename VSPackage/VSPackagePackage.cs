@@ -180,7 +180,7 @@ namespace MicrosoftResearch.VSPackage
         {
             if (sender != null)
             {
-                if (VCCLauncher.VCCRunning())
+                if (VCCLauncher.VCCRunning() && VSIntegration.IsCodeFile)
                 {
                     ((OleMenuCommand)sender).Visible = true;
                 }
@@ -190,6 +190,73 @@ namespace MicrosoftResearch.VSPackage
                 }
             }
         }
+
+        void ContextVerifyFunction_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                if (VSIntegration.CurrentFunctionName != string.Empty)
+                {
+                    //// Name of current function is known.
+                    ((OleMenuCommand)sender).Text = string.Format("Verify Function '{0}'", VSIntegration.CurrentFunctionName);
+                    if (VCCLauncher.VCCRunning())
+                    {
+                        ((OleMenuCommand)sender).Enabled = false;
+                    }
+                    else
+                    {
+                        ((OleMenuCommand)sender).Enabled = true;
+                    }
+                }
+                else
+                {
+                    //// There is no current function.
+                    ((OleMenuCommand)sender).Text = "Verify Current Function";
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+
+                if (VSIntegration.IsCodeFile)
+                {
+                    //// active document is in C or C++ => show entry
+                    ((MenuCommand)sender).Visible = true;
+
+                }
+                else
+                {
+                    //// there is no active document or it is not in C or C++ => hide entry
+                    ((MenuCommand)sender).Visible = false;
+                }
+            }
+
+        }
+
+        void ContextVerifyFile_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.ActiveFileName);
+                if (VCCLauncher.VCCRunning())
+                {
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+                else
+                {
+                    ((OleMenuCommand)sender).Enabled = true;
+                }
+
+                if (VSIntegration.IsCodeFile)
+                {
+                    //// active document is in C or C++ => show entry
+                    ((OleMenuCommand)sender).Visible = true;
+                }
+                else
+                {
+                    //// there is no active document or it is not in C or C++ => hide entry
+                    ((OleMenuCommand)sender).Visible = false;
+                }
+            }
+        }
+
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -237,13 +304,13 @@ namespace MicrosoftResearch.VSPackage
                 //// Verify File (Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
                 OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(ContextVerifyFile_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
                 //// Verify Function (Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyCurrentFunction);
                 OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(ContextVerifyFunction_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
                 //// Cancel (Context Menu)
