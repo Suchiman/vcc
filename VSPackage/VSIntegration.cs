@@ -1,35 +1,61 @@
 ﻿using System;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
-using System.Windows.Forms;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace MicrosoftResearch.VSPackage
 {
-    static class VSIntegration
+    /// <summary>
+    ///     This class handles all Interaction with Visual Studio
+    /// </summary>
+    internal static class VSIntegration
     {
         private static Lazy<DTE> _dte = new Lazy<DTE>(() => { return (DTE)Package.GetGlobalService(typeof(DTE)); });
         
         /// <summary>
         ///     Returns an instance of the toplevel object for interaction with Visual Studio
         /// </summary>
-        public static DTE dte
+        private static DTE dte
         {
             get { return _dte.Value; }
+        }
+
+        private static Lazy<IVsOutputWindowPane> _pane = new Lazy<IVsOutputWindowPane>(() =>
+        {
+            IVsOutputWindow outputwindow = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
+            Guid guidVerificationPane = new Guid("{1EE5916F-A3C7-403C-89D8-58C61285688F}");
+            IVsOutputWindowPane result;
+
+            outputwindow.CreatePane(ref guidVerificationPane, "Verification", 1, 1);
+            outputwindow.GetPane(ref guidVerificationPane, out result);
+            return result;
+        }
+        );
+
+        /// <summary>
+        ///     This object represents the Verification Outputpane.
+        /// </summary>
+        private static IVsOutputWindowPane verificationOutputpane
+        {
+            get { return _pane.Value; }
         }
 
         /// <summary>
         ///     Returns the name of the active document with path
         /// </summary>
         /// <returns>the name of the active document with path</returns>
-        public static string GetActiveFileFullName()
+        internal static string ActiveFileFullName 
         {
-            if (dte.ActiveDocument != null)
+            get
             {
-                return dte.ActiveDocument.FullName;
-            }
-            else
-            {
-                return String.Empty;
+                if (dte.ActiveDocument != null)
+                {
+                    return dte.ActiveDocument.FullName;
+                }
+                else
+                {
+                    return String.Empty;
+                }
             }
         }
 
@@ -37,15 +63,18 @@ namespace MicrosoftResearch.VSPackage
         ///     Returns the name of the active document without path
         /// </summary>
         /// <returns>the name of the active document without path</returns>
-        public static string GetActiveFileName()
+        internal static string ActiveFileName
         {
-            if (dte.ActiveDocument != null)
+            get
             {
-                return dte.ActiveDocument.Name;
-            }
-            else
-            {
-                return String.Empty;
+                if (dte.ActiveDocument != null)
+                {
+                    return dte.ActiveDocument.Name;
+                }
+                else
+                {
+                    return String.Empty;
+                }
             }
         }
 
@@ -53,45 +82,62 @@ namespace MicrosoftResearch.VSPackage
         ///     Returns wether the active document is in C or C++
         /// </summary>
         /// <returns>true, if active document is existent and in C or C++</returns>
-        public static bool IsCodeFile()
+        internal static bool IsCodeFile
         {
-            if (dte.ActiveDocument != null)
+            get
             {
-                if (dte.ActiveDocument.Language == "C/C++")
+                if (dte.ActiveDocument != null)
                 {
-                    return true;
+                    if (dte.ActiveDocument.Language == "C/C++")
+                    {
+                        return true;
+                    }
                 }
-            }
 
-            return false;
+                return false;
+            }
         }
         
         /// <summary>
-        ///     Returns the selected Text or (if nothing's selected) the name of the function surrounding the cursor
+        ///     Returns the selected Text or (if nothing's selected) the name of the function surrounding the cursor or an empty string
         /// </summary>
-        /// <returns>the selected Text or (if nothing's selected) the name of the function surrounding the cursor</returns>
-        public static string GetCurrentFunctionName()
+        /// <returns>the selected Text or (if nothing's selected) the name of the function surrounding the cursor or an empty string</returns>
+        internal static string CurrentFunctionName
         {
-            //// Get CodeElement which represents the current function
-            TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
-            CodeElement currentFunctionCodeElement = textDocument.Selection.ActivePoint.CodeElement[vsCMElement.vsCMElementFunction];
-            if (textDocument.Selection.Text != string.Empty)
+            get
             {
-                return textDocument.Selection.Text;
-            }
-            else
-            {
-                //// This second check is necessary because ActivePoint's CodeElement-Property unexpectedly
-                //// returns CodeElements that are not functions
-                if (currentFunctionCodeElement != null && currentFunctionCodeElement.Kind == vsCMElement.vsCMElementFunction)
+                //// Get CodeElement which represents the current function
+                TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
+                CodeElement currentFunctionCodeElement = textDocument.Selection.ActivePoint.CodeElement[vsCMElement.vsCMElementFunction];
+                if (textDocument.Selection.Text != string.Empty)
                 {
-                    return currentFunctionCodeElement.Name;
+                    return textDocument.Selection.Text;
                 }
                 else
                 {
-                    return null;
+                    //// This second check is necessary because ActivePoint's CodeElement-Property unexpectedly
+                    //// returns CodeElements that are not functions
+                    if (currentFunctionCodeElement != null && currentFunctionCodeElement.Kind == vsCMElement.vsCMElementFunction)
+                    {
+                        return currentFunctionCodeElement.Name;
+                    }
+                    else
+                    {
+                        return string.Empty;
+                    }
+
                 }
             }
+        }
+
+        internal static void ClearPane()
+        {
+            verificationOutputpane.Clear();
+        }
+
+        internal static void WriteToPane(string message)
+        {
+            verificationOutputpane.OutputString(message);
         }
     }
 }

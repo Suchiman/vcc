@@ -5,9 +5,6 @@ using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
-using EnvDTE;
-using System.ComponentModel;
-using System.Windows.Forms;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -32,7 +29,7 @@ namespace MicrosoftResearch.VSPackage
     // This attribute registers a tool window exposed by this package.
     [ProvideToolWindow(typeof(MyToolWindow))]
     // This attribute makes sure this package is loaded and initialized when a solution exists
-    [ProvideOptionPage(typeof(VCCOptionPage), "VCC", "General", 101, 106, true)]
+    [ProvideOptionPage(typeof(VccOptionPage), "VCC", "General", 101, 106, true)]
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
     [Guid(GuidList.guidVSPackagePkgString)]
     public sealed class VSPackagePackage : Package
@@ -76,10 +73,10 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         private void VerifyActiveFile(object sender, EventArgs e)
         {
-            VCCOptionPage options = this.GetAutomationObject("VCC.General") as VCCOptionPage;
+            VccOptionPage options = this.GetAutomationObject("VCC.General") as VccOptionPage;
             if (options != null)
             {
-                VCCLauncher.VerifyFile(VSIntegration.GetActiveFileFullName(), options.AdditionalCommandlineArguments);
+                VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, options);
             }
         }
 
@@ -90,13 +87,18 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         private void VerifyCurrentFunction(object sender, EventArgs e)
         {
-            VCCOptionPage options = this.GetAutomationObject("VCC.General") as VCCOptionPage;
+            VccOptionPage options = this.GetAutomationObject("VCC.General") as VccOptionPage;
             if (options != null)
             {
-                VCCLauncher.VerifyFunction( VSIntegration.GetActiveFileFullName(),
-                                            VSIntegration.GetCurrentFunctionName(),
-                                            options.AdditionalCommandlineArguments);
+                VCCLauncher.VerifyFunction( VSIntegration.ActiveFileFullName,
+                                            VSIntegration.CurrentFunctionName,
+                                            options);
             }
+        }
+
+        private void Cancel(object sender, EventArgs e)
+        {
+            VCCLauncher.Cancel();
         }
 
         /// <summary>
@@ -108,7 +110,7 @@ namespace MicrosoftResearch.VSPackage
         {
             if (sender != null)
             {
-                if (VSIntegration.IsCodeFile())
+                if (VSIntegration.IsCodeFile)
                 {
                     //// active document is in C or C++ => show menu
                     ((MenuCommand)sender).Visible = true;
@@ -123,7 +125,7 @@ namespace MicrosoftResearch.VSPackage
         }
 
         /// <summary>
-        ///     Renames the VerifyFile-Command
+        ///     Renames the VerifyFile-Button
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -131,12 +133,20 @@ namespace MicrosoftResearch.VSPackage
         {
             if (sender != null)
             {
-                ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.GetActiveFileName());
+                ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.ActiveFileName);
+                if (VCCLauncher.VCCRunning())
+                {
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+                else
+                {
+                    ((OleMenuCommand)sender).Enabled = true;
+                }
             }
         }
 
         /// <summary>
-        ///     Disables/Enables and renames the VerifyFunction-Command
+        ///     Disables/Enables and renames the VerifyFunction-Button
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -144,22 +154,42 @@ namespace MicrosoftResearch.VSPackage
         {
             if (sender != null)
             {
-                if (VSIntegration.GetCurrentFunctionName() != null)
+                if (VSIntegration.CurrentFunctionName != string.Empty)
                 {
-                    ((OleMenuCommand)sender).Text = string.Format("Verify Function '{0}'", VSIntegration.GetCurrentFunctionName());
-                    ((OleMenuCommand)sender).Enabled = true;
+                    //// Name of current function is known.
+                    ((OleMenuCommand)sender).Text = string.Format("Verify Function '{0}'", VSIntegration.CurrentFunctionName);
+                    if (VCCLauncher.VCCRunning())
+                    {
+                        ((OleMenuCommand)sender).Enabled = false;
+                    }
+                    else
+                    {
+                        ((OleMenuCommand)sender).Enabled = true;
+                    }
                 }
                 else
                 {
+                    //// There is no current function.
                     ((OleMenuCommand)sender).Text = "Verify Current Function";
                     ((OleMenuCommand)sender).Enabled = false;
                 }
             }
         }
 
-        /////////////////////////////////////////////////////////////////////////////
-        // Overriden Package Implementation
-        #region Package Members
+        void Cancel_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                if (VCCLauncher.VCCRunning())
+                {
+                    ((OleMenuCommand)sender).Visible = true;
+                }
+                else
+                {
+                    ((OleMenuCommand)sender).Visible = false;
+                }
+            }
+        }
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -167,14 +197,14 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         protected override void Initialize()
         {
-            Trace.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
+            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-            if ( null != mcs )
+            if (null != mcs)
             {
-                
+
                 //// Create the commands for the menu items.
 
                 CommandID menuCommandID;
@@ -183,13 +213,13 @@ namespace MicrosoftResearch.VSPackage
 
                 //// VCC Options
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMyCommand);
-                menuItem = new MenuCommand(ShowToolWindow, menuCommandID );
+                menuItem = new MenuCommand(ShowToolWindow, menuCommandID);
                 mcs.AddCommand(menuItem);
 
                 //// Verify File
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);
                 OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
-                OleMenuItem.BeforeQueryStatus +=new EventHandler(VerifyFile_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
                 //// Verify Function
@@ -198,26 +228,36 @@ namespace MicrosoftResearch.VSPackage
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
-                //// Verify File Context Menu
+                //// Cancel
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCancel);
+                OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(Cancel_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
+                //// Verify File (Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
                 OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
-                //// Verify Function Context Menu
+                //// Verify Function (Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyCurrentFunction);
                 OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
+                //// Cancel (Context Menu)
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCancel);
+                OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(Cancel_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
                 //// Verifymenu
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyMenu);
                 OleMenuItem = new OleMenuCommand(null, menuCommandID);
-                OleMenuItem.BeforeQueryStatus +=new EventHandler(VerifyMenu_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyMenu_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
             }
         }
-
-        #endregion
     }
 }
