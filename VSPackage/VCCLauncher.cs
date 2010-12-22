@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using Process = System.Diagnostics.Process;
-using Thread = System.Threading.Thread;
 using System.Management;
 
 namespace MicrosoftResearch.VSPackage
@@ -128,6 +127,5 @@ namespace MicrosoftResearch.VSPackage
                 return false;
             }
         }
-
     }
 }

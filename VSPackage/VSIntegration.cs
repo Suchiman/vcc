@@ -2,6 +2,7 @@
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using System.Windows.Forms;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -130,6 +131,34 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        internal static string CurrentStructName
+        {
+            get
+            {
+                //// Get CodeElement which represents the current struct
+                TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
+                CodeElement currentStructCodeElement = textDocument.Selection.ActivePoint.CodeElement[vsCMElement.vsCMElementStruct];
+                if (textDocument.Selection.Text != string.Empty)
+                {
+                    return textDocument.Selection.Text;
+                }
+                else
+                {
+                    //// This second check is necessary because ActivePoint's CodeElement-Property unexpectedly
+                    //// returns CodeElements that are not functions
+                    if (currentStructCodeElement != null && currentStructCodeElement.Kind == vsCMElement.vsCMElementStruct)
+                    {
+                        return currentStructCodeElement.Name;
+                    }
+                    else
+                    {
+                        return string.Empty;
+                    }
+
+                }
+            }
+        }
+
         internal static void ClearPane()
         {
             verificationOutputpane.Clear();
@@ -140,11 +169,36 @@ namespace MicrosoftResearch.VSPackage
             verificationOutputpane.OutputString(message);
         }
 
+        internal static void DocumentsSavedCheck()
+        {
+            if (!DocumentsSaved())
+            {
+                DialogResult dialogResult =
+                    MessageBox.Show("There are unsaved documents. Would you like to save all documents before proceding?",
+                                        "Unsaved Items",
+                                        MessageBoxButtons.YesNoCancel,
+                                        MessageBoxIcon.Question,
+                                        MessageBoxDefaultButton.Button3);
+
+                switch (dialogResult)
+                {
+                    case DialogResult.Cancel:
+                        return;
+                    case DialogResult.Yes:
+                        SaveAll();
+                        break;
+                    case DialogResult.No:
+                    default:
+                        break;
+                }
+
+            }
+        }
         /// <summary>
         ///     Returns wether all open documents were saved after the last change
         /// </summary>
         /// <returns>true, when no changes were made since the last save, false, if there are open documents that are dirty<returns>
-        internal static bool ProjectSaved()
+        private static bool DocumentsSaved()
         {
             foreach (Document document in dte.Documents)
             {
@@ -159,7 +213,7 @@ namespace MicrosoftResearch.VSPackage
         /// <summary>
         ///     Saves all open documents that belong to the project containing the active document.
         /// </summary>
-        internal static void SaveAll()
+        private static void SaveAll()
         {
             dte.Documents.SaveAll();
         }
