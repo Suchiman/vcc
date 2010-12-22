@@ -139,5 +139,29 @@ namespace MicrosoftResearch.VSPackage
         {
             verificationOutputpane.OutputString(message);
         }
+
+        /// <summary>
+        ///     Returns wether all open documents were saved after the last change
+        /// </summary>
+        /// <returns>true, when no changes were made since the last save, false, if there are open documents that are dirty<returns>
+        internal static bool ProjectSaved()
+        {
+            foreach (Document document in dte.Documents)
+            {
+                if (!document.Saved)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        ///     Saves all open documents that belong to the project containing the active document.
+        /// </summary>
+        internal static void SaveAll()
+        {
+            dte.Documents.SaveAll();
+        }
     }
 }
