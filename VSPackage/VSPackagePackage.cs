@@ -98,7 +98,7 @@ namespace MicrosoftResearch.VSPackage
 
             }
             
-            VccOptionPage options = this.GetAutomationObject("VCC.General") as VccOptionPage;
+            VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
             if (options != null)
             {
                 VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, options);
