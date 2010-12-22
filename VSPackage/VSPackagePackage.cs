@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
+using System.Windows.Forms;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -73,6 +74,29 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         private void VerifyActiveFile(object sender, EventArgs e)
         {
+            if (!VSIntegration.ProjectSaved())
+            {
+                DialogResult dialogResult =
+                    MessageBox.Show (   "There are unsaved documents. Would you like to save all documents before proceding?",
+                                        "Unsaved Items",
+                                        MessageBoxButtons.YesNoCancel,
+                                        MessageBoxIcon.Question,
+                                        MessageBoxDefaultButton.Button3);
+
+                switch (dialogResult)
+                {
+                    case DialogResult.Cancel:
+                        return;
+                    case DialogResult.Yes:
+                        VSIntegration.SaveAll();
+                        break;
+                    case DialogResult.No:
+                    default:
+                        break;
+                }
+
+            }
+            
             VccOptionPage options = this.GetAutomationObject("VCC.General") as VccOptionPage;
             if (options != null)
             {
