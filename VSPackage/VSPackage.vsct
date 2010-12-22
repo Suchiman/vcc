@@ -151,7 +151,7 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
-          <ButtonText>Cancel</ButtonText>
+          <ButtonText>Cancel VCC</ButtonText>
         </Strings>
       </Button>
       

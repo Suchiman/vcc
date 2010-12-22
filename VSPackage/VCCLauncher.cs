@@ -30,8 +30,7 @@ namespace MicrosoftResearch.VSPackage
 
         internal static void LaunchVCC(string arguments)
         {
-            //// Prepare VCC-Process, execute it and read its Output
-                        
+            //// Prepare VCC-Process, execute it and read its Output            
             ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"",vccPath), arguments);
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
