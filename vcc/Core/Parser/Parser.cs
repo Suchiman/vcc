@@ -3243,7 +3243,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
       }
-      this.SkipOverTo(Token.RightBrace, followers);
+      this.SkipOverTo(Token.RightBrace, followers | Token.LeftBrace);
       result.TrimExcess();
       return result.AsReadOnly();
     }

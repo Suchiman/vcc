@@ -57,3 +57,22 @@ Verification of fill succeeded.
 Verification of foo succeeded.
 Verification of bar succeeded.
 `
+`/newsyntax
+#include <vcc.h>
+
+bool b[42];
+
+_(axiom \forall unsigned i; {b[i]} {b[i]} \true)
+
+struct Foo {
+	bool a[42];
+	_(invariant \forall unsigned i; {a[i]} {a[i]} \true)
+};
+void bar() {
+	bool a[42];
+	_(assert \forall unsigned i; {a[i]} {a[i]} \true)
+}
+`
+Verification of Foo#adm succeeded.
+Verification of bar succeeded.
+`
