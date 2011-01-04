@@ -889,7 +889,8 @@ axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
     $non_null($owner(S, r)) && $is_proper($owner(S, r)) &&
     ($typ($owner(S, r)) != ^$#thread_id_t ==>
       $is_proper(r) && $non_null(r) && $is_non_primitive($typ(r)) &&
-      $root(S, r) == $root(S, $owner(S, r))));
+      ($is_sequential_field($f_owns($typ($owner(S, r)))) ==> $root(S, r) == $root(S, $owner(S, r)))
+    ));
 
 axiom (forall S:$state, p:$ptr ::
   {$root(S, $root(S, p))}
