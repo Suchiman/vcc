@@ -98,8 +98,15 @@ namespace Microsoft.Research.Vcc
         options.Add("/printModelToFile:" + parent.ModelFileName);
       }
       options.AddRange(parent.options.BoogieOptions);
-      foreach (string z3option in parent.options.Z3Options)
-        options.Add("/z3opt:" + z3option);
+      foreach (string z3option in parent.options.Z3Options) {
+        if (z3option.StartsWith("-") || z3option.StartsWith("/") || z3option.Contains("="))
+          options.Add("/z3opt:" + z3option);
+        else {
+          Console.WriteLine("Z3 options '{0}' is invalid.", z3option);
+          return false;
+        }
+
+      }
       return ReParseBoogieOptions(options, parent.options.RunningFromCommandLine);
     }
 
