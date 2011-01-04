@@ -102,7 +102,7 @@ namespace Microsoft.Research.Vcc
         if (z3option.StartsWith("-") || z3option.StartsWith("/") || z3option.Contains("="))
           options.Add("/z3opt:" + z3option);
         else {
-          Console.WriteLine("Z3 options '{0}' is invalid.", z3option);
+          Console.WriteLine("Z3 option '{0}' is syntactically invalid.", z3option);
           return false;
         }
 
