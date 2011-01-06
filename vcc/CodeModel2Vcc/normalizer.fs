@@ -278,7 +278,7 @@ namespace Microsoft.Research.Vcc
           | x :: xs ->
             if (x.Type._IsPtr) then
               helper.Error(x.Token, 9711, "claimed property must not be of pointer type")
-            Some (self (Macro (c, name.Replace("_vcc_", ""), Expr.Pure (x.Common, convertToBool (fun x -> x) x) :: xs)))
+            Some (self (Macro (c, name.Replace("_vcc_", ""), Expr.Pure (x.Common, convertToBool (fun x -> x) x) :: (List.rev xs))))
           | _ -> 
             helper.Oops (c.Token, "no arguments to claim")
             None
