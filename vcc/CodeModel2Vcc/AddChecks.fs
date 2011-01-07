@@ -183,10 +183,10 @@ namespace Microsoft.Research.Vcc
                                      save @ 
                                      save2 @ 
                                      [checkWrap; checkWr; assumeInv] @ 
-                                     addOwnees @ 
-                                     [pre; staticUnwrap] @ 
+                                     addOwnees @
+                                     [assumeOwns; pre; staticUnwrap] @
                                      check @ 
-                                     [assume; assumeOwns]))
+                                     [assume]))
               | _ -> die()
             
           | _ -> 
