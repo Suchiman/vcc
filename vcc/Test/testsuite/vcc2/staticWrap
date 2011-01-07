@@ -292,3 +292,21 @@ Verification of U#adm succeeded.
 Verification of works succeeded.
 Verification of fails succeeded.
 `
+#include "vcc.h"
+
+struct S { int a; };
+
+struct Foo { struct S s; invariant(keeps(&s)) };
+
+void bar(struct Foo *t) 
+  requires(wrapped(t))
+  writes(t)
+  ensures(wrapped(&t->s))
+  ensures(is_fresh(&t->s))
+{
+  unwrap(t);
+}
+`
+Verification of Foo#adm succeeded.
+Verification of bar succeeded.
+`

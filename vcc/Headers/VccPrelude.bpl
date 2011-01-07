@@ -1443,13 +1443,27 @@ procedure $static_unwrap(#l:$ptr, S:$state);
   requires $pre_static_unwrap($s);
   ensures $mutable($s, #l);
   ensures $owns(old($s), #l) == $owns($s, #l);
-  ensures $timestamp_is_now($s, #l);
-  ensures $typemap(old($s)) == $typemap($s);
-  ensures (exists #x:int :: $memory($s) == $store.mem($memory(old($s)), #l, #x));
-  ensures (exists #st:$status :: $statusmap($s) == $store.sm($statusmap(S), #l, #st));
+  ensures (forall #p:$ptr ::
+    {$st($s, #p)} {$ts($s, #p)}
+    {$set_in(#p, $owns(old($s), #l))}
+    //{$st(old($s), #p)} {$st($s, #p)} {$ts(meta, #p)}
+    $set_in(#p, $owns(old($s), #l)) ==>
+      $typed(old($s), #p) &&
+      $wrapped($s, #p, $typ(#p)) && $timestamp_is_now($s, #p) && $is_non_primitive($typ(#p)));
+  ensures (forall #p:$ptr :: {$set_in(#p, $owns(old($s), #l)), $is_claimable($typ(#p))}
+    $set_in(#p, $owns(old($s), #l)) ==>
+      ($is_claimable($typ(#p)) ==>
+         old($ref_cnt($s, #p)) == $ref_cnt($s, #p) ));
   ensures (forall #p:$ptr :: {$thread_local($s, #p)}
     $thread_local(old($s), #p) ==> $thread_local($s, #p));
+  ensures $timestamp_is_now($s, #l);
 
+  ensures $typemap(old($s)) == $typemap($s);
+  ensures (forall #p:$ptr :: {:weight 0} {$st($s, #p)}
+    $st($s, #p) == $st(old($s), #p) ||
+    ($nested(old($s), #p) && $set_in(#p, $owns(old($s), #l))) ||
+    #p == #l);
+  ensures (exists #x:int :: $memory($s) == $store.mem($memory(old($s)), #l, #x));
   ensures $timestamp_post_strict(old($s), $s);
   ensures $post_unwrap(old($s), $s);
 
