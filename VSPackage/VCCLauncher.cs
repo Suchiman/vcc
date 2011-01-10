@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using Process = System.Diagnostics.Process;
 using System.Management;
+using System.Text.RegularExpressions;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -12,6 +13,9 @@ namespace MicrosoftResearch.VSPackage
     {
         private static string vccPath = @"C:\Users\t-chworr\VCC\vcc\Host\bin\Debug\vcc.exe";
         private static Process vccProcess;
+        //// This is set to true, when Verification fails.
+        private static bool errorOccurred = false;
+        private static Regex VCCErrorRegEx = new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\s(.*?):)?\s(?<errormessage>(.*))");
 
         internal static void VerifyFile(string filename, VccOptionPage options)
         {
@@ -29,10 +33,13 @@ namespace MicrosoftResearch.VSPackage
 
         internal static void LaunchVCC(string arguments)
         {
+            errorOccurred = false;
+            VSIntegration.clearErrorList();
             //// Prepare VCC-Process, execute it and read its Output            
             ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"",vccPath), arguments);
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
+            psi.RedirectStandardError = true;
             psi.CreateNoWindow = true;
             vccProcess = new Process();
             vccProcess.StartInfo = psi;
@@ -52,26 +59,46 @@ namespace MicrosoftResearch.VSPackage
             //// Finally start the process
             vccProcess.Start();
             vccProcess.BeginOutputReadLine();
+            vccProcess.BeginErrorReadLine();
         }
 
         private static void vccProcess_Exited(object sender, EventArgs e)
         {
             if (vccProcess != null && vccProcess.ExitCode == -1)
             {
+                vccProcess.CancelOutputRead();
+                vccProcess.CancelErrorRead();
                 VSIntegration.WriteToPane("===VCC was canceled.===\n");
-            }
-            else
-            {
-                VSIntegration.WriteToPane("===VCC finished.===\n");
             }
         }
 
         private static void vccProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             // Write Output from VCC to Verification Outputpane
-            if (VCCRunning())
+            if (e != null && e.Data != null)
             {
-                VSIntegration.WriteToPane(String.Format("{0}\n", e.Data));
+                if (VCCErrorRegEx.IsMatch(e.Data))
+                {
+                    //// This line is an errormessage.
+                    if (!errorOccurred)
+                    {
+                        VSIntegration.WriteToPane("An Error occured. See Error List for details.\n\n");
+                        errorOccurred = true;
+                    }
+
+                    //// Add error to error list
+                    Match match = VCCErrorRegEx.Match(e.Data);
+                    VSIntegration.addErrorToErrorList(  match.Groups["path"].Value,
+                                                        match.Groups["errormessage"].Value,
+                                                        Int32.Parse(match.Groups["line"].Value),
+                                                        match.Groups["column"] != null ? Int32.Parse(match.Groups["column"].Value) : 0
+                                                        );
+                }
+                else if (!e.Data.StartsWith("Exiting"))
+                {
+                    //// This line is not an errormessage.
+                    VSIntegration.WriteToPane(String.Format("{0}\n", e.Data));
+                }
             }
         }
 
@@ -96,7 +123,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         internal static void Cancel()
         {
-            if (VCCRunning())
+            if (VCCRunning)
             {
                 try
                 {
@@ -116,15 +143,18 @@ namespace MicrosoftResearch.VSPackage
             }//if
         }//method
 
-        internal static bool VCCRunning()
+        internal static bool VCCRunning
         {
-            if (vccProcess != null && !vccProcess.HasExited)
+            get
             {
-                return true;
-            }
-            else
-            {
-                return false;
+                if (vccProcess != null && !vccProcess.HasExited)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
     }

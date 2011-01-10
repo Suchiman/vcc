@@ -35,6 +35,20 @@ namespace MicrosoftResearch.VSPackage
     [Guid(GuidList.guidVSPackagePkgString)]
     public sealed class VSPackagePackage : Package
     {
+
+        /// <summary>
+        ///     this helps to get the instance of the Packageclass from outside this class.
+        ///     constructor is still public because Visual Studio calls the constructor
+        /// </summary>
+        private static VSPackagePackage instance;
+        public static VSPackagePackage Instance
+        {
+            get
+            {
+                return instance;
+            }
+        }
+
         /// <summary>
         /// Default constructor of the package.
         /// Inside this method you can place any initialization code that does not require 
@@ -44,6 +58,8 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         public VSPackagePackage()
         {
+            if (instance != null) throw new InvalidOperationException();
+            instance = this;
             Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
         }
 
@@ -74,6 +90,9 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         private void VerifyActiveFile(object sender, EventArgs e)
         {
+            //VSIntegration.test(this);
+            
+            
             VSIntegration.DocumentsSavedCheck();
             
             VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
@@ -81,6 +100,7 @@ namespace MicrosoftResearch.VSPackage
             {
                 VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, options);
             }
+            
         }
 
         private void CheckAdmissiblityOfStruct(object sender, EventArgs e)
@@ -152,7 +172,7 @@ namespace MicrosoftResearch.VSPackage
             if (sender != null)
             {
                 ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.ActiveFileName);
-                if (VCCLauncher.VCCRunning())
+                if (VCCLauncher.VCCRunning)
                 {
                     ((OleMenuCommand)sender).Enabled = false;
                 }
@@ -176,7 +196,7 @@ namespace MicrosoftResearch.VSPackage
                 {
                     //// Name of current function is known.
                     ((OleMenuCommand)sender).Text = string.Format("Verify Function '{0}'", VSIntegration.CurrentFunctionName);
-                    if (VCCLauncher.VCCRunning())
+                    if (VCCLauncher.VCCRunning)
                     {
                         ((OleMenuCommand)sender).Enabled = false;
                     }
@@ -202,7 +222,7 @@ namespace MicrosoftResearch.VSPackage
                 {
                     //// Name of current struct is known.
                     ((OleMenuCommand)sender).Text = string.Format("Check Admissibility of Struct '{0}'", VSIntegration.CurrentStructName);
-                    if (VCCLauncher.VCCRunning())
+                    if (VCCLauncher.VCCRunning)
                     {
                         ((OleMenuCommand)sender).Enabled = false;
                     }
@@ -224,7 +244,7 @@ namespace MicrosoftResearch.VSPackage
         {
             if (sender != null)
             {
-                if (VCCLauncher.VCCRunning() && VSIntegration.IsCodeFile)
+                if (VCCLauncher.VCCRunning && VSIntegration.IsCodeFile)
                 {
                     ((OleMenuCommand)sender).Visible = true;
                 }
@@ -243,7 +263,7 @@ namespace MicrosoftResearch.VSPackage
                 {
                     //// Name of current function is known.
                     ((OleMenuCommand)sender).Text = string.Format("Verify Function '{0}'", VSIntegration.CurrentFunctionName);
-                    if (VCCLauncher.VCCRunning())
+                    if (VCCLauncher.VCCRunning)
                     {
                         ((OleMenuCommand)sender).Enabled = false;
                     }
@@ -279,7 +299,7 @@ namespace MicrosoftResearch.VSPackage
             if (sender != null)
             {
                 ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.ActiveFileName);
-                if (VCCLauncher.VCCRunning())
+                if (VCCLauncher.VCCRunning)
                 {
                     ((OleMenuCommand)sender).Enabled = false;
                 }
@@ -309,7 +329,7 @@ namespace MicrosoftResearch.VSPackage
                 {
                     //// Name of current struct is known.
                     ((OleMenuCommand)sender).Text = string.Format("Check Admissibility of Struct '{0}'", VSIntegration.CurrentStructName);
-                    if (VCCLauncher.VCCRunning())
+                    if (VCCLauncher.VCCRunning)
                     {
                         ((OleMenuCommand)sender).Enabled = false;
                     }
