@@ -482,3 +482,18 @@ int foo() {}
 `
 testcase(3,42) : error VC9718: operator '<' not allowed in triggers when /opsasfuncs is not set
 `
+`/newsyntax
+#include <vcc.h>
+
+void foo() {
+  int i = 0;
+  while (++i < 10)
+    _(invariant i < 10) { }
+ i = 0;
+ while (++i < 10) 
+    _(invariant i < 10) ;
+}
+`
+testcase(9,39) : warning VC0000: Possible mistaken null statement.
+Verification of foo succeeded.
+`
