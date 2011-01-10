@@ -3,6 +3,9 @@ using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.Windows.Forms;
+using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.TextManager.Interop;
+using System.Text.RegularExpressions;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -32,6 +35,9 @@ namespace MicrosoftResearch.VSPackage
             return result;
         }
         );
+
+        private static ErrorListProvider errorListProvider = new ErrorListProvider(VSPackagePackage.Instance);
+        private static Regex VccErrorMessageRegEx = new Regex("(.*?)'(?<identifier>(.*?))'.*");
 
         /// <summary>
         ///     This object represents the Verification Outputpane.
@@ -145,7 +151,7 @@ namespace MicrosoftResearch.VSPackage
                 else
                 {
                     //// This second check is necessary because ActivePoint's CodeElement-Property unexpectedly
-                    //// returns CodeElements that are not functions
+                    //// returns CodeElements that are not structs
                     if (currentStructCodeElement != null && currentStructCodeElement.Kind == vsCMElement.vsCMElementStruct)
                     {
                         return currentStructCodeElement.Name;
@@ -174,7 +180,7 @@ namespace MicrosoftResearch.VSPackage
             if (!DocumentsSaved())
             {
                 DialogResult dialogResult =
-                    MessageBox.Show("There are unsaved documents. Would you like to save all documents before proceding?",
+                    MessageBox.Show(    "There are unsaved documents. Would you like to save all documents before proceding?",
                                         "Unsaved Items",
                                         MessageBoxButtons.YesNoCancel,
                                         MessageBoxIcon.Question,
@@ -216,6 +222,92 @@ namespace MicrosoftResearch.VSPackage
         private static void SaveAll()
         {
             dte.Documents.SaveAll();
+        }
+
+        internal static void clearErrorList()
+        {
+            errorListProvider.Tasks.Clear();
+        }
+        
+        /// <summary>
+        ///     Adds an entry to the error list
+        /// </summary>
+        /// <param name="serviceProvider">In this case the service provider is the VSPackage</param>
+        /// <param name="document">Complete path of the document in which the error was found</param>
+        /// <param name="text">Errormessage</param>
+        /// <param name="line"></param>
+        /// <param name="column"></param>
+        internal static void addErrorToErrorList(string document, string text, int line, int column)
+        {
+            ErrorTask errorTask = new ErrorTask();
+            errorTask.ErrorCategory = TaskErrorCategory.Error;
+            errorTask.Document = document;
+            errorTask.Text = text;
+            errorTask.Line = line - 1;
+            errorTask.Column = column - 1;
+            errorTask.Navigate += new EventHandler(errorTask_Navigate);
+            errorListProvider.Tasks.Add(errorTask);
+        }
+
+        static void errorTask_Navigate(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                //// Open the document if necessary
+                ErrorTask errorTask = sender as ErrorTask;
+                IVsUIShellOpenDocument uiShellOpenDocument = Package.GetGlobalService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
+                if (uiShellOpenDocument == null) { return; }
+                IVsWindowFrame windowFrame;
+                Microsoft.VisualStudio.OLE.Interop.IServiceProvider serviceProvider;
+                IVsUIHierarchy hierachy;
+                uint itemid;
+                Guid logicalView = VSConstants.LOGVIEWID_Code;
+                uiShellOpenDocument.OpenDocumentViaProject( errorTask.Document,
+                                                            ref logicalView,
+                                                            out serviceProvider,
+                                                            out hierachy,
+                                                            out itemid,
+                                                            out windowFrame);
+                if (windowFrame == null) { return; }
+                object docData;
+                windowFrame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
+
+                //// Get the TextBuffer
+                VsTextBuffer buffer = docData as VsTextBuffer;
+                if (buffer == null)
+                {
+                    IVsTextBufferProvider bufferProvider = docData as IVsTextBufferProvider;
+                    if (bufferProvider != null)
+                    {
+                        IVsTextLines lines;
+                        bufferProvider.GetTextBuffer(out lines);
+                        buffer = lines as VsTextBuffer;
+                        if (buffer == null) { return; }
+                    }
+                }
+
+                //// Get length of identifier if there is one (else set it to 1)
+                int identifierLength;
+                Match match = VccErrorMessageRegEx.Match(errorTask.Text);
+                if (match.Groups["identifier"] != null && match.Groups["identifier"].Value != string.Empty)
+                {
+                    identifierLength = match.Groups["identifier"].Length;
+                }
+                else
+                {
+                    identifierLength = 1;
+                }
+
+                //// Navigate to line and column
+                IVsTextManager textManager = Package.GetGlobalService(typeof(VsTextManagerClass)) as IVsTextManager;
+                if (textManager == null) { return; }
+                textManager.NavigateToLineAndColumn(    buffer, 
+                                                        ref logicalView, 
+                                                        errorTask.Line, 
+                                                        errorTask.Column, 
+                                                        errorTask.Line, 
+                                                        errorTask.Column + identifierLength);
+            }
         }
     }
 }
