@@ -745,17 +745,21 @@ namespace Microsoft.Research.Vcc
           | Macro(_, "out", [Ref(_, v)]) -> addOut v; false
           | _ -> true
 
-        let replLocalsEnsures self (e : Expr) =
+        let replLocalsEnsures isPureBlock self (e : Expr) =
           // inside of ensures, we need to replace references to in-parameters in the context of old
           // to their out-parameters counter part
           // if we find such an occurrence, we suppress warnings about old not referring to state
           // as we leave old in because we don't know if it contains other references to state
-          let rec fixupLocalsInEnsures seenOld varReplaced self = function
+          // unless we are dealing with pure blocks, where these don't make any sense anyway and thus
+          // can safely be eliminated
+          let rec fixupLocalsInEnsures isPureBlock seenOld varReplaced self = function
             | Expr.Old(ec, (Macro(_, "prestate", []) as ps), e) -> 
               let varReplaced = ref false
-              let e' = e.SelfMap(fixupLocalsInEnsures true varReplaced)
-              let tok = if !varReplaced then new WarningSuppressingToken (e'.Token, 9106) :> Token else e'.Token
-              Some(Old({ec with Token = tok}, ps, e'))
+              let e' = e.SelfMap(fixupLocalsInEnsures isPureBlock true varReplaced)
+              if isPureBlock then Some(e') 
+              else 
+                let tok = if !varReplaced then new WarningSuppressingToken (e'.Token, 9106) :> Token else e'.Token
+                Some(Old({ec with Token = tok}, ps, e'))
             | Expr.Ref(_, v) when not seenOld -> Some(v |> vMap outMap |> vMap inMap |> mkRef)
             | Expr.Ref(_, v) when     seenOld -> 
               let v' = vMap inMap v
@@ -765,7 +769,7 @@ namespace Microsoft.Research.Vcc
               else None
             | _ -> None
           let dummy = ref false
-          Some (e.SelfMap(fixupLocalsInEnsures false dummy));
+          Some (e.SelfMap(fixupLocalsInEnsures isPureBlock false dummy));
           //| Expr.Ref(ec, v) -> Some(Expr.Ref(ec, vMap inMap v))
           //| Expr.VarWrite(ec, vs, e) -> Some(Expr.VarWrite(ec, List.map (vMap inMap) vs, self e))
           //| _ -> None
@@ -778,10 +782,11 @@ namespace Microsoft.Research.Vcc
         List.iter (List.iter (fun (e : Expr) -> e.SelfVisit findLocals)) (body :: cs.Requires :: cs.Ensures :: cs.Reads :: cs.Writes :: [cs.Decreases])
         let body' = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) body
         let contract = {Requires = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Requires;
-                        Ensures = List.map (fun (e : Expr) -> e.SelfMap replLocalsEnsures) cs.Ensures;
+                        Ensures = List.map (fun (e : Expr) -> e.SelfMap (replLocalsEnsures cs.IsPureBlock)) cs.Ensures;
                         Reads = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Reads;
                         Writes = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Writes;
-                        Decreases = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Decreases}
+                        Decreases = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Decreases;
+                        IsPureBlock = cs.IsPureBlock }
         body', contract, !localsThatGoIn, vMap inMap, !localsThatGoOut, vMap outMap
           
       let findReferencesBeforeAndAfter (fn : Function) block =
@@ -834,7 +839,7 @@ namespace Microsoft.Research.Vcc
                          Writes = stripInitialPure cs'.Writes;
                          Variants = stripInitialPure cs'.Decreases;
                          Reads = stripInitialPure cs'.Reads;
-                         CustomAttr = [];
+                         CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else []);
                          Body = Some (Expr.MkBlock(ss @ List.map mkSetOutPar localsThatGoOut));
                          IsProcessed = true;
                          UniqueId = CAST.unique() } : Function

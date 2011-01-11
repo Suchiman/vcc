@@ -672,6 +672,7 @@ module Microsoft.Research.Vcc.CAST
       Reads : list<Expr>;
       Writes : list<Expr>;
       Decreases : list<Expr>;
+      IsPureBlock : bool
     }
 
   and TestClassifier = Expr
@@ -988,7 +989,7 @@ module Microsoft.Research.Vcc.CAST
                 let rReads, reads' = apply paux cs.Reads
                 let rWrites, writes' = apply paux cs.Writes
                 let rDecreases, decreases' = apply paux cs.Decreases
-                let cs' = {Requires=pres'; Ensures=posts'; Reads=reads'; Writes=writes'; Decreases=decreases'}
+                let cs' = {Requires=pres'; Ensures=posts'; Reads=reads'; Writes=writes'; Decreases=decreases'; IsPureBlock = cs.IsPureBlock }
                 let rSS, block'' =
                     match  constructList (fun args -> Block (c, args, Some cs')) (map ctx) ss with
                       | None -> false, Block (c,ss,Some cs')
