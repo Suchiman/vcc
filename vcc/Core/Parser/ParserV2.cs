@@ -459,7 +459,10 @@ namespace Microsoft.Research.Vcc.Parsing
         case Token.SpecWrites:
           return this.ParseBlockWithContracts(followers, savedInSpecCode);
         case Token.Identifier:
-          if (this.declspecExtensions.ContainsKey(this.scanner.GetIdentifierString())) {
+          var id = this.scanner.GetIdentifierString();
+          if (id == "pure") 
+            return this.ParseBlockWithPureModifier(followers, savedInSpecCode);
+          if (this.declspecExtensions.ContainsKey(id)) {
             var specifiers = new List<Specifier>();
             this.ParseSpecTypeModifierList(specifiers, followers | Token.RightParenthesis);
             this.SkipOutOfSpecBlock(savedInSpecCode, followers | TS.DeclaratorStart);
@@ -509,6 +512,21 @@ namespace Microsoft.Research.Vcc.Parsing
       }
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       return StatementGroup.Create(statements);
+    }
+
+    private Statement ParseBlockWithPureModifier(TokenSet followers, bool savedInSpecCode)
+    {
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      this.GetNextToken();
+      this.SkipOutOfSpecBlock(savedInSpecCode, TS.StatementStart | followers);
+      FunctionOrBlockContract contract = new FunctionOrBlockContract();
+      contract.IsPure = true;
+      this.ParseFunctionOrBlockContract(contract, followers, false, savedInSpecCode);
+      Statement stmt = this.ParseStatement(followers);
+      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+      VccBlockWithContracts blockWithContracts = new VccBlockWithContracts(new List<Statement>(1) { stmt }, slb);
+      this.compilation.ContractProvider.AssociateMethodWithContract(blockWithContracts, contract.ToMethodContract());
+      return blockWithContracts;      
     }
 
     private Statement ParseBlockWithContracts(TokenSet followers, bool savedInSpecCode)
