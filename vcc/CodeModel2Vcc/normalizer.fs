@@ -1111,9 +1111,7 @@ namespace Microsoft.Research.Vcc
 
     let embedStackArrays decls =
 
-      let embeddingStructs = ref []
-
-      
+      let embeddingStructs = ref []     
 
       let findStackArrays stmts =
         let stackArrays = ref []
@@ -1129,10 +1127,22 @@ namespace Microsoft.Research.Vcc
 
       let doFunction (fn:Function) =
         let embCount = ref 0
-        let varToDeclMap = new Dict<_,_>()
+        let asArrayDecls = new Dict<_,_>()
 
-        let fillVarToDeclMap self = function
-          | VarDecl(_,v,_) as decl -> varToDeclMap.Add(v, decl); false
+        let findAsArray self = function
+          // find the stack allocated arrays that are marked as_array
+          // also include those that are generated as part of the projection of arrays with
+          // initializer
+          | VarDecl(_,v,attr) as decl when hasCustomAttr "as_array" attr-> asArrayDecls.Add(v, true); false
+          | Macro(_, "=", [Ref(_, v); Block(_, VarDecl(_,vTemp,_) :: stmts, _)]) when asArrayDecls.ContainsKey v ->
+            let rec last = function
+              | [x] -> x
+              | _ :: xs -> last xs
+              | _ -> die()              
+            match last stmts with
+              | Ref(_, v') when v = v' -> asArrayDecls.Add(vTemp, true)
+              | _ -> ()
+            true
           | _ -> true
              
         let findAndEmbedStackArrays self = function
@@ -1143,10 +1153,7 @@ namespace Microsoft.Research.Vcc
               let fieldMap = new Dict<_,_>()
               let createField (td:TypeDecl) offset = function
                 | SAR(var, t, size, isSpec) ->
-                  let asArray =
-                    match varToDeclMap.TryGetValue var with
-                      | true, VarDecl(_,_,attr) when hasCustomAttr "as_array" attr -> [VccAttr("as_array", "")]
-                      | _ -> []
+                  let asArray = asArrayDecls.ContainsKey var
                   let f = { Token = td.Token
                             Name = var.Name
                             Type = Type.Array(t, size)
@@ -1154,7 +1161,7 @@ namespace Microsoft.Research.Vcc
                             IsSpec = isSpec
                             IsVolatile = false
                             Offset = FieldOffset.Normal(offset)
-                            CustomAttr = asArray
+                            CustomAttr = [VccAttr("as_array", "true")]
                             UniqueId = CAST.unique() } : Field
                   fieldMap.Add(var, f)
                   f
@@ -1210,7 +1217,7 @@ namespace Microsoft.Research.Vcc
 
         match fn.Body with
           | Some body -> 
-            body.SelfVisit(fillVarToDeclMap)
+            body.SelfVisit(findAsArray)
             fn.Body <- Some(body.SelfMap(findAndEmbedStackArrays))
           | None -> ()
           
