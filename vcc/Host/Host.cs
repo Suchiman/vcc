@@ -539,7 +539,7 @@ namespace Microsoft.Research.Vcc
   internal class HostEnvironment : SourceEditHostEnvironment {
 
     internal HostEnvironment(int pointerSizeInBits)
-      : base(new NameTable(), (byte)(pointerSizeInBits / 8)) {
+      : base(new NameTable(), new InternFactory(), (byte)(pointerSizeInBits / 8), null, false) {
       Debug.Assert(pointerSizeInBits == 32 || pointerSizeInBits == 64);
       this.peReader = new PeReader(this);
       string loc = typeof (object).Assembly.Location;
