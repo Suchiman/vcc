@@ -38,6 +38,8 @@ namespace MicrosoftResearch.VSPackage
 
         private static ErrorListProvider errorListProvider = new ErrorListProvider(VSPackagePackage.Instance);
         private static Regex VccErrorMessageRegEx = new Regex("(.*?)'(?<identifier>(.*?))'.*");
+        //// this just helps to determine where the first non whitespace character is in a line
+        private static Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*)");
 
         /// <summary>
         ///     This object represents the Verification Outputpane.
@@ -237,16 +239,76 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="text">Errormessage</param>
         /// <param name="line"></param>
         /// <param name="column"></param>
-        internal static void addErrorToErrorList(string document, string text, int line, int column)
+        internal static void addErrorToErrorList(string document, string text, int line)
         {
             ErrorTask errorTask = new ErrorTask();
             errorTask.ErrorCategory = TaskErrorCategory.Error;
             errorTask.Document = document;
             errorTask.Text = text;
             errorTask.Line = line - 1;
-            errorTask.Column = column - 1;
+            errorTask.Column = 0;
             errorTask.Navigate += new EventHandler(errorTask_Navigate);
             errorListProvider.Tasks.Add(errorTask);
+        }
+
+        /// <summary>
+        ///     Adds squigglies to the specified line. The line is underlined starting with the first nonwhitespace character.
+        /// </summary>
+        /// <param name="document"></param>
+        /// <param name="line"></param>
+        internal static void addMarker(string document, int line)
+        {
+            IVsUIShellOpenDocument uiShellOpenDocument = Package.GetGlobalService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
+            if (uiShellOpenDocument == null) { return; }
+
+            IVsUIHierarchy hierCaller = Package.GetGlobalService(typeof(IVsUIHierarchy)) as IVsUIHierarchy;
+            Guid logicalView = VSConstants.LOGVIEWID_Code;
+
+            IVsUIHierarchy hierOpen = null;
+            uint[] itemIdOpen = null;
+            IVsWindowFrame windowFrame = null;
+            int open = 0;
+
+            if (uiShellOpenDocument.IsDocumentOpen(     hierCaller,
+                                                        0,
+                                                        document,
+                                                        ref logicalView,
+                                                        0,
+                                                        out hierOpen,
+                                                        itemIdOpen,
+                                                        out windowFrame,
+                                                        out open
+                                                        ) == VSConstants.S_OK)
+            {
+                //// Document is open, get lines as IVsTextLines
+                if (windowFrame == null) { return; }
+                
+                object docData;
+                windowFrame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
+                IVsTextLines lines = docData as IVsTextLines;
+                
+                MarkerClient textMarkerClient = new MarkerClient("test");
+                IVsTextLineMarker[] textLineMarker = null;
+
+                int lineLength;
+                lines.GetLengthOfLine(line, out lineLength);
+
+                string lineText;
+                lines.GetLineText(line, 0, line, lineLength - 1, out lineText);
+
+                //// This is used to get the position of the first non-whitespace character
+                Match match = CodeLine.Match(lineText);
+
+                int a = lines.CreateLineMarker( (int)MARKERTYPE.MARKER_OTHER_ERROR,
+                                        line - 1,
+                                        match.Groups["whitespaces"].Length,
+                                        line - 1,
+                                        match.Groups["whitespaces"].Length + match.Groups["code"].Length,
+                                        textMarkerClient,
+                                        textLineMarker);
+
+                
+            }
         }
 
         static void errorTask_Navigate(object sender, EventArgs e)
@@ -286,6 +348,9 @@ namespace MicrosoftResearch.VSPackage
                     }
                 }
 
+
+                /* could be useful if not underlining whole lines
+                
                 //// Get length of identifier if there is one (else set it to 1)
                 int identifierLength;
                 Match match = VccErrorMessageRegEx.Match(errorTask.Text);
@@ -297,8 +362,9 @@ namespace MicrosoftResearch.VSPackage
                 {
                     identifierLength = 1;
                 }
+                */
 
-                //// Navigate to line and column
+                //// Navigate to line
                 IVsTextManager textManager = Package.GetGlobalService(typeof(VsTextManagerClass)) as IVsTextManager;
                 if (textManager == null) { return; }
                 textManager.NavigateToLineAndColumn(    buffer, 
@@ -306,7 +372,7 @@ namespace MicrosoftResearch.VSPackage
                                                         errorTask.Line, 
                                                         errorTask.Column, 
                                                         errorTask.Line, 
-                                                        errorTask.Column + identifierLength);
+                                                        errorTask.Column);
             }
         }
     }

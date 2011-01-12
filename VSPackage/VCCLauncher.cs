@@ -82,7 +82,7 @@ namespace MicrosoftResearch.VSPackage
                     //// This line is an errormessage.
                     if (!errorOccurred)
                     {
-                        VSIntegration.WriteToPane("An Error occured. See Error List for details.\n\n");
+                        VSIntegration.WriteToPane("\nAn Error occured. See Error List for details.\n\n");
                         errorOccurred = true;
                     }
 
@@ -90,9 +90,9 @@ namespace MicrosoftResearch.VSPackage
                     Match match = VCCErrorRegEx.Match(e.Data);
                     VSIntegration.addErrorToErrorList(  match.Groups["path"].Value,
                                                         match.Groups["errormessage"].Value,
-                                                        Int32.Parse(match.Groups["line"].Value),
-                                                        match.Groups["column"] != null ? Int32.Parse(match.Groups["column"].Value) : 0
+                                                        Int32.Parse(match.Groups["line"].Value)
                                                         );
+
                 }
                 else if (!e.Data.StartsWith("Exiting"))
                 {
