@@ -114,6 +114,7 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MarkerClient.cs" />
     <Compile Include="VCCOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>

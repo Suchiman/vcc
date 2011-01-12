@@ -71,6 +71,10 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         private void ShowToolWindow(object sender, EventArgs e)
         {
+
+            VSIntegration.addMarker(VSIntegration.ActiveFileFullName, 13);
+
+            /*
             // Get the instance number 0 of this tool window. This window is single instance so this instance
             // is actually the only one.
             // The last flag is set to true so that if the tool window does not exists it will be created.
@@ -81,6 +85,9 @@ namespace MicrosoftResearch.VSPackage
             }
             IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
+            
+             */
+            
         }
 
         /// <summary>
