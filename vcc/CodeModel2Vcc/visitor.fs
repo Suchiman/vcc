@@ -1146,8 +1146,6 @@ namespace Microsoft.Research.Vcc
       member this.Visit (assumeStatement:IAssumeStatement) : unit =
         stmtRes <- C.Expr.MkAssume (this.DoExpression (assumeStatement.Condition))
 
-      member this.Visit (baseClassReference:IBaseClassReference) : unit = assert false
-
       member this.Visit (bitwiseAnd:IBitwiseAnd) : unit =
         this.DoBinary ("&", bitwiseAnd)
 
