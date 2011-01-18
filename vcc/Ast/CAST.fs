@@ -205,8 +205,8 @@ module Microsoft.Research.Vcc.CAST
         | Macro(_, "labeled_invariant", [Macro(_, "", _); i]) -> "invariant " + i.ToString()
         | Macro(_, "labeled_invariant", [Macro(_, lbl, _); i]) -> "invariant " + lbl + ": " + i.ToString()
         | e -> "invariant " + e.ToString()
-      this.ToString () + " {\n  " + String.concat ";\n  " [for f in this.Fields -> f.ToString ()] + ";\n" +
-        String.concat "" [for i in this.Invariants -> prInv i + ";\n" ] + "}\n"
+      this.ToString () + " {\r\n  " + String.concat ";\r\n  " [for f in this.Fields -> f.ToString ()] + ";\r\n" +
+        String.concat "" [for i in this.Invariants -> prInv i + ";\r\n" ] + "}\r\n"
   
   // TODO: this attribute shouldn't be needed here, but is      
   and [<StructuralEquality; NoComparison>] Type =
@@ -587,13 +587,13 @@ module Microsoft.Research.Vcc.CAST
       if this.IsSpec then wr "spec " else ()
       this.RetType.WriteTo b; wr " "
       doArgsAndTArgsb b (fun (p:Variable) -> p.WriteTo b) (fun (tp:TypeVariable) -> tp.WriteTo b) (this.Name) this.Parameters this.TypeParameters 
-      wr "\n"
+      wr "\r\n"
       
       let doList pref lst =
         for (e:Expr) in lst do
           wr "  "; wr pref; wr " ";
           e.WriteTo System.Int32.MinValue showTypes b
-          wr ";\n";
+          wr ";\r\n";
       doList "requires" (this.Requires)
       doList "ensures" (this.Ensures)
       doList "reads" (this.Reads)
@@ -1135,83 +1135,83 @@ module Microsoft.Research.Vcc.CAST
                   | [] -> wr "@"; wr op
                   | _ -> doArgs ("@" + op) args
           | VarDecl (_, v, _) ->
-            wr (v.Type.ToString()); wr " "; wr v.Name; wr ";\n"
+            wr (v.Type.ToString()); wr " "; wr v.Name; wr ";\r\n"
           | VarWrite (_, [v], e) ->
-            wr v.Name; wr " := "; fe e; wr ";\n"
+            wr v.Name; wr " := "; fe e; wr ";\r\n"
           | VarWrite (_, vs, e) -> 
             let bogus = { Type = Type.Void; Token = Token.NoToken } : ExprCommon
-            doArgs "" (List.map (fun v -> Ref(bogus, v)) vs); wr " = "; fe e; wr ";\n"
+            doArgs "" (List.map (fun v -> Ref(bogus, v)) vs); wr " = "; fe e; wr ";\r\n"
           | MemoryWrite (_, d, s) ->
-            wr "*"; fe d; wr " := "; fe s; wr ";\n"
-          | Goto (_, l) -> wr "goto "; wr l.Name; wr ";\n"
-          | Label (_, l) -> wr l.Name; wr ":\n"
-          | Assert (_, e, trigs) -> wr "assert "; fe e; wr ";\n"
-          | Assume (_, e) -> wr "assume "; fe e; wr ";\n"
-          | Return (_, Some (e)) -> wr "return "; fe e; wr ";\n"
-          | Return (_, None) -> wr "return;\n"
+            wr "*"; fe d; wr " := "; fe s; wr ";\r\n"
+          | Goto (_, l) -> wr "goto "; wr l.Name; wr ";\r\n"
+          | Label (_, l) -> wr l.Name; wr ":\r\n"
+          | Assert (_, e, trigs) -> wr "assert "; fe e; wr ";\r\n"
+          | Assume (_, e) -> wr "assume "; fe e; wr ";\r\n"
+          | Return (_, Some (e)) -> wr "return "; fe e; wr ";\r\n"
+          | Return (_, None) -> wr "return;\r\n"
           | If (_, None, cond, th, el) ->
-            wr "if ("; fe cond; wr ")\n"; f th; doInd ind; wr "else\n"; f el
+            wr "if ("; fe cond; wr ")\r\n"; f th; doInd ind; wr "else\r\n"; f el
           | If (_, Some cl, cond, th, el) ->
-            wr "if as_high("; fe cl; wr ", "; fe cond;  wr ")\n"; f th; doInd ind; wr "else\n"; f el
+            wr "if as_high("; fe cl; wr ", "; fe cond;  wr ")\r\n"; f th; doInd ind; wr "else\r\n"; f el
           | Loop (_, invs, writes, variants, body) ->
-            wr "loop\n";
+            wr "loop\r\n";
             for i in invs do
               doInd (ind + 4)
               wr "invariant ";
               fe i;
-              wr ";\n"
+              wr ";\r\n"
             for w in writes do
               doInd (ind + 4)
               wr "writes ";
               fe w;
-              wr ";\n"
+              wr ";\r\n"
             for r in variants do
               doInd (ind + 4)
               wr "decreases ";
               fe r;
-              wr ";\n"
+              wr ";\r\n"
             f body        
           | Atomic (c, args, body) ->
             doArgs "atomic" args
             f (Block (c, [body], None))
           | Block (_, stmts, None) ->
-            wr "{\n";
+            wr "{\r\n";
             for s in stmts do 
               match s with
                 | Macro (_, _, _) -> 
                   f s
-                  wr "\n"
+                  wr "\r\n"
                 | _ -> f s
             doInd ind
-            wr "}\n"
+            wr "}\r\n"
           | Block (_, stmts, Some cs) ->
-            wr "block // with contracts, not correct \n";
+            wr "block // with contracts, not correct \r\n";
             let macroPrint prep s app =
               match s with
                 | Macro(_, _, _) ->
                   wr prep; f s; wr app
                 | _ -> wr prep; f s; wr app // Should do something else, too many line breaks.
             for s in cs.Requires do
-              macroPrint "requires(" s ")\n"
+              macroPrint "requires(" s ")\r\n"
             for s in cs.Ensures do
-              macroPrint "ensures(" s ")\n"
+              macroPrint "ensures(" s ")\r\n"
             for s in cs.Reads do
-              macroPrint "reads(" s ")\n"
+              macroPrint "reads(" s ")\r\n"
             for s in cs.Writes do
-              macroPrint "writes(" s ")\n"
+              macroPrint "writes(" s ")\r\n"
             for s in cs.Decreases do
-              macroPrint "variant(" s ")\n" // Is this right?
-            wr "{\n"
+              macroPrint "variant(" s ")\r\n" // Is this right?
+            wr "{\r\n"
             for s in stmts do
-              macroPrint "" s "\n"
+              macroPrint "" s "\r\n"
             doInd ind
-            wr "}\n"
+            wr "}\r\n"
           | Stmt (_, e) ->
             wr "stmt "
             fe e
-            wr ";\n"
+            wr ";\r\n"
           | Comment (_, s) ->
-            wr "// "; wr s; wr "\n"
+            wr "// "; wr s; wr "\r\n"
           | UserData (_, o) ->
             wr "userdata("; wr (o.ToString()); wr ") : "; wr (o.GetType().Name)
           | SizeOf(_, t) ->
@@ -1323,19 +1323,19 @@ module Microsoft.Research.Vcc.CAST
     member this.WriteTo showTypes b =
       let wr = wrb b
       match this with
-        | Global (v, None) -> wr (v.ToString() + ";\n")
-        | Global (v, Some e) -> wr (v.ToString()); wr " = "; e.WriteTo System.Int32.MinValue false b; wr ";\n"
+        | Global (v, None) -> wr (v.ToString() + ";\r\n")
+        | Global (v, Some e) -> wr (v.ToString()); wr " = "; e.WriteTo System.Int32.MinValue false b; wr ";\r\n"
         | TypeDecl d -> wr (d.Declaration())
         | FunctionDecl d -> 
           wr (d.ToStringWT(showTypes))
           match d.Body with
             | Some e ->
               e.WriteTo 0 showTypes b
-              wr "\n"
+              wr "\r\n"
             | None -> ()
-        | Axiom e -> wr "axiom "; e.WriteTo System.Int32.MinValue showTypes b; wr ";\n"
+        | Axiom e -> wr "axiom "; e.WriteTo System.Int32.MinValue showTypes b; wr ";\r\n"
         | GeneratedAxiom(e, origin) ->
-          wr "axiom (from "; wr (origin.ToString()); wr ") "; e.WriteTo System.Int32.MinValue showTypes b; wr ";\n"
+          wr "axiom (from "; wr (origin.ToString()); wr ") "; e.WriteTo System.Int32.MinValue showTypes b; wr ";\r\n"
     
     member this.MapExpressions f =
       let pf = f true
