@@ -186,10 +186,10 @@ module Ast =
           proto this.ArgTypes
         | Expand (vars, body) ->
           proto vars +
-            "\n  { " + body.ToString() + " }"
+            "\r\n  { " + body.ToString() + " }"
         | ImpliedBy (vars, body) ->
           proto vars +
-            "\n  <==> " + body.ToString()
+            "\r\n  <==> " + body.ToString()
   
   and FuncBody =
     | Uninterpreted
@@ -251,14 +251,14 @@ module Ast =
     member this.WriteTo sb =
       let wr = wrb sb
       wr this.Label
-      wr ":\n"
+      wr ":\r\n"
       for c in this.Cmds do
         wr "  "
         c.WriteTo sb
-        wr "\n"
+        wr "\r\n"
       wr "  goto {"
       wr (String.concat ", " (this.Exits |> List.map (fun b -> b.Label)))
-      wr "}\n"
+      wr "}\r\n"
       
     override this.ToString() = toString (this.WriteTo)
           
@@ -269,9 +269,9 @@ module Ast =
     }
 
     override this.ToString() =
-     "procedure " + this.Name + "()\n{\n" +
-       (this.Blocks |> List.map (fun b -> b.ToString()) |> String.concat "\n") +
-       "\n}\n"
+     "procedure " + this.Name + "()\r\n{\r\n" +
+       (this.Blocks |> List.map (fun b -> b.ToString()) |> String.concat "\r\n") +
+       "\r\n}\r\n"
         
   
   let (|PForall|_|) = function
