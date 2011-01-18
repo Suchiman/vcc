@@ -20,7 +20,8 @@ typedef struct t_vp{
 
 `
 Verification of t_th#adm succeeded.
-`#include <vcc2test.h>
+`
+#include <vcc2test.h>
 
 struct foo {
     vcc(as_array) unsigned int arr[20];

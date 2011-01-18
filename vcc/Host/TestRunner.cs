@@ -113,132 +113,66 @@ namespace Microsoft.Research.Vcc
         return RunTestSuite(testFile.DirectoryName, testFile.Name, reader, commandLineOptions);
     }
 
-    static bool RunTestSuite(string directoryName, string suiteName, TextReader instream, VccOptions commandLineOptions) {
+    static bool RunTestSuite(string directoryName, string suiteName, StreamReader instream, VccOptions commandLineOptions) {
       System.Diagnostics.Debug.Listeners.Remove("Default");
       var errorHandler = new CciErrorHandler(commandLineOptions);
       StringBuilder source = null;
       StringBuilder expectedOutput = null;
       StringBuilder actualOutput = null;
-      List<string> suiteParameters = new List<string>();
       List<string> compilerParameters;
-      List<string> testCaseParameters = null;
       int errors = 0;
       int testCaseCount = 0;
+      var WhiteSpaceChars = " \r\n\t".ToCharArray();
+
       try {
-        int ch = instream.Read();
         int line = 1;
-        while (ch >= 0) {
-          compilerParameters = new List<string>(suiteParameters);
-          if (ch == '`') {
-            ch = instream.Read();
-            bool parametersAreForEntireSuite = false;
-            if (ch == '`') {
-              parametersAreForEntireSuite = true;
-              ch = instream.Read();
-            }
-            while (ch == '/') {
-              //compiler parameters
-              StringBuilder cParam = new StringBuilder();
-              do {
-                cParam.Append((char)ch);
-                ch = instream.Read();
-              } while (ch != ' ' && ch != 0 && ch != 10 && ch != 13);
-              while (ch == ' ') {
-                ch = instream.Read();
-              }
-              for (int i = cParam.Length - 1; i >= 0; i--) {
-                if (!Char.IsWhiteSpace(cParam[i])) break;
-                cParam.Length = i;
-              }
-              string cp = cParam.ToString();
-              compilerParameters.Add(cp);
-            }
-            if (parametersAreForEntireSuite)
-              suiteParameters.AddRange(compilerParameters);
-            if (ch == 13) ch = instream.Read();
-            if (ch == 10) {
-              line++;
-              ch = instream.Read();
-              if (parametersAreForEntireSuite && ch == '`') continue;
-            }
-          }
-          if (ch == ':') {
-            ch = instream.Read();
-            while (ch == '=') {
-              //test case parameters
-              StringBuilder tcParam = new StringBuilder();
-              ch = instream.Read(); //discard =
-              while (ch != '=' && ch != 0 && ch != 10 && ch != 13) {
-                tcParam.Append((char)ch);
-                ch = instream.Read();
-              }
-              for (int i = tcParam.Length - 1; i >= 0; i--) {
-                if (!Char.IsWhiteSpace(tcParam[i])) break;
-                tcParam.Length = i;
-              }
-              if (testCaseParameters == null) testCaseParameters = new List<string>();
-              testCaseParameters.Add(tcParam.ToString());
-            }
-            if (ch == 13) ch = instream.Read();
-            if (ch == 10) {
-              ch = instream.Read();
-              line++;
-            }
-          }
+
+        while (!instream.EndOfStream) {
+          var l = instream.ReadLine(); // strips Unix or Dos line ending
+          line++;
+
           source = new StringBuilder();
-          while (ch >= 0 && ch != '`') {
-            source.Append((char)ch);
-            ch = instream.Read();
-            if (ch == 10) line++;
+          if (l.StartsWith("`") || l.StartsWith("//`")) {
+            string optionString = l.Substring(l.IndexOf('`') + 1);
+            compilerParameters = optionString.Split(WhiteSpaceChars, StringSplitOptions.RemoveEmptyEntries).ToList<string>();
+          } else {
+            compilerParameters = new List<string>();
+            source.Append(l);
+            source.Append("\r\n");
           }
-          if (ch < 0) {
+
+          while (!instream.EndOfStream) {
+            l = instream.ReadLine();
+            line++;
+            if (l == "`" || l == "/*`")
+              break;
+            source.Append(l);
+            source.Append("\r\n");
+          }
+
+          if (instream.EndOfStream) {
             Console.WriteLine("The last test case in the suite has not been provided with expected output");
             errors++;
             break;
           }
-          ch = instream.Read();
-          if (ch == 13) ch = instream.Read();
-          if (ch == 10) {
-            line++;
-            ch = instream.Read();
-          }
+          
           int errLine = line;
           expectedOutput = new StringBuilder();
-          while (ch >= 0 && ch != '`') {
-            expectedOutput.Append((char)ch);
-            ch = instream.Read();
-            if (ch == 10) line++;
-          }
-          if (expectedOutput.Length > 0 && expectedOutput[expectedOutput.Length - 1] == 10)
-            expectedOutput.Length -= 1;
-          if (expectedOutput.Length > 0 && expectedOutput[expectedOutput.Length - 1] == 13)
-            expectedOutput.Length -= 1;
-          ch = instream.Read();
-
-          // Allow for:
-          // void foo() {}
-          // /*`
-          // Verification of foo succeeded.
-          // `*/
-          if (ch == '*') {
-            ch = instream.Read();
-            if (ch != '/') {
-              Console.WriteLine("Expecting / after `*");
-              errors++;
-              break;
-            }
-            while (source.Length > 0 && source[source.Length - 1] == 10 || source[source.Length - 1] == 13)
-              source.Length -= 1;
-            if (source.Length > 2 && source[source.Length - 1] == '*' && source[source.Length - 2] == '/')
-              source.Length -= 2;
-            ch = instream.Read();
-          }
-
-          if (ch == 13) ch = instream.Read();
-          if (ch == 10) {
-            ch = instream.Read();
+          while (!instream.EndOfStream) {
+            l = instream.ReadLine();
             line++;
+            if (l == "`" || l == "`*/")
+              break;
+            expectedOutput.Append(l);
+            expectedOutput.Append("\r\n");
           }
+
+          if (l != "`" && l != "`*/") {
+            Console.WriteLine("The last test case in the suite has been provided with incomplete expected output");
+            errors++;
+            break;
+          }
+
           actualOutput = new StringBuilder();
           TextWriter savedOut = Console.Out;
           Console.SetOut(new StringWriter(actualOutput));
@@ -272,18 +206,15 @@ namespace Microsoft.Research.Vcc
 
           errorHandler.Reset();
           VccCommandLineHost.ErrorHandler.ResetReportedErrors();
-          testCaseParameters = null;
           Console.SetOut(savedOut);
           System.Diagnostics.Debug.Listeners.Remove(myWriter);
-          if (actualOutput.Length > 0 && actualOutput[actualOutput.Length - 1] == 10)
-            actualOutput.Length -= 1;
-          if (actualOutput.Length > 0 && actualOutput[actualOutput.Length - 1] == 13)
-            actualOutput.Length -= 1;
           Regex rx = new Regex(@"[a-zA-Z]:\\.*?\\(.*)" + vccSplitSuffix + @"[0-9_]*.c\(");
           string actualOutputRepl = rx.Replace(actualOutput.ToString(), "testcase(");
+          
           if (!expectedOutput.ToString().Equals(actualOutputRepl)) {
             ReportError(suiteName, source, expectedOutput, actualOutputRepl, errLine, errors++ == 0);
           }
+
         }
         instream.Close();
         if (errors == 0)

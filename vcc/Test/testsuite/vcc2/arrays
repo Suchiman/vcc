@@ -686,7 +686,8 @@ void foo()
 }
 `
 Verification of foo succeeded.
-`#include "vcc.h"
+`
+#include "vcc.h"
 
 #define CONCAT(x,y) x##y
 #define TEST1(x,...) \
@@ -950,7 +951,7 @@ void bar()
   b[5] = 1;
   _(assert tmp == foo(a, 10))
  }
- `
+`
 Verification of foo succeeded.
 Verification of bar succeeded.
 Verification of foo#reads succeeded.
