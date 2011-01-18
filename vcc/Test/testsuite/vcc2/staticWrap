@@ -255,7 +255,8 @@ struct A4 {
 testcase(9,36) : error VC9662: Explicit reference to owns-set of type 'A2', which is static. Use keeps(...) or mark 'A2' with vcc(dynamic_owns).
 testcase(16,37) : error VC9662: Explicit reference to owns-set of type 'A3', which is static. Use keeps(...) or mark 'A3' with vcc(dynamic_owns).
 testcase(23,66) : error VC9662: Explicit reference to owns-set of type 'A4', which is static. Use keeps(...) or mark 'A4' with vcc(dynamic_owns).
-`#include "vcc.h"
+`
+#include "vcc.h"
 
 struct S {
     int a;

@@ -335,7 +335,8 @@ void foo(PTEST a)
 Verification of Fun succeeded.
 Verification of foo succeeded.
 Verification of Fun#reads succeeded.
-`#include "vcc.h"
+`
+#include "vcc.h"
 
 void foo(int x) {
     spec(int map[int];)

@@ -184,7 +184,8 @@ void bar(spec(int i)) {
 `
 Verification of foo succeeded.
 Verification of bar succeeded.
-`#include <vcc.h>
+`
+#include <vcc.h>
 
 void foo(int x, int y spec(out int o1) spec(out int o2))
   ensures(o1 == x && o2 == y)
