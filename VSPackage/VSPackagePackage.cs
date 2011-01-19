@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
-using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
 
@@ -35,7 +34,7 @@ namespace MicrosoftResearch.VSPackage
     [Guid(GuidList.guidVSPackagePkgString)]
     public sealed class VSPackagePackage : Package
     {
-
+        
         /// <summary>
         ///     this helps to get the instance of the Packageclass from outside this class.
         ///     constructor is still public because Visual Studio calls the constructor
@@ -72,7 +71,7 @@ namespace MicrosoftResearch.VSPackage
         private void ShowToolWindow(object sender, EventArgs e)
         {
 
-            VSIntegration.addMarker(VSIntegration.ActiveFileFullName, 13);
+            VSIntegration.addErrorToErrorList(VSIntegration.ActiveFileFullName, "test", 14);
 
             /*
             // Get the instance number 0 of this tool window. This window is single instance so this instance
