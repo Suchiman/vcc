@@ -34,7 +34,9 @@ namespace MicrosoftResearch.VSPackage
         internal static void LaunchVCC(string arguments)
         {
             errorOccurred = false;
-            VSIntegration.clearErrorList();
+
+            VSIntegration.initializeErrorList();
+
             //// Prepare VCC-Process, execute it and read its Output            
             ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"",vccPath), arguments);
             psi.UseShellExecute = false;
