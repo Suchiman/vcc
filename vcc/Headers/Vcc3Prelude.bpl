@@ -504,6 +504,25 @@ function $is_mutable_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 function $array_range(S:$state, p:$ptr, T:$ctype, sz:int) : $ptrset
   { $array_range_no_state(p, T, sz) }
 
+function $arrays_disjoint(a:$ptr, al:int, b:$ptr, bl:int) : bool;
+function $arrays_disjoint_id(a:$ptr, al:int, b:$ptr, bl:int, idx:$ptr) : int;
+
+axiom (forall a:$ptr, al:int, b:$ptr, bl:int ::
+  {$arrays_disjoint(a, al, b, bl)}
+  $byte_ptr_subtraction(b, $idx(a, al)) > 0 ||
+  $byte_ptr_subtraction(a, $idx(b, bl)) > 0 ==>
+  $arrays_disjoint(a, al, b, bl));
+
+axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
+  {$arrays_disjoint(a, al, b, bl), $idx(a, i)}
+  $arrays_disjoint(a, al, b, bl) &&
+  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx(a, i)) == 0);
+
+axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
+  {$arrays_disjoint(a, al, b, bl), $idx(b, i)}
+  $arrays_disjoint(a, al, b, bl) &&
+  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx(a, i)) == 1);
+
 function {:inline true} $mem_range(s:$state, p:$ptr, sz:int) : int
   { $mem_range_heap($heap(s), p, sz) }
 function  $mem_range_heap(s:$object, p:$ptr, sz:int) : int;
@@ -1856,6 +1875,8 @@ axiom (forall p:$ptr, q:$ptr, r:$ptr :: {$extent_hint(p, q), $extent_hint(q, r)}
   $extent_hint(p, q) && $extent_hint(q, r) ==> $extent_hint(p, r));
 axiom (forall p:$ptr, f:$field :: {$dot(p, $as_composite_field(f))}
   $extent_hint($dot(p, $as_composite_field(f)), p));
+axiom (forall p:$ptr, i:int :: {$idx(p, i)}
+  $extent_hint($idx(p, i), p));
 // axiom (forall p:$ptr :: {$typ(p)} !$is_primitive($typ(p)) ==> $extent_hint(p, p));
 
 // ----------------------------------------------------------------------------
