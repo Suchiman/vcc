@@ -175,6 +175,7 @@ namespace Microsoft.Research.Vcc
                   "account_claim", "Spp";
                   "is_ghost_ptr", "p";
                   "admissibility_start", "t";
+                  "arrays_disjoint", "pipi";
                 ]
     dict
 

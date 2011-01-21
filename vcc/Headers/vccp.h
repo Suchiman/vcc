@@ -88,6 +88,8 @@ _(bool \malloc_root(\object);)
 _(bool \object_root(\object);)
 _(bool \union_active(\object);)
 
+_(bool \arrays_disjoint(\object, \size_t, \object, \size_t);)
+
 _(template<typename T> bool \shallow_eq(T s, T t);)
 _(template<typename T> bool \deep_eq(T s, T t);)
 
