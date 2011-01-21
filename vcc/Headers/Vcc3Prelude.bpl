@@ -245,7 +245,7 @@ function {:inline true} $emb(S:$state,p:$ptr) : $ptr
 function $emb0(p:$ptr) : $ptr
   { if $is_primitive($typ(p)) then $base(p) else p }
 
-function $is_semi_sequential_field($field) : bool;
+function $is_semi_sequential_field(f:$field) : bool;
 function $is_sequential_field($field) : bool;
 function $is_volatile_field($field) : bool;
 function $as_primitive_field($field) : $field;
@@ -524,6 +524,10 @@ axiom (forall S0, S1:$state, p:$ptr, sz:int ::
   (forall i:int :: {$dont_instantiate_int(i)} 
     $in_range(0, i, sz - 1) ==> $mem(S0, $idx(p, i)) == $mem(S1, $idx(p, i))) ==>
   $mem_range(S0, p, sz) == $mem_range(S1, p, sz));
+
+axiom (forall S0, S1:$state, p:$ptr, f:$field ::
+  {$call_transition(S0, S1), $rd(S1, p, f)}
+  $instantiate_int($rd(S0, p, f)));
 
 // $index_within(p, arr) = ($ref(p) - $ref(arr)) / $sizeof($typ(arr))
 // To avoid using division, we define a category of simple indices. 
@@ -1062,7 +1066,7 @@ function {:inline true} $not_written(S0:$state, p:$ptr, W:$ptrset) : bool
 function {:inline false} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
   { (forall p:$ptr :: {$root(S1, p)} $not_written(S0, p, W) ==> $root(S0, p) == $root(S1, p)) &&
     (forall p:$ptr, f:$field :: {$rdtrig(S1, p, f)} $not_written(S0, p, W) && !$in($dot(p, f), W) ==> 
-           ($is_sequential_field(f) || !$closed(S0, p) || $is_sequential_field(f) ==> $rd(S0, p, f) == $rd(S1, p, f))) &&
+           ($is_sequential_field(f) || $is_semi_sequential_field(f) || !$closed(S0, p) ==> $rd(S0, p, f) == $rd(S1, p, f))) &&
 
     (forall p:$ptr :: {$f_timestamp(S1)[p]} 
       ($not_written(S0, p, W) ==>
