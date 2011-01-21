@@ -817,7 +817,7 @@ namespace Microsoft.Research.Vcc
                   if f.IsVolatile then
                     cond codeTh ("{0} is mutable " + msg + "(accessing volatile field " + f.Name + ")" + suff) "_vcc_mutable" [cState; p']
                   else
-                    if vcc3 then
+                    if vcc3 && not f.Type.IsComposite then
                       cond codeTh ("{0} is thread local " + msg + "(accessing field " + f.Name + ")" + suff) "_vcc_thread_local" [cState; p']
                     else
                       cond codeTh ("{0} is thread local" + suff) "_vcc_thread_local2" [cState; p]
