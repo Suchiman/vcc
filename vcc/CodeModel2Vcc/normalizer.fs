@@ -1161,7 +1161,7 @@ namespace Microsoft.Research.Vcc
                             IsSpec = isSpec
                             IsVolatile = false
                             Offset = FieldOffset.Normal(offset)
-                            CustomAttr = [VccAttr("as_array", "true")]
+                            CustomAttr = if helper.Options.Vcc3 then [] else [VccAttr("as_array", "true")]
                             UniqueId = CAST.unique() } : Field
                   fieldMap.Add(var, f)
                   f
