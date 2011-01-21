@@ -451,7 +451,7 @@ function $idx(p:$ptr, i:int) : $ptr
   }
 
 axiom (forall p:$ptr, i:int :: {$addr($idx(p, i))}
-  $is_proper($idx(p, i)) ==>
+//  $is_proper($idx(p, i)) ==>
     $addr($idx(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
 axiom (forall p:$ptr, i:int :: {$idx(p, i)}
   $is_proper($idx(p, i)) ==>
