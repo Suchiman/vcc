@@ -445,9 +445,14 @@ function {:inline true} $def_ghost_arr_field(partp:$ctype, f:$field, tp:$ctype, 
     true
   }
 
-function $idx(p:$ptr, i:int) : $ptr
+function {:inline true} $idx_inline(p:$ptr, i:int) : $ptr
   {
     $dot($base(p), $field_plus($field(p), i))
+  }
+
+function $idx(p:$ptr, i:int) : $ptr
+  {
+    $idx_inline(p, i)
   }
 
 axiom (forall p:$ptr, i:int :: {$addr($idx(p, i))}
@@ -462,7 +467,10 @@ axiom (forall p:$ptr, i:int :: {$idx(p, i)}
   && $is_proper($idx(p, i)) ==> $in_range_phys_ptr($idx(p, i)));
 
 function $field_plus($field, int) : $field;
+function $field_plus0($field, int) : $field;
+
 axiom (forall f:$field, i:int :: {$field_plus(f, i)}
+  $field_plus(f, i) == $field_plus0($field_arr_root(f), $field_arr_index(f) + i) &&
   $field_kind($field_plus(f, i)) == $field_kind(f) &&
   $field_arr_root($field_plus(f, i)) == $field_arr_root(f) &&
   $field_arr_index($field_plus(f, i)) == $field_arr_index(f) + i &&
@@ -514,14 +522,14 @@ axiom (forall a:$ptr, al:int, b:$ptr, bl:int ::
   $arrays_disjoint(a, al, b, bl));
 
 axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
-  {$arrays_disjoint(a, al, b, bl), $idx(a, i)}
+  {$arrays_disjoint(a, al, b, bl), $idx_inline(a, i)}
   $arrays_disjoint(a, al, b, bl) &&
-  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx(a, i)) == 0);
+  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx_inline(a, i)) == 0);
 
 axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
-  {$arrays_disjoint(a, al, b, bl), $idx(b, i)}
+  {$arrays_disjoint(a, al, b, bl), $idx_inline(b, i)}
   $arrays_disjoint(a, al, b, bl) &&
-  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx(a, i)) == 1);
+  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx_inline(a, i)) == 1);
 
 function {:inline true} $mem_range(s:$state, p:$ptr, sz:int) : int
   { $mem_range_heap($heap(s), p, sz) }
