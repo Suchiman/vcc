@@ -191,9 +191,10 @@
 
   </Commands>
 
-
-
-
+  <KeyBindings>
+    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyActiveFile" key1="V" key2="F" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidCancel" key1="V" key2="C" mod1="ALT" mod2="ALT" />
+  </KeyBindings>
 
   <Symbols>
     <!-- This is the package guid. -->
