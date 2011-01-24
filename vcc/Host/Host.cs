@@ -273,8 +273,39 @@ namespace Microsoft.Research.Vcc
       set { errorCount = value; }
     }
 
+    static bool IsNewSyntax(string filename)
+    {
+      char[] buf = new char[4096];
+      int len = 0;
+
+      using (var sr = File.OpenText(filename)) {
+        len = sr.ReadBlock(buf, 0, buf.Length);
+      }
+      for (int i = 0; i < len - 2; ++i) {
+        switch (buf[i]) {
+          case ' ':
+          case '\t':
+          case '\n':
+          case '\r':
+            if (buf[i + 1] == '_' && buf[i + 2] == '(') {
+              return true;
+            }
+            break;
+        }
+      }
+      return false;
+    }
+
     static void RunPlugin(VccOptions commandLineOptions) {
       bool errorsInPreprocessor;
+
+      if (commandLineOptions.DetectSyntax && !commandLineOptions.NewSyntax) {
+        foreach (var fn in commandLineOptions.FileNames) {
+          if (IsNewSyntax(fn))
+            commandLineOptions.NewSyntax = true;
+        }
+      }
+
       var processedFiles = CCompilerHelper.Preprocess(commandLineOptions, out errorsInPreprocessor);
       if (errorsInPreprocessor) return;
       using (var fnEnum = commandLineOptions.FileNames.GetEnumerator())

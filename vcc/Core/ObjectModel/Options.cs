@@ -53,6 +53,7 @@ namespace Microsoft.Research.Vcc
     public bool PrintCEVModel;
     public int PointerSize = 64;
     public bool NewSyntax;
+    public bool DetectSyntax;
     public bool Vcc3;
     public string PreludePath = "VccPrelude.bpl"; // we might want an option for setting it
     public bool InferTriggers;
@@ -124,6 +125,7 @@ namespace Microsoft.Research.Vcc
       this.DumpTriggers = other.DumpTriggers;
       this.KeepPreprocessorFiles = other.KeepPreprocessorFiles;
       this.OpsAsFunctions = other.OpsAsFunctions;
+      this.DetectSyntax = other.DetectSyntax;
     }
   }
 
@@ -258,6 +260,7 @@ namespace Microsoft.Research.Vcc
           }
 
           return
+            this.TryParseNamedBoolean(arg, "detectsyntax", "ds", ref this.options.DetectSyntax) ||
             this.TryParseNamedBoolean(arg, "dumpboogie", "db", ref this.options.DumpBoogie) ||
             this.TryParseNamedInteger(arg, "dumptriggers", "dt", ref this.options.DumpTriggers);
 
