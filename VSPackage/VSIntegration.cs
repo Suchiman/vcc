@@ -326,14 +326,16 @@ namespace MicrosoftResearch.VSPackage
                 //// This is used to get the position of the first non-whitespace character
                 Match match = CodeLine.Match(lineText);
 
-                lines.CreateLineMarker((int)MARKERTYPE.MARKER_OTHER_ERROR,
-                        line - 1,
-                        match.Groups["whitespaces"].Length,
-                        line - 1,
-                        match.Groups["whitespaces"].Length + match.Groups["code"].Length,
-                        textMarkerClient,
-                        textLineMarker);
+                CreateLineMarker createLineMarker = new CreateLineMarker( lines,
+                                                                (int)MARKERTYPE.MARKER_OTHER_ERROR,
+                                                                line - 1,
+                                                                match.Groups["whitespaces"].Length,
+                                                                line - 1,
+                                                                match.Groups["whitespaces"].Length + match.Groups["code"].Length,
+                                                                textMarkerClient,
+                                                                textLineMarker);
 
+                ThreadHelper.Generic.Invoke( createLineMarker.doIt );
 
                 if (textLineMarker.Length > 0 && textLineMarker[0] != null)
                 {
