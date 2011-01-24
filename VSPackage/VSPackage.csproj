@@ -116,6 +116,7 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CreateLineMarker.cs" />
     <Compile Include="MarkerClient.cs" />
     <Compile Include="VCCOptionPage.cs">
       <SubType>Component</SubType>
