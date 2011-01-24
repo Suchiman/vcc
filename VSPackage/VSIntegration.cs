@@ -12,7 +12,7 @@ using Microsoft.VisualStudio.Package;
 namespace MicrosoftResearch.VSPackage
 {
     /// <summary>
-    ///     This class handles all Interaction with Visual Studio
+    ///     This class handles interaction with Visual Studio
     /// </summary>
     internal static class VSIntegration
     {

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -26,8 +27,6 @@ namespace MicrosoftResearch.VSPackage
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
     // This attribute is needed to let the shell know that this package exposes some menus.
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    // This attribute registers a tool window exposed by this package.
-    [ProvideToolWindow(typeof(MyToolWindow))]
     // This attribute makes sure this package is loaded and initialized when a solution exists
     [ProvideOptionPage(typeof(VccOptionPage), "VCC", "General", 101, 106, true)]
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
@@ -57,36 +56,9 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         public VSPackagePackage()
         {
+            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
             if (instance != null) throw new InvalidOperationException();
             instance = this;
-            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
-        }
-
-
-        /// <summary>
-        /// This function is called when the user clicks the menu item that shows the 
-        /// tool window. See the Initialize method to see how the menu item is associated to 
-        /// this function using the OleMenuCommandService service and the MenuCommand class.
-        /// </summary>
-        private void ShowToolWindow(object sender, EventArgs e)
-        {
-
-            VSIntegration.addErrorToErrorList(VSIntegration.ActiveFileFullName, "test", 14);
-
-            /*
-            // Get the instance number 0 of this tool window. This window is single instance so this instance
-            // is actually the only one.
-            // The last flag is set to true so that if the tool window does not exists it will be created.
-            ToolWindowPane window = this.FindToolWindow(typeof(MyToolWindow), 0, true);
-            if ((null == window) || (null == window.Frame))
-            {
-                throw new NotSupportedException(Resources.CanNotCreateWindow);
-            }
-            IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
-            Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
-            
-             */
-            
         }
 
         /// <summary>
@@ -96,23 +68,17 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         private void VerifyActiveFile(object sender, EventArgs e)
         {
-            //VSIntegration.test(this);
-            
-            
             VSIntegration.DocumentsSavedCheck();
-            
             VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
             if (options != null)
             {
                 VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, options);
             }
-            
         }
 
         private void CheckAdmissiblityOfStruct(object sender, EventArgs e)
         {
             VSIntegration.DocumentsSavedCheck();
-            
             VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
             if (options != null)
             {
@@ -130,7 +96,6 @@ namespace MicrosoftResearch.VSPackage
         private void VerifyCurrentFunction(object sender, EventArgs e)
         {
             VSIntegration.DocumentsSavedCheck();
-                        
             VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
             if (options != null)
             {
@@ -383,13 +348,7 @@ namespace MicrosoftResearch.VSPackage
                 //// Create the commands for the menu items.
 
                 CommandID menuCommandID;
-                MenuCommand menuItem;
                 OleMenuCommand OleMenuItem;
-
-                //// VCC Options
-                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMyCommand);
-                menuItem = new MenuCommand(ShowToolWindow, menuCommandID);
-                mcs.AddCommand(menuItem);
 
                 //// Verify File
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);

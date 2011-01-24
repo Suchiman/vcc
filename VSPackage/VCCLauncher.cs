@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Process = System.Diagnostics.Process;
 using System.Management;
 using System.Text.RegularExpressions;
+using Thread = System.Threading.Thread;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -19,7 +20,13 @@ namespace MicrosoftResearch.VSPackage
 
         internal static void VerifyFile(string filename, VccOptionPage options)
         {
-            string addArguments = options.UseAdditionalCommandlineArguments ? options.AdditionalCommandlineArguments + " " : string.Empty;
+            string addArguments = options.UseAdditionalCommandlineArguments ?
+                options.AdditionalCommandlineArguments + " " :
+                string.Empty;
+            if (options.showZ3Inspector)
+            {
+                addArguments += "/i ";
+            }
             LaunchVCC(String.Format("{0}\"{1}\"", addArguments, filename));
         }
 
@@ -28,6 +35,10 @@ namespace MicrosoftResearch.VSPackage
             string addArguments = options.UseAdditionalCommandlineArguments ?
                 options.AdditionalCommandlineArguments + " " :
                 string.Empty;
+            if (options.showZ3Inspector)
+            {
+                addArguments += "/i ";
+            }
             LaunchVCC(String.Format("{0} /f:\"{1}\" \"{2}\"", addArguments, function, filename));
         }
 
@@ -66,17 +77,34 @@ namespace MicrosoftResearch.VSPackage
 
         private static void vccProcess_Exited(object sender, EventArgs e)
         {
-            if (vccProcess != null && vccProcess.ExitCode == -1)
+            if (vccProcess != null)
             {
-                vccProcess.CancelOutputRead();
-                vccProcess.CancelErrorRead();
-                VSIntegration.WriteToPane("===VCC was canceled.===\n");
+                switch (vccProcess.ExitCode)
+                {
+                    case -1:
+                        vccProcess.CancelOutputRead();
+                        vccProcess.CancelErrorRead();
+                        VSIntegration.WriteToPane("\n===VCC was canceled.===\n");
+                        break;
+                    case 0:
+                        Thread.Sleep(500);
+                        VSIntegration.WriteToPane("\n===Verification succeeded.===\n");
+                        break;
+                    case 3:
+                        Thread.Sleep(500);
+                        VSIntegration.WriteToPane("\n===Verification failed.===\n");
+                        break;
+                    default:
+                        VSIntegration.WriteToPane("\n===VCC finished with unknown exitcode.===\n");
+                        VSIntegration.WriteToPane(vccProcess.ExitCode.ToString() + "\n");
+                        break;
+                }
             }
         }
 
         private static void vccProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            // Write Output from VCC to Verification Outputpane
+            //// Write Output from VCC to Verification Outputpane
             if (e != null && e.Data != null)
             {
                 if (VCCErrorRegEx.IsMatch(e.Data))
