@@ -172,8 +172,10 @@ function {:inline true} $is_base_field(f:$field) : bool
 // Meaning it's not some pointer casted to an unrelated type.
 // When casting to something odd, the field_parent_type() will point
 // to something that no field_type() returns. TODO what about f_root(something) ?
-function {:inline true} $is_proper(p:$ptr) : bool
-  { $field_parent_type($field(p)) == $typ($base(p)) }
+function $is_proper(p:$ptr) : bool;
+
+axiom (forall p:$ptr :: {$is_proper(p)}
+  $is_proper(p) ==> $field_parent_type($field(p)) == $typ($base(p)));
 
 //typed pointer test
 function $is(p:$ptr, t:$ctype) : bool
@@ -185,7 +187,9 @@ function $phys_ptr_cast(p:$ptr, t:$ctype) : $ptr;
 axiom (forall p:$ptr :: {$spec_ptr_cast(p, $typ(p))} {$in_range_spec_ptr(p)}
   $in_range_spec_ptr(p) ==> $spec_ptr_cast(p, $typ(p)) == p);
 axiom (forall p:$ptr :: {$phys_ptr_cast(p, $typ(p))} {$in_range_phys_ptr(p)}
-  $in_range_phys_ptr(p) ==> $phys_ptr_cast(p, $typ(p)) == p);
+  $in_range_phys_ptr(p) ==> $phys_ptr_cast(p, $typ(p)) == p && $is_phys_field($field(p)));
+axiom (forall p:$ptr :: {$in_range_phys_ptr($base(p))}
+  $in_range_phys_ptr(p) ==> $in_range_phys_ptr($base(p)));
 axiom (forall p:$ptr, t:$ctype :: {$addr($spec_ptr_cast(p, t))}
   $addr($spec_ptr_cast(p, t)) == $addr(p));
 axiom (forall p:$ptr, t:$ctype :: {$addr($phys_ptr_cast(p, t))}
@@ -229,14 +233,16 @@ function $dot(p:$ptr, f:$field) : $ptr
   { $ptr(f, p) }
 
 axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
-  $is_phys_field(f) && $is_proper($dot(p, f)) ==>
+  $is_phys_field(f) && ($is_proper($dot(p, f)) || $addr(p) == 0) ==>
      $addr($dot(p, f)) == $addr(p) + $field_offset(f));
 
 // PERF 5.7%
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
      ($in_range_spec_ptr(p) || $is_ghost_field(f) ==> $in_range_spec_ptr($dot(p, f)))
-  && ($in_range_phys_ptr(p) && $is_phys_field(f) ==> $in_range_phys_ptr($dot(p, f))) 
-  && ($is_proper($dot(p, f)) ==> $non_null(p) ==> $non_null($dot(p, f))));
+  && ($in_range_phys_ptr(p) && $is_phys_field(f) ==> $in_range_phys_ptr($dot(p, f)))
+  && ($is_proper($dot(p, f)) ==> $non_null(p) ==> $non_null($dot(p, f)))
+  && ($is_proper(p) && $field_parent_type(f) == $typ(p) ==> $is_proper($dot(p, f)))
+);
 
 function {:inline true} $emb1(p:$ptr) : $ptr
   { $base(p) }
@@ -459,7 +465,7 @@ axiom (forall p:$ptr, i:int, j:int :: {$idx($idx(p, i), j)}
   $idx($idx(p, i), j) == $idx_inline(p, i + j));
 
 axiom (forall p:$ptr, i:int :: {$addr($idx(p, i))}
-//  $is_proper($idx(p, i)) ==>
+  $is_proper($idx(p, i)) ==>
     $addr($idx(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
 axiom (forall p:$ptr, i:int :: {$idx(p, i)}
   $is_proper($idx(p, i)) ==>
