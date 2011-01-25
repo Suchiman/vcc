@@ -584,6 +584,12 @@ function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
       (lambda q:$ptr :: $is_proper(q) && $in(q, $full_extent($idx(p, $index_within(q, p)))))
   }
 
+function $in_composite_array(q:$ptr, a:$ptr, sz:int) : bool
+  {
+    $in_range(0, $index_within(q, a), sz - 1) &&
+    q == $idx(a, $index_within(q, a))
+  }
+
 // ----------------------------------------------------------------------------
 // As-array
 // ----------------------------------------------------------------------------

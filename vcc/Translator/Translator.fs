@@ -1691,7 +1691,15 @@ namespace Microsoft.Research.Vcc
         let s = er "s"
         let forallRM id trig body = B.Expr.Forall (Token.NoToken, [("p", tpPtr); ("q", tpPtr); ("s", tpState)], trig, weight id, body)
         let eq = bEq (er "q")
-        let eqs = td.Fields |> List.map (fun f -> if f.Type.IsComposite then eq (bCall "$dot" [er "p"; er (fieldName f)]) else bFalse)
+        let oneField (f:C.Field) =
+          if f.Type.IsComposite then
+            let dot = bCall "$dot" [er "p"; er (fieldName f)]
+            match f.Type with
+              | C.Type.Array (_, sz) ->
+                bCall "$in_composite_array" [er "q"; dot; bInt sz]
+              | _ -> eq dot
+          else bFalse
+        let eqs = td.Fields |> List.map oneField
         let eqs = (eq (er "p")) :: eqs
         let inExt = bCall "$in" [er "q"; bCall "$composite_extent" [er "s"; er "p"; er ("^" + td.Name)]]
         let body = bEq inExt (bMultiOr eqs)          
