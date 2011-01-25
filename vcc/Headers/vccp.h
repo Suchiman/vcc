@@ -87,7 +87,9 @@ _(bool \not_shared(\object);)
 _(bool \malloc_root(\object);)
 _(bool \object_root(\object);)
 _(bool \union_active(\object);)
-
+_(\integer \addr(\object);)
+_(bool \addr_eq(\object,\object);)
+_(template<typename T> T* \retype(T*);)
 _(bool \arrays_disjoint(\object, \size_t, \object, \size_t);)
 
 _(template<typename T> bool \shallow_eq(T s, T t);)

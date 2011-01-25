@@ -149,7 +149,10 @@ axiom (forall p:$ptr :: {$base(p)} {$field(p)} $ptr($field(p), $base(p)) == p); 
 function {:inline true} $non_null(p:$ptr) : bool
   { !$is_null(p) }
 function $is_null(p:$ptr) : bool;
-axiom (forall p:$ptr :: {$addr(p)} $addr(p) == 0 <==> $is_null(p));
+axiom (forall p:$ptr :: {$addr(p)} 
+  ($addr(p) == 0 <==> $is_null(p)) &&
+  ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr(p)))
+  );
 
 // ----------------------------------------------------------------------------
 // Field algebra
@@ -351,6 +354,11 @@ axiom (forall t:$ctype :: {$f_vol_version(t)}
 
 const $arch_ptr_size : int; // arch-specific; to be defined by a compiler-generated axiom
 
+function $in_range_uintptr(a:int) : bool;
+
+axiom $arch_ptr_size == 4 ==> (forall a:int :: {$in_range_uintptr(a)} $in_range_uintptr(a) <==> $in_range_u4(a));
+axiom $arch_ptr_size == 8 ==> (forall a:int :: {$in_range_uintptr(a)} $in_range_uintptr(a) <==> $in_range_u8(a));
+
 const unique ^^i1: $ctype;
 const unique ^^i2: $ctype;
 const unique ^^i4: $ctype;
@@ -465,8 +473,11 @@ axiom (forall p:$ptr, i:int, j:int :: {$idx($idx(p, i), j)}
   $idx($idx(p, i), j) == $idx_inline(p, i + j));
 
 axiom (forall p:$ptr, i:int :: {$addr($idx(p, i))}
-  $is_proper($idx(p, i)) ==>
+  $is_proper($idx(p, i)) ||
+  $in_range_uintptr($addr(p) + $sizeof($typ(p)) * i)
+  ==>
     $addr($idx(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
+
 axiom (forall p:$ptr, i:int :: {$idx(p, i)}
   $is_proper($idx(p, i)) ==>
     $non_null(p) ==> $non_null($idx(p, i)));
@@ -763,13 +774,32 @@ function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) : bool
 function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is_spec_ptr(#p, #t) }
 
-axiom (forall S:$state, p:$ptr :: {$addr(p), $owner(S, $root(S, p))}
+axiom (forall S:$state, p:$ptr ::
+  {$addr(p), $owner(S, $root(S, p))}
   $good_state(S) ==>
-    $owner(S, $root(S, p)) == $me() ==>
+    $is_proper(p) &&
+    $owner(S, $root(S, $emb0(p))) == $me() ==>
       $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
+
+axiom (forall S:$state, p, q:$ptr ::
+  {$retype(S, q), $as_addr(p, $typ(q), $addr(q))}
+  $good_state(S) ==>
+    $is_proper(p) &&
+    $owner(S, $root(S, $emb0(p))) == $me() ==>
+      $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
+
+function $as_addr(p:$ptr, t:$ctype, a:int) : $ptr;
+axiom (forall p:$ptr :: {$addr(p)} $as_addr(p, $typ(p), $addr(p)) == p);
+
+function $retype(S:$state, p:$ptr) : $ptr
+  { $typemap($f_owner(S))[$addr(p), $typ(p)] }
 
 function $ptr_eq(p1:$ptr, p2:$ptr) : bool
   { $addr(p1) == $addr(p2) }
+
+// exposed in the header
+function {:inline true} $addr_eq(p1:$ptr, p2:$ptr) : bool
+  { $ptr_eq(p1, p2) }
 
 function {:inline true} $ptr_neq(p1:$ptr,p2:$ptr) : bool
   { !$ptr_eq(p1, p2) }
