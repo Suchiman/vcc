@@ -820,8 +820,10 @@ namespace Microsoft.Research.Vcc {
     private bool StripPointersThenInferTypesAndReturnTrueIfInferenceFails(Dictionary<IGenericMethodParameter, ITypeDefinition> inferredTypeArgumentFor, ITypeDefinition argumentType, ITypeDefinition parameterType) {
       IPointerType/*?*/ pType = parameterType as IPointerType;
       if (pType != null) {
-        IPointerType/*?*/ apType = argumentType as IPointerType;
-        if (apType != null) return this.StripPointersThenInferTypesAndReturnTrueIfInferenceFails(inferredTypeArgumentFor, apType.TargetType.ResolvedType, pType.TargetType.ResolvedType);
+        if (this.IsPointerType(argumentType)) {
+          return this.StripPointersThenInferTypesAndReturnTrueIfInferenceFails(inferredTypeArgumentFor, 
+                    this.GetPointerTargetType(argumentType).ResolvedType, pType.TargetType.ResolvedType);
+        }
       }
       return base.InferTypesAndReturnTrueIfInferenceFails(inferredTypeArgumentFor, argumentType, parameterType);
     }
