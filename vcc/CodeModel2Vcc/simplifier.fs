@@ -176,6 +176,9 @@ namespace Microsoft.Research.Vcc
                   "is_ghost_ptr", "p";
                   "admissibility_start", "t";
                   "arrays_disjoint", "pipi";
+                  "addr", "p";
+                  "addr_eq", "pp";
+                  "retype", "Sp";
                 ]
     dict
 
@@ -1058,10 +1061,16 @@ namespace Microsoft.Research.Vcc
           cond.SelfVisit(checkAccessToSpecFields ctx);
           false
         | Macro(_, "=", [tgt; src]) as assign ->
+          let tgt =
+            match tgt with
+              | Deref (c, CallMacro (_, "_vcc_retype", _, [p])) -> Deref(c, p)
+              | e -> e
           match exprDependsOnSpecExpr tgt with
-            | Some specThing -> helper.GraveWarning(tgt.Token, 9301, "write to specification " + specThing + " from non-specification code"); false
+            | Some specThing ->
+              helper.GraveWarning(tgt.Token, 9301, "write to specification " + specThing + " from non-specification code")
+              false
             | _ -> true
-        | Call(cmn, ({IsSpec = true} as fn), _, args) ->
+        | Call(cmn, ({IsSpec = true} as fn), _, args) when fn.Name <> "_vcc_retype" ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification function '" + fn.Name + "' within non-specification code")
           false
         | Call(_, f, _, args) ->
