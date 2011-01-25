@@ -1274,7 +1274,7 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   && $owns(S0, o) == $owns(S, o)
   && (forall p:$ptr :: {$root(S, p)}
         ($root(S0, p) != o && $root(S0, p) == $root(S, p)) ||
-        ($root(S0, p) == o && ($root(S, p) == p || $owner(S0, p) != o)))
+        ($root(S0, p) == o && ($root(S, p) == p || $owner(S0, p) != o) && ($owner(S, $root(S, p)) == $me())))
   && $f_closed(S) == $f_closed(S0)[o := false]
   && $timestamp_post_strict(S0, S)
   && $post_unwrap(S0, S)
