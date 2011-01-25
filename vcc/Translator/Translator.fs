@@ -1220,7 +1220,7 @@ namespace Microsoft.Research.Vcc
       let callConvCnt = ref 0
       let rec trStmt (env:Env) (stmt:C.Expr) =
         let self = trStmt env
-        let cmt () = B.Stmt.Comment ((stmt.ToString ()).Replace ("\n", " "))
+        let cmt () = B.Stmt.Comment (((stmt.ToString ()).Replace ("\n", " ")).Replace ("\r", ""))
         let doCall (c:C.ExprCommon) (res : C.Variable list) fn (name:string) targs args =
           let name' = 
             if name.StartsWith "_vcc_" then "$" + name.Substring 5 
