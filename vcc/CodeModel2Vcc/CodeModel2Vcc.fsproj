@@ -59,6 +59,7 @@
     <Compile Include="Helper.fs" />
     <Compile Include="Visitor.fs" />
     <Compile Include="TransUtil.fs" />
+    <Compile Include="Isabelle.fs" />
     <Compile Include="ExtraWarnings.fs" />
     <Compile Include="Normalizer.fs" />
     <Compile Include="TransType.fs" />
