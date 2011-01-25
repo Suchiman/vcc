@@ -11,9 +11,9 @@
 (*
 Verification errors:  between 8001 and 8499: First available: 8026
 Assertions:           between 8501 and 8999. First available: 8538
-Warnings:             between 9100 and 9199. First available: 9125
+Warnings:             between 9100 and 9199. First available: 9126
 Grave Warnings:       between 9300 and 9399. First available: 9314
-Errors:               between 9601 and 9799. First available: 9722
+Errors:               between 9601 and 9799. First available: 9724
 *)
 
 
@@ -72,7 +72,11 @@ namespace Microsoft.Research.Vcc
                 | "after" -> 1
                 | _ -> pipeErr "move expects 'before' or 'after'"
             let t = helper.RemoveTransformer w.[1]
-            helper.AddTransformerAt (t.Name, t.Func, w.[3], off)              
+            helper.AddTransformerAt (t.Name, t.Func, w.[3], off)       
+          | "isabelle" ->
+            if w.Length < 2 || w.Length > 3 then pipeErr "isabelle expects one or two parameters"
+            let prefix = if w.Length = 3 then w.[2] else ""
+            helper.AddTransformerAfter ("isabelle", Helper.Decl (Isabelle.dump helper (w.[1]) prefix), "begin")       
           | _ ->
             pipeErr ("unknown command " + w.[0])
             
@@ -161,12 +165,12 @@ namespace Microsoft.Research.Vcc
     let decls = fixpoint decls
     
     List.filter used.ContainsKey decls
-    
-      
+
+
   let init (helper:Helper.Env) =
     helper.AddTransformer ("begin", Helper.DoNothing)
     helper.AddTransformer ("prune", Helper.Decl (pruneDecls helper))
-    
+
     Normalizer.init helper
     TransType.init helper
     ExtraWarnings.init helper
