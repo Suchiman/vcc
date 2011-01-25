@@ -513,7 +513,7 @@ function $is_mutable_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {
      $is_array(S, p, T, sz)
   && if $is_primitive(T) then $mutable(S, $emb0(p))
-     else (forall i:int :: {$owner(S, $idx(p, i))} 0 <= i && i < sz ==> $mutable(S, $idx(p, i)))
+     else (forall i:int :: {$idx(p, i)} 0 <= i && i < sz ==> $mutable(S, $idx(p, i)))
 }
 
 function $array_range(S:$state, p:$ptr, T:$ctype, sz:int) : $ptrset
@@ -542,14 +542,9 @@ function {:inline true} $mem_range(s:$state, p:$ptr, sz:int) : int
   { $mem_range_heap($heap(s), p, sz) }
 function  $mem_range_heap(s:$object, p:$ptr, sz:int) : int;
 
-function $guess_index(p:$ptr, r:$ptr) : int;
-
-axiom (forall p:$ptr, n:int :: {$guess_index(p, $idx(p, n))}
-  $guess_index(p, $idx(p, n)) == n);
-
 axiom (forall h:$object, r:$ptr, f:$field, v:int, p:$ptr, sz:int ::
-      !$in_range(0, $guess_index(p, $ptr(f, r)), sz - 1) ||
-      $ptr(f, r) != $idx(p, $guess_index(p, $ptr(f, r))) ==>
+      !$in_range(0, $index_within(p, $ptr(f, r)), sz - 1) ||
+      $ptr(f, r) != $idx(p, $index_within(p, $ptr(f, r))) ==>
          $mem_range_heap($update(h, r, f, v), p, sz) == $mem_range_heap(h, p, sz));
 
 axiom (forall S0, S1:$state, p:$ptr, sz:int ::
@@ -568,7 +563,14 @@ axiom (forall S0, S1:$state, p:$ptr, f:$field ::
 //   $simple_index(p, arr) iff p == arr[k].f1.f2.f3...fN, where N >= 0.
 // We're only interested in simple indices for verification.
 function $index_within(p:$ptr, arr:$ptr) : int;
-function $simple_index(p:$ptr, arr:$ptr) : bool;
+// function $simple_index(p:$ptr, arr:$ptr) : bool;
+
+axiom (forall i:int, a:$ptr :: {$index_within($idx(a, i), a)}
+  $index_within($idx(a, i), a) == i);
+
+axiom (forall p, a:$ptr, f:$field :: {$index_within($dot(p, f), a)}
+  $is_proper($dot(p, f)) ==>
+    $index_within($dot(p, f), a) == $index_within(p, a));
 
 function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
   { if $is_primitive(T) then
@@ -1044,7 +1046,7 @@ function {:inline true} $timestamp_post_strict(M1:$state, M2:$state) : bool
 
 function $writes_at(time:int) : $ptrset;
 
-function {:inline true} $in_writes_at(time:int, p:$ptr) : bool
+function {:inline false} $in_writes_at(time:int, p:$ptr) : bool
   { $in(p, $writes_at(time)) }
 
 function {:inline true} $def_writes(S:$state, time:int, ptrs:$ptrset) : bool
@@ -1087,7 +1089,7 @@ function {:inline true} $writable_prim(S:$state, begin_time:int, p:$ptr) : bool
 function {:inline true} $listed_in_writes(S:$state, begin_time:int, p:$ptr) : bool
   { $in_writes_at(begin_time, p) }
 
-function {:inline true} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
+function {:inline false} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
   { if $is_primitive($typ(p)) then
       $writable_prim(S, begin_time, p)
     else
@@ -1854,7 +1856,7 @@ procedure $bump_volatile_version(p:$ptr);
 function $composite_extent(S:$state, r:$ptr, t:$ctype) : $ptrset;
 
 function $extent(S:$state, r:$ptr) : $ptrset
-  { (lambda p:$ptr :: $is_proper(p) && $composite_extent(S, r, $typ(r))[$emb0(p)]) }
+  { (lambda p:$ptr :: $is_proper($dot($base(p), $field(p))) && $composite_extent(S, r, $typ(r))[$emb0(p)]) }
 
 const $full_extent_state : $state;
 function $full_extent(r:$ptr) : $ptrset
