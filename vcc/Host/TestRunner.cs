@@ -245,12 +245,12 @@ namespace Microsoft.Research.Vcc
         Console.WriteLine();
       }
       Console.WriteLine("*** actual output:");
-      Console.WriteLine(actualOutput);
+      Console.Write(actualOutput);
       Console.WriteLine("***");
       Console.WriteLine();
       Console.WriteLine("*** expected output:");
       if (expectedOutput != null) {
-        Console.WriteLine(expectedOutput);
+        Console.Write(expectedOutput);
         Console.WriteLine("***");
         Console.WriteLine();
       }
