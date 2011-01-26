@@ -210,9 +210,11 @@ namespace Microsoft.Research.Vcc
           System.Diagnostics.Debug.Listeners.Remove(myWriter);
           Regex rx = new Regex(@"[a-zA-Z]:\\.*?\\(.*)" + vccSplitSuffix + @"[0-9_]*.c\(");
           string actualOutputRepl = rx.Replace(actualOutput.ToString(), "testcase(");
-          
-          if (!expectedOutput.ToString().Equals(actualOutputRepl)) {
-            ReportError(suiteName, source, expectedOutput, actualOutputRepl, errLine, errors++ == 0);
+          actualOutputRepl = actualOutputRepl.Trim();
+
+          var expected = expectedOutput.ToString().Trim();
+          if (!expected.Equals(actualOutputRepl)) {
+            ReportError(suiteName, source, expected, actualOutputRepl, errLine, errors++ == 0);
           }
 
         }
@@ -224,12 +226,14 @@ namespace Microsoft.Research.Vcc
           Console.WriteLine(suiteName + " had " + errors + (errors > 1 ? " failures" : " failure"));
         }
       } catch {
-        ReportError(suiteName, source, expectedOutput, actualOutput.ToString(), -1, true);
+        var expected = expectedOutput == null ? "<none>" : expectedOutput.ToString().Trim();
+        ReportError(suiteName, source, expected, actualOutput.ToString(), -1, true);
       }
       return errors == 0;
     }
 
-    private static void ReportError(string suiteName, StringBuilder source, StringBuilder expectedOutput, string actualOutput, int errLine, bool printBanner) {
+    private static void ReportError(string suiteName, StringBuilder source, string expectedOutput, string actualOutput, int errLine, bool printBanner)
+    {
       if (printBanner) {
         Console.WriteLine();
         Console.WriteLine();
@@ -249,11 +253,9 @@ namespace Microsoft.Research.Vcc
       Console.WriteLine("***");
       Console.WriteLine();
       Console.WriteLine("*** expected output:");
-      if (expectedOutput != null) {
-        Console.Write(expectedOutput);
-        Console.WriteLine("***");
-        Console.WriteLine();
-      }
+      Console.Write(expectedOutput);
+      Console.WriteLine("***");
+      Console.WriteLine();
     }
 
     private static int RunTest(CciErrorHandler errorHandler, string suiteName, string fileNameWithoutExt,
