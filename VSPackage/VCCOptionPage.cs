@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.ComponentModel;
 using Microsoft.VisualStudio.Shell;
+using System.IO;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -20,7 +21,13 @@ namespace MicrosoftResearch.VSPackage
 
         [DisplayName("Show Z3 Inspector")]
         [Description("Choose true to launch the Z3 Inspector to view the progress of verification.")]
-        public bool showZ3Inspector{ get; set; }
+        public bool ShowZ3Inspector{ get; set; }
 
+        [DisplayName("Vcc executable Folder")]
+        [Description("Here you can give the folder in which your vcc.exe is located. This is usually" +
+                      " not necessary. Leave this empty to use the path written to the registry while installing" +
+                      " Vcc.")]
+        public string VccExecutableFolder
+        { get; set; }
     }
 }

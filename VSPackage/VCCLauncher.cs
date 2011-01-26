@@ -4,6 +4,7 @@ using Process = System.Diagnostics.Process;
 using System.Management;
 using System.Text.RegularExpressions;
 using Thread = System.Threading.Thread;
+using Microsoft.Win32;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -12,7 +13,32 @@ namespace MicrosoftResearch.VSPackage
     /// </summary>
     internal static class VCCLauncher
     {
-        private static string vccPath = @"C:\Users\t-chworr\VCC\vcc\Host\bin\Debug\vcc.exe";
+        private static Lazy<string> _vccPath = new Lazy<string>(() =>
+            {
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
+                {
+                    if (key != null)
+                    {
+                        string result = key.GetValue("vccExecutablePath") as string;
+                        if (result != null)
+                        {
+                            return result;
+                        }
+                        else
+                        {
+                            return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
+                        }
+                    }
+                    else
+                    {
+                        return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
+                    }
+                }
+            });
+        private static string VccPath
+        {
+            get { return _vccPath.Value; }
+        }
         private static Process vccProcess;
         //// This is set to true, when Verification fails.
         private static bool errorOccurred = false;
@@ -23,7 +49,7 @@ namespace MicrosoftResearch.VSPackage
             string addArguments = options.UseAdditionalCommandlineArguments ?
                 options.AdditionalCommandlineArguments + " " :
                 string.Empty;
-            if (options.showZ3Inspector)
+            if (options.ShowZ3Inspector)
             {
                 addArguments += "/i ";
             }
@@ -35,7 +61,7 @@ namespace MicrosoftResearch.VSPackage
             string addArguments = options.UseAdditionalCommandlineArguments ?
                 options.AdditionalCommandlineArguments + " " :
                 string.Empty;
-            if (options.showZ3Inspector)
+            if (options.ShowZ3Inspector)
             {
                 addArguments += "/i ";
             }
@@ -47,9 +73,10 @@ namespace MicrosoftResearch.VSPackage
             errorOccurred = false;
 
             VSIntegration.initializeErrorList();
+            VSIntegration.updateStatus("Verifying...",true);
 
             //// Prepare VCC-Process, execute it and read its Output            
-            ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"",vccPath), arguments);
+            ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"",VccPath), arguments);
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
@@ -61,7 +88,7 @@ namespace MicrosoftResearch.VSPackage
             VSIntegration.ClearPane();
             VSIntegration.WriteToPane("===VCC started.===\n");
             //// Write Commandline-Command to Verification Outputpane
-            VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n\n", vccPath, arguments));
+            VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n\n", VccPath, arguments));
             //// Get notified when VCC sends Output or Error Data
             vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
             vccProcess.ErrorDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
@@ -85,14 +112,17 @@ namespace MicrosoftResearch.VSPackage
                         vccProcess.CancelOutputRead();
                         vccProcess.CancelErrorRead();
                         VSIntegration.WriteToPane("\n===VCC was canceled.===\n");
+                        VSIntegration.updateStatus("Verification canceled.",false);
                         break;
                     case 0:
                         Thread.Sleep(500);
                         VSIntegration.WriteToPane("\n===Verification succeeded.===\n");
+                        VSIntegration.updateStatus("Verification succeeded.", false);
                         break;
                     case 3:
                         Thread.Sleep(500);
                         VSIntegration.WriteToPane("\n===Verification failed.===\n");
+                        VSIntegration.updateStatus("Verification failed.", false);
                         break;
                     default:
                         VSIntegration.WriteToPane("\n===VCC finished with unknown exitcode.===\n");

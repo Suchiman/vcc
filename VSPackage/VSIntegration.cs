@@ -353,6 +353,12 @@ namespace MicrosoftResearch.VSPackage
             markers.Clear();
         }
 
+        internal static void updateStatus(string text, bool animationOn)
+        {
+            dte.StatusBar.Text = text;
+            dte.StatusBar.Animate(animationOn, vsStatusAnimation.vsStatusAnimationGeneral);
+        }
+
         internal static void errorTask_Navigate(object sender, EventArgs e)
         {
             if (sender != null)
