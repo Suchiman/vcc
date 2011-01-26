@@ -133,17 +133,25 @@ namespace Microsoft.Research.Vcc
       let weight = ctx.Weight
       let vcc3 = helper.Options.Vcc3
       
-      let assumeSync (env:Env) tok =
+      let captureStateAttrs suff (tok:Token) =
+        if helper.Options.PrintCEVModel && suff <> "<skip>" then             
+          let suff = if suff = "" then "" else " : " + suff
+          [B.StringAttr ("captureState", String.Format ("{0}({1},{2}){3}", tok.Filename, tok.Line, tok.Column, suff))]
+        else []
+
+      let assumeSyncCS suff (env:Env) tok =
         let name = ctx.GetTokenConst tok
         let pred =
           match env.AtomicObjects with
             | [] -> "$full_stop_ext"
             | _ -> "$good_state_ext"
-        let attrs = 
-          if helper.Options.PrintCEVModel then 
-            [B.StringAttr ("captureState", String.Format ("{0}({1},{2})", tok.Filename, tok.Line, tok.Column))]
-          else []
+        let attrs = captureStateAttrs suff tok
         B.Stmt.Assume (attrs, bCall pred [er name; bState])
+
+      let assumeSync = assumeSyncCS "<skip>"
+
+      let captureState suff tok =
+        B.Stmt.Assume (captureStateAttrs suff tok, bTrue)
 
       let addType t e =
         if vcc3 then
@@ -1074,7 +1082,7 @@ namespace Microsoft.Research.Vcc
             let assign = 
               [B.Stmt.Assign (varRef local, if vcc3 then er claim else bCall "$ref" [er claim]);
                ctx.AssumeLocalIs tok local;
-               assumeSync env tok]
+               assumeSyncCS "claim constructed" env tok]
                                       
             let initial =
               match env.AtomicObjects with
@@ -1138,7 +1146,7 @@ namespace Microsoft.Research.Vcc
           let different = different [] objects
           let decrements = List.map doObj objects |> List.concat
           let call = B.Stmt.Call (tok, [], "$unclaim", [claim'])
-          allowWrite :: different @ [call] @ decrements @ [assumeSync env tok]
+          allowWrite :: different @ [call] @ decrements @ [assumeSyncCS "claim disposed" env tok]
         | _ -> die()
       
       let trAtomic trStmt env (ec:C.ExprCommon) objs body =
@@ -1200,7 +1208,8 @@ namespace Microsoft.Research.Vcc
         let atomicAction = flmap (trStmt env') after
           
         [B.Stmt.Call (ec.Token, [], "$atomic_havoc", []);
-         assumeSync env ec.Token] @ 
+         assumeSyncCS "inside atomic" env ec.Token;
+         ] @ 
         atomicInits @
         before @
         valid_claims @
@@ -1220,7 +1229,12 @@ namespace Microsoft.Research.Vcc
       let callConvCnt = ref 0
       let rec trStmt (env:Env) (stmt:C.Expr) =
         let self = trStmt env
-        let cmt () = B.Stmt.Comment (((stmt.ToString ()).Replace ("\n", " ")).Replace ("\r", ""))
+        let cmt () = 
+          let c = B.Stmt.Comment (((stmt.ToString ()).Replace ("\n", " ")).Replace ("\r", ""))
+          if helper.Options.PrintCEVModel then
+            B.Stmt.Block [c; captureState "" stmt.Token]
+          else
+            c
         let doCall (c:C.ExprCommon) (res : C.Variable list) fn (name:string) targs args =
           let name' = 
             if name.StartsWith "_vcc_" then "$" + name.Substring 5 
@@ -1421,7 +1435,7 @@ namespace Microsoft.Research.Vcc
               cmt() :: trUnclaim env c.Token args
             
             | C.Expr.Atomic (ec, objs, body) ->
-              trAtomic trStmt env ec objs body
+              captureState "" ec.Token :: trAtomic trStmt env ec objs body
               
             | C.Expr.VarWrite (_, vs, C.Expr.Call (c, fn, targs, args)) -> 
               doCall c vs (Some fn) fn.Name targs args @ List.map (fun v -> ctx.AssumeLocalIs c.Token v) vs
@@ -1509,6 +1523,7 @@ namespace Microsoft.Research.Vcc
                                      assumeSync env stmt.Token]
                       condLevelCheck :: setPC, resetPC, env'
                 else [],[],env
+              captureState "" ec.Token ::
               B.Stmt.Comment ("if (" + c.ToString() + ") ...") ::
               prefix @
               [B.Stmt.If (trExpr env c, B.Stmt.Block (trStmt innerEnv s1), B.Stmt.Block (trStmt innerEnv s2))] @
@@ -1539,11 +1554,12 @@ namespace Microsoft.Research.Vcc
               let body =
                 B.Stmt.While (bTrue, 
                   List.map (fun (e:C.Expr) -> (e.Token, trExpr env e)) invs,
-                  B.Stmt.Block (B.Stmt.MkAssume (stateChanges env) :: 
-                    B.Stmt.MkAssume (bCall "$timestamp_post" [env.OldState; bState]) ::
-                        assumeSync env comm.Token :: 
-                          List.map (ctx.AssumeLocalIs comm.Token) ctx.SoFarAssignedLocals @
-                              trStmt env s))
+                  B.Stmt.Block ([B.Stmt.MkAssume (stateChanges env);
+                                 B.Stmt.MkAssume (bCall "$timestamp_post" [env.OldState; bState]);
+                                 assumeSync env comm.Token] @
+                                 List.map (ctx.AssumeLocalIs comm.Token) ctx.SoFarAssignedLocals @
+                                 trStmt env s @
+                                 [captureState "after loop iter" comm.Token] ))
               bump @ save @ wrCheck @ [body; assumeSync env comm.Token]
                 
             | C.Expr.VarDecl (b, v, _) when env.hasIF ->
@@ -2465,7 +2481,7 @@ namespace Microsoft.Research.Vcc
                   B.Stmt.Block (B.Stmt.MkAssume (bCall "$function_entry" [bState]) ::
                                 B.Stmt.VarDecl(("#stackframe", B.Type.Int), None) ::
                                 secDecls @
-                                (assumeSync env h.Token ::
+                                (assumeSyncCS "function entry" env h.Token ::
                                  can_frame @
                                  init @
                                  List.map assumeMutability h.Writes @
