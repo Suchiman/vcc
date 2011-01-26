@@ -46,6 +46,13 @@ namespace MicrosoftResearch.VSPackage
                 return instance;
             }
         }
+        public VccOptionPage OptionPage
+        {
+            get
+            {
+                return this.GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
+            }
+        }
 
         /// <summary>
         /// Default constructor of the package.
