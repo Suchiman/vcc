@@ -6,8 +6,8 @@
     <Version>1.0</Version>
     <Description xml:space="preserve">Microsoft Research VCC Visual Studio Extension</Description>
     <Locale>1033</Locale>
-    <Icon>VCC.ico</Icon>
-    <PreviewImage>preview.png</PreviewImage>
+    <Icon>Resources\Package.ico</Icon>
+    <PreviewImage>Resources\preview.png</PreviewImage>
     <InstalledByMsi>false</InstalledByMsi>
     <SupportedProducts>
       <VisualStudio Version="10.0">
