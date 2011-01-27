@@ -758,12 +758,6 @@ const $arch_spec_ptr_start : int; // arch-specific; to be defined by a compiler-
 function {:inline true} $is_ghost_ptr(p:$ptr) : bool
   { $in_range_spec_ptr(p) }
 
-function {:inline true} $is_spec_ptr(p:$ptr, t:$ctype) : bool
-  { $is(p, t) && $in_range_spec_ptr(p) }
-
-function {:inline true} $is_phys_ptr(p:$ptr, t:$ctype) : bool
-  { $is(p, t) && $in_range_phys_ptr(p) }
-
 /*
 axiom (forall S:$state, #r:int, #t:$ctype ::
   {:vcc3 "todo"}
@@ -774,10 +768,10 @@ axiom (forall S:$state, #r:int, #t:$ctype ::
 
 // This was often used in invariants. Typed now means thread-local, so it doesn't work in invariants.
 function {:inline true} $typed2_phys(S:$state, #p:$ptr, #t:$ctype) : bool
-  { $is_phys_ptr(#p, #t) }
+  { $in_range_phys_ptr(#p) }
 
 function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) : bool
-  { $is_spec_ptr(#p, #t) }
+  { $in_range_spec_ptr(#p) }
 
 axiom (forall S:$state, p:$ptr ::
   {$addr(p), $owner(S, $root(S, p))}
