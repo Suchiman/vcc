@@ -411,7 +411,8 @@ namespace Microsoft.Research.Vcc
           | PtrSoP(_, s), _ ->
             let expectedRange, checkFn, errno = if s then "spec", "in_range_spec_ptr", 8534 else "physical", "in_range_phys_ptr", 8535
             let comm = afmte errno ("{0} is in " + expectedRange + " pointer range (in cast)") [e']
-            let check = Expr.Macro (comm, checkFn, [Expr.Cast({e'.Common with Type= Type.MathInteger}, CheckedStatus.Processed, e')])
+            let casted = if helper.Options.Vcc3 then e' else Expr.Cast({e'.Common with Type= Type.MathInteger}, CheckedStatus.Processed, e')
+            let check = Expr.Macro (comm, checkFn, [casted])
             addStmtsOpt [Expr.MkAssert check] newe
           | _ -> None
       | _ -> None

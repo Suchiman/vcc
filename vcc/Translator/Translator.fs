@@ -519,8 +519,7 @@ namespace Microsoft.Research.Vcc
           | "writes_check", [a] -> writesCheck env ec.Token false a
           | "prim_writes_check", [a] -> writesCheck env ec.Token true a
           | ("in_range_phys_ptr"|"in_range_spec_ptr") as in_range, [p] when vcc3 ->
-            let name = if in_range.Contains "spec" then "$is_spec_ptr" else "$is_phys_ptr"
-            bCall name [self p; toTypeId p.Type.Deref]
+            bCall ("$" + in_range) [self p]
           | in_range, args when in_range.StartsWith ("in_range") -> bCall ("$" + in_range) (selfs args)
           | ("unchecked_sbits"|"unchecked_ubits"), args ->
             bCall ("$" + n) (selfs args)
