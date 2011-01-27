@@ -507,7 +507,7 @@ function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
      $is(p, T)
   && $is_proper(p)
   && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
-  && $field(p) == $field_plus($field_arr_root($field(p)), $field_arr_index($field(p)))
+  && p == $idx($dot($base(p), $field_arr_root($field(p))), $field_arr_index($field(p)))
   && $field_kind($field(p)) != $fk_base
   && $field_arr_index($field(p)) >= 0
   && $is_non_primitive($typ($emb(S, p)))
@@ -537,6 +537,11 @@ axiom (forall a:$ptr, al:int, b:$ptr, bl:int ::
   {$arrays_disjoint(a, al, b, bl)}
   $byte_ptr_subtraction(b, $idx(a, al)) > 0 ||
   $byte_ptr_subtraction(a, $idx(b, bl)) > 0 ==>
+  $arrays_disjoint(a, al, b, bl));
+
+axiom (forall a:$ptr, al:int, b:$ptr, bl:int ::
+  {$set_disjoint($array_range_no_state(a, $typ(a), al), $array_range_no_state(b, $typ(b), bl))}
+  $set_disjoint($array_range_no_state(a, $typ(a), al), $array_range_no_state(b, $typ(b), bl)) ==>
   $arrays_disjoint(a, al, b, bl));
 
 axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
@@ -780,6 +785,13 @@ axiom (forall S:$state, p:$ptr ::
     $is_proper(p) &&
     $owner(S, $root(S, $emb0(p))) == $me() ==>
       $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
+
+axiom (forall S:$state, p:$ptr, f:$field ::
+  {$addr($dot(p, f)), $owner(S, $root(S, p))}
+  $good_state(S) ==>
+    $is_proper($dot(p, f)) &&
+    $owner(S, $root(S, p)) == $me() ==>
+      $typemap($f_owner(S))[$addr($dot(p, f)), $field_type(f)] == $dot(p, f));
 
 axiom (forall S:$state, p, q:$ptr ::
   {$retype(S, q), $as_addr(p, $typ(q), $addr(q))}
