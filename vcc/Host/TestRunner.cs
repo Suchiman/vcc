@@ -249,11 +249,11 @@ namespace Microsoft.Research.Vcc
         Console.WriteLine();
       }
       Console.WriteLine("*** actual output:");
-      Console.Write(actualOutput);
+      Console.WriteLine(actualOutput);
       Console.WriteLine("***");
       Console.WriteLine();
       Console.WriteLine("*** expected output:");
-      Console.Write(expectedOutput);
+      Console.WriteLine(expectedOutput);
       Console.WriteLine("***");
       Console.WriteLine();
     }
