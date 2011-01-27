@@ -597,7 +597,7 @@ function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
                         $in_range(0, $field_arr_index($field(q)) - $field_arr_index($field(p)), sz - 1) &&
                         $field_kind($field(q)) != $fk_base)
     else
-      (lambda q:$ptr :: $is_proper(q) && $in(q, $full_extent($idx(p, $index_within(q, p)))))
+      (lambda q:$ptr :: $is_proper(q) && $in_range(0, $index_within(q, p), sz - 1) && $in(q, $full_extent($idx(p, $index_within(q, p)))))
   }
 
 function $in_composite_array(q:$ptr, a:$ptr, sz:int) : bool
