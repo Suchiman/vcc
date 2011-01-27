@@ -151,7 +151,8 @@ function {:inline true} $non_null(p:$ptr) : bool
 function $is_null(p:$ptr) : bool;
 axiom (forall p:$ptr :: {$addr(p)} 
   ($addr(p) == 0 <==> $is_null(p)) &&
-  ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr(p)))
+  ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr(p))) &&
+  ($in_range_phys_ptr(p) && $is_proper(p) ==> $in_range_uintptr($addr(p) + $sizeof($typ(p))))
   );
 
 // ----------------------------------------------------------------------------
@@ -193,8 +194,6 @@ axiom (forall p:$ptr :: {$phys_ptr_cast(p, $typ(p))} {$in_range_phys_ptr(p)}
   $in_range_phys_ptr(p) ==> $phys_ptr_cast(p, $typ(p)) == p && $is_phys_field($field(p)));
 axiom (forall p:$ptr :: {$in_range_phys_ptr($base(p))}
   $in_range_phys_ptr(p) ==> $in_range_phys_ptr($base(p)));
-axiom (forall p:$ptr, t:$ctype :: {$addr($spec_ptr_cast(p, t))}
-  $addr($spec_ptr_cast(p, t)) == $addr(p));
 axiom (forall p:$ptr, t:$ctype :: {$addr($phys_ptr_cast(p, t))}
   $addr($phys_ptr_cast(p, t)) == $addr(p));
 function {:inline true} $cast_props(p:$ptr, t:$ctype, c:$ptr) : bool
@@ -236,8 +235,8 @@ function $dot(p:$ptr, f:$field) : $ptr
   { $ptr(f, p) }
 
 axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
-  $is_phys_field(f) && ($is_proper($dot(p, f)) || $addr(p) == 0) ==>
-     $addr($dot(p, f)) == $addr(p) + $field_offset(f));
+  $is_phys_field(f) ==>
+     $addr($dot(p, f)) == $unchk_add_ptr($addr(p), $field_offset(f)));
 
 // PERF 5.7%
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
@@ -353,11 +352,15 @@ axiom (forall t:$ctype :: {$f_vol_version(t)}
 // ----------------------------------------------------------------------------
 
 const $arch_ptr_size : int; // arch-specific; to be defined by a compiler-generated axiom
+const $arch_ptr_type : $ctype;
 
-function $in_range_uintptr(a:int) : bool;
+function {:inline true} $in_range_uintptr(a:int) : bool
+  { $in_range_t($arch_ptr_type, a) }
+function {:inline true} $unchk_add_ptr(p:int, off:int) : int
+  { $unchk_add($arch_ptr_type, p, off) }
 
-axiom $arch_ptr_size == 4 ==> (forall a:int :: {$in_range_uintptr(a)} $in_range_uintptr(a) <==> $in_range_u4(a));
-axiom $arch_ptr_size == 8 ==> (forall a:int :: {$in_range_uintptr(a)} $in_range_uintptr(a) <==> $in_range_u8(a));
+axiom $arch_ptr_size == 4 ==> $arch_ptr_type == ^^u4;
+axiom $arch_ptr_size == 8 ==> $arch_ptr_type == ^^u8;
 
 const unique ^^i1: $ctype;
 const unique ^^i2: $ctype;
@@ -473,10 +476,7 @@ axiom (forall p:$ptr, i:int, j:int :: {$idx($idx(p, i), j)}
   $idx($idx(p, i), j) == $idx_inline(p, i + j));
 
 axiom (forall p:$ptr, i:int :: {$addr($idx(p, i))}
-  $is_proper($idx(p, i)) ||
-  $in_range_uintptr($addr(p) + $sizeof($typ(p)) * i)
-  ==>
-    $addr($idx(p, i)) == $addr(p) + $sizeof($typ(p)) * i);
+    $addr($idx(p, i)) == $unchk_add_ptr($addr(p), $sizeof($typ(p)) * i));
 
 axiom (forall p:$ptr, i:int :: {$idx(p, i)}
   $is_proper($idx(p, i)) ==>
@@ -777,6 +777,7 @@ axiom (forall S:$state, p:$ptr ::
   {$addr(p), $owner(S, $root(S, p))}
   $good_state(S) ==>
     $is_proper(p) &&
+    $in_range_phys_ptr(p) &&
     $owner(S, $root(S, $emb0(p))) == $me() ==>
       $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
 
@@ -784,6 +785,7 @@ axiom (forall S:$state, p:$ptr, f:$field ::
   {$addr($dot(p, f)), $owner(S, $root(S, p))}
   $good_state(S) ==>
     $is_proper($dot(p, f)) &&
+    $in_range_phys_ptr($dot(p, f)) &&
     $owner(S, $root(S, p)) == $me() ==>
       $typemap($f_owner(S))[$addr($dot(p, f)), $field_type(f)] == $dot(p, f));
 
@@ -791,6 +793,7 @@ axiom (forall S:$state, p, q:$ptr ::
   {$retype(S, q), $as_addr(p, $typ(q), $addr(q))}
   $good_state(S) ==>
     $is_proper(p) &&
+    $in_range_phys_ptr(p) &&
     $owner(S, $root(S, $emb0(p))) == $me() ==>
       $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
 
