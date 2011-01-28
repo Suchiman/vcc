@@ -1030,6 +1030,14 @@ function {:inline true} $specials_eq(S0:$state, S:$state) : bool
     $roots(S0) == $roots(S)
   }
 
+function {:inline true} $specials_eq_except(S0:$state, S:$state, p:$ptr) : bool
+  { 
+    $f_timestamp(S) == $f_timestamp(S0)[ p := $f_timestamp(S)[p] ] &&
+    $f_closed(S) == $f_closed(S0)[ p := $f_closed(S)[p] ] &&
+    $f_owner(S) == $f_owner(S0)[ p := $f_owner(S)[p] ] &&
+    $roots(S) == $roots(S0)[ p:= $roots(S)[p] ]
+  }
+
 
 function {:inline true} $meta_eq(s1:$state, s2:$state) : bool
   { $specials_eq(s1, s2) }
@@ -1629,6 +1637,7 @@ procedure $alloc_claim() returns(r:$ptr);
   ensures $in_range_spec_ptr(r);
   ensures $owns($s, r) == $set_empty();
   ensures $ref_cnt($s, r) == 0;
+  ensures $specials_eq_except(old($s), $s, r);
   ensures r != $no_claim;
 
 function {:inline true} $claim_killed(S0:$state, S:$state, c:$ptr) : bool
@@ -1729,10 +1738,11 @@ procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
   requires $is_volatile_field($f_owns($typ(owner)));
 
   ensures $f_closed($s) == $f_closed(old($s));
-  ensures $f_timestamp($s) == $f_timestamp(old($s));
+  ensures $f_timestamp($s) == $f_timestamp(old($s))[ #p := $current_timestamp($s) ];
   ensures $f_owner($s) == $f_owner(old($s))[ #p := $me() ];
   ensures $roots($s) == (lambda q:$ptr :: if $root(old($s), q) == $root(old($s), owner) then $root($s, q) else $root(old($s), q));
   ensures $updated_owns(old($s), $s, owner, $set_difference($owns(old($s), owner), $set_singleton(#p)));
+  ensures $timestamp_post_strict(old($s), $s);
 
 // -----------------------------------------------------------------------
 // Laballed invariants
