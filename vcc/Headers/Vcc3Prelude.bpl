@@ -194,7 +194,7 @@ axiom (forall p:$ptr :: {$phys_ptr_cast(p, $typ(p))} {$in_range_phys_ptr(p)}
   $in_range_phys_ptr(p) ==> $phys_ptr_cast(p, $typ(p)) == p && $is_phys_field($field(p)));
 axiom (forall p:$ptr :: {$in_range_phys_ptr($base(p))}
   $in_range_phys_ptr(p) ==> $in_range_phys_ptr($base(p)));
-axiom (forall p:$ptr, t:$ctype :: {$addr($phys_ptr_cast(p, t))}
+axiom (forall p:$ptr, t:$ctype :: {$addr(p), $phys_ptr_cast(p, t)}
   $addr($phys_ptr_cast(p, t)) == $addr(p));
 function {:inline true} $cast_props(p:$ptr, t:$ctype, c:$ptr) : bool
   { $typ(c) == t && $is_null(c) == $is_null(p) && $field(c) == $as_field_with_type($field(c), t) }
@@ -2552,10 +2552,15 @@ function $i2_to_ptr(x : int) : $ptr;
 function $u1_to_ptr(x : int) : $ptr;
 function $i1_to_ptr(x : int) : $ptr;
 
-axiom (forall k:int :: { $u8_to_ptr(k) } $addr($u8_to_ptr(k)) == k);
+axiom $arch_ptr_size >= 8 ==> (forall k:int :: { $u8_to_ptr(k) } $addr($u8_to_ptr(k)) == k);
 axiom (forall k:int :: { $u4_to_ptr(k) } $addr($u4_to_ptr(k)) == k);
 axiom (forall k:int :: { $u2_to_ptr(k) } $addr($u2_to_ptr(k)) == k);
 axiom (forall k:int :: { $u1_to_ptr(k) } $addr($u1_to_ptr(k)) == k);
+
+axiom $arch_ptr_size >= 8 ==> (forall k:int :: { $i8_to_ptr(k) } k >= 0 ==> $addr($i8_to_ptr(k)) == k);
+axiom (forall k:int :: { $i4_to_ptr(k) } k >= 0 ==> $addr($i4_to_ptr(k)) == k);
+axiom (forall k:int :: { $i2_to_ptr(k) } k >= 0 ==> $addr($i2_to_ptr(k)) == k);
+axiom (forall k:int :: { $i1_to_ptr(k) } k >= 0 ==> $addr($i1_to_ptr(k)) == k);
 
 axiom (forall p:$ptr :: { $ptr_to_u8(p) } $in_range_u8($addr(p)) ==> $ptr_to_u8(p) == $addr(p));
 axiom (forall p:$ptr :: { $ptr_to_i8(p) } $in_range_i8($addr(p)) ==> $ptr_to_i8(p) == $addr(p));
