@@ -613,6 +613,18 @@ function $in_composite_array_lev2(s:$state, q:$ptr, a:$ptr, sz:int) : bool
     $in(q, $composite_extent(s, $idx(a, $index_within(q, a)), $typ(a)))
   }
 
+function {:inline true} $in_array(q:$ptr, arr:$ptr, T:$ctype, sz:int) : bool
+  { $in_range(0, $index_within(q, arr), sz - 1) && q == $idx(arr, $index_within(q, arr)) }
+
+function {:inline true} $in_array_full_extent_of(q:$ptr, arr:$ptr, T:$ctype, sz:int) : bool
+  { $in_range(0, $index_within(q, arr), sz - 1) && $in(q, $full_extent($idx(arr, $index_within(q, arr)))) }
+
+function {:inline true} $in_array_extent_of(S:$state, q:$ptr, arr:$ptr, T:$ctype, sz:int) : bool
+  { $in_range(0, $index_within(q, arr), sz - 1) && $in(q, $extent(S, $idx(arr, $index_within(q, arr)))) }
+
+function $array_members(p:$ptr, T:$ctype, sz:int) : $ptrset
+  { (lambda q:$ptr :: $in_array(q, p, T, sz)) }
+
 // ----------------------------------------------------------------------------
 // As-array
 // ----------------------------------------------------------------------------
@@ -1230,6 +1242,7 @@ function {:inline true} $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : b
   &&
     if $is_primitive(t) then
       (   $mutable(S, $emb0(r))
+       && r == $dot($emb0(r), $field(r))
        && $timestamp_is_now(S, $emb0(r)))
     else
       (    $extent_mutable(S, r)
