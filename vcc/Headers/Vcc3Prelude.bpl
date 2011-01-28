@@ -860,6 +860,7 @@ function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
   { !$is_primitive($typ(p))
   && $is_proper(p)
   && $owner(S, $root(S, p)) == $me()
+  && $non_null(p)
 //     ($wrapped(S, $root(S, p), $typ($root(S, p))) && $set_in(p, $domain(S, $root(S, p)))))
   }
 
