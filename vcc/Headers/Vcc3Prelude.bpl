@@ -607,6 +607,12 @@ function $in_composite_array(q:$ptr, a:$ptr, sz:int) : bool
     q == $idx(a, $index_within(q, a))
   }
 
+function $in_composite_array_lev2(s:$state, q:$ptr, a:$ptr, sz:int) : bool
+  {
+    $in_range(0, $index_within(q, a), sz - 1) &&
+    $in(q, $composite_extent(s, $idx(a, $index_within(q, a)), $typ(a)))
+  }
+
 // ----------------------------------------------------------------------------
 // As-array
 // ----------------------------------------------------------------------------

@@ -1700,19 +1700,32 @@ namespace Microsoft.Research.Vcc
               [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_field" else "$def_phys_field") args)]
         def @ axs
       
+      let rec compositeFields = function
+        | C.Type.Ref td -> td.Fields
+        | C.Volatile(t)
+        | C.Array (t, _) -> compositeFields t
+        | _ -> []
+
       let trCompositeExtent (td:C.TypeDecl) =
         xassert (not td.IsUnion)
         let we = er ("^" + td.Name)
         let s = er "s"
         let forallRM id trig body = B.Expr.Forall (Token.NoToken, [("p", tpPtr); ("q", tpPtr); ("s", tpState)], trig, weight id, body)
         let eq = bEq (er "q")
-        let oneField (f:C.Field) =
+        let oneField (f:C.Field) =                  
           if f.Type.IsComposite then
             let dot = bCall "$dot" [er "p"; er (fieldName f)]
-            match f.Type with
-              | C.Type.Array (_, sz) ->
-                bCall "$in_composite_array" [er "q"; dot; bInt sz]
-              | _ -> eq dot
+            if compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
+              match f.Type with
+                | C.Type.Array (_, sz) ->
+                  bCall "$in_composite_array_lev2" [er "s"; er "q"; dot; bInt sz]
+                | _ -> 
+                  bCall "$in" [er "q"; bCall "$composite_extent" [er "s"; dot; toTypeId f.Type]]
+            else
+              match f.Type with
+                | C.Type.Array (_, sz) ->
+                  bCall "$in_composite_array" [er "q"; dot; bInt sz]
+                | _ -> eq dot
           else bFalse
         let eqs = td.Fields |> List.map oneField
         let eqs = (eq (er "p")) :: eqs
