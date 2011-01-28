@@ -253,7 +253,9 @@ function {:inline true} $emb(S:$state,p:$ptr) : $ptr
 function $emb0(p:$ptr) : $ptr
   { if $is_primitive($typ(p)) then $base(p) else p }
 
+// means roughly volatile, owner-approved
 function $is_semi_sequential_field(f:$field) : bool;
+
 function $is_sequential_field($field) : bool;
 function $is_volatile_field($field) : bool;
 function $as_primitive_field($field) : $field;
@@ -341,7 +343,7 @@ axiom (forall t:$ctype :: {$f_owns(t)}
 axiom (forall t:$ctype :: {$f_ref_cnt(t)} 
   $is_non_primitive(t) ==>
     $def_special_ghost_field(t, $f_ref_cnt(t), ^^mathint, $fk_ref_cnt) &&
-    $is_volatile_field($f_ref_cnt(t)));
+    $is_semi_sequential_field($f_ref_cnt(t)));
 axiom (forall t:$ctype :: {$f_vol_version(t)} 
   $is_non_primitive(t) ==>
     $def_special_ghost_field(t, $f_vol_version(t), ^$#volatile_version_t, $fk_vol_version) &&
@@ -1610,7 +1612,6 @@ axiom (forall S:$state, p:$ptr :: {$invok_state(S), $claimed_closed(S, p)}
 procedure $atomic_havoc();
   modifies $s;
   ensures $writes_nothing(old($s), $s);
-
   ensures (forall p:$ptr, f:$field ::
     {$not_shared(old($s), p), $rdtrig($s, p, f)}
     $not_shared(old($s), p) ==> $rd($s, p, f) == $rd(old($s), p, f));
