@@ -1235,6 +1235,7 @@ function {:inline true} $is_allocated0(S0:$state, S:$state, r:$ptr, t:$ctype) : 
   && $writes_nothing(S0, S)
   && $heap(S) == $heap(S0)
   && $timestamp_post_strict(S0, S)
+  && !$closed(S0, r)
   && $owner(S0, r) != $me()
   && $is_malloc_root(S, r)
   && $field(r) == $f_root(t)
