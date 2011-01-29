@@ -664,12 +664,15 @@ axiom (forall t:$ctype, sz:int :: {$array_emb(t, sz)} {$array(t, sz)}
   $is_phys_field($array_emb(t, sz)) &&
   $field_offset($array_emb(t, sz)) == 0 &&
   $field_arr_size($array_emb(t, sz)) == sz &&
+  $field_arr_index($array_emb(t, sz)) == 0 &&
+  $field_arr_root($array_emb(t, sz)) == $array_emb(t, sz) &&
   $is_sequential_field($array_emb(t, sz)) &&
   true);
 
 function $as_array(p:$ptr, T:$ctype, sz:int) : $ptr
   {
-      if $field($emb1(p)) == $f_root($array(T, sz)) &&
+      if $is_proper(p) &&
+         $field($emb1(p)) == $f_root($array(T, sz)) &&
          $field(p) == $array_emb(T, sz) then
         $emb1(p)
       else
@@ -1845,7 +1848,14 @@ function $claim_version($ptr) : $version;
 
 axiom (forall S:$state, p:$ptr, c:$ptr, f:$field :: 
   {$in_claim_domain(p, c), $rdtrig(S, p, f)}
-  {$by_claim(S, c, p, $dot(p, f))}
+  $good_state(S) &&
+  $closed(S, c) && $in_claim_domain(p, c) && $is_sequential_field(f) ==>
+    $in_claim_domain(p, c) &&
+    $rd(S, p, f) == $fetch_from_domain($claim_version(c), p, f)
+    );
+
+axiom (forall S:$state, p, q:$ptr, c:$ptr, f:$field :: 
+  {$by_claim(S, c, q, $dot(p, f))}
   $good_state(S) &&
   $closed(S, c) && $in_claim_domain(p, c) && $is_sequential_field(f) ==>
     $in_claim_domain(p, c) &&
