@@ -1333,6 +1333,9 @@ function $is_unwrapped_dynamic(S0:$state, S:$state, o:$ptr) : bool
      $is_unwrapped(S0, S, o)
   && $f_timestamp(S) == 
        (lambda r:$ptr :: if $owner(S0, r) == o || r == o then $current_timestamp(S) else $f_timestamp(S0)[r])
+  && (forall r:$ptr :: {$owner(S, r)} {$closed(S, r)} 
+         $set_in(r, $owns(S0, o)) ==>
+           $owner(S0, r) == o && $wrapped(S, r, $typ(r)))
   && $f_owner(S) == 
        (lambda r:$ptr :: if $owner(S0, r) == o then $me() else $f_owner(S0)[r])
 }
