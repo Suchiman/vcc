@@ -1646,7 +1646,8 @@ function {:inline true} $claim_killed(S0:$state, S:$state, c:$ptr) : bool
   $f_timestamp(S) == $f_timestamp(S0) &&
   $f_owner(S) == $f_owner(S0) &&
   $heap(S) == $heap(S0) &&
-  $good_state(S)
+  $good_state(S) &&
+  $timestamp_post_strict(S0, S)
 }
 
 // FIXME should it havoc non thread local state?
@@ -1939,6 +1940,10 @@ function $extent(S:$state, r:$ptr) : $ptrset
 const $full_extent_state : $state;
 function $full_extent(r:$ptr) : $ptrset
   { (lambda p:$ptr :: $is_proper(p) && $composite_extent($full_extent_state, r, $typ(r))[$emb0(p)]) }
+
+axiom (forall S:$state, p, r:$ptr ::
+  {$in(p, $composite_extent(S, r, $typ(r)))}
+  $extent_hint(p, r));
 
 function $span(o:$ptr) : $ptrset
   { (lambda p:$ptr :: $is_proper(p) && $emb0(p) == o) }
