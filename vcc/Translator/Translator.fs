@@ -645,9 +645,14 @@ namespace Microsoft.Research.Vcc
             bCall ("$" + n.Substring 5) (selfs args)
                               
           | "reads_same", [ptr] ->
-            let ptr = self ptr
-            let expr = bCall "$mem" [bState; ptr]
-            B.Primitive ("==", [expr; B.Old expr])
+            let sptr = self ptr
+            match ptr.Type with
+              | C.Ptr t when vcc3 && t.IsComposite ->
+                let expr = bCall "$read_version" [bState; sptr]
+                B.Primitive ("==", [expr; B.Old expr])                
+              | _ ->
+                let expr = bCall "$mem" [bState; sptr]
+                B.Primitive ("==", [expr; B.Old expr])
           
           | "keeps", [p1; p2] ->
             match p2.Type with
