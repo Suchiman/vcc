@@ -5,6 +5,8 @@ using System.Management;
 using System.Text.RegularExpressions;
 using Thread = System.Threading.Thread;
 using Microsoft.Win32;
+using System.IO;
+using System.Windows.Forms;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -13,7 +15,13 @@ namespace MicrosoftResearch.VSPackage
     /// </summary>
     internal static class VCCLauncher
     {
-        private static Lazy<string> _vccPath = new Lazy<string>(() =>
+        /// <summary>
+        ///     This string contains the Path of the Vcc-Executable. If the registryentry does not exist or another
+        ///     error occurs, this is null.
+        /// </summary>
+        private static string VccPath
+        {
+            get
             {
                 using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
                 {
@@ -26,23 +34,36 @@ namespace MicrosoftResearch.VSPackage
                         }
                         else
                         {
-                            return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
+                            if (File.Exists(VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe"))
+                            {
+                                return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
+                            }
+                            else
+                            {
+                                return null;
+                            }
                         }
                     }
                     else
                     {
-                        return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
+                        if (File.Exists(VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe"))
+                        {
+                            return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
                 }
-            });
-        private static string VccPath
-        {
-            get { return _vccPath.Value; }
+            }
         }
+
         private static Process vccProcess;
         //// This is set to true, when Verification fails.
         private static bool errorOccurred = false;
-        private static Regex VCCErrorRegEx = new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\s(.*?):)?\s(?<errormessage>(.*))");
+        private static Regex VCCErrorRegEx =
+            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\s(.*?):)?\s(?<errormessage>(.*))");
 
         internal static void VerifyFile(string filename, VccOptionPage options)
         {
@@ -76,7 +97,19 @@ namespace MicrosoftResearch.VSPackage
             VSIntegration.updateStatus("Verifying...",true);
 
             //// Prepare VCC-Process, execute it and read its Output            
-            ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"",VccPath), arguments);
+            ProcessStartInfo psi;
+            if (VccPath != null)
+            {
+                psi = new ProcessStartInfo(string.Format("\"{0}\"", VccPath), arguments);
+            }
+            else
+            {
+                MessageBox.Show("Vcc executable was not found. You can specify the folder in which vcc.exe"
+                                + " is located in the Tools Options Window.",
+                                "Vcc not found.",
+                                MessageBoxButtons.OK);
+                return;
+            }
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
@@ -115,12 +148,12 @@ namespace MicrosoftResearch.VSPackage
                         VSIntegration.updateStatus("Verification canceled.",false);
                         break;
                     case 0:
-                        Thread.Sleep(500);
+                        Thread.Sleep(1000);
                         VSIntegration.WriteToPane("\n===Verification succeeded.===\n");
                         VSIntegration.updateStatus("Verification succeeded.", false);
                         break;
                     case 3:
-                        Thread.Sleep(500);
+                        Thread.Sleep(1000);
                         VSIntegration.WriteToPane("\n===Verification failed.===\n");
                         VSIntegration.updateStatus("Verification failed.", false);
                         break;

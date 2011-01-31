@@ -24,7 +24,8 @@ namespace MicrosoftResearch.VSPackage
         public bool ShowZ3Inspector{ get; set; }
 
         [DisplayName("Vcc executable Folder")]
-        [Description("Here you can give the folder in which your vcc.exe is located. This is usually" +
+        [Editor(typeof(System.Windows.Forms.Design.FolderNameEditor),typeof(System.Drawing.Design.UITypeEditor))]
+        [Description("Here you can specify the folder in which your vcc.exe is located. This is usually" +
                       " not necessary. Leave this empty to use the path written to the registry while installing" +
                       " Vcc.")]
         public string VccExecutableFolder
