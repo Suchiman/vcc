@@ -68,6 +68,16 @@ namespace MicrosoftResearch.VSPackage
             instance = this;
         }
 
+
+        private void CustomVerify(object sender, EventArgs e)
+        {
+            VSIntegration.DocumentsSavedCheck();
+            if (OptionPage != null)
+            {
+                VCCLauncher.CustomVerify(VSIntegration.ActiveFileFullName, OptionPage);
+            }
+        }
+
         /// <summary>
         ///     Launches VCC.exe to verify the active file
         /// </summary>
@@ -76,22 +86,20 @@ namespace MicrosoftResearch.VSPackage
         private void VerifyActiveFile(object sender, EventArgs e)
         {
             VSIntegration.DocumentsSavedCheck();
-            VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
-            if (options != null)
+            if (OptionPage != null)
             {
-                VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, options);
+                VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, OptionPage);
             }
         }
 
         private void CheckAdmissiblityOfStruct(object sender, EventArgs e)
         {
             VSIntegration.DocumentsSavedCheck();
-            VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
-            if (options != null)
+            if (OptionPage != null)
             {
                 VCCLauncher.VerifyFunction( VSIntegration.ActiveFileFullName,
                                             VSIntegration.CurrentStructName,
-                                            options);
+                                            OptionPage);
             }
         }
 
@@ -104,11 +112,11 @@ namespace MicrosoftResearch.VSPackage
         {
             VSIntegration.DocumentsSavedCheck();
             VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
-            if (options != null)
+            if (OptionPage != null)
             {
                 VCCLauncher.VerifyFunction( VSIntegration.ActiveFileFullName,
                                             VSIntegration.CurrentFunctionName,
-                                            options);
+                                            OptionPage);
             }
         }
 
@@ -337,6 +345,32 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        void CustomVerify_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                if (VCCLauncher.VCCRunning)
+                {
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+                else
+                {
+                    ((OleMenuCommand)sender).Enabled = true;
+                }
+
+                if (VSIntegration.IsCodeFile)
+                {
+                    //// active document is in C or C++ => show entry
+                    ((OleMenuCommand)sender).Visible = true;
+                }
+                else
+                {
+                    //// there is no active document or it is not in C or C++ => hide entry
+                    ((OleMenuCommand)sender).Visible = false;
+                }
+            }
+        }
+
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -375,6 +409,12 @@ namespace MicrosoftResearch.VSPackage
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
+                //// Custom Verify
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCustomVerify);
+                OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(CustomVerify_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
                 //// Cancel
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCancel);
                 OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
@@ -397,6 +437,12 @@ namespace MicrosoftResearch.VSPackage
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyCurrentFunction);
                 OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += new EventHandler(ContextVerifyFunction_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
+                //// Custom Verify (Context Menu)
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCustomVerify);
+                OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(CustomVerify_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
                 //// Cancel (Context Menu)
