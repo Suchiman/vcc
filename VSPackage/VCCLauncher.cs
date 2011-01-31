@@ -17,45 +17,38 @@ namespace MicrosoftResearch.VSPackage
     internal static class VCCLauncher
     {
         /// <summary>
-        ///     This string contains the Path of the Vcc-Executable. If the registryentry does not exist or another
-        ///     error occurs, this is null.
+        ///     This string contains the Path of the Vcc-Executable.
+        ///     User Input in Tools/Options/Vcc > Registry Entry > "vcc.exe"
         /// </summary>
         private static string VccPath
         {
             get
             {
-                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
+                if (VSPackagePackage.Instance.OptionPage.VccExecutableFolder == string.Empty)
                 {
-                    if (key != null)
+                    using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
                     {
-                        string result = key.GetValue("vccExecutablePath") as string;
-                        if (result != null)
+                        if (key != null)
                         {
-                            return result;
-                        }
-                        else
-                        {
-                            if (File.Exists(VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe"))
+                            string result = key.GetValue("vccExecutablePath") as string;
+                            if (result != null)
                             {
-                                return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
+                                return result;
                             }
                             else
                             {
-                                return null;
+                                return "vcc.exe";
                             }
-                        }
-                    }
-                    else
-                    {
-                        if (File.Exists(VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe"))
-                        {
-                            return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
                         }
                         else
                         {
-                            return null;
+                            return "vcc.exe";
                         }
                     }
+                }
+                else
+                {
+                    return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
                 }
             }
         }
@@ -75,7 +68,18 @@ namespace MicrosoftResearch.VSPackage
             {
                 addArguments += "/i ";
             }
-            addArguments = Interaction.InputBox("Commandline arguments for vcc.exe:", "Custom Verify", addArguments) + " ";
+            string userInput = Interaction.InputBox("Commandline arguments for vcc.exe:", "Custom Verify", addArguments) + " ";
+            if (userInput == " ")
+            {
+                if (MessageBox.Show("Do you want to start verification without additional commandline arguments?",
+                                    "Custom Verify",
+                                    MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button1)
+                                    == DialogResult.No)
+                {
+                    return;
+                }
+            }
+            addArguments = userInput;
             LaunchVCC(String.Format("{0}\"{1}\"", addArguments, filename));
         }
 
@@ -108,22 +112,10 @@ namespace MicrosoftResearch.VSPackage
             errorOccurred = false;
 
             VSIntegration.initializeErrorList();
-            VSIntegration.updateStatus("Verifying...",true);
+            VSIntegration.updateStatus("Verifying...", true);
 
             //// Prepare VCC-Process, execute it and read its Output            
-            ProcessStartInfo psi;
-            if (VccPath != null)
-            {
-                psi = new ProcessStartInfo(string.Format("\"{0}\"", VccPath), arguments);
-            }
-            else
-            {
-                MessageBox.Show("Vcc executable was not found. You can specify the folder in which vcc.exe"
-                                + " is located in the Tools Options Window.",
-                                "Vcc not found.",
-                                MessageBoxButtons.OK);
-                return;
-            }
+            ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"", VccPath), arguments);
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
@@ -144,9 +136,21 @@ namespace MicrosoftResearch.VSPackage
             vccProcess.Exited += new EventHandler(vccProcess_Exited);
 
             //// Finally start the process
-            vccProcess.Start();
-            vccProcess.BeginOutputReadLine();
-            vccProcess.BeginErrorReadLine();
+            try
+            {
+                vccProcess.Start();
+                vccProcess.BeginOutputReadLine();
+                vccProcess.BeginErrorReadLine();
+            }
+            catch (Exception)
+            {
+                vccProcess = null;
+                VSIntegration.WriteToPane("Executing\n" + VccPath + "\nfailed.\n"
+                    + "You can specify the folder in which the vcc executable is located in Tools/Options/Vcc.");
+                VSIntegration.WriteToPane("\n===Verification failed.===\n");
+                VSIntegration.updateStatus("Verification failed.", false);
+            }
+
         }
 
         private static void vccProcess_Exited(object sender, EventArgs e)
@@ -158,6 +162,7 @@ namespace MicrosoftResearch.VSPackage
                     case -1:
                         vccProcess.CancelOutputRead();
                         vccProcess.CancelErrorRead();
+                        vccProcess = null;
                         VSIntegration.WriteToPane("\n===VCC was canceled.===\n");
                         VSIntegration.updateStatus("Verification canceled.",false);
                         break;
@@ -166,12 +171,14 @@ namespace MicrosoftResearch.VSPackage
                         VSIntegration.WriteToPane("\n===Verification succeeded.===\n");
                         VSIntegration.updateStatus("Verification succeeded.", false);
                         break;
+                    case 1:
                     case 3:
                         Thread.Sleep(1000);
                         VSIntegration.WriteToPane("\n===Verification failed.===\n");
                         VSIntegration.updateStatus("Verification failed.", false);
                         break;
                     default:
+                        Thread.Sleep(1000);
                         VSIntegration.WriteToPane("\n===VCC finished with unknown exitcode.===\n");
                         VSIntegration.WriteToPane(vccProcess.ExitCode.ToString() + "\n");
                         break;
