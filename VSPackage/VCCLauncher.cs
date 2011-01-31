@@ -7,6 +7,7 @@ using Thread = System.Threading.Thread;
 using Microsoft.Win32;
 using System.IO;
 using System.Windows.Forms;
+using Microsoft.VisualBasic;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -64,6 +65,19 @@ namespace MicrosoftResearch.VSPackage
         private static bool errorOccurred = false;
         private static Regex VCCErrorRegEx =
             new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\s(.*?):)?\s(?<errormessage>(.*))");
+
+        internal static void CustomVerify(string filename, VccOptionPage options)
+        {
+            string addArguments = options.UseAdditionalCommandlineArguments ?
+                options.AdditionalCommandlineArguments + " " :
+                string.Empty;
+            if (options.ShowZ3Inspector)
+            {
+                addArguments += "/i ";
+            }
+            addArguments = Interaction.InputBox("Commandline arguments for vcc.exe:", "Custom Verify", addArguments) + " ";
+            LaunchVCC(String.Format("{0}\"{1}\"", addArguments, filename));
+        }
 
         internal static void VerifyFile(string filename, VccOptionPage options)
         {
