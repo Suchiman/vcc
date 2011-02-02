@@ -239,21 +239,30 @@ namespace MicrosoftResearch.VSPackage
         {
             if (VCCRunning)
             {
+                int vccProcess_Id = vccProcess.Id;
                 try
                 {
                     vccProcess.Kill();
-                    foreach (Process subProcess in Process.GetProcesses())
-                    {
-                        if (GetParentProcess(subProcess.Id) == vccProcess.Id)
-                        {
-                            subProcess.Kill();
-                        }//if
-                    }//foreach
                 }//try
                 catch
                 {
                     VSIntegration.WriteToPane("Canceling VCC failed.");
                 }//catch
+
+                foreach (Process subProcess in Process.GetProcesses())
+                {
+                    if (GetParentProcess(subProcess.Id) == vccProcess_Id)
+                    {
+                        try
+                        {
+                            subProcess.Kill();
+                        }
+                        catch
+                        {
+                            VSIntegration.WriteToPane("Canceling a subprocess of VCC failed.");
+                        }
+                    }//if
+                }//foreach
             }//if
         }//method
 
