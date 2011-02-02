@@ -165,7 +165,6 @@
   <ItemGroup>
     <None Include="Resources\Images_32bit.bmp" />
     <None Include="Resources\Check_File.bmp" />
-    <None Include="Resources\Check_Function.bmp" />
     <None Include="Resources\Check_Struct.bmp" />
   </ItemGroup>
   <ItemGroup>
@@ -177,13 +176,13 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Resource Include="Resources\Check_Fkt.bmp" />
+    <Resource Include="Resources\Custom.bmp" />
     <Content Include="Resources\Package.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\preview.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
   </ItemGroup>
   <ItemGroup>
