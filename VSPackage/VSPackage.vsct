@@ -104,6 +104,15 @@
         </Strings>
       </Button>
 
+      <Button guid ="guidVerifyCmdSet" id ="cmdidReVerify" priority ="0x0105" type ="Button">
+        <Parent guid ="guidVerifyCmdSet" id ="cmdidMyMenuGroup"/>
+        <Icon guid="guidVccImageReVerify" id ="bmpPicR"/>
+        <CommandFlag>DefaultDisabled</CommandFlag>
+        <Strings>
+          <ButtonText>Re-Verify</ButtonText>
+        </Strings>
+      </Button>
+
       <Button guid="guidVerifyCmdSet" id="cmdidCustomVerify" priority="0x0106" type ="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
         <Icon guid="guidVccImageCustomVerify" id="bmpPicC"/>
@@ -156,7 +165,17 @@
         </Strings>
       </Button>
 
-      <Button guid="guidVerifyCmdSet" id="cmdidContextCustomVerify" priority="0x0103" type="Button">
+      <Button guid="guidVerifyCmdSet" id="cmdidContextReVerify" priority="0x0104" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
+        <Icon guid="guidVccImageReVerify" id ="bmpPicR"/>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Re-Verify</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVerifyCmdSet" id="cmdidContextCustomVerify" priority="0x0106" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
         <Icon guid="guidVccImageCustomVerify" id="bmpPicC"/>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -166,7 +185,7 @@
         </Strings>
       </Button>
 
-      <Button guid="guidVerifyCmdSet" id="cmdidContextCancel" priority="0x0104" type="Button">
+      <Button guid="guidVerifyCmdSet" id="cmdidContextCancel" priority="0x0108" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
         <Icon guid="guidImages" id ="bmpPicX"/>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -190,6 +209,7 @@
       <Bitmap guid ="guidVccImageCheckFunction" href ="Resources\Check_Fkt.bmp" />
       <Bitmap guid ="guidVccImageCheckStruct" href ="Resources\Check_struct.bmp" />
       <Bitmap guid ="guidVccImageCustomVerify" href="Resources\Custom.bmp"/>
+      <Bitmap guid ="guidVccImageReVerify" href ="Resources\ReVerify.bmp"/>
 
     </Bitmaps>
 
@@ -198,6 +218,7 @@
   <KeyBindings>
     <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyActiveFile" key1="V" key2="F" mod1="ALT" mod2="ALT" />
     <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidCancel" key1="V" key2="C" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidReVerify" key1="V" key2="R" mod1="ALT" mod2="ALT" />
   </KeyBindings>
 
   <Symbols>
@@ -215,12 +236,14 @@
       <IDSymbol name="cmdidVerifyActiveFile" value="0x0102" />
       <IDSymbol name="cmdidCheckAdmissibilityOfCurrentStruct" value="0x0103"/>
       <IDSymbol name="cmdidVerifyCurrentFunction" value ="0x0104" />
+      <IDSymbol name="cmdidReVerify" value ="0x0112"/>
       <IDSymbol name="cmdidCustomVerify" value="0x0111" />
       <IDSymbol name="cmdidCancel" value ="0x0105" />
 
       <IDSymbol name="cmdidContextVerifyActiveFile" value="0x0106"/>
       <IDSymbol name="cmdidContextCheckAdmissibilityOfCurrentStruct" value="0x0107"/>
       <IDSymbol name="cmdidContextVerifyCurrentFunction" value ="0x0108"/>
+      <IDSymbol name="cmdidContextReVerify" value ="0x0113"/>
       <IDSymbol name="cmdidContextCustomVerify" value="0x0109" />
       <IDSymbol name="cmdidContextCancel" value ="0x0110"/>
 
@@ -248,6 +271,10 @@
 
     <GuidSymbol name ="guidVccImageCustomVerify" value ="{5274796B-17B0-4D61-8692-E33153B05435}" >
       <IDSymbol name ="bmpPicC" value ="1"/>
+    </GuidSymbol>
+
+    <GuidSymbol name ="guidVccImageReVerify" value ="{8AB4D9A9-88A3-4D13-86CB-13A6E926ABBB}" >
+      <IDSymbol name ="bmpPicR" value ="1"/>
     </GuidSymbol>
     
   </Symbols>
