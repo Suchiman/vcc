@@ -53,6 +53,10 @@ namespace MicrosoftResearch.VSPackage
                 return this.GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
             }
         }
+        /// <summary>
+        ///     here the parameters of the last call of Vcc are stored
+        /// </summary>
+        internal static string LastAction { get; set; }
 
         /// <summary>
         /// Default constructor of the package.
@@ -66,8 +70,10 @@ namespace MicrosoftResearch.VSPackage
             Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
             if (instance != null) throw new InvalidOperationException();
             instance = this;
+            LastAction = "";
         }
 
+        #region Commands
 
         private void CustomVerify(object sender, EventArgs e)
         {
@@ -120,10 +126,20 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        private void ReVerify(object sender, EventArgs e)
+        {
+            VSIntegration.DocumentsSavedCheck();
+            VCCLauncher.LaunchVCC(LastAction);
+        }
+
         private void Cancel(object sender, EventArgs e)
         {
             VCCLauncher.Cancel();
         }
+
+        #endregion
+
+        #region BeforeQueryStatusHandlers
 
         /// <summary>
         ///     Hides/Shows the VerifyMenu
@@ -345,6 +361,32 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        void ReVerify_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                if (VCCLauncher.VCCRunning)
+                {
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+                else
+                {
+                    ((OleMenuCommand)sender).Enabled = true;
+                }
+
+                if (VSIntegration.IsCodeFile)
+                {
+                    //// active document is in C or C++ => show entry
+                    ((OleMenuCommand)sender).Visible = true;
+                }
+                else
+                {
+                    //// there is no active document or it is not in C or C++ => hide entry
+                    ((OleMenuCommand)sender).Visible = false;
+                }
+            }
+        }
+
         void CustomVerify_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
@@ -371,6 +413,7 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        #endregion
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -409,6 +452,12 @@ namespace MicrosoftResearch.VSPackage
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
+                //// Re-Verify
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidReVerify);
+                OleMenuItem = new OleMenuCommand(ReVerify, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(ReVerify_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
                 //// Custom Verify
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCustomVerify);
                 OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
@@ -437,6 +486,12 @@ namespace MicrosoftResearch.VSPackage
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyCurrentFunction);
                 OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += new EventHandler(ContextVerifyFunction_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
+                //// Re-Verify (Context Menu)
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextReVerify);
+                OleMenuItem = new OleMenuCommand(ReVerify, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(ReVerify_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
                 //// Custom Verify (Context Menu)

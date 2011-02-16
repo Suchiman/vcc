@@ -138,7 +138,6 @@ namespace MicrosoftResearch.VSPackage
                     {
                         return string.Empty;
                     }
-
                 }
             }
         }

@@ -141,6 +141,8 @@ namespace MicrosoftResearch.VSPackage
                 vccProcess.Start();
                 vccProcess.BeginOutputReadLine();
                 vccProcess.BeginErrorReadLine();
+                //// When the process was started, remember the cmdlinearguments
+                VSPackagePackage.LastAction = arguments;
             }
             catch (Exception)
             {
@@ -150,7 +152,6 @@ namespace MicrosoftResearch.VSPackage
                 VSIntegration.WriteToPane("\n===Verification failed.===\n");
                 VSIntegration.updateStatus("Verification failed.", false);
             }
-
         }
 
         private static void vccProcess_Exited(object sender, EventArgs e)
