@@ -68,6 +68,15 @@ namespace MicrosoftResearch.VSPackage
 
         #region document info
 
+        internal static int CurrentLine
+        {
+            get
+            {
+                TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
+                return textDocument.Selection.ActivePoint.Line;
+            }
+        }
+
         /// <summary>
         ///     Returns the name of the active document with path
         /// </summary>
