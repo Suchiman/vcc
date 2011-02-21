@@ -342,23 +342,26 @@ namespace MicrosoftResearch.VSPackage
                 string lineText;
                 lines.GetLineText(line - 1, 0, line - 1, lineLength, out lineText);
 
-                //// This is used to get the position of the first non-whitespace character
-                Match match = CodeLine.Match(lineText);
-
-                CreateLineMarker createLineMarker = new CreateLineMarker( lines,
-                                                                (int)MARKERTYPE.MARKER_OTHER_ERROR,
-                                                                line - 1,
-                                                                match.Groups["whitespaces"].Length,
-                                                                line - 1,
-                                                                match.Groups["whitespaces"].Length + match.Groups["code"].Length,
-                                                                textMarkerClient,
-                                                                textLineMarker);
-
-                ThreadHelper.Generic.Invoke( createLineMarker.doIt );
-
-                if (textLineMarker.Length > 0 && textLineMarker[0] != null)
+                if(lineText != null)
                 {
-                    markers.Add(textLineMarker[0]);
+                    //// This is used to get the position of the first non-whitespace character
+                    Match match = CodeLine.Match(lineText);
+
+                    CreateLineMarker createLineMarker = new CreateLineMarker(lines,
+                                                                    (int)MARKERTYPE.MARKER_OTHER_ERROR,
+                                                                    line - 1,
+                                                                    match.Groups["whitespaces"].Length,
+                                                                    line - 1,
+                                                                    match.Groups["whitespaces"].Length + match.Groups["code"].Length,
+                                                                    textMarkerClient,
+                                                                    textLineMarker);
+
+                    ThreadHelper.Generic.Invoke(createLineMarker.doIt);
+
+                    if (textLineMarker.Length > 0 && textLineMarker[0] != null)
+                    {
+                        markers.Add(textLineMarker[0]);
+                    }
                 }
             }
         }

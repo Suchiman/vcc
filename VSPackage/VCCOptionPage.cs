@@ -11,10 +11,12 @@ namespace MicrosoftResearch.VSPackage
 
     public class VccOptionPage : DialogPage
     {
+        [Category("Additional Commandline Arguments")]
         [DisplayName("Commandline Arguments")]
         [Description("Here you can place additional commandline arguments for VCC that will be used every time VCC is executed.")]
         public string AdditionalCommandlineArguments { get; set; }
 
+        [Category("Additional Commandline Arguments")]
         [DisplayName("Use Commandline Arguments")]
         [Description("Choose true to use the arguments you entered above. If this is false, those arguments will be ignored.")]
         public bool UseAdditionalCommandlineArguments { get; set; }
