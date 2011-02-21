@@ -16,48 +16,8 @@ namespace MicrosoftResearch.VSPackage
     /// </summary>
     internal static class VCCLauncher
     {
-        /// <summary>
-        ///     This string contains the Path of the Vcc-Executable.
-        ///     User Input in Tools/Options/Vcc > Registry Entry > "vcc.exe"
-        /// </summary>
-        private static string VccPath
-        {
-            get
-            {
-                if (VSPackagePackage.Instance.OptionPage.VccExecutableFolder == string.Empty)
-                {
-                    using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
-                    {
-                        if (key != null)
-                        {
-                            string result = key.GetValue("vccExecutablePath") as string;
-                            if (result != null)
-                            {
-                                return result;
-                            }
-                            else
-                            {
-                                return "vcc.exe";
-                            }
-                        }
-                        else
-                        {
-                            return "vcc.exe";
-                        }
-                    }
-                }
-                else
-                {
-                    return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
-                }
-            }
-        }
-
-        private static Process vccProcess;
-        //// This is set to true, when Verification fails.
-        private static bool errorOccurred = false;
-        private static Regex VCCErrorRegEx =
-            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\s(.*?):)?\s(?<errormessage>(.*))");
+        
+        #region commands
 
         internal static void CustomVerify(string filename, VccOptionPage options)
         {
@@ -107,9 +67,53 @@ namespace MicrosoftResearch.VSPackage
             LaunchVCC(String.Format("{0} /f:\"{1}\" \"{2}\"", addArguments, function, filename));
         }
 
+        #endregion
+
+        #region process handling
+
+        /// <summary>
+        ///     This string contains the Path of the Vcc-Executable.
+        ///     User Input in Tools/Options/Vcc > Registry Entry > "vcc.exe"
+        /// </summary>
+        private static string VccPath
+        {
+            get
+            {
+                if (VSPackagePackage.Instance.OptionPage.VccExecutableFolder == string.Empty)
+                {
+                    using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
+                    {
+                        if (key != null)
+                        {
+                            string result = key.GetValue("vccExecutablePath") as string;
+                            if (result != null)
+                            {
+                                return result;
+                            }
+                            else
+                            {
+                                return "vcc.exe";
+                            }
+                        }
+                        else
+                        {
+                            return "vcc.exe";
+                        }
+                    }
+                }
+                else
+                {
+                    return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
+                }
+            }
+        }
+
+        private static Process vccProcess;
+
         internal static void LaunchVCC(string arguments)
         {
             errorOccurred = false;
+            warningOccured = false;
 
             VSIntegration.initializeErrorList();
             VSIntegration.updateStatus("Verifying...", true);
@@ -153,6 +157,68 @@ namespace MicrosoftResearch.VSPackage
                 VSIntegration.updateStatus("Verification failed.", false);
             }
         }
+
+        /// <summary>
+        ///     Cancels the running VCC Process, if it exists
+        /// </summary>
+        internal static void Cancel()
+        {
+            if (VCCRunning)
+            {
+                int vccProcess_Id = vccProcess.Id;
+                try
+                {
+                    vccProcess.Kill();
+                }//try
+                catch
+                {
+                    VSIntegration.WriteToPane("Canceling VCC failed.");
+                }//catch
+
+                foreach (Process subProcess in Process.GetProcesses())
+                {
+                    if (GetParentProcess(subProcess.Id) == vccProcess_Id)
+                    {
+                        try
+                        {
+                            subProcess.Kill();
+                        }
+                        catch
+                        {
+                            VSIntegration.WriteToPane("Canceling a subprocess of VCC failed.");
+                        }
+                    }//if
+                }//foreach
+            }//if
+        }//method
+
+        private static int GetParentProcess(int Id)
+        {
+            int parentPid = 0;
+            using (ManagementObject mo = new ManagementObject("win32_process.handle='" + Id.ToString() + "'"))
+            {
+
+                try
+                {
+                    mo.Get();
+                    parentPid = Convert.ToInt32(mo["ParentProcessId"]);
+                }
+                catch { }
+            }
+            return parentPid;
+        }
+
+        #endregion
+
+        #region process observation
+        
+        //// This is set to true, when Verification fails.
+        private static bool errorOccurred = false;
+        private static bool warningOccured = false;
+        private static Regex VCCErrorRegEx =
+            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\serror\s(.*?):)\s(?<errormessage>(.*))");
+        private static Regex VCCWarningRegEx =
+            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\swarning\s(.*?):)\s(?<errormessage>(.*))");
 
         private static void vccProcess_Exited(object sender, EventArgs e)
         {
@@ -205,7 +271,26 @@ namespace MicrosoftResearch.VSPackage
                     Match match = VCCErrorRegEx.Match(e.Data);
                     VSIntegration.addErrorToErrorList(  match.Groups["path"].Value,
                                                         match.Groups["errormessage"].Value,
-                                                        Int32.Parse(match.Groups["line"].Value)
+                                                        Int32.Parse(match.Groups["line"].Value),
+                                                        Microsoft.VisualStudio.Shell.TaskErrorCategory.Error
+                                                        );
+
+                }
+                else if (VCCWarningRegEx.IsMatch(e.Data))
+                {
+                    //// This line is a warning.
+                    if (!errorOccurred && !warningOccured)
+                    {
+                        VSIntegration.WriteToPane("\nA warning occured. See Error List for details.\n\n");
+                        warningOccured = true;
+                    }
+                    
+                    //// Add warning to error list
+                    Match match = VCCWarningRegEx.Match(e.Data);
+                    VSIntegration.addErrorToErrorList(  match.Groups["path"].Value,
+                                                        match.Groups["errormessage"].Value,
+                                                        Int32.Parse(match.Groups["line"].Value),
+                                                        Microsoft.VisualStudio.Shell.TaskErrorCategory.Warning
                                                         );
 
                 }
@@ -216,56 +301,6 @@ namespace MicrosoftResearch.VSPackage
                 }
             }
         }
-
-        private static int GetParentProcess(int Id)
-        {
-            int parentPid = 0;
-            using (ManagementObject mo = new ManagementObject("win32_process.handle='" + Id.ToString() + "'"))
-            {
-
-                try
-                {
-                    mo.Get();
-                    parentPid = Convert.ToInt32(mo["ParentProcessId"]);
-                }
-                catch { }
-            }
-            return parentPid;
-        }
-
-        /// <summary>
-        ///     Cancels the running VCC Process, if it exists
-        /// </summary>
-        internal static void Cancel()
-        {
-            if (VCCRunning)
-            {
-                int vccProcess_Id = vccProcess.Id;
-                try
-                {
-                    vccProcess.Kill();
-                }//try
-                catch
-                {
-                    VSIntegration.WriteToPane("Canceling VCC failed.");
-                }//catch
-
-                foreach (Process subProcess in Process.GetProcesses())
-                {
-                    if (GetParentProcess(subProcess.Id) == vccProcess_Id)
-                    {
-                        try
-                        {
-                            subProcess.Kill();
-                        }
-                        catch
-                        {
-                            VSIntegration.WriteToPane("Canceling a subprocess of VCC failed.");
-                        }
-                    }//if
-                }//foreach
-            }//if
-        }//method
 
         internal static bool VCCRunning
         {
@@ -281,5 +316,8 @@ namespace MicrosoftResearch.VSPackage
                 }
             }
         }
+
+        #endregion
+
     }
 }

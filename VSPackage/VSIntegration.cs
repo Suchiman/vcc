@@ -26,11 +26,6 @@ namespace MicrosoftResearch.VSPackage
             get { return _dte.Value; }
         }
 
-        private static ErrorListProvider errorListProvider = new ErrorListProvider(VSPackagePackage.Instance);
-        private static Regex VccErrorMessageRegEx = new Regex("(.*?)'(?<identifier>(.*?))'.*");
-        //// this just helps with underlining just the code, no preceding whitespaces or comments
-        private static Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
-
         internal static void updateStatus(string text, bool animationOn)
         {
             dte.StatusBar.Text = text;
@@ -247,11 +242,16 @@ namespace MicrosoftResearch.VSPackage
 
         #region error list and markers
 
+        private static ErrorListProvider errorListProvider = new ErrorListProvider(VSPackagePackage.Instance);
+        private static Regex VccErrorMessageRegEx = new Regex("(.*?)'(?<identifier>(.*?))'.*");
+        //// this just helps with underlining just the code, no preceding whitespaces or comments
+        private static Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
+
         private static List<IVsTextLineMarker> markers = new List<IVsTextLineMarker>();
 
         internal static void initializeErrorList()
         {
-            addErrorToErrorList(dte.ActiveDocument.Name, "initializing...", 1);
+            addErrorToErrorList(dte.ActiveDocument.Name, "initializing...", 1, TaskErrorCategory.Error);
             clearErrorList();
         }
 
@@ -268,11 +268,11 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="document">Complete path of the document in which the error was found</param>
         /// <param name="text">Errormessage</param>
         /// <param name="line">the line, counting from one</param>
-        /// <param name="column"></param>
-        internal static void addErrorToErrorList(string document, string text, int line)
+        /// <param name="category">is this an error or a warning?</param>
+        internal static void addErrorToErrorList(string document, string text, int line, TaskErrorCategory category)
         {
             ErrorTask errorTask = new ErrorTask();
-            errorTask.ErrorCategory = TaskErrorCategory.Error;
+            errorTask.ErrorCategory = category;
             errorTask.Document = document;
             errorTask.Text = text;
             errorTask.Line = line - 1;
