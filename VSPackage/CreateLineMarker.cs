@@ -7,8 +7,9 @@ using Microsoft.VisualStudio.TextManager.Interop;
 namespace MicrosoftResearch.VSPackage
 {
     /// <summary>
-    ///     An Instance of this helper class generates a textmarker by calling IVsTextLines.createLineMarker. This class is necessary, because a delegate with
-    ///     parameters is needed which is to be called by the UI-thread.
+    ///     An Instance of this helper class generates a textmarker by calling IVsTextLines.createLineMarker.
+    ///     This class is necessary, because a delegate with parameters is needed which is to be called by
+    ///     the UI-thread.
     /// </summary>
     class CreateLineMarker
     {

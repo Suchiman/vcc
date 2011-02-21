@@ -16,8 +16,6 @@ namespace MicrosoftResearch.VSPackage
     /// </summary>
     internal static class VSIntegration
     {
-        private static List<IVsTextLineMarker> markers = new List<IVsTextLineMarker>();
-
         private static Lazy<DTE> _dte = new Lazy<DTE>(() => { return (DTE)Package.GetGlobalService(typeof(DTE)); });
         
         /// <summary>
@@ -27,6 +25,19 @@ namespace MicrosoftResearch.VSPackage
         {
             get { return _dte.Value; }
         }
+
+        private static ErrorListProvider errorListProvider = new ErrorListProvider(VSPackagePackage.Instance);
+        private static Regex VccErrorMessageRegEx = new Regex("(.*?)'(?<identifier>(.*?))'.*");
+        //// this just helps with underlining just the code, no preceding whitespaces or comments
+        private static Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
+
+        internal static void updateStatus(string text, bool animationOn)
+        {
+            dte.StatusBar.Text = text;
+            dte.StatusBar.Animate(animationOn, vsStatusAnimation.vsStatusAnimationGeneral);
+        }
+
+        #region Outputpane
 
         private static Lazy<IVsOutputWindowPane> _pane = new Lazy<IVsOutputWindowPane>(() =>
         {
@@ -40,11 +51,6 @@ namespace MicrosoftResearch.VSPackage
         }
         );
 
-        private static ErrorListProvider errorListProvider = new ErrorListProvider(VSPackagePackage.Instance);
-        private static Regex VccErrorMessageRegEx = new Regex("(.*?)'(?<identifier>(.*?))'.*");
-        //// this just helps with underlining just the code, no preceding whitespaces or comments
-        private static Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
-
         /// <summary>
         ///     This object represents the Verification Outputpane.
         /// </summary>
@@ -52,6 +58,20 @@ namespace MicrosoftResearch.VSPackage
         {
             get { return _pane.Value; }
         }
+        
+        internal static void ClearPane()
+        {
+            verificationOutputpane.Clear();
+        }
+
+        internal static void WriteToPane(string message)
+        {
+            verificationOutputpane.OutputString(message);
+        }
+
+        #endregion
+
+        #region document info
 
         /// <summary>
         ///     Returns the name of the active document with path
@@ -170,15 +190,9 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
-        internal static void ClearPane()
-        {
-            verificationOutputpane.Clear();
-        }
+        #endregion
 
-        internal static void WriteToPane(string message)
-        {
-            verificationOutputpane.OutputString(message);
-        }
+        #region document saving
 
         internal static void DocumentsSavedCheck()
         {
@@ -229,6 +243,12 @@ namespace MicrosoftResearch.VSPackage
             dte.Documents.SaveAll();
         }
 
+        #endregion
+
+        #region error list and markers
+
+        private static List<IVsTextLineMarker> markers = new List<IVsTextLineMarker>();
+
         internal static void initializeErrorList()
         {
             addErrorToErrorList(dte.ActiveDocument.Name, "initializing...", 1);
@@ -240,7 +260,7 @@ namespace MicrosoftResearch.VSPackage
             errorListProvider.Tasks.Clear();
             clearMarkers();
         }
-        
+
         /// <summary>
         ///     Adds an entry to the error list
         /// </summary>
@@ -351,13 +371,7 @@ namespace MicrosoftResearch.VSPackage
             }
             markers.Clear();
         }
-
-        internal static void updateStatus(string text, bool animationOn)
-        {
-            dte.StatusBar.Text = text;
-            dte.StatusBar.Animate(animationOn, vsStatusAnimation.vsStatusAnimationGeneral);
-        }
-
+        
         internal static void errorTask_Navigate(object sender, EventArgs e)
         {
             if (sender != null)
@@ -422,5 +436,8 @@ namespace MicrosoftResearch.VSPackage
                                                         errorTask.Column);
             }
         }
+
+        #endregion
+
     }
 }
