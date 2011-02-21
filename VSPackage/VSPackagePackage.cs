@@ -84,6 +84,15 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        private void VerifyThis(object sender, EventArgs e)
+        {
+            VSIntegration.DocumentsSavedCheck();
+            if (OptionPage != null)
+            {
+                VCCLauncher.VerifyThis(VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, OptionPage);
+            }
+        }
+
         /// <summary>
         ///     Launches VCC.exe to verify the active file
         /// </summary>
@@ -252,6 +261,32 @@ namespace MicrosoftResearch.VSPackage
                 }
                 else
                 {
+                    ((OleMenuCommand)sender).Visible = false;
+                }
+            }
+        }
+
+        void VerifyThis_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            if (sender != null)
+            {
+                if (VCCLauncher.VCCRunning)
+                {
+                    ((OleMenuCommand)sender).Enabled = false;
+                }
+                else
+                {
+                    ((OleMenuCommand)sender).Enabled = true;
+                }
+
+                if (VSIntegration.IsCodeFile)
+                {
+                    //// active document is in C or C++ => show entry
+                    ((OleMenuCommand)sender).Visible = true;
+                }
+                else
+                {
+                    //// there is no active document or it is not in C or C++ => hide entry
                     ((OleMenuCommand)sender).Visible = false;
                 }
             }
@@ -458,6 +493,12 @@ namespace MicrosoftResearch.VSPackage
                 OleMenuItem.BeforeQueryStatus += new EventHandler(ReVerify_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
+                //// Verify This
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyThis);
+                OleMenuItem = new OleMenuCommand(VerifyThis, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyThis_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
                 //// Custom Verify
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCustomVerify);
                 OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
@@ -486,6 +527,12 @@ namespace MicrosoftResearch.VSPackage
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyCurrentFunction);
                 OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += new EventHandler(ContextVerifyFunction_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
+                //// Verify This(Context Menu)
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyThis);
+                OleMenuItem = new OleMenuCommand(VerifyThis, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyThis_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
                 //// Re-Verify (Context Menu)

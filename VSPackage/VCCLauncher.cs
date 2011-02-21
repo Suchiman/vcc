@@ -19,6 +19,21 @@ namespace MicrosoftResearch.VSPackage
         
         #region commands
 
+        internal static void VerifyThis(string filename, int line, VccOptionPage options)
+        {
+            string addArguments = options.UseAdditionalCommandlineArguments ?
+                options.AdditionalCommandlineArguments + " " :
+                string.Empty;
+            if (options.ShowZ3Inspector)
+            {
+                addArguments += "/i ";
+            }
+
+            addArguments += String.Format("/pos:\"{0}\":{1} ", filename, line);
+
+            LaunchVCC(String.Format("{0}\"{1}\"", addArguments, filename));
+        }
+
         internal static void CustomVerify(string filename, VccOptionPage options)
         {
             string addArguments = options.UseAdditionalCommandlineArguments ?
@@ -237,6 +252,12 @@ namespace MicrosoftResearch.VSPackage
                         Thread.Sleep(1000);
                         VSIntegration.WriteToPane("\n===Verification succeeded.===\n");
                         VSIntegration.updateStatus("Verification succeeded.", false);
+                        break;
+                    case 2:
+                        Thread.Sleep(1000);
+                        VSIntegration.WriteToPane("Incorrect Commandline Arguments were used.\n");
+                        VSIntegration.WriteToPane("\n===Verification failed.===\n");
+                        VSIntegration.updateStatus("Verification failed.", false);
                         break;
                     case 1:
                     case 3:

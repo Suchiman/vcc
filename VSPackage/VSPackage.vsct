@@ -104,7 +104,16 @@
         </Strings>
       </Button>
 
-      <Button guid ="guidVerifyCmdSet" id ="cmdidReVerify" priority ="0x0105" type ="Button">
+      <Button guid ="guidVerifyCmdSet" id ="cmdidVerifyThis" priority ="0x0106" type ="Button">
+        <Parent guid ="guidVerifyCmdSet" id ="cmdidMyMenuGroup"/>
+        <Icon guid="guidVccImageVerifyThis" id ="bmpPicT"/>
+        <CommandFlag>DefaultDisabled</CommandFlag>
+        <Strings>
+          <ButtonText>Verify This</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid ="guidVerifyCmdSet" id ="cmdidReVerify" priority ="0x0108" type ="Button">
         <Parent guid ="guidVerifyCmdSet" id ="cmdidMyMenuGroup"/>
         <Icon guid="guidVccImageReVerify" id ="bmpPicR"/>
         <CommandFlag>DefaultDisabled</CommandFlag>
@@ -113,7 +122,7 @@
         </Strings>
       </Button>
 
-      <Button guid="guidVerifyCmdSet" id="cmdidCustomVerify" priority="0x0106" type ="Button">
+      <Button guid="guidVerifyCmdSet" id="cmdidCustomVerify" priority="0x0110" type ="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
         <Icon guid="guidVccImageCustomVerify" id="bmpPicC"/>
         <Strings>
@@ -121,7 +130,7 @@
         </Strings>
       </Button>
       
-      <Button guid="guidVerifyCmdSet" id="cmdidCancel" priority="0x0108" type="Button">
+      <Button guid="guidVerifyCmdSet" id="cmdidCancel" priority="0x0112" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup"/>
         <Icon guid="guidImages" id ="bmpPicX"/>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -162,6 +171,16 @@
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Verify Current Function</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVerifyCmdSet" id="cmdidContextVerifyThis" priority="0x0103" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
+        <Icon guid="guidVccImageVerifyThis" id ="bmpPicT"/>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Verify This</ButtonText>
         </Strings>
       </Button>
 
@@ -210,6 +229,7 @@
       <Bitmap guid ="guidVccImageCheckStruct" href ="Resources\Check_struct.bmp" />
       <Bitmap guid ="guidVccImageCustomVerify" href="Resources\Custom.bmp"/>
       <Bitmap guid ="guidVccImageReVerify" href ="Resources\ReVerify.bmp"/>
+      <Bitmap guid ="guidVccImageVerifyThis" href ="Resources\VerifyThis.bmp"/>
 
     </Bitmaps>
 
@@ -219,6 +239,7 @@
     <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyActiveFile" key1="V" key2="F" mod1="ALT" mod2="ALT" />
     <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidCancel" key1="V" key2="C" mod1="ALT" mod2="ALT" />
     <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidReVerify" key1="V" key2="R" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyThis" key1="V" key2="T" mod1="ALT" mod2="ALT" />
   </KeyBindings>
 
   <Symbols>
@@ -236,6 +257,7 @@
       <IDSymbol name="cmdidVerifyActiveFile" value="0x0102" />
       <IDSymbol name="cmdidCheckAdmissibilityOfCurrentStruct" value="0x0103"/>
       <IDSymbol name="cmdidVerifyCurrentFunction" value ="0x0104" />
+      <IDSymbol name="cmdidVerifyThis" value ="0x0115"/>
       <IDSymbol name="cmdidReVerify" value ="0x0112"/>
       <IDSymbol name="cmdidCustomVerify" value="0x0111" />
       <IDSymbol name="cmdidCancel" value ="0x0105" />
@@ -243,6 +265,7 @@
       <IDSymbol name="cmdidContextVerifyActiveFile" value="0x0106"/>
       <IDSymbol name="cmdidContextCheckAdmissibilityOfCurrentStruct" value="0x0107"/>
       <IDSymbol name="cmdidContextVerifyCurrentFunction" value ="0x0108"/>
+      <IDSymbol name="cmdidContextVerifyThis" value ="0x0114"/>
       <IDSymbol name="cmdidContextReVerify" value ="0x0113"/>
       <IDSymbol name="cmdidContextCustomVerify" value="0x0109" />
       <IDSymbol name="cmdidContextCancel" value ="0x0110"/>
@@ -275,6 +298,10 @@
 
     <GuidSymbol name ="guidVccImageReVerify" value ="{8AB4D9A9-88A3-4D13-86CB-13A6E926ABBB}" >
       <IDSymbol name ="bmpPicR" value ="1"/>
+    </GuidSymbol>
+
+    <GuidSymbol name ="guidVccImageVerifyThis" value ="{EA8AF276-3724-4348-AC90-2F74BC74B726}" >
+      <IDSymbol name ="bmpPicT" value ="1"/>
     </GuidSymbol>
     
   </Symbols>
