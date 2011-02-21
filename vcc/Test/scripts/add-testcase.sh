@@ -1,5 +1,12 @@
 #!/bin/sh
 
+opt=
+
+case "$2" in
+  vcc3/* )
+  opt=-3
+esac
+
 case "$2" in
   vcc2/* | vcc3/* )
     case "$1" in
@@ -13,7 +20,7 @@ case "$2" in
 	sleep 1
 	perl -p -i -e 's/\n/\r\n/g' "$2"
 	rm -f "$2".bak
-        ./fix "$2"
+        ./fix $opt "$2"
         ;;
     esac
 esac
