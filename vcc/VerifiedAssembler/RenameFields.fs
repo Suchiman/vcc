@@ -6,13 +6,15 @@
 
 #light
 
+module RenameFields
+
 open Ast
 
 let keyWords = [ ("auto", "asm_auto");  ("break", "asm_break");  ("case", "asm_case");  ("char", "asm_char");  ("const", "asm_const"); ("continue", "asm_continue"); ("default", "asm_default");  ("do", "asm_do"); 
                  ("double", "asm_double"); ("else", "asm_else"); ("enum", "asm_enum"); ("extern", "asm_extern"); ("float", "asm_float"); ("for", "asm_for"); ("goto", "asm_goto"); ("if", "asm_if"); 
                  ("int", "asm_int"); ("long", "asm_long"); ("register", "asm_register"); ("return", "asm_return"); ("short", "asm_short"); ("signed", "asm_signed"); ("sizeof", "asm_sizeof"); ("static", "asm_static");
                  ("struct", "asm_struct"); ("switch", "asm_switch"); ("typedef", "asm_typedef"); ("union", "asm_union"); ("unsigned", "asm_unsigned"); ("void", "asm_void"); ("volatile", "asm_volatile"); ("while", "asm_while"); ]
-let keyMap = Map.of_list keyWords
+let keyMap = Map.ofList keyWords
 let renameField id = match keyMap.TryFind id with | Some id' -> id' | None -> id
     
 

@@ -6,6 +6,8 @@
 
 #light
 
+module PrettyPrinter
+
 open Ast
 
 

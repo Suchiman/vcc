@@ -6,7 +6,10 @@
 
 #light
 
+module Ast
+
 open System
+
 
 type Prog =
     | Entry of OutStmt list

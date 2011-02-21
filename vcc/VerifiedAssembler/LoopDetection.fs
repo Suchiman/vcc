@@ -6,6 +6,8 @@
 
 #light
 
+module LoopDetection
+
 open Ast
 open PrettyPrinter
 
