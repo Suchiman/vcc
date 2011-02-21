@@ -6,11 +6,15 @@
 //
 //-----------------------------------------------------------------------------
 
+module Lexer
+
 open System
 open Parser
-open Lexing
+open Microsoft.FSharp.Text.Lexing
 
 let debug = false
+
+let lexeme = LexBuffer<_>.LexemeString 
 
 let regs = [ ("rax", REG_RAX); ("rbx", REG_RBX); ("rcx", REG_RCX); ("rdx", REG_RDX); ("rdi", REG_RDI); ("rsi", REG_RSI); ("rbp", REG_RBP); ("rsp", REG_RSP); ("r8",  REG_R8);  ("r9",  REG_R9);  ("r10",  REG_R10);  ("r11",  REG_R11);  ("r12",  REG_R12);  ("r13",  REG_R13);  ("r14",  REG_R14);  ("r15",  REG_R15); ("cr0", REG_CR0); ("cr1", REG_CR1); ("cr2", REG_CR2); ("cr3", REG_CR3); ("cr4", REG_CR4); ("cr5", REG_CR5); ("cr6", REG_CR6); ("cr7", REG_CR7); ("cr8", REG_CR8);
              ("eax", REG_EAX); ("ebx", REG_EBX); ("ecx", REG_ECX); ("edx", REG_EDX); ("edi", REG_EDI); ("esi", REG_ESI); ("ebp", REG_EBP); ("esp", REG_ESP); ("r8d", REG_R8D); ("r9d", REG_R9D); ("r10d", REG_R10D); ("r11d", REG_R11D); ("r12d", REG_R12D); ("r13d", REG_R13D); ("r14d", REG_R14D); ("r15d", REG_R15D);
@@ -18,7 +22,7 @@ let regs = [ ("rax", REG_RAX); ("rbx", REG_RBX); ("rcx", REG_RCX); ("rdx", REG_R
              ("cs",  REG_CS);  ("ds",  REG_DS);  ("es",  REG_ES);  ("fs",  REG_FS);  ("gs",  REG_GS);  ("ss",  REG_SS);  ("dr0", REG_DR0); ("dr1", REG_DR1); ("dr2", REG_DR2); ("dr3", REG_DR3); ("dr4",  REG_DR4);  ("dr5",  REG_DR5);  ("dr6",  REG_DR6);  ("dr7", REG_DR7);
              ("xmm0", REG_XMM0); ("xmm1", REG_XMM1); ("xmm2", REG_XMM2); ("xmm3", REG_XMM3); ("xmm4", REG_XMM4); ("xmm5", REG_XMM5); ("xmm6", REG_XMM6); ("xmm7", REG_XMM7); ("xmm8", REG_XMM8); ("xmm9", REG_XMM9); ("xmm10", REG_XMM10); ("xmm11", REG_XMM11); ("xmm12", REG_XMM12); ("xmm13", REG_XMM13); ("xmm14", REG_XMM14); ("xmm15", REG_XMM15);
              ("Xmm0", REG_XMM0); ("Xmm1", REG_XMM1); ("Xmm2", REG_XMM2); ("Xmm3", REG_XMM3); ("Xmm4", REG_XMM4); ("Xmm5", REG_XMM5); ("Xmm6", REG_XMM6); ("Xmm7", REG_XMM7); ("Xmm8", REG_XMM8); ("Xmm9", REG_XMM9); ("Xmm10", REG_XMM10); ("Xmm11", REG_XMM11); ("Xmm12", REG_XMM12); ("Xmm13", REG_XMM13); ("Xmm14", REG_XMM14); ("Xmm15", REG_XMM15); ]
-let regsMap = Map.of_list regs
+let regsMap = Map.ofList regs
 let ident lexbuf tokenText = match regsMap.TryFind tokenText with | Some tt -> tt | None -> STRING tokenText
 
 let log_debug s =

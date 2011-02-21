@@ -8,7 +8,7 @@
 
 open System
 open System.IO
-open Lexing
+open Microsoft.FSharp.Text.Lexing
 
 open Ast
 open PrettyPrinter
@@ -40,7 +40,7 @@ let main (args : string array) =
             | s ->
             printfn "Lexing [%s]" input
 
-            let lexbuff = Lexing.from_text_reader (System.Text.Encoding.ASCII) (File.OpenText(input))
+            let lexbuff = Lexing.LexBuffer<_>.FromTextReader (File.OpenText(input))
             lexbuff.EndPos <-{ pos_bol = 0;
                          pos_fname=input; 
                          pos_cnum=0;
@@ -64,7 +64,7 @@ let main (args : string array) =
             return_value := 0
             
         with 
-            | Microsoft.FSharp.Core.Failure(blah) as ex -> printf "Parse Exception found: %s\n" blah
+            | Failure(blah) as ex -> printf "Parse Exception found: %s\n" blah
             | Microsoft.FSharp.Text.Parsing.RecoverableParseError as ex -> printf "Unhandled RecoverableParseError Exception %s\n" ex.Message
             | Microsoft.FSharp.Text.Parsing.Accept(blah) as ex -> printf "Unhandled Accept Exception %s\n" ex.Message
             | QuitException -> printf "\nExit\n"
@@ -76,7 +76,7 @@ let main (args : string array) =
             
             //printfn "Lexing [%s]" file_name
 
-            let lexbuff = Lexing.from_text_reader (System.Text.Encoding.ASCII) (File.OpenText(file_name))
+            let lexbuff = Lexing.LexBuffer<_>.FromTextReader (File.OpenText(file_name))
             lexbuff.EndPos <-{ pos_bol = 0;
                          pos_fname=file_name; 
                          pos_cnum=0;
@@ -102,7 +102,7 @@ let main (args : string array) =
             return_value := 0
             
         with 
-            | Microsoft.FSharp.Core.Failure(blah) as ex -> printf "Parse Exception found: %s\n" blah
+            | Failure(blah) as ex -> printf "Parse Exception found: %s\n" blah
             | Microsoft.FSharp.Text.Parsing.RecoverableParseError as ex -> printf "Unhandled RecoverableParseError Exception %s\n" ex.Message
             | Microsoft.FSharp.Text.Parsing.Accept(blah) as ex -> printf "Unhandled Accept Exception %s\n" ex.Message
             | ex -> printfn "Unhandled Exception %s\n" (ex.Message)
