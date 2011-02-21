@@ -82,3 +82,9 @@ vcc/Tools/Z3Visualizer/Z3Visualizer/bin/
 vcc/Tools/Z3Visualizer/Z3Visualizer/obj/
 vcc/Translator/bin/
 vcc/Translator/obj/
+vcc/VerifiedAssembler/Lexer.fs
+vcc/VerifiedAssembler/Parser.fs
+vcc/VerifiedAssembler/Parser.fsi
+vcc/VerifiedAssembler/*.suo
+vcc/VerifiedAssembler/bin
+vcc/VerifiedAssembler/obj
