@@ -281,18 +281,17 @@ namespace MicrosoftResearch.VSPackage
                     //// This line is a warning.
                     if (!errorOccurred && !warningOccured)
                     {
-                        VSIntegration.WriteToPane("\nA warning occured. See Error List for details.\n\n");
+                        VSIntegration.WriteToPane("\nA warning occured. See Error List for details. (You can hide warnings in Tools/Options/Vcc)\n\n");
                         warningOccured = true;
                     }
-                    
+
                     //// Add warning to error list
                     Match match = VCCWarningRegEx.Match(e.Data);
-                    VSIntegration.addErrorToErrorList(  match.Groups["path"].Value,
-                                                        match.Groups["errormessage"].Value,
-                                                        Int32.Parse(match.Groups["line"].Value),
-                                                        Microsoft.VisualStudio.Shell.TaskErrorCategory.Warning
-                                                        );
-
+                    VSIntegration.addErrorToErrorList(match.Groups["path"].Value,
+                                                            match.Groups["errormessage"].Value,
+                                                            Int32.Parse(match.Groups["line"].Value),
+                                                            Microsoft.VisualStudio.Shell.TaskErrorCategory.Warning
+                                                            );
                 }
                 else if (!e.Data.StartsWith("Exiting"))
                 {
