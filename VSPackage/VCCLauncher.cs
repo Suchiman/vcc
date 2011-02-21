@@ -231,7 +231,7 @@ namespace MicrosoftResearch.VSPackage
         private static bool errorOccurred = false;
         private static bool warningOccured = false;
         private static Regex VCCErrorRegEx =
-            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\serror\s(.*?):)\s(?<errormessage>(.*))");
+            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:\s(((error\s(.*?):)\s(?<errormessage>(.*)))|(?<errormessage>\(Location of symbol related to previous error.\)))");
         private static Regex VCCWarningRegEx =
             new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\swarning\s(.*?):)\s(?<errormessage>(.*))");
 
