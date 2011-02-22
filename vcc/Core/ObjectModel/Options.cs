@@ -316,6 +316,13 @@ namespace Microsoft.Research.Vcc
         case 'k':
           return this.TryParseNamedBoolean(arg, "keepppoutput", "keepppoutput", ref this.options.KeepPreprocessorFiles);
 
+        case 'l':
+          if (this.ParseName(arg, "launch", "launch")) {
+            System.Diagnostics.Debugger.Launch();
+            return true;
+          }
+          break;
+
         case 'm':
           if (this.ParseName(arg, "modifiedpreprocessorfile", "modifiedpreprocessorfile")) {
             this.options.ModifiedPreprocessorFiles = true;
