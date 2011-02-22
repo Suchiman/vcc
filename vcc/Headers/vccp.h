@@ -43,6 +43,26 @@ _(SPEC_TYPE(thread_id))
 
 _(typedef \thread_id ^\thread;)
 
+// '__declspec's
+_(const char * const \declspec_atomic_inline;)
+_(const char * const \declspec_backing_member;)
+_(const char * const \declspec_claimable;)
+_(const char * const \declspec_dynamic_owns;)
+_(const char * const \declspec_frameaxiom;)
+_(const char * const \declspec_no_admissibility;)
+_(const char * const \declspec_volatile_owns;)
+_(const char * const \declspec_pure = "is_pure";)
+_(const char * const \declspec_as_array;)
+_(const char * const \declspec_admissibility = "is_admissibilitycheck";)
+_(const char * const \declspec_no_reads_check;)
+_(const char * const \declspec_record;)
+_(const char * const \declspec__boogie0;)
+_(const char * const \declspec__boogie1;)
+_(const char * const \declspec__boogie2;)
+// _(inline) is also supported, but becaue 'inline' is a keyword, we special-case _(inline) in the parser
+
+#define vcc_attr(k, v) __declspec(System.Diagnostics.Contracts.CodeContract.StringVccAttr, k, v)
+
 _(bool \mine(\object, ...);)
 _(bool \wrapped(\object);)
 _(bool \fresh(\object);)
@@ -90,7 +110,7 @@ _(bool \union_active(\object);)
 _(\integer \addr(\object);)
 _(bool \addr_eq(\object,\object);)
 _(template<typename T> T* \retype(T*);)
-_(bool \arrays_disjoint(\object, \size_t, \object, \size_t);)
+_(bool _(_boogie0) \arrays_disjoint(\object, \size_t, \object, \size_t);)
 
 _(template<typename T> bool \shallow_eq(T s, T t);)
 _(template<typename T> bool \deep_eq(T s, T t);)
@@ -130,23 +150,6 @@ _(void \split_array(\object arr, \size_t sz) _(writes \extent(arr));)
 _(void \to_bytes(\object o) _(writes \extent(o));)
 _(void \from_bytes(\object o, bool preserveZero) _(writes \extent(o));)
 
-// '__declspec's
-
-_(const char * const \declspec_atomic_inline;)
-_(const char * const \declspec_backing_member;)
-_(const char * const \declspec_claimable;)
-_(const char * const \declspec_dynamic_owns;)
-_(const char * const \declspec_frameaxiom;)
-_(const char * const \declspec_no_admissibility;)
-_(const char * const \declspec_volatile_owns;)
-_(const char * const \declspec_pure = "is_pure";)
-_(const char * const \declspec_as_array;)
-_(const char * const \declspec_admissibility = "is_admissibilitycheck";)
-_(const char * const \declspec_no_reads_check;)
-_(const char * const \declspec_record;)
-// _(inline) is also supported, but becaue 'inline' is a keyword, we special-case _(inline) in the parser
-
-#define vcc_attr(k, v) __declspec(System.Diagnostics.Contracts.CodeContract.StringVccAttr, k, v)
 
 // matching helper functions
 

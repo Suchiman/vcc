@@ -40,6 +40,15 @@ module Microsoft.Research.Vcc.CAST
   let AttrFrameaxiom = "frameaxiom"
 
   [<Literal>]
+  let AttrBoogie0 = "_boogie0"
+
+  [<Literal>]
+  let AttrBoogie1 = "_boogie1"
+
+  [<Literal>]
+  let AttrBoogie2 = "_boogie2"
+
+  [<Literal>]
   let AttrIsPure = "is_pure"
 
   [<Literal>]

@@ -373,8 +373,8 @@ namespace Microsoft.Research.Vcc
           helper.Error(ec.Token, 9697, "old(...) is allowed only in two-state contexts")
           false
         | CallMacro(ec, n, _, args) ->
-          match Simplifier.alwaysPureCalls.TryGetValue(n) with
-            | true, signature when signature.Contains("s") -> 
+          match helper.PureCallSignature n with
+            | Some signature when signature.Contains("s") -> 
               helper.Error(ec.Token, 9697, "calling '" + n + "' is allowed only in two-state contexts")
               false
             | _ -> true
