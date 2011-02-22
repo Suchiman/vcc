@@ -588,8 +588,13 @@ axiom (forall i:int, a:$ptr :: {$index_within($idx(a, i), a)}
   $index_within($idx(a, i), a) == i);
 
 axiom (forall p, a:$ptr, f:$field :: {$index_within($dot(p, f), a)}
-  $is_proper($dot(p, f)) ==>
+  $is_proper($dot(p, f)) && $sizeof($typ(p)) <= $sizeof($typ(a)) ==>
     $index_within($dot(p, f), a) == $index_within(p, a));
+
+axiom (forall p, q:$ptr, t:$ctype ::
+  {$index_within($as_ptr_with_type(p, t), $as_ptr_with_type(q, t))}
+  $typ(p) == t && $typ(q) == t ==>
+    $index_within(p, q) == $field_arr_index($field(p)) - $field_arr_index($field(q)));
 
 function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
   { if $is_primitive(T) then
@@ -597,7 +602,7 @@ function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
                         $emb0(q) == $emb0(p) &&
                         $typ(q) == T &&
                         $field_arr_root($field(q)) == $field_arr_root($field(p)) &&
-                        $index_within(q, p) == $field_arr_index($field(q)) - $field_arr_index($field(p)) &&
+//                        $index_within(q, p) == $field_arr_index($field(q)) - $field_arr_index($field(p)) &&
                         $in_range(0, $index_within(q, p), sz - 1) &&
                         q == $idx_inline(p, $index_within(q, p)) &&
                         $field_kind($field(q)) != $fk_base)
