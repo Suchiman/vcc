@@ -1034,6 +1034,23 @@ namespace Microsoft.Research.Vcc
       deepMapExpressions rewriteBvAssertAsBvLemma
 
     // ============================================================================================================
+
+    let handleBoogieInlineDeclarations decls =
+      let maybeAdd = function
+        | Top.FunctionDecl f ->
+          let pref =
+            if TransUtil.hasCustomAttr AttrBoogie0 f.CustomAttr then ""
+            elif TransUtil.hasCustomAttr AttrBoogie1 f.CustomAttr then "S"
+            elif TransUtil.hasCustomAttr AttrBoogie2 f.CustomAttr then "sS"
+            else null
+          if pref <> null then
+            let sign = pref + (f.InParameters |> List.map (fun _ -> ".") |> String.concat "")
+            helper.AddPureCall (f.Name, sign)
+        | _ -> ()
+      List.iter maybeAdd decls
+      decls
+            
+    // ============================================================================================================
  
     let expandContractMacros decls =
       let isMacro (f:Function) = f.Name.StartsWith "\\macro_"
@@ -1233,6 +1250,7 @@ namespace Microsoft.Research.Vcc
 
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
     helper.AddTransformer ("norm-new-syntax", Helper.Decl normalizeNewSyntax)
+    helper.AddTransformer ("norm-inline-boogie", Helper.Decl handleBoogieInlineDeclarations)
     helper.AddTransformer ("norm-expand-contract-macros", Helper.Decl expandContractMacros)
     helper.AddTransformer ("norm-initializers", Helper.Expr normalizeInitializers)
     helper.AddTransformer ("norm-use", Helper.Expr normalizeUse)

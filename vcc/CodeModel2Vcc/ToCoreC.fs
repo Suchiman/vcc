@@ -162,12 +162,12 @@ namespace Microsoft.Research.Vcc
       stateArgs' (Seq.toList(sgn))
     function 
       | CallMacro (c, fn, _, args) ->
-        match Simplifier.alwaysPureCalls.TryGetValue(fn) with
-          | true, sgn -> 
+        match helper.PureCallSignature fn with
+          | Some sgn -> 
             let args = List.map self args
             let args = if firstIsState args then args else (stateArgs sgn) @ args
             Some (Expr.Macro (c, fn, args))
-          | false, _ -> None
+          | None -> None
       | _ -> None
             
  

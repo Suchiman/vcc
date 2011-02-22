@@ -49,6 +49,169 @@ namespace Microsoft.Research.Vcc
        
     
   module Helper =
+   
+    let alwaysPureCallList =
+                [ 
+                  // signature letter:
+                  //   t - typed pointer (will add encoding of type)
+                  //   p - typed pointer (nothing gets added)
+                  //   S - $s
+                  //   s - old($s)
+                  //   a - ptrset
+                  //   i - _vcc_size_t
+                  //   . - just pass whatever was there
+                  "admissibility_pre",      "Sp";
+                  "good_for_post_admissibility", "S";
+                  "array_members",          "ti";
+                  "array_range",            "Sti";
+                  "array",                  ".i";
+                  "as_array",               "ti";
+                  "byte_ptr_subtraction",   "pp";
+                  "closed",                 "Sp";
+                  "nested",                 "Sp";
+                  "claims_obj",             "pp";
+                  "claims",                 "p.";
+                  "current_state",          "S";
+                  "is_claimable",           ".";
+                  "union_active",           "pp";
+                  "not_shared",             "Sp";
+                  "ref_cnt",                "Sp";
+                  "valid_claim",            "Sp";
+                  "depends",                "sSpp";
+                  "dont_instantiate",       "p";
+                  "dont_instantiate_int",   "i";
+                  "emb",                    "Sp";
+                  "simple_emb",             "p";
+                  "extent",                 "Sp";
+                  "full_extent",            "p";
+                  "get_fnptr",              "i.";
+                  "get_memory_allocator",   "";
+                  "get_string_literal",     "ii";
+                  "in_array",               "pti";
+                  "in_domain",              "Spp";
+                  "in_vdomain",             "Spp";
+                  "in_claim_domain",        "pp";
+                  "domain",                 "Sp";
+                  "imply_inv",              "St";
+                  "inlined_array",          "t";
+                  "inv",                    "St";
+                  "inv2",                   "sSt";
+                  "inv2_when_closed",       "sSt";
+                  "i1_to_ptr",              ".";
+                  "i2_to_ptr",              ".";
+                  "i4_to_ptr",              ".";
+                  "i8_to_ptr",              ".";
+                  "is",                     "p.";
+                  "is_array",               "Sti";
+                  "is_array_emb",           "Stip";
+                  "is_fresh",               "sSp";
+                  "is_global",              "t";
+                  "is_global_array",        "ti";
+                  "is_malloc_root",         "Sp";
+                  "is_mutable_array",       "Sti";
+                  "is_object",              "p";
+                  "is_object_root",         "Sp";
+                  "is_thread_local_array",  "Sti";
+                  "is_thread",              "p";
+                  "me",                     "";
+                  "mutable",                "Sp";
+                  "thread_owned",           "Sp";
+                  "non_null_array_range",   "ti";
+                  "non_null_extent",        "Sp";
+                  "non_null_set_singleton", "p";
+                  "owner",                  "Sp";
+                  "owns",                   "Sp";
+                  "obj_eq",                 "pp";
+                  "obj_neq",                "pp";
+                  "wrapped",                "St";
+                  "ptr_eq",                 "pp";
+                  "ptr_neq",                "pp";
+                  "ptr_to_i1",              "p";
+                  "ptr_to_i2",              "p";
+                  "ptr_to_i4",              "p";
+                  "ptr_to_i8",              "p";
+                  "ptr_to_u1",              "p";
+                  "ptr_to_u2",              "p";
+                  "ptr_to_u4",              "p";
+                  "ptr_to_u8",              "p";
+                  "thread_local",           "Sp";
+                  "thread_local2",          "St";
+                  "set_cardinality",        "a";
+                  "set_disjoint",           "aa";
+                  "set_difference",         "aa";
+                  "set_empty",              "";
+                  "set_eq",                 "aa";
+                  "set_subset",             "aa";
+                  "set_in",                 "pa";
+                  "set_in0",                "pa";
+                  "set_in2",                "pa";
+                  "set_intersection",       "aa";
+                  "set_singleton",          "p";
+                  "set_union",              "aa";
+                  "set_universe",           "";
+                  "set_add_element",        "..";
+                  "set_remove_element",     "..";
+                  "sk_hack",                ".";
+                  "span",                   "p";
+                  "volatile_span",          "Sp";
+                  "typed",                  "Sp";
+                  "typed2",                 "St";
+                  "typed2_phys",            "St";
+                  "typed2_spec",            "St";
+                  "typeof",                 "p";
+                  "u1_to_ptr",              ".";
+                  "u2_to_ptr",              ".";
+                  "u4_to_ptr",              ".";
+                  "u8_to_ptr",              ".";                  
+                  "vs_ctor",                "Sp";
+                  "when_claimed",           "";
+                  "mutable_increases",      "sS";
+                  "meta_eq",                "sS";
+                  "program_entry_point",    "S";
+                  "always_by_claim",        "pp";
+                  "reads_check_pre",        "S";
+                  "reads_check_post",       "S";
+                  "gemb",                   "p";
+                  "start_here",             "";
+                  "full_stop",              "S";
+                  "pre_wrap",               "S";
+                  "pre_unwrap",             "S";
+                  "pre_static_wrap",        "S";
+                  "pre_static_unwrap",      "S";
+                  "unwrap_check_pre",       "Sp";
+                  "good_for_post_can_unwrap","S";
+                  "unwrap_post",            "..pp";
+                  "unwrap_post_claimable",  "..pp";
+                  "wrap_post",              "..pp";
+                  "take_over",              ".pp";
+                  "release",                "..pp";
+                  "expect_unreachable",     "";
+                  "bv_lemma",               ".";
+                  "is_non_primitive_ptr",   "p";
+                  "extent_mutable",         "Sp";
+                  "extent_zero",            "Sp";
+                  "extent_is_fresh",        "sSp";
+                  "inv_is_approved_by",     "sSp..";
+                  "inv_is_owner_approved",  "sSp.";
+                  "is_approved_by",         "...";
+                  "is_owner_approved",      "..";
+                  "updated_only_values",    "sS.";
+                  "updated_only_domains",   "sS.";
+                  "domain_updated_at",      "sS..";
+                  "claims_claim",           "..";
+                  "stuttering_pre","S.";
+                  "is_admissibility_check", "";
+                  "is_unwrap_check", "";
+                  "is_stuttering_check", "";
+                  "new_ownees", "S..";
+                  "rec_eq", "..";
+                  "account_claim", "Spp";
+                  "is_ghost_ptr", "p";
+                  "admissibility_start", "t";
+                  "addr", "p";
+                  "addr_eq", "pp";
+                  "retype", "Sp";
+                ]
   
     type Transformer =
       | Expr of ((CAST.Expr -> CAST.Expr) -> CAST.Expr -> option<CAST.Expr>)
@@ -82,6 +245,7 @@ namespace Microsoft.Research.Vcc
       let transformers = new GList<_>()
       let topDecls = ref []
       let times = new Dict<_,_>()
+      let pureCalls = new Dict<_,_>()
       let dumpTime = ref false
       let errorHandler (args:Microsoft.Cci.ErrorEventArgs) =
         if !errorReported then ()
@@ -89,14 +253,24 @@ namespace Microsoft.Research.Vcc
           for msg in args.Errors do
              if not msg.IsWarning then errorReported := true
              
-      do hostEnv.Errors.Add errorHandler
+      do
+        List.iter (fun (n, s) -> pureCalls.Add ("_vcc_" + n, s)) alwaysPureCallList
+        hostEnv.Errors.Add errorHandler
      
       member this.Stopwatches = !stopwatches
       
       member this.SwTransformers = swTransformers
       member this.SwTranslator = swTranslator
       member this.SwPruning = swPruning
+
+      member this.PureCallSignature name =
+        match pureCalls.TryGetValue name with
+          | true, s -> Some s
+          | _ -> None
       
+      member this.AddPureCall (name, signature) =
+        pureCalls.[name] <- signature
+
       member this.PointerSizeInBytes = opts.PointerSize / 8
       
       member this.Oops (tok:Token, msg:string) =

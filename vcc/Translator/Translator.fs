@@ -100,8 +100,6 @@ namespace Microsoft.Research.Vcc
 
     let freshGrpID (env:Env) = env.IFGrpID := (!env.IFGrpID) + bigint.One; !env.IFGrpID
 
-    let hasCustomAttr n = List.exists (function C.VccAttr (n', _) -> n = n' | _ -> false)
-    
     let rec noUnions = function
       | C.Type.Ref td ->
         match td.Kind with           
@@ -723,8 +721,8 @@ namespace Microsoft.Research.Vcc
               | _ -> die()
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
             B.FunctionCall(name, [self e1; self e2])
-          | n, _ when Simplifier.alwaysPureCalls.ContainsKey n ->
-            let signature = Simplifier.alwaysPureCalls.[n]
+          | n, _ when (helper.PureCallSignature n).IsSome ->
+            let signature = (helper.PureCallSignature n).Value
             let rec aux acc idx (args:list<C.Expr>) =
               if idx >= signature.Length then
                 xassert (args = [])
@@ -2350,7 +2348,7 @@ namespace Microsoft.Research.Vcc
           let fnconst = "cf#" + h.Name
           let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$pure_function" }
           let frameAxiom =
-            let containsGenerateFrameAxiom = hasCustomAttr C.AttrFrameaxiom h.CustomAttr
+            let containsGenerateFrameAxiom = TransUtil.hasCustomAttr C.AttrFrameaxiom h.CustomAttr
             if (not containsGenerateFrameAxiom) || h.IsStateless then 
               []
             else
@@ -2386,7 +2384,7 @@ namespace Microsoft.Research.Vcc
 
       let sanityChecks env (h:C.Function) =
         // we disable that by default for now, it seems to be too much of a hassle
-        if not (hasCustomAttr "postcondition_sanity" h.CustomAttr) then []
+        if not (TransUtil.hasCustomAttr "postcondition_sanity" h.CustomAttr) then []
         else
           let checks = List.map stripFreeFromEnsures h.Ensures
           match checks with
