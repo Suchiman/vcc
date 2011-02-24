@@ -459,6 +459,9 @@ namespace Microsoft.Research.Vcc
                 | t when t.IsPtrSet ->
                   match expr with
                     | Macro(_, "_vcc_set_empty", _) -> Expr.MkBlock []
+                    | Macro(_, "_vcc_array_range", args) when helper.Options.Vcc3 ->
+                      let setIn = Expr.Macro(boolBogusEC(), "reads_same_arr", args)
+                      Expr.MkAssume setIn
                     | Macro(_, "_vcc_array_range", [_; ptr; _]) ->
                       let p = Variable.CreateUnique "#p" ptr.Type VarKind.QuantBound
                       let pRef = Expr.Ref({bogusEC with Type = p.Type}, p)
