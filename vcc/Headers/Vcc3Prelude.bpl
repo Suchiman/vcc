@@ -1244,6 +1244,10 @@ procedure $reads_havoc();
   ensures $reads_check_post($s);
   ensures $call_transition(old($s), $s);
 
+function $same_array(s0:$state, s1:$state, p:$ptr, sz:int) : bool
+{
+  (forall i:int :: {$idx(p, i)} $in_range(0, i, sz - 1) ==> $mem(s0, $idx(p, i)) == $mem(s1, $idx(p, i)))
+}
 
 // ----------------------------------------------------------------------------
 // Allocation

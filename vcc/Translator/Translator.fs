@@ -652,6 +652,9 @@ namespace Microsoft.Research.Vcc
                 let expr = bCall "$mem" [bState; sptr]
                 B.Primitive ("==", [expr; B.Old expr])
           
+          | "reads_same_arr", [_; ptr; sz] ->
+            bCall "$same_array" [B.Old bState; bState; self ptr; self sz]
+          
           | "keeps", [p1; p2] ->
             match p2.Type with
               | C.Ptr t when not t.IsComposite ->
