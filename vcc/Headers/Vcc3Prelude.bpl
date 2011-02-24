@@ -769,14 +769,19 @@ function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
 function {:inline true} $initially_mutable(S:$state, W:$ptrset) : bool
   {
     (forall p: $ptr ::
-       { $owner(S, p) } { $closed(S, p) } { $owner(S, $emb0(p)) } { $closed(S, $emb0(p)) }
+       { $mutable(S, p) } { $owner(S, p) } { $closed(S, p) } { $owner(S, $emb0(p)) } { $closed(S, $emb0(p)) }
        $set_in(p, W) ==> $mutable(S, p))
+  }
+
+function {:inline true} $initially_mutable_array(S:$state, p:$ptr, t:$ctype, sz:int) : bool
+  {
+    $is_mutable_array(S, p, t, sz)
   }
 
 function {:inline true} $initially_thread_owned_or_mutable(S:$state, W:$ptrset) : bool
   {
     (forall p: $ptr :: 
-       { $owner(S, p) } { $closed(S, p) } { $owner(S, $emb0(p)) } { $closed(S, $emb0(p)) }
+       { $mutable(S, p) } { $owner(S, p) } { $closed(S, p) } { $owner(S, $emb0(p)) } { $closed(S, $emb0(p)) }
        $set_in(p, W) ==> $thread_owned_or_even_mutable(S, p))
   }
 
