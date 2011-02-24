@@ -64,14 +64,18 @@ namespace Microsoft.Research.Vcc
           let isUnwrap = Macro (boolBogusEC(), "_vcc_is_unwrap_check", [])
           let isAdm = Macro (boolBogusEC(), "_vcc_is_admissibility_check", [])
           let assume name = Expr.MkAssume (Macro (boolBogusEC(), name, [mkRef parm]))
+          // insert after havoc to make sure there is :captureState generated there
+          let assertTrue = Expr.MkAssert (Expr.BoolLiteral ({ ec with Type = Type.Bool }, true)) 
           let unwrapBody = Expr.MkBlock [Expr.MkAssume (mkNot isStutt);
                                          assume "_vcc_unwrap_check_pre";
-                                         Macro (ec, "_vcc_unwrap_check", [mkRef parm])]
+                                         Macro (ec, "_vcc_unwrap_check", [mkRef parm]);
+                                         assertTrue]
           let admBody    = Expr.MkBlock ( if explicitAdm then 
                                             [ assume "_vcc_stuttering_pre" ]
                                           else 
                                             [ If (ec, None, isAdm, assume "_vcc_admissibility_pre", assume "_vcc_stuttering_pre");
                                             Macro (ec, "_vcc_havoc_others", [mkRef parm; typeExpr (Type.Ref td)]);
+                                            assertTrue;
                                             Expr.MkAssume (mkImpl isStutt (Macro (boolBogusEC(), "_vcc_inv2", [mkRef parm]))) ])
           let assumeNot cond name body =
             if cond then Expr.MkBlock [Expr.MkAssume (mkNot name); body]
