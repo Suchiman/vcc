@@ -2467,6 +2467,8 @@ namespace Microsoft.Research.Vcc
                             bCall "$extent_mutable" args
                           | B.Expr.FunctionCall ("$span", [o]) when vcc3 ->
                             bCall "$mutable" [bState; o]
+                          | B.Expr.FunctionCall ("$array_range", args) when vcc3 ->
+                            bCall "$initially_mutable_array" args
                           | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent" | "$span"), args) ->
                             if vcc3 then bCall "$initially_mutable" [bState; e']
                             else mut (Some (List.head (List.rev args))) "$mutable"
