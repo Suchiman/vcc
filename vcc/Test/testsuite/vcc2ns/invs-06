@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned int UINT;
@@ -5,30 +6,30 @@ typedef unsigned int UINT;
 
 typedef struct Bakery Bakery;
 
-typedef struct vcc(claimable) Client {
+typedef _(claimable) struct Client {
 	volatile bool choosing;
-	spec(volatile bool waiting;)
-	spec(obj_t bakery;)
-	on_unwrap(inv(bakery))
-	invariant(approves(owner(this),choosing))
-	invariant(approves(bakery,choosing))
+	_(ghost volatile bool waiting)
+	_(ghost \object bakery)
+	_(invariant \on_unwrap(\this, \inv(bakery)))
+	_(invariant \approves(\this->\owner,choosing))
+	_(invariant \approves(bakery,choosing))
 } Client;
 
 typedef struct Bakery {
 	Client *c;
-	invariant(forall(UINT i; i<N ==> closed(&c[i]) /*&& typed(&c[i])*/ && (c[i].bakery==this)))
-	invariant(forall(UINT i; i<N  ==> c[i].choosing))
+	_(invariant \forall UINT i; i<N ==> (&c[i])->\consistent /*&& typed(&c[i])*/ && (c[i].bakery==\this))
+	_(invariant \forall UINT i; i<N  ==> c[i].choosing)
 } Bakery;
 
-void client(Bakery *server, Client *cl spec(UINT idx) spec(claimp(sc)))
-requires(wrapped0(sc) && idx<N && wrapped(cl))
-requires(claims(sc,closed(server) && &server->c[idx]==cl))
-writes(cl,sc)
+void client(Bakery *server, Client *cl _(ghost UINT idx) _(ghost \claim sc))
+_(requires \wrapped0(sc) && idx<N && \wrapped(cl))
+_(requires \claims(sc,server->\consistent && &server->c[idx]==cl))
+_(writes cl,sc)
 {
-	atomic(sc,server,cl) {
+	_(atomic sc,server,cl) {
 		// note: the verification goes through if waiting below is replaced with choosing
-		spec(cl->waiting = 0;)
-		bump_volatile_version(cl);
+		_(ghost cl->waiting = 0)
+		_(bump_volatile_version cl)
 	}
 }
 `

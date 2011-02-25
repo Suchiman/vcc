@@ -1,11 +1,11 @@
-
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int32 UINT32;
 typedef __int32 INT32;
 
 #define _InterlockedCompareExchange(T)                                         \
-vcc(atomic_inline)                                                             \
+_(atomic_inline)                                                             \
 T InterlockedCompareExchange(volatile T *Destination, T Exchange, T Compare) { \
   if (*Destination == Compare) {                                               \
     *Destination = Exchange;                                                   \
@@ -26,18 +26,18 @@ struct S {
 };
 
 
-void foo(struct S *s claimp(c)) 
-  always(c, closed(s))
+void foo(struct S *s _(ghost \claim c)) 
+  _(always c, s->\consistent)
 {
-  atomic(c,s) {
+  _(atomic c,s) {
     InterlockedCompareExchange(&s->i, -5, -7);
   }
 }
 
-void bar(struct S *s claimp(c)) 
-  always(c, closed(s))
+void bar(struct S *s _(ghost \claim c)) 
+  _(always c, s->\consistent)
 {
-  atomic(c,s) {
+  _(atomic c,s) {
     InterlockedCompareExchange(&s->ui, 3, 8);
   }
 }
