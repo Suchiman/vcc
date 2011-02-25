@@ -1,0 +1,22 @@
+#include <vcc.h>
+
+ispure int f1(int *x)
+  returns(*x == 0)
+  reads(x);
+
+ispure int f2(int *x, int *y)
+  returns(*x == *y)
+  reads(x);
+
+void fux()
+{
+  int y,y2;
+  int x = f1(&y);
+  int z = f2(&y,&y2);
+}
+`
+Verification of fux succeeded.
+Verification of f2#reads failed.
+testcase(7,1) : error VC8007: the value of 'result' changed (in reads check of 'f2').
+Verification of f1#reads succeeded.
+`

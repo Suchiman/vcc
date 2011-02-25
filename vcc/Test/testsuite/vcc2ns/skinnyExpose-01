@@ -1,0 +1,19 @@
+#include <vcc.h>
+
+struct A { int x; };
+
+void foo()
+{
+  struct A a;
+
+  wrap(&a);
+
+  skinny_expose(&a) 
+     invariant(a.x > 0)
+   {
+     a.x = 1;
+   }
+}
+`
+testcase(12,18) : error VC9674: skinny_expose(...) does not allow invariants, only writes(...)
+`

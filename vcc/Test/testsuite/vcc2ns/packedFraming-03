@@ -1,0 +1,29 @@
+#include "vcc.h"
+
+typedef unsigned __int64 uint64;
+struct CONC {
+    int a;
+    uint64   GPR[16];
+    uint64   RIP;
+ uint64  DebugR[8];
+};
+
+void bar(struct CONC *c)
+  writes(c);
+
+void foo(struct CONC *c, struct CONC *c2)
+  requires(c != c2 && wrapped(c))
+  writes(c, c2)
+
+{
+  unwrap(c);
+  c->GPR[3] = 12;
+  wrap(c);
+  assert(c->GPR[3] == 12);
+  assert(in_domain(c,c));
+  bar(c2);
+  assert(c->GPR[3] == 12);
+}
+`
+Verification of foo succeeded.
+`

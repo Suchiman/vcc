@@ -1,0 +1,16 @@
+#include "vcc.h"
+
+void foo(int *a)
+	maintains(wrapped((int[10])a))
+	writes((int[10])a)
+	ensures(domain_updated_at((int[10])a, SET(&a[1])))
+{
+	skinny_expose((int[10])a)
+		writes(&a[1])
+	{
+		a[1] = 0;
+	}
+}
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,24 @@
+#include <vcc.h>
+
+struct S {
+  int a;
+  spec(int b;)
+};
+
+struct T {
+  struct S s;
+  spec(struct S r;)
+};
+
+void foo(struct T *p) {
+  spec(int ^i1 = &(p->s.b);)
+  spec(int ^i1 = &(p->r.a);)
+}
+
+spec(void bar(struct T ^p) {
+  int ^i1 = &(p->s.a);
+})
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

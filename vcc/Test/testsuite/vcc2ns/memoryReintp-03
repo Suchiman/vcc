@@ -1,0 +1,46 @@
+#include <vcc2test.h>
+
+typedef unsigned char byte;
+
+void *alloc(unsigned __int64  sz)
+  ensures(is_object_root(as_array((byte*)result, sz)))
+  ensures(mutable(as_array((byte*)result, sz)))
+  ensures(is_fresh(as_array((byte*)result, sz)))
+  ;
+
+struct A {
+  int x , y;
+};
+struct B {
+  struct A a1;
+  struct A a2;
+  int x;
+};
+
+void f1()
+{
+  struct B * b = alloc(sizeof(struct B));
+  from_bytes(b, false);
+  b->a1.x = 10;
+  b->a2.y = 20;
+  b->x = 20;
+}
+
+void mfree(void *p spec(unsigned __int64 sz))
+  writes(extent(as_array((byte*)p, sz)));
+
+void f2()
+{
+  struct B * b = alloc(sizeof(struct B));
+  from_bytes(b, false);
+  b->a1.x = 10;
+  b->a2.y = 20;
+  b->x = 20;
+  to_bytes(b);
+  mfree(b spec(sizeof(*b)));
+}
+
+`
+Verification of f1 succeeded.
+Verification of f2 succeeded.
+`

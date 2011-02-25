@@ -1,0 +1,21 @@
+#include <vcc.h>
+
+struct vcc(claimable) FooBar {
+  int x;
+};
+
+void f(struct FooBar *b claimp(cc))
+  requires(wrapped(b))
+  requires(closed(cc))
+  writes(b)
+{
+  spec(claim_t c;)
+
+  spec(
+    c = claim(b, true);
+    assert(c != cc);
+  )
+}
+`
+Verification of f succeeded.
+`

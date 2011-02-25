@@ -1,0 +1,9 @@
+#include "vcc.h"
+spec(vcc(atomic_inline) bool True() { return true; })
+void foo() {
+    spec(bool f;)
+    spec(f = True();)
+}
+`
+Verification of foo succeeded.
+`

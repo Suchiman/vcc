@@ -1,0 +1,26 @@
+
+#include <vcc.h>
+
+void foo(spec(out int o)) 
+  ensures(o == 5)
+{
+  spec(o = 5;)
+}
+
+void bar(spec(out int o)) 
+  ensures(o == 5)
+{
+  foo(spec(out o));
+}
+
+void baz() {
+  spec(int p;)
+  bar(spec(out p));
+  assert(p == 5);
+}
+
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+`

@@ -1,0 +1,9 @@
+#include <vcc.h>
+
+void foo(int i) {
+  spec(unsigned M[unsigned] = lambda(unsigned j; true; j == 0 ? unchecked((unsigned)i) : 0);)
+  assert(M[0] == unchecked((unsigned) i));
+}
+`
+Verification of foo succeeded.
+`

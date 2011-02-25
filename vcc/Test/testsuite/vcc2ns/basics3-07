@@ -1,0 +1,14 @@
+#include "vcc.h"
+
+spec(struct vcc(record) Output {
+    unsigned out;
+    unsigned x;
+};)
+
+void foo(spec(struct Output o))
+    requires(o.out==5)
+    requires(o.x==5)
+{}
+`
+Verification of foo succeeded.
+`

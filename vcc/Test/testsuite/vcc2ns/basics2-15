@@ -1,0 +1,15 @@
+#include "vcc.h"
+
+struct S {
+    int a;
+    unsigned b;
+    spec(obj_t c;)
+    spec(mathint d;)
+    invariant(a)
+    invariant(b)
+    invariant(c)
+    invariant(d)
+};
+`
+Verification of S#adm succeeded.
+`

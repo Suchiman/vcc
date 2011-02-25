@@ -1,0 +1,63 @@
+#include <vcc.h>
+
+struct vcc(claimable) A {
+  volatile int x;
+  invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
+};
+
+struct A2 {
+  volatile int x;
+  invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
+};
+
+void kill_A(struct A *a)
+  writes(a)
+  requires(wrapped(a))
+{
+  unwrap(a);
+}
+
+void kill_A2(struct A2 *a)
+  writes(a)
+  requires(wrapped(a))
+{
+  unwrap(a);
+}
+
+void kill_A_ok(struct A *a)
+  writes(a)
+  requires(wrapped(a) && ref_cnt(a) == 0)
+{
+  unwrap(a);
+}
+
+void claim_A(struct A *a)
+  writes(a)
+  requires(wrapped(a))
+{
+spec( 
+  claim_t c = claim(a, true);
+)
+}
+
+
+void claim_A2(struct A2 *a)
+  writes(a)
+  requires(wrapped(a))
+{
+spec( 
+  claim_t c = claim(a, true);
+)
+}
+`
+Verification of A#adm succeeded.
+Verification of A2#adm succeeded.
+Verification of kill_A failed.
+testcase(17,3) : error VC9502: Call '_vcc_unwrap(a)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object has no outstanding claims'.
+Verification of kill_A2 succeeded.
+Verification of kill_A_ok succeeded.
+Verification of claim_A succeeded.
+Verification of claim_A2 failed.
+testcase(49,20) : error VC8009: type of object a was not marked with vcc(claimable).
+`

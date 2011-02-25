@@ -1,0 +1,38 @@
+#include <vcc2test.h>
+
+void donothing_nonpure();
+
+ispure
+void donothing_pure()
+{
+  int x = 0;
+  x++;
+  x++;
+}
+
+
+void t1(int *x)
+{
+  donothing_pure();
+  assert(old(emb(x)) == emb(x));
+}
+
+void t1_fail(int *x)
+{
+  donothing_nonpure();
+  assert(old(emb(x)) == emb(x));
+}
+
+void t1_failAlso(int *x)
+{
+  donothing_nonpure();
+  assert(old(emb(x)) != emb(x));
+}
+`
+Verification of donothing_pure succeeded.
+Verification of t1 succeeded.
+Verification of t1_fail failed.
+testcase(23,12) : error VC9500: Assertion '__old(_vcc_emb(x)) == _vcc_emb(x)' did not verify.
+Verification of t1_failAlso failed.
+testcase(29,12) : error VC9500: Assertion '__old(_vcc_emb(x)) != _vcc_emb(x)' did not verify.
+`

@@ -1,0 +1,21 @@
+#include "vcc2test.h"
+
+struct A {
+  volatile int x;
+  invariant(depends(owner(this),this))
+};
+
+void OldInInvCheckInLoop()
+{ 
+  int x;
+  while (unchecked(x++)) 
+  {
+    struct A *a;
+    a = malloc(sizeof(*a));
+    if (a != NULL) wrap(a);
+  }
+}
+`
+Verification of A#adm succeeded.
+Verification of OldInInvCheckInLoop succeeded.
+`

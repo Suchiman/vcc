@@ -1,0 +1,19 @@
+
+#include <vcc.h>
+
+struct S {
+  vcc(as_array) int a[10];
+  invariant(keeps(as_array(a,10)))
+};
+
+void foo(struct S *s)
+  writes(extent(s))
+  ensures(wrapped(s))
+{
+  wrap(as_array(s->a,10));
+  wrap(s);
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`

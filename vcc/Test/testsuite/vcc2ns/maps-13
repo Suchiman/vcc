@@ -1,0 +1,15 @@
+
+#include <vcc.h>
+
+struct S {
+  int a;
+  spec(bool M[unsigned __int64];)
+  invariant(M == lambda(unsigned __int64 x; x < 100; is((struct S *)x, struct S)))
+};
+
+void foo(struct S *s) {}
+
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`

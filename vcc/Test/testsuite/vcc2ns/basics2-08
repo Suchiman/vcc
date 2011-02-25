@@ -1,0 +1,20 @@
+#include "vcc.h"
+
+struct S {
+  void *y;
+  invariant(y)
+  spec(obj_t x;)
+  invariant(x)
+};
+
+void foo() {
+  struct S s;
+  spec(s.x = &s;)
+  s.y = &s;
+  wrap(&s);
+  unwrap(&s);
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`

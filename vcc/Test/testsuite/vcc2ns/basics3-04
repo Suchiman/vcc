@@ -1,0 +1,5 @@
+#include "vcc.h"
+spec(struct U { invariant(this==&u) } u;)
+`
+Verification of U#adm succeeded.
+`

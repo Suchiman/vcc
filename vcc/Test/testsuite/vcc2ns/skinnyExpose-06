@@ -1,0 +1,50 @@
+#include <vcc.h>
+
+struct B {
+  int x;
+  int y;
+  invariant(x < 100)
+};
+struct A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+  invariant(b->x > 0)
+};
+
+void fooFail1(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+    wrap(a->b);
+  }
+}
+
+void fooFail2(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    wrap(a->b);
+    a->b->x = 12;
+  }
+}
+
+`
+Verification of B#adm succeeded.
+Verification of A#adm succeeded.
+Verification of fooFail1 failed.
+testcase(20,28) : error VC8530: Assertion 'skinny_expose(a, ...) body has written at an unlisted location' did not verify.
+testcase(20,31) : error VC9502: Call 'wrap(a->b)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is not closed'.
+Verification of fooFail2 failed.
+testcase(37,5) : error VC8507: Assertion 'a->b->x is writable' did not verify.
+`

@@ -1,0 +1,16 @@
+#include <vcc.h>
+
+void foo(spec(out int a))
+  ensures(a == 17);
+
+void bar() {
+  spec(int a;)
+  spec(int ^b = &a;)
+  int c;
+  
+  foo(spec(out a));
+  assert(a == 17);
+}
+`
+Verification of bar succeeded.
+`

@@ -1,0 +1,31 @@
+#include <vcc.h>
+
+typedef struct vcc(claimable) vcc(volatile_owns) _LOCK {
+  volatile int locked;
+} LOCK;
+
+vcc(atomic_inline)
+int ICX(volatile int *p, int tst, int rpl)
+{
+  if (*p == tst) {
+    *p = rpl;
+    return tst;
+  } else {
+    return *p;
+  }
+}
+
+void Acquire(LOCK *l claimp(c))
+  always(c, closed(l))
+{
+  int res = 0;
+  int a = 0;
+  int *p = &a;
+
+  atomic (c, l) {
+    res = ICX(&l->locked, a, 1);
+  }
+}
+`
+Verification of Acquire succeeded.
+`

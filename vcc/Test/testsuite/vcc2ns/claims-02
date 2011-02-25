@@ -1,0 +1,30 @@
+#include <vcc.h>
+
+struct A {
+  volatile int x;
+  invariant( old(this->x) == this->x || old(this->x) + 1 == this->x )
+};
+
+void LockFreeIncr(struct A *a claimp(c))
+  writes(c)
+  always(c, closed(a))
+{
+  int y;
+  int z;
+  spec( claim_t c1, c2; )
+
+  atomic(c,a) {
+    y = a->x;
+    spec( c1 = claim(c, y <= a->x); )
+  }
+  
+  if (y >= 0x7fffffff) {
+    unclaim(c1, c, c);
+    return;
+  }
+}
+`
+Verification of A#adm succeeded.
+Verification of LockFreeIncr failed.
+testcase(22,5) : error VC8010: object c might equal c.
+`

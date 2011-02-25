@@ -1,0 +1,47 @@
+#include <vcc.h>
+
+int x;
+
+struct A {
+  int y;
+
+  spec(claim_t c;)
+
+  invariant(keeps(c) && claims(c, closed(emb(&x))))
+  invariant(y < by_claim(c, x))
+};
+
+spec(
+struct vcc(claimable) _GlobalOwner {
+  int dummy;
+  invariant(keeps(emb(&x)))
+} GlobalOwner;
+)
+
+struct A a;
+
+void init()
+  writes(set_universe())
+  requires(program_entry_point())
+{
+  spec(claim_t c;)
+
+  x = 42;
+  wrap(emb(&x));
+
+  set_owns(&GlobalOwner, set_singleton(emb(&x)));
+  wrap(&GlobalOwner);
+
+  a.y = 12;
+  spec(  
+    c = claim(&GlobalOwner, true); 
+    a.c = c;
+    set_owns(&a, set_singleton(c));
+    wrap(&a);
+  )
+}
+`
+Verification of A#adm succeeded.
+Verification of _GlobalOwner#adm succeeded.
+Verification of init succeeded.
+`

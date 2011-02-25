@@ -1,0 +1,100 @@
+#include <vcc.h>
+
+ struct vcc(claimable) Struct
+ {
+   int value;
+  
+   def_group(g, vcc(claimable))
+
+   in_group(g)
+   volatile int v;
+
+   
+   spec(in_group(g) volatile bool map[unsigned int];)
+
+   invariant(keeps(this::g))
+   
+};
+ 
+
+int test2a(struct Struct *s)
+     requires(wrapped(s))
+ {
+    spec(claim_t c;)
+
+    atomic(s) {
+      assert(closed(s::g));
+      spec(c = claim(s::g, closed(s::g));)
+    }
+
+    atomic(c,  s::g){
+    begin_update();
+    spec(s->map[5] = true;)
+    };
+    
+ }
+
+int test(struct Struct *s)
+   requires(wrapped(s))
+{
+    int tmp;
+
+    atomic(s::g){
+      tmp = s->v;
+    }
+    
+}
+
+ int test3(struct Struct *s)
+     requires(wrapped(s))
+ {
+    spec(claim_t c;)
+
+    atomic(s) {
+      assert(closed(s::g));
+      spec(c = claim(s::g, closed(s::g));)
+    }
+
+    atomic(c, s::g){
+    begin_update();
+    s->v = 1;
+    };
+    
+ }
+
+
+
+
+
+struct vcc(claimable) Struct1
+ {
+   int value;
+   spec(volatile bool map[unsigned int];)
+};
+ 
+  int test1(struct Struct1 *s claimp(c))
+     always(c, closed(s))
+ {
+    atomic(c, s){
+    begin_update();
+    spec(s->map[5] = true;)
+    };
+ }
+
+  int test2(struct Struct1 *s claimp(c))
+     requires(wrapped(s))
+ {
+    atomic(s){
+    begin_update();
+    spec(s->map[5] = true;)
+    };
+    
+ }
+`
+Verification of Struct#adm succeeded.
+Verification of test2a succeeded.
+Verification of test succeeded.
+Verification of test3 succeeded.
+Verification of test1 succeeded.
+Verification of test2 succeeded.
+`

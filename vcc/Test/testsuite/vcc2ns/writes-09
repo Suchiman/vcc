@@ -1,0 +1,39 @@
+#include "vcc.h"
+
+struct A {
+int x;
+};
+
+struct A *get_a()
+  ensures(mutable(result))
+  ensures(is_fresh(result));
+
+void foo()
+{
+  int x;
+  struct A *a;
+
+  while(x>0) {
+    x--;
+    a = get_a();
+    a->x = 20;
+  }
+}
+
+void foo2()
+{
+  int x;
+  struct A *a;
+
+  while(x>0) 
+    writes(set_empty())
+  {
+    x--;
+    a = get_a();
+    a->x = 20;
+  }
+}
+`
+Verification of foo succeeded.
+Verification of foo2 succeeded.
+`

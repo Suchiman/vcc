@@ -1,0 +1,19 @@
+#include <vcc.h>
+
+struct S {
+  int a;
+  int b;
+  int c;
+};
+
+void foo() {
+  spec(struct S a[int];)
+  struct S s = {1,2,3};
+  spec(a[1] = s;)
+  assert(a[1].a == 1);
+  assert(a[1].b == 2);
+  assert(a[1].c == 3);
+}
+`
+Verification of foo succeeded.
+`

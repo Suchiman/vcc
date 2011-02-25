@@ -1,0 +1,45 @@
+#include "vcc.h"
+
+void works(int *a, int *b)
+    maintains(wrapped(as_array(a,42)))
+    maintains(wrapped(as_array(b,42)))
+    writes(as_array(a,42))
+    requires(a!=b) // apparently sufficient for framing here
+    ensures(forall(unsigned i; i < 42; unchanged(b[i])))
+    ensures(forall(unsigned i; i < 42; i ? unchanged(a[i]) : a[i]==5))
+{
+    unwrap(as_array(a,42));
+    a[0] = 5;
+    wrap(as_array(a,42));
+}
+
+void set_5_at_0(unsigned *a)
+    maintains(is_mutable_array(a,42))
+    writes(a+0)
+    ensures(*a==5)
+{
+    a[0] = 5;
+}
+
+struct vcc(dynamic_owns) X {
+  int y;
+};
+
+void problematic(unsigned *a, unsigned *b)
+    maintains(wrapped(as_array(a,42)))
+    maintains(wrapped(as_array(b,42)))
+    writes(as_array(a,42))
+    requires(a!=b)
+    ensures(forall(unsigned i; i < 42; unchanged(b[i])))
+    ensures(forall(unsigned i; i < 42; i ? unchanged(a[i]) : a[i]==5))
+{
+    assert(in_domain(as_array(b,42),as_array(b,42)));
+    unwrap(as_array(a,42));
+    set_5_at_0(a);
+    wrap(as_array(a,42));
+}
+`
+Verification of works succeeded.
+Verification of set_5_at_0 succeeded.
+Verification of problematic succeeded.
+`

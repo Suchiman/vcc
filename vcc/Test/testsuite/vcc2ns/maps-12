@@ -1,0 +1,15 @@
+
+#include <vcc.h>
+
+struct Foo {
+    unsigned dummy;
+};
+
+void foo(unsigned i) {
+   spec(struct Foo map1[unsigned];) 
+   spec(struct Foo map2[unsigned];) 
+   spec(map2 = ((i==2)? map1: map2);)
+}
+`
+Verification of foo succeeded.
+`

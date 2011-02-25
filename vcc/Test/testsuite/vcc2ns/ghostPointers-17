@@ -1,0 +1,13 @@
+#include "vcc.h"
+
+spec(
+typedef struct s {
+    int dummy;
+    invariant(this == &g)
+} s;
+)
+
+spec( s g; )
+`
+Verification of s#adm succeeded.
+`

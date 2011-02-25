@@ -1,0 +1,37 @@
+
+#include <vcc.h>
+
+#define MAX 100
+
+typedef struct _S 
+{
+    unsigned dummy;
+} S;
+
+
+typedef struct _T
+{
+    S arr[MAX];
+} T;
+
+void foo(T* t)
+  maintains(forall(obj_t p; in_array(p,t->arr,MAX) ==> wrapped(p)))
+  writes(&t->arr[5])
+{
+  unwrap(&t->arr[5]);
+  t->arr[5].dummy = 5;
+  wrap(&t->arr[5]);
+}
+
+void fooShouldFail(T* t)
+  maintains(forall(obj_t p; in_array(p,t->arr,MAX) ==> wrapped(p)))
+  writes(t->arr)
+{
+  unwrap(&t->arr[0]);
+  assert(false);
+}
+`
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(31,12) : error VC9500: Assertion '((bool)0)' did not verify.
+`

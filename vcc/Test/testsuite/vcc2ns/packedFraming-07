@@ -1,0 +1,43 @@
+#include <vcc.h>
+
+struct A { int x; };
+struct B {
+  struct A *a;
+  invariant(keeps(a))
+};
+struct C {
+  struct B *b;
+  invariant(keeps(b))
+};
+
+void SetX(struct B *b)
+  maintains(wrapped_dom(b))
+  writes(b)
+  ensures(domain_updated_at(b, SET(&b->a->x)))
+{
+  skinny_expose(b, b->a)
+    writes(&b->a->x)
+  {
+    b->a->x = 10;
+  }
+}
+
+void foo(struct C *c)
+  maintains(wrapped(c))
+  writes(c)
+  ensures(domain_updated_at(c, SET(&c->b->a->x)))
+{
+	skinny_expose(c)
+		writes(c->b, &c->b->a->x)
+	{
+		SetX(c->b);
+	}
+}
+
+
+`
+Verification of B#adm succeeded.
+Verification of C#adm succeeded.
+Verification of SetX succeeded.
+Verification of foo succeeded.
+`

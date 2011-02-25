@@ -1,0 +1,58 @@
+#include <vcc.h>
+
+struct A {
+  int x;
+};
+
+void foo4(struct A *a)
+  requires(wrapped(a))
+  writes(a)
+{
+  int x = 0;
+  while(x++ < 3) 
+    invariant(x <= 3)
+    invariant(wrapped(a))
+  {
+    unwrap(a);
+    a->x = 7;
+    wrap(a);
+  }
+}
+
+void foo5(struct A *a)
+  requires(wrapped(a))
+  writes(a)
+{
+  int x = 0;
+  while(x++ < 3) 
+    writes(set_empty())
+    invariant(x <= 3)
+    invariant(wrapped(a))
+  {
+    unwrap(a);
+    a->x = 7;
+    wrap(a);
+  }
+}
+
+void foo6(struct A *a)
+  requires(wrapped(a))
+{
+  int x = 0;
+  while(x++ < 3) 
+    writes(a)
+    invariant(x <= 3)
+    invariant(wrapped(a))
+  {
+    unwrap(a);
+    a->x = 7;
+    wrap(a);
+  }
+}
+`
+Verification of foo4 succeeded.
+Verification of foo5 failed.
+testcase(32,17) : error VC8021: 'a' is not writable before unwrapping it.
+Verification of foo6 failed.
+testcase(43,14) : error VC8011: writes clause of the loop might not be included writes clause of the function.
+`

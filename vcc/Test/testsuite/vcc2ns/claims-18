@@ -1,0 +1,45 @@
+#include "vcc2test.h"
+
+struct vcc(claimable) S {
+  volatile int x;
+};
+
+void foo()
+{
+   
+   struct S *sp = (struct S *)malloc(sizeof(struct S));
+   spec(claim_t c;)
+   if (sp != NULL) { 
+     wrap(sp);
+     atomic(sp) {
+       sp->x = 10;
+       spec( c = claim(sp, sp->x > 0); )
+     }
+   }
+}
+
+void bar()
+{
+   
+   struct S *sp = (struct S *)malloc(sizeof(struct S));
+   int q;
+
+   spec(claim_t c;)
+
+   if (sp != NULL) {
+     wrap(sp);
+     atomic(sp) {
+       q = 10;
+       sp->x = 10;
+       spec( c = claim(sp, q == 9 && sp->x > 0); )
+       q = 9;
+     }
+   }
+}
+
+`
+Verification of foo failed.
+testcase(16,29) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
+Verification of bar failed.
+testcase(34,29) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
+`

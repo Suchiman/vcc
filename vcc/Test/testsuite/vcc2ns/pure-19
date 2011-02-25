@@ -1,0 +1,11 @@
+#include "vcc.h"
+ispure void f(int *a);
+ispure void g(int *a) reads(a);
+
+void foo() {
+  int i = 10;
+  g(&i);
+}
+`
+Verification of foo succeeded.
+`

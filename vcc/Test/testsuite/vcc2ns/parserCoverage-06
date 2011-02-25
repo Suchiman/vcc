@@ -1,0 +1,8 @@
+#include <vcc.h>
+
+int foo(spec(spec(int i)))
+{
+}
+`
+Verification of foo succeeded.
+`

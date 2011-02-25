@@ -1,0 +1,24 @@
+#include <vcc.h>
+
+spec(
+vcc(specmacro) 
+bool And(bool a, bool b) returns(a && b);
+)
+
+void foo2()
+{
+  int a, b, c;
+  assert(And(a > b, And(b > c, b > 0)));
+}
+
+`
+Verification of foo2 failed.
+testcase(11,16) : error VC9500: Assertion 'a > b' did not verify.
+testcase(4,1) : error VC9599: (related information) from expansion of 'And(a > b, And(b > c, b > 0))'.
+testcase(11,27) : error VC9500: Assertion 'b > c' did not verify.
+testcase(4,1) : error VC9599: (related information) from expansion of 'And(a > b, And(b > c, b > 0))'.
+testcase(4,1) : error VC9599: (related information) from expansion of 'And(b > c, b > 0)'.
+testcase(11,34) : error VC9500: Assertion 'b > 0' did not verify.
+testcase(4,1) : error VC9599: (related information) from expansion of 'And(a > b, And(b > c, b > 0))'.
+testcase(4,1) : error VC9599: (related information) from expansion of 'And(b > c, b > 0)'.
+`

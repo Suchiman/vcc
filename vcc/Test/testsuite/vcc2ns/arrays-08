@@ -1,0 +1,46 @@
+#include "vcc.h"
+ 
+typedef unsigned __int64 uint64;
+
+typedef struct SubDESC {
+	uint64 a;
+	uint64 b;
+} SubDESC;
+ 
+struct vcc(dynamic_owns) DESC {
+ SubDESC   AbsArray[6];
+ invariant(forall(uint64 i; i < 6 ==> set_in(&AbsArray[i], owns(this))))
+};
+
+void SetDescAbsArrayFail(struct DESC *desc, uint64 index, uint64 Value)
+    maintains(wrapped(desc))
+	writes(desc)
+    requires(index < 6)
+	ensures(desc->AbsArray[index].a == Value)
+{ 
+	unwrap(desc);
+	unwrap(&desc->AbsArray[index]); // this unwrap produces inconsistency
+	assert(false);
+	desc->AbsArray[index].a = Value;
+	wrap(&desc->AbsArray[index]);
+	wrap(desc);
+}
+
+void SetDescAbsArray(struct DESC *desc, uint64 index, uint64 Value)
+    maintains(wrapped(desc))
+	writes(desc)
+    requires(index < 6)
+	ensures(desc->AbsArray[index].a == Value)
+{ 
+	unwrap(desc);
+	unwrap(&desc->AbsArray[index]); // this unwrap produces inconsistency
+	desc->AbsArray[index].a = Value;
+	wrap(&desc->AbsArray[index]);
+	wrap(desc);
+}
+`
+Verification of DESC#adm succeeded.
+Verification of SetDescAbsArrayFail failed.
+testcase(23,11) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of SetDescAbsArray succeeded.
+`

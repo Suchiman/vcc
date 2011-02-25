@@ -1,0 +1,37 @@
+#include "vcc.h"
+
+typedef int* pint;
+
+spec(int foo(int map[pint], int* p)
+{
+  return map[p];
+})
+
+spec(int foo2(int map[obj_t], int* p)
+{
+  return map[p];
+})
+
+void bar(int* p)
+{
+  spec(int map[pint];)
+  spec(map[p] = 12;)
+}
+
+struct A {
+  int q;
+  spec( int m[int]; )
+};
+
+void baz(struct A *a)
+  requires(thread_local(a))
+  writes(&a->m)
+{
+  spec(a->m[12] = 11;)
+}
+`
+Verification of foo succeeded.
+Verification of foo2 succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+`

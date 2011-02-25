@@ -1,0 +1,6 @@
+void foo(void ^p) {
+  void *q = p;
+}
+`
+testcase(2,13) : error VC0000: Cannot implicitly convert type 'void^' to 'void*'.
+`

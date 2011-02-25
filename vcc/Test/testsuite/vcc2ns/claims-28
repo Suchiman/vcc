@@ -1,0 +1,28 @@
+#include <vcc.h>
+
+struct vcc(claimable) A {
+  int dummy;
+};
+
+void succeeds(struct A *a, struct A *b claimp(d))
+  writes(a)
+  requires(wrapped(a))
+  requires(wrapped(d) && claims_obj(d, b))
+{
+  spec(claim_t c;)
+  atomic(d, b) {
+    spec(c = claim(a, claims_obj(c,a));)
+  }
+}
+
+void usedToFail(struct A *a)
+  writes(a)
+  requires(wrapped(a))
+{
+  spec(claim_t c;)
+  spec(c = claim(a, claims_obj(c,a));)
+}
+`
+Verification of succeeds succeeded.
+Verification of usedToFail succeeded.
+`

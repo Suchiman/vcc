@@ -1,0 +1,11 @@
+#include "vcc.h"
+
+struct vcc(dynamic_owns) _X
+{
+	int a;
+	invariant(a > 0 ==> set_in(&a, owns(this)))
+};
+`
+testcase(6,37) : warning VC9104: primitive pointers are unlikely to be in the owns set
+Verification of _X#adm succeeded.
+`

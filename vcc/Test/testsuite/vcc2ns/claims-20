@@ -1,0 +1,24 @@
+#include <vcc.h>
+
+struct vcc(volatile_owns) A {
+  int x;
+};
+
+struct B { int y; };
+
+void foo();
+
+void bar(struct A *a, struct B *b)
+  requires(wrapped(a) && set_in(b, owns(a)))
+{
+  assert(in_domain(a, a));
+  assert(in_domain(b, a));
+  assume(b->y == 10);
+  foo();
+  assert(in_domain(b, a));
+  assert(b->y == 10);
+}
+`
+Verification of bar failed.
+testcase(15,12) : error VC9500: Assertion '_vcc_in_domain(b,a)' did not verify.
+`

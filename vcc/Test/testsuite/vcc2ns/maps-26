@@ -1,0 +1,14 @@
+#include "vcc.h"
+
+struct X { int a; };
+
+void foo() {
+    spec(void *f[int];)
+    spec(f[0] = (void*)0;)
+    assert(f[0]==(void*)0);
+    spec(f = lambda(int x; true; (void*)0);)
+    assert(forall(int x; f[x] == (void*)0));
+}
+`
+Verification of foo succeeded.
+`

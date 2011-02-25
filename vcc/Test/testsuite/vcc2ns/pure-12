@@ -1,0 +1,16 @@
+#include <vcc.h>
+
+// should fail, no contract
+frameaxiom ispure int f1(int *x)
+  reads(x);
+
+// OK, assuming frameaxiom of f1
+frameaxiom ispure int f2(int *x)
+  returns(f1(x))
+  reads(x);
+
+`
+Verification of f2#reads succeeded.
+Verification of f1#reads failed.
+testcase(4,1) : error VC8007: the value of 'result' changed (in reads check of 'f1').
+`

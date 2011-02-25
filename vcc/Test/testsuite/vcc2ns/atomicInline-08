@@ -1,0 +1,18 @@
+#include <vcc.h>
+
+vcc(atomic_inline) int foo(spec(out int x)) {
+  spec(x = 10;)
+  return 1;
+};
+
+void bar(int p) {
+  spec(int i;)
+  int j;
+  j = p || foo(spec(out i));
+  assert(j);
+  assert(p || i == 10);
+  
+}
+`
+Verification of bar succeeded.
+`

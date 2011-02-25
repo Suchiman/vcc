@@ -1,0 +1,23 @@
+#include "vcc.h"
+
+struct DESC {
+	int a,b,c;
+};
+
+struct DESC2 {
+	int a;
+	struct DESC d1;
+	struct DESC d2;
+};
+
+void test_wr(struct DESC2 *d)
+    writes(extent(d))
+{
+	assert(mutable(d));
+	assert(mutable(&d->a));
+	assert(mutable(&d->d1));
+	assert(mutable(&d->d1.b));
+}
+`
+Verification of test_wr succeeded.
+`

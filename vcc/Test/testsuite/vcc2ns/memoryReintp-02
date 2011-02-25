@@ -1,0 +1,78 @@
+#include <vcc2test.h>
+
+void fooFail1(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 50);
+}
+
+void fooFail2(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+ // impossible to get split-point-negative error
+  split_array(as_array(arr, 100), (unsigned __int64) -1);
+}
+
+void fooFail3(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+//  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 50);
+}
+
+
+void fooFail4(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 100);
+}
+
+void fooFail5(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 110);
+}
+
+void fooFail6(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 0);
+}
+
+void fooOK(int *arr)
+  requires(mutable(as_array(arr, 100)))
+  requires(is_object_root(as_array(arr, 100)))
+  writes(extent(as_array(arr, 100)))
+{
+  split_array(as_array(arr, 100), 50);
+}
+`
+Verification of fooFail1 failed.
+testcase(7,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), 50)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the array to split is not embedded inside of another object'.
+Verification of fooFail2 failed.
+testcase(16,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), (unsigned __int64) -1)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the split-point is within the array'.
+Verification of fooFail3 failed.
+testcase(24,3) : error VC8510: Assertion '_vcc_extent(arr) is writable in call to _vcc_split_array(_vcc_as_array(arr, 100), 50)' did not verify.
+Verification of fooFail4 failed.
+testcase(33,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), 100)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the split-point is within the array'.
+Verification of fooFail5 failed.
+testcase(41,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), 110)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the split-point is within the array'.
+Verification of fooFail6 failed.
+testcase(49,3) : error VC9502: Call '_vcc_split_array(_vcc_as_array(arr, 100), 0)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the array is split at positive index'.
+Verification of fooOK succeeded.
+`

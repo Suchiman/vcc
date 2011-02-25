@@ -1,0 +1,26 @@
+#include <stdlib.h>
+#include "vcc.h"
+
+#define UINT32 unsigned int
+
+typedef struct _st{
+    def_group(g)
+
+    in_group(g) UINT32 *p;
+
+    UINT32 f;
+} st;
+
+
+void test()
+{
+    st *newp;
+
+    newp = (st*) malloc(sizeof(st));
+    assert(newp == NULL || set_eq(owns(newp), set_empty()));
+    assert(newp == NULL || set_eq(owns((st::g*)newp), set_empty()));
+
+}
+`
+Verification of test succeeded.
+`

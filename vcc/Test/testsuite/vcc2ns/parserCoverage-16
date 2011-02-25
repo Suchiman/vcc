@@ -1,0 +1,8 @@
+void foo(int i) {
+  switch (i)
+  {
+  }
+}
+`
+testcase(4,3) : error VC0000: Empty switch block.
+`

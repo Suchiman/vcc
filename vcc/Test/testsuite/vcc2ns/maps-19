@@ -1,0 +1,9 @@
+#include "vcc.h"
+
+void foo() {
+  spec(bool mapmap[int][int];)
+  spec(bool map[int] = lambda(int j; true; exists(int i; mapmap[i][j]));)
+}
+`
+Verification of foo succeeded.
+`

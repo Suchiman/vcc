@@ -1,0 +1,22 @@
+#include "vcc.h"
+struct T;
+spec(ispure bool not_inv(obj_t o)
+    reads(set_universe())
+    returns(!inv(o));)
+
+spec(ispure bool _inv(obj_t o)
+    reads(set_universe())
+    returns(inv(o));)
+
+struct T {
+    int a;
+    invariant(not_inv(this))
+};
+
+struct S {
+    int a;
+    invariant(_inv(this))
+};
+`
+testcase(5,27) : error VC9712: Use of 'inv(...)' or 'inv2(...)' with negative polarity.
+`

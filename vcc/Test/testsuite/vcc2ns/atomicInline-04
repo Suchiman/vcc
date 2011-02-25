@@ -1,0 +1,7 @@
+#include "vcc.h"
+
+ispure vcc(atomic_inline) void foo();
+void bar() { foo(); }
+`
+testcase(3,1) : error VC9667: Pure function 'foo' cannot be inlined.
+`

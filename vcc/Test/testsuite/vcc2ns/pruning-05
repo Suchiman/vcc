@@ -1,0 +1,10 @@
+`/a /functions:foo
+
+template<typename T> void bar();
+
+struct X { int x; };
+
+void foo() { bar<struct X>(); }
+`
+Verification of foo succeeded.
+`

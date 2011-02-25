@@ -1,0 +1,15 @@
+#include <vcc.h>
+
+typedef struct T {
+  int b[10];
+} T;
+
+spec(void foo(int ^v);)
+
+void test() {
+  spec(T t;)
+  spec(foo(& t.b[0]);)
+} 
+`
+Verification of test succeeded.
+`

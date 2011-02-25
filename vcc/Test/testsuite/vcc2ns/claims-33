@@ -1,0 +1,22 @@
+#include "vcc.h"
+
+struct S {
+  int a;
+};
+
+struct vcc(claimable) T {
+  struct S *s;
+  invariant(keeps(s))
+};
+
+void foo(struct T *p claimp(c))
+  always(c, closed(p))
+  
+{
+  assert(closed(p));
+  assert(typed(p->s));
+}
+`
+Verification of T#adm succeeded.
+Verification of foo succeeded.
+`

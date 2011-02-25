@@ -1,0 +1,46 @@
+#include <vcc2test.h>
+
+typedef struct vcc(claimable) vcc(volatile_owns) _LOCK {
+  volatile int locked;
+
+  spec( obj_t protected_obj; )
+
+  invariant( locked == 0 ==> set_in(protected_obj, owns(this)) )
+} LOCK;
+
+vcc(atomic_inline)
+int ICX(volatile int *p, int tst, int rpl)
+{
+  if (*p == tst) {
+    *p = rpl;
+    return tst;
+  } else {
+    return *p;
+  }
+}
+
+void Acquire(LOCK *l claimp(c))
+  always(c, closed(l))
+  ensures( wrapped(l->protected_obj) && is_fresh(l->protected_obj) )
+{
+  int res = 0;
+
+  do 
+//    invariant(res stop == 0)
+  {
+    atomic (c, l) {
+      res = ICX(&l->locked, 0, 1);
+
+      spec(
+        if (res == 0) {
+	  giveup_closed_owner(l->protected_obj, l);
+	}
+      )
+    }
+  } while (res != 0);
+}
+
+`
+Verification of _LOCK#adm succeeded.
+Verification of Acquire succeeded.
+`

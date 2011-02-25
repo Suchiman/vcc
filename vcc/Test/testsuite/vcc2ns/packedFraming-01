@@ -1,0 +1,46 @@
+#include <vcc.h>
+
+struct A {
+  int x;
+};
+
+void update(struct A *a)
+  maintains(wrapped(a))
+  writes(a);
+
+void foo(struct A *a, struct A *b)
+  requires(wrapped(a) && wrapped(b) && a != b)
+  writes(a,b)
+{
+  assert(in_domain(b, b));
+  update(a);
+  assert(b->x == old(b->x));
+}
+
+
+void fooFail1(struct A *a, struct A *b)
+  requires(wrapped(a) && wrapped(b))
+  writes(a,b)
+{
+  assert(in_domain(b, b));
+  update(a);
+  assert(b->x == old(b->x));
+}
+
+
+vcc_attr("no_infer", "all")
+void fooMayFail1(struct A *a, struct A *b)
+  requires(wrapped(a) && wrapped(b) && a != b)
+  writes(a,b)
+{
+  update(a);
+  assert(b->x == old(b->x));
+}
+
+`
+Verification of foo succeeded.
+Verification of fooFail1 failed.
+testcase(27,12) : error VC9500: Assertion 'b->x == __old(b->x)' did not verify.
+Verification of fooMayFail1 failed.
+testcase(37,12) : error VC9500: Assertion 'b->x == __old(b->x)' did not verify.
+`

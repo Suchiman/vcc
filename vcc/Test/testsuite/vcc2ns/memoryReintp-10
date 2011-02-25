@@ -1,0 +1,33 @@
+#include "vcc.h"
+
+spec (
+typedef vcc(dynamic_owns) struct x_str {
+} x_t;
+)
+
+typedef struct big_str {
+    spec (x_t x;)
+    int dummy; 
+} big_t;
+
+int test(unsigned char *u) 
+    requires(is_object_root(as_array(u, sizeof(big_t))))
+    requires(wrapped(as_array(u, sizeof(big_t))))
+    writes(as_array(u, sizeof(big_t)))
+{
+   big_t *b;
+//assert(in_domain(as_array(u, sizeof(big_t)), as_array(u, sizeof(big_t))));
+   unwrap(as_array(u, sizeof(big_t)));
+   b = (big_t *)u;
+
+   from_bytes(b, false);
+   assume(owns(&b->x) == set_empty());
+   wrap(&b->x);
+   assert(false);
+   return 1;
+}
+
+`
+Verification of test failed.
+testcase(26,13) : error VC9500: Assertion '((bool)0)' did not verify.
+`

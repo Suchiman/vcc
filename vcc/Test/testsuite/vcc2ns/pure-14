@@ -1,0 +1,21 @@
+#include "vcc.h"
+
+struct ArrayList{
+    size_t capacity;
+    size_t length;
+    int *array;
+
+};
+
+ispure 
+size_t Length(struct ArrayList * A)
+    reads(A)
+    requires (wrapped(A))
+    ensures (result == A->length)
+{
+    return A->length;
+}
+`
+Verification of Length succeeded.
+Verification of Length#reads succeeded.
+`

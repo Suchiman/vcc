@@ -1,0 +1,23 @@
+#include <vcc.h>
+
+struct A {
+  int x;
+};
+
+spec(void bar()
+{
+})
+
+spec(isadmissibilitycheck
+void adm_A(struct A* x)
+{
+  havoc_others(x);
+  bar();
+  assume(inv(x));
+}
+)
+`
+Verification of bar succeeded.
+Verification of adm_A failed.
+testcase(11,17) : error VC8002: state was altered after havoc_others().
+`

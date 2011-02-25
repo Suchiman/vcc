@@ -1,0 +1,20 @@
+#include <vcc.h>
+
+struct A {
+  int x;
+
+  struct {
+    def_group(C)
+    in_group(C) int z;
+
+    def_group(D)
+    in_group(D) int zz;
+  } y;
+  
+  invariant(keeps(&this->y::C))
+  invariant(keeps(&this->y::D))
+};
+
+`
+Verification of A#adm succeeded.
+`

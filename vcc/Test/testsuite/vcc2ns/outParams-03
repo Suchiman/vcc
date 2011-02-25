@@ -1,0 +1,26 @@
+#include <vcc.h>
+
+int foo(spec(out int o) spec(out int o1)) 
+  ensures(o == 5)
+  ensures(o1 == 7)
+  ensures(result == 6)
+{
+  spec(o = 5;)
+  spec(o1 = 7;)
+  return 6;
+}		
+
+void bar() {
+  spec(int p;)
+  spec(int p1;)
+  int r;
+  r = foo(spec(out p) spec(out p1));
+  assert(p == 5);
+  assert(p1 == 7);
+  assert(r == 6);
+}
+
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

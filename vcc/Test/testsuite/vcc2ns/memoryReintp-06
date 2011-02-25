@@ -1,0 +1,27 @@
+#include <stdlib.h>
+#include "vcc.h"
+
+typedef unsigned __int8 byte;
+
+typedef struct C { int dummy; } C;
+
+typedef struct B { C c; int c0; } B;
+
+typedef struct A1 { B b; int b0; } A1;
+
+typedef struct gA { A1 g[10]; } gA;
+
+void one()
+    requires(is_object_root(as_array((byte*) 1024, sizeof(gA))))
+    writes(extent(as_array((byte*) 1024, sizeof(gA))))
+{
+    gA* a = (gA*) 1024;
+    from_bytes(a, false);
+    assert(set_in(&a->g[0].b0, extent(a)));
+    assert(set_in(&a->g[0].b.c0, extent(a)));
+    assert(set_in(&a->g[0].b.c.dummy, extent(a)));
+    a->g[0].b.c.dummy = 42;
+}
+`
+Verification of one succeeded.
+`

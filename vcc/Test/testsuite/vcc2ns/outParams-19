@@ -1,0 +1,11 @@
+
+#include <vcc.h>
+
+void foo(spec(int out)) 
+  requires(out == 5)
+{
+  assert(out == 5);
+}
+`
+Verification of foo succeeded.
+`

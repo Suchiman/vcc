@@ -1,0 +1,11 @@
+struct S { int a;};
+
+struct S GetS();
+
+void foo() {
+    struct S s;
+    s = GetS();
+}
+`
+Verification of foo succeeded.
+`

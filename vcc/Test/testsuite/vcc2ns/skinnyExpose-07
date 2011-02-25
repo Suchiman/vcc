@@ -1,0 +1,59 @@
+#include "vcc.h"
+
+struct B {
+  int x;
+  int y;
+};
+
+struct A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+};
+
+ 
+
+void works(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x, &a->b->y)))
+{
+
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+	writes(&a->b->y)
+  {
+    a->b->x = 12;
+    a->b->y = 144;
+  }
+  
+  assert(domain_updated_at(a, SET(&a->b->x, &a->b->y)));
+}
+
+
+void now_also_works(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x, &a->b->y)))
+{
+
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+  assert(domain_updated_at(a, SET(&a->b->x)));
+
+  skinny_expose(a, a->b)
+    writes(&a->b->y)
+  {
+    a->b->y = 144;
+  }
+  
+  assert(domain_updated_at(a, SET(&a->b->x, &a->b->y)));
+}
+`
+Verification of A#adm succeeded.
+Verification of works succeeded.
+Verification of now_also_works succeeded.
+`

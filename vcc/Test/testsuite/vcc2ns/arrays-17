@@ -1,0 +1,21 @@
+#include <vcc.h>
+
+struct S
+{
+  int dummy;
+  spec(mathint a[42];)
+  spec(bool b[10];)
+};
+
+void foo() {
+  struct S s;
+  spec(s.a[0]= 5;)
+  spec(s.a[1] = s.a[0] * 5;)
+  assert(s.a[1] == 25);
+  spec(s.b[0] = false;)
+  spec(s.b[1] = !s.b[0];)
+  assert(s.b[1]);
+}
+`
+Verification of foo succeeded.
+`

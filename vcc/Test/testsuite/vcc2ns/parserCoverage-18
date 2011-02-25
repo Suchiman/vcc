@@ -1,0 +1,10 @@
+void foo()
+{
+  int i;
+  for (i = 0, int j = 5; i < j; i++)
+  {
+  }
+}
+`
+testcase(4,15) : error VC0000: expression expected
+`

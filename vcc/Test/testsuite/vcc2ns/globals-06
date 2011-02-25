@@ -1,0 +1,50 @@
+#include <vcc.h>
+
+volatile int global;
+
+typedef struct vcc(claimable) GlobalsOwner{
+  invariant(this == &Globals)
+  invariant(keeps(gemb(&global)))
+
+  int dummy;
+  spec(volatile int shadow;)
+  invariant(shadow == global)
+} GlobalsOwner;
+
+GlobalsOwner Globals;
+
+void
+f(claimp(c))
+  always(c, closed(&Globals))
+  {
+  atomic(c, gemb(&global), &Globals){
+        global = 5;
+        spec(Globals.shadow = 5;)
+     }    
+  }
+
+void foo()
+  maintains(wrapped(gemb(&global)))
+  writes(gemb(&global))
+{
+  atomic(gemb(&global)) {
+    global = 5;
+    bump_volatile_version(gemb(&global));
+  }
+}
+
+void fooShouldFail()
+  maintains(wrapped(gemb(&global)))
+  writes(gemb(&global))
+{
+  atomic(gemb(&global)) {
+    global = 5;
+  }
+}
+`
+Verification of GlobalsOwner#adm succeeded.
+Verification of f succeeded.
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(40,21) : error VC8525: Assertion 'invariant of _vcc_gemb(&global) holds after atomic' did not verify.
+`

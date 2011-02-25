@@ -1,0 +1,32 @@
+#include "vcc.h"
+#ifdef VERIFY
+struct vcc(dynamic_owns) S { int a; obj_t b;};
+void foo(struct S *s) requires(wrapped(s)) {
+    assume(set_in(s->b,owns(s)));
+    assert(owner(s->b) == s);
+}
+void foo2(struct S *s) requires(wrapped(s)) {
+    assume(set_in(s->b,owns(s)));
+    assume(is_non_primitive_ptr(s->b));
+    assert(owner(s->b) == s);
+}
+
+void t()
+{
+  struct S s;
+  assert(is_non_primitive_ptr(&s));
+}
+void t2()
+{
+  int x;
+  assert(is_non_primitive_ptr(&x));
+}
+#endif
+`
+Verification of foo failed.
+testcase(6,14) : error VC9500: Assertion '_vcc_owner(s->b) == s' did not verify.
+Verification of foo2 succeeded.
+Verification of t succeeded.
+Verification of t2 failed.
+testcase(22,12) : error VC9500: Assertion '_vcc_is_non_primitive_ptr(&x)' did not verify.
+`

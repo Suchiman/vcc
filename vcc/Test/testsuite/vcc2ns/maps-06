@@ -1,0 +1,17 @@
+#include <vcc.h>
+
+struct S {
+  int i;
+  spec(int m[int];)
+};
+
+void foo(struct S *s)
+  writes(s)
+  maintains(wrapped(s)) {
+  expose(s) {
+    spec((s->m[1]) = 2;)
+  }
+}
+`
+Verification of foo succeeded.
+`
