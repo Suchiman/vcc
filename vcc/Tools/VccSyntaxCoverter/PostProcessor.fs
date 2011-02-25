@@ -4,19 +4,20 @@ open Microsoft.Research.Vcc.SyntaxConverter.Ast
 
 module PostProcessor =
 
-  let apply addCompilerOptionForTestSuite toks = 
+  let apply addCompilerOptionForTestSuite addInclude toks = 
     let nl = Tok.Whitespace(fakePos, "\n") 
     let rec coalesceWhitespace acc = function
       | [] -> List.rev acc
       | Tok.Whitespace(p0, ws0) :: Tok.Whitespace(p1, ws1) :: rest -> coalesceWhitespace acc (Tok.Whitespace(p0, ws0 + ws1) :: rest)
       | Tok.Group (p, s, toks) :: rest -> coalesceWhitespace (Tok.Group(p, s, coalesceWhitespace [] toks) :: acc) rest
       | tok :: rest -> coalesceWhitespace (tok :: acc) rest
+    let inc = if addInclude then [Comment (fakePos, "#include <vcc.h>"); nl] else []
     let rec addNewSyntaxOption atStartOfFile = function
       | Whitespace _ :: rest -> addNewSyntaxOption atStartOfFile rest
       | Comment(p, s) :: rest when addCompilerOptionForTestSuite && s.StartsWith("`/") 
-        -> Comment(p, s + "/newsyntax") :: nl :: rest
+        -> Comment(p, s + " /newsyntax") :: nl :: inc @ rest
       | toks -> 
-        let toks = Comment(fakePos, "`/newsyntax") :: nl :: toks
+        let toks = Comment(fakePos, "`/newsyntax") :: nl :: inc @ toks
         if not atStartOfFile then nl :: toks else toks
     let rec apply' acc = function
       // _(ghost out ...) ==> _(out ...)

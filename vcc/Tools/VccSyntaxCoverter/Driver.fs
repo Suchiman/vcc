@@ -3,12 +3,17 @@ open Microsoft.Research.Vcc.SyntaxConverter.Ast
 
 let go filename = 
   try
+    if not (System.IO.File.Exists filename) then
+      raise (SyntaxError (fakePos, "file does not exists"))
     let toks = Tokenizer.fromFile filename
     let toks = Rules.apply toks
     let isTestSuiteSource = 
       let extension = System.IO.Path.GetExtension(filename)
       extension <> ".c" && extension <> ".h"
-    let toks = PostProcessor.apply isTestSuiteSource toks
+    let hasInclude =
+      let text = System.IO.File.ReadAllText filename
+      text.Contains "#include"
+    let toks = PostProcessor.apply isTestSuiteSource (not hasInclude) toks
     let outf = System.IO.File.CreateText (filename + ".out")
     let outs = (Tok.Group (fakePos, "", toks)).ToString()
     let outs = outs.Replace ("\n", "\r\n")
