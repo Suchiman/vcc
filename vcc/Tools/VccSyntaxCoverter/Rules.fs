@@ -213,10 +213,19 @@ module Rules =
               let body, defs =
                 match List.rev (splitAt ";" toks) with
                   | body :: guard :: defs ->
-                    if looksLikeDecl guard then
-                      body, List.rev (guard :: defs)
-                    else
-                      guard @ [Tok.Whitespace (p, " "); Tok.Op (p, guardOp)] @ [space; Tok.Group(fakePos, "(", eatWs body)], List.rev defs
+                    match trim guard with
+                      | [Tok.Id (_, "\\true")] ->
+                        [space; Tok.Group(fakePos, "(", eatWs body)], List.rev defs
+                      | _ ->
+                        if looksLikeDecl guard then
+                          body, List.rev (guard :: defs)
+                        else
+                          let guardOp =
+                            if guardOp = "###" then
+                              System.Console.WriteLine ("{0}: Making lambda total with: {1} ==> ...", p, Tok.Sequence guard)
+                              "==>"
+                            else guardOp
+                          guard @ [Tok.Whitespace (p, " "); Tok.Op (p, guardOp)] @ [space; Tok.Group(fakePos, "(", eatWs body)], List.rev defs
                   | _ -> failwith ""
               joinWith ";" defs @ [Tok.Op (p, ";")] @ body
             else
@@ -277,6 +286,8 @@ module Rules =
                         "mutable"
                         "extent_mutable"
                         "approves"
+                        "program_entry_point"
+                        "in_array"
                       ]
 
     let canonicalSm = [
@@ -318,15 +329,15 @@ module Rules =
     addKwRepl "true" "\\true"
     addKwRepl "false" "\\false"
     addKwRepl "spec_malloc" "\\alloc"             // cannot use fnRule because of template paramters
-    addKwRepl "spec_alloc_array" "\\alloc_array"  // cannot use fnRule because of template paramters
+    addKwRepl "spec_malloc_array" "\\alloc_array"  // cannot use fnRule because of template paramters
     addKwRepl "block" ""                          // has become superfluous in the new syntax
     
     addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
     addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, ":hint"); space; paren "" toks]))
     addRule (quantRule "forall" "==>")
     addRule (quantRule "exists" "&&")
-    addRule (quantRule "lambda" "### /* range restriction ignored */")
-    
+    addRule (quantRule "lambda" "###")
+
     addKwRule "expose" "unwrapping"
     addKwRule "out_param" "writes"
     addKwRule "weak_out_param" "writes"
@@ -348,6 +359,7 @@ module Rules =
     addFnRule "current_state" "\\now"
     addFnRule "deep_eq"  "\\deep_eq"
     addFnRule "shallow_eq" "\\shallow_eq"
+    addFnRule "set_disjoint" "\\disjoint"
 
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))

@@ -49,7 +49,9 @@ module Ast =
           wr (closing c)
       pr this
       sb.ToString()
-        
+
+    static member Sequence lst = Group (fakePos, "", lst)
+    
     member this.Pos =
       match this with
         | Id (p, _)
