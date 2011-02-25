@@ -420,6 +420,7 @@ namespace Microsoft.Research.Vcc {
             case PtrConvKind.ObjT:
               return ConvMethod.Implicit;
             case PtrConvKind.SpecPtr:
+            case PtrConvKind.Array:
               return ConvMethod.Explicit;
             default:
               return ConvMethod.Incompatible;
