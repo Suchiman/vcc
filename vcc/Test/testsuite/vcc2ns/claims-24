@@ -1,17 +1,18 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
   volatile int x;
-  invariant(x == 0)
+  _(invariant x == 0)
 };
 
 void foo(struct A *a, struct A *aa)
-  requires(wrapped(aa) && wrapped(a) && aa != a)
+  _(requires \wrapped(aa) && \wrapped(a) && aa != a)
 {
   struct A *a0;
 
   a0 = a;
-  atomic(a0) {
+  _(atomic a0) {
     a0 = aa;
     a0->x = 12;
     a0 = a;

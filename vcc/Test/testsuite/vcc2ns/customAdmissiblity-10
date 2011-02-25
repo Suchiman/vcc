@@ -1,17 +1,18 @@
+`/newsyntax
 #include<vcc.h>
 
 typedef struct _T {
         int dummy;
-        invariant((!old(closed(this)) && closed(this)) || false)
+        _(invariant (!\old(\this->\consistent) && \this->\consistent) || \false)
 } T;
 
 void bar()
 {
         T t;
         t.dummy = 1;
-        wrap(&t);
-        assert(inv(&t));
-        assert(false);
+        _(wrap &t)
+        _(assert \inv(&t))
+        _(assert \false)
 }
 
 
@@ -21,23 +22,23 @@ typedef  struct _S {
 
 typedef struct _T2 {
     S s; 
-    invariant(s.x < 10)
-    invariant(old(s.x) > s.x)
+    _(invariant s.x < 10)
+    _(invariant \old(s.x) > s.x)
 
 } T2;
 
 void foo(T2* p)
-    requires(wrapped(p))
+    _(requires \wrapped(p))
 {
-    assert(p->s.x < 10);
+    _(assert p->s.x < 10)
     p->s.x = 111;
-    assert(false);
+    _(assert \false)
 }
 `
 Verification of _T#adm failed.
-testcase(5,22) : error VC8013: invariant(!__old(_vcc_closed(__this))) is not admissible (stuttering).
+testcase(5,36) : error VC8013: invariant(!\old(\this->\consistent)) is not admissible (stuttering).
 Verification of _T2#adm failed.
-testcase(25,17) : error VC8013: invariant(__old(s.x) > s.x) is not admissible (stuttering).
+testcase(25,31) : error VC8013: invariant(\old(s.x) > s.x) is not admissible (stuttering).
 Verification of bar succeeded.
 Verification of foo succeeded.
 `

@@ -1,27 +1,28 @@
+`/newsyntax
 #include "vcc2test.h"
 
 struct A {
   int x;
   int y[10];
 
-  invariant (typed(this) && this->x > 0)
+  _(invariant \this->\valid && \this->x > 0)
 };
 
 void baz(struct A*a)
-  requires(wrapped(a))
-  ensures(wrapped(a))
-  writes(a)
+  _(requires \wrapped(a))
+  _(ensures \wrapped(a))
+  _(writes a)
 {
-  unwrap(a);
+  _(unwrap a)
   a->x = 12;
   a->y[9] = 78;
-  wrap(a);
+  _(wrap a)
 }
 
 
 void bar(struct A*a)
-  requires(mutable(a))
-  writes(full_extent(a))
+  _(requires \mutable(a))
+  _(writes \full_extent(a))
 {
   a->y[0] = 3;
   a->y[9] = 3;
@@ -43,19 +44,18 @@ void foo()
   }
 }
 
-spec(
-void fooSafe()
+
+_(ghost void fooSafe()
 {
   struct A ^a;
   int ^tmp;
   int q;
 
-  a = spec_malloc<struct A>();
+  a = \alloc<struct A>();
   a->x = 12;
   tmp = &a->y[0];
   q = a->y[3];
-}
-)
+})
 `
 Verification of A#adm succeeded.
 Verification of baz succeeded.

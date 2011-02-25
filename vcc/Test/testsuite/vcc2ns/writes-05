@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 struct DESC {
@@ -11,12 +12,12 @@ struct DESC2 {
 };
 
 void test_wr(struct DESC2 *d)
-    writes(extent(d))
+    _(writes \extent(d))
 {
-	assert(mutable(d));
-	assert(mutable(&d->a));
-	assert(mutable(&d->d1));
-	assert(mutable(&d->d1.b));
+	_(assert \mutable(d))
+	_(assert \mutable(&d->a))
+	_(assert \mutable(&d->d1))
+	_(assert \mutable(&d->d1.b))
 }
 `
 Verification of test_wr succeeded.

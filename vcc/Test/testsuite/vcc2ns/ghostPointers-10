@@ -1,18 +1,18 @@
-
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   int a;
-  spec(int b;)
-  spec(int ^p;)
-  invariant(p != &b)
+  _(ghost int b)
+  _(ghost int ^p)
+  _(invariant p != &b)
 };
 
 struct T {
   int a;
-  spec(int b;)
-  spec(int ^p;)
-  invariant(p == &b)
+  _(ghost int b)
+  _(ghost int ^p)
+  _(invariant p == &b)
 };
 `
 Verification of S#adm succeeded.

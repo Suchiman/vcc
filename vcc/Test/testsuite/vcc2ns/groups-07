@@ -1,91 +1,92 @@
+`/newsyntax
 #include <vcc.h>
 
- struct vcc(claimable) Struct
+ _(claimable) struct Struct
  {
    int value;
   
-   def_group(g, vcc(claimable))
+   _(group  _(claimable) g)
 
-   in_group(g)
+   _(:g)
    volatile int v;
 
    
-   spec(in_group(g) volatile bool map[unsigned int];)
+   _(ghost _(:g) volatile bool map[unsigned int])
 
-   invariant(keeps((struct Struct::g*)this))
+   _(invariant \mine((struct Struct::g*)\this))
    
 };
  
 
 int test2a(struct Struct *s)
-     requires(wrapped(s))
+     _(requires \wrapped(s))
  {
-    spec(claim_t c;)
+    _(ghost \claim c)
 
-    assert(closed((struct Struct::g*)s));
+    _(assert ((struct Struct::g*)s)->\consistent)
 
-    atomic(s) {
-      spec(c = claim((struct Struct::g*)s, closed((struct Struct::g*)s));)
+    _(atomic s) {
+      _(ghost c = \make_claim({(struct Struct::g*)s}, ((struct Struct::g*)s)->\consistent))
     }
 
-    atomic(c, (struct Struct::g*)s){
-    begin_update();
-    spec(s->map[5] = true;)
+    _(atomic c, (struct Struct::g*)s){
+    _(begin_update)
+    _(ghost s->map[5] = \true)
     };
     
  }
 
 int test(struct Struct *s)
-   requires(wrapped(s))
+   _(requires \wrapped(s))
 {
     int tmp;
 
-    atomic((struct Struct::g*)s){
+    _(atomic (struct Struct::g*)s){
       tmp = s->v;
     }
     
 }
 
  int test3(struct Struct *s)
-     requires(wrapped(s))
+     _(requires \wrapped(s))
  {
-    spec(claim_t c;)
+    _(ghost \claim c)
 
-    atomic(s) {
-      assert(closed((struct Struct::g*)s));
-      spec(c = claim((struct Struct::g*)s, closed((struct Struct::g*)s));)
+    _(atomic s) {
+      _(assert ((struct Struct::g*)s)->\consistent)
+      _(ghost c = \make_claim({(struct Struct::g*)s}, ((struct Struct::g*)s)->\consistent))
     }
 
 
-    atomic(c, (struct Struct::g*)s){
-    begin_update();
+    _(atomic c, (struct Struct::g*)s){
+    _(begin_update)
     s->v = 1;
     };
  }
 
-  struct vcc(claimable) Struct1
+  _(claimable) struct Struct1
  {
    int value;
-   spec(volatile bool map[unsigned int];)
+   _(ghost volatile bool map[unsigned int])
 };
  
-  int test1(struct Struct1 *s claimp(c))
-     always(c, closed(s))
+  int test1(struct Struct1 *s _(ghost \claim c))
+     _(always c, s->\consistent)
  {
-    atomic(c, s){
-    begin_update();
-    spec(s->map[5] = true;)
+    _(atomic c, s){
+    _(begin_update)
+    _(ghost s->map[5] = \true)
     };
  }
 
-  int test2(struct Struct1 *s claimp(c))
-     requires(wrapped(s))
+  int test2(struct Struct1 *s _(ghost \claim c))
+     _(requires \wrapped(s))
  {
  //  spec(c = claim((struct Struct::g*)s, closed((struct Struct::g*)s));)*/
 
-    atomic(s){
-    begin_update();
-    spec(s->map[5] = true;)
+    _(atomic s){
+    _(begin_update)
+    _(ghost s->map[5] = \true)
     };
     
  }

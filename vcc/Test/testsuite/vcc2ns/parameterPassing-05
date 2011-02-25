@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -6,7 +7,7 @@ struct S {
 };
 
 void foo(struct S *p)
-  out_param(p)
+  _(writes p)
 {
   struct S s;
   s.a = 1;

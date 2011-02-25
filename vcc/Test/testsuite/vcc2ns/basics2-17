@@ -1,4 +1,5 @@
-
+`/newsyntax
+#include <vcc.h>
 struct S;
 struct T;
 struct R { struct S x; int a; };

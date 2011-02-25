@@ -1,41 +1,42 @@
+`/newsyntax
 #include "vcc2test.h"
 
 void foo(int *p) 
-  writes(p) {}
+  _(writes p) {}
 
 void setk2(int *p, size_t sz)
-  requires(is_thread_local_array(p, sz))
-  writes(array_range(p, sz))
+  _(requires \thread_local_array(p, sz))
+  _(writes \array_range(p, sz))
 {
   size_t i;
 
   i = 0;
   while (i < sz) 
-    writes(array_range(p, sz))
-    invariant (i >= 0)
+    _(writes \array_range(p, sz))
+    _(invariant i >= 0)
   {
-    p[i] = unchecked((int)i);
+    p[i] = _(unchecked)((int)i);
     foo(&p[i]);
     i = i + 1;
   }
 }
 
 void setk4(int *p, size_t sz)
-  requires(is_thread_local_array(p, sz))
-  writes(array_range(p, sz))
+  _(requires \thread_local_array(p, sz))
+  _(writes \array_range(p, sz))
 {
   size_t i;
-  spec(claim_t c;)
+  _(ghost \claim c)
 
 
   i = 0;
   while (i < sz) 
-    writes(array_range(p, sz))
-    invariant (i >= 0)
+    _(writes \array_range(p, sz))
+    _(invariant i >= 0)
   {
-    p[i] = unchecked((int)i);
+    p[i] = _(unchecked)((int)i);
     i = i + 1;
-    if(0) unclaim(c);
+    if(0) _(ghost \destroy_claim(c, {}));
   }
 }
 `

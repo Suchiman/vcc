@@ -1,9 +1,10 @@
+`/newsyntax
 #include "vcc.h"
 
 void foo(int *a, unsigned n)
-	requires(n && typed(as_array(a,n)))
+	_(requires n && ((void[n])a)->\valid)
 {
-	assert(set_in(a+0,span(as_array(a,n))));
+	_(assert a+0 \in \span((void[n])a))
 }
 `
 Verification of foo succeeded.

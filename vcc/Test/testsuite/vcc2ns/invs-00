@@ -1,18 +1,19 @@
+`/newsyntax
 #include "vcc2test.h"
 
 struct A {
   volatile int x;
-  invariant(depends(owner(this),this))
+  _(invariant \depends(\this->\owner,\this))
 };
 
 void OldInInvCheckInLoop()
 { 
   int x;
-  while (unchecked(x++)) 
+  while (_(unchecked)(x++)) 
   {
     struct A *a;
     a = malloc(sizeof(*a));
-    if (a != NULL) wrap(a);
+    if (a != NULL) _(wrap a)
   }
 }
 `

@@ -1,4 +1,4 @@
-
+`/newsyntax
 #include <vcc.h>
 
 struct S { int a; };
@@ -9,18 +9,18 @@ struct T {
 };
 
 void foo(struct S *s) 
-  requires(typed(s) && thread_local(s))
-  requires(extent_zero(s))
+  _(requires s->\valid && \thread_local(s))
+  _(requires \extent_zero(s))
 {
-  assert(s->a == 0);
+  _(assert s->a == 0)
 }
 
 void bar(struct T *t) 
-  requires(typed(t) && thread_local(t))
-  requires(extent_zero(t))
+  _(requires t->\valid && \thread_local(t))
+  _(requires \extent_zero(t))
 {
-  assert(t->s.a == 0);
-  assert(t->b == 0);
+  _(assert t->s.a == 0)
+  _(assert t->b == 0)
 }
 `
 Verification of foo succeeded.

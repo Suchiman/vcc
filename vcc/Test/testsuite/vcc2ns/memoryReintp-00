@@ -1,14 +1,15 @@
+`/newsyntax
 #include <vcc2test.h>
 
 void foo(int *arr)
-  requires(mutable(as_array(arr, 100)))
-  requires(is_object_root(as_array(arr, 100)))
-  writes(extent(as_array(arr, 100)))
+  _(requires \mutable((void[100])arr))
+  _(requires \object_root((void[100])arr))
+  _(writes \extent((void[100])arr))
 {
-  split_array(as_array(arr, 100), 50);
-  split_array(as_array(arr+50, 50), 25);
-  split_array(as_array(arr, 50), 25);
-  split_array(as_array(arr+25, 25), 10);
+  _(split_array (void[100])arr, 50)
+  _(split_array (void[50])(arr+50), 25)
+  _(split_array (void[50])arr, 25)
+  _(split_array (void[25])(arr+25), 10)
 }
 
 `

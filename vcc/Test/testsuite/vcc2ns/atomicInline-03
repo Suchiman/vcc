@@ -1,6 +1,7 @@
+`/newsyntax
 #include "vcc.h"
 
-vcc(atomic_inline) void foo();
+_(atomic_inline) void foo();
 void bar() { foo(); }
 
 `

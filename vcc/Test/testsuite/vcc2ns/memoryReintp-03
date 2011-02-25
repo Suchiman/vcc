@@ -1,11 +1,12 @@
+`/newsyntax
 #include <vcc2test.h>
 
 typedef unsigned char byte;
 
 void *alloc(unsigned __int64  sz)
-  ensures(is_object_root(as_array((byte*)result, sz)))
-  ensures(mutable(as_array((byte*)result, sz)))
-  ensures(is_fresh(as_array((byte*)result, sz)))
+  _(ensures \object_root((void[sz])((byte*)\result)))
+  _(ensures \mutable((void[sz])((byte*)\result)))
+  _(ensures \fresh((void[sz])((byte*)\result)))
   ;
 
 struct A {
@@ -20,24 +21,24 @@ struct B {
 void f1()
 {
   struct B * b = alloc(sizeof(struct B));
-  from_bytes(b, false);
+  _(from_bytes b, \false)
   b->a1.x = 10;
   b->a2.y = 20;
   b->x = 20;
 }
 
-void mfree(void *p spec(unsigned __int64 sz))
-  writes(extent(as_array((byte*)p, sz)));
+void mfree(void *p _(ghost unsigned __int64 sz))
+  _(writes \extent((void[sz])((byte*)p)));
 
 void f2()
 {
   struct B * b = alloc(sizeof(struct B));
-  from_bytes(b, false);
+  _(from_bytes b, \false)
   b->a1.x = 10;
   b->a2.y = 20;
   b->x = 20;
-  to_bytes(b);
-  mfree(b spec(sizeof(*b)));
+  _(to_bytes b)
+  mfree(b _(ghost sizeof(*b)));
 }
 
 `

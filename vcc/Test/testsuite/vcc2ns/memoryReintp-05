@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int8 byte;
@@ -14,21 +15,21 @@ typedef struct A1 {
     B b;
 } A1;
 
-typedef struct vcc(dynamic_owns) gA {
+typedef _(dynamic_owns) struct gA {
     A1 g[10]; 
 } gA;
 
 void foo ()
- requires(is_object_root(as_array((byte*) 1024, sizeof(gA))))
- writes(extent(as_array((byte*) 1024, sizeof(gA))))
+ _(requires \object_root((void[sizeof(gA)])((byte*) 1024)))
+ _(writes \extent((void[sizeof(gA)])((byte*) 1024)))
 {
     gA* a;
     a = (gA*) 1024;
    
-    from_bytes (a, false);
-    assert(mutable(&a->g[0]));
-    assert(mutable(&a->g[0].b));
-    assert(mutable(&a->g[0].b.c));
+    _(from_bytes a, \false)
+    _(assert \mutable(&a->g[0]))
+    _(assert \mutable(&a->g[0].b))
+    _(assert \mutable(&a->g[0].b.c))
 }
 `
 Verification of foo succeeded.

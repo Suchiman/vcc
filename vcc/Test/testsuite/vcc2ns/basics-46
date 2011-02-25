@@ -1,19 +1,20 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef struct _Y {
   int x;
-  invariant(unchanged(closed(this)) || x > 0)
+  _(invariant \unchanged(\this->\consistent) || x > 0)
 } Y, *PY;
 
 void foo()
 {
   Y y;
   y.x = -1;
-  wrap(&y); // should fail
+  _(wrap &y) // should fail
 }
 `
 Verification of _Y#adm succeeded.
 Verification of foo failed.
-testcase(12,13) : error VC8014: invariant((__old(_vcc_closed(__this)) == (_vcc_closed(__this))) || x > 0) of _Y fails on wrap.
-testcase(5,15) : error VC9599: (related information) location of the invariant.
+testcase(12,24) : error VC8014: invariant(\unchanged(\this->\consistent) || x > 0) of _Y fails on wrap.
+testcase(5,29) : error VC9599: (related information) location of the invariant.
 `

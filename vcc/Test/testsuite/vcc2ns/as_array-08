@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo() {
@@ -6,14 +7,14 @@ void foo() {
 
 
 void fooShouldFail() {
-  vcc(as_array) int a[5];
-  wrap((int[5])a);
+  _(as_array) int a[5];
+  _(wrap (int[5])a)
 }
 
 void bar() {
-  vcc(as_array) int a[5];
-  wrap((int[5])a);
-  unwrap((int[5])a);
+  _(as_array) int a[5];
+  _(wrap (int[5])a)
+  _(unwrap (int[5])a)
 }
 `
 Verification of foo succeeded.

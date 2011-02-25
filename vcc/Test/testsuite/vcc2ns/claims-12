@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
@@ -6,14 +7,14 @@ struct A {
 
 struct B {
   struct A *a;
-  spec(claim_t c;)
-  invariant(keeps(c) && closed(c))
-  invariant(claims(c, this->a->x > 0))
-  invariant(a->x > 0)
+  _(ghost \claim c)
+  _(invariant \mine(c) && c->\consistent)
+  _(invariant \claims(c, \this->a->x > 0))
+  _(invariant a->x > 0)
 };
 
 
 `
 Verification of B#adm failed.
-testcase(12,15) : error VC8012: invariant(a->x > 0) of B is not admissible.
+testcase(12,29) : error VC8012: invariant(a->x > 0) of B is not admissible.
 `

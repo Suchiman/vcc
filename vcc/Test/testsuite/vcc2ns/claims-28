@@ -1,26 +1,27 @@
+`/newsyntax
 #include <vcc.h>
 
-struct vcc(claimable) A {
+_(claimable) struct A {
   int dummy;
 };
 
-void succeeds(struct A *a, struct A *b claimp(d))
-  writes(a)
-  requires(wrapped(a))
-  requires(wrapped(d) && claims_obj(d, b))
+void succeeds(struct A *a, struct A *b _(ghost \claim d))
+  _(writes a)
+  _(requires \wrapped(a))
+  _(requires \wrapped(d) && \claims_object(d, b))
 {
-  spec(claim_t c;)
-  atomic(d, b) {
-    spec(c = claim(a, claims_obj(c,a));)
+  _(ghost \claim c)
+  _(atomic d, b) {
+    _(ghost c = \make_claim({a}, \claims_object(c,a)))
   }
 }
 
 void usedToFail(struct A *a)
-  writes(a)
-  requires(wrapped(a))
+  _(writes a)
+  _(requires \wrapped(a))
 {
-  spec(claim_t c;)
-  spec(c = claim(a, claims_obj(c,a));)
+  _(ghost \claim c)
+  _(ghost c = \make_claim({a}, \claims_object(c,a)))
 }
 `
 Verification of succeeds succeeded.

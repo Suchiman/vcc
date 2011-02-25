@@ -1,22 +1,23 @@
+`/newsyntax
 #include <vcc.h>
  
-struct vcc(claimable) Foo
+_(claimable) struct Foo
 {
     int x;
 };
  
-void foo(struct Foo *o claimp(c))
-  always(c,closed(o))
-  writes(o)
-  ensures(false)
+void foo(struct Foo *o _(ghost \claim c))
+  _(always c,o->\consistent)
+  _(writes o)
+  _(ensures \false)
 {
-  spec(claim_t c1;)
-  atomic(c,o) {
-    spec(c1 = claim(o, false);)
+  _(ghost \claim c1)
+  _(atomic c,o) {
+    _(ghost c1 = \make_claim({o}, \false))
   }
-  assert(false);
+  _(assert \false)
 }
 `
 Verification of foo failed.
-testcase(15,26) : error VC8520: Assertion 'chunk ((bool)0) of the claim initially holds' did not verify.
+testcase(15,32) : error VC8520: Assertion 'chunk \false of the claim initially holds' did not verify.
 `

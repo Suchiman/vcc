@@ -1,12 +1,13 @@
+`/newsyntax
 #include <stdlib.h>
 #include "vcc.h"
 
 #define UINT32 unsigned int
 
 typedef struct _st{
-    def_group(g)
+    _(group g)
 
-    in_group(g) UINT32 *p;
+    _(:g) UINT32 *p;
 
     UINT32 f;
 } st;
@@ -17,8 +18,8 @@ void test()
     st *newp;
 
     newp = (st*) malloc(sizeof(st));
-    assert(newp == NULL || set_eq(owns(newp), set_empty()));
-    assert(newp == NULL || set_eq(owns((st::g*)newp), set_empty()));
+    _(assert newp == NULL || newp->\owns == {})
+    _(assert newp == NULL || ((st::g*)newp)->\owns == {})
 
 }
 `

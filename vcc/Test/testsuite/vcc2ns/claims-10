@@ -1,17 +1,18 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
-  spec(claim_t c;)
+  _(ghost \claim c)
   int x;
 };
 
 void foo(struct A *a, struct A *b)
-  writes(extent(a), extent(b))
-  requires(a != b)
+  _(writes \extent(a), \extent(b))
+  _(requires a != b)
 {
-  spec(claim_t c;)
-  assert(c == claim(a, true));
+  _(ghost \claim c)
+  _(assert c == \make_claim({a}, \true))
 }
 `
-testcase(13,17) : error VC9652: claim(...) used in pure context
+testcase(13,31) : error VC9652: claim(...) used in pure context
 `

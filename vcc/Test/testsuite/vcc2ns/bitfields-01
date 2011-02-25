@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int8     UINT8;
@@ -8,7 +9,7 @@ typedef struct S
 {
     union
     {
-        backing_member 
+        _(backing_member) 
           UINT64 AsUINT64;  
         struct
         {
@@ -24,9 +25,9 @@ void foo()
     S Template;
 
     Template.Count = 4;
-    assert(Template.Count < 7);
+    _(assert Template.Count < 7)
     Template.Parameter = 8;
-    assert(Template.Count < 7);
+    _(assert Template.Count < 7)
 }
 `
 Verification of foo succeeded.

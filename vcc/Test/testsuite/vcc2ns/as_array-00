@@ -1,21 +1,22 @@
+`/newsyntax
 #include "vcc.h"
 
 struct A {
   unsigned size;
   int *arr;
-  invariant(keeps((unsigned[size])(arr)))
-  invariant(this->size > 0 && this->arr[0] > 0)
+  _(invariant \mine((unsigned[size])(arr)))
+  _(invariant \this->size > 0 && \this->arr[0] > 0)
 };
 
 void foo(struct A *a)
-  writes(a)
-  requires(wrapped(a))
+  _(writes a)
+  _(requires \wrapped(a))
 {
-  unwrap(a);
-  unwrap((int[a->size])a->arr);
+  _(unwrap a)
+  _(unwrap (int[a->size])a->arr)
   a->arr[0] = 5;
-  wrap((int[a->size])a->arr);
-  wrap(a);
+  _(wrap (int[a->size])a->arr)
+  _(wrap a)
 }
 `
 Verification of A#adm succeeded.

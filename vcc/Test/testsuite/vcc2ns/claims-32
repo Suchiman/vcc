@@ -1,8 +1,9 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S {
     int a;
-    invariant(when_claimed(a))
+    _(invariant \when_claimed(a))
 };
 
 `

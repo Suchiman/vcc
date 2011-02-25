@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _S {
@@ -5,7 +6,7 @@ typedef struct _S {
   int y[5];
 } S;
 
-spec(int bla(S ^s)
+_(ghost int bla(S ^s)
 {
   int ^x;
   x = &s->x;

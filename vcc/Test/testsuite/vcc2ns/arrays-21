@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef struct A {
@@ -5,12 +6,12 @@ typedef struct A {
 } A;
 
 void bar(A *p)
-  writes(extent(p))
-  maintains(mutable(p));
+  _(writes \extent(p))
+  _(maintains \mutable(p));
 
 void foo(A*p)
-  maintains(is_mutable_array(p,5))
-  writes(array_range(p,5))
+  _(maintains \mutable_array(p,5))
+  _(writes \array_range(p,5))
 {
   bar(p+1);
 }

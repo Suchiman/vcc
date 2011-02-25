@@ -1,14 +1,15 @@
+`/newsyntax
 #include <vcc.h>
 
 template<typename T> void foo(T* t)
-  requires(wrapped(t));
+  _(requires \wrapped(t));
   
 struct S {
   int a;
 };
   
 void bar(struct S *s) 
-  requires(wrapped(s))
+  _(requires \wrapped(s))
 {
   foo(s);
 }

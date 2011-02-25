@@ -1,6 +1,7 @@
+`/newsyntax
 #include <vcc.h>
 
-vcc(atomic_inline)
+_(atomic_inline)
 int ICX(volatile int *p, int tst, int rpl)
 {
   if (*p == tst) {
@@ -15,7 +16,7 @@ void foo(int res)
 {
   int old;
   old = ICX(&res, 0, 10);
-  assert(res == 10 || res == old);
+  _(assert res == 10 || res == old)
 }
 `
 Verification of foo succeeded.

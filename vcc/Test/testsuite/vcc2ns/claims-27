@@ -1,46 +1,47 @@
+`/newsyntax
 #include <vcc.h>
 
-struct vcc(claimable) A { int dummy; };
+_(claimable) struct A { int dummy; };
 
-void foo(struct A *a claimp(c1) claimp(c2) claimp(c3))
-  requires(c1 != c2 && c1 != c3 && c2 != c3)
-  requires(wrapped(c1) && claims_obj(c1, a))
-  requires(wrapped(c2) && claims_obj(c2, a))
-  requires(wrapped(c3) && claims_obj(c3, a))
+void foo(struct A *a _(ghost \claim c1) _(ghost \claim c2) _(ghost \claim c3))
+  _(requires c1 != c2 && c1 != c3 && c2 != c3)
+  _(requires \wrapped(c1) && \claims_object(c1, a))
+  _(requires \wrapped(c2) && \claims_object(c2, a))
+  _(requires \wrapped(c3) && \claims_object(c3, a))
 {
-  assert(account_claim(c1, a));
-  assert(account_claim(c2, a));
-  assert(account_claim(c3, a));
-  assert(ref_cnt(a) >= 3);
+  _(assert \account_claim(c1, a))
+  _(assert \account_claim(c2, a))
+  _(assert \account_claim(c3, a))
+  _(assert a->\claim_count >= 3)
 }
 
-void fooFail1(struct A *a claimp(c1) claimp(c2) claimp(c3))
-  requires(c1 != c2 && c1 != c3)
-  requires(wrapped(c1) && claims_obj(c1, a))
-  requires(wrapped(c2) && claims_obj(c2, a))
-  requires(wrapped(c3) && claims_obj(c3, a))
+void fooFail1(struct A *a _(ghost \claim c1) _(ghost \claim c2) _(ghost \claim c3))
+  _(requires c1 != c2 && c1 != c3)
+  _(requires \wrapped(c1) && \claims_object(c1, a))
+  _(requires \wrapped(c2) && \claims_object(c2, a))
+  _(requires \wrapped(c3) && \claims_object(c3, a))
 {
-  assert(account_claim(c1, a));
-  assert(account_claim(c2, a));
-  assert(account_claim(c3, a));
-  assert(ref_cnt(a) >= 3);
+  _(assert \account_claim(c1, a))
+  _(assert \account_claim(c2, a))
+  _(assert \account_claim(c3, a))
+  _(assert a->\claim_count >= 3)
 }
 
-void fooFail2(struct A *a claimp(c1) claimp(c2) claimp(c3))
-  requires(c1 != c2 && c1 != c3 && c2 != c3)
-  requires(wrapped(c1))
-  requires(wrapped(c2) && claims_obj(c2, a))
-  requires(wrapped(c3) && claims_obj(c3, a))
+void fooFail2(struct A *a _(ghost \claim c1) _(ghost \claim c2) _(ghost \claim c3))
+  _(requires c1 != c2 && c1 != c3 && c2 != c3)
+  _(requires \wrapped(c1))
+  _(requires \wrapped(c2) && \claims_object(c2, a))
+  _(requires \wrapped(c3) && \claims_object(c3, a))
 {
-  assert(account_claim(c1, a));
-  assert(account_claim(c2, a));
-  assert(account_claim(c3, a));
-  assert(ref_cnt(a) >= 3);
+  _(assert \account_claim(c1, a))
+  _(assert \account_claim(c2, a))
+  _(assert \account_claim(c3, a))
+  _(assert a->\claim_count >= 3)
 }
 `
 Verification of foo succeeded.
 Verification of fooFail1 failed.
-testcase(26,12) : error VC9500: Assertion '_vcc_ref_cnt(a) >= 3' did not verify.
+testcase(26,26) : error VC9500: Assertion 'a->\claim_count >= 3' did not verify.
 Verification of fooFail2 failed.
-testcase(35,12) : error VC9500: Assertion '_vcc_account_claim(c1, a)' did not verify.
+testcase(35,26) : error VC9500: Assertion '\account_claim(c1, a)' did not verify.
 `

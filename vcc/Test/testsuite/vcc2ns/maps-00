@@ -1,33 +1,34 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef int* pint;
 
-spec(int foo(int map[pint], int* p)
+_(ghost int foo(int map[pint], int* p)
 {
   return map[p];
 })
 
-spec(int foo2(int map[obj_t], int* p)
+_(ghost int foo2(int map[\object], int* p)
 {
   return map[p];
 })
 
 void bar(int* p)
 {
-  spec(int map[pint];)
-  spec(map[p] = 12;)
+  _(ghost int map[pint])
+  _(ghost map[p] = 12)
 }
 
 struct A {
   int q;
-  spec( int m[int]; )
+   _(ghost int m[int];) 
 };
 
 void baz(struct A *a)
-  requires(thread_local(a))
-  writes(&a->m)
+  _(requires \thread_local(a))
+  _(writes &a->m)
 {
-  spec(a->m[12] = 11;)
+  _(ghost a->m[12] = 11)
 }
 `
 Verification of foo succeeded.

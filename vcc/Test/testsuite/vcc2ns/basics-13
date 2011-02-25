@@ -1,4 +1,4 @@
-
+`/newsyntax
 #include <vcc.h>
 
 static void notJustForFun (
@@ -6,13 +6,13 @@ static void notJustForFun (
     unsigned char *hi,
     unsigned int width
     )
-requires(is_thread_local_array(lo, (1u << 31) + 10u))
-requires(lo+width == hi)
-requires(width == (1u << 31) + 1)
+_(requires \thread_local_array(lo, (1u << 31) + 10u))
+_(requires lo+width == hi)
+_(requires width == (1u << 31) + 1)
 {
 
 	hi = hi - width;
-	assert(hi == lo);
+	_(assert hi == lo)
 }
 `
 Verification of notJustForFun succeeded.

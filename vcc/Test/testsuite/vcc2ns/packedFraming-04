@@ -1,33 +1,34 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S { int a; };
 
-void foo(int *a) writes(a);
+void foo(int *a) _(writes a);
 
-void bar(struct S *s, int *a spec(obj_t c_root))
-    requires(wrapped(c_root))
-    requires(in_domain(s,c_root))
+void bar(struct S *s, int *a _(ghost \object c_root))
+    _(requires \wrapped(c_root))
+    _(requires s \in \domain(c_root))
 //    maintains(thread_local(s))
-    writes(a)
+    _(writes a)
 {
     int tmp = s->a, t2;
     foo(a);
 //    assert(in_domain(s,c_root));
     t2 = s->a;
-    assert(tmp == t2);
+    _(assert tmp == t2)
 }
 
-void bar2(struct S *s, int *a spec(obj_t c_root))
-    requires(wrapped(c_root))
-    requires(in_domain(s,c_root))
-    maintains(thread_local(s))
-    writes(a)
+void bar2(struct S *s, int *a _(ghost \object c_root))
+    _(requires \wrapped(c_root))
+    _(requires s \in \domain(c_root))
+    _(maintains \thread_local(s))
+    _(writes a)
 {
     int tmp = s->a, t2;
     foo(a);
-    assert(in_domain(s,c_root));
+    _(assert s \in \domain(c_root))
     t2 = s->a;
-    assert(tmp == t2);
+    _(assert tmp == t2)
 }
 `
 Verification of bar succeeded.

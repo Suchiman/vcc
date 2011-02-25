@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 #define UINT32 unsigned int
@@ -9,7 +10,7 @@ typedef struct t_th{
     pvp vp; 
   } st;
 
-  invariant(keeps(&st))
+  _(invariant \mine(&st))
 } *pth;
 
 

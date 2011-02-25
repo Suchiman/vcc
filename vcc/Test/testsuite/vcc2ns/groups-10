@@ -1,14 +1,15 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S{
 
-  def_group(G0)
-  def_group(G1)
+  _(group G0)
+  _(group G1)
   int a;
-  def_group(G)
+  _(group G)
   int b;
   int c;
-  def_group(G2)
+  _(group G2)
 };
 
 struct T {
@@ -18,13 +19,13 @@ struct T {
 };
 
 void foo(struct S *s) {
-  assert(&(s->b) - &(s->a) == &(s->c) - &(s->b));
+  _(assert &(s->b) - &(s->a) == &(s->c) - &(s->b))
 }
 
 void bar(struct T *t) {
   size_t ss = sizeof(struct S);
   size_t st = sizeof(struct T);
-  assert(ss == st);
+  _(assert ss == st)
 }
 `
 Verification of foo succeeded.

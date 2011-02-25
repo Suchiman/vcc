@@ -1,11 +1,12 @@
+`/newsyntax
 #include "vcc.h"
 
-spec(ispure bool a_is_increasing(state_t s1, state_t s2, struct S *s)
-    returns(in_state(s1,s->a) <= in_state(s2,s->a));)
+_(ghost _(pure) bool a_is_increasing(\state s1, \state s2, struct S *s)
+    _(returns \at(s1,s->a) <= \at(s2,s->a)))
 
 struct S {
     volatile int a;
-    invariant(a_is_increasing(old(current_state()), current_state(), this))
+    _(invariant a_is_increasing(\old(\now()), \now(), \this))
 };
 `
 Verification of S#adm succeeded.

@@ -1,4 +1,5 @@
-
+`/newsyntax
+#include <vcc.h>
 int x(int param) {
 return 0;
 }

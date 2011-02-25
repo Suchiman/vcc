@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 struct ArrayList{
@@ -7,11 +8,11 @@ struct ArrayList{
 
 };
 
-ispure 
+_(pure) 
 size_t Length(struct ArrayList * A)
-    reads(A)
-    requires (wrapped(A))
-    ensures (result == A->length)
+    _(reads A)
+    _(requires \wrapped(A))
+    _(ensures \result == A->length)
 {
     return A->length;
 }

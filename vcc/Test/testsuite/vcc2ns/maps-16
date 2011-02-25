@@ -1,21 +1,22 @@
+`/newsyntax
 #include "vcc.h"
 
 void foo(int x) {
-    spec(int map[int];)
-    spec(int i;)
-    assume(forall(int j; (j|x)==42));
-    assert((i|x)==42);
-    spec(i = map[3];)
+    _(ghost int map[int])
+    _(ghost int i)
+    _(assume \forall int j; (j|x)==42)
+    _(assert (i|x)==42)
+    _(ghost i = map[3])
     // We lose $in_range_i4() here, so the following assert doesn't verify...
-    assert((i|x)==42);
+    _(assert (i|x)==42)
 }
 
 typedef unsigned __int64 UINT64;
-spec( typedef UINT64 MAP[UINT64]; )
+ _(ghost typedef UINT64 MAP[UINT64];) 
 
-spec(
-void foo2(MAP m) {
-  assert(m[0] >= 0);
+
+_(ghost void foo2(MAP m) {
+  _(assert m[0] >= 0)
 })
 `
 Verification of foo succeeded.

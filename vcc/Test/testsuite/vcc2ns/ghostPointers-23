@@ -1,12 +1,13 @@
+`/newsyntax
 #include "vcc.h"
 
 struct List;
 struct Node
 {
   struct Node* next;
-  spec(struct List* list;)
-  spec(bool initialized;)
-  invariant(initialized ==> next == &list->nil)
+  _(ghost struct List* list)
+  _(ghost bool initialized)
+  _(invariant initialized ==> next == &list->nil)
 };
 struct List
 {

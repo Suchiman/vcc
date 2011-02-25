@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 struct A {
@@ -5,18 +6,18 @@ struct A {
   int y;
 };
 
-ispure bool f1(struct A*a)
-  reads(a)
-  returns(a->x < a->y);
+_(pure) bool f1(struct A*a)
+  _(reads a)
+  _(returns a->x < a->y);
 
 struct B {
   struct A *a;
-  invariant(keeps(a))
+  _(invariant \mine(a))
 };
 
-ispure bool f2(struct B*b)
-  reads(b)
-  returns(b->a->x < b->a->y);
+_(pure) bool f2(struct B*b)
+  _(reads b)
+  _(returns b->a->x < b->a->y);
 
 typedef unsigned __int64 uint64;
 struct CONC {
@@ -34,18 +35,17 @@ struct ABS {
     int a;
  int c;
  struct X64_Core core;
- invariant(keeps(&this->core))
+ _(invariant \mine(&\this->core))
 };
  
 #ifdef VERIFY
-ispure
+_(pure)
 bool AbsConcRel(struct ABS *abs, struct CONC *conc)
- reads(abs, conc)
- returns(abs->a == conc->a &&
+ _(reads abs, conc)
+ _(returns abs->a == conc->a &&
       abs->core.RIP == conc->RIP &&
-   forall(uint64 i; i < 16 ==> abs->core.R[i] == conc->GPR[i]) &&
-   forall(uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i])
-   );
+   (\forall uint64 i; i < 16 ==> abs->core.R[i] == conc->GPR[i]) &&
+   \forall uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i]);
 #endif
 `
 Verification of B#adm succeeded.

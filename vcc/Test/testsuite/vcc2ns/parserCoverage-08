@@ -1,8 +1,9 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   int a;
-  invariant(a > 0);
+  _(invariant a > 0)
 };
 `
 Verification of S#adm succeeded.

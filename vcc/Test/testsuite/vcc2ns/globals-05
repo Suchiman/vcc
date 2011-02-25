@@ -1,16 +1,16 @@
-
+`/newsyntax
 #include <vcc.h>
 
 volatile int i;
 
-void fooShouldFail(claimp(p))
-  always(p, closed(gemb(&i)))
+void fooShouldFail(_(ghost \claim p))
+  _(always p, (\gemb(&i))->\consistent)
 {
-  atomic(p, gemb(&i)) {
+  _(atomic p, \gemb(&i)) {
     i = 5;
   }
 }
 `
 Verification of fooShouldFail failed.
-testcase(9,24) : error VC8525: Assertion 'invariant of _vcc_gemb(&i) holds after atomic' did not verify.
+testcase(8,29) : error VC8525: Assertion 'invariant of \gemb(&i) holds after atomic' did not verify.
 `

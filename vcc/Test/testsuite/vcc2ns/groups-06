@@ -1,4 +1,4 @@
-
+`/newsyntax
 #include <vcc.h>
 
 struct A {
@@ -8,16 +8,16 @@ struct A {
 struct B {
   int y;
 
-  def_group(C)
-  in_group(C) int z;
-  in_group(C) struct A *a;
-  inv_group(C, a->x == z)
-  inv_group(C, keeps(a))
+  _(group C)
+  _(:C) int z;
+  _(:C) struct A *a;
+  _(invariant :C a->x == z)
+  _(invariant :C \mine(a))
 
-  def_group(D)
-  in_group(D) int zz;
-  inv_group(D, keeps((struct B::C*)this))
-  inv_group(D, zz == z)
+  _(group D)
+  _(:D) int zz;
+  _(invariant :D \mine((struct B::C*)\this))
+  _(invariant :D zz == z)
 };
 
 `

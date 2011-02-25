@@ -1,27 +1,28 @@
+`/newsyntax
 #include "vcc.h"
 
 
-struct vcc(volatile_owns) Actor {
+_(volatile_owns) struct Actor {
   bool dummy;
-  spec(
-  volatile claim_t c;
-  volatile claim_t arr[3];
-  claim_t map[mathint];
-  volatile claim_t vmap[mathint];
+  
+  _(ghost volatile \claim c;)
+  _(ghost volatile \claim arr[3];)
+  _(ghost \claim map[\integer];)
+  _(ghost volatile \claim vmap[\integer];)
 
-  bool OutP[claim_t];
-  )
-  invariant(forall(claim_t inc; OutP[inc]))
+  _(ghost bool OutP[\claim];)
+  
+  _(invariant \forall \claim inc; OutP[inc])
 };
 
 
 void ss(struct Actor *a)
-  maintains(wrapped(a))
+  _(maintains \wrapped(a))
 {
-    assert(a->OutP[a->c]);
-    assert(a->OutP[a->arr[1]]);
-    assert(a->OutP[a->map[1]]);
-    assert(a->OutP[a->vmap[1]]);
+    _(assert a->OutP[a->c])
+    _(assert a->OutP[a->arr[1]])
+    _(assert a->OutP[a->map[1]])
+    _(assert a->OutP[a->vmap[1]])
    
 }
 `

@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S { 
@@ -11,16 +12,16 @@ struct S {
 };
 
 void foo(struct S *s) 
-  requires(typed(s) && thread_local(s))
-  requires(extent_zero(s))
+  _(requires s->\valid && \thread_local(s))
+  _(requires \extent_zero(s))
 {
-  assert(s->a == 0);
-  assert(s->b == 0);
-  assert(s->c == 0);
-  assert(s->d == 0);
-  assert(s->e == 0);
-  assert(s->f == 0);
-  assert(s->p == (void *)0);
+  _(assert s->a == 0)
+  _(assert s->b == 0)
+  _(assert s->c == 0)
+  _(assert s->d == 0)
+  _(assert s->e == 0)
+  _(assert s->f == 0)
+  _(assert s->p == (void *)0)
 }
 
 void bar() {
@@ -32,7 +33,7 @@ void bar() {
   s.e = 0;
   s.f = 0;
   s.p = (void *)0;
-  assert(extent_zero(&s));
+  _(assert \extent_zero(&s))
 }
 
 `

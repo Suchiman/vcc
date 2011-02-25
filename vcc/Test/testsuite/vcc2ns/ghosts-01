@@ -1,6 +1,8 @@
+`/newsyntax
+#include <vcc.h>
 struct Acct {
-  __specification(volatile int baz;)
+  _(ghost volatile int baz;)
 };
 `
-testcase(1,1) : error VC9620: need at least one physical field in structure, got only spec fields
+testcase(2,1) : error VC9620: need at least one physical field in structure, got only spec fields
 `

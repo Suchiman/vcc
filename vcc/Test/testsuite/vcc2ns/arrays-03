@@ -1,10 +1,11 @@
+`/newsyntax
 #include "vcc.h"
 
 struct A {
   unsigned size;
   int *arr;
-  invariant(keeps(as_array(this->arr, this->size)))
-  invariant(this->size > 0 && this->arr[0] > 0)
+  _(invariant \mine((void[\this->size])(\this->arr)))
+  _(invariant \this->size > 0 && \this->arr[0] > 0)
 };
 
 void foo(struct A *a)

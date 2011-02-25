@@ -1,18 +1,19 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S {
   void *y;
-  invariant(y)
-  spec(obj_t x;)
-  invariant(x)
+  _(invariant y)
+  _(ghost \object x)
+  _(invariant x)
 };
 
 void foo() {
   struct S s;
-  spec(s.x = &s;)
+  _(ghost s.x = &s)
   s.y = &s;
-  wrap(&s);
-  unwrap(&s);
+  _(wrap &s)
+  _(unwrap &s)
 }
 `
 Verification of S#adm succeeded.

@@ -1,17 +1,18 @@
+`/newsyntax
 #include "vcc.h"
 
 void foo() {
     unsigned __int8 a[128];
-    assume(extent_zero(as_array(a,128)));
-    assert(forall(unsigned i; i < 128; a[i]==0));
+    _(assume \extent_zero((void[128])a))
+    _(assert \forall unsigned i; i < 128 ==> (a[i]==0))
 }
 
 void bar() {
     unsigned __int8 a[128];
-    assume(typed(as_array(a,128)));
-    assume(mutable(as_array(a,128)));
-    assume(forall(unsigned i; i < 128; a[i]==0));
-    assert(extent_zero(as_array(a,128)));
+    _(assume ((void[128])a)->\valid)
+    _(assume \mutable((void[128])a))
+    _(assume \forall unsigned i; i < 128 ==> (a[i]==0))
+    _(assert \extent_zero((void[128])a))
 }
 `
 Verification of foo succeeded.

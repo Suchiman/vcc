@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 struct Node {
     struct Node *next;
 
-    invariant( depends(owner(this), this) )
+    _(invariant \depends(\this->\owner, \this))
 };
 
 
@@ -12,18 +13,18 @@ struct Stack {
     volatile PNode hd;
 };
 
-bool push(struct Node *n, struct Stack *s claimp(c))
-    always (c, closed(s))
-    requires (mutable(n) && owns(n) == set_empty())
-    writes (n, n->next)
+bool push(struct Node *n, struct Stack *s _(ghost \claim c))
+    _(always c, s->\consistent)
+    _(requires \mutable(n) && n->\owns == {})
+    _(writes n, n->next)
 {
-	atomic(c) {
-            set_closed_owner(n, s);
+	_(atomic c) {
+            _(ghost  s->\owns += n);
 
 	}
 }
 `
 Verification of Node#adm succeeded.
 Verification of push failed.
-testcase(21,13) : error VC8532: Assertion 's is atomically updated in call to _vcc_set_closed_owner(n, s)' did not verify.
+testcase(21,36) : error VC8532: Assertion 's is atomically updated in call to s->\owns += n' did not verify.
 `

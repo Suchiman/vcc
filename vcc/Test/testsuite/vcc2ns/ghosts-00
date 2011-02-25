@@ -1,21 +1,22 @@
+`/newsyntax
 #include "vcc.h"
 
 struct A {
   int a;
-  spec( int b; )
-  invariant (this->a + this->b > 0)
+   _(ghost int b;) 
+  _(invariant \this->a + \this->b > 0)
 };
 
 void f2(struct A *a)
-  requires(wrapped(a) && a->a < 1000 )
-  writes(a)
+  _(requires \wrapped(a) && a->a < 1000)
+  _(writes a)
 {
-  assert(sizeof(struct A) == sizeof(int));
+  _(assert sizeof(struct A) == sizeof(int))
 
-  unwrap(a);
-    spec( a->b = a->b - 1;)
+  _(unwrap a)
+     _(ghost a->b = a->b - 1)
     a->a = a->a + 1;
-  wrap(a);
+  _(wrap a)
 }
 `
 Verification of A#adm succeeded.

@@ -1,14 +1,14 @@
+`/newsyntax
 #include "vcc.h"
 
-spec(
-ptrset foo()
-  ensures(set_eq(result, set_singleton((void *)0)))
+
+_(ghost \objset foo()
+  _(ensures \result == {(void *)0})
 {
-  return set_empty();
-}
-)
+  return {};
+})
 `
 Verification of foo failed.
-testcase(7,3) : error VC9501: Post condition '_vcc_set_eq(result,_vcc_set_singleton((void *)0))' did not verify.
-testcase(5,13) : error VC9599: (related information) Location of post condition.
+testcase(7,3) : error VC9501: Post condition '\result == {(void *)0}' did not verify.
+testcase(5,27) : error VC9599: (related information) Location of post condition.
 `

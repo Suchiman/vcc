@@ -1,9 +1,9 @@
-
+`/newsyntax
 #include <vcc.h>
 
-typedef struct vcc(volatile_owns) key{
+typedef _(volatile_owns) struct key{
   int data;
-  invariant(unchanged(owns(this)) || (data == 0))
+  _(invariant \unchanged(\this->\owns) || (data == 0))
 } key;
 `
 Verification of key#adm succeeded.

@@ -1,3 +1,4 @@
+`/newsyntax
 #include <stdlib.h>
 #include <vcc.h>
 
@@ -6,10 +7,10 @@ typedef struct A {
 } A;
 
 A *foo( A*p)
-  writes(extent(p))
-  requires(is_malloc_root(p))
-  ensures(result == NULL || is_fresh(result))
-  ensures(result == NULL || (typed(result) && mutable(result)))
+  _(writes \extent(p))
+  _(requires \malloc_root(p))
+  _(ensures \result == NULL || \fresh(\result))
+  _(ensures \result == NULL || (\result->\valid && \mutable(\result)))
 {
   free(p);
   return malloc(sizeof(A));
@@ -29,13 +30,13 @@ void useA()
     t1 = foo(p1);
     if (t1 != NULL) {
       donothing();
-      assert(p2 != t1);
+      _(assert p2 != t1)
       t2 = foo(p2);
       if (t2 != NULL) {
         donothing();
-        assert(t1 != t2);
-        assert(t1 != &loc);
-        assert(t2 != &loc);
+        _(assert t1 != t2)
+        _(assert t1 != &loc)
+        _(assert t2 != &loc)
       }
     }
   }

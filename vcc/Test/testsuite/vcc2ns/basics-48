@@ -1,13 +1,14 @@
+`/newsyntax
 #include <vcc2test.h>
 
-vcc(claimable) struct T
+_(claimable) struct T
 {
     struct S c;
 };
 
 void foo() {
   struct T *t = (struct T *)malloc(sizeof(struct T));
-  assert(t == NULL || is_claimable(t));
+  _(assert t == NULL || \claimable(t))
 }
 `
 Verification of foo succeeded.

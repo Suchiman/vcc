@@ -1,17 +1,18 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S {
- def_group(G)
- in_group(G) int a;
+ _(group G)
+ _(:G) int a;
              int b;
 };
 
 
 struct S2 {
- def_group(G)
- in_group(G) int a;
+ _(group G)
+ _(:G) int a;
              int b;
- invariant(keeps((((struct S *)this)::G1)))
+ _(invariant \mine((((struct S *)\this)::G1)))
 };
 `
 testcase(14,35) : error VC0000: 'S' does not contain a definition for 'G1'.

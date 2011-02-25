@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -7,12 +8,12 @@ struct S {
 };
 
 void foo() {
-  spec(struct S a[int];)
+  _(ghost struct S a[int])
   struct S s = {1,2,3};
-  spec(a[1] = s;)
-  assert(a[1].a == 1);
-  assert(a[1].b == 2);
-  assert(a[1].c == 3);
+  _(ghost a[1] = s)
+  _(assert a[1].a == 1)
+  _(assert a[1].b == 2)
+  _(assert a[1].c == 3)
 }
 `
 Verification of foo succeeded.

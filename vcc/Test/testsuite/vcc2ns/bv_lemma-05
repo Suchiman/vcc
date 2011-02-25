@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int16 UINT16;
@@ -13,13 +14,13 @@ void foo(UINT16 t)
 	b = (t & 0x00ff);
 	res = a | b;
 
-	assert(a == (t & 0x0f00));
-	assert(b == (t & 0x00ff));
-	assert(res == (a | b));
+	_(assert a == (t & 0x0f00))
+	_(assert b == (t & 0x00ff))
+	_(assert res == (a | b))
 	
-	bv_lemma(forall(UINT32 a,b; ((a & b) & b) == (a & b)));
-	bv_lemma(forall(UINT16 a,b; (a|b) == (int)((UINT32)a | (UINT32)b)));
-	assert(res == ((a & 0x0f00) | (b & 0x00ff)));
+	_(assert {:bv} \forall UINT32 a,b; ((a & b) & b) == (a & b))
+	_(assert {:bv} \forall UINT16 a,b; (a|b) == (int)((UINT32)a | (UINT32)b))
+	_(assert res == ((a & 0x0f00) | (b & 0x00ff)))
 }
 `
 Verification of foo succeeded.

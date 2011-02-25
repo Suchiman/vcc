@@ -1,16 +1,17 @@
+`/newsyntax
 #include <vcc.h>
 
-bool ispure zero1(int a)
-returns (a == 0 ? (0 == 0) : false);
-bool ispure zero2(int a)
-returns (a == 0 ? (0 == 0) : (1 < 0));
-bool ispure zero3(int a)
-returns (a == 0 ? (0 != 1) : (0 == 0) && (0 == 1));
+bool _(pure) zero1(int a)
+_(returns a == 0 ? (0 == 0) : \false);
+bool _(pure) zero2(int a)
+_(returns a == 0 ? (0 == 0) : (1 < 0));
+bool _(pure) zero3(int a)
+_(returns a == 0 ? (0 != 1) : (0 == 0) && (0 == 1));
 
 void foo() {
-  assert(zero1(0));
-  assert(zero2(0));
-  assert(zero3(0));
+  _(assert zero1(0))
+  _(assert zero2(0))
+  _(assert zero3(0))
 }
 `
 Verification of foo succeeded.

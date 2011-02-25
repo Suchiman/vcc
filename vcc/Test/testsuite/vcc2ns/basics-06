@@ -1,10 +1,11 @@
+`/newsyntax
 #include <vcc.h>
 
-struct vcc(volatile_owns) Foo {
+_(volatile_owns) struct Foo {
   int x;
 };
 
-struct vcc(dynamic_owns) FooNV {
+_(dynamic_owns) struct FooNV {
   int x;
 };
 
@@ -14,19 +15,19 @@ struct Bar {
   struct Foo foo;
   struct Baz baz;
 
-  invariant(keeps(&foo))
-  invariant(set_in(&baz, owns(&foo)))
+  _(invariant \mine(&foo))
+  _(invariant &baz \in (&foo)->\owns)
 };
 
 struct BarOK {
   struct FooNV foo;
   struct Baz baz;
 
-  invariant(keeps(&foo))
-  invariant(set_in(&baz, owns(&foo)))
+  _(invariant \mine(&foo))
+  _(invariant &baz \in (&foo)->\owns)
 };
 `
 Verification of Bar#adm failed.
-testcase(18,15) : error VC8012: invariant(_vcc_set_in(&baz,_vcc_owns(&foo))) of Bar is not admissible.
+testcase(18,29) : error VC8012: invariant(&baz \in (&foo)->\owns) of Bar is not admissible.
 Verification of BarOK#adm succeeded.
 `

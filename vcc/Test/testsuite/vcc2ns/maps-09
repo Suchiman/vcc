@@ -1,9 +1,10 @@
+`/newsyntax
 #include<vcc.h>
 
-spec(int G[void *];)
+_(ghost int G[void *])
 
 struct S {
- spec(int M[void *];)
+ _(ghost int M[void *])
  int a;
 };
 

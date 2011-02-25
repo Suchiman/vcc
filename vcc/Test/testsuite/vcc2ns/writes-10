@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned int UINT32;
@@ -9,7 +10,7 @@ typedef union pte_t {
         unsigned v:1;    /* bit [11] */
         unsigned ppx:20;    /* bits [31:12] */
     };            /* PTE fields */
-    backing_member 
+    _(backing_member) 
         UINT32 uint32;    /* complete word */
 } pte_t;
 
@@ -21,7 +22,7 @@ void test1(pte_t *arr)
     n = 0;
     
     while(n < 100)
-      invariant(mutable(&pte.uint32))
+      _(invariant \mutable(&pte.uint32))
 //      writes(&pte.uint32)
     {
         pte.ppx = n;
@@ -30,17 +31,17 @@ void test1(pte_t *arr)
 }
 
 void test2(pte_t *arr)
-requires(is_mutable_array(arr, 100))
-writes(array_range(arr, 100))
+_(requires \mutable_array(arr, 100))
+_(writes \array_range(arr, 100))
 {
     pte_t pte;
     UINT32 n;
     n = 0;
     
     while(n < 100)
-    invariant(is_mutable_array(arr, 100))
-    writes(array_range(arr, 100))
-      writes(&pte.uint32)
+    _(invariant \mutable_array(arr, 100))
+    _(writes \array_range(arr, 100))
+      _(writes &pte.uint32)
     {
         pte.ppx = n;
         n++;
@@ -48,14 +49,14 @@ writes(array_range(arr, 100))
 }
 
 void test3(pte_t *arr)
-requires(is_mutable_array(arr, 100))
-writes(array_range(arr, 100))
+_(requires \mutable_array(arr, 100))
+_(writes \array_range(arr, 100))
 {
     UINT32 n;
     n = 0;
     while(n < 100)
-    invariant(is_mutable_array(arr, 100))
-    writes(array_range(arr, 100))
+    _(invariant \mutable_array(arr, 100))
+    _(writes \array_range(arr, 100))
     {
         arr[n].uint32 = n;
         n++;
@@ -64,14 +65,14 @@ writes(array_range(arr, 100))
 
 
 void test4(UINT32 *arr)
-requires(is_mutable_array(arr, 100))
-writes(array_range(arr, 100))
+_(requires \mutable_array(arr, 100))
+_(writes \array_range(arr, 100))
 {
     UINT32 n;
     n = 0;
     while(n < 100)
-    invariant(is_mutable_array(arr, 100))
-    writes(array_range(arr, 100))
+    _(invariant \mutable_array(arr, 100))
+    _(writes \array_range(arr, 100))
     {
         arr[n] = n;
         n++;

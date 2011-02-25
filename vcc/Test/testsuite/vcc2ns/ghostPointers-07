@@ -1,23 +1,24 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   int a;
-  spec(int b;)
+  _(ghost int b)
 };
 
 void foo() {
-  spec(int i;)
-  spec(int ^p;)
-  spec(p = &i;)
+  _(ghost int i)
+  _(ghost int ^p)
+  _(ghost p = &i)
 }
 
 void bar(struct S *s) {
-  spec(int ^p;)
-  spec(p = &s->b;)
+  _(ghost int ^p)
+  _(ghost p = &s->b)
 }
 
-spec(void baz(struct S ^s) {
-  spec(int ^p;)
+_(ghost void baz(struct S ^s) {
+  _(ghost int ^p)
   p = &s->a;
 })
 `

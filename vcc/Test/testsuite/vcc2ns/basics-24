@@ -1,9 +1,10 @@
+`/newsyntax
 #include "vcc.h"
 
-struct vcc(dynamic_owns) S {
+_(dynamic_owns) struct S {
   int a[5];
   bool x;
-  invariant(x ==> keeps(a)) 
+  _(invariant x ==> \mine(a)) 
 };
 
 void foo(struct S s) { }

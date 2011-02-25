@@ -1,18 +1,19 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
   int x;
 
   struct {
-    def_group(C)
-    in_group(C) int z;
+    _(group C)
+    _(:C) int z;
 
-    def_group(D)
-    in_group(D) int zz;
+    _(group D)
+    _(:D) int zz;
   } y;
   
-  invariant(keeps(&this->y::C))
-  invariant(keeps(&this->y::D))
+  _(invariant \mine(&\this->y::C))
+  _(invariant \mine(&\this->y::D))
 };
 
 `

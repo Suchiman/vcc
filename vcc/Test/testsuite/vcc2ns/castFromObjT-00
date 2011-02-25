@@ -1,16 +1,16 @@
-
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   int a;
 };
 
-spec(void foo(obj_t obj) 
-  requires(typed_phys(obj))
+_(ghost void foo(\object obj) 
+  _(requires (obj->\valid && !\ghost(obj)))
 {
   struct S *p = (struct S *)obj;
-};
-)
+};)
+
 
 `
 Verification of foo succeeded.

@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int8 uint8_t;
@@ -8,24 +9,24 @@ zero(
     void *a,
     unsigned n
     )
-    requires(n==sizeof(T))
+    _(requires n==sizeof(T))
     // Currently translates to "requires P#n == 0;" to Boogie, function
     // call_zero verifies when this is changed to "requires P#n ==
     // $sizeof(^^TV#T);"
-    writes(array_range((uint8_t *)a, n))
-    ensures(*((uint8_t*)a)==0)
-    ensures(forall(unsigned i; i < n ==> ((uint8_t *)a)[i] == 0))
+    _(writes \array_range((uint8_t *)a, n))
+    _(ensures *((uint8_t*)a)==0)
+    _(ensures \forall unsigned i; i < n ==> ((uint8_t *)a)[i] == 0)
     ;
 
 struct S { int a, b, c; };
 
 void call_zero(struct S *s)
-    requires(is_object_root(s))
-    writes(extent(s))
+    _(requires \object_root(s))
+    _(writes \extent(s))
 {
-    to_bytes(s);
+    _(to_bytes s)
     zero<struct S>((void*) s, sizeof(*s));
-    from_bytes(s, false);
+    _(from_bytes s, \false)
 }
 `
 Verification of call_zero succeeded.

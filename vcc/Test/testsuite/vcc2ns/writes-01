@@ -1,8 +1,9 @@
-`/omitrw
+`/omitrw /newsyntax
+
 #include <vcc.h>
 
 void foo0(int *p)
-  requires(mutable(p))
+  _(requires \mutable(p))
 {
   *p = 7;
 }
@@ -12,14 +13,14 @@ struct A {
 };
 
 void foo1(struct A *a)
-  requires(mutable(a))
+  _(requires \mutable(a))
 {
   a->x = 7;
 }
 
 void foo2(struct A *a)
-  writes(a)
-  requires(mutable(a))
+  _(writes a)
+  _(requires \mutable(a))
 {
   a->x = 7;
 }

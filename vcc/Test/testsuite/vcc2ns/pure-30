@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned int     uint;
@@ -7,7 +8,7 @@ typedef struct Core {
 } Core;
 
  uint fun_1(Core core)
-    returns (core.dummy ? 8u : 4u)
+    _(returns core.dummy ? 8u : 4u)
 {
     return core.dummy ? 8u : 4u;
 }

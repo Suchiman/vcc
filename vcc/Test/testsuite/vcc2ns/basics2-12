@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 #define BUF_LEN	100
@@ -5,18 +6,18 @@
 typedef struct MyCtx_s
 {
   int buf[BUF_LEN];
-	spec(size_t bound;)
-	invariant(bound == BUF_LEN)
+	_(ghost size_t bound)
+	_(invariant bound == BUF_LEN)
 } MyCtx_t;
 
 void set(MyCtx_t *pCtx, size_t idx, int *pX )
-  maintains(wrapped(pCtx))
-  requires(thread_local(pX) && is_object_root(pX))
-  requires(idx < pCtx->bound)
-  writes(pCtx)
+  _(maintains \wrapped(pCtx))
+  _(requires \thread_local(pX) && \object_root(pX))
+  _(requires idx < pCtx->bound)
+  _(writes pCtx)
 {
   int i = *pX;
-  expose(pCtx) {
+  _(unwrapping pCtx) {
     pCtx->buf[idx] = *pX;
   }
 }

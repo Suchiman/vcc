@@ -1,18 +1,19 @@
+`/newsyntax
 #include <vcc.h>
 #include <stdlib.h>
 
-struct vcc(claimable) S {
+_(claimable) struct S {
   volatile int c;
 };
 
 void foo(struct S **s) 
-  writes(s)
+  _(writes s)
 {
   struct S *a = (struct S *)malloc(sizeof(struct S) * 10);
   struct S *b = &a[0];
   if (a != NULL) {
-    wrap(b);
-    free((void *)as_array(a, 10));
+    _(wrap b)
+    free((void *)(void[10])a);
   }
 }
 `

@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 struct A {
@@ -5,8 +6,8 @@ int x;
 };
 
 struct A *get_a()
-  ensures(mutable(result))
-  ensures(is_fresh(result));
+  _(ensures \mutable(\result))
+  _(ensures \fresh(\result));
 
 void foo()
 {
@@ -26,7 +27,7 @@ void foo2()
   struct A *a;
 
   while(x>0) 
-    writes(set_empty())
+    _(writes {})
   {
     x--;
     a = get_a();

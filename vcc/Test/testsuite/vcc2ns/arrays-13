@@ -1,17 +1,17 @@
-
+`/newsyntax
 #include <vcc.h>
 
 struct S {
-  vcc(as_array) int a[10];
-  invariant(keeps(as_array(a,10)))
+  _(as_array) int a[10];
+  _(invariant \mine((void[10])a))
 };
 
 void foo(struct S *s)
-  writes(extent(s))
-  ensures(wrapped(s))
+  _(writes \extent(s))
+  _(ensures \wrapped(s))
 {
-  wrap(as_array(s->a,10));
-  wrap(s);
+  _(wrap (void[10])(s->a))
+  _(wrap s)
 }
 `
 Verification of S#adm succeeded.

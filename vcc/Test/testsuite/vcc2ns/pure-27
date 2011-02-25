@@ -1,13 +1,14 @@
+`/newsyntax
 #include <vcc.h>
 
-ispure
+_(pure)
 int *foo(int *q)
-  returns(q + 10);
+  _(returns q + 10);
 
 void qux()
 {
 int x;
-assert(foo(&x) != &x);
+_(assert foo(&x) != &x)
 }
 `
 Verification of qux succeeded.

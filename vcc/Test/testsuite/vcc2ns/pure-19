@@ -1,6 +1,7 @@
+`/newsyntax
 #include "vcc.h"
-ispure void f(int *a);
-ispure void g(int *a) reads(a);
+_(pure) void f(int *a);
+_(pure) void g(int *a) _(reads a);
 
 void foo() {
   int i = 10;

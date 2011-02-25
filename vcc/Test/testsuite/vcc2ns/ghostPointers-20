@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct T {
@@ -7,10 +8,10 @@ typedef struct T {
 void foo(int *v);
 
 void test() {
-  spec(T t;)
-  spec(foo(& t.b[0]);)
+  _(ghost T t)
+  _(ghost foo(& t.b[0]))
 } 
 `
-testcase(11,19) : error VC0000: The best overloaded method match for '__Globals__.foo(int*)' has some invalid arguments.
-testcase(11,23) : error VC0000: Argument '1': cannot convert from 'int^' to 'int*'.
+testcase(11,25) : error VC0000: The best overloaded method match for '__Globals__.foo(int*)' has some invalid arguments.
+testcase(11,29) : error VC0000: Argument '1': cannot convert from 'int^' to 'int*'.
 `

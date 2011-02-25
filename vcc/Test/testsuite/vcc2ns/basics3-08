@@ -1,11 +1,12 @@
+`/newsyntax
 #include "vcc.h"
 
-typedef struct vcc(claimable) X {
+typedef _(claimable) struct X {
   int dummy;
 
-  def_group(R)
-  in_group(R) claimp(c;)
-  inv_group(R,c)
+  _(group R)
+  _(ghost _(:R) \claim c;)
+  _(invariant :R c)
 };
 `
 Verification of X##R#adm succeeded.
