@@ -21,6 +21,8 @@ module Rules =
     
   let space = Tok.Whitespace(fakePos, " ")
 
+  let id n = Tok.Id (fakePos, n)
+  
   let rec eatWs = function
     | Tok.Whitespace (_, _) :: rest -> eatWs rest
     | x -> x
@@ -333,7 +335,7 @@ module Rules =
     addKwRepl "block" ""                          // has become superfluous in the new syntax
     
     addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
-    addRule (parenRule false "sk_hack" (fun toks -> [Tok.Id (fakePos, ":hint"); space; paren "" toks]))
+    addRule (parenRule false "sk_hack" (fun toks -> [id ":hint"; space; paren "" toks]))
     addRule (quantRule "forall" "==>")
     addRule (quantRule "exists" "&&")
     addRule (quantRule "lambda" "###")
@@ -369,10 +371,11 @@ module Rules =
     
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
+    addRule (parenRuleN "reads_check" 1 (fun n -> id "vcc_attr (\"is_reads_check\", \"" :: n.Head @ [id "\")"]))
   
     let typed_phys_or_spec isSpec toks = 
       let optNot = if isSpec then [] else [Tok.Op(fakePos, "!")]
-      [paren "(" ([parenOpt toks; Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\valid"); space; Tok.Op(fakePos, "&&"); space] @ optNot @ (fnApp "\\ghost" toks))]
+      [paren "(" ([parenOpt toks; Tok.Op(fakePos, "->"); id "\\valid"; space; Tok.Op(fakePos, "&&"); space] @ optNot @ (fnApp "\\ghost" toks))]
 
     addRule (parenRule false "typed_phys" (typed_phys_or_spec false))
     addRule (parenRule false "typed_spec" (typed_phys_or_spec true))

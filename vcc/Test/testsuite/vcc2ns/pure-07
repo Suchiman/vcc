@@ -1,36 +1,37 @@
+`/newsyntax
 #include <vcc.h>
 
-ispure int f1(int *x)
-  returns(*x)
-  reads(x);
+_(pure) int f1(int *x)
+  _(returns *x)
+  _(reads x);
 
-ispure int f2(int *x)
-  returns(*x)
-  reads(x);
+_(pure) int f2(int *x)
+  _(returns *x)
+  _(reads x);
 
-ispure int f3(int *x)
-  returns(*x)
-  reads(x);
+_(pure) int f3(int *x)
+  _(returns *x)
+  _(reads x);
 
 #ifdef VERIFY
-reads_check(f1)
+vcc_attr ("is_reads_check", "f1")
 void reads_f1()
 {
-  reads_havoc();
+  _(reads_havoc)
 }
 
 
-reads_check(f2)
+vcc_attr ("is_reads_check", "f2")
 void reads_f2(int *x)
 {
-  reads_havoc();
+  _(reads_havoc)
 }
 
 
-reads_check(f3)
+vcc_attr ("is_reads_check", "f3")
 void reads_f3(int *y)
 {
-  reads_havoc();
+  _(reads_havoc)
 }
 
 

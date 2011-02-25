@@ -1,62 +1,63 @@
+`/newsyntax
 #include <vcc.h>
 
-ispure int f1(int *x)
-  reads(x);
+_(pure) int f1(int *x)
+  _(reads x);
 
-ispure int f2(int *x)
-  reads(x);
+_(pure) int f2(int *x)
+  _(reads x);
 
-ispure int f3(int *x)
-  reads(x);
+_(pure) int f3(int *x)
+  _(reads x);
 
-ispure int f4(int *x)
-  reads(x);
+_(pure) int f4(int *x)
+  _(reads x);
 
-ispure int f5(int *x)
-  reads(x);
+_(pure) int f5(int *x)
+  _(reads x);
 
-ispure int f6(int *x)
-  reads(x);
+_(pure) int f6(int *x)
+  _(reads x);
 
 #ifdef VERIFY
-reads_check(f1)
-reads_check(f2)
+vcc_attr ("is_reads_check", "f1")
+vcc_attr ("is_reads_check", "f2")
 void reads_f12()
 {
-  reads_havoc();
+  _(reads_havoc)
 }
 
 
-reads_check(f3)
+vcc_attr ("is_reads_check", "f3")
 void reads_f3_1()
 {
-  reads_havoc();
+  _(reads_havoc)
 }
 
-reads_check(f3)
+vcc_attr ("is_reads_check", "f3")
 void reads_f3_2()
 {
-  reads_havoc();
+  _(reads_havoc)
 }
 
-reads_check(f4)
+vcc_attr ("is_reads_check", "f4")
 void reads_f4(short *y)
 {
-  reads_havoc();
+  _(reads_havoc)
 }
 
-reads_check(f5)
+vcc_attr ("is_reads_check", "f5")
 void reads_f5(int *x, short *y)
 {
-  reads_havoc();
+  _(reads_havoc)
 }
 
 
 
-reads_check(szczebrzyszczykiewicz)
+vcc_attr ("is_reads_check", "szczebrzyszczykiewicz")
 void reads_szczebrzyszczykiewicz()
 {
-  reads_havoc();
+  _(reads_havoc)
 }
 #endif
 `
@@ -65,7 +66,7 @@ testcase(22,1) : error VC9639: function 'reads_f12' pretends to be several read 
 testcase(36,1) : warning VC9105: reads check for 'f3' specified multiple times
 testcase(30,1) : warning VC9105: (this is the first one)
 testcase(42,1) : error VC9642: the reads check and function checked differ on type of parameter 'y'
-testcase(12,1)-(12,98) : (Location of symbol related to previous error.)
+testcase(12,17)-(12,37) : (Location of symbol related to previous error.)
 testcase(48,1) : error VC9641: the reads check and the function checked have different number of parameters
-testcase(15,1)-(15,98) : (Location of symbol related to previous error.)
+testcase(15,17)-(15,37) : (Location of symbol related to previous error.)
 `
