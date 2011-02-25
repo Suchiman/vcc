@@ -892,6 +892,7 @@ namespace Microsoft.Research.Vcc
                                     "\\object_root",         "_vcc_is_object_root"
                                     "\\deep_eq",             "_vcc_deep_struct_eq"
                                     "\\shallow_eq",          "_vcc_shallow_struct_eq"
+                                    "\\non_primitive_ptr",   "_vcc_is_non_primitive_ptr"
                                   ]
 
       let newToOldType = Map.ofList [ "\\objset", "ptrset"
