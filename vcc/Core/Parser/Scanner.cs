@@ -1965,7 +1965,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// </summary>
     SetIntersection,
     /// <summary>
-    /// \difference
+    /// \diff
     /// </summary>
     SetDifference,
     /// <summary>
