@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int64 uint64_t;
@@ -8,15 +9,15 @@ typedef unsigned (*G)(unsigned);
 int foo(int a);
 
 int baz(F f) 
-  requires(typed(f))
+  _(requires f->\valid)
 {
   f(4);
 }
 
 int bar() {
   F x = foo;
-  G y = unchecked((G)x);
-  baz(unchecked((F)y));
+  G y = _(unchecked)((G)x);
+  baz(_(unchecked)((F)y));
 }
 `
 Verification of baz succeeded.

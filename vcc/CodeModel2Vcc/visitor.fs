@@ -532,7 +532,13 @@ namespace Microsoft.Research.Vcc
             let instance = this.DoExpression instance
 
             match typestateFieldsMap.TryFind def.Name.Value with
-              | Some v1Fn -> exprRes <- C.Expr.Macro({ec with Type = this.DoType def.Type}, v1Fn, [instance])           
+              | Some v1Fn ->
+                // We seem to generate _vcc_typed(*f) when f is a function
+                let instance = 
+                  match instance with
+                    | C.Deref (_, inner) when instance.Type = inner.Type -> inner
+                    | _ -> instance
+                exprRes <- C.Expr.Macro({ec with Type = this.DoType def.Type}, v1Fn, [instance])           
               | None ->
 
                 if not (fieldsMap.ContainsKey def) then
