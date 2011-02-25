@@ -138,6 +138,17 @@
 /preprocessor:&lt;pp option list&gt; Options to pass on to the C preprocessor (Short form: /p)
 /pause                         Wait for a key press before terminating
 /pointersize:&lt;32|64&gt;           Size of the target platform's pointer type in bits (32,64), default is 64 (Short form: /ps)
+/pipe:&lt;opt1&gt;,...               Alter compiler pipeline. Can use . or + instead of the space in option names.
+                                     'active' lists stages
+                                     'dump after &lt;stage&gt;' dumps source after the stage
+                                     'dump after ...', ditto
+                                     'dump-all', dump after every stage (lots of output!)
+                                     'show-types', show expression types when dumping
+                                     'time', dump time takes by each stage
+                                     'disable &lt;stage&gt;' turns off a stage
+                                     'move &lt;stage&gt; before &lt;stage&gt;' moves stage in the pipeline
+                                     'move ... after ...', ditto
+                                     'isabelle &lt;theory-name&gt; &lt;filename-prefix&gt;', dump Isabelle theory
 /smoke                         Run smoke tests, which is equivalent to /b:/smoke (Short form: /sm)
 /stats                         Display time statistics (Short form: /st)
 /suite &lt;file or directory&gt;     Treat the given file or directory as a collection of test cases with expected output and report any differences (Short form: /s)
