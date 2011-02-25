@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 #ifdef VERIFY 
@@ -6,20 +7,20 @@ typedef int MAP[int];
 
 struct S {
   int i;
-  spec(MAP m;)
+  _(ghost MAP m)
 };
 
-spec(ispure MAP MyLambda(MAP oldMap, int j)
-  ensures(result == lambda(int n; true; n == j ? 0 : oldMap[n]));
-)
+_(ghost _(pure) MAP MyLambda(MAP oldMap, int j)
+  _(ensures \result == \lambda int n; (n == j ? 0 : oldMap[n]));)
+
 
 void foo(struct S *s, int j)
-  writes(s)
-  maintains(wrapped(s))
-  ensures(forall(int i; s->m[i] == MyLambda(old(s->m), j)[i]))
+  _(writes s)
+  _(maintains \wrapped(s))
+  _(ensures \forall int i; s->m[i] == MyLambda(\old(s->m), j)[i])
 {
-  expose(s) {
-    spec(s->m[j] = 0;)
+  _(unwrapping s) {
+    _(ghost s->m[j] = 0)
   }
 }
 `

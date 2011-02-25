@@ -1,3 +1,4 @@
+`/newsyntax
 #define PVOID void*
 #define NULL ((void*)0)
 
@@ -8,21 +9,21 @@ typedef struct TH *PTH;
 typedef struct GLOBAL_STATE 
 {
 	int dummy;
-	spec(volatile PVOID ThreadState[PTH];)
+	_(ghost volatile PVOID ThreadState[PTH])
 	
 } GLOBAL_STATE, *PGLOBAL_STATE;
 
 GLOBAL_STATE SchGlobalState;
 
 
- void MoveFromEvent(PTH Thread claimp(lh_nchange))
-   always(lh_nchange, closed(&SchGlobalState))
+ void MoveFromEvent(PTH Thread _(ghost \claim lh_nchange))
+   _(always lh_nchange, (&SchGlobalState)->\consistent)
  {
  
-	atomic(lh_nchange, &SchGlobalState)
+	_(atomic lh_nchange, &SchGlobalState)
 	{
-		begin_update();
-		spec(SchGlobalState.ThreadState = lambda(PTH e; true; NULL);)
+		_(begin_update)
+		_(ghost SchGlobalState.ThreadState = (\lambda PTH e; (NULL)))
 	}
  }
 `

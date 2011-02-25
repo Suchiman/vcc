@@ -1,45 +1,46 @@
+`/newsyntax
 #include <vcc.h>
 
-struct vcc(record) S {
+_(record) struct S {
   int a;
   int b;
 };
 
 
-struct vcc(record) T {
+_(record) struct T {
  struct S s;
  int c;
 };
 
-spec(ispure struct S foo() 
-  ensures(result == (struct S) { .a = 10, .b = 20 } && result.a == 20);
-)
+_(ghost _(pure) struct S foo() 
+  _(ensures \result == (struct S) { .a = 10, .b = 20 } && \result.a == 20);)
 
-spec(ispure struct T foo2(struct S s) 
-  ensures(result == (struct T) { .s = s, .c = 20 } && result.s.a == 20);
-)
 
-spec(ispure struct T foo3(struct S s) 
-  ensures(result == (struct T) { .s = s, .c = 20 } && result.s == (struct S) { .a = 10, .b = 20 });
-)
+_(ghost _(pure) struct T foo2(struct S s) 
+  _(ensures \result == (struct T) { .s = s, .c = 20 } && \result.s.a == 20);)
 
-spec(ispure struct T foo4(struct S s) 
-  ensures(result.s == s && result.s.a == 20);
-)
+
+_(ghost _(pure) struct T foo3(struct S s) 
+  _(ensures \result == (struct T) { .s = s, .c = 20 } && \result.s == (struct S) { .a = 10, .b = 20 });)
+
+
+_(ghost _(pure) struct T foo4(struct S s) 
+  _(ensures \result.s == s && \result.s.a == 20);)
+
 
 void baz()
 {
- spec( struct S s; )
- spec( struct T t; )
+  _(ghost struct S s;) 
+  _(ghost struct T t;) 
 
- spec( s = foo(); t = foo2(s); t = foo3(s);  t = foo4(s); )
- assert(false);
+  _(ghost s = foo();) _(ghost t = foo2(s);) _(ghost t = foo3(s);)  _(ghost t = foo4(s);) 
+ _(assert \false)
 
 }
 `
-testcase(15,58) : warning VC9311: [possible unsoundness]: value of 'result.a' was already defined in this pure function contract (as 'result')
-testcase(19,57) : warning VC9311: [possible unsoundness]: value of 'result.s.a' was already defined in this pure function contract (as 'result')
-testcase(23,57) : warning VC9311: [possible unsoundness]: value of 'result.s' was already defined in this pure function contract (as 'result')
-testcase(27,30) : warning VC9311: [possible unsoundness]: value of 'result.s.a' was already defined in this pure function contract (as 'result.s')
+testcase(15,73) : warning VC9311: [possible unsoundness]: value of '\result.a' was already defined in this pure function contract (as '\result')
+testcase(19,72) : warning VC9311: [possible unsoundness]: value of '\result.s.a' was already defined in this pure function contract (as '\result')
+testcase(23,72) : warning VC9311: [possible unsoundness]: value of '\result.s' was already defined in this pure function contract (as '\result')
+testcase(27,45) : warning VC9311: [possible unsoundness]: value of '\result.s.a' was already defined in this pure function contract (as '\result.s')
 Verification of baz succeeded.
 `

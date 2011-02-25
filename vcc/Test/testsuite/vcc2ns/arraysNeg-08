@@ -1,17 +1,18 @@
+`/newsyntax
 #include "vcc.h"
 
 void x(unsigned *X, unsigned z, unsigned j, unsigned k)
-    ensures(set_disjoint(array_range(X, z - k + 1), array_range(X + j, k - j + 1)))
+    _(ensures \disjoint(\array_range(X, z - k + 1), \array_range(X + j, k - j + 1)))
 { }
 
 unsigned y() {
     unsigned Y[4712];
     x(Y, 0, 0, 0);
-    assert(0);
+    _(assert 0)
 }
 `
 Verification of x failed.
-testcase(5,3) : error VC9501: Post condition '_vcc_set_disjoint(_vcc_array_range(X, z - k + 1),_vcc_array_range(X + j, k - j + 1))' did not verify.
-testcase(4,15) : error VC9599: (related information) Location of post condition.
+testcase(5,3) : error VC9501: Post condition '\disjoint(\array_range(X, z - k + 1), \array_range(X + j, k - j + 1))' did not verify.
+testcase(4,29) : error VC9599: (related information) Location of post condition.
 Verification of y succeeded.
 `

@@ -1,11 +1,12 @@
+`/newsyntax
 #include <vcc2test.h>
 
 struct foo {
-    vcc(as_array) unsigned int arr[20];
+    _(as_array) unsigned int arr[20];
     int y;
 
-    invariant(keeps(as_array(arr, 20)))
-    invariant(y >= 0 ==> forall(unsigned int x; x < 20; arr[x] == x))
+    _(invariant \mine((void[20])arr))
+    _(invariant y >= 0 ==> \forall unsigned int x; x < 20 ==> (arr[x] == x))
 };
 	
 void init()
@@ -14,26 +15,26 @@ void init()
   pf = (struct foo *)malloc(sizeof(struct foo));
   if (pf != NULL) {
     pf->y = -1;
-    wrap(as_array(pf->arr, 20));
-    wrap(pf);
+    _(wrap (void[20])(pf->arr))
+    _(wrap pf)
   }
 }
 
 void i2(struct foo *f)
-writes(extent(f))
+_(writes \extent(f))
 {
   f->y = -1;
-  wrap(as_array(f->arr, 20));
-  wrap(f);
+  _(wrap (void[20])(f->arr))
+  _(wrap f)
 }
 struct fail1 {
-  vcc(as_array) unsigned int arr[10];
-  invariant(arr[0] == 7) // you don't own it
+  _(as_array) unsigned int arr[10];
+  _(invariant arr[0] == 7) // you don't own it
 };
 `
 Verification of foo#adm succeeded.
 Verification of fail1#adm failed.
-testcase(31,15) : error VC8012: invariant(arr[0] == 7) of fail1 is not admissible.
+testcase(31,29) : error VC8012: invariant(arr[0] == 7) of fail1 is not admissible.
 Verification of init succeeded.
 Verification of i2 succeeded.
 `

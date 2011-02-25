@@ -1,12 +1,13 @@
+`/newsyntax
 #include "vcc.h"
 
-void foo(int a spec(out int n))
-  ensures(n == a);
+void foo(int a _(out int n))
+  _(ensures n == a);
 
 void bar() {
-    spec(int n[unsigned] = lambda(unsigned i; 0);)
-    foo(0 spec(out n[0]));
+    _(ghost int n[unsigned] = (\lambda unsigned i; 0))
+    foo(0 _(out n[0]));
 }
 `
-testcase(8,31) : error VC0000: A map access cannot be passed as an out parameter.
+testcase(8,11) : error VC0000: A map access cannot be passed as an out parameter.
 `

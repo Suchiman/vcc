@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 #define MAX 100
@@ -13,33 +14,33 @@ typedef struct _T
     S arr[MAX];
 } T;
 
-typedef vcc(claimable) struct _Dummy
+typedef _(claimable) struct _Dummy
 {
    unsigned dummy;
 } Dummy;
 
-spec(ispure ptrset F(obj_t arr, size_t sz); )
-axiom(forall(obj_t arr; size_t sz; obj_t ptr; set_in(ptr, F(arr, sz)) <==> in_array(ptr, arr, sz)));
+_(ghost _(pure) \objset F(\object arr, size_t sz);) 
+_(axiom \forall \object arr; size_t sz; \object ptr; ptr \in F(arr, sz) <==> \in_array(ptr, arr, sz))
 
 void foo(T* T, Dummy* d)
-requires(wrapped(d))
-requires(forall(unsigned i; i < MAX ==> wrapped(&T->arr[i])))
-writes(F(T->arr,MAX))
+_(requires \wrapped(d))
+_(requires \forall unsigned i; i < MAX ==> \wrapped(&T->arr[i]))
+_(writes F(T->arr,MAX))
 {
-        atomic(d) {}
-        unwrap(&T->arr[0]);
-        wrap(&T->arr[0]);
+        _(atomic d) {}
+        _(unwrap &T->arr[0])
+        _(wrap &T->arr[0])
 }
 
 
 void bar(T* T, Dummy* d)
-requires(wrapped(d))
-requires(forall(unsigned i; i < MAX ==> wrapped(&T->arr[i])))
-writes(array_members(T->arr,MAX))
+_(requires \wrapped(d))
+_(requires \forall unsigned i; i < MAX ==> \wrapped(&T->arr[i]))
+_(writes \array_members(T->arr,MAX))
 {
-        atomic(d) {}
-        unwrap(&T->arr[0]);
-        wrap(&T->arr[0]);
+        _(atomic d) {}
+        _(unwrap &T->arr[0])
+        _(wrap &T->arr[0])
 }
 `
 Verification of foo succeeded.

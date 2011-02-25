@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 
@@ -19,17 +20,17 @@ struct B {
 };
 
 
-ispure
+_(pure)
 struct B fail1(int k)
-  ensures(result.a.x == k && result.a.x == k * 2);
+  _(ensures \result.a.x == k && \result.a.x == k * 2);
 
-ispure
+_(pure)
 struct B fail2(int k)
-  ensures(result.a.x == k && result.a.x < 7);
+  _(ensures \result.a.x == k && \result.a.x < 7);
 
-ispure
+_(pure)
 int fail3(int k)
-  ensures(k == 2);
+  _(ensures k == 2);
 
 void foo()
 {
@@ -38,8 +39,8 @@ struct B b2 = fail2(0);
 int aa = fail3(2);
 }
 `
-testcase(24,32) : warning VC9309: [possible unsoundness]: value of 'result.a.x' was already defined in this pure function contract (as 'result.a.x')
-testcase(26,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
-testcase(32,13) : warning VC9305: [possible unsoundness]: 'result' does not occur in one of a pure function postconditions
+testcase(24,47) : warning VC9309: [possible unsoundness]: value of '\result.a.x' was already defined in this pure function contract (as '\result.a.x')
+testcase(26,17) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+testcase(32,27) : warning VC9305: [possible unsoundness]: 'result' does not occur in one of a pure function postconditions
 Verification of foo succeeded.
 `

@@ -1,17 +1,18 @@
+`/newsyntax
 #include "vcc.h"
 
-spec(void foo(int *map[int])
+_(ghost void foo(int *map[int])
 {
-  assert(is(map[3], int));
+  _(assert map[3] \is int)
 })
 
 
-spec(void bar(obj_t map[int])
+_(ghost void bar(\object map[int])
 {
-  assert(is(map[3], int));
+  _(assert map[3] \is int)
 })
 `
 Verification of foo succeeded.
 Verification of bar failed.
-testcase(11,12) : error VC9500: Assertion '_vcc_is(map[3], (_vcc_typeof((int*)0)))' did not verify.
+testcase(11,26) : error VC9500: Assertion 'map[3] \is int' did not verify.
 `

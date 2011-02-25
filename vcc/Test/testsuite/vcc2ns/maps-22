@@ -1,17 +1,18 @@
+`/newsyntax
 #include "vcc.h"
 
-struct vcc(record) S {
+_(record) struct S {
     int a;
     int b;
 };
 
 void foo()
 {
-    spec(struct S t, map[int];)
-    spec(t.b = 20;)
-    spec(map = lambda(int x; true; t / { .a = x });)
-    assert(map[4].a == 4);
-    assert(map[4].b == 20);
+    _(ghost struct S t, map[int])
+    _(ghost t.b = 20)
+    _(ghost map = (\lambda int x; (t / { .a = x })))
+    _(assert map[4].a == 4)
+    _(assert map[4].b == 20)
 }
 `
 Verification of foo succeeded.

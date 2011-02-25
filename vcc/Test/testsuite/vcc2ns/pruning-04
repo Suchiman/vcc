@@ -1,10 +1,11 @@
-`/a /functions:foo
+`/a /functions:foo /newsyntax
+
 #include <vcc.h>
 
-axiom(forall(int x,  y; ((x ^ y) ^ x) == y));
+_(axiom \forall int x,  y; ((x ^ y) ^ x) == y)
 
 void foo(int a, int b) {
-  assert(((a ^ b) ^ a) == b);
+  _(assert ((a ^ b) ^ a) == b)
 }
 `
 Verification of foo succeeded.

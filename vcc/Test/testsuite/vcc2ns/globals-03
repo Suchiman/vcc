@@ -1,10 +1,11 @@
+`/newsyntax
 #include "vcc.h"
 typedef struct _X { int a, b; } X;
 const X my_x;
 void foo(X x);
 
 void bar1() 
-  requires(program_entry_point())
+  _(requires \program_entry_point())
   { foo(my_x); }
 `
 Verification of bar1 succeeded.

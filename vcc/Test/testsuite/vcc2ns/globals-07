@@ -1,24 +1,25 @@
+`/newsyntax
 #include <vcc.h> 
 
 struct A {
     int foo;
 };
 
-struct vcc(claimable) LockContainer {
+_(claimable) struct LockContainer {
     struct A embedded;
-    invariant(keeps(&embedded))
+    _(invariant \mine(&embedded))
 } Container;
 
 void Initialize() 
-    requires(mutable(&Container))
-    ensures(wrapped(&Container))
-    writes(extent(&Container))
+    _(requires \mutable(&Container))
+    _(ensures \wrapped(&Container))
+    _(writes \extent(&Container))
     ;
 
 void Main() 
-    requires(program_entry_point())    
+    _(requires \program_entry_point())    
     //writes(set_universe(), extent(&Container))
-    writes(set_universe())
+    _(writes \universe())
 {
     Initialize();
 }

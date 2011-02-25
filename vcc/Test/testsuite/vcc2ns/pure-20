@@ -1,4 +1,4 @@
-
+`/newsyntax
 #include <vcc.h>
 #include <stdlib.h>
 
@@ -7,24 +7,26 @@ struct S {
 };
 
 struct S *foo() 
-  ensures(typed(result))
-  ensures(thread_local(result))
-  ensures(is_fresh(result))
-  ensures(mutable(result))
+  _(ensures \result->\valid)
+  _(ensures \thread_local(\result))
+  _(ensures \fresh(\result))
+  _(ensures \mutable(\result))
 {
   struct S *p = (struct S *)malloc(sizeof(struct S));
-  assume(p != NULL);
+  _(assume p != NULL)
   return p;
 }
 
 void bar() {
   struct S *p;
-  wrap((p = foo()));
-  unwrap((p = foo()));
+  _(wrap (p = foo()))
+  _(unwrap (p = foo()))
 }
 `
-testcase(22,18) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
-testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
-testcase(23,20) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
-testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
+testcase(21,25) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(22,27) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(21,29) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(8,8)-(17,2) : (Location of symbol related to previous error.)
+testcase(22,31) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(8,8)-(17,2) : (Location of symbol related to previous error.)
 `

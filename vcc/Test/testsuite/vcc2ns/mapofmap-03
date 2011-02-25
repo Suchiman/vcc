@@ -1,16 +1,17 @@
+`/newsyntax
 #include "vcc.h"
 
 struct T {
     int dummy;
-    spec(volatile bool map[int][int][int];)
+    _(ghost volatile bool map[int][int][int])
 };
 
 void foo(struct T *t)
-    requires(wrapped(t))
-    writes(t)
+    _(requires \wrapped(t))
+    _(writes t)
 {
-    unwrap(t);
-    spec(t->map=lambda(int i; int j; int k; true; false);)
+    _(unwrap t)
+    _(ghost t->map=(\lambda int i; int j; int k; (\false)))
 }
 `
 Verification of foo succeeded.

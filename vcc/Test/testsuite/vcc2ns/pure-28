@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 union U {
@@ -12,31 +13,31 @@ union U {
     int overlap3 : 12;
   };
   
-  backing_member int AsInt;
+  _(backing_member) int AsInt;
 };
 
 
-ispure
+_(pure)
 union U fu(int a, int b)
-  ensures(result.a == a && result.b == b);
+  _(ensures \result.a == a && \result.b == b);
 
-ispure
+_(pure)
 union U fu1(int a, int b)
-  ensures(result.a == a && result.overlap1 == b);
+  _(ensures \result.a == a && \result.overlap1 == b);
 
-ispure
+_(pure)
 union U fu2(int a, int b)
-  ensures(result.AsInt == a && result.b == b);
+  _(ensures \result.AsInt == a && \result.b == b);
 
-ispure
+_(pure)
 union U fu3(int a, int b)
-  ensures(result.b == b && result.AsInt == a);
+  _(ensures \result.b == b && \result.AsInt == a);
 
 void foo()
 {
   union U u;
   u = fu(100000, 10);
-  assert(false);
+  _(assert \false)
 }
 
 void foo2()
@@ -45,13 +46,13 @@ void foo2()
   u = fu1(100000, 10);
   u = fu2(100000, 10);
   u = fu3(100000, 10);
-  assert(false);
+  _(assert \false)
 }
 `
-testcase(25,30) : warning VC9309: [possible unsoundness]: value of 'result.overlap1' was already defined in this pure function contract (as 'result.a')
-testcase(29,34) : warning VC9311: [possible unsoundness]: value of 'result.b' was already defined in this pure function contract (as 'result.AsInt')
-testcase(33,13) : warning VC9311: [possible unsoundness]: value of 'result.b' was already defined in this pure function contract (as 'result.AsInt')
+testcase(25,45) : warning VC9309: [possible unsoundness]: value of '\result.overlap1' was already defined in this pure function contract (as '\result.a')
+testcase(29,49) : warning VC9311: [possible unsoundness]: value of '\result.b' was already defined in this pure function contract (as '\result.AsInt')
+testcase(33,27) : warning VC9311: [possible unsoundness]: value of '\result.b' was already defined in this pure function contract (as '\result.AsInt')
 Verification of foo failed.
-testcase(39,12) : error VC9500: Assertion '((bool)0)' did not verify.
+testcase(39,26) : error VC9500: Assertion '\false' did not verify.
 Verification of foo2 succeeded.
 `

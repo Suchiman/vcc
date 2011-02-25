@@ -1,14 +1,15 @@
-`/a /functions:foo
+`/a /functions:foo /newsyntax
+
 
 #include <vcc.h>
 
 template<typename T> void bar(T *p)
-  writes(p);
+  _(writes p);
 
 struct X { int x; };
 
 void foo(struct X *p) 
-  writes(p)
+  _(writes p)
 { 
   bar<struct X>(p); 
 }

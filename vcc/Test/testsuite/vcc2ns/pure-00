@@ -1,23 +1,24 @@
+`/newsyntax
 #include "vcc.h"
 
 #ifdef VERIFY
 typedef _Bool bool;
-ispure bool is_zero(int n)
-  ensures(result == (n == 0));
+_(pure) bool is_zero(int n)
+  _(ensures \result == (n == 0));
 
-frameaxiom bool is_zerop(int *n)
-  reads(n)
-  ensures(result == (*n == 0));
+_(frameaxiom) bool is_zerop(int *n)
+  _(reads n)
+  _(ensures \result == (*n == 0));
 
-no_reads_check
-frameaxiom bool wont_tell(int *n)
-  reads(n);
+_(no_reads_check)
+_(frameaxiom) bool wont_tell(int *n)
+  _(reads n);
 #endif
 
 void foo()
 {
-  assert (is_zero(0));
-  assert (!is_zero(1));
+  _(assert is_zero(0))
+  _(assert !is_zero(1))
 }
 
 void bar()
@@ -27,9 +28,9 @@ void bar()
   int *py = &y;
 
   *px = 0;
-  assert (is_zerop(px));
+  _(assert is_zerop(px))
   *py = 1;
-  assert (is_zerop(px));
+  _(assert is_zerop(px))
 }
 
 void baz()
@@ -38,47 +39,47 @@ void baz()
   int *px = &x;
   int *py = &y;
 
-  assume (wont_tell(px));
+  _(assume wont_tell(px))
   *py = 1;
-  assert (wont_tell(px));
+  _(assert wont_tell(px))
 }
 
 struct A {
   int x, y;
 };
 
-spec( no_reads_check frameaxiom bool wont_tell_A(struct A *a) reads(a); )
-spec( no_reads_check ispure bool wont_tell_nf(struct A *a) reads(a); )
+ _(ghost _(no_reads_check) _(frameaxiom) bool wont_tell_A(struct A *a) _(reads a);) 
+ _(ghost _(no_reads_check) _(pure) bool wont_tell_nf(struct A *a) _(reads a);) 
 
 void mux(struct A *a)
-  requires(wrapped(a) && wont_tell_A(a))
+  _(requires \wrapped(a) && wont_tell_A(a))
 {
   int x;
   int *px = &x;
 
   *px = 12;
-  assert(wont_tell_A(a));
+  _(assert wont_tell_A(a))
 }
 
 void mux_Fail1(struct A *a)
-  requires(wrapped(a) && wont_tell_nf(a))
+  _(requires \wrapped(a) && wont_tell_nf(a))
 {
   int x;
   int *px = &x;
 
   *px = 12;
-  assert(wont_tell_nf(a));
+  _(assert wont_tell_nf(a))
 }
 
 void write_A(struct A *a)
-  writes(a);
+  _(writes a);
 
 void mux_Fail2(struct A *a, struct A *b)
-  requires(wrapped(b) && wrapped(a) && wont_tell_A(a))
-  writes(b)
+  _(requires \wrapped(b) && \wrapped(a) && wont_tell_A(a))
+  _(writes b)
 {
   write_A(b);
-  assert(wont_tell_A(a));
+  _(assert wont_tell_A(a))
 }
 
 
@@ -88,8 +89,8 @@ Verification of bar succeeded.
 Verification of baz succeeded.
 Verification of mux succeeded.
 Verification of mux_Fail1 failed.
-testcase(70,12) : error VC9500: Assertion 'wont_tell_nf(a)' did not verify.
+testcase(70,26) : error VC9500: Assertion 'wont_tell_nf(a)' did not verify.
 Verification of mux_Fail2 failed.
-testcase(81,12) : error VC9500: Assertion 'wont_tell_A(a)' did not verify.
+testcase(81,26) : error VC9500: Assertion 'wont_tell_A(a)' did not verify.
 Verification of is_zerop#reads succeeded.
 `

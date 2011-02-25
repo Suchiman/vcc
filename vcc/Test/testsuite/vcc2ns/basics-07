@@ -1,8 +1,9 @@
+`/newsyntax
 #include <vcc.h>
 
 void bar(unsigned i) {
-   spec(bool map[unsigned];) 
-   spec(map = (lambda(unsigned j; true; i==j || map[j]));)
+   _(ghost bool map[unsigned]) 
+   _(ghost map = (\lambda unsigned j; (i==j || map[j])))
 }
 `
 Verification of bar succeeded.
