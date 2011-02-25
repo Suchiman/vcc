@@ -1,0 +1,15 @@
+#include "vcc.h"
+
+struct vcc(dynamic_owns) S {
+  int a[5];
+  bool x;
+  invariant(x ==> keeps(a)) 
+};
+
+void foo(struct S s) { }
+
+`
+testcase(6,41) : warning VC9104: primitive pointers are unlikely to be in the owns set
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`

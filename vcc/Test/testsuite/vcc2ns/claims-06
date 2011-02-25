@@ -1,0 +1,33 @@
+#include <vcc.h>
+
+struct vcc(claimable) A {
+  volatile int x;
+  invariant( old(x) == x )
+};
+
+void ClaimsValidOnlyInFullStops(struct A *a claimp(c))
+  always(c, closed(a) && a->x == 22)
+{
+  int y;
+  int z;
+
+  atomic(c,a) {
+    a->x = 17;
+    assert(valid_claim(c) || !valid_claim(c));
+    assert(false);
+  }
+}
+
+void RequiresIsNotEnough(struct A *a)
+  requires(closed(a))
+{
+  atomic(a) {
+  }
+}
+`
+Verification of A#adm succeeded.
+Verification of ClaimsValidOnlyInFullStops failed.
+testcase(17,14) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of RequiresIsNotEnough failed.
+testcase(24,21) : error VC8527: Assertion 'a is closed (for atomic(...))' did not verify.
+`

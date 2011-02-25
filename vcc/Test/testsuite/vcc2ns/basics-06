@@ -1,0 +1,32 @@
+#include <vcc.h>
+
+struct vcc(volatile_owns) Foo {
+  int x;
+};
+
+struct vcc(dynamic_owns) FooNV {
+  int x;
+};
+
+struct Baz { int x; };
+
+struct Bar {
+  struct Foo foo;
+  struct Baz baz;
+
+  invariant(keeps(&foo))
+  invariant(set_in(&baz, owns(&foo)))
+};
+
+struct BarOK {
+  struct FooNV foo;
+  struct Baz baz;
+
+  invariant(keeps(&foo))
+  invariant(set_in(&baz, owns(&foo)))
+};
+`
+Verification of Bar#adm failed.
+testcase(18,15) : error VC8012: invariant(_vcc_set_in(&baz,_vcc_owns(&foo))) of Bar is not admissible.
+Verification of BarOK#adm succeeded.
+`

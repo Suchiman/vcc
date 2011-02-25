@@ -1,0 +1,19 @@
+#include <vcc.h>
+
+typedef int (*TF)(int x)
+  requires(x > 1)
+  ensures(result > 0);
+
+int bar(int x)
+  requires(x > 0)
+  ensures(result > 1);
+
+void foo() {
+  TF p = &bar;
+  int res = p(3);
+  assert(res > 0);
+}
+`
+Verification of foo succeeded.
+Verification of $fnptr_bar_to_fnptr#1 succeeded.
+`

@@ -1,0 +1,11 @@
+void foo(int i)
+{
+  switch (i)
+  {
+    case:
+      break;
+  }
+}
+`
+testcase(5,9) : error VC0000: A constant value is expected.
+`

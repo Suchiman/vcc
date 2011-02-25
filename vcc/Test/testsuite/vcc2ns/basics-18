@@ -1,0 +1,8 @@
+void foo()
+{
+  int x, *p;
+  __assert(*x == 2);
+}
+`
+testcase(4,12) : error VC0000: Illegal indirection.
+`

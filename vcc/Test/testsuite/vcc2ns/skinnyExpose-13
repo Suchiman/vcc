@@ -1,0 +1,32 @@
+#include "vcc.h"
+
+struct B {
+  def_group(G)
+  int x;
+  in_group(G) volatile int z;
+  spec(claim_t c;)
+  
+  invariant(keeps(c) && claims(c, closed(this::G)))
+  invariant(keeps(this::G))
+};
+ 
+void foo(struct B *b)
+  maintains(wrapped(b))
+  writes(b)
+  ensures(domain_updated_at(b, SET(&b->x)))
+{
+ 
+  skinny_expose(b)
+	   writes(&b->x)
+  {
+		b->x = 12;
+		atomic(b->c, b::G)
+		{
+			b->z = 12;
+		}
+  }
+}
+`
+Verification of B#adm succeeded.
+Verification of foo succeeded.
+`

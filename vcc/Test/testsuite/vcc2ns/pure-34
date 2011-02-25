@@ -1,0 +1,6 @@
+#include "vcc.h"
+struct S { volatile int a; };
+spec(ispure void foo(struct S *s) requires(wrapped(s)) { atomic (s) { } };)
+`
+testcase(3,152) : error VC9703: Atomic block in pure context is not allowed.
+`

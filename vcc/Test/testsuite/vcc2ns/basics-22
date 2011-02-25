@@ -1,0 +1,12 @@
+#include "vcc.h"
+
+struct vcc(dynamic_owns) F { int x; };
+
+void f(struct F *f)
+  maintains(wrapped(f))
+{
+  assert(! set_in((struct F*)0, owns(f)));
+}
+`
+Verification of f succeeded.
+`

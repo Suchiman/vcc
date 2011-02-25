@@ -1,0 +1,20 @@
+#include <vcc.h>
+
+struct vcc(claimable) A {
+  spec(claim_t c;)
+  int x;
+};
+
+void foo(struct A *a, struct A *b)
+  writes(extent(a), extent(b))
+  requires(a != b)
+{
+  spec(
+    set_owns(a, set_empty());
+    wrap(a);
+    b->c = claim(a, true);
+  )
+}
+`
+Verification of foo succeeded.
+`

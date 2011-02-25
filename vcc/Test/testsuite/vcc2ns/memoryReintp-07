@@ -1,0 +1,25 @@
+#include <vcc2test.h>
+
+typedef unsigned char byte;
+
+void *alloc(unsigned __int64  sz)
+  ensures(is_object_root(as_array((byte*)result, sz)))
+  ensures(mutable(as_array((byte*)result, sz)))
+  ensures(is_fresh(as_array((byte*)result, sz)))
+  ensures(extent_zero(as_array((byte*)result, sz)))
+  ;
+
+struct A {
+  int x , y;
+};
+
+void f1()
+{
+  struct A * a = alloc(sizeof(struct A));
+  from_bytes(a, true);
+  assert(a->x == 0);
+  assert(a->y == 0);
+}
+`
+Verification of f1 succeeded.
+`

@@ -1,0 +1,9 @@
+#include "vcc.h"
+
+struct S {
+    int dummy;
+    invariant(keeps(SET()))
+};
+`
+testcase(5,37) : error VC9699: 'keeps' requires arguments of pointer type; '_vcc_create_set(_vcc_dummy_set_element()  )' has type '_math ptrset' which is not allowed.
+`

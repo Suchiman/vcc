@@ -1,0 +1,56 @@
+#include <vcc2test.h>
+
+struct CannotClose {
+  int y;
+  invariant(!old(closed(this)) && closed(this) ==> 0)
+};
+
+struct CannotOpen {
+  int y;
+  on_unwrap(0)
+};
+
+struct CannotOpenShouldFail {
+  int y;
+  invariant(y < 2 ==> old(closed(this)) && !closed(this) ==> 0)
+};
+  
+void foo()
+{
+  struct CannotClose x;
+  wrap(&x);
+}
+
+void ok2()
+{
+  struct CannotOpen *x = (struct CannotOpen *)malloc(sizeof(struct CannotOpen));
+  if (x != NULL) wrap(x);
+}
+
+void bar(struct CannotOpen *x)
+  requires(wrapped(x))
+  writes(x)
+{
+  unwrap(x);
+}
+
+void bar_2(struct CannotOpenShouldFail *x)
+  requires(wrapped(x))
+  writes(x)
+{
+  unwrap(x);
+}
+`
+Verification of CannotClose#adm succeeded.
+Verification of CannotOpen#adm succeeded.
+Verification of CannotOpenShouldFail#adm failed.
+testcase(15,15) : error VC8018: invariant(y < 2 ==> __old(_vcc_closed(__this)) && !_vcc_closed(__this) ==> 0) of CannotOpenShouldFail forbids unwrapping.
+Verification of foo failed.
+testcase(21,13) : error VC8014: invariant(!__old(_vcc_closed(__this)) && _vcc_closed(__this) ==> 0) of CannotClose fails on wrap.
+testcase(5,15) : error VC9599: (related information) location of the invariant.
+Verification of ok2 succeeded.
+Verification of bar failed.
+testcase(34,15) : error VC8015: invariant(__old(_vcc_closed(__this)) && !_vcc_closed(__this) ==> (0)) of CannotOpen fails on unwrap.
+testcase(10,15) : error VC9599: (related information) location of the invariant.
+Verification of bar_2 succeeded.
+`

@@ -1,0 +1,56 @@
+#include "vcc.h"
+
+struct A {
+  int x;
+  int y;
+};
+
+ispure bool f1(struct A*a)
+  reads(a)
+  returns(a->x < a->y);
+
+struct B {
+  struct A *a;
+  invariant(keeps(a))
+};
+
+ispure bool f2(struct B*b)
+  reads(b)
+  returns(b->a->x < b->a->y);
+
+typedef unsigned __int64 uint64;
+struct CONC {
+    int a;
+    uint64   GPR[16];
+    uint64   RIP;
+ uint64  DebugR[8];
+};
+typedef struct X64_Core{
+    uint64   R[16];     // general-purpose registers
+    uint64   RIP;       // instruction pointer
+ uint64  DR[8];  // debug registers
+} X64_Core;
+struct ABS {
+    int a;
+ int c;
+ struct X64_Core core;
+ invariant(keeps(&this->core))
+};
+ 
+#ifdef VERIFY
+ispure
+bool AbsConcRel(struct ABS *abs, struct CONC *conc)
+ reads(abs, conc)
+ returns(abs->a == conc->a &&
+      abs->core.RIP == conc->RIP &&
+   forall(uint64 i; i < 16 ==> abs->core.R[i] == conc->GPR[i]) &&
+   forall(uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i])
+   );
+#endif
+`
+Verification of B#adm succeeded.
+Verification of ABS#adm succeeded.
+Verification of AbsConcRel#reads succeeded.
+Verification of f2#reads succeeded.
+Verification of f1#reads succeeded.
+`

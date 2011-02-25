@@ -1,0 +1,25 @@
+#include <vcc.h>
+
+ispure int f1(void *x)
+  reads(x);
+
+spec(
+ispure int f2(obj_t x)
+  reads(x);
+)
+
+ispure int f3(int *x)
+  reads(owns(x));
+
+void fux()
+{
+  int y;
+  f1(&y);
+  spec( f2(&y); )
+  f3(&y);
+}
+`
+testcase(12,11) : error VC9648: unsupported pointer set in reads clauses
+testcase(8,11) : error VC9647: void* and obj_t are not supported in reads clauses
+testcase(4,11) : error VC9647: void* and obj_t are not supported in reads clauses
+`

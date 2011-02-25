@@ -1,0 +1,95 @@
+#include "vcc.h"
+
+#ifdef VERIFY
+typedef _Bool bool;
+ispure bool is_zero(int n)
+  ensures(result == (n == 0));
+
+frameaxiom bool is_zerop(int *n)
+  reads(n)
+  ensures(result == (*n == 0));
+
+no_reads_check
+frameaxiom bool wont_tell(int *n)
+  reads(n);
+#endif
+
+void foo()
+{
+  assert (is_zero(0));
+  assert (!is_zero(1));
+}
+
+void bar()
+{
+  int x, y;
+  int *px = &x;
+  int *py = &y;
+
+  *px = 0;
+  assert (is_zerop(px));
+  *py = 1;
+  assert (is_zerop(px));
+}
+
+void baz()
+{
+  int x, y;
+  int *px = &x;
+  int *py = &y;
+
+  assume (wont_tell(px));
+  *py = 1;
+  assert (wont_tell(px));
+}
+
+struct A {
+  int x, y;
+};
+
+spec( no_reads_check frameaxiom bool wont_tell_A(struct A *a) reads(a); )
+spec( no_reads_check ispure bool wont_tell_nf(struct A *a) reads(a); )
+
+void mux(struct A *a)
+  requires(wrapped(a) && wont_tell_A(a))
+{
+  int x;
+  int *px = &x;
+
+  *px = 12;
+  assert(wont_tell_A(a));
+}
+
+void mux_Fail1(struct A *a)
+  requires(wrapped(a) && wont_tell_nf(a))
+{
+  int x;
+  int *px = &x;
+
+  *px = 12;
+  assert(wont_tell_nf(a));
+}
+
+void write_A(struct A *a)
+  writes(a);
+
+void mux_Fail2(struct A *a, struct A *b)
+  requires(wrapped(b) && wrapped(a) && wont_tell_A(a))
+  writes(b)
+{
+  write_A(b);
+  assert(wont_tell_A(a));
+}
+
+
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+Verification of mux succeeded.
+Verification of mux_Fail1 failed.
+testcase(70,12) : error VC9500: Assertion 'wont_tell_nf(a)' did not verify.
+Verification of mux_Fail2 failed.
+testcase(81,12) : error VC9500: Assertion 'wont_tell_A(a)' did not verify.
+Verification of is_zerop#reads succeeded.
+`

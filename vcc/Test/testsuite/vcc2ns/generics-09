@@ -1,0 +1,20 @@
+
+#include <vcc.h>
+
+struct S { int a; };
+struct T { 
+  int b;
+  spec(struct S *p;)
+};
+
+spec(template<typename T> T *bar();)
+
+void foo() 
+  writes(set_empty())
+{
+  struct T t;
+  spec(t.p = bar<struct S>();)
+}
+`
+Verification of foo succeeded.
+`

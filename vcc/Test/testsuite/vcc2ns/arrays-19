@@ -1,0 +1,29 @@
+#include "vcc.h"
+
+struct S {
+  int a[5][7][9];
+};
+
+void foo() {
+  int a[5][7][9];
+  spec(int sa[2][4];)
+  a[1][2][3] = 5;
+  spec(sa[1][2] = 3;)
+  assert(a[1][2][3] == 5);
+  assert(a[0][0][84] == 5);
+} 
+
+void bar(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+ {
+  expose(s) {
+    s->a[1][2][3] = 5;
+    assert(s->a[1][2][3] == 5);
+    assert(s->a[0][0][84] == 5);
+  }
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

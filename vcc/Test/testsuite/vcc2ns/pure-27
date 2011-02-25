@@ -1,0 +1,14 @@
+#include <vcc.h>
+
+ispure
+int *foo(int *q)
+  returns(q + 10);
+
+void qux()
+{
+int x;
+assert(foo(&x) != &x);
+}
+`
+Verification of qux succeeded.
+`

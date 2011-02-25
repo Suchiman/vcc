@@ -1,0 +1,17 @@
+#include "vcc.h"
+
+void foo() {
+  spec(int XY[int][int];)
+  spec(XY[3][4] = 42;)
+  assert(XY[3][4] == 42);
+}
+
+void bar() {
+  spec(int XY[int][int][int];)
+  spec(XY[3][4][5] = 42;)
+  assert(XY[3][4][5] == 42);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

@@ -1,0 +1,19 @@
+#include "vcc.h"
+
+spec(
+no_reads_check
+ispure ptrset bar(int *p)
+  reads(p);)
+
+void baz();
+
+void foo(int *x)
+  requires(typed(x) && set_in(x, bar(x)) && mutable(x))
+  writes(bar(x))
+{
+  baz();
+  *x = 10;
+}
+`
+Verification of foo succeeded.
+`

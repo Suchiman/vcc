@@ -1,0 +1,42 @@
+#include <vcc.h>
+
+ispure int f1(int *x)
+  returns(*x)
+  reads(x);
+
+ispure int f2(int *x)
+  returns(*x)
+  reads(x);
+
+ispure int f3(int *x)
+  returns(*x)
+  reads(x);
+
+#ifdef VERIFY
+reads_check(f1)
+void reads_f1()
+{
+  reads_havoc();
+}
+
+
+reads_check(f2)
+void reads_f2(int *x)
+{
+  reads_havoc();
+}
+
+
+reads_check(f3)
+void reads_f3(int *y)
+{
+  reads_havoc();
+}
+
+
+#endif
+`
+Verification of reads_f1 succeeded.
+Verification of reads_f2 succeeded.
+Verification of reads_f3 succeeded.
+`

@@ -1,0 +1,72 @@
+#include "vcc.h"
+
+spec(
+ispure unsigned foo(unsigned x)
+  ensures(result == x - 1000);
+)
+
+
+void bar(unsigned y)
+{
+  spec( unsigned tmp; )
+  assert(foo(y) >= 0);
+  spec( tmp = foo(100); )
+  assert(false);
+}
+
+
+struct X {
+  unsigned x;
+  unsigned y;
+};
+
+ispure struct X bzz(unsigned x)
+  ensures( result.x == x - 10 );
+
+
+void bzz2()
+{
+  struct X x;
+  x = bzz(0);
+  assert(x.x >= 0);
+  assert(false);
+}
+
+struct vcc(record) X2 {
+  unsigned x;
+  unsigned y;
+};
+
+spec(ispure struct X2 bzzX(unsigned x)
+  ensures( result.x == x - 10 );)
+
+
+spec(void bzz2X()
+{
+  struct X2 x;
+  x = bzzX(0);
+  assert(x.x >= 0);
+  assert(false);
+})
+
+spec(ispure struct X2 bzzX2(unsigned x)
+  ensures( result == (struct X2) { .x = x - 10 } );)
+
+
+spec(void bzz2X2()
+{
+  struct X2 x;
+  x = bzzX2(0);
+  assert(x.x >= 0);
+  assert(false);
+})
+`
+Verification of bar failed.
+testcase(14,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bzz2 failed.
+testcase(32,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bzz2X failed.
+testcase(49,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bzz2X2 failed.
+testcase(61,12) : error VC9500: Assertion '((bool)0)' did not verify.
+`

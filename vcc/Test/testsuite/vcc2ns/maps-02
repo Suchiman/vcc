@@ -1,0 +1,17 @@
+#include "vcc.h"
+
+spec(void foo(int *map[int])
+{
+  assert(is(map[3], int));
+})
+
+
+spec(void bar(obj_t map[int])
+{
+  assert(is(map[3], int));
+})
+`
+Verification of foo succeeded.
+Verification of bar failed.
+testcase(11,12) : error VC9500: Assertion '_vcc_is(map[3], (_vcc_typeof((int*)0)))' did not verify.
+`

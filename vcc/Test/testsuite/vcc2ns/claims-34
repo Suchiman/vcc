@@ -1,0 +1,19 @@
+#include <vcc.h>
+
+struct vcc(claimable) S {
+  int a;
+};
+
+void foo(struct S *s)
+  writes(extent(s))
+{
+  claimp(c;)
+  wrap(s);
+  spec(c = claim(s);)
+  spec(c = claim(s,s);)
+  assert(typed_spec(c));
+}
+`
+testcase(12,23) : error VC9710: claim(...) requires at least one object and a claimed property
+testcase(13,36) : error VC9711: claimed property must not be of pointer type
+`

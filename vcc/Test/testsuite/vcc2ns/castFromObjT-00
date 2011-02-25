@@ -1,0 +1,17 @@
+
+#include <vcc.h>
+
+struct S {
+  int a;
+};
+
+spec(void foo(obj_t obj) 
+  requires(typed_phys(obj))
+{
+  struct S *p = (struct S *)obj;
+};
+)
+
+`
+Verification of foo succeeded.
+`

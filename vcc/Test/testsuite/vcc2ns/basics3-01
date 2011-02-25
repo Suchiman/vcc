@@ -1,0 +1,10 @@
+#include "vcc.h"
+
+struct Foo {
+   unsigned N;
+   invariant(0 < N);
+   invariant(forall(true)); 
+};
+`
+testcase(6,16) : error VC0000: Quantifier without variables.
+`

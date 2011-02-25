@@ -1,0 +1,9 @@
+
+#include <vcc.h>
+
+void foo() {
+  assert(forall(int i; i != 0 ==> forall(int i; i != 0)));
+}
+`
+testcase(5,48) : error VC9675: Quantified variable 'i' clashes with earlier declaration
+`

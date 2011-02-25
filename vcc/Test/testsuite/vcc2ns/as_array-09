@@ -1,0 +1,15 @@
+#include <vcc2test.h>
+
+void foo(int *arr)
+  requires(mutable((int[100])arr))
+  requires(is_object_root((int[100])arr))
+  writes(extent((int[100])arr))
+{
+  split_array((int[100])arr, 50);
+  split_array((int[50])(arr+50), 25);
+  split_array((int[50])arr, 25);
+  split_array((int[25])(arr+25), 10);
+}
+`
+Verification of foo succeeded.
+`

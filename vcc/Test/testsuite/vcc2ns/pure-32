@@ -1,0 +1,6 @@
+#include "vcc.h"
+ispure int foo(int *x) reads(x) returns(old(*x));
+void bar() { int x; foo(&x); }
+`
+testcase(2,132) : error VC9697: old(...) is allowed only in two-state contexts
+`

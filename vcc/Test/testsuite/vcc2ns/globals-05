@@ -1,0 +1,16 @@
+
+#include <vcc.h>
+
+volatile int i;
+
+void fooShouldFail(claimp(p))
+  always(p, closed(gemb(&i)))
+{
+  atomic(p, gemb(&i)) {
+    i = 5;
+  }
+}
+`
+Verification of fooShouldFail failed.
+testcase(9,24) : error VC8525: Assertion 'invariant of _vcc_gemb(&i) holds after atomic' did not verify.
+`

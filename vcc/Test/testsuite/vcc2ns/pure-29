@@ -1,0 +1,11 @@
+#include "vcc.h"
+
+spec(ispure bool foo(int *arr, unsigned c)
+    reads(set_universe())
+    returns(mutable(as_array(arr,c)) ==> is_mutable_array(arr,c))
+{ 
+  return mutable(as_array(arr,c)) ==> is_mutable_array(arr,c); 
+} )
+`
+Verification of foo succeeded.
+`

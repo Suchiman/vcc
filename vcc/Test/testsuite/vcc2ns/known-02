@@ -1,0 +1,17 @@
+#include <vcc.h>
+
+bool bar();
+
+void foo(bool b) 
+requires(b)
+{
+
+if (known(b,true) || bar()) {
+assert(true);
+} else {
+bar();
+}
+}
+`
+Verification of foo succeeded.
+`

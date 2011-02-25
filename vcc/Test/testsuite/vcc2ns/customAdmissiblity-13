@@ -1,0 +1,24 @@
+#include "vcc.h"
+
+typedef unsigned __int64 UINT64;
+
+spec(typedef bool BITMAP[UINT64];)
+
+spec(
+ispure BITMAP ToBm64(UINT64 n); 
+)
+
+struct foo {
+    UINT64 x;
+    invariant(forall(unsigned i; i < 64; ToBm64(x)[i]))
+};
+
+struct workaround {
+    UINT64 x;
+    invariant(x > 0)
+    invariant(forall(unsigned i; i < 64; ToBm64(x)[i]))
+};
+`
+Verification of foo#adm succeeded.
+Verification of workaround#adm succeeded.
+`

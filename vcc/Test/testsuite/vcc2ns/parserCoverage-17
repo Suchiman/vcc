@@ -1,0 +1,11 @@
+void foo()
+{
+  int i;
+  for ( (unsigned)i; i < 5; i++)
+  {
+  }
+}
+`
+testcase(4,9) : error VC0000: Only assignment, call, increment, decrement, and new object expressions can be used as a statement.
+testcase(4,9) : warning VC9001: The expression '(unsigned)i' has no side effect; expected operation with side effect.
+`

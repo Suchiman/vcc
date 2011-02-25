@@ -1,0 +1,13 @@
+#include "vcc.h"
+struct S {
+    int a;
+    spec(int b;)
+};
+
+void foo() {
+    struct S s;
+    spec(unchecked(s.b++);)
+}
+`
+Verification of foo succeeded.
+`

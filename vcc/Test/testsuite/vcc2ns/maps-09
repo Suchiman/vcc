@@ -1,0 +1,13 @@
+#include<vcc.h>
+
+spec(int G[void *];)
+
+struct S {
+ spec(int M[void *];)
+ int a;
+};
+
+void foo(struct S *s) { }
+`
+Verification of foo succeeded.
+`

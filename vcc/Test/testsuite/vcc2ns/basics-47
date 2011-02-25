@@ -1,0 +1,41 @@
+// vim:set expandtab shiftwidth=2 tabstop=2:
+#include "vcc.h"
+#include <stdlib.h>
+
+typedef struct _Y *PY;
+
+typedef struct vcc(claimable) _X {
+  int dummy;
+  spec(volatile bool T[PY];)
+  invariant(approves(owner(this),T))
+  invariant(forall(PY t; {T[t]} T[t] <==> closed(t) && t->x == this))
+} X, *PX;
+
+typedef struct vcc(claimable) _Y {
+  PX x;
+  claimp(xClaim;)
+  invariant(unchanged(closed(this)) || inv2(x))
+  invariant(keeps(xClaim))
+} Y, *PY;
+
+void foo(PX P claimp(c))
+  always(c, closed(P))
+  writes(P)
+{
+  PY y = (PY) malloc(sizeof(Y));
+  assume(y); // successful allocation
+  y->x = P;
+  assert(P->T==P->T); // TODO for triggering, find another way ?
+  spec(y->xClaim = claim(P, closed(P));)
+  wrap(y); // This fails to check inv2(y->x)
+  assert(inv(P));
+  assert(!P->T[y]);
+  assert(false);
+}
+`
+Verification of _X#adm succeeded.
+Verification of _Y#adm succeeded.
+Verification of foo failed.
+testcase(30,13) : error VC8014: invariant((__old(_vcc_closed(__this)) == (_vcc_closed(__this))) || _vcc_inv2(x)) of _Y fails on wrap.
+testcase(17,15) : error VC9599: (related information) location of the invariant.
+`

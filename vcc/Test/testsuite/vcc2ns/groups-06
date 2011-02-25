@@ -1,0 +1,26 @@
+
+#include <vcc.h>
+
+struct A {
+  int x;
+} ;
+
+struct B {
+  int y;
+
+  def_group(C)
+  in_group(C) int z;
+  in_group(C) struct A *a;
+  inv_group(C, a->x == z)
+  inv_group(C, keeps(a))
+
+  def_group(D)
+  in_group(D) int zz;
+  inv_group(D, keeps((struct B::C*)this))
+  inv_group(D, zz == z)
+};
+
+`
+Verification of B##C#adm succeeded.
+Verification of B##D#adm succeeded.
+`

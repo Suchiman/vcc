@@ -1,0 +1,28 @@
+#include <vcc.h>
+
+struct vcc(volatile_owns) A {
+  int x;
+};
+
+void foo(struct A *a, struct A *aa)
+  requires(wrapped(aa) && wrapped(a) && aa != a)
+  writes(a)
+{
+  atomic(aa) {
+    set_closed_owner(a, aa);
+  }
+}
+
+void foo2(struct A *a, struct A *aa)
+  requires(wrapped(aa) && wrapped(a) && aa != a)
+  writes(a)
+{
+  struct A *aa2 = aa;
+  atomic(aa) {
+    set_closed_owner(a, aa2);
+  }
+}
+`
+Verification of foo succeeded.
+Verification of foo2 succeeded.
+`

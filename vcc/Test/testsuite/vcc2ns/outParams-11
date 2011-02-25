@@ -1,0 +1,17 @@
+#include <vcc.h>
+
+spec(int foo(int x, int y spec(out int o1) spec(out int o2))
+  ensures(o1 == x && o2 == y && result == 0)
+{
+  spec(o1 = x; o2 = y;)
+})
+
+void bar()
+{
+  spec(int z;)
+  spec(int y;)
+  spec(z = foo(1, 2 spec(out z) spec(out y));)
+}
+`
+testcase(13,52) : error VC9676: duplicate out parameter 'z'
+`

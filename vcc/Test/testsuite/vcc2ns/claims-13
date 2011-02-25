@@ -1,0 +1,7 @@
+#include "vcc.h"
+
+void foo(obj_t O) requires(is_claimable(O)) { }    
+
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,9 @@
+#include "vcc.h"
+spec(struct S {
+    int a;
+    spec(struct S ^s;)
+    invariant(s==this)
+};)
+`
+Verification of S#adm succeeded.
+`

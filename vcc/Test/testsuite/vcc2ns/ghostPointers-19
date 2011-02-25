@@ -1,0 +1,11 @@
+#include "vcc.h"
+
+struct S { unsigned b; };
+
+spec(ispure struct S foo() ensures(result.b==0);)
+void bar() {
+    spec(struct S x = foo();)
+}
+`
+Verification of bar succeeded.
+`

@@ -1,0 +1,11 @@
+#include "vcc.h"
+spec(ispure bool foo(unsigned n);)
+spec(ispure bool bar(unsigned *map);)
+axiom(forall(unsigned *p; { bar(p) } foo(*p)));
+
+void f() {
+  spec(foo(5);)
+ }
+`
+Verification of f succeeded.
+`

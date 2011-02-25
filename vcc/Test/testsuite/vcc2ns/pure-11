@@ -1,0 +1,24 @@
+#include <vcc.h>
+
+ispure int f1(int *x)
+  returns(*x == 0)
+  reads(x);
+
+spec(
+reads_check(f1)
+void r_f1(int *x)
+{
+  reads_havoc();
+}
+)
+
+void fux()
+{
+  int y;
+  spec( r_f1(&y); )
+}
+`
+Verification of r_f1 succeeded.
+Verification of fux failed.
+testcase(18,20) : error VC8005: intercepted call to reads check (in call 'r_f1(&y)').
+`

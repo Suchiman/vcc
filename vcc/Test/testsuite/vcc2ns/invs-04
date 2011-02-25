@@ -1,0 +1,12 @@
+#include "vcc.h"
+
+spec(ispure bool a_is_increasing(state_t s1, state_t s2, struct S *s)
+    returns(in_state(s1,s->a) <= in_state(s2,s->a));)
+
+struct S {
+    volatile int a;
+    invariant(a_is_increasing(old(current_state()), current_state(), this))
+};
+`
+Verification of S#adm succeeded.
+`

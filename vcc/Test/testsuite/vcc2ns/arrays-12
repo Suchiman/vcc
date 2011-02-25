@@ -1,0 +1,47 @@
+#include <vcc.h>
+
+#define MAX 100
+
+typedef struct _S 
+{
+    unsigned dummy;
+} S;
+
+
+typedef struct _T
+{
+    S arr[MAX];
+} T;
+
+typedef vcc(claimable) struct _Dummy
+{
+   unsigned dummy;
+} Dummy;
+
+spec(ispure ptrset F(obj_t arr, size_t sz); )
+axiom(forall(obj_t arr; size_t sz; obj_t ptr; set_in(ptr, F(arr, sz)) <==> in_array(ptr, arr, sz)));
+
+void foo(T* T, Dummy* d)
+requires(wrapped(d))
+requires(forall(unsigned i; i < MAX ==> wrapped(&T->arr[i])))
+writes(F(T->arr,MAX))
+{
+        atomic(d) {}
+        unwrap(&T->arr[0]);
+        wrap(&T->arr[0]);
+}
+
+
+void bar(T* T, Dummy* d)
+requires(wrapped(d))
+requires(forall(unsigned i; i < MAX ==> wrapped(&T->arr[i])))
+writes(array_members(T->arr,MAX))
+{
+        atomic(d) {}
+        unwrap(&T->arr[0]);
+        wrap(&T->arr[0]);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

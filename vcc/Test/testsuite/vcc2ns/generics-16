@@ -1,0 +1,12 @@
+
+//#include <vcc.h>
+
+template<typename T> void foo(void **p)
+  __requires(*(T**)p != 0);
+
+template<typename T> void foo(void **p)
+{
+}
+`
+Verification of foo succeeded.
+`

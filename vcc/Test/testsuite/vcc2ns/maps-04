@@ -1,0 +1,23 @@
+#include <vcc.h>
+
+#ifdef VERIFY 
+typedef int MAP[int];
+#endif
+
+struct S {
+  int i;
+  spec(MAP m;)
+};
+
+void foo(struct S *s, int j)
+  writes(s)
+  maintains(wrapped(s))
+  ensures(s->m == lambda(int n; true; n == j ? 0 : old(s->m)[n]))
+{
+  expose(s) {
+    spec(s->m[j] = 0;)
+  }
+}
+`
+Verification of foo succeeded.
+`

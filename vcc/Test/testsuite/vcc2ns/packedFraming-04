@@ -1,0 +1,35 @@
+#include "vcc.h"
+
+struct S { int a; };
+
+void foo(int *a) writes(a);
+
+void bar(struct S *s, int *a spec(obj_t c_root))
+    requires(wrapped(c_root))
+    requires(in_domain(s,c_root))
+//    maintains(thread_local(s))
+    writes(a)
+{
+    int tmp = s->a, t2;
+    foo(a);
+//    assert(in_domain(s,c_root));
+    t2 = s->a;
+    assert(tmp == t2);
+}
+
+void bar2(struct S *s, int *a spec(obj_t c_root))
+    requires(wrapped(c_root))
+    requires(in_domain(s,c_root))
+    maintains(thread_local(s))
+    writes(a)
+{
+    int tmp = s->a, t2;
+    foo(a);
+    assert(in_domain(s,c_root));
+    t2 = s->a;
+    assert(tmp == t2);
+}
+`
+Verification of bar succeeded.
+Verification of bar2 succeeded.
+`

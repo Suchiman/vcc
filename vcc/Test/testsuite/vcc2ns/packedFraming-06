@@ -1,0 +1,116 @@
+#include <vcc.h>
+
+struct _A{
+    int dummy;
+};
+
+typedef struct vcc(volatile_owns) _B{
+    struct _A *a;
+    invariant(set_in(a, owns(this)))
+
+ //here should be other components that are conditionally owned 
+//...
+} B;
+
+
+struct X { int x; };
+
+void wr(struct X *x)
+  out_param(x);
+
+void foo(B *b)
+requires(wrapped(b))
+{
+struct X unrelated;
+    assert(in_domain(b, b));
+    assert(in_vdomain(b->a, b));
+    assume(b->a->dummy == 12);
+    wr(&unrelated);
+    assert(b->a->dummy == 12);
+}
+
+struct C {
+  struct B *b;
+  invariant(keeps(b))
+};
+struct vcc(volatile_owns) VC {
+  struct B *b;
+  invariant(keeps(b))
+};
+
+void foo2(struct C *b)
+requires(wrapped(b))
+{
+struct X unrelated;
+    assert(in_domain(b, b));
+    assert(in_domain(b->b, b));
+    assert(in_vdomain(b->b->a, b));
+    assume(b->b->a->dummy == 12);
+    wr(&unrelated);
+    assert(b->b->a->dummy == 12);
+}
+
+void foo3(struct VC *b)
+requires(wrapped(b))
+{
+struct X unrelated;
+    assert(in_domain(b, b));
+    assert(in_vdomain(b->b, b));
+    assert(in_vdomain(b->b->a, b));
+    assume(b->b->a->dummy == 12);
+    wr(&unrelated);
+    assert(b->b->a->dummy == 12);
+}
+
+
+typedef struct vcc(volatile_owns) _B2{
+    struct _A *a;
+    int f;
+    invariant(f ==> set_in(a, owns(this)))
+} B2;
+
+
+void fooFail1(B2 *b)
+requires(wrapped(b))
+{
+    assert(in_domain(b, b));
+    assert(in_vdomain(b->a, b));
+}
+
+void fooComplex(B2 *b)
+requires(wrapped(b))
+requires(b->f)
+{
+    assert(in_domain(b, b));
+    assert(in_vdomain(b->a, b));
+}
+
+typedef struct vcc(volatile_owns) _B3 {
+    struct _A *a;
+    volatile int f;
+    invariant(f ==> set_in(a, owns(this)))
+} B3;
+
+
+void fooFail2(B3 *b)
+requires(wrapped(b))
+requires(b->f)
+{
+    assert(in_domain(b, b));
+    assert(in_vdomain(b->a, b));
+}
+`
+Verification of _B#adm succeeded.
+Verification of C#adm succeeded.
+Verification of VC#adm succeeded.
+Verification of _B2#adm succeeded.
+Verification of _B3#adm succeeded.
+Verification of foo succeeded.
+Verification of foo2 succeeded.
+Verification of foo3 succeeded.
+Verification of fooFail1 failed.
+testcase(77,14) : error VC9500: Assertion '_vcc_in_vdomain(b->a,b)' did not verify.
+Verification of fooComplex succeeded.
+Verification of fooFail2 failed.
+testcase(100,14) : error VC9500: Assertion '_vcc_in_vdomain(b->a,b)' did not verify.
+`

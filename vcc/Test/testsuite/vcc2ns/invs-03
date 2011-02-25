@@ -1,0 +1,101 @@
+#include "vcc.h"
+typedef unsigned __int64 UINT64, *PUINT64;
+typedef struct vcc(volatile_owns) vcc(dynamic_owns) _rwkey{
+  int data;
+  on_unwrap(unchanged(closed(this)) || inv2(&ghost))
+  //on_unwrap(closed(&ghost) ==> inv2(&ghost))
+  invariant((!old(closed(this)) && (closed(this))) ==> inv2(&ghost))// needed for admissibility without having b => closed(rwkey) in ghost
+  invariant(unchanged(owns(this)) || inv2(&ghost))
+} rwkey;
+
+typedef struct vcc(volatile_owns) vcc(dynamic_owns) _rwkey2{
+  int data;
+  invariant(unchanged(closed(this)) || inv2(&ghost))
+  invariant(unchanged(owns(this)) || inv2(&ghost))
+} rwkey2;
+
+
+typedef struct vcc(dynamic_owns) p
+{
+
+    def_group(Ipi, vcc(claimable))
+   
+    spec(claim_t IpiClaim;) 
+    invariant(set_in(IpiClaim, owns(this)))
+    invariant(claims(IpiClaim, closed(this::Ipi) && closed(&ghost))) 
+    in_group(Ipi)
+    UINT64 CpuNumber;
+    
+    spec(in_group(Ipi) rwkey read[64];)
+    
+    spec(in_group(Ipi) rwkey write[64];)
+
+    invariant(forall(UINT64 i; i < 64; set_in(&read[i], owns(this))))
+    invariant(forall(UINT64 i; i < 64; set_in(&write[i], owns(this))))
+
+    in_group(Ipi)
+    volatile bool flag;
+    inv_group(Ipi, unchanged(flag) || inv2(&ghost))
+		
+	  }p, *pp;
+
+pp kpr[64];
+
+typedef struct vcc(claimable) vcc(dynamic_owns)_ownerkpr{
+    invariant(this == &ghost)
+    volatile int i;
+    invariant(unchanged(i))
+    int dummy;
+    invariant(set_in(gemb(&kpr),owns(this)))
+    invariant(closed(gemb(&kpr)))
+    invariant(forall(UINT64 i; i < 64;  set_in(kpr[i]::Ipi, owns(this))))
+    invariant(forall(UINT64 i; i < 64; 
+    closed(kpr[i]::Ipi) && typed(kpr[i]::Ipi) && (kpr[i]->CpuNumber == i))) 
+     
+    invariant(forall(UINT64 i, j; i < 64 && j < 64 ;
+      i != j ==> kpr[i] != kpr[j]
+      ))
+  
+
+   invariant(forall(UINT64 i, j; i < 64 && j < 64 ;  
+    (kpr[i]->flag) ==> closed(&kpr[i]->read[j])))
+
+}ownerkpr;
+
+ownerkpr ghost;
+
+void foo() { }
+
+void
+f(
+  pp currentPls,
+  pp targetPls,
+  int currentNumber,
+  int targetNumber
+  )
+  requires(0 <= targetNumber && targetNumber < 64)
+  requires(0 <= targetNumber && targetNumber < 64)
+  
+  writes(currentPls)
+  requires(wrapped(currentPls))
+  
+  requires(currentPls == kpr[currentNumber])
+  requires(targetPls == kpr[targetNumber])
+{
+
+  foo();
+  unwrap(currentPls);
+
+  assert(valid_claim(currentPls->IpiClaim));
+
+  unwrap(&currentPls->write[targetNumber]);
+}
+`
+Verification of _rwkey#adm succeeded.
+Verification of _rwkey2#adm succeeded.
+Verification of p#adm succeeded.
+Verification of p##Ipi#adm succeeded.
+Verification of _ownerkpr#adm succeeded.
+Verification of foo succeeded.
+Verification of f succeeded.
+`

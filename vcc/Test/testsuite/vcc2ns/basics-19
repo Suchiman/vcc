@@ -1,0 +1,14 @@
+#include "vcc.h"
+
+struct Foo {
+    def_group(g)
+    int a;
+    def_group(g)
+    int b;
+};
+
+void foo(struct Foo *s) {}
+`
+testcase(6,5) : error VC9678: 'g' : group name redefinition
+testcase(4,5)-(4,103) : (Location of symbol related to previous error.)
+`

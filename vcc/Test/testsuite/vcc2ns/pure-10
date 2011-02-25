@@ -1,0 +1,18 @@
+#include <vcc.h>
+
+ispure int f1(int *x)
+  reads(x);
+
+spec(
+reads_check(f1)
+void r_f1(int *x);
+)
+
+void fux()
+{
+  int y;
+  spec( r_f1(&y); )
+}
+`
+testcase(7,1) : error VC9646: the reads check is required to have a body
+`

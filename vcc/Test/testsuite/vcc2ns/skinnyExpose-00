@@ -1,0 +1,152 @@
+#include <vcc.h>
+
+struct B {
+  int x;
+  int y;
+};
+struct A {
+  int z;
+  struct B *b;
+  invariant(keeps(b))
+};
+
+void foo(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+void fooFail(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->y = 12;
+  }
+}
+
+
+void fooFail2(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->y)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+void baz(struct A *a, struct B *b)
+  maintains(wrapped(a))
+  maintains(wrapped(b))
+  writes(a,b)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+
+  expose(b) {
+    b->y = 12;
+  }
+}
+
+void bazFail(struct A *a, struct B *b)
+  maintains(wrapped(a))
+  maintains(wrapped(b))
+  writes(a,b)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+
+  expose(a) {
+    a->z = 12;
+  }
+}
+
+void fooFailOwns(struct A *a)
+  maintains(wrapped(a))
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    set_owns(a, SET());
+    a->b->x = 12;
+  }
+}
+
+
+void fooFailWrapped(struct A *a)
+  writes(a)
+  ensures(domain_updated_at(a, SET(&a->b->x)))
+{
+  skinny_expose(a, a->b)
+    writes(&a->b->x)
+  {
+    a->b->x = 12;
+  }
+}
+
+
+void bar()
+{
+  struct A a;
+  struct B b;
+
+
+  a.b = &b;
+  a.b->y = 10;
+  a.z = 10;
+  wrap(&b);
+  wrap(&a);
+
+  assert(in_domain(&a, &a));
+  assert(in_domain(&b, &a));
+  assert(a.b->y == 10);
+  assert(a.z == 10);
+
+  foo(&a);
+
+  assert(a.b->y == 10);
+  assert(a.z == 10);
+  unwrap(&a);
+  unwrap(&b);
+}
+`
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+Verification of fooFail failed.
+testcase(30,28) : error VC8530: Assertion 'skinny_expose(a, ...) body has written at an unlisted location' did not verify.
+Verification of fooFail2 failed.
+testcase(48,1) : error VC9501: Post condition '_vcc_domain_updated_at(a, _vcc_create_set(_vcc_dummy_set_element(), &a->b->y))' did not verify.
+testcase(41,13) : error VC9599: (related information) Location of post condition.
+Verification of baz succeeded.
+Verification of bazFail failed.
+testcase(82,1) : error VC9501: Post condition '_vcc_domain_updated_at(a, _vcc_create_set(_vcc_dummy_set_element(), &a->b->x))' did not verify.
+testcase(71,13) : error VC9599: (related information) Location of post condition.
+Verification of fooFailOwns failed.
+testcase(89,28) : error VC8530: Assertion 'skinny_expose(a, ...) body has written at an unlisted location' did not verify.
+testcase(89,28) : error VC8531: Assertion 'owns(a) was updated inside skinny_expose(...)' did not verify.
+Verification of fooFailWrapped failed.
+testcase(102,28) : error VC8016: 'a' is not wrapped before unwrap.
+Verification of bar succeeded.
+`

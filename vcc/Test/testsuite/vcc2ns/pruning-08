@@ -1,0 +1,22 @@
+`/a /functions:bar
+#include <vcc.h>
+
+spec(bool ispure baz() ensures (result == true);)
+
+vcc(atomic_inline) int foo(spec(out int x)) {
+  spec(x = 10;)
+  assert(baz());
+  return 1;
+};
+
+void bar(int p) {
+  spec(int i;)
+  int j;
+  j = p || foo(spec(out i));
+  assert(j);
+  assert(p || i == 10);
+  
+}
+`
+Verification of bar succeeded.
+`

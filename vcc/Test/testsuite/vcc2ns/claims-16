@@ -1,0 +1,22 @@
+#include <vcc.h>
+ 
+struct vcc(claimable) Foo
+{
+    int x;
+};
+ 
+void foo(struct Foo *o claimp(c))
+  always(c,closed(o))
+  writes(o)
+  ensures(false)
+{
+  spec(claim_t c1;)
+  atomic(c,o) {
+    spec(c1 = claim(o, false);)
+  }
+  assert(false);
+}
+`
+Verification of foo failed.
+testcase(15,26) : error VC8520: Assertion 'chunk ((bool)0) of the claim initially holds' did not verify.
+`

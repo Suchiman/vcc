@@ -1,0 +1,9 @@
+void foo() {
+  int i = 0;
+  while {
+    i++;
+  }
+}
+`
+testcase(3,9) : error VC0000: Syntax error, '(' expected.
+`

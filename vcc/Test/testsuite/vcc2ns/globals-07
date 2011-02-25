@@ -1,0 +1,28 @@
+#include <vcc.h> 
+
+struct A {
+    int foo;
+};
+
+struct vcc(claimable) LockContainer {
+    struct A embedded;
+    invariant(keeps(&embedded))
+} Container;
+
+void Initialize() 
+    requires(mutable(&Container))
+    ensures(wrapped(&Container))
+    writes(extent(&Container))
+    ;
+
+void Main() 
+    requires(program_entry_point())    
+    //writes(set_universe(), extent(&Container))
+    writes(set_universe())
+{
+    Initialize();
+}
+`
+Verification of LockContainer#adm succeeded.
+Verification of Main succeeded.
+`

@@ -1,0 +1,9 @@
+#include <vcc.h>
+
+int foo()
+{
+  spec(int ^a = (void *)0;)
+}
+`
+Verification of foo succeeded.
+`

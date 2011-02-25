@@ -1,0 +1,14 @@
+#include <vcc.h>
+
+// the following used to seen Z3 into a loop
+
+void loops(bool *a, unsigned N, unsigned n)
+  requires(wrapped(as_array(a,N)))
+{
+  unsigned j, k;
+  for (j=0, k = 0; j<N; j++) k++;
+}
+`
+Verification of loops failed.
+testcase(9,30) : error VC8004: k++ might overflow.
+`

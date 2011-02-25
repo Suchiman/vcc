@@ -1,0 +1,39 @@
+#include <vcc.h>
+
+typedef struct _A {
+    int i;
+} A, *PA;
+
+typedef struct _B {
+    A a1;
+    A a2;
+    invariant(keeps(&a1, &a2))
+    int j;
+} B, *PB;
+
+void foo(PB b)
+maintains(wrapped(b))
+writes(b)
+ensures(domain_updated_at(b, SET(&b->a1.i, &b->a2.i, &b->j)))
+{
+    skinny_expose(b)
+        writes(&b->a1.i, &b->a2.i, &b->j, &b->a1, &b->a2)
+    {
+        skinny_expose(&b->a1)
+            writes(&b->a1.i)
+        {
+            b->a1.i = 8;
+        }
+        skinny_expose(&b->a2)
+            writes(&b->a2.i)
+        {
+            b->a2.i = 9;
+        }
+
+        b->j = 8;
+    }
+}
+`
+Verification of _B#adm succeeded.
+Verification of foo succeeded.
+`

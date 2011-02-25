@@ -1,0 +1,42 @@
+#include <vcc.h>
+
+vcc(atomic_inline) int InterlockedDecrement(volatile int *p) {
+  *p = *p - 1;
+  return *p;
+}
+
+vcc(atomic_inline) int InterlockedExchangeAdd(volatile int *p, int n) {
+  int old = *p;
+  *p = *p + n;
+  return old;
+}
+
+struct A {
+  volatile int x;
+  invariant( x >= 0 )
+  invariant( old(this->x) == this->x || old(this->x) - 1 == this->x )
+};
+
+void fail1(struct A *a claimp(c))
+  always(c, closed(a))
+{
+  atomic(c,a) {
+    assume(a->x > 100);
+    InterlockedExchangeAdd(&a->x, -2);
+  }
+}
+
+void fail2(struct A *a claimp(c))
+  always(c, closed(a))
+{
+  atomic(c,a) {
+    InterlockedDecrement(&a->x);
+  }
+}
+`
+Verification of A#adm succeeded.
+Verification of fail1 failed.
+testcase(23,23) : error VC8524: Assertion 'chunk __old(__this->x) == __this->x || __old(__this->x) - 1 == __this->x of invariant of a holds after atomic' did not verify.
+Verification of fail2 failed.
+testcase(32,23) : error VC8524: Assertion 'chunk x >= 0 of invariant of a holds after atomic' did not verify.
+`

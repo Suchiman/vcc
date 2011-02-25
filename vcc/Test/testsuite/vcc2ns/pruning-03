@@ -1,0 +1,14 @@
+`/a /functions:LeaveTurnstile
+typedef _Bool bool;
+
+bool _vcc_spec_code();
+
+void LeaveTurnstile()
+{
+    __specification(bool snapmap[unsigned][unsigned];)
+    __specification(bool snapmap_tmp[unsigned][unsigned];)
+    __specification(snapmap = __lambda(unsigned s; ((bool)1); __lambda(unsigned i; i < s; (i==s+1) ? ((bool)0):((bool)1)));)
+}
+`
+Verification of LeaveTurnstile succeeded.
+`

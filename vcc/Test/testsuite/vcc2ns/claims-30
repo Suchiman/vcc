@@ -1,0 +1,16 @@
+#include "vcc.h"
+
+struct vcc(claimable) S { int a; };
+
+void foo(struct S *s)
+	requires(wrapped(s))
+	writes(s)
+{
+	claimp(c;)
+	spec(c = claim(s,1);)
+	unclaim(c,s);
+	assert(!closed(c));
+}
+`
+Verification of foo succeeded.
+`

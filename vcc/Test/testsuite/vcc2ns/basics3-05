@@ -1,0 +1,10 @@
+#include "vcc.h"
+
+void foo(int *a, unsigned n)
+	requires(n && typed(as_array(a,n)))
+{
+	assert(set_in(a+0,span(as_array(a,n))));
+}
+`
+Verification of foo succeeded.
+`

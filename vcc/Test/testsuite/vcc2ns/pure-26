@@ -1,0 +1,19 @@
+#include "vcc.h"
+
+ispure
+int foo()
+{
+  int x;
+  return x;
+}
+
+void bar()
+{
+  int t1 = foo();
+  int t2 = foo();
+  assert(t1 == t2);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

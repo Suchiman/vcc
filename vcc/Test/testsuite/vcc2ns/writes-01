@@ -1,0 +1,30 @@
+`/omitrw
+#include <vcc.h>
+
+void foo0(int *p)
+  requires(mutable(p))
+{
+  *p = 7;
+}
+
+struct A {
+  int x;
+};
+
+void foo1(struct A *a)
+  requires(mutable(a))
+{
+  a->x = 7;
+}
+
+void foo2(struct A *a)
+  writes(a)
+  requires(mutable(a))
+{
+  a->x = 7;
+}
+`
+Verification of foo0 succeeded.
+Verification of foo1 succeeded.
+Verification of foo2 succeeded.
+`

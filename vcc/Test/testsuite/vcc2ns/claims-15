@@ -1,0 +1,40 @@
+#include "vcc.h"
+
+typedef unsigned __int64 UINT64;
+
+typedef union _CONC
+{
+	volatile struct
+    {
+        UINT64 c1;
+    };
+
+    backing_member UINT64 AsUINT64;
+} CONC;
+
+struct DESC {
+	def_group(Group)
+	invariant(keeps(this::Group))
+
+	in_group(Group) CONC o;
+	
+	spec(in_group(Group) claim_t c;)
+	inv_group(Group, keeps(c) && claims(c, closed(&o)))
+};
+
+void update_o(struct DESC *d)
+	maintains(wrapped(d::Group))
+	writes(d::Group)
+{
+	expose(d::Group){
+	atomic(d->c, &d->o){
+		assert(valid_claim(d->c));
+		begin_update();
+		d->o.c1 = 1;
+	}}
+}
+`
+Verification of DESC#adm succeeded.
+Verification of DESC##Group#adm succeeded.
+Verification of update_o succeeded.
+`

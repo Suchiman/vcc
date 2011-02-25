@@ -1,0 +1,19 @@
+#include <vcc.h>
+
+struct A {
+  int x;
+  invariant(this->x>0)
+};
+
+
+spec(
+isadmissibilitycheck
+void adm_A(struct A* x)
+{
+  havoc_others(x);
+}
+)
+`
+Verification of A#adm succeeded.
+Verification of adm_A succeeded.
+`

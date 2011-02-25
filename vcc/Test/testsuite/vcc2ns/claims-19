@@ -1,0 +1,30 @@
+#define PVOID void*
+#define NULL ((void*)0)
+
+#include "vcc.h"
+
+typedef struct TH *PTH;
+
+typedef struct GLOBAL_STATE 
+{
+	int dummy;
+	spec(volatile PVOID ThreadState[PTH];)
+	
+} GLOBAL_STATE, *PGLOBAL_STATE;
+
+GLOBAL_STATE SchGlobalState;
+
+
+ void MoveFromEvent(PTH Thread claimp(lh_nchange))
+   always(lh_nchange, closed(&SchGlobalState))
+ {
+ 
+	atomic(lh_nchange, &SchGlobalState)
+	{
+		begin_update();
+		spec(SchGlobalState.ThreadState = lambda(PTH e; true; NULL);)
+	}
+ }
+`
+Verification of MoveFromEvent succeeded.
+`

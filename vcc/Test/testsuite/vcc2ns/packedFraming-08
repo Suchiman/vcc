@@ -1,0 +1,20 @@
+#include <vcc.h>
+
+struct B { int x; invariant(x > 0) };
+
+struct vcc(volatile_owns) A {
+ struct B b;
+ invariant(keeps(&b))
+};
+
+void foo(struct A *a)
+  requires(wrapped(a))
+{
+  assert(in_vdomain(&a->b, a));
+  assert(a->b.x > 0);
+}
+`
+Verification of B#adm succeeded.
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+`
