@@ -1,3 +1,4 @@
+`/newsyntax
 #include <stdlib.h>
 #include "vcc.h"
 
@@ -5,17 +6,16 @@ void bar()
 {
     int *a;
     a = (int*) malloc(sizeof(*a) * 42);
-    if (a != NULL) free(as_array(a,42));
+    if (a != NULL) free((void[42])a);
 }
 
-spec(
-void barSafe()
+
+_(ghost void barSafe()
 {
     int ^a;
-    a = spec_malloc_array<int>(42);
-    free(as_array(a,42));
-}
-)
+    a = \alloc_array<int>(42);
+    free((void[42])a);
+})
 `
 Verification of bar succeeded.
 Verification of barSafe succeeded.
