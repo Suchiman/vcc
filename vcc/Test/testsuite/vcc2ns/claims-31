@@ -1,34 +1,35 @@
+`/newsyntax
 // Authors: Mark Hillebrand, Dirk Leinenbach (with inspiration from Ernie Cohen)
 #include "vcc.h"
 
-#define stays_unchanged(o) ((o)==when_claimed(o))
+#define stays_unchanged(o) ((o)==\when_claimed(o))
 #define protects(structure,protector,expression) \
-    (wrapped(structure) && ref_cnt(structure)==1 && \
-    wrapped0((structure)->protector) && \
-    valid_claim((structure)->protector) && claims_obj(((structure)->protector),(structure)) && \
-    claims(((structure)->protector), closed(structure) && stays_unchanged(structure->protector)) && \
-    claims(((structure)->protector), (expression)))
+    (\wrapped(structure) && structure->\claim_count==1 && \
+    \wrapped0((structure)->protector) && \
+    \active_claim((structure)->protector) && \claims_object(((structure)->protector),(structure)) && \
+    \claims(((structure)->protector), structure->\consistent && stays_unchanged(structure->protector)) && \
+    \claims(((structure)->protector), (expression)))
 
-struct vcc(claimable) S {
+_(claimable) struct S {
     unsigned dummy;
-    spec(volatile claim_t protector;)
-    spec(volatile unsigned protected;)
-    invariant(closed(old(protector)) ==> unchanged(protector) && unchanged(protected))
+    _(ghost volatile \claim protector)
+    _(ghost volatile unsigned protected)
+    _(invariant (\old(protector))->\consistent ==> \unchanged(protector) && \unchanged(protected))
 };
 
 void middle(struct S *s)
-    requires(protects(s,protector,s->protected==2))
-    ensures(protects(s,protector,s->protected==1))
-    ensures(is_fresh(s->protector))
-    writes(s->protector)
+    _(requires protects(s,protector,s->protected==2))
+    _(ensures protects(s,protector,s->protected==1))
+    _(ensures \fresh(s->protector))
+    _(writes s->protector)
 {
-    atomic(s) {
-        assert(valid_claim(old(s->protector)));
-        begin_update();
-        spec(
-	  s->protected = 1;
-          s->protector = upgrade_claim(s->protector, stays_unchanged(s->protector) && s->protected==1);
-	)
+    _(atomic s) {
+        _(assert \active_claim(\old(s->protector)))
+        _(begin_update)
+        
+	  _(ghost s->protected = 1;)
+          _(ghost s->protector = \upgrade_claim({s->protector}, stays_unchanged(s->protector) && s->protected==1);)
+	
     }
 }
 `

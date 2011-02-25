@@ -1,23 +1,24 @@
+`/newsyntax
 #include "vcc.h"
-#define array_emb_unchanged(a,n) forall(unsigned _i; _i < (n); unchanged(emb((a)+_i)))
+#define array_emb_unchanged(a,n) (\forall unsigned _i; _i < (n) ==> (\unchanged(\embedding((a)+_i))))
 
 void calc(int a[32], int b[32], int c[32])
-   writes(array_range(a,32))
-   maintains(is_mutable_array(a,32))
-   ensures(array_emb_unchanged(a,32))
+   _(writes \array_range(a,32))
+   _(maintains \mutable_array(a,32))
+   _(ensures array_emb_unchanged(a,32))
    
-   maintains(is_mutable_array(b,32))
-   ensures(array_emb_unchanged(b,32))
+   _(maintains \mutable_array(b,32))
+   _(ensures array_emb_unchanged(b,32))
    
-   maintains(is_mutable_array(c,32))
-   ensures(array_emb_unchanged(c,32))
+   _(maintains \mutable_array(c,32))
+   _(ensures array_emb_unchanged(c,32))
 {
 }
 
 void longrunner(int a[32])
-   writes(array_range(a,32))
-   maintains(is_mutable_array(a,32))
-   ensures(array_emb_unchanged(a,32))
+   _(writes \array_range(a,32))
+   _(maintains \mutable_array(a,32))
+   _(ensures array_emb_unchanged(a,32))
 {
    int l1[32];
    int l2[32];

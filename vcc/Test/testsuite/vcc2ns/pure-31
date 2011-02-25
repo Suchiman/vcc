@@ -1,19 +1,20 @@
+`/newsyntax
 #include <vcc.h>
 
-ispure int foo(int *i)
-  reads(i)
-  requires(thread_local(i))
-  ensures(result == *i);
+_(pure) int foo(int *i)
+  _(reads i)
+  _(requires \thread_local(i))
+  _(ensures \result == *i);
   
 void bar(int *i)
-  writes(i)
-  requires(thread_local(i))
+  _(writes i)
+  _(requires \thread_local(i))
 {
-  int p = 1;
+  _(ghost int p = 1;)
   int j;
   *i = 0;
-  p = j && old(foo(i));
-  assert(j && old(*i) ==> p);
+  _(ghost p = j && \old(foo(i));)
+  _(assert j && \old(*i) ==> p)
 }
 `
 Verification of bar succeeded.
