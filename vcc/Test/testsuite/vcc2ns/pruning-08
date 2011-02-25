@@ -1,20 +1,21 @@
-`/a /functions:bar
+`/a /functions:bar /newsyntax
+
 #include <vcc.h>
 
-spec(bool ispure baz() ensures (result == true);)
+_(ghost bool _(pure) baz() _(ensures \result == \true))
 
-vcc(atomic_inline) int foo(spec(out int x)) {
-  spec(x = 10;)
-  assert(baz());
+_(atomic_inline) int foo(_(out int x)) {
+  _(ghost x = 10)
+  _(assert baz())
   return 1;
 };
 
 void bar(int p) {
-  spec(int i;)
+  _(ghost int i)
   int j;
-  j = p || foo(spec(out i));
-  assert(j);
-  assert(p || i == 10);
+  j = p || foo(_(out i));
+  _(assert j)
+  _(assert p || i == 10)
   
 }
 `

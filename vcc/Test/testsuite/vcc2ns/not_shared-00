@@ -1,6 +1,7 @@
+`/newsyntax
 #include <vcc2test.h>
 
-typedef struct vcc(dynamic_owns) vcc(claimable) _X {
+typedef _(dynamic_owns) _(claimable) struct _X {
   volatile int v;
   int f;
 } X;
@@ -12,11 +13,11 @@ void test1()
   if (p != NULL) {
     p->v = 1;
     p->f = 2;
-    wrap(p);
-    assert(p->v == 1); // OK, we didn't simulate other threads yet
+    _(wrap p)
+    _(assert p->v == 1) // OK, we didn't simulate other threads yet
 
-    atomic(p) {
-      assert(p->f == 2);
+    _(atomic p) {
+      _(assert p->f == 2)
     }
   }
 }
@@ -27,12 +28,12 @@ void test2()
   if (p != NULL) {
     p->v = 1;
     p->f = 2;
-    wrap(p);
+    _(wrap p)
 
     // no not_shared
 
-    atomic(p) {
-      assert(p->v == 1);
+    _(atomic p) {
+      _(assert p->v == 1)
     }
   }
 }
@@ -44,11 +45,11 @@ void test3()
   if (p != NULL) {
     p->v = 1;
     p->f = 2;
-    wrap(p);
-    assert(not_shared(p));
+    _(wrap p)
+    _(assert \not_shared(p))
 
-    atomic(p) {
-      assert(p->v == 1);
+    _(atomic p) {
+      _(assert p->v == 1)
     }
   }
 }
@@ -60,17 +61,17 @@ void test4()
   if (p != NULL) {
     p->v = 1;
     p->f = 2;
-    wrap(p);
-    assert(not_shared(p));
+    _(wrap p)
+    _(assert \not_shared(p))
 
-    atomic(p) {
-      assert(p->v == 1);
+    _(atomic p) {
+      _(assert p->v == 1)
       p->v = 12;
     }
-    assert(not_shared(p));
+    _(assert \not_shared(p))
 
-    atomic(p) {
-      assert(p->v == 12);
+    _(atomic p) {
+      _(assert p->v == 12)
     }
   }
 }
@@ -82,18 +83,18 @@ void test5()
   if (p != NULL) {
     p->v = 1;
     p->f = 2;
-    wrap(p);
-    assert(not_shared(p));
+    _(wrap p)
+    _(assert \not_shared(p))
 
-    atomic(p) {
-      assert(p->v == 1);
+    _(atomic p) {
+      _(assert p->v == 1)
       p->v = 12;
     }
 
     // no not_shared, error
 
-    atomic(p) {
-      assert(p->v == 12);
+    _(atomic p) {
+      _(assert p->v == 12)
     }
   }
 }
@@ -101,16 +102,16 @@ void test5()
 void test6()
 {
   X *p = malloc(sizeof(*p));
-  spec(claim_t c;)
+  _(ghost \claim c)
 
   if (p != NULL) {
     p->v = 1;
     p->f = 2;
-    wrap(p);
+    _(wrap p)
 
-    spec( c = claim(p, true); )
+     _(ghost c = \make_claim({p}, \true);) 
 
-    assert(not_shared(p)); // error, p has claims
+    _(assert \not_shared(p)) // error, p has claims
   }
 }
 
@@ -118,17 +119,17 @@ void test7()
 {
   X *p = malloc(sizeof(*p));
   X *q = malloc(sizeof(*q));
-  spec(claim_t c;)
+  _(ghost \claim c)
 
   if (p != NULL && q != NULL) {
     p->v = 1;
     p->f = 2;
-    wrap(p);
+    _(wrap p)
 
-    set_owns(q, set_singleton(p));
-    wrap(q);
+    _(ghost q->\owns =  {p});
+    _(wrap q)
 
-    assert(not_shared(p)); // error, p is nested
+    _(assert \not_shared(p)) // error, p is nested
   }
 }
 
@@ -136,31 +137,31 @@ void test8()
 {
   X *p = malloc(sizeof(*p));
   X *q = malloc(sizeof(*q));
-  spec(claim_t c;)
+  _(ghost \claim c)
 
   if (p != NULL && q != NULL) {
     p->v = 1;
     p->f = 2;
-    wrap(p);
+    _(wrap p)
 
-    set_owns(q, set_singleton(p));
-    wrap(q);
+    _(ghost q->\owns =  {p});
+    _(wrap q)
 
-    assert(not_shared(q));
+    _(assert \not_shared(q))
   }
 }
 
 `
 Verification of test1 succeeded.
 Verification of test2 failed.
-testcase(35,16) : error VC9500: Assertion 'p->v == 1' did not verify.
+testcase(35,30) : error VC9500: Assertion 'p->v == 1' did not verify.
 Verification of test3 succeeded.
 Verification of test4 succeeded.
 Verification of test5 failed.
-testcase(96,16) : error VC9500: Assertion 'p->v == 12' did not verify.
+testcase(96,30) : error VC9500: Assertion 'p->v == 12' did not verify.
 Verification of test6 failed.
-testcase(113,14) : error VC9500: Assertion '_vcc_not_shared(p)' did not verify.
+testcase(113,28) : error VC9500: Assertion '\not_shared(p)' did not verify.
 Verification of test7 failed.
-testcase(131,14) : error VC9500: Assertion '_vcc_not_shared(p)' did not verify.
+testcase(131,28) : error VC9500: Assertion '\not_shared(p)' did not verify.
 Verification of test8 succeeded.
 `

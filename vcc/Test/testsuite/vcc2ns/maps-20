@@ -1,20 +1,21 @@
+`/newsyntax
 #include "vcc.h"
 
 struct T {
     int dummy;
-    spec(bool Y[int];)
+    _(ghost bool Y[int])
 };
 
-spec(ispure bool takes_quantified_variable(int l)
-    reads(set_universe())
-    returns(true);)
+_(ghost _(pure) bool takes_quantified_variable(int l)
+    _(reads \universe())
+    _(returns \true))
 
 void foo(struct T *t)
-    requires(wrapped(t))
+    _(requires \wrapped(t))
 {
-    spec(bool Z[int];)
-    spec(bool Y[int];)
-    spec(Z = lambda(int l; true; t->Y[l] || takes_quantified_variable(l));)
+    _(ghost bool Z[int])
+    _(ghost bool Y[int])
+    _(ghost Z = (\lambda int l; (t->Y[l] || takes_quantified_variable(l))))
 }
 `
 Verification of foo succeeded.

@@ -1,8 +1,9 @@
+`/newsyntax
 #include <vcc2test.h>
 
 void donothing_nonpure();
 
-ispure
+_(pure)
 void donothing_pure()
 {
   int x = 0;
@@ -14,25 +15,25 @@ void donothing_pure()
 void t1(int *x)
 {
   donothing_pure();
-  assert(old(emb(x)) == emb(x));
+  _(assert \old(\embedding(x)) == \embedding(x))
 }
 
 void t1_fail(int *x)
 {
   donothing_nonpure();
-  assert(old(emb(x)) == emb(x));
+  _(assert \old(\embedding(x)) == \embedding(x))
 }
 
 void t1_failAlso(int *x)
 {
   donothing_nonpure();
-  assert(old(emb(x)) != emb(x));
+  _(assert \old(\embedding(x)) != \embedding(x))
 }
 `
 Verification of donothing_pure succeeded.
 Verification of t1 succeeded.
 Verification of t1_fail failed.
-testcase(23,12) : error VC9500: Assertion '__old(_vcc_emb(x)) == _vcc_emb(x)' did not verify.
+testcase(23,26) : error VC9500: Assertion '\old(\embedding(x)) == \embedding(x)' did not verify.
 Verification of t1_failAlso failed.
-testcase(29,12) : error VC9500: Assertion '__old(_vcc_emb(x)) != _vcc_emb(x)' did not verify.
+testcase(29,26) : error VC9500: Assertion '\old(\embedding(x)) != \embedding(x)' did not verify.
 `

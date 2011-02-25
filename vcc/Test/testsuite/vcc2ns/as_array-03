@@ -1,40 +1,41 @@
+`/newsyntax
 #include "vcc.h"
 
-spec(typedef unsigned map_t[unsigned];)
+_(ghost typedef unsigned map_t[unsigned])
 
-spec(ispure map_t upd(map_t m,unsigned y)
-    returns(lambda(unsigned x; true; x==y ? 0 : m[x]));)
+_(ghost _(pure) map_t upd(map_t m,unsigned y)
+    _(returns \lambda unsigned x; (x==y ? 0 : m[x])))
 
-spec(ispure map_t abs(unsigned *m, unsigned z)
-    reads(set_universe())
-    returns(lambda(unsigned x; true; x < z ? m[x] : 0));)
+_(ghost _(pure) map_t abs(unsigned *m, unsigned z)
+    _(reads \universe())
+    _(returns \lambda unsigned x; (x < z ? m[x] : 0)))
 
 void trg(unsigned *m, unsigned z)
-    requires(z)
-    requires(typed((unsigned[z])m))
-    writes(m+0)
+    _(requires z)
+    _(requires ((unsigned[z])m)->\valid)
+    _(writes m+0)
 {
     m[0] = 0;
-    assert(abs(m,z)==upd(old(abs(m,z)),0));
+    _(assert abs(m,z)==upd(\old(abs(m,z)),0))
 }
 
-spec(typedef struct vcc(record) x { map_t m; } rec_t;)
+_(ghost typedef _(record) struct x { map_t m; } rec_t)
 
-spec(ispure rec_t rec_upd(rec_t r,unsigned y)
-    returns(r / { .m = lambda(unsigned x; true; x==y ? 0 : r.m[x]) });)
+_(ghost _(pure) rec_t rec_upd(rec_t r,unsigned y)
+    _(returns r / { .m = \lambda unsigned x; (x==y ? 0 : r.m[x]) }))
 
-spec(ispure rec_t rec_abs(unsigned *m, unsigned z)
-    reads(set_universe())
-    returns((rec_t) { .m = lambda(unsigned x; true; x < z ? m[x] : 0) });)
+_(ghost _(pure) rec_t rec_abs(unsigned *m, unsigned z)
+    _(reads \universe())
+    _(returns (rec_t) { .m = \lambda unsigned x; (x < z ? m[x] : 0) }))
 
 void trg2(unsigned *m, unsigned z)
-    requires(z)
-    requires(typed((unsigned[z])m))
-    writes(m+0)
+    _(requires z)
+    _(requires ((unsigned[z])m)->\valid)
+    _(writes m+0)
 {
     m[0] = 0;
     //assert(rec_abs(m,z).m==rec_upd(old(rec_abs(m,z)),0).m);
-    assert(rec_abs(m,z)==rec_upd(old(rec_abs(m,z)),0));
+    _(assert rec_abs(m,z)==rec_upd(\old(rec_abs(m,z)),0))
 }
 `
 Verification of trg succeeded.

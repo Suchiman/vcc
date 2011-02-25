@@ -1,11 +1,12 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S { int d; };
 
 void foo() {
-spec(struct S X[unsigned];)
-spec(X[0].d = 42;)
+_(ghost struct S X[unsigned])
+_(ghost X[0].d = 42)
 }
 `
-testcase(7,17) : error VC0000: Illegal update of map 'X'.
+testcase(7,23) : error VC0000: Illegal update of map 'X'.
 `

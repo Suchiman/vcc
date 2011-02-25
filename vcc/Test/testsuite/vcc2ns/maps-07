@@ -1,16 +1,15 @@
-
-
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT64;
 
 typedef bool BITMAP[UINT64];
 
-spec(
-ispure BITMAP ToBitMap(UINT64 n);
-)
 
-axiom(forall(UINT64 x; forall(UINT64 i; i < 64 ==> !ToBitMap(x)) ==> x == 0));
+_(ghost _(pure) BITMAP ToBitMap(UINT64 n);)
+
+
+_(axiom \forall UINT64 x; (\forall UINT64 i; i < 64 ==> !ToBitMap(x)) ==> x == 0)
 `
-testcase(13,62) : error VC0000: Operator '!' cannot be applied to operand of type 'System.Diagnostics.Contracts.CodeContract.Map<ulong, bool>'.
+testcase(11,71) : error VC0000: Operator '!' cannot be applied to operand of type 'System.Diagnostics.Contracts.CodeContract.Map<ulong, bool>'.
 `

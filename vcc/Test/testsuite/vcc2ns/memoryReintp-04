@@ -1,97 +1,98 @@
+`/newsyntax
 #include <vcc2test.h>
 
 void foo(int *arr)
-  requires(is_object_root(as_array(arr, 100)))
-  writes(extent(as_array(arr, 100)))
+  _(requires \object_root((void[100])arr))
+  _(writes \extent((void[100])arr))
 {
-  split_array(as_array(arr, 100), 50);
-  join_arrays(as_array(arr, 50), as_array(arr+50, 50));
+  _(split_array (void[100])arr, 50)
+  _(join_arrays (void[50])arr, (void[50])(arr+50))
 }
 
 void foo2(int *arr1, int *arr2)
-  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
-  requires(arr1 + 100 == arr2)
-  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+  _(requires \object_root((void[100])arr1) && \object_root((void[32])arr2))
+  _(requires arr1 + 100 == arr2)
+  _(writes \extent((void[100])arr1), \extent((void[32])arr2))
 {
-  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+  _(join_arrays (void[100])arr1, (void[32])arr2)
 }
 
 void foo2Fail1(int *arr1, int *arr2)
-  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
-  requires(arr1 + 100 == arr2)
-  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+  _(requires \object_root((void[100])arr1) && \object_root((void[32])arr2))
+  _(requires arr1 + 100 == arr2)
+  _(writes \extent((void[100])arr1), \extent((void[32])arr2))
 {
-  join_arrays(as_array(arr1, 99), as_array(arr2, 32));
+  _(join_arrays (void[99])arr1, (void[32])arr2)
 }
 
 void foo2Fail2(int *arr1, int *arr2)
-  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
-  requires(arr1 + 100 == arr2)
-  writes(extent(as_array(arr2, 32)), extent(as_array(arr1, 100)))
+  _(requires \object_root((void[100])arr1) && \object_root((void[32])arr2))
+  _(requires arr1 + 100 == arr2)
+  _(writes \extent((void[32])arr2), \extent((void[100])arr1))
 {
-  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+  _(join_arrays (void[100])arr1, (void[32])arr2)
 }
 
 void foo2Fail3(int *arr1, __int64 *arr2)
-  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
-  requires(arr1 + 100 == arr2)
-  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+  _(requires \object_root((void[100])arr1) && \object_root((void[32])arr2))
+  _(requires arr1 + 100 == arr2)
+  _(writes \extent((void[100])arr1), \extent((void[32])arr2))
 {
-  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+  _(join_arrays (void[100])arr1, (void[32])arr2)
 }
 
 void foo2Fail4(int *arr1, int *arr2)
-  requires(is_object_root(as_array(arr2, 32)))
-  requires(arr1 + 100 == arr2)
-  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+  _(requires \object_root((void[32])arr2))
+  _(requires arr1 + 100 == arr2)
+  _(writes \extent((void[100])arr1), \extent((void[32])arr2))
 {
-  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+  _(join_arrays (void[100])arr1, (void[32])arr2)
 }
 
 void foo2Fail5(int *arr1, int *arr2)
-  requires(is_object_root(as_array(arr1, 100)))
-  requires(arr1 + 100 == arr2)
-  writes(extent(as_array(arr1, 100)), extent(as_array(arr2, 32)))
+  _(requires \object_root((void[100])arr1))
+  _(requires arr1 + 100 == arr2)
+  _(writes \extent((void[100])arr1), \extent((void[32])arr2))
 {
-  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+  _(join_arrays (void[100])arr1, (void[32])arr2)
 }
 
 void foo2Fail6(int *arr1, int *arr2)
-  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
-  requires(arr1 + 100 == arr2)
-  writes(extent(as_array(arr1, 100)))
+  _(requires \object_root((void[100])arr1) && \object_root((void[32])arr2))
+  _(requires arr1 + 100 == arr2)
+  _(writes \extent((void[100])arr1))
 {
-  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+  _(join_arrays (void[100])arr1, (void[32])arr2)
 }
 
 
 void foo2Fail7(int *arr1, int *arr2)
-  requires(is_object_root(as_array(arr1, 100)) && is_object_root(as_array(arr2, 32)))
-  requires(arr1 + 100 == arr2)
-  writes(extent(as_array(arr2, 32)))
+  _(requires \object_root((void[100])arr1) && \object_root((void[32])arr2))
+  _(requires arr1 + 100 == arr2)
+  _(writes \extent((void[32])arr2))
 {
-  join_arrays(as_array(arr1, 100), as_array(arr2, 32));
+  _(join_arrays (void[100])arr1, (void[32])arr2)
 }
 
 `
 Verification of foo succeeded.
 Verification of foo2 succeeded.
 Verification of foo2Fail1 failed.
-testcase(24,3) : error VC8510: Assertion '_vcc_extent(arr1) is writable in call to _vcc_join_arrays(_vcc_as_array(arr1, 99), _vcc_as_array(arr2, 32))' did not verify.
-testcase(24,3) : error VC9502: Call '_vcc_join_arrays(_vcc_as_array(arr1, 99), _vcc_as_array(arr2, 32))' did not verify.
+testcase(24,19) : error VC8510: Assertion '\extent(arr1) is writable in call to join_arrays (void[99])arr1, (void[32])arr2' did not verify.
+testcase(24,19) : error VC9502: Call 'join_arrays (void[99])arr1, (void[32])arr2' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the first array to join is not embedded inside of another object'.
 Verification of foo2Fail2 succeeded.
 Verification of foo2Fail3 failed.
-testcase(40,3) : error VC9502: Call '_vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+testcase(40,19) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'types of arrays to join agree'.
 Verification of foo2Fail4 failed.
-testcase(48,3) : error VC9502: Call '_vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+testcase(48,19) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the first array to join is not embedded inside of another object'.
 Verification of foo2Fail5 failed.
-testcase(56,3) : error VC9502: Call '_vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+testcase(56,19) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the second array to join is not embedded inside of another object'.
 Verification of foo2Fail6 failed.
-testcase(64,3) : error VC8510: Assertion '_vcc_extent(arr2) is writable in call to _vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+testcase(64,19) : error VC8510: Assertion '\extent(arr2) is writable in call to join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 Verification of foo2Fail7 failed.
-testcase(73,3) : error VC8510: Assertion '_vcc_extent(arr1) is writable in call to _vcc_join_arrays(_vcc_as_array(arr1, 100), _vcc_as_array(arr2, 32))' did not verify.
+testcase(73,19) : error VC8510: Assertion '\extent(arr1) is writable in call to join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 `

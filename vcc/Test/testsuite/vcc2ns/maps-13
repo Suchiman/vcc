@@ -1,10 +1,10 @@
-
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   int a;
-  spec(bool M[unsigned __int64];)
-  invariant(M == lambda(unsigned __int64 x; x < 100; is((struct S *)x, struct S)))
+  _(ghost bool M[unsigned __int64])
+  _(invariant M == \lambda unsigned __int64 x; x < 100 ==> ((struct S *)x \is struct S))
 };
 
 void foo(struct S *s) {}

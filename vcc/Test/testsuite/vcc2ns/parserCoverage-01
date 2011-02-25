@@ -1,12 +1,12 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   int a;
-  invariant(forall(int x; { } x == a ==> x == a))
+  _(invariant \forall int x; { } x == a ==> x == a)
 };
 
 void foo(struct S *s) { }
 `
-testcase(5,33) : error VC0000: Invalid expression term '}'.
-testcase(5,33) : error VC0000: ) expected.
+testcase(5,46) : error VC0000: Invalid expression term '}'.
 `
