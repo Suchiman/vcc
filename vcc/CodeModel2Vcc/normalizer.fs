@@ -881,6 +881,7 @@ namespace Microsoft.Research.Vcc
                                     "\\active_claim",        "_vcc_valid_claim"
                                     "\\atomic_object",       "_vcc_is_atomic_obj"
                                     "\\universe",            "_vcc_set_universe" 
+                                    "\\disjoint",            "_vcc_set_disjoint" 
                                     "\\by_claim_wrapper",    "_vcc_by_claim"
                                     "\\alloc",               "_vcc_spec_alloc"
                                     "\\alloc_array",         "_vcc_spec_alloc_array"
