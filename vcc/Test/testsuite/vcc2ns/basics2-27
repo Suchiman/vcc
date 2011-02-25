@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo() { 
   int *a = /*(int*)*/ 3;
   int *b = 4;
-  assert(a != b);          
+  _(assert a != b)          
 }
 `
 Verification of foo succeeded.

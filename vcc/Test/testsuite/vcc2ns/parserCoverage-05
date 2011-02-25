@@ -1,4 +1,4 @@
-
+`/newsyntax
 #include<vcc.h>
 
 void foo() { }

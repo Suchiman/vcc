@@ -1,3 +1,4 @@
+`/newsyntax
 //-----------------------------------------------------------------------------
 // Parameterpassing
 //
@@ -12,19 +13,19 @@ struct T{ struct S* s; int c;};
 
  
 void LowerLevel(int* x)
-	maintains(mutable(x))
-	requires(*x < 1000)
-	ensures(*x == old(*x)+1)
-	writes(x)
+	_(maintains \mutable(x))
+	_(requires *x < 1000)
+	_(ensures *x == \old(*x)+1)
+	_(writes x)
 {
 	*x=*x+1;
 }
 
 void MiddleLevel(struct S* s)
-	maintains(mutable(s))
-	requires(s->a < 1000)
-	ensures(s->a == old(s->a)+1)
-	writes(&s->a)
+	_(maintains \mutable(s))
+	_(requires s->a < 1000)
+	_(ensures s->a == \old(s->a)+1)
+	_(writes &s->a)
 {	LowerLevel(&s->a);
 }
 
@@ -32,14 +33,14 @@ void UpperLevel(struct T* t)
 	// the reason we need mutable(t) here is that otherwise
 	// it could be contained and call to MiddleLevel(t->s) could change location &t->s
 	// Same goes for t->s
-	requires(mutable(t) && mutable(t->s) && t->s->a < 1000)
-	writes(&t->s->a)
+	_(requires \mutable(t) && \mutable(t->s) && t->s->a < 1000)
+	_(writes &t->s->a)
 
 {	MiddleLevel(t->s);
 
-	assert(t->s == old(t->s));
-	assert(t->s->a == old(t->s->a)+1);
-	assert(1);
+	_(assert t->s == \old(t->s))
+	_(assert t->s->a == \old(t->s->a)+1)
+	_(assert 1)
 }
 
 

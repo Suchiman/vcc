@@ -1,19 +1,20 @@
+`/newsyntax
 #include "vcc2test.h"
 
 
 void setk3(int *p, size_t sz)
-  requires(is_thread_local_array(p, sz))
-  writes(array_range(p, sz))
+  _(requires \thread_local_array(p, sz))
+  _(writes \array_range(p, sz))
 {
   size_t i;
   int *x;
 
   i = 0;
   while (i < sz) 
-    writes(array_range(p, sz))
-    invariant (i >= 0)
+    _(writes \array_range(p, sz))
+    _(invariant i >= 0)
   {
-    p[i] = unchecked((int)i);
+    p[i] = _(unchecked)((int)i);
     i = i + 1;
     if(0) free(x);
   }

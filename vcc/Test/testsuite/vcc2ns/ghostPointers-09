@@ -1,25 +1,26 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   int a;
-  spec(int b;)
+  _(ghost int b)
 };
 
 struct T {
   struct S s;
-  spec(struct S r;)
+  _(ghost struct S r)
 };
 
 void foo(struct T *p) {
-  spec(int *i1 = &(p->s.b);)
-  spec(int *i1 = &(p->r.a);)
+  _(ghost int *i1 = &(p->s.b))
+  _(ghost int *i1 = &(p->r.a))
 }
 
 void bar(struct T ^p) {
-  spec(int *i1 = &(p->s.a);)
+  _(ghost int *i1 = &(p->s.a))
 }
 `
-testcase(14,29) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
-testcase(15,29) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
-testcase(19,29) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
+testcase(14,35) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
+testcase(15,35) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
+testcase(19,35) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
 `

@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -9,17 +10,17 @@ void foo() {
   struct S s;
   s.a = 0;
   s.b = 0;
-  assert(extent_zero(&s));
+  _(assert \extent_zero(&s))
 }
 
 void bar() {
   int i = 0;
-  assert(extent_zero(&i));
+  _(assert \extent_zero(&i))
 }
 
 void baz() {
   int a[4] = { 0,0,0,0 };
-  assert(extent_zero(as_array(a, 4)));
+  _(assert \extent_zero((void[4])a))
 }
 
 void qux() {
@@ -32,7 +33,7 @@ void qux() {
   a[2].b = 0;
   a[3].a = 0;
   a[3].b = 0;
-  assert(extent_zero(as_array(a,4)));
+  _(assert \extent_zero((void[4])a))
 }
 `
 Verification of foo succeeded.

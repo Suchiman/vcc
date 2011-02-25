@@ -1,6 +1,7 @@
+`/newsyntax
 #include "vcc.h"
 
-void foo(obj_t O) requires(is_claimable(O)) { }    
+_(ghost void foo(\object O) _(requires \claimable(O)) { }    )
 
 `
 Verification of foo succeeded.

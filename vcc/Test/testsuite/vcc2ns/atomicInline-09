@@ -1,10 +1,11 @@
+`/newsyntax
 #include "vcc.h"
 
-vcc(atomic_inline)
+_(atomic_inline)
 long _InterlockedIncrement(long volatile *target)
 #ifdef VERIFY
 {
-    unchecked(*target++);
+    _(unchecked)(*target++);
     // Also crashes: *target++ and with --
     return *target;
 }
@@ -17,13 +18,13 @@ struct S {
 
 void foo() {
     struct S s;
-    spec(claim_t c;)
-    wrap(&s);
-    assert(not_shared(&s));
-    atomic (&s) {
+    _(ghost \claim c)
+    _(wrap &s)
+    _(assert \not_shared(&s))
+    _(atomic &s) {
         _InterlockedIncrement(&s.a);
     }
-    unwrap(&s);
+    _(unwrap &s)
 }
 `
 Verification of foo failed.

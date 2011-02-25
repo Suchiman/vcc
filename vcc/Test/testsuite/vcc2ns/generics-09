@@ -1,19 +1,19 @@
-
+`/newsyntax
 #include <vcc.h>
 
 struct S { int a; };
 struct T { 
   int b;
-  spec(struct S *p;)
+  _(ghost struct S *p)
 };
 
-spec(template<typename T> T *bar();)
+_(ghost template<typename T> T *bar())
 
 void foo() 
-  writes(set_empty())
+  _(writes {})
 {
   struct T t;
-  spec(t.p = bar<struct S>();)
+  _(ghost t.p = bar<struct S>())
 }
 `
 Verification of foo succeeded.

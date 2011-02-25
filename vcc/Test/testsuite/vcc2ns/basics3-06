@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 // the following used to seen Z3 into a loop
 
 void loops(bool *a, unsigned N, unsigned n)
-  requires(wrapped(as_array(a,N)))
+  _(requires \wrapped((void[N])a))
 {
   unsigned j, k;
   for (j=0, k = 0; j<N; j++) k++;

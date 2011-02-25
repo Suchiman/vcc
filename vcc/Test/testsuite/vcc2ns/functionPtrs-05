@@ -1,20 +1,21 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef int (*TF)(int x)
-  requires(x > 1)
-  ensures(result > 0);
+  _(requires x > 1)
+  _(ensures \result > 0);
 
 int bar(int x)
-  requires(x > 0)
-  ensures(result > 1);
+  _(requires x > 0)
+  _(ensures \result > 1);
 
 void foo() {
   TF p = &bar;
   int res = p(3);
-  assert(res > 1);
+  _(assert res > 1)
 }
 `
 Verification of foo failed.
-testcase(14,12) : error VC9500: Assertion 'res > 1' did not verify.
+testcase(14,26) : error VC9500: Assertion 'res > 1' did not verify.
 Verification of $fnptr_bar_to_fnptr#1 succeeded.
 `

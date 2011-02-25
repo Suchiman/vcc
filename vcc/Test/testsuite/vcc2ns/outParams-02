@@ -1,19 +1,20 @@
+`/newsyntax
 #include <vcc.h>
 
-int foo(int i spec(out int o)) 
-  ensures(o == i)
-  ensures(result == 6)
+int foo(int i _(out int o)) 
+  _(ensures o == i)
+  _(ensures \result == 6)
 {
-  spec(o = i;)
+  _(ghost o = i)
   return 6;
 }		
 
 void bar() {
-  spec(int p;)
+  _(ghost int p)
   int r;
-  r = foo(5 spec(out p));
-  assert(p == 5);
-  assert(r == 6);
+  r = foo(5 _(out p));
+  _(assert p == 5)
+  _(assert r == 6)
 }
 
 `

@@ -1,13 +1,14 @@
+`/newsyntax
 #include "vcc.h"
 
-spec(struct vcc(record) Output {
+_(ghost _(record) struct Output {
     unsigned out;
     unsigned x;
-};)
+})
 
-void foo(spec(struct Output o))
-    requires(o.out==5)
-    requires(o.x==5)
+void foo(_(ghost struct Output o))
+    _(requires o.out==5)
+    _(requires o.x==5)
 {}
 `
 Verification of foo succeeded.

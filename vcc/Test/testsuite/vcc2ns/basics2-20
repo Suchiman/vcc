@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -14,7 +15,7 @@ void bar(struct S s) {
 }
 
 void baz(struct S *s) 
-  requires(mutable(s))
+  _(requires \mutable(s))
 {
   __int64 y;
   y = s->a;

@@ -1,10 +1,11 @@
+`/newsyntax
 #include <vcc.h>
 
 int foo(int i) 
-  ensures(result == unchecked(-i))
+  _(ensures \result == _(unchecked)(-i))
 {
-  bv_lemma( forall( int a; unchecked(-a) == unchecked(~a + 1) ) );
-  return unchecked(~i + 1);
+  _(assert {:bv}  \forall  int a; _(unchecked)(-a) == _(unchecked)(~a + 1))
+  return _(unchecked)(~i + 1);
 }
 `
 Verification of foo succeeded.

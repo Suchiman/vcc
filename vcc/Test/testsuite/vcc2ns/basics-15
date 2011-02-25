@@ -1,24 +1,24 @@
-
+`/newsyntax
 #include <vcc.h>
 
 void foo(bool a, bool b) 
-  requires(a && !b)
+  _(requires a && !b)
 {
-  assert(b <== b);
-  assert(a <== b);
-  assert(a <== a);
-  assert(!(b <== a));
-  assert(b <== b <== a);
-  assert(a <== b <== a);
-  assert(b <== a <== b);
-  assert(a <== a <== b);
-  assert(!(b <== a <== a));
-  assert(a <== a <== a);
-  assert(a <== b <== b);
-  assert(b <== b <== b);
-  assert(!(a <== a ==> b));
-  assert(!((a <== a) ==> b));
-  assert(a <== (a ==> b));
+  _(assert b <== b)
+  _(assert a <== b)
+  _(assert a <== a)
+  _(assert !(b <== a))
+  _(assert b <== b <== a)
+  _(assert a <== b <== a)
+  _(assert b <== a <== b)
+  _(assert a <== a <== b)
+  _(assert !(b <== a <== a))
+  _(assert a <== a <== a)
+  _(assert a <== b <== b)
+  _(assert b <== b <== b)
+  _(assert !(a <== a ==> b))
+  _(assert !((a <== a) ==> b))
+  _(assert a <== (a ==> b))
 }
 `
 Verification of foo succeeded.

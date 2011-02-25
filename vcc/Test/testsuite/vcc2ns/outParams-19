@@ -1,10 +1,10 @@
-
+`/newsyntax
 #include <vcc.h>
 
-void foo(spec(int out)) 
-  requires(out == 5)
+void foo(_(ghost int out)) 
+  _(requires out == 5)
 {
-  assert(out == 5);
+  _(assert out == 5)
 }
 `
 Verification of foo succeeded.

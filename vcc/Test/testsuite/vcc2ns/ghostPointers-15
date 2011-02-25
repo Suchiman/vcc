@@ -1,6 +1,7 @@
+`/newsyntax
 #include <vcc.h>
 
-spec(int foo()
+_(ghost int foo()
 {
   int ^a;
   if (a == (void *)0) { 

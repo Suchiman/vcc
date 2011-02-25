@@ -1,6 +1,7 @@
+`/newsyntax
 #include "vcc.h"
 
-ispure
+_(pure)
 int foo()
 {
   int x;
@@ -11,7 +12,7 @@ void bar()
 {
   int t1 = foo();
   int t2 = foo();
-  assert(t1 == t2);
+  _(assert t1 == t2)
 }
 `
 Verification of foo succeeded.

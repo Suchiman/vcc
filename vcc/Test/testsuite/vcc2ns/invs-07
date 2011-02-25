@@ -1,22 +1,23 @@
+`/newsyntax
 #include "vcc.h"
 struct T;
-spec(ispure bool not_inv(obj_t o)
-    reads(set_universe())
-    returns(!inv(o));)
+_(ghost _(pure) bool not_inv(\object o)
+    _(reads \universe())
+    _(returns !\inv(o)))
 
-spec(ispure bool _inv(obj_t o)
-    reads(set_universe())
-    returns(inv(o));)
+_(ghost _(pure) bool _inv(\object o)
+    _(reads \universe())
+    _(returns \inv(o)))
 
 struct T {
     int a;
-    invariant(not_inv(this))
+    _(invariant not_inv(\this))
 };
 
 struct S {
     int a;
-    invariant(_inv(this))
+    _(invariant _inv(\this))
 };
 `
-testcase(5,27) : error VC9712: Use of 'inv(...)' or 'inv2(...)' with negative polarity.
+testcase(5,30) : error VC9712: Use of 'inv(...)' or 'inv2(...)' with negative polarity.
 `

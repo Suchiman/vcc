@@ -1,10 +1,11 @@
+`/newsyntax
 #include "vcc.h"
-spec(ispure bool foo(unsigned n);)
-spec(ispure bool bar(unsigned *map);)
-axiom(forall(unsigned *p; { bar(p) } foo(*p)));
+_(ghost _(pure) bool foo(unsigned n))
+_(ghost _(pure) bool bar(unsigned *map))
+_(axiom \forall unsigned *p; { bar(p) } foo(*p))
 
 void f() {
-  spec(foo(5);)
+  _(ghost foo(5))
  }
 `
 Verification of f succeeded.

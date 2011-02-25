@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
@@ -5,48 +6,48 @@ struct A {
 };
 
 void foo4(struct A *a)
-  requires(wrapped(a))
-  writes(a)
+  _(requires \wrapped(a))
+  _(writes a)
 {
   int x = 0;
   while(x++ < 3) 
-    invariant(x <= 3)
-    invariant(wrapped(a))
+    _(invariant x <= 3)
+    _(invariant \wrapped(a))
   {
-    unwrap(a);
+    _(unwrap a)
     a->x = 7;
-    wrap(a);
+    _(wrap a)
   }
 }
 
 void foo5(struct A *a)
-  requires(wrapped(a))
-  writes(a)
+  _(requires \wrapped(a))
+  _(writes a)
 {
   int x = 0;
   while(x++ < 3) 
-    writes(set_empty())
-    invariant(x <= 3)
-    invariant(wrapped(a))
+    _(writes {})
+    _(invariant x <= 3)
+    _(invariant \wrapped(a))
   {
-    unwrap(a);
+    _(unwrap a)
     a->x = 7;
-    wrap(a);
+    _(wrap a)
   }
 }
 
 void foo6(struct A *a)
-  requires(wrapped(a))
+  _(requires \wrapped(a))
 {
   int x = 0;
   while(x++ < 3) 
-    writes(a)
-    invariant(x <= 3)
-    invariant(wrapped(a))
+    _(writes a)
+    _(invariant x <= 3)
+    _(invariant \wrapped(a))
   {
-    unwrap(a);
+    _(unwrap a)
     a->x = 7;
-    wrap(a);
+    _(wrap a)
   }
 }
 `

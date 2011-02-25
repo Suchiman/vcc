@@ -1,3 +1,4 @@
+`/newsyntax
 #include <stdlib.h>
 #include <vcc.h>
 
@@ -10,15 +11,15 @@ struct B {
 };
 
 void foo(struct B *b)
-  requires(extent_mutable(b))
+  _(requires \extent_mutable(b))
 {
-  assert(mutable(b));
-  assert(mutable(&b->a1));
-  assert(mutable(&b->a2));
+  _(assert \mutable(b))
+  _(assert \mutable(&b->a1))
+  _(assert \mutable(&b->a2))
 }
 
 struct B *alloc_B()
-  ensures(result == NULL || (extent_is_fresh(result) && extent_mutable(result)))
+  _(ensures \result == NULL || (\extent_fresh(\result) && \extent_mutable(\result)))
 {
   return (struct B*)malloc(sizeof(struct B));
 }
@@ -40,7 +41,7 @@ struct C {
 };
 
 struct C *alloc_C()
-  ensures(result == NULL || (extent_is_fresh(result) && extent_mutable(result)))
+  _(ensures \result == NULL || (\extent_fresh(\result) && \extent_mutable(\result)))
 {
   return (struct C*)malloc(sizeof(struct C));
 }
@@ -56,20 +57,20 @@ void baz_C()
 void fail()
 {
   struct B *b;
-  assert(mutable(b) ==> extent_mutable(b));
+  _(assert \mutable(b) ==> \extent_mutable(b))
 }
 
 
 void ok()
 {
   struct A *b;
-  assert(mutable(b) ==> extent_mutable(b));
+  _(assert \mutable(b) ==> \extent_mutable(b))
 }
 
 void ok2(struct B *b)
-  writes(extent(b))
+  _(writes \extent(b))
 {
-  assert(extent_mutable(b));
+  _(assert \extent_mutable(b))
 }
 
 `

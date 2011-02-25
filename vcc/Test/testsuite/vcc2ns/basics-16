@@ -1,9 +1,9 @@
-
+`/newsyntax
 #include <vcc.h>
 
 void foo() {
-  assert(forall(int i; i != 0 ==> forall(int i; i != 0)));
+  _(assert \forall int i; i != 0 ==> \forall int i; i != 0)
 }
 `
-testcase(5,48) : error VC9675: Quantified variable 'i' clashes with earlier declaration
+testcase(4,60) : error VC9675: Quantified variable 'i' clashes with earlier declaration
 `

@@ -1,12 +1,13 @@
+`/newsyntax
 #include "vcc.h"
 struct S {
     int a;
-    spec(int b;)
+    _(ghost int b)
 };
 
 void foo() {
     struct S s;
-    spec(unchecked(s.b++);)
+    _(ghost _(unchecked)(s.b++))
 }
 `
 Verification of foo succeeded.

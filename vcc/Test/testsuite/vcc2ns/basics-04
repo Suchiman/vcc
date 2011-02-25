@@ -1,13 +1,14 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int64 uint64;
 
 void testme(uint64* p)
-  requires(typed(p))
-  requires(thread_local(p))
-  requires(mutable((uint64*)(*p)))
-  requires(p != (uint64 *)(*p))
-  writes((uint64 *)*p)
+  _(requires p->\valid)
+  _(requires \thread_local(p))
+  _(requires \mutable((uint64*)(*p)))
+  _(requires p != (uint64 *)(*p))
+  _(writes (uint64 *)*p)
 {
 
     *((uint64*)(*p)) = 5;

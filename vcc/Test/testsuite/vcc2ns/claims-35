@@ -1,11 +1,12 @@
+`/newsyntax
 #include <vcc.h>
 
-struct vcc(claimable) S { int a; };
+_(claimable) struct S { int a; };
 
 void foo(struct S *s1, struct S *s2)
-  writes(s1, s2)
+  _(writes s1, s2)
 {
-  claimp(c = claim(s1, s2, 1);)
+  _(ghost \claim c = \make_claim({s1, s2}, 1);)
 }
 `
 Verification of foo failed.

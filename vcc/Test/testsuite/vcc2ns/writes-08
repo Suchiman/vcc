@@ -1,15 +1,16 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct { int x; } A;
 
 void writes_p(A* p)
-  writes(p)
+  _(writes p)
 {
   p->x = 12;
 }
 
 void writes_singleton_p(A* p)
-  writes(set_singleton(p))
+  _(writes {p})
 {
   p->x = 12;
 }

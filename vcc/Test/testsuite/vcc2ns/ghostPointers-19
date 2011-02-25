@@ -1,10 +1,11 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S { unsigned b; };
 
-spec(ispure struct S foo() ensures(result.b==0);)
+_(ghost _(pure) struct S foo() _(ensures \result.b==0))
 void bar() {
-    spec(struct S x = foo();)
+    _(ghost struct S x = foo())
 }
 `
 Verification of bar succeeded.

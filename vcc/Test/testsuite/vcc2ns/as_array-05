@@ -1,11 +1,12 @@
+`/newsyntax
 #include "vcc.h"
 
-spec(ispure bool foo(int *arr, unsigned c)
-    reads(set_universe())
-    returns(mutable((int[c])arr) ==> is_mutable_array(arr,c))
+_(ghost _(pure) bool foo(int *arr, unsigned c)
+    _(reads \universe())
+    _(returns \mutable((int[c])arr) ==> \mutable_array(arr,c))
 { 
-  return mutable((int[c])arr) ==> is_mutable_array(arr,c); 
-} )
+  return \mutable((int[c])arr) ==> \mutable_array(arr,c); 
+})
 `
 Verification of foo succeeded.
 `

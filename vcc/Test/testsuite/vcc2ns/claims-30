@@ -1,15 +1,16 @@
+`/newsyntax
 #include "vcc.h"
 
-struct vcc(claimable) S { int a; };
+_(claimable) struct S { int a; };
 
 void foo(struct S *s)
-	requires(wrapped(s))
-	writes(s)
+	_(requires \wrapped(s))
+	_(writes s)
 {
-	claimp(c;)
-	spec(c = claim(s,1);)
-	unclaim(c,s);
-	assert(!closed(c));
+	_(ghost \claim c;)
+	_(ghost c = \make_claim({s},1))
+	_(ghost \destroy_claim(c, {s}));
+	_(assert !c->\consistent)
 }
 `
 Verification of foo succeeded.

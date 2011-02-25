@@ -1,10 +1,11 @@
+`/newsyntax
 #include <vcc.h>
 
-typedef struct vcc(claimable) vcc(volatile_owns) _LOCK {
+typedef _(claimable) _(volatile_owns) struct _LOCK {
   volatile int locked;
 } LOCK;
 
-vcc(atomic_inline)
+_(atomic_inline)
 int ICX(volatile int *p, int tst, int rpl)
 {
   if (*p == tst) {
@@ -15,14 +16,14 @@ int ICX(volatile int *p, int tst, int rpl)
   }
 }
 
-void Acquire(LOCK *l claimp(c))
-  always(c, closed(l))
+void Acquire(LOCK *l _(ghost \claim c))
+  _(always c, l->\consistent)
 {
   int res = 0;
   int a = 0;
   int *p = &a;
 
-  atomic (c, l) {
+  _(atomic c, l) {
     res = ICX(&l->locked, a, 1);
   }
 }

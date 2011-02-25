@@ -1,20 +1,21 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S {
   int a;
 };
 
-struct vcc(claimable) T {
+_(claimable) struct T {
   struct S *s;
-  invariant(keeps(s))
+  _(invariant \mine(s))
 };
 
-void foo(struct T *p claimp(c))
-  always(c, closed(p))
+void foo(struct T *p _(ghost \claim c))
+  _(always c, p->\consistent)
   
 {
-  assert(closed(p));
-  assert(typed(p->s));
+  _(assert p->\consistent)
+  _(assert (p->s)->\valid)
 }
 `
 Verification of T#adm succeeded.

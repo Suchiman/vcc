@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned int UINT32;
@@ -17,7 +18,7 @@ typedef union foo_t {
                 unsigned b:10;
                 unsigned c:10;
         } h;
-        backing_member UINT32 u32;
+        _(backing_member) UINT32 u32;
 } foo_t;
 
 void t1()
@@ -25,7 +26,7 @@ void t1()
   foo_t x;
   x.f.b = 3;
   x.g.b = 3;
-  assert(x.f.b == 3);
+  _(assert x.f.b == 3)
 }
 
 void t2()
@@ -33,7 +34,7 @@ void t2()
   foo_t x;
   x.f.b = 3;
   x.h.b = 3;
-  assert(x.f.b == 3);
+  _(assert x.f.b == 3)
 }
 
 void ok1()
@@ -41,12 +42,12 @@ void ok1()
   foo_t x;
   x.f.b = 3;
   x.h.c = 3;
-  assert(x.f.b == 3);
+  _(assert x.f.b == 3)
 }
 `
 Verification of t1 failed.
-testcase(28,12) : error VC9500: Assertion 'x.f.b == 3' did not verify.
+testcase(28,26) : error VC9500: Assertion 'x.f.b == 3' did not verify.
 Verification of t2 failed.
-testcase(36,12) : error VC9500: Assertion 'x.f.b == 3' did not verify.
+testcase(36,26) : error VC9500: Assertion 'x.f.b == 3' did not verify.
 Verification of ok1 succeeded.
 `

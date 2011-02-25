@@ -1,8 +1,9 @@
+`/newsyntax
 #include "vcc.h"
 struct X {
     int dummy;
-    invariant(closed(&this))
+    _(invariant (&\this)->\consistent)
 };
 `
-testcase(4,29) : error VC0000: Cannot take the address of the given expression.
+testcase(4,32) : error VC0000: Cannot take the address of the given expression.
 `

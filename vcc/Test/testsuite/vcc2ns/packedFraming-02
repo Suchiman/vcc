@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct B {
@@ -8,20 +9,20 @@ struct A {
   int x;
   struct B *b;
 
-  invariant(keeps(this->b))
+  _(invariant \mine(\this->b))
 };
 
 void update(struct A *a)
-  writes(a);
+  _(writes a);
 
 void bar(struct A *a, struct A *b)
-  requires(wrapped(a) && wrapped(b) && a != b)
-  writes(a,b)
+  _(requires \wrapped(a) && \wrapped(b) && a != b)
+  _(writes a,b)
 {
-  assert(in_domain(a,a));
-  assert(in_domain(a->b,a));
+  _(assert a \in \domain(a))
+  _(assert a->b \in \domain(a))
   update(b);
-  assert(a->b->y == old(a->b->y));
+  _(assert a->b->y == \old(a->b->y))
 }
 `
 Verification of A#adm succeeded.

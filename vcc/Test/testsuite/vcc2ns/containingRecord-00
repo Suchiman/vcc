@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned char *PUINT8;
@@ -10,14 +11,14 @@ typedef struct A_ {
 } A;
 
 void foo(A *a)
-  requires(typed(a))
+  _(requires a->\valid)
 {
-  assert(a == CONTAINING_RECORD(&a->y, A, y));
+  _(assert a == CONTAINING_RECORD(&a->y, A, y))
 }
 
 void bar(int *a)
 {
-  assert(a == &CONTAINING_RECORD(a, A, y)->y);
+  _(assert a == &CONTAINING_RECORD(a, A, y)->y)
 }
 `
 Verification of foo succeeded.

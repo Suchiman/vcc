@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 typedef unsigned char *PUINT8;
 
@@ -20,10 +21,10 @@ void foo (B *b)
    int * x;
    B* y;
 
-   assert(&CONTAINING_RECORD(CONTAINING_RECORD(&b->bA.a,A,a),B,bA)->bA == CONTAINING_RECORD(&b->bA.a,A,a));
+   _(assert &CONTAINING_RECORD(CONTAINING_RECORD(&b->bA.a,A,a),B,bA)->bA == CONTAINING_RECORD(&b->bA.a,A,a))
    y = CONTAINING_RECORD(&b->bA.a,B,bA.a);
-   assert (&y->bA == CONTAINING_RECORD(&b->bA.a,A,a));
-   assert (&CONTAINING_RECORD(&b->bA.a,B,bA.a)->bA == CONTAINING_RECORD(&b->bA.a,A,a));
+   _(assert &y->bA == CONTAINING_RECORD(&b->bA.a,A,a))
+   _(assert &CONTAINING_RECORD(&b->bA.a,B,bA.a)->bA == CONTAINING_RECORD(&b->bA.a,A,a))
 }
 `
 Verification of foo succeeded.

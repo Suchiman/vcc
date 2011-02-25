@@ -1,14 +1,15 @@
+`/newsyntax
 #include "vcc.h"
 
-vcc(atomic_inline)
-void foo(int a spec(out int c)) {
-    spec(c = a;)
+_(atomic_inline)
+void foo(int a _(out int c)) {
+    _(ghost c = a)
 }
 
 void bar(int a) {
-    spec(int x;)
-    foo(42 spec(out x));
-    assert(x == 42);
+    _(ghost int x)
+    foo(42 _(out x));
+    _(assert x == 42)
 }
 `
 Verification of bar succeeded.

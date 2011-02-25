@@ -1,3 +1,4 @@
+`/newsyntax
 #include"vcc.h"
 
 struct S {
@@ -6,7 +7,7 @@ struct S {
 
 
 unsigned foo(struct S *T)
-requires(wrapped(T))
+_(requires \wrapped(T))
 {
 unsigned i;
 for(i=0; i<T->n; i++)

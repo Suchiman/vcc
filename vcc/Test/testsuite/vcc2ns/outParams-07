@@ -1,18 +1,19 @@
+`/newsyntax
 #include <vcc.h>
 
-void foo(int * x spec(out int o))
-  ensures(o == 5)
-  out_param(x)
+void foo(int * x _(out int o))
+  _(ensures o == 5)
+  _(writes x)
 {
-  spec(o = 5;)
+  _(ghost o = 5)
 }
 
 void bar()
 {
   int x;
-  spec(int o;)
+  _(ghost int o)
 
-  foo(&x spec(out o));
+  foo(&x _(out o));
 }
 `
 Verification of foo succeeded.

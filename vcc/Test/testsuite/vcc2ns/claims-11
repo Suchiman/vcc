@@ -1,15 +1,16 @@
+`/newsyntax
 #include <vcc.h>
 
-struct vcc(claimable) S {
+_(claimable) struct S {
   int x;
 };
 
 
 void foo(struct S *s)
-  writes(s)
-  maintains(wrapped0(s))
+  _(writes s)
+  _(maintains \wrapped0(s))
 {
-  expose(s) {
+  _(unwrapping s) {
     s->x = 12;
   }
 }

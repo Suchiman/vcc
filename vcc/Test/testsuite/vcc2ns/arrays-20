@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -5,10 +6,10 @@ struct S {
 };
 
 void foo(struct S *s)
-    requires(typed(s))
+    _(requires s->\valid)
 {
     int *b = s->a+3; // okay for the C compiler
-    assert(s->a+3==&s->a[3]);
+    _(assert s->a+3==&s->a[3])
 }
 `
 Verification of foo succeeded.

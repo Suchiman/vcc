@@ -1,4 +1,5 @@
-`/a /functions:foo
+`/a /functions:foo /newsyntax
+#include <vcc.h>
 
 template<typename T> void bar();
 

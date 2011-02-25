@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
-void foo(spec(out int o));
+void foo(_(out int o));
 
 void bar() {
-  foo(spec(out 1));
+  foo(_(out 1));
 }
 
 `

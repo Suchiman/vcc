@@ -1,11 +1,12 @@
+`/newsyntax
 #include "vcc.h"
 
 template<typename T> bool foo(T *x)
-    writes(array_range(x,sizeof(T)/4));
+    _(writes \array_range(x,sizeof(T)/4));
 
 vcc_attr("no_infer", "weak_out_param")
 void bar(int *p) 
-  writes(p)
+  _(writes p)
 { 
   foo(p);
 }

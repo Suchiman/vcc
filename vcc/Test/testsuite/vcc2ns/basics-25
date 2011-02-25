@@ -1,12 +1,13 @@
+`/newsyntax
 #include "vcc.h"
 
 #ifdef VERIFY
-ispure
+_(pure)
 int foo(int a)
-  reads(a);
+  _(reads a);
 
 #endif
   
 `
-testcase(6,11) : error VC9648: non-pointers are not supported in reads clauses
+testcase(6,25) : error VC9648: non-pointers are not supported in reads clauses
 `

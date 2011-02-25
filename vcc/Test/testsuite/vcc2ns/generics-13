@@ -1,8 +1,9 @@
+`/newsyntax
 #include "vcc.h"
-__specification(template<typename T> ispure size_t check() ensures(result == sizeof(T));)
+__specification(template<typename T> _(pure) size_t check() _(ensures \result == sizeof(T));)
 
 void foo() { 
-  assert(check<int>() == 4); 
+  _(assert check<int>() == 4) 
 }
 `
 Verification of foo succeeded.

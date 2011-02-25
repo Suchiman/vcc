@@ -1,4 +1,4 @@
-
+`/newsyntax
 #include "vcc.h"
 
 typedef struct _LTH_THREAD
@@ -10,7 +10,7 @@ typedef struct _LTH_THREAD
 typedef struct _LCPU_PLS
 {
 	PLTH_THREAD volatile SchDeferredList;
-  invariant(SchDeferredList == (void *)0)
+  _(invariant SchDeferredList == (void *)0)
 } LCPU_PLS, *PLCPU_PLS;
 
 `

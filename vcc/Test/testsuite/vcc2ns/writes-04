@@ -1,12 +1,13 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct { int x; } A;
 
 void update_after_wrap(A* p)
-  writes(extent(p))
+  _(writes \extent(p))
 {
-  set_owns(p, set_empty());
-  wrap(p);
+  _(ghost p->\owns =  {});
+  _(wrap p)
   p->x = 12;
 }
 `

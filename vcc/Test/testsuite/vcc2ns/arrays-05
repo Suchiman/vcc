@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int64 uint64;
@@ -6,7 +7,7 @@ struct DESC {
  int c;
  uint64   R[16];
  uint64   GPR[16];
- invariant(forall(uint64 i; i < 16 ==> this->R[i] == this->GPR[i]))
+ _(invariant \forall uint64 i; i < 16 ==> \this->R[i] == \this->GPR[i])
 };
 
 `

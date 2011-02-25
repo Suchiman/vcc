@@ -1,10 +1,11 @@
+`/newsyntax
 #include "vcc.h"
 
 
 typedef struct s1{
     int dummy;
-    spec(volatile bool b[int];)
-    invariant(approves(owner(this), b))
+    _(ghost volatile bool b[int])
+    _(invariant \approves(\this->\owner, b))
 } s1;
 
 struct SX { int x; } ;
@@ -12,33 +13,33 @@ struct SX { int x; } ;
 s1 S;
 
 void f()
-maintains(wrapped(&S))
+_(maintains \wrapped(&S))
 ;
 
 void f2(struct SX *sx)
-maintains(wrapped(&S))
-writes(sx)
+_(maintains \wrapped(&S))
+_(writes sx)
 ;
 
 void t1()
-maintains(wrapped(&S))
-requires(forall(int i; (&S)->b[i]))
+_(maintains \wrapped(&S))
+_(requires \forall int i; (&S)->b[i])
 {
-    assert((forall(int i; (&S)->b[i])));
+    _(assert (\forall int i; (&S)->b[i]))
     
     f();  
-    assert(forall(int i; (&S)->b[i]));
+    _(assert \forall int i; (&S)->b[i])
     //error VC9500: Assertion '__forall(int i; (&S)->b[i])' did not verify.
 }
 
 void okSX(struct SX *sx)
-writes(sx)
-maintains(wrapped(&S))
-requires(forall(int i; (&S)->b[i]))
+_(writes sx)
+_(maintains \wrapped(&S))
+_(requires \forall int i; (&S)->b[i])
 {
-    assert((forall(int i; (&S)->b[i])));
+    _(assert (\forall int i; (&S)->b[i]))
     f2(sx);  
-    assert(forall(int i; (&S)->b[i]));
+    _(assert \forall int i; (&S)->b[i])
 }
 
 `

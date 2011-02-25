@@ -1,27 +1,28 @@
+`/newsyntax
 #include <vcc.h>
 
 #define NULL ((void *)0)
 
 typedef __int32 INT32;
 
-typedef struct vcc(claimable) vcc(volatile_owns) _RTL_SPIN_LOCK
+typedef _(claimable) _(volatile_owns) struct _RTL_SPIN_LOCK
 {
     volatile INT32 Lock;
-    spec(volatile obj_t protected_obj;)
-    invariant(protected_obj!=NULL ==> (Lock == 0 || Lock == 1))
-    invariant(old(protected_obj)!=NULL ==> unchanged(protected_obj))
-    invariant(!Lock && protected_obj!=NULL ==> set_in(protected_obj, owns(this)))
+    _(ghost volatile \object protected_obj)
+    _(invariant protected_obj!=NULL ==> (Lock == 0 || Lock == 1))
+    _(invariant \old(protected_obj)!=NULL ==> \unchanged(protected_obj))
+    _(invariant !Lock && protected_obj!=NULL ==> protected_obj \in \this->\owns)
 
 } RTL_SPIN_LOCK, *PRTL_SPIN_LOCK;
 
 void
 RtlAcquireSpinLock(
     PRTL_SPIN_LOCK SpinLock
-    claimp(c)
+    _(ghost \claim c)
     )
-    always(c,closed(SpinLock) && SpinLock->protected_obj!=NULL)
-    ensures(wrapped(SpinLock->protected_obj))
-    ensures(is_fresh(SpinLock->protected_obj))
+    _(always c,SpinLock->\consistent && SpinLock->protected_obj!=NULL)
+    _(ensures \wrapped(SpinLock->protected_obj))
+    _(ensures \fresh(SpinLock->protected_obj))
     ;
 
 
@@ -33,17 +34,17 @@ struct T {
 
   struct S s;
   RTL_SPIN_LOCK L;
-  spec(claim_t Claim;)
+  _(ghost \claim Claim)
   
-  invariant(keeps(&L, Claim))
-  invariant(claims(Claim, closed(&L) && L.protected_obj == &s))
+  _(invariant \mine(&L, Claim))
+  _(invariant \claims(Claim, (&L)->\consistent && L.protected_obj == &s))
 };
 
-void foo(struct T *p claimp(c))
-  always(c, closed(p))
+void foo(struct T *p _(ghost \claim c))
+  _(always c, p->\consistent)
 {
-  assert(claims_claim(c, p->Claim));
-  RtlAcquireSpinLock(&p->L spec(c));
+  _(assert \claims_claim(c, p->Claim))
+  RtlAcquireSpinLock(&p->L _(ghost c));
 }
 
 

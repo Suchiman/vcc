@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc2test.h>
 
 // TODO we want a better error message for that
-ispure
+_(pure)
 void donothing_pure_fail()
 {
   int *p = malloc(sizeof(int));

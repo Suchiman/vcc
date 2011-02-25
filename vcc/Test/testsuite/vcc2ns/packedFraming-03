@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int64 uint64;
@@ -9,20 +10,20 @@ struct CONC {
 };
 
 void bar(struct CONC *c)
-  writes(c);
+  _(writes c);
 
 void foo(struct CONC *c, struct CONC *c2)
-  requires(c != c2 && wrapped(c))
-  writes(c, c2)
+  _(requires c != c2 && \wrapped(c))
+  _(writes c, c2)
 
 {
-  unwrap(c);
+  _(unwrap c)
   c->GPR[3] = 12;
-  wrap(c);
-  assert(c->GPR[3] == 12);
-  assert(in_domain(c,c));
+  _(wrap c)
+  _(assert c->GPR[3] == 12)
+  _(assert c \in \domain(c))
   bar(c2);
-  assert(c->GPR[3] == 12);
+  _(assert c->GPR[3] == 12)
 }
 `
 Verification of foo succeeded.

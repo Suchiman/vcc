@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 void *
@@ -9,7 +10,7 @@ CompareAndSwapPointer(
 
 #ifdef VERIFY
 template<typename T>
-vcc(atomic_inline)
+_(atomic_inline)
 T *
 CompareAndSwapPointer(
     T volatile** Destination,

@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 #define UINT32 unsigned int
@@ -11,19 +12,19 @@ typedef union pte_t {
         unsigned v:1;    /* bit [11] */
         unsigned ppx:20;    /* bits [31:12] */
     };            /* PTE fields */
-    backing_member 
+    _(backing_member) 
         UINT32 uint32;    /* complete word */
 } pte_t;
 
 void test1(UINT32 *mem)
-requires(is_thread_local_array(mem, 100))
+_(requires \thread_local_array(mem, 100))
 {
    UINT32 b;
    b = mem[0];
 }
 
 void test2(UINT32 *mem)
-requires(is_thread_local_array(mem, 100))
+_(requires \thread_local_array(mem, 100))
 {
     pte_t tmp;
     tmp.uint32 = mem[0];

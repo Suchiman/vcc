@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S {
@@ -6,21 +7,21 @@ struct S {
 
 void foo() {
   int a[5][7][9];
-  spec(int sa[2][4];)
+  _(ghost int sa[2][4])
   a[1][2][3] = 5;
-  spec(sa[1][2] = 3;)
-  assert(a[1][2][3] == 5);
-  assert(a[0][0][84] == 5);
+  _(ghost sa[1][2] = 3)
+  _(assert a[1][2][3] == 5)
+  _(assert a[0][0][84] == 5)
 } 
 
 void bar(struct S *s)
-  maintains(wrapped(s))
-  writes(s)
+  _(maintains \wrapped(s))
+  _(writes s)
  {
-  expose(s) {
+  _(unwrapping s) {
     s->a[1][2][3] = 5;
-    assert(s->a[1][2][3] == 5);
-    assert(s->a[0][0][84] == 5);
+    _(assert s->a[1][2][3] == 5)
+    _(assert s->a[0][0][84] == 5)
   }
 }
 `

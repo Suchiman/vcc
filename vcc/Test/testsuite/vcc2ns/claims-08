@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 struct Node {
     struct Node *next;
 
-    invariant( depends(owner(this), this) )
+    _(invariant \depends(\this->\owner, \this))
 };
 
 
@@ -12,33 +13,33 @@ struct Stack {
     volatile PNode hd;
 };
 
-bool t1(struct Stack *s claimp(c))
-    always (c, closed(s))
+bool t1(struct Stack *s _(ghost \claim c))
+    _(always c, s->\consistent)
 {
-	atomic(c, s) {
-	   wrap(s);
+	_(atomic c, s) {
+	   _(wrap s)
 	}
 }
 
-bool t2(struct Stack *s claimp(c))
-    always (c, closed(s))
+bool t2(struct Stack *s _(ghost \claim c))
+    _(always c, s->\consistent)
 {
-	atomic(c, s) {
-	   unwrap(s);
+	_(atomic c, s) {
+	   _(unwrap s)
 	}
 }
 
 void foo () { }
 
-bool t3(struct Stack *s claimp(c))
-    always (c, closed(s))
+bool t3(struct Stack *s _(ghost \claim c))
+    _(always c, s->\consistent)
 {
-	atomic(c, s) {
+	_(atomic c, s) {
 		foo();
 	}
 }
 `
-testcase(19,5) : error VC9626: static_wrap(...) cannot be used inside atomic update/read
-testcase(27,5) : error VC9626: static_unwrap(...) cannot be used inside atomic update/read
+testcase(19,21) : error VC9626: static_wrap(...) cannot be used inside atomic update/read
+testcase(27,21) : error VC9626: static_unwrap(...) cannot be used inside atomic update/read
 testcase(37,3) : error VC9627: ordinary functions like foo(...) cannot be used inside atomic update/read
 `

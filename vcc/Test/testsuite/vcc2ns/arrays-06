@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int64 uint64;
@@ -16,26 +17,25 @@ struct ABS {
     int a;
  int c;
  struct X64_Core core;
- invariant(keeps(&this->core))
+ _(invariant \mine(&\this->core))
 };
 struct DESC {
  int c;
  struct CONC *conc;
- spec(struct ABS abs;)
- invariant(keeps(this->conc, &this->abs))
- invariant(AbsConcRel(&this->abs,this->conc))
- invariant(this->c == this->abs.c)
+ _(ghost struct ABS abs)
+ _(invariant \mine(\this->conc, &\this->abs))
+ _(invariant AbsConcRel(&\this->abs,\this->conc))
+ _(invariant \this->c == \this->abs.c)
 };
  
-spec(ispure
+_(ghost _(pure)
 bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
- reads(abs, conc)
- returns(abs->a == conc->a &&
+ _(reads abs, conc)
+ _(returns abs->a == conc->a &&
       abs->core.RIP == conc->RIP &&
-   forall(uint64 i; i < 16 ==> abs->core.R[i] == conc->GPR[i]) &&
-   forall(uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i])
-   );
-)
+   (\forall uint64 i; i < 16 ==> abs->core.R[i] == conc->GPR[i]) &&
+   \forall uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i]);)
+
 `
 Verification of ABS#adm succeeded.
 Verification of DESC#adm succeeded.

@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 int foo(int i)
-  ensures(result == 5)
+  _(ensures \result == 5)
 {
   switch(i) 
   {

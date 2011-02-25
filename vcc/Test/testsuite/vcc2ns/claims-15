@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int64 UINT64;
@@ -9,27 +10,27 @@ typedef union _CONC
         UINT64 c1;
     };
 
-    backing_member UINT64 AsUINT64;
+    _(backing_member) UINT64 AsUINT64;
 } CONC;
 
 struct DESC {
-	def_group(Group)
-	invariant(keeps(this::Group))
+	_(group Group)
+	_(invariant \mine(\this::Group))
 
-	in_group(Group) CONC o;
+	_(:Group) CONC o;
 	
-	spec(in_group(Group) claim_t c;)
-	inv_group(Group, keeps(c) && claims(c, closed(&o)))
+	_(ghost _(:Group) \claim c)
+	_(invariant :Group \mine(c) && \claims(c, (&o)->\consistent))
 };
 
 void update_o(struct DESC *d)
-	maintains(wrapped(d::Group))
-	writes(d::Group)
+	_(maintains \wrapped(d::Group))
+	_(writes d::Group)
 {
-	expose(d::Group){
-	atomic(d->c, &d->o){
-		assert(valid_claim(d->c));
-		begin_update();
+	_(unwrapping d::Group){
+	_(atomic d->c, &d->o){
+		_(assert \active_claim(d->c))
+		_(begin_update)
 		d->o.c1 = 1;
 	}}
 }

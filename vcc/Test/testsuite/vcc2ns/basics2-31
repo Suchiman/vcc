@@ -1,13 +1,14 @@
+`/newsyntax
 #include "vcc.h"
 typedef struct Foo {
 int x;
-spec(int y[int][5];)
+_(ghost int y[int][5])
 } Foo;
 
 void bar(Foo *f) {
-assert(f->y[0][0]);
+_(assert f->y[0][0])
 }
 `
-testcase(4,17) : error VC0000: Illegal type 'int[5]' in map domain.
-testcase(8,10) : error VC0000: Illegal index.
+testcase(4,23) : error VC0000: Illegal type 'int[5]' in map domain.
+testcase(8,24) : error VC0000: Illegal index.
 `

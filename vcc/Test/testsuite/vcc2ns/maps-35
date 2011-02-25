@@ -1,10 +1,11 @@
+`/newsyntax
 #include <vcc.h>
 
-void foo(spec(int m[int]))
-  requires(forall(int i; m[i] == i))
+void foo(_(ghost int m[int]))
+  _(requires \forall int i; m[i] == i)
 {
-  spec(int k[int] = lambda(int i; i);)
-  assert(k == m);
+  _(ghost int k[int] = (\lambda int i; i))
+  _(assert k == m)
 }
 `
 Verification of foo succeeded.

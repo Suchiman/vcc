@@ -1,8 +1,9 @@
+`/newsyntax
 #include "vcc.h"
-spec(vcc(atomic_inline) bool True() { return true; })
+_(ghost _(atomic_inline) bool True() { return \true; })
 void foo() {
-    spec(bool f;)
-    spec(f = True();)
+    _(ghost bool f)
+    _(ghost f = True())
 }
 `
 Verification of foo succeeded.

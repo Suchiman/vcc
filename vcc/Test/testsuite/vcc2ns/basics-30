@@ -1,9 +1,11 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S {
     int dummy;
-    invariant(keeps(SET()))
+    _(invariant \mine({}))
 };
 `
-testcase(5,37) : error VC9699: 'keeps' requires arguments of pointer type; '_vcc_create_set(_vcc_dummy_set_element()  )' has type '_math ptrset' which is not allowed.
+testcase(5,31) : error VC0000: The best overloaded method match for '__Globals__.\mine(System.Diagnostics.Contracts.CodeContract.TypedPtr)' has some invalid arguments.
+testcase(5,37) : error VC0000: Argument '1': cannot convert from 'System.Diagnostics.Contracts.CodeContract.Objset' to 'obj_t'.
 `

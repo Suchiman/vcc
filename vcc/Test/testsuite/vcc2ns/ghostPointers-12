@@ -1,16 +1,17 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S {
     int dummy;
-    def_group(a)
-    in_group(a) int b;
+    _(group a)
+    _(:a) int b;
 };
 
 struct T {
     int dummy;
-    spec(struct S ^s;)
-    invariant(keeps(s))
-    invariant(keeps(s::a))
+    _(ghost struct S ^s)
+    _(invariant \mine(s))
+    _(invariant \mine(s::a))
 };
 `
 Verification of T#adm succeeded.

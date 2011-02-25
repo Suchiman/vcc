@@ -1,8 +1,9 @@
+`/newsyntax
 #include "vcc.h"
 
 void foo()
 {
-  bv_lemma(forall(int x; x!= 0 && x != 1 && x != -1 ==> -1 % x));
+  _(assert {:bv} \forall int x; x!= 0 && x != 1 && x != -1 ==> -1 % x)
 }
 `
 Verification of foo succeeded.

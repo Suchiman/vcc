@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
  
 typedef unsigned __int64 uint64;
@@ -7,40 +8,40 @@ typedef struct SubDESC {
 	uint64 b;
 } SubDESC;
  
-struct vcc(dynamic_owns) DESC {
+_(dynamic_owns) struct DESC {
  SubDESC   AbsArray[6];
- invariant(forall(uint64 i; i < 6 ==> set_in(&AbsArray[i], owns(this))))
+ _(invariant \forall uint64 i; i < 6 ==> &AbsArray[i] \in \this->\owns)
 };
 
 void SetDescAbsArrayFail(struct DESC *desc, uint64 index, uint64 Value)
-    maintains(wrapped(desc))
-	writes(desc)
-    requires(index < 6)
-	ensures(desc->AbsArray[index].a == Value)
+    _(maintains \wrapped(desc))
+	_(writes desc)
+    _(requires index < 6)
+	_(ensures desc->AbsArray[index].a == Value)
 { 
-	unwrap(desc);
-	unwrap(&desc->AbsArray[index]); // this unwrap produces inconsistency
-	assert(false);
+	_(unwrap desc)
+	_(unwrap &desc->AbsArray[index]) // this unwrap produces inconsistency
+	_(assert \false)
 	desc->AbsArray[index].a = Value;
-	wrap(&desc->AbsArray[index]);
-	wrap(desc);
+	_(wrap &desc->AbsArray[index])
+	_(wrap desc)
 }
 
 void SetDescAbsArray(struct DESC *desc, uint64 index, uint64 Value)
-    maintains(wrapped(desc))
-	writes(desc)
-    requires(index < 6)
-	ensures(desc->AbsArray[index].a == Value)
+    _(maintains \wrapped(desc))
+	_(writes desc)
+    _(requires index < 6)
+	_(ensures desc->AbsArray[index].a == Value)
 { 
-	unwrap(desc);
-	unwrap(&desc->AbsArray[index]); // this unwrap produces inconsistency
+	_(unwrap desc)
+	_(unwrap &desc->AbsArray[index]) // this unwrap produces inconsistency
 	desc->AbsArray[index].a = Value;
-	wrap(&desc->AbsArray[index]);
-	wrap(desc);
+	_(wrap &desc->AbsArray[index])
+	_(wrap desc)
 }
 `
 Verification of DESC#adm succeeded.
 Verification of SetDescAbsArrayFail failed.
-testcase(23,11) : error VC9500: Assertion '((bool)0)' did not verify.
+testcase(23,25) : error VC9500: Assertion '\false' did not verify.
 Verification of SetDescAbsArray succeeded.
 `

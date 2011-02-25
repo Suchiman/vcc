@@ -1,11 +1,12 @@
+`/newsyntax
 #include "vcc.h"
 
-struct vcc(dynamic_owns) _X
+_(dynamic_owns) struct _X
 {
 	int a;
-	invariant(a > 0 ==> set_in(&a, owns(this)))
+	_(invariant a > 0 ==> &a \in \this->\owns)
 };
 `
-testcase(6,37) : warning VC9104: primitive pointers are unlikely to be in the owns set
+testcase(6,39) : warning VC9104: primitive pointers are unlikely to be in the owns set
 Verification of _X#adm succeeded.
 `

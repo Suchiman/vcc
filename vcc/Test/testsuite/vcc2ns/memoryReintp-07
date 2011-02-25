@@ -1,12 +1,13 @@
+`/newsyntax
 #include <vcc2test.h>
 
 typedef unsigned char byte;
 
 void *alloc(unsigned __int64  sz)
-  ensures(is_object_root(as_array((byte*)result, sz)))
-  ensures(mutable(as_array((byte*)result, sz)))
-  ensures(is_fresh(as_array((byte*)result, sz)))
-  ensures(extent_zero(as_array((byte*)result, sz)))
+  _(ensures \object_root((void[sz])((byte*)\result)))
+  _(ensures \mutable((void[sz])((byte*)\result)))
+  _(ensures \fresh((void[sz])((byte*)\result)))
+  _(ensures \extent_zero((void[sz])((byte*)\result)))
   ;
 
 struct A {
@@ -16,9 +17,9 @@ struct A {
 void f1()
 {
   struct A * a = alloc(sizeof(struct A));
-  from_bytes(a, true);
-  assert(a->x == 0);
-  assert(a->y == 0);
+  _(from_bytes a, \true)
+  _(assert a->x == 0)
+  _(assert a->y == 0)
 }
 `
 Verification of f1 succeeded.

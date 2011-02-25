@@ -1,3 +1,5 @@
+`/newsyntax
+#include <vcc.h>
 typedef unsigned __int32 uint32_t;
 
 void x(uint32_t y);
@@ -6,5 +8,5 @@ void foo() {
     x(1<<32);
 }
 `
-testcase(6,7) : error VC0000: Shift count must be between 0 and 31.
+testcase(7,7) : error VC0000: Shift count must be between 0 and 31.
 `

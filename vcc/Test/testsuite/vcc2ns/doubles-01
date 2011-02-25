@@ -1,16 +1,17 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   double a;
   double b;
-  invariant(a + b == 0.0)
+  _(invariant a + b == 0.0)
 };
 
 void foo(struct S *s) 
-  requires(wrapped(s))
+  _(requires \wrapped(s))
 { 
-  assert(in_domain(s,s));
-  assert(s->a + s->b == 0.0);
+  _(assert s \in \domain(s))
+  _(assert s->a + s->b == 0.0)
 }
 `
 Verification of S#adm succeeded.

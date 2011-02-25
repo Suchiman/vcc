@@ -1,16 +1,17 @@
+`/newsyntax
 #include "vcc.h"
 
 void setk(int *p, size_t sz)
-  requires(is_mutable_array(p, sz))
-  writes(array_range(p, sz - 1)) // ERR
+  _(requires \mutable_array(p, sz))
+  _(writes \array_range(p, sz - 1)) // ERR
 {
   size_t i;
 
   i = 0;
   while (i < sz) 
-    invariant (i >= 0)
+    _(invariant i >= 0)
   {
-    p[i] = unchecked((int)i);
+    p[i] = _(unchecked)((int)i);
     i = i + 1;
   }
 }

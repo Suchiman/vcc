@@ -1,22 +1,23 @@
+`/newsyntax
 #include <vcc2test.h>
 
-typedef  struct  vcc(claimable) { int dummy; } Seal;
+typedef  _(claimable) struct { int dummy; } Seal;
 
-struct vcc(volatile_owns) vcc(claimable) Mut {
+_(volatile_owns) _(claimable) struct Mut {
   volatile bool af, bf;
-  spec( Seal afs; )
-  on_unwrap( !closed(&afs))
+   _(ghost Seal afs;) 
+  _(invariant \on_unwrap(\this,  !(&afs)->\consistent))
 };
 
-void alice(struct Mut *m claimp(c))
-  always(c, closed(m))
-  requires(wrapped(&m->afs))
-  writes(&m->afs)
+void alice(struct Mut *m _(ghost \claim c))
+  _(always c, m->\consistent)
+  _(requires \wrapped(&m->afs))
+  _(writes &m->afs)
 {
-spec(claim_t c2;)
-  assert(valid_claim(c));
-  assert(closed(m));
-  spec( c2 = claim(&m->afs, closed(m)); )
+_(ghost \claim c2)
+  _(assert \active_claim(c))
+  _(assert m->\consistent)
+   _(ghost c2 = \make_claim({&m->afs}, m->\consistent);) 
 }
 
 `

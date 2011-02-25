@@ -1,23 +1,23 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
   int x;
 };
 
-spec(void bar()
+_(ghost void bar()
 {
 })
 
-spec(isadmissibilitycheck
+_(ghost _(admissibility)
 void adm_A(struct A* x)
 {
-  havoc_others(x);
+  _(havoc_others x)
   bar();
-  assume(inv(x));
-}
-)
+  _(assume \inv(x))
+})
 `
 Verification of bar succeeded.
 Verification of adm_A failed.
-testcase(11,17) : error VC8002: state was altered after havoc_others().
+testcase(11,39) : error VC8002: state was altered after havoc_others().
 `

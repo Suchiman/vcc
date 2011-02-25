@@ -1,18 +1,19 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
   int x;
   
-  invariant(this->x > 0)
+  _(invariant \this->x > 0)
 };
 
-spec(isadmissibilitycheck
+_(ghost _(admissibility)
 void adm_A(struct A* x)
-  ensures(false)
+  _(ensures \false)
 {
-  havoc_others(x);
-  assert(x->x > 0);
+  _(havoc_others x)
+  _(assert x->x > 0)
 })
 `
-testcase(9,17) : error VC9624: custom admissibility checks are not allowed to have explicit requires/ensures/writes
+testcase(9,39) : error VC9624: custom admissibility checks are not allowed to have explicit requires/ensures/writes
 `

@@ -1,5 +1,6 @@
+`/newsyntax
 #include "vcc.h"
-spec(struct U { invariant(this==&u) } u;)
+_(ghost struct U { _(invariant \this==&u) } u)
 `
 Verification of U#adm succeeded.
 `

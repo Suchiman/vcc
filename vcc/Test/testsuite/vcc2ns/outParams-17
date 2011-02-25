@@ -1,14 +1,14 @@
-
+`/newsyntax
 #include <vcc.h>
 #include <limits.h>
 
-void foo(spec(out int x));
+void foo(_(out int x));
 
 
 void bar() {
-  spec(int i;)
-  foo(spec(out i));
-  assert(i <= INT_MAX);
+  _(ghost int i)
+  foo(_(out i));
+  _(assert i <= INT_MAX)
 }
 `
 Verification of bar succeeded.

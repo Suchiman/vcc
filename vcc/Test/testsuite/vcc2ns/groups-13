@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 #define UINT32 unsigned int
@@ -5,17 +6,17 @@
 
 struct lock{
  volatile int locked;  
- spec(obj_t obj;)   
+ _(ghost \object obj)   
 };
 
 typedef struct t_st{
  
   struct lock state_lock;  
-  def_group(g)
-  in_group(g) UINT32 state;
+  _(group g)
+  _(:g) UINT32 state;
 
-  invariant(keeps(&state_lock))
-  invariant(state_lock.obj == this::g)  
+  _(invariant \mine(&state_lock))
+  _(invariant state_lock.obj == \this::g)  
 
 } *pst;
 `

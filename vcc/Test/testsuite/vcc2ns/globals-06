@@ -1,43 +1,44 @@
+`/newsyntax
 #include <vcc.h>
 
 volatile int global;
 
-typedef struct vcc(claimable) GlobalsOwner{
-  invariant(this == &Globals)
-  invariant(keeps(gemb(&global)))
+typedef _(claimable) struct GlobalsOwner{
+  _(invariant \this == &Globals)
+  _(invariant \mine(\gemb(&global)))
 
   int dummy;
-  spec(volatile int shadow;)
-  invariant(shadow == global)
+  _(ghost volatile int shadow)
+  _(invariant shadow == global)
 } GlobalsOwner;
 
 GlobalsOwner Globals;
 
 void
-f(claimp(c))
-  always(c, closed(&Globals))
+f(_(ghost \claim c))
+  _(always c, (&Globals)->\consistent)
   {
-  atomic(c, gemb(&global), &Globals){
+  _(atomic c, \gemb(&global), &Globals){
         global = 5;
-        spec(Globals.shadow = 5;)
+        _(ghost Globals.shadow = 5)
      }    
   }
 
 void foo()
-  maintains(wrapped(gemb(&global)))
-  writes(gemb(&global))
+  _(maintains \wrapped(\gemb(&global)))
+  _(writes \gemb(&global))
 {
-  atomic(gemb(&global)) {
+  _(atomic \gemb(&global)) {
     global = 5;
-    bump_volatile_version(gemb(&global));
+    _(bump_volatile_version \gemb(&global))
   }
 }
 
 void fooShouldFail()
-  maintains(wrapped(gemb(&global)))
-  writes(gemb(&global))
+  _(maintains \wrapped(\gemb(&global)))
+  _(writes \gemb(&global))
 {
-  atomic(gemb(&global)) {
+  _(atomic \gemb(&global)) {
     global = 5;
   }
 }
@@ -46,5 +47,5 @@ Verification of GlobalsOwner#adm succeeded.
 Verification of f succeeded.
 Verification of foo succeeded.
 Verification of fooShouldFail failed.
-testcase(40,21) : error VC8525: Assertion 'invariant of _vcc_gemb(&global) holds after atomic' did not verify.
+testcase(40,26) : error VC8525: Assertion 'invariant of \gemb(&global) holds after atomic' did not verify.
 `
