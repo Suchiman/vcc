@@ -1,21 +1,22 @@
+`/newsyntax
 #include <vcc.h>
 
 struct B{ int x; };
 
 struct A {
 	struct B *b;
-	invariant(keeps(b))
+	_(invariant \mine(b))
 };
 
 
 template<typename T>void blah(T **p)
-    writes(p);
+    _(writes p);
 
 void foo(struct A *a)
-	requires(mutable(a))
-	writes(extent(a))
+	_(requires \mutable(a))
+	_(writes \extent(a))
 {
-	blah(nospeccast(void **, &a->b));
+	blah(vcc_nospeccast(void **, &a->b));
 }
 `
 Verification of A#adm succeeded.

@@ -364,6 +364,8 @@ module Rules =
     addFnRule "shallow_eq" "\\shallow_eq"
     addFnRule "set_disjoint" "\\disjoint"
     addFnRule "is_non_primitive_ptr" "\\non_primitive_ptr"
+    addFnRule "generic_instance" "vcc_generic_instance"
+    addFnRule "nospeccast" "vcc_nospeccast"
 
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))

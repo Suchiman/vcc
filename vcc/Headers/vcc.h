@@ -13,6 +13,13 @@
 // For the new syntax.
 #define _(...) /* nothing */
 
+#define vcc_attr(k, v)
+#define vcc_nospeccast(_TYPE_, _EXPR_) ((_TYPE_)_EXPR_)
+#define vcc_generic_instance(_F_, ...) _F_ __VA_ARGS__
+
+// The rest should be removed when we switch completely to the new syntax.
+#ifndef VCC_ONLY_NEW_SYNTAX
+
 #ifndef __cplusplus
 typedef int bool;
 #endif
@@ -37,7 +44,6 @@ typedef int bool;
 #define set_closed_owns(x, y)
 #define set_closed_owner(x, y)
 #define begin_update()
-#define vcc_attr(k, v)
 #define on_unwrap(e)
 #define skinny_expose(...)
 #define join_arrays(...)
@@ -99,6 +105,8 @@ typedef int bool;
 #define test_classifier(_CLASSIF_, _EXPR_) (_EXPR_)
 #define current_context(...)
 #define label_of(...)
+
+#endif // VCC_ONLY_NEW_SYNTAX
 
 #else
 
