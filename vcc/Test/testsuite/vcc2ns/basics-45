@@ -1,7 +1,9 @@
+`/newsyntax
+#include <vcc.h>
 void foo() { \
-  __assert(0);
+  _(assert \false)
 }
 `
 Verification of foo failed.
-testcase(2,12) : error VC9500: Assertion '0' did not verify.
+testcase(3,26) : error VC9500: Assertion '\false' did not verify.
 `
