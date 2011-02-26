@@ -1,12 +1,13 @@
+`/newsyntax
 #include <vcc.h>
 
 struct _A{
     int dummy;
 };
 
-typedef struct vcc(volatile_owns) _B{
+typedef _(volatile_owns) struct _B{
     struct _A *a;
-    invariant(set_in(a, owns(this)))
+    _(invariant a \in \this->\owns)
 
  //here should be other components that are conditionally owned 
 //...
@@ -16,88 +17,90 @@ typedef struct vcc(volatile_owns) _B{
 struct X { int x; };
 
 void wr(struct X *x)
-  out_param(x);
+  _(ensures \mutable(x))
+  _(ensures \unchanged(\embedding(x)))
+  _(writes x);
 
 void foo(B *b)
-requires(wrapped(b))
+_(requires \wrapped(b))
 {
 struct X unrelated;
-    assert(in_domain(b, b));
-    assert(in_vdomain(b->a, b));
-    assume(b->a->dummy == 12);
+    _(assert b \in \domain(b))
+    _(assert b->a \in \vdomain(b))
+    _(assume b->a->dummy == 12)
     wr(&unrelated);
-    assert(b->a->dummy == 12);
+    _(assert b->a->dummy == 12)
 }
 
 struct C {
   struct B *b;
-  invariant(keeps(b))
+  _(invariant \mine(b))
 };
-struct vcc(volatile_owns) VC {
+_(volatile_owns) struct VC {
   struct B *b;
-  invariant(keeps(b))
+  _(invariant \mine(b))
 };
 
 void foo2(struct C *b)
-requires(wrapped(b))
+_(requires \wrapped(b))
 {
 struct X unrelated;
-    assert(in_domain(b, b));
-    assert(in_domain(b->b, b));
-    assert(in_vdomain(b->b->a, b));
-    assume(b->b->a->dummy == 12);
+    _(assert b \in \domain(b))
+    _(assert b->b \in \domain(b))
+    _(assert b->b->a \in \vdomain(b))
+    _(assume b->b->a->dummy == 12)
     wr(&unrelated);
-    assert(b->b->a->dummy == 12);
+    _(assert b->b->a->dummy == 12)
 }
 
 void foo3(struct VC *b)
-requires(wrapped(b))
+_(requires \wrapped(b))
 {
 struct X unrelated;
-    assert(in_domain(b, b));
-    assert(in_vdomain(b->b, b));
-    assert(in_vdomain(b->b->a, b));
-    assume(b->b->a->dummy == 12);
+    _(assert b \in \domain(b))
+    _(assert b->b \in \vdomain(b))
+    _(assert b->b->a \in \vdomain(b))
+    _(assume b->b->a->dummy == 12)
     wr(&unrelated);
-    assert(b->b->a->dummy == 12);
+    _(assert b->b->a->dummy == 12)
 }
 
 
-typedef struct vcc(volatile_owns) _B2{
+typedef _(volatile_owns) struct _B2{
     struct _A *a;
     int f;
-    invariant(f ==> set_in(a, owns(this)))
+    _(invariant f ==> a \in \this->\owns)
 } B2;
 
 
 void fooFail1(B2 *b)
-requires(wrapped(b))
+_(requires \wrapped(b))
 {
-    assert(in_domain(b, b));
-    assert(in_vdomain(b->a, b));
+    _(assert b \in \domain(b))
+    _(assert b->a \in \vdomain(b))
 }
 
 void fooComplex(B2 *b)
-requires(wrapped(b))
-requires(b->f)
+_(requires \wrapped(b))
+_(requires b->f)
 {
-    assert(in_domain(b, b));
-    assert(in_vdomain(b->a, b));
+    _(assert b \in \domain(b))
+    _(assert b->a \in \vdomain(b))
 }
 
-typedef struct vcc(volatile_owns) _B3 {
+typedef _(volatile_owns) struct _B3 {
     struct _A *a;
     volatile int f;
-    invariant(f ==> set_in(a, owns(this)))
+    _(invariant f ==> a \in \this->\owns)
 } B3;
 
 
 void fooFail2(B3 *b)
-requires(wrapped(b))
-requires(b->f)
+_(requires \wrapped(b))
+_(requires b->f)
 {
-    assert(in_domain(b, b));
-    assert(in_vdomain(b->a, b));
+    _(assert b \in \domain(b))
+    _(assert b->a \in \vdomain(b))
 }
 `
 Verification of _B#adm succeeded.
@@ -109,8 +112,8 @@ Verification of foo succeeded.
 Verification of foo2 succeeded.
 Verification of foo3 succeeded.
 Verification of fooFail1 failed.
-testcase(77,14) : error VC9500: Assertion '_vcc_in_vdomain(b->a,b)' did not verify.
+testcase(79,28) : error VC9500: Assertion 'b->a \in \vdomain(b)' did not verify.
 Verification of fooComplex succeeded.
 Verification of fooFail2 failed.
-testcase(100,14) : error VC9500: Assertion '_vcc_in_vdomain(b->a,b)' did not verify.
+testcase(102,28) : error VC9500: Assertion 'b->a \in \vdomain(b)' did not verify.
 `
