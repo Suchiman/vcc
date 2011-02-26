@@ -18,5 +18,5 @@ void foo(struct S **s)
 }
 `
 Verification of foo failed.
-testcase(15,5) : error VC8510: Assertion '_vcc_extent(p) is writable in call to free((void *)_vcc_as_array(a, 10))' did not verify.
+testcase(15,5) : error VC8510: Assertion '\extent(p) is writable in call to free((void *)(void[10])a)' did not verify.
 `
