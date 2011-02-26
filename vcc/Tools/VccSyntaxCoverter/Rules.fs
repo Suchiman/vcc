@@ -453,12 +453,13 @@ module Rules =
     addRule (parenRuleN "set_closed_owner" 2 (closed_owner_rule "+="))
     addRule (parenRuleN "giveup_closed_owner" 2 (closed_owner_rule "-="))
 
-    let in_domain = function
+    let in_domain dom = function
      | [e1; e2] ->
-       e1 @ [ Tok.Op(fakePos, " \\in ") ] @ fnApp "\\domain" (eatWs e2)
+       e1 @ [ Tok.Op(fakePos, " \\in ") ] @ fnApp dom (eatWs e2)
      | _ -> failwith ""
-    addRule (parenRuleN "in_domain" 2 in_domain)
-    
+    addRule (parenRuleN "in_domain" 2 (in_domain "\\domain"))
+    addRule (parenRuleN "in_vdomain" 2 (in_domain "\\vdomain"))
+        
     let reify fn toks = 
       match List.rev (splitAt "," toks) with 
         | prop :: objs ->

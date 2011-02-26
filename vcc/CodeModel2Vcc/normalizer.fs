@@ -923,6 +923,8 @@ namespace Microsoft.Research.Vcc
       let normalizeInDomain self = function
         | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\domain"}, [], [e2])])
           -> Some(Macro(ec, "_vcc_in_domain", [self e1; self e2]))
+        | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\vdomain"}, [], [e2])])
+          -> Some(Macro(ec, "_vcc_in_vdomain", [self e1; self e2]))
         | _ -> None
 
       let normalizeSignatures self =
