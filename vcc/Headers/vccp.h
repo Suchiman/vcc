@@ -63,6 +63,8 @@ _(const char * const \declspec__boogie2;)
 // _(inline) is also supported, but becaue 'inline' is a keyword, we special-case _(inline) in the parser
 
 #define vcc_attr(k, v) __declspec(System.Diagnostics.Contracts.CodeContract.StringVccAttr, k, v)
+#define vcc_nospeccast(_TYPE_, _EXPR_) (_EXPR_)
+#define vcc_generic_instance(_F_, ...) _F_ __VA_ARGS__
 
 _(bool \mine(\object, ...);)
 _(bool \wrapped(\object);)
