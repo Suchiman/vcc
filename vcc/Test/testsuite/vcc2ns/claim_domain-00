@@ -1,49 +1,52 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S { int a; };
-struct T { int a; struct S s; invariant(keeps(&s)) };
+struct T { int a; struct S s; _(invariant \mine(&s)) };
 
-void foo() writes(SET());
+void foo() _(writes {});
 
 vcc_attr("no_infer","all")
-void one(struct T *t claimp(c))
-  always(c, closed(t))
+void one(struct T *t _(ghost \claim c))
+  _(always c, t->\consistent)
 {
 
   foo();
-  assert(unchanged(t->a)); // should fail
+  _(assert \unchanged(t->a)) // should fail
 }
 
-void two(struct T *t claimp(c))
-  always(c, closed(t))
+void two(struct T *t _(ghost \claim c))
+  _(always c, t->\consistent)
 {
   foo();
-  assert(unchanged(t->a)); // should work
+  _(assert \unchanged(t->a)) // should work
 }
 
-void three(struct T *t claimp(c))
-  always(c, closed(t))
+void three(struct T *t _(ghost \claim c))
+  _(always c, t->\consistent)
 {
 
   foo();
-  assert(unchanged(t->s.a)); // should fail
+  _(assert \unchanged(t->s.a)) // should fail
 }
 
-void four(struct T *t claimp(c))
-  always(c, closed(t))
+void four(struct T *t _(ghost \claim c))
+  _(always c, t->\consistent)
 {
 
-  assert(in_claim_domain(&t->s,c));
+  _(assert &t->s \in \domain(c))
   foo();
-  assert(unchanged(t->s.a)); // should work
+  _(assert \unchanged(t->s.a)) // should work
 }
 
 `
 Verification of T#adm succeeded.
 Verification of one failed.
-testcase(14,13) : error VC9500: Assertion '__old(t->a) == (t->a)' did not verify.
+testcase(14,26) : error VC9500: Assertion '\old(expr) == expr' did not verify.
+testcase(181,70) : error VC9599: (related information) from expansion of '\unchanged(t->a)'.
 Verification of two succeeded.
 Verification of three failed.
-testcase(29,13) : error VC9500: Assertion '__old(t->s.a) == (t->s.a)' did not verify.
+testcase(29,26) : error VC9500: Assertion '\old(expr) == expr' did not verify.
+testcase(181,70) : error VC9599: (related information) from expansion of '\unchanged(t->s.a)'.
 Verification of four succeeded.
 `

@@ -459,6 +459,7 @@ module Rules =
        e1 @ [ Tok.Op(fakePos, " \\in ") ] @ fnApp dom (eatWs e2)
      | _ -> failwith ""
     addRule (parenRuleN "in_domain" 2 (in_domain "\\domain"))
+    addRule (parenRuleN "in_claim_domain" 2 (in_domain "\\domain"))
     addRule (parenRuleN "in_vdomain" 2 (in_domain "\\vdomain"))
         
     let reify fn toks = 

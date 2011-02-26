@@ -921,10 +921,18 @@ namespace Microsoft.Research.Vcc
         List.filter isNotMagic
 
       let normalizeInDomain self = function
-        | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\domain"}, [], [e2])])
-          -> Some(Macro(ec, "_vcc_in_domain", [self e1; self e2]))
-        | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\vdomain"}, [], [e2])])
-          -> Some(Macro(ec, "_vcc_in_vdomain", [self e1; self e2]))
+        | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\domain"}, [], [e2])]) ->          
+          let uncasted =
+            match e2 with
+              | Cast ({ Type = Type.ObjectT }, _, e) -> e
+              | e2 -> e2
+          let name =
+            match uncasted.Type with
+              | Ptr Claim -> "_vcc_in_claim_domain"
+              | _ -> "_vcc_in_domain"
+          Some(Macro(ec, name, [self e1; self e2]))
+        | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\vdomain"}, [], [e2])]) -> 
+          Some(Macro(ec, "_vcc_in_vdomain", [self e1; self e2]))
         | _ -> None
 
       let normalizeSignatures self =
@@ -966,8 +974,7 @@ namespace Microsoft.Research.Vcc
             | None -> None
         | _ -> None
 
-      let mapFromNewSyntax = function
-        
+      let mapFromNewSyntax = function        
         | Top.FunctionDecl(fn) when fn.Name.StartsWith("\\macro") -> ()
         | Top.FunctionDecl(fn) when fn.Name.StartsWith("\\result_macro") -> ()
         | Top.FunctionDecl(fn) when fn.Name.StartsWith "\\" ->
