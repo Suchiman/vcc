@@ -1,18 +1,17 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo()
 {
-  spec(
-    ptrset s;
-    obj_t x;
-    assume(forall(obj_t p; set_in(p,s)==> is(p,int)));
-    assume(set_in(x,s));
-    assert(is(x,int));
-
-assert(false);
-  )
+  
+    _(ghost \objset s;)
+    _(ghost \object x;)
+    _(assume \forall \object p; p \in s==> p \is int)
+    _(assume x \in s)
+    _(assert x \is int)
+    _(assert \false)
 }
 `
 Verification of foo failed.
-testcase(12,10) : error VC9500: Assertion '((bool)0)' did not verify.
+testcase(11,28) : error VC9500: Assertion '\false' did not verify.
 `
