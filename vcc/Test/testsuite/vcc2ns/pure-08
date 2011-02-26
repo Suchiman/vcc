@@ -1,12 +1,13 @@
+`/newsyntax
 #include <vcc.h>
 
-ispure int f1(int *x)
-  returns(*x == 0)
-  reads(x);
+_(pure) int f1(int *x)
+  _(returns *x == 0)
+  _(reads x);
 
-ispure int f2(int *x, int *y)
-  returns(*x == *y)
-  reads(x);
+_(pure) int f2(int *x, int *y)
+  _(returns *x == *y)
+  _(reads x);
 
 void fux()
 {
@@ -17,6 +18,6 @@ void fux()
 `
 Verification of fux succeeded.
 Verification of f2#reads failed.
-testcase(7,1) : error VC8007: the value of 'result' changed (in reads check of 'f2').
+testcase(7,17) : error VC8007: the value of 'result' changed (in reads check of 'f2').
 Verification of f1#reads succeeded.
 `

@@ -969,6 +969,7 @@ namespace Microsoft.Research.Vcc
       let mapFromNewSyntax = function
         
         | Top.FunctionDecl(fn) when fn.Name.StartsWith("\\macro") -> ()
+        | Top.FunctionDecl(fn) when fn.Name.StartsWith("\\result_macro") -> ()
         | Top.FunctionDecl(fn) when fn.Name.StartsWith "\\" ->
           match newToOldFn.TryFind fn.Name with
             | Some oldName -> fn.Name <- oldName
@@ -1057,7 +1058,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
  
     let expandContractMacros decls =
-      let isMacro (f:Function) = f.Name.StartsWith "\\macro_"
+      let isMacro (f:Function) = f.Name.StartsWith "\\macro_" || f.Name.StartsWith ("\\result_macro_")
       let isMacroCall = function
         | Call (_, f, _, _) -> isMacro f
         | Macro(_, "ite", [Cast(_, _, Call(_, f, _, _)); BoolLiteral(_, true); BoolLiteral(_, false)]) -> isMacro f

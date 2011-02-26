@@ -320,11 +320,19 @@ namespace Microsoft.Research.Vcc.Parsing
               break;
             case Token.Identifier:
               var keyword = this.scanner.GetIdentifierString();
-              var name = this.GetSimpleNameFor(this.functionContractExtensions[keyword]);
+              var fnName = this.functionContractExtensions[keyword];
+              var loc = this.GetSourceLocationBuilderForLastScannedToken();
+              Expression name = this.GetSimpleNameFor(fnName);
               this.GetNextToken();
               var slb = new SourceLocationBuilder(name.SourceLocation);
               var parameters = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
               slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+              if (fnName.StartsWith("\\result_macro_")) {
+                var res = new VccReturnValue(loc);
+                parameters.Insert(0, res);
+                var tp = new VccTypeExpressionOf(res);
+                name = new GenericInstanceExpression(name, new TypeExpression[] { tp }, loc);
+              }
               var call = new VccMethodCall(name, parameters.AsReadOnly(), slb);
               contract.AddPrecondition(new Precondition(call, null, call.SourceLocation));
               break;
