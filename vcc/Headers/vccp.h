@@ -176,6 +176,11 @@ _(bool \macro_always(\claim c, bool cond)
   _(requires \wrapped(c) && \active_claim(c) && \claims(c, cond))
   _(ensures \wrapped(c) && \active_claim(c));)
 
+_(bool \macro_out_param(\object p)
+  _(writes p)
+  _(requires \mutable(p))
+  _(ensures \mutable(p)); )
+
 _(template<typename T> bool \result_macro_returns(T res, T expr)
   _(ensures res == expr);)
 
