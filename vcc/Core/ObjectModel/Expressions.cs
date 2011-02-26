@@ -2466,15 +2466,23 @@ namespace Microsoft.Research.Vcc {
         if (this.type == null) {
           if (this.structureTypeExpression != null) {
             this.type = this.structureTypeExpression.ResolvedType;
-            this.PropagateStructuredTypeToSubExpressions(this.GetStructuredTypeDecl());
+            var structuredType = this.GetStructuredTypeDecl();
+            if (structuredType != null) {
+              this.PropagateStructuredTypeToSubExpressions(structuredType);
+              return this.type;
+            }
           } else if (this.arrayTypeExpression != null) {
             this.type = PointerType.GetPointerType(this.arrayTypeExpression.ElementType.ResolvedType, this.Compilation.HostEnvironment.InternFactory);
             this.PropagateArrayTypeToSubExpressions(this.arrayTypeExpression.ElementType);
-          } else if (this.typeDefaultsToObjset) {
+            return this.type;
+          } 
+          
+          if (this.typeDefaultsToObjset) {
             Expression objsetRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.Compilation.NameTable, "Objset");
             objsetRef.SetContainingExpression(this);
             this.type = new VccNamedTypeExpression(objsetRef).Resolve(0);
-          } else this.type = Dummy.Type;
+          } else 
+            this.type = Dummy.Type;
         }
         return this.type;
       }
