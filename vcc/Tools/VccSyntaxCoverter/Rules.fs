@@ -327,6 +327,7 @@ module Rules =
     addKwRepl "no_reads_check" "_(no_reads_check)"
     addKwRepl "frameaxiom" "_(frameaxiom)"
     addKwRepl "isadmissibilitycheck" "_(admissibility)"
+    addKwRepl "skipverification" "_(assume_correct)"
     addKwRepl "backing_member" "_(backing_member)"
     addKwRepl "true" "\\true"
     addKwRepl "false" "\\false"
