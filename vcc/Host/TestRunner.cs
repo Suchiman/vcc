@@ -49,6 +49,7 @@ namespace Microsoft.Research.Vcc
       return errs;
     }
 
+    static bool firstFile = true;
     static bool RunTestSuite(string fileName, VccOptions commandLineOptions) {
       if (Directory.Exists(fileName)) {
         int errorCount = 0;
@@ -75,6 +76,11 @@ namespace Microsoft.Research.Vcc
         }
 
         if (trmt != null) {
+          if (firstFile) {
+            firstFile = false;
+            if (File.Exists("testsuite.log"))
+              File.Delete("testsuite.log");
+          }
           errorCount += trmt.Run();
         }
 
@@ -509,7 +515,7 @@ namespace Microsoft.Research.Vcc
         maxBytesPerProcess = totalBytes / this.threadCount;
         if (maxBytesPerProcess > 10000)
           maxBytesPerProcess /= 4;
-        using (globalLogFile = new StreamWriter("testsuite.log")) {
+        using (globalLogFile = new StreamWriter("testsuite.log", true)) {
           SpawnRunAndJoin();
         }
         return errorCount;
