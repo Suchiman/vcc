@@ -173,8 +173,8 @@ _(bool \macro_always(\claim c, bool cond)
   _(requires \wrapped(c) && \active_claim(c) && \claims(c, cond))
   _(ensures \wrapped(c) && \active_claim(c));)
 
-_(template<typename T> bool \macro_returns(T expr)
-  _(ensures \static_cast<T,bool>(\result) == expr);)
+_(template<typename T> bool \result_macro_returns(T res, T expr)
+  _(ensures res == expr);)
 
 _(logic bool \wrapped0(\object o) = \wrapped(o) && o->\claim_count == 0;)
 _(logic template<typename T> bool \unchanged(T expr) = \old(expr) == expr;)

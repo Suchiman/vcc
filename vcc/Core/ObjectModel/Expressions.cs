@@ -4821,4 +4821,46 @@ namespace Microsoft.Research.Vcc {
     }
 
   }
+
+  public class VccTypeExpressionOf : TypeExpression
+  {
+    private Expression expr;
+
+    public VccTypeExpressionOf(Expression expr)
+      :base(expr.SourceLocation)
+    {
+      this.expr = expr;
+    }
+
+    protected override ITypeDefinition Resolve()
+    {
+      return expr.InferType().ResolvedType;
+    }
+
+    /// <summary>
+    /// A copy constructor that allocates an instance that is the same as the given template, except for its containing block.
+    /// </summary>
+    /// <param name="containingBlock">A new value for containing block. This replaces template.ContainingBlock in the resulting copy of template.</param>
+    /// <param name="template">The template to copy.</param>
+    protected VccTypeExpressionOf(BlockStatement containingBlock, VccTypeExpressionOf template)
+      : base(containingBlock, template)
+    //^ requires template.ContainingBlock != containingBlock;
+    //^ ensures this.containingBlock == containingBlock;
+    {
+      this.expr = template.expr.MakeCopyFor(containingBlock);
+    }
+
+
+    /// <summary>
+    /// Makes a copy of this expression, changing the ContainingBlock to the given block.
+    /// </summary>
+    //^ [MustOverride]
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    //^^ ensures result.GetType() == this.GetType();
+    //^^ ensures result.ContainingBlock == containingBlock;
+    {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccTypeExpressionOf(containingBlock, this);
+    }
+  }
 }

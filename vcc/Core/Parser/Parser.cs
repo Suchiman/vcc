@@ -474,7 +474,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           this.ParseFunctionOrBlockContract(funcDeclarator.Contract, followers);
           RegisterTypedef(funcDeclarator.Identifier.Name.Value, typedefDecl); //TODO: const and volatile;
           this.AssociateContracts(functionType, funcDeclarator);
-          typeMembers.Add(typedefDecl);          
+          typeMembers.Add(typedefDecl);
         } else {
           //^ assert pointerToFunc != null;
           // Distinguish between whether this function pointer is inside a type definition
@@ -495,26 +495,29 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<GenericMethodParameterDeclaration>/*?*/ templateParameters = Parser.ConvertToGenericMethodParameterDeclarations(funcDeclarator.TemplateParameters);
       CallingConvention callingConvention = GetCallingConvention(specifiers, acceptsExtraArguments);
 
-      FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments, 
-          specifiers, 
-          storageClass == Token.Extern, 
-          callingConvention, 
-          visibility, 
-          returnType, 
-          funcDeclarator.Identifier, 
-          templateParameters, 
-          parameters, 
-          this.InSpecCode, 
-          null, 
+      FunctionDeclaration fdecl = new FunctionDeclaration(acceptsExtraArguments,
+          specifiers,
+          storageClass == Token.Extern,
+          callingConvention,
+          visibility,
+          returnType,
+          funcDeclarator.Identifier,
+          templateParameters,
+          parameters,
+          this.InSpecCode,
+          null,
           slb);
       this.AssociateContracts(fdecl, funcDeclarator);
       typeMembers.Add(fdecl);
       this.locallyDefinedNames.Clear();
 
       var prefix = "\\macro_";
+      var prefixRes = "\\result_macro_";
       var nameString = funcDeclarator.FunctionName.Identifier.Name.Value;
       if (nameString.StartsWith(prefix)) {
         this.functionContractExtensions[nameString.Substring(prefix.Length)] = nameString;
+      } else if (nameString.StartsWith(prefixRes)) {
+        this.functionContractExtensions[nameString.Substring(prefixRes.Length)] = nameString;
       } else if (nameString.StartsWith("\\") && IsVoid(returnType)) {
         this.statementLikeFunctions[nameString.Substring(1)] = nameString;
       }
