@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 int x;
@@ -5,40 +6,39 @@ int x;
 struct A {
   int y;
 
-  spec(claim_t c;)
+  _(ghost \claim c)
 
-  invariant(keeps(c) && claims(c, closed(emb(&x))))
-  invariant(y < by_claim(c, x))
+  _(invariant \mine(c) && \claims(c, (\embedding(&x))->\consistent))
+  _(invariant y < (_(\by_claim c)(x)))
 };
 
-spec(
-struct vcc(claimable) _GlobalOwner {
+
+_(ghost _(claimable) struct _GlobalOwner {
   int dummy;
-  invariant(keeps(emb(&x)))
-} GlobalOwner;
-)
+  _(invariant \mine(\embedding(&x)))
+} GlobalOwner;)
+
 
 struct A a;
 
 void init()
-  writes(set_universe())
-  requires(program_entry_point())
+  _(writes \universe())
+  _(requires \program_entry_point())
 {
-  spec(claim_t c;)
+  _(ghost \claim c)
 
   x = 42;
-  wrap(emb(&x));
+  _(wrap \embedding(&x))
 
-  set_owns(&GlobalOwner, set_singleton(emb(&x)));
-  wrap(&GlobalOwner);
+  _(ghost (&GlobalOwner)->\owns =  {\embedding(&x)});
+  _(wrap &GlobalOwner)
 
   a.y = 12;
-  spec(  
-    c = claim(&GlobalOwner, true); 
-    a.c = c;
-    set_owns(&a, set_singleton(c));
-    wrap(&a);
-  )
+    
+    _(ghost c = \make_claim({&GlobalOwner}, \true);) 
+    _(ghost a.c = c;)
+    _(ghost _(ghost (&a)->\owns =  {c});)
+    _(ghost _(wrap &a))
 }
 `
 Verification of A#adm succeeded.

@@ -440,14 +440,14 @@ module Rules =
 
     let set_owns = function
       | [e; s] ->
-        spec "ghost" (e @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns"); Tok.Op(fakePos, " = ")] @ s)
+        spec "ghost" ([parenOpt e; Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns"); Tok.Op(fakePos, " = ")] @ s)
       | _ -> failwith ""
     addRule (parenRuleN "set_owns" 2 set_owns)
     
     let closed_owner_rule op = function
       | [ob; owner] ->
         let owns = fnApp "\\owns" owner
-        spec "ghost" (owner @ [Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns"); Tok.Op(fakePos, " " + op + " ") ] @ (eatWs ob))
+        spec "ghost" ([parenOpt owner; Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns"); Tok.Op(fakePos, " " + op + " ") ] @ (eatWs ob))
       | _ -> failwith ""
 
     addRule (parenRuleN "set_closed_owner" 2 (closed_owner_rule "+="))
