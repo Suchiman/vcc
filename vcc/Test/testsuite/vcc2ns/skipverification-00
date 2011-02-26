@@ -1,6 +1,7 @@
+`/newsyntax
 #include <vcc.h>
 
-skipverification void foo() {}
+_(assume_correct) void foo() {}
 void bar() {}
 `
 Verification of bar succeeded.
