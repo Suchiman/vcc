@@ -1,5 +1,4 @@
-
-
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _T {
@@ -9,28 +8,28 @@ typedef struct _T {
 T S;
 
 void no_chg(int* x)
-        writes(x)
-        maintains(wrapped(&S))
-        maintains(thread_local(x))
-        ensures(deep_eq(S,old(S)))
-        ensures(*x == S.a)
-        maintains(mutable(x) && is_object_root(x));
+        _(writes x)
+        _(maintains \wrapped(&S))
+        _(maintains \thread_local(x))
+        _(ensures \deep_eq(S,\old(S)))
+        _(ensures *x == S.a)
+        _(maintains \mutable(x) && \object_root(x));
 
 int foo()
-writes(extent(&S))
+_(writes \extent(&S))
 {
         int c;
 
         S.a=7;
         S.b=42;
 
-        set_owns(&S, set_empty());
-        wrap(&S);
+        _(ghost (&S)->\owns =  {});
+        _(wrap &S)
 
         no_chg(&c);
 
-        assert(c == S.a); // VERIFIES
-        assert(S.a == 7); // FAILS
+        _(assert c == S.a) // VERIFIES
+        _(assert S.a == 7) // FAILS
 
         return 0;
 }
