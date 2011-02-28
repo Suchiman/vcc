@@ -955,13 +955,17 @@ function {:inline true} $full_stop_ext(t:$token, S:$state) : bool
 function $file_name_is(id:int, tok:$token) : bool;
 
 axiom (forall S:$state :: {$function_entry(S)}
-  $function_entry(S) ==> $full_stop(S) && $current_timestamp(S) >= 0);
+  $function_entry(S) ==> $full_stop(S) && $current_timestamp(S) >= 0 && $timestamp_checkpoint(S));
 
 axiom (forall S:$state :: {$full_stop(S)}
   $full_stop(S) ==> $good_state(S) && $invok_state(S));
 
 axiom (forall S:$state :: {$invok_state(S)}
   $invok_state(S) ==> $good_state(S));
+
+function {:inline true} $timestamp_checkpoint(S:$state) : bool
+{ (forall p:$ptr :: {$owner(S, p)}
+     $timestamp(S, p) <= $current_timestamp(S)) }
 
 
 // Assumed after each meta/state update, means that the meta corresponds to the state
