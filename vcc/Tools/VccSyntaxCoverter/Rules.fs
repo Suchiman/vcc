@@ -520,8 +520,6 @@ module Rules =
     addRule { keyword = "member_name"; replFn = ctxFreeRule member_name }
 
     let spec_code toks =
-      (*
-      *)
       if List.exists (function Tok.Op (_, ";") -> true | _ -> false) toks then
         spec "ghost" [Tok.Group (fakePos, "{", toks)]
       else
@@ -536,8 +534,8 @@ module Rules =
     addRule (parenRuleExtCtx "speconly" specOnlyBlock (fun x -> x))
 
     let specBlock (ctx:ctx, oldToks, toks, rest) =
-      if ctx.outer_braces > 0 then
-        specOnlyBlock (ctx, oldToks, toks, rest)
+      if countSemicolons oldToks > 1 && ctx.outer_braces > 0 then
+        spec "ghost" [Tok.Group (fakePos, "{", toks)], rest
       else
         let rec map_with_last f = function
           | [] -> []
