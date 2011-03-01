@@ -8,6 +8,7 @@ module Rules =
   type ctx = 
     {
       in_ensures : bool
+      outer_braces : int
     }
 
   type rule =
@@ -48,7 +49,9 @@ module Rules =
           let ctx', res, rest = (r:rule).replFn ctx (t :: rest)
           apply' ctx' (rev_append res acc) rest
         | _ -> apply' ctx (t :: acc) rest
-    | Tok.Group (p, s, toks) :: rest -> apply' ctx (Tok.Group (p, s, apply' ctx [] toks) :: acc) rest    
+    | Tok.Group (p, s, toks) :: rest ->
+      let ctx = if s = "{" then { ctx with outer_braces = ctx.outer_braces + 1 } else ctx
+      apply' ctx (Tok.Group (p, s, apply' ctx [] toks) :: acc) rest    
     | t :: rest -> apply' ctx (t :: acc) rest
     | [] -> List.rev acc
 
@@ -78,15 +81,15 @@ module Rules =
       | id :: toks ->
         match eatWs toks with
           | Tok.Group (_, "(", toks) :: rest ->
-            let toks = apply' (fnCtx ctx) [] toks
-            let l1, l2 = fn (toks, rest) in ctx, l1, l2
+            let toks' = apply' (fnCtx ctx) [] toks
+            let l1, l2 = fn (ctx, toks, toks', rest) in ctx, l1, l2
           | _ -> ctx, [id], toks
       | _ -> failwith ""
     { keyword = kw
       replFn = repl }
   
   let parenRuleCtx eatSemi kw fn =
-    let repl (toks, rest) =
+    let repl (_, _, toks, rest) =
       match eatWs rest with
         | Tok.Op (_, ";") :: rest when eatSemi -> fn toks, rest
         | _ -> fn toks, rest            
@@ -160,12 +163,6 @@ module Rules =
       | _ -> false
     List.length (List.filter isSemi toks)
   
-  let makeBlock toks =
-    if countSemicolons toks > 1 then
-      [Tok.Group (poss toks, "{", toks)]
-    else
-      toks
-
   let joinWith op defs =
     let rec aux acc = function
       | [x] -> List.rev (rev_append x acc)
@@ -335,7 +332,6 @@ module Rules =
     addKwRepl "spec_malloc_array" "\\alloc_array"  // cannot use fnRule because of template paramters
     addKwRepl "block" ""                          // has become superfluous in the new syntax
     
-    addRule (parenRule false "speconly" (fun toks -> spec "ghost" (makeBlock toks)))
     addRule (parenRule false "sk_hack" (fun toks -> [id ":hint"; space; paren "" toks]))
     addRule (quantRule "forall" "==>")
     addRule (quantRule "exists" "&&")
@@ -523,19 +519,38 @@ module Rules =
       | _ -> failwith ""
     addRule { keyword = "member_name"; replFn = ctxFreeRule member_name }
 
-    let spec_code =
-      let rec map_with_last f = function
-        | [] -> []
-        | [x] -> [f true x]
-        | x :: xs -> f false x :: map_with_last f xs
+    let spec_code toks =
+      (*
+      *)
+      if List.exists (function Tok.Op (_, ";") -> true | _ -> false) toks then
+        spec "ghost" [Tok.Group (fakePos, "{", toks)]
+      else
+        spec "ghost" toks
 
-      let  doStmt isLast stmt =
-        let semi = if isLast then [] else [Tok.Op(fakePos, ";")]
-        match eatWsEx stmt with
-          | ws, [] -> ws
-          | ws, stmt' ->  ws @ spec "ghost" (stmt' @ semi)
-      splitAt ";"  >> map_with_last doStmt >> List.concat
-    addRule (parenRule false "spec" spec_code)
+    let specOnlyBlock (ctx, oldToks, toks, rest) =
+      if countSemicolons oldToks > 1 then
+        spec "ghost" [Tok.Group (fakePos, "{", toks)], rest
+      else
+        spec "ghost" toks, rest
+
+    addRule (parenRuleExtCtx "speconly" specOnlyBlock (fun x -> x))
+
+    let specBlock (ctx:ctx, oldToks, toks, rest) =
+      if ctx.outer_braces > 0 then
+        specOnlyBlock (ctx, oldToks, toks, rest)
+      else
+        let rec map_with_last f = function
+          | [] -> []
+          | [x] -> [f true x]
+          | x :: xs -> f false x :: map_with_last f xs
+        let  doStmt isLast stmt =
+          let semi = if isLast then [] else [Tok.Op(fakePos, ";")]
+          match eatWsEx stmt with
+            | ws, [] -> ws
+            | ws, stmt' ->  ws @ spec "ghost" (stmt' @ semi)
+        toks |> splitAt ";" |> map_with_last doStmt |> List.concat, rest
+
+    addRule (parenRuleExtCtx "spec" specBlock (fun x -> x))
 
     let struct_rule = function
       | hd :: rest ->
@@ -551,4 +566,4 @@ module Rules =
     addRule { keyword = "struct"; replFn = ctxFreeRule struct_rule }
     addRule { keyword = "union"; replFn = ctxFreeRule struct_rule }
 
-  let apply = apply' { in_ensures = false }  []
+  let apply = apply' { in_ensures = false; outer_braces = 0 }  []
