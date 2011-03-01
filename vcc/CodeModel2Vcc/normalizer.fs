@@ -952,11 +952,20 @@ namespace Microsoft.Research.Vcc
         function
           | Atomic(ec, objs, body) -> Some(Atomic(ec, selfs objs, body.SelfMap(normalizeOwnershipManipulation true)))
           | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); 
-                            Call(_, {Name = ("\\set_add_element"|"\\set_remove_element" as setOp)}, [], 
+                            CallMacro(_, ("\\set_add_element"|"\\set_remove_element" as setOp), [], 
                                  [Macro(_, "_vcc_owns", [e1']); e2] )]) when inAtomic  -> 
               let fn = if setOp = "\\set_add_element" then fnMap.["\\set_closed_owner"] else fnMap.["\\giveup_closed_owner"]
               Some(Call({ec with Type = Type.Void}, fn, [], [self e2; self e1]))
-          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); e2]) -> Some(Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [self e1; self e2]))
+          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]) as ownsSet; 
+                            CallMacro (_, "\\set_remove_element", [], [Macro(_, "_vcc_owns", [e1']); e2]) as newOwns]) ->
+            let e1 = self e1
+            let e2 = self e2
+            let tok = afmte 8026 "{0} is not in {1}->\\owns before trying to remove it" [e2; e1]            
+            let check = Expr.MkAssert (Expr.Macro (tok, "_vcc_set_in", [e2; ownsSet]))
+            let update = Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [e1; self newOwns])
+            Some (Expr.MkBlock [check; update])
+          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); e2]) -> 
+            Some(Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [self e1; self e2]))
           | _ -> None
 
       let normalizeMisc self = 

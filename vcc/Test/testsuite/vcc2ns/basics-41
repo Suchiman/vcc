@@ -1,25 +1,26 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef struct s1{
     int dummy;
 } s1;
 
-typedef struct vcc(dynamic_owns) q1{
+typedef _(dynamic_owns) struct q1{
     bool b;
     s1 *s;
-    invariant(b ==> keeps(s))
+    _(invariant b ==> \mine(s))
 }q1;
 
 void f(q1 *q)
-requires(!q->b)
-requires(wrapped(q))
-writes(q)
+_(requires !q->b)
+_(requires \wrapped(q))
+_(writes q)
 {
-    unwrap(q);
-    giveup_owner(q->s, q);
+    _(unwrap q)
+    _(ghost q->\owns -= q->s);
 }
 `
 Verification of q1#adm succeeded.
 Verification of f failed.
-testcase(19,19) : error VC9500: Assertion '_vcc_set_in(q->s,_vcc_owns(q))' did not verify.
+testcase(19,39) : error VC8026: q->s is not in q->\owns before trying to remove it.
 `

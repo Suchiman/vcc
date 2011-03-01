@@ -452,6 +452,9 @@ module Rules =
     addRule (parenRuleN "set_closed_owner" 2 (closed_owner_rule "+="))
     addRule (parenRuleN "giveup_closed_owner" 2 (closed_owner_rule "-="))
 
+    addRule (parenRuleN "set_owner" 2 (closed_owner_rule "+="))
+    addRule (parenRuleN "giveup_owner" 2 (closed_owner_rule "-="))
+
     let in_domain dom = function
      | [e1; e2] ->
        e1 @ [ Tok.Op(fakePos, " \\in ") ] @ fnApp dom (eatWs e2)
