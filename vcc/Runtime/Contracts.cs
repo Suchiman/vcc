@@ -156,9 +156,13 @@ namespace System.Diagnostics.Contracts
         throw new NotImplementedException(); // is only here to suppress warnings
       }
     }
-
+   
     public abstract class Objset
     {
+      // ensure the size is non-zero
+      byte dummy;
+      private Objset() { dummy++; }
+
       public static bool operator <=(TypedPtr elem, Objset set) {
         throw new NotImplementedException();
       }

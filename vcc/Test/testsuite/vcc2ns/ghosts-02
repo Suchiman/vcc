@@ -1,13 +1,14 @@
+`/newsyntax
 #include <vcc2test.h>
 
 void foo(unsigned int x)
-  requires(x > 0 && x < 1000)
+  _(requires x > 0 && x < 1000)
 {
-  spec(
-    spec(ptrset ^p = spec_malloc_array<ptrset>(x);)
-    assert((char^)(p + 1) - (char^)p == 1);
-    p[x + 1] = set_empty();
-  )
+  _(ghost {
+    _(ghost \objset ^p = \alloc_array<\objset>(x);)
+    _(assert (char^)(p + 1) - (char^)p == 1)
+    p[x + 1] = {};
+  })
 
 }
 `
