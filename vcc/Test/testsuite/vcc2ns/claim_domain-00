@@ -43,10 +43,10 @@ void four(struct T *t _(ghost \claim c))
 Verification of T#adm succeeded.
 Verification of one failed.
 testcase(14,26) : error VC9500: Assertion '\old(expr) == expr' did not verify.
-testcase(181,70) : error VC9599: (related information) from expansion of '\unchanged(t->a)'.
+vccp.h(0,0) : error VC9599: (related information) from expansion of '\unchanged(t->a)'.
 Verification of two succeeded.
 Verification of three failed.
 testcase(29,26) : error VC9500: Assertion '\old(expr) == expr' did not verify.
-testcase(181,70) : error VC9599: (related information) from expansion of '\unchanged(t->s.a)'.
+vccp.h(0,0) : error VC9599: (related information) from expansion of '\unchanged(t->s.a)'.
 Verification of four succeeded.
 `

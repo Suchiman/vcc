@@ -51,6 +51,25 @@ namespace Microsoft.Research.Vcc
       get { return CommandLineOptions != null ? CommandLineOptions.DebugOnWarningOrError : false; }
     }
 
+    internal static string LocationToString(bool testSuite, string docName, int startLine, int startColumn)
+    {
+      if (testSuite) {
+        if (docName.EndsWith("vccp.h")) {
+          docName = "vccp.h";
+          startLine = 0;
+          startColumn = 0;
+        } else {
+          docName = "testcase";
+        }
+      }
+      return string.Format("{0}({1},{2})", docName, startLine, startColumn);
+    }
+
+    private string LocationToString(string docName, int startLine, int startColumn)
+    {
+      return LocationToString(this.RunningTestSuite, docName, startLine, startColumn);
+    }
+    
     public void HandleErrors(object sender, Microsoft.Cci.ErrorEventArgs args) {
       foreach (IErrorMessage error in args.Errors) {
         ISourceLocation/*?*/ sourceLocation = error.Location as ISourceLocation;
@@ -83,8 +102,8 @@ namespace Microsoft.Research.Vcc
         long id = error.IsWarning ? ErrorToId(error.Code) : error.Code;
         if (WarningIsDisabled(id)) return;
 
-        StringBuilder msgBldr = new StringBuilder();
-        msgBldr.AppendFormat("{0}({1},{2})", this.RunningTestSuite ? "testcase" : docName, startLine, startColumn);
+        StringBuilder msgBldr = new StringBuilder();        
+        msgBldr.Append(LocationToString(docName, startLine, startColumn));
         //if (commandLineOptions == null || (commandLineOptions.NoPreprocessor && !commandLineOptions.VCLikeErrorMessages))
         //  msgBldr.AppendFormat("-({0},{1})", endLine, endColumn);
         msgBldr.AppendFormat(" : {0} VC{1:0000}: {2}", isError ? "error" : "warning", this.RunningTestSuite && id < 9000 ? 0 : id, error.Message);
@@ -122,7 +141,7 @@ namespace Microsoft.Research.Vcc
               endLine = includedSourceLocation.OriginalEndLine;
             }
             if (docName != firstErrFile || firstErrLine != startLine) {
-              Console.Write("{0}({1},{2})", this.RunningTestSuite ? "testcase" : docName, startLine, startColumn);
+              Console.Write(LocationToString(docName, startLine, startColumn));
               if (this.NoPreprocessor && !this.VCLikeErrorMessages)
                 Console.Write("-({0},{1})", endLine, endColumn);
               Console.WriteLine(" : (Location of symbol related to previous {0}.)", isError ? "error" : "warning");
@@ -255,11 +274,15 @@ namespace Microsoft.Research.Vcc
     //        cevModelWriter.WriteLine(msg);
     //}
 
-    private bool ReportError(IToken tok, VerificationErrorHandler.ErrorCode code, string fmt, params string[] args) {
+    private string LocationToString(IToken tok)
+    {
+      return CciErrorHandler.LocationToString(commandLineOptions.RunTestSuite, tok.filename, tok.line, tok.col);
+    }
+
+    private bool ReportError(IToken tok, VerificationErrorHandler.ErrorCode code, string fmt, params string[] args)
+    {
       if (ErrorHasBeenReported(tok, code)) return false;
-      string msg = string.Format("{0}({1},{2}) : error {3}: {4}.",
-                                 commandLineOptions.RunTestSuite ? "testcase" : tok.filename, tok.line, tok.col,
-                                 ErrorCodeToString(code), Format(fmt, args));
+      string msg = string.Format("{0} : error {1}: {2}.", LocationToString(tok), ErrorCodeToString(code), Format(fmt, args));
       if (commandLineOptions.RunTestSuite)
         errors.Add(msg);
       else
@@ -277,8 +300,8 @@ namespace Microsoft.Research.Vcc
     }
 
     private void ReportRelated(IToken tok, string fmt, params string[] args) {
-      string msg = string.Format("{0}({1},{2}) : error {3}: (related information) {4}.",
-                                 commandLineOptions.RunTestSuite ? "testcase" : tok.filename, tok.line, tok.col,
+      string msg = string.Format("{0} : error {1}: (related information) {2}.",
+                                 LocationToString(tok),
                                  ErrorCodeToString(ErrorCode.RelatedInformation),
                                  Format(fmt, args));
       if (commandLineOptions.RunTestSuite)
