@@ -13,7 +13,7 @@ case "$2" in
       *.c )
         chmod 644 "$2"
 	if grep -q ' _(' "$1" || grep -q '^_(' "$1" ; then
-	  echo '`/ns' >> "$2"
+	  echo '`/newsyntax' >> "$2"
 	fi
         cat "$1" >> "$2"
         echo '`' >> "$2"

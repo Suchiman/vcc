@@ -93,7 +93,7 @@ Verification of t succeeded.
 Verification of t2 failed.
 testcase(23,12) : error VC9500: Assertion '_vcc_is_non_primitive_ptr(&x)' did not verify.
 `
-`/ns
+`/newsyntax
 #include <vcc.h>
 #include <limits.h>
 
@@ -117,7 +117,7 @@ _(writes \array_range(q,l))
 `
 Verification of test succeeded.
 `
-`/ns
+`/newsyntax
 #include <vcc.h>
 #include <limits.h>
 
