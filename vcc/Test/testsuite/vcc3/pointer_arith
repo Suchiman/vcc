@@ -17,7 +17,7 @@ assert(tmp == 0);
 Verification of main failed.
 testcase(12,10) : error VC9500: Assertion 'tmp == 0' did not verify.
 `
-`/2
+`/newsyntax
 #include <stdlib.h>
 #include "vcc.h"
 
