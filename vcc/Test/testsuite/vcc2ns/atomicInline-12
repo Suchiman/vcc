@@ -1,30 +1,30 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   volatile int a;
-  spec(volatile int b;)
+  _(ghost volatile int b)
 };
 
-int f(struct S *s spec(int ^x) claimp(c))
-  requires(claims(c, closed(s)))
-  requires(wrapped(c))
-  requires(x!=0 ==> mutable(x))
+int f(struct S *s _(ghost int ^x) _(ghost \claim c))
+  _(requires \claims(c, s->\consistent))
+  _(requires \wrapped(c))
+  _(requires x!=0 ==> \mutable(x))
 {
-  atomic(s, c) {
+  _(atomic s, c) {
     s->a=5;
-    spec(x!=0 && (s->b=*x);)
+    _(ghost x!=0 && (s->b=*x))
   }
 }
 
-int g(struct S *s spec(int ^x) claimp(c))
-  requires(claims(c, closed(s)))
-  requires(wrapped(c))
-  requires(x!=0 ==> mutable(x))
+int g(struct S *s _(ghost int ^x) _(ghost \claim c))
+  _(requires \claims(c, s->\consistent))
+  _(requires \wrapped(c))
+  _(requires x!=0 ==> \mutable(x))
 {
-  atomic_op(s->a=5,
+  _(atomic_op 
             s, c,
-            x!=0 && (s->b=*x)
-            );
+            x!=0 && (s->b=*x))(s->a=5);
 }
 `
 Verification of f succeeded.

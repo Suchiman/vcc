@@ -478,7 +478,7 @@ namespace Microsoft.Research.Vcc.Parsing
             this.SkipOutOfSpecBlock(savedInSpecCode, followers | TS.DeclaratorStart);
             return StatementGroup.Create(this.ParseLocalDeclaration(specifiers, followers));
           }
-          if (this.castlikeFunctions.ContainsKey(id)) {
+          if (id == "atomic_op" || this.castlikeFunctions.ContainsKey(id)) {
             this.LeaveSpecBlock(savedInSpecCode);
             scanner.RevertToSnapshot(scannerState);
             this.currentToken = Token.Specification;
@@ -656,8 +656,8 @@ namespace Microsoft.Research.Vcc.Parsing
               return new VccMethodCall(this.GetSimpleNameFor("\\retype"), new Expression[] { expr }, slb);
             }
           default:
-            if (this.castlikeFunctions.ContainsKey(id)) {
-              var methodName = this.castlikeFunctions[id];
+            if (id == "atomic_op" || this.castlikeFunctions.ContainsKey(id)) {
+              var methodName = id == "atomic_op" ? "" : this.castlikeFunctions[id];
               var isVarArgs = methodName.StartsWith("\\castlike_va_");
               this.GetNextToken();
               var exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
@@ -670,8 +670,15 @@ namespace Microsoft.Research.Vcc.Parsing
               }
               var expr = this.ParseUnaryExpression(followers);
               slb.UpdateToSpan(expr.SourceLocation);
-              exprs.Insert(0, expr);
-              return new VccMethodCall(this.GetSimpleNameFor(methodName), exprs, slb);
+              if (id == "atomic_op") {
+                exprs.Add(expr);
+                var atomicOp = new VccAtomicOp(this.GetSimpleNameFor("_vcc_atomic_op"), exprs.AsReadOnly(), slb);
+                var atomicOpBlock = new VccAtomicOpBlock(new List<Statement>(0), atomicOp, slb);
+                return new BlockExpression(atomicOpBlock, atomicOp, slb);
+              } else {
+                exprs.Insert(0, expr);
+                return new VccMethodCall(this.GetSimpleNameFor(methodName), exprs, slb);
+              }
             } else {
               this.HandleError(Error.SyntaxError, this.scanner.GetTokenSource());
               this.SkipOutOfSpecBlock(savedInSpecCode, followers);

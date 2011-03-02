@@ -172,9 +172,11 @@ _(ghost extern const \thread \me;)
 //     _(foobar x, y)(z) -> \castlike_va_foobar(z, \argument_tuple(x, y))
 //     _(foobaz x, y)(z) -> \castlike_foobaz(z, x, y)
 _(\integer \argument_tuple(\object, ...); ) 
-_(template<typename T> T \castlike_va_atomic_op(T op, \integer);)
 _(template<typename T> T \castlike_va_atomic_read(T op, \integer);)
 _(template<typename T> T \castlike_known(T v, bool expected);)
+
+// the VccAtomicOp AST class uses this
+_(void _vcc_atomic_op(\object, ...);)
 
 // This one is built-in
 // _(template<typename T> T \castlike_unchecked(T v);)
