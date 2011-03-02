@@ -994,6 +994,7 @@ namespace Microsoft.Research.Vcc
           | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" | "_vcc_label_of" | "_vcc_lblset_leq"
           | "\\static_cast"
           | "_vcc_new_club" | "_vcc_add_member" | "_vcc_is_member" -> ()
+          | x when x.StartsWith "\\castlike_" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false)
 
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
@@ -1476,11 +1477,11 @@ namespace Microsoft.Research.Vcc
             match args() with
               | [e1; e2] -> exprRes <- C.Expr.Macro (ec, "approves", [e1; e2])
               | _ -> oopsNumArgs() 
-          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq") ->
+          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "\\castlike_known" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq") ->
             match args() with
               | [e1; e2] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
               | _ -> oopsNumArgs()
-          | _, "_vcc_atomic_op" ->
+          | _, ("_vcc_atomic_op" | "\\castlike_atomic_op") ->
             exprRes <- C.Expr.Macro(ec, "atomic_op",  args())
           | _, "_vcc_atomic_op_result" ->
             exprRes <- C.Expr.Macro(ec, "atomic_op_result", [])

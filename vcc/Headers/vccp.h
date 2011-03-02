@@ -168,6 +168,14 @@ _(bool _(pure) \match_ulong(unsigned __int64) _(ensures \result == \true);)
 
 _(ghost extern const \thread \me;)
 
+// Function that can be used in cast-like syntax: _(foobar x, y)(z) -> \castlike_foobar(z, x, y)
+_(template<typename T> T \castlike_atomic_op(T op, ...);)
+_(template<typename T> T \castlike_atomic_read(T op, ...);)
+_(template<typename T> T \castlike_known(T v, bool val);)
+
+// This one is built-in
+// _(template<typename T> T \castlike_unchecked(T v);)
+
 // 'Built-in' spec macros and logic definitions
 
 _(bool \macro_maintains(bool cond) _(requires cond) _(ensures cond);)

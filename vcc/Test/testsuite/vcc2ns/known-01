@@ -1,16 +1,17 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo() {
 int i = 0;
-do { } while(known(i, false));
+do { } while(_(known  \false)i);
 } 
 
 void bar() {
 int i = 1;
-do { } while(known(i, false));
+do { } while(_(known  \false)i);
 } 
 `
 Verification of foo succeeded.
 Verification of bar failed.
-testcase(10,25) : error VC8533: Assertion 'i has the value ((bool)0) specified by known(...)' did not verify.
+testcase(10,44) : error VC8533: Assertion 'i has the value \false specified by known(...)' did not verify.
 `

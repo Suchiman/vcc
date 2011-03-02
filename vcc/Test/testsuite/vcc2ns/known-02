@@ -1,13 +1,14 @@
+`/newsyntax
 #include <vcc.h>
 
 bool bar();
 
 void foo(bool b) 
-requires(b)
+_(requires b)
 {
 
-if (known(b,true) || bar()) {
-assert(true);
+if (_(known \true)b || bar()) {
+_(assert \true)
 } else {
 bar();
 }

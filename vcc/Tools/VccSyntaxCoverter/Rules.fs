@@ -477,6 +477,18 @@ module Rules =
     addRule (parenRule false "claim" (reify "\\make_claim"))
     addRule (parenRule false "upgrade_claim" (reify "\\upgrade_claim"))
             
+    let castLike oldName newName =
+      let fn toks =
+        match splitAt "," toks with
+          | hd :: tl ->
+            spec newName (joinWith "," tl) @ [parenOpt hd]
+          | _ -> failwith ""
+      parenRule false oldName fn
+
+    addRule (castLike "known" "known")
+    addRule (castLike "atomic_op" "atomic_op")
+    addRule (castLike "atomic_read" "atomic_read")
+
     let unclaim toks = 
       match splitAt "," toks with 
         | cl :: objs ->

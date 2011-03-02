@@ -20,12 +20,13 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected delegate TResult Func<in T1, in T2, out TResult>(T1 arg1, T2 arg2);
 
     protected readonly Compilation compilation;
-    protected readonly Dictionary<string, TypedefDeclaration> typedefs;
-    protected readonly Dictionary<string, bool> locallyDefinedNames;
-    protected readonly Dictionary<string, string> functionContractExtensions;
-    protected readonly Dictionary<string, string> declspecExtensions;
-    protected readonly Dictionary<string, string> statementLikeFunctions;
-    protected readonly Dictionary<Expression, bool> emptyStructuredTypes;
+    protected readonly Dictionary<string, TypedefDeclaration> typedefs = new Dictionary<string, TypedefDeclaration>();
+    protected readonly Dictionary<string, bool> locallyDefinedNames = new Dictionary<string, bool>();
+    protected readonly Dictionary<string, string> functionContractExtensions = new Dictionary<string, string>();
+    protected readonly Dictionary<string, string> castlikeFunctions = new Dictionary<string, string>();
+    protected readonly Dictionary<string, string> declspecExtensions = new Dictionary<string, string>();
+    protected readonly Dictionary<string, string> statementLikeFunctions = new Dictionary<string, string>();
+    protected readonly Dictionary<Expression, bool> emptyStructuredTypes = new Dictionary<Expression, bool>();
     protected readonly Scanner scanner;
     protected readonly List<IErrorMessage> scannerAndParserErrors;
     protected readonly RootNamespaceExpression rootNs;
@@ -53,12 +54,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.nameTable = compilation.NameTable;
       this.scannerAndParserErrors = scannerAndParserErrors;
       this.scanner = new Scanner(scannerAndParserErrors, sourceLocation, true);
-      this.typedefs = new Dictionary<string, TypedefDeclaration>();
-      this.locallyDefinedNames = new Dictionary<string, bool>();
-      this.emptyStructuredTypes = new Dictionary<Expression, bool>();
-      this.functionContractExtensions = new Dictionary<string, string>();
-      this.declspecExtensions = new Dictionary<string, string>();
-      this.statementLikeFunctions = new Dictionary<string, string>();
       this.rootNs = new RootNamespaceExpression(SourceDummy.SourceLocation);
       this.systemNs = new AliasQualifiedName(rootNs, this.GetSimpleNameFor("System"), SourceDummy.SourceLocation);
     }
@@ -511,13 +506,16 @@ namespace Microsoft.Research.Vcc.Parsing {
       typeMembers.Add(fdecl);
       this.locallyDefinedNames.Clear();
 
-      var prefix = "\\macro_";
-      var prefixRes = "\\result_macro_";
+      var prefixMacro = "\\macro_";
+      var prefixResMacro = "\\result_macro_";
+      var prefixCastLike = "\\castlike_";
       var nameString = funcDeclarator.FunctionName.Identifier.Name.Value;
-      if (nameString.StartsWith(prefix)) {
-        this.functionContractExtensions[nameString.Substring(prefix.Length)] = nameString;
-      } else if (nameString.StartsWith(prefixRes)) {
-        this.functionContractExtensions[nameString.Substring(prefixRes.Length)] = nameString;
+      if (nameString.StartsWith(prefixMacro)) {
+        this.functionContractExtensions[nameString.Substring(prefixMacro.Length)] = nameString;
+      } else if (nameString.StartsWith(prefixResMacro)) {
+        this.functionContractExtensions[nameString.Substring(prefixResMacro.Length)] = nameString;
+      } else if (nameString.StartsWith(prefixCastLike)) {
+        this.castlikeFunctions[nameString.Substring(prefixCastLike.Length)] = nameString;
       } else if (nameString.StartsWith("\\") && IsVoid(returnType)) {
         this.statementLikeFunctions[nameString.Substring(1)] = nameString;
       }
