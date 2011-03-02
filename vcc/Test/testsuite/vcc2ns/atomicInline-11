@@ -1,18 +1,22 @@
+`/newsyntax
 #include <vcc.h>
 
-vcc(atomic_inline) bool f() {
+_(atomic_inline) bool f() {
   return 1;
 }
 
-void test(spec(obj_t o) claimp(lock_access_claim))
-  requires(wrapped(o))
+void test(_(ghost \object o) _(ghost \claim lock_access_claim))
+  _(requires \wrapped(o))
 {
-  spec(int i;)
-  atomic_op(1,
+  _(ghost int i)
+  _(atomic_op 
     o,
-    result + f())
+    \result + f())1
     ;
 }
 `
+testcase(11,3) : warning VC9001: The expression '__specification(atomic_op 
+    o,
+    \result + f())1' has no side effect; expected operation with side effect.
 Verification of test succeeded.
 `

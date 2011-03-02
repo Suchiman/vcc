@@ -948,26 +948,37 @@ namespace Microsoft.Research.Vcc
             Some(Macro(ec, "_vcc_havoc_others", [e'; Macro({e'.Common with Type = Type.TypeIdT}, "_vcc_typeof", [e'])]))
           | _ -> None
 
-      let rec normalizeOwnershipManipulation inAtomic self = 
-        let selfs = List.map self
-        function
-          | Atomic(ec, objs, body) -> Some(Atomic(ec, selfs objs, body.SelfMap(normalizeOwnershipManipulation true)))
-          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); 
-                            CallMacro(_, ("\\set_add_element"|"\\set_remove_element" as setOp), [], 
-                                 [Macro(_, "_vcc_owns", [e1']); e2] )]) when inAtomic  -> 
-              let fn = if setOp = "\\set_add_element" then fnMap.["\\set_closed_owner"] else fnMap.["\\giveup_closed_owner"]
-              Some(Call({ec with Type = Type.Void}, fn, [], [self e2; self e1]))
-          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]) as ownsSet; 
-                            CallMacro (_, "\\set_remove_element", [], [Macro(_, "_vcc_owns", [e1']); e2]) as newOwns]) ->
-            let e1 = self e1
-            let e2 = self e2
-            let tok = afmte 8026 "{0} is not in {1}->\\owns before trying to remove it" [e2; e1]            
-            let check = Expr.MkAssert (Expr.Macro (tok, "_vcc_set_in", [e2; ownsSet]))
-            let update = Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [e1; self newOwns])
-            Some (Expr.MkBlock [check; update])
-          | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); e2]) -> 
-            Some(Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [self e1; self e2]))
-          | _ -> None
+      let normalizeOwnershipManipulation =
+        let rec aux inAtomic self = 
+          let selfs = List.map self
+          function
+            | Atomic(ec, objs, body) -> Some(Atomic(ec, selfs objs, body.SelfMap(aux true)))
+            | Macro(ec, "atomic_op", args) ->
+              let self' (e:Expr) = e.SelfMap(aux true)
+              Some (Macro (ec, "atomic_op", List.map self' args))
+            | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); 
+                              CallMacro(_, ("\\set_add_element"|"\\set_remove_element" as setOp), [], 
+                                   [Macro(_, "_vcc_owns", [e1']); e2] )]) when inAtomic  -> 
+                let fn = if setOp = "\\set_add_element" then fnMap.["\\set_closed_owner"] else fnMap.["\\giveup_closed_owner"]
+                Some(Call({ec with Type = Type.Void}, fn, [], [self e2; self e1]))
+            | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]) as ownsSet; 
+                              CallMacro (_, "\\set_remove_element", [], [Macro(_, "_vcc_owns", [e1']); e2]) as newOwns]) ->
+              let e1 = self e1
+              let e2 = self e2
+              let tok = afmte 8026 "{0} is not in {1}->\\owns before trying to remove it" [e2; e1]            
+              let check = Expr.MkAssert (Expr.Macro (tok, "_vcc_set_in", [e2; ownsSet]))
+              let update = Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [e1; self newOwns])
+              Some (Expr.MkBlock [check; update])
+            | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); e2]) -> 
+              Some(Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [self e1; self e2]))
+            | _ -> None
+        let doDecl = function
+          | Top.FunctionDecl f when f.Body.IsSome ->
+            let isAtomic = hasCustomAttr "atomic_inline" f.CustomAttr
+            f.Body <- Some (f.Body.Value.SelfMap (aux isAtomic))
+            Top.FunctionDecl f
+          | d -> d
+        List.map doDecl
 
       let normalizeMisc self = 
         let selfs = List.map self
@@ -1000,8 +1011,6 @@ namespace Microsoft.Research.Vcc
       let normalizeCastLike self = function
         | Macro (ec, n, [primary; Macro (_, "argument_tuple", secondary)]) when n.StartsWith "\\castlike_va_" ->
           match n.Substring 13 with
-            | "atomic_op" ->
-              Some (Macro (ec, "atomic_op", secondary @ [primary]))
             | "atomic_read" ->
               Some (Macro (ec, "atomic_op", secondary @ [Expr.False; primary]))
             | n ->              
@@ -1059,7 +1068,7 @@ namespace Microsoft.Research.Vcc
       deepMapExpressions normalizeInDomain >> 
       List.map normalizeCallsAndFindKeyFunctions >> 
       normalizeGroupInvariants >>
-      deepMapExpressions (normalizeOwnershipManipulation false) >>
+      normalizeOwnershipManipulation >>
       deepMapExpressions normalizeSignatures >> 
       (fun decls -> List.iter mapFromNewSyntax decls; decls)>> 
       deepMapExpressions normalizeMacros >>
