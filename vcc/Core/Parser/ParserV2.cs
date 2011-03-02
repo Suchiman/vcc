@@ -636,51 +636,40 @@ namespace Microsoft.Research.Vcc.Parsing
         slb.UpdateToSpan(uncheckedExpr.SourceLocation);
         return new UncheckedExpression(uncheckedExpr, slb);
       } else if (this.currentToken == Token.Identifier) {
-        var id = this.scanner.GetIdentifierString();         
-        switch (id) {
-          case "\\by_claim":
-            this.GetNextToken();
-            var claim = this.ParseUnaryExpression(followers | Token.RightParenthesis);
-            this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);
-            var value = this.ParseUnaryExpression(followers);
-            slb.UpdateToSpan(value.SourceLocation);
-            var byClaimWrapper = this.GetSimpleNameFor("\\by_claim_wrapper");
-            var byClaimCall = new VccMethodCall(byClaimWrapper, new Expression[] { claim }, slb);
-            var atName = this.GetSimpleNameFor("\\at");
-            return new VccMethodCall(atName, new Expression[] { byClaimCall, value }, slb);
-          default:
-            if (id == "atomic_op" || this.castlikeFunctions.ContainsKey(id)) {
-              var methodName = id == "atomic_op" ? "" : this.castlikeFunctions[id];
-              var isVarArgs = methodName.StartsWith("\\castlike_va_");
-              this.GetNextToken();
-              List<Expression> exprs;
-              if (this.currentToken == Token.RightParenthesis)
-                exprs = new List<Expression>();
-              else
-                exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
-              this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);              
-              if (isVarArgs) {
-                slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-                var argList = new VccMethodCall(this.GetSimpleNameFor("\\argument_tuple"), exprs.ToArray(), slb.GetSourceLocation());
-                exprs.Clear();
-                exprs.Add(argList);
-              }
-              var expr = this.ParseUnaryExpression(followers);
-              slb.UpdateToSpan(expr.SourceLocation);
-              if (id == "atomic_op") {
-                exprs.Add(expr);
-                var atomicOp = new VccAtomicOp(this.GetSimpleNameFor("_vcc_atomic_op"), exprs.AsReadOnly(), slb);
-                var atomicOpBlock = new VccAtomicOpBlock(new List<Statement>(0), atomicOp, slb);
-                return new BlockExpression(atomicOpBlock, atomicOp, slb);
-              } else {
-                exprs.Insert(0, expr);
-                return new VccMethodCall(this.GetSimpleNameFor(methodName), exprs, slb);
-              }
-            } else {
-              this.HandleError(Error.SyntaxError, this.scanner.GetTokenSource());
-              this.SkipOutOfSpecBlock(savedInSpecCode, followers);
-              return new DummyExpression(slb);
-            }
+        var id = this.scanner.GetIdentifierString();
+        //if (id.StartsWith("\\") && this.castlikeFunctions.ContainsKey(id.Substring(1)))
+        //  id = id.Substring(1);
+        if (id == "atomic_op" || this.castlikeFunctions.ContainsKey(id)) {
+          var methodName = id == "atomic_op" ? "" : this.castlikeFunctions[id];
+          var isVarArgs = methodName.StartsWith("\\castlike_va_");
+          this.GetNextToken();
+          List<Expression> exprs;
+          if (this.currentToken == Token.RightParenthesis)
+            exprs = new List<Expression>();
+          else
+            exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+          this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);
+          if (isVarArgs) {
+            slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+            var argList = new VccMethodCall(this.GetSimpleNameFor("\\argument_tuple"), exprs.ToArray(), slb.GetSourceLocation());
+            exprs.Clear();
+            exprs.Add(argList);
+          }
+          var expr = this.ParseUnaryExpression(followers);
+          slb.UpdateToSpan(expr.SourceLocation);
+          if (id == "atomic_op") {
+            exprs.Add(expr);
+            var atomicOp = new VccAtomicOp(this.GetSimpleNameFor("_vcc_atomic_op"), exprs.AsReadOnly(), slb);
+            var atomicOpBlock = new VccAtomicOpBlock(new List<Statement>(0), atomicOp, slb);
+            return new BlockExpression(atomicOpBlock, atomicOp, slb);
+          } else {
+            exprs.Insert(0, expr);
+            return new VccMethodCall(this.GetSimpleNameFor(methodName), exprs, slb);
+          }
+        } else {
+          this.HandleError(Error.SyntaxError, this.scanner.GetTokenSource());
+          this.SkipOutOfSpecBlock(savedInSpecCode, followers);
+          return new DummyExpression(slb);
         }
       } else {
         this.HandleError(Error.SyntaxError, this.scanner.GetTokenSource());

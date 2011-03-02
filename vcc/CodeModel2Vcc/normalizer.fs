@@ -1018,6 +1018,8 @@ namespace Microsoft.Research.Vcc
               None
         | Macro (ec, "\\castlike_retype", args) ->
           Some (Macro (ec, "_vcc_retype", List.map self args))
+        | Macro (ec, "\\castlike_by_claim", [expr; cl]) ->
+          Some (Old (ec, Macro ({ expr.Common with Type = Type.MathState }, "_vcc_by_claim", [cl]), expr))
         | _ -> None
       
       let rewriteBvAssertAsBvLemma self = function
