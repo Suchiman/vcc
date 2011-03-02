@@ -509,11 +509,14 @@ namespace Microsoft.Research.Vcc.Parsing {
       var prefixMacro = "\\macro_";
       var prefixResMacro = "\\result_macro_";
       var prefixCastLike = "\\castlike_";
+      var prefixCastLikeVa = "\\castlike_va_";
       var nameString = funcDeclarator.FunctionName.Identifier.Name.Value;
       if (nameString.StartsWith(prefixMacro)) {
         this.functionContractExtensions[nameString.Substring(prefixMacro.Length)] = nameString;
       } else if (nameString.StartsWith(prefixResMacro)) {
         this.functionContractExtensions[nameString.Substring(prefixResMacro.Length)] = nameString;
+      } else if (nameString.StartsWith(prefixCastLikeVa)) {
+        this.castlikeFunctions[nameString.Substring(prefixCastLikeVa.Length)] = nameString;
       } else if (nameString.StartsWith(prefixCastLike)) {
         this.castlikeFunctions[nameString.Substring(prefixCastLike.Length)] = nameString;
       } else if (nameString.StartsWith("\\") && IsVoid(returnType)) {

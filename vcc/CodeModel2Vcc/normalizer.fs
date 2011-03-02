@@ -997,6 +997,18 @@ namespace Microsoft.Research.Vcc
             | None -> ()
         | _ -> ()
       
+      let normalizeCastLike self = function
+        | Macro (ec, n, [primary; Macro (_, "argument_tuple", secondary)]) when n.StartsWith "\\castlike_va_" ->
+          match n.Substring 13 with
+            | "atomic_op" ->
+              Some (Macro (ec, "atomic_op", secondary @ [primary]))
+            | "atomic_read" ->
+              Some (Macro (ec, "atomic_op", secondary @ [Expr.False; primary]))
+            | n ->              
+              helper.Oops (ec.Token, "unknown \\castlike_va_ function " + n)
+              None
+        | _ -> None
+      
       let rewriteBvAssertAsBvLemma self = function
         | Assert(ec, expr, []) -> None
         | Assert(ec, expr, [[Macro(_, "labeled_expr", [Label(_, {Name = "bv"})])]]) -> 
@@ -1053,7 +1065,8 @@ namespace Microsoft.Research.Vcc
       deepMapExpressions normalizeMacros >>
       removeMagicEntities >>
       deepMapExpressions normalizeMisc >> 
-      deepMapExpressions rewriteBvAssertAsBvLemma
+      deepMapExpressions rewriteBvAssertAsBvLemma >>
+      deepMapExpressions normalizeCastLike
 
     // ============================================================================================================
 

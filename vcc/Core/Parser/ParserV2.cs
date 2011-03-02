@@ -451,6 +451,8 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     override protected Statement ParseSpecStatements(TokenSet followers) {
+      var scannerState = scanner.MakeSnapshot();
+
       bool savedInSpecCode = this.SkipIntoSpecBlock();
 
       switch (this.currentToken) {
@@ -475,6 +477,16 @@ namespace Microsoft.Research.Vcc.Parsing
             this.ParseSpecTypeModifierList(specifiers, followers | Token.RightParenthesis);
             this.SkipOutOfSpecBlock(savedInSpecCode, followers | TS.DeclaratorStart);
             return StatementGroup.Create(this.ParseLocalDeclaration(specifiers, followers));
+          }
+          if (this.castlikeFunctions.ContainsKey(id)) {
+            this.LeaveSpecBlock(savedInSpecCode);
+            scanner.RevertToSnapshot(scannerState);
+            this.currentToken = Token.Specification;
+
+            Expression expr = this.ParseExpression(true, false, followers | Token.Semicolon);
+            ExpressionStatement eStat = new ExpressionStatement(expr, new SourceLocationBuilder(expr.SourceLocation));
+            this.SkipSemiColonAfterDeclarationOrStatement(followers);
+            return eStat;
           }
           break;
         default:
@@ -645,13 +657,21 @@ namespace Microsoft.Research.Vcc.Parsing
             }
           default:
             if (this.castlikeFunctions.ContainsKey(id)) {
+              var methodName = this.castlikeFunctions[id];
+              var isVarArgs = methodName.StartsWith("\\castlike_va_");
               this.GetNextToken();
               var exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
-              this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);
-              var expr = this.ParseUnaryExpression(followers);              
+              this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);              
+              if (isVarArgs) {
+                slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+                var argList = new VccMethodCall(this.GetSimpleNameFor("\\argument_tuple"), exprs.ToArray(), slb.GetSourceLocation());
+                exprs.Clear();
+                exprs.Add(argList);
+              }
+              var expr = this.ParseUnaryExpression(followers);
               slb.UpdateToSpan(expr.SourceLocation);
               exprs.Insert(0, expr);
-              return new VccMethodCall(this.GetSimpleNameFor(this.castlikeFunctions[id]), exprs, slb);
+              return new VccMethodCall(this.GetSimpleNameFor(methodName), exprs, slb);
             } else {
               this.HandleError(Error.SyntaxError, this.scanner.GetTokenSource());
               this.SkipOutOfSpecBlock(savedInSpecCode, followers);
