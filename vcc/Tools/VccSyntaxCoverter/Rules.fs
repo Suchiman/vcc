@@ -470,7 +470,7 @@ module Rules =
         | _ -> failwith ""
 
     let by_claim = function
-      | [claim; expr] -> [paren "(" (spec "\\by_claim" claim @ [paren "(" expr])]
+      | [claim; expr] -> [paren "(" (spec "by_claim" claim @ [paren "(" expr])]
       | _ -> failwith ""
     addRule (parenRuleN "by_claim" 2 by_claim)
 

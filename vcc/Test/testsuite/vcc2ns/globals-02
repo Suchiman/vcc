@@ -9,7 +9,7 @@ struct A {
   _(ghost \claim c)
 
   _(invariant \mine(c) && \claims(c, (\embedding(&x))->\consistent))
-  _(invariant y < (_(\by_claim c)(x)))
+  _(invariant y < (_(by_claim c)(x)))
 };
 
 

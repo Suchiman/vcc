@@ -10,9 +10,9 @@ void ThpCreateThread(PTH_PROCESS Process _(ghost \claim c))
   _(always c, Process->\consistent)
   _(writes c)
 {
-  _(assert _(\by_claim c)(Process->x) == 0)
+  _(assert _(by_claim c)(Process->x) == 0)
 }
 `
 Verification of ThpCreateThread failed.
-testcase(12,26) : error VC9500: Assertion '__specification(\by_claim c)(Process->x) == 0' did not verify.
+testcase(12,26) : error VC9500: Assertion '__specification(by_claim c)(Process->x) == 0' did not verify.
 `

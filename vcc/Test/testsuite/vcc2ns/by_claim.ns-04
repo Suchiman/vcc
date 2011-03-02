@@ -11,7 +11,7 @@ struct B {
    _(ghost \claim c;) 
   _(invariant \mine(c))
   _(invariant \claims(c, (&a)->\consistent))
-  _(invariant _(\by_claim c)(a.x) == 1)
+  _(invariant _(by_claim c)(a.x) == 1)
 };
 
 struct B2 {

@@ -13,19 +13,19 @@ struct B_fail1 {
   _(ghost \claim ca)
 
   _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\consistent))
-  _(invariant y == _(\by_claim ca)(a->vol_x))
+  _(invariant y == _(by_claim ca)(a->vol_x))
 };
 
 void fail1(struct A*a _(ghost \claim c))
   _(always c, a->\consistent)
 { 
-  int z = _(\by_claim c)(a->vol_x);
+  int z = _(by_claim c)(a->vol_x);
 }
 
 void fail2(struct A*a, int *x _(ghost \claim c))
   _(always c, a->\consistent)
 { 
-  int z = _(\by_claim c)(*x);
+  int z = _(by_claim c)(*x);
 }
 `
 testcase(15,34) : error VC9629: by_claim(...) can only refer to a non-volatile field

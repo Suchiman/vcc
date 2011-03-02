@@ -13,8 +13,8 @@ void foo(struct S *s _(ghost \claim c))
 {
     _(atomic c,s) {}
     _(assert \is_array(s->x, 3))
-    _(assert s->x==_(\by_claim c)(s->x))
-    _(assert s->x[2] == _(\by_claim c)(s->x[2]))
+    _(assert s->x==_(by_claim c)(s->x))
+    _(assert s->x[2] == _(by_claim c)(s->x[2]))
     _(assert \unchanged(s->x[2]))
 }
 `

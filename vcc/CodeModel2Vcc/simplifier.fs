@@ -436,7 +436,7 @@ namespace Microsoft.Research.Vcc
         | _ -> None    
             
       let doByClaim self = function
-        | Expr.Old (ec, Call (_, { Name = "_vcc_by_claim" }, _, [c]), e) ->
+        | Expr.Old (ec, CallMacro (_, "_vcc_by_claim", _, [c]), e) ->
           match e with
             | Expr.Deref (_, (Dot (_, obj, f) as ptr))
             | Expr.Deref (_, (Index (_, Dot (_, obj, f), _) as ptr)) ->
