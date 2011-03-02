@@ -1409,7 +1409,7 @@ namespace Microsoft.Research.Vcc
 
         let oopsNumArgs() = oopsLoc methodCall ("unexpected number of arguments for "+ methodName); die ()
 
-        let args() = [ for e in methodCall.Arguments -> this.DoExpression e]       
+        let args() = [for e in methodCall.Arguments -> this.DoExpression e]
 
         let trBigIntOp methodName = 
           match args() with
@@ -1477,11 +1477,15 @@ namespace Microsoft.Research.Vcc
             match args() with
               | [e1; e2] -> exprRes <- C.Expr.Macro (ec, "approves", [e1; e2])
               | _ -> oopsNumArgs() 
-          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "\\castlike_known" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq") ->
+          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq") ->
             match args() with
               | [e1; e2] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
               | _ -> oopsNumArgs()
-          | _, ("_vcc_atomic_op" | "\\castlike_atomic_op") ->
+          | _, "\\argument_tuple" ->
+            exprRes <- C.Expr.Macro(ec, "argument_tuple",  args())
+          | _, _ when methodName.StartsWith "\\castlike_" ->
+            exprRes <- C.Expr.Macro(ec, methodName, args())
+          | _, "_vcc_atomic_op" ->
             exprRes <- C.Expr.Macro(ec, "atomic_op",  args())
           | _, "_vcc_atomic_op_result" ->
             exprRes <- C.Expr.Macro(ec, "atomic_op_result", [])

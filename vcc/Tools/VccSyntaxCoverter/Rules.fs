@@ -477,17 +477,17 @@ module Rules =
     addRule (parenRule false "claim" (reify "\\make_claim"))
     addRule (parenRule false "upgrade_claim" (reify "\\upgrade_claim"))
             
-    let castLike oldName newName =
+    let castLike useResult oldName newName =
       let fn toks =
         match splitAt "," toks with
           | hd :: tl ->
             spec newName (joinWith "," tl) @ [parenOpt hd]
-          | _ -> failwith ""
-      parenRule false oldName fn
+          | _ -> failwith ""      
+      parenRuleCtx false oldName fn (fun ctx -> if useResult then { ctx with in_ensures = true } else ctx)
 
-    addRule (castLike "known" "known")
-    addRule (castLike "atomic_op" "atomic_op")
-    addRule (castLike "atomic_read" "atomic_read")
+    addRule (castLike false "known" "known")
+    addRule (castLike true "atomic_op" "atomic_op")
+    addRule (castLike true "atomic_read" "atomic_read")
 
     let unclaim toks = 
       match splitAt "," toks with 
