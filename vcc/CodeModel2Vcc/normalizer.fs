@@ -1016,6 +1016,8 @@ namespace Microsoft.Research.Vcc
             | n ->              
               helper.Oops (ec.Token, "unknown \\castlike_va_ function " + n)
               None
+        | Macro (ec, "\\castlike_retype", args) ->
+          Some (Macro (ec, "_vcc_retype", List.map self args))
         | _ -> None
       
       let rewriteBvAssertAsBvLemma self = function
