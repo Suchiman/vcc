@@ -648,19 +648,16 @@ namespace Microsoft.Research.Vcc.Parsing
             var byClaimCall = new VccMethodCall(byClaimWrapper, new Expression[] { claim }, slb);
             var atName = this.GetSimpleNameFor("\\at");
             return new VccMethodCall(atName, new Expression[] { byClaimCall, value }, slb);
-          case "retype": {
-              this.GetNextToken();
-              this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);
-              var expr = this.ParseUnaryExpression(followers);
-              slb.UpdateToSpan(expr.SourceLocation);
-              return new VccMethodCall(this.GetSimpleNameFor("\\retype"), new Expression[] { expr }, slb);
-            }
           default:
             if (id == "atomic_op" || this.castlikeFunctions.ContainsKey(id)) {
               var methodName = id == "atomic_op" ? "" : this.castlikeFunctions[id];
               var isVarArgs = methodName.StartsWith("\\castlike_va_");
               this.GetNextToken();
-              var exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+              List<Expression> exprs;
+              if (this.currentToken == Token.RightParenthesis)
+                exprs = new List<Expression>();
+              else
+                exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
               this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);              
               if (isVarArgs) {
                 slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);

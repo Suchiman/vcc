@@ -117,7 +117,6 @@ _(bool \object_root(\object);)
 _(bool \union_active(\object);)
 _(\integer \addr(\object);)
 _(bool \addr_eq(\object,\object);)
-_(template<typename T> T* \retype(T*);)
 _(bool _(_boogie0) \arrays_disjoint(\object, \size_t, \object, \size_t);)
 
 _(template<typename T> bool \shallow_eq(T s, T t);)
@@ -174,6 +173,7 @@ _(ghost extern const \thread \me;)
 _(\integer \argument_tuple(\object, ...); ) 
 _(template<typename T> T \castlike_va_atomic_read(T op, \integer);)
 _(template<typename T> T \castlike_known(T v, bool expected);)
+_(template<typename T> T* \castlike_retype(T*);)
 
 // the VccAtomicOp AST class uses this
 _(void _vcc_atomic_op(\object, ...);)
