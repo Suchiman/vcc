@@ -136,61 +136,15 @@ namespace MicrosoftResearch.VSPackage
         }
         
         /// <summary>
-        ///     Returns the selected Text or (if nothing's selected) the name of the function surrounding the cursor or an empty string
+        ///     Returns the selected Text
         /// </summary>
-        /// <returns>the selected Text or (if nothing's selected) the name of the function surrounding the cursor or an empty string</returns>
-        internal static string CurrentFunctionName
+        /// <returns>the selected Text</returns>
+        internal static string CurrentSelection
         {
             get
             {
-                //// Get CodeElement which represents the current function
                 TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
-                CodeElement currentFunctionCodeElement = textDocument.Selection.ActivePoint.CodeElement[vsCMElement.vsCMElementFunction];
-                if (textDocument.Selection.Text != string.Empty)
-                {
-                    return textDocument.Selection.Text;
-                }
-                else
-                {
-                    //// This second check is necessary because ActivePoint's CodeElement-Property unexpectedly
-                    //// returns CodeElements that are not functions
-                    if (currentFunctionCodeElement != null && currentFunctionCodeElement.Kind == vsCMElement.vsCMElementFunction)
-                    {
-                        return currentFunctionCodeElement.Name;
-                    }
-                    else
-                    {
-                        return string.Empty;
-                    }
-                }
-            }
-        }
-
-        internal static string CurrentStructName
-        {
-            get
-            {
-                //// Get CodeElement which represents the current struct
-                TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
-                CodeElement currentStructCodeElement = textDocument.Selection.ActivePoint.CodeElement[vsCMElement.vsCMElementStruct];
-                if (textDocument.Selection.Text != string.Empty)
-                {
-                    return textDocument.Selection.Text;
-                }
-                else
-                {
-                    //// This second check is necessary because ActivePoint's CodeElement-Property unexpectedly
-                    //// returns CodeElements that are not structs
-                    if (currentStructCodeElement != null && currentStructCodeElement.Kind == vsCMElement.vsCMElementStruct)
-                    {
-                        return currentStructCodeElement.Name;
-                    }
-                    else
-                    {
-                        return string.Empty;
-                    }
-
-                }
+                return textDocument.Selection.Text;
             }
         }
 
