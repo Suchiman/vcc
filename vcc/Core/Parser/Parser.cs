@@ -2285,16 +2285,20 @@ namespace Microsoft.Research.Vcc.Parsing {
       TokenSet followerOrComma = followers|Token.Comma;
       for (; ; ) {
         //^ assume followerOrComma[Token.Comma];
-        Statement s = this.ParseExpressionStatementOrDeclaration(true, false, followerOrComma);
-        statements.Add(s);
-        if (s is LocalDeclarationsStatement) {
-          if (statements.Count > 1)
-            this.HandleError(s.SourceLocation, Error.ExpectedExpression);
-        } else {
-          ExpressionStatement es = (ExpressionStatement)s;
-          Expression e = es.Expression;
-          if (!(e is Assignment || e is BinaryOperationAssignment || e is MethodCall || e is UnaryOperationAssignment || e is CreateObjectInstance))
-            this.HandleError(e.SourceLocation, Error.IllegalStatement);
+        var exprOrDecl = this.ParseExpressionStatementOrDeclaration(true, false, followerOrComma);        
+        var grp = exprOrDecl as StatementGroup;
+        var stmts = grp == null ? IteratorHelper.GetSingletonEnumerable(exprOrDecl) : grp.Statements;
+        foreach (var s in stmts) {
+          statements.Add(s);
+          if (s is LocalDeclarationsStatement) {
+            if (statements.Count > 1)
+              this.HandleError(s.SourceLocation, Error.ExpectedExpression);
+          } else {
+            ExpressionStatement es = (ExpressionStatement)s;
+            Expression e = es.Expression;
+            if (!(e is Assignment || e is BinaryOperationAssignment || e is MethodCall || e is UnaryOperationAssignment || e is CreateObjectInstance))
+              this.HandleError(e.SourceLocation, Error.IllegalStatement);
+          }
         }
         //^ assume followers[this.currentToken] || this.currentToken == Token.Comma || this.currentToken == Token.EndOfFile;
         if (this.currentToken != Token.Comma) break;
