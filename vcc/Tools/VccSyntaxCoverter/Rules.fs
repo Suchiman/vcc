@@ -461,6 +461,11 @@ module Rules =
     addRule (parenRuleN "set_owner" 2 (closed_owner_rule "+="))
     addRule (parenRuleN "giveup_owner" 2 (closed_owner_rule "-="))
 
+    let doUse = function
+      | [lab; expr] -> paren "{" (Tok.Id (fakePos, ":use ") :: lab) :: expr
+      | _ -> failwith ""
+    addRule (parenRuleN "use" 2 doUse)
+
     let in_domain dom = function
      | [e1; e2] ->
        e1 @ [ Tok.Op(fakePos, " \\in ") ] @ fnApp dom (eatWs e2)
