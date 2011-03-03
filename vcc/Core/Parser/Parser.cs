@@ -1339,6 +1339,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
+    protected virtual Expression ParseBraceLabeledExpression(SourceLocationBuilder slb, TokenSet followers)
+    {
+      return null; // syntax-refresh concept
+    }
+
     protected Expression ParseInitializer(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -1346,6 +1351,12 @@ namespace Microsoft.Research.Vcc.Parsing {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
       if (this.currentToken == Token.Dot) return ParseInitializerWithDesignators(followers, slb);
+
+      if (this.currentToken == Token.Colon) {
+        var res = this.ParseBraceLabeledExpression(slb, followers);
+        if (res != null)
+          return res;
+      }
 
       TokenSet followersOrCommaOrRightBrace = followers | Token.Comma | Token.RightBrace;
       List<Expression> expressions = new List<Expression>();

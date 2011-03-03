@@ -224,6 +224,8 @@ _(bool \start_here();)
 _(\objset \new_ownees(\object, \objset);)
 _(template<typename T, typename S> T \static_cast(S expr);)
 
+_(template<typename T, typename S> T \labeled_expression(char *label_name, S label_argument, T expr); )
+
 #else 
 
 /*** 

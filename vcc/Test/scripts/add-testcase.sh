@@ -8,7 +8,7 @@ case "$2" in
 esac
 
 case "$2" in
-  vcc2/* | vcc3/* )
+  vcc2/* | vcc2ns/* | vcc3/* )
     case "$1" in
       *.c )
         chmod 644 "$2"

@@ -1023,13 +1023,13 @@ namespace Microsoft.Research.Vcc
         | _ -> None
       
       let rewriteBvAssertAsBvLemma self = function
-        | Assert(ec, expr, []) -> None
-        | Assert(ec, expr, [[Macro(_, "labeled_expr", [Label(_, {Name = "bv"})])]]) -> 
+        | Assert(ec, Macro (_, "lbl_bv", [_; expr]), []) -> 
           let makeUnchecked self = function
             | Prim(ec, Op(_, CheckedStatus.Unchecked), _) -> None
             | Prim(ec, Op(op, _), args) -> Some(Prim(ec, Op(op, CheckedStatus.Unchecked), List.map self args))
             | _ -> None
           Some(Assert(ec, Expr.Macro(expr.Common, "_vcc_bv_lemma", [expr.SelfMap(makeUnchecked)]), []))
+        | Assert(ec, expr, []) -> None
         | Assert(ec, expr, trigs) -> 
           helper.Error(ec.Token, 9713, "unhandled triggers on assert")
           Some(Assert(ec, expr, []))
