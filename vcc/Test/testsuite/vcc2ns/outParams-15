@@ -1,15 +1,16 @@
-
-int foo(__specification(int a));
+`/newsyntax
+#include <vcc.h>
+int foo(_(ghost int a));
 void bar() {
-  __specification(int x;)
-  foo(__specification(out x));
+  _(ghost int x)
+  foo(_(out x));
 }
 
 
-int fooOut(__specification(out int a));
+int fooOut(_(out int a));
 void barOut() {
-  __specification(int x;)
-  fooOut(__specification(x));
+  _(ghost int x)
+  fooOut(_(ghost x));
 }
 `
 testcase(5,3) : error VC0000: The best overloaded method match for '__Globals__.foo(int)' has some invalid arguments.

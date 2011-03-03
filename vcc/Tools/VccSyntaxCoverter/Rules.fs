@@ -366,7 +366,13 @@ module Rules =
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_empty" (fun toks -> [paren "{" []]))
-    addRule (parenRule false "claimp" (fun toks -> spec "ghost" (Tok.Id (fakePos, "\\claim ") :: toks)))
+
+    let claimp toks =
+      match eatWs toks with
+        | Tok.Id (_, "out") :: rest ->
+          spec "out" (Tok.Id (fakePos, "\\claim") :: rest)
+        | _ -> spec "ghost" (Tok.Id (fakePos, "\\claim") :: space :: toks)
+    addRule (parenRule false "claimp" claimp)
     
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
