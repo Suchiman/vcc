@@ -19,30 +19,38 @@ namespace MicrosoftResearch.VSPackage
         
         #region commands
 
-        internal static void VerifyThis(string filename, int line, VccOptionPage options)
+        private static string GetAddArguments(VccOptionPage options)
         {
-            string addArguments = options.UseAdditionalCommandlineArguments ?
+            string result = options.UseAdditionalCommandlineArguments ?
                 options.AdditionalCommandlineArguments + " " :
                 string.Empty;
             if (options.ShowZ3Inspector)
             {
-                addArguments += "/i ";
+                result += "/i ";
             }
 
-            addArguments += String.Format("/pos:\"{0}\":{1} ", filename, line);
+            return result;
+        }
+        
+        internal static void VerifyThis(string filename, string selection, int line, VccOptionPage options)
+        {
+            string addArguments = GetAddArguments(options);
 
+            if (selection == string.Empty)
+            {
+                addArguments += String.Format("/pos:\"{0}\":{1} ", filename, line);
+            }
+            else
+            {
+                addArguments += String.Format("/f:{0} ", selection);
+            }
             LaunchVCC(String.Format("{0}\"{1}\"", addArguments, filename));
         }
 
         internal static void CustomVerify(string filename, VccOptionPage options)
         {
-            string addArguments = options.UseAdditionalCommandlineArguments ?
-                options.AdditionalCommandlineArguments + " " :
-                string.Empty;
-            if (options.ShowZ3Inspector)
-            {
-                addArguments += "/i ";
-            }
+            string addArguments = GetAddArguments(options);
+
             string userInput = Interaction.InputBox("Commandline arguments for vcc.exe:", "Custom Verify", addArguments) + " ";
             if (userInput == " ")
             {
@@ -60,26 +68,8 @@ namespace MicrosoftResearch.VSPackage
 
         internal static void VerifyFile(string filename, VccOptionPage options)
         {
-            string addArguments = options.UseAdditionalCommandlineArguments ?
-                options.AdditionalCommandlineArguments + " " :
-                string.Empty;
-            if (options.ShowZ3Inspector)
-            {
-                addArguments += "/i ";
-            }
+            string addArguments = GetAddArguments(options);
             LaunchVCC(String.Format("{0}\"{1}\"", addArguments, filename));
-        }
-
-        internal static void VerifyFunction(string filename, string function, VccOptionPage options)
-        {
-            string addArguments = options.UseAdditionalCommandlineArguments ?
-                options.AdditionalCommandlineArguments + " " :
-                string.Empty;
-            if (options.ShowZ3Inspector)
-            {
-                addArguments += "/i ";
-            }
-            LaunchVCC(String.Format("{0} /f:\"{1}\" \"{2}\"", addArguments, function, filename));
         }
 
         #endregion

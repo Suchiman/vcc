@@ -94,7 +94,7 @@ namespace MicrosoftResearch.VSPackage
             VSIntegration.DocumentsSavedCheck();
             if (OptionPage != null)
             {
-                VCCLauncher.VerifyThis(VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, OptionPage);
+                VCCLauncher.VerifyThis(VSIntegration.ActiveFileFullName,VSIntegration.CurrentSelection, VSIntegration.CurrentLine, OptionPage);
             }
         }
 
@@ -109,34 +109,6 @@ namespace MicrosoftResearch.VSPackage
             if (OptionPage != null)
             {
                 VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, OptionPage);
-            }
-        }
-
-        private void CheckAdmissiblityOfStruct(object sender, EventArgs e)
-        {
-            VSIntegration.DocumentsSavedCheck();
-            if (OptionPage != null)
-            {
-                VCCLauncher.VerifyFunction( VSIntegration.ActiveFileFullName,
-                                            VSIntegration.CurrentStructName,
-                                            OptionPage);
-            }
-        }
-
-        /// <summary>
-        ///     Launches VCC.exe to verify the current function
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void VerifyCurrentFunction(object sender, EventArgs e)
-        {
-            VSIntegration.DocumentsSavedCheck();
-            VccOptionPage options = GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
-            if (OptionPage != null)
-            {
-                VCCLauncher.VerifyFunction( VSIntegration.ActiveFileFullName,
-                                            VSIntegration.CurrentFunctionName,
-                                            OptionPage);
             }
         }
 
@@ -232,50 +204,6 @@ namespace MicrosoftResearch.VSPackage
         }
 
         /// <summary>
-        ///     Verify Function
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void VerifyFunction_BeforeQueryStatus(object sender, EventArgs e)
-        {
-            if (sender != null)
-            {
-                if (VSIntegration.CurrentFunctionName != string.Empty)
-                {
-                    //// Name of current function is known.
-                    ((OleMenuCommand)sender).Text = string.Format("Verify Function '{0}'", VSIntegration.CurrentFunctionName);
-                    if (VCCLauncher.VCCRunning)
-                    {
-                        ((OleMenuCommand)sender).Enabled = false;
-                    }
-                    else
-                    {
-                        ((OleMenuCommand)sender).Enabled = true;
-                    }
-                }
-                else
-                {
-                    //// There is no current function.
-                    ((OleMenuCommand)sender).Text = "Verify Current Function";
-                    ((OleMenuCommand)sender).Enabled = false;
-                }
-
-                if (VSIntegration.IsCodeFile)
-                {
-                    //// active document is in C or C++ => show entry
-                    ((MenuCommand)sender).Visible = true;
-
-                }
-                else
-                {
-                    //// there is no active document or it is not in C or C++ => hide entry
-                    ((MenuCommand)sender).Visible = false;
-                }
-            }
-
-        }
-
-        /// <summary>
         ///     Verify File
         /// </summary>
         /// <param name="sender"></param>
@@ -303,49 +231,6 @@ namespace MicrosoftResearch.VSPackage
                 {
                     //// there is no active document or it is not in C or C++ => hide entry
                     ((OleMenuCommand)sender).Visible = false;
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Check Admissibility of Struct
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void CheckAdmissibilityOfStruct_BeforeQueryStatus(object sender, EventArgs e)
-        {
-            if (sender != null)
-            {
-                if (VSIntegration.CurrentStructName != string.Empty)
-                {
-                    //// Name of current struct is known.
-                    ((OleMenuCommand)sender).Text = string.Format("Check Admissibility of Struct '{0}'", VSIntegration.CurrentStructName);
-                    if (VCCLauncher.VCCRunning)
-                    {
-                        ((OleMenuCommand)sender).Enabled = false;
-                    }
-                    else
-                    {
-                        ((OleMenuCommand)sender).Enabled = true;
-                    }
-                }
-                else
-                {
-                    //// There is no current struct.
-                    ((OleMenuCommand)sender).Text = "Check Admissibility of Current Struct";
-                    ((OleMenuCommand)sender).Enabled = false;
-                }
-
-                if (VSIntegration.IsCodeFile)
-                {
-                    //// active document is in C or C++ => show entry
-                    ((MenuCommand)sender).Visible = true;
-
-                }
-                else
-                {
-                    //// there is no active document or it is not in C or C++ => hide entry
-                    ((MenuCommand)sender).Visible = false;
                 }
             }
         }
@@ -444,18 +329,6 @@ namespace MicrosoftResearch.VSPackage
                 OleMenuItem = new OleMenuCommand(Options, menuCommandID);
                 mcs.AddCommand(OleMenuItem);
 
-                //// Check Admissibility of struct
-                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCheckAdmissibilityOfCurrentStruct);
-                OleMenuItem = new OleMenuCommand(CheckAdmissiblityOfStruct, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(CheckAdmissibilityOfStruct_BeforeQueryStatus);
-                mcs.AddCommand(OleMenuItem);
-
-                //// Verify Function
-                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyCurrentFunction);
-                OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
-                mcs.AddCommand(OleMenuItem);
-
                 //// Re-Verify
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidReVerify);
                 OleMenuItem = new OleMenuCommand(ReVerify, menuCommandID);
@@ -485,24 +358,7 @@ namespace MicrosoftResearch.VSPackage
                 OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
-
-                //// Options
-                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextOptions);
-                OleMenuItem = new OleMenuCommand(Options, menuCommandID);
-                mcs.AddCommand(OleMenuItem);
-
-                //// Check Admissibility of struct (Context Menu)
-                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCheckAdmissibilityOfCurrentStruct);
-                OleMenuItem = new OleMenuCommand(CheckAdmissiblityOfStruct, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(CheckAdmissibilityOfStruct_BeforeQueryStatus);
-                mcs.AddCommand(OleMenuItem);
-
-                //// Verify Function (Context Menu)
-                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyCurrentFunction);
-                OleMenuItem = new OleMenuCommand(VerifyCurrentFunction, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFunction_BeforeQueryStatus);
-                mcs.AddCommand(OleMenuItem);
-
+                
                 //// Verify This(Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyThis);
                 OleMenuItem = new OleMenuCommand(VerifyThis, menuCommandID);
