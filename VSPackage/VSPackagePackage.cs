@@ -75,6 +75,11 @@ namespace MicrosoftResearch.VSPackage
 
         #region Commands
 
+        private void Options(object sender, EventArgs e)
+        {
+            ShowOptionPage(typeof(VccOptionPage));
+        }
+
         private void CustomVerify(object sender, EventArgs e)
         {
             VSIntegration.DocumentsSavedCheck();
@@ -434,6 +439,11 @@ namespace MicrosoftResearch.VSPackage
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
                 mcs.AddCommand(OleMenuItem);
 
+                //// Options
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidOptions);
+                OleMenuItem = new OleMenuCommand(Options, menuCommandID);
+                mcs.AddCommand(OleMenuItem);
+
                 //// Check Admissibility of struct
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCheckAdmissibilityOfCurrentStruct);
                 OleMenuItem = new OleMenuCommand(CheckAdmissiblityOfStruct, menuCommandID);
@@ -474,6 +484,11 @@ namespace MicrosoftResearch.VSPackage
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
                 OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
+                mcs.AddCommand(OleMenuItem);
+
+                //// Options
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextOptions);
+                OleMenuItem = new OleMenuCommand(Options, menuCommandID);
                 mcs.AddCommand(OleMenuItem);
 
                 //// Check Admissibility of struct (Context Menu)

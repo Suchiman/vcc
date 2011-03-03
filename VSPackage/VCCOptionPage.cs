@@ -5,6 +5,7 @@ using System.Text;
 using System.ComponentModel;
 using Microsoft.VisualStudio.Shell;
 using System.IO;
+using System.Windows.Forms;
 
 namespace MicrosoftResearch.VSPackage
 {
