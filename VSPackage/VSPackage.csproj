@@ -176,9 +176,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Resource Include="Resources\settings.bmp" />
     <Resource Include="Resources\ReVerify.bmp" />
     <Resource Include="Resources\Check_Fkt.bmp" />
-    <Resource Include="Resources\Custom.bmp" />
     <Content Include="Resources\Package.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
