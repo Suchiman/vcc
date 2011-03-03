@@ -608,10 +608,14 @@ namespace Microsoft.Research.Vcc.Parsing
       var lab = (VccLabeledExpression)this.ParseLabeledExpression(followers | Token.RightBrace);      
       this.SkipOverTo(Token.RightBrace, followers);
       var body = this.ParseExpression(followers);
-      var labName = new VccByteStringLiteral(lab.Label.Name.Value, lab.Label.SourceLocation);
+      var labString = lab.Label.Name.Value;
+      var labName = new VccByteStringLiteral(labString, lab.Label.SourceLocation);
       var labArg = lab.Expression;
       if (labArg is DummyExpression)
         labArg = new CompileTimeConstant((int)1, false, lab.Label.SourceLocation);
+      if (labString == "use") { // this condition is sort of a hack, it should likely look at some function \lbl_use(...) or something
+        labArg = new VccByteStringLiteral(labArg.SourceLocation.Source, labArg.SourceLocation);        
+      }
       var args = new Expression[] { labName, labArg, body };
       slb.UpdateToSpan(body.SourceLocation);
       return new VccMethodCall(this.GetSimpleNameFor("\\labeled_expression"), args, slb.GetSourceLocation());

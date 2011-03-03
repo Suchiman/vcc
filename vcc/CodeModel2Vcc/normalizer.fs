@@ -820,6 +820,8 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let normalizeUse self = function
+      | CallMacro(ec1, "lbl_use", _, [lbl; CallMacro(ec2, ("_vcc_in_domain"|"_vcc_in_vdomain" as fn), [], [e1; e2])]) ->
+        Some (self (Macro (ec2, fn, [Macro (ec1, "_vcc_use", [lbl; e1]); e2])))
       | CallMacro(ec, "_vcc_use", _, [lbl; e]) ->
         let rec normalizeLabel = function
           | Cast(_, _, Macro(_, "&", [Macro(_, "string", [lbl])])) -> lbl
