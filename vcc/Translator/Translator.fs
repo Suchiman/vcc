@@ -770,7 +770,10 @@ namespace Microsoft.Research.Vcc
           | "_vcc_lblset_leq", [l1;l2] -> B.Expr.FunctionCall ("$lblset.leq", [trExpr env l1; trExpr env l2])
           | "_vcc_is_member", [p; c] -> B.Expr.FunctionCall("$ptrclub.isMember", [trExpr env p; trExpr env c])
           | _ ->
-            helper.Oops (ec.Token, sprintf "unhandled macro %s" n)
+            if n.StartsWith "lbl_" then
+              helper.Error (ec.Token, 9724, sprintf "expression label {:%s ...} unsupported (here)" (n.Substring 4))
+            else
+              helper.Oops (ec.Token, sprintf "unhandled macro %s" n)
             er "$bogus"                
 
 

@@ -593,14 +593,28 @@ namespace Microsoft.Research.Vcc.Parsing
     private AssertStatement ParseAssert(TokenSet followers) {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
-      IEnumerable<IEnumerable<Expression>> triggers = null;
-      if (this.currentToken == Token.LeftBrace)
-        triggers = this.ParseQuantifierTriggers(followers | TS.UnaryStart);
+      //IEnumerable<IEnumerable<Expression>> triggers = null;
+      //if (this.currentToken == Token.LeftBrace)
+      //  triggers = this.ParseQuantifierTriggers(followers | TS.UnaryStart);
       var condition = this.ParseExpression(followers | Token.RightParenthesis);
       slb.UpdateToSpan(condition.SourceLocation);
       var result = new VccAssertStatement(condition, slb);
-      if (triggers != null) this.compilation.ContractProvider.AssociateTriggersWithQuantifier(result, triggers);
+      //if (triggers != null) this.compilation.ContractProvider.AssociateTriggersWithQuantifier(result, triggers);
       return result;
+    }
+
+    protected override Expression ParseBraceLabeledExpression(SourceLocationBuilder slb, TokenSet followers)
+    {
+      var lab = (VccLabeledExpression)this.ParseLabeledExpression(followers | Token.RightBrace);      
+      this.SkipOverTo(Token.RightBrace, followers);
+      var body = this.ParseExpression(followers);
+      var labName = new VccByteStringLiteral(lab.Label.Name.Value, lab.Label.SourceLocation);
+      var labArg = lab.Expression;
+      if (labArg is DummyExpression)
+        labArg = new CompileTimeConstant((int)1, false, lab.Label.SourceLocation);
+      var args = new Expression[] { labName, labArg, body };
+      slb.UpdateToSpan(body.SourceLocation);
+      return new VccMethodCall(this.GetSimpleNameFor("\\labeled_expression"), args, slb.GetSourceLocation());
     }
 
     protected override Expression ParseLabeledExpression(TokenSet followers) {

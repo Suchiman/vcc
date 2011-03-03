@@ -992,7 +992,7 @@ namespace Microsoft.Research.Vcc
           | "_vcc_approves" | "\\approves"
           | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq"
           | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" | "_vcc_label_of" | "_vcc_lblset_leq"
-          | "\\static_cast"
+          | "\\static_cast" | "\\labeled_expression"
           | "_vcc_new_club" | "_vcc_add_member" | "_vcc_is_member" -> ()
           | x when x.StartsWith "\\castlike_" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false)
@@ -1485,6 +1485,16 @@ namespace Microsoft.Research.Vcc
             exprRes <- C.Expr.Macro(ec, "argument_tuple",  args())
           | _, _ when methodName.StartsWith "\\castlike_" ->
             exprRes <- C.Expr.Macro(ec, methodName, args())
+          | _, "\\labeled_expression" ->
+            match args() with
+              | [labName; arg; body] ->
+                let rec aux = function
+                  | C.Macro (_, "&", [e])
+                  | C.Cast (_, _, e) -> aux e
+                  | C.Macro (_, "string", [C.UserData (_, (:? string as r))]) -> r
+                  | e -> oops ("expecting label name as string, got " + e.ToString()); ""
+                exprRes <- C.Expr.Macro(ec, "lbl_" + aux labName, [arg; body])
+              | _ -> oopsNumArgs()
           | _, "_vcc_atomic_op" ->
             exprRes <- C.Expr.Macro(ec, "atomic_op",  args())
           | _, "_vcc_atomic_op_result" ->
