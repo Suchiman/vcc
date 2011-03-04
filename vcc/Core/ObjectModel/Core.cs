@@ -928,6 +928,11 @@ namespace Microsoft.Research.Vcc {
         return ImplicitConversionToBooleanExists(expression.Type);
 
       IPointerType targetTypeAsPtr = targetType as IPointerType;
+
+      // CCI now treats false as zero, and thus allows its usage as a pointer
+      if (targetTypeAsPtr != null && TypeHelper.TypesAreEquivalent(expression.Type, this.PlatformType.SystemBoolean))
+        return false;
+
       if (targetTypeAsPtr != null && VccCompilationHelper.IsSpecPointer(targetTypeAsPtr) && IsZeroVisitor.IsZero(expression.ProjectAsIExpression())) return true;
 
       CompileTimeConstant/*?*/ cconst = expression as CompileTimeConstant;
@@ -959,6 +964,7 @@ namespace Microsoft.Research.Vcc {
 
       if (IsFixedSizeArrayType(expression.Type) && IsSpecVisitor.Check(expression.ProjectAsIExpression()))
         return this.ImplicitConversionExists(this.GetPointerForFixedSizeArray(expression.Type, true), targetType);
+
       return base.ImplicitConversionExists(expression, targetType);
     }
 
