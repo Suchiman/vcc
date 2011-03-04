@@ -538,8 +538,9 @@ function $arrays_disjoint_id(a:$ptr, al:int, b:$ptr, bl:int, idx:$ptr) : int;
 
 axiom (forall a:$ptr, al:int, b:$ptr, bl:int ::
   {$arrays_disjoint(a, al, b, bl)}
-  $byte_ptr_subtraction(b, $idx(a, al)) >= 0 ||
-  $byte_ptr_subtraction(a, $idx(b, bl)) >= 0 ==>
+  (forall i,j:int :: {$dont_instantiate_int(i), $dont_instantiate_int(j)}
+     0 <= i && i < al &&
+     0 <= j && j < bl ==> $idx(a, i) != $idx(b, j)) ==>
   $arrays_disjoint(a, al, b, bl));
 
 axiom (forall a:$ptr, al:int, b:$ptr, bl:int ::
