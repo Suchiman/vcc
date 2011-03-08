@@ -59,7 +59,7 @@ namespace Microsoft.Research.Vcc
           Process.Start(FsharpDownloadUrl);
         }
         Console.WriteLine("Exiting with -3");
-        return -4;
+        return -3;
       }
 
       if (errorCount > 0) {
