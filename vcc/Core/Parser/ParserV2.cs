@@ -70,7 +70,7 @@ namespace Microsoft.Research.Vcc.Parsing
         this.SkipSemicolonsInSpecBlock(TS.DeclarationStart | STS.Global | Token.RightParenthesis);
       }
 
-      this.SkipOutOfSpecBlock(savedInSpecCode, followers);
+      this.SkipOutOfSpecBlock(savedInSpecCode, followers, true);
     }
 
 
@@ -732,10 +732,17 @@ namespace Microsoft.Research.Vcc.Parsing
       return savedInSpecCode;
     }
 
-    private void SkipOutOfSpecBlock(bool savedInSpecBlock, TokenSet followers) {
+    private void SkipOutOfSpecBlock(bool savedInSpecBlock, TokenSet followers, bool skipSemicolons) {
       this.Skip(Token.RightParenthesis);
       this.LeaveSpecBlock(savedInSpecBlock);
+      if (skipSemicolons)
+        while (this.currentToken == Token.Semicolon)
+          this.Skip(Token.Semicolon, true);
       this.SkipTo(followers);
+    }
+
+    private void SkipOutOfSpecBlock(bool savedInSpecBlock, TokenSet followers) {
+      this.SkipOutOfSpecBlock(savedInSpecBlock, followers, false);
     }
 
     private void SkipSemicolonsInSpecBlock(TokenSet followers) {

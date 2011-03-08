@@ -242,7 +242,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
       this.ParseGlobalDeclarationList(members, globalMembers, followers | Token.RightParenthesis);
-      this.SkipOverTo(Token.RightParenthesis, followers);
+      this.Skip(Token.RightParenthesis);
+      if (this.currentToken == Token.Semicolon) 
+        this.SkipSemiColon(followers);
+      this.SkipTo(followers);
       this.LeaveSpecBlock(savedInSpecCode);
     }
 
@@ -312,6 +315,8 @@ namespace Microsoft.Research.Vcc.Parsing {
           //TODO: complain if not first declarator
           if (this.currentToken == Token.LeftBrace) {
             this.ParseFunctionDefinition(specifiers, typeMembers, declarator, funcDeclarator, followers | Token.Semicolon);
+            if (this.currentToken == Token.Semicolon) 
+              this.SkipSemiColon(followers);
             return;
           } else
             this.ParseFunctionDeclaration(specifiers, typeMembers, declarator, funcDeclarator, followers | Token.Semicolon, isGlobal);

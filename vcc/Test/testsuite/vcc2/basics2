@@ -497,3 +497,64 @@ void foo() {
 testcase(9,39) : warning VC0000: Possible mistaken null statement.
 Verification of foo succeeded.
 `
+#include "vcc.h"
+int a2;
+int a3; ;
+void f4() {}
+void f5() {};
+void f6() {}; ;
+void f7() {};
+spec(void f8() {})
+spec(void f9() {};)
+spec(void f10() {}; ;)
+spec(void f11() {})
+spec(void f12() {});
+spec(void f13() {}); ;
+spec(int a14;)
+spec(int a15; ;)
+spec(int a16;);
+spec(int a17;); ;
+int a18;
+`
+Verification of f4 succeeded.
+Verification of f5 succeeded.
+Verification of f6 succeeded.
+Verification of f7 succeeded.
+Verification of f8 succeeded.
+Verification of f9 succeeded.
+Verification of f10 succeeded.
+Verification of f11 succeeded.
+Verification of f12 succeeded.
+Verification of f13 succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+int a2;
+int a3; ;
+void f4() {}
+void f5() {};
+void f6() {}; ;
+void f7() {};
+_(ghost void f8() {})
+_(ghost void f9() {};)
+_(ghost void f10() {}; ;)
+_(ghost void f11() {})
+_(ghost void f12() {});
+_(ghost void f13() {}); ;
+_(ghost int a14;)
+_(ghost int a15; ;)
+_(ghost int a16;);
+_(ghost int a17;); ;
+int a18;
+`
+Verification of f4 succeeded.
+Verification of f5 succeeded.
+Verification of f6 succeeded.
+Verification of f7 succeeded.
+Verification of f8 succeeded.
+Verification of f9 succeeded.
+Verification of f10 succeeded.
+Verification of f11 succeeded.
+Verification of f12 succeeded.
+Verification of f13 succeeded.
+`
