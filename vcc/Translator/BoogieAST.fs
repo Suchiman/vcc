@@ -326,6 +326,29 @@ namespace Microsoft.Research.Vcc
             | While (a, b, s) -> While (a, b, self s)
             | Block stmts -> Block (List.map self stmts)
     
+    let writtenVars stmt =
+      let vars = gdict()
+      let varList = ref []
+      let useV v =
+        if not (vars.ContainsKey v) then
+          varList := v :: !varList
+          vars.Add (v, true)
+      let aux = function
+        | Havoc ids
+        | Call (_, ids, _, _) ->
+          List.iter useV ids
+          None
+        | Assign (e, _) ->
+          let rec f = function
+            | Expr.ArrayIndex (e, _) -> f e
+            | Expr.Ref v -> useV v
+            | e -> failwith ("wrong thing assigned to " + e.ToString())
+          f e
+          None
+        | _ -> None
+      mapStmt aux stmt |> ignore
+      !varList
+
     type AbstrCmd =
        | Label of string
        | StructuredCmd of Microsoft.Boogie.StructuredCmd

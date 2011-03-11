@@ -1347,7 +1347,7 @@ namespace Microsoft.Research.Vcc
 
         try         
           match stmt with
-            | C.Expr.Block (_, stmts, _) -> 
+            | C.Expr.Block (_, stmts, None) -> 
               List.concat (List.map self stmts)
             | C.Expr.Comment (_, s) -> 
               [B.Stmt.Comment s]
@@ -1536,6 +1536,59 @@ namespace Microsoft.Research.Vcc
               prefix @
               [B.Stmt.If (trExpr env c, B.Stmt.Block (trStmt innerEnv s1), B.Stmt.Block (trStmt innerEnv s2))] @
               suffix
+            | C.Expr.Block (comm, stmts, Some bc) ->
+              let (save, oldState) = saveState "loop"
+              let nonDetVar = "nondet#" + stateId.ToString()
+              let varDecl = B.Stmt.VarDecl ((nonDetVar, B.Type.Bool), None)
+              let origEnv = env
+              let env = { env with OldState = oldState }
+              let wrTok =
+                if bc.Writes.IsEmpty then comm.Token
+                else bc.Writes.Head.Token              
+              let (bump, wrCheck, env) =
+                    let env' = { env with WritesState = oldState }
+                    let (init, env') = setWritesTime wrTok env' bc.Writes
+                    let name = "#loopWrites^" + (ctx.TokSuffix wrTok)
+                    let p = er name
+                    let impl = 
+                      if vcc3 then
+                        let repl = function
+                          | B.FunctionCall ("$top_writable", args) -> Some (bCall "$listed_in_writes" args)
+                          | _ -> None
+                        bImpl ((objectWritesCheck env' p).Map repl) (objectWritesCheck env p)
+                      else
+                        bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
+                    let tok = afmtet wrTok 8027 "writes clause of the block might not be included writes clause of the function" []
+                    let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
+                    let check = [B.Stmt.MkAssert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
+                    (bump, init @ check, env')
+
+              let mkAssert (e:C.Expr) = 
+                B.Stmt.Assert ([], afmtet e.Token 8028 "postcondition '{0}' of the block might not hold" [e], trExpr env e)
+
+              let mkAssume (e) = 
+                B.Stmt.Assume ([], trExpr origEnv e)
+                
+              let innerBody =
+                  captureState "block start" comm.Token ::                  
+                  List.collect (trStmt env) stmts @
+                  [captureState "end if the block" comm.Token] @
+                  List.map mkAssert bc.Ensures @
+                  [B.Stmt.Assume ([], bFalse)]
+              let innerBody = B.Stmt.Block innerBody
+              let innerVars = B.writtenVars innerBody
+
+              let callBody =
+                  [B.Stmt.Havoc innerVars;
+                   B.Stmt.MkAssume (stateChanges env);
+                   B.Stmt.MkAssume (bCall "$timestamp_post" [env.OldState; bState]);
+                   assumeSync env comm.Token] @
+                  List.map mkAssume bc.Ensures
+
+              let body =
+                B.Stmt.If (er nonDetVar, innerBody, B.Stmt.Block callBody)
+              bump @ save @ wrCheck @ [varDecl; body]
+
             | C.Expr.Loop (comm, invs, writes, variants, s) ->
               let (save, oldState) = saveState "loop"
               let env = { env with OldState = oldState }
