@@ -186,6 +186,13 @@ let init (helper:Helper.Env) =
         helper.Error(ec.Token, 9713, "unhandled triggers on assert")
         Some(Assert(ec, expr, []))
       | _ -> None
+
+    let handleExpressionLabels self = function
+      | Macro (ec, "lbl_split", [_; expr]) ->
+        Some (Macro (ec, "_vcc_split_conjunctions", [self expr]))
+      | Macro (ec1, "lbl_use", [lbl; CallMacro(ec2, ("_vcc_in_domain"|"_vcc_in_vdomain" as fn), [], [e1; e2])]) ->
+        Some (self (Macro (ec2, fn, [Macro (ec1, "_vcc_use", [lbl; e1]); e2])))
+      | _ -> None
           
     let normalizeGroupInvariants decls = 
 
@@ -231,6 +238,7 @@ let init (helper:Helper.Env) =
     removeMagicEntities >>
     deepMapExpressions normalizeMisc >> 
     deepMapExpressions rewriteBvAssertAsBvLemma >>
+    deepMapExpressions handleExpressionLabels >>
     deepMapExpressions normalizeCastLike
 
 

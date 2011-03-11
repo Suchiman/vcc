@@ -606,7 +606,7 @@ namespace Microsoft.Research.Vcc.Parsing
     protected override Expression ParseBraceLabeledExpression(SourceLocationBuilder slb, TokenSet followers)
     {
       var lab = (VccLabeledExpression)this.ParseLabeledExpression(followers | Token.RightBrace);      
-      this.SkipOverTo(Token.RightBrace, followers);
+      this.Skip(Token.RightBrace);
       var body = this.ParseExpression(followers);
       var labString = lab.Label.Name.Value;
       var labName = new VccByteStringLiteral(labString, lab.Label.SourceLocation);

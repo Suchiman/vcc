@@ -15,7 +15,6 @@ module Rules =
     {
       keyword : string
       replFn : ctx -> list<Tok> -> ctx * list<Tok> * list<Tok>
-
     }
 
   let ctxFreeRule rule ctx toks = let (l1, l2) = rule toks in ctx, l1, l2
@@ -27,6 +26,12 @@ module Rules =
   let rec eatWs = function
     | Tok.Whitespace (_, _) :: rest -> eatWs rest
     | x -> x
+
+  let (|AfterWs|) toks = eatWs toks
+  let (|FnApp|_|) = function
+    | AfterWs (Tok.Id (_, n) :: AfterWs (Tok.Group (_, "(", args) :: rest)) ->
+      Some (n, args, rest)
+    | _ -> None
 
   let eatWsEx l = 
     let rec aux acc = function
@@ -466,6 +471,11 @@ module Rules =
       | _ -> failwith ""
     addRule (parenRuleN "use" 2 doUse)
 
+    let simpleLabel labName = function
+      | [expr] -> paren "{" [Tok.Id (fakePos, (":" + labName))] :: space :: expr
+      | _ -> failwith ""
+    addRule (parenRuleN "split_conjunctions" 1 (simpleLabel "split"))
+
     let in_domain dom = function
      | [e1; e2] ->
        e1 @ [ Tok.Op(fakePos, " \\in ") ] @ fnApp dom (eatWs e2)
@@ -563,16 +573,24 @@ module Rules =
       if countSemicolons oldToks > 1 && ctx.outer_braces > 0 then
         spec "ghost" [Tok.Group (fakePos, "{", toks)], rest
       else
-        let rec map_with_last f = function
-          | [] -> []
-          | [x] -> [f true x]
-          | x :: xs -> f false x :: map_with_last f xs
-        let  doStmt isLast stmt =
-          let semi = if isLast then [] else [Tok.Op(fakePos, ";")]
-          match eatWsEx stmt with
-            | ws, [] -> ws
-            | ws, stmt' ->  ws @ spec "ghost" (stmt' @ semi)
-        toks |> splitAt ";" |> map_with_last doStmt |> List.concat, rest
+        match toks with
+          | FnApp ("_", AfterWs ([Tok.Id (_, "specmacro")]), AfterWs (fnDef)) ->
+            let rec repl = function
+              | FnApp ("_", AfterWs (Tok.Id (p, "returns") :: inner), remaining) -> space :: Tok.Op (p, "=") :: space :: paren "(" inner :: remaining
+              | x :: xs -> x :: repl xs
+              | [] -> []
+            spec "logic" (repl fnDef), rest
+          | _ ->
+            let rec map_with_last f = function
+              | [] -> []
+              | [x] -> [f true x]
+              | x :: xs -> f false x :: map_with_last f xs
+            let  doStmt isLast stmt =
+              let semi = if isLast then [] else [Tok.Op(fakePos, ";")]
+              match eatWsEx stmt with
+                | ws, [] -> ws
+                | ws, stmt' ->  ws @ spec "ghost" (stmt' @ semi)
+            toks |> splitAt ";" |> map_with_last doStmt |> List.concat, rest
 
     addRule (parenRuleExtCtx "spec" specBlock (fun x -> x))
 
