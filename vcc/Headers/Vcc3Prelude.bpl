@@ -1640,10 +1640,10 @@ axiom (forall S:$state, c:$ptr, r:$ptr, f:$field ::
     $valid_claim(S, c) && $claims_obj(c, $ptr(f, r)) ==>
       $valid_claim(S, $ptr(f, r)));
 
-function {:weight 0} $not_shared(S:$state, p:$ptr) returns(bool)
+function $not_shared(S:$state, p:$ptr) returns(bool)
   { $wrapped(S, p, $typ(p)) && (!$is_claimable($typ(p)) || $ref_cnt(S, p) == 0) }
 
-function {:weight 0} $claimed_closed(s:$state, p:$ptr) returns(bool)
+function $claimed_closed(s:$state, p:$ptr) returns(bool)
   { $closed(s, p) }
 
 axiom (forall S:$state, p:$ptr :: {$invok_state(S), $claimed_closed(S, p)}
