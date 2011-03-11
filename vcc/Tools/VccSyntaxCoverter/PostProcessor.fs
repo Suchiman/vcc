@@ -28,7 +28,7 @@ module PostProcessor =
          Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p2, "ghost") :: gRest) :: rest ->
          apply' acc (Tok.Id(p0, "_") :: Tok.Group(p1, "(", Tok.Id(p2, "ghost") :: Tok.Whitespace(fakePos, " ")  :: Tok.Id(fakePos, "_") :: groupName :: gRest) :: rest)
       | Tok.Comment(p, s) as tok :: rest when s.StartsWith("`") && s.[s.Length - 1] = '`' ->
-        match Rules.eatWs rest with
+        match eatWs rest with
          | [] -> apply' (tok :: acc) []
          | _ -> apply' (tok :: acc) (addNewSyntaxOption false rest)
       | Tok.Group (p, s, toks) :: rest -> apply' (Tok.Group (p, s, apply' [] toks) :: acc) rest  

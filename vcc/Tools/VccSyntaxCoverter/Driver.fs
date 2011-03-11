@@ -5,8 +5,8 @@ let go filename =
   try
     if not (System.IO.File.Exists filename) then
       raise (SyntaxError (fakePos, "file does not exists"))
-    let toks = Tokenizer.fromFile filename
-    let toks = Rules.apply toks
+    let toks = 
+      Tokenizer.fromFile filename |> PreProcessor.apply |> Rules.apply
     let isTestSuiteSource = 
       let extension = System.IO.Path.GetExtension(filename)
       extension <> ".c" && extension <> ".h"
