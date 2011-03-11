@@ -367,6 +367,10 @@ namespace Microsoft.Research.Vcc
             this.options.OpsAsFunctions = true;
             return true;
           }
+          if (this.ParseName(arg, "oldsyntax", "os")) {
+            this.options.NewSyntax = false;
+            return true;
+          }
           return false;
         case 'p':
           if (this.ParseName(arg, "pause", "pause")) {
