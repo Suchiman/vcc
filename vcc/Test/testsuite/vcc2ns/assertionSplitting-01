@@ -1,44 +1,36 @@
+`/newsyntax
 #include <vcc.h>
 
-spec(
-vcc(specmacro) 
-bool And(bool a, bool b) ensures(a && b);
-)
+_(logic bool And(bool a, bool b) _(ensures a && b);)
 
 void foo2()
 {
   int a, b, c;
-  assert(And(a > b, b > c && b > 0));
+  _(assert And(a > b, b > c && b > 0))
 }
 
-spec(
-vcc(specmacro) 
-bool And2(bool a, bool b) returns(a && b) ensures(a);
-)
+_(logic bool And2(bool a, bool b) _(returns a && b) _(ensures a);)
 
 void foo3()
 {
   int a, b, c;
-  assert(And2(a > b, b > c && b > 0));
+  _(assert And2(a > b, b > c && b > 0))
 }
 
 
-spec(
-vcc(specmacro) 
-bool And3(bool a, bool b) returns(result == result && b);
-)
+_(logic bool And3(bool a, bool b) = (\result && b);)
 
 void foo4()
 {
   int a, b, c;
-  assert(And3(a > b, b > c && b > 0));
+  _(assert And3(a > b, b > c && b > 0))
 }
 
 `
-testcase(4,1) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
-testcase(11,12)-(11,38) : (Location of symbol related to previous error.)
-testcase(15,1) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
-testcase(22,12)-(22,39) : (Location of symbol related to previous error.)
-testcase(27,1) : error VC9714: 'result' cannot be used recursively in a spec macro definition
-testcase(34,12)-(34,39) : (Location of symbol related to previous error.)
+testcase(3,17) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
+testcase(8,26)-(8,52) : (Location of symbol related to previous error.)
+testcase(11,17) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
+testcase(16,26)-(16,53) : (Location of symbol related to previous error.)
+testcase(20,17) : error VC9714: 'result' cannot be used recursively in a spec macro definition
+testcase(25,26)-(25,53) : (Location of symbol related to previous error.)
 `
