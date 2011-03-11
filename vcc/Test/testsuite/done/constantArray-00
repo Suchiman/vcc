@@ -1,0 +1,16 @@
+#include <vcc.h>
+
+unsigned const int a[] = {0, 1, 2, 3, 4, 5};
+
+unsigned int foo(unsigned int n)
+  requires(n < 6)
+  ensures(result == n)
+  requires(thread_local(&a[n]))
+  reads(&a[n])
+{
+  return a[n];
+}
+
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,19 @@
+#include <vcc.h>
+
+struct A {
+  int a;
+  int b;
+  spec(int x;)
+  spec(int y;)
+};
+
+void foo(struct A *p)
+  requires(mutable(p))
+  writes(&p->a, &p->x)
+{
+  p->a = 12;
+  spec(p->x = 13;)
+}
+`
+Verification of foo succeeded.
+`

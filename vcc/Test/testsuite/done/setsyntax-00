@@ -1,0 +1,66 @@
+
+#include <vcc.h>
+
+void foo() {
+  int a,b,c,d,e,f;
+  
+  assert(set_eq(set_empty(), SET()));
+
+  assert(set_eq(
+    set_singleton(&a), 
+    SET(&a)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b)), 
+    SET(&a, &b)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&c),
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b))), 
+    SET(&a, &b, &c)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&d),
+    set_union(
+      set_singleton(&c),
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b)))), 
+    SET(&a, &b, &c, &d)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&d),
+    set_union(
+      set_singleton(&e),
+    set_union(
+      set_singleton(&c),
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b))))), 
+    SET(&a, &b, &c, &d, &e)));
+
+  assert(set_eq(
+    set_union(
+      set_singleton(&f),
+    set_union(
+      set_singleton(&d),
+    set_union(
+      set_singleton(&e),
+    set_union(
+      set_singleton(&c),
+    set_union(
+      set_singleton(&a), 
+      set_singleton(&b)))))), 
+    SET(&a, &b, &c, &d, &e, &f)));
+}
+
+`
+Verification of foo succeeded.
+`

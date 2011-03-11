@@ -1,0 +1,18 @@
+#include <vcc.h>
+
+typedef struct _ABS_LIST
+{
+	int Card;
+	spec(ptrset List;)
+} ABS_LIST, *PABS_LIST;
+
+spec(ispure bool IsEmptyAbsList(ABS_LIST AL) ensures(result == (AL.Card==0 && AL.List==set_empty()));)
+
+void foo() {
+  ABS_LIST l;
+  assume(IsEmptyAbsList(l));
+}
+
+`
+Verification of foo succeeded.
+`

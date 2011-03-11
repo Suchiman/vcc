@@ -1,0 +1,10 @@
+// conversion from Boolean to other integral types.
+int main()
+{
+   int i = -1;
+   __assert( 1 || i);
+	
+}
+`
+Verification of main succeeded.
+`

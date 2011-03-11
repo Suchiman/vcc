@@ -1,0 +1,13 @@
+#include <vcc.h>
+
+int global;
+
+void foo()
+  ensures(global == 1)
+  writes(&global)
+{
+  global = 1;
+}
+`
+Verification of foo succeeded.
+`
