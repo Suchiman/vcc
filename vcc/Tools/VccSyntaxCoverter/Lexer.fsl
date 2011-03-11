@@ -83,7 +83,7 @@ rule token = parse
 
 | '0' ('x'|'X') hexdigit+ intSuff { Literal (lexeme lexbuf) }
 | digit+ intSuff { Literal (lexeme lexbuf) }
-| "'" ([^ '\\'] | '\\' _) "'" { Literal (newlines lexbuf) }
+| "'" ([^ '\\'] | '\\' [^ '\'']+ ) "'" { Literal (newlines lexbuf) }
 | digit+ exponent floatSuff { Literal (lexeme lexbuf) }
 | digit* "." digit+ exponent floatSuff { Literal (lexeme lexbuf) }
 | digit+ "." digit* exponent floatSuff { Literal (lexeme lexbuf) }
