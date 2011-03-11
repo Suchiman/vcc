@@ -1233,7 +1233,19 @@ namespace Microsoft.Research.Vcc
         [assumeSync env ec.Token]
         
       
-      
+      let isPure bpl =
+        let vars = B.writtenVars bpl
+        if _list_mem "$s" vars then false
+        else
+          let isPure = ref true
+          let tst = function
+            | B.Stmt.Call (_, _, _, _) ->
+              isPure := false
+              None
+            | _ -> None
+          B.mapStmt tst bpl |> ignore
+          !isPure
+
       let callConvCnt = ref 0
       let rec trStmt (env:Env) (stmt:C.Expr) =
         let self = trStmt env
@@ -1569,24 +1581,29 @@ namespace Microsoft.Research.Vcc
               let mkAssume (e) = 
                 B.Stmt.Assume ([], trExpr origEnv e)
                 
-              let innerBody =
+              let innerBodyLst =
                   captureState "block start" comm.Token ::                  
                   List.collect (trStmt env) stmts @
                   [captureState "end if the block" comm.Token] @
-                  List.map mkAssert bc.Ensures @
-                  [B.Stmt.Assume ([], bFalse)]
-              let innerBody = B.Stmt.Block innerBody
+                  List.map mkAssert bc.Ensures
+              let innerBody = B.Stmt.Block innerBodyLst
               let innerVars = B.writtenVars innerBody
-
-              let callBody =
-                  [B.Stmt.Havoc ("$s" :: innerVars);
-                   B.Stmt.MkAssume (stateChanges env);
-                   B.Stmt.MkAssume (bCall "$timestamp_post" [env.OldState; bState]);
-                   assumeSync env comm.Token] @
-                  List.map mkAssume bc.Ensures
+              let (check, havoc) =
+                if isPure innerBody then
+                  [B.Stmt.Assert ([], afmtet comm.Token 0 "OOPS: state changed" [], bEq bState oldState)],
+                   [B.Stmt.Havoc innerVars]
+                else
+                  [],
+                   [B.Stmt.Havoc ("$s" :: innerVars);
+                    B.Stmt.MkAssume (stateChanges env);
+                    B.Stmt.MkAssume (bCall "$timestamp_post" [env.OldState; bState]);
+                    assumeSync env comm.Token]
+                  
+              let callBody = havoc @ List.map mkAssume bc.Ensures
+              let innerBodyLst = innerBodyLst @ check @ [B.Stmt.Assume ([], bFalse)]
 
               let body =
-                B.Stmt.If (er nonDetVar, innerBody, B.Stmt.Block callBody)
+                B.Stmt.If (er nonDetVar, B.Stmt.Block innerBodyLst, B.Stmt.Block callBody)
               bump @ save @ wrCheck @ [varDecl; body]
 
             | C.Expr.Loop (comm, invs, writes, variants, s) ->
