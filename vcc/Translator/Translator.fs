@@ -1579,7 +1579,7 @@ namespace Microsoft.Research.Vcc
               let innerVars = B.writtenVars innerBody
 
               let callBody =
-                  [B.Stmt.Havoc innerVars;
+                  [B.Stmt.Havoc ("$s" :: innerVars);
                    B.Stmt.MkAssume (stateChanges env);
                    B.Stmt.MkAssume (bCall "$timestamp_post" [env.OldState; bState]);
                    assumeSync env comm.Token] @
