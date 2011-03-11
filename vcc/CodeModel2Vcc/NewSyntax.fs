@@ -138,6 +138,10 @@ let init (helper:Helper.Env) =
         | Macro(ec, "set", elems) -> Some(Macro(ec, "_vcc_create_set", Expr.Bogus :: selfs elems))
         | Macro(ec, "\\is", [arg;UserData(_, (:? Type as t))]) -> Some(Macro(ec, "_vcc_is", [self arg; typeExpr t]))
         | Ref(ec, {Name = "\\me"}) -> Some(Macro(ec, "_vcc_me", []))
+        | Prim (ec, Op ("==" as name, _), [e1; e2]) when e1.Type.IsPtrSet ->
+          Some (Macro (ec, "_vcc_set_eq", [self e1; self e2]))
+        | Prim (ec, Op ("!=" as name, _), [e1; e2]) when e1.Type.IsPtrSet ->
+          Some (mkNot (Macro (ec, "_vcc_set_eq", [self e1; self e2])))
         | _ -> None
 
     let normalizeMacros self = function
