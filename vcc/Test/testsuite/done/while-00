@@ -1,0 +1,17 @@
+#include <vcc.h>
+
+void WhileTest(int n)
+  requires(0<=n)
+{ int i;
+  i = 0;
+  while(i<n)
+    invariant(0<=i)
+    invariant(i<=n)
+  {
+    i=i+1;
+  }
+   assert(i==n);
+}
+`
+Verification of WhileTest succeeded.
+`

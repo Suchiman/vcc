@@ -1,0 +1,35 @@
+#include <vcc.h>
+
+typedef int (*FOO)(int i)
+  ensures(result == i);
+  
+typedef int (*BAR)(int i)
+  ensures(result == i);
+  
+void bar(FOO f) 
+  requires(typed(f))
+{
+  int i = f(2);
+  assert(i == 2);
+}
+
+int foo(int i)
+  ensures(result == i)
+{
+  return i;
+}
+
+int baz() 
+{
+  BAR b = &foo;
+  bar(&foo);
+  bar(&foo); return 0;
+}
+
+`
+Verification of bar succeeded.
+Verification of foo succeeded.
+Verification of baz succeeded.
+Verification of $fnptr_foo_to_fnptr#1 succeeded.
+Verification of $fnptr_foo_to_fnptr#2 succeeded.
+`
