@@ -245,7 +245,16 @@ namespace Microsoft.Research.Vcc.Parsing
       List<Expression> writes = new List<Expression>();
       List<LoopVariant> variants = new List<LoopVariant>();
       while (this.currentToken == Token.Specification) {
+        var snap = this.scanner.MakeSnapshot();
         bool savedInSpecCode = this.SkipIntoSpecBlock();
+
+        if (!STS.LoopContract[this.currentToken]) {
+          this.LeaveSpecBlock(savedInSpecCode);
+          scanner.RevertToSnapshot(snap);
+          this.currentToken = Token.Specification;
+          break;
+        }
+
         while (STS.LoopContract[this.currentToken]) {
           switch (this.currentToken) {
             case Token.SpecInvariant:
