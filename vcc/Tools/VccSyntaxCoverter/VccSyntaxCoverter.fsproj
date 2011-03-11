@@ -54,6 +54,7 @@
     </FsLex>
     <Compile Include="Lexer.fs" />
     <Compile Include="Tokenizer.fs" />
+    <Compile Include="PreProcessor.fs" />
     <Compile Include="Rules.fs" />
     <Compile Include="PostProcessor.fs" />
     <Compile Include="..\..\Common\Include\version.fs">

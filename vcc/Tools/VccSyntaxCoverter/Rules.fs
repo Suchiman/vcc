@@ -19,26 +19,6 @@ module Rules =
 
   let ctxFreeRule rule ctx toks = let (l1, l2) = rule toks in ctx, l1, l2
     
-  let space = Tok.Whitespace(fakePos, " ")
-
-  let id n = Tok.Id (fakePos, n)
-  
-  let rec eatWs = function
-    | Tok.Whitespace (_, _) :: rest -> eatWs rest
-    | x -> x
-
-  let (|AfterWs|) toks = eatWs toks
-  let (|FnApp|_|) = function
-    | AfterWs (Tok.Id (_, n) :: AfterWs (Tok.Group (_, "(", args) :: rest)) ->
-      Some (n, args, rest)
-    | _ -> None
-
-  let eatWsEx l = 
-    let rec aux acc = function
-      | Tok.Whitespace (_, _) as w :: rest -> aux (w :: acc) rest
-      | x -> (List.rev acc, x)
-    aux [] l
-  
   let rules = gdict()
   
   let rev_append a b =
@@ -126,30 +106,6 @@ module Rules =
       replFn = repl }
     
   let addRule (r:rule) = rules.Add (r.keyword, r)
-  let poss = function
-    | [] -> fakePos
-    | (x:Tok) :: _ -> x.Pos
-  
-  let trim toks =
-    toks |> List.rev |> eatWs |> List.rev |> eatWs
-    
-  let paren p toks =
-    Tok.Group (fakePos, p, trim toks)
-    
-  let parenOpt toks =
-    match trim toks with
-      | [] -> Tok.Whitespace(fakePos, "")
-      | [tok] -> tok
-      | toks -> paren "(" toks
-
-  let fnApp fnName toks = 
-    let p = poss toks 
-    [Tok.Id (p, fnName); paren "(" toks]
-    
-  let spec kw toks = 
-    let p = poss toks 
-    fnApp "_" (Tok.Id (p, kw) :: Tok.Whitespace (p, " ") :: toks)
-    
   let addStmtKwRule kw newKw =    
     addRule (parenRule true kw (fun toks -> spec newKw toks))
     
@@ -317,6 +273,9 @@ module Rules =
     for cs in canonicalSm do addStmtKwRule cs cs
 
     addStmtKwRule "bv_lemma" "assert {:bv}" // this is stretching it
+    
+    // mostly for the testsuite
+    addStmtKwRule "__assert" "assert"
     
     addKwRepl "mathint" "\\integer"
     addKwRepl "state_t" "\\state"
