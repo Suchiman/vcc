@@ -814,6 +814,9 @@ namespace Microsoft.Research.Vcc
         fVar before, fVar after
           
       let rec liftBlocks findRefs currentBlockId blockPrefix self = function
+        | Expr.Block (ec, body, Some ({ Requires = [CallMacro (fc, "_vcc_full_context", _, [])] } as bc)) ->
+          Some (Expr.Block (ec, List.map self body, Some bc))
+
         | Expr.Block(ec, block, Some cs) as b ->
           let blockId = (!currentBlockId).ToString()
           incr currentBlockId

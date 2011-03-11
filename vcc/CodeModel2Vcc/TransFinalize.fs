@@ -247,7 +247,7 @@ namespace Microsoft.Research.Vcc
         let rec loop acc = function
           | [] -> List.rev acc
           | Expr.Macro(_,"fake_block",nested)::stmts
-          | Expr.Block(_, nested, _) :: stmts -> loop acc (nested @ stmts)
+          | Expr.Block(_, nested, None) :: stmts -> loop acc (nested @ stmts)
           | Expr.Comment(_, comment) :: stmts when comment.StartsWith("__vcc__") -> loop acc stmts
           | stmt :: stmts -> loop (self stmt :: acc) stmts
         Some(Expr.Block(ec, loop [] stmts, cso))
