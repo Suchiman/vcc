@@ -171,6 +171,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("begin", Helper.DoNothing)
     helper.AddTransformer ("prune", Helper.Decl (pruneDecls helper))
 
+    NewSyntax.init helper
     Normalizer.init helper
     TransType.init helper
     ExtraWarnings.init helper
