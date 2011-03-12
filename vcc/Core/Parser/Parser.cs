@@ -1744,7 +1744,6 @@ namespace Microsoft.Research.Vcc.Parsing {
             typeDefNameIsAllowed = false;
             result.Add(ScopedTypeNameSpecifier.CreateForExpression(this.ParseSimpleOrScopedName(followers | TS.SpecifierThatCombinesWithTypedefName)));
             break;
-          case Token.Colon:
           case Token.Specification:
             if (!this.ParseSpecTypeModifiers(result, followers))
               goto default;
