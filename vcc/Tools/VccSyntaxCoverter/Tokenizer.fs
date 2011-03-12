@@ -37,7 +37,6 @@ module Tokenizer =
                 | Tok0.Id n -> Tok.Id (pos, n)
                 | Tok0.Comment s -> Tok.Comment (pos, s)
                 | Tok0.Op n -> Tok.Op (pos, n)
-                | Tok0.Directive n -> Tok.Directive (pos, n)
                 | Tok0.Literal n -> Tok.Literal (pos, n)
                 | Tok0.Whitespace n -> Tok.Whitespace (pos, n)
                 | Tok0.Eof

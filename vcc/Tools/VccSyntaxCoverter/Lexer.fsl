@@ -76,6 +76,8 @@ rule token = parse
 | "^"		{ Op "^" }
 | "|"		{ Op "|" }
 | '?'		{ Op "?" }
+| '#'		{ Op "#" }
+| '\\'		{ Op "\\" }
 
 | idbeg idbody* { Id (lexeme lexbuf) }
 | whitespace+   { Whitespace (lexeme lexbuf) }
@@ -91,7 +93,6 @@ rule token = parse
 
 
 | "//" [^ '\r' '\n']*  { Comment (lexeme lexbuf) }
-| "#" ([^ '\r' '\n'] | '\\' ('\r')? '\n')*  { Directive (newlines lexbuf) }
 | "`/" [^ '\r' '\n']* { Comment (lexeme lexbuf) }
 | "/*" ([^ '*'] | '*' [^ '/'])* "*/"
                       { comm lexbuf }

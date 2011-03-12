@@ -6,7 +6,6 @@ module PreToken =
     | Literal of string
     | Op of string
     | Comment of string
-    | Directive of string
     | Whitespace of string
     | Eof
     | Invalid of string

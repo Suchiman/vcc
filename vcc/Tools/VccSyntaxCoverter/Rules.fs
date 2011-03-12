@@ -338,7 +338,6 @@ module Rules =
         | _ -> spec "ghost" (Tok.Id (fakePos, "\\claim") :: space :: toks)
     addRule (parenRule false "claimp" claimp)
     
-    
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
     addRule (parenRuleN "reads_check" 1 (fun n -> id "vcc_attr (\"is_reads_check\", \"" :: n.Head @ [id "\")"]))
 

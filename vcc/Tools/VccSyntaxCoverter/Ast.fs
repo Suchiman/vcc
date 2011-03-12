@@ -29,7 +29,6 @@ module Ast =
     | Literal of Pos * string
     | Op of Pos * string
     | Comment of Pos * string
-    | Directive of Pos * string
     | Whitespace of Pos * string
     | Group of Pos * string * list<Tok>
     
@@ -41,7 +40,6 @@ module Ast =
         | Literal (_, s)
         | Op (_, s)
         | Comment (_, s)
-        | Directive (_, s)
         | Whitespace (_, s) -> wr s
         | Group (_, c, toks) ->
           wr c
@@ -58,7 +56,6 @@ module Ast =
         | Literal (p, _)
         | Op (p, _)
         | Comment (p, _)
-        | Directive (p, _)
         | Whitespace (p, _)
         | Group (p, _, _) -> p
 
