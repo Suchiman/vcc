@@ -330,7 +330,7 @@ module Rules =
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_empty" (fun toks -> [paren "{" []]))
-
+    
     let claimp toks =
       match eatWs toks with
         | Tok.Id (_, "out") :: rest ->
@@ -341,7 +341,19 @@ module Rules =
     
     addRule (parenRuleN "me" 0 (fun _ -> [Tok.Id (fakePos, "\\me")]))
     addRule (parenRuleN "reads_check" 1 (fun n -> id "vcc_attr (\"is_reads_check\", \"" :: n.Head @ [id "\")"]))
-  
+
+    let speccast = function
+      | [tp; expr] ->
+        fnApp "_" tp @ [paren "(" expr]
+      | _ -> failwith ""
+    addRule (parenRuleN "speccast" 2 speccast)
+
+    let speccast_uc = function
+      | [tp; expr] ->
+        fnApp "_(unchecked)" (fnApp "_" tp @ [paren "(" expr])
+      | _ -> failwith ""
+    addRule (parenRuleN "speccast_uc" 2 speccast_uc)
+
     let typed_phys_or_spec isSpec toks = 
       let optNot = if isSpec then [] else [Tok.Op(fakePos, "!")]
       [paren "(" ([parenOpt toks; Tok.Op(fakePos, "->"); id "\\valid"; space; Tok.Op(fakePos, "&&"); space] @ optNot @ (fnApp "\\ghost" toks))]
