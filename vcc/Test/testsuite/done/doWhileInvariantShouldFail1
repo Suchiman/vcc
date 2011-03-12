@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 // the current behavior is actually correct, loop invariants in Boogie are not supposed
@@ -19,7 +20,7 @@ void bar()
   int i = 0;
   
   do   
-    invariant(i < 10)
+    _(invariant i < 10)
   {
     i += 2;
   } while (i < 10);
@@ -29,7 +30,7 @@ void foo()
 {
   int i = 0;
   while (i < 10)
-    invariant(i < 10)
+    _(invariant i < 10)
   {
     i += 20;
   }

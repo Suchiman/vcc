@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo() {
   unsigned x;
   x = 0;
-  assert(((unsigned)-1) < x);
+  _(assert ((unsigned)-1) < x)
 }
 `
 Verification of foo failed.

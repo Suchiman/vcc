@@ -1,8 +1,9 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo()
 {
-  assert((void *)1 == (void *)0);
+  _(assert (void *)1 == (void *)0)
 }
 `
 Verification of foo failed.

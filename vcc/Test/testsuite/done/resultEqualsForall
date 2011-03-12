@@ -1,10 +1,11 @@
+`/newsyntax
 #include <vcc.h>
 
-spec(ispure bool foo()
-  ensures(result == forall(int i; i == i));)
+_(ghost _(pure) bool foo()
+  _(ensures \result == \forall int i; i == i))
 
 void bar()
-  requires(foo())
+  _(requires foo())
 {
 }
 `

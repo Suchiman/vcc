@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
  unsigned int test(unsigned int i) {

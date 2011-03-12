@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
-ispure bool f();
+_(pure) bool f();
 
 bool bar() 
-  ensures(result == f())
+  _(ensures \result == f())
 {
   return f();
 }

@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
-void foo(int a) requires(a > 10);
+void foo(int a) _(requires a > 10);
 
 void foo(int b) {
-  assert(b > 0);
+  _(assert b > 0)
 }
   
 struct S {
@@ -17,19 +18,19 @@ struct T {
 };
   
   
-void bar(struct S s) requires(s.x > 10);
+void bar(struct S s) _(requires s.x > 10);
 
 void bar(struct S s1)  {
-  assert(s1.x > 10);
+  _(assert s1.x > 10)
 }
 
 void baz(struct T t) 
-  requires(t.s.x > 10)
-  requires(t.y > 10);
+  _(requires t.s.x > 10)
+  _(requires t.y > 10);
   
 void baz(struct T t1) {
-  assert(t1.s.x > 10);
-  assert(t1.y > 10);
+  _(assert t1.s.x > 10)
+  _(assert t1.y > 10)
 }
 
 `

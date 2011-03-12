@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 
@@ -5,15 +6,15 @@
 
 void CorExpressionTestOk(int a,int b) { int result;
   result = a>0?1:-1;
-  assert(result == 1 || result == -1);
+  _(assert result == 1 || result == -1)
 }
 
 void CandExpressionTestOk(int a,int b) 
-  requires(0<=a && 0<b)
+  _(requires 0<=a && 0<b)
 { 
   int result;
   result= a%b;
-  assert(result >=0 && result <b); 
+  _(assert result >=0 && result <b) 
 }
 
 void IfThenElseTestOk(int val) { int a, b, c;
@@ -23,7 +24,7 @@ void IfThenElseTestOk(int val) { int a, b, c;
   else
     b = 2;
   c = a + b;
-  assert(c > 0);
+  _(assert c > 0)
 }
 
 void IfThenElseWithArithmeticTestOk(int val) { int a, b, c, d;
@@ -32,15 +33,15 @@ void IfThenElseWithArithmeticTestOk(int val) { int a, b, c, d;
     b = -(2 + a);
   else
     b = 13 * (5 + a);
-  assert(-5 <= b && b <= 104);
+  _(assert -5 <= b && b <= 104)
   c = a * b;
-  assert(-15 <= c && c <= 312);  
+  _(assert -15 <= c && c <= 312)  
   d = c - c;
-  assert(d == 0); 
+  _(assert d == 0) 
 }
 
 int AbsTestOk(int x)
-  requires(x > -2000000000)
+  _(requires x > -2000000000)
 { 
   if(x>=0){
     return x;
@@ -51,7 +52,7 @@ int AbsTestOk(int x)
 
 
 int Abs2TestOk(int x)
-  requires(x > -2000000000)
+  _(requires x > -2000000000)
 { 
   if(x>=0){
     return x;
@@ -81,7 +82,7 @@ int SwitchTestOk(int x){
 void ImplTestOk(bool b, bool c)
 {
    // binding strength and direction of implication
-    assert(b ==> c ==> b && c);
+    _(assert b ==> c ==> b && c)
 }
 `
 Verification of CorExpressionTestOk succeeded.

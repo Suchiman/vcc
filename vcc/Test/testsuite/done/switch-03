@@ -1,13 +1,14 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo(unsigned x)
 {
-  assume(x == 7 || x == 1);
+  _(assume x == 7 || x == 1)
   switch (x) {
   case 7:
   case 1:
     break;
-  default:assert(0);
+  default:_(assert 0)
   }
 }
 `

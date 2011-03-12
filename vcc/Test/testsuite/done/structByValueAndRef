@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 #include <sal.h>
 
@@ -13,9 +14,9 @@ typedef struct {
 } S, *PS;
 
 void initS(PS s) 
-  writes(extent(s))
-  ensures(thread_local(s))
-  maintains(mutable(s) && is_object_root(s))
+  _(writes \extent(s))
+  _(ensures \thread_local(s))
+  _(maintains \mutable(s) && \object_root(s))
 {
   s->a = 0;
   s->b = 0;

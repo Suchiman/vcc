@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef __int32 INT32;
@@ -8,7 +9,7 @@ typedef unsigned __int64 UINT64;
 typedef void VOID;
 
 VOID bar (UINT64 width)
-  requires(0 < width && width < 1024)
+  _(requires 0 < width && width < 1024)
 {
     UINT64 lo, hi;
     UINT64 size;
@@ -17,7 +18,7 @@ VOID bar (UINT64 width)
     hi = lo + width;
     size = (hi - lo) / width; 
     
-    assert(size == 1);
+    _(assert size == 1)
 }
 
 `

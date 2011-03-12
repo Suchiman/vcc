@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 unsigned f(unsigned i, unsigned j)
-	requires(i < 30)
+	_(requires i < 30)
 {
 	return i + (j & 1023);
 }

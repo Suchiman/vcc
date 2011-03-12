@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo(unsigned x)
@@ -6,7 +7,7 @@ void foo(unsigned x)
   switch (x) {
   case 7:
   case 1:
-    assert(false); break;
+    _(assert \false) break;
   default: break;
   }
 }

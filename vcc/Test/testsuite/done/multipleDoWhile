@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef __int32 INT32;
@@ -16,12 +17,12 @@ VOID foo()
   do 
   {
     do {
-      unchecked(i++);
+      _(unchecked)(i++);
     } while (i != j);
     
     do 
     {
-      unchecked(j++);
+      _(unchecked)(j++);
     } while (i != j);
   } while (i != 0);
  

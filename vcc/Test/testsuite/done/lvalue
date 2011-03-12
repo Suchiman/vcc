@@ -1,9 +1,10 @@
+`/newsyntax
 #include "vcc.h"
 
 struct S {
     int a;
-    spec(int b[int];)
-    invariant(&b[3])
+    _(ghost int b[int])
+    _(invariant &b[3])
 };
 
 `

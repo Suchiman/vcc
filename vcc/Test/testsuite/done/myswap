@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef __int32 INT32;
@@ -9,12 +10,12 @@ typedef void VOID;
 
 
 void myswap(UINT8 *a, UINT8 *b)
-  reads(array_range(a, 2), array_range(b, 2))
-  writes(array_range(a, 2), array_range(b, 2))
-  requires(set_disjoint(array_range(a, 2), array_range(b, 2)))
-  requires(is_thread_local_array(a, 2) && is_thread_local_array(b,2))
-  ensures(forall(UINT64 i; 0 <= i && i<2 ==> a[i] == old(b[i])))
-  ensures(forall(UINT64 i; 0 <= i && i<2 ==> b[i] == old(a[i])))
+  _(reads \array_range(a, 2), \array_range(b, 2))
+  _(writes \array_range(a, 2), \array_range(b, 2))
+  _(requires \disjoint(\array_range(a, 2), \array_range(b, 2)))
+  _(requires \thread_local_array(a, 2) && \thread_local_array(b,2))
+  _(ensures \forall UINT64 i; 0 <= i && i<2 ==> a[i] == \old(b[i]))
+  _(ensures \forall UINT64 i; 0 <= i && i<2 ==> b[i] == \old(a[i]))
 {
   UINT8 tmp;
   tmp = a[0];

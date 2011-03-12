@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef struct itype_instr_t {
@@ -26,15 +27,15 @@ typedef union instr_t {
 	unsigned uint32;
 } instr_t;
 
-ispure _Bool one_or_two(instr_t i)
-	reads(set_empty())
-	ensures(result == (i.rtype.opc==1 || i.rtype.opc==2))
+_(pure) _Bool one_or_two(instr_t i)
+	_(reads {})
+	_(ensures \result == (i.rtype.opc==1 || i.rtype.opc==2))
 {
 	return i.rtype.opc==1 || i.rtype.opc==2;
 }
 
 _Bool one_or_two_alternative(instr_t i)
-	ensures(result == (one_or_two(i))) 	
+	_(ensures \result == (one_or_two(i))) 	
 {
 	return one_or_two(i);
 }

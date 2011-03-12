@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -6,8 +7,8 @@ struct S {
 };
 
 int foo(int p, struct S s) 
-  requires(p == 2 && (s.b & 1 == 1))
-  ensures(result == 1)
+  _(requires p == 2 && (s.b & 1 == 1))
+  _(ensures \result == 1)
 {
     return  ((p == 2) ? 1 : 0) & s.b;
 }

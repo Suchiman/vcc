@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _S { 
@@ -21,19 +22,19 @@ void foo()
   char* strings[] ={"one", "two", "three"};
   char* strings4[4];
 
-  assert(sizeof(i8) == 1);
-  assert(sizeof(i16) == 2);
-  assert(sizeof(i32) == 4);
-  assert(sizeof(i64) == 8);
-  assert(sizeof(ui8) == 1);
-  assert(sizeof(ui16) == 2);
-  assert(sizeof(ui32) == 4);
-  assert(sizeof(ui64) == 8);
-  assert(sizeof(x_s) == sizeof(struct _S));
-  assert(sizeof(xs) == sizeof(S));
-  assert(sizeof(p) == sizeof(void *));
-  assert((sizeof strings)/(sizeof strings[0]) == 3); 
-  assert((sizeof strings4)/(sizeof strings4[0]) == 4); 
+  _(assert sizeof(i8) == 1)
+  _(assert sizeof(i16) == 2)
+  _(assert sizeof(i32) == 4)
+  _(assert sizeof(i64) == 8)
+  _(assert sizeof(ui8) == 1)
+  _(assert sizeof(ui16) == 2)
+  _(assert sizeof(ui32) == 4)
+  _(assert sizeof(ui64) == 8)
+  _(assert sizeof(x_s) == sizeof(struct _S))
+  _(assert sizeof(xs) == sizeof(S))
+  _(assert sizeof(p) == sizeof(void *))
+  _(assert (sizeof strings)/(sizeof strings[0]) == 3) 
+  _(assert (sizeof strings4)/(sizeof strings4[0]) == 4) 
   
 }
 `

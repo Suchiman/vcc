@@ -1,22 +1,23 @@
+`/newsyntax
 #include <vcc.h>
 
-spec(int x = 0;)
-spec(int y = 0;)
+_(ghost int x = 0)
+_(ghost int y = 0)
 
-spec(void foo()
-  writes(&x)
+_(ghost void foo()
+  _(writes &x)
 {
   x = 1;
-  assert(x == 0);
+  _(assert x == 0)
 })
 
-spec(void foo2()
+_(ghost void foo2()
 {
   x = 1;
 })
 
-spec(void foo3()
-  writes(&x)
+_(ghost void foo3()
+  _(writes &x)
 {
   y = 1;
 })

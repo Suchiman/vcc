@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct S {
@@ -8,8 +9,8 @@ typedef struct S {
 } S;
 
 _Bool f(S s)
-  requires(s.a == 1 && s.b == 2 && s.c == 3 && s.d == 4)
-  reads(set_empty())
+  _(requires s.a == 1 && s.b == 2 && s.c == 3 && s.d == 4)
+  _(reads {})
 
 {
   unsigned __int8 a = s.a;  
@@ -19,7 +20,7 @@ _Bool f(S s)
 }
 
 _Bool g(S s)
-  reads(set_empty())
+  _(reads {})
 {
   s.a = (unsigned __int8)1;
   s.b = (unsigned __int16)2;

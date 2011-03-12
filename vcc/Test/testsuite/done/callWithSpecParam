@@ -1,13 +1,14 @@
+`/newsyntax
 #include <vcc.h>
 
-int f(spec(int n))
+int f(_(ghost int n))
 {
   return 0;
 }
 
-int g(spec(int n))
+int g(_(ghost int n))
 {
-  return f(spec(n));
+  return f(_(ghost n));
 }        
 
 `

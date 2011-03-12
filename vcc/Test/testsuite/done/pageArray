@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int8 PAGE[4096];

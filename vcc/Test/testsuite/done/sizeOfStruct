@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _S0_8 {
@@ -13,9 +14,9 @@ typedef S0_8 AS0_8[10];
 
 void SizeAndOffsetOfStructPack8Ok()
 {
-  assert(sizeof(struct _S0_8) == 32);
-  assert(sizeof(S0_8) == 32);
-  assert(sizeof(AS0_8) == 10 * sizeof(S0_8));
+  _(assert sizeof(struct _S0_8) == 32)
+  _(assert sizeof(S0_8) == 32)
+  _(assert sizeof(AS0_8) == 10 * sizeof(S0_8))
 }
 `
 Verification of SizeAndOffsetOfStructPack8Ok succeeded.

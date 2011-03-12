@@ -1,10 +1,11 @@
+`/newsyntax
 #include <vcc.h>
 
-ispure int f(int);
+_(pure) int f(int);
 void foo()
 {
   int x = 10;
-  assert(exists(int i,j; {f(i),f(j)} i+j < 0 && i+j == x));
+  _(assert \exists int i,j; {f(i),f(j)} i+j < 0 && i+j == x)
 }
 `
 Verification of foo failed.

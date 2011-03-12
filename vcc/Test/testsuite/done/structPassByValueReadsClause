@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT64;
@@ -17,7 +18,7 @@ typedef union _VA {
 
 
 void Translate(VA VirtualAddress)
-  reads(PhysicalPages[10]) 
+  _(reads PhysicalPages[10]) 
   
 {
   UINT64 po = VirtualAddress.PageOffset;

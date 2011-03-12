@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 struct x {
-    spec(int Map2[int];)
+    _(ghost int Map2[int])
     int a;
 } z;
 

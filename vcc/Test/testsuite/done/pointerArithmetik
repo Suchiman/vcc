@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef __int32 INT32;
@@ -17,7 +18,7 @@ VOID foo (
     lo = (UINT8 *)base;
     hi = (UINT8 *)base + 4 * 9;
     size = ((UINT64)(hi - lo)) / 4 + 1; 
-    assert(size == 10);
+    _(assert size == 10)
 }    
 
 `

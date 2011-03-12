@@ -1,10 +1,11 @@
+`/newsyntax
 #include <vcc.h>
 
 int global;
 
 void foo()
-  ensures(global == 1)
-  writes(&global)
+  _(ensures global == 1)
+  _(writes &global)
 {
   global = 1;
 }

@@ -1,8 +1,9 @@
+`/newsyntax
 #include "vcc.h"
 
 void bar() {
-	assert(set_eq(set_intersection(SET((void*)40),SET((void*)44)),SET()));
-	assert(set_eq(set_intersection(SET((void*)40),SET((void*)40)),SET((void*)40)));
+	_(assert {(void*)40} \inter {(void*)44} == {})
+	_(assert {(void*)40} \inter {(void*)40} == {(void*)40})
 }
 
 `

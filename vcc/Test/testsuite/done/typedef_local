@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 int main() {
@@ -8,8 +9,8 @@ int main() {
   typedef struct J { char a; } E;
   D d; E e;
   d.c = 10; e.a = 'e';
-  assert(d.c == 10);
-  assert(e.a == 'e');
+  _(assert d.c == 10)
+  _(assert e.a == 'e')
 }
 `
 Verification of main succeeded.

@@ -1,16 +1,17 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _ABS_LIST
 {
 	int Card;
-	spec(ptrset List;)
+	_(ghost \objset List)
 } ABS_LIST, *PABS_LIST;
 
-spec(ispure bool IsEmptyAbsList(ABS_LIST AL) ensures(result == (AL.Card==0 && AL.List==set_empty()));)
+_(ghost _(pure) bool IsEmptyAbsList(ABS_LIST AL) _(ensures \result == (AL.Card==0 && AL.List=={})))
 
 void foo() {
   ABS_LIST l;
-  assume(IsEmptyAbsList(l));
+  _(assume IsEmptyAbsList(l))
 }
 
 `

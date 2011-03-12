@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned int UINT32;
@@ -19,8 +20,8 @@ typedef union pte_t {
 void foo()
 {
   UINT32 a, b;
-  assume (a == b);
-  assert(((pte_t*)(&a))->uint32 == ((pte_t*)(&b))->uint32);
+  _(assume a == b)
+  _(assert ((pte_t*)(&a))->uint32 == ((pte_t*)(&b))->uint32)
 }
 
 `

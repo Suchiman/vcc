@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
@@ -15,8 +16,8 @@ void foo()
   void *p;
 
   p = &b;
-  assume(typed(b));
-  assert(typed(&b->a));
+  _(assume b->\valid)
+  _(assert (&b->a)->\valid)
 }
 
 
@@ -24,8 +25,8 @@ void bar(struct B b)
 {
   struct B *p;
   p = &b;
-  assert(typed(p));
-  assert(typed(&p->a));
+  _(assert p->\valid)
+  _(assert (&p->a)->\valid)
 }
 
 `

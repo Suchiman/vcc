@@ -1,10 +1,11 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT64;
 typedef unsigned __int32 UINT32;
 
 typedef union _U {
-  backing_member UINT64 AsUINT64;
+  _(backing_member) UINT64 AsUINT64;
   struct 
   {
     UINT32 AccessSize:2;
@@ -18,10 +19,10 @@ void foo() {
     case 0:
       break;
     case 1:
-      assert(false);
+      _(assert \false)
       break;
     default:
-      assert(false);
+      _(assert \false)
       break;
   }
 }

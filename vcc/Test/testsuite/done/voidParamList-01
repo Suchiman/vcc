@@ -1,5 +1,5 @@
-
-
+`/newsyntax
+#include <vcc.h>
 typedef void VOID;
 
 void foo(VOID) { }

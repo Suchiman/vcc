@@ -1,20 +1,21 @@
+`/newsyntax
 #include <vcc.h>
 
 void AssignLocalTestOk(){ int x,y,z;
   x=1;y=2;z=3;
-  assert(x+y==z);
+  _(assert x+y==z)
 }
 
 void AssumeLocalTestOk(){ int x,y,z;
-  assume(x==1);
-  assume(y==2);
-  assume(z==3);
-  assert(x+y==z);
+  _(assume x==1)
+  _(assume y==2)
+  _(assume z==3)
+  _(assert x+y==z)
 }
 
 void AssertTestFails()
 {
-  assert(false);
+  _(assert \false)
 }
 `
 Verification of AssignLocalTestOk succeeded.

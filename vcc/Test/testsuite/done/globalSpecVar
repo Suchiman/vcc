@@ -1,26 +1,27 @@
+`/newsyntax
 #include <vcc.h>
 
-spec(int x = 0;)
-spec(int y = 0;)
+_(ghost int x = 0)
+_(ghost int y = 0)
 
-spec(void foo() 
-  writes(&x)
+_(ghost void foo() 
+  _(writes &x)
 {
   x = 1;
-  assert(x == 1);
+  _(assert x == 1)
 })
 
-spec(void bar() 
-  writes(&x, &y)
+_(ghost void bar() 
+  _(writes &x, &y)
 {
   y = 1;
   foo();
-  assert(y == 1);
+  _(assert y == 1)
 })
 
 void baz()
-  requires(program_entry_point())
-  requires(x > 0)
+  _(requires \program_entry_point())
+  _(requires x > 0)
 {
   int q = x - 1;
 }

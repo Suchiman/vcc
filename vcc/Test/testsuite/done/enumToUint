@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef enum _HV
@@ -10,7 +11,7 @@ typedef enum _HV
 
 void foo() {
   unsigned u = (unsigned)Hv0 ;
-  assert(u == (unsigned)Hv0) ;
+  _(assert u == (unsigned)Hv0)
 }
 
 `

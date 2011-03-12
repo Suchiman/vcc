@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -16,15 +17,15 @@ struct T {
 void fooS_shouldFail(unsigned __int64 x) {
   struct S s;
   s.a = x;
-  assert(s.a == x);
+  _(assert s.a == x)
 }
 
 void fooS_ok(unsigned __int64 x) 
-  requires(x <= 15)
+  _(requires x <= 15)
 {
   struct S s;
   s.a = x;
-  assert(s.a == x);
+  _(assert s.a == x)
 }
 
 void fooT_shouldFail(__int64 x) {
@@ -33,11 +34,11 @@ void fooT_shouldFail(__int64 x) {
 }
 
 void fooT_ok(__int64 x) 
-  requires(-8 <= x && x <= 7)
+  _(requires -8 <= x && x <= 7)
 {
   struct T t;
   t.a = x;
-  assert(t.a == x);
+  _(assert t.a == x)
 }
 
 `

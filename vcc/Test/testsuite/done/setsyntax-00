@@ -1,64 +1,33 @@
-
+`/newsyntax
 #include <vcc.h>
 
 void foo() {
   int a,b,c,d,e,f;
   
-  assert(set_eq(set_empty(), SET()));
+  _(assert {} == {})
 
-  assert(set_eq(
-    set_singleton(&a), 
-    SET(&a)));
+  _(assert 
+    {&a} == {&a})
 
-  assert(set_eq(
-    set_union(
-      set_singleton(&a), 
-      set_singleton(&b)), 
-    SET(&a, &b)));
+  _(assert 
+    
+      {&a} \union {&b} == {&a, &b})
 
-  assert(set_eq(
-    set_union(
-      set_singleton(&c),
-    set_union(
-      set_singleton(&a), 
-      set_singleton(&b))), 
-    SET(&a, &b, &c)));
+  _(assert 
+    
+      {&c} \union {&a} \union {&b} == {&a, &b, &c})
 
-  assert(set_eq(
-    set_union(
-      set_singleton(&d),
-    set_union(
-      set_singleton(&c),
-    set_union(
-      set_singleton(&a), 
-      set_singleton(&b)))), 
-    SET(&a, &b, &c, &d)));
+  _(assert 
+    
+      {&d} \union {&c} \union {&a} \union {&b} == {&a, &b, &c, &d})
 
-  assert(set_eq(
-    set_union(
-      set_singleton(&d),
-    set_union(
-      set_singleton(&e),
-    set_union(
-      set_singleton(&c),
-    set_union(
-      set_singleton(&a), 
-      set_singleton(&b))))), 
-    SET(&a, &b, &c, &d, &e)));
+  _(assert 
+    
+      {&d} \union {&e} \union {&c} \union {&a} \union {&b} == {&a, &b, &c, &d, &e})
 
-  assert(set_eq(
-    set_union(
-      set_singleton(&f),
-    set_union(
-      set_singleton(&d),
-    set_union(
-      set_singleton(&e),
-    set_union(
-      set_singleton(&c),
-    set_union(
-      set_singleton(&a), 
-      set_singleton(&b)))))), 
-    SET(&a, &b, &c, &d, &e, &f)));
+  _(assert 
+    
+      {&f} \union {&d} \union {&e} \union {&c} \union {&a} \union {&b} == {&a, &b, &c, &d, &e, &f})
 }
 
 `

@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 #include <sal.h>
 
@@ -5,13 +6,13 @@ typedef unsigned __int8 UINT8;
 typedef unsigned __int64 UINT64, *PUINT64;
 
 static void swap(UINT8 arr[], UINT64 lo, UINT64 hi, UINT64 count)
-  requires(0 <= lo && lo <= hi && hi < count)
-  ensures(arr[lo] == old(arr[hi]))
-  ensures(arr[hi] == old(arr[lo]))
-  ensures(forall(UINT64 i; 0 <= i && i < count && i != lo && i != hi ==> arr[i] == old(arr[i])))
-  ensures(is_mutable_array(arr, count))
-  requires(is_thread_local_array(arr, count))
-  writes(array_range(arr, count))
+  _(requires 0 <= lo && lo <= hi && hi < count)
+  _(ensures arr[lo] == \old(arr[hi]))
+  _(ensures arr[hi] == \old(arr[lo]))
+  _(ensures \forall UINT64 i; 0 <= i && i < count && i != lo && i != hi ==> arr[i] == \old(arr[i]))
+  _(ensures \mutable_array(arr, count))
+  _(requires \thread_local_array(arr, count))
+  _(writes \array_range(arr, count))
 {
   UINT8 tmp;
   tmp = arr[hi];
@@ -20,17 +21,17 @@ static void swap(UINT8 arr[], UINT64 lo, UINT64 hi, UINT64 count)
 }
 
 static void foo(UINT8 arr[], UINT64 count)
-  requires(count > 0 && count < (1UI64 << 40)) 
-  requires(is_thread_local_array(arr, count))
-  writes(array_range(arr, count))
+  _(requires count > 0 && count < (1UI64 << 40)) 
+  _(requires \thread_local_array(arr, count))
+  _(writes \array_range(arr, count))
 {
   UINT64 p, max, hi;
   hi = count-1;
 
-  assert(forall(UINT64 i,j; 0 <= i && i < j && j < count && hi < j ==> arr[i] <= arr[j]));
-  assume(arr[0] >= arr[hi]);
+  _(assert \forall UINT64 i,j; 0 <= i && i < j && j < count && hi < j ==> arr[i] <= arr[j])
+  _(assume arr[0] >= arr[hi])
   swap(arr, 0, hi, count);
-  assert(arr[0] <= arr[hi]);
+  _(assert arr[0] <= arr[hi])
 }
 
 `

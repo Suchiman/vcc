@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 #include <sal.h>
 
@@ -11,7 +12,7 @@ typedef struct _SINGLE_LIST_ENTRY
 __forceinline
 void
 InitializeSingleListHead(PSINGLE_LIST_ENTRY ListHead) 
-  writes(extent(ListHead))
+  _(writes \extent(ListHead))
 {
     ListHead->Next = ((void *) 0);
 }

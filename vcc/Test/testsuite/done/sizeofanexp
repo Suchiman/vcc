@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 
 int main () {
   int x = sizeof(x+3);
-  assert(x == 4);
+  _(assert x == 4)
 }
 `
 Verification of main succeeded.

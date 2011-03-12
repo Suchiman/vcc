@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef union pte_t {
@@ -13,18 +14,18 @@ typedef union pte_t {
 unsigned *mm_4; 
 
 void update_spt(unsigned i, unsigned j, unsigned k)
-	requires(i<(8))
-	requires(k <= (100))
-	requires(j<=k)
-	requires(is_thread_local_array((((union pte_t *) &mm_4[((33) + (((1)*(8)+(i))*(((100)>>10)+1)))<<10])), (((100))+1)*sizeof(unsigned)))
-	writes(array_range((((union pte_t *) &mm_4[((33) + (((1)*(8)+(i))*(((100)>>10)+1)))<<10])), 100+1))
+	_(requires i<(8))
+	_(requires k <= (100))
+	_(requires j<=k)
+	_(requires \thread_local_array((((union pte_t *) &mm_4[((33) + (((1)*(8)+(i))*(((100)>>10)+1)))<<10])), (((100))+1)*sizeof(unsigned)))
+	_(writes \array_range((((union pte_t *) &mm_4[((33) + (((1)*(8)+(i))*(((100)>>10)+1)))<<10])), 100+1))
 {
 	pte_t hpte;
 	unsigned l;
 
 	l = j;
 	while (l <= k) 
-		invariant(j <= l && l <= k+1)
+		_(invariant j <= l && l <= k+1)
 	{
 		hpte.f.v = 0; 
 		l++;

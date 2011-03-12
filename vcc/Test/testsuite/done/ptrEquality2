@@ -1,8 +1,9 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo(void *p)
 {
-  assert(p != (void *)0); // NULL != NULL is now ambiguous between 'void* op void *' and 'void^ op void^'
+  _(assert p != (void *)0) // NULL != NULL is now ambiguous between 'void* op void *' and 'void^ op void^'
 }
 `
 Verification of foo failed.

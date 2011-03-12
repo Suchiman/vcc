@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _LS {
@@ -7,15 +8,15 @@ typedef struct _LS {
 } LS;
 
 LS f(LS s)
-  requires (s.x < 0x7FFFFFFF)
-  ensures (result.x == s.x + 1)
+  _(requires s.x < 0x7FFFFFFF)
+  _(ensures \result.x == s.x + 1)
 {
     s.x = s.x + 1;
     return s;
 }
 
 LS fSholdFail(LS s)
-  ensures (result.x == s.x + 1)
+  _(ensures \result.x == s.x + 1)
 {
     s.x = s.x + 1;
     return s;
@@ -25,7 +26,7 @@ void g(LS s)
 {
   s.x = 0;
   s = f(s);
-  assert(s.x == 1);
+  _(assert s.x == 1)
 }
 `
 Verification of f succeeded.

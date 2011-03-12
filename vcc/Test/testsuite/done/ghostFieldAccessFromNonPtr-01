@@ -1,16 +1,17 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _S {
   unsigned __int32 a;
   unsigned __int32 b;
   unsigned __int64 padding;
-  spec(unsigned __int64 sum;)
+  _(ghost unsigned __int64 sum)
 } S;
 
 S foo(S s)
-  requires(s.sum == (unsigned __int64)s.a + (unsigned __int64)s.b)
-  requires(s.a > 0 && s.b < 1000)
-  ensures(result.sum == (unsigned __int64)result.a + (unsigned __int64)result.b)
+  _(requires s.sum == (unsigned __int64)s.a + (unsigned __int64)s.b)
+  _(requires s.a > 0 && s.b < 1000)
+  _(ensures \result.sum == (unsigned __int64)\result.a + (unsigned __int64)\result.b)
 {
   s.a -=1;
   s.b +=1;
@@ -21,7 +22,7 @@ void bar() {
   S s;
   s.a = 10;
   s.b = 10;
-  spec(s.sum = 20;)
+  _(ghost s.sum = 20)
   s = foo(s);
 }
 `

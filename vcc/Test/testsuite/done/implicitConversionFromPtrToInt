@@ -1,3 +1,5 @@
+`/newsyntax
+#include <vcc.h>
 int  sf( int i);
 
 void test3( int *xx)

@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct {
@@ -5,7 +6,7 @@ void (*func)() ;
 } x;
 
 int main(){
-  assert(sizeof(x) == 8);
+  _(assert sizeof(x) == 8)
 }
 `
 Verification of main succeeded.

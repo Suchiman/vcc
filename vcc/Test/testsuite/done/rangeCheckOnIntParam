@@ -1,20 +1,21 @@
+`/newsyntax
 #include <vcc.h>
 
 void i8ShouldFail(__int8 x) {
-  assert(0 <= x);
+  _(assert 0 <= x)
 }
 
 void i16ShouldFail(__int16 x) {
-  assert(0 <= x);
+  _(assert 0 <= x)
 }
 
 void i32ShouldFail(__int32 x) {
-  assert(0 <= x);
+  _(assert 0 <= x)
 }
 
 
 void i64ShouldFail(__int64 x) {
-  assert(0 <= x);
+  _(assert 0 <= x)
 }
 
 `

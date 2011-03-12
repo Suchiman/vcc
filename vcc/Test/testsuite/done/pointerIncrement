@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _PTE
@@ -15,7 +16,7 @@ void foo(PPTE p)
   q--;
   p++;
   p--;
-  assert(p == q);
+  _(assert p == q)
 }
 `
 Verification of foo succeeded.

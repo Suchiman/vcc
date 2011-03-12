@@ -1,4 +1,4 @@
-
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -13,13 +13,13 @@ struct T {
 
 void foo(struct T *t)
 {
-  assert(set_in(&t->c, span(t)));
-  assert(!set_in(&t->s, span(t)));
-  assert(set_in(&t->s, extent(t)));
-  assert(set_in(&t->s.a, extent(t)));
-  assert(set_in(&t->s.b, extent(t)));
-  assert(set_in(&t->s.a, span(&t->s)));
-  assert(set_in(&t->s.b, span(&t->s)));
+  _(assert &t->c \in \span(t))
+  _(assert !(&t->s \in \span(t)))
+  _(assert &t->s \in \extent(t))
+  _(assert &t->s.a \in \extent(t))
+  _(assert &t->s.b \in \extent(t))
+  _(assert &t->s.a \in \span(&t->s))
+  _(assert &t->s.b \in \span(&t->s))
 }
 
 `

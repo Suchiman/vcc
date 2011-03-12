@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef long long __vcI8;
@@ -9,16 +10,16 @@ typedef unsigned int UINT32;
 
 
 UINT32 test(UINT32 a)
-ensures(result == (a? unchecked(a+1):1))
+_(ensures \result == (a? _(unchecked)(a+1):1))
 {
 	UINT32 res;
 
 	if(a)
-		res = unchecked(a + 1);
+		res = _(unchecked)(a + 1);
 	else
 		res = 1;
 
-	assert(res == (a? unchecked(a+1):1));
+	_(assert res == (a? _(unchecked)(a+1):1))
 
 	return res;
 }

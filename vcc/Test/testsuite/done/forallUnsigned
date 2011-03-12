@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT64;
 
 void foo() {
-  assert(forall(UINT64 i, j; 0 <= i));
+  _(assert \forall UINT64 i, j; 0 <= i)
 }
 
 `

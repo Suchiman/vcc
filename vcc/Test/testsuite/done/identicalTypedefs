@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef __int64 S1;
