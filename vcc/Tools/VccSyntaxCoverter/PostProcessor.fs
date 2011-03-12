@@ -34,6 +34,20 @@ module PostProcessor =
       | Tok.Group (p, s, toks) :: rest -> apply' (Tok.Group (p, s, apply' [] toks) :: acc) rest  
       | t :: rest -> apply' (t::acc) rest
       | [] -> List.rev acc
-    let toks = toks |> coalesceWhitespace [] |> apply' [] 
+
+    let rec fixupTrueFalse acc = function
+      | (Tok.Id (_, "_") as i) :: (Tok.Group (_, _, _) as g) :: rest ->
+        fixupTrueFalse (g :: i :: acc) rest
+      | Tok.Id (p0, "\\true") :: rest ->
+        fixupTrueFalse (Tok.Id (p0, "true") :: acc) rest
+      | Tok.Id (p0, "\\false") :: rest ->
+        fixupTrueFalse (Tok.Id (p0, "false") :: acc) rest
+      | Tok.Group (p, o, toks) :: rest ->
+        fixupTrueFalse (Tok.Group (p, o, fixupTrueFalse [] toks) :: acc) rest
+      | t :: rest ->
+        fixupTrueFalse (t :: acc) rest
+      | [] -> List.rev acc
+
+    let toks = toks |> coalesceWhitespace [] |> apply' [] |> fixupTrueFalse []
     if addCompilerOptionForTestSuite then addNewSyntaxOption true toks else toks
       
