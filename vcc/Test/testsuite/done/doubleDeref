@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 uint;
@@ -12,15 +13,15 @@ pstr arr[];
 
 pstr
 foo(uint str1)
-	reads(&arr)
-	reads(arr[str1])
-  requires(program_entry_point())
-	requires(arr[str1]->second == str1)
-	requires(thread_local(&arr[str1]))
-	requires(thread_local(arr[str1]))
-	requires(thread_local(&arr[str1]))
-	ensures(result == arr[str1])
-	ensures(result->second == str1)
+	_(reads &arr)
+	_(reads arr[str1])
+  _(requires \program_entry_point())
+	_(requires arr[str1]->second == str1)
+	_(requires \thread_local(&arr[str1]))
+	_(requires \thread_local(arr[str1]))
+	_(requires \thread_local(&arr[str1]))
+	_(ensures \result == arr[str1])
+	_(ensures \result->second == str1)
 {
 	return arr[str1];
 }

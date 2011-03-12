@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 //top level casting to void is permitted.

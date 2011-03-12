@@ -1,8 +1,9 @@
+`/newsyntax
 #include <vcc.h>
 
-spec(const int foo;)
+_(ghost const int foo)
 
-axiom(foo == 1);
+_(axiom foo == 1)
 
 void bar(){
 }

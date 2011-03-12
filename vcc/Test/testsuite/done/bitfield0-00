@@ -1,4 +1,4 @@
-
+`/newsyntax
 #include <vcc.h>
 
 
@@ -16,15 +16,15 @@ void foo() {
   x.val=0;
   x.fld.a=1;
 
-  assert(x.fld.a == 1);
-  assert(x.fld.b == 0); 
-  assert(x.val == 1);   
+  _(assert x.fld.a == 1)
+  _(assert x.fld.b == 0) 
+  _(assert x.val == 1)   
   x.val=0x00000001;
-  assert(x.fld.a == 1); 
-  assert(x.fld.b == 0);
+  _(assert x.fld.a == 1) 
+  _(assert x.fld.b == 0)
   x.val=0x10000001;
-  assert(x.fld.a == 1);
-  assert(x.fld.b == 0x8000000);
+  _(assert x.fld.a == 1)
+  _(assert x.fld.b == 0x8000000)
 }
 `
 Verification of foo succeeded.

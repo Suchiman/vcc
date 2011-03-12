@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned __int16 UINT16;
@@ -6,7 +7,7 @@ typedef unsigned __int64 UINT64;
 
 typedef union _UNION_TYPE
 {
-    backing_member UINT64 AsArrayUINT64[2];
+    _(backing_member) UINT64 AsArrayUINT64[2];
 
     struct
     {
@@ -14,7 +15,7 @@ typedef union _UNION_TYPE
         union
         {
             // Long Mode
-            backing_member UINT64 AsUINT64;
+            _(backing_member) UINT64 AsUINT64;
             // 32 Bit Mode
             struct
             {
@@ -26,8 +27,8 @@ typedef union _UNION_TYPE
 } UNION_TYPE, *PUNION_TYPE;
 
 PUNION_TYPE testit(PUNION_TYPE arg) 
-	maintains(wrapped(arg))
-	ensures(result == arg)
+	_(maintains \wrapped(arg))
+	_(ensures \result == arg)
 {
 	return arg;
 }

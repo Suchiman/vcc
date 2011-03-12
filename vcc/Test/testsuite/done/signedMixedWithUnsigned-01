@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned long long U8;
@@ -6,12 +7,12 @@ U8 rcx;
 U8* MSRs;
 
 void RtlpZeroSinglePage()
-  requires(program_entry_point())
-  requires(is_thread_local_array(MSRs+0x0C0000080,8))
+  _(requires \program_entry_point())
+  _(requires \thread_local_array(MSRs+0x0C0000080,8))
 {
-  assume(rcx == 0x0C0000080);
-  assert(is_thread_local_array(MSRs+0x0C0000080,8));
-  assert(is_thread_local_array(MSRs+rcx,8));
+  _(assume rcx == 0x0C0000080)
+  _(assert \thread_local_array(MSRs+0x0C0000080,8))
+  _(assert \thread_local_array(MSRs+rcx,8))
 }
 `
 Verification of RtlpZeroSinglePage succeeded.

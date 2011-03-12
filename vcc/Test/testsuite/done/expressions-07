@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo(unsigned a, unsigned b)
 {
-  unsigned r = unchecked(a + b);
-  assert(r >= a);
+  unsigned r = _(unchecked)(a + b);
+  _(assert r >= a)
 }
 
 void bar(int x)
@@ -13,13 +14,13 @@ void bar(int x)
 
 void foobar(int x)
 {
-  assert(unchecked(-x) == unchecked(0 - x));
+  _(assert _(unchecked)(-x) == _(unchecked)(0 - x))
 }
 
 void foobar2(int x)
 {
-  assume(0 <= x && x <= 100);
-  assert(unchecked(-x) == unchecked(0 - x));
+  _(assume 0 <= x && x <= 100)
+  _(assert _(unchecked)(-x) == _(unchecked)(0 - x))
 }
 
 void baz(unsigned x, unsigned y)

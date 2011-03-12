@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 bool foo(int i, bool b) 
-  ensures(result <==> b && i < 0) 
+  _(ensures \result <==> b && i < 0) 
 {
   if (!b) return 0;
   if (i < 0) return 1;
@@ -9,7 +10,7 @@ bool foo(int i, bool b)
 }
 
 void bar(int i, int j)
-  requires(i <==> j)
+  _(requires i <==> j)
 {
 }
 

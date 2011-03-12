@@ -1,10 +1,11 @@
-
+`/newsyntax
+#include <vcc.h>
 struct S {
   int a;
 };
 
 struct S *foo(struct S *s)
-    __reads(s);
+    _(reads s);
     
 void bar(struct S *s) 
 {

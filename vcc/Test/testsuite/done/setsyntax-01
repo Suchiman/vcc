@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -6,10 +7,10 @@ struct S {
 };
 
 
-struct vcc(dynamic_owns) T {
+_(dynamic_owns) struct T {
   struct S s1;
   struct S s2;
-  invariant(set_eq(owns(this), SET(&s1, &s2)))
+  _(invariant \this->\owns == {&s1, &s2})
 };
 
 void foo(struct T t) { }

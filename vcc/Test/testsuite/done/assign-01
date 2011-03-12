@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef __w64 unsigned int   size_t;
@@ -8,7 +9,7 @@ void f0()
   int j = 1;
   
   j += i + i;
-  assert(j == 3);
+  _(assert j == 3)
 }
 
 void f1() 
@@ -17,7 +18,7 @@ void f1()
   int j = 1;
   
   j -= i + i;
-  assert(j == -1);
+  _(assert j == -1)
 }
 
 void f2() 
@@ -26,7 +27,7 @@ void f2()
   int j = 2;
   
   j *= i + i;
-  assert(j == 4);
+  _(assert j == 4)
 }
 
 void f3() 
@@ -35,7 +36,7 @@ void f3()
   int j = 8;
   
   j /= i + i;
-  assert(j == 4);
+  _(assert j == 4)
 }
 
 void f4() 
@@ -44,7 +45,7 @@ void f4()
   unsigned int j = 2;
   
   j &= i | ~i;
-  assert(j == 2);
+  _(assert j == 2)
 }
 
 void f5() 
@@ -53,7 +54,7 @@ void f5()
   unsigned int j = 2;
   
   j |= i & ~i;
-  assert(j == 2);
+  _(assert j == 2)
 }
 
 void f6()
@@ -63,7 +64,7 @@ void f6()
   
   j ^= i | ~i;
   j ^= i | ~i;
-  assert(j == 2);
+  _(assert j == 2)
 }
 
 void f7()
@@ -72,7 +73,7 @@ void f7()
   unsigned int j = 9;
   j %= i + i;
 
-  assert(j == 1);
+  _(assert j == 1)
 }
 
 void f8()
@@ -81,7 +82,7 @@ void f8()
   int j = 1;
   j <<= i + i;
 
-  assert(j == 4);
+  _(assert j == 4)
 }
 
 void f9()
@@ -90,7 +91,7 @@ void f9()
   int j = 4;
   j >>= i + i;
 
-  assert(j == 1);
+  _(assert j == 1)
 }
 `
 Verification of f0 succeeded.

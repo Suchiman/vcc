@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 #include <sal.h>
 
@@ -12,7 +13,7 @@ typedef struct{
 } Status, *PStatus ;
 
 void BitfieldReadTestOk(PStatus s)
-  requires(thread_local(s))
+  _(requires \thread_local(s))
 { int x;
   
   x = s->empty;
@@ -21,15 +22,15 @@ void BitfieldReadTestOk(PStatus s)
 }
 
 void BitfieldWriteTestOk(PStatus s)
-  ensures(s->full==2)
-  writes(extent(s))
+  _(ensures s->full==2)
+  _(writes \extent(s))
 {
   s->full = 2;
 }
 
 void BitfieldSimpleFramingTestOk(PStatus s)
-  ensures(s->full==2)
-  writes(extent(s))
+  _(ensures s->full==2)
+  _(writes \extent(s))
 {
   s->full = 2;
   s->empty = 0;
@@ -42,8 +43,8 @@ typedef struct{
 } Point, *PPoint ;
 
 void BitfieldSimpleFraming2TestOk(PPoint s)
-  ensures(s->x==2)
-  writes(extent(s))
+  _(ensures s->x==2)
+  _(writes \extent(s))
 {
   s->x = 2;
   s->y = 0;
@@ -55,8 +56,8 @@ typedef struct {
 } XY, *PXY ;
 
 void BitfieldComplexFramingTestOk(PXY s)
-  ensures(s->x==2)   
-  writes(extent(s))
+  _(ensures s->x==2)   
+  _(writes \extent(s))
 {
   s->x = 2;
   s->y = 0;
@@ -68,16 +69,16 @@ typedef struct {
 } S, *PS;
 
 void BitfieldTestOk(PS s)
-  writes(extent(s))
+  _(writes \extent(s))
 {
   s->x = 2;
   s->y = 0;
 }
 
 void BitFieldReadWriteTestOk(PStatus s)
-  ensures(s->empty ==0)
-  ensures(s->full == old(s->empty)+1)
-  writes(extent(s))
+  _(ensures s->empty ==0)
+  _(ensures s->full == \old(s->empty)+1)
+  _(writes \extent(s))
 {
   s->full = s->empty+1;
   s->empty = 0;

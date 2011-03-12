@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo(unsigned x)
-  requires(x < 1000)
+  _(requires x < 1000)
 {
   int a = (int) x;
 }

@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 union U {
-  backing_member unsigned __int64 AsUINT64;
+  _(backing_member) unsigned __int64 AsUINT64;
   struct {
     unsigned __int64 a:32;    
     unsigned __int64 b:32;
@@ -9,7 +10,7 @@ union U {
 };
 
 union V {
-  backing_member union U u;
+  _(backing_member) union U u;
   struct {
     unsigned __int64 a:16;    
     unsigned __int64 b:16;
@@ -19,18 +20,18 @@ union V {
 };
 
 void foo(union V *v) 
-  requires(mutable(v))
-  writes(extent(v))
+  _(requires \mutable(v))
+  _(writes \extent(v))
 { 
   v->u.AsUINT64 = 1;
-  assert(v->u.AsUINT64 == 1);
-  assert(v->u.a == 1);
-  assert(v->u.b == 0);
+  _(assert v->u.AsUINT64 == 1)
+  _(assert v->u.a == 1)
+  _(assert v->u.b == 0)
   v->a = 2;
-  assert(v->a == 2);
-  assert(v->b == 0);
-  assert(v->c == 0);
-  assert(v->d == 0);
+  _(assert v->a == 2)
+  _(assert v->b == 0)
+  _(assert v->c == 0)
+  _(assert v->d == 0)
 }
 `
 Verification of foo succeeded.

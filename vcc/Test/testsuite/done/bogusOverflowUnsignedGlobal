@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned int UINT32;
@@ -7,39 +8,39 @@ UINT32 g;
 INT32 h;
 
 UINT32 ptea(UINT32 y)
-  requires(program_entry_point())
-	requires(y<(1<<20))
-	reads(&g)
+  _(requires \program_entry_point())
+	_(requires y<(1<<20))
+	_(reads &g)
 {
 	return ((g % (1<<20)) << 10) + y;
 }
 
 void foo() 
-  requires(program_entry_point())
-  reads(&g)
+  _(requires \program_entry_point())
+  _(reads &g)
 {
-  assert(0 <= g && g <= 4294967295);
+  _(assert 0 <= g && g <= 4294967295)
 }
 
 void fooShouldFail() 
-  requires(program_entry_point())
+  _(requires \program_entry_point())
 {
-  assert(g <= 2147483647);
+  _(assert g <= 2147483647)
 }
 
 
 void bar() 
-  requires(program_entry_point())
-  reads(&h)
+  _(requires \program_entry_point())
+  _(reads &h)
 {
-  assert(-2147483648 <= h && h <= 2147483647);
+  _(assert -2147483648 <= h && h <= 2147483647)
 }
 
 void barShouldFail() 
-  requires(program_entry_point())
-  reads(&h)
+  _(requires \program_entry_point())
+  _(reads &h)
 {
-  assert(0 <= h);
+  _(assert 0 <= h)
 }
 `
 Verification of ptea succeeded.

@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -13,7 +14,7 @@ void foo() {
   struct S s;
   s.T.c = 3;
   s.d = 4;
-  assert(s.T.c == 3);
+  _(assert s.T.c == 3)
 }
 
 `

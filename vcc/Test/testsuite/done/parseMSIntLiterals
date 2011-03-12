@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 const __int32 i32 = 0xFFFFF801I32;

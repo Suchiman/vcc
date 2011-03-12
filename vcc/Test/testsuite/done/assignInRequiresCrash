@@ -1,8 +1,9 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo(int *p) 
-  requires(*p = 10)
-  ensures(*p = 10)
+  _(requires *p = 10)
+  _(ensures *p = 10)
 {
 }
 

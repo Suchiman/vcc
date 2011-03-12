@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 #include <sal.h>
 
@@ -16,8 +17,8 @@ struct S {
 };
 
 void foo(struct S *p, unsigned __int32 idx) 
-  requires(idx < 16)
-  writes(extent(p))
+  _(requires idx < 16)
+  _(writes \extent(p))
 {
   p->a[idx >> 3] |= 3;
 }

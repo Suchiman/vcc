@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 int foo()
-  ensures(result == 1)
+  _(ensures \result == 1)
 {
   return 1;
 }

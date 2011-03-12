@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT64;
@@ -16,16 +17,16 @@ typedef union _PTE {
   };
 } PTE, *PPTE;
 
-spec(ispure bool InvSelfmapping()
-  reads(set_universe())
-  ensures ( result == 
+_(ghost _(pure) bool InvSelfmapping()
+  _(reads \universe())
+  _(ensures  \result == 
     ((((PPTE)PhysicalPages[23]) + 0x1FE)->Pfn == 23 && 
     (((PPTE)PhysicalPages[23]) + 0x1FE)->Present == 1 &&      
-    (((PPTE)PhysicalPages[23]) + 0x1FE)->ReadWrite == 1));)
+    (((PPTE)PhysicalPages[23]) + 0x1FE)->ReadWrite == 1)))
 
 void foo()
-  requires(InvSelfmapping())
-  ensures(InvSelfmapping())
+  _(requires InvSelfmapping())
+  _(ensures InvSelfmapping())
   {
   }
   

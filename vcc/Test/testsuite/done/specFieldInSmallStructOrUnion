@@ -1,14 +1,15 @@
+`/newsyntax
 #include <vcc.h>
 
 union X {
 	unsigned a;
 	int b;
-	spec(int c;)
+	_(ghost int c)
 };
 
 struct S {
   unsigned a;
-  spec(int b;)
+  _(ghost int b)
 };
 
 

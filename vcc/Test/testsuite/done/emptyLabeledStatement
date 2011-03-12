@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo()
@@ -10,7 +11,7 @@ label2:
   i = 1;
 label3:
 label4:
-  assert(i == 0);
+  _(assert i == 0)
 }
 `
 Verification of foo succeeded.

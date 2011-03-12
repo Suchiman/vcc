@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef long long __vcI8;
@@ -7,9 +8,9 @@ typedef unsigned long long __vcU8;
 
 
 void orderDivTestU(unsigned int a, unsigned int b)
-  requires(0 < b)
+  _(requires 0 < b)
 {
-  assert(a / b <= a);
+  _(assert a / b <= a)
 }
 
 `

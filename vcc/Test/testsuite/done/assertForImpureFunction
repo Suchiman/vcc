@@ -1,15 +1,16 @@
+`/newsyntax
 #include <vcc.h>
 #include <sal.h>
 
 typedef unsigned __int32 UINT32, *PUINT32;
 
 UINT32 foo(__in_ecount(a) PUINT32 p, UINT32 a)
-  writes(set_empty())
-  ensures(a == 0 ==> result == 0)
+  _(writes {})
+  _(ensures a == 0 ==> \result == 0)
   
  {
     UINT32 b = 0;
-    assert(b == foo(p, 0));
+    _(assert b == foo(p, 0))
     
     b += a;
     return b;

@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _S {
@@ -5,7 +6,7 @@ typedef struct _S {
 } S;
 
 void foo(S s)
-  requires(typed(s.p)) {
+  _(requires (s.p)->\valid) {
 }
 
 typedef union _U {
@@ -14,7 +15,7 @@ typedef union _U {
 } U;
 
 void bar(U u) 
-  requires(typed(u.a)) {
+  _(requires (u.a)->\valid) {
 }
 
 void baz(int *p) {

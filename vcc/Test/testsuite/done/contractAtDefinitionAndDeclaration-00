@@ -1,11 +1,12 @@
+`/newsyntax
 #include <vcc.h>
 #include <sal.h>
 
 _Bool f(int *x)
-ensures(result == 0);
+_(ensures \result == 0);
 
 _Bool f(int *x)
-ensures(1)
+_(ensures 1)
 { 
   return 1;
 }

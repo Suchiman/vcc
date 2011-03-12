@@ -1,6 +1,7 @@
+`/newsyntax
 #include <vcc.h>
 
-void foo() ensures(0);
+void foo() _(ensures 0);
 void foo() { }
 `
 Verification of foo failed.

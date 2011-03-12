@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 int div(int i, int j)
-  requires(j != 0)
+  _(requires j != 0)
 {
   return i / j;
 }

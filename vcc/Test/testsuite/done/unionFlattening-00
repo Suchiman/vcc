@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 union U {
-  backing_member unsigned __int32 a[4];
+  _(backing_member) unsigned __int32 a[4];
   unsigned __int64 b[2];
 };
 

@@ -1,15 +1,16 @@
+`/newsyntax
 #include <vcc.h>
 
 void foo()
 {
   
-  spec(ptrset a, b;)
+  _(ghost \objset a, b)
   void *x;
 
-  assert(set_in(x,a) && !set_in(x,b) ==> set_in(x,set_difference(a,b)));
-  assert(set_in(x,a) && set_in(x,b) ==> !set_in(x,set_difference(a,b)));
-  assert(!set_in(x,a) && set_in(x,b) ==> !set_in(x,set_difference(a,b)));
-  assert(!set_in(x,a) && !set_in(x,b) ==> !set_in(x,set_difference(a,b)));
+  _(assert x \in a && !(x \in b) ==> x \in a \diff b)
+  _(assert x \in a && x \in b ==> !(x \in a \diff b))
+  _(assert !(x \in a) && x \in b ==> !(x \in a \diff b))
+  _(assert !(x \in a) && !(x \in b) ==> !(x \in a \diff b))
 }
 `
 Verification of foo succeeded.

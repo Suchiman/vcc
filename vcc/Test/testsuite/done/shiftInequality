@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT64;
@@ -5,70 +6,70 @@ typedef unsigned __int32 UINT32;
 
 
 void foo19(UINT64 num)
-  requires(num < (1UI64 << 19))
+  _(requires num < (1UI64 << 19))
 {
     __int32 stkptr;
     unsigned __int32 nineteen = 19;
     stkptr = 0;   
 
-    assert(num < (1UI64 << nineteen));
+    _(assert num < (1UI64 << nineteen))
 }
 
 void foo19ShouldFail(UINT64 num)
-  requires(num < (1UI64 << 20))
+  _(requires num < (1UI64 << 20))
 {
     __int32 stkptr;
     unsigned __int32 nineteen = 19;
     stkptr = 0;   
 
-    assert(num < (1UI64 << nineteen));
+    _(assert num < (1UI64 << nineteen))
 }
 
 void foo20(UINT64 num)
-  requires(num < (1UI64 << 20))
+  _(requires num < (1UI64 << 20))
 {
     __int32 stkptr;
     unsigned __int32 twenty = 20;
     stkptr = 0;   
-    assert(num < (1UI64 << twenty));
+    _(assert num < (1UI64 << twenty))
 }
 
 void foo20ShouldFail(UINT64 num)
-  requires(num < (1UI64 << 21))
+  _(requires num < (1UI64 << 21))
 {
     __int32 stkptr;
     unsigned __int32 twenty = 20;
     stkptr = 0;   
-    assert(num < (1UI64 << twenty));
+    _(assert num < (1UI64 << twenty))
 }
 
 void foo62(UINT64 num)
-  requires(num < (1UI64 << 62))
+  _(requires num < (1UI64 << 62))
 {
     __int32 stkptr;
     unsigned __int32 sixtyTwo = 62;
     stkptr = 0;   
-    assert(num < (1UI64 << sixtyTwo));
+    _(assert num < (1UI64 << sixtyTwo))
 }
 
 void foo62ShouldFail(UINT64 num)
-  requires(num < (1UI64 << 63))
+  _(requires num < (1UI64 << 63))
 {
     __int32 stkptr;
     unsigned __int32 sixtyTwo = 62;
     stkptr = 0;   
-    assert(num < (1UI64 << sixtyTwo));
+    _(assert num < (1UI64 << sixtyTwo))
 }
 
 
 
 void bar(UINT64 num)
-  requires(num < (1UI64 << 62))
+  _(requires num < (1UI64 << 62))
 {
     __int32 stkptr;
     stkptr = 0;   
-    assert(num < (1UI64 << 62));
-    assert(num < (1UI64 << (62 - stkptr)));
+    _(assert num < (1UI64 << 62))
+    _(assert num < (1UI64 << (62 - stkptr)))
 }
 
 `

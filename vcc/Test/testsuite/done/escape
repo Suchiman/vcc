@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 const char c = '\0';
@@ -5,8 +6,8 @@ const char c1 = '\077';
 const char c2 = '\x3F';
 
 void foo(){
-  assert(c == (char)0);
-  assert(c1 == c2);
+  _(assert c == (char)0)
+  _(assert c1 == c2)
 }
 `
 Verification of foo succeeded.

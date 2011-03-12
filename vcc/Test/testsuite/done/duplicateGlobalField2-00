@@ -1,10 +1,11 @@
+`/newsyntax
 #include <vcc.h>
 
 extern int perfect;
 
 static void f()
-  writes(&perfect)
-  requires(mutable(&perfect))
+  _(writes &perfect)
+  _(requires \mutable(&perfect))
 {
   perfect = 12;
 }
@@ -13,8 +14,8 @@ static void f()
 int perfect = 4;
 
 int foo()
-  writes(&perfect)
-  requires(mutable(&perfect))
+  _(writes &perfect)
+  _(requires \mutable(&perfect))
 {
   perfect =0;
   return 0;

@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 unsigned int PowerOfTwo(unsigned int i)
-  requires(i < 32)
+  _(requires i < 32)
 {	
   return 1 << i;
 }

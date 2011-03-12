@@ -1,17 +1,18 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef int (*foo)(int i)
-  requires(i > 0)
-  ensures(result > 0);
+  _(requires i > 0)
+  _(ensures \result > 0);
 
 int test(int i)
-  requires(i > 0)
+  _(requires i > 0)
 {
   return i;
 }
 
 int bar(foo fum)
-  reads(fum) requires(thread_local(fum))
+  _(reads fum) _(requires \thread_local(fum))
 {
   return fum(1);
 }

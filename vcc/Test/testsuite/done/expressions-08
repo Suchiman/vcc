@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
-ispure
+_(pure)
 int sin(int x);
 
-axiom(forall(int x; (-1 <= sin(x)) && (sin(x) <= 1)));
+_(axiom \forall int x; (-1 <= sin(x)) && (sin(x) <= 1))
 
 #define RHS sin(a)*b
 #define LHS c
@@ -11,16 +12,16 @@ axiom(forall(int x; (-1 <= sin(x)) && (sin(x) <= 1)));
 void test006a(int a, int b, int c2)
 {
     int LHS;
-    int tmpRHS = unchecked(RHS);
+    int tmpRHS = _(unchecked)(RHS);
     LHS = tmpRHS;
-    assert(LHS == tmpRHS);
+    _(assert LHS == tmpRHS)
 }
 
 void test006b(int a, int b, int c2)
 {
     int LHS;
-    LHS = unchecked(RHS);
-    assert(LHS == unchecked(RHS));
+    LHS = _(unchecked)(RHS);
+    _(assert LHS == _(unchecked)(RHS))
 }
 `
 Verification of test006a succeeded.

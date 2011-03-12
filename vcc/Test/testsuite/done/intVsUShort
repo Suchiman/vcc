@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 const unsigned __int16 RtlpCrc1021Table[256] =
@@ -38,8 +39,8 @@ const unsigned __int16 RtlpCrc1021Table[256] =
 
 
 void foo()
-  requires(program_entry_point())
-  reads(RtlpCrc1021Table)
+  _(requires \program_entry_point())
+  _(reads RtlpCrc1021Table)
 {
     unsigned __int16 accumulator = 0;
     unsigned __int8 byteBlock = 0;

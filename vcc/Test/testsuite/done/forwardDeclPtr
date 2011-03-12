@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
   struct T *t;
   
-  invariant(keeps((obj_t)t))
+  _(invariant \mine((\object)t))
 };
 
 void foo(struct S *s) { }

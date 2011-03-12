@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 typedef unsigned char UINT8, *PUINT8;
@@ -19,16 +20,16 @@ void initalizeA() {
     A *temp_a;
 
     temp_a = CONTAINING_RECORD(&a.Entry, A, Entry);
-    assert( temp_a == &a );
+    _(assert  temp_a == &a)
 }
 
 void foo(A *a) 
-  requires(wrapped(a))
+  _(requires \wrapped(a))
 {
     A *temp_a;
 
     temp_a = CONTAINING_RECORD(&a->Entry, A, Entry);
-    assert( temp_a == a );
+    _(assert  temp_a == a)
 }
 `
 Verification of initalizeA succeeded.

@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 #include <sal.h>
 
@@ -19,14 +20,14 @@ struct StAbsT
 	sti el;
 };
 
-spec(ispure StAbsT AFStm(UINT64 b) ensures(result.el.b == b);)
+_(ghost _(pure) StAbsT AFStm(UINT64 b) _(ensures \result.el.b == b))
 
 void func(__in UINT64 b, PUINT64 Value)
-  writes(Value)
-  ensures(*Value == AFStm(b).el.b)
+  _(writes Value)
+  _(ensures *Value == AFStm(b).el.b)
 {
   *Value = b;
-  assert(*Value == AFStm(b).el.b);
+  _(assert *Value == AFStm(b).el.b)
 }
 
 `

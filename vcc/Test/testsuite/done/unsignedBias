@@ -1,5 +1,7 @@
+`/newsyntax
+#include <vcc.h>
 void foo(unsigned __int8 u) 
-  __requires(u > 0)
+  _(requires u > 0)
 {
   unsigned __int32 a = 5;
   a += (u - 1);

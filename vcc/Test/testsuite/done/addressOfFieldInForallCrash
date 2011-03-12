@@ -1,4 +1,4 @@
-
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT_PTR;
@@ -12,9 +12,9 @@ typedef struct _RTL_RBTREE
 {    
     RTL_RBNODE NilNode;
     
-    spec(PRTL_RBNODE nodesMap[UINT_PTR];)
+    _(ghost PRTL_RBNODE nodesMap[UINT_PTR])
 
-    invariant(forall(UINT_PTR key; (nodesMap[key] != &NilNode) ) )
+    _(invariant \forall UINT_PTR key; (nodesMap[key] != &NilNode))
                           
 } RTL_RBTREE, *PRTL_RBTREE;
 

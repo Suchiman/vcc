@@ -1,11 +1,12 @@
+`/newsyntax
 #include <vcc.h>
 
-ispure unsigned int bar();
+_(pure) unsigned int bar();
 
 void foo(unsigned int x)
-requires(x > 10)
+_(requires x > 10)
 {
-    assert(bar() >= 0);
+    _(assert bar() >= 0)
     return;
 }
 

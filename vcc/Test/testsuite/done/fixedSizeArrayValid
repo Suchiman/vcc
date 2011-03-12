@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 int a[1000];
 
 void foo()
-  requires(is_thread_local_array(a, 10)) {
+  _(requires \thread_local_array(a, 10)) {
 }
 
 `

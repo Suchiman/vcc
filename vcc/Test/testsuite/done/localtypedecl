@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct rec {int x;} rec;
@@ -16,13 +17,13 @@ int main () {
   {
     struct rec x;
     x.f = v.f;
-    assert(x.f == 8);
-    assert(sizeof(rec) == 4);
+    _(assert x.f == 8)
+    _(assert sizeof(rec) == 4)
   }
   {
     struct rec { char c;} v;
     v.c = 'c';
-    assert(v.c == 'c');
+    _(assert v.c == 'c')
   }
   return 0;
 }

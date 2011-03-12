@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned int UINT32;
@@ -6,7 +7,7 @@ struct str{ UINT32 i; } I;
 
 void ptea_struct_param(struct str s)
 {
-  assert(0 <= s.i);
+  _(assert 0 <= s.i)
 }
 
 `

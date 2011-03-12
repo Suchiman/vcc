@@ -1,20 +1,21 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef int (*FOO)(int i)
-  ensures(result == i);
+  _(ensures \result == i);
   
 typedef int (*BAR)(int i)
-  ensures(result == i);
+  _(ensures \result == i);
   
 void bar(FOO f) 
-  requires(typed(f))
+  _(requires f->\valid)
 {
   int i = f(2);
-  assert(i == 2);
+  _(assert i == 2)
 }
 
 int foo(int i)
-  ensures(result == i)
+  _(ensures \result == i)
 {
   return i;
 }

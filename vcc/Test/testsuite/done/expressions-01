@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 void dbz1() {
@@ -7,7 +8,7 @@ void dbz1() {
 
 void dbz2() {
   int a, zero = 0;
-  a = unchecked(a / zero);
+  a = _(unchecked)(a / zero);
 }
 
 void dbz3() {
@@ -17,7 +18,7 @@ void dbz3() {
 
 void dbz4() {
   int a, zero = 0;
-  a = unchecked(a % zero);
+  a = _(unchecked)(a % zero);
 }
 `
 Verification of dbz1 failed.

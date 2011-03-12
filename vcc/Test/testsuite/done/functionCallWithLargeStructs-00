@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _LS {
@@ -11,33 +12,33 @@ void f(LS s)
     s.x = 0;
     s.y = 0;
     s.z = 0;
-    assert(s.x == 0 && s.y == 0 && s.z == 0);
+    _(assert s.x == 0 && s.y == 0 && s.z == 0)
 }
 
 void g(LS s) 
 {
   s.x = 1;
   f(s);
-  assert(s.x == 1);
+  _(assert s.x == 1)
 }
 
 void h(LS s) 
 {
   f(s);
   s.z = 1;
-  assert(s.z == 1);
+  _(assert s.z == 1)
 }
 
 void f1(LS s)
-  requires(s.x == 1 && s.y == 1 && s.z == 1)
+  _(requires s.x == 1 && s.y == 1 && s.z == 1)
  {
-    assert(s.x == 1);    
-    assert(s.y == 1);    
-    assert(s.z == 1);
+    _(assert s.x == 1)    
+    _(assert s.y == 1)    
+    _(assert s.z == 1)
 }
 
 void g1(LS s)
-  requires(s.x == 1 && s.y == 1 && s.z == 1)
+  _(requires s.x == 1 && s.y == 1 && s.z == 1)
 {
   f1(s);
 }
@@ -51,13 +52,13 @@ void h1(LS s)
 }
 
 void h1ShouldFail(LS s)
-  requires(s.x == 1 && s.y == 1)
+  _(requires s.x == 1 && s.y == 1)
 {
   f1(s);
 }
 
 void g2(LS s)
-  requires(s.x == 1 && s.y == 1 && s.z == 1)
+  _(requires s.x == 1 && s.y == 1 && s.z == 1)
 {
   LS t;
   t.x = s.x;
@@ -66,94 +67,94 @@ void g2(LS s)
   f1(t);
 }
 
-ispure unsigned __int32 fx(LS s)
-  ensures(result == s.x)
+_(pure) unsigned __int32 fx(LS s)
+  _(ensures \result == s.x)
 {
   return s.x;
 }
 
 unsigned __int32 fxShouldFail(LS s)
-  ensures(result == s.y)
+  _(ensures \result == s.y)
 {
   return s.x;
 }
 
-ispure unsigned __int32 fy(LS s)
-  reads(set_empty())
-  ensures(result == s.y)
+_(pure) unsigned __int32 fy(LS s)
+  _(reads {})
+  _(ensures \result == s.y)
 {
   return s.y;
 }
 
-ispure unsigned __int32 fz(LS s)
-  ensures(result == s.z) reads(set_empty())
+_(pure) unsigned __int32 fz(LS s)
+  _(ensures \result == s.z) _(reads {})
 {
   return s.z;
 }
 
 unsigned __int32 fzShouldFail(LS s)
-  ensures(result == s.x)
+  _(ensures \result == s.x)
 {
   return s.z;
 }
 
 unsigned __int32 gx(LS s)
-  ensures(result == s.x)
+  _(ensures \result == s.x)
 {
   return fx(s);
 }
 
 unsigned __int32 gy(LS s)
-  reads(set_empty())
-  ensures(result == s.y)
+  _(reads {})
+  _(ensures \result == s.y)
 {
   return fy(s);
 }
 
 unsigned __int32 gz(LS s)
-  ensures(result == s.z)
+  _(ensures \result == s.z)
 {
   return fz(s);
 }
 
 unsigned __int32 hx(LS s)
-  requires(s.x == 1)
-  ensures(result == 1)
+  _(requires s.x == 1)
+  _(ensures \result == 1)
 {
   return fx(s);
 }
 
 unsigned __int32 hy(LS s)
-  reads(set_empty())
-  requires(s.x == 1)
-  ensures(result == 1)
+  _(reads {})
+  _(requires s.x == 1)
+  _(ensures \result == 1)
 {
   return fx(s);
 }
 
 unsigned __int32 hz(LS s)
-  requires(s.z == 1)
-  ensures(result == 1)
+  _(requires s.z == 1)
+  _(ensures \result == 1)
 {
   return fz(s);
 }
 
 unsigned __int32 lx(LS s)
-  ensures(result == fx(s))
+  _(ensures \result == fx(s))
 {
   return fx(s);
 }
 
 unsigned __int32 ly(LS s)
-  reads(set_empty())
-  ensures(result == fy(s))
+  _(reads {})
+  _(ensures \result == fy(s))
 {
   return fy(s);
 }
 
 unsigned __int32 lz(LS s)
-  reads(set_empty())
-  ensures(result == fz(s))
+  _(reads {})
+  _(ensures \result == fz(s))
 {
   return fz(s);
 }

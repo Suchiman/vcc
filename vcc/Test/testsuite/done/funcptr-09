@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef void (*foo)();
 
 int bar(foo fum)
-   reads(fum) requires(typed(fum))
+   _(reads fum) _(requires fum->\valid)
 {
   fum(); return 0;
 }

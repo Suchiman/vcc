@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT64;
@@ -34,7 +35,7 @@ void InitializeVirtualMemoryAndSelfMap()
   dummyPageVa.AsUINT64 = 0UI64;
   dummyPageVa.PtOffset = 1;
   dummyPageVa.PageOffset = 0; 
-  assert(pte == ((PPTE)PhysicalPages[23]) + dummyPageVa.PtOffset);
+  _(assert pte == ((PPTE)PhysicalPages[23]) + dummyPageVa.PtOffset)
 }
 
 void InitializeVirtualMemoryAndSelfMapNoBV()
@@ -45,7 +46,7 @@ void InitializeVirtualMemoryAndSelfMapNoBV()
   dummyPageVa.AsUINT64 = 0UI64;
   dummyPageVa.PtOffset = 1;
   dummyPageVa.PageOffset = 0; 
-  assert(pte == ((PPTE)PhysicalPages[23]) + dummyPageVa.PtOffset);
+  _(assert pte == ((PPTE)PhysicalPages[23]) + dummyPageVa.PtOffset)
 }
 
 `

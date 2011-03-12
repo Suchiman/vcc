@@ -1,7 +1,8 @@
+`/newsyntax
 #include <vcc.h>
 
 unsigned Bitcount (unsigned Target)
-  requires (Target < 256)
+  _(requires Target < 256)
 {   
   Target = Target & 0x0F;
   return Target;

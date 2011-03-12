@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 extern void* malloc(unsigned int);
@@ -6,15 +7,15 @@ extern void free(void*);
 typedef struct { int x; } A;
 
 void do_free(A* p)
-  requires(typed(p))
-  requires(is_object_root(p))
-  writes(extent(p))
+  _(requires p->\valid)
+  _(requires \object_root(p))
+  _(writes \extent(p))
 {
   free(p);
 }
 
 void test_it()
-  writes(set_universe())
+  _(writes \universe())
 {
   A* p = malloc(sizeof(*p));
   if (p != 0) {

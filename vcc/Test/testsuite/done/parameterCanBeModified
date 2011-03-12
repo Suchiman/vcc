@@ -1,15 +1,16 @@
+`/newsyntax
 #include <vcc.h>
 
 void f(unsigned k, unsigned l) {
   k = 0;
   l = 0;
   while(k++ <= 10)
-    invariant(0 <= k && k <= 11)
-    invariant(l==k)
+    _(invariant 0 <= k && k <= 11)
+    _(invariant l==k)
   {
     l++;
   }
-  assert(l==11);
+  _(assert l==11)
 }
 
 `

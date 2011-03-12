@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT64;
@@ -13,13 +14,13 @@ typedef union _PTE {
   };
 } PTE, *PPTE;
 
-spec(ispure bool PteIsPresent(PPTE p)
-  reads(p)
-  ensures(result == (p->Present));)
+_(ghost _(pure) bool PteIsPresent(PPTE p)
+  _(reads p)
+  _(ensures \result == (p->Present)))
 
  void foo(PPTE p)
-    reads(p)
-    requires(PteIsPresent(p))
+    _(reads p)
+    _(requires PteIsPresent(p))
     {
     } 
 `
