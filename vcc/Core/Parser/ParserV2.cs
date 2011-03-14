@@ -117,7 +117,16 @@ namespace Microsoft.Research.Vcc.Parsing
     }
 
     protected override bool ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {
+      var snap = scanner.MakeSnapshot();
       bool savedInSpecCode = this.SkipIntoSpecBlock();
+
+      if (IsSpecParameterStart(this.currentToken)) {
+        this.LeaveSpecBlock(savedInSpecCode);
+        scanner.RevertToSnapshot(snap);
+        this.currentToken = Token.Specification;
+        return false;
+      }
+
       this.ParseSpecTypeModifierList(specifiers, followers);
       this.SkipOutOfSpecBlock(savedInSpecCode, followers);
       return true;
@@ -389,11 +398,17 @@ namespace Microsoft.Research.Vcc.Parsing
       return result;
     }
 
+    private bool IsSpecParameterStart(Token t)
+    {
+      return t == Token.SpecGhost || t == Token.SpecOut;
+    }
+
     private Parameter ParseSpecParameter(TokenSet followers) {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       Parameter result;
       bool savedInSpecCode = this.SkipIntoSpecBlock();
 
+      // sync with IsSpecParameterStart
       switch (this.currentToken) {
         case Token.SpecGhost:
           this.GetNextToken();

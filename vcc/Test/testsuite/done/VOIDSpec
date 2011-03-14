@@ -1,9 +1,10 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef void VOID;
 
-VOID foo(VOID spec(int a))
-  requires(a > 10)
+VOID foo(VOID _(ghost int a))
+  _(requires a > 10)
 {
 }
 
