@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _S {
@@ -6,10 +7,10 @@ typedef struct _S {
 
 struct T {
   void *p;
-  invariant(p == (void*)0 || (is(p, PS) && typed(p)))
+  _(invariant p == (void*)0 || (p \is PS && p->\valid))
 };
 
 `
-testcase(9,57) : warning VC9107: 'is' applied to a pointer type; this is probably not what you intended
+testcase(9,47) : warning VC9107: 'is' applied to a pointer type; this is probably not what you intended
 Verification of T#adm succeeded.
 `
