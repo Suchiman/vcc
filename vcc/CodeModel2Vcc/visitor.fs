@@ -1182,9 +1182,13 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (checkIfInstance:ICheckIfInstance) : unit = 
         let typeToCheck = this.DoType checkIfInstance.TypeToCheck
+        let ec = this.ExprCommon checkIfInstance
+        match typeToCheck with
+          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended")
+          | _ -> ()
         // set also the type in ExprCommon so we prevent pruning of the type
         let typeExpr = C.Expr.UserData({C.ExprCommon.Bogus with Type = typeToCheck}, typeToCheck ) 
-        exprRes <- C.Expr.Macro(this.ExprCommon checkIfInstance, "\\is", [this.DoExpression checkIfInstance.Operand; typeExpr ])
+        exprRes <- C.Expr.Macro(ec, "\\is", [this.DoExpression checkIfInstance.Operand; typeExpr ])
 
       member this.Visit (constant:ICompileTimeConstant) : unit =
         let ec = this.ExprCommon constant
