@@ -327,6 +327,8 @@ module Rules =
     addFnRule "is_non_primitive_ptr" "\\non_primitive_ptr"
     addFnRule "generic_instance" "vcc_generic_instance"
     addFnRule "nospeccast" "vcc_nospeccast"
+    addFnRule "vcs_force_splits" "vcc_force_splits"
+    addFnRule "vcs_keep_going" "vcc_keep_going"
 
     addRule (parenRule false "SET" (fun toks -> [paren "{" toks]))
     addRule (parenRule false "set_singleton" (fun toks -> [paren "{" toks]))

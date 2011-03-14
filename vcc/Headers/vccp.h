@@ -66,6 +66,18 @@ _(const char * const \declspec__boogie2;)
 #define vcc_nospeccast(_TYPE_, _EXPR_) (_EXPR_)
 #define vcc_generic_instance(_F_, ...) _F_ __VA_ARGS__
 
+#ifdef VCC_NO_SPLITS
+#define vcc_force_splits(n)
+#define vcc_keep_going(n)
+#else
+#define vcc_force_splits(n) \
+  __declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_splits", n) \
+  __declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_cost", 1)
+#define vcc_keep_going(n) \
+  __declspec(System.Diagnostics.Contracts.CodeContract.IntBoogieAttr, "vcs_max_keep_going_splits", n)
+#endif
+
+
 _(bool \mine(\object, ...);)
 _(bool \wrapped(\object);)
 _(bool \fresh(\object);)
