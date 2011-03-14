@@ -42,6 +42,8 @@ module PostProcessor =
         fixupTrueFalse (Tok.Id (p0, "true") :: acc) rest
       | Tok.Id (p0, "\\false") :: rest ->
         fixupTrueFalse (Tok.Id (p0, "false") :: acc) rest
+      | Tok.Id (p0, "\\objset") :: rest ->
+        fixupTrueFalse (Tok.Id (p0, "ptrset") :: acc) rest
       | Tok.Group (p, o, toks) :: rest ->
         fixupTrueFalse (Tok.Group (p, o, fixupTrueFalse [] toks) :: acc) rest
       | t :: rest ->
