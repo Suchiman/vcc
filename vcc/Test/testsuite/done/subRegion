@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct S {
@@ -9,9 +10,9 @@ void foo() {
   struct S s;
   struct S *p;
   p = &s;
-  spec(ptrset r;)
-  assume(set_subset(extent(p), r)); 
-  assert(set_subset(extent(&(p->b)), r));
+  _(ghost \objset r)
+  _(assume \subset(\extent(p), r)) 
+  _(assert \subset(\extent(&(p->b)), r))
 }
 
 `

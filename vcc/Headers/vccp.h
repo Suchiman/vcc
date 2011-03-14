@@ -78,6 +78,7 @@ _(bool \extent_zero(\object);)
 _(bool \extent_fresh(\object);)
 _(\objset \universe();)
 _(bool \disjoint(\objset, \objset);)
+_(bool \subset(\objset, \objset);)
 _(bool \thread_local(\object);)
 _(bool \thread_local_array(\object, \size_t);)
 _(bool \mutable(\object);)
@@ -157,7 +158,6 @@ _(void \join_arrays(\object arr1, \object arr2) _(writes \extent(arr1), \extent(
 _(void \split_array(\object arr, \size_t sz) _(writes \extent(arr));)
 _(void \to_bytes(\object o) _(writes \extent(o));)
 _(void \from_bytes(\object o, bool preserveZero) _(writes \extent(o));)
-
 
 // matching helper functions
 
