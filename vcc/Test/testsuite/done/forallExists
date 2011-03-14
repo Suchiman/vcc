@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef __int32 INT32;
@@ -9,11 +10,11 @@ typedef void VOID, *PVOID;
 
 
 static void shortsort(UINT8 arr[], UINT64 count)
-  reads(array_range(arr, count))
-  writes(array_range(arr, count))
-  maintains(is_thread_local_array(arr, count))
-  requires(count > 0)
-  ensures(forall(UINT64 i; _vcc_match_ulong(i) && 0 <= i && i < count ==> exists(UINT64 j; _vcc_match_ulong(j) && thread_local(&arr[j]) && old(arr[i]) == arr[j])))
+  _(reads \array_range(arr, count))
+  _(writes \array_range(arr, count))
+  _(maintains \thread_local_array(arr, count))
+  _(requires count > 0)
+  _(ensures \forall UINT64 i; \match_ulong(i) && 0 <= i && i < count ==> \exists UINT64 j; \match_ulong(j) && \thread_local(&arr[j]) && \old(arr[i]) == arr[j])
   {
   }
 
