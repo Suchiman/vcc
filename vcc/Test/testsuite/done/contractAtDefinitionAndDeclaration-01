@@ -6,6 +6,6 @@ void foo(int a _(ghost int b))
   
 void foo(int a) {};
 `
-testcase(7,1) : error VC9658: declared formal parameter list different from definition
-testcase(4,1)-(4,39) : (Location of symbol related to previous error.)
+testcase(6,1) : error VC9658: declared formal parameter list different from definition
+testcase(3,1)-(3,45) : (Location of symbol related to previous error.)
 `

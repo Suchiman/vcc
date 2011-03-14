@@ -25,6 +25,6 @@ Verification of test succeeded.
 Verification of bar succeeded.
 Verification of myn succeeded.
 Verification of $fnptr_test_to_fnptr#1 failed.
-testcase(20,19) : error VC9501: Post condition 'result > 0' did not verify.
-testcase(5,13) : error VC9599: (related information) Location of post condition.
+testcase(20,19) : error VC9501: Post condition '\result > 0' did not verify.
+testcase(5,27) : error VC9599: (related information) Location of post condition.
 `

@@ -12,5 +12,5 @@ void foo() {
 }
 
 `
-testcase(10,51) : error VC0000: 'f2(i)' is not a method and cannot be called.
+testcase(10,64) : error VC0000: 'f2(i)' is not a method and cannot be called.
 `

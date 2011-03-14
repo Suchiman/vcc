@@ -9,5 +9,5 @@ void foo(UINT32 n)
 }
 `
 Verification of foo failed.
-testcase(7,31) : error VC8519: Assertion 'n in admissible range (in shift)' did not verify.
+testcase(7,46) : error VC8519: Assertion 'n in admissible range (in shift)' did not verify.
 `

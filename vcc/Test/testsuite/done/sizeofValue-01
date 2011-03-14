@@ -4,5 +4,5 @@ void foo() {
 	_(assert sizeof int==4)
 }
 `
-testcase(3,18) : error VC0000: Did not expect 'int'.
+testcase(3,32) : error VC0000: Did not expect 'int'.
 `

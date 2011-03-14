@@ -7,5 +7,5 @@ void foo()
 }
 `
 Verification of foo failed.
-testcase(5,12) : error VC9500: Assertion '((int)(void *)0) == ((int)(void *)1)' did not verify.
+testcase(5,26) : error VC9500: Assertion '((int)(void *)0) == ((int)(void *)1)' did not verify.
 `

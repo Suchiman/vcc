@@ -8,5 +8,5 @@ struct S {
 };
 
 `
-testcase(6,18) : error VC0000: Cannot take the address of the given expression.
+testcase(6,32) : error VC0000: Cannot take the address of the given expression.
 `

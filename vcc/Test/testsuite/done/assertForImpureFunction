@@ -17,7 +17,7 @@ UINT32 foo(__in_ecount(a) PUINT32 p, UINT32 a)
 }
 
 `
-testcase(12,19) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(12,33) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
 testcase(6,1)-(16,2) : (Location of symbol related to previous error.)
-testcase(12,19) : error VC9703: Calling function 'foo' with non-empty writes clause in pure context is not allowed.
+testcase(12,33) : error VC9703: Calling function 'foo' with non-empty writes clause in pure context is not allowed.
 `
