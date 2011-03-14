@@ -323,6 +323,7 @@ module Rules =
     addFnRule "deep_eq"  "\\deep_eq"
     addFnRule "shallow_eq" "\\shallow_eq"
     addFnRule "set_disjoint" "\\disjoint"
+    addFnRule "set_subset" "\\subset"
     addFnRule "is_non_primitive_ptr" "\\non_primitive_ptr"
     addFnRule "generic_instance" "vcc_generic_instance"
     addFnRule "nospeccast" "vcc_nospeccast"

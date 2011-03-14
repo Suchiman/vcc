@@ -34,6 +34,7 @@ let init (helper:Helper.Env) =
                                   "\\atomic_object",       "_vcc_is_atomic_obj"
                                   "\\universe",            "_vcc_set_universe" 
                                   "\\disjoint",            "_vcc_set_disjoint" 
+                                  "\\subset",              "_vcc_set_subset" 
                                   "\\by_claim_wrapper",    "_vcc_by_claim"
                                   "\\alloc",               "_vcc_spec_alloc"
                                   "\\alloc_array",         "_vcc_spec_alloc_array"
