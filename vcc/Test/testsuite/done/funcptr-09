@@ -16,5 +16,5 @@ int myn(){
 Verification of bar succeeded.
 Verification of myn failed.
 testcase(12,10) : error VC9502: Call 'bar((foo)(void *)0)' did not verify.
-testcase(6,28) : error VC9599: (related information) Precondition: '_vcc_typed2(fum)'.
+testcase(6,56) : error VC9599: (related information) Precondition: 'fum->\valid'.
 `

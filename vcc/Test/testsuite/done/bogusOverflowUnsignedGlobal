@@ -46,8 +46,8 @@ void barShouldFail()
 Verification of ptea succeeded.
 Verification of foo succeeded.
 Verification of fooShouldFail failed.
-testcase(27,12) : error VC9500: Assertion 'g <= 2147483647' did not verify.
+testcase(27,26) : error VC9500: Assertion 'g <= 2147483647' did not verify.
 Verification of bar succeeded.
 Verification of barShouldFail failed.
-testcase(42,12) : error VC9500: Assertion '0 <= h' did not verify.
+testcase(42,26) : error VC9500: Assertion '0 <= h' did not verify.
 `

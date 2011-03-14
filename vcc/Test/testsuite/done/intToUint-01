@@ -7,5 +7,5 @@ void main() {
   _(assert -1 < x)
 }
 `
-testcase(6,12) : error VC0000: Operator '<' cannot be applied to operands of type '__int32' and 'unsigned __int32'.
+testcase(6,26) : error VC0000: Operator '<' cannot be applied to operands of type '__int32' and 'unsigned __int32'.
 `

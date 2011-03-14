@@ -13,5 +13,5 @@ void foo(unsigned x)
 }
 `
 Verification of foo failed.
-testcase(9,14) : error VC9500: Assertion '((bool)0)' did not verify.
+testcase(9,28) : error VC9500: Assertion '\false' did not verify.
 `

@@ -27,5 +27,5 @@ Verification of bar succeeded.
 Verification of myn succeeded.
 Verification of $fnptr_test_to_fnptr#1 failed.
 testcase(21,19) : error VC9502: Call '&test' did not verify.
-testcase(8,14) : error VC9599: (related information) Precondition: 'i > 1'.
+testcase(8,28) : error VC9599: (related information) Precondition: 'i > 1'.
 `

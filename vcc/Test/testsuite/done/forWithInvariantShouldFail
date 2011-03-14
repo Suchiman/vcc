@@ -14,5 +14,5 @@ void foo()
 }
 `
 Verification of foo failed.
-testcase(9,17) : error VC9500: Loop body invariant 'j < 100' did not verify.
+testcase(9,31) : error VC9500: Loop body invariant 'j < 100' did not verify.
 `

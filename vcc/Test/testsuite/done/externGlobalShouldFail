@@ -11,5 +11,5 @@ void foo()
 }
 `
 Verification of foo failed.
-testcase(9,12) : error VC9500: Assertion 'global == 1' did not verify.
+testcase(9,26) : error VC9500: Assertion 'global == 1' did not verify.
 `

@@ -7,5 +7,5 @@ void foo(void *p)
 }
 `
 Verification of foo failed.
-testcase(5,12) : error VC9500: Assertion 'p != (void *)0' did not verify.
+testcase(5,26) : error VC9500: Assertion 'p != (void *)0' did not verify.
 `

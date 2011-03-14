@@ -168,17 +168,17 @@ Verification of g1 succeeded.
 Verification of h1 succeeded.
 Verification of h1ShouldFail failed.
 testcase(56,3) : error VC9502: Call 'f1(s)' did not verify.
-testcase(32,38) : error VC9599: (related information) Precondition: 's.z == 1'.
+testcase(32,52) : error VC9599: (related information) Precondition: 's.z == 1'.
 Verification of g2 succeeded.
 Verification of fx succeeded.
 Verification of fxShouldFail failed.
-testcase(78,3) : error VC9501: Post condition 'result == s.y' did not verify.
-testcase(76,13) : error VC9599: (related information) Location of post condition.
+testcase(78,3) : error VC9501: Post condition '\result == s.y' did not verify.
+testcase(76,27) : error VC9599: (related information) Location of post condition.
 Verification of fy succeeded.
 Verification of fz succeeded.
 Verification of fzShouldFail failed.
-testcase(97,3) : error VC9501: Post condition 'result == s.x' did not verify.
-testcase(95,13) : error VC9599: (related information) Location of post condition.
+testcase(97,3) : error VC9501: Post condition '\result == s.x' did not verify.
+testcase(95,27) : error VC9599: (related information) Location of post condition.
 Verification of gx succeeded.
 Verification of gy succeeded.
 Verification of gz succeeded.

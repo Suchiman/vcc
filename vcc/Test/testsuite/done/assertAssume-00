@@ -21,5 +21,5 @@ void AssertTestFails()
 Verification of AssignLocalTestOk succeeded.
 Verification of AssumeLocalTestOk succeeded.
 Verification of AssertTestFails failed.
-testcase(17,12) : error VC9500: Assertion '((bool)0)' did not verify.
+testcase(17,26) : error VC9500: Assertion '\false' did not verify.
 `
