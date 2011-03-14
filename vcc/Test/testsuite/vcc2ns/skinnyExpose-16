@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 typedef struct _A {
@@ -7,25 +8,25 @@ typedef struct _A {
 typedef struct _B {
     A a1;
     A a2;
-    invariant(keeps(&a1, &a2))
+    _(invariant \mine(&a1, &a2))
     int j;
 } B, *PB;
 
 void foo(PB b)
-maintains(wrapped(b))
-writes(b)
-ensures(domain_updated_at(b, SET(&b->a1.i, &b->a2.i, &b->j)))
+_(maintains \wrapped(b))
+_(writes b)
+_(ensures \domain_updated_at(b, {&b->a1.i, &b->a2.i, &b->j}))
 {
-    skinny_expose(b)
-        writes(&b->a1.i, &b->a2.i, &b->j, &b->a1, &b->a2)
+    _(unwrapping b)
+        _(writes &b->a1.i, &b->a2.i, &b->j, &b->a1, &b->a2)
     {
-        skinny_expose(&b->a1)
-            writes(&b->a1.i)
+        _(unwrapping &b->a1)
+            _(writes &b->a1.i)
         {
             b->a1.i = 8;
         }
-        skinny_expose(&b->a2)
-            writes(&b->a2.i)
+        _(unwrapping &b->a2)
+            _(writes &b->a2.i)
         {
             b->a2.i = 9;
         }

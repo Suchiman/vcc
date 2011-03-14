@@ -1,34 +1,36 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A { int x; };
 struct B {
   struct A *a;
-  invariant(keeps(a))
+  _(invariant \mine(a))
 };
 struct C {
   struct B *b;
-  invariant(keeps(b))
+  _(invariant \mine(b))
 };
 
 void SetX(struct B *b)
-  maintains(wrapped_dom(b))
-  writes(b)
-  ensures(domain_updated_at(b, SET(&b->a->x)))
+  _(maintains \wrapped(b))
+  _(ensures b \in \domain(b))
+  _(writes b)
+  _(ensures \domain_updated_at(b, {&b->a->x}))
 {
-  skinny_expose(b, b->a)
-    writes(&b->a->x)
+  _(unwrapping b, b->a)
+    _(writes &b->a->x)
   {
     b->a->x = 10;
   }
 }
 
 void foo(struct C *c)
-  maintains(wrapped(c))
-  writes(c)
-  ensures(domain_updated_at(c, SET(&c->b->a->x)))
+  _(maintains \wrapped(c))
+  _(writes c)
+  _(ensures \domain_updated_at(c, {&c->b->a->x}))
 {
-	skinny_expose(c)
-		writes(c->b, &c->b->a->x)
+	_(unwrapping c)
+		_(writes c->b, &c->b->a->x)
 	{
 		SetX(c->b);
 	}

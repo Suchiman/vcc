@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 struct B {
@@ -8,49 +9,49 @@ struct B {
 struct A {
   int z;
   struct B *b;
-  invariant(keeps(b))
+  _(invariant \mine(b))
 };
 
  
 
 void works(struct A *a)
-  maintains(wrapped(a))
-  writes(a)
-  ensures(domain_updated_at(a, SET(&a->b->x, &a->b->y)))
+  _(maintains \wrapped(a))
+  _(writes a)
+  _(ensures \domain_updated_at(a, {&a->b->x, &a->b->y}))
 {
 
-  skinny_expose(a, a->b)
-    writes(&a->b->x)
-	writes(&a->b->y)
+  _(unwrapping a, a->b)
+    _(writes &a->b->x)
+	_(writes &a->b->y)
   {
     a->b->x = 12;
     a->b->y = 144;
   }
   
-  assert(domain_updated_at(a, SET(&a->b->x, &a->b->y)));
+  _(assert \domain_updated_at(a, {&a->b->x, &a->b->y}))
 }
 
 
 void now_also_works(struct A *a)
-  maintains(wrapped(a))
-  writes(a)
-  ensures(domain_updated_at(a, SET(&a->b->x, &a->b->y)))
+  _(maintains \wrapped(a))
+  _(writes a)
+  _(ensures \domain_updated_at(a, {&a->b->x, &a->b->y}))
 {
 
-  skinny_expose(a, a->b)
-    writes(&a->b->x)
+  _(unwrapping a, a->b)
+    _(writes &a->b->x)
   {
     a->b->x = 12;
   }
-  assert(domain_updated_at(a, SET(&a->b->x)));
+  _(assert \domain_updated_at(a, {&a->b->x}))
 
-  skinny_expose(a, a->b)
-    writes(&a->b->y)
+  _(unwrapping a, a->b)
+    _(writes &a->b->y)
   {
     a->b->y = 144;
   }
   
-  assert(domain_updated_at(a, SET(&a->b->x, &a->b->y)));
+  _(assert \domain_updated_at(a, {&a->b->x, &a->b->y}))
 }
 `
 Verification of A#adm succeeded.

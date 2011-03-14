@@ -623,79 +623,83 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================
 
+    let buildSkinnyExpose ec writes objects sbody =
+      let ptrsetEC = { bogusEC with Type = Type.PtrSet }
+      let empty = Macro (ptrsetEC, "_vcc_set_empty", [])
+      let single e = Macro (ptrsetEC, "_vcc_set_singleton", [e])
+      let union a b = Macro (ptrsetEC, "_vcc_set_union", [a; b])
+      let setify acc (e:Expr) =
+        let e = 
+          match e.Type with 
+            | MathTypeRef "ptrset" -> e
+            | _ -> single e
+        if acc = empty then e
+        else union acc e
+        
+      let setify = List.fold setify empty
+      let isNonStruct (e:Expr) = 
+        match e.Type with
+          | Ptr (Type.Ref { Kind = Struct|Union }) -> false
+          | _ -> true
+        
+      let fnToken (obj:Expr) name =
+        { forwardingToken obj.Token None (fun () -> name + "(" + obj.Token.Value + ")") with Type = Void }
+    
+      let prestateVar = getTmp helper "prestate" Type.MathState VarKind.SpecLocal
+      let nowstate = Expr.Macro ({ bogusEC with Type = Type.MathState }, "_vcc_current_state", [])        
+      let prestate = mkRef prestateVar
+      let saveState = [VarDecl (bogusEC, prestateVar, []); Expr.SpecCode(Macro (bogusEC, "=", [prestate; nowstate]))]
+      let postUnwrapVar = getTmp helper "postUnwrap" Type.MathState VarKind.SpecLocal
+      let postUnwrap = mkRef postUnwrapVar
+      let savePostUnwrapState = [VarDecl (bogusEC, postUnwrapVar, []); Expr.SpecCode(Macro (bogusEC, "=", [postUnwrap; nowstate]))]
+      let old (e:Expr) = Old ({ e.Common with Token = new WarningSuppressingToken (e.Token, 9106) }, prestate, e)
+        
+      let writeSet = old (setify writes)
+      let primWriteSet = old (setify (List.filter isNonStruct writes))
+        
+      let writesCheck =
+        let assrt id msg name =
+          let tok = afmte id msg objects
+          Expr.MkAssert (Macro (tok, "_vcc_updated_only_" + name, [postUnwrap; nowstate; writeSet]))
+        [assrt 8530 "skinny_expose({0}, ...) body has written at an unlisted location" "values";
+          assrt 8530 "skinny_expose({0}, ...) body has written at an unlisted location in a domain" "domains"]
+        
+      let introduceWrapUnwrap acc obj =
+        let obj' = old obj
+        let wrapLike name vcc_name =
+          let tok = fnToken obj name
+          Stmt (tok, Macro (tok, vcc_name, [obj']))
+            
+        let owns st = Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_owns", [st; obj])
+        let checkOwns = 
+          let tok = afmte 8531 "owns({0}) was updated inside skinny_expose(...)" [obj]
+          Expr.MkAssert (Prim (tok, Op ("==", Processed), [owns nowstate; owns prestate]))
+            
+        [wrapLike "unwrap" "_vcc_unwrap"] @ acc @ 
+        [checkOwns;
+          wrapLike "wrap" "_vcc_wrap_non_owns"]
+        
+      let finalAssume =
+        Expr.MkAssume (Macro (boolBogusEC(), "_vcc_domain_updated_at", [prestate; nowstate; old objects.Head; primWriteSet ]))
+          
+      let totalBody = 
+        saveState @
+        (List.rev objects |> List.fold introduceWrapUnwrap (savePostUnwrapState @ [sbody] @ writesCheck)) @
+        [finalAssume]
+          
+      Expr.MkBlock totalBody
+
     let normalizeSkinnyExpose self = function
       | Macro (ec, "while", [Macro (_, "loop_contract", contract); CallMacro (_, "_vcc_skinny_expose", _, objects); body]) ->
-        let ptrsetEC = { bogusEC with Type = Type.PtrSet }
-        let empty = Macro (ptrsetEC, "_vcc_set_empty", [])
-        let single e = Macro (ptrsetEC, "_vcc_set_singleton", [e])
-        let union a b = Macro (ptrsetEC, "_vcc_set_union", [a; b])
         let extractWrites acc = function
           | Assert (_, Macro (_, "loop_writes", [e]), []) -> e :: acc
           | e ->
             helper.Error (e.Token, 9674, "skinny_expose(...) does not allow invariants, only writes(...)")
             acc
         let writes = List.rev (List.fold extractWrites [] contract)
-                
-        let setify acc (e:Expr) =
-          let e = 
-            match e.Type with 
-              | MathTypeRef "ptrset" -> e
-              | _ -> single e
-          if acc = empty then e
-          else union acc e
-        
-        let setify = List.fold setify empty
-        let isNonStruct (e:Expr) = 
-          match e.Type with
-            | Ptr (Type.Ref { Kind = Struct|Union }) -> false
-            | _ -> true
-        
-        let fnToken (obj:Expr) name =
-          { forwardingToken obj.Token None (fun () -> name + "(" + obj.Token.Value + ")") with Type = Void }
-    
-        let prestateVar = getTmp helper "prestate" Type.MathState VarKind.SpecLocal
-        let nowstate = Expr.Macro ({ bogusEC with Type = Type.MathState }, "_vcc_current_state", [])        
-        let prestate = mkRef prestateVar
-        let saveState = [VarDecl (bogusEC, prestateVar, []); Expr.SpecCode(Macro (bogusEC, "=", [prestate; nowstate]))]
-        let postUnwrapVar = getTmp helper "postUnwrap" Type.MathState VarKind.SpecLocal
-        let postUnwrap = mkRef postUnwrapVar
-        let savePostUnwrapState = [VarDecl (bogusEC, postUnwrapVar, []); Expr.SpecCode(Macro (bogusEC, "=", [postUnwrap; nowstate]))]
-        let old (e:Expr) = Old ({ e.Common with Token = new WarningSuppressingToken (e.Token, 9106) }, prestate, e)
-        
-        let writeSet = old (setify writes)
-        let primWriteSet = old (setify (List.filter isNonStruct writes))
-        
-        let writesCheck =
-          let assrt id msg name =
-            let tok = afmte id msg objects
-            Expr.MkAssert (Macro (tok, "_vcc_updated_only_" + name, [postUnwrap; nowstate; writeSet]))
-          [assrt 8530 "skinny_expose({0}, ...) body has written at an unlisted location" "values";
-           assrt 8530 "skinny_expose({0}, ...) body has written at an unlisted location in a domain" "domains"]
-        
-        let introduceWrapUnwrap acc obj =
-          let obj' = old obj
-          let wrapLike name vcc_name =
-            let tok = fnToken obj name
-            Stmt (tok, Macro (tok, vcc_name, [obj']))
-            
-          let owns st = Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_owns", [st; obj])
-          let checkOwns = 
-            let tok = afmte 8531 "owns({0}) was updated inside skinny_expose(...)" [obj]
-            Expr.MkAssert (Prim (tok, Op ("==", Processed), [owns nowstate; owns prestate]))
-            
-          [wrapLike "unwrap" "_vcc_unwrap"] @ acc @ 
-          [checkOwns;
-           wrapLike "wrap" "_vcc_wrap_non_owns"]
-        
-        let finalAssume =
-          Expr.MkAssume (Macro (boolBogusEC(), "_vcc_domain_updated_at", [prestate; nowstate; old objects.Head; primWriteSet ]))
-          
-        let totalBody = 
-          saveState @
-          (List.rev objects |> List.fold introduceWrapUnwrap (savePostUnwrapState @ [self body] @ writesCheck)) @
-          [finalAssume]
-          
-        Some (Expr.MkBlock totalBody)
+        Some (buildSkinnyExpose ec writes objects (self body))   
+      | Macro (ec, "skinny_expose", Macro (_, "se_writes", writes) :: body :: objects) ->
+        Some (buildSkinnyExpose ec writes objects (self body))   
       | _ -> None
     
     // ============================================================================================================

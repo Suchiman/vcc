@@ -4,6 +4,7 @@
 //
 //-----------------------------------------------------------------------------
 using System.Collections.Generic;
+using System.Linq;
 using System.Diagnostics;
 using Microsoft.Cci;
 using Microsoft.Cci.Ast;
@@ -25,7 +26,7 @@ namespace Microsoft.Research.Vcc {
 
   public interface IVccUnwrappingStatement : IVccStatement
   {
-    IExpression Object { get; }
+    IEnumerable<IExpression> Objects { get; }
     IStatement Body { get; }
   }
 
@@ -469,22 +470,22 @@ namespace Microsoft.Research.Vcc {
   public sealed class VccUnwrappingStatement : Statement, IVccUnwrappingStatement
   {
 
-    public VccUnwrappingStatement(Statement body, Expression expr, ISourceLocation sourceLocation)
+    public VccUnwrappingStatement(Statement body, IEnumerable<Expression> exprs, ISourceLocation sourceLocation)
       : base(sourceLocation) {
-      this.expression = expr;
+      this.expressions = exprs;
       this.body = body;
     }
 
     private VccUnwrappingStatement(BlockStatement containingBlock, VccUnwrappingStatement template)
       : base(containingBlock, template) {
-      this.expression = template.expression.MakeCopyFor(containingBlock);
+      this.expressions = template.expressions.Select(e => e.MakeCopyFor(containingBlock)).ToArray();
       this.body = template.body.MakeCopyFor(containingBlock);
     }
 
-    public Expression Expression {
-      get { return this.expression; }
+    public IEnumerable<Expression> Expressions {
+      get { return this.expressions; }
     }
-    private readonly Expression expression;
+    private readonly IEnumerable<Expression> expressions;
 
     public Statement Body {
       get { return this.body; }
@@ -496,14 +497,17 @@ namespace Microsoft.Research.Vcc {
     }
 
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      return this.Expression.HasErrors || this.Expression.HasSideEffect(true) || this.Body.HasErrors;
+      return this.Expressions.Any(e => e.HasErrors) || 
+             this.Expressions.Any(e => e.HasSideEffect(true)) || 
+             this.Body.HasErrors;
     }
 
     public override void SetContainingBlock(BlockStatement containingBlock) {
       base.SetContainingBlock(containingBlock);
       this.body.SetContainingBlock(containingBlock);
       DummyExpression containingExpression = new DummyExpression(containingBlock, SourceDummy.SourceLocation);
-      this.expression.SetContainingExpression(containingExpression);
+      foreach (var e in this.expressions)
+        e.SetContainingExpression(containingExpression);
     }
 
     public override Statement MakeCopyFor(BlockStatement containingBlock) {
@@ -511,8 +515,8 @@ namespace Microsoft.Research.Vcc {
       return new VccUnwrappingStatement(containingBlock, this);
     }
 
-    IExpression IVccUnwrappingStatement.Object {
-      get { return this.expression.ProjectAsIExpression(); }
+    IEnumerable<IExpression> IVccUnwrappingStatement.Objects {
+      get { return this.expressions.Select(e => e.ProjectAsIExpression()).ToArray(); }
     }
 
     IStatement IVccUnwrappingStatement.Body {

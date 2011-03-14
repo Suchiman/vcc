@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 struct B {
@@ -6,17 +7,17 @@ struct B {
 
 struct A {
   struct B *b;
-  invariant(keeps(b))
+  _(invariant \mine(b))
 };
 
  
 void foo(struct A *a)
-  maintains(wrapped(a))
-  writes(a)
-  ensures(domain_updated_at(a, full_extent(a->b)))
+  _(maintains \wrapped(a))
+  _(writes a)
+  _(ensures \domain_updated_at(a, \full_extent(a->b)))
 {
-  skinny_expose(a, a->b)
-	writes(full_extent(a->b))
+  _(unwrapping a, a->b)
+	_(writes \full_extent(a->b))
   {
     a->b->x = 12;
   }

@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
@@ -6,12 +7,12 @@ struct A {
 };
 
 void up1(struct A *a)
-  writes(a)
-  maintains(wrapped(a))
-  ensures(domain_updated_at(a, SET(&a->x, &a->y)))
+  _(writes a)
+  _(maintains \wrapped(a))
+  _(ensures \domain_updated_at(a, {&a->x, &a->y}))
 {
-  skinny_expose(a)
-      writes(&a->y, &a->x)
+  _(unwrapping a)
+      _(writes &a->y, &a->x)
   {
     a->x = 1;
     a->y = 1;

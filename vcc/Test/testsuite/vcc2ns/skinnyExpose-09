@@ -1,3 +1,4 @@
+`/newsyntax
 #include "vcc.h"
 
 struct B {
@@ -5,31 +6,31 @@ struct B {
   int y;
 };
 
-spec(
-struct C {
+
+_(ghost struct C {
   int x;
-  spec(int y;)
-};)
+  _(ghost int y)
+})
 
 struct A {
   struct B *b;
-  spec(struct C *c;)
-  invariant(keeps(b) && keeps(c))
-  invariant(b->x == c->y)
+  _(ghost struct C *c)
+  _(invariant \mine(b) && \mine(c))
+  _(invariant b->x == c->y)
 };
 
  
 void foo(struct A *a)
-  maintains(wrapped(a))
-  writes(a)
-  ensures(domain_updated_at(a, set_union(SET(&a->b->x), SET(&a->c->y))))
+  _(maintains \wrapped(a))
+  _(writes a)
+  _(ensures \domain_updated_at(a, {&a->b->x} \union {&a->c->y}))
 {
-  skinny_expose(a, a->b, a->c)
-    writes(&a->b->x)
-	writes(&a->c->y)
+  _(unwrapping a, a->b, a->c)
+    _(writes &a->b->x)
+	_(writes &a->c->y)
   {
     a->b->x = 12;
-	spec(a->c->y = 12;)
+	_(ghost a->c->y = 12)
   }
 }
 `
