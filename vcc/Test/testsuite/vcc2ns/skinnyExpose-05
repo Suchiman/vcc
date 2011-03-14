@@ -1,24 +1,25 @@
+`/newsyntax
 #include <vcc.h>
 
 struct B {
   int x;
   int y;
-  invariant(x < 100)
+  _(invariant x < 100)
 };
 struct A {
   int z;
   struct B *b;
-  invariant(keeps(b))
-  invariant(b->x > 0)
+  _(invariant \mine(b))
+  _(invariant b->x > 0)
 };
 
 void foo(struct A *a)
-  maintains(wrapped(a))
-  writes(a)
-  ensures(domain_updated_at(a, SET(&a->b->x)))
+  _(maintains \wrapped(a))
+  _(writes a)
+  _(ensures \domain_updated_at(a, {&a->b->x}))
 {
-  skinny_expose(a, a->b)
-    writes(&a->b->x)
+  _(unwrapping a, a->b)
+    _(writes &a->b->x)
   {
     a->b->x = 12;
   }
@@ -26,23 +27,23 @@ void foo(struct A *a)
 
 
 void fooFail1(struct A *a)
-  maintains(wrapped(a))
-  writes(a)
-  ensures(domain_updated_at(a, SET(&a->b->x)))
+  _(maintains \wrapped(a))
+  _(writes a)
+  _(ensures \domain_updated_at(a, {&a->b->x}))
 {
-  skinny_expose(a, a->b)
-    writes(&a->b->x)
+  _(unwrapping a, a->b)
+    _(writes &a->b->x)
   {
     a->b->x = -10;
   }
 }
 void fooFail2(struct A *a)
-  maintains(wrapped(a))
-  writes(a)
-  ensures(domain_updated_at(a, SET(&a->b->x)))
+  _(maintains \wrapped(a))
+  _(writes a)
+  _(ensures \domain_updated_at(a, {&a->b->x}))
 {
-  skinny_expose(a, a->b)
-    writes(&a->b->x)
+  _(unwrapping a, a->b)
+    _(writes &a->b->x)
   {
     a->b->x = 120;
   }
@@ -52,9 +53,9 @@ Verification of B#adm succeeded.
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 Verification of fooFail1 failed.
-testcase(33,28) : error VC8014: invariant(b->x > 0) of A fails on wrap.
-testcase(12,15) : error VC9599: (related information) location of the invariant.
+testcase(33,30) : error VC8014: invariant(b->x > 0) of A fails on wrap.
+testcase(12,29) : error VC9599: (related information) location of the invariant.
 Verification of fooFail2 failed.
-testcase(44,31) : error VC8014: invariant(x < 100) of B fails on wrap.
-testcase(6,15) : error VC9599: (related information) location of the invariant.
+testcase(44,33) : error VC8014: invariant(x < 100) of B fails on wrap.
+testcase(6,29) : error VC9599: (related information) location of the invariant.
 `

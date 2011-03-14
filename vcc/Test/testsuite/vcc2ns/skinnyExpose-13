@@ -1,26 +1,27 @@
+`/newsyntax
 #include "vcc.h"
 
 struct B {
-  def_group(G)
+  _(group G)
   int x;
-  in_group(G) volatile int z;
-  spec(claim_t c;)
+  _(:G) volatile int z;
+  _(ghost \claim c)
   
-  invariant(keeps(c) && claims(c, closed(this::G)))
-  invariant(keeps(this::G))
+  _(invariant \mine(c) && \claims(c, (\this::G)->\consistent))
+  _(invariant \mine(\this::G))
 };
  
 void foo(struct B *b)
-  maintains(wrapped(b))
-  writes(b)
-  ensures(domain_updated_at(b, SET(&b->x)))
+  _(maintains \wrapped(b))
+  _(writes b)
+  _(ensures \domain_updated_at(b, {&b->x}))
 {
  
-  skinny_expose(b)
-	   writes(&b->x)
+  _(unwrapping b)
+	   _(writes &b->x)
   {
 		b->x = 12;
-		atomic(b->c, b::G)
+		_(atomic b->c, b::G)
 		{
 			b->z = 12;
 		}

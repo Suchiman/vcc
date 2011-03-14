@@ -1635,12 +1635,10 @@ namespace Microsoft.Research.Vcc
         stmtRes <- C.Expr.SpecCode(stmt)
 
       member this.Visit (unwrappingStmt:IVccUnwrappingStatement) : unit =
-        let wrap = findFunctionOrDie "\\wrap" unwrappingStmt
-        let unwrap = findFunctionOrDie "\\unwrap" unwrappingStmt
         let cmn = this.StmtCommon unwrappingStmt
-        let expr = this.DoExpression(unwrappingStmt.Object)
+        let exprs = unwrappingStmt.Objects |> Seq.map this.DoExpression |> Seq.toList
         let body = this.DoStatement(unwrappingStmt.Body)
-        stmtRes <- C.Expr.Block(cmn, [ C.Expr.Call((stmtToken "unwrap(@@)" expr), unwrap, [], [expr]); body; C.Expr.Call((stmtToken "wrap(@@)" expr), wrap, [], [expr]) ], None )
+        stmtRes <- C.Expr.Macro (cmn, "unwrapping", body :: exprs)
 
       member this.Visit (atomicStmt : IVccAtomicStatement) : unit =
         let args = [ for arg in atomicStmt.Objects -> this.DoExpression arg ]

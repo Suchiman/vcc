@@ -607,11 +607,11 @@ namespace Microsoft.Research.Vcc.Parsing
     private Statement ParseUnwrappingStatement(TokenSet followers, bool savedInSpecCode) {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
-      var expr = this.ParseExpression(followers | Token.RightParenthesis);
+      var exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
       this.SkipOutOfSpecBlock(savedInSpecCode, TS.StatementStart | followers);
       var body = this.ParseStatement(followers);
       slb.UpdateToSpan(body.SourceLocation);
-      return new VccUnwrappingStatement(body, expr, slb);
+      return new VccUnwrappingStatement(body, exprs, slb);
     }
 
     private AssertStatement ParseAssert(TokenSet followers) {

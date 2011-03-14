@@ -198,7 +198,30 @@ let init (helper:Helper.Env) =
       | Macro (ec1, "lbl_use", [lbl; CallMacro(ec2, ("_vcc_in_domain"|"_vcc_in_vdomain" as fn), [], [e1; e2])]) ->
         Some (self (Macro (ec2, fn, [Macro (ec1, "_vcc_use", [lbl; e1]); e2])))
       | _ -> None
-          
+    
+    let normalizeUnwrapping self = function
+      | Macro (ec, "unwrapping", Block (bec, stmts, Some bc) :: objects) ->
+        let nonWrites = bc.Decreases @ bc.Reads @ bc.Ensures @ bc.Requires
+        match nonWrites with
+          | e :: _ ->  
+            helper.Error (e.Token, 9674, "_(unwrapping ...) does not allow contracts other than _(writes ...)")
+          | [] -> ()
+        let wr = Macro (ec, "se_writes", bc.Writes)
+        Some (Macro (ec, "skinny_expose", wr :: (self (Block (bec, stmts, None))) :: objects))
+      | Macro (ec, "unwrapping", body :: objects) ->
+        let stmtToken (msg:string) ec =
+          let ee = forwardingToken ec None (fun () -> msg.Replace ("@@", ec.Value))
+          { ee with Type = Type.Void }
+        let rec build = function
+          | (o:Expr) :: os ->
+            let wrapLike n = 
+              let t = stmtToken ("_(" + n + " @@)") o.Token 
+              Stmt (t, Macro (t, "_vcc_" + n, [o]))
+            Expr.MkBlock [wrapLike "unwrap"; build os; wrapLike "wrap"] 
+          | [] -> self body
+        Some (build objects)
+      | _ -> None
+
     let normalizeGroupInvariants decls = 
 
       let addGroupToMap (map : Map<_,_>) = 
@@ -244,7 +267,8 @@ let init (helper:Helper.Env) =
     deepMapExpressions normalizeMisc >> 
     deepMapExpressions rewriteBvAssertAsBvLemma >>
     deepMapExpressions handleExpressionLabels >>
-    deepMapExpressions normalizeCastLike
+    deepMapExpressions normalizeCastLike >>
+    deepMapExpressions normalizeUnwrapping
 
 
 

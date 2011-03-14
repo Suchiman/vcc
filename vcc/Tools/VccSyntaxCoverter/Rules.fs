@@ -248,6 +248,7 @@ module Rules =
                         "approves"
                         "program_entry_point"
                         "in_array"
+                        "domain_updated_at"
                       ]
 
     let canonicalSm = [
@@ -302,6 +303,7 @@ module Rules =
     addRule (quantRule "lambda" "###")
 
     addKwRule "expose" "unwrapping"
+    addKwRule "skinny_expose" "unwrapping"
     addKwRule "out_param" "writes"
     addKwRule "weak_out_param" "writes"
 
