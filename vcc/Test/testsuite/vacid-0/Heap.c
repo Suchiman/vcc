@@ -310,3 +310,25 @@ int main()                                    // A
   printf("\n");                               // A
 }                                             // A 
 #endif                                        // A
+
+// the warnings about unreachable code are currently expected, an artifact of the translation of lazy operators
+
+/*`
+Verification of Heap#adm succeeded.
+Verification of swprintf succeeded.
+Verification of vswprintf succeeded.
+Verification of _swprintf_l succeeded.
+Verification of _vswprintf_l succeeded.
+Verification of init succeeded.
+Verification of insert failed.
+testcase(115,17) : error VC9500: Loop body invariant 'isHeapExcept(h,h->len)' did not verify.
+testcase(140,13) : error VC8014: invariant(isHeapExcept(__this,__this->len)) of Heap fails on wrap.
+testcase(39,15) : error VC9599: (related information) location of the invariant.
+Verification of extractMin failed.
+testcase(177,17) : error VC9500: Loop body invariant 'isHeapExcept(h,h->len)' did not verify.
+Verification of heapSort succeeded.
+Verification of heapSortTestHarness succeeded.
+testcase(298): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(298): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(297): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+`*/

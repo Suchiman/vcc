@@ -295,3 +295,13 @@ void rb_rotate(struct Tree *t, PNode x)
   t->root->red = false;
 }
 #endif
+
+/*`
+Verification of Tree#adm succeeded.
+Verification of tree_init succeeded.
+Verification of tree_find succeeded.
+Verification of tree_lookup succeeded.
+Verification of tree_insert succeeded.
+Verification of left_rotate succeeded.
+Verification of right_rotate succeeded.
+`*/

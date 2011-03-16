@@ -61,3 +61,10 @@ void update(struct Node *n, int v spec(struct Mgr ^m))
     n = n->p;
   }
 }
+
+/*`
+testcase(57,28) : warning VC9302: [possible unsoundness]: more than one access to physical memory in atomic block ('n->val' and 'n->sum'); extra accesses might be due to bitfield operations
+Verification of Node#adm succeeded.
+Verification of Mgr#adm succeeded.
+Verification of update succeeded.
+`*/
