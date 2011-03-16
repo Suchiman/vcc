@@ -1,3 +1,4 @@
+//`/newsyntax
 #include <limits.h>
 #include <vcc.h>
 
