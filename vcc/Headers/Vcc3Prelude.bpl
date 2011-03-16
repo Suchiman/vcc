@@ -654,6 +654,9 @@ axiom (forall T:$ctype, s:int :: {$array(T, s)}
 );
 axiom (forall T:$ctype, s:int :: {$sizeof($array(T, s))} $sizeof($array(T, s)) == $sizeof(T) * s);
 
+axiom (forall S0,S:$state, p:$ptr, T:$ctype, s:int :: {$inv2(S0, S, p, $array(T, s))}
+    $inv2(S0, S, p, $array(T, s)) <==> $owns(S, p) == $set_empty());
+
 // the first fields of as_array
 function $array_emb($ctype, int) : $field;
 
