@@ -1,4 +1,3 @@
-
 #include <vcc.h>
 #include <stdlib.h>
 
@@ -9,7 +8,6 @@ typedef _(claimable) _(volatile_owns) struct _SPIN_LOCK
   _(invariant !Lock ==> \mine(protected_obj))
 } SPIN_LOCK;
 
-
 void InitializeSpinLock(SPIN_LOCK * SpinLock _(ghost \object obj))
   _(writes \span(SpinLock), obj)
   _(requires \wrapped(obj))
@@ -17,7 +15,7 @@ void InitializeSpinLock(SPIN_LOCK * SpinLock _(ghost \object obj))
   _(ensures SpinLock->protected_obj == obj)
   ;
 
-void Acquire(SPIN_LOCK *SpinLock _(ghost \claim access_claim))   
+void Acquire(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
   _(always access_claim, SpinLock->\consistent)
   _(ensures \wrapped(SpinLock->protected_obj))
   _(ensures \fresh(SpinLock->protected_obj))

@@ -1,4 +1,3 @@
-
 #include "BitMap.h"
 
 void InitializeBitMap (BITMAP *BitMap, unsigned int *BitMapBuffer, unsigned int Size)
@@ -16,7 +15,7 @@ void SetBit (BITMAP *BitMap, unsigned int BitNumber)
   expose(BitMap) {
   expose(as_array(BitMap->Buffer, BitMap->Size /32)) {
     BitMap->Buffer[BitNumber/32] |= 1 << BitNumber % 32;
-    spec(BitMap->BM = 
+    spec(BitMap->BM =
        lambda(unsigned int i; true; i == BitNumber ? true : BitMap->BM[i]);)
   }}
 }

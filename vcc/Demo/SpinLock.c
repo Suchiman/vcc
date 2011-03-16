@@ -1,18 +1,17 @@
 #include "SpinLock.h"
 #include "Intrinsics.h"
 
-
 void InitializeSpinLock(SPIN_LOCK *SpinLock spec(obj_t obj))
 {
   SpinLock->Lock = 0;
   spec(SpinLock->protected_obj = obj;)
-  set_owns(SpinLock,SET(obj));
+  set_owns(SpinLock, SET(obj));
   wrap(SpinLock);
 }
 
 #ifdef SIMPLE_SPIN_LOCKS
 
-void Acquire(SPIN_LOCK *SpinLock)   
+void Acquire(SPIN_LOCK *SpinLock)
 {
   int stop;
   do  {
@@ -33,7 +32,7 @@ void Release(SPIN_LOCK *SpinLock)
 
 #else
 
-void Acquire(SPIN_LOCK *SpinLock claimp(access_claim))   
+void Acquire(SPIN_LOCK *SpinLock claimp(access_claim))
 {
   int stop;
   do {

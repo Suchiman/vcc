@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <vcc.h>
@@ -11,5 +10,3 @@ vcc(atomic_inline) int __interlockedcompareexchange(volatile int *Destination, i
     return *Destination;
   }
 }
-
-
