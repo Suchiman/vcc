@@ -66,7 +66,7 @@ namespace Microsoft.Research.Vcc
         foreach (FileInfo fi in new DirectoryInfo(fileName).GetFiles("*", SearchOption.TopDirectoryOnly)) {
           if (fi.Name.StartsWith(".")) continue;
           if (fi.Name.Contains(vccSplitSuffix)) continue;
-          if (fi.Extension == ".i" || fi.Extension == ".bpl" || fi.Extension == ".h") continue;
+          if (fi.Extension != ".c" && fi.Extension != "" && !fi.Extension.StartsWith(".ns")) continue; // remove *.ns* case eventually
 
           if (trmt != null) trmt.Queue(fi);
           else {
