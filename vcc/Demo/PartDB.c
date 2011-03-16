@@ -7,11 +7,11 @@
 
 typedef struct vcc(claimable) _Partition {
   bool active;
-  
+
   struct _PartitionDB *db;
   unsigned idx;
   invariant(idx < MAXPART && db->partitions[idx] == this)
- 
+
   spec(volatile bool signaled;)
   invariant(signaled <==> ISSET(idx, db->allSignaled))
   invariant(signaled ==> active)
@@ -28,10 +28,10 @@ typedef struct vcc(claimable) _PartitionDB {
   volatile uint64_t allSignaled;
   volatile PPartition partitions[MAXPART];
   invariant(forall(unsigned i; i < MAXPART;
-                   unchanged(partitions[i]) || 
+                   unchanged(partitions[i]) ||
                    old(partitions[i]) == NULL || !closed(old(partitions[i]))))
-  invariant(forall(unsigned i; i < MAXPART; 
-                   unchanged(ISSET(i, allSignaled)) || 
+  invariant(forall(unsigned i; i < MAXPART;
+                   unchanged(ISSET(i, allSignaled)) ||
                    inv2(partitions[i])))
 } PartitionDB;
 
@@ -45,7 +45,7 @@ void part_send_signal(Partition *part spec(claim_t c))
 
   bv_lemma(forall(int i, j; uint64_t v; 0 <= i && i < 64 && 0 <= j && j < 64 ==>
     i != j ==> (ISSET(j, v) <==> ISSET(j, v | (1ULL << i)))));
-  
+
   atomic(part, db, c) {
     spec(part->signaled = true;)
     InterlockedBitSet(&db->allSignaled, idx);

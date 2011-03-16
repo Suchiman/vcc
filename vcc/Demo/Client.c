@@ -1,4 +1,3 @@
-
 #include <vcc.h>
 #include "Spinlock.h"
 #include "BitMap.h"
@@ -8,7 +7,6 @@
 #else
 #define _claimable_ vcc(claimable)
 #endif
-
 
 struct _claimable_ LockContainer {
   BITMAP bitmap;
@@ -73,9 +71,9 @@ void InitializeConcurrentUser(struct ConcurrentUser *cu, struct LockContainer *l
   wrap(cu);
 }
 
-void UseConcurrentOwner(struct ConcurrentUser *cu) 
+void UseConcurrentOwner(struct ConcurrentUser *cu)
   writes(cu)
-  maintains(wrapped(cu)) 
+  maintains(wrapped(cu))
 {
   expose(cu) {
   UseContainer(cu->lc, 10 spec(cu->cont_claim));

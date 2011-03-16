@@ -3,7 +3,7 @@
 
 unsigned binary_search(int val, int *buf, unsigned len)
   requires(is_thread_local_array(buf, len))                                     // buf[0..len] is valid, locally owned
-  requires(forall(unsigned i,j; i < j && j < len ==> buf[i] <= buf[j]))         // buffer is sorted
+  requires(forall(unsigned i, j; i < j && j < len ==> buf[i] <= buf[j]))         // buffer is sorted
   ensures(result != UINT_MAX ==> buf[result] == val)                            // val found
   ensures(result == UINT_MAX ==> forall(unsigned i; i < len ==> buf[i] != val)) // val not found
 {

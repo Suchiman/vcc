@@ -10,7 +10,7 @@ void InitializeSpinLock(SPIN_LOCK *SpinLock _(ghost \object obj))
     wrap SpinLock)
 }
 
-void Acquire(SPIN_LOCK *SpinLock _(ghost \claim access_claim))   
+void Acquire(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
 {
   int stop;
   do {

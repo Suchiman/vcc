@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <vcc.h>
@@ -7,7 +6,7 @@
 // |-------------------------------------------------------|
 // | 010...                                                |
 // |-------------------------------------------------------|
-//   <--                    Size                       -->
+// <--                     Size                          -->
 
 typedef struct _BITMAP {
   unsigned int Size;      // Number of bits in bit map
@@ -21,7 +20,7 @@ typedef struct _BITMAP {
 
   // public abstraction
   spec(bool BM[unsigned int];) // unsigned int --> {true, false}
-  invariant(forall(unsigned int i; i < Size ==> 
+  invariant(forall(unsigned int i; i < Size ==>
         BM[i] == ToBm32(Buffer[i/32])[i%32]))
   // ToBm32: unsigned int -> ( {0..31} -> {true, false} )
 
@@ -36,7 +35,7 @@ void InitializeBitMap (BITMAP *BitMap, unsigned int * BitMapBuffer, unsigned int
   ensures(wrapped(BitMap))
   ensures(BitMap->Size == Size)
   ensures(forall(unsigned int i; i < Size ==> BitMap->BM[i] == false))
-  #pragma endregion 
+  #pragma endregion
   ;
 
 void SetBit (BITMAP *BitMap, unsigned int BitNumber)
@@ -44,7 +43,7 @@ void SetBit (BITMAP *BitMap, unsigned int BitNumber)
   writes(BitMap)
   maintains(wrapped(BitMap))
   requires(BitNumber < BitMap->Size)
-  ensures(forall(unsigned int i; 
+  ensures(forall(unsigned int i;
       BitMap->BM[i] == (i == BitNumber ? true : old(BitMap->BM[i]))))
   ensures(unchanged(BitMap->Size))
   #pragma endregion
