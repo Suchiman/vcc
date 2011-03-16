@@ -166,8 +166,8 @@ namespace Microsoft.Research.Vcc
       let mapEqAxioms t =
         let t1, t2 =
           match t with
-            | C.Type.Map (t1, t2) -> t1, t2
-            | C.Type.Map (C.Type.ObjectT, C.Type.Bool)
+            | C.Type.Map (C.Type.ObjectT, C.Type.Bool) when not vcc3 -> die()
+            | C.Type.Map (t1, t2) -> t1, t2            
             | _ -> die()
         let bt1 = trType t1
         let bt2 = trType t2

@@ -267,7 +267,7 @@ namespace Microsoft.Research.Vcc
             let bt2 = trType t2
             let mapName = typeIdToName (toTypeId t)
             let mapType = B.Type.Ref mapName
-            if not (t1 = C.Type.ObjectT && t2 = C.Type.Bool) then
+            if vcc3 || not (t1 = C.Type.ObjectT && t2 = C.Type.Bool) then
               if not (mapTypes.ContainsKey mapName) then
                 mapTypeList.Add t
                 mapTypes.Add (mapName, true)
