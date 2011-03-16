@@ -61,7 +61,7 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
 {
   UINT max = 0;
   UINT checked;
-  UINT N = _(\by_claim sc)server->N;
+  UINT N = _(by_claim sc)server->N;
 
   //start choosing
   atomicCl(cl->flag = TRUE;
