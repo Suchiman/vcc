@@ -89,5 +89,15 @@ void sparseArrayTestHarness()                             // R
   unwrap(&b);
 }                                                         // R
 
+// the warnings about unreachable code are expected, an artifact of the translation of lazy operators
 
-
+/*`
+Verification of Array#adm succeeded.
+Verification of init succeeded.
+Verification of set succeeded.
+Verification of get succeeded.
+Verification of sparseArrayTestHarness succeeded.
+testcase(86): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(85): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(83): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+`*/
