@@ -5,7 +5,8 @@
 
 #ifdef SIMPLE_SPIN_LOCKS
 #define _claimable_
-#else define _claimable_ vcc(claimable)
+#else
+#define _claimable_ vcc(claimable)
 #endif
 
 
