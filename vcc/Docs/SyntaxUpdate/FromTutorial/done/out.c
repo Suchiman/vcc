@@ -1,9 +1,10 @@
+//`/newsyntax
 #include <vcc.h>
 
 void foo(_(out int o)) 
   _(ensures o == 5)
 {
-  o = 5;
+  _(ghost o = 5;)
 }		
 
 void bar() {

@@ -1,3 +1,4 @@
+//`/newsyntax /smoke
 
 #include <vcc.h>
 
@@ -10,6 +11,11 @@ void foo(void *p)
 {
   _(assert p \is S || p \is struct T)
 }
+
+// TODO smoke?
+
 /*`
 Verification of foo succeeded.
+testcase(12): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+Found unreachable code, but cannot figure out where it is.
 `*/

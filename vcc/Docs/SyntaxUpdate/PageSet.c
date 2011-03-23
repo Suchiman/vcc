@@ -12,7 +12,6 @@ typedef struct _PAGE_SET
 
     _(invariant PagesAllocated <= PageCount)
     _(invariant \mine((UINT64[PageCount])Array))
-    _(invariant \valid((UINT64[PageCount])Array))
     
 } PAGE_SET, *PPAGE_SET;
 
@@ -42,3 +41,9 @@ void CallInit() {
     Init(ps, 100, arr);
   }
 }
+
+/*`
+Verification of _PAGE_SET#adm succeeded.
+Verification of Init succeeded.
+Verification of CallInit succeeded.
+`*/

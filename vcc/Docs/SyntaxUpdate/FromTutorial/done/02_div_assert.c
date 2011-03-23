@@ -1,3 +1,4 @@
+//`/newsyntax /b:/timeLimit:30
 #include <vcc.h>
 _(axiom \forall unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b)
 _(axiom \forall unsigned a,b; a < b && b != 0 ==> a % b == a)
@@ -25,6 +26,7 @@ theEnd:
   _(assert res == a % b) // translation of ensures
   return res;
 }
+// TODO: timeout?
 /*`
-Verification of mod succeeded.
+Verification of mod timeout.
 `*/

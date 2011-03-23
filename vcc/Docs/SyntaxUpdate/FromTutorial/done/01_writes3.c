@@ -1,3 +1,4 @@
+//`/newsyntax
 #include <vcc.h>
 
 #define writable(p) 1 // TODO
