@@ -1,3 +1,5 @@
+//`/newsyntax
+/*{begin}*/
 #include <vcc.h>
 
 typedef unsigned int UINT;
@@ -35,3 +37,10 @@ void divide(UINT x, UINT d, UINT *q, UINT *r)
   // assert postcondition
   _(assert x == d*(*q) + *r && *r < d)
 }
+/*{end}*/
+// Note: this above example is just meant to illustrate how VCC works; the
+// expected output below does not mean much.
+/*`
+testcase(18,3) : error VC0000: The name 'havoc' does not exist in the current context.
+testcase(19,3) : error VC0000: The name 'havoc' does not exist in the current context.
+`*/

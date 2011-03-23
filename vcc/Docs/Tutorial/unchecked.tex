@@ -24,7 +24,7 @@ default, for several reasons:
 
 Here is an example where the second interpretation is intended, but
 VCC complains because it assumes the first:
-\vccInput{c/02_hash_fail.c}
+\vccInput[linerange={begin-}]{c/02_hash_fail.c}
 
 \noindent
 VCC complains that the hash-computing operation might overflow.
@@ -66,7 +66,7 @@ reasoning (\secref{bv}).
 
 %% I don't think the following example is worth the trouble -E
 %% Let's have a look at another example:
-%% \vccInput{c/02_rand.c}
+%% \vccInput[linerange={begin-}]{c/02_rand.c}
 %% \noindent
 %% The reason we needed to use unchecked cast here, is that the C library
 %% \vcc{rand()} function is specified to return a signed integer.

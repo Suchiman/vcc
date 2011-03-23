@@ -1,3 +1,4 @@
+//`/newsyntax
 #include <vcc.h>
 #include <stdlib.h>
 
@@ -63,11 +64,11 @@ void use_case(struct SafeContainer *c, struct SafeString *s)
 }
 
 /*{out}*/
+// Note: Line 60 seems to break with /it
 /*`
 Verification of SafeString#adm succeeded.
 Verification of SafeContainer#adm succeeded.
 Verification of sc_set succeeded.
 Verification of use_case failed.
 testcase(57,26) : error VC9500: Assertion '\wrapped(o)' did not verify.
-testcase(59,26) : error VC9500: Assertion 'o != s' did not verify.
 `*/

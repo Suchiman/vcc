@@ -1,3 +1,5 @@
+//`/newsyntax
+/*{begin}*/
 #include <vcc.h>
 
 void copy(int *from, int *to)
