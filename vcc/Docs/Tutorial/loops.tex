@@ -26,7 +26,7 @@ the same value it had on entry to the loop%
 in the loop body.
 
 Let's look at an example:
-\vccInput[]{c/02_div.c}
+\vccInput[linerange={begin-}]{c/02_div.c}
 \noindent
 
 The \vcc{divide()} function computes the quotient and reminder of integer division
@@ -35,7 +35,7 @@ of \vcc{x} by \vcc{d} using the classic division algorithm.
 %% the specification language, but not into C.)
 The loop invariant says that we have a suitable answer, except with a
 remainder that is possibly too big. VCC translates this example roughly as follows:
-\vccInput[]{c/02_div_assert.c}
+\vccInput[linerange={begin-end}]{c/02_div_assert.c}
 
 \noindent
 Note that this translation has removed all cycles from the control
@@ -81,7 +81,7 @@ For another, more typical example of a loop, consider
 the following function that uses linear search to determine if a value
 occurs within an array:
 
-%% \vccInput{c/03_lsearch.c}
+%% \vccInput[linerange={begin-}]{c/03_lsearch.c}
 
 %% \noindent
 %% The first postcondition guarantees that when the returned value
@@ -94,7 +94,7 @@ occurs within an array:
 %% The second postcondition says that 
 %% To express that an element is not in an array we will use a universal quantifier:
 
-\vccInput{c/03_lsearch_full.c}
+\vccInput[linerange={begin-}]{c/03_lsearch_full.c}
 
 %% Moved the discussion of quantification to the section on
 %% assertions; this just isn't an appropriate place to talk about

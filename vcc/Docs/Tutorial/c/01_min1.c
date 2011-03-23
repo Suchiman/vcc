@@ -1,3 +1,4 @@
+//`/newsyntax
 #include <vcc.h>
 
 int min(int a, int b)

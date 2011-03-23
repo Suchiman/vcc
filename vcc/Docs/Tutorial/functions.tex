@@ -5,7 +5,7 @@ Next we turn to the specification of functions. We'll take the example
 from the previous section, and pull the computation of the minimum of
 two numbers out into a separate function:
 
-\vccInput{c/01_min2.c}
+\vccInput[linerange={begin-}]{c/01_min2.c}
 
 (The listing above presents both the source code and the output
 of VCC, typeset in a different fonts, and 
@@ -97,7 +97,7 @@ call with an assertion of the preconditions of the function, sets the
 return value to an arbitrary value, and finally assumes each
 postcondition of the function. 
 For example, VCC translates the program above roughly as follows:
-\vccInput{c/01_min_assert.c}
+\vccInput[linerange={begin-end}]{c/01_min_assert.c}
 
 Note that the assumption of a precondition on function entry could
 fail in an execution only if the corresponding assertion of the
@@ -255,7 +255,7 @@ each call to a function that lists \vcc{p} in a writes clause.
 
 Here is a simple example of a function that visibly reads and writes
 memory; it simply copies data from one location to another.
-\vccInput{c/01_copy1.c}
+\vccInput[linerange={begin-}]{c/01_copy1.c}
 In the postcondition the expression \vcc{\old(E)} returns the value
 the expression \vcc{E} had on function entry.
 Thus, our postcondition states that the new value of \vcc{*to}

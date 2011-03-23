@@ -1,3 +1,4 @@
+//`/newsyntax
 /*{min}*/
 #include <vcc.h>
 

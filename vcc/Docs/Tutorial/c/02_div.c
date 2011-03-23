@@ -1,3 +1,5 @@
+//`/newsyntax
+/*{begin}*/
 #include <vcc.h>
 
 typedef unsigned int UINT;

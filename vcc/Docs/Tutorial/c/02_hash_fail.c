@@ -1,3 +1,5 @@
+//`/newsyntax
+/*{begin}*/
 #include <vcc.h>
 
 unsigned hash(unsigned char *s, unsigned len)
@@ -10,5 +12,5 @@ unsigned hash(unsigned char *s, unsigned len)
 }
 /*`
 Verification of hash failed.
-testcase(8,11) : error VC8004: (res + s[i]) * 13 might overflow.
+testcase(9,11) : error VC8004: (res + s[i]) * 13 might overflow.
 `*/

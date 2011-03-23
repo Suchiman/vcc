@@ -1,3 +1,5 @@
+//`/newsyntax
+/*{begin}*/
 #include <vcc.h>
 
 int min(int a, int b)
@@ -32,4 +34,14 @@ int main()
   // assert postcondition of main()
   _(assert \true)
 }
-
+/*{end}*/
+// Note: this above example is just meant to illustrate how VCC works; the
+// expected output below does not mean much.
+/*`
+testcase(6,7) : error VC0000: Invalid expression term '\r'.
+testcase(10,5) : error VC0000: Invalid expression term '\r'.
+testcase(11,8) : error VC0000: Invalid expression term '\r'.
+testcase(18,7) : error VC0000: Invalid expression term '\r'.
+testcase(32,3) : error VC0000: Invalid expression term '\result'.
+testcase(32,13) : warning VC9001: The expression '0' has no side effect; expected operation with side effect.
+`*/
