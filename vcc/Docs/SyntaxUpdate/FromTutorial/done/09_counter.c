@@ -1,3 +1,4 @@
+//`/newsyntax
 #include <vcc.h>
 
 /*{counter}*/
@@ -22,7 +23,7 @@ void create_reading(struct Counter *n _(ghost \claim c))
   struct Reading k;
   k.r = 0;
   k.n = n;
-  k.c = c;
+  _(ghost k.c = c;)
   _(wrap &k)
   _(unwrap &k)
 }
@@ -49,6 +50,7 @@ void readtwice(struct Counter *n)
 /*{endreadtwice}*/
 
 /*`
+
 Verification of Counter#adm succeeded.
 Verification of Reading#adm succeeded.
 Verification of create_reading succeeded.

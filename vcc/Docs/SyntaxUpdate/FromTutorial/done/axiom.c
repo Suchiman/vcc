@@ -1,3 +1,4 @@
+//`/newsyntax
 #include <vcc.h>
 
 _(axiom 1 != 1)
