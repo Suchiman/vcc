@@ -869,3 +869,20 @@ void write_parm2(bool a, int n)
 Verification of write_parm1 succeeded.
 Verification of write_parm2 succeeded.
 `
+#include <vcc.h>
+
+typedef struct B {
+     bool c;
+} B;
+
+void bar(B* a)
+     writes(a)
+     requires(mutable(a))
+{
+     set_owner(a, a);
+}
+
+`
+Verification of bar failed.
+testcase(11,6) : error VC8510: Assertion '_vcc_span(obj) is writable in call to _vcc_set_owns(a, _vcc_set_union(_vcc_set_singleton(a),_vcc_owns(a)))' did not verify.
+`

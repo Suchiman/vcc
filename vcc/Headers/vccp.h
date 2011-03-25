@@ -229,7 +229,7 @@ _(\objset \set_remove_element(\objset, \object);)
 _(bool \atomic_object(unsigned __int64);)
 _(void \set_closed_owner(\object obj, \object owner)  _(writes obj) _(requires \atomic_object(1));)
 _(void \giveup_closed_owner(\object obj, \object owner)  _(requires \atomic_object(1));)
-_(void \set_owns(\object obj, \objset owns)  _(writes obj);)
+_(void \set_owns(\object obj, \objset owns)  _(writes \span(obj));)
 _(\state \by_claim_wrapper(\claim);)
 _(\state \when_claimed_marker();)
 _(\object \heap_alloc(\type);)
@@ -470,7 +470,7 @@ void _vcc_set_closed_owns(obj_t owner, ptrset owns)
 #define set_owner(p, owner) set_owns(owner, set_union(set_singleton(p), owns(owner)))
 
 void _vcc_set_owns(obj_t obj, ptrset owns)
-  writes (obj);
+  writes (span(obj));
 #define set_owns(x, y) _vcc_set_owns(x, y)
 
 void _vcc_union_reinterpret(obj_t fld)
