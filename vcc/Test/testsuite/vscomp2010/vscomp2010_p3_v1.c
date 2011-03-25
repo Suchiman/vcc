@@ -1,5 +1,5 @@
-// vcc /newsyntax /z:QI_MODEL_CHECKER=2 /3
-#include <vcc.h>
+//`/newsyntax
+#include <vcc.h> 
 
 typedef _(dynamic_owns) struct List {
   int head;
@@ -24,6 +24,7 @@ unsigned find(PList l)
     _(invariant \forall unsigned j; j < l->length - p->length ==> l->vals[j] != 0)
   {
     _(assert \forall unsigned j; j < p->tail->length ==> p->tail->vals[j] == p->vals[j + 1])
+    _(assert p->head == p->vals[0])
     if (p->head == 0) {
       break;
     }
