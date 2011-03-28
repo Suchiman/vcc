@@ -178,6 +178,16 @@
           <ButtonText>Cancel VCC</ButtonText>
         </Strings>
       </Button>
+
+      <Button guid="guidVerifyCmdSet" id="cmdidShowErrorModel" priority="0x010a" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
+        <Icon guid="guidImages" id ="bmpPicX"/>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Show Error Model</ButtonText>
+        </Strings>
+      </Button>
       
     </Buttons>
 
@@ -231,6 +241,7 @@
       <IDSymbol name="cmdidContextReVerify" value ="0x0113"/>
       <IDSymbol name="cmdidContextCustomVerify" value="0x0109" />
       <IDSymbol name="cmdidContextCancel" value ="0x0110"/>
+      <IDSymbol name="cmdidShowErrorModel" value="0x0117"/>
 
     </GuidSymbol>
 

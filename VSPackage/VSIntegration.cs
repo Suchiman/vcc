@@ -76,6 +76,11 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        internal static bool CurrentLineHasError
+        {
+          get { return markers.ContainsKey(CurrentLine); }
+        }
+
         /// <summary>
         ///     Returns the name of the active document with path
         /// </summary>
@@ -206,7 +211,7 @@ namespace MicrosoftResearch.VSPackage
         //// this just helps with underlining just the code, no preceding whitespaces or comments
         private static readonly Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
 
-        private static readonly List<IVsTextLineMarker> markers = new List<IVsTextLineMarker>();
+        private static readonly SortedList<int, IVsTextLineMarker> markers = new SortedList<int, IVsTextLineMarker>();
 
         internal static void initializeErrorList()
         {
@@ -293,7 +298,6 @@ namespace MicrosoftResearch.VSPackage
                 IVsTextLines lines = docData as IVsTextLines;
 
                 MarkerClient textMarkerClient = new MarkerClient(text);
-                IVsTextLineMarker[] textLineMarker = new IVsTextLineMarker[1];
 
                 int lineLength;
                 lines.GetLengthOfLine(line - 1, out lineLength);
@@ -312,14 +316,13 @@ namespace MicrosoftResearch.VSPackage
                                                                     match.Groups["whitespaces"].Length,
                                                                     line - 1,
                                                                     match.Groups["whitespaces"].Length + match.Groups["code"].Length,
-                                                                    textMarkerClient,
-                                                                    textLineMarker);
+                                                                    textMarkerClient);
 
-                    ThreadHelper.Generic.Invoke(createLineMarker.doIt);
+                    var marker = ThreadHelper.Generic.Invoke<IVsTextLineMarker>(createLineMarker.CreateMarker);
 
-                    if (textLineMarker.Length > 0 && textLineMarker[0] != null)
+                  if (marker != null)
                     {
-                        markers.Add(textLineMarker[0]);
+                      markers[line] = marker;
                     }
                 }
             }
@@ -327,9 +330,9 @@ namespace MicrosoftResearch.VSPackage
 
         private static void clearMarkers()
         {
-            foreach (IVsTextLineMarker marker in markers)
+            foreach (var entry in markers)
             {
-                marker.Invalidate();
+                entry.Value.Invalidate();
             }
             markers.Clear();
         }
