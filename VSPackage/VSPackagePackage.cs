@@ -97,6 +97,13 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        private void ShowErrorModel(object sender, EventArgs e)
+        {
+          if (OptionPage != null)
+          {
+          }
+        }
+
         /// <summary>
         ///     Launches VCC.exe to verify the active file
         /// </summary>
@@ -158,17 +165,37 @@ namespace MicrosoftResearch.VSPackage
         /// <param name="e"></param>
         static void Cancel_BeforeQueryStatus(object sender, EventArgs e)
         {
-            if (sender != null)
+          if (sender != null)
+          {
+            if (VCCLauncher.VCCRunning && VSIntegration.IsCodeFile)
             {
-                if (VCCLauncher.VCCRunning && VSIntegration.IsCodeFile)
-                {
-                    ((OleMenuCommand)sender).Visible = true;
-                }
-                else
-                {
-                    ((OleMenuCommand)sender).Visible = false;
-                }
+              ((OleMenuCommand)sender).Visible = true;
             }
+            else
+            {
+              ((OleMenuCommand)sender).Visible = false;
+            }
+          }
+        }
+
+        /// <summary>
+        ///     Show Error Model
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        static void ShowErrorModel_BeforeQueryStatus(object sender, EventArgs e)
+        {
+          if (sender != null)
+          {
+            if (VSIntegration.IsCodeFile && !VCCLauncher.VCCRunning && VSIntegration.CurrentLineHasError)
+            {
+              ((OleMenuCommand)sender).Visible = true;
+            }
+            else
+            {
+              ((OleMenuCommand)sender).Visible = false;
+            }
+          }
         }
 
         /// <summary>
@@ -377,6 +404,12 @@ namespace MicrosoftResearch.VSPackage
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCancel);
                 OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
                 OleMenuItem.BeforeQueryStatus += Cancel_BeforeQueryStatus;
+                mcs.AddCommand(OleMenuItem);
+
+                //// Show Error Model (Context Menu)
+                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidShowErrorModel);
+                OleMenuItem = new OleMenuCommand(ShowErrorModel, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += ShowErrorModel_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Verifymenu
