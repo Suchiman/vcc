@@ -10,7 +10,7 @@ namespace Microsoft.Research.Vcc
 {
   public static class VisitorHelper
   {
-    private class DeferredToken
+    public class DeferredToken
     {
       private readonly IEnumerable<ILocation> locations;
 

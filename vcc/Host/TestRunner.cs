@@ -308,7 +308,7 @@ namespace Microsoft.Research.Vcc
         List<VccSourceDocument> programSources = new List<VccSourceDocument>(1);
         assem = new VccAssembly(name, "", hostEnvironment, options, assemblyReferences, moduleReferences, programSources);
         var helper = new VccCompilationHelper(assem.Compilation);
-        programSources.Add(hostEnvironment.previousDocument = new VccSourceDocument(helper, name, "", test));
+        programSources.Add(hostEnvironment.previousDocument = new VccSourceDocument(helper, name, name.ToString(), test));
       }
       VccCommandLineHost.ResetStartTime();
       return VccCommandLineHost.Felt2Cast2Plugin("testcase", options, hostEnvironment, assem);

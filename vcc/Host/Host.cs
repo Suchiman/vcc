@@ -41,34 +41,40 @@ namespace Microsoft.Research.Vcc
       standardPreludePath = commandLineOptions.PreludePath;
       cciErrorHandler.CommandLineOptions = commandLineOptions;
       verificationErrorHandler = new VerificationErrorHandler(commandLineOptions);
-      
-      if (commandLineOptions.DisplayCommandLineHelp) {
+
+      if (commandLineOptions.DisplayCommandLineHelp)
+      {
         DisplayCommandLineHelp();
         return 0;
       }
-      if (commandLineOptions.DisplayVersion) {
+      if (commandLineOptions.DisplayVersion)
+      {
         DisplayVersion(commandLineOptions.XmlFormatOutput);
         return 0;
       }
 
-      if (!CheckPresenceOfFSharpRuntime()) {
+      if (!CheckPresenceOfFSharpRuntime())
+      {
         Console.WriteLine("Error - F# runtime not installed. You can download the runtime from:\n\n" + FsharpDownloadUrl);
         Console.WriteLine("\n\nGo to download page?");
         string reply = Console.ReadLine();
-        if (reply != null && reply.ToUpperInvariant().StartsWith("Y")) {
+        if (reply != null && reply.ToUpperInvariant().StartsWith("Y"))
+        {
           Process.Start(FsharpDownloadUrl);
         }
         Console.WriteLine("Exiting with -3");
         return -3;
       }
 
-      if (errorCount > 0) {
+      if (errorCount > 0)
+      {
         Console.WriteLine("Exiting with 1 - error parsing arguments.");
         return 1;
       }
 
 
-      if ((currentPlugin = InitializePlugin(commandLineOptions)) == null) {
+      if ((currentPlugin = InitializePlugin(commandLineOptions)) == null)
+      {
         Console.WriteLine("Exiting with 2 - error initializing plugin.");
         return 2;
       }
@@ -84,12 +90,14 @@ namespace Microsoft.Research.Vcc
 
       int retVal = 0;
 
-      if (errorCount > 0) {
+      if (errorCount > 0)
+      {
         Console.WriteLine("Exiting with 3 ({0} error(s).)", errorCount);
         retVal = 3;
       }
 
-      if (commandLineOptions.PauseBeforeExit) {
+      if (commandLineOptions.PauseBeforeExit)
+      {
         Console.WriteLine("Done. Press any key to continue . . .");
         Console.ReadKey();
       }
@@ -97,23 +105,31 @@ namespace Microsoft.Research.Vcc
       return retVal;
     }
 
-    internal static bool CheckPresenceOfFSharpRuntime() {
-      try {
+    internal static bool CheckPresenceOfFSharpRuntime()
+    {
+      try
+      {
         CheckPresenceOfFSharpRuntimeHelper();
-      } catch (TypeLoadException) {
+      }
+      catch (TypeLoadException)
+      {
         return false;
-      } catch (FileNotFoundException) {
+      }
+      catch (FileNotFoundException)
+      {
         return false;
       }
       return true;
     }
 
-    internal static void CheckPresenceOfFSharpRuntimeHelper() {
+    internal static void CheckPresenceOfFSharpRuntimeHelper()
+    {
       Microsoft.FSharp.Collections.FSharpList<int> l = new FSharp.Collections.FSharpList<int>(1, Microsoft.FSharp.Collections.FSharpList<int>.Empty);
       Debug.Assert(l.Length == 1);
     }
 
-    internal static VerificationErrorHandler ErrorHandler {
+    internal static VerificationErrorHandler ErrorHandler
+    {
       get { return verificationErrorHandler; }
     }
 
@@ -133,21 +149,27 @@ namespace Microsoft.Research.Vcc
 
     private static Plugin InitializePlugin(VccOptions commandLineOptions)
     {
-      try {
+      try
+      {
         string pluginName = null;
         Plugin selectedPlugin = null;
-        VCGenPlugin vcgenPlugin = null; 
+        VCGenPlugin vcgenPlugin = null;
 
-        if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp || commandLineOptions.Vcc3) {
+        if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp || commandLineOptions.Vcc3)
+        {
           pluginManager = new PluginManager(commandLineOptions);
           string pluginDir = PathHelper.PluginDir;
-          if (pluginDir != null)  pluginManager.AddPluginDirectory(pluginDir);
+          if (pluginDir != null) pluginManager.AddPluginDirectory(pluginDir);
           pluginManager.Discover();
-          foreach (var opt in commandLineOptions.PluginOptions.Keys) {
+          foreach (var opt in commandLineOptions.PluginOptions.Keys)
+          {
             if (opt == "dir") continue;
-            if (pluginName == null) {
+            if (pluginName == null)
+            {
               pluginName = opt;
-            } else {
+            }
+            else
+            {
               System.Console.WriteLine("More than one plugin requested ('{0}' and '{1}').", pluginName, opt);
               return null;
             }
@@ -160,20 +182,28 @@ namespace Microsoft.Research.Vcc
           }
            */
 
-          if (pluginName != null) {
-            foreach (var plugin in pluginManager.Plugins) {
-              if (string.Compare(pluginName, plugin.Name(), true) == 0) {
-                if (selectedPlugin != null) {
+          if (pluginName != null)
+          {
+            foreach (var plugin in pluginManager.Plugins)
+            {
+              if (string.Compare(pluginName, plugin.Name(), true) == 0)
+              {
+                if (selectedPlugin != null)
+                {
                   System.Console.WriteLine("More than one plugin matches '{0}'.", pluginName);
                   return null;
                 }
                 selectedPlugin = plugin;
               }
             }
-            if (selectedPlugin == null) {
-              foreach (var plugin in pluginManager.VCGenPlugins) {
-                if (string.Compare(pluginName, plugin.Name, true) == 0) {
-                  if (vcgenPlugin != null) {
+            if (selectedPlugin == null)
+            {
+              foreach (var plugin in pluginManager.VCGenPlugins)
+              {
+                if (string.Compare(pluginName, plugin.Name, true) == 0)
+                {
+                  if (vcgenPlugin != null)
+                  {
                     System.Console.WriteLine("More than one VCGEN plugin matches '{0}'.", pluginName);
                     return null;
                   }
@@ -181,7 +211,8 @@ namespace Microsoft.Research.Vcc
                 }
               }
 
-              if (vcgenPlugin == null) {
+              if (vcgenPlugin == null)
+              {
                 System.Console.WriteLine("Plugin '{0}' not found.", pluginName);
                 return null;
               }
@@ -197,19 +228,25 @@ namespace Microsoft.Research.Vcc
         selectedPlugin.RegisterStopwatch(swPrelude);
         selectedPlugin.MessageHandler.AddHandler(PrintPluginMessage);
 
-        try {
+        try
+        {
           swPlugin.Start();
           selectedPlugin.UseVccOptions(commandLineOptions);
           if (pluginName != null)
             selectedPlugin.UseCommandLineOptions(commandLineOptions.PluginOptions[pluginName]);
-        } finally {
+        }
+        finally
+        {
           swPlugin.Stop();
         }
 
         return selectedPlugin;
 
-      } catch (System.Reflection.ReflectionTypeLoadException e) {
-        foreach (Exception ex in e.LoaderExceptions) {
+      }
+      catch (System.Reflection.ReflectionTypeLoadException e)
+      {
+        foreach (Exception ex in e.LoaderExceptions)
+        {
           Console.WriteLine(ex.Message);
           Console.WriteLine(ex.StackTrace);
         }
@@ -220,11 +257,14 @@ namespace Microsoft.Research.Vcc
     private static double startTime;
     internal static HostEnvironment dummyHostEnvironment = new HostEnvironment(64);
 
-    private static void DisplayCommandLineHelp() {
+    private static void DisplayCommandLineHelp()
+    {
       System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
       Console.Out.WriteLine(rm.GetString("Usage"));
-      if (pluginManager != null && pluginManager.Plugins != null) {
-        foreach (var plugin in pluginManager.Plugins) {
+      if (pluginManager != null && pluginManager.Plugins != null)
+      {
+        foreach (var plugin in pluginManager.Plugins)
+        {
           Console.WriteLine();
           Console.WriteLine("--------------------------- Plugin: {0} ---------------------------", plugin.Name());
           Console.WriteLine();
@@ -234,31 +274,41 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private static string GetZ3Version() {
+    private static string GetZ3Version()
+    {
       ProcessStartInfo z3Psi = new ProcessStartInfo("z3.exe", "/version") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true };
-      try {
-        using (Process z3Proc = Process.Start(z3Psi)) {
+      try
+      {
+        using (Process z3Proc = Process.Start(z3Psi))
+        {
           z3Proc.WaitForExit();
           var z3VersionString = z3Proc.StandardOutput.ReadToEnd();
           Regex regex = new Regex("(?<major>\\d+)\\s+(?<minor>\\d+)\\s+(?<build>\\d+)\\s+(?<revision>\\d+)");
           var match = regex.Match(z3VersionString);
-          if (match.Success) {
+          if (match.Success)
+          {
             return String.Format("{0}.{1}.{2}.{3}", match.Groups["major"].Value, match.Groups["minor"].Value, match.Groups["build"].Value, match.Groups["revision"].Value);
           }
           return z3VersionString;
         }
-      } catch (Exception) {
+      }
+      catch (Exception)
+      {
         return "unknow";
       }
     }
 
-    private static void DisplayVersion(bool formatAsXml) {
+    private static void DisplayVersion(bool formatAsXml)
+    {
       string vccVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location).FileVersion;
       string boogieVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Boogie.Parser).Assembly.Location).FileVersion;
       string z3VersionString = GetZ3Version();
-      if (formatAsXml) {
+      if (formatAsXml)
+      {
         Console.WriteLine("<version>Vcc " + vccVersionString + ", Boogie " + boogieVersionString + ", Z3 " + z3VersionString + "</version>");
-      } else {
+      }
+      else
+      {
         System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
         // ReSharper disable AssignNullToNotNullAttribute
         Console.WriteLine(rm.GetString("Version"), vccVersionString, boogieVersionString, z3VersionString);
@@ -268,7 +318,8 @@ namespace Microsoft.Research.Vcc
 
     static int errorCount;
 
-    public static int ErrorCount {
+    public static int ErrorCount
+    {
       get { return errorCount; }
       set { errorCount = value; }
     }
@@ -276,18 +327,22 @@ namespace Microsoft.Research.Vcc
     static bool IsNewSyntax(string filename)
     {
       char[] buf = new char[4096];
-      int len = 0;
+      int len;
 
-      using (var sr = File.OpenText(filename)) {
+      using (var sr = File.OpenText(filename))
+      {
         len = sr.ReadBlock(buf, 0, buf.Length);
       }
-      for (int i = 0; i < len - 2; ++i) {
-        switch (buf[i]) {
+      for (int i = 0; i < len - 2; ++i)
+      {
+        switch (buf[i])
+        {
           case ' ':
           case '\t':
           case '\n':
           case '\r':
-            if (buf[i + 1] == '_' && buf[i + 2] == '(') {
+            if (buf[i + 1] == '_' && buf[i + 2] == '(')
+            {
               return true;
             }
             break;
@@ -296,11 +351,14 @@ namespace Microsoft.Research.Vcc
       return false;
     }
 
-    static void RunPlugin(VccOptions commandLineOptions) {
+    static void RunPlugin(VccOptions commandLineOptions)
+    {
       bool errorsInPreprocessor;
 
-      if (commandLineOptions.DetectSyntax && !commandLineOptions.NewSyntax) {
-        foreach (var fn in commandLineOptions.FileNames) {
+      if (commandLineOptions.DetectSyntax && !commandLineOptions.NewSyntax)
+      {
+        foreach (var fn in commandLineOptions.FileNames)
+        {
           if (IsNewSyntax(fn))
             commandLineOptions.NewSyntax = true;
         }
@@ -310,8 +368,8 @@ namespace Microsoft.Research.Vcc
       if (errorsInPreprocessor) return;
       using (var fnEnum = commandLineOptions.FileNames.GetEnumerator())
       using (var ppEnum = processedFiles.GetEnumerator())
-      while (fnEnum.MoveNext() && ppEnum.MoveNext())
-        RunPlugin(fnEnum.Current, ppEnum.Current, commandLineOptions);
+        while (fnEnum.MoveNext() && ppEnum.MoveNext())
+          RunPlugin(fnEnum.Current, ppEnum.Current, commandLineOptions);
     }
 
     private static Plugin currentPlugin;
@@ -333,74 +391,146 @@ namespace Microsoft.Research.Vcc
       Felt2Cast2Plugin(fileName, commandLineOptions, hostEnvironment, assem);
     }
 
-    private static string FunctionOrTypeRoot(string name) {
+    private static string FunctionOrTypeRoot(string name)
+    {
       name = name.Replace(':', '#');
       int pos = name.IndexOf('#');
       if (pos <= 0) return name;
       return name.Substring(0, pos);
     }
 
-    public static void ResetStartTime() {
+    public static void ResetStartTime()
+    {
       startTime = GetTime();
+    }
+
+    internal static string FindMemberNameByLocation(string fileLoc, VccAssembly assem)
+    {
+      var colonPos = fileLoc.LastIndexOf(':');
+      if (colonPos == -1 || colonPos == 0 || colonPos == fileLoc.Length - 1)
+      {
+        Console.WriteLine("vcc : error : invalid source location '{0}' .", fileLoc);
+        errorCount++;
+        return null;
+      }
+
+      var fileName = fileLoc.Substring(0, colonPos);
+      uint fileLine;
+
+      if (!uint.TryParse(fileLoc.Substring(colonPos + 1), out fileLine))
+      {
+        Console.WriteLine("vcc : error : invalid source location line '{0}' .", fileLoc.Substring(colonPos + 1));
+        errorCount++;
+        return null;
+      }
+
+      var fullPath = Path.GetFullPath(fileName);
+
+      foreach (var member in ((IAssembly)assem).NamespaceRoot.Members)
+      {
+        var ploc = new VisitorHelper.DeferredToken(member.Locations).GetToken() as IPrimarySourceLocation;
+        if (ploc != null && 
+          fullPath.Equals(Path.GetFullPath(ploc.PrimarySourceDocument.Location), StringComparison.OrdinalIgnoreCase) &&
+          ploc.StartLine <= fileLine &&
+          ploc.EndLine >= fileLine)
+        {
+          return member.Name.ToString();
+        }
+      }
+
+
+      Console.WriteLine( "vcc : error : could not find source item with location '{0}'", fileLoc);
+      errorCount++;
+      return null;
     }
 
     internal static int Felt2Cast2Plugin(string fileName, VccOptions commandLineOptions, HostEnvironment hostEnvironment, VccAssembly assem)
     {
-      try {
-        
+      try
+      {
+
         Helper.Env helperenv;
         FSharp.Collections.FSharpList<CAST.Top> res;
 
-        try {
+        try
+        {
           swVisitor.Start();
           helperenv = new Microsoft.Research.Vcc.Helper.Env(hostEnvironment, commandLineOptions);
           var visitor = new Microsoft.Research.Vcc.Visitor(assem.Compilation.ContractProvider, helperenv);
 
-          try {
-            if (commandLineOptions.AggressivePruning && (commandLineOptions.Functions.Count > 0 || commandLineOptions.FunctionsWithExactName.Count > 0)) {
+          if (commandLineOptions.VerificationLocation != null)
+          {
+            var memberAtLoc = FindMemberNameByLocation(commandLineOptions.VerificationLocation, assem);
+            if (memberAtLoc != null)
+            {
+              commandLineOptions.Functions.Add(memberAtLoc);
+            }
+          }
+
+          try
+          {
+            if (commandLineOptions.AggressivePruning && (commandLineOptions.Functions.Count > 0 || commandLineOptions.FunctionsWithExactName.Count > 0))
+            {
               var pruningRoots = new List<string>();
               pruningRoots.AddRange(commandLineOptions.Functions.ConvertAll(FunctionOrTypeRoot));
               pruningRoots.AddRange(commandLineOptions.FunctionsWithExactName.ConvertAll(FunctionOrTypeRoot));
               visitor.VisitOnly(assem, pruningRoots);
-            } else
+            }
+            else
               ((ICodeVisitor)visitor).Visit(assem);
-          } catch (Exception) {
+          }
+          catch (Exception)
+          {
             if (helperenv.ShouldDumpStack) throw;
             return 0;
           }
 
           res = visitor.GetResult();
-        } finally {
+        }
+        finally
+        {
           swVisitor.Stop();
         }
 
         if (errorCount > 0) return 0;
 
-        try {
+        try
+        {
           swPlugin.Start();
-          if (currentPlugin.IsModular()) {
+          if (currentPlugin.IsModular())
+          {
             var fv = currentPlugin.GetFunctionVerifier(fileName, helperenv, res);
             if (helperenv.ShouldContinue && errorCount == 0)
               VerifyFunctions(commandLineOptions, assem.Name.ToString(), fv);
-          } else {
+          }
+          else
+          {
             currentPlugin.Verify(fileName, helperenv, res);
           }
-        } finally {
+        }
+        finally
+        {
           swPlugin.Stop();
         }
 
         return 0;
 
-      } catch (ProverDiedException e) {
+      }
+      catch (ProverDiedException e)
+      {
         // we might want to do something else for this one
         System.Console.WriteLine();
         System.Console.WriteLine();
         System.Console.WriteLine(e.Message);
-      } catch (UnexpectedProverOutputException e) {
+      }
+      catch (UnexpectedProverOutputException e)
+      {
         System.Console.WriteLine();
         System.Console.WriteLine();
         System.Console.WriteLine(e.Message);
-      } catch (Exception e) {
+      }
+      catch (Exception e)
+      {
         System.Console.WriteLine();
         System.Console.WriteLine();
         System.Console.WriteLine(e);
@@ -417,23 +547,30 @@ namespace Microsoft.Research.Vcc
       bool checkSpecificFunctions = commandLineOptions.Functions.Count > 0 || commandLineOptions.FunctionsWithExactName.Count > 0;
       List<string> foundFunctionSpecifiers = new List<string>();
 
-      if (commandLineOptions.DumpBoogie) {
+      if (commandLineOptions.DumpBoogie)
+      {
         fver.DumpInternalsToFile(fileName, true);
       }
 
-      foreach (string funcName in fver.FunctionsToVerify()) {
-        if (checkSpecificFunctions) {
+      foreach (string funcName in fver.FunctionsToVerify())
+      {
+        if (checkSpecificFunctions)
+        {
           // check if this function has been requested either specifically or by prefix
           bool checkThisFunction = false;
-          if (commandLineOptions.FunctionsWithExactName.Contains(funcName)) {
+          if (commandLineOptions.FunctionsWithExactName.Contains(funcName))
+          {
             checkThisFunction = true;
             foundFunctionSpecifiers.Add(funcName);
           }
-          if (!checkThisFunction) {
-            foreach (var fn in commandLineOptions.Functions) {
+          if (!checkThisFunction)
+          {
+            foreach (var fn in commandLineOptions.Functions)
+            {
               var normalized = fn.Replace(':', '#');
               if (funcName.StartsWith(normalized) &&
-                   (normalized.Length == funcName.Length || funcName[normalized.Length] == '#')) {
+                   (normalized.Length == funcName.Length || funcName[normalized.Length] == '#'))
+              {
                 checkThisFunction = true;
                 foundFunctionSpecifiers.Add(fn);
                 break;
@@ -449,17 +586,21 @@ namespace Microsoft.Research.Vcc
         if (outcome == VerificationResult.Succeeded || outcome == VerificationResult.Skipped) { } else { numErrors++; }
       }
 
-      if (commandLineOptions.DumpBoogie) {
+      if (commandLineOptions.DumpBoogie)
+      {
         fver.DumpInternalsToFile(fileName, false);
       }
 
-      if (checkSpecificFunctions) {
+      if (checkSpecificFunctions)
+      {
         List<string> functionSpecifiers = new List<string>();
         functionSpecifiers.AddRange(commandLineOptions.Functions);
         functionSpecifiers.AddRange(commandLineOptions.FunctionsWithExactName);
         // some functions have not been encountered; warn about those
-        foreach (var fn in functionSpecifiers) {
-          if (!foundFunctionSpecifiers.Contains(fn)) {
+        foreach (var fn in functionSpecifiers)
+        {
+          if (!foundFunctionSpecifiers.Contains(fn))
+          {
             Console.WriteLine("vcc : error : '{0}' did not match any function.", fn);
             errorCount++;
           }
@@ -469,18 +610,24 @@ namespace Microsoft.Research.Vcc
       double now = GetTime();
       fver.Close();
 
-      if (commandLineOptions.TimeStats) {
+      if (commandLineOptions.TimeStats)
+      {
         string xmlReport = string.Format("<time><total>{0:0.00}</total><compiler>{1:0.00}</compiler><boogie>{2:0.00}</boogie><verification>{3:0.00}</verification></time>",
                             now - startTime, beforeBoogie - startTime,
                             beforeMethods - beforeBoogie,
                             now - beforeMethods);
         xmlReport += "\r\n" + "<errors>" + numErrors + "</errors>\r\n";
-        if (commandLineOptions.RunTestSuite) {
+        if (commandLineOptions.RunTestSuite)
+        {
           if (TestRunner.testrunTimeStats != null)
             TestRunner.testrunTimeStats.Append(xmlReport);
-        } else if (commandLineOptions.XmlFormatOutput) {
+        }
+        else if (commandLineOptions.XmlFormatOutput)
+        {
           Console.Write(xmlReport);
-        } else {
+        }
+        else
+        {
           Console.WriteLine("Time: {0:0.00}s total, {1:0.00}s compiler, {2:0.00}s Boogie, {3:0.00}s method verification.",
                             now - startTime, beforeBoogie - startTime,
                             beforeMethods - beforeBoogie,
@@ -493,25 +640,32 @@ namespace Microsoft.Research.Vcc
 
     private static void DumpTimes(VccOptions commandLineOptions)
     {
-      if (commandLineOptions.DetailedTimes) {
-        foreach (var s in currentPlugin.Stopwatches) {
+      if (commandLineOptions.DetailedTimes)
+      {
+        foreach (var s in currentPlugin.Stopwatches)
+        {
           Console.WriteLine(s.Display());
         }
       }
     }
 
-    internal static Program StandardPrelude {
-      get {
+    internal static Program StandardPrelude
+    {
+      get
+      {
         // For now Boogie does not support reusing the prelude.
 
         //if (standardPrelude == null)
         //  standardPrelude = GetStandardPrelude();
         //return standardPrelude;
 
-        try {
+        try
+        {
           swPrelude.Start();
           return GetStandardPrelude();
-        } finally {
+        }
+        finally
+        {
           swPrelude.Stop();
         }
       }
@@ -520,31 +674,38 @@ namespace Microsoft.Research.Vcc
     public static string preludePath = "";
     // [Once]
 
-    public static IList<String> StandardPreludeLines {
+    public static IList<String> StandardPreludeLines
+    {
       get { return standardPreludeLines.AsReadOnly(); }
     }
 
     static List<String> standardPreludeLines;
     static string standardPreludePath;
 
-    private static Program GetStandardPrelude() {
+    private static Program GetStandardPrelude()
+    {
       string _preludePath = PathHelper.PreludePath(standardPreludePath);
-      if (standardPreludeLines == null) {
+      if (standardPreludeLines == null)
+      {
         var lines = File.ReadAllLines(_preludePath, Encoding.UTF8);
         standardPreludeLines = new List<string>(lines);
       }
 
       Program prelude;
       int _errorCount = Boogie.Parser.Parse(_preludePath, new List<string>(), out prelude);
-      if (prelude == null || _errorCount > 0) {
+      if (prelude == null || _errorCount > 0)
+      {
         System.Console.WriteLine("There were errors parsing VccPrelude.bpl.");
         return new Program();
-      } else {
+      }
+      else
+      {
         return prelude;
       }
     }
 
-    internal static double GetTime() {
+    internal static double GetTime()
+    {
       return System.Environment.TickCount / 1000.0;
     }
   }
@@ -552,13 +713,15 @@ namespace Microsoft.Research.Vcc
   class BoogieErrorSink : IErrorSink
   {
 
-    public BoogieErrorSink(bool noPreprocessor) {
+    public BoogieErrorSink(bool noPreprocessor)
+    {
       this.noPreprocessor = noPreprocessor;
     }
 
     readonly bool noPreprocessor;
 
-    public void Error(IToken tok, string msg) {
+    public void Error(IToken tok, string msg)
+    {
       if (this.noPreprocessor)
         Console.Out.WriteLine("({0},{1}): verification: {2}", tok.line, tok.col, msg);
       else
@@ -567,23 +730,26 @@ namespace Microsoft.Research.Vcc
   }
 
 
-  internal class HostEnvironment : SourceEditHostEnvironment {
+  internal class HostEnvironment : SourceEditHostEnvironment
+  {
 
     internal HostEnvironment(int pointerSizeInBits)
-      : base(new NameTable(), new InternFactory(), (byte)(pointerSizeInBits / 8), null, false) {
+      : base(new NameTable(), new InternFactory(), (byte)(pointerSizeInBits / 8), null, false)
+    {
       Debug.Assert(pointerSizeInBits == 32 || pointerSizeInBits == 64);
       this.peReader = new PeReader(this);
-      string loc = typeof (object).Assembly.Location;
+      string loc = typeof(object).Assembly.Location;
       System.Reflection.AssemblyName mscorlibName = new System.Reflection.AssemblyName(typeof(object).Assembly.FullName);
       var tempMscorlibIdentity = new AssemblyIdentity(this.NameTable.GetNameFor(mscorlibName.Name), "", mscorlibName.Version, mscorlibName.GetPublicKeyToken(), loc);
       this.RegisterAsLatest(this.peReader.OpenAssembly(BinaryDocument.GetBinaryDocumentForFile(tempMscorlibIdentity.Location, this), out this.mscorlibIdentity));
-      loc = typeof (Microsoft.Research.Vcc.Runtime).Assembly.Location;
+      loc = typeof(Microsoft.Research.Vcc.Runtime).Assembly.Location;
       System.Reflection.AssemblyName runtimeName = new System.Reflection.AssemblyName(typeof(Microsoft.Research.Vcc.Runtime).Assembly.FullName);
       var tempVccRuntimeAssemblyIdentity = new AssemblyIdentity(this.NameTable.GetNameFor(runtimeName.Name), "", runtimeName.Version, runtimeName.GetPublicKeyToken(), loc);
       this.RegisterAsLatest(this.peReader.OpenAssembly(BinaryDocument.GetBinaryDocumentForFile(tempVccRuntimeAssemblyIdentity.Location, this), out this.vccRuntimeAssemblyIdentity));
     }
 
-    internal IUnit GetIncrementalUnit(string newText) {
+    internal IUnit GetIncrementalUnit(string newText)
+    {
       string[] lines = newText.Split('$');
       if (lines.Length != 4) return Dummy.Unit;
       string prefix = lines[0];
@@ -592,20 +758,23 @@ namespace Microsoft.Research.Vcc
       IVccSourceDocument updatedDocument = this.previousDocument.GetUpdatedDocument(prefix.Length, textToReplace.Length, replacement);
       return updatedDocument.VccCompilationPart.Compilation.Result;
     }
-    
+
     internal VccSourceDocument/*?*/ previousDocument;
 
-    protected override AssemblyIdentity GetCoreAssemblySymbolicIdentity() {
+    protected override AssemblyIdentity GetCoreAssemblySymbolicIdentity()
+    {
       return this.mscorlibIdentity;
-    }    
+    }
     readonly AssemblyIdentity mscorlibIdentity;
 
-    public AssemblyIdentity VccRuntimeAssemblyIdentity {
+    public AssemblyIdentity VccRuntimeAssemblyIdentity
+    {
       get { return this.vccRuntimeAssemblyIdentity; }
     }
     readonly AssemblyIdentity vccRuntimeAssemblyIdentity;
 
-    public override IUnit LoadUnitFrom(string location) {
+    public override IUnit LoadUnitFrom(string location)
+    {
       IUnit result = this.peReader.OpenModule(BinaryDocument.GetBinaryDocumentForFile(location, this));
       this.RegisterAsLatest(result);
       return result;
@@ -613,7 +782,8 @@ namespace Microsoft.Research.Vcc
 
     readonly Microsoft.Cci.PeReader peReader;
 
-    public override void ReportErrors(Microsoft.Cci.ErrorEventArgs errorEventArguments) {
+    public override void ReportErrors(Microsoft.Cci.ErrorEventArgs errorEventArguments)
+    {
       this.SynchronousReportErrors(errorEventArguments);
     }
   }

@@ -93,7 +93,6 @@
     <Compile Include="ObjectModel\Members.cs" />
     <Compile Include="ObjectModel\Miscellaneous.cs" />
     <Compile Include="ObjectModel\NamespaceDeclarations.cs" />
-    <Compile Include="ObjectModel\Namespaces.cs" />
     <Compile Include="ObjectModel\Options.cs" />
     <Compile Include="ObjectModel\Statements.cs" />
     <Compile Include="ObjectModel\TypeDeclarations.cs" />
