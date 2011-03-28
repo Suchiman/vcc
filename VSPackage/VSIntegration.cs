@@ -7,7 +7,6 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
-using Microsoft.VisualStudio.Package;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -16,7 +15,7 @@ namespace MicrosoftResearch.VSPackage
     /// </summary>
     internal static class VSIntegration
     {
-        private static Lazy<DTE> _dte = new Lazy<DTE>(() => { return (DTE)Package.GetGlobalService(typeof(DTE)); });
+        private static readonly Lazy<DTE> _dte = new Lazy<DTE>(() => { return (DTE)Package.GetGlobalService(typeof(DTE)); });
         
         /// <summary>
         ///     Returns an instance of the toplevel object for interaction with Visual Studio
@@ -34,7 +33,7 @@ namespace MicrosoftResearch.VSPackage
 
         #region Outputpane
 
-        private static Lazy<IVsOutputWindowPane> _pane = new Lazy<IVsOutputWindowPane>(() =>
+        private static readonly Lazy<IVsOutputWindowPane> _pane = new Lazy<IVsOutputWindowPane>(() =>
         {
             IVsOutputWindow outputwindow = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
             Guid guidVerificationPane = new Guid("{1EE5916F-A3C7-403C-89D8-58C61285688F}");
@@ -170,7 +169,6 @@ namespace MicrosoftResearch.VSPackage
                     case DialogResult.Yes:
                         SaveAll();
                         break;
-                    case DialogResult.No:
                     default:
                         break;
                 }
@@ -178,9 +176,8 @@ namespace MicrosoftResearch.VSPackage
             }
         }
         /// <summary>
-        ///     Returns wether all open documents were saved after the last change
+        /// Returns wether all open documents were saved after the last change
         /// </summary>
-        /// <returns>true, when no changes were made since the last save, false, if there are open documents that are dirty<returns>
         private static bool DocumentsSaved()
         {
             foreach (Document document in dte.Documents)
@@ -205,12 +202,11 @@ namespace MicrosoftResearch.VSPackage
 
         #region error list and markers
 
-        private static ErrorListProvider errorListProvider = new ErrorListProvider(VSPackagePackage.Instance);
-        private static Regex VccErrorMessageRegEx = new Regex("(.*?)'(?<identifier>(.*?))'.*");
+        private static readonly ErrorListProvider errorListProvider = new ErrorListProvider(VSPackagePackage.Instance);
         //// this just helps with underlining just the code, no preceding whitespaces or comments
-        private static Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
+        private static readonly Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
 
-        private static List<IVsTextLineMarker> markers = new List<IVsTextLineMarker>();
+        private static readonly List<IVsTextLineMarker> markers = new List<IVsTextLineMarker>();
 
         internal static void initializeErrorList()
         {
@@ -227,7 +223,6 @@ namespace MicrosoftResearch.VSPackage
         /// <summary>
         ///     Adds an entry to the error list
         /// </summary>
-        /// <param name="serviceProvider">In this case the service provider is the VSPackage</param>
         /// <param name="document">Complete path of the document in which the error was found</param>
         /// <param name="text">Errormessage</param>
         /// <param name="line">the line, counting from one</param>
@@ -240,7 +235,7 @@ namespace MicrosoftResearch.VSPackage
             errorTask.Text = text;
             errorTask.Line = line - 1;
             errorTask.Column = 0;
-            errorTask.Navigate += new EventHandler(errorTask_Navigate);
+            errorTask.Navigate += errorTask_Navigate;
             errorListProvider.Tasks.Add(errorTask);
             addMarker(document, line, text);
         }
@@ -250,6 +245,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         /// <param name="document"></param>
         /// <param name="line">the line, counting from one</param>
+        /// <param name="text"></param>
         internal static void addMarker(string document, int line, string text)
         {
             IVsUIShellOpenDocument uiShellOpenDocument = Package.GetGlobalService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
@@ -272,10 +268,10 @@ namespace MicrosoftResearch.VSPackage
             //// Set the other arguments for IsDocumentOpen
             Guid logicalView = VSConstants.LOGVIEWID_Code;
 
-            IVsUIHierarchy hierOpen = null;
+            IVsUIHierarchy hierOpen;
             uint[] itemIdOpen = new uint[1];
-            IVsWindowFrame windowFrame = null;
-            int open = 0;
+            IVsWindowFrame windowFrame;
+            int open;
 
             //// this is called to get windowFrame which we need to get the IVsTextLines Object
             if (uiShellOpenDocument.IsDocumentOpen(     hierCaller,

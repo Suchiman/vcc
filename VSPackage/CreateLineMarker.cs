@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.VisualStudio.TextManager.Interop;
+﻿using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -13,14 +9,14 @@ namespace MicrosoftResearch.VSPackage
     /// </summary>
     class CreateLineMarker
     {
-        private IVsTextLines lines;
-        private int markerType;
-        private int startLine;
-        private int startIndex;
-        private int endLine;
-        private int endIndex;
-        private IVsTextMarkerClient client;
-        private IVsTextLineMarker[] marker;
+        private readonly IVsTextLines lines;
+        private readonly int markerType;
+        private readonly int startLine;
+        private readonly int startIndex;
+        private readonly int endLine;
+        private readonly int endIndex;
+        private readonly IVsTextMarkerClient client;
+        private readonly IVsTextLineMarker[] marker;
 
         public CreateLineMarker(   IVsTextLines lines,
                             int markerType,

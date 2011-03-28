@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.VisualStudio.TextManager.Interop;
+﻿using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio;
 
 namespace MicrosoftResearch.VSPackage
 {
     public class MarkerClient : IVsTextMarkerClient
     {
-        private string errorHint;
+        private readonly string errorHint;
 
         public MarkerClient(string message)
         {
