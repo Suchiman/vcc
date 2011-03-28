@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell.Interop;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -67,7 +66,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         public VSPackagePackage()
         {
-            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
+            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this));
             if (instance != null) throw new InvalidOperationException();
             instance = this;
             LastAction = "";
@@ -112,13 +111,13 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
-        private void ReVerify(object sender, EventArgs e)
+        private static void ReVerify(object sender, EventArgs e)
         {
             VSIntegration.DocumentsSavedCheck();
             VCCLauncher.LaunchVCC(LastAction);
         }
 
-        private void Cancel(object sender, EventArgs e)
+        private static void Cancel(object sender, EventArgs e)
         {
             VCCLauncher.Cancel();
         }
@@ -134,7 +133,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void VerifyMenu_BeforeQueryStatus(object sender, EventArgs e)
+        static void VerifyMenu_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -157,7 +156,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void Cancel_BeforeQueryStatus(object sender, EventArgs e)
+        static void Cancel_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -177,7 +176,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void VerifyThis_BeforeQueryStatus(object sender, EventArgs e)
+        static void VerifyThis_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -208,7 +207,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void VerifyFile_BeforeQueryStatus(object sender, EventArgs e)
+        static void VerifyFile_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -240,7 +239,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void ReVerify_BeforeQueryStatus(object sender, EventArgs e)
+        static void ReVerify_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -271,7 +270,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void CustomVerify_BeforeQueryStatus(object sender, EventArgs e)
+        static void CustomVerify_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -305,7 +304,7 @@ namespace MicrosoftResearch.VSPackage
         /// </summary>
         protected override void Initialize()
         {
-            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
+            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this));
             base.Initialize();
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
@@ -315,13 +314,10 @@ namespace MicrosoftResearch.VSPackage
 
                 //// Create the commands for the menu items.
 
-                CommandID menuCommandID;
-                OleMenuCommand OleMenuItem;
-
                 //// Verify File
-                menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);
-                OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
+                CommandID menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);
+                OleMenuCommand OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
+                OleMenuItem.BeforeQueryStatus += VerifyFile_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Options
@@ -332,61 +328,61 @@ namespace MicrosoftResearch.VSPackage
                 //// Re-Verify
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidReVerify);
                 OleMenuItem = new OleMenuCommand(ReVerify, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(ReVerify_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += ReVerify_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Verify This
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyThis);
                 OleMenuItem = new OleMenuCommand(VerifyThis, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyThis_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += VerifyThis_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Custom Verify
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCustomVerify);
                 OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(CustomVerify_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += CustomVerify_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Cancel
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCancel);
                 OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(Cancel_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += Cancel_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Verify File (Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
                 OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyFile_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += VerifyFile_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
                 
                 //// Verify This(Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyThis);
                 OleMenuItem = new OleMenuCommand(VerifyThis, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyThis_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += VerifyThis_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Re-Verify (Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextReVerify);
                 OleMenuItem = new OleMenuCommand(ReVerify, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(ReVerify_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += ReVerify_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Custom Verify (Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCustomVerify);
                 OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(CustomVerify_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += CustomVerify_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Cancel (Context Menu)
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCancel);
                 OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(Cancel_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += Cancel_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
 
                 //// Verifymenu
                 menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyMenu);
                 OleMenuItem = new OleMenuCommand(null, menuCommandID);
-                OleMenuItem.BeforeQueryStatus += new EventHandler(VerifyMenu_BeforeQueryStatus);
+                OleMenuItem.BeforeQueryStatus += VerifyMenu_BeforeQueryStatus;
                 mcs.AddCommand(OleMenuItem);
             }
         }

@@ -5,7 +5,6 @@ using System.Management;
 using System.Text.RegularExpressions;
 using Thread = System.Threading.Thread;
 using Microsoft.Win32;
-using System.IO;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
 
@@ -38,7 +37,7 @@ namespace MicrosoftResearch.VSPackage
 
             if (selection == string.Empty)
             {
-                addArguments += String.Format("/pos:\"{0}\":{1} ", filename, line);
+                addArguments += String.Format("/loc:\"{0}\":{1} ", filename, line);
             }
             else
             {
@@ -138,11 +137,11 @@ namespace MicrosoftResearch.VSPackage
             //// Write Commandline-Command to Verification Outputpane
             VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n\n", VccPath, arguments));
             //// Get notified when VCC sends Output or Error Data
-            vccProcess.OutputDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
-            vccProcess.ErrorDataReceived += new DataReceivedEventHandler(vccProcess_OutputDataReceived);
+            vccProcess.OutputDataReceived += vccProcess_OutputDataReceived;
+            vccProcess.ErrorDataReceived += vccProcess_OutputDataReceived;
             //// Get notified when VCC-Process finishes.
             vccProcess.EnableRaisingEvents = true;
-            vccProcess.Exited += new EventHandler(vccProcess_Exited);
+            vccProcess.Exited += vccProcess_Exited;
 
             //// Finally start the process
             try
@@ -200,7 +199,7 @@ namespace MicrosoftResearch.VSPackage
         private static int GetParentProcess(int Id)
         {
             int parentPid = 0;
-            using (ManagementObject mo = new ManagementObject("win32_process.handle='" + Id.ToString() + "'"))
+            using (ManagementObject mo = new ManagementObject("win32_process.handle='" + Id + "'"))
             {
 
                 try
@@ -218,11 +217,11 @@ namespace MicrosoftResearch.VSPackage
         #region process observation
         
         //// This is set to true, when Verification fails.
-        private static bool errorOccurred = false;
-        private static bool warningOccured = false;
-        private static Regex VCCErrorRegEx =
+        private static bool errorOccurred;
+        private static bool warningOccured;
+        private static readonly Regex VCCErrorRegEx =
             new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:\s(((error\s(.*?):)\s(?<errormessage>(.*)))|(?<errormessage>\(Location of symbol related to previous error.\)))");
-        private static Regex VCCWarningRegEx =
+        private static readonly Regex VCCWarningRegEx =
             new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\swarning\s(.*?):)\s(?<errormessage>(.*))");
 
         private static void vccProcess_Exited(object sender, EventArgs e)
@@ -258,7 +257,7 @@ namespace MicrosoftResearch.VSPackage
                     default:
                         Thread.Sleep(1000);
                         VSIntegration.WriteToPane("\n===VCC finished with unknown exitcode.===\n");
-                        VSIntegration.WriteToPane(vccProcess.ExitCode.ToString() + "\n");
+                        VSIntegration.WriteToPane(vccProcess.ExitCode + "\n");
                         break;
                 }
             }
