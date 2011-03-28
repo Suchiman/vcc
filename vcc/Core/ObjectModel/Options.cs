@@ -60,6 +60,7 @@ namespace Microsoft.Research.Vcc
     public int DumpTriggers; // 0-none, 1-C syntax, 2-C+Boogie syntax
     public bool KeepPreprocessorFiles;
     public bool OpsAsFunctions;
+    public string VerificationLocation;
 
     public void CopyFrom(VccOptions other)
     {
@@ -321,6 +322,12 @@ namespace Microsoft.Research.Vcc
             System.Diagnostics.Debugger.Launch();
             return true;
           }
+          var loc = this.ParseNamedArgument(arg, "loc", "location");
+          if (loc != null) {
+            this.options.VerificationLocation = loc;
+            return true;
+          }
+
           break;
 
         case 'm':
