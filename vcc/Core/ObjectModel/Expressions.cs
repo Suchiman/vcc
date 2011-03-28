@@ -4824,7 +4824,7 @@ namespace Microsoft.Research.Vcc {
 
   public class VccTypeExpressionOf : TypeExpression
   {
-    private Expression expr;
+    private readonly Expression expr;
 
     public VccTypeExpressionOf(Expression expr)
       :base(expr.SourceLocation)
