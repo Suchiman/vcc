@@ -81,7 +81,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ast", "vcc\Ast\Ast.fsproj",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VS2010 Extension", "VS2010 Extension", "{5D0A2F9B-C37E-4E1C-BF01-10DCFA9E2FC2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSPackage", "VSPackage\VSPackage.csproj", "{3090CDC7-C76B-4DDB-96F9-AB7D36CA5F32}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSPackage", "vcc\VSPackage\VSPackage.csproj", "{3090CDC7-C76B-4DDB-96F9-AB7D36CA5F32}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Contracts", "cci\Metadata\Sources\Microsoft.Contracts\Microsoft.Contracts.csproj", "{B114E5FF-F2A2-4BE7-8AF1-936FC87030F0}"
 EndProject
