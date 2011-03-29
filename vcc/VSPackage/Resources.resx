@@ -129,7 +129,7 @@
   <data name="CanNotCreateWindow" xml:space="preserve">
     <value>Can not create tool window.</value>
   </data>
-  <data name="ToolWindowTitle" xml:space="preserve">
-    <value>My Tool Window</value>
+  <data name="9892" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\9892.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

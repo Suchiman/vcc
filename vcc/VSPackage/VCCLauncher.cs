@@ -119,6 +119,8 @@ namespace MicrosoftResearch.VSPackage
             errorOccurred = false;
             warningOccured = false;
 
+            arguments += " /model";
+
             VSIntegration.initializeErrorList();
             VSIntegration.updateStatus("Verifying...", true);
 

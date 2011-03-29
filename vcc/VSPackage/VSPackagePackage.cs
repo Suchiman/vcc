@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace MicrosoftResearch.VSPackage
 {
@@ -29,6 +30,7 @@ namespace MicrosoftResearch.VSPackage
     // This attribute makes sure this package is loaded and initialized when a solution exists
     [ProvideOptionPage(typeof(VccOptionPage), "VCC", "General", 101, 106, true)]
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
+    [ProvideToolWindow(typeof(ErrorModelToolWindow))]
     [Guid(GuidList.guidVSPackagePkgString)]
     public sealed class VSPackagePackage : Package
     {
@@ -99,9 +101,19 @@ namespace MicrosoftResearch.VSPackage
 
         private void ShowErrorModel(object sender, EventArgs e)
         {
-          if (OptionPage != null)
+          // Get the instance number 0 of this tool window. This window is single instance so this instance
+          // is actually the only one.
+          // The last flag is set to true so that if the tool window does not exists it will be created.
+          ToolWindowPane window = this.FindToolWindow(typeof(ErrorModelToolWindow), 0, true);
+          if ((null == window) || (null == window.Frame))
           {
+            throw new NotSupportedException(Resources.CanNotCreateWindow);
           }
+
+          ErrorModelToolWindow.ModelViewer.LoadModel(VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel) ;
+
+          IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
+          Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
 
         /// <summary>

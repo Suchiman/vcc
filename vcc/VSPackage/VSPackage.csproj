@@ -123,6 +123,7 @@
       <Link>version.cs</Link>
     </Compile>
     <Compile Include="CreateLineMarker.cs" />
+    <Compile Include="ErrorModelToolWindow.cs" />
     <Compile Include="MarkerClient.cs" />
     <Compile Include="VCCOptionPage.cs">
       <SubType>Component</SubType>
@@ -178,9 +179,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Resource Include="Resources\settings.bmp" />
-    <Resource Include="Resources\ReVerify.bmp" />
-    <Resource Include="Resources\Check_Fkt.bmp" />
+    <None Include="Resources\settings.bmp" />
+    <None Include="Resources\ReVerify.bmp" />
+    <None Include="Resources\Check_Fkt.bmp" />
+    <Resource Include="Resources\9892.bmp" />
     <Content Include="Resources\Package.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -189,7 +191,18 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <WCFMetadata Include="Service References\" />
+    <ProjectReference Include="..\Tools\ModelViewer\ModelViewer\VccModelViewer.csproj">
+      <Project>{19CF9E68-12F6-4249-ADE9-D9D7EC18F41D}</Project>
+      <Name>VccModelViewer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Tools\ModelViewer\Model\VccModel.csproj">
+      <Project>{58F55EE8-F35F-427F-B4C3-F650A9843485}</Project>
+      <Name>VccModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Tools\ModelViewer\Z3ModelParser\Z3ModelParser.csproj">
+      <Project>{3CE03E07-26AB-4969-97AD-BDDCE41B0A28}</Project>
+      <Name>Z3ModelParser</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <UseCodebase>true</UseCodebase>
