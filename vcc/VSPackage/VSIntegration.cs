@@ -76,9 +76,17 @@ namespace MicrosoftResearch.VSPackage
             }
         }
 
+        internal static int CurrentErrorModel
+        {
+          get
+          {
+            return markers.IndexOfKey(new Tuple<int, string>(CurrentLine, ActiveFileFullName));
+          }
+        }
+
         internal static bool CurrentLineHasError
         {
-          get { return markers.ContainsKey(CurrentLine); }
+          get { return markers.ContainsKey(new Tuple<int, string>(CurrentLine, ActiveFileFullName)); }
         }
 
         /// <summary>
@@ -211,7 +219,7 @@ namespace MicrosoftResearch.VSPackage
         //// this just helps with underlining just the code, no preceding whitespaces or comments
         private static readonly Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
 
-        private static readonly SortedList<int, IVsTextLineMarker> markers = new SortedList<int, IVsTextLineMarker>();
+      private static readonly SortedList<Tuple<int, string>, IVsTextLineMarker> markers = new SortedList<Tuple<int, string>, IVsTextLineMarker>();
 
         internal static void initializeErrorList()
         {
@@ -322,7 +330,7 @@ namespace MicrosoftResearch.VSPackage
 
                   if (marker != null)
                     {
-                      markers[line] = marker;
+                      markers[new Tuple<int, string>(line, document)] = marker;
                     }
                 }
             }

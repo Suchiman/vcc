@@ -23,9 +23,6 @@
   <!--Definition of some VSCT specific constants. In this sample we use it for the IDs inside the guidOfficeIcon group. -->
   <Extern href="msobtnid.h"/>
 
-
-
-
   <!--The Commands section is where we the commands, menus and menu groups are defined.
       This section uses a Guid to identify the package that provides the command defined inside it. -->
   <Commands package="guidVSPackage1Pkg">
@@ -74,7 +71,7 @@
               <CommandFlag>DefaultInvisible</CommandFlag>
               <CommandFlag>DynamicVisibility</CommandFlag>
           If you do not want an image next to your command, remove the Icon node or set it to <Icon guid="guidOfficeIcon" id="msotcidNoIcon" /> -->
-      
+
       <Button guid="guidVerifyCmdSet" id="cmdidVerifyActiveFile" priority="0x0102" type ="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
         <Icon guid="guidVccImageCheckFile" id ="bmpPicF"/>
@@ -117,7 +114,7 @@
           <ButtonText>Custom Verify...</ButtonText>
         </Strings>
       </Button>
-      
+
       <Button guid="guidVerifyCmdSet" id="cmdidCancel" priority="0x0112" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup"/>
         <Icon guid="guidImages" id ="bmpPicX"/>
@@ -181,14 +178,14 @@
 
       <Button guid="guidVerifyCmdSet" id="cmdidShowErrorModel" priority="0x010a" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicX"/>
+        <Icon guid="guidVccShowErrorModel" id ="bmpPicSEM"/>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Show Error Model</ButtonText>
         </Strings>
       </Button>
-      
+
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -203,7 +200,7 @@
       <Bitmap guid ="guidVccImageReVerify" href ="Resources\ReVerify.bmp"/>
       <Bitmap guid ="guidVccImageVerifyThis" href ="Resources\VerifyThis.bmp"/>
       <Bitmap guid ="guidVccImageOptions" href ="Resources\settings.bmp"/>
-
+      <Bitmap guid ="guidVccShowErrorModel" href="Resources\9892.bmp"/>
     </Bitmaps>
 
   </Commands>
@@ -223,26 +220,21 @@
 
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidVerifyCmdSet" value="{7c3dd686-d502-4019-8b44-67b2efb94304}">
-
       <IDSymbol name="cmdidVerifyMenu" value="0x1021"/>
-      
       <IDSymbol name="cmdidMyMenuGroup" value="0x1020" />
       <IDSymbol name="cmdidContextMenuGroup" value="0x1022" />
-
       <IDSymbol name="cmdidVerifyActiveFile" value="0x0102" />
-      <IDSymbol name="cmdidVerifyThis" value ="0x0115"/>
-      <IDSymbol name="cmdidReVerify" value ="0x0112"/>
+      <IDSymbol name="cmdidVerifyThis" value="0x0115"/>
+      <IDSymbol name="cmdidReVerify" value="0x0112"/>
       <IDSymbol name="cmdidCustomVerify" value="0x0111" />
-      <IDSymbol name="cmdidCancel" value ="0x0105" />
-      <IDSymbol name ="cmdidOptions" value ="0x0116"/>
-
+      <IDSymbol name="cmdidCancel" value="0x0105" />
+      <IDSymbol name="cmdidOptions" value="0x0116"/>
       <IDSymbol name="cmdidContextVerifyActiveFile" value="0x0106"/>
-      <IDSymbol name="cmdidContextVerifyThis" value ="0x0114"/>
-      <IDSymbol name="cmdidContextReVerify" value ="0x0113"/>
+      <IDSymbol name="cmdidContextVerifyThis" value="0x0114"/>
+      <IDSymbol name="cmdidContextReVerify" value="0x0113"/>
       <IDSymbol name="cmdidContextCustomVerify" value="0x0109" />
-      <IDSymbol name="cmdidContextCancel" value ="0x0110"/>
+      <IDSymbol name="cmdidContextCancel" value="0x0110"/>
       <IDSymbol name="cmdidShowErrorModel" value="0x0117"/>
-
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{3cf37389-040e-4b6a-ae89-b51a048cf747}" >
@@ -253,22 +245,24 @@
       <IDSymbol name="bmpPicArrows" value="5" />
     </GuidSymbol>
 
-    <GuidSymbol name ="guidVccImageCheckFile" value ="{3C5F1D3E-BC71-485F-A5C6-55867BEA8618}" >
-      <IDSymbol name ="bmpPicF" value ="1"/>
-    </GuidSymbol>
-    
-    <GuidSymbol name ="guidVccImageReVerify" value ="{8AB4D9A9-88A3-4D13-86CB-13A6E926ABBB}" >
-      <IDSymbol name ="bmpPicR" value ="1"/>
+    <GuidSymbol name="guidVccImageCheckFile" value="{3c5f1d3e-bc71-485f-a5c6-55867bea8618}" >
+      <IDSymbol name="bmpPicF" value="1"/>
     </GuidSymbol>
 
-    <GuidSymbol name ="guidVccImageVerifyThis" value ="{EA8AF276-3724-4348-AC90-2F74BC74B726}" >
-      <IDSymbol name ="bmpPicT" value ="1"/>
+    <GuidSymbol name="guidVccImageReVerify" value="{8ab4d9a9-88a3-4d13-86cb-13a6e926abbb}" >
+      <IDSymbol name="bmpPicR" value="1"/>
     </GuidSymbol>
 
-    <GuidSymbol name ="guidVccImageOptions" value ="{AE6E7BA3-247D-407A-BC9A-1A72E86FC854}" >
-      <IDSymbol name ="bmpPicO" value ="1" />
+    <GuidSymbol name="guidVccImageVerifyThis" value="{ea8af276-3724-4348-ac90-2f74bc74b726}" >
+      <IDSymbol name="bmpPicT" value="1"/>
     </GuidSymbol>
-    
+
+    <GuidSymbol name="guidVccImageOptions" value="{ae6e7ba3-247d-407a-bc9a-1a72e86fc854}" >
+      <IDSymbol name="bmpPicO" value="1" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidVccShowErrorModel" value="{628629ef-f5c1-454a-bdc0-36d89974af30}" >
+      <IDSymbol name="bmpPicSEM" value="1"/>
+    </GuidSymbol>
   </Symbols>
-
 </CommandTable>
