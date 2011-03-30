@@ -130,11 +130,6 @@
     </Compile>
     <Compile Include="VCCLauncher.cs" />
     <Compile Include="Guids.cs" />
-    <Compile Include="Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="VSIntegration.cs" />
     <Compile Include="VSPackagePackage.cs" />
@@ -142,11 +137,6 @@
     <Compile Include="PkgCmdID.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <ManifestResourceName>VSPackage</ManifestResourceName>
@@ -165,11 +155,6 @@
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Images_32bit.bmp" />
-    <None Include="Resources\Check_File.bmp" />
-    <None Include="Resources\Check_Struct.bmp" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Build\setVersion.msbuild.xml" />
     <Content Include="Package.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -179,10 +164,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <None Include="Resources\settings.bmp" />
-    <None Include="Resources\ReVerify.bmp" />
-    <None Include="Resources\Check_Fkt.bmp" />
-    <Resource Include="Resources\9892.bmp" />
+    <None Include="Resources\Images_32bit.png" />
     <Content Include="Resources\Package.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

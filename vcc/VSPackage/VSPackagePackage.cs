@@ -96,7 +96,7 @@ namespace MicrosoftResearch.VSPackage
       ToolWindowPane window = this.FindToolWindow(typeof(ErrorModelToolWindow), 0, true);
       if ((null == window) || (null == window.Frame))
       {
-        throw new NotSupportedException(Resources.CanNotCreateWindow);
+        throw new NotSupportedException("Can not create window");
       }
 
       ErrorModelToolWindow.ModelViewer.LoadModel(VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
