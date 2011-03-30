@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
-namespace MicrosoftResearch.VSPackage
+namespace Microsoft.Research.Vcc.VSPackage
 {
   /// <summary>
   ///     This class handles interaction with Visual Studio
@@ -21,15 +21,15 @@ namespace MicrosoftResearch.VSPackage
     /// <summary>
     ///     Returns an instance of the toplevel object for interaction with Visual Studio
     /// </summary>
-    private static DTE dte
+    internal static DTE DTE
     {
       get { return _dte.Value; }
     }
 
-    internal static void updateStatus(string text, bool animationOn)
+    internal static void UpdateStatus(string text, bool animationOn)
     {
-      dte.StatusBar.Text = text;
-      dte.StatusBar.Animate(animationOn, vsStatusAnimation.vsStatusAnimationGeneral);
+      DTE.StatusBar.Text = text;
+      DTE.StatusBar.Animate(animationOn, vsStatusAnimation.vsStatusAnimationGeneral);
     }
 
     #region Outputpane
@@ -49,19 +49,19 @@ namespace MicrosoftResearch.VSPackage
     /// <summary>
     ///     This object represents the Verification Outputpane.
     /// </summary>
-    private static IVsOutputWindowPane verificationOutputpane
+    private static IVsOutputWindowPane VerificationOutputpane
     {
       get { return _pane.Value; }
     }
 
     internal static void ClearPane()
     {
-      verificationOutputpane.Clear();
+      VerificationOutputpane.Clear();
     }
 
     internal static void WriteToPane(string message)
     {
-      verificationOutputpane.OutputString(message);
+      VerificationOutputpane.OutputString(message);
     }
 
     #endregion
@@ -72,7 +72,7 @@ namespace MicrosoftResearch.VSPackage
     {
       get
       {
-        TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
+        TextDocument textDocument = (TextDocument)DTE.ActiveDocument.Object(null);
         return textDocument.Selection.ActivePoint.Line;
       }
     }
@@ -96,7 +96,7 @@ namespace MicrosoftResearch.VSPackage
     /// <returns>the name of the active document with path</returns>
     internal static string ActiveFileFullName
     {
-      get { return dte.ActiveDocument != null ? dte.ActiveDocument.FullName : String.Empty; }
+      get { return DTE.ActiveDocument != null ? DTE.ActiveDocument.FullName : String.Empty; }
     }
 
     /// <summary>
@@ -105,7 +105,7 @@ namespace MicrosoftResearch.VSPackage
     /// <returns>the name of the active document without path</returns>
     internal static string ActiveFileName
     {
-      get { return dte.ActiveDocument != null ? dte.ActiveDocument.Name : String.Empty; }
+      get { return DTE.ActiveDocument != null ? DTE.ActiveDocument.Name : String.Empty; }
     }
 
     /// <summary>
@@ -116,9 +116,9 @@ namespace MicrosoftResearch.VSPackage
     {
       get
       {
-        if (dte.ActiveDocument != null)
+        if (DTE.ActiveDocument != null)
         {
-          if (dte.ActiveDocument.Language == "C/C++")
+          if (DTE.ActiveDocument.Language == "C/C++")
           {
             return true;
           }
@@ -136,8 +136,30 @@ namespace MicrosoftResearch.VSPackage
     {
       get
       {
-        TextDocument textDocument = (TextDocument)dte.ActiveDocument.Object(null);
+        TextDocument textDocument = (TextDocument)DTE.ActiveDocument.Object(null);
         return textDocument.Selection.Text;
+      }
+    }
+
+    #endregion
+
+    #region project settings
+
+    internal static string CurrentPlatform
+    {
+      get
+      {
+        SelectedItem sitem = DTE.SelectedItems.Item(1);
+        return sitem.ProjectItem.ConfigurationManager.ActiveConfiguration.PlatformName;
+      }
+    }
+
+    internal static CompilerSettings CurrentCompilerSettings
+    {
+      get
+      {
+        SelectedItem sitem = DTE.SelectedItems.Item(1);
+        return new CompilerSettings(sitem.ProjectItem);
       }
     }
 
@@ -174,7 +196,7 @@ namespace MicrosoftResearch.VSPackage
     /// </summary>
     private static bool DocumentsSaved()
     {
-      return dte.Documents.Cast<Document>().All(document => document.Saved);
+      return DTE.Documents.Cast<Document>().All(document => document.Saved);
     }
 
     /// <summary>
@@ -182,7 +204,7 @@ namespace MicrosoftResearch.VSPackage
     /// </summary>
     private static void SaveAll()
     {
-      dte.Documents.SaveAll();
+      DTE.Documents.SaveAll();
     }
 
     #endregion
@@ -195,16 +217,16 @@ namespace MicrosoftResearch.VSPackage
 
     private static readonly SortedList<Tuple<int, string>, IVsTextLineMarker> markers = new SortedList<Tuple<int, string>, IVsTextLineMarker>();
 
-    internal static void initializeErrorList()
+    internal static void InitializeErrorList()
     {
-      addErrorToErrorList(dte.ActiveDocument.Name, "initializing...", 1, TaskErrorCategory.Error);
-      clearErrorList();
+      AddErrorToErrorList(DTE.ActiveDocument.Name, "initializing...", 1, TaskErrorCategory.Error);
+      ClearErrorList();
     }
 
-    internal static void clearErrorList()
+    internal static void ClearErrorList()
     {
       errorListProvider.Tasks.Clear();
-      clearMarkers();
+      ClearMarkers();
     }
 
     /// <summary>
@@ -214,7 +236,7 @@ namespace MicrosoftResearch.VSPackage
     /// <param name="text">Errormessage</param>
     /// <param name="line">the line, counting from one</param>
     /// <param name="category">is this an error or a warning?</param>
-    internal static void addErrorToErrorList(string document, string text, int line, TaskErrorCategory category)
+    internal static void AddErrorToErrorList(string document, string text, int line, TaskErrorCategory category)
     {
       ErrorTask errorTask = new ErrorTask
                               {
@@ -226,7 +248,7 @@ namespace MicrosoftResearch.VSPackage
                               };
       errorTask.Navigate += errorTask_Navigate;
       errorListProvider.Tasks.Add(errorTask);
-      addMarker(document, line, text);
+      AddMarker(document, line, text);
     }
 
     /// <summary>
@@ -235,14 +257,14 @@ namespace MicrosoftResearch.VSPackage
     /// <param name="document"></param>
     /// <param name="line">the line, counting from one</param>
     /// <param name="text"></param>
-    internal static void addMarker(string document, int line, string text)
+    internal static void AddMarker(string document, int line, string text)
     {
       IVsUIShellOpenDocument uiShellOpenDocument = Package.GetGlobalService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
       if (uiShellOpenDocument == null) { return; }
 
       //// get hierCaller i.e. the project containing the file containing the error
       string projectUniqueName = null;
-      foreach (Document currentDocument in dte.Documents)
+      foreach (Document currentDocument in DTE.Documents)
       {
         if (currentDocument.FullName == document)
         {
@@ -312,13 +334,46 @@ namespace MicrosoftResearch.VSPackage
       }
     }
 
-    private static void clearMarkers()
+    private static void ClearMarkers()
     {
       foreach (var entry in markers)
       {
         entry.Value.Invalidate();
       }
       markers.Clear();
+    }
+
+    internal static void ModelViewer_LineColumnChanged(object sender, VccModelViewer.LineColumnChangedEventArgs e)
+    {
+      try
+      {
+        Document Doc = DTE.Documents.Cast<object>().Where(doc => e.fileName.Equals(((Document) doc).FullName, StringComparison.OrdinalIgnoreCase)).Cast<Document>().FirstOrDefault();
+
+        if (Doc != null)
+        {
+          TextDocument textDocument = Doc.Object(null) as TextDocument;
+          int tabsize = Doc.TabSize;
+          textDocument.Selection.MoveTo(e.lineNumber, e.columnNumber, false);
+          textDocument.Selection.SelectLine();
+          string Text = textDocument.Selection.Text;
+
+          int newcolumn = 0;
+          for (int idx = 0; idx < e.columnNumber; idx++)
+          {
+            if (Text[idx] == '\t')
+            {
+              newcolumn += tabsize - (newcolumn%tabsize);
+            }
+            else
+            {
+              newcolumn++;
+            }
+          }
+
+          textDocument.Selection.MoveTo(e.lineNumber, newcolumn);
+        }
+      }
+      catch { }
     }
 
     internal static void errorTask_Navigate(object sender, EventArgs e)

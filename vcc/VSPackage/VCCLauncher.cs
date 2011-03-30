@@ -8,13 +8,31 @@ using Microsoft.Win32;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
 
-namespace MicrosoftResearch.VSPackage
+namespace Microsoft.Research.Vcc.VSPackage
 {
   /// <summary>
   ///     This class is used to start VCC.exe with the correct parameters and to get the results from VCC.exe
   /// </summary>
   internal static class VCCLauncher
   {
+
+    #region
+
+    private static string GetVSCOMNTOOLS()
+    {
+      string Version = VSIntegration.DTE.Version;      //returns something like 8.0
+      string CleanVersionTag = Version.Replace(".", "");
+      string VSDir = Environment.GetEnvironmentVariable(String.Format("VS{0}COMNTOOLS", CleanVersionTag));
+      return VSDir;
+    }
+
+    internal static string GetCLPath(string ActivePlattform)
+    {
+      string CL = (ActivePlattform == "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
+      return GetVSCOMNTOOLS().ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
+    }
+
+    #endregion
 
     #region commands
 
@@ -112,10 +130,11 @@ namespace MicrosoftResearch.VSPackage
       errorOccurred = false;
       warningOccured = false;
 
-      arguments += " /model /clerrors+";
+      arguments += VSIntegration.CurrentCompilerSettings.ToVccOptions();
+      arguments += String.Format(" /model /clerrors+ /clpath:\"{0}\"", GetCLPath(VSIntegration.CurrentPlatform));
 
-      VSIntegration.initializeErrorList();
-      VSIntegration.updateStatus("Verifying...", true);
+      VSIntegration.InitializeErrorList();
+      VSIntegration.UpdateStatus("Verifying...", true);
 
       //// Prepare VCC-Process, execute it and read its Output            
       ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"", VccPath), arguments)
@@ -154,7 +173,7 @@ namespace MicrosoftResearch.VSPackage
         VSIntegration.WriteToPane("Executing\n" + VccPath + "\nfailed.\n"
             + "You can specify the folder in which the vcc executable is located in Tools/Options/Vcc.");
         VSIntegration.WriteToPane("\n===Verification failed.===\n");
-        VSIntegration.updateStatus("Verification failed.", false);
+        VSIntegration.UpdateStatus("Verification failed.", false);
       }
     }
 
@@ -231,24 +250,24 @@ namespace MicrosoftResearch.VSPackage
             vccProcess.CancelErrorRead();
             vccProcess = null;
             VSIntegration.WriteToPane("\n===VCC was canceled.===\n");
-            VSIntegration.updateStatus("Verification canceled.", false);
+            VSIntegration.UpdateStatus("Verification canceled.", false);
             break;
           case 0:
             Thread.Sleep(1000);
             VSIntegration.WriteToPane("\n===Verification succeeded.===\n");
-            VSIntegration.updateStatus("Verification succeeded.", false);
+            VSIntegration.UpdateStatus("Verification succeeded.", false);
             break;
           case 2:
             Thread.Sleep(1000);
             VSIntegration.WriteToPane("Incorrect Commandline Arguments were used.\n");
             VSIntegration.WriteToPane("\n===Verification failed.===\n");
-            VSIntegration.updateStatus("Verification failed.", false);
+            VSIntegration.UpdateStatus("Verification failed.", false);
             break;
           case 1:
           case 3:
             Thread.Sleep(1000);
             VSIntegration.WriteToPane("\n===Verification failed.===\n");
-            VSIntegration.updateStatus("Verification failed.", false);
+            VSIntegration.UpdateStatus("Verification failed.", false);
             break;
           default:
             Thread.Sleep(1000);
@@ -275,7 +294,7 @@ namespace MicrosoftResearch.VSPackage
 
           //// Add error to error list
           Match match = VCCErrorRegEx.Match(e.Data);
-          VSIntegration.addErrorToErrorList(match.Groups["path"].Value,
+          VSIntegration.AddErrorToErrorList(match.Groups["path"].Value,
                                               match.Groups["errormessage"].Value,
                                               Int32.Parse(match.Groups["line"].Value),
                                               Microsoft.VisualStudio.Shell.TaskErrorCategory.Error
@@ -293,7 +312,7 @@ namespace MicrosoftResearch.VSPackage
 
           //// Add warning to error list
           Match match = VCCWarningRegEx.Match(e.Data);
-          VSIntegration.addErrorToErrorList(match.Groups["path"].Value,
+          VSIntegration.AddErrorToErrorList(match.Groups["path"].Value,
                                                   match.Groups["errormessage"].Value,
                                                   Int32.Parse(match.Groups["line"].Value),
                                                   Microsoft.VisualStudio.Shell.TaskErrorCategory.Warning
