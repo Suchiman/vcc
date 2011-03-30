@@ -7,6 +7,7 @@ using Thread = System.Threading.Thread;
 using Microsoft.Win32;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
+using System.IO;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
@@ -101,14 +102,13 @@ namespace Microsoft.Research.Vcc.VSPackage
     {
       get
       {
-        if (VSPackagePackage.Instance.OptionPage.VccExecutableFolder == string.Empty)
+        if (String.IsNullOrWhiteSpace(VSPackagePackage.Instance.OptionPage.VccExecutableFolder))
         {
-          using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
+          using (var key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
           {
             if (key != null)
             {
-              string result = key.GetValue("vccExecutablePath") as string;
-              return result ?? "vcc.exe";
+              return key.GetValue("vccExecutablePath", "vcc.exe") as string;
             }
             else
             {
@@ -118,7 +118,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         }
         else
         {
-          return VSPackagePackage.Instance.OptionPage.VccExecutableFolder + "\\vcc.exe";
+          return Path.Combine(VSPackagePackage.Instance.OptionPage.VccExecutableFolder, "vcc.exe");
         }
       }
     }
@@ -129,6 +129,7 @@ namespace Microsoft.Research.Vcc.VSPackage
     {
       errorOccurred = false;
       warningOccured = false;
+      var vccPath = VccPath;
 
       arguments += VSIntegration.CurrentCompilerSettings.ToVccOptions();
       arguments += String.Format(" /model /clerrors+ /clpath:\"{0}\"", GetCLPath(VSIntegration.CurrentPlatform));
@@ -137,7 +138,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       VSIntegration.UpdateStatus("Verifying...", true);
 
       //// Prepare VCC-Process, execute it and read its Output            
-      ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"", VccPath), arguments)
+      ProcessStartInfo psi = new ProcessStartInfo(string.Format("\"{0}\"", vccPath), arguments)
                                {
                                  UseShellExecute = false,
                                  RedirectStandardOutput = true,
@@ -150,7 +151,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       VSIntegration.ClearPane();
       VSIntegration.WriteToPane("===VCC started.===\n");
       //// Write Commandline-Command to Verification Outputpane
-      VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n\n", VccPath, arguments));
+      VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n\n", vccPath, arguments));
       //// Get notified when VCC sends Output or Error Data
       vccProcess.OutputDataReceived += vccProcess_OutputDataReceived;
       vccProcess.ErrorDataReceived += vccProcess_OutputDataReceived;
@@ -170,7 +171,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       catch (Exception)
       {
         vccProcess = null;
-        VSIntegration.WriteToPane("Executing\n" + VccPath + "\nfailed.\n"
+        VSIntegration.WriteToPane("Executing\n" + vccPath + "\nfailed.\n"
             + "You can specify the folder in which the vcc executable is located in Tools/Options/Vcc.");
         VSIntegration.WriteToPane("\n===Verification failed.===\n");
         VSIntegration.UpdateStatus("Verification failed.", false);
