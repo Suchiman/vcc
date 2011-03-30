@@ -49,6 +49,12 @@
     </Reference>
     <Reference Include="Microsoft.VisualStudio.Shell.Immutable.10.0" />
     <Reference Include="Microsoft.VisualStudio.TextManager.Interop.8.0, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.VCProject, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.VCProjectEngine, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -125,6 +131,7 @@
     <Compile Include="CreateLineMarker.cs" />
     <Compile Include="ErrorModelToolWindow.cs" />
     <Compile Include="MarkerClient.cs" />
+    <Compile Include="CompilerSettings.cs" />
     <Compile Include="VCCOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>

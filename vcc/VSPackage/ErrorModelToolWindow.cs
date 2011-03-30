@@ -1,11 +1,11 @@
-﻿namespace MicrosoftResearch.VSPackage
+﻿namespace Microsoft.Research.Vcc.VSPackage
 {
   using System;
   using System.Runtime.InteropServices;
   using Microsoft.VisualStudio.Shell;
   using VccModelViewer;
 
-  [Guid(GuidList.guidErrorToolWindowPersistanceString)]
+  [Guid(GuidList.GuidErrorToolWindowPersistanceString)]
   internal sealed class ErrorModelToolWindow : ToolWindowPane
   {
     private static readonly Lazy<ModelViewer> modelViewerInstance = new Lazy<ModelViewer>(() => new ModelViewer(true));

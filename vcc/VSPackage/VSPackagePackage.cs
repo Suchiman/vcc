@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
 
-namespace MicrosoftResearch.VSPackage
+namespace Microsoft.Research.Vcc.VSPackage
 {
   /// <summary>
   /// This is the class that implements the package exposed by this assembly.
@@ -31,7 +31,7 @@ namespace MicrosoftResearch.VSPackage
   [ProvideOptionPage(typeof(VccOptionPage), "VCC", "General", 101, 106, true)]
   [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
   [ProvideToolWindow(typeof(ErrorModelToolWindow))]
-  [Guid(GuidList.guidVSPackagePkgString)]
+  [Guid(GuidList.GuidVSPackagePkgString)]
   public sealed class VSPackagePackage : Package
   {
     public static VSPackagePackage Instance { get; private set; }
@@ -100,7 +100,6 @@ namespace MicrosoftResearch.VSPackage
       }
 
       ErrorModelToolWindow.ModelViewer.LoadModel(VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
-
       IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
       Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
     }
@@ -265,78 +264,79 @@ namespace MicrosoftResearch.VSPackage
         //// Create the commands for the menu items.
 
         //// Verify File
-        CommandID menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);
+        CommandID menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);
         OleMenuCommand OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
         OleMenuItem.BeforeQueryStatus += VerifyFile_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Options
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidOptions);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidOptions);
         OleMenuItem = new OleMenuCommand(Options, menuCommandID);
         mcs.AddCommand(OleMenuItem);
 
         //// Re-Verify
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidReVerify);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidReVerify);
         OleMenuItem = new OleMenuCommand(ReVerify, menuCommandID);
         OleMenuItem.BeforeQueryStatus += ReVerify_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Verify This
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyThis);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyThis);
         OleMenuItem = new OleMenuCommand(VerifyThis, menuCommandID);
         OleMenuItem.BeforeQueryStatus += VerifyThis_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Custom Verify
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCustomVerify);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCustomVerify);
         OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
         OleMenuItem.BeforeQueryStatus += CustomVerify_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Cancel
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCancel);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCancel);
         OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
         OleMenuItem.BeforeQueryStatus += Cancel_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Verify File (Context Menu)
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
         OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
         OleMenuItem.BeforeQueryStatus += VerifyFile_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Verify This(Context Menu)
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyThis);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyThis);
         OleMenuItem = new OleMenuCommand(VerifyThis, menuCommandID);
         OleMenuItem.BeforeQueryStatus += VerifyThis_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Re-Verify (Context Menu)
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextReVerify);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextReVerify);
         OleMenuItem = new OleMenuCommand(ReVerify, menuCommandID);
         OleMenuItem.BeforeQueryStatus += ReVerify_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Custom Verify (Context Menu)
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCustomVerify);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCustomVerify);
         OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
         OleMenuItem.BeforeQueryStatus += CustomVerify_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Cancel (Context Menu)
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCancel);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCancel);
         OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
         OleMenuItem.BeforeQueryStatus += Cancel_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Show Error Model (Context Menu)
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidShowErrorModel);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidShowErrorModel);
         OleMenuItem = new OleMenuCommand(ShowErrorModel, menuCommandID);
         OleMenuItem.BeforeQueryStatus += ShowErrorModel_BeforeQueryStatus;
+        ErrorModelToolWindow.ModelViewer.LineColumnChanged += VSIntegration.ModelViewer_LineColumnChanged;
         mcs.AddCommand(OleMenuItem);
 
         //// Verifymenu
-        menuCommandID = new CommandID(GuidList.guidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyMenu);
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyMenu);
         OleMenuItem = new OleMenuCommand(null, menuCommandID);
         OleMenuItem.BeforeQueryStatus += VerifyMenu_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);

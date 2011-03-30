@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TextManager.Interop;
 
-namespace MicrosoftResearch.VSPackage
+namespace Microsoft.Research.Vcc.VSPackage
 {
   /// <summary>
   ///     An Instance of this helper class generates a textmarker by calling IVsTextLines.createLineMarker.

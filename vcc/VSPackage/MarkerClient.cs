@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio;
 
-namespace MicrosoftResearch.VSPackage
+namespace Microsoft.Research.Vcc.VSPackage
 {
     public class MarkerClient : IVsTextMarkerClient
     {
