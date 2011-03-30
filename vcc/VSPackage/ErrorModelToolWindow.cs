@@ -13,9 +13,8 @@
     public ErrorModelToolWindow() : base(null)
     {
       this.Caption = "Vcc Error Model";
-      this.BitmapResourceID = 9892;
-      this.BitmapIndex = 1;
-      //this.Content = ErrorModelToolWindow.ModelViewer;
+      this.BitmapResourceID = 301;
+      this.BitmapIndex = 5;
     }
 
     public override System.Windows.Forms.IWin32Window Window
