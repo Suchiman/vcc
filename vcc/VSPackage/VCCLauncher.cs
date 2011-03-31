@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
-using Process = System.Diagnostics.Process;
+using System.IO;
 using System.Management;
 using System.Text.RegularExpressions;
-using Thread = System.Threading.Thread;
-using Microsoft.Win32;
+using System.Threading;
 using System.Windows.Forms;
-using Microsoft.VisualBasic;
-using System.IO;
+using Microsoft.Win32;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
@@ -67,21 +65,13 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     internal static void CustomVerify(string filename, VccOptionPage options)
     {
-      string addArguments = GetAddArguments(options);
-
-      string userInput = Interaction.InputBox("Commandline arguments for vcc.exe:", "Custom Verify", addArguments) + " ";
-      if (userInput == " ")
+      using (var customVerifyForm = new CustomVerifyForm(options.AdditionalCommandlineArguments))
       {
-        if (MessageBox.Show("Do you want to start verification without additional commandline arguments?",
-                            "Custom Verify",
-                            MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1)
-                            == DialogResult.No)
+        if (customVerifyForm.ShowDialog() == DialogResult.OK)
         {
-          return;
+          LaunchVCC(String.Format("{0}\"{1}\"", customVerifyForm.Arguments, filename));
         }
       }
-      addArguments = userInput;
-      LaunchVCC(String.Format("{0}\"{1}\"", addArguments, filename));
     }
 
     internal static void VerifyFile(string filename, VccOptionPage options)
