@@ -132,7 +132,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       var vccPath = VccPath;
 
       arguments += VSIntegration.CurrentCompilerSettings.ToVccOptions();
-      arguments += String.Format(" /model /clerrors+ /clpath:\"{0}\"", GetCLPath(VSIntegration.CurrentPlatform));
+      arguments += String.Format(" /st /model /clerrors+ /clpath:\"{0}\"", GetCLPath(VSIntegration.CurrentPlatform));
 
       VSIntegration.ClearErrorsAndMarkers();
       VSIntegration.UpdateStatus("Verifying...", true);
