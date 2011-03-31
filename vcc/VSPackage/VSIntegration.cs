@@ -325,7 +325,7 @@ namespace Microsoft.Research.Vcc.VSPackage
           //// This is used to get the position of the first non-whitespace character
           Match match = CodeLine.Match(lineText);
           var wsLength = match.Groups["whitespaces"].Length;
-          CreateLineMarker createLineMarker = new CreateLineMarker(lines,
+          LineMarkerClosure createLineMarker = new LineMarkerClosure(lines,
                                                                    (int)MARKERTYPE.MARKER_OTHER_ERROR,
                                                                    line - 1,
                                                                    wsLength,

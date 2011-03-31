@@ -7,7 +7,7 @@ namespace Microsoft.Research.Vcc.VSPackage
   ///     This class is necessary, because a delegate with parameters is needed which is to be called by
   ///     the UI-thread.
   /// </summary>
-  class CreateLineMarker
+  class LineMarkerClosure
   {
     private readonly IVsTextLines lines;
     private readonly int markerType;
@@ -17,7 +17,7 @@ namespace Microsoft.Research.Vcc.VSPackage
     private readonly int endIndex;
     private readonly IVsTextMarkerClient client;
 
-    public CreateLineMarker(IVsTextLines lines,
+    public LineMarkerClosure(IVsTextLines lines,
                         int markerType,
                         int startLine,
                         int startIndex,

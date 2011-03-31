@@ -103,7 +103,7 @@
         <Icon guid="guidImages" id ="bmpPicR"/>
         <CommandFlag>DefaultDisabled</CommandFlag>
         <Strings>
-          <ButtonText>Re-Verify</ButtonText>
+          <ButtonText>Re-verify</ButtonText>
         </Strings>
       </Button>
 
