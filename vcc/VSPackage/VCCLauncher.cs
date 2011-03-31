@@ -134,7 +134,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       arguments += VSIntegration.CurrentCompilerSettings.ToVccOptions();
       arguments += String.Format(" /model /clerrors+ /clpath:\"{0}\"", GetCLPath(VSIntegration.CurrentPlatform));
 
-      VSIntegration.InitializeErrorList();
+      VSIntegration.ClearErrorsAndMarkers();
       VSIntegration.UpdateStatus("Verifying...", true);
 
       //// Prepare VCC-Process, execute it and read its Output            
@@ -284,7 +284,8 @@ namespace Microsoft.Research.Vcc.VSPackage
       //// Write Output from VCC to Verification Outputpane
       if (e != null && e.Data != null)
       {
-        if (VCCErrorRegEx.IsMatch(e.Data))
+        Match match;
+        if ((match = VCCErrorRegEx.Match(e.Data)).Success)
         {
           //// This line is an errormessage.
           if (!errorOccurred)
@@ -294,15 +295,13 @@ namespace Microsoft.Research.Vcc.VSPackage
           }
 
           //// Add error to error list
-          Match match = VCCErrorRegEx.Match(e.Data);
-          VSIntegration.AddErrorToErrorList(match.Groups["path"].Value,
-                                              match.Groups["errormessage"].Value,
-                                              Int32.Parse(match.Groups["line"].Value),
-                                              Microsoft.VisualStudio.Shell.TaskErrorCategory.Error
-                                              );
-
+          VSIntegration.AddErrorToErrorList(
+            match.Groups["path"].Value,
+            match.Groups["errormessage"].Value,
+            Int32.Parse(match.Groups["line"].Value),
+            Microsoft.VisualStudio.Shell.TaskErrorCategory.Error);
         }
-        else if (VCCWarningRegEx.IsMatch(e.Data))
+        else if ((match = VCCWarningRegEx.Match(e.Data)).Success)
         {
           //// This line is a warning.
           if (!errorOccurred && !warningOccured)
@@ -312,12 +311,11 @@ namespace Microsoft.Research.Vcc.VSPackage
           }
 
           //// Add warning to error list
-          Match match = VCCWarningRegEx.Match(e.Data);
-          VSIntegration.AddErrorToErrorList(match.Groups["path"].Value,
-                                                  match.Groups["errormessage"].Value,
-                                                  Int32.Parse(match.Groups["line"].Value),
-                                                  Microsoft.VisualStudio.Shell.TaskErrorCategory.Warning
-                                                  );
+          VSIntegration.AddErrorToErrorList(
+            match.Groups["path"].Value,
+            match.Groups["errormessage"].Value,
+            Int32.Parse(match.Groups["line"].Value),
+            Microsoft.VisualStudio.Shell.TaskErrorCategory.Warning);
         }
         else if (!e.Data.StartsWith("Exiting"))
         {

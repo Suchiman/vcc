@@ -217,16 +217,14 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     private static readonly SortedList<Tuple<int, string>, IVsTextLineMarker> markers = new SortedList<Tuple<int, string>, IVsTextLineMarker>();
 
-    internal static void InitializeErrorList()
+    internal static void ClearErrorsAndMarkers()
     {
-      AddErrorToErrorList(DTE.ActiveDocument.Name, "initializing...", 1, TaskErrorCategory.Error);
-      ClearErrorList();
-    }
-
-    internal static void ClearErrorList()
-    {
+      foreach (var entry in markers)
+      {
+        entry.Value.Invalidate();
+      }
+      markers.Clear();
       errorListProvider.Tasks.Clear();
-      ClearMarkers();
     }
 
     /// <summary>
@@ -259,8 +257,15 @@ namespace Microsoft.Research.Vcc.VSPackage
     /// <param name="text"></param>
     internal static void AddMarker(string document, int line, string text)
     {
-      IVsUIShellOpenDocument uiShellOpenDocument = Package.GetGlobalService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
-      if (uiShellOpenDocument == null) { return; }
+      var markersKey = new Tuple<int, string>(line, document);
+      if (markers.ContainsKey(markersKey)) return;
+
+      IVsUIShellOpenDocument uiShellOpenDocument =
+        Package.GetGlobalService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
+      if (uiShellOpenDocument == null)
+      {
+        return;
+      }
 
       //// get hierCaller i.e. the project containing the file containing the error
       string projectUniqueName = null;
@@ -286,18 +291,21 @@ namespace Microsoft.Research.Vcc.VSPackage
 
       //// this is called to get windowFrame which we need to get the IVsTextLines Object
       if (uiShellOpenDocument.IsDocumentOpen(hierCaller,
-                                                  (uint)__VSIDOFLAGS.IDO_ActivateIfOpen,
-                                                  document,
-                                                  ref logicalView,
-                                                  (uint)__VSIDOFLAGS.IDO_ActivateIfOpen,
-                                                  out hierOpen,
-                                                  itemIdOpen,
-                                                  out windowFrame,
-                                                  out open
-                                                  ) == VSConstants.S_OK)
+                                             (uint)__VSIDOFLAGS.IDO_ActivateIfOpen,
+                                             document,
+                                             ref logicalView,
+                                             (uint)__VSIDOFLAGS.IDO_ActivateIfOpen,
+                                             out hierOpen,
+                                             itemIdOpen,
+                                             out windowFrame,
+                                             out open
+            ) == VSConstants.S_OK)
       {
         //// Document is open, get lines as IVsTextLines
-        if (windowFrame == null) { return; }
+        if (windowFrame == null)
+        {
+          return;
+        }
 
         object docData;
         windowFrame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
@@ -313,41 +321,33 @@ namespace Microsoft.Research.Vcc.VSPackage
 
         if (lineText != null)
         {
+
           //// This is used to get the position of the first non-whitespace character
           Match match = CodeLine.Match(lineText);
-
+          var wsLength = match.Groups["whitespaces"].Length;
           CreateLineMarker createLineMarker = new CreateLineMarker(lines,
-                                                          (int)MARKERTYPE.MARKER_OTHER_ERROR,
-                                                          line - 1,
-                                                          match.Groups["whitespaces"].Length,
-                                                          line - 1,
-                                                          match.Groups["whitespaces"].Length + match.Groups["code"].Length,
-                                                          textMarkerClient);
+                                                                   (int)MARKERTYPE.MARKER_OTHER_ERROR,
+                                                                   line - 1,
+                                                                   wsLength,
+                                                                   line - 1,
+                                                                   wsLength + match.Groups["code"].Length,
+                                                                   textMarkerClient);
 
           var marker = ThreadHelper.Generic.Invoke<IVsTextLineMarker>(createLineMarker.CreateMarker);
 
           if (marker != null)
           {
-            markers[new Tuple<int, string>(line, document)] = marker;
+            markers[markersKey] = marker;
           }
         }
       }
-    }
-
-    private static void ClearMarkers()
-    {
-      foreach (var entry in markers)
-      {
-        entry.Value.Invalidate();
-      }
-      markers.Clear();
     }
 
     internal static void ModelViewer_LineColumnChanged(object sender, VccModelViewer.LineColumnChangedEventArgs e)
     {
       try
       {
-        Document Doc = DTE.Documents.Cast<object>().Where(doc => e.fileName.Equals(((Document) doc).FullName, StringComparison.OrdinalIgnoreCase)).Cast<Document>().FirstOrDefault();
+        Document Doc = DTE.Documents.Cast<object>().Where(doc => e.fileName.Equals(((Document)doc).FullName, StringComparison.OrdinalIgnoreCase)).Cast<Document>().FirstOrDefault();
 
         if (Doc != null)
         {
@@ -362,7 +362,7 @@ namespace Microsoft.Research.Vcc.VSPackage
           {
             if (Text[idx] == '\t')
             {
-              newcolumn += tabsize - (newcolumn%tabsize);
+              newcolumn += tabsize - (newcolumn % tabsize);
             }
             else
             {
