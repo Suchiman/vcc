@@ -19,7 +19,7 @@
 
     public override System.Windows.Forms.IWin32Window Window
     {
-      get { return ErrorModelToolWindow.ModelViewer; }
+      get { return modelViewerInstance.Value; }
     }
 
     public static ModelViewer ModelViewer
