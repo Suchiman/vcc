@@ -6,6 +6,7 @@ using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
+using System.IO;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
@@ -31,6 +32,7 @@ namespace Microsoft.Research.Vcc.VSPackage
   [ProvideOptionPage(typeof(VccOptionPage), "VCC", "General", 101, 106, true)]
   [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
   [ProvideToolWindow(typeof(ErrorModelToolWindow))]
+  [ProvideToolWindow(typeof(BvdToolWindow))]
   [Guid(GuidList.GuidVSPackagePkgString)]
   public sealed class VSPackagePackage : Package
   {
@@ -90,18 +92,32 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     private void ShowErrorModel(object sender, EventArgs e)
     {
-      // Get the instance number 0 of this tool window. This window is single instance so this instance
-      // is actually the only one.
-      // The last flag is set to true so that if the tool window does not exists it will be created.
-      ToolWindowPane window = this.FindToolWindow(typeof(ErrorModelToolWindow), 0, true);
-      if ((null == window) || (null == window.Frame))
+      if (this.OptionPage.LanguageVersion == LanguageVersion.V3)
       {
-        throw new NotSupportedException("Can not create window");
+        var window = this.FindToolWindow(typeof(BvdToolWindow), 0, true);
+        if ((null == window) || (null == window.Frame))
+        {
+          throw new NotSupportedException("Can not create BvdToolWindow");
+        }
+        BvdToolWindow.BVD.ReadModels(Path.ChangeExtension(VSIntegration.ActiveFileFullName, "model"), VSIntegration.CurrentErrorModel);
+        IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
+        Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
       }
+      else
+      {
+        // Get the instance number 0 of this tool window. This window is single instance so this instance
+        // is actually the only one.
+        // The last flag is set to true so that if the tool window does not exists it will be created.
+        var window = this.FindToolWindow(typeof(ErrorModelToolWindow), 0, true);
+        if ((null == window) || (null == window.Frame))
+        {
+          throw new NotSupportedException("Can not create ErrorModelToolWindow");
+        }
 
-      ErrorModelToolWindow.ModelViewer.LoadModel(VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
-      IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
-      Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
+        ErrorModelToolWindow.ModelViewer.LoadModel(VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
+        IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
+        Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
+      }
     }
 
     /// <summary>
