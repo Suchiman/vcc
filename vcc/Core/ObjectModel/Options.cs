@@ -47,6 +47,7 @@ namespace Microsoft.Research.Vcc
     public int WarningLevel = 1;
     public bool DebugOnWarningOrError;
     public bool SaveModel;
+    public bool SaveModelForBvd;
     public bool RunModelViewer;
     public bool RunInspector;
     public bool DetailedTimes;
@@ -114,6 +115,7 @@ namespace Microsoft.Research.Vcc
       this.WarningLevel = other.WarningLevel;
       this.DebugOnWarningOrError = other.DebugOnWarningOrError;
       this.SaveModel = other.SaveModel;
+      this.SaveModelForBvd = other.SaveModelForBvd;
       this.RunModelViewer = other.RunModelViewer;
       this.RunInspector = other.RunInspector;
       this.DetailedTimes = other.DetailedTimes;
@@ -217,6 +219,13 @@ namespace Microsoft.Research.Vcc
             this.options.RunInBatchMode = true;
             return true;
           }
+          if (this.ParseName(arg, "bvd", "bvd"))
+          {
+            this.options.PrintCEVModel = true;
+            this.options.SaveModelForBvd = true;
+            return true;
+          }
+
           List<string>/*?*/ boogieOptions = this.ParseNamedArgumentList(arg, "boogie", "b");
           if (boogieOptions == null || boogieOptions.Count == 0) return false;
           this.options.BoogieOptions.AddRange(boogieOptions);

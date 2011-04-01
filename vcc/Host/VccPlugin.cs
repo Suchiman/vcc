@@ -97,6 +97,10 @@ namespace Microsoft.Research.Vcc
         options.Add("/printModel:1");
         options.Add("/printModelToFile:" + parent.ModelFileName);
       }
+      if (parent.BvdModelFileName != null) {
+        options.Add("/mv:" + parent.BvdModelFileName);
+      }
+
       options.AddRange(parent.options.BoogieOptions);
       foreach (string z3option in parent.options.Z3Options) {
         if (z3option.StartsWith("-") || z3option.StartsWith("/") || z3option.Contains("="))
@@ -317,6 +321,7 @@ namespace Microsoft.Research.Vcc
   {
     internal VccOptions options;
     internal string ModelFileName;
+    internal string BvdModelFileName;
     internal VCGenPlugin plugin;
 
     readonly Stopwatch swBoogieAST = new Stopwatch("Boogie AST");
@@ -415,7 +420,8 @@ namespace Microsoft.Research.Vcc
       Transformers.init(env);
       Transformers.processPipeOptions(env);
       options = env.Options;
-      ModelFileName = options.SaveModel ? Path.ChangeExtension(filename, "vccmodel") : null;
+      this.ModelFileName = options.SaveModel ? Path.ChangeExtension(filename, "vccmodel") : null;
+      this.BvdModelFileName = options.SaveModelForBvd ? Path.ChangeExtension(filename, "model") : null;
     }
 
     public override FunctionVerifier GetFunctionVerifier(string fileName, Helper.Env env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
