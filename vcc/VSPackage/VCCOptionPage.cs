@@ -24,12 +24,16 @@ namespace Microsoft.Research.Vcc.VSPackage
         [Description("Choose true to launch the Z3 Inspector to view the progress of verification.")]
         public bool ShowZ3Inspector{ get; set; }
 
-        [DisplayName("Vcc executable Folder")]
+        [DisplayName("Vcc Executable Folder")]
         [Editor(typeof(System.Windows.Forms.Design.FolderNameEditor),typeof(System.Drawing.Design.UITypeEditor))]
         [Description("The the folder in which your vcc.exe is located - this is usually" +
                       " not necessary. Leave this empty to use the path written to the registry while installing" +
                       " Vcc.")]
         public string VccExecutableFolder { get; set; }
+
+        [DisplayName("Show Notifications")]
+        [Description("Show notifications when a verfication run completes and Visual Studion is no longer the foreground window.")]
+        public bool ShowNotifications { get; set; }
 
         [Category("Vcc Version")]
         [DisplayName("Installed Vcc Version")]
