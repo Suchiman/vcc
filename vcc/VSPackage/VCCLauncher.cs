@@ -49,12 +49,13 @@ namespace Microsoft.Research.Vcc.VSPackage
       switch (options.LanguageVersion)
       {
         case LanguageVersion.V1:
+          result += " /model";
           break;
         case LanguageVersion.V2:
-          result += " /2";
+          result += " /2 /model";
           break;
         case LanguageVersion.V3:
-          result += " /3";
+          result += " /2 /3 /bvd";
           break;
       }
 
@@ -135,7 +136,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       var vccPath = VccPath;
 
       arguments += VSIntegration.CurrentCompilerSettings.ToVccOptions();
-      arguments += String.Format(" /st /model /clerrors+ /clpath:\"{0}\"", GetCLPath(VSIntegration.CurrentPlatform));
+      arguments += String.Format(" /st /clerrors+ /clpath:\"{0}\"", GetCLPath(VSIntegration.CurrentPlatform));
 
       VSIntegration.ClearErrorsAndMarkers();
       VSIntegration.UpdateStatus("Verifying...", true);
