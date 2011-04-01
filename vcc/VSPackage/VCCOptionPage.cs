@@ -3,17 +3,21 @@ using Microsoft.VisualStudio.Shell;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
-
     public class VccOptionPage : DialogPage
     {
+        [Category("Language Version")]
+        [DisplayName("VCC Language Version")]
+        [Description("Choose the language version of VCC.")]
+        public LanguageVersion LanguageVersion { get; set; }
+
         [Category("Additional Commandline Arguments")]
-        [DisplayName("Commandline Arguments")]
-        [Description("Here you can place additional commandline arguments for VCC that will be used every time VCC is executed.")]
+        [DisplayName("Custom Arguments")]
+        [Description("These additional commandline arguments for VCC will be used every time VCC is executed.")]
         public string AdditionalCommandlineArguments { get; set; }
 
         [Category("Additional Commandline Arguments")]
         [DisplayName("Use Commandline Arguments")]
-        [Description("Choose true to use the arguments you entered above. If this is false, those arguments will be ignored.")]
+        [Description("Choose true to use the arguments you entered above, otherwise these arguments will be ignored.")]
         public bool UseAdditionalCommandlineArguments { get; set; }
 
         [DisplayName("Show Z3 Inspector")]
@@ -22,10 +26,16 @@ namespace Microsoft.Research.Vcc.VSPackage
 
         [DisplayName("Vcc executable Folder")]
         [Editor(typeof(System.Windows.Forms.Design.FolderNameEditor),typeof(System.Drawing.Design.UITypeEditor))]
-        [Description("Here you can specify the folder in which your vcc.exe is located. This is usually" +
+        [Description("The the folder in which your vcc.exe is located - this is usually" +
                       " not necessary. Leave this empty to use the path written to the registry while installing" +
                       " Vcc.")]
-        public string VccExecutableFolder
-        { get; set; }
+        public string VccExecutableFolder { get; set; }
+
+        [Category("Vcc Version")]
+        [DisplayName("Installed Vcc Version")]
+        [Description("The version of this extension and the vcc compiler.")]
+        public string VccVersion { 
+          get { return System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(VccOptionPage).Assembly.Location).FileVersion;; } 
+        }
     }
 }

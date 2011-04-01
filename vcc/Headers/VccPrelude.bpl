@@ -3058,6 +3058,17 @@ function {:inline true} $can_use_all_frame_axioms(s:$state) returns(bool)
 function {:inline true} $can_use_frame_axiom_of(f:$pure_function) returns(bool)
   { $frame_level(f) < $current_frame_level }
 
+// and the same for pure function postcondition checking
+
+function $pure_post_level($pure_function) returns(int);
+const $current_pure_post_level : int;
+
+function {:inline true} $can_use_all_pure_post_axioms(s:$state) returns(bool)
+  { (forall f:$pure_function :: {$frame_level(f)} $pure_post_level(f) < $current_frame_level) }
+
+function {:inline true} $can_use_pure_post_axiom_of(f:$pure_function) returns(bool)
+  { $pure_post_level(f) < $current_pure_post_level }
+
 
 // reads checking
 

@@ -35,14 +35,27 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     #region commands
 
-    private static string GetAddArguments(VccOptionPage options)
+    private static string GetArgumentsFromOptions(VccOptionPage options, bool respectCustomFlag)
     {
-      string result = options.UseAdditionalCommandlineArguments ?
-          options.AdditionalCommandlineArguments + " " :
+      string result = !respectCustomFlag || options.UseAdditionalCommandlineArguments ?
+          options.AdditionalCommandlineArguments :
           string.Empty;
+
       if (options.ShowZ3Inspector)
       {
-        result += "/i ";
+        result += " /i";
+      }
+
+      switch (options.LanguageVersion)
+      {
+        case LanguageVersion.V1:
+          break;
+        case LanguageVersion.V2:
+          result += " /2";
+          break;
+        case LanguageVersion.V3:
+          result += " /3";
+          break;
       }
 
       return result;
@@ -50,34 +63,34 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     internal static void VerifyThis(string filename, string selection, int line, VccOptionPage options)
     {
-      string addArguments = GetAddArguments(options);
+      string addArguments = GetArgumentsFromOptions(options, true);
 
       if (selection == string.Empty)
       {
-        addArguments += String.Format("/loc:\"{0}\":{1} ", filename, line);
+        addArguments += String.Format(" /loc:\"{0}\":{1} ", filename, line);
       }
       else
       {
-        addArguments += String.Format("/f:{0} ", selection);
+        addArguments += String.Format(" /f:{0} ", selection);
       }
-      LaunchVCC(String.Format("{0}\"{1}\"", addArguments, filename));
+      LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
     }
 
     internal static void CustomVerify(string filename, VccOptionPage options)
     {
-      using (var customVerifyForm = new CustomVerifyForm(options.AdditionalCommandlineArguments))
+      using (var customVerifyForm = new CustomVerifyForm(GetArgumentsFromOptions(options, false)))
       {
         if (customVerifyForm.ShowDialog() == DialogResult.OK)
         {
-          LaunchVCC(String.Format("{0}\"{1}\"", customVerifyForm.Arguments, filename));
+          LaunchVCC(String.Format("{0} \"{1}\"", customVerifyForm.Arguments, filename));
         }
       }
     }
 
     internal static void VerifyFile(string filename, VccOptionPage options)
     {
-      string addArguments = GetAddArguments(options);
-      LaunchVCC(String.Format("{0}\"{1}\"", addArguments, filename));
+      string addArguments = GetArgumentsFromOptions(options, true);
+      LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
     }
 
     #endregion
@@ -321,6 +334,5 @@ namespace Microsoft.Research.Vcc.VSPackage
     }
 
     #endregion
-
   }
 }
