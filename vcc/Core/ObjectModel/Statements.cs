@@ -158,27 +158,39 @@ namespace Microsoft.Research.Vcc {
       return false;
     }
 
+    private Expression initialValue;
+
+    private Expression GetInitialValue() {
+      VccArrayTypeExpression /*?*/
+        arrayTypeExpression = this.ContainingLocalDeclarationsStatement.TypeExpression as VccArrayTypeExpression;
+      var baseInit = base.InitialValue;
+      if (baseInit == null && arrayTypeExpression != null && arrayTypeExpression.Size != null) {
+        VccLocalDefinition loc = this.LocalVariable as VccLocalDefinition;
+        var isSpec = loc != null ? loc.IsSpec : false;
+        var result = new VccCreateStackArray(arrayTypeExpression.ElementType, arrayTypeExpression.Size, isSpec,
+                                       SourceDummy.SourceLocation);
+        var containingExpression = new DummyExpression(this.ContainingLocalDeclarationsStatement.ContainingBlock, SourceDummy.SourceLocation);
+        result.SetContainingExpression(containingExpression);
+        return result;
+      }
+      else if (baseInit == null) {
+        return new DummyExpression(this.Name.SourceLocation);
+      }
+      else return baseInit;
+    }
+
+    public override Expression InitialValue {
+      get {
+        if (this.initialValue == null) {
+          this.initialValue = this.GetInitialValue();
+        }
+
+        return this.initialValue is DummyExpression ? null : this.initialValue;
+      }
+    }
+
     public override void Dispatch(ICodeVisitor visitor) {
       visitor.Visit(this); // do not go to base.Dispatch because it will not do anything for const decls
-      VccArrayTypeExpression/*?*/ arrayTypeExpression = this.ContainingLocalDeclarationsStatement.TypeExpression as VccArrayTypeExpression;
-      if (this.InitialValue == null && arrayTypeExpression != null && arrayTypeExpression.Size != null) {
-        VccLocalDefinition loc = this.LocalVariable as VccLocalDefinition;
-        bool isSpec = loc != null ? loc.IsSpec : false;       
-        Expression dummyExpression = new DummyExpression(this.Name.SourceLocation);
-        TargetExpression targetExpression = new TargetExpression(new BoundExpression(dummyExpression, this.LocalVariable), this.Name.SourceLocation);
-        Expression initialValue = new VccCreateStackArray(arrayTypeExpression.ElementType, arrayTypeExpression.Size, this.IsSpec, SourceDummy.SourceLocation);
-        Assignment assignment = new Assignment(targetExpression, initialValue, this.SourceLocation);       
-        Statement aStat = new ExpressionStatement(assignment);
-        if (isSpec) aStat = new VccSpecStatement(aStat, aStat.SourceLocation);
-        aStat.SetContainingBlock(this.ContainingLocalDeclarationsStatement.ContainingBlock);
-        if (isSpec) {
-          IVccCodeVisitor vccCodeVisitor = visitor as IVccCodeVisitor;
-          if (vccCodeVisitor != null) {
-            ((IVccSpecStatement)aStat).Dispatch(vccCodeVisitor);
-            return;
-          }
-        } else aStat.Dispatch(visitor);
-      }
     }
 
     /// <summary>
