@@ -1,25 +1,26 @@
+//`/newsyntax
 #include <vcc.h>
 
 struct F {
 	int value;
 	
-	def_group(g, vcc(claimable))
+	_(group  _(claimable) g)
 	
-	in_group(g)
+	_(:g)
 	volatile int vol;
 	
-	invariant(keeps((struct F::g*)this))
+	_(invariant \mine((struct F::g*)\this))
 };
 
 int test(struct F *f)
-	requires(wrapped(f::g))
-	writes(f::g)
+	_(requires \wrapped(f::g))
+	_(writes f::g)
 {
-	spec(claim_t c;)
+	_(ghost \claim c)
 	
-	assert(closed((struct F::g*)f));
+	_(assert ((struct F::g*)f)->\consistent)
 	
-	spec(c = claim((struct F::g*)f, closed((struct F::g*)f));)
+	_(ghost c = \make_claim({(struct F::g*)f}, ((struct F::g*)f)->\consistent))
 }
 
 /*`

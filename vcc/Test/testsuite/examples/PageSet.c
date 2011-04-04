@@ -1,3 +1,4 @@
+//`/newsyntax
 #include <stdlib.h>
 
 #include <vcc.h>
@@ -11,9 +12,9 @@ typedef struct _PAGE_SET
     UINT32 PagesAllocated;
     PUINT64 Array;
 
-    invariant(PagesAllocated <= PageCount)
-    invariant(keeps(as_array(Array, PageCount)))
-    invariant(typed(as_array(Array, PageCount)))
+    _(invariant PagesAllocated <= PageCount)
+    _(invariant \mine((void[PageCount])Array))
+    _(invariant ((void[PageCount])Array)->\valid)
 
 } PAGE_SET, *PPAGE_SET;
 
@@ -22,24 +23,24 @@ void Init(
     UINT32 PageCount,
     UINT64 Array[]
     )
-    writes(extent(PageSet), as_array(Array, PageCount))
-    requires(wrapped(as_array(Array, PageCount)))
-    ensures(PageSet->PageCount == PageCount)
-    ensures(PageSet->PagesAllocated == 0)
-    ensures(PageSet->Array == Array)
-    ensures(wrapped(PageSet))
+    _(writes \extent(PageSet), (void[PageCount])Array)
+    _(requires \wrapped((void[PageCount])Array))
+    _(ensures PageSet->PageCount == PageCount)
+    _(ensures PageSet->PagesAllocated == 0)
+    _(ensures PageSet->Array == Array)
+    _(ensures \wrapped(PageSet))
 {
     PageSet->Array = Array;
     PageSet->PageCount = PageCount;
     PageSet->PagesAllocated = 0;
-    wrap(PageSet);
+    _(wrap PageSet)
 }
 
 void CallInit() {
   PAGE_SET *ps = (PAGE_SET *)malloc(sizeof(PAGE_SET));
   PUINT64 arr = malloc(sizeof(UINT64) * 100);
   if (ps != NULL && arr != NULL) {
-    wrap(as_array(arr, 100));
+    _(wrap (void[100])arr)
     Init(ps, 100, arr);
   }
 }

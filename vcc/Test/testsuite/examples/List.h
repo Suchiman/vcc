@@ -11,7 +11,7 @@
 /*
  * Forward declaration of ghost type _LIST_MANAGER.
  */
-spec(typedef struct _LIST_MANAGER LIST_MANAGER, ^PLIST_MANAGER;)
+_(ghost typedef struct _LIST_MANAGER LIST_MANAGER, ^PLIST_MANAGER)
 
 /*
  * Define the doubly-linked list type.
@@ -22,7 +22,7 @@ typedef struct _LIST_ENTRY
     struct _LIST_ENTRY *Blink;
 
     // Each list entry contains a back link to its corresponding list manager.
-    spec(PLIST_MANAGER Manager;)
+    _(ghost PLIST_MANAGER Manager)
 } LIST_ENTRY, *PLIST_ENTRY;
 
 /*
@@ -33,38 +33,38 @@ typedef struct _LIST_ENTRY
  * values in the range of 0 to size-1, which represent the position of the pointer in
  * the list.
  */
-spec(
-struct vcc(dynamic_owns) _LIST_MANAGER
+
+_(ghost _(dynamic_owns) struct _LIST_MANAGER
 {
     // Number of entries in the list
     unsigned size;
     // Pointer to the designated list head
-    spec(PLIST_ENTRY ListHead;)
+    _(ghost PLIST_ENTRY ListHead)
     // A map for the housekeeping of the order of referenced pointers in the list.
-    spec(unsigned index[PLIST_ENTRY];)
+    _(ghost unsigned index[PLIST_ENTRY])
 
     // The "Manager" back-pointer of each LIST_ENTRY points back to this list manager.
-    invariant(forall(PLIST_ENTRY p; {keeps(p)}
-        keeps(p) ==> p->Manager == this))
+    _(invariant \forall PLIST_ENTRY p; {\mine(p)}
+        \mine(p) ==> p->Manager == \this)
 
     // The ListHead is owned by the list manager.
-    invariant(keeps(ListHead))
+    _(invariant \mine(ListHead))
 
     // The invariant explicitly talks about this node, and thus we explicitly state
     // we own it.
-    invariant(keeps(ListHead->Blink)) 
+    _(invariant \mine(ListHead->Blink)) 
 
     // Each list entry, that can be reached via a Flink is also in the ownership
     // domain of the list manager. Additionally each Blink of an entry p->Flink points
     // back to p.
-    invariant(forall(PLIST_ENTRY p; {keeps(p->Flink)} {sk_hack(keeps(p->Flink))}
-        keeps(p) ==> keeps(p->Flink) && p->Flink->Blink == p))
+    _(invariant \forall PLIST_ENTRY p; {\mine(p->Flink)} {:hint \mine(p->Flink)}
+        \mine(p) ==> \mine(p->Flink) && p->Flink->Blink == p)
 
     // Each list entry, that can be reached via a Blink is also in the ownership
     // domain of the list manager. Additionally each Flink of an entry p->Blink points
     // back to p.
-    invariant(forall(PLIST_ENTRY p; {keeps(p->Blink)} {sk_hack(keeps(p->Blink))}
-        keeps(p) ==> keeps(p->Blink) && p->Blink->Flink == p))
+    _(invariant \forall PLIST_ENTRY p; {\mine(p->Blink)} {:hint \mine(p->Blink)}
+        \mine(p) ==> \mine(p->Blink) && p->Blink->Flink == p)
 
     // The index[] map always increases by 1 for each object that can be reached by
     // an Flink pointer. Except if the Flink points to the list head, which implies
@@ -72,22 +72,22 @@ struct vcc(dynamic_owns) _LIST_MANAGER
     //
     // The {sk_hack(keeps(p->Flink))} trigger introduces a witness of
     // a keeps(p->Flink) entry, that is required for the prove to succeed.
-    invariant(forall(PLIST_ENTRY p; {keeps(p)} {sk_hack(keeps(p->Flink))}
-        keeps(p) && p->Flink != ListHead ==> index[p] + 1 == index[p->Flink]))
+    _(invariant \forall PLIST_ENTRY p; {\mine(p)} {:hint \mine(p->Flink)}
+        \mine(p) && p->Flink != ListHead ==> index[p] + 1 == index[p->Flink])
 
     // Specify index[] for well known objects.
-    invariant(index[ListHead] == 0)
-    invariant(index[ListHead->Blink] == size - 1)
+    _(invariant index[ListHead] == 0)
+    _(invariant index[ListHead->Blink] == size - 1)
 
     // Specify range of the index[] map.
-    invariant(forall(PLIST_ENTRY e; {keeps(e)}
-        keeps(e) ==> index[e] < size))
+    _(invariant \forall PLIST_ENTRY e; {\mine(e)}
+        \mine(e) ==> index[e] < size)
 
     // Each element in the list is only contained once.
-    invariant(forall(PLIST_ENTRY e1, e2; {keeps(e1), keeps(e2)}
-        keeps(e1) && keeps(e2) && e1 != e2 ==> index[e1] != index[e2]))
+    _(invariant \forall PLIST_ENTRY e1, e2; {\mine(e1), \mine(e2)}
+        \mine(e1) && \mine(e2) && e1 != e2 ==> index[e1] != index[e2])
 
-};)
+})
 
 /**
  * InitializeListHead
@@ -103,11 +103,11 @@ struct vcc(dynamic_owns) _LIST_MANAGER
  *   None
  */
 void InitializeListHead( PLIST_ENTRY ListHead )
-    writes(span(ListHead))
-    ensures(wrapped(ListHead->Manager) && is_fresh(ListHead->Manager))
-    ensures(set_eq(owns(ListHead->Manager),SET(ListHead)))
-    ensures(ListHead->Manager->size == 1)
-    ensures(ListHead->Manager->ListHead == ListHead);
+    _(writes \span(ListHead))
+    _(ensures \wrapped(ListHead->Manager) && \fresh(ListHead->Manager))
+    _(ensures (ListHead->Manager)->\owns == {ListHead})
+    _(ensures ListHead->Manager->size == 1)
+    _(ensures ListHead->Manager->ListHead == ListHead);
 
 /**
  * IsListEmpty
@@ -123,9 +123,9 @@ void InitializeListHead( PLIST_ENTRY ListHead )
  *   IsListEmpty returns TRUE if there are currently no entries in the list and FALSE otherwise.
  */
 bool IsListEmpty( PLIST_ENTRY ListHead )
-    requires(wrapped(ListHead->Manager))
-    requires(set_in(ListHead, owns(ListHead->Manager)))
-    returns(ListHead->Manager->size == 1);
+    _(requires \wrapped(ListHead->Manager))
+    _(requires ListHead \in (ListHead->Manager)->\owns)
+    _(returns ListHead->Manager->size == 1);
 
 /**
  * RemoveEntryList
@@ -141,16 +141,16 @@ bool IsListEmpty( PLIST_ENTRY ListHead )
  *   RemoveEntryList returns TRUE if the list is empty and FALSE otherwise.
  */
 bool RemoveEntryList( PLIST_ENTRY Entry )
-    requires(set_in(Entry,owns(Entry->Manager)))
-    requires(Entry != Entry->Manager->ListHead)
-    maintains(wrapped(Entry->Manager))
-    writes(Entry->Manager)
-    returns(old(Entry->Manager)->size==1)
-    ensures(wrapped(Entry) && is_fresh(Entry))
-    ensures(set_equal(owns(Entry->Manager),set_difference(old(owns(Entry->Manager)),SET(Entry))))
-    ensures(Entry->Manager->size == old(Entry->Manager->size) - 1)
-    ensures(old(Entry->Manager->ListHead)==old(Entry->Manager)->ListHead)
-    ensures(forall(PLIST_ENTRY le; set_in(le,old(owns(Entry->Manager))); unchanged(emb(le))));
+    _(requires Entry \in (Entry->Manager)->\owns)
+    _(requires Entry != Entry->Manager->ListHead)
+    _(maintains \wrapped(Entry->Manager))
+    _(writes Entry->Manager)
+    _(returns \old(Entry->Manager)->size==1)
+    _(ensures \wrapped(Entry) && \fresh(Entry))
+    _(ensures (Entry->Manager)->\owns == \old((Entry->Manager)->\owns) \diff {Entry})
+    _(ensures Entry->Manager->size == \old(Entry->Manager->size) - 1)
+    _(ensures \old(Entry->Manager->ListHead)==\old(Entry->Manager)->ListHead)
+    _(ensures \forall PLIST_ENTRY le; le \in \old((Entry->Manager)->\owns) ==> (\unchanged(\embedding(le))));
 
 /**
  * RemoveHeadList
@@ -167,18 +167,18 @@ bool RemoveEntryList( PLIST_ENTRY Entry )
  *   RemoveHeadList returns a pointer to the entry removed from the list.
  */
 PLIST_ENTRY RemoveHeadList( PLIST_ENTRY ListHead )
-    requires(ListHead->Flink != ListHead->Manager->ListHead)
-    maintains(set_in(ListHead,owns(ListHead->Manager)))
-    maintains(wrapped(ListHead->Manager))
-    writes(ListHead->Manager)
-    returns(old(ListHead->Flink))
-    ensures(unchanged(ListHead->Manager))
-    ensures(unchanged(ListHead->Manager->ListHead))
-    ensures(forall(PLIST_ENTRY le; set_in(le,old(owns(ListHead->Manager))); unchanged(emb(le))))
-    ensures(ListHead->Manager->size == old(ListHead->Manager->size) - 1)
-    ensures(set_equal(owns(ListHead->Manager),set_difference(old(owns(ListHead->Manager)),SET(result))))
-    ensures(set_in(result, old(owns(ListHead->Manager))))
-    ensures(wrapped(result));
+    _(requires ListHead->Flink != ListHead->Manager->ListHead)
+    _(maintains ListHead \in (ListHead->Manager)->\owns)
+    _(maintains \wrapped(ListHead->Manager))
+    _(writes ListHead->Manager)
+    _(returns \old(ListHead->Flink))
+    _(ensures \unchanged(ListHead->Manager))
+    _(ensures \unchanged(ListHead->Manager->ListHead))
+    _(ensures \forall PLIST_ENTRY le; le \in \old((ListHead->Manager)->\owns) ==> (\unchanged(\embedding(le))))
+    _(ensures ListHead->Manager->size == \old(ListHead->Manager->size) - 1)
+    _(ensures (ListHead->Manager)->\owns == \old((ListHead->Manager)->\owns) \diff {\result})
+    _(ensures \result \in \old((ListHead->Manager)->\owns))
+    _(ensures \wrapped(\result));
 
 /**
  * RemoveTailList
@@ -194,18 +194,18 @@ PLIST_ENTRY RemoveHeadList( PLIST_ENTRY ListHead )
  *   RemoveTailList returns a pointer to the entry that was at the tail of the list.
  */
 PLIST_ENTRY RemoveTailList( PLIST_ENTRY ListHead )
-    requires(ListHead->Manager->size > 1)
-    requires(ListHead->Blink != ListHead->Manager->ListHead)
-    maintains(set_in(ListHead,owns(ListHead->Manager)))
-    maintains(wrapped(ListHead->Manager))
-    writes(ListHead->Manager)
-    returns(old(ListHead->Blink))
-    ensures(unchanged(ListHead->Manager))
-    ensures(unchanged(ListHead->Manager->ListHead))
-    ensures(forall(PLIST_ENTRY le; set_in(le,old(owns(ListHead->Manager))); unchanged(emb(le))))
-    ensures(ListHead->Manager->size == old(ListHead->Manager->size) - 1)
-    ensures(set_equal(owns(ListHead->Manager),set_difference(old(owns(ListHead->Manager)),SET(result))))
-    ensures(wrapped(result));
+    _(requires ListHead->Manager->size > 1)
+    _(requires ListHead->Blink != ListHead->Manager->ListHead)
+    _(maintains ListHead \in (ListHead->Manager)->\owns)
+    _(maintains \wrapped(ListHead->Manager))
+    _(writes ListHead->Manager)
+    _(returns \old(ListHead->Blink))
+    _(ensures \unchanged(ListHead->Manager))
+    _(ensures \unchanged(ListHead->Manager->ListHead))
+    _(ensures \forall PLIST_ENTRY le; le \in \old((ListHead->Manager)->\owns) ==> (\unchanged(\embedding(le))))
+    _(ensures ListHead->Manager->size == \old(ListHead->Manager->size) - 1)
+    _(ensures (ListHead->Manager)->\owns == \old((ListHead->Manager)->\owns) \diff {\result})
+    _(ensures \wrapped(\result));
 
 /**
  * InsertTailList
@@ -224,19 +224,19 @@ PLIST_ENTRY RemoveTailList( PLIST_ENTRY ListHead )
  *   None
  */
 void InsertTailList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
-    requires(mutable(Entry))
-    requires(ListHead->Manager->size < MAXUINT)
-    maintains(wrapped(ListHead->Manager))
-    maintains(set_in(ListHead,owns(ListHead->Manager)))
-    writes(ListHead->Manager,span(Entry))
-    ensures(unchanged(ListHead->Manager))
-    ensures(unchanged(ListHead->Manager->ListHead))
-    ensures(forall(PLIST_ENTRY le; set_in(le,old(owns(ListHead->Manager))); unchanged(emb(le))))
-    ensures(set_in(Entry,owns(ListHead->Manager)))
-    ensures(ListHead->Manager->size == old(ListHead->Manager->size) + 1)
-    ensures(set_eq(owns(ListHead->Manager),set_union(old(owns(ListHead->Manager)),SET(Entry))))
-    ensures(unchanged(ListHead->Manager->ListHead))
-    ensures(Entry->Manager == ListHead->Manager);
+    _(requires \mutable(Entry))
+    _(requires ListHead->Manager->size < MAXUINT)
+    _(maintains \wrapped(ListHead->Manager))
+    _(maintains ListHead \in (ListHead->Manager)->\owns)
+    _(writes ListHead->Manager,\span(Entry))
+    _(ensures \unchanged(ListHead->Manager))
+    _(ensures \unchanged(ListHead->Manager->ListHead))
+    _(ensures \forall PLIST_ENTRY le; le \in \old((ListHead->Manager)->\owns) ==> (\unchanged(\embedding(le))))
+    _(ensures Entry \in (ListHead->Manager)->\owns)
+    _(ensures ListHead->Manager->size == \old(ListHead->Manager->size) + 1)
+    _(ensures (ListHead->Manager)->\owns == \old((ListHead->Manager)->\owns) \union {Entry})
+    _(ensures \unchanged(ListHead->Manager->ListHead))
+    _(ensures Entry->Manager == ListHead->Manager);
 
 /**
  * InsertHeadList
@@ -255,15 +255,15 @@ void InsertTailList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
  *   None
  */
 void InsertHeadList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
-    requires(mutable(Entry))
-    requires(ListHead->Manager->size < MAXUINT)
-    maintains(wrapped(ListHead->Manager))
-    maintains(set_in(ListHead,owns(ListHead->Manager)))
-    writes(ListHead->Manager,span(Entry))
-    ensures(unchanged(ListHead->Manager))
-    ensures(unchanged(ListHead->Manager->ListHead))
-    ensures(forall(PLIST_ENTRY le; set_in(le,old(owns(ListHead->Manager))); unchanged(emb(le))))
-    ensures(set_in(Entry,owns(ListHead->Manager)))
-    ensures(ListHead->Manager->size == old(ListHead->Manager->size) + 1)
-    ensures(set_eq(owns(ListHead->Manager),set_union(old(owns(ListHead->Manager)),SET(Entry))))
-    ensures(Entry->Manager == ListHead->Manager);
+    _(requires \mutable(Entry))
+    _(requires ListHead->Manager->size < MAXUINT)
+    _(maintains \wrapped(ListHead->Manager))
+    _(maintains ListHead \in (ListHead->Manager)->\owns)
+    _(writes ListHead->Manager,\span(Entry))
+    _(ensures \unchanged(ListHead->Manager))
+    _(ensures \unchanged(ListHead->Manager->ListHead))
+    _(ensures \forall PLIST_ENTRY le; le \in \old((ListHead->Manager)->\owns) ==> (\unchanged(\embedding(le))))
+    _(ensures Entry \in (ListHead->Manager)->\owns)
+    _(ensures ListHead->Manager->size == \old(ListHead->Manager->size) + 1)
+    _(ensures (ListHead->Manager)->\owns == \old((ListHead->Manager)->\owns) \union {Entry})
+    _(ensures Entry->Manager == ListHead->Manager);

@@ -1,3 +1,4 @@
+//`/newsyntax
 /*
  * This file provides a sample implementation of doubly-linked lists.
  */
@@ -5,54 +6,53 @@
 
 void InitializeListHead( PLIST_ENTRY ListHead )
 {
-    spec(PLIST_MANAGER ListManager;)
+    _(ghost PLIST_MANAGER ListManager)
     ListHead->Flink = ListHead->Blink = ListHead;
 
-spec(
-    ListManager = spec_malloc<LIST_MANAGER>();
+_(ghost {
+    ListManager = \alloc<LIST_MANAGER>();
     ListManager->size = 1;
     ListManager->index[ListHead] = 0;
     ListManager->ListHead = ListHead;
     ListHead->Manager = ListManager;
-    set_owns(ListManager,SET(ListHead));
-    wrap(ListHead);
-    wrap(ListManager);
-    )
+    _(ghost ListManager->\owns = {ListHead});
+    _(wrap ListHead)
+    _(wrap ListManager)
+    })
 }
 
 bool IsListEmpty( PLIST_ENTRY ListHead )
 {
-    assert(set_in(ListHead->Flink,owns(ListHead->Manager)));
+    _(assert ListHead->Flink \in (ListHead->Manager)->\owns)
     return ListHead->Flink == ListHead;
 }
 
 bool RemoveEntryList( PLIST_ENTRY Entry )
 {
     PLIST_ENTRY Blink, Flink;
-    spec(PLIST_MANAGER ListManager = Entry->Manager;)
+    _(ghost PLIST_MANAGER ListManager = Entry->Manager)
 
-    assert(in_domain(Entry,ListManager));
-    assert(in_domain(Entry->Blink,ListManager));
-    assert(in_domain(Entry->Flink,ListManager));
+    _(assert Entry \in \domain(ListManager))
+    _(assert Entry->Blink \in \domain(ListManager))
+    _(assert Entry->Flink \in \domain(ListManager))
 
     Blink = Entry->Blink;
     Flink = Entry->Flink;
-    expose (ListManager) {
-        expose (Blink) {
+    _(unwrapping ListManager) {
+        _(unwrapping Blink) {
             Blink->Flink = Flink;
         }
-        expose (Flink) {
+        _(unwrapping Flink) {
             Flink->Blink = Blink;
         }
 
-spec(
+_(ghost {
         ListManager->size--;
-        giveup_owner(Entry,ListManager);
-        ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager));
-            ListManager->index[x] < ListManager->index[Entry]
+        _(ghost ListManager->\owns -= Entry);
+        ListManager->index = (\lambda PLIST_ENTRY x; (ListManager->index[x] < ListManager->index[Entry]
                 ? ListManager->index[x]
-                : ListManager->index[x] - 1);
-        )
+                : ListManager->index[x] - 1));
+        })
     }
 
     return Flink == Blink;
@@ -61,30 +61,29 @@ spec(
 PLIST_ENTRY RemoveHeadList( PLIST_ENTRY ListHead )
 {
     PLIST_ENTRY Flink, Entry;
-    spec(PLIST_MANAGER ListManager = ListHead->Manager;)
+    _(ghost PLIST_MANAGER ListManager = ListHead->Manager)
 
-    assert(in_domain(ListHead,ListManager));
-    assert(in_domain(ListHead->Flink,ListManager));
-    assert(in_domain(ListHead->Flink->Flink,ListManager));
+    _(assert ListHead \in \domain(ListManager))
+    _(assert ListHead->Flink \in \domain(ListManager))
+    _(assert ListHead->Flink->Flink \in \domain(ListManager))
 
     Entry = ListHead->Flink;
     Flink = ListHead->Flink->Flink;
-    expose(ListManager) {
-        expose(ListHead) {
+    _(unwrapping ListManager) {
+        _(unwrapping ListHead) {
             ListHead->Flink = Flink;
         }
-        expose(Flink) {
+        _(unwrapping Flink) {
             Flink->Blink = ListHead;
         }
 
-spec(
+_(ghost {
         ListManager->size--;
-        giveup_owner(Entry,ListManager);
-        ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager));
-            ListManager->index[x] < ListManager->index[Entry]
+        _(ghost ListManager->\owns -= Entry);
+        ListManager->index = (\lambda PLIST_ENTRY x; (ListManager->index[x] < ListManager->index[Entry]
                 ? ListManager->index[x]
-                : ListManager->index[x] - 1);
-        )
+                : ListManager->index[x] - 1));
+        })
     }
     return Entry;
 }
@@ -92,101 +91,98 @@ spec(
 PLIST_ENTRY RemoveTailList( PLIST_ENTRY ListHead )
 {
     PLIST_ENTRY Blink, Entry;
-    spec(PLIST_MANAGER ListManager = ListHead->Manager;)
+    _(ghost PLIST_MANAGER ListManager = ListHead->Manager)
 
-    assert(in_domain(ListHead,ListManager));
-    assert(in_domain(ListHead->Blink,ListManager));
-    assert(in_domain(ListHead->Blink->Blink,ListManager));
+    _(assert ListHead \in \domain(ListManager))
+    _(assert ListHead->Blink \in \domain(ListManager))
+    _(assert ListHead->Blink->Blink \in \domain(ListManager))
 
     Entry = ListHead->Blink;
     Blink = ListHead->Blink->Blink;
-    expose(ListManager) {
-        expose(ListHead) {
+    _(unwrapping ListManager) {
+        _(unwrapping ListHead) {
             ListHead->Blink = Blink;
         }
-        expose(Blink) {
+        _(unwrapping Blink) {
             Blink->Flink = ListHead;
         }
 
-spec(
+_(ghost {
         ListManager->size--;
-        giveup_owner(Entry,ListManager);
-        ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager));
-            ListManager->index[x] < ListManager->index[Entry]
+        _(ghost ListManager->\owns -= Entry);
+        ListManager->index = (\lambda PLIST_ENTRY x; (ListManager->index[x] < ListManager->index[Entry]
                 ? ListManager->index[x]
-                : ListManager->index[x] - 1);
-        )
+                : ListManager->index[x] - 1));
+        })
     }
     return Entry;
 }
 
 void InsertTailList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
 {
-    spec(PLIST_MANAGER ListManager = ListHead->Manager;)
+    _(ghost PLIST_MANAGER ListManager = ListHead->Manager)
 
-    assert(in_domain(ListHead,ListManager));
-    assert(in_domain(ListHead->Blink,ListManager));
+    _(assert ListHead \in \domain(ListManager))
+    _(assert ListHead->Blink \in \domain(ListManager))
 
     Entry->Flink = ListHead;
     Entry->Blink = ListHead->Blink;
-    spec(Entry->Manager = ListManager;)
+    _(ghost Entry->Manager = ListManager)
 
-    wrap(Entry);
-    expose(ListManager) {
-        expose(ListHead->Blink) {
+    _(wrap Entry)
+    _(unwrapping ListManager) {
+        _(unwrapping ListHead->Blink) {
             ListHead->Blink->Flink = Entry;
         }
-        expose(ListHead) {
+        _(unwrapping ListHead) {
             ListHead->Blink = Entry;
         }
 
-spec(
+_(ghost {
         ListManager->size++;
-        set_owner(Entry,ListManager);
+        _(ghost ListManager->\owns += Entry);
 
         if (ListHead == ListManager->ListHead) {
             ListManager->index[Entry] = ListManager->size - 1;
         } else {
-            ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager));
-                x==Entry
+            ListManager->index = (\lambda PLIST_ENTRY x; (x==Entry
                     ? ListManager->index[ListHead]
                     : (ListManager->index[x] < ListManager->index[ListHead]
                         ? ListManager->index[x]
-                        : ListManager->index[x] + 1));
+                        : ListManager->index[x] + 1)));
         }
-        )
+        })
     }
 }
 
 void InsertHeadList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
 {
-    spec(PLIST_MANAGER ListManager = ListHead->Manager;)
+    _(ghost PLIST_MANAGER ListManager = ListHead->Manager)
 
-    assert(in_domain(ListHead,ListManager));
-    assert(in_domain(ListHead->Flink,ListManager));
+    _(assert ListHead \in \domain(ListManager))
+    _(assert ListHead->Flink \in \domain(ListManager))
 
     Entry->Blink = ListHead;
     Entry->Flink = ListHead->Flink;
-    spec(Entry->Manager = ListManager;)
-    wrap(Entry);
-    expose(ListManager) {
-        expose(ListHead->Flink) {
+    _(ghost Entry->Manager = ListManager)
+    _(wrap Entry)
+    _(unwrapping ListManager) {
+        _(unwrapping ListHead->Flink) {
             ListHead->Flink->Blink = Entry;
         }
-        expose(ListHead) {
+        _(unwrapping ListHead) {
             ListHead->Flink = Entry;
         }
 
-spec(
+_(ghost {
         ListManager->size++;
-        set_owner(Entry,ListManager);
-        ListManager->index = lambda(PLIST_ENTRY x; set_in(x,owns(ListManager));
-            x==Entry
+        _(ghost ListManager->\owns += Entry);
+        ListManager->index = (\lambda PLIST_ENTRY x; (x==Entry
                 ? ListManager->index[ListHead] + 1
                 : (ListManager->index[x] <= ListManager->index[ListHead]
                     ? ListManager->index[x]
-                    : ListManager->index[x] + 1));
-        )
+                    : ListManager->index[x] + 1)));
+        })
     }
 }
 

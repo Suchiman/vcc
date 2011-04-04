@@ -1,111 +1,112 @@
+//`/newsyntax
 #include <vcc2test.h>
 
-vcc(atomic_inline) unsigned int InterlockedIncrement(volatile unsigned int *p) {
+_(atomic_inline) unsigned int InterlockedIncrement(volatile unsigned int *p) {
   *p = *p + 1;
   return *p;
 }
 
-vcc(atomic_inline) unsigned int InterlockedDecrement(volatile unsigned int *p) {
+_(atomic_inline) unsigned int InterlockedDecrement(volatile unsigned int *p) {
   *p = *p - 1;
   return *p;
 }
 
 
-typedef struct vcc(claimable) _Protector {
+typedef _(claimable) struct _Protector {
   int dummy;
 } Protector;
 
-typedef struct vcc(claimable) vcc(volatile_owns) _Rundown {
-  spec( volatile claim_t self_claim; )
-  spec( obj_t protected_obj; )
+typedef _(claimable) _(volatile_owns) struct _Rundown {
+   _(ghost volatile \claim self_claim;) 
+   _(ghost \object protected_obj;) 
   volatile unsigned int count;
 
-  spec( volatile bool alive; )
-  spec( volatile bool enabled; )
-  spec( Protector enabled_protector; )
-  invariant( old(closed(&enabled_protector)) ==> unchanged(enabled) && unchanged(alive) )
+   _(ghost volatile bool alive;) 
+   _(ghost volatile bool enabled;) 
+   _(ghost Protector enabled_protector;) 
+  _(invariant \old((&enabled_protector)->\consistent) ==> \unchanged(enabled) && \unchanged(alive))
 
-  invariant( !alive ==> !enabled && count == 0 )
+  _(invariant !alive ==> !enabled && count == 0)
   // cannot set both count and alive in one step
-  invariant( old(count) > 0 && old(alive) ==> alive )
-  invariant( alive ==>
-               keeps(protected_obj) &&
-               keeps(self_claim) &&
-               claims_obj(self_claim, this) &&
-               ref_cnt(self_claim) == count )
-  invariant(old(alive) ==> unchanged(self_claim) )
+  _(invariant \old(count) > 0 && \old(alive) ==> alive)
+  _(invariant alive ==>
+               \mine(protected_obj) &&
+               \mine(self_claim) &&
+               \claims_object(self_claim, \this) &&
+               self_claim->\claim_count == count)
+  _(invariant \old(alive) ==> \unchanged(self_claim))
 
-  invariant( !enabled ==> count <= old(count) )
+  _(invariant !enabled ==> count <= \old(count))
 
 } Rundown;
 
-void InitializeRundown(Rundown *r spec(obj_t obj) claimp(out rdi))
-  writes(extent(r), obj)
-  requires(wrapped(obj))
-  ensures(claims_obj(rdi, r))
-  ensures(claims_obj(rdi, &r->enabled_protector))
-  ensures(is_fresh(rdi) && wrapped0(rdi) && claims(rdi, r->enabled && r->protected_obj == obj))
-  ensures(ref_cnt(r) == 2)
-  ensures(wrapped(&r->enabled_protector) && ref_cnt(&r->enabled_protector) == 1)
-  ensures(wrapped(r))
+void InitializeRundown(Rundown *r _(ghost \object obj) _(out \claim rdi))
+  _(writes \extent(r), obj)
+  _(requires \wrapped(obj))
+  _(ensures \claims_object(rdi, r))
+  _(ensures \claims_object(rdi, &r->enabled_protector))
+  _(ensures \fresh(rdi) && \wrapped0(rdi) && \claims(rdi, r->enabled && r->protected_obj == obj))
+  _(ensures r->\claim_count == 2)
+  _(ensures \wrapped(&r->enabled_protector) && (&r->enabled_protector)->\claim_count == 1)
+  _(ensures \wrapped(r))
 {
-  spec(claim_t s1;)
+  _(ghost \claim s1)
 
   r->count = 0;
-  set_owns(r, SET());
-  set_owns(&r->enabled_protector, SET());
-  spec( r->protected_obj = obj; r->alive = false; r->enabled = false; )
-  wrap(r);
+  _(ghost r->\owns =  {});
+  _(ghost (&r->enabled_protector)->\owns =  {});
+  _(ghost { r->protected_obj = obj; r->alive = \false; r->enabled = \false; })
+  _(wrap r)
 
-  assert(not_shared(r));
+  _(assert \not_shared(r))
 
-  spec(
-    atomic(r) {
-      s1 = claim(r, true);
-      begin_update();
-      r->alive = true;
-      r->enabled = true;
+  _(ghost {
+    _(atomic r) {
+      s1 = \make_claim({r}, \true);
+      _(begin_update)
+      r->alive = \true;
+      r->enabled = \true;
       r->self_claim = s1;
-      set_closed_owner(obj, r);
-      set_closed_owner(s1, r);
+      _(ghost r->\owns += obj);
+      _(ghost r->\owns += s1);
     }
-    wrap(&r->enabled_protector);
+    _(wrap &r->enabled_protector)
     // we can still claim r->enabled, as the state is havoced only at the BEGINNING of the atomic,
     // not at the end
-    rdi = claim(r, &r->enabled_protector, r->enabled && r->protected_obj == obj);
-  )
+    rdi = \make_claim({r, &r->enabled_protector}, r->enabled && r->protected_obj == obj);
+  })
 }
 
-void ReferenceRundown(Rundown *r claimp(out res) claimp(rdi))
+void ReferenceRundown(Rundown *r _(out \claim res) _(ghost \claim rdi))
   // we want a claim to our enabled rundown
-  always(rdi, closed(r) && r->enabled )
+  _(always rdi, r->\consistent && r->enabled)
   // we will give out a fresh claim with zero ref_cnt
-  ensures(wrapped0(res) && is_fresh(res))
+  _(ensures \wrapped0(res) && \fresh(res))
   // the claim will reference r->self_claim, will guarantee that the protected_obj is closed and the rundown is initialized
-  ensures(claims(res, claims_obj(res, r->self_claim) && closed(r) && closed(r->protected_obj) && r->count > 0))
+  _(ensures \claims(res, \claims_object(res, r->self_claim) && r->\consistent && (r->protected_obj)->\consistent && r->count > 0))
 {
-  spec( claim_t c; )
+   _(ghost \claim c;) 
 
-  atomic(r, rdi) {
-    assume(r->count < 0xffffffff);
+  _(atomic r, rdi) {
+    _(assume r->count < 0xffffffff)
     InterlockedIncrement(&r->count);
-    spec( res = claim(r->self_claim, r->count > 0 && closed(r->protected_obj) && when_claimed(r->self_claim) == r->self_claim); )
+     _(ghost res = \make_claim({r->self_claim}, r->count > 0 && (r->protected_obj)->\consistent && \when_claimed(r->self_claim) == r->self_claim);) 
   }
 }
 
-void DereferenceRundown(Rundown *r claimp( h ))
+void DereferenceRundown(Rundown *r _(ghost \claim  h))
   // we write the claim, what will we do with it? we're not telling.
-  writes(h)
+  _(writes h)
   // we want a claim to self_claim with no outstanding references guaranteeing that rundown is fully initialized
-  requires(wrapped0(h) && claims(h, claims_obj(h, r->self_claim) && closed(r) && r->count > 0))
+  _(requires \wrapped0(h) && \claims(h, \claims_object(h, r->self_claim) && r->\consistent && r->count > 0))
 {
-  atomic(h, r) {
-    unclaim(h, r->self_claim);
+  _(atomic h, r) {
+    _(ghost \destroy_claim(h, {r->self_claim}));
     InterlockedDecrement(&r->count);
   }
 }
 
-typedef struct vcc(claimable) _Resource {
+typedef _(claimable) struct _Resource {
   volatile int x;
   Rundown rd;
 } Resource;
@@ -113,122 +114,122 @@ typedef struct vcc(claimable) _Resource {
 typedef struct _RundownContainer {
   Resource *rsc;
   bool enabled;
-  spec( claim_t rd_claim; )
+   _(ghost \claim rd_claim;) 
 
-  invariant( keeps(rd_claim, &rsc->rd, &rsc->rd.enabled_protector) )
+  _(invariant \mine(rd_claim, &rsc->rd, &rsc->rd.enabled_protector))
 
-  invariant( claims_obj(rd_claim, &rsc->rd) )
-  invariant( claims_obj(rd_claim, &rsc->rd.enabled_protector) )
+  _(invariant \claims_object(rd_claim, &rsc->rd))
+  _(invariant \claims_object(rd_claim, &rsc->rd.enabled_protector))
 
-  invariant( ref_cnt(&rsc->rd.enabled_protector) == 1 )
-  invariant( ref_cnt(&rsc->rd) == 2 )
-  invariant( ref_cnt(rd_claim) == 0 )
+  _(invariant (&rsc->rd.enabled_protector)->\claim_count == 1)
+  _(invariant (&rsc->rd)->\claim_count == 2)
+  _(invariant rd_claim->\claim_count == 0)
 
-  invariant( claims(rd_claim, when_claimed(rsc)->rd.enabled == when_claimed(enabled)) )
-  invariant( claims(rd_claim, when_claimed(rsc)->rd.alive) )
-  invariant( claims(rd_claim, when_claimed(rsc)->rd.protected_obj == when_claimed(rsc)) )
+  _(invariant \claims(rd_claim, \when_claimed(rsc)->rd.enabled == \when_claimed(enabled)))
+  _(invariant \claims(rd_claim, \when_claimed(rsc)->rd.alive))
+  _(invariant \claims(rd_claim, \when_claimed(rsc)->rd.protected_obj == \when_claimed(rsc)))
 } RundownContainer;
 
 void InitializeRundownContainer(Resource *rsc, RundownContainer *cont)
-  writes(span(cont), rsc, extent(&rsc->rd))
-  requires(mutable(&rsc->rd.enabled_protector))
-  requires(wrapped(rsc))
-  ensures(wrapped(cont))
+  _(writes \span(cont), rsc, \extent(&rsc->rd))
+  _(requires \mutable(&rsc->rd.enabled_protector))
+  _(requires \wrapped(rsc))
+  _(ensures \wrapped(cont))
 {
   cont->rsc = rsc;
-  InitializeRundown(&rsc->rd spec(rsc) spec(out cont->rd_claim));
+  InitializeRundown(&rsc->rd _(ghost rsc) _(out cont->rd_claim));
   cont->enabled = 1;
 
-  wrap(cont);
+  _(wrap cont)
 }
 
 void FinalizeRundownContainer(RundownContainer *cont)
-  writes(cont)
-  maintains(wrapped(cont))
-  requires(cont->enabled)
-  ensures(!cont->enabled)
+  _(writes cont)
+  _(maintains \wrapped(cont))
+  _(requires cont->enabled)
+  _(ensures !cont->enabled)
 {
-  spec(claim_t tmp;)
-  spec(Rundown *rd;)
+  _(ghost \claim tmp)
+  _(ghost Rundown *rd)
 
-  unwrap(cont);
+  _(unwrap cont)
   cont->enabled = 0;
-  spec(
+  _(ghost {
     rd = &cont->rsc->rd;
-    atomic(rd) {
-      assert(valid_claim(cont->rd_claim));
-      unclaim(cont->rd_claim, rd, &rd->enabled_protector);
-      unwrap(&rd->enabled_protector);
-      begin_update();
+    _(atomic rd) {
+      _(assert \active_claim(cont->rd_claim))
+      _(ghost \destroy_claim(cont->rd_claim, {rd, &rd->enabled_protector}));
+      _(unwrap &rd->enabled_protector)
+      _(begin_update)
       rd->enabled = 0;
     }
-    wrap(&rd->enabled_protector);
-    tmp = claim(rd, &rd->enabled_protector, rd->alive && !rd->enabled && rd->protected_obj == when_claimed(cont->rsc));
-    giveup_owner(cont->rd_claim, cont);
+    _(wrap &rd->enabled_protector)
+    tmp = \make_claim({rd, &rd->enabled_protector}, rd->alive && !rd->enabled && rd->protected_obj == \when_claimed(cont->rsc));
+    _(ghost cont->\owns -= cont->rd_claim);
     cont->rd_claim = tmp;
-    set_owner(cont->rd_claim, cont);
-    wrap(cont);
-  )
+    _(ghost cont->\owns += cont->rd_claim);
+    _(wrap cont)
+  })
 }
 
 Resource *KillRundownContainerDead(RundownContainer *cont)
-  writes(cont)
-  requires(wrapped(cont))
-  ensures(old(cont->rsc) == result)
-  ensures(wrapped(result))
-  requires(!cont->enabled)
-  requires(is_malloc_root(cont))
+  _(writes cont)
+  _(requires \wrapped(cont))
+  _(ensures \old(cont->rsc) == \result)
+  _(ensures \wrapped(\result))
+  _(requires !cont->enabled)
+  _(requires \malloc_root(cont))
 {
   Resource *rsc;
   unsigned int cur_count;
   Rundown *rd = &cont->rsc->rd;
-  spec(claim_t tmp, is_zero; )
+  _(ghost \claim tmp, is_zero;) 
 
-  unwrap(cont);
+  _(unwrap cont)
     rsc = cont->rsc;
 
     do
-      invariant(ref_cnt(cont->rd_claim) == 0)
-      invariant(wrapped(cont->rd_claim))
-      writes(cont->rd_claim)
+      _(invariant (cont->rd_claim)->\claim_count == 0)
+      _(invariant \wrapped(cont->rd_claim))
+      _(writes cont->rd_claim)
     {
-      atomic (cont->rd_claim, rd) {
+      _(atomic cont->rd_claim, rd) {
         cur_count = rd->count;
-        spec(
-           if (cur_count == 0) {
-             is_zero = claim(cont->rd_claim, rd->count == 0);
+        
+           _(ghost if (cur_count == 0) {
+             is_zero = \make_claim({cont->rd_claim}, rd->count == 0);
            })
       }
     } while (cur_count != 0);
 
-    spec(
-      atomic(rd) {
-        assert(valid_claim(is_zero));
-        assert(valid_claim(cont->rd_claim));
-        unclaim(is_zero, cont->rd_claim);
-        unclaim(cont->rd_claim, rd, &rd->enabled_protector);
-        unwrap(&rd->enabled_protector);
-        begin_update();
+    _(ghost {
+      _(atomic rd) {
+        _(assert \active_claim(is_zero))
+        _(assert \active_claim(cont->rd_claim))
+        _(ghost \destroy_claim(is_zero, {cont->rd_claim}));
+        _(ghost \destroy_claim(cont->rd_claim, {rd, &rd->enabled_protector}));
+        _(unwrap &rd->enabled_protector)
+        _(begin_update)
         tmp = rd->self_claim;
-        giveup_closed_owner(rd->self_claim, rd);
+        _(ghost rd->\owns -= rd->self_claim);
         rd->alive = 0;
       }
-      unclaim(tmp, rd);
-      unwrap(rd);
-    )
+      _(ghost \destroy_claim(tmp, {rd}));
+      _(unwrap rd)
+    })
   free(cont);
   return rsc;
 }
 
-void UseRundown(Resource *a, Rundown *r claimp(rdi))
-  always(rdi, closed(r) && r->protected_obj == a && r->enabled )
+void UseRundown(Resource *a, Rundown *r _(ghost \claim rdi))
+  _(always rdi, r->\consistent && r->protected_obj == a && r->enabled)
 {
-  spec( claim_t ac; )
-  ReferenceRundown(r spec(out ac) spec(rdi));
-  atomic(rdi, ac, a) {
+   _(ghost \claim ac;) 
+  ReferenceRundown(r _(out ac) _(ghost rdi));
+  _(atomic rdi, ac, a) {
     a->x = 12;
   }
-  DereferenceRundown(r spec(ac));
+  DereferenceRundown(r _(ghost ac));
 }
 
 /*`
