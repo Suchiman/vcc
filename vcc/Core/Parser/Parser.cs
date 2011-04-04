@@ -696,10 +696,13 @@ namespace Microsoft.Research.Vcc.Parsing {
         declarations.Add(new VccLocalDeclaration(declarator.Identifier, initializer, specifiers, this.InSpecCode, slb));
       }
 
-
       //TODO: There may also be constant pointers - this would need to be dealt with differently
       if (TypeExpressionHasPointerType(localType) != null)
         constOrVolatile &= ~FieldDeclaration.Flags.ReadOnly;
+
+      // stack allocated arrays are readonly, so that they cannot be used as lvalues
+      if (localType is VccArrayTypeExpression)
+        constOrVolatile |= FieldDeclaration.Flags.ReadOnly;
 
       statements.Add(new LocalDeclarationsStatement((constOrVolatile & FieldDeclaration.Flags.ReadOnly) != 0, false, false, localType, declarations, slb));
     }
