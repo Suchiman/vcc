@@ -150,3 +150,14 @@ void foo() {
 `
 Verification of foo succeeded.
 `
+`/newsyntax
+#include "vcc.h"
+
+void test() {
+  unsigned char x;
+  _(ghost \integer y)
+  _(assert x<y || \true)
+}
+`
+Verification of test succeeded.
+`
