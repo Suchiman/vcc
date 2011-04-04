@@ -797,10 +797,10 @@ namespace Microsoft.Research.Vcc {
       bool foundError = false;
       var argumentTypeEnum = this.ArgumentTypes.GetEnumerator();
 
-      foreach (var rngOrDom in new[] { "range", "domain" }) {
+      foreach (var rngOrDom in new[] { "domain", "range" }) {
         argumentTypeEnum.MoveNext();
         var te = argumentTypeEnum.Current;
-        if (te is ArrayTypeExpression) {
+        if (te is ArrayTypeExpression || te.ResolvedType == this.Compilation.PlatformType.SystemVoid.ResolvedType) {
           foundError = true;
           this.Helper.ReportError(new VccErrorMessage(te.SourceLocation, Error.IllegalTypeInMap, this.Helper.GetTypeName(te.ResolvedType), rngOrDom));
         }

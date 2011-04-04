@@ -650,5 +650,13 @@ Verification of foo succeeded.
 
 void bar() { spec(void f[int];) }
 `
-Illegal type 'void' in map range.
+testcase(3,30) : error VC0000: Illegal type 'void' in map range.
+testcase(3,30) : error VC0000: 'f' : illegal use of type 'void'.
+`
+#include "vcc.h"
+
+void bar() { spec(int f[void];) }
+`
+testcase(3,36) : error VC0000: Illegal type 'void' in map domain.
+testcase(3,30) : error VC0000: 'f' : illegal use of type 'void'.
 `
