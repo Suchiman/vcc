@@ -1,19 +1,20 @@
+//`/newsyntax
 #include <vcc2test.h>
 
 struct Collection {
   int *arr;
   int ver;
   
-  def_group(Shadow, vcc(claimable))
-  spec( in_group(Shadow) volatile state_t shadow; )
-  inv_group(Shadow, approves(owner(this), shadow))
-  inv_group(Shadow, in_state(old(shadow), ver) <= in_state(shadow, ver) )
-  inv_group(Shadow, in_state(old(shadow), ver) == in_state(shadow, ver) ==>
-                       in_state(old(shadow), arr) == in_state(shadow, arr))
+  _(group  _(claimable) Shadow)
+   _(ghost _(:Shadow) volatile \state shadow;) 
+  _(invariant :Shadow \approves(\this->\owner, shadow))
+  _(invariant :Shadow \at(\old(shadow), ver) <= \at(shadow, ver))
+  _(invariant :Shadow \at(\old(shadow), ver) == \at(shadow, ver) ==>
+                       \at(\old(shadow), arr) == \at(shadow, arr))
   
-  invariant(keeps(this::Shadow))
-  invariant(in_state(shadow, arr) == arr)
-  invariant(in_state(shadow, ver) == ver)
+  _(invariant \mine(\this::Shadow))
+  _(invariant \at(shadow, arr) == arr)
+  _(invariant \at(shadow, ver) == ver)
 };
 
 
@@ -24,72 +25,71 @@ void init()
     coll->arr = NULL;
     coll->ver = 0;
 
-    spec(
-      coll->shadow = current_state();
-      wrap(coll::Shadow);
-      wrap(coll);
-    )
+    _(ghost {
+      coll->shadow = \now();
+      _(wrap coll::Shadow)
+      _(wrap coll)
+    })
   }
 }
 
 
 void add(struct Collection *c)
-  maintains(wrapped(c))
-  requires(c->ver < 100000)
-  writes(c)
+  _(maintains \wrapped(c))
+  _(requires c->ver < 100000)
+  _(writes c)
 {
   int x;
 
-  expose(c) {
-    assert(inv(c));
+  _(unwrapping c) {
+    _(assert \inv(c))
     c->arr = &x;
     c->ver++;
     
-    spec(
-      atomic(c::Shadow) {
-        c->shadow = current_state();
-	bump_volatile_version(c::Shadow);
-      }
-    )
+    
+      _(ghost _(atomic c::Shadow) {
+        c->shadow = \now();
+	_(bump_volatile_version c::Shadow)
+      })
   }
 }
 
 struct Iterator {
   struct Collection *coll;
   int ver;
-  spec( claim_t cl; )
-  spec( int *arr; )
+   _(ghost \claim cl;) 
+   _(ghost int *arr;) 
 
-#define shadow_copy(o, f) in_state((o)->shadow, in_state(current_state(), o)->f)
-  invariant(keeps(cl) && claims_obj(cl, coll::Shadow))
-  invariant(shadow_copy(coll, ver) >= ver)
-  invariant(shadow_copy(coll, ver) == ver ==> shadow_copy(coll, arr) == arr)
+#define shadow_copy(o, f) \at((o)->shadow, \at(\now(), o)->f)
+  _(invariant \mine(cl) && \claims_object(cl, coll::Shadow))
+  _(invariant shadow_copy(coll, ver) >= ver)
+  _(invariant shadow_copy(coll, ver) == ver ==> shadow_copy(coll, arr) == arr)
 };
 
 void get_iter(struct Collection *c)
-  requires(wrapped(c))
+  _(requires \wrapped(c))
 {
   struct Iterator *iter = (struct Iterator *)malloc(sizeof(struct Iterator));
   if (iter != NULL) {
     iter->coll = c;
     iter->ver = c->ver;
-    spec( iter->arr = c->arr; )
-    atomic(c) {
-      spec( iter->cl = claim(c::Shadow, true); )
+     _(ghost iter->arr = c->arr;) 
+    _(atomic c) {
+       _(ghost iter->cl = \make_claim({c::Shadow}, \true);) 
     }
 
-    wrap(iter);
+    _(wrap iter)
   }
 }
 
 void iterate(struct Iterator *it)
-  maintains(wrapped(it))
-  requires(wrapped(it->coll))
-  requires(it->ver == it->coll->ver)
-  writes(it)
+  _(maintains \wrapped(it))
+  _(requires \wrapped(it->coll))
+  _(requires it->ver == it->coll->ver)
+  _(writes it)
 {
-  expose(it) {
-    assert(it->arr == it->coll->arr);
+  _(unwrapping it) {
+    _(assert it->arr == it->coll->arr)
   }
 }
 

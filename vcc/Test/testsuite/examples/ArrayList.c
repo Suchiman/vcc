@@ -1,3 +1,4 @@
+//`/newsyntax
 // ----------------------------------------------------------------------------
 // ArrayList.c
 //
@@ -15,100 +16,99 @@ struct ArrayList{
     size_t length;
     int *array;
 
-    invariant(
-       is_malloc_root(this)
+    _(invariant \malloc_root(\this)
     && length <= capacity
-    && keeps(as_array(array, capacity))
-    && typed(as_array(array, capacity))
-    && is_malloc_root(as_array(array, capacity)))
+    && \mine((void[capacity])array)
+    && ((void[capacity])array)->\valid
+    && \malloc_root((void[capacity])array))
 };
 
-ispure
+_(pure)
 size_t Length(struct ArrayList *A)
-    reads(A)
-    requires(wrapped(A))
-    returns(A->length)
+    _(reads A)
+    _(requires \wrapped(A))
+    _(returns A->length)
 {
     return A->length;
 }
 
 struct ArrayList *CreateArrayList(size_t InitialCapacity)
-  requires(0 < InitialCapacity)
-  ensures(wrapped(result))
-  ensures(Length(result)==0)
-  ensures(is_fresh(result))
+  _(requires 0 < InitialCapacity)
+  _(ensures \wrapped(\result))
+  _(ensures Length(\result)==0)
+  _(ensures \fresh(\result))
 {
     struct ArrayList *A;
-    spec(obj_t arr;)
+    _(ghost \object arr)
 
     A = malloc(sizeof(*A));
-    assume(A != NULL);
+    _(assume A != NULL)
 
     A->capacity = InitialCapacity;
     A->length = 0;
     A->array = malloc(sizeof(*A->array) * InitialCapacity);
-    assume(A->array != NULL);
+    _(assume A->array != NULL)
 
-    spec(arr = as_array(A->array, InitialCapacity);)
-    wrap(arr);
-    set_owns(A, SET(arr));
-    wrap(A);
+    _(ghost arr = (void[InitialCapacity])(A->array))
+    _(wrap arr)
+    _(ghost A->\owns =  {arr});
+    _(wrap A)
     return A;
 }
 
 void MakeEmpty(struct ArrayList *A)
-    maintains(wrapped(A))
-    ensures(Length(A)==0)
-    writes(A)
+    _(maintains \wrapped(A))
+    _(ensures Length(A)==0)
+    _(writes A)
 {
-    unwrap(A);
+    _(unwrap A)
     A->length = 0;
-    wrap(A);
+    _(wrap A)
 }
 
-ispure
+_(pure)
 int Select(struct ArrayList *A, size_t i)
-    requires(i < Length(A))
-    requires(wrapped(A))
-    ensures(result == A->array[i])
-    reads(set_universe())
+    _(requires i < Length(A))
+    _(requires \wrapped(A))
+    _(ensures \result == A->array[i])
+    _(reads \universe())
 {
     return A->array[i];
 }
 
 void Update(struct ArrayList *A, size_t i, int v)
-    requires(i < Length(A))
-    requires(wrapped(A))
-    writes(A)
+    _(requires i < Length(A))
+    _(requires \wrapped(A))
+    _(writes A)
 {
-    unwrap(A);
-    unwrap(as_array(A->array, A->capacity));
+    _(unwrap A)
+    _(unwrap (void[A->capacity])(A->array))
     A->array[i] = v;
-    wrap(as_array(A->array, A->capacity));
-    wrap(A);
+    _(wrap (void[A->capacity])(A->array))
+    _(wrap A)
 }
 
 void DisposeArrayList(struct ArrayList *A)
-    requires(wrapped(A))
-    writes(A)
+    _(requires \wrapped(A))
+    _(writes A)
 {
-    unwrap(A);
-    unwrap(as_array(A->array, A->capacity));
-    free(as_array(A->array, A->capacity));
+    _(unwrap A)
+    _(unwrap (void[A->capacity])(A->array))
+    free((void[A->capacity])(A->array));
     A->array = (int *) NULL;
     free(A);
 }
 
 void Add(struct ArrayList *A, int v)
-    requires(Length(A) < 100000)
-    maintains(wrapped(A))
-    ensures(Length(A)==old(Length(A))+1)
+    _(requires Length(A) < 100000)
+    _(maintains \wrapped(A))
+    _(ensures Length(A)==\old(Length(A))+1)
     // Note: there should be additional postconditions / annotations on the
     // elements of A after returning
-    writes(A)
+    _(writes A)
 {
-    unwrap(A);
-    unwrap(as_array(A->array, A->capacity));
+    _(unwrap A)
+    _(unwrap (void[A->capacity])(A->array))
     if (A->capacity == A->length) {
         size_t i;
         int *tmp;
@@ -117,24 +117,24 @@ void Add(struct ArrayList *A, int v)
         newCapacity = A->capacity * 2 + 1;
 
         tmp = malloc(sizeof(*A->array) * newCapacity);
-        assume(tmp != NULL);
+        _(assume tmp != NULL)
 
         i = 0;
         while (i < A->length)
-            writes(array_range(tmp, A->length))
+            _(writes \array_range(tmp, A->length))
         {
             tmp[i] = A->array[i];
             i = i + 1;
         }
-        free(as_array(A->array, A->capacity));
+        free((void[A->capacity])(A->array));
         A->capacity = newCapacity;
         A->array = tmp;
-        set_owns(A, SET(as_array(A->array, A->capacity)));
+        _(ghost A->\owns =  {(void[A->capacity])(A->array)});
     }
     A->array[A->length] = v;
     A->length++;
-    wrap(as_array(A->array, A->capacity));
-    wrap(A);
+    _(wrap (void[A->capacity])(A->array))
+    _(wrap A)
 }
 
 int main_test()
@@ -144,8 +144,8 @@ int main_test()
     size_t i = 0;
 
     while (i < N)
-        invariant(wrapped(A))
-        invariant(Length(A)==i)
+        _(invariant \wrapped(A))
+        _(invariant Length(A)==i)
     {
         Add(A, (int)i);
         i++;

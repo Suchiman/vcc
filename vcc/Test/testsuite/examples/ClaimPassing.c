@@ -1,60 +1,61 @@
+//`/newsyntax
 #include <vcc2test.h>
 
-struct vcc(claimable) A {
+_(claimable) struct A {
   volatile int x;
-  invariant( unchanged(x) || old(x) + 1 == x )
+  _(invariant \unchanged(x) || \old(x) + 1 == x)
 };
 
-void incr(struct A *a, int *res claimp(c) claimp(out cres))
-  writes(c, res)
-  always(c, closed(a))
+void incr(struct A *a, int *res _(ghost \claim c) _(out \claim cres))
+  _(writes c, res)
+  _(always c, a->\consistent)
   // there will be a single new child to c
-  ensures(ref_cnt(c) == old(ref_cnt(c)) + 1)
+  _(ensures c->\claim_count == \old(c->\claim_count) + 1)
   // the claim we return will be child of c
-  ensures(claims_obj(cres, c))
+  _(ensures \claims_object(cres, c))
   // it will be wrapped without any references
-  ensures(wrapped0(cres))
+  _(ensures \wrapped0(cres))
   // and it will guarantee a condition about a->x
-  ensures(claims(cres, a->x >= when_claimed(*res)))
+  _(ensures \claims(cres, a->x >= \when_claimed(*res)))
   // and it was not allocated before
-  ensures(is_fresh(cres))
+  _(ensures \fresh(cres))
   // we don't free the result parameter
-  ensures(mutable(res))
+  _(ensures \mutable(res))
 {
   int val;
 
-  atomic(c,a) {
+  _(atomic c,a) {
     val = a->x;
   }
   
   *res = val;
-  spec( cres = claim(c, when_claimed(*res) <= a->x); )
+   _(ghost cres = \make_claim({c}, \when_claimed(*res) <= a->x);) 
 }
 
 void use_case()
 {
   struct A *a;
   int tmp;
-  spec( claim_t c; )
-  spec( claim_t c2; )
+   _(ghost \claim c;) 
+   _(ghost \claim c2;) 
 
   a = malloc(sizeof(*a));
-  assume(a != NULL);
+  _(assume a != NULL)
   a->x = 0;
-  wrap(a);
+  _(wrap a)
 
-  spec( c = claim(a, true); )
-  incr(a, &tmp spec(c) spec(out c2) );
-  assert(wrapped(c));
+   _(ghost c = \make_claim({a}, \true);) 
+  incr(a, &tmp _(ghost c) _(out c2) );
+  _(assert \wrapped(c))
  
-  assert(valid_claim(c2));
-  assert(tmp <= a->x);
+  _(assert \active_claim(c2))
+  _(assert tmp <= a->x)
 
-  assert(wrapped(c));
+  _(assert \wrapped(c))
 
-  unclaim(c2, c);
-  unclaim(c, a);
-  unwrap(a);
+  _(ghost \destroy_claim(c2, {c}));
+  _(ghost \destroy_claim(c, {a}));
+  _(unwrap a)
   free(a);
 }
 

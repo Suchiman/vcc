@@ -1,3 +1,4 @@
+//`/newsyntax
 
 #include <vcc.h>
 
@@ -23,69 +24,66 @@ typedef struct _ENTRY
             UINT64 : 40;
         };
 
-        backing_member UINT64 AsUINT64;
+        _(backing_member) UINT64 AsUINT64;
     };
 
     union
     {
-        backing_member struct _ENTRY *NextPfn;
+        _(backing_member) struct _ENTRY *NextPfn;
         UINT64 Available2;
     };
-    
-    invariant(keeps())
 } ENTRY, *PENTRY;
 
-typedef struct vcc(dynamic_owns) _RESERVE
+typedef _(dynamic_owns) struct _RESERVE
 {
     void *Compartment;
     void *ListHead;   
     UINT64 ListDepth;
 
-    spec(UINT64 ListIndex[struct _ENTRY *];)
-    spec(PENTRY _ListHead;)
+    _(ghost UINT64 ListIndex[struct _ENTRY *])
+    _(ghost PENTRY _ListHead)
     
-    invariant(Compartment != NULL)
-    invariant(_ListHead == (PENTRY)ListHead)
-    invariant(_ListHead == NULL <==> ListDepth == 0)
-    invariant(_ListHead == NULL || set_in0(_ListHead, owns(this)))
-    invariant(forall(obj_t p; {set_in0(p,owns(this))} set_in0(p, owns(this)) ==> is(p, ENTRY) && typed(p)))
-    invariant(forall(PENTRY p; { set_in0(p->NextPfn, owns(this)) } set_in0(p, owns(this)) ==> ((p->NextPfn == NULL) || set_in0(p->NextPfn, owns(this)))))
-    invariant(forall(PENTRY p; { set_in0(p, owns(this)) } set_in0(p, owns(this)) ==> (p->NextPfn == NULL) || ListIndex[p] == ListIndex[p->NextPfn] + 1))
-    invariant(forall(PENTRY p; { set_in0(p, owns(this)) } set_in0(p, owns(this)) ==> (ListIndex[p] == 0 <==> p->NextPfn == NULL)))
-    invariant(_ListHead != NULL ==> ListIndex[_ListHead] + 1 == ListDepth)
-    invariant(forall(PENTRY p; { set_in0(p, owns(this)) } set_in0(p, owns(this)) ==> ListDepth > ListIndex[p]))
-    invariant(forall(PENTRY p; { set_in0(p, owns(this)) } set_in0(p, owns(this)) ==> p->h&& (p->f || p->g)))
+    _(invariant Compartment != NULL)
+    _(invariant _ListHead == (PENTRY)ListHead)
+    _(invariant _ListHead == NULL <==> ListDepth == 0)
+    _(invariant _ListHead == NULL || _ListHead \in0 \this->\owns)
+    _(invariant \forall \object p; {p \in0 \this->\owns} p \in0 \this->\owns ==> p \is ENTRY && p->\valid)
+    _(invariant \forall PENTRY p; { p->NextPfn \in0 \this->\owns } p \in0 \this->\owns ==> ((p->NextPfn == NULL) || p->NextPfn \in0 \this->\owns))
+    _(invariant \forall PENTRY p; { p \in0 \this->\owns } p \in0 \this->\owns ==> (p->NextPfn == NULL) || ListIndex[p] == ListIndex[p->NextPfn] + 1)
+    _(invariant \forall PENTRY p; { p \in0 \this->\owns } p \in0 \this->\owns ==> (ListIndex[p] == 0 <==> p->NextPfn == NULL))
+    _(invariant _ListHead != NULL ==> ListIndex[_ListHead] + 1 == ListDepth)
+    _(invariant \forall PENTRY p; { p \in0 \this->\owns } p \in0 \this->\owns ==> ListDepth > ListIndex[p])
+    _(invariant \forall PENTRY p; { p \in0 \this->\owns } p \in0 \this->\owns ==> p->h&& (p->f || p->g))
     
 } RESERVE, *PRESERVE;
 
 void
 Check(PRESERVE Reserve)
-    maintains(wrapped(Reserve))
+    _(maintains \wrapped(Reserve))
 {
     UINT64 pageCount;
     PENTRY pfn;
 
-    assert(Reserve != NULL);
-    assert(Reserve->Compartment != NULL);
+    _(assert Reserve != NULL)
+    _(assert Reserve->Compartment != NULL)
         
     for (pfn = (PENTRY) Reserve->ListHead, pageCount = Reserve->ListDepth;
          pageCount != 0;
          pfn = pfn->NextPfn, pageCount--)
-    invariant(pfn == NULL || set_in0(pfn, owns(Reserve)))
-    invariant(pfn == NULL <==> pageCount == 0)
-    invariant(pfn == NULL || pageCount == Reserve->ListIndex[pfn] + 1)
+    _(invariant pfn == NULL || pfn \in0 Reserve->\owns)
+    _(invariant pfn == NULL <==> pageCount == 0)
+    _(invariant pfn == NULL || pageCount == Reserve->ListIndex[pfn] + 1)
     {
-      assert(pfn != NULL);
-      assert(pfn->h);
-      assert(pfn->f || pfn->g);
+      _(assert pfn != NULL)
+      _(assert pfn->h)
+      _(assert pfn->f || pfn->g)
     }
 
-    assert(pfn == NULL);
+    _(assert pfn == NULL)
     return;
 }
 
 /*`
-Verification of _ENTRY#adm succeeded.
 Verification of _RESERVE#adm succeeded.
 Verification of Check succeeded.
 `*/

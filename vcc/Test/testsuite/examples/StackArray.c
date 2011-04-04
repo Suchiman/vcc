@@ -1,3 +1,4 @@
+//`/newsyntax
 #include <stdlib.h>
 #include "vcc.h"
 
@@ -6,98 +7,98 @@
 struct Stack {
     size_t topOfStack;
     int array[CAPACITY];
-    invariant(is_malloc_root(this) && topOfStack <= CAPACITY)
+    _(invariant \malloc_root(\this) && topOfStack <= CAPACITY)
 };
 
-frameaxiom
+_(frameaxiom)
 bool IsEmpty(struct Stack *S)
-    reads(S)
-    requires(wrapped(S))
-    returns(S->topOfStack == 0)
+    _(reads S)
+    _(requires \wrapped(S))
+    _(returns S->topOfStack == 0)
 {
     return S->topOfStack == 0;
 }
 
-ispure
+_(pure)
 bool IsFull(struct Stack *S)
-    reads(S)
-    requires(wrapped(S))
-    returns(S->topOfStack == CAPACITY)
+    _(reads S)
+    _(requires \wrapped(S))
+    _(returns S->topOfStack == CAPACITY)
 {
     return S->topOfStack == CAPACITY;
 }
 
-ispure
+_(pure)
 size_t Length(struct Stack *S)
-    reads(S)
-    requires(wrapped(S))
-    returns(S->topOfStack)
+    _(reads S)
+    _(requires \wrapped(S))
+    _(returns S->topOfStack)
 {
     return S->topOfStack;
 }
 
 struct Stack *CreateStack()
-    ensures(result == NULL ||
-	    wrapped(result) && is_fresh(result) && IsEmpty(result))
+    _(ensures \result == NULL ||
+	    \wrapped(\result) && \fresh(\result) && IsEmpty(\result))
 {
     struct Stack *S;
 
     S = malloc(sizeof(*S));
     if (S != NULL) {
         S->topOfStack = 0;
-        wrap(S);
+        _(wrap S)
     }
     return S;
 }
 
 void DisposeStack(struct Stack *S)
-    requires(wrapped(S))
-    writes(S)
+    _(requires \wrapped(S))
+    _(writes S)
 {
-    unwrap(S);
+    _(unwrap S)
     free(S);
 }
 
 void MakeEmpty(struct Stack *S)
-    maintains(wrapped(S))
-    ensures(IsEmpty(S))
-    writes(S)
+    _(maintains \wrapped(S))
+    _(ensures IsEmpty(S))
+    _(writes S)
 {
-    unwrap(S);
+    _(unwrap S)
     S->topOfStack = 0;
-    wrap(S);
+    _(wrap S)
 }
 
 void Push(struct Stack *S, int X)
-    maintains(wrapped(S))
-    requires(!IsFull(S))
-    ensures(!IsEmpty(S))
-    ensures(S->topOfStack==old(S->topOfStack) + 1)
-    writes(S)
+    _(maintains \wrapped(S))
+    _(requires !IsFull(S))
+    _(ensures !IsEmpty(S))
+    _(ensures S->topOfStack==\old(S->topOfStack) + 1)
+    _(writes S)
 {
-    unwrap(S);
+    _(unwrap S)
     S->array[S->topOfStack++] = X;
-    wrap(S);
+    _(wrap S)
 }
 
 int Top(struct Stack *S)
-    requires(!IsEmpty(S))
-    requires(wrapped(S))
-    returns(S->array[S->topOfStack-1])
+    _(requires !IsEmpty(S))
+    _(requires \wrapped(S))
+    _(returns S->array[S->topOfStack-1])
 {
     return S->array[S->topOfStack-1];
 }
 
 void Pop(struct Stack *S)
-    maintains(wrapped(S))
-    requires(!IsEmpty(S))
-    ensures(!IsFull(S))
-    ensures(S->topOfStack==old(S->topOfStack) - 1)
-    writes(S)
+    _(maintains \wrapped(S))
+    _(requires !IsEmpty(S))
+    _(ensures !IsFull(S))
+    _(ensures S->topOfStack==\old(S->topOfStack) - 1)
+    _(writes S)
 {
-    unwrap(S);
+    _(unwrap S)
     S->topOfStack--;
-    wrap(S);
+    _(wrap S)
 }
 
 void test_main()
@@ -109,19 +110,19 @@ void test_main()
     S = CreateStack();
 
     if (S!=NULL) {
-        assert(IsEmpty(S));
+        _(assert IsEmpty(S))
         i = 0;
         while (i < CAPACITY)
-            invariant(wrapped(S))
-            invariant(i == Length(S))
+            _(invariant \wrapped(S))
+            _(invariant i == Length(S))
         {   
-            Push(S, unchecked((int)i));
+            Push(S, _(unchecked)((int)i));
             i++;
         }
 
         while (i > 0)
-            invariant(wrapped(S))
-            invariant(i == Length(S))
+            _(invariant \wrapped(S))
+            _(invariant i == Length(S))
         {   
             j = Top(S);
             Pop(S);

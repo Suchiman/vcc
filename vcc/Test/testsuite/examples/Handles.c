@@ -1,23 +1,24 @@
+//`/newsyntax
 #include <vcc2test.h>
 
 struct X { int y; };
 
 struct Data {
   int dummy;
-  spec( volatile bool handles[struct Handle*]; )
-  on_unwrap(forall(struct Handle *h; ! handles[h]))
-  invariant(approves(owner(this), handles))
+   _(ghost volatile bool handles[struct Handle*];) 
+  _(invariant \on_unwrap(\this, \forall struct Handle *h; ! handles[h]))
+  _(invariant \approves(\this->\owner, handles))
   //invariant(forall(struct Handle *h; closed(h) && h->data == this ==> handles[h]))
-  invariant(forall(struct Handle *h; old(handles[h]) && !handles[h] ==> !closed(h)))
+  _(invariant \forall struct Handle *h; \old(handles[h]) && !handles[h] ==> !h->\consistent)
 };
 
 struct Handle {
   int dummy;
-  spec( struct Data *data; )
-  invariant(typed_phys(this) && closed(data) && data->handles[this])
+   _(ghost struct Data *data;) 
+  _(invariant (\this->\valid && !\ghost(\this)) && data->\consistent && data->handles[\this])
 };
 
-void foo(struct X *x) writes(extent(x)) maintains(mutable(x) && is_object_root(x));
+void foo(struct X *x) _(writes \extent(x)) _(maintains \mutable(x) && \object_root(x));
 
 void wrapped_use()
 {
@@ -25,38 +26,38 @@ void wrapped_use()
   struct Handle h;
   struct X x;
 
-  spec(
+  _(ghost {
 
-  d.handles = lambda(struct Handle *h; true; false);
-  assert(forall(struct Handle *h; h->data == &d ==> !inv(h)));
-  wrap(&d);
-  assert(in_domain(&d,&d));
+  d.handles = (\lambda struct Handle *h; (\false));
+  _(assert \forall struct Handle *h; h->data == &d ==> !\inv(h))
+  _(wrap &d)
+  _(assert &d \in \domain(&d))
 
-  atomic(&d) {
-    d.handles = lambda(struct Handle *hh; true; hh == &h);
-    bump_volatile_version(&d);
+  _(atomic &d) {
+    d.handles = (\lambda struct Handle *hh; (hh == &h));
+    _(bump_volatile_version &d)
   }
-  assert(in_domain(&d,&d));
+  _(assert &d \in \domain(&d))
   h.data = &d;
-  wrap(&h);
+  _(wrap &h)
 
-  )
+  })
 
   foo(&x);
 
-  spec(
+  _(ghost {
 
-  atomic(&d) {
-    unwrap(&h);
-    begin_update();
-    d.handles = lambda(struct Handle *hh; true; false);
-    bump_volatile_version(&d);
+  _(atomic &d) {
+    _(unwrap &h)
+    _(begin_update)
+    d.handles = (\lambda struct Handle *hh; (\false));
+    _(bump_volatile_version &d)
   }
-  assert(in_domain(&d,&d));
+  _(assert &d \in \domain(&d))
 
-  unwrap(&d);
+  _(unwrap &d)
 
-  )
+  })
 }
 
 struct Container {
@@ -64,34 +65,34 @@ struct Container {
   struct Handle h;
   struct Handle h2;
 
-  invariant(keeps(&d))
-  invariant(forall(struct Handle *hh; d.handles[hh] ==> hh == &h || hh == &h2))
+  _(invariant \mine(&d))
+  _(invariant \forall struct Handle *hh; d.handles[hh] ==> hh == &h || hh == &h2)
 };
 
 void init()
 {
   struct Container *c = (struct Container *)malloc(sizeof(struct Container));
   if (c != NULL) {
-    spec( c->d.handles = lambda(struct Handle *h; true; false); )
-    assert(forall(struct Handle *h; h->data == &c->d ==> !inv(h)));
-    wrap(&c->d);
-    wrap(c);
+     _(ghost c->d.handles = (\lambda struct Handle *h; (\false));) 
+    _(assert \forall struct Handle *h; h->data == &c->d ==> !\inv(h))
+    _(wrap &c->d)
+    _(wrap c)
   }
 }
 
 void closed_use(struct Container *c)
-  writes(extent(&c->h))
-  requires(wrapped(c))
-  ensures(wrapped(&c->h) && c->h.data == &c->d)
+  _(writes \extent(&c->h))
+  _(requires \wrapped(c))
+  _(ensures \wrapped(&c->h) && c->h.data == &c->d)
 {
-spec(
-  atomic(&c->d) {
-    assert(inv(c));
-    c->d.handles = lambda(struct Handle *hh; true; hh == &c->h || c->d.handles[hh]);
+_(ghost {
+  _(atomic &c->d) {
+    _(assert \inv(c))
+    c->d.handles = (\lambda struct Handle *hh; (hh == &c->h || c->d.handles[hh]));
   }
   c->h.data = &c->d;
-  wrap(&c->h);
-)
+  _(wrap &c->h)
+})
 }
 
 /*`

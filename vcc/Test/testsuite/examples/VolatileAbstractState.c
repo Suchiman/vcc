@@ -1,58 +1,59 @@
+//`/newsyntax
 #include <vcc.h>
 
-spec(
-  struct vcc(claimable) Protector {
-    int dummy;
-  };
-)
 
-spec(
-  struct vcc(claimable) AbstractStruct
+  _(ghost _(claimable) struct Protector {
+    int dummy;
+  };)
+
+
+
+  _(ghost _(claimable) struct AbstractStruct
   {
     volatile int value;
     struct Protector protector;
 
     // By claiming the protector, a claim that abs->value doesn't change can be
     // established.
-    invariant(closed(&protector) ==> unchanged(value))
+    _(invariant (&protector)->\consistent ==> \unchanged(value))
     // The other case.
-    invariant(value == 2*old(value) || unchanged(value))
-  };
-)
+    _(invariant value == 2*\old(value) || \unchanged(value))
+  };)
+
 
 struct ConcreteStruct
 {
   int value;
-  spec(struct AbstractStruct *abs;)
-  invariant(keeps(abs, &abs->protector))
+  _(ghost struct AbstractStruct *abs)
+  _(invariant \mine(abs, &abs->protector))
   // We need to make sure no one has a claim on the protector, as we will want
   // to crack it open.
-  invariant(ref_cnt(&abs->protector) == 0)
-  invariant(value == abs->value)
+  _(invariant (&abs->protector)->\claim_count == 0)
+  _(invariant value == abs->value)
 };
 
 int writeStruct(struct ConcreteStruct *s, int v)
-  maintains(wrapped(s))
-  writes(s)
-  requires(v == 2*s->value)
+  _(maintains \wrapped(s))
+  _(writes s)
+  _(requires v == 2*s->value)
 {
-  spec(claim_t c;)
+  _(ghost \claim c)
 
   // Need to save s->abs into a local, otherwise when using s->abs in claims,
   // the prover thinks that it might change (which is true).
-  spec( struct AbstractStruct *abs = s->abs; )
+   _(ghost struct AbstractStruct *abs = s->abs;) 
 
   // We unwrap s and immediately take a claim on the protector and abs.
   // The claim holds initially, because we're right after unwrap, therefore
   // the invariant of s has to hold.
   // The claim holds after step of the machine, because the abs and its protector
   // stay closed, therefore abs->value cannot change.
-  unwrap(s);
-  spec(c = claim(&abs->protector, abs, abs->value == when_claimed(abs->value));)
+  _(unwrap s)
+  _(ghost c = \make_claim({&abs->protector, abs}, abs->value == \when_claimed(abs->value)))
 
   s->value = v;
 
-  atomic(abs) {
+  _(atomic abs) {
     // Here actions of other thread happen ('atomic havoc')
     //
     // Note the missing c in the atomic clause: if we had listed c above, the
@@ -62,24 +63,24 @@ int writeStruct(struct ConcreteStruct *s, int v)
     // of the claim here.
     
     // We use the claim, so we know abs->value didn't change.
-    assert(valid_claim(c));
+    _(assert \active_claim(c))
     // We get rid of the claim...
-    unclaim(c, &abs->protector, abs);
+    _(ghost \destroy_claim(c, {&abs->protector, abs}));
     // ...so that we can crack the protector open.
-    unwrap(&abs->protector);
+    _(unwrap &abs->protector)
 
     // begin_update() gives you write access to s, and also makes
     // the two state invariant of s to be checked between here and
     // the end of the atomic block. Otherwise it does not modify the
     // heap.
-    begin_update();
-    spec(s->abs->value = v;)
+    _(begin_update)
+    _(ghost s->abs->value = v)
   }
   // We close the protector again.
-  wrap(&abs->protector);
+  _(wrap &abs->protector)
   // Then we can close s. Note that there was no other atomic havoc since the
   // beginning of atomic, which is why the invariant of s holds.
-  wrap(s);
+  _(wrap s)
 }
 
 /*`

@@ -1,12 +1,10 @@
+//`/newsyntax
 #include <vcc.h>
 
-#ifndef VERIFY
 #define bool int
 #define true 1
 #define false 0
-#else
 #define NULL 0
-#endif
 
 typedef void *PVOID;
 
@@ -14,10 +12,10 @@ typedef void *PVOID;
 typedef struct Node {
     struct Node *next;
 
-    invariant( depends(owner(this), this) )
+    _(invariant \depends(\this->\owner, \this))
 } *PNODE;
 
-vcc(atomic_inline) PNODE InterlockedCompareExchangePointer(volatile PNODE *Destination, PNODE Exchange, PNODE Comparand) {
+_(atomic_inline) PNODE InterlockedCompareExchangePointer(volatile PNODE *Destination, PNODE Exchange, PNODE Comparand) {
   if (*Destination == Comparand) {
     *Destination = Exchange;
     return Comparand;
@@ -28,74 +26,74 @@ vcc(atomic_inline) PNODE InterlockedCompareExchangePointer(volatile PNODE *Desti
 
 
 typedef struct Node *PNode;
-struct vcc(volatile_owns) Stack {
+_(volatile_owns) struct Stack {
     volatile PNode hd;
 
-    invariant (this->hd == NULL <==> owns(this) == set_empty())
-    invariant (this->hd != NULL <==> owns(this) != set_empty())
-    invariant (this->hd != NULL <==>set_in(this->hd, owns(this)))
-    invariant (this->hd != NULL ==>
-                  forall(struct Node *x; {set_in(x, owns(this))} 
-                    set_in(x, owns(this)) ==> typed(x) && x->next != this->hd)
-               && forall(struct Node *x; {set_in(x->next, owns(this))} 
-                    set_in(x, owns(this)) && x->next != NULL ==> set_in(x->next, owns(this)))
-               && forall(struct Node *x; struct Node *y; {x->next, y->next} 
-                    set_in(x, owns(this)) && set_in(y, owns(this)) && x->next == y->next ==> x == y))
+    _(invariant \this->hd == NULL <==> \this->\owns == {})
+    _(invariant \this->hd != NULL <==> \this->\owns != {})
+    _(invariant \this->hd != NULL <==>\this->hd \in \this->\owns)
+    _(invariant \this->hd != NULL ==>
+                  (\forall struct Node *x; {x \in \this->\owns} 
+                    x \in \this->\owns ==> x->\valid && x->next != \this->hd)
+               && (\forall struct Node *x; {x->next \in \this->\owns} 
+                    x \in \this->\owns && x->next != NULL ==> x->next \in \this->\owns)
+               && \forall struct Node *x; struct Node *y; {x->next, y->next} 
+                    x \in \this->\owns && y \in \this->\owns && x->next == y->next ==> x == y)
 };
 
-bool push(struct Node *n, struct Stack *s claimp(c))
-    always (c, closed(s))
-    requires (owns(n) == set_empty())
-    writes (extent(n))
+bool push(struct Node *n, struct Stack *s _(ghost \claim c))
+    _(always c, s->\consistent)
+    _(requires n->\owns == {})
+    _(writes \extent(n))
 {
     while (true) 
-        invariant (mutable(n) && owns(n) == set_empty())
+        _(invariant \mutable(n) && n->\owns == {})
     {
         struct Node *h;
         bool ok;
 
-        atomic(c, s) {
+        _(atomic c, s) {
           h = s->hd;
 	}
         n->next = h;
 
         ok = false;
-	atomic(c, s) {
-            wrap(n);
-	    begin_update();
+	_(atomic c, s) {
+            _(wrap n)
+	    _(begin_update)
         ok = (InterlockedCompareExchangePointer(&s->hd, n, h) == h);
         if (ok) {
-                assert(!set_in(n, owns(s)));
-                set_closed_owner(n, s);
+                _(assert !(n \in s->\owns))
+                _(ghost s->\owns += n);
             }
 	}
 
         if (ok) 
             return true;
 	
-	unwrap(n);
+	_(unwrap n)
     }
 }
 
 #ifdef NOTYET
 bool pop(struct Node **n, struct Stack *s)
-    invariant (closed(s) && typed(s))
+    _(invariant s->\consistent && s->\valid)
 //    requires (mutable(s->hd))
-    requires (mutable(*n))
-    ensures ((owns(s) == set_empty()) ==> result == false)
-    ensures (set_in(s->hd, owns(s)) ==> result == true)
-    writes (*n, s->hd)
+    _(requires \mutable(*n))
+    _(ensures (s->\owns == {}) ==> \result == \false)
+    _(ensures s->hd \in s->\owns ==> \result == \true)
+    _(writes *n, s->hd)
 {
-    assume (s->hd != NULL);
-    assume (owns(s) != set_empty());
+    _(assume s->hd != NULL)
+    _(assume s->\owns != {})
     
     while (true) 
-    invariant (/*mutable(s->hd) && */mutable(*n) && owns(s) != set_empty())
+    _(invariant /*mutable(s->hd) && */\mutable(*n) && s->\owns != {})
     {
         struct Node *h;
         bool ok;
 
-        h = volatile(s->hd, owns(s) != set_empty());
+        h = volatile(s->hd, s->\owns != {});
 
         assume false;
 
@@ -109,16 +107,16 @@ bool pop(struct Node **n, struct Stack *s)
 */
 //        {
 
-            assert (owns(s) != set_empty());
+            _(assert s->\owns != {})
             ok = false;
-            atomic(s, owns(s) != set_empty()) {
+            _(atomic s, s->\owns != {}) {
                 // InterlockedCompareExchange(&s->hd, h, h->next)
                 if (s->hd == h) {
                     s->hd = h->next;
                     ok = true;
-                    giveup_owner(h, s);
-                    unwrap(h);
-                    assert(!set_in(h, owns(s)));
+                    _(ghost s->\owns -= h);
+                    _(unwrap h)
+                    _(assert !(h \in s->\owns))
                     *n = h;
                 }
             }
