@@ -82,7 +82,11 @@ namespace System.Diagnostics.Contracts
         throw new NotImplementedException();
       }
 
-      public static explicit operator long(BigInt n) {
+      public static implicit operator BigInt(byte n) {
+        throw new NotImplementedException();
+      }
+
+      public static implicit operator BigInt(sbyte n) {
         throw new NotImplementedException();
       }
 
@@ -90,11 +94,24 @@ namespace System.Diagnostics.Contracts
         throw new NotImplementedException();
       }
 
+      public static explicit operator uint(BigInt n) {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator long(BigInt n)
+      {
+        throw new NotImplementedException();
+      }
+
       public static explicit operator ulong(BigInt n) {
         throw new NotImplementedException();
       }
 
-      public static explicit operator uint(BigInt n) {
+      public static explicit operator byte(BigInt n) {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator sbyte(BigInt n) {
         throw new NotImplementedException();
       }
 
