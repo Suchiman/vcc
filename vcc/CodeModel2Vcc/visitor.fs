@@ -1021,7 +1021,7 @@ namespace Microsoft.Research.Vcc
                          C.Type.Bogus
               let t2 = if isAdmissibleMapRangeType t2 then t2
                        else 
-                         helper.Error(token (mapTypes.Item(0)), 9721, "Illegal type '" + t2.ToString() + "' in map range.")
+                         helper.Error(token (mapTypes.Item(1)), 9721, "Illegal type '" + t2.ToString() + "' in map range.")
                          C.Type.Bogus
               typeRes <- C.Type.Map (t1, t2)
             | _ -> assert false
