@@ -1036,7 +1036,7 @@ namespace Microsoft.Research.Vcc {
     private IExpression GetProjectedExpression() {
       VccCompilationHelper helper = (VccCompilationHelper)this.Helper;
       string/*?*/ str = this.Value as string;
-      if (str == null) return CodeDummy.Expression; //TODO: provide invariant that guarantees that str is never null.
+      if (str == null) return CodeDummy.Expression;
       GlobalVariableDeclaration/*?*/ globalVar;
       if (!helper.StringTable.TryGetValue(str, out globalVar)) {
         NameDeclaration dummyName = new NameDeclaration(this.NameTable.GetNameFor("?mappedLiteral"+this.GetHashCode()), this.SourceLocation);
@@ -3442,7 +3442,9 @@ namespace Microsoft.Research.Vcc {
           return ModifiedPointerType.GetModifiedPointerType(this.ElementType.ResolvedType, modifiers, this.Compilation.HostEnvironment.InternFactory);
       }
 
+#pragma warning disable 168
       ITypeDefinition resolvedElementType = this.ElementType.ResolvedType; // !!! We need the side effect of resolving the type !!!
+#pragma warning restore 168
       VccNamedTypeExpression namedType = this.ElementType as VccNamedTypeExpression;
       if (namedType != null && namedType.DidSilentlyResolveToVoid) {
         // turn forward-declated pointers into obj_t
@@ -4765,7 +4767,9 @@ namespace Microsoft.Research.Vcc {
       TypeExpression texpr = TypeExpression.For(this.lambdaExpr.Type);
 
       foreach (var localDeclStmt in localDeclStmts) {
+#pragma warning disable 168
         foreach (var dummy in localDeclStmt.Declarations) // we care only about the number of variables of this type
+#pragma warning restore 168
           targetType = texpr; // keep track of the previous type because it is required for 
         texpr = new VccMapTypeExpressions(localDeclStmt.TypeExpression, texpr, this.NameTable, SourceDummy.SourceLocation);
       }
