@@ -1,8 +1,9 @@
+`/newsyntax
 #include <vcc.h>
 
-struct vcc(dynamic_owns) A {
+_(dynamic_owns) struct A {
   int x;
-  invariant(x > 0)
+  _(invariant x > 0)
 };
 
 
