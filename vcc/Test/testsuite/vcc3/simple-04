@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
@@ -7,41 +8,41 @@ struct A {
 
 
 void fooFail(struct A *a)
-  writes(&a->x)
+  _(writes &a->x)
 {
-  while (true)
-    writes(&a->x,&a->y)
+  while (1)
+    _(writes &a->x,&a->y)
   { a->x = 0; }
 }
 
 void fooOk(struct A *a)
-  writes(&a->x,&a->y)
+  _(writes &a->x,&a->y)
 {
-  while (true)
-    writes(&a->x,&a->y)
+  while (1)
+    _(writes &a->x,&a->y)
   { a->x = 0; }
 }
 
 void fooOkWrap(struct A *a)
-  writes(a)
-  requires(wrapped(a))
+  _(writes a)
+  _(requires \wrapped(a))
 {
-  unwrap(a);
-  while (true)
-    writes(&a->x,&a->y)
+  _(unwrap a)
+  while (1)
+    _(writes &a->x,&a->y)
   { a->x = 0; }
 }
 
 
 void fooFailWrap(struct A *a)
-  writes(a)
-  requires(wrapped(a))
+  _(writes a)
+  _(requires \wrapped(a))
 {
   int z;
-  unwrap(a);
-  wrap(a);
-  while (true)
-    writes(&a->x)
+  _(unwrap a)
+  _(wrap a)
+  while (1)
+    _(writes &a->x)
   {
     z = 0;
   }
@@ -49,9 +50,9 @@ void fooFailWrap(struct A *a)
 
 `
 Verification of fooFail failed.
-testcase(13,15) : error VC8011: writes clause of the loop might not be included writes clause of the function.
+testcase(13,29) : error VC8011: writes clause of the loop might not be included writes clause of the function.
 Verification of fooOk succeeded.
 Verification of fooOkWrap succeeded.
 Verification of fooFailWrap failed.
-testcase(44,15) : error VC8011: writes clause of the loop might not be included writes clause of the function.
+testcase(44,29) : error VC8011: writes clause of the loop might not be included writes clause of the function.
 `

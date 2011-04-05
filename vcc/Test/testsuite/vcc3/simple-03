@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc.h>
 
 struct A {
@@ -15,17 +16,17 @@ void foo()
 {
   struct B *b, *c;
 
-  assume(mutable(b) && mutable(c));
+  _(assume \mutable(b) && \mutable(c))
 
-  assert(set_in(&b->z, extent(b)));
-  assert(set_in(&b->x, extent(b)));
-  assert(set_in(&b->x.a, extent(b)));
-  assert(set_in(&b->y, extent(b)));
-  assert(set_in(&b->y.b, extent(b)));
+  _(assert &b->z \in \extent(b))
+  _(assert &b->x \in \extent(b))
+  _(assert &b->x.a \in \extent(b))
+  _(assert &b->y \in \extent(b))
+  _(assert &b->y.b \in \extent(b))
 
-  assert(set_in(&b->y.b, extent(c)));
+  _(assert &b->y.b \in \extent(c))
 }
 `
 Verification of foo failed.
-testcase(26,12) : error VC9500: Assertion '_vcc_set_in(&b->y.b,_vcc_extent(c))' did not verify.
+testcase(26,26) : error VC9500: Assertion '&b->y.b \in \extent(c)' did not verify.
 `

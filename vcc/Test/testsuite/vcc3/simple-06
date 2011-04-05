@@ -1,3 +1,4 @@
+`/newsyntax
 #include <vcc2.h>
 
 struct A {
@@ -6,9 +7,9 @@ struct A {
 };
 
 void bar(struct A *a)
-  maintains(wrapped(a))
+  _(maintains \wrapped(a))
 {
-  atomic(a) {
+  _(atomic a) {
     a->g = 3;
   }
 }
@@ -19,16 +20,16 @@ void foo()
 
   a.f = 1;
   a.g = 2;
-  wrap(&a);
-  assert(a.f == 1 && a.g == 2);
+  _(wrap &a)
+  _(assert a.f == 1 && a.g == 2)
   bar(&a);
-  assert(a.f == 1);
-  assert(a.g == 2); // should fail
-  unwrap(&a);
+  _(assert a.f == 1)
+  _(assert a.g == 2) // should fail
+  _(unwrap &a)
 
 }
 `
 Verification of bar succeeded.
 Verification of foo failed.
-testcase(26,12) : error VC9500: Assertion 'a.g == 2' did not verify.
+testcase(26,26) : error VC9500: Assertion 'a.g == 2' did not verify.
 `

@@ -1,4 +1,5 @@
-`/ps:32
+`/ps:32 /newsyntax
+
 #include <vcc.h>
 
 struct A {
@@ -10,10 +11,10 @@ int main()
 {
 struct A *a = (struct A*) 0xfffffffc;
 int tmp = &(a->b) == 0; // overflows and actually goes to NULL
-assert(tmp == 0);
+_(assert tmp == 0)
 // printf("%d\n", tmp);
 }
 `
 Verification of main failed.
-testcase(12,10) : error VC9500: Assertion 'tmp == 0' did not verify.
+testcase(13,24) : error VC9500: Assertion 'tmp == 0' did not verify.
 `
