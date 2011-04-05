@@ -49,6 +49,26 @@ namespace Microsoft.Research.Vcc
       return errs;
     }
 
+    private static int NumThreads(double arg) {
+        int result = 0;
+
+        if (arg < 0) {
+          return 1;
+        }
+
+        if (arg < 0.001) {
+          return (int) System.Environment.ProcessorCount;
+        }
+
+        if (arg < 2) {
+          result = (int) (System.Environment.ProcessorCount * arg);
+          if (result < 1) result = 1;
+          return result;
+        } else {
+          return (int) arg;
+        }
+    }
+
     static bool firstFile = true;
     static bool RunTestSuite(string fileName, VccOptions commandLineOptions) {
       if (Directory.Exists(fileName)) {
@@ -56,12 +76,9 @@ namespace Microsoft.Research.Vcc
 
         methodVerificationTime = 0;
         double startTime = GetTime();
-        int threads = 1;
-        if (commandLineOptions.RunTestSuiteMultiThreaded == 0) threads = System.Environment.ProcessorCount;
-        else if (commandLineOptions.RunTestSuiteMultiThreaded > 0) threads = commandLineOptions.RunTestSuiteMultiThreaded;
+        int threads = NumThreads(commandLineOptions.RunTestSuiteMultiThreaded);
 
         TestRunnerMT trmt = threads > 1 ? new TestRunnerMT(threads, commandLineOptions) : null;
-        
 
         foreach (FileInfo fi in new DirectoryInfo(fileName).GetFiles("*", SearchOption.TopDirectoryOnly)) {
           if (fi.Name.StartsWith(".")) continue;

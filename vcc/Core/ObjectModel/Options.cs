@@ -19,7 +19,7 @@ namespace Microsoft.Research.Vcc
     public bool NoPreprocessor;
     public List<string> PreprocessorOptions = new List<string>();
     public bool RunTestSuite;
-    public int RunTestSuiteMultiThreaded = -1;
+    public double RunTestSuiteMultiThreaded = -1;
     public bool TranslateToBPL;
     public List<string> Z3Options = new List<string>();
     public bool VCLikeErrorMessages;
@@ -175,6 +175,18 @@ namespace Microsoft.Research.Vcc
       int tmp;
       string value = this.ParseNamedArgument(arg, longName, shortName);
       if (value != null && Int32.TryParse(value, out tmp)) {
+        flag = tmp;
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    private bool TryParseNamedDouble(string arg, string longName, string shortName, ref double flag)
+    {
+      double tmp;
+      string value = this.ParseNamedArgument(arg, longName, shortName);
+      if (value != null && double.TryParse(value, out tmp)) {
         flag = tmp;
         return true;
       } else {
@@ -457,10 +469,10 @@ namespace Microsoft.Research.Vcc
           this.options.BoogieOptions.Add("/smoke");
           return true;
         } else {
-          if (this.TryParseNamedInteger(arg, "suitemt", "smt", ref this.options.RunTestSuiteMultiThreaded))
+          if (this.TryParseNamedDouble(arg, "suitemt", "smt", ref this.options.RunTestSuiteMultiThreaded))
             return true;
           if (this.ParseName(arg, "suitemt", "smt")) {
-            this.options.RunTestSuiteMultiThreaded = 0;
+            this.options.RunTestSuiteMultiThreaded = 0.0;
             return true;
           }
         }
