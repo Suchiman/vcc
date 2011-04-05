@@ -147,7 +147,7 @@ namespace Microsoft.Research.Vcc.VSPackage
     internal static void LaunchVCC(string arguments)
     {
       errorOccurred = false;
-      warningOccured = false;
+      warningOccurred = false;
       var vccPath = VccPath;
 
       arguments += VSIntegration.CurrentCompilerSettings.ToVccOptions();
@@ -191,8 +191,8 @@ namespace Microsoft.Research.Vcc.VSPackage
       {
         vccProcess = null;
         VSIntegration.WriteToPane("Executing\n" + vccPath + "\nfailed.\n"
-            + "You can specify the folder in which the vcc executable is located in Tools/Options/Vcc.");
-        VSIntegration.WriteToPane("\n===Verification failed.===\n");
+            + "You can specify the folder in which the VCC executable is located in Tools/Options/Vcc.");
+        VSIntegration.WriteToPane("\n=== Verification failed. ===\n");
         VSIntegration.UpdateStatus("Verification failed.", false);
       }
     }
@@ -253,7 +253,7 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     //// This is set to true, when Verification fails.
     private static bool errorOccurred;
-    private static bool warningOccured;
+    private static bool warningOccurred;
     private static readonly Regex VCCErrorRegEx =
         new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:\s(((error\s(.*?):)\s(?<errormessage>(.*)))|(?<errormessage>\(Location of symbol related to previous error.\)))");
     private static readonly Regex VCCWarningRegEx =
@@ -292,7 +292,7 @@ namespace Microsoft.Research.Vcc.VSPackage
             break;
           case 2:
             Thread.Sleep(1000);
-            VSIntegration.WriteToPane("Incorrect Commandline Arguments were used.\n");
+            VSIntegration.WriteToPane("Incorrect commandline arguments were used.\n");
             VSIntegration.WriteToPane("\n=== Verification failed. ===\n");
             VSIntegration.UpdateStatus("Verification failed.", false);
             break;
@@ -322,7 +322,7 @@ namespace Microsoft.Research.Vcc.VSPackage
           //// This line is an errormessage.
           if (!errorOccurred)
           {
-            VSIntegration.WriteToPane("\nAn Error occured. See Error List for details.\n\n");
+            VSIntegration.WriteToPane("\nAn error occurred. See Error List for details.\n\n");
             errorOccurred = true;
           }
 
@@ -336,10 +336,10 @@ namespace Microsoft.Research.Vcc.VSPackage
         else if ((match = VCCWarningRegEx.Match(e.Data)).Success)
         {
           //// This line is a warning.
-          if (!errorOccurred && !warningOccured)
+          if (!errorOccurred && !warningOccurred)
           {
-            VSIntegration.WriteToPane("\nA warning occured. See Error List for details. (You can hide warnings in Tools/Options/Vcc)\n\n");
-            warningOccured = true;
+            VSIntegration.WriteToPane("\nA warning occurred. See Error List for details. (You can hide warnings in Tools/Options/Vcc)\n\n");
+            warningOccurred = true;
           }
 
           //// Add warning to error list
@@ -351,7 +351,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         }
         else if (!e.Data.StartsWith("Exiting"))
         {
-          //// This line is not an errormessage.
+          //// This line is not an error message.
           VSIntegration.WriteToPane(String.Format("{0}\n", e.Data));
         }
       }

@@ -24,11 +24,11 @@ namespace Microsoft.Research.Vcc.VSPackage
         [Description("Choose true to launch the Z3 Inspector to view the progress of verification.")]
         public bool ShowZ3Inspector{ get; set; }
 
-        [DisplayName("Vcc Executable Folder")]
+        [DisplayName("VCC Executable Folder")]
         [Editor(typeof(System.Windows.Forms.Design.FolderNameEditor),typeof(System.Drawing.Design.UITypeEditor))]
-        [Description("The the folder in which your vcc.exe is located - this is usually" +
+        [Description("The folder in which your vcc.exe is located - this is usually" +
                       " not necessary. Leave this empty to use the path written to the registry while installing" +
-                      " Vcc.")]
+                      " VCC.")]
         public string VccExecutableFolder { get; set; }
 
         [DisplayName("Show Notifications")]
@@ -36,8 +36,8 @@ namespace Microsoft.Research.Vcc.VSPackage
         public bool ShowNotifications { get; set; }
 
         [Category("Vcc Version")]
-        [DisplayName("Installed Vcc Version")]
-        [Description("The version of this extension and the vcc compiler.")]
+        [DisplayName("Installed VCC Version")]
+        [Description("The version of this extension and the VCC compiler.")]
         public string VccVersion { 
           get { return System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(VccOptionPage).Assembly.Location).FileVersion;; } 
         }
