@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?define WikiDir=..\..\Docs\Wiki?>
+  
+	<Fragment>
+    <DirectoryRef Id="DOCDIR">
+      <Directory Id="wiki_dir" Name="wiki"/>
+    </DirectoryRef>
+	</Fragment>
+
+  <Fragment>
+    <DirectoryRef Id="wiki_dir" FileSource="$(var.WikiDir)">
+      <Component Id="wiki_files" Guid="58e1dd16-a5da-4cda-bd68-43dbb305e1aa">
+        <RemoveFolder Id="wiki_dir" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="wiki_files" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+  
+</Wix>

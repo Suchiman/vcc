@@ -32,15 +32,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Vcc.wxs" />
+    <Compile Include="WikiFiles.wxs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Docs\VccDocumentation.csproj">
-      <Name>VccDocumentation</Name>
-      <Project>{570bb01a-b827-44dd-9ba1-a683704cc3e0}</Project>
-      <Private>True</Private>
-      <RefProjectOutputGroups>Content</RefProjectOutputGroups>
-      <RefTargetDir>DOCDIR</RefTargetDir>
-    </ProjectReference>
     <ProjectReference Include="..\SamplesSetup\SamplesSetup.wixproj">
       <Name>SamplesSetup</Name>
       <Project>{b334e568-0421-4e1a-b740-77538ddd947e}</Project>
