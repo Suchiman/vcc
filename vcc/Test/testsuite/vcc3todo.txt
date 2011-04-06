@@ -134,7 +134,6 @@ volatileModifier.ns-09
 volatileVersion.ns-06
 
 # new ones?
-arrays-23
 arrays-25
 basics-49
 by_claim.ns-00
