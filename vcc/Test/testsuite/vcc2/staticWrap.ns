@@ -1,0 +1,321 @@
+`/newsyntax
+#include "vcc2test.h"
+
+struct B { int x; };
+
+struct A {
+  struct B * volatile b;
+};
+
+struct A2 {
+  struct B *b;
+};
+
+struct ShouldFailStabilityOfAB {
+  struct A a;
+  _(invariant \mine(a.b))
+};
+
+struct ShouldFailStabilityOfAB2 {
+  struct A a;
+  _(invariant \mine(&a))
+  _(invariant \mine(a.b))
+};
+
+struct OK1 {
+  struct A2 a;
+  _(invariant \mine(&a))
+  _(invariant \mine(a.b))
+};
+
+
+`
+Verification of ShouldFailStabilityOfAB#adm failed.
+testcase(15,29) : error VC8012: invariant(\mine(a.b)) of ShouldFailStabilityOfAB is not admissible.
+Verification of ShouldFailStabilityOfAB2#adm failed.
+testcase(21,29) : error VC8012: invariant(\mine(a.b)) of ShouldFailStabilityOfAB2 is not admissible.
+Verification of OK1#adm succeeded.
+`
+`/newsyntax
+#include "vcc2test.h"
+
+struct B { int x; };
+
+struct A {
+  struct B *b;
+};
+
+struct C {
+  struct B *b;
+  _(invariant \mine(b))
+};
+
+void failWr(struct A*a)
+  _(requires \mutable(a))
+{
+  _(wrap a)
+}
+
+void failMut(struct A*a)
+  _(requires \wrapped(a))
+  _(writes a)
+{
+  _(wrap a)
+}
+
+void okA(struct A*a)
+  _(requires \mutable(a))
+  _(ensures \wrapped(a))
+  _(writes a)
+{
+  _(wrap a)
+}
+
+void okC(struct C*c, struct B*b)
+  _(requires \wrapped(b))
+  _(writes \extent(c), b)
+  _(ensures \wrapped(c) && \nested(b))
+{
+  c->b = b;
+  _(wrap c)
+}
+
+void failCChWr(struct C*c, struct B*b)
+  _(requires \wrapped(b))
+  _(writes \extent(c))
+{
+  c->b = b;
+  _(wrap c)
+}
+
+void failCChWrap(struct C*c, struct B*b)
+  _(writes \extent(c), b)
+{
+  c->b = b;
+  _(wrap c)
+}
+
+void failWrongCh(struct C*c, struct B*b)
+  _(requires \wrapped(b))
+  _(writes \extent(c), b)
+{
+  _(wrap c)
+}
+`
+Verification of C#adm succeeded.
+Verification of failWr failed.
+testcase(17,24) : error VC8020: 'a' is not writable before wrapping it.
+Verification of failMut failed.
+testcase(24,19) : error VC9502: Call 'wrap a' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped must not be closed'.
+Verification of okA succeeded.
+Verification of okC succeeded.
+Verification of failCChWr failed.
+testcase(49,24) : error VC8019: 'b' is not writable before wrapping 'c' (its owner).
+Verification of failCChWrap failed.
+testcase(56,24) : error VC8018: 'b' is not wrapped before wrapping 'c' (its owner).
+Verification of failWrongCh failed.
+testcase(63,24) : error VC8018: 'b' is not wrapped before wrapping 'c' (its owner).
+testcase(63,24) : error VC8019: 'b' is not writable before wrapping 'c' (its owner).
+`
+`/newsyntax
+#include "vcc2test.h"
+
+struct B { int x; };
+
+struct A {
+  struct B *b;
+};
+
+struct C {
+  struct B *b;
+  _(invariant \mine(b))
+};
+
+struct C2 {
+  struct B *b;
+  _(invariant b != NULL <==> \mine(b))
+};
+
+void okC(struct C*c)
+  _(writes c)
+  _(requires \wrapped(c))
+{
+  _(unwrap c)
+  _(unwrap c->b)
+  c->b->x = 20;
+  _(wrap c->b)
+  _(wrap c)
+}
+
+void okC2(struct C2*c)
+  _(writes c)
+  _(requires \wrapped(c) && c->b != NULL)
+{
+  _(unwrap c)
+  _(unwrap c->b)
+  c->b->x = 20;
+  _(wrap c->b)
+  _(wrap c)
+}
+
+void fail1C(struct C*c)
+  _(writes c)
+  _(requires \wrapped(c))
+{
+ // unwrap(c);
+  _(unwrap c->b)
+}
+
+
+void fail1C2(struct C2*c)
+  _(writes c)
+  _(requires \wrapped(c))
+{
+  _(unwrap c)
+  _(unwrap c->b)
+  c->b->x = 20;
+  _(wrap c->b)
+  _(wrap c)
+}
+`
+Verification of C#adm succeeded.
+Verification of C2#adm succeeded.
+Verification of okC succeeded.
+Verification of okC2 succeeded.
+Verification of fail1C failed.
+testcase(46,26) : error VC8016: 'c->b' is not wrapped before unwrap.
+Verification of fail1C2 failed.
+testcase(55,26) : error VC8016: 'c->b' is not wrapped before unwrap.
+`
+`/newsyntax
+#include "vcc2test.h"
+
+struct B { int x; };
+
+struct A {
+  struct B *b;
+  _(invariant \mine(b))
+};
+
+void failWrapped(struct B *b)
+  _(writes b)
+{
+  _(unwrap b)
+}
+
+void failWrites(struct B *b)
+  _(requires \wrapped(b))
+{
+  _(unwrap b)
+}
+
+`
+Verification of A#adm succeeded.
+Verification of failWrapped failed.
+testcase(13,26) : error VC8016: 'b' is not wrapped before unwrap.
+Verification of failWrites failed.
+testcase(19,26) : error VC8021: 'b' is not writable before unwrapping it.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct B { int x,y; };
+
+struct A {
+  int x;
+  struct B b;
+
+  _(invariant x ==> \mine(&b))
+};
+`
+testcase(9,35) : warning VC9110: keeps(...) (or set_in(..., owns(this))) is not allowed here; annotate the type 'A' with vcc(dynamic_owns)
+Verification of A#adm succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct B { int x,y; };
+
+struct A2 {
+  int x;
+  struct B b;
+
+  _(invariant x ==> &b \in \this->\owns)
+};
+
+struct A3 {
+  int x;
+  struct B b;
+
+  _(invariant x ==> &b \in0 \this->\owns)
+};
+
+struct A4 {
+  int x;
+  struct B b[5];
+
+  _(invariant \forall int x; 0 <= x && x < 5 ==> &b[x] \in \this->\owns)
+};
+`
+testcase(9,42) : error VC9662: Explicit reference to owns-set of type 'A2', which is static. Use keeps(...) or mark 'A2' with vcc(dynamic_owns).
+testcase(16,43) : error VC9662: Explicit reference to owns-set of type 'A3', which is static. Use keeps(...) or mark 'A3' with vcc(dynamic_owns).
+testcase(23,74) : error VC9662: Explicit reference to owns-set of type 'A4', which is static. Use keeps(...) or mark 'A4' with vcc(dynamic_owns).
+`
+`/newsyntax
+#include "vcc.h"
+
+struct S {
+    int a;
+};
+
+_(dynamic_owns) struct T {
+    struct S a, b, c;
+    _(invariant \mine(&a, &b, &c))
+};
+
+void works(struct T *t)
+    _(requires \wrapped(t))
+    _(writes t)
+{
+    _(unwrap t)
+    _(assert \forall \object o; o \in t->\owns ==> \wrapped(o))
+}
+
+struct U {
+    struct S a, b, c;
+    _(invariant \mine(&a, &b, &c))
+};
+
+void fails(struct U *u)
+    _(requires \wrapped(u))
+    _(writes u)
+{
+    _(unwrap u)
+    _(assert \forall \object o; o \in u->\owns ==> \wrapped(o))
+}
+`
+Verification of T#adm succeeded.
+Verification of U#adm succeeded.
+Verification of works succeeded.
+Verification of fails succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+struct S { int a; };
+
+struct Foo { struct S s; _(invariant \mine(&s)) };
+
+void bar(struct Foo *t) 
+  _(requires \wrapped(t))
+  _(writes t)
+  _(ensures \wrapped(&t->s))
+  _(ensures \fresh(&t->s))
+{
+  _(unwrap t)
+}
+`
+Verification of Foo#adm succeeded.
+Verification of bar succeeded.
+`
