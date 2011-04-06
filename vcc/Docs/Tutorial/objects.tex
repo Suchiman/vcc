@@ -309,7 +309,7 @@ It is defined on every object \vcc{p} and referred to as \vcc{p->\owns}.
 VCC maintains that:
 \begin{VCC}
 \forall \object p, q; p->\consistent ==> 
-  (q \in p->\owns <==> p->\owner == q)
+  (q \in p->\owns <==> q->\owner == p)
 \end{VCC}
 The operator \vcc{<==>} reads ``if and only if'', and is simply boolean
 equality (or implication both ways), with a binding priority lower than implication.
