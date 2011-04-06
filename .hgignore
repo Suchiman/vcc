@@ -4,6 +4,7 @@ syntax: regexp
 ^.*\.(user|ncb|suo|cache|sdf|opensdf|stackdump)$
 
 syntax: glob
+testsuite.log
 vcc/Tools/VccSyntaxCoverter/Lexer.fs
 vcc/Docs/Wiki
 _ReSharper*
