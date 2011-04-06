@@ -1,0 +1,41 @@
+`/newsyntax
+#include <vcc.h>
+
+struct T {
+  int a;
+};
+
+_(record) struct R {
+  int a;
+};
+
+_(ghost typedef int M[int])
+
+_(ghost _(record) struct S {
+  int a;
+  _(ghost \integer m0[int])  
+  _(ghost bool m1[int])
+  _(ghost int m2[int])
+  _(ghost void *m3[int])
+  _(ghost struct T m4[int])
+  _(ghost struct R m5[int])
+  _(ghost M m6[int])
+  _(ghost int m7[int][int])
+  _(ghost \objset m8[int])
+})
+
+_(ghost void foo() {
+  struct S a;
+  _(assert a.m0[0] == 0)
+  _(assert !a.m1[0])
+  _(assert a.m2[0] == 0)
+  _(assert a.m3[0] == (void *)0)
+  _(assert a.m4[0].a == 0)
+  _(assert a.m5[0].a == 0) 
+  _(assert a.m6[0][0] == 0)
+  _(assert a.m7[0][0] == 0)
+  _(assert a.m8[0] == {})
+})
+`
+Verification of foo succeeded.
+`

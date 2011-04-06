@@ -1,0 +1,17 @@
+#!/bin/sh
+echo -n "preparing dirs "
+rm -rf done3 todo3
+echo -n "."
+mkdir done3 todo3
+cp `ls vcc2ns | perl -e 'open(F,"<vcc3todo.txt");while(<F>) {s/[\r\n]//g; $i{$_}=1;};while(<>) { s/[\r\n]//g; print "vcc2ns/$_ " unless $i{$_} }'` done3/
+echo -n "."
+cp `perl -e 'open(F,"<vcc3todo.txt");$a=0;while(<F>) {s/[\r\n]//g; /###START/ and $a=1; /^#/ and next; /^\s*$/ and next; print "vcc2ns/$_ " if $a}'` todo3/
+echo " done"
+time vcc3 -s -smt -smoke "$@" vcc3 done3
+mv testsuite.log tsdone.log
+time vcc3  -s -smt -smoke "$@" todo3 |grep -v -- "-----"
+echo "*** smoke?"
+grep -i unreach testsuite.log
+echo "***"
+perl -n -e '/^(\S+) passed/ and print "$1\n"' testsuite.log
+rm -rf done3 todo3
