@@ -140,7 +140,6 @@ basics-49
 by_claim.ns-00
 by_claim.ns-08
 by_claim.ns-09
-maps-36
 memoryReintp-10
 staticWrap.ns-07
 volatileModifier.ns-03
