@@ -116,8 +116,6 @@ fieldInlining.ns-01
 functionPtrs-07
 functionPtrs-09
 generics-08
-groups-00
-groups-08
 groups-17
 groups-20
 invs-03
@@ -138,7 +136,6 @@ structEquality.ns-01
 thread_id-00
 volatile.ns-03
 volatileModifier.ns-09
-volatileVersion.ns-06
 
 # new ones?
 by_claim.ns-09
