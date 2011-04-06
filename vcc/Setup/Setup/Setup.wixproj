@@ -88,6 +88,10 @@
       <ProductName>Microsoft Visual F# Runtime for .NET 2.0</ProductName>
     </BootstrapperFile>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Wiki.Css.wxi" />
+    <Content Include="Wiki.Files.wxi" />
+  </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
   <!--
 	To modify your build process, add your task inside one of the targets below and uncomment it.
