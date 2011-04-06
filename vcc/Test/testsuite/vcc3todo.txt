@@ -1,4 +1,4 @@
-# testcases that got updated (need different annotations in VCC3)
+# testcases that got updated (need different annotations/have different output in VCC3)
 32bitPtr-01
 32bitPtr-02
 32bitPtr-03
@@ -24,6 +24,7 @@ volatileModifier.ns-11
 basics-49
 by_claim.ns-00
 by_claim.ns-08
+writes.ns-10
 
 # wierd pointer arithmetic
 groups-02
@@ -143,5 +144,4 @@ memoryReintp-10
 staticWrap.ns-07
 volatileModifier.ns-03
 writes.ns-06
-writes.ns-10
 ghosts-02
