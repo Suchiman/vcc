@@ -1470,7 +1470,7 @@ procedure $static_unwrap(o:$ptr, S:$state);
 
   ensures $is_unwrapped(old($s), $s, o);
   ensures $f_owner($s) == $f_owner(S);
-  ensures $f_timestamp($s) == $f_timestamp(S)[o := $current_timestamp(S)];
+  ensures $f_timestamp($s) == $f_timestamp(S)[o := $current_timestamp(old($s))];
 
 
 procedure $static_wrap(o:$ptr, S:$state, owns:$ptrset);
