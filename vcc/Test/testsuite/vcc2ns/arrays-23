@@ -34,9 +34,11 @@ void longrunner(int a[32])
    calc(l1, a, l2);
    calc(a, l5, l6);
    calc(a, l1, l4);
-   if (a) {
+   if (1) {
     int l7[32];
     calc(a,l7,l7);
+   } else {
+     _(assert \false)
    }
 }
 `
