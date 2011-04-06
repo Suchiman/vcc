@@ -31,6 +31,7 @@ vcc/Test/testsuite/fixoutput.pl
 vcc/Test/testsuite/add-testcase.sh
 vcc/Test/testsuite/cmpout
 vcc/Test/testsuite/done3/
+vcc/Test/testsuite/todo3/
 vcc/Test/testsuite/examples/*.i
 vcc/Test/testsuite/expected.txt
 vcc/Test/testsuite/fix
