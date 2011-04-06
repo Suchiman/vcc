@@ -25,6 +25,7 @@ basics-49
 by_claim.ns-00
 by_claim.ns-08
 writes.ns-10
+volatileModifier.ns-03
 
 # wierd pointer arithmetic
 groups-02
@@ -63,6 +64,7 @@ memoryReintp-06
 memoryReintp-07
 memoryReintp-08
 memoryReintp-09
+memoryReintp-10
 
 # skinny expose
 packedFraming-07
@@ -140,8 +142,6 @@ volatileVersion.ns-06
 
 # new ones?
 by_claim.ns-09
-memoryReintp-10
 staticWrap.ns-07
-volatileModifier.ns-03
 writes.ns-06
 ghosts-02
