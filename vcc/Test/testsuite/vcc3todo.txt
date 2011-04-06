@@ -36,6 +36,7 @@ as_array-08
 as_array-09
 nestedStructs-01
 specOrPhysical-10
+arrays-25
 
 # extent_zero
 extent_zero-00
@@ -134,7 +135,6 @@ volatileModifier.ns-09
 volatileVersion.ns-06
 
 # new ones?
-arrays-25
 basics-49
 by_claim.ns-00
 by_claim.ns-08
