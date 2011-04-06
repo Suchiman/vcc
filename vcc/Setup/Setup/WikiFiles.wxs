@@ -5,7 +5,9 @@
   
 	<Fragment>
     <DirectoryRef Id="DOCDIR">
-      <Directory Id="wiki_dir" Name="wiki"/>
+      <Directory Id="wiki_dir" Name="wiki">
+        <Directory Id="wiki_css_dir" Name="css"/>
+      </Directory>
     </DirectoryRef>
 	</Fragment>
 
@@ -14,6 +16,14 @@
       <Component Id="wiki_files" Guid="58e1dd16-a5da-4cda-bd68-43dbb305e1aa">
         <RemoveFolder Id="wiki_dir" On="uninstall"/>
         <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="wiki_files" Type="integer" Value="1" KeyPath="yes" />
+        <?include Wiki.Files.wxi?>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="wiki_css_dir" FileSource="$(var.WikiDir)\css">
+      <Component Id="wiki_css_files" Guid="ddb49de6-974e-448b-b323-1f8c5bddb42c">
+        <RemoveFolder Id="wiki_css_dir" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="wiki_css_files" Type="integer" Value="1" KeyPath="yes" />
+        <?include Wiki.Css.wxi?>
       </Component>
     </DirectoryRef>
   </Fragment>
