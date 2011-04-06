@@ -9,6 +9,7 @@
   <?define SamplesDir="..\SamplesSetup\bin\Debug" ?>
   <?define ConverterDir="..\..\Tools\VccSyntaxCoverter\bin\Debug" ?>
   <?define RedistDir="..\Redist"?>
+  <?define WikiDir="..\Docs\Wiki"?>
 
   <Product Id="*" Codepage="1252" Language="1033" Manufacturer="Microsoft Research" Name="Microsoft Research Vcc $(var.VccVersion)" UpgradeCode="{09253B53-5BAF-4EE5-836C-9742871A2812}" Version="$(var.VccVersion)">
     <Package Comments="Installs Microsoft Research Vcc $(var.VccVersion). " Compressed="yes" InstallerVersion="300" InstallPrivileges="elevated" InstallScope="perMachine" Languages="1033" Manufacturer="Microsoft Research" Platform="x86" ShortNames="no" />
@@ -28,6 +29,9 @@
             <Directory Id="VSPACKAGEDIR" Name="VsPackage" />
             <Directory Id="DOCDIR" Name="Documentation">
               <Directory Id="SAMPLESDIR" Name="Samples" />
+              <Directory Id="WIKIDIR" Name="Wiki">
+                <Directory Id="CSS" Name="css"/>
+              </Directory>
             </Directory>
           </Directory>
         </Directory>
@@ -110,6 +114,7 @@
         <Environment Id="EnvPath" Name="PATH" Value="[BINDIR]" Permanent="no" Part="last" Separator=";" Action="set" System="yes" />
       </Component>
     </DirectoryRef>
+
     <DirectoryRef Id="BINDIR" FileSource="$(var.BoogieDir)">
       <Component Id="Boogie" Guid="DDA78D93-D121-477F-94BB-ABED71406996">
         <File Name="boogie.exe" KeyPath="yes">
@@ -245,6 +250,23 @@
         <File Source="$(var.SamplesDir)\Samples.msi" />
       </Component>
     </DirectoryRef>
+    
+    <DirectoryRef Id="WIKIDIR" FileSource="$(var.WikiDir)">
+      <Component Id="wiki_files" Guid="58e1dd16-a5da-4cda-bd68-43dbb305e1aa">
+        <RemoveFolder Id="WIKIDIR" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="wiki_files" Type="integer" Value="1" KeyPath="yes" />
+        <?include Wiki.Files.wxi?>
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="CSS" FileSource="$(var.WikiDir)\css">
+      <Component Id="wiki_css_files" Guid="ddb49de6-974e-448b-b323-1f8c5bddb42c">
+        <RemoveFolder Id="CSS" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="wiki_css_files" Type="integer" Value="1" KeyPath="yes" />
+        <?include Wiki.Css.wxi?>
+      </Component>
+    </DirectoryRef>
+
 
     <DirectoryRef Id="ShortcutFolder">
       <Component Id="Shortcuts" Guid="B20B4427-86FF-42A0-B705-973D8106A917">
@@ -316,6 +338,8 @@
       <ComponentRef Id="Z3" />
       <ComponentRef Id="HeaderFiles" />
       <ComponentRef Id="SamplesInstaller" />
+      <ComponentRef Id="wiki_files"/>
+      <ComponentRef Id="wiki_css_files"/>
       <ComponentRef Id="Shortcuts" />
       <MergeRef Id="VCCRTRedist" />
       <MergeRef Id="VCCRTRedistPol" />
