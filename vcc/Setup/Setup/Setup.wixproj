@@ -32,7 +32,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Vcc.wxs" />
-    <Compile Include="WikiFiles.wxs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SamplesSetup\SamplesSetup.wixproj">
