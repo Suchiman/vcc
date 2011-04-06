@@ -75,12 +75,6 @@
     <Compile Include="Stdlib.cs" />
     <Compile Include="String.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\cci\Sources\CodeModel\CodeModel.csproj">
-      <Project>{035FEA7F-0D36-4AE4-B694-EC45191B9AF2}</Project>
-      <Name>CodeModel</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

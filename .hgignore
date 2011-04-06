@@ -1,0 +1,5 @@
+syntax: regexp
+^.*(bin|obj)/([^/]*/)?([Dd]ebug|[Rr]elease)/.*$
+^_ReSharper\.Vcc$
+^.*\.(user|suo|cache|sdf|opensdf)$
+
