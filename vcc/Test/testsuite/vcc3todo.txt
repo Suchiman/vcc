@@ -22,6 +22,8 @@ staticWrap.ns-01
 triggerInference-04
 volatileModifier.ns-11
 basics-49
+by_claim.ns-00
+by_claim.ns-08
 
 # wierd pointer arithmetic
 groups-02
@@ -136,8 +138,6 @@ volatileModifier.ns-09
 volatileVersion.ns-06
 
 # new ones?
-by_claim.ns-00
-by_claim.ns-08
 by_claim.ns-09
 memoryReintp-10
 staticWrap.ns-07
