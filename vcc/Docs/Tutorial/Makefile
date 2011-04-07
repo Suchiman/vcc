@@ -1,79 +1,47 @@
 -include Makefile.local
 
-D = tutorial
+PAPER_BASE = vcc-tutorial-col
+COLUMNS ?= 1
+PAPER = $(PAPER_BASE)$(COLUMNS)
+BIB = tutorial.bib 
+OTHERSOURCES := $(wildcard *.tex) $(wildcard c/*.c)
 
-CONV ?= ../../Tools/VccSyntaxCoverter/bin/Debug/VccSyntaxCoverter.exe
+all: $(PAPER).pdf
 
-all: build 
-#maybe-show
+.PHONY: pdf
+pdf: $(PAPER).pdf
 
-build: 
-	pdflatex $(D).tex </dev/null
-	chmod +x $(D).pdf
+$(PAPER).bbl: $(PAPER).aux $(BIB)
+	bibtex $(PAPER)
 
-.PHONY: conv
+$(PAPER).aux:
+	pdflatex $(PAPER).tex </dev/null
 
-conv:
-	$(CONV) c/*.c
 
-bib:
-	bibtex $(D)
-a:
-	$(MAKE) build
-	$(MAKE) bib
-	$(MAKE) build
-	$(MAKE) build
+$(PAPER).pdf: $(PAPER).bbl $(PAPER).tex $(OTHERSOURCES)
+	echo "Rerun to get cross" >> $(PAPER).log
+	while grep -q "Rerun to get cross" $(PAPER).log; do \
+		if pdflatex $(PAPER).tex </dev/null; then \
+			true; \
+		else \
+			stat=$$?; touch $(PAPER).pdf; exit $$stat; \
+		fi; \
+	done
+	touch $(PAPER).bbl
+	touch $(PAPER).pdf
+	cp $(PAPER).pdf view.pdf
 
-show: show-win
 
-maybe-show:
-	case `uname` in \
-	  *CYGWIN* ) $(MAKE) dont-show-win ;; \
-	  *Darwin* ) $(MAKE) show-mac ;; \
-	  *Linux* ) $(MAKE) show-lin ;; \
-	  * ) ;; \
-	esac
-
-show-mac:
-	open -a Preview $(D).pdf
-
-dont-show-win:
-	true
-
-show-win:
-	chmod +x $(D).pdf
-	cmd /c $(D).pdf &
-
-show-lin:
-	acroread $(D).pdf &
-
-show-ev:
-	evince $(D).pdf
-
-show-ac:
-	n=$(D)-`md5sum $(D).pdf | sed -e 's/ .*//'`.pdf; \
-	cp $(D).pdf $$n; \
-	acroread $$n; \
-	sleep 2; rm $$n
-
-%.pdf: %.dia
-	dia -e `basename $@ .pdf`.eps -t eps $<
-	epstopdf `basename $@ .pdf`.eps
+$(PAPER).ps: $(PAPER).pdf
+	pdf2ps $(PAPER).pdf
 
 clean:
-	rm -f *.log *.dvi *.ps *.aux *.pdf *.bbl *.blg *.out
+	rm -f *.aux *.log $(PAPER_BASE)*.ps *.dvi *.blg *.bbl *.toc *~ *.out $(PAPER_BASE)*.pdf view.pdf
+
 
 both:
-	perl -p -i -e 's/.*(\\densetrue)/$$1/' tutorial.tex
-	$(MAKE) build
-	$(MAKE) build
-	$(MAKE) build
-	cp tutorial.pdf vcc-tutorial-2col.pdf
-	perl -p -i -e 's/.*(\\densetrue)/%$$1/' tutorial.tex
-	$(MAKE) build
-	$(MAKE) build
-	$(MAKE) build
-	cp tutorial.pdf vcc-tutorial-1col.pdf
+	$(MAKE) COLUMNS=1
+	$(MAKE) COLUMNS=2
 
 send: both
-	$(WEBCP) vcc-tutorial-{1,2}col.pdf 
+	$(WEBCP) $(PAPER_BASE){1,2}.pdf 
