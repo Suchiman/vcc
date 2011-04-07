@@ -252,10 +252,12 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
           Some expr
         | _ ->
           candidatesSet.[expr] <- true
+          // subterms need to be added first to the candidate list
+          expr.Map (getSubterms 0) |> ignore
+          // then we can add the current term
           match getTriggerScore pol expr with
             | Some (vs, q) -> candidates.Add ((expr, vs, q))
-            | None -> ()
-          expr.Map (getSubterms 0) |> ignore
+            | None -> ()          
           Some expr
 
     let willLoop tr =
