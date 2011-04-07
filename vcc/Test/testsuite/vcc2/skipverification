@@ -1,0 +1,7 @@
+#include <vcc.h>
+
+skipverification void foo() {}
+void bar() {}
+`
+Verification of bar succeeded.
+`
