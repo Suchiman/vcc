@@ -148,7 +148,8 @@ axiom (forall p:$ptr :: {$base(p)} {$field(p)} $ptr($field(p), $base(p)) == p); 
 
 function {:inline true} $non_null(p:$ptr) : bool
   { !$is_null(p) }
-function $is_null(p:$ptr) : bool;
+function {:inline true} $is_null(p:$ptr) : bool
+  { p == $null_of($typ(p)) }
 axiom (forall p:$ptr :: {$addr(p)} 
   ($addr(p) == 0 <==> $is_null(p)) &&
   ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr(p))) &&
@@ -378,6 +379,7 @@ const unique ^^f4: $ctype;
 const unique ^^f8: $ctype;
 const unique ^^object: $ctype;
 const unique ^^field: $ctype;
+const unique ^^null_type: $ctype;
 
 // struct A will get ^A :$ctype
 axiom $def_integer_type(^^i1, 1);
@@ -395,6 +397,7 @@ axiom $def_primitive_type(^^bool, 1);
 axiom $def_primitive_type(^^void, 1);
 axiom $def_math_type(^^object);
 axiom $def_math_type(^^field);
+axiom $def_math_type(^^null_type);
 
 const unique ^^claim: $ctype;
 const unique ^^mathint: $ctype;
@@ -418,7 +421,9 @@ function $field_parent_type($field) : $ctype;
 function $is_ghost_field($field) : bool;
 function $is_phys_field($field) : bool;
 
-const $null:$ptr;
+const $null : $ptr;
+function {:inline true} $null_of(t:$ctype) : $ptr
+  { $phys_ptr_cast($null, t) }
 axiom $addr($null) == 0;
 axiom $in_range_spec_ptr($null) && $in_range_phys_ptr($null);
 
@@ -687,7 +692,7 @@ function $as_array(p:$ptr, T:$ctype, sz:int) : $ptr
          $field(p) == $array_emb(T, sz) then
         $emb1(p)
       else
-        $phys_ptr_cast($null, $array(T, sz))
+        $null_of($array(T, sz))
   }
 
 
@@ -1470,7 +1475,7 @@ procedure $static_unwrap(o:$ptr, S:$state);
 
   ensures $is_unwrapped(old($s), $s, o);
   ensures $f_owner($s) == $f_owner(S);
-  ensures $f_timestamp($s) == $f_timestamp(S)[o := $current_timestamp(S)];
+  ensures $f_timestamp($s) == $f_timestamp(S)[o := $current_timestamp(old($s))];
 
 
 procedure $static_wrap(o:$ptr, S:$state, owns:$ptrset);
@@ -1662,7 +1667,7 @@ procedure $atomic_havoc();
   ensures $timestamp_post_strict(old($s), $s);
 
 const unique $no_claim : $ptr;
-axiom $no_claim == $spec_ptr_cast($null, ^^claim);
+axiom $no_claim == $null_of(^^claim);
 
 procedure $alloc_claim() returns(r:$ptr);
   modifies $s;
@@ -2155,7 +2160,7 @@ function $set_singleton(p:$ptr) : $ptrset
   { (lambda o:$ptr :: o == p) }
 
 function $non_null_set_singleton(p:$ptr) : $ptrset
-  { (lambda o:$ptr :: $ptr_neq(p, $null) && p == o) }
+  { (lambda o:$ptr :: $non_null(p) && p == o) }
 
 function $set_union(A:$ptrset, B:$ptrset) : $ptrset
   { (lambda o:$ptr :: A[o] || B[o]) }

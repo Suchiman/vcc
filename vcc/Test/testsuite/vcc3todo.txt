@@ -1,4 +1,4 @@
-# testcases that got updated (need different annotations in VCC3)
+# testcases that got updated (need different annotations/have different output in VCC3)
 32bitPtr-01
 32bitPtr-02
 32bitPtr-03
@@ -21,6 +21,11 @@ start_here-01
 staticWrap.ns-01
 triggerInference-04
 volatileModifier.ns-11
+basics-49
+by_claim.ns-00
+by_claim.ns-08
+writes.ns-10
+volatileModifier.ns-03
 
 # wierd pointer arithmetic
 groups-02
@@ -36,6 +41,7 @@ as_array-08
 as_array-09
 nestedStructs-01
 specOrPhysical-10
+arrays-25
 
 # extent_zero
 extent_zero-00
@@ -58,6 +64,7 @@ memoryReintp-06
 memoryReintp-07
 memoryReintp-08
 memoryReintp-09
+memoryReintp-10
 
 # skinny expose
 packedFraming-07
@@ -109,8 +116,6 @@ fieldInlining.ns-01
 functionPtrs-07
 functionPtrs-09
 generics-08
-groups-00
-groups-08
 groups-17
 groups-20
 invs-03
@@ -131,19 +136,9 @@ structEquality.ns-01
 thread_id-00
 volatile.ns-03
 volatileModifier.ns-09
-volatileVersion.ns-06
 
 # new ones?
-arrays-23
-arrays-25
-basics-49
-by_claim.ns-00
-by_claim.ns-08
 by_claim.ns-09
-maps-36
-memoryReintp-10
 staticWrap.ns-07
-volatileModifier.ns-03
 writes.ns-06
-writes.ns-10
 ghosts-02
