@@ -9,7 +9,7 @@
   <?define SamplesDir="..\SamplesSetup\bin\Debug" ?>
   <?define ConverterDir="..\..\Tools\VccSyntaxCoverter\bin\Debug" ?>
   <?define RedistDir="..\Redist"?>
-  <?define WikiDir="..\Docs\Wiki"?>
+  <?define WikiDir="..\..\Docs\Wiki"?>
 
   <Product Id="*" Codepage="1252" Language="1033" Manufacturer="Microsoft Research" Name="Microsoft Research Vcc $(var.VccVersion)" UpgradeCode="{09253B53-5BAF-4EE5-836C-9742871A2812}" Version="$(var.VccVersion)">
     <Package Comments="Installs Microsoft Research Vcc $(var.VccVersion). " Compressed="yes" InstallerVersion="300" InstallPrivileges="elevated" InstallScope="perMachine" Languages="1033" Manufacturer="Microsoft Research" Platform="x86" ShortNames="no" />
