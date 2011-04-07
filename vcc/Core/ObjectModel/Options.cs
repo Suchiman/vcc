@@ -215,6 +215,7 @@ namespace Microsoft.Research.Vcc
             this.options.Vcc3 = vcc3.Value;
             this.options.PreludePath = "Vcc3Prelude.bpl";
             this.options.InferTriggers = true;
+            this.options.NewSyntax = true;
             this.options.Z3Options.Add("CASE_SPLIT=5");
             return true;
           }
