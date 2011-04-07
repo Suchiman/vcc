@@ -32,16 +32,21 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
   //  2 : everything else
   //  3 : maps, sets, user functions
   //  4 : ownership
-  let topTriggerQuality = function
+  //
+  // Currently the polarity is ignored, in future we might do something about it.
+  let topTriggerQuality pol = function
     // level 4
-    | B.Expr.FunctionCall (("$keeps"|"$set_in0"), _) -> 4
-    | B.Expr.FunctionCall ("$set_in", [_; B.Expr.FunctionCall ("$owns", _)]) -> 4
-    | B.Expr.ArrayIndex (B.Expr.FunctionCall ("$owns", _), _) -> 4
+    | B.Expr.FunctionCall (("$keeps"|"$set_in0"), _)
+    | B.Expr.FunctionCall ("$set_in", [_; B.Expr.FunctionCall ("$owns", _)])
+    | B.Expr.ArrayIndex (B.Expr.FunctionCall ("$owns", _), _) as expr ->
+      4
 
     // level 3
-    | B.Expr.FunctionCall ("$set_in", _) -> 3
-    | B.Expr.FunctionCall (name, _) when name.StartsWith "$select.$map" -> 3
-    | B.Expr.ArrayIndex (_, _) -> 3
+    | B.Expr.FunctionCall ("$set_in", _)
+    | B.Expr.ArrayIndex (_, _) ->
+      3
+    | B.Expr.FunctionCall (name, _) when name.StartsWith "$select.$map" ->
+      3
 
     // list of bad patterns: 
     | B.Expr.FunctionCall (("$ptr"|"$phys_ptr_cast"|"$spec_ptr_cast"), [_; B.Expr.Ref _]) -> 1 
@@ -60,7 +65,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
 
   // this is very arbitrary; keep in mind that sk_hack has type bool->bool, so don't use it on terms of non-bool type
   let shouldAddSkHack = function
-    | B.Expr.FunctionCall (("$keeps"|"$set_in"|"$set_in0"), _) as expr -> topTriggerQuality expr = 4
+    | B.Expr.FunctionCall (("$keeps"|"$set_in"|"$set_in0"), _) as expr -> topTriggerQuality 0 expr = 4
     | _ -> false
 
   let isForbiddenInTrigger = function
@@ -93,7 +98,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
     | B.Expr.Primitive (("<"|">"|"<="|">="|"+"|"-"|"*"), _) -> true
     | _ -> false
 
-  let getTriggerScore = function
+  let getTriggerScore pol = function
     | B.Expr.Ref _ -> None
     | expr when isForbiddenInTrigger expr -> None
     | expr ->
@@ -116,7 +121,8 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
       expr.Map aux |> ignore
       if !allowed then        
         if !hasArithmetic then Some (res, 0)
-        else Some (res, topTriggerQuality expr)
+        else           
+          Some (res, topTriggerQuality pol expr)
       else None
   
   let removeSubsumed resTrig =
@@ -230,16 +236,27 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
 
     let candidates = glist[]
     let candidatesSet = gdict()
-    let rec getSubterms (expr:B.Expr) =
+    let rec getSubterms pol expr =
       if candidatesSet.ContainsKey expr then
         None
       else
-        candidatesSet.[expr] <- true
-        expr.Map getSubterms |> ignore
-        match getTriggerScore expr with
-          | Some (vs, q) -> candidates.Add ((expr, vs, q))
-          | None -> ()
-        Some expr
+        match expr with
+        | B.Primitive (("||"|"&&"), args) ->
+          None
+        | B.Primitive ("!", [arg]) ->
+          arg.Map (getSubterms (-pol)) |> ignore
+          Some expr
+        | B.Primitive ("==>", [a; b]) ->
+          a.Map (getSubterms (-pol)) |> ignore
+          b.Map (getSubterms pol) |> ignore
+          Some expr
+        | _ ->
+          candidatesSet.[expr] <- true
+          match getTriggerScore pol expr with
+            | Some (vs, q) -> candidates.Add ((expr, vs, q))
+            | None -> ()
+          expr.Map (getSubterms 0) |> ignore
+          Some expr
 
     let willLoop tr =
       let isHigh = function
@@ -249,7 +266,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
         | None -> false
       Seq.exists (fun (t, _, _) -> isHigh (matchExpr Map.empty (tr, t))) candidates
       
-    body.Map getSubterms |> ignore
+    body.Map (getSubterms 1) |> ignore
     if dbg then Console.WriteLine ("infer: {0}", quantTok.Value)
     for (tr, vs, q) in candidates do
       if List.forall vs.ContainsKey quantVars then
