@@ -550,7 +550,7 @@ Normally, object invariants are not allowed to reference locals.
 The idea is that when the claim is constructed, all the locals that the
 claim references are copied into imaginary fields of the claim.
 The fields of the claim never change, once it is created.
-Therefore an assignment \vcc{x = MAX_UINT;} in between the atomic
+Therefore an assignment \vcc{x = UINT_MAX;} in between the atomic
 blocks would not invalidate the claim --- the claim would still
 refer to the old value of \vcc{x}.
 Of course, it would invalidate the final \vcc{x <= y} assert.

@@ -2,15 +2,13 @@
 /*{begin}*/
 #include <vcc.h>
 
-typedef unsigned int UINT;
-
-void divide(UINT x, UINT d, UINT *q, UINT *r)
+void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
 _(requires d > 0 && q != r)
 _(writes q,r)
 _(ensures x == d*(*q) + *r && *r < d)
 {
-  UINT lq = 0;
-  UINT lr = x;
+  unsigned lq = 0;
+  unsigned lr = x;
   while (lr >= d)
   _(invariant x == d*lq + lr)
   {

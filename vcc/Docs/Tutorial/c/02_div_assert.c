@@ -2,14 +2,14 @@
 /*{begin}*/
 #include <vcc.h>
 
-typedef unsigned int UINT;
+typedef unsigned int unsigned;
 
-void divide(UINT x, UINT d, UINT *q, UINT *r)
+void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
 {
   // assume the precondition
   _(assume d > 0 && q != r)
-  UINT lq = 0;
-  UINT lr = x;
+  unsigned lq = 0;
+  unsigned lr = x;
 
   // check that the invariant holds on loop entry
   _(assert x == d*lq + lr)
