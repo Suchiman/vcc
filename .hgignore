@@ -1,0 +1,8 @@
+syntax: regexp
+^.*(bin|obj)/([^/]*/)?([Dd]ebug|[Rr]elease)/.*$
+^_ReSharper\.Vcc$
+^.*\.(user|suo|cache|sdf|opensdf)$
+
+syntax: glob
+vcc/Tools/VccSyntaxCoverter/Lexer.fs
+vcc/Docs/Wiki

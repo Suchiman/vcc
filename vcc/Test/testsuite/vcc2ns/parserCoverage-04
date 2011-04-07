@@ -1,0 +1,15 @@
+`/newsyntax
+#include<vcc.h>
+
+typedef void (*FOO)();
+
+void foo() { }
+
+FOO bar() {
+  return  &foo;
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of $fnptr_foo_to_fnptr#1 succeeded.
+`

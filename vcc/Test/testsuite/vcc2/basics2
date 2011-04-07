@@ -1,0 +1,560 @@
+typedef unsigned __int32 uint32_t;
+
+void x(uint32_t y);
+
+void foo() {
+    x(1<<32);
+}
+`
+testcase(6,7) : error VC0000: Shift count must be between 0 and 31.
+`
+#include <vcc.h>
+
+struct x { int a; };
+void foo() { assert(x.a==x.a); }
+`
+testcase(4,23) : error VC0000: left of '.a' must have struct/union type
+`
+#include "vcc.h"
+spec(ispure bool foo(unsigned n);)
+spec(ispure bool bar(unsigned *map);)
+axiom(forall(unsigned *p; { bar(p) } foo(*p)));
+
+void f() {
+  spec(foo(5);)
+ }
+`
+Verification of f succeeded.
+`
+#include <vcc.h>
+
+void test()
+{
+  assert(forall(mathint m; 0 < m; (1 % m) == (0 % m) ));
+  assert(forall(mathint m; 0 < m; (1 / m) == (0 / m) ));
+} 
+`
+Verification of test failed.
+testcase(5,12) : error VC9500: Assertion '__forall(_vcc_integer_t m; 0 < m; (1 % m) == (0 % m) )' did not verify.
+testcase(6,12) : error VC9500: Assertion '__forall(_vcc_integer_t m; 0 < m; (1 / m) == (0 / m) )' did not verify.
+`
+typedef struct __generated {
+  int value;
+} T;
+
+void foo() {
+  T t;
+  t.value = 3;
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+void foo() {
+    assert(set_eq(set_empty(),SET(SET())));
+}
+`
+testcase(4,85) : error VC9706: Invalid type '_math ptrset' in SET expression.
+`
+#include "vcc.h"
+
+int foo(int a, int *a) {
+}
+`
+testcase(3,16) : error VC0000: The parameter name 'a' is a duplicate.
+`
+#include "vcc.h"
+
+spec(
+ptrset foo()
+  ensures(set_eq(result, set_singleton((void *)0)))
+{
+  return set_empty();
+}
+)
+`
+Verification of foo failed.
+testcase(7,3) : error VC9501: Post condition '_vcc_set_eq(result,_vcc_set_singleton((void *)0))' did not verify.
+testcase(5,13) : error VC9599: (related information) Location of post condition.
+`
+#include "vcc.h"
+
+struct S {
+  void *y;
+  invariant(y)
+  spec(obj_t x;)
+  invariant(x)
+};
+
+void foo() {
+  struct S s;
+  spec(s.x = &s;)
+  s.y = &s;
+  wrap(&s);
+  unwrap(&s);
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+bool foo();
+void bar()
+{
+  assert(foo->b == 0);
+} 
+`
+testcase(6,12) : error VC0000: The left of '->b' must point to a struct or union.
+`
+
+#include <vcc2test.h>
+
+struct S {  int a; };
+
+void void a(struct S *x)
+  requires(x == NULL);
+
+void a(int *x)
+  requires(x != NULL);
+
+void b() {
+    int x;
+    a(&x);
+}
+
+void c() {
+  struct S s;
+  a(&s);
+}
+
+void d() {
+  a((struct S *)NULL);
+}
+
+void e() {
+  a((int *)NULL);
+}
+`
+Verification of b succeeded.
+Verification of c failed.
+testcase(19,3) : error VC9502: Call 'a(&s)' did not verify.
+testcase(7,14) : error VC9599: (related information) Precondition: 'x == ((void*)0)'.
+Verification of d succeeded.
+Verification of e failed.
+testcase(27,3) : error VC9502: Call 'a((int *)((void*)0))' did not verify.
+testcase(10,14) : error VC9599: (related information) Precondition: 'x != ((void*)0)'.
+`
+#include "vcc.h"
+struct T { int a; };
+struct S { struct T t; } x;
+
+void foo() {
+    assert(x.t[42]);
+}
+`
+testcase(6,14) : error VC0000: Illegal index.
+`
+#include <vcc.h>
+
+#define BUF_LEN	100
+
+typedef struct MyCtx_s
+{
+  int buf[BUF_LEN];
+	spec(size_t bound;)
+	invariant(bound == BUF_LEN)
+} MyCtx_t;
+
+void set(MyCtx_t *pCtx, size_t idx, int *pX )
+  maintains(wrapped(pCtx))
+  requires(thread_local(pX) && is_object_root(pX))
+  requires(idx < pCtx->bound)
+  writes(pCtx)
+{
+  int i = *pX;
+  expose(pCtx) {
+    pCtx->buf[idx] = *pX;
+  }
+}
+`
+Verification of MyCtx_s#adm succeeded.
+Verification of set succeeded.
+`
+#include "vcc.h"
+
+void foo(spec(obj_t x)) { assert((int)x); } 
+`
+Verification of foo failed.
+testcase(3,52) : error VC9500: Assertion '(int)x' did not verify.
+`
+#include "vcc.h"
+#ifdef VERIFY
+
+struct vcc(record) S {
+    int a;
+};
+
+void foo()
+{
+    spec(struct S x;)
+    spec(x = /* missing: (struct S) */ { .a = 3 };)
+}
+
+#endif
+`
+testcase(11,26) : error VC0000: Cannot determine initializer's type from context.
+`
+#include "vcc.h"
+
+struct S {
+    int a;
+    unsigned b;
+    spec(obj_t c;)
+    spec(mathint d;)
+    invariant(a)
+    invariant(b)
+    invariant(c)
+    invariant(d)
+};
+`
+Verification of S#adm succeeded.
+`
+#include <vcc.h>
+
+static char const RCSid[] = "2.1.2";
+
+void foo() {
+  assert(RCSid[0] == '2');
+}
+`
+Verification of foo succeeded.
+`
+
+struct S;
+struct T;
+struct R { struct S x; int a; };
+
+struct S { struct T y; };
+
+struct T { struct R x; };
+
+void foo(struct R *s) { }
+`
+testcase(4,1) : error VC0000: Type member 'x' in type 'R' causes a cycle in the type layout.
+`
+typedef unsigned __int8 uint8_t;
+int ToBm8(uint8_t n);
+void foo(unsigned i) { ToBm8(1UI8); };
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+void foo() {
+  assert(i==3);
+  spec(int i;)
+} 
+`
+testcase(4,12) : error VC0000: Cannot use local variable 'i' before it is declared.
+`
+#include <vcc.h>
+
+struct S {
+  unsigned __int64 a:63 ;
+  unsigned __int64 b:1;
+};
+
+void foo(__int64 a) { }
+
+void bar(struct S s) {
+  __int64 y;
+  y = s.a;
+  foo(s.a);
+}
+
+void baz(struct S *s) 
+  requires(mutable(s))
+{
+  __int64 y;
+  y = s->a;
+  foo(s->a);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+`
+#include <vcc.h>
+
+struct S {
+  unsigned __int64 a:32;
+  unsigned __int64 b:16;
+};
+
+void foo(unsigned __int32 a, unsigned __int16 b) { }
+
+void bar(struct S s) {
+  foo(s.a, s.b);
+}
+
+void baz(struct S *s) 
+  requires(mutable(s))
+{
+  foo(s->a, s->b);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+`
+#include "vcc.h"
+enum X { A, B, C};
+struct Y { 
+  unsigned __int64 x:3; 
+};
+ispure enum X foo(enum X x) returns(x);
+enum X bar(struct Y y) returns(foo(y.x))
+{
+  return foo(y.x);
+}
+`
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+typedef unsigned long long uint64;
+
+typedef struct pte_t{
+        uint64 pfn   :40; // 12: next page frame number
+} pte_t;
+
+int g(uint64 b);
+
+int f() {
+  uint64 a,b;
+  pte_t x;
+
+  g(x.pfn<<12);
+}
+`
+Verification of f succeeded.
+`
+#include <vcc.h>
+#include <limits.h>
+
+void foo()
+{
+  unsigned i = UINT_MAX / 2;
+  assert(i == INT_MAX);
+} 
+`
+Verification of foo succeeded.
+`
+void bar() { }
+
+void foo() {
+  unsigned __int8 r = 5;
+  r |= (bar(), 6);
+}
+`
+Verification of bar succeeded.
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+void foo(unsigned *a, unsigned n)
+	writes(array_range(a,n))
+{
+	unsigned i;
+	spec(unsigned j;)
+
+	for (i = 0; i < n; i++)
+		invariant(unsigned j; j < n; a[i]==0) // syntactically wrong (quantifier missing)
+		a[i] = 0;
+}
+`
+testcase(10,15) : error VC0000: Invalid expression term 'unsigned'.
+testcase(10,15) : error VC0000: ) expected.
+testcase(10,41) : error VC0000: Invalid expression term ')'.
+testcase(11,3) : error VC0000: ; expected.
+testcase(10,27) : warning VC9001: The expression 'j < n' has no side effect; expected operation with side effect.
+testcase(10,34) : warning VC9001: The expression 'a[i]==0' has no side effect; expected operation with side effect.
+`
+#include <vcc.h>
+
+void foo() { 
+  int *a = /*(int*)*/ 3;
+  int *b = 4;
+  assert(a != b);          
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+void foo(void, int a) { }
+
+void bar(int b, void c) { }
+
+void qux(void a) { }
+`
+testcase(3,10) : error VC0000: '' : illegal use of type 'void'.
+testcase(5,17) : error VC0000: 'c' : illegal use of type 'void'.
+testcase(7,10) : error VC0000: 'a' : illegal use of type 'void'.
+`
+#include "vcc.h"
+
+void foo() {
+	void x, y;
+	x = y;
+}
+`
+testcase(4,2) : error VC0000: 'x' : illegal use of type 'void'.
+testcase(4,2) : error VC0000: 'y' : illegal use of type 'void'.
+`
+
+#include <vcc.h>
+
+
+spec(typedef int Perm[1][int];)
+spec(bool f(Perm p) ensures (forall(int i; p[0][i] == i ));)
+
+`
+testcase(5,25) : error VC0000: Cannot declare array of type 'System.Diagnostics.Contracts.CodeContract.Map<int, int>' because it has size 0.
+testcase(6,59) : error VC0000: Illegal index.
+testcase(6,59) : error VC0000: The name 'p' does not exist in the current context.
+`
+#include "vcc.h"
+typedef struct Foo {
+int x;
+spec(int y[int][5];)
+} Foo;
+
+void bar(Foo *f) {
+assert(f->y[0][0]);
+}
+`
+testcase(4,17) : error VC0000: Illegal type 'int[5]' in map range.
+testcase(8,10) : error VC0000: Illegal index.
+`
+#include <vcc.h>
+
+typedef struct _S S;
+
+typedef struct _S { int a; } S;
+
+typedef int X;
+typedef unsigned X;
+
+void foo()  { }
+`
+testcase(8,1) : error VC0000: Incompatible redefinition of type 'X' from '__int32' to 'unsigned __int32'.
+`
+#include <vcc.h>
+
+typedef struct A a
+typedef struct B b
+`
+testcase(4,1) : error VC0000: ; expected.
+`
+#include "vcc.h"
+
+void foo() {
+	assert(forall(int i = 0; i < 20; 1));
+}
+`
+testcase(4,26) : error VC0000: ; expected.
+`
+#include <vcc.h>
+
+typedef struct S { } S
+typedef struct S { } S
+`
+testcase(4,1) : error VC0000: ; expected.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(axiom \forall int x,y; { x < y } \true)
+int foo() {}
+`
+testcase(3,42) : error VC9718: operator '<' not allowed in triggers when /opsasfuncs is not set
+`
+`/newsyntax
+#include <vcc.h>
+
+void foo() {
+  int i = 0;
+  while (++i < 10)
+    _(invariant i < 10) { }
+ i = 0;
+ while (++i < 10) 
+    _(invariant i < 10) ;
+}
+`
+testcase(9,39) : warning VC0000: Possible mistaken null statement.
+Verification of foo succeeded.
+`
+#include "vcc.h"
+int a2;
+int a3; ;
+void f4() {}
+void f5() {};
+void f6() {}; ;
+void f7() {};
+spec(void f8() {})
+spec(void f9() {};)
+spec(void f10() {}; ;)
+spec(void f11() {})
+spec(void f12() {});
+spec(void f13() {}); ;
+spec(int a14;)
+spec(int a15; ;)
+spec(int a16;);
+spec(int a17;); ;
+int a18;
+`
+Verification of f4 succeeded.
+Verification of f5 succeeded.
+Verification of f6 succeeded.
+Verification of f7 succeeded.
+Verification of f8 succeeded.
+Verification of f9 succeeded.
+Verification of f10 succeeded.
+Verification of f11 succeeded.
+Verification of f12 succeeded.
+Verification of f13 succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+int a2;
+int a3; ;
+void f4() {}
+void f5() {};
+void f6() {}; ;
+void f7() {};
+_(ghost void f8() {})
+_(ghost void f9() {};)
+_(ghost void f10() {}; ;)
+_(ghost void f11() {})
+_(ghost void f12() {});
+_(ghost void f13() {}); ;
+_(ghost int a14;)
+_(ghost int a15; ;)
+_(ghost int a16;);
+_(ghost int a17;); ;
+int a18;
+`
+Verification of f4 succeeded.
+Verification of f5 succeeded.
+Verification of f6 succeeded.
+Verification of f7 succeeded.
+Verification of f8 succeeded.
+Verification of f9 succeeded.
+Verification of f10 succeeded.
+Verification of f11 succeeded.
+Verification of f12 succeeded.
+Verification of f13 succeeded.
+`

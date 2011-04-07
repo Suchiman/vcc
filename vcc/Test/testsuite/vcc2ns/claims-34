@@ -1,0 +1,19 @@
+`/newsyntax
+#include <vcc.h>
+
+_(claimable) struct S {
+  int a;
+};
+
+void foo(struct S *s)
+  _(writes \extent(s))
+{
+  _(ghost \claim c;)
+  _(wrap s)
+  _(ghost c = \make_claim({},s))
+  _(ghost c = \make_claim({s},s))
+  _(assert (c->\valid && \ghost(c)))
+}
+`
+testcase(12,29) : error VC9710: claim(...) requires at least one object and a claimed property
+`
