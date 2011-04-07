@@ -2,30 +2,31 @@
 // ----------------------------------------------------------------------------
 // ArrayList.c
 //
-// The capacity of an ArrayList is the number of elements the ArrayList can hold.
-// As elements are added to an ArrayList, the capacity is automatically increased as required through reallocation.
-// Elements in this collection can be accessed using an integer index. Indexes in this collection are zero-based.
+// The capacity of an ArrayList is the number of elements the ArrayList can
+// hold.  As elements are added to an ArrayList, the capacity is automatically
+// increased as required through reallocation.  Elements in this collection can
+// be accessed using an integer index. Indexes in this collection are
+// zero-based.
 //
 // ----------------------------------------------------------------------------
 
 #include <stdlib.h>
 #include "vcc.h"
 
-struct ArrayList{
+struct ArrayList {
     size_t capacity;
     size_t length;
     int *array;
 
-    _(invariant \malloc_root(\this)
-    && length <= capacity
-    && \mine((void[capacity])array)
-    && ((void[capacity])array)->\valid
-    && \malloc_root((void[capacity])array))
+    _(invariant \malloc_root(\this) &&
+        length <= capacity &&
+        \mine((int[capacity])array) &&
+        \malloc_root((int[capacity])array))
 };
 
 _(pure)
 size_t Length(struct ArrayList *A)
-    _(reads A)
+    _(reads \universe())
     _(requires \wrapped(A))
     _(returns A->length)
 {
@@ -33,13 +34,12 @@ size_t Length(struct ArrayList *A)
 }
 
 struct ArrayList *CreateArrayList(size_t InitialCapacity)
-  _(requires 0 < InitialCapacity)
-  _(ensures \wrapped(\result))
-  _(ensures Length(\result)==0)
-  _(ensures \fresh(\result))
+    _(requires 0 < InitialCapacity)
+    _(ensures \wrapped(\result))
+    _(ensures \fresh(\result))
+    _(ensures Length(\result) == 0)
 {
     struct ArrayList *A;
-    _(ghost \object arr)
 
     A = malloc(sizeof(*A));
     _(assume A != NULL)
@@ -49,17 +49,15 @@ struct ArrayList *CreateArrayList(size_t InitialCapacity)
     A->array = malloc(sizeof(*A->array) * InitialCapacity);
     _(assume A->array != NULL)
 
-    _(ghost arr = (void[InitialCapacity])(A->array))
-    _(wrap arr)
-    _(ghost A->\owns =  {arr});
+    _(wrap (int[InitialCapacity])A->array)
     _(wrap A)
     return A;
 }
 
 void MakeEmpty(struct ArrayList *A)
     _(maintains \wrapped(A))
-    _(ensures Length(A)==0)
     _(writes A)
+    _(ensures Length(A) == 0)
 {
     _(unwrap A)
     A->length = 0;
@@ -68,10 +66,10 @@ void MakeEmpty(struct ArrayList *A)
 
 _(pure)
 int Select(struct ArrayList *A, size_t i)
+    _(reads \universe())
     _(requires i < Length(A))
     _(requires \wrapped(A))
     _(ensures \result == A->array[i])
-    _(reads \universe())
 {
     return A->array[i];
 }
@@ -80,12 +78,11 @@ void Update(struct ArrayList *A, size_t i, int v)
     _(requires i < Length(A))
     _(requires \wrapped(A))
     _(writes A)
+    _(ensures \forall size_t j; j < Length(A) ==>
+        Select(A, j) == \old(j == i ? v : A->array[j]))
 {
-    _(unwrap A)
-    _(unwrap (void[A->capacity])(A->array))
-    A->array[i] = v;
-    _(wrap (void[A->capacity])(A->array))
-    _(wrap A)
+    _(unwrapping A, (int[A->capacity])(A->array))
+        A->array[i] = v;
 }
 
 void DisposeArrayList(struct ArrayList *A)
@@ -93,48 +90,46 @@ void DisposeArrayList(struct ArrayList *A)
     _(writes A)
 {
     _(unwrap A)
-    _(unwrap (void[A->capacity])(A->array))
-    free((void[A->capacity])(A->array));
-    A->array = (int *) NULL;
+    _(unwrap (int[A->capacity])A->array)
+    free((int[A->capacity])A->array);
     free(A);
 }
 
 void Add(struct ArrayList *A, int v)
     _(requires Length(A) < 100000)
     _(maintains \wrapped(A))
-    _(ensures Length(A)==\old(Length(A))+1)
-    // Note: there should be additional postconditions / annotations on the
-    // elements of A after returning
     _(writes A)
+    _(ensures Length(A) == \old(Length(A)) + 1)
+    _(ensures \forall size_t j; j < \old(Length(A)) ==>
+        Select(A, j) == \old(Select(A, j)))
+    _(ensures Select(A, Length(A) - 1) == v)
 {
-    _(unwrap A)
-    _(unwrap (void[A->capacity])(A->array))
-    if (A->capacity == A->length) {
-        size_t i;
-        int *tmp;
-        size_t newCapacity;
+    _(unwrapping A, (int[A->capacity])A->array) {
+        if (A->capacity == A->length) {
+            size_t i;
+            int *tmp;
+            size_t newCapacity;
 
-        newCapacity = A->capacity * 2 + 1;
+            newCapacity = A->capacity * 2 + 1;
 
-        tmp = malloc(sizeof(*A->array) * newCapacity);
-        _(assume tmp != NULL)
+            tmp = malloc(sizeof(*A->array) * newCapacity);
+            _(assume tmp != NULL)
 
-        i = 0;
-        while (i < A->length)
-            _(writes \array_range(tmp, A->length))
-        {
-            tmp[i] = A->array[i];
-            i = i + 1;
+            i = 0;
+            while (i < A->length)
+                _(invariant \forall size_t j; j < i ==> tmp[j] == \old(A->array[j]))
+                _(writes \array_range(tmp, A->length))
+            {
+                tmp[i] = A->array[i];
+                i = i + 1;
+            }
+            free((int[A->capacity])A->array);
+            A->capacity = newCapacity;
+            A->array = tmp;
         }
-        free((void[A->capacity])(A->array));
-        A->capacity = newCapacity;
-        A->array = tmp;
-        _(ghost A->\owns =  {(void[A->capacity])(A->array)});
+        A->array[A->length] = v;
+        A->length++;
     }
-    A->array[A->length] = v;
-    A->length++;
-    _(wrap (void[A->capacity])(A->array))
-    _(wrap A)
 }
 
 int main_test()
@@ -145,7 +140,8 @@ int main_test()
 
     while (i < N)
         _(invariant \wrapped(A))
-        _(invariant Length(A)==i)
+        _(invariant Length(A) == i)
+        _(invariant \forall size_t j; j < i ==> Select(A, j) == (int) j)
     {
         Add(A, (int)i);
         i++;
@@ -164,5 +160,4 @@ Verification of Update succeeded.
 Verification of DisposeArrayList succeeded.
 Verification of Add succeeded.
 Verification of main_test succeeded.
-Verification of Length#reads succeeded.
 `*/
