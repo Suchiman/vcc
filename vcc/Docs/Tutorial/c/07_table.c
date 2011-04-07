@@ -34,6 +34,7 @@ void sc_set(struct SafeContainer *c,
   _(ensures c->len == \old(c->len))
   _(writes c, s)
 {
+  _(assert !(s \in c->\owns))
   _(unwrapping c) {
     _(unwrapping (struct SafeString *[c->len])(c->strings)) {
       c->strings[idx] = s;
@@ -55,6 +56,7 @@ void use_case(struct SafeContainer *c, struct SafeString *s)
   o = c->strings[5];
   _(assert \wrapped(c)) // OK
   _(assert \wrapped(s)) // OK
+  _(assert o \in c->\owns) // OK
   _(assert \wrapped(o)) // error
   sc_set(c, s, 5);
   _(assert o != s) // OK
@@ -70,5 +72,5 @@ Verification of SafeString#adm succeeded.
 Verification of SafeContainer#adm succeeded.
 Verification of sc_set succeeded.
 Verification of use_case failed.
-testcase(57,26) : error VC9500: Assertion '\wrapped(o)' did not verify.
+testcase(59,26) : error VC9500: Assertion '\wrapped(o)' did not verify.
 `*/
