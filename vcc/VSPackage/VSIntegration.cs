@@ -167,44 +167,27 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     #region document saving
 
-    internal static void DocumentsSavedCheck()
-    {
-      if (!DocumentsSaved())
-      {
-        DialogResult dialogResult =
-            MessageBox.Show("There are unsaved documents. Would you like to save all documents before proceding?",
-                                "Unsaved Items",
-                                MessageBoxButtons.YesNoCancel,
-                                MessageBoxIcon.Question,
-                                MessageBoxDefaultButton.Button3);
+    internal static bool DocumentsSavedCheck(VccOptionPage options) {
+      if (DTE.Documents.Cast<Document>().All(document => document.Saved)) return true;
 
-        switch (dialogResult)
-        {
-          case DialogResult.Cancel:
-            return;
-          case DialogResult.Yes:
-            SaveAll();
-            break;
-          default:
-            break;
-        }
-
+      if (options.SaveMode == SaveMode.Automatically) {
+        DTE.Documents.SaveAll();
+        return true;
       }
-    }
-    /// <summary>
-    /// Returns wether all open documents were saved after the last change
-    /// </summary>
-    private static bool DocumentsSaved()
-    {
-      return DTE.Documents.Cast<Document>().All(document => document.Saved);
-    }
-
-    /// <summary>
-    ///     Saves all open documents that belong to the project containing the active document.
-    /// </summary>
-    private static void SaveAll()
-    {
-      DTE.Documents.SaveAll();
+      else {
+        if (MessageBox.Show(
+          "There are unsaved changes. Press OK to save all documents and proceed with the verification.",
+          "Unsaved Changes",
+          MessageBoxButtons.OKCancel,
+          MessageBoxIcon.Question,
+          MessageBoxDefaultButton.Button1) == DialogResult.OK) {
+            DTE.Documents.SaveAll();
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
     }
 
     #endregion

@@ -74,18 +74,18 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     private void CustomVerify(object sender, EventArgs e)
     {
-      VSIntegration.DocumentsSavedCheck();
       if (OptionPage != null)
       {
+        if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
         VCCLauncher.CustomVerify(VSIntegration.ActiveFileFullName, OptionPage);
       }
     }
 
     private void VerifyThis(object sender, EventArgs e)
     {
-      VSIntegration.DocumentsSavedCheck();
       if (OptionPage != null)
       {
+        if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
         VCCLauncher.VerifyThis(VSIntegration.ActiveFileFullName, VSIntegration.CurrentSelection, VSIntegration.CurrentLine, OptionPage);
       }
     }
@@ -127,17 +127,20 @@ namespace Microsoft.Research.Vcc.VSPackage
     /// <param name="e"></param>
     private void VerifyActiveFile(object sender, EventArgs e)
     {
-      VSIntegration.DocumentsSavedCheck();
       if (OptionPage != null)
       {
+        if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
         VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, OptionPage);
       }
     }
 
-    private static void ReVerify(object sender, EventArgs e)
+    private void ReVerify(object sender, EventArgs e)
     {
-      VSIntegration.DocumentsSavedCheck();
-      VCCLauncher.LaunchVCC(LastAction);
+      if (OptionPage != null)
+      {
+        if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
+        VCCLauncher.LaunchVCC(LastAction);
+      }
     }
 
     private static void Cancel(object sender, EventArgs e)
