@@ -168,8 +168,27 @@ Micha{\l} Moskal, Wolfram Schulte \\
 
 
 \begin{abstract}
-This tutorial provides an introduction to VCC (a deductive verifier
-for concurrent C programs) and its annotation language.
+VCC is an industrial-strength verification environment for low-level concurrent
+systems code written in C.
+VCC takes a program (annotated with function
+contracts, state assertions, and type invariants) and attempts to prove the
+correctness of these annotations.  VCC's verification methodology allows global
+two-state invariants that restrict update of shared state and enforces simple,
+semantic conditions sufficient for checking those global invariants modularly.
+VCC works by translating C, via Boogie intermediate verification language, to
+verification conditions handled by the Z3 SMT solver.
+
+The environment includes tools for monitoring proof attempts and constructing
+partial counterexample executions for failed proofs and has been used to verify
+functional correctness of tens of thousands of lines of Microsoft's Hyper-V
+virtualization platform and of SYSGOs embedded real-time operating system
+PikeOS.
+
+This tutorial describes the usage of VCC verification environment:
+its annotation language and verification methodology, 
+the verifier itself, the VCC Visual Studio plugin,
+and Boogie Verification Debugger.
+The primary audience is programmers wanting to write correct code.
 \end{abstract}
 
 
@@ -220,16 +239,7 @@ for concurrent C programs) and its annotation language.
 \input{memmodel}
 \input{unchecked}
 \input{bitvectors}
-\section{Groups}
-\section{Structure inlining}
-\section{Structure equality}
-\section{Globals}
-\section{Out parameters}
-\section{Skinny expose}
-\section{Mathint}
-\section{Allocating ghost objects}
-\section{Smoke}
-\section{Isabelle}
+\input{others}
 \bibliography{tutorial}
 
 
