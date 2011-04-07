@@ -1,0 +1,12 @@
+`/loc:locOption:5
+#include <vcc.h>
+
+void foo() { 
+
+}
+
+void bar() { 
+}
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,447 @@
+\section{Simple Programs}
+We begin by describing how VCC verifies ``simple programs'' ---
+sequential programs without loops, pointers, or function calls. This
+might seem to be a trivial subset of C, but in fact VCC reasons about
+more complex programs (with pointers, function calls, loops, and
+concurrency) by reducing them to reasoning about simple programs.
+
+\subsection{Assertions}
+\label{sect:assert-assume}
+
+%\itodo{Penny: This section dives right into the meat. First, you need two things: 
+%1. A general guide to annotation syntax
+%2. A section that describes how to think in VCC terms is, you have to describe
+%not only exactly what your code does at each step of the way, but what your
+%program *doesnt* do. This latter point will nail people on loop verification
+%every time. 
+%After you do the how to think part, I suggest some simple exercises, if this is in fact to be a tutorial. The whole book can come later. 
+%}
+%\itodo{Michal: I'm not sure about 1., 2. might be good idea.}
+
+Let's begin with a simple example:
+
+\vccInputSC[linerange={begin-}]{c/01_minInline2.c}
+This program (internally) sets \vcc{z} to the minimum of \vcc{x} and
+\vcc{y}. In addition to the ordinary C code, this program includes an
+\Def{annotation}, starting with \vcc{_(}, terminating with a closing
+parenthesis, with balanced parentheses inside. The first identifier
+after the opening parenthesis (in the program above it's \vcc{assert})
+is called an \Def{annotation tag} and
+identifies the type of annotation provided (and hence its function).
+(The tag plays this role only 
+at the beginning of an annotation; elsewhere, it would be treated as
+an ordinary program identifier.)
+
+An annotation of the form \vcc{_(assert E)}, called an \Def{assertion}, asks VCC to prove that
+\vcc{E} is guaranteed to hold (\ie, evaluate to a value other than \vcc{0})
+whenever control reaches the assertion%
+\footnote{
+  This interpretation changes slightly if \vcc{E} refers to
+  memory locations that might be concurrently modified by other
+  threads; see \secref{concurrency}}.  
+Thus, the line \vcc|_(assert z <= x)| says
+that when control reaches the assertion, \vcc{z} is no larger than \vcc{x}.
+When VCC successfully verifies a program, it promises that all assertions
+hold in \emph{every} possible execution of the program, considering all possible inputs,
+all possible ways of scheduling concurrent threads, etc. 
+% The following doesn't really clarify much
+%% An \Def{execution} is a complete recording of all actions made by the program:
+%% which branches were taken, what values were read and stored in memory
+%% and so forth.
+%% For a deterministic program, once you fix input data (\eg by saying in this and that
+%% microsecond the user is going to click at that pixel and so forth),
+%% you fix the execution.
+%% An assertion causes VCC to try to \emph{prove} that \vcc{E} holds for \emph{all}
+%% executions.
+
+% There are only a few of these notes, so let's avoid them for now -E
+% Also, this note is something we probably want people to read.
+%\todo{should these notes be less prominent?}
+%\begin{note}
+It is instructive to compare \vcc{_(assert E)} with the macro
+\lstinline|assert(E)| (defined in \lstinline|<assert.h>|), which
+evaluates \vcc{E}  at runtime and aborts execution if \vcc{E}
+doesn't hold. First, \lstinline|assert(E)| requires runtime overhead (at least
+in builds where the check is made), whereas \vcc{_(assert E)} does
+not. Second, \lstinline|assert(E)| will catch failure of the 
+assertion only when it actually fails in an execution, whereas 
+\vcc{_(assert E)} is guaranteed to catch the failure if it is
+possible in \emph{any} execution. Third, because VCC doesn't have to
+actually execute \vcc{_(assert E)}, it allows \vcc{E} to include
+mathematical operations that cannot be executed, such as
+quantification over infinite domains.
+%\end{note}
+
+To verify the function using VCC from the command line, save the source in a file called \lstinline|minimum.c|
+and run VCC as follows:
+
+\begin{VCC}
+/*`C:\Somewhere\VCC Tutorial> vcc.exe minimum.c
+Verification of main succeeded.
+C:\Somewhere\VCC Tutorial>`*/
+\end{VCC}
+
+
+If instead you wish to use VCC Visual Studio plugin, load the solution \lstinline|VCCTutorial.sln|
+% moved the information on the samples to the preface - E
+%% (distributed with VCC), 
+%% \itodo{
+%% This isn't yet true. The samples are available only with VCC sources, available from
+%% \url{http://vcc.codeplex.com/SourceControl/list/changesets}: click Download on the right,
+%% get the zip file and navigate to \lstinline|vcc/Docs/Tutorial/c|.
+%% }
+%% \todo{we need to package the examples, but only after it is clear which ones are included in the tutorial}
+locate the file with the example, and right-click on the program text.
+You should get options to verify the file or just this function (either will work).
+
+\begin{note}
+If you right-click within a C source file,
+several VCC commands are made available, depending on what kind of
+construction IntelliSense thinks you are in the middle of. The choice
+of verifying the entire file is always available. If you click within
+the definition of a struct type, VCC will offer you the choice of
+checking admissibility for that type (a concept explained in \secref{admissibility0}).
+If you click within the body of a function, VCC should offer
+you the opportunity to verify just that function. However,
+IntelliSense often gets confused about the syntactic structure of
+VCC code, so it might not always present these context-dependent
+options. However, if you select the name of a function and then right
+click, it will allow you to verify just that function.
+\end{note}
+
+VCC verifies this function successfully, which means that its
+assertions are indeed guaranteed to hold and that the program cannot
+crash%
+\footnote{
+  VCC currently doesn't check that your program doesn't run forever or
+  run out of stack space, but future versions will, at least for sequential
+  programs.  
+}
+If VCC is unable
+to prove an assertion, it reports an error.  Try changing the
+assertion in this program to something that isn't true and see what
+happens. (You might also want to try coming up with some complex
+assertion that is true, just to see whether VCC is smart enough to
+prove it.)
+
+Assertions, like all VCC annotations, 
+are surrounded by \vcc{_( ... )} to indicate that they are
+only for VCC, and are not part of the program being verified
+For the regular C compiler the \vcc{<vcc.h>} header file defines:
+\begin{VCC}
+#define _(...) /* nothing */
+\end{VCC}
+VCC does not use this definition, and instead parses the inside of \vcc{_( ... )}
+annotations.%
+% there's not much point in putting into the tutorial an obscure
+% feature that doesn't work -E
+%% \footnote{
+%%   You can prevent definition of \vcc{_}, and instead surround annotations with
+%%   \vcc{__vcc_spec(...)}.
+%%   This is controlled with \vcc{_VCC_DONT_USE_UNDERSCORE} macro-definition.
+%%   \itodo{This doesn't work at the moment.} }
+
+
+
+To understand how VCC works, and to use it successfully, it is useful to
+think in terms of what VCC ``knows'' at various program points. In
+this example, VCC initially knows nothing about the variables (since they
+can initially hold any value). 
+Just before the first assignment, VCC knows that 
+\vcc{x <= y} (because execution followed that branch of the conditional), and
+after the assignment, VCC also knows that \vcc{z == x}, 
+so it knows that \vcc{z <= x}. Similarly, in the \vcc{else} branch,
+VCC knows that \vcc{y < x} (because execution didn't follow the
+\vcc{if} branch), and after the assignment to \vcc{z}, it also knows
+that \vcc{z == y}, so it knows \vcc{z <= x}. Since 
+\vcc{z <= x} is known to hold at the end of each branch of the
+conditional, it is known to hold at the end of the conditional, so the
+assertion is known to hold when control reaches it. In general,
+VCC doesn't lose any information when reasoning about assignments and
+conditionals. However, we will see that VCC
+ some information when reasoning about loops and function calls,
+which means additional annotations are necessary.
+
+When VCC surprises you by failing to verify something that you think
+it should be able to verify, it is usually because it doesn't know
+something you think it should know. An assertion provides one way to
+check whether VCC knows what you think it knows.
+
+% Too much information, too few full examples in one place. --M
+% We can't use a complete program to introduce every single thing,
+% especially those that should be easy to understand. Spreading things
+% out over the text just makes it harder to grasp what facilities are
+% available.
+%
+
+VCC provides a number of C extensions that can be used within VCC
+annotations (such as assertions):
+\begin{itemize}
+\item
+The Boolean operator \vcc{==>} denotes logical implication; formally,
+\vcc{P ==> Q} means \vcc{((!P) || (Q))}, and is usually 
+read as ``\vcc{P} implies \vcc{Q}''. Because \vcc{==>} has lower
+precedence than the C operators, it is typically not necessary to
+parenthesize \vcc{P} or \vcc{Q}.
+
+\item
+The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
+expression \vcc{E} evaluates to a nonzero value for every value 
+\vcc{v} of type \vcc{E}. For example, the assertion
+\begin{VCC}
+_(assert x > 1 && \forall int i; 1 < i && i < x ==> x % i != 0)
+\end{VCC}
+\noindent says that (\vcc{int}) \vcc{x} is a prime number. If \vcc{b}
+is an \vcc{int} array of size \vcc{N},
+\begin{VCC}
+_(assert \forall int i; \forall int j; 0 <= i && i <= j && j < N ==>
+  b[i] <= b[j])
+\end{VCC}
+says that \vcc{b} is sorted.
+
+\item
+Similarly, the expression \vcc{\exists T v; E} evaluates to \vcc{1} if there
+is some value of \vcc{v} of type \vcc{T} for which \vcc{E} evaluates
+to a nonzero value. For example, if \vcc{b} is an \vcc{int} array of
+size \vcc{N}, the assertion
+\begin{VCC}
+_(assert \exists int i; 0 <= i && i < N && b[i] == 0)
+\end{VCC}
+asserts that  \vcc{b} contains a zero element.
+\vcc{\forall} and \vcc{\exists} are jointly referred to as
+\Def{quantifiers}. 
+
+\item
+VCC also provides some mathematical types that cannot be used in
+ordinary C code (because they are too big to fit in memory);
+these include mathematical integers and maps. They are described in
+\secref{mathTypes}.
+
+\item
+Expressions within VCC annotations are restricted in their use of 
+functions: you can only use functions that are proved to be 
+\Def{pure}, \ie free from side effects (\secref{pureFunctions}).
+\end{itemize}
+
+%% Within a VCC declaration, the type \vcc|T[E]| where \vcc{T} is
+%% a type and \vcc{E} is an expression that is convertible to an
+%% \vcc{int}, is the type of arrays of \vcc{E} elements of type
+%% \vcc{T}. For example, the declaration
+%% \begin{VCC}
+%% void copyArray(int *from, int *to, int len)
+%% _(requires \\thread_local((int[len]) from))
+%% _(writes ((int[len]) to))
+%% ...
+%% \end{VCC}
+%defines a function that can read the first \vcc{len} elements of the
+%array \vcc{from}, and read or write the first \vcc{len} elements of
+%the array \vcc{to}.
+%
+%The expression \vcc{\old(E)}, when used in a postcondition of a
+%function, returns the value of expression \vcc{E} as it was at just
+%before the function was called. For example, the postcondition 
+%\vcc{*x == \old(*x) + 1} says that the function under consideration
+%increments \vcc{*x}.
+
+\subsection*{Exercises}
+\begin{enumerate}
+\item Write an assertion that says that the \vcc{int} \vcc{x} is the average of
+  the \vcc{int}s \vcc{y} and \vcc{z}.
+\item Write an assertion that says that the \vcc{int} \vcc{x} is a
+  perfect square.
+\item Write an assertion that says that the \vcc{int} \vcc{x} occurs
+  in the \vcc{int} array \vcc{b[10]}.
+\item Write an assertion that says that the \vcc{int} array \vcc{b},
+  of length \vcc{N}, contains no duplicates.
+\item Write an assertion that says that all pairs of adjacent elements
+  of the \vcc{int} array \vcc{b} of length \vcc{N} differ by at most
+  \vcc{1}.
+\item Write an assertion that says that an array \vcc{b} of length
+  \vcc{N} contains only perfect squares.
+\end{enumerate}
+
+\subsection{Assumptions}
+
+You can add to what VCC knows at a particular point with a second
+type of annotation, called an \Def{assumption}.
+The assumption \vcc{_(assume E)} tells VCC to ignore
+the rest of an execution if \vcc{E} fails to hold (\ie if
+\vcc{E} evaluates to \vcc{0}). 
+Reasoning-wise, assumption simply adds \vcc{E} to what VCC
+knows for subsequent reasoning. For example:
+\begin{VCC}
+int x, y;
+_(assume x != 0)
+y = 100 / x;
+\end{VCC}
+Without the assumption, VCC would complain about possible division by
+zero (it checks for division by zero because it would cause the
+program to crash).  Assuming the assumption, this error cannot happen.  
+Since assumptions (like all annotations) are not seen by the compiler,
+assumption failure won't cause the program to stop, and subsequent assertions
+might be violated. To put it another way, if VCC verifies a program,
+it guarantees that in any prefix of an execution
+where all (user-provided) assumptions hold, all assertions will also
+hold. Thus, your verification goal should be to eliminate as many assumptions as
+possible (preferably all of them).
+
+Although assumptions are generally to be avoided, they are nevertheless
+sometimes useful:
+\begin{itemize}
+\item In an incomplete verification, assumptions can be used to mark
+  the knowledge that VCC is missing, and to coordinate further
+  verification work (possibly performed by other people). If you
+  follow a discipline of keeping your code in a state where the whole 
+  program verifies, the verification state can be judged by browsing
+  the code (without having to run the verifier).
+
+\item When debugging a failed verification, you can use assumptions to
+  narrow down the failed verification to a more specific failure
+  scenario, perhaps even to a complete counterexample. 
+% We should have chapter about it, not a cryptic mention here. --M
+%  You can then
+%  add additional (non-assumption) annotations to eliminate the
+%  counterexample, weaken assumptions until you either hit another
+%  counterexample (or finish the verification), and repeat the process.
+
+\item Sometimes you want to assume something even though VCC can
+  verify it, just to stop VCC from spending time proving it. For
+  example, assuming \vcc{\false} allows VCC to 
+  easily prove subsequent assertions, thereby focussing its
+  attention on other parts of the code. Temporarily adding assumptions
+  is a common tactic when developing annotations for complex functions.
+
+\item Sometimes you want to make assumptions about the operating
+  environment of a program. For example, you might want to assume that
+  a 64-bit counter doesn't overflow, but don't want to justify it
+  formally because it depends on extra-logical assumptions (like the
+  speed of the hardware or the lifetime of the software). 
+
+\item Assumptions provide a useful tool in explaining how VCC
+  reasons about your program. We'll see examples of this throughout
+  this tutorial.
+\end{itemize}
+
+%%  What is however much more common is
+%% use of assumption when debugging your specifications: when the program
+%% does not verify you might try to temporarily add assumptions in a bet
+%% ``if VCC knew that, would it verify my program?''.  Once you find what
+%% is that thing VCC doesn't know, but what makes it verify the program,
+%% you can figure out how to specify rest of your program, so that is
+%% knows it.
+
+% The following is a bad example, since we would normally specify
+% hardware by an invariant on a volatile field.
+%% One case is interaction with hardware: you might know the hardware is
+%% going to leave specific I/O register positive, and an assumption is a
+%% way to communicate that to VCC. 
+
+An assertion can also change what VCC knows after the assertion, if
+the assertion fails to verify: although VCC will report the failure as an error,
+it will assume the asserted fact holds afterward. For example, in the following
+VCC will only report an error for the first assumption and not the second:
+\begin{VCC}
+int x;
+_(assert x == 0)
+_(assert x == 0)
+\end{VCC}
+
+When we talk about what VCC knows, we mean what it knows in an ideal
+sense, where if it knows \vcc{E}, it also knows any logical
+consequence of \vcc{E}. In such a world, adding an assertion that
+succeeds would have no effect on whether later assertions succeed.
+VCC's ability to deduce consequences is indeed complete for many types
+of formulas (e.g. formulas that use only equalities,
+inequalities, addition, subtraction, multiplication by constants, and
+boolean connectives), but not for all formulas, so VCC will
+sometimes fail to prove an assertion, even though it ``knows'' enough
+to prove it.  Conversely, an assertion that succeeds can sometimes cause later assertions that
+would otherwise fail to succeed, by drawing VCC's attention to a
+crucial fact it needs to prove the later assertion.  This is
+relatively rare, and typically involves ``nonlinear arithmetic''
+(e.g. where variables are multiplied together), bitvector reasoning
+(\secref{bv}) or quantifiers.
+
+\subsection*{Exercises}
+\begin{enumerate}
+\item
+In the following program fragment, which assertions will fail?
+\begin{VCC}
+int x,y; 
+_(assert x > 5) 
+_(assert x > 3) 
+_(assert x < 2) 
+_(assert y < 3)
+\end{VCC}
+\item
+Is there any difference between 
+\begin{VCC}
+_(assume p)
+_(assume q)
+\end{VCC}
+and 
+\begin{VCC}
+_(assume q) 
+_(assume p)
+\end{VCC}
+? What if the assumptions are replaced by assertions?
+\item
+Is there any difference between
+\begin{VCC}
+_(assume p)
+_(assert q)
+\end{VCC}
+and 
+\begin{VCC}
+_(assert (!p) || (q))
+\end{VCC}
+? 
+
+% we need to have a place where we collect all of the new operators -E
+%% \vcc{p ==> q} means \vcc{p} implies \vcc{q}, and formally \vcc{!p || q}.
+%\item
+%\itodo{I'm not sure if this and the following exercise give
+%any insight. --M}
+% the objective is to let readers think about strongest postconditions
+% and weakest preconditions -E
+%Given the assumptions preceding each of the assignments below to int
+%variables, what are the strongest assertions that would be valid?
+%\begin{VCC}
+%_(assume x < 5) x += 5; _(assert ??)
+%_(assume u < v) u = v;  _(assert ??)
+%_(assume a < b && a < c) a = b;  _(assert ??)
+%\end{VCC}
+%\item
+%Given the assertions following each of the assignments below, what is 
+%the weakest preceding assumption that would allow the assertions to be
+%valid?
+%\begin{VCC}
+%_(assume ??) x = y _(assert x < 10)
+%_(assume ??) u += 3 _(assert 2*u == 3*v)
+%\end{VCC}
+\end{enumerate}
+
+\subsection{Havoc}
+%% \itodo{Add havoc to VCC}
+
+An assignment of the form \vcc{x = E}, where \vcc{E} is an expression
+that doesn't mention \vcc{x}, is equivalent to setting \vcc{x} to an
+arbitrary value of its type (an operation we write as \vcc{havoc(x)}%
+), followed by the assumption that \vcc{x==y}. This can be naturally
+generalized to havocing a collection of variables and then assuming
+something about the resulting state (to constrain the chosen values of
+these variables).
+
+This idiom is central to how VCC reasons about more interesting kinds
+of programs. Whenever something complex happens in the body of a
+function (such as a loop, a function call, or interference from other
+threads), VCC replaces it with an abstraction of this form, to reduce
+reasoning about the original program to reasoning about a simple
+program.  The annotations you put on the program determine the
+abstraction that is used; successful verification guarantees that these
+abstractions are \Def{sound}, \ie that each complex behavior
+implements the abstraction used to replace it.
+
+
+
+

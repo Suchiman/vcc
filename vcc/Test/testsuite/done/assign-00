@@ -1,0 +1,16 @@
+`/newsyntax
+#include <vcc.h>
+
+union A {
+int a;
+short q;
+};
+
+void foo()
+{
+  union A x, y;
+  x = y;
+}
+`
+Verification of foo succeeded.
+`

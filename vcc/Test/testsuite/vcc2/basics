@@ -1,0 +1,888 @@
+#include <vcc.h>
+
+void foo(int *a) {
+	int b = *a;
+}
+`
+Verification of foo failed.
+testcase(4,11) : error VC8512: Assertion 'a is thread local' did not verify.
+`
+`/omitrw
+#include <vcc.h>
+
+void foo(int *a) {
+	int b = *a;
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+#ifdef VERIFY
+struct vcc(dynamic_owns) S { int a; obj_t b;};
+void foo(struct S *s) requires(wrapped(s)) {
+    assume(set_in(s->b,owns(s)));
+    assert(owner(s->b) == s);
+}
+void foo2(struct S *s) requires(wrapped(s)) {
+    assume(set_in(s->b,owns(s)));
+    assume(is_non_primitive_ptr(s->b));
+    assert(owner(s->b) == s);
+}
+
+void t()
+{
+  struct S s;
+  assert(is_non_primitive_ptr(&s));
+}
+void t2()
+{
+  int x;
+  assert(is_non_primitive_ptr(&x));
+}
+#endif
+`
+Verification of foo failed.
+testcase(6,14) : error VC9500: Assertion '_vcc_owner(s->b) == s' did not verify.
+Verification of foo2 succeeded.
+Verification of t succeeded.
+Verification of t2 failed.
+testcase(22,12) : error VC9500: Assertion '_vcc_is_non_primitive_ptr(&x)' did not verify.
+`
+#include <vcc.h>
+
+bool _vcc_full_stop();
+
+struct foo {
+  int x;
+  invariant(_vcc_full_stop())
+  invariant(x > 0)
+};
+`
+Verification of foo#adm failed.
+testcase(7,15) : error VC8012: invariant(_vcc_full_stop()) of foo is not admissible.
+testcase(7,15) : error VC8018: invariant(_vcc_full_stop()) of foo forbids unwrapping.
+`
+#include "vcc.h"
+
+typedef unsigned __int64 uint64;
+
+void testme(uint64* p)
+  requires(typed(p))
+  requires(thread_local(p))
+  requires(mutable((uint64*)(*p)))
+  requires(p != (uint64 *)(*p))
+  writes((uint64 *)*p)
+{
+
+    *((uint64*)(*p)) = 5;
+}
+`
+Verification of testme succeeded.
+`
+#include "vcc.h"
+
+struct x {
+  int dummy;
+};
+
+struct y {
+  int dummy;
+  struct x *xp;
+  invariant(closed(xp)) 
+};
+`
+Verification of y#adm failed.
+testcase(10,15) : error VC8012: invariant(_vcc_closed(xp)) of y is not admissible.
+`
+#include <vcc.h>
+
+struct vcc(volatile_owns) Foo {
+  int x;
+};
+
+struct vcc(dynamic_owns) FooNV {
+  int x;
+};
+
+struct Baz { int x; };
+
+struct Bar {
+  struct Foo foo;
+  struct Baz baz;
+
+  invariant(keeps(&foo))
+  invariant(set_in(&baz, owns(&foo)))
+};
+
+struct BarOK {
+  struct FooNV foo;
+  struct Baz baz;
+
+  invariant(keeps(&foo))
+  invariant(set_in(&baz, owns(&foo)))
+};
+`
+Verification of Bar#adm failed.
+testcase(18,15) : error VC8012: invariant(_vcc_set_in(&baz,_vcc_owns(&foo))) of Bar is not admissible.
+Verification of BarOK#adm succeeded.
+`
+#include <vcc.h>
+
+void bar(unsigned i) {
+   spec(bool map[unsigned];) 
+   spec(map = (lambda(unsigned j; true; i==j || map[j]));)
+}
+`
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+void bar(unsigned i) {
+   spec(bool map[unsigned];) 
+   spec(map = (lambda(unsigned j; true; (bool) ((i==j)? 1: (map[j]))));)
+}
+`
+testcase(5,67) : error VC0000: Type of conditional expression cannot be determined because there are implicit conversions between '__int32' and 'bool'; try adding an explicit cast to one of the arguments.
+`
+#include "vcc.h"
+
+typedef struct _FOO
+{
+	int dummy;
+	spec(bool Map[AAA];)
+	invariant(Map[dummy])
+} FOO;
+
+
+isadmissibilitycheck 
+void funcname(FOO *p)
+{ 
+	havoc_others(p);
+}
+
+`
+testcase(6,27) : error VC0000: The name 'AAA' does not exist in the current context.
+`
+
+#include <vcc.h>
+
+typedef struct vcc(volatile_owns) key{
+  int data;
+  invariant(unchanged(owns(this)) || (data == 0))
+} key;
+`
+Verification of key#adm succeeded.
+`
+#include "vcc.h"
+struct X {
+    int dummy;
+    invariant(closed(&this))
+};
+`
+testcase(4,29) : error VC0000: Cannot take the address of the given expression.
+`
+#include "vcc.h"
+
+typedef __int64 int64;
+typedef unsigned __int64 uint64;
+
+struct {
+    uint64 R[16];            
+} core;
+
+void foo() {
+    int64 a;
+    uint64 b;
+
+    a = (int64)(core.R[12]) < 0;
+}
+`
+Verification of foo failed.
+testcase(14,17) : error VC8512: Assertion 'core.R[12] is thread local' did not verify.
+testcase(14,17) : error VC8518: Assertion 'core.R[12] fits range of int64_t' did not verify.
+`
+
+#include <vcc.h>
+
+static void notJustForFun (
+    unsigned char *lo,
+    unsigned char *hi,
+    unsigned int width
+    )
+requires(is_thread_local_array(lo, (1u << 31) + 10u))
+requires(lo+width == hi)
+requires(width == (1u << 31) + 1)
+{
+
+	hi = hi - width;
+	assert(hi == lo);
+}
+`
+Verification of notJustForFun succeeded.
+`
+
+struct bla {
+  int dummy;
+};
+
+void bla(struct bla o) 
+{
+}
+`
+Verification of bla succeeded.
+`
+
+#include <vcc.h>
+
+void foo(bool a, bool b) 
+  requires(a && !b)
+{
+  assert(b <== b);
+  assert(a <== b);
+  assert(a <== a);
+  assert(!(b <== a));
+  assert(b <== b <== a);
+  assert(a <== b <== a);
+  assert(b <== a <== b);
+  assert(a <== a <== b);
+  assert(!(b <== a <== a));
+  assert(a <== a <== a);
+  assert(a <== b <== b);
+  assert(b <== b <== b);
+  assert(!(a <== a ==> b));
+  assert(!((a <== a) ==> b));
+  assert(a <== (a ==> b));
+}
+`
+Verification of foo succeeded.
+`
+
+#include <vcc.h>
+
+void foo() {
+  assert(forall(int i; i != 0 ==> forall(int i; i != 0)));
+}
+`
+testcase(5,48) : error VC9675: Quantified variable 'i' clashes with earlier declaration
+`
+
+#include <vcc.h>
+
+void foo() {
+  spec(bool m[int];)
+  spec(m[(void *)0] = true;)
+}
+`
+testcase(6,19) : error VC0000: The best overloaded method match for 'System.Diagnostics.Contracts.CodeContract.Map<int, bool>.Item.get(int)' has some invalid arguments.
+testcase(6,21) : error VC0000: Argument '1': cannot convert from 'void*' to '__int32'.
+`
+void foo()
+{
+  int x, *p;
+  __assert(*x == 2);
+}
+`
+testcase(4,12) : error VC0000: Illegal indirection.
+`
+#include "vcc.h"
+
+struct Foo {
+    def_group(g)
+    int a;
+    def_group(g)
+    int b;
+};
+
+void foo(struct Foo *s) {}
+`
+testcase(6,5) : error VC9678: 'g' : group name redefinition
+testcase(4,5)-(4,103) : (Location of symbol related to previous error.)
+`
+#include "vcc.h"
+
+struct Foo {
+    int a;
+    int a;
+};
+
+void foo(struct Foo *s) {}
+`
+testcase(5,5) : error VC9677: 'a' : 'struct' member redefinition
+testcase(4,5)-(4,10) : (Location of symbol related to previous error.)
+`
+#include "vcc.h"
+
+struct Foo {
+    int a;
+    spec(int a;)
+};
+
+void foo(struct Foo *s) {}
+`
+testcase(5,21) : error VC9677: 'a' : 'struct' member redefinition
+testcase(4,5)-(4,10) : (Location of symbol related to previous error.)
+`
+#include "vcc.h"
+
+struct vcc(dynamic_owns) F { int x; };
+
+void f(struct F *f)
+  maintains(wrapped(f))
+{
+  assert(! set_in((struct F*)0, owns(f)));
+}
+`
+Verification of f succeeded.
+`
+void foo() {
+  int i;
+  unsigned i;
+  i = 5;
+};
+`
+testcase(3,3) : error VC0000: A local variable named 'i' is already defined in this scope.
+`
+#include "vcc.h"
+
+struct vcc(dynamic_owns) S {
+  int a[5];
+  bool x;
+  invariant(x ==> keeps(a)) 
+};
+
+void foo(struct S s) { }
+
+`
+testcase(6,41) : warning VC9104: primitive pointers are unlikely to be in the owns set
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+#ifdef VERIFY
+ispure
+int foo(int a)
+  reads(a);
+
+#endif
+  
+`
+testcase(6,11) : error VC9648: non-pointers are not supported in reads clauses
+`
+#include "vcc.h"
+
+struct S {
+    int dummy;
+    spec(volatile obj_t a;)
+    invariant(old(a==(void*)0) ==> 42)
+};
+`
+Verification of S#adm succeeded.
+`
+#include "vcc.h"
+
+typedef struct _T
+{
+    unsigned d;
+} T;
+
+void foo() {
+    assert(forall(T x; 42));
+}
+
+`
+Verification of foo succeeded.
+`
+struct S { int a;};
+
+struct S GetS();
+
+void foo() {
+    struct S s;
+    s = GetS();
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned __int8 UINT8;
+
+void foo() {
+    UINT8 x = 5;
+    void *p = (void *)x;
+    assert(p);
+    assert((UINT8)p == 5);
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+struct S {
+    int dummy;
+    invariant(keeps(SET()))
+};
+`
+testcase(5,37) : error VC9699: 'keeps' requires arguments of pointer type; '_vcc_create_set(_vcc_dummy_set_element()  )' has type '_math ptrset' which is not allowed.
+`
+#include "vcc.h"
+
+void foo(int *x) requires(is_fresh(x)) {};
+`
+testcase(3,29) : error VC9697: calling '_vcc_is_fresh' is allowed only in two-state contexts
+`
+#include <stdlib.h>
+#include "vcc.h"
+
+void bar()
+{
+    int *a;
+    a = (int*) malloc(sizeof(*a) * 42);
+    if (a != NULL) free(as_array(a,42));
+}
+
+spec(
+void barSafe()
+{
+    int ^a;
+    a = spec_malloc_array<int>(42);
+    free(as_array(a,42));
+}
+)
+`
+Verification of bar succeeded.
+Verification of barSafe succeeded.
+`
+struct S { int a; }
+
+struct T { int b; }
+`
+testcase(3,1) : error VC0000: ; expected.
+Unexpected 'end-of-file'. Did you forget a ';'?
+`
+#include "vcc.h"
+
+void foo(int *a) {
+    if (a) {
+        *a++;
+    }
+    
+    while (a) {
+      *a++;
+    }
+}
+`
+Verification of foo failed.
+testcase(5,10) : error VC8512: Assertion 'a is thread local' did not verify.
+testcase(9,8) : error VC8512: Assertion 'a is thread local' did not verify.
+`
+void foo() { int a[42]; a[(void*)0] = 3; }
+`
+testcase(1,25) : error VC0000: subscript is not of integral type
+`
+#include <vcc.h>
+
+typedef struct _UINT128 {
+  unsigned int a;
+  unsigned int b;
+} UINT128;
+
+struct S {
+  UINT128 a;
+};
+
+void foo() {
+  UINT128 x,y;
+  x.a = y.a;
+}
+
+void bar()
+{
+  struct S x,y;
+  x.a=y.a;
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+
+#include <vcc2test.h>
+
+struct S {
+  volatile int a;
+  invariant(old(old(a)) == a)
+};
+`
+Verification of S#adm succeeded.
+`
+#include <vcc.h>
+
+bool ispure zero1(int a)
+returns (a == 0 ? (0 == 0) : false);
+bool ispure zero2(int a)
+returns (a == 0 ? (0 == 0) : (1 < 0));
+bool ispure zero3(int a)
+returns (a == 0 ? (0 != 1) : (0 == 0) && (0 == 1));
+
+void foo() {
+  assert(zero1(0));
+  assert(zero2(0));
+  assert(zero3(0));
+}
+`
+Verification of foo succeeded.
+`
+void foo(void *f) { 
+  void *p = f + 3;
+} 
+
+void bar(void *f) { 
+  void *p = f - 3;
+} 
+
+void baz(void *f) { 
+  void *p = 3 + f;
+} 
+
+void qux(void *f) { 
+  void *p = 100 - f;
+} 
+`
+testcase(2,13) : error VC0000: The operation in question is undefined on void pointers.
+testcase(6,13) : error VC0000: The operation in question is undefined on void pointers.
+testcase(10,13) : error VC0000: Operator '+' cannot be applied to operands of type '__int32' and 'void*'.
+testcase(14,13) : error VC0000: Operator '-' cannot be applied to operands of type '__int32' and 'void*'.
+`
+#include <vcc.h>
+
+struct X {
+  int x;
+  invariant(x > 7)
+};
+
+struct X *get_x()
+  ensures(closed(result));
+
+struct X *test_ens()
+  ensures(inv(result))
+  ensures(result->x > 4)
+{
+  return get_x();
+}
+
+struct X *test_ens_may_fail()
+  ensures(result->x > 4)
+  ensures(inv(result))
+{
+  return get_x();
+}
+
+void test_req(struct X *p)
+  requires(inv(p))
+  requires(p->x > 3)
+{
+}
+
+void use_test_req(struct X *p)
+  requires(closed(p))
+{
+  test_req(p);
+}
+
+void test_req_inv(struct X *p)
+  requires(p->x > 3)
+  requires(inv(p))
+{
+}
+
+void use_test_req_may_fail(struct X *p)
+  requires(closed(p))
+{
+  test_req_inv(p);
+}
+
+void loop_inv()
+{
+  struct X *p = get_x();
+  int k;
+
+  while(1)
+    invariant(inv(p))
+    invariant(p->x > 3)
+  {
+    k = 7;
+  }
+}
+
+void loop_inv_may_fail()
+{
+  struct X *p = get_x();
+  int k;
+
+  while(1)
+    invariant(p->x > 3)
+    invariant(inv(p))
+  {
+    k = 7;
+  }
+}
+
+spec(
+ispure bool f1(int x)
+  reads(set_universe())
+  returns(x > 0); )
+spec(
+ispure bool f2(int x)
+  reads(set_universe()) ; )
+
+axiom(forall(int x; {f1(x)} f1(x) ==> f2(x)));
+
+struct A {
+  int x;
+  invariant(f1(x))
+  invariant(f2(x))
+};
+
+void wrap_order(struct A *a)
+  writes(extent(a))
+{
+  a->x = 7;
+  wrap(a);
+}
+
+struct A_may_fail {
+  int x;
+  invariant(f2(x))
+  invariant(f1(x))
+};
+
+void wrap_order_may_fail(struct A_may_fail *a)
+  writes(extent(a))
+{
+  a->x = 7;
+  wrap(a);
+}
+
+`
+Verification of X#adm succeeded.
+Verification of A#adm succeeded.
+Verification of A_may_fail#adm failed.
+testcase(100,15) : error VC8012: invariant(f2(x)) of A_may_fail is not admissible.
+testcase(100,15) : error VC8018: invariant(f2(x)) of A_may_fail forbids unwrapping.
+Verification of test_ens succeeded.
+Verification of test_ens_may_fail failed.
+testcase(22,3) : error VC9501: Post condition 'result->x > 4' did not verify.
+testcase(19,13) : error VC9599: (related information) Location of post condition.
+Verification of test_req succeeded.
+Verification of use_test_req succeeded.
+Verification of test_req_inv succeeded.
+Verification of use_test_req_may_fail failed.
+testcase(46,3) : error VC9502: Call 'test_req_inv(p)' did not verify.
+testcase(38,14) : error VC9599: (related information) Precondition: 'p->x > 3'.
+Verification of loop_inv succeeded.
+Verification of loop_inv_may_fail failed.
+testcase(68,17) : error VC9500: Loop entry invariant 'p->x > 3' did not verify.
+Verification of wrap_order succeeded.
+Verification of wrap_order_may_fail failed.
+testcase(108,13) : error VC8014: invariant(f2(x)) of A_may_fail fails on wrap.
+testcase(100,15) : error VC9599: (related information) location of the invariant.
+`
+#include "vcc.h"
+
+typedef struct s1{
+    int dummy;
+} s1;
+
+typedef struct vcc(dynamic_owns) q1{
+    bool b;
+    s1 *s;
+    invariant(b ==> keeps(s))
+}q1;
+
+void f(q1 *q)
+requires(!q->b)
+requires(wrapped(q))
+writes(q)
+{
+    unwrap(q);
+    giveup_owner(q->s, q);
+}
+`
+Verification of q1#adm succeeded.
+Verification of f failed.
+testcase(19,19) : error VC9500: Assertion '_vcc_set_in(q->s,_vcc_owns(q))' did not verify.
+`
+#include "vcc.h"
+
+typedef struct { int a; } X;
+
+typedef void (*FOO)(unsigned X)
+  requires((X) & 3);
+
+void foo(unsigned X, FOO f)
+	requires((X) & 3)	
+	requires(X & 3)		
+	requires(typed(f))
+{
+	assert((X) & 3);	
+	f(X);
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+spec(ispure bool foo(int *a)
+    reads(set_universe())
+    returns(*a);)
+
+spec(ispure bool bar(int ^a)
+    reads(set_universe())
+    returns(*a);)
+
+void wrong_type() {
+    assert(foo(false));
+    assert(foo((int *)false));
+    assert(bar(false));
+    assert(bar((int ^)false));
+}
+`
+testcase(12,14) : error VC0000: The best overloaded method match for '__Globals__.foo(int*)' has some invalid arguments.
+testcase(12,18) : error VC0000: Argument '1': cannot convert from 'bool' to 'int*'.
+testcase(13,18) : error VC0000: Cannot convert type 'bool' to 'int*'.
+testcase(14,14) : error VC0000: The best overloaded method match for '__Globals__.bar(int*)' has some invalid arguments.
+testcase(14,18) : error VC0000: Argument '1': cannot convert from 'bool' to 'int^'.
+testcase(15,18) : error VC0000: Cannot convert type 'bool' to 'int^'.
+`
+#include <vcc.h>
+
+struct System {
+  int x;
+};
+`
+testcase(3,8) : error VC0000: 'System' is a reserved name and cannot be used as type name.
+`
+void foo() { \
+  __assert(0);
+}
+`
+Verification of foo failed.
+testcase(2,12) : error VC9500: Assertion '0' did not verify.
+`
+#include "vcc.h"
+
+typedef struct _Y {
+  int x;
+  invariant(unchanged(closed(this)) || x > 0)
+} Y, *PY;
+
+void foo()
+{
+  Y y;
+  y.x = -1;
+  wrap(&y); // should fail
+}
+`
+Verification of _Y#adm succeeded.
+Verification of foo failed.
+testcase(12,13) : error VC8014: invariant((__old(_vcc_closed(__this)) == (_vcc_closed(__this))) || x > 0) of _Y fails on wrap.
+testcase(5,15) : error VC9599: (related information) location of the invariant.
+`
+// vim:set expandtab shiftwidth=2 tabstop=2:
+#include "vcc.h"
+#include <stdlib.h>
+
+typedef struct _Y *PY;
+
+typedef struct vcc(claimable) _X {
+  int dummy;
+  spec(volatile bool T[PY];)
+  invariant(approves(owner(this),T))
+  invariant(forall(PY t; {T[t]} T[t] <==> closed(t) && t->x == this))
+} X, *PX;
+
+typedef struct vcc(claimable) _Y {
+  PX x;
+  claimp(xClaim;)
+  invariant(unchanged(closed(this)) || inv2(x))
+  invariant(keeps(xClaim))
+} Y, *PY;
+
+void foo(PX P claimp(c))
+  always(c, closed(P))
+  writes(P)
+{
+  PY y = (PY) malloc(sizeof(Y));
+  assume(y); // successful allocation
+  y->x = P;
+  assert(P->T==P->T); // TODO for triggering, find another way ?
+  spec(y->xClaim = claim(P, closed(P));)
+  wrap(y); // This fails to check inv2(y->x)
+  assert(inv(P));
+  assert(!P->T[y]);
+  assert(false);
+}
+`
+Verification of _X#adm succeeded.
+Verification of _Y#adm succeeded.
+Verification of foo failed.
+testcase(30,13) : error VC8014: invariant((__old(_vcc_closed(__this)) == (_vcc_closed(__this))) || _vcc_inv2(x)) of _Y fails on wrap.
+testcase(17,15) : error VC9599: (related information) location of the invariant.
+`
+#include <vcc2test.h>
+
+vcc(claimable) struct T
+{
+    struct S c;
+};
+
+void foo() {
+  struct T *t = (struct T *)malloc(sizeof(struct T));
+  assert(t == NULL || is_claimable(t));
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+struct S { int a; };
+
+void foo(struct S *s) {
+	assert(s==&s->a);
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+void write_parm1(int n)
+{
+  n = 1;
+}
+
+void write_parm2(bool a, int n)
+{
+  a && (n = 1);
+}
+`
+Verification of write_parm1 succeeded.
+Verification of write_parm2 succeeded.
+`
+#include <vcc.h>
+
+typedef struct B {
+     bool c;
+} B;
+
+void bar(B* a)
+     writes(a)
+     requires(mutable(a))
+{
+     set_owner(a, a);
+}
+
+`
+Verification of bar failed.
+testcase(11,6) : error VC8510: Assertion '_vcc_span(obj) is writable in call to _vcc_set_owns(a, _vcc_set_union(_vcc_set_singleton(a),_vcc_owns(a)))' did not verify.
+`
