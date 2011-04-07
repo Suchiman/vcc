@@ -150,6 +150,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="SaveMode.cs" />
     <Compile Include="VCCOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>
