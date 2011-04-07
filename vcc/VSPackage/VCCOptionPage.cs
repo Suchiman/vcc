@@ -35,6 +35,10 @@ namespace Microsoft.Research.Vcc.VSPackage
         [Description("Show notifications when a verfication run completes and Visual Studion is no longer the foreground window.")]
         public bool ShowNotifications { get; set; }
 
+        [DisplayName("Save Files")]
+        [Description("VCC can ask you to save unsaved changes when you start a verification, or save changed files automatically.")]
+        public SaveMode SaveMode { get; set; }
+
         [Category("Vcc Version")]
         [DisplayName("Installed VCC Version")]
         [Description("The version of this extension and the VCC compiler.")]
