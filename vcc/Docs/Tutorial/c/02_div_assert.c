@@ -13,13 +13,17 @@ void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
   _(assert x == d*lq + lr)
   
   // start an arbitrary iteration
-  // havoc variables modified in the loop  
-  havoc(lq);
-  havoc(lr);
+  // forget variables modified in the loop
+  {
+    unsigned _fresh_lq, _fresh_lr;
+    lq = _fresh_lq; lr = _fresh_lr;
+  }
   // assume that the loop invariant holds
   _(assume x == d*lq + lr)
   // jump out if the loop terminated
-  if (!(lr >= d)) goto loopExit;
+  if (!(lr >= d))
+    goto loopExit;
+  // body of the loop
   {
     lq++;
     lr -= d;
