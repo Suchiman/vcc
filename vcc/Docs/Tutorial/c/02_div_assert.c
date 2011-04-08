@@ -2,8 +2,6 @@
 /*{begin}*/
 #include <vcc.h>
 
-typedef unsigned int unsigned;
-
 void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
 {
   // assume the precondition

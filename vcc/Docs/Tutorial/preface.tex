@@ -1,19 +1,17 @@
 \section{Introduction}
 This tutorial is an introduction to verifying C code with VCC. Our
-primary audience is software engineers who want to write correct code
-and verification engineers who want to check code for correctness.
+primary audience is programmers who want to write correct code.
 The only prerequisite is a working knowledge of C.
 
-To use VCC, you must first \emph{annotate} your code to specify how
+To use VCC, you first \emph{annotate} your code to specify how
 your functions and data structures are meant to be used.
 VCC then tries to \emph{prove} (mathematically) that
 your program meets these specifications.  Unlike most program
 analyzers, VCC doesn't look for bugs, or analyze an abstraction of
 your program; if VCC certifies that your program is correct, then your
-program really should be correct%
+program really is correct%
 \footnote{
-  In reality, this isn't
-  really a guarantee, because VCC itself might have bugs. In
+  In reality, this isn't a 100\% guarantee, because VCC itself might have bugs. In
   practice, this is unlikely to cause you to accidentally verify an
   incorrect program, unless you find and intentionally exploit such a
   bug. 
@@ -30,7 +28,8 @@ program really should be correct%
   %future.
   }. 
 
-To check your program, VCC generates a number of mathematical
+To check your program, VCC uses the \Def{deductive verification paradigm}:
+it generates a number of mathematical
 statements (called \Def{verification conditions}), the validity of
 which suffices to guarantee the program's correctness, and tries to
 prove these statements using an automatic theorem prover. If any of
@@ -40,8 +39,7 @@ prover). Thus, you normally interact with VCC entirely at the level of
 code and program states; you can usually ignore the mathematical
 reasoning going on ``under the hood''.
 For example, if your program uses division
-somewhere, and VCC is unable to prove (from what it thinks holds at the
-point at which the division is done) that the divisor is nonzero, it
+somewhere, and VCC is unable to prove that the divisor is nonzero, it
 will report this to you as a program error at that point in the
 program. 
 % Seems like a redundant information.
@@ -60,7 +58,7 @@ the strengthening of other specifications, so verification is in
 practice an iterative process.  
 Often this process will reveal a genuine programming error.
 Moreover, this process pays the extra dividend of producing precise
-specifications for your functions and data structures - a very useful
+specifications for your functions and data structures---a very useful
 form of documentation. 
 
 %\itodo{the following paragraph should be moved out of here}
@@ -84,15 +82,16 @@ background of VCC \cite{lci}, implementation details \cite{vcc}
 or advanced topics;
 information on these can be found on the VCC
 homepage\footnote{\url{http://vcc.codeplex.com/}}.
-
+%
 %%  These topics are covered
 %% separately~\cite{lci}.  A high-level overview of the VCC tool chain is
 %% also available separately~\cite{Cohen:TPHOLs2009-23}.
-
-The examples in this tutorial are currently distributed with the VCC sources
-available from \url{http://vcc.codeplex.com/SourceControl/list/changesets}: click Download on the right,
+%
+The examples in this tutorial are currently distributed with the VCC sources.%
+\footnote{
+Available from \url{http://vcc.codeplex.com/SourceControl/list/changesets}: click Download on the right,
 get the zip file and navigate to \lstinline|vcc/Docs/Tutorial/c|. (In
-future, these will form part of the distribution.)
+future, these will form part of the distribution.)}
 
 You can use VCC either from the command line or from Visual Studio
 2008 (VS); the VS interface offers easy access to different components of
@@ -115,19 +114,22 @@ Because this is a tutorial, we will occasionally provide simplified (and
 therefore not strictly correct) explanations, providing
 additional clarification in the footnotes\footnote{Like this one.},
 which can be skipped on first reading. 
+\begin{note}
+Notes like this one are used for explanatory and additional material,
+that is not necessary to understand the main flow of the text.
+\end{note}
 % Don't need this -E
 %Definitions  be introduced with \Def{italic boldface}.
 
 \subsection{A Note on VCC Invocation}
-This tutorial uses a new revision of the VCC annotation syntax, which
-is incompatible with the previous syntax.  To enable the use of the
-new syntax, to use the flag \texttt{/2}.  Additionally, the trigger
-inference, needed to check some of the more complex invariants, is
-enabled by the \texttt{/it} flag. Both will be the default soon, but
-please supply them for now.
-
-\subsection{Notes on VCC invocation}
 \label{sect:todo-invoke}
+This tutorial assumes you're using VCC version 3. 
+As of April 2011 it is necessary to supply the flag \texttt{/3}
+to VCC to enable this.
+This will soon be the default.
+% -3 now implies -2 and -it. --MM
+
+\subsection{Revision history}
 
 %% \subsection{Top-level To-Do}
 
