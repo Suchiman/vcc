@@ -30,7 +30,7 @@ void sstr_append_char(struct SafeString *s, char c)
   s->content[s->len] = '\0';
   _(wrap s)
 }
-
+/*{index}*/
 int sstr_index_of(struct SafeString *s, char c)
   _(requires \wrapped(s))
   _(ensures \result >= 0 ==> s->content[\result] == c)
