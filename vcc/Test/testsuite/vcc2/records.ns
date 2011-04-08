@@ -1,0 +1,724 @@
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+void foo() {
+  struct S s = { .a = 5, .b = 10 };
+  _(assert s.a == 5)
+  _(assert s.b == 10)
+}
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+void foo() {
+  struct S s = { .b = 10, .a = 5  };
+  _(assert s.a == 5)
+  _(assert s.b == 10)
+}
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int a;
+};
+
+void foo() {
+  _(ghost struct S s = { .b = 10, .a = 5  })
+  _(assert s.a == 5)
+}
+`
+testcase(8,41) : error VC0000: 'S' does not contain a definition for 'b'.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+int foo(struct S s) 
+  _(ensures \result == s.a + s.b);
+  
+void bar() {
+  int x = foo( (struct S) { .a = 10, .b = 20 } );
+  _(assert x == 30)
+}
+`
+Verification of bar succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+int foo(struct S s) 
+  _(ensures \result == s.a + s.b);
+  
+void bar() {
+  struct S s = { .a = 10, .b = 20 };
+  int x = foo( s / { .b = 5 });
+  _(assert x == 15)
+}
+
+`
+Verification of bar succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(record) struct S {
+  int a;
+  int b;
+};
+
+_(ghost struct S foo(struct S s0) 
+  _(ensures \result == s0 / { .a = 10 })
+{
+  return s0 / { .a = 10 };
+})
+
+void bar() {
+  _(ghost struct S s = { 1, 2 })
+  _(ghost s = foo(s))
+  _(assert s.a == 10)
+  _(assert s.b == 2)
+}
+
+_(ghost void baz(struct S s)
+{
+  _(assert s.a <= 0x7fffffff)
+})
+
+
+_(ghost struct S foo2(int k, struct S s0) 
+  _(ensures \result == (k ? s0 / { .a = 10 } : s0 / { .b = 10 }))
+{
+  if (k)
+    return s0 / { .a = 10 };
+  else
+    return s0 / { .b = 10 };
+})
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+Verification of foo2 succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(record) struct S {
+  int a;
+  int b;
+};
+
+_(ghost struct S foo(struct S s0) 
+  _(ensures \result == s0 / { .a = 11 })
+{
+  return s0 / { .a = 10 };
+})
+
+void bar() {
+  _(ghost struct S s = { 1, 2 })
+  _(ghost s = foo(s))
+  _(assert s.a == 10)
+  _(assert s.b == 2)
+}
+
+_(ghost void baz(struct S s)
+{
+  _(assert s.a <= 0x7ffffff0)
+})
+
+
+_(ghost struct S foo2(int k, struct S s0) 
+  _(ensures \result == (k ? s0 / { .a = 10 } : s0 / { .b = 10 }))
+{
+  if (k)
+    return s0 / { .a = 10 };
+  else
+    return s0 / { .a = 10 };
+})
+`
+Verification of foo failed.
+testcase(11,3) : error VC9501: Post condition '\result == s0 / { .a = 11 }' did not verify.
+testcase(9,27) : error VC9599: (related information) Location of post condition.
+Verification of bar failed.
+testcase(17,26) : error VC9500: Assertion 's.a == 10' did not verify.
+Verification of baz failed.
+testcase(23,26) : error VC9500: Assertion 's.a <= 0x7ffffff0' did not verify.
+Verification of foo2 failed.
+testcase(33,5) : error VC9501: Post condition '\result == (k ? s0 / { .a = 10 } : s0 / { .b = 10 })' did not verify.
+testcase(28,27) : error VC9599: (related information) Location of post condition.
+`
+`/newsyntax
+#include <vcc2test.h>
+
+struct A {
+  int z;
+};
+
+
+_(ghost _(record) struct S {
+  int dummy;
+  struct A *a;
+  int b;
+  \object o;
+  int map[int];
+};)
+
+
+_(ghost struct S foo(struct A *a, struct S s0) 
+  _(ensures \result == s0 / { .a = a })
+{
+  return s0 / { .a = a };
+})
+
+void bar() {
+  _(ghost struct S s = { .dummy = 1 })
+  struct A a;
+
+  _(assert s.a == NULL)
+  _(assert s.b == 0)
+
+  _(ghost s = foo(&a, s))
+  _(assert s.a == &a)
+  _(assert s.b == 0)
+
+   _(ghost s = s / { .o = &a };) 
+  _(assert s.o == &a)
+
+   _(ghost s.map = (\lambda int x; x + 1);) 
+  _(assert s.map[2] == 3)
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+`/newsyntax
+#include <vcc2test.h>
+
+
+_(ghost _(record) struct S {
+  int a;
+  int b;
+};)
+
+
+
+_(ghost _(record) struct T {
+  struct S s;
+  int c;
+};)
+
+
+void bar() {
+    _(ghost struct T t) 
+    _(ghost t.c = 10;)
+    _(ghost t.s.a = 20;)
+    _(ghost t.s.b = 21;)
+
+    _(assert t.c == 10)
+    _(assert t.s.a == 20)
+    _(assert t.s.b == 21)
+
+    _(ghost t = t / { .s = t.s / { .b = 30 } };)
+    _(ghost t = t / { .c = 20 };)
+
+    _(assert t.s.b == 30)
+    _(assert t.c == 20)
+    _(assert t.s.a == 20)
+}
+`
+Verification of bar succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(record) union S {
+	struct {
+		unsigned int b1 : 1;
+		unsigned int b2 : 1;
+		unsigned int b3 : 6;
+		unsigned int b5 : 1;
+		unsigned int b6 : 1;
+		unsigned int b7 : 22;
+	};
+	_(backing_member) unsigned int AsUINT;
+};
+
+_(ghost union S foo(union S s0)
+  _(ensures \result == s0 / { .b1 = 1 })
+{
+  return s0 / { .b1 = 1 };
+})
+
+void bar() {
+  _(ghost union S s)
+  _(ghost s = (union S) { .b1 = 0, .b2 = 1, .b7 = 10 })
+  _(ghost s = foo(s))
+
+  _(assert s.b1 == 1)
+  _(assert s.b7 == 10)
+  _(assert s.b2 == 1)
+
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+typedef _(record) struct R
+{
+	int Register0;
+	int Register1;
+};
+
+struct S {
+	int data;
+	int data2;
+	
+	_(ghost struct R rec)
+
+	_(invariant rec.Register0 == data && rec.Register1 == data2)
+};
+
+
+void foo(struct S *s) 
+  _(maintains \wrapped(s))
+  _(writes s)
+{
+  _(assert s->data == s->rec.Register0)
+  _(assert s->data2 == s->rec.Register1)
+  _(unwrapping s) {
+    int tmp = s->data;
+    s->data = s->data2;
+    s->data2 = tmp;
+    _(ghost s->rec = s->rec / { .Register0 = s->rec.Register1, .Register1 = s->rec.Register0 })
+  }
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+typedef unsigned __int64 uint64;
+typedef unsigned int uint;
+
+
+    _(ghost typedef _(record) struct Core{
+        uint64 RIP;
+        uint64 R[uint];
+    } Core;)
+
+
+#define let(x, X, y, f) (\exists X x; x == (y) && (f))
+
+
+_(ghost _(pure) bool mov_reg_excp(uint regidx, uint64 data, Core c)
+    _(returns regidx >= 8);)
+
+
+
+_(ghost _(pure) Core mov_reg(uint regidx, uint64 data, Core c)
+    _(requires !mov_reg_excp(regidx, data, c))
+    _(ensures 
+        let (c1, Core, c / {.R = \lambda uint i; i == regidx ? data : c.R[i]},
+        \result == c1))
+;)
+
+
+
+_(ghost void test_mov_reg()
+{
+    Core c;
+    c = mov_reg(1, 16, c);
+    _(assert c.R[1] == 16)
+})
+`
+Verification of test_mov_reg succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(record) struct S {
+  int a;
+  int b;
+};
+
+
+_(ghost _(pure)
+int foo(struct S s) 
+  _(ensures \result == _(unchecked)(s.a + s.b))
+{
+  return _(unchecked)(s.a + s.b);
+})
+
+_(ghost _(pure)
+int bar(int a, int b)
+  _(ensures \result == _(unchecked)(a+b))
+{
+  struct S s = {a,b};
+  return foo(s);
+})
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+typedef _(record) struct State {
+    int x;
+} State;
+
+typedef _(claimable) struct Container {
+    _(ghost volatile State s)
+    volatile int a;
+} Container;
+
+void test(Container *c _(ghost \claim claim))
+    _(requires \wrapped(claim))
+    _(requires \active_claim(claim))
+    _(requires \claims(claim, c->\consistent))
+{
+    _(atomic c, claim)
+    {
+        c->a = 0;
+        
+            _(ghost c->s = c->s / {.x = 1};)
+        
+    }
+}
+`
+Verification of test succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(record) struct R
+{
+	int x;
+};
+
+struct S
+{
+	_(ghost volatile struct R r)
+	int dummy;
+
+	_(invariant \approves(\this->\owner,r))
+};
+
+
+void test(struct S *s)
+_(maintains \wrapped(s))
+_(writes s)
+{
+	_(atomic s)
+	{
+		_(bump_volatile_version s)
+		_(ghost s->r.x = 2)
+	}
+}
+`
+Verification of test succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(record) struct Y {
+  unsigned state;
+};
+
+_(record) struct Z {
+  int dummy;
+  _(ghost struct Y X)
+  _(invariant X.state==0)
+};
+`
+testcase(7,25) : error VC9698: type 'Z' is marked as a record type and thus must not declare invariants
+testcase(10,29)-(10,39) : (Location of symbol related to previous error.)
+`
+`/newsyntax
+#include "vcc.h"
+
+_(record) struct X {
+    bool Y[unsigned];   
+}; 
+
+_(ghost void foo() {
+  struct X x;
+  x.Y[5] = \false;
+  _(assert x.Y[5] == \false)
+})
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(record) struct R
+{
+	int x;
+};
+
+struct Rc
+{
+  int a;
+	_(ghost struct R r)
+};
+
+void test(struct Rc *s)
+  _(writes s)
+  _(maintains \wrapped(s))
+  _(ensures \unchanged(s->r))
+{
+  _(unwrapping s) {
+    _(ghost s->r = s->r / {.x = s->r.x })
+	}
+}
+`
+Verification of test succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(record) struct S {
+  int a;
+};
+
+_(record) struct T {
+  struct S s;
+};
+
+void foo(_(ghost struct T t)) {
+  _(ghost struct T s)
+  _(ghost s = t / { .s = t.s / { .a = 5 } })
+  _(assert s == t / { .s = t.s / { .a = 5 } })
+}
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(record) struct S {
+  int a;
+  int b;
+};
+
+
+_(record) struct T {
+  struct S s;
+  struct S s1;
+  int c;
+};
+
+_(ghost _(pure) struct T foo()
+  _(ensures \result == (struct T) { .s = { .a = 10, .b = 20 }, .c = 20, .s1 = {2, 4}}) {
+  return (struct T) { .s = { .a = 10, .b = 20 }, .c = 20, .s1 = { 2, 4 } };
+})
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(record) struct X {
+  int a:10;
+  int b:22;
+}; 
+
+_(ghost void foo() {
+  struct X x;
+  x.a = 5;
+  _(assert x.a == 5)
+})
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(record) struct S {
+    int a;
+    int b;
+};
+
+void foo() {
+    _(ghost struct S wa = {.a = 5, .b = 10})
+    _(ghost wa /= { .a = 3 })
+    _(assert wa.a == 3 && wa.b == 10)
+}
+
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct T {
+  int a;
+};
+
+_(record) struct R {
+  int a;
+};
+
+_(ghost typedef int M[int])
+
+_(ghost _(record) struct S {
+  int a;
+  _(ghost \integer m0[int])  
+  _(ghost bool m1[int])
+  _(ghost int m2[int])
+  _(ghost void *m3[int])
+  _(ghost struct T m4[int])
+  _(ghost struct R m5[int])
+  _(ghost M m6[int])
+  _(ghost int m7[int][int])
+  _(ghost \objset m8[int])
+})
+
+_(ghost void foo() {
+  struct S a;
+  _(assert a.m0[0] == 0)
+  _(assert !a.m1[0])
+  _(assert a.m2[0] == 0)
+  _(assert a.m3[0] == (void *)0)
+  _(assert a.m4[0].a == 0)
+  _(assert a.m5[0].a == 0) 
+  _(assert a.m6[0][0] == 0)
+  _(assert a.m7[0][0] == 0)
+  _(assert a.m8[0] == {})
+})
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(ghost typedef _(record) struct R {
+    int x;
+} R)
+
+_(ghost typedef _(record) struct S {
+  int y;
+} S)
+
+_(ghost void foo(R abs, S conc)
+{
+    _(assert abs==abs.x)
+    _(assert abs == conc)
+})
+`
+testcase(13,28) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and '__int32'.
+testcase(14,28) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and 'S'.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(ghost typedef _(record) struct R {
+    int x[int];
+} R)
+
+_(ghost void foo(R abs)
+{
+    _(assert abs==abs.x)
+})
+`
+testcase(9,28) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and 'System.Diagnostics.Contracts.CodeContract.Map<int, int>'.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(ghost typedef bool M[bool])
+
+_(ghost typedef _(record) struct R {
+    M m;
+} R)
+
+_(ghost R foo(R r)
+  _(returns r / { .m = \lambda bool j; \true})
+{
+  return r / { .m = \lambda bool j; \true};
+})
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(ghost typedef unsigned map_t[unsigned])
+
+_(ghost _(pure) map_t upd(map_t m,unsigned y)
+    _(returns \lambda unsigned x; x==y ? 0 : m[x]))
+
+_(ghost _(pure) map_t abs(unsigned *m, unsigned z)
+    _(reads \universe())
+    _(returns \lambda unsigned x; x < z ? m[x] : 0))
+
+void trg(unsigned *m, unsigned z)
+    _(requires z)
+    _(requires ((void[z])m)->\valid)
+    _(writes m+0)
+{
+    m[0] = 0;
+    _(assert abs(m,z)==upd(\old(abs(m,z)),0))
+}
+
+_(ghost typedef _(record) struct x { map_t m; } rec_t)
+
+_(ghost _(pure) rec_t rec_upd(rec_t r,unsigned y)
+    _(returns r / { .m = \lambda unsigned x; x==y ? 0 : r.m[x] }))
+
+_(ghost _(pure) rec_t rec_abs(unsigned *m, unsigned z)
+    _(reads \universe())
+    _(returns (rec_t) { .m = \lambda unsigned x; x < z ? m[x] : 0 }))
+
+void trg2(unsigned *m, unsigned z)
+    _(requires z)
+    _(requires ((void[z])m)->\valid)
+    _(writes m+0)
+{
+    m[0] = 0;
+    //assert(rec_abs(m,z).m==rec_upd(old(rec_abs(m,z)),0).m);
+    _(assert rec_abs(m,z)==rec_upd(\old(rec_abs(m,z)),0))
+}
+`
+Verification of trg succeeded.
+Verification of trg2 succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(ghost _(record) struct R { int a; })
+
+void foo() {
+	_(ghost struct R s = ((struct R) {}))
+}
+`
+Verification of foo succeeded.
+`
