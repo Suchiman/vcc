@@ -49,17 +49,18 @@ invariant), but fields can also be referred to directly (as in the
 second invariant). 
 
 Because memory in C is allocated without initialization, no nontrivial
-object invariant could be enforced to hold at all times. 
-Thus, in VCC the invariants are only guaranteed to hold for
-\Def{consistent} objects. 
-Objects, which are consistent and owned by the current thread are called
-\Def{wrapped}.
-After allocating an object we would usually wrap it to make sure its invariant holds:
+object invariant could be enforced to hold at all times
+(they would not hold right after allocation).
+% Consistency is explained later. --M
+\Def{Wrapped} objects are ones for which invariant holds,
+and which the current thread directly owns (that is they are not
+part of representation of some higher-level objects).
+After allocating an object we would usually wrap it to make sure its invariant holds
+and prepare it for later use:
 
 \vccInput[linerange={init-append}]{c/05_safestring.c}
 
 \noindent
-\todo{Should talk about the array rules somewhere.}
 For a pointer \vcc{p} of structured type, \vcc{\span(p)} returns the
 set of pointers to members of \vcc{p}. Arrays of base types produce
 one pointer for each base type component, so in this example,
@@ -86,12 +87,15 @@ members to the writes set of a function, so such a function has to
 report that it writes the object, but does not have to report writing
 the fields of the object.
 
+\vccInput[linerange={append-index}]{c/05_safestring.c}
+
+\noindent
 Finally, a function that only reads an object need not unwrap, and so
 will not list it in its writes clause. For example:
 
-\vccInput[linerange={append-out}]{c/05_safestring.c}
+\vccInput[linerange={index-out}]{c/05_safestring.c}
 
-The following subsection explains this wrap\slash unwrap protocol in more details.
+The following subsection explains this wrap/unwrap protocol in more details.
 
 \subsection{Wrap/unwrap protocol}
 \label{sect:wrap-unwrap}
@@ -127,7 +131,7 @@ The \vcc{\thread} object representing it is referred to as \vcc{\me}.
 \begin{enumerate}
 \item on every atomic step of the program the invariants of all the consistent objects have to hold
 \item only the owning thread can modify fields of an inconsistent object
-\item threads own themselves
+\item each thread owns itself
 \item only threads can own inconsistent objects
 \end{enumerate}
 Thus, by the first two rules, VCC allows updates of objects in the following two situations:
@@ -144,7 +148,7 @@ For such objects we can assume that they \emph{do not change}
 when they are consistent, so the only way to change their fields is to
 first make them inconsistent, \ie via method 2 above.
 
-So a thread needs to make the object inconsistent to update it.
+A thread needs to make the object inconsistent to update it.
 Because making it inconsistent counts as an update, the thread needs
 to own it first.
 This is performed by the unwrap operation, which translates to the following steps:
@@ -158,8 +162,7 @@ This is performed by the unwrap operation, which translates to the following ste
 The wrap operation does just the reverse:
 \begin{enumerate}
 \item
-assert that the object is mutable (inconsistent and owned by the current thread;
-note that this does not mean ``not wrapped''),
+assert that the object is mutable (inconsistent and owned by the current thread),
 \item assert the invariant, 
 \item set the \vcc{\consistent} field to true (this implicitly prevents further writes to the fields of the object)
 \end{enumerate}
@@ -204,7 +207,7 @@ the type \vcc{char[capacity]} denoting an array with \vcc{capacity} elements
 Such types can be only used in casts, as in \vcc{(char[capacity])content}
 which means: take the pointer \vcc{content} and interpret it as an array
 of \vcc{capacity} elements of type \vcc{char}.
-This notation is used so we can think of arrays as objects (of some weird type).
+This notation is used so we can think of arrays as objects (of a special type).
 The other way to think about it is that \vcc{content} represents just
 one object of type \vcc{char}, whereas \vcc{(char[capacity])content}
 is an object representing the array.
@@ -224,18 +227,22 @@ should still list only \vcc{s} in their writes clauses,
 and not also \vcc{(char[s->capacity])s->content},
 or any other objects the string might comprise of.
 To achieve that VCC performs \Def{ownership transfers},
-\ie assignments to the \vcc{\owner} field,
-when unwrapping and wrapping objects.
-\begin{itemize}
+\ie assignments to the \vcc{\owner} field.
+Specifically, there is another step when unwrapping an object \vcc{p}:
+\begin{enumerate}
+\setcounter{enumi}{5}
 \item
-When object is mutable, in addition to the five steps described in the previous section,
-the \vcc{\owner} field of all objects owned by mutable object is set to \vcc{\me}.
-Additionally, these objects are added to the writes set.
+for each object \vcc{o} owned by \vcc{p},
+set \vcc{o->\owner} to \vcc{\me} and add \vcc{o} to the writes set
+\end{enumerate}
+Similarly, when wrapping \vcc{p}, VCC additionally does:
+\begin{enumerate}
+\setcounter{enumi}{3}
 \item
-When object \vcc{p} is wrapped, in addition to the previously described steps, for every object \vcc{q} that needs to be owned by \vcc{p}
-VCC asserts that \vcc{q} is wrapped and writable, and sets \vcc{q->\owner} to \vcc{p}.
-What \vcc{p} needs to own is is determined by \vcc{p}'s invariant, as you'll see in the next section.
-\end{itemize}
+for each object \vcc{o} that needs to be owned by \vcc{p}
+(which is determined by \vcc{p}'s invariant, as you'll see in the next section),
+assert that \vcc{o} is wrapped and writable and set \vcc{o->\owner} to \vcc{p}.
+\end{enumerate}
 Let's have a look at an example:
 
 \vccInput[linerange={append-alloc}]{c/06_safestring_dynamic.c}
@@ -249,6 +256,7 @@ is equivalent to:
 \begin{VCC}
 _(unwrap o) { ... } _(wrap o)
 \end{VCC}
+\itodo{should we use ``s'' instead of ``the string'', and similarly for content?}
 Thus, at the beginning of the function the string is owned by the current thread and consistent (\ie wrapped),
 whereas, by the string invariant, the content is owned by the string and consistent.
 After unwrapping the string, the ownership of the content goes to the current thread,
