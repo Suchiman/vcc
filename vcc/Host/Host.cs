@@ -428,16 +428,15 @@ namespace Microsoft.Research.Vcc
 
       foreach (var member in ((IAssembly)assem).NamespaceRoot.Members)
       {
-        var ploc = new VisitorHelper.DeferredToken(member.Locations).GetToken() as IPrimarySourceLocation;
+        var ploc = new VisitorHelper.DeferredToken(member.Locations).GetToken() as IOriginalDocumentLocation;
         if (ploc != null && 
-          fullPath.Equals(Path.GetFullPath(ploc.PrimarySourceDocument.Location), StringComparison.OrdinalIgnoreCase) &&
+          fullPath.Equals(Path.GetFullPath(ploc.OriginalDocumentLocation), StringComparison.OrdinalIgnoreCase) &&
           ploc.StartLine <= fileLine &&
           ploc.EndLine >= fileLine)
         {
-          return member.Name.ToString();
+          return member.Name.Value;
         }
       }
-
 
       Console.WriteLine( "vcc : error : could not find source item with location '{0}'", fileLoc);
       errorCount++;
