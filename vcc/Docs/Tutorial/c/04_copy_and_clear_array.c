@@ -1,3 +1,4 @@
+//`/newsyntax
 #include<vcc.h>
 /*{begin}*/
 void memcpyandclr(unsigned char *dst, unsigned char *src, unsigned len)

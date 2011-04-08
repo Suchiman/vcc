@@ -1,3 +1,4 @@
+//`/newsyntax
 #include <vcc.h>
 
 /*{beginsp}*/
@@ -18,8 +19,9 @@ int check_sorted(int *arr, unsigned len)
     return 1;
   if (!(arr[len - 2] <= arr[len - 1]))
     return 0;
-  return is_sorted(arr, len - 1);
+  return check_sorted(arr, len - 1);
 }
 /*{endim}*/
 /*`
+Verification of check_sorted succeeded.
 `*/
