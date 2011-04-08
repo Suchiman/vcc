@@ -8,7 +8,12 @@ using Microsoft.Cci;
 
 namespace Microsoft.Research.Vcc
 {
-  internal sealed class SourceLocationWrapper : Token, IPrimarySourceLocation
+  public interface IOriginalDocumentLocation : IPrimarySourceLocation
+  {
+    string OriginalDocumentLocation { get; }
+  }
+
+  internal sealed class SourceLocationWrapper : Token, IOriginalDocumentLocation
   {
     internal SourceLocationWrapper(IPrimarySourceLocation sourceLocation)
     {
@@ -107,6 +112,16 @@ namespace Microsoft.Research.Vcc
       {
         var iloc = this.sourceLocation as IIncludedSourceLocation;
         return iloc != null ? iloc.OriginalStartLine : this.sourceLocation.StartLine;
+      }
+    }
+
+    string IOriginalDocumentLocation.OriginalDocumentLocation
+    {
+      get
+      {
+        var iloc = this.sourceLocation as IIncludedSourceLocation;
+        return iloc != null ? iloc.OriginalSourceDocumentName.Replace("\\\\", "\\") : this.sourceLocation.SourceDocument.Location;
+
       }
     }
 
