@@ -18,16 +18,16 @@ int main()
 {
   int \result;
   // assume precondition of main()
-  _(assert \true)
+  _(assume \true)
   int x, y, z;
   // z = min(x,y);
   {
-    int _res; 
+    int _res; // placeholder for the result of min()
     // assert precondition of min(x,y)
     _(assert \true)
     // assume postcondition of min(x,y) 
     _(assume _res <= x && _res <= y)
-    z = _res;
+    z = _res; // store the result of min()
   }
   _(assert z <= x)
   \result = 0;

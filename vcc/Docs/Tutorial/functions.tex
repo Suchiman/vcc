@@ -30,22 +30,6 @@ satisfies the specification of \vcc{min()}.
 Since the correctness of \vcc{main()} clearly depends on what \vcc{min()}
 does, we need to specify \vcc{min()} in order to verify \vcc{main()}.
 
-%%\begin{note}
-% This is important enough to put in the main text -E
-Modular verification brings several benefits. 
-First, it allows verification to more easily scale to
-large programs. Second, by providing a precise interface between
-caller and callee, it allows you to modify the implementation of
-a function like \vcc{min()} without having to worry about breaking the
-verifications of functions that call it (as long as you don't change
-the specification of \vcc{min()}). This is especially important
-because these callers normally aren't in scope, and the person
-maintaining \vcc{min()} might not even know about them (e.g., if
-\vcc{min()} is in a library). Third, you can verify a function like
-\vcc{main()} even if the implementation of \vcc{min()} is unavailable
-(\eg if it hasn't been written yet). 
-%%\end{note}
-
 The specification of a function is sometimes called its \Def{contract},
 because it gives obligations on both the function and its callers. It
 is provided by three types of annotations:
@@ -79,13 +63,14 @@ with arbitrary parameter values.
 The postcondition states that the value returned from \vcc{min()} 
 is no bigger than either of the inputs.
 Note that \vcc{\true} and \vcc{\result} are spelled with a backslash
-to avoid name clashes with C identifiers\footnote{
+to avoid name clashes with C identifiers.%
+\footnote{
   All VCC keywords start with a backslash; 
   this contrasts with annotation tags (like \vcc{requires}),
   which are only used at the beginning of annotation
   and therefore cannot be confused with C identifiers
   (and thus you are still free to have, \eg
-  a function called \lstinline{requires} or \lstinline{assert}).}.
+  a function called \lstinline{requires} or \lstinline{assert}).}
 
 VCC uses function specifications as follows. When verifying the body of a
 function, VCC implicitly assumes each precondition of the function on
@@ -99,12 +84,27 @@ postcondition of the function.
 For example, VCC translates the program above roughly as follows:
 \vccInput[linerange={begin-end}]{c/01_min_assert.c}
 
-Note that the assumption of a precondition on function entry could
-fail in an execution only if the corresponding assertion of the
-precondition (in the caller) failed first. Similarly, the
-postconditions assumed on return from a function could fail only if
-the corresponding assertion in the called function failed first. Thus,
-in a verified program, these assumptions can never fail.
+Note that the assumptions above are ``harmless'', that is in a fully
+verified program they will be never violated, as they follow
+from assertion that proceed them.
+For example, the precondition assumption would only fail if the precondition
+assertion before it fails.
+
+\begin{note}
+\notehd{Why modular?}
+Modular verification brings several benefits. 
+First, it allows verification to more easily scale to
+large programs. Second, by providing a precise interface between
+caller and callee, it allows you to modify the implementation of
+a function like \vcc{min()} without having to worry about breaking the
+verifications of functions that call it (as long as you don't change
+the specification of \vcc{min()}). This is especially important
+because these callers normally aren't in scope, and the person
+maintaining \vcc{min()} might not even know about them (e.g., if
+\vcc{min()} is in a library). Third, you can verify a function like
+\vcc{main()} even if the implementation of \vcc{min()} is unavailable
+(\eg if it hasn't been written yet). 
+\end{note}
 
 \subsection*{Exercises}
 \begin{enumerate}
@@ -196,14 +196,15 @@ The expression \vcc{\thread_local_array(ar, sz)} is
 syntactic sugar for \vcc{\forall unsigned i; i < sz ==> \thread_local(&ar[i])}.
 
 While thread locality is what is checked on a read, in practice it is
-not often used in the specifications of functions with side effects%
+not often used in the specifications of functions with side effects.%
 \footnote{This is because the thread-locality of an object could be
   falsified by the unwrapping of other objects; see
-  \secref{invariants}).}.  More usual is to provide the stronger
+  \secref{invariants}).} 
+More usual is to provide the stronger
 precondition of the object being \vcc{\mutable} (also described in
 \secref{ownership}), which essentially says that object is
 private to the current thread; you should generally use this stronger
-condition in specifications%
+condition in specifications.%
 \footnote{The other useful idiom is to require that the read object
   lies in the sequential ownership domain of some object that is
   wrapped, but not written, in the function, which guarantees that it
@@ -226,10 +227,10 @@ another form of function specification, called \Def{writes clauses}.
 Intuitively, the clause \vcc{_(writes p, q)} says that, 
 of the memory objects that are thread-local to the caller before the call,
 the function is going to modify only the object pointed to by \vcc{p}
-and the object pointed to by \vcc{q}%
+and the object pointed to by \vcc{q}.%
 \footnote{More precisely, the function can modify objects that were in
   the sequential ownership domains of \vcc{p} and \vcc{q}; see 
-  \secref{ownership}.}.
+  \secref{ownership}.}
 In other words, it is roughly equivalent to a postcondition that ensures
 that all other objects local to the caller prior
 to the call remain unchanged.%
@@ -322,10 +323,8 @@ it into a separate function (\eg because you don't want to bother with
 having to pass in a bunch of parameters, or because you want to verify
 code without rewriting it). VCC lets you conduct your verification as
 if you had done so, by putting a function-like specification on the
-block%
-\footnote{
-  This feature has not yet been implemented in the new VCC syntax.
-}. This is done by simply writing function specifications
+block.
+This is done by simply writing function specifications
 preceding the block, \eg
 \begin{VCC}
 ...

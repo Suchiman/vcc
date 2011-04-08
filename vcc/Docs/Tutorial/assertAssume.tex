@@ -21,7 +21,7 @@ concurrency) by reducing them to reasoning about simple programs.
 Let's begin with a simple example:
 
 \vccInputSC[linerange={begin-}]{c/01_minInline2.c}
-This program (internally) sets \vcc{z} to the minimum of \vcc{x} and
+This program sets \vcc{z} to the minimum of \vcc{x} and
 \vcc{y}. In addition to the ordinary C code, this program includes an
 \Def{annotation}, starting with \vcc{_(}, terminating with a closing
 parenthesis, with balanced parentheses inside. The first identifier
@@ -34,15 +34,16 @@ an ordinary program identifier.)
 
 An annotation of the form \vcc{_(assert E)}, called an \Def{assertion}, asks VCC to prove that
 \vcc{E} is guaranteed to hold (\ie, evaluate to a value other than \vcc{0})
-whenever control reaches the assertion%
+whenever control reaches the assertion.%
 \footnote{
   This interpretation changes slightly if \vcc{E} refers to
   memory locations that might be concurrently modified by other
-  threads; see \secref{concurrency}}.  
+  threads; see \secref{concurrency}}  
 Thus, the line \vcc|_(assert z <= x)| says
 that when control reaches the assertion, \vcc{z} is no larger than \vcc{x}.
 When VCC successfully verifies a program, it promises that all assertions
-hold in \emph{every} possible execution of the program, considering all possible inputs,
+\emph{always} hold, that is
+in every possible execution of the program, considering all possible inputs,
 all possible ways of scheduling concurrent threads, etc. 
 % The following doesn't really clarify much
 %% An \Def{execution} is a complete recording of all actions made by the program:
@@ -111,7 +112,7 @@ click, it will allow you to verify just that function.
 
 VCC verifies this function successfully, which means that its
 assertions are indeed guaranteed to hold and that the program cannot
-crash%
+crash.%
 \footnote{
   VCC currently doesn't check that your program doesn't run forever or
   run out of stack space, but future versions will, at least for sequential
@@ -127,10 +128,12 @@ prove it.)
 Assertions, like all VCC annotations, 
 are surrounded by \vcc{_( ... )} to indicate that they are
 only for VCC, and are not part of the program being verified
-For the regular C compiler the \vcc{<vcc.h>} header file defines:
+When using the regular C compiler the \vcc{<vcc.h>} header file defines:
 \begin{VCC}
 #define _(...) /* nothing */
 \end{VCC}
+Thus, the regular C compiler never sees any assertions, and therefore
+doesn't generate any code for them.
 VCC does not use this definition, and instead parses the inside of \vcc{_( ... )}
 annotations.%
 % there's not much point in putting into the tutorial an obscure
@@ -145,7 +148,8 @@ annotations.%
 
 To understand how VCC works, and to use it successfully, it is useful to
 think in terms of what VCC ``knows'' at various program points. In
-this example, VCC initially knows nothing about the variables (since they
+the example at the beginning of this section,
+VCC initially knows nothing about the variables (since they
 can initially hold any value). 
 Just before the first assignment, VCC knows that 
 \vcc{x <= y} (because execution followed that branch of the conditional), and
@@ -191,13 +195,13 @@ expression \vcc{E} evaluates to a nonzero value for every value
 \begin{VCC}
 _(assert x > 1 && \forall int i; 1 < i && i < x ==> x % i != 0)
 \end{VCC}
-\noindent says that (\vcc{int}) \vcc{x} is a prime number. If \vcc{b}
-is an \vcc{int} array of size \vcc{N},
+\noindent checks that (\vcc{int}) \vcc{x} is a prime number. If \vcc{b}
+is an \vcc{int} array of size \vcc{N}, then
 \begin{VCC}
 _(assert \forall int i; \forall int j; 0 <= i && i <= j && j < N ==>
   b[i] <= b[j])
 \end{VCC}
-says that \vcc{b} is sorted.
+checks that \vcc{b} is sorted.
 
 \item
 Similarly, the expression \vcc{\exists T v; E} evaluates to \vcc{1} if there
@@ -214,7 +218,7 @@ asserts that  \vcc{b} contains a zero element.
 \item
 VCC also provides some mathematical types that cannot be used in
 ordinary C code (because they are too big to fit in memory);
-these include mathematical integers and maps. They are described in
+these include mathematical (unbounded) integers and (possibly infinite) maps. They are described in
 \secref{mathTypes}.
 
 \item
@@ -248,7 +252,7 @@ functions: you can only use functions that are proved to be
 \item Write an assertion that says that the \vcc{int} \vcc{x} is the average of
   the \vcc{int}s \vcc{y} and \vcc{z}.
 \item Write an assertion that says that the \vcc{int} \vcc{x} is a
-  perfect square.
+  perfect square (\ie a number being a square of an integer).
 \item Write an assertion that says that the \vcc{int} \vcc{x} occurs
   in the \vcc{int} array \vcc{b[10]}.
 \item Write an assertion that says that the \vcc{int} array \vcc{b},
@@ -342,8 +346,8 @@ it will assume the asserted fact holds afterward. For example, in the following
 VCC will only report an error for the first assumption and not the second:
 \begin{VCC}
 int x;
-_(assert x == 0)
-_(assert x == 0)
+_(assert x == 1)
+_(assert x > 0)
 \end{VCC}
 
 When we talk about what VCC knows, we mean what it knows in an ideal
@@ -421,26 +425,26 @@ _(assert (!p) || (q))
 %\end{VCC}
 \end{enumerate}
 
-\subsection{Havoc}
-%% \itodo{Add havoc to VCC}
-
-An assignment of the form \vcc{x = E}, where \vcc{E} is an expression
-that doesn't mention \vcc{x}, is equivalent to setting \vcc{x} to an
-arbitrary value of its type (an operation we write as \vcc{havoc(x)}%
-), followed by the assumption that \vcc{x==y}. This can be naturally
-generalized to havocing a collection of variables and then assuming
-something about the resulting state (to constrain the chosen values of
-these variables).
-
-This idiom is central to how VCC reasons about more interesting kinds
-of programs. Whenever something complex happens in the body of a
-function (such as a loop, a function call, or interference from other
-threads), VCC replaces it with an abstraction of this form, to reduce
-reasoning about the original program to reasoning about a simple
-program.  The annotations you put on the program determine the
-abstraction that is used; successful verification guarantees that these
-abstractions are \Def{sound}, \ie that each complex behavior
-implements the abstraction used to replace it.
+%\subsection{Havoc}
+%%% \itodo{Add havoc to VCC}
+%
+%An assignment of the form \vcc{x = E}, where \vcc{E} is an expression
+%that doesn't mention \vcc{x}, is equivalent to setting \vcc{x} to an
+%arbitrary value of its type (an operation we write as \vcc{havoc(x)}%
+%), followed by the assumption that \vcc{x==y}. This can be naturally
+%generalized to havocing a collection of variables and then assuming
+%something about the resulting state (to constrain the chosen values of
+%these variables).
+%
+%This idiom is central to how VCC reasons about more interesting kinds
+%of programs. Whenever something complex happens in the body of a
+%function (such as a loop, a function call, or interference from other
+%threads), VCC replaces it with an abstraction of this form, to reduce
+%reasoning about the original program to reasoning about a simple
+%program.  The annotations you put on the program determine the
+%abstraction that is used; successful verification guarantees that these
+%abstractions are \Def{sound}, \ie that each complex behavior
+%implements the abstraction used to replace it.
 
 
 
