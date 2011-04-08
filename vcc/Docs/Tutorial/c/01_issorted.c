@@ -1,9 +1,18 @@
 #include <vcc.h>
 
-/*{begin}*/
-int is_sorted(int *arr, unsigned len)
+/*{beginsp}*/
+_(logic bool sorted(int *arr, unsigned len) =
+  \forall unsigned i, j; i <= j && j < len ==> arr[i] <= arr[j])
+/*{endsp}*/
+/*{beginso}*/
+void sort(int *arr, unsigned len)
+  _(writes \array_range(arr, len))
+  _(ensures sorted(arr, len))
+/*{endso}*/;
+/*{beginim}*/
+int check_sorted(int *arr, unsigned len)
   _(requires \thread_local_array(arr, len))
-  _(ensures \result == \forall unsigned i, j; i < j && j < len ==> arr[i] <= arr[j])
+  _(ensures \result == sorted(arr, len))
 {
   if (len <= 1)
     return 1;
@@ -11,6 +20,6 @@ int is_sorted(int *arr, unsigned len)
     return 0;
   return is_sorted(arr, len - 1);
 }
-/*{end}*/
+/*{endim}*/
 /*`
 `*/

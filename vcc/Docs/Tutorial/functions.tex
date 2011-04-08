@@ -341,20 +341,36 @@ which is roughly a syntactic sugar for:
 _(writes &ar[0], &ar[1], ..., &ar[sz-1])
 \end{VCC}
 
-For example, the function below checks if an array is sorted:
-\vccInput[linerange={begin-end}]{c/01_issorted.c}
-It requires that array to be thread local,
-and ensures that its result is true if and only if
-the array is indeed sorted,
-that is for any \vcc{i < j} in the array \vcc{arr[i] <= arr[j]}.
-The operator \vcc{<==>} means the same as \vcc{==} on Booleans,
-but has very low priority. It's usually read as ``if and only if''.
-
-The function is implemented by checking if the last two elements of the
-array are in order, and if so the array is sorted if the array
-one shorter is sorted.
+For example, the function below is reimplementation of the 
+C standard library \vcc{memcpy()} function:
+\vccInput[linerange={begin-end}]{c/01_copy_array.c}
+It requires that array \vcc{src} is thread-local,
+\vcc{dst} is writable, and they do not overlap.
+It ensures that at all indices \vcc{dst} has the old
+value of \vcc{src}.
 The next section will show how to implemented it with a loop.
 
+\subsection{Logic functions}
+
+Just like with programs, as the specifications get more complex,
+it's good to structure them somewhat.
+One mechanism provided by VCC for that is \Def{logic functions}.
+They essentially work as macros for pieces of specification,
+but prevent name capture and give better error messages.
+For example:
+\vccInput[linerange={beginsp-endsp}]{c/01_issorted.c}
+\noindent
+A partial spec for a sorting routine could look like:%
+\footnote{We will take care about input being permutation of the output in \secref{ghosts}.}
+\vccInput[linerange={beginso-endso}]{c/01_issorted.c}
+
+Logic functions are not executable, but they can be implemented:
+\vccInput[linerange={beginim-endim}]{c/01_issorted.c}
+
+A logic function and its C implementation can be combined into one using
+\vcc{_(pure)} annotation.  This is covered in \secref{pureFunctions}.
+
+ 
 \subsection{Exercises}
 \begin{enumerate}
 \item
@@ -386,57 +402,22 @@ Specify a function that takes a text (stored in an array) and a string
 text.
 \end{enumerate}
 
-\subsection{Pure Functions and Logic Functions}
-\label{sect:pureFunctions}
-A \Def{pure function} is one that has no side effects on the program
-state. In VCC, pure functions are not allowed to allocate memory, and can
-write only to local variables. Only pure functions can be called within VCC
-annotations. The function \vcc{min()} from \secref{functions} is an
-example of a function that can be declared to be pure; this is done by
-adding the modifier \vcc{_(vcc ispure)} to the beginning of the function specification,
-\eg
-\begin{VCC}
-_(vcc ispure) min(int x, int y) ...
-\end{VCC}
+\begin{enumerate}
+\item
+Extend the specification of sorting to guarantee that the sort
+is stable (i.e., it shouldn't change the array if it is already
+sorted).  
+\item
+Extend the specification of sorting to guarantee that the sorting
+doesn't change the set of numbers occurring in the array (though it
+might change their multiplicities). 
+\item
+Write, without using the \vcc{%} operator, logic functions that
+specify (1)~that one number (\vcc{unsigned int}) divides another
+evenly, (2)~that a number is prime, (3)~that two numbers are
+relatively prime, (4)~the greatest common divisor of two numbers.
+\end{enumerate}
 
-Being pure is a stronger condition that simply having an empty writes
-clause. This is because a writes clause has only to mention those side
-effects that might cause the caller to lose information (\ie
-knowledge) about the state, and as we have seen, VCC takes advantage
-of the kind of information callers maintain to limit the kinds of side
-effects that have to be reported.
-
-Sometimes you want a spec function that performs a logical operation
-that cannot be performed easily with C, such as a quantification. (Of
-course such functions can only be used in annotations, not in actual
-code.) VCC lets you define such \Def{logic functions} using the syntax
-
-\begin{VCC}
-_(logic F(A) = E)
-\end{VCC}
-which is roughly equivalent to 
-\begin{VCC}
-#define F(A) (E)
-\end{VCC}
-except that it prevents
-name capture and gives better error messages (\ie ones which mention
-both \vcc{E} and \vcc{F(A)}). 
- 
-For example, you can specify a sorting function as follows:
-\begin{VCC}
-_(logic bool sorted(int *buf, unsigned len) =
-  \forall unsigned i, j; i <= j && j < len ==> buf[i] <= buf[j])
-
-void sort(int *buf, unsigned len)
-  _(writes \array_range(buf, len))
-  _(ensures sorted(buf, len));
-\end{VCC}
-\
-
-\noindent Note that this specification says that the buffer is
-sorted in the poststate, but does not say that it is a permutation of
-the elements that it had in the prestate; we address this in
-\secref{ghosts}.
 
 %% \vccInput[linerange={swap-partition}]{c/04_partition.c}
 %% \vccInput[linerange={foo-}]{c/01_swap1.c}
@@ -498,19 +479,3 @@ the elements that it had in the prestate; we address this in
 %For example, if we remove the \vcc{_(writes ...)} clause from the
 %\vcc{boundedIncr()} we get the following output:
 
-\subsection*{Exercises}
-\begin{enumerate}
-\item
-Extend the specification of sorting to guarantee that the sort
-is stable (i.e., it shouldn't change the array if it is already
-sorted).  
-\item
-Extend the specification of sorting to guarantee that the sorting
-doesn't change the set of numbers occurring in the array (though it
-might change their multiplicities). 
-\item
-Write, without using the \vcc{%} operator, logic functions that
-specify (1)~that one number (\vcc{unsigned int}) divides another
-evenly, (2)~that a number is prime, (3)~that two numbers are
-relatively prime, (4)~the greatest common divisor of two numbers.
-\end{enumerate}
