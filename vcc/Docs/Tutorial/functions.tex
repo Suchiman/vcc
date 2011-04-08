@@ -14,9 +14,10 @@ VCC failed to prove our assertion, even though it's easy to see that
 it always holds. This is because verification in VCC is \Def{modular}: 
 VCC doesn't look inside the body of a function (such as the definition of \vcc{min()}) 
 when understanding the effect of a call to the function (such as 
-the call from \vcc{main()})%
-\footnote{We will see later how to selectively override this default
-  and perform such inlining during verification.}; 
+the call from \vcc{main()});
+% We actually don't have that (except for atomics) --MM
+%\footnote{We will see later how to selectively override this default
+%  and perform such inlining during verification.}; 
 all it knows about the effect of calling \vcc{min()} is that the call 
 satisfies the specification of \vcc{min()}. 
 %This is just because we have chosen the default to be so. It thus doesn't
@@ -155,8 +156,9 @@ Can you think of useful functions in a real program that might
 legitimately guarantee only the trivial postcondition \vcc{_(ensures \true)}?
 \end{enumerate}
 
-\subsection{Reading and writing}
+\subsection{Reading and writing through pointers}
 \label{sect:writes}
+
 When programming in C, it is important to distinguish two kinds of
 memory access. \Def{Sequential} access, which is the default, is appropriate when
 interference from other threads (or the outside world) is not an
@@ -165,94 +167,124 @@ safely optimized by the compiler by breaking it up into multiple
 operations, caching reads, reordering operations, etc. 
 \Def{Atomic} access is required when the access might race with other
 threads, \eg a write to memory that is concurrently read or written,
-or a read to memory that is concurrently written. In this section, we
-consider only sequential access to memory, atomic access is considered
-in \secref{concurrency}. 
+or a read to memory that is concurrently written.
 
-For each memory access within a program, VCC checks that the access is accessing a 
-\Def{valid} memory object. Validity implies that the object address
-points to memory that is actually in the address space of the program
-(i.e., it has been allocated, either on the stack or on the heap, and
-has not been freed). (Validity in VCC additionally requires that the
-access is appropriately typed; this aspect is 
-described in more detail in \secref{type-safety}). 
+We have already seen that VCC verifies each function separately,
+but it also verifies each thread separately. 
+There is always a notion of a single \Def{current thread}
+that is executing the verified function.
+Other threads might be concurrently executing in the same
+function, or in other functions. 
 
-To safely read memory, we additionally need to know that the memory
-is not concurrently modified by other threads; such an object is said
-to be \Def{readable}. In general, readability can depend on complex
-program reasoning (and perhaps hints from the user), so by default,
-VCC checks a stronger condition, called \Def{thread
-  locality}. The precise definition of thread locality is given in 
-\secref{ownership}, but intuitively, an object is
-considered thread-local if it is controlled by the thread under
-consideration. For sequential programs, readability essentially
-reduces to simple validity; we point out thread-locality only because
-if VCC is unable to check that a read is safe, it will report that it
-was unable to show that the object read was thread-local.
+By default VCC enforces all memory accesses to be sequential,
+which means you have to prove that the memory location read
+or written ``belongs'' to the current thread.
+The three simple ways of specifying this are listed below:
 
-You can specify that an object (pointed to by) a pointer \vcc{p} is
-thread-local by the expression \vcc{\thread_local(p)}. 
-The expression \vcc{\thread_local_array(ar, sz)} is
-syntactic sugar for \vcc{\forall unsigned i; i < sz ==> \thread_local(&ar[i])}.
+\begin{itemize}
+\item A pointer \vcc{p} is considered \Def{thread-local}
+when you specify:
+\begin{VCC}
+_(requires \thread_local(p))
+\end{VCC}
+When reading \vcc{*p} (without additional annotations) you will need to prove \vcc{\thread_local(p)}.
 
-While thread locality is what is checked on a read, in practice it is
-not often used in the specifications of functions with side effects.%
-\footnote{This is because the thread-locality of an object could be
-  falsified by the unwrapping of other objects; see
-  \secref{invariants}).} 
-More usual is to provide the stronger
-precondition of the object being \vcc{\mutable} (also described in
-\secref{ownership}), which essentially says that object is
-private to the current thread; you should generally use this stronger
-condition in specifications.%
-\footnote{The other useful idiom is to require that the read object
-  lies in the sequential ownership domain of some object that is
-  wrapped, but not written, in the function, which guarantees that it
-  remains thread-local throughout the function; see
-  \secref{ownership}.} Similar to \vcc{\thread_local_array},
-\vcc{\mutable_array(ar,sz)} is defined as
-\vcc{\forall unsigned i; i < sz ==> \mutable(&ar[i])}.
+\item A pointer \vcc{p} is considered \Def{mutable} when you specify:
+\begin{VCC}
+_(requires \mutable(p))
+\end{VCC}
+All mutable pointers are also thread local.
+Writing via pointers different than \vcc{p} cannot make \vcc{p} non-mutable.
 
+\item A pointer \vcc{p} is considered \Def{writable} when you specify:
+\begin{VCC}
+_(writes p)
+\end{VCC}
+Additionally, freshly allocated pointers are are also writable.
+All writable pointers are also mutable.
+To write through \vcc{p} you will need to prove that the pointer is writable.
+Deallocating \vcc{p} requires that it is writable, and afterwards
+the memory is not even thread-local anymore.
+\end{itemize}
 
-When a program writes to an object, that object must be
-\Def{writable}. Writability requires the object to be \vcc{\mutable}
-(because a sequential write can in general cause unpredictable results
-for a concurrent read to the same memory in another thread). 
-However, a stronger check is needed because, by default, VCC assumes that a
-function call has no side effects on its caller; for example, in
-verifying \vcc{main()} above, VCC assumed that the call of
-\vcc{min()} didn't change \vcc{newPos}. 
-In VCC, possible side effects are specified using 
-another form of function specification, called \Def{writes clauses}.
+\begin{note}
+If VCC doesn't know why an object is thread local, then it has
+hard time proving that the object stays thread local after an operation
+with side effects (\eg a function call).
+Thus, in preconditions you will sometimes want to use
+\vcc{\mutable(p)} instead of \vcc{\thread_local(p)}.
+The precise definitions of mutability and thread locality
+is given in \secref{ownership},
+where we also describe another form of guaranteeing thread locality
+through so called ownership domains.
+\end{note}
+
+The \vcc{NULL} pointer, pointers outside bounds of arrays,
+the memory protected by the operating system, or outside
+the address space are never thread local (and thus also never mutable
+nor writable).
+Access to thread local memory will never crash the program.
+The memory that is not thread-local is covered in 
+\secref{concurrency}.
+
+Let's have a look at an example:
+\vccInput[linerange={begin-}]{c/01_rw.c}
+\noindent
+The function \vcc{write_wrong} fails because \vcc{p} is only
+mutable, and not writable.
+In \vcc{read_wrong} VCC complains that it does not know
+anything about \vcc{p} (maybe it's \vcc{NULL}, who knows),
+in particular it doesn't know it's thread-local.
+\vcc{read2} is fine because \vcc{\mutable} is stronger
+than \vcc{\thread_local}.
+Finally, in \vcc{test_them} the first three assertions succeed
+because if something is not listed in the writes clause
+of the called function it cannot change.
+The last assertion fails, because \vcc{write()} listed \vcc{&a}
+in its writes clause.
+
+%\noindent Without the \vcc{\thread_local()} annotation you would
+%get the following:
+%\vccInput[linerange={begin-}]{c/01_read_wrong.c}
+
+% the concept of validity (typed pointers) is gone from VCC3 --MM
+%For each memory access within a program, VCC checks that the access is accessing a 
+%\Def{valid} memory object. Validity implies that the object address
+%points to memory that is actually in the address space of the program
+%(i.e., it has been allocated, either on the stack or on the heap, and
+%has not been freed). (Validity in VCC additionally requires that the
+%access is appropriately typed; this aspect is 
+%described in more detail in \secref{type-safety}). 
+
 Intuitively, the clause \vcc{_(writes p, q)} says that, 
 of the memory objects that are thread-local to the caller before the call,
 the function is going to modify only the object pointed to by \vcc{p}
 and the object pointed to by \vcc{q}.%
-\footnote{More precisely, the function can modify objects that were in
-  the sequential ownership domains of \vcc{p} and \vcc{q}; see 
-  \secref{ownership}.}
+\footnote{
+And their ``ownership domains'',
+but until \secref{ownership} we consider these to be empty.
+}
 In other words, it is roughly equivalent to a postcondition that ensures
 that all other objects local to the caller prior
-to the call remain unchanged.%
-\footnote{It's not quite the same when considering objects that are
-  wrapped; see \secref{invariants}.}  VCC allows you
+to the call remain unchanged.
+VCC allows you
 to write multiple writes clauses, and implicitly
 combines them into a single set. If a function spec contains no writes clauses, 
 it is equivalent to specifying a writes clause with empty set of
 pointers.
 
-More precisely, an object is \vcc{\writable} if it is \vcc{\mutable} and 
-it is either listed in a writes clause of the function,
-or it became \vcc{\mutable} sometime after the function was entered; the 
-latter condition guarantees that either \vcc{p} was listed in the
-writes clause or was not thread-local in the caller when the call to
-the function was made. 
-In particular, formal function parameters and local variables are
-writable as long as they are in scope and have not been explicitly
-wrapped (\secref{invariants}) or reinterpreted to a
-different type (\secref{reint}).  VCC asserts
-\vcc{\writable(p)} on each attempt to write to \vcc{*p}, as well as on
-each call to a function that lists \vcc{p} in a writes clause.
+%More precisely, an object is \vcc{\writable} if it is \vcc{\mutable} and 
+%it is either listed in a writes clause of the function,
+%or it became \vcc{\mutable} sometime after the function was entered; the 
+%latter condition guarantees that either \vcc{p} was listed in the
+%writes clause or was not thread-local in the caller when the call to
+%the function was made. 
+%In particular, formal function parameters and local variables are
+%writable as long as they are in scope and have not been explicitly
+%wrapped (\secref{invariants}) or reinterpreted to a
+%different type (\secref{reint}).  VCC asserts
+%\vcc{\writable(p)} on each attempt to write to \vcc{*p}, as well as on
+%each call to a function that lists \vcc{p} in a writes clause.
 
 Here is a simple example of a function that visibly reads and writes
 memory; it simply copies data from one location to another.
@@ -274,15 +306,54 @@ havoc(y);
 _(assume y == _old_x)
 \end{VCC}
 
-% Shouldn't \array_range be allowed for arrays of non-primitives also?
-Programs that manipulate arrays often write to multiple array
-locations. Writes clauses actually allow sets of pointers, rather than
-individual pointers. We'll introduce sets in full generality later, but
-note one special case: the expression \vcc{\array_range(ar, len)}
-denotes the set of pointers \vcc@{&ar[0], &ar[1], ..., &ar[len-1]}@. 
-Thus, a writes clause of the form
-\vcc{_(writes \array_range(ar,len))}
-allows writing to all elements of the array.
+%% Shouldn't \array_range be allowed for arrays of non-primitives also?
+% Similar to \vcc{\thread_local_array},
+%\vcc{\mutable_array(ar,sz)} is defined as
+%\vcc{\forall unsigned i; i < sz ==> \mutable(&ar[i])}.
+%
+%The expression \vcc{\thread_local_array(ar, sz)} is
+%syntactic sugar for \vcc{\forall unsigned i; i < sz ==> \thread_local(&ar[i])}.
+%
+%Programs that manipulate arrays often write to multiple array
+%locations. Writes clauses actually allow sets of pointers, rather than
+%individual pointers. We'll introduce sets in full generality later, but
+%note one special case: the expression \vcc{\array_range(ar, len)}
+%denotes the set of pointers \vcc@{&ar[0], &ar[1], ..., &ar[len-1]}@. 
+%Thus, a writes clause of the form
+%\vcc{_(writes \array_range(ar,len))}
+%allows writing to all elements of the array.
+
+\subsection{Arrays}
+
+Array accesses are a kind of pointer accesses.
+Thus, before allowing you to read an element of an array VCC checks if it's thread-local.
+Usually you want to specify that all elements of an array are thread-local,
+which is done using the expression \vcc{\thread_local_array(ar, sz)}.
+It is essentially a syntactic sugar for
+\vcc{\forall unsigned i; i < sz ==> \thread_local(&ar[i])}.
+The \vcc{\mutable_array()} is analogous.
+To specify that an array is writable use:
+\begin{VCC}
+_(writes \array_range(ar, sz))
+\end{VCC}
+which is roughly a syntactic sugar for:
+\begin{VCC}
+_(writes &ar[0], &ar[1], ..., &ar[sz-1])
+\end{VCC}
+
+For example, the function below checks if an array is sorted:
+\vccInput[linerange={begin-end}]{c/01_issorted.c}
+It requires that array to be thread local,
+and ensures that its result is true if and only if
+the array is indeed sorted,
+that is for any \vcc{i < j} in the array \vcc{arr[i] <= arr[j]}.
+The operator \vcc{<==>} means the same as \vcc{==} on Booleans,
+but has very low priority. It's usually read as ``if and only if''.
+
+The function is implemented by checking if the last two elements of the
+array are in order, and if so the array is sorted if the array
+one shorter is sorted.
+The next section will show how to implemented it with a loop.
 
 \subsection{Exercises}
 \begin{enumerate}

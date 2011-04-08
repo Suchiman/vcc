@@ -56,9 +56,10 @@ all possible ways of scheduling concurrent threads, etc.
 %% executions.
 
 % There are only a few of these notes, so let's avoid them for now -E
-% Also, this note is something we probably want people to read.
+% Also, this note is something we probably want people to read. -E
+% This not necessary for the main text flow. --MM
 %\todo{should these notes be less prominent?}
-%\begin{note}
+\begin{note}
 It is instructive to compare \vcc{_(assert E)} with the macro
 \lstinline|assert(E)| (defined in \lstinline|<assert.h>|), which
 evaluates \vcc{E}  at runtime and aborts execution if \vcc{E}
@@ -71,7 +72,7 @@ possible in \emph{any} execution. Third, because VCC doesn't have to
 actually execute \vcc{_(assert E)}, it allows \vcc{E} to include
 mathematical operations that cannot be executed, such as
 quantification over infinite domains.
-%\end{note}
+\end{note}
 
 To verify the function using VCC from the command line, save the source in a file called \lstinline|minimum.c|
 and run VCC as follows:
@@ -95,7 +96,6 @@ If instead you wish to use VCC Visual Studio plugin, load the solution \lstinlin
 locate the file with the example, and right-click on the program text.
 You should get options to verify the file or just this function (either will work).
 
-\begin{note}
 If you right-click within a C source file,
 several VCC commands are made available, depending on what kind of
 construction IntelliSense thinks you are in the middle of. The choice
@@ -108,7 +108,6 @@ IntelliSense often gets confused about the syntactic structure of
 VCC code, so it might not always present these context-dependent
 options. However, if you select the name of a function and then right
 click, it will allow you to verify just that function.
-\end{note}
 
 VCC verifies this function successfully, which means that its
 assertions are indeed guaranteed to hold and that the program cannot
