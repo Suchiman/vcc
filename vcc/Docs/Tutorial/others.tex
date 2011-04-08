@@ -10,7 +10,44 @@ features of the VCC annotation language and the verifier itself.
 \subsection{begin-update}
 \subsection{start-here}
 \subsection{Using pure functions for triggering}
-\subsection{Blocks +  full-context}
+
+\subsection{Contracts on Blocks} 
+
+Sometimes, a large function will contain an inner block that
+implements some simple functionality, but you don't want to refactor
+it into a separate function (\eg because you don't want to bother with
+having to pass in a bunch of parameters, or because you want to verify
+code without rewriting it). VCC lets you conduct your verification as
+if you had done so, by putting a function-like specification on the
+block.
+This is done by simply writing function specifications
+preceding the block, \eg
+\begin{VCC}
+...
+x = 5;
+_(requires x == 5)
+_(writes &x)
+_(ensures x == 6)
+{
+  x++;
+}
+...
+\end{VCC}
+VCC translates this by (internally) refactoring the block into a
+function, the parameters of which are the variables from the
+surrounding scope that are mentioned within the block (or the block
+specifications). The advantages of this separation is that within the block,
+VCC can ignore what it knows about the preceding context, and
+following the block, VCC can ``forget'' what it knew inside the block
+(other than what escapes through the \vcc{ensures} clauses); in each
+case, this results in less distracting irrelevant detail for the
+theorem prover.
+
+Block contracts are not allowed if the block contains a \vcc{return},
+or a \vcc{goto} to a label outside the block.
+
+\itodo{talk about \vcc{_(requires \full_context())}}
+
 \subsection{Frame axioms}
 \subsection{extent-mutable and friends}
 \subsection{Claim upgrade}
