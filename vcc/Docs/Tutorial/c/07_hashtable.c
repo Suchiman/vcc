@@ -10,9 +10,9 @@ struct SafeString {
   _(invariant \mine((char[capacity])content))
 };
 
-_(ghost typedef struct SafeString * sstr_map[unsigned];)
+_(typedef struct SafeString * sstr_map[unsigned];)
 _(_(pure) bool match(unsigned i, unsigned j) _(returns \true);) // should use 'logic'
-_(_(pure)\integer do_mod(\integer a, \integer b);)
+_(_(pure) \integer do_mod(\integer a, \integer b);)
 
 _(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 ==> 0 <= do_mod(a, b) && do_mod(a,b) < b)
 _(axiom \forall \integer a; {do_mod(a,a)} a > 0 ==> do_mod(a, a) == 0)
@@ -27,7 +27,7 @@ struct Hashtable {
   unsigned *keys;
   struct SafeString **values;
   unsigned size;
-  _(ghost sstr_map elts;)
+  _(ghost sstr_map elts)
 
   _(invariant size > 0)
 

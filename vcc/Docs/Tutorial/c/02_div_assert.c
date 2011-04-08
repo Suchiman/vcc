@@ -43,6 +43,6 @@ void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
 // Note: this above example is just meant to illustrate how VCC works; the
 // expected output below does not mean much.
 /*`
-testcase(18,3) : error VC0000: The name 'havoc' does not exist in the current context.
-testcase(19,3) : error VC0000: The name 'havoc' does not exist in the current context.
+testcase(16,3) : error VC0000: The name 'havoc' does not exist in the current context.
+testcase(17,3) : error VC0000: The name 'havoc' does not exist in the current context.
 `*/
