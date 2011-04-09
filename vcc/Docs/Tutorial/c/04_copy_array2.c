@@ -19,5 +19,6 @@ void my_memcpy(unsigned char *dst, unsigned char *src, unsigned len)
 }
 /*{end}*/
 /*`
+testcase(11,57) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\old(len)' has no effect
 Verification of my_memcpy succeeded.
 `*/
