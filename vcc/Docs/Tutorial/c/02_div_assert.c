@@ -3,6 +3,7 @@
 #include <vcc.h>
 
 void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
+  _(writes q,r)
 {
   // assume the precondition
   _(assume d > 0 && q != r)
@@ -40,9 +41,6 @@ void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
   _(assert x == d*(*q) + *r && *r < d)
 }
 /*{end}*/
-// Note: this above example is just meant to illustrate how VCC works; the
-// expected output below does not mean much.
 /*`
-testcase(16,3) : error VC0000: The name 'havoc' does not exist in the current context.
-testcase(17,3) : error VC0000: The name 'havoc' does not exist in the current context.
+Verification of divide succeeded.
 `*/

@@ -26,5 +26,5 @@ void memcpyandclr(unsigned char *dst, unsigned char *src, unsigned len)
 }
 /*{end}*/
 /*`
-Verification of my_memcpy succeeded.
+Verification of memcpyandclr succeeded.
 `*/
