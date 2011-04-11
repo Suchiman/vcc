@@ -1,0 +1,86 @@
+#include "vcc.h"
+
+void success1()
+{
+	spec(int a[int][int];)
+	spec(int b[int];)
+	spec(int foo[int];)
+spec(
+	foo = lambda(int x; x > 0 && x<100; x*x);
+	a = lambda(int y; y>0; foo);
+	foo = lambda(int x; x > 0 && x<100; x*x*x);
+	a[6] = foo;
+	b = a[5];
+	assert(b[3] == 9);
+	b = a[6];
+	assert(b[3] == 27);
+)
+}
+`
+Verification of success1 succeeded.
+`
+#include "vcc.h"
+
+void fail2()
+{
+
+	spec(int a[int][int];)
+	spec(int b[int];)
+	spec(int foo[int];)
+spec(
+	foo = lambda(int x; x > 0 && x<100; x*x);
+	a = lambda(int y; y>0; foo);
+	foo = lambda(int x; x > 0 && x<100; x*x*x);
+	a[6] = foo;
+	b = a[5];
+	assert(b[3] == 9);
+	b = a[6];
+	assert(b[4] == 27);
+)
+}
+`
+Verification of fail2 failed.
+testcase(17,11) : error VC9500: Assertion 'b[4] == 27' did not verify.
+`
+#include <vcc.h>
+
+#ifdef VERIFY
+typedef int FromIntToInt[int];
+typedef bool FromIntToBool[int];
+typedef FromIntToBool FromIntToIntToBool[int];
+#endif
+
+spec(ispure FromIntToBool InnerLambda(int y)
+  returns(lambda(int x; x < 100; x < y));)
+
+spec(FromIntToIntToBool success3() {
+  spec(bool result[int][int];)
+  spec(bool foo[int];)
+  result = lambda(int y; y < 100; InnerLambda(y));
+
+  assert(result[4][3]);
+  assert(!result[3][4]);
+  
+  return result;
+})
+
+`
+Verification of success3 succeeded.
+`
+#include "vcc.h"
+
+struct T {
+    int dummy;
+    spec(volatile bool map[int][int][int];)
+};
+
+void foo(struct T *t)
+    requires(wrapped(t))
+    writes(t)
+{
+    unwrap(t);
+    spec(t->map=lambda(int i; int j; int k; true; false);)
+}
+`
+Verification of foo succeeded.
+`
