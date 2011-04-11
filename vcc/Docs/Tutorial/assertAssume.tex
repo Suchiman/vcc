@@ -33,7 +33,7 @@ at the beginning of an annotation; elsewhere, it would be treated as
 an ordinary program identifier.)
 
 An annotation of the form \vcc{_(assert E)}, called an \Def{assertion}, asks VCC to prove that
-\vcc{E} is guaranteed to hold (\ie, evaluate to a value other than \vcc{0})
+\vcc{E} is guaranteed to hold (\ie evaluate to a value other than \vcc{0})
 whenever control reaches the assertion.%
 \footnote{
   This interpretation changes slightly if \vcc{E} refers to
@@ -161,7 +161,7 @@ that \vcc{z == y}, so it knows \vcc{z <= x}. Since
 conditional, it is known to hold at the end of the conditional, so the
 assertion is known to hold when control reaches it. In general,
 VCC doesn't lose any information when reasoning about assignments and
-conditionals. However, we will see that VCC
+conditionals. However, we will see that VCC may lose
  some information when reasoning about loops and function calls,
 which means additional annotations are necessary.
 
@@ -192,13 +192,14 @@ The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
 expression \vcc{E} evaluates to a nonzero value for every value 
 \vcc{v} of type \vcc{E}. For example, the assertion
 \begin{VCC}
-_(assert x > 1 && \forall int i; 1 < i && i < x ==> x % i != 0)
+_(assert x > 1 &&
+  \forall int i; 1 < i && i < x ==> x % i != 0)
 \end{VCC}
 \noindent checks that (\vcc{int}) \vcc{x} is a prime number. If \vcc{b}
 is an \vcc{int} array of size \vcc{N}, then
 \begin{VCC}
-_(assert \forall int i; \forall int j; 0 <= i && i <= j && j < N ==>
-  b[i] <= b[j])
+_(assert \forall int i; \forall int j;
+  0 <= i && i <= j && j < N ==> b[i] <= b[j])
 \end{VCC}
 checks that \vcc{b} is sorted.
 
@@ -270,7 +271,7 @@ type of annotation, called an \Def{assumption}.
 The assumption \vcc{_(assume E)} tells VCC to ignore
 the rest of an execution if \vcc{E} fails to hold (\ie if
 \vcc{E} evaluates to \vcc{0}). 
-Reasoning-wise, assumption simply adds \vcc{E} to what VCC
+Reasoning-wise, the assumption simply adds \vcc{E} to what VCC
 knows for subsequent reasoning. For example:
 \begin{VCC}
 int x, y;
@@ -354,7 +355,7 @@ sense, where if it knows \vcc{E}, it also knows any logical
 consequence of \vcc{E}. In such a world, adding an assertion that
 succeeds would have no effect on whether later assertions succeed.
 VCC's ability to deduce consequences is indeed complete for many types
-of formulas (e.g. formulas that use only equalities,
+of formulas (e.g.\ formulas that use only equalities,
 inequalities, addition, subtraction, multiplication by constants, and
 boolean connectives), but not for all formulas, so VCC will
 sometimes fail to prove an assertion, even though it ``knows'' enough
@@ -362,7 +363,7 @@ to prove it.  Conversely, an assertion that succeeds can sometimes cause later a
 would otherwise fail to succeed, by drawing VCC's attention to a
 crucial fact it needs to prove the later assertion.  This is
 relatively rare, and typically involves ``nonlinear arithmetic''
-(e.g. where variables are multiplied together), bitvector reasoning
+(e.g.\ where variables are multiplied together), bitvector reasoning
 (\secref{bv}) or quantifiers.
 
 \subsection*{Exercises}

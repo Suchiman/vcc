@@ -122,7 +122,7 @@ verification will fail?
 
 \item
 What is the effect of giving a function the specification
-\vcc{_(requires \false)} ? How does it effect verification of
+\vcc{_(requires \false)}? How does it effect verification of
 the function itself? What about its callers? Can you think of a good 
 reason to use such a specification?
 %% When verifying function body it translates to an assumption.
@@ -146,7 +146,7 @@ specification strong enough to be useful? If not, how might it be
 strengthened to make it more useful?
 
 \item
-Specify a function that returns the (int) square root of its (int)
+Specify a function that returns the (\vcc{int}) square root of its (\vcc{int})
 argument. (You can try writing an implementation for the function, but
 won't be able to verify it until you've learned about loop
 invariants.)
@@ -331,7 +331,7 @@ Usually you want to specify that all elements of an array are thread-local,
 which is done using the expression \vcc{\thread_local_array(ar, sz)}.
 It is essentially a syntactic sugar for
 \vcc{\forall unsigned i; i < sz ==> \thread_local(&ar[i])}.
-The \vcc{\mutable_array()} is analogous.
+The annotation \vcc{\mutable_array()} is analogous.
 To specify that an array is writable use:
 \begin{VCC}
 _(writes \array_range(ar, sz))
@@ -360,7 +360,7 @@ but prevent name capture and give better error messages.
 For example:
 \vccInput[linerange={beginsp-endsp}]{c/01_issorted.c}
 \noindent
-A partial spec for a sorting routine could look like:%
+A partial spec for a sorting routine could look like the following:%
 \footnote{We will take care about input being permutation of the output in \secref{ghosts}.}
 \vccInput[linerange={beginso-endso}]{c/01_issorted.c}
 
@@ -400,9 +400,8 @@ size. (Don't worry about array aliasing.)
 Specify a function that takes a text (stored in an array) and a string
 (stored in an array) and checks whether the string occurs within the
 text.
-\end{enumerate}
-
-\begin{enumerate}
+%\end{enumerate}
+%\begin{enumerate}
 \item
 Extend the specification of sorting to guarantee that the sort
 is stable (i.e., it shouldn't change the array if it is already
@@ -415,7 +414,7 @@ might change their multiplicities).
 Write, without using the \vcc{%} operator, logic functions that
 specify (1)~that one number (\vcc{unsigned int}) divides another
 evenly, (2)~that a number is prime, (3)~that two numbers are
-relatively prime, (4)~the greatest common divisor of two numbers.
+relatively prime, and (4)~the greatest common divisor of two numbers.
 \end{enumerate}
 
 
