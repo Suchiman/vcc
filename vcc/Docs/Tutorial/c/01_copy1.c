@@ -13,7 +13,7 @@ void copy(int *from, int *to)
 int z;
 
 void main()
-_(writes &z)
+  _(writes &z)
 {
   int x,y;
   copy(&x,&y);
