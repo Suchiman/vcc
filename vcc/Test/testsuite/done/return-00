@@ -1,0 +1,11 @@
+`/newsyntax
+#include <vcc.h>
+
+int foo()
+  _(ensures \result == 1)
+{
+  return 1;
+}
+`
+Verification of foo succeeded.
+`

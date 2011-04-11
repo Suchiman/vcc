@@ -1,0 +1,56 @@
+#include "vcc.h"
+
+struct S {
+int x;
+int y;
+};
+
+struct T {
+struct S s;
+};
+
+void f(struct T* t)
+requires (typed(t))
+{
+    assert (exists(struct S* s; typed(s) && (s == (struct S*) t)));
+}
+`
+Verification of f failed.
+testcase(15,15) : error VC9500: Assertion '__exists(struct S* s; _vcc_typed2(s) && (s == (struct S*) t))' did not verify.
+`
+#include <vcc.h>
+
+typedef unsigned __int64 UINT64;
+
+spec( typedef bool BITMAP[UINT64]; )
+
+spec(
+ispure BITMAP ToBm64(UINT64 n);
+)
+
+typedef union _BITSET_INDEX {
+backing_member UINT64 AsUINT64;
+struct {
+UINT64 BitIndex:5;
+UINT64 IntegerIndex:10;
+UINT64 RbKey:49;
+};
+} BITSET_INDEX, *PBITSET_INDEX;
+
+spec(ispure
+BITMAP PgBitmap(unsigned int Page[])
+  reads(set_universe())
+  ensures(forall(BITSET_INDEX i; result[i.AsUINT64] <==> ToBm64((UINT64)Page[i.IntegerIndex])[i.BitIndex]));
+)
+
+void foo() {
+  unsigned int P[1024];
+  spec(BITMAP bm;)
+  spec(bm = PgBitmap(P);)
+  assume(!ToBm64(P[0])[0]);
+  assert(!bm[0]);
+}
+`
+testcase(20,17) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+Verification of foo succeeded.
+`
