@@ -1,0 +1,325 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{0F1AF63F-A46F-4B56-B66B-6FDEDD2BC10E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <StartupObject>
+    </StartupObject>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>VerifiedCCompilerAddin</AssemblyName>
+    <RootNamespace>VerifiedCCompilerAddin</RootNamespace>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\Common\InterimKey.snk</AssemblyOriginatorKeyFile>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <ApplicationIcon>Resources\Vcc.ico</ApplicationIcon>
+    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\debug\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <IncrementalBuild>false</IncrementalBuild>
+    <DocumentationFile>
+    </DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\release\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <IncrementalBuild>false</IncrementalBuild>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files\Common Files\Microsoft Shared\MSEnv\PublicAssemblies\envdte.dll</HintPath>
+    </Reference>
+    <Reference Include="Extensibility, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.OLE.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.Shell, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Shell.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.Shell.Interop.8.0, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.TextManager.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.VCProject, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.VCProjectEngine, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.XML" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Common\Include\Version.cs">
+      <Link>Build\Version.cs</Link>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ActiveDocument\ActiveDocument.cs" />
+    <Compile Include="Commands\CustomCommands\VCCLaunchZ3Inspector.cs" />
+    <Compile Include="Commands\CustomCommands\VCCTypeAdmissibilityGroupCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCTypeAdmissibilityCommand.cs" />
+    <Compile Include="AddInGlobals.cs" />
+    <Compile Include="Manager\Commands\CommandManager.cs" />
+    <Compile Include="Commands\PopupCommands\VCCPopupCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCAssertSelectionCommand.cs" />
+    <Compile Include="Commands\VCCBindings.cs" />
+    <Compile Include="Commands\CustomCommands\VCCCreateBoogie.cs" />
+    <Compile Include="Commands\CustomCommands\VCCViewErrorModel.cs" />
+    <Compile Include="Commands\CustomCommands\VCCViewErrorModelFromErrorList.cs" />
+    <Compile Include="Commands\CustomCommands\VCCLaunchZ3Visualizer.cs" />
+    <Compile Include="Commands\CustomCommands\VCCMenueSettings.cs" />
+    <Compile Include="Commands\CustomCommands\Random Seed\VCCRandomSeedX.cs" />
+    <Compile Include="Commands\CustomCommands\VCCSwapAssertToAssume.cs" />
+    <Compile Include="Commands\CustomCommands\VCCSwapAssumeToAssert.cs" />
+    <Compile Include="Forms\AddInSettings\AddInSettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AddInSettings\AddInSettingsForm.Designer.cs">
+      <DependentUpon>AddInSettingsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\CustomVerify\CustomVerifyForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CustomVerify\CustomVerifyForm.Designer.cs">
+      <DependentUpon>CustomVerifyForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Commands\CustomCommands\VCCCancelCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCMenueViewCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCProgressCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCShowErrorCommand.cs" />
+    <Compile Include="Commands\VCCMenueIcons.cs" />
+    <Compile Include="Commands\CustomCommands\VCCCustomFileCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCSingleFileCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCSingleFileInSolutionCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCSingleFileFunctionCommand.cs" />
+    <Compile Include="Manager\Marker\TextMarkerHandler.cs" />
+    <Compile Include="Manager\Marker\VCCErrorItem.cs" />
+    <Compile Include="Manager\Settings\AddinSettingsManager.cs" />
+    <Compile Include="Manager\Verify\Job Factory\LaunchZ3Inspector.cs" />
+    <Compile Include="Manager\Verify\Job Factory\CreateBoogie.cs" />
+    <Compile Include="Manager\Verify\Job Factory\CustomVerify.cs" />
+    <Compile Include="Manager\Verify\Job Factory\JobType.cs" />
+    <Compile Include="Manager\Verify\Job Factory\LaunchZ3Visualizer.cs" />
+    <Compile Include="Manager\Verify\Job Factory\SingleFileFunction.cs" />
+    <Compile Include="Manager\Verify\Job Factory\SingleFileInSolution.cs" />
+    <Compile Include="Manager\Verify\Job Factory\SingleFileVerify.cs" />
+    <Compile Include="Manager\Verify\Job Factory\TypeAdmissiblityCheck.cs" />
+    <Compile Include="Manager\Verify\Job Factory\TypeAndGroupAdmissiblityCheck.cs" />
+    <Compile Include="Manager\Verify\Job Factory\JobFactory.cs" />
+    <Compile Include="ProjectExtender\Editors\FilteredFileNameEditor.cs" />
+    <Compile Include="ProjectExtender\Options\MasterFileOption.cs" />
+    <Compile Include="ProjectExtender\TypeConverter\VCCMasterFileConverter.cs" />
+    <Compile Include="ProjectExtender\TypeConverter\VCCOptionConverter.cs" />
+    <Compile Include="ProjectExtender\Editors\VCCVersionEditor.cs" />
+    <Compile Include="ProjectExtender\TypeConverter\VCCVersionConverter.cs" />
+    <Compile Include="ProjectExtender\VCCExtender.cs" />
+    <Compile Include="ProjectExtender\VCCExtenderProvider.cs" />
+    <Compile Include="ProjectExtender\Options\VCCOptions.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Resources\InstallResource.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>InstallResource.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\VCCPane\VerifyListBox\VerifyListItem.cs" />
+    <Compile Include="Resources\ImageResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ImageResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Manager\Marker\MarkerManager.cs" />
+    <Compile Include="Manager\Settings\SettingsManager.cs" />
+    <Compile Include="VCCConnect.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Utilities.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="VCCLauncher\VCCLauncher.cs" />
+    <Compile Include="Commands\CustomCommands\VCCSingleProjectCommand.cs" />
+    <Compile Include="Commands\CustomCommands\VCCSingleSolutionCommand.cs" />
+    <Compile Include="Forms\VCCPane\VCCPane.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\VCCPane\VCCPane.Designer.cs">
+      <DependentUpon>VCCPane.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\VCCPane\VerifyListBox\VerifyListBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Manager\Verify\VerifyEventArgs.cs" />
+    <Compile Include="Manager\Verify\VerifyJob.cs" />
+    <Compile Include="Manager\Verify\VerifyManger.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Forms\AddInSettings\AddInSettingsForm.resx">
+      <DependentUpon>AddInSettingsForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\CommandBar.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\CustomVerify\CustomVerifyForm.resx">
+      <DependentUpon>CustomVerifyForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\ImageResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ImageResources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\InstallResource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>InstallResource.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\VCCPane\VCCPane.resx">
+      <DependentUpon>VCCPane.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="EnvDTE80">
+      <Guid>{1A31287A-4D7D-413E-8E32-3B374931BD89}</Guid>
+      <VersionMajor>8</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+    </COMReference>
+    <COMReference Include="Microsoft.VisualStudio.CommandBars">
+      <Guid>{1CBA492E-7263-47BB-87FE-639000619B15}</Guid>
+      <VersionMajor>8</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\101.bmp" />
+    <Content Include="Resources\8880.bmp" />
+    <Content Include="Resources\8881.bmp" />
+    <Content Include="Extensibility.dll" />
+    <Content Include="Resources\Cancel_VCC.bmp" />
+    <Content Include="Resources\Check_Sln.bmp" />
+    <Content Include="Resources\Check_File.bmp" />
+    <Content Include="Resources\Check_Project.bmp" />
+    <Content Include="Resources\Vcc.ico" />
+    <Content Include="Resources\VerifiedCCompilerAddin.AddIn">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Include="VccAddin.AddIn">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 2.0 %28x86%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.0">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.0 %28x86%29</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Check_Sln1.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\1091.bmp" />
+    <Content Include="Resources\1092.bmp" />
+    <Content Include="Resources\9892.bmp" />
+    <Content Include="Resources\CreateOpenBoogie.bmp" />
+    <Content Include="Resources\ViewModel.bmp" />
+    <Content Include="Resources\assert_selection.bmp" />
+    <Content Include="Resources\Check_Fkt.bmp" />
+    <Content Include="Resources\Check_Fkt_UpToHere.bmp" />
+    <Content Include="Resources\Dummy.bmp" />
+    <Content Include="Resources\info.png" />
+    <Content Include="Resources\settings.bmp" />
+    <Content Include="Resources\usertype.dat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Z3Visualiser.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Tools\ModelViewer\ModelViewer\VccModelViewer.csproj">
+      <Project>{19CF9E68-12F6-4249-ADE9-D9D7EC18F41D}</Project>
+      <Name>VccModelViewer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Tools\Z3Visualizer\Z3Visualizer\Z3AxiomProfiler.csproj">
+      <Project>{29651769-4A5F-4C7F-BAA7-4064BA38324D}</Project>
+      <Name>Z3AxiomProfiler</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
