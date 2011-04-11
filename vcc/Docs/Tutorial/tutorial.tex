@@ -169,27 +169,18 @@ Micha{\l} Moskal, Wolfram Schulte \\
 
 
 \begin{abstract}
-VCC is an industrial-strength verification environment for low-level concurrent
-systems code written in C.
+VCC is a verification environment for software written in C.
 VCC takes a program (annotated with function
-contracts, state assertions, and type invariants) and attempts to prove the
-correctness of these annotations.  VCC's verification methodology allows global
-two-state invariants that restrict update of shared state and enforces simple,
-semantic conditions sufficient for checking those global invariants modularly.
-VCC works by translating C, via Boogie intermediate verification language, to
-verification conditions handled by the Z3 SMT solver.
-
+contracts, state assertions, and type invariants) and attempts to prove that these 
+annotations are corrrect, i.e. that they hold for every possible program execution.
 The environment includes tools for monitoring proof attempts and constructing
-partial counterexample executions for failed proofs and has been used to verify
-functional correctness of tens of thousands of lines of Microsoft's Hyper-V
-virtualization platform and of SYSGOs embedded real-time operating system
-PikeOS.
+partial counterexample executions for failed proofs.
+VCC handles fine-grained concurrency and low-level C features, and
+has been used to verify the functional correctness of tens of thousands of 
+lines of commercial concurrent system code. 
 
-This tutorial describes the usage of VCC verification environment:
-its annotation language and verification methodology, 
-the verifier itself, the VCC Visual Studio plugin,
-and Boogie Verification Debugger.
-The primary audience is programmers wanting to write correct code.
+This tutorial describes how to use VCC to verify C code. It covers the
+annotation language, the verification methodology, and the use of VCC itself.
 \end{abstract}
 
 
