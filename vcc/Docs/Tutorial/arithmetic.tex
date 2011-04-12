@@ -1,0 +1,55 @@
+\todo{if this section remains after the functions section, move the exercises from there to here,
+since they require quantification.}
+\section{Arithmetic and Quantifiers}
+\todo{move arithmetic stuff appendix in, as well as mathint and a mention of maps}
+\todo{add appendix section gathering together all annotations and extensions to C}
+
+VCC provides a number of C extensions that can be used within VCC
+annotations (such as assertions):
+\begin{itemize}
+\item
+The Boolean operator \vcc{==>} denotes logical implication; formally,
+\vcc{P ==> Q} means \vcc{((!P) || (Q))}, and is usually 
+read as ``\vcc{P} implies \vcc{Q}''. Because \vcc{==>} has lower
+precedence than the C operators, it is typically not necessary to
+parenthesize \vcc{P} or \vcc{Q}.
+
+\item
+The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
+expression \vcc{E} evaluates to a nonzero value for every value 
+\vcc{v} of type \vcc{E}. For example, the assertion
+\begin{VCC}
+_(assert x > 1 &&
+  \forall int i; 1 < i && i < x ==> x % i != 0)
+\end{VCC}
+\noindent checks that (\vcc{int}) \vcc{x} is a prime number. If \vcc{b}
+is an \vcc{int} array of size \vcc{N}, then
+\begin{VCC}
+_(assert \forall int i; \forall int j;
+  0 <= i && i <= j && j < N ==> b[i] <= b[j])
+\end{VCC}
+checks that \vcc{b} is sorted.
+
+\item
+Similarly, the expression \vcc{\exists T v; E} evaluates to \vcc{1} if there
+is some value of \vcc{v} of type \vcc{T} for which \vcc{E} evaluates
+to a nonzero value. For example, if \vcc{b} is an \vcc{int} array of
+size \vcc{N}, the assertion
+\begin{VCC}
+_(assert \exists int i; 0 <= i && i < N && b[i] == 0)
+\end{VCC}
+asserts that  \vcc{b} contains a zero element.
+\vcc{\forall} and \vcc{\exists} are jointly referred to as
+\Def{quantifiers}. 
+
+\item
+VCC also provides some mathematical types that cannot be used in
+ordinary C code (because they are too big to fit in memory);
+these include mathematical (unbounded) integers and (possibly infinite) maps. They are described in
+\secref{mathTypes}.
+
+\item
+Expressions within VCC annotations are restricted in their use of 
+functions: you can only use functions that are proved to be 
+\Def{pure}, \ie free from side effects (\secref{pureFunctions}).
+\end{itemize}
