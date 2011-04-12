@@ -178,10 +178,15 @@ namespace Microsoft.Research.Vcc {
         }
         NameDeclaration fieldName = new NameDeclaration(this.Helper.NameTable.GetNameFor("_ElementType"), SourceDummy.SourceLocation);
         // Mangle the new type's name. Add an underscore to avoid name clash. 
-        NameDeclaration typeName = new NameDeclaration(this.Helper.NameTable.GetNameFor("_FixedArrayOfSize"+arraySizeInBytes+"_"+ elementType), SourceDummy.SourceLocation);
         FieldDeclaration dummyField = 
           new FieldDeclaration(null, FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Private, TypeExpression.For(elementType), fieldName, null, SourceDummy.SourceLocation);
-        List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>(1) {dummyField};
+        List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>((int) numberOfElements) {dummyField};
+        for (int i = 1; i < numberOfElements; i++) {
+          fieldName = new NameDeclaration(this.Helper.NameTable.GetNameFor("_Element_" + i), SourceDummy.SourceLocation);
+          dummyField = new FieldDeclaration(null, FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Private, TypeExpression.For(elementType), fieldName, null, SourceDummy.SourceLocation);
+          members.Add(dummyField);
+        }
+        NameDeclaration typeName = new NameDeclaration(this.Helper.NameTable.GetNameFor("_FixedArrayOfSize" + arraySizeInBytes + "_" + elementType), SourceDummy.SourceLocation);
         result = new VccArray(typeName, members, arraySizeInBytes);
         result.SetContainingTypeDeclaration(this.GlobalDeclarationContainer, true);
         arrayTypeTable2.Add(elementType, result);
@@ -769,7 +774,7 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     //^ [Pure]
     public override string GetTypeName(ITypeDefinition typeDefinition, NameFormattingOptions formattingOptions) {
-      TypeDefinition/*?*/ tdef = typeDefinition as TypeDefinition;
+      var/*?*/ tdef = typeDefinition as NamedTypeDefinition;
       if (tdef != null) {
         foreach (TypeDeclaration typeDeclaration in tdef.TypeDeclarations) {
           VccArray/*?*/ vcArr = typeDeclaration as VccArray;
