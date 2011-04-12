@@ -161,8 +161,33 @@ namespace Microsoft.Research.Vcc {
       return TypeMemberVisibility.Public;
     }
 
-    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      return base.CheckForErrorsAndReturnTrueIfAnyAreFound() || VccStructuredTypeDeclaration.HasTypeCycle(this.TypeDefinition, this.Helper);
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
+    {
+      return base.CheckForErrorsAndReturnTrueIfAnyAreFound() ||
+             VccStructuredTypeDeclaration.HasTypeCycle(this.TypeDefinition, this.Helper) ||
+             VccStructuredTypeDeclaration.HasFieldOfUnspecifiedType(this.TypeDefinition, this.TypeDefinition.Members, this.Helper);
+    }
+
+    internal static bool HasFieldOfUnspecifiedType(ITypeReference type,  IEnumerable<ITypeDefinitionMember> members, LanguageSpecificCompilationHelper helper)
+    {
+      bool errorFound = false;
+      foreach (var member in members)
+      {
+        var field = member as IFieldDefinition;
+        if (field != null && field.Type == helper.Compilation.PlatformType.SystemVoid.ResolvedType)
+        {
+          var fieldDecl = ((Cci.Ast.FieldDefinition) field).Declaration as FieldDefinition;
+          var location = IteratorHelper.First(helper.Compilation.SourceLocationProvider.GetPrimarySourceLocationsFor(type.Locations));
+            helper.ReportError(
+              new VccErrorMessage(location,
+                                  Error.IllegalUseOfUndefinedType,
+                                  field.Name.Value,
+                                  fieldDecl != null ? fieldDecl.Type.SourceLocation.Source : helper.GetTypeName(field.Type.ResolvedType)));
+          errorFound = true;
+        }
+      }
+
+      return errorFound;
     }
 
     internal static bool HasTypeCycle(ITypeReference type, LanguageSpecificCompilationHelper helper) {
@@ -184,9 +209,9 @@ namespace Microsoft.Research.Vcc {
         lock (GlobalLock.LockingObject) {
           if (!typesWithKnownLoops.ContainsKey(type)) {
             typesWithKnownLoops.Add(type, true);
-            var locations = new List<IPrimarySourceLocation>(helper.Compilation.SourceLocationProvider.GetPrimarySourceLocationsFor(type.Locations));
+            var location = IteratorHelper.First(helper.Compilation.SourceLocationProvider.GetPrimarySourceLocationsFor(type.Locations));
             helper.ReportError(
-              new VccErrorMessage(locations[0],
+              new VccErrorMessage(location,
                 Error.ValueTypeLayoutCycle, offendingField.Name.Value, helper.GetTypeName(type.ResolvedType)));
           }
         }
@@ -273,8 +298,12 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
-    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
-      return base.CheckForErrorsAndReturnTrueIfAnyAreFound() || VccStructuredTypeDeclaration.HasTypeCycle(this.TypeDefinition, this.Helper);
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
+    {
+      return base.CheckForErrorsAndReturnTrueIfAnyAreFound() ||
+             VccStructuredTypeDeclaration.HasTypeCycle(this.TypeDefinition, this.Helper) ||
+             VccStructuredTypeDeclaration.HasFieldOfUnspecifiedType(this.TypeDefinition, this.TypeDefinition.Members, this.Helper);
+
     }
   }
 
