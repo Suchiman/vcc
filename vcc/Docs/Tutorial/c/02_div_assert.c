@@ -3,6 +3,7 @@
 #include <vcc.h>
 
 void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
+  _(writes q,r)
 {
   // assume the precondition
   _(assume d > 0 && q != r)
@@ -13,13 +14,17 @@ void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
   _(assert x == d*lq + lr)
   
   // start an arbitrary iteration
-  // havoc variables modified in the loop  
-  havoc(lq);
-  havoc(lr);
+  // forget variables modified in the loop
+  {
+    unsigned _fresh_lq, _fresh_lr;
+    lq = _fresh_lq; lr = _fresh_lr;
+  }
   // assume that the loop invariant holds
   _(assume x == d*lq + lr)
   // jump out if the loop terminated
-  if (!(lr >= d)) goto loopExit;
+  if (!(lr >= d))
+    goto loopExit;
+  // body of the loop
   {
     lq++;
     lr -= d;
@@ -36,9 +41,6 @@ void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
   _(assert x == d*(*q) + *r && *r < d)
 }
 /*{end}*/
-// Note: this above example is just meant to illustrate how VCC works; the
-// expected output below does not mean much.
 /*`
-testcase(18,3) : error VC0000: The name 'havoc' does not exist in the current context.
-testcase(19,3) : error VC0000: The name 'havoc' does not exist in the current context.
+Verification of divide succeeded.
 `*/
