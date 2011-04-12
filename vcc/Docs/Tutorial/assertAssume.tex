@@ -61,7 +61,7 @@ quantification over infinite domains.
 To verify the function using VCC from the command line, save the source in a file called \lstinline|minimum.c|
 and run VCC as follows:
 
-\todo{add something about \3}
+\todo{add something about /3}
 \begin{VCC}
 /*`C:\Somewhere\VCC Tutorial> vcc.exe minimum.c
 Verification of main succeeded.
@@ -196,7 +196,7 @@ possible (preferably all of them).
 \begin{note}
 Although assumptions are generally to be avoided, they are nevertheless
 sometimes useful:
-\begin{itemize}
+\begin{inparaenum}
 \item In an incomplete verification, assumptions can be used to mark
   the knowledge that VCC is missing, and to coordinate further
   verification work (possibly performed by other people). If you
@@ -224,7 +224,7 @@ sometimes useful:
 \item Assumptions provide a useful tool in explaining how VCC
   reasons about your program. We'll see examples of this throughout
   this tutorial.
-\end{itemize}
+\end{inparaenum}
 \end{note}
 
 An assertion can also change what VCC knows after the assertion, if
@@ -272,3 +272,4 @@ _(assert (!p) || (q))
 \end{VCC}
 ? 
 
+\end{enumerate}
