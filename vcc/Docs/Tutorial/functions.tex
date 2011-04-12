@@ -202,8 +202,6 @@ written by other threads (including hardware and devices); in VCC, this conditio
 \vcc{\thread_local(p)}, where \vcc{p} is a pointer to the memory object. VCC asserts this 
 before any sequential memory access to the object. 
 
-
-
 The three simple ways of specifying this are as follows:
 \todo{There are some problems here. First, we have unnecessarily 
 tangled up the classification of memory with the specification of functions
@@ -257,9 +255,10 @@ The \vcc{NULL} pointer, pointers outside bounds of arrays,
 the memory protected by the operating system, or outside
 the address space are never thread local (and thus also never mutable
 nor writable).
-Access to thread local memory will never crash the program.
-The memory that is not thread-local is covered in 
-\secref{concurrency}.
+%Moved this up -E
+%Access to thread local memory will never crash the program.
+%The memory that is not thread-local is covered in 
+%\secref{concurrency}.
 
 Let's have a look at an example:
 \vccInput[linerange={begin-}]{c/01_rw.c}
@@ -293,20 +292,22 @@ in its writes clause.
 Intuitively, the clause \vcc{_(writes p, q)} says that, 
 of the memory objects that are thread-local to the caller before the call,
 the function is going to modify only the object pointed to by \vcc{p}
-and the object pointed to by \vcc{q}.%
-\footnote{
-And their ``ownership domains'',
-but until \secref{ownership} we consider these to be empty.
-}
+and the object pointed to by \vcc{q}.
+%\todo{I think we should get rid of this footnote. For writes claiuses, the ownership domains
+%are logically irrelevant; what matters is when the object became mutable.
+%\footnote{
+%And their ``ownership domains'',
+%but until \secref{ownership} we consider these to be empty.
+%}
 In other words, it is roughly equivalent to a postcondition that ensures
-that all other objects local to the caller prior
+that all other objects thread-local to the caller prior
 to the call remain unchanged.
-VCC allows you
-to write multiple writes clauses, and implicitly
+VCC allows you to write multiple writes clauses, and implicitly
 combines them into a single set. If a function spec contains no writes clauses, 
 it is equivalent to specifying a writes clause with empty set of
 pointers.
 
+% Do we have essentially the same paragraph later? -E
 %More precisely, an object is \vcc{\writable} if it is \vcc{\mutable} and 
 %it is either listed in a writes clause of the function,
 %or it became \vcc{\mutable} sometime after the function was entered; the 
@@ -359,6 +360,7 @@ _(assume y == _old_x)
 
 \subsection{Arrays}
 
+\todo{should the inline expressions below be displayed like the writes clauses?}
 Array accesses are a kind of pointer accesses.
 Thus, before allowing you to read an element of an array VCC checks if it's thread-local.
 Usually you want to specify that all elements of an array are thread-local,
@@ -375,14 +377,15 @@ which is roughly a syntactic sugar for:
 _(writes &ar[0], &ar[1], ..., &ar[sz-1])
 \end{VCC}
 
-For example, the function below is reimplementation of the 
+For example, the function below is recursive implementation of the 
 C standard library \vcc{memcpy()} function:
 \vccInput[linerange={begin-end}]{c/01_copy_array.c}
 It requires that array \vcc{src} is thread-local,
 \vcc{dst} is writable, and they do not overlap.
-It ensures that at all indices \vcc{dst} has the old
-value of \vcc{src}.
-The next section will show how to implemented it with a loop.
+It ensures that, at all indices, \vcc{dst} has the
+value \vcc{src}. The next section presents a more conventional implementation using a loop.
+
+\todo{Should we talk about termination here?}
 
 \subsection{Logic functions}
 \todo{These should probably be put into an appendix, or just left out altogeather in favor of pure functions. 
@@ -407,33 +410,52 @@ A logic function and its C implementation can be combined into one using
 \todo{This isn't right, is it? Logic functions really act as macros, e.g. they cannot be
 used in triggers.}
  
+\begin{enumerate}
+
+\item
+Write and verify a program that checks whether two sorted arrays
+contain a common element.
+\item
+Write and verify a program for binary search (a program
+that checks whether a sorted array contains a given value).
+
+%\item
+%Write and verify an iterative program that sorts an array of ints using
+%bubblesort. The specification should be the same as for bozo-sort above.
+% TODO no bozo sort yet
+\item 
+Write and verify a program that takes a 2-dimensional array of ints in
+which every row and column is sorted, and checks whether a given int
+occurs in the array.
+\end{enumerate}
+
 \subsection{Exercises}
+\label{sect:recursiveExercises}
+In the following exercises,all implementations should be recursive. You should return to these
+and write/verify iterative implementations after reading section \secref{loops}.
 \begin{enumerate}
 \item
 Could the postcondition of \vcc{copy} have been written equivalently
 as the simpler \vcc{*to == *from}? If not, why not?
 \item
-Specify a program that takes two arrays and checks whether
+Specify and verify a program that takes two arrays and checks whether
 the arrays are equal (\ie whether they contain the same sequence of
-elements).
+elements). 
 \item
-Specify a program that takes an array and checks whether it
-contains any duplicate elements.
+Specify and verify a program that takes an array and checks whether it
+contains any duplicate elements. Verify a recursive implementation.
 \item
-Specify a program that checks whether a given array
-is a palindrome.
+Specify and verify a program that checks whether a given array
+is a palindrome. 
 \item
-Specify a program that checks whether two arrays contain a
+Specify and verify a program that checks whether two arrays contain a
 common element.
 \item
-Specify, write, and verify a function that swaps the values pointed to
+Specify and verify a function that swaps the values pointed to
 by two \vcc{int} pointers. Hint: use \vcc{\old(...)} in the
 postcondition.
-\item
-Specify a function that copies one array to another array of the same
-size. (Don't worry about array aliasing.)
 \item 
-Specify a function that takes a text (stored in an array) and a string
+Specify and verify a function that takes a text (stored in an array) and a string
 (stored in an array) and checks whether the string occurs within the
 text.
 \end{enumerate}
@@ -441,7 +463,7 @@ text.
 \begin{enumerate}
 \item
 Extend the specification of sorting to guarantee that the sort
-is stable (i.e., it shouldn't change the array if it is already
+is stable (i.e., specify that it shouldn't change the array if it is already
 sorted).  
 \item
 Extend the specification of sorting to guarantee that the sorting
