@@ -195,6 +195,12 @@
             object invariants, and loop invariants.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.Contracts.IContractElement.Dispatch(Microsoft.Cci.Contracts.ICodeAndContractVisitor)">
+            <summary>
+            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
+            of the object implementing IContractElement.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.Contracts.IContractElement.Condition">
             <summary>
             The condition associated with this particular contract element.
@@ -1579,6 +1585,7 @@
         <member name="P:Microsoft.Cci.ICatchClause.ExceptionContainer">
             <summary>
             The local that contains the exception instance when executing the catch clause body.
+            If there is no such local, Dummy.LocalVariable is returned.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.ICatchClause.ExceptionType">
@@ -2025,11 +2032,6 @@
             Performs some computation with the given exclusive or expression.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IExpression)">
-            <summary>
-            Performs some computation with the given expression.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IExpressionStatement)">
             <summary>
             Performs some computation with the given expression statement.
@@ -2291,6 +2293,1524 @@
             Performs some computation with the given yield return statement.
             </summary>
         </member>
+        <member name="T:Microsoft.Cci.CodeVisitor">
+            <summary>
+            Contains a specialized Visit routine for each standard type of object defined in the code and metadata model. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.#ctor">
+            <summary>
+            Contains a specialized Visit routine for each standard type of object defined in the code and metadata model. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IAddition)">
+            <summary>
+            Performs some computation with the given addition.
+            </summary>
+            <param name="addition"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IAddressableExpression)">
+            <summary>
+            Performs some computation with the given addressable expression.
+            </summary>
+            <param name="addressableExpression"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IAddressDereference)">
+            <summary>
+            Performs some computation with the given address dereference expression.
+            </summary>
+            <param name="addressDereference"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IAddressOf)">
+            <summary>
+            Performs some computation with the given AddressOf expression.
+            </summary>
+            <param name="addressOf"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IAnonymousDelegate)">
+            <summary>
+            Performs some computation with the given anonymous delegate expression.
+            </summary>
+            <param name="anonymousDelegate"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IArrayIndexer)">
+            <summary>
+            Performs some computation with the given array indexer expression.
+            </summary>
+            <param name="arrayIndexer"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IAssertStatement)">
+            <summary>
+            Performs some computation with the given assert statement.
+            </summary>
+            <param name="assertStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IAssignment)">
+            <summary>
+            Performs some computation with the given assignment expression.
+            </summary>
+            <param name="assignment"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IAssumeStatement)">
+            <summary>
+            Performs some computation with the given assume statement.
+            </summary>
+            <param name="assumeStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IBitwiseAnd)">
+            <summary>
+            Performs some computation with the given bitwise and expression.
+            </summary>
+            <param name="bitwiseAnd"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IBinaryOperation)">
+            <summary>
+            Performs some computation with the given bitwise and expression.
+            </summary>
+            <param name="binaryOperation"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IBitwiseOr)">
+            <summary>
+            Performs some computation with the given bitwise or expression.
+            </summary>
+            <param name="bitwiseOr"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IBlockExpression)">
+            <summary>
+            Performs some computation with the given block expression.
+            </summary>
+            <param name="blockExpression"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IBlockStatement)">
+            <summary>
+            Performs some computation with the given statement block.
+            </summary>
+            <param name="block"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IBreakStatement)">
+            <summary>
+            Performs some computation with the given break statement.
+            </summary>
+            <param name="breakStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ICastIfPossible)">
+            <summary>
+            Performs some computation with the cast-if-possible expression.
+            </summary>
+            <param name="castIfPossible"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ICatchClause)">
+            <summary>
+            Performs some computation with the given catch clause.
+            </summary>
+            <param name="catchClause"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ICheckIfInstance)">
+            <summary>
+            Performs some computation with the given check-if-instance expression.
+            </summary>
+            <param name="checkIfInstance"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ICompileTimeConstant)">
+            <summary>
+            Performs some computation with the given compile time constant.
+            </summary>
+            <param name="constant"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IConversion)">
+            <summary>
+            Performs some computation with the given conversion expression.
+            </summary>
+            <param name="conversion"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IConditional)">
+            <summary>
+            Performs some computation with the given conditional expression.
+            </summary>
+            <param name="conditional"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IConditionalStatement)">
+            <summary>
+            Performs some computation with the given conditional statement.
+            </summary>
+            <param name="conditionalStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IContinueStatement)">
+            <summary>
+            Performs some computation with the given continue statement.
+            </summary>
+            <param name="continueStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ICreateArray)">
+            <summary>
+            Performs some computation with the given array creation expression.
+            </summary>
+            <param name="createArray"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ICreateObjectInstance)">
+            <summary>
+            Performs some computation with the given constructor call expression.
+            </summary>
+            <param name="createObjectInstance"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ICreateDelegateInstance)">
+            <summary>
+            Performs some computation with the anonymous object creation expression.
+            </summary>
+            <param name="createDelegateInstance"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IDefaultValue)">
+            <summary>
+            Performs some computation with the given defalut value expression.
+            </summary>
+            <param name="defaultValue"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IDivision)">
+            <summary>
+            Performs some computation with the given division expression.
+            </summary>
+            <param name="division"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IDoUntilStatement)">
+            <summary>
+            Performs some computation with the given do until statement.
+            </summary>
+            <param name="doUntilStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IDupValue)">
+            <summary>
+            Performs some computation with the given dup value expression.
+            </summary>
+            <param name="dupValue"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IEmptyStatement)">
+            <summary>
+            Performs some computation with the given empty statement.
+            </summary>
+            <param name="emptyStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IEquality)">
+            <summary>
+            Performs some computation with the given equality expression.
+            </summary>
+            <param name="equality"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IExclusiveOr)">
+            <summary>
+            Performs some computation with the given exclusive or expression.
+            </summary>
+            <param name="exclusiveOr"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IBoundExpression)">
+            <summary>
+            Performs some computation with the given bound expression.
+            </summary>
+            <param name="boundExpression"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IDebuggerBreakStatement)">
+            <summary>
+            Performs some computation with the given debugger break statement.
+            </summary>
+            <param name="debuggerBreakStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IExpression)">
+            <summary>
+            Performs some computation with the given expression.
+            </summary>
+            <param name="expression"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IExpressionStatement)">
+            <summary>
+            Performs some computation with the given expression statement.
+            </summary>
+            <param name="expressionStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IForEachStatement)">
+            <summary>
+            Performs some computation with the given foreach statement.
+            </summary>
+            <param name="forEachStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IForStatement)">
+            <summary>
+            Performs some computation with the given for statement.
+            </summary>
+            <param name="forStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IGetTypeOfTypedReference)">
+            <summary>
+            Performs some computation with the given get type of typed reference expression.
+            </summary>
+            <param name="getTypeOfTypedReference"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IGetValueOfTypedReference)">
+            <summary>
+            Performs some computation with the given get value of typed reference expression.
+            </summary>
+            <param name="getValueOfTypedReference"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IGotoStatement)">
+            <summary>
+            Performs some computation with the given goto statement.
+            </summary>
+            <param name="gotoStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IGotoSwitchCaseStatement)">
+            <summary>
+            Performs some computation with the given goto switch case statement.
+            </summary>
+            <param name="gotoSwitchCaseStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IGreaterThan)">
+            <summary>
+            Performs some computation with the given greater-than expression.
+            </summary>
+            <param name="greaterThan"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IGreaterThanOrEqual)">
+            <summary>
+            Performs some computation with the given greater-than-or-equal expression.
+            </summary>
+            <param name="greaterThanOrEqual"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ILabeledStatement)">
+            <summary>
+            Performs some computation with the given labeled statement.
+            </summary>
+            <param name="labeledStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ILeftShift)">
+            <summary>
+            Performs some computation with the given left shift expression.
+            </summary>
+            <param name="leftShift"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ILessThan)">
+            <summary>
+            Performs some computation with the given less-than expression.
+            </summary>
+            <param name="lessThan"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ILessThanOrEqual)">
+            <summary>
+            Performs some computation with the given less-than-or-equal expression.
+            </summary>
+            <param name="lessThanOrEqual"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ILocalDeclarationStatement)">
+            <summary>
+            Performs some computation with the given local declaration statement.
+            </summary>
+            <param name="localDeclarationStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ILockStatement)">
+            <summary>
+            Performs some computation with the given lock statement.
+            </summary>
+            <param name="lockStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ILogicalNot)">
+            <summary>
+            Performs some computation with the given logical not expression.
+            </summary>
+            <param name="logicalNot"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IMakeTypedReference)">
+            <summary>
+            Performs some computation with the given make typed reference expression.
+            </summary>
+            <param name="makeTypedReference"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IMethodCall)">
+            <summary>
+            Performs some computation with the given method call.
+            </summary>
+            <param name="methodCall"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IModulus)">
+            <summary>
+            Performs some computation with the given modulus expression.
+            </summary>
+            <param name="modulus"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IMultiplication)">
+            <summary>
+            Performs some computation with the given multiplication expression.
+            </summary>
+            <param name="multiplication"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.INamedArgument)">
+            <summary>
+            Performs some computation with the given named argument expression.
+            </summary>
+            <param name="namedArgument"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.INotEquality)">
+            <summary>
+            Performs some computation with the given not equality expression.
+            </summary>
+            <param name="notEquality"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IOldValue)">
+            <summary>
+            Performs some computation with the given old value expression.
+            </summary>
+            <param name="oldValue"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IOnesComplement)">
+            <summary>
+            Performs some computation with the given one's complement expression.
+            </summary>
+            <param name="onesComplement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IOutArgument)">
+            <summary>
+            Performs some computation with the given out argument expression.
+            </summary>
+            <param name="outArgument"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IPointerCall)">
+            <summary>
+            Performs some computation with the given pointer call.
+            </summary>
+            <param name="pointerCall"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IPopValue)">
+            <summary>
+            Performs some computation with the given pop value expression.
+            </summary>
+            <param name="popValue"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IPushStatement)">
+            <summary>
+            Performs some computation with the given push statement.
+            </summary>
+            <param name="pushStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IRefArgument)">
+            <summary>
+            Performs some computation with the given ref argument expression.
+            </summary>
+            <param name="refArgument"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IResourceUseStatement)">
+            <summary>
+            Performs some computation with the given resource usage statement.
+            </summary>
+            <param name="resourceUseStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IRethrowStatement)">
+            <summary>
+            Performs some computation with the rethrow statement.
+            </summary>
+            <param name="rethrowStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IReturnStatement)">
+            <summary>
+            Performs some computation with the return statement.
+            </summary>
+            <param name="returnStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IReturnValue)">
+            <summary>
+            Performs some computation with the given return value expression.
+            </summary>
+            <param name="returnValue"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IRightShift)">
+            <summary>
+            Performs some computation with the given right shift expression.
+            </summary>
+            <param name="rightShift"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IStackArrayCreate)">
+            <summary>
+            Performs some computation with the given stack array create expression.
+            </summary>
+            <param name="stackArrayCreate"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IRuntimeArgumentHandleExpression)">
+            <summary>
+            Performs some computation with the given runtime argument handle expression.
+            </summary>
+            <param name="runtimeArgumentHandleExpression"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ISizeOf)">
+            <summary>
+            Performs some computation with the given sizeof() expression.
+            </summary>
+            <param name="sizeOf"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IStatement)">
+            <summary>
+            Visits the specified statement.
+            </summary>
+            <param name="statement">The statement.</param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ISubtraction)">
+            <summary>
+            Performs some computation with the given subtraction expression.
+            </summary>
+            <param name="subtraction"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ISwitchCase)">
+            <summary>
+            Performs some computation with the given switch case.
+            </summary>
+            <param name="switchCase"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ISwitchStatement)">
+            <summary>
+            Performs some computation with the given switch statement.
+            </summary>
+            <param name="switchStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ITargetExpression)">
+            <summary>
+            Performs some computation with the given target expression.
+            </summary>
+            <param name="targetExpression"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IThisReference)">
+            <summary>
+            Performs some computation with the given this reference expression.
+            </summary>
+            <param name="thisReference"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IThrowStatement)">
+            <summary>
+            Performs some computation with the throw statement.
+            </summary>
+            <param name="throwStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ITryCatchFinallyStatement)">
+            <summary>
+            Performs some computation with the try-catch-filter-finally statement.
+            </summary>
+            <param name="tryCatchFilterFinallyStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ITokenOf)">
+            <summary>
+            Performs some computation with the given tokenof() expression.
+            </summary>
+            <param name="tokenOf"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.ITypeOf)">
+            <summary>
+            Performs some computation with the given typeof() expression.
+            </summary>
+            <param name="typeOf"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IUnaryNegation)">
+            <summary>
+            Performs some computation with the given unary negation expression.
+            </summary>
+            <param name="unaryNegation"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IUnaryOperation)">
+            <summary>
+            Performs some computation with the given unary operation expression.
+            </summary>
+            <param name="unaryOperation"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IUnaryPlus)">
+            <summary>
+            Performs some computation with the given unary plus expression.
+            </summary>
+            <param name="unaryPlus"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IVectorLength)">
+            <summary>
+            Performs some computation with the given vector length expression.
+            </summary>
+            <param name="vectorLength"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IWhileDoStatement)">
+            <summary>
+            Performs some computation with the given while do statement.
+            </summary>
+            <param name="whileDoStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IYieldBreakStatement)">
+            <summary>
+            Performs some computation with the given yield break statement.
+            </summary>
+            <param name="yieldBreakStatement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeVisitor.Visit(Microsoft.Cci.IYieldReturnStatement)">
+            <summary>
+            Performs some computation with the given yield return statement.
+            </summary>
+            <param name="yieldReturnStatement"></param>
+        </member>
+        <member name="T:Microsoft.Cci.CodeTraverser">
+            <summary>
+            A class that traverses the code and metadata model in depth first, left to right order,
+            calling visitors on each model instance in pre-order as well as post-order.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.#ctor">
+            <summary>
+            A class that traverses the code and metadata model in depth first, left to right order,
+            calling visitors on each model instance in pre-order as well as post-order.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IAddition)">
+            <summary>
+            Traverses the addition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IAddressableExpression)">
+            <summary>
+            Traverses the addressable expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IAddressDereference)">
+            <summary>
+            Traverses the address dereference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IAddressOf)">
+            <summary>
+            Traverses the AddressOf expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IAnonymousDelegate)">
+            <summary>
+            Traverses the anonymous delegate expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IArrayIndexer)">
+            <summary>
+            Traverses the array indexer expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IAssertStatement)">
+            <summary>
+            Traverses the assert statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IAssignment)">
+            <summary>
+            Traverses the assignment expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IAssumeStatement)">
+            <summary>
+            Traverses the assume statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IBinaryOperation)">
+            <summary>
+            Traverses the bitwise and expression.
+            </summary>
+            <param name="binaryOperation"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IBitwiseAnd)">
+            <summary>
+            Traverses the bitwise and expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IBitwiseOr)">
+            <summary>
+            Traverses the bitwise or expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IBlockExpression)">
+            <summary>
+            Traverses the block expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IBlockStatement)">
+            <summary>
+            Traverses the statement block.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IBoundExpression)">
+            <summary>
+            Traverses the bound expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IBreakStatement)">
+            <summary>
+            Traverses the break statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ICastIfPossible)">
+            <summary>
+            Traverses the cast-if-possible expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ICatchClause)">
+            <summary>
+            Traverses the catch clause.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ICheckIfInstance)">
+            <summary>
+            Traverses the check-if-instance expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ICompileTimeConstant)">
+            <summary>
+            Traverses the compile time constant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IConditional)">
+            <summary>
+            Traverses the conditional expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IConditionalStatement)">
+            <summary>
+            Traverses the conditional statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IContinueStatement)">
+            <summary>
+            Traverses the continue statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IConversion)">
+            <summary>
+            Traverses the conversion expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ICreateArray)">
+            <summary>
+            Traverses the array creation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ICreateDelegateInstance)">
+            <summary>
+            Traverses the delegate creation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ICreateObjectInstance)">
+            <summary>
+            Traverses the create object instance expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IDebuggerBreakStatement)">
+            <summary>
+            Traverses the debugger break statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IDefaultValue)">
+            <summary>
+            Traverses the defalut value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IDivision)">
+            <summary>
+            Traverses the division expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IDoUntilStatement)">
+            <summary>
+            Traverses the do until statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IDupValue)">
+            <summary>
+            Traverses the dup value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IEmptyStatement)">
+            <summary>
+            Traverses the empty statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IEquality)">
+            <summary>
+            Traverses the equality expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IExclusiveOr)">
+            <summary>
+            Traverses the exclusive or expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IExpression)">
+            <summary>
+            Traverses the expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IExpressionStatement)">
+            <summary>
+            Traverses the expression statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IForEachStatement)">
+            <summary>
+            Traverses the foreach statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IForStatement)">
+            <summary>
+            Traverses the for statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IGetTypeOfTypedReference)">
+            <summary>
+            Traverses the get type of typed reference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IGetValueOfTypedReference)">
+            <summary>
+            Traverses the get value of typed reference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IGotoStatement)">
+            <summary>
+            Traverses the goto statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IGotoSwitchCaseStatement)">
+            <summary>
+            Traverses the goto switch case statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IGreaterThan)">
+            <summary>
+            Traverses the greater-than expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IGreaterThanOrEqual)">
+            <summary>
+            Traverses the greater-than-or-equal expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ILabeledStatement)">
+            <summary>
+            Traverses the labeled statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ILeftShift)">
+            <summary>
+            Traverses the left shift expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ILessThan)">
+            <summary>
+            Traverses the less-than expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ILessThanOrEqual)">
+            <summary>
+            Traverses the less-than-or-equal expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ILocalDeclarationStatement)">
+            <summary>
+            Traverses the local declaration statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ILockStatement)">
+            <summary>
+            Traverses the lock statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ILogicalNot)">
+            <summary>
+            Traverses the logical not expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IMakeTypedReference)">
+            <summary>
+            Traverses the make typed reference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IMethodBody)">
+            <summary>
+            Traverses the the given method body.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IMethodCall)">
+            <summary>
+            Traverses the method call.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IModulus)">
+            <summary>
+            Traverses the modulus expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IMultiplication)">
+            <summary>
+            Traverses the multiplication expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.INamedArgument)">
+            <summary>
+            Traverses the named argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.INotEquality)">
+            <summary>
+            Traverses the not equality expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IOldValue)">
+            <summary>
+            Traverses the old value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IOnesComplement)">
+            <summary>
+            Traverses the one's complement expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IOutArgument)">
+            <summary>
+            Traverses the out argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IPointerCall)">
+            <summary>
+            Traverses the pointer call.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IPopValue)">
+            <summary>
+            Traverses the pop value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IPushStatement)">
+            <summary>
+            Traverses the push statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IRefArgument)">
+            <summary>
+            Traverses the ref argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IResourceUseStatement)">
+            <summary>
+            Traverses the resource usage statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IRethrowStatement)">
+            <summary>
+            Traverses the rethrow statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IReturnStatement)">
+            <summary>
+            Traverses the return statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IReturnValue)">
+            <summary>
+            Traverses the return value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IRightShift)">
+            <summary>
+            Traverses the right shift expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IRuntimeArgumentHandleExpression)">
+            <summary>
+            Traverses the runtime argument handle expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ISizeOf)">
+            <summary>
+            Traverses the sizeof() expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ISourceMethodBody)">
+            <summary>
+            Traverses the the given source method body.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IStackArrayCreate)">
+            <summary>
+            Traverses the stack array create expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IStatement)">
+            <summary>
+            Traverses the specified statement.
+            </summary>
+            <param name="statement">The statement.</param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ISubtraction)">
+            <summary>
+            Traverses the subtraction expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ISwitchCase)">
+            <summary>
+            Traverses the switch case.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ISwitchStatement)">
+            <summary>
+            Traverses the switch statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ITargetExpression)">
+            <summary>
+            Traverses the target expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IThisReference)">
+            <summary>
+            Traverses the this reference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IThrowStatement)">
+            <summary>
+            Traverses the throw statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ITryCatchFinallyStatement)">
+            <summary>
+            Traverses the try-catch-filter-finally statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ITokenOf)">
+            <summary>
+            Traverses the tokenof() expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.ITypeOf)">
+            <summary>
+            Traverses the typeof() expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IUnaryNegation)">
+            <summary>
+            Traverses the unary negation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IUnaryOperation)">
+            <summary>
+            Traverses the unary operation expression.
+            </summary>
+            <param name="unaryOperation"></param>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IUnaryPlus)">
+            <summary>
+            Traverses the unary plus expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IVectorLength)">
+            <summary>
+            Traverses the vector length expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IWhileDoStatement)">
+            <summary>
+            Traverses the while do statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IYieldBreakStatement)">
+            <summary>
+            Traverses the yield break statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IYieldReturnStatement)">
+            <summary>
+            Traverses the yield return statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.ICatchClause})">
+            <summary>
+            Traverses the enumeration of catch clauses.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.IExpression})">
+            <summary>
+            Traverses the enumeration of expressions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.ISwitchCase})">
+            <summary>
+            Traverses the enumeration of switch cases.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.IStatement})">
+            <summary>
+            Traverses the enumeration of statements.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IAddition)">
+            <summary>
+            Traverses the children of the addition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IAddressableExpression)">
+            <summary>
+            Traverses the children of the addressable expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IAddressDereference)">
+            <summary>
+            Traverses the children of the address dereference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IAddressOf)">
+            <summary>
+            Traverses the children of the AddressOf expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IAnonymousDelegate)">
+            <summary>
+            Traverses the children of the anonymous delegate expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IArrayIndexer)">
+            <summary>
+            Traverses the children of the array indexer expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IAssertStatement)">
+            <summary>
+            Traverses the children of the assert statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IAssignment)">
+            <summary>
+            Traverses the children of the assignment expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IAssumeStatement)">
+            <summary>
+            Traverses the children of the assume statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IBinaryOperation)">
+            <summary>
+            Called whenever a binary operation expression is about to be traversed by a type specific routine.
+            This gives the traverser the opportunity to take some uniform action for all binary operation expressions,
+            regardless of how the traversal gets to them.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IBitwiseAnd)">
+            <summary>
+            Traverses the children of the bitwise and expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IBitwiseOr)">
+            <summary>
+            Traverses the children of the bitwise or expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IBlockExpression)">
+            <summary>
+            Traverses the children of the block expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IBlockStatement)">
+            <summary>
+            Traverses the children of the statement block.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IBoundExpression)">
+            <summary>
+            Traverses the children of the bound expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IBreakStatement)">
+            <summary>
+            Traverses the children of the break statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ICastIfPossible)">
+            <summary>
+            Traverses the cast-if-possible expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ICatchClause)">
+            <summary>
+            Traverses the children of the catch clause.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ICheckIfInstance)">
+            <summary>
+            Traverses the children of the check-if-instance expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ICompileTimeConstant)">
+            <summary>
+            Traverses the children of the compile time constant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IConditional)">
+            <summary>
+            Traverses the children of the conditional expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IConditionalStatement)">
+            <summary>
+            Traverses the children of the conditional statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IContinueStatement)">
+            <summary>
+            Traverses the children of the continue statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IConversion)">
+            <summary>
+            Traverses the children of the conversion expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ICreateArray)">
+            <summary>
+            Traverses the children of the array creation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ICreateDelegateInstance)">
+            <summary>
+            Traverses the children the delegate instance creation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ICreateObjectInstance)">
+            <summary>
+            Traverses the children of the create object instance expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IDebuggerBreakStatement)">
+            <summary>
+            Traverses the children of the debugger break statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IDefaultValue)">
+            <summary>
+            Traverses the children of the defalut value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IDivision)">
+            <summary>
+            Traverses the children of the division expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IDoUntilStatement)">
+            <summary>
+            Traverses the children of the do until statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IDupValue)">
+            <summary>
+            Traverses the children of the dup value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IEmptyStatement)">
+            <summary>
+            Traverses the children of the empty statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IEquality)">
+            <summary>
+            Traverses the children of the equality expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IExclusiveOr)">
+            <summary>
+            Traverses the children of the exclusive or expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IExpression)">
+            <summary>
+            Called whenever an expression is about to be traversed by a type specific routine.
+            This gives the traverser the opportunity to take some uniform action for all expressions,
+            regardless of how the traversal gets to them.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IExpressionStatement)">
+            <summary>
+            Traverses the children of the expression statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IForEachStatement)">
+            <summary>
+            Traverses the children of the foreach statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IForStatement)">
+            <summary>
+            Traverses the children of the for statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IGetTypeOfTypedReference)">
+            <summary>
+            Traverses the children of the get type of typed reference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IGetValueOfTypedReference)">
+            <summary>
+            Traverses the children of the get value of typed reference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IGotoStatement)">
+            <summary>
+            Traverses the children of the goto statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IGotoSwitchCaseStatement)">
+            <summary>
+            Traverses the children of the goto switch case statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IGreaterThan)">
+            <summary>
+            Traverses the children of the greater-than expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IGreaterThanOrEqual)">
+            <summary>
+            Traverses the children of the greater-than-or-equal expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ILabeledStatement)">
+            <summary>
+            Traverses the children of the labeled statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ILeftShift)">
+            <summary>
+            Traverses the children of the left shift expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ILessThan)">
+            <summary>
+            Traverses the children of the less-than expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ILessThanOrEqual)">
+            <summary>
+            Traverses the children of the less-than-or-equal expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ILocalDeclarationStatement)">
+            <summary>
+            Traverses the children of the local declaration statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ILockStatement)">
+            <summary>
+            Traverses the children of the lock statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ILogicalNot)">
+            <summary>
+            Traverses the children of the logical not expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IMakeTypedReference)">
+            <summary>
+            Traverses the children of the make typed reference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IMethodCall)">
+            <summary>
+            Traverses the children of the method call.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IModulus)">
+            <summary>
+            Traverses the children of the modulus expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IMultiplication)">
+            <summary>
+            Traverses the children of the multiplication expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.INamedArgument)">
+            <summary>
+            Traverses the children of the named argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.INotEquality)">
+            <summary>
+            Traverses the children of the not equality expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IOldValue)">
+            <summary>
+            Traverses the children of the old value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IOnesComplement)">
+            <summary>
+            Traverses the children of the one's complement expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IOutArgument)">
+            <summary>
+            Traverses the children of the out argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IPointerCall)">
+            <summary>
+            Traverses the children of the pointer call.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IPopValue)">
+            <summary>
+            Traverses the children of the pop value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IPushStatement)">
+            <summary>
+            Traverses the children of the push statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IRefArgument)">
+            <summary>
+            Traverses the children of the ref argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IResourceUseStatement)">
+            <summary>
+            Traverses the children of the resource usage statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IRethrowStatement)">
+            <summary>
+            Traverses the rethrow statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IReturnStatement)">
+            <summary>
+            Traverses the return statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IReturnValue)">
+            <summary>
+            Traverses the children of the return value expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IRightShift)">
+            <summary>
+            Traverses the children of the right shift expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IRuntimeArgumentHandleExpression)">
+            <summary>
+            Traverses the children of the runtime argument handle expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ISizeOf)">
+            <summary>
+            Traverses the children of the sizeof() expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ISourceMethodBody)">
+            <summary>
+            Traverses the the given source method body.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IStackArrayCreate)">
+            <summary>
+            Traverses the children of the stack array create expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IStatement)">
+            <summary>
+            Called whenever a statement is about to be traversed by a type specific routine.
+            This gives the traverser the opportunity to take some uniform action for all statements,
+            regardless of how the traversal gets to them.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ISubtraction)">
+            <summary>
+            Traverses the children of the subtraction expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ISwitchCase)">
+            <summary>
+            Traverses the children of the switch case.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ISwitchStatement)">
+            <summary>
+            Traverses the children of the switch statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ITargetExpression)">
+            <summary>
+            Traverses the children of the target expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IThisReference)">
+            <summary>
+            Traverses the children of the this reference expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IThrowStatement)">
+            <summary>
+            Traverses the throw statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ITryCatchFinallyStatement)">
+            <summary>
+            Traverses the try-catch-filter-finally statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ITokenOf)">
+            <summary>
+            Traverses the children of the tokenof() expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ITypeOf)">
+            <summary>
+            Traverses the children of the typeof() expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IUnaryNegation)">
+            <summary>
+            Traverses the children of the unary negation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IUnaryOperation)">
+            <summary>
+            Called whenever a unary operation expression is about to be traversed by a type specific routine.
+            This gives the traverser the opportunity to take some uniform action for all unary operation expressions,
+            regardless of how the traversal gets to them.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IUnaryPlus)">
+            <summary>
+            Traverses the children of the unary plus expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IVectorLength)">
+            <summary>
+            Traverses the children of the vector length expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IWhileDoStatement)">
+            <summary>
+            Traverses the children of the while do statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IYieldBreakStatement)">
+            <summary>
+            Traverses the children of the yield break statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.IYieldReturnStatement)">
+            <summary>
+            Traverses the children of the yield return statement.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.CodeTraverser.PreorderVisitor">
+            <summary>
+            A visitor that should be called on each object being traversed, before any of its children are traversed. May be null.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.CodeTraverser.PostorderVisitor">
+            <summary>
+            A visitor that should be called on each object being traversed, after all of its children are traversed. May be null. 
+            </summary>
+        </member>
         <member name="T:Microsoft.Cci.BaseCodeTraverser">
             <summary>
             A visitor base class that traverses the code model in depth first, left to right order.
@@ -2303,37 +3823,37 @@
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IAddition)">
             <summary>
-            Performs some computation with the given addition.
+            Traverses the given addition.
             </summary>
             <param name="addition"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IAddressableExpression)">
             <summary>
-            Performs some computation with the given addressable expression.
+            Traverses the given addressable expression.
             </summary>
             <param name="addressableExpression"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IAddressDereference)">
             <summary>
-            Performs some computation with the given address dereference expression.
+            Traverses the given address dereference expression.
             </summary>
             <param name="addressDereference"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IAddressOf)">
             <summary>
-            Performs some computation with the given AddressOf expression.
+            Traverses the given AddressOf expression.
             </summary>
             <param name="addressOf"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IAnonymousDelegate)">
             <summary>
-            Performs some computation with the given anonymous delegate expression.
+            Traverses the given anonymous delegate expression.
             </summary>
             <param name="anonymousDelegate"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IAssertStatement)">
             <summary>
-            Performs some computation with the given assert statement.
+            Traverses the given assert statement.
             </summary>
             <param name="assertStatement"></param>
         </member>
@@ -2345,43 +3865,43 @@
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IAssignment)">
             <summary>
-            Performs some computation with the given assignment expression.
+            Traverses the given assignment expression.
             </summary>
             <param name="assignment"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IAssumeStatement)">
             <summary>
-            Performs some computation with the given assume statement.
+            Traverses the given assume statement.
             </summary>
             <param name="assumeStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IBitwiseAnd)">
             <summary>
-            Performs some computation with the given bitwise and expression.
+            Traverses the given bitwise and expression.
             </summary>
             <param name="bitwiseAnd"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IBitwiseOr)">
             <summary>
-            Performs some computation with the given bitwise or expression.
+            Traverses the given bitwise or expression.
             </summary>
             <param name="bitwiseOr"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IBlockExpression)">
             <summary>
-            Performs some computation with the given block expression.
+            Traverses the given block expression.
             </summary>
             <param name="blockExpression"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IBlockStatement)">
             <summary>
-            Performs some computation with the given statement block.
+            Traverses the given statement block.
             </summary>
             <param name="block"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ICastIfPossible)">
             <summary>
-            Performs some computation with the cast-if-possible expression.
+            Traverses the cast-if-possible expression.
             </summary>
             <param name="castIfPossible"></param>
         </member>
@@ -2393,127 +3913,127 @@
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ICatchClause)">
             <summary>
-            Performs some computation with the given catch clause.
+            Traverses the given catch clause.
             </summary>
             <param name="catchClause"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ICheckIfInstance)">
             <summary>
-            Performs some computation with the given check-if-instance expression.
+            Traverses the given check-if-instance expression.
             </summary>
             <param name="checkIfInstance"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ICompileTimeConstant)">
             <summary>
-            Performs some computation with the given compile time constant.
+            Traverses the given compile time constant.
             </summary>
             <param name="constant"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IConversion)">
             <summary>
-            Performs some computation with the given conversion expression.
+            Traverses the given conversion expression.
             </summary>
             <param name="conversion"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IConditional)">
             <summary>
-            Performs some computation with the given conditional expression.
+            Traverses the given conditional expression.
             </summary>
             <param name="conditional"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IConditionalStatement)">
             <summary>
-            Performs some computation with the given conditional statement.
+            Traverses the given conditional statement.
             </summary>
             <param name="conditionalStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IContinueStatement)">
             <summary>
-            Performs some computation with the given continue statement.
+            Traverses the given continue statement.
             </summary>
             <param name="continueStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ICreateArray)">
             <summary>
-            Performs some computation with the given array creation expression.
+            Traverses the given array creation expression.
             </summary>
             <param name="createArray"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ICreateObjectInstance)">
             <summary>
-            Performs some computation with the given constructor call expression.
+            Traverses the given constructor call expression.
             </summary>
             <param name="createObjectInstance"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ICreateDelegateInstance)">
             <summary>
-            Performs some computation with the anonymous object creation expression.
+            Traverses the anonymous object creation expression.
             </summary>
             <param name="createDelegateInstance"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IArrayIndexer)">
             <summary>
-            Performs some computation with the given array indexer expression.
+            Traverses the given array indexer expression.
             </summary>
             <param name="arrayIndexer"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IBoundExpression)">
             <summary>
-            Performs some computation with the given bound expression.
+            Traverses the given bound expression.
             </summary>
             <param name="boundExpression"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ICustomAttribute)">
             <summary>
-            Performs some computation with the given custom attribute.
+            Traverses the given custom attribute.
             </summary>
             <param name="customAttribute"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IDefaultValue)">
             <summary>
-            Performs some computation with the given defalut value expression.
+            Traverses the given defalut value expression.
             </summary>
             <param name="defaultValue"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IDebuggerBreakStatement)">
             <summary>
-            Performs some computation with the given debugger break statement.
+            Traverses the given debugger break statement.
             </summary>
             <param name="debuggerBreakStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IDivision)">
             <summary>
-            Performs some computation with the given division expression.
+            Traverses the given division expression.
             </summary>
             <param name="division"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IDoUntilStatement)">
             <summary>
-            Performs some computation with the given do until statement.
+            Traverses the given do until statement.
             </summary>
             <param name="doUntilStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IDupValue)">
             <summary>
-            Performs some computation with the given dup value expression.
+            Traverses the given dup value expression.
             </summary>
             <param name="popValue"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IEmptyStatement)">
             <summary>
-            Performs some computation with the given empty statement.
+            Traverses the given empty statement.
             </summary>
             <param name="emptyStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IEquality)">
             <summary>
-            Performs some computation with the given equality expression.
+            Traverses the given equality expression.
             </summary>
             <param name="equality"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IExclusiveOr)">
             <summary>
-            Performs some computation with the given exclusive or expression.
+            Traverses the given exclusive or expression.
             </summary>
             <param name="exclusiveOr"></param>
         </member>
@@ -2525,115 +4045,115 @@
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IExpression)">
             <summary>
-            Performs some computation with the given expression.
+            Traverses the given expression.
             </summary>
             <param name="expression"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IExpressionStatement)">
             <summary>
-            Performs some computation with the given expression statement.
+            Traverses the given expression statement.
             </summary>
             <param name="expressionStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IForEachStatement)">
             <summary>
-            Performs some computation with the given foreach statement.
+            Traverses the given foreach statement.
             </summary>
             <param name="forEachStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IForStatement)">
             <summary>
-            Performs some computation with the given for statement.
+            Traverses the given for statement.
             </summary>
             <param name="forStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IGetTypeOfTypedReference)">
             <summary>
-            Performs some computation with the given get type of typed reference expression.
+            Traverses the given get type of typed reference expression.
             </summary>
             <param name="getTypeOfTypedReference"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IGetValueOfTypedReference)">
             <summary>
-            Performs some computation with the given get value of typed reference expression.
+            Traverses the given get value of typed reference expression.
             </summary>
             <param name="getValueOfTypedReference"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IGotoStatement)">
             <summary>
-            Performs some computation with the given goto statement.
+            Traverses the given goto statement.
             </summary>
             <param name="gotoStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IGotoSwitchCaseStatement)">
             <summary>
-            Performs some computation with the given goto switch case statement.
+            Traverses the given goto switch case statement.
             </summary>
             <param name="gotoSwitchCaseStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IGreaterThan)">
             <summary>
-            Performs some computation with the given greater-than expression.
+            Traverses the given greater-than expression.
             </summary>
             <param name="greaterThan"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IGreaterThanOrEqual)">
             <summary>
-            Performs some computation with the given greater-than-or-equal expression.
+            Traverses the given greater-than-or-equal expression.
             </summary>
             <param name="greaterThanOrEqual"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ILabeledStatement)">
             <summary>
-            Performs some computation with the given labeled statement.
+            Traverses the given labeled statement.
             </summary>
             <param name="labeledStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ILeftShift)">
             <summary>
-            Performs some computation with the given left shift expression.
+            Traverses the given left shift expression.
             </summary>
             <param name="leftShift"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ILessThan)">
             <summary>
-            Performs some computation with the given less-than expression.
+            Traverses the given less-than expression.
             </summary>
             <param name="lessThan"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ILessThanOrEqual)">
             <summary>
-            Performs some computation with the given less-than-or-equal expression.
+            Traverses the given less-than-or-equal expression.
             </summary>
             <param name="lessThanOrEqual"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ILocalDeclarationStatement)">
             <summary>
-            Performs some computation with the given local declaration statement.
+            Traverses the given local declaration statement.
             </summary>
             <param name="localDeclarationStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ILockStatement)">
             <summary>
-            Performs some computation with the given lock statement.
+            Traverses the given lock statement.
             </summary>
             <param name="lockStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ILogicalNot)">
             <summary>
-            Performs some computation with the given logical not expression.
+            Traverses the given logical not expression.
             </summary>
             <param name="logicalNot"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IBreakStatement)">
             <summary>
-            Performs some computation with the given break statement.
+            Traverses the given break statement.
             </summary>
             <param name="breakStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IMakeTypedReference)">
             <summary>
-            Performs some computation with the given make typed reference expression.
+            Traverses the given make typed reference expression.
             </summary>
             <param name="makeTypedReference"></param>
         </member>
@@ -2645,31 +4165,31 @@
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IMethodDefinition)">
             <summary>
-            Performs some computation with the given method definition.
+            Traverses the given method definition.
             </summary>
             <param name="method"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IMethodBody)">
             <summary>
-            Performs some computation with the given method body.
+            Traverses the given method body.
             </summary>
             <param name="methodBody"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IMethodCall)">
             <summary>
-            Performs some computation with the given method call.
+            Traverses the given method call.
             </summary>
             <param name="methodCall"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IModulus)">
             <summary>
-            Performs some computation with the given modulus expression.
+            Traverses the given modulus expression.
             </summary>
             <param name="modulus"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IMultiplication)">
             <summary>
-            Performs some computation with the given multiplication expression.
+            Traverses the given multiplication expression.
             </summary>
             <param name="multiplication"></param>
         </member>
@@ -2681,102 +4201,102 @@
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.INamedArgument)">
             <summary>
-            Performs some computation with the given named argument expression.
+            Traverses the given named argument expression.
             </summary>
             <param name="namedArgument"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.INotEquality)">
             <summary>
-            Performs some computation with the given not equality expression.
+            Traverses the given not equality expression.
             </summary>
             <param name="notEquality"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IOldValue)">
             <summary>
-            Performs some computation with the given old value expression.
+            Traverses the given old value expression.
             </summary>
             <param name="oldValue"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IOnesComplement)">
             <summary>
-            Performs some computation with the given one's complement expression.
+            Traverses the given one's complement expression.
             </summary>
             <param name="onesComplement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IOutArgument)">
             <summary>
-            Performs some computation with the given out argument expression.
+            Traverses the given out argument expression.
             </summary>
             <param name="outArgument"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IPointerCall)">
             <summary>
-            Performs some computation with the given pointer call.
+            Traverses the given pointer call.
             </summary>
             <param name="pointerCall"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IPopValue)">
             <summary>
-            Performs some computation with the given pop value expression.
+            Traverses the given pop value expression.
             </summary>
             <param name="popValue"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IPushStatement)">
             <summary>
-            Performs some computation with the given push statement.
+            Traverses the given push statement.
             </summary>
             <param name="pushStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IRefArgument)">
             <summary>
-            Performs some computation with the given ref argument expression.
+            Traverses the given ref argument expression.
             </summary>
             <param name="refArgument"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IResourceUseStatement)">
             <summary>
-            Performs some computation with the given resource usage statement.
+            Traverses the given resource usage statement.
             </summary>
             <param name="resourceUseStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IRethrowStatement)">
             <summary>
-            Performs some computation with the rethrow statement.
+            Traverses the rethrow statement.
             </summary>
             <param name="rethrowStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IReturnStatement)">
             <summary>
-            Performs some computation with the return statement.
+            Traverses the return statement.
             </summary>
             <param name="returnStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IReturnValue)">
             <summary>
-            Performs some computation with the given return value expression.
+            Traverses the given return value expression.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IRightShift)">
             <summary>
-            Performs some computation with the given right shift expression.
+            Traverses the given right shift expression.
             </summary>
             <param name="rightShift"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IStackArrayCreate)">
             <summary>
-            Performs some computation with the given stack array create expression.
+            Traverses the given stack array create expression.
             </summary>
             <param name="stackArrayCreate"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IRuntimeArgumentHandleExpression)">
             <summary>
-            Performs some computation with the given runtime argument handle expression.
+            Traverses the given runtime argument handle expression.
             </summary>
             <param name="runtimeArgumentHandleExpression"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ISizeOf)">
             <summary>
-            Performs some computation with the given sizeof() expression.
+            Traverses the given sizeof() expression.
             </summary>
             <param name="sizeOf"></param>
         </member>
@@ -2794,7 +4314,7 @@
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ISubtraction)">
             <summary>
-            Performs some computation with the given subtraction expression.
+            Traverses the given subtraction expression.
             </summary>
             <param name="subtraction"></param>
         </member>
@@ -2806,99 +4326,87 @@
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ISwitchCase)">
             <summary>
-            Performs some computation with the given switch case.
+            Traverses the given switch case.
             </summary>
             <param name="switchCase"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ISwitchStatement)">
             <summary>
-            Performs some computation with the given switch statement.
+            Traverses the given switch statement.
             </summary>
             <param name="switchStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ITargetExpression)">
             <summary>
-            Performs some computation with the given target expression.
+            Traverses the given target expression.
             </summary>
             <param name="targetExpression"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IThisReference)">
             <summary>
-            Performs some computation with the given this reference expression.
+            Traverses the given this reference expression.
             </summary>
             <param name="thisReference"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IThrowStatement)">
             <summary>
-            Performs some computation with the throw statement.
+            Traverses the throw statement.
             </summary>
             <param name="throwStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ITryCatchFinallyStatement)">
             <summary>
-            Performs some computation with the try-catch-filter-finally statement.
+            Traverses the try-catch-filter-finally statement.
             </summary>
             <param name="tryCatchFilterFinallyStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ITokenOf)">
             <summary>
-            Performs some computation with the given tokenof() expression.
+            Traverses the given tokenof() expression.
             </summary>
             <param name="tokenOf"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.ITypeOf)">
             <summary>
-            Performs some computation with the given typeof() expression.
+            Traverses the given typeof() expression.
             </summary>
             <param name="typeOf"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IUnaryNegation)">
             <summary>
-            Performs some computation with the given unary negation expression.
+            Traverses the given unary negation expression.
             </summary>
             <param name="unaryNegation"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IUnaryPlus)">
             <summary>
-            Performs some computation with the given unary plus expression.
+            Traverses the given unary plus expression.
             </summary>
             <param name="unaryPlus"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IVectorLength)">
             <summary>
-            Performs some computation with the given vector length expression.
+            Traverses the given vector length expression.
             </summary>
             <param name="vectorLength"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IWhileDoStatement)">
             <summary>
-            Performs some computation with the given while do statement.
+            Traverses the given while do statement.
             </summary>
             <param name="whileDoStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IYieldBreakStatement)">
             <summary>
-            Performs some computation with the given yield break statement.
+            Traverses the given yield break statement.
             </summary>
             <param name="yieldBreakStatement"></param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.Visit(Microsoft.Cci.IYieldReturnStatement)">
             <summary>
-            Performs some computation with the given yield return statement.
+            Traverses the given yield return statement.
             </summary>
             <param name="yieldReturnStatement"></param>
-        </member>
-        <member name="M:Microsoft.Cci.BaseCodeTraverser.VisitReference(Microsoft.Cci.IParameterDefinition)">
-            <summary>
-            Performs some computation on the reference to the given parameter definition.
-            </summary>
-            <param name="parameter">The parameter being referenced.</param>
-        </member>
-        <member name="M:Microsoft.Cci.BaseCodeTraverser.VisitReference(Microsoft.Cci.ILocalDefinition)">
-            <summary>
-            Performs some computation on the reference to the given local definition.
-            </summary>
-            <param name="local">The local definition being referenced.</param>
         </member>
         <member name="M:Microsoft.Cci.BaseCodeTraverser.VisitReference(Microsoft.Cci.IPropertyDefinition)">
             <summary>
@@ -3528,6 +5036,279 @@
         <member name="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ITypeInvariant)">
             <summary>
             Performs some computation with the given type invariant.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.Contracts.CodeAndContractVisitor">
+            <summary>
+            Contains a specialized Visit routine for each standard type of object defined in the contract, code and metadata model. 
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.Contracts.CodeAndContractVisitor.contractProvider">
+            <summary>
+            A map from code model objects to contract objects.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.#ctor(Microsoft.Cci.Contracts.IContractProvider)">
+            <summary>
+            Contains a specialized Visit routine for each standard type of object defined in the contract, code and metadata model. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IContractElement)">
+            <summary>
+            Visits the given contract element.
+            </summary>
+            <param name="contractElement"></param>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ILoopContract)">
+            <summary>
+            Visits the given loop contract.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ILoopInvariant)">
+            <summary>
+            Visits the given loop invariant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ILoopVariant)">
+            <summary>
+            Visits the given loop variant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodContract)">
+            <summary>
+            Visits the given method contract.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodVariant)">
+            <summary>
+            Visits the given variant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IPostcondition)">
+            <summary>
+            Visits the given postCondition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IPrecondition)">
+            <summary>
+            Visits the given precondition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IThrownException)">
+            <summary>
+            Visits the given thrown exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ITypeContract)">
+            <summary>
+            Visits the given type contract.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ITypeInvariant)">
+            <summary>
+            Visits the given type invariant.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.Contracts.CodeAndContractTraverser">
+            <summary>
+            A class that traverses the contract, code and metadata models in depth first, left to right order.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.#ctor(Microsoft.Cci.Contracts.IContractProvider)">
+            <summary>
+            A class that traverses the contract, code and metadata models in depth first, left to right order.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.Contracts.CodeAndContractTraverser.contractProvider">
+            <summary>
+            A map from code model objects to contract objects.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.IContractElement)">
+            <summary>
+            Traverses the contract element.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.IAddressableExpression})">
+            <summary>
+            Traverses the enumeration of addressable expressions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{Microsoft.Cci.IExpression}})">
+            <summary>
+            Traverses the enumeration of trigger expressions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.ILoopInvariant})">
+            <summary>
+            Traverses the enumeration of loop invariants.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.ILoopVariant})">
+            <summary>
+            Traverses the enumeration of loop variants.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.IPostcondition})">
+            <summary>
+            Traverses the enumeration of post conditions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.IPrecondition})">
+            <summary>
+            Traverses the enumeration of pre conditions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.IThrownException})">
+            <summary>
+            Traverses the enumeration of thrown exceptions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.ITypeInvariant})">
+            <summary>
+            Traverses the enumeration of addressable expressions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.IMethodVariant})">
+            <summary>
+            Traverses the enumeration of post conditions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.ILoopContract)">
+            <summary>
+            Traverses the loop contract.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.ILoopInvariant)">
+            <summary>
+            Traverses the loop invariant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.ILoopVariant)">
+            <summary>
+            Traverses the loop variant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.IMethodContract)">
+            <summary>
+            Traverses the method contract.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.IMethodVariant)">
+            <summary>
+            Traverses the method variant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.IPostcondition)">
+            <summary>
+            Traverses the postCondition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.IPrecondition)">
+            <summary>
+            Traverses the pre condition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.IThrownException)">
+            <summary>
+            Traverses the thrown exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.ITypeContract)">
+            <summary>
+            Traverses the type contract.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.ITypeInvariant)">
+            <summary>
+            Traverses the type invariant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.IContractElement)">
+            <summary>
+            Called whenever a contract element is about to be traversed by a type specific routine.
+            This gives the traverser the opportunity to take some uniform action for all contract elements,
+            regardless of how the traversal gets to them.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.ILoopContract)">
+            <summary>
+            Traverses the children of the loop contract.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.ILoopInvariant)">
+            <summary>
+            Traverses the children of the loop invariant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.ILoopVariant)">
+            <summary>
+            Traverses the children of the loop variant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.IMethodCall)">
+            <summary>
+            Traverses the children of the method call.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.IMethodContract)">
+            <summary>
+            Traverses the children of the method contract.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.IMethodDefinition)">
+            <summary>
+            Traverses the children of the method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.IMethodVariant)">
+            <summary>
+            Traverses the children of the method variant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.IPostcondition)">
+            <summary>
+            Traverses the children of the postCondition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.IPrecondition)">
+            <summary>
+            Traverses the children of the pre condition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.IStatement)">
+            <summary>
+            Traverses the children of the statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.IThrownException)">
+            <summary>
+            Traverses the children of the thrown exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.ITypeContract)">
+            <summary>
+            Traverses the children of the type contract.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.ITypeDefinition)">
+            <summary>
+            Traverses the children of the type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.ITypeInvariant)">
+            <summary>
+            Traverses the children of the type invariant.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.Contracts.CodeAndContractTraverser.PreorderVisitor">
+            <summary>
+            A visitor that should be called on each object being traversed, before any of its children are traversed. May be null.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.Contracts.CodeAndContractTraverser.PostorderVisitor">
+            <summary>
+            A visitor that should be called on each object being traversed, after all of its children are traversed. May be null. 
             </summary>
         </member>
         <member name="T:Microsoft.Cci.Contracts.BaseCodeAndContractTraverser">

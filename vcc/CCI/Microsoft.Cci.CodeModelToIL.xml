@@ -47,262 +47,238 @@
             A map that indicates how many iterator locals are present in a given block. Only useful for generated MoveNext methods. May be null.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAddition)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAddition)">
             <summary>
-            Visits the specified addition.
+            Generates IL for the specified addition.
             </summary>
             <param name="addition">The addition.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAddressableExpression)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAddressableExpression)">
             <summary>
-            Visits the specified addressable expression.
+            Generates IL for the specified addressable expression.
             </summary>
             <param name="addressableExpression">The addressable expression.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAddressDereference)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAddressDereference)">
             <summary>
-            Visits the specified address dereference.
+            Generates IL for the specified address dereference.
             </summary>
             <param name="addressDereference">The address dereference.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAddressOf)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAddressOf)">
             <summary>
-            Visits the specified address of.
+            Generates IL for the specified address of.
             </summary>
             <param name="addressOf">The address of.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAliasForType)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAliasForType)">
             <summary>
-            Visits the specified alias for type.
+            Generates IL for the specified alias for type.
             </summary>
             <param name="aliasForType">Type of the alias for.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAnonymousDelegate)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAnonymousDelegate)">
             <summary>
-            Visits the specified anonymous delegate.
+            Generates IL for the specified anonymous delegate.
             </summary>
             <param name="anonymousDelegate">The anonymous delegate.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IArrayIndexer)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IArrayIndexer)">
             <summary>
-            Visits the specified array indexer.
+            Generates IL for the specified array indexer.
             </summary>
             <param name="arrayIndexer">The array indexer.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IArrayTypeReference)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IArrayTypeReference)">
             <summary>
-            Visits the specified array type reference.
+            Generates IL for the specified array type reference.
             </summary>
             <param name="arrayTypeReference">The array type reference.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAssembly)">
-            <summary>
-            Visits the specified assembly.
-            </summary>
-            <param name="assembly">The assembly.</param>
-        </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAssemblyReference)">
-            <summary>
-            Visits the specified assembly reference.
-            </summary>
-            <param name="assemblyReference">The assembly reference.</param>
-        </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAssertStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAssertStatement)">
             <summary>
             Throws an exception when executed: IAssertStatement nodes
             must be replaced before converting the Code Model to IL.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAssignment)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAssignment)">
             <summary>
-            Visits the specified assignment.
+            Generates IL for the specified assignment.
             </summary>
             <param name="assignment">The assignment.</param>
         </member>
         <member name="M:Microsoft.Cci.CodeModelToILConverter.VisitAssignment(Microsoft.Cci.IAssignment,System.Boolean)">
             <summary>
-            Visits the assignment.
+            Generates IL for the assignment.
             </summary>
             <param name="assignment">The assignment.</param>
             <param name="treatAsStatement">if set to <c>true</c> [treat as statement].</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IAssumeStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAssumeStatement)">
             <summary>
             Throws an exception when executed: IAssumeStatement nodes
             must be replaced before converting the Code Model to IL.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IBitwiseAnd)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IBitwiseAnd)">
             <summary>
-            Visits the specified bitwise and.
+            Generates IL for the specified bitwise and.
             </summary>
             <param name="bitwiseAnd">The bitwise and.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IBitwiseOr)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IBitwiseOr)">
             <summary>
-            Visits the specified bitwise or.
+            Generates IL for the specified bitwise or.
             </summary>
             <param name="bitwiseOr">The bitwise or.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IBlockExpression)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IBlockExpression)">
             <summary>
-            Visits the specified block expression.
+            Generates IL for the specified block expression.
             </summary>
             <param name="blockExpression">The block expression.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IBlockStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IBlockStatement)">
             <summary>
-            Visits the specified block.
+            Generates IL for the specified block.
             </summary>
             <param name="block">The block.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IBoundExpression)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IBoundExpression)">
             <summary>
             Performs some computation with the given bound expression.
             </summary>
             <param name="boundExpression"></param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IBreakStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IBreakStatement)">
             <summary>
-            Visits the specified break statement.
+            Generates IL for the specified break statement.
             </summary>
             <param name="breakStatement">The break statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ICastIfPossible)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ICastIfPossible)">
             <summary>
-            Visits the specified cast if possible.
+            Generates IL for the specified cast if possible.
             </summary>
             <param name="castIfPossible">The cast if possible.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ICatchClause)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ICatchClause)">
             <summary>
-            Visits the specified catch clause.
+            Generates IL for the specified catch clause.
             </summary>
             <param name="catchClause">The catch clause.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ICheckIfInstance)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ICheckIfInstance)">
             <summary>
-            Visits the specified check if instance.
+            Generates IL for the specified check if instance.
             </summary>
             <param name="checkIfInstance">The check if instance.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ICompileTimeConstant)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ICompileTimeConstant)">
             <summary>
-            Visits the specified constant.
+            Generates IL for the specified constant.
             </summary>
             <param name="constant">The constant.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IConditional)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IConditional)">
             <summary>
-            Visits the specified conditional.
+            Generates IL for the specified conditional.
             </summary>
             <param name="conditional">The conditional.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IConditionalStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IConditionalStatement)">
             <summary>
-            Visits the specified conditional statement.
+            Generates IL for the specified conditional statement.
             </summary>
             <param name="conditionalStatement">The conditional statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IContinueStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IContinueStatement)">
             <summary>
-            Visits the specified continue statement.
+            Generates IL for the specified continue statement.
             </summary>
             <param name="continueStatement">The continue statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IConversion)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IConversion)">
             <summary>
-            Visits the specified conversion.
+            Generates IL for the specified conversion.
             </summary>
             <param name="conversion">The conversion.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ICreateArray)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ICreateArray)">
             <summary>
-            Visits the specified create array.
+            Generates IL for the specified create array.
             </summary>
             <param name="createArray">The create array instance to visit.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ICreateDelegateInstance)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ICreateDelegateInstance)">
             <summary>
-            Visits the specified create delegate instance.
+            Generates IL for the specified create delegate instance.
             </summary>
             <param name="createDelegateInstance">The create delegate instance.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ICreateObjectInstance)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ICreateObjectInstance)">
             <summary>
-            Visits the specified create object instance.
+            Generates IL for the specified create object instance.
             </summary>
             <param name="createObjectInstance">The create object instance.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ICustomAttribute)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IDefaultValue)">
             <summary>
-            Visits the specified custom attribute.
-            </summary>
-            <param name="customAttribute">The custom attribute.</param>
-        </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ICustomModifier)">
-            <summary>
-            Visits the specified custom modifier.
-            </summary>
-            <param name="customModifier">The custom modifier.</param>
-        </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IDefaultValue)">
-            <summary>
-            Visits the specified default value.
+            Generates IL for the specified default value.
             </summary>
             <param name="defaultValue">The default value.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IDebuggerBreakStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IDebuggerBreakStatement)">
             <summary>
-            Visits the specified debugger break statement.
+            Generates IL for the specified debugger break statement.
             </summary>
             <param name="debuggerBreakStatement">The debugger break statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IDivision)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IDivision)">
             <summary>
-            Visits the specified division.
+            Generates IL for the specified division.
             </summary>
             <param name="division">The division.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IDoUntilStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IDoUntilStatement)">
             <summary>
-            Visits the specified do until statement.
+            Generates IL for the specified do until statement.
             </summary>
             <param name="doUntilStatement">The do until statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IDupValue)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IDupValue)">
             <summary>
             Performs some computation with the given dup value expression.
             </summary>
             <param name="dupValue"></param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IEmptyStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IEmptyStatement)">
             <summary>
-            Visits the specified empty statement.
+            Generates IL for the specified empty statement.
             </summary>
             <param name="emptyStatement">The empty statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IEquality)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IEquality)">
             <summary>
-            Visits the specified equality.
+            Generates IL for the specified equality.
             </summary>
             <param name="equality">The equality.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IExclusiveOr)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IExclusiveOr)">
             <summary>
-            Visits the specified exclusive or.
+            Generates IL for the specified exclusive or.
             </summary>
             <param name="exclusiveOr">The exclusive or.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IExpressionStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IExpressionStatement)">
             <summary>
-            Visits the specified expression statement.
+            Generates IL for the specified expression statement.
             </summary>
             <param name="expressionStatement">The expression statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IForEachStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IForEachStatement)">
             <summary>
-            Visits the specified for each statement.
+            Generates IL for the specified for each statement.
             </summary>
             <param name="forEachStatement">For each statement.</param>
         </member>
@@ -314,309 +290,309 @@
             <param name="forEachStatement">The foreach statement to visit.</param>
             <param name="arrayType">The vector type of the collection.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IForStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IForStatement)">
             <summary>
-            Visits the specified for statement.
+            Generates IL for the specified for statement.
             </summary>
             <param name="forStatement">For statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IGetTypeOfTypedReference)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IGetTypeOfTypedReference)">
             <summary>
-            Visits the specified get type of typed reference.
+            Generates IL for the specified get type of typed reference.
             </summary>
             <param name="getTypeOfTypedReference">The get type of typed reference.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IGetValueOfTypedReference)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IGetValueOfTypedReference)">
             <summary>
-            Visits the specified get value of typed reference.
+            Generates IL for the specified get value of typed reference.
             </summary>
             <param name="getValueOfTypedReference">The get value of typed reference.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IGotoStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IGotoStatement)">
             <summary>
-            Visits the specified goto statement.
+            Generates IL for the specified goto statement.
             </summary>
             <param name="gotoStatement">The goto statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IGotoSwitchCaseStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IGotoSwitchCaseStatement)">
             <summary>
-            Visits the specified goto switch case statement.
+            Generates IL for the specified goto switch case statement.
             </summary>
             <param name="gotoSwitchCaseStatement">The goto switch case statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IGreaterThan)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IGreaterThan)">
             <summary>
-            Visits the specified greater than.
+            Generates IL for the specified greater than.
             </summary>
             <param name="greaterThan">The greater than.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IGreaterThanOrEqual)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IGreaterThanOrEqual)">
             <summary>
-            Visits the specified greater than or equal.
+            Generates IL for the specified greater than or equal.
             </summary>
             <param name="greaterThanOrEqual">The greater than or equal.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ILabeledStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ILabeledStatement)">
             <summary>
-            Visits the specified labeled statement.
+            Generates IL for the specified labeled statement.
             </summary>
             <param name="labeledStatement">The labeled statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ILeftShift)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ILeftShift)">
             <summary>
-            Visits the specified left shift.
+            Generates IL for the specified left shift.
             </summary>
             <param name="leftShift">The left shift.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ILessThan)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ILessThan)">
             <summary>
-            Visits the specified less than.
+            Generates IL for the specified less than.
             </summary>
             <param name="lessThan">The less than.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ILessThanOrEqual)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ILessThanOrEqual)">
             <summary>
-            Visits the specified less than or equal.
+            Generates IL for the specified less than or equal.
             </summary>
             <param name="lessThanOrEqual">The less than or equal.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ILocalDeclarationStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ILocalDeclarationStatement)">
             <summary>
-            Visits the specified local declaration statement.
+            Generates IL for the specified local declaration statement.
             </summary>
             <param name="localDeclarationStatement">The local declaration statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ILockStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ILockStatement)">
             <summary>
-            Visits the specified lock statement.
+            Generates IL for the specified lock statement.
             </summary>
             <param name="lockStatement">The lock statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ILogicalNot)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ILogicalNot)">
             <summary>
-            Visits the specified logical not.
+            Generates IL for the specified logical not.
             </summary>
             <param name="logicalNot">The logical not.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IMakeTypedReference)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IMakeTypedReference)">
             <summary>
-            Visits the specified make typed reference.
+            Generates IL for the specified make typed reference.
             </summary>
             <param name="makeTypedReference">The make typed reference.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IMethodCall)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IMethodCall)">
             <summary>
-            Visits the specified method call.
+            Generates IL for the specified method call.
             </summary>
             <param name="methodCall">The method call.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IModulus)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IModulus)">
             <summary>
-            Visits the specified modulus.
+            Generates IL for the specified modulus.
             </summary>
             <param name="modulus">The modulus.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IMultiplication)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IMultiplication)">
             <summary>
-            Visits the specified multiplication.
+            Generates IL for the specified multiplication.
             </summary>
             <param name="multiplication">The multiplication.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.INotEquality)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.INotEquality)">
             <summary>
-            Visits the specified not equality.
+            Generates IL for the specified not equality.
             </summary>
             <param name="notEquality">The not equality.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IOldValue)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IOldValue)">
             <summary>
             Throws an exception when executed: IOldValue nodes
             must be replaced before converting the Code Model to IL.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IOnesComplement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IOnesComplement)">
             <summary>
-            Visits the specified ones complement.
+            Generates IL for the specified ones complement.
             </summary>
             <param name="onesComplement">The ones complement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IOutArgument)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IOutArgument)">
             <summary>
-            Visits the specified out argument.
+            Generates IL for the specified out argument.
             </summary>
             <param name="outArgument">The out argument.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IPointerCall)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IPointerCall)">
             <summary>
-            Visits the specified pointer call.
+            Generates IL for the specified pointer call.
             </summary>
             <param name="pointerCall">The pointer call.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IPopValue)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IPopValue)">
             <summary>
             Performs some computation with the given pop value expression.
             </summary>
             <param name="popValue"></param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IPushStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IPushStatement)">
             <summary>
             Performs some computation with the given push statement.
             </summary>
             <param name="pushStatement"></param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IRefArgument)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IRefArgument)">
             <summary>
-            Visits the specified ref argument.
+            Generates IL for the specified ref argument.
             </summary>
             <param name="refArgument">The ref argument.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IResourceUseStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IResourceUseStatement)">
             <summary>
-            Visits the specified resource use statement.
+            Generates IL for the specified resource use statement.
             </summary>
             <param name="resourceUseStatement">The resource use statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IRethrowStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IRethrowStatement)">
             <summary>
-            Visits the specified rethrow statement.
+            Generates IL for the specified rethrow statement.
             </summary>
             <param name="rethrowStatement">The rethrow statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IReturnStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IReturnStatement)">
             <summary>
-            Visits the specified return statement.
+            Generates IL for the specified return statement.
             </summary>
             <param name="returnStatement">The return statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IReturnValue)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IReturnValue)">
             <summary>
             Throws an exception when executed: IReturnValue nodes
             must be replaced before converting the Code Model to IL.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IRightShift)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IRightShift)">
             <summary>
-            Visits the specified right shift.
+            Generates IL for the specified right shift.
             </summary>
             <param name="rightShift">The right shift.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IRuntimeArgumentHandleExpression)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IRuntimeArgumentHandleExpression)">
             <summary>
-            Visits the specified runtime argument handle expression.
+            Generates IL for the specified runtime argument handle expression.
             </summary>
             <param name="runtimeArgumentHandleExpression">The runtime argument handle expression.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ISizeOf)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ISizeOf)">
             <summary>
-            Visits the specified size of.
+            Generates IL for the specified size of.
             </summary>
             <param name="sizeOf">The size of.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ISourceMethodBody)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ISourceMethodBody)">
             <summary>
-            Visits the specified method body.
+            Generates IL for the specified method body.
             </summary>
             <param name="methodBody">The method body.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IStackArrayCreate)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IStackArrayCreate)">
             <summary>
-            Visits the specified stack array create.
+            Generates IL for the specified stack array create.
             </summary>
             <param name="stackArrayCreate">The stack array create.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IStatement)">
             <summary>
             Traverses the given statement.
             </summary>
             <param name="statement"></param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ISubtraction)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ISubtraction)">
             <summary>
-            Visits the specified subtraction.
+            Generates IL for the specified subtraction.
             </summary>
             <param name="subtraction">The subtraction.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ISwitchCase)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ISwitchCase)">
             <summary>
-            Visits the specified switch case.
+            Generates IL for the specified switch case.
             </summary>
             <param name="switchCase">The switch case.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ISwitchStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ISwitchStatement)">
             <summary>
-            Visits the specified switch statement.
+            Generates IL for the specified switch statement.
             </summary>
             <param name="switchStatement">The switch statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ITargetExpression)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ITargetExpression)">
             <summary>
             Performs some computation with the given target expression.
             </summary>
             <param name="targetExpression"></param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IThisReference)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IThisReference)">
             <summary>
-            Visits the specified this reference.
+            Generates IL for the specified this reference.
             </summary>
             <param name="thisReference">The this reference.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IThrowStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IThrowStatement)">
             <summary>
-            Visits the specified throw statement.
+            Generates IL for the specified throw statement.
             </summary>
             <param name="throwStatement">The throw statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ITryCatchFinallyStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ITryCatchFinallyStatement)">
             <summary>
-            Visits the specified try catch filter finally statement.
+            Generates IL for the specified try catch filter finally statement.
             </summary>
             <param name="tryCatchFilterFinallyStatement">The try catch filter finally statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ITokenOf)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ITokenOf)">
             <summary>
-            Visits the specified token of.
+            Generates IL for the specified token of.
             </summary>
             <param name="tokenOf">The token of.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.ITypeOf)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ITypeOf)">
             <summary>
-            Visits the specified type of.
+            Generates IL for the specified type of.
             </summary>
             <param name="typeOf">The type of.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IUnaryNegation)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IUnaryNegation)">
             <summary>
-            Visits the specified unary negation.
+            Generates IL for the specified unary negation.
             </summary>
             <param name="unaryNegation">The unary negation.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IUnaryPlus)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IUnaryPlus)">
             <summary>
-            Visits the specified unary plus.
+            Generates IL for the specified unary plus.
             </summary>
             <param name="unaryPlus">The unary plus.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IVectorLength)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IVectorLength)">
             <summary>
-            Visits the specified vector length.
+            Generates IL for the specified vector length.
             </summary>
             <param name="vectorLength">Length of the vector.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IWhileDoStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IWhileDoStatement)">
             <summary>
-            Visits the specified while do statement.
+            Generates IL for the specified while do statement.
             </summary>
             <param name="whileDoStatement">The while do statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IYieldBreakStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IYieldBreakStatement)">
             <summary>
-            Visits the specified yield break statement.
+            Generates IL for the specified yield break statement.
             </summary>
             <param name="yieldBreakStatement">The yield break statement.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.Visit(Microsoft.Cci.IYieldReturnStatement)">
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IYieldReturnStatement)">
             <summary>
-            Visits the specified yield return statement.
+            Generates IL for the specified yield return statement.
             </summary>
             <param name="yieldReturnStatement">The yield return statement.</param>
         </member>

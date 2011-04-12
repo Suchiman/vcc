@@ -602,7 +602,7 @@ namespace Microsoft.Research.Vcc
                   C.Type.Claim
                 else if name.Contains ("._FixedArrayOfSize") then
                   match fields with
-                    | [f] ->
+                    | f :: _ ->
                       xassert (typeDef.SizeOf > 0u)
                       let eltype = this.DoType f.Type
                       C.Type.Array (eltype, int typeDef.SizeOf / eltype.SizeOf)
@@ -939,7 +939,33 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (fileReference:IFileReference) : unit = assert false
       
-      member this.Visit (aliasForType:IAliasForType) : unit = assert false
+      member this.Visit (platformInvokeInformation:IPlatformInvokeInformation) : unit = assert false
+
+      member this.Visit (specializedEventDefinition:ISpecializedEventDefinition) : unit = assert false
+
+      member this.Visit (specializedFieldDefinition:ISpecializedFieldDefinition) : unit = assert false
+
+      member this.Visit (specializedFieldReference:ISpecializedFieldReference) : unit = assert false
+
+      member this.Visit (specializedMethodDefinition:ISpecializedMethodDefinition) : unit = assert false
+
+      member this.Visit (specializedMethodReference:ISpecializedMethodReference) : unit = assert false
+
+      member this.Visit (specializedPropertyDefinition:ISpecializedPropertyDefinition) : unit = assert false
+
+      member this.Visit (specializedNestedTypeDefinition:ISpecializedNestedTypeDefinition) : unit = assert false
+
+      member this.Visit (specializedNestedTypeReference:ISpecializedNestedTypeReference) : unit = assert false
+
+      member this.Visit (localDefinition:ILocalDefinition) : unit = assert false
+
+      member this.Visit (operation:IOperation) : unit = assert false
+
+      member this.Visit (operationExceptionInformation:IOperationExceptionInformation) : unit = assert false
+
+      member this.VisitReference (localDefinition:ILocalDefinition) : unit = assert false
+
+      member this.VisitReference (parameterDefinition:IParameterDefinition) : unit = assert false
 
       member this.Visit (functionPointerTypeReference:IFunctionPointerTypeReference) : unit =
         let meth = functionPointerTypeReference :> ISignature
@@ -1271,8 +1297,6 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (exclusiveOr:IExclusiveOr) : unit =
         this.DoBinary ("^", exclusiveOr)
-
-      member this.Visit (expression:IExpression) : unit = assert false
 
       member this.Visit (expressionStatement:IExpressionStatement) : unit =
         let expr = this.DoExpression (expressionStatement.Expression)

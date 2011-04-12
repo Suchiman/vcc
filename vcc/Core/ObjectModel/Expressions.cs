@@ -2431,7 +2431,7 @@ namespace Microsoft.Research.Vcc {
 
     internal static VccStructuredTypeDeclaration GetStructuredTypeDeclFor(ITypeDefinition type) {
       if (type == null) return null;
-      TypeDefinition td = type as TypeDefinition;
+      var td = type as NamedTypeDefinition;
       if (td != null && td.TypeDeclarations != null) {
         foreach (TypeDeclaration tdecl in td.TypeDeclarations) {
           VccStructuredTypeDeclaration/*?*/  typeDecl = tdecl as VccStructuredTypeDeclaration;
