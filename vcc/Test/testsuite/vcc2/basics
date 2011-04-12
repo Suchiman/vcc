@@ -832,6 +832,8 @@ testcase(17,15) : error VC9599: (related information) location of the invariant.
 `
 #include <vcc2test.h>
 
+struct S { int a; };
+
 vcc(claimable) struct T
 {
     struct S c;

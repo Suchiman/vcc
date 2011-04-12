@@ -558,3 +558,13 @@ Verification of f11 succeeded.
 Verification of f12 succeeded.
 Verification of f13 succeeded.
 `
+#include <vcc.h>
+
+struct S;
+
+struct T {
+  struct S c;
+};
+`
+testcase(5,1) : error VC0000: 'c' : illegal use of undefined type 'S'.
+`
