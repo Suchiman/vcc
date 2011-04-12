@@ -1,22 +1,11 @@
 \section{Verifying Simple Programs}
 We begin by describing how VCC verifies ``simple programs'' ---
-sequential programs without loops, pointers,  function calls, or concurrency. This
+sequential programs without loops,  function calls, or concurrency. This
 might seem to be a trivial subset of C, but in fact VCC reasons about
 more complex programs by reducing them to reasoning about simple programs.
-\todo{It doesn't exactly eliminate the reasoning about pointers, does it?}
 
 \subsection{Assertions}
 \label{sect:assert-assume}
-
-%\itodo{Penny: This section dives right into the meat. First, you need two things: 
-%1. A general guide to annotation syntax
-%2. A section that describes how to think in VCC terms is, you have to describe
-%not only exactly what your code does at each step of the way, but what your
-%program *doesnt* do. This latter point will nail people on loop verification
-%every time. 
-%After you do the how to think part, I suggest some simple exercises, if this is in fact to be a tutorial. The whole book can come later. 
-%}
-%\itodo{Michal: I'm not sure about 1., 2. might be good idea.}
 
 Let's begin with a simple example:
 
@@ -32,7 +21,6 @@ identifies the type of annotation provided (and hence its function).
 at the beginning of an annotation; elsewhere, it is treated as
 an ordinary program identifier.)
 Annotations are used only by VCC, and are not seen by the C compiler.
-\todo{Should the rest of this paragraph be in a footnote?}
 When using the regular C compiler the \vcc{<vcc.h>} header file defines:
 \begin{VCC}
 #define _(...) /* nothing */
@@ -54,20 +42,7 @@ If VCC successfully verifies a program, it promises that this will hold througho
 every possible execution of the program, regardless of inputs, how concurrent
 threads are scheduled, etc. More generally, VCC might verify some, but not all of your assertions; 
 in this case, VCC promises that the first assertion to be violated will not be one of the verified ones.
-% The following doesn't really clarify much
-%% An \Def{execution} is a complete recording of all actions made by the program:
-%% which branches were taken, what values were read and stored in memory
-%% and so forth.
-%% For a deterministic program, once you fix input data (\eg by saying in this and that
-%% microsecond the user is going to click at that pixel and so forth),
-%% you fix the execution.
-%% An assertion causes VCC to try to \emph{prove} that \vcc{E} holds for \emph{all}
-%% executions.
 
-% There are only a few of these notes, so let's avoid them for now -E
-% Also, this note is something we probably want people to read. -E
-% This not necessary for the main text flow. --MM
-%\todo{should these notes be less prominent?}
 \begin{note}
 It is instructive to compare \vcc{_(assert E)} with the macro
 \lstinline|assert(E)| (defined in \lstinline|<assert.h>|), which
@@ -86,6 +61,7 @@ quantification over infinite domains.
 To verify the function using VCC from the command line, save the source in a file called \lstinline|minimum.c|
 and run VCC as follows:
 
+\todo{add something about \3}
 \begin{VCC}
 /*`C:\Somewhere\VCC Tutorial> vcc.exe minimum.c
 Verification of main succeeded.
@@ -94,14 +70,7 @@ C:\Somewhere\VCC Tutorial>`*/
 
 
 If instead you wish to use VCC Visual Studio plugin, load the solution \lstinline|VCCTutorial.sln|
-% moved the information on the samples to the preface - E
-%% (distributed with VCC), 
-%% \itodo{
-%% This isn't yet true. The samples are available only with VCC sources, available from
-%% \url{http://vcc.codeplex.com/SourceControl/list/changesets}: click Download on the right,
-%% get the zip file and navigate to \lstinline|vcc/Docs/Tutorial/c|.
-%% }
-%% \todo{we need to package the examples, but only after it is clear which ones are included in the tutorial}
+\todo{make sure that VCC can verify code not in the project}
 locate the file with the example, and right-click on the program text.
 You should get options to verify the file or just this function (either will work).
 
@@ -133,27 +102,6 @@ happens. (You might also want to try coming up with some complex
 assertion that is true, just to see whether VCC is smart enough to
 prove it.)
 
-Assertions, like all VCC annotations, 
-are surrounded by \vcc{_( ... )} to indicate that they are
-only for VCC, and are not part of the program being verified
-When using the regular C compiler the \vcc{<vcc.h>} header file defines:
-\begin{VCC}
-#define _(...) /* nothing */
-\end{VCC}
-Thus, the regular C compiler never sees any assertions, and therefore
-doesn't generate any code for them.
-VCC does not use this definition, and instead parses the inside of \vcc{_( ... )}
-annotations.%
-% there's not much point in putting into the tutorial an obscure
-% feature that doesn't work -E
-%% \footnote{
-%%   You can prevent definition of \vcc{_}, and instead surround annotations with
-%%   \vcc{__vcc_spec(...)}.
-%%   This is controlled with \vcc{_VCC_DONT_USE_UNDERSCORE} macro-definition.
-%%   \itodo{This doesn't work at the moment.} }
-
-
-
 To understand how VCC works, and to use it successfully, it is useful to
 think in terms of what VCC ``knows'' at each control point
 of your program. In the current example, just before the first conditional,
@@ -175,7 +123,6 @@ conditionals. However, we will see that VCC may lose
 loses some information when reasoning about loops,
 necessitating additional annotations.
 
-% moved thus up from the assumptions section -E
 When we talk about what VCC knows, we mean what it knows in an ideal
 sense, where if it knows \vcc{E}, it also knows any logical
 consequence of \vcc{E}. In such a world, adding an assertion that
@@ -197,82 +144,6 @@ it should be able to verify, it is usually because it doesn't know
 something you think it should know. An assertion provides one way to
 check whether VCC knows what you think it knows.
 
-% Too much information, too few full examples in one place. --M
-% We can't use a complete program to introduce every single thing,
-% especially those that should be easy to understand. Spreading things
-% out over the text just makes it harder to grasp what facilities are
-% available. 
-%
-
-VCC provides a number of C extensions that can be used within VCC
-annotations (such as assertions):
-\begin{itemize}
-\item
-The Boolean operator \vcc{==>} denotes logical implication; formally,
-\vcc{P ==> Q} means \vcc{((!P) || (Q))}, and is usually 
-read as ``\vcc{P} implies \vcc{Q}''. Because \vcc{==>} has lower
-precedence than the C operators, it is typically not necessary to
-parenthesize \vcc{P} or \vcc{Q}.
-
-\item
-The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
-expression \vcc{E} evaluates to a nonzero value for every value 
-\vcc{v} of type \vcc{E}. For example, the assertion
-\begin{VCC}
-_(assert x > 1 &&
-  \forall int i; 1 < i && i < x ==> x % i != 0)
-\end{VCC}
-\noindent checks that (\vcc{int}) \vcc{x} is a prime number. If \vcc{b}
-is an \vcc{int} array of size \vcc{N}, then
-\begin{VCC}
-_(assert \forall int i; \forall int j;
-  0 <= i && i <= j && j < N ==> b[i] <= b[j])
-\end{VCC}
-checks that \vcc{b} is sorted.
-
-\item
-Similarly, the expression \vcc{\exists T v; E} evaluates to \vcc{1} if there
-is some value of \vcc{v} of type \vcc{T} for which \vcc{E} evaluates
-to a nonzero value. For example, if \vcc{b} is an \vcc{int} array of
-size \vcc{N}, the assertion
-\begin{VCC}
-_(assert \exists int i; 0 <= i && i < N && b[i] == 0)
-\end{VCC}
-asserts that  \vcc{b} contains a zero element.
-\vcc{\forall} and \vcc{\exists} are jointly referred to as
-\Def{quantifiers}. 
-
-\item
-VCC also provides some mathematical types that cannot be used in
-ordinary C code (because they are too big to fit in memory);
-these include mathematical (unbounded) integers and (possibly infinite) maps. They are described in
-\secref{mathTypes}.
-
-\item
-Expressions within VCC annotations are restricted in their use of 
-functions: you can only use functions that are proved to be 
-\Def{pure}, \ie free from side effects (\secref{pureFunctions}).
-\end{itemize}
-
-%% Within a VCC declaration, the type \vcc|T[E]| where \vcc{T} is
-%% a type and \vcc{E} is an expression that is convertible to an
-%% \vcc{int}, is the type of arrays of \vcc{E} elements of type
-%% \vcc{T}. For example, the declaration
-%% \begin{VCC}
-%% void copyArray(int *from, int *to, int len)
-%% _(requires \\thread_local((int[len]) from))
-%% _(writes ((int[len]) to))
-%% ...
-%% \end{VCC}
-%defines a function that can read the first \vcc{len} elements of the
-%array \vcc{from}, and read or write the first \vcc{len} elements of
-%the array \vcc{to}.
-%
-%The expression \vcc{\old(E)}, when used in a postcondition of a
-%function, returns the value of expression \vcc{E} as it was at just
-%before the function was called. For example, the postcondition 
-%\vcc{*x == \old(*x) + 1} says that the function under consideration
-%increments \vcc{*x}.
 
 \subsection*{Exercises}
 \begin{enumerate}
@@ -322,6 +193,7 @@ where all (user-provided) assumptions hold, all assertions will also
 hold. Thus, your verification goal should be to eliminate as many assumptions as
 possible (preferably all of them).
 
+\begin{note}
 Although assumptions are generally to be avoided, they are nevertheless
 sometimes useful:
 \begin{itemize}
@@ -335,11 +207,6 @@ sometimes useful:
 \item When debugging a failed verification, you can use assumptions to
   narrow down the failed verification to a more specific failure
   scenario, perhaps even to a complete counterexample. 
-% We should have chapter about it, not a cryptic mention here. --M
-%  You can then
-%  add additional (non-assumption) annotations to eliminate the
-%  counterexample, weaken assumptions until you either hit another
-%  counterexample (or finish the verification), and repeat the process.
 
 \item Sometimes you want to assume something even though VCC can
   verify it, just to stop VCC from spending time proving it. For
@@ -358,20 +225,7 @@ sometimes useful:
   reasons about your program. We'll see examples of this throughout
   this tutorial.
 \end{itemize}
-
-%%  What is however much more common is
-%% use of assumption when debugging your specifications: when the program
-%% does not verify you might try to temporarily add assumptions in a bet
-%% ``if VCC knew that, would it verify my program?''.  Once you find what
-%% is that thing VCC doesn't know, but what makes it verify the program,
-%% you can figure out how to specify rest of your program, so that is
-%% knows it.
-
-% The following is a bad example, since we would normally specify
-% hardware by an invariant on a volatile field.
-%% One case is interaction with hardware: you might know the hardware is
-%% going to leave specific I/O register positive, and an assumption is a
-%% way to communicate that to VCC. 
+\end{note}
 
 An assertion can also change what VCC knows after the assertion, if
 the assertion fails to verify: although VCC will report the failure as an error,
@@ -382,23 +236,6 @@ int x;
 _(assert x == 1)
 _(assert x > 0)
 \end{VCC}
-
-
-When we talk about what VCC knows, we mean what it knows in an ideal
-sense, where if it knows \vcc{E}, it also knows any logical
-consequence of \vcc{E}. In such a world, adding an assertion that
-succeeds would have no effect on whether later assertions succeed.
-VCC's ability to deduce consequences is indeed complete for many types
-of formulas (e.g.\ formulas that use only equalities,
-inequalities, addition, subtraction, multiplication by constants, and
-boolean connectives), but not for all formulas, so VCC will
-sometimes fail to prove an assertion, even though it ``knows'' enough
-to prove it.  Conversely, an assertion that succeeds can sometimes cause later assertions that
-would otherwise fail to succeed, by drawing VCC's attention to a
-crucial fact it needs to prove the later assertion.  This is
-relatively rare, and typically involves ``nonlinear arithmetic''
-(e.g.\ where variables are multiplied together), bitvector reasoning
-(\secref{bv}) or quantifiers.
 
 \subsection*{Exercises}
 \begin{enumerate}
@@ -434,52 +271,4 @@ and
 _(assert (!p) || (q))
 \end{VCC}
 ? 
-
-% we need to have a place where we collect all of the new operators -E
-%% \vcc{p ==> q} means \vcc{p} implies \vcc{q}, and formally \vcc{!p || q}.
-%\item
-%\itodo{I'm not sure if this and the following exercise give
-%any insight. --M}
-% the objective is to let readers think about strongest postconditions
-% and weakest preconditions -E
-%Given the assumptions preceding each of the assignments below to int
-%variables, what are the strongest assertions that would be valid?
-%\begin{VCC}
-%_(assume x < 5) x += 5; _(assert ??)
-%_(assume u < v) u = v;  _(assert ??)
-%_(assume a < b && a < c) a = b;  _(assert ??)
-%\end{VCC}
-%\item
-%Given the assertions following each of the assignments below, what is 
-%the weakest preceding assumption that would allow the assertions to be
-%valid?
-%\begin{VCC}
-%_(assume ??) x = y _(assert x < 10)
-%_(assume ??) u += 3 _(assert 2*u == 3*v)
-%\end{VCC}
-\end{enumerate}
-
-%\subsection{Havoc}
-%%% \itodo{Add havoc to VCC}
-%
-%An assignment of the form \vcc{x = E}, where \vcc{E} is an expression
-%that doesn't mention \vcc{x}, is equivalent to setting \vcc{x} to an
-%arbitrary value of its type (an operation we write as \vcc{havoc(x)}%
-%), followed by the assumption that \vcc{x==y}. This can be naturally
-%generalized to havocing a collection of variables and then assuming
-%something about the resulting state (to constrain the chosen values of
-%these variables).
-%
-%This idiom is central to how VCC reasons about more interesting kinds
-%of programs. Whenever something complex happens in the body of a
-%function (such as a loop, a function call, or interference from other
-%threads), VCC replaces it with an abstraction of this form, to reduce
-%reasoning about the original program to reasoning about a simple
-%program.  The annotations you put on the program determine the
-%abstraction that is used; successful verification guarantees that these
-%abstractions are \Def{sound}, \ie that each complex behavior
-%implements the abstraction used to replace it.
-
-
-
 
