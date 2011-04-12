@@ -7,12 +7,18 @@ void my_memcpy(unsigned char *dst, unsigned char *src, unsigned len)
   _(requires \arrays_disjoint(src, len, dst, len))
   _(ensures \forall unsigned i; i < len ==> dst[i] == \old(src[i]))
 {
-  if (len > 0) {
-    dst[len - 1] = src[len - 1];
-    my_memcpy(dst, src, len - 1);
+  unsigned k;
+  for (k = 0; k < len; ++k)
+    _(invariant \mutable_array(\old(dst), \old(len)))
+    _(invariant \forall unsigned i; i < k ==> \old(dst)[i] == \old(src[i]))
+    _(invariant dst == \old(dst) + k)
+    _(invariant src == \old(src) + k)
+  {
+    *dst++ = *src++;
   }
 }
 /*{end}*/
 /*`
+testcase(11,57) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\old(len)' has no effect
 Verification of my_memcpy succeeded.
 `*/

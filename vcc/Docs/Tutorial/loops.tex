@@ -13,23 +13,22 @@ VCC lets you tell it what it should know, by providing a \Def{loop
   invariant}. To make sure that the loop invariant does indeed hold 
 whenever control reaches the top
 of the loop, VCC asserts that the invariant holds wherever control
-jumps to the top of the loop -- namely, on loop entry, at the end of
-the loop body, and at \vcc{continue} statements within the loop body.
-In addition, VCC knows at the top of a loop
-that any variable that is not modified in the loop has 
-the same value it had on entry to the loop%
-\footnote{ Because of aliasing, it is not always obvious to VCC that a
-  variable is not modified in the body of the loop. However, VCC can
-  check it syntactically for a local variable if you never take the
-  address of that variable.}. We simulate this by having VCC forget
-(at loop entry) everything it knew about variables that are modified
-in the loop body.
+jumps to the top of the loop -- namely, on loop entry and at the end of
+the loop body.
+
+% Repeated below. --MM
+%In addition, VCC knows at the top of a loop
+%that any variable that is not modified in the loop has 
+%the same value it had on entry to the loop.
+%We simulate this by having VCC forget
+%(at loop entry) everything it knew about variables that are modified
+%in the loop body.
 
 Let's look at an example:
 \vccInput[linerange={begin-}]{c/02_div.c}
 \noindent
 
-The \vcc{divide()} function computes the quotient and reminder of integer division
+The \vcc{divide()} function computes the quotient and remainder of integer division
 of \vcc{x} by \vcc{d} using the classic division algorithm.
 %% (Later, we'll see similar examples with sets, which are built into
 %% the specification language, but not into C.)
@@ -47,7 +46,11 @@ acyclic chunks of code in this way.
 Note that the invariant is asserted wherever control moves to the top of the
 loop (here, on entry to the loop and at the end of the loop body). On
 loop entry, VCC forgets the value of each variable modified in the
-loop (in this case just the local variables \vcc{lr} and \vcc{ld}),
+loop (in this case just the local variables \vcc{lr} and \vcc{ld}),%
+\footnote{ Because of aliasing, it is not always obvious to VCC that a
+  variable is not modified in the body of the loop. However, VCC can
+  check it syntactically for a local variable if you never take the
+  address of that variable.}
 and assumes the invariant (which places some constraints on these
 variables).  VCC doesn't have to consider the actual jump from the end
 of the loop iteration back to the top of the loop (since it has
@@ -70,18 +73,9 @@ computed the quotient and remainder.
 %% would be assumed before checking the guard, despite the fact that
 %% guard syntactically precedes the invariant.
 
-% This is still about array 
-% This example isn't really about the unnecessity of invariants
-%% Sometimes invariants are not required, in particular when the loop
-%% doesn't modify any interesting locations. 
-
-%% I think we can  use just the second linear search, since the first
-%% has no loop invariant -E
 For another, more typical example of a loop, consider 
 the following function that uses linear search to determine if a value
 occurs within an array:
-
-%% \vccInput[linerange={begin-}]{c/03_lsearch.c}
 
 %% \noindent
 %% The first postcondition guarantees that when the returned value
@@ -104,6 +98,61 @@ The postconditions say that the returned value is the minimal array
 index at which \vcc{elt} occurs (or \vcc{UINT_MAX} if it does not occur).
 The loop invariant says that \vcc{elt}  does not occur in \vcc{ar[0]}\dots
 \vcc{ar[i - 1]}.
+
+
+\subsection{Writes clauses for loops}
+\label{sect:sorting}
+
+Loops are in many ways similar to recursive functions.
+Invariants work as the combination of pre- and post-conditions.
+Similarly to functions loops can also have writes clauses.
+You can provide a writes clause using exactly the same syntax
+as for functions.
+When you do not write any heap location in the loop (which has been
+the case in all examples so far), VCC will automatically infer
+an empty writes clause.
+Otherwise, it will take the writes clause that is specified on
+the function.%
+\footnote{This gets a bit more complicated when objects
+change ownership. 
+\itodo{maybe it shouldn't get more complicated? --MM}
+When in doubt always use explicit writes clauses on loops.}
+So by default, the loop is allowed to write everything that the function
+can.
+Let's see an example of such implicit writes clause,
+a reinterpretation of \vcc{my_memcpy()} from \secref{TODO}.
+
+\vccInput[linerange={begin-end}]{c/04_copy_array.c}
+
+If the loop does not write everything the function can write
+you will often want to provide explicit write clauses.
+Here's a variation of \vcc{memcpy()}, which clears (maybe for security reasons)
+the source buffer after copying it.
+
+\vccInput[linerange={begin-end}]{c/04_copy_and_clear_array.c}
+
+\noindent
+If the second loops did not provide a writes clause,
+we couldn't prove the first postcondition---VCC 
+would think that the second loop could have overwritten \vcc{dst}.
+
+\itodo{one sorting example is needed if we want people to do other,
+maybe we should use bubble or insertion sort though}
+Equipped with that knowledge we can proceed to not only checking
+if an array is sorted, as we did in \secref{TODO}, but to actually
+sorting it.
+The function below implements the bozo-sort algorithm.
+The algorithm works by swapping two random elements in an array, checking if the resulting array
+is sorted, and repeating otherwise.
+We do not recommend using it in production code:
+it's not stable, and moreover has a fairly bad time complexity.
+
+\vccInput[linerange={begin-out}]{c/04_bozosort.c}
+
+The specification that we use is that the output of the sorting routine is sorted.
+Unfortunately, we do not say that it's actually a permutation of the input.
+We'll show how to do that in \secref{sorting-perm}.
+
 
 \subsection*{Exercises}
 \begin{enumerate}
@@ -155,36 +204,6 @@ occurs in the array.
 
 %We shall start with ghost functions, which in this case is just a
 %macro for another formula.
-
-% Should we have a simpler example? -E
-% This is a bad example, since it verifies without the loop invariant! -E
-%% \subsection{Writes clauses for loops}
-%% \label{sect:sorting}
-
-
-%% The function below implements the bozo-sort algorithm.
-%% The algorithm works by swapping two random elements in an array, checking if the resulting array
-%% is sorted, and repeating otherwise.
-%% We do not recommend using it in production code:
-%% it's not stable, and moreover has a fairly bad time complexity.
-%% Still, it will serve us to illustrate the use of logic functions, and later (\secref{sorting-perm}) ghost data.
-
-%% \vccInput[linerange={begin-out}]{c/04_bozosort.c}
-
-%% In addition to specifying the writes clause on the function, we also specify it on
-%% the loop; this is common for loops that write the heap.
-%% Typically, the writes clause for a loop is the same clause you would need 
-%% on a function whose body was the loop body. 
-%% % todo: this is rather cryptoc -E
-%% If there is no writes clauses on the loop, VCC takes the writes clause from the 
-%% function, but interprets it with respect to the beginning of the function,
-%% and not beginning of the loop.
-%% Thus, in general, when the loop writes the heap, you will want to specify a writes clause on it.
-% todo: should we discuss the framing aspect?
-
-%% The specification that we use is that the output of the sorting routine is sorted.
-%% Unfortunately, we do not say that it's actually a permutation of the input.
-%% We'll show how to do that in \secref{sorting-perm}.
 
 % Let's leave this out for now -E
 %\subsection{Review}

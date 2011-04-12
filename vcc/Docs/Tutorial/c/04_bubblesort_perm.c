@@ -57,8 +57,6 @@ void bubble_sort(int *buf, unsigned len _(out perm_t perm))
   while (swapped);
 }
 
-
-
 /*`
 Verification of bubble_sort succeeded.
 `*/

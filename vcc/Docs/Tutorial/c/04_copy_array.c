@@ -7,9 +7,12 @@ void my_memcpy(unsigned char *dst, unsigned char *src, unsigned len)
   _(requires \arrays_disjoint(src, len, dst, len))
   _(ensures \forall unsigned i; i < len ==> dst[i] == \old(src[i]))
 {
-  if (len > 0) {
-    dst[len - 1] = src[len - 1];
-    my_memcpy(dst, src, len - 1);
+  unsigned k;
+  for (k = 0; k < len; ++k)
+    _(invariant \mutable_array(dst, len)) // TODO will be inferred
+    _(invariant \forall unsigned i; i < k ==> dst[i] == \old(src[i]))
+  {
+    dst[k] = src[k];
   }
 }
 /*{end}*/

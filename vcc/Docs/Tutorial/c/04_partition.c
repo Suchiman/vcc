@@ -55,14 +55,14 @@ unsigned partition(int *arr, unsigned len, unsigned pivotIdx)
 }
 
 #if 0
-_(ghost ispure bool iszero(int x) returns(x == 0);)
+_(_(pure) bool iszero(int x) _(returns x == 0))
 /*{qsort}*/
 void qsort(int *arr, unsigned len)
-  _(writes array_range(arr, len))
+  _(writes \array_range(arr, len))
   _(requires my_mutable_array(arr, len))
   _(ensures my_mutable_array(arr, len))
   _(ensures \forall unsigned i; {arr[i]} i < len - 1 ==> arr[i] <= arr[i+1])
-  _(ensures \forall unsigned k; {&arr[k]} {hint: iszero(arr[k])} k < len ==> \exists unsigned k0; k0 < len && arr[k] == \old(arr[k0]))
+  _(ensures \forall unsigned k; {&arr[k]} {:hint iszero(arr[k])} k < len ==> \exists unsigned k0; k0 < len && arr[k] == \old(arr[k0]))
 {
   unsigned idx;
 
@@ -71,8 +71,8 @@ void qsort(int *arr, unsigned len)
   idx = partition(arr, len, len / 2);
 
   qsort(arr, idx);
-  _(assert \forall unsigned k; {&arr[k]} {hint: iszero(arr[k])} k < len ==> \exists unsigned k0; k0 < len && arr[k] == \old(arr[k0]))
-  _(assume false)
+  _(assert \forall unsigned k; {&arr[k]} {:hint iszero(arr[k])} k < len ==> \exists unsigned k0; k0 < len && arr[k] == \old(arr[k0]))
+  _(assume \false)
   if (idx < len)
     qsort(arr + idx + 1, len - idx - 1);
 }
