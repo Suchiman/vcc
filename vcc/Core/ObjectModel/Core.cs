@@ -180,12 +180,7 @@ namespace Microsoft.Research.Vcc {
         // Mangle the new type's name. Add an underscore to avoid name clash. 
         FieldDeclaration dummyField = 
           new FieldDeclaration(null, FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Private, TypeExpression.For(elementType), fieldName, null, SourceDummy.SourceLocation);
-        List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>((int) numberOfElements) {dummyField};
-        for (int i = 1; i < numberOfElements; i++) {
-          fieldName = new NameDeclaration(this.Helper.NameTable.GetNameFor("_Element_" + i), SourceDummy.SourceLocation);
-          dummyField = new FieldDeclaration(null, FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Private, TypeExpression.For(elementType), fieldName, null, SourceDummy.SourceLocation);
-          members.Add(dummyField);
-        }
+        List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>(1) {dummyField};
         NameDeclaration typeName = new NameDeclaration(this.Helper.NameTable.GetNameFor("_FixedArrayOfSize" + arraySizeInBytes + "_" + elementType), SourceDummy.SourceLocation);
         result = new VccArray(typeName, members, arraySizeInBytes);
         result.SetContainingTypeDeclaration(this.GlobalDeclarationContainer, true);
