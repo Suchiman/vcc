@@ -4,6 +4,794 @@
         <name>Microsoft.Cci.MutableMetadataModel</name>
     </assembly>
     <members>
+        <member name="T:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.#ctor(Microsoft.Cci.IMetadataHost)">
+            <summary>
+            
+            </summary>
+            <param name="targetHost">An object representing the application that will host the copies made by this copier.</param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.IUnit)">
+            <summary>
+            
+            </summary>
+            <param name="targetHost">An object representing the application that will host the copies made by this copier.</param>
+            <param name="targetUnit">The unit of metadata into which copies made by this copier will be inserted.</param>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.targetHost">
+            <summary>
+            An object representing the application that will host the copies made by this copier.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IAliasForType)">
+            <summary>
+            Returns a shallow copy of the specified alias for type.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IArrayTypeReference)">
+            <summary>
+            Returns a shallow copy of the given array type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IAssembly)">
+            <summary>
+            Returns a shallow copy of the given assembly.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IAssemblyReference)">
+            <summary>
+            Returns a shallow copy of the given assembly reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ICustomAttribute)">
+            <summary>
+            Returns a shallow copy of the given custom attribute.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ICustomModifier)">
+            <summary>
+            Returns a shallow copy of the given custom modifier.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IEventDefinition)">
+            <summary>
+            Returns a shallow copy of the given event definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.CopyUnspecialized(Microsoft.Cci.IEventDefinition)">
+            <summary>
+            Returns a shallow copy of the given event definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IFieldDefinition)">
+            <summary>
+            Returns a shallow copy of the given field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.CopyUnspecialized(Microsoft.Cci.IFieldDefinition)">
+            <summary>
+            Returns a shallow copy of the given field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IFieldReference)">
+            <summary>
+            Returns a shallow copy of the given field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.CopyUnspecialized(Microsoft.Cci.IFieldReference)">
+            <summary>
+            Returns a shallow copy of the given field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IFileReference)">
+            <summary>
+            Returns a shallow copy of the given file reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IFunctionPointerTypeReference)">
+            <summary>
+            Returns a shallow copy of the given function pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IGenericMethodInstanceReference)">
+            <summary>
+            Returns a shallow copy of the given generic method instance reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IGenericMethodParameter)">
+            <summary>
+            Returns a shallow copy of the given generic method parameter.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IGenericMethodParameterReference)">
+            <summary>
+            Returns a shallow copy of the given generic method parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IGenericTypeInstanceReference)">
+            <summary>
+            Returns a shallow copy of the given generic type instance reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IGenericTypeParameter)">
+            <summary>
+            Returns a shallow copy of the given generic type parameter.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IGenericTypeParameterReference)">
+            <summary>
+            Returns a shallow copy of the given generic type parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IGlobalFieldDefinition)">
+            <summary>
+            Returns a shallow copy of the given global field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IGlobalMethodDefinition)">
+            <summary>
+            Returns a shallow copy of the given global method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ILocalDefinition)">
+            <summary>
+            Returns a shallow copy of the specified local definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IManagedPointerTypeReference)">
+            <summary>
+            Returns a shallow copy of the given managed pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMarshallingInformation)">
+            <summary>
+            Returns a shallow copy of the given marshalling information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMetadataConstant)">
+            <summary>
+            Returns a shallow copy of the given metadata constant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMetadataCreateArray)">
+            <summary>
+            Returns a shallow copy of the given metadata array creation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMetadataExpression)">
+            <summary>
+            Returns a shallow copy of the given metadata expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMetadataNamedArgument)">
+            <summary>
+            Returns a shallow copy of the given metadata named argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMetadataTypeOf)">
+            <summary>
+            Returns a shallow copy of the given metadata typeof expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMethodBody)">
+            <summary>
+            Returns a shallow copy of the given method body.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMethodDefinition)">
+            <summary>
+            Returns a shallow copy of the given method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.CopyUnspecialized(Microsoft.Cci.IMethodDefinition)">
+            <summary>
+            Returns a shallow copy of the given method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMethodImplementation)">
+            <summary>
+            Returns a shallow copy of the given method implementation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IMethodReference)">
+            <summary>
+            Returns a shallow copy of the given method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.CopyUnspecialized(Microsoft.Cci.IMethodReference)">
+            <summary>
+            Returns a shallow copy of the given method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IModifiedTypeReference)">
+            <summary>
+            Returns a shallow copy of the given modified type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.MutableCodeModel.Module)">
+            <summary>
+            Returns a shallow copy of the given module.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IModuleReference)">
+            <summary>
+            Returns a shallow copy of the given module reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.INamedTypeDefinition)">
+            <summary>
+            Returns a shallow copy of the specified named type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.INamespaceAliasForType)">
+            <summary>
+            Returns a shallow copy of the given alias for a namespace type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IUnitNamespace)">
+            <summary>
+            Returns a shallow copy of the specified unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IUnitNamespaceReference)">
+            <summary>
+            Returns a shallow copy of the specified unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.INamespaceTypeDefinition)">
+            <summary>
+            Returns a shallow copy of the given namespace type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.INamespaceTypeReference)">
+            <summary>
+            Returns a shallow copy of the given namespace type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.INestedAliasForType)">
+            <summary>
+            Returns a shallow copy of the given nested type alias.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.INestedTypeDefinition)">
+            <summary>
+            Returns a shallow copy of the given nested type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.CopyUnspecialized(Microsoft.Cci.INestedTypeDefinition)">
+            <summary>
+            Returns a shallow copy of the given nested type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.INestedTypeReference)">
+            <summary>
+            Returns a shallow copy of the given nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.CopyUnspecialized(Microsoft.Cci.INestedTypeReference)">
+            <summary>
+            Returns a shallow copy of the given nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.INestedUnitNamespace)">
+            <summary>
+            Returns a shallow copy of the given nested unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.INestedUnitNamespaceReference)">
+            <summary>
+            Returns a shallow copy of the given nested unit namespace reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IOperation)">
+            <summary>
+            Returns a shallow copy of the specified operation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IOperationExceptionInformation)">
+            <summary>
+            Returns a shallow copy of the specified operation exception information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IParameterDefinition)">
+            <summary>
+            Returns a shallow copy of the given parameter definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IParameterTypeInformation)">
+            <summary>
+            Returns a shallow copy of the given parameter type information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IPlatformInvokeInformation)">
+            <summary>
+            Returns a shallow copy of the specified platform invoke information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IPointerTypeReference)">
+            <summary>
+            Returns a shallow copy of the given pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IPropertyDefinition)">
+            <summary>
+            Returns a shallow copy of the given property definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.CopyUnspecialized(Microsoft.Cci.IPropertyDefinition)">
+            <summary>
+            Returns a shallow copy of the given property definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IRootUnitNamespace)">
+            <summary>
+            Returns a shallow copy of the given root unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IRootUnitNamespaceReference)">
+            <summary>
+            Returns a shallow copy of the given root unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IResourceReference)">
+            <summary>
+            Returns a shallow copy of the given reference to a manifest resource.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ISecurityAttribute)">
+            <summary>
+            Returns a shallow copy of the given security attribute.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ISpecializedFieldReference)">
+            <summary>
+            Returns a shallow copy of the given specialized field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ISpecializedMethodReference)">
+            <summary>
+            Returns a shallow copy of the given specialized method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ISpecializedNestedTypeDefinition)">
+            <summary>
+            Returns a shallow copy of the given specialized nested type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ISpecializedNestedTypeReference)">
+            <summary>
+            Returns a shallow copy of the given specialized nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ITypeDefinition)">
+            <summary>
+            Returns a shallow copy of the specified type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ITypeDefinitionMember)">
+            <summary>
+            Returns a shallow copy of the specified type member.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.ITypeReference)">
+            <summary>
+            Returns a shallow copy of the specified type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IUnitReference)">
+            <summary>
+            Returns a shallow copy of the specified unit reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IWin32Resource)">
+            <summary>
+            Returns a shallow copy of the given Win32 resource.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.#ctor(Microsoft.Cci.IMetadataHost)">
+            <summary>
+            </summary>
+            <param name="targetHost">An object representing the application that will host the copies made by this copier.</param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.IUnit)">
+            <summary>
+            </summary>
+            <param name="targetHost">An object representing the application that will host the copies made by this copier.</param>
+            <param name="targetUnit">The unit of metadata into which copies made by this copier will be inserted.</param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.MutableCodeModel.MetadataShallowCopier)">
+            <summary>
+            
+            </summary>
+            <param name="targetHost"></param>
+            <param name="shallowCopier"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IAliasForType)">
+            <summary>
+            Returns a deep copy of the specified alias for type.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IArrayTypeReference)">
+            <summary>
+            Returns a shallow copy of the given array type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IAssembly)">
+            <summary>
+            Returns a deep copy of the given assembly.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IAssemblyReference)">
+            <summary>
+            Returns a deep copy of the given assembly reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ICustomAttribute)">
+            <summary>
+            Returns a deep copy of the given custom attribute.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ICustomModifier)">
+            <summary>
+            Returns a deep copy of the given custom modifier.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IEventDefinition)">
+            <summary>
+            Returns a deep copy of the given event definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.CopyMethodBody(Microsoft.Cci.IMethodBody,Microsoft.Cci.IMethodDefinition)">
+            <summary>
+            Returns a deep copy of the given method body.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IFieldDefinition)">
+            <summary>
+            Returns a deep copy of the given field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IFieldReference)">
+            <summary>
+            Returns a deep copy of the given field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.CopyUnspecialized(Microsoft.Cci.IFieldReference)">
+            <summary>
+            Returns a deep copy of the given field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IFileReference)">
+            <summary>
+            Returns a deep copy of the given file reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IFunctionPointerTypeReference)">
+            <summary>
+            Returns a deep copy of the given function pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IGenericMethodInstanceReference)">
+            <summary>
+            Returns a deep copy of the given generic method instance reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IGenericMethodParameter)">
+            <summary>
+            Returns a deep copy of the given generic method parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IGenericMethodParameterReference)">
+            <summary>
+            Returns a deep copy of the given generic method parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IGenericTypeParameter)">
+            <summary>
+            Returns a deep copy of the given generic type parameter.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IGenericTypeInstanceReference)">
+            <summary>
+            Returns a deep copy of the given generic type instance reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IGenericTypeParameterReference)">
+            <summary>
+            Returns a deep copy of the given generic type parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IGlobalFieldDefinition)">
+            <summary>
+            Returns a deep copy of the given global field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IGlobalMethodDefinition)">
+            <summary>
+            Returns a deep copy of the given global method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ILocalDefinition)">
+            <summary>
+            Returns a deep copy of the specified local definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IManagedPointerTypeReference)">
+            <summary>
+            Returns a deep copy of the given managed pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMarshallingInformation)">
+            <summary>
+            Returns a deep copy of the given marshalling information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMetadataConstant)">
+            <summary>
+            Returns a deep copy of the given metadata constant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMetadataCreateArray)">
+            <summary>
+            Returns a deep copy of the given metadata array creation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMetadataExpression)">
+            <summary>
+            Returns a deep copy of the given metadata expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMetadataNamedArgument)">
+            <summary>
+            Returns a deep copy of the given metadata named argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMetadataTypeOf)">
+            <summary>
+            Returns a deep copy of the given metadata typeof expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMethodBody)">
+            <summary>
+            Returns a deep copy of the given method body.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMethodDefinition)">
+            <summary>
+            Returns a deep copy of the given method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMethodImplementation)">
+            <summary>
+            Returns a deep copy of the given method implementation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IMethodReference)">
+            <summary>
+            Returns a deep copy of the given method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.CopyUnspecialized(Microsoft.Cci.IMethodReference)">
+            <summary>
+            Returns a deep copy of the given method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IModifiedTypeReference)">
+            <summary>
+            Returns a deep copy of the given modified type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IModule)">
+            <summary>
+            Returns a deep copy of the given module.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IModuleReference)">
+            <summary>
+            Returns a deep copy of the given module reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.INamedTypeDefinition)">
+            <summary>
+            Returns a deep copy of the specified named type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.INamespaceAliasForType)">
+            <summary>
+            Returns a deep copy of the given alias for a namespace type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.INamespaceTypeDefinition)">
+            <summary>
+            Returns a deep copy of the given namespace type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.INamespaceTypeReference)">
+            <summary>
+            Returns a deep copy of the given namespace type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.INestedAliasForType)">
+            <summary>
+            Returns a deep copy of the given nested type alias.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.INestedTypeDefinition)">
+            <summary>
+            Returns a deep copy of the given nested type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.INestedTypeReference)">
+            <summary>
+            Returns a deep copy of the given nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.CopyUnspecialized(Microsoft.Cci.INestedTypeReference)">
+            <summary>
+            Returns a deep copy of the given nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.INestedUnitNamespace)">
+            <summary>
+            Returns a deep copy of the given nested unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.INestedUnitNamespaceReference)">
+            <summary>
+            Returns a deep copy of the given nested unit namespace reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IOperation)">
+            <summary>
+            Returns a deep copy of the specified operation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IOperationExceptionInformation)">
+            <summary>
+            Returns a deep copy of the specified operation exception information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IParameterDefinition)">
+            <summary>
+            Returns a deep copy of the given parameter definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IParameterTypeInformation)">
+            <summary>
+            Returns a deep copy of the given parameter type information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IPlatformInvokeInformation)">
+            <summary>
+            Returns a deep copy of the specified platform invoke information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IPointerTypeReference)">
+            <summary>
+            Returns a deep copy of the given pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IPropertyDefinition)">
+            <summary>
+            Returns a deep copy of the given property definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IResourceReference)">
+            <summary>
+            Returns a deep copy of the given reference to a manifest resource.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IRootUnitNamespace)">
+            <summary>
+            Returns a deep copy of the given root unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IRootUnitNamespaceReference)">
+            <summary>
+            Returns a deep copy of the given root unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ISecurityAttribute)">
+            <summary>
+            Returns a deep copy of the given security attribute.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ISpecializedFieldReference)">
+            <summary>
+            Returns a deep copy of the given specialized field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ISpecializedMethodReference)">
+            <summary>
+            Returns a deep copy of the given specialized method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ISpecializedNestedTypeReference)">
+            <summary>
+            Returns a deep copy of the given specialized nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ITypeDefinition)">
+            <summary>
+            Returns a deep copy of the specified type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ITypeDefinitionMember)">
+            <summary>
+            Returns a deep copy of the specified type member.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.ITypeReference)">
+            <summary>
+            Returns a deep copy of the specified type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IUnitNamespace)">
+            <summary>
+            Returns a deep copy of the specified unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IUnitNamespaceReference)">
+            <summary>
+            Returns a deep copy of the specified unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IWin32Resource)">
+            <summary>
+            Returns a deep copy of the given Win32 resource.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(System.Collections.Generic.List{Microsoft.Cci.IDefinition})">
+            <summary>
+            Replaces each element of the given list with a deep copy of itself.
+            </summary>
+            <param name="definitions"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.GetExistingCopyIfInsideCone(Microsoft.Cci.IParameterDefinition)">
+            <summary>
+            If the parameter has already been copied, return the copy. If not, assume that it is outside the cone and return this original.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.GetExistingCopyIfInsideCone(Microsoft.Cci.IPropertyDefinition)">
+            <summary>
+            If the property has already been copied, return the copy. If not, assume that it is outside the cone and return this original.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Populator">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Substitutor">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Substitutor.host">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Substitutor.DefinitionCache">
+            <summary>
+            Unless a definition is outside the cone to be copied, it must have an entry in this table.
+            Consult this to find containing definitions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Substitutor.ReferenceCache">
+            <summary>
+            A cache of references that have already been encountered and copied. Once in the cache, the cached value is just returned unchanged.
+            </summary>
+        </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MetadataCopier">
              <summary>
              A class that produces a mutable deep copy a given metadata model node. 
@@ -745,6 +1533,13 @@
             <param name="methodReference">The method reference.</param>
             <returns></returns>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCopier.DeepCopy(Microsoft.Cci.INamespaceAliasForType)">
+            <summary>
+            Makes a deep copy of the specified namespace type alias.
+            </summary>
+            <param name="namespaceAliasForType"></param>
+            <returns></returns>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCopier.DeepCopy(Microsoft.Cci.INamespaceMember)">
             <summary>
             Visits the specified namespace member.
@@ -1141,7 +1936,7 @@
             <param name="specializedNestedTypeReference">The specialized nested type reference.</param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCopier.DeepCopy(Microsoft.Cci.MutableCodeModel.TypeDefinition)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCopier.DeepCopy(Microsoft.Cci.MutableCodeModel.NamedTypeDefinition)">
             <summary>
             Replaces the child nodes of the given mutable type definition with the results of running the mutator over them. 
             Note that when overriding this method, care must be taken to add the given mutable type definition to this.flatListOfTypes.
@@ -1999,14 +2794,6 @@
             </summary>
             <param name="nestedTypeDefinition"></param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CollectAndShallowCopyDefinitions.VisitTypeDefinition(Microsoft.Cci.ITypeDefinition)">
-            <summary>
-            Base class's Visit(ITypeDefinition) will dispatch to subtypes. This method visits the sub nodes
-            of an ITypeDefinition without dispatching. It is supposed to be called from Visit(INestedTypeDefinition)
-            or Visit(INamespaceTypeDefinition) to avoid circular invocation. 
-            </summary>
-            <param name="typeDefinition"></param>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.CollectAndShallowCopyDefinitions.Visit(Microsoft.Cci.IGenericMethodParameter)">
             <summary>
             Visit an generic method parameter. 
@@ -2037,23 +2824,11 @@
             </summary>
             <param name="rootUnitNamespace"></param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CollectAndShallowCopyDefinitions.VisitUnitNamespace(Microsoft.Cci.IUnitNamespace)">
-            <summary>
-            Visit a unit namespace. 
-            </summary>
-            <param name="namespaceDefinition"></param>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.CollectAndShallowCopyDefinitions.Visit(Microsoft.Cci.INestedUnitNamespace)">
             <summary>
             Visit an INestedUnitNamespace
             </summary>
             <param name="nestedUnitNamespace"></param>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CollectAndShallowCopyDefinitions.Visit(Microsoft.Cci.INestedUnitSetNamespace)">
-            <summary>
-            Visit an INestedUnitSetNamespace. Not implemented. 
-            </summary>
-            <param name="nestedUnitSetNamespace"></param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.CollectAndShallowCopyDefinitions.Visit(Microsoft.Cci.IParameterDefinition)">
             <summary>
@@ -2066,24 +2841,6 @@
             Visit an IPropertyDefinition. Create a mutable PropertyDefinition if one is not already created. 
             </summary>
             <param name="propertyDefinition"></param>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CollectAndShallowCopyDefinitions.Visit(Microsoft.Cci.IUnit)">
-            <summary>
-            Visit an IUnit.
-            </summary>
-            <param name="unit"></param>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CollectAndShallowCopyDefinitions.Visit(Microsoft.Cci.IUnitSet)">
-            <summary>
-            Visit a UnitSet. Not implemented.
-            </summary>
-            <param name="unitSet"></param>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CollectAndShallowCopyDefinitions.Visit(Microsoft.Cci.IRootUnitSetNamespace)">
-            <summary>
-            Visit a UnitSetNamespace. Not implemented.
-            </summary>
-            <param name="unitSetNamespace"></param>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MetadataConstant">
             <summary>
@@ -2317,8 +3074,15 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinitionMember.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDoubleDispatcher. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
+            of the object implementing IReference. The dispatch method does nothing else.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinitionMember.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
+            of the object implementing IReference, which is not derived from IDefinition. For example an object implemeting IArrayType will
+            call visitor.Visit(IArrayTypeReference) and not visitor.Visit(IArrayType).
+            The dispatch method does nothing else.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinitionMember.ToString">
@@ -2385,9 +3149,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.EventDefinition.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IEventDefinition).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.EventDefinition.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Throws an InvalidOperation exception since valid Metadata never refers directly to an event.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.EventDefinition.Accessors">
             <summary>
@@ -2451,9 +3219,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.FieldDefinition.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IFieldDefinition).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.FieldDefinition.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IFieldReference).
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.FieldDefinition.BitLength">
             <summary>
@@ -2601,7 +3373,11 @@
             <summary>
             Calls visitor.Visit(IFieldReference).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.FieldReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IFieldReference).
+            </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.FieldReference.ToString">
             <summary>
@@ -2639,6 +3415,13 @@
             <summary>
             Returns a key that is computed from the information in this reference and that distinguishes
             this.ResolvedField from all other fields obtained from the same metadata host.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.FieldReference.IsFrozen">
+            <summary>
+            True if the reference has been frozen and can no longer be modified. A reference becomes frozen
+            as soon as it is resolved or interned. An unfrozen reference can also explicitly be set to be frozen.
+            It is recommended that any code constructing a type reference freezes it immediately after construction is complete.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.FieldReference.IsModified">
@@ -2735,9 +3518,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodDefinition.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IMethodDefinition).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MethodDefinition.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IMethodReference).
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.MethodDefinition.AcceptsExtraArguments">
             <summary>
@@ -3001,6 +3788,12 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.MethodDefinition.ReturnValueName">
+            <summary>
+            Specifies the name of the return value parameter.
+            </summary>
+            <value></value>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.MethodDefinition.SecurityAttributes">
             <summary>
             Declarative security actions for this method.
@@ -3073,11 +3866,18 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDefinition. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
+            Calls visitor.Visit(IMethodReference).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MethodReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IMethodReference).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MethodReference.Resolve">
+            <summary>
+            Resolves the reference to find the method being referred to.
+            </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodReference.ToString">
             <summary>
@@ -3134,6 +3934,13 @@
             <summary>
             Returns a key that is computed from the information in this reference and that distinguishes
             this.ResolvedMethod from all other methods obtained from the same metadata host.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.MethodReference.IsFrozen">
+            <summary>
+            True if the reference has been frozen and can no longer be modified. A reference becomes frozen
+            as soon as it is resolved or interned. An unfrozen reference can also explicitly be set to be frozen.
+            It is recommended that any code constructing a type reference freezes it immediately after construction is complete.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.MethodReference.IsGeneric">
@@ -3214,6 +4021,17 @@
             <param name="genericMethodInstanceReference"></param>
             <param name="internFactory"></param>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.GenericMethodInstanceReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            
+            </summary>
+            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.GenericMethodInstanceReference.Resolve">
+            <summary>
+            Resolves the reference to find the method being referred to.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.GenericMethodInstanceReference.GenericArguments">
             <summary>
             The type arguments that were used to instantiate this.GenericMethod in order to create this method.
@@ -3223,12 +4041,6 @@
         <member name="P:Microsoft.Cci.MutableCodeModel.GenericMethodInstanceReference.GenericMethod">
             <summary>
             Returns the generic method of which this method is an instance.
-            </summary>
-            <value></value>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.GenericMethodInstanceReference.ResolvedMethod">
-            <summary>
-            The method being referred to.
             </summary>
             <value></value>
         </member>
@@ -3242,17 +4054,17 @@
             
             </summary>
         </member>
-        <member name="T:Microsoft.Cci.MutableCodeModel.TypeDefinition">
+        <member name="T:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition">
             <summary>
             
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.#ctor">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.#ctor">
             <summary>
             
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.Copy(Microsoft.Cci.INamedTypeDefinition,Microsoft.Cci.IInternFactory)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Copy(Microsoft.Cci.INamedTypeDefinition,Microsoft.Cci.IInternFactory)">
             <summary>
             Makes this type be a shallow copy of the given type.
             </summary>
@@ -3263,28 +4075,35 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.Contains(Microsoft.Cci.ITypeDefinitionMember)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Contains(Microsoft.Cci.ITypeDefinitionMember)">
             <summary>
             Return true if the given member instance is a member of this scope.
             </summary>
             <param name="member"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDoubleDispatcher. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
+            of the object implementing IReference. The dispatch method does nothing else.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.SelfInstance(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IInternFactory)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
+            of the object implementing IReference, which is not derived from IDefinition. For example an object implemeting IArrayType will
+            call visitor.Visit(IArrayTypeReference) and not visitor.Visit(IArrayType).
+            The dispatch method does nothing else.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.SelfInstance(Microsoft.Cci.INamedTypeDefinition,Microsoft.Cci.IInternFactory)">
             <summary>
             Get the reference to fully specialized/instantiated version of typeDefinition. 
             </summary>
             <param name="typeDefinition">Unspecialized type definition to be specialized/instantiated.</param>
             <param name="internFactory">An internfactory. </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.GetMatchingMembersNamed(Microsoft.Cci.IName,System.Boolean,Microsoft.Cci.Function{Microsoft.Cci.ITypeDefinitionMember,System.Boolean})">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.GetMatchingMembersNamed(Microsoft.Cci.IName,System.Boolean,Microsoft.Cci.Function{Microsoft.Cci.ITypeDefinitionMember,System.Boolean})">
             <summary>
             Returns the list of members with the given name that also satisfy the given predicate.
             </summary>
@@ -3293,14 +4112,14 @@
             <param name="predicate"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.GetMatchingMembers(Microsoft.Cci.Function{Microsoft.Cci.ITypeDefinitionMember,System.Boolean})">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.GetMatchingMembers(Microsoft.Cci.Function{Microsoft.Cci.ITypeDefinitionMember,System.Boolean})">
             <summary>
             Returns the list of members that satisfy the given predicate.
             </summary>
             <param name="predicate"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.GetMembersNamed(Microsoft.Cci.IName,System.Boolean)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.GetMembersNamed(Microsoft.Cci.IName,System.Boolean)">
             <summary>
             Returns the list of members with the given name.
             </summary>
@@ -3308,13 +4127,13 @@
             <param name="ignoreCase"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.GetSpecializedType(Microsoft.Cci.ITypeDefinition)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.GetSpecializedType(Microsoft.Cci.INamedTypeDefinition)">
             <summary>
             Return a specialized nested type obtained from the specialized instance of its containing type if this type is a nested type, or this otherwise.
             </summary>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.TypeDefinition.ToString">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.ToString">
             <summary>
             Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
             </summary>
@@ -3322,112 +4141,112 @@
             A <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
             </returns>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Alignment">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Alignment">
             <summary>
             The byte alignment that values of the given type ought to have. Must be a power of 2. If zero, the alignment is decided at runtime.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Attributes">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Attributes">
             <summary>
             A collection of metadata custom attributes that are associated with this definition.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.BaseClasses">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.BaseClasses">
             <summary>
             Zero or more classes from which this type is derived.
             For CLR types this collection is empty for interfaces and System.Object and populated with exactly one base type for all other types.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Events">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Events">
             <summary>
             Zero or more events defined by this type.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.ExplicitImplementationOverrides">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.ExplicitImplementationOverrides">
             <summary>
             Zero or more implementation overrides provided by the class.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Fields">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Fields">
             <summary>
             Zero or more fields defined by this type.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.GenericParameters">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.GenericParameters">
             <summary>
             Zero or more parameters that can be used as type annotations.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.GenericParameterCount">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.GenericParameterCount">
             <summary>
             The number of generic parameters. Zero if the type is not generic.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.HasDeclarativeSecurity">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.HasDeclarativeSecurity">
             <summary>
             True if this type has a non empty collection of SecurityAttributes or the System.Security.SuppressUnmanagedCodeSecurityAttribute.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.InstanceType">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.InstanceType">
             <summary>
             An instance of this generic type that has been obtained by using the generic parameters as the arguments.
             Use this instance to look up members
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Interfaces">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Interfaces">
             <summary>
             Zero or more interfaces implemented by this type.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsAbstract">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsAbstract">
             <summary>
             True if the type may not be instantiated.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsClass">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsClass">
             <summary>
             True if the type is a class (it is not an interface or type parameter and does not extend a special base class).
             Corresponds to C# class.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsDelegate">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsDelegate">
             <summary>
             True if the type is a delegate (it extends System.MultiCastDelegate). Corresponds to C# delegate
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsEnum">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsEnum">
             <summary>
             True if the type is an enumeration (it extends System.Enum and is sealed). Corresponds to C# enum.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsGeneric">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsGeneric">
             <summary>
             True if this type is parameterized (this.GenericParameters is a non empty collection).
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsInterface">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsInterface">
             <summary>
             True if the type is an interface.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsReferenceType">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsReferenceType">
             <summary>
             True if the type is a reference type. A reference type is non static class or interface or a suitably constrained type parameter.
             A type parameter for which MustBeReferenceType (the class constraint in C#) is true returns true for this property
@@ -3435,19 +4254,19 @@
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsSealed">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsSealed">
             <summary>
             True if the type may not be subtyped.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsStatic">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsStatic">
             <summary>
             True if the type is an abstract sealed class that directly extends System.Object and declares no constructors.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsValueType">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsValueType">
             <summary>
             True if the type is a value type.
             Value types are sealed and extend System.ValueType or System.Enum.
@@ -3455,159 +4274,159 @@
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsRuntimeSpecial">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsRuntimeSpecial">
             <summary>
             True if this type gets special treatment from the runtime.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsStruct">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsStruct">
             <summary>
             True if the type is a struct (its not Primitive, is sealed and base is System.ValueType).
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsSpecialName">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsSpecialName">
             <summary>
             True if the type has special name.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsComObject">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsComObject">
             <summary>
             Is this imported from COM type library
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsSerializable">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsSerializable">
             <summary>
             True if this type is serializable.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsBeforeFieldInit">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsBeforeFieldInit">
             <summary>
             Is type initialized anytime before first access to static field
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Layout">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Layout">
             <summary>
             Layout of the type.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Locations">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Locations">
             <summary>
             A potentially empty collection of locations that correspond to this instance.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.MangleName">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.MangleName">
             <summary>
             If true, the persisted type name is mangled by appending "`n" where n is the number of type parameters, if the number of type parameters is greater than 0.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Members">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Members">
             <summary>
             The collection of member instances that are members of this scope.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Methods">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Methods">
             <summary>
             Zero or more methods defined by this type.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Name">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Name">
             <summary>
             The name of the entity.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.NestedTypes">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.NestedTypes">
             <summary>
             Zero or more nested types defined by this type.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.PlatformType">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.PlatformType">
             <summary>
             A way to get to platform types such as System.Object.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.PrivateHelperMembers">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.PrivateHelperMembers">
             <summary>
             Zero or more private type members generated by the compiler for implementation purposes. These members
             are only available after a complete visit of all of the other members of the type, including the bodies of methods.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.Properties">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.Properties">
             <summary>
             Zero or more properties defined by this type.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.SecurityAttributes">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.SecurityAttributes">
             <summary>
             Declarative security actions for this type. Will be empty if this.HasSecurity is false.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.SizeOf">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.SizeOf">
             <summary>
             Size of an object of this type. In bytes. If zero, the size is unspecified and will be determined at runtime.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.StringFormat">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.StringFormat">
             <summary>
             Default marshalling of the Strings in this class.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.TypeCode">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.TypeCode">
             <summary>
             Unless the value of TypeCode is PrimitiveTypeCode.NotPrimitive, the type corresponds to a "primitive" CLR type (such as System.Int32) and
             the type code identifies which of the primitive types it corresponds to.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.UnderlyingType">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.UnderlyingType">
             <summary>
             Returns a reference to the underlying (integral) type on which this (enum) type is based.
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.IsAlias">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.IsAlias">
             <summary>
             Indicates if this type reference resolved to an alias rather than a type
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.AliasForType">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.AliasForType">
             <summary>
             Gives the alias for the type
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.ResolvedType">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.ResolvedType">
             <summary>
             The type definition being referred to.
             In case this type was alias, this is also the type of the aliased type
             </summary>
             <value></value>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.InternedKey">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.InternedKey">
             <summary>
             Returns the unique interned key associated with the type. This takes unification/aliases/custom modifiers into account.
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.TypeDefinition.InternFactory">
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamedTypeDefinition.InternFactory">
             <summary>
             A collection of methods that associate unique integers with metadata model entities.
             The association is based on the identities of the entities and the factory does not retain
@@ -3696,9 +4515,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.GenericMethodParameter.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IGenericMethodParameter).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.GenericMethodParameter.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IGenericMethodParameterReference).
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.GenericMethodParameter.DefiningMethod">
             <summary>
@@ -3869,9 +4692,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.ParameterDefinition.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IParameterDefinition).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.ParameterDefinition.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.VisitReference(IParameterDefinition).
+            </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.ParameterDefinition.ToString">
             <summary>
@@ -4058,9 +4885,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.PropertyDefinition.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IPropertyDefinition).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.PropertyDefinition.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Throw an InvalidOperation exception since valid Metadata never references a property.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.PropertyDefinition.Accessors">
             <summary>
@@ -4216,6 +5047,11 @@
             <param name="specializedFieldReference"></param>
             <param name="internFactory"></param>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.SpecializedFieldReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(ISpecializedFieldReference).
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.SpecializedFieldReference.UnspecializedVersion">
             <summary>
             A reference to the field definition that has been specialized to obtain the field definition referred to by this field reference.
@@ -4241,6 +5077,12 @@
             </summary>
             <param name="specializedMethodReference"></param>
             <param name="internFactory"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.SpecializedMethodReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(ISpecializedMethodReference).
+            </summary>
+            <param name="visitor"></param>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.SpecializedMethodReference.UnspecializedVersion">
             <summary>
@@ -4365,18 +5207,6 @@
         <member name="P:Microsoft.Cci.MutableCodeModel.MarshallingInformation.CustomMarshallerRuntimeArgument">
             <summary>
             An argument string (cookie) passed to the custom marshaller at run time.
-            </summary>
-            <value></value>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.MarshallingInformation.ElementSize">
-            <summary>
-            The size of an element of the fixed sized umanaged array.
-            </summary>
-            <value></value>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.MarshallingInformation.ElementSizeMultiplier">
-            <summary>
-            A multiplier that must be applied to the value of the parameter specified by ParamIndex in order to work out the total size of the unmanaged array.
             </summary>
             <value></value>
         </member>
@@ -4823,6 +5653,872 @@
             A string that identifies what type of resource this is. Only valid if this.TypeId &lt; 0.
             </summary>
             <value></value>
+        </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.MetadataRewriter">
+            <summary>
+            A class that traverses a metadata model in depth first, left to right order,
+            rewriting each mutable node it visits by updating the node's children with recursivly rewritten nodes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.#ctor(Microsoft.Cci.IMetadataHost)">
+            <summary>
+            A class that traverses a metadata model in depth first, left to right order,
+            rewriting each mutable node it visits by updating the node's children with recursivly rewritten nodes.
+            </summary>
+            <param name="host">An object representing the application that is hosting this rewriter. It is used to obtain access to some global
+            objects and services such as the shared name table and the table for interning references.</param>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.MetadataRewriter.host">
+            <summary>
+            An object representing the application that is hosting this rewriter. It is used to obtain access to some global
+            objects and services such as the shared name table and the table for interning references.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.MetadataRewriter.referenceRewrites">
+            <summary>
+            A map from reference to rewritten reference. Can be used to avoid rewriting the same reference more than once.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IAliasForType)">
+            <summary>
+            Rewrites the alias for type
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IAliasMember)">
+            <summary>
+            Rewrites the alias for type member.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IArrayTypeReference)">
+            <summary>
+            Rewrites the array type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IAssembly)">
+            <summary>
+            Rewrites the given assembly.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IAssemblyReference)">
+            <summary>
+            Rewrites the given assembly reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ICustomAttribute)">
+            <summary>
+            Rewrites the given custom attribute.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ICustomModifier)">
+            <summary>
+            Rewrites the given custom modifier.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IEventDefinition)">
+            <summary>
+            Rewrites the given event definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IFieldDefinition)">
+            <summary>
+            Rewrites the given field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IFieldReference)">
+            <summary>
+            Rewrites the given field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteUnspecialized(Microsoft.Cci.IFieldReference)">
+            <summary>
+            Rewrites the given field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IFileReference)">
+            <summary>
+            Rewrites the given file reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IFunctionPointerTypeReference)">
+            <summary>
+            Rewrites the given function pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IGenericMethodInstanceReference)">
+            <summary>
+            Rewrites the given generic method instance reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IGenericMethodParameter)">
+            <summary>
+            Rewrites the given generic method parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IGenericMethodParameterReference)">
+            <summary>
+            Rewrites the given generic method parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IGenericTypeInstanceReference)">
+            <summary>
+            Rewrites the given generic type instance reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IGenericTypeParameter)">
+            <summary>
+            Rewrites the given generic type parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IGenericTypeParameterReference)">
+            <summary>
+            Rewrites the given generic type parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IGlobalFieldDefinition)">
+            <summary>
+            Rewrites the specified global field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IGlobalMethodDefinition)">
+            <summary>
+            Rewrites the specified global method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ILocalDefinition)">
+            <summary>
+            Rewrites the specified local definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IManagedPointerTypeReference)">
+            <summary>
+            Rewrites the given managed pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMarshallingInformation)">
+            <summary>
+            Rewrites the given marshalling information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMetadataConstant)">
+            <summary>
+            Rewrites the given metadata constant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMetadataCreateArray)">
+            <summary>
+            Rewrites the given metadata array creation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMetadataExpression)">
+            <summary>
+            Rewrites the given metadata expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMetadataNamedArgument)">
+            <summary>
+            Rewrites the given metadata named argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMetadataTypeOf)">
+            <summary>
+            Rewrites the given metadata typeof expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMethodBody)">
+            <summary>
+            Rewrites the given method body.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMethodDefinition)">
+            <summary>
+            Rewrites the given method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMethodImplementation)">
+            <summary>
+            Rewrites the given method implementation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IMethodReference)">
+            <summary>
+            Rewrites the given method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteUnspecialized(Microsoft.Cci.IMethodReference)">
+            <summary>
+            Rewrites the given method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IModifiedTypeReference)">
+            <summary>
+            Rewrites the given modified type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IModule)">
+            <summary>
+            Rewrites the given module.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IModuleReference)">
+            <summary>
+            Rewrites the given module reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INamedTypeDefinition)">
+            <summary>
+            Rewrites the named specified type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INamedTypeReference)">
+            <summary>
+            Rewrites the named specified type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INamespaceAliasForType)">
+            <summary>
+            Rewrites the namespace alias for type.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INamespaceDefinition)">
+            <summary>
+            Rewrites the namespace definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INamespaceMember)">
+            <summary>
+            Rewrites the specified namespace member.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INamespaceTypeDefinition)">
+            <summary>
+            Rewrites the given namespace type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INamespaceTypeReference)">
+            <summary>
+            Rewrites the given namespace type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INestedAliasForType)">
+            <summary>
+            Rewrites the nested alias for type
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INestedTypeDefinition)">
+            <summary>
+            Rewrites the given nested type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INestedTypeReference)">
+            <summary>
+            Rewrites the given namespace type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteUnspecialized(Microsoft.Cci.INestedTypeReference)">
+            <summary>
+            Rewrites the given namespace type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INestedUnitNamespace)">
+            <summary>
+            Rewrites the specified nested unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.INestedUnitNamespaceReference)">
+            <summary>
+            Rewrites the specified reference to a nested unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IOperation)">
+            <summary>
+            Rewrites the specified operation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IOperationExceptionInformation)">
+            <summary>
+            Rewrites the specified operation exception information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IParameterDefinition)">
+            <summary>
+            Rewrites the given parameter definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IParameterTypeInformation)">
+            <summary>
+            Rewrites the given parameter type information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IPlatformInvokeInformation)">
+            <summary>
+            Rewrites the specified platform invoke information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IPointerTypeReference)">
+            <summary>
+            Rewrites the given pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IPropertyDefinition)">
+            <summary>
+            Rewrites the given property definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IResourceReference)">
+            <summary>
+            Rewrites the given reference to a manifest resource.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IRootUnitNamespace)">
+            <summary>
+            Rewrites the given root unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IRootUnitNamespaceReference)">
+            <summary>
+            Rewrites the given reference to a root unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ISecurityAttribute)">
+            <summary>
+            Rewrites the given security attribute.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ISpecializedFieldReference)">
+            <summary>
+            Rewrites the given specialized field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ISpecializedMethodReference)">
+            <summary>
+            Rewrites the given specialized method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ISpecializedNestedTypeReference)">
+            <summary>
+            Rewrites the given specialized nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ITypeDefinition)">
+            <summary>
+            Rewrites the given type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ITypeDefinitionMember)">
+            <summary>
+            Rewrites the specified type member.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.ITypeReference)">
+            <summary>
+            Rewrites the specified type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IUnit)">
+            <summary>
+            Rewrites the specified unit.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IUnitNamespace)">
+            <summary>
+            Rewrites the specified unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IUnitNamespaceReference)">
+            <summary>
+            Rewrites the specified reference to a unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IUnitReference)">
+            <summary>
+            Rewrites the specified unit reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IWin32Resource)">
+            <summary>
+            Rewrites the given Win32 resource.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IAliasForType})">
+            <summary>
+            Rewrites the list of aliases for types.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IAliasMember})">
+            <summary>
+            Rewrites the list of members of a type alias.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IAssemblyReference})">
+            <summary>
+            Rewrites the specified assembly references.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.ICustomAttribute})">
+            <summary>
+            Rewrites the specified custom attributes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.ICustomModifier})">
+            <summary>
+            Rewrites the specified custom modifiers.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IEventDefinition})">
+            <summary>
+            Rewrites the specified events.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IFieldDefinition})">
+            <summary>
+            Rewrites the specified fields.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IFileReference})">
+            <summary>
+            Rewrites the specified file references.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IGenericMethodParameter})">
+            <summary>
+            Rewrites the specified generic parameters.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IGenericTypeParameter})">
+            <summary>
+            Rewrites the specified generic parameters.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.ILocalDefinition})">
+            <summary>
+            Rewrites the specified local definitions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IMetadataExpression})">
+            <summary>
+            Rewrites the specified expressions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IMetadataNamedArgument})">
+            <summary>
+            Rewrites the specified named arguments.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IMethodDefinition})">
+            <summary>
+            Rewrites the specified methods.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IMethodImplementation})">
+            <summary>
+            Rewrites the specified method implementations.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IMethodReference})">
+            <summary>
+            Rewrites the specified method references.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IModule})">
+            <summary>
+            Rewrites the specified modules.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IModuleReference})">
+            <summary>
+            Rewrites the specified module references.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.INamedTypeDefinition})">
+            <summary>
+            Rewrites the specified types.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.INamespaceMember})">
+            <summary>
+            Rewrites the specified namespace members.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.INestedTypeDefinition})">
+            <summary>
+            Rewrites the specified nested types.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IOperation})">
+            <summary>
+            Rewrites the specified operations.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IOperationExceptionInformation})">
+            <summary>
+            Rewrites the specified operation exception informations.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IParameterDefinition})">
+            <summary>
+            Rewrites the specified parameters.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IParameterTypeInformation})">
+            <summary>
+            Rewrites the specified parameter type informations.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IPropertyDefinition})">
+            <summary>
+            Rewrites the specified properties.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IResourceReference})">
+            <summary>
+            Rewrites the specified resource references.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.ISecurityAttribute})">
+            <summary>
+            Rewrites the specified security attributes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.ITypeDefinitionMember})">
+            <summary>
+            Rewrites the specified type members.
+            </summary>
+            <remarks>Not used by the rewriter itself.</remarks>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.ITypeReference})">
+            <summary>
+            Rewrites the specified type references.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IWin32Resource})">
+            <summary>
+            Rewrites the specified type references.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.AliasForType)">
+            <summary>
+            Rewrites the children of the alias for type
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.ArrayTypeReference)">
+            <summary>
+            Rewrites the children of the array type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.Assembly)">
+            <summary>
+            Rewrites the children of the given assembly.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.AssemblyReference)">
+            <summary>
+            Rewrites the children of the given assembly reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.CustomAttribute)">
+            <summary>
+            Rewrites the children of the given custom attribute.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.CustomModifier)">
+            <summary>
+            Rewrites the children of the given custom modifier.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.EventDefinition)">
+            <summary>
+            Rewrites the children of the given event definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.FieldDefinition)">
+            <summary>
+            Rewrites the children of the given field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.FieldReference)">
+            <summary>
+            Rewrites the chidren of the given field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.FileReference)">
+            <summary>
+            Rewrites the children the given file reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.FunctionPointerTypeReference)">
+            <summary>
+            Rewrites the children the given function pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GenericMethodInstanceReference)">
+            <summary>
+            Rewrites the children of the given generic method instance reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GenericMethodParameter)">
+            <summary>
+            Rewrites the children of the given generic method parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GenericMethodParameterReference)">
+            <summary>
+            Rewrites the children the given generic method parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GenericParameter)">
+            <summary>
+            Rewrites the children of the given generic parameter.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GenericTypeInstanceReference)">
+            <summary>
+            Rewrites the children of the given generic type instance reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GenericTypeParameter)">
+            <summary>
+            Rewrites the children of the given generic type parameter .
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GenericTypeParameterReference)">
+            <summary>
+            Rewrites the children of the given generic type parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GlobalFieldDefinition)">
+            <summary>
+            Rewrites the children of the given global field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GlobalMethodDefinition)">
+            <summary>
+            Rewrites the children of the given global method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.LocalDefinition)">
+            <summary>
+            Rewrites the children of the specified local definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.ManagedPointerTypeReference)">
+            <summary>
+            Rewrites the children of the given managed pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MarshallingInformation)">
+            <summary>
+            Rewrites the children of the given marshalling information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MetadataConstant)">
+            <summary>
+            Rewrites the children of the given metadata constant.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MetadataCreateArray)">
+            <summary>
+            Rewrites the children of the given metadata array creation expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MetadataExpression)">
+            <summary>
+            Rewrites the children the given metadata expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MetadataNamedArgument)">
+            <summary>
+            Rewrites the children of the given metadata named argument expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MetadataTypeOf)">
+            <summary>
+            Rewrites the given metadata typeof expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MethodBody)">
+            <summary>
+            Rewrites the children of the given method body.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MethodDefinition)">
+            <summary>
+            Rewrites the children of the given method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MethodImplementation)">
+            <summary>
+            Rewrites the children of the given method implementation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.MethodReference)">
+            <summary>
+            Rewrites the children of the given method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.ModifiedTypeReference)">
+            <summary>
+            Rewrites the children of the given modified type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.Module)">
+            <summary>
+            Rewrites the children of the given module.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.ModuleReference)">
+            <summary>
+            Rewrites the children the given module reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.NamespaceAliasForType)">
+            <summary>
+            Rewrites the namespace alias for type
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.NamespaceTypeDefinition)">
+            <summary>
+            Rewrites the given namespace type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.NamespaceTypeReference)">
+            <summary>
+            Rewrites the given namespace type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.NestedAliasForType)">
+            <summary>
+            Rewrites the nested alias for type
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.NestedTypeDefinition)">
+            <summary>
+            Rewrites the children of given nested type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.NestedTypeReference)">
+            <summary>
+            Rewrites the given nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.NestedUnitNamespace)">
+            <summary>
+            Rewrites the given nested unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.NestedUnitNamespaceReference)">
+            <summary>
+            Rewrites the given nested unit namespace reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.Operation)">
+            <summary>
+            Rewrites the children the specified operation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.OperationExceptionInformation)">
+            <summary>
+            Rewrites the children of the specified operation exception information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.ParameterDefinition)">
+            <summary>
+            Rewrites the children of the given parameter definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.ParameterTypeInformation)">
+            <summary>
+            Rewrites the given parameter type information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.PlatformInvokeInformation)">
+            <summary>
+            Rewrites the children of the specified platform invoke information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.PointerTypeReference)">
+            <summary>
+            Rewrites the given pointer type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.PropertyDefinition)">
+            <summary>
+            Rewrites the given property definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.ResourceReference)">
+            <summary>
+            Rewrites the children of the given reference to a manifest resource.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.RootUnitNamespace)">
+            <summary>
+            Rewrites the children of the specified root unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.RootUnitNamespaceReference)">
+            <summary>
+            Rewrites the given reference to a root unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.SecurityAttribute)">
+            <summary>
+            Rewrites the given security attribute.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.SpecializedFieldReference)">
+            <summary>
+            Rewrites the given specialized field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.SpecializedMethodReference)">
+            <summary>
+            Rewrites the given specialized method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.SpecializedNestedTypeReference)">
+            <summary>
+            Rewrites the given specialized nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.NamedTypeDefinition)">
+            <summary>
+            Rewrites the children of the specified named type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.TypeDefinitionMember)">
+            <summary>
+            Rewrites the children of the given type definition member.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.TypeReference)">
+            <summary>
+            Rewrites the children of the given type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.Unit)">
+            <summary>
+            Rewrites the children of the specified unit.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.UnitReference)">
+            <summary>
+            Rewrites the specified unit.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.UnitNamespace)">
+            <summary>
+            Rewrites the children of the specified unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.UnitNamespaceReference)">
+            <summary>
+            Rewrites the children of the specified reference to a unit namespace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.Win32Resource)">
+            <summary>
+            Rewrites the children of the given Win32 resource.
+            </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MetadataMutator">
             <summary>
@@ -5911,7 +7607,7 @@
             <param name="specializedNestedTypeReference">The specialized nested type reference.</param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.Visit(Microsoft.Cci.MutableCodeModel.TypeDefinition)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.Visit(Microsoft.Cci.MutableCodeModel.NamedTypeDefinition)">
             <summary>
             Replaces the child nodes of the given mutable type definition with the results of running the mutator over them. 
             Note that when overriding this method, care must be taken to add the given mutable type definition to this.flatListOfTypes.
@@ -7294,7 +8990,7 @@
             <param name="specializedNestedTypeReference">The specialized nested type reference.</param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.VisitTypeDefinition(Microsoft.Cci.MutableCodeModel.TypeDefinition)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.VisitTypeDefinition(Microsoft.Cci.MutableCodeModel.NamedTypeDefinition)">
             <summary>
             Replaces the child nodes of the given mutable type definition with the results of running the mutator over them. 
             </summary>
@@ -7909,7 +9605,7 @@
             A helper class that provides functional versions of creating different type references. 
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MutableModelHelper.GetGenericTypeInstanceReference(System.Collections.Generic.IEnumerable{Microsoft.Cci.ITypeReference},Microsoft.Cci.ITypeReference,Microsoft.Cci.IInternFactory,Microsoft.Cci.ITypeReference)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.MutableModelHelper.GetGenericTypeInstanceReference(System.Collections.Generic.IEnumerable{Microsoft.Cci.ITypeReference},Microsoft.Cci.INamedTypeReference,Microsoft.Cci.IInternFactory,Microsoft.Cci.ITypeReference)">
             <summary>
             Functional version of creating a generic type instance reference. 
             </summary>
@@ -8049,10 +9745,16 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.UnitNamespace.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDefinition. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
+            of the object implementing IReference. The dispatch method does nothing else.
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.UnitNamespace.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
+            of the object implementing IReference, which is not derived from IDefinition. For example an object implemeting IArrayType will
+            call visitor.Visit(IArrayTypeReference) and not visitor.Visit(IArrayType).
+            The dispatch method does nothing else.
+            </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.UnitNamespace.GetMatchingMembersNamed(Microsoft.Cci.IName,System.Boolean,Microsoft.Cci.Function{Microsoft.Cci.INamespaceMember,System.Boolean})">
             <summary>
@@ -8130,9 +9832,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.NestedUnitNamespace.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(INestedUnitNamespace).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.NestedUnitNamespace.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(INestedUnitNamespaceReference).
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.NestedUnitNamespace.ContainingUnitNamespace">
             <summary>
@@ -8177,16 +9883,45 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.UnitNamespaceReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDefinition. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
+            of the object implementing IReference. The dispatch method does nothing else.
             </summary>
             <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.UnitNamespaceReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
+            of the object implementing IReference, which is not derived from IDefinition. For example an object implemeting IArrayType will
+            call visitor.Visit(IArrayTypeReference) and not visitor.Visit(IArrayType).
+            The dispatch method does nothing else.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.UnitNamespaceReference.isFrozen">
+            <summary>
+            True if the reference has been frozen and can no longer be modified. A reference becomes frozen
+            as soon as it is resolved or interned. An unfrozen reference can also explicitly be set to be frozen.
+            It is recommended that any code constructing a type reference freezes it immediately after construction is complete.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.UnitNamespaceReference.ToString">
+            <summary>
+            Returns a <see cref="T:System.String"/> that represents this instance.
+            </summary>
+            <returns>
+            A <see cref="T:System.String"/> that represents this instance.
+            </returns>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.UnitNamespaceReference.Attributes">
             <summary>
             A collection of metadata custom attributes that are associated with this definition.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.UnitNamespaceReference.IsFrozen">
+            <summary>
+            True if the reference has been frozen and can no longer be modified. A reference becomes frozen
+            as soon as it is resolved or interned. An unfrozen reference can also explicitly be set to be frozen.
+            It is recommended that any code constructing a type reference freezes it immediately after construction is complete.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.UnitNamespaceReference.Locations">
             <summary>
@@ -8212,11 +9947,10 @@
             <param name="nestedUnitNamespaceReference"></param>
             <param name="internFactory"></param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.NestedUnitNamespaceReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NestedUnitNamespaceReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(INestedUnitNamespaceReference).
             </summary>
-            <param name="visitor"></param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.NestedUnitNamespaceReference.GetUnit">
             <summary>
@@ -8273,9 +10007,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.RootUnitNamespace.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IRootUnitNamespace).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.RootUnitNamespace.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IRootUnitNamespaceReference).
+            </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.RootUnitNamespaceReference">
             <summary>
@@ -8294,11 +10032,10 @@
             <param name="rootUnitNamespaceReference"></param>
             <param name="internFactory"></param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.RootUnitNamespaceReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.RootUnitNamespaceReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IRootUnitNamespaceReference).
             </summary>
-            <param name="visitor"></param>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.RootUnitNamespaceReference.ResolvedUnitNamespace">
             <summary>
@@ -8339,10 +10076,13 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.AliasForType.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDefinition. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
+            of the object implementing IReference. The dispatch method does nothing else.
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AliasForType.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            This throws an InvalidOperation exception since valid metadata never has a reference to a type alias.
+            </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AliasForType.GetMatchingMembersNamed(Microsoft.Cci.IName,System.Boolean,Microsoft.Cci.Function{Microsoft.Cci.IAliasMember,System.Boolean})">
             <summary>
@@ -8392,39 +10132,9 @@
             </summary>
             <value></value>
         </member>
-        <member name="T:Microsoft.Cci.MutableCodeModel.CustomModifier">
+        <member name="T:Microsoft.Cci.MutableCodeModel.ArrayTypeReference">
             <summary>
             
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CustomModifier.#ctor">
-            <summary>
-            
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CustomModifier.Copy(Microsoft.Cci.ICustomModifier,Microsoft.Cci.IInternFactory)">
-            <summary>
-            
-            </summary>
-            <param name="customModifier"></param>
-            <param name="internFactory"></param>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.CustomModifier.IsOptional">
-            <summary>
-            If true, a language may use the modified storage location without being aware of the meaning of the modification.
-            </summary>
-            <value></value>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.CustomModifier.Modifier">
-            <summary>
-            A type used as a tag that indicates which type of modification applies to the storage location.
-            </summary>
-            <value></value>
-        </member>
-        <member name="T:Microsoft.Cci.MutableCodeModel.FunctionPointerTypeReference">
-            <summary>
-            A reference to a function pointer type. Type references can be initialized incrementally, but once a reference is frozen, or resolved
-            or once the InternedKey of a reference has been computed, no further initialization is permitted.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.TypeReference">
@@ -8453,13 +10163,17 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.TypeReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDefinition. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
+            of the object implementing IReference. The dispatch method does nothing else.
             </summary>
-            <param name="visitor">
-            An instance of a class that visit nodes of object graphs via a double dispatch mechanism, usually performing some computation of
-            a subset of the nodes in the graph. Contains a specialized Visit routine for each standard type of object defined in this object model. 
-            </param>
+            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.TypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
+            of the object implementing IReference, which is not derived from IDefinition. For example an object implemeting IArrayType will
+            call visitor.Visit(IArrayTypeReference) and not visitor.Visit(IArrayType).
+            The dispatch method does nothing else.
+            </summary>
         </member>
         <member name="F:Microsoft.Cci.MutableCodeModel.TypeReference.isFrozen">
             <summary>
@@ -8551,6 +10265,98 @@
             the type code identifies which of the primitive types it corresponds to.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.#ctor">
+            <summary>
+            A reference to an array type. Type references can be initialized incrementally, but once a reference is frozen, or resolved
+            or once the InternedKey of a reference has been computed, no further initialization is permitted.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IArrayTypeReference).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.Resolve">
+            <summary>
+            Returns the type of the resolved array.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.ElementType">
+            <summary>
+            The type of the elements of this array.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.IsVector">
+            <summary>
+            This type of array is a single dimensional array with zero lower bound for index values.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.LowerBounds">
+            <summary>
+            A possibly empty list of lower bounds for dimension indices. When not explicitly specified, a lower bound defaults to zero.
+            The first lower bound in the list corresponds to the first dimension. Dimensions cannot be skipped.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.Rank">
+            <summary>
+            The number of array dimensions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.Sizes">
+            <summary>
+            A possible empty list of upper bounds for dimension indices.
+            The first upper bound in the list corresponds to the first dimension. Dimensions cannot be skipped.
+            An unspecified upper bound means that instances of this type can have an arbitrary upper bound for that dimension.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.ResolvedType">
+            <summary>
+            Gets the type of the resolved.
+            </summary>
+            <value>The type of the resolved.</value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.ArrayTypeReference.ResolvedArrayType">
+            <summary>
+            Gets the type of the resolved array.
+            </summary>
+            <value>The type of the resolved array.</value>
+        </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.CustomModifier">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.CustomModifier.#ctor">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.CustomModifier.Copy(Microsoft.Cci.ICustomModifier,Microsoft.Cci.IInternFactory)">
+            <summary>
+            
+            </summary>
+            <param name="customModifier"></param>
+            <param name="internFactory"></param>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.CustomModifier.IsOptional">
+            <summary>
+            If true, a language may use the modified storage location without being aware of the meaning of the modification.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.CustomModifier.Modifier">
+            <summary>
+            A type used as a tag that indicates which type of modification applies to the storage location.
+            </summary>
+            <value></value>
+        </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.FunctionPointerTypeReference">
+            <summary>
+            A reference to a function pointer type. Type references can be initialized incrementally, but once a reference is frozen, or resolved
+            or once the InternedKey of a reference has been computed, no further initialization is permitted.
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.FunctionPointerTypeReference.#ctor">
             <summary>
             A reference to a function pointer type. Type references can be initialized incrementally, but once a reference is frozen, or resolved
@@ -8568,7 +10374,7 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.FunctionPointerTypeReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.FunctionPointerTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(IFunctionPointerTypeReference).
             </summary>
@@ -8648,7 +10454,7 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.GenericMethodParameterReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.GenericMethodParameterReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(IGenericMethodParameterReference).
             </summary>
@@ -8701,7 +10507,7 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.GenericTypeInstanceReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.GenericTypeInstanceReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(IGenericTypeInstanceReference).
             </summary>
@@ -8756,6 +10562,11 @@
             Calls visitor.Visit(IGenericTypeParameter).
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.GenericTypeParameter.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IGenericTypeParameterReference).
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.GenericTypeParameter.DefiningType">
             <summary>
             The generic type that defines this type parameter.
@@ -8785,7 +10596,7 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.GenericTypeParameterReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.GenericTypeParameterReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(IGenericTypeParameterReference).
             </summary>
@@ -8838,7 +10649,7 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.ManagedPointerTypeReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.ManagedPointerTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(IManagedPointerTypeReference).
             </summary>
@@ -8885,16 +10696,11 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MatrixTypeReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.MatrixTypeReference.Resolve">
             <summary>
-            Calls visitor.Visit(IArrayTypeReference).
+            Returns the type of the resolved array.
             </summary>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.MatrixTypeReference.ElementType">
-            <summary>
-            The type of the elements of this array.
-            </summary>
-            <value></value>
+            <returns></returns>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.MatrixTypeReference.IsVector">
             <summary>
@@ -8920,19 +10726,6 @@
             A possible empty list of upper bounds for dimension indices.
             The first upper bound in the list corresponds to the first dimension. Dimensions cannot be skipped.
             An unspecified upper bound means that instances of this type can have an arbitrary upper bound for that dimension.
-            </summary>
-            <value></value>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.MatrixTypeReference.ResolvedArrayType">
-            <summary>
-            Gets the type of the resolved array.
-            </summary>
-            <value>The type of the resolved array.</value>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.MatrixTypeReference.ResolvedType">
-            <summary>
-            The type definition being referred to.
-            In case this type was alias, this is also the type of the aliased type
             </summary>
             <value></value>
         </member>
@@ -9051,6 +10844,18 @@
             Calls visitor.Visit(INamespaceTypeDefinition).
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamespaceTypeDefinition.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(INamespaceTypeReference).
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamespaceTypeDefinition.AttributesFor">
+            <summary>
+            A map from type references to potentially empty enumerations of attributes.
+            The references are expected to be references to interface types implemented by this type
+            and the attributes are meant to provide additional information about the relationship between this type and its interface.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.NamespaceTypeDefinition.ContainingUnitNamespace">
             <summary>
             The namespace that contains this member.
@@ -9062,6 +10867,18 @@
             True if the type can be accessed from other assemblies.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamespaceTypeDefinition.KeepDistinctFromDefinition">
+            <summary>
+            True if this reference should be kept distinct from the definition it refers to. That is, when copied or persisted,
+            this object should not be unified with the referenced type, even if the referenced type is defined in the same
+            module as the reference to the type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamespaceTypeDefinition.IsForeignObject">
+            <summary>
+            True if objects of this type are neither COM objects nor native to the CLR and are accessed via some kind of interoperation mechanism.
+            </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.NamespaceTypeReference">
             <summary>
@@ -9086,7 +10903,7 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.NamespaceTypeReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamespaceTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(INamespaceTypeReference).
             </summary>
@@ -9120,6 +10937,13 @@
             The name of the entity.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamespaceTypeReference.KeepDistinctFromDefinition">
+            <summary>
+            True if this reference should be kept distinct from the definition it refers to. That is, when copied or persisted,
+            this object should not be unified with the referenced type, even if the referenced type is defined in the same
+            module as the reference to the type.
+            </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.NestedAliasForType">
             <summary>
@@ -9191,6 +11015,11 @@
             Calls visitor.Visit(INestedTypeDefinition).
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.NestedTypeDefinition.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(INestedTypeReference).
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.NestedTypeDefinition.ContainingTypeDefinition">
             <summary>
             The type definition that contains this member.
@@ -9208,6 +11037,40 @@
             The type definition member this reference resolves to.
             </summary>
             <value></value>
+        </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.SpecializedNestedTypeDefinition">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.SpecializedNestedTypeDefinition.#ctor">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.SpecializedNestedTypeDefinition.Copy(Microsoft.Cci.ISpecializedNestedTypeDefinition,Microsoft.Cci.IInternFactory)">
+            <summary>
+            
+            </summary>
+            <param name="specializedNestedTypeDefinition"></param>
+            <param name="internFactory"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.SpecializedNestedTypeDefinition.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(ISpecializedNestedTypeDefinition).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.SpecializedNestedTypeDefinition.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(ISpecializedNestedTypeReference).
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.SpecializedNestedTypeDefinition.UnspecializedVersion">
+            <summary>
+            The property that has been specialized to obtain this event. When the containing type is an instance of type which is itself a specialized member (i.e. it is a nested
+            type of a generic type instance), then the unspecialized member refers to a member from the unspecialized containing type. (I.e. the unspecialized member always
+            corresponds to a definition that is not obtained via specialization.)
+            </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.NestedTypeReference">
             <summary>
@@ -9232,7 +11095,7 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.NestedTypeReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.NestedTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(INestedTypeReference).
             </summary>
@@ -9297,7 +11160,7 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.PointerTypeReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.PointerTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(IPointerTypeReference).
             </summary>
@@ -9344,6 +11207,11 @@
             references to the given metadata model objects.   
             </param>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.SpecializedNestedTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(ISpecializedNestedTypeReference).
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.SpecializedNestedTypeReference.UnspecializedVersion">
             <summary>
             A reference to the nested type that has been specialized to obtain this nested type reference. When the containing type is an instance of type which is itself a specialized member (i.e. it is a nested
@@ -9375,7 +11243,7 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.ModifiedTypeReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.ModifiedTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(IModifiedTypeReference).
             </summary>
@@ -9422,51 +11290,16 @@
             references to the given metadata model objects.   
             </param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.VectorTypeReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.VectorTypeReference.Resolve">
             <summary>
-            Calls visitor.Visit(IArrayTypeReference).
+            Returns the type of the resolved array.
             </summary>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.VectorTypeReference.ElementType">
-            <summary>
-            The type of the elements of this array.
-            </summary>
+            <returns></returns>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.VectorTypeReference.IsVector">
             <summary>
             This type of array is a single dimensional array with zero lower bound for index values.
             </summary>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.VectorTypeReference.LowerBounds">
-            <summary>
-            A possibly empty list of lower bounds for dimension indices. When not explicitly specified, a lower bound defaults to zero.
-            The first lower bound in the list corresponds to the first dimension. Dimensions cannot be skipped.
-            </summary>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.VectorTypeReference.Rank">
-            <summary>
-            The number of array dimensions.
-            </summary>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.VectorTypeReference.Sizes">
-            <summary>
-            A possible empty list of upper bounds for dimension indices.
-            The first upper bound in the list corresponds to the first dimension. Dimensions cannot be skipped.
-            An unspecified upper bound means that instances of this type can have an arbitrary upper bound for that dimension.
-            </summary>
-            <value></value>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.VectorTypeReference.ResolvedType">
-            <summary>
-            Gets the type of the resolved.
-            </summary>
-            <value>The type of the resolved.</value>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.VectorTypeReference.ResolvedArrayType">
-            <summary>
-            Gets the type of the resolved array.
-            </summary>
-            <value>The type of the resolved array.</value>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.Assembly">
             <summary>
@@ -9503,16 +11336,37 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.UnitReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDefinition. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
+            of the object implementing IReference. The dispatch method does nothing else.
             </summary>
             <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.UnitReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
+            of the object implementing IReference, which is not derived from IDefinition. For example an object implemeting IArrayType will
+            call visitor.Visit(IArrayTypeReference) and not visitor.Visit(IArrayType).
+            The dispatch method does nothing else.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.UnitReference.isFrozen">
+            <summary>
+            True if the reference has been frozen and can no longer be modified. A reference becomes frozen
+            as soon as it is resolved or interned. An unfrozen reference can also explicitly be set to be frozen.
+            It is recommended that any code constructing a type reference freezes it immediately after construction is complete.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.UnitReference.Attributes">
             <summary>
             A collection of metadata custom attributes that are associated with this definition.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.UnitReference.IsFrozen">
+            <summary>
+            True if the reference has been frozen and can no longer be modified. A reference becomes frozen
+            as soon as it is resolved or interned. An unfrozen reference can also explicitly be set to be frozen.
+            It is recommended that any code constructing a type reference freezes it immediately after construction is complete.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.UnitReference.Locations">
             <summary>
@@ -9613,9 +11467,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Module.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IModule).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.Module.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IModuleReference).
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Module.AllTypes">
             <summary>
@@ -9808,6 +11666,20 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.Module.TypeReferences">
+            <summary>
+            Zero or more type references used in the module. If the module is produced by reading in a CLR PE file, then this will be the contents
+            of the type reference table. If the module is produced some other way, the method may return an empty enumeration or an enumeration that is a
+            subset of the type references actually used in the module. 
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.Module.TypeMemberReferences">
+            <summary>
+            Returns zero or more type member references used in the module. If the module is produced by reading in a CLR PE file, then this will be the contents
+            of the member reference table (which only contains entries for fields and methods). If the module is produced some other way, 
+            the method may return an empty enumeration or an enumeration that is a subset of the member references actually used in the module. 
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Module.UnitReferences">
             <summary>
             A list of other units that are referenced by this unit.
@@ -9871,9 +11743,13 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Assembly.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IAssembly).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.Assembly.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls visitor.Visit(IAssemblyReference).
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Assembly.AssemblyAttributes">
             <summary>
@@ -9918,6 +11794,12 @@
             True if the implementation of the referenced assembly used at runtime is not expected to match the version seen at compile time.
             </summary>
         </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.Assembly.ContainsForeignTypes">
+            <summary>
+            True if the referenced assembly contains types that describe objects that are neither COM objects nor objects that are managed by the CLR.
+            Instances of such types are created and managed by another runtime and are accessed by CLR objects via some form of interoperation mechanism.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Assembly.Location">
             <summary>
             An indication of the location where the assembly is or will be stored. This need not be a file system path and may be empty.
@@ -9950,7 +11832,7 @@
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Assembly.PublicKey">
             <summary>
-            The public part of the key used to encrypt the SHA1 hash over the persisted form of this assembly . Empty if not specified.
+            The public part of the key used to encrypt the SHA1 hash over the persisted form of this assembly. Null if not specified.
             This value is used by the loader to decrypt HashValue which it then compares with a freshly computed hash value to verify the
             integrity of the assembly.
             </summary>
@@ -10027,17 +11909,26 @@
             <param name="moduleReference"></param>
             <param name="internFactory"></param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.ModuleReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.ModuleReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls vistor.Visit(IModuleReference).
             </summary>
-            <param name="visitor"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.ModuleReference.Resolve">
+            <summary>
+            Tries to resolves the reference with the aid of this.Host. If resolution fails, the result is Dummy.Module.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.ModuleReference.ContainingAssembly">
             <summary>
             The Assembly that contains this module. May be null if the module is not part of an assembly.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.ModuleReference.Host">
+            <summary>
+            An object representing the application that is hosting the object model that this reference forms a part of.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.ModuleReference.ModuleIdentity">
             <summary>
@@ -10046,11 +11937,11 @@
             <value></value>
             <remarks>The location might not be set.</remarks>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.ModuleReference.Name">
+        <member name="P:Microsoft.Cci.MutableCodeModel.ModuleReference.ReferringUnit">
             <summary>
-            The name of the referenced module.
+            The unit that is the root of a graph that contains this reference instance. This is not the same as ContainingAssembly, which
+            is a reference to the assembly that contains the module which is referenced by this instance. May be null.
             </summary>
-            <value></value>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.ModuleReference.ResolvedModule">
             <summary>
@@ -10083,6 +11974,11 @@
             <param name="assemblyReference"></param>
             <param name="internFactory"></param>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AssemblyReference.Resolve">
+            <summary>
+            Tries to resolves the reference with the aid of this.Host. If resolution fails, the result is Dummy.Module.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.AssemblyReference.Aliases">
             <summary>
             A list of aliases for the root namespace of the referenced assembly.
@@ -10107,11 +12003,11 @@
             True if the implementation of the referenced assembly used at runtime is not expected to match the version seen at compile time.
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.AssemblyReference.Name">
+        <member name="P:Microsoft.Cci.MutableCodeModel.AssemblyReference.ContainsForeignTypes">
             <summary>
-            The name of the referenced assembly.
+            True if the referenced assembly contains types that describe objects that are neither COM objects nor objects that are managed by the CLR.
+            Instances of such types are created and managed by another runtime and are accessed by CLR objects via some form of interoperation mechanism.
             </summary>
-            <value></value>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.AssemblyReference.PublicKeyToken">
             <summary>
