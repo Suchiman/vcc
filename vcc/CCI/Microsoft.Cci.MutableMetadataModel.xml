@@ -5729,6 +5729,16 @@
             Rewrites the given field reference.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteReference(Microsoft.Cci.ILocalDefinition)">
+            <summary>
+            Rewrites the reference to a local definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteReference(Microsoft.Cci.IParameterDefinition)">
+            <summary>
+            Rewrites the reference to a parameter.
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteUnspecialized(Microsoft.Cci.IFieldReference)">
             <summary>
             Rewrites the given field reference.
@@ -9590,14 +9600,6 @@
             Create a copy for a generic method instance reference. 
             </summary>
             <param name="genericMethodInstanceReference"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.TypeOrderPreserver.Compare(Microsoft.Cci.INamedTypeDefinition,Microsoft.Cci.INamedTypeDefinition)">
-            <summary>
-            
-            </summary>
-            <param name="x"></param>
-            <param name="y"></param>
             <returns></returns>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MutableModelHelper">
