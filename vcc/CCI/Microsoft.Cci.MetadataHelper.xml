@@ -7655,8 +7655,8 @@
         </member>
         <member name="M:Microsoft.Cci.TypeHelper.GetDefiningUnitReference(Microsoft.Cci.ITypeReference)">
             <summary>
-            Returns a reference to the unit that defines the given referenced type. If the referenced type is a structural type, such as a pointer or a generic type instance,
-            then the result is null.
+            Returns a reference to the unit that defines the given type. If the reference type is a reference to a structural type, such as a pointer the result is 
+            the a reference to the defining unit of the element type, or in the case of a generic type instance, the definining type of the generic template type.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.TypeHelper.GetField(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName)">

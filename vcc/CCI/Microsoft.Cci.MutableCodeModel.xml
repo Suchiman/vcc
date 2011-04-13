@@ -9773,9 +9773,19 @@
             Rewrites the children of the given addressable expression.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.RewriteChildren(Microsoft.Cci.MutableCodeModel.BlockStatement)">
+            <summary>
+            Rewrites the children of the given statement block.
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.RewriteChildren(Microsoft.Cci.MutableCodeModel.BoundExpression)">
             <summary>
             Rewrites the children of the given bound expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.Rewrite(Microsoft.Cci.ILocalDeclarationStatement)">
+            <summary>
+            Rewrites the children of the given local declaration statement.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.RewriteChildren(Microsoft.Cci.MutableCodeModel.TargetExpression)">
