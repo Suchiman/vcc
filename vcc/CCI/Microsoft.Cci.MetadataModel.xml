@@ -326,8 +326,15 @@
         <member name="M:Microsoft.Cci.IReference.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDefinition. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
+            of the object implementing IReference. The dispatch method does nothing else.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
+            of the object implementing IReference, which is not derived from IDefinition. For example an object implemeting IArrayType will
+            call visitor.Visit(IArrayTypeReference) and not visitor.Visit(IArrayType).
+            The dispatch method does nothing else.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IReference.Attributes">
@@ -539,11 +546,6 @@
             Contains a specialized Visit routine for each standard type of object defined in this object model. 
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IAliasForType)">
-            <summary>
-            Performs some computation with the alias for type.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IArrayTypeReference)">
             <summary>
             Performs some computation with the given array type reference.
@@ -632,6 +634,16 @@
         <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IGenericTypeParameterReference)">
             <summary>
             Performs some computation with the given generic type parameter reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.ILocalDefinition)">
+            <summary>
+            Performs some computation with the given local definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.VisitReference(Microsoft.Cci.ILocalDefinition)">
+            <summary>
+            Performs some computation with the given local definition.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IManagedPointerTypeReference)">
@@ -749,7 +761,23 @@
             Performs some computation with the given nested unit set namespace.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IOperation)">
+            <summary>
+            Performs some computation with the given IL operation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IOperationExceptionInformation)">
+            <summary>
+            Performs some computation with the given IL operation exception information instance.
+            </summary>
+            <param name="operationExceptionInformation"></param>
+        </member>
         <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IParameterDefinition)">
+            <summary>
+            Performs some computation with the given parameter definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.VisitReference(Microsoft.Cci.IParameterDefinition)">
             <summary>
             Performs some computation with the given parameter definition.
             </summary>
@@ -757,6 +785,11 @@
         <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IParameterTypeInformation)">
             <summary>
             Performs some computation with the given parameter type information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IPlatformInvokeInformation)">
+            <summary>
+            Performs some compuation with the given platoform invoke information.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IPointerTypeReference)">
@@ -794,6 +827,46 @@
             Performs some computation with the given security attribute.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.ISpecializedEventDefinition)">
+            <summary>
+            Performs some computation with the given specialized event definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.ISpecializedFieldDefinition)">
+            <summary>
+            Performs some computation with the given specialized field definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.ISpecializedFieldReference)">
+            <summary>
+            Performs some computation with the given specialized field reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.ISpecializedMethodDefinition)">
+            <summary>
+            Performs some computation with the given specialized method definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.ISpecializedMethodReference)">
+            <summary>
+            Performs some computation with the given specialized method reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.ISpecializedPropertyDefinition)">
+            <summary>
+            Performs some computation with the given specialized propperty definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.ISpecializedNestedTypeDefinition)">
+            <summary>
+            Performs some computation with the given specialized nested type definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.ISpecializedNestedTypeReference)">
+            <summary>
+            Performs some computation with the given specialized nested type reference.
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.IMetadataVisitor.Visit(Microsoft.Cci.IUnitSet)">
             <summary>
             Performs some computation with the given unit set.
@@ -806,12 +879,14 @@
         </member>
         <member name="T:Microsoft.Cci.IAliasForType">
             <summary>
-            Alias type to represent exported types and typedef.
+            Alias types represent exported and forwarded types, and correspond to entries in the Exported Type table in the ECMA-335 metadata format.
+            An exported type is an alias for a type defined a member module of the assembly containing the type table, whereas a forwarded type
+            is an alias for a type defined in another assembly.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IAliasForType.AliasedType">
             <summary>
-            Type reference of the type for which this is the alias
+            A reference to the type for which this is an alias.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IAliasForType.Members">
@@ -929,6 +1004,20 @@
         <member name="M:Microsoft.Cci.IModule.GetAllTypes">
             <summary>
             Returns all of the types defined in the current module. These are always named types, in other words: INamespaceTypeDefinition or INestedTypeDefinition instances.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IModule.GetTypeReferences">
+            <summary>
+            Returns zero or more type references used in the module. If the module is produced by reading in a CLR PE file, then this will be the contents
+            of the type reference table. If the module is produced some other way, the method may return an empty enumeration or an enumeration that is a
+            subset of the type references actually used in the module. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IModule.GetTypeMemberReferences">
+            <summary>
+            Returns zero or more type member references used in the module. If the module is produced by reading in a CLR PE file, then this will be the contents
+            of the member reference table (which only contains entries for fields and methods). If the module is produced some other way, 
+            the method may return an empty enumeration or an enumeration that is a subset of the member references actually used in the module. 
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IModule.AssemblyReferences">
@@ -1110,6 +1199,12 @@
         <member name="P:Microsoft.Cci.IAssemblyReference.IsRetargetable">
             <summary>
             True if the implementation of the referenced assembly used at runtime is not expected to match the version seen at compile time.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.IAssemblyReference.ContainsForeignTypes">
+            <summary>
+            True if the referenced assembly contains types that describe objects that are neither COM objects nor objects that are managed by the CLR.
+            Instances of such types are created and managed by another runtime and are accessed by CLR objects via some form of interoperation mechanism.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IAssemblyReference.PublicKeyToken">
@@ -1495,7 +1590,10 @@
         </member>
         <member name="P:Microsoft.Cci.ITypeReference.AliasForType">
             <summary>
-            Gives the alias for the type
+            If this type reference can be resolved and it resolves to a type alias, the resolution continues on
+            to resolve the reference to the aliased type. This property provides a way to discover how that resolution
+            proceeded, by exposing the alias concerned. Think of this as a version of ResolvedType that does not
+            traverse aliases.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.ITypeReference.InternedKey">
@@ -1506,20 +1604,52 @@
         </member>
         <member name="P:Microsoft.Cci.ITypeReference.IsAlias">
             <summary>
-            Indicates if this type reference resolved to an alias rather than a type
+            True if this reference can be resolved and it resolves to a type alias. The type alias can be retrieved
+            via the AliasForType property. The value of this.ResolvedType will be this.AliasForType.AliasedType.ResolvedType.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.ITypeReference.IsEnum">
             <summary>
             True if the type is an enumeration (it extends System.Enum and is sealed). Corresponds to C# enum.
+            A type reference may report this value as false, even though the referenced type definition reports it as true.
+            However, any type reference used in a custom attribute must report the correct value for this property or the
+            resulting metadata would be invalid.
+            Important, do not cache this property. Its value may change from false to true (but not the other way round) in some situations.
+            To be on the safe side, resolve all type references whenever possible.
             </summary>
+            <remarks>
+            Metadata readers have trouble with this property because an ITypeReference instance is a model for the TypeRef table in the ECMA-335 metadata format.
+            Unfortunately, a TypeRef table entry does not distinguish between enum types and other types. The distinction is made in some signatures that
+            include TypeRef tokens. A more accurate model of the metadata format would encode the information obtained from those signatures in a separate property of
+            the object containing the type reference, or would introduce a new kind of type reference such as INamespaceEnumTypeReference and INestedEnumTypeReference.
+            However, for historical/usability reasons this object model oversimplifies the situation by pretending that all type references can tell if they refer to enum types
+            or not. When consuming metadata, a type reference starts off with the value being false, but may change it to true as soon as it is token is encountered
+            in a signature that indicates that is is an enum type. In practise this means that a type reference encountered in a part of the object model where it is
+            important to know if the referenced type is an enum type, will get the right value from this property. However, if the value of this property is cached
+            as soon as it is encountered for the first time, the wrong value may get cached.
+            </remarks>
         </member>
         <member name="P:Microsoft.Cci.ITypeReference.IsValueType">
             <summary>
             True if the type is a value type. 
             Value types are sealed and extend System.ValueType or System.Enum.
             A type parameter for which MustBeValueType (the struct constraint in C#) is true also returns true for this property.
+            A type reference may report this value as false, even though the referenced type definition reports it as true.
+            However, any type reference used in an IL instruction other than ldtoken (used for the C# typeof expression) must report the correct value.
+            Important, do not cache this property. Its value may change from false to true (but not the other way round) in some situations.
+            To be on the safe side, resolve all type references whenever possible.
             </summary>
+            <remarks>
+            Metadata readers have trouble with this property because an ITypeReference instance is a model for the TypeRef table in the ECMA-335 metadata format.
+            Unfortunately, a TypeRef table entry does not distinguish between value types and reference types. The distinction is made in some signatures that
+            include TypeRef tokens. A more accurate model of the metadata format would encode the information obtained from those signatures in a separate property of
+            the object containing the type reference, or would introduce a new kind of type reference such as INamespaceValueTypeReference and INestedValueTypeReference.
+            However, for historical/usability reasons this object model oversimplifies the situation by pretending that all type references can tell if they refer to value types
+            or not. When consuming metadata, a type reference starts off with the value being false, but may change it to true as soon as it is token is encountered
+            in a signature that indicates that is is a value type. In practise this means that a type reference encountered in a part of the object model where it is
+            important to know if the referenced type is a value type, will get the right value from this property. However, if the value of this property is cached
+            as soon as it is encountered for the first time, the wrong value may get cached.
+            </remarks>
         </member>
         <member name="P:Microsoft.Cci.ITypeReference.PlatformType">
             <summary>
@@ -1529,8 +1659,12 @@
         <member name="P:Microsoft.Cci.ITypeReference.ResolvedType">
             <summary>
             The type definition being referred to.
-            In case this type was alias, this is also the type of the aliased type
+            In case the reference is to an alias, then this is resolved type of the alias, which
+            could have a different InternedKey from this reference.
             </summary>
+            <remarks>
+            If this.IsAlias then this.ResolvedType == this.AliasForType.AliasedType.ResolvedType.
+            </remarks>
         </member>
         <member name="P:Microsoft.Cci.ITypeReference.TypeCode">
             <summary>
@@ -1997,7 +2131,13 @@
         <member name="P:Microsoft.Cci.IMethodDefinition.Body">
             <summary>
             A container for a list of IL instructions providing the implementation (if any) of this method.
+            Note that each call to this property may result in a different object instance. All instances
+            produced by this property will identical in content.
             </summary>
+            <remarks>Since the bulk of the memory consumed by a metadata model is usually consumed by method bodies, the
+            object model used by the metadata reader does not cache method bodies, but produces them anew for every call.
+            If consumers do not hold on the bodies for long, the bodies can be garbage collected and the working set memory used by
+            the object model will be considerably reduced.</remarks>
         </member>
         <member name="P:Microsoft.Cci.IMethodDefinition.GenericParameters">
             <summary>
@@ -2162,6 +2302,11 @@
             Specifies how the return value is marshalled when the method is called from unmanaged code.
             </summary>
         </member>
+        <member name="P:Microsoft.Cci.IMethodDefinition.ReturnValueName">
+            <summary>
+            The name of the parameter to which the return value is marshalled. Returns Dummy.Name if the name has not been specified.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.IMethodDefinition.SecurityAttributes">
             <summary>
             Declarative security actions for this method.
@@ -2212,6 +2357,7 @@
         <member name="P:Microsoft.Cci.IMetadataNamedArgument.ResolvedDefinition">
             <summary>
             Returns either null or the parameter or property or field that corresponds to this argument.
+            Obsolete, please do not use.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.INamespaceTypeDefinition">
@@ -2249,6 +2395,26 @@
             The namespace type this reference resolves to.
             </summary>
         </member>
+        <member name="P:Microsoft.Cci.INamespaceTypeReference.KeepDistinctFromDefinition">
+            <summary>
+            True if this reference should be kept distinct from the definition it refers to. That is, when copied or persisted,
+            this object should not be unified with the referenced type, even if the referenced type is defined in the same
+            module as the reference to the type.
+            </summary>
+            <remarks>
+            This is a somewhat strange property and there is no corresponding bit in the metadata. It serves to
+            constrain the way in which metadata is persisted in order to enable a particular implementation technique for
+            substituting one type for another at runtime. This bit needs to be set only if there is a need to exploit this
+            implementation technique. Metadata readers will set it whenever they encounter a distinct reference (a TypeRef token)
+            when the definition (a TypeDef token) could have been used instead. Metadata writers will not substitute
+            TypeDef tokens when they persist references with this property set to true.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Cci.INamespaceTypeDefinition.AttributesFor(Microsoft.Cci.ITypeReference)">
+            <summary>
+            Returns a potentially empty enumeration of custom attributes that describe how this type implements the given interface.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.INamespaceTypeDefinition.GenericParameterCount">
             <summary>
             The number of generic parameters. Zero if the type is not generic.
@@ -2262,6 +2428,11 @@
         <member name="P:Microsoft.Cci.INamespaceTypeDefinition.IsPublic">
             <summary>
             True if the type can be accessed from other assemblies.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.INamespaceTypeDefinition.IsForeignObject">
+            <summary>
+            True if objects of this type are neither COM objects nor native to the CLR and are accessed via some kind of interoperation mechanism.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.INameTable">
@@ -3161,9 +3332,9 @@
             System.Runtime.CompilerServices.ExtensionAttribute
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.IPlatformType.SystemRuntimeCompilerServicesFriendAccessAllowedAttribute">
+        <member name="P:Microsoft.Cci.IPlatformType.SystemRuntimeCompilerServicesInternalsVisibleToAttribute">
             <summary>
-            System.Runtime.CompilerServices.FriendAccessAllowedAttribute
+            System.Runtime.CompilerServices.InternalsVisibleToAttribute
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IPlatformType.SystemRuntimeCompilerServicesIsConst">
@@ -3199,6 +3370,11 @@
         <member name="P:Microsoft.Cci.IPlatformType.SystemSecuritySecuritySafeCriticalAttribute">
             <summary>
             System.Security.SecuritySafeCriticalAttribute
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.IPlatformType.SystemSecuritySuppressUnmanagedCodeSecurityAttribute">
+            <summary>
+            System.Security.SuppressUnmanagedCodeSecurityAttribute
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IPlatformType.SystemString">
@@ -3481,24 +3657,14 @@
             An argument string (cookie) passed to the custom marshaller at run time.
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.IMarshallingInformation.ElementSize">
-            <summary>
-            The size of an element of the fixed sized umanaged array.
-            </summary>
-        </member>
-        <member name="P:Microsoft.Cci.IMarshallingInformation.ElementSizeMultiplier">
-            <summary>
-            A multiplier that must be applied to the value of the parameter specified by ParamIndex in order to work out the total size of the unmanaged array.
-            </summary>
-        </member>
         <member name="P:Microsoft.Cci.IMarshallingInformation.ElementType">
             <summary>
-            The unmanged element type of the unmanaged array.
+            The unmanaged element type of the unmanaged array.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IMarshallingInformation.IidParameterIndex">
             <summary>
-            Specifies the index of the parameter that contains the value of the Inteface Identifier (IID) of the marshalled object.
+            Specifies the index of the parameter that contains the value of the Interface Identifier (IID) of the marshalled object.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IMarshallingInformation.UnmanagedType">

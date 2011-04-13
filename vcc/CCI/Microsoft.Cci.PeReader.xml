@@ -28,13 +28,6 @@
             or it is a nested namespace that is directly of indirectly nested in the root namespace.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MetadataReader.ObjectModelImplementation.GenericTypeInstanceMember.Dispatch(Microsoft.Cci.IMetadataVisitor)">
-            <summary>
-            Calls the visitor.Visit(T) method where T is the most derived object model node interface type implemented by the concrete type
-            of the object implementing IDoubleDispatcher. The dispatch method does not invoke Dispatch on any child objects. If child traversal
-            is desired, the implementations of the Visit methods should do the subsequent dispatching.
-            </summary>
-        </member>
         <member name="T:Microsoft.Cci.MetadataReader.MethodBodyDocument">
             <summary>
             
