@@ -385,7 +385,7 @@ module Rules =
     addGhostFieldRule "owns"    "\\owns"
     addGhostFieldRule "owner"   "\\owner"
     addGhostFieldRule "typed"   "\\valid"
-    addGhostFieldRule "closed"  "\\consistent"
+    addGhostFieldRule "closed"  "\\closed"
     addGhostFieldRule "ref_cnt" "\\claim_count"
 
     let result_rule ctx = function
