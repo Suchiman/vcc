@@ -140,13 +140,14 @@ _(template<typename T> T \at(\state, T expr);)
 _(\state \now();)
 _(logic template<typename T> T \by_claim(\claim c, T expr) = \at(\by_claim_wrapper(c), expr);)
 _(logic template<typename T> T \when_claimed(T expr) = \at(\when_claimed_marker(), expr);)
-_(logic bool \on_unwrap(\object o, bool expr) = \old(o->\consistent) && !o->\consistent ==> expr;)
+_(logic bool \on_unwrap(\object o, bool expr) = \old(o->\closed) && !o->\closed ==> expr;)
 
 // built-in fields
 
 _(struct \TypeState {
   _(ghost \integer \claim_count;)
   _(ghost bool \consistent;)
+  _(ghost bool \closed;)
   _(ghost \objset \owns;)
   _(ghost \object \owner;)
   _(ghost bool \valid;)
