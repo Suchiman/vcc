@@ -112,11 +112,7 @@ When you do not write any heap location in the loop (which has been
 the case in all examples so far), VCC will automatically infer
 an empty writes clause.
 Otherwise, it will take the writes clause that is specified on
-the function.%
-\footnote{This gets a bit more complicated when objects
-change ownership. 
-\itodo{maybe it shouldn't get more complicated? --MM}
-When in doubt always use explicit writes clauses on loops.}
+the function.
 So by default, the loop is allowed to write everything that the function
 can.
 Let's see an example of such implicit writes clause,

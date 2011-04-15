@@ -1609,6 +1609,11 @@ namespace Microsoft.Research.Vcc
             | C.Expr.Loop (comm, invs, writes, variants, s) ->
               let (save, oldState) = saveState "loop"
               let env = { env with OldState = oldState }
+              let writes =
+                match writes, env.Writes with
+                  | [], fst :: rest when vcc3 ->
+                    fst.WithCommon ({ comm with Type = fst.Type }) :: rest
+                  | x, _ -> x
               let (bump, wrCheck, env) =
                 match writes with
                   | [] -> ([], [], env)
