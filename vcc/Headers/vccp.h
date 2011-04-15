@@ -197,22 +197,29 @@ _(void _vcc_atomic_op(\object, ...);)
 
 // 'Built-in' spec macros and logic definitions
 
-_(bool \macro_maintains(bool cond) _(requires cond) _(ensures cond);)
+_(bool \macro_maintains(bool cond)
+  _(requires cond)
+  _(ensures cond))
 
 _(bool \macro_always(\claim c, bool cond)
   _(requires \wrapped(c) && \active_claim(c) && \claims(c, cond))
-  _(ensures \wrapped(c) && \active_claim(c));)
+  _(ensures \wrapped(c) && \active_claim(c)))
+
+_(bool \macro_updates(\object o)
+  _(requires \wrapped(o))
+  _(ensures \wrapped(o))
+  _(writes o))
 
 _(bool \macro_out_param(\object p)
   _(writes p)
   _(requires \mutable(p))
-  _(ensures \mutable(p)); )
+  _(ensures \mutable(p)))
 
 _(template<typename T> bool \result_macro_returns(T res, T expr)
-  _(ensures res == expr);)
+  _(ensures res == expr))
 
-_(logic bool \wrapped0(\object o) = \wrapped(o) && o->\claim_count == 0;)
-_(logic template<typename T> bool \unchanged(T expr) = \old(expr) == expr;)
+_(logic bool \wrapped0(\object o) = \wrapped(o) && o->\claim_count == 0)
+_(logic template<typename T> bool \unchanged(T expr) = \old(expr) == expr)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
