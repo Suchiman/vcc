@@ -344,6 +344,18 @@ Let's have a look at an example, which does perform an ownership transfer:
 The \vcc{sc_set()} function transfers ownership of \vcc{s} to \vcc{c},
 and additionally leaves object initially pointed to by \vcc{s->strings[idx]}
 wrapped, \ie owned by the current thread.
+\begin{note}
+\todo{We should have entire section about BVD. --MM}
+VCC needs a help in form of an assertion statement at the beginning:
+\vcc{sc_set} gets a wrapped \vcc{c} and \vcc{s}, so it cannot be the
+case that \vcc{c} owns \vcc{s}. This is what the assertion says.
+Without spelling it out explicitly, VCC thinks that \vcc{s} might be 
+somewhere in the \vcc{strings} array beforehand, and
+thus after inserting it at \vcc{idx} the distinctness invariant could be violated.
+If you look at the error model in that case, you can
+see that VCC knows nothing about the truth value of \vcc{s \in c->\owns},
+and thus adding an explicit assertion about it helps.
+\end{note}
 Moreover, it promises that this object is \Def{fresh}, \ie the thread did not own
 it directly before.
 This can be used at a call site:
