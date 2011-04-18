@@ -1,0 +1,171 @@
+#include <vcc.h>
+
+struct A {
+  int x;
+  int y;
+
+  invariant(this->x > 0 && this->y > 0)
+};
+
+void foo(struct A *a)
+  writes(a)
+  requires(wrapped(a))
+{
+  unwrap(a);
+  a->y = -1;
+  wrap(a);
+}
+`
+Verification of A#adm succeeded.
+Verification of foo failed.
+testcase(16,13) : error VC8014: invariant(__this->y > 0) of A fails on wrap.
+testcase(7,32) : error VC9599: (related information) location of the invariant.
+`
+#include "vcc.h"
+
+struct A {
+  int a;
+  invariant(depends(owner(this), this))
+};
+
+void foo(struct A *a)
+  requires(wrapped(a))
+  writes(a)
+{
+unwrap(a);
+a->a = 7;
+wrap(a);
+}
+`
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+struct T {
+  int a;
+  int b;
+} t;
+
+struct R {
+  int c;
+  int d;
+} r;
+
+
+struct S {
+
+  struct T *t;
+  struct R *r;
+
+  invariant(this->t->a == this->t->b)
+  invariant(this->r->c == this->r->d)
+
+};
+
+void foo(struct S *p) {
+}
+`
+Verification of S#adm failed.
+testcase(19,15) : error VC8012: invariant(__this->t->a == __this->t->b) of S is not admissible.
+testcase(20,15) : error VC8012: invariant(__this->r->c == __this->r->d) of S is not admissible.
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+vcc(atomic_inline) int InterlockedDecrement(volatile int *p) {
+  *p = *p - 1;
+  return *p;
+}
+
+vcc(atomic_inline) int InterlockedExchangeAdd(volatile int *p, int n) {
+  int old = *p;
+  *p = *p + n;
+  return old;
+}
+
+struct A {
+  volatile int x;
+  invariant( x >= 0 )
+  invariant( old(this->x) == this->x || old(this->x) - 1 == this->x )
+};
+
+void fail1(struct A *a claimp(c))
+  always(c, closed(a))
+{
+  atomic(c,a) {
+    assume(a->x > 100);
+    InterlockedExchangeAdd(&a->x, -2);
+  }
+}
+
+void fail2(struct A *a claimp(c))
+  always(c, closed(a))
+{
+  atomic(c,a) {
+    InterlockedDecrement(&a->x);
+  }
+}
+`
+Verification of A#adm succeeded.
+Verification of fail1 failed.
+testcase(23,23) : error VC8524: Assertion 'chunk __old(__this->x) == __this->x || __old(__this->x) - 1 == __this->x of invariant of a holds after atomic' did not verify.
+Verification of fail2 failed.
+testcase(32,23) : error VC8524: Assertion 'chunk x >= 0 of invariant of a holds after atomic' did not verify.
+`
+#include <vcc2test.h>
+
+struct CannotClose {
+  int y;
+  invariant(!old(closed(this)) && closed(this) ==> 0)
+};
+
+struct CannotOpen {
+  int y;
+  on_unwrap(0)
+};
+
+struct CannotOpenShouldFail {
+  int y;
+  invariant(y < 2 ==> old(closed(this)) && !closed(this) ==> 0)
+};
+  
+void foo()
+{
+  struct CannotClose x;
+  wrap(&x);
+}
+
+void ok2()
+{
+  struct CannotOpen *x = (struct CannotOpen *)malloc(sizeof(struct CannotOpen));
+  if (x != NULL) wrap(x);
+}
+
+void bar(struct CannotOpen *x)
+  requires(wrapped(x))
+  writes(x)
+{
+  unwrap(x);
+}
+
+void bar_2(struct CannotOpenShouldFail *x)
+  requires(wrapped(x))
+  writes(x)
+{
+  unwrap(x);
+}
+`
+Verification of CannotClose#adm succeeded.
+Verification of CannotOpen#adm succeeded.
+Verification of CannotOpenShouldFail#adm failed.
+testcase(15,15) : error VC8018: invariant(y < 2 ==> __old(_vcc_closed(__this)) && !_vcc_closed(__this) ==> 0) of CannotOpenShouldFail forbids unwrapping.
+Verification of foo failed.
+testcase(21,13) : error VC8014: invariant(!__old(_vcc_closed(__this)) && _vcc_closed(__this) ==> 0) of CannotClose fails on wrap.
+testcase(5,15) : error VC9599: (related information) location of the invariant.
+Verification of ok2 succeeded.
+Verification of bar failed.
+testcase(34,15) : error VC8015: invariant(__old(_vcc_closed(__this)) && !_vcc_closed(__this) ==> (0)) of CannotOpen fails on unwrap.
+testcase(10,15) : error VC9599: (related information) location of the invariant.
+Verification of bar_2 succeeded.
+`

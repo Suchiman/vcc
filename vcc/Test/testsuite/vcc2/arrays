@@ -1,0 +1,968 @@
+#include "vcc2test.h"
+
+void setk2(int *p, size_t sz)
+  requires(is_thread_local_array(p, sz))
+  writes(array_range(p, sz))
+{
+  size_t i;
+
+  i = 0;
+  while (i < sz) 
+    writes(array_range(p, sz))
+    invariant (i >= 0)
+  {
+    p[i] = unchecked((int)i);
+    i = i + 1;
+  }
+}
+
+int sumup(int *p, size_t sz)
+  requires(is_thread_local_array(p, sz))
+{
+  size_t i;
+  int sum;
+
+  sum = 0;
+  i = 0;
+  while (i < sz) 
+    invariant (i >= 0)
+  {
+    sum = unchecked(sum + p[i]);
+    i = i + 1;
+  }
+
+  return sum;
+}
+
+void setk(int *p, size_t sz)
+  requires(is_thread_local_array(p, sz))
+  writes(array_range(p, sz))
+{
+  size_t i;
+
+  i = 0;
+  while (i < sz) 
+    // writes inherited from the function
+    invariant (i >= 0)
+  {
+    p[i] = unchecked((int)i);
+    i = i + 1;
+  }
+}
+
+void setk3(int *p, size_t sz)
+  requires(is_thread_local_array(p, sz))
+  writes(array_range(p, sz))
+  requires(sz > 0)
+{
+  size_t i;
+
+  i = 0;
+  while (i < sz - 1) 
+    writes(array_range(p, sz - 1))
+    invariant (i >= 0)
+  {
+    p[i] = unchecked((int)i);
+    i = i + 1;
+  }
+}
+
+void setk4(int *p, size_t sz, int **q)
+  requires(is_thread_local_array(p, sz) && typed(q) && mutable(q))
+  writes(array_range(p, sz), q)
+  requires(sz > 0)
+{
+  size_t i;
+
+  *q = (int*)NULL;
+
+  i = 0;
+  while (i < sz - 1) 
+    writes(array_range(p, sz - 1))
+    invariant (i >= 0)
+  {
+    p[i] = unchecked((int)i);
+    i = i + 1;
+  }
+
+  assert(*q == NULL);
+}
+
+int foo()
+{
+  int *a;
+  
+  a = (int*)malloc(sizeof(int) * 10);
+  if ( a != 0 ) {
+    a[3] = 12;
+    return unchecked(a[0] + a[1]);
+  }
+  return 0;
+}
+
+spec(
+int fooSafe()
+{
+  int ^a; 
+  a = spec_malloc_array<int>(10);
+  a[3] = 12;
+  return unchecked(a[0] + a[1]);
+}
+)
+`
+Verification of setk2 succeeded.
+Verification of sumup succeeded.
+Verification of setk succeeded.
+Verification of setk3 succeeded.
+Verification of setk4 succeeded.
+Verification of foo succeeded.
+Verification of fooSafe succeeded.
+`
+#include "vcc2test.h"
+
+struct A {
+  int x;
+  int y[10];
+
+  invariant (typed(this) && this->x > 0)
+};
+
+void baz(struct A*a)
+  requires(wrapped(a))
+  ensures(wrapped(a))
+  writes(a)
+{
+  unwrap(a);
+  a->x = 12;
+  a->y[9] = 78;
+  wrap(a);
+}
+
+
+void bar(struct A*a)
+  requires(mutable(a))
+  writes(full_extent(a))
+{
+  a->y[0] = 3;
+  a->y[9] = 3;
+  a->x = 12;
+  a->y[-1] = 3;
+}
+
+void foo()
+{
+  struct A *a;
+  int *tmp;
+  int q;
+
+  a = malloc(sizeof(struct A));
+  if (a != NULL) {
+    a->x = 12;
+    tmp = a->y;
+    q = a->y[3];
+  }
+}
+
+spec(
+void fooSafe()
+{
+  struct A ^a;
+  int ^tmp;
+  int q;
+
+  a = spec_malloc<struct A>();
+  a->x = 12;
+  tmp = &a->y[0];
+  q = a->y[3];
+}
+)
+`
+Verification of A#adm succeeded.
+Verification of baz succeeded.
+Verification of bar succeeded.
+Verification of foo succeeded.
+Verification of fooSafe succeeded.
+`
+#include "vcc2test.h"
+
+struct A {
+  int x[100];
+};
+
+void donothing()
+{
+}
+
+spec(void donothingSpec() { })
+
+void set0(int *arr, size_t sz)
+  requires(is_mutable_array(arr, sz))
+  ensures(is_mutable_array(arr, sz))
+  writes(array_range(arr, sz))
+{
+  size_t i;
+  i = 0;
+  while (i < sz) 
+    invariant(is_mutable_array(arr, sz))
+  {
+    donothing();
+    arr[i] = 0;
+    donothing();
+    i = i + 1;
+    donothing();
+  }
+}
+
+spec(void set0Spec(int ^arr, size_t sz)
+  requires(is_mutable_array(arr, sz))
+  ensures(is_mutable_array(arr, sz))
+  writes(array_range(arr, sz))
+{
+  size_t i;
+  i = 0;
+  while (i < sz) 
+    invariant(is_mutable_array(arr, sz))
+  {
+    donothingSpec();
+    arr[i] = 0;
+    donothingSpec();
+    i = i + 1;
+    donothingSpec();
+  }
+})
+
+void usex()
+{
+  struct A *a;
+
+  a = malloc(sizeof(struct A));
+  if (a != NULL) free(a);
+}
+
+spec(
+void usexSafe()
+{
+  struct A ^a;
+
+  a = spec_malloc<struct A>();
+  free(a);
+}
+)
+
+void use1()
+{
+  struct A *a;
+
+  a = malloc(sizeof(struct A));
+  if (a != NULL) {
+    donothing();
+    set0(a->x, 100);
+    donothing();
+    set0(&a->x[10], 90);
+    donothing();
+    set0(a->x, 50);
+    donothing();
+
+    free(a);
+  }
+}
+
+spec(
+void use1Safe()
+{
+  struct A ^a;
+
+  a = spec_malloc<struct A>();
+  donothingSpec();
+  set0Spec(&a->x[0], 100);
+  donothingSpec();
+  set0Spec(&a->x[10], 90);
+  donothingSpec();
+  set0Spec(&a->x[0], 50);
+  donothingSpec();
+  free(a);
+}
+)
+
+/*
+This one randomly runs out of memory. I have no idea why.
+
+void use2()
+{
+  int *x;
+
+  x = malloc(sizeof(int) * 100);
+
+  donothing();
+  set0(x, 100);
+  donothing();
+  set0(x, 50);
+  donothing();
+  set0(&x[10], 90);
+  donothing();
+
+  free(as_array(x, 100));
+}
+*/
+`
+Verification of donothing succeeded.
+Verification of donothingSpec succeeded.
+Verification of set0 succeeded.
+Verification of set0Spec succeeded.
+Verification of usex succeeded.
+Verification of usexSafe succeeded.
+Verification of use1 succeeded.
+Verification of use1Safe succeeded.
+`
+#include "vcc.h"
+
+struct A {
+  unsigned size;
+  int *arr;
+  invariant(keeps(as_array(this->arr, this->size)))
+  invariant(this->size > 0 && this->arr[0] > 0)
+};
+
+void foo(struct A *a)
+{
+}
+`
+Verification of A#adm succeeded.
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+void donothing();
+
+void swap(int *a, int *b, unsigned long width)
+writes(array_range(a,width),array_range(b,width))
+maintains(is_mutable_array(a,width))
+maintains(is_mutable_array(b,width))
+requires(a == b || set_disjoint(array_range(a,width),array_range(b,width)))
+ensures(forall(unsigned long i; i < width; a[i] == old(b[i]) && b[i] == old(a[i])))
+{
+    int tmp;
+    spec(unsigned long idx =0, width0 = width;)
+    spec(int *a0 = a, *b0 = b;)
+
+
+    if ( a!=b )
+        while ( unchecked(width--) )
+	    invariant(is_mutable_array(a0,width0))
+            invariant(is_mutable_array(b0,width0))
+
+            invariant(width+idx == width0)
+            invariant(a == a0 + idx && b == b0 + idx)
+
+            invariant(forall(unsigned long i; 0 <= i && i < idx; a0[i] == old(b0[i]) && b0[i] == old(a0[i])))
+            invariant(forall(unsigned long i; idx <= i && i < width0; a0[i] == old(a0[i]) && b0[i] == old(b0[i])))
+        {
+	    donothing();
+            tmp = *a;
+            *a++ = *b;
+            *b++ = tmp;
+            spec(idx++;)
+        }
+}
+`
+Verification of swap succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned __int64 uint64;
+
+struct DESC {
+ int c;
+ uint64   R[16];
+ uint64   GPR[16];
+ invariant(forall(uint64 i; i < 16 ==> this->R[i] == this->GPR[i]))
+};
+
+`
+Verification of DESC#adm succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned __int64 uint64;
+struct CONC {
+    int a;
+    uint64   GPR[16];
+    uint64   RIP;
+ uint64  DebugR[8];
+};
+typedef struct X64_Core{
+    uint64   R[16];     // general-purpose registers
+    uint64   RIP;       // instruction pointer
+ uint64  DR[8];  // debug registers
+} X64_Core;
+struct ABS {
+    int a;
+ int c;
+ struct X64_Core core;
+ invariant(keeps(&this->core))
+};
+struct DESC {
+ int c;
+ struct CONC *conc;
+ spec(struct ABS abs;)
+ invariant(keeps(this->conc, &this->abs))
+ invariant(AbsConcRel(&this->abs,this->conc))
+ invariant(this->c == this->abs.c)
+};
+ 
+spec(ispure
+bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
+ reads(abs, conc)
+ returns(abs->a == conc->a &&
+      abs->core.RIP == conc->RIP &&
+   forall(uint64 i; i < 16 ==> abs->core.R[i] == conc->GPR[i]) &&
+   forall(uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i])
+   );
+)
+`
+Verification of ABS#adm succeeded.
+Verification of DESC#adm succeeded.
+Verification of AbsConcRel#reads succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned __int64 uint64;
+struct CONC {
+    int a;
+    uint64   GPR[16];
+    uint64   RIP;
+ uint64  DebugR[8];
+};
+typedef struct X64_Core{
+    uint64   RIP;       // instruction pointer
+    uint64   R[16];     // general-purpose registers
+ uint64  DR[8];  // debug registers
+} X64_Core;
+struct ABS {
+    int a;
+ int c;
+ struct X64_Core core;
+ invariant(keeps(&this->core))
+};
+struct DESC {
+ int c;
+ struct CONC *conc;
+ spec(struct ABS abs;)
+ invariant(keeps(this->conc, &this->abs))
+ invariant(AbsConcRel(&this->abs,this->conc))
+ invariant(this->c == this->abs.c)
+};
+ 
+spec(
+no_reads_check
+ispure bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
+ reads(abs, conc)
+ returns(abs->a == conc->a &&
+      abs->core.RIP == conc->RIP &&
+   forall(uint64 i; i <= 16 ==> abs->core.R[i] == conc->GPR[i]) &&
+   forall(uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i])
+   );
+)
+`
+Verification of ABS#adm succeeded.
+Verification of DESC#adm failed.
+testcase(26,14) : error VC8012: invariant(AbsConcRel(&__this->abs,__this->conc)) of DESC is not admissible.
+`
+#include "vcc.h"
+ 
+typedef unsigned __int64 uint64;
+
+typedef struct SubDESC {
+	uint64 a;
+	uint64 b;
+} SubDESC;
+ 
+struct vcc(dynamic_owns) DESC {
+ SubDESC   AbsArray[6];
+ invariant(forall(uint64 i; i < 6 ==> set_in(&AbsArray[i], owns(this))))
+};
+
+void SetDescAbsArrayFail(struct DESC *desc, uint64 index, uint64 Value)
+    maintains(wrapped(desc))
+	writes(desc)
+    requires(index < 6)
+	ensures(desc->AbsArray[index].a == Value)
+{ 
+	unwrap(desc);
+	unwrap(&desc->AbsArray[index]); // this unwrap produces inconsistency
+	assert(false);
+	desc->AbsArray[index].a = Value;
+	wrap(&desc->AbsArray[index]);
+	wrap(desc);
+}
+
+void SetDescAbsArray(struct DESC *desc, uint64 index, uint64 Value)
+    maintains(wrapped(desc))
+	writes(desc)
+    requires(index < 6)
+	ensures(desc->AbsArray[index].a == Value)
+{ 
+	unwrap(desc);
+	unwrap(&desc->AbsArray[index]); // this unwrap produces inconsistency
+	desc->AbsArray[index].a = Value;
+	wrap(&desc->AbsArray[index]);
+	wrap(desc);
+}
+`
+Verification of DESC#adm succeeded.
+Verification of SetDescAbsArrayFail failed.
+testcase(23,11) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of SetDescAbsArray succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned __int64 uint64;
+
+struct DESC {
+	spec(uint64   R[16];)
+	uint64        GPR[16];
+	invariant(forall(uint64 i; i < 16 ==> R[i] == GPR[i]))
+};
+
+void SetConcGpr(struct DESC *desc, uint64 index, uint64 Value)
+	maintains(wrapped(desc))
+    writes(desc)
+	requires(0 <= index)
+	requires(index < 16)
+    ensures(desc->R[index] == Value)
+{
+	unwrap(desc);
+	desc->GPR[index] = Value;
+	spec(desc->R[index] = Value;);
+	wrap(desc);
+}
+`
+Verification of DESC#adm succeeded.
+Verification of SetConcGpr succeeded.
+`
+
+#include <vcc.h>
+
+#define MAX 100
+
+typedef struct _S 
+{
+    unsigned dummy;
+} S;
+
+
+typedef struct _T
+{
+    S arr[MAX];
+} T;
+
+void foo(T* t)
+  maintains(forall(obj_t p; in_array(p,t->arr,MAX) ==> wrapped(p)))
+  writes(&t->arr[5])
+{
+  unwrap(&t->arr[5]);
+  t->arr[5].dummy = 5;
+  wrap(&t->arr[5]);
+}
+
+void fooShouldFail(T* t)
+  maintains(forall(obj_t p; in_array(p,t->arr,MAX) ==> wrapped(p)))
+  writes(t->arr)
+{
+  unwrap(&t->arr[0]);
+  assert(false);
+}
+`
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(31,12) : error VC9500: Assertion '((bool)0)' did not verify.
+`
+#include "vcc.h"
+
+struct S {
+  volatile int a[2];
+};
+
+void foo(struct S *p claimp(c))
+  always(c, closed(p))
+{
+  atomic(p,c) {
+    p->a[1] = 5;
+  }
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+#define MAX 100
+
+typedef struct _S 
+{
+    unsigned dummy;
+} S;
+
+
+typedef struct _T
+{
+    S arr[MAX];
+} T;
+
+typedef vcc(claimable) struct _Dummy
+{
+   unsigned dummy;
+} Dummy;
+
+spec(ispure ptrset F(obj_t arr, size_t sz); )
+axiom(forall(obj_t arr; size_t sz; obj_t ptr; set_in(ptr, F(arr, sz)) <==> in_array(ptr, arr, sz)));
+
+void foo(T* T, Dummy* d)
+requires(wrapped(d))
+requires(forall(unsigned i; i < MAX ==> wrapped(&T->arr[i])))
+writes(F(T->arr,MAX))
+{
+        atomic(d) {}
+        unwrap(&T->arr[0]);
+        wrap(&T->arr[0]);
+}
+
+
+void bar(T* T, Dummy* d)
+requires(wrapped(d))
+requires(forall(unsigned i; i < MAX ==> wrapped(&T->arr[i])))
+writes(array_members(T->arr,MAX))
+{
+        atomic(d) {}
+        unwrap(&T->arr[0]);
+        wrap(&T->arr[0]);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+
+#include <vcc.h>
+
+struct S {
+  vcc(as_array) int a[10];
+  invariant(keeps(as_array(a,10)))
+};
+
+void foo(struct S *s)
+  writes(extent(s))
+  ensures(wrapped(s))
+{
+  wrap(as_array(s->a,10));
+  wrap(s);
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+#define cnt 64
+
+typedef struct s{
+    int a[cnt];
+}s;
+
+typedef struct m_t{
+    s arr[cnt];
+    int intarr[cnt];
+}m_t;
+
+m_t m;
+
+void foo()
+{
+    s *p;
+    int *j;
+    unsigned __int8 i;
+    i = 5;
+    p = &m.arr[5];
+    j = &m.intarr[i];
+    p = &m.arr[i];
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+#define CONCAT(x,y) x##y
+#define TEST1(x,...) \
+	void CONCAT(test,x) () { \
+		int a[13]; \
+		int b[13]; \
+		assert(__VA_ARGS__); \
+	}
+
+#define TEST(...) TEST1(__COUNTER__,__VA_ARGS__)
+
+spec( ispure bool alwaysTrue(bool x) returns(true); )
+
+
+TEST(a!=b)
+TEST(a + 0 != b)
+TEST(a + 0 != b + 0)
+// good ^ -- bad v
+TEST(forall(unsigned i; i < 13; alwaysTrue(typed(a+i)) && alwaysTrue(typed(b+0)) ==> a + i != b))
+TEST(forall(unsigned i; i < 13; alwaysTrue(typed(a+i)) && alwaysTrue(typed(b+0)) ==> a + i != b + 0))
+TEST(forall(unsigned i, j; i < 13 && j < 13; alwaysTrue(typed(a+i)) && alwaysTrue(typed(b+j)) ==> a + i != b + j))
+TEST(set_disjoint(array_range(a,13), array_range(b,13)))
+`
+Verification of test0 succeeded.
+Verification of test1 succeeded.
+Verification of test2 succeeded.
+Verification of test3 succeeded.
+Verification of test4 succeeded.
+Verification of test5 succeeded.
+Verification of test6 succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned __int8 uint8_t;
+
+struct T { int a[42]; int b; };
+struct Tv { volatile int a[42]; int b; };
+
+void foo(struct T *t) writes(extent(t));
+void fooV(struct Tv *t) writes(extent(t));
+
+void bar(struct T *t) writes(extent(t))
+{
+	foo(t);
+}
+
+void fails(struct T *t)
+	writes(array_range(t,7))
+{
+	// (... but succeeds without array int a[42])
+	foo(t + 0);
+}
+
+void failsV(struct Tv *t)
+	writes(array_range(t,7))
+{
+	// (... but succeeds without array int a[42])
+	fooV(t + 0);
+}
+`
+Verification of bar succeeded.
+Verification of fails succeeded.
+Verification of failsV succeeded.
+`
+#include <vcc.h>
+
+struct S
+{
+  int dummy;
+  spec(mathint a[42];)
+  spec(bool b[10];)
+};
+
+void foo() {
+  struct S s;
+  spec(s.a[0]= 5;)
+  spec(s.a[1] = s.a[0] * 5;)
+  assert(s.a[1] == 25);
+  spec(s.b[0] = false;)
+  spec(s.b[1] = !s.b[0];)
+  assert(s.b[1]);
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned __int8 UINT8;
+typedef unsigned __int64 UINT64;
+
+int ispure Contains(UINT8 a[], UINT64 count, UINT8 elem)
+  reads(array_range(a, count))
+  ensures(result == exists(UINT64 j; 0 <= j && j < count && a[j] == elem));
+
+void writeArray(UINT8 a[], UINT64 count)
+  writes(array_range(a, count));
+
+void foo()
+{
+  UINT8 A[256];
+  UINT64 i;
+  A[0] = 0;
+  assert(Contains(A, 1, 0));
+  writeArray(A+1, 255);
+  assert(Contains(A, 1, 0));
+}
+`
+Verification of foo succeeded.
+Verification of Contains#reads succeeded.
+`
+#include "vcc.h"
+
+struct S {
+  int a[5][7][9];
+};
+
+void foo() {
+  int a[5][7][9];
+  spec(int sa[2][4];)
+  a[1][2][3] = 5;
+  spec(sa[1][2] = 3;)
+  assert(a[1][2][3] == 5);
+  assert(a[0][0][84] == 5);
+} 
+
+void bar(struct S *s)
+  maintains(wrapped(s))
+  writes(s)
+ {
+  expose(s) {
+    s->a[1][2][3] = 5;
+    assert(s->a[1][2][3] == 5);
+    assert(s->a[0][0][84] == 5);
+  }
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+struct S {
+    int a[10];
+};
+
+void foo(struct S *s)
+    requires(typed(s))
+{
+    int *b = s->a+3; // okay for the C compiler
+    assert(s->a+3==&s->a[3]);
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+typedef struct A {
+  int x;
+} A;
+
+void bar(A *p)
+  writes(extent(p))
+  maintains(mutable(p));
+
+void foo(A*p)
+  maintains(is_mutable_array(p,5))
+  writes(array_range(p,5))
+{
+  bar(p+1);
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+void foo()
+{
+  int *p;
+  assume(forall(mathint x; 0 <= x && x < 10 ==> p[x] == 12));
+  assert(forall(mathint x; 0 <= x && x < 10 ==> p[x] == 12));
+}
+
+void bar()
+{
+  int p[];
+  assume(forall(mathint x; 0 <= x && x < 10 ==> p[x] == 12));
+  assert(forall(mathint x; 0 <= x && x < 10 ==> p[x] == 12));
+}
+
+void baz()
+{
+  int p[10] = { 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, };
+  assert(forall(mathint x; 0 <= x && x < 10 ==> p[x] == 12));
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+`
+#include "vcc.h"
+#define array_emb_unchanged(a,n) forall(unsigned _i; _i < (n); unchanged(emb((a)+_i)))
+
+void calc(int a[32], int b[32], int c[32])
+   writes(array_range(a,32))
+   maintains(is_mutable_array(a,32))
+   ensures(array_emb_unchanged(a,32))
+   
+   maintains(is_mutable_array(b,32))
+   ensures(array_emb_unchanged(b,32))
+   
+   maintains(is_mutable_array(c,32))
+   ensures(array_emb_unchanged(c,32))
+{
+}
+
+void longrunner(int a[32])
+   writes(array_range(a,32))
+   maintains(is_mutable_array(a,32))
+   ensures(array_emb_unchanged(a,32))
+{
+   int l1[32];
+   int l2[32];
+   int l3[32];
+   int l4[32];
+   int l5[32];
+   int l6[32];
+   calc(a, l1, l2);
+   calc(l1, l1, l2);
+   calc(l4, l1, l2);
+   calc(l3, a, l6);
+   calc(a, l1, l2);
+   calc(l1, a, l2);
+   calc(a, l5, l6);
+   calc(a, l1, l4);
+   if (a) {
+    int l7[32];
+    calc(a,l7,l7);
+   }
+}
+`
+Verification of calc succeeded.
+Verification of longrunner succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+_(pure, frameaxiom) int foo(int *arr, unsigned int len)
+  _(ensures \result == arr[len-1])
+  _(reads \array_range(arr, len))
+  _(requires len > 0)
+  _(requires \thread_local_array(arr, len))
+{
+  return arr[len-1];
+}
+
+void bar()
+{
+  int a[10];
+  int b[10];
+  int tmp = foo(a, 10);
+  b[5] = 1;
+  _(assert tmp == foo(a, 10))
+ }
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of foo#reads succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+void foo() {
+  unsigned _(as_array) a[2] = { 42, 4711 };
+  _(assert \mutable((unsigned[2]) a))
+}
+`
+Verification of foo succeeded.
+`
