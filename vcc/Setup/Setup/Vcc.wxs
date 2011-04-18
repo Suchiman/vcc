@@ -53,12 +53,6 @@
       </Directory>
     </Directory>
 
-    <DirectoryRef Id="INSTALLLOCATION">
-      <Component Id="VersionFile" Guid="*">
-        <File Source="svn_versions.txt" />
-      </Component>
-    </DirectoryRef>
-
     <DirectoryRef Id="BINDIR" FileSource="$(var.HostDir)">
       <Component Id="VccCommandLine" Guid="8A90C8BD-A5E4-436D-B42B-BD5206AB4B1B">
         <RegistryValue Root ="HKLM" Key="Software\Microsoft Research\Vcc" Name ="vccExecutablePath" Type ="string" Value ="[BINDIR]vcc.exe" />
@@ -332,7 +326,6 @@
 
     <Feature Id="Vcc" Title="Vcc" Level="1" Absent ="disallow" AllowAdvertise ="no">
       <ComponentRef Id="EULA" />
-      <ComponentRef Id="VersionFile" />
       <ComponentRef Id="VccCommandLine" />
       <ComponentRef Id="Boogie" />
       <ComponentRef Id="Z3" />
