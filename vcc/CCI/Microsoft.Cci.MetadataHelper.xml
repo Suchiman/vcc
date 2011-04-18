@@ -958,7 +958,7 @@
             Information that describes a method or property parameter, but does not include all the information in a IParameterDefinition.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.SimpleParameterTypeInformation.#ctor(Microsoft.Cci.ISignature,System.UInt16,Microsoft.Cci.ITypeReference)">
+        <member name="M:Microsoft.Cci.SimpleParameterTypeInformation.#ctor(Microsoft.Cci.ISignature,System.UInt16,Microsoft.Cci.ITypeReference,System.Boolean)">
             <summary>
             Allocates an object with information that describes a method or property parameter, but does not include all the information in a IParameterDefinition.
             </summary>
@@ -974,6 +974,11 @@
         <member name="P:Microsoft.Cci.SimpleParameterTypeInformation.Index">
             <summary>
             The position in the parameter list where the described parameter can be found.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.SimpleParameterTypeInformation.IsByReference">
+            <summary>
+            True if the parameter is passed by reference (using a managed pointer).
             </summary>
         </member>
         <member name="P:Microsoft.Cci.SimpleParameterTypeInformation.Type">

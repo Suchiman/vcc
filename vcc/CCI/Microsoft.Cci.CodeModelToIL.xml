@@ -31,10 +31,80 @@
             <param name="sourceLocationProvider">An object that can map the ILocation objects found in the block of statements to IPrimarySourceLocation objects.  May be null.</param>
             <param name="iteratorLocalCount">A map that indicates how many iterator locals are present in a given block. Only useful for generated MoveNext methods. May be null.</param>
         </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.currentBreakTarget">
+            <summary>
+            A label for the instruction to where a break statement should currently branch to.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.currentContinueTarget">
+            <summary>
+            A label for the instruction to where a continue statement should currently branch to.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.currentTryCatchFinallyEnd">
+            <summary>
+            A label for the first instruction that comes after the current TryCatchFinally statement.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.currentTryCatch">
+            <summary>
+            The TryCatchFinally statement for which IL is currently being generated.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.endOfMethod">
+            <summary>
+            A label for the final (return) instruction in the current method, or the instruction that loads the argument of the final return instruction.
+            If there is no final return intruction, this is location of the instruction following the final instruction (which of course does not exist).
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.generator">
+            <summary>
+            On object into which IL instructions are generated.
+            </summary>
+        </member>
         <member name="F:Microsoft.Cci.CodeModelToILConverter.host">
             <summary>
             An object representing the application that is hosting the converter. It is used to obtain access to some global
             objects and services such as the shared name table and the table for interning references.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.labelFor">
+            <summary>
+            A map from source label name unique keys to ILGenerator labels.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.lastStatementWasUnconditionalTransfer">
+            <summary>
+            True if the last generated statement tranferred control unconditionally, and hence an instruction at the current location can only
+            be reached via a branch.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.localIndex">
+            <summary>
+            A map from ILocalDefinition instances to indices that can be used in IL instructions referring to locals.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.method">
+            <summary>
+            The method whose CodeModel body is being converted to IL instructions.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.minizeCodeSize">
+            <summary>
+            If true, code generation emphasizes small code size over patterns that make debugging better.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.mostNestedTryCatchFor">
+            <summary>
+            A map from labels (and labeled statements) to the most nested try catch that contains them. If a branch is
+            enountered to a label and the current try catch is not the one that contains the label, then the branch leaves
+            the current try catch block (and thus must become a leave instruction).
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.returnLocal">
+            <summary>
+            A local (temporary) that holds the return value until control reaches the end of the method body.
+            Only used if minimizeCodeSize is false or if the return statement is inside a try catch.
             </summary>
         </member>
         <member name="F:Microsoft.Cci.CodeModelToILConverter.sourceLocationProvider">
@@ -42,9 +112,20 @@
             An object that can map the ILocation objects found in the block of statements to IPrimarySourceLocation objects.
             </summary>
         </member>
+        <member name="F:Microsoft.Cci.CodeModelToILConverter.localVariables">
+            <summary>
+            A list of all the local variable definitions that were encountered during the translation to IL.
+            </summary>
+        </member>
         <member name="F:Microsoft.Cci.CodeModelToILConverter.iteratorLocalCount">
             <summary>
             A map that indicates how many iterator locals are present in a given block. Only useful for generated MoveNext methods. May be null.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.CodeModelToILConverter.GetParameterIndex(Microsoft.Cci.IParameterDefinition)">
+            <summary>
+            Translates the parameter list position of the given parameter to an IL parameter index. In other words,
+            it adds 1 to the parameterDefinition.Index value if the containing method has an implicit this parameter.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAddition)">
@@ -71,12 +152,6 @@
             </summary>
             <param name="addressOf">The address of.</param>
         </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAliasForType)">
-            <summary>
-            Generates IL for the specified alias for type.
-            </summary>
-            <param name="aliasForType">Type of the alias for.</param>
-        </member>
         <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAnonymousDelegate)">
             <summary>
             Generates IL for the specified anonymous delegate.
@@ -88,12 +163,6 @@
             Generates IL for the specified array indexer.
             </summary>
             <param name="arrayIndexer">The array indexer.</param>
-        </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IArrayTypeReference)">
-            <summary>
-            Generates IL for the specified array type reference.
-            </summary>
-            <param name="arrayTypeReference">The array type reference.</param>
         </member>
         <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IAssertStatement)">
             <summary>
@@ -499,12 +568,6 @@
             Generates IL for the specified stack array create.
             </summary>
             <param name="stackArrayCreate">The stack array create.</param>
-        </member>
-        <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.IStatement)">
-            <summary>
-            Traverses the given statement.
-            </summary>
-            <param name="statement"></param>
         </member>
         <member name="M:Microsoft.Cci.CodeModelToILConverter.TraverseChildren(Microsoft.Cci.ISubtraction)">
             <summary>

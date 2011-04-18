@@ -9728,44 +9728,202 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover">
             <summary>
-            A class providing functionality to rewrite high level constructs such as anonymous delegates and yield statements
-            into helper classes and methods, thus making it easier to generate IL from the CodeModel.
+            A rewriter for CodeModel method bodies, which changes any anynomous delegate expressions found in the body into delegates over
+            methods of either the containing type of the method, or of a nested type of that type.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.ISourceLocationProvider)">
             <summary>
-            A class providing functionality to rewrite high level constructs such as anonymous delegates and yield statements
-            into helper classes and methods, thus making it easier to generate IL from the CodeModel.
+            A rewriter for CodeModel method bodies, which changes any anynomous delegate expressions found in the body into delegates over
+            methods of either the containing type of the method, or of a nested type of that type.
             </summary>
             <param name="host">An object representing the application that is hosting the converter. It is used to obtain access to some global
             objects and services such as the shared name table and the table for interning references.</param>
             <param name="sourceLocationProvider">An object that can map the ILocation objects found in a block of statements to IPrimarySourceLocation objects. May be null.</param>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.copier">
+            <summary>
+            A copier to use for making copies of type references that need to get specialized for use inside anonymous methods.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.closureClasses">
+            <summary>
+            A list of all of the closure (display) classes generated as a result of removing the anonymous delegates.
+            These classes contain copies of any parameters and locals captured by anonymous delegates.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.helperMembers">
+            <summary>
+            Fields that cache anonymous delegates that capture no state are added here. The list comes from the type that contains 
+            the method whose body is rewritten by the rewriter. (If that type is immutable, closure classes are generated instead.)
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.scopesWithCapturedLocals">
+            <summary>
+            A list of scopes that declare locals that have been captured. When entering such a scope, a closure must be constructed.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.fieldReferencesForUseInsideAnonymousMethods">
+            <summary>
+            A map from parameters and locals to closure field references, specialized (if necessary) for use inside of anonymous methods.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.fieldReferencesForUseInsideThisMethod">
+            <summary>
+            A map from parameters and locals to closure field references, specialized (if necessary) for use inside the method being rewritten.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.genericMethodParameterMap">
+            <summary>
+            A map from the generic parameters (if any) of the method being rewritten, to the corresponding generic parameters of the delegate method (if a peer)
+            or the type parameters of the closure class (if the method captured state).
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.anonymousDelegatesThatCaptureThis">
+            <summary>
+            A list of the anonymous delegates that capture the "this" argument of the containing method. They should at the very
+            least be instance peer methods, unlike delegates that capture nothing and the end up being static peer methods.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.anonymousDelegatesThatCaptureLocalsOrParameters">
+            <summary>
+            A list of anonymous delegates that capture one or more of the arguments (other than this) or the local definitions
+            of the method being rewritten. The method for these delegates must be instance methods of the classes in which the
+            state will be captured.
+            </summary>
         </member>
         <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.sourceLocationProvider">
             <summary>
             An object that can map the ILocation objects found in a block of statements to IPrimarySourceLocation objects. May be null.
             </summary>
         </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.currentClosureClass">
+            <summary>
+            The closure (display) class that holds the captured state of the current block. If the method is generic
+            the closure class will be generic and this will be the template, not an instantiation.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.currentClosureSelfInstance">
+            <summary>
+            Either the same as this.currentClosure, or this.currentClosure.InstanceType if the closure is generic.
+            Use this instance inside the body of an anonymous delegate.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.currentClosureInstance">
+            <summary>
+            Either the same as this.currentClosureClass, or an instance of it using the generic type parameters of the method being
+            rewritten as the generic arguments. Use this instance inside the body of the method being rewritten.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.currentClosureObject">
+            <summary>
+            A bound expression for accessing the local that contains the current closure object instance.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.currentClosureLocal">
+            <summary>
+            The local variable that holds the instance of the current closure class. This.currentClosureInstance is an expression that binds to this local.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.closureLocalInstances">
+            <summary>
+            A list expressions (local bindings) for all of the closure object instances. Only used in the method being rewritten. Delegate methods
+            will start with their "this" argument and then traverse the outer closure fields of that object.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.compilerGenerated">
+            <summary>
+            A custom attribute that indicates that the attributed definition was generated by the compiler. Used to annotate closure classes,
+            cache fields and delegate methods (if they are peers).
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.anonymousDelegateCounter">
+            <summary>
+            A number that is incremented every time a method is generated for an anonymous delegate, and that helps to make the method names unique.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.isInsideAnonymousMethod">
+            <summary>
+            A flag that indicates if the rewriter is inside the method whose anonymous delegates are being removed, or inside the body
+            of generated delegate method.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.method">
+            <summary>
+            The method containing the block that is being rewritten.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.objectCtor">
+            <summary>
+            A reference to the default constructor of System.Object. Used during the generation of closure class constructors.
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.RemoveAnonymousDelegates(Microsoft.Cci.IMethodDefinition,Microsoft.Cci.MutableCodeModel.BlockStatement)">
             <summary>
-            Given a method definition and a block of statements that represents the Block property of the body of the method,
-            returns a SourceMethod with a body that no longer has any yield statements or anonymous delegate expressions.
+            When given a method definition and a block of statements that represents the Block property of the body of the method
+            this method returns a semantically equivalent SourceMethod with a body that no longer has any anonymous delegate expressions.
             The given block of statements is mutated in place.
             </summary>
-            <param name="method"></param>
-            <param name="body">The tree rooted at body must be fully mutable and the nodes must not be shared with anything else.</param>
+            <param name="method">The method containing the block that is to be rewritten.</param>
+            <param name="body">The block to be rewritten. 
+            The entire tree rooted at the block must be mutable and the nodes must not be shared with anything else.</param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.InsertStatementsToAllocateAndInitializeTopLevelClosure(Microsoft.Cci.MutableCodeModel.BlockStatement)">
+            <summary>
+            Inserts statements into block that will create an instance of the top level closure and initialize it 
+            with captured parameter values and the "this" value (if captured).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.GenerateTopLevelClosure">
+            <summary>
+            If any parameters have been captured, or if "this" has been captured along with some locals, generate a closure class
+            for the root block and populate it with fields to hold the captured parameter values and the "this" argument (if captured).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.CreateClosureField(System.Object,Microsoft.Cci.ITypeReference,Microsoft.Cci.ITypeReference,System.String)">
+            <summary>
+            Creates a field in the current closure class with the given type and name.
+            If the current closure class is generic, the returned value is a reference
+            to the corresponding field in the InstanceType of the current closure class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.CreateClosureClass">
+            <summary>
+            Creates a new nested type definition with a default constructor and no other members and adds it to this.closureClasses.
+            If this.method is generic, then the closure class is generic as well, with the same
+            number of type parameters (constrained in the same way) as the generic method.
+            Initializes this.currentClosure, this.currentClosureInstance and this.currentClosureSelfInstance.
+            </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.CreateClosureMethod(Microsoft.Cci.MutableCodeModel.AnonymousDelegate)">
             <summary>
-            Returns a reference to the closure method. If the method is generic, the reference is to an instantiation, using
-            the generic parameters of the current class as arguments.
+            Returns a reference to the closure method. If the method is generic, the reference is to an instantiation, 
+            using the generic parameters of the current class as arguments.
             </summary>
-            <param name="anonymousDelegate"></param>
-            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.GetClosureObjectInstanceContaining(Microsoft.Cci.IFieldReference)">
+            <summary>
+            Returns an expression that results in a closure object instance that contains the given field.
+            If the expression will be evaluated in the body of this.method, the result is a bound expression
+            that references the local that contains the object. Otherwise it is the "this" argument of the 
+            anonymous delegate method, possibly with a number of field accesses to chase down the outer closure chain.
+            </summary>
+            <param name="closureField">A reference to a field from the "self instance" of a closure class.</param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.MakeDelegateMethodGeneric(Microsoft.Cci.MutableCodeModel.MethodDefinition)">
+            <summary>
+            Copies the generic parameters from this.method to the given delegate method and fixes up 
+            the delegate method signature to refer to its own type parameters, rather than those of this.method.
+            </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.Rewrite(Microsoft.Cci.IAnonymousDelegate)">
             <summary>
             Rewrites the given anonymous delegate expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.CreateStaticCacheField(Microsoft.Cci.ITypeReference)">
+            <summary>
+            Creates and returns a static field of the given type and adds it to the helper members of the containing type of this.method.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.RewriteChildren(Microsoft.Cci.MutableCodeModel.AddressableExpression)">
@@ -9778,9 +9936,38 @@
             Rewrites the children of the given statement block.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.AllocateClosureFor(System.Object,System.Collections.Generic.List{Microsoft.Cci.IStatement},Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.Action)">
+            <summary>
+            Saves the current closure fields. Allocates a new closure and updates the fields. Then calls the given delegate and
+            restores the earlier state.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.GetReferenceToDefaultConstructor(Microsoft.Cci.ITypeReference)">
+            <summary>
+            Returns a reference to the default constructor method of the given type.
+            </summary>
+            <param name="containingType">The type whose default constructor is wanted. If the type is generic this
+            must be a generic type instance where the generic parameters are used as the generic arguments. (I.e. the "self" instance.)</param>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.RewriteChildren(Microsoft.Cci.MutableCodeModel.BoundExpression)">
             <summary>
             Rewrites the children of the given bound expression.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.RewriteChildren(Microsoft.Cci.MutableCodeModel.CatchClause)">
+            <summary>
+            Rewrites the children of the given catch clause.
+            </summary>
+            <param name="catchClause"></param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.RewriteChildren(Microsoft.Cci.MutableCodeModel.ForEachStatement)">
+            <summary>
+            Rewrites the children of the given foreach statement.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.Rewrite(Microsoft.Cci.IGenericMethodParameterReference)">
+            <summary>
+            Rewrites the given generic method parameter reference.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.Rewrite(Microsoft.Cci.ILocalDeclarationStatement)">
@@ -9798,15 +9985,40 @@
             Rewrites the given this reference expression.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.GenericParameterRewriter.#ctor(Microsoft.Cci.IMetadataHost,System.Collections.Generic.Dictionary{System.UInt16,Microsoft.Cci.IGenericParameterReference})">
+            <summary>
+            A rewriter that substitutes the keys of the genericMethodParameterMap with their corresponding values.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.ScopesWithCapturedLocalsFinder">
+            <summary>
+            A traverser that records all of the scopes that declare locals that have been captured by anonymous delegates.
+            This runs as a second pass, after all of the captured locals have been found.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.ScopesWithCapturedLocalsFinder.#ctor">
+            <summary>
+            A traverser that records all of the blocks that declare locals that have been captured by anonymous delegates.
+            This runs as a second pass, after all of the captured locals have been found.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.CapturedParameterAndLocalFinder">
+            <summary>
+            A traverser that records all of the parameters and locals that are captured by anoymous delegates and also
+            records the anonymous delegates that do the capturing. Delegates that only capture the "this" argument
+            will have an entry in anonymousDelegatesThatCaptureThis but no entry in anonymousDelegatesThatCaptureLocalsOrParameters.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.CapturedParameterAndLocalFinder.#ctor">
+            <summary>
+            A traverser that records all of the parameters and locals that are captured by anoymous delegates and also
+            records the anonymous delegates that do the capturing. Delegates that only capture the "this" argument
+            will have an entry in anonymousDelegatesThatCaptureThis but no entry in anonymousDelegatesThatCaptureLocalsOrParameters.
+            </summary>
+        </member>
         <member name="F:Microsoft.Cci.MutableCodeModel.ClosureFinder.method">
             <summary>
             The enclosing method that is being normalized, i.e., the one whose body will end up containing the lambdas.
-            </summary>
-        </member>
-        <member name="F:Microsoft.Cci.MutableCodeModel.ClosureFinder.nestingDepth">
-            <summary>
-            The depth in the current tree of lambdas. Level 0 is the original method.
-            invariant: 0 &lt;= nestingDepth &lt;= classList.Count
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.ClosureFinder.#ctor(Microsoft.Cci.IMethodDefinition,Microsoft.Cci.IMetadataHost)">
@@ -10086,222 +10298,6 @@
             <summary>
             IDisposable interface. 
             </summary>
-        </member>
-        <member name="T:Microsoft.Cci.MutableCodeModel.InjectClosureFields">
-            <summary>
-            A mutator that substitutes the appropriate closure fields (i.e., fields defined
-            in private nested types that implement a closure) for occurrences of parameters,
-            and locals. It is used on anonymous delegate bodies as well as the body of the
-            original method that contained the anonymous delegate(s) since it also needs to
-            use the closure fields.
-            NOTE: It must be instantiated for each body it visits, either an anonymous
-            delegate or the original method body.
-            </summary>  
-        </member>
-        <member name="F:Microsoft.Cci.MutableCodeModel.InjectClosureFields.method">
-            <summary>
-            The method whose body this mutator is visiting.
-            </summary>
-        </member>
-        <member name="F:Microsoft.Cci.MutableCodeModel.InjectClosureFields.currentClass">
-            <summary>
-            When this is being used on the body of an anonymous delegate, this
-            is the closure class the method implementing the anonymous delegate
-            is contained in.
-            When this is being used on the original method body, this is the
-            containing type definition of the original method.
-            </summary>
-        </member>
-        <member name="F:Microsoft.Cci.MutableCodeModel.InjectClosureFields.nestedClosure">
-            <summary>
-            Non-null when currentClass has a nested closure class defined
-            within it. Of course in that case, this *is* that nested closure class.
-            I.e., it is null only for the innermost nested closure class.
-            </summary>
-        </member>
-        <member name="F:Microsoft.Cci.MutableCodeModel.InjectClosureFields.outerClosures">
-            <summary>
-            Non-empty when this is being used on the body of a nested anonymous
-            delegate (i.e., not on an outermost anonymous delegate or the original
-            method body).
-            </summary>
-        </member>
-        <member name="F:Microsoft.Cci.MutableCodeModel.InjectClosureFields.closureLocal">
-            <summary>
-            When non-null a local that is used to reference fields in the next closure class "down"
-            from the method that is currently being mutated.
-            </summary>
-        </member>
-        <member name="F:Microsoft.Cci.MutableCodeModel.InjectClosureFields.lambda2method">
-            <summary>
-            The map used to get from an anonymous delegate encountered during mutation to the method
-            in the closure class that implements the anonymous delegate.
-            </summary>
-        </member>
-        <member name="F:Microsoft.Cci.MutableCodeModel.InjectClosureFields.constructorForClosureClass">
-            <summary>
-            A map to hold generated constructors.
-            </summary>
-        </member>
-        <member name="F:Microsoft.Cci.MutableCodeModel.InjectClosureFields.classList">
-            <summary>
-            The list of classes used by the closure classes. I.e., the first element is the containing class of
-            the original method that contains the lambdas. The rest are the nested closure classes created by this
-            visitor as it walks the original method body. Due to the order of the visit, the list is meant to be in
-            the order from outermost class to innermost.
-            I.e., (forall i : 0 &lt; i &lt; closureClassList.Length : closureClassList[i].ContainingTypeDefinition == closureClassList[i-1])
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.#ctor(Microsoft.Cci.IMethodDefinition,System.Collections.Generic.Dictionary{System.Object,Microsoft.Cci.MutableCodeModel.BoundField},System.Collections.Generic.List{Microsoft.Cci.INamedTypeDefinition},System.Int32,System.Collections.Generic.List{Microsoft.Cci.MutableCodeModel.FieldDefinition},Microsoft.Cci.IMetadataHost,Microsoft.Cci.ISourceLocationProvider,System.Collections.Generic.Dictionary{System.UInt32,Microsoft.Cci.IGenericTypeParameter},System.Collections.Generic.Dictionary{Microsoft.Cci.IAnonymousDelegate,Microsoft.Cci.MutableCodeModel.MethodDefinition},System.Collections.Generic.Dictionary{Microsoft.Cci.MutableCodeModel.NestedTypeDefinition,Microsoft.Cci.MutableCodeModel.MethodDefinition})">
-            <summary>
-            Allocates a mutator that substitutes the appropriate closure fields (i.e., fields defined
-            in private nested types that implement a closure) for occurrences of parameters,
-            and locals. It is used on anonymous delegate bodies as well as the body of the
-            original method that contained the anonymous delegate(s) since it also needs to
-            use the closure fields.
-            NOTE: It must be instantiated for each body it visits, either an anonymous
-            delegate or the original method body.
-            </summary>
-            <param name="method">The method whose body is to be mutated into the body of an anonymous delegate.</param>
-            <param name="fieldForCapturedLocalOrParameter">A map from captured locals and parameters to the closure class fields that hold their state for the method
-            corresponding to the anonymous delegate.</param>
-            <param name="classList">
-            The list of classes used by the closure classes. I.e., the first element is the containing class of
-            the original method that contains the lambdas. The rest are the nested closure classes created by this
-            visitor as it walks the original method body. Due to the order of the visit, the list is meant to be in
-            the order from outermost class to innermost.
-            I.e., (forall i : 0 &lt; i &lt; closureClassList.Length : closureClassList[i].ContainingTypeDefinition == closureClassList[i-1])
-            </param>
-            <param name="index">
-            The index into <paramref name="classList"/> of the containing type of the method whose body is going to be mutated
-            by this muatator.
-            </param>
-            <param name="outerClosures">A potentially empty list of closures that for any anonymous delegates that enclose the anonymous delegate that will be
-            traversed by this mutator.</param>
-            <param name="host">An object representing the application that is hosting this mutator. It is used to obtain access to some global
-            objects and services such as the shared name table and the table for interning references.</param>
-            <param name="sourceLocationProvider">An object that can map the ILocation objects found in a block of statements to IPrimarySourceLocation objects. May be null.</param>
-            <param name="genericTypeParameterMapping"></param>
-            <param name="lambda2method">The map used to get from an anonymous delegate encountered during mutation to the method
-            in the closure class that implements the anonymous delegate.</param>
-            <param name="constructorForClosureClass">
-            A map shared by all instances of this class that provides the constructor of the closure class so that method calls
-            to it can be generated in methods in the enclosing class. The map starts out empty at the outermost call to this class
-            and each time a ctor is generated, it is added to the map.
-            </param>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.ClosureInstanceFor(Microsoft.Cci.MutableCodeModel.NestedTypeDefinition)">
-            <summary>
-            Given a closure type that we created, return an expression that is of the form this[.f]*. The [.f] repeats 
-            more than zero times if the closure is embedded. 
-            </summary>
-            <param name="closure">The closure class</param>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.GetSelfReferenceForPrivateHelperTypes(Microsoft.Cci.INestedTypeDefinition)">
-            <summary>
-            Given a private helper type, that is, a closure type generated for compiling anonymous delegate or an iterator
-            method, generate a type reference that can be used whether it is generic or not.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.GetSelfReference(Microsoft.Cci.IFieldDefinition)">
-            <summary>
-            Get a reference to a field of a private helper type of which resolution is possible. 
-            </summary>
-            <param name="fieldDefinition"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.GetSelfReference(Microsoft.Cci.IMethodDefinition)">
-            <summary>
-            Get a method reference to a method definition. Either the definition is in a private helper type
-            (and is either the constructor or else the implementation of an anonymous delegate), or else
-            it is a static method defined in the same type as the method that contains the anonymous delegate.
-            The returned reference is to be used in the body of the method containing the anonymous delegate.
-            </summary>
-            <param name="methodDefinition"></param>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.GetBodyAfterInjectingClosureFields(Microsoft.Cci.IMethodDefinition,System.Collections.Generic.Dictionary{System.Object,Microsoft.Cci.MutableCodeModel.BoundField},System.Collections.Generic.List{Microsoft.Cci.INamedTypeDefinition},System.Collections.Generic.List{Microsoft.Cci.MutableCodeModel.FieldDefinition},Microsoft.Cci.IMetadataHost,Microsoft.Cci.ISourceLocationProvider,System.Collections.Generic.Dictionary{System.UInt32,Microsoft.Cci.IGenericTypeParameter},System.Collections.Generic.Dictionary{Microsoft.Cci.IAnonymousDelegate,Microsoft.Cci.MutableCodeModel.MethodDefinition},Microsoft.Cci.IBlockStatement)">
-            <summary>
-            Given a method and its body, along with a bunch of information
-            computed by a previous visit to the body, rewrite the body in
-            the following ways:
-            1. Any references to captured locals or parameters become
-            references to the corresponding fields in the closure classes.
-            2. Create the definitions for the methods in the
-            closure classes that implement the anonymous delegates.
-            3. Replace occurrences of anonymous delegates by create-delegate
-            expressions.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.Rewrite(Microsoft.Cci.ILocalDeclarationStatement)">
-            <summary>
-            If this is the declaration (i.e., definition) of a local that was captured, then
-            transform it into an assignment to the field in the closure class.
-            </summary>
-            <param name="localDeclarationStatement">The local declaration statement.</param>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.Rewrite(Microsoft.Cci.IAddressableExpression)">
-            <summary>
-            Replaces all references to captured locals/parameters with a reference to the corresponding closure class field.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.Rewrite(Microsoft.Cci.IBoundExpression)">
-            <summary>
-            Replaces all references to captured locals/parameters with a reference to the corresponding closure class field.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.Rewrite(Microsoft.Cci.ITargetExpression)">
-            <summary>
-            Replaces all references to captured locals/parameters with a reference to the corresponding closure class field.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.Rewrite(Microsoft.Cci.IThisReference)">
-            <summary>
-            Replaces an occurrence of "this" (appearing in the original method or within a lambda)
-            which refers to an instance of the class containing the original method
-            with a bound expression that evaluates to the same instance. If the context is the
-            original method, then just return the occurrence. If the context is a method in a (nested)
-            closure class, then return an expression of the form "this.outer.outer ..." where "outer"
-            is the field in each closure class that holds an instance of the class for the
-            surrounding context (which is either the containing class of the original method for
-            the outermost lambda or the closure class corresponding to the next outer lambda for
-            any nested lambdas).
-            
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.InjectClosureFields.Rewrite(Microsoft.Cci.IAnonymousDelegate)">
-            <summary>
-            Generates the implementation for the <paramref name="anonymousDelegate"/>.
-            Notation:
-              The <paramref name="anonymousDelegate"/> is lambda.
-              The method whose body contains the lambda is M.
-              The class containing M is C.
-              The generated method implementing the lambda is L.
-              
-            If the lambda captures any state:
-              then L is a static method defined in C.
-              then L is an instance method in a generated (nested private)
-              class, "CC", that is contained in C.
-            </summary>
-            <param name="anonymousDelegate">The anonymous delegate.</param>
-        </member>
-        <member name="T:Microsoft.Cci.MutableCodeModel.SubstituteParameters">
-            <summary>
-            A mutator that substitutes parameters defined in one signature with those from another signature.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.SubstituteParameters.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.ISignature,Microsoft.Cci.ISignature)">
-            <summary>
-            Creates a mutator that replaces all occurrences of parameters from the target signature with those from the source signature.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.SubstituteParameters.Visit(Microsoft.Cci.MutableCodeModel.BoundExpression)">
-            <summary>
-            If the <paramref name="boundExpression"/> represents a parameter of the source signature,
-            it is replaced with the equivalent parameter of the target signature.
-            </summary>
-            <param name="boundExpression">The bound expression.</param>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MethodBodyNormalizer">
             <summary>
