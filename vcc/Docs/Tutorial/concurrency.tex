@@ -32,13 +32,13 @@ It has the usual meaning for the regular C compiler (\ie it makes the compiler
 assume that the environment might write to that field, outside the knowledge
 of the compiler).
 For VCC it means that the field can be written also when the object is
-consistent (that is after wrapping it).
+closed (that is after wrapping it).
 The idea is that we will not unwrap the object, but write it atomically,
 while preserving its invariant.
 The attribute
 \vcc{_(volatile_owns)} means that we want the \vcc{\owns} set
 to be treated as a volatile field (\ie we want to be able to write
-it while to object is consistent; normally this is not possible).
+it while to object is closed; normally this is not possible).
 
 First, let's have a look at lock initialization:
 
@@ -51,10 +51,10 @@ object the lock is supposed to protect, but our lock invariant requires it.
 Thus, we introduce additional parameter for the purpose of verification.
 A call to the initialization will look like \vcc{InitializeLock(&l _(ghost o))}.
 
-Second, we require that the object to be protected is wrapped (recall that wrapped means consistent
+Second, we require that the object to be protected is wrapped (recall that wrapped means closed
 and owned by the current thread).
-We need it to be consistent because we will want to make the lock own it, and
-lock can only own consistent objects.
+We need it to be closed because we will want to make the lock own it, and
+lock can only own closed objects.
 We need the current thread to own it, because ownership transfer can
 only happen between the current thread and an object,
 and not for example some other thread and an object.
@@ -123,7 +123,7 @@ invariant of the lock.
 But this isn't the only condition imposed by VCC here.
 To transfer ownership of \vcc{l->protected_obj} to the lock, we also need
 write permission to the object being transferred, and
-we need to know it is consistent.
+we need to know it is closed.
 For example, should we forget to mention \vcc{l->protected_obj}
 in the writes clause VCC will complain about:
 
@@ -178,17 +178,17 @@ so you can just rename them to fit your compiler.
 The contracts of functions operating on the lock require that the lock
 is wrapped.
 This is because one can only perform atomic operations on objects
-that are consistent. 
-If an object is inconsistent, then the owning thread is in full control of it.
-However, wrapped means not only consistent, but also owned by the current thread,
+that are closed. 
+If an object is open, then the owning thread is in full control of it.
+However, wrapped means not only closed, but also owned by the current thread,
 which defeats the purpose of the lock --- it should be possible
 for multiple threads to compete for the lock.
 Let's then say, there is a thread which owns the lock.
-Assume some other thread \vcc|t| got to know that the lock is consistent.
+Assume some other thread \vcc|t| got to know that the lock is closed.
 How would \vcc|t| know that the owning thread won't unwrap (or worse yet, deallocate) the lock, just
 before \vcc|t| tries an atomic operation on the lock?
 The owning thread thus needs to somehow promise \vcc|t|
-that lock will stay consistent.
+that lock will stay closed.
 In VCC such a promise takes the form of a \Def{claim}.
 Later we'll see that claims are more powerful, but for
 now consider the following to be the definition of a claim:
@@ -197,28 +197,28 @@ now consider the following to be the definition of a claim:
 _(ghost 
 typedef struct {
   \ptrset claimed;
-  _(invariant \forall \object o; o \in claimed ==> o->\consistent)
+  _(invariant \forall \object o; o \in claimed ==> o->\closed)
 } \claim_struct, *\claim;
 )
 \end{VCC}
 
 \noindent
 Thus, a claim is an object, with an invariant stating that a number of other objects
-(we call them \Def{claimed objects}) are consistent.
+(we call them \Def{claimed objects}) are closed.
 As this is stated in the invariant of the claim, it only needs to be true
-as long as the claim itself stays consistent.
+as long as the claim itself stays closed.
 
 Recall that what can be written in invariants is subject to the admissibility
 condition, which we have seen partially explained in \secref{admissibility0}.
 There we said that an invariant should talk only about things the object owns.
 But here the claim doesn't own the claimed objects,
-so how should the claim know the object will stay consistent?
+so how should the claim know the object will stay closed?
 In general, an admissible invariant can depend on other objects invariants always being
 preserved (we'll see the precise rule in \secref{inv2}).
 So VCC adds an implicit invariant to all types
 marked with \vcc{_(claimable)} attribute.
 This invariant states that the object cannot be unwrapped when
-when there are consistent claims on it.
+when there are closed claims on it.
 More precisely, each claimable object keeps track of the count of outstanding
 claims.
 The number of outstanding claim on an object is stored in
@@ -252,7 +252,7 @@ as parameter to the atomic block.
 Listing a normal object as parameter to the atomic makes VCC know you're
 going to modify the object.
 For claims, it is just a hint, that it should use this claim when trying
-to prove that the object is consistent.
+to prove that the object is closed.
 
 Additionally, the \vcc{InitializeLock()} needs to ensure \vcc{l->\claim_count} \vcc{== 0}
 (\ie no claims on freshly initialized lock).
@@ -332,7 +332,7 @@ since the beginning of the program.
 \noindent
 Its first invariant is a plain single-state invariant -- for some reason
 we decided to exclude zero as the valid count.
-The second invariant says that for any atomic update of (consistent)
+The second invariant says that for any atomic update of (closed)
 counter, \vcc{v} can either stay unchanged or increment by exactly one.
 The syntax \vcc{\old(v)} is used to refer to value of \vcc{v} before
 an atomic update, and plain \vcc{v} is used for the value of \vcc{v}
@@ -385,7 +385,7 @@ at the end of \vcc{foo()}.
 If we knew that nobody is updating \vcc{n->v} while \vcc{foo()}
 is running we would know \vcc{x == y}.
 This would be the case if \vcc{n} was unwrapped, but it is wrapped.
-In our case, because \vcc{n} is consistent, other threads can update it,
+In our case, because \vcc{n} is closed, other threads can update it,
 while \vcc{foo()} is running, but they will need to
 adhere to \vcc{n}'s invariant.
 So we might guess that at end of \vcc{foo()} we know
@@ -401,7 +401,7 @@ check to express such properties in VCC.
 An invariant is \Def{transitive} if it holds over states \vcc{S0, S2},
 provided that it holds over \vcc{S0, S1} and \vcc{S1, S2}.
 Transitive invariants could be assumed over arbitrary
-pairs of states, provided that the object stays consistent
+pairs of states, provided that the object stays closed
 in between them. 
 VCC does not require invariants to be transitive, though.
 
@@ -445,12 +445,12 @@ On the other hand, an invariant like \vcc{r == n->v} or \vcc{r >= n->v}
 could be broken by such a change.
 But let us proceed with somewhat more precise definitions.
 
-First, assume that every object invariant holds when the object is inconsistent.
-This might sound counter-intuitive, but remember that consistency is controlled
+First, assume that every object invariant holds when the object is not closed.
+This might sound counter-intuitive, but remember that closedness is controlled
 by a field.
 When that field is set to false, we want to \emph{effectively} disable the invariant,
 which is the same as just forcing it to be true in that case.
-Alternatively, you might try to think of all objects as being consistent for a while.
+Alternatively, you might try to think of all objects as being closed for a while.
 
 An atomic action, which updates state \vcc{S0} into \vcc{S1}, is \Def{legal} if and only if the invariants of
 objects that have changed between \vcc{S0} and \vcc{S1} hold over \vcc{S0, S1}.
@@ -480,7 +480,7 @@ Let's see how our previous notion of admissibility relates to this one.
 If \vcc{p} owns \vcc{q}, then \vcc{q \in p->\owns}.
 By the third admissibility assumption, after the simulated action \vcc{p} still owns \vcc{q}.
 By the rules of ownership (\secref{wrap-unwrap}), only threads can own
-inconsistent objects, so we know that \vcc{q} is consistent in both \vcc{S0}
+open objects, so we know that \vcc{q} is closed in both \vcc{S0}
 and \vcc{S1}.
 Therefore non-volatile fields of \vcc{q} do not change between \vcc{S0} and \vcc{S1},
 and thus the invariant of \vcc{p} can freely talk about their values:
@@ -518,7 +518,7 @@ Let's have a look at annotated version of our previous \vcc{foo()} function.
 \noindent
 Let's give a high-level description of what's going on.
 Just after reading \vcc{n->v} we create a claim \vcc{r}, which guarantees
-that in every state, where \vcc{r} is consistent,
+that in every state, where \vcc{r} is closed,
 the current value of \vcc{n->v} is no less than the value of \vcc{x}
 at the time when \vcc{r} was created.
 Then, after reading \vcc{n->v} for the second time, we tell VCC to
@@ -540,8 +540,8 @@ Because we're just constructing the claim, just like during regular object initi
 the invariant has to hold initially (\ie at the moment when the claim is created,
 that is wrapped).
 Moreover, the invariant has to be admissible, under the condition
-that all objects in \vcc{S} stay consistent as long as the claim itself
-stays consistent.
+that all objects in \vcc{S} stay closed as long as the claim itself
+stays closed.
 The claimed property cannot use \vcc{\old(...)}, and therefore it's automatically
 reflexive, thus it only needs to be stable to guarantee admissibility.
 
@@ -569,13 +569,13 @@ It does however affect the admissibility check for \vcc{P}:
 \item Assume that all invariants hold over \vcc{S0, S0}, including assuming \vcc{P} in \vcc{S0}.
 \item Assume that fields of \vcc{c} didn't change between \vcc{S0} and \vcc{S1}
 (in particular locals referenced by the claim are the same as at the moment of its creation).
-\item Assume all objects in \vcc{S} are consistent in both \vcc{S0} and \vcc{S1}.
+\item Assume all objects in \vcc{S} are closed in both \vcc{S0} and \vcc{S1}.
 \item Assume that for all objects, fields of which are not the same in \vcc{S0} and \vcc{S1},
 their invariants hold over \vcc{S0, S1}.
 \item Check that \vcc{P} holds in \vcc{S1}.
 \end{itemize}
 
-To prove \vcc{\active_claim(c)} one needs to prove \vcc{c->\consistent} and that
+To prove \vcc{\active_claim(c)} one needs to prove \vcc{c->\closed} and that
 the current state is a \Def{full-stop} state, \ie state where all invariants
 are guaranteed to hold.
 Any execution state outside of an atomic block is full-stop.
@@ -645,7 +645,7 @@ The syntax \vcc{_(always c, P)} is equivalent to:
   _(ensures \wrapped(c))
 \end{VCC}
 Thus, instead of requiring \vcc{\claims_obj(c, r)}, we require that the claim
-guarantees \vcc{r->\consistent}.
+guarantees \vcc{r->\closed}.
 One way of doing this is claiming \vcc{r}, but another is claiming the owner
 of \vcc{r}, as we will see shortly.
 
@@ -682,11 +682,11 @@ Finally, let's have a look at a possible use scenario of our reference counter.
 The \vcc{struct B} contains a \vcc{struct A} governed by a reference counter.
 It owns the reference counter, but not \vcc{struct A} (which is owned by the reference
 counter).
-A claim guaranteeing consistency of \vcc{struct B} also guarantees
-consistency of its counter, so we can pass it to \vcc{try_incr()},
+A claim guaranteeing that \vcc{struct B} is closed also guarantees
+that its counter is closed, so we can pass it to \vcc{try_incr()},
 which gives us a handle on \vcc{struct A}.
 
 Of course a question arises where one does get a claim on \vcc{struct B} from?
 In real systems the top-level claims come either from global objects that are
-always consistent, or from data passed when the thread is created.
+always closed, or from data passed when the thread is created.
 
