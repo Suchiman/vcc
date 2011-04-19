@@ -7,6 +7,11 @@
 \fi
 \bibliographystyle{plain}
 
+% on-screen reading version
+\ifwide
+\usepackage[margin=3mm, paperwidth=5in, paperheight=4in]{geometry}
+\fi
+
 \usepackage{amsmath}
 \usepackage{stmaryrd}
 \usepackage{color}
@@ -176,7 +181,7 @@ Micha{\l} Moskal, Wolfram Schulte \\
 VCC is a verification environment for software written in C.
 VCC takes a program (annotated with function
 contracts, state assertions, and type invariants) and attempts to prove that these 
-annotations are corrrect, i.e. that they hold for every possible program execution.
+annotations are correct, i.e. that they hold for every possible program execution.
 The environment includes tools for monitoring proof attempts and constructing
 partial counterexample executions for failed proofs.
 VCC handles fine-grained concurrency and low-level C features, and

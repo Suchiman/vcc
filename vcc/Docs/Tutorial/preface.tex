@@ -13,7 +13,7 @@ analyzers, VCC doesn't look for bugs, or analyze an abstraction of
 your program; if VCC certifies that your program is correct, then your
 program really is correct%
 \footnote{
-  In reality, this isn'tnecessarily true, for two reasons. 
+  In reality, this isn't necessarily true, for two reasons. 
   First, VCC itself might have bugs; in practice, these are unlikely to cause you to accidentally verify an
   incorrect program, unless you find and intentionally exploit such a
   bug. Second, there are a few checks needed for soundness that haven't yet
@@ -74,6 +74,7 @@ and how to set up tool paths.
 \label{sect:todo-invoke}
 This tutorial assumes you're using VCC version 3. 
 Currently, it is necessary to supply the flag \texttt{/3}
+(or enable V3 language in Visual Studio verification settings)
 to VCC to enable this.
 This will soon be the default.
 % -3 now implies -2 and -it. --MM
