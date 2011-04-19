@@ -1,7 +1,7 @@
 -include Makefile.local
 
 PAPER_BASE = vcc-tutorial-col
-COLUMNS ?= 1
+COLUMNS ?= 1w
 PAPER = $(PAPER_BASE)$(COLUMNS)
 BIB = tutorial.bib 
 OTHERSOURCES := $(wildcard *.tex) $(wildcard c/*.c)
@@ -42,6 +42,7 @@ clean:
 both:
 	$(MAKE) COLUMNS=1
 	$(MAKE) COLUMNS=2
+	$(MAKE) COLUMNS=1w
 
 send: both
 	$(WEBCP) $(PAPER_BASE){1,2}.pdf 
