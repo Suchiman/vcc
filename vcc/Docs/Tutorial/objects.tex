@@ -103,13 +103,14 @@ The following subsection explains this wrap/unwrap protocol in more details.
 
 Because invariants do not always hold,
 in VCC one needs to explicitly state which objects are consistent,
-using a field \vcc{\consistent} which is defined on every object.
-The invariants need to hold only when the \vcc{\consistent} field is true.
-When the field is false they need not hold (but of course still can).
-The field is initially (on newly allocated objects) false,
-and you need to set it to false before disposing objects.
+using a field \vcc{\closed} which is defined on every object.
+A \Def{closed object} is one for which the \vcc{\closed} field
+is true, and an \Def{open object} is one where it is false.
+The invariants have to (VCC enforces them) to hold only when for closed objects, but
+can also hold for open objects.
+Newly allocated objects are open, and you need to make them open before disposing them.
 
-In addition to the \vcc{\consistent} field each object has an \Def{owner field}.
+In addition to the \vcc{\closed} field each object has an \Def{owner field}.
 The owner of \vcc{p} is \vcc{p->\owner}.
 %While the consistency flag is always written to by the wrap
 %and unwrap operations, the owner field can be under some
@@ -130,15 +131,15 @@ The \vcc{\thread} object representing it is referred to as \vcc{\me}.
 
 (Some of) the rules of ownership and consistency are
 \begin{enumerate}
-\item on every atomic step of the program the invariants of all the consistent objects have to hold,
-\item only the owning thread can modify fields of an inconsistent object,
+\item on every atomic step of the program the invariants of all the closed objects have to hold,
+\item only the owning thread can modify fields of an open object,
 \item each thread owns itself, and
-\item only threads can own inconsistent objects.
+\item only threads can own open objects.
 \end{enumerate}
 Thus, by the first two rules, VCC allows updates of objects in the following two situations:
 \begin{enumerate}
-\item the updated object is consistent, the update is atomic, and the update preserves the invariant of the object,
-\item or the updated object is inconsistent and the update is performed by the owning thread.
+\item the updated object is closed, the update is atomic, and the update preserves the invariant of the object,
+\item or the updated object is open and the update is performed by the owning thread.
 \end{enumerate}
 In the first case to ensure that an update is atomic, VCC requires that the
 updated field has a \vcc{volatile} modifier.
@@ -146,34 +147,34 @@ There is a lot to be said about atomic updates in VCC, and we shall do
 that in \secref{concurrency}, but for now we're only considering sequentially
 accessed objects, with no \vcc{volatile} modifiers on fields.
 For such objects we can assume that they \emph{do not change}
-when they are consistent, so the only way to change their fields is to
-first make them inconsistent, \ie via method~2 above.
+when they are closed, so the only way to change their fields is to
+first make them open, \ie via method~2 above.
 
-A thread needs to make the object inconsistent to update it.
-Because making it inconsistent counts as an update, the thread needs
+A thread needs to make the object open to update it.
+Because making it open counts as an update, the thread needs
 to own it first.
 This is performed by the unwrap operation, which translates to the following steps:
 \begin{enumerate}
 \item assert that the object is in the writes set,
-\item assert that the object is wrapped (consistent and owned by the current thread), 
-\item assume the invariant (as a consequence of rule~1, the invariant holds for every consistent object),
-\item set the \vcc{\consistent} field to false, and
+\item assert that the object is wrapped (closed and owned by the current thread), 
+\item assume the invariant (as a consequence of rule~1, the invariant holds for every closed object),
+\item set the \vcc{\closed} field to false, and
 \item add the span of the object (\ie all its fields) to the writes set
 \end{enumerate}
 The wrap operation does just the reverse:
 \begin{enumerate}
 \item
-assert that the object is mutable (inconsistent and owned by the current thread),
+assert that the object is mutable (open and owned by the current thread),
 \item assert the invariant, and
-\item set the \vcc{\consistent} field to true (this implicitly prevents further writes to the fields of the object).
+\item set the \vcc{\closed} field to true (this implicitly prevents further writes to the fields of the object).
 \end{enumerate}
 Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\mutable(...)}.
 
 \begin{VCC}
 logic bool \wrapped(\object o) =
-  o->\consistent && o->\owner == \me;
+  o->\closed && o->\owner == \me;
 logic bool \mutable(\object o) =
-  !o->\consistent && o->\owner == \me;
+  !o->\closed && o->\owner == \me;
 \end{VCC}
 
 The definitions of \vcc{\wrapped(...)} and \vcc{\mutable(...)}
@@ -259,15 +260,15 @@ is equivalent to:
 _(unwrap o) { ... } _(wrap o)
 \end{VCC}
 \itodo{should we use ``s'' instead of ``the string'', and similarly for content?} % mah: <- I guess so...
-Thus, at the beginning of the function the string is owned by the current thread and consistent (\ie wrapped),
-whereas, by the string invariant, the content is owned by the string and consistent.
+Thus, at the beginning of the function the string is owned by the current thread and closed (\ie wrapped),
+whereas, by the string invariant, the content is owned by the string and closed.
 After unwrapping the string, the ownership of the content goes to the current thread,
-but the content remains consistent.
+but the content remains closed.
 Thus, unwrapping the string makes the string mutable, and the content wrapped.
 Then we unwrap the content (which doesn't own anything, so the thread gets no new wrapped objects), perform the changes,
 and wrap the content.
 Finally, we wrap the string.
-This transfers ownership of the content from the current thread to the string, so the content is no longer wrapped (but still consistent).
+This transfers ownership of the content from the current thread to the string, so the content is no longer wrapped (but still closed).
 Second, let's have a look at the assert\slash assume translation:
 
 \vccInput[linerange={append-out}]{c/06_safestring_dynamic_assert.c}
@@ -317,12 +318,12 @@ It is essentially the inverse of the owner field.
 It is defined on every object \vcc{p} and referred to as \vcc{p->\owns}.
 VCC maintains that:
 \begin{VCC}
-\forall \object p, q; p->\consistent ==> 
+\forall \object p, q; p->\closed ==> 
   (q \in p->\owns <==> q->\owner == p)
 \end{VCC}
 The operator \vcc{<==>} reads ``if and only if'', and is simply boolean
 equality (or implication both ways), with a binding priority lower than implication.
-That is, for consistent \vcc{p}, the set \vcc{p->\owns} contains exactly
+That is, for closed \vcc{p}, the set \vcc{p->\owns} contains exactly
 the objects that have \vcc{p} as their owner.
 Additionally, the unwrap operation does not touch the owns set,
 that is after unwrapping \vcc{p}, the \vcc{p->\owns} still contains
@@ -388,7 +389,7 @@ definition around the loop.
 %Additionally, when we look at the invariant of \vcc{c}, we can even figure out
 %that \vcc{s} is indeed no longer wrapped.
 %
-%VCC does know that the invariant of \vcc{s} holds (because the object is consistent),
+%VCC does know that the invariant of \vcc{s} holds (because the object is closed),
 %but we need to explicitly assert it to bring it into theorem prover scope.
 %Normally, this is done by \vcc{unwrap}, or \vcc{requires \wrapped(...)}.
 %
@@ -418,7 +419,7 @@ Let's then take a look at an ownership graph:
 we will have a bunch of threads as roots.
 In particular,
 the current thread will own a number of objects, some of them
-mutable (inconsistent and thus not owning anything), but other wrapped (consistent and
+mutable (open and thus not owning anything), but other wrapped (closed and
 so with possibly large ownership trees (domains) hanging off them).
 The ownership domains of the wrapped objects are disjoint
 (in the grand ownership tree of the thread they are all at the same level).
@@ -478,7 +479,7 @@ We plan to fix that in future.
 
 Until now we've been skimming on the issue of what you can actually
 mention in an invariant. 
-Intuitively the invariant of an object should talk about consistent states
+Intuitively the invariant of an object should talk about closed states
 of that very object, not some other objects.
 However, for example the invariant of the \vcc{struct SafeString} 
 talks about the values stored in its underlying array.
@@ -488,7 +489,7 @@ from the ownership domain of \vcc{p} in \vcc{p}'s invariant.
 This is important, because VCC checks only invariants of objects
 that you actually modify, and as we recall the most important
 verification property we want to enforce (and which we rely on in our
-verifications) is that all invariant of all (consistent) objects 
+verifications) is that all invariant of all (closed) objects 
 are always preserved (\secref{wrap-unwrap}).
 For example, consider:
 
