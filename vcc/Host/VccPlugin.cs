@@ -554,7 +554,7 @@ namespace Microsoft.Research.Vcc
     {
       if (string.IsNullOrEmpty(tok.filename)) return false;
       PrintSummary(VC.ConditionGeneration.Outcome.Correct); // it is correct, but
-      Console.WriteLine("{0}: found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)", 
+      Console.WriteLine("{0} : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)", 
                         TokenLocation(tok));
       return true;
     }
@@ -636,7 +636,7 @@ namespace Microsoft.Research.Vcc
         }
       }
       PrintSummary(VC.ConditionGeneration.Outcome.Correct); // it is correct, but
-      Console.WriteLine("Found unreachable code, but cannot figure out where it is.");
+      Console.WriteLine("Found unreachable code, but cannot figure out where it is."); // TODO this won't be caught by the VS add-on
     outer: ;
     }
   }
