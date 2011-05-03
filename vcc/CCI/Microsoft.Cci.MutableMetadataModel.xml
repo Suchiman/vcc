@@ -2844,12 +2844,12 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MetadataConstant">
             <summary>
-            
+            An expression that does not change its value at runtime and can be evaluated at compile time.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MetadataExpression">
             <summary>
-            
+            An expression that can be represented directly in metadata.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.ICopyFrom`1">
@@ -2866,12 +2866,12 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataExpression.#ctor">
             <summary>
-            
+            An expression that can be represented directly in metadata.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataExpression.Copy(Microsoft.Cci.IMetadataExpression,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of an expression that can be represented directly in metadata.
             </summary>
             <param name="metadataExpression"></param>
             <param name="internFactory"></param>
@@ -2898,19 +2898,19 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataConstant.#ctor">
             <summary>
-            
+            An expression that does not change its value at runtime and can be evaluated at compile time.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataConstant.Copy(Microsoft.Cci.IMetadataConstant,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            An expression that does not change its value at runtime and can be evaluated at compile time.
             </summary>
-            <param name="metadataConstant"></param>
-            <param name="internFactory"></param>
+            <param name="metadataConstant">A template from which to construct a shallow copy.</param>
+            <param name="internFactory">The intern factory to use for computing the interned identity (if applicable) of this mutable object.</param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataConstant.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor(IMetadataConstant).
             </summary>
             <param name="visitor"></param>
         </member>
@@ -2922,24 +2922,24 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MetadataCreateArray">
             <summary>
-            
+            An expression that creates an array instance in metadata. Only for use in custom attributes.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCreateArray.#ctor">
             <summary>
-            
+            An expression that creates an array instance in metadata. Only for use in custom attributes.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCreateArray.Copy(Microsoft.Cci.IMetadataCreateArray,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of an expression that creates an array instance in metadata. Only for use in custom attributes.
             </summary>
             <param name="createArray"></param>
             <param name="internFactory"></param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCreateArray.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IMetadataCreateArray).
             </summary>
             <param name="visitor"></param>
         </member>
@@ -2975,24 +2975,24 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MetadataNamedArgument">
             <summary>
-            
+            An expression that represents a (name, value) pair and that is typically used in method calls, custom attributes and object initializers.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataNamedArgument.#ctor">
             <summary>
-            
+            An expression that represents a (name, value) pair and that is typically used in method calls, custom attributes and object initializers.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataNamedArgument.Copy(Microsoft.Cci.IMetadataNamedArgument,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of an expression that represents a (name, value) pair and that is typically used in method calls, custom attributes and object initializers.
             </summary>
             <param name="namedArgument"></param>
             <param name="internFactory"></param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataNamedArgument.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IMetadataNamedArgument).
             </summary>
             <param name="visitor"></param>
         </member>
@@ -3022,24 +3022,24 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MetadataTypeOf">
             <summary>
-            
+            An expression that results in a System.Type instance.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataTypeOf.#ctor">
             <summary>
-            
+            An expression that results in a System.Type instance.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataTypeOf.Copy(Microsoft.Cci.IMetadataTypeOf,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of an expression that results in a System.Type instance.
             </summary>
             <param name="typeOf"></param>
             <param name="internFactory"></param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataTypeOf.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IMetadataTypeOf).
             </summary>
             <param name="visitor"></param>
         </member>
@@ -3051,7 +3051,8 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.EventDefinition">
             <summary>
-            
+            An event is a member that enables an object or class to provide notifications. Clients can attach executable code for events by supplying event handlers.
+            This interface models the metadata representation of an event.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.TypeDefinitionMember">
@@ -3137,12 +3138,15 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.EventDefinition.#ctor">
             <summary>
-            
+            An event is a member that enables an object or class to provide notifications. Clients can attach executable code for events by supplying event handlers.
+            This interface models the metadata representation of an event.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.EventDefinition.Copy(Microsoft.Cci.IEventDefinition,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of an event. An event is a member that enables an object or class to provide notifications.
+            Clients can attach executable code for events by supplying event handlers.
+            This interface models the metadata representation of an event.
             </summary>
             <param name="eventDefinition"></param>
             <param name="internFactory"></param>
@@ -3207,12 +3211,15 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.FieldDefinition.#ctor">
             <summary>
-            
+            A field is a member that represents a variable associated with an object or class.
+            This interface models the metadata representation of a field.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.FieldDefinition.Copy(Microsoft.Cci.IFieldDefinition,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of a field.
+            A field is a member that represents a variable associated with an object or class.
+            This interface models the metadata representation of a field.
             </summary>
             <param name="fieldDefinition"></param>
             <param name="internFactory"></param>
@@ -3354,17 +3361,17 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.FieldReference">
             <summary>
-            
+            A reference to a field.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.FieldReference.#ctor">
             <summary>
-            
+            A reference to a field.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.FieldReference.Copy(Microsoft.Cci.IFieldReference,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of a reference to a field.
             </summary>
             <param name="fieldReference"></param>
             <param name="internFactory"></param>
@@ -3501,17 +3508,17 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MethodDefinition">
             <summary>
-            
+            The metadata representation of a method.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodDefinition.#ctor">
             <summary>
-            
+            The metadata representation of a method.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodDefinition.Copy(Microsoft.Cci.IMethodDefinition,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of the metadata representation of a method.
             </summary>
             <param name="methodDefinition"></param>
             <param name="internFactory"></param>
@@ -3849,17 +3856,17 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MethodReference">
             <summary>
-            
+            A reference to a method.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodReference.#ctor">
             <summary>
-            
+            A reference to a method.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodReference.Copy(Microsoft.Cci.IMethodReference,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of a reference to a method.
             </summary>
             <param name="methodReference"></param>
             <param name="internFactory"></param>
@@ -4046,7 +4053,7 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.GenericMethodParameter">
             <summary>
-            
+            The definition of a type parameter of a generic method.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.GenericParameter">
@@ -4503,12 +4510,12 @@
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.GenericMethodParameter.#ctor">
             <summary>
-            
+            The definition of a type parameter of a generic method.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.GenericMethodParameter.Copy(Microsoft.Cci.IGenericMethodParameter,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of the definition of a type parameter of a generic method.
             </summary>
             <param name="genericMehodParameter"></param>
             <param name="internFactory"></param>
@@ -4612,24 +4619,24 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.MethodBody">
             <summary>
-            
+            A metadata (IL) level represetation of the body of a method or of a property/event accessor.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodBody.#ctor">
             <summary>
-            
+            A metadata (IL) level represetation of the body of a method or of a property/event accessor.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodBody.Copy(Microsoft.Cci.IMethodBody,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of a metadata (IL) level represetation of the body of a method or of a property/event accessor.
             </summary>
             <param name="methodBody"></param>
             <param name="internFactory"></param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MethodBody.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
-            
+            Calls visitor.Visit(IMethodBody).
             </summary>
             <param name="visitor"></param>
         </member>
@@ -4675,17 +4682,17 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.ParameterDefinition">
             <summary>
-            
+            The metadata representation of a method or property parameter.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.ParameterDefinition.#ctor">
             <summary>
-            
+            The metadata representation of a method or property parameter.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.ParameterDefinition.Copy(Microsoft.Cci.IParameterDefinition,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of the metadata representation of a method or property parameter.
             </summary>
             <param name="parameterDefinition"></param>
             <param name="internFactory"></param>
@@ -4979,17 +4986,17 @@
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.SignatureDefinition">
             <summary>
-            
+            The parameters and return type that makes up a method or property signature.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.SignatureDefinition.#ctor">
             <summary>
-            
+            The parameters and return type that makes up a method or property signature.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.SignatureDefinition.Copy(Microsoft.Cci.ISignature,Microsoft.Cci.IInternFactory)">
             <summary>
-            
+            Makes a shallow copy of the parameters and return type that makes up a method or property signature.
             </summary>
             <param name="signatureDefinition"></param>
             <param name="internFactory"></param>
@@ -10194,9 +10201,11 @@
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.TypeReference.AliasForType">
             <summary>
-            Gives the alias for the type
+            If this type reference can be resolved and it resolves to a type alias, the resolution continues on
+            to resolve the reference to the aliased type. This property provides a way to discover how that resolution
+            proceeded, by exposing the alias concerned. Think of this as a version of ResolvedType that does not
+            traverse aliases.
             </summary>
-            <value></value>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.TypeReference.Attributes">
             <summary>
@@ -10910,6 +10919,14 @@
             Calls visitor.Visit(INamespaceTypeReference).
             </summary>
         </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.NamespaceTypeReference.AliasForType">
+            <summary>
+            If this type reference can be resolved and it resolves to a type alias, the resolution continues on
+            to resolve the reference to the aliased type. This property provides a way to discover how that resolution
+            proceeded, by exposing the alias concerned. Think of this as a version of ResolvedType that does not
+            traverse aliases.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.NamespaceTypeReference.ContainingUnitNamespace">
             <summary>
             The namespace that contains the referenced type.
@@ -11100,6 +11117,14 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.NestedTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(INestedTypeReference).
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.NestedTypeReference.AliasForType">
+            <summary>
+            If this type reference can be resolved and it resolves to a type alias, the resolution continues on
+            to resolve the reference to the aliased type. This property provides a way to discover how that resolution
+            proceeded, by exposing the alias concerned. Think of this as a version of ResolvedType that does not
+            traverse aliases.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.NestedTypeReference.ContainingType">

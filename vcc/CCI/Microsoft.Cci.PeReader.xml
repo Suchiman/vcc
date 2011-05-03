@@ -22,10 +22,45 @@
             Base class of Namespaces/Types/TypeMembers.
             </summary>
         </member>
+        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.ScopedContainerMetadataObject`3">
+            <summary>
+            Contains generic implementation of being a container as well as a scope.
+            </summary>
+            <typeparam name="InternalMemberType">The type of actual objects that are stored</typeparam>
+            <typeparam name="ExternalMemberType">The type of objects as they are exposed outside</typeparam>
+            <typeparam name="ExternalContainerType">Externally visible container type</typeparam>
+        </member>
         <member name="P:Microsoft.Cci.MetadataReader.ObjectModelImplementation.Namespace.RootOwner">
             <summary>
             The object associated with the namespace. For example an IUnit or IUnitSet instance. This namespace is either the root namespace of that object
             or it is a nested namespace that is directly of indirectly nested in the root namespace.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.GenericMethodInstanceReferenceWithToken">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReader.ObjectModelImplementation.GenericMethodInstanceReferenceWithToken.#ctor(Microsoft.Cci.IMethodReference,System.Collections.Generic.IEnumerable{Microsoft.Cci.ITypeReference},Microsoft.Cci.IInternFactory,System.UInt32)">
+            <summary>
+            
+            </summary>
+            <param name="genericMethod"></param>
+            <param name="genericArguments"></param>
+            <param name="internFactory"></param>
+            <param name="tokenValue">
+            The most significant byte identifies a metadata table, using the values specified by ECMA-335.
+            The least significant three bytes represent the row number in the table, with the first row being numbered as one.
+            If, for some implemenation reason, a metadata object implements this interface but was not obtained from a metadata table
+            (for example it might be an array type reference that only occurs in a signature blob), the the value is UInt32.MaxValue.
+            </param>
+        </member>
+        <member name="P:Microsoft.Cci.MetadataReader.ObjectModelImplementation.GenericMethodInstanceReferenceWithToken.TokenValue">
+            <summary>
+            The most significant byte identifies a metadata table, using the values specified by ECMA-335.
+            The least significant three bytes represent the row number in the table, with the first row being numbered as one.
+            If, for some implemenation reason, a metadata object implements this interface but was not obtained from a metadata table
+            (for example it might be an array type reference that only occurs in a signature blob), the the value is UInt32.MaxValue.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MetadataReader.MethodBodyDocument">
@@ -338,38 +373,26 @@
             These types can all be implicitly referenced in IL and metadata and hence need special treatment.
             </summary>
         </member>
-        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.ModuleTypeKind">
+        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.MetadataReaderTypeKind">
             <summary>
             Enumeration to identify various type kinds
             </summary>
         </member>
-        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.ModuleSignatureTypeCode">
+        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.MetadataReaderSignatureTypeCode">
             <summary>
             A enumeration of all of the types that can be used in IL operations.
             </summary>
         </member>
-        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.IModuleTypeReference">
+        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.IMetadataReaderNamedTypeReference">
             <summary>
-            Module specific type reference. In case of error null value is used rather than a dummy. This contains methods for
-            specializing the type when doing generic instantiations.
-            Resolving returns null rather than Dummy in case of failure.
-            </summary>
-        </member>
-        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.IModuleTypeDefAndRef">
-            <summary>
-            Type that is a definition too. This supports resolving internal method and field references.
-            </summary>
-        </member>
-        <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.IModuleNominalType">
-            <summary>
-            This represents either a namespace or nested type. This supports fast comparision of nominal types using interned module is, namespace name, type name
+            This represents either a namespace or nested type. This supports fast comparision of nominal types using interned module id, namespace name, type name
             and parent type reference in case of nested type.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.CoreTypeReference">
             <summary>
             Represents the core types such as int, float, object etc from the core assembly.
-            These are created if these types are not directly referneced by the assembly being loaded.
+            These are created if these types are not directly referenced by the assembly being loaded.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.TypeRefReference">
@@ -456,7 +479,7 @@
             <param name="mangledTypeName"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ResolveNestedTypeDefinition(Microsoft.Cci.MetadataReader.ObjectModelImplementation.TypeBase,Microsoft.Cci.IName)">
+        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ResolveNestedTypeDefinition(Microsoft.Cci.INamedTypeDefinition,Microsoft.Cci.IName)">
             <summary>
             Given a parent type and mangled type name of the nested type, this method resolves it.
             </summary>
@@ -487,12 +510,12 @@
             Cache for type ref's in the module.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ResolveModuleTypeRefReference(Microsoft.Cci.MetadataReader.ObjectModelImplementation.TypeRefReference)">
+        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ResolveModuleTypeRefReference(Microsoft.Cci.MetadataReader.ObjectModelImplementation.IMetadataReaderNamedTypeReference)">
             <summary>
              This method resolves TypeRef as a non exported type. i.e. the said type reference refers to the type
              in the type def table direcly rather than exported type table of the assembly.
             </summary>
-            <param name="moduleTypeRefReference"></param>
+            <param name="namedTypeReference"></param>
             <returns></returns>
         </member>
         <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ResolveNamespaceTypeRefReferenceAsExportedType(Microsoft.Cci.MetadataReader.ObjectModelImplementation.NamespaceTypeRefReference)">

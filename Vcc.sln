@@ -18,7 +18,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{71D5CA0F-17DC-4743-B427-C9014592D3AC}"
 	ProjectSection(SolutionItems) = preProject
 		LocalTestRun.testrunconfig = LocalTestRun.testrunconfig
-		Vcc1.vsmdi = Vcc1.vsmdi
+		Vcc2.vsmdi = Vcc2.vsmdi
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VccCore", "vcc\Core\VccCore.csproj", "{B855D039-8A27-419D-9A81-86FF93227E31}"
@@ -81,7 +81,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "VccSyntaxCoverter", "vcc\To
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = Vcc1.vsmdi
+		CategoryFile = Vcc2.vsmdi
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CompilerOnly|Any CPU = CompilerOnly|Any CPU

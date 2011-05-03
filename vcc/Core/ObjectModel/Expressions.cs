@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Cci;
 using Microsoft.Cci.Ast;
+using Microsoft.Cci.Immutable;
 using Microsoft.Research.Vcc.Parsing;
 using IMethodContract = Microsoft.Cci.Contracts.IMethodContract;
 

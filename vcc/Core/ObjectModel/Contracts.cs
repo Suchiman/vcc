@@ -63,7 +63,7 @@ namespace Microsoft.Research.Vcc {
 
     protected virtual IEnumerable<FieldDeclaration> BuiltInFields {
       get {
-        return IteratorHelper.GetEmptyEnumerable<FieldDeclaration>();
+        return Enumerable<FieldDeclaration>.Empty;
       }
     }
 
@@ -75,8 +75,8 @@ namespace Microsoft.Research.Vcc {
       get { yield break; }
     }
 
-    private static readonly IEnumerable<FieldDeclaration> EmptyListOfFields = IteratorHelper.GetEmptyEnumerable<FieldDeclaration>();
-    private static readonly IEnumerable<TypeInvariant> EmptyListOfInvariants = IteratorHelper.GetEmptyEnumerable<TypeInvariant>();
+    private static readonly IEnumerable<FieldDeclaration> EmptyListOfFields = Enumerable<FieldDeclaration>.Empty;
+    private static readonly IEnumerable<TypeInvariant> EmptyListOfInvariants = Enumerable<TypeInvariant>.Empty;
 
     private IEnumerable<ITypeInvariant> GetInvariantsAndAxiomsAboutConstantArraysAndStructs() {
       VccGlobalDeclarationContainerClass/*?*/ globals = this.containingType as VccGlobalDeclarationContainerClass;

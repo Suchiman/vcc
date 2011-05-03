@@ -1670,7 +1670,7 @@
             Performs some computation with the given goto switch case statement.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Ast.SourceVisitor.Visit(Microsoft.Cci.GenericTypeInstance)">
+        <member name="M:Microsoft.Cci.Ast.SourceVisitor.Visit(Microsoft.Cci.Immutable.GenericTypeInstance)">
             <summary>
             Performs some computation with the given generic instance.
             </summary>
@@ -1820,7 +1820,7 @@
             Performs some computation with the given make typed reference expression.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Ast.SourceVisitor.Visit(Microsoft.Cci.ManagedPointerType)">
+        <member name="M:Microsoft.Cci.Ast.SourceVisitor.Visit(Microsoft.Cci.Immutable.ManagedPointerType)">
             <summary>
             Performs some computation with the given managed pointer type.
             </summary>
@@ -2723,7 +2723,7 @@
             Performs some computation with the given generic type instance expression.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Ast.SourceTraverser.Visit(Microsoft.Cci.GenericTypeInstance)">
+        <member name="M:Microsoft.Cci.Ast.SourceTraverser.Visit(Microsoft.Cci.Immutable.GenericTypeInstance)">
             <summary>
             Performs some computation with the given generic type instance.
             </summary>
@@ -2908,7 +2908,7 @@
             Performs some computation with the given make typed reference expression.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Ast.SourceTraverser.Visit(Microsoft.Cci.ManagedPointerType)">
+        <member name="M:Microsoft.Cci.Ast.SourceTraverser.Visit(Microsoft.Cci.Immutable.ManagedPointerType)">
             <summary>
             Performs some computation with the given managed pointer type.
             </summary>
@@ -19109,7 +19109,7 @@
             </summary>
             <typeparam name="MemberType"></typeparam>
         </member>
-        <member name="M:Microsoft.Cci.Ast.SpecializedTypeDefinitionMember`1.#ctor(`0,Microsoft.Cci.GenericTypeInstance)">
+        <member name="M:Microsoft.Cci.Ast.SpecializedTypeDefinitionMember`1.#ctor(`0,Microsoft.Cci.IGenericTypeInstance)">
             <summary>
             
             </summary>
