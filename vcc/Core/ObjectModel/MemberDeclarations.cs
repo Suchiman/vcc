@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Cci;
 using Microsoft.Cci.Ast;
+using Microsoft.Cci.Immutable;
 using Microsoft.Research.Vcc.Parsing;
 using IMethodContract = Microsoft.Cci.Contracts.IMethodContract;
 
@@ -794,11 +795,11 @@ namespace Microsoft.Research.Vcc {
     #region IDeclaration Members
 
     IEnumerable<ICustomAttribute> IDeclaration.Attributes {
-      get { return IteratorHelper.GetEmptyEnumerable<ICustomAttribute>(); }
+      get { return Enumerable<ICustomAttribute>.Empty; }
     }
 
     IEnumerable<SourceCustomAttribute> IDeclaration.SourceAttributes {
-      get { return IteratorHelper.GetEmptyEnumerable<SourceCustomAttribute>(); }
+      get { return Enumerable<SourceCustomAttribute>.Empty; }
     }
 
     #endregion
@@ -1008,7 +1009,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public TypedefDeclaration(TypeExpression type, NameDeclaration name, ISourceLocation sourceLocation)
-      : this(type, name, IteratorHelper.GetEmptyEnumerable<Specifier>(), sourceLocation) {
+      : this(type, name, Enumerable<Specifier>.Empty, sourceLocation) {
     }
 
     private TypedefDeclaration(TypeDeclaration containingTypeDeclaration, TypedefDeclaration template)
@@ -1116,11 +1117,11 @@ namespace Microsoft.Research.Vcc {
     #region IDeclaration Members
 
     IEnumerable<ICustomAttribute> IDeclaration.Attributes {
-      get { return IteratorHelper.GetEmptyEnumerable<ICustomAttribute>(); }
+      get { return Enumerable<ICustomAttribute>.Empty; }
     }
 
     IEnumerable<SourceCustomAttribute> IDeclaration.SourceAttributes {
-      get { return IteratorHelper.GetEmptyEnumerable<SourceCustomAttribute>(); }
+      get { return Enumerable<SourceCustomAttribute>.Empty; }
     }
 
     #endregion

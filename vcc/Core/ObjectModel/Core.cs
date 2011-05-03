@@ -11,6 +11,7 @@ using System.Resources;
 using System.Text;
 using Microsoft.Cci;
 using Microsoft.Cci.Ast;
+using Microsoft.Cci.Immutable;
 using Microsoft.Research.Vcc.Parsing;
 using Microsoft.Research.Vcc.Preprocessing;
 
@@ -74,7 +75,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override void Visit(IBoundExpression boundExpression) {
-      var typeAsPtr = boundExpression.Type as IPointerType;
+      var typeAsPtr = boundExpression.Type.ResolvedType as IPointerType;
       if (typeAsPtr != null) {
         if (VccCompilationHelper.IsSpecPointer(typeAsPtr)) result = true;
       } else this.VisitDefinitionThenInstance(boundExpression.Definition, boundExpression.Instance);

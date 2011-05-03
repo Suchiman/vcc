@@ -9965,6 +9965,11 @@
             Rewrites the children of the given foreach statement.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.RewriteChildren(Microsoft.Cci.MutableCodeModel.GenericMethodInstanceReference)">
+            <summary>
+            Rewrites the children of the given generic method instance reference.
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.Rewrite(Microsoft.Cci.IGenericMethodParameterReference)">
             <summary>
             Rewrites the given generic method parameter reference.
@@ -9988,6 +9993,11 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.GenericParameterRewriter.#ctor(Microsoft.Cci.IMetadataHost,System.Collections.Generic.Dictionary{System.UInt16,Microsoft.Cci.IGenericParameterReference})">
             <summary>
             A rewriter that substitutes the keys of the genericMethodParameterMap with their corresponding values.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegateRemover.GenericParameterRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.GenericMethodInstanceReference)">
+            <summary>
+            Rewrites the children of the given generic method instance reference.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.ScopesWithCapturedLocalsFinder">

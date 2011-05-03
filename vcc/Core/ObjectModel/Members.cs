@@ -33,7 +33,7 @@ namespace Microsoft.Research.Vcc {
       get {
         //^ assume this.GlobalMethodDeclaration is FunctionDefinition; //the constructor assures this
         FunctionDefinition functionDefinition = (FunctionDefinition)this.GlobalMethodDeclaration;
-        if (functionDefinition.HasSingleVoidParameter) return IteratorHelper.GetEmptyEnumerable<ParameterDefinition>();
+        if (functionDefinition.HasSingleVoidParameter) return Enumerable<ParameterDefinition>.Empty;
         return base.Parameters;
       }
     }

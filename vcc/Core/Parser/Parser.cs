@@ -2433,7 +2433,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (TS.StatementStart[this.currentToken])
           scBody = this.ParseSwitchCaseStatementBlock(scCtx, followersOrCaseOrDefaultOrRightBrace);
         else
-          scBody = IteratorHelper.GetEmptyEnumerable<Statement>();
+          scBody = Enumerable<Statement>.Empty;
         cases.Add(new SwitchCase(scExpression, scBody, scCtx));
       }
     done:

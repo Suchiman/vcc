@@ -4299,6 +4299,17 @@
             Returns the generic method of which this method is an instance.
             </summary>
         </member>
+        <member name="T:Microsoft.Cci.Enumerable`1">
+            <summary>
+            A helper class for efficiently getting hold of empty enumerables.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Microsoft.Cci.Enumerable`1.Empty">
+            <summary>
+            An empty enumerable of element type T.
+            </summary>
+        </member>
         <member name="T:Microsoft.Cci.Function`2">
             <summary>
             A Function that takes a single argument of type P and returns a value of type R.
@@ -4333,6 +4344,13 @@
             Returns an enumerable containing no objects.
             </summary>
             <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.IteratorHelper.GetReadonly``1(``0[])">
+            <summary>
+            Returns an enumerable wrapper for the array that cannot be cast back down to the array. If the array is null, the result is null.
+            </summary>
+            <typeparam name="T">The element type of the array.</typeparam>
+            <param name="array">The array to wrap. May be null.</param>
         </member>
         <member name="M:Microsoft.Cci.IteratorHelper.GetSingletonEnumerable``1(``0)">
             <summary>

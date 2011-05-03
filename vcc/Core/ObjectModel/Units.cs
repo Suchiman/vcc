@@ -159,11 +159,11 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override IEnumerable<IAliasForType> ExportedTypes {
-      get { return IteratorHelper.GetEmptyEnumerable<IAliasForType>(); } //TODO: compute this
+      get { return Enumerable<IAliasForType>.Empty; } //TODO: compute this
     }
 
     public override IEnumerable<ISecurityAttribute> SecurityAttributes {
-      get { return IteratorHelper.GetEmptyEnumerable<ISecurityAttribute>(); } //TODO: compute this
+      get { return Enumerable<ISecurityAttribute>.Empty; } //TODO: compute this
     }
 
     public override uint Flags {
@@ -179,7 +179,7 @@ namespace Microsoft.Research.Vcc {
     }
 
     public override IEnumerable<byte> PublicKey {
-      get { return IteratorHelper.GetEmptyEnumerable<byte>(); } //TODO: obtain it from the compiler options or a custom attribute
+      get { return Enumerable<byte>.Empty; } //TODO: obtain it from the compiler options or a custom attribute
     }
 
     public override Version Version {

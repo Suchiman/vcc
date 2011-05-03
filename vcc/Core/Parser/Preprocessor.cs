@@ -849,7 +849,7 @@ namespace Microsoft.Research.Vcc.Preprocessing {
       slb.UpdateToSpan(this.GetSourceLocation(this.fragmentIndex, 0));
       this.preprocessorInformation.directives.Add(new IncludeDirective(fileToInclude, slb));
       this.SkipPastBlanksCommentAndNewLine();
-      if (fileToInclude == null || !include) return IteratorHelper.GetEmptyEnumerable<ISourceLocation>();
+      if (fileToInclude == null || !include) return Enumerable<ISourceLocation>.Empty;
       return this.GetIncludedContent(fileToInclude, searchParentsDirectory);
     }
 
@@ -859,7 +859,7 @@ namespace Microsoft.Research.Vcc.Preprocessing {
         Preprocessor includedPreprocessor = this.documentToProcess.GetPreprocessorFor(path, this.preprocessorDefinedSymbols);
         return includedPreprocessor.GetIncludedSections();
       }
-      return IteratorHelper.GetEmptyEnumerable<ISourceLocation>();
+      return Enumerable<ISourceLocation>.Empty;
     }
 
     private string/*?*/ GetFilePath(string fileToInclude, bool searchParentsDirectory) {
