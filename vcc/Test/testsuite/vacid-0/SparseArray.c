@@ -97,7 +97,7 @@ Verification of init succeeded.
 Verification of set succeeded.
 Verification of get succeeded.
 Verification of sparseArrayTestHarness succeeded.
-testcase(86): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(85): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(83): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(86) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(85) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(83) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
 `*/

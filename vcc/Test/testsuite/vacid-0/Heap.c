@@ -328,7 +328,7 @@ Verification of extractMin failed.
 testcase(177,17) : error VC9500: Loop body invariant 'isHeapExcept(h,h->len)' did not verify.
 Verification of heapSort succeeded.
 Verification of heapSortTestHarness succeeded.
-testcase(298): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(298): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(297): found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(298) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(298) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(297) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
 `*/
