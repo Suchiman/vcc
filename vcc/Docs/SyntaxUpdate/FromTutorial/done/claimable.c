@@ -2,6 +2,8 @@
 #include <vcc.h>
 #include <stdlib.h>
 
+struct S { int a; };
+
 _(claimable) struct T
 {
     struct S c;
