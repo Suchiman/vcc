@@ -41,6 +41,7 @@ void bar_2(struct CannotOpenShouldFail *x)
 {
   _(unwrap x)
 }
+// TODO check \consistent vs. \closed inconsistencies below
 `
 Verification of CannotClose#adm succeeded.
 Verification of CannotOpen#adm succeeded.
@@ -51,7 +52,7 @@ testcase(21,24) : error VC8014: invariant(!\old(\this->\consistent) && \this->\c
 testcase(5,29) : error VC9599: (related information) location of the invariant.
 Verification of ok2 succeeded.
 Verification of bar failed.
-testcase(34,26) : error VC8015: invariant(\old(o->\consistent) && !o->\consistent ==> expr) of CannotOpen fails on unwrap.
+testcase(34,26) : error VC8015: invariant(\old(o->\closed) && !o->\closed ==> expr) of CannotOpen fails on unwrap.
 testcase(10,29) : error VC9599: (related information) location of the invariant.
 Verification of bar_2 succeeded.
 `
