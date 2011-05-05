@@ -67,7 +67,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{
 	ProjectSection(SolutionItems) = preProject
 		vcc\Setup\Setup\eula.rtf = vcc\Setup\Setup\eula.rtf
 		vcc\Setup\Setup\Modified VCC Codeplex license (2010-02-05) FINAL.doc = vcc\Setup\Setup\Modified VCC Codeplex license (2010-02-05) FINAL.doc
-		vcc\Setup\Setup\svn_versions.txt = vcc\Setup\Setup\svn_versions.txt
 		vcc\Setup\Setup\UtilityText.ico = vcc\Setup\Setup\UtilityText.ico
 		vcc\Setup\Setup\Vcc.ico = vcc\Setup\Setup\Vcc.ico
 		vcc\Setup\Setup\vcc.pdn = vcc\Setup\Setup\vcc.pdn
