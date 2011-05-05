@@ -431,7 +431,6 @@ module Rules =
     
     let closed_owner_rule op = function
       | [ob; owner] ->
-        let owns = fnApp "\\owns" owner
         spec "ghost" ([parenOpt owner; Tok.Op(fakePos, "->"); Tok.Id(fakePos, "\\owns"); Tok.Op(fakePos, " " + op + " ") ] @ (eatWs ob))
       | _ -> failwith ""
 
