@@ -159,11 +159,17 @@ namespace Microsoft.Research.Vcc.Parsing
       }
     }
 
-    private void ParseDeclarationWithSpecModifiers(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, bool savedInSpecCode) {
+    private void ParseDeclarationWithSpecModifiers(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, bool savedInSpecCode)
+    {
       List<Specifier> specifiers = new List<Specifier>();
       this.ParseSpecTypeModifierList(specifiers, followers);
-      this.SkipOutOfSpecBlock(savedInSpecCode, followers);
-      this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, isGlobal, specifiers);
+      if (specifiers.Count == 1 && this.currentToken != Token.RightParenthesis) {
+        this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers | Token.RightParenthesis, isGlobal, specifiers);
+        this.SkipOutOfSpecBlock(savedInSpecCode, followers);
+      } else {
+        this.SkipOutOfSpecBlock(savedInSpecCode, followers);
+        this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, isGlobal, specifiers);
+      }
     }
 
     protected override void ParseNonLocalDeclarationInSpecBlock(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
