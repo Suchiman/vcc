@@ -391,6 +391,7 @@ namespace Microsoft.Research.Vcc
             decl.Ensures    <- [ for r in contract.Postconditions -> this.DoPostcond r ]
             decl.Writes     <- [ for e in contract.Writes -> this.DoExpression e ]
             decl.Reads      <- [ for e in contract.Reads -> this.DoExpression e ]
+            decl.Variants   <- [ for e in contract.Variants -> this.DoMethodVariant e ]
             localsMap <- savedLocalsMap
           else if expansion <> null then
             let ex = this.DoExpression (expansion.ProjectAsIExpression())

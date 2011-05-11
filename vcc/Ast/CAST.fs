@@ -52,6 +52,9 @@ module Microsoft.Research.Vcc.CAST
   let AttrIsPure = "is_pure"
 
   [<Literal>]
+  let AttrDefinition = "definition"
+
+  [<Literal>]
   let AttrBvLemmaCheck = "bv_lemma_check"
 
   [<Literal>]
@@ -562,7 +565,7 @@ module Microsoft.Research.Vcc.CAST
       //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
       //  true // HACK
       else
-        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro), "") -> true | _ -> false) this.CustomAttr 
+        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition), "") -> true | _ -> false) this.CustomAttr 
       
     member this.IsStateless =
       this.IsPure && this.Reads = []
@@ -589,6 +592,17 @@ module Microsoft.Research.Vcc.CAST
                     Reads = ses this.Reads;
                     TypeParameters = [];
                     Body = if includeBody then Option.map se this.Body else None }
+
+    member this.CallSubst args =
+      let subst = new Dict<_,_>()
+      let rec loop = function
+        | (p :: pp, v :: vv) ->
+          subst.Add (p, v)
+          loop (pp, vv)
+        | ([], _) -> () // for varargs functions
+        | _ -> failwith "wrong number of arguments"
+      loop (this.InParameters, args)
+      subst
 
     member this.ToStringWT (showTypes) = 
       let b = StringBuilder()
