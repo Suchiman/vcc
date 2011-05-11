@@ -179,6 +179,7 @@ namespace Microsoft.Research.Vcc
     Inference.init helper
     ToCoreC.init helper
     AddChecks.init helper
+    Termination.init helper
     TransFinalize.init helper
     
     helper.AddTransformer ("end", Helper.DoNothing)

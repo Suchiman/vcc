@@ -250,9 +250,9 @@ namespace Microsoft.Research.Vcc
 
   let getTmp (helper:Helper.Env) name = Variable.CreateUnique (name + "#" + (helper.UniqueId()).ToString())
      
-  let cacheEx helper assign name expr varKind = 
+  let cacheEx saveRefs helper assign name expr varKind = 
     let rec isSimple = function
-      | Expr.Ref _
+      | Expr.Ref _ -> not saveRefs
       | IntLiteral _
       | BoolLiteral _ -> true
       | Dot (_, e, _) -> isSimple e
@@ -264,8 +264,15 @@ namespace Microsoft.Research.Vcc
          assign tmp expr ],
        Expr.Ref (expr.Common, tmp))
 
-  let cache helper = cacheEx helper (fun tmp expr -> Macro (voidBogusEC(), "=", [mkRef tmp; expr]))
-  let lateCache helper = cacheEx helper (fun tmp expr -> VarWrite (voidBogusEC(), [tmp], expr))
+  let cache helper = cacheEx false helper (fun tmp expr -> Macro (voidBogusEC(), "=", [mkRef tmp; expr]))
+  let lateCache helper = cacheEx false helper (fun tmp expr -> VarWrite (voidBogusEC(), [tmp], expr))
+  let lateCacheRef helper = cacheEx true helper (fun tmp expr -> VarWrite (voidBogusEC(), [tmp], expr))
+
+  let cacheMultiple helper fn name varKind exprs =
+     let aux (assigns, refs) e =
+        let assignsE, refE = fn helper name e varKind
+        (assignsE @ assigns, refE :: refs)
+     exprs |> List.fold aux ([], [])
   
   (*
   let applyFieldSubst (subst : Dict<Field, Field>) decls =

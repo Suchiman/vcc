@@ -244,15 +244,7 @@ namespace Microsoft.Research.Vcc
           match f'.Writes with
             | [] -> []
             | _ ->
-              let subst = new Dict<_,_>()
-              let rec loop = function
-                | (p :: pp, v :: vv) ->
-                  subst.Add (p, v)
-                  loop (pp, vv)
-                | ([], _) -> () // for varargs functions
-                | _ -> helper.Die()
-              loop (f'.InParameters, args)             
-
+              let subst = f'.CallSubst args
               [for w in f'.Writes ->
                 let w' = w.Subst (subst)
                 let prop = afmte 8510 "{1} is writable in call to {0}" [call; w']

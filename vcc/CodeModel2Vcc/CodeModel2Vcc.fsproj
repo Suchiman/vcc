@@ -101,6 +101,7 @@
     <Compile Include="Inference.fs" />
     <Compile Include="ToCoreC.fs" />
     <Compile Include="AddChecks.fs" />
+    <Compile Include="Termination.fs" />
     <Compile Include="TransFinalize.fs" />
     <Compile Include="TransSideChecks.fs" />
     <Compile Include="Transformers.fs" />
