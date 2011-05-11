@@ -1264,19 +1264,19 @@ namespace Microsoft.Research.Vcc {
       this.Writes.AddRange(writes);
     }
 
-    internal void AddMethodVariant(MethodVariant variant)
+    internal void AddMethodVariant(Expression variant)
     {
       if (this.Variants == null)  {
-        this.Variants = new List<MethodVariant>();
+        this.Variants = new List<Expression>();
         this.HasContract = true;
       }
       this.Variants.Add(variant);
     }
 
-    internal void AddMethodVariants(IEnumerable<MethodVariant> variants)
+    internal void AddMethodVariants(IEnumerable<Expression> variants)
     {
       if (this.Variants == null) {
-        this.Variants = new List<MethodVariant>();
+        this.Variants = new List<Expression>();
         this.HasContract = true;
       }
       this.Variants.AddRange(variants);
@@ -1288,7 +1288,7 @@ namespace Microsoft.Research.Vcc {
     internal List<Precondition>/*?*/ Preconditions;
     internal List<Expression>/*?*/ Reads;
     internal List<Expression>/*?*/ Writes;
-    internal List<MethodVariant>/*?*/ Variants;
+    internal List<Expression>/*?*/ Variants;
   }
 
   internal class FunctionDeclarator : Declarator {
