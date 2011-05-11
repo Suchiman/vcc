@@ -168,9 +168,6 @@ namespace Microsoft.Research.Vcc
     member private this.DoPostcond (p:IPostcondition) =
       if Visitor.CheckHasError(p.Condition) then oopsLoc p "postcondition has errors"; cFalse
       else this.DoExpression (p.Condition)
-    member private this.DoMethodVariant (v:IMethodVariant) =
-      if Visitor.CheckHasError(v.Condition) then oopsLoc v "variant has errors"; cFalse
-      else this.DoExpression (v.Condition)
         
     member this.GetResult () =
       while finalActions.Count > 0 do      
@@ -391,7 +388,7 @@ namespace Microsoft.Research.Vcc
             decl.Ensures    <- [ for r in contract.Postconditions -> this.DoPostcond r ]
             decl.Writes     <- [ for e in contract.Writes -> this.DoExpression e ]
             decl.Reads      <- [ for e in contract.Reads -> this.DoExpression e ]
-            decl.Variants   <- [ for e in contract.Variants -> this.DoMethodVariant e ]
+            decl.Variants   <- [ for e in contract.Variants -> this.DoExpression e ]
             localsMap <- savedLocalsMap
           else if expansion <> null then
             let ex = this.DoExpression (expansion.ProjectAsIExpression())
@@ -446,7 +443,7 @@ namespace Microsoft.Research.Vcc
                   Ensures   = [ for ens in contract.Postconditions -> this.DoPostcond ens ];
                   Reads     = [ for rd in contract.Reads -> this.DoExpression rd ];
                   Writes    = [ for wr in contract.Writes -> this.DoExpression wr ];
-                  Decreases = [ for vr in contract.Variants -> this.DoMethodVariant vr ];
+                  Decreases = [ for vr in contract.Variants -> this.DoExpression vr ];
                   IsPureBlock = contract.IsPure } : CAST.BlockContract
         match block' with
           | C.Expr.Block (ec,ss,_) -> C.Expr.Block (ec,ss, Some cs)
@@ -884,6 +881,9 @@ namespace Microsoft.Research.Vcc
       let conds =
         if contract = null then []
         else [ for i in contract.Invariants -> C.Expr.MkAssert (this.DoExpression i.Condition) ] @
+             [ for v in contract.Variants ->
+                  let expr = this.DoExpression v                 
+                  C.Expr.MkAssert (C.Expr.Macro ({ expr.Common with Type = C.Type.Bool }, "loop_variant", [expr]))] @
              [ for w in contract.Writes -> 
                   let set = this.DoExpression w                    
                   C.Expr.MkAssert (C.Expr.Macro ({ set.Common with Type = C.Type.Bool }, "loop_writes", [set]))]

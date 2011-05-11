@@ -381,7 +381,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (this.currentToken != Token.Invariant && this.currentToken != Token.Writes) return null;
       List<LoopInvariant> invariants = new List<LoopInvariant>();
       List<Expression> writes = new List<Expression>();
-      List<LoopVariant> variants = new List<LoopVariant>();
+      List<Expression> variants = new List<Expression>();
       LoopContract loopContract = new LoopContract(invariants, writes, variants);
       TokenSet loopContractFollowers = followers | Token.Invariant | Token.Writes | Token.Decreases;
       while (TS.LoopContractStart[this.currentToken]) {
@@ -402,11 +402,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       return this.ParseExpressionWithParens(followers, (expr, slb) => new LoopInvariant(expr, slb));
     }
 
-    protected LoopVariant ParseLoopVariant(TokenSet followers)
+    protected Expression ParseLoopVariant(TokenSet followers)
     //^ requires this.currentToken == Token.Variants;
     //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      return this.ParseExpressionWithParens(followers, (expr, slb) => new LoopVariant(expr, slb));
+      return this.ParseExpressionWithParens(followers, (expr, slb) => expr);
     }
 
     protected void ParseTypeInvariant(TokenSet followers)
@@ -1530,7 +1530,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             this.resultIsAKeyword = true;
             condition = this.ParseExpressionWithParens(followersOrContractStart, (expr, slb) => expr);
             this.resultIsAKeyword = false;
-            contract.AddMethodVariant(new MethodVariant(condition, condition.SourceLocation));
+            contract.AddMethodVariant(condition);
             break;
           case Token.Reads: 
             exprList = this.ParseExpressionListWithParens(Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, followersOrContractStart);

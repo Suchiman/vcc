@@ -258,7 +258,7 @@ namespace Microsoft.Research.Vcc.Parsing
     protected override LoopContract ParseLoopContract(TokenSet followers) {
       List<LoopInvariant> invariants = new List<LoopInvariant>();
       List<Expression> writes = new List<Expression>();
-      List<LoopVariant> variants = new List<LoopVariant>();
+      List<Expression> variants = new List<Expression>();
       while (this.currentToken == Token.Specification) {
         var snap = this.scanner.MakeSnapshot();
         bool savedInSpecCode = this.SkipIntoSpecBlock();
@@ -283,12 +283,9 @@ namespace Microsoft.Research.Vcc.Parsing
               this.GetNextToken();
               this.ParseExpressionList(writes, Token.Comma, followers | Token.RightParenthesis);
               break;
-            case Token.SpecDecreases:
-              SourceLocationBuilder slb2 = new SourceLocationBuilder(this.scanner.SourceLocationOfLastScannedToken);
+            case Token.SpecDecreases:              
               this.GetNextToken();
-              var red = this.ParseExpression(followers | Token.RightParenthesis);
-              slb2.UpdateToSpan(red.SourceLocation);
-              variants.Add(new LoopVariant(red, slb2));
+              this.ParseExpressionList(variants, Token.Comma, followers | Token.RightParenthesis);
               break;
           }
           this.SkipSemicolonsInSpecBlock(STS.LoopContract | Token.RightParenthesis);
@@ -334,8 +331,8 @@ namespace Microsoft.Research.Vcc.Parsing
               break;
             case Token.SpecDecreases:
               this.GetNextToken();
-              var variant = this.ParseExpression(followers | Token.RightParenthesis);
-              contract.AddMethodVariant(new MethodVariant(variant, variant.SourceLocation));
+              var variants = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+              contract.AddMethodVariants(variants);
               break;
             case Token.SpecReads:
               this.GetNextToken();
