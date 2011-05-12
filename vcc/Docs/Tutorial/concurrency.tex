@@ -78,7 +78,7 @@ First, let's have a look at the contract.
 wrapped), we will fix that later. }
 The preconditions on the protected object are very similar to the
 preconditions on the \vcc{InitializeLock()}.
-Note that the \vcc{Release()} does not mention the lock it its writes clause,
+Note that the \vcc{Release()} does not mention the lock in its writes clause,
 this is because the write it performs is volatile.
 Intuitively, VCC needs to assume such writes can happen at any time, so one additional
 write from this function doesn't make a difference.
@@ -218,10 +218,10 @@ preserved (we'll see the precise rule in \secref{inv2}).
 So VCC adds an implicit invariant to all types
 marked with \vcc{_(claimable)} attribute.
 This invariant states that the object cannot be unwrapped when
-when there are closed claims on it.
+there are closed claims on it.
 More precisely, each claimable object keeps track of the count of outstanding
 claims.
-The number of outstanding claim on an object is stored in
+The number of outstanding claims on an object is stored in
 \vcc{\claim_count} field.
 
 Now, getting back to our lock example, the trick is that there can be
