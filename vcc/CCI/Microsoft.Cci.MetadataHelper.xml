@@ -505,6 +505,33 @@
             <param name="childDocumentName">The name of the child document.</param>
             <returns>The unmanaged memory block corresponding to the child document.</returns>
         </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHost.Redirect(Microsoft.Cci.IUnit,Microsoft.Cci.ITypeReference)">
+            <summary>
+            Provides the host with an opportunity to substitute one type reference for another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="referringUnit">The unit that is referencing the type.</param>
+            <param name="typeReference">A type reference encountered during metadata reading.</param>
+            <returns>Usually the value in typeReference, but occassionally something else.</returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHost.Rewrite(Microsoft.Cci.IUnit,Microsoft.Cci.ICustomAttribute)">
+            <summary>
+            Provides the host with an opportunity to substitute a custom attribute with another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="containingUnit">The unit that contains the custom attribute.</param>
+            <param name="customAttribute">The custom attribute to rewrite (fix up).</param>
+            <returns>Usually the value in customAttribute, but occassionally another custom attribute.</returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHost.Rewrite(Microsoft.Cci.IUnit,Microsoft.Cci.IMethodDefinition)">
+            <summary>
+            Provides the host with an opportunity to substitute one method definition for another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="containingUnit">The unit that is defines the method.</param>
+            <param name="methodDefinition">A method definition encountered during metadata reading.</param>
+            <returns>Usually the value in methodDefinition, but occassionally something else.</returns>
+        </member>
         <member name="M:Microsoft.Cci.IMetadataReaderHost.ResolvingAssemblyReference(Microsoft.Cci.IUnit,Microsoft.Cci.AssemblyIdentity)">
             <summary>
             This method is called when the assembly reference is being resolved and its not already loaded by the host.
@@ -624,6 +651,39 @@
             <param name="childDocumentName">The name of the child document.</param>
             <returns>The unmanaged memory block corresponding to the child document.</returns>
             <remarks>When overridding this method, be sure to add any disposable objects to this.disposableObjectAllocatedByThisHost.</remarks>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReaderHost.Redirect(Microsoft.Cci.IUnit,Microsoft.Cci.ITypeReference)">
+            <summary>
+            Provides the host with an opportunity to substitute one type reference for another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="referringUnit">The unit that is referencing the type.</param>
+            <param name="typeReference">A type reference encountered during metadata reading.</param>
+            <returns>
+            Usually the value in typeReference, but occassionally something else.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReaderHost.Rewrite(Microsoft.Cci.IUnit,Microsoft.Cci.ICustomAttribute)">
+            <summary>
+            Provides the host with an opportunity to substitute a custom attribute with another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="containingUnit">The unit that contains the custom attribute.</param>
+            <param name="customAttribute">The custom attribute to rewrite (fix up).</param>
+            <returns>
+            Usually the value in customAttribute, but occassionally another custom attribute.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReaderHost.Rewrite(Microsoft.Cci.IUnit,Microsoft.Cci.IMethodDefinition)">
+            <summary>
+            Provides the host with an opportunity to substitute one method definition for another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="containingUnit">The unit that is defines the method.</param>
+            <param name="methodDefinition">A method definition encountered during metadata reading.</param>
+            <returns>
+            Usually the value in methodDefinition, but occassionally something else.
+            </returns>
         </member>
         <member name="M:Microsoft.Cci.MetadataReaderHost.ResolvingAssemblyReference(Microsoft.Cci.IUnit,Microsoft.Cci.AssemblyIdentity)">
             <summary>
@@ -934,6 +994,11 @@
         <member name="P:Microsoft.Cci.MethodReference.IsGeneric">
             <summary>
             True if the referenced method has generic parameters;
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MethodReference.IsStatic">
+            <summary>
+            True if the referenced method does not require an instance of its declaring type as its first argument.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MethodReference.Name">
@@ -1622,6 +1687,11 @@
             True if the method has generic parameters;
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.Immutable.GenericMethodInstanceReference.IsStatic">
+            <summary>
+            True if the referenced method does not require an instance of its declaring type as its first argument.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.Immutable.GenericMethodInstanceReference.Name">
             <summary>
@@ -2956,6 +3026,51 @@
             </summary>
             <value></value>
         </member>
+        <member name="T:Microsoft.Cci.Immutable.SpecializedMethodImplementation">
+            <summary>
+            Models an explicit implementation or override of a base class virtual method or an explicit implementation of an interface method
+            in the case of a generic type instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.Immutable.SpecializedMethodImplementation.#ctor(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IMethodImplementation,Microsoft.Cci.IInternFactory)">
+            <summary>
+            Models an explicit implementation or override of a base class virtual method or an explicit implementation of an interface method
+            in the case of a generic type instance.
+            </summary>
+            <param name="containingType">The type that is explicitly implementing or overriding the base class virtual method or explicitly implementing an interface method.</param>
+            <param name="unspecializedVersion">The method implementation as defined by the original unspecialized generic (template) type. No type parameters have been substituted in this version.</param>
+            <param name="internFactory">The intern factory to use for computing the interned identity of this type and any types and members referenced by it.</param>
+        </member>
+        <member name="M:Microsoft.Cci.Immutable.SpecializedMethodImplementation.Dispatch(Microsoft.Cci.IMetadataVisitor)">
+            <summary>
+            Calls the visitor.Visit(IMethodImplementation).
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.Immutable.SpecializedMethodImplementation.internFactory">
+            <summary>
+            The intern factory to use for computing the interned identity of this type and any types and members referenced by it.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.Immutable.SpecializedMethodImplementation.ContainingType">
+            <summary>
+            The type that is explicitly implementing or overriding the base class virtual method or explicitly implementing an interface method.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.Immutable.SpecializedMethodImplementation.ImplementedMethod">
+            <summary>
+            A reference to the method whose implementation is being provided or overridden.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.Immutable.SpecializedMethodImplementation.ImplementingMethod">
+            <summary>
+            A reference to the method that provides the implementation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.Immutable.SpecializedMethodImplementation.UnspecializedVersion">
+            <summary>
+            The method implementation as defined by the original generic (template) type. No type parameters have been substituted in this version.
+            </summary>
+        </member>
         <member name="T:Microsoft.Cci.Immutable.SpecializedMethodReference">
             <summary>
             A reference to a method of a generic type instance or one of its nested types.
@@ -3013,6 +3128,11 @@
         <member name="P:Microsoft.Cci.Immutable.SpecializedMethodReference.IsGeneric">
             <summary>
             True if the method has generic parameters;
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.Immutable.SpecializedMethodReference.IsStatic">
+            <summary>
+            True if the referenced method does not require an instance of its declaring type as its first argument.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.Immutable.SpecializedMethodReference.ParameterCount">
@@ -3455,6 +3575,11 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Microsoft.Cci.Immutable.SpecializedPropertyDefinition.IsStatic">
+            <summary>
+            True if the referenced property does not require an instance of its declaring type as its first argument.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.Immutable.SpecializedPropertyDefinition.ReturnValueAttributes">
             <summary>
             Custom attributes associated with the property's return value.
@@ -3645,7 +3770,10 @@
         </member>
         <member name="P:Microsoft.Cci.Immutable.BaseTypeReference.AliasForType">
             <summary>
-            Gives the alias for the type
+            If this type reference can be resolved and it resolves to a type alias, the resolution continues on
+            to resolve the reference to the aliased type. This property provides a way to discover how that resolution
+            proceeded, by exposing the alias concerned. Think of this as a version of ResolvedType that does not
+            traverse aliases.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.Immutable.BaseTypeReference.Attributes">
@@ -3801,6 +3929,14 @@
             Returns a string representation of this object.
             </summary>
         </member>
+        <member name="P:Microsoft.Cci.Immutable.NamespaceTypeReference.AliasForType">
+            <summary>
+            If this type reference can be resolved and it resolves to a type alias, the resolution continues on
+            to resolve the reference to the aliased type. This property provides a way to discover how that resolution
+            proceeded, by exposing the alias concerned. Think of this as a version of ResolvedType that does not
+            traverse aliases.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.Immutable.NamespaceTypeReference.ContainingUnitNamespace">
             <summary>
             The namespace that contains the referenced type.
@@ -3889,6 +4025,11 @@
         <member name="T:Microsoft.Cci.Immutable.PlatformType">
             <summary>
             A collection of references to types from the core platform, such as System.Object and System.String.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.Immutable.PlatformType.host">
+            <summary>
+            An object that provides a standard abstraction over the applications that host components that provide or consume objects from the metadata model.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.Immutable.PlatformType.#ctor(Microsoft.Cci.IMetadataHost)">
@@ -8034,6 +8175,14 @@
             Returns a reference to the unit that defines the given type. If the reference type is a reference to a structural type, such as a pointer the result is 
             the a reference to the defining unit of the element type, or in the case of a generic type instance, the definining type of the generic template type.
             </summary>
+        </member>
+        <member name="M:Microsoft.Cci.TypeHelper.GetEvent(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName)">
+            <summary>
+            Returns an event of the given declaring type that has the given name.
+            If no such event can be found, Dummy.Event is returned.
+            </summary>
+            <param name="declaringType">The type thats declares the field.</param>
+            <param name="eventName">The name of the event.</param>
         </member>
         <member name="M:Microsoft.Cci.TypeHelper.GetField(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName)">
             <summary>
