@@ -2712,4 +2712,17 @@ function $type_code_is(x:int, tp:$ctype) : bool;
 // idx==0 - return type
 function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) : bool;
 
+// ----------------------------------------------------------------------------
+// Termination
+// ----------------------------------------------------------------------------
+
+function {:inline} $int_lt_or(called:int, caller:int, otherwise:bool) : bool
+{
+  (0 <= caller && called < caller) || (called == caller && otherwise)
+}
+
+// ----------------------------------------------------------------------------
+// Datatypes
+// ----------------------------------------------------------------------------
+
 // That's all folks.

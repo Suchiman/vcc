@@ -271,8 +271,8 @@ namespace Microsoft.Research.Vcc
   let cacheMultiple helper fn name varKind exprs =
      let aux (assigns, refs) e =
         let assignsE, refE = fn helper name e varKind
-        (assignsE @ assigns, refE :: refs)
-     exprs |> List.fold aux ([], [])
+        (List.rev assignsE @ assigns, refE :: refs)
+     exprs |> List.fold aux ([], []) |> fun (a, b) -> (List.rev a, List.rev b)
   
   (*
   let applyFieldSubst (subst : Dict<Field, Field>) decls =

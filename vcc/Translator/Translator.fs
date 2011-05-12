@@ -724,6 +724,8 @@ namespace Microsoft.Research.Vcc
               | _ -> die()
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
             B.FunctionCall(name, [self e1; self e2])
+          | name, args when name.StartsWith "prelude_" ->
+            B.FunctionCall (name.Replace ("prelude_", "$"), selfs args)
           | n, _ when (helper.PureCallSignature n).IsSome ->
             let signature = (helper.PureCallSignature n).Value
             let rec aux acc idx (args:list<C.Expr>) =
