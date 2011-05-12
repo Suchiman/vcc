@@ -145,9 +145,9 @@
             Is null when no writes clause was specified.
             </summary>
         </member>
-        <member name="T:Microsoft.Cci.MutableContracts.LoopVariant">
+        <member name="T:Microsoft.Cci.MutableContracts.LoopInvariant">
             <summary>
-            A measure that must be reduced in every nonterminal iteration of a loop
+            A condition that must be true at the start of every iteration of a loop.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MutableContracts.ContractElement">
@@ -214,28 +214,6 @@
         <member name="P:Microsoft.Cci.MutableContracts.ContractElement.Locations">
             <summary>
             A potentially empty collection of locations that correspond to this instance.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableContracts.LoopVariant.#ctor">
-            <summary>
-            Creates a fresh loop variant.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableContracts.LoopVariant.#ctor(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Creates a loop variant that shares all of the information in <paramref name="loopVariant"/>.
-            </summary>
-            <param name="loopVariant"></param>
-        </member>
-        <member name="M:Microsoft.Cci.MutableContracts.LoopVariant.Dispatch(Microsoft.Cci.Contracts.ICodeAndContractVisitor)">
-            <summary>
-            Calls visitor.Visit(ILoopVariant).
-            </summary>
-            <param name="visitor"></param>
-        </member>
-        <member name="T:Microsoft.Cci.MutableContracts.LoopInvariant">
-            <summary>
-            A condition that must be true at the start of every iteration of a loop.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableContracts.LoopInvariant.#ctor">
@@ -332,28 +310,6 @@
             True if the method has no observable side-effect on program state and hence this method is safe to use in a contract,
             which may or may not be executed, depending on how the program has been compiled.
             </summary>
-        </member>
-        <member name="T:Microsoft.Cci.MutableContracts.MethodVariant">
-            <summary>
-            A measure that must be decrease in every call from the method.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableContracts.MethodVariant.#ctor">
-            <summary>
-            Creates a fresh method variant.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableContracts.MethodVariant.#ctor(Microsoft.Cci.Contracts.IMethodVariant)">
-            <summary>
-            Creates a method variant that shares all of the information in <paramref name="methodVariant"/>
-            </summary>
-            <param name="methodVariant"></param>
-        </member>
-        <member name="M:Microsoft.Cci.MutableContracts.MethodVariant.Dispatch(Microsoft.Cci.Contracts.ICodeAndContractVisitor)">
-            <summary>
-            Calls visitor.Visit(IMethodVariant).
-            </summary>
-            <param name="visitor"></param>
         </member>
         <member name="T:Microsoft.Cci.MutableContracts.Precondition">
             <summary>
@@ -511,18 +467,20 @@
             
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CodeShallowCopier.#ctor(Microsoft.Cci.IMetadataHost)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.CodeShallowCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.ISourceLocationProvider)">
             <summary>
             
             </summary>
             <param name="targetHost">An object representing the application that will host the copies made by this copier.</param>
+            <param name="sourceLocationProvider"></param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CodeShallowCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.IUnit)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.CodeShallowCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.IUnit,Microsoft.Cci.ISourceLocationProvider)">
             <summary>
             
             </summary>
             <param name="targetHost">An object representing the application that will host the copies made by this copier.</param>
             <param name="targetUnit">The unit of metadata into which copies made by this copier will be inserted.</param>
+            <param name="sourceLocationProvider"></param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.CodeShallowCopier.Copy(Microsoft.Cci.IAddition)">
             <summary>
@@ -1081,18 +1039,20 @@
             
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CodeDeepCopier.#ctor(Microsoft.Cci.IMetadataHost)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.CodeDeepCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.ISourceLocationProvider)">
             <summary>
             
             </summary>
             <param name="targetHost">An object representing the application that will host the copies made by this copier.</param>
+            <param name="sourceLocationProvider"></param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.CodeDeepCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.IUnit)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.CodeDeepCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.IUnit,Microsoft.Cci.ISourceLocationProvider)">
             <summary>
             
             </summary>
             <param name="targetHost">An object representing the application that will host the copies made by this copier.</param>
             <param name="targetUnit">The unit of metadata into which copies made by this copier will be inserted.</param>
+            <param name="sourceLocationProvider"></param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.CodeDeepCopier.#ctor(Microsoft.Cci.IMetadataHost,Microsoft.Cci.MutableCodeModel.CodeShallowCopier)">
             <summary>
@@ -3000,19 +2960,9 @@
             Makes a shallow copy of the given loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractShallowCopier.Copy(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Makes a shallow copy of the given loop variant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractShallowCopier.Copy(Microsoft.Cci.Contracts.IMethodContract)">
             <summary>
             Makes a shallow copy of the given method contract.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractShallowCopier.Copy(Microsoft.Cci.Contracts.IMethodVariant)">
-            <summary>
-            Makes a shallow copy of the given variant.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractShallowCopier.Copy(Microsoft.Cci.Contracts.IPostcondition)">
@@ -3084,11 +3034,6 @@
             Makes a deep copy of the given list of loop invariants.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractDeepCopier.Copy(System.Collections.Generic.List{Microsoft.Cci.Contracts.ILoopVariant})">
-            <summary>
-            Makes a deep copy of the given list of loop variants.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractDeepCopier.Copy(System.Collections.Generic.List{Microsoft.Cci.IMethodDefinition})">
             <summary>
             Makes a deep copy of the given list of method definitions.
@@ -3114,11 +3059,6 @@
             Makes a deep copy of the given list of addressable expressions.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractDeepCopier.Copy(System.Collections.Generic.List{Microsoft.Cci.Contracts.IMethodVariant})">
-            <summary>
-            Makes a deep copy of the given list of post conditions.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractDeepCopier.Copy(Microsoft.Cci.Contracts.IContractElement)">
             <summary>
             Makes a deep copy of the given contract element.
@@ -3135,19 +3075,9 @@
             Makes a deep copy of the given loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractDeepCopier.Copy(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Makes a deep copy of the given loop variant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractDeepCopier.Copy(Microsoft.Cci.Contracts.IMethodContract)">
             <summary>
             Makes a deep copy of the given method contract.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractDeepCopier.Copy(Microsoft.Cci.Contracts.IMethodVariant)">
-            <summary>
-            Makes a deep copy of the given variant.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractDeepCopier.Copy(Microsoft.Cci.Contracts.IPostcondition)">
@@ -3606,6 +3536,11 @@
             Calling convention of the signature.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.IsStatic">
+            <summary>
+            True if the enclosed method does not require an instance of its declaring type as its first argument.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Parameters">
             <summary>
@@ -4132,6 +4067,11 @@
         <member name="P:Microsoft.Cci.MutableCodeModel.CreateDelegateInstance.Instance">
             <summary>
             An expression that evaluates to the instance (if any) on which this.MethodToCallViaDelegate must be called (via the delegate).
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.CreateDelegateInstance.IsVirtualDelegate">
+            <summary>
+            True if the delegate encapsulates a virtual method.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.CreateDelegateInstance.MethodToCallViaDelegate">
@@ -5251,15 +5191,6 @@
             </summary>
             <param name="visitor"></param>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.SourceMethodBody.GetIteratorScopes">
-            <summary>
-            Returns zero or more local (block) scopes, each defining an IL range in which an iterator local is defined.
-            The scopes are returned by the MoveNext method of the object returned by the iterator method.
-            The index of the scope corresponds to the index of the local. Specifically local scope i corresponds
-            to the local stored in field &lt;localName&gt;x_i of the class used to store the local values in between
-            calls to MoveNext.
-            </summary>
-        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.SourceMethodBody.Block">
             <summary>
             The collection of statements making up the body.
@@ -5271,6 +5202,25 @@
             <summary>
             True if the method body does not contain any anonymous delegates or yield statements.
             This property is not computed, but is set by the constructor of this body.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.SourceMethodBody.IsIterator">
+            <summary>
+            True if the method body is an iterator.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.SourceMethodBody.IteratorScopes">
+            <summary>
+            Returns zero or more local (block) scopes, each defining an IL range in which an iterator local is defined.
+            The scopes are returned by the MoveNext method of the object returned by the iterator method.
+            The index of the scope corresponds to the index of the local. Specifically local scope i corresponds
+            to the local stored in field &lt;localName&gt;x_i of the class used to store the local values in between
+            calls to MoveNext.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.SourceMethodBody.LocalScopes">
+            <summary>
+            Returns zero or more local (block) scopes into which the CLR IL operations in the given method body is organized.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.SourceMethodBody.LocalsAreZeroed">
@@ -5296,6 +5246,14 @@
             If this is the body of an event or property accessor, this will hold the corresponding adder/remover/setter or getter method.
             </summary>
             <remarks>The setter should only be called once, to complete the two phase initialization of this object.</remarks>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.SourceMethodBody.NamespaceScopes">
+            <summary>
+            Returns zero or more namespace scopes into which the namespace type containing the given method body has been nested.
+            These scopes determine how simple names are looked up inside the method body. There is a separate scope for each dotted
+            component in the namespace type name. For istance namespace type x.y.z will have two namespace scopes, the first is for the x and the second
+            is for the y.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.SourceMethodBody.Operations">
             <summary>
@@ -9063,19 +9021,9 @@
             Rewrites the given loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.Rewrite(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Rewrites the given loop variant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.Rewrite(Microsoft.Cci.Contracts.IMethodContract)">
             <summary>
             Rewrites the given method contract.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.Rewrite(Microsoft.Cci.Contracts.IMethodVariant)">
-            <summary>
-            Rewrites the given method variant.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.Rewrite(Microsoft.Cci.Contracts.IPostcondition)">
@@ -9133,11 +9081,6 @@
             Rewrites the given list of loop invariants.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.Contracts.ILoopVariant})">
-            <summary>
-            Rewrites the given list of loop variants.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.Contracts.IPostcondition})">
             <summary>
             Rewrites the given list of post conditions.
@@ -9158,11 +9101,6 @@
             Rewrites the given list of addressable expressions.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.Contracts.IMethodVariant})">
-            <summary>
-            Rewrites the given list of post conditions.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.RewriteChildren(Microsoft.Cci.MutableContracts.ContractElement)">
             <summary>
             Called from the type specific rewrite method to rewrite the common part of all contract elments.
@@ -9179,19 +9117,9 @@
             Rewrites the children of the given loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.RewriteChildren(Microsoft.Cci.MutableContracts.LoopVariant)">
-            <summary>
-            Rewrites the children of the given loop variant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.RewriteChildren(Microsoft.Cci.MutableContracts.MethodContract)">
             <summary>
             Rewrites the children of the given method contract.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.RewriteChildren(Microsoft.Cci.MutableContracts.MethodVariant)">
-            <summary>
-            Rewrites the children of the given method variant.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.Contracts.CodeAndContractRewriter.RewriteChildren(Microsoft.Cci.MutableContracts.Precondition)">

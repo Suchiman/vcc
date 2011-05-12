@@ -271,11 +271,6 @@
             A condition that must be true at the start of every iteration of a loop.
             </summary>
         </member>
-        <member name="T:Microsoft.Cci.Contracts.ILoopVariant">
-            <summary>
-            A measure that must be reduced in every nonterminal iteration of a loop
-            </summary>
-        </member>
         <member name="T:Microsoft.Cci.Contracts.IMethodContract">
             <summary>
             A collection of collections of objects that augment the type signature of a method with additional information
@@ -360,11 +355,6 @@
         <member name="T:Microsoft.Cci.Contracts.IPostcondition">
             <summary>
             A condition that must be true at the end of a method.
-            </summary>
-        </member>
-        <member name="T:Microsoft.Cci.Contracts.IMethodVariant">
-            <summary>
-            A measure that must be decrease in every call from the method.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.Contracts.IThrownException">
@@ -1048,6 +1038,11 @@
         <member name="P:Microsoft.Cci.ICreateDelegateInstance.Instance">
             <summary>
             An expression that evaluates to the instance (if any) on which this.MethodToCallViaDelegate must be called (via the delegate).
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.ICreateDelegateInstance.IsVirtualDelegate">
+            <summary>
+            True if the delegate encapsulates a virtual method.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.ICreateDelegateInstance.MethodToCallViaDelegate">
@@ -1771,7 +1766,7 @@
         </member>
         <member name="P:Microsoft.Cci.IResourceUseStatement.ResourceAcquisitions">
             <summary>
-            Statements to initialize local definitions with the resources to use.
+            Either an IExpression statement whose expression of type IDisposable, or an ILocalDeclarationStatement whose variable is initialized and of type IDisposable.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.IRethrowStatement">
@@ -4998,17 +4993,7 @@
             Performs some computation with the given loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Performs some computation with the given loop invariant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodContract)">
-            <summary>
-            Performs some computation with the given method contract.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodVariant)">
             <summary>
             Performs some computation with the given method contract.
             </summary>
@@ -5069,19 +5054,9 @@
             Visits the given loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Visits the given loop variant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodContract)">
             <summary>
             Visits the given method contract.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodVariant)">
-            <summary>
-            Visits the given variant.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.Contracts.CodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IPostcondition)">
@@ -5144,11 +5119,6 @@
             Traverses the enumeration of loop invariants.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.ILoopVariant})">
-            <summary>
-            Traverses the enumeration of loop variants.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.IPostcondition})">
             <summary>
             Traverses the enumeration of post conditions.
@@ -5169,11 +5139,6 @@
             Traverses the enumeration of addressable expressions.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.IMethodVariant})">
-            <summary>
-            Traverses the enumeration of post conditions.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.ILoopContract)">
             <summary>
             Traverses the loop contract.
@@ -5184,19 +5149,9 @@
             Traverses the loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Traverses the loop variant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.IMethodContract)">
             <summary>
             Traverses the method contract.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.IMethodVariant)">
-            <summary>
-            Traverses the method variant.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.Traverse(Microsoft.Cci.Contracts.IPostcondition)">
@@ -5241,11 +5196,6 @@
             Traverses the children of the loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Traverses the children of the loop variant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.IMethodCall)">
             <summary>
             Traverses the children of the method call.
@@ -5259,11 +5209,6 @@
         <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.IMethodDefinition)">
             <summary>
             Traverses the children of the method definition.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.IMethodVariant)">
-            <summary>
-            Traverses the children of the method variant.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.IPostcondition)">
@@ -5356,16 +5301,6 @@
             Traverses the given loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractTraverser.Visit(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.ILoopVariant})">
-            <summary>
-            Traverses the given list of loop variants.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractTraverser.Visit(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Traverses the given loop variant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractTraverser.Visit(Microsoft.Cci.Contracts.IMethodContract)">
             <summary>
             Traverses the given method contract.
@@ -5379,16 +5314,6 @@
         <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractTraverser.Visit(Microsoft.Cci.Contracts.IPostcondition)">
             <summary>
             Traverses the given postCondition.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractTraverser.Visit(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.IMethodVariant})">
-            <summary>
-            Traverses the given list of post conditions.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractTraverser.Visit(Microsoft.Cci.Contracts.IMethodVariant)">
-            <summary>
-            Traverses the given variant.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractTraverser.Visit(System.Collections.Generic.IEnumerable{Microsoft.Cci.Contracts.IPrecondition})">
@@ -5466,19 +5391,9 @@
             Visits the given loop invariant.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ILoopVariant)">
-            <summary>
-            Visits the given loop variant.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodContract)">
             <summary>
             Visits the given method contract.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodVariant)">
-            <summary>
-            Visits the given variant.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.Contracts.BaseCodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IPostcondition)">

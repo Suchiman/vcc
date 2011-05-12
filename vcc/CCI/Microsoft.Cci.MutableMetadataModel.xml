@@ -3956,6 +3956,11 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.MethodReference.IsStatic">
+            <summary>
+            True if the referenced method does not require an instance of its declaring type as its first argument.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.MethodReference.Locations">
             <summary>
             A potentially empty collection of locations that correspond to this instance.
@@ -4942,6 +4947,11 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.PropertyDefinition.IsStatic">
+            <summary>
+            True if the referenced property does not require an instance of its declaring type as its first argument.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.PropertyDefinition.Parameters">
             <summary>
             The parameters forming part of this signature.
@@ -5006,6 +5016,11 @@
             Calling convention of the signature.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.SignatureDefinition.IsStatic">
+            <summary>
+            True if the referenced method or property does not require an instance of its declaring type as its first argument.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.SignatureDefinition.Parameters">
             <summary>
@@ -10396,6 +10411,11 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.FunctionPointerTypeReference.IsStatic">
+            <summary>
+            True if the referenced function does not require an instance of its declaring type as its first argument.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.FunctionPointerTypeReference.ExtraArgumentTypes">
             <summary>
             The types and modifiers of extra arguments that the caller will pass to the methods that are pointed to by this pointer. May be null.
@@ -10917,6 +10937,11 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.NamespaceTypeReference.DispatchAsReference(Microsoft.Cci.IMetadataVisitor)">
             <summary>
             Calls visitor.Visit(INamespaceTypeReference).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.NamespaceTypeReference.Resolve">
+            <summary>
+            The namespace type this reference resolves to.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.NamespaceTypeReference.AliasForType">

@@ -2067,6 +2067,11 @@
             Calling convention of the signature.
             </summary>
         </member>
+        <member name="P:Microsoft.Cci.ISignature.IsStatic">
+            <summary>
+            True if the referenced method or property does not require an instance of its declaring type as its first argument.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.ISignature.Parameters">
             <summary>
             The parameters forming part of this signature.
@@ -2239,11 +2244,6 @@
         <member name="P:Microsoft.Cci.IMethodDefinition.IsSpecialName">
             <summary>
             True if the method is special in some way for tools. For example, it might be a property getter or setter.
-            </summary>
-        </member>
-        <member name="P:Microsoft.Cci.IMethodDefinition.IsStatic">
-            <summary>
-            True if the method does not require an instance of its declaring type as its first argument.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IMethodDefinition.IsStaticConstructor">
@@ -5821,7 +5821,7 @@
         </member>
         <member name="T:Microsoft.Cci.IMethodImplementation">
             <summary>
-            Models an explicit implemenation or override of a base class virtual method or an explicit implementation of an interface method.
+            Models an explicit implementation or override of a base class virtual method or an explicit implementation of an interface method.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.IMethodImplementation.Dispatch(Microsoft.Cci.IMetadataVisitor)">
