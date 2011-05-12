@@ -398,7 +398,12 @@ namespace Microsoft.Research.Vcc
             List.iter (add (g::path)) calls.[g]
             
         for g in calls.[f] do
-          if g.IsPure then add [f] g
+          if g.IsPure then
+            if g.CustomAttr |> hasCustomAttr AttrDefinition then
+              // these are checked for termination, and cannot call ordinary pure functions
+              ()
+            else
+              add [f] g
           else
             helper.Error (f.Token, 9637, "the pure function '" + f.Name + "' calls '" + g.Name + "' which is not pure", Some(g.Token))
         if !error <> [] then
