@@ -494,6 +494,24 @@ module Microsoft.Research.Vcc.CAST
         } : Variable
     
       member this.UniqueCopy() = Variable.CreateUnique this.Name this.Type this.Kind
+
+      static member UniqueCopies f vars =
+        let subst = new Dict<_,_>()
+        let doSubst (v:Variable) =
+          let v' = f (v.UniqueCopy())
+          subst.Add(v,v')
+          v'
+        let replace (e:Expr) = 
+          let replace' _ = function
+            | Expr.Ref(ec, v) -> 
+              match subst.TryGetValue v with
+                | true, v' -> Some(Expr.Ref(ec, v'))
+                | false, _ -> None
+            | _ -> None
+          e.SelfMap(replace')
+        let vars' = List.map doSubst vars
+        vars', replace
+
     
       member this.WriteTo b =
         match this.Kind with
@@ -1104,6 +1122,61 @@ module Microsoft.Research.Vcc.CAST
     member this.Type = this.Common.Type
     member this.Token = this.Common.Token
     
+    member this.ApplyToChildren f =
+      let fs = List.map f
+      match this with
+        | Return (_, None)
+        | Goto _
+        | Label _
+        | Comment _ 
+        | Ref _
+        | IntLiteral _
+        | BoolLiteral _
+        | VarDecl _
+        | Macro(_, _, [])
+        | Call(_, _, _, [])
+        | UserData _
+        | SizeOf _
+        | This _
+        | Result _ -> this
+        | Prim (c, op, es) ->  Prim (c, op, fs es)
+        | Call (c, fn, tas, es) -> Call (c, fn, tas, fs es)
+        | Macro (c, op, es) -> Macro (c, op, fs es)
+        | Deref (c, e) -> Deref (c, f e)
+        | Dot (c, e, fld) -> Dot (c, f e, fld)
+        | Index (c, e1, e2) -> Index (c, f e1, f e2)
+        | Cast (c, ch, e) -> Cast (c, ch, f e)
+        | Old (c, e1, e2) -> Old (c, f e1, f e2)
+        | Quant (c, q) ->
+          Quant (c, 
+            {q with 
+              Condition = Option.map f q.Condition
+              Body = f q.Body
+              Triggers = List.map fs q.Triggers
+            })
+        | VarWrite (c, v, e) -> VarWrite (c, v, f e)
+        | MemoryWrite (c, e1, e2) -> MemoryWrite (c, f e1, f e2)
+        | Assert (c, e, trigs) -> Assert (c, f e, List.map fs trigs)
+        | Assume (c, e) -> Assume (c, f e)
+        | Return (c, Some e) -> Return (c, Some (f e))
+        | If (c, cl, cond, s1, s2) -> If (c, Option.map f cl, f cond, f s1, f s2)
+        | Loop (c, invs, writes, variants, s) -> 
+          Loop (c, fs invs, fs writes, fs variants, f s)
+        | Atomic (c, exprs, s) -> Atomic (c, fs exprs, f s)
+        | Block (c, ss, None) -> Block (c, fs ss, None)
+        | Block (c, ss, Some cs) as b ->
+          let cs = 
+            { cs with 
+                Requires = fs cs.Requires 
+                Ensures = fs cs.Ensures 
+                Reads = fs cs.Reads
+                Writes = fs cs.Writes
+                Decreases = fs cs.Decreases
+                }
+          Block (c, fs ss, Some cs)
+        | Stmt (c, e) -> Stmt (c, f e)
+        | Pure (c, e) -> Pure (c, f e)
+
     member this.WriteTo (ind:int) (showTypes:bool) (b:StringBuilder) : unit =
       
       let rec wt (ind:int) (outerType:Type) (e:Expr) = 

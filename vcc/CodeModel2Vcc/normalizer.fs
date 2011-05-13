@@ -138,24 +138,11 @@ namespace Microsoft.Research.Vcc
       deepMapExpressions replRef decls
       
     // ============================================================================================================
-    
+   
     let makeQuantifiedVarsUnique (expr:Expr) =
       let aux self = function
         | Quant(ec, qd) ->
-          let subst = new Dict<_,_>()
-          let doSubst (v:Variable) =
-            let v' = v.UniqueCopy()
-            subst.Add(v,v')
-            v'
-          let replace (e:Expr) = 
-            let replace' _ = function
-              | Expr.Ref(ec, v) -> 
-                match subst.TryGetValue v with
-                  | true, v' -> Some(Expr.Ref(ec, v'))
-                  | false, _ -> None
-              | _ -> None
-            e.SelfMap(replace')
-          let vs' = List.map doSubst qd.Variables
+          let vs', replace = Variable.UniqueCopies (fun x -> x) qd.Variables
           let qd' = { qd with Variables = vs';
                               Triggers = List.map (List.map(replace)) qd.Triggers;
                               Condition = Option.map replace qd.Condition;
