@@ -1,0 +1,1 @@
+robocopy /s \\emicvccbld\drops\cci\latest .
