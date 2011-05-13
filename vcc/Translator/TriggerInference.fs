@@ -250,6 +250,9 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
           a.Map (getSubterms (-pol)) |> ignore
           b.Map (getSubterms pol) |> ignore
           Some expr
+        | B.Forall _
+        | B.Exists _ -> 
+          Some expr
         | _ ->
           candidatesSet.[expr] <- true
           // subterms need to be added first to the candidate list
