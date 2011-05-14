@@ -2,7 +2,6 @@
 #include <vcc.h>
 
 _(def \integer fib(\integer x)
-  _(decreases x)
 {
   if (x <= 2)
     return x;

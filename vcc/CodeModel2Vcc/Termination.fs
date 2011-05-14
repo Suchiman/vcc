@@ -167,6 +167,8 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         helper.GraveWarning (fn.Token, 9318, "definition functions need to have body")
         [decl]
       else
+        if fn.Variants = [] then
+          fn.Variants <- fn.Parameters |> List.map (fun v -> Ref ({ bogusEC with Type = v.Type }, v))
         let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
         let body = Expr.MkBlock (assigns @ [fn.Body.Value])
         let body = body.SelfMap (check refs)

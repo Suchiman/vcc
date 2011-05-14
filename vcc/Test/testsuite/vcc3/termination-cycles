@@ -4,20 +4,17 @@
 _(pure \integer a(\integer x))
 
 _(def \integer b(\integer x)
-  _(decreases x)
 {
   return a(x); // not allowed
 })
 
 _(def \integer c(\integer x)
-  _(decreases x)
 {
   if (x < 0) return 0;
   return b(x-1); // OK
 })
 
 _(def \integer c2(\integer x)
-  _(decreases x)
 {
   if (x < 0) return 0;
   return c2(x-1); // OK
@@ -29,8 +26,8 @@ _(pure \integer d(\integer x)
 _(pure \integer d2(\integer x)
   _(returns d2(x))) // not allowed
 `
-testcase(8,10) : warning VC9315: [possible unsoundness]: function 'a' should by defined with _(def) for termination checking
-testcase(28,17) : warning VC9303: [possible unsoundness]: cycle in pure function calls: d2 -> d2
+testcase(7,10) : warning VC9315: [possible unsoundness]: function 'a' should by defined with _(def) for termination checking
+testcase(25,17) : warning VC9303: [possible unsoundness]: cycle in pure function calls: d2 -> d2
 Verification of b succeeded.
 Verification of c succeeded.
 Verification of c2 succeeded.
