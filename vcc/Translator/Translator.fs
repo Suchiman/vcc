@@ -1754,19 +1754,15 @@ namespace Microsoft.Research.Vcc
         (proc, env)
 
       let toFieldRef (f:C.Field) =
-        let fieldRef = er (fieldName f)
-        fieldRef
+        er (fieldName f)
         
       let toBaseType (f:C.Field) =
-        let baset = 
-          match f.Type with
-            | C.Array (t, _) -> t
-            | t -> t
-        baset
+        match f.Type with
+          | C.Array (t, _) -> t
+          | t -> t
           
       let trField3 (td:C.TypeDecl) (f:C.Field) =
-        if TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr then
-          failwith "as_array fields not supported yet in vcc3"
+        let isAsArray = TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr
         let tdname = er ("^" + td.Name)
         let def =
           [B.Decl.Const ({ Name = fieldName f
@@ -1776,7 +1772,9 @@ namespace Microsoft.Research.Vcc
         let args = if f.IsSpec then args else args @ [bInt f.ByteOffset]
         let axs =
           match f.Type with
-            | C.Array (_, sz) ->              
+            | C.Array (_, sz) when isAsArray ->              
+              [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_as_array_field" else "$def_phys_as_array_field") (args @ [bInt sz]))]
+            | C.Array (_, sz) ->
               xassert (not td.IsUnion)
               [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_arr_field" else "$def_phys_arr_field") (args @ [bInt sz]))]
             | C.Type.Ref (td) when td.Name.Contains "##" && f.ByteOffset = 0 ->
@@ -1801,6 +1799,7 @@ namespace Microsoft.Research.Vcc
         | C.Array (t, _) -> compositeFields t
         | _ -> []
 
+      // vcc3-only
       let trCompositeExtent (td:C.TypeDecl) =
         let we = er ("^" + td.Name)
         let s = er "s"
@@ -1815,6 +1814,9 @@ namespace Microsoft.Research.Vcc
             let dot = bCall "$dot" [er "p"; er (fieldName f)]
             if compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
               match f.Type with
+                | C.Type.Array (_, sz) when TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr ->
+                  xassert false
+                  bTrue
                 | C.Type.Array (_, sz) ->
                   xassert (not td.IsUnion)
                   bCall "$in_composite_array_lev2" [er "s"; er "q"; dot; bInt sz]
@@ -1837,6 +1839,7 @@ namespace Microsoft.Research.Vcc
         let body = bEq inExt (bMultiOr eqs)          
         forallRM "composite-extent-def" [[inExt]] body        
 
+      // vcc2-only
       let trField (td:C.TypeDecl) (f:C.Field) =
         let tok = td.Token
         let we = er ("^" + td.Name)
