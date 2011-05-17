@@ -8,7 +8,7 @@ cp `ls vcc2ns | perl -e 'open(F,"<vcc3todo.txt");while(<F>) {s/[\r\n]//g; $i{$_}
 echo -n "."
 cp `perl -e 'open(F,"<vcc3todo.txt");$a=0;while(<F>) {s/[\r\n]//g; /###START/ and $a=1; /^#/ and next; /^\s*$/ and next; print "vcc2ns/$_ " if $a}'` todo3/
 echo " done"
-time vcc3 -s -smt -smoke "$@" vcc3 done3
+time vcc3 -s -smt -smoke "$@" vcc3 done3 examples3
 mv testsuite.log tsdone.log
 if grep -q "failed ---" tsdone.log ; then
   err="There where errors!!!"

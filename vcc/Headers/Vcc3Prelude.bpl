@@ -722,7 +722,8 @@ function $as_array(p:$ptr, T:$ctype, sz:int) : $ptr
 
 axiom (forall S:$state, T:$ctype, sz:int, p, a:$ptr ::
   {$in(p, $composite_extent(S, a, $array(T, sz)))}
-  $in(p, $composite_extent(S, a, $array(T, sz))) <==> p == a || $in_composite_array_lev2(S, p, $as_array_first_index(a), sz));
+  $in(p, $composite_extent(S, a, $array(T, sz))) <==> p == a || 
+     (!$is_primitive(T) && $in_composite_array_lev2(S, p, $as_array_first_index(a), sz)));
 
 // ----------------------------------------------------------------------------
 // Global state components
