@@ -457,24 +457,40 @@ axiom (forall f:$field :: {$field_arr_index(f)}
 axiom (forall f:$field, i:int :: {$field_arr_ctor(f, i)}
   $field_arr_root($field_arr_ctor(f, i)) == f && $field_arr_index($field_arr_ctor(f, i)) == i);
 
-function {:inline true} $def_phys_arr_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int, sz:int) : bool
+function {:inline true} $def_arr_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, sz:int) : bool
   { $def_field(partp, f, tp, isvolatile) &&
-    $field_offset(f) == off &&
-    $is_phys_field(f) &&
     $field_arr_size(f) == sz &&
     $field_arr_index(f) == 0 &&
     $field_kind(f) == $fk_emb_array &&
     true
   }
 
-function {:inline true} $def_ghost_arr_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, sz:int) : bool
-  { $def_field(partp, f, tp, isvolatile) &&
-    $is_ghost_field(f) &&
-    $field_arr_size(f) == sz &&
-    $field_arr_index(f) == 0 &&
-    $field_kind(f) == $fk_emb_array &&
+function {:inline true} $def_phys_arr_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int, sz:int) : bool
+  { $def_arr_field(partp, f, tp, isvolatile, sz) &&
+    $field_offset(f) == off &&
+    $is_phys_field(f) &&
     true
   }
+
+function {:inline true} $def_ghost_arr_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, sz:int) : bool
+  { $def_arr_field(partp, f, tp, isvolatile, sz) &&
+    $is_ghost_field(f) &&
+    true
+  }
+
+
+// as_array fields
+// right now we treat them as regular fields (and not as array fields!)
+function {:inline true} $def_phys_as_array_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int, sz:int) : bool
+  { $def_phys_field(partp, f, tp, isvolatile, off) &&
+    true
+  }
+function {:inline true} $def_ghost_as_array_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, sz:int) : bool
+  { $def_ghost_field(partp, f, tp, isvolatile) &&
+    true
+  }
+
+// idx() function
 
 function {:inline true} $idx_inline(p:$ptr, i:int) : $ptr
   {
@@ -695,7 +711,8 @@ axiom (forall t:$ctype, sz:int :: {$array_emb(t, sz)} {$array(t, sz)}
 function $as_array(p:$ptr, T:$ctype, sz:int) : $ptr
   {
       if $is_proper(p) &&
-         $field($emb1(p)) == $f_root($array(T, sz)) &&
+         // $field($emb1(p)) == $f_root($array(T, sz)) &&
+         $field_type($field($emb1(p))) == $array(T, sz) &&
          $field(p) == $array_emb(T, sz) then
         $emb1(p)
       else
