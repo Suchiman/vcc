@@ -2,22 +2,18 @@
 #include <vcc.h>
 
 _(def \integer fib(\integer x)
-  _(decreases x)
 {
   if (x <= 2)
     return x;
-  else
-    return fib(x - 1) + fib(x - 2);
+  return fib(x - 1) + fib(x - 2);
 })
 
 
 void foo()
 {
-  // cannot prove that yet
   _(assert fib(3) == 3)
 }
 `
 Verification of fib succeeded.
-Verification of foo failed.
-testcase(16,26) : error VC9500: Assertion 'fib(3) == 3' did not verify.
+Verification of foo succeeded.
 `

@@ -11,6 +11,104 @@ open Microsoft.Research.Vcc.Util
 open Microsoft.Research.Vcc.TransUtil
 open Microsoft.Research.Vcc.CAST
 
+let turnIntoPureExpression (helper:Helper.Env) expr =
+  
+  let rec aux stmtCtx bindings (exprs:list<Expr>) =
+    let expr, cont = exprs.Head, exprs.Tail
+    //System.Console.WriteLine ("doing (cont={0}) e: {1}/{2}", cont.Length, expr, expr.GetType())
+
+    let recExpr e = aux false bindings [e]
+    let self = aux stmtCtx bindings
+
+    let notsupp kind = 
+      helper.Error (expr.Token, 0, kind + " are not supported when turning statements into expressions")
+      Macro (bogusEC, "null", [])
+
+    let valueShouldFollow f =
+      if cont.IsEmpty then
+        helper.Error (expr.Token, 0, "expecting value here")
+        Macro (bogusEC, "null", [])        
+      else
+        f cont
+
+    let returnValue () =
+      if cont.IsEmpty then
+        //System.Console.WriteLine "recurse"
+        expr.ApplyToChildren recExpr
+      else
+        // warn about ignored expression?
+        self cont
+
+    match expr with
+      // pure expressions
+      | Prim _
+      | IntLiteral _
+      | BoolLiteral _
+      | Deref _
+      | Dot _
+      | Index _
+      | Cast _
+      | Quant _
+      | Result _
+      | This _
+      | Old _
+      | SizeOf _ 
+      | UserData _ ->
+        returnValue()
+
+      | Ref (_, v) ->
+        if Map.containsKey v.UniqueId bindings && cont.IsEmpty then
+          Map.find v.UniqueId bindings
+        else
+          returnValue()
+
+      | Call (ec, fn, _, _) ->
+        // TODO check if fn is OK
+        returnValue()
+
+      | Pure (_, e)
+      | Stmt (_, e) ->
+        self (e :: cont)
+
+      // ignored statements
+      | Assert _
+      | Assume _ 
+      | Comment _
+      | Label _ 
+      | VarDecl _ ->
+        valueShouldFollow self
+
+      // errors
+      | MemoryWrite _ -> notsupp "state updates"
+      | Atomic _ -> notsupp "atomic blocks"
+      | Loop _ -> notsupp "loops"
+      | Goto _ -> notsupp "gotos"
+
+      | VarWrite (ec, [v], e) ->
+        let bindings = Map.add v.UniqueId (recExpr e) bindings
+        valueShouldFollow (aux stmtCtx bindings)
+
+      | If (ec, _, cond, thn, els) ->        
+        Macro (ec, "ite", [recExpr cond; self (thn :: cont); self (els :: cont)])
+
+      | Block (ec, exprs, None) ->
+        self (exprs @ cont)
+
+      | Return (ec, Some e) ->
+        if not stmtCtx then
+          helper.Die()
+        recExpr e
+
+      | Macro _ ->
+        // TODO?
+        returnValue()
+
+      | VarWrite _
+      | Block _
+      | Return _ -> helper.Die()
+
+  aux true Map.empty [expr]
+
 let insertTerminationChecks (helper:Helper.Env) decls =
   let check decrRefs self e =
     match e with
@@ -64,17 +162,39 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | _ -> None
 
   let aux = function
-    | Top.FunctionDecl fn when fn.CustomAttr |> hasCustomAttr AttrDefinition ->
+    | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition ->
       if fn.Body.IsNone then
         helper.GraveWarning (fn.Token, 9318, "definition functions need to have body")
+        [decl]
       else
+        if fn.Variants = [] then
+          fn.Variants <- fn.Parameters |> List.map (fun v -> Ref ({ bogusEC with Type = v.Type }, v))
         let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
         let body = Expr.MkBlock (assigns @ [fn.Body.Value])
-        fn.Body <- Some (body.SelfMap (check refs))
-      ()
-    | _ -> ()
-  List.iter aux decls
-  decls
+        let body = body.SelfMap (check refs)
+        fn.Body <- Some body
+        if fn.RetType <> Type.Void then
+          let expr = turnIntoPureExpression helper body
+          let vars, repl = Variable.UniqueCopies (fun v -> { v with Kind = QuantBound }) fn.Parameters
+          let ec t = { body.Common with Type = t }
+          let app = Call (ec fn.RetType, fn, [], vars |> List.map (fun v -> Expr.Ref (ec v.Type, v)))
+          let eq = Prim (ec Type.Bool, Op ("==", Processed), [app; repl expr])
+          let preconds = fn.Requires |> multiAnd |> repl
+          let impl = Prim (ec Type.Bool, Op ("==>", Processed), [preconds; eq])
+          let qd = 
+            {
+              Body = eq
+              Variables = vars
+              Kind = Forall
+              Condition = None
+              Triggers = [[app]]
+            }
+          let axiom = Top.Axiom (Quant (ec Type.Bool, qd))
+          [decl; axiom]
+        else
+          [decl]
+    | decl -> [decl]
+  List.collect aux decls
 
 let init (helper:Helper.Env) =
   helper.AddTransformer ("termination-add-checks", Helper.Decl (insertTerminationChecks helper))
