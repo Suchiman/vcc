@@ -43,6 +43,7 @@ as_array-09
 nestedStructs-01
 specOrPhysical-10
 arrays-25
+by_claim.ns-09
 
 # extent_zero
 extent_zero-00
@@ -135,7 +136,11 @@ volatile.ns-03
 volatileModifier.ns-09
 
 # new ones?
-by_claim.ns-09
 staticWrap.ns-07
 writes.ns-06
 ghosts-02
+
+# examples/
+Iterator.c
+LockFreeStack.c
+Rundown.c
