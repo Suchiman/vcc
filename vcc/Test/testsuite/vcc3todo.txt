@@ -26,6 +26,7 @@ by_claim.ns-00
 by_claim.ns-08
 writes.ns-10
 volatileModifier.ns-03
+unions.ns-00
 
 # wierd pointer arithmetic
 groups-02
@@ -87,13 +88,9 @@ skinnyExpose-16
 
 # unions
 structEquality.ns-00
-unions.ns-00
 unions.ns-01
-unions.ns-08
 unions.ns-10
 unions.ns-11
-unionsNeg.ns-00
-unionsNeg.ns-01
 unionsNeg.ns-02
 
 # information flow

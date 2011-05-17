@@ -1828,7 +1828,9 @@ namespace Microsoft.Research.Vcc
                   bCall "$in_composite_array" [er "q"; dot; bInt sz]
                 | _ ->
                   unionThing (eq dot)
-          else bFalse
+          else
+            xassert (not td.IsUnion)
+            bFalse
         let eqs = td.Fields |> List.map oneField
         let eqs = (eq (er "p")) :: eqs
         let inExt = bCall "$in" [er "q"; bCall "$composite_extent" [er "s"; er "p"; er ("^" + td.Name)]]
