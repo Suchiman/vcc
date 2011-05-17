@@ -967,7 +967,7 @@ namespace Microsoft.Research.Vcc
           // find the stack allocated arrays that are marked as_array
           // also include those that are generated as part of the projection of arrays with
           // initializer
-          | VarDecl(_,v,attr) as decl when hasCustomAttr "as_array" attr-> asArrayDecls.Add(v, true); false
+          | VarDecl(_,v,attr) as decl when hasCustomAttr AttrAsArray attr -> asArrayDecls.Add(v, true); false
           | Macro(_, "=", [Ref(_, v); Block(_, VarDecl(_,vTemp,_) :: stmts, _)]) when asArrayDecls.ContainsKey v ->
             let rec last = function
               | [x] -> x

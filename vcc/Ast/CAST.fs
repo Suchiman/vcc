@@ -63,6 +63,10 @@ module Microsoft.Research.Vcc.CAST
   [<Literal>]
   let AttrSpecMacro = "spec_macro"
 
+  [<Literal>]
+  let AttrAsArray = "as_array"
+
+
   type VarKind =    
     | Parameter
     | SpecParameter
