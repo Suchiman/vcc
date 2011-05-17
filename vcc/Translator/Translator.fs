@@ -1765,7 +1765,6 @@ namespace Microsoft.Research.Vcc
         baset
           
       let trField3 (td:C.TypeDecl) (f:C.Field) =
-        xassert (td.Kind <> C.Union)
         if TransUtil.hasCustomAttr "as_array" f.CustomAttr then
           failwith "as_array fields not supported yet in vcc3"
         let tdname = er ("^" + td.Name)
@@ -1778,12 +1777,22 @@ namespace Microsoft.Research.Vcc
         let axs =
           match f.Type with
             | C.Array (_, sz) ->              
+              xassert (not td.IsUnion)
               [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_arr_field" else "$def_phys_arr_field") (args @ [bInt sz]))]
             | C.Type.Ref (td) when td.Name.Contains "##" && f.ByteOffset = 0 ->
+              xassert (not td.IsUnion)
               let args = args |> Seq.take 3 |> Seq.toList
               [B.Decl.Axiom (bCall "$def_group" args)]
-            | _ -> 
-              [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_field" else "$def_phys_field") args)]
+            | _ ->
+              let defAx = B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_field" else "$def_phys_field") args)
+              if td.IsUnion then
+                if f.IsSpec then
+                  failwith "ghost fields in unions are unsupported at the moment"
+                let unionAx =
+                  B.Decl.Axiom (bCall (if td.Fields.Head = f then "$is_first_union_field" else "$is_union_field") [toFieldRef f])
+                [defAx; unionAx]
+              else
+                [defAx]
         def @ axs
       
       let rec compositeFields = function
@@ -1793,25 +1802,32 @@ namespace Microsoft.Research.Vcc
         | _ -> []
 
       let trCompositeExtent (td:C.TypeDecl) =
-        xassert (not td.IsUnion)
         let we = er ("^" + td.Name)
         let s = er "s"
         let forallRM id trig body = B.Expr.Forall (Token.NoToken, [("p", tpPtr); ("q", tpPtr); ("s", tpState)], trig, weight id, body)
         let eq = bEq (er "q")
         let oneField (f:C.Field) =                  
+          let unionThing eq = 
+            if td.IsUnion then
+              bAnd (bCall "$union_active" [er "s"; er "p"; er (fieldName f)]) eq
+            else eq
           if f.Type.IsComposite then
             let dot = bCall "$dot" [er "p"; er (fieldName f)]
             if compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
               match f.Type with
                 | C.Type.Array (_, sz) ->
+                  xassert (not td.IsUnion)
                   bCall "$in_composite_array_lev2" [er "s"; er "q"; dot; bInt sz]
                 | _ -> 
-                  bCall "$in" [er "q"; bCall "$composite_extent" [er "s"; dot; toTypeId f.Type]]
+                  let eq = bCall "$in" [er "q"; bCall "$composite_extent" [er "s"; dot; toTypeId f.Type]]
+                  unionThing eq
             else
               match f.Type with
                 | C.Type.Array (_, sz) ->
+                  xassert (not td.IsUnion)
                   bCall "$in_composite_array" [er "q"; dot; bInt sz]
-                | _ -> eq dot
+                | _ ->
+                  unionThing (eq dot)
           else bFalse
         let eqs = td.Fields |> List.map oneField
         let eqs = (eq (er "p")) :: eqs
@@ -2308,7 +2324,7 @@ namespace Microsoft.Research.Vcc
                                          weight "typedef-union_active",
                                          bInvImpl firstOptionTypedCall (bCall "$union_active" [s; ptr; toFieldRef f])))
           match List.tryFind (fun (f:C.Field) -> not f.IsSpec) allFields with
-            | Some f when isUnion -> [firstOptionTypedAxiom f]
+            | Some f when not vcc3 && isUnion -> [firstOptionTypedAxiom f]
             | _ -> []
         
         let forward =
