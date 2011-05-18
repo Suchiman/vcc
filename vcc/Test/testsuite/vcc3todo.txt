@@ -130,15 +130,11 @@ unions.ns-11
 unionsNeg.ns-02
 
 # as_array field
-arrays-13
 as_array-04
-as_array-07
 as_array-08
 as_array-09
-nestedStructs-01
 specOrPhysical-10
 arrays-25
-by_claim.ns-09
 
 # examples/
 # Iterator.c
