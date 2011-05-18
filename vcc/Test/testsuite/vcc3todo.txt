@@ -4,6 +4,7 @@
 32bitPtr-03
 32bitPtr-04
 32bitPtr-08
+as_array-01
 arrays-01
 arraysNeg-06
 basics-02
@@ -32,19 +33,6 @@ unions.ns-00
 groups-02
 groups-10
 
-# as_array field
-arrays-13
-as_array-01
-as_array-02
-as_array-04
-as_array-07
-as_array-08
-as_array-09
-nestedStructs-01
-specOrPhysical-10
-arrays-25
-by_claim.ns-09
-
 # extent_zero
 extent_zero-00
 extent_zero-01
@@ -70,6 +58,7 @@ memoryReintp-10
 
 # skinny expose
 packedFraming-07
+as_array-02
 skinnyExpose-00
 skinnyExpose-02
 skinnyExpose-03
@@ -86,13 +75,6 @@ skinnyExpose-13
 skinnyExpose-14
 skinnyExpose-15
 skinnyExpose-16
-
-# unions
-structEquality.ns-00
-unions.ns-01
-unions.ns-10
-unions.ns-11
-unionsNeg.ns-02
 
 # information flow
 informationFlow-00
@@ -140,7 +122,25 @@ staticWrap.ns-07
 writes.ns-06
 ghosts-02
 
+# unions
+structEquality.ns-00
+unions.ns-01
+unions.ns-10
+unions.ns-11
+unionsNeg.ns-02
+
+# as_array field
+arrays-13
+as_array-04
+as_array-07
+as_array-08
+as_array-09
+nestedStructs-01
+specOrPhysical-10
+arrays-25
+by_claim.ns-09
+
 # examples/
-Iterator.c
-LockFreeStack.c
-Rundown.c
+# Iterator.c
+# LockFreeStack.c
+# Runown.c

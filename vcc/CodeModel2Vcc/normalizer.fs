@@ -1064,6 +1064,14 @@ namespace Microsoft.Research.Vcc
       decls @ !embeddingStructs
 
     // ============================================================================================================
+   
+    let fixAsArrayRefs self = function
+      | _ when not helper.Options.Vcc3 -> None
+      | Dot (ec, p, f) when hasCustomAttr AttrAsArray f.CustomAttr ->
+        Some (Macro (ec, "prelude_as_array_first_index", [Dot (ec, self p, f)]))
+      | _ -> None
+
+    // ============================================================================================================
 
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
     helper.AddTransformer ("norm-inline-boogie", Helper.Decl handleBoogieInlineDeclarations)
@@ -1083,6 +1091,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("fixup-claims", Helper.Expr handleClaims)    
     helper.AddTransformer ("add-explicit-return", Helper.Decl addExplicitReturn)
     helper.AddTransformer ("norm-embed-stack-arrays", Helper.Decl embedStackArrays)
+    helper.AddTransformer ("norm-fix-as_array-refs", Helper.Expr fixAsArrayRefs)
     helper.AddTransformer ("norm-atomic-ops", Helper.Expr normalizeAtomicOperations)
     helper.AddTransformer ("norm-skinny-expose", Helper.Expr normalizeSkinnyExpose)
     helper.AddTransformer ("norm-bv_lemma", Helper.Decl normalizeBvLemma)

@@ -1810,14 +1810,12 @@ namespace Microsoft.Research.Vcc
             if td.IsUnion then
               bAnd (bCall "$union_active" [er "s"; er "p"; er (fieldName f)]) eq
             else eq
-          if f.Type.IsComposite then
+          let isAsArray = TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr
+          if f.Type.IsComposite || isAsArray then
             let dot = bCall "$dot" [er "p"; er (fieldName f)]
             if compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
               match f.Type with
-                | C.Type.Array (_, sz) when TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr ->
-                  xassert false
-                  bTrue
-                | C.Type.Array (_, sz) ->
+                | C.Type.Array (_, sz) when not isAsArray ->
                   xassert (not td.IsUnion)
                   bCall "$in_composite_array_lev2" [er "s"; er "q"; dot; bInt sz]
                 | _ -> 
@@ -1825,7 +1823,7 @@ namespace Microsoft.Research.Vcc
                   unionThing eq
             else
               match f.Type with
-                | C.Type.Array (_, sz) ->
+                | C.Type.Array (_, sz)  when not isAsArray ->
                   xassert (not td.IsUnion)
                   bCall "$in_composite_array" [er "q"; dot; bInt sz]
                 | _ ->
@@ -2204,8 +2202,8 @@ namespace Microsoft.Research.Vcc
           let isAField = bMultiOr (List.map (function fld -> bAnd (inExtent fld (auxDot r fld)) (typedCond r fld)) fields)
           let body = bOr (bEq q (auxPtr r)) isAField
           B.Forall (Token.NoToken, qvars, [[bExtentCall]], weight ("eqdef-extent-" + extentName.Replace ("$", "")), bEq bExtentCall body)
-
-        let spansCalls (fields:list<C.Field>) =
+        
+        let spansCalls (fields:list<C.Field>) =          
           let maybeArrayLift r f prop =
             let dot = bCall "$dot" [r; toFieldRef f]
             match f.Type with
