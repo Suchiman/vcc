@@ -480,13 +480,13 @@ function {:inline true} $def_ghost_arr_field(partp:$ctype, f:$field, tp:$ctype, 
 
 
 // as_array fields
-// right now we treat them as regular fields (and not as array fields!)
+
 function {:inline true} $def_phys_as_array_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, off:int, sz:int) : bool
-  { $def_phys_field(partp, f, tp, isvolatile, off) &&
+  { $def_phys_field(partp, f, $array(tp, sz), isvolatile, off) &&
     true
   }
 function {:inline true} $def_ghost_as_array_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, sz:int) : bool
-  { $def_ghost_field(partp, f, tp, isvolatile) &&
+  { $def_ghost_field(partp, f, $array(tp, sz), isvolatile) &&
     true
   }
 
