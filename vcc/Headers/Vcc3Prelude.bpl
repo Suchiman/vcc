@@ -204,7 +204,11 @@ axiom (forall p:$ptr, t:$ctype :: {$spec_ptr_cast(p, t)}
 axiom (forall p:$ptr, t:$ctype :: {$phys_ptr_cast(p, t)}
   $cast_props(p, t, $phys_ptr_cast(p, t)) && $in_range_phys_ptr($phys_ptr_cast(p, t)));
 axiom (forall p:$ptr :: {$in_range_phys_ptr(p)}
-  !$in_range_phys_ptr(p) ==> $in_range_spec_ptr(p));
+  (!$in_range_phys_ptr(p) ==> $in_range_spec_ptr(p)) &&
+  true
+// TODO this unmasks a number of problems with our treatment of ghost pointers
+//  ($in_range_phys_ptr(p) && $non_null(p) ==> !$in_range_spec_ptr(p))
+  );
 
 /*
 Doesn't seem needed.
