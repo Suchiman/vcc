@@ -28,6 +28,8 @@ by_claim.ns-08
 writes.ns-10
 volatileModifier.ns-03
 unions.ns-00
+unions.ns-01
+unions.ns-11
 
 # wierd pointer arithmetic
 groups-02
@@ -132,8 +134,6 @@ as_array-04
 
 # unions
 structEquality.ns-00
-unions.ns-01
-unions.ns-11
 unionsNeg.ns-02
 
 # examples/
