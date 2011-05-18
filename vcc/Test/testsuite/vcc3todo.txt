@@ -55,6 +55,7 @@ memoryReintp-07
 memoryReintp-08
 memoryReintp-09
 memoryReintp-10
+as_array-09
 
 # skinny expose
 packedFraming-07
@@ -86,6 +87,11 @@ informationFlow-05
 informationFlow-06
 informationFlow-07
 informationFlow-08
+
+# as_array locals
+as_array-08
+specOrPhysical-10
+arrays-25
 
 ###START
 # Real TODO starts here
@@ -122,19 +128,13 @@ staticWrap.ns-07
 writes.ns-06
 ghosts-02
 
+as_array-04
+
 # unions
 structEquality.ns-00
 unions.ns-01
-unions.ns-10
 unions.ns-11
 unionsNeg.ns-02
-
-# as_array field
-as_array-04
-as_array-08
-as_array-09
-specOrPhysical-10
-arrays-25
 
 # examples/
 # Iterator.c
