@@ -1775,7 +1775,8 @@ namespace Microsoft.Research.Vcc
             | C.Array (_, sz) when isAsArray ->              
               [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_as_array_field" else "$def_phys_as_array_field") (args @ [bInt sz]))]
             | C.Array (_, sz) ->
-              xassert (not td.IsUnion)
+              if td.IsUnion then
+                helper.Error (f.Token, 0, "array fields directly in unions are not supported; surround the array with 'struct { ... } _(myArrayField);' or add _(as_array) attribute")
               [B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_arr_field" else "$def_phys_arr_field") (args @ [bInt sz]))]
             | C.Type.Ref (td) when td.Name.Contains "##" && f.ByteOffset = 0 ->
               xassert (not td.IsUnion)
@@ -1783,11 +1784,9 @@ namespace Microsoft.Research.Vcc
               [B.Decl.Axiom (bCall "$def_group" args)]
             | _ ->
               let defAx = B.Decl.Axiom (bCall (if f.IsSpec then "$def_ghost_field" else "$def_phys_field") args)
-              if td.IsUnion then
-                if f.IsSpec then
-                  failwith "ghost fields in unions are unsupported at the moment"
+              if td.IsUnion && not f.IsSpec then
                 let unionAx =
-                  B.Decl.Axiom (bCall (if td.Fields.Head = f then "$is_first_union_field" else "$is_union_field") [toFieldRef f])
+                  B.Decl.Axiom (bCall (if (td.Fields |> List.filter (fun f -> not f.IsSpec)).Head = f then "$is_first_union_field" else "$is_union_field") [toFieldRef f])
                 [defAx; unionAx]
               else
                 [defAx]
@@ -1805,9 +1804,10 @@ namespace Microsoft.Research.Vcc
         let s = er "s"
         let forallRM id trig body = B.Expr.Forall (Token.NoToken, [("p", tpPtr); ("q", tpPtr); ("s", tpState)], trig, weight id, body)
         let eq = bEq (er "q")
-        let oneField (f:C.Field) =                  
+        let oneField (f:C.Field) =
+          let isUnion = td.IsUnion && not f.IsSpec
           let unionThing eq = 
-            if td.IsUnion then
+            if isUnion then
               bAnd (bCall "$union_active" [er "s"; er "p"; er (fieldName f)]) eq
             else eq
           let isAsArray = TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr
@@ -1816,20 +1816,21 @@ namespace Microsoft.Research.Vcc
             if compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
               match f.Type with
                 | C.Type.Array (_, sz) when not isAsArray ->
-                  xassert (not td.IsUnion)
+                  xassert (helper.ErrorReported || not isUnion)
                   bCall "$in_composite_array_lev2" [er "s"; er "q"; dot; bInt sz]
                 | _ -> 
                   let eq = bCall "$in" [er "q"; bCall "$composite_extent" [er "s"; dot; toTypeId f.Type]]
                   unionThing eq
             else
               match f.Type with
-                | C.Type.Array (_, sz)  when not isAsArray ->
-                  xassert (not td.IsUnion)
+                | C.Type.Array (_, sz)  when not isAsArray ->                  
+                  xassert (helper.ErrorReported || not isUnion)
                   bCall "$in_composite_array" [er "q"; dot; bInt sz]
                 | _ ->
                   unionThing (eq dot)
           else
-            xassert (not td.IsUnion)
+            if isUnion then
+              helper.Error (f.Token, 0, "unions with primitive fields are not supported; either use _(backing_member) attribute or surround the offending field with 'struct { ... } _(myPrimitiveField);'")
             bFalse
         let eqs = td.Fields |> List.map oneField
         let eqs = (eq (er "p")) :: eqs
