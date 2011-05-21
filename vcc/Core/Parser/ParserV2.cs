@@ -63,6 +63,16 @@ namespace Microsoft.Research.Vcc.Parsing
             this.GetNextToken();
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true, specifier);
             break;
+          case Token.Identifier:
+            switch (this.scanner.GetIdentifierString()) {
+              case "datatype":
+                this.GetNextToken();
+                this.ParseDataTypeDefinition(members, globalMembers, followersOrDeclarationStart);
+                break;
+              default:
+                this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
+                break;
+            }            break;
           default:
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
             break;
@@ -71,6 +81,11 @@ namespace Microsoft.Research.Vcc.Parsing
       }
 
       this.SkipOutOfSpecBlock(savedInSpecCode, followers, true);
+    }
+
+    void ParseDataTypeDefinition(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers)
+    {
+
     }
 
 

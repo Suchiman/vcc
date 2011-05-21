@@ -37,11 +37,25 @@ namespace Microsoft.Research.Vcc {
     IStatement Body { get; }
   }
 
+  public interface IVccMatchCase : IObjectWithLocations
+  {
+    IExpression Pattern { get; }
+    IBlockStatement Body { get; }
+    bool IsDefault { get; }
+  }
+
+  public interface IVccMatchStatement : IVccStatement
+  {
+    IEnumerable<IVccMatchCase> Cases { get; }
+    IExpression Expression { get; }
+  }
+
   public interface IVccCodeVisitor : ICodeVisitor
   {
     void Visit(IVccSpecStatement specStatement);
     void Visit(IVccUnwrappingStatement unwrappingStatment);
     void Visit(IVccAtomicStatement atomicStatement);
+    void Visit(IVccMatchStatement matchStatement);
   }
 
   internal class StatementGroup : Statement {
@@ -601,4 +615,159 @@ namespace Microsoft.Research.Vcc {
       get { return this.body; }
     }
   }
+
+  public sealed class VccMatchCase : CheckableSourceItem, IVccMatchCase
+  {
+    public VccMatchCase(Expression pattern, BlockStatement body, ISourceLocation sourceLocation)
+      : base(sourceLocation)
+    {
+      this.pattern = pattern;
+      this.body = body;
+    }
+
+    protected VccMatchCase(VccMatchStatement stmt, VccMatchCase template)
+      : base(template.sourceLocation)
+    {
+      this.containingMatchStatement = stmt;
+      this.body = (BlockStatement)template.body.MakeCopyFor(stmt.Block);
+      if (template.pattern != null)
+        this.pattern = template.pattern.MakeCopyFor(stmt.Block);
+    }
+
+    internal VccMatchCase MakeCopyFor(VccMatchStatement stmt)
+    {
+      if (stmt == this.containingMatchStatement)
+        return this;
+      return new VccMatchCase(stmt, this);
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
+    {
+      if (pattern == null)
+        return body.HasErrors;
+
+      var call = pattern as VccMethodCall;
+
+      if (call != null) {
+        var methods = call.GetCandidateMethods(true);
+        var args = call.OriginalArguments.ToArray();
+        foreach (var meth in methods) {
+          if (meth.ParameterCount == args.Length) {
+            var parms = meth.Parameters.ToArray();
+            List<Statement> stmts = new List<Statement>();
+            for (int i = 0; i < args.Length; ++i) {
+              //var local = new VccLocalDeclaration(
+            }
+          }
+        }
+      }
+
+      throw new System.NotImplementedException();
+    }
+
+    public IExpression Pattern
+    {
+      get { return pattern.ProjectAsIExpression(); }
+    }
+    private readonly Expression pattern;
+
+    public IBlockStatement Body
+    {
+      get { return body; }
+    }
+    private readonly BlockStatement body;
+
+    public bool IsDefault
+    {
+      get { return pattern == null; }
+    }
+
+    public VccMatchStatement ContainingMatchStatement
+    {
+      get { return this.containingMatchStatement; }
+    }
+    VccMatchStatement containingMatchStatement;
+
+    public virtual void SetContainingMatchStatement(VccMatchStatement stmt)
+    {
+      this.containingMatchStatement = stmt;
+      if (this.pattern != null) {
+        this.pattern.SetContainingExpression(new DummyExpression(stmt.Block, SourceDummy.SourceLocation));
+      }
+      body.SetContainingBlock(stmt.Block);
+    }
+  }
+
+
+  public sealed class VccMatchStatement : Statement, IVccMatchStatement
+  {
+    public VccMatchStatement(Expression expr, IEnumerable<VccMatchCase> cases, ISourceLocation sourceLocation)
+      : base(sourceLocation) {
+      this.expression = expr;
+      this.cases = cases;
+    }
+
+    private VccMatchStatement(BlockStatement containingBlock, VccMatchStatement template)
+      : base(containingBlock, template) {
+      var cases = new List<VccMatchCase>();
+      foreach (var cs in template.cases)
+        cases.Add(cs.MakeCopyFor(this));
+      cases.TrimExcess();
+      this.cases = cases;
+      this.expression = template.expression.MakeCopyFor(containingBlock);
+    }
+
+    public Expression Expression {
+      get { return this.expression; }
+    }
+    private readonly Expression expression;
+
+    public IEnumerable<IVccMatchCase> Cases {
+      get { return this.cases; }
+    }
+    private readonly IEnumerable<VccMatchCase> cases;
+
+    public void Dispatch(IVccCodeVisitor visitor) {
+      visitor.Visit(this);
+    }
+
+    protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound() {
+      bool result = false;
+      foreach (var expr in this.cases)
+        result |= expr.HasErrors;
+      return result || this.Expression.HasErrors;
+    }
+
+    public override void SetContainingBlock(BlockStatement containingBlock) {
+      base.SetContainingBlock(containingBlock);
+      foreach (var cs in this.cases)
+        cs.SetContainingMatchStatement(this);
+      DummyExpression containingExpression = new DummyExpression(containingBlock, SourceDummy.SourceLocation);
+      this.expression.SetContainingExpression(containingExpression);
+    }
+
+    public override Statement MakeCopyFor(BlockStatement containingBlock) {
+      if (this.ContainingBlock == containingBlock) return this;
+      return new VccMatchStatement(containingBlock, this);
+    }
+
+    public BlockStatement Block
+    {
+      get
+      {
+        if (this.block == null) {
+          List<Statement> statements = new List<Statement>(1);
+          BlockStatement block = new BlockStatement(statements, this.SourceLocation);
+          block.SetContainingBlock(this.ContainingBlock);
+          statements.Add(this);
+          this.block = block;
+        }
+        return this.block;
+      }
+    }
+    //^ [Once]
+    private BlockStatement/*?*/ block;
+  }
+
+
 }
