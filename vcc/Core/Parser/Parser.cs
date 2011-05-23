@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Cci;
 using Microsoft.Cci.Ast;
+using System.Linq;
 
 //^ using Microsoft.Contracts;
 
@@ -2399,8 +2400,9 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       this.GetNextToken();
-      Expression expression = this.ParseParenthesizedExpression(followers|Token.LeftBrace);
-      List<SwitchCase> cases = new List<SwitchCase>();
+      var expression = this.ParseParenthesizedExpression(followers|Token.LeftBrace);
+      var cases = new List<VccMatchCase>();
+      var isMatch = false;
       this.Skip(Token.LeftBrace);
       TokenSet followersOrCaseOrColonOrDefaultOrRightBrace = followers | TS.CaseOrColonOrDefaultOrRightBrace;
       TokenSet followersOrCaseOrDefaultOrRightBrace = followers | TS.CaseOrDefaultOrRightBrace;
@@ -2414,6 +2416,7 @@ namespace Microsoft.Research.Vcc.Parsing {
               this.HandleError(Error.ConstantExpected);
             else {
               scExpression = this.ParseExpression(followersOrCaseOrColonOrDefaultOrRightBrace);
+              isMatch |= scExpression is VccMethodCall;
               scCtx.UpdateToSpan(scExpression.SourceLocation);
             }
             break;
@@ -2434,23 +2437,25 @@ namespace Microsoft.Research.Vcc.Parsing {
           scBody = this.ParseSwitchCaseStatementBlock(scCtx, followersOrCaseOrDefaultOrRightBrace);
         else
           scBody = Enumerable<Statement>.Empty;
-        cases.Add(new SwitchCase(scExpression, scBody, scCtx));
+        cases.Add(new VccMatchCase(scExpression, scBody, scCtx));
       }
     done:
       if (cases.Count == 0) {
         this.HandleError(Error.EmptySwitch);
       } else {
         // add SwitchCaseBottom to last case if it happened to have no statements.
-        SwitchCase lastCase = cases[cases.Count-1];
-        if (lastCase != null && !lastCase.Body.GetEnumerator().MoveNext()) {
-          List<Statement> body = new List<Statement>(1);
-          body.Add(new EmptyStatement(true, lastCase.SourceLocation));
-          cases[cases.Count-1] = new SwitchCase(lastCase.IsDefault ? null : lastCase.Expression, body.AsReadOnly(), lastCase.SourceLocation);
-        }
+        cases[cases.Count - 1].AddEmptyStatement();
       }
 
-      cases.TrimExcess();
-      SwitchStatement result = new SwitchStatement(expression, cases, slb);
+      Statement result;
+      if (isMatch) {
+        cases.TrimExcess();
+        result = new VccMatchStatement(expression, cases, slb);
+      } else {
+        var switchCases = cases.Select(c => c.ToSwitchCase()).ToList();
+        switchCases.TrimExcess();
+        result = new SwitchStatement(expression, switchCases, slb);
+      }
       this.SkipOverTo(Token.RightBrace, followers);
       return result;
     }

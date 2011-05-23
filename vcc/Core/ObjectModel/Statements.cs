@@ -39,7 +39,6 @@ namespace Microsoft.Research.Vcc {
 
   public interface IVccMatchCase : IObjectWithLocations
   {
-    IExpression Pattern { get; }
     IBlockStatement Body { get; }
     bool IsDefault { get; }
   }
@@ -618,18 +617,32 @@ namespace Microsoft.Research.Vcc {
 
   public sealed class VccMatchCase : CheckableSourceItem, IVccMatchCase
   {
-    public VccMatchCase(Expression pattern, BlockStatement body, ISourceLocation sourceLocation)
+    public VccMatchCase(Expression pattern, IEnumerable<Statement> body, ISourceLocation sourceLocation)
       : base(sourceLocation)
     {
       this.pattern = pattern;
-      this.body = body;
+      this.statements = body;
     }
 
-    protected VccMatchCase(VccMatchStatement stmt, VccMatchCase template)
+    internal SwitchCase ToSwitchCase()
+    {
+      return new SwitchCase(this.pattern, this.statements, this.sourceLocation);
+    }
+
+    internal void AddEmptyStatement()
+    {
+      var stmts = this.statements.ToList();
+      if (stmts.Count == 0) {
+        stmts.Add(new EmptyStatement(true, this.SourceLocation));
+        this.statements = stmts;
+      }
+    }
+
+    private VccMatchCase(VccMatchStatement stmt, VccMatchCase template)
       : base(template.sourceLocation)
     {
       this.containingMatchStatement = stmt;
-      this.body = (BlockStatement)template.body.MakeCopyFor(stmt.Block);
+      this._body = (BlockStatement)template.Body.MakeCopyFor(stmt.Block);
       if (template.pattern != null)
         this.pattern = template.pattern.MakeCopyFor(stmt.Block);
     }
@@ -641,41 +654,77 @@ namespace Microsoft.Research.Vcc {
       return new VccMatchCase(stmt, this);
     }
 
+    private LanguageSpecificCompilationHelper Helper {
+      get { return this.ContainingMatchStatement.Block.CompilationPart.Helper; }
+    }
+
     protected override bool CheckForErrorsAndReturnTrueIfAnyAreFound()
     {
       if (pattern == null)
-        return body.HasErrors;
+        return Body.HasErrors;
 
+      var hasError = false;
+      var newStmts = new List<Statement>();
+      var newBlock = new BlockStatement(newStmts, this.SourceLocation);
       var call = pattern as VccMethodCall;
-
       if (call != null) {
-        var methods = call.GetCandidateMethods(true);
         var args = call.OriginalArguments.ToArray();
-        foreach (var meth in methods) {
-          if (meth.ParameterCount == args.Length) {
-            var parms = meth.Parameters.ToArray();
-            List<Statement> stmts = new List<Statement>();
-            for (int i = 0; i < args.Length; ++i) {
-              //var local = new VccLocalDeclaration(
+        var methods = call.GetCandidateMethods(true).Where(m => m.ParameterCount == args.Length).ToArray();
+        if (methods.Length == 0) {
+          hasError = true;
+          // hopefully the error has been reported already...
+        } else {
+          var meth = (MethodDefinition)methods.First();
+          var decl = (FunctionDefinition)meth.Declaration;
+          var parms = decl.Parameters.ToArray();
+          List<Statement> stmts = new List<Statement>();
+          for (int i = 0; i < args.Length; ++i) {
+            var name = args[i] as VccSimpleName;
+            if (name == null) {
+              this.Helper.ReportError(new VccErrorMessage(args[i].SourceLocation, Error.ExpectedIdentifier));
+              hasError = true;
+            } else {
+              var local = new VccLocalDeclaration(new NameDeclaration(name.Name, name.SourceLocation), null, new List<Specifier>(), true, name.SourceLocation);
+              var tp = (TypeExpression)parms[i].Type;
+              //tp = (TypeExpression)tp.MakeCopyFor(newBlock);
+              var stmt = new LocalDeclarationsStatement(false, true, false, tp, new LocalDeclaration[] { local }.ToList(), name.SourceLocation);
+              newStmts.Add(stmt);
             }
           }
+
+          newStmts.Add(new ExpressionStatement(call));
+
+          if (_body != null)
+            newStmts.AddRange(_body.Statements);
+          else
+            newStmts.AddRange(statements);
+
+          _body = newBlock;
+          newBlock.SetContainingBlock(containingMatchStatement.ContainingBlock);
+          hasError |= newBlock.HasErrors;
         }
       }
 
-      throw new System.NotImplementedException();
+      return hasError;
     }
 
-    public IExpression Pattern
-    {
-      get { return pattern.ProjectAsIExpression(); }
-    }
     private readonly Expression pattern;
 
-    public IBlockStatement Body
+    public BlockStatement Body
     {
-      get { return body; }
+      get {
+        if (_body == null)
+          _body = new BlockStatement(statements.ToList(), this.sourceLocation);
+        return _body; 
+      }
     }
-    private readonly BlockStatement body;
+    private BlockStatement _body;
+    private IEnumerable<Statement> statements;
+
+    IBlockStatement IVccMatchCase.Body
+    {
+      get { return Body; }
+    }
 
     public bool IsDefault
     {
@@ -688,13 +737,13 @@ namespace Microsoft.Research.Vcc {
     }
     VccMatchStatement containingMatchStatement;
 
-    public virtual void SetContainingMatchStatement(VccMatchStatement stmt)
+    public void SetContainingMatchStatement(VccMatchStatement stmt)
     {
       this.containingMatchStatement = stmt;
       if (this.pattern != null) {
         this.pattern.SetContainingExpression(new DummyExpression(stmt.Block, SourceDummy.SourceLocation));
       }
-      body.SetContainingBlock(stmt.Block);
+      Body.SetContainingBlock(stmt.Block);
     }
   }
 
@@ -717,8 +766,8 @@ namespace Microsoft.Research.Vcc {
       this.expression = template.expression.MakeCopyFor(containingBlock);
     }
 
-    public Expression Expression {
-      get { return this.expression; }
+    public IExpression Expression {
+      get { return this.expression.ProjectAsIExpression(); }
     }
     private readonly Expression expression;
 
@@ -735,7 +784,7 @@ namespace Microsoft.Research.Vcc {
       bool result = false;
       foreach (var expr in this.cases)
         result |= expr.HasErrors;
-      return result || this.Expression.HasErrors;
+      return result || this.expression.HasErrors;
     }
 
     public override void SetContainingBlock(BlockStatement containingBlock) {
