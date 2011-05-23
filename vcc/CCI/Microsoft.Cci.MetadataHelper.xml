@@ -1143,6 +1143,11 @@
             Returns a C#-like string that corresponds to the signature of the given property definition and that conforms to the specified formatting options.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.SignatureFormatter.GetVisibility(Microsoft.Cci.ITypeDefinitionMember)">
+            <summary>
+            Returns a C#-like string that corresponds to the visibilty of the member (i.e. "public", "protected", "private" and so on).
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.SignatureFormatter.AppendGenericArguments(Microsoft.Cci.IGenericMethodInstanceReference,Microsoft.Cci.NameFormattingOptions,System.Text.StringBuilder)">
             <summary>
             Appends a formatted string of type arguments. Enclosed in angle brackets and comma-delimited.
@@ -1409,6 +1414,12 @@
         <member name="P:Microsoft.Cci.Immutable.GenericMethodInstance.IsNeverInlined">
             <summary>
             True if the the runtime is not allowed to inline this method.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.Immutable.GenericMethodInstance.IsAggressivelyInlined">
+            <summary>
+            True if the runtime is requested to inline this method.
             </summary>
             <value></value>
         </member>
@@ -2887,6 +2898,12 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Microsoft.Cci.Immutable.SpecializedMethodDefinition.IsAggressivelyInlined">
+            <summary>
+            True if the runtime is requested to inline this method.
+            </summary>
+            <value></value>
+        </member>
         <member name="P:Microsoft.Cci.Immutable.SpecializedMethodDefinition.IsNeverOptimized">
             <summary>
             True if the runtime is not allowed to optimize this method.
@@ -3680,6 +3697,11 @@
             Instances of such types are created and managed by another runtime and are accessed by CLR objects via some form of interoperation mechanism.
             </summary>
         </member>
+        <member name="P:Microsoft.Cci.Immutable.AssemblyReference.HashValue">
+            <summary>
+            The encrypted SHA1 hash of the persisted form of the referenced assembly.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.Immutable.AssemblyReference.Locations">
             <summary>
             A potentially empty collection of locations that correspond to this AssemblyReference instance.
@@ -3693,6 +3715,13 @@
         <member name="P:Microsoft.Cci.Immutable.AssemblyReference.Name">
             <summary>
             The name of the referenced assembly.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.Immutable.AssemblyReference.PublicKey">
+            <summary>
+            The public part of the key used to encrypt the SHA1 hash over the persisted form of the referenced assembly. Empty if not specified.
+            This value is used by the loader to decrypt an encrypted hash value stored in the assembly, which it then compares with a freshly computed hash value
+            in order to verify the integrity of the assembly.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.Immutable.AssemblyReference.PublicKeyToken">
@@ -8009,12 +8038,14 @@
         </member>
         <member name="F:Microsoft.Cci.NameFormattingOptions.SmartTypeName">
             <summary>
-            Inlcude the name of the containing type only if it is needed becuase of ambiguity or hiding. Include only as much as is needed to resolve this.
+            Include the name of the containing type only if it is needed because of ambiguity or hiding. Include only as much as is needed to resolve this.
+            Please note: this needs source level information to implement. The default formatters in MetdataHelper ignore this bit.
             </summary>
         </member>
         <member name="F:Microsoft.Cci.NameFormattingOptions.SmartNamespaceName">
             <summary>
-            Inlcude the name of the containing namespace only if it is needed becuase of ambiguity or hiding. Include only as much as is needed to resolve this.
+            Include the name of the containing namespace only if it is needed because of ambiguity or hiding. Include only as much as is needed to resolve this.
+            Please note: this needs source level information to implement. The default formatters in MetdataHelper ignore this bit.
             </summary>
         </member>
         <member name="F:Microsoft.Cci.NameFormattingOptions.SupressAttributeSuffix">
@@ -8519,6 +8550,11 @@
             <example>For example, this appends the "[][,]" part of an array like "int[][,]".</example>
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.TypeNameFormatter.EscapeKeyword(System.String)">
+            <summary>
+            If the name matches a C# keyword, return "@"+name
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.TypeNameFormatter.GetGenericMethodParameterName(Microsoft.Cci.IGenericMethodParameterReference,Microsoft.Cci.NameFormattingOptions)">
             <summary>
             Returns a C#-like string that corresponds to the given type definition and that conforms to the specified formatting options.
@@ -8573,6 +8609,11 @@
         <member name="M:Microsoft.Cci.TypeNameFormatter.GetTypeKind(Microsoft.Cci.ITypeReference)">
             <summary>
             Returns a C#-like string that identifies the kind of the given type definition. For example, "class" or "delegate".
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.TypeNameFormatter.GetVisibility(Microsoft.Cci.INestedTypeDefinition)">
+            <summary>
+            Returns a C#-like string that corresponds to the visibilty of the type (i.e. "public", "protected", "private" and so on).
             </summary>
         </member>
         <member name="M:Microsoft.Cci.TypeNameFormatter.GetFunctionPointerTypeName(Microsoft.Cci.IFunctionPointerTypeReference,Microsoft.Cci.NameFormattingOptions)">
