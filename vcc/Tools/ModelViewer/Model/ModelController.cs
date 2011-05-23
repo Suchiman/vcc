@@ -79,8 +79,14 @@ namespace VccModel.Controller
           if (FilenameMap.ContainsKey(fileindex))
           {
             _filename = FilenameMap[fileindex];
-            FileInfo fi = new FileInfo(_filename);
-            _shortfilename = fi.Name;
+            try
+            {
+                _shortfilename = new FileInfo(_filename).Name;
+            }
+            catch (ArgumentException)
+            {
+                _shortfilename = null;
+            }
           }
         }
         fileinfotoken = fileinfotoken.Substring(hat_pos + 1);
@@ -1432,8 +1438,8 @@ namespace VccModel.Controller
       Partition retval = null;
 
       foreach (string key in model.FunctionMap.Keys)
-	    {
-		    if (key.StartsWith(funcname)) {
+        {
+            if (key.StartsWith(funcname)) {
           retval = SelectResult(key, content);
           if (retval != null)
           {
@@ -1441,7 +1447,7 @@ namespace VccModel.Controller
             return retval;
           }
         }
-	    }
+        }
       return null;
     }
 
