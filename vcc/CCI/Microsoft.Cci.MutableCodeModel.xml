@@ -9791,6 +9791,7 @@
             When given a method definition and a block of statements that represents the Block property of the body of the method
             this method returns a semantically equivalent SourceMethod with a body that no longer has any anonymous delegate expressions.
             The given block of statements is mutated in place.
+            Any types that get defined in order to implement the body semantics are returned (null if no such types are defined).
             </summary>
             <param name="method">The method containing the block that is to be rewritten.</param>
             <param name="body">The block to be rewritten. 
