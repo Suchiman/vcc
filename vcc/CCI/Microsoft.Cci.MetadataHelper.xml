@@ -8207,6 +8207,14 @@
             the a reference to the defining unit of the element type, or in the case of a generic type instance, the definining type of the generic template type.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.TypeHelper.GetEvent(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName)">
+            <summary>
+            Returns an event of the given declaring type that has the given name.
+            If no such event can be found, Dummy.Event is returned.
+            </summary>
+            <param name="declaringType">The type thats declares the field.</param>
+            <param name="eventName">The name of the event.</param>
+        </member>
         <member name="M:Microsoft.Cci.TypeHelper.GetField(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName)">
             <summary>
             Returns a field of the given declaring type that has the given name.
