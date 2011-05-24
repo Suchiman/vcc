@@ -29,6 +29,7 @@ writes.ns-10
 volatileModifier.ns-03
 unions.ns-00
 unions.ns-01
+unions.ns-10
 unions.ns-11
 
 # wierd pointer arithmetic
