@@ -667,43 +667,53 @@ namespace Microsoft.Research.Vcc {
       var newStmts = new List<Statement>();
       var newBlock = new BlockStatement(newStmts, this.SourceLocation);
       var call = pattern as VccMethodCall;
-      if (call != null) {
-        var args = call.OriginalArguments.ToArray();
-        var methods = call.GetCandidateMethods(true).Where(m => m.ParameterCount == args.Length).ToArray();
-        if (methods.Length == 0) {
+      if (call == null) {
+        this.Helper.ReportError(new VccErrorMessage(pattern.SourceLocation, Error.ExpectedIdentifier));
+        return true;
+      }
+
+      var args = call.OriginalArguments.ToArray();
+      var calledMethod = call.MethodExpression as VccSimpleName;
+      if (calledMethod == null) {
+        this.Helper.ReportError(new VccErrorMessage(call.MethodExpression.SourceLocation, Error.ExpectedIdentifier));
+        return true;
+      }
+
+      var methods = call.GetCandidateMethods(true).Where(m => m.ParameterCount == args.Length).ToArray();
+      if (methods.Length == 0) {
+        if (!call.MethodExpression.HasErrors)
+          this.Helper.ReportError(new AstErrorMessage(call, Cci.Ast.Error.BadNumberOfArguments, calledMethod.Name.Value, args.Length.ToString()));
+        return true;
+      }
+
+      var meth = (MethodDefinition)methods.First();
+      var decl = (FunctionDefinition)meth.Declaration;
+      var parms = decl.Parameters.ToArray();
+      List<Statement> stmts = new List<Statement>();
+      for (int i = 0; i < args.Length; ++i) {
+        var name = args[i] as VccSimpleName;
+        if (name == null) {
+          this.Helper.ReportError(new VccErrorMessage(args[i].SourceLocation, Error.ExpectedIdentifier));
           hasError = true;
-          // hopefully the error has been reported already...
         } else {
-          var meth = (MethodDefinition)methods.First();
-          var decl = (FunctionDefinition)meth.Declaration;
-          var parms = decl.Parameters.ToArray();
-          List<Statement> stmts = new List<Statement>();
-          for (int i = 0; i < args.Length; ++i) {
-            var name = args[i] as VccSimpleName;
-            if (name == null) {
-              this.Helper.ReportError(new VccErrorMessage(args[i].SourceLocation, Error.ExpectedIdentifier));
-              hasError = true;
-            } else {
-              var local = new VccLocalDeclaration(new NameDeclaration(name.Name, name.SourceLocation), null, new List<Specifier>(), true, name.SourceLocation);
-              var tp = (TypeExpression)parms[i].Type;
-              //tp = (TypeExpression)tp.MakeCopyFor(newBlock);
-              var stmt = new LocalDeclarationsStatement(false, true, false, tp, new LocalDeclaration[] { local }.ToList(), name.SourceLocation);
-              newStmts.Add(stmt);
-            }
-          }
-
-          newStmts.Add(new ExpressionStatement(call));
-
-          if (_body != null)
-            newStmts.AddRange(_body.Statements);
-          else
-            newStmts.AddRange(statements);
-
-          _body = newBlock;
-          newBlock.SetContainingBlock(containingMatchStatement.ContainingBlock);
-          hasError |= newBlock.HasErrors;
+          var local = new VccLocalDeclaration(new NameDeclaration(name.Name, name.SourceLocation), null, new List<Specifier>(), true, name.SourceLocation);
+          var tp = (TypeExpression)parms[i].Type;
+          //tp = (TypeExpression)tp.MakeCopyFor(newBlock);
+          var stmt = new LocalDeclarationsStatement(false, true, false, tp, new LocalDeclaration[] { local }.ToList(), name.SourceLocation);
+          newStmts.Add(stmt);
         }
       }
+
+      newStmts.Add(new ExpressionStatement(call));
+
+      if (_body != null)
+        newStmts.AddRange(_body.Statements);
+      else
+        newStmts.AddRange(statements);
+
+      _body = newBlock;
+      newBlock.SetContainingBlock(containingMatchStatement.ContainingBlock);
+      hasError |= newBlock.HasErrors;
 
       return hasError;
     }
