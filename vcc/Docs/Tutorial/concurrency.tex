@@ -38,7 +38,7 @@ while preserving its invariant.
 The attribute
 \vcc{_(volatile_owns)} means that we want the \vcc{\owns} set
 to be treated as a volatile field (\ie we want to be able to write
-it while to object is closed; normally this is not possible).
+it while the object is closed; normally this is not possible).
 
 First, let's have a look at lock initialization:
 
@@ -279,7 +279,7 @@ Let us give desugaring of \vcc{\make_claim(...)} for a single object
 in terms of the \vcc{\claim_struct} defined in the previous section.
 
 \begin{VCC}
-// c = \make_claim({o}, true) expands to
+// c = \make_claim({o}, \true) expands to
 o->\claim_count += 1;
 c = malloc(sizeof(\claim_struct));
 c->claimed = {o};
