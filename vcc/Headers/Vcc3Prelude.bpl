@@ -2032,6 +2032,9 @@ function $extent_mutable(S:$state, r:$ptr) : bool
   { $mutable(S, r) && 
     (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $mutable(S, p)) }
   
+function $extent_thread_local(S:$state, r:$ptr) : bool
+  { $extent_mutable(S, r) } // for now, later we might check if r is completely non-volatile, and then thread_local is enough
+  
 axiom (forall S:$state, T:$ctype, sz:int, p:$ptr :: {$extent_mutable(S, $as_ptr_with_type(p, $array(T, sz)))}
   $extent_mutable(S, $as_ptr_with_type(p, $array(T, sz))) ==> $is_mutable_array(S, $as_array_first_index(p), T, sz));
 
@@ -2106,6 +2109,34 @@ axiom (forall S:$state, p:$ptr, f:$field ::
   $owner(S, $dot(p, f)) != $inactive_union_owner() ==> $active_option(S, p) == f);
 
 // ----------------------------------------------------------------------------
+// Struct coping
+// ----------------------------------------------------------------------------
+
+function $strong_struct_eq(A:$state, a:$ptr, B:$state, b:$ptr) : bool
+{
+  $strong_shallow_struct_eq(A, a, B, b) &&
+  (forall f:$field :: 
+    {$dot(a, $as_composite_field(f))}
+    $composite_extent(A, a, $typ(a))[$dot(a, f)] ==> $strong_struct_eq(A, $dot(a, f), B, $dot(b, f)))
+}
+
+function $strong_shallow_struct_eq(A:$state, a:$ptr, B:$state, b:$ptr) : bool
+{
+  (forall f:$field :: $rd(A, a, f) == $rd(B, b, f))
+}
+
+procedure $copy_struct(dst:$ptr, src:$ptr);
+  // writes extent(d)
+  modifies $s;
+  requires $typ(dst) == $typ(src);
+  requires $extent_thread_local($s, src);
+  ensures $specials_eq(old($s), $s);
+  ensures (forall p:$ptr, f:$field :: {$rdtrig($s, p, f)}  
+    $composite_extent(old($s), dst, $typ(dst))[p] || $rd(old($s), p, f) == $rd($s, p, f));
+  ensures $strong_struct_eq($s, src, $s, dst);
+
+
+// ----------------------------------------------------------------------------
 // Value structs
 // ----------------------------------------------------------------------------
 
@@ -2119,6 +2150,16 @@ function $vs_base_ref($struct) : $ptr;
 
 function $vs_state($struct) : $state;
 axiom (forall s:$struct :: $good_state($vs_state(s)));
+
+function $vs_deep_eq(a:$struct, b:$struct, t:$ctype) : bool
+{
+  $strong_struct_eq($vs_state(a), $vs_base(a, t), $vs_state(b), $vs_base(b, t))
+}
+
+function $vs_shallow_eq(a:$struct, b:$struct, t:$ctype) : bool
+{
+  $strong_shallow_struct_eq($vs_state(a), $vs_base(a, t), $vs_state(b), $vs_base(b, t))
+}
 
 function $vs_ctor(S:$state, p:$ptr) : $struct;
 axiom (forall S:$state, p:$ptr :: {$vs_ctor(S, p)}
