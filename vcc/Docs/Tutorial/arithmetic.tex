@@ -17,7 +17,7 @@ parenthesize \vcc{P} or \vcc{Q}.
 \item
 The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
 expression \vcc{E} evaluates to a nonzero value for every value 
-\vcc{v} of type \vcc{E}. For example, the assertion
+\vcc{v} of type \vcc{T}. For example, the assertion
 \begin{VCC}
 _(assert x > 1 &&
   \forall int i; 1 < i && i < x ==> x % i != 0)
