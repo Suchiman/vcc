@@ -3600,6 +3600,12 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.MethodDefinition.IsAggressivelyInlined">
+            <summary>
+            True if the the runtime is asked to inline this method.
+            </summary>
+            <value></value>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.MethodDefinition.IsCil">
             <summary>
             True if the method is implemented in the CLI Common Intermediate Language.
@@ -11933,6 +11939,11 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.Assembly.HashValue">
+            <summary>
+            The encrypted SHA1 hash of the persisted form of the assembly.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Assembly.PublicKeyToken">
             <summary>
             The hashed 8 bytes of the public key of the referenced assembly. This is empty if the referenced assembly does not have a public key.
@@ -12059,6 +12070,18 @@
             <summary>
             True if the referenced assembly contains types that describe objects that are neither COM objects nor objects that are managed by the CLR.
             Instances of such types are created and managed by another runtime and are accessed by CLR objects via some form of interoperation mechanism.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.AssemblyReference.HashValue">
+            <summary>
+            The encrypted SHA1 hash of the persisted form of the referenced assembly.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.AssemblyReference.PublicKey">
+            <summary>
+            The public part of the key used to encrypt the SHA1 hash over the persisted form of the referenced assembly. Null if not specified.
+            This value is used by the loader to decrypt HashValue which it then compares with a freshly computed hash value to verify the
+            integrity of the assembly.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.AssemblyReference.PublicKeyToken">
