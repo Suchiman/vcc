@@ -530,7 +530,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    private void RegisterTypedef(string typedefName, TypedefDeclaration typedefDecl) {
+    protected void RegisterTypedef(string typedefName, TypedefDeclaration typedefDecl) {
       // this potentiall overwrites previous typedefs - we will check later if these were compatile
       this.typedefs[typedefName] = typedefDecl;
     }  
