@@ -723,7 +723,11 @@ namespace Microsoft.Research.Vcc
               | :? single as s -> ctx.GetFloatConst ((float)s)
               | _ -> die()
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
-            B.FunctionCall(name, [self e1; self e2])
+            if vcc3 then
+              let name = if name.StartsWith("_vcc_deep") then "$vs_deep_eq" else "$vs_shallow_eq"
+              B.FunctionCall(name, [self e1; self e2; toTypeId e1.Type])
+            else
+              B.FunctionCall(name, [self e1; self e2])
           | name, args when name.StartsWith "prelude_" ->
             B.FunctionCall (name.Replace ("prelude_", "$"), selfs args)
           | n, _ when (helper.PureCallSignature n).IsSome ->
@@ -1974,7 +1978,8 @@ namespace Microsoft.Research.Vcc
                     helper.Error(f.Token, 9656, "equality for structures with nested arrays not supported", Some(td.Token))
                     die()
                   | None -> read (Some t) v t 
-              | _ -> die()
+              | t ->
+                die()
           let read = read None
           match f.Type with // _vcc_deep_struct_eq.S($vs_ctor(#s2, $dot(#p, T.s1)),
             | C.Ref _ when not deep && not inUnion -> None
@@ -2348,6 +2353,7 @@ namespace Microsoft.Research.Vcc
            
         let forward = 
           match td.GenerateEquality with
+          | _ when vcc3 -> forward
           | C.StructEqualityKind.NoEq -> forward
           | C.StructEqualityKind.ShallowEq -> (trStructEq false td) @ forward
           | C.StructEqualityKind.DeepEq -> (trStructEq true td) @ (trStructEq false td) @ forward
