@@ -248,6 +248,15 @@ _(template<typename T, typename S> T \static_cast(S expr);)
 
 _(template<typename T, typename S> T \labeled_expression(char *label_name, S label_argument, T expr); )
 
+#ifdef VCC_DEFINE_ASSERT
+#ifdef assert
+#undef assert
+#endif
+_(pure)
+void assert(bool assertedCondition)
+  _(requires assertedCondition);
+#endif
+
 #else 
 
 /*** 
