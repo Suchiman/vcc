@@ -66,6 +66,8 @@ module Microsoft.Research.Vcc.CAST
   [<Literal>]
   let AttrAsArray = "as_array"
 
+  [<Literal>]
+  let AttrIsDatatypeOption = "_vcc_internal__is_datatype_option"
 
   type VarKind =    
     | Parameter
@@ -593,7 +595,7 @@ module Microsoft.Research.Vcc.CAST
       //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
       //  true // HACK
       else
-        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition), "") -> true | _ -> false) this.CustomAttr 
+        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition|AttrIsDatatypeOption), "") -> true | _ -> false) this.CustomAttr 
       
     member this.IsStateless =
       this.IsPure && this.Reads = []

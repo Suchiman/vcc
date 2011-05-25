@@ -18,6 +18,17 @@ open Microsoft.Research.Vcc.CAST
 // - each datatype option is used at most once
 
 // for datatype definition check that
+// - attach constructors to type
 // - the induction is grounded (there is an non-recursive option)
 
-let x = 0
+// this needs to be done early, otherwise pruning will get rid of our constructors if they are not explicitly used, which would be bad
+let attachDatatypeCtors (helper:Helper.Env) decls =
+  let aux = function
+    | Top.FunctionDecl fd when fd.CustomAttr |> hasCustomAttr AttrAsArray ->
+      match fd.RetType with
+        | Type.Ref td when td.Kind = MathType ->
+          td.DataTypeOptions <- fd :: td.DataTypeOptions
+        | _ -> die()
+    | _ -> ()
+  List.iter aux decls
+  decls
