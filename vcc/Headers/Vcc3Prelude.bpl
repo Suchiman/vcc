@@ -2108,6 +2108,12 @@ axiom (forall S:$state, p:$ptr, f:$field ::
   $is_union_field(f) && 
   $owner(S, $dot(p, f)) != $inactive_union_owner() ==> $active_option(S, p) == f);
 
+axiom (forall S:$state, p:$ptr, f:$field ::
+  {$is_union_field(f), $dot(p, f), $active_option(S, p)}
+  $good_state(S) &&
+  $is_union_field(f) ==>
+  f == $active_option(S, p) || $owner(S, $dot(p, f)) == $inactive_union_owner());
+
 // ----------------------------------------------------------------------------
 // Struct coping
 // ----------------------------------------------------------------------------
