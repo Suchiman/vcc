@@ -1688,6 +1688,13 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (switchCase:ISwitchCase) : unit = assert false // never encountered during traversal
 
+      member this.Visit (switchStatement:IVccMatchStatement) : unit = 
+        let doCase (sc : IVccMatchCase) =
+          C.Expr.Macro({ C.voidBogusEC () with Token = token sc }, "case", [this.DoStatement sc.Body])
+        let condExprStmt = this.DoExpression switchStatement.Expression
+        let cases = [for sc in switchStatement.Cases -> doCase sc]
+        stmtRes <- C.Expr.Macro(this.StmtCommon switchStatement, "match", condExprStmt :: cases)
+
       member this.Visit (switchStatement:ISwitchStatement) : unit = 
         let doCase (sc : ISwitchCase) =
           let (caseLabel,castExprStmt) =
