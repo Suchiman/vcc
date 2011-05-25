@@ -1,7 +1,7 @@
 syntax: regexp
 ^.*(bin|obj)/([^/]*/)?([Dd]ebug|[Rr]elease)/.*$
 ^_ReSharper\.Vcc$
-^.*\.(user|ncb|suo|cache|sdf|opensdf|stackdump)$
+^.*\.(user|ncb|suo|cache|sdf|opensdf|stackdump|vs10x)$
 ^vcc/Docs/Tutorial/vcc-tutorial-col.*\.(aux|log|out|bbl|pdf|blg)$
 ^vcc/Docs/Tutorial/c/.*\.i$
 ^vcc/Docs/Tutorial/(view\.pdf|Makefile\.local|fix)$
