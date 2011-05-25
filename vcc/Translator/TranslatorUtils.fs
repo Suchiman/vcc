@@ -213,7 +213,9 @@ namespace Microsoft.Research.Vcc
           | C.Type.Map (range, C.Type.Ref({ Kind = C.Union|C.Struct})) -> toTypeId' translateArrayAsPtr (C.Type.Map(range, C.Type.MathStruct))
           | C.Type.Map (range, dom) -> 
             internalizeType t (bCall "$map_t" [toTypeId' false range; toTypeId' false dom])
-          | C.Type.Ref { Name = n; Kind = (C.MathType|C.Record|C.FunctDecl _) } -> er ("^$#" + n)
+          | C.Type.Ref { Name = n; Kind = (C.MathType|C.Record|C.FunctDecl _) } ->
+            if n = "thread_id" then er "^$#thread_id_t"
+            else er ("^$#" + n)
           | C.Type.Ref td -> er ("^" + td.Name)
           | C.Type.TypeIdT -> er "^$#typeid_t"
           | C.Type.Claim -> er "^^claim"
