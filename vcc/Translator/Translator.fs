@@ -723,11 +723,7 @@ namespace Microsoft.Research.Vcc
               | :? single as s -> ctx.GetFloatConst ((float)s)
               | _ -> die()
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
-            if vcc3 then
-              let name = if name.StartsWith("_vcc_deep") then "$vs_deep_eq" else "$vs_shallow_eq"
-              B.FunctionCall(name, [self e1; self e2; toTypeId e1.Type])
-            else
-              B.FunctionCall(name, [self e1; self e2])
+            B.FunctionCall(name, [self e1; self e2])
           | name, args when name.StartsWith "prelude_" ->
             B.FunctionCall (name.Replace ("prelude_", "$"), selfs args)
           | n, _ when (helper.PureCallSignature n).IsSome ->
@@ -1958,7 +1954,11 @@ namespace Microsoft.Research.Vcc
         let s2 = er "#p2"
         let idx = er "#i"
         let eqFunName typeName deep = "_vcc_" + deep + "_struct_eq." + typeName
-        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars, None)
+        let body =
+          if vcc3 then
+            Some (bCall ("$vs_" + deepStr + "_eq") [s1; s2; toTypeId (C.Type.Ref td)])
+          else None
+        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars, body)
         let typeRef = toTypeId (C.Type.Ref td)
         let fldEqual inUnion (f : C.Field) =
           let rec read arrayElementType v = 
@@ -2017,8 +2017,11 @@ namespace Microsoft.Research.Vcc
             //activeOptionEq = 
             //bEq (bCall "$active_option" [s; p]) fieldRef
           | _ -> die()
-        let eqForall = B.Forall(Token.NoToken, vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
-        [eqFun; B.Axiom eqForall]
+        if vcc3 then
+          [eqFun]
+        else
+          let eqForall = B.Forall(Token.NoToken, vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
+          [eqFun; B.Axiom eqForall]
 
 
       let imax x y = if x < y then y else x
@@ -2353,7 +2356,6 @@ namespace Microsoft.Research.Vcc
            
         let forward = 
           match td.GenerateEquality with
-          | _ when vcc3 -> forward
           | C.StructEqualityKind.NoEq -> forward
           | C.StructEqualityKind.ShallowEq -> (trStructEq false td) @ forward
           | C.StructEqualityKind.DeepEq -> (trStructEq true td) @ (trStructEq false td) @ forward
