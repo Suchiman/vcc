@@ -122,7 +122,6 @@ specOrPhysical-04
 specOrPhysical-08
 specOrPhysical-09
 structEquality.ns-01
-thread_id-00
 volatile.ns-03
 volatileModifier.ns-09
 
