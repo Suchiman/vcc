@@ -2345,7 +2345,8 @@ namespace Microsoft.Research.Vcc
                           
         let forward =
           if vcc3 then
-            let defAx = bCall "$def_composite_type" [we; bInt td.SizeOf; B.Expr.BoolLiteral !is_claimable; B.Expr.BoolLiteral !owns_set_is_volatile]
+            let defName = if isUnion then "$def_union_type" else "$def_struct_type"
+            let defAx = bCall defName [we; bInt td.SizeOf; B.Expr.BoolLiteral !is_claimable; B.Expr.BoolLiteral !owns_set_is_volatile]
             forward @ [B.Decl.Axiom defAx]
           else
             forward @ 
