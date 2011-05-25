@@ -333,6 +333,7 @@ namespace Microsoft.Research.Vcc
             Parent = None
             IsVolatile = false 
             IsSpec = isSpec
+            DataTypeOptions = []
             UniqueId = CAST.unique() }
       let (t, vol) = match t with | Volatile(t) -> (t, true) | t -> (t, false)
       let singleField =

@@ -650,6 +650,7 @@ namespace Microsoft.Research.Vcc
                       IsSpec = specFromContract || hasCustomAttr "record" customAttr
                       IsVolatile = false
                       UniqueId = C.unique()
+                      DataTypeOptions = []
                     } : C.TypeDecl
                                       
                   // TODO?
@@ -996,6 +997,7 @@ namespace Microsoft.Research.Vcc
                   Parent = None
                   IsVolatile = false
                   IsSpec = false
+                  DataTypeOptions = []
                   UniqueId = C.unique()
                  } : C.TypeDecl
               topDecls <- C.Top.TypeDecl td :: topDecls

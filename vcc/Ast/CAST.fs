@@ -190,6 +190,7 @@ module Microsoft.Research.Vcc.CAST
       mutable Kind: TypeKind;
       mutable Name: string;
       mutable Fields: list<Field>;
+      mutable DataTypeOptions: list<Function>;
       mutable Invariants: list<Expr>;
       mutable CustomAttr:list<CustomAttr>;
       mutable SizeOf: int;
@@ -204,12 +205,15 @@ module Microsoft.Research.Vcc.CAST
     
     override this.GetHashCode () = int this.UniqueId
     override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
+
+    member this.IsDataType = this.DataTypeOptions <> []
     
     override this.ToString () =
       (match this.Kind with
         | Struct -> "struct "
         | Record -> "record "
         | Union -> "union "
+        | MathType when this.IsDataType -> "datatype "
         | MathType -> "_math "
         | FunctDecl d -> "_fnptr ") + this.Name
     
@@ -222,6 +226,7 @@ module Microsoft.Research.Vcc.CAST
         | Macro(_, "labeled_invariant", [Macro(_, lbl, _); i]) -> "invariant " + lbl + ": " + i.ToString()
         | e -> "invariant " + e.ToString()
       this.ToString () + " {\r\n  " + String.concat ";\r\n  " [for f in this.Fields -> f.ToString ()] + ";\r\n" +
+        String.concat "" [for f in this.DataTypeOptions -> f.ToString() ] +
         String.concat "" [for i in this.Invariants -> prInv i + ";\r\n" ] + "}\r\n"
   
   // TODO: this attribute shouldn't be needed here, but is      
@@ -367,6 +372,7 @@ module Microsoft.Research.Vcc.CAST
               SizeOf = 1
               Invariants = []
               CustomAttr = []
+              DataTypeOptions = []
               IsNestedAnon = false
               GenerateEquality = NoEq
               GenerateFieldOffsetAxioms = false
@@ -721,7 +727,7 @@ module Microsoft.Research.Vcc.CAST
     }
 
   and TestClassifier = Expr
-    
+
   and Expr =
     | Ref of ExprCommon * Variable    
     | Prim of ExprCommon * Op * list<Expr>

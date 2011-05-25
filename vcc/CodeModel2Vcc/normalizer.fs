@@ -1020,6 +1020,7 @@ namespace Microsoft.Research.Vcc
                 IsSpec = false
                 Parent = None
                 IsVolatile = false
+                DataTypeOptions = []
                 UniqueId = CAST.unique() } : TypeDecl
 
               let fields = createFields embTd 0 [] (List.rev stackArrays)
