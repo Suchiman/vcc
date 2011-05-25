@@ -28,6 +28,7 @@ typedef _Bool bool;
 
 #define SPEC_TYPE(name) typedef struct _concat_identifiers(_vcc_math_type_, name) {char _vcc_marker_for_math_type;} _concat_identifiers(\,name);
 
+
 _(const bool \true = 1;)
 _(const bool \false = 0;)
 

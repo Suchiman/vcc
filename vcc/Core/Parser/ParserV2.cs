@@ -63,6 +63,16 @@ namespace Microsoft.Research.Vcc.Parsing
             this.GetNextToken();
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true, specifier);
             break;
+          case Token.Identifier:
+            switch (this.scanner.GetIdentifierString()) {
+              case "datatype":
+                this.GetNextToken();
+                this.ParseDataTypeDefinition(members, globalMembers, followersOrDeclarationStart);
+                break;
+              default:
+                this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
+                break;
+            }            break;
           default:
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
             break;
@@ -73,6 +83,48 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, followers, true);
     }
 
+    void ParseDataTypeDefinition(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers)
+    {
+      var noSpecifiers = new Specifier[0];
+      var name = this.ParseNameDeclaration(true);
+      var loc = name.SourceLocation;
+      var mangledName = new VccNameDeclaration(this.GetNameFor("_vcc_datatype_" + name.Name.Value), loc);
+      var strct = new VccStructDeclaration(mangledName, new List<ITypeDeclarationMember>(), noSpecifiers, loc);
+      members.Add(strct);
+
+      var tp = new VccNamedTypeExpression(new VccSimpleName(mangledName, mangledName.SourceLocation));
+
+      var typedefDecl = new TypedefDeclaration(tp, name, loc);
+      this.RegisterTypedef(name.Value, typedefDecl);
+      globalMembers.Add(typedefDecl);
+
+      this.Skip(Token.LeftBrace);
+
+      for (; ; ) {
+        SourceLocationBuilder scCtx = this.GetSourceLocationBuilderForLastScannedToken();
+        if (this.currentToken != Token.Case) {
+          if (this.currentToken == Token.RightBrace)
+            this.Skip(Token.RightBrace);
+          else
+            this.Skip(Token.Case);
+          break;
+        }
+        this.Skip(Token.Case);
+        var fname = this.ParseNameDeclaration(true);
+        var parmFollowers = followers | Token.RightBrace | Token.Case | Token.Semicolon;
+        var parms0 = this.ParseParameterList(parmFollowers);
+        this.Skip(Token.RightParenthesis);
+        if (this.currentToken == Token.Semicolon)
+          this.Skip(Token.Semicolon);
+        bool acceptsExtraArguments;
+        var parms1 = this.ConvertToParameterDeclarations(parms0, out acceptsExtraArguments);
+        var fdecl = new FunctionDeclaration(acceptsExtraArguments,
+                        noSpecifiers, false, CallingConvention.C, TypeMemberVisibility.Public,
+                        tp, fname, null, parms1, true, null, scCtx
+                    );
+        globalMembers.Add(fdecl);
+      }
+    }
 
     protected override void SkipSemiColonAfterDeclarationOrStatement(TokenSet followers) {
       if (this.InSpecCode && this.currentToken == Token.RightParenthesis) {
