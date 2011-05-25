@@ -109,6 +109,7 @@
     <Compile Include="..\Common\Include\version.fs">
       <Link>version.fs</Link>
     </Compile>
+    <Compile Include="DataTypes.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
