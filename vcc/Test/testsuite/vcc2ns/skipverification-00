@@ -1,0 +1,8 @@
+`/newsyntax
+#include <vcc.h>
+
+_(assume_correct) void foo() {}
+void bar() {}
+`
+Verification of bar succeeded.
+`
