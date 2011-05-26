@@ -95,6 +95,7 @@
     <Compile Include="Isabelle.fs" />
     <Compile Include="ExtraWarnings.fs" />
     <Compile Include="NewSyntax.fs" />
+    <Compile Include="DataTypes.fs" />
     <Compile Include="Normalizer.fs" />
     <Compile Include="TransType.fs" />
     <Compile Include="Simplifier.fs" />

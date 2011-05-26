@@ -72,7 +72,8 @@ namespace Microsoft.Research.Vcc.Parsing
               default:
                 this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
                 break;
-            }            break;
+            }
+            break;
           default:
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
             break;
@@ -118,8 +119,9 @@ namespace Microsoft.Research.Vcc.Parsing
           this.Skip(Token.Semicolon);
         bool acceptsExtraArguments;
         var parms1 = this.ConvertToParameterDeclarations(parms0, out acceptsExtraArguments);
+        var specifiers = new Specifier[] { this.CreateAttribute("_vcc_internal__is_datatype_option", "", scCtx) };
         var fdecl = new FunctionDeclaration(acceptsExtraArguments,
-                        noSpecifiers, false, CallingConvention.C, TypeMemberVisibility.Public,
+                        specifiers, false, CallingConvention.C, TypeMemberVisibility.Public,
                         tp, fname, null, parms1, true, null, scCtx
                     );
         globalMembers.Add(fdecl);
