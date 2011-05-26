@@ -2016,7 +2016,6 @@ procedure $bump_volatile_version(p:$ptr);
   modifies $s;
   ensures $specials_eq(old($s), $s);
   ensures $havoc_at(old($s), $s, p, $f_vol_version($typ(p)));
-  ensures $timestamp_post_strict(old($s), $s);
   ensures $read_vol_version(old($s), p) != $read_vol_version($s, p);
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -2219,6 +2218,7 @@ procedure $havoc(o:$ptr, t:$ctype);
   ensures $specials_eq(old($s), $s);
   ensures (forall p:$ptr, f:$field :: {$rdtrig($s, p, f)}  
     $composite_extent(old($s), o, t)[p] || $rd(old($s), p, f) == $rd($s, p, f));
+  ensures $timestamp_post_strict(old($s), $s);
 
 // ----------------------------------------------------------------------------
 // Records

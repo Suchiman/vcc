@@ -27,7 +27,6 @@ void f() {
         *pc = *pd;
         _(wrap pd)
         *pc = *pd;
-        _(assume \false) // TODO
         _(unwrap pd)
 }
 
