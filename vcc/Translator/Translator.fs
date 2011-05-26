@@ -2347,7 +2347,10 @@ namespace Microsoft.Research.Vcc
           if vcc3 then
             let defName = if isUnion then "$def_union_type" else "$def_struct_type"
             let defAx = bCall defName [we; bInt td.SizeOf; B.Expr.BoolLiteral !is_claimable; B.Expr.BoolLiteral !owns_set_is_volatile]
-            forward @ [B.Decl.Axiom defAx]
+            let seq =
+              if !owns_set_is_volatile || td.Fields |> List.exists (fun f -> f.IsVolatile) then []
+              else [B.Decl.Axiom (bCall "$is_span_sequential" [we])]
+            forward @ seq @ [B.Decl.Axiom defAx]
           else
             forward @ 
               [B.Decl.Axiom (bCall "$is_composite" [we]);

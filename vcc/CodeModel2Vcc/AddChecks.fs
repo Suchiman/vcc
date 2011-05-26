@@ -290,7 +290,11 @@ namespace Microsoft.Research.Vcc
                 deepReadsCheck (Expr.MkDot(ec, e, fld))
               locAssert :: (td.Fields |> List.map fldAssert |> List.concat)
             | _ -> []
-        Some (Expr.MkBlock(deepReadsCheck p @ [Macro(c, "_vcc_vs_ctor", [self p])]))
+        let readsCheck =
+          if helper.Options.Vcc3 then
+            [propAssert 8538 "{0} has thread-local extent in struct assignment" "_vcc_extent_thread_local" (self p)]
+          else deepReadsCheck p
+        Some (Expr.MkBlock(readsCheck @ [Macro(c, "_vcc_vs_ctor", [self p])]))
         
       | _ -> None
     

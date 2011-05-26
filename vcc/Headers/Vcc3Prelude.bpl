@@ -128,6 +128,7 @@ function {:inline true} $is_non_primitive_ptr(p:$ptr) : bool
   { $is_non_primitive($typ(p)) }
 
 function $is_claimable($ctype) : bool;
+function $is_span_sequential($ctype) : bool;
 function $is_group_type($ctype) : bool;
 
 // These three are not really used for anything, get rid of them?
@@ -950,6 +951,11 @@ function {:inline true} $typed2(S:$state, p:$ptr, t:$ctype) : bool
 
 function {:inline true} $typed(S:$state, p:$ptr) : bool
   { $thread_local(S, p) }
+
+function {:inline true} $readable_span(S:$state, p:$ptr) : bool
+{
+  ($is_span_sequential($typ(p)) && $thread_local(S, p)) || $mutable(S, p)
+}
 
 // ----------------------------------------------------------------------------
 // Boogie/Z3 hacks
@@ -2040,9 +2046,10 @@ function {:inline true} $struct_extent(#p:$ptr) : $ptrset
 function $extent_mutable(S:$state, r:$ptr) : bool
   { $mutable(S, r) && 
     (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $mutable(S, p)) }
-  
+
 function $extent_thread_local(S:$state, r:$ptr) : bool
-  { $extent_mutable(S, r) } // for now, later we might check if r is completely non-volatile, and then thread_local is enough
+  { $readable_span(S, r) && 
+    (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $readable_span(S, p)) }
   
 axiom (forall S:$state, T:$ctype, sz:int, p:$ptr :: {$extent_mutable(S, $as_ptr_with_type(p, $array(T, sz)))}
   $extent_mutable(S, $as_ptr_with_type(p, $array(T, sz))) ==> $is_mutable_array(S, $as_array_first_index(p), T, sz));
