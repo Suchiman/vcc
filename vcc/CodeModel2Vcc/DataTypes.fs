@@ -81,12 +81,12 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
         let ec, fn, args, pref, suff = findPattern [] stmts
         match usedCases.TryGetValue fn.UniqueId with
           | true, loc ->
-            helper.Error (ec.Token, 0, "the datatype case '" + fn.Name + "' is used more than once", Some loc)
+            helper.Error (ec.Token, 9726, "the datatype case '" + fn.Name + "' is used more than once", Some loc)
           | false, _ ->
             if dtTd.DataTypeOptions |> _list_mem fn then
               usedCases.Add (fn.UniqueId, ec.Token)
             else
-              helper.Error (ec.Token, 0, "case '" + fn.Name + "' is not a member of " + dtTd.Name)
+              helper.Error (ec.Token, 9727, "case '" + fn.Name + "' is not a member of " + dtTd.Name)
         let mkAssign (n:int) (e:Expr) =
           let fetch = Macro ({ bogusEC with Type = e.Type }, ("dtp_" + n.ToString()), [expr])
           Macro (voidBogusEC(), "=", [e; fetch])
@@ -94,14 +94,14 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
         let body = pref @ assignments @ suff @ [Expr.Label (bogusEC, case_end)]
         let body = desugarSwitch labels (Expr.MkBlock body)
         if fallOff case_end body then
-          helper.Error (blockEc.Token, 0, "possible fall-off from a match case")
+          helper.Error (blockEc.Token, 9728, "possible fall-off from a match case")
         Expr.If ({ ec with Type = Void }, None, testHd expr fn, body, (aux rest))
       | [] ->
         let asserts = 
           dtTd.DataTypeOptions 
             |> List.filter (fun f -> usedCases.ContainsKey f.UniqueId)
             |> List.map (fun f -> 
-                  let err = afmte 0 ("case " + f.Name + " is unhandled when matching {0}") [expr]
+                  let err = afmte 8030 ("case " + f.Name + " is unhandled when matching {0}") [expr]
                   Expr.MkAssert ((mkNot (testHd expr f)).WithCommon err))
         Expr.MkBlock (asserts @ [Expr.MkAssume (Expr.False)])
       | _ -> die()
@@ -111,10 +111,10 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
     | Macro (ec, "match", expr :: cases) ->
       match expr.Type with
         | Type.Ref dtTd when dtTd.IsDataType ->
-          // TODO cache expr
-          Some (compileCases expr dtTd cases)
+          let (save, expr) = cache helper "matched" expr VarKind.SpecLocal
+          Some (Expr.MkBlock (save @ [compileCases expr dtTd cases]))
         | tp ->
-          helper.Error (ec.Token, 0, "cannot match on non-datatype " + tp.ToString())
+          helper.Error (ec.Token, 9729, "cannot match on non-datatype " + tp.ToString())
           None
     | _ -> None
 
