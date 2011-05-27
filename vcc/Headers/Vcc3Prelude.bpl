@@ -1886,7 +1886,7 @@ axiom (forall S:$state, p, q, r:$ptr ::
   $good_state(S) &&
   $is_sequential_field($f_owns($typ(p))) &&
   $in_domain(S, p, q) && $set_in(r, $owns(S, p)) ==>
-    $in_domain(S, p, r));
+    $in_domain(S, r, q));
 
 type $version;
 function $ver_domain($version) : $ptrset;
