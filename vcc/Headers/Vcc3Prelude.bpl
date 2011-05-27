@@ -2297,7 +2297,7 @@ function {:inline true} $is_global_array(p:$ptr, T:$ctype, sz:int) returns(bool)
   }
 
 // -----------------------------------------------------------------------
-// Data types
+// Datatypes
 // -----------------------------------------------------------------------
 
 type $dt;
@@ -2320,16 +2320,16 @@ function $dt0($dt_tag) : $dt;
 function $dt1($dt_tag, int) : $dt;
 function $dt2($dt_tag, int, int) : $dt;
 
-function $dtp0($dt) : int;
-function $dtp1($dt) : int;
+function $dtp_0($dt) : int;
+function $dtp_1($dt) : int;
 
 // dt is completly defined through the tag and projections; this might not be what we want Node(int) -> only take 32 bits
 axiom (forall d:$dt :: {$has_arity($dt_hd(d), 0)}
   $has_arity($dt_hd(d), 0) ==> d == $dt0($dt_hd(d)));
 axiom (forall d:$dt :: {$has_arity($dt_hd(d), 1)}
-  $has_arity($dt_hd(d), 1) ==> d == $dt1($dt_hd(d), $dtp0(d)));
+  $has_arity($dt_hd(d), 1) ==> d == $dt1($dt_hd(d), $dtp_0(d)));
 axiom (forall d:$dt :: {$has_arity($dt_hd(d), 2)}
-  $has_arity($dt_hd(d), 2) ==> d == $dt2($dt_hd(d), $dtp0(d), $dtp1(d)));
+  $has_arity($dt_hd(d), 2) ==> d == $dt2($dt_hd(d), $dtp_0(d), $dtp_1(d)));
 
 
 // -----------------------------------------------------------------------
