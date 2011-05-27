@@ -748,6 +748,8 @@ namespace Microsoft.Research.Vcc
                           td.DataTypeOptions <- 
                             dt.Constructors |> Seq.map (fun fd -> this.LookupMethod fd.ResolvedMethod) |> Seq.toList
                           td.Kind <- C.TypeKind.MathType
+                          let pref = "_vcc_datatype_"
+                          td.Name <- td.Name.Substring pref.Length
                         | _ -> ()
                     | _ -> ()
 
