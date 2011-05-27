@@ -1876,6 +1876,18 @@ axiom (forall S:$state, q,r:$ptr :: { $in_domain(S, r, $root(S, q)) }
         $root(S, r) == $root(S, q) && 
         $in_domain(S, r, $root(S, q)));
 
+// automatic traversal of ownership structure; beware of cycles
+function $as_deep_domain(S:$state, p:$ptr) : $ptr { p }
+function $wrapped_with_deep_domain(S:$state, p:$ptr) : bool
+  { $in_domain(S, p, $as_deep_domain(S, p)) }
+
+axiom (forall S:$state, p, q, r:$ptr :: 
+  {$in_domain(S, p, $as_deep_domain(S, q)), $set_in(r, $owns(S, p))}
+  $good_state(S) &&
+  $is_sequential_field($f_owns($typ(p))) &&
+  $in_domain(S, p, q) && $set_in(r, $owns(S, p)) ==>
+    $in_domain(S, p, r));
+
 type $version;
 function $ver_domain($version) : $ptrset;
 function $int_to_version(int) : $version;
