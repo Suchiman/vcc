@@ -42,11 +42,36 @@ let checkDatatypeDefinitions (helper:Helper.Env) decls =
 // - add assert(false) for unused options
 // - each datatype option is used at most once
 
-let handleMatchStatements (helper:Helper.Env) self = function
-  | Macro (ec, "match", expr :: cases) ->
-    // TODO cache expr
-    let rec compileCase = function
-      | Macro (_, "case", [Block (_, stmts, None)]) :: rest ->
+let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
+  let usedCases = gdict() 
+  let testHd expr fn =
+    Expr.Macro (boolBogusEC(), "dt_testhd", [expr; Expr.UserData (boolBogusEC(), fn)])
+ 
+  let rec fallOff nm expr = 
+    let self = fallOff nm 
+    match expr with
+    | Expr.Block (_, stmts, _) -> List.forall self stmts
+    | Expr.If (_, _, _, th, el) -> self th || self el
+    | Expr.Return _ -> false
+    | Expr.Goto (_, nm') -> nm <> nm'
+    | _ -> true
+
+  let (|Case|_|) = function
+    | Macro (_, "case", [Block (blockEc, stmts, None)]) ->
+      Some (blockEc, stmts)
+    | Macro (_, "case", [Call _ as call]) ->
+      Some (call.Common, [call])
+    | _ -> None
+
+  let compileCases expr (dtTd:TypeDecl) cases =
+    let rec aux = function
+      | Case (blockEc, stmts) :: rest ->
+        let unique = helper.UniqueId()
+        let case_end = { Name = "match_end_" + unique.ToString() } : LabelId
+        let labels = 
+          match labels with
+            | Some(_, continue_lbl) -> Some(case_end, continue_lbl)
+            | None -> Some(case_end, ({ Name = "dummy_label"} : LabelId))
         let rec findPattern acc = function
           | Call (ec, fn, _, args) :: rest ->
             ec, fn, args, List.rev acc, rest
@@ -54,19 +79,44 @@ let handleMatchStatements (helper:Helper.Env) self = function
             findPattern (x :: acc) rest
           | [] -> die()
         let ec, fn, args, pref, suff = findPattern [] stmts
-        let test = Expr.Macro ({ ec with Type = Bool }, "dt_testhd", [expr; Expr.Call (ec, fn, [], [])])
+        match usedCases.TryGetValue fn.UniqueId with
+          | true, loc ->
+            helper.Error (ec.Token, 0, "the datatype case '" + fn.Name + "' is used more than once", Some loc)
+          | false, _ ->
+            if dtTd.DataTypeOptions |> _list_mem fn then
+              usedCases.Add (fn.UniqueId, ec.Token)
+            else
+              helper.Error (ec.Token, 0, "case '" + fn.Name + "' is not a member of " + dtTd.Name)
         let mkAssign (n:int) (e:Expr) =
           let fetch = Macro ({ bogusEC with Type = e.Type }, ("dtp_" + n.ToString()), [expr])
           Macro (voidBogusEC(), "=", [e; fetch])
         let assignments = args |> List.mapi mkAssign
-        let body = pref @ assignments @ suff
-        Expr.If ({ ec with Type = Void }, None, test, self (Expr.MkBlock body), (compileCase rest))
+        let body = pref @ assignments @ suff @ [Expr.Label (bogusEC, case_end)]
+        let body = desugarSwitch labels (Expr.MkBlock body)
+        if fallOff case_end body then
+          helper.Error (blockEc.Token, 0, "possible fall-off from a match case")
+        Expr.If ({ ec with Type = Void }, None, testHd expr fn, body, (aux rest))
       | [] ->
-        Expr.MkAssume (Expr.False)  
+        let asserts = 
+          dtTd.DataTypeOptions 
+            |> List.filter (fun f -> usedCases.ContainsKey f.UniqueId)
+            |> List.map (fun f -> 
+                  let err = afmte 0 ("case " + f.Name + " is unhandled when matching {0}") [expr]
+                  Expr.MkAssert ((mkNot (testHd expr f)).WithCommon err))
+        Expr.MkBlock (asserts @ [Expr.MkAssume (Expr.False)])
       | _ -> die()
-    Some (compileCase cases) 
-  | _ -> None
+    aux cases
+
+  match expr with
+    | Macro (ec, "match", expr :: cases) ->
+      match expr.Type with
+        | Type.Ref dtTd when dtTd.IsDataType ->
+          // TODO cache expr
+          Some (compileCases expr dtTd cases)
+        | tp ->
+          helper.Error (ec.Token, 0, "cannot match on non-datatype " + tp.ToString())
+          None
+    | _ -> None
 
 let init (helper:Helper.Env) =
   helper.AddTransformer ("datatype-check-defs", Helper.Decl (checkDatatypeDefinitions helper))
-  helper.AddTransformer ("datatype-handle-match", Helper.Expr (handleMatchStatements helper))

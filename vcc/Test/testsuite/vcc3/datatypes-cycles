@@ -19,7 +19,7 @@ _(datatype OK1 {
 })
 
 `
-testcase(3,26) : error VC9725: a finite instance of datatype '_vcc_datatype_Bar' could never be constructed
-testcase(7,26) : error VC9725: a finite instance of datatype '_vcc_datatype_Baz0' could never be constructed
-testcase(11,26) : error VC9725: a finite instance of datatype '_vcc_datatype_Baz1' could never be constructed
+testcase(3,26) : error VC9725: a finite instance of datatype 'Bar' could never be constructed
+testcase(7,26) : error VC9725: a finite instance of datatype 'Baz0' could never be constructed
+testcase(11,26) : error VC9725: a finite instance of datatype 'Baz1' could never be constructed
 `

@@ -723,6 +723,8 @@ namespace Microsoft.Research.Vcc
     /// Get rid of while(){}, do{}while(), for(;;){}, break and continue
     let rec loopAndSwitchDesugaring labels self s =
       let generateUnique = helper.UniqueId
+      let selfWith labels (body:Expr) =
+        body.SelfMap (loopAndSwitchDesugaring labels)
       let doLoop (loopEc:ExprCommon) contract =
         let unique = generateUnique().ToString()
         let break_lbl = { Name = "#break_" + unique } : LabelId
@@ -738,8 +740,7 @@ namespace Microsoft.Research.Vcc
         let mkLoop stmts =
           let loop = Loop ({ voidBogusEC() with Token = loopEc.Token }, invs, writes, variants, Expr.MkBlock stmts)
           Some (Expr.MkBlock [loop; Label (loopEc, break_lbl)])
-        let inBody (body:Expr) =
-          body.SelfMap (loopAndSwitchDesugaring (Some (break_lbl, continue_lbl)))
+        let inBody = selfWith (Some (break_lbl, continue_lbl))
         (mkLoop, inBody, break_lbl, continue_lbl)
       
       let doSwitch ctx stmts =
@@ -813,6 +814,8 @@ namespace Microsoft.Research.Vcc
           Some (Expr.MkBlock [init; loop.Value])
         
         | Macro (token, "switch", condAndBody) -> Some (doSwitch labels condAndBody)
+        | Macro (token, "match", _) as expr ->
+          DataTypes.handleMatchStatement helper selfWith labels expr
         | Macro (token, "break", []) ->
           match labels with
             | Some (l, _) -> Some (Goto (token, l))
