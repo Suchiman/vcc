@@ -90,7 +90,8 @@ namespace Microsoft.Research.Vcc.Parsing
       var name = this.ParseNameDeclaration(true);
       var loc = name.SourceLocation;
       var mangledName = new VccNameDeclaration(this.GetNameFor("_vcc_datatype_" + name.Name.Value), loc);
-      var strct = new VccStructDeclaration(mangledName, new List<ITypeDeclarationMember>(), noSpecifiers, loc);
+      var ctornames = new List<FunctionDeclaration>();
+      var strct = new VccDatatypeDeclaration(mangledName, new List<ITypeDeclarationMember>(), noSpecifiers, ctornames, loc);
       members.Add(strct);
 
       var tp = new VccNamedTypeExpression(new VccSimpleName(mangledName, mangledName.SourceLocation));
@@ -125,7 +126,11 @@ namespace Microsoft.Research.Vcc.Parsing
                         tp, fname, null, parms1, true, null, scCtx
                     );
         globalMembers.Add(fdecl);
+        ctornames.Add(fdecl);
       }
+
+      if (ctornames.Count == 0)
+        this.HandleError(Error.EmptySwitch); //TODO use proper error
     }
 
     protected override void SkipSemiColonAfterDeclarationOrStatement(TokenSet followers) {

@@ -585,7 +585,6 @@ namespace Microsoft.Research.Vcc
                     | :? INamespaceTypeDefinition as n -> n.Name.Value
                     | :? INestedTypeDefinition as n -> n.ContainingTypeDefinition.ToString() + "." + n.Name.Value
                     | _ -> die()
-                
                 let mathPref = "_vcc_math_type_"
                 if name.StartsWith mathPref then
                   if name.Substring(mathPref.Length) = "label_t"
@@ -741,6 +740,15 @@ namespace Microsoft.Research.Vcc
                     | Some(f) -> f :: trMembers isSpec ms
                   
                   //if (contract <> null) then contract.HasErrors |> ignore
+
+                  match typeDef with
+                    | :? NamedTypeDefinition as ntd ->
+                      match ntd.TypeDeclarations |> Seq.map (fun o -> o :> obj) |> Seq.toList with
+                        | (:? IVccDatatypeDeclaration as dt) :: _ ->
+                          td.DataTypeOptions <- 
+                            dt.Constructors |> Seq.map (fun fd -> this.LookupMethod fd.ResolvedMethod) |> Seq.toList
+                        | _ -> ()
+                    | _ -> ()
 
                   match fields with
                     | [] when not (VccScopedName.IsGroupType(typeDef)) && not td.IsSpec ->
