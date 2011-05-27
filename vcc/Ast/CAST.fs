@@ -597,6 +597,9 @@ module Microsoft.Research.Vcc.CAST
       else
         List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition|AttrIsDatatypeOption), "") -> true | _ -> false) this.CustomAttr 
       
+    member this.IsDatatypeOption =
+      List.exists (function VccAttr(AttrIsDatatypeOption, "") -> true | _ -> false) this.CustomAttr 
+       
     member this.IsStateless =
       this.IsPure && this.Reads = []
 

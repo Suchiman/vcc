@@ -162,7 +162,21 @@ namespace Microsoft.Research.Vcc
             | C.Type.SpecPtr t
             | C.Type.PhysPtr t -> bCall "$ptr" [toTypeId t; e]
             | _ -> e
-      
+     
+      let intToTyped t fetch =
+        match t with
+          | C.Type.Integer _ ->
+            bCall "$unchecked" [toTypeId t; fetch]
+          | C.Ptr t ->
+            if vcc3 then
+              addType t (castFromInt (trType t) fetch)
+            else
+              bCall "$ptr" [toTypeId t; fetch]
+          | C.Bool ->
+            bNeq fetch (bInt 0)
+          | t ->
+            castFromInt (trType t) fetch
+         
       let mapEqAxioms t =
         let t1, t2 =
           match t with
@@ -449,11 +463,15 @@ namespace Microsoft.Research.Vcc
                   bCall "$idx" [self arr; self idx; ptrType arr]
               | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
               | C.Expr.Call (_, fn, targs, args) ->
-                let args =  List.map ctx.ToTypeIdArraysAsPtrs targs @ convertArgs fn (selfs args)
-                let args =
-                  if fn.IsStateless then args
-                  else bState :: args
-                addType fn.RetType (bCall ("F#" + fn.Name) args)
+                if fn.IsDatatypeOption then
+                  let args = List.map2 (fun (f:C.Variable) a -> trForWrite env f.Type a) fn.Parameters args
+                  bCall ("$dt" + args.Length.ToString()) (er ("DT#" + fn.Name) :: args)
+                else
+                  let args = List.map ctx.ToTypeIdArraysAsPtrs targs @ convertArgs fn (selfs args)
+                  let args =
+                    if fn.IsStateless then args
+                    else bState :: args
+                  addType fn.RetType (bCall ("F#" + fn.Name) args)
               // TODO this is wrong for loop invariants and stuff (but the legacy vcc doesn't handle that correctly as well)
               | C.Expr.Old (ec, C.Macro (_, "_vcc_when_claimed", []), e) ->
                 warnForIneffectiveOld ec.Token (self e)
@@ -545,15 +563,7 @@ namespace Microsoft.Research.Vcc
           
           | "rec_fetch", [r; C.UserData(_, (:? C.Field as f))] ->
             let fetch = bCall "$rec_fetch" [self r; er (fieldName f)]
-            match f.Type with
-              | C.Type.Integer _ ->
-                bCall "$unchecked" [toTypeId f.Type; fetch]
-              | C.Ptr t when not vcc3 ->
-                bCall "$ptr" [toTypeId t; fetch]
-              | C.Bool ->
-                bNeq fetch (bInt 0)
-              | t ->
-                castFromInt (trType t) fetch
+            intToTyped f.Type fetch
             
           | "rec_update", [r; C.UserData(_, ( :? C.Field as f) ); v] ->
             bCall "$rec_update" [self r; er (fieldName f); trForWrite env f.Type v]
@@ -722,6 +732,10 @@ namespace Microsoft.Research.Vcc
               | :? float as f -> ctx.GetFloatConst f
               | :? single as s -> ctx.GetFloatConst ((float)s)
               | _ -> die()
+          | ("dtp_0" | "dtp_1"), [e] ->
+            intToTyped ec.Type (bCall ("$" + n) [self e])
+          | "dt_testhd", [e; C.UserData (_, (:? C.Function as fn))] ->
+            bCall "$dt_testhd" [self e; er ("DT#" + fn.Name)]
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
             B.FunctionCall(name, [self e1; self e2])
           | name, args when name.StartsWith "prelude_" ->
@@ -2418,6 +2432,12 @@ namespace Microsoft.Research.Vcc
              B.Decl.Axiom (bCall (def + kind + "_type") [er ("^" + name)])
              ] @ additions
 
+      let trDataType (h:C.Function) =
+        let fnconst = "DT#" + h.Name
+        let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$dt_tag" }
+        let defax = B.Decl.Axiom (bCall "$def_datatype_option" [h.RetType |> toTypeId; er fnconst; bInt (h.Parameters |> List.length)]) 
+        [defconst; defax]
+
       let trPureFunction (h:C.Function) =
         if not h.IsPure || h.RetType = C.Void then []
         else
@@ -2541,6 +2561,8 @@ namespace Microsoft.Research.Vcc
       let trTop decl =
         try 
           match decl with
+            | C.Top.FunctionDecl h when h.IsDatatypeOption ->
+              trDataType h
             | C.Top.FunctionDecl h ->
               if h.Name.StartsWith "_vcc_" && not (h.Name.StartsWith "_vcc_match") then 
                 []
