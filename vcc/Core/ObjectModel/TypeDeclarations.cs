@@ -11,6 +11,11 @@ using Microsoft.Cci.Ast;
 //^ using Microsoft.Contracts;
 
 namespace Microsoft.Research.Vcc {
+  public interface IVccDatatypeDeclaration : IStructDeclaration
+  {
+    IEnumerable<FunctionDeclaration> Constructors { get; }
+  }
+
   internal sealed class VccGlobalDeclarationContainerClass : GlobalDeclarationContainerClass {
 
     public VccGlobalDeclarationContainerClass(IMetadataHost compilationHost)
@@ -345,6 +350,36 @@ namespace Microsoft.Research.Vcc {
     {
       if (targetNamespaceDeclaration == this.ContainingNamespaceDeclaration) return this;
       return new VccStructDeclaration(targetNamespaceDeclaration, this);
+    }
+  }
+
+  internal class VccDatatypeDeclaration : VccStructuredTypeDeclaration, IVccDatatypeDeclaration {
+
+    internal VccDatatypeDeclaration(NameDeclaration name, List<ITypeDeclarationMember> members, IEnumerable<Specifier> extendedAttributes, IEnumerable<FunctionDeclaration> ctors, ISourceLocation sourceLocation)
+      : base(name, members, extendedAttributes, sourceLocation) {
+        this.Constructors = ctors;
+    }
+
+    protected VccDatatypeDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccDatatypeDeclaration template)
+      : base(containingNamespaceDeclaration, template) {
+        this.Constructors = template.Constructors;
+    }
+
+    public override uint SizeOf {
+      get {
+        return 1;
+      }
+    }
+
+    public IEnumerable<FunctionDeclaration> Constructors { get; private set; }
+
+    //^ [MustOverride]
+    public override INamespaceDeclarationMember MakeShallowCopyFor(NamespaceDeclaration targetNamespaceDeclaration)
+      //^^ ensures result.GetType() == this.GetType();
+      //^^ ensures result.ContainingNamespaceDeclaration == targetNamespaceDeclaration;
+    {
+      if (targetNamespaceDeclaration == this.ContainingNamespaceDeclaration) return this;
+      return new VccDatatypeDeclaration(targetNamespaceDeclaration, this);
     }
   }
 

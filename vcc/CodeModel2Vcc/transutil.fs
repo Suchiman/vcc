@@ -416,6 +416,8 @@ namespace Microsoft.Research.Vcc
       | Top.TypeDecl td ->
         for f in td.Fields do
           walkType cb f.Type
+        for o in td.DataTypeOptions do
+          cb.UseFunction o
       | Top.Axiom ax -> ax.SelfVisit (walkExpr cb)
       | Top.GeneratedAxiom _ -> ()
 
