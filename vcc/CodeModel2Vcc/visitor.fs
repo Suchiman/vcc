@@ -747,6 +747,7 @@ namespace Microsoft.Research.Vcc
                         | (:? IVccDatatypeDeclaration as dt) :: _ ->
                           td.DataTypeOptions <- 
                             dt.Constructors |> Seq.map (fun fd -> this.LookupMethod fd.ResolvedMethod) |> Seq.toList
+                          td.Kind <- C.TypeKind.MathType
                         | _ -> ()
                     | _ -> ()
 
