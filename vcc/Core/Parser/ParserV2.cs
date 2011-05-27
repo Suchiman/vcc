@@ -72,7 +72,8 @@ namespace Microsoft.Research.Vcc.Parsing
               default:
                 this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
                 break;
-            }            break;
+            }
+            break;
           default:
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
             break;

@@ -134,6 +134,7 @@ _(\integer \addr(\object);)
 _(bool \addr_eq(\object,\object);)
 _(bool _(_boogie0) \arrays_disjoint(\object, \size_t, \object, \size_t);)
 _(bool _(_boogie0) \full_context();)
+_(bool _(_boogie1) \wrapped_with_deep_domain(\object))
 
 _(template<typename T> bool \shallow_eq(T s, T t);)
 _(template<typename T> bool \deep_eq(T s, T t);)
