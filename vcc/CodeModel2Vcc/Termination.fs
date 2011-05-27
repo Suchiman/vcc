@@ -155,6 +155,12 @@ let insertTerminationChecks (helper:Helper.Env) decls =
       helper.Die() // these should be gone, right?
       None
 
+    | Macro (_, "dt_testhd", _) ->
+      None
+
+    | Macro (_, n, _) when n.StartsWith ("dtp_") ->
+      None
+
     | Macro (ec, s, args) as e ->
       helper.GraveWarning (e.Token, 9317, "macro '" + s + "' is not supported in termination checking")
       Some e
