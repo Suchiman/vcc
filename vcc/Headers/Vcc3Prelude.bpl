@@ -205,7 +205,9 @@ axiom (forall p:$ptr :: {$phys_ptr_cast(p, $typ(p))} {$in_range_phys_ptr(p)}
   $in_range_phys_ptr(p) ==> $phys_ptr_cast(p, $typ(p)) == p && $is_phys_field($field(p)));
 axiom (forall p:$ptr :: {$in_range_phys_ptr($base(p))}
   $in_range_phys_ptr(p) ==> $in_range_phys_ptr($base(p)));
-axiom (forall p:$ptr, t:$ctype :: {$addr(p), $phys_ptr_cast(p, t)}
+axiom (forall p:$ptr, t:$ctype :: 
+  {$addr($phys_ptr_cast(p, t))}
+  // {$addr(p), $phys_ptr_cast(p, t)}
   $addr($phys_ptr_cast(p, t)) == $addr(p));
 function {:inline true} $cast_props(p:$ptr, t:$ctype, c:$ptr) : bool
   { $typ(c) == t && $is_null(c) == $is_null(p) && $field(c) == $as_field_with_type($field(c), t) }
@@ -1028,12 +1030,13 @@ axiom (forall id:$token, S:$state :: {$good_state_ext(id, S)}
   $good_state_ext(id, S) ==> $good_state(S));
 
 function {:inline true} $closed_is_transitive(S:$state) : bool
-  { 
+  {
     (forall p:$ptr,q:$ptr ::
-      {$set_in_pos(p, $owns_inline(S, q))}
+      {$set_in_pos(p, $owns(S, q))}
       $good_state(S) &&
       $set_in(p, $owns_inline(S, q)) && $closed(S, q) ==> 
          $is_non_primitive($typ(p)) && 
+         // $f_owner(S)[p] == q &&
          $owner(S, p) == q &&
          $closed(S, p) && 
          $non_null(p) &&
@@ -1070,11 +1073,17 @@ axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$root(S, p)}
 // PERF 3.2%
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
   $good_state(S) ==>
-    $non_null($owner(S, r)) && $is_proper($owner(S, r)) &&
+    $non_null($owner(S, r)) && 
+    $is_proper($owner(S, r))
+    &&
     ($typ($owner(S, r)) != ^$#thread_id_t ==>
-      $is_proper(r) && $non_null(r) && $is_non_primitive($typ(r)) &&
+      $is_proper(r) && 
+      $non_null(r) && 
+      $is_non_primitive($typ(r)) &&
       ($is_sequential_field($f_owns($typ($owner(S, r)))) ==> $root(S, r) == $root(S, $owner(S, r)))
-    ));
+    )
+
+    );
 
 axiom (forall S:$state, p:$ptr ::
   {$root(S, $root(S, p))}
@@ -1857,13 +1866,14 @@ axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $root(S, p))}
   $full_stop(S) && $wrapped(S, $root(S, p), $typ($root(S, p))) ==> $in_domain(S, p, $root(S, p)));
 
 axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
-  $in_domain(S, p, q) ==> 
+  $instantiate_ptr($root(S, q)) &&
+  ($in_domain(S, p, q) ==> 
     $root(S, p) == q &&
     $wrapped(S, q, $typ(q)) &&
     $closed(S, p) &&
     $set_in(p, $domain(S, q)) &&
     $inv(S, p, $typ(p)) && 
-    $set_in0(p, $owns(S, $owner(S, p))));
+    $set_in0(p, $owns(S, $owner(S, p)))));
 
 axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
   $full_stop(S) && $set_in(p, $domain(S, q)) && $wrapped(S, q, $typ(q)) ==> $in_domain(S, p, q));

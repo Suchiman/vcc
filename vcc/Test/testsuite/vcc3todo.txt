@@ -32,6 +32,7 @@ unions.ns-01
 unions.ns-10
 unions.ns-11
 valueStructs.ns-03
+basics2-27
 
 # wierd pointer arithmetic
 groups-02
