@@ -1,0 +1,18 @@
+`/newsyntax
+#include <vcc.h>
+
+struct A {
+  _(ghost \claim c)
+  int x;
+};
+
+void foo(struct A *a, struct A *b)
+  _(writes \extent(a), \extent(b))
+  _(requires a != b)
+{
+  _(ghost \claim c)
+  _(assert c == \make_claim({a}, \true))
+}
+`
+testcase(13,31) : error VC9652: claim(...) used in pure context
+`

@@ -1,0 +1,16 @@
+`/newsyntax
+#include "vcc.h"
+
+struct x {
+  int dummy;
+};
+
+struct y {
+  int dummy;
+  struct x *xp;
+  _(invariant xp->\consistent) 
+};
+`
+Verification of y#adm failed.
+testcase(10,29) : error VC8012: invariant(xp->\consistent) of y is not admissible.
+`

@@ -1,0 +1,340 @@
+#include <vcc.h>
+
+struct A {
+  int x;
+  invariant(this->x>0)
+};
+
+
+spec(isadmissibilitycheck
+void adm_A(struct A* x)
+{
+})
+`
+Verification of A#adm succeeded.
+Verification of adm_A failed.
+testcase(9,17) : error VC8002: state was altered after havoc_others().
+`
+#include <vcc.h>
+
+struct A {
+  int x;
+  invariant(this->x>0)
+};
+
+
+spec(
+isadmissibilitycheck
+void adm_A(struct A* x)
+{
+  havoc_others(x);
+}
+)
+`
+Verification of A#adm succeeded.
+Verification of adm_A succeeded.
+`
+#include <vcc.h>
+
+struct A {
+  int x;
+};
+
+spec(void bar()
+{
+})
+
+spec(isadmissibilitycheck
+void adm_A(struct A* x)
+{
+  havoc_others(x);
+  bar();
+  assume(inv(x));
+}
+)
+`
+Verification of bar succeeded.
+Verification of adm_A failed.
+testcase(11,17) : error VC8002: state was altered after havoc_others().
+`
+#include <vcc.h>
+
+struct B {
+  int y;
+};
+
+struct A {
+  int x;
+  struct B b;
+  
+  invariant(this->b.y > 0)
+};
+
+spec(isadmissibilitycheck
+void adm_A(struct A* x)
+{
+  havoc_others(x);
+}
+)
+`
+Verification of A#adm succeeded.
+Verification of adm_A failed.
+testcase(11,15) : error VC8012: invariant(__this->b.y > 0) of A is not admissible.
+`
+#include <vcc.h>
+
+struct B {
+  int y;
+};
+
+struct A {
+  int x;
+  
+  invariant(this->x > 0)
+};
+
+spec(isadmissibilitycheck
+void adm_A(struct A* x)
+{
+  havoc_others(x);
+  assert(x->x > 0);
+})
+
+`
+Verification of A#adm succeeded.
+Verification of adm_A succeeded.
+`
+#include <vcc.h>
+
+struct A {
+  int x;
+  
+  invariant(this->x > 0)
+};
+
+spec(isadmissibilitycheck
+void adm_A(struct A* x)
+  requires(false)
+{
+  havoc_others(x);
+  assert(x->x > 0);
+})
+
+`
+testcase(9,17) : error VC9624: custom admissibility checks are not allowed to have explicit requires/ensures/writes
+`
+#include <vcc.h>
+
+struct A {
+  int x;
+  
+  invariant(this->x > 0)
+};
+
+spec(isadmissibilitycheck
+void adm_A(struct A* x)
+  ensures(false)
+{
+  havoc_others(x);
+  assert(x->x > 0);
+})
+`
+testcase(9,17) : error VC9624: custom admissibility checks are not allowed to have explicit requires/ensures/writes
+`
+#include <vcc.h>
+
+struct A {
+  int x;
+  invariant(this->x>0)
+};
+
+
+spec(isadmissibilitycheck
+void adm_A(struct A* x);)
+
+void qux()
+{
+  spec( adm_A((struct A*)0); )
+}
+`
+testcase(9,17) : error VC9644: the admissibility check is required to have a body
+`
+#include <vcc.h>
+
+struct A {
+  int x;
+  invariant(this->x>0)
+};
+
+
+spec(isadmissibilitycheck
+void adm_A(struct A* x)
+{
+  havoc_others(x);
+})
+
+void qux()
+{
+  spec( adm_A((struct A*)0); )
+}
+`
+Verification of A#adm succeeded.
+Verification of adm_A succeeded.
+Verification of qux failed.
+testcase(17,20) : error VC8001: custom admissibility was called (in call 'adm_A((struct A*)0)').
+`
+#include <vcc.h>
+
+struct B {
+  int y;
+};
+
+struct A {
+  int x;
+  struct B b;
+  
+  invariant(this->b.y > 0)
+};
+
+struct C {
+  int x;
+  struct B b;
+
+  invariant(old(b.y) == 7)
+};
+`
+testcase(18,15) : warning VC9115: 'old' in invariant does not refer to volatile state
+Verification of A#adm failed.
+testcase(11,15) : error VC8012: invariant(__this->b.y > 0) of A is not admissible.
+Verification of C#adm failed.
+testcase(18,15) : error VC8013: invariant(__old(b.y) == 7) is not admissible (stuttering).
+`
+#include<vcc.h>
+
+typedef struct _T {
+        int dummy;
+        invariant((!old(closed(this)) && closed(this)) || false)
+} T;
+
+void bar()
+{
+        T t;
+        t.dummy = 1;
+        wrap(&t);
+        assert(inv(&t));
+        assert(false);
+}
+
+
+typedef  struct _S {
+    volatile unsigned x;
+} S;
+
+typedef struct _T2 {
+    S s; 
+    invariant(s.x < 10)
+    invariant(old(s.x) > s.x)
+
+} T2;
+
+void foo(T2* p)
+    requires(wrapped(p))
+{
+    assert(p->s.x < 10);
+    p->s.x = 111;
+    assert(false);
+}
+`
+Verification of _T#adm failed.
+testcase(5,22) : error VC8013: invariant(!__old(_vcc_closed(__this))) is not admissible (stuttering).
+Verification of _T2#adm failed.
+testcase(25,17) : error VC8013: invariant(__old(s.x) > s.x) is not admissible (stuttering).
+Verification of bar succeeded.
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+struct X {
+  volatile int x ;
+  volatile int y ;
+  invariant(!y ==> x == 0)
+  invariant(y ==> x > old(x))
+};
+
+void f()
+{
+struct X x;
+x.x = 0;
+x.y = 0;
+wrap(&x);
+atomic(&x){
+  x.y = 1;
+  x.x = 2;
+}
+assert(inv(&x));
+assert(false);
+}
+
+
+struct A2 {
+  volatile int p;
+  volatile int q;
+
+  invariant(old(p)!=0 ==> q<7 && unchanged(p))
+};
+`
+Verification of X#adm failed.
+testcase(7,15) : error VC8013: invariant(y ==> x > __old(x)) is not admissible (stuttering).
+Verification of A2#adm failed.
+testcase(29,31) : error VC8013: invariant(__old(p)!=0 ==> q<7) is not admissible (stuttering).
+Verification of f succeeded.
+`
+#include <vcc2test.h>
+
+typedef  struct  vcc(claimable) { int dummy; } Seal;
+
+struct vcc(volatile_owns) vcc(claimable) Mut {
+  volatile bool af, bf;
+  spec( Seal afs; )
+  on_unwrap( !closed(&afs))
+};
+
+void alice(struct Mut *m claimp(c))
+  always(c, closed(m))
+  requires(wrapped(&m->afs))
+  writes(&m->afs)
+{
+spec(claim_t c2;)
+  assert(valid_claim(c));
+  assert(closed(m));
+  spec( c2 = claim(&m->afs, closed(m)); )
+}
+
+`
+Verification of Mut#adm succeeded.
+Verification of alice succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned __int64 UINT64;
+
+spec(typedef bool BITMAP[UINT64];)
+
+spec(
+ispure BITMAP ToBm64(UINT64 n); 
+)
+
+struct foo {
+    UINT64 x;
+    invariant(forall(unsigned i; i < 64; ToBm64(x)[i]))
+};
+
+struct workaround {
+    UINT64 x;
+    invariant(x > 0)
+    invariant(forall(unsigned i; i < 64; ToBm64(x)[i]))
+};
+`
+Verification of foo#adm succeeded.
+Verification of workaround#adm succeeded.
+`

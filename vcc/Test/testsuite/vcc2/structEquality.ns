@@ -1,0 +1,236 @@
+`/newsyntax
+#include <vcc.h>
+
+_(dynamic_owns) union U {
+  unsigned __int64 a;
+  __int64 b;
+  int c;
+  unsigned int d;
+  struct {
+    int e;
+    int f;
+  } x;
+  
+  
+  _(invariant \union_active(&\this->x) ==> &\this->x \in \this->\owns)
+};
+
+struct S {
+  int a;
+  int b;
+  _(ghost int m[int])
+};
+
+struct T {
+  int a;
+  int b;
+  struct S s1;
+  struct S s2;
+  union U u1,u2;
+  
+  _(invariant \mine(&s1, &s2, &u1, &u2))
+  _(invariant \deep_eq(s1, s2))
+  _(invariant \deep_eq(u1, u2))
+};
+
+
+bool eq_S(struct S s1, struct S s2) 
+  _(requires \deep_eq(s1, s2))
+{
+  _(assert s1.a == s2.a)
+  _(assert s1.b == s2.b)
+  _(assert s1.m == s2.m)
+}
+
+bool eq_T(struct T t1, struct T t2) 
+  _(requires \deep_eq(t1, t2))
+{
+  _(assert t1.a == t2.a)
+  _(assert t1.b == t2.b)
+  _(assert \deep_eq(t1.s1, t2.s1))
+  _(assert \deep_eq(t1.s2, t2.s2))
+}
+
+`
+testcase(20,25) : warning VC9108: structured type equality treats map equality as map identity
+Verification of U#adm succeeded.
+Verification of T#adm succeeded.
+Verification of eq_S succeeded.
+Verification of eq_T succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct A {
+  int x[3];
+};
+
+struct B {
+  struct A a;
+  int z;
+  _(invariant \mine(&a))
+  _(invariant a.x[0] == 10)
+};
+
+struct C {
+  struct A a1;
+  struct A a2;
+  int z;
+  _(invariant \mine(&a1, &a2))
+  _(invariant \deep_eq(a1, a2))
+};
+
+struct D {
+  struct A a1;
+  struct A a2;
+  int z;
+  _(invariant \mine(&a1))
+  _(invariant \deep_eq(a1, a2))
+};
+
+void foo()
+{
+  struct A a, b;
+  a.x[0] = 1;
+  a.x[1] = 2;
+  a.x[2] = 3;
+  b.x[0] = 1;
+  b.x[1] = 2;
+  b.x[2] = 3;
+  _(assert \deep_eq(a, b))
+}
+
+void bar()
+{
+  struct A a, b;
+  a.x[0] = 1;
+  a.x[1] = 2;
+  a.x[2] = 3;
+  b.x[0] = 1;
+  b.x[1] = 2;
+  b.x[2] = 4;
+  _(assert \deep_eq(a, b))
+}
+`
+Verification of B#adm succeeded.
+Verification of C#adm succeeded.
+Verification of D#adm failed.
+testcase(27,29) : error VC8012: invariant(\deep_eq(a1, a2)) of D is not admissible.
+Verification of foo succeeded.
+Verification of bar failed.
+testcase(51,26) : error VC9500: Assertion '\deep_eq(a, b)' did not verify.
+`
+`/newsyntax
+#include "vcc.h"
+
+void foo(void *);
+
+struct A {
+  int x, y, z;
+};
+
+void test1(struct A *a)
+  _(requires \wrapped(a))
+{
+  struct A a2;
+
+  a2 = *a;
+  _(assert a2.y == a->y)
+}
+
+void test2(struct A *a)
+  _(requires \wrapped(a))
+{
+  struct A a2;
+
+  foo(&a2);
+  a2 = *a;
+  _(assert a2.y == a->y)
+}
+`
+Verification of test1 succeeded.
+Verification of test2 succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+struct A { int a; };
+
+struct B { struct A a; int b; };
+
+struct C { struct B b; int c; };
+
+void owns1(struct A *o, struct A *p)
+	_(requires \wrapped(o) && \wrapped(p))
+	_(requires \deep_eq(*o,*p))
+{
+	_(assert o->\owns==p->\owns)
+}
+
+void owns2(struct A *o, struct A *p)
+	_(requires \wrapped(o) && \wrapped(p))
+	_(requires \shallow_eq(*o,*p))
+{
+	_(assert o->\owns==p->\owns)
+}
+
+void f1(struct A *o, struct A *p)
+	_(requires \wrapped(o) && \wrapped(p))
+	_(requires \deep_eq(*o,*p))
+{
+	_(assert o->a==p->a)
+}
+
+void f2(struct A *o, struct A *p)
+	_(requires \wrapped(o) && \wrapped(p))
+	_(requires \shallow_eq(*o,*p))
+{
+	_(assert o->a==p->a)
+}
+
+void g1(struct B *o, struct B *p)
+	_(requires \wrapped(o) && \wrapped(p))
+	_(requires \deep_eq(*o,*p))
+{
+	_(assert o->b==p->b)
+	_(assert o->a.a==p->a.a)
+}
+
+void g2(struct B *o, struct B *p)
+	_(requires \wrapped(o) && \wrapped(p))
+	_(requires \shallow_eq(*o,*p))
+{
+	_(assert o->b==p->b)
+	_(assert o->a.a==p->a.a)
+}
+
+void h1(struct C *o, struct C *p)
+	_(requires \wrapped(o) && \wrapped(p))
+	_(requires \deep_eq(*o,*p))
+{
+	_(assert o->c==p->c)
+	_(assert o->b.b==p->b.b)
+	_(assert o->b.a.a==p->b.a.a)
+}
+
+void h2(struct C *o, struct C *p)
+	_(requires \wrapped(o) && \wrapped(p))
+	_(requires \shallow_eq(*o,*p))
+{
+	_(assert o->c==p->c)
+	_(assert o->b.b==p->b.b)
+	_(assert o->b.a.a==p->b.a.a)
+}
+`
+Verification of owns1 succeeded.
+Verification of owns2 succeeded.
+Verification of f1 succeeded.
+Verification of f2 succeeded.
+Verification of g1 succeeded.
+Verification of g2 failed.
+testcase(50,25) : error VC9500: Assertion 'o->a.a==p->a.a' did not verify.
+Verification of h1 succeeded.
+Verification of h2 failed.
+testcase(67,25) : error VC9500: Assertion 'o->b.b==p->b.b' did not verify.
+testcase(68,25) : error VC9500: Assertion 'o->b.a.a==p->b.a.a' did not verify.
+`
