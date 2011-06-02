@@ -476,6 +476,14 @@ namespace Microsoft.Research.Vcc
             | Type.Ref { Kind = (Struct|Union) } -> Some (Macro({ c with Type = Type.MathStruct}, "map_get", List.map self args))
             | _ -> None
             
+        | Block(_, [], _) -> None
+
+        // fixup block type - needed for struct initilizers
+        | Block(ec, exprs, None) -> 
+          let exprs = List.map self exprs
+          let last = exprs |> List.rev |> List.head
+          Some (Block ({ec with Type = last.Type}, exprs, None))
+
         | Block(_,_,_) -> None
 
         | e ->
@@ -485,6 +493,7 @@ namespace Microsoft.Research.Vcc
         
       and handleMemWrite self (c, dst, src) =
         let src = self src
+        let dst = self dst
         if isValStruct src.Type then  
           let cache pre expr =
             let (inits, tmp) = lateCache helper "vsAssign" expr VarKind.Local
@@ -492,8 +501,8 @@ namespace Microsoft.Research.Vcc
         
           match dst.Type with
             | Ptr ((Type.Ref td) as t) ->
-              let (pre, dst) = cache [] (self dst)
-              let (pre, src) = cache pre (self src)
+              let (pre, dst) = cache [] dst
+              let (pre, src) = cache pre src
               TransType.setEqualityKind td DeepEq
               let stmts =
                     pre @ 
@@ -503,7 +512,7 @@ namespace Microsoft.Research.Vcc
                                                [construct dst; src]))] 
               Some (Expr.MkBlock stmts)
             | _ -> die()
-        else None 
+        else Some (MemoryWrite (c, dst, src))
         
       and underDeref = function
         | Dot (c, e, f) ->
