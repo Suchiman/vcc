@@ -212,6 +212,7 @@ namespace Microsoft.Research.Vcc
                   "addr", "p";
                   "addr_eq", "pp";
                   "retype", "Sp";
+                  "composite_extent", "St";
                 ]
   
     type Transformer =
