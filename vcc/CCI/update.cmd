@@ -1,1 +1,1 @@
-robocopy /s \\emicvccbld\drops\cci\latest .
+xcopy /s /y \\emicvccbld\drops\cci\latest .
