@@ -1818,11 +1818,15 @@ namespace Microsoft.Research.Vcc
         let s = er "s"
         let forallRM id trig body = B.Expr.Forall (Token.NoToken, [("p", tpPtr); ("q", tpPtr); ("s", tpState)], trig, weight id, body)
         let eq = bEq (er "q")
+        let union_active f =
+          bCall "$union_active" [er "s"; er "p"; er (fieldName f)]
+        let allActive = ref [] 
         let oneField (f:C.Field) =
           let isUnion = td.IsUnion && not f.IsSpec
           let unionThing eq = 
-            if isUnion then
-              bAnd (bCall "$union_active" [er "s"; er "p"; er (fieldName f)]) eq
+            if isUnion then 
+              allActive := union_active f :: !allActive
+              bAnd (union_active f) eq
             else eq
           let isAsArray = TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr
           if f.Type.IsComposite || isAsArray then
@@ -1850,6 +1854,10 @@ namespace Microsoft.Research.Vcc
         let eqs = (eq (er "p")) :: eqs
         let inExt = bCall "$in" [er "q"; bCall "$composite_extent" [er "s"; er "p"; er ("^" + td.Name)]]
         let body = bEq inExt (bMultiOr eqs)          
+        let body =
+          if td.IsUnion then
+            bAnd body (bImpl (bCall "$good_state" [er "s"]) (bMultiOr !allActive))
+          else body
         forallRM "composite-extent-def" [[inExt]] body        
 
       // vcc2-only
