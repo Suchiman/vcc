@@ -4959,46 +4959,6 @@
             nested type.</param>
             <param name="internFactory">The intern factory to use for computing the interned identity of this type and any types and members referenced by it.</param>
         </member>
-        <member name="M:Microsoft.Cci.Immutable.SpecializedNestedTypeDefinition.DeepCopyTypeReference(Microsoft.Cci.INestedTypeReference,Microsoft.Cci.Immutable.SpecializedNestedTypeDefinition,Microsoft.Cci.IInternFactory)">
-            <summary>
-            Returns a copy of the given type reference, but with every reference to a partially specialized version of type parameter 
-            defined by the partially specialized version of the targetContainer, or of its parent (if the parent is a SpecializedNestedTypeDefinition 
-            and generic) replaced with a reference to the specialized type parameter. 
-            </summary>
-            <remarks>
-            We compute the copy of the nestedType by first copying its ContainingType and looking for the nestedType in the members of the copy.
-            For example, to make a copy of Type1[T].Type2 with targetContainer being Outer[A].Mid (which has a specialized type parameter T, which we denote by
-            T+), we first copy Type1[T] to Type1[T+] and then look for Type2 in the members of Type1[T+]. 
-            </remarks>
-            <param name="nestedType">A reference to a nested type to be copied.</param>
-            <param name="targetContainer">A specialized nested type definition whose or whose parents' (specialized) type parameters will
-            replace the occurrences of matching type parameters in nestedType.</param>
-            <param name="internFactory">An intern factory.</param>
-        </member>
-        <member name="M:Microsoft.Cci.Immutable.SpecializedNestedTypeDefinition.DeepCopyTypeReferenceWRTSpecializedMethod(Microsoft.Cci.INestedTypeReference,Microsoft.Cci.ISpecializedMethodReference,Microsoft.Cci.IInternFactory)">
-            <summary>
-            Make a copy of the nested type, with every reference to a (partially specialized version of) generic parameter defined in the 
-            partially specialized version of specializedMethodReference or its containing specialized nested type replaced with the specialized 
-            version of the generic parameter defined in either specializedMethodReference or its containing specialized nested type. 
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Immutable.SpecializedNestedTypeDefinition.SpecializeIfConstructedFromApplicableTypeParameter(Microsoft.Cci.INestedTypeReference,Microsoft.Cci.IGenericMethodInstanceReference,Microsoft.Cci.IInternFactory)">
-            <summary>
-            Return a copy of the given nestedType, but with every reference to a generic method parameter replaced with corresponding types in genericMethodInstance's
-            GenericArguments. 
-            </summary>
-        </member>
-        <member name="M:Microsoft.Cci.Immutable.SpecializedNestedTypeDefinition.SpecializeIfConstructedFromApplicableTypeParameter(Microsoft.Cci.INestedTypeReference,Microsoft.Cci.IGenericTypeInstanceReference,Microsoft.Cci.IInternFactory)">
-            <summary>
-            If the given unspecialized type reference is a constructed nested type, then return a new instance (if necessary)
-            in which all refererences to the type parameters of containingTypeInstance.GenericType have been replaced with the 
-            corresponding values from containingTypeInstance.GenericArguments. 
-            
-            We compute the nested type by looking it up in the specailized version of its containing type. For example, to specialize Type1[T].Type2
-            to Type1[int].Type2, w.r.t. to the current containing instance X[int], we first specialize Type1[T] to Type1[int] and then look for and
-            return its member Type2.
-            </summary>
-        </member>
         <member name="M:Microsoft.Cci.Immutable.SpecializedNestedTypeDefinition.CopyAndSpecialize(Microsoft.Cci.ITypeReference)">
             <summary>
             Makes a copy of the given type reference, making sure that any references to this.partiallySpecializedVersion.ContainingType or something defined, directly or indirectly,
@@ -8068,19 +8028,24 @@
             Append `n where n is the number of type parameters to the type name.
             </summary>
         </member>
+        <member name="F:Microsoft.Cci.NameFormattingOptions.UseGlobalPrefix">
+            <summary>
+            Prepend "global::" to all namespace type names whose containing namespace is not omitted, including the case where the namespace type name qualifies a nested type name.
+            </summary>
+        </member>
         <member name="F:Microsoft.Cci.NameFormattingOptions.UseReflectionStyleForNestedTypeNames">
             <summary>
             Use '+' instead of '.' to delimit the boundary between a containing type name and a nested type name.
             </summary>
         </member>
-        <member name="F:Microsoft.Cci.NameFormattingOptions.Visibility">
-            <summary>
-            Include the visibility of the member in its name.
-            </summary>
-        </member>
         <member name="F:Microsoft.Cci.NameFormattingOptions.UseTypeKeywords">
             <summary>
             If the type corresponds to a keyword use the keyword rather than the type name.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.NameFormattingOptions.Visibility">
+            <summary>
+            Include the visibility of the member in its name.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.TypeHelper">
@@ -8183,6 +8148,11 @@
             Returns a TypeMemberVisibility value that corresponds to the visibility of the given type definition.
             Namespace types are treated as being TypeMemberVisibility.Public or TypeMemberVisibility.Assembly.
             Generic type instances are treated as having a visibility that is the intersection of the generic type's visibility and all of the type arguments' visibilities.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.TypeHelper.Unspecialize(Microsoft.Cci.INestedTypeReference)">
+            <summary>
+            If the given type is a specialized nested type, return its unspecialized version. Otherwise just return the type itself.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.TypeHelper.VisibilityIntersection(Microsoft.Cci.TypeMemberVisibility,Microsoft.Cci.TypeMemberVisibility)">
@@ -9208,9 +9178,118 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.Hashtable`2">
+            <summary>
+            Hashtable that can hold only single value per key.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.#ctor">
+            <summary>
+            Constructor for Hashtable
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.#ctor(System.UInt32)">
+            <summary>
+            Constructor for Hashtable
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.Add(`0,`1)">
+            <summary>
+            Add element to the Hashtable
+            </summary>
+            <param name="key"></param>
+            <param name="value"></param>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.ContainsKey(`0)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.Remove(`0)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.TryGetValue(`0,`1@)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.Hashtable`2.Count">
+            <summary>
+            Number of elements
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.Hashtable`2.Item(`0)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1">
+            <summary>
+            Hashtable that can hold only single non zero uint per key.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.#ctor">
+            <summary>
+            Constructor for Hashtable
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.#ctor(System.UInt32)">
+            <summary>
+            Constructor for Hashtable
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.Clear">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.Add(`0,System.UInt32)">
+            <summary>
+            Sets this[key] = value.
+            </summary>
+            <param name="key"></param>
+            <param name="value"></param>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.ContainsKey(`0)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.TryGetValue(`0,System.UInt32@)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.Count">
+            <summary>
+            Number of elements
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.Item(`0)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <returns></returns>
+        </member>
         <member name="T:Microsoft.Cci.UtilityDataStructures.Hashtable`1">
             <summary>
-            Hashtable that can hold only single value per uint key.
+            Hashtable that can hold only single non null value per uint key.
             </summary>
             <typeparam name="InternalT"></typeparam>
         </member>
@@ -9242,6 +9321,13 @@
             <summary>
             Number of elements
             </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.Hashtable`1.Item(System.UInt32)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <returns></returns>
         </member>
         <member name="P:Microsoft.Cci.UtilityDataStructures.Hashtable`1.Values">
             <summary>
@@ -9301,16 +9387,38 @@
             <param name="key"></param>
             <param name="value"></param>
         </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable.ContainsKey(System.UInt32)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <returns></returns>
+        </member>
         <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable.Find(System.UInt32)">
             <summary>
             Find element in the Hashtable
             </summary>
             <param name="key"></param>
         </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable.TryGetValue(System.UInt32,System.UInt32@)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
         <member name="P:Microsoft.Cci.UtilityDataStructures.Hashtable.Count">
             <summary>
             Number of elements
             </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.Hashtable.Item(System.UInt32)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
+            <returns></returns>
         </member>
         <member name="P:Microsoft.Cci.UtilityDataStructures.Hashtable.Values">
             <summary>
@@ -9420,6 +9528,146 @@
         <member name="P:Microsoft.Cci.UtilityDataStructures.DoubleHashtable`1.Count">
             <summary>
             Count of elements
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.SetOfObjects">
+            <summary>
+            Hashtable that can hold only single value per key.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.#ctor">
+            <summary>
+            Constructor for SetOfObjects
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.#ctor(System.UInt32)">
+            <summary>
+            Constructor for SetOfObjects
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.Clear">
+            <summary>
+            Removes all elements from the set.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.Add(System.Object)">
+            <summary>
+            Returns false if the element is already in the set. Otherwise returns true and adds the element.
+            </summary>
+            <param name="element"></param>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.Contains(System.Object)">
+            <summary>
+            
+            </summary>
+            <param name="element"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.Remove(System.Object)">
+            <summary>
+            
+            </summary>
+            <param name="element"></param>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.SetOfObjects.Count">
+            <summary>
+            Number of elements
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.SetOfObjects.Values">
+            <summary>
+            Enumerable of all the values
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.SetOfObjects.ValuesEnumerator">
+            <summary>
+            Enumerator for elements
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.ValuesEnumerator.MoveNext">
+            <summary>
+            Move to next element
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.ValuesEnumerator.Reset">
+            <summary>
+            Reset the enumerator
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.SetOfObjects.ValuesEnumerator.Current">
+            <summary>
+            Current element
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.SetOfObjects.ValuesEnumerable">
+            <summary>
+            Enumerable for elements
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.ValuesEnumerable.GetEnumerator">
+            <summary>
+            Get the enumerator
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.Sublist`1">
+            <summary>
+            A list of elements represented as a sublist of a master list. Use this to avoid allocating lots of little list objects.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Sublist`1.#ctor(System.Collections.Generic.List{`0},System.Int32,System.Int32)">
+            <summary>
+            A list of elements represented as a sublist of a master list. Use this to avoid allocating lots of little list objects.
+            </summary>
+            <param name="masterList">A list that contains this list as a sublist.</param>
+            <param name="offset">The offset from masterList where this sublist starts.</param>
+            <param name="count">The number of elements in this sublist.</param>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Sublist`1.GetEnumerator">
+            <summary>
+            Returns an object that can enumerate the elements of this list.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.Sublist`1.Count">
+            <summary>
+            The number of elements in this list.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.Sublist`1.Item(System.Int32)">
+            <summary>
+            The i'th element of this list.
+            </summary>
+            <param name="i"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.Sublist`1.Enumerator">
+            <summary>
+            An enumerator for the elements of a Sublist.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Sublist`1.Enumerator.#ctor(System.Collections.Generic.List{`0},System.Int32,System.Int32)">
+            <summary>
+            An enumerator for the elements of a Sublist.
+            </summary>
+            <param name="masterList">A list of basic blocks that contains a sublist equal to the list that this enumerator will enumerate.</param>
+            <param name="first">The index of the first element in the list to enumerate.</param>
+            <param name="last">The index of the last element in the list to enumerate. If the list is empty, this is -1.</param>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Sublist`1.Enumerator.MoveNext">
+            <summary>
+            True if there is another element in the enumeration and it is now valid to call Current to obtain this element.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.Sublist`1.Enumerator.IsValid">
+            <summary>
+            True if the last call to MoveNext returned true, which means it is valid to Current to get the current element of the enumeration.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.Sublist`1.Enumerator.Current">
+            <summary>
+            The current element of the enumeration.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MetadataValidator">
