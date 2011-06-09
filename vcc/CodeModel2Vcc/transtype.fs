@@ -80,7 +80,8 @@ namespace Microsoft.Research.Vcc
             helper.Error (tok, 9605, "checked function pointer cast: different return types", Some(called.Token))
             None
           else
-            let header = { fnptr with Name = "$fnptr_" + called.Name + "_to_" + fnptr.Name; Token = tok }
+            let header = { fnptr with Name = "$fnptr_" + called.Name + "_to_" + fnptr.Name; Token = tok; 
+                                      Parameters = List.map (fun (v:Variable) -> v.UniqueCopy()) fnptr.Parameters }
             if not (checks.ContainsKey header.Name) then
               checks.Add (header.Name, checks.Count)
               let call = Expr.Call ({ comm with Type = called.RetType },
