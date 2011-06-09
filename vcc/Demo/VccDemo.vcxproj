@@ -103,7 +103,6 @@
   <ItemGroup>
     <ClCompile Include="bakery.c" />
     <ClCompile Include="BinarySearch.c" />
-    <ClCompile Include="BinarySearchNewSyntax.c" />
     <ClCompile Include="BitMap.c" />
     <ClCompile Include="Client.c" />
     <ClCompile Include="Parity.c" />
