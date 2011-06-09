@@ -136,7 +136,7 @@ _(bool _(_boogie0) \arrays_disjoint(\object, \size_t, \object, \size_t);)
 _(bool _(_boogie0) \full_context();)
 _(bool _(_boogie1) \wrapped_with_deep_domain(\object))
 _(\objset \composite_extent(\object))
-_(\object _(_boogie1) \root(\object))
+_(\object _(_boogie1) \domain_root(\object))
 
 _(template<typename T> bool \shallow_eq(T s, T t);)
 _(template<typename T> bool \deep_eq(T s, T t);)

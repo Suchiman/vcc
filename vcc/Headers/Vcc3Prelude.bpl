@@ -756,7 +756,7 @@ function $heap(s:$state) : $object;
 function $typemap($owner) : [int, $ctype]$ptr;
 
 
-function {:inline true} $root(s:$state, p:$ptr) : $ptr
+function {:inline true} $domain_root(s:$state, p:$ptr) : $ptr
   { $roots(s)[p] }
 
 function {:inline true} $rd_inv(s:$state, f:$field, p:$ptr) : int { $rd(s,p,f) }
@@ -865,19 +865,19 @@ function {:inline true} $typed2_spec(S:$state, #p:$ptr, #t:$ctype) : bool
   { $in_range_spec_ptr(#p) }
 
 axiom (forall S:$state, p:$ptr ::
-  {$addr(p), $owner(S, $root(S, p))}
+  {$addr(p), $owner(S, $domain_root(S, p))}
   $good_state(S) ==>
     $is_proper(p) &&
     $in_range_phys_ptr(p) &&
-    $owner(S, $root(S, $emb0(p))) == $me() ==>
+    $owner(S, $domain_root(S, $emb0(p))) == $me() ==>
       $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
 
 axiom (forall S:$state, p:$ptr, f:$field ::
-  {$addr($dot(p, f)), $owner(S, $root(S, p))}
+  {$addr($dot(p, f)), $owner(S, $domain_root(S, p))}
   $good_state(S) ==>
     $is_proper($dot(p, f)) &&
     $in_range_phys_ptr($dot(p, f)) &&
-    $owner(S, $root(S, p)) == $me() ==>
+    $owner(S, $domain_root(S, p)) == $me() ==>
       $typemap($f_owner(S))[$addr($dot(p, f)), $field_type(f)] == $dot(p, f));
 
 axiom (forall S:$state, p, q:$ptr ::
@@ -885,7 +885,7 @@ axiom (forall S:$state, p, q:$ptr ::
   $good_state(S) ==>
     $is_proper(p) &&
     $in_range_phys_ptr(p) &&
-    $owner(S, $root(S, $emb0(p))) == $me() ==>
+    $owner(S, $domain_root(S, $emb0(p))) == $me() ==>
       $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
 
 function $as_addr(p:$ptr, t:$ctype, a:int) : $ptr;
@@ -931,9 +931,9 @@ function $in_wrapped_domain(S:$state, p:$ptr) : bool;
 function {:inline true} $thread_local_np(S:$state, p:$ptr) : bool
   { !$is_primitive($typ(p))
   && $is_proper(p)
-  && $owner(S, $root(S, p)) == $me()
+  && $owner(S, $domain_root(S, p)) == $me()
   && $non_null(p)
-//     ($wrapped(S, $root(S, p), $typ($root(S, p))) && $set_in(p, $domain(S, $root(S, p)))))
+//     ($wrapped(S, $domain_root(S, p), $typ($domain_root(S, p))) && $set_in(p, $domain(S, $domain_root(S, p)))))
   }
 
 // required for reading
@@ -1066,9 +1066,9 @@ axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
     $closed(S, p) ==> $non_null(p));
 
 // Root axioms
-axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$root(S, p)}
+axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$domain_root(S, p)}
   $good_state(S) ==>
-  $owner(S, p) == $me() ==> $is_proper(p) && $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $root(S, p) == p);
+  $owner(S, p) == $me() ==> $is_proper(p) && $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $domain_root(S, p) == p);
 
 // PERF 3.2%
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
@@ -1080,14 +1080,14 @@ axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
       $is_proper(r) && 
       $non_null(r) && 
       $is_non_primitive($typ(r)) &&
-      ($is_sequential_field($f_owns($typ($owner(S, r)))) ==> $root(S, r) == $root(S, $owner(S, r)))
+      ($is_sequential_field($f_owns($typ($owner(S, r)))) ==> $domain_root(S, r) == $domain_root(S, $owner(S, r)))
     )
 
     );
 
 axiom (forall S:$state, p:$ptr ::
-  {$root(S, $root(S, p))}
-  $good_state(S) ==> $root(S, $root(S, p)) == $root(S, p));
+  {$domain_root(S, $domain_root(S, p))}
+  $good_state(S) ==> $domain_root(S, $domain_root(S, p)) == $domain_root(S, p));
 
 function $call_transition(S1:$state, S2:$state) : bool;
 
@@ -1129,7 +1129,7 @@ function {:inline true} $meta_eq(s1:$state, s2:$state) : bool
   { $specials_eq(s1, s2) }
 
 function {:inline true} $mutable_increases(s1:$state, s2:$state) : bool
-  { (forall p:$ptr :: {$owner(s2, p)} {$closed(s2, p)} {$root(s2, p)}
+  { (forall p:$ptr :: {$owner(s2, p)} {$closed(s2, p)} {$domain_root(s2, p)}
         $mutable(s1, p) ==> $mutable(s2, p)) }
 
 procedure $write_int(f:$field, p:$ptr, v:int);
@@ -1257,11 +1257,11 @@ function {:inline false} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
       ($owner(S, p) == $me() && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $not_written(S0:$state, p:$ptr, W:$ptrset) : bool
-  { $owner(S0, $root(S0, p)) == $me() && !$in($root(S0, p), W) }
-// TODO: { if $closed(S0, p) then $in($root(S0, p), W) else $in(p, W) }
+  { $owner(S0, $domain_root(S0, p)) == $me() && !$in($domain_root(S0, p), W) }
+// TODO: { if $closed(S0, p) then $in($domain_root(S0, p), W) else $in(p, W) }
 
 function {:inline false} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
-  { (forall p:$ptr :: {$root(S1, p)} $not_written(S0, p, W) ==> $root(S0, p) == $root(S1, p)) &&
+  { (forall p:$ptr :: {$domain_root(S1, p)} $not_written(S0, p, W) ==> $domain_root(S0, p) == $domain_root(S1, p)) &&
     (forall p:$ptr, f:$field :: {$rdtrig(S1, p, f)} $not_written(S0, p, W) && !$in($dot(p, f), W) ==> 
            ($is_sequential_field(f) || $is_semi_sequential_field(f) || !$closed(S0, p) ==> $rd(S0, p, f) == $rd(S1, p, f))) &&
 
@@ -1437,9 +1437,9 @@ function $is_unwrapped(S0:$state, S:$state, o:$ptr) : bool
   && $mutable(S, o)
   && $heap(S) == $heap(S0)
   && $owns(S0, o) == $owns(S, o)
-  && (forall p:$ptr :: {$root(S, p)}
-        ($root(S0, p) != o && $root(S0, p) == $root(S, p)) ||
-        ($root(S0, p) == o && ($root(S, p) == p || $owner(S0, p) != o) && ($owner(S, $root(S, p)) == $me())))
+  && (forall p:$ptr :: {$domain_root(S, p)}
+        ($domain_root(S0, p) != o && $domain_root(S0, p) == $domain_root(S, p)) ||
+        ($domain_root(S0, p) == o && ($domain_root(S, p) == p || $owner(S0, p) != o) && ($owner(S, $domain_root(S, p)) == $me())))
   && $f_closed(S) == $f_closed(S0)[o := false]
   && $timestamp_post_strict(S0, S)
   && $post_unwrap(S0, S)
@@ -1467,9 +1467,9 @@ function $is_wrapped(S0:$state, S:$state, o:$ptr, owns:$ptrset) : bool
      true
   && $f_closed(S) == $f_closed(S0)[o := true]
   && $f_timestamp(S) == $f_timestamp(S0)[o := $current_timestamp(S)]
-  && (forall p:$ptr :: {$root(S, p)}
-        $root(S, p) == $root(S0, p) ||
-        ($root(S, p) == o && (p == o || $set_in($root(S0, p), owns))))
+  && (forall p:$ptr :: {$domain_root(S, p)}
+        $domain_root(S, p) == $domain_root(S0, p) ||
+        ($domain_root(S, p) == o && (p == o || $set_in($domain_root(S0, p), owns))))
   && $wrapped(S, o, $typ(o))
   && ($is_claimable($typ(o)) ==> $ref_cnt(S0, o) == 0 && $ref_cnt(S, o) == 0)
   && $timestamp_post_strict(S0, S)
@@ -1794,7 +1794,7 @@ procedure $set_closed_owner(#p:$ptr, owner:$ptr);
   ensures $f_closed($s) == $f_closed(old($s));
   ensures $f_timestamp($s) == $f_timestamp(old($s));
   ensures $f_owner($s) == $f_owner(old($s))[ #p := owner ];
-  ensures $roots($s) == (lambda q:$ptr :: if $root(old($s), q) == #p then $root($s, q) else $root(old($s), q));
+  ensures $roots($s) == (lambda q:$ptr :: if $domain_root(old($s), q) == #p then $domain_root($s, q) else $domain_root(old($s), q));
   ensures $updated_owns(old($s), $s, owner, $set_union($set_singleton(#p), $owns(old($s), owner)));
   ensures $set_in(#p, $owns($s, owner));
 
@@ -1817,7 +1817,7 @@ procedure $set_closed_owns(owner:$ptr, owns:$ptrset);
   ensures $f_closed($s) == $f_closed(old($s));
   ensures $f_timestamp($s) == $f_timestamp(old($s));
   ensures $f_owner($s) == (lambda q:$ptr :: if $in(q, owns) then owner else $f_owner(old($s))[q]);
-  ensures $roots($s) == (lambda q:$ptr :: if $in($root(old($s), q), owns) then $root($s, q) else $root(old($s), q));
+  ensures $roots($s) == (lambda q:$ptr :: if $in($domain_root(old($s), q), owns) then $domain_root($s, q) else $domain_root(old($s), q));
   ensures $updated_owns(old($s), $s, owner, owns);
 
 procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
@@ -1835,7 +1835,7 @@ procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
   ensures $f_closed($s) == $f_closed(old($s));
   ensures $f_timestamp($s) == $f_timestamp(old($s))[ #p := $current_timestamp($s) ];
   ensures $f_owner($s) == $f_owner(old($s))[ #p := $me() ];
-  ensures $roots($s) == (lambda q:$ptr :: if $root(old($s), q) == $root(old($s), owner) then $root($s, q) else $root(old($s), q));
+  ensures $roots($s) == (lambda q:$ptr :: if $domain_root(old($s), q) == $domain_root(old($s), owner) then $domain_root($s, q) else $domain_root(old($s), q));
   ensures $updated_owns(old($s), $s, owner, $set_difference($owns(old($s), owner), $set_singleton(#p)));
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -1862,13 +1862,13 @@ axiom (forall S:$state, p:$ptr, q:$ptr, l:$label :: {$in_vdomain_lab(S, p, q, l)
 function $in_domain(S:$state, p:$ptr, q:$ptr) : bool;
 function $in_vdomain(S:$state, p:$ptr, q:$ptr) : bool;
 
-axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $root(S, p))}
-  $full_stop(S) && $wrapped(S, $root(S, p), $typ($root(S, p))) ==> $in_domain(S, p, $root(S, p)));
+axiom (forall S:$state, p:$ptr :: {$in_domain(S, p, $domain_root(S, p))}
+  $full_stop(S) && $wrapped(S, $domain_root(S, p), $typ($domain_root(S, p))) ==> $in_domain(S, p, $domain_root(S, p)));
 
 axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
-  $instantiate_ptr($root(S, q)) &&
+  $instantiate_ptr($domain_root(S, q)) &&
   ($in_domain(S, p, q) ==> 
-    $root(S, p) == q &&
+    $domain_root(S, p) == q &&
     $wrapped(S, q, $typ(q)) &&
     $closed(S, p) &&
     $set_in(p, $domain(S, q)) &&
@@ -1878,13 +1878,13 @@ axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
 axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
   $full_stop(S) && $set_in(p, $domain(S, q)) && $wrapped(S, q, $typ(q)) ==> $in_domain(S, p, q));
 
-axiom (forall S:$state, q,r:$ptr :: { $in_domain(S, r, $root(S, q)) }
-     $in_domain(S, q, $root(S, q)) && 
+axiom (forall S:$state, q,r:$ptr :: { $in_domain(S, r, $domain_root(S, q)) }
+     $in_domain(S, q, $domain_root(S, q)) && 
      $is_sequential_field($f_owns($typ(q))) &&
      $set_in0(r, $owns(S, q)) ==>
         $owner(S, r) == q && 
-        $root(S, r) == $root(S, q) && 
-        $in_domain(S, r, $root(S, q)));
+        $domain_root(S, r) == $domain_root(S, q) && 
+        $in_domain(S, r, $domain_root(S, q)));
 
 // automatic traversal of ownership structure; beware of cycles
 function $as_deep_domain(S:$state, p:$ptr) : $ptr { p }
@@ -2114,7 +2114,7 @@ procedure $union_reinterpret(#x:$ptr, #off:$field);
   ensures $timestamp_post_strict(old($s), $s);
 
 function {:inline true} $union_havoced(S0:$state, S1:$state, E0:$ptrset, E1:$ptrset) : bool
-  { (forall p:$ptr :: {$root(S1, p)} $in(p, E0) || $in(p, E1) || $root(S0, p) == $root(S1, p)) &&
+  { (forall p:$ptr :: {$domain_root(S1, p)} $in(p, E0) || $in(p, E1) || $domain_root(S0, p) == $domain_root(S1, p)) &&
     (forall p:$ptr, f:$field :: {$rdtrig(S1, p, f)} $in(p, E0) || $in(p, E1) || $rd(S0, p, f) == $rd(S1, p, f)) &&
     (forall p:$ptr :: {$f_timestamp(S1)[p]} 
       ($in(p, E0) || $in(p, E1) || $f_timestamp(S1)[p] == $f_timestamp(S0)[p]) &&
