@@ -1,0 +1,1107 @@
+#include "vcc.h"
+
+#ifdef VERIFY
+typedef _Bool bool;
+ispure bool is_zero(int n)
+  ensures(result == (n == 0));
+
+frameaxiom bool is_zerop(int *n)
+  reads(n)
+  ensures(result == (*n == 0));
+
+no_reads_check
+frameaxiom bool wont_tell(int *n)
+  reads(n);
+#endif
+
+void foo()
+{
+  assert (is_zero(0));
+  assert (!is_zero(1));
+}
+
+void bar()
+{
+  int x, y;
+  int *px = &x;
+  int *py = &y;
+
+  *px = 0;
+  assert (is_zerop(px));
+  *py = 1;
+  assert (is_zerop(px));
+}
+
+void baz()
+{
+  int x, y;
+  int *px = &x;
+  int *py = &y;
+
+  assume (wont_tell(px));
+  *py = 1;
+  assert (wont_tell(px));
+}
+
+struct A {
+  int x, y;
+};
+
+spec( no_reads_check frameaxiom bool wont_tell_A(struct A *a) reads(a); )
+spec( no_reads_check ispure bool wont_tell_nf(struct A *a) reads(a); )
+
+void mux(struct A *a)
+  requires(wrapped(a) && wont_tell_A(a))
+{
+  int x;
+  int *px = &x;
+
+  *px = 12;
+  assert(wont_tell_A(a));
+}
+
+void mux_Fail1(struct A *a)
+  requires(wrapped(a) && wont_tell_nf(a))
+{
+  int x;
+  int *px = &x;
+
+  *px = 12;
+  assert(wont_tell_nf(a));
+}
+
+void write_A(struct A *a)
+  writes(a);
+
+void mux_Fail2(struct A *a, struct A *b)
+  requires(wrapped(b) && wrapped(a) && wont_tell_A(a))
+  writes(b)
+{
+  write_A(b);
+  assert(wont_tell_A(a));
+}
+
+
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+Verification of mux succeeded.
+Verification of mux_Fail1 failed.
+testcase(70,12) : error VC9500: Assertion 'wont_tell_nf(a)' did not verify.
+Verification of mux_Fail2 failed.
+testcase(81,12) : error VC9500: Assertion 'wont_tell_A(a)' did not verify.
+Verification of is_zerop#reads succeeded.
+`
+#include <vcc2test.h>
+
+// TODO we want a better error message for that
+ispure
+void donothing_pure_fail()
+{
+  int *p = malloc(sizeof(int));
+  *p = 20;
+}
+`
+testcase(7,12) : error VC9703: Memory allocation in pure context is not allowed.
+testcase(8,3) : error VC9703: Writing memory location 'p' in pure context is not allowed.
+`
+#include <vcc2test.h>
+
+void donothing_nonpure();
+
+ispure
+void donothing_pure()
+{
+  int x = 0;
+  x++;
+  x++;
+}
+
+
+void t1(int *x)
+{
+  donothing_pure();
+  assert(old(emb(x)) == emb(x));
+}
+
+void t1_fail(int *x)
+{
+  donothing_nonpure();
+  assert(old(emb(x)) == emb(x));
+}
+
+void t1_failAlso(int *x)
+{
+  donothing_nonpure();
+  assert(old(emb(x)) != emb(x));
+}
+`
+Verification of donothing_pure succeeded.
+Verification of t1 succeeded.
+Verification of t1_fail failed.
+testcase(23,12) : error VC9500: Assertion '__old(_vcc_emb(x)) == _vcc_emb(x)' did not verify.
+Verification of t1_failAlso failed.
+testcase(29,12) : error VC9500: Assertion '__old(_vcc_emb(x)) != _vcc_emb(x)' did not verify.
+`
+#include <vcc2test.h>
+
+ispure
+void donothing_pure_fail(int *x)
+  writes(x)
+{
+}
+`
+testcase(3,1) : error VC9623: writes specified on a pure function
+`
+#include <vcc.h>
+
+int f1(int x);
+
+ispure int f2(int x)
+{
+  return f1(x);
+}
+`
+testcase(5,1) : error VC9637: the pure function 'f2' calls 'f1' which is not pure
+testcase(3,1)-(3,14) : (Location of symbol related to previous error.)
+`
+#include <vcc.h>
+
+spec(ispure int g1(int x) ensures(result == g2(x));)
+spec(ispure int g2(int x) ensures(result == g3(x));)
+spec(ispure int g3(int x) ensures(result == g1(x));)
+spec(ispure int g0(int x) ensures(result == g2(x)) { return g2(x); })
+`
+testcase(3,17) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g1 -> g2 -> g3 -> g1
+testcase(4,17) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g2 -> g3 -> g1 -> g2
+testcase(5,17) : warning VC9303: [possible unsoundness]: cycle in pure function calls: g3 -> g1 -> g2 -> g3
+Verification of g0 succeeded.
+`
+#include <vcc.h>
+
+ispure int f1(int *x)
+  reads(x);
+
+ispure int f2(int *x)
+  reads(x);
+
+ispure int f3(int *x)
+  reads(x);
+
+ispure int f4(int *x)
+  reads(x);
+
+ispure int f5(int *x)
+  reads(x);
+
+ispure int f6(int *x)
+  reads(x);
+
+#ifdef VERIFY
+reads_check(f1)
+reads_check(f2)
+void reads_f12()
+{
+  reads_havoc();
+}
+
+
+reads_check(f3)
+void reads_f3_1()
+{
+  reads_havoc();
+}
+
+reads_check(f3)
+void reads_f3_2()
+{
+  reads_havoc();
+}
+
+reads_check(f4)
+void reads_f4(short *y)
+{
+  reads_havoc();
+}
+
+reads_check(f5)
+void reads_f5(int *x, short *y)
+{
+  reads_havoc();
+}
+
+
+
+reads_check(szczebrzyszczykiewicz)
+void reads_szczebrzyszczykiewicz()
+{
+  reads_havoc();
+}
+#endif
+`
+testcase(56,1) : error VC9643: function 'szczebrzyszczykiewicz' is nowhere to be found (for reads check)
+testcase(22,1) : error VC9639: function 'reads_f12' pretends to be several read checks at once
+testcase(36,1) : warning VC9105: reads check for 'f3' specified multiple times
+testcase(30,1) : warning VC9105: (this is the first one)
+testcase(42,1) : error VC9642: the reads check and function checked differ on type of parameter 'y'
+testcase(12,1)-(12,98) : (Location of symbol related to previous error.)
+testcase(48,1) : error VC9641: the reads check and the function checked have different number of parameters
+testcase(15,1)-(15,98) : (Location of symbol related to previous error.)
+`
+#include <vcc.h>
+
+ispure int f1(int *x)
+  returns(*x)
+  reads(x);
+
+ispure int f2(int *x)
+  returns(*x)
+  reads(x);
+
+ispure int f3(int *x)
+  returns(*x)
+  reads(x);
+
+#ifdef VERIFY
+reads_check(f1)
+void reads_f1()
+{
+  reads_havoc();
+}
+
+
+reads_check(f2)
+void reads_f2(int *x)
+{
+  reads_havoc();
+}
+
+
+reads_check(f3)
+void reads_f3(int *y)
+{
+  reads_havoc();
+}
+
+
+#endif
+`
+Verification of reads_f1 succeeded.
+Verification of reads_f2 succeeded.
+Verification of reads_f3 succeeded.
+`
+#include <vcc.h>
+
+ispure int f1(int *x)
+  returns(*x == 0)
+  reads(x);
+
+ispure int f2(int *x, int *y)
+  returns(*x == *y)
+  reads(x);
+
+void fux()
+{
+  int y,y2;
+  int x = f1(&y);
+  int z = f2(&y,&y2);
+}
+`
+Verification of fux succeeded.
+Verification of f2#reads failed.
+testcase(7,1) : error VC8007: the value of 'result' changed (in reads check of 'f2').
+Verification of f1#reads succeeded.
+`
+#include <vcc.h>
+
+ispure int f1(void *x)
+  reads(x);
+
+spec(
+ispure int f2(obj_t x)
+  reads(x);
+)
+
+ispure int f3(int *x)
+  reads(owns(x));
+
+void fux()
+{
+  int y;
+  f1(&y);
+  spec( f2(&y); )
+  f3(&y);
+}
+`
+testcase(12,11) : error VC9648: unsupported pointer set in reads clauses
+testcase(8,11) : error VC9647: void* and obj_t are not supported in reads clauses
+testcase(4,11) : error VC9647: void* and obj_t are not supported in reads clauses
+`
+#include <vcc.h>
+
+ispure int f1(int *x)
+  reads(x);
+
+spec(
+reads_check(f1)
+void r_f1(int *x);
+)
+
+void fux()
+{
+  int y;
+  spec( r_f1(&y); )
+}
+`
+testcase(7,1) : error VC9646: the reads check is required to have a body
+`
+#include <vcc.h>
+
+ispure int f1(int *x)
+  returns(*x == 0)
+  reads(x);
+
+spec(
+reads_check(f1)
+void r_f1(int *x)
+{
+  reads_havoc();
+}
+)
+
+void fux()
+{
+  int y;
+  spec( r_f1(&y); )
+}
+`
+Verification of r_f1 succeeded.
+Verification of fux failed.
+testcase(18,20) : error VC8005: intercepted call to reads check (in call 'r_f1(&y)').
+`
+#include <vcc.h>
+
+// should fail, no contract
+frameaxiom ispure int f1(int *x)
+  reads(x);
+
+// OK, assuming frameaxiom of f1
+frameaxiom ispure int f2(int *x)
+  returns(f1(x))
+  reads(x);
+
+`
+Verification of f2#reads succeeded.
+Verification of f1#reads failed.
+testcase(4,1) : error VC8007: the value of 'result' changed (in reads check of 'f1').
+`
+#include "vcc.h"
+
+struct A {
+  int x;
+  int y;
+};
+
+ispure bool f1(struct A*a)
+  reads(a)
+  returns(a->x < a->y);
+
+struct B {
+  struct A *a;
+  invariant(keeps(a))
+};
+
+ispure bool f2(struct B*b)
+  reads(b)
+  returns(b->a->x < b->a->y);
+
+typedef unsigned __int64 uint64;
+struct CONC {
+    int a;
+    uint64   GPR[16];
+    uint64   RIP;
+ uint64  DebugR[8];
+};
+typedef struct X64_Core{
+    uint64   R[16];     // general-purpose registers
+    uint64   RIP;       // instruction pointer
+ uint64  DR[8];  // debug registers
+} X64_Core;
+struct ABS {
+    int a;
+ int c;
+ struct X64_Core core;
+ invariant(keeps(&this->core))
+};
+ 
+#ifdef VERIFY
+ispure
+bool AbsConcRel(struct ABS *abs, struct CONC *conc)
+ reads(abs, conc)
+ returns(abs->a == conc->a &&
+      abs->core.RIP == conc->RIP &&
+   forall(uint64 i; i < 16 ==> abs->core.R[i] == conc->GPR[i]) &&
+   forall(uint64 i; i < 8 ==> abs->core.DR[i] == conc->DebugR[i])
+   );
+#endif
+`
+Verification of B#adm succeeded.
+Verification of ABS#adm succeeded.
+Verification of AbsConcRel#reads succeeded.
+Verification of f2#reads succeeded.
+Verification of f1#reads succeeded.
+`
+#include "vcc.h"
+
+struct ArrayList{
+    size_t capacity;
+    size_t length;
+    int *array;
+
+};
+
+ispure 
+size_t Length(struct ArrayList * A)
+    reads(A)
+    requires (wrapped(A))
+    ensures (result == A->length)
+{
+    return A->length;
+}
+`
+Verification of Length succeeded.
+Verification of Length#reads succeeded.
+`
+#include "vcc.h"
+
+ispure bool Length(int *x)
+    ensures (result == *x > 0);
+
+void foo()
+{
+  int x;
+  assert(Length(&x));
+}
+`
+testcase(3,1) : error VC9650: the specification refers to memory, but function is missing a reads clause
+`
+#include <vcc.h>
+
+struct IN {
+  int d0;
+  int d1;
+  int d2;
+};
+
+struct A {
+  int x;
+  int y;
+};
+
+struct B {
+  struct A a;
+  int z;
+};
+
+ispure
+struct A ok1(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.x == x->d0 && result.y == x->d0)
+  reads(x);
+
+ispure
+struct A fail1(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.x == x->d0)
+  reads(x);
+
+ispure
+struct B ok2(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.a.x == x->d0 && result.a.y == x->d0 && result.z == x->d0)
+  reads(x);
+
+ispure
+struct B fail2(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.a.x == x->d0 && result.a.y == x->d0)
+  reads(x);
+
+ispure
+struct B fail3(struct IN *x)
+  requires(thread_local(x))
+  ensures(result.a.y == x->d0 && result.z == x->d0)
+  reads(x);
+`
+Verification of fail3#reads failed.
+testcase(43,1) : error VC8007: the value of 'result.a.x' changed (in reads check of 'fail3').
+Verification of fail2#reads failed.
+testcase(37,1) : error VC8007: the value of 'result.z' changed (in reads check of 'fail2').
+Verification of ok2#reads succeeded.
+Verification of fail1#reads failed.
+testcase(25,1) : error VC8007: the value of 'result.y' changed (in reads check of 'fail1').
+Verification of ok1#reads succeeded.
+`
+#include <stdlib.h>
+#include "vcc.h"
+
+
+
+
+typedef unsigned int UINT32;
+
+typedef struct itype_instr_t {
+    int simm16:16;
+    unsigned rd:5;
+    unsigned rs1:5;
+    unsigned opc:6;
+} itype_instr_t;
+
+typedef struct rtype_instr_t {
+    unsigned fu:6;
+    unsigned sa:5;
+    unsigned rd:5;
+    unsigned rs2:5;
+    unsigned rs1:5;
+    unsigned opc:6;
+} rtype_instr_t;
+
+typedef struct jtype_instr_t {
+    int simm26:26;
+    unsigned opc:6;
+} jtype_instr_t;
+
+typedef union instr_t {
+    rtype_instr_t rtype;
+    itype_instr_t itype;
+    jtype_instr_t jtype;
+    backing_member UINT32 uint32;
+} instr_t;
+
+typedef struct proc_t {
+    UINT32 gpr[32];    /* general-purpose register file */
+    UINT32 spr[17];    /* special-purpose register file */
+    UINT32 dpc;        /* delayed program counter */
+    UINT32 pcp;        /* (primed) program counter */
+} proc_t;
+
+
+spec(ispure instr_t Mem2Instr(proc_t *proc)	
+     //reads(&proc->gpr[0])
+     reads(proc)
+     ensures(result.uint32 == proc->gpr[0])
+    ;
+)
+`
+Verification of Mem2Instr#reads succeeded.
+`
+#include <vcc.h>
+
+struct S {
+	int a;
+	int b;
+	invariant(a == b)
+};
+
+ispure
+void Validate(struct S *p)
+  requires(wrapped(p))
+{
+  assert(p->a == p->b);
+}
+
+ispure int GetA(struct S *p)
+  requires(wrapped(p))
+  reads(&p->a)
+  ensures(result == p->a)
+{
+  Validate(p);
+  return p->a;
+}
+`
+Verification of S#adm succeeded.
+Verification of Validate succeeded.
+Verification of GetA succeeded.
+Verification of GetA#reads succeeded.
+`
+#include "vcc.h"
+ispure void f(int *a);
+ispure void g(int *a) reads(a);
+
+void foo() {
+  int i = 10;
+  g(&i);
+}
+`
+Verification of foo succeeded.
+`
+
+#include <vcc.h>
+#include <stdlib.h>
+
+struct S {
+  int a;
+};
+
+struct S *foo() 
+  ensures(typed(result))
+  ensures(thread_local(result))
+  ensures(is_fresh(result))
+  ensures(mutable(result))
+{
+  struct S *p = (struct S *)malloc(sizeof(struct S));
+  assume(p != NULL);
+  return p;
+}
+
+void bar() {
+  struct S *p;
+  wrap((p = foo()));
+  unwrap((p = foo()));
+}
+`
+testcase(22,18) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
+testcase(23,20) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(9,8)-(18,2) : (Location of symbol related to previous error.)
+`
+#include "vcc.h"
+
+spec(
+ispure int foo(int x)
+  ensures(result == result + 0);
+)
+
+spec(
+ispure int bar(int x)
+  ensures(result == x + 2)
+  ensures(result == x + 2);
+)
+
+spec(
+ispure int baz(int x)
+  ensures(result < 3);
+)
+
+spec(
+ispure int baz2(int x)
+  ensures(x == result + 3);
+)
+
+spec(
+ispure int ok1(int x)
+  ensures(result == x + 2);
+)
+
+
+spec(
+ispure int ok2(int x)
+  ensures(x + 2 == result);
+)
+
+void usecase()
+{
+assert(foo(1)+bar(1)+baz(1)+ok1(1)+ok2(1)+baz2(3) == 3);
+}
+
+`
+testcase(4,1) : warning VC9306: [possible unsoundness]: 'result' cannot be used recursively in a pure function definition
+testcase(11,13) : warning VC9309: [possible unsoundness]: value of 'result' was already defined in this pure function contract (as 'result')
+testcase(15,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+testcase(21,13) : warning VC9307: [possible unsoundness]: form of a pure function postcondition is neither 'result == ...' nor 'result.x.y.z == ...' (it is: +(result, 3))
+Verification of usecase failed.
+testcase(37,10) : error VC9500: Assertion 'foo(1)+bar(1)+baz(1)+ok1(1)+ok2(1)+baz2(3) == 3' did not verify.
+`
+#include "vcc.h"
+
+
+
+struct IN {
+  int d0;
+  int d1;
+  int d2;
+};
+
+struct A {
+  int x;
+  int y;
+};
+
+struct B {
+  struct A a;
+  int z;
+};
+
+
+ispure
+struct B fail1(int k)
+  ensures(result.a.x == k && result.a.x == k * 2);
+
+ispure
+struct B fail2(int k)
+  ensures(result.a.x == k && result.a.x < 7);
+
+ispure
+int fail3(int k)
+  ensures(k == 2);
+
+void foo()
+{
+struct B b1 = fail1(0);
+struct B b2 = fail2(0);
+int aa = fail3(2);
+}
+`
+testcase(24,32) : warning VC9309: [possible unsoundness]: value of 'result.a.x' was already defined in this pure function contract (as 'result.a.x')
+testcase(26,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+testcase(32,13) : warning VC9305: [possible unsoundness]: 'result' does not occur in one of a pure function postconditions
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+struct vcc(record) S {
+  int a;
+  int b;
+};
+
+
+struct vcc(record) T {
+ struct S s;
+ int c;
+};
+
+spec(ispure struct S foo() 
+  ensures(result == (struct S) { .a = 10, .b = 20 } && result.a == 20);
+)
+
+spec(ispure struct T foo2(struct S s) 
+  ensures(result == (struct T) { .s = s, .c = 20 } && result.s.a == 20);
+)
+
+spec(ispure struct T foo3(struct S s) 
+  ensures(result == (struct T) { .s = s, .c = 20 } && result.s == (struct S) { .a = 10, .b = 20 });
+)
+
+spec(ispure struct T foo4(struct S s) 
+  ensures(result.s == s && result.s.a == 20);
+)
+
+void baz()
+{
+ spec( struct S s; )
+ spec( struct T t; )
+
+ spec( s = foo(); t = foo2(s); t = foo3(s);  t = foo4(s); )
+ assert(false);
+
+}
+`
+testcase(15,58) : warning VC9311: [possible unsoundness]: value of 'result.a' was already defined in this pure function contract (as 'result')
+testcase(19,57) : warning VC9311: [possible unsoundness]: value of 'result.s.a' was already defined in this pure function contract (as 'result')
+testcase(23,57) : warning VC9311: [possible unsoundness]: value of 'result.s' was already defined in this pure function contract (as 'result')
+testcase(27,30) : warning VC9311: [possible unsoundness]: value of 'result.s.a' was already defined in this pure function contract (as 'result.s')
+Verification of baz succeeded.
+`
+#include "vcc.h"
+typedef unsigned __int64 uint64;
+typedef unsigned int uint;
+
+spec (
+    typedef struct vcc(record) Core{
+        uint64 RIP;
+        uint64 R[uint];
+    } Core;
+)
+
+#define let(x, X, y, f) exists (X x; x == (y) && (f))
+
+spec (
+ispure bool mov_reg_excp(uint regidx, uint64 data, Core c)
+    returns (regidx >= 8);
+)
+
+spec (
+ispure Core mov_reg(uint regidx, uint64 data, Core c)
+    requires (!mov_reg_excp(regidx, data, c))
+    ensures
+    (
+        let (c1, Core, c / {.R = lambda(uint i; i < 8 ; i == regidx ? data : result.R[i])},
+        result == c1)
+    )
+;
+)
+
+spec (
+ispure Core mov_reg_f1(uint regidx, uint64 data, Core c)
+    requires (!mov_reg_excp(regidx, data, c))
+    ensures
+    (
+        let (c1, Core, c / {.R = lambda(uint i; i < 8 ; i == regidx ? data : c1.R[i])},
+        result == c1)
+    )
+;
+)
+
+spec (
+void test_mov_reg()
+{
+    Core c;
+    c = mov_reg(1, 16, c);
+    assert(c.R[1] == 16);
+    c = mov_reg_f1(1, 16, c);
+}
+)
+`
+testcase(20,1) : warning VC9312: [possible unsoundness]: 'result' cannot be used in let binding in a pure function definition
+testcase(31,1) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+Verification of test_mov_reg succeeded.
+`
+#include "vcc.h"
+
+spec(
+ispure unsigned foo(unsigned x)
+  ensures(result == x - 1000);
+)
+
+
+void bar(unsigned y)
+{
+  spec( unsigned tmp; )
+  assert(foo(y) >= 0);
+  spec( tmp = foo(100); )
+  assert(false);
+}
+
+
+struct X {
+  unsigned x;
+  unsigned y;
+};
+
+ispure struct X bzz(unsigned x)
+  ensures( result.x == x - 10 );
+
+
+void bzz2()
+{
+  struct X x;
+  x = bzz(0);
+  assert(x.x >= 0);
+  assert(false);
+}
+
+struct vcc(record) X2 {
+  unsigned x;
+  unsigned y;
+};
+
+spec(ispure struct X2 bzzX(unsigned x)
+  ensures( result.x == x - 10 );)
+
+
+spec(void bzz2X()
+{
+  struct X2 x;
+  x = bzzX(0);
+  assert(x.x >= 0);
+  assert(false);
+})
+
+spec(ispure struct X2 bzzX2(unsigned x)
+  ensures( result == (struct X2) { .x = x - 10 } );)
+
+
+spec(void bzz2X2()
+{
+  struct X2 x;
+  x = bzzX2(0);
+  assert(x.x >= 0);
+  assert(false);
+})
+`
+Verification of bar failed.
+testcase(14,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bzz2 failed.
+testcase(32,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bzz2X failed.
+testcase(49,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of bzz2X2 failed.
+testcase(61,12) : error VC9500: Assertion '((bool)0)' did not verify.
+`
+#include "vcc.h"
+
+ispure
+int foo()
+{
+  int x;
+  return x;
+}
+
+void bar()
+{
+  int t1 = foo();
+  int t2 = foo();
+  assert(t1 == t2);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+ispure
+int *foo(int *q)
+  returns(q + 10);
+
+void qux()
+{
+int x;
+assert(foo(&x) != &x);
+}
+`
+Verification of qux succeeded.
+`
+#include <vcc.h>
+
+union U {
+  struct {
+    int a : 16;
+    int b : 16;
+  };
+  
+  struct {
+    int overlap1 : 8;
+    int overlap2 : 12;
+    int overlap3 : 12;
+  };
+  
+  backing_member int AsInt;
+};
+
+
+ispure
+union U fu(int a, int b)
+  ensures(result.a == a && result.b == b);
+
+ispure
+union U fu1(int a, int b)
+  ensures(result.a == a && result.overlap1 == b);
+
+ispure
+union U fu2(int a, int b)
+  ensures(result.AsInt == a && result.b == b);
+
+ispure
+union U fu3(int a, int b)
+  ensures(result.b == b && result.AsInt == a);
+
+void foo()
+{
+  union U u;
+  u = fu(100000, 10);
+  assert(false);
+}
+
+void foo2()
+{
+  union U u;
+  u = fu1(100000, 10);
+  u = fu2(100000, 10);
+  u = fu3(100000, 10);
+  assert(false);
+}
+`
+testcase(25,30) : warning VC9309: [possible unsoundness]: value of 'result.overlap1' was already defined in this pure function contract (as 'result.a')
+testcase(29,34) : warning VC9311: [possible unsoundness]: value of 'result.b' was already defined in this pure function contract (as 'result.AsInt')
+testcase(33,13) : warning VC9311: [possible unsoundness]: value of 'result.b' was already defined in this pure function contract (as 'result.AsInt')
+Verification of foo failed.
+testcase(39,12) : error VC9500: Assertion '((bool)0)' did not verify.
+Verification of foo2 succeeded.
+`
+#include "vcc.h"
+
+spec(ispure bool foo(int *arr, unsigned c)
+    reads(set_universe())
+    returns(mutable(as_array(arr,c)) ==> is_mutable_array(arr,c))
+{ 
+  return mutable(as_array(arr,c)) ==> is_mutable_array(arr,c); 
+} )
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+typedef unsigned int     uint;
+
+typedef struct Core {
+    bool dummy;
+} Core;
+
+ uint fun_1(Core core)
+    returns (core.dummy ? 8u : 4u)
+{
+    return core.dummy ? 8u : 4u;
+}
+`
+Verification of fun_1 succeeded.
+`
+#include <vcc.h>
+
+ispure int foo(int *i)
+  reads(i)
+  requires(thread_local(i))
+  ensures(result == *i);
+  
+void bar(int *i)
+  writes(i)
+  requires(thread_local(i))
+{
+  int p = 1;
+  int j;
+  *i = 0;
+  p = j && old(foo(i));
+  assert(j && old(*i) ==> p);
+}
+`
+Verification of bar succeeded.
+Verification of foo#reads succeeded.
+`
+#include "vcc.h"
+ispure int foo(int *x) reads(x) returns(old(*x));
+void bar() { int x; foo(&x); }
+`
+testcase(2,132) : error VC9697: old(...) is allowed only in two-state contexts
+`
+#include "vcc.h"
+
+spec(ispure int foo(int a)
+  requires(a > 0)
+  ensures(result > 0);
+)
+void bar(int i)
+{
+  assert(foo(i) > 0);
+}
+`
+testcase(3,17) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+Verification of bar failed.
+testcase(9,12) : error VC9500: Assertion 'foo(i) > 0' did not verify.
+`
+#include "vcc.h"
+struct S { volatile int a; };
+spec(ispure void foo(struct S *s) requires(wrapped(s)) { atomic (s) { } };)
+`
+testcase(3,152) : error VC9703: Atomic block in pure context is not allowed.
+`
+`/newsyntax
+
+#include <vcc.h>
+
+_(logic unsigned  foo() = -17)
+ _(typedef \integer Seq[unsigned];)
+_(logic Seq seq_empty() = \lambda unsigned i; 0)
+`
+testcase(4,41) : error VC0000: Constant value '-17' cannot be converted to a 'unsigned __int32'.
+testcase(6,41) : error VC0000: Cannot implicitly convert type 'System.Diagnostics.Contracts.CodeContract.Map<uint, int>' to 'System.Diagnostics.Contracts.CodeContract.Map<uint, System.Diagnostics.Contracts.CodeContract.BigInt>'.
+`
