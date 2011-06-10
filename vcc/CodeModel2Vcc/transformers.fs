@@ -13,7 +13,7 @@ Verification errors:  between 8001 and 8499: First available: 8031
 Assertions:           between 8501 and 8999. First available: 8539
 Warnings:             between 9100 and 9199. First available: 9126
 Grave Warnings:       between 9300 and 9399. First available: 9319
-Errors:               between 9601 and 9799. First available: 9730
+Errors:               between 9601 and 9799. First available: 9731
 *)
 
 
