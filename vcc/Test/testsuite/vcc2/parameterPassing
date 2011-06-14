@@ -1,0 +1,194 @@
+//-----------------------------------------------------------------------------
+// Parameterpassing
+//
+// A struct is passed in pieces down to a lower level, which updates it; 
+// the effect is visible on the upper level
+//-----------------------------------------------------------------------------
+
+#include "vcc.h"
+
+struct S{ int a; int b;};
+struct T{ struct S* s; int c;};
+
+ 
+void LowerLevel(int* x)
+	maintains(mutable(x))
+	requires(*x < 1000)
+	ensures(*x == old(*x)+1)
+	writes(x)
+{
+	*x=*x+1;
+}
+
+void MiddleLevel(struct S* s)
+	maintains(mutable(s))
+	requires(s->a < 1000)
+	ensures(s->a == old(s->a)+1)
+	writes(&s->a)
+{	LowerLevel(&s->a);
+}
+
+void UpperLevel(struct T* t)
+	// the reason we need mutable(t) here is that otherwise
+	// it could be contained and call to MiddleLevel(t->s) could change location &t->s
+	// Same goes for t->s
+	requires(mutable(t) && mutable(t->s) && t->s->a < 1000)
+	writes(&t->s->a)
+
+{	MiddleLevel(t->s);
+
+	assert(t->s == old(t->s));
+	assert(t->s->a == old(t->s->a)+1);
+	assert(1);
+}
+
+
+
+
+/*int main(int argc, char *argv[])
+{
+	struct T t;
+	struct S s;
+	s.a= 1;
+	t.s=&s;
+	assert(t.s->a == 1);
+	UpperLevel(&t);
+
+} */
+`
+Verification of LowerLevel succeeded.
+Verification of MiddleLevel succeeded.
+Verification of UpperLevel succeeded.
+`
+#include "vcc.h"
+
+spec(
+no_reads_check
+ispure ptrset bar(int *p)
+  reads(p);)
+
+void baz();
+
+void foo(int *x)
+  requires(typed(x) && set_in(x, bar(x)) && mutable(x))
+  writes(bar(x))
+{
+  baz();
+  *x = 10;
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+void foo()
+{
+  spec(
+    ptrset s;
+    obj_t x;
+    assume(forall(obj_t p; set_in(p,s)==> is(p,int)));
+    assume(set_in(x,s));
+    assert(is(x,int));
+
+assert(false);
+  )
+}
+`
+Verification of foo failed.
+testcase(12,10) : error VC9500: Assertion '((bool)0)' did not verify.
+`
+#include <vcc.h>
+
+void foo(int **p, int *q)
+  requires (mutable(p) && mutable(*p) && typed(q))
+  writes(*p, p)
+{
+  *p = q;
+  **p = 12;
+}
+
+void foo2(int **p, int *q)
+  requires (mutable(p) && mutable(*p) && typed(q))
+  writes(*p, p)
+{
+  *p = q;
+  **p = 12;
+}
+`
+Verification of foo failed.
+testcase(8,4) : error VC8507: Assertion '*p is writable' did not verify.
+testcase(9,1) : error VC8536: Post condition 'unchanged(emb(*p)) (inferred from writes clause)' did not verify.
+testcase(5,12) : error VC9599: (related information) Location of post condition.
+Verification of foo2 failed.
+testcase(16,4) : error VC8507: Assertion '*p is writable' did not verify.
+testcase(17,1) : error VC8536: Post condition 'unchanged(emb(*p)) (inferred from writes clause)' did not verify.
+testcase(13,12) : error VC9599: (related information) Location of post condition.
+`
+#include <vcc.h>
+
+void foo(int *p)
+  out_param(p)
+{
+  *p = 10;
+}
+
+void foo_w(int *p)
+  weak_out_param(p)
+{
+  *p = 10;
+}
+
+struct A { int x; };
+
+void bar(struct A *a)
+  out_param(a);
+
+int baz()
+{
+  int x;
+  struct A a;
+  foo(&x);
+  bar(&a);
+  return x;
+}
+
+void fail1()
+{
+  struct A a;
+  foo(&a.x);
+}
+
+void ok1()
+{
+  struct A a;
+  foo_w(&a.x);
+}
+`
+Verification of foo succeeded.
+Verification of foo_w succeeded.
+Verification of baz succeeded.
+Verification of fail1 failed.
+testcase(32,3) : error VC9502: Call 'foo(&a.x)' did not verify.
+testcase(4,45) : error VC9599: (related information) Precondition: '_vcc_is_object_root(p)'.
+Verification of ok1 succeeded.
+`
+#include <vcc.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+void foo(struct S *p)
+  out_param(p)
+{
+  struct S s;
+  s.a = 1;
+  s.b = 1;
+  *p = s;
+};
+
+`
+Verification of foo failed.
+testcase(14,4) : error VC8507: Assertion 'extent(p) is writable' did not verify.
+`

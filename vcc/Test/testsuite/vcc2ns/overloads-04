@@ -1,0 +1,14 @@
+`/newsyntax
+#include <vcc.h>
+
+void foo() { }
+void foo() { }
+
+int bar(int a) { }
+int bar(int b) { }
+`
+testcase(4,1) : error VC9717: function 'foo' already has a body
+testcase(3,1)-(3,15) : (Location of symbol related to previous error.)
+testcase(7,1) : error VC9717: function 'bar' already has a body
+testcase(6,1)-(6,19) : (Location of symbol related to previous error.)
+`

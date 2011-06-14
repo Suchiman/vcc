@@ -1,0 +1,322 @@
+
+void foo() {
+  int i, ^p;
+  p = &i;
+}
+`
+testcase(4,7) : error VC0000: Cannot implicitly convert type 'int*' to 'int^'.
+`
+
+void foo() {
+  int i, ^p;
+  p = (int ^)&i;
+}
+`
+testcase(4,7) : error VC0000: Cannot convert type 'int*' to 'int^'.
+`
+void foo(int ^p) {
+  int *q = p;
+}
+`
+testcase(2,12) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
+`
+void foo(int ^p) {
+  int *q = (int *)p;
+}
+`
+testcase(2,12) : error VC0000: Cannot convert type 'int^' to 'int*'.
+`
+void foo(int ^p) {
+  void *q = p;
+}
+`
+testcase(2,13) : error VC0000: Cannot implicitly convert type 'int^' to 'void*'.
+`
+void foo(void ^p) {
+  void *q = p;
+}
+`
+testcase(2,13) : error VC0000: Cannot implicitly convert type 'void^' to 'void*'.
+`
+void foo(int *p) {
+  void ^q = p;
+}
+`
+testcase(2,13) : error VC0000: Cannot implicitly convert type 'int*' to 'void^'.
+`
+#include <vcc.h>
+
+struct S {
+  int a;
+  spec(int b;)
+};
+
+void foo() {
+  spec(int i;)
+  spec(int ^p;)
+  spec(p = &i;)
+}
+
+void bar(struct S *s) {
+  spec(int ^p;)
+  spec(p = &s->b;)
+}
+
+spec(void baz(struct S ^s) {
+  spec(int ^p;)
+  p = &s->a;
+})
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+`
+#include <vcc.h>
+
+struct S {
+  int a;
+  spec(int b;)
+};
+
+struct T {
+  struct S s;
+  spec(struct S r;)
+};
+
+void foo(struct T *p) {
+  spec(int ^i1 = &(p->s.b);)
+  spec(int ^i1 = &(p->r.a);)
+}
+
+spec(void bar(struct T ^p) {
+  int ^i1 = &(p->s.a);
+})
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+struct S {
+  int a;
+  spec(int b;)
+};
+
+struct T {
+  struct S s;
+  spec(struct S r;)
+};
+
+void foo(struct T *p) {
+  spec(int *i1 = &(p->s.b);)
+  spec(int *i1 = &(p->r.a);)
+}
+
+void bar(struct T ^p) {
+  spec(int *i1 = &(p->s.a);)
+}
+`
+testcase(14,29) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
+testcase(15,29) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
+testcase(19,29) : error VC0000: Cannot implicitly convert type 'int^' to 'int*'.
+`
+
+#include <vcc.h>
+
+struct S {
+  int a;
+  spec(int b;)
+  spec(int ^p;)
+  invariant(p != &b)
+};
+
+struct T {
+  int a;
+  spec(int b;)
+  spec(int ^p;)
+  invariant(p == &b)
+};
+`
+Verification of S#adm succeeded.
+Verification of T#adm succeeded.
+`
+
+#include "vcc.h"
+
+typedef struct _LTH_THREAD
+{
+	int dummy;
+} LTH_THREAD, *PLTH_THREAD;
+
+
+typedef struct _LCPU_PLS
+{
+	PLTH_THREAD volatile SchDeferredList;
+  invariant(SchDeferredList == (void *)0)
+} LCPU_PLS, *PLCPU_PLS;
+
+`
+Verification of _LCPU_PLS#adm succeeded.
+`
+#include "vcc.h"
+
+struct S {
+    int dummy;
+    def_group(a)
+    in_group(a) int b;
+};
+
+struct T {
+    int dummy;
+    spec(struct S ^s;)
+    invariant(keeps(s))
+    invariant(keeps(s::a))
+};
+`
+Verification of T#adm succeeded.
+`
+#include "vcc.h"
+spec(struct S {
+    int a;
+    spec(struct S ^s;)
+    invariant(s==this)
+};)
+`
+Verification of S#adm succeeded.
+`
+#include <vcc.h>
+
+int foo()
+{
+  spec(int ^a = (void *)0;)
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+spec(int foo()
+{
+  int ^a;
+  if (a == (void *)0) { 
+  }
+  
+  if (a != (void *)0) { 
+  }
+})
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+spec(struct S { int a; };)
+
+void foo() {
+    spec(struct S s1, s2;)
+    assume(deep_eq(s1,s2));
+    assume(shallow_eq(s1,s2));
+    assert(deep_eq(s1,s2));
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+spec(
+typedef struct s {
+    int dummy;
+    invariant(this == &g)
+} s;
+)
+
+spec( s g; )
+`
+Verification of s#adm succeeded.
+`
+#include <vcc.h>
+
+typedef struct _S {
+  int x;
+  int y[5];
+} S;
+
+spec(int bla(S ^s)
+{
+  int ^x;
+  x = &s->x;
+  x = &(s->y[1]); 
+})
+`
+Verification of bla succeeded.
+`
+#include "vcc.h"
+
+struct S { unsigned b; };
+
+spec(ispure struct S foo() ensures(result.b==0);)
+void bar() {
+    spec(struct S x = foo();)
+}
+`
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+typedef struct T {
+  int b[10];
+} T;
+
+void foo(int *v);
+
+void test() {
+  spec(T t;)
+  spec(foo(& t.b[0]);)
+} 
+`
+testcase(11,19) : error VC0000: The best overloaded method match for '__Globals__.foo(int*)' has some invalid arguments.
+testcase(11,23) : error VC0000: Argument '1': cannot convert from 'int^' to 'int*'.
+`
+#include <vcc.h>
+
+typedef struct T {
+  int b[10];
+} T;
+
+spec(void foo(int ^v);)
+
+void test() {
+  spec(T t;)
+  spec(foo(& t.b[0]);)
+} 
+`
+Verification of test succeeded.
+`
+#include "vcc.h"
+
+struct vcc(dynamic_owns) wa {
+  int a[10];
+  invariant(*(a + 5) == 6) // works
+  spec(int sa[10];)
+  invariant(*(sa + 5) == 6) // fails
+}; 
+`
+Verification of wa#adm succeeded.
+`
+#include "vcc.h"
+
+struct List;
+struct Node
+{
+  struct Node* next;
+  spec(struct List* list;)
+  spec(bool initialized;)
+  invariant(initialized ==> next == &list->nil)
+};
+struct List
+{
+  struct Node nil;
+  struct Node* first;
+};
+`
+Verification of Node#adm succeeded.
+`
