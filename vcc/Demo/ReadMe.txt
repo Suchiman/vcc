@@ -6,9 +6,9 @@ Preparation:
    VccDemo -> Properties -> Configuration Properties -> C/C++ -> General ->
    Additional Include Directories'.
 
-2. All examples *NewSyntax.c and bakery.c are in VCC's new syntax. They
-   currently need '/2' as an additional switch (use 'Verify -> Settings' to
-   configure).
+2. Examples that have "//`/newsyntax" in their top line are in VCC's new
+   syntax.  Set "Verify -> Vcc Options... -> VCC Language Version" to V2 (or
+   use /2 as a VCC switch on the command-line).
 
 3. Open SpinLock.h and make sure that #define SIMPLE_SPIN_LOCKS has not been
    commented out.
@@ -83,20 +83,18 @@ BinarySearch example demo macros
    Use "Tools -> Macros -> Macros IDE" or Alt-F11 to open the 'Microsoft Visual
    Studio Macros' window.
 
-   Add VccDemo*.vb as existing items to the Samples macros (note: this will be
+   Add VccDemo.vb as existing items to the Samples macros (note: this will be
    persistent, updating "%USERPROFILE%\Documents\Visual Studio 2008\
    Projects\VSMacros80\Samples\Samples.vsmacros".
    
    In 'Tools -> Options -> Environment -> Keyboard'; assign global shortcuts to
-   the VccDemo* function (e.g., 'Ctrl + Shift + D, R' for demo reset, 'Ctrl +
+   the VccDemo function (e.g., 'Ctrl + Shift + D, R' for demo reset, 'Ctrl +
    Shift + D, 1' for step 1, etc.). Note: the 'Assign' button must be
    explicitly used to assign each shortcut.
 
-   VccDemo.vb should be started in the BinarySearch.c buffer,
-   VccDemoNewSyntax.vb should be started in the BinarySearchNewSyntax.c buffer.
-
-   Note that VccDemoNewSyntax.vb needs '/2' as an additional VCC switch.  Start
-   the demo with the reset command, and then step through the other states.
+   VccDemo.vb should be started in the BinarySearch.c buffer. Set "Verify ->
+   Vcc Options... -> VCC Language Version" to V2. Start the demo with the reset
+   command, and then step through the other states.
 
    The buffer will be clobbered, but should end up in the original content if
    the VS text editor is configured as follows: in 'Tools -> Options -> Text
