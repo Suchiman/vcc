@@ -930,7 +930,11 @@ namespace Microsoft.Research.Vcc
       let typeToVolatileType = new Dict<_,_>()
     
       let mkVolFld td (f : Field) = 
-        let f' = {f with IsVolatile = true; Parent = td}
+        let f' = 
+          match f.Type with
+            | Array(t, size) ->
+              { f with Type = Array(Volatile(t), size); Parent = td }
+            | _ -> { f with IsVolatile = true; Parent = td}
         fldToVolatileFld.Add(f,f')
         f'
 

@@ -249,6 +249,10 @@ namespace Microsoft.Research.Vcc
               else match meth with
                     | :? Microsoft.Research.Vcc.VccGlobalMethodDefinition as def -> def.IsSpec 
                     | _ -> false 
+            let acceptsExtraArguments =
+              match meth with
+                | :? IMethodDefinition as methodDef -> methodDef.AcceptsExtraArguments
+                | _ -> false
             let decl =
               { Token           = tok
                 IsSpec          = isSpec
@@ -265,6 +269,7 @@ namespace Microsoft.Research.Vcc
                 CustomAttr      = []
                 Body            = None
                 IsProcessed     = false
+                AcceptsExtraArguments = acceptsExtraArguments
                 UniqueId        = CAST.unique() } : C.Function                      
             if decl.Name = "" then
               printf "null name\n"

@@ -2002,19 +2002,20 @@ namespace Microsoft.Research.Vcc
                     helper.Error(f.Token, 9656, "equality for structures with nested arrays not supported", Some(td.Token))
                     die()
                   | None -> read (Some t) v t 
+              | C.Ref(td) ->
+                  bCall "$vs_ctor" [ bCall "$vs_state" [v]; bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]]
+
               | t ->
                 die()
           let read = read None
+
           match f.Type with // _vcc_deep_struct_eq.S($vs_ctor(#s2, $dot(#p, T.s1)),
             | C.Ref _ when not deep && not inUnion -> None
             | C.Ref td' ->
-                let dot v = 
-                  bCall "$vs_ctor"
-                    [bCall "$vs_state" [v];
-                     bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]]
                 let funName = eqFunName td'.Name (if deep then "deep" else "shallow")
-                Some(bCall funName [dot s1; dot s2]) 
+                Some(bCall funName [read s1 f.Type; read s2 f.Type]) 
             | C.Array(t,n) -> 
+              helper.Error(f.Token, 9730, "equality or assignment of structs with fixed-size arrays is currently only supported with /3")
               let cond = B.Expr.Primitive ("==>", [ bAnd (B.Expr.Primitive("<=", [bInt 0; idx])) (B.Expr.Primitive("<", [idx; bInt n]));
                                                       bEq (read s1 f.Type) (read s2 f.Type) ])
               Some(B.Forall(Token.NoToken, [("#i", B.Int)], [], weight "array-structeq", cond))
