@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="us-ascii" standalone="no"?>
+<Extensibility xmlns="http://schemas.microsoft.com/AutomationExtensibility">
+	<HostApplication>
+		<Name>Microsoft Visual Studio Macros</Name>
+		<Version>9.0</Version>
+	</HostApplication>
+	<HostApplication>
+		<Name>Microsoft Visual Studio</Name>
+		<Version>9.0</Version>
+	</HostApplication>
+	<HostApplication>
+		<Name>Microsoft Visual Studio Macros</Name>
+		<Version>8.0</Version>
+	</HostApplication>
+	<HostApplication>
+		<Name>Microsoft Visual Studio</Name>
+		<Version>8.0</Version>
+	</HostApplication>
+	<Addin>
+		<FriendlyName>VerifiedCCompiler Add-in</FriendlyName>
+		<Description>Verified C-Compiler (VCC) add-in for Visual Studio 2008. This add-in interact with vcc.exe the commandline tool of the Verified C-Compiler.</Description>
+		<AboutBoxDetails>Verified C-Compiler (VCC) add-in for Visual Studio 2008. This add-in interact with vcc.exe the commandline tool of the Verified C-Compiler.\r\nTo enable the add-in goto Tools Menu and open "Add-in Manager...", set the first checkmark and the add-in starts after leaving the Add-In Manager. \r\nCopyright (C) Microsoft Corporation.  All Rights Reserved.</AboutBoxDetails>
+		<AboutIconData>@AboutIcon</AboutIconData>
+		<Assembly>VerifiedCCompilerAddin.dll</Assembly>
+		<FullClassName>VerifiedCCompilerAddin.VCCConnect</FullClassName>
+		<LoadBehavior>1</LoadBehavior>
+		<CommandPreload>1</CommandPreload>
+		<CommandLineSafe>0</CommandLineSafe>
+	</Addin>
+</Extensibility>

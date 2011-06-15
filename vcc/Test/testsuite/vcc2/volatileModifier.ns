@@ -1,0 +1,600 @@
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int nonvol;
+  volatile int vol;
+  _(ghost  volatile int specvol;)
+  _(ghost  int specnonvol;)
+};
+
+int ok1(struct S *s)
+  _(requires \thread_local(s))
+{
+  return s->nonvol;
+}
+
+int nok1(struct S *s)
+  _(requires \thread_local(s))
+{
+  return s->vol;
+}
+
+_(ghost 
+int ok2(struct S *s)
+  _(requires \thread_local(s))
+{
+  return s->specnonvol;
+})
+
+
+_(ghost 
+int nok2(struct S *s)
+  _(requires \thread_local(s))
+{
+  return s->specvol;
+})
+
+`
+Verification of ok1 succeeded.
+Verification of nok1 failed.
+testcase(19,10) : error VC8512: Assertion 's is mutable (accessing volatile field vol)' did not verify.
+Verification of ok2 succeeded.
+Verification of nok2 failed.
+testcase(34,10) : error VC8512: Assertion 's is mutable (accessing volatile field specvol)' did not verify.
+`
+`/newsyntax
+#include "vcc.h"
+
+typedef struct _X {
+  int nonvol;
+  volatile int vol;
+
+  _(ghost int specnonvol;)
+  _(ghost volatile int specvol;)
+} X;
+
+
+void ok1(X*x _(ghost \claim c))
+  _(always c, x->\consistent)
+{
+  int q;
+  _(atomic c,x) {
+    q = x->vol;
+  }
+}
+
+void ok11(X*x _(ghost \claim c))
+  _(always c, x->\consistent)
+{
+  int q;
+  _(atomic c,x) {
+    q = x->nonvol;
+  }
+}
+
+void nok2(X*x)
+  _(requires x->\valid)
+{
+  int q;
+  _(atomic x) {
+    q = x->vol;
+  }
+}
+
+void ok2(X*x,X*y _(ghost \claim c))
+  _(always c, x->\consistent && y->\consistent)
+{
+  _(atomic c,x,y) {
+    x->vol = 7;
+  }
+}
+
+void nok3(X*x,X*y _(ghost \claim c))
+  _(always c, x->\consistent && y->\consistent)
+{
+  _(atomic c,x,y) {
+    x->nonvol = 7;
+  }
+}
+
+void nok4(X*x,X*y _(ghost \claim c))
+  _(always c, x->\consistent && y->\consistent)
+{
+  _(atomic c,y) {
+    x->vol = 7;
+  }
+}
+
+
+_(ghost 
+void specok1(X*x _(ghost \claim c))
+  _(always c, x->\consistent)
+{
+  _(ghost int q;)
+  _(atomic c,x) {
+    q = x->specvol;
+  }
+})
+
+_(ghost 
+void specok11(X*x _(ghost \claim c))
+  _(always c, x->\consistent)
+{
+  int q;
+  _(atomic c,x) {
+    q = x->specnonvol;
+  }
+})
+
+_(ghost 
+void nspecok2(X*x)
+  _(requires x->\valid)
+{
+  int q;
+  _(atomic x) {
+    q = x->specvol;
+  }
+})
+
+
+void specok2(X*x,X*y _(ghost \claim c))
+  _(always c, x->\consistent && y->\consistent)
+{
+  _(atomic c,x,y) {
+    _(ghost x->specvol = 7;)
+  }
+}
+
+void nspecok3(X*x,X*y _(ghost \claim c))
+  _(always c, x->\consistent && y->\consistent)
+{
+  _(atomic c,x,y) {
+    _(ghost x->specnonvol = 7;)
+  }
+}
+
+void nspecok4(X*x,X*y _(ghost \claim c))
+  _(always c, x->\consistent && y->\consistent)
+{
+  _(atomic c,y) {
+    _(ghost x->specvol = 7;)
+  }
+}
+
+`
+Verification of ok1 succeeded.
+Verification of ok11 succeeded.
+Verification of nok2 failed.
+testcase(34,26) : error VC8527: Assertion 'x is closed (for atomic(...))' did not verify.
+Verification of ok2 succeeded.
+Verification of nok3 failed.
+testcase(51,5) : error VC8507: Assertion 'x->nonvol is writable' did not verify.
+Verification of nok4 failed.
+testcase(59,5) : error VC8507: Assertion 'x->vol is writable' did not verify.
+Verification of specok1 succeeded.
+Verification of specok11 succeeded.
+Verification of nspecok2 failed.
+testcase(89,26) : error VC8527: Assertion 'x is closed (for atomic(...))' did not verify.
+Verification of specok2 succeeded.
+Verification of nspecok3 failed.
+testcase(107,27) : error VC8507: Assertion 'x->specnonvol is writable' did not verify.
+Verification of nspecok4 failed.
+testcase(115,27) : error VC8507: Assertion 'x->specvol is writable' did not verify.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int nonvol;
+  volatile int vol;
+  _(ghost  volatile int specvol;)
+  _(ghost  int specnonvol;)
+};
+
+void foo1(struct S *s _(ghost \claim c))
+  _(always c, s->\consistent)
+{
+  _(atomic c, s) {
+    s->nonvol = 1;
+    _(begin_update)
+  }
+}
+
+void foo2(struct S *s _(ghost \claim c))
+  _(always c, s->\consistent)
+{
+  _(atomic c, s) {
+    _(begin_update)
+    s->nonvol = 1;
+  }
+}
+
+void foo3(struct S *s _(ghost \claim c))
+  _(always c, s->\consistent)
+{
+  _(atomic c, s) {
+    s->vol = 1;
+    _(begin_update)
+  }
+}
+
+void foo4(struct S *s _(ghost \claim c))
+  _(always c, s->\consistent)
+{
+  _(atomic c, s) {
+    _(begin_update)
+    s->vol = 1;
+  }
+}
+`
+Verification of foo1 failed.
+testcase(14,5) : error VC8507: Assertion 's->nonvol is writable' did not verify.
+Verification of foo2 failed.
+testcase(24,5) : error VC8507: Assertion 's->nonvol is writable' did not verify.
+Verification of foo3 failed.
+testcase(32,5) : error VC8507: Assertion 's->vol is writable' did not verify.
+Verification of foo4 succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(volatile_owns) struct VO {
+  int x;
+};
+
+struct NVO {
+  int x;
+};
+
+struct Ownee {
+  int x;
+};
+
+void foo(struct Ownee *o, struct VO *v)
+  _(requires \wrapped(v) && \wrapped(o))
+  _(writes o)
+{
+  _(atomic v) {
+    _(ghost  v->\owns += o);
+  }
+}
+
+void foo2(struct Ownee *o, struct NVO *v)
+  _(requires \wrapped(v) && \wrapped(o))
+  _(writes o)
+{
+  _(atomic v) {
+    _(ghost  v->\owns += o);
+  }
+}
+`
+Verification of foo succeeded.
+Verification of foo2 failed.
+testcase(29,28) : error VC9502: Call 'v->\owns += o' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the owner has volatile owns set'.
+`
+`/newsyntax
+#include "vcc.h"
+
+typedef volatile struct _COUNTER
+{
+    unsigned AsUNSIGNED;
+} COUNTER;
+
+typedef _(claimable) struct _Foo
+{
+    _(invariant \mine(&c))
+    COUNTER c;
+} Foo;
+
+void foo(Foo* p _(ghost \claim c))
+    _(always c,(&p->c)->\consistent)
+{
+    _(atomic c,&p->c) {
+        p->c.AsUNSIGNED = 2;
+        //error VC8507: Assertion 'p->c.AsUNSIGNED is writable' did not verify.
+    }
+}
+
+`
+Verification of _Foo#adm succeeded.
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+_(ghost _(pure) int f(int a) _(ensures \result == (a == 0 ? 1 : -1));)
+
+struct S {
+  volatile int a;
+  _(ghost volatile int b;)
+  
+  _(invariant b == f(a))
+};
+
+void foo(struct S *p _(ghost \claim c))
+  _(always c, p->\consistent)
+{
+  _(atomic c,p) {
+    p->a = 10;
+    _(ghost p->b = f(10);)
+  }
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+typedef _(claimable) struct _counter {
+ int xxx;
+
+ _(invariant \depends(\this->\owner, \this))
+} counter;
+
+typedef volatile counter vcounter;
+
+struct sum {
+ vcounter c[10];
+ int sum;
+
+ _(invariant \mine(&c[0]))
+ _(invariant \mine(&c[1]))
+ _(invariant sum==c[0].xxx + c[1].xxx)
+};
+
+void test(struct sum *s _(ghost \claim c))
+ _(requires \wrapped(s))
+ _(writes s)
+    _(always c, (&s->c[0])->\consistent && (&s->c[1])->\consistent)
+{
+ int i,j;
+
+ _(atomic c, &s->c[0]) {
+  i=s->c[0].xxx;
+ }
+
+ _(atomic c, &s->c[1]) {
+  j=s->c[1].xxx;
+ }
+}
+`
+Verification of _counter#adm succeeded.
+Verification of sum#adm succeeded.
+Verification of test succeeded.
+Verification of volatile#_counter#adm succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+typedef union COUNTER
+{
+    struct
+    {
+        unsigned InUse            :  1;
+        unsigned Generation       : 31;
+   };
+
+    _(backing_member) unsigned AsUINT32;
+} COUNTER;
+
+typedef _(claimable) struct _S
+{
+    volatile COUNTER cntr;
+    _(invariant \mine(&cntr))
+} S;
+
+void foo(S* p _(ghost \claim c))
+    _(always c,p->\consistent)
+{
+    unsigned x;
+    _(atomic c,p,&p->cntr) {
+        x = p->cntr.InUse;
+    }
+}
+`
+Verification of _S#adm succeeded.
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+typedef struct _S {
+  int a;
+} S;
+
+_(dynamic_owns) struct T {
+  volatile S* s;
+  _(invariant \mine(s))
+};
+
+void foo(struct T *t)
+  _(requires \wrapped(t))
+{
+  volatile S *s = t->s;
+  _(assert t->s \in t->\owns)
+  _(assert s \in t->\owns)  // <- HERE
+}
+`
+Verification of T#adm succeeded.
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc2test.h>
+
+typedef struct Node {
+  struct Node *next;
+  int data;
+} Node, *PNode;
+
+_(volatile_owns) struct Stack {
+  volatile PNode head;
+
+  _(invariant head != NULL ==> \mine(head))
+  _(invariant \forall PNode n; {&n->next} n \in \this->\owns ==> n->next == NULL || n->next \in \this->\owns)
+};
+
+_(atomic_inline)
+PNode ICX(volatile PNode  *p, PNode tst, PNode rpl)
+{
+  if (*p == tst) {
+    *p = rpl;
+    return tst;
+  } else {
+    return *p;
+  }
+}
+
+void drain(struct Stack *s _(ghost \claim c))
+  _(always c, s->\consistent)
+{
+  _(atomic c,s) {
+    s->head = NULL;
+    _(set_closed_owns s, {})
+  }
+}
+
+void move(struct Stack *s1, struct Stack *s2 _(ghost \claim c))
+  _(always c, s1->\consistent && s2->\consistent)
+{
+  struct Node *n, *n2;
+  _(ghost  \objset s1_owns;)
+
+
+  _(atomic c,s1) {
+    n = s1->head;
+  }
+
+  _(atomic c,s1) {
+    n2 = ICX(&s1->head, n, NULL);
+    _(ghost 
+      if (n2 == n) {
+        s1_owns = s1->\owns;
+        _(set_closed_owns s1, {})
+      })
+  }
+
+
+  if (n2 == n) {
+    _(atomic c,s2) {
+      s2->head = n2;
+      _(set_closed_owns s2, s1_owns)
+    }
+  }
+}
+
+void drainFail1(struct Stack *s _(ghost \claim c))
+  _(always c, s->\consistent)
+{
+  _(atomic c,s) {
+    _(set_closed_owns s, {})
+  }
+}
+
+
+void moveFail1(struct Stack *s1, struct Stack *s2 _(ghost \claim c))
+  _(always c, s1->\consistent && s2->\consistent)
+{
+  struct Node *n, *n2;
+  _(ghost  \objset s1_owns;)
+
+
+  _(atomic c,s1) {
+    n = s1->head;
+  }
+
+  _(atomic c,s1) {
+    n2 = ICX(&s1->head, n, NULL);
+    _(ghost 
+      if (n2 == n) {
+        s1_owns = s1->\owns;
+//        set_closed_owns(s1, set_empty());
+      })
+  }
+
+
+  if (n2 == n) {
+    _(atomic c,s2) {
+      s2->head = n2;
+      _(set_closed_owns s2, s1_owns)
+    }
+  }
+}
+
+_(dynamic_owns) struct NVO  {
+  int x;
+};
+
+void foo(struct NVO *n)
+  _(requires \wrapped(n))
+{
+  _(atomic n) {
+    _(set_closed_owns n, {})
+  }
+}
+
+void foo2(struct Stack *s)
+  _(requires \wrapped(s))
+  _(writes s)
+{
+  _(set_closed_owns s, {})
+}
+`
+Verification of Stack#adm succeeded.
+Verification of drain succeeded.
+Verification of move succeeded.
+Verification of drainFail1 failed.
+testcase(67,28) : error VC8524: Assertion 'chunk head != ((void*)0) ==> \mine(head) of invariant of s holds after atomic' did not verify.
+Verification of moveFail1 failed.
+testcase(95,30) : error VC8524: Assertion 'chunk \forall PNode n; {&n->next} n \in \this->\owns ==> n->next == ((void*)0) || n->next \in \this->\owns) of invariant of s2 holds after atomic' did not verify.
+testcase(97,23) : error VC8510: Assertion '\new_ownees(owner, owns) is writable in call to set_closed_owns s2, s1_owns' did not verify.
+testcase(97,23) : error VC9502: Call 'set_closed_owns s2, s1_owns' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'all newly owned objects are wrapped'.
+Verification of foo failed.
+testcase(110,21) : error VC9502: Call 'set_closed_owns n, {}' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the owner has volatile owns set'.
+Verification of foo2 failed.
+testcase(118,19) : error VC8532: Assertion 's is atomically updated in call to set_closed_owns s, {}' did not verify.
+`
+`/newsyntax
+#include <vcc.h>
+
+typedef int *PINT;
+
+struct T { int a; };
+
+typedef struct T *PT;
+
+_(volatile_owns) struct S {
+  PT volatile x;
+  _(invariant \mine(x))
+};
+
+void foo(struct S *p, struct T *t)
+  _(requires \wrapped(p))
+  _(requires \wrapped(t))
+  _(writes t)
+{
+  _(atomic p) {
+    _(ghost  p->\owns += t);
+    p->x = t;
+  }
+}
+`
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+    int dummy;
+    _(ghost \claim volatile c;)
+    _(ghost int a;)
+    _(invariant c!=&a)
+};
+`
+Verification of S#adm succeeded.
+`
