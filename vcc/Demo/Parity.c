@@ -1,37 +1,38 @@
+//`/newsyntax
 #include <vcc.h>
 
-typedef struct vcc(claimable) _A {
+typedef _(claimable) struct _A {
   volatile int f;
-  invariant(unchanged(f) || f == unchecked(old(f) + 2))
+  _(invariant \unchanged(f) || f == _(unchecked)(\old(f) + 2))
   // unchecked() used as work-around for issue 5883
 } A;
 
-int check_parity(A *a spec(out claim_t p))
-  requires(wrapped(a))
-  writes(a)
-  ensures(wrapped(a) && ref_cnt(a) == old(ref_cnt(a)) + 1)
-  ensures(wrapped(p) && claims(p, (a->f & 1) == result))
+int check_parity(A *a _(out \claim p))
+  _(requires \wrapped(a))
+  _(writes a)
+  _(ensures \wrapped(a) && a->\claim_count == \old(a->\claim_count) + 1)
+  _(ensures \wrapped(p) && \claims(p, (a->f & 1) == \result))
 {
   int tmp;
-  atomic (a) {
+  _(atomic a) {
     tmp = a->f;
-    bv_lemma(forall (int x; (x&1) == ((x+2) & 1)));
-    spec(p = claim(a, (a->f & 1) == (tmp & 1));)
+    _(assert {:bv} \forall int x; (x&1) == ((x+2) & 1))
+    _(ghost p = \make_claim({a}, (a->f & 1) == (tmp & 1)))
   }
   return (tmp & 1);
 }
 
-int check_parity_b(A *a spec(claim_t c) spec(out claim_t p))
-  requires(wrapped(c) && claims(c, closed(a)))
-  writes(c)
-  ensures(wrapped(c) && ref_cnt(c) == old(ref_cnt(c)) + 1)
-  ensures(wrapped(p) && claims(p, (a->f & 1) == result))
+int check_parity_b(A *a _(ghost \claim c) _(out \claim p))
+  _(requires \wrapped(c) && \claims(c, a->\closed))
+  _(writes c)
+  _(ensures \wrapped(c) && c->\claim_count == \old(c->\claim_count) + 1)
+  _(ensures \wrapped(p) && \claims(p, (a->f & 1) == \result))
 {
   int tmp;
-  atomic (a, c) {
+  _(atomic a, c) {
     tmp = a->f;
-    bv_lemma(forall (int x; (x&1) == ((x+2) & 1)));
-    spec(p = claim(c, (a->f & 1) == (tmp & 1));)
+    _(assert {:bv} \forall int x; (x&1) == ((x+2) & 1))
+    _(ghost p = \make_claim({c}, (a->f & 1) == (tmp & 1)))
   }
   return (tmp & 1);
 }
