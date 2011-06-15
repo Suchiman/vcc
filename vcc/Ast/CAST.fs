@@ -566,6 +566,7 @@ module Microsoft.Research.Vcc.CAST
     {
       Token:Token;
       IsSpec:bool;
+      AcceptsExtraArguments:bool;
       mutable OrigRetType:Type;
       mutable RetType:Type;
       mutable Name:Id;

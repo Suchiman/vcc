@@ -171,5 +171,10 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     NoQuantifiedVariables,
 
+    /// <summary>
+    /// Calling function {0}, which with variable arguments, is not supported.
+    /// </summary>
+    VarArgsNotSupported,
+
   }
 }
