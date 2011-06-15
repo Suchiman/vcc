@@ -803,6 +803,6 @@ bool _vcc_is_member(obj_t, club_t);
 // Misc
 char *get___FUNCTION__();
 void __annotation(...);
-void __debugbreak(...);
+void __debugbreak();
 
 #endif // _VCCP_H
