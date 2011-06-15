@@ -558,7 +558,9 @@ namespace Microsoft.Research.Vcc
               | _ -> die()
           | "field", [C.Expr.UserData (_, ( :? C.Field as f))] ->
             er (fieldName f)
-            
+          | "owns_field", [e] ->
+            bCall "$f_owns" [toTypeId e.Type.Deref]
+
           | "rec_zero", [] -> er "$rec_zero"
           
           | "rec_fetch", [r; C.UserData(_, (:? C.Field as f))] ->

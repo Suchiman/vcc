@@ -464,16 +464,22 @@ namespace Microsoft.Research.Vcc
         Some expr
       let approvers = gdict()
       let selfApproved = gdict()
+      let (|AnyField|_|) = function
+        | Deref (_, Dot (_, (This _ as th), subject)) -> Some (th, mkFieldRef subject, Some subject)
+        | CallMacro (ec, "_vcc_owns", _, [th]) -> 
+          let fld = Macro ({ bogusEC with Type = Type.FieldT }, "owns_field", [th])
+          Some (th, fld, None)
+        | _ -> None
       let doApproves self = function
-        | Macro (ec, "approves", [approver; Deref (_, Dot (_, (This _ as th), subject))]) ->        
+        | Macro (ec, "approves", [approver; AnyField (th, subject, subjOpt)]) ->
           match approver with
             | CallMacro (_, "_vcc_owner", _, [This(_)]) ->
-              res (Macro (ec, "_vcc_inv_is_owner_approved", [th; mkFieldRef subject]))
+              res (Macro (ec, "_vcc_inv_is_owner_approved", [th; subject]))
             | Deref (_, Dot (_, This(_), approver)) ->
-              if approver = subject then
+              if Some approver = subjOpt then
                 selfApproved.[approver] <- true
               approvers.[approver] <- ec.Token
-              res (Macro (ec, "_vcc_inv_is_approved_by", [th; mkFieldRef approver; mkFieldRef subject]))
+              res (Macro (ec, "_vcc_inv_is_approved_by", [th; mkFieldRef approver; subject]))
             | expr ->
               helper.Error (ec.Token, 9670, "approves(...) needs owner(this) or this->field as the first parameter", None)
               None
