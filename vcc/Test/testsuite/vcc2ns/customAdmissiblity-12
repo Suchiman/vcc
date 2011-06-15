@@ -1,0 +1,26 @@
+`/newsyntax
+#include <vcc2test.h>
+
+typedef  _(claimable) struct { int dummy; } Seal;
+
+_(volatile_owns) _(claimable) struct Mut {
+  volatile bool af, bf;
+   _(ghost Seal afs;) 
+  _(invariant \on_unwrap(\this,  !(&afs)->\consistent))
+};
+
+void alice(struct Mut *m _(ghost \claim c))
+  _(always c, m->\consistent)
+  _(requires \wrapped(&m->afs))
+  _(writes &m->afs)
+{
+_(ghost \claim c2)
+  _(assert \active_claim(c))
+  _(assert m->\consistent)
+   _(ghost c2 = \make_claim({&m->afs}, m->\consistent);) 
+}
+
+`
+Verification of Mut#adm succeeded.
+Verification of alice succeeded.
+`
