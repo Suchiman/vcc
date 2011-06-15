@@ -115,6 +115,7 @@ namespace Microsoft.Research.Vcc
               CustomAttr = [ VccAttr(AttrIsAdmissibility, "") ]
               Body = Some body
               IsProcessed = true
+              AcceptsExtraArguments = false
               UniqueId = CAST.unique() } : Function
           [decl; Top.FunctionDecl check]
       | decl -> [decl]
@@ -378,6 +379,7 @@ namespace Microsoft.Research.Vcc
             CustomAttr = [ ReadsCheck f ]
             Body = Some body
             IsProcessed = true
+            AcceptsExtraArguments = false
             UniqueId = CAST.unique() } : Function
         let decl = Top.FunctionDecl rc
         revReadChecks.[rc] <- f

@@ -191,6 +191,7 @@ namespace Microsoft.Research.Vcc
               CustomAttr      = [VccAttr (AttrIsPure, "")]
               Body            = None
               IsProcessed     = true
+              AcceptsExtraArguments = false
               UniqueId = CAST.unique()
             } : Function                  
                 
