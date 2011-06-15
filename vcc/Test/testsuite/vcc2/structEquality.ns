@@ -80,14 +80,6 @@ struct C {
   _(invariant \deep_eq(a1, a2))
 };
 
-struct D {
-  struct A a1;
-  struct A a2;
-  int z;
-  _(invariant \mine(&a1))
-  _(invariant \deep_eq(a1, a2))
-};
-
 void foo()
 {
   struct A a, b;
@@ -112,13 +104,7 @@ void bar()
   _(assert \deep_eq(a, b))
 }
 `
-Verification of B#adm succeeded.
-Verification of C#adm succeeded.
-Verification of D#adm failed.
-testcase(27,29) : error VC8012: invariant(\deep_eq(a1, a2)) of D is not admissible.
-Verification of foo succeeded.
-Verification of bar failed.
-testcase(51,26) : error VC9500: Assertion '\deep_eq(a, b)' did not verify.
+testcase(4,3) : error VC9730: equality or assignment of structs with fixed-size arrays is currently only supported with /3
 `
 `/newsyntax
 #include "vcc.h"
