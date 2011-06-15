@@ -1075,9 +1075,17 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
-    let normalizeVarArgs self = function
-      | Call(ec, { Name = "_vcc_keeps"}, _, args) ->
+    let normalizeVarArgs self = 
+      let ignoredVarArgsFunctions = Map.ofList [ "_vcc_claim", true;
+                                                 "_vcc_unclaim", true;
+                                                 "_vcc_upgrade_claim", true;
+                                                 "_vcc_skinny_expose", true;
+                                                 "_vcc_create_set", true ] 
+      function
+      | Call(ec, { Name = "_vcc_keeps" }, _, args) ->
         Some(Macro(ec, "_vcc_keeps", List.map self args))
+      | Call(ec, { Name = fnName }, _, args) when Map.containsKey fnName ignoredVarArgsFunctions ->
+        None
       | Call(ec, { Name = "__annotation"}, _, args) ->
         let reportErrorForSideEffect _ = function
           | VarWrite(ec, _, _)
