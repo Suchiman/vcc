@@ -302,8 +302,8 @@
     </Property>
 
     <Property Id="FSHARPINSTALLED">
-      <DirectorySearch Id="AssemblyDirectorySearch" Path="[WindowsFolder]\assembly\GAC_MSIL\FSharp.Core" Depth="1">
-        <FileSearch Name="FSharp.Core.dll" MinVersion="2.0.0.0" />
+      <DirectorySearch Id="AssemblyDirectorySearch" Path="[WindowsFolder]\Microsoft.NET\assembly\GAC_MSIL\FSharp.Core\" Depth="1">
+        <FileSearch Name="FSharp.Core.dll" MinVersion="4.0.0.0" />
       </DirectorySearch>
     </Property>
 
