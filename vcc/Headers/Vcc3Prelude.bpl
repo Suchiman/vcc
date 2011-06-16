@@ -2631,6 +2631,18 @@ axiom (forall from:int, to:int, x:int, xs:int ::
   {$bv_extract_unsigned(x, xs, from, to)}
   0 <= from && from < to && to <= xs ==>
   $in_range(0, $bv_extract_unsigned(x, xs, from, to), $_pow2(to - from) - 1));
+  
+axiom (forall from, to, x, y:int:: 
+  {$bv_extract_unsigned(x, 32, from, to), $_and(^^u4, x, y)}
+  0 <= from && from < to && to <= 32 ==>
+  $bv_extract_unsigned(x, 32, from, to) == 
+  $_shr($_and(^^u4, x, $_shl(^^u4, $_shl(^^u4, 1, to - from) - 1, from)), from));
+  
+axiom (forall from, to, x, y:int:: 
+  {$bv_extract_unsigned(x, 64, from, to), $_and(^^u8, x, y)}
+  0 <= from && from < to && to <= 64 ==>
+  $bv_extract_unsigned(x, 64, from, to) == 
+  $_shr($_and(^^u8, x, $_shl(^^u4, $_shl(^^u8, 1, to - from) - 1, from)), from));
 
 axiom (forall from:int, to:int, val:int, x:int, xs:int, from2:int, to2:int :: 
   {$bv_extract_signed($bv_update(x, xs, from, to, val), xs, from2, to2)}
