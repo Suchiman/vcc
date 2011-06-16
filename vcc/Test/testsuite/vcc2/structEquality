@@ -111,13 +111,7 @@ void bar()
   assert(deep_eq(a, b));
 }
 `
-Verification of B#adm succeeded.
-Verification of C#adm succeeded.
-Verification of D#adm failed.
-testcase(27,15) : error VC8012: invariant(_vcc_deep_struct_eq(a1, a2)) of D is not admissible.
-Verification of foo succeeded.
-Verification of bar failed.
-testcase(51,12) : error VC9500: Assertion '_vcc_deep_struct_eq(a, b)' did not verify.
+testcase(4,3) : error VC9730: equality or assignment of structs with fixed-size arrays is currently only supported with /3
 `
 #include "vcc.h"
 

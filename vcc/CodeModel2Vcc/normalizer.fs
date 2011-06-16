@@ -925,6 +925,7 @@ namespace Microsoft.Research.Vcc
             CustomAttr = [VccAttr (AttrIsPure, ""); VccAttr(AttrBvLemmaCheck, "true")]
             Body = Some (Expr.Block(lemma.Common, [lemma], None))
             IsProcessed = true
+            AcceptsExtraArguments = false
             UniqueId = CAST.unique() } : Function
         let findAmdExtractThem _ = function
           | Expr.Assert(ec, CallMacro(_, "_vcc_bv_lemma", _, _), _) as _assert ->
@@ -1074,7 +1075,36 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let normalizeVarArgs self = 
+      let ignoredVarArgsFunctions = Map.ofList [ "_vcc_claim", true;
+                                                 "_vcc_unclaim", true;
+                                                 "_vcc_upgrade_claim", true;
+                                                 "_vcc_skinny_expose", true;
+                                                 "_vcc_create_set", true ] 
+      function
+      | Call(ec, { Name = "_vcc_keeps" }, _, args) ->
+        Some(Macro(ec, "_vcc_keeps", List.map self args))
+      | Call(ec, { Name = fnName }, _, args) when Map.containsKey fnName ignoredVarArgsFunctions ->
+        None
+      | Call(ec, { Name = "__annotation"}, _, args) ->
+        let reportErrorForSideEffect _ = function
+          | VarWrite(ec, _, _)
+          | MemoryWrite(ec, _,_)
+          | Call(ec, { Writes = _ :: _ }, _, _) -> 
+              helper.Error(ec.Token, 9732, "Side effect in argument to '__annotation' intrinsic")
+              false
+          | _ -> true
+        List.iter (fun (e:Expr) -> e.SelfVisit(reportErrorForSideEffect)) args
+        Some(Macro(ec, "ignore_me", []))
+      | Call(ec, fn, _, _) when fn.AcceptsExtraArguments ->
+        helper.Error(ec.Token, 9731, "Call to function '" + fn.Name + "', which has variable arguments, is not supported.")
+        None
+      | _ -> None
+
+    // ============================================================================================================
+
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
+    helper.AddTransformer ("norm-varargs", Helper.Expr normalizeVarArgs)
     helper.AddTransformer ("norm-inline-boogie", Helper.Decl handleBoogieInlineDeclarations)
     helper.AddTransformer ("norm-expand-contract-macros", Helper.Decl expandContractMacros)
     helper.AddTransformer ("norm-initializers", Helper.Expr normalizeInitializers)

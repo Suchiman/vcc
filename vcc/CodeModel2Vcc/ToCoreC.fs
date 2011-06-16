@@ -854,6 +854,7 @@ namespace Microsoft.Research.Vcc
                          CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else []);
                          Body = Some (Expr.MkBlock(ss @ List.map mkSetOutPar localsThatGoOut));
                          IsProcessed = true;
+                         AcceptsExtraArguments = false;
                          UniqueId = CAST.unique() } : Function
                 blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
                 let inArgs = List.map mkRef localsThatGoIn 

@@ -263,11 +263,20 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
             | None -> ()          
           Some expr
 
+    let hasFreeVars (e:B.Expr) =
+      let res = ref false
+      e.Map (function 
+               | B.Expr.Ref v when quantVarSet.ContainsKey v ->
+                 res := true
+                 None
+               | _ -> None) |> ignore
+      !res
+
     let willLoop tr =
       let isHigh = function
         | Some m ->
           if helper.Options.DumpTriggers >= 10 then Console.WriteLine ("check subst: " + substToString (Some m))
-          Map.exists (fun _ -> function B.Expr.Ref _ -> false | _ -> true) m
+          Map.exists (fun _ -> function B.Expr.Ref _ -> false | e -> hasFreeVars e) m
         | None -> false
       Seq.exists (fun (t, _, _) -> isHigh (matchExpr Map.empty (tr, t))) candidates
       
