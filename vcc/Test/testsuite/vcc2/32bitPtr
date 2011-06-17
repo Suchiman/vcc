@@ -1,0 +1,216 @@
+`/ps:32 /newsyntax
+
+#include <vcc.h>
+
+void foo() { 
+  _(assert sizeof(int*) == sizeof(int))
+  _(assert sizeof(long*) == sizeof(long))
+  _(assert sizeof(int) == sizeof(long))
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32 /newsyntax
+
+
+#include <vcc.h>
+
+struct S {
+  int *p;
+  int i;
+};
+
+void foo(struct S *x) { 
+  size_t s = sizeof(struct S);
+  _(assert s == 8)
+  _(assert (char *)(&x->i) == ((char *)x) + 4)
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32 /newsyntax
+
+
+#include <vcc.h>
+
+struct S {
+  long *p;
+  long i;
+};
+
+void foo(struct S *x) { 
+  size_t s = sizeof(struct S);
+  _(assert s == 8)
+  _(assert (char *)(&x->i) == ((char *)x) + 4)
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32 /newsyntax
+
+
+#include <vcc.h>
+
+struct S {
+  int *p;
+  int *q;
+};
+
+void foo(struct S *x) { 
+  int **barInt = &x->p;
+  _(assert barInt == x)
+  barInt++;
+  _(assert barInt == &x->q)
+  _(assert sizeof(x) == 4)
+  _(assert sizeof(x->p) == 4)
+  _(assert sizeof(barInt) == 4)
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32 /newsyntax
+
+
+#include <vcc.h>
+
+struct S {
+  char p[3];
+  // one padding byte here
+  int *q;
+};
+
+void foo(struct S *x) { 
+  // check alignment
+  _(assert sizeof(struct S) == 8)
+  _(assert sizeof(x->q) == 4)
+  _(assert (char*)&x->q - (char*)x == 4)
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32 /newsyntax
+
+
+#include <vcc.h>
+#include <stddef.h>
+
+struct Alignment {
+	char c1;
+	char c2;
+	short s1;
+	short s2;
+	int i1;
+	int i2;
+	long l1;
+	long l2;
+	long long ll1;
+	long long ll2;
+};
+
+void foo() { 
+	_(assert offsetof(struct Alignment, c1) == 0)
+	_(assert offsetof(struct Alignment, c2) == 1)
+	_(assert offsetof(struct Alignment, s1) == 2)
+	_(assert offsetof(struct Alignment, s2) == 4)
+	_(assert offsetof(struct Alignment, i1) == 8)
+	_(assert offsetof(struct Alignment, i2) == 12)
+	_(assert offsetof(struct Alignment, l1) == 16)
+	_(assert offsetof(struct Alignment, l2) == 20)
+	_(assert offsetof(struct Alignment, ll1) == 24)
+	_(assert offsetof(struct Alignment, ll2) == 32)
+	_(assert sizeof(struct Alignment) == 40)
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32 /newsyntax
+
+
+#include <vcc.h>
+#include <stddef.h>
+
+struct Alignment {
+	char c1;
+	short s1;
+	char c2;
+	int i1;
+	short s2;
+	long l1;
+	int i2;
+	long long ll1;
+};
+
+void foo() { 
+	_(assert offsetof(struct Alignment, c1) == 0)
+	_(assert offsetof(struct Alignment, s1) == 2)
+	_(assert offsetof(struct Alignment, c2) == 4)
+	_(assert offsetof(struct Alignment, i1) == 8)
+	_(assert offsetof(struct Alignment, s2) == 12)
+	_(assert offsetof(struct Alignment, l1) == 16)
+	_(assert offsetof(struct Alignment, i2) == 20)
+	_(assert offsetof(struct Alignment, ll1) == 24)
+	_(assert sizeof(struct Alignment) == 32)
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32 /newsyntax
+
+
+#include <vcc.h>
+#include <stddef.h>
+
+struct Alignment {
+     char a[13];
+     long b;
+     char c[7];
+     short d;
+     char e[3];
+};
+
+void foo() { 
+	_(assert offsetof(struct Alignment, a) == 0)
+	_(assert offsetof(struct Alignment, b) == 16)
+	_(assert offsetof(struct Alignment, c) == 20)
+	_(assert offsetof(struct Alignment, d) == 28)
+	_(assert offsetof(struct Alignment, e) == 30)
+	_(assert sizeof(struct Alignment) == 36)
+}
+`
+Verification of foo succeeded.
+`
+`/ps:32 /newsyntax
+
+#include "vcc.h"
+
+union x {
+  unsigned a;
+  int *b;
+  _(backing_member) unsigned __int64 x; 
+};
+
+void foo(int *c)
+{
+  union x bla;
+  bla.b = c;
+  _(assert bla.a == (unsigned)c)
+}
+
+struct y {
+  int *b;
+  unsigned a;
+};
+
+
+void bar(unsigned int *arr,unsigned int c)
+  _(requires \mutable_array(arr,2))
+  _(writes \array_range(arr,2))
+  _(ensures ((struct y *)arr)->a == c)
+{
+  arr[1] = c;
+  _(assert &((struct y *)arr)->a == &arr[1])
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`

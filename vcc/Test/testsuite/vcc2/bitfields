@@ -1,0 +1,131 @@
+#include <vcc.h>
+
+typedef unsigned int UINT32;
+typedef union foo_t {
+        struct {
+                unsigned a:3;
+                unsigned b:10;
+                unsigned c:10;
+        } f;
+        struct {
+                unsigned a:2;
+                unsigned b:10;
+                unsigned c:10;
+        } g;
+        struct {
+                unsigned a:4;
+                unsigned b:10;
+                unsigned c:10;
+        } h;
+        backing_member UINT32 u32;
+} foo_t;
+
+void t1()
+{
+  foo_t x;
+  x.f.b = 3;
+  x.g.b = 3;
+  assert(x.f.b == 3);
+}
+
+void t2()
+{
+  foo_t x;
+  x.f.b = 3;
+  x.h.b = 3;
+  assert(x.f.b == 3);
+}
+
+void ok1()
+{
+  foo_t x;
+  x.f.b = 3;
+  x.h.c = 3;
+  assert(x.f.b == 3);
+}
+`
+Verification of t1 failed.
+testcase(28,12) : error VC9500: Assertion 'x.f.b == 3' did not verify.
+Verification of t2 failed.
+testcase(36,12) : error VC9500: Assertion 'x.f.b == 3' did not verify.
+Verification of ok1 succeeded.
+`
+#include <vcc.h>
+
+typedef unsigned __int8     UINT8;
+typedef signed __int64      INT64;
+typedef unsigned __int64    UINT64;
+
+typedef struct S
+{
+    union
+    {
+        backing_member 
+          UINT64 AsUINT64;  
+        struct
+        {
+            UINT64 Count:16;
+            INT64 Parameter:48;
+        };
+    };
+} S;
+
+
+void foo()
+{
+    S Template;
+
+    Template.Count = 4;
+    assert(Template.Count < 7);
+    Template.Parameter = 8;
+    assert(Template.Count < 7);
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+struct X { unsigned __int64 Y : 42; };
+
+unsigned foo();
+
+void bar() {
+    struct X x;
+    x.Y = foo();
+}
+`
+Verification of bar succeeded.
+`
+#include "vcc.h"
+typedef unsigned __int32 uint32_t;
+
+union Y {
+    struct {
+        unsigned hi:16;
+        unsigned lo:16;
+    };
+    backing_member uint32_t x;
+};
+
+void foo() {
+    union Y s1;
+    s1.hi = s1.lo;
+    assert(s1.hi == s1.lo);
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+typedef struct {
+unsigned short x;
+unsigned y: 16;
+unsigned z: 16;
+} S;
+
+void foo(struct S *s)
+{
+} 
+`
+Verification of foo succeeded.
+`

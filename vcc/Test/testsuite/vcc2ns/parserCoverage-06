@@ -1,0 +1,11 @@
+`/newsyntax
+#include <vcc.h>
+
+int foo(_(ghost _(ghost int i)))
+{
+}
+`
+testcase(3,31) : error VC0000: ) expected.
+testcase(3,60) : error VC0000: Invalid expression term ')'.
+testcase(3,31) : error VC0000: Did not expect '__specification'.
+`
