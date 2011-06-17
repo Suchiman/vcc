@@ -35,6 +35,20 @@
             </summary>
             <param name="local">The local variable to add to the current scope.</param>
         </member>
+        <member name="M:Microsoft.Cci.ILGenerator.AddExceptionHandlerInformation(Microsoft.Cci.HandlerKind,Microsoft.Cci.ITypeReference,Microsoft.Cci.ILGeneratorLabel,Microsoft.Cci.ILGeneratorLabel,Microsoft.Cci.ILGeneratorLabel,Microsoft.Cci.ILGeneratorLabel,Microsoft.Cci.ILGeneratorLabel)">
+            <summary>
+            Adds an exception handler entry to the generated body. This intended for IL rewriting scenarios and should not be used in conjunction with methods such as BeginCatchBlock,
+            which are intended for CodeModel to IL generation scenarios. The calls to AddExceptionHandler should result in a list of handlers that 
+            satisfies CLI rules with respect to ordering and nesting.
+            </summary>
+            <param name="kind">The kind of handler being added.</param>
+            <param name="exceptionType">The type of exception this handler will handle (may be Dummy.TypeReference).</param>
+            <param name="tryStart">A label identifying the first instruction in the try body.</param>
+            <param name="tryEnd">A label identifying the first instruction following the try body.</param>
+            <param name="handlerStart">A label identifying the first instruction in the handler body.</param>
+            <param name="handlerEnd">A label identifying the first instruction following the handler body.</param>
+            <param name="filterStart">A label identifying the first instruction of the filter decision block. May be null.</param>
+        </member>
         <member name="M:Microsoft.Cci.ILGenerator.AdjustBranchSizesToBestFit">
             <summary>
             Performs one or more extra passes over the list of operations, changing long branches to short if possible and short branches to
@@ -91,6 +105,13 @@
             Puts the specified instruction onto the stream of instructions.
             </summary>
             <param name="opcode">The Intermediate Language (IL) instruction to be put onto the stream.</param>
+        </member>
+        <member name="M:Microsoft.Cci.ILGenerator.Emit(Microsoft.Cci.OperationCode,System.Object)">
+            <summary>
+            Calls a type specific overload of Emit, based on the runtime type of the given object. Use this when copying IL operations.
+            </summary>
+            <param name="opcode">The Intermediate Language (IL) instruction to be put onto the stream.</param>
+            <param name="value">An argument that parameterizes the IL instruction at compile time (not a runtime operand for the instruction).</param>
         </member>
         <member name="M:Microsoft.Cci.ILGenerator.Emit(Microsoft.Cci.OperationCode,System.Byte)">
             <summary>
@@ -507,7 +528,7 @@
             A metadata (IL) level represetation of the body of a method or of a property/event accessor.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.ILGeneratorMethodBody.#ctor(Microsoft.Cci.ILGenerator,System.Boolean,System.UInt16)">
+        <member name="M:Microsoft.Cci.ILGeneratorMethodBody.#ctor(Microsoft.Cci.ILGenerator,System.Boolean,System.UInt16,Microsoft.Cci.IMethodDefinition,System.Collections.Generic.IEnumerable{Microsoft.Cci.ILocalDefinition},System.Collections.Generic.IEnumerable{Microsoft.Cci.ITypeDefinition})">
             <summary>
             Allocates an object that is the metadata (IL) level represetation of the body of a method or of a property/event accessor.
             </summary>
@@ -515,6 +536,13 @@
             be completed by the time the generator is passed to this constructor. The generator is not referenced by the resulting method body.</param>
             <param name="localsAreZeroed">True if the locals are initialized by zeroeing the stack upon method entry.</param>
             <param name="maxStack">The maximum number of elements on the evaluation stack during the execution of the method.</param>
+            <param name="methodDefinition">The definition of the method whose body this is.
+            If this is the body of an event or property accessor, this will hold the corresponding adder/remover/setter or getter method.</param>
+            <param name="localVariables"></param>
+            <param name="privateHelperTypes">Any types that are implicitly defined in order to implement the body semantics.
+            In case of AST to instructions conversion this lists the types produced.
+            In case of instructions to AST decompilation this should ideally be list of all types
+            which are local to method.</param>
         </member>
         <member name="M:Microsoft.Cci.ILGeneratorMethodBody.Dispatch(Microsoft.Cci.IMetadataVisitor)">
             <summary>
@@ -554,7 +582,6 @@
             The definition of the method whose body this is.
             If this is the body of an event or property accessor, this will hold the corresponding adder/remover/setter or getter method.
             </summary>
-            <remarks>The setter should only be called once, to complete the two phase initialization of this object.</remarks>
         </member>
         <member name="P:Microsoft.Cci.ILGeneratorMethodBody.Operations">
             <summary>
