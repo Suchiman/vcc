@@ -9532,7 +9532,7 @@
         </member>
         <member name="T:Microsoft.Cci.UtilityDataStructures.SetOfObjects">
             <summary>
-            Hashtable that can hold only single value per key.
+            A hash table used to keep track of a set of objects, providing methods to add objects to the set and to determine if an objet is a member of the set.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.#ctor">
