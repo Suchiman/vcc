@@ -2156,7 +2156,9 @@ axiom (forall S:$state, p:$ptr, f:$field ::
   {$is_union_field(f), $owner(S, $dot(p, f))}
   $good_state(S) &&
   $is_union_field(f) && 
-  $owner(S, $dot(p, f)) != $inactive_union_owner() ==> $active_option(S, p) == f);
+  ($owner(S, $dot(p, f)) != $inactive_union_owner() ==> $active_option(S, p) == f) &&
+  ($owner(S, $dot(p, f)) == $inactive_union_owner() ==> 
+    (forall q:$ptr :: {$extent_hint(q, p)} $in(q, $composite_extent(S, $dot(p, f), $typ($dot(p, f)))) ==> !$thread_local_np(S, q))));
 
 axiom (forall S:$state, p:$ptr, f:$field ::
   {$is_union_field(f), $dot(p, f), $active_option(S, p)}
