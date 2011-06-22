@@ -894,10 +894,11 @@ namespace Microsoft.Research.Vcc
             | _ -> die()
           List.iter handleExpansion macros
         | _ -> ()
-      let isntMacro = function
-        | Top.FunctionDecl f when isMacro f -> false
-        | _ -> true
-      let decls = decls |> List.filter isntMacro
+      let isMacro = function
+        | Top.FunctionDecl f -> isMacro f
+        | _ -> false
+      let macros, decls = List.partition isMacro decls
+      List.iter expand macros
       List.iter expand decls
       decls
     
