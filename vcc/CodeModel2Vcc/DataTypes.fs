@@ -36,6 +36,11 @@ let checkDatatypeDefinitions (helper:Helper.Env) decls =
   List.iter aux decls
   decls
 
+let wrapDatatypeCtors (helper:Helper.Env) (ctx:ExprCtx) self = function
+  | Call (ec, fn, tps, args) as e when not ctx.IsPure && fn.IsDatatypeOption ->
+    Some (Pure (ec, Call (ec, fn, tps, List.map self args)))
+  | _ -> None
+
 // for match stmt check that
 // - each branch uses the same type
 // - each branch ends with break or return
@@ -120,3 +125,4 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
 
 let init (helper:Helper.Env) =
   helper.AddTransformer ("datatype-check-defs", Helper.Decl (checkDatatypeDefinitions helper))
+  helper.AddTransformer ("datatype-wrap-ctors", Helper.ExprCtx (wrapDatatypeCtors helper))

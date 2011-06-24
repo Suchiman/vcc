@@ -113,7 +113,9 @@ let insertTerminationChecks (helper:Helper.Env) decls =
   let check decrRefs self e =
     match e with
     | Call (ec, fn, tps, args) as e ->
-      if fn.CustomAttr |> hasCustomAttr AttrDefinition then        
+      if fn.IsDatatypeOption then
+        None
+      elif fn.CustomAttr |> hasCustomAttr AttrDefinition then        
         let subst = fn.CallSubst args
         let assigns, callVariants = 
           fn.Variants 

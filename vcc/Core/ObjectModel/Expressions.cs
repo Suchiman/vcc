@@ -1677,7 +1677,9 @@ namespace Microsoft.Research.Vcc {
       INamespaceTypeDefinition rtype = t2 as INamespaceTypeDefinition;
 
       if (ltype != null && rtype != null && TypeHelper.TypesAreEquivalent(ltype, rtype)) {
-        if (ltype.Name.Value.StartsWith("_vcc_math_type", StringComparison.Ordinal))  return true;
+        var nam =  ltype.Name.Value;
+        if (nam.StartsWith("_vcc_math_type", StringComparison.Ordinal))  return true;
+        if (nam.StartsWith("_vcc_datatype", StringComparison.Ordinal))  return true;
         if (IsRecordType(ltype)) return true;
       }
       
