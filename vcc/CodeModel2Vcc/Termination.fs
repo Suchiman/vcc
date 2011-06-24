@@ -161,6 +161,9 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Macro (_, n, _) when n.StartsWith ("dtp_") ->
       None
 
+    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"), _) ->
+      None
+
     | Macro (ec, s, args) as e ->
       helper.GraveWarning (e.Token, 9317, "macro '" + s + "' is not supported in termination checking")
       Some e
@@ -195,7 +198,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
               Condition = None
               Triggers = [[app]]
             }
-          let axiom = Top.Axiom (Quant (ec Type.Bool, qd))
+          let axiom = Top.Axiom (if vars = [] then eq else Quant (ec Type.Bool, qd))
           [decl; axiom]
         else
           [decl]
