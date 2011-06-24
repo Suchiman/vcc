@@ -135,6 +135,26 @@ namespace System.Diagnostics.Contracts
         throw new NotImplementedException();
       }
 
+      public static BigInt operator <<(BigInt b1, int b2) {
+        throw new NotImplementedException();
+      }
+      public static BigInt operator >>(BigInt b1, int b2) {
+        throw new NotImplementedException();
+      }
+
+      public static BigInt operator &(BigInt b1, BigInt b2) {
+        throw new NotImplementedException();
+      }
+      public static BigInt operator |(BigInt b1, BigInt b2) {
+        throw new NotImplementedException();
+      }
+      public static BigInt operator ^(BigInt b1, BigInt b2) {
+        throw new NotImplementedException();
+      }
+      public static BigInt operator ~(BigInt b1) {
+        throw new NotImplementedException();
+      }
+
       public static BigInt operator -(BigInt b)
       {
         throw new NotImplementedException();

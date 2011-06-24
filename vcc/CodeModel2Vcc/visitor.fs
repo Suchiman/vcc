@@ -1422,6 +1422,8 @@ namespace Microsoft.Research.Vcc
                                  "op_Multiply", ("*", false); "op_LessThan", ("<", false); "op_LessThanOrEqual", ("<=", false);
                                  "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false);
                                  "op_UnaryNegation", ("-", false);
+                                 "op_LeftShift", ("<<", false); "op_RightShift", (">>", false); "op_BitwiseAnd", ("&", false);
+                                 "op_BitwiseOr", ("|", false); "op_BitwiseNot", ("~", false); "op_ExclusiveOr", ("^", false);
                                ]
 
         this.EnsureMethodIsVisited(methodToCall)
@@ -1430,20 +1432,10 @@ namespace Microsoft.Research.Vcc
           | (s:string) when s.StartsWith(SystemDiagnosticsContractsCodeContractMap) -> Some ()
           | _ -> None
 
-        let (|BigIntOp|_|) = function
-          | "op_Equality" 
-          | "op_Inequality" 
-          | "op_Addition" 
-          | "op_Subtraction" 
-          | "op_UnaryNegation"
-          | "op_Division" 
-          | "op_Modulus" 
-          | "op_Multiply" 
-          | "op_LessThan" 
-          | "op_LessThanOrEqual" 
-          | "op_GreaterThan" 
-          | "op_GreaterThanOrEqual" -> Some ()
-          | _ -> None
+        let (|BigIntOp|_|) = fun s ->
+          if Map.containsKey s opMap then
+            Some ()
+          else None
 
         let (|ObjsetOp|_|) = function
           | "op_Addition"
