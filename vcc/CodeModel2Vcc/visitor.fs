@@ -906,8 +906,7 @@ namespace Microsoft.Research.Vcc
                   C.Expr.MkAssert (C.Expr.Macro ({ set.Common with Type = C.Type.Bool }, "loop_writes", [set]))]
       C.Expr.Macro (C.bogusEC, "loop_contract", conds)
 
-    member this.DoneVisitingAssembly() : unit = 
-
+    member this.DoneVisitingAssembly(assembly:IAssembly) : unit = 
       if globalsType <> null then
         let contract = contractProvider.GetTypeContractFor globalsType
         if contract <> null then
@@ -916,6 +915,23 @@ namespace Microsoft.Research.Vcc
             if inv.IsAxiom then
               topDecls <- C.Top.Axiom (this.DoExpression inv.Condition) :: topDecls
               
+      let typedefs = glist []
+      (assembly :?> VccAssembly).Compilation.Parts |> 
+          Seq.iter (fun m -> m.GlobalDeclarationContainer.GlobalMembers |> 
+                                Seq.iter (function
+                                            | :? TypedefDeclaration as decl -> typedefs.Add decl
+                                            | _ -> ()))
+      let rec doTd stripPtr = function
+        | (name, C.Ptr tp) when stripPtr -> doTd false (name, tp)
+        | (name, C.Type.Ref td) ->
+          let cdot = td.Name.LastIndexOf ".."
+          if cdot > 0 && td.Name.Substring (cdot + 2) |> Seq.forall System.Char.IsDigit then
+            td.Name <- name
+        | _ -> ()
+      
+      let typedefs = typedefs |> Seq.map (fun decl -> (decl.Name.Value, decl.Type.ResolvedType |> this.DoType)) |> Seq.toList
+      typedefs |> Seq.iter (doTd false)
+      typedefs |> Seq.iter (doTd true)
       topDecls <- List.rev topDecls        
 
     member this.VisitOnly (assembly:IAssembly, fnNames) : unit =
@@ -929,8 +945,7 @@ namespace Microsoft.Research.Vcc
         let ncmp s = s = n.Name.Value
         if n.Name.Value.StartsWith("_vcc") || n.Name.Value.StartsWith("\\") || List.exists ncmp requestedFunctions || isRequired n.Name.Value then
           n.Dispatch(this)
-      this.DoneVisitingAssembly()
-
+      this.DoneVisitingAssembly assembly
 
     // The idea is to only do dispatch into children, and not put any complicated
     // logic inside Visit(***) methods. The logic should be up, in the Do*** methods.
@@ -942,7 +957,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (assembly:IAssembly) : unit =
         let ns = assembly.NamespaceRoot
         ns.Dispatch(this)
-        this.DoneVisitingAssembly()        
+        this.DoneVisitingAssembly assembly
                           
       member this.Visit (assemblyReference:IAssemblyReference) : unit = assert false
 
