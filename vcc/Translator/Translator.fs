@@ -226,6 +226,8 @@ namespace Microsoft.Research.Vcc
               | C.Type.Integer _ -> bInt 0
               | C.Type.ObjectT _ -> er "$null"
               | C.Type.Ref({Kind = C.TypeKind.Record}) -> er "$rec_zero"
+              | C.Type.Ref(td) when td.IsDataType ->
+                bCall "$dt_zero" [toTypeId t2]
               | C.Type.Ref({Name = n; Kind = C.TypeKind.MathType}) -> 
                 match n with 
                   | "ptrset" -> bCall "$set_empty" []
