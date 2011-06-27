@@ -2350,6 +2350,8 @@ function $dt2($dt_tag, int, int) : $dt;
 function $dtp_0($dt) : int;
 function $dtp_1($dt) : int;
 
+function $dt_zero($ctype) : $dt;
+
 // dt is completly defined through the tag and projections; this might not be what we want Node(int) -> only take 32 bits
 axiom (forall d:$dt :: {$has_arity($dt_hd(d), 0)}
   $has_arity($dt_hd(d), 0) ==> d == $dt0($dt_hd(d)));
