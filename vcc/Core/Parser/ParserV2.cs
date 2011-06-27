@@ -282,7 +282,7 @@ namespace Microsoft.Research.Vcc.Parsing
       List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers | Token.Identifier);
       var groupName = this.ParseNameDeclaration(true);
       slb.UpdateToSpan(groupName.SourceLocation);
-      var dummyName = this.GetNameFor(SanitizeString(slb.SourceDocument.Name.Value) + ((ISourceLocation)slb).StartIndex);
+      var dummyName = this.GetNameFor(SanitizeString(slb.SourceDocument.Name.Value) + ".." + ((ISourceLocation)slb).StartIndex);
       specifiers.Add(this.CreateAttribute("group_decl", groupName.Name.Value, groupName.SourceLocation));
       var groupDecl = new VccNestedStructDeclaration(new VccNameDeclaration(dummyName, true, groupName.SourceLocation), new List<ITypeDeclarationMember>(0), specifiers, slb);
       typeMembers.Add(groupDecl);

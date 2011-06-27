@@ -139,7 +139,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         this.GetNextToken();
       } else {
         if (requireIdentifier) this.HandleError(Error.ExpectedIdentifier);
-        name = this.GetNameFor(SanitizeString(sourceLocation.SourceDocument.Name.Value)+sourceLocation.StartIndex);
+        name = this.GetNameFor(SanitizeString(sourceLocation.SourceDocument.Name.Value)+".."+sourceLocation.StartIndex);
         compilerGenerated = true;
       }
       return new VccNameDeclaration(name, compilerGenerated, sourceLocation);
@@ -688,7 +688,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         FunctionDeclaration mangledFunc = 
           new FunctionDeclaration(cFuncTypeExp.AcceptsExtraArguments, specifiers, isExternal, 
             cFuncTypeExp.CallingConvention, visibility, cFuncTypeExp.ReturnType, 
-            new VccNameDeclaration(this.GetNameFor(cFuncTypeExp.Name.Value + cFuncTypeExp.GetHashCode()), true, cFuncTypeExp.SourceLocation),
+            new VccNameDeclaration(this.GetNameFor(cFuncTypeExp.Name.Value + ".." + cFuncTypeExp.GetHashCode()), true, cFuncTypeExp.SourceLocation),
             null, parameters, this.InSpecCode, null, slb);
         
         this.currentTypeMembers.Add(mangledFunc);
@@ -1850,7 +1850,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       NameDeclaration name = this.ParseNameDeclaration(false);
       if (name.Name == this.nameTable.System) {
         this.HandleError(name.SourceLocation, Error.ReservedName, name.Name.Value, "type name");
-        name = new VccNameDeclaration(this.GetNameFor(SanitizeString(name.SourceLocation.SourceDocument.Name.Value) + name.SourceLocation.StartIndex), true, name.SourceLocation);
+        name = new VccNameDeclaration(this.GetNameFor(SanitizeString(name.SourceLocation.SourceDocument.Name.Value) + ".." + name.SourceLocation.StartIndex), true, name.SourceLocation);
       }
       NameDeclaration mangledName = this.MangledStructuredName(name);
       NamedTypeExpression/*?*/ texpr = null;
