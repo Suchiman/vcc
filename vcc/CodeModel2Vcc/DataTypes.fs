@@ -78,6 +78,7 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
             | Some(_, continue_lbl) -> Some(case_end, continue_lbl)
             | None -> Some(case_end, ({ Name = "dummy_label"} : LabelId))
         let rec findPattern acc = function
+          | Pure (_, Call (ec, fn, _, args)) :: rest
           | Call (ec, fn, _, args) :: rest ->
             ec, fn, args, List.rev acc, rest
           | x :: rest ->
