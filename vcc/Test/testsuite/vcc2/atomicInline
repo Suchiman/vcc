@@ -1,0 +1,377 @@
+#include <vcc2test.h>
+
+typedef struct vcc(claimable) vcc(volatile_owns) _LOCK {
+  volatile int locked;
+
+  spec( obj_t protected_obj; )
+
+  invariant( locked == 0 ==> set_in(protected_obj, owns(this)) )
+} LOCK;
+
+vcc(atomic_inline)
+int ICX(volatile int *p, int tst, int rpl)
+{
+  if (*p == tst) {
+    *p = rpl;
+    return tst;
+  } else {
+    return *p;
+  }
+}
+
+void Acquire(LOCK *l claimp(c))
+  always(c, closed(l))
+  ensures( wrapped(l->protected_obj) && is_fresh(l->protected_obj) )
+{
+  int res = 0;
+
+  do 
+//    invariant(res stop == 0)
+  {
+    atomic (c, l) {
+      res = ICX(&l->locked, 0, 1);
+
+      spec(
+        if (res == 0) {
+	  giveup_closed_owner(l->protected_obj, l);
+	}
+      )
+    }
+  } while (res != 0);
+}
+
+`
+Verification of _LOCK#adm succeeded.
+Verification of Acquire succeeded.
+`
+
+#include <vcc.h>
+
+typedef unsigned __int32 UINT32;
+typedef __int32 INT32;
+
+#define _InterlockedCompareExchange(T)                                         \
+vcc(atomic_inline)                                                             \
+T InterlockedCompareExchange(volatile T *Destination, T Exchange, T Compare) { \
+  if (*Destination == Compare) {                                               \
+    *Destination = Exchange;                                                   \
+    return Compare;                                                            \
+  }                                                                            \
+  else {                                                                       \
+    return *Destination;                                                       \
+  }                                                                            \
+}                                                                              \
+
+_InterlockedCompareExchange(UINT32)
+
+_InterlockedCompareExchange(INT32)
+
+struct S {
+  volatile UINT32 ui;
+  volatile INT32 i;
+};
+
+
+void foo(struct S *s claimp(c)) 
+  always(c, closed(s))
+{
+  atomic(c,s) {
+    InterlockedCompareExchange(&s->i, -5, -7);
+  }
+}
+
+void bar(struct S *s claimp(c)) 
+  always(c, closed(s))
+{
+  atomic(c,s) {
+    InterlockedCompareExchange(&s->ui, 3, 8);
+  }
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+vcc(atomic_inline)
+int ICX(volatile int *p, int tst, int rpl)
+{
+  if (*p == tst) {
+    *p = rpl;
+    return tst;
+  } else {
+    return *p;
+  }
+}
+
+void foo(int res)
+{
+  int old;
+  old = ICX(&res, 0, 10);
+  assert(res == 10 || res == old);
+}
+`
+Verification of foo succeeded.
+`
+#include "vcc.h"
+
+vcc(atomic_inline) void foo();
+void bar() { foo(); }
+
+`
+Verification of bar succeeded.
+`
+#include "vcc.h"
+
+ispure vcc(atomic_inline) void foo();
+void bar() { foo(); }
+`
+testcase(3,1) : error VC9667: Pure function 'foo' cannot be inlined.
+`
+
+#include <vcc.h>
+
+#define RTL_MAXIMUM_EXCESSIVE_SPIN_COUNT 10000
+
+typedef unsigned __int64 UINT64;
+typedef __int32 INT32;
+
+#define NULL ((void*)0)
+
+typedef struct vcc(claimable) vcc(volatile_owns) _RTL_SPIN_LOCK
+{
+    volatile INT32 Lock;
+    spec(volatile obj_t protected_obj;)
+    invariant(protected_obj!=NULL ==> (Lock == 0 || Lock == 1))
+    invariant(old(protected_obj)!=NULL ==> unchanged(protected_obj))
+    invariant(!Lock && protected_obj!=NULL ==> set_in(protected_obj, owns(this)))
+
+} RTL_SPIN_LOCK, *PRTL_SPIN_LOCK;
+
+
+	spec(
+vcc(atomic_inline)
+int
+RtlpGiveupSpinLockOwner(
+    bool r,
+    PRTL_SPIN_LOCK SpinLock)
+{
+    if (!r) giveup_closed_owner(SpinLock->protected_obj, SpinLock);
+    return 1;
+};
+)
+
+vcc(atomic_inline) bool InterlockedBitTestAndSet(volatile INT32 *v, INT32 pos) {
+  bool result = (((*v) >> pos) & 1) == 1;
+  *v |= (1 << pos);
+  return result;
+}
+
+UINT64
+RtlpWaitForSpinLockAndAcquire(
+    __inout PRTL_SPIN_LOCK SpinLock
+    claimp(c)
+    )   
+    always(c,closed(SpinLock) && SpinLock->protected_obj!=NULL)
+    ensures(wrapped(SpinLock->protected_obj))
+    ensures(is_fresh(SpinLock->protected_obj))
+    ensures(result<=RTL_MAXIMUM_EXCESSIVE_SPIN_COUNT)
+{
+    UINT64 spinCount;
+
+    spinCount = 0;	
+
+    do
+        invariant(spinCount<=RTL_MAXIMUM_EXCESSIVE_SPIN_COUNT)
+        invariant(mutable(&spinCount))
+    {
+        do 
+            invariant(spinCount<=RTL_MAXIMUM_EXCESSIVE_SPIN_COUNT)
+            invariant(mutable(&spinCount))
+        {
+        } while (atomic_read(SpinLock->Lock, c, SpinLock) != 0);
+    } while (atomic_op(InterlockedBitTestAndSet(&SpinLock->Lock, 0),
+        c, SpinLock, RtlpGiveupSpinLockOwner(result, SpinLock)));
+
+    return spinCount;
+}
+
+`
+Verification of _RTL_SPIN_LOCK#adm succeeded.
+Verification of RtlpWaitForSpinLockAndAcquire succeeded.
+`
+#include <vcc.h>
+
+typedef struct vcc(claimable) vcc(volatile_owns) _LOCK {
+  volatile int locked;
+} LOCK;
+
+vcc(atomic_inline)
+int ICX(volatile int *p, int tst, int rpl)
+{
+  if (*p == tst) {
+    *p = rpl;
+    return tst;
+  } else {
+    return *p;
+  }
+}
+
+void Acquire(LOCK *l claimp(c))
+  always(c, closed(l))
+{
+  int res = 0;
+  int a = 0;
+  int *p = &a;
+
+  atomic (c, l) {
+    res = ICX(&l->locked, a, 1);
+  }
+}
+`
+Verification of Acquire succeeded.
+`
+#include "vcc.h"
+
+vcc(atomic_inline)
+void foo(int a spec(out int c)) {
+    spec(c = a;)
+}
+
+void bar(int a) {
+    spec(int x;)
+    foo(42 spec(out x));
+    assert(x == 42);
+}
+`
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+vcc(atomic_inline) int foo(spec(out int x)) {
+  spec(x = 10;)
+  return 1;
+};
+
+void bar(int p) {
+  spec(int i;)
+  int j;
+  j = p || foo(spec(out i));
+  assert(j);
+  assert(p || i == 10);
+  
+}
+`
+Verification of bar succeeded.
+`
+#include "vcc.h"
+
+vcc(atomic_inline)
+long _InterlockedIncrement(long volatile *target)
+#ifdef VERIFY
+{
+    unchecked(*target++);
+    // Also crashes: *target++ and with --
+    return *target;
+}
+#endif
+;
+
+struct S {
+    volatile long a;
+};
+
+void foo() {
+    struct S s;
+    spec(claim_t c;)
+    wrap(&s);
+    assert(not_shared(&s));
+    atomic (&s) {
+        _InterlockedIncrement(&s.a);
+    }
+    unwrap(&s);
+}
+`
+Verification of foo failed.
+testcase(24,31) : error VC8512: Assertion '&s.a is thread local or atomically updated' did not verify.
+`
+#include "vcc.h"
+spec(vcc(atomic_inline) bool True() { return true; })
+void foo() {
+    spec(bool f;)
+    spec(f = True();)
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+vcc(atomic_inline) bool f() {
+  return 1;
+}
+
+void test(spec(obj_t o) claimp(lock_access_claim))
+  requires(wrapped(o))
+{
+  spec(int i;)
+  atomic_op(1,
+    o,
+    result + f())
+    ;
+}
+`
+Verification of test succeeded.
+`
+#include <vcc.h>
+
+struct S {
+  volatile int a;
+  spec(volatile int b;)
+};
+
+int f(struct S *s spec(int ^x) claimp(c))
+  requires(claims(c, closed(s)))
+  requires(wrapped(c))
+  requires(x!=0 ==> mutable(x))
+{
+  atomic(s, c) {
+    s->a=5;
+    spec(x!=0 && (s->b=*x);)
+  }
+}
+
+int g(struct S *s spec(int ^x) claimp(c))
+  requires(claims(c, closed(s)))
+  requires(wrapped(c))
+  requires(x!=0 ==> mutable(x))
+{
+  atomic_op(s->a=5,
+            s, c,
+            x!=0 && (s->b=*x)
+            );
+}
+`
+Verification of f succeeded.
+Verification of g succeeded.
+`
+#include "vcc.h"
+
+struct S {
+    volatile int x;
+    spec(volatile int y;)
+};
+
+spec(vcc(atomic_inline)
+void SetX(struct S *s) {
+    s->y = 1;
+};)
+
+void foo(struct S *s)
+    requires(wrapped(s))
+{
+    atomic (s) { s->x = 1; spec(s->y = 1;) } // no warning
+    atomic (s) { s->x = 1; spec(SetX(s);) } // warning
+}
+`
+Verification of foo succeeded.
+`
