@@ -14,7 +14,6 @@ namespace Microsoft.Research.Vcc
  open Microsoft.Research.Vcc.CAST
  
  module Simplifier =
-  let isRecord (td : TypeDecl) = hasCustomAttr "record" td.CustomAttr
     
   let exprDependsOnSpecExpr (expr : Expr) = 
     let (specFound : string option ref) = ref None
@@ -113,7 +112,7 @@ namespace Microsoft.Research.Vcc
           
           let isPure = ref true         
           let rec checkForSideEffect _ = function
-            | Deref(_, Dot(_,e,f)) when hasCustomAttr "record" f.Parent.CustomAttr -> true
+            | Deref(_, Dot(_,e,f)) when f.Parent.IsRecord -> true
             | Deref _ ->
               isPure := false
               false
@@ -538,7 +537,8 @@ namespace Microsoft.Research.Vcc
        *)        
 
     let cacheAssignTarget self = function
-      | Expr.Deref (_, Dot(_, _, f)) as e when isRecord f.Parent -> (self, e)
+      | Expr.Deref (_, Dot(_, _, f)) as e when f.Parent.IsRecord -> (self, e)
+
       | Expr.Deref (c, ptr) ->
         let cacheVarKind =
           match exprDependsOnSpecExpr ptr with
@@ -845,7 +845,7 @@ namespace Microsoft.Research.Vcc
           | Dot(_, ptr, _) -> isPhysicalLocation' ptr
           | Index(_, ptr, _) -> isPhysicalLocation' ptr
           | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter|QuantBound}) -> false        
-          | Ref(_, {Type = Type.Ref td }) when hasCustomAttr "record" td.CustomAttr -> false
+          | Ref(_, {Type = Type.Ref td }) when td.IsRecord -> false
           | Ref(_, {Name = name}) when name.StartsWith("__temp") -> false // introduced during IExpression projection; unclear status
           | Deref(_, expr) -> 
             match expr.Type with 
