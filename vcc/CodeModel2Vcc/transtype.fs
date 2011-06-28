@@ -34,7 +34,7 @@ namespace Microsoft.Research.Vcc
       | _ -> ()
     markTypeDecl eqKind td
 
-  let isRecord (td : TypeDecl) = hasCustomAttr "record" td.CustomAttr
+  let isRecord (td : TypeDecl) = td.IsRecord
   
   // ============================================================================================================
   
@@ -354,7 +354,7 @@ namespace Microsoft.Research.Vcc
       let processedTypes = new Dict<TypeDecl, bool>()
   
       let tryFindBackingMember (td:TypeDecl) = 
-        let tdIsRecord = isRecord td
+        let tdIsRecord = td.IsRecord
         let isValidField (fld : Field) =
           let isValidType = 
             let rec isValidType' allowArray = function
@@ -404,7 +404,7 @@ namespace Microsoft.Research.Vcc
           match tryFindBackingMember td with
             | Some fld -> 
               let bf = { backingField fld with IsVolatile = List.exists hasVolatileInExtent td.Fields }        
-              let tdIsRecord = isRecord td
+              let tdIsRecord = td.IsRecord
               let addOtherFlds (f : Field) =
                 if f = bf || (f.IsSpec && not tdIsRecord) then () else fieldsToReplace.Add(f, bf)
               List.iter addOtherFlds (td.Fields)
@@ -914,7 +914,7 @@ namespace Microsoft.Research.Vcc
             None
         | Expr.Prim(ec, Op("==",_), [e1; e2]) ->
           match e1.Type with
-            | Type.Ref(td) when isRecord td -> Some(self (Expr.Macro(ec, "_vcc_rec_eq", [e1; e2])))
+            | Type.Ref(td) when td.IsRecord -> Some(self (Expr.Macro(ec, "_vcc_rec_eq", [e1; e2])))
             | _ -> None
         | _ -> None
 
@@ -975,7 +975,7 @@ namespace Microsoft.Research.Vcc
       and pushDownOne initial (td : TypeDecl) =
         let pdo (f:Field) =
           match f.Type with
-            | Type.Ref({Kind = Struct|Union} as td) when f.IsVolatile && not (isRecord td)->
+            | Type.Ref({Kind = Struct|Union} as td) when f.IsVolatile && not td.IsRecord ->
               let td' = mkVolTd td
               let f' = {f with IsVolatile = false; Type = Type.Ref(td')}
               if initial then initialFldToVolatileFld.Add(f, f')
@@ -1091,7 +1091,7 @@ namespace Microsoft.Research.Vcc
     let assignSingleFieldStructsByField self = function
       | Macro(ec, "=", [dst; src])  ->
         match dst.Type with
-          | Type.Ref({Fields = [fld]} as td) when not (isRecord td)->
+          | Type.Ref({Fields = [fld]} as td) when not td.IsRecord ->
             let addDot (e:Expr) = 
               let isSpecRef = function | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> true | _ -> false
               Deref({e.Common with Type = fld.Type}, Expr.MkDot(Macro({e.Common with Type = Type.MkPtr(e.Type, isSpecRef e)}, "&", [e]), fld))
@@ -1161,7 +1161,7 @@ namespace Microsoft.Research.Vcc
         else 
           let checkField (f:Field) =
             let rec checkType = function
-              | Type.Ref(td') when not (isRecord td') ->
+              | Type.Ref(td') when not td'.IsRecord ->
                 helper.Error(f.Token, 9680, "field '" + f.Name + "' of record type '" + td.Name + "' cannot be of non-record structured type '" + td'.Name + "'", Some(td'.Token))
               | Type.Volatile _ -> helper.Error(f.Token, 9683, "volatile modified on field '" + f.Name + "' in record type '" + td.Name + "' is currently not supported")
               | Type.Array _ -> helper.Error(f.Token, 9688, "inline array field '" + f.Name + "' in record type '" + td.Name + "' is currently not supported")
@@ -1175,7 +1175,7 @@ namespace Microsoft.Research.Vcc
       
       for d in decls do
         match d with
-          | Top.TypeDecl(td) when isRecord td-> checkDecl td
+          | Top.TypeDecl td when td.IsRecord -> checkDecl td
           | _ -> ()
 
       decls

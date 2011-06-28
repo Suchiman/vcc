@@ -67,6 +67,9 @@ module Microsoft.Research.Vcc.CAST
   let AttrAsArray = "as_array"
 
   [<Literal>]
+  let AttrRecord = "record"
+
+  [<Literal>]
   let AttrIsDatatypeOption = "_vcc_internal__is_datatype_option"
 
   type VarKind =    
@@ -209,7 +212,11 @@ module Microsoft.Research.Vcc.CAST
     override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
 
     member this.IsDataType = this.DataTypeOptions <> []
-    
+
+    member this.IsRecord =
+      List.exists (function VccAttr(AttrRecord, "") -> true | _ -> false) this.CustomAttr 
+
+
     override this.ToString () =
       (match this.Kind with
         | Struct -> "struct "
