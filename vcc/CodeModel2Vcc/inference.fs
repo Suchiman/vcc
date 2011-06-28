@@ -232,7 +232,7 @@ namespace Microsoft.Research.Vcc
         !keepsFound
       
       function 
-        | Top.TypeDecl({Kind = Struct|Union} as td) as top when staticOwns td &&  not (hasCustomAttr "record" td.CustomAttr) ->
+        | Top.TypeDecl({Kind = Struct|Union} as td) as top when staticOwns td && not td.IsRecord ->
           if not (hasKeeps td.Invariants) then
             let ownsThis = Macro({ bogusEC with Type = Type.PtrSet }, "_vcc_owns", [This({bogusEC with Type = Type.MkPtr(Type.Void, td.IsSpec)})]) // todo: change type to *S instead of void *
             let emptySet = Macro({ bogusEC with Type = Type.PtrSet }, "_vcc_set_empty", [])

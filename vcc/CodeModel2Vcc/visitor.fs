@@ -651,7 +651,7 @@ namespace Microsoft.Research.Vcc
                           | (true, parent) -> Some parent
                           | _ -> None
                         | _ -> None
-                      IsSpec = specFromContract || hasCustomAttr "record" customAttr
+                      IsSpec = specFromContract || hasCustomAttr C.AttrRecord customAttr
                       IsVolatile = false
                       UniqueId = C.unique()
                       DataTypeOptions = []
@@ -1061,7 +1061,8 @@ namespace Microsoft.Research.Vcc
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
         let rec isAdmissibleMapDomainType = function
           | C.Volatile t -> isAdmissibleMapDomainType t
-          | C.Ref _ 
+          | C.Type.Ref td when helper.Options.Vcc3 -> td.IsRecord || td.IsDataType
+          | C.Type.Ref _ -> false
           | C.TypeVar _
           | C.Array _
           | C.Void -> false

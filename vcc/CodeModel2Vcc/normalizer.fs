@@ -710,7 +710,7 @@ namespace Microsoft.Research.Vcc
         e.SelfMap(doSubst)
         
       let shouldHandle = function
-        | Type.Ref(td) when hasCustomAttr "record" td.CustomAttr -> true
+        | Type.Ref td -> td.IsRecord
         | _ -> false
         
       let foldBackFieldAssignments ec tmp =
