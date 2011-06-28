@@ -1112,5 +1112,6 @@ namespace Microsoft.Research.Vcc
 
     if helper.Options.Vcc3 then
       helper.AddTransformer ("fix-group-casts", Helper.Expr fixGroupCasts)
+      helper.AddTransformer ("datatype-wrap-ctors", Helper.ExprCtx (DataTypes.wrapDatatypeCtors helper))
      
     helper.AddTransformer ("desugar-end", Helper.DoNothing)
