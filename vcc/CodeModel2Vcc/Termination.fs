@@ -11,8 +11,7 @@ open Microsoft.Research.Vcc.Util
 open Microsoft.Research.Vcc.TransUtil
 open Microsoft.Research.Vcc.CAST
 
-let turnIntoPureExpression (helper:Helper.Env) expr =
-  
+let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
   let rec aux stmtCtx bindings (exprs:list<Expr>) =
     let expr, cont = exprs.Head, exprs.Tail
     //System.Console.WriteLine ("doing (cont={0}) e: {1}/{2}", cont.Length, expr, expr.GetType())
@@ -69,6 +68,9 @@ let turnIntoPureExpression (helper:Helper.Env) expr =
       | Pure (_, e)
       | Stmt (_, e) ->
         self (e :: cont)
+
+      | Assert (_, Expr.BoolLiteral (_, false), _) ->
+        Macro ({bogusEC with Type = topType}, "default", [])
 
       // ignored statements
       | Assert _
@@ -185,7 +187,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         let body = body.SelfMap (check refs)
         fn.Body <- Some body
         if fn.RetType <> Type.Void then
-          let expr = turnIntoPureExpression helper body
+          let expr = turnIntoPureExpression helper fn.RetType body
           let vars, repl = Variable.UniqueCopies (fun v -> { v with Kind = QuantBound }) fn.Parameters
           let ec t = { body.Common with Type = t }
           let app = Call (ec fn.RetType, fn, [], vars |> List.map (fun v -> Expr.Ref (ec v.Type, v)))
