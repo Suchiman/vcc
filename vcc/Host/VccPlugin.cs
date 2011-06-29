@@ -403,7 +403,7 @@ namespace Microsoft.Research.Vcc
         if (env.ShouldContinue) {
           try {
             swSaveBPL.Start();
-            TokenTextWriter writer = new TokenTextWriter(Path.ChangeExtension(fileName, ".bpl"));
+            TokenTextWriter writer = new TokenTextWriter(AddOutputDirIfRequested(Path.ChangeExtension(fileName, ".bpl")));
             p.Emit(writer);
             writer.Close();
           } finally {
