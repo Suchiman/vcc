@@ -62,6 +62,7 @@ namespace Microsoft.Research.Vcc
     public bool KeepPreprocessorFiles;
     public bool OpsAsFunctions;
     public string VerificationLocation;
+    public string OutputDir;
 
     public void CopyFrom(VccOptions other)
     {
@@ -129,6 +130,7 @@ namespace Microsoft.Research.Vcc
       this.KeepPreprocessorFiles = other.KeepPreprocessorFiles;
       this.OpsAsFunctions = other.OpsAsFunctions;
       this.DetectSyntax = other.DetectSyntax;
+      this.OutputDir = other.OutputDir;
     }
   }
 
@@ -381,7 +383,7 @@ namespace Microsoft.Research.Vcc
         case 'o':
           string /*?*/ path = this.ParseNamedArgument(arg, "out", "o");
           if (path != null) {
-            this.options.OutputFileName = path;
+            this.options.OutputDir = path;
             return true;
           }
           if (this.ParseName(arg, "omitrw", "omitrw")) {

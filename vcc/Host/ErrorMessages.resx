@@ -112,10 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Usage" xml:space="preserve">
     <value>/aggressivepruning             Remove unreferenced items when verifying specific functions (Short form: /a)
@@ -137,6 +137,7 @@
 /oldsyntax                     Use foobar(...) syntax (Short form: /os)
 /opsasfuncs                    Translate arithmetic operations into Boogie functions (Short form: /oaf)
 /omitrw                        Omit reads/writes clause checking
+/out:&lt;directory&gt;               Place generated files in &lt;directory&gt; (Short form: /o)
 /preprocessor:&lt;pp option list&gt; Options to pass on to the C preprocessor (Short form: /p)
 /pause                         Wait for a key press before terminating
 /pointersize:&lt;32|64&gt;           Size of the target platform's pointer type in bits (32,64), default is 64 (Short form: /ps)
