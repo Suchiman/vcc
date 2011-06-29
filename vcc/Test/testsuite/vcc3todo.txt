@@ -98,6 +98,9 @@ as_array-08
 specOrPhysical-10
 arrays-25
 
+# record with bitfields
+records.ns-09
+
 ###START
 # Real TODO starts here
 claims-33

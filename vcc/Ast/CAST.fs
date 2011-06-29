@@ -214,6 +214,7 @@ module Microsoft.Research.Vcc.CAST
     member this.IsDataType = this.DataTypeOptions <> []
 
     member this.IsRecord =
+      this.Kind = Record ||
       List.exists (function VccAttr(AttrRecord, "") -> true | _ -> false) this.CustomAttr 
 
 
