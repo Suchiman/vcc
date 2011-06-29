@@ -2274,48 +2274,17 @@ function {:inline true} $is_global_array(p:$ptr, T:$ctype, sz:int) returns(bool)
 // Datatypes
 // -----------------------------------------------------------------------
 
-type $dt;
 type $dt_tag;
 
-function $dt_hd($dt) : $dt_tag;
 function $has_arity($dt_tag, int) : bool;
-
-function {:inline true} $dt_testhd(e:$dt, t:$dt_tag) : bool
-  { $dt_hd(e) == t }
-
 function $is_datatype($ctype) : bool;
-function {:inline true} $def_datatype(t:$ctype) : bool
+function {:inline true} $def_datatype_type(t:$ctype) : bool
   { $def_math_type(t) && $is_datatype(t) }
 
 function $def_datatype_option(parent:$ctype, tag:$dt_tag, arity:int) : bool
   { 
     $has_arity(tag, arity)
   }
-
-// up to two arguments for now.
-function $dt0($dt_tag) : $dt;
-function $dt1($dt_tag, int) : $dt;
-function $dt2($dt_tag, int, int) : $dt;
-
-function $dtp_0($dt) : int;
-function $dtp_1($dt) : int;
-
-function $dt_zero($ctype) : $dt;
-
-// dt is completly defined through the tag and projections; this might not be what we want Node(int) -> only take 32 bits
-axiom (forall d:$dt :: {$has_arity($dt_hd(d), 0)}
-  $has_arity($dt_hd(d), 0) ==> d == $dt0($dt_hd(d)));
-axiom (forall d:$dt_tag :: {$dt0(d)}
-  $dt_hd($dt0(d)) == d);
-axiom (forall d:$dt :: {$has_arity($dt_hd(d), 1)}
-  $has_arity($dt_hd(d), 1) ==> d == $dt1($dt_hd(d), $dtp_0(d)));
-axiom (forall d:$dt_tag, v0:int :: {$dt1(d, v0)}
-  $dt_hd($dt1(d, v0)) == d && $dtp_0($dt1(d, v0)) == v0);
-axiom (forall d:$dt :: {$has_arity($dt_hd(d), 2)}
-  $has_arity($dt_hd(d), 2) ==> d == $dt2($dt_hd(d), $dtp_0(d), $dtp_1(d)));
-axiom (forall d:$dt_tag, v0:int, v1:int :: {$dt2(d, v0, v1)}
-  $dt_hd($dt2(d, v0, v1)) == d && $dtp_0($dt2(d, v0, v1)) == v0 && $dtp_1($dt2(d, v0, v1)) == v1);
-
 
 // -----------------------------------------------------------------------
 // Sets of pointers

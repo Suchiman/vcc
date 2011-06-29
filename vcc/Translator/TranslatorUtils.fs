@@ -277,7 +277,7 @@ namespace Microsoft.Research.Vcc
           | C.Type.Ref ({ Kind = C.Record } as td) ->
             if helper.Options.Vcc3 then B.Type.Ref ("RT#" + td.Name)
             else B.Type.Ref "$record"
-          | C.Type.Ref td when td.IsDataType -> B.Type.Ref "$dt"
+          | C.Type.Ref td when td.IsDataType -> B.Type.Ref ("DT#" + td.Name)
           | C.Type.Ref ({ Name = n; Kind = (C.MathType|C.FunctDecl _) }) ->
             match n with
               | "ptrset" -> tpPtrset

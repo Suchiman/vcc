@@ -160,10 +160,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Macro (_, "dt_testhd", _) ->
       None
 
-    | Macro (_, n, _) when n.StartsWith ("dtp_") ->
-      None
-
-    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"), _) ->
+    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"), _) ->
       None
 
     | Macro (ec, s, args) as e ->

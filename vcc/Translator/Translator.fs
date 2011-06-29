@@ -181,6 +181,8 @@ namespace Microsoft.Research.Vcc
         match tp with
           | C.Type.Ref td when td.IsRecord && vcc3 ->
             bCall ("REQ#" + td.Name) [e1; e2]
+          | C.Type.Ref td when td.IsDataType ->
+            bCall ("DEQ#" + td.Name) [e1; e2]
           | C.Type.Map _ ->
             bCall ("$eq." + (ctx.TypeIdToName (toTypeId tp))) [e1; e2]
           | _ ->
@@ -247,7 +249,7 @@ namespace Microsoft.Research.Vcc
                 else
                   er "$rec_zero"
               | C.Type.Ref(td) when td.IsDataType ->
-                bCall "$dt_zero" [toTypeId t2]
+                er ("DZ#" + td.Name)
               | C.Type.Ref({Name = n; Kind = C.TypeKind.MathType}) -> 
                 match n with 
                   | "ptrset" -> bCall "$set_empty" []
@@ -292,11 +294,16 @@ namespace Microsoft.Research.Vcc
         ] @ inRange
       
       let recTypeName (td:C.TypeDecl) = "RT#" + td.Name
+      let dataTypeName (td:C.TypeDecl) = "DT#" + td.Name
 
       let recType = function
         | C.Ptr (C.Type.Ref td) // we get this for nested records
         | C.Type.Ref td when td.IsRecord -> td
         | t -> helper.Panic ("record type expected, got " + t.ToString())
+
+      let dtType = function
+        | C.Type.Ref td when td.IsDataType -> td
+        | t -> helper.Panic ("data type expected, got " + t.ToString())
 
       let trRecordFetch3 (td:C.TypeDecl) (r:B.Expr) (f:C.Field) =
         match r with
@@ -506,8 +513,7 @@ namespace Microsoft.Research.Vcc
               | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
               | C.Expr.Call (_, fn, targs, args) ->
                 if fn.IsDatatypeOption then
-                  let args = List.map2 (fun (f:C.Variable) a -> trForWrite env f.Type a) fn.Parameters args
-                  bCall ("$dt" + args.Length.ToString()) (er ("DT#" + fn.Name) :: args)
+                  bCall ("DF#" + fn.Name) (selfs args)
                 else
                   let args = List.map ctx.ToTypeIdArraysAsPtrs targs @ convertArgs fn (selfs args)
                   let args =
@@ -789,10 +795,9 @@ namespace Microsoft.Research.Vcc
               | :? float as f -> ctx.GetFloatConst f
               | :? single as s -> ctx.GetFloatConst ((float)s)
               | _ -> die()
-          | ("dtp_0" | "dtp_1"), [e] ->
-            intToTyped ec.Type (bCall ("$" + n) [self e])
           | "dt_testhd", [e; C.UserData (_, (:? C.Function as fn))] ->
-            bCall "$dt_testhd" [self e; er ("DT#" + fn.Name)]
+            let td = dtType e.Type
+            bEq (bCall ("DGH#" + td.Name) [self e]) (er ("DH#" + fn.Name))
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
             B.FunctionCall(name, [self e1; self e2])
           | name, args when name.StartsWith "prelude_" ->
@@ -1748,6 +1753,20 @@ namespace Microsoft.Research.Vcc
                                                                                           IF.getLabel (B.Expr.Ref(targetPC))]))
                                                       B.Stmt.Goto (c.Token, [trLabel l])]]
             | C.Expr.Label (c, l) -> [B.Stmt.Label (c.Token, trLabel l)]
+
+            | C.Expr.Macro (_, "havoc_locals", []) -> []
+
+            | C.Expr.Macro (_, "havoc_locals", args) ->
+              let aux = function
+                | C.Expr.Ref (_, v) -> v
+                | _ -> die()
+              let vars = args |> List.map aux
+              let mkAssump v =
+                match trWhereVar v with
+                  | (_, Some e) -> [e]
+                  | _ -> []
+              [B.Stmt.Havoc (vars |> List.map ctx.VarName)
+               B.Stmt.Assume ([], vars |> List.map mkAssump |> List.concat |> bMultiAnd)]
             
             | C.Expr.Macro (_, "ignore_me", []) -> []
             | C.Expr.Macro (_, "inlined_atomic", [C.Expr.Macro (_, "ignore_me", [])]) -> []
@@ -2474,9 +2493,18 @@ namespace Microsoft.Research.Vcc
            B.Decl.Axiom (bEq (bCall "$record_field_int_kind" [er (fieldName f)]) (intKind f.Type))]
         List.map trRecField td.Fields |> List.concat
       
+      let mkSelector rt tp name ff =
+        let constrained =
+          match tp with
+            | C.Type.Integer k -> bCall "$unchecked" [toTypeId tp; ff]
+            | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [ff; toTypeId t]
+            | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [ff; toTypeId t]
+            | _ -> ff
+        (B.Decl.Function (trType tp, [], name, [("r", rt)], None), constrained)
+       
       let trRecord3 (td:C.TypeDecl) =
         let name = td.Name
-        let rt = B.Type.Ref (recTypeName td)
+        let rt = trType (C.Type.Ref td)
         let loc f = fieldName f
         let ctorArgs = td.Fields |> List.map (fun f -> (loc f, trType f.Type)) 
         let ctorCall = bCall ("RC#" + name) (ctorArgs |> List.map (fun (n, _) -> er n))
@@ -2484,28 +2512,70 @@ namespace Microsoft.Research.Vcc
         let trRecField (f:C.Field) =
           let sel = rf f ctorCall
           let ff = er (loc f)
-          let constrained =
-            match f.Type with
-              | C.Type.Integer k -> bCall "$unchecked" [toTypeId f.Type; ff]
-              | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [ff; toTypeId t]
-              | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [ff; toTypeId t]
-              | _ -> ff
-          [B.Decl.Function (trType f.Type, [], "RF#" + fieldName f, [("r", rt)], None);
-           B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[sel]], [], bEq sel constrained))]
+          let fndef, constrained = mkSelector rt f.Type ("RF#" + fieldName f) ff
+          fndef, bEq (rf f ctorCall) constrained
         let injArgs = td.Fields |> List.map (fun f -> rf f (er "r"))
         let eqArgs = td.Fields |> List.map (fun f -> typedEq f.Type (rf f (er "a")) (rf f (er "b")))
         let eqAB = bCall ("REQ#" + name) [er "a"; er "b"]
+        let prjFuns, eqs = List.map trRecField td.Fields |> List.unzip
         let tdef = [
           B.Decl.TypeDef (recTypeName td)
           B.Decl.Function (rt, [], "RC#" + name, ctorArgs, None)
           B.Decl.Function (B.Type.Bool, [], "REQ#" + name, ["a",rt; "b",rt], None)
           B.Decl.Const { Unique = false; Name = "RZ#" + name; Type = rt }
+          B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd eqs))
           B.Decl.Axiom (B.Forall (Token.NoToken, [("r", rt)], [], [], bEq (er "r") (bCall ("RC#" + name) injArgs)))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bImpl (bMultiAnd (eqArgs)) eqAB))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bEq (eqAB) (bEq (er "a") (er "b"))))
+        ] 
+        tdef @ prjFuns
+      
+      let trDataType (td:C.TypeDecl) =
+        let rt = trType (C.Type.Ref td)
+        let name = td.Name
+        let hd e = bCall ("DGH#" + name) [e]
+        let trCtor (h:C.Function) =
+          let fnconst = "DH#" + h.Name
+          let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$dt_tag" }
+          let defax = B.Decl.Axiom (bCall "$def_datatype_option" [h.RetType |> toTypeId; er fnconst; bInt (h.Parameters |> List.length)]) 
+          let args = h.Parameters |> List.mapi (fun n p -> ("p" + n.ToString(), p.Type))
+          let ctorArgs = args |> List.map (fun (n, t) -> (n, trType t))
+          let ctordef = B.Decl.Function (rt, [], "DF#" + h.Name, ctorArgs, None)
+          let ctorCall = bCall ("DF#" + h.Name) (args |> List.map (fun (n, _) -> er n))
+
+          let prjFuns = glist[]
+          let eqs = glist[]
+          let injPrjCalls = glist[]
+          let subEqs = glist[]
+           
+          let getProjection (n, t) =
+            let name = "DP#" + n + "#" + h.Name 
+            let fndef, constrained = mkSelector rt t name (er n)
+            prjFuns.Add fndef
+            eqs.Add (bEq (bCall name [ctorCall]) constrained)
+            injPrjCalls.Add (bCall name [er "a"])
+            subEqs.Add (typedEq t (bCall name [er "a"]) (bCall name [er "b"]))
+          List.iter getProjection args
+
+          let hdIs = bEq (hd ctorCall) (er fnconst)
+          let prjAxiom = B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd (hdIs :: Seq.toList eqs)))
+          let injDisj = bEq (bCall ("DF#" + h.Name) (injPrjCalls |> Seq.toList)) (er "a")
+          let eqDisj = bMultiAnd (bEq (hd (er "a")) (er fnconst) :: Seq.toList subEqs)
+          [defconst; defax; ctordef; prjAxiom] @ (prjFuns |> Seq.toList), injDisj, eqDisj
+        let eqAB = bCall ("DEQ#" + name) [er "a"; er "b"]
+        let ctorDefs, injDisjs, eqArgs = td.DataTypeOptions |> List.map trCtor |> List.unzip3
+        let tdef = [
+          B.Decl.TypeDef (dataTypeName td)
+          B.Decl.Function (B.Type.Bool, [], "DEQ#" + name, ["a",rt; "b",rt], None)
+          B.Decl.Const { Unique = false; Name = "DZ#" + name; Type = rt }
+          B.Decl.Function (B.Type.Ref "$dt_tag", [], "DGH#" + name, ["",rt], None)
+
+          B.Decl.Axiom (B.Forall (Token.NoToken, [("a", rt)], [[bCall ("DGH#" + name) [er "a"]]], [], bMultiOr injDisjs))
+          B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [], bImpl (bEq (hd (er "a")) (hd (er "b"))) (bImpl (bMultiOr eqArgs) eqAB)))
+          B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bEq (eqAB) (bEq (er "a") (er "b"))))
         ]
-        tdef :: List.map trRecField td.Fields |> List.concat
-        
+        tdef :: ctorDefs |> List.concat
+
       let trMathType (td:C.TypeDecl) =
         match td.Name with
           | "state_t"
@@ -2522,6 +2592,7 @@ namespace Microsoft.Research.Vcc
                 | C.FunctDecl _ -> (typeDef, "fnptr")
                 | C.Record when vcc3 -> (trRecord3 td, "record")
                 | C.Record -> (trRecord2 td, "record")
+                | _ when td.IsDataType -> (trDataType td, "datatype")
                 | _ -> (typeDef, "math")
             let def = if vcc3 then "$def_" else "$is_"
                         
@@ -2530,12 +2601,6 @@ namespace Microsoft.Research.Vcc
                             Type = tpCtype };           
              B.Decl.Axiom (bCall (def + kind + "_type") [er ("^" + name)])
              ] @ additions
-
-      let trDataType (h:C.Function) =
-        let fnconst = "DT#" + h.Name
-        let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$dt_tag" }
-        let defax = B.Decl.Axiom (bCall "$def_datatype_option" [h.RetType |> toTypeId; er fnconst; bInt (h.Parameters |> List.length)]) 
-        [defconst; defax]
 
       let trPureFunction (h:C.Function) =
         if not h.IsPure || h.RetType = C.Void then []
@@ -2660,12 +2725,9 @@ namespace Microsoft.Research.Vcc
       let trTop decl =
         try 
           match decl with
-            | C.Top.FunctionDecl h when h.IsDatatypeOption ->
-              trDataType h
+            | C.Top.FunctionDecl h when h.IsDatatypeOption -> []
+            | C.Top.FunctionDecl h when h.Name.StartsWith "_vcc_" && not (h.Name.StartsWith "_vcc_match") -> []
             | C.Top.FunctionDecl h ->
-              if h.Name.StartsWith "_vcc_" && not (h.Name.StartsWith "_vcc_match") then 
-                []
-              else
                 ctx.NewFunction()
                 let (proc, env) = trHeader h
                 let (init, env) = setWritesTime h.Token env h.Writes
@@ -2755,6 +2817,7 @@ namespace Microsoft.Research.Vcc
                         | None -> proc
                     | _ -> proc
                 trPureFunction h @ [B.Decl.Proc proc]
+
             | C.Top.TypeDecl td ->
               match td.Kind with
                 | C.TypeKind.Union
@@ -2762,6 +2825,7 @@ namespace Microsoft.Research.Vcc
                 | C.TypeKind.Record
                 | C.TypeKind.FunctDecl _
                 | C.TypeKind.MathType -> trMathType td
+
             | C.Top.GeneratedAxiom(e, _)
             | C.Top.Axiom e ->
               let res = trExpr initialEnv e
@@ -2783,12 +2847,14 @@ namespace Microsoft.Research.Vcc
                   | _, _ -> 
                     B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
               [B.Decl.Axiom res]
+
             | C.Top.Global ({ Kind = C.ConstGlobal ; Type = C.Ptr t } as v, _) ->
               if vcc3 then
                 [bDeclUnique tpPtr (ctx.VarName v);
                  B.Decl.Axiom (bCall "$def_global" [varRef v; toTypeId t])]
               else
                 [bDeclUnique B.Type.Int (ctx.VarName v)]
+
             | C.Top.Global _ -> die()
           with
             | Failure _ ->

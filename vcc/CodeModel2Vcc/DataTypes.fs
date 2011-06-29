@@ -92,10 +92,11 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
               usedCases.Add (fn.UniqueId, ec.Token)
             else
               helper.Error (ec.Token, 9727, "case '" + fn.Name + "' is not a member of " + dtTd.Name)
-        let mkAssign (n:int) (e:Expr) =
-          let fetch = Macro ({ bogusEC with Type = e.Type }, ("dtp_" + n.ToString()), [expr])
-          Macro (voidBogusEC(), "=", [e; fetch])
-        let assignments = args |> List.mapi mkAssign
+        let assignments =
+          [
+            Macro (voidBogusEC(), "havoc_locals", args);
+            Assume (voidBogusEC(), mkEq expr (Call (ec, fn, [], args)))
+          ]
         let body = pref @ assignments @ suff @ [Expr.Label (bogusEC, case_end)]
         let body = desugarSwitch labels (Expr.MkBlock body)
         if fallOff case_end body then

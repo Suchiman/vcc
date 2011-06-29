@@ -251,6 +251,9 @@ namespace Microsoft.Research.Vcc
           Microsoft.Boogie.OldExpr (noToken, trExpr e) :> Microsoft.Boogie.Expr // TODO: in AbsyExpr.scc we have OldExpr : Expr, AI.IFunApp // HACK ???
         | Ite (c, t, e) ->
           Microsoft.Boogie.NAryExpr (noToken, Boogie.IfThenElse (noToken), toExprSeq ([c; t; e])) :> Microsoft.Boogie.Expr
+        | Exists (_, [], _, _, e)
+        | Forall (_, [], _, _, e) ->
+          trExpr e
         | Exists (token, vl, tl, attrs, e) ->
           let vars = Boogie.VariableSeq(List.toArray (List.map (trBound (tok token)) vl))          
           let attrs = toAttributesList attrs
