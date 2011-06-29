@@ -1,28 +1,20 @@
 `/newsyntax
 #include <vcc.h>
 
-_(datatype D1 {
-  case A();
-  case B(int);
+_(datatype D {
+	case A();
+	case B(D x);
 })
 
-_(def
-int foo0(D1 d)
+_(def bool f(D d)
 {
-  switch (d) {
-  case A(): return 0;
-  case B(x): return x;
-  }
-  return 13;
-})
-
-_(ghost 
-void t0()
-{
-  _(assert foo0(A()) == 0)
-  _(assert foo0(B(7)) == 7)
-})
+	switch(d) {
+	case B(x): _(assert d == B(x)); return \false;
+        case A(): return \true;
+	}
+	return \true;
+}
+)
 `
-Verification of foo0 succeeded.
-Verification of t0 succeeded.
+Verification of f succeeded.
 `
