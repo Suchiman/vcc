@@ -254,7 +254,13 @@ namespace Microsoft.Research.Vcc
         var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
         PrepareBoogie(boogieDecls);
       }
-      using (TokenTextWriter writer = new TokenTextWriter(Path.ChangeExtension(fn, (bplFileCounter++) + ".bpl")))
+
+      fn = Path.ChangeExtension(fn, (bplFileCounter++) + ".bpl");
+      if (parent.options.OutputDir != null) {
+        fn = Path.Combine(parent.options.OutputDir, Path.GetFileName(fn));
+      }
+
+      using (TokenTextWriter writer = new TokenTextWriter(fn))
         currentBoogie.Emit(writer);
     }
 
@@ -300,7 +306,12 @@ namespace Microsoft.Research.Vcc
         VccCommandLineHost.ErrorCount++;
         if (!parent.options.RunTestSuite) {
           Console.WriteLine("attempting to dump BPL to buggy.bpl");
-          using(TokenTextWriter writer = new TokenTextWriter("buggy.bpl"))
+          var filename = "buggy.bpl";
+          if (parent.options.OutputDir != null)
+          {
+            filename = Path.Combine(parent.options.OutputDir, filename);
+          }
+          using(TokenTextWriter writer = new TokenTextWriter(filename))
             currentBoogie.Emit(writer);
         }
         errorMode = true;
@@ -421,8 +432,8 @@ namespace Microsoft.Research.Vcc
       Transformers.init(env);
       Transformers.processPipeOptions(env);
       options = env.Options;
-      this.ModelFileName = options.SaveModel ? Path.ChangeExtension(filename, "vccmodel") : null;
-      this.BvdModelFileName = options.SaveModelForBvd ? Path.ChangeExtension(filename, "model") : null;
+      this.ModelFileName = options.SaveModel ? AddOutputDirIfRequested(Path.ChangeExtension(filename, "vccmodel")) : null;
+      this.BvdModelFileName = options.SaveModelForBvd ? AddOutputDirIfRequested(Path.ChangeExtension(filename, "model")) : null;
     }
 
     public override FunctionVerifier GetFunctionVerifier(string fileName, Helper.Env env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
@@ -444,6 +455,11 @@ namespace Microsoft.Research.Vcc
       } finally {
         swBoogie.Stop();
       }   
+    }
+
+    private string AddOutputDirIfRequested(string filePath)
+    {
+      return options.OutputDir == null ? filePath : Path.Combine(options.OutputDir, Path.GetFileName(filePath));
     }
   }
 

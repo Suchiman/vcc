@@ -81,6 +81,9 @@ namespace Microsoft.Research.Vcc
       string outExtension = ".i";
       if (commandLineOptions.ModifiedPreprocessorFiles) outExtension += "." + System.Diagnostics.Process.GetCurrentProcess().Id;
       string outFileName = Path.ChangeExtension(fileName, outExtension);
+      if (commandLineOptions.OutputDir != null) {
+        outFileName = Path.Combine(commandLineOptions.OutputDir, Path.GetFileName(outFileName));
+      }
       if (StartClProcessAndReturnTrueIfErrorsAreFound(fileName, args, outFileName, commandLineOptions))
         return null;
       return outFileName;
