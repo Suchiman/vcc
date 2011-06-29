@@ -274,7 +274,9 @@ namespace Microsoft.Research.Vcc
                 mapTypeList.Add t
                 mapTypes.Add (mapName, true)
             mapType
-          | C.Type.Ref ({ Kind = C.Record }) -> B.Type.Ref "$record"
+          | C.Type.Ref ({ Kind = C.Record } as td) ->
+            if helper.Options.Vcc3 then B.Type.Ref ("RT#" + td.Name)
+            else B.Type.Ref "$record"
           | C.Type.Ref td when td.IsDataType -> B.Type.Ref "$dt"
           | C.Type.Ref ({ Name = n; Kind = (C.MathType|C.FunctDecl _) }) ->
             match n with
