@@ -194,14 +194,16 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    protected override bool ParseCompilerOption(string arg) {
+    protected override bool ParseCompilerOption(string arg)
+    {
       int n = arg.Length;
       if (n <= 1) return false;
       char ch = arg[0];
       if (ch != '/' && ch != '-') return false;
       this.options.HandledOptions.Add(arg);
       ch = arg[1];
-      switch (ch) {
+      switch (ch)
+      {
         case '2':
           bool? vcc2 = this.ParseNamedBoolean(arg, "2", "2");
           if (vcc2 != null) {
@@ -232,14 +234,13 @@ namespace Microsoft.Research.Vcc
             this.options.RunInBatchMode = true;
             return true;
           }
-          if (this.ParseName(arg, "bvd", "bvd"))
-          {
+          if (this.ParseName(arg, "bvd", "bvd")) {
             this.options.PrintCEVModel = true;
             this.options.SaveModelForBvd = true;
             return true;
           }
 
-          List<string>/*?*/ boogieOptions = this.ParseNamedArgumentList(arg, "boogie", "b");
+          List<string> /*?*/ boogieOptions = this.ParseNamedArgumentList(arg, "boogie", "b");
           if (boogieOptions == null || boogieOptions.Count == 0) return false;
           this.options.BoogieOptions.AddRange(boogieOptions);
           return true;
@@ -254,16 +255,16 @@ namespace Microsoft.Research.Vcc
             this.options.VCLikeErrorMessages = clErrors.Value;
             return true;
           }
-          string/*?*/ clPath = this.ParseNamedArgument(arg, "clpath", "clpath");
+          string /*?*/ clPath = this.ParseNamedArgument(arg, "clpath", "clpath");
           if (clPath != null) {
             this.options.ClPath = clPath;
             return true;
           }
           string filename = this.ParseNamedArgument(arg, "cevprint", "cev");
           if (filename != null) {
-              this.options.PrintCEVModel = true;
-              this.options.BoogieOptions.Add("/mv:" + filename);
-              return true;
+            this.options.PrintCEVModel = true;
+            this.options.BoogieOptions.Add("/mv:" + filename);
+            return true;
           }
           return false;
         case 'd':
@@ -318,7 +319,7 @@ namespace Microsoft.Research.Vcc
             this.options.DisplayCommandLineHelp = true;
             return true;
           }
-          List<string>/*?*/ hiddenWarnings = this.ParseNamedArgumentList(arg, "hide", "h");
+          List<string> /*?*/ hiddenWarnings = this.ParseNamedArgumentList(arg, "hide", "h");
           if (hiddenWarnings == null || hiddenWarnings.Count == 0) return false;
           foreach (string w in hiddenWarnings) {
             long tmp;
@@ -378,7 +379,7 @@ namespace Microsoft.Research.Vcc
           }
           return false;
         case 'o':
-          string/*?*/ path = this.ParseNamedArgument(arg, "out", "o");
+          string /*?*/ path = this.ParseNamedArgument(arg, "out", "o");
           if (path != null) {
             this.options.OutputFileName = path;
             return true;
@@ -408,18 +409,19 @@ namespace Microsoft.Research.Vcc
           }
 
           int pointerSize = 0;
-          if (this.TryParseNamedInteger(arg, "pointersize", "ps", ref pointerSize) && (pointerSize == 32 || pointerSize == 64)) {
+          if (this.TryParseNamedInteger(arg, "pointersize", "ps", ref pointerSize) &&
+              (pointerSize == 32 || pointerSize == 64)) {
             this.options.PointerSize = pointerSize;
             return true;
           }
 
-          List<string>/*?*/ pipeOptions = this.ParseNamedArgumentList(arg, "pipe", "pipe");
+          List<string> /*?*/ pipeOptions = this.ParseNamedArgumentList(arg, "pipe", "pipe");
           if (pipeOptions != null && pipeOptions.Count > 0) {
             this.options.PipeOperations.AddRange(pipeOptions);
             return true;
           }
 
-          List<string>/*?*/ preprocessorOptions = this.ParseNamedArgumentList(arg, "preprocessor", "p");
+          List<string> /*?*/ preprocessorOptions = this.ParseNamedArgumentList(arg, "preprocessor", "p");
           if (preprocessorOptions != null && preprocessorOptions.Count > 0) {
             //i-sebaf: If IncludeDir Contains Spaces like "Program Files" than a quote is required.
             for (int i = 0; i < preprocessorOptions.Count; i++) {
@@ -431,7 +433,7 @@ namespace Microsoft.Research.Vcc
             return true;
           }
 
-        {
+          {
             int end = arg.IndexOf(':');
             int semi = end;
             if (end < 0) end = arg.Length;
@@ -443,84 +445,103 @@ namespace Microsoft.Research.Vcc
               this.options.PluginOptions[plugin] = args;
             }
             if (semi > 0) {
-              List<string>/*?*/ pluginOptions = this.ParseNamedArgumentList(arg, option, option);
+              List<string> /*?*/ pluginOptions = this.ParseNamedArgumentList(arg, option, option);
               if (pluginOptions == null)
                 args.Add("");
               else
                 args.AddRange(pluginOptions);
-            } else {
+            }
+            else
+            {
               args.Add("");
             }
             return true;
           }
 
         case 's':
-        if (this.ParseName(arg, "suite", "s")) {
-          this.options.RunTestSuite = true;
-          this.options.NoPreprocessor = true;
-          return true;
-        } else if (this.ParseName(arg, "stats", "st")) {
-          this.options.TimeStats = true;
-          return true;
-        } else if (this.ParseName(arg, "statsvs", "stvs")) {
-          this.options.TimeStats = true;
-          this.options.TimeStatsForVs = true;
-          return true;
-        } else if (this.ParseName(arg, "smoke", "sm")) {
-          this.options.BoogieOptions.Add("/smoke");
-          return true;
-        } else {
-          if (this.TryParseNamedDouble(arg, "suitemt", "smt", ref this.options.RunTestSuiteMultiThreaded))
-            return true;
-          if (this.ParseName(arg, "suitemt", "smt")) {
-            this.options.RunTestSuiteMultiThreaded = 0.0;
+          if (this.ParseName(arg, "suite", "s"))
+          {
+            this.options.RunTestSuite = true;
+            this.options.NoPreprocessor = true;
             return true;
           }
-        }
-        return false;
+          else if (this.ParseName(arg, "stats", "st"))
+          {
+            this.options.TimeStats = true;
+            return true;
+          }
+          else if (this.ParseName(arg, "statsvs", "stvs"))
+          {
+            this.options.TimeStats = true;
+            this.options.TimeStatsForVs = true;
+            return true;
+          }
+          else if (this.ParseName(arg, "smoke", "sm"))
+          {
+            this.options.BoogieOptions.Add("/smoke");
+            return true;
+          }
+          else
+          {
+            if (this.TryParseNamedDouble(arg, "suitemt", "smt", ref this.options.RunTestSuiteMultiThreaded))
+              return true;
+            if (this.ParseName(arg, "suitemt", "smt"))
+            {
+              this.options.RunTestSuiteMultiThreaded = 0.0;
+              return true;
+            }
+          }
+          return false;
         case 't':
-        bool? detailedTimes = this.ParseNamedBoolean(arg, "time", "time");
-        if (detailedTimes != null) {
-          this.options.DetailedTimes = detailedTimes.Value;
-          return true;
-        }
-        this.options.TranslateToBPL = this.ParseName(arg, "translate", "t");
-        return true;
-        case 'u':
-        string lineStr = this.ParseNamedArgument(arg, "uptoline", "uptoline");
-        uint lineNo;
-        if (lineStr != null && UInt32.TryParse(lineStr, out lineNo)) {
-          this.options.VerifyUpToLine = lineNo;
-          return true;
-        }
-        return false;
-        case 'v':
-
-        if (this.ParseName(arg, "verify", "v")) {
-          DummyExpression dummyExpression = new DummyExpression(SourceDummy.SourceLocation);
-          this.hostEnvironment.ReportError(new AstErrorMessage(dummyExpression, Microsoft.Cci.Ast.Error.InvalidCompilerOption, "/verify is the default option and does not need to be specified explicitly"));
-          return true;
-        }
-
-        if (this.ParseName(arg, "version", "version")) {
-          this.options.DisplayVersion = true;
-          return true;
-        }
-
-        bool? vcOpt = this.ParseNamedBoolean(arg, "vo", "vcopt");
-        if (vcOpt != null) {
-          if (vcOpt.Value) this.options.VcOpt.Add("yes");
-          else this.options.VcOpt.Clear();
-          return true;
-        } else {
-          List<string> vcopts = this.ParseNamedArgumentList(arg, "vo", "vcopt");
-          if (vcopts != null) {
-            this.options.VcOpt.AddRange(vcopts);
+          bool? detailedTimes = this.ParseNamedBoolean(arg, "time", "time");
+          if (detailedTimes != null) {
+            this.options.DetailedTimes = detailedTimes.Value;
             return true;
           }
-        }
+          bool? translateToBpl = this.ParseNamedBoolean(arg, "translate", "t");
+          if (translateToBpl != null) {
+            this.options.TranslateToBPL = translateToBpl.Value;
+            return true;
+          }
+          return false;
+        case 'u':
+          string lineStr = this.ParseNamedArgument(arg, "uptoline", "uptoline");
+          uint lineNo;
+          if (lineStr != null && UInt32.TryParse(lineStr, out lineNo)) {
+            this.options.VerifyUpToLine = lineNo;
+            return true;
+          }
+          return false;
+        case 'v':
+          if (this.ParseName(arg, "verify", "v")) {
+            DummyExpression dummyExpression = new DummyExpression(SourceDummy.SourceLocation);
+            this.hostEnvironment.ReportError(new AstErrorMessage(dummyExpression,
+                                                                 Microsoft.Cci.Ast.Error.InvalidCompilerOption,
+                                                                 "/verify is the default option and does not need to be specified explicitly"));
+            return true;
+          }
 
-        return false;
+          if (this.ParseName(arg, "version", "version")) {
+            this.options.DisplayVersion = true;
+            return true;
+          }
+
+          bool? vcOpt = this.ParseNamedBoolean(arg, "vo", "vcopt");
+          if (vcOpt != null) {
+            if (vcOpt.Value) this.options.VcOpt.Add("yes");
+            else this.options.VcOpt.Clear();
+            return true;
+          }
+          else
+          {
+            List<string> vcopts = this.ParseNamedArgumentList(arg, "vo", "vcopt");
+            if (vcopts != null) {
+              this.options.VcOpt.AddRange(vcopts);
+              return true;
+            }
+          }
+
+          return false;
 
         case 'w':
           int warnLevel = -1;
@@ -528,28 +549,28 @@ namespace Microsoft.Research.Vcc
             this.options.WarningLevel = warnLevel;
             return true;
           }
-        bool? wx = this.ParseNamedBoolean(arg, "warningsaserrors", "wx");
-        if (wx != null) {
-          this.options.WarningsAsErrors = wx.Value;
-          return true;
-        }
-        return false;
+          bool? wx = this.ParseNamedBoolean(arg, "warningsaserrors", "wx");
+          if (wx != null) {
+            this.options.WarningsAsErrors = wx.Value;
+            return true;
+          }
+          return false;
         case 'x':
-        if (this.ParseName(arg, "xml", "xml")) {
-          this.options.XmlFormatOutput = true;
-          return true;
-        }
-        return false;
+          if (this.ParseName(arg, "xml", "xml")) {
+            this.options.XmlFormatOutput = true;
+            return true;
+          }
+          return false;
         case 'z':
-        List<string>/*?*/ z3Options = this.ParseNamedArgumentList(arg, "z3", "z");
-        if (z3Options == null || z3Options.Count == 0) return false;
-        this.options.Z3Options.AddRange(z3Options);
-        return true;
+          List<string> /*?*/ z3Options = this.ParseNamedArgumentList(arg, "z3", "z");
+          if (z3Options == null || z3Options.Count == 0) return false;
+          this.options.Z3Options.AddRange(z3Options);
+          return true;
         case '?':
-        this.options.DisplayCommandLineHelp = true;
-        return true;
+          this.options.DisplayCommandLineHelp = true;
+          return true;
         default:
-        break;
+          break;
       }
       return false;
     }
