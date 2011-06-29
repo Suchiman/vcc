@@ -78,29 +78,39 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
             | Some(_, continue_lbl) -> Some(case_end, continue_lbl)
             | None -> Some(case_end, ({ Name = "dummy_label"} : LabelId))
         let rec findPattern acc = function
-          | Call (ec, fn, _, args) :: rest ->
-            ec, fn, args, List.rev acc, rest
-          | x :: rest ->
+          | Call (ec, fn, _, args) :: rest when fn.IsDatatypeOption ->
+            Some (ec, fn, args, List.rev acc, rest)
+          | (Expr.VarDecl _ | Expr.Comment _ as x) :: rest ->
             findPattern (x :: acc) rest
-          | [] -> die()
-        let ec, fn, args, pref, suff = findPattern [] stmts
-        match usedCases.TryGetValue fn.UniqueId with
-          | true, loc ->
-            helper.Error (ec.Token, 9726, "the datatype case '" + fn.Name + "' is used more than once", Some loc)
-          | false, _ ->
-            if dtTd.DataTypeOptions |> _list_mem fn then
-              usedCases.Add (fn.UniqueId, ec.Token)
-            else
-              helper.Error (ec.Token, 9727, "case '" + fn.Name + "' is not a member of " + dtTd.Name)
-        let mkAssign (n:int) (e:Expr) =
-          let fetch = Macro ({ bogusEC with Type = e.Type }, ("DP#p" + n.ToString() + "#" + fn.Name), [expr])
-          Macro (voidBogusEC(), "=", [e; fetch])
-        let assignments = args |> List.mapi mkAssign
-        let body = pref @ assignments @ suff @ [Expr.Label (bogusEC, case_end)]
-        let body = desugarSwitch labels (Expr.MkBlock body)
-        if fallOff case_end body then
-          helper.Error (blockEc.Token, 9728, "possible fall-off from a match case")
-        Expr.If ({ ec with Type = Void }, None, testHd expr fn, body, (aux rest))
+          | _ -> 
+            None
+        let buildBody stmts =
+          let body = desugarSwitch labels (Expr.MkBlock stmts)
+          if fallOff case_end body then
+            helper.Error (blockEc.Token, 9728, "possible fall-off from a match case")
+          body
+
+        match findPattern [] stmts with
+          | Some (ec, fn, args, pref, suff) ->
+            match usedCases.TryGetValue fn.UniqueId with
+              | true, loc ->
+                helper.Error (ec.Token, 9726, "the datatype case '" + fn.Name + "' is used more than once", Some loc)
+              | false, _ ->
+                if dtTd.DataTypeOptions |> _list_mem fn then
+                  usedCases.Add (fn.UniqueId, ec.Token)
+                else
+                  helper.Error (ec.Token, 9727, "case '" + fn.Name + "' is not a member of " + dtTd.Name)
+            let mkAssign (n:int) (e:Expr) =
+              let fetch = Macro ({ bogusEC with Type = e.Type }, ("DP#p" + n.ToString() + "#" + fn.Name), [expr])
+              Macro (voidBogusEC(), "=", [e; fetch])
+            let assignments = args |> List.mapi mkAssign
+            let body = pref @ assignments @ suff @ [Expr.Label (bogusEC, case_end)]
+            let body = buildBody body
+            Expr.If ({ ec with Type = Void }, None, testHd expr fn, body, (aux rest))
+          | None ->
+            if rest <> [] then
+              helper.Error (rest.Head.Token, 9726, "case is unreachable (after the default: label)") 
+            buildBody stmts
       | [] ->
         let asserts = 
           dtTd.DataTypeOptions 

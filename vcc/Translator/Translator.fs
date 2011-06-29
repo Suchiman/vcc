@@ -188,6 +188,30 @@ namespace Microsoft.Research.Vcc
           | _ ->
             bEq e1 e2
        
+      let defaultValueOf = function
+        | C.Ptr _ as t ->
+          if vcc3 then addType t (er "$null")
+          else bInt 0              
+        | C.Type.Claim
+        | C.Type.MathInteger
+        | C.Type.Integer _ -> bInt 0
+        | C.Type.ObjectT _ -> er "$null"
+        | C.Type.Ref({Kind = C.TypeKind.Record} as td) ->
+          if vcc3 then 
+            er ("RZ#" + td.Name)
+          else
+            er "$rec_zero"
+        | C.Type.Ref(td) when td.IsDataType ->
+          er ("DZ#" + td.Name)
+        | C.Type.Ref({Name = n; Kind = C.TypeKind.MathType}) -> 
+          match n with 
+            | "ptrset" -> bCall "$set_empty" []
+            | "state_t" -> er "$state_zero"
+            | _ -> er "$struct_zero"
+        | C.Type.Bool -> bFalse
+        | C.Type.Map _ as t -> er ("$zero." + ctx.TypeIdToName(toTypeId t))
+        | t -> helper.Panic ("don't know default value for type " + t.ToString())
+       
       let mapEqAxioms t =
         let t1, t2 =
           match t with
@@ -234,31 +258,7 @@ namespace Microsoft.Research.Vcc
             bInvImpl (bNeq (er "p") (er "q"))
                       (bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"]) selMP)
         let selZero =
-          let zeroVal = 
-            match t2 with
-              | C.Ptr _ ->
-                if vcc3 then addType t2 (er "$null")
-                else bInt 0              
-              | C.Type.Claim
-              | C.Type.MathInteger
-              | C.Type.Integer _ -> bInt 0
-              | C.Type.ObjectT _ -> er "$null"
-              | C.Type.Ref({Kind = C.TypeKind.Record} as td) ->
-                if vcc3 then 
-                  er ("RZ#" + td.Name)
-                else
-                  er "$rec_zero"
-              | C.Type.Ref(td) when td.IsDataType ->
-                er ("DZ#" + td.Name)
-              | C.Type.Ref({Name = n; Kind = C.TypeKind.MathType}) -> 
-                match n with 
-                  | "ptrset" -> bCall "$set_empty" []
-                  | "state_t" -> er "$state_zero"
-                  | _ -> er "$struct_zero"
-              | C.Type.Bool -> bFalse
-              | C.Type.Map _ -> er ("$zero." + ctx.TypeIdToName(toTypeId t2))
-              | _ -> die()
-            
+          let zeroVal = defaultValueOf t2
           bEq (bCall sel [er zero; er "p"]) zeroVal
         let t2Eq = typedEq t2
         let eqM1M2 = bCall eq [er "M1"; er "M2"]
@@ -790,6 +790,8 @@ namespace Microsoft.Research.Vcc
             bEq (addType v.Type (bCall ("F#" + fn.Name + "#OP#" + v.Name) args)) (self arg)
           | "stackframe", [] -> er "#stackframe"
           | "map_eq", [e1; e2] -> bCall ("$eq." + (ctx.TypeIdToName (toTypeId e1.Type))) [self e1; self e2]
+          | "default", [] ->
+            defaultValueOf ec.Type
           | "float_literal", [C.Expr.UserData(_, f)] ->
             match f with
               | :? float as f -> ctx.GetFloatConst f
