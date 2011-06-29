@@ -92,11 +92,10 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
               usedCases.Add (fn.UniqueId, ec.Token)
             else
               helper.Error (ec.Token, 9727, "case '" + fn.Name + "' is not a member of " + dtTd.Name)
-        let assignments =
-          [
-            Macro (voidBogusEC(), "havoc_locals", args);
-            Assume (voidBogusEC(), mkEq expr (Call (ec, fn, [], args)))
-          ]
+        let mkAssign (n:int) (e:Expr) =
+          let fetch = Macro ({ bogusEC with Type = e.Type }, ("DP#p" + n.ToString() + "#" + fn.Name), [expr])
+          Macro (voidBogusEC(), "=", [e; fetch])
+        let assignments = args |> List.mapi mkAssign
         let body = pref @ assignments @ suff @ [Expr.Label (bogusEC, case_end)]
         let body = desugarSwitch labels (Expr.MkBlock body)
         if fallOff case_end body then
@@ -105,11 +104,12 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
       | [] ->
         let asserts = 
           dtTd.DataTypeOptions 
-            |> List.filter (fun f -> usedCases.ContainsKey f.UniqueId)
+            |> List.filter (fun f -> not (usedCases.ContainsKey f.UniqueId))
             |> List.map (fun f -> 
                   let err = afmte 8030 ("case " + f.Name + " is unhandled when matching {0}") [expr]
                   Expr.MkAssert ((mkNot (testHd expr f)).WithCommon err))
-        Expr.MkBlock (asserts @ [Expr.MkAssume (Expr.False)])
+        let finalErr = afmte 8030 "some case is unhandled when matching {0}" [expr] // this shouldn't really happen
+        Expr.MkBlock (asserts @ [Expr.MkAssert (Expr.False.WithCommon finalErr)])
       | _ -> die()
     aux cases
 

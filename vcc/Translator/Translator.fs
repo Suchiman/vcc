@@ -798,6 +798,8 @@ namespace Microsoft.Research.Vcc
           | "dt_testhd", [e; C.UserData (_, (:? C.Function as fn))] ->
             let td = dtType e.Type
             bEq (bCall ("DGH#" + td.Name) [self e]) (er ("DH#" + fn.Name))
+          | name, [e] when name.StartsWith "DP#" ->
+            bCall name [self e]
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
             B.FunctionCall(name, [self e1; self e2])
           | name, args when name.StartsWith "prelude_" ->
