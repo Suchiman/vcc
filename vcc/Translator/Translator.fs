@@ -177,6 +177,15 @@ namespace Microsoft.Research.Vcc
           | t ->
             castFromInt (trType t) fetch
          
+      let typedEq tp e1 e2 =
+        match tp with
+          | C.Type.Ref td when td.IsRecord && vcc3 ->
+            bCall ("REQ#" + td.Name) [e1; e2]
+          | C.Type.Map _ ->
+            bCall ("$eq." + (ctx.TypeIdToName (toTypeId tp))) [e1; e2]
+          | _ ->
+            bEq e1 e2
+       
       let mapEqAxioms t =
         let t1, t2 =
           match t with
@@ -210,11 +219,18 @@ namespace Microsoft.Research.Vcc
             | C.Type.Integer _ -> 
               bCall "$in_range_t" [toTypeId t1; er "p"]
             | _ -> bTrue
+        let hasComplexEq =
+          vcc3 && typedEq t1 v v <> (bEq v v)
         let selStorPP = 
-          bImpl argRange (bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) v)
+          if hasComplexEq then bTrue
+          else bImpl argRange (bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) v)
         let selStorPQ =
-          bInvImpl (bNeq (er "p") (er "q"))
-                    (bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"]) selMP)
+          if hasComplexEq then
+            bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"])
+                (B.Expr.Ite (typedEq t1 (er "p") (er "q"), v, selMP))
+          else
+            bInvImpl (bNeq (er "p") (er "q"))
+                      (bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"]) selMP)
         let selZero =
           let zeroVal = 
             match t2 with
@@ -225,7 +241,11 @@ namespace Microsoft.Research.Vcc
               | C.Type.MathInteger
               | C.Type.Integer _ -> bInt 0
               | C.Type.ObjectT _ -> er "$null"
-              | C.Type.Ref({Kind = C.TypeKind.Record}) -> er "$rec_zero"
+              | C.Type.Ref({Kind = C.TypeKind.Record} as td) ->
+                if vcc3 then 
+                  er ("RZ#" + td.Name)
+                else
+                  er "$rec_zero"
               | C.Type.Ref(td) when td.IsDataType ->
                 bCall "$dt_zero" [toTypeId t2]
               | C.Type.Ref({Name = n; Kind = C.TypeKind.MathType}) -> 
@@ -238,23 +258,22 @@ namespace Microsoft.Research.Vcc
               | _ -> die()
             
           bEq (bCall sel [er zero; er "p"]) zeroVal
-        let t2Eq =
-          match t2 with
-            | C.Type.Map _ -> fun b1 b2 -> bCall ("$eq." + (ctx.TypeIdToName (toTypeId t2))) [b1; b2]
-            | _ -> bEq
+        let t2Eq = typedEq t2
         let eqM1M2 = bCall eq [er "M1"; er "M2"]
         let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", bImpl argRange (t2Eq (bCall sel [er "M1"; er "p"]) (bCall sel [er "M2"; er "p"]))))
                              eqM1M2
         let eqM1M2Ax2 = bImpl eqM1M2 (bEq (er "M1") (er "M2"))
         
         let eqRecAx = 
-          let m1 = bCall "$rec_fetch" [er "r1"; er "f"]
-          let m2 = bCall "$rec_fetch" [er "r2"; er "f"]
-          let recEq = bCall "$rec_base_eq" [m1; m2]
-          let mapEq = bCall eq [castFromInt mt m1; castFromInt mt m2]                    
-          let vars = ["r1", tpRecord; "r2", tpRecord; "f", tpField; "R", tpCtype]
-          let isRecFld = bCall "$is_record_field" [er "R"; er "f"; toTypeId (C.Type.Map (t1, t2))]
-          B.Expr.Forall (Token.NoToken, vars, [[recEq; isRecFld]], weight "select-map-eq", bImpl mapEq recEq)
+          if vcc3 then bTrue
+          else
+            let m1 = bCall "$rec_fetch" [er "r1"; er "f"]
+            let m2 = bCall "$rec_fetch" [er "r2"; er "f"]
+            let recEq = bCall "$rec_base_eq" [m1; m2]
+            let mapEq = bCall eq [castFromInt mt m1; castFromInt mt m2]                    
+            let vars = ["r1", tpRecord; "r2", tpRecord; "f", tpField; "R", tpCtype]
+            let isRecFld = bCall "$is_record_field" [er "R"; er "f"; toTypeId (C.Type.Map (t1, t2))]
+            B.Expr.Forall (Token.NoToken, vars, [[recEq; isRecFld]], weight "select-map-eq", bImpl mapEq recEq)
         
         let mpv = ["M", tp; "p", bt1; "v", bt2]
         let m1m2 = ["M1", tp; "M2", tp]
@@ -271,6 +290,23 @@ namespace Microsoft.Research.Vcc
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["p", bt1], [], weight "select-map-eq", selZero));
          B.Decl.Axiom eqRecAx
         ] @ inRange
+      
+      let recTypeName (td:C.TypeDecl) = "RT#" + td.Name
+
+      let recType = function
+        | C.Type.Ref td when td.IsRecord -> td
+        | _ -> die()
+
+      let trRecordFetch3 (td:C.TypeDecl) (r:B.Expr) (f:C.Field) =
+        match r with
+          | B.FunctionCall (n, args) when n.StartsWith "RC#" ->
+            List.nth args (List.findIndex (fun x -> x = f) td.Fields)
+          | _ ->
+            bCall ("RF#" + fieldName f) [r]
+
+      let trRecordUpdate3 (td:C.TypeDecl) (r:B.Expr) (f:C.Field) (v:B.Expr) =
+        let args = td.Fields |> List.map (fun g -> if g = f then v else trRecordFetch3 td r g)
+        bCall ("RC#" + td.Name) args
       
       let tryDecomposeDot = function
         | B.Expr.FunctionCall ("$dot", [p; f]) -> Some [p; f]
@@ -563,14 +599,27 @@ namespace Microsoft.Research.Vcc
           | "owns_field", [e] ->
             bCall "$f_owns" [toTypeId e.Type.Deref]
 
-          | "rec_zero", [] -> er "$rec_zero"
+          | "_vcc_rec_eq", [r1; r2] when vcc3 ->
+            bCall ("REQ#" + (recType r1.Type).Name) [self r1; self r2]
+             
+          | "rec_zero", [] -> 
+            if vcc3 then
+              er ("RZ#" + (recType ec.Type).Name)
+            else
+              er "$rec_zero"
           
           | "rec_fetch", [r; C.UserData(_, (:? C.Field as f))] ->
-            let fetch = bCall "$rec_fetch" [self r; er (fieldName f)]
-            intToTyped f.Type fetch
+            if vcc3 then
+              trRecordFetch3 (recType r.Type) (self r) f
+            else
+              let fetch = bCall "$rec_fetch" [self r; er (fieldName f)]
+              intToTyped f.Type fetch
             
           | "rec_update", [r; C.UserData(_, ( :? C.Field as f) ); v] ->
-            bCall "$rec_update" [self r; er (fieldName f); trForWrite env f.Type v]
+            if vcc3 then
+              trRecordUpdate3 (recType r.Type) (self r) f (self v)
+            else
+              bCall "$rec_update" [self r; er (fieldName f); trForWrite env f.Type v]
           
           | "rec_update_bv", [r; C.UserData(_, (:? C.Field as f)); bvSize; bvStart; bvEnd; v] ->
             bCall "$rec_update_bv" [self r; er (fieldName f); self bvSize; self bvStart; self bvEnd; trForWrite env f.Type v]
@@ -2411,7 +2460,7 @@ namespace Microsoft.Research.Vcc
                  ] @ extentProps 
                    @ List.concat (List.map (trField td) allFields)
       
-      let trRecord (td:C.TypeDecl) =
+      let trRecord2 (td:C.TypeDecl) =
         let intKind = function
           | C.Type.Integer _ as t -> toTypeId t
           | _ -> er "^^mathint"
@@ -2420,6 +2469,38 @@ namespace Microsoft.Research.Vcc
            B.Decl.Axiom (bCall "$is_record_field" [toTypeId (C.Type.Ref td); er (fieldName f); toTypeId f.Type]);
            B.Decl.Axiom (bEq (bCall "$record_field_int_kind" [er (fieldName f)]) (intKind f.Type))]
         List.map trRecField td.Fields |> List.concat
+      
+      let trRecord3 (td:C.TypeDecl) =
+        let name = td.Name
+        let rt = B.Type.Ref (recTypeName td)
+        let loc f = fieldName f
+        let ctorArgs = td.Fields |> List.map (fun f -> (loc f, trType f.Type)) 
+        let ctorCall = bCall ("RC#" + name) (ctorArgs |> List.map (fun (n, _) -> er n))
+        let rf f e = bCall ("RF#" + fieldName f) [e]
+        let trRecField (f:C.Field) =
+          let sel = rf f ctorCall
+          let ff = er (loc f)
+          let constrained =
+            match f.Type with
+              | C.Type.Integer k -> bCall "$unchecked" [toTypeId f.Type; ff]
+              | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [ff; toTypeId t]
+              | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [ff; toTypeId t]
+              | _ -> ff
+          [B.Decl.Function (trType f.Type, [], "RF#" + fieldName f, [("r", rt)], None);
+           B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[sel]], [], bEq sel constrained))]
+        let injArgs = td.Fields |> List.map (fun f -> rf f (er "r"))
+        let eqArgs = td.Fields |> List.map (fun f -> typedEq f.Type (rf f (er "a")) (rf f (er "b")))
+        let eqAB = bCall ("REQ#" + name) [er "a"; er "b"]
+        let tdef = [
+          B.Decl.TypeDef (recTypeName td)
+          B.Decl.Function (rt, [], "RC#" + name, ctorArgs, None)
+          B.Decl.Function (B.Type.Bool, [], "REQ#" + name, ["a",rt; "b",rt], None)
+          B.Decl.Const { Unique = false; Name = "RZ#" + name; Type = rt }
+          B.Decl.Axiom (B.Forall (Token.NoToken, [("r", rt)], [], [], bEq (er "r") (bCall ("RC#" + name) injArgs)))
+          B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bImpl (bMultiAnd (eqArgs)) eqAB))
+          B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bEq (eqAB) (bEq (er "a") (er "b"))))
+        ]
+        tdef :: List.map trRecField td.Fields |> List.concat
         
       let trMathType (td:C.TypeDecl) =
         match td.Name with
@@ -2435,7 +2516,8 @@ namespace Microsoft.Research.Vcc
             let (additions, kind) = 
               match td.Kind with
                 | C.FunctDecl _ -> (typeDef, "fnptr")
-                | C.Record -> (trRecord td, "record")
+                | C.Record when vcc3 -> (trRecord3 td, "record")
+                | C.Record -> (trRecord2 td, "record")
                 | _ -> (typeDef, "math")
             let def = if vcc3 then "$def_" else "$is_"
                         

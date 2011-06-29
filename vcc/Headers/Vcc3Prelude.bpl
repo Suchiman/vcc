@@ -2244,56 +2244,6 @@ procedure $havoc(o:$ptr, t:$ctype);
     $composite_extent(old($s), o, t)[p] || $rd(old($s), p, f) == $rd($s, p, f));
   ensures $timestamp_post_strict(old($s), $s);
 
-// ----------------------------------------------------------------------------
-// Records
-// ----------------------------------------------------------------------------
-
-type $record;
-const $rec_zero : $record;
-function $rec_update(r:$record, f:$field, v:int) : $record;
-function $rec_fetch(r:$record, f:$field) : int;
-
-function {:inline true} $rec_update_bv(r:$record, f:$field, val_bitsize:int, from:int, to:int, repl:int) : $record
-  { $rec_update(r, f, $bv_update($rec_fetch(r, f), val_bitsize, from, to, repl)) }
-
-axiom (forall f:$field :: {$rec_fetch($rec_zero, f)} $rec_fetch($rec_zero, f) == 0);
-
-axiom (forall r:$record, f:$field, v:int :: {$rec_fetch($rec_update(r, f, v), f)}
-  $rec_fetch($rec_update(r, f, v), f) == $unchecked($record_field_int_kind(f), v));
-
-axiom (forall r:$record, f:$field :: {$rec_fetch(r, f)}
-  $in_range_t($record_field_int_kind(f), $rec_fetch(r, f)));
-
-axiom (forall r:$record, f1:$field, f2:$field, v:int :: {$rec_fetch($rec_update(r, f1, v), f2)}
-  $rec_fetch($rec_update(r, f1, v), f2) == $rec_fetch(r, f2) || f1 == f2);
-
-function $is_record_field(parent:$ctype, field:$field, field_type:$ctype) : bool;
-
-function $as_record_record_field($field) : $field;
-axiom (forall p:$ctype, f:$field, ft:$ctype :: {$is_record_field(p, f, ft), $is_record_type(ft)}
-  $is_record_field(p, f, ft) && $is_record_type(ft) ==> $as_record_record_field(f) == f);
-
-function $record_field_int_kind(f:$field) : $ctype;
-
-function $rec_eq(r1:$record, r2:$record) : bool
-  { r1 == r2 }
-function $rec_base_eq(x:int, y:int) : bool
-  { x == y }
-
-function $int_to_record(x:int) : $record;
-function $record_to_int(r:$record) : int;
-
-axiom (forall r:$record :: {$record_to_int(r)} $int_to_record($record_to_int(r)) == r);
-
-axiom (forall r1:$record, r2:$record :: {$rec_eq(r1, r2)}
-  $rec_eq(r1, r2) <==
-  (forall f:$field :: $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f))));
-
-axiom (forall r1:$record, r2:$record, f:$field ::
- {$rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, $as_record_record_field(f)))}
- $rec_base_eq($rec_fetch(r1, f), $rec_fetch(r2, f)) <==
-   $rec_eq($int_to_record($rec_fetch(r1, f)), $int_to_record($rec_fetch(r2, f))));
-
 // -----------------------------------------------------------------------
 // Globals
 // -----------------------------------------------------------------------
