@@ -294,13 +294,17 @@ namespace Microsoft.Research.Vcc
       let recTypeName (td:C.TypeDecl) = "RT#" + td.Name
 
       let recType = function
+        | C.Ptr (C.Type.Ref td) // we get this for nested records
         | C.Type.Ref td when td.IsRecord -> td
-        | _ -> die()
+        | t -> helper.Panic ("record type expected, got " + t.ToString())
 
       let trRecordFetch3 (td:C.TypeDecl) (r:B.Expr) (f:C.Field) =
         match r with
           | B.FunctionCall (n, args) when n.StartsWith "RC#" ->
-            List.nth args (List.findIndex (fun x -> x = f) td.Fields)
+            try
+              List.nth args (List.findIndex (fun x -> x = f) td.Fields)
+            with e ->
+              helper.Panic ("cannot find field " + f.Name + " in " + td.Name)
           | _ ->
             bCall ("RF#" + fieldName f) [r]
 
