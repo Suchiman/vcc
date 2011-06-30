@@ -19,7 +19,7 @@ void main()
   copy(&x,&y);
   copy(&y,&z);
   _(assert x==y && y==z)
-} 
+}
 
 /*`
 Verification of copy succeeded.

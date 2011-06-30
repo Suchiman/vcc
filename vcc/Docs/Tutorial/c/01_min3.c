@@ -6,7 +6,7 @@ int min(int a, int b)
   _(requires \true)
   _(ensures \result <= a && \result <= b)
 {
-  if (a <= b) 
+  if (a <= b)
     return a;
   else return b;
 }

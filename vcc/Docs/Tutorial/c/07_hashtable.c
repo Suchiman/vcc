@@ -16,9 +16,9 @@ _(_(pure) \integer do_mod(\integer a, \integer b);)
 
 _(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 ==> 0 <= do_mod(a, b) && do_mod(a,b) < b)
 _(axiom \forall \integer a; {do_mod(a,a)} a > 0 ==> do_mod(a, a) == 0)
-_(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 && do_mod(a, b) < b - 1 ==> 
+_(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 && do_mod(a, b) < b - 1 ==>
   do_mod(a + 1, b) == do_mod(a, b) + 1)
-_(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 && do_mod(a, b) == b - 1 ==> 
+_(axiom \forall \integer a, b; {do_mod(a,b)} a >= 0 && b > 0 && do_mod(a, b) == b - 1 ==>
   do_mod(a + 1, b) == 0)
 
 #define mod(a,b) ((unsigned)(do_mod((\integer)(a), (\integer)(b))))
@@ -33,7 +33,7 @@ struct Hashtable {
 
   _(invariant \mine((unsigned[size])keys, (struct SafeString *[size])values))
 
-  _(invariant \forall unsigned k; {match(k,0)} match(k,0) && elts[k] != NULL ==> 
+  _(invariant \forall unsigned k; {match(k,0)} match(k,0) && elts[k] != NULL ==>
     \exists unsigned d; {match(d,1)}
       match(d,1) &&
       (\forall unsigned i; {match(i,2)} match(i,2) && i < d ==> values[mod(k + i, size)] != NULL) &&
@@ -76,7 +76,7 @@ int h_insert(struct Hashtable *h, unsigned k, struct SafeString *s)
 	    i = 0;
 	  d++;
 
-	  if (d >= h->size) { 
+	  if (d >= h->size) {
 	    res = -1;
 	    break;
 	  }
@@ -132,7 +132,7 @@ unsigned i, d;
 	    i = 0;
 	  d++;
 
-	  if (d >= h->size) { 
+	  if (d >= h->size) {
 	    _(assume \false)
 	    return NULL;
 	  }

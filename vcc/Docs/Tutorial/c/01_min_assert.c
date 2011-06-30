@@ -4,10 +4,10 @@
 
 int min(int a, int b)
 {
-  int \result; 
+  int \result;
   // assume precondition of min(a,b)
   _(assume \true)
-  if (a <= b) 
+  if (a <= b)
     \result = a;
   else \result = b;
   // assert postcondition of min(a,b)
@@ -25,7 +25,7 @@ int main()
     int _res; // placeholder for the result of min()
     // assert precondition of min(x,y)
     _(assert \true)
-    // assume postcondition of min(x,y) 
+    // assume postcondition of min(x,y)
     _(assume _res <= x && _res <= y)
     z = _res; // store the result of min()
   }

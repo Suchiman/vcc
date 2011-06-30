@@ -16,14 +16,14 @@ _(dynamic_owns) struct SafeContainer {
   unsigned len;
 
   _(invariant \mine((struct SafeString *[len])strings))
-  _(invariant \forall unsigned i; i < len ==> 
+  _(invariant \forall unsigned i; i < len ==>
       \mine(strings[i]))
   _(invariant \forall unsigned i, j; i < len && j < len ==>
       i != j ==> strings[i] != strings[j])
 };
 
 /*{set}*/
-void sc_set(struct SafeContainer *c, 
+void sc_set(struct SafeContainer *c,
             struct SafeString *s, unsigned idx)
   _(requires \wrapped(c) && \wrapped(s))
   _(requires idx < c->len)
