@@ -34,7 +34,7 @@ typedef _(claimable) struct Client {
 typedef _(claimable, dynamic_owns)  struct Bakery {
   UINT N;               // number of clients
   Client *c;            // pointer to array of clients
-  _(invariant \forall UINT i; i<N ==> (&c[i])->\consistent  && (&c[i])->\valid && (c[i].bakery==\this) && (c[i].checked<=N))
+  _(invariant \forall UINT i; i<N ==> (&c[i])->\closed  && (&c[i])->\valid && (c[i].bakery==\this) && (c[i].checked<=N))
   // a client in the checking phase has priority over all the clients he's checked
   _(invariant \forall UINT i, j; i < N && j < c[i].checked && in_bakery(\this, i) ==> before(\this, i, j))
   // once i has checked a flag of a client, if the client is choosing again, he comes after i
@@ -50,7 +50,7 @@ typedef _(claimable, dynamic_owns)  struct Bakery {
   _(invariant \wrapped(cl) && cl->checked == checked &&  cl->ticket == max && !cl->flag && cl->ticket > 0)
 
 void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
-  _(requires \wrapped(sc) && \claims(sc, server->\consistent))   // need evidence that nobody will destroy the server
+  _(requires \wrapped(sc) && \claims(sc, server->\closed))   // need evidence that nobody will destroy the server
   _(requires idx < server->N && \wrapped(cl))                   // must own a client of the server
   _(requires thinking(server, idx))                              // client must be thinking
   _(writes cl)
@@ -130,7 +130,7 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
 void BakeryRelease(Bakery *server, UINT idx _(ghost \claim sc))
   _(requires serving(server, idx))
   _(requires \wrapped(sc) && idx < server->N && \wrapped(cl))
-  _(requires \claims(sc, server->\consistent))
+  _(requires \claims(sc, server->\closed))
   _(writes cl)
   _(ensures thinking(server, idx))
 {

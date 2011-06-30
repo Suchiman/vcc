@@ -3,6 +3,8 @@
 #include <vcc.h>
 #include "spec.h"
 
+#define BIT_SELECT(x, i) ((x) & (1 << (i)))
+
 // |-------------------------------------------------------|
 // | 010...                                                |
 // |-------------------------------------------------------|
@@ -21,8 +23,7 @@ typedef struct _BITMAP {
   // public abstraction
   spec(bool BM[unsigned int];) // unsigned int --> {true, false}
   invariant(forall(unsigned int i; i < Size ==>
-        BM[i] == ToBm32(Buffer[i/32])[i%32]))
-  // ToBm32: unsigned int -> ( {0..31} -> {true, false} )
+        (BM[i] <==> BIT_SELECT(Buffer[i/32], i%32))))
 
   #pragma endregion
 } BITMAP;
