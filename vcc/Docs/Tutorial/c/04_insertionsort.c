@@ -17,7 +17,7 @@ void insertion_sort(int *buf, unsigned len)
   {
     v = buf[i];
     j = i - 1;
-    for (;;) 
+    for (;;)
       _(invariant j <= i - 1)
       _(invariant sorted(buf, i))
       _(invariant (j == i - 1 && buf[i] == v) || sorted(buf, i + 1))
@@ -28,7 +28,7 @@ void insertion_sort(int *buf, unsigned len)
       if (buf[j] > v) {
         buf[j + 1] = buf[j];
         if (_(unchecked)(j--) == 0) break;
-      } else 
+      } else
         break;
     }
     buf[_(unchecked)(j + 1)] = v;

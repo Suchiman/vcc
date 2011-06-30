@@ -12,7 +12,7 @@ void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
 
   // check that the invariant holds on loop entry
   _(assert x == d*lq + lr)
-  
+
   // start an arbitrary iteration
   // forget variables modified in the loop
   {
