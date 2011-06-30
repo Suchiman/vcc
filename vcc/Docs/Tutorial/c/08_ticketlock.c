@@ -19,7 +19,7 @@ typedef _(volatile_owns) _(claimable) struct Lock {
     _(invariant \forall int i;
         \unchanged(tickets[i]) ||
         !\old(tickets[i]) ||
-        !\old(tickets[i])->\consistent)
+        !\old(tickets[i])->\closed)
         // the last one replaced 'inv(old(tickets[i]))' from the board; in the
         // VCC tool, inv() is not defined for claim pointers
 
@@ -41,7 +41,7 @@ void Initialize(Lock *lock _(ghost \object protected_object))
 }
 
 void Acquire(Lock *lock _(ghost \claim lockAccessClaim))
-    _(requires \wrapped(lockAccessClaim) && \claims(lockAccessClaim, lock->\consistent))
+    _(requires \wrapped(lockAccessClaim) && \claims(lockAccessClaim, lock->\closed))
     _(ensures \wrapped(lock->protected_object) && \fresh(lock->protected_object))
     _(writes lock) // TODO we can get rid of the writes() clause setting up a so-called "self claim", which we have avoid here
 {
@@ -64,7 +64,7 @@ void Acquire(Lock *lock _(ghost \claim lockAccessClaim))
 }
 
 void Release(Lock *lock _(ghost \claim lockAccessClaim))
-    _(requires \wrapped(lockAccessClaim) && \claims(lockAccessClaim, lock->\consistent))
+    _(requires \wrapped(lockAccessClaim) && \claims(lockAccessClaim, lock->\closed))
     _(requires \wrapped(lock->protected_object))
     _(writes lock->protected_object)
 {

@@ -14,7 +14,7 @@ _(dynamic_owns) struct List {
   _(invariant head != NULL ==> \mine(head))
   _(invariant \forall struct Node *n;
                 \mine(n) ==> n->next == NULL || \mine(n->next))
-  _(invariant \forall struct Node *n; 
+  _(invariant \forall struct Node *n;
                 \mine(n) ==> val[n->data])
 };
 /*{init}*/

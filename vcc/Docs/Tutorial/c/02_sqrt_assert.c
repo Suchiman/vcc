@@ -8,7 +8,7 @@ void isqrt(unsigned x)
   _(requires x < 0xfffe0001)
 {
   unsigned r = 0, s;
-  
+
   _(assert r*r <= x) // invariant initially holds
   r = anything();
   _(assume r*r <= x)

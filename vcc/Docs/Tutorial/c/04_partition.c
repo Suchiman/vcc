@@ -28,7 +28,7 @@ unsigned partition(int *arr, unsigned len, unsigned pivotIdx)
 {
   unsigned i, j;
   int pivot;
-  
+
   pivot = arr[pivotIdx];
 
   i = 0;
