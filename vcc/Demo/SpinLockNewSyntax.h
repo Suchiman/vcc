@@ -16,14 +16,14 @@ void InitializeSpinLock(SPIN_LOCK * SpinLock _(ghost \object obj))
   ;
 
 void Acquire(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
-  _(always access_claim, SpinLock->\consistent)
+  _(always access_claim, SpinLock->\closed)
   _(ensures \wrapped(SpinLock->protected_obj))
   _(ensures \fresh(SpinLock->protected_obj))
   ;
 
 void Release(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
   _(writes SpinLock->protected_obj)
-  _(always access_claim, SpinLock->\consistent)
+  _(always access_claim, SpinLock->\closed)
   _(requires access_claim != SpinLock->protected_obj)
   _(requires \wrapped(SpinLock->protected_obj))
   ;
