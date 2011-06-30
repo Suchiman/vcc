@@ -1,12 +1,13 @@
+//`/newsyntax
 #include "SpinLock.h"
 #include "Intrinsics.h"
 
-void InitializeSpinLock(SPIN_LOCK *SpinLock spec(obj_t obj))
+void InitializeSpinLock(SPIN_LOCK *SpinLock _(ghost \object obj))
 {
   SpinLock->Lock = 0;
-  spec(SpinLock->protected_obj = obj;)
-  set_owns(SpinLock, SET(obj));
-  wrap(SpinLock);
+  _(ghost SpinLock->protected_obj = obj;
+    ghost SpinLock->\owns = {obj};
+    wrap SpinLock)
 }
 
 #ifdef SIMPLE_SPIN_LOCKS
@@ -15,39 +16,39 @@ void Acquire(SPIN_LOCK *SpinLock)
 {
   int stop;
   do  {
-    atomic(SpinLock) {
+    _(atomic SpinLock) {
       stop = (__interlockedcompareexchange(&SpinLock->Lock, 1, 0) == 0);
-      spec(if (stop) giveup_closed_owner(SpinLock->protected_obj, SpinLock);)
+      _(ghost if (stop) _(ghost SpinLock->\owns -= SpinLock->protected_obj))
     }
   } while (!stop);
 }
 
 void Release(SPIN_LOCK *SpinLock)
 {
-  atomic(SpinLock) {
+  _(atomic SpinLock) {
     SpinLock->Lock = 0;
-    set_closed_owner(SpinLock->protected_obj, SpinLock);
+    _(ghost SpinLock->\owns += SpinLock->protected_obj);
   }
 }
 
 #else
 
-void Acquire(SPIN_LOCK *SpinLock claimp(access_claim))
+void Acquire(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
 {
   int stop;
   do {
-    atomic(access_claim, SpinLock) {
+    _(atomic access_claim, SpinLock) {
       stop = (__interlockedcompareexchange(&SpinLock->Lock, 1, 0) == 0);
-      spec(if (!stop) giveup_closed_owner(SpinLock->protected_obj, SpinLock);)
+      _(ghost if (stop) SpinLock->\owns -= SpinLock->protected_obj)
     }
   } while (!stop);
 }
 
-void Release(SPIN_LOCK *SpinLock claimp(access_claim))
+void Release(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
 {
-  atomic(access_claim, SpinLock) {
+  _(atomic access_claim, SpinLock) {
     SpinLock->Lock = 0;
-    set_closed_owner(SpinLock->protected_obj, SpinLock);
+    _(ghost  SpinLock->\owns += SpinLock->protected_obj);
   }
 }
 

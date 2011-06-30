@@ -1,28 +1,27 @@
+//`/newsyntax
 #include "BitMap.h"
 
-void InitializeBitMap (BITMAP *BitMap, unsigned int *BitMapBuffer, unsigned int Size)
+void InitializeBitMap (BITMAP *BitMap, unsigned *BitMapBuffer, unsigned Size)
 {
   BitMap->Size = Size;
   BitMap->Buffer = BitMapBuffer;
   memzero(BitMapBuffer, Size/32);
 
-  spec(BitMap->BM = lambda(unsigned int i; i < Size; false);)
-  wrap(BitMap);
+  _(ghost BitMap->BM = \lambda unsigned i; i < Size ==> \false)
+  _(wrap BitMap)
 }
 
-void SetBit (BITMAP *BitMap, unsigned int BitNumber)
+void SetBit (BITMAP *BitMap, unsigned BitNumber)
 {
-  spec(unsigned old, new;)
-
-  expose(BitMap) {
-  expose(as_array(BitMap->Buffer, BitMap->Size/32)) {
+  _(unwrapping BitMap) {
+  _(unwrapping (unsigned[BitMap->Size/32])(BitMap->Buffer)) {
 
     BitMap->Buffer[BitNumber/32] |= 1 << BitNumber % 32;
 
-    bv_lemma(forall(unsigned x, i, j; j < 32 && i != j ==>
-        (BIT_SELECT(x, i) <==> BIT_SELECT(x | (1 << j), i))));
+    _(assert {:bv} \forall unsigned x, i, j; j < 32 && i != j ==>
+      (BIT_SELECT(x, i) <==> BIT_SELECT(x | (1 << j), i)))
 
-    spec(BitMap->BM[BitNumber] = true;)
+    _(ghost BitMap->BM[BitNumber] = \true)
   }}
 }
 

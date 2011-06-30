@@ -1,19 +1,19 @@
 //`/newsyntax
 #include <vcc.h>
 
-void ssort(int *a, unsigned int len)
+void ssort(int *a, unsigned len)
   _(writes \array_range(a, len))
-  _(ensures \forall unsigned int n, m; n < m && m < len ==> a[n] <= a[m])
+  _(ensures \forall unsigned n, m; n < m && m < len ==> a[n] <= a[m])
 {
-  unsigned int i, j, k;
+  unsigned i, j, k;
   int tmp;
   for (i = 0; i < len; i++)
-    _(invariant \forall unsigned int n, m; n < m && m < i ==> a[n] <= a[m]) // sorted up to i
-    _(invariant \forall unsigned int n, m; n < i && i <= m && m < len ==> a[n] <= a[m]) // only larger values after i
+    _(invariant \forall unsigned n, m; n < m && m < i ==> a[n] <= a[m]) // sorted up to i
+    _(invariant \forall unsigned n, m; n < i && i <= m && m < len ==> a[n] <= a[m]) // only larger values after i
   {
     for (j = i, k = i; j < len; j++)
       _(invariant i <= j && j <= len && i <= k && k < len)
-      _(invariant \forall unsigned int n; i <= n && n < j ==> a[k] <= a[n])
+      _(invariant \forall unsigned n; i <= n && n < j ==> a[k] <= a[n])
     {
       if (a[j] < a[k]) k = j;
     }
