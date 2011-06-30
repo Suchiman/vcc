@@ -4,7 +4,7 @@
 
 #define FALSE 0
 #define TRUE !0
-typedef unsigned int UINT;
+typedef unsigned UINT;
 #define MAX(a, b) (a<b ? b : a)
 
 #define approvesClientFields(a) \approves(a, ticket) && \approves(a, flag) && \approves(a, checked) \

@@ -3,19 +3,18 @@
 
 #define SIMPLE_SPIN_LOCKS
 
-typedef struct vcc(claimable) vcc(volatile_owns) _SPIN_LOCK
+typedef _(claimable) _(volatile_owns) struct _SPIN_LOCK
 {
   volatile int Lock;
-
-  spec(obj_t protected_obj;)
-  invariant(!Lock ==> keeps(protected_obj))
+  _(ghost \object protected_obj)
+  _(invariant !Lock ==> \mine(protected_obj))
 } SPIN_LOCK;
 
-void InitializeSpinLock(SPIN_LOCK * SpinLock spec(obj_t obj))
-  writes(span(SpinLock), obj)
-  requires(wrapped(obj))
-  ensures(wrapped(SpinLock))
-  ensures(SpinLock->protected_obj == obj)
+void InitializeSpinLock(SPIN_LOCK * SpinLock _(ghost \object obj))
+  _(writes \span(SpinLock), obj)
+  _(requires \wrapped(obj))
+  _(ensures \wrapped(SpinLock))
+  _(ensures SpinLock->protected_obj == obj)
   ;
 
 #ifdef SIMPLE_SPIN_LOCKS
@@ -23,32 +22,32 @@ void InitializeSpinLock(SPIN_LOCK * SpinLock spec(obj_t obj))
 #define _claimable_
 
 void Acquire(SPIN_LOCK *SpinLock)
-  requires(wrapped(SpinLock))
-  ensures(wrapped(SpinLock->protected_obj))
-  ensures(is_fresh(SpinLock->protected_obj))
+  _(requires \wrapped(SpinLock))
+  _(ensures \wrapped(SpinLock->protected_obj))
+  _(ensures \fresh(SpinLock->protected_obj))
  ;
 
 void Release(SPIN_LOCK *SpinLock)
-  writes(SpinLock->protected_obj)
-  requires(wrapped(SpinLock))
-  requires(wrapped(SpinLock->protected_obj))
+  _(writes SpinLock->protected_obj)
+  _(requires \wrapped(SpinLock))
+  _(requires \wrapped(SpinLock->protected_obj))
  ;
 
 #else
 
-#define _claimable_ vcc(claimable)
+#define _claimable_ _(claimable)
 
-void Acquire(SPIN_LOCK *SpinLock claimp(access_claim))
-  always(access_claim, closed(SpinLock))
-  ensures(wrapped(SpinLock->protected_obj))
-  ensures(is_fresh(SpinLock->protected_obj))
+void Acquire(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
+  _(always access_claim, SpinLock->\closed)
+  _(ensures \wrapped(SpinLock->protected_obj))
+  _(ensures \fresh(SpinLock->protected_obj))
   ;
 
-void Release(SPIN_LOCK *SpinLock claimp(access_claim))
-  writes(SpinLock->protected_obj)
-  always(access_claim, closed(SpinLock))
-  requires(access_claim != SpinLock->protected_obj)
-  requires(wrapped(SpinLock->protected_obj))
+void Release(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
+  _(writes SpinLock->protected_obj)
+  _(always access_claim, SpinLock->\closed)
+  _(requires access_claim != SpinLock->protected_obj)
+  _(requires \wrapped(SpinLock->protected_obj))
   ;
 
 #endif
