@@ -1029,7 +1029,7 @@ namespace Microsoft.Research.Vcc
                   match fldToVolatileFld.TryGetValue(f) with
                     | true, f' -> Some(Expr.MkDot(ec, expr', f'))
                     | false, _ -> Some(Dot(ec, expr', f))
-                | _ -> None
+                | _ -> Some(Dot(ec, expr', f))
 
         // for the above to work as expected, we need to propagate volatile type information outward
   
