@@ -2,42 +2,26 @@
 #include <vcc.h>
 
 _(abstract int foo0()
-  _(decreases 1)
   _(ensures \result > 0)
 {
   return 7;
 })
 
 _(def int foo1()
-  _(decreases 1)
   _(ensures \result > 0)
 {
   return 7;
 })
 
-/* Currently unsound
-_(abstract int fooFail0()
-  _(ensures \result > 0)
-{
-  return -7;
-})
-
-_(def int fooFail1()
-  _(ensures \result > 0)
-{
-  return -7;
-})
-*/
-
 _(def int bar0()
-  _(decreases 2)
+  _(level 1)
   _(ensures \result > 0)
 {
   return foo0();
 })
 
 _(def int bar1()
-  _(decreases 2)
+  _(level 1)
   _(ensures \result > 0)
 {
   return foo1();

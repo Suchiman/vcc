@@ -2877,6 +2877,8 @@ function {:inline} $int_lt_or(called:int, caller:int, otherwise:bool) : bool
   (0 <= caller && called < caller) || (called == caller && otherwise)
 }
 
+const $decreases_level : int;
+
 // ----------------------------------------------------------------------------
 // Datatypes
 // ----------------------------------------------------------------------------

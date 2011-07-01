@@ -28,6 +28,13 @@ let setDecreasesLevel (helper:Helper.Env) decls =
           Expr.True
         | e -> e
       fn.Requires <- List.map checkDecr fn.Requires
+      let lev =
+        if fn.DecreasesLevel <> 0 || fn.IsWellFounded then
+          fn.DecreasesLevel
+        else
+          System.Int32.MaxValue
+      let assump = Expr.MkAssume (Macro (boolBogusEC(), "decreases_level_is", [mkInt lev]))
+      fn.Body <- Option.map (addStmts [assump]) fn.Body
     | _ -> ()
   List.iter aux decls
   decls
@@ -133,13 +140,15 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
   aux true Map.empty [expr]
 
 let insertTerminationChecks (helper:Helper.Env) decls =
-  let check decrRefs self e =
+  let check (currFn:Function) decrRefs self e =
     match e with
     | Call (ec, fn, tps, args) as e ->
       if fn.IsDatatypeOption then
         None
       elif fn.Name.StartsWith "lambda#" then
         None 
+      elif fn.DecreasesLevel < currFn.DecreasesLevel then
+        None
       elif fn.IsWellFounded then        
         let subst = fn.CallSubst args
         let assigns, callVariants = 
@@ -208,7 +217,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           fn.Variants <- fn.Parameters |> List.map (fun v -> Ref ({ bogusEC with Type = v.Type }, v))
         let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
         let body = Expr.MkBlock (assigns @ [fn.Body.Value])
-        let body = body.SelfMap (check refs)
+        let body = body.SelfMap (check fn refs)
         fn.Body <- Some body
         if fn.RetType <> Type.Void && fn.CustomAttr |> hasCustomAttr AttrDefinition then
           let expr = turnIntoPureExpression helper fn.RetType body
