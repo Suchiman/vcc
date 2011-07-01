@@ -11,6 +11,27 @@ open Microsoft.Research.Vcc.Util
 open Microsoft.Research.Vcc.TransUtil
 open Microsoft.Research.Vcc.CAST
 
+let setDecreasesLevel (helper:Helper.Env) decls =
+  let aux = function
+    | Top.FunctionDecl fn ->
+      let checkDecr = function
+        | CallMacro (ec, "_vcc_decreases_level", _, [arg]) ->
+          match arg with
+            | Expr.IntLiteral (_, n) ->
+              match System.Int32.TryParse (n.ToString()) with
+                | true, k ->
+                  fn.DecreasesLevel <- k
+                | _ ->
+                  helper.Error (ec.Token, 9733, "_(level ...) needs to fit integer range")
+            | _ -> 
+              helper.Error (ec.Token, 9734, "_(level ...) needs a compile time constant")
+          Expr.True
+        | e -> e
+      fn.Requires <- List.map checkDecr fn.Requires
+    | _ -> ()
+  List.iter aux decls
+  decls
+
 let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
   let rec aux stmtCtx bindings (exprs:list<Expr>) =
     let expr, cont = exprs.Head, exprs.Tail
@@ -213,4 +234,5 @@ let insertTerminationChecks (helper:Helper.Env) decls =
   List.collect aux decls
 
 let init (helper:Helper.Env) =
+  helper.AddTransformer ("termination-set-level", Helper.Decl (setDecreasesLevel helper))
   helper.AddTransformer ("termination-add-checks", Helper.Decl (insertTerminationChecks helper))

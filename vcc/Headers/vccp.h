@@ -225,6 +225,9 @@ _(bool \macro_out_param(\object p)
 _(template<typename T> bool \result_macro_returns(T res, T expr)
   _(ensures res == expr))
 
+_(bool \macro_level(\integer l)
+  _(requires \decreases_level(l)))
+
 _(logic bool \wrapped0(\object o) = \wrapped(o) && o->\claim_count == 0)
 _(logic template<typename T> bool \unchanged(T expr) = \old(expr) == expr)
 
@@ -250,6 +253,7 @@ _(\object \heap_alloc(\type);)
 _(bool \start_here();)
 _(\objset \new_ownees(\object, \objset);)
 _(template<typename T, typename S> T \static_cast(S expr);)
+_(bool \decreases_level(\integer);)
 
 _(template<typename T, typename S> T \labeled_expression(char *label_name, S label_argument, T expr); )
 
