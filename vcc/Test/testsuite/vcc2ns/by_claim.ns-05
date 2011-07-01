@@ -7,7 +7,7 @@ typedef _(claimable) struct _TH_PROCESS {
 
 
 void ThpCreateThread(PTH_PROCESS Process _(ghost \claim c))
-  _(always c, Process->\consistent)
+  _(always c, Process->\closed)
   _(writes c)
 {
   _(assert _(by_claim c)(Process->x) == 0)

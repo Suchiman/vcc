@@ -7,7 +7,7 @@ struct B {
   _(:G) volatile int z;
   _(ghost \claim c)
   
-  _(invariant \mine(c) && \claims(c, (\this::G)->\consistent))
+  _(invariant \mine(c) && \claims(c, (\this::G)->\closed))
   _(invariant \mine(\this::G))
 };
  

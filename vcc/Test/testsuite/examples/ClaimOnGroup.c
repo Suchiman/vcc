@@ -18,9 +18,9 @@ int test(struct F *f)
 {
 	_(ghost \claim c)
 	
-	_(assert ((struct F::g*)f)->\consistent)
+	_(assert ((struct F::g*)f)->\closed)
 	
-	_(ghost c = \make_claim({(struct F::g*)f}, ((struct F::g*)f)->\consistent))
+	_(ghost c = \make_claim({(struct F::g*)f}, ((struct F::g*)f)->\closed))
 }
 
 /*`

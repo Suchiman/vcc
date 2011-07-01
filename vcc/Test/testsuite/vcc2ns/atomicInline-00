@@ -21,7 +21,7 @@ int ICX(volatile int *p, int tst, int rpl)
 }
 
 void Acquire(LOCK *l _(ghost \claim c))
-  _(always c, l->\consistent)
+  _(always c, l->\closed)
   _(ensures  \wrapped(l->protected_obj) && \fresh(l->protected_obj))
 {
   int res = 0;

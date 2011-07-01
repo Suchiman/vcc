@@ -17,7 +17,7 @@ int ICX(volatile int *p, int tst, int rpl)
 }
 
 void Acquire(LOCK *l _(ghost \claim c))
-  _(always c, l->\consistent)
+  _(always c, l->\closed)
 {
   int res = 0;
   int a = 0;

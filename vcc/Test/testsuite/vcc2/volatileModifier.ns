@@ -56,7 +56,7 @@ typedef struct _X {
 
 
 void ok1(X*x _(ghost \claim c))
-  _(always c, x->\consistent)
+  _(always c, x->\closed)
 {
   int q;
   _(atomic c,x) {
@@ -65,7 +65,7 @@ void ok1(X*x _(ghost \claim c))
 }
 
 void ok11(X*x _(ghost \claim c))
-  _(always c, x->\consistent)
+  _(always c, x->\closed)
 {
   int q;
   _(atomic c,x) {
@@ -83,7 +83,7 @@ void nok2(X*x)
 }
 
 void ok2(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,x,y) {
     x->vol = 7;
@@ -91,7 +91,7 @@ void ok2(X*x,X*y _(ghost \claim c))
 }
 
 void nok3(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,x,y) {
     x->nonvol = 7;
@@ -99,7 +99,7 @@ void nok3(X*x,X*y _(ghost \claim c))
 }
 
 void nok4(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,y) {
     x->vol = 7;
@@ -109,7 +109,7 @@ void nok4(X*x,X*y _(ghost \claim c))
 
 _(ghost 
 void specok1(X*x _(ghost \claim c))
-  _(always c, x->\consistent)
+  _(always c, x->\closed)
 {
   _(ghost int q;)
   _(atomic c,x) {
@@ -119,7 +119,7 @@ void specok1(X*x _(ghost \claim c))
 
 _(ghost 
 void specok11(X*x _(ghost \claim c))
-  _(always c, x->\consistent)
+  _(always c, x->\closed)
 {
   int q;
   _(atomic c,x) {
@@ -139,7 +139,7 @@ void nspecok2(X*x)
 
 
 void specok2(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,x,y) {
     _(ghost x->specvol = 7;)
@@ -147,7 +147,7 @@ void specok2(X*x,X*y _(ghost \claim c))
 }
 
 void nspecok3(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,x,y) {
     _(ghost x->specnonvol = 7;)
@@ -155,7 +155,7 @@ void nspecok3(X*x,X*y _(ghost \claim c))
 }
 
 void nspecok4(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,y) {
     _(ghost x->specvol = 7;)
@@ -193,7 +193,7 @@ struct S {
 };
 
 void foo1(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c, s) {
     s->nonvol = 1;
@@ -202,7 +202,7 @@ void foo1(struct S *s _(ghost \claim c))
 }
 
 void foo2(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c, s) {
     _(begin_update)
@@ -211,7 +211,7 @@ void foo2(struct S *s _(ghost \claim c))
 }
 
 void foo3(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c, s) {
     s->vol = 1;
@@ -220,7 +220,7 @@ void foo3(struct S *s _(ghost \claim c))
 }
 
 void foo4(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c, s) {
     _(begin_update)
@@ -289,7 +289,7 @@ typedef _(claimable) struct _Foo
 } Foo;
 
 void foo(Foo* p _(ghost \claim c))
-    _(always c,(&p->c)->\consistent)
+    _(always c,(&p->c)->\closed)
 {
     _(atomic c,&p->c) {
         p->c.AsUNSIGNED = 2;
@@ -314,7 +314,7 @@ struct S {
 };
 
 void foo(struct S *p _(ghost \claim c))
-  _(always c, p->\consistent)
+  _(always c, p->\closed)
 {
   _(atomic c,p) {
     p->a = 10;
@@ -348,7 +348,7 @@ struct sum {
 void test(struct sum *s _(ghost \claim c))
  _(requires \wrapped(s))
  _(writes s)
-    _(always c, (&s->c[0])->\consistent && (&s->c[1])->\consistent)
+    _(always c, (&s->c[0])->\closed && (&s->c[1])->\closed)
 {
  int i,j;
 
@@ -387,7 +387,7 @@ typedef _(claimable) struct _S
 } S;
 
 void foo(S* p _(ghost \claim c))
-    _(always c,p->\consistent)
+    _(always c,p->\closed)
 {
     unsigned x;
     _(atomic c,p,&p->cntr) {
@@ -448,7 +448,7 @@ PNode ICX(volatile PNode  *p, PNode tst, PNode rpl)
 }
 
 void drain(struct Stack *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c,s) {
     s->head = NULL;
@@ -457,7 +457,7 @@ void drain(struct Stack *s _(ghost \claim c))
 }
 
 void move(struct Stack *s1, struct Stack *s2 _(ghost \claim c))
-  _(always c, s1->\consistent && s2->\consistent)
+  _(always c, s1->\closed && s2->\closed)
 {
   struct Node *n, *n2;
   _(ghost  \objset s1_owns;)
@@ -486,7 +486,7 @@ void move(struct Stack *s1, struct Stack *s2 _(ghost \claim c))
 }
 
 void drainFail1(struct Stack *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c,s) {
     _(set_closed_owns s, {})
@@ -495,7 +495,7 @@ void drainFail1(struct Stack *s _(ghost \claim c))
 
 
 void moveFail1(struct Stack *s1, struct Stack *s2 _(ghost \claim c))
-  _(always c, s1->\consistent && s2->\consistent)
+  _(always c, s1->\closed && s2->\closed)
 {
   struct Node *n, *n2;
   _(ghost  \objset s1_owns;)

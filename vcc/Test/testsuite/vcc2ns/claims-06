@@ -7,7 +7,7 @@ _(claimable) struct A {
 };
 
 void ClaimsValidOnlyInFullStops(struct A *a _(ghost \claim c))
-  _(always c, a->\consistent && a->x == 22)
+  _(always c, a->\closed && a->x == 22)
 {
   int y;
   int z;
@@ -20,7 +20,7 @@ void ClaimsValidOnlyInFullStops(struct A *a _(ghost \claim c))
 }
 
 void RequiresIsNotEnough(struct A *a)
-  _(requires a->\consistent)
+  _(requires a->\closed)
 {
   _(atomic a) {
   }

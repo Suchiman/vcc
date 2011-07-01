@@ -32,7 +32,7 @@ _(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int E
 }
 
 void Acquire(LOCK *l _(ghost \claim c))
-  _(always c, l->\consistent)
+  _(always c, l->\closed)
   _(ensures  \wrapped(l->protected_obj) && \fresh(l->protected_obj))
 {
   int stop = 0;
@@ -46,7 +46,7 @@ void Acquire(LOCK *l _(ghost \claim c))
 }
 
 void Release(LOCK *l _(ghost \claim c))
-  _(always c, l->\consistent)
+  _(always c, l->\closed)
   _(requires l->protected_obj != c)
   _(writes  l->protected_obj)
   _(requires  \wrapped(l->protected_obj))
@@ -75,7 +75,7 @@ LOCK DataLock;
 DATA Data;
 
 void testit(_(ghost \claim c))
-  _(always c, (&DataContainer)->\consistent)
+  _(always c, (&DataContainer)->\closed)
 {
   Acquire(&DataLock _(ghost c));
     _(unwrapping &Data) {
@@ -98,7 +98,7 @@ void boot()
   _(ghost (&DataContainer)->\owns += &DataLock);
   _(wrap &DataContainer)
 
-  _(ghost c = \make_claim({&DataContainer}, (&DataContainer)->\consistent);) 
+  _(ghost c = \make_claim({&DataContainer}, (&DataContainer)->\closed);) 
   testit(_(ghost c));
 }
 

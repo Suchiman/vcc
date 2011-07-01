@@ -20,7 +20,7 @@ RtlAcquireSpinLock(
     PRTL_SPIN_LOCK SpinLock
     _(ghost \claim c)
     )
-    _(always c,SpinLock->\consistent && SpinLock->protected_obj!=NULL)
+    _(always c,SpinLock->\closed && SpinLock->protected_obj!=NULL)
     _(ensures \wrapped(SpinLock->protected_obj))
     _(ensures \fresh(SpinLock->protected_obj))
     ;
@@ -37,11 +37,11 @@ struct T {
   _(ghost \claim Claim)
   
   _(invariant \mine(&L, Claim))
-  _(invariant \claims(Claim, (&L)->\consistent && L.protected_obj == &s))
+  _(invariant \claims(Claim, (&L)->\closed && L.protected_obj == &s))
 };
 
 void foo(struct T *p _(ghost \claim c))
-  _(always c, p->\consistent)
+  _(always c, p->\closed)
 {
   _(assert \claims_claim(c, p->Claim))
   RtlAcquireSpinLock(&p->L _(ghost c));

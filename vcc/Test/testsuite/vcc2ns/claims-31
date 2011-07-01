@@ -7,14 +7,14 @@
     (\wrapped(structure) && structure->\claim_count==1 && \
     \wrapped0((structure)->protector) && \
     \active_claim((structure)->protector) && \claims_object(((structure)->protector),(structure)) && \
-    \claims(((structure)->protector), structure->\consistent && stays_unchanged(structure->protector)) && \
+    \claims(((structure)->protector), structure->\closed && stays_unchanged(structure->protector)) && \
     \claims(((structure)->protector), (expression)))
 
 _(claimable) struct S {
     unsigned dummy;
     _(ghost volatile \claim protector)
     _(ghost volatile unsigned protected)
-    _(invariant (\old(protector))->\consistent ==> \unchanged(protector) && \unchanged(protected))
+    _(invariant (\old(protector))->\closed ==> \unchanged(protector) && \unchanged(protected))
 };
 
 void middle(struct S *s)

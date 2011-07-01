@@ -9,7 +9,7 @@ _(claimable) struct A {
 
 
 void fail1(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
   _(writes c)
   _(requires c->\claim_count == 0)
 { 
@@ -21,7 +21,7 @@ void fail1(struct A*a _(ghost \claim c))
 }
 
 void fail2(struct A*a,struct A*b _(ghost \claim c))
-  _(always c, b->\consistent)
+  _(always c, b->\closed)
   _(requires \always_by_claim(c, a))
 { 
   int z;

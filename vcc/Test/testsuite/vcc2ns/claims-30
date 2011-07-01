@@ -10,7 +10,7 @@ void foo(struct S *s)
 	_(ghost \claim c;)
 	_(ghost c = \make_claim({s},1))
 	_(ghost \destroy_claim(c, {s}));
-	_(assert !c->\consistent)
+	_(assert !c->\closed)
 }
 `
 Verification of foo succeeded.

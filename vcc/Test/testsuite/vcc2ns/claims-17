@@ -8,7 +8,7 @@ _(claimable) struct Foo
 };
  
 void foo(struct Foo *o _(ghost \claim c))
-  _(always c,o->\consistent)
+  _(always c,o->\closed)
   _(writes o)
   _(ensures \false)
 {

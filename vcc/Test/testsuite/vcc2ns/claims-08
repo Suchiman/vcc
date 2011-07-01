@@ -14,7 +14,7 @@ struct Stack {
 };
 
 bool t1(struct Stack *s _(ghost \claim c))
-    _(always c, s->\consistent)
+    _(always c, s->\closed)
 {
 	_(atomic c, s) {
 	   _(wrap s)
@@ -22,7 +22,7 @@ bool t1(struct Stack *s _(ghost \claim c))
 }
 
 bool t2(struct Stack *s _(ghost \claim c))
-    _(always c, s->\consistent)
+    _(always c, s->\closed)
 {
 	_(atomic c, s) {
 	   _(unwrap s)
@@ -32,7 +32,7 @@ bool t2(struct Stack *s _(ghost \claim c))
 void foo () { }
 
 bool t3(struct Stack *s _(ghost \claim c))
-    _(always c, s->\consistent)
+    _(always c, s->\closed)
 {
 	_(atomic c, s) {
 		foo();

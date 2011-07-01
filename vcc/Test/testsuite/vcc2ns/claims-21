@@ -7,7 +7,7 @@ _(claimable) struct FooBar {
 
 void f(struct FooBar *b _(ghost \claim cc))
   _(requires \wrapped(b))
-  _(requires cc->\consistent)
+  _(requires cc->\closed)
   _(writes b)
 {
   _(ghost \claim c)

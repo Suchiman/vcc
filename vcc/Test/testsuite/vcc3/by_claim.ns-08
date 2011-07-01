@@ -8,7 +8,7 @@ _(claimable) struct S {
 
 vcc_attr("no_infer", "always_by_claim")
 void foo(struct S *s _(ghost \claim c))
-    _(always c, s->\consistent)
+    _(always c, s->\closed)
 {
     _(atomic c,s) {}
     _(assert \is_array(s->x, 3))

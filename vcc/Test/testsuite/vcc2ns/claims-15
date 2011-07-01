@@ -20,7 +20,7 @@ struct DESC {
 	_(:Group) CONC o;
 	
 	_(ghost _(:Group) \claim c)
-	_(invariant :Group \mine(c) && \claims(c, (&o)->\consistent))
+	_(invariant :Group \mine(c) && \claims(c, (&o)->\closed))
 };
 
 void update_o(struct DESC *d)

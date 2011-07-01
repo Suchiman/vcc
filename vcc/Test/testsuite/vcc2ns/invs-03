@@ -3,15 +3,15 @@
 typedef unsigned __int64 UINT64, *PUINT64;
 typedef _(volatile_owns) _(dynamic_owns) struct _rwkey{
   int data;
-  _(invariant \on_unwrap(\this, \unchanged(\this->\consistent) || \inv2(&ghost)))
+  _(invariant \on_unwrap(\this, \unchanged(\this->\closed) || \inv2(&ghost)))
   //on_unwrap(closed(&ghost) ==> inv2(&ghost))
-  _(invariant (!\old(\this->\consistent) && (\this->\consistent)) ==> \inv2(&ghost))// needed for admissibility without having b => closed(rwkey) in ghost
+  _(invariant (!\old(\this->\closed) && (\this->\closed)) ==> \inv2(&ghost))// needed for admissibility without having b => closed(rwkey) in ghost
   _(invariant \unchanged(\this->\owns) || \inv2(&ghost))
 } rwkey;
 
 typedef _(volatile_owns) _(dynamic_owns) struct _rwkey2{
   int data;
-  _(invariant \unchanged(\this->\consistent) || \inv2(&ghost))
+  _(invariant \unchanged(\this->\closed) || \inv2(&ghost))
   _(invariant \unchanged(\this->\owns) || \inv2(&ghost))
 } rwkey2;
 
@@ -23,7 +23,7 @@ typedef _(dynamic_owns) struct p
    
     _(ghost \claim IpiClaim) 
     _(invariant IpiClaim \in \this->\owns)
-    _(invariant \claims(IpiClaim, (\this::Ipi)->\consistent && (&ghost)->\consistent)) 
+    _(invariant \claims(IpiClaim, (\this::Ipi)->\closed && (&ghost)->\closed)) 
     _(:Ipi)
     UINT64 CpuNumber;
     
@@ -48,15 +48,15 @@ typedef _(claimable) _(dynamic_owns) struct _ownerkpr{
     _(invariant \unchanged(i))
     int dummy;
     _(invariant \gemb(&kpr) \in \this->\owns)
-    _(invariant (\gemb(&kpr))->\consistent)
+    _(invariant (\gemb(&kpr))->\closed)
     _(invariant \forall UINT64 i; i < 64 ==> (kpr[i]::Ipi \in \this->\owns))
-    _(invariant \forall UINT64 i; i < 64 ==> ((kpr[i]::Ipi)->\consistent && (kpr[i]::Ipi)->\valid && (kpr[i]->CpuNumber == i))) 
+    _(invariant \forall UINT64 i; i < 64 ==> ((kpr[i]::Ipi)->\closed && (kpr[i]::Ipi)->\valid && (kpr[i]->CpuNumber == i))) 
      
     _(invariant \forall UINT64 i, j; i < 64 && j < 64  ==> (i != j ==> kpr[i] != kpr[j]
       ))
   
 
-   _(invariant \forall UINT64 i, j; i < 64 && j < 64  ==> ((kpr[i]->flag) ==> (&kpr[i]->read[j])->\consistent))
+   _(invariant \forall UINT64 i, j; i < 64 && j < 64  ==> ((kpr[i]->flag) ==> (&kpr[i]->read[j])->\closed))
 
 }ownerkpr;
 

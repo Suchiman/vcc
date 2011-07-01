@@ -11,7 +11,7 @@ void foo( _(ghost \claim c) )
   _(maintains \wrapped(c));
 
 void bar(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
   _(writes c)
 {
   int tmp = _(by_claim c)(s->x);

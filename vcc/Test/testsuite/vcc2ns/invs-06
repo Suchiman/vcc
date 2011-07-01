@@ -17,13 +17,13 @@ typedef _(claimable) struct Client {
 
 typedef struct Bakery {
 	Client *c;
-	_(invariant \forall UINT i; i<N ==> (&c[i])->\consistent /*&& typed(&c[i])*/ && (c[i].bakery==\this))
+	_(invariant \forall UINT i; i<N ==> (&c[i])->\closed /*&& typed(&c[i])*/ && (c[i].bakery==\this))
 	_(invariant \forall UINT i; i<N  ==> c[i].choosing)
 } Bakery;
 
 void client(Bakery *server, Client *cl _(ghost UINT idx) _(ghost \claim sc))
 _(requires \wrapped0(sc) && idx<N && \wrapped(cl))
-_(requires \claims(sc,server->\consistent && &server->c[idx]==cl))
+_(requires \claims(sc,server->\closed && &server->c[idx]==cl))
 _(writes cl,sc)
 {
 	_(atomic sc,server,cl) {

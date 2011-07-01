@@ -17,7 +17,7 @@ struct A {
 
 void LockFreeIncr(struct A *a _(ghost \claim c))
   _(writes c)
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
   _(ensures c->\claim_count == \old(c->\claim_count))
 {
   int y;

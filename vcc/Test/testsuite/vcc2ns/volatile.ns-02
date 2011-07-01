@@ -7,7 +7,7 @@ typedef struct Goo {
 } Goo;
 
 void foo(Goo *g _(ghost \claim c))
-  _(always c, g->\consistent)
+  _(always c, g->\closed)
 {
   _(atomic c, g) {
     g->f[1] = 1;
@@ -15,7 +15,7 @@ void foo(Goo *g _(ghost \claim c))
 }
 
 void fooShouldFail(Goo *g _(ghost \claim c))
-  _(always c, g->\consistent)
+  _(always c, g->\closed)
 {
   _(atomic c, g) {
     g->f[0] = 1;

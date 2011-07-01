@@ -24,7 +24,7 @@ typedef _(claimable) _(volatile_owns) struct _Rundown {
    _(ghost volatile bool alive;) 
    _(ghost volatile bool enabled;) 
    _(ghost Protector enabled_protector;) 
-  _(invariant \old((&enabled_protector)->\consistent) ==> \unchanged(enabled) && \unchanged(alive))
+  _(invariant \old((&enabled_protector)->\closed) ==> \unchanged(enabled) && \unchanged(alive))
 
   _(invariant !alive ==> !enabled && count == 0)
   // cannot set both count and alive in one step
@@ -79,18 +79,18 @@ void InitializeRundown(Rundown *r _(ghost \object obj) _(out \claim rdi))
 
 void ReferenceRundown(Rundown *r _(out \claim res) _(ghost \claim rdi))
   // we want a claim to our enabled rundown
-  _(always rdi, r->\consistent && r->enabled)
+  _(always rdi, r->\closed && r->enabled)
   // we will give out a fresh claim with zero ref_cnt
   _(ensures \wrapped0(res) && \fresh(res))
   // the claim will reference r->self_claim, will guarantee that the protected_obj is closed and the rundown is initialized
-  _(ensures \claims(res, \claims_object(res, r->self_claim) && r->\consistent && (r->protected_obj)->\consistent && r->count > 0))
+  _(ensures \claims(res, \claims_object(res, r->self_claim) && r->\closed && (r->protected_obj)->\closed && r->count > 0))
 {
    _(ghost \claim c;) 
 
   _(atomic r, rdi) {
     _(assume r->count < 0xffffffff)
     InterlockedIncrement(&r->count);
-     _(ghost res = \make_claim({r->self_claim}, r->count > 0 && (r->protected_obj)->\consistent && \when_claimed(r->self_claim) == r->self_claim);) 
+     _(ghost res = \make_claim({r->self_claim}, r->count > 0 && (r->protected_obj)->\closed && \when_claimed(r->self_claim) == r->self_claim);) 
   }
 }
 
@@ -98,7 +98,7 @@ void DereferenceRundown(Rundown *r _(ghost \claim  h))
   // we write the claim, what will we do with it? we're not telling.
   _(writes h)
   // we want a claim to self_claim with no outstanding references guaranteeing that rundown is fully initialized
-  _(requires \wrapped0(h) && \claims(h, \claims_object(h, r->self_claim) && r->\consistent && r->count > 0))
+  _(requires \wrapped0(h) && \claims(h, \claims_object(h, r->self_claim) && r->\closed && r->count > 0))
 {
   _(atomic h, r) {
     _(ghost \destroy_claim(h, {r->self_claim}));
@@ -222,7 +222,7 @@ Resource *KillRundownContainerDead(RundownContainer *cont)
 }
 
 void UseRundown(Resource *a, Rundown *r _(ghost \claim rdi))
-  _(always rdi, r->\consistent && r->protected_obj == a && r->enabled)
+  _(always rdi, r->\closed && r->protected_obj == a && r->enabled)
 {
    _(ghost \claim ac;) 
   ReferenceRundown(r _(out ac) _(ghost rdi));

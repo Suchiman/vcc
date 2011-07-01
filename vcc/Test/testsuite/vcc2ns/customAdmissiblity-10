@@ -3,7 +3,7 @@
 
 typedef struct _T {
         int dummy;
-        _(invariant (!\old(\this->\consistent) && \this->\consistent) || \false)
+        _(invariant (!\old(\this->\closed) && \this->\closed) || \false)
 } T;
 
 void bar()
@@ -36,7 +36,7 @@ void foo(T2* p)
 }
 `
 Verification of _T#adm failed.
-testcase(5,36) : error VC8013: invariant(!\old(\this->\consistent)) is not admissible (stuttering).
+testcase(5,36) : error VC8013: invariant(!\old(\this->\closed)) is not admissible (stuttering).
 Verification of _T2#adm failed.
 testcase(25,31) : error VC8013: invariant(\old(s.x) > s.x) is not admissible (stuttering).
 Verification of bar succeeded.

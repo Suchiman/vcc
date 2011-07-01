@@ -8,7 +8,7 @@ _(claimable) struct A {
 
 void incr(struct A *a, int *res _(ghost \claim c) _(out \claim cres))
   _(writes c, res)
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
   // there will be a single new child to c
   _(ensures c->\claim_count == \old(c->\claim_count) + 1)
   // the claim we return will be child of c

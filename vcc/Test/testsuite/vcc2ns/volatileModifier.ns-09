@@ -25,7 +25,7 @@ PNode ICX(volatile PNode  *p, PNode tst, PNode rpl)
 }
 
 void drain(struct Stack *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c,s) {
     s->head = NULL;
@@ -34,7 +34,7 @@ void drain(struct Stack *s _(ghost \claim c))
 }
 
 void move(struct Stack *s1, struct Stack *s2 _(ghost \claim c))
-  _(always c, s1->\consistent && s2->\consistent)
+  _(always c, s1->\closed && s2->\closed)
 {
   struct Node *n, *n2;
   _(ghost  \objset s1_owns;)
@@ -63,7 +63,7 @@ void move(struct Stack *s1, struct Stack *s2 _(ghost \claim c))
 }
 
 void drainFail1(struct Stack *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c,s) {
     _(set_closed_owns s, {})
@@ -72,7 +72,7 @@ void drainFail1(struct Stack *s _(ghost \claim c))
 
 
 void moveFail1(struct Stack *s1, struct Stack *s2 _(ghost \claim c))
-  _(always c, s1->\consistent && s2->\consistent)
+  _(always c, s1->\closed && s2->\closed)
 {
   struct Node *n, *n2;
   _(ghost  \objset s1_owns;)

@@ -8,7 +8,7 @@ struct A {
 struct B {
   struct A *a;
   _(ghost \claim c)
-  _(invariant \mine(c) && c->\consistent)
+  _(invariant \mine(c) && c->\closed)
   _(invariant \claims(c, \this->a->x > 0))
   _(invariant a->x > 0)
 };

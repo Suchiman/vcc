@@ -161,7 +161,7 @@ _(ghost {
 PSINGLE_LIST_ENTRY PopEntryList( PSINGLE_LIST_ENTRY ListHead )
     _(requires ListHead \in (ListHead->Manager)->\owns)
     _(requires ListHead == ListHead->Manager->ListHead)
-    _(requires ListHead->\consistent)
+    _(requires ListHead->\closed)
     _(maintains \wrapped(ListHead->Manager))
     _(ensures \old(ListHead->Manager->size) == 1 ==> \result == NULL)
     _(ensures \old(ListHead->Manager->size) > 1 ==> \result == \old(ListHead->Next))

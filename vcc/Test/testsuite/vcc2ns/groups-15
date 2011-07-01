@@ -24,8 +24,8 @@ int test2a(struct Struct *s)
     _(ghost \claim c)
 
     _(atomic s) {
-      _(assert (s::g)->\consistent)
-      _(ghost c = \make_claim({s::g}, (s::g)->\consistent))
+      _(assert (s::g)->\closed)
+      _(ghost c = \make_claim({s::g}, (s::g)->\closed))
     }
 
     _(atomic c,  s::g){
@@ -52,8 +52,8 @@ int test(struct Struct *s)
     _(ghost \claim c)
 
     _(atomic s) {
-      _(assert (s::g)->\consistent)
-      _(ghost c = \make_claim({s::g}, (s::g)->\consistent))
+      _(assert (s::g)->\closed)
+      _(ghost c = \make_claim({s::g}, (s::g)->\closed))
     }
 
     _(atomic c, s::g){
@@ -74,7 +74,7 @@ _(claimable) struct Struct1
 };
  
   int test1(struct Struct1 *s _(ghost \claim c))
-     _(always c, s->\consistent)
+     _(always c, s->\closed)
  {
     _(atomic c, s){
     _(begin_update)

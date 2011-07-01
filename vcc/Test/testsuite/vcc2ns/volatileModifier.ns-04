@@ -13,7 +13,7 @@ typedef _(claimable) struct _Foo
 } Foo;
 
 void foo(Foo* p _(ghost \claim c))
-    _(always c,(&p->c)->\consistent)
+    _(always c,(&p->c)->\closed)
 {
     _(atomic c,&p->c) {
         p->c.AsUNSIGNED = 2;

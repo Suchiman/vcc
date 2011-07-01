@@ -14,7 +14,7 @@ mailbox mbox[2];
 _(invariant :ipi \depends(\this->\owner, \this))
 _(ghost \claim c)
 _(invariant \mine(c) &&
-\claims(c, (&ghost)->\consistent))
+\claims(c, (&ghost)->\closed))
 _(invariant &(_(by_claim c)(onepls))->mbox[1] \in \this->\owns)
 _(invariant &(_(by_claim c)(kpr[1]))->mbox[1] \in \this->\owns)
 } pls, *ppls;

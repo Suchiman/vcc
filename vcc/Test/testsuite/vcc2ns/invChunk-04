@@ -3,7 +3,7 @@
 
 struct CannotClose {
   int y;
-  _(invariant !\old(\this->\consistent) && \this->\consistent ==> 0)
+  _(invariant !\old(\this->\closed) && \this->\closed ==> 0)
 };
 
 struct CannotOpen {
@@ -13,7 +13,7 @@ struct CannotOpen {
 
 struct CannotOpenShouldFail {
   int y;
-  _(invariant y < 2 ==> \old(\this->\consistent) && !\this->\consistent ==> 0)
+  _(invariant y < 2 ==> \old(\this->\closed) && !\this->\closed ==> 0)
 };
   
 void foo()
@@ -41,14 +41,14 @@ void bar_2(struct CannotOpenShouldFail *x)
 {
   _(unwrap x)
 }
-// TODO check \consistent vs. \closed inconsistencies below
+// TODO check \closed vs. \closed inconsistencies below
 `
 Verification of CannotClose#adm succeeded.
 Verification of CannotOpen#adm succeeded.
 Verification of CannotOpenShouldFail#adm failed.
-testcase(15,29) : error VC8018: invariant(y < 2 ==> \old(\this->\consistent) && !\this->\consistent ==> 0) of CannotOpenShouldFail forbids unwrapping.
+testcase(15,29) : error VC8018: invariant(y < 2 ==> \old(\this->\closed) && !\this->\closed ==> 0) of CannotOpenShouldFail forbids unwrapping.
 Verification of foo failed.
-testcase(21,24) : error VC8014: invariant(!\old(\this->\consistent) && \this->\consistent ==> 0) of CannotClose fails on wrap.
+testcase(21,24) : error VC8014: invariant(!\old(\this->\closed) && \this->\closed ==> 0) of CannotClose fails on wrap.
 testcase(5,29) : error VC9599: (related information) location of the invariant.
 Verification of ok2 succeeded.
 Verification of bar failed.

@@ -12,18 +12,18 @@ struct B_fail1 {
   struct A *a;
   _(ghost \claim ca)
 
-  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == _(by_claim ca)(a->vol_x))
 };
 
 void fail1(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 { 
   int z = _(by_claim c)(a->vol_x);
 }
 
 void fail2(struct A*a, int *x _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 { 
   int z = _(by_claim c)(*x);
 }

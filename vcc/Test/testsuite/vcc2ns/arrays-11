@@ -6,7 +6,7 @@ struct S {
 };
 
 void foo(struct S *p _(ghost \claim c))
-  _(always c, p->\consistent)
+  _(always c, p->\closed)
 {
   _(atomic p,c) {
     p->a[1] = 5;

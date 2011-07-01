@@ -129,7 +129,7 @@ _(writes p)
     _(writes p)
   {
    _(ghost \claim c)
-    _(ghost c = \make_claim({p}, p->\consistent))
+    _(ghost c = \make_claim({p}, p->\closed))
   }
 }
 `

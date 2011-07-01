@@ -13,7 +13,7 @@ typedef _(claimable) struct Container {
 void test(Container *c _(ghost \claim claim))
     _(requires \wrapped(claim))
     _(requires \active_claim(claim))
-    _(requires \claims(claim, c->\consistent))
+    _(requires \claims(claim, c->\closed))
 {
     _(atomic c, claim)
     {

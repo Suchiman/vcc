@@ -14,7 +14,7 @@ struct Stack {
 };
 
 bool push(struct Node *n, struct Stack *s _(ghost \claim c))
-    _(always c, s->\consistent)
+    _(always c, s->\closed)
     _(requires \mutable(n) && n->\owns == {})
     _(writes n, n->next)
 {

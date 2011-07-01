@@ -267,7 +267,7 @@ struct Dummy1 {
 };
 
 void foo1(struct Dummy1 *d, struct VS *vs _(ghost \claim c))
-  _(always c, d->\consistent && vs->\consistent && vs->yappr == d)
+  _(always c, d->\closed && vs->\closed && vs->yappr == d)
 {
   _(atomic vs, c) {
     vs->y = 10;
@@ -275,7 +275,7 @@ void foo1(struct Dummy1 *d, struct VS *vs _(ghost \claim c))
 }
 
 void foo2(struct VS *vs _(ghost \claim c))
-  _(always c, vs->\consistent && vs->yappr == NULL)
+  _(always c, vs->\closed && vs->yappr == NULL)
 {
   _(atomic vs, c) {
     vs->y = 10;

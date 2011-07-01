@@ -10,14 +10,14 @@ typedef _(claimable) _(volatile_owns) struct _SPIN_LOCK
 } SPIN_LOCK;
 
 void Acquire(SPIN_LOCK *SpinLock _(ghost \claim access_claim))   
-  _(always access_claim, SpinLock->\consistent)
+  _(always access_claim, SpinLock->\closed)
   _(ensures \wrapped(SpinLock->protected_obj))
   _(ensures \fresh(SpinLock->protected_obj))
   ;
 
 void Release(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
   _(writes SpinLock->protected_obj)
-  _(always access_claim, SpinLock->\consistent)
+  _(always access_claim, SpinLock->\closed)
   _(requires access_claim != SpinLock->protected_obj)
   _(requires \wrapped(SpinLock->protected_obj))
   ;
@@ -30,7 +30,7 @@ _(claimable) struct LockedArray {
 };
 
 void WriteArr(struct LockedArray *larr, unsigned int pos, int val _(ghost \claim cl))
-  _(always cl, larr->\consistent)
+  _(always cl, larr->\closed)
   _(requires pos < 10)
 {
   Acquire(&larr->Lock _(ghost cl));

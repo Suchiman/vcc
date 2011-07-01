@@ -6,7 +6,7 @@ _(claimable) struct A {
 };
 void incr(struct A *a, int *res _(ghost \claim c) _(ghost \claim ^cres))
   _(writes c, res, cres)
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
   _(ensures \claims(*cres, a->x > \when_claimed(*res)))
   _(ensures \claims_object(*cres, c))
 {

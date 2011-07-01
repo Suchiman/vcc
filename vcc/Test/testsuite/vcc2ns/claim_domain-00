@@ -8,7 +8,7 @@ void foo() _(writes {});
 
 vcc_attr("no_infer","all")
 void one(struct T *t _(ghost \claim c))
-  _(always c, t->\consistent)
+  _(always c, t->\closed)
 {
 
   foo();
@@ -16,14 +16,14 @@ void one(struct T *t _(ghost \claim c))
 }
 
 void two(struct T *t _(ghost \claim c))
-  _(always c, t->\consistent)
+  _(always c, t->\closed)
 {
   foo();
   _(assert \unchanged(t->a)) // should work
 }
 
 void three(struct T *t _(ghost \claim c))
-  _(always c, t->\consistent)
+  _(always c, t->\closed)
 {
 
   foo();
@@ -31,7 +31,7 @@ void three(struct T *t _(ghost \claim c))
 }
 
 void four(struct T *t _(ghost \claim c))
-  _(always c, t->\consistent)
+  _(always c, t->\closed)
 {
 
   _(assert &t->s \in \domain(c))

@@ -19,7 +19,7 @@ struct A {
 };
 
 void fail1(struct A *a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 {
   _(atomic c,a) {
     _(assume a->x > 100)
@@ -28,7 +28,7 @@ void fail1(struct A *a _(ghost \claim c))
 }
 
 void fail2(struct A *a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 {
   _(atomic c,a) {
     InterlockedDecrement(&a->x);

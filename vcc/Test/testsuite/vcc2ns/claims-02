@@ -8,7 +8,7 @@ struct A {
 
 void LockFreeIncr(struct A *a _(ghost \claim c))
   _(writes c)
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 {
   int y;
   int z;

@@ -27,7 +27,7 @@ struct S {
 
 
 void foo(struct S *s _(ghost \claim c)) 
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c,s) {
     InterlockedCompareExchange(&s->i, -5, -7);
@@ -35,7 +35,7 @@ void foo(struct S *s _(ghost \claim c))
 }
 
 void bar(struct S *s _(ghost \claim c)) 
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c,s) {
     InterlockedCompareExchange(&s->ui, 3, 8);

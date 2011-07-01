@@ -10,7 +10,7 @@ struct B {
   struct A a;
    _(ghost \claim c;) 
   _(invariant \mine(c))
-  _(invariant \claims(c, (&a)->\consistent))
+  _(invariant \claims(c, (&a)->\closed))
   _(invariant _(by_claim c)(a.x) == 1)
 };
 
@@ -18,7 +18,7 @@ struct B2 {
   struct A a;
    _(ghost \claim c;) 
   _(invariant \mine(c))
-  _(invariant \claims(c, (&a)->\consistent))
+  _(invariant \claims(c, (&a)->\closed))
   _(invariant a.x == 1)
 };
 `

@@ -54,7 +54,7 @@ typedef struct Goo {
 } Goo;
 
 void foo(Goo *g _(ghost \claim c))
-  _(always c, g->\consistent)
+  _(always c, g->\closed)
 {
   _(atomic c, g) {
     g->f[1] = 1;
@@ -62,7 +62,7 @@ void foo(Goo *g _(ghost \claim c))
 }
 
 void fooShouldFail(Goo *g _(ghost \claim c))
-  _(always c, g->\consistent)
+  _(always c, g->\closed)
 {
   _(atomic c, g) {
     g->f[0] = 1;
@@ -90,13 +90,13 @@ typedef _(claimable) struct Client {
 typedef _(claimable) _(dynamic_owns) struct Bakery {
 	UINT N;						// number of clients
 	Client *c;					// pointer to array of clients
-	_(invariant \forall UINT i; i<N ==> (&c[i])->\consistent  && (&c[i])->\valid && (c[i].bakery==\this))
+	_(invariant \forall UINT i; i<N ==> (&c[i])->\closed  && (&c[i])->\valid && (c[i].bakery==\this))
 } Bakery;
 
 #define cl (&server->c[idx])	// defined rather than declared as a local so we can use it in the contract (replace with let someday)
 
 void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
-_(requires \wrapped(sc) && \claims(sc,server->\consistent))  // need evidence that nobody will destroy the server
+_(requires \wrapped(sc) && \claims(sc,server->\closed))  // need evidence that nobody will destroy the server
 _(requires idx < server->N && \wrapped(cl))			// must own a client of the server
 _(writes cl)
 {	

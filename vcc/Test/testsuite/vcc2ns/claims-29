@@ -59,7 +59,7 @@ int fooOk2(struct Counter *cnt spec(claim_t cl) spec(out claim_t res))
 
 int fooFail2(struct Counter *cnt _(ghost \claim cl) _(out \claim res))
   _(writes cl)
-  _(requires \wrapped0(cl) && \claims(cl, cnt->\consistent))
+  _(requires \wrapped0(cl) && \claims(cl, cnt->\closed))
   _(ensures \wrapped0(res) && \claims(res, cnt->count >= \result - 1) && \fresh(res))
 {
   int y;

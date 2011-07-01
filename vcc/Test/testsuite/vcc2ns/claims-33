@@ -11,10 +11,10 @@ _(claimable) struct T {
 };
 
 void foo(struct T *p _(ghost \claim c))
-  _(always c, p->\consistent)
+  _(always c, p->\closed)
   
 {
-  _(assert p->\consistent)
+  _(assert p->\closed)
   _(assert (p->s)->\valid)
 }
 `

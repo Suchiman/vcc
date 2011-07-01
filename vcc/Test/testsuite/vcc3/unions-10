@@ -19,7 +19,7 @@ _(dynamic_owns) struct S {
 	union U uc;
 	_(invariant \mine(&uc))
 	_(ghost \claim c;)
-	_(invariant \mine(c) && (\mine(&(&uc)->m1) ==> \claims(c, (&(&uc)->m1)->\consistent)))
+	_(invariant \mine(c) && (\mine(&(&uc)->m1) ==> \claims(c, (&(&uc)->m1)->\closed)))
 	int dummy;
 };
 

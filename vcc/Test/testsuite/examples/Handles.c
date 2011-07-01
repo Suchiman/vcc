@@ -9,13 +9,13 @@ struct Data {
   _(invariant \on_unwrap(\this, \forall struct Handle *h; ! handles[h]))
   _(invariant \approves(\this->\owner, handles))
   //invariant(forall(struct Handle *h; closed(h) && h->data == this ==> handles[h]))
-  _(invariant \forall struct Handle *h; \old(handles[h]) && !handles[h] ==> !h->\consistent)
+  _(invariant \forall struct Handle *h; \old(handles[h]) && !handles[h] ==> !h->\closed)
 };
 
 struct Handle {
   int dummy;
    _(ghost struct Data *data;) 
-  _(invariant (\this->\valid && !\ghost(\this)) && data->\consistent && data->handles[\this])
+  _(invariant (\this->\valid && !\ghost(\this)) && data->\closed && data->handles[\this])
 };
 
 void foo(struct X *x) _(writes \extent(x)) _(maintains \mutable(x) && \object_root(x));

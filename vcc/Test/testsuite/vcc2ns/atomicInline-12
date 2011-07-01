@@ -7,7 +7,7 @@ struct S {
 };
 
 int f(struct S *s _(ghost int ^x) _(ghost \claim c))
-  _(requires \claims(c, s->\consistent))
+  _(requires \claims(c, s->\closed))
   _(requires \wrapped(c))
   _(requires x!=0 ==> \mutable(x))
 {
@@ -18,7 +18,7 @@ int f(struct S *s _(ghost int ^x) _(ghost \claim c))
 }
 
 int g(struct S *s _(ghost int ^x) _(ghost \claim c))
-  _(requires \claims(c, s->\consistent))
+  _(requires \claims(c, s->\closed))
   _(requires \wrapped(c))
   _(requires x!=0 ==> \mutable(x))
 {

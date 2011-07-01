@@ -12,7 +12,7 @@ struct B {
   struct A *a;
   _(ghost \claim ca)
 
-  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == _(by_claim ca)(a->x))
 };
 
@@ -20,7 +20,7 @@ void write_int(int *x)
   _(writes x);
 
 void ok1(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 { 
   int q;
   int z = _(by_claim c)(a->x);
@@ -33,13 +33,13 @@ void ok1(struct A*a _(ghost \claim c))
 
 
 void fail1(struct A*a, struct A*b _(ghost \claim c))
-  _(always c, b->\consistent)
+  _(always c, b->\closed)
 { 
   int z = _(by_claim c)(a->x);
 }
 
 void fail2(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
   _(writes c)
   _(requires c->\claim_count == 0)
 { 
@@ -55,7 +55,7 @@ struct B_fail1 {
   struct A *a;
   _(ghost \claim ca)
 
-  _(invariant \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == _(by_claim ca)(a->x))
 };
 
@@ -83,20 +83,20 @@ struct vcc_attr("no_infer", "always_by_claim") B_may_fail1 {
   struct A *a;
   _(ghost \claim ca)
 
-  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == a->x)
 };
 
 vcc_attr("no_infer", "always_by_claim")
 void may_fail1(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 { 
   int z = a->x;
 }
 
 
 void fail3(struct A*a, struct A*b _(ghost \claim c))
-  _(always c, b->\consistent)
+  _(always c, b->\closed)
 { 
   int z = a->x;
 }
@@ -135,18 +135,18 @@ struct B_fail1 {
   struct A *a;
   _(ghost \claim ca)
 
-  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == _(by_claim ca)(a->vol_x))
 };
 
 void fail1(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 { 
   int z = _(by_claim c)(a->vol_x);
 }
 
 void fail2(struct A*a, int *x _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 { 
   int z = _(by_claim c)(*x);
 }
@@ -171,7 +171,7 @@ struct B {
   struct A *a;
   _(ghost \claim ca)
 
-  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == a->x)
 };
 
@@ -179,7 +179,7 @@ void write_int(int *x)
   _(writes x);
 
 void ok1(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 { 
   int q;
   int z = a->x;
@@ -193,7 +193,7 @@ void ok1(struct A*a _(ghost \claim c))
 vcc_attr("no_infer", "always_by_claim")
 void ok2(struct A*a _(ghost \claim c))
   _(requires \always_by_claim(c, a))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 {
   int q;
   int z = a->x;
@@ -207,7 +207,7 @@ void ok2(struct A*a _(ghost \claim c))
 
 vcc_attr("no_infer", "always_by_claim")
 void ok3(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 {
   int q;
   int z;
@@ -228,7 +228,7 @@ struct B2 {
   _(ghost \claim ca)
  
   _(invariant \always_by_claim(ca, a))
-  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == a->x)
 };
 
@@ -250,7 +250,7 @@ _(claimable) struct A {
 
 
 void fail1(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
   _(writes c)
   _(requires c->\claim_count == 0)
 { 
@@ -262,7 +262,7 @@ void fail1(struct A*a _(ghost \claim c))
 }
 
 void fail2(struct A*a,struct A*b _(ghost \claim c))
-  _(always c, b->\consistent)
+  _(always c, b->\closed)
   _(requires \always_by_claim(c, a))
 { 
   int z;
@@ -287,7 +287,7 @@ struct B {
   struct A a;
    _(ghost \claim c;) 
   _(invariant \mine(c))
-  _(invariant \claims(c, (&a)->\consistent))
+  _(invariant \claims(c, (&a)->\closed))
   _(invariant _(by_claim c)(a.x) == 1)
 };
 
@@ -295,7 +295,7 @@ struct B2 {
   struct A a;
    _(ghost \claim c;) 
   _(invariant \mine(c))
-  _(invariant \claims(c, (&a)->\consistent))
+  _(invariant \claims(c, (&a)->\closed))
   _(invariant a.x == 1)
 };
 `
@@ -311,7 +311,7 @@ typedef _(claimable) struct _TH_PROCESS {
 
 
 void ThpCreateThread(PTH_PROCESS Process _(ghost \claim c))
-  _(always c, Process->\consistent)
+  _(always c, Process->\closed)
   _(writes c)
 {
   _(assert _(by_claim c)(Process->x) == 0)
@@ -336,7 +336,7 @@ mailbox mbox[2];
 _(invariant :ipi \depends(\this->\owner, \this))
 _(ghost \claim c)
 _(invariant \mine(c) &&
-\claims(c, (&ghost)->\consistent))
+\claims(c, (&ghost)->\closed))
 _(invariant &(_(by_claim c)(onepls))->mbox[1] \in \this->\owns)
 _(invariant &(_(by_claim c)(kpr[1]))->mbox[1] \in \this->\owns)
 } pls, *ppls;
@@ -372,7 +372,7 @@ void foo( _(ghost \claim c) )
   _(maintains \wrapped(c));
 
 void bar(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
   _(writes c)
 {
   int tmp = _(by_claim c)(s->x);
@@ -393,7 +393,7 @@ _(claimable) struct S {
 
 vcc_attr("no_infer", "always_by_claim")
 void foo(struct S *s _(ghost \claim c))
-    _(always c, s->\consistent)
+    _(always c, s->\closed)
 {
     _(atomic c,s) {}
     _(assert \is_array(s->x, 3))
@@ -417,14 +417,14 @@ typedef _(claimable) _(volatile_owns) struct _SPIN_LOCK
 } SPIN_LOCK;
 
 void Acquire(SPIN_LOCK *SpinLock _(ghost \claim access_claim))   
-  _(always access_claim, SpinLock->\consistent)
+  _(always access_claim, SpinLock->\closed)
   _(ensures \wrapped(SpinLock->protected_obj))
   _(ensures \fresh(SpinLock->protected_obj))
   ;
 
 void Release(SPIN_LOCK *SpinLock _(ghost \claim access_claim))
   _(writes SpinLock->protected_obj)
-  _(always access_claim, SpinLock->\consistent)
+  _(always access_claim, SpinLock->\closed)
   _(requires access_claim != SpinLock->protected_obj)
   _(requires \wrapped(SpinLock->protected_obj))
   ;
@@ -437,7 +437,7 @@ _(claimable) struct LockedArray {
 };
 
 void WriteArr(struct LockedArray *larr, unsigned int pos, int val _(ghost \claim cl))
-  _(always cl, larr->\consistent)
+  _(always cl, larr->\closed)
   _(requires pos < 10)
 {
   Acquire(&larr->Lock _(ghost cl));

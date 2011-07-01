@@ -4,7 +4,7 @@
 volatile int i;
 
 void fooShouldFail(_(ghost \claim p))
-  _(always p, (\gemb(&i))->\consistent)
+  _(always p, (\gemb(&i))->\closed)
 {
   _(atomic p, \gemb(&i)) {
     i = 5;

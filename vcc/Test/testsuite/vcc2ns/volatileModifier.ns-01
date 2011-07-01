@@ -11,7 +11,7 @@ typedef struct _X {
 
 
 void ok1(X*x _(ghost \claim c))
-  _(always c, x->\consistent)
+  _(always c, x->\closed)
 {
   int q;
   _(atomic c,x) {
@@ -20,7 +20,7 @@ void ok1(X*x _(ghost \claim c))
 }
 
 void ok11(X*x _(ghost \claim c))
-  _(always c, x->\consistent)
+  _(always c, x->\closed)
 {
   int q;
   _(atomic c,x) {
@@ -38,7 +38,7 @@ void nok2(X*x)
 }
 
 void ok2(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,x,y) {
     x->vol = 7;
@@ -46,7 +46,7 @@ void ok2(X*x,X*y _(ghost \claim c))
 }
 
 void nok3(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,x,y) {
     x->nonvol = 7;
@@ -54,7 +54,7 @@ void nok3(X*x,X*y _(ghost \claim c))
 }
 
 void nok4(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,y) {
     x->vol = 7;
@@ -64,7 +64,7 @@ void nok4(X*x,X*y _(ghost \claim c))
 
 _(ghost 
 void specok1(X*x _(ghost \claim c))
-  _(always c, x->\consistent)
+  _(always c, x->\closed)
 {
   _(ghost int q;)
   _(atomic c,x) {
@@ -74,7 +74,7 @@ void specok1(X*x _(ghost \claim c))
 
 _(ghost 
 void specok11(X*x _(ghost \claim c))
-  _(always c, x->\consistent)
+  _(always c, x->\closed)
 {
   int q;
   _(atomic c,x) {
@@ -94,7 +94,7 @@ void nspecok2(X*x)
 
 
 void specok2(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,x,y) {
     _(ghost x->specvol = 7;)
@@ -102,7 +102,7 @@ void specok2(X*x,X*y _(ghost \claim c))
 }
 
 void nspecok3(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,x,y) {
     _(ghost x->specnonvol = 7;)
@@ -110,7 +110,7 @@ void nspecok3(X*x,X*y _(ghost \claim c))
 }
 
 void nspecok4(X*x,X*y _(ghost \claim c))
-  _(always c, x->\consistent && y->\consistent)
+  _(always c, x->\closed && y->\closed)
 {
   _(atomic c,y) {
     _(ghost x->specvol = 7;)

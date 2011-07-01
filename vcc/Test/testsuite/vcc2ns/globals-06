@@ -16,7 +16,7 @@ GlobalsOwner Globals;
 
 void
 f(_(ghost \claim c))
-  _(always c, (&Globals)->\consistent)
+  _(always c, (&Globals)->\closed)
   {
   _(atomic c, \gemb(&global), &Globals){
         global = 5;

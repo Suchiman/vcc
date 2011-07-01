@@ -8,7 +8,7 @@ struct Counter {
 
 int foo(struct Counter *cnt _(ghost \claim cl) _(ghost \claim ^res))
   _(writes res, cl)
-  _(requires \wrapped(cl) && \claims(cl, cnt->\consistent))
+  _(requires \wrapped(cl) && \claims(cl, cnt->\closed))
   _(ensures \wrapped(*res) && \claims(*res, cnt->count >= \result - 1))
 {
   int y;
@@ -26,7 +26,7 @@ int foo(struct Counter *cnt _(ghost \claim cl) _(ghost \claim ^res))
 
 int fooFail1(struct Counter *cnt _(ghost \claim cl) _(ghost \claim ^res))
   _(writes res)
-  _(requires \wrapped(cl) && \claims(cl, cnt->\consistent))
+  _(requires \wrapped(cl) && \claims(cl, cnt->\closed))
   _(ensures \wrapped(*res) && \claims(*res, cnt->count >= \result - 1))
 {
   int y;
@@ -44,7 +44,7 @@ int fooFail1(struct Counter *cnt _(ghost \claim cl) _(ghost \claim ^res))
 
 int fooFail2(struct Counter *cnt _(ghost \claim cl) _(ghost \claim ^res))
   _(writes res, cl)
-  _(requires \wrapped(cl) && \claims(cl, cnt->\consistent))
+  _(requires \wrapped(cl) && \claims(cl, cnt->\closed))
   _(ensures \wrapped(*res) && \claims(*res, cnt->count >= \result + 1))
 {
   int y;
@@ -62,7 +62,7 @@ int fooFail2(struct Counter *cnt _(ghost \claim cl) _(ghost \claim ^res))
 
 int fooFail3(struct Counter *cnt _(ghost \claim cl) _(ghost \claim ^res))
   _(writes res, cl)
-  _(requires \wrapped(cl) && \claims(cl, cnt->\consistent))
+  _(requires \wrapped(cl) && \claims(cl, cnt->\closed))
   _(ensures \wrapped(*res) && \claims(*res, cnt->count >= 0))
 {
   int y;
@@ -94,7 +94,7 @@ int fooFail4(struct Counter *cnt _(ghost \claim cl) _(ghost \claim ^res))
 
 int fooFail5(struct Counter *cnt _(ghost \claim cl) _(ghost \claim ^res))
   _(writes res, cl)
-  _(requires \wrapped(cl) && \claims(cl, cnt->\consistent))
+  _(requires \wrapped(cl) && \claims(cl, cnt->\closed))
   _(ensures \wrapped(*res) && \claims(*res, cnt->count >= \result - 1))
 {
   int y;

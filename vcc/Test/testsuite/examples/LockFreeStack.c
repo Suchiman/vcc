@@ -42,7 +42,7 @@ _(volatile_owns) struct Stack {
 };
 
 bool push(struct Node *n, struct Stack *s _(ghost \claim c))
-    _(always c, s->\consistent)
+    _(always c, s->\closed)
     _(requires n->\owns == {})
     _(writes \extent(n))
 {
@@ -77,7 +77,7 @@ bool push(struct Node *n, struct Stack *s _(ghost \claim c))
 
 #ifdef NOTYET
 bool pop(struct Node **n, struct Stack *s)
-    _(invariant s->\consistent && s->\valid)
+    _(invariant s->\closed && s->\valid)
 //    requires (mutable(s->hd))
     _(requires \mutable(*n))
     _(ensures (s->\owns == {}) ==> \result == \false)

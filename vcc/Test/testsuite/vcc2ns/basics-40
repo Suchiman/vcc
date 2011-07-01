@@ -7,7 +7,7 @@ struct X {
 };
 
 struct X *get_x()
-  _(ensures \result->\consistent);
+  _(ensures \result->\closed);
 
 struct X *test_ens()
   _(ensures \inv(\result))
@@ -30,7 +30,7 @@ void test_req(struct X *p)
 }
 
 void use_test_req(struct X *p)
-  _(requires p->\consistent)
+  _(requires p->\closed)
 {
   test_req(p);
 }
@@ -42,7 +42,7 @@ void test_req_inv(struct X *p)
 }
 
 void use_test_req_may_fail(struct X *p)
-  _(requires p->\consistent)
+  _(requires p->\closed)
 {
   test_req_inv(p);
 }

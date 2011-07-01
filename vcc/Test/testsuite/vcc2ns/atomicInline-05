@@ -42,7 +42,7 @@ RtlpWaitForSpinLockAndAcquire(
     __inout PRTL_SPIN_LOCK SpinLock
     _(ghost \claim c)
     )   
-    _(always c,SpinLock->\consistent && SpinLock->protected_obj!=NULL)
+    _(always c,SpinLock->\closed && SpinLock->protected_obj!=NULL)
     _(ensures \wrapped(SpinLock->protected_obj))
     _(ensures \fresh(SpinLock->protected_obj))
     _(ensures \result<=RTL_MAXIMUM_EXCESSIVE_SPIN_COUNT)

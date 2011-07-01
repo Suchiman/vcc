@@ -9,7 +9,7 @@ struct S {
 };
 
 void foo1(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c, s) {
     s->nonvol = 1;
@@ -18,7 +18,7 @@ void foo1(struct S *s _(ghost \claim c))
 }
 
 void foo2(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c, s) {
     _(begin_update)
@@ -27,7 +27,7 @@ void foo2(struct S *s _(ghost \claim c))
 }
 
 void foo3(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c, s) {
     s->vol = 1;
@@ -36,7 +36,7 @@ void foo3(struct S *s _(ghost \claim c))
 }
 
 void foo4(struct S *s _(ghost \claim c))
-  _(always c, s->\consistent)
+  _(always c, s->\closed)
 {
   _(atomic c, s) {
     _(begin_update)

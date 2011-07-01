@@ -19,7 +19,7 @@ typedef _(claimable) struct _S
 } S;
 
 void foo(S* p _(ghost \claim c))
-    _(always c,p->\consistent)
+    _(always c,p->\closed)
 {
     unsigned x;
     _(atomic c,p,&p->cntr) {

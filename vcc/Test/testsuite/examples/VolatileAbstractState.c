@@ -15,7 +15,7 @@
 
     // By claiming the protector, a claim that abs->value doesn't change can be
     // established.
-    _(invariant (&protector)->\consistent ==> \unchanged(value))
+    _(invariant (&protector)->\closed ==> \unchanged(value))
     // The other case.
     _(invariant value == 2*\old(value) || \unchanged(value))
   };)

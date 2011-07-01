@@ -12,7 +12,7 @@ struct B {
   struct A *a;
   _(ghost \claim ca)
 
-  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == _(by_claim ca)(a->x))
 };
 
@@ -20,7 +20,7 @@ void write_int(int *x)
   _(writes x);
 
 void ok1(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 { 
   int q;
   int z = _(by_claim c)(a->x);
@@ -33,13 +33,13 @@ void ok1(struct A*a _(ghost \claim c))
 
 
 void fail1(struct A*a, struct A*b _(ghost \claim c))
-  _(always c, b->\consistent)
+  _(always c, b->\closed)
 { 
   int z = _(by_claim c)(a->x);
 }
 
 void fail2(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
   _(writes c)
   _(requires c->\claim_count == 0)
 { 
@@ -55,7 +55,7 @@ struct B_fail1 {
   struct A *a;
   _(ghost \claim ca)
 
-  _(invariant \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == _(by_claim ca)(a->x))
 };
 
@@ -83,20 +83,20 @@ struct vcc_attr("no_infer", "always_by_claim") B_may_fail1 {
   struct A *a;
   _(ghost \claim ca)
 
-  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\consistent))
+  _(invariant \mine(ca) && \claims(ca, (\when_claimed(a))->\closed))
   _(invariant y == a->x)
 };
 
 vcc_attr("no_infer", "always_by_claim")
 void may_fail1(struct A*a _(ghost \claim c))
-  _(always c, a->\consistent)
+  _(always c, a->\closed)
 { 
   int z = a->x;
 }
 
 
 void fail3(struct A*a, struct A*b _(ghost \claim c))
-  _(always c, b->\consistent)
+  _(always c, b->\closed)
 { 
   int z = a->x;
 }

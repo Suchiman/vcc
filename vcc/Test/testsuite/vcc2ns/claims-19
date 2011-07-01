@@ -17,7 +17,7 @@ GLOBAL_STATE SchGlobalState;
 
 
  void MoveFromEvent(PTH Thread _(ghost \claim lh_nchange))
-   _(always lh_nchange, (&SchGlobalState)->\consistent)
+   _(always lh_nchange, (&SchGlobalState)->\closed)
  {
  
 	_(atomic lh_nchange, &SchGlobalState)
