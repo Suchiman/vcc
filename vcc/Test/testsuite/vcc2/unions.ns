@@ -1,0 +1,545 @@
+`/newsyntax
+#include "vcc2test.h"
+
+struct A {
+  int a;
+  int b;
+  int c;
+};
+
+struct IntWrap {
+  int i;
+};
+
+struct PtrWrap {
+  int* p;
+};
+
+union B {
+  struct A x;
+  struct IntWrap y;
+  struct PtrWrap z;
+
+
+};
+
+union C {
+  int x;
+  int *y;
+};
+
+void foo(union C *b)
+  _(requires (&b->x)->\valid)
+  _(writes &b->x)
+{
+  b->x = 7;
+}
+
+void bar(union B *b)
+  _(requires (&b->x)->\valid)
+  _(writes &b->x.b)
+{
+  b->x.b = 7;
+}
+
+int baz(union B *b)
+  _(requires \thread_local(&b->x))
+{
+  return _(unchecked)(b->x.a + b->x.b);
+}
+
+int foobar(union B *b)
+  _(requires \thread_local(&b->x))
+{
+  _(assert &b->y.i == &b->x.a)
+  return b->y.i;
+}
+
+void reint(union B *b)
+  _(requires b->\valid && (&b->z)->\valid)
+  _(requires \wrapped(b))
+  _(requires \malloc_root(b))
+  _(writes b)
+{
+  _(deep_unwrap b)
+  _(union_reinterpret &b->y);
+  b->y.i = 7;
+  _(assert b->y.i == 7)
+  _(union_reinterpret &b->x);
+  _(assert b->x.a == 7)
+  b->x.b = 8;
+  _(assert b->x.b == 8)
+  free(b);
+}
+
+void reint2(union B *b)
+  _(requires b->\valid)
+  _(requires \malloc_root(b))
+  _(writes \extent(b))
+{
+  _(union_reinterpret &b->y);
+  b->y.i = 7;
+  _(assert b->y.i == 7)
+  _(union_reinterpret &b->x);
+  _(assert b->x.a == 7)
+  b->x.b = 8;
+  _(assert b->x.b == 8)
+  free(b);
+}
+
+void reint3(union B *b)
+  _(requires b->\valid && (&b->z)->\valid)
+  _(requires \wrapped(b))
+  _(requires \malloc_root(b))
+  _(writes b)
+{
+  _(deep_unwrap b)
+  reint2(b);
+}
+
+void reint4()
+{
+  union B *b;
+  b = malloc(sizeof(union B));
+  if (b != NULL) reint2(b);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+Verification of baz succeeded.
+Verification of foobar succeeded.
+Verification of reint succeeded.
+Verification of reint2 succeeded.
+Verification of reint3 succeeded.
+Verification of reint4 succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct Z {
+short xx;
+int a,b,c,d,e,f;
+};
+
+union A {
+  _(ghost int x;)
+  _(ghost int x2;)
+  int y;
+  struct Z z;
+};
+
+void foo(union A *a)
+  _(writes \extent(a))
+  _(requires \union_active(&a->y))
+{
+  _(ghost int tmp;)
+
+  a->y = 12;
+  _(ghost  a->x = 11;)
+  _(ghost  a->x2 = 42;)
+  _(assert a->y == 12 && a->x == 11 && a->x2 == 42)
+
+  _(ghost  tmp = a->x;)
+  _(ghost  tmp = a->y;)
+}
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int a;
+};
+
+struct T {
+  int b;
+};
+
+_(dynamic_owns) union U {
+  _(backing_member) struct S *s;
+  struct T *t;
+  unsigned __int64 i;
+  _(invariant i != 0)
+  _(invariant \this->s \in \this->\owns ||
+    \this->t \in \this->\owns)
+};
+
+void foo() {
+  union U u;
+  struct S *s;
+  struct T *t;
+  unsigned __int64 i;
+  u.s = (void *)0;
+  u.t = (void *)0;
+  u.i = 5;
+  s = u.s;
+  t = u.t;
+  i = u.i;
+}
+`
+Verification of U#adm succeeded.
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int a;
+};
+
+struct T {
+  int b;
+};
+
+_(dynamic_owns) union U {
+  struct S *s;
+  struct T *t;
+  _(backing_member) unsigned __int64 i;
+  _(invariant i == 0 ||
+    \this->s \in \this->\owns ||
+    \this->t \in \this->\owns)
+};
+
+void foo() {
+  union U u;
+  struct S *s;
+  struct T *t;
+  unsigned __int64 i;
+  u.s = (void *)0;
+  u.t = (void *)0;
+  u.i = 5;
+  s = u.s;
+  t = u.t;
+  i = u.i;
+}
+`
+Verification of U#adm succeeded.
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc2test.h"
+
+union A {
+  int x;
+  _(backing_member) unsigned int y;
+};
+
+void fooShouldFail(union A *a)
+  _(requires \wrapped(a))
+{
+  _(assert a->x >= 0)
+}
+
+union B {
+  _(backing_member) int x;
+  unsigned int y;
+};
+
+void barShouldFail(union B *a)
+  _(requires \wrapped(a))
+{
+  _(assert a->y < 3000000000)
+}
+
+void foo(union A *a)
+  _(requires \mutable(a))
+  _(writes \extent(a))
+{
+  a->x = -5;
+  _(assert a->x == -5)
+}
+
+void bar(union B *a)
+  _(requires \mutable(a))
+  _(writes \extent(a))
+{
+  a->y = 3000000000;
+  _(assert a->y == 3000000000)
+}
+`
+Verification of fooShouldFail failed.
+testcase(11,26) : error VC9500: Assertion 'a->x >= 0' did not verify.
+Verification of barShouldFail failed.
+testcase(22,26) : error VC9500: Assertion 'a->y < 3000000000' did not verify.
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+typedef unsigned int UINT32;
+
+typedef struct itype_instr_t {
+    int simm16:16;
+    unsigned rd:5;
+    unsigned rs1:5;
+    unsigned opc:6;
+} itype_instr_t;
+
+typedef union instr_t {
+    itype_instr_t itype;
+    _(backing_member) UINT32 uint32;
+} instr_t;
+
+bool foo(instr_t I)
+{
+   UINT32 i = I.itype.rs1;
+   _(assert 0 <= i)
+   _(assert i < 32)
+   I.itype.rs1 = 17;
+   _(assert I.itype.rs1 == 17)
+}
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+typedef unsigned __int32 UINT32;
+
+typedef union FOO
+{
+    struct
+    {
+        UINT32 Low  :  1;
+        UINT32 Count: 31;
+    };
+
+    _(backing_member) UINT32 AsUINT32;
+    _(ghost unsigned age;)
+    _(invariant age == AsUINT32)
+};
+
+void foo(union FOO *p) 
+  _(requires \wrapped(p))
+  _(writes p)
+{
+  _(unwrapping p) {
+    p->AsUINT32 = 16;
+    _(ghost p->age = 16;)
+  }
+}
+
+void fooShouldFail(union FOO *p) 
+  _(requires \wrapped(p))
+  _(writes p)
+{
+  _(unwrapping p) {
+    p->AsUINT32 = 16;
+    _(ghost p->age = 17;)
+    _(assert p->AsUINT32 == 16)
+  }
+}
+`
+Verification of FOO#adm succeeded.
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(32,30) : error VC8014: invariant(age == AsUINT32) of FOO fails on wrap.
+testcase(15,31) : error VC9599: (related information) location of the invariant.
+`
+`/newsyntax
+#include<vcc.h>
+
+union U {
+  int a;
+  _(backing_member) int b;
+  _(ghost int c;)
+} ;
+
+void foo(union U *p)
+  _(writes \extent(p))
+  _(requires \mutable(p))
+{
+  p->a = 10;
+  _(assert p->b == 10)
+  _(assert p->c == \old(p->c))
+}
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+union U {
+  struct {
+    int a;
+    int b;
+  } _(m1);
+  
+  struct {
+    unsigned int c;
+    unsigned int d;
+  } _(m2);
+};
+
+
+void foo(union U *u)
+  _(writes \extent(u))
+  _(requires \union_active(&u->m1))
+{
+
+  u->a = 12;
+}
+
+void fooShouldFail(union U *u)
+  _(writes \extent(u))
+  _(requires \union_active(&u->m1))
+{
+
+  u->c = 12;
+}
+`
+Verification of foo succeeded.
+Verification of fooShouldFail failed.
+testcase(29,3) : error VC8507: Assertion 'u->c is writable' did not verify.
+`
+`/newsyntax
+#include <vcc.h>
+
+typedef unsigned __int32 UINT32;
+
+typedef union _S
+{
+  _(backing_member) int AsUINT32:32;
+  int bla;
+} S;
+
+void foo(S *s)
+  _(writes s)
+  _(maintains \wrapped(s))
+  _(ensures s->AsUINT32 == 10)
+ { 
+  _(unwrapping s) {
+  s->AsUINT32 = 10;
+  }
+ }
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+union U {
+   struct {
+    volatile int a;
+    volatile int b;
+  } _(m1);
+
+  _(invariant \depends(\this->\owner, \this))
+  
+  struct {
+    unsigned int c;
+    unsigned int d;
+  };
+};
+
+_(dynamic_owns) struct S {
+	union U uc;
+	_(invariant \mine(&uc))
+	_(ghost \claim c;)
+	_(invariant \mine(c) && (\union_active(&(&uc)->m1) ==> \claims(c, (&(&uc)->m1)->\closed)))
+	_(invariant \union_active(&(&uc)->m1) ==> \mine(&(&uc)->m1))
+	int dummy;
+};
+
+void foo(struct S *s)
+  _(maintains \wrapped(s))
+  _(requires \union_active(&(&s->uc)->m1))
+{
+	_(atomic &(&s->uc)->m1) {
+		s->uc.a = 12;
+	}
+}
+`
+Verification of U#adm succeeded.
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+typedef unsigned __int8 UINT8;
+typedef unsigned __int64 UINT64;
+
+typedef union XX
+{
+    struct {
+        UINT8 PteFlags[8];
+    } _(AsStruct);
+
+    UINT64 AsUINT64;
+
+} X, *PX;
+
+
+void foo(PX g)
+    _(requires \union_active(&g->AsStruct))
+{
+}
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+typedef unsigned __int64 UINT64;
+
+typedef union U
+{
+    struct 
+    {
+                UINT64   Rax;
+                UINT64   Rip;
+    };
+    _(backing_member) UINT64  AsUINT64[2];
+} U, *PU;
+
+
+void foo(PU vmcb, UINT64 Value)
+        _(maintains \wrapped(vmcb))
+        _(writes vmcb)
+        _(ensures vmcb->Rip == Value)
+{
+        _(unwrap vmcb)
+        vmcb->Rip = Value;
+        _(assert vmcb->Rip == Value)
+        _(wrap vmcb)
+};
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+union X { unsigned a : 8; _(backing_member) int b; } x;
+
+void foo() {
+  union X x;
+  x.a = 5;
+  _(assert x.a == 5)
+  x.b = 10;
+  _(assert x.b == 10)
+}
+`
+Verification of foo succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+typedef union _T {
+  struct {unsigned dummy;};
+  _(backing_member) unsigned cnt;
+  _(ghost volatile \object container;)
+} T;
+
+
+void foo(T* t)
+    _(requires \wrapped(t))
+{
+   unsigned n;
+   n=t->cnt;
+}
+`
+Verification of foo succeeded.
+`
