@@ -119,7 +119,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         None
       elif fn.Name.StartsWith "lambda#" then
         None 
-      elif fn.CustomAttr |> hasCustomAttr AttrDefinition then        
+      elif fn.IsWellFounded then        
         let subst = fn.CallSubst args
         let assigns, callVariants = 
           fn.Variants 
@@ -143,7 +143,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         let check = Expr.MkAssert check
         Some (Expr.MkBlock (assigns @ [check; Call (ec, fn, tps, List.map self args)]))
       else
-        helper.GraveWarning (e.Token, 9315, "function '" + fn.Name + "' should by defined with _(def) for termination checking")
+        helper.GraveWarning (e.Token, 9315, "function '" + fn.Name + "' should by defined with _(def) or _(abstract) for termination checking")
         None
         
     | Loop _
@@ -177,7 +177,8 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | _ -> None
 
   let aux = function
-    | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition ->
+    | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition 
+                                    || fn.CustomAttr |> hasCustomAttr AttrAbstract ->
       if fn.Body.IsNone then
         helper.GraveWarning (fn.Token, 9318, "definition functions need to have body")
         [decl]
@@ -188,7 +189,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         let body = Expr.MkBlock (assigns @ [fn.Body.Value])
         let body = body.SelfMap (check refs)
         fn.Body <- Some body
-        if fn.RetType <> Type.Void then
+        if fn.RetType <> Type.Void && fn.CustomAttr |> hasCustomAttr AttrDefinition then
           let expr = turnIntoPureExpression helper fn.RetType body
           let vars, repl = Variable.UniqueCopies (fun v -> { v with Kind = QuantBound }) fn.Parameters
           let ec t = { body.Common with Type = t }
