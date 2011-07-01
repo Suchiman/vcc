@@ -591,6 +591,7 @@ module Microsoft.Research.Vcc.CAST
       mutable CustomAttr:list<CustomAttr>;
       mutable Body:option<Expr>;
       mutable IsProcessed:bool;
+      mutable DecreasesLevel:int;
       UniqueId:Unique;
     }
 
@@ -608,6 +609,7 @@ module Microsoft.Research.Vcc.CAST
         Variants = []
         Reads = []
         CustomAttr = []
+        DecreasesLevel = 0
         Body = None
         IsProcessed = false
         AcceptsExtraArguments = false
