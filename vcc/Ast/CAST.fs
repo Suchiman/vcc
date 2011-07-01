@@ -55,6 +55,9 @@ module Microsoft.Research.Vcc.CAST
   let AttrDefinition = "definition"
 
   [<Literal>]
+  let AttrAbstract = "abstract"
+
+  [<Literal>]
   let AttrBvLemmaCheck = "bv_lemma_check"
 
   [<Literal>]
@@ -598,13 +601,16 @@ module Microsoft.Research.Vcc.CAST
     
     member this.OutParameters = [ for p in this.Parameters do if p.Kind = VarKind.OutParameter then yield p ]
     
+    member this.IsWellFounded =
+      List.exists (function VccAttr((AttrDefinition|AttrAbstract|AttrIsDatatypeOption), "") -> true | _ -> false) this.CustomAttr 
+
     member this.IsPure =
       if (this.Name.StartsWith "_vcc_"  || this.Name.StartsWith "\\") && this.Writes = [] then
         true
       //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
       //  true // HACK
       else
-        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition|AttrIsDatatypeOption), "") -> true | _ -> false) this.CustomAttr 
+        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition|AttrAbstract|AttrIsDatatypeOption), "") -> true | _ -> false) this.CustomAttr 
       
     member this.IsDatatypeOption =
       List.exists (function VccAttr(AttrIsDatatypeOption, "") -> true | _ -> false) this.CustomAttr 
