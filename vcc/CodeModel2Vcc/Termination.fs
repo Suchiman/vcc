@@ -39,28 +39,34 @@ let setDecreasesLevel (helper:Helper.Env) decls =
   List.iter aux decls
   decls
 
+type PureTrCtx =
+  {
+    InStmt : bool
+    SeenAssertFalse : bool
+  }
+
 let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
-  let rec aux stmtCtx bindings (exprs:list<Expr>) =
+  let rec aux (ctx:PureTrCtx) bindings (exprs:list<Expr>) =
     let expr, cont = exprs.Head, exprs.Tail
     //System.Console.WriteLine ("doing (cont={0}) e: {1}/{2}", cont.Length, expr, expr.GetType())
 
-    let recExpr e = aux false bindings [e]
-    let self = aux stmtCtx bindings
+    let recExpr e = aux { ctx with InStmt = false } bindings [e]
+    let self = aux ctx bindings
 
     let notsupp kind = 
-      helper.Error (expr.Token, 0, kind + " are not supported when turning statements into expressions")
-      Macro (bogusEC, "null", [])
+      helper.Error (expr.Token, 9735, kind + " are not supported when turning statements into expressions")
+      Macro ({ bogusEC with Type = topType }, "default", [])
 
-    let valueShouldFollow f =
+    let valueShouldFollow (ctx:PureTrCtx) f =
       if cont.IsEmpty then
-        helper.Error (expr.Token, 0, "expecting value here")
-        Macro (bogusEC, "null", [])        
+        if not ctx.SeenAssertFalse then
+          helper.Error (expr.Token, 9736, "expecting value here")
+        Macro ({ bogusEC with Type = topType }, "default", [])
       else
         f cont
 
     let returnValue () =
       if cont.IsEmpty then
-        //System.Console.WriteLine "recurse"
         expr.ApplyToChildren recExpr
       else
         // warn about ignored expression?
@@ -98,7 +104,8 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
         self (e :: cont)
 
       | Assert (_, Expr.BoolLiteral (_, false), _) ->
-        Macro ({bogusEC with Type = topType}, "default", [])
+        let ctx = { ctx with SeenAssertFalse = true }
+        valueShouldFollow ctx (aux ctx bindings)
 
       // ignored statements
       | Assert _
@@ -106,7 +113,7 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
       | Comment _
       | Label _ 
       | VarDecl _ ->
-        valueShouldFollow self
+        valueShouldFollow ctx self
 
       // errors
       | MemoryWrite _ -> notsupp "state updates"
@@ -116,7 +123,7 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
 
       | VarWrite (ec, [v], e) ->
         let bindings = Map.add v.UniqueId (recExpr e) bindings
-        valueShouldFollow (aux stmtCtx bindings)
+        valueShouldFollow ctx (aux ctx bindings)
 
       | If (ec, _, cond, thn, els) ->        
         Macro (ec, "ite", [recExpr cond; self (thn :: cont); self (els :: cont)])
@@ -125,7 +132,7 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
         self (exprs @ cont)
 
       | Return (ec, Some e) ->
-        if not stmtCtx then
+        if not ctx.InStmt then
           helper.Die()
         recExpr e
 
@@ -137,7 +144,12 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
       | Block _
       | Return _ -> helper.Die()
 
-  aux true Map.empty [expr]
+  let ctx =
+    {
+      InStmt = true
+      SeenAssertFalse = false
+    } 
+  aux ctx Map.empty [expr]
 
 let insertTerminationChecks (helper:Helper.Env) decls =
   let check (currFn:Function) decrRefs self e =
