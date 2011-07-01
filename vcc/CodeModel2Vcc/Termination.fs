@@ -209,7 +209,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Macro (_, name, _) when name.StartsWith "DP#" ->
       None
 
-    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"), _) ->
+    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"), _) ->
       None
 
     | Macro (ec, s, args) as e ->
