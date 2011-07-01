@@ -27,7 +27,7 @@ void insertion_sort(int *buf, unsigned len _(out perm_t perm))
   _(ghost \state s0 = \now() )
   _(ghost perm_t perm2 )
 
-  _(ghost perm = \lambda unsigned i; i) 
+  _(ghost perm = \lambda unsigned i; i)
 
   for (i = 1; i < len; ++i)
     _(invariant sorted(buf, i))
@@ -39,7 +39,7 @@ void insertion_sort(int *buf, unsigned len _(out perm_t perm))
     v = buf[i];
     j = i - 1;
     _(ghost perm2 = perm )
-    for (;;) 
+    for (;;)
       _(invariant is_permutation(perm2, len))
       _(invariant \forall unsigned k; perm2[k] == (k == j + 1 ? tmp : perm[k]))
       _(invariant is_permuted(s0, buf, len, perm))
@@ -54,7 +54,7 @@ void insertion_sort(int *buf, unsigned len _(out perm_t perm))
         _(ghost perm[j + 1] = perm[j] )
         _(ghost perm2 = swap(perm2, j, j + 1) )
         if (_(unchecked)(j--) == 0) break;
-      } else 
+      } else
         break;
     }
     buf[_(unchecked)(j + 1)] = v;

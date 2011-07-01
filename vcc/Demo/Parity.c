@@ -3,7 +3,7 @@
 
 typedef _(claimable) struct _A {
   volatile int f;
-  _(invariant \unchanged(f) || f == _(unchecked)(\old(f) + 2))
+  _(invariant f == \old(f) || f == _(unchecked)(\old(f) + 2))
   // unchecked() used as work-around for issue 5883
 } A;
 

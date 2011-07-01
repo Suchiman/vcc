@@ -108,15 +108,12 @@
     <ClCompile Include="Parity.c" />
     <ClCompile Include="PartDB.c" />
     <ClCompile Include="SpinLock.c" />
-    <ClCompile Include="SpinLockNewSyntax.c" />
     <ClCompile Include="ssort.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BitMap.h" />
     <ClInclude Include="SpinLock.h" />
-    <ClInclude Include="SpinLockNewSyntax.h" />
     <ClInclude Include="Intrinsics.h" />
-    <ClInclude Include="IntrinsicsNewSyntax.h" />
     <ClInclude Include="Spec.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

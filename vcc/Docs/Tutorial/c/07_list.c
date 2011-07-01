@@ -17,10 +17,10 @@ _(dynamic_owns) struct List {
   _(invariant followers[NULL] == \lambda int k; \false)
   _(invariant \forall struct Node *n;
                 \mine(n) ==> n->next == NULL || \mine(n->next))
-  _(invariant \forall struct Node *n; 
-                \mine(n) ==> 
-                   \forall int e; 
-                      followers[n][e] <==> 
+  _(invariant \forall struct Node *n;
+                \mine(n) ==>
+                   \forall int e;
+                      followers[n][e] <==>
                       followers[n->next][e] || e == n->data)
 };
 
@@ -57,7 +57,7 @@ int add(struct List *l, int k)
     _(wrap n)
     _(ghost {
       l->\owns += n; /*{specupdate}*/
-      l->followers[n] = 
+      l->followers[n] =
         (\lambda int z; l->followers[n->next][z] || z == k);
       l->val = l->followers[n]; /*{updateend}*/
     })
