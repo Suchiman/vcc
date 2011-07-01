@@ -117,6 +117,8 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Call (ec, fn, tps, args) as e ->
       if fn.IsDatatypeOption then
         None
+      elif fn.Name.StartsWith "lambda#" then
+        None 
       elif fn.CustomAttr |> hasCustomAttr AttrDefinition then        
         let subst = fn.CallSubst args
         let assigns, callVariants = 
@@ -165,7 +167,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Macro (_, name, _) when name.StartsWith "DP#" ->
       None
 
-    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"), _) ->
+    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"), _) ->
       None
 
     | Macro (ec, s, args) as e ->
