@@ -100,23 +100,15 @@ namespace Microsoft.Research.Vcc
                     
               //Expr.Assert( { afmte 8514 "invariant({0}) holds (in admissibility check)" [expr] with Type = Type.Void }, expr )
           let check = 
-            { Token = td.Token
-              IsSpec = true  
-              RetType = Void
-              OrigRetType = Void
-              Name = td.Name + "#adm"
-              Parameters = [parm]
-              TypeParameters = []
-              Requires = []
-              Ensures = post
-              Writes = []
-              Variants = []
-              Reads = []
-              CustomAttr = [ VccAttr(AttrIsAdmissibility, "") ]
-              Body = Some body
-              IsProcessed = true
-              AcceptsExtraArguments = false
-              UniqueId = CAST.unique() } : Function
+            { Function.Empty() with
+                Token = td.Token
+                IsSpec = true  
+                Name = td.Name + "#adm"
+                Parameters = [parm]
+                Ensures = post
+                CustomAttr = [ VccAttr(AttrIsAdmissibility, "") ]
+                Body = Some body
+                IsProcessed = true }
           [decl; Top.FunctionDecl check]
       | decl -> [decl]
     List.map handleDecl >> List.concat
@@ -364,23 +356,13 @@ namespace Microsoft.Research.Vcc
           Expr.MkBlock [Stmt (tok, Macro (tok, "_vcc_reads_havoc", []));
                         Return (tok, None)]
         let rc =
-          { Token = f.Token
-            IsSpec = true  
-            OrigRetType = Void
-            RetType = Void
-            Name = f.Name + "#reads"
-            Parameters = []
-            TypeParameters = []
-            Requires = []
-            Ensures = []
-            Writes = []
-            Variants = []
-            Reads = []
-            CustomAttr = [ ReadsCheck f ]
-            Body = Some body
-            IsProcessed = true
-            AcceptsExtraArguments = false
-            UniqueId = CAST.unique() } : Function
+          { Function.Empty() with
+              Token = f.Token
+              IsSpec = true  
+              Name = f.Name + "#reads"
+              CustomAttr = [ ReadsCheck f ]
+              Body = Some body
+              IsProcessed = true }
         let decl = Top.FunctionDecl rc
         revReadChecks.[rc] <- f
         synteticReadChecks := decl :: !synteticReadChecks

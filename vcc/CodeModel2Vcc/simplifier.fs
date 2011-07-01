@@ -175,24 +175,17 @@ namespace Microsoft.Research.Vcc
           body.SelfVisit(checkForSideEffect)
           
           let fn =
-            { Token           = c.Token
-              IsSpec          = true
-              RetType         = c.Type
-              OrigRetType     = c.Type
-              Name            = "lambda#" + (helper.UniqueId()).ToString()
-              Parameters      = [for (_, var) in !parms -> { var with Kind = Parameter }]
-              TypeParameters  = []
-              Requires        = []
-              Ensures         = []
-              Writes          = []
-              Variants        = []
-              Reads           = if !isPure then [] else [Expr.Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_set_universe", [])]
-              CustomAttr      = [VccAttr (AttrIsPure, "")]
-              Body            = None
-              IsProcessed     = true
-              AcceptsExtraArguments = false
-              UniqueId = CAST.unique()
-            } : Function                  
+            { Function.Empty() with
+                Token           = c.Token
+                IsSpec          = true
+                RetType         = c.Type
+                OrigRetType     = c.Type
+                Name            = "lambda#" + (helper.UniqueId()).ToString()
+                Parameters      = [for (_, var) in !parms -> { var with Kind = Parameter }]
+                Reads           = if !isPure then [] else [Expr.Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_set_universe", [])]
+                CustomAttr      = [VccAttr (AttrIsPure, "")]
+                IsProcessed     = true
+              }
                 
           let axcall = Call ({ bogusEC with Type = fn.RetType }, fn, [], List.map (snd >> mkRef) !parms)
           let idxvar = match q.Variables with [x] -> x | _ -> die()

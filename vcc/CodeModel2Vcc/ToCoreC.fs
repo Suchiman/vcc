@@ -839,23 +839,18 @@ namespace Microsoft.Research.Vcc
                   Expr.VarWrite(voidBogusEC(), [outMap v], mkRef (inMap v))
                 let stripInitialPure = List.map (function | Pure(_, e) -> e | e -> e)
 
-                let fn = { Token = b.Token;
-                         IsSpec = false;
-                         OrigRetType = Type.Void;
-                         RetType = Type.Void;
-                         Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut;
-                         TypeParameters = [];
-                         Name = !currentFunctionName + "#block#" + blockPrefix + blockId;
-                         Requires = stripInitialPure cs'.Requires;
-                         Ensures = stripInitialPure cs'.Ensures;
-                         Writes = stripInitialPure cs'.Writes;
-                         Variants = stripInitialPure cs'.Decreases;
-                         Reads = stripInitialPure cs'.Reads;
-                         CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else []);
-                         Body = Some (Expr.MkBlock(ss @ List.map mkSetOutPar localsThatGoOut));
-                         IsProcessed = true;
-                         AcceptsExtraArguments = false;
-                         UniqueId = CAST.unique() } : Function
+                let fn = { Function.Empty() with 
+                             Token = b.Token
+                             Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut
+                             Name = !currentFunctionName + "#block#" + blockPrefix + blockId
+                             Requires = stripInitialPure cs'.Requires
+                             Ensures = stripInitialPure cs'.Ensures
+                             Writes = stripInitialPure cs'.Writes
+                             Variants = stripInitialPure cs'.Decreases
+                             Reads = stripInitialPure cs'.Reads;
+                             CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else [])
+                             Body = Some (Expr.MkBlock(ss @ List.map mkSetOutPar localsThatGoOut))
+                             IsProcessed = true }
                 blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
                 let inArgs = List.map mkRef localsThatGoIn 
                 let outArgs = List.map (fun (v:Variable) -> Expr.Macro({bogusEC with Type = v.Type}, "out", [mkRef v])) localsThatGoOut
