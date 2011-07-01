@@ -1,41 +1,36 @@
+//`/newsyntax
 #include <vcc.h>
 #include "Spinlock.h"
 #include "BitMap.h"
 
-#ifdef SIMPLE_SPIN_LOCKS
-#define _claimable_
-#else
-#define _claimable_ vcc(claimable)
-#endif
-
-struct _claimable_ LockContainer {
+_claimable_ struct LockContainer {
   BITMAP bitmap;
-  vcc(as_array) unsigned int buffer[10];
+  _(as_array) unsigned buffer[10];
   SPIN_LOCK Lock;
 
-  invariant(keeps(&Lock))
-  invariant(Lock.protected_obj == &bitmap)
+  _(invariant \mine(&Lock))
+  _(invariant Lock.protected_obj == &bitmap)
 };
 
 void InitContainer(struct LockContainer *lc)
-  writes(extent(lc))
-  ensures(wrapped(lc))
+  _(writes \extent(lc))
+  _(ensures \wrapped(lc))
 {
-  wrap(as_array(lc->buffer, 10));
+  _(wrap (unsigned[10])(lc->buffer))
   InitializeBitMap(&lc->bitmap, lc->buffer, 320);
-  InitializeSpinLock(&lc->Lock spec(&lc->bitmap));
-  wrap(lc);
+  InitializeSpinLock(&lc->Lock _(ghost &lc->bitmap));
+  _(wrap lc)
 }
 
 #ifdef SIMPLE_SPIN_LOCKS
 
-void UseContainer(struct LockContainer *lc, unsigned int bitNumber)
-  writes(lc)
-  maintains(wrapped(lc))
+void UseContainer(struct LockContainer *lc, unsigned bitNumber)
+  _(writes lc)
+  _(maintains \wrapped(lc))
 {
-  expose(lc) {
+  _(unwrapping lc) {
     Acquire(&lc->Lock);
-    assert(in_domain(&lc->Lock, &lc->Lock));
+    _(assert &lc->Lock \in \domain(&lc->Lock))
     if (bitNumber < lc->bitmap.Size) SetBit(&lc->bitmap, bitNumber);
     Release(&lc->Lock);
   }
@@ -46,37 +41,37 @@ void UseContainer(struct LockContainer *lc, unsigned int bitNumber)
 struct ConcurrentUser {
   struct LockContainer *lc;
 
-  spec(claim_t cont_claim;)
-  invariant(keeps(cont_claim))
-  invariant(claims_obj(cont_claim, lc))
+  _(ghost \claim cont_claim)
+  _(invariant \mine(cont_claim))
+  _(invariant \claims_object(cont_claim, lc))
 };
 
-void UseContainer(struct LockContainer *lc, unsigned int bitNumber claimp(cont_claim))
-  always(cont_claim, closed(lc))
+void UseContainer(struct LockContainer *lc, unsigned bitNumber _(ghost \claim cont_claim))
+  _(always cont_claim, lc->\closed)
 {
-  Acquire(&lc->Lock spec(cont_claim));
-  assert(in_domain(&lc->bitmap, &lc->bitmap));
+  Acquire(&lc->Lock _(ghost cont_claim));
+  _(assert &lc->bitmap \in \domain(&lc->bitmap))
   if (bitNumber < lc->bitmap.Size) SetBit(&lc->bitmap, bitNumber);
-  Release(&lc->Lock spec(cont_claim));
+  Release(&lc->Lock _(ghost cont_claim));
 }
 
 void InitializeConcurrentUser(struct ConcurrentUser *cu, struct LockContainer *lc)
-  writes(lc, extent(cu))
-  maintains(wrapped(lc))
-  ensures(wrapped(cu))
-  ensures(cu->lc == lc)
+  _(writes lc, \extent(cu))
+  _(maintains \wrapped(lc))
+  _(ensures \wrapped(cu))
+  _(ensures cu->lc == lc)
 {
-  spec(cu->cont_claim = claim(lc, closed(lc));)
+  _(ghost cu->cont_claim = \make_claim({lc}, lc->\closed))
   cu->lc = lc;
-  wrap(cu);
+  _(wrap cu)
 }
 
 void UseConcurrentOwner(struct ConcurrentUser *cu)
-  writes(cu)
-  maintains(wrapped(cu))
+  _(writes cu)
+  _(maintains \wrapped(cu))
 {
-  expose(cu) {
-  UseContainer(cu->lc, 10 spec(cu->cont_claim));
+  _(unwrapping cu) {
+  UseContainer(cu->lc, 10 _(ghost cu->cont_claim));
   }
 }
 

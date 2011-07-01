@@ -24,17 +24,17 @@ void sstr_append_char(struct SafeString *s, char c)
   _(assert \wrapped(s))
   _(assume s->len <= SSTR_MAXLEN &&
            s->content[s->len] == '\0')
-  _(ghost s->\consistent = \false;)
+  _(ghost s->\closed = \false;)
   _(assume \writable(\span(s)))
 
   s->content[s->len++] = c;
   s->content[s->len] = '\0';
-  
+
   // _(wrap s), steps 1-3
   _(assert \mutable(s))
   _(assert s->len <= SSTR_MAXLEN &&
            s->content[s->len] == '\0')
-  _(ghost s->\consistent = \true;)
+  _(ghost s->\closed = \true;)
 }
 /*{out}*/
 /*`

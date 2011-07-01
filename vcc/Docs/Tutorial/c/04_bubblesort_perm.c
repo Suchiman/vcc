@@ -25,7 +25,7 @@ void bubble_sort(int *buf, unsigned len _(out perm_t perm))
   int swapped;
   _(ghost \state s0 = \now() )
 
-  _(ghost perm = \lambda unsigned i; i) 
+  _(ghost perm = \lambda unsigned i; i)
 
   if (len == 0) return;
 
@@ -36,7 +36,7 @@ void bubble_sort(int *buf, unsigned len _(out perm_t perm))
   {
     int tmp;
     unsigned i;
-  
+
     swapped = 0;
     for (i = 0; i < len - 1; ++i)
       _(invariant !swapped ==> sorted(buf, i + 1))

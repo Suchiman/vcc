@@ -6,9 +6,8 @@ Preparation:
    VccDemo -> Properties -> Configuration Properties -> C/C++ -> General ->
    Additional Include Directories'.
 
-2. Examples that have "//`/newsyntax" in their top line are in VCC's new
-   syntax.  Set "Verify -> Vcc Options... -> VCC Language Version" to V2 (or
-   use /2 as a VCC switch on the command-line).
+2. Examples are in VCC's new syntax.  Set "Verify -> Vcc Options... -> VCC
+   Language Version" to V2 (or use /2 as a VCC switch on the command-line).
 
 3. Open SpinLock.h and make sure that #define SIMPLE_SPIN_LOCKS has not been
    commented out.

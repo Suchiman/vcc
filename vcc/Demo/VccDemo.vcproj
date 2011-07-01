@@ -201,10 +201,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SpinLockNewSyntax.c"
-				>
-			</File>
-			<File
 				RelativePath=".\ssort.c"
 				>
 			</File>
@@ -222,20 +218,12 @@
 				RelativePath=".\SpinLock.h"
 				>
 			</File>
-			<File
-				RelativePath=".\SpinLockNewSyntax.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Misc"
 			>
 			<File
 				RelativePath=".\Intrinsics.h"
-				>
-			</File>
-			<File
-				RelativePath=".\IntrinsicsNewSyntax.h"
 				>
 			</File>
 			<File

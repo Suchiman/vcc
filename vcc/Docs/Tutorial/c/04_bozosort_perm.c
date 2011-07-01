@@ -11,9 +11,9 @@ _(logic bool is_permutation(perm_t perm, unsigned len) =
   (\forall unsigned i, j;
     i < j && j < len ==> perm[i] != perm[j]))
 
-_(logic bool is_permuted(\state s, int *buf, unsigned len, 
+_(logic bool is_permuted(\state s, int *buf, unsigned len,
                          perm_t perm) =
-  \forall unsigned i; i < len ==> 
+  \forall unsigned i; i < len ==>
       perm[i] < len && \at(s, buf[ perm[i] ]) == buf[i])
 
 _(logic perm_t swap(perm_t p, unsigned i, unsigned j) =
@@ -27,7 +27,7 @@ void bozo_sort(int *buf, unsigned len _(out perm_t perm))
 {
   _(ghost \state s0 = \now() )
 
-  _(ghost perm = \lambda unsigned i; i) 
+  _(ghost perm = \lambda unsigned i; i)
 
   if (len == 0) return;
 

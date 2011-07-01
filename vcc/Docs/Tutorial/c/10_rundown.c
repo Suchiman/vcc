@@ -31,10 +31,10 @@ void init(struct RefCnt *r _(ghost \object rsc))
   _(wrap r)
 }
 /*{incr}*/
-int try_incr(struct RefCnt *r _(ghost \claim c) 
+int try_incr(struct RefCnt *r _(ghost \claim c)
              _(	out \claim ret))
-  _(always c, r->\consistent)
-  _(ensures \result == 0 ==> 
+  _(always c, r->\closed)
+  _(ensures \result == 0 ==>
      \claims_object(ret, r->resource) && \wrapped0(ret) && \fresh(ret))
 {
   unsigned v, n;
@@ -46,7 +46,7 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
     _(assume v <= UINT_MAX - 2)
     _(atomic c, r) {
       n = InterlockedCompareExchange(&r->cnt, v + 2, v);
-      _(ghost 
+      _(ghost
         if (v == n) ret = \make_claim({r->resource}, \true);)
     }
 
@@ -55,7 +55,7 @@ int try_incr(struct RefCnt *r _(ghost \claim c)
 }
 /*{decr}*/
 void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
-  _(always c, r->\consistent)
+  _(always c, r->\closed)
   _(requires \claims_object(handle, r->resource) && \wrapped0(handle))
   _(requires c != handle)
   _(writes handle)
@@ -73,7 +73,7 @@ void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
 
     _(atomic c, r) {
       n = InterlockedCompareExchange(&r->cnt, v - 2, v);
-      _(ghost 
+      _(ghost
         if (v == n) {
           _(ghost \destroy_claim(handle, {r->resource}));
         })
@@ -84,18 +84,18 @@ void decr(struct RefCnt *r _(ghost \claim c) _(ghost \claim handle))
 }
 /*{use}*/
 _(claimable) struct A {
-  volatile int x;	
+  volatile int x;
 };
 
 struct B {
-  struct RefCnt rc;	
+  struct RefCnt rc;
   struct A a;
   _(invariant \mine(&rc))
   _(invariant rc.resource == &a)
 };
 
 void useb(struct B *b _(ghost \claim c))
-  _(always c, b->\consistent)
+  _(always c, b->\closed)
 {
   _(ghost \claim ac;)
   if (try_incr(&b->rc _(ghost c) _(out ac)) == 0) {
