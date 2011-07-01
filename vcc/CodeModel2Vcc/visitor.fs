@@ -254,23 +254,14 @@ namespace Microsoft.Research.Vcc
                 | :? IMethodDefinition as methodDef -> methodDef.AcceptsExtraArguments
                 | _ -> false
             let decl =
-              { Token           = tok
-                IsSpec          = isSpec
-                RetType         = this.DoType(meth.Type)
-                OrigRetType     = this.DoType(meth.Type)
-                Name            = name
-                Parameters      = []
-                TypeParameters  = []
-                Requires        = []
-                Ensures         = []
-                Writes          = []
-                Variants        = []
-                Reads           = []
-                CustomAttr      = []
-                Body            = None
-                IsProcessed     = false
-                AcceptsExtraArguments = acceptsExtraArguments
-                UniqueId        = CAST.unique() } : C.Function                      
+              { C.Function.Empty() with
+                  Token           = tok
+                  IsSpec          = isSpec
+                  RetType         = this.DoType(meth.Type)
+                  OrigRetType     = this.DoType(meth.Type)
+                  Name            = name
+                  AcceptsExtraArguments = acceptsExtraArguments
+                  }
             if decl.Name = "" then
               printf "null name\n"
             else

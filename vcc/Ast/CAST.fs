@@ -593,6 +593,25 @@ module Microsoft.Research.Vcc.CAST
       mutable IsProcessed:bool;
       UniqueId:Unique;
     }
+
+    static member Empty() =
+      { Token = bogusToken
+        IsSpec = false
+        OrigRetType = Type.Void
+        RetType = Type.Void
+        Parameters = []
+        TypeParameters = []
+        Name = "<none>"
+        Requires = []
+        Ensures = []
+        Writes = []
+        Variants = []
+        Reads = []
+        CustomAttr = []
+        Body = None
+        IsProcessed = false
+        AcceptsExtraArguments = false
+        UniqueId = unique() } : Function
     
     override this.GetHashCode () = int this.UniqueId
     override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)

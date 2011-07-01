@@ -911,23 +911,13 @@ namespace Microsoft.Research.Vcc
       let extractBvLemmas (fn : Function) = 
         let idCount = ref -1
         let checkFunctionFor (lemma:Expr) = 
-          { Token = lemma.Token
-            IsSpec = true
-            OrigRetType = Type.Void
-            RetType = Type.Void
-            Parameters = []
-            TypeParameters = []
-            Name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
-            Requires = []
-            Ensures = []
-            Writes = []
-            Variants = []
-            Reads = []
-            CustomAttr = [VccAttr (AttrIsPure, ""); VccAttr(AttrBvLemmaCheck, "true")]
-            Body = Some (Expr.Block(lemma.Common, [lemma], None))
-            IsProcessed = true
-            AcceptsExtraArguments = false
-            UniqueId = CAST.unique() } : Function
+          { Function.Empty() with
+              Token = lemma.Token
+              IsSpec = true
+              Name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
+              CustomAttr = [VccAttr (AttrIsPure, ""); VccAttr(AttrBvLemmaCheck, "true")]
+              Body = Some (Expr.Block(lemma.Common, [lemma], None))
+              IsProcessed = true }
         let findAmdExtractThem _ = function
           | Expr.Assert(ec, CallMacro(_, "_vcc_bv_lemma", _, _), _) as _assert ->
             let checkFn = checkFunctionFor _assert
