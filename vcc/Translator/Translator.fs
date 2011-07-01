@@ -746,6 +746,8 @@ namespace Microsoft.Research.Vcc
             B.Ite (cond', self th, self el)
           | "can_use_frame_axiom_of", [C.Call (_, f, _, _)] ->
             bCall "$can_use_frame_axiom_of" [er ("cf#" + f.Name)]
+          | "decreases_level_is", [n] ->
+            bEq (self n) (er "$decreases_level")
           | "_vcc_typeof", [e] ->
             typeOf env e                
           | "_vcc_obj_eq", [e1; e2] ->
@@ -2643,6 +2645,10 @@ namespace Microsoft.Research.Vcc
           let fappl  = fappls.Head
           let subst = bSubst (("$s", er "#s") :: List.zip ("$result" :: List.map (fun (v:C.Variable) -> "OP#" + v.Name) h.OutParameters)  fappls )
           let defBody = subst (bImpl requires ensures)
+          let defBody =
+            if h.IsWellFounded then
+              bImpl (B.Expr.Primitive ("<", [bInt h.DecreasesLevel; er "$decreases_level"])) defBody
+            else defBody
           if h.IsStateless && bContains "#s" defBody then
             helper.Error (h.Token, 9650, "the specification refers to memory, but function is missing a reads clause", None)
           let defAxiom =

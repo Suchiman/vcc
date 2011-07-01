@@ -38,8 +38,6 @@ _(def ByteString cons(ByteString s, BYTE b)
 
 
 `
-testcase(22,18) : warning VC9315: [possible unsoundness]: function 'lambda#1' should by defined with _(def) for termination checking
-testcase(31,18) : warning VC9315: [possible unsoundness]: function 'lambda#2' should by defined with _(def) for termination checking
 Verification of empty succeeded.
 Verification of cons succeeded.
 `
