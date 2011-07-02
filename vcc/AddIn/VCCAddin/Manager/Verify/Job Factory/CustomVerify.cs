@@ -14,7 +14,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     public CustomVerify(ActiveDocument activeDocument)
       : base(activeDocument.getFileName(true),
              activeDocument.VCCSettings,
-             Utilities.GetActivePlattformID(activeDocument.ProjectItem)) {
+             Utilities.GetActivePlatformID(activeDocument.ProjectItem)) {
 
       string FktName = activeDocument.CurrentFunctionName;
       bool isInFkt = activeDocument.IsInFunction;

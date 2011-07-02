@@ -456,7 +456,7 @@ namespace VerifiedCCompilerAddin {
     /// </summary>
     /// <returns></returns>
     private string getActiveConfigNameOfProject() {
-      string ActiveConfig = Utilities.GetActiveConfigOfProject(ContainingProject) + "|" + Utilities.GetActivePlattformOfProject(ContainingProject);
+      string ActiveConfig = Utilities.GetActiveConfigOfProject(ContainingProject) + "|" + Utilities.GetActivePlatformOfProject(ContainingProject);
       return ActiveConfig;
     }
     

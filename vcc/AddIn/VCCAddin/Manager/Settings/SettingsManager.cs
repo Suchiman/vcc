@@ -188,20 +188,20 @@ namespace VerifiedCCompilerAddin.Manager.Settings {
 
       string VCIncludeDir = properties.Item("IncludeDirectories").Value.ToString();
       string[] aVCDirs = VCIncludeDir.Split('|');
-      Dictionary<string, string> IncludesForPlattforms = new Dictionary<string, string>();
+      Dictionary<string, string> IncludesForPlatforms = new Dictionary<string, string>();
       for (int i = 0; i < aVCDirs.Length; i += 2) {
-        IncludesForPlattforms.Add(aVCDirs[i], aVCDirs[i + 1]);
+        IncludesForPlatforms.Add(aVCDirs[i], aVCDirs[i + 1]);
       }
 
-      string IncDirsForActivePlattform = IncludesForPlattforms[Utilities.GetActivePlattformOfProject(prjItem.ContainingProject)];
-      IncDirsForActivePlattform = ExecuteMacroProject((prjItem.ContainingProject.Object as VCProject),
+      string IncDirsForActivePlatform = IncludesForPlatforms[Utilities.GetActivePlatformOfProject(prjItem.ContainingProject)];
+      IncDirsForActivePlatform = ExecuteMacroProject((prjItem.ContainingProject.Object as VCProject),
                                   Utilities.GetActiveConfigOfProject(prjItem.ContainingProject),
-                                  IncDirsForActivePlattform);
+                                  IncDirsForActivePlatform);
 
-      if (IncDirsForActivePlattform.EndsWith(";"))
-        return IncDirsForActivePlattform;
+      if (IncDirsForActivePlatform.EndsWith(";"))
+        return IncDirsForActivePlatform;
       else
-        return IncDirsForActivePlattform + ";";
+        return IncDirsForActivePlatform + ";";
     }
   }
 }
