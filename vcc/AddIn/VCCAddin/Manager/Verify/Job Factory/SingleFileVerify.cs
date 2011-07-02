@@ -11,7 +11,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     public SingleFileVerify(ActiveDocument activeDocument)
       : base(activeDocument.getFileName(false),
              activeDocument.VCCSettings,
-             Utilities.GetActivePlattformID(activeDocument.ProjectItem)) {
+             Utilities.GetActivePlatformID(activeDocument.ProjectItem)) {
     }
   }
 }

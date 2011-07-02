@@ -40,9 +40,9 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     public string FullFileName { get; set; }
 
     /// <summary>
-    /// Contains the current plattform, like x64, win32 ...
+    /// Contains the current platform, like x64, win32 ...
     /// </summary>
-    public string Plattform { get; set; }
+    public string Platform { get; set; }
 
     /// <summary>
     /// Current VCCSettings
@@ -86,24 +86,24 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
       this.Settings = null;
       this.FunctionToVerify = String.Empty;
       this.AdditionalParameter = String.Empty;
-      this.Plattform = String.Empty;
+      this.Platform = String.Empty;
       this.AfterExecuteDelegate = delegate() { };
     }
 
-    public VerifyJob(string FullFileName, VCCSettings Settings, string Plattform)
+    public VerifyJob(string FullFileName, VCCSettings Settings, string Platform)
     {
       this.FullFileName = FullFileName;
       this.Settings = Settings;
-      this.Plattform = Plattform;
+      this.Platform = Platform;
     }
 
-    public VerifyJob(string FullFileName, VCCSettings Settings, string Plattform, string FunctionToVerify)
-      : this(FullFileName, Settings, Plattform) {
+    public VerifyJob(string FullFileName, VCCSettings Settings, string Platform, string FunctionToVerify)
+      : this(FullFileName, Settings, Platform) {
       this.FunctionToVerify = FunctionToVerify;
     }
 
-    public VerifyJob(string FullFileName, VCCSettings Settings, string Plattform, string FunctionToVerify, string AdditionalParameter)
-      : this(FullFileName, Settings, Plattform, FunctionToVerify) {
+    public VerifyJob(string FullFileName, VCCSettings Settings, string Platform, string FunctionToVerify, string AdditionalParameter)
+      : this(FullFileName, Settings, Platform, FunctionToVerify) {
       this.AdditionalParameter += AdditionalParameter;
     }
 
@@ -147,7 +147,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
                               ForcedIncludes,
                               (Settings.IgnoreStandardIncludePath ? "/X" : String.Empty),
                               Path.GetFileName(FullFileName),
-                              Utilities.GetCLPath(Plattform));
+                              Utilities.GetCLPath(Platform));
 
       if (FunctionToVerify != String.Empty) {
         cmdline.AppendFormat(" /f:{0}", FunctionToVerify);

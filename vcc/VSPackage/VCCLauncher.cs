@@ -29,9 +29,9 @@ namespace Microsoft.Research.Vcc.VSPackage
       return VSDir;
     }
 
-    internal static string GetCLPath(string ActivePlattform)
+    internal static string GetCLPath(string ActivePlatform)
     {
-      string CL = (ActivePlattform == "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
+      string CL = (ActivePlatform == "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
       return GetVSCOMNTOOLS().ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
     }
 
