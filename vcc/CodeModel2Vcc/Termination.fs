@@ -255,5 +255,6 @@ let insertTerminationChecks (helper:Helper.Env) decls =
   List.collect aux decls
 
 let init (helper:Helper.Env) =
-  helper.AddTransformer ("termination-set-level", Helper.Decl (setDecreasesLevel helper))
-  helper.AddTransformer ("termination-add-checks", Helper.Decl (insertTerminationChecks helper))
+  if helper.Options.Vcc3 then
+    helper.AddTransformer ("termination-set-level", Helper.Decl (setDecreasesLevel helper))
+    helper.AddTransformer ("termination-add-checks", Helper.Decl (insertTerminationChecks helper))
