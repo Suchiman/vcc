@@ -1,0 +1,344 @@
+`/newsyntax
+#include <vcc.h>
+
+struct VS {
+  volatile int x;
+  volatile int y;
+  _(ghost volatile \object yappr;)
+  volatile int z;
+  _(ghost \object zappr;)
+  volatile int w;
+  int nv;
+
+  _(invariant \approves(\this->\owner, x))
+  _(invariant \approves(yappr, y))
+  _(invariant \approves(yappr, yappr))
+  _(invariant \approves(zappr, z))
+};
+
+struct Q {
+  struct VS vs;
+
+  _(invariant \mine(&vs))
+  _(invariant vs.x == 12)
+  _(invariant vs.y == 12)
+  _(invariant vs.yappr == \this)
+  _(invariant vs.z == 12)
+  _(invariant vs.nv == 12)
+  _(invariant vs.zappr == \this)
+};
+
+struct Qfail1 {
+  struct VS vs;
+
+  _(invariant \mine(&vs))
+  _(invariant vs.w == 12)
+};
+
+struct Qfail2 {
+  struct VS vs;
+
+  _(invariant \mine(&vs))
+  _(invariant vs.y == 12)
+};
+
+struct Qfail3 {
+  struct VS vs;
+
+  _(invariant vs.x == 12)
+};
+
+void foo1(struct VS *vs)
+  _(requires \wrapped(vs))
+{
+  _(atomic vs) {
+    vs->w = 10;
+  }
+}
+
+void foo2(struct VS *vs)
+  _(requires \wrapped(vs))
+  _(writes vs)
+{
+  _(atomic vs) {
+    vs->x = 10;
+    _(bump_volatile_version vs)
+  }
+}
+
+void foo2fail1(struct VS *vs)
+  _(requires \wrapped(vs))
+  _(writes vs)
+{
+  _(atomic vs) {
+    vs->x = 10;
+  }
+}
+
+void foo2fail2(struct VS *vs)
+  _(requires \wrapped(vs))
+{
+  _(atomic vs) {
+    vs->x = 10;
+    _(bump_volatile_version vs)
+  }
+}
+`
+Verification of VS#adm succeeded.
+Verification of Q#adm succeeded.
+Verification of Qfail1#adm failed.
+testcase(34,29) : error VC8012: invariant(vs.w == 12) of Qfail1 is not admissible.
+Verification of Qfail2#adm failed.
+testcase(41,29) : error VC8012: invariant(vs.y == 12) of Qfail2 is not admissible.
+Verification of Qfail3#adm failed.
+testcase(47,29) : error VC8012: invariant(vs.x == 12) of Qfail3 is not admissible.
+Verification of foo1 succeeded.
+Verification of foo2 succeeded.
+Verification of foo2fail1 failed.
+testcase(72,26) : error VC8524: Assertion 'chunk \approves(\this->\owner, x) of invariant of vs holds after atomic' did not verify.
+Verification of foo2fail2 failed.
+testcase(82,21) : error VC8510: Assertion 'vs is writable in call to bump_volatile_version vs' did not verify.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct VS {
+  volatile int x;
+  volatile int y;
+  _(ghost volatile \object yappr;)
+  volatile int z;
+  _(ghost \object zappr;)
+  volatile int w;
+  int nv;
+
+  _(invariant \approves(\this->\owner, x))
+  _(invariant \approves(yappr, y))
+  _(invariant \approves(yappr, yappr))
+  _(invariant \approves(zappr, z))
+};
+
+struct A { int x; }; 
+
+void writeVS(struct VS *vs)
+  _(maintains \wrapped(vs))
+  _(writes vs);
+
+void writeA(struct A *a)
+  _(maintains \wrapped(a))
+  _(writes a);
+
+void foo1(struct VS *vs)
+  _(requires \wrapped(vs))
+  _(requires vs->x == 10)
+{
+  struct A a;
+  _(wrap &a)
+  writeA(&a);
+  _(assert vs->x == 10)
+  _(unwrap &a)
+}
+
+void foo2(struct VS *vs)
+  _(requires \wrapped(vs))
+  _(requires vs->y == 10)
+  _(requires vs->yappr == \me)
+{
+  struct A a;
+  _(wrap &a)
+  writeA(&a);
+  _(assert vs->y == 10)
+  _(unwrap &a)
+}
+
+void foo1fail(struct VS *vs)
+  _(requires \wrapped(vs))
+  _(requires vs->x == 10)
+  _(writes vs)
+{
+  writeVS(vs);
+  _(assert vs->x == 10)
+}
+
+// the axioms about versions should only hold for closed objects:
+void foo1fail2(struct VS *vs)
+  _(requires \mutable(vs))
+  _(writes &vs->x)
+  _(requires vs->x == 10)
+{
+  vs->x = 12;
+  _(assert vs->x == 10)
+}
+
+void foo1fail3(struct VS *vs)
+  _(requires \mutable(vs))
+  _(writes &vs->y)
+  _(requires vs->y == 10)
+  _(requires vs->yappr == \me)
+{
+  vs->y = 12;
+  _(assert vs->y == 10)
+}
+
+`
+Verification of VS#adm succeeded.
+Verification of foo1 succeeded.
+Verification of foo2 succeeded.
+Verification of foo1fail failed.
+testcase(57,26) : error VC9500: Assertion 'vs->x == 10' did not verify.
+Verification of foo1fail2 failed.
+testcase(67,26) : error VC9500: Assertion 'vs->x == 10' did not verify.
+Verification of foo1fail3 failed.
+testcase(77,26) : error VC9500: Assertion 'vs->y == 10' did not verify.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct VS1 {
+  volatile int y;
+  _(ghost volatile \object yappr;)
+
+  _(invariant \approves(yappr, y))
+};
+
+
+struct VS2 {
+  volatile int y;
+  _(ghost struct VS1 * yappr;)
+
+  _(invariant \approves(yappr, y))
+};
+
+
+struct VS3 {
+  volatile int y;
+  _(ghost \object yappr;)
+  bool f;
+
+  _(invariant f ==> \approves(yappr, y))
+};
+
+`
+testcase(7,29) : error VC9672: volatile field 'yappr' is an approver, but not a self-approver
+testcase(15,29) : error VC9673: approver field 'yappr' should have obj_t type, it has 'struct VS1*'
+testcase(24,35) : error VC9671: approves(...) can only be used as a top-level invariant
+`
+`/newsyntax
+#include <vcc.h>
+
+struct A { _(ghost \object x;) int y; };
+
+struct VS1 {
+  struct A a;
+
+  volatile int y;
+  _(ghost \object yappr;)
+
+  _(invariant \approves(yappr, y + 1))
+  _(invariant \approves(a.x, y))
+};
+`
+testcase(11,29) : error VC9669: approves(...) needs this->field as the second parameter
+testcase(12,29) : error VC9670: approves(...) needs owner(this) or this->field as the first parameter
+`
+`/newsyntax
+#include "vcc.h"
+
+struct A {
+  _(group B)
+  _(:B) int x;
+  _(invariant :B \approves(\this->\owner, x))
+};
+
+`
+`
+`/newsyntax
+#include <vcc2test.h>
+
+struct VS {
+  volatile int y;
+  _(ghost volatile \object yappr;)
+
+  _(invariant \approves(yappr, y))
+  _(invariant \approves(yappr, yappr))
+};
+
+struct Dummy1 {
+  int dummy;
+};
+
+void foo1(struct Dummy1 *d, struct VS *vs _(ghost \claim c))
+  _(always c, d->\closed && vs->\closed && vs->yappr == d)
+{
+  _(atomic vs, c) {
+    vs->y = 10;
+  }
+}
+
+void foo2(struct VS *vs _(ghost \claim c))
+  _(always c, vs->\closed && vs->yappr == NULL)
+{
+  _(atomic vs, c) {
+    vs->y = 10;
+  }
+}
+`
+Verification of VS#adm succeeded.
+Verification of foo1 succeeded.
+Verification of foo2 succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+struct t{
+    _(group  _(claimable) A)
+
+    _(:A) volatile int a;
+    _(invariant :A \approves(\this->\owner, a))
+
+    int b;
+    _(invariant b == a)
+
+    _(group  _(claimable) C)
+    _(:C) volatile int c;
+
+    int d;
+
+    _(invariant \mine(\this::A, \this::C))
+};
+
+void test(struct t *p)
+_(requires \wrapped(p))
+_(writes p)
+{
+    _(unwrap p)
+
+    p->b = 0;
+    _(atomic p::A)
+    {
+
+        _(begin_update)
+        _(ghost _(bump_volatile_version p::A))
+        p->a = 0;
+    }
+    _(wrap p)
+}
+
+
+void test1(struct t *p)
+_(requires \wrapped(p))
+_(writes p)
+{
+    _(unwrap p)
+
+    _(atomic p::C)
+    {
+        _(begin_update)
+        p->c = 0;
+    }
+    _(wrap p)
+}
+`
+Verification of t#adm succeeded.
+Verification of test succeeded.
+Verification of test1 succeeded.
+`

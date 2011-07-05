@@ -1,0 +1,255 @@
+\section{Loop invariants}
+
+For the most part, what VCC knows at a control point can be
+computed from what it knew at the immediately preceding control
+points. But when the control flow contains a loop, VCC faces a
+chicken-egg problem, since what it knows at the top of the loop (i.e.,
+at the beginning of each loop iteration) depends not only on what it
+knew just before the loop, but also on what it knew just before it
+jumped back to the top of the loop from the loop body.
+
+Rather than trying to guess what it should know at the top of a loop,
+VCC lets you tell it what it should know, by providing a \Def{loop
+  invariant}. To make sure that the loop invariant does indeed hold 
+whenever control reaches the top
+of the loop, VCC asserts that the invariant holds wherever control
+jumps to the top of the loop -- namely, on loop entry and at the end of
+the loop body.
+
+% Repeated below. --MM
+%In addition, VCC knows at the top of a loop
+%that any variable that is not modified in the loop has 
+%the same value it had on entry to the loop.
+%We simulate this by having VCC forget
+%(at loop entry) everything it knew about variables that are modified
+%in the loop body.
+
+Let's look at an example:
+\vccInput[linerange={begin-}]{c/02_div.c}
+\noindent
+
+The \vcc{divide()} function computes the quotient and remainder of integer division
+of \vcc{x} by \vcc{d} using the classic division algorithm.
+%% (Later, we'll see similar examples with sets, which are built into
+%% the specification language, but not into C.)
+The loop invariant says that we have a suitable answer, except with a
+remainder that is possibly too big. VCC translates this example roughly as follows:
+\vccInput[linerange={begin-end}]{c/02_div_assert.c}
+
+\noindent
+Note that this translation has removed all cycles from the control
+flow graph of the function (even though it has gotos); this means that
+VCC can use the rules of the previous sections to reason about the
+program. In VCC, all program reasoning is reduced to reasoning about
+acyclic chunks of code in this way.
+
+Note that the invariant is asserted wherever control moves to the top of the
+loop (here, on entry to the loop and at the end of the loop body). On
+loop entry, VCC forgets the value of each variable modified in the
+loop (in this case just the local variables \vcc{lr} and \vcc{ld}),%
+\footnote{ Because of aliasing, it is not always obvious to VCC that a
+  variable is not modified in the body of the loop. However, VCC can
+  check it syntactically for a local variable if you never take the
+  address of that variable.}
+and assumes the invariant (which places some constraints on these
+variables).  VCC doesn't have to consider the actual jump from the end
+of the loop iteration back to the top of the loop (since it has
+already checked the loop invariant), so further consideration of that
+branch is cut off with \vcc{_(assume \false)}.  Each loop exit is
+translated into a \vcc{goto} that jumps to just beyond the loop (to
+\vcc{loopExit}). At this control point, we know the loop invariant
+holds and that \vcc{lr < d}, which together imply that we have
+computed the quotient and remainder.
+
+%% If the loop had been of the form
+%% \begin{VCC}
+%% while (res >= b) 
+%%   _( invariant a % b == res % b )
+%% {
+%%   res -= b;
+%% }
+%% \end{VCC}
+%% the assert/assume translation would be exactly the same: the invariant
+%% would be assumed before checking the guard, despite the fact that
+%% guard syntactically precedes the invariant.
+
+For another, more typical example of a loop, consider 
+the following function that uses linear search to determine if a value
+occurs within an array:
+
+%% \noindent
+%% The first postcondition guarantees that when the returned value
+%% is not \vcc{UINT_MAX}, then \vcc{elt} is indeed found at the returned
+%% index.
+%% \itodo{It is required if we promise to return the first one; make this an exercise?}
+%% This doesn't require an invariant, because the non-\vcc{UINT_MAX} index
+%% is returned only under that condition.
+%% However this specification is not full: what about the case when the result is not found?
+%% The second postcondition says that 
+%% To express that an element is not in an array we will use a universal quantifier:
+
+\vccInput[linerange={begin-}]{c/03_lsearch_full.c}
+
+%% Moved the discussion of quantification to the section on
+%% assertions; this just isn't an appropriate place to talk about
+%% quantifiers, because they are not specific to loop invariants. -E
+\noindent
+The postconditions say that the returned value is the minimal array
+index at which \vcc{elt} occurs (or \vcc{UINT_MAX} if it does not occur).
+The loop invariant says that \vcc{elt}  does not occur in \vcc{ar[0]}\dots
+\vcc{ar[i - 1]}.
+
+
+\subsection{Writes clauses for loops}
+\label{sect:sorting}
+
+Loops are in many ways similar to recursive functions.
+Invariants work as the combination of pre- and post-conditions.
+Similarly to functions loops can also have writes clauses.
+You can provide a writes clause using exactly the same syntax
+as for functions.
+When you do not write any heap location in the loop (which has been
+the case in all examples so far), VCC will automatically infer
+an empty writes clause.
+Otherwise, it will take the writes clause that is specified on
+the function.
+So by default, the loop is allowed to write everything that the function
+can.
+Let's see an example of such implicit writes clause,
+a reinterpretation of \vcc{my_memcpy()} from \secref{TODO}.
+
+\vccInput[linerange={begin-end}]{c/04_copy_array.c}
+
+If the loop does not write everything the function can write
+you will often want to provide explicit write clauses.
+Here's a variation of \vcc{memcpy()}, which clears (maybe for security reasons)
+the source buffer after copying it.
+
+\vccInput[linerange={begin-end}]{c/04_copy_and_clear_array.c}
+
+\noindent
+If the second loops did not provide a writes clause,
+we couldn't prove the first postcondition---VCC 
+would think that the second loop could have overwritten \vcc{dst}.
+
+\itodo{one sorting example is needed if we want people to do other,
+maybe we should use bubble or insertion sort though}
+Equipped with that knowledge we can proceed to not only checking
+if an array is sorted, as we did in \secref{TODO}, but to actually
+sorting it.
+The function below implements the bozo-sort algorithm.
+The algorithm works by swapping two random elements in an array, checking if the resulting array
+is sorted, and repeating otherwise.
+We do not recommend using it in production code:
+it's not stable, and moreover has a fairly bad time complexity.
+
+\vccInput[linerange={begin-out}]{c/04_bozosort.c}
+
+The specification that we use is that the output of the sorting routine is sorted.
+Unfortunately, we do not say that it's actually a permutation of the input.
+We'll show how to do that in \secref{sorting-perm}.
+
+
+\subsection*{Exercises}
+Return to the verification exercises of section \secref{recursiveExercises} and repeat them with iterative 
+implementations.
+
+
+%\Def{Ghost data} contains auxiliary information needed to convince VCC about correctness of a program.
+%You can think of it as data that the program maintains for the purpose of debugging.
+%An example might be a program which only keeps track of count of foobars, whereas
+%the specifications of that program also need to use the set of these foobars.
+%\Def{Ghost code} is code which manipulates such data (\ie when you increment the count of foobars
+%you need to add the specific foobar to the set). Ghost variables are just pieces of local ghost
+%data, and ghost functions are functions, which can be only used in specifications and ghost code.
+%
+%The regular C compiler doesn't see the ghost code.
+%Therefore it has no runtime effect, it's only there to help VCC understand why the program works.
+
+%We shall start with ghost functions, which in this case is just a
+%macro for another formula.
+
+% Let's leave this out for now -E
+%\subsection{Review}
+%\todo{Put in some way to get to the relevant info about quantifiers
+%  and ghost data?}  
+%
+%\itodo{I'm not sure how useful this review is. In particular the parts
+%where we explain the semantics of if statements and assignments
+%in terms of what VCC know just seem confusing. Programmers already
+%know what if statement or assignment does. 
+%I think it would be useful just to emphasize what VCC doesn't know,
+%for loops and function calls.
+%--M }
+
+%% You have now learned enough to verify some nontrivial sequential
+%% programs that use only base types and arrays.  This is already a very
+%% rich domain for programming, and you should take some time using VCC
+%% to verify some of the ``toy'' algorithms you learned in school. It's
+%% also a good opportunity to review what we've learned so far.
+
+%% At each control point within a function, VCC ``knows'' certain things
+%% about the state of the program. Included in this knowledge is what
+%% memory locations it can safely read or write. The computation of this
+%% knowledge can be summarized as follows:
+%% \begin{itemize}
+%% \item
+%% On entry to a function, it knows the preconditions of the function.
+%% \item
+%% A memory object is writable if it is mutable and is either listed in the 
+%% writes clause of the function or was mutable after the function was entered.
+%% \item
+%% After \vcc{_(assume E)}, it knows what it knew before the assumption,
+%% and in addition knows \vcc{E != 0}.
+%% \item
+%% \vcc{_(assert E)} asks VCC to prove that what it knows before the
+%% assertion implies \vcc{E} (and report an error if it can't). 
+%% It also assumes \vcc{E} afterward.
+%% %\item
+%% %\todo{Break this up into variable assignment and memory assignment?}
+%% %An assignment statement \vcc{v = E}, where \vcc{E} doesn't have a 
+%% %function call and doesn't mention \vcc{v}%
+%% %\footnote{
+%% %  If \vcc{E} mentions \vcc{v}, we can imagine the value of \vcc{v} being
+%% %  first copied into a fresh temporary variable, which is used in place
+%% %  of \vcc{v} within \vcc{E}.
+%% %}, asserts that the data needed to
+%% %compute \vcc{E} is readable, and that \vcc{v} is writable. After the
+%% %assignment, it knows everything it knew before the assignment (except
+%% %for what it knew about the value of \vcc{v}), and additionally knows
+%% %that \vcc{v == E}. 
+%% \item 
+%% A function call \vcc{f(args)}, 
+%% %where \vcc{args} is a list of variables
+%% %\footnote{
+%% %  If the arguments to the function call are expressions, we can think
+%% %  of these expressions being evaluated and assigned to temporary
+%% %  variables before the function call.
+%% %}, 
+%% asserts that the \vcc{args} are readable, asserts that the objects
+%% mentioned in the writes clauses of \vcc{f} are writable,
+%% asserts the preconditions of \vcc{f} (with the actual parameters
+%% substituted for the formal parameters), forgets what it knew about
+%% \vcc{v} and any objects mentioned in the writes clause of \vcc{f}, and
+%% finally assumes the postconditions of \vcc{f}.
+%% If these postconditions use \vcc{\\old} to refer to parts of
+%% the state before the call, we can think of these parts of the state
+%% as copied to temporary variables prior to the call. The result of
+%% the function can be viewed as being put into a temporary variable of
+%% the caller.
+%% %\item
+%% %For a conditional \vcc{if (p) S1 else S2}, it first asserts that
+%% %\vcc{p} is readable. At the beginning of \vcc{S1} (resp. \vcc{S2}), it
+%% %knows what it knew before the conditional, and in addition knows
+%% %\vcc{p != 0} (resp. \vcc{p == 0}). After the conditional, it knows the 
+%% %disjunction (``or'') of what it knew at the end of \vcc{S1} and what
+%% %we know at the end of \vcc{S2}.
+%% \item
+%% For a loop, it knows at the beginning of the loop body just what it
+%% knew just before the loop (except that it forgets what it knew about
+%% variables modified in the loop), and also knows the loop
+%% invariant. Just before the loop, and at any point in the loop body where
+%% control jumps back to the top of the loop (including the end of the
+%% loop body), it asserts the loop invariant.
+%% \end{itemize}
+
