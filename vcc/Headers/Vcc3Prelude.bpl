@@ -643,7 +643,7 @@ axiom (forall p, q:$ptr, t:$ctype ::
 
 function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
   { if $is_primitive(T) then
-      (lambda q:$ptr :: $is_proper(q) &&
+      (lambda q:$ptr :: // $is_proper(q) && // the array range should also include invalid pointers, in case someone uses sz bigger than the actual size of the array
                         $emb0(q) == $emb0(p) &&
                         $typ(q) == T &&
                         $field_arr_root($field(q)) == $field_arr_root($field(p)) &&
@@ -652,7 +652,8 @@ function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
                         q == $idx_inline(p, $index_within(q, p)) &&
                         $field_kind($field(q)) != $fk_base)
     else
-      (lambda q:$ptr :: $is_proper(q) && $in_range(0, $index_within(q, p), sz - 1) && $in(q, $full_extent($idx(p, $index_within(q, p)))))
+      (lambda q:$ptr :: // $is_proper(q) && 
+          $in_range(0, $index_within(q, p), sz - 1) && $in(q, $full_extent($idx(p, $index_within(q, p)))))
   }
 
 function $in_composite_array(q:$ptr, a:$ptr, sz:int) : bool
