@@ -14,7 +14,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     public CreateBoogie(ActiveDocument activeDocument)
       : base(activeDocument.getFileName(true),
              activeDocument.VCCSettings,
-             Utilities.GetActivePlattformID(activeDocument.ProjectItem)) {
+             Utilities.GetActivePlatformID(activeDocument.ProjectItem)) {
       this.AdditionalParameter = "/t";
       this.AfterExecuteDelegate = delegate() { AfterExecute(this.FullFileName); };
     }

@@ -18,7 +18,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
 
       this.Settings = sets;
       this.FullFileName = (string)pi.Properties.Item("FullPath").Value;
-      this.Plattform = Utilities.GetActivePlattformID(pi);
+      this.Platform = Utilities.GetActivePlatformID(pi);
 
       // #warning Is not correct code here - Masterfile detection, from false project possible!
       if (AddinSettingsManager.UseMasterFile && FullFileName.ToLower().EndsWith(".h")) {

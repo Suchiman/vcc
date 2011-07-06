@@ -14,7 +14,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     public LaunchZ3Visualizer(ActiveDocument activeDocument) :
       base(activeDocument.getFileName(true),
          activeDocument.VCCSettings,
-         Utilities.GetActivePlattformID(activeDocument.ProjectItem)) {
+         Utilities.GetActivePlatformID(activeDocument.ProjectItem)) {
 
       string functionName = activeDocument.CurrentFunctionName;
       this.AdditionalParameter = "/t";

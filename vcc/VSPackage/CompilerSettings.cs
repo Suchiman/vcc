@@ -191,7 +191,7 @@ namespace Microsoft.Research.Vcc.VSPackage {
       return prj.ConfigurationManager.ActiveConfiguration.ConfigurationName;
     }
 
-    private  static string GetActivePlattformOfProject(Project prj)
+    private  static string GetActivePlatformOfProject(Project prj)
     {
       return prj.ConfigurationManager.ActiveConfiguration.PlatformName;
     }
@@ -204,20 +204,20 @@ namespace Microsoft.Research.Vcc.VSPackage {
 
       string VCIncludeDir = properties.Item("IncludeDirectories").Value.ToString();
       string[] aVCDirs = VCIncludeDir.Split('|');
-      Dictionary<string, string> IncludesForPlattforms = new Dictionary<string, string>();
+      Dictionary<string, string> IncludesForPlatforms = new Dictionary<string, string>();
       for (int i = 0; i < aVCDirs.Length; i += 2) {
-        IncludesForPlattforms.Add(aVCDirs[i], aVCDirs[i + 1]);
+        IncludesForPlatforms.Add(aVCDirs[i], aVCDirs[i + 1]);
       }
 
-      string IncDirsForActivePlattform = IncludesForPlattforms[GetActivePlattformOfProject(prjItem.ContainingProject)];
-      IncDirsForActivePlattform = ExecuteMacroProject((prjItem.ContainingProject.Object as VCProject),
+      string IncDirsForActivePlatform = IncludesForPlatforms[GetActivePlatformOfProject(prjItem.ContainingProject)];
+      IncDirsForActivePlatform = ExecuteMacroProject((prjItem.ContainingProject.Object as VCProject),
                                   GetActiveConfigOfProject(prjItem.ContainingProject),
-                                  IncDirsForActivePlattform);
+                                  IncDirsForActivePlatform);
 
-      if (IncDirsForActivePlattform.EndsWith(";"))
-        return IncDirsForActivePlattform;
+      if (IncDirsForActivePlatform.EndsWith(";"))
+        return IncDirsForActivePlatform;
       else
-        return IncDirsForActivePlattform + ";";
+        return IncDirsForActivePlatform + ";";
     }
 
     private static string CheckPreProcessorDefs(string PreProcessorDefs) {

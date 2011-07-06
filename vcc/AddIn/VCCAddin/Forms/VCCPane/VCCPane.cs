@@ -182,7 +182,7 @@ namespace VerifiedCCompilerAddin.Forms {
 
       VerifyJob Job = new VerifyJob(AddInGlobals.ActiveDocument.FullFileName,
                                    sets,
-                                   Utilities.GetActivePlattformID(AddInGlobals.ActiveDocument.ProjectItem),
+                                   Utilities.GetActivePlatformID(AddInGlobals.ActiveDocument.ProjectItem),
                                    Functions.ToString());
       VerifyManager.AddJob(Job);
 
@@ -274,7 +274,7 @@ namespace VerifiedCCompilerAddin.Forms {
 
       VerifyJob Job = new VerifyJob(AddInGlobals.ActiveDocument.FullFileName,
                                    sets,
-                                   Utilities.GetActivePlattformID(AddInGlobals.ActiveDocument.ProjectItem),
+                                   Utilities.GetActivePlatformID(AddInGlobals.ActiveDocument.ProjectItem),
                                    FunctionName);
       VerifyManager.AddJob(Job);
       VerifyManager.Execute();
