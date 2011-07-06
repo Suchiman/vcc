@@ -5,7 +5,6 @@
 #define FALSE 0
 #define TRUE !0
 typedef unsigned UINT;
-#define MAX(a, b) (a<b ? b : a)
 
 #define approvesClientFields(a) \approves(a, ticket) && \approves(a, flag) && \approves(a, checked) \
     && \approves(a, max) && \approves(a, waiting)
@@ -13,28 +12,28 @@ typedef unsigned UINT;
 typedef _(claimable) struct Client {
   volatile UINT ticket;                             // chosen ticket
   volatile bool flag;                               // true when choosing a ticket
-  _(ghost volatile UINT checked;)                   // minimum index of unchecked clients
-  _(ghost volatile UINT max;)                       // maximum ticket read from other clients
-  _(ghost volatile bool waiting;)                   // true when waiting for another client's flag to be lowered
-  _(ghost \object bakery;)                          // the bakery this client is in
+  _(ghost volatile UINT checked)                    // minimum index of unchecked clients
+  _(ghost volatile UINT max)                        // maximum ticket read from other clients
+  _(ghost volatile bool waiting)                    // true when waiting for another client's flag to be lowered
+  _(ghost \object bakery)                           // the bakery this client is in
   _(invariant \on_unwrap(\this, \inv(bakery)))      // don't destroy the client while the bakery is running
-  _(invariant approvesClientFields(\this->\owner))  // only the owne can "change" the fields
+  _(invariant approvesClientFields(\this->\owner))  // only the owner can "change" the fields
   _(invariant approvesClientFields(bakery))         // changes to the fields require checking the bakery invariants
 } Client;
 
-#define thinking(s, i)      (!in_bakery(s, i) && !in_doorway(s, i))
-#define in_bakery(s, i)      (s->c[i].ticket > 0 && !s->c[i].flag)
-#define in_doorway(s, i)    (s->c[i].flag)
+#define thinking(s, i)     (!in_bakery(s, i) && !in_doorway(s, i))
+#define in_bakery(s, i)    (s->c[i].ticket > 0 && !s->c[i].flag)
+#define in_doorway(s, i)   (s->c[i].flag)
 #define serving(s, i)      (in_bakery(s, i) && s->c[i].checked==s->N)
 #define ticket_order(ti, i, tj, j) (ti < tj || (ti == tj && i<=j))
-#define before(s, i, j)      (in_bakery(s, i) && \
+#define before(s, i, j)    (in_bakery(s, i) && \
                  (ticket_order(s->c[i].ticket, i, s->c[j].ticket, j) || thinking(s, j) \
                   || (in_doorway(s, j) && (s->c[j].checked <= i || s->c[j].max >= s->c[i].ticket ))))
 
 typedef _(claimable, dynamic_owns)  struct Bakery {
   UINT N;               // number of clients
   Client *c;            // pointer to array of clients
-  _(invariant \forall UINT i; i<N ==> (&c[i])->\closed  && (&c[i])->\valid && (c[i].bakery==\this) && (c[i].checked<=N))
+  _(invariant \forall UINT i; i < N ==> (&c[i])->\closed  && (&c[i])->\valid && (c[i].bakery==\this) && (c[i].checked<=N))
   // a client in the checking phase has priority over all the clients he's checked
   _(invariant \forall UINT i, j; i < N && j < c[i].checked && in_bakery(\this, i) ==> before(\this, i, j))
   // once i has checked a flag of a client, if the client is choosing again, he comes after i
@@ -51,19 +50,19 @@ typedef _(claimable, dynamic_owns)  struct Bakery {
 
 void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
   _(requires \wrapped(sc) && \claims(sc, server->\closed))   // need evidence that nobody will destroy the server
-  _(requires idx < server->N && \wrapped(cl))                   // must own a client of the server
-  _(requires thinking(server, idx))                              // client must be thinking
+  _(requires idx < server->N && \wrapped(cl))                // must own a client of the server
+  _(requires thinking(server, idx))                          // client must be thinking
   _(writes cl)
-  _(ensures serving(server, idx))                                // get me some service!
+  _(ensures serving(server, idx))                            // get me some service!
 {
   UINT max = 0;
   UINT checked;
-  UINT N = _(by_claim sc)server->N;
+  UINT N = _(by_claim sc) server->N;
 
   // start choosing
   atomicCl(cl->flag = TRUE;
-    _(ghost cl->max = 0;)
-    _(ghost cl->checked = 0;))
+    _(ghost cl->max = 0)
+    _(ghost cl->checked = 0))
 
   // calculate the maximum of the outstanding tickets (asynchronously)
   for(checked = 0; checked < N; checked++)
@@ -73,8 +72,8 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
     UINT t;
     Client *cc = &server->c[checked];
     atomicCc(t = cc->ticket;
-      _(ghost if (t >= max) cl->max = t;)
-      _(ghost cl->checked++;))
+      _(ghost if (t >= max) cl->max = t)
+      _(ghost cl->checked++))
     if (t > max) max = t;
   }
 
@@ -82,12 +81,13 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
 
   // make my ticket bigger than the biggest ticket I found
   max++;
-  atomicCl(cl->ticket = max;)
+  atomicCl(cl->ticket = max)
 
   // anounce that I'm done choosing
   atomicCl(cl->flag = FALSE;
-    _(ghost cl->waiting = \true;)
-    _(ghost cl->checked = 0;))
+    _(ghost cl->waiting = \true)
+    _(ghost cl->checked = 0))
+
   // wait until it's my turn - check that nobody is ahead of me
   for (checked = 0; checked < N; checked++)
     cl_coupling_invariant
@@ -110,7 +110,7 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
     }
 
     // wait until his ticket is 0 or is bigger than mine
-    while(1)
+    while (1)
       _(invariant !cl->waiting)
       cl_coupling_invariant
     {
@@ -134,7 +134,7 @@ void BakeryRelease(Bakery *server, UINT idx _(ghost \claim sc))
   _(writes cl)
   _(ensures thinking(server, idx))
 {
-  atomicCl(cl->ticket = 0;)
+  atomicCl(cl->ticket = 0)
 }
 
 /*`
