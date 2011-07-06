@@ -25,13 +25,13 @@ void Acquire(SPIN_LOCK *SpinLock)
   _(requires \wrapped(SpinLock))
   _(ensures \wrapped(SpinLock->protected_obj))
   _(ensures \fresh(SpinLock->protected_obj))
- ;
+  ;
 
 void Release(SPIN_LOCK *SpinLock)
   _(writes SpinLock->protected_obj)
   _(requires \wrapped(SpinLock))
   _(requires \wrapped(SpinLock->protected_obj))
- ;
+  ;
 
 #else
 

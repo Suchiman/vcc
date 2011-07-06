@@ -6,7 +6,7 @@ void memzero(unsigned *b, unsigned size)
   _(ensures \forall unsigned i; i < size ==> b[i] == 0);
 
 #define _InterlockedCompareExchange(T)                                         \
-_(atomic_inline)                                                             \
+_(atomic_inline)                                                               \
 T InterlockedCompareExchange(volatile T *Destination, T Exchange, T Compare) { \
   if (*Destination == Compare) {                                               \
     *Destination = Exchange;                                                   \

@@ -7,7 +7,7 @@ void InitializeBitMap (BITMAP *BitMap, unsigned *BitMapBuffer, unsigned Size)
   BitMap->Buffer = BitMapBuffer;
   memzero(BitMapBuffer, Size/32);
 
-  _(ghost BitMap->BM = \lambda unsigned i; i < Size ==> \false)
+  _(ghost BitMap->BM = \lambda unsigned i; \false)
   _(wrap BitMap)
 }
 
