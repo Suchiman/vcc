@@ -26,7 +26,7 @@ namespace VerifiedCCompilerAddin {
 
   public static class Utilities {
 
-    internal static string GetActivePlattformID(ProjectItem prjItem) {
+    internal static string GetActivePlatformID(ProjectItem prjItem) {
       return prjItem.ConfigurationManager.ActiveConfiguration.PlatformName;
     }
 
@@ -110,8 +110,8 @@ namespace VerifiedCCompilerAddin {
       return VPath;
     }
 
-    internal static string GetCLPath(string ActivePlattform) {
-      string CL = (ActivePlattform ==  "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
+    internal static string GetCLPath(string ActivePlatform) {
+      string CL = (ActivePlatform ==  "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
       return GetVSCOMNTOOLS().ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
     }
        
@@ -119,7 +119,7 @@ namespace VerifiedCCompilerAddin {
       return prj.ConfigurationManager.ActiveConfiguration.ConfigurationName;
     }
     
-    internal static string GetActivePlattformOfProject(Project prj) {
+    internal static string GetActivePlatformOfProject(Project prj) {
       return prj.ConfigurationManager.ActiveConfiguration.PlatformName;
     }
 
@@ -186,7 +186,7 @@ namespace VerifiedCCompilerAddin {
 
           VerifyManager.AddJob(new VerifyJob(pi.Properties.Item("FullPath").Value.ToString(),
                                             sets,
-                                            Utilities.GetActivePlattformID(pi)
+                                            Utilities.GetActivePlatformID(pi)
                                             ));
         }
       }

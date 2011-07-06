@@ -11,7 +11,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     public LaunchZ3Inspector(ActiveDocument activeDocument)
       : base(activeDocument.getFileName(true),
              activeDocument.VCCSettings,
-             Utilities.GetActivePlattformID(activeDocument.ProjectItem),
+             Utilities.GetActivePlatformID(activeDocument.ProjectItem),
              activeDocument.CurrentFunctionName,
              "/b:/proverOpt:INSPECTOR=Z3Inspector.exe")
     { }

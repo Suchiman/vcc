@@ -11,7 +11,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
     public TypeAdmissiblityCheck(ActiveDocument activeDocument)
       : base(activeDocument.getFileName(true),
             activeDocument.VCCSettings,
-            Utilities.GetActivePlattformID(activeDocument.ProjectItem),
+            Utilities.GetActivePlatformID(activeDocument.ProjectItem),
             activeDocument.getAdmissibilityCheckString(false)) {
    
     }
