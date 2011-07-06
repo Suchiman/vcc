@@ -43,7 +43,7 @@ _(ghost _(pure) uset_t empty()  // A
 _(ghost _(pure) uset_t addone(uset_t s, unsigned i) // A
   _(returns \lambda unsigned j; i == j ? \true : s[j]))  // A
 
-_(axiom \forall uset_t s; card(empty()) == 0) // A
+_(axiom card(empty()) == 0) // A
 _(axiom \forall uset_t s; unsigned i; card(s) >= 0 && !s[i] ==> card(addone(s, i)) == card(s) + 1) // A
 
 _(ghost _(pure) bool upper_card(uset_t s, \integer n) _(returns \forall unsigned i; s[i] ==> i < n))  // A
