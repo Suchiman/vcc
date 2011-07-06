@@ -108,6 +108,7 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
         valueShouldFollow ctx (aux ctx bindings)
 
       // ignored statements
+      | Macro (_, "check_termination", _)
       | Assert _
       | Assume _ 
       | Comment _
@@ -125,8 +126,21 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
         let bindings = Map.add v.UniqueId (recExpr e) bindings
         valueShouldFollow ctx (aux ctx bindings)
 
-      | If (ec, _, cond, thn, els) ->        
-        Macro (ec, "ite", [recExpr cond; self (thn :: cont); self (els :: cont)])
+      | If (ec, _, cond, thn, els) ->
+        let rec noEffect = function
+          | If (_, _, _, thn, els) -> noEffect thn && noEffect els
+          | Macro (_, "check_termination", _)
+          | Assert _
+          | Assume _ 
+          | Comment _
+          | Label _ 
+          | VarDecl _ -> true
+          | Block (_, lst, _) -> List.forall noEffect lst
+          | _ -> false
+        if noEffect thn && noEffect els then
+          self cont
+        else
+          Macro (ec, "ite", [recExpr cond; self (thn :: cont); self (els :: cont)])
 
       | Block (ec, exprs, None) ->
         self (exprs @ cont)
@@ -153,41 +167,54 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
 
 let insertTerminationChecks (helper:Helper.Env) decls =
   let check (currFn:Function) decrRefs self e =
+    let rec justChecks = function
+      | Pure (_, e) -> justChecks e
+
+      | Call (ec, fn, tps, args) as e ->
+        if fn.IsDatatypeOption then
+          []
+        elif fn.Name.StartsWith "lambda#" then
+          []
+        elif fn.DecreasesLevel < currFn.DecreasesLevel then
+          []
+        elif fn.IsWellFounded then        
+          let subst = fn.CallSubst args
+          let assigns, callVariants = 
+            fn.Variants 
+              |> List.map (fun e -> e.Subst subst)
+              |> cacheMultiple helper lateCache "callDecr" VarKind.SpecLocal
+          let rec computeCheck = function
+            | ((s:Expr) :: ss, (c:Expr) :: cc) ->
+              match s.Type, c.Type with
+                | (MathInteger | Integer _), (MathInteger | Integer _) ->
+                  Expr.Macro (boolBogusEC(), "prelude_int_lt_or", [c; s; computeCheck (ss, cc)])
+                | _ ->
+                  helper.GraveWarning (e.Token, 9314, "only integer arguments are currently accepted in _(decreases ...) clauses")
+                  Expr.False
+            // missing elements are treated as Top, e.g. consider:
+            // f(a) = ... f(a-1) ... g(a-1,b) ...
+            // g(a,b) = ... g(a,b-1) ... f(a-1) ...
+            | (_, []) -> Expr.False
+            | ([], _) -> Expr.True 
+          let check = computeCheck (decrRefs, callVariants)
+          let check = check.WithCommon (afmte 8029 "the call '{0}' might not terminate" [e])
+          let check = Expr.MkAssert check
+          assigns @ [check]
+        else
+          helper.GraveWarning (e.Token, 9315, "function '" + fn.Name + "' should by defined with _(def) or _(abstract) for termination checking")
+          []
+      | _ -> helper.Die()
+
     match e with
     | Call (ec, fn, tps, args) as e ->
-      if fn.IsDatatypeOption then
-        None
-      elif fn.Name.StartsWith "lambda#" then
-        None 
-      elif fn.DecreasesLevel < currFn.DecreasesLevel then
-        None
-      elif fn.IsWellFounded then        
-        let subst = fn.CallSubst args
-        let assigns, callVariants = 
-          fn.Variants 
-            |> List.map (fun e -> e.Subst subst)
-            |> cacheMultiple helper lateCache "callDecr" VarKind.SpecLocal
-        let rec computeCheck = function
-          | ((s:Expr) :: ss, (c:Expr) :: cc) ->
-            match s.Type, c.Type with
-              | (MathInteger | Integer _), (MathInteger | Integer _) ->
-                Expr.Macro (boolBogusEC(), "prelude_int_lt_or", [c; s; computeCheck (ss, cc)])
-              | _ ->
-                helper.GraveWarning (e.Token, 9314, "only integer arguments are currently accepted in _(decreases ...) clauses")
-                Expr.False
-          // missing elements are treated as Top, e.g. consider:
-          // f(a) = ... f(a-1) ... g(a-1,b) ...
-          // g(a,b) = ... g(a,b-1) ... f(a-1) ...
-          | (_, []) -> Expr.False
-          | ([], _) -> Expr.True 
-        let check = computeCheck (decrRefs, callVariants)
-        let check = check.WithCommon (afmte 8029 "the call '{0}' might not terminate" [e])
-        let check = Expr.MkAssert check
-        Some (Expr.MkBlock (assigns @ [check; Call (ec, fn, tps, List.map self args)]))
-      else
-        helper.GraveWarning (e.Token, 9315, "function '" + fn.Name + "' should by defined with _(def) or _(abstract) for termination checking")
-        None
-        
+      match justChecks e with
+        | [] -> None
+        | lst ->
+          Some (Expr.MkBlock (lst @ [Call (ec, fn, tps, List.map self args)]))
+
+    | Macro (_, "check_termination", [e]) ->
+      Some (Expr.MkBlock (justChecks e))
+
     | Loop _
     | Goto _ ->
       // as funny as it may sound...
@@ -198,6 +225,9 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Assume _ -> 
       // skip checking inside
       Some e 
+
+    | Macro (_, "skip_termination_check", [e]) ->
+      Some e
 
     | Block (_, _, Some _) ->
       helper.Die() // these should be gone, right?
@@ -228,11 +258,12 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         if fn.Variants = [] then
           fn.Variants <- fn.Parameters |> List.map (fun v -> Ref ({ bogusEC with Type = v.Type }, v))
         let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
-        let body = Expr.MkBlock (assigns @ [fn.Body.Value])
+        let origBody = fn.Body.Value
+        let body = Expr.MkBlock (assigns @ [origBody])
         let body = body.SelfMap (check fn refs)
         fn.Body <- Some body
         if fn.RetType <> Type.Void && fn.CustomAttr |> hasCustomAttr AttrDefinition then
-          let expr = turnIntoPureExpression helper fn.RetType body
+          let expr = turnIntoPureExpression helper fn.RetType origBody
           let vars, repl = Variable.UniqueCopies (fun v -> { v with Kind = QuantBound }) fn.Parameters
           let ec t = { body.Common with Type = t }
           let app = Call (ec fn.RetType, fn, [], vars |> List.map (fun v -> Expr.Ref (ec v.Type, v)))
@@ -254,7 +285,64 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | decl -> [decl]
   List.collect aux decls
 
+let terminationCheckingPlaceholder (helper:Helper.Env) decls =
+  let rec checks = function
+    | Expr.Quant (ec, qd) as res ->
+      let vars, repl = Variable.UniqueCopies (fun v -> { v with Kind = SpecLocal }) qd.Variables
+      let decls = vars |> List.map (fun v -> Expr.VarDecl (bogusEC, v, []))
+      match qd.Condition with
+        | Some e ->
+          let e = repl e
+          let pref0 = checks e
+          let pref1 = checks (repl qd.Body)
+          decls @ pref0 @ [Expr.If (bogusEC, None, e, Expr.MkBlock pref1, Expr.MkBlock [])]
+        | None ->
+          let pref1 = checks (repl qd.Body)
+          decls @ pref1 
+    | Expr.Macro (ec, "ite", [cond; a; b]) ->
+      checks cond @ [Expr.If (bogusEC, None, cond, Expr.MkBlock (checks a), Expr.MkBlock (checks b))]
+    | Expr.Call (ec, fn, targs, args) as e ->
+      (args |> List.map checks |> List.concat) @ [Expr.Macro (bogusEC, "check_termination", [Expr.Pure (e.Common, e)])]
+
+    // just the common stuff, so we know when we run into it
+    | Expr.Assert _
+    | Expr.Assume _
+    | Expr.VarWrite _
+    | Expr.Block _ 
+    | Expr.Return _
+    | Expr.MemoryWrite _
+    | Expr.Goto _
+    | Expr.Loop _ 
+    | Expr.Stmt _ as e ->
+      helper.Oops (e.Token, "expression not supported when checking termination of a binder: " + e.ToString())
+      []
+
+    | e ->
+      let acc = glist[]
+      let f e =
+        acc.AddRange (checks e)
+        e
+      e.ApplyToChildren f |> ignore
+      acc |> Seq.toList
+      
+  let rec addChecks inQ = function
+    | Quant _ as q ->
+      Expr.MkBlock (checks q @ [q.ApplyToChildren (addChecks true)])
+    | Expr.Call _ as e when inQ ->
+      Expr.Macro (e.Common, "skip_termination_check", [Expr.Pure (e.Common, e.ApplyToChildren (addChecks inQ))])
+    | e ->
+      e.ApplyToChildren (addChecks inQ)
+       
+  let aux = function
+    | Top.FunctionDecl fn as decl when fn.IsWellFounded ->
+      fn.Body <- fn.Body |> Option.map (addChecks false)
+    | _ -> ()
+
+  List.iter aux decls
+  decls
+
 let init (helper:Helper.Env) =
   if helper.Options.Vcc3 then
     helper.AddTransformer ("termination-set-level", Helper.Decl (setDecreasesLevel helper))
     helper.AddTransformer ("termination-add-checks", Helper.Decl (insertTerminationChecks helper))
+    helper.AddTransformerBefore ("termination-insert-placeholders", Helper.Decl (terminationCheckingPlaceholder helper), "desugar-lambdas")
