@@ -33,7 +33,7 @@ typedef _(claimable) struct Client {
 typedef _(claimable, dynamic_owns)  struct Bakery {
   UINT N;               // number of clients
   Client *c;            // pointer to array of clients
-  _(invariant \forall UINT i; i < N ==> (&c[i])->\closed  && (&c[i])->\valid && (c[i].bakery==\this) && (c[i].checked<=N))
+  _(invariant \forall UINT i; i < N ==> (&c[i])->\closed && (c[i].bakery==\this) && (c[i].checked<=N))
   // a client in the checking phase has priority over all the clients he's checked
   _(invariant \forall UINT i, j; i < N && j < c[i].checked && in_bakery(\this, i) ==> before(\this, i, j))
   // once i has checked a flag of a client, if the client is choosing again, he comes after i
