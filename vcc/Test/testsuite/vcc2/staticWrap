@@ -1,0 +1,313 @@
+#include "vcc2test.h"
+
+struct B { int x; };
+
+struct A {
+  struct B * volatile b;
+};
+
+struct A2 {
+  struct B *b;
+};
+
+struct ShouldFailStabilityOfAB {
+  struct A a;
+  invariant(keeps(a.b))
+};
+
+struct ShouldFailStabilityOfAB2 {
+  struct A a;
+  invariant(keeps(&a))
+  invariant(keeps(a.b))
+};
+
+struct OK1 {
+  struct A2 a;
+  invariant(keeps(&a))
+  invariant(keeps(a.b))
+};
+
+
+`
+Verification of ShouldFailStabilityOfAB#adm failed.
+testcase(15,15) : error VC8012: invariant(_vcc_keeps(__this , a.b)) of ShouldFailStabilityOfAB is not admissible.
+Verification of ShouldFailStabilityOfAB2#adm failed.
+testcase(21,15) : error VC8012: invariant(_vcc_keeps(__this , a.b)) of ShouldFailStabilityOfAB2 is not admissible.
+Verification of OK1#adm succeeded.
+`
+#include "vcc2test.h"
+
+struct B { int x; };
+
+struct A {
+  struct B *b;
+};
+
+struct C {
+  struct B *b;
+  invariant(keeps(b))
+};
+
+void failWr(struct A*a)
+  requires(mutable(a))
+{
+  wrap(a);
+}
+
+void failMut(struct A*a)
+  requires(wrapped(a))
+  writes(a)
+{
+  wrap(a);
+}
+
+void okA(struct A*a)
+  requires(mutable(a))
+  ensures(wrapped(a))
+  writes(a)
+{
+  wrap(a);
+}
+
+void okC(struct C*c, struct B*b)
+  requires(wrapped(b))
+  writes(extent(c), b)
+  ensures(wrapped(c) && nested(b))
+{
+  c->b = b;
+  wrap(c);
+}
+
+void failCChWr(struct C*c, struct B*b)
+  requires(wrapped(b))
+  writes(extent(c))
+{
+  c->b = b;
+  wrap(c);
+}
+
+void failCChWrap(struct C*c, struct B*b)
+  writes(extent(c), b)
+{
+  c->b = b;
+  wrap(c);
+}
+
+void failWrongCh(struct C*c, struct B*b)
+  requires(wrapped(b))
+  writes(extent(c), b)
+{
+  wrap(c);
+}
+`
+Verification of C#adm succeeded.
+Verification of failWr failed.
+testcase(17,13) : error VC8020: 'a' is not writable before wrapping it.
+Verification of failMut failed.
+testcase(24,3) : error VC9502: Call '_vcc_wrap(a)' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped must not be closed'.
+Verification of okA succeeded.
+Verification of okC succeeded.
+Verification of failCChWr failed.
+testcase(49,13) : error VC8019: 'b' is not writable before wrapping 'c' (its owner).
+Verification of failCChWrap failed.
+testcase(56,13) : error VC8018: 'b' is not wrapped before wrapping 'c' (its owner).
+Verification of failWrongCh failed.
+testcase(63,13) : error VC8018: 'b' is not wrapped before wrapping 'c' (its owner).
+testcase(63,13) : error VC8019: 'b' is not writable before wrapping 'c' (its owner).
+`
+#include "vcc2test.h"
+
+struct B { int x; };
+
+struct A {
+  struct B *b;
+};
+
+struct C {
+  struct B *b;
+  invariant(keeps(b))
+};
+
+struct C2 {
+  struct B *b;
+  invariant(b != NULL <==> keeps(b))
+};
+
+void okC(struct C*c)
+  writes(c)
+  requires(wrapped(c))
+{
+  unwrap(c);
+  unwrap(c->b);
+  c->b->x = 20;
+  wrap(c->b);
+  wrap(c);
+}
+
+void okC2(struct C2*c)
+  writes(c)
+  requires(wrapped(c) && c->b != NULL)
+{
+  unwrap(c);
+  unwrap(c->b);
+  c->b->x = 20;
+  wrap(c->b);
+  wrap(c);
+}
+
+void fail1C(struct C*c)
+  writes(c)
+  requires(wrapped(c))
+{
+ // unwrap(c);
+  unwrap(c->b);
+}
+
+
+void fail1C2(struct C2*c)
+  writes(c)
+  requires(wrapped(c))
+{
+  unwrap(c);
+  unwrap(c->b);
+  c->b->x = 20;
+  wrap(c->b);
+  wrap(c);
+}
+`
+Verification of C#adm succeeded.
+Verification of C2#adm succeeded.
+Verification of okC succeeded.
+Verification of okC2 succeeded.
+Verification of fail1C failed.
+testcase(46,15) : error VC8016: 'c->b' is not wrapped before unwrap.
+Verification of fail1C2 failed.
+testcase(55,15) : error VC8016: 'c->b' is not wrapped before unwrap.
+`
+#include "vcc2test.h"
+
+struct B { int x; };
+
+struct A {
+  struct B *b;
+  invariant(keeps(b))
+};
+
+void failWrapped(struct B *b)
+  writes(b)
+{
+  unwrap(b);
+}
+
+void failWrites(struct B *b)
+  requires(wrapped(b))
+{
+  unwrap(b);
+}
+
+`
+Verification of A#adm succeeded.
+Verification of failWrapped failed.
+testcase(13,15) : error VC8016: 'b' is not wrapped before unwrap.
+Verification of failWrites failed.
+testcase(19,15) : error VC8021: 'b' is not writable before unwrapping it.
+`
+#include <vcc.h>
+
+struct B { int x,y; };
+
+struct A {
+  int x;
+  struct B b;
+
+  invariant(x ==> keeps(&b))
+};
+`
+testcase(9,21) : warning VC9110: keeps(...) (or set_in(..., owns(this))) is not allowed here; annotate the type 'A' with vcc(dynamic_owns)
+Verification of A#adm succeeded.
+`
+#include <vcc.h>
+
+struct B { int x,y; };
+
+struct A2 {
+  int x;
+  struct B b;
+
+  invariant(x ==> set_in(&b, owns(this)))
+};
+
+struct A3 {
+  int x;
+  struct B b;
+
+  invariant(x ==> set_in0(&b, owns(this)))
+};
+
+struct A4 {
+  int x;
+  struct B b[5];
+
+  invariant(forall(int x; 0 <= x && x < 5; set_in(&b[x], owns(this))))
+};
+`
+testcase(9,36) : error VC9662: Explicit reference to owns-set of type 'A2', which is static. Use keeps(...) or mark 'A2' with vcc(dynamic_owns).
+testcase(16,37) : error VC9662: Explicit reference to owns-set of type 'A3', which is static. Use keeps(...) or mark 'A3' with vcc(dynamic_owns).
+testcase(23,66) : error VC9662: Explicit reference to owns-set of type 'A4', which is static. Use keeps(...) or mark 'A4' with vcc(dynamic_owns).
+`
+#include "vcc.h"
+
+struct S {
+    int a;
+};
+
+struct vcc(dynamic_owns) T {
+    struct S a, b, c;
+    invariant(keeps(&a, &b, &c))
+};
+
+void works(struct T *t)
+    requires(wrapped(t))
+    writes(t)
+{
+    unwrap(t);
+    assert(forall(obj_t o; set_in(o,owns(t)); wrapped(o)));
+}
+
+struct U {
+    struct S a, b, c;
+    invariant(keeps(&a, &b, &c))
+};
+
+void fails(struct U *u)
+    requires(wrapped(u))
+    writes(u)
+{
+    unwrap(u);
+    assert(forall(obj_t o; set_in(o,owns(u)); wrapped(o)));
+}
+`
+Verification of T#adm succeeded.
+Verification of U#adm succeeded.
+Verification of works succeeded.
+Verification of fails succeeded.
+`
+#include "vcc.h"
+
+struct S { int a; };
+
+struct Foo { struct S s; invariant(keeps(&s)) };
+
+void bar(struct Foo *t) 
+  requires(wrapped(t))
+  writes(t)
+  ensures(wrapped(&t->s))
+  ensures(is_fresh(&t->s))
+{
+  unwrap(t);
+}
+`
+Verification of Foo#adm succeeded.
+Verification of bar succeeded.
+`
