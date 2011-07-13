@@ -135,10 +135,12 @@ namespace Microsoft.Research.Vcc
               | _ -> explicitAdm.[td] <- (true, false, false)
             let pre  = Expr.Macro (afmtt f.Token 8001 "custom admissibility was called" [], 
                                  "_vcc_admissibility_pre", [mkRef p])
+            let pre2 = Expr.Macro (afmtt f.Token 8001 "custom admissibility was called" [], 
+                                 "_vcc_is_admissibility_check", [])
             let good = Expr.Macro (afmtt f.Token 8002 "state was altered after havoc_others()" [], 
                                  "_vcc_good_for_post_admissibility", [])
-            f.Requires <- pre :: f.Requires
-            f.Ensures <- [good] @ admChecks helper p @ stuttChecks helper p @ f.Ensures)
+            f.Requires <- pre2 :: pre :: f.Requires
+            f.Ensures <- [good] @ admChecks helper p @ f.Ensures)
             
         | Top.FunctionDecl f when hasCustomAttr "is_unwrap_check" f.CustomAttr ->
           errCheck f (fun td p ->

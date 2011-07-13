@@ -44,9 +44,9 @@ namespace Microsoft.Research.Vcc.VSPackage {
       CompilerSettings.AddSettingsFromVCFile(this, file, activeSetting);
       CompilerSettings.AddSettingsFromVCProject(this, vcProject, activeSetting);
 
-      additionalIncludeDirectories = CompilerSettings.ExecuteMacroProject(vcProject, activeSetting, "");
-      preprocessorDefinitions = CompilerSettings.ExecuteMacroProject(vcProject, activeSetting, "");
-      forcedIncludeFiles = CompilerSettings.ExecuteMacroProject(vcProject, activeSetting, "");
+      this.additionalIncludeDirectories = CompilerSettings.ExecuteMacroProject(vcProject, activeSetting, this.additionalIncludeDirectories);
+      this.preprocessorDefinitions = CompilerSettings.ExecuteMacroProject(vcProject, activeSetting, this.preprocessorDefinitions);
+      this.forcedIncludeFiles = CompilerSettings.ExecuteMacroProject(vcProject, activeSetting, this.forcedIncludeFiles);
 
       string VCIncludeDirs = CompilerSettings.GetVCIncludeDirs(prjItem);
       if (InheritAdditionalIncludeDirectories && !ignoreStandardIncludePath)

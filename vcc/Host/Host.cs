@@ -365,7 +365,11 @@ namespace Microsoft.Research.Vcc
       }
 
       var processedFiles = CCompilerHelper.Preprocess(commandLineOptions, out errorsInPreprocessor);
-      if (errorsInPreprocessor) return;
+      if (errorsInPreprocessor) 
+      {
+          errorCount++;
+          return;
+      }
       using (var fnEnum = commandLineOptions.FileNames.GetEnumerator())
       using (var ppEnum = processedFiles.GetEnumerator())
         while (fnEnum.MoveNext() && ppEnum.MoveNext())
@@ -388,7 +392,10 @@ namespace Microsoft.Research.Vcc
       VccAssembly assem = new VccAssembly(assemName, Path.GetFullPath(fileName), hostEnvironment, commandLineOptions, assemblyReferences, moduleReferences, programSources);
       VccCompilationHelper helper = new VccCompilationHelper(assem.Compilation);
       programSources.Add(new VccSourceDocument(helper, docName, Path.GetFullPath(fileName), instream));
-      Felt2Cast2Plugin(fileName, commandLineOptions, hostEnvironment, assem);
+      if (0 != Felt2Cast2Plugin(fileName, commandLineOptions, hostEnvironment, assem)) 
+      {
+          errorCount++;
+      }
     }
 
     private static string FunctionOrTypeRoot(string name)
@@ -478,7 +485,7 @@ namespace Microsoft.Research.Vcc
             else
               ((ICodeVisitor)visitor).Visit(assem);
           }
-          catch (Exception)
+          catch 
           {
             if (helperenv.ShouldDumpStack) throw;
             return 0;
