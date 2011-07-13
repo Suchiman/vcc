@@ -1,0 +1,242 @@
+
+#include <vcc.h>
+
+struct S {
+  int a;
+  int b;
+};
+
+struct T {
+  vcc(inline) struct S S1;
+  struct S S2;
+  invariant(keeps(&S2))
+};
+
+void foo(struct S *s) 
+  reads(s)
+  requires(typed(s))
+{ 
+}
+void fooByVal(struct S s) 
+  requires(s.a == s.b)
+{ 
+}
+
+void bar(struct T *t) 
+  requires(wrapped(t))
+  writes(t)
+{
+  expose(t) {
+    foo(&t->S2);
+  }
+}
+
+void barByVal(struct T *t) 
+  requires(wrapped(t))
+  requires(t->S2.a == t->S2.b)
+  writes(t)
+{
+  expose(t) {
+    fooByVal(t->S2);
+  }
+}
+
+`
+Verification of T#adm succeeded.
+Verification of foo succeeded.
+Verification of fooByVal succeeded.
+Verification of bar succeeded.
+Verification of barByVal succeeded.
+`
+
+	#include <vcc.h>
+
+	struct S {
+		int a;
+		int b;
+	};
+
+	struct T {
+		vcc(inline) struct S S1[5];
+		struct S S2;
+		invariant(keeps(&S2))
+	};
+
+void foo(struct S *s) 
+  reads(s)
+  requires(typed(s))
+{ 
+}
+void fooByVal(struct S s) 
+  requires(s.a == s.b)
+{ 
+}
+
+void bar(struct T *t) 
+  requires(wrapped(t))
+  writes(t)
+{
+  expose(t) {
+    foo(&t->S2);
+  }
+}
+
+void barByVal(struct T *t) 
+  requires(wrapped(t))
+  requires(t->S2.a == t->S2.b)
+  writes(t)
+{
+  expose(t) {
+    fooByVal(t->S2);
+  }
+}
+
+`
+Verification of T#adm succeeded.
+Verification of foo succeeded.
+Verification of fooByVal succeeded.
+Verification of bar succeeded.
+Verification of barByVal succeeded.
+`
+#include <vcc.h>
+
+struct A {
+	int a;
+	int b;
+};
+
+struct B {
+	vcc(inline) struct A x;
+};
+
+struct C {
+	vcc(inline) struct B y;
+};
+
+struct D {
+	vcc(inline) struct C z;
+};
+
+void foo(struct C *p) 
+  writes(extent(p))
+  ensures(p->y.x.a == p->y.x.b)
+{
+	p->y.x.a = p->y.x.b;
+}
+
+void bar(struct D *p) 
+  writes(extent(p))
+  ensures(p->z.y.x.a == p->z.y.x.b)
+{
+	p->z.y.x.a = p->z.y.x.b;
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+#include <vcc.h>
+
+union U {
+  struct {
+    int a : 16;
+    int b : 16;
+  };
+  
+  backing_member int AsInt;
+};
+
+
+struct S {
+  vcc(inline) union U u;
+  int dummy;
+};
+
+void foo(struct S *p) 
+  writes(p)
+  maintains(wrapped(p))
+{
+  union U u;
+  unwrap(p);
+  p->u = u;
+  wrap(p);
+}
+`
+Verification of foo succeeded.
+`
+#include <vcc.h>
+
+struct U {
+  int a;
+  int b;
+};
+
+
+struct S {
+  vcc(inline) struct U u;	
+  int dummy;
+};
+
+void foo(struct S *p) 
+  writes(p)
+  maintains(wrapped(p))
+{
+  struct U u;
+  unwrap(p);
+  p->u = u;
+  wrap(p);
+}
+`
+testcase(20,3) : error VC9679: Field 'u' has been inlined and cannot be referred to as such; refer to its nested fields instead
+`
+#include <vcc2test.h>
+typedef unsigned __int8 byte;
+struct S1 { 
+  int A1;
+  struct member_name(s2) { 
+    int A2;
+    struct member_name(s3) S3 { 
+      int A3;
+    }; 
+  }; 
+}; 
+
+void foo1() {
+    byte x[] = (byte*)malloc(sizeof(struct S1));
+    if (x != NULL) from_bytes((struct S1*)x, false);
+}
+
+
+void foo3() {
+    byte x[] = (byte*)malloc(sizeof(struct S3));
+    if (x != NULL) from_bytes((struct S3*)x, false);
+}
+`
+Verification of foo1 succeeded.
+Verification of foo3 succeeded.
+`
+#include <vcc2test.h>
+typedef unsigned __int8 byte;
+struct S1 { 
+  int A1;
+  struct { 
+    int A2;
+    struct S3 { 
+      int A3;
+    }; 
+  }; 
+}; 
+
+void foo1() {
+    byte x[] = (byte*)malloc(sizeof(struct S1));
+    if (x != NULL) from_bytes((struct S1*)x, false);
+}
+
+
+void foo3() {
+    byte x[] = (byte*)malloc(sizeof(struct S3));
+    if (x != NULL) from_bytes((struct S3*)x, false);
+}
+`
+Verification of foo1 succeeded.
+Verification of foo3 succeeded.
+`

@@ -1,0 +1,78 @@
+`/newsyntax
+#include <vcc.h>
+
+_(pure) unsigned fu(unsigned);
+_(pure) unsigned fi(int);
+
+void f() {
+  _(assert \forall unsigned x; fu(x) >= 0)
+  _(assert \forall int *p; p \is int)
+  _(assert \forall int k; 10 <= fi(k) ==> (0 <= fi(k)))
+  _(assert \forall unsigned x,y,z; {fu(x),fu(y),fu(z)} x+y+z >= 0)
+}
+`
+Verification of f succeeded.
+`
+`/newsyntax
+#include "vcc.h"
+
+void fill(void *arr, unsigned len, int fill)
+    _(writes \array_range((int*)arr,len))
+    _(ensures \forall unsigned j; j < len ==> ((int*)arr)[j]==fill)
+{
+    unsigned i;
+    for (i = 0; i < len; i++)
+        _(invariant i <= len)
+        _(invariant \forall unsigned j; j < i ==> ((int*)arr)[j]==fill)
+        ((int*)arr)[i] = fill;
+}
+
+void foo(int *arr, unsigned a)
+    _(requires 0 <= a && a < 100)
+    _(maintains \wrapped((void[100])arr))
+    _(writes (void[100])arr)
+    _(ensures \forall unsigned j; {:hint \match_ulong(j)} j < 100 ==>
+        (j < a ? \unchanged(arr[j]) : arr[j]==42))
+{
+    _(unwrap (void[100])arr)
+    fill(arr+a, 100-a, 42);
+    // doesn't help: assert(forall(unsigned j; a <= j ==> (arr+j == (((int*)((void*)arr))+a)+(j-a)));
+    _(assert \forall unsigned j; {\match_ulong(j)} a <= j ==> (arr+j == (arr+a)+(j-a)))
+    _(wrap (void[100])arr)
+}
+
+void bar(int *arr, unsigned a, unsigned b)
+    _(requires a && a < b && b < 100)
+    _(maintains \wrapped((void[100])arr))
+    _(writes (void[100])arr)
+    _(ensures \forall unsigned j; {:hint \match_ulong(j)} j < 100 ==> (a <= j && j < b ? arr[j]==42 : \unchanged(arr[j])))
+{
+    _(unwrap (void[100])arr)
+    fill(arr+a, b-a, 42);
+    _(wrap (void[100])arr)
+    _(assert \forall unsigned j; {\match_ulong(j)} a <= j ==> (arr+j == (arr+a)+(j-a)))
+}
+`
+Verification of fill succeeded.
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
+`/newsyntax
+#include <vcc.h>
+
+bool b[42];
+
+_(axiom \forall unsigned i; {b[i]} {b[i]} \true)
+
+struct Foo {
+	bool a[42];
+	_(invariant \forall unsigned i; {a[i]} {a[i]} \true)
+};
+void bar() {
+	bool a[42];
+	_(assert \forall unsigned i; {a[i]} {a[i]} \true)
+}
+`
+Verification of Foo#adm succeeded.
+Verification of bar succeeded.
+`

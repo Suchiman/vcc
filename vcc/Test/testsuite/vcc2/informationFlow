@@ -1,0 +1,369 @@
+﻿#include <vcc.h>
+
+void defaultClassifs()
+{
+	int h;
+	int x = 0, y = 0;
+
+	if (h  > 0) x = 1;
+	
+	assert(is_low(y));
+	x = 0;
+	assert(is_low(x));
+}
+
+void defaultClassifsFail()
+{
+	int h;
+	int x = 0, y = 0;
+
+	if (h  > 0) x = 1;
+	if (x == 0) y = 1;
+	x = 0;
+	
+	assert(is_low(x));
+}
+
+void nothingToDo()
+{
+	int h;
+	int x = 0, y = 0, z = 0;
+	
+	if (h >0) x = 1;
+	if (x == 0) y = 1;
+	z = 1;
+	x = 0;
+}
+`
+Verification of defaultClassifs succeeded.
+Verification of defaultClassifsFail failed.
+testcase(21,6) : error VC9719: Assertion 'test condition is as low as specified by the test classifier' did not verify.
+Verification of nothingToDo succeeded.
+`
+#include <vcc.h>
+
+void explicitClassifs()
+{
+	int h;
+	int x = 0, y = 0, z = 0;
+
+	if (h  > 0) x = 1;
+	if (test_classifier(lambda(obj_t p; true),x == 0)) y = 1;
+	z = 1;
+	x = 0;
+
+	assert(is_low(z));
+	assert(is_low(x));
+}
+
+void explicitClassifsWrong()
+{
+	int h;
+	int x = 0;
+
+	if (h  > 0) x = 1;
+	if (test_classifier(lambda(obj_t p; h == 0),x == 0)) x = 1;
+}
+
+void explicitClassifsFail()
+{
+	int h;
+	int x = 0;
+	
+	if (h > 0) x = 1;
+	if (test_classifier(lambda(obj_t p; true),x ==0)) x = 1;
+	
+	assert(is_low(x)); // LIN makes it succeed, but we require an extra annotation for this
+}
+`
+Verification of explicitClassifs succeeded.
+Verification of explicitClassifsWrong failed.
+testcase(23,27) : error VC0000: Assertion 'the provided test classifier is valid' did not verify.
+Verification of explicitClassifsFail failed.
+testcase(34,11) : error VC9500: Assertion '_vcc_lblset_leq(_vcc_label_of(x), _vcc_seclabel_bot())' did not verify.
+`
+#include <vcc.h>
+
+void gotoSample()
+{
+	int x = 0, y = 0;
+
+	if (known(x  > 0, false)) x = 0;
+	if (test_classifier(lambda(obj_t p; false),known(x == 0,true))) {y = 1; goto label;}
+label:
+	x = 0;
+
+	assert(is_low(x));
+}
+
+void gotoFail()
+{
+	int h;
+	int x = 0, y = 0, z = 0;
+
+	if (h  > 0) {x = 1; goto label;}
+	if (test_classifier(lambda(obj_t p; true),x == 0)) y = 1;
+	z = 1;
+	x = 0;
+label:
+
+	assert(is_low(x));
+}
+`
+Verification of gotoSample succeeded.
+Verification of gotoFail failed.
+testcase(20,22) : error VC9716: Assertion 'the target label's context is at least as high as the jump's' did not verify.
+`
+#include <vcc.h>
+
+void simplePointerSuccess()
+{
+	int h;
+	int *x;
+
+	x = &h;
+
+	h = 0;
+	assert(is_low(*x));
+}
+
+void simplePointerFail()
+{
+	int h;
+	int *x;
+
+	x = &h;
+	assert(is_low(*x));
+}
+
+`
+Verification of simplePointerSuccess succeeded.
+Verification of simplePointerFail failed.
+testcase(20,11) : error VC9500: Assertion '_vcc_lblset_leq(_vcc_label_of(*x), _vcc_seclabel_bot())' did not verify.
+`
+#include <vcc.h>
+
+void explicitDowngradeSuccess()
+{
+	int h;
+	int x = 0;
+	
+	if (h > 0) x = 1;
+	if (test_classifier(lambda(obj_t p; true),x == 0)) x = 1;
+
+	downgrade_to(x,1);
+	assert(is_low(x));
+}
+
+void explicitDowngradeFailure()
+{
+	int h;
+	int x = 0;
+
+	if (h > 0) x = 1;
+	if (test_classifier(lambda(obj_t p; true), x == 0)) x = 2;
+
+	downgrade_to(x,1);
+	assert(is_low(x));
+}
+
+void explicitDowngradeContextFail()
+{
+	int h;
+
+	if (h == 0) downgrade_to(h,0);
+}
+`
+Verification of explicitDowngradeSuccess succeeded.
+Verification of explicitDowngradeFailure failed.
+testcase(23,20) : error VC9717: Assertion 'x == 1' did not verify.
+Verification of explicitDowngradeContextFail failed.
+testcase(31,14) : error VC9718: Assertion 'context is low' did not verify.
+`
+#include <vcc.h>
+
+void testLabelOf()
+{
+	int h;
+	int *x;
+
+	x = &h;
+
+	assert(lblset_leq(current_context(), seclabel_bot));
+	assert(lblset_leq(label_of(label_of(h)), seclabel_bot));
+}
+
+void testLabelOfFail()
+{
+	int h;
+	int *x;
+
+	x = &h;
+
+	assert(lblset_leq(current_context(), seclabel_bot));
+	assert(lblset_leq(label_of(label_of(h)), seclabel_bot));
+	assert(lblset_leq(label_of(h), seclabel_bot));
+}
+`
+Verification of testLabelOf succeeded.
+Verification of testLabelOfFail failed.
+testcase(23,11) : error VC9500: Assertion '_vcc_lblset_leq(_vcc_label_of(h), _vcc_seclabel_bot())' did not verify.
+`
+#include <vcc.h>
+#include <stdlib.h>
+
+void primPtr1Group()
+{
+	int *h;
+	int *x;
+	
+	h = malloc(sizeof(*h)); assume(h != NULL);
+	assert(is_low(h == h));
+	x = h;
+	assert(is_low(x == h));
+	
+	*x = 1;
+	assert(is_low(*x));
+	assert(is_low(*h));
+	assert(is_low(x == h));
+}
+
+void primPtrStackHeap()
+{
+	int *x, y;
+	
+	x = malloc(sizeof(*x));
+	if (test_classifier(lambda(obj_t p; true), x == NULL)) assume(false);
+
+	assert(is_low(x == x));
+	assert(is_low(x == &y));
+}
+
+void primPtrStackHeapWithPtrClubs()
+{
+	int *x, y;
+	spec(club_t happyFriends = new_club(seclabel_bot);)
+	spec(add_member(&y, happyFriends);)
+	
+	x = malloc(sizeof(*x));
+	if (test_classifier(lambda(obj_t p; true), x == NULL)) assume(false);
+	spec(add_member(x, happyFriends);)
+
+	assert(is_member(x, happyFriends));
+	assert(is_low(x == x));
+	assert(is_low(x == &y));
+}
+
+
+void primPtr2Groups()
+{
+	int *x, *y;
+	
+	x = malloc(sizeof(*x));
+	if (test_classifier(lambda(obj_t p; true), x == NULL)) assume(false);
+	y = malloc(sizeof(*y));
+	if (test_classifier(lambda(obj_t p; true), y == NULL)) assume(false);
+	
+	assert(is_low(x == x));
+	*x = 0;
+	assert(is_low(*x));
+}
+`
+Verification of primPtr1Group succeeded.
+Verification of primPtrStackHeap failed.
+testcase(28,11) : error VC9500: Assertion '_vcc_lblset_leq(_vcc_label_of(x == &y), _vcc_seclabel_bot())' did not verify.
+Verification of primPtrStackHeapWithPtrClubs succeeded.
+Verification of primPtr2Groups succeeded.
+`
+#include <vcc.h>
+#include <stdlib.h>
+
+struct A
+{
+	int d1;
+	int d2;
+};
+
+void testStructure()
+{
+	struct A *foo;
+	spec(club_t pointerBuddies = new_club(seclabel_bot);)
+	
+	foo = malloc(sizeof(*foo));
+	assume(foo != NULL);
+	spec(add_member(&foo->d1, pointerBuddies);)
+	spec(add_member(&foo->d2, pointerBuddies);)
+
+	assert(is_member(&foo->d1, pointerBuddies));	// Remove this with intelligent patterns
+	assert(is_low(&foo->d1 == &foo->d2));
+
+	foo->d1 = 1;
+	assert(is_low(foo->d1));
+}
+
+void testStructures()
+{
+	struct A *foo, *bar;
+	
+	foo = malloc(sizeof(*foo));
+	bar = malloc(sizeof(*bar));
+	assume(foo != NULL && bar != NULL);
+
+	foo->d1 = 1;
+	bar->d2 = 2;
+	
+	assert(foo->d1 == 1);
+	assert(is_low(foo->d1));
+	assert(is_low(bar->d2));
+
+	foo = bar;	
+	assert(foo->d2 == 2);
+	assert(is_low(foo->d2));
+}
+`
+Verification of testStructure succeeded.
+Verification of testStructures succeeded.
+`
+#include <vcc.h>
+#include <stdlib.h>
+
+void testArray()
+{
+	int *arr;
+	spec(club_t myPointerFriends = new_club(seclabel_bot);)
+	
+	arr = malloc(42*sizeof(*arr));
+	assume(arr != NULL);
+	
+	arr[2] = 1;
+	assert(set_in(arr + 2, full_extent(as_array(arr, 42))));
+	assert(is_low(arr[2]));
+	
+	spec(add_member(arr + 1, myPointerFriends);)
+	spec(add_member(arr + 40, myPointerFriends);)
+	
+	assert(is_member(arr + 1, myPointerFriends));
+	
+	assert(is_low(arr + 1 == arr + 40));
+}
+
+void testLocalArray()
+{
+	int arr[42];
+	spec(club_t myPointerFriends = new_club(seclabel_bot);)
+	
+	arr[2] = 1;
+	assert(set_in(arr + 2, full_extent(as_array(arr, 42))));
+	assert(is_low(arr[2]));
+
+	spec(add_member(arr + 1, myPointerFriends);)
+	spec(add_member(arr + 40, myPointerFriends);)
+	
+	assert(is_member(arr + 1, myPointerFriends));
+	
+	assert(is_low(arr + 1 == arr + 40));
+}
+`
+Verification of testArray succeeded.
+Verification of testLocalArray succeeded.
+`
