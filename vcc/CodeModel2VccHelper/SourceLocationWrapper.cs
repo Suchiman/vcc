@@ -5,6 +5,7 @@
 //-----------------------------------------------------------------------------
 
 using Microsoft.Cci;
+using System;
 
 namespace Microsoft.Research.Vcc
 {
@@ -15,18 +16,26 @@ namespace Microsoft.Research.Vcc
 
   internal sealed class SourceLocationWrapper : Token, IOriginalDocumentLocation
   {
-    internal SourceLocationWrapper(IPrimarySourceLocation sourceLocation)
+     internal readonly IPrimarySourceLocation firstSourceLocation;
+     internal readonly IPrimarySourceLocation lastSourceLocation;
+     private readonly Lazy<string> source;
+      
+      
+    internal SourceLocationWrapper(
+        IPrimarySourceLocation firstSourceLocation, 
+        IPrimarySourceLocation lastSourceLocation, 
+        Func<string> getSource)
     {
-      this.sourceLocation = sourceLocation;
+      this.firstSourceLocation = firstSourceLocation;
+      this.lastSourceLocation = lastSourceLocation;
+      this.source = new Lazy<string>(getSource);
     }
-
-    internal IPrimarySourceLocation sourceLocation;
 
     public override int Column
     {
       get
       {
-        return this.sourceLocation.StartColumn;
+        return this.firstSourceLocation.StartColumn;
       }
     }
 
@@ -34,9 +43,9 @@ namespace Microsoft.Research.Vcc
     {
       get
       {
-        IIncludedSourceLocation/*?*/ iloc = this.sourceLocation as IIncludedSourceLocation;
+        IIncludedSourceLocation/*?*/ iloc = this.firstSourceLocation as IIncludedSourceLocation;
         if (iloc != null) return iloc.OriginalSourceDocumentName.Replace("\\\\", "\\");
-        return this.sourceLocation.PrimarySourceDocument.Name.Value;
+        return this.firstSourceLocation.PrimarySourceDocument.Name.Value;
       }
     }
 
@@ -44,9 +53,9 @@ namespace Microsoft.Research.Vcc
     {
       get
       {
-        IIncludedSourceLocation/*?*/ iloc = this.sourceLocation as IIncludedSourceLocation;
+        IIncludedSourceLocation/*?*/ iloc = this.firstSourceLocation as IIncludedSourceLocation;
         if (iloc != null) return iloc.OriginalStartLine;
-        return this.sourceLocation.StartLine;
+        return this.firstSourceLocation.StartLine;
       }
     }
 
@@ -54,41 +63,35 @@ namespace Microsoft.Research.Vcc
     {
       get
       {
-        IIncludedSourceLocation/*?*/ iloc = this.sourceLocation as IIncludedSourceLocation;
+        IIncludedSourceLocation/*?*/ iloc = this.lastSourceLocation as IIncludedSourceLocation;
         if (iloc != null) return iloc.OriginalEndLine;
-        return this.sourceLocation.EndLine;
+        return this.lastSourceLocation.EndLine;
       }
     }
 
     public override int Byte
     {
-      get { return this.sourceLocation.StartIndex; }
+      get { return this.firstSourceLocation.StartIndex; }
     }
 
     public override string Value
     {
-      get
-      {
-        if (this._val == null)
-          this._val = this.sourceLocation.Source;
-        return this._val;
-      }
+      get { return this.source.Value; }
     }
-    string _val;
 
 
     #region IPrimarySourceLocation Members
 
     int IPrimarySourceLocation.EndColumn
     {
-      get { return this.sourceLocation.EndColumn; }
+      get { return this.lastSourceLocation.EndColumn; }
     }
 
     int IPrimarySourceLocation.EndLine
     {
       get { 
-        var iloc = this.sourceLocation as IIncludedSourceLocation;
-        return iloc != null ? iloc.OriginalEndLine : this.sourceLocation.EndLine;
+        var iloc = this.lastSourceLocation as IIncludedSourceLocation;
+        return iloc != null ? iloc.OriginalEndLine : this.lastSourceLocation.EndLine;
       }
     }
 
@@ -96,22 +99,22 @@ namespace Microsoft.Research.Vcc
     {
       get
       {
-        var iloc = this.sourceLocation as IIncludedSourceLocation;
-        return iloc != null ? iloc.SourceDocument as IPrimarySourceDocument : this.sourceLocation.SourceDocument as IPrimarySourceDocument;
+        var iloc = this.firstSourceLocation as IIncludedSourceLocation;
+        return iloc != null ? iloc.SourceDocument as IPrimarySourceDocument : this.firstSourceLocation.SourceDocument as IPrimarySourceDocument;
       }
     }
 
     int IPrimarySourceLocation.StartColumn
     {
-      get { return this.sourceLocation.StartColumn; }
+      get { return this.firstSourceLocation.StartColumn; }
     }
 
     int IPrimarySourceLocation.StartLine
     {
       get
       {
-        var iloc = this.sourceLocation as IIncludedSourceLocation;
-        return iloc != null ? iloc.OriginalStartLine : this.sourceLocation.StartLine;
+        var iloc = this.firstSourceLocation as IIncludedSourceLocation;
+        return iloc != null ? iloc.OriginalStartLine : this.firstSourceLocation.StartLine;
       }
     }
 
@@ -119,8 +122,8 @@ namespace Microsoft.Research.Vcc
     {
       get
       {
-        var iloc = this.sourceLocation as IIncludedSourceLocation;
-        return iloc != null ? iloc.OriginalSourceDocumentName.Replace("\\\\", "\\") : this.sourceLocation.SourceDocument.Location;
+        var iloc = this.firstSourceLocation as IIncludedSourceLocation;
+        return iloc != null ? iloc.OriginalSourceDocumentName.Replace("\\\\", "\\") : this.firstSourceLocation.SourceDocument.Location;
 
       }
     }
