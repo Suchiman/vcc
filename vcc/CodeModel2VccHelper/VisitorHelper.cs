@@ -18,25 +18,30 @@ namespace Microsoft.Research.Vcc
         this.locations = locations;
       }
 
-      public Token GetToken() {
-        Token result = Token.NoToken;
-        foreach (ILocation loc in locations) {
-          IPrimarySourceLocation/*?*/ sloc = loc as IPrimarySourceLocation;
-          if (sloc == null) {
-            IDerivedSourceLocation/*?*/ dloc = loc as IDerivedSourceLocation;
-            if (dloc != null) {
-              foreach (IPrimarySourceLocation ploc in dloc.PrimarySourceLocations) {
-                sloc = ploc;
-                break;
+      public Token GetToken()
+      {
+          foreach (ILocation loc in locations)
+          {
+              IPrimarySourceLocation/*?*/ sloc = loc as IPrimarySourceLocation;
+              if (sloc != null) return new SourceLocationWrapper(sloc, sloc, () => sloc.Source);
+              IDerivedSourceLocation/*?*/ dloc = loc as IDerivedSourceLocation;
+              if (dloc != null)
+              {
+                  IPrimarySourceLocation fLoc = null, lLoc = null;
+                  foreach (IPrimarySourceLocation ploc in dloc.PrimarySourceLocations)
+                  {
+                      if (fLoc == null) fLoc = ploc;
+                      lLoc = ploc;
+                  }
+          
+                  if (fLoc != null)
+                  {
+                      return new SourceLocationWrapper(fLoc, lLoc, () => dloc.Source);
+                  }
               }
-            } 
-            else continue;
           }
-          if (sloc == null) continue;
-          result = new SourceLocationWrapper(sloc);
-          break;
-        }
-        return result;
+
+          return Token.NoToken;
       }
     }
 
@@ -49,7 +54,7 @@ namespace Microsoft.Research.Vcc
     public static ISourceLocation LocationFromToken(Token tok)
     {
       SourceLocationWrapper wrap = tok as SourceLocationWrapper;
-      if (wrap != null) return wrap.sourceLocation;
+      if (wrap != null) return wrap.firstSourceLocation;
       ForwardingToken fwd = tok as ForwardingToken;
       if (fwd != null) return LocationFromToken(fwd.WrappedToken);
       LazyToken lazyToken = tok as LazyToken;
