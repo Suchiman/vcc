@@ -148,6 +148,36 @@ namespace Microsoft.Research.Vcc.VSPackage
       VCCLauncher.Cancel();
     }
 
+    private void InsertForall(object sender, EventArgs e)
+    {
+        VSIntegration.InsertIntoCurrentDocument("∀");
+    }
+
+    private void InsertExists(object sender, EventArgs e)
+    {
+        VSIntegration.InsertIntoCurrentDocument("∃");
+    }
+
+    private void InsertLambda(object sender, EventArgs e)
+    {
+        VSIntegration.InsertIntoCurrentDocument("λ");
+    }
+
+    private void InsertIn(object sender, EventArgs e)
+    {
+        VSIntegration.InsertIntoCurrentDocument("∈");
+    }
+
+    private void InsertIntersection(object sender, EventArgs e)
+    {
+        VSIntegration.InsertIntoCurrentDocument("∩");
+    }
+
+    private void InsertUnion(object sender, EventArgs e)
+    {
+        VSIntegration.InsertIntoCurrentDocument("∪");
+    }
+
     #endregion
 
     #region BeforeQueryStatusHandlers
@@ -359,6 +389,37 @@ namespace Microsoft.Research.Vcc.VSPackage
         OleMenuItem = new OleMenuCommand(null, menuCommandID);
         OleMenuItem.BeforeQueryStatus += VerifyMenu_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
+
+        //// insert \forall
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolForall);
+        OleMenuItem = new OleMenuCommand(InsertForall, menuCommandID);
+        mcs.AddCommand(OleMenuItem);
+
+        //// insert \exists
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolExists);
+        OleMenuItem = new OleMenuCommand(InsertExists, menuCommandID);
+        mcs.AddCommand(OleMenuItem);
+
+        //// insert \lambda
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolLambda);
+        OleMenuItem = new OleMenuCommand(InsertLambda, menuCommandID);
+        mcs.AddCommand(OleMenuItem);
+
+        //// insert \in
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolIn);
+        OleMenuItem = new OleMenuCommand(InsertIn, menuCommandID);
+        mcs.AddCommand(OleMenuItem);
+
+        //// insert \intersection
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolIntersection);
+        OleMenuItem = new OleMenuCommand(InsertIntersection, menuCommandID);
+        mcs.AddCommand(OleMenuItem);
+
+        //// insert \union
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolUnion);
+        OleMenuItem = new OleMenuCommand(InsertUnion, menuCommandID);
+        mcs.AddCommand(OleMenuItem);
+
       }
     }
 
