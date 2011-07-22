@@ -21,6 +21,11 @@ namespace Microsoft.Research.Vcc.VSPackage
     public const uint cmdidVerifyMenu = 0x1021;
     public const uint cmdidContextMenuGroup = 0x1022;
 
-
+    public const uint cmdidMathSymbolForall = 0x0220;
+    public const uint cmdidMathSymbolExists = 0x0221;
+    public const uint cmdidMathSymbolIn = 0x0222;
+    public const uint cmdidMathSymbolUnion = 0x0223;
+    public const uint cmdidMathSymbolIntersection = 0x0224;
+    public const uint cmdidMathSymbolLambda = 0x0225;
   };
 }
