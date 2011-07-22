@@ -574,47 +574,6 @@ void foo() {
 `
 Verification of foo succeeded.
 `
-
-#include <vcc.h>
-
-struct T {
-  int a;
-};
-
-struct vcc(record) R {
-  int a;
-};
-
-spec (typedef int M[int];)
-
-spec(struct vcc(record) S {
-  int a;
-  spec(mathint m0[int];)  
-  spec(bool m1[int];)
-  spec(int m2[int];)
-  spec(void *m3[int];)
-  spec(struct T m4[int];)
-  spec(struct R m5[int];)
-  spec(M m6[int];)
-  spec(int m7[int][int];)
-  spec(ptrset m8[int];)
-};)
-
-spec(void foo() {
-  struct S a;
-  assert(a.m0[0] == 0);
-  assert(!a.m1[0]);
-  assert(a.m2[0] == 0);
-  assert(a.m3[0] == (void *)0);
-  assert(a.m4[0].a == 0);
-  assert(a.m5[0].a == 0); 
-  assert(a.m6[0][0] == 0);
-  assert(a.m7[0][0] == 0);
-  assert(set_eq(a.m8[0], set_empty()));
-})
-`
-Verification of foo succeeded.
-`
 #include "vcc.h"
 
 spec(typedef struct vcc(record) R {
