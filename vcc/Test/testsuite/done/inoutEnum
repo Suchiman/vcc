@@ -1,0 +1,11 @@
+`/newsyntax
+#include <vcc.h>
+#include <sal.h>
+
+typedef enum { A, B }  ENUM;
+
+void foo(__in ENUM a) { }
+
+`
+Verification of foo succeeded.
+`
