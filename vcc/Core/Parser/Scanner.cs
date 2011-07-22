@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------------
 //
 // Copyright (C) Microsoft Corporation.  All Rights Reserved.
 //
@@ -237,6 +237,24 @@ namespace Microsoft.Research.Vcc.Parsing {
           break;
         case '}':
           token = Token.RightBrace;
+          break;
+        case '∀':
+          token = Token.Forall;
+          break;
+        case '∃':
+          token = Token.Exists;
+          break;
+        case '∈':
+          token = Token.SetIn;
+          break;
+        case 'λ':
+          token = Token.Lambda;
+          break;
+        case '∩':
+          token = Token.SetIntersection;
+          break;
+        case '∪':
+          token = Token.SetUnion;
           break;
         case '.':
           token = Token.Dot;
