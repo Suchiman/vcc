@@ -239,7 +239,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Macro (_, name, _) when name.StartsWith "DP#" ->
       None
 
-    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"|"ite"), _) ->
+    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"|"ite"|"dt_size"), _) ->
       None
 
     | Macro (ec, s, args) as e ->
@@ -256,7 +256,16 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         [decl]
       else
         if fn.Variants = [] then
-          fn.Variants <- fn.Parameters |> List.map (fun v -> Ref ({ bogusEC with Type = v.Type }, v))
+          let aux acc (v:Variable) =
+            let rf = Ref ({ bogusEC with Type = v.Type }, v)
+            match v.Type with
+              | Type.MathInteger
+              | Type.Integer _ -> rf :: acc
+              | Type.Ref td when td.IsDataType ->
+                let ex = Macro ({ bogusEC with Type = Type.MathInteger }, "dt_size", [rf])
+                ex :: acc
+              | _ -> acc
+          fn.Variants <- fn.Parameters |> List.fold aux [] |> List.rev
         let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
         let origBody = fn.Body.Value
         let body = Expr.MkBlock (assigns @ [origBody])
