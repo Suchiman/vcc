@@ -402,6 +402,19 @@ namespace Microsoft.Research.Vcc
 
       let claimStateId = ref 0
 
+      let abstractSizeUndef = bInt 0 
+      let abstractSize t expr =
+        match t with
+          | C.MathInteger 
+          | C.Type.Integer _ ->
+            bCall "$abs" [expr]
+          | C.Type.Ref td when td.IsDataType ->
+            bCall ("DSZ#" + td.Name) [expr]
+          | C.Type.Ref td when td.IsRecord ->
+            bCall ("RSZ#" + td.Name) [expr]
+          | _ -> 
+            abstractSizeUndef
+
 
       let rec trExpr (env:Env) expr =
         let self = trExpr env
@@ -802,9 +815,11 @@ namespace Microsoft.Research.Vcc
           | "dt_testhd", [e; C.UserData (_, (:? C.Function as fn))] ->
             let td = dtType e.Type
             bEq (bCall ("DGH#" + td.Name) [self e]) (er ("DH#" + fn.Name))
-          | "dt_size", [e] ->
-            let td = dtType e.Type
-            bCall ("DSZ#" + td.Name) [self e]
+          | "size", [e] ->
+            let res = abstractSize e.Type (self e)
+            if res = abstractSizeUndef then
+              helper.Error (ec.Token, 9737, "\\size() can only be called on data types, records and integers")
+            res
           | "skip_termination_check", [e] ->
             self e
           | name, [e] when name.StartsWith "DP#" ->
@@ -864,7 +879,6 @@ namespace Microsoft.Research.Vcc
             else
               helper.Oops (ec.Token, sprintf "unhandled macro %s" n)
             er "$bogus"                
-
 
       and typeOf env (e:C.Expr) =
         match e.Type with
@@ -2512,7 +2526,7 @@ namespace Microsoft.Research.Vcc
             | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [ff; toTypeId t]
             | _ -> ff
         (B.Decl.Function (trType tp, [], name, [("r", rt)], None), constrained)
-       
+      
       let trRecord3 (td:C.TypeDecl) =
         let name = td.Name
         let rt = trType (C.Type.Ref td)
@@ -2520,21 +2534,25 @@ namespace Microsoft.Research.Vcc
         let ctorArgs = td.Fields |> List.map (fun f -> (loc f, trType f.Type)) 
         let ctorCall = bCall ("RC#" + name) (ctorArgs |> List.map (fun (n, _) -> er n))
         let rf f e = bCall ("RF#" + fieldName f) [e]
+        let sum = ref (bInt 0)
         let trRecField (f:C.Field) =
           let sel = rf f ctorCall
           let ff = er (loc f)
           let fndef, constrained = mkSelector rt f.Type ("RF#" + fieldName f) ff
+          sum := bPlus !sum (abstractSize f.Type constrained)
           fndef, bEq (rf f ctorCall) constrained
         let injArgs = td.Fields |> List.map (fun f -> rf f (er "r"))
         let eqArgs = td.Fields |> List.map (fun f -> typedEq f.Type (rf f (er "a")) (rf f (er "b")))
         let eqAB = bCall ("REQ#" + name) [er "a"; er "b"]
         let prjFuns, eqs = List.map trRecField td.Fields |> List.unzip
+        let szLt = B.Primitive ("<", [!sum; abstractSize (C.Type.Ref td) ctorCall])
         let tdef = [
           B.Decl.TypeDef (recTypeName td)
           B.Decl.Function (rt, [], "RC#" + name, ctorArgs, None)
+          B.Decl.Function (B.Type.Int, [], "RSZ#" + name, ["a",rt], None)
           B.Decl.Function (B.Type.Bool, [], "REQ#" + name, ["a",rt; "b",rt], None)
           B.Decl.Const { Unique = false; Name = "RZ#" + name; Type = rt }
-          B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd eqs))
+          B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd (szLt :: eqs)))
           B.Decl.Axiom (B.Forall (Token.NoToken, [("r", rt)], [], [], bEq (er "r") (bCall ("RC#" + name) injArgs)))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bImpl (bMultiAnd (eqArgs)) eqAB))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bEq (eqAB) (bEq (er "a") (er "b"))))
@@ -2559,26 +2577,19 @@ namespace Microsoft.Research.Vcc
           let eqs = glist[]
           let injPrjCalls = glist[]
           let subEqs = glist[]
-          let sumSizes = glist[]
+          let sum = ref (bInt 0)
            
           let getProjection (n, t) =
             let name = "DP#" + n + "#" + h.Name 
             let fndef, constrained = mkSelector rt t name (er n)
             prjFuns.Add fndef
             eqs.Add (bEq (bCall name [ctorCall]) constrained)
-            match t with
-              | C.MathInteger 
-              | C.Type.Integer _ ->
-                sumSizes.Add (bCall "$abs" [constrained])
-              | C.Type.Ref td when td.IsDataType ->
-                sumSizes.Add (bCall ("DSZ#" + td.Name) [constrained])
-              | _ -> ()
+            sum := bPlus !sum (abstractSize t constrained)
             injPrjCalls.Add (bCall name [er "a"])
             subEqs.Add (typedEq t (bCall name [er "a"]) (bCall name [er "b"]))
           List.iter getProjection args
 
-          let sum = sumSizes |> Seq.fold (fun s k -> B.Primitive ("+", [s; k])) (bInt 0)
-          let lt = B.Primitive ("<", [sum; dtsz ctorCall])
+          let lt = B.Primitive ("<", [!sum; dtsz ctorCall])
           eqs.Add lt
 
           let hdIs = bEq (hd ctorCall) (er fnconst)
