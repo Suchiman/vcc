@@ -802,6 +802,9 @@ namespace Microsoft.Research.Vcc
           | "dt_testhd", [e; C.UserData (_, (:? C.Function as fn))] ->
             let td = dtType e.Type
             bEq (bCall ("DGH#" + td.Name) [self e]) (er ("DH#" + fn.Name))
+          | "dt_size", [e] ->
+            let td = dtType e.Type
+            bCall ("DSZ#" + td.Name) [self e]
           | "skip_termination_check", [e] ->
             self e
           | name, [e] when name.StartsWith "DP#" ->
@@ -2542,6 +2545,7 @@ namespace Microsoft.Research.Vcc
         let rt = trType (C.Type.Ref td)
         let name = td.Name
         let hd e = bCall ("DGH#" + name) [e]
+        let dtsz e = bCall ("DSZ#" + td.Name) [e]
         let trCtor (h:C.Function) =
           let fnconst = "DH#" + h.Name
           let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$dt_tag" }
@@ -2555,15 +2559,27 @@ namespace Microsoft.Research.Vcc
           let eqs = glist[]
           let injPrjCalls = glist[]
           let subEqs = glist[]
+          let sumSizes = glist[]
            
           let getProjection (n, t) =
             let name = "DP#" + n + "#" + h.Name 
             let fndef, constrained = mkSelector rt t name (er n)
             prjFuns.Add fndef
             eqs.Add (bEq (bCall name [ctorCall]) constrained)
+            match t with
+              | C.MathInteger 
+              | C.Type.Integer _ ->
+                sumSizes.Add (bCall "$abs" [constrained])
+              | C.Type.Ref td when td.IsDataType ->
+                sumSizes.Add (bCall ("DSZ#" + td.Name) [constrained])
+              | _ -> ()
             injPrjCalls.Add (bCall name [er "a"])
             subEqs.Add (typedEq t (bCall name [er "a"]) (bCall name [er "b"]))
           List.iter getProjection args
+
+          let sum = sumSizes |> Seq.fold (fun s k -> B.Primitive ("+", [s; k])) (bInt 0)
+          let lt = B.Primitive ("<", [sum; dtsz ctorCall])
+          eqs.Add lt
 
           let hdIs = bEq (hd ctorCall) (er fnconst)
           let prjAxiom = B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd (hdIs :: Seq.toList eqs)))
@@ -2577,10 +2593,12 @@ namespace Microsoft.Research.Vcc
           B.Decl.Function (B.Type.Bool, [], "DEQ#" + name, ["a",rt; "b",rt], None)
           B.Decl.Const { Unique = false; Name = "DZ#" + name; Type = rt }
           B.Decl.Function (B.Type.Ref "$dt_tag", [], "DGH#" + name, ["",rt], None)
+          B.Decl.Function (B.Type.Int, [], "DSZ#" + name, ["",rt], None)
 
           B.Decl.Axiom (B.Forall (Token.NoToken, [("a", rt)], [[bCall ("DGH#" + name) [er "a"]]], [], bMultiOr injDisjs))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [], bImpl (bEq (hd (er "a")) (hd (er "b"))) (bImpl (bMultiOr eqArgs) eqAB)))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bEq (eqAB) (bEq (er "a") (er "b"))))
+          B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt], [[dtsz (er "a")]], [], B.Primitive ("<", [bInt 0; dtsz (er "a")])))
         ]
         tdef :: ctorDefs |> List.concat
 

@@ -1,0 +1,13 @@
+`/newsyntax
+#include <vcc.h>
+
+
+_(def \integer len(\integer x)
+  _(decreases \dt_size(x))
+{
+return 0;
+}
+)
+`
+testcase(5,29) : error VC9737: \dt_size() can only be called on data type values
+`
