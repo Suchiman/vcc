@@ -139,7 +139,7 @@ _(bool _(_boogie1) \wrapped_with_deep_domain(\object))
 _(\objset \composite_extent(\object))
 _(\object _(_boogie1) \domain_root(\object))
 
-_(template<typename T> \integer \dt_size(T dt);)
+_(template<typename T> \integer \size(T dt);)
 
 _(template<typename T> bool \shallow_eq(T s, T t);)
 _(template<typename T> bool \deep_eq(T s, T t);)

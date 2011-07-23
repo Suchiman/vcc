@@ -1042,7 +1042,7 @@ namespace Microsoft.Research.Vcc
         match globalMethodDefinition.Name.Value with
           | "_vcc_in_state" | "\\at"
           | "_vcc_approves" | "\\approves"
-          | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq" | "\\dt_size"
+          | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq" | "\\size"
           | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" | "_vcc_label_of" | "_vcc_lblset_leq"
           | "\\static_cast" | "\\labeled_expression"
           | "_vcc_new_club" | "_vcc_add_member" | "_vcc_is_member" -> ()
@@ -1528,7 +1528,7 @@ namespace Microsoft.Research.Vcc
             match args() with
               | [e1; e2] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
               | _ -> oopsNumArgs()
-          | _, ("\\dt_size") ->
+          | _, ("\\size") ->
             match args() with
               | [e1] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
               | _ -> oopsNumArgs()

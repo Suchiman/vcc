@@ -39,12 +39,8 @@ let checkDatatypeDefinitions (helper:Helper.Env) decls =
 let wrapDatatypeCtors (helper:Helper.Env) (ctx:ExprCtx) self = function
   | Call (ec, fn, tps, args) as e when not ctx.IsPure && fn.IsDatatypeOption ->
     Some (Pure (ec, Call (ec, fn, tps, List.map self args)))
-  | Macro (ec, "\\dt_size", [e]) ->
-    match e.Type with
-      | Type.Ref td when td.IsDataType -> ()
-      | _ ->
-        helper.Error (ec.Token, 9737, "\\dt_size() can only be called on data type values")
-    Some (Macro (ec, "dt_size", [self e]))
+  | Macro (ec, "\\size", [e]) ->
+    Some (Macro (ec, "size", [self e]))
   | _ -> None
 
 // for match stmt check that
