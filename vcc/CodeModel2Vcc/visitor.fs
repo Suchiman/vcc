@@ -1524,7 +1524,7 @@ namespace Microsoft.Research.Vcc
             match args() with
               | [e1; e2] -> exprRes <- C.Expr.Macro (ec, "approves", [e1; e2])
               | _ -> oopsNumArgs() 
-          | _, ("_vcc_deep_struct_eq" | "_vcc_sallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq") ->
+          | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq") ->
             match args() with
               | [e1; e2] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
               | _ -> oopsNumArgs()
