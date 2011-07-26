@@ -89,7 +89,9 @@ namespace Microsoft.Research.Vcc
               if t1 <> t2 then
                 helper.Warning (c.Token, 9124, "pointers of different types (" + t1.ToString() + " and " + t2.ToString() + ") are never equal in pure context")
               Some (Expr.Macro (c, name + "_pure", [self p1; self p2]))
-            | _ -> die()
+            | _ ->
+              helper.Oops (p1.Token, "cannot compare non-pointers as pointers: " + p1.Type.ToString() + " == " + p2.Type.ToString())
+              None
         else None
       | _ -> None
     if helper.Options.Vcc3 then
