@@ -115,7 +115,7 @@ namespace Microsoft.Research.Vcc.Parsing {
 
     protected void WarnIfLoopWithContractAndEmptyBody(LoopContract contract, Statement body)
     {
-      if ((contract != null && body is EmptyStatement) 
+      if (contract != null && body is EmptyStatement)
         this.HandleError(body.SourceLocation, Error.PossibleMistakenNullStatement);
 
       if (body is VccAssertStatement || body is AssumeStatement || body is VccSpecStatement)
