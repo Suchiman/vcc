@@ -29,6 +29,6 @@ unsigned binary_search(int *a, unsigned len, int v)
 	return UINT_MAX;
 }
 `
-testcase(15,19) : warning VC0000: Possible mistaken null statement.
+testcase(15,19) : warning VC0000: This loop body contains only specification code.
 Verification of binary_search succeeded.
 `
