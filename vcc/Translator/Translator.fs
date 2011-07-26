@@ -677,6 +677,8 @@ namespace Microsoft.Research.Vcc
                 bCall "$good_state" [arr]
               | _ -> helper.Panic("wrong thing in vs_can_update")
             
+          | "yarra_nondet", [p] ->
+            typedRead (bCall "$yarra_heap" [bState]) (self p) ec.Type
           | "by_claim", args ->
             self (C.Expr.Deref (ec, C.Expr.Macro (ec, "by_claim_ptr", args)))
           | "by_claim_ptr", [c; obj; ptr] ->

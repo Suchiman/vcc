@@ -75,6 +75,9 @@ module Microsoft.Research.Vcc.CAST
   [<Literal>]
   let AttrIsDatatypeOption = "_vcc_internal__is_datatype_option"
 
+  [<Literal>]
+  let AttrYarra = "yarra"
+
   type VarKind =    
     | Parameter
     | SpecParameter
