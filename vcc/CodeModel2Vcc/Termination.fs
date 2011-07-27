@@ -177,6 +177,11 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           []
         elif fn.DecreasesLevel < currFn.DecreasesLevel then
           []
+        elif fn.DecreasesLevel > currFn.DecreasesLevel then
+          helper.GraveWarning (e.Token, 9319, 
+                               System.String.Format ("calling function '{0}' (level {1}) from lower-level function ('{2}' at level {3})", 
+                                                     fn.Name, fn.DecreasesLevel, currFn.Name, currFn.DecreasesLevel))
+          []
         elif fn.IsWellFounded then        
           let subst = fn.CallSubst args
           let assigns, callVariants = 
