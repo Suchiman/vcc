@@ -20,7 +20,14 @@ namespace Microsoft.Research.Vcc
   let forwardingToken tok related (getmsg : unit -> string) =
     { Token = (new ForwardingToken (tok, related, getmsg) :> Token)
       Type = Type.Bool } : ExprCommon
-        
+  
+  //
+  // "id" numbers
+  //      
+  // Verification errors:  between 8001 and 8499: First available: 8031
+  // Assertions:           between 8501 and 8999: First available: 8539
+  //
+
   let afmt (id:int) fmt (args : list<string>) =
     System.String.Format ("#VCCERR:{0:0000}#", id) +
       System.String.Format (fmt, [| for a in args -> (a :> obj) |])
@@ -32,6 +39,21 @@ namespace Microsoft.Research.Vcc
   
   let afmter id fmt primary related (args : list<Expr>) =
     forwardingToken primary related (fun () -> afmt id fmt [ for a in args -> a.Token.Value ])
+  
+  let ignoreEffects e =
+    let aux self = function 
+      | Block (_, stmts, _) ->
+        let rec last = function
+          | [x] -> x
+          | _ :: xs -> last xs
+          | [] -> die()
+        Some (self (last stmts))
+      | _ -> None
+    (e:Expr).SelfMap aux 
+    
+  let propAssert id msg name p =
+    let p = ignoreEffects p
+    Expr.MkAssert (Expr.Macro (afmte id msg [p], name, [p]))
   
   let addSuffix tok getsuff =
     forwardingToken tok None (fun () -> tok.Value + " " + getsuff())
@@ -191,21 +213,6 @@ namespace Microsoft.Research.Vcc
         | FunctionDecl d -> FunctionDecl (f d)
     List.map aux decls
     
-  let ignoreEffects e =
-    let aux self = function 
-      | Block (_, stmts, _) ->
-        let rec last = function
-          | [x] -> x
-          | _ :: xs -> last xs
-          | [] -> die()
-        Some (self (last stmts))
-      | _ -> None
-    (e:Expr).SelfMap aux 
-    
-  let propAssert id msg name p =
-    let p = ignoreEffects p
-    Expr.MkAssert (Expr.Macro (afmte id msg [p], name, [p]))
-  
   let addStmts stmts expr = Expr.MkBlock (stmts @ [expr])
   let addStmtsOpt stmts expr = Some (addStmts stmts expr)
       
