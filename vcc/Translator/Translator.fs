@@ -2528,7 +2528,9 @@ namespace Microsoft.Research.Vcc
             | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [ff; toTypeId t]
             | _ -> ff
         (B.Decl.Function (trType tp, [], name, [("r", rt)], None), constrained)
-      
+     
+      let plusOne sz = B.Primitive ("+", [sz; bInt 1])
+       
       let trRecord3 (td:C.TypeDecl) =
         let name = td.Name
         let rt = trType (C.Type.Ref td)
@@ -2547,14 +2549,14 @@ namespace Microsoft.Research.Vcc
         let eqArgs = td.Fields |> List.map (fun f -> typedEq f.Type (rf f (er "a")) (rf f (er "b")))
         let eqAB = bCall ("REQ#" + name) [er "a"; er "b"]
         let prjFuns, eqs = List.map trRecField td.Fields |> List.unzip
-        let szLt = B.Primitive ("<", [!sum; abstractSize (C.Type.Ref td) ctorCall])
+        let szEq =  bEq (abstractSize (C.Type.Ref td) ctorCall) (plusOne !sum)
         let tdef = [
           B.Decl.TypeDef (recTypeName td)
           B.Decl.Function (rt, [], "RC#" + name, ctorArgs, None)
           B.Decl.Function (B.Type.Int, [], "RSZ#" + name, ["a",rt], None)
           B.Decl.Function (B.Type.Bool, [], "REQ#" + name, ["a",rt; "b",rt], None)
           B.Decl.Const { Unique = false; Name = "RZ#" + name; Type = rt }
-          B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd (szLt :: eqs)))
+          B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd (szEq :: eqs)))
           B.Decl.Axiom (B.Forall (Token.NoToken, [("r", rt)], [], [], bEq (er "r") (bCall ("RC#" + name) injArgs)))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bImpl (bMultiAnd (eqArgs)) eqAB))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bEq (eqAB) (bEq (er "a") (er "b"))))
@@ -2591,8 +2593,8 @@ namespace Microsoft.Research.Vcc
             subEqs.Add (typedEq t (bCall name [er "a"]) (bCall name [er "b"]))
           List.iter getProjection args
 
-          let lt = B.Primitive ("<", [!sum; dtsz ctorCall])
-          eqs.Add lt
+          let eqSz = bEq (dtsz ctorCall) (plusOne !sum)
+          eqs.Add eqSz
 
           let hdIs = bEq (hd ctorCall) (er fnconst)
           let prjAxiom = B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd (hdIs :: Seq.toList eqs)))
