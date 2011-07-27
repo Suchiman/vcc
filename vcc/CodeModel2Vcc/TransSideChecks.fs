@@ -385,7 +385,7 @@ namespace Microsoft.Research.Vcc
             
         for g in calls.[f] do
           if g.IsPure then
-            if g.CustomAttr |> hasCustomAttr AttrDefinition then
+            if g.IsWellFounded then
               // these are checked for termination, and cannot call ordinary pure functions
               ()
             else
