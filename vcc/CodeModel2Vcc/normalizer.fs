@@ -442,6 +442,10 @@ namespace Microsoft.Research.Vcc
                   mkUnion (createUnion a) (createUnion b)
               Some(rest |> List.map self |> createUnion)
    
+        | Expr.Return (ec, Some e) when e.Type = Type.Void ->
+          helper.Error (ec.Token, 9738, "expressions of type void cannot be used as an argument to a return statement")
+          None
+           
         | _ -> None
     
       deepMapExpressions doFixQuantifiers
