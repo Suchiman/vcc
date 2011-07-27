@@ -22,6 +22,7 @@ unsigned sum_max(unsigned *a, unsigned N, unsigned *maxout)
   unsigned sum = 0;
   unsigned i;
   _(ghost IntIntMap S)
+  _(ghost S[0] = 0)
 
   for (i = 0; i < N; i++)
     _(invariant \forall unsigned k; {match_integer(S[k + 1])} {:hint match_integer(S[k + 1])}
