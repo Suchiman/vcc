@@ -62,6 +62,8 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
     match expr with
     | Expr.Block (_, stmts, _) -> List.forall self stmts
     | Expr.If (_, _, _, th, el) -> self th || self el
+    | Expr.Assert (_, EFalse, _)
+    | Expr.Assume (_, EFalse)
     | Expr.Return _ -> false
     | Expr.Goto (_, nm') -> nm <> nm'
     | _ -> true
