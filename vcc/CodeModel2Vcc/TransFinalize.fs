@@ -544,6 +544,9 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-move-test-classifiers", Helper.Decl flattenTestClassifiers)
     helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
     // reads check goes here
+
+    if helper.Options.Vcc3 then
+      helper.AddTransformer ("datatype-wrap-ctors", Helper.ExprCtx (DataTypes.wrapDatatypeCtors helper))
     
     helper.AddTransformer ("final-fold-ITE", Helper.Expr foldIteBack)
     helper.AddTransformer ("final-ITE-to-logical", Helper.Expr introduceAndOrs)

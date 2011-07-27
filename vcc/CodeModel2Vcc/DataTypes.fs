@@ -36,11 +36,14 @@ let checkDatatypeDefinitions (helper:Helper.Env) decls =
   List.iter aux decls
   decls
 
+let handleSize (helper:Helper.Env) self = function
+  | Macro (ec, "\\size", [e]) ->
+    Some (Macro (ec, "size", [self e]))
+  | _ -> None
+
 let wrapDatatypeCtors (helper:Helper.Env) (ctx:ExprCtx) self = function
   | Call (ec, fn, tps, args) as e when not ctx.IsPure && fn.IsDatatypeOption ->
     Some (Pure (ec, Call (ec, fn, tps, List.map self args)))
-  | Macro (ec, "\\size", [e]) ->
-    Some (Macro (ec, "size", [self e]))
   | _ -> None
 
 // for match stmt check that
