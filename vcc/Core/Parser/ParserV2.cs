@@ -556,6 +556,9 @@ namespace Microsoft.Research.Vcc.Parsing
           return this.ParseBlockWithContracts(followers, savedInSpecCode);
         case Token.Identifier:
           var id = this.scanner.GetIdentifierString();
+          if (this.functionContractExtensions.ContainsKey(id)) {
+              return this.ParseBlockWithContracts(followers, savedInSpecCode);
+          }
           if (id == "pure") 
             return this.ParseBlockWithPureModifier(followers, savedInSpecCode);
           if (this.declspecExtensions.ContainsKey(id)) {
