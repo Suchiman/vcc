@@ -723,8 +723,10 @@ namespace Microsoft.Research.Vcc {
     public BlockStatement Body
     {
       get {
-        if (_body == null)
+        if (_body == null) {
           _body = new BlockStatement(statements.ToList(), this.sourceLocation);
+          _body.SetContainingBlock(containingMatchStatement.ContainingBlock);
+        }
         return _body; 
       }
     }
