@@ -14,7 +14,15 @@ namespace Microsoft.Research.Vcc
  
  module Normalizer =
 
-  type StackArrayDetails = SAR of Variable * Type * int * bool
+  type private StackArrayDetails = SAR of Variable * Type * int * bool
+
+  type private Contract = {
+    Requires : list<Expr>;
+    Ensures : list<Expr>;
+    Reads : list<Expr>;
+    Writes : list<Expr>;
+    Decreases : list<Expr>;
+  }
  
   // ============================================================================================================          
   let rec doHandleComparison helper self = function
@@ -882,31 +890,54 @@ namespace Microsoft.Research.Vcc
         | Macro(_, "ite", [Cast(_, _, Call(_, f, _, _)); BoolLiteral(_, true); BoolLiteral(_, false)]) -> isMacro f
           // this is how non-bool macros are projected
         | _ -> false
+
+
+      let collectExpansions = 
+        let addExpansion (c : Contract) = function
+          | Call (ec, m, targs, args) as call
+          | Macro(_, "ite", [Cast(_, _, (Call(ec, m, targs, args) as call)); BoolLiteral(_, true); BoolLiteral(_, false)]) ->
+            let m' = m.Specialize(targs, false)
+            let subst = inlineCall "_(" (fun x -> x) (Call({ec with Type=m'.RetType}, m', [], args))
+            let substs = List.map subst
+            { c with Requires = c.Requires @ substs m'.Requires; 
+                     Ensures = c.Ensures @ substs m'.Ensures;
+                     Writes = c.Writes @ substs m'.Writes;
+                     Reads = c.Reads @ substs m'.Reads;
+                     Decreases = c.Decreases @ substs m'.Variants }
+          | _ -> die()
+        List.fold addExpansion { Requires = []; Ensures = []; Writes = []; Reads = []; Decreases = [] }
+
       let expand = function
         | Top.FunctionDecl f ->
           let (macros, reqs) = List.partition isMacroCall f.Requires
-          f.Requires <- reqs          
-          let handleExpansion = function
-            | Call (ec, m, targs, args) as call
-            | Macro(_, "ite", [Cast(_, _, (Call(ec, m, targs, args) as call)); BoolLiteral(_, true); BoolLiteral(_, false)]) ->
-              let m' = m.Specialize(targs, false)
-              let subst = inlineCall "_(" (fun x -> x) (Call({ec with Type=m'.RetType}, m', [], args))
-              let substs = List.map subst
-              f.Requires <- f.Requires @ substs m'.Requires
-              f.Ensures <- f.Ensures @ substs m'.Ensures
-              f.Writes <- f.Writes @ substs m'.Writes
-              f.Reads <- f.Reads @ substs m'.Reads
-              f.Variants <- f.Variants @ substs m'.Variants
-            | _ -> die()
-          List.iter handleExpansion macros
+          let contr = collectExpansions macros
+          f.Requires <- reqs @ contr.Requires
+          f.Ensures <- f.Ensures @ contr.Ensures
+          f.Writes <- f.Writes @ contr.Writes
+          f.Reads <- f.Reads @ contr.Reads
+          f.Variants <- f.Variants @ contr.Decreases
         | _ -> ()
+
+      let expandBlockContracts self = function
+        | Block(ec, stmts, Some(contract)) ->
+          let (macros, reqs) = List.partition isMacroCall contract.Requires
+          let contr = collectExpansions macros
+          let contract' = { contract with Requires = reqs @ contr.Requires;
+                                          Ensures = contract.Ensures @ contr.Ensures;
+                                          Writes = contract.Writes @ contr.Writes;
+                                          Reads = contract.Reads @ contr.Reads;
+                                          Decreases = contract.Decreases @ contr.Decreases }
+          Some(Block(ec, List.map self stmts, Some(contract')))
+        | _ -> None
+
       let isMacro = function
         | Top.FunctionDecl f -> isMacro f
         | _ -> false
+
       let macros, decls = List.partition isMacro decls
       List.iter expand macros
       List.iter expand decls
-      decls
+      deepMapExpressions expandBlockContracts decls
     
     // ============================================================================================================
 

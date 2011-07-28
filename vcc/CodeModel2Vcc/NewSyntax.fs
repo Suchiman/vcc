@@ -216,7 +216,8 @@ let init (helper:Helper.Env) =
           | (o:Expr) :: os ->
             let wrapLike n = 
               let t = stmtToken ("_(" + n + " @@)") o.Token 
-              Stmt (t, Macro (t, "_vcc_" + n, [o]))
+              let fn = TransUtil.internalFunction helper n
+              Stmt (t, Call (t, fn, [], [o]))
             Expr.MkBlock [wrapLike "unwrap"; build os; wrapLike "wrap"] 
           | [] -> self body
         Some (build objects)
