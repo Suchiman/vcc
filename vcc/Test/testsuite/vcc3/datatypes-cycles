@@ -1,0 +1,25 @@
+`/newsyntax
+#include <vcc.h>
+
+_(datatype Bar { 
+  case c0(Bar)
+})
+
+_(datatype Baz0 { 
+  case c1(struct _vcc_datatype_Baz1)
+})
+
+_(datatype Baz1 { 
+  case c2(Baz0)
+})
+
+_(datatype OK1 { 
+  case c3(OK1)
+  case c4()
+})
+
+`
+testcase(3,26) : error VC9725: a finite instance of datatype 'Bar' could never be constructed
+testcase(7,26) : error VC9725: a finite instance of datatype 'Baz0' could never be constructed
+testcase(11,26) : error VC9725: a finite instance of datatype 'Baz1' could never be constructed
+`
