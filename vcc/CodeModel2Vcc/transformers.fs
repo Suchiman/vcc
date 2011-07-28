@@ -133,10 +133,9 @@ namespace Microsoft.Research.Vcc
           match h.Name with
             | "\\free" | "\\stack_free" | "\\heap_alloc" | "\\stack_alloc"
             | "\\set_owns" | "\\set_closed_owner" | "\\giveup_closed_owner"
-            | "_vcc_free"
-            | "_vcc_stack_free"
-            | "_vcc_alloc"
-            | "_vcc_stack_alloc" -> useIt (h :> obj)
+            | "\\wrap" | "\\unwrap" 
+            | "_vcc_free" | "_vcc_stack_free"
+            | "_vcc_alloc" | "_vcc_stack_alloc" -> useIt (h :> obj)
             | "__FallThrough" -> ()
             | _ ->
              match h.Body, h.Reads with
