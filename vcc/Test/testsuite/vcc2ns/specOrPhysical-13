@@ -1,0 +1,11 @@
+`/newsyntax
+#include <vcc.h>
+
+struct Perm {
+int op;
+_(invariant \forall struct Perm ^p; (\object) p == \this)
+};
+
+`
+Verification of Perm#adm succeeded.
+`
