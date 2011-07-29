@@ -307,6 +307,11 @@
             Returns a shallow copy of the given parameter type information.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IPESection)">
+            <summary>
+            Returns a shallow copy of the given parameter type information.
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataShallowCopier.Copy(Microsoft.Cci.IPlatformInvokeInformation)">
             <summary>
             Returns a shallow copy of the specified platform invoke information.
@@ -668,6 +673,11 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IParameterTypeInformation)">
             <summary>
             Returns a deep copy of the given parameter type information.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IPESection)">
+            <summary>
+            Returns a deep copy of the given PE section.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.Copy(Microsoft.Cci.IPlatformInvokeInformation)">
@@ -1168,6 +1178,13 @@
             
             </summary>
             <param name="parameterTypeInformation"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCopier.GetMutableShallowCopy(Microsoft.Cci.IPESection)">
+            <summary>
+            
+            </summary>
+            <param name="peSection"></param>
             <returns></returns>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCopier.GetMutableShallowCopy(Microsoft.Cci.IPlatformInvokeInformation)">
@@ -5451,6 +5468,62 @@
             </summary>
             <value></value>
         </member>
+        <member name="T:Microsoft.Cci.MutableCodeModel.PESection">
+            <summary>
+            A section of the PE file that does not contain any objects that can be referenced in another way
+            using this object model. The data of such a section is not decompiled by metadata reader and 
+            is written out unchanged by metadata writers. Presumably it is meaningful in some way and is 
+            thus exposed for use by other tools.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.PESection.#ctor">
+            <summary>
+            A section of the PE file that does not contain any objects that can be referenced in another way
+            using this object model. The data of such a section is not decompiled by metadata reader and 
+            is written out unchanged by metadata writers. Presumably it is meaningful in some way and is 
+            thus exposed for use by other tools.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.PESection.Copy(Microsoft.Cci.IPESection,Microsoft.Cci.IInternFactory)">
+            <summary>
+            
+            </summary>
+            <param name="peSection"></param>
+            <param name="internFactory"></param>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.PESection.SectionName">
+            <summary>
+            The name of the section. Should be exactly eight characters long.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.PESection.Characteristics">
+            <summary>
+            A set of bits that describes the purpose of a section and how it behaves when loaded.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.PESection.VirtualAddress">
+            <summary>
+            For executable images this is the address of the first byte of the section, when loaded into memory, relative to the image base.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.PESection.VirtualSize">
+            <summary>
+            Total size of the section in bytes. If this value is greater than SizeOfRawData, the section is zero-padded.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.PESection.SizeOfRawData">
+            <summary>
+            Size of the initialized data on disk in bytes, shall be a multiple of FileAlignment from the PE header.
+            If this is less than VirtualSize the remainder of the section is zero filled.
+            Because this field is rounded while the VirtualSize field is not, it is possible for this to be greater than VirtualSize.
+            When a section contains only uninitialized data, this field should be 0.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.PESection.Rawdata">
+            <summary>
+            The data, if any, with which the section will be initialized when loaded. May be null.
+            </summary>
+        </member>
         <member name="T:Microsoft.Cci.MutableCodeModel.Resource">
             <summary>
             A named data resource that is stored as part of CLR metadata.
@@ -5987,6 +6060,11 @@
             Rewrites the given parameter type information.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IPESection)">
+            <summary>
+            Rewrites the given PE section.
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(Microsoft.Cci.IPlatformInvokeInformation)">
             <summary>
             Rewrites the specified platform invoke information.
@@ -6200,6 +6278,11 @@
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IParameterTypeInformation})">
             <summary>
             Rewrites the specified parameter type informations.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IPESection})">
+            <summary>
+            Rewrites the specified PE sections.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.Rewrite(System.Collections.Generic.List{Microsoft.Cci.IPropertyDefinition})">
@@ -6467,6 +6550,12 @@
             <summary>
             Rewrites the given parameter type information.
             </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.PESection)">
+            <summary>
+            Rewrites the given PE section.
+            </summary>
+            <param name="peSection"></param>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.RewriteChildren(Microsoft.Cci.MutableCodeModel.PlatformInvokeInformation)">
             <summary>
@@ -6963,6 +7052,13 @@
             
             </summary>
             <param name="parameterTypeInformation"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.GetMutableCopy(Microsoft.Cci.IPESection)">
+            <summary>
+            
+            </summary>
+            <param name="peSection"></param>
             <returns></returns>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.GetMutableCopy(Microsoft.Cci.IPlatformInvokeInformation)">
@@ -7971,6 +8067,19 @@
             Visits the specified type reference.
             </summary>
             <param name="typeReference">The type reference.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.Visit(System.Collections.Generic.List{Microsoft.Cci.IPESection})">
+            <summary>
+            Visits the specified PE sections.
+            </summary>
+            <param name="peSections">The PE section.</param>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.Visit(Microsoft.Cci.MutableCodeModel.PESection)">
+            <summary>
+            Visits the specifed PE section.
+            </summary>
+            <param name="peSection">The PE section</param>
             <returns></returns>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.Visit(Microsoft.Cci.MutableCodeModel.Unit)">
@@ -9040,6 +9149,13 @@
             </summary>
             <param name="typeDefinitions">The type definitions.</param>
         </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.Mutate(System.Collections.Generic.List{Microsoft.Cci.IPESection})">
+            <summary>
+            Visits the specified PE sections.
+            </summary>
+            <param name="peSections">The PE sections.</param>
+            <returns></returns>
+        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.Mutate(System.Collections.Generic.List{Microsoft.Cci.ITypeDefinitionMember})">
             <summary>
             Visits the specified type definition members.
@@ -9381,6 +9497,21 @@
             Visits the specified parameter type information.
             </summary>
             <param name="parameterTypeInformation">The parameter type information.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.Visit(Microsoft.Cci.IPESection)">
+            <summary>
+            Visits the (interface) IPESection. We first see if it is a mutable model node, if so, we 
+            visit the mutable node. If not, we just return the section.
+            </summary>
+            <param name="peSection"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.Mutate(Microsoft.Cci.MutableCodeModel.PESection)">
+            <summary>
+            Visits a mutable PE section.
+            </summary>
+            <param name="peSection">The PE section.</param>
             <returns></returns>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.Visit(Microsoft.Cci.IPlatformInvokeInformation)">
@@ -11485,6 +11616,12 @@
             The interpretation depends on the ICompilationHostEnviroment instance used to resolve references to this unit.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.Unit.UninterpretedSections">
+            <summary>
+            A sequence of PE sections that are not well known to PE readers and thus have not been decompiled into 
+            other parts of the Metadata Model. These sections may have meaning to other tools. 
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Unit.PlatformType">
             <summary>

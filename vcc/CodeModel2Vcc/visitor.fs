@@ -952,6 +952,8 @@ namespace Microsoft.Research.Vcc
         let ns = assembly.NamespaceRoot
         ns.Dispatch(this)
         this.DoneVisitingAssembly assembly
+             
+      member this.Visit (peSection:IPESection) : unit = assert false
                           
       member this.Visit (assemblyReference:IAssemblyReference) : unit = assert false
 
