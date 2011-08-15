@@ -2303,13 +2303,6 @@
             <param name="unitNamespace"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCopier.DeepCopyPropertyReturnValueAttributes(System.Collections.Generic.List{Microsoft.Cci.ICustomAttribute})">
-            <summary>
-            Visits the property return value attributes.
-            </summary>
-            <param name="customAttributes">The custom attributes.</param>
-            <returns></returns>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataCopier.DeepCopyMethodReturnValueAttributes(System.Collections.Generic.List{Microsoft.Cci.ICustomAttribute})">
             <summary>
             Visits the method return value attributes.
@@ -4978,12 +4971,6 @@
         <member name="P:Microsoft.Cci.MutableCodeModel.PropertyDefinition.Parameters">
             <summary>
             The parameters forming part of this signature.
-            </summary>
-            <value></value>
-        </member>
-        <member name="P:Microsoft.Cci.MutableCodeModel.PropertyDefinition.ReturnValueAttributes">
-            <summary>
-            Custom attributes associated with the property's return value.
             </summary>
             <value></value>
         </member>
@@ -8124,13 +8111,6 @@
             <param name="win32Resource">The win32 resource.</param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.VisitPropertyReturnValueAttributes(System.Collections.Generic.List{Microsoft.Cci.ICustomAttribute})">
-            <summary>
-            Visits the property return value attributes.
-            </summary>
-            <param name="customAttributes">The custom attributes.</param>
-            <returns></returns>
-        </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.VisitMethodReturnValueAttributes(System.Collections.Generic.List{Microsoft.Cci.ICustomAttribute})">
             <summary>
             Visits the method return value attributes.
@@ -9689,13 +9669,6 @@
             Visits the specified win32 resource.
             </summary>
             <param name="win32Resource">The win32 resource.</param>
-            <returns></returns>
-        </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.VisitPropertyReturnValueAttributes(System.Collections.Generic.List{Microsoft.Cci.ICustomAttribute})">
-            <summary>
-            Visits the property return value attributes.
-            </summary>
-            <param name="customAttributes">The custom attributes.</param>
             <returns></returns>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MutatingVisitor.VisitMethodReturnValueAttributes(System.Collections.Generic.List{Microsoft.Cci.ICustomAttribute})">
@@ -11715,6 +11688,17 @@
         <member name="P:Microsoft.Cci.MutableCodeModel.Module.ILOnly">
             <summary>
             True if the module contains only IL and is processor independent.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.Module.StrongNameSigned">
+            <summary>
+            True if the module contains a hash of its contents, encrypted with the private key of an assembly strong name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.Module.NativeEntryPoint">
+            <summary>
+            True if the module has a native entry point.
             </summary>
             <value></value>
         </member>

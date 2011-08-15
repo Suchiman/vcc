@@ -3136,6 +3136,7 @@
       <summary>
             Traverses the the given method body.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.MetadataTraverser.Traverse(Microsoft.Cci.IMethodBody)" inheritedFromTypeName="MetadataTraverser">methodBody != null</requires>
     </member>
     <member name="M:Microsoft.Cci.CodeTraverser.Traverse(Microsoft.Cci.IMethodCall)">
       <summary>
@@ -5224,6 +5225,7 @@
       <summary>
             Traverses the children of the method definition.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.MetadataTraverser.TraverseChildren(Microsoft.Cci.IMethodDefinition)" inheritedFromTypeName="MetadataTraverser">method != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.IPostcondition)">
       <summary>
@@ -5254,6 +5256,7 @@
       <summary>
             Traverses the children of the type definition.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.MetadataTraverser.TraverseChildren(Microsoft.Cci.ITypeDefinition)" inheritedFromTypeName="MetadataTraverser">typeDefinition != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.TraverseChildren(Microsoft.Cci.Contracts.ITypeInvariant)">
       <summary>
