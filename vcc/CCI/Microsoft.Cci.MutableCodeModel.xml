@@ -1602,7 +1602,10 @@
       <summary>
             Returns a deep copy of the given method body.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.CopyMethodBody(Microsoft.Cci.IMethodBody,Microsoft.Cci.IMethodDefinition)" inheritedFromTypeName="MetadataDeepCopier">methodBody != null</requires>
+      <requires inheritedFrom="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.CopyMethodBody(Microsoft.Cci.IMethodBody,Microsoft.Cci.IMethodDefinition)" inheritedFromTypeName="MetadataDeepCopier">method != null</requires>
       <requires inheritedFrom="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.CopyMethodBody(Microsoft.Cci.IMethodBody,Microsoft.Cci.IMethodDefinition)" inheritedFromTypeName="MetadataDeepCopier">!(methodBody is Dummy)</requires>
+      <ensures inheritedFrom="M:Microsoft.Cci.MutableCodeModel.MetadataDeepCopier.CopyMethodBody(Microsoft.Cci.IMethodBody,Microsoft.Cci.IMethodDefinition)" inheritedFromTypeName="MetadataDeepCopier">Contract.Result&lt;IMethodBody&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.MutableCodeModel.CodeDeepCopier.GetExistingCopyIfInsideCone(Microsoft.Cci.ILocalDefinition)">
       <summary>
@@ -4850,6 +4853,9 @@
             to the local stored in field &lt;localName&gt;x_i of the class used to store the local values in between
             calls to MoveNext.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IEnumerable&lt;ILocalScope&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.MutableCodeModel.SourceMethodBody.LocalScopes">
       <summary>
@@ -10378,6 +10384,7 @@
     </member>
     <member name="T:Microsoft.Cci.MutableCodeModel.BlockStatement">
       <summary />
+      <invariant>this.statements != null</invariant>
     </member>
     <member name="M:Microsoft.Cci.MutableCodeModel.BlockStatement.#ctor">
       <summary />
@@ -10396,6 +10403,12 @@
             The statements making up the block.
             </summary>
       <value />
+      <getter>
+        <ensures>Contract.Result&lt;List&lt;IStatement&gt;&gt;() != null</ensures>
+      </getter>
+      <setter>
+        <requires>value != null</requires>
+      </setter>
     </member>
     <member name="P:Microsoft.Cci.MutableCodeModel.BlockStatement.UseCheckedArithmetic">
       <summary>
@@ -11059,25 +11072,27 @@
             </summary>
       <value />
     </member>
+    <member name="M:Microsoft.Cci.MutableCodeModel.SwitchCase.Microsoft#Cci#IObjectWithLocations#get_Locations">
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
     <member name="P:Microsoft.Cci.MutableCodeModel.SwitchCase.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.MutableCodeModel.SwitchCase.Microsoft#Cci#IObjectWithLocations#get_Locations">
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    <member name="M:Microsoft.Cci.MutableCodeModel.CapturedParameterAndLocalFinder.TraverseChildren(Microsoft.Cci.IParameterDefinition)">
+      <requires inheritedFrom="M:Microsoft.Cci.MetadataTraverser.TraverseChildren(Microsoft.Cci.IParameterDefinition)" inheritedFromTypeName="MetadataTraverser">parameterDefinition != null</requires>
     </member>
-    <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#get_ReturnValueCustomModifiers">
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
-    </member>
-    <member name="P:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#Parameters">
+    <member name="P:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#Type">
       <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Type" inheritedFromTypeName="ISignature">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#get_Parameters">
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
     <member name="P:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#ReturnValueCustomModifiers">
       <getter>
@@ -11088,26 +11103,21 @@
     <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Type" inheritedFromTypeName="ISignature">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
-    <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#get_Parameters">
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
-    </member>
-    <member name="P:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#Type">
+    <member name="P:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#Parameters">
       <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Type" inheritedFromTypeName="ISignature">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.MutableCodeModel.Expression.Microsoft#Cci#IObjectWithLocations#Locations">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
-      </getter>
+    <member name="M:Microsoft.Cci.MutableCodeModel.AnonymousDelegate.Microsoft#Cci#ISignature#get_ReturnValueCustomModifiers">
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
     <member name="M:Microsoft.Cci.MutableCodeModel.Expression.Microsoft#Cci#IObjectWithLocations#get_Locations">
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
-    <member name="P:Microsoft.Cci.MutableCodeModel.Statement.Microsoft#Cci#IObjectWithLocations#Locations">
+    <member name="P:Microsoft.Cci.MutableCodeModel.Expression.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
@@ -11117,7 +11127,7 @@
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
-    <member name="P:Microsoft.Cci.MutableCodeModel.CatchClause.Microsoft#Cci#IObjectWithLocations#Locations">
+    <member name="P:Microsoft.Cci.MutableCodeModel.Statement.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
@@ -11126,6 +11136,12 @@
     <member name="M:Microsoft.Cci.MutableCodeModel.CatchClause.Microsoft#Cci#IObjectWithLocations#get_Locations">
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.MutableCodeModel.CatchClause.Microsoft#Cci#IObjectWithLocations#Locations">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.MutableCodeModel.NamedArgument.Microsoft#Cci#IMetadataNamedArgument#ArgumentValue">
       <getter>
@@ -11145,17 +11161,11 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IMethodBody.get_PrivateHelperTypes" inheritedFromTypeName="IMethodBody">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ITypeDefinition&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.MutableContracts.ContractElement.Microsoft#Cci#IObjectWithLocations#Locations">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
-      </getter>
-    </member>
     <member name="M:Microsoft.Cci.MutableContracts.ContractElement.Microsoft#Cci#IObjectWithLocations#get_Locations">
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
-    <member name="P:Microsoft.Cci.MutableContracts.MethodContract.Microsoft#Cci#IObjectWithLocations#Locations">
+    <member name="P:Microsoft.Cci.MutableContracts.ContractElement.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
@@ -11165,7 +11175,7 @@
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
-    <member name="P:Microsoft.Cci.MutableContracts.LoopContract.Microsoft#Cci#IObjectWithLocations#Locations">
+    <member name="P:Microsoft.Cci.MutableContracts.MethodContract.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
@@ -11175,7 +11185,7 @@
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
-    <member name="P:Microsoft.Cci.MutableContracts.TypeContract.Microsoft#Cci#IObjectWithLocations#Locations">
+    <member name="P:Microsoft.Cci.MutableContracts.LoopContract.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
@@ -11184,6 +11194,12 @@
     <member name="M:Microsoft.Cci.MutableContracts.TypeContract.Microsoft#Cci#IObjectWithLocations#get_Locations">
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.MutableContracts.TypeContract.Microsoft#Cci#IObjectWithLocations#Locations">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
     </member>
   </members>
 </doc>

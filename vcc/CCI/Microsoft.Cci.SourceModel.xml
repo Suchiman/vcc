@@ -1669,11 +1669,15 @@
             to the local stored in field &lt;localName&gt;x_i of the class used to store the local values in between
             calls to MoveNext.
             </summary>
+      <requires>methodBody != null</requires>
+      <ensures>Contract.Result&lt;IEnumerable&lt;ILocalScope&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.ILocalScopeProvider.GetLocalScopes(Microsoft.Cci.IMethodBody)">
       <summary>
             Returns zero or more local (block) scopes into which the CLR IL operations in the given method body is organized.
             </summary>
+      <requires>methodBody != null</requires>
+      <ensures>Contract.Result&lt;IEnumerable&lt;ILocalScope&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.ILocalScopeProvider.GetNamespaceScopes(Microsoft.Cci.IMethodBody)">
       <summary>
@@ -1682,21 +1686,28 @@
             component in the namespace type name. For istance namespace type x.y.z will have two namespace scopes, the first is for the x and the second
             is for the y.
             </summary>
+      <requires>methodBody != null</requires>
+      <ensures>Contract.Result&lt;IEnumerable&lt;INamespaceScope&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.ILocalScopeProvider.GetConstantsInScope(Microsoft.Cci.ILocalScope)">
       <summary>
             Returns zero or more local constant definitions that are local to the given scope.
             </summary>
+      <requires>scope != null</requires>
+      <ensures>Contract.Result&lt;IEnumerable&lt;ILocalDefinition&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.ILocalScopeProvider.GetVariablesInScope(Microsoft.Cci.ILocalScope)">
       <summary>
             Returns zero or more local variable definitions that are local to the given scope.
             </summary>
+      <requires>scope != null</requires>
+      <ensures>Contract.Result&lt;IEnumerable&lt;ILocalDefinition&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.ILocalScopeProvider.IsIterator(Microsoft.Cci.IMethodBody)">
       <summary>
             Returns true if the method body is an iterator.
             </summary>
+      <requires>methodBody != null</requires>
     </member>
     <member name="T:Microsoft.Cci.INamespaceScope">
       <summary>
@@ -1802,11 +1813,15 @@
             to the local stored in field &lt;localName&gt;x_i of the class used to store the local values in between
             calls to MoveNext.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetIteratorScopes(Microsoft.Cci.IMethodBody)" inheritedFromTypeName="ILocalScopeProvider">methodBody != null</requires>
+      <ensures inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetIteratorScopes(Microsoft.Cci.IMethodBody)" inheritedFromTypeName="ILocalScopeProvider">Contract.Result&lt;IEnumerable&lt;ILocalScope&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.AggregatingLocalScopeProvider.GetLocalScopes(Microsoft.Cci.IMethodBody)">
       <summary>
             Returns zero or more local (block) scopes into which the CLR IL operations in the given method body is organized.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetLocalScopes(Microsoft.Cci.IMethodBody)" inheritedFromTypeName="ILocalScopeProvider">methodBody != null</requires>
+      <ensures inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetLocalScopes(Microsoft.Cci.IMethodBody)" inheritedFromTypeName="ILocalScopeProvider">Contract.Result&lt;IEnumerable&lt;ILocalScope&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.AggregatingLocalScopeProvider.GetNamespaceScopes(Microsoft.Cci.IMethodBody)">
       <summary>
@@ -1815,21 +1830,28 @@
             component in the namespace type name. For istance namespace type x.y.z will have two namespace scopes, the first is for the x and the second
             is for the y.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetNamespaceScopes(Microsoft.Cci.IMethodBody)" inheritedFromTypeName="ILocalScopeProvider">methodBody != null</requires>
+      <ensures inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetNamespaceScopes(Microsoft.Cci.IMethodBody)" inheritedFromTypeName="ILocalScopeProvider">Contract.Result&lt;IEnumerable&lt;INamespaceScope&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.AggregatingLocalScopeProvider.GetConstantsInScope(Microsoft.Cci.ILocalScope)">
       <summary>
             Returns zero or more local constant definitions that are local to the given scope.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetConstantsInScope(Microsoft.Cci.ILocalScope)" inheritedFromTypeName="ILocalScopeProvider">scope != null</requires>
+      <ensures inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetConstantsInScope(Microsoft.Cci.ILocalScope)" inheritedFromTypeName="ILocalScopeProvider">Contract.Result&lt;IEnumerable&lt;ILocalDefinition&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.AggregatingLocalScopeProvider.GetVariablesInScope(Microsoft.Cci.ILocalScope)">
       <summary>
             Returns zero or more local variable definitions that are local to the given scope.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetVariablesInScope(Microsoft.Cci.ILocalScope)" inheritedFromTypeName="ILocalScopeProvider">scope != null</requires>
+      <ensures inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.GetVariablesInScope(Microsoft.Cci.ILocalScope)" inheritedFromTypeName="ILocalScopeProvider">Contract.Result&lt;IEnumerable&lt;ILocalDefinition&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.AggregatingLocalScopeProvider.IsIterator(Microsoft.Cci.IMethodBody)">
       <summary>
             Returns true if the method body is an iterator.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.ILocalScopeProvider.IsIterator(Microsoft.Cci.IMethodBody)" inheritedFromTypeName="ILocalScopeProvider">methodBody != null</requires>
     </member>
     <member name="M:Microsoft.Cci.AggregatingLocalScopeProvider.Dispose">
       <summary>
