@@ -287,25 +287,25 @@ namespace Microsoft.Research.Vcc
       member this.Die () : 'a =
         failwith "confused, will now die"
       
-      // 9100 <= code <= 9199
-      // see (and update) comments on the top of transformers.fs for the next available number
+      // 9100 <= code <= 9199; First available: 9126
       member this.Warning (tok:Token, code, msg:string) =
         if not (tok.SuppressWarning code) then
           hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true))
 
+      // see above
       member this.Warning (tok:Token, code, msg:string, relatedTok) =
         if not (tok.SuppressWarning code) then
           hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true, (Seq.singleton (VisitorHelper.LocationFromToken relatedTok))))
           
-      // 9300 <= code <= 9399
+      // 9300 <= code <= 9399; First available: 9320
       member this.GraveWarning (tok, code, msg:string) =
         this.Warning (tok, code, "[possible unsoundness]: " + msg)
-      
+     
+      // see above 
       member this.GraveWarning (tok, code, msg:string, relatedTok) =
         this.Warning (tok, code, "[possible unsoundness]: " + msg, relatedTok)
       
-      // 9601 <= code <= 9699
-      // see (and update) comments on the top of transformers.fs for the next available number
+      // 9601 <= code <= 9799; First available: 9739
       member this.Error (tok:Token, code, msg:string) =
         this.Error (tok, code, msg, None)
         

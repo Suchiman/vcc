@@ -177,6 +177,11 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           []
         elif fn.DecreasesLevel < currFn.DecreasesLevel then
           []
+        elif fn.DecreasesLevel > currFn.DecreasesLevel then
+          helper.GraveWarning (e.Token, 9319, 
+                               System.String.Format ("calling function '{0}' (level {1}) from lower-level function ('{2}' at level {3})", 
+                                                     fn.Name, fn.DecreasesLevel, currFn.Name, currFn.DecreasesLevel))
+          []
         elif fn.IsWellFounded then        
           let subst = fn.CallSubst args
           let assigns, callVariants = 
@@ -239,7 +244,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Macro (_, name, _) when name.StartsWith "DP#" ->
       None
 
-    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"|"ite"), _) ->
+    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"|"ite"|"size"), _) ->
       None
 
     | Macro (ec, s, args) as e ->
@@ -256,7 +261,17 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         [decl]
       else
         if fn.Variants = [] then
-          fn.Variants <- fn.Parameters |> List.map (fun v -> Ref ({ bogusEC with Type = v.Type }, v))
+          let aux acc (v:Variable) =
+            let rf = Ref ({ bogusEC with Type = v.Type }, v)
+            let sz = Macro ({ bogusEC with Type = Type.MathInteger }, "size", [rf])
+            match v.Type with
+              | Type.MathInteger
+              | Type.Integer _ ->
+                rf :: acc
+              | Type.Ref td when td.IsDataType || td.IsRecord ->
+                sz :: acc
+              | _ -> acc
+          fn.Variants <- fn.Parameters |> List.fold aux [] |> List.rev
         let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
         let origBody = fn.Body.Value
         let body = Expr.MkBlock (assigns @ [origBody])

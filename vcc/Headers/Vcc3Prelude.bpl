@@ -2502,6 +2502,9 @@ function $_xor(t:$ctype, x:int, y:int) : int;
 function $_and(t:$ctype, x:int, y:int) : int;
 function $_not(t:$ctype, x:int) : int;
 
+function $abs(x:int) : int
+  { if x < 0 then -x else x }
+
 function $unchk_add(t:$ctype, x:int, y:int) : int { $unchecked(t, x + y) }
 function $unchk_sub(t:$ctype, x:int, y:int) : int { $unchecked(t, x - y) }
 function $unchk_mul(t:$ctype, x:int, y:int) : int { $unchecked(t, x * y) }
@@ -2879,6 +2882,12 @@ function {:inline} $int_lt_or(called:int, caller:int, otherwise:bool) : bool
 }
 
 const $decreases_level : int;
+
+// ----------------------------------------------------------------------------
+// Yarra
+// ----------------------------------------------------------------------------
+
+function $yarra_heap(s:$state) : $state;
 
 // ----------------------------------------------------------------------------
 // Datatypes

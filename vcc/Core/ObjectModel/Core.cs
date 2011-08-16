@@ -1744,6 +1744,7 @@ namespace Microsoft.Research.Vcc {
           case Error.SizeOfUnknown:
           case Error.DiscardedContractAtDefinition:
           case Error.PotentialPrecedenceErrorInLogicalExpression:
+          case Error.LoopWithOnlySpecStatements:
             return 1;
           default:
             return 0;

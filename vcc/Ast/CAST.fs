@@ -75,6 +75,9 @@ module Microsoft.Research.Vcc.CAST
   [<Literal>]
   let AttrIsDatatypeOption = "_vcc_internal__is_datatype_option"
 
+  [<Literal>]
+  let AttrYarra = "yarra"
+
   type VarKind =    
     | Parameter
     | SpecParameter
@@ -1498,6 +1501,7 @@ module Microsoft.Research.Vcc.CAST
           x.Ensures <- pfs x.Ensures
           x.Reads <- pfs x.Reads
           x.Writes <- pfs x.Writes
+          x.Variants <- pfs x.Variants
           this
         | Top.TypeDecl td ->
           td.Invariants <- pfs td.Invariants; this
@@ -1516,6 +1520,7 @@ module Microsoft.Research.Vcc.CAST
           pfs x.Ensures
           pfs x.Reads
           pfs x.Writes
+          pfs x.Variants
         | Top.TypeDecl td -> pfs td.Invariants
         | Top.Global(v, Some e) -> pf e
         | Top.Global(_, None) -> ()

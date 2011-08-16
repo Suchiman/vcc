@@ -16,7 +16,7 @@ _(def S f(int a[])
 )
 
 _(def bool g(int a[], S s)
-//	_(decreases 2)
+	_(decreases a, s)
 {
 //_(assert \false)
 	return s == f(a);

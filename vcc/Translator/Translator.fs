@@ -402,6 +402,19 @@ namespace Microsoft.Research.Vcc
 
       let claimStateId = ref 0
 
+      let abstractSizeUndef = bInt 0 
+      let abstractSize t expr =
+        match t with
+          | C.MathInteger 
+          | C.Type.Integer _ ->
+            bCall "$abs" [expr]
+          | C.Type.Ref td when td.IsDataType ->
+            bCall ("DSZ#" + td.Name) [expr]
+          | C.Type.Ref td when td.IsRecord ->
+            bCall ("RSZ#" + td.Name) [expr]
+          | _ -> 
+            abstractSizeUndef
+
 
       let rec trExpr (env:Env) expr =
         let self = trExpr env
@@ -664,6 +677,8 @@ namespace Microsoft.Research.Vcc
                 bCall "$good_state" [arr]
               | _ -> helper.Panic("wrong thing in vs_can_update")
             
+          | "yarra_nondet", [p] ->
+            typedRead (bCall "$yarra_heap" [bState]) (self p) ec.Type
           | "by_claim", args ->
             self (C.Expr.Deref (ec, C.Expr.Macro (ec, "by_claim_ptr", args)))
           | "by_claim_ptr", [c; obj; ptr] ->
@@ -802,6 +817,11 @@ namespace Microsoft.Research.Vcc
           | "dt_testhd", [e; C.UserData (_, (:? C.Function as fn))] ->
             let td = dtType e.Type
             bEq (bCall ("DGH#" + td.Name) [self e]) (er ("DH#" + fn.Name))
+          | "size", [e] ->
+            let res = abstractSize e.Type (self e)
+            if res = abstractSizeUndef then
+              helper.Error (ec.Token, 9737, "\\size() can only be called on data types, records and integers")
+            res
           | "skip_termination_check", [e] ->
             self e
           | name, [e] when name.StartsWith "DP#" ->
@@ -861,7 +881,6 @@ namespace Microsoft.Research.Vcc
             else
               helper.Oops (ec.Token, sprintf "unhandled macro %s" n)
             er "$bogus"                
-
 
       and typeOf env (e:C.Expr) =
         match e.Type with
@@ -2509,6 +2528,8 @@ namespace Microsoft.Research.Vcc
             | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [ff; toTypeId t]
             | _ -> ff
         (B.Decl.Function (trType tp, [], name, [("r", rt)], None), constrained)
+     
+      let plusOne sz = B.Primitive ("+", [sz; bInt 1])
        
       let trRecord3 (td:C.TypeDecl) =
         let name = td.Name
@@ -2517,21 +2538,25 @@ namespace Microsoft.Research.Vcc
         let ctorArgs = td.Fields |> List.map (fun f -> (loc f, trType f.Type)) 
         let ctorCall = bCall ("RC#" + name) (ctorArgs |> List.map (fun (n, _) -> er n))
         let rf f e = bCall ("RF#" + fieldName f) [e]
+        let sum = ref (bInt 0)
         let trRecField (f:C.Field) =
           let sel = rf f ctorCall
           let ff = er (loc f)
           let fndef, constrained = mkSelector rt f.Type ("RF#" + fieldName f) ff
+          sum := bPlus !sum (abstractSize f.Type constrained)
           fndef, bEq (rf f ctorCall) constrained
         let injArgs = td.Fields |> List.map (fun f -> rf f (er "r"))
         let eqArgs = td.Fields |> List.map (fun f -> typedEq f.Type (rf f (er "a")) (rf f (er "b")))
         let eqAB = bCall ("REQ#" + name) [er "a"; er "b"]
         let prjFuns, eqs = List.map trRecField td.Fields |> List.unzip
+        let szEq =  bEq (abstractSize (C.Type.Ref td) ctorCall) (plusOne !sum)
         let tdef = [
           B.Decl.TypeDef (recTypeName td)
           B.Decl.Function (rt, [], "RC#" + name, ctorArgs, None)
+          B.Decl.Function (B.Type.Int, [], "RSZ#" + name, ["a",rt], None)
           B.Decl.Function (B.Type.Bool, [], "REQ#" + name, ["a",rt; "b",rt], None)
           B.Decl.Const { Unique = false; Name = "RZ#" + name; Type = rt }
-          B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd eqs))
+          B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd (szEq :: eqs)))
           B.Decl.Axiom (B.Forall (Token.NoToken, [("r", rt)], [], [], bEq (er "r") (bCall ("RC#" + name) injArgs)))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bImpl (bMultiAnd (eqArgs)) eqAB))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bEq (eqAB) (bEq (er "a") (er "b"))))
@@ -2542,6 +2567,7 @@ namespace Microsoft.Research.Vcc
         let rt = trType (C.Type.Ref td)
         let name = td.Name
         let hd e = bCall ("DGH#" + name) [e]
+        let dtsz e = bCall ("DSZ#" + td.Name) [e]
         let trCtor (h:C.Function) =
           let fnconst = "DH#" + h.Name
           let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$dt_tag" }
@@ -2555,15 +2581,20 @@ namespace Microsoft.Research.Vcc
           let eqs = glist[]
           let injPrjCalls = glist[]
           let subEqs = glist[]
+          let sum = ref (bInt 0)
            
           let getProjection (n, t) =
             let name = "DP#" + n + "#" + h.Name 
             let fndef, constrained = mkSelector rt t name (er n)
             prjFuns.Add fndef
             eqs.Add (bEq (bCall name [ctorCall]) constrained)
+            sum := bPlus !sum (abstractSize t constrained)
             injPrjCalls.Add (bCall name [er "a"])
             subEqs.Add (typedEq t (bCall name [er "a"]) (bCall name [er "b"]))
           List.iter getProjection args
+
+          let eqSz = bEq (dtsz ctorCall) (plusOne !sum)
+          eqs.Add eqSz
 
           let hdIs = bEq (hd ctorCall) (er fnconst)
           let prjAxiom = B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd (hdIs :: Seq.toList eqs)))
@@ -2577,10 +2608,12 @@ namespace Microsoft.Research.Vcc
           B.Decl.Function (B.Type.Bool, [], "DEQ#" + name, ["a",rt; "b",rt], None)
           B.Decl.Const { Unique = false; Name = "DZ#" + name; Type = rt }
           B.Decl.Function (B.Type.Ref "$dt_tag", [], "DGH#" + name, ["",rt], None)
+          B.Decl.Function (B.Type.Int, [], "DSZ#" + name, ["",rt], None)
 
           B.Decl.Axiom (B.Forall (Token.NoToken, [("a", rt)], [[bCall ("DGH#" + name) [er "a"]]], [], bMultiOr injDisjs))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [], bImpl (bEq (hd (er "a")) (hd (er "b"))) (bImpl (bMultiOr eqArgs) eqAB)))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bEq (eqAB) (bEq (er "a") (er "b"))))
+          B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt], [[dtsz (er "a")]], [], B.Primitive ("<", [bInt 0; dtsz (er "a")])))
         ]
         tdef :: ctorDefs |> List.concat
 

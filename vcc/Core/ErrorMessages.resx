@@ -3680,4 +3680,7 @@
     <value>Calling function '{0}', which has variable arguments, is not supported.</value>
     <comment>0234</comment>
   </data>
+  <data name="LoopWithOnlySpecStatements" xml:space="preserve">
+    <value>This loop body contains only specification code.</value>
+  </data>
 </root>

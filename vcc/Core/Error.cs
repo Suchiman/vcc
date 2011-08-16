@@ -176,5 +176,10 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     VarArgsNotSupported,
 
+    /// <summary>
+    /// This loop body contains only specification code.
+    /// </summary>
+    LoopWithOnlySpecStatements,
+
   }
 }
