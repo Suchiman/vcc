@@ -699,7 +699,7 @@ namespace Microsoft.Research.Vcc {
       //^ requires template.ContainingBlock != containingBlock;
       //^ ensures this.containingBlock == containingBlock;
     {
-      this.Size = template.Size;
+      this.Size = template.Size == null ? null : template.Size.MakeCopyFor(containingBlock);
     }
 
     /// <summary>
