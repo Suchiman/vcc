@@ -329,8 +329,6 @@ namespace Microsoft.Research.Vcc
           | e -> e
           
         function
-        | VarDecl(ec, v, _) as decl when (v.Kind = VarKind.SpecLocal  || v.Kind = VarKind.Local) && isRecType v.Type ->
-          Some(Expr.MkBlock([decl; Expr.VarWrite(ec, [v], Macro({ec with Type = v.Type}, "rec_zero", []))]))
         | Deref (c, (Dot (_, p, f) as dot)) when isRecField f ->
           Some (self (Macro (c, "rec_fetch", [normalizeRecord (Type.Ref(f.Parent)) p; Expr.ToUserData(f)])))
         | Macro (c, name, ((Dot (_, p, f)::args))) when name.StartsWith("vs_updated") && isRecField f ->
@@ -878,13 +876,6 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
-    let handleMapInit self = function
-      | VarDecl(ec, v, _) as decl when (v.Kind = VarKind.SpecLocal  || v.Kind = VarKind.Local) && v.Type._IsMap ->
-        Some(Expr.MkBlock([decl; Expr.VarWrite(ec, [v], Macro({ec with Type = v.Type}, "map_zero", []))]))
-      | _ -> None
-
-    // ============================================================================================================    
-
     helper.AddTransformer ("core-begin", Helper.DoNothing)
     
     // it's important if a transformer is before or after those two
@@ -903,7 +894,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("core-out-parameters", Helper.Expr handleOutParameters)
     helper.AddTransformer ("core-out-parameters-pull-out-from-pure-call",  Helper.Expr pullOutOutpars)
     helper.AddTransformer ("core-map-eq", Helper.Expr handleMapEquality)
-    helper.AddTransformer ("core-map-init", Helper.Expr handleMapInit)
     helper.AddTransformer ("core-linearize", Helper.Decl (linearizeDecls helper))
 
     helper.AddTransformer ("core-end", Helper.DoNothing)

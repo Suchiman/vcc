@@ -137,6 +137,9 @@ ghosts-02
 
 as_array-04
 
+# seems to be something broken in the types in AST
+records.ns-19
+
 # unions
 structEquality.ns-00
 unionsNeg.ns-02

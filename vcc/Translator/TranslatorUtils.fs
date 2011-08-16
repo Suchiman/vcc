@@ -98,6 +98,12 @@ namespace Microsoft.Research.Vcc
         | (e, B.Expr.BoolLiteral true) -> e
         | (a, b) -> B.Expr.Primitive ("&&", [a; b])
     
+    let bPlus x y =
+      match (x, y) with
+        | (B.Expr.IntLiteral ZeroBigInt, e)
+        | (e, B.Expr.IntLiteral ZeroBigInt) -> e
+        | (a, b) -> B.Expr.Primitive ("+", [a; b])
+    
     let bMultiAnd = List.fold bAnd bTrue    
     let bMultiOr = List.fold bOr bFalse
     

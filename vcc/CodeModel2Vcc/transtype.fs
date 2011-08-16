@@ -1161,7 +1161,7 @@ namespace Microsoft.Research.Vcc
         else 
           let checkField (f:Field) =
             let rec checkType = function
-              | Type.Ref(td') when not td'.IsRecord ->
+              | Type.Ref(td') when not td'.IsRecord && not td'.IsDataType ->
                 helper.Error(f.Token, 9680, "field '" + f.Name + "' of record type '" + td.Name + "' cannot be of non-record structured type '" + td'.Name + "'", Some(td'.Token))
               | Type.Volatile _ -> helper.Error(f.Token, 9683, "volatile modified on field '" + f.Name + "' in record type '" + td.Name + "' is currently not supported")
               | Type.Array _ -> helper.Error(f.Token, 9688, "inline array field '" + f.Name + "' in record type '" + td.Name + "' is currently not supported")

@@ -117,6 +117,9 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       if (contract != null && body is EmptyStatement)
         this.HandleError(body.SourceLocation, Error.PossibleMistakenNullStatement);
+
+      if (body is VccAssertStatement || body is AssumeStatement || body is VccSpecStatement)
+        this.HandleError(body.SourceLocation, Error.LoopWithOnlySpecStatements);
     }
 
     /// <summary>
@@ -2153,11 +2156,11 @@ namespace Microsoft.Research.Vcc.Parsing {
         case Token.Return: return this.ParseReturn(followers);
         case Token.Specification: return this.ParseSpecStatements(followers);
         default:
-          return this.ParseExpressionStatementOrDeclaration(false, true, followers);
+          return this.ParseExpressionStatementOrDeclaration(false, followers);
       }
     }
 
-    protected Statement ParseExpressionStatementOrDeclaration(bool acceptComma, bool acceptLabel, TokenSet followers)
+    protected Statement ParseExpressionStatementOrDeclaration(bool inForInitializer, TokenSet followers)
       //^ requires acceptComma ==> followers[Token.Comma];
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
       //^ ensures result is ExpressionStatement || result is LocalDeclarationsStatement || (acceptLabel && result is LabeledStatement);
@@ -2167,14 +2170,18 @@ namespace Microsoft.Research.Vcc.Parsing {
         return StatementGroup.Create(statements);
       }
       TokenSet followersOrCommaOrColonOrSemicolon = followers|Token.Comma|Token.Colon|Token.Semicolon;
-      Expression e = this.ParseExpression(!acceptComma, false, followersOrCommaOrColonOrSemicolon);
+      Expression e = this.ParseExpression(!inForInitializer, false, followersOrCommaOrColonOrSemicolon);
       SourceLocationBuilder slb = new SourceLocationBuilder(e.SourceLocation);
       ExpressionStatement eStat = new ExpressionStatement(e, slb);
       VccSimpleName/*?*/ id;
-      if (this.currentToken == Token.Colon && acceptLabel && (id = e as VccSimpleName) != null)
+      if (this.currentToken == Token.Colon && !inForInitializer && (id = e as VccSimpleName) != null)
         return this.ParseLabeledStatement(id, followers);
-      if (!acceptComma || this.currentToken != Token.Comma) {
-        this.SkipSemiColonAfterDeclarationOrStatement(followers);
+      if (!inForInitializer) {
+          this.SkipSemiColonAfterDeclarationOrStatement(followers);
+      } else {
+          if (this.currentToken != Token.Comma) {
+              this.SkipOverTo(Token.Semicolon, followers);
+          }
       }
       //^ assume followers[this.currentToken] || this.currentToken == Token.EndOfFile;
       return eStat;
@@ -2293,7 +2300,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       TokenSet followerOrComma = followers|Token.Comma;
       for (; ; ) {
         //^ assume followerOrComma[Token.Comma];
-        var exprOrDecl = this.ParseExpressionStatementOrDeclaration(true, false, followerOrComma);        
+        var exprOrDecl = this.ParseExpressionStatementOrDeclaration(true, followerOrComma);        
         var grp = exprOrDecl as StatementGroup;
         var stmts = grp == null ? IteratorHelper.GetSingletonEnumerable(exprOrDecl) : grp.Statements;
         foreach (var s in stmts) {

@@ -426,5 +426,13 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     #endregion
 
+    public static void InsertIntoCurrentDocument(string str)
+    {
+        TextDocument textDocument = DTE.ActiveDocument.Object(null) as TextDocument;
+        if (textDocument != null)
+        {
+            textDocument.Selection.Insert(str);
+        }
+    }
   }
 }

@@ -177,7 +177,7 @@ namespace Microsoft.Research.Vcc
     member this.EnsureMethodIsVisited (m : IMethodDefinition) =
       if doingEarlyPruning then 
         match m with 
-          | :? IGlobalMethodDefinition -> this.DoMethod(m, true) 
+          | :? IGlobalMethodDefinition -> this.DoMethod(m, true, false) 
           | :? IGenericMethodInstance as gmi -> this.EnsureMethodIsVisited(gmi.GenericMethod.ResolvedMethod)
           | _ -> ()
     
@@ -279,7 +279,7 @@ namespace Microsoft.Research.Vcc
             methodsMap.Add(meth, decl)
             decl
     
-    member this.DoMethod (meth:ISignature, contractsOnly:bool) =
+    member this.DoMethod (meth:ISignature, contractsOnly:bool, deferContracts:bool) =
       
       let (name, genericPars) =
         match meth with
@@ -367,25 +367,28 @@ namespace Microsoft.Research.Vcc
           if contract <> null then
             Visitor.CheckHasError(contract) |> ignore
             // reset localsMap to deal with renaming of contracts between definition and declaration          
-            let savedLocalsMap = localsMap
-            match contract with
-            | :? MethodContract as methodContract ->
-              let isNotVoidPar (p : ParameterDeclaration) = p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void
-              if (methodContract.ContainingSignatureDeclaration.Parameters |> Seq.filter isNotVoidPar |> Seq.length) <> (Seq.length decl.Parameters) then
-                helper.Error(decl.Token, 9658, "declared formal parameter list different from definition", Some(VisitorHelper.GetTokenFor [(methodContract.ContainingSignatureDeclaration.SourceLocation :> ILocation)]))
-              localsMap <- new Dict<obj,_>(new ObjEqualityComparer())
-              let addParmRenaming (fromParm:ParameterDeclaration) (toVar:C.Variable) =
-                localsMap.Add(((fromParm.ContainingSignature.SignatureDefinition), fromParm.Name.Value), toVar)
-              let contractPars = seq { for p in methodContract.ContainingSignatureDeclaration.Parameters do if p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void then yield p }
-              Seq.iter2 addParmRenaming contractPars decl.Parameters
-            | _ -> ()
+            let doContracts() = 
+              let savedLocalsMap = localsMap
+              match contract with
+              | :? MethodContract as methodContract ->
+                let isNotVoidPar (p : ParameterDeclaration) = p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void
+                if (methodContract.ContainingSignatureDeclaration.Parameters |> Seq.filter isNotVoidPar |> Seq.length) <> (Seq.length decl.Parameters) then
+                  helper.Error(decl.Token, 9658, "declared formal parameter list different from definition", Some(VisitorHelper.GetTokenFor [(methodContract.ContainingSignatureDeclaration.SourceLocation :> ILocation)]))
+                localsMap <- new Dict<obj,_>(new ObjEqualityComparer())
+                let addParmRenaming (fromParm:ParameterDeclaration) (toVar:C.Variable) =
+                  localsMap.Add(((fromParm.ContainingSignature.SignatureDefinition), fromParm.Name.Value), toVar)
+                let contractPars = seq { for p in methodContract.ContainingSignatureDeclaration.Parameters do if p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void then yield p }
+                Seq.iter2 addParmRenaming contractPars decl.Parameters
+              | _ -> ()
+              decl.Requires   <- [ for p in contract.Preconditions -> this.DoPrecond p ]
+              decl.Ensures    <- [ for r in contract.Postconditions -> this.DoPostcond r ]
+              decl.Writes     <- [ for e in contract.Writes -> this.DoExpression e ]
+              decl.Reads      <- [ for e in contract.Reads -> this.DoExpression e ]
+              decl.Variants   <- [ for e in contract.Variants -> this.DoExpression e ]
+              localsMap <- savedLocalsMap
 
-            decl.Requires   <- [ for p in contract.Preconditions -> this.DoPrecond p ]
-            decl.Ensures    <- [ for r in contract.Postconditions -> this.DoPostcond r ]
-            decl.Writes     <- [ for e in contract.Writes -> this.DoExpression e ]
-            decl.Reads      <- [ for e in contract.Reads -> this.DoExpression e ]
-            decl.Variants   <- [ for e in contract.Variants -> this.DoExpression e ]
-            localsMap <- savedLocalsMap
+            if deferContracts then finalActions.Enqueue doContracts else doContracts()
+
           else if expansion <> null then
             let ex = this.DoExpression (expansion.ProjectAsIExpression())
             decl.Ensures <- [ C.Expr.Prim({ex.Common with Type = C.Type.Bool}, C.Op("==", C.CheckedStatus.Unchecked), [C.Expr.Result(ex.Common); ex]) ]
@@ -949,6 +952,8 @@ namespace Microsoft.Research.Vcc
         let ns = assembly.NamespaceRoot
         ns.Dispatch(this)
         this.DoneVisitingAssembly assembly
+             
+      member this.Visit (peSection:IPESection) : unit = assert false
                           
       member this.Visit (assemblyReference:IAssemblyReference) : unit = assert false
 
@@ -1002,7 +1007,7 @@ namespace Microsoft.Research.Vcc
           match functionPointerMap.TryGetValue cont with
             | true, td -> td
             | _ ->
-              this.DoMethod(meth, true)
+              this.DoMethod(meth, true, true)
               let fndecl = this.LookupMethod meth
               let td = 
                 { 
@@ -1042,12 +1047,12 @@ namespace Microsoft.Research.Vcc
         match globalMethodDefinition.Name.Value with
           | "_vcc_in_state" | "\\at"
           | "_vcc_approves" | "\\approves"
-          | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq"
+          | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq" | "\\size"
           | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" | "_vcc_label_of" | "_vcc_lblset_leq"
           | "\\static_cast" | "\\labeled_expression"
           | "_vcc_new_club" | "_vcc_add_member" | "_vcc_is_member" -> ()
           | x when x.StartsWith "\\castlike_" -> ()
-          | _ -> this.DoMethod (globalMethodDefinition, false)
+          | _ -> this.DoMethod (globalMethodDefinition, false, false)
 
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
         let rec isAdmissibleMapDomainType = function
@@ -1527,6 +1532,10 @@ namespace Microsoft.Research.Vcc
           | _, ("_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq") ->
             match args() with
               | [e1; e2] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
+              | _ -> oopsNumArgs()
+          | _, ("\\size") ->
+            match args() with
+              | [e1] as args -> exprRes <- C.Expr.Macro(ec, methodName, args)
               | _ -> oopsNumArgs()
           | _, "\\argument_tuple" ->
             exprRes <- C.Expr.Macro(ec, "argument_tuple",  args())

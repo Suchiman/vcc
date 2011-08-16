@@ -56,6 +56,7 @@ namespace Microsoft.Research.Vcc
     public bool NewSyntax;
     public bool DetectSyntax;
     public bool Vcc3;
+    public bool YarraMode;
     public string PreludePath = "VccPrelude.bpl"; // we might want an option for setting it
     public bool InferTriggers;
     public int DumpTriggers; // 0-none, 1-C syntax, 2-C+Boogie syntax
@@ -131,6 +132,7 @@ namespace Microsoft.Research.Vcc
       this.OpsAsFunctions = other.OpsAsFunctions;
       this.DetectSyntax = other.DetectSyntax;
       this.OutputDir = other.OutputDir;
+      this.YarraMode = other.YarraMode;
     }
   }
 
@@ -560,6 +562,13 @@ namespace Microsoft.Research.Vcc
         case 'x':
           if (this.ParseName(arg, "xml", "xml")) {
             this.options.XmlFormatOutput = true;
+            return true;
+          }
+          return false;
+        case 'y':
+          if (this.ParseName(arg, "yarra", "yarra")) {
+            this.options.YarraMode = true;
+            this.ParseCompilerOption("/3");
             return true;
           }
           return false;

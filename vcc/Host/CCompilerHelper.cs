@@ -98,11 +98,12 @@ namespace Microsoft.Research.Vcc
       info.RedirectStandardOutput = true;
       info.RedirectStandardError = true;
       info.UseShellExecute = false;
+      info.StandardOutputEncoding = Encoding.UTF8;
 
-      using (StreamWriter outFile = new StreamWriter(outFileName))
+      using (StreamWriter outFile = new StreamWriter(outFileName, false, Encoding.UTF8))
       using (Process process = Process.Start(info)) {
         process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs args) {
-          if (args.Data != null) outFile.WriteLine(args.Data);
+            if (args.Data != null) outFile.WriteLine(args.Data);
         };
 
         process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs args) {

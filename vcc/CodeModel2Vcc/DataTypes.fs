@@ -36,6 +36,11 @@ let checkDatatypeDefinitions (helper:Helper.Env) decls =
   List.iter aux decls
   decls
 
+let handleSize (helper:Helper.Env) self = function
+  | Macro (ec, "\\size", [e]) ->
+    Some (Macro (ec, "size", [self e]))
+  | _ -> None
+
 let wrapDatatypeCtors (helper:Helper.Env) (ctx:ExprCtx) self = function
   | Call (ec, fn, tps, args) as e when not ctx.IsPure && fn.IsDatatypeOption ->
     Some (Pure (ec, Call (ec, fn, tps, List.map self args)))
@@ -57,6 +62,8 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
     match expr with
     | Expr.Block (_, stmts, _) -> List.forall self stmts
     | Expr.If (_, _, _, th, el) -> self th || self el
+    | Expr.Assert (_, EFalse, _)
+    | Expr.Assume (_, EFalse)
     | Expr.Return _ -> false
     | Expr.Goto (_, nm') -> nm <> nm'
     | _ -> true

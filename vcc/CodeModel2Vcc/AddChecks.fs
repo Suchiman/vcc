@@ -212,12 +212,27 @@ namespace Microsoft.Research.Vcc
       if helper.Options.RunTestSuite || helper.Options.Vcc3 then Expr.MkBlock []
       else expr
 
+    let rec isYarraIgnore (p:Expr) =
+      if not helper.Options.YarraMode then false
+      else
+        match p.Type with
+          | Ptr (Type.Ref td) when hasCustomAttr AttrYarra td.CustomAttr ->
+            false
+          | _ ->
+            match p with
+              | Index (_, p, _)
+              | Dot (_, p, _) -> isYarraIgnore p
+              | _ -> true
+          
+      
     /// Add checks for writability/readability of memory
     let rec addMemoryChecks ctx self = function
       | MemoryWrite (c, p, expr) ->
         if expr.Type.IsComposite then helper.Oops (expr.Token, "non primitive type in memory write")
         let istyped = propAssert 8506 "{0} is typed" "_vcc_typed2" p
-        let wrassert = propAssert 8507 "{0} is writable" "prim_writes_check" p
+        let wrassert = 
+          if isYarraIgnore p then Expr.MkBlock [] 
+          else propAssert 8507 "{0} is writable" "prim_writes_check" p
         Some (Expr.MkBlock [notInTestsuite istyped; wrassert; MemoryWrite (c, self p, self expr)])
       
       | Macro (ec, "by_claim", ([c; obj; _] as args)) when not ctx.IsPure ->
@@ -276,6 +291,9 @@ namespace Microsoft.Research.Vcc
         let checksD,dest' = last [] (removeOuterBlock (dest.SelfMap(addMemoryChecks ctx).SelfMap(ToCoreC.removeFakeBlocks)))
         Some (Expr.Macro(ec, "fake_block", checksO @ checksD @ [Macro(ec, "_vcc_downgrade_to", [orig'; dest'])]))
         
+      | Deref (c, p) when isYarraIgnore p ->
+        Some (Macro (c, "yarra_nondet", [self p]))
+         
       | Deref (c, p) when not ctx.IsPure ->
         let rd = Expr.MkAssert (Macro ({c with Type = Bool}, "reads_check_normal", [ignoreEffects p]))
         Some (Expr.MkBlock [rd; Deref (c, self p)])
