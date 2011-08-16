@@ -135,7 +135,7 @@ namespace Microsoft.Research.Vcc
 
       let addDecls lst = tokenConstants := lst @ !tokenConstants
     
-      let defaultWeights = if vcc3 then [("user-forall", 10); ("user-exists", 10); ("", 1)] else [("", 1)]
+      let defaultWeights = if vcc3 then [("user-forall", 10); ("user-exists", 10); ("eqprop", 5); ("", 1)] else [("", 1)]
     
       let weights = defaultWeights
       let weight (id:string) =
