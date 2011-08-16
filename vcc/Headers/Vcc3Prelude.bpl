@@ -606,6 +606,7 @@ function {:inline true} $mem_range(s:$state, p:$ptr, sz:int) : int
   { $mem_range_heap($heap(s), p, sz) }
 function  $mem_range_heap(s:$object, p:$ptr, sz:int) : int;
 
+// TODO: is this one needed? the one below should do it
 axiom (forall h:$object, r:$ptr, f:$field, v:int, p:$ptr, sz:int ::
       !$in_range(0, $index_within(p, $ptr(f, r)), sz - 1) ||
       $ptr(f, r) != $idx(p, $index_within(p, $ptr(f, r))) ==>
