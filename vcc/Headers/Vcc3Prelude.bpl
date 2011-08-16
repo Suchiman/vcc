@@ -606,6 +606,7 @@ function {:inline true} $mem_range(s:$state, p:$ptr, sz:int) : int
   { $mem_range_heap($heap(s), p, sz) }
 function  $mem_range_heap(s:$object, p:$ptr, sz:int) : int;
 
+// TODO: is this one needed? the one below should do it
 axiom (forall h:$object, r:$ptr, f:$field, v:int, p:$ptr, sz:int ::
       !$in_range(0, $index_within(p, $ptr(f, r)), sz - 1) ||
       $ptr(f, r) != $idx(p, $index_within(p, $ptr(f, r))) ==>
@@ -1091,6 +1092,15 @@ axiom (forall S:$state, p:$ptr ::
   $good_state(S) ==> $domain_root(S, $domain_root(S, p)) == $domain_root(S, p));
 
 function $call_transition(S1:$state, S2:$state) : bool;
+
+function $trans_call_transition(S1:$state, S2:$state) : bool;
+axiom (forall S0,S1:$state ::
+  {$call_transition(S0, S1)}
+  $call_transition(S0, S1) ==> $trans_call_transition(S0, S1));
+axiom (forall S0,S1,S2:$state ::
+  {$trans_call_transition(S0, S1), $call_transition(S1, S2)}
+  $trans_call_transition(S0, S1) && $call_transition(S1, S2) ==>
+    $trans_call_transition(S0, S2));
 
 // Type-system-derived
 // TODO: this one should also go, we should always use $unchecked(...) when reading from memory
