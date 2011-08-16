@@ -932,7 +932,7 @@ namespace Microsoft.Research.Vcc
       let mkVolFld td (f : Field) = 
         let f' = 
           match f.Type with
-            | Array(t, size) ->
+            | Array(Type.Ref({Kind = Struct|Union}) as t, size) ->
               { f with Type = Array(Volatile(t), size); Parent = td }
             | _ -> { f with IsVolatile = true; Parent = td}
         fldToVolatileFld.Add(f,f')
