@@ -35,7 +35,7 @@ _(const bool \false = 0;)
 _(typedef void *\object;)
 _(typedef __int64 \integer;)
 _(typedef struct \claim_struct { } ^\claim;)
-_(typedef \integer \size_t;)
+_(typedef unsigned __int64 \size_t;)
 
 _(SPEC_TYPE(objset))
 _(SPEC_TYPE(state))
