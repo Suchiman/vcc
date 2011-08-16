@@ -114,6 +114,9 @@
     <Reference Include="Microsoft.Contracts">
       <HintPath>..\CCI\Microsoft.Contracts.dll</HintPath>
     </Reference>
+    <Reference Include="Model">
+      <HintPath>..\Boogie\Model.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="ParserHelper">
       <HintPath>..\Boogie\ParserHelper.dll</HintPath>

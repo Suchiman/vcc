@@ -2643,6 +2643,22 @@ namespace Microsoft.Research.Vcc
              B.Decl.Axiom (bCall (def + kind + "_type") [er ("^" + name)])
              ] @ additions
 
+      let equalityInstantiation (h:C.Function) fappl parameters =
+        if vcc3 && not h.IsStateless then
+          let f0 = bSubst ["#s", er "#s0"] fappl
+          let f1 = bSubst ["#s", er "#s1"] fappl
+          match typedEq h.RetType f0 f1 with
+            | B.Primitive ("==", _) -> []
+            // we only do it for maps, others are usually automatically extensional; to be revisited
+            | eq when h.RetType._IsMap ->
+              // the exact body is not very relevant, it's only so that definition axiom for "eq" will get instantiated
+              let body = bImpl eq (bEq f0 f1)
+              let qargs = ["#s0", tpState; "#s1", tpState] @ parameters
+              let trans = bCall "$trans_call_transition" [er "#s0"; er "#s1"]
+              [B.Decl.Axiom (B.Forall (Token.NoToken, qargs, [[trans; f0; f1]], weight "eqprop", body))]
+            | _ -> []
+        else []
+
       let trPureFunction (h:C.Function) =
         if not h.IsPure || h.RetType = C.Void then []
         else
@@ -2690,6 +2706,7 @@ namespace Microsoft.Research.Vcc
             if (defBody = bTrue) then [] 
             else if qargs = [] then [B.Decl.Axiom defBody]
             else [B.Decl.Axiom (B.Expr.Forall(Token.NoToken, qargs, List.map (fun x -> [x]) fappls, weight "eqdef-userfun", defBody))]
+          let defAxiom = defAxiom @ equalityInstantiation h fappl parameters
           let fnconst = "cf#" + h.Name
           let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$pure_function" }
           let frameAxiom =
