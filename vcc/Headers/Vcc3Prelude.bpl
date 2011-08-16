@@ -1093,6 +1093,15 @@ axiom (forall S:$state, p:$ptr ::
 
 function $call_transition(S1:$state, S2:$state) : bool;
 
+function $trans_call_transition(S1:$state, S2:$state) : bool;
+axiom (forall S0,S1:$state ::
+  {$call_transition(S0, S1)}
+  $call_transition(S0, S1) ==> $trans_call_transition(S0, S1));
+axiom (forall S0,S1,S2:$state ::
+  {$trans_call_transition(S0, S1), $call_transition(S1, S2)}
+  $trans_call_transition(S0, S1) && $call_transition(S1, S2) ==>
+    $trans_call_transition(S0, S2));
+
 // Type-system-derived
 // TODO: this one should also go, we should always use $unchecked(...) when reading from memory
 axiom (forall S:$state, p:$ptr, f:$field, t:$ctype ::

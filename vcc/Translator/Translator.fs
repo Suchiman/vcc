@@ -2649,12 +2649,14 @@ namespace Microsoft.Research.Vcc
           let f1 = bSubst ["#s", er "#s1"] fappl
           match typedEq h.RetType f0 f1 with
             | B.Primitive ("==", _) -> []
-            | eq ->
+            // we only do it for maps, others are usually automatically extensional; to be revisited
+            | eq when h.RetType._IsMap ->
               // the exact body is not very relevant, it's only so that definition axiom for "eq" will get instantiated
               let body = bImpl eq (bEq f0 f1)
               let qargs = ["#s0", tpState; "#s1", tpState] @ parameters
-              let trans = bCall "$call_transition" [er "#s0"; er "#s1"]
+              let trans = bCall "$trans_call_transition" [er "#s0"; er "#s1"]
               [B.Decl.Axiom (B.Forall (Token.NoToken, qargs, [[trans; f0; f1]], weight "eqprop", body))]
+            | _ -> []
         else []
 
       let trPureFunction (h:C.Function) =
