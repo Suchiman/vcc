@@ -253,6 +253,21 @@ let insertTerminationChecks (helper:Helper.Env) decls =
 
     | _ -> None
 
+  let computeAllDefReads decls =
+    let didSomething = ref true
+    let computeDefReads = function
+      | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition ->
+        match fn.Reads, fn.Body with
+          | [], Some b ->
+            fn.Reads <- computeReads b
+            if fn.Reads <> [] then
+              didSomething := true
+          | _ -> ()
+      | _ -> ()
+    while !didSomething do
+      didSomething := false
+      List.iter computeDefReads decls
+   
   let aux = function
     | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition 
                                     || fn.CustomAttr |> hasCustomAttr AttrAbstract ->
@@ -279,6 +294,8 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         fn.Body <- Some body
         if fn.RetType <> Type.Void && fn.CustomAttr |> hasCustomAttr AttrDefinition then
           let expr = turnIntoPureExpression helper fn.RetType origBody
+          if fn.Reads = [] then
+            fn.Reads <- computeReads expr
           let vars, repl = Variable.UniqueCopies (fun v -> { v with Kind = QuantBound }) fn.Parameters
           let ec t = { body.Common with Type = t }
           let app = Call (ec fn.RetType, fn, [], vars |> List.map (fun v -> Expr.Ref (ec v.Type, v)))
@@ -298,6 +315,8 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         else
           [decl]
     | decl -> [decl]
+
+  computeAllDefReads decls
   List.collect aux decls
 
 let terminationCheckingPlaceholder (helper:Helper.Env) decls =
