@@ -109,17 +109,7 @@ namespace Microsoft.Research.Vcc
             match c.Type with
               | Type.Map (d, r) -> (d, r)
               | _ -> helper.Die()
-          
-          let isPure = ref true         
-          let rec checkForSideEffect _ = function
-            | Deref(_, Dot(_,e,f)) when f.Parent.IsRecord -> true
-            | Deref _ ->
-              isPure := false
-              false
-            | Call(_, fn, _, _) ->
-                if not fn.IsStateless then isPure := false; false
-                else true
-            | _ -> true
+         
           
           let rec hasQVar vars expr =
             let hasIt = ref false
@@ -172,7 +162,6 @@ namespace Microsoft.Research.Vcc
               | Some c -> c.SelfMap repl
               | None -> Expr.True
           let body = q.Body.SelfMap repl
-          body.SelfVisit(checkForSideEffect)
           
           let fn =
             { Function.Empty() with
@@ -182,7 +171,7 @@ namespace Microsoft.Research.Vcc
                 OrigRetType     = c.Type
                 Name            = "lambda#" + (helper.UniqueId()).ToString()
                 Parameters      = [for (_, var) in !parms -> { var with Kind = Parameter }]
-                Reads           = if !isPure then [] else [Expr.Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_set_universe", [])]
+                Reads           = computeReads body
                 CustomAttr      = [VccAttr (AttrIsPure, "")]
                 IsProcessed     = true
               }

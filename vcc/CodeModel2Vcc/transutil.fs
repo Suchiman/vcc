@@ -348,6 +348,20 @@ namespace Microsoft.Research.Vcc
     find helper.TopDecls
            
     
+  let computeReads (expr:Expr) = 
+    let isPure = ref true         
+    let rec checkForSideEffect _ = function
+      | Deref(_, Dot(_,e,f)) when f.Parent.IsRecord -> true
+      | Deref _ ->
+        isPure := false
+        false
+      | Call(_, fn, _, _) ->
+          if not fn.IsStateless then isPure := false; false
+          else true
+      | _ -> true
+    expr.SelfVisit checkForSideEffect
+    if !isPure then [] else [Expr.Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_set_universe", [])]
+
   // -----------------------------------------------------------------------------
   // Pruning
   // ----------------------------------------------------------------------------- 
