@@ -48,7 +48,7 @@ namespace Microsoft.Research.Vcc
       if (!this.InitBoogie()) this.env.Error(Token.NoToken, 1000, "Boogie initialization failed.");
     }
 
-    public override Microsoft.FSharp.Collections.FSharpList<string> FunctionsToVerify()
+    public override Microsoft.FSharp.Collections.FSharpList<Tuple<string,string>> FunctionsToVerify()
     {
       return this.FindAllFunctions(currentDecls);
     }

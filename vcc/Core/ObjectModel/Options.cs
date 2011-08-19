@@ -64,6 +64,7 @@ namespace Microsoft.Research.Vcc
     public bool OpsAsFunctions;
     public string VerificationLocation;
     public string OutputDir;
+    public bool IgnoreIncludes;
 
     public void CopyFrom(VccOptions other)
     {
@@ -133,6 +134,7 @@ namespace Microsoft.Research.Vcc
       this.DetectSyntax = other.DetectSyntax;
       this.OutputDir = other.OutputDir;
       this.YarraMode = other.YarraMode;
+      this.IgnoreIncludes = other.IgnoreIncludes;
     }
   }
 
@@ -339,6 +341,13 @@ namespace Microsoft.Research.Vcc
             this.options.RunInspector = true;
             return true;
           }
+
+          if (this.ParseName(arg, "ignoreincludes", "ii"))
+          {
+              this.options.IgnoreIncludes = true;
+              return true;
+          }
+
           return this.TryParseNamedBoolean(arg, "infertriggers", "it", ref this.options.InferTriggers);
 
         case 'k':

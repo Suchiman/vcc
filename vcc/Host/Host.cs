@@ -558,24 +558,38 @@ namespace Microsoft.Research.Vcc
         fver.DumpInternalsToFile(fileName, true);
       }
 
-      foreach (string funcName in fver.FunctionsToVerify())
+      foreach (var func in fver.FunctionsToVerify())
       {
+
+        if (commandLineOptions.IgnoreIncludes)
+        {
+          bool fileFound = false;
+          foreach (var file in commandLineOptions.FileNames) {
+            if (file.ToUpperInvariant() == func.Item1.ToUpperInvariant()) {
+              fileFound = true;
+              break;
+            }
+          }
+
+          if (!fileFound) continue;
+        }
+
         if (checkSpecificFunctions)
         {
           // check if this function has been requested either specifically or by prefix
           bool checkThisFunction = false;
-          if (commandLineOptions.FunctionsWithExactName.Contains(funcName))
+          if (commandLineOptions.FunctionsWithExactName.Contains(func.Item2))
           {
             checkThisFunction = true;
-            foundFunctionSpecifiers.Add(funcName);
+            foundFunctionSpecifiers.Add(func.Item2);
           }
           if (!checkThisFunction)
           {
             foreach (var fn in commandLineOptions.Functions)
             {
               var normalized = fn.Replace(':', '#');
-              if (funcName.StartsWith(normalized) &&
-                   (normalized.Length == funcName.Length || funcName[normalized.Length] == '#'))
+              if (func.Item2.StartsWith(normalized) &&
+                   (normalized.Length == func.Item2.Length || func.Item2[normalized.Length] == '#'))
               {
                 checkThisFunction = true;
                 foundFunctionSpecifiers.Add(fn);
@@ -586,7 +600,7 @@ namespace Microsoft.Research.Vcc
           if (!checkThisFunction) continue;
         }
 
-        var outcome = fver.Verify(funcName);
+        var outcome = fver.Verify(func.Item2);
         verificationErrorHandler.FlushErrors();
 
         if (outcome == VerificationResult.Succeeded || outcome == VerificationResult.Skipped) { } else { numErrors++; }
