@@ -25,7 +25,7 @@ namespace Microsoft.Research.Vcc
  
  type [<AbstractClass>] FunctionVerifier(env:Helper.Env, initialDecls:list<Top>) =
    
-   abstract FunctionsToVerify : unit -> list<string>
+   abstract FunctionsToVerify : unit -> list<string * string>
    abstract Verify : string -> VerificationResult
    abstract DumpInternalsToFile : string * bool -> unit
    abstract Close : unit -> unit
@@ -36,7 +36,7 @@ namespace Microsoft.Research.Vcc
     if env.ShouldContinue then
       [ for d in decls do
           match d with
-            | CAST.FunctionDecl f when f.Body.IsSome -> yield f.Name
+            | CAST.FunctionDecl f when f.Body.IsSome -> yield (f.Token.Filename, f.Name)
             | _ -> yield! [] ]
     else []
  
