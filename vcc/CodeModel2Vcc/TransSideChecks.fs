@@ -100,13 +100,15 @@ namespace Microsoft.Research.Vcc
                     
               //Expr.Assert( { afmte 8514 "invariant({0}) holds (in admissibility check)" [expr] with Type = Type.Void }, expr )
           let check = 
+            let skipVerification = 
+              if hasCustomAttr AttrSkipVerification td.CustomAttr then [VccAttr(AttrSkipVerification, "true")] else []
             { Function.Empty() with
                 Token = td.Token
                 IsSpec = true  
                 Name = td.Name + "#adm"
                 Parameters = [parm]
                 Ensures = post
-                CustomAttr = [ VccAttr(AttrIsAdmissibility, "") ]
+                CustomAttr = VccAttr(AttrIsAdmissibility, "") :: skipVerification
                 Body = Some body
                 IsProcessed = true }
           [decl; Top.FunctionDecl check]
