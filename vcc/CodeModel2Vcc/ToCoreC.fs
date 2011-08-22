@@ -704,7 +704,7 @@ namespace Microsoft.Research.Vcc
 
     let liftBlocksWithContracts decls =
     
-      let currentFunctionName = ref ""
+      let currentFunction = ref (Function.Empty())
       let blockFunctionDecls = ref []
     
       let reportErrorForJumpsOutOfBlock (block:Expr) =
@@ -840,13 +840,13 @@ namespace Microsoft.Research.Vcc
                 let fn = { Function.Empty() with 
                              Token = b.Token
                              Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut
-                             Name = !currentFunctionName + "#block#" + blockPrefix + blockId
+                             Name = (!currentFunction).Name + "#block#" + blockPrefix + blockId
                              Requires = stripInitialPure cs'.Requires
                              Ensures = stripInitialPure cs'.Ensures
                              Writes = stripInitialPure cs'.Writes
                              Variants = stripInitialPure cs'.Decreases
                              Reads = stripInitialPure cs'.Reads;
-                             CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else [])
+                             CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else []) @ inheritedSkipVerificationAttr (!currentFunction).CustomAttr
                              Body = Some (Expr.MkBlock(ss @ List.map mkSetOutPar localsThatGoOut))
                              IsProcessed = true }
                 blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
@@ -859,7 +859,7 @@ namespace Microsoft.Research.Vcc
       for d in decls do
         match d with
           | Top.FunctionDecl({ Name = name; Body = Some body} as fn) ->
-            currentFunctionName := name
+            currentFunction := fn
             fn.Body <- Some(body.SelfMap (liftBlocks (findReferencesBeforeAndAfter fn) (ref 0) ""))
           | _ -> ()
       decls @ List.sortBy (fun top -> match top with | Top.FunctionDecl(fn) -> fn.Name | _ -> die()) !blockFunctionDecls

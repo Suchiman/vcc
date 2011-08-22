@@ -952,7 +952,7 @@ namespace Microsoft.Research.Vcc
               Token = lemma.Token
               IsSpec = true
               Name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
-              CustomAttr = [VccAttr (AttrIsPure, ""); VccAttr(AttrBvLemmaCheck, "true")]
+              CustomAttr = VccAttr (AttrIsPure, "") :: VccAttr(AttrBvLemmaCheck, "true") :: inheritedSkipVerificationAttr fn.CustomAttr
               Body = Some (Expr.Block(lemma.Common, [lemma], None))
               IsProcessed = true }
         let findAmdExtractThem _ = function
