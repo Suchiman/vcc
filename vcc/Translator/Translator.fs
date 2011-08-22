@@ -232,37 +232,46 @@ namespace Microsoft.Research.Vcc
         let zero = "$zero." + mapName
         let eq = "$eq." + mapName
         let v = er "v"
-        let v, inRange =
+        let inRange =
           let rangeAxiom rangeFn args = [B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["M", tp; "p", bt1], [], weight "select-map-eq", bCall rangeFn args))]
           match t2 with
-            | C.Type.Integer _ -> bCall "$unchecked" [toTypeId t2; v], rangeAxiom "$in_range_t" [toTypeId t2; selMP]
+            | C.Type.Integer _ -> rangeAxiom "$in_range_t" [toTypeId t2; selMP]
             | C.Type.Claim
-            | C.Type.SpecPtr _ -> v, rangeAxiom "$in_range_spec_ptr" [selMP]
-            | C.Type.PhysPtr _ -> v, rangeAxiom "$in_range_phys_ptr" [selMP]
-            | _ -> v, []
+            | C.Type.SpecPtr _ -> rangeAxiom "$in_range_spec_ptr" [selMP]
+            | C.Type.PhysPtr _ -> rangeAxiom "$in_range_phys_ptr" [selMP]
+            | _ -> []
+        let unchk t e =
+          match t with
+            | C.Type.Integer _ ->
+              bCall "$unchecked" [toTypeId t; e]
+            | C.Ptr _ when vcc3 ->
+              addType t e
+            | _ -> e
+        let v = unchk t2 v
+        let tpEq t p q = typedEq t (unchk t p) (unchk t q)
         let argRange = 
           match t1 with
-            | C.Type.Integer _ -> 
+            | C.Type.Integer _ when not vcc3 -> 
               bCall "$in_range_t" [toTypeId t1; er "p"]
             | _ -> bTrue
-        let hasComplexEq =
-          vcc3 && typedEq t1 v v <> (bEq v v)
+        
         let selStorPP = 
-          if hasComplexEq then bTrue
+          if vcc3 then bTrue
           else bImpl argRange (bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) v)
         let selStorPQ =
-          if hasComplexEq then
+          if vcc3 then
             bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"])
-                (B.Expr.Ite (typedEq t1 (er "p") (er "q"), v, selMP))
+                (B.Expr.Ite (tpEq t1 (er "p") (er "q"), v, selMP))
           else
             bInvImpl (bNeq (er "p") (er "q"))
                       (bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"]) selMP)
         let selZero =
           let zeroVal = defaultValueOf t2
           bEq (bCall sel [er zero; er "p"]) zeroVal
-        let t2Eq = typedEq t2
         let eqM1M2 = bCall eq [er "M1"; er "M2"]
-        let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", bImpl argRange (t2Eq (bCall sel [er "M1"; er "p"]) (bCall sel [er "M2"; er "p"]))))
+        let unchkp = if vcc3 then unchk t1 (er "p") else er "p"
+        let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", 
+                                             bImpl argRange (tpEq t2 (bCall sel [er "M1"; unchkp]) (bCall sel [er "M2"; unchkp]))))
                              eqM1M2
         let eqM1M2Ax2 = bImpl eqM1M2 (bEq (er "M1") (er "M2"))
         
