@@ -30,7 +30,8 @@ namespace Microsoft.Research.Vcc
 
       // reference symbol from Z3 so it gets copied
 #pragma warning disable 168
-      Microsoft.Boogie.Z3.Factory x = new Microsoft.Boogie.Z3.Factory();
+      var x = new Microsoft.Boogie.Z3.Factory();
+      var y = new Microsoft.Boogie.SMTLib.Factory();
 #pragma warning restore 168
 
       startTime = GetTime();
