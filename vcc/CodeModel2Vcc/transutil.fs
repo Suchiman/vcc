@@ -301,6 +301,8 @@ namespace Microsoft.Research.Vcc
   
   let hasCustomAttr n = List.exists (function VccAttr (n', _) -> n = n' | _ -> false)
 
+  let inheritedSkipVerificationAttr attrs = if hasCustomAttr AttrSkipVerification attrs then [VccAttr(AttrSkipVerification, "true")] else []
+
   // Warning: this function gets rid of multiplication so possible overflow check is gone
   // This usually is OK in spec context.
   let extractArraySize (helper:Helper.Env) (expr:Expr) (elementType:Type) (byteCount:Expr) =
