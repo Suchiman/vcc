@@ -49,6 +49,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
       3
 
     // list of bad patterns: 
+    | B.Expr.FunctionCall (("$good_state"), _) -> 1 
     | B.Expr.FunctionCall (("$ptr"|"$phys_ptr_cast"|"$spec_ptr_cast"), [_; B.Expr.Ref _]) -> 1 
     | B.Expr.FunctionCall (("$field_parent_type"|"$field_type"|"$base"|"$is_primitive"|"$is"|"$addr"|"$field"
                            |"$is_null"), _) -> -1 

@@ -2899,25 +2899,62 @@ namespace Microsoft.Research.Vcc
 
             | C.Top.GeneratedAxiom(e, _)
             | C.Top.Axiom e ->
-              let res = trExpr initialEnv e
+
               let seenState = ref false
               let replMS = function
                 | B.Expr.Ref "$s" -> seenState := true; Some (er "#s")
                 | B.Expr.Old _ ->
                   failwith "axiom mentions old"
                 | _ -> None
+              let res = trExpr initialEnv e
               let res = res.Map replMS
-              let res, vars = 
-                if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
-                //if !seenState then res, [("#s", tpState)] else res, []
-              let res =
-                match vars, res with
-                  | [], _ -> res
-                  | _, B.Expr.Forall (tok, vars2, triggers, attrs, body) ->
-                    B.Expr.Forall (tok, vars @ vars2, triggers, attrs, body)
-                  | _, _ -> 
-                    B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
-              [B.Decl.Axiom res]
+
+              if vcc3 then
+                let e =
+                  if not !seenState then e
+                  else
+                    let stateVar = C.Variable.CreateUnique "__vcc_state" C.Type.MathState C.VarKind.QuantBound
+                    let stateRef = C.Expr.Ref ({ C.bogusEC with Type = stateVar.Type }, stateVar)
+                    let inState (e:C.Expr) =
+                      let ec = { e.Common with Token = WarningSuppressingToken (e.Token, 9106) }
+                      C.Old (ec, stateRef, e)
+                    let goodState = C.Expr.Macro (C.boolBogusEC(), "prelude_good_state", [stateRef])
+                    match e with
+                      | C.Quant (ec, ({ Kind = C.Forall } as qd)) ->
+                        let qd =
+                          { qd with 
+                              Variables = stateVar :: qd.Variables
+                              Body = inState qd.Body
+                              Condition =
+                                match qd.Condition with
+                                  | Some c -> Some (TransUtil.mkAnd goodState (inState c))
+                                  | None -> Some goodState
+                              Triggers = List.map (List.map inState) qd.Triggers }
+                        C.Quant (ec, qd)
+                      | _ ->
+                        let qd = 
+                            {
+                              Kind = C.QuantKind.Forall
+                              Variables = [stateVar]
+                              Triggers = []
+                              Condition = Some goodState
+                              Body = inState e
+                            } : C.QuantData
+                        C.Expr.Quant (e.Common, qd)
+                // run trExpr again, so it will infer triggers 
+                [B.Decl.Axiom (trExpr initialEnv e)]
+              else
+                let res, vars = 
+                  if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
+                  //if !seenState then res, [("#s", tpState)] else res, []
+                let res =
+                  match vars, res with
+                    | [], _ -> res
+                    | _, B.Expr.Forall (tok, vars2, triggers, attrs, body) ->
+                      B.Expr.Forall (tok, vars @ vars2, triggers, attrs, body)
+                    | _, _ -> 
+                      B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
+                [B.Decl.Axiom res]
 
             | C.Top.Global ({ Kind = C.ConstGlobal ; Type = C.Ptr t } as v, _) ->
               if vcc3 then
