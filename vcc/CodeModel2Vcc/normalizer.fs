@@ -209,7 +209,7 @@ namespace Microsoft.Research.Vcc
                   helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
                   None
                 else                 
-                  Some (inlineCall "" self (Call({ec with Type = fn'.RetType}, fn', [], args)) e)
+                  Some (self (inlineCall "" self (Call({ec with Type = fn'.RetType}, fn', [], args)) e))
               | _ ->
                 helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
                 None
