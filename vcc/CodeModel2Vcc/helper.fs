@@ -112,6 +112,7 @@ namespace Microsoft.Research.Vcc
                   "is_object",              "p";
                   "is_object_root",         "Sp";
                   "is_thread_local_array",  "Sti";
+                  "is_thread_local_array_inline",  "Sti";
                   "is_thread",              "p";
                   "me",                     "";
                   "mutable",                "Sp";

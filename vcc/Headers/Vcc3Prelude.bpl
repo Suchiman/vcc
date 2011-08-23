@@ -550,6 +550,11 @@ axiom (forall f:$field, i:int :: {$field_plus(f, i)}
   );
 
 function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
+{
+  $is_array_inline(S,p,T,sz)
+}
+
+function {:inline true} $is_array_inline(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {   
      $is(p, T)
   && $is_proper(p)
@@ -562,7 +567,13 @@ function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {
+  $is_thread_local_array_inline(S,p,T,sz)
+}
+
+function {:inline true} $is_thread_local_array_inline(S:$state, p:$ptr, T:$ctype, sz:int) : bool
+{
      $is_array(S, p, T, sz)
+ //  && $is_array_inline(S, p, T, sz)
   && if $is_primitive(T) then $thread_local(S, p)
      else (forall i:int :: {$owner(S, $idx(p, i))} 0 <= i && i < sz ==> $thread_local(S, $idx(p, i)))
 }
@@ -2903,7 +2914,7 @@ function $yarra_heap(s:$state) : $state;
 // Strings
 // --------------------------------------------------------------------------------
 
-function $get_string_literal(id:int, length:int) returns($ptr);
+function $get_string_literal(id:int, length:int) : $ptr;
 
 // TODO: add axioms
 

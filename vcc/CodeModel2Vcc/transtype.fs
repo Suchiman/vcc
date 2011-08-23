@@ -1122,7 +1122,7 @@ namespace Microsoft.Research.Vcc
               | Expr.Macro(_, "init", initializers) -> readAxiom 0 initializers
               | _ -> die()
           let threadLocalAxiom = Top.GeneratedAxiom(Expr.Macro(ec_b, 
-                                                               "_vcc_is_thread_local_array" , 
+                                                               (if helper.Options.Vcc3 then "_vcc_is_thread_local_array_inline" else "_vcc_is_thread_local_array"), 
                                                                [Expr.Macro(ec_ptr, "&", [Expr.Ref(ec_t, v)]); mkInt n]), Top.Global(v,None));
 
           Global (v, None) :: threadLocalAxiom :: (readAxioms init) 
