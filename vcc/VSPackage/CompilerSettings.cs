@@ -97,25 +97,39 @@ namespace Microsoft.Research.Vcc.VSPackage {
 
     private static void AddSettingsForCompilerTool(CompilerSettings settings, VCCLCompilerTool compilerTool)
     {
-      if (compilerTool != null) {
         settings.ignoreStandardIncludePath |= compilerTool.IgnoreStandardIncludePath;
         string prePro = compilerTool.PreprocessorDefinitions;
 
 
         if (prePro != null && settings.InheritPreprocessorDefinitions)
-          settings.preprocessorDefinitions += prePro + ";";
+            settings.preprocessorDefinitions += prePro + ";";
 
         string additionalDirs = compilerTool.AdditionalIncludeDirectories;
         if (additionalDirs != null && settings.InheritAdditionalIncludeDirectories)
-          settings.additionalIncludeDirectories += additionalDirs + ";";
+            settings.additionalIncludeDirectories += additionalDirs + ";";
 
         string forcedIncludes = compilerTool.ForcedIncludeFiles;
         if (forcedIncludes != null && settings.InheritForcedIncludeFiles)
-          settings.forcedIncludeFiles += forcedIncludes + ";";
-      }
+            settings.forcedIncludeFiles += forcedIncludes + ";";
     }
 
-    /// <summary>
+      private static void AddSettingsForCompilerTool(CompilerSettings settings, VCNMakeTool nMakeTool)
+    {
+        string prePro = nMakeTool.PreprocessorDefinitions;
+
+        if (prePro != null && settings.InheritPreprocessorDefinitions)
+            settings.preprocessorDefinitions += prePro + ";";
+
+        string additionalDirs = nMakeTool.IncludeSearchPath;
+        if (additionalDirs != null && settings.InheritAdditionalIncludeDirectories)
+            settings.additionalIncludeDirectories += additionalDirs + ";";
+
+        string forcedIncludes = nMakeTool.ForcedIncludes;
+        if (forcedIncludes != null && settings.InheritForcedIncludeFiles)
+            settings.forcedIncludeFiles += forcedIncludes + ";";
+    }
+
+      /// <summary>
     /// Gets current Settings for an VCProject.
     /// Reads out Settings of the entry project.
     /// 1. Main Project Settings
@@ -139,8 +153,13 @@ namespace Microsoft.Research.Vcc.VSPackage {
       try {
         //Get VCCLCompilerTool
         VCCLCompilerTool CompilerTool = Tools.Item("VCCLCompilerTool") as VCCLCompilerTool;
-        AddSettingsForCompilerTool(settings, CompilerTool);
+        if (CompilerTool != null) AddSettingsForCompilerTool(settings, CompilerTool);
       } catch { }
+
+      try {
+          VCNMakeTool nMakeTool = Tools.Item("VCNMakeTool") as VCNMakeTool;
+          if (nMakeTool != null) AddSettingsForCompilerTool(settings, nMakeTool);
+      } catch {  }
 
       //2nd collect Tool Data from PropertySheets! *****************************************************
       //PropertySheets Collection
@@ -156,7 +175,10 @@ namespace Microsoft.Research.Vcc.VSPackage {
           IVCCollection CollectionOfTools = PropertySheet.Tools as IVCCollection;
           //Get VCCLCompilerTool
           VCCLCompilerTool CompilerTool = CollectionOfTools.Item("VCCLCompilerTool") as VCCLCompilerTool;
-          AddSettingsForCompilerTool(settings, CompilerTool);
+          if (CompilerTool != null) AddSettingsForCompilerTool(settings, CompilerTool);
+
+          VCNMakeTool nMakeTool = CollectionOfTools.Item("VCNMakeTool") as VCNMakeTool;
+          if (nMakeTool != null) AddSettingsForCompilerTool(settings, nMakeTool);
         } catch { }
       }
     }
@@ -174,7 +196,7 @@ namespace Microsoft.Research.Vcc.VSPackage {
       try {
         //Get Tool  
         VCCLCompilerTool CompilerTool = FileConfiguration.Tool as VCCLCompilerTool;
-        AddSettingsForCompilerTool(settings, CompilerTool);
+        if (CompilerTool != null) AddSettingsForCompilerTool(settings, CompilerTool);
       } catch { }
     }
 
