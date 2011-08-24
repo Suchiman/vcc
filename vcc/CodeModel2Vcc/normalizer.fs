@@ -344,7 +344,9 @@ namespace Microsoft.Research.Vcc
 
         | Expr.Call (c, { Name = "_vcc_inv_group"}, _, [Expr.Cast (_, _, EString (c', v)); groupInv]) ->
           Some (Expr.Macro (c, "group_invariant", [Expr.Macro (c', v, []); self groupInv]))
-        | EString (c, v) when not helper.Options.Vcc3 ->      
+        | Macro (ec, "\\castlike_precise", [EString (_, v)]) ->
+          Some (Expr.Macro (ec, "precise_string", [UserData (ec, v)]))
+        | EString (c, v) ->
           let id =
             match stringLiterals.TryGetValue v with
               | (true, id) -> id
@@ -1141,7 +1143,7 @@ namespace Microsoft.Research.Vcc
         addDecls.Add (Top.Global (vr, Some (Macro ({ bogusEC with Type = vr.Type }, "init", initExprs))))
         vr
       let aux self = function
-        | EString (c, v) ->
+        | Macro (c, "precise_string", [UserData (_, (:? string as v))]) ->
           if not (stringLiterals.ContainsKey v) then
             stringLiterals.Add (v, generateGlobal v)
           Some (Expr.Macro (c, "&", [Expr.Ref (c, stringLiterals.[v])]))
