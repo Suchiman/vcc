@@ -209,7 +209,7 @@ namespace Microsoft.Research.Vcc
                   helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
                   None
                 else                 
-                  Some (inlineCall "" self (Call({ec with Type = fn'.RetType}, fn', [], args)) e)
+                  Some (self (inlineCall "" self (Call({ec with Type = fn'.RetType}, fn', [], args)) e))
               | _ ->
                 helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
                 None
@@ -344,7 +344,9 @@ namespace Microsoft.Research.Vcc
 
         | Expr.Call (c, { Name = "_vcc_inv_group"}, _, [Expr.Cast (_, _, EString (c', v)); groupInv]) ->
           Some (Expr.Macro (c, "group_invariant", [Expr.Macro (c', v, []); self groupInv]))
-        | EString (c, v) ->      
+        | Macro (ec, "\\castlike_precise", [EString (_, v)]) ->
+          Some (Expr.Macro (ec, "precise_string", [UserData (ec, v)]))
+        | EString (c, v) ->
           let id =
             match stringLiterals.TryGetValue v with
               | (true, id) -> id
@@ -952,7 +954,7 @@ namespace Microsoft.Research.Vcc
               Token = lemma.Token
               IsSpec = true
               Name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
-              CustomAttr = [VccAttr (AttrIsPure, ""); VccAttr(AttrBvLemmaCheck, "true")]
+              CustomAttr = VccAttr (AttrIsPure, "") :: VccAttr(AttrBvLemmaCheck, "true") :: inheritedSkipVerificationAttr fn.CustomAttr
               Body = Some (Expr.Block(lemma.Common, [lemma], None))
               IsProcessed = true }
         let findAmdExtractThem _ = function
@@ -1131,6 +1133,26 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let desugarStringLiterals decls =
+      let stringLiterals = gdict()
+      let addDecls = glist[]
+      let generateGlobal (v:string) =
+        let vn = "string_literal#" + stringLiterals.Count.ToString()
+        let vr = Variable.CreateUnique vn (Array (Integer IntKind.Int8, v.Length + 1)) VarKind.ConstGlobal
+        let initExprs = ((v |> Seq.map (fun c -> (int)c) |> Seq.toList) @ [0]) |> List.map mkInt
+        addDecls.Add (Top.Global (vr, Some (Macro ({ bogusEC with Type = vr.Type }, "init", initExprs))))
+        vr
+      let aux self = function
+        | Macro (c, "precise_string", [UserData (_, (:? string as v))]) ->
+          if not (stringLiterals.ContainsKey v) then
+            stringLiterals.Add (v, generateGlobal v)
+          Some (Expr.Macro (c, "&", [Expr.Ref (c, stringLiterals.[v])]))
+        | _ -> None
+      let decls = deepMapExpressions aux decls 
+      decls @ (addDecls |> Seq.toList)
+
+    // ============================================================================================================
+
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
     helper.AddTransformer ("norm-varargs", Helper.Expr normalizeVarArgs)
     helper.AddTransformer ("norm-inline-boogie", Helper.Decl handleBoogieInlineDeclarations)
@@ -1162,4 +1184,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-atomic-inline", Helper.Decl inlineAtomics)
     helper.AddTransformer ("norm-reintp", Helper.Expr normalizeReinterpretation)
     helper.AddTransformer ("norm-on-unwrap", Helper.Decl normalizeOnUnwrap)
+    if helper.Options.Vcc3 then
+      helper.AddTransformer ("norm-strings", Helper.Decl desugarStringLiterals)
     helper.AddTransformer ("norm-end", Helper.DoNothing)

@@ -550,6 +550,11 @@ axiom (forall f:$field, i:int :: {$field_plus(f, i)}
   );
 
 function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
+{
+  $is_array_stateless(p,T,sz)
+}
+
+function {:inline true} $is_array_stateless(p:$ptr, T:$ctype, sz:int) : bool
 {   
      $is(p, T)
   && $is_proper(p)
@@ -557,12 +562,18 @@ function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
   && p == $idx($dot($base(p), $field_arr_root($field(p))), $field_arr_index($field(p)))
   && $field_kind($field(p)) != $fk_base
   && $field_arr_index($field(p)) >= 0
-  && $is_non_primitive($typ($emb(S, p)))
+  && $is_non_primitive($typ($emb0(p)))
 }
 
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {
+  $is_thread_local_array_inline(S,p,T,sz)
+}
+
+function {:inline true} $is_thread_local_array_inline(S:$state, p:$ptr, T:$ctype, sz:int) : bool
+{
      $is_array(S, p, T, sz)
+ //  && $is_array_inline(S, p, T, sz)
   && if $is_primitive(T) then $thread_local(S, p)
      else (forall i:int :: {$owner(S, $idx(p, i))} 0 <= i && i < sz ==> $thread_local(S, $idx(p, i)))
 }
@@ -2898,6 +2909,18 @@ const $decreases_level : int;
 // ----------------------------------------------------------------------------
 
 function $yarra_heap(s:$state) : $state;
+
+// --------------------------------------------------------------------------------
+// Strings
+// --------------------------------------------------------------------------------
+
+function $get_string_literal(id:int, length:int) : $ptr;
+
+axiom (forall S:$state, id:int, length:int ::
+  {$good_state(S), $get_string_literal(id, length)}
+  $good_state(S) ==> 
+    $in_range_phys_ptr($get_string_literal(id, length)) &&
+    $is_thread_local_array(S, $get_string_literal(id, length), ^^i1, length + 1));
 
 // ----------------------------------------------------------------------------
 // Datatypes

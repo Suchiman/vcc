@@ -1121,10 +1121,25 @@ namespace Microsoft.Research.Vcc
             function 
               | Expr.Macro(_, "init", initializers) -> readAxiom 0 initializers
               | _ -> die()
-          let threadLocalAxiom = Top.GeneratedAxiom(Expr.Macro(ec_b, 
-                                                               "_vcc_is_thread_local_array" , 
-                                                               [Expr.Macro(ec_ptr, "&", [Expr.Ref(ec_t, v)]); mkInt n]), Top.Global(v,None));
 
+          let axBody pref = Expr.Macro(ec_b, "_vcc_is_thread_local_array", pref @ [Expr.Macro(ec_ptr, "&", [Expr.Ref(ec_t, v)]); mkInt n])
+
+          let threadLocalAxiom =
+            if not helper.Options.Vcc3 then
+              Top.GeneratedAxiom(axBody [], Top.Global(v,None))
+            else
+              let stateVar = Variable.CreateUnique "__vcc_state" Type.MathState VarKind.QuantBound
+              let stateRef = Expr.Ref ({ bogusEC with Type = stateVar.Type }, stateVar)
+              let goodState = Expr.Macro (boolBogusEC(), "prelude_good_state", [stateRef])
+              let qd =
+                {
+                  Kind = QuantKind.Forall
+                  Variables = [stateVar]
+                  Triggers = [[goodState]]
+                  Condition = Some goodState
+                  Body = axBody [stateRef]
+                } : QuantData
+              Top.GeneratedAxiom(Expr.Quant (boolBogusEC(), qd), Top.Global(v,None))
           Global (v, None) :: threadLocalAxiom :: (readAxioms init) 
         | Global ({Kind = VarKind.ConstGlobal} as v, Some init) when not init.Type.IsComposite -> [Global (v, None)] // the initial value is handled by FELT in the AST
         | Global (v, Some(init)) when v.Type._IsInteger || v.Type._IsPtr ->

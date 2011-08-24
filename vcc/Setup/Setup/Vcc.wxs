@@ -138,6 +138,8 @@
         <File Name="Provers.Simplify.pdb" />
         <File Name="Provers.Z3.dll" />
         <File Name="Provers.Z3.pdb" />
+        <File Name="Provers.SMTLib.dll" />
+        <File Name="Provers.SMTLib.pdb" />
         <File Name="VCExpr.dll" />
         <File Name="VCExpr.pdb" />
         <File Name="VCGeneration.dll" />

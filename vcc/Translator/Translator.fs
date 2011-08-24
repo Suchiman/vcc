@@ -232,37 +232,46 @@ namespace Microsoft.Research.Vcc
         let zero = "$zero." + mapName
         let eq = "$eq." + mapName
         let v = er "v"
-        let v, inRange =
+        let inRange =
           let rangeAxiom rangeFn args = [B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["M", tp; "p", bt1], [], weight "select-map-eq", bCall rangeFn args))]
           match t2 with
-            | C.Type.Integer _ -> bCall "$unchecked" [toTypeId t2; v], rangeAxiom "$in_range_t" [toTypeId t2; selMP]
+            | C.Type.Integer _ -> rangeAxiom "$in_range_t" [toTypeId t2; selMP]
             | C.Type.Claim
-            | C.Type.SpecPtr _ -> v, rangeAxiom "$in_range_spec_ptr" [selMP]
-            | C.Type.PhysPtr _ -> v, rangeAxiom "$in_range_phys_ptr" [selMP]
-            | _ -> v, []
+            | C.Type.SpecPtr _ -> rangeAxiom "$in_range_spec_ptr" [selMP]
+            | C.Type.PhysPtr _ -> rangeAxiom "$in_range_phys_ptr" [selMP]
+            | _ -> []
+        let unchk t e =
+          match t with
+            | C.Type.Integer _ ->
+              bCall "$unchecked" [toTypeId t; e]
+            | C.Ptr _ when vcc3 ->
+              addType t e
+            | _ -> e
+        let v = unchk t2 v
+        let tpEq t p q = typedEq t (unchk t p) (unchk t q)
         let argRange = 
           match t1 with
-            | C.Type.Integer _ -> 
+            | C.Type.Integer _ when not vcc3 -> 
               bCall "$in_range_t" [toTypeId t1; er "p"]
             | _ -> bTrue
-        let hasComplexEq =
-          vcc3 && typedEq t1 v v <> (bEq v v)
+        
         let selStorPP = 
-          if hasComplexEq then bTrue
+          if vcc3 then bTrue
           else bImpl argRange (bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) v)
         let selStorPQ =
-          if hasComplexEq then
+          if vcc3 then
             bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"])
-                (B.Expr.Ite (typedEq t1 (er "p") (er "q"), v, selMP))
+                (B.Expr.Ite (tpEq t1 (er "p") (er "q"), v, selMP))
           else
             bInvImpl (bNeq (er "p") (er "q"))
                       (bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"]) selMP)
         let selZero =
           let zeroVal = defaultValueOf t2
           bEq (bCall sel [er zero; er "p"]) zeroVal
-        let t2Eq = typedEq t2
         let eqM1M2 = bCall eq [er "M1"; er "M2"]
-        let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", bImpl argRange (t2Eq (bCall sel [er "M1"; er "p"]) (bCall sel [er "M2"; er "p"]))))
+        let unchkp = if vcc3 then unchk t1 (er "p") else er "p"
+        let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", 
+                                             bImpl argRange (tpEq t2 (bCall sel [er "M1"; unchkp]) (bCall sel [er "M2"; unchkp]))))
                              eqM1M2
         let eqM1M2Ax2 = bImpl eqM1M2 (bEq (er "M1") (er "M2"))
         
@@ -2890,25 +2899,62 @@ namespace Microsoft.Research.Vcc
 
             | C.Top.GeneratedAxiom(e, _)
             | C.Top.Axiom e ->
-              let res = trExpr initialEnv e
+
               let seenState = ref false
               let replMS = function
                 | B.Expr.Ref "$s" -> seenState := true; Some (er "#s")
                 | B.Expr.Old _ ->
                   failwith "axiom mentions old"
                 | _ -> None
+              let res = trExpr initialEnv e
               let res = res.Map replMS
-              let res, vars = 
-                if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
-                //if !seenState then res, [("#s", tpState)] else res, []
-              let res =
-                match vars, res with
-                  | [], _ -> res
-                  | _, B.Expr.Forall (tok, vars2, triggers, attrs, body) ->
-                    B.Expr.Forall (tok, vars @ vars2, triggers, attrs, body)
-                  | _, _ -> 
-                    B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
-              [B.Decl.Axiom res]
+
+              if vcc3 then
+                let e =
+                  if not !seenState then e
+                  else
+                    let stateVar = C.Variable.CreateUnique "__vcc_state" C.Type.MathState C.VarKind.QuantBound
+                    let stateRef = C.Expr.Ref ({ C.bogusEC with Type = stateVar.Type }, stateVar)
+                    let inState (e:C.Expr) =
+                      let ec = { e.Common with Token = WarningSuppressingToken (e.Token, 9106) }
+                      C.Old (ec, stateRef, e)
+                    let goodState = C.Expr.Macro (C.boolBogusEC(), "prelude_good_state", [stateRef])
+                    match e with
+                      | C.Quant (ec, ({ Kind = C.Forall } as qd)) ->
+                        let qd =
+                          { qd with 
+                              Variables = stateVar :: qd.Variables
+                              Body = inState qd.Body
+                              Condition =
+                                match qd.Condition with
+                                  | Some c -> Some (TransUtil.mkAnd goodState (inState c))
+                                  | None -> Some goodState
+                              Triggers = List.map (List.map inState) qd.Triggers }
+                        C.Quant (ec, qd)
+                      | _ ->
+                        let qd = 
+                            {
+                              Kind = C.QuantKind.Forall
+                              Variables = [stateVar]
+                              Triggers = []
+                              Condition = Some goodState
+                              Body = inState e
+                            } : C.QuantData
+                        C.Expr.Quant (e.Common, qd)
+                // run trExpr again, so it will infer triggers 
+                [B.Decl.Axiom (trExpr initialEnv e)]
+              else
+                let res, vars = 
+                  if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
+                  //if !seenState then res, [("#s", tpState)] else res, []
+                let res =
+                  match vars, res with
+                    | [], _ -> res
+                    | _, B.Expr.Forall (tok, vars2, triggers, attrs, body) ->
+                      B.Expr.Forall (tok, vars @ vars2, triggers, attrs, body)
+                    | _, _ -> 
+                      B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
+                [B.Decl.Axiom res]
 
             | C.Top.Global ({ Kind = C.ConstGlobal ; Type = C.Ptr t } as v, _) ->
               if vcc3 then

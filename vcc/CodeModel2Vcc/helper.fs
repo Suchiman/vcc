@@ -103,6 +103,7 @@ namespace Microsoft.Research.Vcc
                   "i8_to_ptr",              ".";
                   "is",                     "p.";
                   "is_array",               "Sti";
+                  "is_array_stateless",     "ti";
                   "is_array_emb",           "Stip";
                   "is_fresh",               "sSp";
                   "is_global",              "t";
@@ -112,6 +113,7 @@ namespace Microsoft.Research.Vcc
                   "is_object",              "p";
                   "is_object_root",         "Sp";
                   "is_thread_local_array",  "Sti";
+                  "is_thread_local_array_inline",  "Sti";
                   "is_thread",              "p";
                   "me",                     "";
                   "mutable",                "Sp";
