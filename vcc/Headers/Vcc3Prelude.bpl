@@ -551,10 +551,10 @@ axiom (forall f:$field, i:int :: {$field_plus(f, i)}
 
 function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {
-  $is_array_inline(S,p,T,sz)
+  $is_array_stateless(p,T,sz)
 }
 
-function {:inline true} $is_array_inline(S:$state, p:$ptr, T:$ctype, sz:int) : bool
+function {:inline true} $is_array_stateless(p:$ptr, T:$ctype, sz:int) : bool
 {   
      $is(p, T)
   && $is_proper(p)
@@ -562,7 +562,7 @@ function {:inline true} $is_array_inline(S:$state, p:$ptr, T:$ctype, sz:int) : b
   && p == $idx($dot($base(p), $field_arr_root($field(p))), $field_arr_index($field(p)))
   && $field_kind($field(p)) != $fk_base
   && $field_arr_index($field(p)) >= 0
-  && $is_non_primitive($typ($emb(S, p)))
+  && $is_non_primitive($typ($emb0(p)))
 }
 
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool

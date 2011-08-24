@@ -103,6 +103,7 @@ namespace Microsoft.Research.Vcc
                   "i8_to_ptr",              ".";
                   "is",                     "p.";
                   "is_array",               "Sti";
+                  "is_array_stateless",     "ti";
                   "is_array_emb",           "Stip";
                   "is_fresh",               "sSp";
                   "is_global",              "t";
