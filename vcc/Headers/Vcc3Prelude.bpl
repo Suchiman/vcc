@@ -2916,7 +2916,9 @@ function $yarra_heap(s:$state) : $state;
 
 function $get_string_literal(id:int, length:int) : $ptr;
 
-// TODO: add axioms
+axiom (forall S:$state, id:int, length:int ::
+  {$good_state(S), $get_string_literal(id, length)}
+  $good_state(S) ==> $is_thread_local_array(S, $get_string_literal(id, length), ^^i1, length + 1));
 
 // ----------------------------------------------------------------------------
 // Datatypes
