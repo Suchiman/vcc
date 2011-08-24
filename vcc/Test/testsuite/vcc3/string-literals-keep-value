@@ -1,0 +1,14 @@
+`/newsyntax
+#include <vcc.h>
+
+void foo()
+{
+  const char *p = "foo";
+  char c = p[2];
+  _(assert p[0] == 'f')
+  _(assert p[1] == 'o')
+  _(assert p[3] == '\0')
+}
+`
+Verification of foo succeeded.
+`
