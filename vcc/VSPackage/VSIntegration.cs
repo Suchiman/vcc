@@ -61,7 +61,7 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     internal static void WriteToPane(string message)
     {
-      VerificationOutputpane.OutputString(message);
+      VerificationOutputpane.OutputString(message + "\n");
     }
 
     #endregion

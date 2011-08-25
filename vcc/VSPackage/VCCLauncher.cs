@@ -39,7 +39,7 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     #region commands
 
-    private static Lazy<NotifyIcon> notifyIcon = new Lazy<NotifyIcon>(InstallNotifyIcon);
+    private static readonly Lazy<NotifyIcon> notifyIcon = new Lazy<NotifyIcon>(InstallNotifyIcon);
 
     private static NotifyIcon InstallNotifyIcon()
     {
@@ -146,10 +146,9 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     internal static void LaunchVCC(string arguments)
     {
-      errorOccurred = false;
-      warningOccurred = false;
       var vccPath = VccPath;
 
+      arguments += " ";
       arguments += VSIntegration.CurrentCompilerSettings.ToVccOptions();
       arguments += String.Format(" /st /clerrors+ /clpath:\"{0}\"", GetCLPath(VSIntegration.CurrentPlatform));
 
@@ -168,9 +167,9 @@ namespace Microsoft.Research.Vcc.VSPackage
 
       //// Clear Verification Outputpane
       VSIntegration.ClearPane();
-      VSIntegration.WriteToPane("=== VCC started. ===\n");
+      VSIntegration.WriteToPane("=== VCC started. ===");
       //// Write Commandline-Command to Verification Outputpane
-      VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n\n", vccPath, arguments));
+      VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n", vccPath, arguments));
       //// Get notified when VCC sends Output or Error Data
       vccProcess.OutputDataReceived += vccProcess_OutputDataReceived;
       vccProcess.ErrorDataReceived += vccProcess_OutputDataReceived;
@@ -192,7 +191,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         vccProcess = null;
         VSIntegration.WriteToPane("Executing\n" + vccPath + "\nfailed.\n"
             + "You can specify the folder in which the VCC executable is located in Tools/Options/Vcc.");
-        VSIntegration.WriteToPane("\n=== Verification failed. ===\n");
+        VSIntegration.WriteToPane("=== Verification failed. ===");
         VSIntegration.UpdateStatus("Verification failed.", false);
       }
     }
@@ -252,8 +251,6 @@ namespace Microsoft.Research.Vcc.VSPackage
     #region process observation
 
     //// This is set to true, when Verification fails.
-    private static bool errorOccurred;
-    private static bool warningOccurred;
     private static readonly Regex VCCErrorRegEx =
         new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:\s(((error\s(.*?):)\s(?<errormessage>(.*)))|(?<errormessage>\(Location of symbol related to previous error.\)))");
     private static readonly Regex VCCWarningRegEx =
@@ -282,30 +279,30 @@ namespace Microsoft.Research.Vcc.VSPackage
             vccProcess.CancelOutputRead();
             vccProcess.CancelErrorRead();
             vccProcess = null;
-            VSIntegration.WriteToPane("\n=== VCC was canceled. ===\n");
+            VSIntegration.WriteToPane("\n=== VCC was canceled. ===");
             VSIntegration.UpdateStatus("Verification canceled.", false);
             break;
           case 0:
             Thread.Sleep(1000);
-            VSIntegration.WriteToPane("\n=== Verification succeeded. ===\n");
+            VSIntegration.WriteToPane("\n=== Verification succeeded. ===");
             VSIntegration.UpdateStatus("Verification succeeded.", false);
             break;
           case 2:
             Thread.Sleep(1000);
-            VSIntegration.WriteToPane("Incorrect commandline arguments were used.\n");
+            VSIntegration.WriteToPane("Incorrect commandline arguments were used.");
             VSIntegration.WriteToPane("\n=== Verification failed. ===\n");
             VSIntegration.UpdateStatus("Verification failed.", false);
             break;
           case 1:
           case 3:
             Thread.Sleep(1000);
-            VSIntegration.WriteToPane("\n=== Verification failed. ===\n");
+            VSIntegration.WriteToPane("\n=== Verification failed. ===");
             VSIntegration.UpdateStatus("Verification failed.", false);
             break;
           default:
             Thread.Sleep(1000);
-            VSIntegration.WriteToPane("\n=== VCC finished with unknown exitcode. ===\n");
-            VSIntegration.WriteToPane(vccProcess.ExitCode + "\n");
+            VSIntegration.WriteToPane("\n=== VCC finished with unknown exitcode. ===");
+            VSIntegration.WriteToPane(vccProcess.ExitCode.ToString());
             break;
         }
       }
@@ -316,16 +313,11 @@ namespace Microsoft.Research.Vcc.VSPackage
       //// Write Output from VCC to Verification Outputpane
       if (e != null && e.Data != null)
       {
+        VSIntegration.WriteToPane(e.Data);
+
         Match match;
         if ((match = VCCErrorRegEx.Match(e.Data)).Success)
         {
-          //// This line is an errormessage.
-          if (!errorOccurred)
-          {
-            VSIntegration.WriteToPane("\nAn error occurred. See Error List for details.\n\n");
-            errorOccurred = true;
-          }
-
           //// Add error to error list
           VSIntegration.AddErrorToErrorList(
             match.Groups["path"].Value,
@@ -335,24 +327,12 @@ namespace Microsoft.Research.Vcc.VSPackage
         }
         else if ((match = VCCWarningRegEx.Match(e.Data)).Success)
         {
-          //// This line is a warning.
-          if (!errorOccurred && !warningOccurred)
-          {
-            VSIntegration.WriteToPane("\nA warning occurred. See Error List for details. (You can hide warnings in Tools/Options/Vcc)\n\n");
-            warningOccurred = true;
-          }
-
           //// Add warning to error list
           VSIntegration.AddErrorToErrorList(
             match.Groups["path"].Value,
             match.Groups["errormessage"].Value,
             Int32.Parse(match.Groups["line"].Value),
             Microsoft.VisualStudio.Shell.TaskErrorCategory.Warning);
-        }
-        else if (!e.Data.StartsWith("Exiting"))
-        {
-          //// This line is not an error message.
-          VSIntegration.WriteToPane(String.Format("{0}\n", e.Data));
         }
       }
     }
