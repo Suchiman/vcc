@@ -236,12 +236,12 @@ axiom (forall p:$ptr, f:$field :: {$has_field_at0($typ(p), f), $spec_ptr_cast(p,
    $in_range_spec_ptr(p) &&
    $has_field_at0($typ(p), f) ==>
      $spec_ptr_cast(p, $field_type(f)) == $dot(p, f));
+*/
 
 axiom (forall p:$ptr :: 
    {$phys_ptr_cast(p, $field_parent_type($field(p))), $has_field_at0($field_parent_type($field(p)), $field(p))}
    $is_proper(p) && $in_range_phys_ptr(p) && $has_field_at0($field_parent_type($field(p)), $field(p)) ==>
      $phys_ptr_cast(p, $field_parent_type($field(p))) == $emb1(p));
-*/
 
 // This may be unsound.
 //axiom (forall p:$ptr :: {$is_group_type($field_type($field(p)))}
