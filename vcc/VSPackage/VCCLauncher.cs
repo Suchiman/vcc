@@ -109,6 +109,13 @@ namespace Microsoft.Research.Vcc.VSPackage
       LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
     }
 
+    internal static void VerifyFileWithoutIncludes(string filename, VccOptionPage options)
+    {
+      string addArguments = GetArgumentsFromOptions(options, true);
+      addArguments += " /ii";
+      LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
+    }
+
     #endregion
 
     #region process handling
