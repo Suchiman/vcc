@@ -93,6 +93,15 @@
         </Strings>
       </Button>
 
+      <Button guid="guidVerifyCmdSet" id="cmdidVerifyActiveFileWithoutIncludes" priority="0x0103" type ="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
+        <Icon guid="guidImages" id ="bmpPicF"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Verify Active File Without Includes</ButtonText>
+        </Strings>
+      </Button>
+
       <Button guid="guidVerifyCmdSet" id="cmdidOptions" priority="0x0101" type ="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
         <Icon guid="guidImages" id ="bmpPicO"/>
@@ -145,6 +154,17 @@
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
           <ButtonText>Verify Active File</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidVerifyCmdSet" id="cmdidContextVerifyActiveFileWithoutIncludes" priority="0x0100" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
+        <Icon guid="guidImages" id ="bmpPicF"/>
+        <CommandFlag>TextChanges</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Verify Active File Without Includes</ButtonText>
         </Strings>
       </Button>
 
@@ -263,6 +283,7 @@
 
   <KeyBindings>
     <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyActiveFile" key1="V" key2="F" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyActiveFileWithoutIncludes" key1="V" key2="I" mod1="ALT" mod2="ALT" />
     <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidCancel" key1="V" key2="C" mod1="ALT" mod2="ALT" />
     <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidReVerify" key1="V" key2="R" mod1="ALT" mod2="ALT" />
     <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyThis" key1="V" key2="T" mod1="ALT" mod2="ALT" />
@@ -280,12 +301,14 @@
       <IDSymbol name="cmdidMyMenuGroup" value="0x1020" />
       <IDSymbol name="cmdidContextMenuGroup" value="0x1022" />
       <IDSymbol name="cmdidVerifyActiveFile" value="0x0102" />
+      <IDSymbol name="cmdidVerifyActiveFileWithoutIncludes" value="0x0103" />
       <IDSymbol name="cmdidVerifyThis" value="0x0115"/>
       <IDSymbol name="cmdidReVerify" value="0x0112"/>
       <IDSymbol name="cmdidCustomVerify" value="0x0111" />
       <IDSymbol name="cmdidCancel" value="0x0105" />
       <IDSymbol name="cmdidOptions" value="0x0116"/>
       <IDSymbol name="cmdidContextVerifyActiveFile" value="0x0106"/>
+      <IDSymbol name="cmdidContextVerifyActiveFileWithoutIncludes" value="0x0107"/>
       <IDSymbol name="cmdidContextVerifyThis" value="0x0114"/>
       <IDSymbol name="cmdidContextReVerify" value="0x0113"/>
       <IDSymbol name="cmdidContextCustomVerify" value="0x0109" />
