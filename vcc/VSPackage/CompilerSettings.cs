@@ -4,10 +4,10 @@
 //
 //-----------------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
-using EnvDTE;
-using Microsoft.VisualStudio.VCProjectEngine;
+using System.Reflection;
 using System.Text;
+using Microsoft.VisualStudio.VCProjectEngine;
+using EnvDTE;
 
 namespace Microsoft.Research.Vcc.VSPackage {
 
@@ -17,7 +17,6 @@ namespace Microsoft.Research.Vcc.VSPackage {
     private string preprocessorDefinitions;
     private string additionalIncludeDirectories;
     private string forcedIncludeFiles;
-    private bool ignoreStandardIncludePath;
     
     bool InheritPreprocessorDefinitions
     {
@@ -47,60 +46,22 @@ namespace Microsoft.Research.Vcc.VSPackage {
       this.additionalIncludeDirectories = CompilerSettings.ExecuteMacroProject(vcProject, activeSetting, this.additionalIncludeDirectories);
       this.preprocessorDefinitions = CompilerSettings.ExecuteMacroProject(vcProject, activeSetting, this.preprocessorDefinitions);
       this.forcedIncludeFiles = CompilerSettings.ExecuteMacroProject(vcProject, activeSetting, this.forcedIncludeFiles);
-
-      string VCIncludeDirs = CompilerSettings.GetVCIncludeDirs(prjItem);
-      if (InheritAdditionalIncludeDirectories && !ignoreStandardIncludePath)
-        additionalIncludeDirectories = VCIncludeDirs + additionalIncludeDirectories;
     }
-    
+
     public string ToVccOptions()
     {
-      var ppDefs = CompilerSettings.CheckPreProcessorDefs(this.preprocessorDefinitions);
-      var forcedIncDirs = CompilerSettings.CheckIncludeDirs(this.forcedIncludeFiles, "/FI");
-      var incDirs = CompilerSettings.CheckIncludeDirs(this.additionalIncludeDirectories, "/I");
-      var args = new StringBuilder();
+        var args = new StringBuilder();
 
-      if (ppDefs.Length > 0)
-      {
-        args.Append(ppDefs);
-      }
+        args.Append(SplitAndFormatArgs(this.preprocessorDefinitions, "/p:/D", false));
+        args.Append(SplitAndFormatArgs(this.additionalIncludeDirectories, "/p:/I", true));
+        args.Append(SplitAndFormatArgs(this.forcedIncludeFiles, "/p:/I", true));
 
-      if (forcedIncDirs.Length > 0)
-      {
-        if (args.Length > 0)
-        {
-          args.Append(';');
-        }
-        args.Append(forcedIncDirs);
-      }
-
-      if (incDirs.Length > 0)
-      {
-        if (args.Length > 0)
-        {
-          args.Append(';');
-        }
-        args.Append(incDirs);
-      }
-
-      if (this.ignoreStandardIncludePath)
-      {
-        if (args.Length > 0)
-        {
-          args.Append(';');
-        }
-        args.Append("/X");
-      }
-
-      return args.Length > 0 ? " /p:" + args : String.Empty;
+        return args.ToString();
     }
 
     private static void AddSettingsForCompilerTool(CompilerSettings settings, VCCLCompilerTool compilerTool)
     {
-        settings.ignoreStandardIncludePath |= compilerTool.IgnoreStandardIncludePath;
         string prePro = compilerTool.PreprocessorDefinitions;
-
-
         if (prePro != null && settings.InheritPreprocessorDefinitions)
             settings.preprocessorDefinitions += prePro + ";";
 
@@ -113,21 +74,70 @@ namespace Microsoft.Research.Vcc.VSPackage {
             settings.forcedIncludeFiles += forcedIncludes + ";";
     }
 
-      private static void AddSettingsForCompilerTool(CompilerSettings settings, VCNMakeTool nMakeTool)
+    private static void AddSettingsForCompilerTool(CompilerSettings settings, VCNMakeTool nMakeTool)
     {
-        string prePro = nMakeTool.PreprocessorDefinitions;
+        var additionalOptions = GetSettingsFromAdditionalOptions(nMakeTool);
 
-        if (prePro != null && settings.InheritPreprocessorDefinitions)
-            settings.preprocessorDefinitions += prePro + ";";
+        string prePro = nMakeTool.PreprocessorDefinitions ?? "";
+        if (settings.InheritPreprocessorDefinitions)
+            settings.preprocessorDefinitions += prePro + ";" + additionalOptions.Item1 + ";";
 
-        string additionalDirs = nMakeTool.IncludeSearchPath;
-        if (additionalDirs != null && settings.InheritAdditionalIncludeDirectories)
-            settings.additionalIncludeDirectories += additionalDirs + ";";
+        string additionalDirs = nMakeTool.IncludeSearchPath ?? "";
+        if (settings.InheritAdditionalIncludeDirectories)
+            settings.additionalIncludeDirectories += additionalDirs + ";" + additionalOptions.Item2 + ";";
 
-        string forcedIncludes = nMakeTool.ForcedIncludes;
-        if (forcedIncludes != null && settings.InheritForcedIncludeFiles)
-            settings.forcedIncludeFiles += forcedIncludes + ";";
+        string forcedIncludes = nMakeTool.ForcedIncludes ?? "";
+        if (settings.InheritForcedIncludeFiles)
+            settings.forcedIncludeFiles += forcedIncludes + ";" + additionalOptions.Item3 + ";";
     }
+
+    private static Tuple<string,string,string> GetSettingsFromAdditionalOptions(VCNMakeTool nMakeTool)
+    {
+        string additionalOptionsString = GetAdditionalOptionsValue(nMakeTool);
+        if (!String.IsNullOrEmpty(additionalOptionsString))
+        {
+            string[] additionalOptions = additionalOptionsString.Split(new[] {' '},
+                                                                        StringSplitOptions.RemoveEmptyEntries);
+
+            var defines = new StringBuilder();
+            var includes = new StringBuilder();
+            var forcedIncludes = new StringBuilder();
+
+            foreach (var opt in additionalOptions)
+            {
+                if (opt.StartsWith("/D") || opt.StartsWith("-D"))
+                {
+                    defines.Append(opt.Substring(2)).Append(';');
+                }
+
+                if (opt.StartsWith("/I") || opt.StartsWith("-I"))
+                {
+                    includes.Append(opt.Substring(2)).Append(';');
+                }
+
+                if (opt.StartsWith("/FI") || opt.StartsWith("-FI"))
+                {
+                    forcedIncludes.Append(opt.Substring(3)).Append(';');
+                }
+            }
+
+            return Tuple.Create(defines.ToString(), includes.ToString(), forcedIncludes.ToString());
+        }
+
+        else return Tuple.Create("", "", "");
+    }
+
+      private static string GetAdditionalOptionsValue(VCNMakeTool nMakeTool)
+      {
+          const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.FlattenHierarchy |
+                                            BindingFlags.NonPublic | BindingFlags.Public;
+          var strProp = nMakeTool.GetType().GetProperty("StronglyTypedRule", bindingFlags);
+          var str = strProp.GetValue(nMakeTool, null);
+          var aoProp = str.GetType().GetProperty("AdditionalOptions", bindingFlags);
+          var ao = aoProp.GetValue(str, null);
+          var vasProp = ao.GetType().GetProperty("ValueAsString", bindingFlags);
+          return (string)vasProp.GetValue(ao, null);
+      }
 
       /// <summary>
     /// Gets current Settings for an VCProject.
@@ -208,90 +218,22 @@ namespace Microsoft.Research.Vcc.VSPackage {
       return Configuration.Evaluate(MacroToEvaluate);
     }
 
-    private static string GetActiveConfigOfProject(Project prj)
+      private static string SplitAndFormatArgs(string options, string optionPrefix, bool quoteFileNames)
     {
-      return prj.ConfigurationManager.ActiveConfiguration.ConfigurationName;
-    }
+        if (String.IsNullOrEmpty(options)) return "";
 
-    private  static string GetActivePlatformOfProject(Project prj)
-    {
-      return prj.ConfigurationManager.ActiveConfiguration.PlatformName;
-    }
-
-
-    private static string GetVCIncludeDirs(ProjectItem prjItem)
-    {
-      EnvDTE80.DTE2 dte = (EnvDTE80.DTE2)VSIntegration.DTE;
-      EnvDTE.Properties properties = dte.Properties["Projects", "VCDirectories"];
-
-      string VCIncludeDir = properties.Item("IncludeDirectories").Value.ToString();
-      string[] aVCDirs = VCIncludeDir.Split('|');
-      Dictionary<string, string> IncludesForPlatforms = new Dictionary<string, string>();
-      for (int i = 0; i < aVCDirs.Length; i += 2) {
-        IncludesForPlatforms.Add(aVCDirs[i], aVCDirs[i + 1]);
-      }
-
-      string IncDirsForActivePlatform = IncludesForPlatforms[GetActivePlatformOfProject(prjItem.ContainingProject)];
-      IncDirsForActivePlatform = ExecuteMacroProject((prjItem.ContainingProject.Object as VCProject),
-                                  GetActiveConfigOfProject(prjItem.ContainingProject),
-                                  IncDirsForActivePlatform);
-
-      if (IncDirsForActivePlatform.EndsWith(";"))
-        return IncDirsForActivePlatform;
-      else
-        return IncDirsForActivePlatform + ";";
-    }
-
-    private static string CheckPreProcessorDefs(string PreProcessorDefs) {
-      if (PreProcessorDefs != null) {
-        PreProcessorDefs = PreProcessorDefs.Replace("$(NOINHERIT);", "");
-        string[] PreProcessorDefsArray = PreProcessorDefs.Split(';');
-        StringBuilder VCCDefs = new StringBuilder();
-
-        foreach (string Defs in PreProcessorDefsArray) {
-          //Emtpy Dirs dont needed     
-          if (Defs == String.Empty || Defs== "VERIFY" ) continue;
-          VCCDefs.Append("/D" + Defs + ";");
-        }
-        while (VCCDefs.ToString().EndsWith(";")) {
-          VCCDefs = VCCDefs.Remove(VCCDefs.Length - 1, 1);
-        }
-        return VCCDefs.ToString();
-      } else {
-        return String.Empty;
-      }
-    }
-
-    private static string CheckIncludeDirs(string DirsOrFiles, string optionString)
-    {
-      //Cleanup NOINHERIT FLAG
-      if (DirsOrFiles != null)
-      {
-        DirsOrFiles = DirsOrFiles.Replace("$(NOINHERIT);", "");
-        string[] DirsOrFilesArray = DirsOrFiles.Split(';');
-        StringBuilder VCCIncDirs = new StringBuilder();
-
-        foreach (string Dir in DirsOrFilesArray)
+        StringBuilder result = new StringBuilder();
+        var opts = options.Split(new[] {';'}, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var opt in opts)
         {
-          //Emtpy Dirs dont needed     
-          if (Dir == String.Empty) continue;
-
-          string help = Dir.Replace("\"", "");
-          if (help.Contains(" "))
-            help = "\"" + help + "\"";
-
-          VCCIncDirs.Append(optionString).Append(help).Append(";");
+            if (opt == NoInherit) continue;
+            if (quoteFileNames && opt.Contains(" ") && !opt.StartsWith("\""))
+                result.Append(optionPrefix).Append('"').Append(opt).Append('"').Append(' ');
+            else
+                result.Append(optionPrefix).Append(opt).Append(' ');
         }
-        while (VCCIncDirs.ToString().EndsWith(";"))
-        {
-          VCCIncDirs = VCCIncDirs.Remove(VCCIncDirs.Length - 1, 1);
-        }
-        return VCCIncDirs.ToString();
-      }
-      else
-      {
-        return String.Empty;
-      }
+
+        return result.ToString();
     }
   }
 }
