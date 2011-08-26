@@ -90,6 +90,7 @@
       <Link>Build\version.cs</Link>
     </Compile>
     <Compile Include="Error.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="ObjectModel\Contracts.cs" />
     <Compile Include="ObjectModel\Core.cs" />
     <Compile Include="ObjectModel\Expressions.cs" />

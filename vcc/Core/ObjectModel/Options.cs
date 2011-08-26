@@ -24,14 +24,12 @@ namespace Microsoft.Research.Vcc
     public List<string> Z3Options = new List<string>();
     public bool VCLikeErrorMessages;
     public bool TimeStats;
-    public bool TimeStatsForVs;
     public bool XmlFormatOutput;
     public string/*?*/ ClPath;
     public List<string> Functions = new List<string>();
     public List<string> FunctionsWithExactName = new List<string>();
     public bool RunningFromCommandLine;
     public uint? VerifyUpToLine;
-    public bool PauseBeforeExit;
     public bool EagerTranslation;
     public bool OmitReadWriteChecking;
     public bool RunInBatchMode;
@@ -101,12 +99,10 @@ namespace Microsoft.Research.Vcc
       this.TranslateToBPL = other.TranslateToBPL;
       this.VCLikeErrorMessages = other.VCLikeErrorMessages;
       this.TimeStats = other.TimeStats;
-      this.TimeStatsForVs = other.TimeStatsForVs;
       this.XmlFormatOutput = other.XmlFormatOutput;
       this.ClPath = other.ClPath;
       this.RunningFromCommandLine = other.RunningFromCommandLine;
       this.VerifyUpToLine = other.VerifyUpToLine;
-      this.PauseBeforeExit = other.PauseBeforeExit;
       this.EagerTranslation = other.EagerTranslation;
       this.OmitReadWriteChecking = other.OmitReadWriteChecking;
       this.RunInBatchMode = other.RunInBatchMode;
@@ -416,11 +412,6 @@ namespace Microsoft.Research.Vcc
           }
           return false;
         case 'p':
-          if (this.ParseName(arg, "pause", "pause")) {
-            this.options.PauseBeforeExit = true;
-            return true;
-          }
-
           int pointerSize = 0;
           if (this.TryParseNamedInteger(arg, "pointersize", "ps", ref pointerSize) &&
               (pointerSize == 32 || pointerSize == 64)) {
@@ -481,12 +472,6 @@ namespace Microsoft.Research.Vcc
           else if (this.ParseName(arg, "stats", "st"))
           {
             this.options.TimeStats = true;
-            return true;
-          }
-          else if (this.ParseName(arg, "statsvs", "stvs"))
-          {
-            this.options.TimeStats = true;
-            this.options.TimeStatsForVs = true;
             return true;
           }
           else if (this.ParseName(arg, "smoke", "sm"))

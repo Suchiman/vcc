@@ -16,6 +16,6 @@ void foo() {
 }
 `
 Verification of foo failed.
-testcase(14,17) : error VC8512: Assertion 'core.R[12] is thread local' did not verify.
 testcase(14,17) : error VC8518: Assertion 'core.R[12] fits range of int64_t' did not verify.
+testcase(14,17) : error VC8512: Assertion 'core.R[12] is thread local' did not verify.
 `

@@ -30,11 +30,8 @@ namespace Microsoft.Research.Vcc
             preprocessedFiles.Add(ppFileName);
           }
         }
-      } catch {
-        if (commandLineOptions.ClPath != null)
-          Console.WriteLine("Error while running preprocessor " + commandLineOptions.ClPath);
-        else
-          Console.WriteLine("Please install Microsoft VC++ before using VCC. If already installed, please ensure that the VS100COMNTOOLS or VS90COMNTOOLS environment variable is set.");
+      } catch (Exception e) {
+        Logger.Instance.Error("Error while running preprocessor: " + e.Message);
         hasErrors = true;
       } finally {
         Directory.SetCurrentDirectory(savedCurentDir);
@@ -65,13 +62,18 @@ namespace Microsoft.Research.Vcc
       return args.ToString();
     }
 
-    private static bool ProcessOutputAndReturnTrueIfErrorsAreFound(string fileName, string ppOutput) {
+    private static bool ProcessOutputAndReturnTrueIfErrorsAreFound(string fileName, StringBuilder ppOutput) {
       bool hasErrors = false;
       if (ppOutput.Length > 0) {
         ppOutput = ppOutput.Replace(Path.GetFileName(fileName) + "\r\n", "");
-        if (ppOutput.Length > 0) Console.Write(ppOutput);
-        if (ppOutput.Contains(": error C") || ppOutput.Contains(": fatal error C"))
+        var str = ppOutput.ToString();
+        if (str.Contains(": error C") || str.Contains(": fatal error C")) {
+          Logger.Instance.Error(str);
           hasErrors = true;
+        } else {
+          if (str.Length > 0)
+          Logger.Instance.Log(str);
+        }
       }
       return hasErrors;
     }
@@ -114,7 +116,7 @@ namespace Microsoft.Research.Vcc
         process.BeginOutputReadLine();
         process.WaitForExit();
       }
-      return ProcessOutputAndReturnTrueIfErrorsAreFound(fileName, errors.ToString());
+      return ProcessOutputAndReturnTrueIfErrorsAreFound(fileName, errors);
     }
     
 

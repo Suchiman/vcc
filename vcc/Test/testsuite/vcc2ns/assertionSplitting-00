@@ -96,6 +96,7 @@ Verification of bar failed.
 testcase(13,29) : error VC9500: Loop entry invariant 'b > 0' did not verify.
 testcase(14,29) : error VC9500: Loop entry invariant 'a > b' did not verify.
 testcase(14,38) : error VC9500: Loop entry invariant 'b > c' did not verify.
+testcase(14,29) : error VC9500: Loop body invariant 'a > b' did not verify.
 Verification of baz failed.
 testcase(27,35) : error VC9500: Assertion 'i > 0 ==> n[i] < 0 in \forall int i; i > 0 ==> m[i] > 0 && n[i] < 0)' did not verify.
 Verification of baz2 failed.
