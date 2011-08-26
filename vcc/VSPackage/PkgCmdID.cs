@@ -6,8 +6,10 @@ namespace Microsoft.Research.Vcc.VSPackage
   static class PkgCmdIDList
   {
     public const uint cmdidVerifyActiveFile = 0x0102;
+    public const uint cmdidVerifyActiveFileWithoutIncludes = 0x0103;
     public const uint cmdidCancel = 0x0105;
     public const uint cmdidContextVerifyActiveFile = 0x0106;
+    public const uint cmdidContextVerifyActiveFileWithoutIncludes = 0x0107;
     public const uint cmdidContextCustomVerify = 0x0109;
     public const uint cmdidContextCancel = 0x0110;
     public const uint cmdidCustomVerify = 0x0111;
