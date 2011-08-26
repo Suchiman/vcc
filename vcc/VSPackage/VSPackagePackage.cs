@@ -134,6 +134,20 @@ namespace Microsoft.Research.Vcc.VSPackage
       }
     }
 
+    /// <summary>
+    ///     Launches VCC.exe to verify the active file without includes
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private void VerifyActiveFileWithoutIncludes(object sender, EventArgs e)
+    {
+      if (OptionPage != null)
+      {
+        if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
+        VCCLauncher.VerifyFileWithoutIncludes(VSIntegration.ActiveFileFullName, OptionPage);
+      }
+    }
+
     private void ReVerify(object sender, EventArgs e)
     {
       if (OptionPage != null)
@@ -267,6 +281,21 @@ namespace Microsoft.Research.Vcc.VSPackage
     }
 
     /// <summary>
+    ///     Verify File Without Includes
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    static void VerifyFileWithoutIncludes_BeforeQueryStatus(object sender, EventArgs e)
+    {
+      if (sender != null)
+      {
+        ((OleMenuCommand)sender).Text = string.Format("Verify File Without Includes: '{0}'", VSIntegration.ActiveFileName);
+        ((OleMenuCommand)sender).Enabled = !VCCLauncher.VCCRunning;
+        ((OleMenuCommand)sender).Visible = VSIntegration.IsCodeFile;
+      }
+    }
+
+    /// <summary>
     ///     Re-Verify
     /// </summary>
     /// <param name="sender"></param>
@@ -318,6 +347,12 @@ namespace Microsoft.Research.Vcc.VSPackage
         OleMenuItem.BeforeQueryStatus += VerifyFile_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
+        //// Verify File Without Includes
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFileWithoutIncludes);
+        OleMenuItem = new OleMenuCommand(VerifyActiveFileWithoutIncludes, menuCommandID);
+        OleMenuItem.BeforeQueryStatus += VerifyFileWithoutIncludes_BeforeQueryStatus;
+        mcs.AddCommand(OleMenuItem);
+
         //// Options
         menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidOptions);
         OleMenuItem = new OleMenuCommand(Options, menuCommandID);
@@ -351,6 +386,12 @@ namespace Microsoft.Research.Vcc.VSPackage
         menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
         OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
         OleMenuItem.BeforeQueryStatus += VerifyFile_BeforeQueryStatus;
+        mcs.AddCommand(OleMenuItem);
+
+        //// Verify File Without Includes (Context Menu)
+        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFileWithoutIncludes);
+        OleMenuItem = new OleMenuCommand(VerifyActiveFileWithoutIncludes, menuCommandID);
+        OleMenuItem.BeforeQueryStatus += VerifyFileWithoutIncludes_BeforeQueryStatus;
         mcs.AddCommand(OleMenuItem);
 
         //// Verify This(Context Menu)
