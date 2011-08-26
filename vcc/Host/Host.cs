@@ -17,7 +17,6 @@ namespace Microsoft.Research.Vcc
 
   public class VccCommandLineHost
   {
-
     const string FsharpDownloadUrl = "http://www.microsoft.com/downloads/details.aspx?FamilyID=5f0a79f8-925f-4297-9ae2-86e2fdcff33c";
 
     /// <summary>
@@ -34,99 +33,75 @@ namespace Microsoft.Research.Vcc
       var y = new Microsoft.Boogie.SMTLib.Factory();
 #pragma warning restore 168
 
-      startTime = GetTime();
-      cciErrorHandler = new CciErrorHandler();
-      dummyHostEnvironment.Errors += cciErrorHandler.HandleErrors;
-      var commandLineOptions = OptionParser.ParseCommandLineArguments(dummyHostEnvironment, args);
-      commandLineOptions.RunningFromCommandLine = true;
-      standardPreludePath = commandLineOptions.PreludePath;
-      cciErrorHandler.CommandLineOptions = commandLineOptions;
-      verificationErrorHandler = new VerificationErrorHandler(commandLineOptions);
+      Logger.Instance.Register(ConsoleLogger.Instance);
 
-      if (commandLineOptions.DisplayCommandLineHelp)
-      {
-        DisplayCommandLineHelp();
-        return 0;
-      }
-      if (commandLineOptions.DisplayVersion)
-      {
-        DisplayVersion(commandLineOptions.XmlFormatOutput);
-        return 0;
-      }
-
-      if (!CheckPresenceOfFSharpRuntime())
-      {
-        Console.WriteLine("Error - F# runtime not installed. You can download the runtime from:\n\n" + FsharpDownloadUrl);
-        Console.WriteLine("\n\nGo to download page?");
-        string reply = Console.ReadLine();
-        if (reply != null && reply.ToUpperInvariant().StartsWith("Y"))
-        {
-          Process.Start(FsharpDownloadUrl);
-        }
-        Console.WriteLine("Exiting with -3");
-        return -3;
-      }
-
-      if (errorCount > 0)
-      {
-        Console.WriteLine("Exiting with 1 - error parsing arguments.");
-        return 1;
-      }
-
-
-      if ((currentPlugin = InitializePlugin(commandLineOptions)) == null)
-      {
-        Console.WriteLine("Exiting with 2 - error initializing plugin.");
-        return 2;
-      }
-
-      if (commandLineOptions.RunTestSuite)
-        errorCount = TestRunner.RunTestSuite(commandLineOptions);
-      else
-        RunPlugin(commandLineOptions);
-
-      swTotal.Stop();
-
-      DumpTimes(commandLineOptions);
-
-      int retVal = 0;
-
-      if (errorCount > 0)
-      {
-        Console.WriteLine("Exiting with 3 ({0} error(s).)", errorCount);
-        retVal = 3;
-      }
-
-      if (commandLineOptions.PauseBeforeExit)
-      {
-        Console.WriteLine("Done. Press any key to continue . . .");
-        Console.ReadKey();
-      }
-
-      return retVal;
-    }
-
-    internal static bool CheckPresenceOfFSharpRuntime()
-    {
       try
       {
-        CheckPresenceOfFSharpRuntimeHelper();
-      }
-      catch (TypeLoadException)
-      {
-        return false;
-      }
-      catch (FileNotFoundException)
-      {
-        return false;
-      }
-      return true;
-    }
 
-    internal static void CheckPresenceOfFSharpRuntimeHelper()
-    {
-      Microsoft.FSharp.Collections.FSharpList<int> l = new FSharp.Collections.FSharpList<int>(1, Microsoft.FSharp.Collections.FSharpList<int>.Empty);
-      Debug.Assert(l.Length == 1);
+          startTime = GetTime();
+          cciErrorHandler = new CciErrorHandler();
+          dummyHostEnvironment.Errors += cciErrorHandler.HandleErrors;
+          var commandLineOptions = OptionParser.ParseCommandLineArguments(dummyHostEnvironment, args);
+          commandLineOptions.RunningFromCommandLine = true;
+          standardPreludePath = commandLineOptions.PreludePath;
+          cciErrorHandler.CommandLineOptions = commandLineOptions;
+          verificationErrorHandler = new VerificationErrorHandler(commandLineOptions);
+
+          if (commandLineOptions.DisplayCommandLineHelp)
+          {
+              DisplayCommandLineHelp();
+              return 0;
+          }
+
+          if (commandLineOptions.DisplayVersion)
+          {
+              DisplayVersion();
+              return 0;
+          }
+
+          if (errorCount > 0)
+          {
+              Console.Error.WriteLine("Exiting with 1 - error parsing arguments.");
+              return 1;
+          }
+
+          if (commandLineOptions.RunTestSuite) {
+            Logger.Instance.Unregister(ConsoleLogger.Instance);
+            Logger.Instance.Register(new ConsoleLoggerForTestRun());
+          } else if (commandLineOptions.VCLikeErrorMessages) {
+            Logger.Instance.Unregister(ConsoleLogger.Instance);
+            Logger.Instance.Register(new ConsoleLogger("vcc : "));
+          }
+
+          if ((currentPlugin = InitializePlugin(commandLineOptions)) == null)
+          {
+              Logger.Instance.Log("Exiting with 2 - error initializing plugin.");
+              return 2;
+          }
+
+          if (commandLineOptions.RunTestSuite)
+              errorCount = TestRunner.RunTestSuite(commandLineOptions);
+          else
+              RunPlugin(commandLineOptions);
+
+          swTotal.Stop();
+
+          DumpTimes(commandLineOptions);
+
+          int retVal = 0;
+
+          if (errorCount > 0)
+          {
+              Logger.Instance.Error("Exiting with 3 ({0} error(s).)", errorCount);
+              retVal = 3;
+          }
+
+          return retVal;
+      }
+      finally
+      {
+          Logger.Instance.Dispose();
+      }              
     }
 
     internal static VerificationErrorHandler ErrorHandler
@@ -140,7 +115,7 @@ namespace Microsoft.Research.Vcc
 
     private static void PrintPluginMessage(object sender, string message)
     {
-      Console.Write(message);
+      Logger.Instance.Log(message);
     }
 
     static readonly Stopwatch swVisitor = new Stopwatch("FELT Visitor");
@@ -171,7 +146,7 @@ namespace Microsoft.Research.Vcc
             }
             else
             {
-              System.Console.WriteLine("More than one plugin requested ('{0}' and '{1}').", pluginName, opt);
+              Logger.Instance.Error("More than one plugin requested ('{0}' and '{1}').", pluginName, opt);
               return null;
             }
           }
@@ -191,7 +166,7 @@ namespace Microsoft.Research.Vcc
               {
                 if (selectedPlugin != null)
                 {
-                  System.Console.WriteLine("More than one plugin matches '{0}'.", pluginName);
+                  Logger.Instance.Error("More than one plugin matches '{0}'.", pluginName);
                   return null;
                 }
                 selectedPlugin = plugin;
@@ -205,7 +180,7 @@ namespace Microsoft.Research.Vcc
                 {
                   if (vcgenPlugin != null)
                   {
-                    System.Console.WriteLine("More than one VCGEN plugin matches '{0}'.", pluginName);
+                    Logger.Instance.Error("More than one VCGEN plugin matches '{0}'.", pluginName);
                     return null;
                   }
                   vcgenPlugin = plugin;
@@ -214,7 +189,7 @@ namespace Microsoft.Research.Vcc
 
               if (vcgenPlugin == null)
               {
-                System.Console.WriteLine("Plugin '{0}' not found.", pluginName);
+                Logger.Instance.Error("Plugin '{0}' not found.", pluginName);
                 return null;
               }
             }
@@ -248,8 +223,8 @@ namespace Microsoft.Research.Vcc
       {
         foreach (Exception ex in e.LoaderExceptions)
         {
-          Console.WriteLine(ex.Message);
-          Console.WriteLine(ex.StackTrace);
+          Logger.Instance.Error(ex.Message);
+          Logger.Instance.Error(ex.StackTrace);
         }
       }
       return null;
@@ -299,22 +274,16 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private static void DisplayVersion(bool formatAsXml)
+    private static void DisplayVersion() 
     {
       string vccVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location).FileVersion;
       string boogieVersionString = System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Boogie.Parser).Assembly.Location).FileVersion;
       string z3VersionString = GetZ3Version();
-      if (formatAsXml)
-      {
-        Console.WriteLine("<version>Vcc " + vccVersionString + ", Boogie " + boogieVersionString + ", Z3 " + z3VersionString + "</version>");
-      }
-      else
-      {
-        System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
-        // ReSharper disable AssignNullToNotNullAttribute
-        Console.WriteLine(rm.GetString("Version"), vccVersionString, boogieVersionString, z3VersionString);
-        // ReSharper restore AssignNullToNotNullAttribute
-      }
+
+      System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
+      // ReSharper disable AssignNullToNotNullAttribute
+      Logger.Instance.Log(rm.GetString("Version"), vccVersionString, boogieVersionString, z3VersionString);
+      // ReSharper restore AssignNullToNotNullAttribute
     }
 
     static int errorCount;
@@ -417,7 +386,7 @@ namespace Microsoft.Research.Vcc
       var colonPos = fileLoc.LastIndexOf(':');
       if (colonPos == -1 || colonPos == 0 || colonPos == fileLoc.Length - 1)
       {
-        Console.WriteLine("vcc : error : invalid source location '{0}' .", fileLoc);
+        Logger.Instance.Error("invalid source location '{0}' .", fileLoc);
         errorCount++;
         return null;
       }
@@ -427,7 +396,7 @@ namespace Microsoft.Research.Vcc
 
       if (!uint.TryParse(fileLoc.Substring(colonPos + 1), out fileLine))
       {
-        Console.WriteLine("vcc : error : invalid source location line '{0}' .", fileLoc.Substring(colonPos + 1));
+        Logger.Instance.Error("invalid source location line '{0}' .", fileLoc.Substring(colonPos + 1));
         errorCount++;
         return null;
       }
@@ -446,7 +415,7 @@ namespace Microsoft.Research.Vcc
         }
       }
 
-      Console.WriteLine( "vcc : error : could not find source item with location '{0}'", fileLoc);
+      Logger.Instance.Error( "could not find source item with location '{0}'", fileLoc);
       errorCount++;
       return null;
     }
@@ -526,21 +495,18 @@ namespace Microsoft.Research.Vcc
       catch (ProverDiedException e)
       {
         // we might want to do something else for this one
-        System.Console.WriteLine();
-        System.Console.WriteLine();
-        System.Console.WriteLine(e.Message);
+        Logger.Instance.NewLine();
+        Logger.Instance.Error(e.Message);
       }
       catch (UnexpectedProverOutputException e)
       {
-        System.Console.WriteLine();
-        System.Console.WriteLine();
-        System.Console.WriteLine(e.Message);
+        Logger.Instance.NewLine();
+        Logger.Instance.Error(e.Message);
       }
       catch (Exception e)
       {
-        System.Console.WriteLine();
-        System.Console.WriteLine();
-        System.Console.WriteLine(e);
+        Logger.Instance.NewLine();
+        Logger.Instance.Error(e.Message);
       }
 
       return -2;
@@ -602,7 +568,7 @@ namespace Microsoft.Research.Vcc
         }
 
         var outcome = fver.Verify(func.Item2);
-        verificationErrorHandler.FlushErrors();
+        //verificationErrorHandler.FlushErrors();
 
         if (outcome == VerificationResult.Succeeded || outcome == VerificationResult.Skipped) { } else { numErrors++; }
       }
@@ -622,40 +588,27 @@ namespace Microsoft.Research.Vcc
         {
           if (!foundFunctionSpecifiers.Contains(fn))
           {
-            Console.WriteLine("vcc : error : '{0}' did not match any function.", fn);
+            Logger.Instance.Error("'{0}' did not match any function.", fn);
             errorCount++;
           }
         }
       }
 
-      double now = GetTime();
       fver.Close();
+      double now = GetTime();
 
-      if (commandLineOptions.TimeStats)
-      {
-        string xmlReport = string.Format("<time><total>{0:0.00}</total><compiler>{1:0.00}</compiler><boogie>{2:0.00}</boogie><verification>{3:0.00}</verification></time>",
-                            now - startTime, beforeBoogie - startTime,
-                            beforeMethods - beforeBoogie,
-                            now - beforeMethods);
-        xmlReport += "\r\n" + "<errors>" + numErrors + "</errors>\r\n";
-        if (commandLineOptions.RunTestSuite)
-        {
-          if (TestRunner.testrunTimeStats != null)
-            TestRunner.testrunTimeStats.Append(xmlReport);
-        }
-        else if (commandLineOptions.XmlFormatOutput)
-        {
-          Console.Write(xmlReport);
-        }
-        else
-        {
-          Console.WriteLine("Time: {0:0.00}s total, {1:0.00}s compiler, {2:0.00}s Boogie, {3:0.00}s method verification.",
-                            now - startTime, beforeBoogie - startTime,
-                            beforeMethods - beforeBoogie,
-                            now - beforeMethods);
-          if (numErrors != 0)
-            Console.WriteLine("Detected verification errors in {0} methods.", numErrors);
-        }
+      if (!commandLineOptions.RunTestSuite) {
+        var timerInfo =
+          commandLineOptions.TimeStats ?
+            new[] {
+            Tuple.Create("total", now - startTime),
+            Tuple.Create("compiler", beforeBoogie - startTime),
+            Tuple.Create("boogie", beforeMethods - beforeBoogie),
+            Tuple.Create("verification", now - beforeMethods),
+          }
+            : null;
+
+        Logger.Instance.LogSummary(numErrors, timerInfo);
       }
     }
 
@@ -665,7 +618,7 @@ namespace Microsoft.Research.Vcc
       {
         foreach (var s in currentPlugin.Stopwatches)
         {
-          Console.WriteLine(s.Display());
+          Logger.Instance.Log(s.Display());
         }
       }
     }
@@ -716,7 +669,7 @@ namespace Microsoft.Research.Vcc
       int _errorCount = Boogie.Parser.Parse(_preludePath, new List<string>(), out prelude);
       if (prelude == null || _errorCount > 0)
       {
-        System.Console.WriteLine("There were errors parsing VccPrelude.bpl.");
+        Logger.Instance.Error("There were errors parsing VccPrelude.bpl.");
         return new Program();
       }
       else
@@ -743,10 +696,7 @@ namespace Microsoft.Research.Vcc
 
     public void Error(IToken tok, string msg)
     {
-      if (this.noPreprocessor)
-        Console.Out.WriteLine("({0},{1}): verification: {2}", tok.line, tok.col, msg);
-      else
-        Console.Out.WriteLine("({0}): verification: {1}", tok.line, msg);
+      Logger.Instance.LogWithLocation(null, msg, new Location(tok.filename, tok.line, noPreprocessor ? -1 : tok.col), LogKind.Error, false);
     }
   }
 

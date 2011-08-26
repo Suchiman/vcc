@@ -33,7 +33,7 @@ void foo2(struct Ownee *o, struct NVO *v)
 `
 Verification of foo succeeded.
 Verification of foo2 failed.
-testcase(28,26) : error VC8524: Assertion 'chunk of invariant of v holds after atomic' did not verify.
 testcase(29,28) : error VC9502: Call 'v->\owns += o' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the owner has volatile owns set'.
+testcase(28,26) : error VC8524: Assertion 'chunk of invariant of v holds after atomic' did not verify.
 `

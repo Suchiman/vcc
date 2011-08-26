@@ -36,7 +36,7 @@ testcase(15,3) : error VC9502: Call 'foo(x)' did not verify.
 testcase(4,28) : error VC9599: (related information) Precondition: 'x > 0'.
 Verification of ok2 succeeded.
 Verification of fail2 failed.
+testcase(29,24) : error VC8020: 'a' is not writable before wrapping it.
 testcase(29,19) : error VC9502: Call 'wrap a' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is mutable'.
-testcase(29,24) : error VC8020: 'a' is not writable before wrapping it.
 `

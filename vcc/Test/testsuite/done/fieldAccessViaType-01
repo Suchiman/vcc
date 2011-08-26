@@ -12,5 +12,5 @@ void foo() {
 }
 `
 testcase(10,5) : error VC0000: An object reference is required for the nonstatic field, method, or property 'a'.
-testcase(5,5)-(5,10) : (Location of symbol related to previous error.)
+testcase(5,5) : error : (Location of symbol related to previous error.)
 `

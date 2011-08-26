@@ -354,7 +354,7 @@ Verification of insert succeeded.
 Verification of extractMin succeeded.
 Verification of heapSort succeeded.
 Verification of heapSortTestHarness succeeded.
-testcase(327) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(327) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(326) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(327,32) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(327,16) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(326,26) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
 `*/
