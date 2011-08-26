@@ -107,7 +107,7 @@ namespace Microsoft.Research.Vcc
         if (z3option.StartsWith("-") || z3option.StartsWith("/") || z3option.Contains("="))
           options.Add("/z3opt:" + z3option);
         else {
-          Console.WriteLine("Z3 option '{0}' is syntactically invalid.", z3option);
+          Logger.Instance.Error("Z3 option '{0}' is syntactically invalid.", z3option);
           return false;
         }
 
@@ -139,7 +139,7 @@ namespace Microsoft.Research.Vcc
         impl = null;
       }
       if (impl == null) {
-        Console.WriteLine("cannot find function: {0}", funcName);
+        Logger.Instance.Error("cannot find function: {0}", funcName);
         return VerificationResult.UserError;
       }
 
@@ -147,8 +147,7 @@ namespace Microsoft.Research.Vcc
 
       if (impl.SkipVerification) return VerificationResult.Skipped;
 
-      if (!parent.options.XmlFormatOutput && !parent.options.VCLikeErrorMessages)
-        Console.Write("Verification of {0} ", funcName);
+      Logger.Instance.LogMethodStart(funcName);
 
       string logPath = CommandLineOptions.Clo.SimplifyLogFilePath;
       if (logPath != null)
@@ -173,7 +172,7 @@ namespace Microsoft.Research.Vcc
         }
         
         if (!ReParseBoogieOptions(effectiveOptions, parent.options.RunningFromCommandLine)) {
-          Console.WriteLine("Error parsing extra options '{0}' for function '{1}'", extraFunctionOptions, impl.Name);
+          Logger.Instance.Error("Error parsing extra options '{0}' for function '{1}'", extraFunctionOptions, impl.Name);
           return VerificationResult.UserError;
         }
         try {
@@ -193,7 +192,7 @@ namespace Microsoft.Research.Vcc
         }
       }
        
-      var reporter = new ErrorReporter(parent.options, impl.Proc.Name, start, VccCommandLineHost.ErrorHandler);
+      var reporter = new ErrorReporter(parent.options, impl.Proc.Name, impl.Proc.tok, start, VccCommandLineHost.ErrorHandler);
 
       try {
         parent.swVcOpt.Start();
@@ -305,7 +304,7 @@ namespace Microsoft.Research.Vcc
       if (numErrors != 0) {
         VccCommandLineHost.ErrorCount++;
         if (!parent.options.RunTestSuite) {
-          Console.WriteLine("attempting to dump BPL to buggy.bpl");
+          Logger.Instance.Error("attempting to dump BPL to buggy.bpl");
           var filename = "buggy.bpl";
           if (parent.options.OutputDir != null)
           {
@@ -469,17 +468,16 @@ namespace Microsoft.Research.Vcc
     bool outcomeReported;
     readonly string name;
     readonly double startTime;
-    string prevPhase;
-    bool lineDirty;
     double prevTime;
     internal int modelCount;
     readonly VccOptions commandLineOptions;
     readonly List<string> proverWarnings;
     readonly VerificationErrorHandler errorHandler;
+    readonly IToken tok;
     Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr> unreachableMasters = new Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr>(new List<IdentifierExpr>());
     Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr> unreachableChildren;
 
-    public ErrorReporter(VccOptions opts, string name, double startTime, VerificationErrorHandler errorHandler)
+    public ErrorReporter(VccOptions opts, string name, IToken tok, double startTime, VerificationErrorHandler errorHandler)
     {
       this.name = name;
       this.startTime = startTime;
@@ -487,6 +485,7 @@ namespace Microsoft.Research.Vcc
       this.commandLineOptions = opts;
       this.proverWarnings = new List<string>();
       this.errorHandler = errorHandler;
+      this.tok = tok;
     }
 
     public void PrintSummary(VC.ConditionGeneration.Outcome outcome)
@@ -498,13 +497,7 @@ namespace Microsoft.Research.Vcc
     {
       if (!this.outcomeReported) {
         this.outcomeReported = true;
-        this.lineDirty = false;
-        this.errorHandler.ReportOutcomeMethodSummary(outcome, addInfo, this.name, this.startTime, this.proverWarnings);
-      }
-
-      if (this.lineDirty) {
-        Console.WriteLine();
-        this.lineDirty = false;
+        this.errorHandler.ReportOutcomeMethodSummary(this.name, this.tok, outcome, addInfo, this.startTime, this.proverWarnings);
       }
     }
 
@@ -535,43 +528,35 @@ namespace Microsoft.Research.Vcc
 
       if (double.IsNaN(progressEst)) return;
 
-      if (commandLineOptions != null && commandLineOptions.TimeStats && !commandLineOptions.XmlFormatOutput && !commandLineOptions.RunTestSuite) {
+      if (commandLineOptions != null && commandLineOptions.TimeStats) {
         double now = VccCommandLineHost.GetTime();
         double length = now - this.prevTime;
         if (length < 0.5) return; // don't even bother reporting
         this.prevTime = now;
-        this.lineDirty = true;
-        //Console.Write("{0}/{1}/[{2:0.00}s]..", step, totalSteps, length);
-        if (commandLineOptions.TimeStatsForVs && phase == "VCprove")
-          Console.WriteLine("vcc : Verification of {0} - progress {1:0.00}%", name, progressEst * 100);
-        else {
-          Console.Write("(");
-          if (this.prevPhase != phase)
-            Console.Write("{0}:", phase);
-          Console.Write(step);
-          if (phase == "VCprove")
-            Console.Write("/{0}/{1:0.00}%) ", totalSteps - step, progressEst * 100);
-          else if (step != totalSteps || phase != "smoke")
-            Console.Write("/{0}) ", totalSteps);
-          else Console.Write(") ");
-        }
-        this.prevPhase = phase;
-      }
-    }
 
-    private string TokenLocation(IToken tok) {
-      if (commandLineOptions == null || commandLineOptions.NoPreprocessor)
-        return string.Format("{0}({1},{2})", tok.filename, tok.line, tok.col);
-      else
-        return string.Format("{0}({1})", tok.filename, tok.line);
+        string progressMsg;
+
+        if (phase == "VCprove")
+          progressMsg = String.Format("({0}/{1}/{1:0.00}%) ", step, totalSteps - step, progressEst * 100);
+        else if (step != totalSteps || phase != "smoke")
+          progressMsg = String.Format("({0}/{1}) ", step, totalSteps);
+        else progressMsg = String.Format("({0})", step);
+
+        Logger.Instance.LogProgress(name, phase, progressMsg);
+      }
     }
 
     private bool ReportUnreachable(IToken tok)
     {
       if (string.IsNullOrEmpty(tok.filename)) return false;
       PrintSummary(VC.ConditionGeneration.Outcome.Correct); // it is correct, but
-      Console.WriteLine("{0} : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)", 
-                        TokenLocation(tok));
+      Logger.Instance.LogWithLocation(
+        null,
+        "found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)",
+        new Location(tok.filename, tok.line, tok.col),
+        LogKind.Warning,
+        false);
+
       return true;
     }
 
@@ -652,7 +637,7 @@ namespace Microsoft.Research.Vcc
         }
       }
       PrintSummary(VC.ConditionGeneration.Outcome.Correct); // it is correct, but
-      Console.WriteLine("Found unreachable code, but cannot figure out where it is."); // TODO this won't be caught by the VS add-on
+      Logger.Instance.Warning("Found unreachable code, but cannot figure out where it is."); // TODO this won't be caught by the VS add-on
     outer: ;
     }
   }

@@ -113,8 +113,8 @@ void wrap_order_may_fail(struct A_may_fail *a)
 Verification of X#adm succeeded.
 Verification of A#adm succeeded.
 Verification of A_may_fail#adm failed.
-testcase(100,29) : error VC8012: invariant(f2(x)) of A_may_fail is not admissible.
 testcase(100,29) : error VC8018: invariant(f2(x)) of A_may_fail forbids unwrapping.
+testcase(100,29) : error VC8012: invariant(f2(x)) of A_may_fail is not admissible.
 Verification of test_ens succeeded.
 Verification of test_ens_may_fail failed.
 testcase(22,3) : error VC9501: Post condition '\result->x > 4' did not verify.

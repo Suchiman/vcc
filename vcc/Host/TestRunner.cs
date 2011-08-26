@@ -30,23 +30,7 @@ namespace Microsoft.Research.Vcc
     private static double methodVerificationTime;
 
     public static int RunTestSuite(VccOptions commandLineOptions) {
-      int errs;
-      if (commandLineOptions.TimeStats)
-        Console.WriteLine("<![CDATA[");
-      try {
-        errs = commandLineOptions.FileNames.Count(fileName => !RunTestSuite(fileName, commandLineOptions));
-      } finally {
-        if (commandLineOptions.TimeStats)
-          Console.WriteLine("]]>");
-      }
-      if (commandLineOptions.TimeStats) {
-        Console.WriteLine("<testrun>");
-        Console.WriteLine(testrunTimeStats.ToString());
-        Console.WriteLine("</testrun>");
-        testrunTimeStats.Length = 0;
-      }
-
-      return errs;
+      return commandLineOptions.FileNames.Count(fileName => !RunTestSuite(fileName, commandLineOptions));
     }
 
     private static int NumThreads(double arg) {
@@ -106,21 +90,10 @@ namespace Microsoft.Research.Vcc
           RunTestSuite(di.FullName, commandLineOptions);
         }
 
-        double now = GetTime();
-        testrunTimeStats.AppendFormat("<file name=\"{0}\">\r\n", Path.GetFileName(fileName));
-        testrunTimeStats.AppendFormat("<time><total>{0:0.00}</total><compiler>{1:0.00}</compiler><boogie>{2:0.00}</boogie><verification>{3:0.00}</verification></time>\r\n",
-                    now - startTime, now - startTime - methodVerificationTime,
-                    0,
-                    methodVerificationTime);
-        testrunTimeStats.AppendFormat("<errors>{0}</errors>\r\n", errorCount);
-        testrunTimeStats.AppendFormat("</file>\r\n");
-
-
         if (errorCount != 0) {
-          Console.WriteLine();
-          Console.WriteLine("*** {0} error(s) ***", errorCount);
-          Console.WriteLine();
-          Console.WriteLine();
+          Logger.Instance.NewLine();
+          Logger.Instance.Error("*** {0} error(s) ***", errorCount);
+          Logger.Instance.NewLine();
           return false;
         }
         return true;
@@ -174,7 +147,7 @@ namespace Microsoft.Research.Vcc
           }
 
           if (instream.EndOfStream) {
-            Console.WriteLine("The last test case in the suite has not been provided with expected output");
+            Logger.Instance.Error("The last test case in the suite has not been provided with expected output");
             errors++;
             break;
           }
@@ -191,7 +164,7 @@ namespace Microsoft.Research.Vcc
           }
 
           if (l != "`" && l != "`*/") {
-            Console.WriteLine("The last test case in the suite has been provided with incomplete expected output");
+            Logger.Instance.Error("The last test case in the suite has been provided with incomplete expected output");
             errors++;
             break;
           }
@@ -207,11 +180,6 @@ namespace Microsoft.Research.Vcc
           string fileNameWithoutExt = directoryName + Path.DirectorySeparatorChar + suiteNameWithoutExt + vccSplitSuffix + testCaseCount + "_" + System.Diagnostics.Process.GetCurrentProcess().Id;
           currentTestcaseName = Path.GetFileName(string.Format("{0}.{1:00}", suiteNameWithoutExt, testCaseCount));
 
-          StringBuilder backupTimeStats = testrunTimeStats;
-          if (suiteName.EndsWith(".c"))
-            testrunTimeStats.AppendFormat("<file name=\"{0}/{1}.{2}\">\r\n", Path.GetFileName(directoryName), suiteName, testCaseCount);
-          else
-            testrunTimeStats = null;
           try {
             int returnCode = RunTest(errorHandler, suiteNameWithoutExt, fileNameWithoutExt, source.ToString(), commandLineOptions, compilerParameters);
             if (returnCode != 0)
@@ -220,15 +188,9 @@ namespace Microsoft.Research.Vcc
             actualOutput.Append(e.InnerException);
           } catch (Exception e) {
             actualOutput.Append(e);
-          } finally {
-            if (testrunTimeStats == null)
-              testrunTimeStats = backupTimeStats;
-            else
-              testrunTimeStats.Append("</file>\r\n");
-          }
+          } 
 
-          errorHandler.Reset();
-          VccCommandLineHost.ErrorHandler.ResetReportedErrors();
+          Logger.Instance.ResetReportedErrors();
           Console.SetOut(savedOut);
           System.Diagnostics.Debug.Listeners.Remove(myWriter);
           Regex rx = new Regex(@"[a-zA-Z]:\\.*?\\(.*)" + vccSplitSuffix + @"[0-9_]*.c\(");
@@ -243,10 +205,10 @@ namespace Microsoft.Research.Vcc
         }
         instream.Close();
         if (errors == 0)
-          Console.WriteLine(suiteName + " passed");
+          Logger.Instance.Log(suiteName + " passed");
         else {
-          Console.WriteLine();
-          Console.WriteLine(suiteName + " had " + errors + (errors > 1 ? " failures" : " failure"));
+          Logger.Instance.NewLine();
+          Logger.Instance.Error(suiteName + " had " + errors + (errors > 1 ? " failures" : " failure"));
         }
       } catch {
         var expected = expectedOutput == null ? "<none>" : expectedOutput.ToString().Trim();
@@ -258,27 +220,26 @@ namespace Microsoft.Research.Vcc
     private static void ReportError(string suiteName, StringBuilder source, string expectedOutput, string actualOutput, int errLine, bool printBanner)
     {
       if (printBanner) {
-        Console.WriteLine();
-        Console.WriteLine();
-        Console.WriteLine("----------------------------- " + suiteName + " failed -----------------------------");
+        Logger.Instance.NewLine();
+        Logger.Instance.Error("----------------------------- " + suiteName + " failed -----------------------------");
       }
-      Console.WriteLine();
+      Logger.Instance.NewLine();
       if (errLine > 0)
-        Console.WriteLine("*** source({0}):", errLine);
+        Logger.Instance.Log("*** source({0}):", errLine);
       else
-        Console.WriteLine("*** source:");
+        Logger.Instance.Log("*** source:");
       if (source != null) {
-        Console.WriteLine(source);
-        Console.WriteLine();
+        Logger.Instance.Log(source.ToString());
+        Logger.Instance.NewLine();
       }
-      Console.WriteLine("*** actual output:");
-      Console.WriteLine(actualOutput);
-      Console.WriteLine("***");
-      Console.WriteLine();
-      Console.WriteLine("*** expected output:");
-      Console.WriteLine(expectedOutput);
-      Console.WriteLine("***");
-      Console.WriteLine();
+      Logger.Instance.Log("*** actual output:");
+      Logger.Instance.Log(actualOutput);
+      Logger.Instance.Log("***");
+      Logger.Instance.NewLine();
+      Logger.Instance.Log("*** expected output:");
+      Logger.Instance.Log(expectedOutput);
+      Logger.Instance.Log("***");
+      Logger.Instance.NewLine();
     }
 
     private static int RunTest(CciErrorHandler errorHandler, string suiteName, string fileNameWithoutExt,
@@ -331,8 +292,6 @@ namespace Microsoft.Research.Vcc
       return VccCommandLineHost.Felt2Cast2Plugin("testcase", options, hostEnvironment, assem);
     }
 
-    public static StringBuilder testrunTimeStats = new StringBuilder();
-
     class TestRunnerMT
     {
       readonly VccOptions commandLineOptions;
@@ -374,8 +333,7 @@ namespace Microsoft.Research.Vcc
       }
 
       private static void CopyFileToStream(string path, TextWriter writer) {
-        string[] lines = File.ReadAllLines(path);
-        foreach (var line in lines) { writer.WriteLine(line); }
+        foreach (var line in File.ReadLines(path)) { writer.WriteLine(line); }
       }
 
       class Runner
@@ -423,7 +381,7 @@ namespace Microsoft.Research.Vcc
               Interlocked.Increment(ref parent.failedTestCount);
               needFlush++;
               lock (parent.lkOutput)
-                Console.WriteLine(line);
+                Logger.Instance.Log(line);
             }
             stdout.Add(line);
           }

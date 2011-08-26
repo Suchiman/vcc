@@ -81,6 +81,7 @@ Verification of foo2Fail1 failed.
 testcase(24,19) : error VC8510: Assertion '\extent(arr1) is writable in call to join_arrays (void[99])arr1, (void[32])arr2' did not verify.
 testcase(24,19) : error VC9502: Call 'join_arrays (void[99])arr1, (void[32])arr2' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the first array to join is not embedded inside of another object'.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the first array ends, where the second array starts'.
 Verification of foo2Fail2 succeeded.
 Verification of foo2Fail3 failed.
 testcase(40,19) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.

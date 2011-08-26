@@ -28,9 +28,9 @@ void foo4()
 
 `
 testcase(3,17) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
-testcase(8,26)-(8,52) : (Location of symbol related to previous error.)
+testcase(8,26) : error : (Location of symbol related to previous error.)
 testcase(11,17) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
-testcase(16,26)-(16,53) : (Location of symbol related to previous error.)
+testcase(16,26) : error : (Location of symbol related to previous error.)
 testcase(20,17) : error VC9714: 'result' cannot be used recursively in a spec macro definition
-testcase(25,26)-(25,53) : (Location of symbol related to previous error.)
+testcase(25,26) : error : (Location of symbol related to previous error.)
 `
