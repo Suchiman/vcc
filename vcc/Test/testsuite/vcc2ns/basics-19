@@ -1,0 +1,15 @@
+`/newsyntax
+#include "vcc.h"
+
+struct Foo {
+    _(group g)
+    int a;
+    _(group g)
+    int b;
+};
+
+void foo(struct Foo *s) {}
+`
+testcase(6,21) : error VC9678: 'g' : group name redefinition
+testcase(4,21)-(4,28) : (Location of symbol related to previous error.)
+`
