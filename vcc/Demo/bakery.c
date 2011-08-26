@@ -30,7 +30,7 @@ typedef _(claimable) struct Client {
                  (ticket_order(s->c[i].ticket, i, s->c[j].ticket, j) || thinking(s, j) \
                   || (in_doorway(s, j) && (s->c[j].checked <= i || s->c[j].max >= s->c[i].ticket ))))
 
-typedef _(claimable, dynamic_owns)  struct Bakery {
+typedef _(claimable, dynamic_owns) struct Bakery {
   UINT N;               // number of clients
   Client *c;            // pointer to array of clients
   _(invariant \forall UINT i; i < N ==> (&c[i])->\closed && (c[i].bakery==\this) && (c[i].checked<=N))
@@ -57,7 +57,7 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
 {
   UINT max = 0;
   UINT checked;
-  UINT N = _(by_claim sc) server->N;
+  UINT N = server->N;
 
   // start choosing
   atomicCl(cl->flag = TRUE;
@@ -83,7 +83,7 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
   max++;
   atomicCl(cl->ticket = max)
 
-  // anounce that I'm done choosing
+  // announce that I'm done choosing
   atomicCl(cl->flag = FALSE;
     _(ghost cl->waiting = \true)
     _(ghost cl->checked = 0))
@@ -128,9 +128,9 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
 }
 
 void BakeryRelease(Bakery *server, UINT idx _(ghost \claim sc))
+  _(requires \wrapped(sc) && \claims(sc, server->\closed))
+  _(requires idx < server->N && \wrapped(cl))
   _(requires serving(server, idx))
-  _(requires \wrapped(sc) && idx < server->N && \wrapped(cl))
-  _(requires \claims(sc, server->\closed))
   _(writes cl)
   _(ensures thinking(server, idx))
 {
