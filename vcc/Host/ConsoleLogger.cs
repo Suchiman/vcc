@@ -194,6 +194,10 @@ namespace Microsoft.Research.Vcc
     {
     }
 
+    public override void LogProgress(string methodName, string phase, string progressMsg)
+    {
+    }
+
     public override void LogMethodSummary(string methodName, Location loc, Outcome outcome, string additionalInfo, double time)
     {
       string outcomeStr = additionalInfo ?? OutcomeToDescription(outcome);
