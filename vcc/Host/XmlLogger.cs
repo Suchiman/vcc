@@ -47,9 +47,10 @@ namespace Microsoft.Research.Vcc
             this.xwr.WriteEndElement();
         }
 
-        public void LogSummary(int errorCount, IEnumerable<Tuple<string, double>> timers)
+        public void LogFileSummary(string fileName, int errorCount, IEnumerable<Tuple<string, double>> timers)
         {
             this.xwr.WriteStartElement("summary", LogFileNamespace);
+            this.xwr.WriteAttributeString("file", fileName);
             this.xwr.WriteElementString("errors", LogFileNamespace, errorCount.ToString());
             if (timers != null)
             {
@@ -59,6 +60,7 @@ namespace Microsoft.Research.Vcc
                     this.xwr.WriteStartElement("timer", LogFileNamespace);
                     this.xwr.WriteAttributeString("name", timer.Item1);
                     this.xwr.WriteAttributeString("value", timer.Item2.ToString("0.00"));
+                    this.xwr.WriteEndElement();
                 }
                 this.xwr.WriteEndElement();
             }

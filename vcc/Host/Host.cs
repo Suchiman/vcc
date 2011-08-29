@@ -485,7 +485,7 @@ namespace Microsoft.Research.Vcc
           {
             var fv = currentPlugin.GetFunctionVerifier(fileName, helperenv, res);
             if (helperenv.ShouldContinue && errorCount == 0)
-              VerifyFunctions(commandLineOptions, assem.Name.ToString(), fv);
+              VerifyFunctions(commandLineOptions, fileName, assem.Name.ToString(), fv);
           }
           else
           {
@@ -520,7 +520,7 @@ namespace Microsoft.Research.Vcc
       return -2;
     }
 
-    private static void VerifyFunctions(VccOptions commandLineOptions, string fileName, FunctionVerifier fver)
+    private static void VerifyFunctions(VccOptions commandLineOptions, string fileName, string baseName, FunctionVerifier fver)
     {
       double beforeBoogie = GetTime();
       int numErrors = 0;
@@ -530,7 +530,7 @@ namespace Microsoft.Research.Vcc
 
       if (commandLineOptions.DumpBoogie)
       {
-        fver.DumpInternalsToFile(fileName, true);
+        fver.DumpInternalsToFile(baseName, true);
       }
 
       foreach (var func in fver.FunctionsToVerify())
@@ -583,7 +583,7 @@ namespace Microsoft.Research.Vcc
 
       if (commandLineOptions.DumpBoogie)
       {
-        fver.DumpInternalsToFile(fileName, false);
+        fver.DumpInternalsToFile(baseName, false);
       }
 
       if (checkSpecificFunctions)
@@ -605,19 +605,17 @@ namespace Microsoft.Research.Vcc
       fver.Close();
       double now = GetTime();
 
-      if (!commandLineOptions.RunTestSuite) {
-        var timerInfo =
-          commandLineOptions.TimeStats ?
-            new[] {
-                Tuple.Create("total", now - startTime),
-                Tuple.Create("compiler", beforeBoogie - startTime),
-                Tuple.Create("boogie", beforeMethods - beforeBoogie),
-                Tuple.Create("verification", now - beforeMethods)
-            }
-            : null;
+      var timerInfo =
+        commandLineOptions.TimeStats ?
+          new[] {
+            Tuple.Create("total", now - startTime),
+            Tuple.Create("compiler", beforeBoogie - startTime),
+            Tuple.Create("boogie", beforeMethods - beforeBoogie),
+            Tuple.Create("verification", now - beforeMethods)
+        }
+        : null;
 
-        Logger.Instance.LogSummary(numErrors, timerInfo);
-      }
+        Logger.Instance.LogFileSummary(fileName, numErrors, timerInfo);
     }
 
     private static void DumpTimes(VccOptions commandLineOptions)
