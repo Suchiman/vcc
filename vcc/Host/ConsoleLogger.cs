@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace Microsoft.Research.Vcc
 {
   internal class ConsoleLogger : ILogger
   {
-    private static Lazy<ILogger> instance = new Lazy<ILogger>(() => new ConsoleLogger());
+    private static readonly Lazy<ILogger> instance = new Lazy<ILogger>(() => new ConsoleLogger());
 
     public static ILogger Instance
     {
@@ -42,8 +41,6 @@ namespace Microsoft.Research.Vcc
           break;
         case LogKind.Warning:
           Console.ForegroundColor = ConsoleColor.Yellow;
-          break;
-        default:
           break;
       }
 
@@ -201,7 +198,7 @@ namespace Microsoft.Research.Vcc
     public override void LogMethodSummary(string methodName, Location loc, Outcome outcome, string additionalInfo, double time)
     {
       string outcomeStr = additionalInfo ?? OutcomeToDescription(outcome);
-      Console.WriteLine("Verification of {0} {1}.", methodName, outcomeStr, time);
+      Console.WriteLine("Verification of {0} {1}.", methodName, outcomeStr);
       this.atStartOfLine = true;
     }
   }
