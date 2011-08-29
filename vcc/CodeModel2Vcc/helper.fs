@@ -299,7 +299,7 @@ namespace Microsoft.Research.Vcc
         if not (tok.SuppressWarning code) then
           hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true, (Seq.singleton (VisitorHelper.LocationFromToken relatedTok))))
           
-      // 9300 <= code <= 9399; First available: 9320
+      // 9300 <= code <= 9399; First available: 9321
       member this.GraveWarning (tok, code, msg:string) =
         this.Warning (tok, code, "[possible unsoundness]: " + msg)
      
