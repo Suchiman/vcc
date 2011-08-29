@@ -160,7 +160,7 @@
 /version                       Display the compiler version.
 /warningsaserrors              Treat warnings as errors (Short form: /wx)
 /warn:&lt;n&gt;                      Set warning level (0-2), default is 1 (Short form: /w)
-/xml                           Use XML format output.
+/xml:&lt;fil&gt;                     Write XML log to &lt;file&gt;.
 /z3:&lt;z3 option list&gt;           Options to pass on to Z3 (Short form: /z)
 /infertriggers[+|-]            Infer quantifier trigger annotations in VCC, not in SMT solver (Short form: /it)
 /dumptriggers:&lt;n&gt;              1-report inferred triggers, 2-report results for different {:level}s, 3-report also when explicit triggers are present, 4-include Boogie form, 5-debug (Short form: /dt)</value>

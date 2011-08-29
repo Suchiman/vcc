@@ -71,6 +71,12 @@ namespace Microsoft.Research.Vcc
           } else if (commandLineOptions.VCLikeErrorMessages) {
             Logger.Instance.Unregister(ConsoleLogger.Instance);
             Logger.Instance.Register(new ConsoleLogger("vcc : "));
+          } 
+          
+          if (!String.IsNullOrEmpty(commandLineOptions.XmlLogFile))
+          {
+              Stream xmlStream = File.Open(commandLineOptions.XmlLogFile, FileMode.Create, FileAccess.Write);
+              Logger.Instance.Register(new XmlLogger(xmlStream));
           }
 
           if ((currentPlugin = InitializePlugin(commandLineOptions)) == null)
@@ -601,11 +607,11 @@ namespace Microsoft.Research.Vcc
         var timerInfo =
           commandLineOptions.TimeStats ?
             new[] {
-            Tuple.Create("total", now - startTime),
-            Tuple.Create("compiler", beforeBoogie - startTime),
-            Tuple.Create("boogie", beforeMethods - beforeBoogie),
-            Tuple.Create("verification", now - beforeMethods),
-          }
+                Tuple.Create("total", now - startTime),
+                Tuple.Create("compiler", beforeBoogie - startTime),
+                Tuple.Create("boogie", beforeMethods - beforeBoogie),
+                Tuple.Create("verification", now - beforeMethods)
+            }
             : null;
 
         Logger.Instance.LogSummary(numErrors, timerInfo);

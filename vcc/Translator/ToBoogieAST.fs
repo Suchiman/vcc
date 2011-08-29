@@ -59,6 +59,7 @@ namespace Microsoft.Research.Vcc
         let body = Block (this.Blocks |> List.map (fun b -> b.ToStmts()) |> List.concat)
         let procData =
           { Name = "$pass_" + this.Name 
+            Token = Token.NoToken
             InParms = []
             OutParms = []
             Contracts = []

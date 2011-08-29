@@ -24,7 +24,7 @@ namespace Microsoft.Research.Vcc
     public List<string> Z3Options = new List<string>();
     public bool VCLikeErrorMessages;
     public bool TimeStats;
-    public bool XmlFormatOutput;
+    public string XmlLogFile;
     public string/*?*/ ClPath;
     public List<string> Functions = new List<string>();
     public List<string> FunctionsWithExactName = new List<string>();
@@ -99,7 +99,7 @@ namespace Microsoft.Research.Vcc
       this.TranslateToBPL = other.TranslateToBPL;
       this.VCLikeErrorMessages = other.VCLikeErrorMessages;
       this.TimeStats = other.TimeStats;
-      this.XmlFormatOutput = other.XmlFormatOutput;
+      this.XmlLogFile = other.XmlLogFile;
       this.ClPath = other.ClPath;
       this.RunningFromCommandLine = other.RunningFromCommandLine;
       this.VerifyUpToLine = other.VerifyUpToLine;
@@ -554,10 +554,12 @@ namespace Microsoft.Research.Vcc
           }
           return false;
         case 'x':
-          if (this.ParseName(arg, "xml", "xml")) {
-            this.options.XmlFormatOutput = true;
+          string xmlLogFile = this.ParseNamedArgument(arg, "xml", "xml");
+          if (xmlLogFile != null) {
+            this.options.XmlLogFile = xmlLogFile;
             return true;
           }
+         
           return false;
         case 'y':
           if (this.ParseName(arg, "yarra", "yarra")) {
