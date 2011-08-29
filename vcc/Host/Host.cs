@@ -17,8 +17,6 @@ namespace Microsoft.Research.Vcc
 
   public class VccCommandLineHost
   {
-    const string FsharpDownloadUrl = "http://www.microsoft.com/downloads/details.aspx?FamilyID=5f0a79f8-925f-4297-9ae2-86e2fdcff33c";
-
     /// <summary>
     /// The main entry point for the application.
     /// </summary>
@@ -71,6 +69,12 @@ namespace Microsoft.Research.Vcc
           } else if (commandLineOptions.VCLikeErrorMessages) {
             Logger.Instance.Unregister(ConsoleLogger.Instance);
             Logger.Instance.Register(new ConsoleLogger("vcc : "));
+          } 
+          
+          if (!String.IsNullOrEmpty(commandLineOptions.XmlLogFile))
+          {
+              Stream xmlStream = File.Open(commandLineOptions.XmlLogFile, FileMode.Create, FileAccess.Write);
+              Logger.Instance.Register(new XmlLogger(xmlStream));
           }
 
           if ((currentPlugin = InitializePlugin(commandLineOptions)) == null)
@@ -236,7 +240,9 @@ namespace Microsoft.Research.Vcc
     private static void DisplayCommandLineHelp()
     {
       System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
+// ReSharper disable ResourceItemNotResolved
       Console.Out.WriteLine(rm.GetString("Usage"));
+// ReSharper restore ResourceItemNotResolved
       if (pluginManager != null && pluginManager.Plugins != null)
       {
         foreach (var plugin in pluginManager.Plugins)
@@ -281,9 +287,11 @@ namespace Microsoft.Research.Vcc
       string z3VersionString = GetZ3Version();
 
       System.Resources.ResourceManager rm = new System.Resources.ResourceManager("Microsoft.Research.Vcc.Host.ErrorMessages", typeof(VccCommandLineHost).Assembly);
-      // ReSharper disable AssignNullToNotNullAttribute
+// ReSharper disable AssignNullToNotNullAttribute
+// ReSharper disable ResourceItemNotResolved
       Logger.Instance.Log(rm.GetString("Version"), vccVersionString, boogieVersionString, z3VersionString);
-      // ReSharper restore AssignNullToNotNullAttribute
+// ReSharper restore ResourceItemNotResolved
+// ReSharper restore AssignNullToNotNullAttribute
     }
 
     static int errorCount;
@@ -601,11 +609,11 @@ namespace Microsoft.Research.Vcc
         var timerInfo =
           commandLineOptions.TimeStats ?
             new[] {
-            Tuple.Create("total", now - startTime),
-            Tuple.Create("compiler", beforeBoogie - startTime),
-            Tuple.Create("boogie", beforeMethods - beforeBoogie),
-            Tuple.Create("verification", now - beforeMethods),
-          }
+                Tuple.Create("total", now - startTime),
+                Tuple.Create("compiler", beforeBoogie - startTime),
+                Tuple.Create("boogie", beforeMethods - beforeBoogie),
+                Tuple.Create("verification", now - beforeMethods)
+            }
             : null;
 
         Logger.Instance.LogSummary(numErrors, timerInfo);

@@ -23,29 +23,21 @@ namespace Microsoft.Research.Vcc
     /// </summary>
     const string vccSplitSuffix = "__vcc_split__";
 
-    private static double GetTime() {
-      return System.Environment.TickCount / 1000.0;
-    }
-
-    private static double methodVerificationTime;
-
-    public static int RunTestSuite(VccOptions commandLineOptions) {
+      public static int RunTestSuite(VccOptions commandLineOptions) {
       return commandLineOptions.FileNames.Count(fileName => !RunTestSuite(fileName, commandLineOptions));
     }
 
     private static int NumThreads(double arg) {
-        int result = 0;
-
         if (arg < 0) {
           return 1;
         }
 
         if (arg < 0.001) {
-          return (int) System.Environment.ProcessorCount;
+          return System.Environment.ProcessorCount;
         }
 
         if (arg < 2) {
-          result = (int) (System.Environment.ProcessorCount * arg);
+          int result = (int) (System.Environment.ProcessorCount * arg);
           if (result < 1) result = 1;
           return result;
         } else {
@@ -58,8 +50,6 @@ namespace Microsoft.Research.Vcc
       if (Directory.Exists(fileName)) {
         int errorCount = 0;
 
-        methodVerificationTime = 0;
-        double startTime = GetTime();
         int threads = NumThreads(commandLineOptions.RunTestSuiteMultiThreaded);
 
         TestRunnerMT trmt = threads > 1 ? new TestRunnerMT(threads, commandLineOptions) : null;
@@ -115,8 +105,7 @@ namespace Microsoft.Research.Vcc
       StringBuilder source = null;
       StringBuilder expectedOutput = null;
       StringBuilder actualOutput = null;
-      List<string> compilerParameters;
-      int errors = 0;
+        int errors = 0;
       int testCaseCount = 0;
       var WhiteSpaceChars = " \r\n\t".ToCharArray();
 
@@ -128,9 +117,10 @@ namespace Microsoft.Research.Vcc
           line++;
 
           source = new StringBuilder();
-          if (l.StartsWith("`") || l.StartsWith("//`")) {
+            List<string> compilerParameters;
+            if (l.StartsWith("`") || l.StartsWith("//`")) {
             string optionString = l.Substring(l.IndexOf('`') + 1);
-            compilerParameters = optionString.Split(WhiteSpaceChars, StringSplitOptions.RemoveEmptyEntries).ToList<string>();
+            compilerParameters = optionString.Split(WhiteSpaceChars, StringSplitOptions.RemoveEmptyEntries).ToList();
           } else {
             compilerParameters = new List<string>();
             source.Append(l);
@@ -332,19 +322,15 @@ namespace Microsoft.Research.Vcc
         return result;
       }
 
-      private static void CopyFileToStream(string path, TextWriter writer) {
-        foreach (var line in File.ReadLines(path)) { writer.WriteLine(line); }
-      }
-
       class Runner
       {
         private static readonly Regex TestPassed = new Regex("^\\S+ passed$");
         private static readonly Regex TestFailed = new Regex("--- \\S+ failed ---");
-        private List<string> stdout = new List<string>();
-        private List<string> stderr = new List<string>();
-        private TestRunnerMT parent;
+        private readonly List<string> stdout = new List<string>();
+        private readonly List<string> stderr = new List<string>();
+        private readonly TestRunnerMT parent;
         private int needFlush;
-        private object dataLock = new object();
+        private readonly object dataLock = new object();
 
         public Runner(TestRunnerMT p)
         {

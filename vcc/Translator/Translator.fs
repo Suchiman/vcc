@@ -1856,6 +1856,7 @@ namespace Microsoft.Research.Vcc
           let outPars, inPars = List.map trVar (header.OutParameters), List.map trTypeVar header.TypeParameters @ List.map trVar (header.InParameters)
           let outPars = if header.RetType = C.Type.Void then outPars else ("$result", trType header.RetType) :: outPars
           { Name      = header.Name
+            Token     = header.Token
             InParms   = inPars
             OutParms  = outPars
             Locals    = []
