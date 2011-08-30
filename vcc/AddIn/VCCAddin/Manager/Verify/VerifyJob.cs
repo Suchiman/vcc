@@ -141,7 +141,7 @@ namespace VerifiedCCompilerAddin.Manager.Verify {
           ForcedIncludes += ";";
       }
 
-      cmdline.AppendFormat("/p:{0}{1}{2}{3} /clerrors+ {4} /clpath:\"{5}\"",
+      cmdline.AppendFormat("/p:{0}{1}{2}{3} {4} /clpath:\"{5}\"",
                               PreProcessorDefs,
                               AdditionalIncludes,
                               ForcedIncludes,

@@ -13,17 +13,10 @@ namespace Microsoft.Research.Vcc
       get { return instance.Value; }
     }
 
-    private readonly string prefix;
     protected bool atStartOfLine = true;
 
     protected ConsoleLogger()
     {
-      this.prefix = "";
-    }
-
-    public ConsoleLogger(string prefix) 
-    {
-      this.prefix = prefix;
     }
 
     public void Log(string msg, LogKind kind)
@@ -61,7 +54,7 @@ namespace Microsoft.Research.Vcc
     public virtual void LogFileSummary(string fileName, int errorCount, IEnumerable<Tuple<string, double>> timers)
     {
       if (timers != null) {
-        Console.Write(this.prefix  + "Time: ");
+        Console.Write("Time: ");
         bool first = true;
         foreach (var entry in timers) {
           if (first) {
@@ -75,13 +68,13 @@ namespace Microsoft.Research.Vcc
       }
 
       if (errorCount > 0) {
-        this.Log(String.Format("{0}Verification errors in {1} function(s)", this.prefix, errorCount), LogKind.Error);
+        this.Log(String.Format("Verification errors in {0} function(s)", errorCount), LogKind.Error);
       }
     }
 
     public virtual void LogWithLocation(string code, string msg, Location loc, LogKind kind, bool isRelated)
     {
-      StringBuilder logMsg = new StringBuilder(this.prefix);
+      StringBuilder logMsg = new StringBuilder();
       logMsg.Append(loc.FileName);
       if (loc.Column >= 0) {
         logMsg.Append(String.Format("({0},{1})", loc.Line, loc.Column));
@@ -113,7 +106,7 @@ namespace Microsoft.Research.Vcc
     {
       string outcomeStr = additionalInfo ?? OutcomeToDescription(outcome);
       if (this.atStartOfLine) {
-        Console.WriteLine("{0}Verification of {1} {2}. [{3:0.00}s]", prefix, methodName, outcomeStr, time);
+        Console.WriteLine("Verification of {0} {1}. [{2:0.00}s]", methodName, outcomeStr, time);
       } else {
         Console.WriteLine("{0}. [{1:0.00}]", outcomeStr, time);
       }
@@ -141,7 +134,7 @@ namespace Microsoft.Research.Vcc
 
     public virtual void LogMethodStart(string methodName)
     {
-      Console.Write("{0}Verification of {1} ", this.prefix, methodName);
+      Console.Write("Verification of {0} ", methodName);
       Console.Out.Flush();
       this.atStartOfLine = false;
     }
@@ -152,7 +145,7 @@ namespace Microsoft.Research.Vcc
         Console.CursorLeft = 0;
       }
 
-      Console.Write("{0}Verification of {1} - {2} {3} ", this.prefix, methodName, phase, progressMsg);
+      Console.Write("Verification of {0} - {1} {2} ", methodName, phase, progressMsg);
       Console.Out.Flush();
       this.atStartOfLine = false;
     }

@@ -22,7 +22,6 @@ namespace Microsoft.Research.Vcc
     public double RunTestSuiteMultiThreaded = -1;
     public bool TranslateToBPL;
     public List<string> Z3Options = new List<string>();
-    public bool VCLikeErrorMessages;
     public bool TimeStats;
     public string XmlLogFile;
     public string/*?*/ ClPath;
@@ -97,7 +96,6 @@ namespace Microsoft.Research.Vcc
       this.RunTestSuite = other.RunTestSuite;
       this.RunTestSuiteMultiThreaded = other.RunTestSuiteMultiThreaded;
       this.TranslateToBPL = other.TranslateToBPL;
-      this.VCLikeErrorMessages = other.VCLikeErrorMessages;
       this.TimeStats = other.TimeStats;
       this.XmlLogFile = other.XmlLogFile;
       this.ClPath = other.ClPath;
@@ -250,11 +248,6 @@ namespace Microsoft.Research.Vcc
           bool? checkedArithmetic = this.ParseNamedBoolean(arg, "checked", "c");
           if (checkedArithmetic != null) {
             this.options.CheckedArithmetic = checkedArithmetic.Value;
-            return true;
-          }
-          bool? clErrors = this.ParseNamedBoolean(arg, "clerrors", "clerrors");
-          if (clErrors != null) {
-            this.options.VCLikeErrorMessages = clErrors.Value;
             return true;
           }
           string /*?*/ clPath = this.ParseNamedArgument(arg, "clpath", "clpath");
