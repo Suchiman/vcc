@@ -925,7 +925,9 @@ namespace Microsoft.Research.Vcc
           | Dot(_, ptr, _) -> isHeapAllocatedParOrLocal ptr
           | _ -> false
         
-        let registerAndReportError token =
+        let registerAndReportError (t:option<Type>) token =
+          if t.IsSome && t.Value.SizeOf > !PointerSizeInBytes then
+            helper.GraveWarning(token, 9320, "accessing " + (t.Value.SizeOf * 8).ToString() + " bits of memory may not be not atomic on this architecture")
           match !foundInstances with
             | None -> foundInstances := Some token
             | Some otherToken -> 
@@ -934,8 +936,8 @@ namespace Microsoft.Research.Vcc
        
         let countPhysicalAccesses' ctx self = function
           | Deref(_, ptr) when not ctx.IsPure && isHeapAllocatedParOrLocal ptr -> true
-          | Deref(cmn, ptr) when not ctx.IsPure && isPhysicalLocation true ptr -> registerAndReportError cmn.Token; true
-          | CallMacro(cmn, "inlined_atomic", _, _) -> registerAndReportError cmn.Token; false
+          | Deref(cmn, ptr) when not ctx.IsPure && isPhysicalLocation true ptr -> registerAndReportError (Some cmn.Type) cmn.Token; true
+          | CallMacro(cmn, "inlined_atomic", _, _) -> registerAndReportError None cmn.Token; false
           | CallMacro(_, "spec", _, _) -> false
           | _ -> true
         expr.SelfCtxVisit(false, countPhysicalAccesses')

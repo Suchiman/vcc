@@ -538,7 +538,7 @@ namespace Microsoft.Research.Vcc
         string progressMsg;
 
         if (phase == "VCprove")
-          progressMsg = String.Format("({0}/{1}/{1:0.00}%) ", step, totalSteps - step, progressEst * 100);
+          progressMsg = String.Format("({0}/{1}/{2:0.00}%) ", step, totalSteps - step, progressEst * 100);
         else if (step != totalSteps || phase != "smoke")
           progressMsg = String.Format("({0}/{1}) ", step, totalSteps);
         else progressMsg = String.Format("({0})", step);

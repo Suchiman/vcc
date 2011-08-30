@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using Microsoft.Boogie;
 using Microsoft.Cci;
 
@@ -35,14 +34,6 @@ namespace Microsoft.Research.Vcc
     private bool WarningIsDisabled(long id) {
       if (CommandLineOptions == null) return false;
       return CommandLineOptions.DisabledWarnings.ContainsKey(id);
-    }
-
-    private bool RunningTestSuite {
-      get { return CommandLineOptions != null ? CommandLineOptions.RunTestSuite : false; }
-    }
-
-    private bool NoPreprocessor {
-      get { return CommandLineOptions != null ? CommandLineOptions.NoPreprocessor : false; }
     }
 
     private bool DebugOnWarningOrError {
@@ -101,14 +92,11 @@ namespace Microsoft.Research.Vcc
             docName = primarySourceLocation.SourceDocument.Location ?? primarySourceLocation.SourceDocument.Name.Value;
             startLine = primarySourceLocation.StartLine;
             startColumn = primarySourceLocation.StartColumn;
-            int endLine = primarySourceLocation.EndLine;
-            int endColumn = primarySourceLocation.EndColumn;
             includedSourceLocation = primarySourceLocation as IncludedSourceLocation;
             if (includedSourceLocation != null) {
               docName = includedSourceLocation.OriginalSourceDocumentName;
               if (docName != null) docName = docName.Replace("\\\\", "\\");
               startLine = includedSourceLocation.OriginalStartLine;
-              endLine = includedSourceLocation.OriginalEndLine;
             }
             if (docName != firstErrFile || firstErrLine != startLine) {
               Logger.Instance.LogWithLocation(
