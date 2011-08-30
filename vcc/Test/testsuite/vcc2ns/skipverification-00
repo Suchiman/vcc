@@ -2,7 +2,7 @@
 #include <vcc.h>
 
 _(assume_correct) void foo() {
-  _(assert {:bv} \forall unsigned int i; i >= 0)
+  _(assert {:bv} \forall unsigned int i; (i | 12) == 12)
   int i = 1;
   _(requires i == 1)
   _(ensures i == 2)
