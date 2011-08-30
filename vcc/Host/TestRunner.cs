@@ -167,7 +167,18 @@ namespace Microsoft.Research.Vcc
 
           ++testCaseCount;
           string suiteNameWithoutExt = Path.GetFileNameWithoutExtension(suiteName);
-          string fileNameWithoutExt = directoryName + Path.DirectorySeparatorChar + suiteNameWithoutExt + vccSplitSuffix + testCaseCount + "_" + System.Diagnostics.Process.GetCurrentProcess().Id;
+          string fileNameWithoutExt;
+
+          if (commandLineOptions.OutputDir != null)
+          {
+              fileNameWithoutExt = commandLineOptions.OutputDir;
+          }
+          else
+          {
+              fileNameWithoutExt = directoryName;
+          }
+
+          fileNameWithoutExt += Path.DirectorySeparatorChar + suiteNameWithoutExt + vccSplitSuffix + testCaseCount + "_" + System.Diagnostics.Process.GetCurrentProcess().Id;
           currentTestcaseName = Path.GetFileName(string.Format("{0}.{1:00}", suiteNameWithoutExt, testCaseCount));
 
           try {
@@ -238,6 +249,7 @@ namespace Microsoft.Research.Vcc
       VccCommandLineHost.ErrorCount = 0;
       string fileNameC = fileNameWithoutExt + ".c";
       string fileNameI = fileNameWithoutExt + ".i";
+
       StreamWriter tempStreamWriter = new StreamWriter(fileNameC);
       tempStreamWriter.Write(test);
       tempStreamWriter.Close();
