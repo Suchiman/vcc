@@ -58,7 +58,7 @@ namespace Microsoft.Research.Vcc
       Console.Out.Flush();
     }
 
-    public void LogSummary(int errorCount, IEnumerable<Tuple<string, double>> timers)
+    public virtual void LogFileSummary(string fileName, int errorCount, IEnumerable<Tuple<string, double>> timers)
     {
       if (timers != null) {
         Console.Write(this.prefix  + "Time: ");
@@ -160,6 +160,18 @@ namespace Microsoft.Research.Vcc
 
   internal class ConsoleLoggerForTestRun : ConsoleLogger
   {
+    public override void LogMethodStart(string methodName)
+    {
+    }
+
+    public override void LogProgress(string methodName, string phase, string progressMsg)
+    {
+    }
+
+    public override void LogFileSummary(string fileName, int errorCount, IEnumerable<Tuple<string, double>> timers)
+    {
+    }
+
     public override void LogWithLocation(string code, string msg, Location loc, LogKind kind, bool isRelated)
     {
       Location normalizedLoc;
@@ -185,14 +197,6 @@ namespace Microsoft.Research.Vcc
       }
 
       base.LogWithLocation(normalizedCode, msg, normalizedLoc, kind, isRelated);
-    }
-
-    public override void LogMethodStart(string methodName)
-    {
-    }
-
-    public override void LogProgress(string methodName, string phase, string progressMsg)
-    {
     }
 
     public override void LogMethodSummary(string methodName, Location loc, Outcome outcome, string additionalInfo, double time)
