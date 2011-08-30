@@ -1,0 +1,95 @@
+`/newsyntax
+#include <vcc.h>
+
+_(ghost typedef \integer imap[\integer])
+_(ghost typedef bool iset[\integer])
+
+_(def \integer foo(\integer x)
+{
+  return x <= 0 ? 1 : x * foo(x - 1);
+})
+
+_(def imap allfoos_fail(\integer xx)
+{
+  return \lambda \integer x; foo(x);
+})
+
+_(def imap allfoos_ok()
+  _(level 1)
+{
+  return \lambda \integer x; foo(x);
+})
+
+_(def iset mux(\integer x)
+{
+  return \lambda \integer y; y <= 0 || y >= x || mux(y)[x];
+})
+
+_(def iset mux1(\integer x)
+{
+  return \lambda \integer y; x <= 0 || mux(x - 1)[y];
+})
+
+_(def iset mux1_fail(\integer x)
+{
+  return \lambda \integer y; x >= 0 || mux(x - 1)[y];
+})
+
+_(def iset mux_fail(\integer x)
+{
+  return \lambda \integer y; mux(y)[x - 1];
+})
+
+_(def iset mux_fail1(\integer x)
+{
+  return \lambda \integer y; mux(x)[y - 1];
+})
+
+_(def iset mux_fail2(\integer x)
+{
+  return \lambda \integer y; mux(x - 1)[x - 1];
+})
+
+
+
+_(def bool fa0(\integer x)
+{
+  return \forall \integer y; 0 < y && y < x ==> fa0(y);
+})
+
+_(def bool fa1(\integer x)
+{
+  return \forall \integer y; {fa1(y)} 0 < y && y < x ==> fa1(x - 1);
+})
+
+_(def bool fa0_fail(\integer x)
+{
+  return \forall \integer y; 0 < y && y <= x ==> fa0(y);
+})
+
+_(def bool fa1_fail(\integer x)
+{
+  return \forall \integer y; {fa1(y)} 0 < y && y < x ==> fa1(x);
+})
+`
+Verification of foo succeeded.
+Verification of allfoos_fail failed.
+testcase(13,30) : error VC8029: the call 'foo(x)' might not terminate.
+Verification of allfoos_ok succeeded.
+Verification of mux succeeded.
+Verification of mux1 succeeded.
+Verification of mux1_fail failed.
+testcase(34,40) : error VC8029: the call 'mux(x - 1)' might not terminate.
+Verification of mux_fail failed.
+testcase(39,30) : error VC8029: the call 'mux(y)' might not terminate.
+Verification of mux_fail1 failed.
+testcase(44,30) : error VC8029: the call 'mux(x)' might not terminate.
+Verification of mux_fail2 failed.
+testcase(49,30) : error VC8029: the call 'mux(x - 1)' might not terminate.
+Verification of fa0 succeeded.
+Verification of fa1 succeeded.
+Verification of fa0_fail failed.
+testcase(66,50) : error VC8029: the call 'fa0(y)' might not terminate.
+Verification of fa1_fail failed.
+testcase(71,58) : error VC8029: the call 'fa1(x)' might not terminate.
+`
