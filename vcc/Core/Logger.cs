@@ -62,7 +62,7 @@ namespace Microsoft.Research.Vcc
   {
     void Log(string msg, LogKind kind);
 
-    void LogSummary(int errorCount, IEnumerable<Tuple<string, double>> timers);
+    void LogFileSummary(string fileName, int errorCount, IEnumerable<Tuple<string, double>> timers);
 
     void LogMethodStart(string methodName);
 
@@ -113,9 +113,9 @@ namespace Microsoft.Research.Vcc
       this.DoForAll(logger => logger.Log(msg, kind));
     }
 
-    public void LogSummary(int errorCount, IEnumerable<Tuple<string, double>> timers)
+    public void LogFileSummary(string fileName, int errorCount, IEnumerable<Tuple<string, double>> timers)
     {
-      this.DoForAll(logger => logger.LogSummary(errorCount, timers));
+      this.DoForAll(logger => logger.LogFileSummary(fileName, errorCount, timers));
     }
 
     public void LogWithLocation(string code, string msg, Location loc, LogKind kind, bool isRelated)

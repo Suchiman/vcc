@@ -467,6 +467,7 @@ namespace Microsoft.Research.Vcc
     type ProcData = 
       {     
         Name: string;
+        Token : Token;
         InParms: list<Var>;
         OutParms: list<Var>;
         Contracts: list<Contract>;
@@ -509,7 +510,7 @@ namespace Microsoft.Research.Vcc
               | None -> None
               | Some b -> Some (mapStmt aux b)
           let proc =      
-            Microsoft.Boogie.Procedure (noToken, p.Name, Boogie.TypeVariableSeq [| |], inparms, outparms,
+            Microsoft.Boogie.Procedure (tok p.Token, p.Name, Boogie.TypeVariableSeq [| |], inparms, outparms,
               Microsoft.Boogie.RequiresSeq [| for e in p.Contracts do 
                                                 match e with
                                                   | Requires (token, e) -> yield Microsoft.Boogie.Requires (tok token, false, trExpr e, null)
