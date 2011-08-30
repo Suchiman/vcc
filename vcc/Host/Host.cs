@@ -66,13 +66,9 @@ namespace Microsoft.Research.Vcc
           if (commandLineOptions.RunTestSuite) {
             Logger.Instance.Unregister(ConsoleLogger.Instance);
             Logger.Instance.Register(new ConsoleLoggerForTestRun());
-          } else if (commandLineOptions.VCLikeErrorMessages) {
-            Logger.Instance.Unregister(ConsoleLogger.Instance);
-            Logger.Instance.Register(new ConsoleLogger("vcc : "));
           } 
           
-          if (!String.IsNullOrEmpty(commandLineOptions.XmlLogFile))
-          {
+          if (!String.IsNullOrEmpty(commandLineOptions.XmlLogFile)) {
               Stream xmlStream = File.Open(commandLineOptions.XmlLogFile, FileMode.Create, FileAccess.Write);
               Logger.Instance.Register(new XmlLogger(xmlStream));
           }
