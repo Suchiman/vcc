@@ -152,7 +152,7 @@ namespace Microsoft.Research.Vcc
         Console.CursorLeft = 0;
       }
 
-      Console.Write("{0}Verification of {1} - {2} {3}", this.prefix, methodName, phase, progressMsg);
+      Console.Write("{0}Verification of {1} - {2} {3} ", this.prefix, methodName, phase, progressMsg);
       Console.Out.Flush();
       this.atStartOfLine = false;
     }
