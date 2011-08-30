@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
 
 namespace Microsoft.Research.Vcc
 {
@@ -142,7 +143,12 @@ namespace Microsoft.Research.Vcc
     public virtual void LogProgress(string methodName, string phase, string progressMsg)
     {
       if (!this.atStartOfLine) {
-        Console.CursorLeft = 0;
+          try {
+              Console.CursorLeft = 0;
+          } catch (IOException)
+          {
+              Console.WriteLine();
+          }
       }
 
       Console.Write("Verification of {0} - {1} {2} ", methodName, phase, progressMsg);
