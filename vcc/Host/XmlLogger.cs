@@ -12,6 +12,8 @@ namespace Microsoft.Research.Vcc
 
         private readonly XmlWriter xwr;
 
+        private bool inVerificatioBlock;
+
         public const string LogFileNamespace = "http://vcc.codeplex.com/logfile/1.0";
 
         public XmlLogger(Stream os)
@@ -49,6 +51,7 @@ namespace Microsoft.Research.Vcc
 
         public void LogFileSummary(string fileName, int errorCount, IEnumerable<Tuple<string, double>> timers)
         {
+            this.CloseVerificationBlockIfNecessary();
             this.xwr.WriteStartElement("summary", LogFileNamespace);
             this.xwr.WriteAttributeString("file", fileName);
             this.xwr.WriteElementString("errors", LogFileNamespace, errorCount.ToString());
@@ -73,6 +76,7 @@ namespace Microsoft.Research.Vcc
 
         public void LogMethodSummary(string methodName, Location loc, Outcome outcome, string additionalInfo, double time)
         {
+            this.CloseVerificationBlockIfNecessary();
             this.xwr.WriteStartElement("verification", LogFileNamespace);
             this.xwr.WriteAttributeString("method", methodName);
             this.xwr.WriteAttributeString("result", OutcomeToString(outcome));
@@ -82,7 +86,8 @@ namespace Microsoft.Research.Vcc
             {
                 this.xwr.WriteElementString("info", LogFileNamespace, additionalInfo);
             }
-            this.xwr.WriteEndElement();
+
+            this.inVerificatioBlock = true;
         }
 
         public void LogWithLocation(string code, string msg, Location loc, LogKind kind, bool isRelated)
@@ -107,8 +112,8 @@ namespace Microsoft.Research.Vcc
                 this.xwr.WriteAttributeString("code", code);
             }
 
-            this.xwr.WriteString(msg);
             this.WriteLocation(loc);
+            this.xwr.WriteString(msg);
             this.xwr.WriteEndElement();            
         }
 
@@ -126,6 +131,7 @@ namespace Microsoft.Research.Vcc
 
         public void Dispose()
         {
+            this.CloseVerificationBlockIfNecessary();
             this.xwr.WriteElementString("timestamp", LogFileNamespace, GetTimestamp());
             this.xwr.WriteEndDocument();
             this.xwr.Close();
@@ -157,6 +163,15 @@ namespace Microsoft.Research.Vcc
                     return "timeout";
                 default:
                     throw new ArgumentException();
+            }
+        }
+
+        private void CloseVerificationBlockIfNecessary()
+        {
+            if (this.inVerificatioBlock)
+            {
+                this.xwr.WriteEndElement();
+                this.inVerificatioBlock = false;
             }
         }
 
