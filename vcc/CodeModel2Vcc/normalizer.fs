@@ -199,23 +199,27 @@ namespace Microsoft.Research.Vcc
 
     let inlineSpecMacros decls =
       let isSpecMacro (fn:Function) = hasCustomAttr AttrSpecMacro fn.CustomAttr
-      let doInline self =
+      let rec doInline expandedFns self =
         function 
           | Call (ec, fn, targs, args) when isSpecMacro fn ->
-            let fn' = fn.Specialize(targs, false)
-            match fn'.Ensures with
-              | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))]
-              | [Expr.Macro (_, "_vcc_set_eq", ([Result _; e]|[e; Result _]))] ->
-                if e.HasSubexpr (function Result _ -> true | _ -> false) then
-                  helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
+            if Set.contains fn.UniqueId expandedFns then
+              helper.Error (fn.Token, 9740, "recursive spec macro '" + fn.Name + "'", Some ec.Token)
+              None
+            else
+              let fn' = fn.Specialize(targs, false)
+              match fn'.Ensures with
+                | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))]
+                | [Expr.Macro (_, "_vcc_set_eq", ([Result _; e]|[e; Result _]))] ->
+                  if e.HasSubexpr (function Result _ -> true | _ -> false) then
+                    helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
+                    None
+                  else                 
+                    Some ((inlineCall "" self (Call({ec with Type = fn'.RetType}, fn', [], args)) e).SelfMap((doInline (Set.add fn.UniqueId expandedFns))))
+                | _ ->
+                  helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
                   None
-                else                 
-                  Some (self (inlineCall "" self (Call({ec with Type = fn'.RetType}, fn', [], args)) e))
-              | _ ->
-                helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
-                None
           | _ -> None
-      deepMapExpressions doInline decls |>
+      deepMapExpressions (doInline Set.empty) decls |>
         List.filter (function Top.FunctionDecl f when isSpecMacro f -> false | _ -> true)    
 
     // ============================================================================================================

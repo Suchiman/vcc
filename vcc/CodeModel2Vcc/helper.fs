@@ -311,7 +311,7 @@ namespace Microsoft.Research.Vcc
       member this.GraveWarning (tok, code, msg:string, relatedTok) =
         this.Warning (tok, code, "[possible unsoundness]: " + msg, relatedTok)
       
-      // 9601 <= code <= 9799; First available: 9740
+      // 9601 <= code <= 9799; First available: 9741
       member this.Error (tok:Token, code, msg:string) =
         this.Error (tok, code, msg, None)
         
