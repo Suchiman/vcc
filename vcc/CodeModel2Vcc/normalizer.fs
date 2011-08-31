@@ -204,7 +204,8 @@ namespace Microsoft.Research.Vcc
           | Call (ec, fn, targs, args) when isSpecMacro fn ->
             let fn' = fn.Specialize(targs, false)
             match fn'.Ensures with
-              | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))] ->
+              | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))]
+              | [Expr.Macro (_, "_vcc_set_eq", ([Result _; e]|[e; Result _]))] ->
                 if e.HasSubexpr (function Result _ -> true | _ -> false) then
                   helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
                   None
