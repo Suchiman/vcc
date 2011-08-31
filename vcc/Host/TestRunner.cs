@@ -100,6 +100,7 @@ namespace Microsoft.Research.Vcc
     }
 
     static bool RunTestSuite(string directoryName, string suiteName, StreamReader instream, VccOptions commandLineOptions) {
+      var startTime = DateTime.Now;
       System.Diagnostics.Debug.Listeners.Remove("Default");
       var errorHandler = new CciErrorHandler(commandLineOptions);
       StringBuilder source = null;
@@ -205,11 +206,12 @@ namespace Microsoft.Research.Vcc
 
         }
         instream.Close();
+        var runtime = DateTime.Now.Subtract(startTime).TotalSeconds;
         if (errors == 0)
-          Logger.Instance.Log(suiteName + " passed");
+          Logger.Instance.Log("{0} passed [{1:0.00}]", suiteName, runtime);
         else {
           Logger.Instance.NewLine();
-          Logger.Instance.Error(suiteName + " had " + errors + (errors > 1 ? " failures" : " failure"));
+          Logger.Instance.Error("{0} had {1} failure(s) [{2:0.00}]", suiteName, errors, runtime);
         }
       } catch {
         var expected = expectedOutput == null ? "<none>" : expectedOutput.ToString().Trim();
@@ -336,7 +338,7 @@ namespace Microsoft.Research.Vcc
 
       class Runner
       {
-        private static readonly Regex TestPassed = new Regex("^\\S+ passed$");
+        private static readonly Regex TestPassed = new Regex("^\\S+ passed \\[.*\\]$");
         private static readonly Regex TestFailed = new Regex("--- \\S+ failed ---");
         private readonly List<string> stdout = new List<string>();
         private readonly List<string> stderr = new List<string>();
