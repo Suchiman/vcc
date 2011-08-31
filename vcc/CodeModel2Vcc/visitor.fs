@@ -81,6 +81,7 @@ namespace Microsoft.Research.Vcc
       helper.Oops (token o, msg)
     let emacro name args = C.Expr.Macro (C.ExprCommon.Bogus, name, args)
     let die () = helper.Die ()
+    let dieTok tok = helper.Die(tok)
     let xassert cond =
       if cond then ()
       else oops "assertion failed"; die ()
@@ -705,6 +706,11 @@ namespace Microsoft.Research.Vcc
                           helper.Error(tok, 9632, "fields of map type must be declared as specification fields", None)
                           true
                         | _ -> isSpec
+
+                    if f.IsBitField then
+                      match t with 
+                        | C.Type.Integer _ -> ()
+                        | _ -> helper.Error(tok, 9739, "bit field of unsupported type '" + t.ToString() + "'", None)
                     let res =
                       { Name = name
                         Token = tok
