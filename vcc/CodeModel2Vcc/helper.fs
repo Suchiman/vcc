@@ -285,9 +285,13 @@ namespace Microsoft.Research.Vcc
       member this.Panic (msg:string) =
         this.Oops (Token.NoToken, msg)
         this.Die ()
-        
+
       member this.Die () : 'a =
         failwith "confused, will now die"
+
+      member this.Die(tok : Token) :'a =
+        this.Oops(tok, "internal compiler error")
+        this.Die()
       
       // 9100 <= code <= 9199; First available: 9126
       member this.Warning (tok:Token, code, msg:string) =
@@ -307,7 +311,7 @@ namespace Microsoft.Research.Vcc
       member this.GraveWarning (tok, code, msg:string, relatedTok) =
         this.Warning (tok, code, "[possible unsoundness]: " + msg, relatedTok)
       
-      // 9601 <= code <= 9799; First available: 9739
+      // 9601 <= code <= 9799; First available: 9740
       member this.Error (tok:Token, code, msg:string) =
         this.Error (tok, code, msg, None)
         
