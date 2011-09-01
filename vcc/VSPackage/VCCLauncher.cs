@@ -31,8 +31,11 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     internal static string GetCLPath(string ActivePlatform)
     {
-      string CL = (ActivePlatform == "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
-      return GetVSCOMNTOOLS().ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
+      string vsToolDir = GetVSCOMNTOOLS();
+      if (!String.IsNullOrEmpty(vsToolDir)) {
+          string CL = (ActivePlatform == "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
+          return vsToolDir.ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
+      } else return null;
     }
 
     #endregion
@@ -157,7 +160,8 @@ namespace Microsoft.Research.Vcc.VSPackage
 
       arguments += " ";
       arguments += VSIntegration.CurrentCompilerSettings.ToVccOptions();
-      arguments += String.Format(" /st /clpath:\"{0}\"", GetCLPath(VSIntegration.CurrentPlatform));
+      var clPath = GetCLPath(VSIntegration.CurrentPlatform);
+      if (clPath != null) arguments += String.Format(" /clpath:\"{0}\"", clPath);
 
       VSIntegration.ClearErrorsAndMarkers();
       VSIntegration.UpdateStatus("Verifying...", true);

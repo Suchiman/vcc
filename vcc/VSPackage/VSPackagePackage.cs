@@ -251,18 +251,12 @@ namespace Microsoft.Research.Vcc.VSPackage
       }
     }
 
-    /// <summary>
-    ///     Verify This
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    static void VerifyThis_BeforeQueryStatus(object sender, EventArgs e)
+    static void CheckCodeFileAndVccNotRunning(object sender, EventArgs e)
     {
-      if (sender != null)
-      {
-        ((OleMenuCommand)sender).Enabled = !VCCLauncher.VCCRunning;
-        ((OleMenuCommand)sender).Visible = VSIntegration.IsCodeFile;
-      }
+        var cmd = sender as OleMenuCommand;
+        if (cmd == null) return;
+        cmd.Enabled = !VCCLauncher.VCCRunning;
+        cmd.Visible = VSIntegration.IsCodeFile;
     }
 
     /// <summary>
@@ -275,8 +269,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (sender != null)
       {
         ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.ActiveFileName);
-        ((OleMenuCommand)sender).Enabled = !VCCLauncher.VCCRunning;
-        ((OleMenuCommand)sender).Visible = VSIntegration.IsCodeFile;
+        CheckCodeFileAndVccNotRunning(sender, e);
       }
     }
 
@@ -290,40 +283,23 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (sender != null)
       {
         ((OleMenuCommand)sender).Text = string.Format("Verify File Without Includes: '{0}'", VSIntegration.ActiveFileName);
-        ((OleMenuCommand)sender).Enabled = !VCCLauncher.VCCRunning;
-        ((OleMenuCommand)sender).Visible = VSIntegration.IsCodeFile;
-      }
-    }
-
-    /// <summary>
-    ///     Re-Verify
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    static void ReVerify_BeforeQueryStatus(object sender, EventArgs e)
-    {
-      if (sender != null)
-      {
-        ((OleMenuCommand)sender).Enabled = !VCCLauncher.VCCRunning;
-        ((OleMenuCommand)sender).Visible = VSIntegration.IsCodeFile;
-      }
-    }
-
-    /// <summary>
-    ///     Custom Verify
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    static void CustomVerify_BeforeQueryStatus(object sender, EventArgs e)
-    {
-      if (sender != null)
-      {
-        ((OleMenuCommand)sender).Enabled = !VCCLauncher.VCCRunning;
-        ((OleMenuCommand)sender).Visible = VSIntegration.IsCodeFile;
+        CheckCodeFileAndVccNotRunning(sender, e);
       }
     }
 
     #endregion
+
+    private void RegisterCommand(OleMenuCommandService mcs, EventHandler invokeHandler, EventHandler beforeQueryStatusHandler, params uint[] cmdIds)
+    {
+        foreach (var cmdId in cmdIds)
+        {
+            var menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int) cmdId);
+            var menuCommand = new OleMenuCommand(invokeHandler, menuCommandID);
+            if (beforeQueryStatusHandler != null)
+                menuCommand.BeforeQueryStatus += beforeQueryStatusHandler;
+            mcs.AddCommand(menuCommand);
+        }
+    }
 
     /// <summary>
     /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -336,132 +312,26 @@ namespace Microsoft.Research.Vcc.VSPackage
 
       // Add our command handlers for menu (commands must exist in the .vsct file)
       OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-      if (null != mcs)
-      {
-
-        //// Create the commands for the menu items.
-
-        //// Verify File
-        CommandID menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFile);
-        OleMenuCommand OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += VerifyFile_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Verify File Without Includes
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyActiveFileWithoutIncludes);
-        OleMenuItem = new OleMenuCommand(VerifyActiveFileWithoutIncludes, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += VerifyFileWithoutIncludes_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Options
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidOptions);
-        OleMenuItem = new OleMenuCommand(Options, menuCommandID);
-        mcs.AddCommand(OleMenuItem);
-
-        //// Re-Verify
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidReVerify);
-        OleMenuItem = new OleMenuCommand(ReVerify, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += ReVerify_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Verify This
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyThis);
-        OleMenuItem = new OleMenuCommand(VerifyThis, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += VerifyThis_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Custom Verify
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCustomVerify);
-        OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += CustomVerify_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Cancel
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidCancel);
-        OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += Cancel_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Verify File (Context Menu)
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFile);
-        OleMenuItem = new OleMenuCommand(VerifyActiveFile, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += VerifyFile_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Verify File Without Includes (Context Menu)
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyActiveFileWithoutIncludes);
-        OleMenuItem = new OleMenuCommand(VerifyActiveFileWithoutIncludes, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += VerifyFileWithoutIncludes_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Verify This(Context Menu)
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextVerifyThis);
-        OleMenuItem = new OleMenuCommand(VerifyThis, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += VerifyThis_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Re-Verify (Context Menu)
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextReVerify);
-        OleMenuItem = new OleMenuCommand(ReVerify, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += ReVerify_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Custom Verify (Context Menu)
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCustomVerify);
-        OleMenuItem = new OleMenuCommand(CustomVerify, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += CustomVerify_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Cancel (Context Menu)
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidContextCancel);
-        OleMenuItem = new OleMenuCommand(Cancel, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += Cancel_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Show Error Model (Context Menu)
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidShowErrorModel);
-        OleMenuItem = new OleMenuCommand(ShowErrorModel, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += ShowErrorModel_BeforeQueryStatus;
-        ErrorModelToolWindow.ModelViewer.LineColumnChanged += VSIntegration.ModelViewer_LineColumnChanged;
-        mcs.AddCommand(OleMenuItem);
-
-        //// Verifymenu
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidVerifyMenu);
-        OleMenuItem = new OleMenuCommand(null, menuCommandID);
-        OleMenuItem.BeforeQueryStatus += VerifyMenu_BeforeQueryStatus;
-        mcs.AddCommand(OleMenuItem);
-
-        //// insert \forall
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolForall);
-        OleMenuItem = new OleMenuCommand(InsertForall, menuCommandID);
-        mcs.AddCommand(OleMenuItem);
-
-        //// insert \exists
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolExists);
-        OleMenuItem = new OleMenuCommand(InsertExists, menuCommandID);
-        mcs.AddCommand(OleMenuItem);
-
-        //// insert \lambda
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolLambda);
-        OleMenuItem = new OleMenuCommand(InsertLambda, menuCommandID);
-        mcs.AddCommand(OleMenuItem);
-
-        //// insert \in
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolIn);
-        OleMenuItem = new OleMenuCommand(InsertIn, menuCommandID);
-        mcs.AddCommand(OleMenuItem);
-
-        //// insert \intersection
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolIntersection);
-        OleMenuItem = new OleMenuCommand(InsertIntersection, menuCommandID);
-        mcs.AddCommand(OleMenuItem);
-
-        //// insert \union
-        menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)PkgCmdIDList.cmdidMathSymbolUnion);
-        OleMenuItem = new OleMenuCommand(InsertUnion, menuCommandID);
-        mcs.AddCommand(OleMenuItem);
-
+      if (null != mcs) {
+          //// Create the commands for the menu items.
+          this.RegisterCommand(mcs, VerifyActiveFile, VerifyFile_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyActiveFile, PkgCmdIDList.cmdidContextVerifyActiveFile);
+          this.RegisterCommand(mcs, VerifyActiveFileWithoutIncludes, VerifyFileWithoutIncludes_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyActiveFileWithoutIncludes, PkgCmdIDList.cmdidContextVerifyActiveFileWithoutIncludes);
+          this.RegisterCommand(mcs, ReVerify, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidReVerify, PkgCmdIDList.cmdidContextReVerify);
+          this.RegisterCommand(mcs, VerifyThis, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidVerifyThis, PkgCmdIDList.cmdidContextVerifyThis);
+          this.RegisterCommand(mcs, CustomVerify, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidCustomVerify, PkgCmdIDList.cmdidContextCustomVerify);
+          this.RegisterCommand(mcs, Cancel, Cancel_BeforeQueryStatus, PkgCmdIDList.cmdidCancel, PkgCmdIDList.cmdidContextCancel);
+          this.RegisterCommand(mcs, Options, null, PkgCmdIDList.cmdidOptions);
+          this.RegisterCommand(mcs, ShowErrorModel, ShowErrorModel_BeforeQueryStatus, PkgCmdIDList.cmdidShowErrorModel);
+          this.RegisterCommand(mcs, null, VerifyMenu_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyMenu);
+          this.RegisterCommand(mcs, InsertForall, null, PkgCmdIDList.cmdidMathSymbolForall);
+          this.RegisterCommand(mcs, InsertExists, null, PkgCmdIDList.cmdidMathSymbolExists);
+          this.RegisterCommand(mcs, InsertLambda, null, PkgCmdIDList.cmdidMathSymbolLambda);
+          this.RegisterCommand(mcs, InsertIn, null, PkgCmdIDList.cmdidMathSymbolIn);
+          this.RegisterCommand(mcs, InsertIntersection, null, PkgCmdIDList.cmdidMathSymbolIntersection);
+          this.RegisterCommand(mcs, InsertUnion, null, PkgCmdIDList.cmdidMathSymbolUnion);
       }
+
+      ErrorModelToolWindow.ModelViewer.LineColumnChanged += VSIntegration.ModelViewer_LineColumnChanged;
     }
 
     /// <summary>
