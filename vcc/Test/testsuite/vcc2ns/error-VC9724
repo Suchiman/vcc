@@ -1,0 +1,10 @@
+`/newsyntax
+#include <vcc.h>
+
+void test()
+{
+  _(assert {:foobar} \true)
+}
+`
+testcase(5,26) : error VC9724: expression label {:foobar ...} unsupported (here)
+`
