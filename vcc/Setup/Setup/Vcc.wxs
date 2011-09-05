@@ -127,6 +127,8 @@
         <File Name="Core.pdb" />
         <File Name="Graph.dll" />
         <File Name="Graph.pdb" />
+        <File Name="Houdini.dll" />
+        <File Name="Houdini.pdb" />
         <File Name="Microsoft.Contracts.dll" />
         <File Name="Model.dll" />
         <File Name="Model.pdb" />
