@@ -23,7 +23,7 @@ namespace Microsoft.Research.Vcc
     /// </summary>
     const string vccSplitSuffix = "__vcc_split__";
 
-      public static int RunTestSuite(VccOptions commandLineOptions) {
+    public static int RunTestSuite(VccOptions commandLineOptions) {
       return commandLineOptions.FileNames.Count(fileName => !RunTestSuite(fileName, commandLineOptions));
     }
 

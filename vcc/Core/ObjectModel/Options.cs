@@ -141,6 +141,18 @@ namespace Microsoft.Research.Vcc
       this.options.CheckedArithmetic = true;
     }
 
+    private static void CheckOptions(MetadataHostEnvironment hostEnvironment, VccOptions options)
+    {
+      if (options.RunTestSuite &&
+          options.RunTestSuiteMultiThreaded != -1 &&
+          !String.IsNullOrEmpty(options.XmlLogFile)) {
+          DummyExpression dummyExpression = new DummyExpression(SourceDummy.SourceLocation);
+          hostEnvironment.ReportError(new AstErrorMessage(dummyExpression,
+                                                          Microsoft.Cci.Ast.Error.InvalidCompilerOption,
+                                                          "Cannot combine /xml with /suite /smt")); // XML logger is sequential
+      }
+    }
+
     public static VccOptions ParseCommandLineArguments(MetadataHostEnvironment hostEnvironment, IEnumerable<string> arguments) {
       return OptionParser.ParseCommandLineArguments(hostEnvironment, arguments, true);
     }
@@ -148,6 +160,7 @@ namespace Microsoft.Research.Vcc
     public static VccOptions ParseCommandLineArguments(MetadataHostEnvironment hostEnvironment, IEnumerable<string> arguments, bool oneOrMoreSourceFilesExpected) {
       OptionParser parser = new OptionParser(hostEnvironment);
       parser.ParseCommandLineArguments(arguments, oneOrMoreSourceFilesExpected);
+      CheckOptions(hostEnvironment, parser.options);
       return parser.options;
     }
 
@@ -156,6 +169,7 @@ namespace Microsoft.Research.Vcc
       OptionParser parser = new OptionParser(hostEnvironment);
       parser.options.CopyFrom(template);
       parser.ParseCommandLineArguments(arguments, false);
+      CheckOptions(hostEnvironment, parser.options);
       return parser.options;
     }
 
