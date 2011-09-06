@@ -1140,6 +1140,10 @@ namespace Microsoft.Research.Vcc
       let trClaim (env:Env) upgrade tok (local:C.Variable) args =
         match args with
           | C.Pure (_, expr) :: objects ->
+            let objects =
+              match objects with
+                | [C.Macro(_, "_vcc_set_empty", [])] -> []
+                | _ -> objects
             let claim = "claim#" + (!claimId).ToString()
             incr claimId
             let conditions = TransUtil.splitConjunction expr

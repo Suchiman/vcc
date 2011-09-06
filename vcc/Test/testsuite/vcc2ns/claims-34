@@ -15,5 +15,5 @@ void foo(struct S *s)
   _(assert (c->\valid && \ghost(c)))
 }
 `
-testcase(12,29) : error VC9710: claim(...) requires at least one object and a claimed property
+Verification of foo succeeded.
 `
