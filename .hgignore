@@ -13,6 +13,7 @@ actual.txt
 expected.txt
 testsuite.log
 vcc/Tools/VccSyntaxCoverter/Lexer.fs
+vcc/Tools/VccTokenCounter/Lexer.fs
 vcc/Docs/Wiki
 _ReSharper*
 VSPackage/bin/
