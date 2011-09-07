@@ -57,7 +57,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Project>{C5203B00-B561-48F9-B56D-C4477A27EA01}</Project>
-      <Name>Ast %28Vcc\Ast%29</Name>
+      <Name>Ast</Name>
     </ProjectReference>
     <ProjectReference Include="..\Core\VccCore.csproj">
       <Project>{B855D039-8A27-419D-9A81-86FF93227E31}</Project>

@@ -1,0 +1,40 @@
+﻿%{
+
+let private spans = ref []
+
+let internal result() = List.rev !spans
+
+let internal reset() = spans := []
+
+%}
+
+// The start token becomes a parser function in the compiled code:
+%start start
+
+%token <Position> OPENSPEC
+%token <Position> LPAREN
+%token <Position> RPAREN
+%token EOF
+
+
+// This is the type of the data produced by a successful reduction of the 'start'
+// symbol:
+%type < unit > start
+
+%%
+
+// These are the rules of the grammar along with the F# code of the 
+// actions executed as rules are reduced.  In this case the actions 
+// produce data using F# data construction terms.
+start:  Program { $1 }
+
+Program : 
+    | NestedParens EOF                          { () }
+
+NestedParens :
+    |                                           { () } 
+    | NestedParens Parens                       { () }
+
+Parens :
+    | LPAREN NestedParens RPAREN                { () }
+    | OPENSPEC NestedParens RPAREN              { spans := ($1, $3) :: !spans }
