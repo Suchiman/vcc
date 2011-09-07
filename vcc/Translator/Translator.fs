@@ -2093,11 +2093,7 @@ namespace Microsoft.Research.Vcc
         let s2 = er "#p2"
         let idx = er "#i"
         let eqFunName typeName deep = "_vcc_" + deep + "_struct_eq." + typeName
-        let body =
-          if vcc3 then
-            Some (bCall ("$vs_" + deepStr + "_eq") [s1; s2; toTypeId (C.Type.Ref td)])
-          else None
-        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars, body)
+        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars, None)
         let typeRef = toTypeId (C.Type.Ref td)
         let fldEqual inUnion (f : C.Field) =
           let rec read arrayElementType v = 
@@ -2143,26 +2139,23 @@ namespace Microsoft.Research.Vcc
           | None -> e
           | Some e' -> bAnd e e'
 
-        if vcc3 then
-          [eqFun]
-        else
-          let eqCall = bCall (eqFunName td.Name deepStr) [s1; s2]
-          let eqExpr = 
-            match td.Kind with
-            | C.TypeKind.Struct -> td.Fields |> List.map (fldEqual false) |> List.fold andOpt bTrue
-            | C.TypeKind.Union ->
-              let getAO v = bCall "$active_option" [bCall "$vs_state" [v]; bCall "$vs_base" [v; typeRef] ]
-              let aoEq = bEq (getAO s1) (getAO s2)
-              let fldEqualCond (f : C.Field) =
-                match fldEqual true f with
-                  | Some expr -> B.Primitive("==>", [bEq (getAO s1) (er (fieldName f)); expr])
-                  | None -> die()
-              td.Fields |> List.map fldEqualCond |> List.fold bAnd aoEq
-              //activeOptionEq = 
-              //bEq (bCall "$active_option" [s; p]) fieldRef
-            | _ -> die()
-          let eqForall = B.Forall(Token.NoToken, vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
-          [eqFun; B.Axiom eqForall]
+        let eqCall = bCall (eqFunName td.Name deepStr) [s1; s2]
+        let eqExpr = 
+          match td.Kind with
+          | C.TypeKind.Struct -> td.Fields |> List.map (fldEqual false) |> List.fold andOpt bTrue
+          | C.TypeKind.Union ->
+            let getAO v = bCall "$active_option" [bCall "$vs_state" [v]; bCall "$vs_base" [v; typeRef] ]
+            let aoEq = bEq (getAO s1) (getAO s2)
+            let fldEqualCond (f : C.Field) =
+              match fldEqual true f with
+                | Some expr -> B.Primitive("==>", [bEq (getAO s1) (er (fieldName f)); expr])
+                | None -> die()
+            td.Fields |> List.map fldEqualCond |> List.fold bAnd aoEq
+            //activeOptionEq = 
+            //bEq (bCall "$active_option" [s; p]) fieldRef
+          | _ -> die()
+        let eqForall = B.Forall(Token.NoToken, vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
+        [eqFun; B.Axiom eqForall]
 
 
       let imax x y = if x < y then y else x
