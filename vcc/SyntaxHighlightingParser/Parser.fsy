@@ -4,13 +4,15 @@ open Ast
 
 let private spans = ref []
 
-let result() = List.rev !spans
+let internal result() = List.rev !spans
 
-let reset() = spans := []
+let internal reset() = spans := []
 
-let mkKeyword (ps : Position , pe : Position) = Keyword(ps.Column, pe.Column - ps.Column)
+let private addKeyword (ps : Position, pe : Position) = 
+  spans := Keyword(ps.Column, pe.Column - ps.Column) :: !spans
 
-let inSpec = ref false
+let private addSpecCode (ps : Position) (pe : Position) =
+  spans := Spec(ps.Column, pe.Column - ps.Column + 1) :: !spans
 
 %}
 
@@ -31,9 +33,11 @@ let inSpec = ref false
 
 %%
 
-// These are the rules of the grammar along with the F# code of the 
-// actions executed as rules are reduced.  In this case the actions 
-// produce data using F# data construction terms.
+// Instead of building an AST and passing that one back to our caller, we create a list of the
+// relevant locations as side-effects during the parsing. The reason for this is that
+// we want to deal with syntactically incorrect code and collect all spans up to the
+// parse error
+
 start:  Program                                       { () }
 
 Program : 
@@ -45,7 +49,7 @@ NestedParens :
 
 Parens :
     | LPAREN NestedParens RPAREN                      { () }
-    | OPENSPEC KeywordOpt NestedParensInSpec RPAREN   { spans := Spec($1.Column, $4.Column - $1.Column + 1) :: !spans }
+    | OPENSPEC KeywordOpt NestedParensInSpec RPAREN   { addSpecCode $1 $4 }
 
 NestedParensInSpec :
     | Keywords                                        { () } 
@@ -53,19 +57,18 @@ NestedParensInSpec :
 
 ParensInSpec :
     | LPAREN NestedParensInSpec RPAREN                { () }
-    | OPENSPEC KeywordOpt NestedParensInSpec RPAREN   { spans := Spec($1.Column, $4.Column - $1.Column + 1) :: !spans }
+    | OPENSPEC KeywordOpt NestedParensInSpec RPAREN   { addSpecCode $1 $4 }
 
 IgnoredKeywords  :
     |                                                 { () }
     | KEYWORD IgnoredKeywords                         { () }
-    | GUARDED IgnoredKeywords                         { spans := (mkKeyword $1) :: !spans }
+    | GUARDED IgnoredKeywords                         { addKeyword $1 }
 
 Keywords  :
     |                                                 { () }
-    | KEYWORD Keywords                                { spans := (mkKeyword $1) :: !spans }
-    | GUARDED Keywords                                { spans := (mkKeyword $1) :: !spans }
-
+    | KEYWORD Keywords                                { addKeyword $1 }
+    | GUARDED Keywords                                { addKeyword $1 }
 
 KeywordOpt :
-    |                                           { () }
-    | KEYWORD                                   { spans := (mkKeyword $1) :: !spans }
+    |                                                 { () }
+    | KEYWORD                                         { addKeyword $1 }
