@@ -213,6 +213,8 @@
         <File Name="Microsoft.Research.Vcc.VsPackage.dll" />
         <File Name="Microsoft.Research.Vcc.VSPackage.pdb" />
         <File Name="Microsoft.Research.Vcc.VSPackage.pkgdef" />
+        <File Name="Microsoft.Research.Vcc.VSPackage.Parser.dll" />
+        <File Name="Microsoft.Research.Vcc.VSPackage.Parser.pdb" />
         <File Id="VccModel.dll_2" Name="VccModel.dll" />
         <File Id="VccModel.pdb_2" Name="VccModel.pdb" />
         <File Id="VccModelViewer.exe_2" Name="VccModelViewer.exe" />

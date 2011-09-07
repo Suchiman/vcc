@@ -36,6 +36,15 @@ namespace Microsoft.Research.Vcc.VSPackage
             var snapshot = span.Snapshot;
             if (snapshot.Length == 0) return new ClassificationSpan[] {};
 
+            try {
+                return GetClassificationSpans(snapshot);
+            } catch {
+                return new ClassificationSpan[] { };
+            }
+        }
+
+        private List<ClassificationSpan> GetClassificationSpans(ITextSnapshot snapshot)
+        {
             var specType = this.registry.GetClassificationType(VccClassificationTypeDefinitions.SpecType);
             var keywordType = this.registry.GetClassificationType(VccClassificationTypeDefinitions.KeywordType);
 
@@ -49,15 +58,14 @@ namespace Microsoft.Research.Vcc.VSPackage
                     var spec = (SyntaxHighlighting.Ast.Span.Spec) pos;
                     classifications.Add(
                         new ClassificationSpan(new SnapshotSpan(snapshot, spec.Item1, spec.Item2), specType));
-                } 
+                }
                 else if (pos.IsKeyword)
                 {
-                    var kw = (SyntaxHighlighting.Ast.Span.Keyword)pos;
+                    var kw = (SyntaxHighlighting.Ast.Span.Keyword) pos;
                     classifications.Add(
                         new ClassificationSpan(new SnapshotSpan(snapshot, kw.Item1, kw.Item2), keywordType));
                 }
             }
-
             return classifications;
         }
 
