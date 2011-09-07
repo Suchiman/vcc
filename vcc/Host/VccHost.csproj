@@ -148,7 +148,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Project>{C5203B00-B561-48F9-B56D-C4477A27EA01}</Project>
-      <Name>Ast %28Vcc\Ast%29</Name>
+      <Name>Ast</Name>
     </ProjectReference>
     <ProjectReference Include="..\Runtime\VccRuntime.csproj">
       <Project>{D0544C0C-C6ED-4F91-9F3C-9F3A02B8CAB6}</Project>

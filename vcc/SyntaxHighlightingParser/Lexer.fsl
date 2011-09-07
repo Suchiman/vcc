@@ -1,0 +1,34 @@
+﻿{
+module SyntaxHighlighting.Lexer
+open System
+open Microsoft.FSharp.Text.Lexing
+open SyntaxHighlighting.FsParser
+}
+
+
+// Base regular expressions
+let whitespace = [' ' '\t' '\r' '\n']
+
+let digit = ['0'-'9']
+let idbeg = (['A' - 'Z'] | ['a'-'z'])
+let idbody = (idbeg | digit | '_')
+
+let id = idbeg idbody* | '_' idbody+
+
+
+rule tokenize = parse
+
+| '_' '('                               { OPENSPEC(lexbuf.StartPos) }
+| '('                                   { LPAREN(lexbuf.StartPos) }
+| ')'                                   { RPAREN(lexbuf.StartPos) }
+
+| id                                    { tokenize lexbuf }
+| whitespace+                           { tokenize lexbuf }
+
+| "'" ([^ '\\'] | '\\' [^ '\'']+ ) "'"  { tokenize lexbuf }
+| '"' ([^ '\\' '"'] | '\\' _)* '"'      { tokenize lexbuf }
+
+| "//" [^ '\r' '\n']*                   { tokenize lexbuf }
+| "/*" ([^ '*'] | '*' [^ '/'])* "*/"    { tokenize lexbuf }
+| eof                                   { EOF }
+| _                                     { tokenize lexbuf }
