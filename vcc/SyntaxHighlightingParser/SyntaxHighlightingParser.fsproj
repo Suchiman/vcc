@@ -50,6 +50,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Ast.fs" />
     <Compile Include="$(IntermediateOutputPath)Parser.fs">
       <Visible>false</Visible>
       <Link>Parser.fs</Link>

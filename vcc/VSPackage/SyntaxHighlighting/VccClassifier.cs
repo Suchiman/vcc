@@ -7,20 +7,10 @@ using Microsoft.VisualStudio.Utilities;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
-
-    #region Provider definition
-    /// <summary>
-    /// This class causes a classifier to be added to the set of classifiers. Since 
-    /// the content type is set to "text", this classifier applies to all text files
-    /// </summary>
     [Export(typeof(IClassifierProvider))]
-    [ContentType("text")]
+    [ContentType("C/C++")]
     internal class VccClassifierProvider : IClassifierProvider
     {
-        /// <summary>
-        /// Import the classification registry to be used for getting a reference
-        /// to the custom classification type later.
-        /// </summary>
         [Import]
 // ReSharper disable RedundantDefaultFieldInitializer
         internal IClassificationTypeRegistryService ClassificationRegistry = null; // Set via MEF
@@ -31,46 +21,41 @@ namespace Microsoft.Research.Vcc.VSPackage
             return buffer.Properties.GetOrCreateSingletonProperty(() => new VccClassifier(ClassificationRegistry));
         }
     }
-    #endregion //provider def
 
-    #region Classifier
-    /// <summary>
-    /// Classifier that classifies all text as an instance of the OrinaryClassifierType
-    /// </summary>
     internal class VccClassifier : IClassifier
     {
-        readonly IClassificationType _classificationType;
-
-        readonly static char[] SplitChars = new char[] { ' ', '\t' };
+        private readonly IClassificationTypeRegistryService registry;
 
         internal VccClassifier(IClassificationTypeRegistryService registry)
         {
-            _classificationType = registry.GetClassificationType("vcc.spec");
+            this.registry = registry;
         }
 
-        /// <summary>
-        /// This method scans the given SnapshotSpan for potential matches for this classification.
-        /// In this instance, it classifies everything and returns each span as a new ClassificationSpan.
-        /// </summary>
-        /// <param name="span">The span currently being classified</param>
-        /// <returns>A list of ClassificationSpans that represent spans identified to be of this classification</returns>
         public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
         {
-
             var snapshot = span.Snapshot;
-
             if (snapshot.Length == 0) return new ClassificationSpan[] {};
 
-            var snapshotText = snapshot.GetText();
-            var positions = SyntaxHighlighting.Parser.Parse(snapshotText);
+            var specType = this.registry.GetClassificationType(VccClassificationTypeDefinitions.SpecType);
+            var keywordType = this.registry.GetClassificationType(VccClassificationTypeDefinitions.KeywordType);
 
+            var positions = SyntaxHighlighting.Parser.Parse(snapshot.GetText());
             var classifications = new List<ClassificationSpan>(positions.Length);
 
             foreach (var pos in positions)
             {
-                classifications.Add(
-                    new ClassificationSpan(new SnapshotSpan(snapshot, pos.Item1.Column,
-                                                            pos.Item2.Column - pos.Item1.Column + 1), _classificationType));
+                if (pos.IsSpec)
+                {
+                    var spec = (SyntaxHighlighting.Ast.Span.Spec) pos;
+                    classifications.Add(
+                        new ClassificationSpan(new SnapshotSpan(snapshot, spec.Item1, spec.Item2), specType));
+                } 
+                else if (pos.IsKeyword)
+                {
+                    var kw = (SyntaxHighlighting.Ast.Span.Keyword)pos;
+                    classifications.Add(
+                        new ClassificationSpan(new SnapshotSpan(snapshot, kw.Item1, kw.Item2), keywordType));
+                }
             }
 
             return classifications;
@@ -83,5 +68,4 @@ namespace Microsoft.Research.Vcc.VSPackage
         public event EventHandler<ClassificationChangedEventArgs> ClassificationChanged;
 #pragma warning restore 67
     }
-    #endregion //Classifier
 }

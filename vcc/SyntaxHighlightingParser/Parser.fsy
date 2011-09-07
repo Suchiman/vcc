@@ -1,10 +1,16 @@
 ﻿%{
 
+open Ast
+
 let private spans = ref []
 
-let internal result() = List.rev !spans
+let result() = List.rev !spans
 
-let internal reset() = spans := []
+let reset() = spans := []
+
+let mkKeyword (ps : Position , pe : Position) = Keyword(ps.Column, pe.Column - ps.Column)
+
+let inSpec = ref false
 
 %}
 
@@ -14,6 +20,8 @@ let internal reset() = spans := []
 %token <Position> OPENSPEC
 %token <Position> LPAREN
 %token <Position> RPAREN
+%token <Position*Position> KEYWORD
+%token <Position*Position> GUARDED
 %token EOF
 
 
@@ -26,15 +34,38 @@ let internal reset() = spans := []
 // These are the rules of the grammar along with the F# code of the 
 // actions executed as rules are reduced.  In this case the actions 
 // produce data using F# data construction terms.
-start:  Program { $1 }
+start:  Program                                       { () }
 
 Program : 
-    | NestedParens EOF                          { () }
+    | NestedParens EOF                                { () }
 
 NestedParens :
-    |                                           { () } 
-    | NestedParens Parens                       { () }
+    | IgnoredKeywords                                 { () } 
+    | NestedParens Parens IgnoredKeywords             { () }
 
 Parens :
-    | LPAREN NestedParens RPAREN                { () }
-    | OPENSPEC NestedParens RPAREN              { spans := ($1, $3) :: !spans }
+    | LPAREN NestedParens RPAREN                      { () }
+    | OPENSPEC KeywordOpt NestedParensInSpec RPAREN   { spans := Spec($1.Column, $4.Column - $1.Column + 1) :: !spans }
+
+NestedParensInSpec :
+    | Keywords                                        { () } 
+    | NestedParensInSpec ParensInSpec Keywords        { () }
+
+ParensInSpec :
+    | LPAREN NestedParensInSpec RPAREN                { () }
+    | OPENSPEC KeywordOpt NestedParensInSpec RPAREN   { spans := Spec($1.Column, $4.Column - $1.Column + 1) :: !spans }
+
+IgnoredKeywords  :
+    |                                                 { () }
+    | KEYWORD IgnoredKeywords                         { () }
+    | GUARDED IgnoredKeywords                         { spans := (mkKeyword $1) :: !spans }
+
+Keywords  :
+    |                                                 { () }
+    | KEYWORD Keywords                                { spans := (mkKeyword $1) :: !spans }
+    | GUARDED Keywords                                { spans := (mkKeyword $1) :: !spans }
+
+
+KeywordOpt :
+    |                                           { () }
+    | KEYWORD                                   { spans := (mkKeyword $1) :: !spans }
