@@ -6,13 +6,13 @@ namespace Microsoft.Research.Vcc.VSPackage
 {
     internal static class VccClassificationTypeDefinitions
     {
-
-        // http://msdn.microsoft.com/en-us/library/microsoft.visualstudio.language.standardclassification.predefinedclassificationtypenames.aspx
+        internal const string SpecType = "vcc.spec";
+        internal const string KeywordType = "vcc.keyword";
 
 
         [Export]
         [Name("vcc")]
-        [BaseDefinition(Microsoft.VisualStudio.Language.StandardClassification.PredefinedClassificationTypeNames.Comment)]
+        [BaseDefinition("C/C++")]
 // ReSharper disable RedundantDefaultFieldInitializer
         internal static ContentTypeDefinition vccContentTypeDefinition = null;
 // ReSharper restore RedundantDefaultFieldInitializer
@@ -38,10 +38,17 @@ namespace Microsoft.Research.Vcc.VSPackage
 // ReSharper restore RedundantDefaultFieldInitializer
 
         [Export]
-        [Name("vcc.spec")]
-        [BaseDefinition("vcc")]
-// ReSharper disable RedundantDefaultFieldInitializer
+        [Name(SpecType)]
+        [BaseDefinition(Microsoft.VisualStudio.Language.StandardClassification.PredefinedClassificationTypeNames.FormalLanguage)]
+        // ReSharper disable RedundantDefaultFieldInitializer
         internal static ClassificationTypeDefinition vccSpecDefinition = null;
+// ReSharper restore RedundantDefaultFieldInitializer
+
+        [Export]
+        [Name(KeywordType)]
+        [BaseDefinition(Microsoft.VisualStudio.Language.StandardClassification.PredefinedClassificationTypeNames.Keyword)]
+// ReSharper disable RedundantDefaultFieldInitializer
+        internal static ClassificationTypeDefinition vccKeywordDefinition = null;
 // ReSharper restore RedundantDefaultFieldInitializer
     }
 }

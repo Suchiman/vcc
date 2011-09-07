@@ -15,8 +15,44 @@ let idbody = (idbeg | digit | '_')
 
 let id = idbeg idbody* | '_' idbody+
 
+let keyword = 
+  "atomic" | 
+  "assume" | 
+  "assert" | 
+  "axiom" | 
+  "decreases" | 
+  "ensures" | 
+  "group" |
+  "ghost" |
+  "invariant" |
+  "logic" |
+  "out" |
+  "requires" |
+  "reads" |
+  "unwrap" |
+  "unwrapping" |
+  "unchecked" |
+  "wrap" |
+  "writes"
+
+let guardedKeyword = 
+  "\\result" |
+  "\\lambda" |
+  "\\forall" |
+  "\\exists" |
+  "\\union" |
+  "\\inter" |
+  "\\this" |
+  "\\diff" |
+  "\\old" |
+  "\\in0" |
+  "\\is" |
+  "\\in"
 
 rule tokenize = parse
+
+| keyword                               { KEYWORD(lexbuf.StartPos, lexbuf.EndPos) }
+| guardedKeyword                        { GUARDED(lexbuf.StartPos, lexbuf.EndPos) }
 
 | '_' '('                               { OPENSPEC(lexbuf.StartPos) }
 | '('                                   { LPAREN(lexbuf.StartPos) }
