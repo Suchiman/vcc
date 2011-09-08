@@ -959,6 +959,10 @@ namespace Microsoft.Research.Vcc
         ns.Dispatch(this)
         this.DoneVisitingAssembly assembly
              
+      member this.Visit (copyMemoryStmt : ICopyMemoryStatement) : unit = assert false
+
+      member this.Visit (fillMemoryStmt : IFillMemoryStatement) : unit = assert false
+
       member this.Visit (peSection:IPESection) : unit = assert false
                           
       member this.Visit (assemblyReference:IAssemblyReference) : unit = assert false
