@@ -1517,6 +1517,7 @@ namespace Microsoft.Research.Vcc
           | SystemDiagnosticsContractsCodeContract, "InLambda" -> exprRes <- C.Expr.Macro (ec, "in_lambda", args())
           | SystemIntPtr, ("op_Implicit" | "op_Explicit") 
           | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Implicit" | "op_Explicit") -> trTrivialCast()
+          | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Equality" | "op_Inequality") -> trBigIntOp methodName
           | SystemDiagnosticsContractsCodeContractBigInt, "op_Implicit" -> trTrivialCast()
           | SystemDiagnosticsContractsCodeContractBigInt, "op_Explicit" -> trCast()
           | SystemDiagnosticsContractsCodeContractBigInt, BigIntOp -> trBigIntOp methodName
