@@ -81,12 +81,15 @@ namespace BenchmarkVis
 
       var y = data.Count() * 20;
 
+      var tt = new ToolTip() { AutoPopDelay = 25000, InitialDelay = 500, ReshowDelay = 500, ShowAlways = true };
+
       s.Left = new RadioButton();
       SetCommonRadio(s.Left, s);
       this.groupBox1.Controls.Add(s.Left);
       s.Left.Text = s.Name;
       s.Left.Location = new System.Drawing.Point(6, y);
       s.Left.CheckAlign = ContentAlignment.MiddleLeft;
+      tt.SetToolTip(s.Left, s.Name);
 
       s.Right = new RadioButton();
       SetCommonRadio(s.Right, s);
@@ -94,6 +97,7 @@ namespace BenchmarkVis
       s.Right.Text = "vs.";
       s.Right.Location = new System.Drawing.Point(4, y);
       s.Right.CheckAlign = ContentAlignment.MiddleRight;
+      tt.SetToolTip(s.Right, s.Name);
     }
 
     private int GetTestcaseId(string name)
@@ -140,9 +144,9 @@ namespace BenchmarkVis
       for (; ; ) {
         var l = rd.ReadLine();
         if (l == null) break;
-        var words = l.Split(seps);
-        if (l.StartsWith("unsat")) seenUnsat = true;
-        if (l.StartsWith("sat")) seenSat = true;
+        var words = l.Split(seps).Where(s => s != "").ToArray();
+        if (l.StartsWith("unsat") || l.Contains(": Valid")) seenUnsat = true;
+        if (l.StartsWith("sat") || l.Contains(": Invalid")) seenSat = true;
         if (words.Length < 2) continue;
         switch (words[0]) {
           case "SX_DIR": sx_dir = words[1]; break;
@@ -173,6 +177,16 @@ namespace BenchmarkVis
           case "TIME":
             currentValue = (int)(double.Parse(words[1]) * 1000);
             break;
+          case "time:": {
+              double tmp;
+              if (double.TryParse(words[1], out tmp)) {
+                currentValue = (int)(tmp * 1000);
+              } else {
+                Console.WriteLine("wrong double: '{0}'", words[1]);
+                System.Environment.Exit(1);
+              }
+              break;
+            }
         }
       }
 
@@ -266,24 +280,23 @@ namespace BenchmarkVis
       for (var i = 0; i < len; ++i) {
         var l = LeftDS.Values[i];
         var r = RightDS.Values[i];
-        if (l != null && r != null) {
-          var selected = i == IdUnderMouse;
-          var ll = ScreenCoord(r.Min, l.Max);
-          var rr = ScreenCoord(r.Max, l.Min);
-          var r2 = new Rectangle(ll.X, ll.Y, rr.X - ll.X, rr.Y - ll.Y);
-          if (selected) {
-            foreach (var v in r.NormValues) {
-              gfx.DrawLine(Pens.LightGray, ScreenCoord(v, l.Min), ScreenCoord(v, l.Max));
-            }
-            foreach (var v in l.NormValues) {
-              gfx.DrawLine(Pens.LightGray, ScreenCoord(r.Min,v), ScreenCoord(r.Max,v));
-            }
+        if (!IsVisible(i)) continue;
+        var selected = i == IdUnderMouse;
+        var ll = ScreenCoord(r.Min, l.Max);
+        var rr = ScreenCoord(r.Max, l.Min);
+        var r2 = new Rectangle(ll.X, ll.Y, rr.X - ll.X, rr.Y - ll.Y);
+        if (selected) {
+          foreach (var v in r.NormValues) {
+            gfx.DrawLine(Pens.LightGray, ScreenCoord(v, l.Min), ScreenCoord(v, l.Max));
           }
-          gfx.DrawRectangle(selected ? Pens.Crimson : Pens.LightPink, r2);
-          var mid = ScreenCoord(r.Avg, l.Avg);
-          r2 = new Rectangle(mid.X - 1, mid.Y - 1, 3, 3);
-          gfx.FillRectangle(selected ? Brushes.Red : Brushes.Blue, r2);
+          foreach (var v in l.NormValues) {
+            gfx.DrawLine(Pens.LightGray, ScreenCoord(r.Min, v), ScreenCoord(r.Max, v));
+          }
         }
+        gfx.DrawRectangle(selected ? Pens.Crimson : Pens.LightPink, r2);
+        var mid = ScreenCoord(r.Avg, l.Avg);
+        r2 = new Rectangle(mid.X - 1, mid.Y - 1, 3, 3);
+        gfx.FillRectangle(selected ? Brushes.Red : Brushes.Blue, r2);
       }
 
       foreach (var ds in data) {
@@ -316,6 +329,17 @@ namespace BenchmarkVis
       Flush();
     }
 
+    private bool IsVisible(int i)
+    {
+      var l = LeftDS.Values[i];
+      var r = RightDS.Values[i];
+      if (l != null && r != null) {
+        return !viewOnly1sToolStripMenuItem.Checked ||
+          l.Max > 1000 || r.Max > 1000;
+      }
+      return false;
+    }
+
     private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
     {
       if (LeftDS == null || RightDS == null) return;
@@ -326,13 +350,12 @@ namespace BenchmarkVis
       for (var i = 0; i < len; ++i) {
         var l = LeftDS.Values[i];
         var r = RightDS.Values[i];
-        if (l != null && r != null) {
-          var p = ScreenCoord(r.Avg, l.Avg);
-          var dist = Math.Abs(p.X - e.X) + Math.Abs(p.Y - e.Y);
-          if (dist < minDist) {
-            minDist = dist;
-            id = i;
-          }
+        if (!IsVisible(i)) continue;
+        var p = ScreenCoord(r.Avg, l.Avg);
+        var dist = Math.Abs(p.X - e.X) + Math.Abs(p.Y - e.Y);
+        if (dist < minDist) {
+          minDist = dist;
+          id = i;
         }
       }
 
@@ -375,6 +398,11 @@ namespace BenchmarkVis
     private void dumpCurrentLeftTodatacsvToolStripMenuItem_Click(object sender, EventArgs e)
     {
       DumpLeft();
+    }
+
+    private void viewOnly1sToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+      viewOnly1sToolStripMenuItem.Checked = !viewOnly1sToolStripMenuItem.Checked;
     }
   }
 
