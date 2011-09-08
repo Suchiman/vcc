@@ -1379,7 +1379,7 @@ namespace Microsoft.Research.Vcc
             else name
           if env.AtomicObjects <> [] then
             match fn with
-              | Some (f : C.Function) when f.IsSpec && f.IsPure -> ()
+              | Some (f : C.Function) when f.IsPure && (f.IsSpec || f.Reads.IsEmpty) -> ()
               | _ ->
                 match name' with
                   | "$wrap"
