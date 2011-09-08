@@ -97,7 +97,7 @@ rule token = parse
 
 | "//" [^ '\r' '\n']*  { Comment (lexeme lexbuf) }
 | "`/" [^ '\r' '\n']* { Comment (lexeme lexbuf) }
-| "/*" ([^ '*'] | '*' [^ '/'])* "*/"
+| "/*" ([^ '*'] | ('*'+ [^ '/' '*']))* ('*'*) "*/"
                       { comm lexbuf }
 | "`" [^ '/'] [^ '`']* "`"    { comm lexbuf }
 | eof                { Eof }
