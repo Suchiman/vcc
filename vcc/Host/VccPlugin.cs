@@ -490,12 +490,7 @@ namespace Microsoft.Research.Vcc
       this.tok = tok;
     }
 
-    public void PrintSummary(VC.ConditionGeneration.Outcome outcome)
-    {
-      PrintSummary(outcome, null);
-    }
-
-    public void PrintSummary(VC.ConditionGeneration.Outcome outcome, string addInfo)
+    public void PrintSummary(VC.ConditionGeneration.Outcome outcome, string addInfo = null)
     {
       if (!this.outcomeReported) {
         this.outcomeReported = true;
@@ -517,7 +512,7 @@ namespace Microsoft.Research.Vcc
 
     public override void OnOutOfMemory(string reason)
     {
-      this.PrintSummary(VC.ConditionGeneration.Outcome.OutOfMemory, null);
+      this.PrintSummary(VC.ConditionGeneration.Outcome.OutOfMemory);
     }
 
     public override void OnWarning(string msg) {
