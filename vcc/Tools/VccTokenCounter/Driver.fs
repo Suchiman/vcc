@@ -11,6 +11,7 @@ let dbg = ref false
 let needHeader = ref true
 let total = ref (Count.Zero())
 let toks = ref false
+let latex = ref false
 
 
 let tokenize lexbuf =
@@ -30,19 +31,31 @@ let lexFile filename =
 
 let dump fn (c:Count) =
   let perc a b =
-    if b = 0 then 999
-    else a * 100 / b
+    if b = 0 || a / b > 50 then sprintf "%9s" ""
+    else sprintf "%8d%%" (a * 100 / b)
   if !toks then
     if !needHeader then
       printf "  SPEC /   PHYS =  OVERHEAD   FILENAME\n"
       needHeader := false
-    printf "%6d / %6d = %8d%%   %s\r\n" c.spec.tokens c.phys.tokens (perc c.spec.tokens c.phys.tokens) fn
+    printf "%6d / %6d = %s   %s\r\n" c.spec.tokens c.phys.tokens (perc c.spec.tokens c.phys.tokens) fn
+  elif !latex then
+    if !needHeader then
+      printf "\\begin{array}{|l|r|r|r|}\n"
+      printf "\\hline\n"
+      printf "\\mbox{File} & \\mbox{Specs} & \\mbox{Code} & \\mbox{Overhead} \\\\\n"
+      printf "\\hline\n"
+      needHeader := false
+    let blanks = c.real_lines - c.spec.lines - c.phys.lines
+    let p = perc c.spec.lines c.phys.lines
+    let p = p.Replace ("%", "\\%")
+    let fn = fn.Replace ("_", "\\_")
+    printf "\\mbox{%-30s} & %6d & %6d & %s \\\\\n" fn c.spec.lines c.phys.lines p
   else
     if !needHeader then
       printf "  SPEC /   PHYS =  OVERHEAD  +BLANK  FILENAME\n"
       needHeader := false
     let blanks = c.real_lines - c.spec.lines - c.phys.lines
-    printf "%6d / %6d = %8d%%  +%-6d %s\r\n" c.spec.lines c.phys.lines (perc c.spec.lines c.phys.lines) blanks fn
+    printf "%6d / %6d = %s  +%-6d %s\r\n" c.spec.lines c.phys.lines (perc c.spec.lines c.phys.lines) blanks fn
 
 let go filename = 
   try
@@ -66,13 +79,18 @@ let main() =
     match args.[i] with
       | "-d" -> dbg := true
       | "-t" -> toks := true
+      | "-l" -> latex := true
       | x -> 
         fileCount <- fileCount + 1
         go x
 
   if fileCount = 0 then
-    printf "Usage: %s [-d] [-t] files.c....\r\n" args.[0]
+    printf "Usage: %s [-d(ebug)] [-t(okens)] [-l(atex)] files.c....\r\n" args.[0]
   elif fileCount > 1 then
+    if !latex then
+      printf "\\hline\n"
     dump "TOTAL" !total
+    if !latex then
+      printf "\\hline\n\end{array}\n"
 
 main()
