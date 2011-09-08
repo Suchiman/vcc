@@ -34,6 +34,30 @@
     <Compile Include="Vcc.wxs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Tools\VccSyntaxCoverter\VccSyntaxCoverter.fsproj">
+      <Name>VccSyntaxCoverter</Name>
+      <Project>{adb80db3-762b-4b3f-aca9-a99812af2078}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLLOCATION</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Tools\Z3Visualizer\Z3Visualizer\Z3AxiomProfiler.csproj">
+      <Name>Z3AxiomProfiler</Name>
+      <Project>{29651769-4a5f-4c7f-baa7-4064ba38324d}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLLOCATION</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\..\VSPackage\VSPackage.csproj">
+      <Name>VSPackage</Name>
+      <Project>{3090cdc7-c76b-4ddb-96f9-ab7d36ca5f32}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLLOCATION</RefTargetDir>
+    </ProjectReference>
     <ProjectReference Include="..\SamplesSetup\SamplesSetup.wixproj">
       <Name>SamplesSetup</Name>
       <Project>{b334e568-0421-4e1a-b740-77538ddd947e}</Project>
@@ -41,15 +65,6 @@
       <RefProjectOutputGroups>
       </RefProjectOutputGroups>
       <RefTargetDir>SAMPLESDIR</RefTargetDir>
-      <DoNotHarvest>True</DoNotHarvest>
-    </ProjectReference>
-    <ProjectReference Include="..\..\AddIn\VCCAddin\VccAddin.csproj">
-      <Name>VccAddin</Name>
-      <Project>{0f1af63f-a46f-4b56-b66b-6fdedd2bc10e}</Project>
-      <Private>True</Private>
-      <RefProjectOutputGroups>
-      </RefProjectOutputGroups>
-      <RefTargetDir>INSTALLLOCATION</RefTargetDir>
       <DoNotHarvest>True</DoNotHarvest>
     </ProjectReference>
     <ProjectReference Include="..\..\Host\VccHost.csproj">
