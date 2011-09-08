@@ -20703,6 +20703,7 @@
       <summary>
             Calls the visitor.Visit(IAssertStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.AssertStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -20782,6 +20783,7 @@
       <summary>
             Calls the visitor.Visit(IAssumeStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.AssumeStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -20916,6 +20918,7 @@
       <summary>
             Calls the visitor.Visit(IBlockStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.BlockStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -21090,6 +21093,7 @@
       <summary>
             Calls the visitor.Visit(IBreakStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.BreakStatement.MakeCopyFor(Microsoft.Cci.Ast.BlockStatement)">
       <summary>
@@ -21242,6 +21246,7 @@
       <summary>
             Calls the visitor.Visit(IConditionalStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.ConditionalStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -21308,6 +21313,7 @@
       <summary>
             Calls the visitor.Visit(IContinueStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.ContinueStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -21443,6 +21449,7 @@
       <summary>
             Calls the visitor.Visit(IDoUntilStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.DoUntilStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -21505,6 +21512,7 @@
       <summary>
             Calls the visitor.Visit(IEmptyStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.EmptyStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -21644,6 +21652,7 @@
       <summary>
             Calls the visitor.Visit(IExpressionStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.ExpressionStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -21823,6 +21832,7 @@
       <summary>
             Calls the visitor.Visit(IForEachStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.ForEachStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -21982,6 +21992,7 @@
       <summary>
             Calls the visitor.Visit(IForStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.ForStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -22064,6 +22075,7 @@
       <summary>
             Calls the visitor.Visit(IGotoStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.GotoStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -22091,6 +22103,9 @@
       <summary>
             The statement at which the program execution is to continue.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IGotoStatement.get_TargetStatement" inheritedFromTypeName="IGotoStatement">Contract.Result&lt;ILabeledStatement&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.Ast.GotoSwitchCaseStatement">
       <summary>
@@ -22121,6 +22136,7 @@
       <summary>
             Calls the visitor.Visit(IGotoSwitchCaseStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.GotoSwitchCaseStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -22167,6 +22183,7 @@
       <summary>
             Calls the visitor.Visit(ILabeledStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.LabeledStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -22302,6 +22319,7 @@
       <summary>
             Calls the visitor.Visit((ILocalDeclarationStatement)this).
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.LocalDeclaration.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -22626,6 +22644,7 @@
       <summary>
             Calls the visitor.Visit(ILockStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.LockStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -22901,6 +22920,7 @@
       <summary>
             Calls the visitor.Visit(IResourceUseStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.ResourceUseStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -23041,6 +23061,7 @@
       <summary>
             Calls the visitor.Visit(IRethrowStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.RethrowStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -23081,6 +23102,7 @@
       <summary>
             Calls the visitor.Visit(IReturnStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.ReturnStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -23245,6 +23267,7 @@
       <summary>
             Calls the visitor.Visit(ISwitchStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.SwitchStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -23310,6 +23333,7 @@
       <summary>
             Calls the visitor.Visit(IThrowStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.ThrowStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -23374,6 +23398,7 @@
       <summary>
             Calls the visitor.Visit(ITryCatchFinallyStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.TryCatchFinallyStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -23487,6 +23512,7 @@
       <summary>
             Calls the visitor.Visit(IWhileDoStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.WhileDoStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -23585,6 +23611,7 @@
       <summary>
             Calls the visitor.Visit(IYieldBreakStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.YieldBreakStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -23623,6 +23650,7 @@
       <summary>
             Calls the visitor.Visit(IYieldReturnStatement) method.
             </summary>
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Ast.YieldReturnStatement.Dispatch(Microsoft.Cci.Ast.SourceVisitor)">
       <summary>
@@ -25416,26 +25444,45 @@
             subset of the strings actually used in the module. The main purpose of this method is to provide a way to control the order of strings in a
             prefix of the user string heap when writing out a module as a PE file.
             </summary>
+      <ensures inheritedFrom="M:Microsoft.Cci.IModule.GetStrings" inheritedFromTypeName="IModule">Contract.Result&lt;IEnumerable&lt;string&gt;&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.Module.GetAllTypes">
       <summary>
             Returns all of the types in the current module.
             </summary>
+      <ensures inheritedFrom="M:Microsoft.Cci.IModule.GetAllTypes" inheritedFromTypeName="IModule">Contract.Result&lt;IEnumerable&lt;INamedTypeDefinition&gt;&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.AssemblyReferences">
       <summary>
             A list of the assemblies that are referenced by this module.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_AssemblyReferences" inheritedFromTypeName="IModule">Contract.Result&lt;IEnumerable&lt;IAssemblyReference&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.BaseAddress">
       <summary>
             The preferred memory address at which the module is to be loaded at runtime.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_BaseAddress" inheritedFromTypeName="IModule">Contract.Result&lt;ulong&gt;() &lt;= uint.MaxValue || this.Requires64bits</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.ContainingAssembly">
       <summary>
             The assembly that contains this module.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_ContainingAssembly" inheritedFromTypeName="IModule">Contract.Result&lt;IAssembly&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.Module.DebugInformationLocation">
+      <summary>
+            A path to the debug information corresponding to this module. Can be absolute or relative to the file path of the module. Empty if not specified.
+            </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_DebugInformationLocation" inheritedFromTypeName="IModule">Contract.Result&lt;string&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.DllCharacteristics">
       <summary>
@@ -25446,6 +25493,9 @@
       <summary>
             The method that will be called to start execution of this executable module. 
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_EntryPoint" inheritedFromTypeName="IModule">Contract.Result&lt;IMethodReference&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.FileAlignment">
       <summary>
@@ -25492,6 +25542,9 @@
             A list of objects representing persisted instances of types that extend System.Attribute. Provides an extensible way to associate metadata
             with this module.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_ModuleAttributes" inheritedFromTypeName="IModule">Contract.Result&lt;IEnumerable&lt;ICustomAttribute&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.ModuleIdentity">
       <summary>
@@ -25502,11 +25555,17 @@
       <summary>
             The name of the module. This can be different from the name if this module is also an assembly.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_ModuleName" inheritedFromTypeName="IModule">Contract.Result&lt;IName&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.ModuleReferences">
       <summary>
             A list of the modules that are referenced by this module.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_ModuleReferences" inheritedFromTypeName="IModule">Contract.Result&lt;IEnumerable&lt;IModuleReference&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.NativeEntryPoint">
       <summary>
@@ -25545,21 +25604,33 @@
       <summary>
             The size of the virtual memory initially committed for the initial process heap.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_SizeOfHeapCommit" inheritedFromTypeName="IModule">Contract.Result&lt;ulong&gt;() &lt;= uint.MaxValue || this.Requires64bits</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.SizeOfHeapReserve">
       <summary>
             The size of the virtual memory to reserve for the initial process heap.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_SizeOfHeapReserve" inheritedFromTypeName="IModule">Contract.Result&lt;ulong&gt;() &lt;= uint.MaxValue || this.Requires64bits</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.SizeOfStackReserve">
       <summary>
             The size of the virtual memory to reserve for the initial thread's stack.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_SizeOfStackReserve" inheritedFromTypeName="IModule">Contract.Result&lt;ulong&gt;() &lt;= uint.MaxValue || this.Requires64bits</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.SizeOfStackCommit">
       <summary>
             The size of the virtual memory initially committed for the initial thread's stack.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_SizeOfStackCommit" inheritedFromTypeName="IModule">Contract.Result&lt;ulong&gt;() &lt;= uint.MaxValue || this.Requires64bits</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.StrongNameSigned">
       <summary>
@@ -25570,6 +25641,9 @@
       <summary>
             Identifies the version of the CLR that is required to load this module or assembly.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_TargetRuntimeVersion" inheritedFromTypeName="IModule">Contract.Result&lt;string&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Module.TrackDebugData">
       <summary>
@@ -25610,6 +25684,9 @@
             A module will define Win32 resources rather than "managed" resources mainly to present metadata to legacy tools
             and not typically use the data in its own code.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_Win32Resources" inheritedFromTypeName="IModule">Contract.Result&lt;IEnumerable&lt;IWin32Resource&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="M:Microsoft.Cci.Ast.Assembly.#ctor(Microsoft.Cci.IName,System.String,Microsoft.Cci.IName,System.Collections.Generic.IEnumerable{Microsoft.Cci.IAssemblyReference},System.Collections.Generic.IEnumerable{Microsoft.Cci.IModuleReference},System.Collections.Generic.IEnumerable{Microsoft.Cci.IResourceReference},System.Collections.Generic.IEnumerable{Microsoft.Cci.IFileReference})">
       <summary>
@@ -25679,6 +25756,9 @@
       <summary>
             The assembly that contains this module.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_ContainingAssembly" inheritedFromTypeName="IModule">Contract.Result&lt;IAssembly&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Assembly.Culture">
       <summary>
@@ -25751,6 +25831,9 @@
       <summary>
             The name of the module containing the assembly manifest. This can be different from the name of the assembly itself.
             </summary>
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IModule.get_ModuleName" inheritedFromTypeName="IModule">Contract.Result&lt;IName&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Assembly.PublicKey">
       <summary>
@@ -26146,22 +26229,19 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
+    <member name="P:Microsoft.Cci.Ast.NamedArgument.Microsoft#Cci#IExpression#Type">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
+    </member>
     <member name="P:Microsoft.Cci.Ast.NamedArgument.Microsoft#Cci#IMetadataNamedArgument#ArgumentValue">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IMetadataNamedArgument.get_ArgumentValue" inheritedFromTypeName="IMetadataNamedArgument">Contract.Result&lt;IMetadataExpression&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.NamedArgument.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.NamedArgument.Microsoft#Cci#IMetadataNamedArgument#ArgumentName">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IMetadataNamedArgument.get_ArgumentName" inheritedFromTypeName="IMetadataNamedArgument">Contract.Result&lt;IName&gt;() != null</ensures>
-      </getter>
-    </member>
-    <member name="P:Microsoft.Cci.Ast.NamedArgument.Microsoft#Cci#IExpression#Type">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
     <member name="M:Microsoft.Cci.Ast.NamedArgument.Microsoft#Cci#IMetadataNamedArgument#get_ArgumentName">
@@ -26170,13 +26250,16 @@
     <member name="M:Microsoft.Cci.Ast.NamedArgument.Microsoft#Cci#IMetadataNamedArgument#get_ArgumentValue">
       <ensures inheritedFrom="M:Microsoft.Cci.IMetadataNamedArgument.get_ArgumentValue" inheritedFromTypeName="IMetadataNamedArgument">Contract.Result&lt;IMetadataExpression&gt;() != null</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.GetValueOfTypedReference.Microsoft#Cci#IExpression#get_Type">
+    <member name="M:Microsoft.Cci.Ast.NamedArgument.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.GetValueOfTypedReference.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.GetValueOfTypedReference.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.TypeDefinitionMember.Microsoft#Cci#ITypeDefinitionMember#ContainingTypeDefinition">
       <getter>
@@ -26186,12 +26269,17 @@
     <member name="M:Microsoft.Cci.Ast.TypeDefinitionMember.Microsoft#Cci#ITypeDefinitionMember#get_ContainingTypeDefinition">
       <ensures inheritedFrom="M:Microsoft.Cci.ITypeDefinitionMember.get_ContainingTypeDefinition" inheritedFromTypeName="ITypeDefinitionMember">Contract.Result&lt;ITypeDefinition&gt;() != null</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.RefArgument.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.RefArgument.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.RefArgument.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.FunctionPointerParameter.Name">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
       </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.FunctionPointerParameter.ContainingSignature">
@@ -26206,11 +26294,6 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IParameterTypeInformation.get_CustomModifiers" inheritedFromTypeName="IParameterTypeInformation">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Ast.FunctionPointerParameter.Name">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
-      </getter>
-    </member>
     <member name="P:Microsoft.Cci.Ast.FunctionPointerParameter.Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
@@ -26222,13 +26305,13 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IParameterTypeInformation.get_Type" inheritedFromTypeName="IParameterTypeInformation">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.Indexer.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.Indexer.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.Indexer.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.PointerCall.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
@@ -26249,14 +26332,14 @@
     <member name="M:Microsoft.Cci.Ast.GenericTypeParameter.Microsoft#Cci#IGenericTypeParameterReference#get_DefiningType">
       <ensures inheritedFrom="M:Microsoft.Cci.IGenericTypeParameterReference.get_DefiningType" inheritedFromTypeName="IGenericTypeParameterReference">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
+    <member name="M:Microsoft.Cci.Ast.GenericTypeParameter.Microsoft#Cci#IGenericTypeParameterReference#get_ResolvedType">
+      <ensures inheritedFrom="M:Microsoft.Cci.IGenericTypeParameterReference.get_ResolvedType" inheritedFromTypeName="IGenericTypeParameterReference">Contract.Result&lt;IGenericTypeParameter&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.IGenericTypeParameterReference.get_ResolvedType" inheritedFromTypeName="IGenericTypeParameterReference">!(this is IGenericTypeParameter) || Contract.Result&lt;IGenericTypeParameter&gt;() == this</ensures>
+    </member>
     <member name="P:Microsoft.Cci.Ast.GenericTypeParameter.Microsoft#Cci#IGenericTypeParameterReference#DefiningType">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IGenericTypeParameterReference.get_DefiningType" inheritedFromTypeName="IGenericTypeParameterReference">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.GenericTypeParameter.Microsoft#Cci#IGenericTypeParameterReference#get_ResolvedType">
-      <ensures inheritedFrom="M:Microsoft.Cci.IGenericTypeParameterReference.get_ResolvedType" inheritedFromTypeName="IGenericTypeParameterReference">Contract.Result&lt;IGenericTypeParameter&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.IGenericTypeParameterReference.get_ResolvedType" inheritedFromTypeName="IGenericTypeParameterReference">!(this is IGenericTypeParameter) || Contract.Result&lt;IGenericTypeParameter&gt;() == this</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.GenericTypeParameter.Microsoft#Cci#IGenericTypeParameterReference#ResolvedType">
       <getter>
@@ -26264,31 +26347,28 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IGenericTypeParameterReference.get_ResolvedType" inheritedFromTypeName="IGenericTypeParameterReference">!(this is IGenericTypeParameter) || Contract.Result&lt;IGenericTypeParameter&gt;() == this</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Ast.GlobalFieldDefinition.Microsoft#Cci#IFieldReference#ResolvedField">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IFieldReference.get_ResolvedField" inheritedFromTypeName="IFieldReference">Contract.Result&lt;IFieldDefinition&gt;() != null</ensures>
-      </getter>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.GlobalFieldDefinition.Microsoft#Cci#ITypeMemberReference#get_ResolvedTypeDefinitionMember">
-      <ensures inheritedFrom="M:Microsoft.Cci.ITypeMemberReference.get_ResolvedTypeDefinitionMember" inheritedFromTypeName="ITypeMemberReference">Contract.Result&lt;ITypeDefinitionMember&gt;() != null</ensures>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.GlobalFieldDefinition.Microsoft#Cci#IFieldReference#get_ResolvedField">
-      <ensures inheritedFrom="M:Microsoft.Cci.IFieldReference.get_ResolvedField" inheritedFromTypeName="IFieldReference">Contract.Result&lt;IFieldDefinition&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.GlobalFieldDefinition.Microsoft#Cci#ITypeMemberReference#ResolvedTypeDefinitionMember">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.ITypeMemberReference.get_ResolvedTypeDefinitionMember" inheritedFromTypeName="ITypeMemberReference">Contract.Result&lt;ITypeDefinitionMember&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.Conditional.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.GlobalFieldDefinition.Microsoft#Cci#IFieldReference#get_ResolvedField">
+      <ensures inheritedFrom="M:Microsoft.Cci.IFieldReference.get_ResolvedField" inheritedFromTypeName="IFieldReference">Contract.Result&lt;IFieldDefinition&gt;() != null</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.GlobalFieldDefinition.Microsoft#Cci#ITypeMemberReference#get_ResolvedTypeDefinitionMember">
+      <ensures inheritedFrom="M:Microsoft.Cci.ITypeMemberReference.get_ResolvedTypeDefinitionMember" inheritedFromTypeName="ITypeMemberReference">Contract.Result&lt;ITypeDefinitionMember&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.GlobalFieldDefinition.Microsoft#Cci#IFieldReference#ResolvedField">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IFieldReference.get_ResolvedField" inheritedFromTypeName="IFieldReference">Contract.Result&lt;IFieldDefinition&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Conditional.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.CreateArray.Microsoft#Cci#IExpression#get_Type">
+    <member name="M:Microsoft.Cci.Ast.Conditional.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.CreateArray.Microsoft#Cci#IExpression#Type">
@@ -26296,13 +26376,24 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.LocalDeclaration.Microsoft#Cci#INamedEntity#get_Name">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.CreateArray.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.LocalDeclaration.Microsoft#Cci#INamedEntity#Name">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.LocalDeclaration.Microsoft#Cci#ILocalDeclarationStatement#get_LocalVariable">
+      <ensures inheritedFrom="M:Microsoft.Cci.ILocalDeclarationStatement.get_LocalVariable" inheritedFromTypeName="ILocalDeclarationStatement">Contract.Result&lt;ILocalDefinition&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.LocalDeclaration.Microsoft#Cci#ILocalDeclarationStatement#LocalVariable">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ILocalDeclarationStatement.get_LocalVariable" inheritedFromTypeName="ILocalDeclarationStatement">Contract.Result&lt;ILocalDefinition&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.LocalDeclaration.Microsoft#Cci#INamedEntity#get_Name">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.FieldDefinition.Microsoft#Cci#IFieldDefinition#get_MarshallingInformation">
       <requires inheritedFrom="M:Microsoft.Cci.IFieldDefinition.get_MarshallingInformation" inheritedFromTypeName="IFieldDefinition">this.IsMarshalledExplicitly</requires>
@@ -26320,54 +26411,49 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#INestedUnitNamespaceReference#ContainingUnitNamespace">
+    <member name="P:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#IUnitNamespaceReference#Unit">
       <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.INestedUnitNamespaceReference.get_ContainingUnitNamespace" inheritedFromTypeName="INestedUnitNamespaceReference">Contract.Result&lt;IUnitNamespaceReference&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IUnitNamespaceReference.get_Unit" inheritedFromTypeName="IUnitNamespaceReference">Contract.Result&lt;IUnitReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#INamespaceMember#get_ContainingNamespace">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamespaceMember.get_ContainingNamespace" inheritedFromTypeName="INamespaceMember">Contract.Result&lt;INamespaceDefinition&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#IUnitNamespaceReference#get_Unit">
       <ensures inheritedFrom="M:Microsoft.Cci.IUnitNamespaceReference.get_Unit" inheritedFromTypeName="IUnitNamespaceReference">Contract.Result&lt;IUnitReference&gt;() != null</ensures>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#INestedUnitNamespaceReference#get_ContainingUnitNamespace">
-      <ensures inheritedFrom="M:Microsoft.Cci.INestedUnitNamespaceReference.get_ContainingUnitNamespace" inheritedFromTypeName="INestedUnitNamespaceReference">Contract.Result&lt;IUnitNamespaceReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#INamespaceMember#ContainingNamespace">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamespaceMember.get_ContainingNamespace" inheritedFromTypeName="INamespaceMember">Contract.Result&lt;INamespaceDefinition&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#INamespaceMember#get_ContainingNamespace">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamespaceMember.get_ContainingNamespace" inheritedFromTypeName="INamespaceMember">Contract.Result&lt;INamespaceDefinition&gt;() != null</ensures>
-    </member>
-    <member name="P:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#IUnitNamespaceReference#Unit">
+    <member name="P:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#INestedUnitNamespaceReference#ContainingUnitNamespace">
       <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IUnitNamespaceReference.get_Unit" inheritedFromTypeName="IUnitNamespaceReference">Contract.Result&lt;IUnitReference&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.INestedUnitNamespaceReference.get_ContainingUnitNamespace" inheritedFromTypeName="INestedUnitNamespaceReference">Contract.Result&lt;IUnitNamespaceReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.NamespaceDeclarationMember.Microsoft#Cci#INamedEntity#get_Name">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.NestedUnitNamespace.Microsoft#Cci#INestedUnitNamespaceReference#get_ContainingUnitNamespace">
+      <ensures inheritedFrom="M:Microsoft.Cci.INestedUnitNamespaceReference.get_ContainingUnitNamespace" inheritedFromTypeName="INestedUnitNamespaceReference">Contract.Result&lt;IUnitNamespaceReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.NamespaceDeclarationMember.Microsoft#Cci#INamedEntity#Name">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.BlockExpression.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.NamespaceDeclarationMember.Microsoft#Cci#INamedEntity#get_Name">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.BlockExpression.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.Ast.BlockExpression.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    </member>
     <member name="M:Microsoft.Cci.Ast.NestedTypeDefinition.Microsoft#Cci#INestedTypeReference#get_ResolvedType">
       <ensures inheritedFrom="M:Microsoft.Cci.INestedTypeReference.get_ResolvedType" inheritedFromTypeName="INestedTypeReference">Contract.Result&lt;INestedTypeDefinition&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.INestedTypeReference.get_ResolvedType" inheritedFromTypeName="INestedTypeReference">!(this is ITypeDefinition) || Contract.Result&lt;ITypeDefinition&gt;() == this</ensures>
-    </member>
-    <member name="P:Microsoft.Cci.Ast.NestedTypeDefinition.Microsoft#Cci#ITypeMemberReference#ContainingType">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.ITypeMemberReference.get_ContainingType" inheritedFromTypeName="ITypeMemberReference">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.NestedTypeDefinition.Microsoft#Cci#INestedTypeReference#ResolvedType">
       <getter>
@@ -26375,16 +26461,21 @@
         <ensures inheritedFrom="M:Microsoft.Cci.INestedTypeReference.get_ResolvedType" inheritedFromTypeName="INestedTypeReference">!(this is ITypeDefinition) || Contract.Result&lt;ITypeDefinition&gt;() == this</ensures>
       </getter>
     </member>
+    <member name="P:Microsoft.Cci.Ast.NestedTypeDefinition.Microsoft#Cci#ITypeMemberReference#ContainingType">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ITypeMemberReference.get_ContainingType" inheritedFromTypeName="ITypeMemberReference">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
+    </member>
     <member name="M:Microsoft.Cci.Ast.NestedTypeDefinition.Microsoft#Cci#ITypeMemberReference#get_ContainingType">
       <ensures inheritedFrom="M:Microsoft.Cci.ITypeMemberReference.get_ContainingType" inheritedFromTypeName="ITypeMemberReference">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.Unit.Microsoft#Cci#INamespaceRootOwner#get_NamespaceRoot">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamespaceRootOwner.get_NamespaceRoot" inheritedFromTypeName="INamespaceRootOwner">Contract.Result&lt;INamespaceDefinition&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.Unit.Microsoft#Cci#INamespaceRootOwner#NamespaceRoot">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamespaceRootOwner.get_NamespaceRoot" inheritedFromTypeName="INamespaceRootOwner">Contract.Result&lt;INamespaceDefinition&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.Unit.Microsoft#Cci#INamespaceRootOwner#get_NamespaceRoot">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamespaceRootOwner.get_NamespaceRoot" inheritedFromTypeName="INamespaceRootOwner">Contract.Result&lt;INamespaceDefinition&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.Unit.Microsoft#Cci#IUnit#UnitNamespaceRoot">
       <getter>
@@ -26394,18 +26485,26 @@
     <member name="M:Microsoft.Cci.Ast.Unit.Microsoft#Cci#IUnit#get_UnitNamespaceRoot">
       <ensures inheritedFrom="M:Microsoft.Cci.IUnit.get_UnitNamespaceRoot" inheritedFromTypeName="IUnit">Contract.Result&lt;IRootUnitNamespace&gt;() != null</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.NestedNamespaceDeclaration.Microsoft#Cci#INamedEntity#get_Name">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.NestedNamespaceDeclaration.Microsoft#Cci#INamedEntity#Name">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.Ast.NestedNamespaceDeclaration.Microsoft#Cci#INamedEntity#get_Name">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.CreateObjectInstance.Microsoft#Cci#IExpression#Type">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
+    </member>
     <member name="M:Microsoft.Cci.Ast.CreateObjectInstance.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
-    <member name="P:Microsoft.Cci.Ast.CreateObjectInstance.Microsoft#Cci#IExpression#Type">
+    <member name="M:Microsoft.Cci.Ast.CreateDelegateInstance.Microsoft#Cci#ICreateDelegateInstance#get_MethodToCallViaDelegate">
+      <ensures inheritedFrom="M:Microsoft.Cci.ICreateDelegateInstance.get_MethodToCallViaDelegate" inheritedFromTypeName="ICreateDelegateInstance">Contract.Result&lt;IMethodReference&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.CreateDelegateInstance.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
@@ -26413,15 +26512,12 @@
     <member name="M:Microsoft.Cci.Ast.CreateDelegateInstance.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.CreateDelegateInstance.Microsoft#Cci#ICreateDelegateInstance#get_MethodToCallViaDelegate">
-      <ensures inheritedFrom="M:Microsoft.Cci.ICreateDelegateInstance.get_MethodToCallViaDelegate" inheritedFromTypeName="ICreateDelegateInstance">Contract.Result&lt;IMethodReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.CreateDelegateInstance.Microsoft#Cci#ICreateDelegateInstance#MethodToCallViaDelegate">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.ICreateDelegateInstance.get_MethodToCallViaDelegate" inheritedFromTypeName="ICreateDelegateInstance">Contract.Result&lt;IMethodReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Ast.CreateDelegateInstance.Microsoft#Cci#IExpression#Type">
+    <member name="P:Microsoft.Cci.Ast.BoundExpression.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
@@ -26429,22 +26525,17 @@
     <member name="M:Microsoft.Cci.Ast.BoundExpression.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
-    <member name="P:Microsoft.Cci.Ast.BoundExpression.Microsoft#Cci#IExpression#Type">
+    <member name="P:Microsoft.Cci.Ast.Subtraction.PointerSubtraction.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-      </getter>
-    </member>
-    <member name="P:Microsoft.Cci.Ast.Subtraction.PointerSubtraction.LeftOperand">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_LeftOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
       </getter>
     </member>
     <member name="M:Microsoft.Cci.Ast.Subtraction.PointerSubtraction.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
-    <member name="P:Microsoft.Cci.Ast.Subtraction.PointerSubtraction.Microsoft#Cci#IExpression#Type">
+    <member name="P:Microsoft.Cci.Ast.Subtraction.PointerSubtraction.LeftOperand">
       <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_LeftOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
       </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.Subtraction.PointerSubtraction.RightOperand">
@@ -26452,13 +26543,23 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_RightOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.CompileTimeConstant.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.CompileTimeConstant.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.CompileTimeConstant.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.LocalDefinition.Microsoft#Cci#IObjectWithLocations#Locations">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.LocalDefinition.Microsoft#Cci#ILocalDefinition#get_CompileTimeValue">
+      <requires inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CompileTimeValue" inheritedFromTypeName="ILocalDefinition">this.IsConstant</requires>
+      <ensures inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CompileTimeValue" inheritedFromTypeName="ILocalDefinition">Contract.Result&lt;IMetadataConstant&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.LocalDefinition.Microsoft#Cci#IObjectWithLocations#get_Locations">
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
@@ -26470,16 +26571,6 @@
         <ensures inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CompileTimeValue" inheritedFromTypeName="ILocalDefinition">Contract.Result&lt;IMetadataConstant&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.LocalDefinition.Microsoft#Cci#ILocalDefinition#get_CompileTimeValue">
-      <requires inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CompileTimeValue" inheritedFromTypeName="ILocalDefinition">this.IsConstant</requires>
-      <ensures inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CompileTimeValue" inheritedFromTypeName="ILocalDefinition">Contract.Result&lt;IMetadataConstant&gt;() != null</ensures>
-    </member>
-    <member name="P:Microsoft.Cci.Ast.LocalDefinition.Microsoft#Cci#IObjectWithLocations#Locations">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
-      </getter>
-    </member>
     <member name="M:Microsoft.Cci.Ast.MakeTypedReference.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
@@ -26488,29 +26579,29 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.TargetExpression.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.TargetExpression.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.TypeDeclaration.Microsoft#Cci#INamedEntity#get_Name">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.TargetExpression.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.TypeDeclaration.Microsoft#Cci#INamedEntity#Name">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.TypeOf.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.TypeDeclaration.Microsoft#Cci#INamedEntity#get_Name">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.TypeOf.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.TypeOf.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.UnaryPlus.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
@@ -26520,23 +26611,20 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.TypeDeclarationMember.Microsoft#Cci#INamedEntity#get_Name">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.TypeDeclarationMember.Microsoft#Cci#INamedEntity#Name">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.SizeOf.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.TypeDeclarationMember.Microsoft#Cci#INamedEntity#get_Name">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.SizeOf.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.Conversion.Microsoft#Cci#IExpression#get_Type">
+    <member name="M:Microsoft.Cci.Ast.SizeOf.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.Conversion.Microsoft#Cci#IExpression#Type">
@@ -26544,13 +26632,12 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#IExpression#get_Type">
+    <member name="M:Microsoft.Cci.Ast.Conversion.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
-    <member name="P:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#ISignature#ReturnValueCustomModifiers">
+    <member name="P:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#IExpression#Type">
       <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
     <member name="M:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#ISignature#get_ReturnValueCustomModifiers">
@@ -26562,39 +26649,43 @@
         <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Type" inheritedFromTypeName="ISignature">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
+    <member name="P:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#ISignature#ReturnValueCustomModifiers">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
+    </member>
     <member name="P:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#ISignature#Parameters">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#IExpression#Type">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-      </getter>
-    </member>
     <member name="M:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#ISignature#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Type" inheritedFromTypeName="ISignature">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.AnonymousDelegate.Microsoft#Cci#ISignature#get_Parameters">
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.GenericParameterDeclaration.Microsoft#Cci#INamedEntity#get_Name">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.GenericParameterDeclaration.Microsoft#Cci#INamedEntity#Name">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.Assignment.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.GenericParameterDeclaration.Microsoft#Cci#INamedEntity#get_Name">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.Assignment.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.Assignment.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.FunctionPointerMethod.Microsoft#Cci#ISignature#get_Parameters">
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
@@ -26608,49 +26699,41 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.ParameterDeclaration.Microsoft#Cci#INamedEntity#get_Name">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.ParameterDeclaration.Microsoft#Cci#INamedEntity#Name">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.AddressDereference.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.ParameterDeclaration.Microsoft#Cci#INamedEntity#get_Name">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamedEntity.get_Name" inheritedFromTypeName="INamedEntity">Contract.Result&lt;IName&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.AddressDereference.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.Ast.AddressDereference.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    </member>
     <member name="P:Microsoft.Cci.Ast.NamespaceTypeDefinition.Microsoft#Cci#INamespaceTypeReference#ResolvedType">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamespaceTypeReference.get_ResolvedType" inheritedFromTypeName="INamespaceTypeReference">Contract.Result&lt;INamespaceTypeDefinition&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.NamespaceTypeDefinition.Microsoft#Cci#INamespaceTypeReference#get_ContainingUnitNamespace">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamespaceTypeReference.get_ContainingUnitNamespace" inheritedFromTypeName="INamespaceTypeReference">Contract.Result&lt;IUnitNamespaceReference&gt;() != null</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.NamespaceTypeDefinition.Microsoft#Cci#INamespaceTypeReference#get_ResolvedType">
+      <ensures inheritedFrom="M:Microsoft.Cci.INamespaceTypeReference.get_ResolvedType" inheritedFromTypeName="INamespaceTypeReference">Contract.Result&lt;INamespaceTypeDefinition&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.NamespaceTypeDefinition.Microsoft#Cci#INamespaceTypeDefinition#AttributesFor(Microsoft.Cci.ITypeReference)">
       <requires inheritedFrom="M:Microsoft.Cci.INamespaceTypeDefinition.AttributesFor(Microsoft.Cci.ITypeReference)" inheritedFromTypeName="INamespaceTypeDefinition">IteratorHelper.EnumerableContains(this.Interfaces, implementedInterface)</requires>
       <ensures inheritedFrom="M:Microsoft.Cci.INamespaceTypeDefinition.AttributesFor(Microsoft.Cci.ITypeReference)" inheritedFromTypeName="INamespaceTypeDefinition">Contract.Result&lt;IEnumerable&lt;ICustomAttribute&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.INamespaceTypeDefinition.AttributesFor(Microsoft.Cci.ITypeReference)" inheritedFromTypeName="INamespaceTypeDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomAttribute&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.NamespaceTypeDefinition.Microsoft#Cci#INamespaceTypeReference#get_ResolvedType">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamespaceTypeReference.get_ResolvedType" inheritedFromTypeName="INamespaceTypeReference">Contract.Result&lt;INamespaceTypeDefinition&gt;() != null</ensures>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.NamespaceTypeDefinition.Microsoft#Cci#INamespaceTypeReference#get_ContainingUnitNamespace">
-      <ensures inheritedFrom="M:Microsoft.Cci.INamespaceTypeReference.get_ContainingUnitNamespace" inheritedFromTypeName="INamespaceTypeReference">Contract.Result&lt;IUnitNamespaceReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.NamespaceTypeDefinition.Microsoft#Cci#INamespaceTypeReference#ContainingUnitNamespace">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.INamespaceTypeReference.get_ContainingUnitNamespace" inheritedFromTypeName="INamespaceTypeReference">Contract.Result&lt;IUnitNamespaceReference&gt;() != null</ensures>
-      </getter>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
-    <member name="P:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IBinaryOperation#LeftOperand">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_LeftOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
       </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IBinaryOperation#RightOperand">
@@ -26658,28 +26741,30 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_RightOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IBinaryOperation#get_RightOperand">
-      <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_RightOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IBinaryOperation#get_LeftOperand">
-      <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_LeftOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#IPropertyDefinition#get_DefaultValue">
-      <requires inheritedFrom="M:Microsoft.Cci.IPropertyDefinition.get_DefaultValue" inheritedFromTypeName="IPropertyDefinition">this.HasDefaultValue</requires>
-      <ensures inheritedFrom="M:Microsoft.Cci.IPropertyDefinition.get_DefaultValue" inheritedFromTypeName="IPropertyDefinition">Contract.Result&lt;IMetadataConstant&gt;() != null</ensures>
+    <member name="M:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IBinaryOperation#get_LeftOperand">
+      <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_LeftOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#IPropertyDefinition#get_Parameters">
-      <ensures inheritedFrom="M:Microsoft.Cci.IPropertyDefinition.get_Parameters" inheritedFromTypeName="IPropertyDefinition">Contract.Result&lt;IEnumerable&lt;IParameterDefinition&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.IPropertyDefinition.get_Parameters" inheritedFromTypeName="IPropertyDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterDefinition&gt;&gt;(), x =&gt; x != null)</ensures>
+    <member name="M:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IBinaryOperation#get_RightOperand">
+      <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_RightOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#ISignature#get_ReturnValueCustomModifiers">
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
+    <member name="P:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IBinaryOperation#LeftOperand">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_LeftOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.BinaryOperation.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#ISignature#Parameters">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#ISignature#ReturnValueCustomModifiers">
       <getter>
@@ -26687,11 +26772,17 @@
         <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#ISignature#Parameters">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
-      </getter>
+    <member name="M:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#IPropertyDefinition#get_Parameters">
+      <ensures inheritedFrom="M:Microsoft.Cci.IPropertyDefinition.get_Parameters" inheritedFromTypeName="IPropertyDefinition">Contract.Result&lt;IEnumerable&lt;IParameterDefinition&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.IPropertyDefinition.get_Parameters" inheritedFromTypeName="IPropertyDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterDefinition&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#IPropertyDefinition#get_DefaultValue">
+      <requires inheritedFrom="M:Microsoft.Cci.IPropertyDefinition.get_DefaultValue" inheritedFromTypeName="IPropertyDefinition">this.HasDefaultValue</requires>
+      <ensures inheritedFrom="M:Microsoft.Cci.IPropertyDefinition.get_DefaultValue" inheritedFromTypeName="IPropertyDefinition">Contract.Result&lt;IMetadataConstant&gt;() != null</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#ISignature#get_ReturnValueCustomModifiers">
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.PropertyDefinition.Microsoft#Cci#IPropertyDefinition#Parameters">
       <getter>
@@ -26717,6 +26808,26 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.Ast.LabeledStatement.Microsoft#Cci#ILabeledStatement#get_Label">
+      <ensures inheritedFrom="M:Microsoft.Cci.ILabeledStatement.get_Label" inheritedFromTypeName="ILabeledStatement">Contract.Result&lt;IName&gt;() != null</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.LabeledStatement.Microsoft#Cci#ILabeledStatement#get_Statement">
+      <ensures inheritedFrom="M:Microsoft.Cci.ILabeledStatement.get_Statement" inheritedFromTypeName="ILabeledStatement">Contract.Result&lt;IStatement&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.LabeledStatement.Microsoft#Cci#ILabeledStatement#Label">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ILabeledStatement.get_Label" inheritedFromTypeName="ILabeledStatement">Contract.Result&lt;IName&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.LabeledStatement.Microsoft#Cci#ILabeledStatement#Statement">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ILabeledStatement.get_Statement" inheritedFromTypeName="ILabeledStatement">Contract.Result&lt;IStatement&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.AnonymousMethod.Microsoft#Cci#ISignature#get_Parameters">
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
     <member name="P:Microsoft.Cci.Ast.AnonymousMethod.Microsoft#Cci#ISignature#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Type" inheritedFromTypeName="ISignature">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
@@ -26731,17 +26842,13 @@
     <member name="M:Microsoft.Cci.Ast.AnonymousMethod.Microsoft#Cci#ISignature#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Type" inheritedFromTypeName="ISignature">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.AnonymousMethod.Microsoft#Cci#ISignature#get_Parameters">
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.OldValue.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.OldValue.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.OldValue.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.VectorLength.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
@@ -26751,9 +26858,6 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.Assembly.Microsoft#Cci#IAssemblyReference#get_UnifiedAssemblyIdentity">
-      <ensures inheritedFrom="M:Microsoft.Cci.IAssemblyReference.get_UnifiedAssemblyIdentity" inheritedFromTypeName="IAssemblyReference">Contract.Result&lt;AssemblyIdentity&gt;() != null</ensures>
-    </member>
     <member name="M:Microsoft.Cci.Ast.Assembly.Microsoft#Cci#IAssemblyReference#get_ResolvedAssembly">
       <ensures inheritedFrom="M:Microsoft.Cci.IAssemblyReference.get_ResolvedAssembly" inheritedFromTypeName="IAssemblyReference">Contract.Result&lt;IAssembly&gt;() != null</ensures>
     </member>
@@ -26761,6 +26865,9 @@
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IAssemblyReference.get_UnifiedAssemblyIdentity" inheritedFromTypeName="IAssemblyReference">Contract.Result&lt;AssemblyIdentity&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.Assembly.Microsoft#Cci#IAssemblyReference#get_UnifiedAssemblyIdentity">
+      <ensures inheritedFrom="M:Microsoft.Cci.IAssemblyReference.get_UnifiedAssemblyIdentity" inheritedFromTypeName="IAssemblyReference">Contract.Result&lt;AssemblyIdentity&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.Assembly.Microsoft#Cci#IAssemblyReference#ResolvedAssembly">
       <getter>
@@ -26791,17 +26898,13 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.UnitNamespace.Microsoft#Cci#IUnitNamespaceReference#get_Unit">
-      <ensures inheritedFrom="M:Microsoft.Cci.IUnitNamespaceReference.get_Unit" inheritedFromTypeName="IUnitNamespaceReference">Contract.Result&lt;IUnitReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.UnitNamespace.Microsoft#Cci#IUnitNamespaceReference#Unit">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IUnitNamespaceReference.get_Unit" inheritedFromTypeName="IUnitNamespaceReference">Contract.Result&lt;IUnitReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.LoopContract.Microsoft#Cci#IObjectWithLocations#get_Locations">
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    <member name="M:Microsoft.Cci.Ast.UnitNamespace.Microsoft#Cci#IUnitNamespaceReference#get_Unit">
+      <ensures inheritedFrom="M:Microsoft.Cci.IUnitNamespaceReference.get_Unit" inheritedFromTypeName="IUnitNamespaceReference">Contract.Result&lt;IUnitReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.LoopContract.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
@@ -26809,30 +26912,26 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.Ast.LoopContract.Microsoft#Cci#IObjectWithLocations#get_Locations">
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.TypeContract.Microsoft#Cci#IObjectWithLocations#get_Locations">
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
     <member name="P:Microsoft.Cci.Ast.TypeContract.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.TypeContract.Microsoft#Cci#IObjectWithLocations#get_Locations">
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.CheckIfInstance.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.CheckIfInstance.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Ast.Addition.PointerAddition.LeftOperand">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_LeftOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
-      </getter>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.Addition.PointerAddition.Microsoft#Cci#IExpression#get_Type">
+    <member name="M:Microsoft.Cci.Ast.CheckIfInstance.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.Addition.PointerAddition.Microsoft#Cci#IExpression#Type">
@@ -26840,20 +26939,52 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.Ast.Addition.PointerAddition.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.Addition.PointerAddition.LeftOperand">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_LeftOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
+    </member>
     <member name="P:Microsoft.Cci.Ast.Addition.PointerAddition.RightOperand">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IBinaryOperation.get_RightOperand" inheritedFromTypeName="IBinaryOperation">Contract.Result&lt;IExpression&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.ConditionalStatement.Microsoft#Cci#IConditionalStatement#Condition">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IConditionalStatement.get_Condition" inheritedFromTypeName="IConditionalStatement">Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.ConditionalStatement.Microsoft#Cci#IConditionalStatement#get_FalseBranch">
+      <ensures inheritedFrom="M:Microsoft.Cci.IConditionalStatement.get_FalseBranch" inheritedFromTypeName="IConditionalStatement">Contract.Result&lt;IStatement&gt;() != null</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.ConditionalStatement.Microsoft#Cci#IConditionalStatement#get_Condition">
+      <ensures inheritedFrom="M:Microsoft.Cci.IConditionalStatement.get_Condition" inheritedFromTypeName="IConditionalStatement">Contract.Result&lt;IExpression&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.ConditionalStatement.Microsoft#Cci#IConditionalStatement#FalseBranch">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IConditionalStatement.get_FalseBranch" inheritedFromTypeName="IConditionalStatement">Contract.Result&lt;IStatement&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.ConditionalStatement.Microsoft#Cci#IConditionalStatement#get_TrueBranch">
+      <ensures inheritedFrom="M:Microsoft.Cci.IConditionalStatement.get_TrueBranch" inheritedFromTypeName="IConditionalStatement">Contract.Result&lt;IStatement&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.ConditionalStatement.Microsoft#Cci#IConditionalStatement#TrueBranch">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IConditionalStatement.get_TrueBranch" inheritedFromTypeName="IConditionalStatement">Contract.Result&lt;IStatement&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.MethodContract.Microsoft#Cci#IObjectWithLocations#get_Locations">
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.MethodContract.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.MethodContract.Microsoft#Cci#IObjectWithLocations#get_Locations">
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.RuntimeArgumentHandleExpression.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
@@ -26863,13 +26994,13 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.CreateStackArray.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.CreateStackArray.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.CreateStackArray.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#IMethodDefinition#get_GenericParameters">
       <ensures inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_GenericParameters" inheritedFromTypeName="IMethodDefinition">Contract.Result&lt;IEnumerable&lt;IGenericMethodParameter&gt;&gt;() != null</ensures>
@@ -26881,6 +27012,10 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_Parameters" inheritedFromTypeName="IMethodDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterDefinition&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#ISignature#get_Parameters">
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
     <member name="M:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#ISignature#get_ReturnValueCustomModifiers">
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
@@ -26891,25 +27026,13 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_Body" inheritedFromTypeName="IMethodDefinition">Contract.Result&lt;IMethodBody&gt;() != null</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#IMethodDefinition#get_Parameters">
+      <ensures inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_Parameters" inheritedFromTypeName="IMethodDefinition">Contract.Result&lt;IEnumerable&lt;IParameterDefinition&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_Parameters" inheritedFromTypeName="IMethodDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterDefinition&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
     <member name="M:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#IMethodDefinition#get_Body">
       <requires inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_Body" inheritedFromTypeName="IMethodDefinition">!this.IsAbstract &amp;&amp; !this.IsExternal</requires>
       <ensures inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_Body" inheritedFromTypeName="IMethodDefinition">Contract.Result&lt;IMethodBody&gt;() != null</ensures>
-    </member>
-    <member name="P:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#ISignature#ReturnValueCustomModifiers">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
-      </getter>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#ISignature#get_Parameters">
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
-    </member>
-    <member name="P:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#ISignature#Parameters">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
-      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#IMethodDefinition#GenericParameters">
       <getter>
@@ -26917,25 +27040,39 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_GenericParameters" inheritedFromTypeName="IMethodDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IGenericMethodParameter&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#IMethodDefinition#get_Parameters">
-      <ensures inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_Parameters" inheritedFromTypeName="IMethodDefinition">Contract.Result&lt;IEnumerable&lt;IParameterDefinition&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.IMethodDefinition.get_Parameters" inheritedFromTypeName="IMethodDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterDefinition&gt;&gt;(), x =&gt; x != null)</ensures>
+    <member name="P:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#ISignature#ReturnValueCustomModifiers">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_ReturnValueCustomModifiers" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.OutArgument.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    <member name="P:Microsoft.Cci.Ast.MethodDefinition.Microsoft#Cci#ISignature#Parameters">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.Module.Microsoft#Cci#IModule#GetTypeReferences">
+      <ensures inheritedFrom="M:Microsoft.Cci.IModule.GetTypeReferences" inheritedFromTypeName="IModule">Contract.Result&lt;IEnumerable&lt;ITypeReference&gt;&gt;() != null</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.Module.Microsoft#Cci#IModule#GetTypeMemberReferences">
+      <ensures inheritedFrom="M:Microsoft.Cci.IModule.GetTypeMemberReferences" inheritedFromTypeName="IModule">Contract.Result&lt;IEnumerable&lt;ITypeMemberReference&gt;&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.OutArgument.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.AddressOf.Microsoft#Cci#IExpression#get_Type">
+    <member name="M:Microsoft.Cci.Ast.OutArgument.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.AddressOf.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.AddressOf.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.ReturnValue.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
@@ -26955,13 +27092,13 @@
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.ISignature.get_Parameters" inheritedFromTypeName="ISignature">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IParameterTypeInformation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.UnaryOperation.Microsoft#Cci#IExpression#get_Type">
-      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
-    </member>
     <member name="P:Microsoft.Cci.Ast.UnaryOperation.Microsoft#Cci#IExpression#Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.UnaryOperation.Microsoft#Cci#IExpression#get_Type">
+      <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.ThisReference.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
@@ -26971,9 +27108,19 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#ITypeReference#get_ResolvedType">
-      <ensures inheritedFrom="M:Microsoft.Cci.ITypeReference.get_ResolvedType" inheritedFromTypeName="ITypeReference">Contract.Result&lt;ITypeDefinition&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.ITypeReference.get_ResolvedType" inheritedFromTypeName="ITypeReference">!(this is ITypeDefinition) || Contract.Result&lt;ITypeDefinition&gt;() == this</ensures>
+    <member name="P:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#ITypeDefinition#GenericParameters">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ITypeDefinition.get_GenericParameters" inheritedFromTypeName="ITypeDefinition">Contract.Result&lt;IEnumerable&lt;IGenericTypeParameter&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.ITypeDefinition.get_GenericParameters" inheritedFromTypeName="ITypeDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IGenericTypeParameter&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#IObjectWithLocations#get_Locations">
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#ITypeDefinition#get_GenericParameters">
+      <ensures inheritedFrom="M:Microsoft.Cci.ITypeDefinition.get_GenericParameters" inheritedFromTypeName="ITypeDefinition">Contract.Result&lt;IEnumerable&lt;IGenericTypeParameter&gt;&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.ITypeDefinition.get_GenericParameters" inheritedFromTypeName="ITypeDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IGenericTypeParameter&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#ITypeReference#ResolvedType">
       <getter>
@@ -26981,19 +27128,9 @@
         <ensures inheritedFrom="M:Microsoft.Cci.ITypeReference.get_ResolvedType" inheritedFromTypeName="ITypeReference">!(this is ITypeDefinition) || Contract.Result&lt;ITypeDefinition&gt;() == this</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#ITypeDefinition#GenericParameters">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.ITypeDefinition.get_GenericParameters" inheritedFromTypeName="ITypeDefinition">Contract.Result&lt;IEnumerable&lt;IGenericTypeParameter&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.ITypeDefinition.get_GenericParameters" inheritedFromTypeName="ITypeDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IGenericTypeParameter&gt;&gt;(), x =&gt; x != null)</ensures>
-      </getter>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#ITypeDefinition#get_GenericParameters">
-      <ensures inheritedFrom="M:Microsoft.Cci.ITypeDefinition.get_GenericParameters" inheritedFromTypeName="ITypeDefinition">Contract.Result&lt;IEnumerable&lt;IGenericTypeParameter&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.ITypeDefinition.get_GenericParameters" inheritedFromTypeName="ITypeDefinition">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;IGenericTypeParameter&gt;&gt;(), x =&gt; x != null)</ensures>
-    </member>
-    <member name="M:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#IObjectWithLocations#get_Locations">
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-      <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    <member name="M:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#ITypeReference#get_ResolvedType">
+      <ensures inheritedFrom="M:Microsoft.Cci.ITypeReference.get_ResolvedType" inheritedFromTypeName="ITypeReference">Contract.Result&lt;ITypeDefinition&gt;() != null</ensures>
+      <ensures inheritedFrom="M:Microsoft.Cci.ITypeReference.get_ResolvedType" inheritedFromTypeName="ITypeReference">!(this is ITypeDefinition) || Contract.Result&lt;ITypeDefinition&gt;() == this</ensures>
     </member>
     <member name="P:Microsoft.Cci.Ast.NamedTypeDefinition.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
@@ -27001,29 +27138,29 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameterReference#get_ResolvedType">
-      <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameterReference.get_ResolvedType" inheritedFromTypeName="IGenericMethodParameterReference">Contract.Result&lt;IGenericMethodParameter&gt;() != null</ensures>
-    </member>
-    <member name="P:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameterReference#ResolvedType">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameterReference.get_ResolvedType" inheritedFromTypeName="IGenericMethodParameterReference">Contract.Result&lt;IGenericMethodParameter&gt;() != null</ensures>
-      </getter>
-    </member>
     <member name="M:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameterReference#get_DefiningMethod">
       <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameterReference.get_DefiningMethod" inheritedFromTypeName="IGenericMethodParameterReference">Contract.Result&lt;IMethodReference&gt;() != null</ensures>
     </member>
-    <member name="M:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameter#get_DefiningMethod">
-      <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameter.get_DefiningMethod" inheritedFromTypeName="IGenericMethodParameter">Contract.Result&lt;IMethodDefinition&gt;() != null</ensures>
+    <member name="P:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameterReference#DefiningMethod">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameterReference.get_DefiningMethod" inheritedFromTypeName="IGenericMethodParameterReference">Contract.Result&lt;IMethodReference&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameter#DefiningMethod">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameter.get_DefiningMethod" inheritedFromTypeName="IGenericMethodParameter">Contract.Result&lt;IMethodDefinition&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameterReference#DefiningMethod">
+    <member name="M:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameter#get_DefiningMethod">
+      <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameter.get_DefiningMethod" inheritedFromTypeName="IGenericMethodParameter">Contract.Result&lt;IMethodDefinition&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameterReference#ResolvedType">
       <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameterReference.get_DefiningMethod" inheritedFromTypeName="IGenericMethodParameterReference">Contract.Result&lt;IMethodReference&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameterReference.get_ResolvedType" inheritedFromTypeName="IGenericMethodParameterReference">Contract.Result&lt;IGenericMethodParameter&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.Ast.GenericMethodParameter.Microsoft#Cci#IGenericMethodParameterReference#get_ResolvedType">
+      <ensures inheritedFrom="M:Microsoft.Cci.IGenericMethodParameterReference.get_ResolvedType" inheritedFromTypeName="IGenericMethodParameterReference">Contract.Result&lt;IGenericMethodParameter&gt;() != null</ensures>
     </member>
     <member name="M:Microsoft.Cci.Ast.AddressableExpression.Microsoft#Cci#IExpression#get_Type">
       <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>

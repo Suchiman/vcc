@@ -720,20 +720,20 @@
             Otherwise returns the value of the Name property and sets isCompilerGenerated to true.
             </summary>
     </member>
-    <member name="P:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#IObjectWithLocations#Locations">
+    <member name="P:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#ILocalDefinition#CustomModifiers">
       <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+        <requires inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">this.IsModified</requires>
+        <ensures inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
       </getter>
     </member>
     <member name="M:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#IObjectWithLocations#get_Locations">
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
     </member>
-    <member name="P:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#ILocalDefinition#CustomModifiers">
+    <member name="P:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
-        <requires inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">this.IsModified</requires>
-        <ensures inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
     <member name="M:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#ILocalDefinition#get_CustomModifiers">

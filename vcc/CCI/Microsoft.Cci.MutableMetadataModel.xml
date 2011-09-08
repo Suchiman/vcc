@@ -6644,7 +6644,7 @@
             <remarks>While the model is being copied, the resulting model is incomplete and or inconsistent. It should not be traversed
             independently nor should any of its computed properties, such as ResolvedType be evaluated. Scenarios that need such functionality
             should be implemented by first making a mutable copy of the entire assembly and then running a second pass over the mutable result.
-            The new classes MetadataCopier and MutatingVisitor are meant to facilitate such scenarios.
+            The new classes MetadataDeepCopier and MetadataRewriter are meant to facilitate such scenarios.
             </remarks>
         </member>
         <member name="M:Microsoft.Cci.MutableCodeModel.MetadataMutator.#ctor(Microsoft.Cci.IMetadataHost)">
@@ -11666,6 +11666,11 @@
             The Assembly that contains this module. If this module is main module then this returns this.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.Cci.MutableCodeModel.Module.DebugInformationLocation">
+            <summary>
+            A path to the debug information corresponding to this module. Can be absolute or relative to the file path of the module. Empty if not specified.
+            </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Module.DllCharacteristics">
             <summary>
