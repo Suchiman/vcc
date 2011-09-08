@@ -1,7 +1,7 @@
 {
-module Microsoft.Research.Vcc.SyntaxConverter.Lexer
+module Microsoft.Research.Vcc.TokenCounter.Lexer
 
-open Microsoft.Research.Vcc.SyntaxConverter.PreToken
+open Microsoft.Research.Vcc.TokenCounter.Token
 open Microsoft.FSharp.Text.Lexing
 
 let lexeme  (lexbuf : LexBuffer<char>) = new System.String(lexbuf.Lexeme)
@@ -50,6 +50,8 @@ rule token = parse
 | "<="		{ Op "<=" }
 | ">="		{ Op ">=" }
 | "=="		{ Op "==" }
+| "==>"		{ Op "==>" }
+| "<==>"	{ Op "<==>" }
 | "!="		{ Op "!=" }
 | ";"		{ Op ";" }
 | "{"		{ Op "{" }
@@ -77,6 +79,7 @@ rule token = parse
 | "|"		{ Op "|" }
 | '?'		{ Op "?" }
 | '#'		{ Op "#" }
+| '\\' idbeg idbody* { Id (lexeme lexbuf) }
 | '\\'		{ Op "\\" }
 
 | idbeg idbody* { Id (lexeme lexbuf) }
