@@ -3,8 +3,8 @@
 
   <?define BoogieDir="..\..\Boogie" ?>
   <?define HostDir="..\..\host\bin\debug" ?>
-  <?define AddinDir="..\..\AddIn\VCCAddin\bin\debug" ?>
   <?define VsPackageDir="..\..\VSPackage\bin\debug" ?>
+  <?define AxiomProfilerDir="..\..\Tools\Z3Visualizer\Z3Visualizer\bin\Debug" ?>
   <?define HeaderDir="..\..\Headers" ?>
   <?define SamplesDir="..\SamplesSetup\bin\Debug" ?>
   <?define ConverterDir="..\..\Tools\VccSyntaxCoverter\bin\Debug" ?>
@@ -25,7 +25,6 @@
           <Directory Id="INSTALLLOCATION" Name="Vcc">
             <Directory Id="BINDIR" Name="Binaries" />
             <Directory Id="INCDIR" Name="Headers" />
-            <Directory Id="ADDINDIR" Name="AddIn" />
             <Directory Id="VSPACKAGEDIR" Name="VsPackage" />
             <Directory Id="DOCDIR" Name="Documentation">
               <Directory Id="SAMPLESDIR" Name="Samples" />
@@ -36,20 +35,8 @@
           </Directory>
         </Directory>
       </Directory>
-      <Directory Id="CommonAppDataFolder">
-        <Directory Id="MicrosoftCommonAppData" Name="Microsoft">
-          <Directory Id="MsEnvShared" Name="MSEnvShared">
-            <Directory Id="VSADDINDIR" Name="Addins" />
-          </Directory>
-        </Directory>
-      </Directory>
       <Directory Id="ProgramMenuFolder">
         <Directory Id="ShortcutFolder" Name="Microsoft Research Vcc" />
-      </Directory>
-      <Directory Id="VS2008INSTALLED">
-        <Component Id="usertype" Guid="D13354B1-327A-4C30-942C-6913252317EA">
-          <File Source="$(var.AddinDir)\Resources\usertype.dat"/>
-        </Component>
       </Directory>
     </Directory>
 
@@ -94,12 +81,12 @@
         <File Name="Microsoft.Cci.SourceModel.pdb" />
         <File Name="System.ComponentModel.Composition.dll" />
         <File Name="System.ComponentModel.Composition.pdb" />
-        <File Source="$(var.AddinDir)\VccModel.dll" />
-        <File Source="$(var.AddinDir)\VccModel.pdb" />
-        <File Source="$(var.AddinDir)\VccModelViewer.exe" />
-        <File Source="$(var.AddinDir)\VccModelViewer.pdb" />
-        <File Source="$(var.AddinDir)\Z3ModelParser.dll" />
-        <File Source="$(var.AddinDir)\Z3ModelParser.pdb" />
+        <File Source="$(var.VsPackageDir)\VccModel.dll" />
+        <File Source="$(var.VsPackageDir)\VccModel.pdb" />
+        <File Source="$(var.VsPackageDir)\VccModelViewer.exe" />
+        <File Source="$(var.VsPackageDir)\VccModelViewer.pdb" />
+        <File Source="$(var.VsPackageDir)\Z3ModelParser.dll" />
+        <File Source="$(var.VsPackageDir)\Z3ModelParser.pdb" />
         <File Source="$(var.BoogieDir)\bvd.exe" />
         <File Source="$(var.BoogieDir)\bvd.pdb" />
         <File Source="$(var.ConverterDir)\VccSyntaxConverter.exe" />
@@ -153,8 +140,8 @@
         <File Name="z3.exe" KeyPath="yes" />
         <File Name="z3inspector.exe" />
         <File Name="z3inspector.pdb" />
-        <File Source="$(var.AddinDir)\Z3AxiomProfiler.exe" />
-        <File Source="$(var.AddinDir)\Z3AxiomProfiler.pdb" />
+        <File Source="$(var.AxiomProfilerDir)\Z3AxiomProfiler.exe" />
+        <File Source="$(var.AxiomProfilerDir)\Z3AxiomProfiler.pdb" />
       </Component>
     </DirectoryRef>
 
@@ -167,40 +154,6 @@
         <File Name="Vcc3Prelude.bpl" />
         <!-- Add . to the path, because WiX adds \ and this ends up as /I:"...\Headers\" in Visual Studio confusing our command line parsing. -->
         <Environment Id="EnvInclude" Name="INCLUDE" Value="[INCDIR]." Permanent="no" Part="last" Separator=";" Action="set" System="yes" />
-      </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="ADDINDIR" FileSource="$(var.AddinDir)">
-      <Component Id="AddIn" Guid="2954A775-EAE6-4723-8BF9-9BEDDD7A9FE1">
-        <File Name="VerifiedCCompilerAddIn.dll" KeyPath="yes">
-          <netfx:NativeImage Id="ngen_VerifiedCCompilerAddIn.dll" Platform="32bit" Priority="1" AppBaseDirectory="ADDINDIR" />
-        </File>
-        <File Name="VerifiedCCompilerAddIn.pdb" />
-        <File Id="VccModel.dll_1" Name="VccModel.dll" />
-        <File Id="VccModel.pdb_1" Name="VccModel.pdb" />
-        <File Id="VccModelViewer.exe_1" Name="VccModelViewer.exe">
-          <netfx:NativeImage Id="ngen_VccModelViewer.exe" Platform="32bit" Priority="1" AppBaseDirectory="ADDINDIR" />
-        </File>
-        <File Id="VccModelViewer.pdb_1" Name="VccModelViewer.pdb" />
-        <File Id="Z3ModelParser.dll_1" Name="Z3ModelParser.dll" />
-        <File Id="Z3ModelParser.pdb_1" Name="Z3ModelParser.pdb" />
-        <File Id="Z3AxiomProfiler.exe_1" Name="Z3AxiomProfiler.exe" />
-        <File Id="Z3AxiomProfiler.pdb_1" Name="Z3AxiomProfiler.pdb" />
-        <File Id="bvd.exe_1" Source="$(var.BoogieDir)\bvd.exe" />
-        <File Id="bvd.pdb_1" Source="$(var.BoogieDir)\bvd.pdb" />
-        <File Id="Model.dll_1" Source="$(var.BoogieDir)\Model.dll" />
-        <File Id="Model.pdb_1" Source="$(var.BoogieDir)\Model.pdb" />
-        <File Source="vcc.ico"/>
-      </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="VSADDINDIR">
-      <Component Id="AddInFile" Guid="*">
-        <File Source="$(var.AddinDir)\..\..\VccAddin.Addin" />
-        <util:XmlFile Id="PatchAddinFile_AssemblyLocation" File="[VSADDINDIR]\VccAddin.Addin" Action="setValue" ElementPath="/Extensibility/Addin/Assembly" Value="[ADDINDIR]VerifiedCCompilerAddIn.dll" />
-        <util:XmlFile Id="PatchAddinFile_IconLocation" File="[VSADDINDIR]\VccAddin.Addin" Action="setValue" ElementPath="/Extensibility/Addin/AboutIconLocation" Value="[ADDINDIR]vcc.ico" />
-        <util:XmlFile Id="PatchAddinFile_InsertVersionFriendly" File="[VSADDINDIR]\VccAddin.Addin" Action="setValue" ElementPath="/Extensibility/Addin/FriendlyName" Value="Microsoft Research Vcc Addin $(var.VccVersion)" />
-        <util:XmlFile Id="PatchAddinFile_InsertVersionDescr" File="[VSADDINDIR]\VccAddin.Addin" Action="setValue" ElementPath="/Extensibility/Addin/Description" Value="Microsoft Research Vcc Addin $(var.VccVersion)" />
       </Component>
     </DirectoryRef>
 
@@ -225,6 +178,8 @@
         <File Id="bvd.pdb_2" Source="$(var.BoogieDir)\bvd.pdb" />
         <File Id="Model.dll_2" Source="$(var.BoogieDir)\Model.dll" />
         <File Id="Model.pdb_2" Source="$(var.BoogieDir)\Model.pdb" />
+        <File Id="FSharp.PowerPack.dll_2" Source="$(var.RedistDir)\FSharp.PowerPack.dll" />
+        <File Id="FSharp.PowerPack.pdb_2" Source="$(var.RedistDir)\FSharp.PowerPack.pdb" />
       </Component>
       <!-- Here the two links in Visual Studio's dir are created that install the VSPackage in VS2010.-->
       <Directory Id="DEVENV_DIR" Name=".">
@@ -297,11 +252,6 @@
     <WixVariable Id="WixUIBannerBmp" Value="vcc_wix.bmp" />
     <WixVariable Id="WixUIDialogBmp" Value="vcc_wix_dialog.bmp" />
 
-
-    <Property Id="VS2008INSTALLED">
-      <ComponentSearch Id="SearchVS2008" Guid="9E43F3BB-E7AE-4A97-ACF6-FB864533CC7E" />
-    </Property>
-
     <!-- This is the registry path for VS2010. If VS2010 is not installed, this is null (and evaluates to false).-->
     <Property Id="DEVENV_DIR">
       <RegistrySearch Id="RegSearch_Devenv_Directory" Root="HKLM" Key="Software\Microsoft\VisualStudio\10.0\Setup\VS" Name="EnvironmentDirectory" Type="raw" />
@@ -344,12 +294,6 @@
       <MergeRef Id="VCCRTRedistPol" />
       <MergeRef Id="VCOpenMPRedist" />
       <MergeRef Id="VCOpenMPRedistPol" />
-    </Feature>
-    <Feature Id="VisualStudio2008Integration" Title="Visual Studio 2008 Integration" AllowAdvertise="no" Level="0">
-      <Condition Level ="1"><![CDATA[Installed OR VS2008INSTALLED]]></Condition>
-      <ComponentRef Id="AddIn" />
-      <ComponentRef Id="AddInFile" />
-      <ComponentRef Id="usertype"/>
     </Feature>
     <Feature Id ="VisualStudio2010Integration" Title ="Visual Studio 2010 Integration" AllowAdvertise="no" Level="0">
       <Condition Level="1">DEVENV_DIR</Condition>
