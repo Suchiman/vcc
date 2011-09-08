@@ -23,6 +23,9 @@ namespace Microsoft.Research.Vcc
     let SystemDiagnosticsContractsCodeContractTypedPtr = "System.Diagnostics.Contracts.CodeContract.TypedPtr"
 
     [<Literal>]
+    let SystemIntPtr = "System.IntPtr"
+
+    [<Literal>]
     let SystemDiagnosticsContractsCodeContractMap = "System.Diagnostics.Contracts.CodeContract.Map"
 
     [<Literal>]
@@ -1512,8 +1515,8 @@ namespace Microsoft.Research.Vcc
           | SystemDiagnosticsContractsCodeContract, ("Exists" | "ForAll" | "Lambda") ->
             exprRes <- C.Expr.Quant (ec, this.DoQuant (methodCall))
           | SystemDiagnosticsContractsCodeContract, "InLambda" -> exprRes <- C.Expr.Macro (ec, "in_lambda", args())
+          | SystemIntPtr, ("op_Implicit" | "op_Explicit") 
           | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Implicit" | "op_Explicit") -> trTrivialCast()
-          | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Equality" | "op_Inequality") -> trBigIntOp methodName
           | SystemDiagnosticsContractsCodeContractBigInt, "op_Implicit" -> trTrivialCast()
           | SystemDiagnosticsContractsCodeContractBigInt, "op_Explicit" -> trCast()
           | SystemDiagnosticsContractsCodeContractBigInt, BigIntOp -> trBigIntOp methodName
