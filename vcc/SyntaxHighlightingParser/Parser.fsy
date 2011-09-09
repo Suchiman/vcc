@@ -24,6 +24,7 @@ let private addSpecCode (ps : Position) (pe : Position) =
 %token <Position> RPAREN
 %token <Position*Position> KEYWORD
 %token <Position*Position> GUARDED
+%token <Position*Position> GHOST
 %token EOF
 
 
@@ -59,16 +60,19 @@ ParensInSpec :
     | LPAREN NestedParensInSpec RPAREN                { () }
     | OPENSPEC KeywordOpt NestedParensInSpec RPAREN   { addSpecCode $1 $4 }
 
-IgnoredKeywords  :
+IgnoredKeywords  :  // handling of keywords outside of spec block
     |                                                 { () }
     | KEYWORD IgnoredKeywords                         { () }
+    | GHOST IgnoredKeywords							              { () }
     | GUARDED IgnoredKeywords                         { addKeyword $1 }
 
-Keywords  :
+Keywords  :  // handling of keywords inside spec block
     |                                                 { () }
-    | KEYWORD Keywords                                { addKeyword $1 }
+    | KEYWORD Keywords                                { () }
+    | GHOST Keywords                                  { addKeyword $1 }
     | GUARDED Keywords                                { addKeyword $1 }
 
-KeywordOpt :
+KeywordOpt :  // handling of keyword following the opening of a spec block
     |                                                 { () }
     | KEYWORD                                         { addKeyword $1 }
+    | GHOST                                           { addKeyword $1 }
