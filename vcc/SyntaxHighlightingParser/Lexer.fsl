@@ -23,7 +23,6 @@ let keyword =
   "decreases" | 
   "ensures" | 
   "group" |
-  "ghost" |
   "invariant" |
   "logic" |
   "out" |
@@ -41,7 +40,6 @@ let keyword =
   "out_param" |
   "returns" |
   "level"
-
 
 let guardedKeyword = 
   "\\result" |
@@ -61,6 +59,7 @@ rule tokenize = parse
 
 | keyword                               { KEYWORD(lexbuf.StartPos, lexbuf.EndPos) }
 | guardedKeyword                        { GUARDED(lexbuf.StartPos, lexbuf.EndPos) }
+| "ghost"								                { GHOST(lexbuf.StartPos, lexbuf.EndPos) }
 
 | '_' '('                               { OPENSPEC(lexbuf.StartPos) }
 | '('                                   { LPAREN(lexbuf.StartPos) }
