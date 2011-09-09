@@ -33,7 +33,15 @@ let keyword =
   "unwrapping" |
   "unchecked" |
   "wrap" |
-  "writes"
+  "writes" |
+  // macros defined in vccp.h:
+  "maintains" |
+  "always" |
+  "updates" |
+  "out_param" |
+  "returns" |
+  "level"
+
 
 let guardedKeyword = 
   "\\result" |
