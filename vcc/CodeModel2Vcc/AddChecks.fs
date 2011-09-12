@@ -445,6 +445,29 @@ namespace Microsoft.Research.Vcc
       | _ -> None
 
     // ============================================================================================================
+
+    let addFullstopCheckInAtomic _ = 
+
+      let isSafeFunction fn = 
+        match fn.Name with 
+          | "_vcc_bump_volatile_version"
+          | "_vcc_unclaim"
+          | "_vcc_set_closed_owner"
+          | "_vcc_giveup_closed_owner"
+          | "_vcc_set_closed_owns" -> true
+          | name when name.StartsWith("lambda#") -> true
+          | _ -> false
+      let assertFullstopOnCall self = function
+        | Call(ec, fn, _, _) as call when not (isSafeFunction fn) ->
+          let ac = afmtt ec.Token 8031 ("not in a full-stop state when calling function '" + fn.Name + "' inside atomic") []
+          let _assert = Expr.MkAssert (Expr.Macro (ac,  "_vcc_full_stop" , []))
+          Some(Expr.MkBlock([_assert; call]))
+        | _ -> None
+      function
+        | Atomic(ec, objs, expr) -> Some(Atomic(ec, objs, expr.SelfMap(assertFullstopOnCall)))
+        | _ -> None
+
+    // ============================================================================================================
     
     helper.AddTransformer ("check-begin", Helper.DoNothing)
     
@@ -455,6 +478,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("check-overflows", Helper.ExprCtx addOverflowChecks)
     helper.AddTransformer ("check-div-by-zero", Helper.ExprCtx addDivByZeroChecks)
     helper.AddTransformer ("check-shift-bits-in-range", Helper.ExprCtx addShiftChecks)
+    helper.AddTransformer ("check-fullstop-in-atomic", Helper.Expr addFullstopCheckInAtomic)
     helper.AddTransformer ("check-remove-checked", Helper.Expr stripRemainingChecked)
     
     helper.AddTransformer ("check-end", Helper.DoNothing)
