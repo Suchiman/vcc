@@ -106,7 +106,7 @@ namespace Microsoft.Research.Vcc
                 Name = td.Name + "#adm"
                 Parameters = [parm]
                 Ensures = post
-                CustomAttr = VccAttr(AttrIsAdmissibility, "") :: (inheritedSkipVerificationAttr td.CustomAttr)
+                CustomAttr = VccAttr(AttrIsAdmissibility, "") :: (inheritedAttrs td.CustomAttr)
                 Body = Some body
                 IsProcessed = true }
           [decl; Top.FunctionDecl check]
@@ -362,7 +362,7 @@ namespace Microsoft.Research.Vcc
               Token = f.Token
               IsSpec = true  
               Name = f.Name + "#reads"
-              CustomAttr = ReadsCheck f :: inheritedSkipVerificationAttr f.CustomAttr
+              CustomAttr = ReadsCheck f :: inheritedAttrs f.CustomAttr
               Body = Some body
               IsProcessed = true }
         let decl = Top.FunctionDecl rc

@@ -36,7 +36,7 @@ namespace Microsoft.Research.Vcc
           | CallMacro(_, "_vcc_owns", _, [Cast(_,_, expr)|expr]) ->
             match expr.Type with 
               | Ptr(Type.Ref(td)) ->
-                if hasCustomAttr "volatile_owns" td.CustomAttr then found() else continueIfNotFound()
+                if hasCustomAttr AttrVolatileOwns td.CustomAttr then found() else continueIfNotFound()
               | _ -> continueIfNotFound()
           | _ -> continueIfNotFound()
         expr.SelfVisit findVolatile 

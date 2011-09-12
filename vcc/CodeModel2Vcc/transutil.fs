@@ -297,12 +297,17 @@ namespace Microsoft.Research.Vcc
   // ----------------------------------------------------------------------------- 
 
   let staticOwns (td:TypeDecl) = 
-    List.forall (function VccAttr ("dynamic_owns", _) | VccAttr ("volatile_owns", _) -> false | _ -> true) td.CustomAttr
+    List.forall (function VccAttr (AttrDynamicOwns, _) | VccAttr (AttrVolatileOwns, _) -> false | _ -> true) td.CustomAttr
   
   let hasCustomAttr n = List.exists (function VccAttr (n', _) -> n = n' | _ -> false)
 
-  let inheritedSkipVerificationAttr attrs = if hasCustomAttr AttrSkipVerification attrs then [VccAttr(AttrSkipVerification, "true")] else []
-
+  let inheritedAttrs attrs = 
+    let isInherited = function
+      | VccAttr(AttrSkipVerification, _) -> true
+      | VccAttr(AttrIsolateProof, _) -> true
+      | _ -> false
+    attrs |> List.filter isInherited
+  
   // Warning: this function gets rid of multiplication so possible overflow check is gone
   // This usually is OK in spec context.
   let extractArraySize (helper:Helper.Env) (expr:Expr) (elementType:Type) (byteCount:Expr) =
