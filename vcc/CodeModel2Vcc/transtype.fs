@@ -962,7 +962,7 @@ namespace Microsoft.Research.Vcc
           | false, _ ->
             let td' = { td with Name = "volatile#" + td.Name; 
                                 IsVolatile = true; 
-                                CustomAttr = CustomAttr.VccAttr("volatile_owns", "") :: td.CustomAttr }
+                                CustomAttr = CustomAttr.VccAttr(AttrVolatileOwns, "") :: td.CustomAttr }
             typeToVolatileType.Add(td, td')
             typeToVolatileType.Add(td', td')
             let vFields = List.map (mkVolFld td') td'.Fields

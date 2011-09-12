@@ -121,7 +121,7 @@ namespace Microsoft.Research.Vcc
       foreach (var decl in currentDecls) {
         if (decl.IsFunctionDecl) {
           foreach (var attr in ((CAST.Top.FunctionDecl)decl).Item.CustomAttr) {
-            if (attr.IsVccAttr && ((CAST.CustomAttr.VccAttr)attr).Item1 == "isolate_proof") 
+            if (attr.IsVccAttr && ((CAST.CustomAttr.VccAttr)attr).Item1 == CAST.AttrIsolateProof) 
               return true;
             
           }

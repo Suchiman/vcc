@@ -22,6 +22,9 @@ module Microsoft.Research.Vcc.CAST
   let AttrSkipVerification = "skip_verification"
 
   [<Literal>]
+  let AttrIsolateProof = "isolate_proof"
+
+  [<Literal>]
   let AttrNoAdmissibility = "no_admissibility"
 
   [<Literal>]
@@ -77,6 +80,12 @@ module Microsoft.Research.Vcc.CAST
 
   [<Literal>]
   let AttrYarra = "yarra"
+
+  [<Literal>]
+  let AttrDynamicOwns = "dynamic_owns"
+
+  [<Literal>]
+  let AttrVolatileOwns = "volatile_owns"
 
   type VarKind =    
     | Parameter

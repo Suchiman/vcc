@@ -846,7 +846,7 @@ namespace Microsoft.Research.Vcc
                              Writes = stripInitialPure cs'.Writes
                              Variants = stripInitialPure cs'.Decreases
                              Reads = stripInitialPure cs'.Reads;
-                             CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else []) @ inheritedSkipVerificationAttr (!currentFunction).CustomAttr
+                             CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else []) @ inheritedAttrs (!currentFunction).CustomAttr
                              Body = Some (Expr.MkBlock(ss @ List.map mkSetOutPar localsThatGoOut))
                              IsProcessed = true }
                 blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
