@@ -117,11 +117,28 @@ namespace Microsoft.Research.Vcc
       return ReParseBoogieOptions(options, parent.options.RunningFromCommandLine);
     }
 
+    private bool HasIsolateProofAttribute(string funcName) {
+      foreach (var decl in currentDecls) {
+        if (decl.IsFunctionDecl) {
+          foreach (var attr in ((CAST.Top.FunctionDecl)decl).Item.CustomAttr) {
+            if (attr.IsVccAttr && ((CAST.CustomAttr.VccAttr)attr).Item1 == "isolate_proof") 
+              return true;
+            
+          }
+        }
+      }
+
+      return false;
+    }
+
     public override VerificationResult Verify(string funcName)
     {
       double start = VccCommandLineHost.GetTime();
 
-      if (parent.options.AggressivePruning) {
+      bool restartProver = false;
+
+      if (parent.options.AggressivePruning || HasIsolateProofAttribute(funcName)) {
+        restartProver = true;
         var decls = TransUtil.pruneBy(env, funcName, currentDecls);
         var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude, decls);
         if (!env.ShouldContinue) return VerificationResult.UserError;
@@ -172,7 +189,11 @@ namespace Microsoft.Research.Vcc
           effectiveOptions.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
           effectiveOptions.Add("/z3opt:CASE_SPLIT=1");
         }
-        
+
+        if (restartProver) {
+          effectiveOptions.Add("/restartProver");
+        }
+
         if (!ReParseBoogieOptions(effectiveOptions, parent.options.RunningFromCommandLine)) {
           Logger.Instance.Error("Error parsing extra options '{0}' for function '{1}'", extraFunctionOptions, impl.Name);
           return VerificationResult.UserError;
