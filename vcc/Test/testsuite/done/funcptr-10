@@ -10,5 +10,5 @@ int main() {
 `
 Verification of f succeeded.
 Verification of main succeeded.
-Verification of $fnptr_f_to_fnptr#1 succeeded.
+Verification of $fnptr_f_to_pf#1 succeeded.
 `

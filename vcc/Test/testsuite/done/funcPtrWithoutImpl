@@ -11,5 +11,5 @@ void foo() {
 
 `
 Verification of foo succeeded.
-Verification of $fnptr_bar_to_fnptr#1 succeeded.
+Verification of $fnptr_bar_to_TF#1 succeeded.
 `

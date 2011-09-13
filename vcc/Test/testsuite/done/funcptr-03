@@ -25,5 +25,5 @@ Verification of test succeeded.
 Verification of bar failed.
 testcase(16,10) : error VC8504: Assertion 'fum is valid function pointer' did not verify.
 Verification of myn succeeded.
-Verification of $fnptr_test_to_fnptr#1 succeeded.
+Verification of $fnptr_test_to_foo#1 succeeded.
 `
