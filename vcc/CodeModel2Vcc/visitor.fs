@@ -48,7 +48,7 @@ namespace Microsoft.Research.Vcc
     let mutable exprRes : C.Expr = C.Expr.Bogus
     let mutable typeRes : C.Type = C.Type.Bogus
     let mutable globalsType = null
-    let mutable fnPtrCount = 0
+    let mutable fnPtrCount = 0;
     let finalActions = System.Collections.Generic.Queue<(unit -> unit)>()
     
     let mutable localsMap = new Dict<obj, C.Variable>(new ObjEqualityComparer());
@@ -207,9 +207,10 @@ namespace Microsoft.Research.Vcc
         let (name, tok) = 
           match meth with
             | :? IMethodDefinition as def -> (def.Name.Value, token def)
-            | _ -> 
+            | :? VccFunctionPointerType as fptr -> 
               fnPtrCount <- fnPtrCount + 1
-              ("fnptr#" + fnPtrCount.ToString(), C.bogusToken)
+              (fptr.Name.Value + "#" + fnPtrCount.ToString(), token fptr)
+            | _ -> die()
         // there is an additional malloc in Vcc.Runtime, we want only one
         // same goes for other ones
         // TODO check if the thing is from Vcc.Runtime and if so, ignore it -- don't list all the names

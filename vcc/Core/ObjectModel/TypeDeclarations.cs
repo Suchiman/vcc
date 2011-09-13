@@ -560,4 +560,26 @@ namespace Microsoft.Research.Vcc {
       if (typeContract != null) typeContract.SetContainingType(this);
     }
   }
+
+  public class VccFunctionPointerType : Microsoft.Cci.Immutable.FunctionPointerType
+  {
+    private readonly NameDeclaration name;
+
+    public VccFunctionPointerType(NameDeclaration name, ISignature signature, IInternFactory internFactory)
+      : base(signature, internFactory)
+    {
+      this.name = name;
+    }
+
+    public VccFunctionPointerType(NameDeclaration name, CallingConvention callingConvention, bool returnValueIsByRef, ITypeReference type, IEnumerable<ICustomModifier> returnValueCustomModifiers, IEnumerable<IParameterTypeInformation> parameters, IEnumerable<IParameterTypeInformation> extraArgumentTypes, IInternFactory internFactory)
+      : base(callingConvention, returnValueIsByRef, type, returnValueCustomModifiers, parameters, extraArgumentTypes, internFactory)
+    {
+      this.name = name;
+    }
+
+    public NameDeclaration Name
+    {
+      get { return this.name; }
+    }
+  }
 }
