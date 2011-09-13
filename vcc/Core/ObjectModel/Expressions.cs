@@ -3470,7 +3470,7 @@ namespace Microsoft.Research.Vcc {
       //List<ICustomModifier> returnValueModifiers = new List<ICustomModifier>(1);
       //returnValueModifiers.Add(new CustomModifier(true, this.PlatformType.SystemRuntimeCompilerServicesCallConvCdecl));
       //FunctionPointerType result = new FunctionPointerType(functionTypeExpression.CallingConvention, false, functionTypeExpression.ReturnType.ResolvedType, returnValueModifiers.AsReadOnly(), parameterTypes, null, this.Compilation.HostEnvironment.InternFactory);
-      FunctionPointerType result = new FunctionPointerType(functionTypeExpression.CallingConvention, false, functionTypeExpression.ReturnType.ResolvedType, null, parameterTypes, null, this.Compilation.HostEnvironment.InternFactory);
+      VccFunctionPointerType result = new VccFunctionPointerType(functionTypeExpression.Name, functionTypeExpression.CallingConvention, false, functionTypeExpression.ReturnType.ResolvedType, null, parameterTypes, null, this.Compilation.HostEnvironment.InternFactory);
       IMethodContract/*?*/ contract = this.Compilation.ContractProvider.GetMethodContractFor(this);
       if (contract != null) this.Compilation.ContractProvider.AssociateMethodWithContract(result, contract);
       return result;

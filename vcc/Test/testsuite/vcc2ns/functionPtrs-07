@@ -40,8 +40,8 @@ Verification of baz succeeded.
 Verification of f1 succeeded.
 Verification of f2 succeeded.
 Verification of baz2 succeeded.
-Verification of $fnptr_f2_to_fnptr#2 succeeded.
-Verification of $fnptr_f1_to_fnptr#2 succeeded.
-Verification of $fnptr_f2_to_fnptr#1 succeeded.
-Verification of $fnptr_f1_to_fnptr#1 succeeded.
+Verification of $fnptr_f2_to_c2#2 succeeded.
+Verification of $fnptr_f1_to_c2#2 succeeded.
+Verification of $fnptr_f2_to_c1#1 succeeded.
+Verification of $fnptr_f1_to_c1#1 succeeded.
 `
