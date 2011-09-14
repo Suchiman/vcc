@@ -5,7 +5,6 @@ open Microsoft.FSharp.Text.Lexing
 open SyntaxHighlighting.FsParser
 }
 
-
 // Base regular expressions
 let whitespace = [' ' '\t' '\r' '\n']
 
@@ -15,57 +14,24 @@ let idbody = (idbeg | digit | '_')
 
 let id = idbeg idbody* | '_' idbody+
 
-let keyword = 
-  "atomic" | 
-  "assume" | 
-  "assert" | 
-  "axiom" | 
-  "decreases" | 
-  "ensures" | 
-  "group" |
-  "invariant" |
-  "logic" |
-  "out" |
-  "requires" |
-  "reads" |
-  "unwrap" |
-  "unwrapping" |
-  "unchecked" |
-  "wrap" |
-  "writes" |
-  // macros defined in vccp.h:
-  "maintains" |
-  "always" |
-  "updates" |
-  "out_param" |
-  "returns" |
-  "level"
-
-let guardedKeyword = 
-  "\\result" |
-  "\\lambda" |
-  "\\forall" |
-  "\\exists" |
-  "\\union" |
-  "\\inter" |
-  "\\this" |
-  "\\diff" |
-  "\\old" |
-  "\\in0" |
-  "\\is" |
-  "\\in"
+let guarded = '\\' id 
 
 rule tokenize = parse
 
-| keyword                               { KEYWORD(lexbuf.StartPos, lexbuf.EndPos) }
-| guardedKeyword                        { GUARDED(lexbuf.StartPos, lexbuf.EndPos) }
 | "ghost"								                { GHOST(lexbuf.StartPos, lexbuf.EndPos) }
+
+| id                                    { if Ast.isKeyword(lexbuf.Lexeme)
+                                            then KEYWORD(lexbuf.StartPos, lexbuf.EndPos) 
+                                            else tokenize lexbuf }
+
+| guarded                               { if Ast.isGuardedKeyword( lexbuf.Lexeme)
+                                            then GUARDED(lexbuf.StartPos, lexbuf.EndPos) 
+                                            else tokenize lexbuf }
 
 | '_' '('                               { OPENSPEC(lexbuf.StartPos) }
 | '('                                   { LPAREN(lexbuf.StartPos) }
 | ')'                                   { RPAREN(lexbuf.StartPos) }
 
-| id                                    { tokenize lexbuf }
 | whitespace+                           { tokenize lexbuf }
 
 | "'" ([^ '\\'] | '\\' [^ '\'']+ ) "'"  { tokenize lexbuf }
