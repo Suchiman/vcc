@@ -44,7 +44,10 @@ namespace Microsoft.Research.Vcc
 
     public override int GetHashCode()
     {
-      return this.filename.GetHashCode() ^ this.line.GetHashCode() ^ this.column.GetHashCode();
+      if (this.filename != null)
+        return this.filename.GetHashCode() ^ this.line.GetHashCode() ^ this.column.GetHashCode();
+      else
+        return this.line.GetHashCode() ^ this.column.GetHashCode();
     }
 
     public int CompareTo(Location other)
