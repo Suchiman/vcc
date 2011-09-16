@@ -24,63 +24,54 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     internal class VccClassifier : IClassifier
     {
-        private readonly IClassificationTypeRegistryService registry;
+        private readonly IClassificationType specType;
+        private readonly IClassificationType keywordType;
 
         internal VccClassifier(IClassificationTypeRegistryService registry)
         {
-            this.registry = registry;
+          this.keywordType = registry.GetClassificationType(VccClassificationTypeDefinitions.KeywordType);
+          this.specType= registry.GetClassificationType(VccClassificationTypeDefinitions.SpecType);
         }
 
         private static readonly IList<ClassificationSpan> emptyClassification = new ClassificationSpan[] { };
 
-        private readonly Dictionary<ITextBuffer, Tuple<int, IList<ClassificationSpan>>> classificationCache = new Dictionary<ITextBuffer, Tuple<int, IList<ClassificationSpan>>>();
+        private readonly Dictionary<ITextBuffer, Tuple<int, FSharp.Collections.FSharpList<SyntaxHighlighting.Ast.Span>>> classificationCache = new Dictionary<ITextBuffer, Tuple<int, FSharp.Collections.FSharpList<SyntaxHighlighting.Ast.Span> >>();
 
         public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
         {
           if (span.Length == 0) return emptyClassification;
-
           // classifications are cached by textbuffer and invalidated as the version of the snapshot changes
-          Tuple<int, IList<ClassificationSpan>> cacheEntry;
+          Tuple<int, FSharp.Collections.FSharpList<SyntaxHighlighting.Ast.Span>> cacheEntry;
+          FSharp.Collections.FSharpList<SyntaxHighlighting.Ast.Span> cachedSpans;
+
           if (this.classificationCache.TryGetValue(span.Snapshot.TextBuffer, out cacheEntry) && cacheEntry.Item1 == span.Snapshot.Version.VersionNumber) {
-            return cacheEntry.Item2;
+            cachedSpans = cacheEntry.Item2;
           } else {
             // previously unknown or version changed
             try {
-              var newClassification = GetClassificationSpans(span.Snapshot);
-              this.classificationCache[span.Snapshot.TextBuffer] = new Tuple<int,IList<ClassificationSpan>>(span.Snapshot.Version.VersionNumber, newClassification);
-              return newClassification;
+              cachedSpans = SyntaxHighlighting.Parser.Parse(span.Snapshot.GetText());
+              this.classificationCache[span.Snapshot.TextBuffer] = Tuple.Create(span.Snapshot.Version.VersionNumber, cachedSpans);
             } catch {
               // errors in syntax highlighting should not bring down VS
               return emptyClassification;
             }
           }
-        }
 
-        private IList<ClassificationSpan> GetClassificationSpans(ITextSnapshot snapshot)
-        {
-            var specType = this.registry.GetClassificationType(VccClassificationTypeDefinitions.SpecType);
-            var keywordType = this.registry.GetClassificationType(VccClassificationTypeDefinitions.KeywordType);
-
-            var positions = SyntaxHighlighting.Parser.Parse(snapshot.GetText());
-            var classifications = new List<ClassificationSpan>(positions.Length);
-
-            foreach (var pos in positions)
-            {
-                if (pos.IsSpec)
-                {
-                    var spec = (SyntaxHighlighting.Ast.Span.Spec) pos;
-                    classifications.Add(
-                        new ClassificationSpan(new SnapshotSpan(snapshot, spec.Item1, spec.Item2), specType));
-                }
-                else if (pos.IsKeyword)
-                {
-                    var kw = (SyntaxHighlighting.Ast.Span.Keyword) pos;
-                    classifications.Add(
-                        new ClassificationSpan(new SnapshotSpan(snapshot, kw.Item1, kw.Item2), keywordType));
-                }
+          // return list of detected spans filtered to those that overlap the given span
+          List<ClassificationSpan> result = new List<ClassificationSpan>();
+          foreach (var pos in cachedSpans) {
+            if (pos.IsSpec) {
+              var spec = (SyntaxHighlighting.Ast.Span.Spec)pos;
+              var specSpan = new Span(spec.Item1, spec.Item2);
+              if (span.OverlapsWith(specSpan)) result.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, specSpan), specType));
+            } else if (pos.IsKeyword) {
+              var kw = (SyntaxHighlighting.Ast.Span.Keyword)pos;
+              var kwSpan = new Span(kw.Item1, kw.Item2);
+              if (span.OverlapsWith(kwSpan)) result.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, kwSpan), keywordType));
             }
+          }
 
-            return classifications.AsReadOnly();
+          return result;
         }
 
 #pragma warning disable 67
