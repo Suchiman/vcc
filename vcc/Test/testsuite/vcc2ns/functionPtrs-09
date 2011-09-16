@@ -22,5 +22,5 @@ int bar() {
 `
 Verification of baz succeeded.
 Verification of bar succeeded.
-Verification of $fnptr_foo_to_F#1 succeeded.
+Verification of bar#fnptr#foo_to_F#1 succeeded.
 `

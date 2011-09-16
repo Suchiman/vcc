@@ -24,7 +24,7 @@ int myn(){
 Verification of test succeeded.
 Verification of bar succeeded.
 Verification of myn succeeded.
-Verification of $fnptr_test_to_foo#1 failed.
+Verification of myn#fnptr#test_to_foo#1 failed.
 testcase(20,19) : error VC9501: Post condition '\result > 0' did not verify.
 testcase(5,27) : error VC9599: (related information) Location of post condition.
 `

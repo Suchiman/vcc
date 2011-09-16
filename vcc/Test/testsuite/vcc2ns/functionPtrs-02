@@ -16,7 +16,7 @@ void foo() {
 }
 `
 Verification of foo succeeded.
-Verification of $fnptr_bar_to_TF#1 failed.
+Verification of foo#fnptr#bar_to_TF#1 failed.
 testcase(12,10) : error VC9501: Post condition '\result > 2' did not verify.
 testcase(5,27) : error VC9599: (related information) Location of post condition.
 `
