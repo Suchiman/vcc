@@ -44,6 +44,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     let handleFunctionPointers decls =
+      let parentDecl = ref (Axiom(bogusExpr))
       let addDecls = ref []
       let checks = new Dict<_,_>()
       let fnids = new Dict<_,_>()
@@ -80,8 +81,13 @@ namespace Microsoft.Research.Vcc
             helper.Error (tok, 9605, "checked function pointer cast: different return types", Some(called.Token))
             None
           else
-            let header = { fnptr with Name = "$fnptr_" + called.Name + "_to_" + fnptr.Name; Token = tok; 
-                                      Parameters = List.map (fun (v:Variable) -> v.UniqueCopy()) fnptr.Parameters }
+            let (checkPrefix, inheritedAttrs) =
+              match !parentDecl with
+                | Top.FunctionDecl fn -> (fn.Name + "#fnptr#", inheritedAttrs fn.CustomAttr)
+                | _ -> ("$fnptr#", [])
+            let header = { fnptr with Name = checkPrefix + called.Name + "_to_" + fnptr.Name; Token = tok; 
+                                      Parameters = List.map (fun (v:Variable) -> v.UniqueCopy()) fnptr.Parameters;
+                                      CustomAttr = fnptr.CustomAttr @ inheritedAttrs }
             if not (checks.ContainsKey header.Name) then
               checks.Add (header.Name, checks.Count)
               let call = Expr.Call ({ comm with Type = called.RetType },
@@ -109,8 +115,12 @@ namespace Microsoft.Research.Vcc
             | _ -> die()
         | _ -> None
       
-      let decls = deepMapExpressionsCtx repl decls
-      decls @ !addDecls
+      let doDecl decl =
+        parentDecl := decl
+        let replExpr isPure (e:Expr) = e.SelfCtxMap(isPure, repl)
+        decl.MapExpressions replExpr
+
+      (List.map doDecl decls) @ !addDecls
       
     // ============================================================================================================
     

@@ -29,4 +29,6 @@ int baz()
 }
 `
 Verification of baz succeeded.
+Verification of baz#fnptr#foo_to_FOO#2 succeeded.
+Verification of baz#fnptr#foo_to_BAR#1 succeeded.
 `

@@ -25,5 +25,5 @@ int myn(){
 Verification of test succeeded.
 Verification of bar succeeded.
 Verification of myn succeeded.
-Verification of $fnptr_test_to_foo#1 succeeded.
+Verification of myn#fnptr#test_to_foo#1 succeeded.
 `
