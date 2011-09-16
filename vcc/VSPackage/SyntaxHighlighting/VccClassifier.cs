@@ -31,19 +31,32 @@ namespace Microsoft.Research.Vcc.VSPackage
             this.registry = registry;
         }
 
+        private static readonly IList<ClassificationSpan> emptyClassification = new ClassificationSpan[] { };
+
+        private readonly Dictionary<ITextBuffer, Tuple<int, IList<ClassificationSpan>>> classificationCache = new Dictionary<ITextBuffer, Tuple<int, IList<ClassificationSpan>>>();
+
         public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
         {
-            var snapshot = span.Snapshot;
-            if (snapshot.Length == 0) return new ClassificationSpan[] {};
+          if (span.Length == 0) return emptyClassification;
 
+          // classifications are cached by textbuffer and invalidated as the version of the snapshot changes
+          Tuple<int, IList<ClassificationSpan>> cacheEntry;
+          if (this.classificationCache.TryGetValue(span.Snapshot.TextBuffer, out cacheEntry) && cacheEntry.Item1 == span.Snapshot.Version.VersionNumber) {
+            return cacheEntry.Item2;
+          } else {
+            // previously unknown or version changed
             try {
-                return GetClassificationSpans(snapshot);
+              var newClassification = GetClassificationSpans(span.Snapshot);
+              this.classificationCache[span.Snapshot.TextBuffer] = new Tuple<int,IList<ClassificationSpan>>(span.Snapshot.Version.VersionNumber, newClassification);
+              return newClassification;
             } catch {
-                return new ClassificationSpan[] { };
+              // errors in syntax highlighting should not bring down VS
+              return emptyClassification;
             }
+          }
         }
 
-        private List<ClassificationSpan> GetClassificationSpans(ITextSnapshot snapshot)
+        private IList<ClassificationSpan> GetClassificationSpans(ITextSnapshot snapshot)
         {
             var specType = this.registry.GetClassificationType(VccClassificationTypeDefinitions.SpecType);
             var keywordType = this.registry.GetClassificationType(VccClassificationTypeDefinitions.KeywordType);
@@ -66,7 +79,8 @@ namespace Microsoft.Research.Vcc.VSPackage
                         new ClassificationSpan(new SnapshotSpan(snapshot, kw.Item1, kw.Item2), keywordType));
                 }
             }
-            return classifications;
+
+            return classifications.AsReadOnly();
         }
 
 #pragma warning disable 67
