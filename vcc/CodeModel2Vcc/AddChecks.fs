@@ -457,14 +457,28 @@ namespace Microsoft.Research.Vcc
           | "_vcc_set_closed_owns" -> true
           | name when name.StartsWith("lambda#") -> true
           | _ -> false
-      let assertFullstopOnCall self = function
-        | Call(ec, fn, _, _) as call when not (isSafeFunction fn) ->
+
+      let extraAsserts = ref []
+
+      let rec addExtraAssertsIntoSurroundingList = function
+        | [] -> []
+        | (stmt:Expr) :: stmts -> 
+          let stmt' = stmt.SelfMap(assertFullstopOnCall)
+          let extras = !extraAsserts
+          extraAsserts := []
+          extras @ [stmt'] @ addExtraAssertsIntoSurroundingList stmts
+        
+      and assertFullstopOnCall self = function
+        | Block(ec, stmts, cont) ->
+          Some(Block(ec, addExtraAssertsIntoSurroundingList stmts, cont))
+        | Call(ec, fn, targs, args) when not (isSafeFunction fn) ->
           let ac = afmtt ec.Token 8031 ("not in a full-stop state when calling function '" + fn.Name + "' inside atomic") []
-          let _assert = Expr.MkAssert (Expr.Macro (ac,  "_vcc_full_stop" , []))
-          Some(Expr.MkBlock([_assert; call]))
+          extraAsserts := Expr.MkAssert (Expr.Macro (ac,  "_vcc_full_stop" , [])) :: !extraAsserts
+          Some(Call(ec, fn, targs, List.map self args))
+        | Assume _ as assume -> Some(assume) // do not add things from withing assumes
         | _ -> None
       function
-        | Atomic(ec, objs, expr) -> Some(Atomic(ec, objs, expr.SelfMap(assertFullstopOnCall)))
+        | Atomic(ec, objs, expr) -> Some(Atomic(ec, objs, Expr.MkBlock(addExtraAssertsIntoSurroundingList [expr])))
         | _ -> None
 
     // ============================================================================================================
