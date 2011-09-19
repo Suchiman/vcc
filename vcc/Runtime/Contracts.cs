@@ -32,69 +32,84 @@ namespace System.Diagnostics.Contracts
       }
     }
 
-    public abstract class AnyType
-    {
-    }
-
     public abstract class BigInt
     {
-      UInt64 dummy; // ensures that sizeof(BigInt) == 8
+      Int64 dummy; // ensures that sizeof(BigInt) == 8
       // get rid of the warning about the variable above
       private void Dummy() { dummy++; }
 
-      public static bool operator ==(BigInt b1, BigInt b2) {
+      public static bool operator ==(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static bool operator !=(BigInt b1, BigInt b2) {
+      public static bool operator !=(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static bool operator <(BigInt b1, BigInt b2) {
+      public static bool operator <(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static bool operator >(BigInt b1, BigInt b2) {
+      public static bool operator >(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static bool operator <=(BigInt b1, BigInt b2) {
+      public static bool operator <=(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static bool operator >=(BigInt b1, BigInt b2) {
+      public static bool operator >=(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static implicit operator BigInt(int n) {
+      public static implicit operator BigInt(BigNat n)
+      {
         throw new NotImplementedException();
       }
 
-      public static implicit operator BigInt(uint n) {
+      public static implicit operator BigInt(int n)
+      {
         throw new NotImplementedException();
       }
 
-      public static implicit operator BigInt(long n) {
+      public static implicit operator BigInt(uint n)
+      {
         throw new NotImplementedException();
       }
 
-      public static implicit operator BigInt(ulong n) {
+      public static implicit operator BigInt(long n)
+      {
         throw new NotImplementedException();
       }
 
-      public static implicit operator BigInt(byte n) {
+      public static implicit operator BigInt(ulong n)
+      {
         throw new NotImplementedException();
       }
 
-      public static implicit operator BigInt(sbyte n) {
+      public static implicit operator BigInt(byte n)
+      {
         throw new NotImplementedException();
       }
 
-      public static explicit operator int(BigInt n) {
+      public static implicit operator BigInt(sbyte n)
+      {
         throw new NotImplementedException();
       }
 
-      public static explicit operator uint(BigInt n) {
+      public static explicit operator int(BigInt n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator uint(BigInt n)
+      {
         throw new NotImplementedException();
       }
 
@@ -103,55 +118,69 @@ namespace System.Diagnostics.Contracts
         throw new NotImplementedException();
       }
 
-      public static explicit operator ulong(BigInt n) {
+      public static explicit operator ulong(BigInt n)
+      {
         throw new NotImplementedException();
       }
 
-      public static explicit operator byte(BigInt n) {
+      public static explicit operator byte(BigInt n)
+      {
         throw new NotImplementedException();
       }
 
-      public static explicit operator sbyte(BigInt n) {
+      public static explicit operator sbyte(BigInt n)
+      {
         throw new NotImplementedException();
       }
 
-      public static BigInt operator +(BigInt b1, BigInt b2) {
+      public static BigInt operator +(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static BigInt operator -(BigInt b1, BigInt b2) {
+      public static BigInt operator -(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static BigInt operator *(BigInt b1, BigInt b2) {
+      public static BigInt operator *(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static BigInt operator /(BigInt b1, BigInt b2) {
+      public static BigInt operator /(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static BigInt operator %(BigInt b1, BigInt b2) {
+      public static BigInt operator %(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static BigInt operator <<(BigInt b1, int b2) {
+      public static BigInt operator <<(BigInt b1, int b2)
+      {
         throw new NotImplementedException();
       }
-      public static BigInt operator >>(BigInt b1, int b2) {
+      public static BigInt operator >>(BigInt b1, int b2)
+      {
         throw new NotImplementedException();
       }
 
-      public static BigInt operator &(BigInt b1, BigInt b2) {
+      public static BigInt operator &(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
-      public static BigInt operator |(BigInt b1, BigInt b2) {
+      public static BigInt operator |(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
-      public static BigInt operator ^(BigInt b1, BigInt b2) {
+      public static BigInt operator ^(BigInt b1, BigInt b2)
+      {
         throw new NotImplementedException();
       }
-      public static BigInt operator ~(BigInt b1) {
+      public static BigInt operator ~(BigInt b1)
+      {
         throw new NotImplementedException();
       }
 
@@ -160,11 +189,181 @@ namespace System.Diagnostics.Contracts
         throw new NotImplementedException();
       }
 
-      public override int GetHashCode() {
+      public override int GetHashCode()
+      {
         throw new NotImplementedException();
       }
 
-      public override bool Equals(object obj) {
+      public override bool Equals(object obj)
+      {
+        throw new NotImplementedException();
+      }
+    }
+
+    public abstract class BigNat
+    {
+      UInt64 dummy; // ensures that sizeof(BigNat) == 8
+      // get rid of the warning about the variable above
+      private void Dummy() { dummy++; }
+
+      public static bool operator ==(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static bool operator !=(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static bool operator <(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static bool operator >(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static bool operator <=(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static bool operator >=(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator BigNat(BigInt n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator BigNat(int n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static implicit operator BigNat(uint n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator BigNat(long n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static implicit operator BigNat(ulong n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static implicit operator BigNat(byte n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator BigNat(sbyte n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator int(BigNat n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator uint(BigNat n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator long(BigNat n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator ulong(BigNat n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator byte(BigNat n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static explicit operator sbyte(BigNat n)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static BigNat operator +(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static BigNat operator -(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static BigNat operator *(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static BigNat operator /(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static BigNat operator %(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static BigNat operator <<(BigNat b1, int b2)
+      {
+        throw new NotImplementedException();
+      }
+      public static BigNat operator >>(BigNat b1, int b2)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static BigNat operator &(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+      public static BigNat operator |(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+      public static BigNat operator ^(BigNat b1, BigNat b2)
+      {
+        throw new NotImplementedException();
+      }
+      public static BigNat operator ~(BigNat b1)
+      {
+        throw new NotImplementedException();
+      }
+
+      public static BigNat operator -(BigNat b)
+      {
+        throw new NotImplementedException();
+      }
+
+      public override int GetHashCode()
+      {
+        throw new NotImplementedException();
+      }
+
+      public override bool Equals(object obj)
+      {
         throw new NotImplementedException();
       }
     }

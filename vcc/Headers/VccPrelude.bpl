@@ -89,6 +89,7 @@ const unique ^^f8: $ctype;
 const unique ^^claim: $ctype;
 const unique ^^root_emb: $ctype;
 const unique ^^mathint: $ctype;
+const unique ^^mathnat: $ctype;
 // struct A will get ^A :$ctype
 
 axiom $sizeof(^^i1) == 1;

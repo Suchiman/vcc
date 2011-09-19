@@ -192,7 +192,7 @@ namespace Microsoft.Research.Vcc
           if vcc3 then addType t (er "$null")
           else bInt 0              
         | C.Type.Claim
-        | C.Type.MathInteger
+        | C.Type.MathInteger _
         | C.Type.Integer _ -> bInt 0
         | C.Type.ObjectT _ -> er "$null"
         | C.Type.Ref({Kind = C.TypeKind.Record} as td) ->
@@ -413,7 +413,7 @@ namespace Microsoft.Research.Vcc
       let abstractSizeUndef = bInt 0 
       let abstractSize t expr =
         match t with
-          | C.MathInteger 
+          | C.MathInteger _ 
           | C.Type.Integer _ ->
             bCall "$abs" [expr]
           | C.Type.Ref td when td.IsDataType ->
@@ -435,8 +435,8 @@ namespace Microsoft.Research.Vcc
                 match e'.Type with
                   | C.Type.Bool ->
                     bCall "$bool_to_int" [self e']
-                  | C.Type.Integer _ -> self e'
-                  | C.Type.MathInteger -> self e'
+                  | C.Type.Integer _
+                  | C.Type.MathInteger _ -> self e'
                   | C.Type.ObjectT
                   | C.Ptr _ -> // TODO insert checks for casts here
                     bCall ("$ptr_to_" + C.Type.IntSuffix k) [self e']
@@ -456,7 +456,7 @@ namespace Microsoft.Research.Vcc
                   | C.Type.SecLabel _ ->
                     self e'
                   | _ -> die()
-              | C.Cast ({ Type = C.Type.MathInteger }, _, e') when e'.Type._IsPtr ->
+              | C.Cast ({ Type = C.Type.MathInteger _}, _, e') when e'.Type._IsPtr ->
                 if vcc3 then                
                   bCall "$addr" [self e']
                 else

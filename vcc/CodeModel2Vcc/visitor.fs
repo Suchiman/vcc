@@ -32,6 +32,9 @@ namespace Microsoft.Research.Vcc
     let SystemDiagnosticsContractsCodeContractBigInt = "System.Diagnostics.Contracts.CodeContract.BigInt"
 
     [<Literal>]
+    let SystemDiagnosticsContractsCodeContractBigNat = "System.Diagnostics.Contracts.CodeContract.BigNat"
+
+    [<Literal>]
     let SystemDiagnosticsContractsCodeContractObjset = "System.Diagnostics.Contracts.CodeContract.Objset"
 
 
@@ -612,7 +615,9 @@ namespace Microsoft.Research.Vcc
                 else if name = SystemDiagnosticsContractsCodeContractTypedPtr then
                   C.Type.ObjectT
                 else if name = SystemDiagnosticsContractsCodeContractBigInt then
-                  C.Type.MathInteger
+                  C.Type.MathInteger C.Signed
+                else if name = SystemDiagnosticsContractsCodeContractBigNat then
+                  C.Type.MathInteger C.Unsigned
                 else if name = SystemDiagnosticsContractsCodeContractObjset then
                   C.Type.Math "\\objset"
                 else              

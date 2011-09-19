@@ -199,7 +199,8 @@ namespace Microsoft.Research.Vcc
         match t with
           | C.Type.Bool -> er "^^bool"
           | C.Type.Integer kind -> er ("^^" + C.Type.IntSuffix kind)
-          | C.Type.MathInteger -> er "^^mathint"
+          | C.Type.MathInteger C.MathIntKind.Signed -> er "^^mathint"
+          | C.Type.MathInteger C.MathIntKind.Unsigned -> er "^^mathnat"
           | C.Type.Primitive kind -> er ("^^" + C.Type.PrimSuffix kind) 
           | C.Type.Void -> er "^^void"
           | C.Type.PhysPtr tp ->
@@ -256,7 +257,7 @@ namespace Microsoft.Research.Vcc
 
       let rec trType (t:C.Type) : B.Type = 
         match t with
-          | C.Type.MathInteger
+          | C.Type.MathInteger _
           | C.Type.Integer _  -> B.Type.Int
           | C.Type.SpecPtr _
           | C.Type.PhysPtr _ -> 

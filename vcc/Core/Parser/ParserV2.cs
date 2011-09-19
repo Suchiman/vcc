@@ -28,6 +28,9 @@ namespace Microsoft.Research.Vcc.Parsing
         case "\\integer":
           result = VccCompilationHelper.GetBigIntType(this.nameTable);
           return true;
+        case "\\natural":
+          result = VccCompilationHelper.GetBigNatType(this.nameTable);
+          return true;
         case "\\objset":
           Expression objsetRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "Objset");
           result = new VccNamedTypeExpression(objsetRef);

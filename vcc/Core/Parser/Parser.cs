@@ -999,6 +999,9 @@ namespace Microsoft.Research.Vcc.Parsing {
         case "_vcc_integer_t":
           result = VccCompilationHelper.GetBigIntType(this.nameTable);
           return true;
+        case "_vcc_natural_t":
+          result = VccCompilationHelper.GetBigIntType(this.nameTable);
+          return true;
         default:
           result = null;
           return false;

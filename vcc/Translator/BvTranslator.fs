@@ -213,7 +213,7 @@ namespace Microsoft.Research.Vcc
               if src.SizeOf = dst.SizeOf then self e
               elif src.SizeOf < dst.SizeOf then selfExtend dst e
               else B.BvExtract(self e, dst.SizeOf * 8, 0)
-            | C.Ptr _, C.MathInteger -> self e
+            | C.Ptr _, C.MathInteger _ -> self e
             | src, dst -> 
               helper.Error (expr.Token, 9690, "cast from " + src.ToString() + " to " + dst.ToString() + " is not supported in bv_lemma(...)")
               er "$err"

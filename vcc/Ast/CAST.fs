@@ -119,6 +119,10 @@ module Microsoft.Research.Vcc.CAST
     | Normal of int
     | BitField of int * int * int // byte-offset, bit-offset, bit-size
   
+  type MathIntKind =
+    | Signed
+    | Unsigned
+
   type IntKind =
     | UInt8
     | Int8
@@ -270,7 +274,7 @@ module Microsoft.Research.Vcc.CAST
     | Claim                // the claim_t in C is actually Claim*
     | Map of Type * Type   // t1 -> t2
     | ObjectT
-    | MathInteger
+    | MathInteger of MathIntKind
     | TypeVar of TypeVariable
     
     member this.WriteTo b =
@@ -290,7 +294,8 @@ module Microsoft.Research.Vcc.CAST
         | SecLabel _ -> wr "label_t"
         | Claim -> wr "claim_t"
         | ObjectT -> wr "obj_t"
-        | MathInteger -> wr "mathint"
+        | MathInteger MathIntKind.Signed -> wr "mathint"
+        | MathInteger MathIntKind.Unsigned -> wr "mathnat"
         | TypeVar({Name = id}) -> wr id
     
     override this.ToString () = toString (this.WriteTo)
@@ -329,7 +334,7 @@ module Microsoft.Research.Vcc.CAST
       match this with
         | Void
         | Integer _
-        | MathInteger
+        | MathInteger _
         | Primitive _
         | Bool
         | PhysPtr _
@@ -349,6 +354,11 @@ module Microsoft.Research.Vcc.CAST
       match this with 
       | Integer _ -> true
       | _         -> false
+
+    member this._IsMathInteger =
+      match this with
+      | MathInteger _ -> true
+      | _             -> false
 
     member this.IsSignedInteger =
       match this with 
@@ -427,7 +437,11 @@ module Microsoft.Research.Vcc.CAST
         let (sz1, signed1) = Type.sizeSign from
         let (sz2, signed2) = Type.sizeSign to_
         (signed1 = signed2 && sz1 <= sz2) || (not signed1 && signed2 && sz1 < sz2)
-      | MathInteger, Integer _ -> false
+      | MathInteger _ , Integer _ -> false
+      | MathInteger Signed, MathInteger Unsigned -> false
+      | Integer from, MathInteger Unsigned ->
+        let (_, signed) = Type.sizeSign from 
+        not signed
       | _ -> true
               
     member this.SizeOf =
@@ -440,7 +454,7 @@ module Microsoft.Research.Vcc.CAST
         | Volatile t -> t.SizeOf
         | Type.Ref td -> td.SizeOf
         | Array (t, sz) -> t.SizeOf * sz
-        | MathInteger -> 8
+        | MathInteger _ -> 8
         | Bool
         | Void
         | SecLabel _

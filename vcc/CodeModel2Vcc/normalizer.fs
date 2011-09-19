@@ -63,7 +63,8 @@ namespace Microsoft.Research.Vcc
           Some (Expr.IntLiteral ({ c with Type = Integer k }, n))
         else
           None 
-      | Expr.Cast ({ Type = MathInteger }, _, expr) when expr.Type._IsInteger -> Some(self(expr))
+      | Expr.Cast ({ Type = MathInteger Signed}, _, expr) when expr.Type._IsInteger -> Some(self(expr))
+      | Expr.Cast ({ Type = MathInteger Unsigned}, _, expr) when expr.Type._IsInteger -> die()
       | Expr.Cast(ec, _, This(tc)) when inGroupInvariant && ec.Type = tc.Type -> 
         None // Do not remove this cast because the type of 'this' will change later on
       | Expr.Cast (_, _, e') as e ->

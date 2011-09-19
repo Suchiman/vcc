@@ -34,6 +34,7 @@ _(const bool \false = 0;)
 
 _(typedef void *\object;)
 _(typedef __int64 \integer;)
+_(typedef unsigned __int64 \natural;)
 _(typedef struct \claim_struct { } ^\claim;)
 _(typedef unsigned __int64 \size_t;)
 
@@ -305,6 +306,9 @@ typedef void *_vcc_obj_t;
 
 typedef __int64 _vcc_integer_t;
 #define mathint _vcc_integer_t
+
+typedef unsigned __int64 _vcc_natural_t;
+#define mathnat _vcc_natural_t
 
 SPEC_TYPE(ptrset)
 SPEC_TYPE(typeid_t)

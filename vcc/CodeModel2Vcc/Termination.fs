@@ -191,7 +191,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           let rec computeCheck = function
             | ((s:Expr) :: ss, (c:Expr) :: cc) ->
               match s.Type, c.Type with
-                | (MathInteger | Integer _), (MathInteger | Integer _) ->
+                | (MathInteger _ | Integer _), (MathInteger _ | Integer _) ->
                   Expr.Macro (boolBogusEC(), "prelude_int_lt_or", [c; s; computeCheck (ss, cc)])
                 | _ ->
                   helper.GraveWarning (e.Token, 9314, "only integer arguments are currently accepted in _(decreases ...) clauses")
@@ -278,9 +278,9 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         if fn.Variants = [] then
           let aux acc (v:Variable) =
             let rf = Ref ({ bogusEC with Type = v.Type }, v)
-            let sz = Macro ({ bogusEC with Type = Type.MathInteger }, "size", [rf])
+            let sz = Macro ({ bogusEC with Type = Type.MathInteger Signed }, "size", [rf])
             match v.Type with
-              | Type.MathInteger
+              | Type.MathInteger _
               | Type.Integer _ ->
                 rf :: acc
               | Type.Ref td when td.IsDataType || td.IsRecord ->

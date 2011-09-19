@@ -322,6 +322,7 @@ namespace Microsoft.Research.Vcc {
     public static readonly string SystemDiagnosticsContractsCodeContractTypedPtrString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".TypedPtr";
     public static readonly string SystemDiagnosticsContractsCodeContractMapString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Map";
     public static readonly string SystemDiagnosticsContractsCodeContractBigIntString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigInt";
+    public static readonly string SystemDiagnosticsContractsCodeContractBigNatString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".BigNat";
     public static readonly string SystemDiagnosticsContractsCodeContractObjsetString = Microsoft.Cci.Ast.NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".Objset";
 
     static internal VccNamedTypeExpression GetBigIntType(INameTable nameTable) {
@@ -331,6 +332,17 @@ namespace Microsoft.Research.Vcc {
 
     static internal VccNamedTypeExpression GetBigIntType(INameTable nameTable, Expression containingExpression) {
       var result = GetBigIntType(nameTable);
+      result.SetContainingExpression(containingExpression);
+      return result;
+    }
+
+    static internal VccNamedTypeExpression GetBigNatType(INameTable nameTable) {
+      var bigNatRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(nameTable, "BigNat");
+      return new VccNamedTypeExpression(bigNatRef);
+    }
+
+    static internal VccNamedTypeExpression GetBigNatType(INameTable nameTable, Expression containingExpression) {
+      var result = GetBigNatType(nameTable);
       result.SetContainingExpression(containingExpression);
       return result;
     }
@@ -570,6 +582,9 @@ namespace Microsoft.Research.Vcc {
 
       // int -> mathint
       if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigIntString && TypeHelper.IsPrimitiveInteger(expression.Type))
+        return this.ConversionExpression(expression, targetType, sourceLocation);
+
+      if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigNatString && TypeHelper.IsUnsignedPrimitiveInteger(expression.Type))
         return this.ConversionExpression(expression, targetType, sourceLocation);
 
       IPointerType/*?*/ srcPointerType;

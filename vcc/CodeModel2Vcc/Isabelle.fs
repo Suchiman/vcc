@@ -24,7 +24,7 @@ namespace Microsoft.Research.Vcc
 
   let rec typeString tok withPar = function
     | Type.Bool -> "bool"
-    | Type.MathInteger -> "int"
+    | Type.MathInteger _ -> "int"
     | Type.Map (dom, rng) ->
       par withPar (typeString tok true dom + " => " + typeString tok false rng)
     | Type.Ref td -> rename td.Name

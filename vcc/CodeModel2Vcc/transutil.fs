@@ -225,7 +225,7 @@ namespace Microsoft.Research.Vcc
     let vcc3 = helper.Options.Vcc3
     let castToInt expr =
       if vcc3 then expr
-      else Expr.Cast({expr.Common with Type= Type.MathInteger}, CheckedStatus.Processed, expr)
+      else Expr.Cast({expr.Common with Type= Type.MathInteger MathIntKind.Signed}, CheckedStatus.Processed, expr)
     match expr.Type with
       | Integer k -> Expr.Macro (ec, "in_range_" + Type.IntSuffix k, [expr])
       | PhysPtr _ -> if vcc3 then Expr.True else Expr.Macro (ec, "in_range_phys_ptr", [castToInt expr])
@@ -403,7 +403,7 @@ namespace Microsoft.Research.Vcc
       | Type.Void
       | Type.Bool
       | Type.Integer _
-      | Type.MathInteger
+      | Type.MathInteger _
       | Type.ObjectT
       | Type.TypeVar _
       | Type.Primitive _ -> ()     

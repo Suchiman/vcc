@@ -166,18 +166,22 @@ namespace Microsoft.Research.Vcc {
     private IEnumerable<IMethodDefinition> GetPointerAdditionMethods(ITypeDefinition pointerType, bool left) {
       BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
       var bigIntType = VccCompilationHelper.GetBigIntType(this.Compilation.NameTable, this);
+      var bigNatType = VccCompilationHelper.GetBigNatType(this.Compilation.NameTable, this);
+
       if (left) {
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt32.ResolvedType);
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt32.ResolvedType);
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt64.ResolvedType);
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt64.ResolvedType);
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, bigIntType.ResolvedType);
+        yield return dummyMethods.GetDummyOp(pointerType, pointerType, bigNatType.ResolvedType);
       } else {
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt32.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt32.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt64.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt64.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, bigIntType.ResolvedType, pointerType);
+        yield return dummyMethods.GetDummyOp(pointerType, bigNatType.ResolvedType, pointerType);
       }
     }
 
