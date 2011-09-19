@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.Shell;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
-    public class VccOptionPage : DialogPage
+    public class VccOptionPage : DialogPage, INotifyPropertyChanged
     {
         [Category("Language Version")]
         [DisplayName("VCC Language Version")]
@@ -31,6 +31,21 @@ namespace Microsoft.Research.Vcc.VSPackage
                       " VCC.")]
         public string VccExecutableFolder { get; set; }
 
+        private bool dimAnnotations;
+
+        [DisplayName("Dim Code Annotations")]
+        [Description("Dim code annotations to visualize difference between implementation and annotation")]
+        public bool DimAnnotations {
+          get { 
+            return this.dimAnnotations; }
+          set {
+            if (this.dimAnnotations != value) {
+              this.dimAnnotations = value;
+              this.NotifyProperyChanged("DimAnnotations");
+            }
+          }
+        }
+
         [DisplayName("Show Notifications")]
         [Description("Show notifications when a verfication run completes and Visual Studion is no longer the foreground window.")]
         public bool ShowNotifications { get; set; }
@@ -45,5 +60,16 @@ namespace Microsoft.Research.Vcc.VSPackage
         public string VccVersion { 
           get { return System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(VccOptionPage).Assembly.Location).FileVersion;; } 
         }
+
+        protected void NotifyProperyChanged(string name)
+        {
+          PropertyChangedEventHandler temp = PropertyChanged;
+          if (temp != null)
+          {
+            temp(this, new PropertyChangedEventArgs(name));
+          }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
     }
 }
