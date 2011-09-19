@@ -64,8 +64,7 @@ namespace Microsoft.Research.Vcc
                        IFGrpID = ref (bigint.Zero)
                      }
     
-    let fieldName (f:C.Field) = f.Parent.Name + "." + (f.Name.Replace('\\', '#'))
-
+    let fieldName (f:C.Field) = f.Parent.Name + "." + f.Name
 
     let currentPC (env:Env) =
       match env.IFContexts with

@@ -16,6 +16,8 @@ namespace Microsoft.Research.Vcc
 
     let die() = failwith "confused, will now die"
 
+    let sanitize (id:string) = id.Replace('\\', '#')
+
     type Id = string
 
     type Type =
@@ -137,8 +139,6 @@ namespace Microsoft.Research.Vcc
       | ExprAttr of string * Expr
       | StringAttr of string * string
       
-   
-
     let unaryOps = 
       [
          ("!", Microsoft.Boogie.UnaryOperator.Opcode.Not);
@@ -177,11 +177,10 @@ namespace Microsoft.Research.Vcc
     let tok t = new BoogieToken (t)
       
     let trIdent id =    
-      let res = Microsoft.Boogie.Expr.Ident(id, Microsoft.Boogie.Type.Int)
+      let res = Microsoft.Boogie.Expr.Ident(sanitize id, Microsoft.Boogie.Type.Int)
       res.Type <- null
       res
        
-
     let rec trType t =
       match t with
         | Bool -> Microsoft.Boogie.Type.Bool
@@ -190,25 +189,25 @@ namespace Microsoft.Research.Vcc
           let args = Boogie.TypeSeq [| for t in it -> trType t |]
           let tyargs = Boogie.TypeVariableSeq [| |] 
           Microsoft.Boogie.MapType (noToken, tyargs, args, trType et) :> Microsoft.Boogie.Type
-        | Type.Ref id -> Microsoft.Boogie.UnresolvedTypeIdentifier (noToken, id) :> Microsoft.Boogie.Type
+        | Type.Ref id -> Microsoft.Boogie.UnresolvedTypeIdentifier (noToken, sanitize id) :> Microsoft.Boogie.Type
         | Type.Bv n -> Microsoft.Boogie.BvType n :> Microsoft.Boogie.Type
 
 
     let trBound tok (n, t) = 
-      (Microsoft.Boogie.BoundVariable (tok, Microsoft.Boogie.TypedIdent (tok, n, trType t)) :> Microsoft.Boogie.Variable)
+      (Microsoft.Boogie.BoundVariable (tok, Microsoft.Boogie.TypedIdent (tok, sanitize n, trType t)) :> Microsoft.Boogie.Variable)
 
     let trConstant (n, t) unique = 
-      (Microsoft.Boogie.Constant (noToken, Microsoft.Boogie.TypedIdent (noToken, n, trType t), unique) :> Microsoft.Boogie.Variable)
+      (Microsoft.Boogie.Constant (noToken, Microsoft.Boogie.TypedIdent (noToken, sanitize n, trType t), unique) :> Microsoft.Boogie.Variable)
 
     let trFormal (n, t) incoming = 
-      (Microsoft.Boogie.Formal (noToken, Microsoft.Boogie.TypedIdent (noToken, n, trType t), incoming) :> Microsoft.Boogie.Variable)
+      (Microsoft.Boogie.Formal (noToken, Microsoft.Boogie.TypedIdent (noToken, sanitize n, trType t), incoming) :> Microsoft.Boogie.Variable)
 
     let rec trLocalVariable ((n, t), where) = 
       let where =
         match where with
           | Some e -> trExpr e
           | None -> null
-      let var = Microsoft.Boogie.LocalVariable (noToken, Microsoft.Boogie.TypedIdent (noToken, n, trType t, where))
+      let var = Microsoft.Boogie.LocalVariable (noToken, Microsoft.Boogie.TypedIdent (noToken, sanitize n, trType t, where))
       (var :> Microsoft.Boogie.Variable)
 
     and trExpr e =
@@ -490,7 +489,7 @@ namespace Microsoft.Research.Vcc
           [(trConstant (c.Name, c.Type) c.Unique :> Microsoft.Boogie.Declaration)]
         | Function (t, attrs, f, vars, body) ->
           let fdecl =
-            Microsoft.Boogie.Function (noToken, f, 
+            Microsoft.Boogie.Function (noToken, sanitize f, 
               Boogie.TypeVariableSeq [| |],
               Microsoft.Boogie.VariableSeq ([| for (n, t) in vars -> trFormal (n, t) false |]),
               trFormal (Microsoft.Boogie.TypedIdent.NoName, t) false, null, toAttributesList attrs)
@@ -510,7 +509,7 @@ namespace Microsoft.Research.Vcc
               | None -> None
               | Some b -> Some (mapStmt aux b)
           let proc =      
-            Microsoft.Boogie.Procedure (tok p.Token, p.Name, Boogie.TypeVariableSeq [| |], inparms, outparms,
+            Microsoft.Boogie.Procedure (tok p.Token, sanitize p.Name, Boogie.TypeVariableSeq [| |], inparms, outparms,
               Microsoft.Boogie.RequiresSeq [| for e in p.Contracts do 
                                                 match e with
                                                   | Requires (token, e) -> yield Microsoft.Boogie.Requires (tok token, false, trExpr e, null)
@@ -533,7 +532,7 @@ namespace Microsoft.Research.Vcc
             match body with
               | Some (b) ->                       
                 let impl = 
-                  Microsoft.Boogie.Implementation (noToken, p.Name, Boogie.TypeVariableSeq [| |], inparms, outparms, 
+                  Microsoft.Boogie.Implementation (noToken, sanitize p.Name, Boogie.TypeVariableSeq [| |], inparms, outparms, 
                     Microsoft.Boogie.VariableSeq ([| for v in p.Locals @ !addVars -> trLocalVariable v |]), toStmtList (trStmt b))
                 [(impl :> Microsoft.Boogie.Declaration)]
               | _ -> []

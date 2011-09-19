@@ -160,7 +160,8 @@ let init (helper:Helper.Env) =
       | Top.FunctionDecl(fn) when fn.Name.StartsWith "\\" ->
         match newToOldFn.TryFind fn.Name with
           | Some oldName -> fn.Name <- oldName
-          | None -> fn.Name <- "_vcc_" + fn.Name.Substring(1)
+          | None when fn.Token.Filename.EndsWith("vccp.h", System.StringComparison.OrdinalIgnoreCase) -> fn.Name <- "_vcc_" + fn.Name.Substring(1)
+          | _ -> ()
       | Top.TypeDecl(td) ->
         match newToOldType.TryFind td.Name with
           | Some oldName -> td.Name <- oldName
