@@ -899,16 +899,23 @@ namespace Microsoft.Research.Vcc {
       if (expression.Type.IsEnum && TypeHelper.IsPrimitiveInteger(targetType))
         return this.ExplicitConversion(expression, targetType);
 
-      if (TypeHelper.IsPrimitiveInteger(expression.Type) && TypeHelper.IsPrimitiveInteger(targetType)) {
-        object/*?*/ val = expression.Value;
-        if (val != null) {
-          CompileTimeConstant cconst = new CompileTimeConstant(val, true, expression.CouldBeInterpretedAsNegativeSignedInteger, expression.SourceLocation);
-          cconst.SetContainingExpression(expression);
-          if (allowUnsafeNumericConversions || this.ImplicitConversionExists(cconst, targetType)) expression = cconst;
+      if (TypeHelper.IsPrimitiveInteger(expression.Type)) {
+        if (TypeHelper.IsPrimitiveInteger(targetType)) {
+          object /*?*/ val = expression.Value;
+          if (val != null) {
+            CompileTimeConstant cconst = new CompileTimeConstant(val, true,
+                                                                 expression.CouldBeInterpretedAsNegativeSignedInteger,
+                                                                 expression.SourceLocation);
+            cconst.SetContainingExpression(expression);
+            if (allowUnsafeNumericConversions || this.ImplicitConversionExists(cconst, targetType)) expression = cconst;
+          }
+          if (allowUnsafeNumericConversions || expression.IntegerConversionIsLossless(targetType))
+            return this.ExplicitConversion(expression, targetType);
+        } else if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigNatString){
+          
         }
-        if (allowUnsafeNumericConversions || expression.IntegerConversionIsLossless(targetType))
-          return this.ExplicitConversion(expression, targetType);
       }
+
 
       if (allowUnsafeNumericConversions) {
         if (this.IsIntOrBooleanType(expression.Type) && this.IsFloatType(targetType))
