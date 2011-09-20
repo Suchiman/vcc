@@ -1516,6 +1516,11 @@ namespace Microsoft.Research.Vcc
             | [e] -> exprRes <- C.Expr.Cast(ec, C.CheckedStatus.Checked, e)
             | _ -> oopsNumArgs()
 
+        let (|BigIntTypeName|_|) = function
+          | SystemDiagnosticsContractsCodeContractBigInt
+          | SystemDiagnosticsContractsCodeContractBigNat -> Some ()
+          | _ -> None
+
 
         match containingTypeDefinitionName, methodName with
           | SystemDiagnosticsContractsCodeContract, ("Exists" | "ForAll" | "Lambda") ->
@@ -1524,9 +1529,9 @@ namespace Microsoft.Research.Vcc
           | SystemIntPtr, ("op_Implicit" | "op_Explicit") 
           | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Implicit" | "op_Explicit") -> trTrivialCast()
           | SystemDiagnosticsContractsCodeContractTypedPtr, ("op_Equality" | "op_Inequality") -> trBigIntOp methodName
-          | SystemDiagnosticsContractsCodeContractBigInt, "op_Implicit" -> trTrivialCast()
-          | SystemDiagnosticsContractsCodeContractBigInt, "op_Explicit" -> trCast()
-          | SystemDiagnosticsContractsCodeContractBigInt, BigIntOp -> trBigIntOp methodName
+          | BigIntTypeName, "op_Implicit" -> trTrivialCast()
+          | BigIntTypeName, "op_Explicit" -> trCast()
+          | BigIntTypeName, BigIntOp -> trBigIntOp methodName
           | SystemDiagnosticsContractsCodeContractObjset, ObjsetOp -> trSetOp methodName
           | "Microsoft.Research.Vcc.Runtime", "__noop" -> exprRes <- C.Expr.Macro (ec, "noop", [])
           | MapTypeString, "get_Item" ->

@@ -139,6 +139,7 @@ axiom $ptr_level(^^f4) == 0;
 axiom $ptr_level(^^f8) == 0;
 
 axiom $ptr_level(^^mathint) == 0;
+axiom $ptr_level(^^mathnat) == 0;
 axiom $ptr_level(^^bool) == 0;
 axiom $ptr_level(^^void) == 0;
 axiom $ptr_level(^^claim) == 0;
@@ -234,6 +235,7 @@ axiom (forall #n:$ctype :: {$is_claimable(#n)} $is_claimable(#n) ==> $is_composi
 axiom $is_primitive(^^void);
 axiom $is_primitive(^^bool);
 axiom $is_primitive(^^mathint);
+axiom $is_primitive(^^mathnat);
 axiom $is_primitive(^$#ptrset);
 axiom $is_primitive(^$#state_t);
 axiom $is_threadtype(^$#thread_id_t);
@@ -2754,6 +2756,7 @@ axiom (forall val:int :: {$in_range_t(^^u2, val)} $in_range_t(^^u2, val) <==> $i
 axiom (forall val:int :: {$in_range_t(^^u4, val)} $in_range_t(^^u4, val) <==> $in_range_u4(val));
 axiom (forall val:int :: {$in_range_t(^^u8, val)} $in_range_t(^^u8, val) <==> $in_range_u8(val));
 axiom (forall val:int :: {$in_range_t(^^mathint, val)} $in_range_t(^^mathint, val));
+axiom (forall val:int :: {$in_range_t(^^mathnat, val)} $in_range_t(^^mathnat, val)  <==> val >= 0);
 
 axiom (forall t:$ctype, val:int :: {$unchecked(t, val)} $in_range_t(t, val) ==> $unchecked(t, val) == val);
 axiom (forall t:$ctype, val:int :: {$unchecked(t, val)} $in_range_t(t, $unchecked(t, val)));
