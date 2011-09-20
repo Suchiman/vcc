@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Boogie;
@@ -532,14 +533,18 @@ namespace Microsoft.Research.Vcc
       foreach (var func in fver.FunctionsToVerify())
       {
 
-        if (commandLineOptions.IgnoreIncludes)
+        if (commandLineOptions.IgnoreIncludes != null)
         {
           bool fileFound = false;
-          foreach (var file in commandLineOptions.FileNames) {
-            if (file.ToUpperInvariant() == func.Item1.ToUpperInvariant()) {
+          if (commandLineOptions.IgnoreIncludes == "")
+          {
+            if (commandLineOptions.FileNames.Any(file => String.Equals(file, func.Item1, StringComparison.OrdinalIgnoreCase)))
+            {
               fileFound = true;
-              break;
             }
+          } else if (String.Equals(Path.GetFullPath(commandLineOptions.IgnoreIncludes), func.Item1, StringComparison.OrdinalIgnoreCase))
+          {
+            fileFound = true;
           }
 
           if (!fileFound) continue;
