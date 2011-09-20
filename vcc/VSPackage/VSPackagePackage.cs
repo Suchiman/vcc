@@ -77,7 +77,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (OptionPage != null)
       {
         if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
-        VCCLauncher.CustomVerify(VSIntegration.ActiveFileFullName, OptionPage);
+        VCCLauncher.CustomVerify(VSIntegration.StartFileName, OptionPage);
       }
     }
 
@@ -86,7 +86,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (OptionPage != null)
       {
         if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
-        VCCLauncher.VerifyThis(VSIntegration.ActiveFileFullName, VSIntegration.CurrentSelection, VSIntegration.CurrentLine, OptionPage);
+        VCCLauncher.VerifyThis(VSIntegration.StartFileName, VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, OptionPage);
       }
     }
 
@@ -99,7 +99,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
           throw new NotSupportedException("Can not create BvdToolWindow");
         }
-        BvdToolWindow.BVD.ReadModels(Path.ChangeExtension(VSIntegration.ActiveFileFullName, "model"), VSIntegration.CurrentErrorModel);
+        BvdToolWindow.BVD.ReadModels(Path.ChangeExtension(VSIntegration.StartFileName, "model"), VSIntegration.CurrentErrorModel);
         IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
         Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
       }
@@ -114,7 +114,7 @@ namespace Microsoft.Research.Vcc.VSPackage
           throw new NotSupportedException("Can not create ErrorModelToolWindow");
         }
 
-        ErrorModelToolWindow.ModelViewer.LoadModel(VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
+        ErrorModelToolWindow.ModelViewer.LoadModel(VSIntegration.StartFileName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
         IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
         Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
       }
@@ -130,7 +130,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (OptionPage != null)
       {
         if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
-        VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, OptionPage);
+        VCCLauncher.VerifyFile(VSIntegration.StartFileName, OptionPage);
       }
     }
 
@@ -144,7 +144,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (OptionPage != null)
       {
         if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
-        VCCLauncher.VerifyFileWithoutIncludes(VSIntegration.ActiveFileFullName, OptionPage);
+        VCCLauncher.VerifyFileWithoutIncludes(VSIntegration.StartFileName, VSIntegration.ActiveFileFullName, OptionPage);
       }
     }
 

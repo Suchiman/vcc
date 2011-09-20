@@ -99,6 +99,21 @@ namespace Microsoft.Research.Vcc.VSPackage
       get { return DTE.ActiveDocument != null ? DTE.ActiveDocument.FullName : String.Empty; }
     }
 
+    internal static string StartFileName
+    {
+      get
+      {
+        if (VSIntegration.ActiveFileFullName.EndsWith(".h", StringComparison.OrdinalIgnoreCase) 
+          && !String.IsNullOrWhiteSpace(VSPackagePackage.Instance.OptionPage.MasterFile)) {
+          return VSPackagePackage.Instance.OptionPage.MasterFile;
+        } else
+        {
+          return VSIntegration.ActiveFileFullName;
+        }
+      }
+    }
+
+
     /// <summary>
     ///     Returns the name of the active document without path
     /// </summary>
@@ -125,19 +140,6 @@ namespace Microsoft.Research.Vcc.VSPackage
         }
 
         return false;
-      }
-    }
-
-    /// <summary>
-    ///     Returns the selected Text
-    /// </summary>
-    /// <returns>the selected Text</returns>
-    internal static string CurrentSelection
-    {
-      get
-      {
-        TextDocument textDocument = (TextDocument)DTE.ActiveDocument.Object(null);
-        return textDocument.Selection.Text;
       }
     }
 
