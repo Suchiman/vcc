@@ -276,10 +276,10 @@ namespace Microsoft.Research.Vcc.VSPackage
 
       //// this is called to get windowFrame which we need to get the IVsTextLines Object
       if (uiShellOpenDocument.IsDocumentOpen(hierCaller,
-                                             (uint)__VSIDOFLAGS.IDO_ActivateIfOpen,
+                                             0u,
                                              document,
                                              ref logicalView,
-                                             (uint)__VSIDOFLAGS.IDO_ActivateIfOpen,
+                                             0u,
                                              out hierOpen,
                                              itemIdOpen,
                                              out windowFrame,
