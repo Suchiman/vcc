@@ -537,7 +537,7 @@ namespace Microsoft.Research.Vcc
                 [(impl :> Microsoft.Boogie.Declaration)]
               | _ -> []
         | TypeDef tid ->
-          [(Microsoft.Boogie.TypeCtorDecl (noToken, tid, 0) :> Microsoft.Boogie.Declaration)]
+          [(Microsoft.Boogie.TypeCtorDecl (noToken, sanitize tid, 0) :> Microsoft.Boogie.Declaration)]
     
 
     let trProgram decls =
