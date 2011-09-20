@@ -140,6 +140,7 @@ _(bool _(_boogie0) \full_context();)
 _(bool _(_boogie1) \wrapped_with_deep_domain(\object))
 _(\objset \composite_extent(\object))
 _(\object _(_boogie1) \domain_root(\object))
+_(\integer _(_boogie0) \index_within(\object,\object))
 
 _(template<typename T> \integer \size(T dt);)
 
