@@ -5,20 +5,28 @@ namespace Microsoft.Research.Vcc.VSPackage
 {
     public class VccOptionPage : DialogPage, INotifyPropertyChanged
     {
+        private const string CmdLineCategory = "Additional Commandline Arguments";
+
         [Category("Language Version")]
         [DisplayName("VCC Language Version")]
         [Description("Choose the language version of VCC.")]
         public LanguageVersion LanguageVersion { get; set; }
 
-        [Category("Additional Commandline Arguments")]
+        [Category(CmdLineCategory)]
         [DisplayName("Custom Arguments")]
         [Description("These additional commandline arguments for VCC will be used every time VCC is executed.")]
         public string AdditionalCommandlineArguments { get; set; }
 
-        [Category("Additional Commandline Arguments")]
+        [Category(CmdLineCategory)]
         [DisplayName("Use Commandline Arguments")]
         [Description("Choose true to use the arguments you entered above, otherwise these arguments will be ignored.")]
         public bool UseAdditionalCommandlineArguments { get; set; }
+
+        [Category("Include File Verification")]
+        [Editor(typeof(System.Windows.Forms.Design.FileNameEditor), typeof(System.Drawing.Design.UITypeEditor))]
+        [DisplayName("Start File for Include Files")]
+        [Description("Use the specified file as command line argument when verifying .h files")]
+        public string MasterFile { get; set; }
 
         [DisplayName("Show Z3 Inspector")]
         [Description("Choose true to launch the Z3 Inspector to view the progress of verification.")]
