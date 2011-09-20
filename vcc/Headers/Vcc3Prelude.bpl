@@ -259,8 +259,11 @@ axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
      ($in_range_spec_ptr(p) || $is_ghost_field(f) ==> $in_range_spec_ptr($dot(p, f)))
   && ($in_range_phys_ptr(p) && $is_phys_field(f) ==> $in_range_phys_ptr($dot(p, f)))
-  && ($is_proper($dot(p, f)) ==> $non_null(p) ==> $non_null($dot(p, f)))
   && ($is_proper(p) && $field_parent_type(f) == $typ(p) ==> $is_proper($dot(p, f)))
+);
+
+axiom (forall p:$ptr, f:$field :: {$ptr(f, p)}
+  ($is_proper($ptr(f, p)) ==> $non_null(p) ==> $non_null($ptr(f, p)))
 );
 
 function {:inline true} $emb1(p:$ptr) : $ptr
