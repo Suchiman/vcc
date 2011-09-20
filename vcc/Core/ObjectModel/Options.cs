@@ -61,7 +61,7 @@ namespace Microsoft.Research.Vcc
     public bool OpsAsFunctions;
     public string VerificationLocation;
     public string OutputDir;
-    public bool IgnoreIncludes;
+    public string IgnoreIncludes;
 
     public void CopyFrom(VccOptions other)
     {
@@ -345,9 +345,16 @@ namespace Microsoft.Research.Vcc
             return true;
           }
 
+          string iiFileName = this.ParseNamedArgument(arg, "ignoreincludes", "ii");
+          if (iiFileName != null)
+          {
+              this.options.IgnoreIncludes = iiFileName;
+              return true;
+          }
+
           if (this.ParseName(arg, "ignoreincludes", "ii"))
           {
-              this.options.IgnoreIncludes = true;
+              this.options.IgnoreIncludes = "";
               return true;
           }
 
