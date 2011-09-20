@@ -637,12 +637,12 @@ axiom (forall S0, S1:$state, p:$ptr, f:$field ::
   {$call_transition(S0, S1), $rd(S1, p, f)}
   $instantiate_int($rd(S0, p, f)));
 
-// $index_within(p, arr) = ($ref(p) - $ref(arr)) / $sizeof($typ(arr))
+// Intuitively:
+//   $index_within(p, arr) = ($addr(p) - $addr(arr)) / $sizeof($typ(arr))
 // To avoid using division, we define a category of simple indices. 
-//   $simple_index(p, arr) iff p == arr[k].f1.f2.f3...fN, where N >= 0.
+//   $index_within(p, arr) == k if p == arr[k].f1.f2.f3...fN, where N >= 0.
 // We're only interested in simple indices for verification.
 function $index_within(p:$ptr, arr:$ptr) : int;
-// function $simple_index(p:$ptr, arr:$ptr) : bool;
 
 axiom (forall i:int, a:$ptr :: {$index_within($idx(a, i), a)}
   $index_within($idx(a, i), a) == i);
