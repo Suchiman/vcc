@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
@@ -90,6 +91,20 @@ namespace Microsoft.Research.Vcc.VSPackage
       }
     }
 
+    private static readonly Regex OutFileSettingRegex = new Regex(@"/(o|(out)):(?<outdir>([^\s]+))", RegexOptions.Compiled);
+
+    private string AdjustFileNameToOutDirIfRequested(string fileName)
+    {
+      if (this.OptionPage.UseAdditionalCommandlineArguments) {
+        var match = OutFileSettingRegex.Match(this.OptionPage.AdditionalCommandlineArguments);
+        if (match.Success) {
+          return Path.Combine(match.Groups["outdir"].Value, Path.GetFileName(fileName));
+        }
+      }
+
+      return fileName;
+    }
+
     private void ShowErrorModel(object sender, EventArgs e)
     {
       if (this.OptionPage.LanguageVersion == LanguageVersion.V3)
@@ -99,7 +114,10 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
           throw new NotSupportedException("Can not create BvdToolWindow");
         }
-        BvdToolWindow.BVD.ReadModels(Path.ChangeExtension(VSIntegration.StartFileName, "model"), VSIntegration.CurrentErrorModel);
+
+        string modelFileName = Path.ChangeExtension(VSIntegration.StartFileName, ".model");
+        modelFileName = AdjustFileNameToOutDirIfRequested(modelFileName);
+        BvdToolWindow.BVD.ReadModels(modelFileName, VSIntegration.CurrentErrorModel);
         IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
         Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
       }
@@ -114,7 +132,9 @@ namespace Microsoft.Research.Vcc.VSPackage
           throw new NotSupportedException("Can not create ErrorModelToolWindow");
         }
 
-        ErrorModelToolWindow.ModelViewer.LoadModel(VSIntegration.StartFileName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
+        string modelFileName = Path.ChangeExtension(VSIntegration.StartFileName, ".vccmodel");
+        modelFileName = AdjustFileNameToOutDirIfRequested(modelFileName);
+        ErrorModelToolWindow.ModelViewer.LoadModel(modelFileName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
         IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
         Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
       }
