@@ -843,7 +843,11 @@ namespace Microsoft.Research.Vcc
             let rec aux acc idx (args:list<C.Expr>) =
               if idx >= signature.Length then
                 xassert (args = [])
-                bCall ("$" + n.Substring 5) (List.rev acc)
+                let n =
+                  if n.StartsWith "_vcc_" then  "$" + n.Substring 5
+                  elif n.StartsWith "\\" then "$" + n.Substring 1
+                  else "$" + n
+                bCall n (List.rev acc)
               else
                 let assertFirstIsState() = 
                   match args with
