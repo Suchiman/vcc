@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
@@ -6,7 +7,6 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System.Windows.Forms;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.TextManager.Interop;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
 namespace Microsoft.Research.Vcc.VSPackage
@@ -17,6 +17,11 @@ namespace Microsoft.Research.Vcc.VSPackage
   internal static class VSIntegration
   {
     private static readonly Lazy<DTE> _dte = new Lazy<DTE>(() => (DTE)Package.GetGlobalService(typeof(DTE)));
+
+    private static readonly Dictionary<string, List<Tuple<int, string>>> errorLines =
+      new Dictionary<string, List<Tuple<int, string>>>(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly List<Tuple<string, int>> linesWithModels = new List<Tuple<string, int>>();
 
     /// <summary>
     ///     Returns an instance of the toplevel object for interaction with Visual Studio
@@ -79,15 +84,12 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     internal static int CurrentErrorModel
     {
-      get
-      {
-        return markers.IndexOfKey(new Tuple<int, string>(CurrentLine, ActiveFileFullName));
-      }
+      get { return Math.Max(linesWithModels.IndexOf(Tuple.Create(ActiveFileFullName.ToUpperInvariant(), CurrentLine)), 0); }
     }
 
     internal static bool CurrentLineHasError
     {
-      get { return markers.ContainsKey(new Tuple<int, string>(CurrentLine, ActiveFileFullName)); }
+      get { return linesWithModels.Contains(Tuple.Create(ActiveFileFullName.ToUpperInvariant(), CurrentLine)); }
     }
 
     /// <summary>
@@ -103,13 +105,12 @@ namespace Microsoft.Research.Vcc.VSPackage
     {
       get
       {
-        if (VSIntegration.ActiveFileFullName.EndsWith(".h", StringComparison.OrdinalIgnoreCase) 
+        if (ActiveFileFullName.EndsWith(".h", StringComparison.OrdinalIgnoreCase) 
           && !String.IsNullOrWhiteSpace(VSPackagePackage.Instance.OptionPage.MasterFile)) {
           return VSPackagePackage.Instance.OptionPage.MasterFile;
-        } else
-        {
-          return VSIntegration.ActiveFileFullName;
         }
+
+        return ActiveFileFullName;
       }
     }
 
@@ -165,6 +166,14 @@ namespace Microsoft.Research.Vcc.VSPackage
       }
     }
 
+    internal static Dictionary<string, List<Tuple<int, string>>> ErrorLines
+    {
+      get { return errorLines; }
+    }
+
+    public static event EventHandler<ErrorLinesChangedEventArgs> ErrorLinesChanged;
+
+
     #endregion
 
     #region document saving
@@ -176,20 +185,18 @@ namespace Microsoft.Research.Vcc.VSPackage
         DTE.Documents.SaveAll();
         return true;
       }
-      else {
-        if (MessageBox.Show(
-          "There are unsaved changes. Press OK to save all documents and proceed with the verification.",
-          "Unsaved Changes",
-          MessageBoxButtons.OKCancel,
-          MessageBoxIcon.Question,
-          MessageBoxDefaultButton.Button1) == DialogResult.OK) {
-            DTE.Documents.SaveAll();
+      
+      if (MessageBox.Show(
+        "There are unsaved changes. Press OK to save all documents and proceed with the verification.",
+        "Unsaved Changes",
+        MessageBoxButtons.OKCancel,
+        MessageBoxIcon.Question,
+        MessageBoxDefaultButton.Button1) == DialogResult.OK) {
+          DTE.Documents.SaveAll();
           return true;
         }
-        else {
-          return false;
-        }
-      }
+      
+      return false;
     }
 
     #endregion
@@ -197,19 +204,31 @@ namespace Microsoft.Research.Vcc.VSPackage
     #region error list and markers
 
     private static readonly ErrorListProvider errorListProvider = new ErrorListProvider(VSPackagePackage.Instance);
-    //// this just helps with underlining just the code, no preceding whitespaces or comments
-    private static readonly Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
 
-    private static readonly SortedList<Tuple<int, string>, IVsTextLineMarker> markers = new SortedList<Tuple<int, string>, IVsTextLineMarker>();
+    // this just helps with underlining just the code, no preceding whitespaces or comments
+    // private static readonly Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
 
     internal static void ClearErrorsAndMarkers()
     {
-      foreach (var entry in markers)
-      {
-        entry.Value.Invalidate();
-      }
-      markers.Clear();
       errorListProvider.Tasks.Clear();
+
+      var fileNames = new List<string>(from entry in errorLines select entry.Key);
+      errorLines.Clear();
+      foreach (var fileName in fileNames)
+      {
+        OnErrorLinesChanged(fileName);
+      }
+
+      linesWithModels.Clear();
+    }
+
+    private static void OnErrorLinesChanged(string fileName)
+    {
+      EventHandler<ErrorLinesChangedEventArgs> temp = ErrorLinesChanged;
+      if (temp != null)
+      {
+        temp(typeof(VSIntegration), new ErrorLinesChangedEventArgs(fileName));
+      }
     }
 
     /// <summary>
@@ -221,7 +240,7 @@ namespace Microsoft.Research.Vcc.VSPackage
     /// <param name="category">is this an error or a warning?</param>
     internal static void AddErrorToErrorList(string document, string text, int line, TaskErrorCategory category)
     {
-      ErrorTask errorTask = new ErrorTask
+      var errorTask = new ErrorTask
                               {
                                 ErrorCategory = category,
                                 Document = document,
@@ -231,101 +250,17 @@ namespace Microsoft.Research.Vcc.VSPackage
                               };
       errorTask.Navigate += errorTask_Navigate;
       errorListProvider.Tasks.Add(errorTask);
-      AddMarker(document, line, text);
-    }
 
-    /// <summary>
-    ///     Adds squigglies to the specified line. The line is underlined starting with the first nonwhitespace character.
-    /// </summary>
-    /// <param name="document"></param>
-    /// <param name="line">the line, counting from one</param>
-    /// <param name="text"></param>
-    internal static void AddMarker(string document, int line, string text)
-    {
-      var markersKey = new Tuple<int, string>(line, document);
-      if (markers.ContainsKey(markersKey)) return;
-
-      IVsUIShellOpenDocument uiShellOpenDocument =
-        Package.GetGlobalService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
-      if (uiShellOpenDocument == null)
+      List<Tuple<int, string>> errorLinesInDocument;
+      if (!ErrorLines.TryGetValue(document, out errorLinesInDocument))
       {
-        return;
+        errorLinesInDocument = new List<Tuple<int, string>>();
+        ErrorLines.Add(document, errorLinesInDocument);
       }
 
-      //// get hierCaller i.e. the project containing the file containing the error
-      string projectUniqueName = null;
-      foreach (Document currentDocument in DTE.Documents)
-      {
-        if (currentDocument.FullName == document)
-        {
-          projectUniqueName = currentDocument.ProjectItem.ContainingProject.UniqueName;
-        }
-      }
-      IVsSolution solution = Package.GetGlobalService(typeof(IVsSolution)) as IVsSolution;
-      IVsHierarchy hierarchy;
-      solution.GetProjectOfUniqueName(projectUniqueName, out hierarchy);
-      IVsUIHierarchy hierCaller = hierarchy as IVsUIHierarchy;
-
-      //// Set the other arguments for IsDocumentOpen
-      Guid logicalView = VSConstants.LOGVIEWID_Code;
-
-      IVsUIHierarchy hierOpen;
-      uint[] itemIdOpen = new uint[1];
-      IVsWindowFrame windowFrame;
-      int open;
-
-      //// this is called to get windowFrame which we need to get the IVsTextLines Object
-      if (uiShellOpenDocument.IsDocumentOpen(hierCaller,
-                                             0u,
-                                             document,
-                                             ref logicalView,
-                                             0u,
-                                             out hierOpen,
-                                             itemIdOpen,
-                                             out windowFrame,
-                                             out open
-            ) == VSConstants.S_OK)
-      {
-        //// Document is open, get lines as IVsTextLines
-        if (windowFrame == null)
-        {
-          return;
-        }
-
-        object docData;
-        windowFrame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
-        IVsTextLines lines = docData as IVsTextLines;
-
-        MarkerClient textMarkerClient = new MarkerClient(text);
-
-        int lineLength;
-        lines.GetLengthOfLine(line - 1, out lineLength);
-
-        string lineText;
-        lines.GetLineText(line - 1, 0, line - 1, lineLength, out lineText);
-
-        if (lineText != null)
-        {
-
-          //// This is used to get the position of the first non-whitespace character
-          Match match = CodeLine.Match(lineText);
-          var wsLength = match.Groups["whitespaces"].Length;
-          LineMarkerClosure createLineMarker = new LineMarkerClosure(lines,
-                                                                   (int)MARKERTYPE.MARKER_OTHER_ERROR,
-                                                                   line - 1,
-                                                                   wsLength,
-                                                                   line - 1,
-                                                                   wsLength + match.Groups["code"].Length,
-                                                                   textMarkerClient);
-
-          var marker = ThreadHelper.Generic.Invoke<IVsTextLineMarker>(createLineMarker.CreateMarker);
-
-          if (marker != null)
-          {
-            markers[markersKey] = marker;
-          }
-        }
-      }
+      errorLinesInDocument.Add(Tuple.Create(line, text));
+      if (!text.StartsWith("(related")) linesWithModels.Add(Tuple.Create(document.ToUpperInvariant(), line));
+      OnErrorLinesChanged(document);
     }
 
     internal static void ModelViewer_LineColumnChanged(object sender, VccModelViewer.LineColumnChangedEventArgs e)
@@ -336,9 +271,10 @@ namespace Microsoft.Research.Vcc.VSPackage
 
         if (Doc != null)
         {
-          TextDocument textDocument = Doc.Object(null) as TextDocument;
+          var textDocument = Doc.Object(null) as TextDocument;
           int tabsize = Doc.TabSize;
-          textDocument.Selection.MoveTo(e.lineNumber, e.columnNumber, false);
+          Debug.Assert(textDocument != null, "textDocument != null");
+          textDocument.Selection.MoveTo(e.lineNumber, e.columnNumber);
           textDocument.Selection.SelectLine();
           string Text = textDocument.Selection.Text;
 
@@ -366,63 +302,63 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (sender != null)
       {
         //// Open the document if necessary
-        ErrorTask errorTask = sender as ErrorTask;
-        IVsUIShellOpenDocument uiShellOpenDocument = Package.GetGlobalService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
-        if (uiShellOpenDocument == null) { return; }
-        IVsWindowFrame windowFrame;
-        Microsoft.VisualStudio.OLE.Interop.IServiceProvider serviceProvider;
-        IVsUIHierarchy hierachy;
-        uint itemid;
-        Guid logicalView = VSConstants.LOGVIEWID_Code;
-        uiShellOpenDocument.OpenDocumentViaProject(errorTask.Document,
-                                                    ref logicalView,
-                                                    out serviceProvider,
-                                                    out hierachy,
-                                                    out itemid,
-                                                    out windowFrame);
-        if (windowFrame == null) { return; }
-        object docData;
-        windowFrame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
-
-        //// Get the TextBuffer
-        VsTextBuffer buffer = docData as VsTextBuffer;
-        if (buffer == null)
+        var errorTask = sender as ErrorTask;
+        if (errorTask != null)
         {
-          IVsTextBufferProvider bufferProvider = docData as IVsTextBufferProvider;
-          if (bufferProvider != null)
+          IVsUIShellOpenDocument uiShellOpenDocument =
+            Package.GetGlobalService(typeof (IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
+          if (uiShellOpenDocument == null)
           {
-            IVsTextLines lines;
-            bufferProvider.GetTextBuffer(out lines);
-            buffer = lines as VsTextBuffer;
-            if (buffer == null) { return; }
+            return;
           }
-        }
+          IVsWindowFrame windowFrame;
+          VisualStudio.OLE.Interop.IServiceProvider serviceProvider;
+          IVsUIHierarchy hierachy;
+          uint itemid;
+          Guid logicalView = VSConstants.LOGVIEWID_Code;
+          uiShellOpenDocument.OpenDocumentViaProject(errorTask.Document,
+                                                     ref logicalView,
+                                                     out serviceProvider,
+                                                     out hierachy,
+                                                     out itemid,
+                                                     out windowFrame);
+          if (windowFrame == null)
+          {
+            return;
+          }
+          object docData;
+          windowFrame.GetProperty((int) __VSFPROPID.VSFPROPID_DocData, out docData);
 
+          //// Get the TextBuffer
+          var buffer = docData as VsTextBuffer;
+          if (buffer == null)
+          {
+            var bufferProvider = docData as IVsTextBufferProvider;
+            if (bufferProvider != null)
+            {
+              IVsTextLines lines;
+              bufferProvider.GetTextBuffer(out lines);
+              buffer = lines as VsTextBuffer;
+              if (buffer == null)
+              {
+                return;
+              }
+            }
+          }
 
-        /* could be useful if not underlining whole lines
-                
-        //// Get length of identifier if there is one (else set it to 1)
-        int identifierLength;
-        Match match = VccErrorMessageRegEx.Match(errorTask.Text);
-        if (match.Groups["identifier"] != null && match.Groups["identifier"].Value != string.Empty)
-        {
-            identifierLength = match.Groups["identifier"].Length;
+          //// Navigate to line
+          var textManager = Package.GetGlobalService(typeof (VsTextManagerClass)) as IVsTextManager;
+          if (textManager == null)
+          {
+            return;
+          }
+          textManager.NavigateToLineAndColumn(buffer,
+                                              ref logicalView,
+                                              errorTask.Line,
+                                              errorTask.Column,
+                                              errorTask.Line,
+                                              errorTask.Column);
         }
-        else
-        {
-            identifierLength = 1;
-        }
-        */
-
-        //// Navigate to line
-        IVsTextManager textManager = Package.GetGlobalService(typeof(VsTextManagerClass)) as IVsTextManager;
-        if (textManager == null) { return; }
-        textManager.NavigateToLineAndColumn(buffer,
-                                                ref logicalView,
-                                                errorTask.Line,
-                                                errorTask.Column,
-                                                errorTask.Line,
-                                                errorTask.Column);
       }
     }
 
@@ -430,7 +366,7 @@ namespace Microsoft.Research.Vcc.VSPackage
 
     public static void InsertIntoCurrentDocument(string str)
     {
-        TextDocument textDocument = DTE.ActiveDocument.Object(null) as TextDocument;
+        var textDocument = DTE.ActiveDocument.Object(null) as TextDocument;
         if (textDocument != null)
         {
             textDocument.Selection.Insert(str);
