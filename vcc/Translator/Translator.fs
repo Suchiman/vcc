@@ -1198,7 +1198,7 @@ namespace Microsoft.Research.Vcc
                [B.Stmt.MkAssume bFalse]
             let rand = claim + "doAdm"
             let claimAdm cond =
-              [B.Stmt.If (bAnd cond (er rand), B.Stmt.Block (B.Stmt.VarDecl ((rand, B.Type.Bool), None) :: claimAdm), B.Stmt.Block [])]
+              [B.Stmt.If  (C.bogusToken, bAnd cond (er rand), B.Stmt.Block (B.Stmt.VarDecl ((rand, B.Type.Bool), None) :: claimAdm), B.Stmt.Block [])]
                
             let initial cond = 
               [B.Stmt.MkAssume (didAlloc (bCall "$claim_initial_assumptions" [bState; er claim; er (ctx.GetTokenConst tok)]))] @
@@ -1667,7 +1667,7 @@ namespace Microsoft.Research.Vcc
               captureState "" ec.Token ::
               B.Stmt.Comment ("if (" + c.ToString() + ") ...") ::
               prefix @
-              [B.Stmt.If (trExpr env c, B.Stmt.Block (trStmt innerEnv s1), B.Stmt.Block (trStmt innerEnv s2))] @
+              [B.Stmt.If (ec.Token, trExpr env c, B.Stmt.Block (trStmt innerEnv s1), B.Stmt.Block (trStmt innerEnv s2))] @
               suffix
             | C.Expr.Block (comm, stmts, Some bc) ->
               let (save, oldState) = saveState "loop"
@@ -1724,7 +1724,7 @@ namespace Microsoft.Research.Vcc
               let innerBodyLst = innerBodyLst @ check @ [B.Stmt.Assume ([], bFalse)]
 
               let body =
-                B.Stmt.If (er nonDetVar, B.Stmt.Block innerBodyLst, B.Stmt.Block callBody)
+                B.Stmt.If (C.bogusToken, er nonDetVar, B.Stmt.Block innerBodyLst, B.Stmt.Block callBody)
               bump @ save @ wrCheck @ [varDecl; body]
 
             | C.Expr.Loop (comm, invs, writes, variants, s) ->
@@ -2787,7 +2787,7 @@ namespace Microsoft.Research.Vcc
               let goodstuff = B.Stmt.MkAssume (bCall "$full_stop" [bState] |> subst)
               [B.Stmt.VarDecl ((var, B.Type.Bool), None);
                B.Stmt.VarDecl (("#sanityState", tpState), None);
-               B.Stmt.If (er var, B.Stmt.Block (assumes @ state :: goodstuff :: List.map mkAssert lst), B.Stmt.Block []);
+               B.Stmt.If (C.bogusToken, er var, B.Stmt.Block (assumes @ state :: goodstuff :: List.map mkAssert lst), B.Stmt.Block []);
                B.Stmt.MkAssume (bNot (er var))]
         
       let hasStartHere (stmt:B.Stmt) =
