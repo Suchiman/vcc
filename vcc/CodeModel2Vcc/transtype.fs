@@ -1101,11 +1101,11 @@ namespace Microsoft.Research.Vcc
     let assignSingleFieldStructsByField self = function
       | Macro(ec, "=", [dst; src])  ->
         match dst.Type with
-          | Type.Ref({Fields = [fld]} as td) when not td.IsRecord ->
+          | Type.Ref({Fields = [fld]} as td) when not td.IsRecord &&  not (hasCustomAttr "inline" fld.CustomAttr) ->
             let addDot (e:Expr) = 
               let isSpecRef = function | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> true | _ -> false
               Deref({e.Common with Type = fld.Type}, Expr.MkDot(Macro({e.Common with Type = Type.MkPtr(e.Type, isSpecRef e)}, "&", [e]), fld))
-            Some(Macro(ec, "=", [addDot dst; addDot src]))
+            Some(self (Macro(ec, "=", [addDot dst; addDot src])))
           | _ -> None
       | _ -> None
             
