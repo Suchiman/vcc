@@ -271,6 +271,14 @@ namespace Microsoft.Research.Vcc.VSPackage
       }
     }
 
+    static void ReVerify_BeforeQueryStatus(object sender, EventArgs e)
+    {
+      var cmd = sender as OleMenuCommand;
+      if (cmd == null) return;
+      cmd.Enabled = !VCCLauncher.VCCRunning && LastAction != "";
+      cmd.Visible = VSIntegration.IsCodeFile;     
+    }
+
     static void CheckCodeFileAndVccNotRunning(object sender, EventArgs e)
     {
         var cmd = sender as OleMenuCommand;
@@ -336,7 +344,7 @@ namespace Microsoft.Research.Vcc.VSPackage
           //// Create the commands for the menu items.
           this.RegisterCommand(mcs, VerifyActiveFile, VerifyFile_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyActiveFile, PkgCmdIDList.cmdidContextVerifyActiveFile);
           this.RegisterCommand(mcs, VerifyActiveFileWithoutIncludes, VerifyFileWithoutIncludes_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyActiveFileWithoutIncludes, PkgCmdIDList.cmdidContextVerifyActiveFileWithoutIncludes);
-          this.RegisterCommand(mcs, ReVerify, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidReVerify, PkgCmdIDList.cmdidContextReVerify);
+          this.RegisterCommand(mcs, ReVerify, ReVerify_BeforeQueryStatus, PkgCmdIDList.cmdidReVerify, PkgCmdIDList.cmdidContextReVerify);
           this.RegisterCommand(mcs, VerifyThis, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidVerifyThis, PkgCmdIDList.cmdidContextVerifyThis);
           this.RegisterCommand(mcs, CustomVerify, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidCustomVerify, PkgCmdIDList.cmdidContextCustomVerify);
           this.RegisterCommand(mcs, Cancel, Cancel_BeforeQueryStatus, PkgCmdIDList.cmdidCancel, PkgCmdIDList.cmdidContextCancel);
