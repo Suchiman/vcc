@@ -1158,8 +1158,32 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let normalizeMultiAssignments self = function
+
+      // turns a nested assignment of the form lhs_1 = lhs_2 = ... = lhs_n = rhs 
+      // into the sequence tmp = rhs; lhs_n = tmp; ...l lhs_1 = tmp;
+
+      | Macro(ec, "=", _) as assignment ->
+        let rec collectLhss acc = function
+          | Macro(_, "=", [lhs; rhs]) -> collectLhss (lhs :: acc) rhs
+          | rhs -> (acc, rhs)
+        
+        let (lhss, rhs) = collectLhss [] assignment 
+        if lhss.Length = 1 then None
+        else 
+          let tmp = getTmp helper "nested" rhs.Type VarKind.Local
+          let tmpRef = mkRef tmp
+          let varDecl = VarDecl({ec with Type = Void}, tmp, [])
+          let rhsassign = Macro(ec, "=", [tmpRef; self rhs])
+          let lhssassigns = List.map (fun (expr : Expr) -> Macro(expr.Common, "=", [self expr; tmpRef])) lhss
+          Some(Expr.MkBlock(varDecl :: rhsassign :: lhssassigns))
+      | _ -> None
+
+    // ============================================================================================================
+
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
     helper.AddTransformer ("norm-varargs", Helper.Expr normalizeVarArgs)
+    helper.AddTransformer ("norm-multi-assignments", Helper.Expr normalizeMultiAssignments)
     helper.AddTransformer ("norm-inline-boogie", Helper.Decl handleBoogieInlineDeclarations)
     helper.AddTransformer ("norm-expand-contract-macros", Helper.Decl expandContractMacros)
     helper.AddTransformer ("norm-initializers", Helper.Expr normalizeInitializers)
