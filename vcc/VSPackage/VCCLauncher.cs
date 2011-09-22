@@ -169,7 +169,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       vccProcess = new Process { StartInfo = psi };
 
       //// Clear Verification Outputpane
-      VSIntegration.ClearPane();
+      VSIntegration.ClearAndShowPane();
       VSIntegration.WriteToPane("=== VCC started. ===");
       //// Write Commandline-Command to Verification Outputpane
       VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n", vccPath, arguments));

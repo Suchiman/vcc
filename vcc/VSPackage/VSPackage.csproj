@@ -24,7 +24,7 @@
     <WarningLevel>4</WarningLevel>
     <CopyVsixExtensionFiles>False</CopyVsixExtensionFiles>
     <CreateVsixContainer>True</CreateVsixContainer>
-    <DeployExtension>False</DeployExtension>
+    <DeployExtension>True</DeployExtension>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
