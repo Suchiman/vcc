@@ -175,6 +175,7 @@ const unique $fk_base : $field_kind;
 const unique $fk_owns : $field_kind;
 const unique $fk_ref_cnt : $field_kind;
 const unique $fk_vol_version : $field_kind;
+const unique $fk_active_option : $field_kind;
 const unique $fk_allocation_root : $field_kind;
 const unique $fk_as_array_first : $field_kind;
 const unique $fk_emb_array : $field_kind;
@@ -338,6 +339,7 @@ function $f_root($ctype) : $field;
 function $f_owns($ctype) : $field;
 function $f_ref_cnt($ctype) : $field;
 function $f_vol_version($ctype) : $field;
+function $f_active_option($ctype) : $field;
 
 function {:inline true} $def_special_field(partp:$ctype, f:$field, tp:$ctype, fk:$field_kind) : bool
   {
@@ -370,6 +372,10 @@ axiom (forall t:$ctype :: {$f_vol_version(t)}
   $is_non_primitive(t) ==>
     $def_special_ghost_field(t, $f_vol_version(t), ^$#volatile_version_t, $fk_vol_version) &&
     $is_semi_sequential_field($f_vol_version(t)));
+axiom (forall t:$ctype :: {$f_active_option(t)}
+  $is_non_primitive(t) ==>
+    $def_special_ghost_field(t, $f_active_option(t), ^^field, $fk_active_option) &&
+    $is_sequential_field($f_active_option(t)));
 
 // ----------------------------------------------------------------------------
 // Built-in types and constants
@@ -1588,16 +1594,21 @@ procedure $static_wrap_non_owns(o:$ptr, S:$state);
 // Admissibility & unwrap checks
 // ----------------------------------------------------------------------------
 
-function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
+function $spans_the_same_no_timestamp(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { $owns(S1, p) == $owns(S2, p) &&
     (forall f:$field :: {$rdtrig(S2, p, f)}
+      // ref_cnt is not part of the span
       $is_proper($dot(p, f)) && f != $f_ref_cnt(t) ==> $rd(S1, p, f) == $rd(S2, p, f)) }
+
+function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
+  { $spans_the_same_no_timestamp(S1, S2, p, t) &&
+    $timestamp(S1, p) == $timestamp(S2, p) }
 
 function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { (forall f:$field :: {$rdtrig(S2, p, f)}
-      // ref_cnt is always volatile
       $is_proper($dot(p, f)) && $is_sequential_field(f)
-        ==> $rd(S1, p, f) == $rd(S2, p, f)) }
+        ==> $rd(S1, p, f) == $rd(S2, p, f)) &&
+    $timestamp(S1, p) == $timestamp(S2, p) }
 
 function $good_for_admissibility(S:$state) : bool;
 function $good_for_post_admissibility(S:$state) : bool;
@@ -1659,7 +1670,7 @@ procedure $unwrap_check(o:$ptr);
   ensures $good_state($s);
   ensures $good_for_post_can_unwrap($s);
 
-  ensures $spans_the_same(old($s), $s, o, $typ(o));
+  ensures $spans_the_same_no_timestamp(old($s), $s, o, $typ(o));
 
   ensures $is_unwrapped(old($s), $s, o);
 
@@ -2172,10 +2183,14 @@ function $all_first_option_typed(S:$state, p:$ptr) : bool
 }
 
 
-function {:inline true} $union_active(s:$state, p:$ptr, f:$field) : bool
+function {:inline} $union_active(s:$state, p:$ptr, f:$field) : bool
   { $owner(s, $dot(p, f)) != $inactive_union_owner() }
 
-function $active_option(S:$state, p:$ptr) : $field;
+function $active_option(S:$state, p:$ptr) : $field
+  { $int_to_field($rd(S, p, $f_active_option($typ(p)))) }
+
+function {:inline} $active_member(S:$state, p:$ptr) : $ptr
+  { $dot(p, $active_option(S, p)) }
 
 axiom (forall S:$state, p:$ptr, f:$field ::
   {$is_union_field(f), $owner(S, $dot(p, f))}
