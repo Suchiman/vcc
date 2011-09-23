@@ -1277,24 +1277,78 @@ namespace Microsoft.Research.Vcc
     let handlePrimitiveStructs decls =
 
       let primMap = Dict<TypeDecl,Type>()
-      let fieldsToRemove = Dict<Field, bool>()
+      let fieldsToRemove = HashSet<Field>()
+
+      // find types marked _(primitive), report errors for those that are invalidly maked so
+      // an prepare to replace the legally marked ones
 
       for d in decls do
         match d with
           | Top.TypeDecl(td) when hasCustomAttr AttrPrimitive td.CustomAttr ->
+
+            let reportError reason = helper.Error(td.Token, 9741, "type '" + td.Name + "' " + reason + " and thus cannot be marked 'primitive'", None)
+
             match td.Fields with
               | [fld] ->
                 if fld.Type.IsComposite then
-                  helper.Error(td.Token, 9741, "type '" + td.Name + "' has field of non-primitive type '" 
-                                               + fld.Type.ToString() + "' and thus cannot be marked 'primitive'", None)
+                  reportError ("has field of non-primitive type '" + fld.Type.ToString() + "'")
+                elif td.Invariants.Length > 0 then
+                  reportError "has invariants"
                 else
                   primMap.Add(td, fld.Type)
-                  fieldsToRemove.Add(fld, true)
-              | _ -> helper.Error(td.Token, 9741, "type '" + td.Name + "' has more than one field and thus cannot be marked 'primitive'", None)
+                  fieldsToRemove.Add fld |> ignore
+              | _ -> reportError "has more than one field"
             ()
           | _ -> ()
 
-      decls
+      let typeMap = function
+        | Type.Ref(td) ->
+          match primMap.TryGetValue td with 
+            | true, t' -> Some t'
+            | false, _ -> None
+        | _ -> None
+
+      // fixup function signatures and fields and collect the substitutions
+
+      let paramSubst = new Dict<Variable, Variable>()
+      let fieldSubst = new Dict<Field, Field>()
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl(fn) -> 
+            let retypeParameter (p : Variable) =
+              match p.Type.Subst(typeMap) with
+                | None -> p
+                | Some t' -> 
+                  let p' = { p.UniqueCopy() with Type = t'}
+                  paramSubst.Add(p, p')
+                  p'
+            fn.Parameters <- List.map retypeParameter fn.Parameters            
+          | Top.TypeDecl(td) ->
+            let retypeField (fld:Field) =
+              match fld.Type.Subst(typeMap) with
+                | None -> fld
+                | Some t' ->
+                  let fld' = { fld with Type = t' }
+                  fieldSubst.Add(fld, fld')
+                  fld'
+            td.Fields <- List.map retypeField td.Fields
+          | _ -> ()
+
+            
+      // remove the extra dots and substitute the types
+
+      let removeAndReplaceFields self = function
+        | Dot(_, expr, fld) when fieldsToRemove.Contains fld -> Some(self expr)
+        | Dot(_, expr, fld) ->
+          match fieldSubst.TryGetValue fld with
+            | true, fld' -> Some(Expr.MkDot(self expr, fld'))
+            | false, _ -> None
+        | _ -> None
+
+      let substTypes _ (expr :Expr) = Some(expr.SubstType(typeMap, paramSubst))
+
+      decls |> deepMapExpressions removeAndReplaceFields |> deepMapExpressions substTypes
 
     // ============================================================================================================
 

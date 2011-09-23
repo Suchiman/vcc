@@ -497,20 +497,41 @@ module Microsoft.Research.Vcc.CAST
                   else
                     (zero, sub (bigint.Pow(two, sz)) one))
                     
-    member this.Subst(typeSubst : Dict<TypeVariable, Type>) =
-      let rec subst = function
-          | TypeVar tv -> 
-            match typeSubst.TryGetValue(tv) with
-              | true, t ->  t
-              | false, _ -> TypeVar tv
-          | SpecPtr(t) -> SpecPtr(subst t)
-          | PhysPtr(t) -> PhysPtr(subst t)
-          | Volatile(t) -> Volatile(subst t)
-          | Array(t, n) -> Array(subst t, n)
-          | Map(t1, t2) -> Map(subst t1, subst t2)
-          | t -> t
+    member this.Subst(typeMap : Type -> Type option) =
+      let rec subst _type =
+        match typeMap _type with
+          | Some t' -> Some t'
+          | None ->
+            match _type with
+              | SpecPtr(t) -> 
+                match subst t with
+                  | Some t' -> Some(SpecPtr t')
+                  | _ -> None
+              | PhysPtr(t) -> 
+                match subst t with
+                  | Some t' -> Some(PhysPtr t')
+                  | _ -> None
+              | Volatile(t) -> 
+                match subst t with
+                  | Some t' -> Some(Volatile t')
+                  | _ -> None
+              | Array(t, n) -> 
+                match subst t with
+                  | Some t' -> Some(Array(t', n))
+                  | _ -> None
+              | Map(t1, t2) -> 
+                match subst t1, subst t2 with
+                  | None, None -> None
+                  | Some t1', None -> Some(Map(t1', t2))
+                  | None, Some t2' -> Some(Map(t1, t2'))
+                  | Some t1', Some t2' -> Some(Map(t1', t2'))
+              | t -> None
       subst this
 
+    member this.ApplySubst(typeMap) = 
+      match this.Subst(typeMap) with
+        | Some t' -> t'
+        | None -> this
         
   and [<CustomEquality; NoComparison>]
     Variable = 
@@ -549,7 +570,6 @@ module Microsoft.Research.Vcc.CAST
           e.SelfMap(replace')
         let vars' = List.map doSubst vars
         vars', replace
-
     
       member this.WriteTo b =
         match this.Kind with
@@ -656,18 +676,30 @@ module Microsoft.Research.Vcc.CAST
 
     member this.Specialize(targs : list<Type>, includeBody : bool) =
       if targs.Length = 0 then this else       
-        let typeSubst = new Dict<_,_>()
+        let typeVarSubst = new Dict<_,_>()
         let varSubst = new Dict<_,_>()
-        List.iter2 (fun tv t -> typeSubst.Add(tv, t)) this.TypeParameters targs 
-        let sv v = 
-          let v' = { v with Type = v.Type.Subst(typeSubst) } : Variable
-          varSubst.Add(v,v')
-          v'
+
+        let toTypeMap (tvs : Dict<TypeVariable, Type>) = function
+          | TypeVar tv -> 
+            match tvs.TryGetValue tv with
+              | true, t -> Some t
+              | false, _ -> None
+          | _ -> None
+
+        List.iter2 (fun tv t -> typeVarSubst.Add(tv, t)) this.TypeParameters targs 
+        let typeMap = toTypeMap typeVarSubst
+        let sv (v : Variable) = 
+          match v.Type.Subst(typeMap) with
+            | None -> v
+            | Some t' ->
+              let v' = { v with Type = t' } : Variable
+              varSubst.Add(v,v')
+              v'
         let pars = List.map sv this.Parameters // do this first to populate varSubst
-        let se (e : Expr) = e.SubstType(typeSubst, varSubst)
+        let se (e : Expr) = e.SubstType(typeMap, varSubst)
         let ses = List.map se
-        { this with OrigRetType = this.OrigRetType.Subst(typeSubst);
-                    RetType = this.RetType.Subst(typeSubst);
+        { this with OrigRetType = this.OrigRetType.ApplySubst(typeMap);
+                    RetType = this.RetType.ApplySubst(typeMap);
                     Parameters = pars;
                     Requires = ses this.Requires;
                     Ensures = ses this.Ensures;
@@ -1111,16 +1143,19 @@ module Microsoft.Research.Vcc.CAST
         | Some this' -> this'
     
     // TODO: implement with DeepMap?
-    member this.SubstType(typeSubst : Dict<TypeVariable, Type>, varSubst : Dict<Variable, Variable>) =
-      let sc c = { c with Type = c.Type.Subst(typeSubst) } : ExprCommon
+    member this.SubstType(typeMap, varSubst : Dict<Variable, Variable>) =
+      let sc c = { c with Type = c.Type.ApplySubst(typeMap) } : ExprCommon
       let varSubst = new Dict<_,_>(varSubst) // we add to it, so make a copy first
       let sv v = 
         match varSubst.TryGetValue(v) with
           | true, v' -> v'
           | false, _ ->
-            let v' = { v with Type = v.Type.Subst(typeSubst) }
-            varSubst.Add(v,v')
-            v'
+            match v.Type.Subst(typeMap) with
+              | Some t' ->
+                let v' = { v with Type = t' }
+                varSubst.Add(v,v')
+                v'
+              | None -> v
       let repl self = 
         let selfs = List.map self
         function
@@ -1145,7 +1180,7 @@ module Microsoft.Research.Vcc.CAST
           | Result c -> Some(Result(sc c))
           | This c -> Some(This(sc c))
           | Prim (c, op, es) ->  Some(Prim(sc c, op, selfs es))
-          | Call (c, fn, tas, es) -> Some(Call(sc c, fn, List.map (fun (t : Type) -> t.Subst(typeSubst)) tas, selfs es))
+          | Call (c, fn, tas, es) -> Some(Call(sc c, fn, List.map (fun (t : Type) -> t.ApplySubst(typeMap)) tas, selfs es))
           | Macro (c, op, es) -> Some(Macro(sc c, op, selfs es))
           | Deref (c, e) -> Some(Deref(sc c, self e))
           | Dot (c, e, f) -> Some(Dot(sc c, self e, f))
@@ -1155,9 +1190,9 @@ module Microsoft.Research.Vcc.CAST
           | Quant (c, q) -> Some(Quant(sc c, {q with Triggers = List.map selfs q.Triggers; Condition = Option.map self (q.Condition); Body = self (q.Body)}))
           | VarWrite (c, vs, e) -> Some(VarWrite(sc c, List.map sv vs, self e))
           | Return (c, Some e) -> Some(Return(sc c, Some(self e)))
-          | SizeOf(c, t) -> Some(SizeOf(c, t.Subst(typeSubst)))
+          | SizeOf(c, t) -> Some(SizeOf(c, t.ApplySubst(typeMap)))
       this.SelfMap(repl)
-    
+
     member this.SelfCtxMap (ispure : bool, f : ExprCtx -> (Expr -> Expr) -> Expr -> option<Expr>) : Expr =        
       let rec aux ctx (e:Expr) = e.Map (ispure, f')
       and f' ctx e = f ctx (aux ctx) e
