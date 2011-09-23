@@ -423,6 +423,8 @@ namespace Microsoft.Research.Vcc
           | _ -> 
             abstractSizeUndef
 
+      let mkIdx ptr idx typeIgnoredForVcc3 =
+        if vcc3 then bCall "$idx" [ptr; idx] else bCall "$idx" [ptr; idx; typeIgnoredForVcc3]
 
       let rec trExpr (env:Env) expr =
         let self = trExpr env
@@ -527,10 +529,7 @@ namespace Microsoft.Research.Vcc
                   helper.Oops (c.Token, "record dot found " + expr.ToString())
                 bCall "$dot" [self o; er (fieldName f)]
               | C.Expr.Index (_, arr, idx) ->
-                if vcc3 then
-                  bCall "$idx" [self arr; self idx]
-                else
-                  bCall "$idx" [self arr; self idx; ptrType arr]
+                mkIdx (self arr) (self idx) (ptrType arr)
               | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
               | C.Expr.Call (_, fn, targs, args) ->
                 if fn.IsDatatypeOption then
@@ -2104,7 +2103,7 @@ namespace Microsoft.Research.Vcc
             let fldAccess = 
               match arrayElementType with
                 | None -> fun v f -> bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]
-                | Some t -> fun v f -> bCall "$idx" [ bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]; idx; toTypeId t]
+                | Some t -> fun v f -> mkIdx (bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]) idx (toTypeId t)
             function
               | C.Array(t, n) -> 
                 match arrayElementType with
