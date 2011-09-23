@@ -1105,7 +1105,7 @@ namespace Microsoft.Research.Vcc
             let addDot (e:Expr) = 
               let isSpecRef = function | Ref(_, {Kind = SpecLocal|SpecParameter|OutParameter}) -> true | _ -> false
               Deref({e.Common with Type = fld.Type}, Expr.MkDot(Macro({e.Common with Type = Type.MkPtr(e.Type, isSpecRef e)}, "&", [e]), fld))
-            Some(self (Macro(ec, "=", [addDot dst; addDot src])))
+            Some(Macro(ec, "=", [addDot dst; addDot src]))
           | _ -> None
       | _ -> None
             

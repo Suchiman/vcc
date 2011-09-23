@@ -59,9 +59,10 @@ namespace Microsoft.Research.Vcc.VSPackage
       get { return _pane.Value; }
     }
 
-    internal static void ClearPane()
+    internal static void ClearAndShowPane()
     {
       VerificationOutputpane.Clear();
+      VerificationOutputpane.Activate();
     }
 
     internal static void WriteToPane(string message)
