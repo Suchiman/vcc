@@ -38,6 +38,8 @@ namespace Microsoft.Research.Vcc
   open StringLiterals
 
   type Dict<'a, 'b> = System.Collections.Generic.Dictionary<'a, 'b>
+
+  type HashSet<'a> = System.Collections.Generic.HashSet<'a>
   
   and Visitor(contractProvider:Microsoft.Cci.Ast.SourceContractProvider, helper:Helper.Env) =
 
@@ -104,13 +106,10 @@ namespace Microsoft.Research.Vcc
       forwardingToken e.Token (fun () -> msg.Replace ("@@", e.Token.Value))
 
     let removeDuplicates l =
-      let elements = new Dict<_,bool>()
+      let elements = new HashSet<_>()
       let rec loop = function
         | [] -> []
-        | x::xs ->
-          match elements.TryGetValue x with
-            | true, _ -> loop xs
-            | false, _ -> elements.Add(x, true); x :: loop xs
+        | x::xs -> if elements.Add x then x :: loop xs else loop xs
       loop l
 
     let hasCustomAttr n = List.exists (function C.VccAttr (n', _) -> n = n' | _ -> false)

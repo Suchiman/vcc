@@ -271,18 +271,17 @@ namespace Microsoft.Research.Vcc
     /// Rename locals if their names clashes with parameters or locals from other scopes   
     let doRemoveNestedLocals (f:Function)=
       let subst = new Dict<Variable, Variable>()
-      let seenNames = new Dict<string,bool>()    
-      let addVarToSeen (v : Variable) = seenNames.[v.Name] <- true
+      let seenNames = new HashSet<string>()    
+      let addVarToSeen (v : Variable) = seenNames.Add (v.Name)
 
       let renameVar (v : Variable) =
-        if seenNames.ContainsKey(v.Name) then
-          let renamedVar = { v with Name = v.Name + "#" + subst.Count.ToString()}
-          if v.Kind <> Local && v.Kind <> SpecLocal then die()
-          subst.[v] <- renamedVar
-          renamedVar
-        else
-          addVarToSeen v
-          v 
+        if addVarToSeen v
+          then v
+          else
+            let renamedVar = { v with Name = v.Name + "#" + subst.Count.ToString()}
+            if v.Kind <> Local && v.Kind <> SpecLocal then die()
+            subst.[v] <- renamedVar
+            renamedVar
 
       let rnExpr self = function
         | Expr.VarDecl (ce, var, attr) -> Some(Expr.VarDecl (ce, renameVar var, attr))

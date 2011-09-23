@@ -65,6 +65,7 @@ _(const char * const \declspec_isolate_proof;)
 _(const char * const \declspec__boogie0;)
 _(const char * const \declspec__boogie1;)
 _(const char * const \declspec__boogie2;)
+_(const char * const \declspec_primitive;)
 // _(inline) is also supported, but becaue 'inline' is a keyword, we special-case _(inline) in the parser
 
 #define vcc_attr(k, v) __declspec(System.Diagnostics.Contracts.CodeContract.StringVccAttr, k, v)

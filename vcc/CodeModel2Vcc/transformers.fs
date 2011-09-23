@@ -75,7 +75,7 @@ namespace Microsoft.Research.Vcc
   
   let pruneDecls (helper:Helper.Env) (decls : list<Top>) : list<Top> =
     let objToTop = objDict()
-    let used = new Dict<Top,bool>()
+    let used = new HashSet<Top>()
     
     let populateObjToTop = function
       | Top.Global (v, _) as d ->
@@ -99,10 +99,7 @@ namespace Microsoft.Research.Vcc
       | (true, top) ->
         match top with
           | Top.FunctionDecl { Name = ( "malloc" | "free" ) } -> ()
-          | t when used.ContainsKey t -> ()
-          | t ->
-            used.[t] <- true
-            walkTop cb t
+          | t -> if used.Add t then walkTop cb t
       | (false, _) ->
         helper.Panic (System.String.Format ("pruning: cannot find {0} : {1}", o, o.GetType()))
 
@@ -115,8 +112,8 @@ namespace Microsoft.Research.Vcc
             
     for d in decls do
       match d with
-        | Top.Axiom _ -> used.[d] <- true
-        | Top.GeneratedAxiom _ -> used.[d] <- true
+        | Top.Axiom _ -> used.Add d |> ignore
+        | Top.GeneratedAxiom _ -> used.Add d |> ignore
         | Top.FunctionDecl h ->
           let doAttr = function
             | VccAttr ("is_reads_check", name) as attr ->
@@ -147,14 +144,14 @@ namespace Microsoft.Research.Vcc
       let prevCount = used.Count
       for d in decls do
         match d with
-          | Top.TypeDecl td when td.Fields.IsEmpty -> used.[d] <- true // include empty structs, which are really groups
+          | Top.TypeDecl td when td.Fields.IsEmpty -> used.Add d |> ignore // include empty structs, which are really groups
           | _ -> ()
       deepVisitExpressions (walkExpr cb) decls
       if prevCount = used.Count then decls
       else fixpoint decls
     let decls = fixpoint decls
     
-    List.filter used.ContainsKey decls
+    List.filter used.Contains decls
 
 
   let init (helper:Helper.Env) =

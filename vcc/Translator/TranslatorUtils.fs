@@ -118,16 +118,16 @@ namespace Microsoft.Research.Vcc
       
     type TranslationState(helper:Helper.Env) =
       let quantVarTokens = new Dict<_,_>()
-      let tokenConstantNames = new Dict<_,_>()
+      let tokenConstantNames = new HashSet<_>()
       let tokenConstants = ref []
       let soFarAssignedLocals = ref []      
       let fileIndices = new Dict<_,_>()
-      let conversionTypes = new Dict<_,_>()
-      let mapTypes = new Dict<_,_>()
+      let conversionTypes = new HashSet<_>()
+      let mapTypes = new HashSet<_>()
       let mapTypeList = glist[]
       let distinctTypes = new Dict<_,_>()
       let typeCodes = new Dict<_,_>()
-      let invLabels = new Dict<_,_>()
+      let invLabels = new HashSet<_>()
       let invLabelConstants = ref []
       let floatLiterals = new Dict<_,_>()
       
@@ -168,8 +168,7 @@ namespace Microsoft.Research.Vcc
           | "map_t..ptr_to..^^void.^^bool" -> suff
           // possible need to generate conversion function
           | _ ->
-            if not (conversionTypes.ContainsKey suff) then
-              conversionTypes.Add (suff, true)
+            if conversionTypes.Add suff then
               let toIntName = "$" + suff + "_to_int"
               let toInt = B.Decl.Function (B.Type.Int, [], toIntName, [("x", t)], None)
               let fromIntName = "$int_to_" + suff
@@ -276,9 +275,8 @@ namespace Microsoft.Research.Vcc
             let mapName = typeIdToName (toTypeId t)
             let mapType = B.Type.Ref mapName
             if vcc3 || not (t1 = C.Type.ObjectT && t2 = C.Type.Bool) then
-              if not (mapTypes.ContainsKey mapName) then
+              if mapTypes.Add mapName then
                 mapTypeList.Add t
-                mapTypes.Add (mapName, true)
             mapType
           | C.Type.Ref ({ Kind = C.Record } as td) ->
             if helper.Options.Vcc3 then B.Type.Ref ("RT#" + td.Name)
@@ -304,8 +302,7 @@ namespace Microsoft.Research.Vcc
       member this.Helper = helper
       
       member this.RegisterToken name =
-        if not (tokenConstantNames.ContainsKey name) then 
-          tokenConstantNames.Add (name, true)
+        if tokenConstantNames.Add name then 
           let constdata = { Name = name; Type = tpToken; Unique = true } : B.ConstData
           addDecls [B.Decl.Const constdata]
       
@@ -402,7 +399,7 @@ namespace Microsoft.Research.Vcc
       member this.AssumeLocalIs tok (l:C.Variable) =
         let pos = this.GetTokenConst tok
         let name = "#loc." + l.Name
-        if not (tokenConstantNames.ContainsKey name) then
+        if not (tokenConstantNames.Contains name) then
           soFarAssignedLocals := l :: !soFarAssignedLocals
         this.RegisterToken name
         let valIs suff v = bCall ("$local_value_is" + suff) [bState; er pos; er name; v; toTypeId l.Type]
@@ -416,8 +413,7 @@ namespace Microsoft.Research.Vcc
         
       member this.TrInvLabel (lbl:string) =
         let result = "l#" + lbl;
-        if not (invLabels.ContainsKey(result)) then 
-          invLabels.Add(result, true)
+        if invLabels.Add result then 
           let constdata = { Name = result; Type = tpLabel; Unique = true } : B.ConstData
           invLabelConstants := B.Decl.Const constdata :: !invLabelConstants
         result

@@ -87,6 +87,9 @@ module Microsoft.Research.Vcc.CAST
   [<Literal>]
   let AttrVolatileOwns = "volatile_owns"
 
+  [<Literal>]
+  let AttrPrimitive = "primitive"
+
   type VarKind =    
     | Parameter
     | SpecParameter
