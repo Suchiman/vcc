@@ -17,5 +17,4 @@ void foo(void *p)
 /*`
 Verification of foo succeeded.
 testcase(12,1) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-Found unreachable code, but cannot figure out where it is.
 `*/
