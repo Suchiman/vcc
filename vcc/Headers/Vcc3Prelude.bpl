@@ -175,6 +175,7 @@ const unique $fk_base : $field_kind;
 const unique $fk_owns : $field_kind;
 const unique $fk_ref_cnt : $field_kind;
 const unique $fk_vol_version : $field_kind;
+const unique $fk_active_option : $field_kind;
 const unique $fk_allocation_root : $field_kind;
 const unique $fk_as_array_first : $field_kind;
 const unique $fk_emb_array : $field_kind;
@@ -338,6 +339,7 @@ function $f_root($ctype) : $field;
 function $f_owns($ctype) : $field;
 function $f_ref_cnt($ctype) : $field;
 function $f_vol_version($ctype) : $field;
+function $f_active_option($ctype) : $field;
 
 function {:inline true} $def_special_field(partp:$ctype, f:$field, tp:$ctype, fk:$field_kind) : bool
   {
@@ -370,6 +372,10 @@ axiom (forall t:$ctype :: {$f_vol_version(t)}
   $is_non_primitive(t) ==>
     $def_special_ghost_field(t, $f_vol_version(t), ^$#volatile_version_t, $fk_vol_version) &&
     $is_semi_sequential_field($f_vol_version(t)));
+axiom (forall t:$ctype :: {$f_active_option(t)}
+  $is_non_primitive(t) ==>
+    $def_special_ghost_field(t, $f_active_option(t), ^^field, $fk_active_option) &&
+    $is_sequential_field($f_active_option(t)));
 
 // ----------------------------------------------------------------------------
 // Built-in types and constants
@@ -2180,7 +2186,8 @@ function $all_first_option_typed(S:$state, p:$ptr) : bool
 function {:inline} $union_active(s:$state, p:$ptr, f:$field) : bool
   { $owner(s, $dot(p, f)) != $inactive_union_owner() }
 
-function $active_option(S:$state, p:$ptr) : $field;
+function $active_option(S:$state, p:$ptr) : $field
+  { $int_to_field($rd(S, p, $f_active_option($typ(p)))) }
 
 function {:inline} $active_member(S:$state, p:$ptr) : $ptr
   { $dot(p, $active_option(S, p)) }
