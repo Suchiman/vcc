@@ -69,12 +69,10 @@ namespace Microsoft.Research.Vcc
         Proc procData
     
     let blocksFromRoot root =
-      let visited = new Dict<_,_>()
+      let visited = new HashSet<_>()
       let res = ref []
       let rec visit (b:Block) =
-        if visited.ContainsKey b then ()
-        else
-          visited.[b] <- true
+        if visited.Add b then
           res := b :: !res
           List.iter visit b.Exits
       visit root
