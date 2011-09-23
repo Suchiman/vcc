@@ -1588,16 +1588,21 @@ procedure $static_wrap_non_owns(o:$ptr, S:$state);
 // Admissibility & unwrap checks
 // ----------------------------------------------------------------------------
 
-function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
+function $spans_the_same_no_timestamp(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { $owns(S1, p) == $owns(S2, p) &&
     (forall f:$field :: {$rdtrig(S2, p, f)}
+      // ref_cnt is not part of the span
       $is_proper($dot(p, f)) && f != $f_ref_cnt(t) ==> $rd(S1, p, f) == $rd(S2, p, f)) }
+
+function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
+  { $spans_the_same_no_timestamp(S1, S2, p, t) &&
+    $timestamp(S1, p) == $timestamp(S2, p) }
 
 function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { (forall f:$field :: {$rdtrig(S2, p, f)}
-      // ref_cnt is always volatile
       $is_proper($dot(p, f)) && $is_sequential_field(f)
-        ==> $rd(S1, p, f) == $rd(S2, p, f)) }
+        ==> $rd(S1, p, f) == $rd(S2, p, f)) &&
+    $timestamp(S1, p) == $timestamp(S2, p) }
 
 function $good_for_admissibility(S:$state) : bool;
 function $good_for_post_admissibility(S:$state) : bool;
@@ -1659,7 +1664,7 @@ procedure $unwrap_check(o:$ptr);
   ensures $good_state($s);
   ensures $good_for_post_can_unwrap($s);
 
-  ensures $spans_the_same(old($s), $s, o, $typ(o));
+  ensures $spans_the_same_no_timestamp(old($s), $s, o, $typ(o));
 
   ensures $is_unwrapped(old($s), $s, o);
 
@@ -2172,10 +2177,13 @@ function $all_first_option_typed(S:$state, p:$ptr) : bool
 }
 
 
-function {:inline true} $union_active(s:$state, p:$ptr, f:$field) : bool
+function {:inline} $union_active(s:$state, p:$ptr, f:$field) : bool
   { $owner(s, $dot(p, f)) != $inactive_union_owner() }
 
 function $active_option(S:$state, p:$ptr) : $field;
+
+function {:inline} $active_member(S:$state, p:$ptr) : $ptr
+  { $dot(p, $active_option(S, p)) }
 
 axiom (forall S:$state, p:$ptr, f:$field ::
   {$is_union_field(f), $owner(S, $dot(p, f))}
