@@ -312,13 +312,11 @@ namespace Microsoft.Research.Vcc
                   readChecks.[name] <- f
                   add_rev ()
             | _ -> ()
-        let fns = new Dict<_,_>()
+        let fns = new HashSet<_>()
         let mycalls = ref []
         let check self = function
           | Call (_, fn, _, _) ->
-            if not (fns.ContainsKey fn) then 
-              mycalls := fn :: !mycalls
-              fns.Add (fn, true)
+            if fns.Add fn then mycalls := fn :: !mycalls
             true
           | _ -> true
         [decl] |> deepVisitExpressions check
@@ -372,14 +370,12 @@ namespace Microsoft.Research.Vcc
     let checkForCycles = function
       | Top.FunctionDecl f when f.IsPure ->
         addReadCheck f
-        let trans = new Dict<_,_>()
+        let trans = new HashSet<_>()
         let allCalled = ref []
         let error = ref []
         let rec add path g =
           if f = g then error := g :: path
-          else if trans.ContainsKey g then ()
-          else
-            trans.Add (g, true)
+          elif trans.Add g then
             allCalled := g :: !allCalled
             List.iter (add (g::path)) calls.[g]
             
