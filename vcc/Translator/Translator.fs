@@ -291,6 +291,8 @@ namespace Microsoft.Research.Vcc
          B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1], None);
          B.Decl.Function (tp, [], stor, mpv, None);
          B.Decl.Function (B.Type.Bool, [], eq, m1m2, None);
+         B.Decl.Const({Unique = false; Name = "MT#" + sel; Type = tpCtype});
+         B.Decl.Axiom(bEq (er ("MT#" + sel)) (toTypeId t));
          B.Decl.Const({Unique = false; Name = zero; Type = mapType});
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", selStorPP));
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
