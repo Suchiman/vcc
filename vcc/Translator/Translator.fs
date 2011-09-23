@@ -2096,11 +2096,7 @@ namespace Microsoft.Research.Vcc
         let s2 = er "#p2"
         let idx = er "#i"
         let eqFunName typeName deep = "_vcc_" + deep + "_struct_eq." + typeName
-        let body =
-          if vcc3 then
-            Some (bCall ("$vs_" + deepStr + "_eq") [s1; s2; toTypeId (C.Type.Ref td)])
-          else None
-        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars, body)
+        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars, None)
         let typeRef = toTypeId (C.Type.Ref td)
         let fldEqual inUnion (f : C.Field) =
           let rec read arrayElementType v = 
@@ -2110,10 +2106,6 @@ namespace Microsoft.Research.Vcc
                 | None -> fun v f -> bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]
                 | Some t -> fun v f -> bCall "$idx" [ bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]; idx; toTypeId t]
             function
-              | C.Bool -> bCall "$read_bool" [state; fldAccess v f]
-              | C.Integer _
-              | C.Ptr _ // using $read_ptr() would add type information, but this isn't needed
-              | C.Map(_,_) -> bCall "$mem" [state; fldAccess v f]
               | C.Array(t, n) -> 
                 match arrayElementType with
                   | Some _ ->
@@ -2121,8 +2113,13 @@ namespace Microsoft.Research.Vcc
                     die()
                   | None -> read (Some t) v t 
               | C.Ref(td) ->
-                  bCall "$vs_ctor" [ bCall "$vs_state" [v]; bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]]
-
+                  bCall "$vs_ctor" [ state; bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]]
+              | t when vcc3 ->
+                typedRead state (fldAccess v f) t
+              | C.Bool -> bCall "$read_bool" [state; fldAccess v f]
+              | C.Integer _
+              | C.Ptr _ // using $read_ptr() would add type information, but this isn't needed
+              | C.Map(_,_) -> bCall "$mem" [state; fldAccess v f]
               | t ->
                 die()
           let read = read None
@@ -2133,39 +2130,41 @@ namespace Microsoft.Research.Vcc
                 let funName = eqFunName td'.Name (if deep then "deep" else "shallow")
                 Some(bCall funName [read s1 f.Type; read s2 f.Type]) 
             | C.Array(t,n) -> 
-              helper.Error(f.Token, 9730, "equality or assignment of structs with fixed-size arrays is currently only supported with /3")
+              if not vcc3 then
+                // not sure about this one yet
+                helper.Error(f.Token, 9730, "equality or assignment of structs with fixed-size arrays is currently only supported with /3")
               let cond = B.Expr.Primitive ("==>", [ bAnd (B.Expr.Primitive("<=", [bInt 0; idx])) (B.Expr.Primitive("<", [idx; bInt n]));
                                                       bEq (read s1 f.Type) (read s2 f.Type) ])
               Some(B.Forall(Token.NoToken, [("#i", B.Int)], [], weight "array-structeq", cond))
-            | C.Map(_,_) ->                 
+            | C.Map(_,_) when not vcc3 ->                 
               helper.Warning(f.Token, 9108, "structured type equality treats map equality as map identity")
               Some(bEq (read s1 f.Type) (read s2 f.Type))
-
-            | _ -> Some(bEq (read s1 f.Type) (read s2 f.Type))
+            | _ -> 
+              if vcc3 then
+                Some (typedEq f.Type (read s1 f.Type) (read s2 f.Type))
+              else
+                Some(bEq (read s1 f.Type) (read s2 f.Type))
         let andOpt e = function 
           | None -> e
           | Some e' -> bAnd e e'
 
-        if vcc3 then
-          [eqFun]
-        else
-          let eqCall = bCall (eqFunName td.Name deepStr) [s1; s2]
-          let eqExpr = 
-            match td.Kind with
-            | C.TypeKind.Struct -> td.Fields |> List.map (fldEqual false) |> List.fold andOpt bTrue
-            | C.TypeKind.Union ->
-              let getAO v = bCall "$active_option" [bCall "$vs_state" [v]; bCall "$vs_base" [v; typeRef] ]
-              let aoEq = bEq (getAO s1) (getAO s2)
-              let fldEqualCond (f : C.Field) =
-                match fldEqual true f with
-                  | Some expr -> B.Primitive("==>", [bEq (getAO s1) (er (fieldName f)); expr])
-                  | None -> die()
-              td.Fields |> List.map fldEqualCond |> List.fold bAnd aoEq
-              //activeOptionEq = 
-              //bEq (bCall "$active_option" [s; p]) fieldRef
-            | _ -> die()
-          let eqForall = B.Forall(Token.NoToken, vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
-          [eqFun; B.Axiom eqForall]
+        let eqCall = bCall (eqFunName td.Name deepStr) [s1; s2]
+        let eqExpr = 
+          match td.Kind with
+          | C.TypeKind.Struct -> td.Fields |> List.map (fldEqual false) |> List.fold andOpt bTrue
+          | C.TypeKind.Union ->
+            let getAO v = bCall "$active_option" [bCall "$vs_state" [v]; bCall "$vs_base" [v; typeRef] ]
+            let aoEq = bEq (getAO s1) (getAO s2)
+            let fldEqualCond (f : C.Field) =
+              match fldEqual true f with
+                | Some expr -> B.Primitive("==>", [bEq (getAO s1) (er (fieldName f)); expr])
+                | None -> die()
+            td.Fields |> List.map fldEqualCond |> List.fold bAnd aoEq
+            //activeOptionEq = 
+            //bEq (bCall "$active_option" [s; p]) fieldRef
+          | _ -> die()
+        let eqForall = B.Forall(Token.NoToken, vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
+        [eqFun; B.Axiom eqForall]
 
 
       let imax x y = if x < y then y else x
