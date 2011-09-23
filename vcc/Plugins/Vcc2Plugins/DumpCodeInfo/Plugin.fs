@@ -42,14 +42,14 @@ namespace Microsoft.Research.Vcc
 
       override this.Verify(filename, env, decls) =
         let functionDependencies (fn:Function) =
-          let pureImplDeps = new Dict<_,_>()
-          let physImplDeps = new Dict<_,_>()
-          let pureContractDeps = new Dict<_,_>()
-          let physContractDeps = new Dict<_,_>()
+          let pureImplDeps = new HashSet<_>()
+          let physImplDeps = new HashSet<_>()
+          let pureContractDeps = new HashSet<_>()
+          let physContractDeps = new HashSet<_>()
 
-          let visit (pureDeps:Dict<_,_>) (physDeps:Dict<_,_>) ctx self = function
+          let visit (pureDeps:HashSet<_>) (physDeps:HashSet<_>) ctx self = function
             | CAST.Call(_, fn, _, _) ->
-              if ctx.IsPure then pureDeps.[fn] <- true else physDeps.[fn] <- true
+              if ctx.IsPure then pureDeps.Add fn |>ignore  else physDeps.Add fn |> ignore
               true
             | _ -> true
 
@@ -60,8 +60,8 @@ namespace Microsoft.Research.Vcc
           List.iter (fun (e:Expr) -> e.SelfCtxVisit(true, (visit pureContractDeps physContractDeps)))
             (fn.Reads @ fn.Writes @ fn.Requires @ fn.Ensures)
 
-          ( [ for k in pureImplDeps.Keys -> k ], [ for k in physImplDeps.Keys -> k],
-            [ for k in pureContractDeps.Keys -> k ], [ for k in physContractDeps.Keys -> k])
+          ( [ for k in pureImplDeps -> k ], [ for k in physImplDeps -> k],
+            [ for k in pureContractDeps -> k ], [ for k in physContractDeps -> k])
 
         let doFunction (fn:Function) =
           let (pureImplDeps, physImplDeps, pureContractDeps, physContractDeps) = functionDependencies fn

@@ -361,7 +361,7 @@ namespace Microsoft.Research.Vcc
     let flattenUnions decls =
 
       let fieldsToReplace = new Dict<Field, Field>()
-      let processedTypes = new Dict<TypeDecl, bool>()
+      let processedTypes = new HashSet<TypeDecl>()
   
       let tryFindBackingMember (td:TypeDecl) = 
         let tdIsRecord = td.IsRecord
@@ -403,23 +403,22 @@ namespace Microsoft.Research.Vcc
           | _ -> false
     
       let rec processTypeDecl = function
-        | TypeDecl(td) when processedTypes.ContainsKey(td) -> ()
         | TypeDecl(td) when td.Kind = TypeKind.Union ->
-          let rec processType = function
-            | Type.Ref(td) -> processTypeDecl (TypeDecl(td))
-            | Type.Array(t, _) -> processType t
-            | _ -> ()
-          processedTypes.Add(td, true)
-          List.iter (fun (fld : Field) -> processType (fld.Type)) td.Fields
-          match tryFindBackingMember td with
-            | Some fld -> 
-              let bf = { backingField fld with IsVolatile = List.exists hasVolatileInExtent td.Fields }        
-              let tdIsRecord = td.IsRecord
-              let addOtherFlds (f : Field) =
-                if f = bf || (f.IsSpec && not tdIsRecord) then () else fieldsToReplace.Add(f, bf)
-              List.iter addOtherFlds (td.Fields)
-              td.Fields <- bf :: if tdIsRecord then [] else List.filter (fun (f : Field) -> f.IsSpec) td.Fields
-            | None ->()
+          if processedTypes.Add td then
+            let rec processType = function
+              | Type.Ref(td) -> processTypeDecl (TypeDecl(td))
+              | Type.Array(t, _) -> processType t
+              | _ -> ()
+            List.iter (fun (fld : Field) -> processType (fld.Type)) td.Fields
+            match tryFindBackingMember td with
+              | Some fld -> 
+                let bf = { backingField fld with IsVolatile = List.exists hasVolatileInExtent td.Fields }        
+                let tdIsRecord = td.IsRecord
+                let addOtherFlds (f : Field) =
+                  if f = bf || (f.IsSpec && not tdIsRecord) then () else fieldsToReplace.Add(f, bf)
+                List.iter addOtherFlds (td.Fields)
+                td.Fields <- bf :: if tdIsRecord then [] else List.filter (fun (f : Field) -> f.IsSpec) td.Fields
+              | None ->()
         | _ -> ()
     
       let rec genDotPrime t1 t2 expr =
@@ -634,16 +633,14 @@ namespace Microsoft.Research.Vcc
     let removedNestedAnonymousTypes decls = 
 
       let fields = new Dict<Field,Field>()
-      let fieldsToRemove = new Dict<Field,bool>()
-      let processedTypeDecls = new Dict<TypeDecl, bool>()
+      let fieldsToRemove = new HashSet<Field>()
+      let processedTypeDecls = new HashSet<TypeDecl>()
       let id = ref 0
       let unnamedFieldId = ref 0
     
       let rec processTypeDecl = function
-        | td when processedTypeDecls.ContainsKey(td) -> ()
         | td -> 
-            // first process all fields
-            processedTypeDecls.Add(td, true)
+          if processedTypeDecls.Add td then
             let rec processType = function
               | Type.Ref(td) -> processTypeDecl td
               | Array (t, _) -> processType t
@@ -652,7 +649,7 @@ namespace Microsoft.Research.Vcc
               processType f.Type
               match f.Type with 
                 | Type.Ref td' when f.Name = "" && td'.IsNestedAnon && ((td.Kind = Struct && td'.Kind = Struct) || td'.Fields.Length <= 1) ->
-                  fieldsToRemove.Add (f, true)
+                  fieldsToRemove.Add f |> ignore
                   [for f' in td'.Fields -> 
                      let newf' =
                        { f' with Offset = addOffsets (f'.Offset) (f.Offset);
@@ -699,10 +696,10 @@ namespace Microsoft.Research.Vcc
       
       let replFields self = function
         | Dot (c, Macro (_, "&", [Deref (_, e)]), f) -> Some (self (Dot (c, e, f)))
-        | Dot (c, Dot (_, e, f'), f) when fields.ContainsKey f && fieldsToRemove.ContainsKey f' ->
+        | Dot (c, Dot (_, e, f'), f) when fields.ContainsKey f && fieldsToRemove.Contains f' ->
           Some (self (Dot (c, e, f)))
         | Dot (c, e, f) ->
-          if fieldsToRemove.ContainsKey f then die()
+          if fieldsToRemove.Contains f then die()
           match fields.TryGetValue f with
             | (true, sField) -> Some (self (Dot (c, e, sField)))
             | (false, _) -> None
@@ -713,7 +710,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let inlineFieldsByRequest decls =
-      let processedTypeDecls = new Dict<TypeDecl, bool>()
+      let processedTypeDecls = new HashSet<TypeDecl>()
       let inlinedFields = new Dict<Field, (Field * Field) list>()
       let inlinedArrays = new Dict<Field, Field>()
       let (dotAxioms : Top list ref) = ref []
@@ -754,52 +751,51 @@ namespace Microsoft.Research.Vcc
                                                Body = instExpr }), Top.TypeDecl(td))
           
       let rec processTypeDecl = function
-        | td when processedTypeDecls.ContainsKey(td) -> ()
         | td ->
-          processedTypeDecls.Add(td, true)
-          let rec processType = function
-              | Type.Ref(td) -> processTypeDecl td
-              | Array (t, _) -> processType t
-              | _ -> ()
-          let trField (f:Field) =
-            processType f.Type
-            if (not (hasCustomAttr "inline" f.CustomAttr)) then [f] else
-              match f.Type with 
-                | Type.Ref td' when ((td.Kind = Struct && td'.Kind = Struct) || td'.Fields.Length <= 1) ->
-                  let newFields = 
-                    [for f' in td'.Fields -> 
-                       let newf' =
-                         { f' with Offset = 
-                                      match f'.Offset with
-                                        | Normal n -> Normal (n + f.ByteOffset)
-                                        | BitField (n, b, s) -> BitField (n + f.ByteOffset, b, s)
-                                      ;
-                                   Parent = td; 
-                                   Name = "inline#" + f.Name + "#" + f'.Name }
-                       newf'
-                    ]
-                  inlinedFields.Add(f, List.zip td'.Fields newFields)
-                  dotAxioms := !dotAxioms @ (genDotAxioms td f newFields)
-                  newFields
-                | Type.Array(Type.Ref td', n) when td.Kind = Struct ->
-                  let mkFieldForIndex i =
-                    [ for f' in td'.Fields ->
-                      { f' with Offset = 
-                                   match f'.Offset with
-                                     | Normal n -> Normal (n + f.ByteOffset + i * td'.SizeOf)
-                                     | BitField (n,b,s) -> BitField (n + f.ByteOffset + i * td'.SizeOf, b, s)
-                                   ;
-                                Parent = td;
-                                Name = f.Name + "#" + f'.Name + "#" + i.ToString() }
-                    ]
-                  let newFields = [ for i in seq { 0 .. n-1 } -> mkFieldForIndex i ] |> List.concat
-                  inlinedArrays.Add(f, newFields.Head)
-                  dotAxioms := (genInlinedArrayAxiom td (Type.MkPtrToStruct(td')) newFields) :: !dotAxioms
-                  newFields
-                | _ -> 
-                  helper.Warning(f.Token, 9109, "field '" + f.Name + "' could not be inlined")
-                  [f] 
-          td.Fields <- td.Fields |> List.map trField |> List.concat 
+          if processedTypeDecls.Add td then
+            let rec processType = function
+                | Type.Ref(td) -> processTypeDecl td
+                | Array (t, _) -> processType t
+                | _ -> ()
+            let trField (f:Field) =
+              processType f.Type
+              if (not (hasCustomAttr "inline" f.CustomAttr)) then [f] else
+                match f.Type with 
+                  | Type.Ref td' when ((td.Kind = Struct && td'.Kind = Struct) || td'.Fields.Length <= 1) ->
+                    let newFields = 
+                      [for f' in td'.Fields -> 
+                         let newf' =
+                           { f' with Offset = 
+                                        match f'.Offset with
+                                          | Normal n -> Normal (n + f.ByteOffset)
+                                          | BitField (n, b, s) -> BitField (n + f.ByteOffset, b, s)
+                                        ;
+                                     Parent = td; 
+                                     Name = "inline#" + f.Name + "#" + f'.Name }
+                         newf'
+                      ]
+                    inlinedFields.Add(f, List.zip td'.Fields newFields)
+                    dotAxioms := !dotAxioms @ (genDotAxioms td f newFields)
+                    newFields
+                  | Type.Array(Type.Ref td', n) when td.Kind = Struct ->
+                    let mkFieldForIndex i =
+                      [ for f' in td'.Fields ->
+                        { f' with Offset = 
+                                     match f'.Offset with
+                                       | Normal n -> Normal (n + f.ByteOffset + i * td'.SizeOf)
+                                       | BitField (n,b,s) -> BitField (n + f.ByteOffset + i * td'.SizeOf, b, s)
+                                     ;
+                                  Parent = td;
+                                  Name = f.Name + "#" + f'.Name + "#" + i.ToString() }
+                      ]
+                    let newFields = [ for i in seq { 0 .. n-1 } -> mkFieldForIndex i ] |> List.concat
+                    inlinedArrays.Add(f, newFields.Head)
+                    dotAxioms := (genInlinedArrayAxiom td (Type.MkPtrToStruct(td')) newFields) :: !dotAxioms
+                    newFields
+                  | _ -> 
+                    helper.Warning(f.Token, 9109, "field '" + f.Name + "' could not be inlined")
+                    [f] 
+            td.Fields <- td.Fields |> List.map trField |> List.concat 
 
       for d in decls do
         match d with 
@@ -1278,6 +1274,30 @@ namespace Microsoft.Research.Vcc
       
     // ============================================================================================================
 
+    let handlePrimitiveStructs decls =
+
+      let primMap = Dict<TypeDecl,Type>()
+      let fieldsToRemove = Dict<Field, bool>()
+
+      for d in decls do
+        match d with
+          | Top.TypeDecl(td) when hasCustomAttr AttrPrimitive td.CustomAttr ->
+            match td.Fields with
+              | [fld] ->
+                if fld.Type.IsComposite then
+                  helper.Error(td.Token, 9741, "type '" + td.Name + "' has field of non-primitive type '" 
+                                               + fld.Type.ToString() + "' and thus cannot be marked 'primitive'", None)
+                else
+                  primMap.Add(td, fld.Type)
+                  fieldsToRemove.Add(fld, true)
+              | _ -> helper.Error(td.Token, 9741, "type '" + td.Name + "' has more than one field and thus cannot be marked 'primitive'", None)
+            ()
+          | _ -> ()
+
+      decls
+
+    // ============================================================================================================
+
     helper.AddTransformer ("type-begin", Helper.DoNothing)
     helper.AddTransformer ("type-function-pointer", Helper.Decl handleFunctionPointers)
     helper.AddTransformer ("type-flatten-arrays", Helper.Decl flattenNestedArrays)
@@ -1290,6 +1310,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("type-assign-by-single-field", Helper.Expr assignSingleFieldStructsByField)
     helper.AddTransformer ("type-inline-fields", Helper.Decl inlineFieldsByRequest)
     helper.AddTransformer ("type-fixup-single-member-unions", Helper.Decl turnSingleMemberUnionsIntoStructs)
+    helper.AddTransformer ("type-primitive-structs", Helper.Decl handlePrimitiveStructs)
     helper.AddTransformer ("type-check-records", Helper.Decl checkRecordValidity)
     helper.AddTransformer ("type-volatile-modifiers", Helper.Decl handleVolatileModifiers)
     helper.AddTransformer ("type-struct-equality", Helper.Expr handleStructAndRecordEquality)

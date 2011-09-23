@@ -997,20 +997,20 @@ namespace Microsoft.Research.Vcc
 
       let doFunction (fn:Function) =
         let embCount = ref 0
-        let asArrayDecls = new Dict<_,_>()
+        let asArrayDecls = new HashSet<_>()
 
         let findAsArray self = function
           // find the stack allocated arrays that are marked as_array
           // also include those that are generated as part of the projection of arrays with
           // initializer
-          | VarDecl(_,v,attr) as decl when hasCustomAttr AttrAsArray attr -> asArrayDecls.Add(v, true); false
-          | Macro(_, "=", [Ref(_, v); Block(_, VarDecl(_,vTemp,_) :: stmts, _)]) when asArrayDecls.ContainsKey v ->
+          | VarDecl(_,v,attr) as decl when hasCustomAttr AttrAsArray attr -> asArrayDecls.Add v |> ignore; false
+          | Macro(_, "=", [Ref(_, v); Block(_, VarDecl(_,vTemp,_) :: stmts, _)]) when asArrayDecls.Contains v ->
             let rec last = function
               | [x] -> x
               | _ :: xs -> last xs
               | _ -> die()              
             match last stmts with
-              | Ref(_, v') when v = v' -> asArrayDecls.Add(vTemp, true)
+              | Ref(_, v') when v = v' -> asArrayDecls.Add vTemp |> ignore
               | _ -> ()
             true
           | _ -> true
@@ -1023,7 +1023,7 @@ namespace Microsoft.Research.Vcc
               let fieldMap = new Dict<_,_>()
               let createField (td:TypeDecl) offset = function
                 | SAR(var, t, size, isSpec) ->
-                  let asArray = asArrayDecls.ContainsKey var
+                  let asArray = asArrayDecls.Contains var
                   let f = { Token = td.Token
                             Name = var.Name
                             Type = Type.Array(t, size)
