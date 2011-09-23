@@ -1,0 +1,19 @@
+`/newsyntax
+#include <vcc.h>
+
+
+_(logic bool foo(int i) = bar(i))
+_(logic bool bar(int i) = foo(i))
+
+void f(int i)
+    _(requires foo(i))
+{
+}
+
+`
+testcase(5,17) : error VC9740: recursive spec macro 'bar'
+testcase(4,41) : error : (Location of symbol related to previous error.)
+testcase(4,17) : error VC9740: recursive spec macro 'foo'
+testcase(5,41) : error : (Location of symbol related to previous error.)
+testcase(8,30) : error : (Location of symbol related to previous error.)
+`
