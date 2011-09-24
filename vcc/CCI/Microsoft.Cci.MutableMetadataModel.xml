@@ -11852,14 +11852,14 @@
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Module.TypeReferences">
             <summary>
-            Zero or more type references used in the module. If the module is produced by reading in a CLR PE file, then this will be the contents
+            Zero or more type references used in the module. May be null. If the module is produced by reading in a CLR PE file, then this will be the contents
             of the type reference table. If the module is produced some other way, the method may return an empty enumeration or an enumeration that is a
             subset of the type references actually used in the module. 
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MutableCodeModel.Module.TypeMemberReferences">
             <summary>
-            Returns zero or more type member references used in the module. If the module is produced by reading in a CLR PE file, then this will be the contents
+            Returns zero or more type member references used in the module. May be null. If the module is produced by reading in a CLR PE file, then this will be the contents
             of the member reference table (which only contains entries for fields and methods). If the module is produced some other way, 
             the method may return an empty enumeration or an enumeration that is a subset of the member references actually used in the module. 
             </summary>
