@@ -1,0 +1,30 @@
+`/newsyntax
+#include <vcc.h>
+
+_(ghost
+typedef _(record) struct {
+	\integer x;
+
+} S;
+)
+
+_(def S f(int a[])
+	_(decreases 1)
+{
+	return (S) {.x = 0};
+}
+)
+
+_(def bool g(int a[], S s)
+	_(decreases a, s)
+{
+//_(assert \false)
+	return s == f(a);
+}
+)
+`
+testcase(21,14) : warning VC9314: [possible unsoundness]: only integer arguments are currently accepted in _(decreases ...) clauses
+Verification of f succeeded.
+Verification of g failed.
+testcase(21,14) : error VC8029: the call 'f(a)' might not terminate.
+`
