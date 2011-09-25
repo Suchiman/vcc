@@ -341,8 +341,6 @@ int main()                                    // A
 }                                             // A
 #endif                                        // A
 
-// the warnings about unreachable code are currently expected, an artifact of the translation of lazy operators
-
 /*`
 Verification of Heap#adm succeeded.
 Verification of swprintf succeeded.
