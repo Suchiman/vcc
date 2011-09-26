@@ -861,11 +861,11 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.LabelAndTryBlockAssociater.TraverseChildren(Microsoft.Cci.ITryCatchFinallyStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ITryCatchFinallyStatement)" inheritedFromTypeName="CodeTraverser">tryCatchFilterFinallyStatement != null</requires>
-    </member>
     <member name="M:Microsoft.Cci.LabelAndTryBlockAssociater.TraverseChildren(Microsoft.Cci.ILabeledStatement)">
       <requires inheritedFrom="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ILabeledStatement)" inheritedFromTypeName="CodeTraverser">labeledStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.LabelAndTryBlockAssociater.TraverseChildren(Microsoft.Cci.ITryCatchFinallyStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.CodeTraverser.TraverseChildren(Microsoft.Cci.ITryCatchFinallyStatement)" inheritedFromTypeName="CodeTraverser">tryCatchFilterFinallyStatement != null</requires>
     </member>
   </members>
 </doc>
