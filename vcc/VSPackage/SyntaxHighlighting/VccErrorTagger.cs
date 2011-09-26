@@ -18,18 +18,33 @@ namespace Microsoft.Research.Vcc.VSPackage
       this.fileName = textDocument != null ? textDocument.FilePath : "";
       this.textBuffer = textBuffer;
       VSIntegration.ErrorLinesChanged += VSIntegration_ErrorLinesChanged;
+      this.textBuffer.Changing += textBuffer_Changing;
+    }
+
+    void textBuffer_Changing(object sender, TextContentChangingEventArgs e)
+    {
+      List<Tuple<int, string>> errorLines;
+      if (VSIntegration.ErrorLines.TryGetValue(this.fileName, out errorLines))
+      {
+        errorLines.Clear();
+        OnTagsChanged();
+      }
+    }
+
+    protected void OnTagsChanged()
+    {
+      EventHandler<SnapshotSpanEventArgs> temp = TagsChanged;
+      if (temp != null) {
+        var snapshot = this.textBuffer.CurrentSnapshot;
+        temp(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, 0, snapshot.Length)));
+      }
     }
 
     void VSIntegration_ErrorLinesChanged(object sender, ErrorLinesChangedEventArgs e)
     {
       if (String.Equals(e.FileName, this.fileName, StringComparison.OrdinalIgnoreCase))
       {
-        EventHandler<SnapshotSpanEventArgs> temp = TagsChanged;
-        if (temp != null)
-        {
-          var snapshot = this.textBuffer.CurrentSnapshot;
-          temp(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, 0, snapshot.Length)));
-        }
+        OnTagsChanged();
       }
     }
 
