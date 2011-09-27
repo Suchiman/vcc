@@ -497,6 +497,7 @@
             of the object implementing IStatement. The dispatch method does not invoke Dispatch on any child objects. If child traversal
             is desired, the implementations of the Visit methods should do the subsequent dispatching.
             </summary>
+      <requires>visitor != null</requires>
     </member>
     <member name="P:Microsoft.Cci.IExpression.Type">
       <summary>
@@ -526,11 +527,17 @@
       <summary>
             The expression representing the value to assign. 
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IAssignment.Target">
       <summary>
             The expression representing the target to assign to.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;ITargetExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IBlockStatement">
       <summary>
@@ -580,6 +587,9 @@
       <summary>
             The element type of the array.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ICreateArray.Initializers">
       <summary>
@@ -587,21 +597,33 @@
             This must be a flat list of the initial values. Its length
             must be the product of the size of each dimension.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IEnumerable&lt;IExpression&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ICreateArray.LowerBounds">
       <summary>
             The index value of the first element in each dimension.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IEnumerable&lt;int&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ICreateArray.Rank">
       <summary>
             The number of dimensions of the array.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;uint&gt;() &gt; 0</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ICreateArray.Sizes">
       <summary>
             The number of elements allowed in each dimension.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IEnumerable&lt;IExpression&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IGotoStatement">
       <summary>
@@ -625,6 +647,9 @@
       <summary>
             The arguments to pass to the method, after they have been converted to match the parameters of the resolved method.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IEnumerable&lt;IExpression&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IMethodCall.IsVirtualCall">
       <summary>
@@ -646,11 +671,18 @@
       <summary>
             The method to call.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IMethodReference&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IMethodCall.ThisArgument">
       <summary>
             The expression that results in the value that must be passed as the value of the this argument of the resolved method.
             </summary>
+      <getter>
+        <requires>!this.IsStaticCall</requires>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.ISwitchCase">
       <summary>
@@ -839,6 +871,9 @@
       <summary>
             An expression that represents an addressable location in memory.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IAddressableExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IAddressOf.ObjectControlsMutability">
       <summary>
@@ -856,6 +891,9 @@
       <summary>
             The address to dereference.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IAddressDereference.Alignment">
       <summary>
@@ -912,11 +950,17 @@
       <summary>
             An expression that results in value of an array type.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IArrayIndexer.Indices">
       <summary>
             The array indices.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IEnumerable&lt;IExpression&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IBitwiseAnd">
       <summary>
@@ -940,12 +984,18 @@
             The scope of these declarations coincides with the block expression. 
             The statements are executed before evaluation of Expression occurs.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IBlockStatement&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IBlockExpression.Expression">
       <summary>
             The expression that computes the result of the entire block expression.
             This expression can contain references to the local variables that are declared inside BlockStatement.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IBoundExpression">
       <summary>
@@ -958,11 +1008,17 @@
             For example, if the field is byte aligned, then the result of this property is 1. Likewise, 2 for word (16-bit) alignment and 4 for
             double word (32-bit alignment). 
             </summary>
+      <getter>
+        <requires>this.IsUnaligned</requires>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IBoundExpression.Definition">
       <summary>
             The local variable, parameter or field that this expression binds to.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;object&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IBoundExpression.Instance">
       <summary>
@@ -1020,6 +1076,9 @@
       <summary>
             The value to convert. If the type of this value is an enumeration, the target type must have the same size and may not itself be an enumeration.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IConversion.CheckNumericRange">
       <summary>
@@ -1030,6 +1089,9 @@
       <summary>
             The type to which the value is to be converted. If the type of this value is an enumeration, the source type must have the same size and may not itself be an enumeration.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IConditional">
       <summary>
@@ -1040,16 +1102,25 @@
       <summary>
             The condition that determines which subexpression to evaluate.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IConditional.ResultIfTrue">
       <summary>
             The expression to evaluate as the value of the overall expression if the condition is true.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IConditional.ResultIfFalse">
       <summary>
             The expression to evaluate as the value of the overall expression if the condition is false.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.ICreateDelegateInstance">
       <summary>
@@ -1085,11 +1156,17 @@
       <summary>
             The arguments to pass to the constructor.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IEnumerable&lt;IExpression&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ICreateObjectInstance.MethodToCall">
       <summary>
             The contructor method to call.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IMethodReference&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IDefaultValue">
       <summary>
@@ -1147,11 +1224,17 @@
       <summary>
             An expression that results in a value of type System.TypedReference.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IGetValueOfTypedReference.TargetType">
       <summary>
             The type to which the value part of the typed reference must be converted.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IGreaterThan">
       <summary>
@@ -1212,6 +1295,9 @@
       <summary>
             The value on which the operation is performed.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IMakeTypedReference">
       <summary>
@@ -1285,6 +1371,9 @@
       <summary>
             The expression whose value at the start of method execution is referred to in the method postcondition.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IOnesComplement">
       <summary>
@@ -1310,6 +1399,9 @@
       <summary>
             The arguments to pass to the method, after they have been converted to match the parameters of the method.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IEnumerable&lt;IExpression&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.IPointerCall.IsTailCall">
       <summary>
@@ -1321,6 +1413,10 @@
       <summary>
             An expression that results at runtime in a function pointer that points to the actual method to call.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IExpression&gt;() != null</ensures>
+        <ensures>Contract.Result&lt;IExpression&gt;().Type is IFunctionPointer</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IPopValue">
       <summary>
@@ -1338,6 +1434,9 @@
       <summary>
             The target that is assigned to as a result of the method call, but whose value is also passed to the method at the start of the call.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IAddressableExpression&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IReturnValue">
       <summary>
@@ -1602,17 +1701,26 @@
       <summary>
             The statements within the catch clause.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IBlockStatement&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ICatchClause.ExceptionContainer">
       <summary>
             The local that contains the exception instance when executing the catch clause body.
             If there is no such local, Dummy.LocalVariable is returned.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;ILocalDefinition&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ICatchClause.ExceptionType">
       <summary>
             The type of the exception to handle.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ICatchClause.FilterCondition">
       <summary>
@@ -1903,6 +2011,9 @@
       <summary>
             The catch clauses.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IEnumerable&lt;ICatchClause&gt;&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ITryCatchFinallyStatement.FinallyBody">
       <summary>
@@ -1919,6 +2030,9 @@
       <summary>
             The body of the try clause.
             </summary>
+      <getter>
+        <ensures>Contract.Result&lt;IBlockStatement&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="T:Microsoft.Cci.IWhileDoStatement">
       <summary>
@@ -6189,6 +6303,26 @@
             </summary>
       <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ITypeInvariant)" inheritedFromTypeName="ICodeAndContractVisitor">typeInvariant != null</requires>
     </member>
+    <member name="P:Microsoft.Cci.DummyCreateArray.ElementType">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ICreateArray.get_ElementType" inheritedFromTypeName="ICreateArray">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="P:Microsoft.Cci.DummyCreateArray.LowerBounds">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ICreateArray.get_LowerBounds" inheritedFromTypeName="ICreateArray">Contract.Result&lt;IEnumerable&lt;int&gt;&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="P:Microsoft.Cci.DummyCreateArray.Rank">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ICreateArray.get_Rank" inheritedFromTypeName="ICreateArray">Contract.Result&lt;uint&gt;() &gt; 0</ensures>
+      </getter>
+    </member>
+    <member name="P:Microsoft.Cci.DummyCreateArray.Sizes">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ICreateArray.get_Sizes" inheritedFromTypeName="ICreateArray">Contract.Result&lt;IEnumerable&lt;IExpression&gt;&gt;() != null</ensures>
+      </getter>
+    </member>
     <member name="P:Microsoft.Cci.DummyCreateArray.Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
@@ -6200,15 +6334,36 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.DummyCreateArray.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IExpression.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IExpression">visitor != null</requires>
+    </member>
+    <member name="P:Microsoft.Cci.DummyCreateArray.Initializers">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ICreateArray.get_Initializers" inheritedFromTypeName="ICreateArray">Contract.Result&lt;IEnumerable&lt;IExpression&gt;&gt;() != null</ensures>
+      </getter>
+    </member>
     <member name="P:Microsoft.Cci.DummyAssignment.Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="P:Microsoft.Cci.DummyAssignment.Source">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IAssignment.get_Source" inheritedFromTypeName="IAssignment">Contract.Result&lt;IExpression&gt;() != null</ensures>
       </getter>
     </member>
     <member name="P:Microsoft.Cci.DummyAssignment.Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.DummyAssignment.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IExpression.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IExpression">visitor != null</requires>
+    </member>
+    <member name="P:Microsoft.Cci.DummyAssignment.Target">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IAssignment.get_Target" inheritedFromTypeName="IAssignment">Contract.Result&lt;ITargetExpression&gt;() != null</ensures>
       </getter>
     </member>
     <member name="P:Microsoft.Cci.DummySwitchCase.Locations">
@@ -6221,6 +6376,9 @@
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.DummyTargetExpression.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IExpression.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IExpression">visitor != null</requires>
     </member>
     <member name="P:Microsoft.Cci.DummyTargetExpression.Locations">
       <getter>
@@ -6239,13 +6397,18 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.DummyExpression.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IExpression.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IExpression">visitor != null</requires>
+    </member>
     <member name="P:Microsoft.Cci.DummyLabeledStatement.Statement">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.ILabeledStatement.get_Statement" inheritedFromTypeName="ILabeledStatement">Contract.Result&lt;IStatement&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.DummyLabeledStatement.Dispatch(Microsoft.Cci.ICodeVisitor)">
-      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
+    <member name="P:Microsoft.Cci.DummyLabeledStatement.Label">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.ILabeledStatement.get_Label" inheritedFromTypeName="ILabeledStatement">Contract.Result&lt;IName&gt;() != null</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.DummyLabeledStatement.Locations">
       <getter>
@@ -6253,10 +6416,8 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.DummyLabeledStatement.Label">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.ILabeledStatement.get_Label" inheritedFromTypeName="ILabeledStatement">Contract.Result&lt;IName&gt;() != null</ensures>
-      </getter>
+    <member name="M:Microsoft.Cci.DummyLabeledStatement.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.DummySwitchStatement.Dispatch(Microsoft.Cci.ICodeVisitor)">
       <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
@@ -6267,15 +6428,34 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
+    <member name="P:Microsoft.Cci.DummyMethodCall.Arguments">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IMethodCall.get_Arguments" inheritedFromTypeName="IMethodCall">Contract.Result&lt;IEnumerable&lt;IExpression&gt;&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.DummyMethodCall.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IExpression.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IExpression">visitor != null</requires>
+    </member>
+    <member name="P:Microsoft.Cci.DummyMethodCall.Type">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="P:Microsoft.Cci.DummyMethodCall.MethodToCall">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IMethodCall.get_MethodToCall" inheritedFromTypeName="IMethodCall">Contract.Result&lt;IMethodReference&gt;() != null</ensures>
+      </getter>
+    </member>
     <member name="P:Microsoft.Cci.DummyMethodCall.Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.DummyMethodCall.Type">
+    <member name="P:Microsoft.Cci.DummyMethodCall.ThisArgument">
       <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+        <requires inheritedFrom="M:Microsoft.Cci.IMethodCall.get_ThisArgument" inheritedFromTypeName="IMethodCall">!this.IsStaticCall</requires>
+        <ensures inheritedFrom="M:Microsoft.Cci.IMethodCall.get_ThisArgument" inheritedFromTypeName="IMethodCall">Contract.Result&lt;IExpression&gt;() != null</ensures>
       </getter>
     </member>
     <member name="P:Microsoft.Cci.DummyGotoStatement.TargetStatement">
@@ -6283,14 +6463,14 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IGotoStatement.get_TargetStatement" inheritedFromTypeName="IGotoStatement">Contract.Result&lt;ILabeledStatement&gt;() != null</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.DummyGotoStatement.Dispatch(Microsoft.Cci.ICodeVisitor)">
-      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
-    </member>
     <member name="P:Microsoft.Cci.DummyGotoStatement.Locations">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
+    </member>
+    <member name="M:Microsoft.Cci.DummyGotoStatement.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="P:Microsoft.Cci.DummyAddressableExpression.Type">
       <getter>
@@ -6303,6 +6483,9 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.DummyAddressableExpression.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IExpression.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IExpression">visitor != null</requires>
+    </member>
     <member name="P:Microsoft.Cci.DummyCompileTimeConstant.Type">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IExpression.get_Type" inheritedFromTypeName="IExpression">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
@@ -6314,8 +6497,8 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.DummyBlock.Dispatch(Microsoft.Cci.ICodeVisitor)">
-      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
+    <member name="M:Microsoft.Cci.DummyCompileTimeConstant.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IExpression.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IExpression">visitor != null</requires>
     </member>
     <member name="P:Microsoft.Cci.DummyBlock.Locations">
       <getter>
@@ -6323,269 +6506,272 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IDoUntilStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IDoUntilStatement)" inheritedFromTypeName="ICodeVisitor">doUntilStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IRefArgument)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IRefArgument)" inheritedFromTypeName="ICodeVisitor">refArgument != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IWhileDoStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IWhileDoStatement)" inheritedFromTypeName="ICodeVisitor">whileDoStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IReturnValue)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IReturnValue)" inheritedFromTypeName="ICodeVisitor">returnValue != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IForStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IForStatement)" inheritedFromTypeName="ICodeVisitor">forStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGotoSwitchCaseStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGotoSwitchCaseStatement)" inheritedFromTypeName="ICodeVisitor">gotoSwitchCaseStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILessThanOrEqual)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILessThanOrEqual)" inheritedFromTypeName="ICodeVisitor">lessThanOrEqual != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IEmptyStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IEmptyStatement)" inheritedFromTypeName="ICodeVisitor">emptyStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICreateDelegateInstance)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICreateDelegateInstance)" inheritedFromTypeName="ICodeVisitor">createDelegateInstance != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IDefaultValue)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IDefaultValue)" inheritedFromTypeName="ICodeVisitor">defaultValue != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IConditionalStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IConditionalStatement)" inheritedFromTypeName="ICodeVisitor">conditionalStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAddressOf)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAddressOf)" inheritedFromTypeName="ICodeVisitor">addressOf != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGreaterThanOrEqual)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGreaterThanOrEqual)" inheritedFromTypeName="ICodeVisitor">greaterThanOrEqual != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IModulus)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IModulus)" inheritedFromTypeName="ICodeVisitor">modulus != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IThisReference)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IThisReference)" inheritedFromTypeName="ICodeVisitor">thisReference != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.INamedArgument)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.INamedArgument)" inheritedFromTypeName="ICodeVisitor">namedArgument != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IResourceUseStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IResourceUseStatement)" inheritedFromTypeName="ICodeVisitor">resourceUseStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICreateObjectInstance)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICreateObjectInstance)" inheritedFromTypeName="ICodeVisitor">createObjectInstance != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGotoStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGotoStatement)" inheritedFromTypeName="ICodeVisitor">gotoStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IDivision)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IDivision)" inheritedFromTypeName="ICodeVisitor">division != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ITokenOf)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ITokenOf)" inheritedFromTypeName="ICodeVisitor">tokenOf != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IContinueStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IContinueStatement)" inheritedFromTypeName="ICodeVisitor">continueStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBitwiseAnd)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBitwiseAnd)" inheritedFromTypeName="ICodeVisitor">bitwiseAnd != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IOutArgument)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IOutArgument)" inheritedFromTypeName="ICodeVisitor">outArgument != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAnonymousDelegate)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAnonymousDelegate)" inheritedFromTypeName="ICodeVisitor">anonymousDelegate != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ISizeOf)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ISizeOf)" inheritedFromTypeName="ICodeVisitor">sizeOf != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IUnaryPlus)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IUnaryPlus)" inheritedFromTypeName="ICodeVisitor">unaryPlus != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ISubtraction)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ISubtraction)" inheritedFromTypeName="ICodeVisitor">subtraction != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILabeledStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILabeledStatement)" inheritedFromTypeName="ICodeVisitor">labeledStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IDebuggerBreakStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IDebuggerBreakStatement)" inheritedFromTypeName="ICodeVisitor">debuggerBreakStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IMultiplication)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IMultiplication)" inheritedFromTypeName="ICodeVisitor">multiplication != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICopyMemoryStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICopyMemoryStatement)" inheritedFromTypeName="ICodeVisitor">copyMemoryStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IYieldBreakStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IYieldBreakStatement)" inheritedFromTypeName="ICodeVisitor">yieldBreakStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IExpressionStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IExpressionStatement)" inheritedFromTypeName="ICodeVisitor">expressionStatement != null</requires>
+    <member name="M:Microsoft.Cci.DummyBlock.Dispatch(Microsoft.Cci.ICodeVisitor)">
+      <requires inheritedFrom="M:Microsoft.Cci.IStatement.Dispatch(Microsoft.Cci.ICodeVisitor)" inheritedFromTypeName="IStatement">visitor != null</requires>
     </member>
     <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBlockExpression)">
       <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBlockExpression)" inheritedFromTypeName="ICodeVisitor">blockExpression != null</requires>
     </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBreakStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBreakStatement)" inheritedFromTypeName="ICodeVisitor">breakStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBitwiseOr)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBitwiseOr)" inheritedFromTypeName="ICodeVisitor">bitwiseOr != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILockStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILockStatement)" inheritedFromTypeName="ICodeVisitor">lockStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IMakeTypedReference)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IMakeTypedReference)" inheritedFromTypeName="ICodeVisitor">makeTypedReference != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IPointerCall)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IPointerCall)" inheritedFromTypeName="ICodeVisitor">pointerCall != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ISwitchStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ISwitchStatement)" inheritedFromTypeName="ICodeVisitor">switchStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IPushStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IPushStatement)" inheritedFromTypeName="ICodeVisitor">pushStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IStackArrayCreate)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IStackArrayCreate)" inheritedFromTypeName="ICodeVisitor">stackArrayCreate != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IForEachStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IForEachStatement)" inheritedFromTypeName="ICodeVisitor">forEachStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILeftShift)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILeftShift)" inheritedFromTypeName="ICodeVisitor">leftShift != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICatchClause)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICatchClause)" inheritedFromTypeName="ICodeVisitor">catchClause != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IThrowStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IThrowStatement)" inheritedFromTypeName="ICodeVisitor">throwStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAddition)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAddition)" inheritedFromTypeName="ICodeVisitor">addition != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICheckIfInstance)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICheckIfInstance)" inheritedFromTypeName="ICodeVisitor">checkIfInstance != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IRethrowStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IRethrowStatement)" inheritedFromTypeName="ICodeVisitor">rethrowStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IConversion)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IConversion)" inheritedFromTypeName="ICodeVisitor">conversion != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGetTypeOfTypedReference)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGetTypeOfTypedReference)" inheritedFromTypeName="ICodeVisitor">getTypeOfTypedReference != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ITypeOf)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ITypeOf)" inheritedFromTypeName="ICodeVisitor">typeOf != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGreaterThan)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGreaterThan)" inheritedFromTypeName="ICodeVisitor">greaterThan != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILogicalNot)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILogicalNot)" inheritedFromTypeName="ICodeVisitor">logicalNot != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICompileTimeConstant)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICompileTimeConstant)" inheritedFromTypeName="ICodeVisitor">constant != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IPopValue)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IPopValue)" inheritedFromTypeName="ICodeVisitor">popValue != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAssertStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAssertStatement)" inheritedFromTypeName="ICodeVisitor">assertStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IVectorLength)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IVectorLength)" inheritedFromTypeName="ICodeVisitor">vectorLength != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAddressDereference)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAddressDereference)" inheritedFromTypeName="ICodeVisitor">addressDereference != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IArrayIndexer)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IArrayIndexer)" inheritedFromTypeName="ICodeVisitor">arrayIndexer != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAddressableExpression)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAddressableExpression)" inheritedFromTypeName="ICodeVisitor">addressableExpression != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IConditional)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IConditional)" inheritedFromTypeName="ICodeVisitor">conditional != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.INotEquality)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.INotEquality)" inheritedFromTypeName="ICodeVisitor">notEquality != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IYieldReturnStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IYieldReturnStatement)" inheritedFromTypeName="ICodeVisitor">yieldReturnStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IOnesComplement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IOnesComplement)" inheritedFromTypeName="ICodeVisitor">onesComplement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IReturnStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IReturnStatement)" inheritedFromTypeName="ICodeVisitor">returnStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IRuntimeArgumentHandleExpression)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IRuntimeArgumentHandleExpression)" inheritedFromTypeName="ICodeVisitor">runtimeArgumentHandleExpression != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGetValueOfTypedReference)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGetValueOfTypedReference)" inheritedFromTypeName="ICodeVisitor">getValueOfTypedReference != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBlockStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBlockStatement)" inheritedFromTypeName="ICodeVisitor">block != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAssumeStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAssumeStatement)" inheritedFromTypeName="ICodeVisitor">assumeStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAssignment)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAssignment)" inheritedFromTypeName="ICodeVisitor">assignment != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ITargetExpression)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ITargetExpression)" inheritedFromTypeName="ICodeVisitor">targetExpression != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICastIfPossible)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICastIfPossible)" inheritedFromTypeName="ICodeVisitor">castIfPossible != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IEquality)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IEquality)" inheritedFromTypeName="ICodeVisitor">equality != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ISwitchCase)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ISwitchCase)" inheritedFromTypeName="ICodeVisitor">switchCase != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IFillMemoryStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IFillMemoryStatement)" inheritedFromTypeName="ICodeVisitor">fillMemoryStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILessThan)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILessThan)" inheritedFromTypeName="ICodeVisitor">lessThan != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ITryCatchFinallyStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ITryCatchFinallyStatement)" inheritedFromTypeName="ICodeVisitor">tryCatchFilterFinallyStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILocalDeclarationStatement)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILocalDeclarationStatement)" inheritedFromTypeName="ICodeVisitor">localDeclarationStatement != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IOldValue)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IOldValue)" inheritedFromTypeName="ICodeVisitor">oldValue != null</requires>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAnonymousDelegate)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAnonymousDelegate)" inheritedFromTypeName="ICodeVisitor">anonymousDelegate != null</requires>
     </member>
     <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBoundExpression)">
       <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBoundExpression)" inheritedFromTypeName="ICodeVisitor">boundExpression != null</requires>
     </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IRightShift)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IRightShift)" inheritedFromTypeName="ICodeVisitor">rightShift != null</requires>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ISizeOf)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ISizeOf)" inheritedFromTypeName="ICodeVisitor">sizeOf != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IMakeTypedReference)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IMakeTypedReference)" inheritedFromTypeName="ICodeVisitor">makeTypedReference != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IYieldBreakStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IYieldBreakStatement)" inheritedFromTypeName="ICodeVisitor">yieldBreakStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICompileTimeConstant)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICompileTimeConstant)" inheritedFromTypeName="ICodeVisitor">constant != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IOldValue)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IOldValue)" inheritedFromTypeName="ICodeVisitor">oldValue != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ISubtraction)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ISubtraction)" inheritedFromTypeName="ICodeVisitor">subtraction != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IModulus)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IModulus)" inheritedFromTypeName="ICodeVisitor">modulus != null</requires>
     </member>
     <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IDupValue)">
       <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IDupValue)" inheritedFromTypeName="ICodeVisitor">dupValue != null</requires>
     </member>
-    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IUnaryNegation)">
-      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IUnaryNegation)" inheritedFromTypeName="ICodeVisitor">unaryNegation != null</requires>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IWhileDoStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IWhileDoStatement)" inheritedFromTypeName="ICodeVisitor">whileDoStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGetTypeOfTypedReference)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGetTypeOfTypedReference)" inheritedFromTypeName="ICodeVisitor">getTypeOfTypedReference != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.INamedArgument)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.INamedArgument)" inheritedFromTypeName="ICodeVisitor">namedArgument != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IForStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IForStatement)" inheritedFromTypeName="ICodeVisitor">forStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IEquality)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IEquality)" inheritedFromTypeName="ICodeVisitor">equality != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IVectorLength)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IVectorLength)" inheritedFromTypeName="ICodeVisitor">vectorLength != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IDefaultValue)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IDefaultValue)" inheritedFromTypeName="ICodeVisitor">defaultValue != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGotoSwitchCaseStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGotoSwitchCaseStatement)" inheritedFromTypeName="ICodeVisitor">gotoSwitchCaseStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IConditional)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IConditional)" inheritedFromTypeName="ICodeVisitor">conditional != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IExpressionStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IExpressionStatement)" inheritedFromTypeName="ICodeVisitor">expressionStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IUnaryPlus)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IUnaryPlus)" inheritedFromTypeName="ICodeVisitor">unaryPlus != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IDoUntilStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IDoUntilStatement)" inheritedFromTypeName="ICodeVisitor">doUntilStatement != null</requires>
     </member>
     <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICreateArray)">
       <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICreateArray)" inheritedFromTypeName="ICodeVisitor">createArray != null</requires>
     </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IContinueStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IContinueStatement)" inheritedFromTypeName="ICodeVisitor">continueStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IPointerCall)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IPointerCall)" inheritedFromTypeName="ICodeVisitor">pointerCall != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IUnaryNegation)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IUnaryNegation)" inheritedFromTypeName="ICodeVisitor">unaryNegation != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IRethrowStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IRethrowStatement)" inheritedFromTypeName="ICodeVisitor">rethrowStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICreateObjectInstance)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICreateObjectInstance)" inheritedFromTypeName="ICodeVisitor">createObjectInstance != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IPushStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IPushStatement)" inheritedFromTypeName="ICodeVisitor">pushStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGreaterThanOrEqual)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGreaterThanOrEqual)" inheritedFromTypeName="ICodeVisitor">greaterThanOrEqual != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ITypeOf)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ITypeOf)" inheritedFromTypeName="ICodeVisitor">typeOf != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILockStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILockStatement)" inheritedFromTypeName="ICodeVisitor">lockStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IResourceUseStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IResourceUseStatement)" inheritedFromTypeName="ICodeVisitor">resourceUseStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILeftShift)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILeftShift)" inheritedFromTypeName="ICodeVisitor">leftShift != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICheckIfInstance)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICheckIfInstance)" inheritedFromTypeName="ICodeVisitor">checkIfInstance != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ITokenOf)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ITokenOf)" inheritedFromTypeName="ICodeVisitor">tokenOf != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IDebuggerBreakStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IDebuggerBreakStatement)" inheritedFromTypeName="ICodeVisitor">debuggerBreakStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILessThanOrEqual)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILessThanOrEqual)" inheritedFromTypeName="ICodeVisitor">lessThanOrEqual != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IFillMemoryStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IFillMemoryStatement)" inheritedFromTypeName="ICodeVisitor">fillMemoryStatement != null</requires>
+    </member>
     <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IExclusiveOr)">
       <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IExclusiveOr)" inheritedFromTypeName="ICodeVisitor">exclusiveOr != null</requires>
     </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ITryCatchFinallyStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ITryCatchFinallyStatement)" inheritedFromTypeName="ICodeVisitor">tryCatchFilterFinallyStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IDivision)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IDivision)" inheritedFromTypeName="ICodeVisitor">division != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICopyMemoryStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICopyMemoryStatement)" inheritedFromTypeName="ICodeVisitor">copyMemoryStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IConditionalStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IConditionalStatement)" inheritedFromTypeName="ICodeVisitor">conditionalStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IRuntimeArgumentHandleExpression)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IRuntimeArgumentHandleExpression)" inheritedFromTypeName="ICodeVisitor">runtimeArgumentHandleExpression != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IThrowStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IThrowStatement)" inheritedFromTypeName="ICodeVisitor">throwStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAddressableExpression)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAddressableExpression)" inheritedFromTypeName="ICodeVisitor">addressableExpression != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICreateDelegateInstance)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICreateDelegateInstance)" inheritedFromTypeName="ICodeVisitor">createDelegateInstance != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IStackArrayCreate)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IStackArrayCreate)" inheritedFromTypeName="ICodeVisitor">stackArrayCreate != null</requires>
+    </member>
     <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IMethodCall)">
       <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IMethodCall)" inheritedFromTypeName="ICodeVisitor">methodCall != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IThisReference)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IThisReference)" inheritedFromTypeName="ICodeVisitor">thisReference != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IOnesComplement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IOnesComplement)" inheritedFromTypeName="ICodeVisitor">onesComplement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ISwitchCase)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ISwitchCase)" inheritedFromTypeName="ICodeVisitor">switchCase != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IMultiplication)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IMultiplication)" inheritedFromTypeName="ICodeVisitor">multiplication != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IForEachStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IForEachStatement)" inheritedFromTypeName="ICodeVisitor">forEachStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ITargetExpression)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ITargetExpression)" inheritedFromTypeName="ICodeVisitor">targetExpression != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGetValueOfTypedReference)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGetValueOfTypedReference)" inheritedFromTypeName="ICodeVisitor">getValueOfTypedReference != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.INotEquality)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.INotEquality)" inheritedFromTypeName="ICodeVisitor">notEquality != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGotoStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGotoStatement)" inheritedFromTypeName="ICodeVisitor">gotoStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAddressOf)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAddressOf)" inheritedFromTypeName="ICodeVisitor">addressOf != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ISwitchStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ISwitchStatement)" inheritedFromTypeName="ICodeVisitor">switchStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBitwiseAnd)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBitwiseAnd)" inheritedFromTypeName="ICodeVisitor">bitwiseAnd != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAddressDereference)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAddressDereference)" inheritedFromTypeName="ICodeVisitor">addressDereference != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBlockStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBlockStatement)" inheritedFromTypeName="ICodeVisitor">block != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAssignment)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAssignment)" inheritedFromTypeName="ICodeVisitor">assignment != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IOutArgument)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IOutArgument)" inheritedFromTypeName="ICodeVisitor">outArgument != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICastIfPossible)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICastIfPossible)" inheritedFromTypeName="ICodeVisitor">castIfPossible != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAssertStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAssertStatement)" inheritedFromTypeName="ICodeVisitor">assertStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAddition)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAddition)" inheritedFromTypeName="ICodeVisitor">addition != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IPopValue)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IPopValue)" inheritedFromTypeName="ICodeVisitor">popValue != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IGreaterThan)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IGreaterThan)" inheritedFromTypeName="ICodeVisitor">greaterThan != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IReturnStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IReturnStatement)" inheritedFromTypeName="ICodeVisitor">returnStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IReturnValue)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IReturnValue)" inheritedFromTypeName="ICodeVisitor">returnValue != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IRefArgument)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IRefArgument)" inheritedFromTypeName="ICodeVisitor">refArgument != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILabeledStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILabeledStatement)" inheritedFromTypeName="ICodeVisitor">labeledStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IEmptyStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IEmptyStatement)" inheritedFromTypeName="ICodeVisitor">emptyStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILogicalNot)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILogicalNot)" inheritedFromTypeName="ICodeVisitor">logicalNot != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILocalDeclarationStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILocalDeclarationStatement)" inheritedFromTypeName="ICodeVisitor">localDeclarationStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ILessThan)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ILessThan)" inheritedFromTypeName="ICodeVisitor">lessThan != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IConversion)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IConversion)" inheritedFromTypeName="ICodeVisitor">conversion != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBreakStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBreakStatement)" inheritedFromTypeName="ICodeVisitor">breakStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IAssumeStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IAssumeStatement)" inheritedFromTypeName="ICodeVisitor">assumeStatement != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.ICatchClause)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.ICatchClause)" inheritedFromTypeName="ICodeVisitor">catchClause != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IBitwiseOr)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IBitwiseOr)" inheritedFromTypeName="ICodeVisitor">bitwiseOr != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IArrayIndexer)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IArrayIndexer)" inheritedFromTypeName="ICodeVisitor">arrayIndexer != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IRightShift)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IRightShift)" inheritedFromTypeName="ICodeVisitor">rightShift != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.CodeTraverser.Dispatcher.Visit(Microsoft.Cci.IYieldReturnStatement)">
+      <requires inheritedFrom="M:Microsoft.Cci.ICodeVisitor.Visit(Microsoft.Cci.IYieldReturnStatement)" inheritedFromTypeName="ICodeVisitor">yieldReturnStatement != null</requires>
     </member>
     <member name="P:Microsoft.Cci.Contracts.DummyMethodContract.Locations">
       <getter>
@@ -6593,23 +6779,14 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="P:Microsoft.Cci.Contracts.DummyPostcondition.Locations">
-      <getter>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
-        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
-      </getter>
-    </member>
-    <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.ILoopContract)">
-      <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ILoopContract)" inheritedFromTypeName="ICodeAndContractVisitor">loopContract != null</requires>
+    <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.IPostcondition)">
+      <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IPostcondition)" inheritedFromTypeName="ICodeAndContractVisitor">postCondition != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.ITypeInvariant)">
       <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ITypeInvariant)" inheritedFromTypeName="ICodeAndContractVisitor">typeInvariant != null</requires>
     </member>
-    <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.IPrecondition)">
-      <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IPrecondition)" inheritedFromTypeName="ICodeAndContractVisitor">precondition != null</requires>
-    </member>
-    <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.IPostcondition)">
-      <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IPostcondition)" inheritedFromTypeName="ICodeAndContractVisitor">postCondition != null</requires>
+    <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.IMethodContract)">
+      <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodContract)" inheritedFromTypeName="ICodeAndContractVisitor">methodContract != null</requires>
     </member>
     <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.ITypeContract)">
       <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ITypeContract)" inheritedFromTypeName="ICodeAndContractVisitor">typeContract != null</requires>
@@ -6617,11 +6794,20 @@
     <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.ILoopInvariant)">
       <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ILoopInvariant)" inheritedFromTypeName="ICodeAndContractVisitor">loopInvariant != null</requires>
     </member>
+    <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.IPrecondition)">
+      <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IPrecondition)" inheritedFromTypeName="ICodeAndContractVisitor">precondition != null</requires>
+    </member>
+    <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.ILoopContract)">
+      <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.ILoopContract)" inheritedFromTypeName="ICodeAndContractVisitor">loopContract != null</requires>
+    </member>
     <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.IThrownException)">
       <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IThrownException)" inheritedFromTypeName="ICodeAndContractVisitor">thrownException != null</requires>
     </member>
-    <member name="M:Microsoft.Cci.Contracts.CodeAndContractTraverser.ContractElementDispatcher.Visit(Microsoft.Cci.Contracts.IMethodContract)">
-      <requires inheritedFrom="M:Microsoft.Cci.Contracts.ICodeAndContractVisitor.Visit(Microsoft.Cci.Contracts.IMethodContract)" inheritedFromTypeName="ICodeAndContractVisitor">methodContract != null</requires>
+    <member name="P:Microsoft.Cci.Contracts.DummyPostcondition.Locations">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
+        <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.Contracts.DummyTypeContract.Locations">
       <getter>
