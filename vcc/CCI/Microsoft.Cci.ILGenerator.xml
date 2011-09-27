@@ -720,15 +720,13 @@
             Otherwise returns the value of the Name property and sets isCompilerGenerated to true.
             </summary>
     </member>
-    <member name="P:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#ILocalDefinition#CustomModifiers">
-      <getter>
-        <requires inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">this.IsModified</requires>
-        <ensures inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
-      </getter>
-    </member>
     <member name="M:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#IObjectWithLocations#get_Locations">
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;() != null</ensures>
       <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#ILocalDefinition#get_CustomModifiers">
+      <requires inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">this.IsModified</requires>
+      <ensures inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
     </member>
     <member name="P:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#IObjectWithLocations#Locations">
       <getter>
@@ -736,17 +734,48 @@
         <ensures inheritedFrom="M:Microsoft.Cci.IObjectWithLocations.get_Locations" inheritedFromTypeName="IObjectWithLocations">Contract.ForAll(Contract.Result&lt;IEnumerable&lt;ILocation&gt;&gt;(), x =&gt; x != null)</ensures>
       </getter>
     </member>
-    <member name="M:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#ILocalDefinition#get_CustomModifiers">
-      <requires inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">this.IsModified</requires>
-      <ensures inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
+    <member name="P:Microsoft.Cci.GeneratorLocal.Microsoft#Cci#ILocalDefinition#CustomModifiers">
+      <getter>
+        <requires inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">this.IsModified</requires>
+        <ensures inheritedFrom="M:Microsoft.Cci.ILocalDefinition.get_CustomModifiers" inheritedFromTypeName="ILocalDefinition">Contract.Result&lt;IEnumerable&lt;ICustomModifier&gt;&gt;() != null</ensures>
+      </getter>
+    </member>
+    <member name="P:Microsoft.Cci.ExceptionHandler.Microsoft#Cci#IOperationExceptionInformation#HandlerEndOffset">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IOperationExceptionInformation.get_HandlerEndOffset" inheritedFromTypeName="IOperationExceptionInformation">Contract.Result&lt;uint&gt;() &gt;= this.HandlerStartOffset</ensures>
+      </getter>
+    </member>
+    <member name="M:Microsoft.Cci.ExceptionHandler.Microsoft#Cci#IOperationExceptionInformation#get_HandlerStartOffset">
+      <ensures inheritedFrom="M:Microsoft.Cci.IOperationExceptionInformation.get_HandlerStartOffset" inheritedFromTypeName="IOperationExceptionInformation">Contract.Result&lt;uint&gt;() &gt; this.FilterDecisionStartOffset</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.ExceptionHandler.Microsoft#Cci#IOperationExceptionInformation#TryEndOffset">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IOperationExceptionInformation.get_TryEndOffset" inheritedFromTypeName="IOperationExceptionInformation">Contract.Result&lt;uint&gt;() &gt;= this.TryStartOffset</ensures>
+      </getter>
     </member>
     <member name="P:Microsoft.Cci.ExceptionHandler.Microsoft#Cci#IOperationExceptionInformation#ExceptionType">
       <getter>
         <ensures inheritedFrom="M:Microsoft.Cci.IOperationExceptionInformation.get_ExceptionType" inheritedFromTypeName="IOperationExceptionInformation">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
       </getter>
     </member>
+    <member name="M:Microsoft.Cci.ExceptionHandler.Microsoft#Cci#IOperationExceptionInformation#get_TryEndOffset">
+      <ensures inheritedFrom="M:Microsoft.Cci.IOperationExceptionInformation.get_TryEndOffset" inheritedFromTypeName="IOperationExceptionInformation">Contract.Result&lt;uint&gt;() &gt;= this.TryStartOffset</ensures>
+    </member>
+    <member name="M:Microsoft.Cci.ExceptionHandler.Microsoft#Cci#IOperationExceptionInformation#get_HandlerEndOffset">
+      <ensures inheritedFrom="M:Microsoft.Cci.IOperationExceptionInformation.get_HandlerEndOffset" inheritedFromTypeName="IOperationExceptionInformation">Contract.Result&lt;uint&gt;() &gt;= this.HandlerStartOffset</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.ExceptionHandler.Microsoft#Cci#IOperationExceptionInformation#HandlerStartOffset">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IOperationExceptionInformation.get_HandlerStartOffset" inheritedFromTypeName="IOperationExceptionInformation">Contract.Result&lt;uint&gt;() &gt; this.FilterDecisionStartOffset</ensures>
+      </getter>
+    </member>
     <member name="M:Microsoft.Cci.ExceptionHandler.Microsoft#Cci#IOperationExceptionInformation#get_ExceptionType">
       <ensures inheritedFrom="M:Microsoft.Cci.IOperationExceptionInformation.get_ExceptionType" inheritedFromTypeName="IOperationExceptionInformation">Contract.Result&lt;ITypeReference&gt;() != null</ensures>
+    </member>
+    <member name="P:Microsoft.Cci.Operation.Location">
+      <getter>
+        <ensures inheritedFrom="M:Microsoft.Cci.IOperation.get_Location" inheritedFromTypeName="IOperation">Contract.Result&lt;ILocation&gt;() != null</ensures>
+      </getter>
     </member>
   </members>
 </doc>
