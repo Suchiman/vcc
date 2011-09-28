@@ -551,7 +551,7 @@ namespace Microsoft.Research.Vcc
   let pruneBy (env:Helper.Env) funcName decls = env.SwPruning.Run doPruneBy funcName decls
   
   let dumpDecls msg showTypes decls = 
-    printf ">>> %s\n" msg
+    printf ">>> %s\r\n" msg
     for (d:Top) in decls do printf "%s" (d.ToStringWT(showTypes))
     decls
 
