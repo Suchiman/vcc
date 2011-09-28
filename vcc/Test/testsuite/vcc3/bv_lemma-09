@@ -1,0 +1,11 @@
+`/newsyntax
+#include <vcc.h>
+
+void foo() {
+  _(assert {:bv} \forall unsigned int i; i == i)
+}
+`
+testcase(4,32) : warning VC9121: failed to infer triggers for '\forall unsigned int i; i == i)'
+Verification of foo succeeded.
+Verification of foo#bv_lemma#0 succeeded.
+`

@@ -1,0 +1,21 @@
+`/newsyntax
+#include<vcc.h>
+
+typedef struct  {
+  int x; 
+  _(invariant x > 0)
+} *PX;
+
+typedef struct  {
+  int x; 
+  _(invariant x > 0)
+} *PY, Y;
+
+void foo(PX x, PY y)
+{
+}
+`
+Verification of PX#adm succeeded.
+Verification of Y#adm succeeded.
+Verification of foo succeeded.
+`
