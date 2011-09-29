@@ -204,6 +204,10 @@ _(template<typename T> T* \castlike_retype(T*);)
 _(template<typename T> T \castlike_by_claim(T v, \claim c);)
 _(template<typename T> T \castlike_precise(T v);)
 
+_(\object \castlike_blob(\object ptr, \integer sz);)
+_(template<typename T> T* \castlike_unblobify(T*);)
+_(template<typename T> T* \castlike_blobify(T*);)
+
 // the VccAtomicOp AST class uses this
 _(void _vcc_atomic_op(\object, ...);)
 
