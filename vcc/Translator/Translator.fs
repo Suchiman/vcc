@@ -1582,6 +1582,9 @@ namespace Microsoft.Research.Vcc
             | C.Expr.VarWrite (_, vs, C.Expr.Call (c, fn, targs, args)) -> 
               doCall c vs (Some fn) fn.Name targs args @ List.map (fun v -> ctx.AssumeLocalIs c.Token v) vs
               
+            | C.Expr.VarWrite (_, vs, C.Expr.Macro (c, ("_vcc_blobify"|"_vcc_unblobify" as name), args)) -> 
+              doCall c vs None name [] args @ List.map (fun v -> ctx.AssumeLocalIs c.Token v) vs
+              
             | C.Expr.Stmt (_, C.Expr.Call (c, fn, targs, args))        -> 
               doCall c [] (Some fn) fn.Name targs args
             | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|"_vcc_set_owns"|

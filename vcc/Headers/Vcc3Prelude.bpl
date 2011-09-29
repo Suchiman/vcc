@@ -57,6 +57,7 @@ const unique $ctype_ptr : $ctype_branch;
 const unique $ctype_spec_ptr : $ctype_branch;
 const unique $ctype_map : $ctype_branch;
 const unique $ctype_array : $ctype_branch;
+const unique $ctype_blob : $ctype_branch;
 
 // inverse functions here (unptr_to, map_domain, map_range) are for the prover
 // so it knows that int*!=short*, i.e. * is injective
@@ -2939,6 +2940,59 @@ axiom (forall S:$state, id:int, length:int ::
   $good_state(S) ==> 
     $in_range_phys_ptr($get_string_literal(id, length)) &&
     $is_thread_local_array(S, $get_string_literal(id, length), ^^i1, length + 1));
+
+// -----------------------------------------------------------------------
+// Memory reinterpretation
+// -----------------------------------------------------------------------
+
+
+function $address_root(rf:int, tp:$ctype) : $ptr;
+axiom (forall rf:int, tp:$ctype :: {$address_root(rf, tp)}
+  $addr($address_root(rf, tp)) == rf && $typ($address_root(rf, tp)) == tp);
+
+function $blob_type(sz:int) : $ctype;
+axiom (forall s:int :: {$blob_type(s)} 
+     true
+  && $sizeof($blob_type(s)) == s 
+  && $is_non_primitive($blob_type(s))
+  && !$is_claimable($blob_type(s))
+  && $type_branch($blob_type(s)) == $ctype_blob
+  && $is_sequential_field($f_owns($blob_type(s)))
+  && $field_offset($f_root($blob_type(s))) == 0
+);
+axiom (forall S0,S:$state, p:$ptr, s:int :: {$inv2(S0, S, p, $blob_type(s))}
+    $inv2(S0, S, p, $blob_type(s)) <==> $owns(S, p) == $set_empty());
+axiom (forall S:$state, sz:int, p, a:$ptr ::
+  {$in(p, $composite_extent(S, a, $blob_type(sz)))}
+  $in(p, $composite_extent(S, a, $blob_type(sz))) <==> p == a);
+
+
+function {:inline} $blob(p:$ptr, sz:int) : $ptr
+  { $address_root($addr(p), $blob_type(sz)) }
+
+function {:inline} $mutable_root(S:$state, p:$ptr) : bool
+  { $extent_mutable(S, p) && $is_object_root(S, p) && $timestamp_is_now(S, p) }
+
+procedure $blobify(p:$ptr) returns(r:$ptr);
+  // writes extent(p)
+  modifies $s;
+  // TOKEN: the reinterpreted object is not embedded inside of another object
+  requires $is_object_root($s, p); // TODO this needs to be replaced with something weaker
+  ensures r == $blob(p, $sizeof($typ(p)));
+  ensures $mutable_root($s, r);
+  ensures $modifies(old($s), $s, $extent(old($s), p));
+
+procedure $unblobify(p:$ptr) returns(r:$ptr);
+  // writes _(blob sizeof(p))p
+  modifies $s;
+  ensures $modifies(old($s), $s, $set_singleton($blob(p, $sizeof($typ(p)))));
+  ensures $addr(r) == $addr(p);
+  ensures $typ(r) == $typ(p);
+  ensures $in_range_phys_ptr(r);
+  ensures $extent_mutable($s, r);
+  ensures $extent_is_fresh(old($s), $s, r);
+  ensures $is_object_root($s, r);
+
 
 // ----------------------------------------------------------------------------
 // Datatypes

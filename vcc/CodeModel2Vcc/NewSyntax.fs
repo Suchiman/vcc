@@ -180,6 +180,16 @@ let init (helper:Helper.Env) =
         Some (Macro (ec, "_vcc_retype", List.map self args))
       | Macro (ec, "\\castlike_by_claim", [expr; cl]) ->
         Some (Old (ec, Macro ({ expr.Common with Type = Type.MathState }, "_vcc_by_claim", [cl]), expr))
+      | Macro (ec, "\\castlike_blob", args) ->
+        Some (Macro (ec, "prelude_blob", List.map self args))
+      | Macro (ec, "\\castlike_unblobify", args) ->
+        let expr' = Macro (ec, "_vcc_unblobify", List.map self args)
+        let decls, rf = cache helper "blob" expr' VarKind.Local 
+        Some (Expr.MkBlock (decls @ [rf]))
+      | Macro (ec, "\\castlike_blobify", args) ->
+        let expr' = Macro (ec, "_vcc_blobify", List.map self args)
+        let decls, rf = cache helper "blob" expr' VarKind.Local 
+        Some (Expr.MkBlock (decls @ [rf]))
       | _ -> None
       
     let rewriteBvAssertAsBvLemma self = function
