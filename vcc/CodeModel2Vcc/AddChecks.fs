@@ -246,15 +246,14 @@ namespace Microsoft.Research.Vcc
         let wrassert = propAssert 8507 "extent({0}) is writable" "writes_check" w
         Some (Expr.MkBlock [notInTestsuite istyped; wrassert; Macro(ec, "havoc", [self obj; t])])
         
-      | Macro (ec, "_vcc_blobify", [obj]) as expr ->
+      | CallMacro (ec, "_vcc_blobify", _, [obj]) as expr ->
         let w = Macro ({ obj.Common with Type = Type.PtrSet }, "_vcc_extent", [obj])
         let wrassert = propAssert 8507 "extent({0}) is writable" "writes_check" w
         Some (Expr.MkBlock [wrassert; expr])
         
       | Macro (ec, "_vcc_unblobify", [obj]) as expr ->
-        let size = obj.Type.Deref.SizeOf
-        let w = Macro (obj.Common, "prelude_blob", [obj; mkInt size])
-        let wrassert = propAssert 8507 ("_(blob " + size.ToString() + ") ({0}) is writable") "writes_check" w
+        let w = Macro (obj.Common, "prelude_blob_of", [obj])
+        let wrassert = propAssert 8507 ("_(blob ...) ({0}) is writable") "writes_check" w
         Some (Expr.MkBlock [wrassert; expr])
         
       | Call (c, ({ Name = "_vcc_from_bytes"|"_vcc_to_bytes"} as fn), _, args) as call ->
