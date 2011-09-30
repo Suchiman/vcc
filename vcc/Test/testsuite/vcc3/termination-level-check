@@ -1,0 +1,19 @@
+`/newsyntax
+#include <vcc.h>
+
+_(abstract
+void foo()
+  _(level 1)
+{
+})
+
+_(abstract
+void bar()
+{
+  foo();
+})
+`
+testcase(12,3) : warning VC9319: [possible unsoundness]: calling function 'foo' (level 1) from lower-level function ('bar' at level 0)
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
