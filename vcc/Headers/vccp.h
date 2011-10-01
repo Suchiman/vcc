@@ -205,11 +205,16 @@ _(template<typename T> T* \castlike_retype(T*);)
 _(template<typename T> T \castlike_by_claim(T v, \claim c);)
 _(template<typename T> T \castlike_precise(T v);)
 
-_(\object \castlike_blob(\object ptr, \integer sz);)
+_(\object \castlike_blob(\object ptr, \integer sz))
+_(\object \castlike_blob_of(\object ptr))
 _(template<typename T> T* \castlike_unblobify(T*);)
 //_(void* \castlike_blobify(void*);)
 
 _(void \blobify(\object);)
+_(void \join_blobs(\object a, \object b)
+  _(writes a, b))
+_(void \split_blob(\object a, \integer offset)
+  _(writes a))
 
 _(template<typename T> T* \castlike_root_array(T*, \integer);)
 _(template<typename T> T* \castlike_root_index(T*, \integer);)
