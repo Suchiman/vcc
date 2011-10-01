@@ -143,6 +143,9 @@ _(bool _(_boogie1) \wrapped_with_deep_domain(\object))
 _(\objset \composite_extent(\object))
 _(\object _(_boogie1) \domain_root(\object))
 _(\integer _(_boogie0) \index_within(\object,\object))
+_(\integer _(_boogie0) \sizeof_object(\object))
+_(bool _(_boogie0) \in_range_phys_ptr(\object))
+_(bool _(_boogie0) \in_range_spec_ptr(\object))
 
 _(template<typename T> \integer \size(T dt);)
 
@@ -204,9 +207,19 @@ _(template<typename T> T* \castlike_retype(T*);)
 _(template<typename T> T \castlike_by_claim(T v, \claim c);)
 _(template<typename T> T \castlike_precise(T v);)
 
-_(\object \castlike_blob(\object ptr, \integer sz);)
+_(\object \castlike_blob(\object ptr, \integer sz))
+_(\object \castlike_blob_of(\object ptr))
 _(template<typename T> T* \castlike_unblobify(T*);)
-_(template<typename T> T* \castlike_blobify(T*);)
+//_(void* \castlike_blobify(void*);)
+
+_(void \blobify(\object);)
+_(void \join_blobs(\object a, \object b)
+  _(writes a, b))
+_(void \split_blob(\object a, \integer offset)
+  _(writes a))
+
+_(template<typename T> T* \castlike_root_array(T*, \integer);)
+_(template<typename T> T* \castlike_root_index(T*, \integer);)
 
 // the VccAtomicOp AST class uses this
 _(void _vcc_atomic_op(\object, ...);)

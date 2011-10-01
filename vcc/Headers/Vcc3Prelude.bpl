@@ -85,6 +85,9 @@ axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $map_domain($map_t(#r,#d))
 
 function $sizeof($ctype): int; // in bytes
 
+function {:inline} $sizeof_object(p:$ptr) : int
+  { $sizeof($typ(p)) }
+
 // for types for which $in_range_t(...) is defined
 function $as_in_range_t($ctype) : $ctype;
 
@@ -2970,28 +2973,64 @@ axiom (forall S:$state, sz:int, p, a:$ptr ::
 function {:inline} $blob(p:$ptr, sz:int) : $ptr
   { $address_root($addr(p), $blob_type(sz)) }
 
+function {:inline} $blob_of(p:$ptr) : $ptr
+  { $blob(p, $sizeof($typ(p))) }
+
 function {:inline} $mutable_root(S:$state, p:$ptr) : bool
   { $extent_mutable(S, p) && $is_object_root(S, p) && $timestamp_is_now(S, p) }
 
-procedure $blobify(p:$ptr) returns(r:$ptr);
+function {:inline} $root_array(p:$ptr, sz:int) : $ptr
+  { $address_root($addr(p), $array($typ(p), sz)) }
+
+function {:inline} $root_index(p:$ptr, sz:int) : $ptr
+  { $dot($root_array(p, sz), $array_emb($typ(p), sz)) }
+
+procedure $blobify(p:$ptr);
   // writes extent(p)
   modifies $s;
   // TOKEN: the reinterpreted object is not embedded inside of another object
   requires $is_object_root($s, p); // TODO this needs to be replaced with something weaker
-  ensures r == $blob(p, $sizeof($typ(p)));
-  ensures $mutable_root($s, r);
+  // TOKEN: the reinterpreted object sits in physical memory
+  requires $in_range_phys_ptr(p);
+  ensures $mutable_root($s, $blob(p, $sizeof($typ(p))));
   ensures $modifies(old($s), $s, $extent(old($s), p));
 
 procedure $unblobify(p:$ptr) returns(r:$ptr);
   // writes _(blob sizeof(p))p
   modifies $s;
   ensures $modifies(old($s), $s, $set_singleton($blob(p, $sizeof($typ(p)))));
-  ensures $addr(r) == $addr(p);
-  ensures $typ(r) == $typ(p);
-  ensures $in_range_phys_ptr(r);
+  ensures $in_range_phys_ptr(r); // all blobs sit in physical memory
   ensures $extent_mutable($s, r);
   ensures $extent_is_fresh(old($s), $s, r);
   ensures $is_object_root($s, r);
+  ensures r == $address_root($addr(p), $typ(p));
+
+procedure $split_blob(p:$ptr, off:int);
+  // writes p
+  modifies $s;
+  // TOKEN: pointer passed is a blob
+  requires p == $blob_of(p);
+  // TOKEN: split position is non-negative
+  requires 0 <= off;
+  // TOKEN: pointer passed is big enough for split
+  requires off <= $sizeof_object(p);
+
+  ensures $mutable_root($s, $blob(p, off));
+  ensures $mutable_root($s, $address_root($addr(p) + off, $blob_type($sizeof_object(p) - off)));
+  ensures $modifies(old($s), $s, $set_singleton(p));
+
+procedure $join_blobs(a:$ptr, b:$ptr);
+  // writes a, b
+  modifies $s;
+  // TOKEN: the left pointer passed is a blob
+  requires a == $blob_of(a);
+  // TOKEN: the right pointer passed is a blob
+  requires b == $blob_of(b);
+  // TOKEN: the blobs are aligned properly in memory
+  requires $addr(a) + $sizeof_object(a) == $addr(b);
+
+  ensures $mutable_root($s, $blob(a, $sizeof_object(a) + $sizeof_object(b)));
+  ensures $modifies(old($s), $s, (lambda o:$ptr :: o == a || o == b));
 
 
 // ----------------------------------------------------------------------------

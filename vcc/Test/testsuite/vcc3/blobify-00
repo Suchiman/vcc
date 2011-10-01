@@ -27,14 +27,16 @@ void f2()
   b->x = 20;
   b->a1.x = 10;
   b->a2.y = 20;
-  mfree(_(blobify)b, sizeof(*b));
+  _(blobify b)
+  mfree(b, sizeof(*b));
 }
 
 void f2_fail1()
 {
   struct B * b = _(unblobify) (struct B*)alloc(sizeof(struct B));
   _(wrap &b->a1)
-  mfree(_(blobify)b, sizeof(*b));
+  _(blobify b)
+  mfree(b, sizeof(*b));
 }
 
 void f2_fail2()
@@ -49,9 +51,9 @@ void f2_fail3()
 `
 Verification of f2 succeeded.
 Verification of f2_fail1 failed.
-testcase(36,33) : error VC8507: Assertion 'extent(b) is writable' did not verify.
+testcase(37,27) : error VC8507: Assertion 'extent(b) is writable' did not verify.
 Verification of f2_fail2 failed.
-testcase(41,45) : error VC8507: Assertion '_(blob 20) ((struct B*)alloc(sizeof(struct B) - 1)) is writable' did not verify.
+testcase(43,45) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) - 1)) is writable' did not verify.
 Verification of f2_fail3 failed.
-testcase(46,45) : error VC8507: Assertion '_(blob 20) ((struct B*)alloc(sizeof(struct B) + 1)) is writable' did not verify.
+testcase(48,45) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) + 1)) is writable' did not verify.
 `
