@@ -272,6 +272,12 @@ namespace Microsoft.Research.Vcc
        Expr.Ref (expr.Common, tmp))
 
   let cache helper = cacheEx false helper (fun tmp expr -> Macro (voidBogusEC(), "=", [mkRef tmp; expr]))
+  let cacheMany helper name exprs varKind = 
+    let decls, refs = 
+      exprs 
+        |> List.map (fun e -> cache helper name e varKind)
+        |> List.unzip
+    List.concat decls, refs
   let lateCache helper = cacheEx false helper (fun tmp expr -> VarWrite (voidBogusEC(), [tmp], expr))
   let lateCacheRef helper = cacheEx true helper (fun tmp expr -> VarWrite (voidBogusEC(), [tmp], expr))
 
