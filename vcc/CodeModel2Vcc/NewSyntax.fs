@@ -180,7 +180,7 @@ let init (helper:Helper.Env) =
         Some (Macro (ec, "_vcc_retype", List.map self args))
       | Macro (ec, "\\castlike_by_claim", [expr; cl]) ->
         Some (Old (ec, Macro ({ expr.Common with Type = Type.MathState }, "_vcc_by_claim", [cl]), expr))
-      | Macro (ec, ("\\castlike_blob" | "\\castlike_root_array" | "\\castlike_root_index" as name), args) ->
+      | Macro (ec, ("\\castlike_blob" | "\\castlike_blob_of" | "\\castlike_root_array" | "\\castlike_root_index" as name), args) ->
         Some (Macro (ec, name.Replace ("\\castlike", "prelude"), List.map self args))
       | Macro (ec, "\\castlike_root_array", args) ->
         Some (Macro (ec, "prelude_blob", List.map self args))

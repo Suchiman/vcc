@@ -3005,6 +3005,33 @@ procedure $unblobify(p:$ptr) returns(r:$ptr);
   ensures $is_object_root($s, r);
   ensures r == $address_root($addr(p), $typ(p));
 
+procedure $split_blob(p:$ptr, off:int);
+  // writes p
+  modifies $s;
+  // TOKEN: pointer passed is a blob
+  requires p == $blob_of(p);
+  // TOKEN: split position is non-negative
+  requires 0 <= off;
+  // TOKEN: pointer passed is big enough for split
+  requires off <= $sizeof_object(p);
+
+  ensures $mutable_root($s, $blob(p, off));
+  ensures $mutable_root($s, $address_root($addr(p) + off, $blob_type($sizeof_object(p) - off)));
+  ensures $modifies(old($s), $s, $set_singleton(p));
+
+procedure $join_blobs(a:$ptr, b:$ptr);
+  // writes a, b
+  modifies $s;
+  // TOKEN: the left pointer passed is a blob
+  requires a == $blob_of(a);
+  // TOKEN: the right pointer passed is a blob
+  requires b == $blob_of(b);
+  // TOKEN: the blobs are aligned properly in memory
+  requires $addr(a) + $sizeof_object(a) == $addr(b);
+
+  ensures $mutable_root($s, $blob(a, $sizeof_object(a) + $sizeof_object(b)));
+  ensures $modifies(old($s), $s, (lambda o:$ptr :: o == a || o == b));
+
 
 // ----------------------------------------------------------------------------
 // Datatypes
