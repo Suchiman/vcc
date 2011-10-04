@@ -1,0 +1,10 @@
+`/newsyntax
+#include <vcc.h>
+
+void test()
+{
+  _(assert { } == { })
+}
+`
+Verification of test succeeded.
+`
