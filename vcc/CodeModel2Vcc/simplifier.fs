@@ -641,7 +641,7 @@ namespace Microsoft.Research.Vcc
           addressableLocals.[v] <- (v', Macro(fakeEC Void, "fake_block", def))
           
       let pointsToStruct = function
-        | Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)})) -> true
+        | Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)} as td)) when not td.IsMathStruct ->  true
         | _ -> false
           
       let rec findThem inBody self = function
