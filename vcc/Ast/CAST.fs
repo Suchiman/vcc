@@ -25,6 +25,9 @@ module Microsoft.Research.Vcc.CAST
   let AttrIsolateProof = "isolate_proof"
 
   [<Literal>]
+  let AttrSkipSmoke = "skip_smoke"
+
+  [<Literal>]
   let AttrNoAdmissibility = "no_admissibility"
 
   [<Literal>]
