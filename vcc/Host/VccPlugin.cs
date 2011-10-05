@@ -75,9 +75,14 @@ namespace Microsoft.Research.Vcc
       return GetStringAttrValue(impl, "vcc_extra_options");
     }
 
-    private static bool/*?*/ IsBvLemmaCheck(Implementation impl)
+    private static bool IsBvLemmaCheck(Implementation impl)
     {
       return GetStringAttrValue(impl, "vcc_bv_lemma_check") != null;
+    }
+
+    private static bool HasSkipSmokeAttr(Implementation impl)
+    {
+      return GetStringAttrValue(impl, "vcc_skip_smoke") != null;
     }
 
     private static bool ReParseBoogieOptions(List<string> options, bool runningFromCommandLine)
@@ -119,11 +124,10 @@ namespace Microsoft.Research.Vcc
 
     private bool HasIsolateProofAttribute(string funcName) {
       foreach (var decl in currentDecls) {
-        if (decl.IsFunctionDecl) {
+        if (decl.IsFunctionDecl && ((Microsoft.Research.Vcc.CAST.Top.FunctionDecl)decl).Item.Name == funcName) {
           foreach (var attr in ((CAST.Top.FunctionDecl)decl).Item.CustomAttr) {
             if (attr.IsVccAttr && ((CAST.CustomAttr.VccAttr)attr).Item1 == CAST.AttrIsolateProof) 
-              return true;
-            
+              return true;            
           }
         }
       }
@@ -178,7 +182,8 @@ namespace Microsoft.Research.Vcc
 
       string extraFunctionOptions = null;
       bool isBvLemmaCheck = IsBvLemmaCheck(impl);
-      if ((parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) || isBvLemmaCheck) {
+      bool skipSmoke = HasSkipSmokeAttr(impl);
+      if ((parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) || isBvLemmaCheck || skipSmoke) {
         CloseVcGen();
         extraFunctionOptions = extraFunctionOptions ?? ""; // this prevents parsing errors in case of bv_lemma checks and will also cause the VcGen to be closed later
         VccOptions extraCommandLineOptions = OptionParser.ParseCommandLineArguments(VccCommandLineHost.dummyHostEnvironment, extraFunctionOptions.Split(' ', '\t'), false);
@@ -188,6 +193,11 @@ namespace Microsoft.Research.Vcc
         if (isBvLemmaCheck) {
           effectiveOptions.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
           effectiveOptions.Add("/z3opt:CASE_SPLIT=1");
+        }
+
+        if (skipSmoke)
+        {
+          effectiveOptions.RemoveAll(opt => opt == "/smoke");
         }
 
         if (restartProver) {

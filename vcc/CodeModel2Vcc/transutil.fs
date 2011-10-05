@@ -309,8 +309,9 @@ namespace Microsoft.Research.Vcc
 
   let inheritedAttrs attrs = 
     let isInherited = function
-      | VccAttr(AttrSkipVerification, _) -> true
-      | VccAttr(AttrIsolateProof, _) -> true
+      | VccAttr(AttrSkipVerification, _)
+      | VccAttr(AttrIsolateProof, _) 
+      | VccAttr(AttrSkipSmoke, _) -> true
       | _ -> false
     attrs |> List.filter isInherited
   
