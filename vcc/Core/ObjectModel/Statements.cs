@@ -35,6 +35,7 @@ namespace Microsoft.Research.Vcc {
   {
     IEnumerable<IExpression> Objects { get; }
     IStatement Body { get; }
+    bool IsGhostAtomic { get; }
   }
 
   public interface IVccMatchCase : IObjectWithLocations
@@ -553,10 +554,11 @@ namespace Microsoft.Research.Vcc {
   public sealed class VccAtomicStatement : Statement, IVccAtomicStatement
   {
 
-    public VccAtomicStatement(Statement body, IEnumerable<Expression> exprs, ISourceLocation sourceLocation)
+    public VccAtomicStatement(Statement body, IEnumerable<Expression> exprs, ISourceLocation sourceLocation, bool isGhostAtomic)
       : base(sourceLocation) {
       this.expressions = exprs;
       this.body = body;
+      this.isGhostAtomic = isGhostAtomic;
     }
 
     private VccAtomicStatement(BlockStatement containingBlock, VccAtomicStatement template)
@@ -567,6 +569,7 @@ namespace Microsoft.Research.Vcc {
       exprs.TrimExcess();
       this.expressions = exprs;
       this.body = template.body.MakeCopyFor(containingBlock);
+      this.isGhostAtomic = template.isGhostAtomic;
     }
 
     public IEnumerable<Expression> Expressions {
@@ -578,6 +581,11 @@ namespace Microsoft.Research.Vcc {
       get { return this.body; }
     }
     private readonly Statement body;
+
+    public bool IsGhostAtomic {
+      get { return this.isGhostAtomic; }
+    }
+    private bool isGhostAtomic;
 
     public void Dispatch(IVccCodeVisitor visitor) {
       visitor.Visit(this);
