@@ -205,8 +205,8 @@ namespace Microsoft.Research.Vcc
     let removeLazyOps = 
 
       let splitKnown = function
-        | Expr.Macro(_, "_vcc_known'", expr :: asserts) -> expr, asserts
-        | Expr.Cast(c, cs, Expr.Macro(_, "_vcc_known'", expr :: asserts)) -> expr, asserts
+        | Expr.Macro(_, "_vcc_known'", expr :: stmts) -> expr, stmts
+        | Expr.Cast(c, cs, Expr.Macro(_, "_vcc_known'", expr :: stmts)) -> expr, stmts
         | expr -> expr, []
 
       let rec doRemoveLazyOps inSpecBlock keepKnown ctx self = 
@@ -242,29 +242,35 @@ namespace Microsoft.Research.Vcc
         | Expr.Macro(c, "_vcc_known", [expr; knownValue]) when not ctx.IsPure ->
           let e, ea = splitKnown (self expr)
           let k, ka = splitKnown (self knownValue)
-          let e' = if e.Type = Type.Bool then e else Expr.Cast({e.Common with Type = Type.Bool}, CheckedStatus.Unchecked, e)
+          let tmp = getTmp helper "known" expr.Type VarKind.Local
+          let tmpRef = Expr.Ref(expr.Common, tmp)
+          let tmpDecl = VarDecl({expr.Common with Type = Type.Void}, tmp, [])
+          let tmpAssign = Macro({expr.Common with Type = Type.Void}, "=", [tmpRef; e])
+          let e' = if e.Type = Type.Bool then tmpRef else Expr.Cast({e.Common with Type = Type.Bool}, CheckedStatus.Unchecked, tmpRef)
           let k' = if k.Type = c.Type then k else Expr.Cast(c, CheckedStatus.Unchecked, k)
-          Some(Expr.Macro(c, "_vcc_known'", k' :: assertEq e' k :: (ea @ ka)))
+          Some(Expr.Macro(c, "_vcc_known'", k' :: tmpDecl :: tmpAssign :: assertEq e' k :: (ea @ ka)))
         | Expr.Prim(c, (Op("!", _) as op), [arg]) when not ctx.IsPure ->
           let arg' = self arg
           match splitKnown arg' with
-            | (Cast(_, _, BoolLiteral(ec, b)) | BoolLiteral(ec, b)), asserts -> Some(Expr.Macro(c, "_vcc_known'", BoolLiteral(ec, not b) :: asserts))
+            | (Cast(_, _, BoolLiteral(ec, b)) | BoolLiteral(ec, b)), stmts -> Some(Expr.Macro(c, "_vcc_known'", BoolLiteral(ec, not b) :: stmts))
             | _ -> Some(Expr.Prim(c, op, [arg']))
         | Expr.Macro(c, "ite", [cond; th; el]) when not ctx.IsPure ->
           let cond' = self cond
-          let pick e asserts =
-            let e', eAsserts = splitKnown (self e)
-            Some(Expr.Macro(c, "_vcc_known'", Expr.Cast(c, CheckedStatus.Unchecked, e') :: (asserts @ eAsserts)))
+          let pick e stmts =
+            let e', eStmts = splitKnown (self e)
+            Some(Expr.Macro(c, "_vcc_known'", Expr.Cast(c, CheckedStatus.Unchecked, e') :: (stmts @ eStmts)))
           match splitKnown cond' with
-            | (Cast(_,_, BoolLiteral(_, b)) | BoolLiteral(_, b)), asserts -> if b then pick th asserts else pick el asserts
+            | (Cast(_,_, BoolLiteral(_, b)) | BoolLiteral(_, b)), stmts -> if b then pick th stmts else pick el stmts
             | _ -> Some(Expr.Macro(c, "ite", [cond'; self th; self el]))
         | _ -> None
                   
       let eliminateKnown self = function
-        | Expr.Macro(c, "_vcc_known'", e :: asserts) -> Some(self (Expr.MkBlock (asserts @ [e])))
+        | Expr.Macro(c, "_vcc_known'", e :: stmts) -> Some(self (Expr.MkBlock (stmts @ [e])))
         | _ -> None
 
-      deepMapExpressionsCtx propagateKnownValue >> deepMapExpressionsCtx (doRemoveLazyOps false false) >> deepMapExpressions eliminateKnown 
+      deepMapExpressionsCtx propagateKnownValue >> 
+      deepMapExpressionsCtx (doRemoveLazyOps false false) >> 
+      deepMapExpressions eliminateKnown 
     
     // ============================================================================================================
 
