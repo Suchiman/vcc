@@ -559,6 +559,8 @@ namespace Microsoft.Research.Vcc.Parsing
           if (this.functionContractExtensions.ContainsKey(id)) {
               return this.ParseBlockWithContracts(followers, savedInSpecCode);
           }
+          if (id == "ghost_atomic")
+            return this.ParseGhostAtomic(followers, savedInSpecCode);
           if (id == "pure") 
             return this.ParseBlockWithPureModifier(followers, savedInSpecCode);
           if (this.declspecExtensions.ContainsKey(id)) {
@@ -666,7 +668,18 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, TS.StatementStart | followers);
       var body = this.ParseStatement(followers);
       slb.UpdateToSpan(body.SourceLocation);
-      return new VccAtomicStatement(body, exprs, slb);
+      return new VccAtomicStatement(body, exprs, slb, isGhostAtomic: false);
+    }
+
+    private Statement ParseGhostAtomic(TokenSet followers, bool savedInSpecCode) {
+      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
+      this.GetNextToken();
+      var exprs = this.ParseExpressionList(Token.Comma, followers | Token.RightBrace);
+      var body = this.ParseStatement(followers | Token.RightParenthesis);
+      this.SkipOutOfSpecBlock(savedInSpecCode, TS.StatementStart | followers);
+      slb.UpdateToSpan(body.SourceLocation);
+      var wrapped = DeepWrapInSpecStmt(body, slb);
+      return new VccAtomicStatement(wrapped, exprs, slb, isGhostAtomic: true);
     }
 
     private Statement ParseUnwrappingStatement(TokenSet followers, bool savedInSpecCode) {

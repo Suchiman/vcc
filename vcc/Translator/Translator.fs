@@ -1291,7 +1291,12 @@ namespace Microsoft.Research.Vcc
             | C.Ptr(_) -> ptrType obj
             | C.Type.ObjectT -> bCall "$typ" [bobj]
             | _ -> die()
-          
+        
+        let isGhostAtomic, objs =
+          match objs with
+            | C.Pure (_, C.Macro (_, "ghost_atomic", [])) :: rest -> true, rest
+            | _ -> false, objs
+
         let (objs, claims) = List.partition (fun (e:C.Expr) -> e.Type <> C.Type.SpecPtr C.Claim) objs
         let (before, after) =
           match body with
@@ -1336,10 +1341,13 @@ namespace Microsoft.Research.Vcc
         
         // this sets env'.ClaimContext things
         let atomicAction = flmap (trStmt env') after
+
+        let atomic_havoc =
+          if isGhostAtomic then []
+          else [B.Stmt.Call (ec.Token, [], "$atomic_havoc", [])]
           
-        [B.Stmt.Call (ec.Token, [], "$atomic_havoc", []);
-         assumeSyncCS "inside atomic" env ec.Token;
-         ] @ 
+        atomic_havoc @
+        [assumeSyncCS "inside atomic" env ec.Token] @
         atomicInits @
         before @
         valid_claims @

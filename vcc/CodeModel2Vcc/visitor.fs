@@ -1709,6 +1709,10 @@ namespace Microsoft.Research.Vcc
       member this.Visit (atomicStmt : IVccAtomicStatement) : unit =
         let args = [ for arg in atomicStmt.Objects -> this.DoExpression arg ]
         let body = this.DoStatement atomicStmt.Body
+        let args = 
+          if atomicStmt.IsGhostAtomic then 
+            C.Expr.Macro ({ C.bogusEC with Type =  C.Type.ObjectT }, "ghost_atomic", []) :: args
+          else args
         stmtRes <- C.Expr.Atomic (this.StmtCommon atomicStmt, args, body)
 
       member this.Visit (stackArrayCreate:IStackArrayCreate) : unit = 
