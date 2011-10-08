@@ -226,7 +226,7 @@ namespace Microsoft.Research.Vcc
           
       
     /// Add checks for writability/readability of memory
-    let rec addMemoryChecks ctx self = function
+    let rec addMemoryChecks inSpec ctx self = function
       | MemoryWrite (c, p, expr) ->
         if expr.Type.IsComposite then helper.Oops (expr.Token, "non primitive type in memory write")
         let istyped = propAssert 8506 "{0} is typed" "_vcc_typed2" p
@@ -255,6 +255,9 @@ namespace Microsoft.Research.Vcc
         let w = Macro (obj.Common, "prelude_blob_of", [obj])
         let wrassert = propAssert 8507 ("_(blob ...) ({0}) is writable") "writes_check" w
         Some (Expr.MkBlock [wrassert; expr])
+
+      | Macro (_, "spec", [body]) ->
+        Some (body.SelfCtxMap (ctx.IsPure, addMemoryChecks true))
         
       | Call (c, ({ Name = "_vcc_from_bytes"|"_vcc_to_bytes"} as fn), _, args) as call ->
         let obj = args.Head
@@ -297,14 +300,14 @@ namespace Microsoft.Research.Vcc
           | [] -> die()
           | [e] -> acc,e
           | x::xs -> last (x::acc) xs
-        let checksO,orig' = last [] (removeOuterBlock (orig.SelfMap(addMemoryChecks ctx).SelfMap(ToCoreC.removeFakeBlocks)))
-        let checksD,dest' = last [] (removeOuterBlock (dest.SelfMap(addMemoryChecks ctx).SelfMap(ToCoreC.removeFakeBlocks)))
+        let checksO,orig' = last [] (removeOuterBlock (orig.SelfMap(addMemoryChecks true ctx).SelfMap(ToCoreC.removeFakeBlocks)))
+        let checksD,dest' = last [] (removeOuterBlock (dest.SelfMap(addMemoryChecks true ctx).SelfMap(ToCoreC.removeFakeBlocks)))
         Some (Expr.Macro(ec, "fake_block", checksO @ checksD @ [Macro(ec, "_vcc_downgrade_to", [orig'; dest'])]))
         
       | Deref (c, p) when isYarraIgnore p ->
         Some (Macro (c, "yarra_nondet", [self p]))
          
-      | Deref (c, p) when not ctx.IsPure ->
+      | Deref (c, p) when not ctx.IsPure && not inSpec ->
         let rd = Expr.MkAssert (Macro ({c with Type = Bool}, "reads_check_normal", [ignoreEffects p]))
         Some (Expr.MkBlock [rd; Deref (c, self p)])
         
@@ -497,7 +500,7 @@ namespace Microsoft.Research.Vcc
     
     helper.AddTransformer ("check-report-checked-in-bv-lemma", Helper.Expr reportCheckedOpsInBvLemma)
     helper.AddTransformer ("check-special-calls", Helper.Expr handleSpecialCalls)
-    helper.AddTransformer ("check-memory-access", Helper.ExprCtx addMemoryChecks)
+    helper.AddTransformer ("check-memory-access", Helper.ExprCtx (addMemoryChecks false))
     helper.AddTransformer ("check-ptr-range", Helper.ExprCtx addPointerConversionChecks)
     helper.AddTransformer ("check-overflows", Helper.ExprCtx addOverflowChecks)
     helper.AddTransformer ("check-div-by-zero", Helper.ExprCtx addDivByZeroChecks)
