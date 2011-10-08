@@ -953,10 +953,6 @@ namespace Microsoft.Research.Vcc
           false
         | _ -> true
       
-      let removeSpecMarker self = function
-        | CallMacro(_, "spec", _, [body]) -> Some(self(body))
-        | _ -> None
-      
       let checkParameterTypes (fn:Function) =
         let checkPar (v:Variable) =
           if v.Kind = VarKind.Parameter && isSpecType v.Type then
@@ -981,7 +977,7 @@ namespace Microsoft.Research.Vcc
                  [d] |> deepVisitExpressions (checkNoWritesToPhysicalFromSpec false)
                  [d] |> deepVisitExpressions checkAtMostOnePhysicalAccessInAtomic
         
-      decls |> deepMapExpressions removeSpecMarker
+      decls
 
     // ============================================================================================================\
   
