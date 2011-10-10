@@ -2296,10 +2296,11 @@ function {:weight 0} $is_array_vol_or_nonvol(S:$state, p:$ptr, T:$ctype, sz:int,
         ($is_volatile(S, $idx(p, i, T)) == vol) && $typed(S, $idx(p, i, T))) }
 
 function {:weight 0} $is_array(S:$state, p:$ptr, T:$ctype, sz:int) returns(bool)
-  { $is(p, T) && 
+  { sz == 0 || (
+    $is(p, T) && 
     (forall i:int :: {$st(S, $idx(p, i, T))} {$ts(S, $idx(p, i, T))} {$mem(S, $idx(p, i, T))}
       0 <= i && i < sz ==> 
-        $typed(S, $idx(p, i, T))) }
+        $typed(S, $idx(p, i, T)))) }
 
 /*
 axiom (forall S:$state, p:$ptr, T:$ctype, sz:int ::

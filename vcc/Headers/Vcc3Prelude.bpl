@@ -569,13 +569,14 @@ function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 
 function {:inline true} $is_array_stateless(p:$ptr, T:$ctype, sz:int) : bool
 {   
-     $is(p, T)
-  && $is_proper(p)
-  && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
-  && p == $idx($dot($base(p), $field_arr_root($field(p))), $field_arr_index($field(p)))
-  && $field_kind($field(p)) != $fk_base
-  && $field_arr_index($field(p)) >= 0
-  && $is_non_primitive($typ($emb0(p)))
+    sz == 0 || (
+       $is(p, T)
+    && $is_proper(p)
+    && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
+    && p == $idx($dot($base(p), $field_arr_root($field(p))), $field_arr_index($field(p)))
+    && $field_kind($field(p)) != $fk_base
+    && $field_arr_index($field(p)) >= 0
+    && $is_non_primitive($typ($emb0(p))))
 }
 
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
