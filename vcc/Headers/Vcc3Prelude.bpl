@@ -1092,23 +1092,22 @@ axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
     $closed(S, p) ==> $non_null(p));
 
 // Root axioms
-axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$domain_root(S, p)}
+axiom(forall S: $state, p: $ptr :: {$f_owner(S)[p]} // {$domain_root(S, p)}
   $good_state(S) ==>
-  $owner(S, p) == $me() ==> $is_proper(p) && $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $domain_root(S, p) == p);
+  $f_owner(S)[p] == $me() ==> $is_proper(p) && $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $domain_root(S, p) == p);
 
 // PERF 3.2%
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
   $good_state(S) ==>
-    $non_null($owner(S, r)) && 
-    $is_proper($owner(S, r))
-    &&
+    $non_null($owner(S, r))  && 
+    $is_proper($owner(S, r))  &&
     ($typ($owner(S, r)) != ^$#thread_id_t ==>
       $is_proper(r) && 
       $non_null(r) && 
       $is_non_primitive($typ(r)) &&
-      ($is_sequential_field($f_owns($typ($owner(S, r)))) ==> $domain_root(S, r) == $domain_root(S, $owner(S, r)))
+      ($is_sequential_field($f_owns($typ($owner(S, r)))) ==> $domain_root(S, r) == $domain_root(S, $owner(S, r))) &&
+      true
     )
-
     );
 
 axiom (forall S:$state, p:$ptr ::
@@ -1292,7 +1291,8 @@ function {:inline false} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
       ($owner(S, p) == $me() && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $not_written(S0:$state, p:$ptr, W:$ptrset) : bool
-  { $owner(S0, $domain_root(S0, p)) == $me() && !$in($domain_root(S0, p), W) }
+//  { $owner(S0, $domain_root(S0, p)) == $me() && !$in($domain_root(S0, p), W) }
+  { $f_owner(S0)[$domain_root(S0, p)] == $me() && !$in($domain_root(S0, p), W) }
 // TODO: { if $closed(S0, p) then $in($domain_root(S0, p), W) else $in(p, W) }
 
 function {:inline false} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
@@ -1779,6 +1779,7 @@ function {:inline true} $claim_killed(S0:$state, S:$state, c:$ptr) : bool
   $f_closed(S) == $f_closed(S0)[ c := false ] &&
   $f_timestamp(S) == $f_timestamp(S0) &&
   $f_owner(S) == $f_owner(S0) &&
+  $roots(S) == $roots(S0) &&
   $heap(S) == $heap(S0) &&
   $good_state(S) &&
   $timestamp_post_strict(S0, S)
@@ -1875,7 +1876,11 @@ procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
   ensures $f_closed($s) == $f_closed(old($s));
   ensures $f_timestamp($s) == $f_timestamp(old($s))[ #p := $current_timestamp($s) ];
   ensures $f_owner($s) == $f_owner(old($s))[ #p := $me() ];
-  ensures $roots($s) == (lambda q:$ptr :: if $domain_root(old($s), q) == $domain_root(old($s), owner) then $domain_root($s, q) else $domain_root(old($s), q));
+  ensures $roots($s) == 
+    (lambda q:$ptr :: 
+       if $domain_root(old($s), q) == $domain_root(old($s), owner) && q != $domain_root(old($s), q)
+       then $domain_root($s, q) 
+       else $domain_root(old($s), q));
   ensures $updated_owns(old($s), $s, owner, $set_difference($owns(old($s), owner), $set_singleton(#p)));
   ensures $timestamp_post_strict(old($s), $s);
 
