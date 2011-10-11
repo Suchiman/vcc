@@ -223,7 +223,8 @@ namespace Microsoft.Research.Vcc
           let tmpRef = Expr.Ref (c, tmp)
           let thAssign = Macro (c', "=", [tmpRef; th])
           let elAssign = Macro (c', "=", [tmpRef; el])          
-          let write = Expr.If (c', None, cond, thAssign, elAssign)
+          let expectUnreach = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_expect_unreachable", []))
+          let write = Expr.If (c', None, cond, Expr.MkBlock([expectUnreach; thAssign]), Expr.MkBlock([expectUnreach; elAssign]))
           addStmtsOpt [VarDecl (c', tmp, []); self write] tmpRef
         | If(c, cl, cond, th, el) ->
           match splitKnown cond with
