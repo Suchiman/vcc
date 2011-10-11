@@ -23,6 +23,8 @@ namespace Microsoft.Research.Vcc
     Writes : list<Expr>;
     Decreases : list<Expr>;
   }
+
+  let isSpecMacro (fn:Function) = hasCustomAttr AttrSpecMacro fn.CustomAttr
  
   // ============================================================================================================          
   let rec doHandleComparison helper self = function
@@ -202,7 +204,7 @@ namespace Microsoft.Research.Vcc
         | _ -> die()
 
     let inlineSpecMacros decls =
-      let isSpecMacro (fn:Function) = hasCustomAttr AttrSpecMacro fn.CustomAttr
+      
       let rec doInline expandedFns self =
         function 
           | Call (ec, fn, targs, args) when isSpecMacro fn ->
@@ -351,6 +353,8 @@ namespace Microsoft.Research.Vcc
             | t, [] -> Some (self (Expr.Quant (ec, { q with Variables = vars1 @ vars2; Triggers = t })))
             | _ -> None
 
+        | Expr.SizeOf(ec, Type.TypeVar(_)) -> None
+        | Expr.SizeOf(ec, t) -> Some(IntLiteral(ec, new bigint(t.SizeOf)))
         | Expr.Call (c, { Name = "_vcc_inv_group"}, _, [Expr.Cast (_, _, EString (c', v)); groupInv]) ->
           Some (Expr.Macro (c, "group_invariant", [Expr.Macro (c', v, []); self groupInv]))
         | Macro (ec, "\\castlike_precise", [EString (_, v)]) ->
@@ -1185,7 +1189,64 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let unfoldConstants decls = 
+
+      let eqs = ref []
+      let extraAxioms = ref []
+
+      let findAndReplaceThem _ = function
+        | Macro(_, "const", [c; uc]) ->
+          let newEq = Expr.Prim({c.Common with Type = Type.Bool}, Op("==", Unchecked), [c; uc])
+          if List.forall (fun (e : Expr) -> not (newEq.ExprEquals(e))) (!eqs) then eqs := newEq :: !eqs
+          Some c
+        | _ -> None
+          
+      let doExpr (expr : Expr) = expr.SelfMap(findAndReplaceThem)
+      let doExprs = List.map doExpr
+        
+      let addExtraAxioms eqs origin = 
+        extraAxioms := !extraAxioms @ List.map (fun (e : Expr) -> Top.GeneratedAxiom(e, origin)) eqs 
+
+      let doDecl decl = 
+        eqs := []
+        match decl with
+          | Top.Axiom(expr)  -> 
+            let result = Top.Axiom(expr.SelfMap(findAndReplaceThem))
+            addExtraAxioms !eqs decl
+            result
+          | Top.GeneratedAxiom(expr, origin) ->
+            let result = Top.GeneratedAxiom(expr.SelfMap(findAndReplaceThem), origin)
+            addExtraAxioms !eqs origin
+            result
+          | Top.Global _ -> decl
+          | Top.TypeDecl(td) ->
+            td.Invariants <- doExprs td.Invariants
+            addExtraAxioms !eqs decl
+            decl
+          | Top.FunctionDecl(fn) ->
+            fn.Reads <- doExprs fn.Reads
+            fn.Writes <- doExprs fn.Writes
+            fn.Variants <- doExprs fn.Variants
+            fn.Requires <- doExprs fn.Requires
+            fn.Ensures <- doExprs fn.Ensures
+            if isSpecMacro fn then
+              addExtraAxioms !eqs decl
+            else
+              fn.Ensures <- fn.Ensures @ (List.map (fun (eq:Expr) -> Expr.Macro(eq.Common, "free_ensures", [eq])) !eqs)
+              fn.Requires <- fn.Requires @ (List.map (fun (eq:Expr) -> Expr.Macro(eq.Common, "free_requires", [eq])) !eqs)
+            eqs := []
+            match fn.Body with
+              | None -> ()
+              | Some body ->
+                let body' = doExpr body
+                fn.Body <- Some(Expr.MkBlock(List.map Expr.MkAssume !eqs @ [body']))
+            decl
+      List.map doDecl decls @ !extraAxioms
+                
+    // ============================================================================================================
+
     helper.AddTransformer ("norm-begin", Helper.DoNothing)
+    helper.AddTransformer ("norm-unfold-constants", Helper.Decl unfoldConstants)
     helper.AddTransformer ("norm-varargs", Helper.Expr normalizeVarArgs)
     helper.AddTransformer ("norm-multi-assignments", Helper.Expr normalizeMultiAssignments)
     helper.AddTransformer ("norm-inline-boogie", Helper.Decl handleBoogieInlineDeclarations)

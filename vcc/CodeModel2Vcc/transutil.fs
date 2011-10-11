@@ -475,6 +475,7 @@ namespace Microsoft.Research.Vcc
       | Top.TypeDecl td -> td :> obj
       | Top.Global(v, _) -> v :> obj
       | Top.FunctionDecl f -> f :>obj
+      | Top.Axiom ax -> ax :> obj
       | _ -> null
       
     and addDependentAxioms top = 
