@@ -526,6 +526,32 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let removeTrivial decls =
+
+      let replaceTrivialEqualities _ = function
+        | Expr.Prim(ec, Op("==", _), [e0; e1]) when e0.ExprEquals(e1) ->
+          Some(BoolLiteral(ec, true))
+        | _ -> None
+
+      let removeTrivialAsserts _ = function
+        | Assert(ec, BoolLiteral(_, true), _) -> Some(Expr.Comment(ec, "assert true"))
+        | Assume(ec, BoolLiteral(_, true)) -> Some(Expr.Comment(ec, "assume true"))
+        | Macro(ec, "free_requires", [BoolLiteral(_, true)]) -> Some(BoolLiteral(ec, true))
+        | Macro(ec, "free_ensures", [BoolLiteral(_, true)]) -> Some(BoolLiteral(ec, true))
+        | _ -> None
+        
+      let decls' = decls |> deepMapExpressions replaceTrivialEqualities |> deepMapExpressions removeTrivialAsserts
+
+      for d in decls' do
+        match d with
+          | Top.FunctionDecl(fn) -> 
+            fn.Ensures <- fn.Ensures |> List.filter (function | BoolLiteral(_, true) -> false | _ -> true)
+            fn.Requires <- fn.Requires |> List.filter (function | BoolLiteral(_, true) -> false | _ -> true)
+          | _ -> ()
+      
+      decls'
+
+    // ============================================================================================================
 
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
@@ -556,5 +582,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-flatten-old", Helper.Expr flattenOld)
     helper.AddTransformer ("final-insert-type-arguments", Helper.Expr insertTypeArgumentForWrapUnwrap)
     helper.AddTransformer ("final-insert-state-arguments", Helper.Expr (ToCoreC.handlePureCalls helper))
+    helper.AddTransformer ("final-remove-trivial", Helper.Decl removeTrivial)
     
     helper.AddTransformer ("final-end", Helper.DoNothing)

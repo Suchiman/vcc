@@ -402,6 +402,10 @@ namespace Microsoft.Research.Vcc
         | C.Macro(_, "free_ensures", [e]) -> e
         | e -> e
 
+      let stripFreeFromRequires = function
+        | C.Macro(_, "free_requires", [e]) -> e
+        | e -> e
+
       let isSetEmpty = function
         | C.Macro (_, "_vcc_set_empty", []) -> true
         | _ -> false
@@ -1868,6 +1872,9 @@ namespace Microsoft.Research.Vcc
         let tEnsures = function
           | C.Macro(_, "free_ensures", [e]) -> B.FreeEnsures(te e)
           | e -> B.Ensures(e.Token, te e)
+        let tRequires = function
+          | C.Macro(_, "free_requires", [e]) -> B.FreeRequires(te e)
+          | e -> B.Requires(e.Token, te e)
         let rec splitConjuncts = function
           | C.Prim(_, C.Op("&&", _), [e1;e2]) -> splitConjuncts e1 @ splitConjuncts e2
           | e -> [e]
@@ -1881,7 +1888,7 @@ namespace Microsoft.Research.Vcc
             Locals    = []
             Body      = None
             Contracts = 
-              [for e in header.Requires |> List.map splitConjuncts |> List.concat -> B.Requires (e.Token, te e)] @
+              [for e in header.Requires |> List.map splitConjuncts |> List.concat -> tRequires e] @
               [for e in ensures -> tEnsures e] @
               pureEq @ stateCondition @
               [B.FreeEnsures (bCall "$call_transition" [bOld bState; bState])]
@@ -2707,7 +2714,7 @@ namespace Microsoft.Research.Vcc
             | C.Macro (_, ("in_range_phys_ptr"|"in_range_spec_ptr"), [_]) -> bTrue
             | e -> trExpr env e
           let ensures = bMultiAnd (List.map (stripFreeFromEnsures >> tens) h.Ensures)
-          let requires = bMultiAnd (List.map te h.Requires)
+          let requires = bMultiAnd (List.map (stripFreeFromRequires >> te) h.Requires)
           let fname = "F#" + h.Name
           let retType = trType h.RetType
           (*

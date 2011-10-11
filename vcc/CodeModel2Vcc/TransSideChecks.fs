@@ -436,7 +436,7 @@ namespace Microsoft.Research.Vcc
           | _ -> None
         let subst (e:Expr) = e.SelfMap subst
         
-        let preconds = List.map (fun e -> Expr.MkAssume (subst e)) f.Requires
+        let preconds = f.Requires |> List.map( function | Macro(_, "free_requires", [e]) -> e | e -> e)  |> List.map (fun e -> Expr.MkAssume (subst e)) 
         let fixupHavocOthers self = function
           | Stmt (_, CallMacro (ec, "_vcc_reads_havoc", _, [])) as call ->
             let isSame (expr:Expr) =
