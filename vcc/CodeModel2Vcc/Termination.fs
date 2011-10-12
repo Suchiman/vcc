@@ -108,7 +108,6 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
         valueShouldFollow ctx (aux ctx bindings)
 
       // ignored statements
-      | Macro (_, "check_termination", _)
       | Assert _
       | Assume _ 
       | Comment _
@@ -128,8 +127,8 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
 
       | If (ec, _, cond, thn, els) ->
         let rec noEffect = function
+          | If (_, _, Macro (_, "check_termination", _), _, _) -> true
           | If (_, _, _, thn, els) -> noEffect thn && noEffect els
-          | Macro (_, "check_termination", _)
           | Assert _
           | Assume _ 
           | Comment _
@@ -217,9 +216,6 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         | lst ->
           Some (Expr.MkBlock (lst @ [Call (ec, fn, tps, List.map self args)]))
 
-    | Macro (_, "check_termination", [e]) ->
-      Some (Expr.MkBlock (justChecks e))
-
     | Loop _
     | Goto _ ->
       // as funny as it may sound...
@@ -244,7 +240,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Macro (_, name, _) when name.StartsWith "DP#" ->
       None
 
-    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"|"ite"|"size"), _) ->
+    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"|"ite"|"size"|"check_termination"), _) ->
       None
 
     | Macro (ec, s, args) as e ->
@@ -338,7 +334,7 @@ let terminationCheckingPlaceholder (helper:Helper.Env) decls =
     | Expr.Macro (ec, "ite", [cond; a; b]) ->
       checks cond @ [Expr.If (bogusEC, None, cond, Expr.MkBlock (checks a), Expr.MkBlock (checks b))]
     | Expr.Call (ec, fn, targs, args) as e ->
-      (args |> List.map checks |> List.concat) @ [Expr.Macro (bogusEC, "check_termination", [Expr.Pure (e.Common, e)])]
+      (args |> List.map checks |> List.concat) @ [e]
 
     // just the common stuff, so we know when we run into it
     | Expr.Assert _
@@ -367,9 +363,12 @@ let terminationCheckingPlaceholder (helper:Helper.Env) decls =
     | e ->
       e.ApplyToChildren skipChecks
        
+  let termWrapper checks =
+    Expr.If (voidBogusEC(), None, Expr.Macro (boolBogusEC(), "check_termination", [mkInt (helper.UniqueId())]), Expr.MkBlock(checks @ [Expr.MkAssume (Expr.False)]), Expr.MkBlock [])
+     
   let rec addChecks = function
     | Quant _ as q ->
-      Expr.MkBlock (checks q @ [skipChecks q])
+      Expr.MkBlock [termWrapper (checks q); skipChecks q]
     | e ->
       e.ApplyToChildren addChecks
        
