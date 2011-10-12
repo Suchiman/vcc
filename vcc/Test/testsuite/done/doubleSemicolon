@@ -1,0 +1,6 @@
+`/newsyntax
+#include <vcc.h>
+
+typedef char __C_ASSERT__[1];;
+`
+`
