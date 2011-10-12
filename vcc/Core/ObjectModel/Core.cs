@@ -180,7 +180,7 @@ namespace Microsoft.Research.Vcc {
         NameDeclaration fieldName = new NameDeclaration(this.Helper.NameTable.GetNameFor("_ElementType"), SourceDummy.SourceLocation);
         // Mangle the new type's name. Add an underscore to avoid name clash. 
         FieldDeclaration dummyField = 
-          new FieldDeclaration(null, FieldDeclaration.Flags.Unsafe, TypeMemberVisibility.Private, TypeExpression.For(elementType), fieldName, null, SourceDummy.SourceLocation);
+          new FieldDeclaration(null, FieldDeclaration.Flags.Unsafe | FieldDeclaration.Flags.Static, TypeMemberVisibility.Private, TypeExpression.For(elementType), fieldName, null, SourceDummy.SourceLocation);
         List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>(1) {dummyField};
         NameDeclaration typeName = new NameDeclaration(this.Helper.NameTable.GetNameFor("_FixedArrayOfSize" + arraySizeInBytes + "_" + elementType), SourceDummy.SourceLocation);
         result = new VccArray(typeName, members, arraySizeInBytes);
@@ -337,7 +337,7 @@ namespace Microsoft.Research.Vcc {
 
 
     internal ITypeDefinition/*?*/ GetFixedArrayElementType(ITypeDefinition fixedSizeArray) {
-      if (fixedSizeArray.IsStruct && fixedSizeArray.SizeOf > 0) {
+      if (fixedSizeArray.IsStruct) {
         IFieldDefinition field = TypeHelper.GetField(fixedSizeArray, this.NameTable.GetNameFor("_ElementType"));
         if (field != Dummy.Field) return field.Type.ResolvedType;
       }
@@ -1023,6 +1023,7 @@ namespace Microsoft.Research.Vcc {
         if (srcKind == PtrConvKind.SpecPtr || srcKind == PtrConvKind.VoidSpecP || tgtKind == PtrConvKind.SpecPtr || tgtKind == PtrConvKind.VoidSpecP)
           return false;
       }
+
       return base.ImplicitConversionExists(sourceType, targetType);
 
       //if (srcKind != PtrConvKind.None && tgtKind != PtrConvKind.None) {
