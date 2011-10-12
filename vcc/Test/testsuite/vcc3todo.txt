@@ -112,7 +112,6 @@ functionPtrs-07
 functionPtrs-09
 generics-08
 groups-17
-groups-20
 invs-03
 labeledInvariants-00
 leakStack-02
@@ -143,6 +142,9 @@ records.ns-19
 
 # unions
 unionsNeg.ns-02
+
+# wrong path
+ignoreIncludes-01
 
 # examples/
 # Iterator.c
