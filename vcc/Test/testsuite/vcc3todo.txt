@@ -34,6 +34,7 @@ unions.ns-11
 valueStructs.ns-03
 basics2-27
 structEquality.ns-00
+pure-42
 
 # wierd pointer arithmetic
 groups-02
