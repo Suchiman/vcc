@@ -117,6 +117,7 @@ namespace Microsoft.Research.Vcc
       | [] -> 0
       
     type TranslationState(helper:Helper.Env) =
+      let quantVarTokens = new Dict<_,_>()
       let tokenConstantNames = new HashSet<_>()
       let tokenConstants = ref []
       let soFarAssignedLocals = ref []      
@@ -364,6 +365,7 @@ namespace Microsoft.Research.Vcc
       member this.AddDecls = addDecls
       member this.TrType = trType
       member this.TypeIdToName = typeIdToName
+      member this.QuantVarTokens = quantVarTokens
       member this.SoFarAssignedLocals = !soFarAssignedLocals
       
       member this.VarName (v:C.Variable) =
@@ -374,7 +376,7 @@ namespace Microsoft.Research.Vcc
             v.Name
         else
           match v.Kind with
-            | C.VarKind.QuantBound -> "Q#" + v.Name + "#" + (v.UniqueId.ToString()) + this.GetTypeSuffix v.Type
+            | C.VarKind.QuantBound -> "Q#" + v.Name + (this.TokSuffix quantVarTokens.[v]) + this.GetTypeSuffix v.Type + "#" + v.UniqueId.ToString()
             | C.VarKind.ConstGlobal -> "G#" + v.Name + this.GetTypeSuffix v.Type
             | C.VarKind.SpecParameter -> "SP#" + v.Name
             | C.VarKind.OutParameter -> "OP#" + v.Name

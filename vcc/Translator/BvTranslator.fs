@@ -140,6 +140,8 @@ namespace Microsoft.Research.Vcc
           bCall (bvOpFor expr expr.Type op) (selfsExtend expr.Type args)
           
         | C.Expr.Quant (c, ({ Kind = C.Forall } as q)) ->
+          for v in q.Variables do
+            ctx.QuantVarTokens.[v] <- c.Token
           let body = self q.Body
           let body =
             match q.Condition, q.Kind with
