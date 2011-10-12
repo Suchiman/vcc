@@ -654,7 +654,6 @@ namespace Microsoft.Research.Vcc
                 else if name.Contains ("._FixedArrayOfSize") then
                   match fields with
                     | f :: _ ->
-                      xassert (typeDef.SizeOf > 0u)
                       let eltype = this.DoType f.Type
                       C.Type.Array (eltype, int typeDef.SizeOf / eltype.SizeOf)
                     | _ -> die()
@@ -774,8 +773,13 @@ namespace Microsoft.Research.Vcc
                         Offset =
                           if f.IsBitField then                               
                             C.FieldOffset.BitField (int f.Offset - minOffset, int (MemberHelper.GetFieldBitOffset f), int f.BitLength)
-                          else
-                            C.FieldOffset.Normal (int f.Offset - minOffset)
+                          else match t with
+                            | C.Type.Array(elType, 0) ->
+                              // zero-size arrays start after the current type with the proper alignment
+                              let alignment = elType.SizeOf // TODO: this should really be computed via TypeHelper.GetAlignment
+                              let offset = ((td.SizeOf + alignment - 1) / alignment) * alignment
+                              C.FieldOffset.Normal (offset - minOffset)
+                            | _ -> C.FieldOffset.Normal (int f.Offset - minOffset)
                         CustomAttr = convCustomAttributes (token f) f.Attributes
                         UniqueId = C.unique()
                       } : C.Field               
