@@ -282,7 +282,9 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
       Seq.exists (fun (t, _, _) -> isHigh (matchExpr Map.empty (tr, t))) candidates
       
     body.Map (getSubterms 1) |> ignore
-    if dbg then Console.WriteLine ("infer: {0}", quantTok.Value)
+    if dbg then
+      Console.WriteLine ("infer: {0}", quantTok.Value)
+      Console.WriteLine ("  BPL: {0}", body.ToString())
     for (tr, vs, q) in candidates do
       if List.forall vs.ContainsKey quantVars then
         if dbg then Console.WriteLine ("  cand: {0} q:{1}", tr, q)
