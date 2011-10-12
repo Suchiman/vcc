@@ -837,6 +837,8 @@ namespace Microsoft.Research.Vcc
             res
           | "skip_termination_check", [e] ->
             self e
+          | "check_termination", [e] ->
+            bCall "$check_termination" [self e]
           | name, [e] when name.StartsWith "DP#" ->
             bCall name [self e]
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->

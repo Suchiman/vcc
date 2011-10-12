@@ -2932,6 +2932,9 @@ function {:inline} $int_lt_or(called:int, caller:int, otherwise:bool) : bool
 
 const $decreases_level : int;
 
+// for non-deterministic choice of termination checking blocks
+function $check_termination(int) : bool;
+
 // ----------------------------------------------------------------------------
 // Yarra
 // ----------------------------------------------------------------------------
