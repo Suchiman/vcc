@@ -579,11 +579,14 @@ namespace Microsoft.Research.Vcc
                       false
                     | _ -> true
                 let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
-                let (body, triggers) = TriggerInference(helper, preludeBodies, c.Token, invMapping, vars).Run (body, List.map selfs q.Triggers)
-                match q.Kind with
-                  | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", body)
-                  | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", body)
-                  | C.Lambda -> die()
+                if body = bTrue then
+                  bTrue
+                else
+                  let (body, triggers) = TriggerInference(helper, preludeBodies, c.Token, invMapping, vars).Run (body, List.map selfs q.Triggers)
+                  match q.Kind with
+                    | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", body)
+                    | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", body)
+                    | C.Lambda -> die()
             
               | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
               | C.Expr.SizeOf(_, t) -> bInt t.SizeOf
