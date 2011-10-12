@@ -324,8 +324,8 @@ void heapSortTestHarness() // R
   heapSort(arr, 3 // R
            _(out perm)
           );  // R
-  ASSERT(_(known \true)(arr[0] <= arr[1]) && _(known \true)(arr[1] <= arr[2])); // R
-  ASSERT(_(known \true)(arr[0] == 13) && _(known \true)(arr[1] == 42) && _(known \true)(arr[2] == 42)); // R
+  ASSERT(arr[0] <= arr[1] && arr[1] <= arr[2]); // R
+  ASSERT(arr[0] == 13 && arr[1] == 42 && arr[2] == 42); // R
 } // R
 
 #ifndef VERIFY                                // A
