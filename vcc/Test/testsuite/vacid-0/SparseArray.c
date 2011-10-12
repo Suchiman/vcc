@@ -113,16 +113,14 @@ void sparseArrayTestHarness()                             // R
 
   init(&a);                                               // R
   init(&b);                                               // R
-  ASSERT(_(known \true) (get(&a, 5) == 0) && _(known \true) (get(&b, 7) == 0));             // R
+  ASSERT(get(&a, 5) == 0 && get(&b, 7) == 0);             // R
   set(&a, 5, 1); set(&b, 7, 2);                           // R
-  ASSERT(_(known \true) (get(&a, 5) == 1) && _(known \true) (get(&b, 7) == 2));             // R
-  ASSERT(_(known \true) (get(&a, 0) == 0) && _(known \true) (get(&b, 0) == 0));             // R
+  ASSERT(get(&a, 5) == 1 && get(&b, 7) == 2);             // R
+  ASSERT(get(&a, 0) == 0 && get(&b, 0) == 0);             // R
 
   _(unwrap &a)
   _(unwrap &b)
 }                                                         // R
-
-// the warnings about unreachable code are currently expected, an artifact of the translation of lazy operators
 
 /*`
 Verification of Array#adm succeeded.
