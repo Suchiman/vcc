@@ -66,7 +66,16 @@ namespace System.Diagnostics.Contracts
         throw new NotImplementedException();
       }
 
-      public static implicit operator BigInt(int n) {
+      public static implicit operator BigInt(ushort n) {
+        throw new NotImplementedException();
+      }
+
+      public static implicit operator BigInt(short n) {
+        throw new NotImplementedException();
+      }
+
+      public static implicit operator BigInt(int n)
+      {
         throw new NotImplementedException();
       }
 
