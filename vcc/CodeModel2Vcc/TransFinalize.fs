@@ -553,6 +553,21 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let rec errorWhenJumpingFromAtomic inAtomic _= function
+      | Atomic(_, _, body) -> body.SelfMap(errorWhenJumpingFromAtomic true) |> ignore; None
+      | Return(ec, _) when inAtomic ->
+        helper.Error(ec.Token, 9742, "returning from within atomic(...) is not allowed")
+        None
+      | Goto(ec, _) when inAtomic ->
+        helper.Error(ec.Token, 9742, "goto from within atomic(...) is not allowed")
+        None
+      | Label(ec, _) when inAtomic ->
+        helper.Error(ec.Token, 9742, "label withing atomic(...) is not allowed")
+        None
+      | _ -> None
+
+    // ============================================================================================================
+
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
     helper.AddTransformer ("final-range-assumptions", Helper.Decl addRangeAssumptions)
@@ -567,6 +582,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-error-pure", Helper.Decl errorForStateWriteInPureContext)
     helper.AddTransformer ("final-error-when-claimed", Helper.Decl errorForWhenClaimedOutsideOfClaim)
     helper.AddTransformer ("final-error-arithmetic-in-trigger", Helper.Expr checkTriggerOps)
+    helper.AddTransformer ("final-error-jump-from-atomic", Helper.Expr (errorWhenJumpingFromAtomic false))
     helper.AddTransformer ("final-move-test-classifiers", Helper.Decl flattenTestClassifiers)
     helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
     // reads check goes here

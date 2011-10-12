@@ -44,6 +44,13 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected bool outIsAKeyword;
     protected bool inSpecCode;
 
+    protected enum FixedSizeArrayContext
+    {
+      AsField,
+      AsParameter,
+      AsLocal
+    }
+
     internal static Parser Create(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) {
       if (((VccOptions)compilation.Options).NewSyntax) return new ParserV2(compilation, sourceLocation, scannerAndParserErrors);
       else return new Parser(compilation, sourceLocation, scannerAndParserErrors);
@@ -557,7 +564,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           name = new ArrayDeclarator(array.ElementType, null, array.SourceLocation);
           //TODO: add a precondition requiring the array to be of at least array.ArraySize in length
         }
-        TypeExpression type = this.GetTypeExpressionFor(p.TypeSpecifiers, name);
+        TypeExpression type = this.GetTypeExpressionFor(p.TypeSpecifiers, name, FixedSizeArrayContext.AsParameter);
         ParameterDeclaration pdecl = new VccParameterDeclaration(type, name.Identifier, p.TypeSpecifiers, i++, p.IsOut, p.IsSpec, p.SourceLocation);
         result.Add(pdecl);
       }
@@ -661,7 +668,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected void AddDeclarationStatement(List<Specifier> specifiers, Declarator declarator, List<Statement> statements) {
       SourceLocationBuilder slb = new SourceLocationBuilder(declarator.SourceLocation);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[0].SourceLocation);
-      TypeExpression localType = this.GetTypeExpressionFor(specifiers, declarator);
+      TypeExpression localType = this.GetTypeExpressionFor(specifiers, declarator, FixedSizeArrayContext.AsLocal);
       FieldDeclaration.Flags constOrVolatile = 
         this.IsPointerDeclarator(declarator) ? LookForConstAndVolatileForLocalPointer(specifiers) : LookForConstAndVolatile(specifiers);
       //Token sct = GetStorageClassToken(specifiers); //TODO: use a LocalDeclaration subclass that can record and interpret the storage class
@@ -714,7 +721,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected void AddTypeDeclarationMember(List<Specifier> specifiers, Declarator declarator, List<ITypeDeclarationMember> typeMembers) {
       SourceLocationBuilder slb = new SourceLocationBuilder(declarator.SourceLocation);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[0].SourceLocation);
-      TypeExpression memberType = this.GetTypeExpressionFor(specifiers, declarator);
+      TypeExpression memberType = this.GetTypeExpressionFor(specifiers, declarator, FixedSizeArrayContext.AsField);
       FieldDeclaration.Flags flags = LookForConstAndVolatile(specifiers) ;
       // C's const will be treated as readonly. When we are inside a type, isConst is never true because you 
       // cannot initialize it.
@@ -894,26 +901,17 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, Declarator declarator)
-    {
-      return this.GetTypeExpressionFor(specifiers, declarator, null);
-    }
-
-    protected TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, Declarator declarator, Expression/*?*/ initializer) {
+    protected TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, Declarator declarator, FixedSizeArrayContext fsaCtx = FixedSizeArrayContext.AsField, Expression/*?*/ initializer = null) {
       InitializedDeclarator/*?*/ initialized = declarator as InitializedDeclarator;
       if (initialized != null)
-        return this.GetTypeExpressionFor(specifiers, initialized.Declarator, initialized.InitialValue);
+        return this.GetTypeExpressionFor(specifiers, initialized.Declarator, fsaCtx, initialized.InitialValue);
       else {
-        return this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, declarator as IdentifierDeclarator), declarator, initializer);
+        return this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, declarator as IdentifierDeclarator), declarator, fsaCtx, initializer);
       }
     }
 
-    protected TypeExpression GetTypeExpressionFor(TypeExpression elementType, Declarator declarator) 
+    protected TypeExpression GetTypeExpressionFor(TypeExpression elementType, Declarator declarator, FixedSizeArrayContext fsaCtx = FixedSizeArrayContext.AsField, Expression/*?*/ initializer = null)
     {
-      return this.GetTypeExpressionFor(elementType, declarator, null);
-    }
-
-    protected TypeExpression GetTypeExpressionFor(TypeExpression elementType, Declarator declarator, Expression/*?*/ initializer) {
       SourceLocationBuilder slb = new SourceLocationBuilder(elementType.SourceLocation);
       ArrayDeclarator/*?*/ array = declarator as ArrayDeclarator;
       if (array != null) {
@@ -923,14 +921,19 @@ namespace Microsoft.Research.Vcc.Parsing {
         if (pointerDeclarator != null) nestedDeclarator = pointerDeclarator.Declarator;
         Expression/*?*/ arraySize = array.ArraySize;
         if (arraySize == null) {
-          var vcInitializer = initializer as VccInitializerBase;         
-          if (vcInitializer != null)
+          var vcInitializer = initializer as VccInitializerBase;
+          if (vcInitializer != null) {
             arraySize = new CompileTimeConstant(vcInitializer.ExpressionCount, array.SourceLocation);
+          }
         }
         if (arraySize is TypeExpression) {
           elementType = new VccMapTypeExpressions((TypeExpression)arraySize, elementType, this.nameTable, slb);
-        } else
+        } else if (fsaCtx == FixedSizeArrayContext.AsParameter || (fsaCtx == FixedSizeArrayContext.AsLocal && arraySize == null)) {
+          // for parameters, arrays are simply treated as pointers
+          elementType = new VccPointerTypeExpression(elementType, null, slb);
+        } else {
           elementType = new VccArrayTypeExpression(elementType, arraySize, slb);
+        }
         TypeExpression result = this.GetTypeExpressionFor(elementType, nestedDeclarator);
         result = AddIndirectionsToType(result, pointerDeclarator, slb);
         return result;
@@ -960,7 +963,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       PointerDeclarator/*?*/ pointer = declarator as PointerDeclarator;
       elementType = AddIndirectionsToType(elementType, pointer, slb);
       if (pointer != null)
-        return this.GetTypeExpressionFor(elementType, pointer.Declarator);
+        return this.GetTypeExpressionFor(elementType, pointer.Declarator, fsaCtx, initializer);
       return elementType;
     }
 
@@ -3291,7 +3294,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         List<Specifier> specifiers = this.ParseSpecifiers(null, null, null, followers|Token.Semicolon);
         List<LocalDeclaration> declarations = new List<LocalDeclaration>(1);
         Declarator declarator = this.ParseDeclaratorInQuantifier(followers | Token.Comma | Token.Semicolon);
-        TypeExpression type = this.GetTypeExpressionFor(specifiers, declarator);
+        TypeExpression type = this.GetTypeExpressionFor(specifiers, declarator, FixedSizeArrayContext.AsLocal);
         SourceLocationBuilder slb = new SourceLocationBuilder(type.SourceLocation);
         slb.UpdateToSpan(declarator.SourceLocation);
         declarations.Add(new LocalDeclaration(false, false, declarator.Identifier, null, slb));

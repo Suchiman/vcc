@@ -716,9 +716,9 @@ namespace Microsoft.Research.Vcc {
         this.Helper.ReportError(new VccErrorMessage(this.SourceLocation, Error.ArrayOfEmptyType, this.Helper.GetTypeName(this.ElementType.ResolvedType)));
         return this.Compilation.PlatformType.SystemVoid.ResolvedType;
       }
-      if (this.Size == null || this.SizeAsInt32 == 0)
-        return PointerType.GetPointerType(this.ElementType.ResolvedType, this.Compilation.HostEnvironment.InternFactory);
-      return this.VccCompilationPart.GetFixedSizeArrayType(this.ElementType.ResolvedType, (uint)this.SizeAsInt32).TypeDefinition;
+
+      var size = this.Size == null ? 0 : this.SizeAsInt32;
+      return this.VccCompilationPart.GetFixedSizeArrayType(this.ElementType.ResolvedType, (uint)size).TypeDefinition;
     }
 
     public override void SetContainingExpression(Expression containingExpression) {

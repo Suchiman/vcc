@@ -561,8 +561,6 @@ namespace Microsoft.Research.Vcc
               | C.Expr.Result c ->
                 addType c.Type (er "$result")
               | C.Expr.Quant (c, q) ->
-                for v in q.Variables do
-                  ctx.QuantVarTokens.[v] <- c.Token
                 let invMapping = gdict()
                 let body = trExpr { env with InverseTranslation = invMapping } q.Body
                 let body =
@@ -1540,7 +1538,6 @@ namespace Microsoft.Research.Vcc
             | C.Macro(_, "test_classifier_validity_check", [C.Expr.Quant(ec, {Kind = C.QuantKind.Forall; Variables = [p]; Triggers = trigs; Condition = cond; Body = body})]) ->
               let tokClass = afmte 0000 "the provided test classifier is valid" [stmt]
               let bodyLabel = IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) (IF.exprLevel false body)
-              ctx.QuantVarTokens.[p] <- ec.Token
               let p,pt = trVar p
               let bodyCheck = B.Expr.FunctionCall("$seclbl.leq", [B.Expr.ArrayIndex(bodyLabel, [B.Expr.Ref p]); B.Expr.Ref "$seclbl.bot"])
               let conditioned =

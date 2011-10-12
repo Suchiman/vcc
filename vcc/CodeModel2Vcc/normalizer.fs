@@ -219,7 +219,7 @@ namespace Microsoft.Research.Vcc
                   if e.HasSubexpr (function Result _ -> true | _ -> false) then
                     helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
                     None
-                  else                 
+                  else      
                     Some ((inlineCall "" self (Call({ec with Type = fn'.RetType}, fn', [], args)) e).SelfMap((doInline (Set.add fn.UniqueId expandedFns))))
                 | _ ->
                   helper.Error (fn.Token, 9715, "spec macros should have one ensures clause of the form 'result == expr'", Some ec.Token)
