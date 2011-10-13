@@ -164,6 +164,7 @@ namespace Microsoft.Research.Vcc
      
       let intToTyped t fetch =
         match t with
+          | C.Type.MathInteger C.MathIntKind.Unsigned
           | C.Type.Integer _ ->
             bCall "$unchecked" [toTypeId t; fetch]
           | C.Ptr t ->
@@ -234,6 +235,7 @@ namespace Microsoft.Research.Vcc
         let inRange =
           let rangeAxiom rangeFn args = [B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["M", tp; "p", bt1], [], weight "select-map-eq", bCall rangeFn args))]
           match t2 with
+            | C.Type.MathInteger C.MathIntKind.Unsigned  
             | C.Type.Integer _ -> rangeAxiom "$in_range_t" [toTypeId t2; selMP]
             | C.Type.Claim
             | C.Type.SpecPtr _ -> rangeAxiom "$in_range_spec_ptr" [selMP]
@@ -241,6 +243,7 @@ namespace Microsoft.Research.Vcc
             | _ -> []
         let unchk t e =
           match t with
+            | C.Type.MathInteger C.MathIntKind.Unsigned
             | C.Type.Integer _ ->
               bCall "$unchecked" [toTypeId t; e]
             | C.Ptr _ when vcc3 ->
@@ -250,6 +253,7 @@ namespace Microsoft.Research.Vcc
         let tpEq t p q = typedEq t (unchk t p) (unchk t q)
         let argRange = 
           match t1 with
+            | C.Type.MathInteger C.MathIntKind.Unsigned 
             | C.Type.Integer _ when not vcc3 -> 
               bCall "$in_range_t" [toTypeId t1; er "p"]
             | _ -> bTrue
@@ -368,6 +372,7 @@ namespace Microsoft.Research.Vcc
       let trWhereVar (v:C.Variable) =
         let v' = trVar v
         match v.Type with
+          | C.Type.MathInteger C.MathIntKind.Unsigned -> (v', Some (bCall "$in_range_nat" [varRef v]))
           | C.Type.Integer k -> (v', Some (bCall ("$in_range_" + C.Type.IntSuffix k) [varRef v]))
           | C.Type.PhysPtr t when vcc3 -> (v', None) // (v', Some (bCall "$is_phys_ptr" [varRef v; toTypeId t]))
           | C.Type.SpecPtr t when vcc3 -> (v', None) // (v', Some (bCall "$is_spac_ptr" [varRef v; toTypeId t]))
@@ -2527,7 +2532,9 @@ namespace Microsoft.Research.Vcc
       let trRecord2 (td:C.TypeDecl) =
         let intKind = function
           | C.Type.Integer _ as t -> toTypeId t
-          | _ -> er "^^mathint"
+          | C.Type.MathInteger C.MathIntKind.Unsigned -> er "^^mathnat"
+          | C.Type.MathInteger C.MathIntKind.Signed -> er "^^mathnat"
+          | _ -> die()
         let trRecField (f:C.Field) =
           [B.Decl.Const { Unique = true; Name = fieldName f; Type = B.Type.Ref "$field" };
            B.Decl.Axiom (bCall "$is_record_field" [toTypeId (C.Type.Ref td); er (fieldName f); toTypeId f.Type]);
@@ -2537,7 +2544,8 @@ namespace Microsoft.Research.Vcc
       let mkSelector rt tp name ff =
         let constrained =
           match tp with
-            | C.Type.Integer k -> bCall "$unchecked" [toTypeId tp; ff]
+            | C.Type.MathInteger C.MathIntKind.Unsigned 
+            | C.Type.Integer _ -> bCall "$unchecked" [toTypeId tp; ff]
             | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [ff; toTypeId t]
             | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [ff; toTypeId t]
             | _ -> ff
