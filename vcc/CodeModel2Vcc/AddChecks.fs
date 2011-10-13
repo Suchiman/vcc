@@ -363,11 +363,8 @@ namespace Microsoft.Research.Vcc
             
         | Prim (c, Op("=="|"!="|"<"|"<="|">"|">=" as opName, (Checked|Unchecked)), args) ->
           Some(Prim(c, Op(opName, Processed), selfs args))                      
-        | Prim (c, Op(opName, (Checked|Unchecked)), args) when c.Type._IsMathInteger ->
-          match c.Type with
-            | MathInteger Signed -> Some(Prim(c, Op(opName, Processed), selfs args))
-            | MathInteger Unsigned -> die()
-            | _ -> die()
+        | Prim ({Type = Type.MathInteger(Signed)} as c, Op(opName, (Checked|Unchecked)), args)  ->
+          Some(Prim(c, Op(opName, Processed), selfs args))
         | Prim (c, (Op(opName, Checked) as op), args) as e when not ctx.IsPure ->
           let args = selfs args
           let newop = Prim (c, Op(opName, Processed), args)
@@ -398,7 +395,7 @@ namespace Microsoft.Research.Vcc
           | Type.Integer k ->
             Expr.Macro (newop.Common, "unchecked_" + Type.IntSuffix k, [newop])  
           | Type.MathInteger Signed -> newop            
-          | Type.MathInteger Unsigned -> die()
+          | Type.MathInteger Unsigned -> Expr.Macro(newop.Common, "unchecked_nat", [newop])
           | _ -> failwith ("non-integer primitive operation " + newop.ToString())
 
       function
