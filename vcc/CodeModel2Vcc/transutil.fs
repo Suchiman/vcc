@@ -401,6 +401,8 @@ namespace Microsoft.Research.Vcc
           | "#Object" -> ()
           | _ ->
             cb.UseTypeDecl td
+            for f in td.DataTypeOptions do
+              cb.UseFunction f
             match td.Kind with
               | FunctDecl d -> cb.UseFunction d
               | _ -> ()
@@ -441,7 +443,7 @@ namespace Microsoft.Research.Vcc
       | _ -> ()
     true
   
-  let walkTop cb t =
+  let rec walkTop cb t =
     let doVar (v:Variable) = walkType cb v.Type
     match t with
       | Top.FunctionDecl h ->

@@ -18,6 +18,13 @@ _(datatype OK1 {
   case c4()
 })
 
+_(abstract void useThem() {
+  Bar bar;
+  Baz0 baz0;
+  Baz1 baz1;
+  OK1 ok1;
+})
+
 `
 testcase(3,26) : error VC9725: a finite instance of datatype 'Bar' could never be constructed
 testcase(7,26) : error VC9725: a finite instance of datatype 'Baz0' could never be constructed
