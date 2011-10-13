@@ -352,11 +352,6 @@ namespace System.Diagnostics.Contracts
         throw new NotImplementedException();
       }
 
-      public static BigNat operator -(BigNat b)
-      {
-        throw new NotImplementedException();
-      }
-
       public override int GetHashCode()
       {
         throw new NotImplementedException();

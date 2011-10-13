@@ -419,6 +419,7 @@ axiom $def_math_type(^^null_type);
 
 const unique ^^claim: $ctype;
 const unique ^^mathint: $ctype;
+const unique ^^mathnat: $ctype;
 const unique ^$#ptrset : $ctype;
 const unique ^$#state_t : $ctype;
 const unique ^$#volatile_version_t : $ctype;
@@ -430,6 +431,7 @@ const unique ^$#vol_version : $ctype;
 axiom $def_composite_type(^^claim, 1, true, false);
 axiom $def_composite_type(^$#volatile_version_t, 1, false, false);
 axiom $def_math_type(^^mathint);
+axiom $def_math_type(^^mathnat);
 axiom $def_math_type(^$#ptrset);
 axiom $def_math_type(^$#state_t);
 axiom $def_math_type(^$#struct);
@@ -2471,6 +2473,7 @@ function {:inline true} $in_range_u1(x:int) : bool { $in_range(0, x, $max.u1) }
 function {:inline true} $in_range_u2(x:int) : bool { $in_range(0, x, $max.u2) }
 function {:inline true} $in_range_u4(x:int) : bool { $in_range(0, x, $max.u4) }
 function {:inline true} $in_range_u8(x:int) : bool { $in_range(0, x, $max.u8) }
+function {:inline true} $in_range_nat(x:int) : bool { x >= 0 }
 function {:inline true} $in_range_ptr(p:$ptr) : bool { $in_range_u8($addr(p)) }
 
 function {:inline true} $in_range_div_i1(x:int, y:int) : bool { y != -1 || x != $min.i1 }
@@ -2662,6 +2665,7 @@ axiom (forall val:int :: {$in_range_t(^^u1, val)} $in_range_t(^^u1, val) <==> $i
 axiom (forall val:int :: {$in_range_t(^^u2, val)} $in_range_t(^^u2, val) <==> $in_range_u2(val));
 axiom (forall val:int :: {$in_range_t(^^u4, val)} $in_range_t(^^u4, val) <==> $in_range_u4(val));
 axiom (forall val:int :: {$in_range_t(^^u8, val)} $in_range_t(^^u8, val) <==> $in_range_u8(val));
+axiom (forall val:int :: {$in_range_t(^^mathnat, val)} $in_range_t(^^mathnat, val) <==> $in_range_nat(val));
 axiom (forall val:int :: {$in_range_t(^^mathint, val)} $in_range_t(^^mathint, val));
 
 axiom (forall t:$ctype, val:int :: {$unchecked(t, val)} $in_range_t(t, val) ==> $unchecked(t, val) == val);

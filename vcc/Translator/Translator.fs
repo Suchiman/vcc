@@ -470,6 +470,7 @@ namespace Microsoft.Research.Vcc
                 else
                   bCall "$ptr_cast" [self e'; ptrType expr]
               | C.Expr.Cast ({ Type = C.Type.ObjectT }, _, C.Expr.IntLiteral(_, z)) when z = bigint.Zero -> er "$null"
+              | C.Expr.Cast ({ Type = C.Type.MathInteger _}, _, e') -> self e'
               | C.Expr.Pure (_, e') -> self e'
               | C.Expr.Macro (c1, name, [C.Expr.Prim (c2, C.Op(_, C.Unchecked), _) as inner]) 
                   when name.StartsWith "unchecked" && c1.Type = c2.Type -> trExpr env inner
