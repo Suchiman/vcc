@@ -2,61 +2,61 @@
 #include "vcc.h"
 
 void foo() {
-  _(ghost \natural a = 10;)
-  _(ghost \natural b = a - 5;)
-  _(assert a + b == 15)
+  _(ghost \natural a = (\natural)10;)
+  _(ghost \natural b = a - (\natural)5;)
+  _(assert a + b == (\natural)15)
 }
 
 void foo1() {
-  _(ghost \natural a = 10;)
-  _(ghost \natural b = a / 5;)
-  _(assert a * b == 20)
+  _(ghost \natural a = (\natural)10;)
+  _(ghost \natural b = a / (\natural)5;)
+  _(assert a * b == (\natural)20)
 }
 
 void foo2(_(ghost \natural i)) {
-  _(ghost \natural a = 10;)
+  _(ghost \natural a = (\natural)10;)
   _(ghost \natural b = a / i;)
 }
 
 void foo2unchk(_(ghost \natural i)) {
-  _(ghost \natural a = 10;)
+  _(ghost \natural a = (\natural)10;)
   _(ghost \natural b = _(unchecked) (a / i);)
 }
 
 void foo3(_(ghost \natural i)) {
-  _(ghost \natural a = 10;)
+  _(ghost \natural a = (\natural)10;)
   _(ghost \natural b = a % i;)
 }
 
 void foo3unchk(_(ghost \natural i)) {
-  _(ghost \natural a = 10;)
+  _(ghost \natural a = (\natural)10;)
   _(ghost \natural b = _(unchecked) (a % i);)
 }
 
 void foo4(_(ghost \natural i)) 
-  _(requires i != 0)
+  _(requires i != (\natural)0)
 {
-  _(ghost \natural a = 10;)
+  _(ghost \natural a = (\natural)10;)
   _(ghost \natural b = a / i;)
 }
 
 void foo5(unsigned long a, unsigned long b) {
   _(ghost \natural sum = ((\natural)a + (\natural)b);)
-  _(assert sum >= 0)
+  _(assert sum >= (\natural)0)
   _(ghost unsigned long j = (unsigned long)sum;)
 }
 
 void foo5_1(unsigned long a, unsigned long b) {
   _(ghost \natural sum = a + b;)
-  _(assert sum >= 0)
+  _(assert sum >= (\natural)0)
   _(ghost unsigned long j = (unsigned long)sum;)
 }
 
 void foo6(unsigned long a, unsigned long b) 
-  _(requires a < 1000 && b < 2000)
+  _(requires a < (\natural)1000 && b < (\natural)2000)
 {
   _(ghost \natural sum = ((\natural)a + (\natural)b);)
-  _(assert sum >= 0)
+  _(assert sum >= (\natural)0)
   _(ghost unsigned long j = (unsigned long)sum;)
 }
 
@@ -73,8 +73,8 @@ void bar(struct S *s)
   _(maintains \wrapped(s))
 {
   _(unwrapping s) {
-    if (s->a < 20000) { s->a++; _(ghost s->c = s->c+1;) }
-    if (s->b < 20000) { s->b++; _(ghost s->c = s->c+1;) }
+    if (s->a < 20000) { s->a++; _(ghost s->c = s->c+(\natural)1;) }
+    if (s->b < 20000) { s->b++; _(ghost s->c = s->c+(\natural)1;) }
   }
 }
 

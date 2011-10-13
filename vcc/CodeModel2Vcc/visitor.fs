@@ -1449,7 +1449,7 @@ namespace Microsoft.Research.Vcc
         let containingTypeDefinitionName = TypeHelper.GetTypeName(methodToCall.ContainingTypeDefinition)        
 
         let opMap = Map.ofList [ "op_Equality", ("==", false) ; "op_Inequality", ("!=", false); "op_Addition", ("+", false);
-                                 "op_Subtraction", ("-", false); "op_Division", ("/", true); "op_Modulus", ("%", true);
+                                 "op_Subtraction", ("-", true); "op_Division", ("/", true); "op_Modulus", ("%", true);
                                  "op_Multiply", ("*", false); "op_LessThan", ("<", false); "op_LessThanOrEqual", ("<=", false);
                                  "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false);
                                  "op_UnaryNegation", ("-", false);
@@ -1483,13 +1483,17 @@ namespace Microsoft.Research.Vcc
         let args() = [for e in methodCall.Arguments -> this.DoExpression e]
 
         let trBigIntOp methodName = 
+          let mcIsChecked = 
+            match methodCall with
+              | :? Expression as expr -> expr.ContainingBlock.UseCheckedArithmetic
+              | _ -> true
           match args() with
             | [e1] when methodName = "op_UnaryNegation" ->
               let op, isChecked = opMap.[methodName]
-              exprRes <- C.Expr.Prim (ec, C.Op(op, if isChecked then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked), [e1])
+              exprRes <- C.Expr.Prim (ec, C.Op(op, checkedStatus (isChecked && mcIsChecked)), [e1])
             | [e1; e2] -> 
               let op, isChecked = opMap.[methodName]
-              exprRes <- C.Expr.Prim (ec, C.Op(op, if isChecked then C.CheckedStatus.Checked else C.CheckedStatus.Unchecked), [e1; e2])
+              exprRes <- C.Expr.Prim (ec, C.Op(op, checkedStatus (isChecked && mcIsChecked)), [e1; e2])
             | _ -> oopsNumArgs()
             
         let trSetOp methodName =

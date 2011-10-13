@@ -260,6 +260,7 @@ namespace Microsoft.Research.Vcc
                     | Some f -> f
                     | None -> fun (def:Expr) -> Macro ({ def.Common with Type = res.Type }, "unchecked_" + intSuffix res.Type, [def])
                 Prim (c, Op ("==", Processed), [res; f def])
+              | Type.MathInteger Unsigned -> die()
               | _ -> post
           post
         | expr ->

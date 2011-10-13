@@ -22,7 +22,8 @@ namespace Microsoft.Research.Vcc
       let rangeAssumptions (parm : Variable) =
         match parm.Type with
           | Ptr _
-          | Integer _ ->
+          | Integer _ 
+          | MathInteger _ ->
             [inRange helper (boolBogusEC ()) (mkRef parm)]
           | _ ->
             []                    
@@ -42,7 +43,7 @@ namespace Microsoft.Research.Vcc
         if not (hasCustomAttr AttrIsAdmissibility h.CustomAttr) then
           h.Body <- Option.map (addStmts (List.concat (List.map rangeAssume (h.InParameters @ h.OutParameters)))) h.Body
           h.Ensures <- List.map mkFreeEnsures (List.concat (List.map rangeAssumptions h.OutParameters)) @ h.Ensures
-        if h.RetType._IsInteger || h.RetType._IsPtr then
+        if h.RetType._IsInteger || h.RetType._IsPtr || h.RetType._IsMathInteger then
           let ec = { boolBogusEC() with Token = h.Token }
           h.Ensures <- (mkFreeEnsures (inRange helper ec (Expr.Result({bogusEC with Type = h.RetType})))) :: h.Ensures
         h

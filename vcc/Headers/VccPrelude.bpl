@@ -115,7 +115,7 @@ axiom $as_in_range_t(^^u4) == ^^u4;
 axiom $as_in_range_t(^^u8) == ^^u8;
 axiom $as_in_range_t(^^f4) == ^^f4;
 axiom $as_in_range_t(^^f8) == ^^f8;
-
+axiom $as_in_range_t(^^mathnat) == ^^mathnat;
 
 // -- sizeof bool, void, mathint uninterpreted
 
@@ -2534,6 +2534,7 @@ function {:inline true} $in_range_u1(x:int) returns(bool) { $in_range(0, x, $max
 function {:inline true} $in_range_u2(x:int) returns(bool) { $in_range(0, x, $max.u2) }
 function {:inline true} $in_range_u4(x:int) returns(bool) { $in_range(0, x, $max.u4) }
 function {:inline true} $in_range_u8(x:int) returns(bool) { $in_range(0, x, $max.u8) }
+function {:inline true} $in_range_nat(x:int) returns(bool) { 0 <= x }
 function {:inline true} $in_range_ptr(p:$ptr) returns(bool) { $in_range_u8($ref(p)) }
 
 function {:inline true} $in_range_div_i1(x:int, y:int) returns(bool) { y != -1 || x != $min.i1 }
@@ -2756,7 +2757,7 @@ axiom (forall val:int :: {$in_range_t(^^u2, val)} $in_range_t(^^u2, val) <==> $i
 axiom (forall val:int :: {$in_range_t(^^u4, val)} $in_range_t(^^u4, val) <==> $in_range_u4(val));
 axiom (forall val:int :: {$in_range_t(^^u8, val)} $in_range_t(^^u8, val) <==> $in_range_u8(val));
 axiom (forall val:int :: {$in_range_t(^^mathint, val)} $in_range_t(^^mathint, val));
-axiom (forall val:int :: {$in_range_t(^^mathnat, val)} $in_range_t(^^mathnat, val)  <==> val >= 0);
+axiom (forall val:int :: {$in_range_t(^^mathnat, val)} $in_range_t(^^mathnat, val) <==> $in_range_nat(val));
 
 axiom (forall t:$ctype, val:int :: {$unchecked(t, val)} $in_range_t(t, val) ==> $unchecked(t, val) == val);
 axiom (forall t:$ctype, val:int :: {$unchecked(t, val)} $in_range_t(t, $unchecked(t, val)));
