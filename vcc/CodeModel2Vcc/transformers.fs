@@ -144,7 +144,7 @@ namespace Microsoft.Research.Vcc
       let prevCount = used.Count
       for d in decls do
         match d with
-          | Top.TypeDecl td when td.Fields.IsEmpty -> used.Add d |> ignore // include empty structs, which are really groups
+          | Top.TypeDecl td when td.Fields.IsEmpty && td.DataTypeOptions.IsEmpty -> used.Add d |> ignore // include empty structs, which are really groups
           | _ -> ()
       deepVisitExpressions (walkExpr cb) decls
       if prevCount = used.Count then decls
