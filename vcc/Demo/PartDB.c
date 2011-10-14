@@ -86,11 +86,11 @@ uint64_t add_to_db(PartitionDB *db, Partition *part _(ghost \claim c))
   for (i = 0; i < MAXPART; ++i)
     _(writes {})
   {
-    // TODO we could use atomic_op() here, not sure if that gives us anything
     _(atomic db, c) {
-      if (db->partitions[i] == NULL)
-        break;
+      old_value = db->partitions[i];
     }
+    if (old_value == NULL)
+      break;
   }
 
   if (i < MAXPART) {

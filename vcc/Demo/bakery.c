@@ -58,6 +58,7 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
   UINT max = 0;
   UINT checked;
   UINT N = server->N;
+  bool flag;
 
   // start choosing
   atomicCl(cl->flag = TRUE;
@@ -101,12 +102,13 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
         cl_coupling_invariant
     {
       _(atomic sc, server, cl, cc) {
-        if (!cc->flag) {
+        flag = cc->flag;
+        if (!flag) {
           _(ghost cl->waiting = \false)
           _(bump_volatile_version cl)
-          break;
         }
-     }
+      }
+      if (!flag) break;
     }
 
     // wait until his ticket is 0 or is bigger than mine
