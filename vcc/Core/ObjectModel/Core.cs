@@ -584,7 +584,8 @@ namespace Microsoft.Research.Vcc {
       if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigIntString && TypeHelper.IsPrimitiveInteger(expression.Type))
         return this.ConversionExpression(expression, targetType, sourceLocation);
 
-      if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigNatString && TypeHelper.IsUnsignedPrimitiveInteger(expression.Type))
+      if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigNatString && 
+        (TypeHelper.IsUnsignedPrimitiveInteger(expression.Type) || (expression is CompileTimeConstant && expression.ValueIsPolymorphicCompileTimeConstant)))
         return this.ConversionExpression(expression, targetType, sourceLocation);
 
       IPointerType/*?*/ srcPointerType;
