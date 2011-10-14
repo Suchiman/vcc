@@ -317,6 +317,12 @@ let insertTerminationChecks (helper:Helper.Env) decls =
   List.collect aux decls
 
 let terminationCheckingPlaceholder (helper:Helper.Env) decls =
+  let rec skipChecks = function
+    | Expr.Call _ as e ->
+      Expr.Macro (e.Common, "skip_termination_check", [Expr.Pure (e.Common, e.ApplyToChildren skipChecks)])
+    | e ->
+      e.ApplyToChildren skipChecks
+       
   let rec checks = function
     | Expr.Quant (ec, qd) as res ->
       let suff = "#" + helper.UniqueId().ToString() 
@@ -332,7 +338,7 @@ let terminationCheckingPlaceholder (helper:Helper.Env) decls =
           let pref1 = checks (repl qd.Body)
           decls @ pref1 
     | Expr.Macro (ec, "ite", [cond; a; b]) ->
-      checks cond @ [Expr.If (bogusEC, None, cond, Expr.MkBlock (checks a), Expr.MkBlock (checks b))]
+      checks cond @ [Expr.If (bogusEC, None, skipChecks cond, Expr.MkBlock (checks a), Expr.MkBlock (checks b))]
     | Expr.Call (ec, fn, targs, args) as e ->
       (args |> List.map checks |> List.concat) @ [e]
 
@@ -357,12 +363,6 @@ let terminationCheckingPlaceholder (helper:Helper.Env) decls =
       e.ApplyToChildren f |> ignore
       acc |> Seq.toList
       
-  let rec skipChecks = function
-    | Expr.Call _ as e ->
-      Expr.Macro (e.Common, "skip_termination_check", [Expr.Pure (e.Common, e.ApplyToChildren skipChecks)])
-    | e ->
-      e.ApplyToChildren skipChecks
-       
   let termWrapper checks =
     Expr.If (voidBogusEC(), None, Expr.Macro (boolBogusEC(), "check_termination", [mkInt (helper.UniqueId())]), Expr.MkBlock(checks @ [Expr.MkAssume (Expr.False)]), Expr.MkBlock [])
      
