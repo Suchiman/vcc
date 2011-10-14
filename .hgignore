@@ -16,6 +16,9 @@ vcc/Tools/VccSyntaxCoverter/Lexer.fs
 vcc/Tools/VccTokenCounter/Lexer.fs
 vcc/Docs/Wiki
 _ReSharper*
+.*.swp
+*.orig
+tags
 VSPackage/bin/
 VSPackage/obj/
 vcc/Demo/*.i

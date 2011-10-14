@@ -80,18 +80,10 @@ namespace Microsoft.Research.Vcc.VSPackage
       return result;
     }
 
-    internal static void VerifyThis(string filename, string selection, int line, VccOptionPage options)
+    internal static void VerifyThis(string filename, string currentFile, int line, VccOptionPage options)
     {
       string addArguments = GetArgumentsFromOptions(options, true);
-
-      if (selection == string.Empty)
-      {
-        addArguments += String.Format(" /loc:\"{0}\":{1} ", filename, line);
-      }
-      else
-      {
-        addArguments += String.Format(" /f:{0} ", selection);
-      }
+      addArguments += String.Format(" /loc:\"{0}\":{1} ", currentFile, line);
       LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
     }
 
@@ -112,10 +104,10 @@ namespace Microsoft.Research.Vcc.VSPackage
       LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
     }
 
-    internal static void VerifyFileWithoutIncludes(string filename, VccOptionPage options)
+    internal static void VerifyFileWithoutIncludes(string filename, string currentFile, VccOptionPage options)
     {
       string addArguments = GetArgumentsFromOptions(options, true);
-      addArguments += " /ii";
+      addArguments += " /ii:" + currentFile;
       LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
     }
 
@@ -177,7 +169,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       vccProcess = new Process { StartInfo = psi };
 
       //// Clear Verification Outputpane
-      VSIntegration.ClearPane();
+      VSIntegration.ClearAndShowPane();
       VSIntegration.WriteToPane("=== VCC started. ===");
       //// Write Commandline-Command to Verification Outputpane
       VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n", vccPath, arguments));

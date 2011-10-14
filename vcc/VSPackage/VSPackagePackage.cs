@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
@@ -77,7 +78,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (OptionPage != null)
       {
         if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
-        VCCLauncher.CustomVerify(VSIntegration.ActiveFileFullName, OptionPage);
+        VCCLauncher.CustomVerify(VSIntegration.StartFileName, OptionPage);
       }
     }
 
@@ -86,8 +87,22 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (OptionPage != null)
       {
         if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
-        VCCLauncher.VerifyThis(VSIntegration.ActiveFileFullName, VSIntegration.CurrentSelection, VSIntegration.CurrentLine, OptionPage);
+        VCCLauncher.VerifyThis(VSIntegration.StartFileName, VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, OptionPage);
       }
+    }
+
+    private static readonly Regex OutFileSettingRegex = new Regex(@"/(o|(out)):(?<outdir>([^\s]+))", RegexOptions.Compiled);
+
+    private string AdjustFileNameToOutDirIfRequested(string fileName)
+    {
+      if (this.OptionPage.UseAdditionalCommandlineArguments) {
+        var match = OutFileSettingRegex.Match(this.OptionPage.AdditionalCommandlineArguments);
+        if (match.Success) {
+          return Path.Combine(match.Groups["outdir"].Value, Path.GetFileName(fileName));
+        }
+      }
+
+      return fileName;
     }
 
     private void ShowErrorModel(object sender, EventArgs e)
@@ -99,7 +114,10 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
           throw new NotSupportedException("Can not create BvdToolWindow");
         }
-        BvdToolWindow.BVD.ReadModels(Path.ChangeExtension(VSIntegration.ActiveFileFullName, "model"), VSIntegration.CurrentErrorModel);
+
+        string modelFileName = Path.ChangeExtension(VSIntegration.StartFileName, ".model");
+        modelFileName = AdjustFileNameToOutDirIfRequested(modelFileName);
+        BvdToolWindow.BVD.ReadModels(modelFileName, VSIntegration.CurrentErrorModel);
         IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
         Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
       }
@@ -114,7 +132,9 @@ namespace Microsoft.Research.Vcc.VSPackage
           throw new NotSupportedException("Can not create ErrorModelToolWindow");
         }
 
-        ErrorModelToolWindow.ModelViewer.LoadModel(VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
+        string modelFileName = Path.ChangeExtension(VSIntegration.StartFileName, ".vccmodel");
+        modelFileName = AdjustFileNameToOutDirIfRequested(modelFileName);
+        ErrorModelToolWindow.ModelViewer.LoadModel(modelFileName, VSIntegration.CurrentLine, VSIntegration.CurrentErrorModel);
         IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
         Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
       }
@@ -130,7 +150,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (OptionPage != null)
       {
         if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
-        VCCLauncher.VerifyFile(VSIntegration.ActiveFileFullName, OptionPage);
+        VCCLauncher.VerifyFile(VSIntegration.StartFileName, OptionPage);
       }
     }
 
@@ -144,7 +164,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       if (OptionPage != null)
       {
         if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
-        VCCLauncher.VerifyFileWithoutIncludes(VSIntegration.ActiveFileFullName, OptionPage);
+        VCCLauncher.VerifyFileWithoutIncludes(VSIntegration.StartFileName, VSIntegration.ActiveFileFullName, OptionPage);
       }
     }
 
@@ -251,6 +271,14 @@ namespace Microsoft.Research.Vcc.VSPackage
       }
     }
 
+    static void ReVerify_BeforeQueryStatus(object sender, EventArgs e)
+    {
+      var cmd = sender as OleMenuCommand;
+      if (cmd == null) return;
+      cmd.Enabled = !VCCLauncher.VCCRunning && LastAction != "";
+      cmd.Visible = VSIntegration.IsCodeFile;     
+    }
+
     static void CheckCodeFileAndVccNotRunning(object sender, EventArgs e)
     {
         var cmd = sender as OleMenuCommand;
@@ -316,7 +344,7 @@ namespace Microsoft.Research.Vcc.VSPackage
           //// Create the commands for the menu items.
           this.RegisterCommand(mcs, VerifyActiveFile, VerifyFile_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyActiveFile, PkgCmdIDList.cmdidContextVerifyActiveFile);
           this.RegisterCommand(mcs, VerifyActiveFileWithoutIncludes, VerifyFileWithoutIncludes_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyActiveFileWithoutIncludes, PkgCmdIDList.cmdidContextVerifyActiveFileWithoutIncludes);
-          this.RegisterCommand(mcs, ReVerify, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidReVerify, PkgCmdIDList.cmdidContextReVerify);
+          this.RegisterCommand(mcs, ReVerify, ReVerify_BeforeQueryStatus, PkgCmdIDList.cmdidReVerify, PkgCmdIDList.cmdidContextReVerify);
           this.RegisterCommand(mcs, VerifyThis, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidVerifyThis, PkgCmdIDList.cmdidContextVerifyThis);
           this.RegisterCommand(mcs, CustomVerify, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidCustomVerify, PkgCmdIDList.cmdidContextCustomVerify);
           this.RegisterCommand(mcs, Cancel, Cancel_BeforeQueryStatus, PkgCmdIDList.cmdidCancel, PkgCmdIDList.cmdidContextCancel);

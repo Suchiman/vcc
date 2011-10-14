@@ -295,6 +295,8 @@ namespace Microsoft.Research.Vcc
          B.Decl.Function (bt2, [], sel, ["M", tp; "p", bt1], None);
          B.Decl.Function (tp, [], stor, mpv, None);
          B.Decl.Function (B.Type.Bool, [], eq, m1m2, None);
+         B.Decl.Const({Unique = false; Name = "MT#" + sel; Type = tpCtype});
+         B.Decl.Axiom(bEq (er ("MT#" + sel)) (toTypeId t));
          B.Decl.Const({Unique = false; Name = zero; Type = mapType});
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", selStorPP));
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
@@ -405,6 +407,10 @@ namespace Microsoft.Research.Vcc
         | C.Macro(_, "free_ensures", [e]) -> e
         | e -> e
 
+      let stripFreeFromRequires = function
+        | C.Macro(_, "free_requires", [e]) -> e
+        | e -> e
+
       let isSetEmpty = function
         | C.Macro (_, "_vcc_set_empty", []) -> true
         | _ -> false
@@ -428,6 +434,8 @@ namespace Microsoft.Research.Vcc
           | _ -> 
             abstractSizeUndef
 
+      let mkIdx ptr idx getTypeWhichIsIgnoredForVcc3 =
+        if vcc3 then bCall "$idx" [ptr; idx] else bCall "$idx" [ptr; idx; getTypeWhichIsIgnoredForVcc3()]
 
       let rec trExpr (env:Env) expr =
         let self = trExpr env
@@ -533,10 +541,7 @@ namespace Microsoft.Research.Vcc
                   helper.Oops (c.Token, "record dot found " + expr.ToString())
                 bCall "$dot" [self o; er (fieldName f)]
               | C.Expr.Index (_, arr, idx) ->
-                if vcc3 then
-                  bCall "$idx" [self arr; self idx]
-                else
-                  bCall "$idx" [self arr; self idx; ptrType arr]
+                mkIdx (self arr) (self idx) (fun () -> ptrType arr)
               | C.Expr.Deref (_, p) -> typedRead bState (self p) expr.Type
               | C.Expr.Call (_, fn, targs, args) ->
                 if fn.IsDatatypeOption then
@@ -580,11 +585,14 @@ namespace Microsoft.Research.Vcc
                       false
                     | _ -> true
                 let vars = q.Variables |> List.filter supportedTypeForQuantification |> List.map trVar 
-                let (body, triggers) = TriggerInference(helper, preludeBodies, c.Token, invMapping, vars).Run (body, List.map selfs q.Triggers)
-                match q.Kind with
-                  | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", body)
-                  | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", body)
-                  | C.Lambda -> die()
+                if body = bTrue then
+                  bTrue
+                else
+                  let (body, triggers) = TriggerInference(helper, preludeBodies, c.Token, invMapping, vars).Run (body, List.map selfs q.Triggers)
+                  match q.Kind with
+                    | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", body)
+                    | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", body)
+                    | C.Lambda -> die()
             
               | C.Expr.SizeOf(_, C.Type.TypeVar(tv)) ->bCall "$sizeof" [typeVarRef tv]
               | C.Expr.SizeOf(_, t) -> bInt t.SizeOf
@@ -838,6 +846,8 @@ namespace Microsoft.Research.Vcc
             res
           | "skip_termination_check", [e] ->
             self e
+          | "check_termination", [e] ->
+            bCall "$check_termination" [self e]
           | name, [e] when name.StartsWith "DP#" ->
             bCall name [self e]
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
@@ -849,7 +859,11 @@ namespace Microsoft.Research.Vcc
             let rec aux acc idx (args:list<C.Expr>) =
               if idx >= signature.Length then
                 xassert (args = [])
-                bCall ("$" + n.Substring 5) (List.rev acc)
+                let n =
+                  if n.StartsWith "_vcc_" then  "$" + n.Substring 5
+                  elif n.StartsWith "\\" then "$" + n.Substring 1
+                  else "$" + n
+                bCall n (List.rev acc)
               else
                 let assertFirstIsState() = 
                   match args with
@@ -1200,7 +1214,7 @@ namespace Microsoft.Research.Vcc
                [B.Stmt.MkAssume bFalse]
             let rand = claim + "doAdm"
             let claimAdm cond =
-              [B.Stmt.If (bAnd cond (er rand), B.Stmt.Block (B.Stmt.VarDecl ((rand, B.Type.Bool), None) :: claimAdm), B.Stmt.Block [])]
+              [B.Stmt.If  (C.bogusToken, bAnd cond (er rand), B.Stmt.Block (B.Stmt.VarDecl ((rand, B.Type.Bool), None) :: claimAdm), B.Stmt.Block [])]
                
             let initial cond = 
               [B.Stmt.MkAssume (didAlloc (bCall "$claim_initial_assumptions" [bState; er claim; er (ctx.GetTokenConst tok)]))] @
@@ -1292,7 +1306,12 @@ namespace Microsoft.Research.Vcc
             | C.Ptr(_) -> ptrType obj
             | C.Type.ObjectT -> bCall "$typ" [bobj]
             | _ -> die()
-          
+        
+        let isGhostAtomic, objs =
+          match objs with
+            | C.Pure (_, C.Macro (_, "ghost_atomic", [])) :: rest -> true, rest
+            | _ -> false, objs
+
         let (objs, claims) = List.partition (fun (e:C.Expr) -> e.Type <> C.Type.SpecPtr C.Claim) objs
         let (before, after) =
           match body with
@@ -1337,10 +1356,13 @@ namespace Microsoft.Research.Vcc
         
         // this sets env'.ClaimContext things
         let atomicAction = flmap (trStmt env') after
+
+        let atomic_havoc =
+          if isGhostAtomic then []
+          else [B.Stmt.Call (ec.Token, [], "$atomic_havoc", [])]
           
-        [B.Stmt.Call (ec.Token, [], "$atomic_havoc", []);
-         assumeSyncCS "inside atomic" env ec.Token;
-         ] @ 
+        atomic_havoc @
+        [assumeSyncCS "inside atomic" env ec.Token] @
         atomicInits @
         before @
         valid_claims @
@@ -1583,6 +1605,9 @@ namespace Microsoft.Research.Vcc
             | C.Expr.VarWrite (_, vs, C.Expr.Call (c, fn, targs, args)) -> 
               doCall c vs (Some fn) fn.Name targs args @ List.map (fun v -> ctx.AssumeLocalIs c.Token v) vs
               
+            | C.Expr.VarWrite (_, vs, C.Expr.Macro (c, ("_vcc_blobify"|"_vcc_unblobify" as name), args)) -> 
+              doCall c vs None name [] args @ List.map (fun v -> ctx.AssumeLocalIs c.Token v) vs
+              
             | C.Expr.Stmt (_, C.Expr.Call (c, fn, targs, args))        -> 
               doCall c [] (Some fn) fn.Name targs args
             | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|"_vcc_set_owns"|
@@ -1669,7 +1694,7 @@ namespace Microsoft.Research.Vcc
               captureState "" ec.Token ::
               B.Stmt.Comment ("if (" + c.ToString() + ") ...") ::
               prefix @
-              [B.Stmt.If (trExpr env c, B.Stmt.Block (trStmt innerEnv s1), B.Stmt.Block (trStmt innerEnv s2))] @
+              [B.Stmt.If (ec.Token, trExpr env c, B.Stmt.Block (trStmt innerEnv s1), B.Stmt.Block (trStmt innerEnv s2))] @
               suffix
             | C.Expr.Block (comm, stmts, Some bc) ->
               let (save, oldState) = saveState "loop"
@@ -1726,7 +1751,7 @@ namespace Microsoft.Research.Vcc
               let innerBodyLst = innerBodyLst @ check @ [B.Stmt.Assume ([], bFalse)]
 
               let body =
-                B.Stmt.If (er nonDetVar, B.Stmt.Block innerBodyLst, B.Stmt.Block callBody)
+                B.Stmt.If (C.bogusToken, er nonDetVar, B.Stmt.Block innerBodyLst, B.Stmt.Block callBody)
               bump @ save @ wrCheck @ [varDecl; body]
 
             | C.Expr.Loop (comm, invs, writes, variants, s) ->
@@ -1858,6 +1883,9 @@ namespace Microsoft.Research.Vcc
         let tEnsures = function
           | C.Macro(_, "free_ensures", [e]) -> B.FreeEnsures(te e)
           | e -> B.Ensures(e.Token, te e)
+        let tRequires = function
+          | C.Macro(_, "free_requires", [e]) -> B.FreeRequires(te e)
+          | e -> B.Requires(e.Token, te e)
         let rec splitConjuncts = function
           | C.Prim(_, C.Op("&&", _), [e1;e2]) -> splitConjuncts e1 @ splitConjuncts e2
           | e -> [e]
@@ -1871,7 +1899,7 @@ namespace Microsoft.Research.Vcc
             Locals    = []
             Body      = None
             Contracts = 
-              [for e in header.Requires |> List.map splitConjuncts |> List.concat -> B.Requires (e.Token, te e)] @
+              [for e in header.Requires |> List.map splitConjuncts |> List.concat -> tRequires e] @
               [for e in ensures -> tEnsures e] @
               pureEq @ stateCondition @
               [B.FreeEnsures (bCall "$call_transition" [bOld bState; bState])]
@@ -1883,6 +1911,7 @@ namespace Microsoft.Research.Vcc
                     | C.VccAttr(C.AttrSkipVerification, _) -> yield (B.ExprAttr ("verify", bFalse))
                     | C.VccAttr ("extra_options", o) -> yield (B.StringAttr ("vcc_extra_options", o))
                     | C.VccAttr (C.AttrBvLemmaCheck, o) -> yield (B.StringAttr ("vcc_bv_lemma_check", o))
+                    | C.VccAttr (C.AttrSkipSmoke, o) -> yield (B.StringAttr("vcc_skip_smoke", o))
                     | C.VccAttr _ -> yield! []
                     | C.ReadsCheck _ -> yield! []
                      
@@ -2098,11 +2127,7 @@ namespace Microsoft.Research.Vcc
         let s2 = er "#p2"
         let idx = er "#i"
         let eqFunName typeName deep = "_vcc_" + deep + "_struct_eq." + typeName
-        let body =
-          if vcc3 then
-            Some (bCall ("$vs_" + deepStr + "_eq") [s1; s2; toTypeId (C.Type.Ref td)])
-          else None
-        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars, body)
+        let eqFun = B.Function(B.Type.Bool, [], eqFunName td.Name deepStr, vars, None)
         let typeRef = toTypeId (C.Type.Ref td)
         let fldEqual inUnion (f : C.Field) =
           let rec read arrayElementType v = 
@@ -2110,12 +2135,8 @@ namespace Microsoft.Research.Vcc
             let fldAccess = 
               match arrayElementType with
                 | None -> fun v f -> bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]
-                | Some t -> fun v f -> bCall "$idx" [ bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]; idx; toTypeId t]
+                | Some t -> fun v f -> mkIdx (bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]) idx (fun () -> toTypeId t)
             function
-              | C.Bool -> bCall "$read_bool" [state; fldAccess v f]
-              | C.Integer _
-              | C.Ptr _ // using $read_ptr() would add type information, but this isn't needed
-              | C.Map(_,_) -> bCall "$mem" [state; fldAccess v f]
               | C.Array(t, n) -> 
                 match arrayElementType with
                   | Some _ ->
@@ -2123,8 +2144,13 @@ namespace Microsoft.Research.Vcc
                     die()
                   | None -> read (Some t) v t 
               | C.Ref(td) ->
-                  bCall "$vs_ctor" [ bCall "$vs_state" [v]; bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]]
-
+                  bCall "$vs_ctor" [ state; bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]]
+              | t when vcc3 ->
+                typedRead state (fldAccess v f) t
+              | C.Bool -> bCall "$read_bool" [state; fldAccess v f]
+              | C.Integer _
+              | C.Ptr _ // using $read_ptr() would add type information, but this isn't needed
+              | C.Map(_,_) -> bCall "$mem" [state; fldAccess v f]
               | t ->
                 die()
           let read = read None
@@ -2135,39 +2161,41 @@ namespace Microsoft.Research.Vcc
                 let funName = eqFunName td'.Name (if deep then "deep" else "shallow")
                 Some(bCall funName [read s1 f.Type; read s2 f.Type]) 
             | C.Array(t,n) -> 
-              helper.Error(f.Token, 9730, "equality or assignment of structs with fixed-size arrays is currently only supported with /3")
+              if not vcc3 then
+                // not sure about this one yet
+                helper.Error(f.Token, 9730, "equality or assignment of structs with fixed-size arrays is currently only supported with /3")
               let cond = B.Expr.Primitive ("==>", [ bAnd (B.Expr.Primitive("<=", [bInt 0; idx])) (B.Expr.Primitive("<", [idx; bInt n]));
                                                       bEq (read s1 f.Type) (read s2 f.Type) ])
               Some(B.Forall(Token.NoToken, [("#i", B.Int)], [], weight "array-structeq", cond))
-            | C.Map(_,_) ->                 
+            | C.Map(_,_) when not vcc3 ->                 
               helper.Warning(f.Token, 9108, "structured type equality treats map equality as map identity")
               Some(bEq (read s1 f.Type) (read s2 f.Type))
-
-            | _ -> Some(bEq (read s1 f.Type) (read s2 f.Type))
+            | _ -> 
+              if vcc3 then
+                Some (typedEq f.Type (read s1 f.Type) (read s2 f.Type))
+              else
+                Some(bEq (read s1 f.Type) (read s2 f.Type))
         let andOpt e = function 
           | None -> e
           | Some e' -> bAnd e e'
 
-        if vcc3 then
-          [eqFun]
-        else
-          let eqCall = bCall (eqFunName td.Name deepStr) [s1; s2]
-          let eqExpr = 
-            match td.Kind with
-            | C.TypeKind.Struct -> td.Fields |> List.map (fldEqual false) |> List.fold andOpt bTrue
-            | C.TypeKind.Union ->
-              let getAO v = bCall "$active_option" [bCall "$vs_state" [v]; bCall "$vs_base" [v; typeRef] ]
-              let aoEq = bEq (getAO s1) (getAO s2)
-              let fldEqualCond (f : C.Field) =
-                match fldEqual true f with
-                  | Some expr -> B.Primitive("==>", [bEq (getAO s1) (er (fieldName f)); expr])
-                  | None -> die()
-              td.Fields |> List.map fldEqualCond |> List.fold bAnd aoEq
-              //activeOptionEq = 
-              //bEq (bCall "$active_option" [s; p]) fieldRef
-            | _ -> die()
-          let eqForall = B.Forall(Token.NoToken, vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
-          [eqFun; B.Axiom eqForall]
+        let eqCall = bCall (eqFunName td.Name deepStr) [s1; s2]
+        let eqExpr = 
+          match td.Kind with
+          | C.TypeKind.Struct -> td.Fields |> List.map (fldEqual false) |> List.fold andOpt bTrue
+          | C.TypeKind.Union ->
+            let getAO v = bCall "$active_option" [bCall "$vs_state" [v]; bCall "$vs_base" [v; typeRef] ]
+            let aoEq = bEq (getAO s1) (getAO s2)
+            let fldEqualCond (f : C.Field) =
+              match fldEqual true f with
+                | Some expr -> B.Primitive("==>", [bEq (getAO s1) (er (fieldName f)); expr])
+                | None -> die()
+            td.Fields |> List.map fldEqualCond |> List.fold bAnd aoEq
+            //activeOptionEq = 
+            //bEq (bCall "$active_option" [s; p]) fieldRef
+          | _ -> die()
+        let eqForall = B.Forall(Token.NoToken, vars, [[eqCall]], weight "eqdef-structeq", bEq eqCall eqExpr)
+        [eqFun; B.Axiom eqForall]
 
 
       let imax x y = if x < y then y else x
@@ -2700,7 +2728,7 @@ namespace Microsoft.Research.Vcc
             | C.Macro (_, ("in_range_phys_ptr"|"in_range_spec_ptr"), [_]) -> bTrue
             | e -> trExpr env e
           let ensures = bMultiAnd (List.map (stripFreeFromEnsures >> tens) h.Ensures)
-          let requires = bMultiAnd (List.map te h.Requires)
+          let requires = bMultiAnd (List.map (stripFreeFromRequires >> te) h.Requires)
           let fname = "F#" + h.Name
           let retType = trType h.RetType
           (*
@@ -2792,7 +2820,7 @@ namespace Microsoft.Research.Vcc
               let goodstuff = B.Stmt.MkAssume (bCall "$full_stop" [bState] |> subst)
               [B.Stmt.VarDecl ((var, B.Type.Bool), None);
                B.Stmt.VarDecl (("#sanityState", tpState), None);
-               B.Stmt.If (er var, B.Stmt.Block (assumes @ state :: goodstuff :: List.map mkAssert lst), B.Stmt.Block []);
+               B.Stmt.If (C.bogusToken, er var, B.Stmt.Block (assumes @ state :: goodstuff :: List.map mkAssert lst), B.Stmt.Block []);
                B.Stmt.MkAssume (bNot (er var))]
         
       let hasStartHere (stmt:B.Stmt) =

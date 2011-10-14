@@ -122,15 +122,10 @@ void sparseArrayTestHarness()                             // R
   _(unwrap &b)
 }                                                         // R
 
-// the warnings about unreachable code are currently expected, an artifact of the translation of lazy operators
-
 /*`
 Verification of Array#adm succeeded.
 Verification of init succeeded.
 Verification of set succeeded.
 Verification of get succeeded.
 Verification of sparseArrayTestHarness succeeded.
-testcase(118,16) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(117,16) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(115,16) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
 `*/

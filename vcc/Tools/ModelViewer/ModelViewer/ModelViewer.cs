@@ -86,7 +86,6 @@ namespace VccModelViewer
     };
 
     public event EventHandler<LineColumnChangedEventArgs> LineColumnChanged;
-    public event EventHandler<ModelInformationChangedEventArgs> ModelInformationChanged;
 
     public ModelViewer() : this(true)
     {
@@ -110,47 +109,39 @@ namespace VccModelViewer
       }
     }
 
-    public void LoadModel(string sourceFileName, int lineNumber, int modelNumber)
+    public void LoadModel(string modelFileName, int lineNumber, int modelNumber)
     {
-      if (sourceFileName != null)
+      FileInfo fi = new FileInfo(modelFileName);
+      if (fi.Exists)
       {
-        string modelFileName = sourceFileName;
-        if (Path.GetExtension(sourceFileName) != ".vccmodel")
+        int numberOfModels = ModelController.FindModelsInFile(modelFileName);
+        if ((modelNumber < 0) || (modelNumber >= numberOfModels))
         {
-          modelFileName = Path.ChangeExtension(sourceFileName, ".vccmodel");
+          modelNumber = 0;
         }
+        modelController = new ModelController();
+        Cursor savedCursor = this.Cursor;
+        this.Cursor = Cursors.WaitCursor;
+        toolStripProgressBar1.Visible = true;
+        modelController.LoadProgressChanged += modelController_LoadProgressChanged;
+        modelController.LoadModel(modelFileName, modelNumber);
+        populateExecutionStates(GetExecutionStateFor(lineNumber));
+        populateModel();
+        populateModelMenu(modelNumber);
+        modelController.LoadProgressChanged -= modelController_LoadProgressChanged;
+        toolStripProgressBar1.Visible = false;
+        toolStripStatusLabel1.Text = String.Format("{0} : Model {1}", modelFileName, modelNumber + 1);
+        this.Cursor = savedCursor;
 
-        FileInfo fi = new FileInfo(modelFileName);
-        if (fi.Exists)
-        {
-          int numberOfModels = ModelController.FindModelsInFile(modelFileName);
-          if ((modelNumber < 0) || (modelNumber >= numberOfModels))
-          {
-            modelNumber = 0;
-          }
-          modelController = new ModelController();
-          Cursor savedCursor = this.Cursor;
-          this.Cursor = Cursors.WaitCursor;
-          toolStripProgressBar1.Visible = true;
-          modelController.LoadProgressChanged += modelController_LoadProgressChanged;
-          modelController.LoadModel(sourceFileName, modelFileName, modelNumber);
-          populateExecutionStates(GetExecutionStateFor(lineNumber));
-          populateModel();
-          populateModelMenu(modelNumber);
-          modelController.LoadProgressChanged -= modelController_LoadProgressChanged;
-          toolStripProgressBar1.Visible = false;
-          toolStripStatusLabel1.Text = String.Format("{0} : Model {1}", modelFileName, modelNumber + 1);
-          this.Cursor = savedCursor;
-
-          this.labelCurrentModel.Text = fi.Name;
-          OnModelInformationChanged(sourceFileName, modelNumber, modelController.ModelsInFile);
-        }
-        else
-        {
-          MessageBox.Show(String.Format("File does not exist:\n{0}", modelFileName), "File does not exist", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
+        this.labelCurrentModel.Text = fi.Name;
+      }
+      else
+      {
+        MessageBox.Show(String.Format("File does not exist:\n{0}", modelFileName), "File does not exist",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
       }
     }
+
 
     public void SwitchToModel( int modelId )
     {
@@ -1199,15 +1190,6 @@ namespace VccModelViewer
       if (eventHandler != null)
       {
         eventHandler(this, new LineColumnChangedEventArgs(fileName, lineNumber, columnNumber));
-      }
-    }
-
-    private void OnModelInformationChanged(string fileName, int selectedModel, int numberOfModels)
-    {
-      EventHandler<ModelInformationChangedEventArgs> eventHandler = ModelInformationChanged;
-      if (eventHandler != null)
-      {
-        eventHandler(this, new ModelInformationChangedEventArgs(fileName, selectedModel, numberOfModels));
       }
     }
 

@@ -708,12 +708,12 @@ namespace Microsoft.Research.Vcc
       let blockFunctionDecls = ref []
     
       let reportErrorForJumpsOutOfBlock (block:Expr) =
-        let internalLabels = new Dict<_,_>()
+        let internalLabels = new HashSet<_>()
         let findLabels _ = function
-          | Expr.Label(_, { Name = l }) -> internalLabels.[l] <- true; false
+          | Expr.Label(_, { Name = l }) -> internalLabels.Add l |> ignore ; false
           | _ -> true
         let reportError _ = function
-          | Expr.Goto(ec, { Name = l }) when not (internalLabels.ContainsKey l) ->
+          | Expr.Goto(ec, { Name = l }) when not (internalLabels.Contains l) ->
             helper.Error(ec.Token, 9705, "Block with explicit contract must not contain goto to external label '" + l + "'."); false
           | Expr.Return(ec, _) ->
             helper.Error(ec.Token, 9705, "Block with explicit contract must not contain return statement."); false
@@ -797,22 +797,22 @@ namespace Microsoft.Research.Vcc
         body', contract, !localsThatGoIn, vMap inMap, !localsThatGoOut, vMap outMap
           
       let findReferencesBeforeAndAfter (fn : Function) block =
-        let before = new Dict<_,_>()
-        let after = new Dict<_,_>()
+        let before = new HashSet<_>()
+        let after = new HashSet<_>()
         let seenBlock = ref false
-        let fVar (d:Dict<_,_>) v = d.ContainsKey(v)
+        let fVar (d:HashSet<_>) v = d.Contains v
 
         let findThem _ = function
-          | VarDecl(_, v, _) when not !seenBlock -> before.[v] <- true; false
-          | Ref(_, v) when !seenBlock -> after.[v] <- true; false
+          | VarDecl(_, v, _) when not !seenBlock -> before.Add v |> ignore; false
+          | Ref(_, v) when !seenBlock -> after.Add v |> ignore; false
           | e when e = block -> seenBlock := true; false
           | _ -> true
           
         let findThemInEnsures _ = function
-          | Ref(_, v) -> after.[v] <- true; false
+          | Ref(_, v) -> after.Add v |> ignore; false
           | _ -> true
           
-        List.iter (fun v -> before.Add(v, true)) fn.Parameters
+        List.iter (fun v -> before.Add v |> ignore) fn.Parameters
         (Option.get fn.Body).SelfVisit(findThem)
         match block with
           | Expr.Block(_, ss, Some cs) ->

@@ -75,9 +75,14 @@ namespace Microsoft.Research.Vcc
       return GetStringAttrValue(impl, "vcc_extra_options");
     }
 
-    private static bool/*?*/ IsBvLemmaCheck(Implementation impl)
+    private static bool IsBvLemmaCheck(Implementation impl)
     {
       return GetStringAttrValue(impl, "vcc_bv_lemma_check") != null;
+    }
+
+    private static bool HasSkipSmokeAttr(Implementation impl)
+    {
+      return GetStringAttrValue(impl, "vcc_skip_smoke") != null;
     }
 
     private static bool ReParseBoogieOptions(List<string> options, bool runningFromCommandLine)
@@ -119,11 +124,10 @@ namespace Microsoft.Research.Vcc
 
     private bool HasIsolateProofAttribute(string funcName) {
       foreach (var decl in currentDecls) {
-        if (decl.IsFunctionDecl) {
+        if (decl.IsFunctionDecl && ((Microsoft.Research.Vcc.CAST.Top.FunctionDecl)decl).Item.Name == funcName) {
           foreach (var attr in ((CAST.Top.FunctionDecl)decl).Item.CustomAttr) {
             if (attr.IsVccAttr && ((CAST.CustomAttr.VccAttr)attr).Item1 == CAST.AttrIsolateProof) 
-              return true;
-            
+              return true;            
           }
         }
       }
@@ -178,7 +182,8 @@ namespace Microsoft.Research.Vcc
 
       string extraFunctionOptions = null;
       bool isBvLemmaCheck = IsBvLemmaCheck(impl);
-      if ((parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) || isBvLemmaCheck) {
+      bool skipSmoke = HasSkipSmokeAttr(impl);
+      if ((parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) || isBvLemmaCheck || skipSmoke) {
         CloseVcGen();
         extraFunctionOptions = extraFunctionOptions ?? ""; // this prevents parsing errors in case of bv_lemma checks and will also cause the VcGen to be closed later
         VccOptions extraCommandLineOptions = OptionParser.ParseCommandLineArguments(VccCommandLineHost.dummyHostEnvironment, extraFunctionOptions.Split(' ', '\t'), false);
@@ -188,6 +193,11 @@ namespace Microsoft.Research.Vcc
         if (isBvLemmaCheck) {
           effectiveOptions.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
           effectiveOptions.Add("/z3opt:CASE_SPLIT=1");
+        }
+
+        if (skipSmoke)
+        {
+          effectiveOptions.RemoveAll(opt => opt == "/smoke");
         }
 
         if (restartProver) {
@@ -564,18 +574,43 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private bool ReportUnreachable(IToken tok)
+    private void ReportUnreachable(IList<IToken> traceTokens)
     {
-      if (string.IsNullOrEmpty(tok.filename)) return false;
-      PrintSummary(VC.ConditionGeneration.Outcome.Correct); // it is correct, but
-      Logger.Instance.LogWithLocation(
-        null,
-        "found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)",
-        new Location(tok.filename, tok.line, tok.col),
-        LogKind.Warning,
-        false);
+      if (traceTokens.Count == 0)
+      {
+        Logger.Instance.Warning("Found unreachable code, but cannot figure out where it is.");
+          // TODO this won't be caught by the VS add-on
+      }
+      else
+      {
+        Logger.Instance.LogWithLocation(
+          null,
+          "found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)",
+          new Location(traceTokens[0].filename, traceTokens[0].line, traceTokens[0].col),
+          LogKind.Warning,
+          false);
 
-      return true;
+        var prevFile = traceTokens[0].filename;
+        var prevLine = traceTokens[0].line;
+        var prevCol = traceTokens[0].col;
+
+        for (int i = traceTokens.Count - 1; i > 0; i--)
+        {
+          if (traceTokens[i].col == prevCol && traceTokens[i].line == prevLine && traceTokens[i].filename == prevFile)
+            continue;
+
+          Logger.Instance.LogWithLocation(
+            null,
+            "trace to unreachable location",
+            new Location(traceTokens[i].filename, traceTokens[i].line, traceTokens[i].col),
+            LogKind.Warning,
+            true);
+
+          prevFile = traceTokens[i].filename;
+          prevLine = traceTokens[i].line;
+          prevCol = traceTokens[i].col;
+        }
+      }
     }
 
     private static bool HasAssertFalse(Block b)
@@ -637,6 +672,8 @@ namespace Microsoft.Research.Vcc
           return;
       }
 
+      var traceTokens = new List<IToken>();
+
       for (int i = impl.Blocks.Count - 1; i >= 0; i--) {
         Block b = impl.Blocks[i];
         foreach (var cmd in b.Cmds) {
@@ -649,14 +686,23 @@ namespace Microsoft.Research.Vcc
             }
           }
         }
-        if (this.ReportUnreachable(b.TransferCmd.tok)) break;
-        for (int j = b.Cmds.Length - 1; j >= 0; j--) {
-          if (this.ReportUnreachable(b.Cmds[j].tok)) goto outer;
+
+        if (!String.IsNullOrEmpty(b.TransferCmd.tok.filename))
+          traceTokens.Add(b.TransferCmd.tok);
+        else {
+          for (int j = b.Cmds.Length - 1; j >= 0; j--)
+          {
+            if (!String.IsNullOrEmpty((b.Cmds[j].tok.filename)))
+            {
+              traceTokens.Add(b.Cmds[j].tok);
+              break;
+            }
+          }
         }
       }
+
       PrintSummary(VC.ConditionGeneration.Outcome.Correct); // it is correct, but
-      Logger.Instance.Warning("Found unreachable code, but cannot figure out where it is."); // TODO this won't be caught by the VS add-on
-    outer: ;
+      this.ReportUnreachable(traceTokens);
     }
   }
 }

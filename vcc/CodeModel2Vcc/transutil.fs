@@ -275,6 +275,12 @@ namespace Microsoft.Research.Vcc
        Expr.Ref (expr.Common, tmp))
 
   let cache helper = cacheEx false helper (fun tmp expr -> Macro (voidBogusEC(), "=", [mkRef tmp; expr]))
+  let cacheMany helper name exprs varKind = 
+    let decls, refs = 
+      exprs 
+        |> List.map (fun e -> cache helper name e varKind)
+        |> List.unzip
+    List.concat decls, refs
   let lateCache helper = cacheEx false helper (fun tmp expr -> VarWrite (voidBogusEC(), [tmp], expr))
   let lateCacheRef helper = cacheEx true helper (fun tmp expr -> VarWrite (voidBogusEC(), [tmp], expr))
 
@@ -306,8 +312,9 @@ namespace Microsoft.Research.Vcc
 
   let inheritedAttrs attrs = 
     let isInherited = function
-      | VccAttr(AttrSkipVerification, _) -> true
-      | VccAttr(AttrIsolateProof, _) -> true
+      | VccAttr(AttrSkipVerification, _)
+      | VccAttr(AttrIsolateProof, _) 
+      | VccAttr(AttrSkipSmoke, _) -> true
       | _ -> false
     attrs |> List.filter isInherited
   
@@ -397,6 +404,8 @@ namespace Microsoft.Research.Vcc
           | "#Object" -> ()
           | _ ->
             cb.UseTypeDecl td
+            for f in td.DataTypeOptions do
+              cb.UseFunction f
             match td.Kind with
               | FunctDecl d -> cb.UseFunction d
               | _ -> ()
@@ -437,7 +446,7 @@ namespace Microsoft.Research.Vcc
       | _ -> ()
     true
   
-  let walkTop cb t =
+  let rec walkTop cb t =
     let doVar (v:Variable) = walkType cb v.Type
     match t with
       | Top.FunctionDecl h ->
@@ -471,6 +480,7 @@ namespace Microsoft.Research.Vcc
       | Top.TypeDecl td -> td :> obj
       | Top.Global(v, _) -> v :> obj
       | Top.FunctionDecl f -> f :>obj
+      | Top.Axiom ax -> ax :> obj
       | _ -> null
       
     and addDependentAxioms top = 
@@ -554,7 +564,7 @@ namespace Microsoft.Research.Vcc
   let pruneBy (env:Helper.Env) funcName decls = env.SwPruning.Run doPruneBy funcName decls
   
   let dumpDecls msg showTypes decls = 
-    printf ">>> %s\n" msg
+    printf ">>> %s\r\n" msg
     for (d:Top) in decls do printf "%s" (d.ToStringWT(showTypes))
     decls
 
