@@ -140,131 +140,137 @@ namespace Microsoft.Research.Vcc
       double start = VccCommandLineHost.GetTime();
 
       bool restartProver = false;
+      bool currentBoogieIsPruned = false;
 
-      if (parent.options.AggressivePruning || HasIsolateProofAttribute(funcName)) {
-        restartProver = true;
-        var decls = TransUtil.pruneBy(env, funcName, currentDecls);
-        var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude, decls);
-        if (!env.ShouldContinue) return VerificationResult.UserError;
-        PrepareBoogie(boogieDecls);
-      } else {
-        if (currentBoogie == null) {
-          var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
+      try {
+
+        if (parent.options.AggressivePruning || HasIsolateProofAttribute(funcName)) {
+          restartProver = true;
+          currentBoogieIsPruned = true;
+          var decls = TransUtil.pruneBy(env, funcName, currentDecls);
+          var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude, decls);
           if (!env.ShouldContinue) return VerificationResult.UserError;
           PrepareBoogie(boogieDecls);
-        }
-      }
-
-      Implementation impl = null;
-      foreach (Declaration decl in currentBoogie.TopLevelDeclarations) {
-        impl = decl as Implementation;
-        if (impl != null && impl.Name == funcName) break;
-        impl = null;
-      }
-      if (impl == null) {
-        Logger.Instance.Error("cannot find function: {0}", funcName);
-        return VerificationResult.UserError;
-      }
-
-      if (this.errorMode || ! env.ShouldContinue) return VerificationResult.UserError;
-
-      if (impl.SkipVerification) return VerificationResult.Skipped;
-
-      Logger.Instance.LogMethodStart(funcName);
-
-      string logPath = CommandLineOptions.Clo.SimplifyLogFilePath;
-      if (logPath != null)
-        logPath = logPath.Replace("@VCCFILE@", TestRunner.currentTestcaseName);
-      if (logPath != null && logPath.Contains("@VCCFUNC@")) {
-        logPath = logPath.Replace("@VCCFUNC@", funcName.Replace("$", "_").Replace("^", "_"));
-        CloseVcGen();
-      }
-
-      string extraFunctionOptions = null;
-      bool isBvLemmaCheck = IsBvLemmaCheck(impl);
-      bool skipSmoke = HasSkipSmokeAttr(impl);
-      if ((parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) || isBvLemmaCheck || skipSmoke) {
-        CloseVcGen();
-        extraFunctionOptions = extraFunctionOptions ?? ""; // this prevents parsing errors in case of bv_lemma checks and will also cause the VcGen to be closed later
-        VccOptions extraCommandLineOptions = OptionParser.ParseCommandLineArguments(VccCommandLineHost.dummyHostEnvironment, extraFunctionOptions.Split(' ', '\t'), false);
-        List<string> effectiveOptions = new List<string>(extraCommandLineOptions.BoogieOptions);
-        effectiveOptions.AddRange(extraCommandLineOptions.Z3Options.Select(z3option => "/z3opt:" + z3option));
-        effectiveOptions.AddRange(options);
-        if (isBvLemmaCheck) {
-          effectiveOptions.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
-          effectiveOptions.Add("/z3opt:CASE_SPLIT=1");
+        } else {
+          if (currentBoogie == null) {
+            var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
+            if (!env.ShouldContinue) return VerificationResult.UserError;
+            PrepareBoogie(boogieDecls);
+          }
         }
 
-        if (skipSmoke)
-        {
-          effectiveOptions.RemoveAll(opt => opt == "/smoke");
+        Implementation impl = null;
+        foreach (Declaration decl in currentBoogie.TopLevelDeclarations) {
+          impl = decl as Implementation;
+          if (impl != null && impl.Name == funcName) break;
+          impl = null;
         }
-
-        if (restartProver) {
-          effectiveOptions.Add("/restartProver");
-        }
-
-        if (!ReParseBoogieOptions(effectiveOptions, parent.options.RunningFromCommandLine)) {
-          Logger.Instance.Error("Error parsing extra options '{0}' for function '{1}'", extraFunctionOptions, impl.Name);
+        if (impl == null) {
+          Logger.Instance.Error("cannot find function: {0}", funcName);
           return VerificationResult.UserError;
         }
-        try {
-          parent.swBoogie.Start();
-          vcgen = new VC.VCGen(currentBoogie, logPath, CommandLineOptions.Clo.SimplifyLogFileAppend);
-        } finally {
-          parent.swBoogie.Stop();
-        }
-      } else if (vcgen == null) {
-        // run with default options
-        ReParseBoogieOptions(options, parent.options.RunningFromCommandLine);
-        try {
-          parent.swBoogie.Start();
-          vcgen = new VC.VCGen(currentBoogie, logPath, CommandLineOptions.Clo.SimplifyLogFileAppend);
-        } finally {
-          parent.swBoogie.Stop();
-        }
-      }
-       
-      var reporter = new ErrorReporter(parent.options, impl.Proc.Name, impl.Proc.tok, start, VccCommandLineHost.ErrorHandler);
 
-      try {
-        parent.swVcOpt.Start();
-        if (vcopt != null) {
-          impl = vcopt.RoundTrip(impl);
+        if (this.errorMode || !env.ShouldContinue) return VerificationResult.UserError;
+
+        if (impl.SkipVerification) return VerificationResult.Skipped;
+
+        Logger.Instance.LogMethodStart(funcName);
+
+        string logPath = CommandLineOptions.Clo.SimplifyLogFilePath;
+        if (logPath != null)
+          logPath = logPath.Replace("@VCCFILE@", TestRunner.currentTestcaseName);
+        if (logPath != null && logPath.Contains("@VCCFUNC@")) {
+          logPath = logPath.Replace("@VCCFUNC@", funcName.Replace("$", "_").Replace("^", "_"));
+          CloseVcGen();
+        }
+
+        string extraFunctionOptions = null;
+        bool isBvLemmaCheck = IsBvLemmaCheck(impl);
+        bool skipSmoke = HasSkipSmokeAttr(impl);
+        if ((parent.options.RunInBatchMode && (extraFunctionOptions = GetExtraFunctionOptions(impl)) != null) || isBvLemmaCheck || skipSmoke) {
+          CloseVcGen();
+          extraFunctionOptions = extraFunctionOptions ?? ""; // this prevents parsing errors in case of bv_lemma checks and will also cause the VcGen to be closed later
+          VccOptions extraCommandLineOptions = OptionParser.ParseCommandLineArguments(VccCommandLineHost.dummyHostEnvironment, extraFunctionOptions.Split(' ', '\t'), false);
+          List<string> effectiveOptions = new List<string>(extraCommandLineOptions.BoogieOptions);
+          effectiveOptions.AddRange(extraCommandLineOptions.Z3Options.Select(z3option => "/z3opt:" + z3option));
+          effectiveOptions.AddRange(options);
+          if (isBvLemmaCheck) {
+            effectiveOptions.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
+            effectiveOptions.Add("/z3opt:CASE_SPLIT=1");
+          }
+
+          if (skipSmoke) {
+            effectiveOptions.RemoveAll(opt => opt == "/smoke");
+          }
+
+          if (restartProver) {
+            effectiveOptions.Add("/restartProver");
+          }
+
+          if (!ReParseBoogieOptions(effectiveOptions, parent.options.RunningFromCommandLine)) {
+            Logger.Instance.Error("Error parsing extra options '{0}' for function '{1}'", extraFunctionOptions, impl.Name);
+            return VerificationResult.UserError;
+          }
+          try {
+            parent.swBoogie.Start();
+            vcgen = new VC.VCGen(currentBoogie, logPath, CommandLineOptions.Clo.SimplifyLogFileAppend);
+          } finally {
+            parent.swBoogie.Stop();
+          }
+        } else if (vcgen == null) {
+          // run with default options
+          ReParseBoogieOptions(options, parent.options.RunningFromCommandLine);
+          try {
+            parent.swBoogie.Start();
+            vcgen = new VC.VCGen(currentBoogie, logPath, CommandLineOptions.Clo.SimplifyLogFileAppend);
+          } finally {
+            parent.swBoogie.Stop();
+          }
+        }
+
+        var reporter = new ErrorReporter(parent.options, impl.Proc.Name, impl.Proc.tok, start, VccCommandLineHost.ErrorHandler);
+
+        try {
+          parent.swVcOpt.Start();
+          if (vcopt != null) {
+            impl = vcopt.RoundTrip(impl);
+          }
+        } finally {
+          parent.swVcOpt.Stop();
+        }
+
+
+        VC.ConditionGeneration.Outcome outcome;
+        string extraInfo = null;
+        try {
+          parent.swVerifyImpl.Start();
+          VCGenPlugin plugin = parent.plugin;
+          outcome = plugin != null ? plugin.VerifyImpl(env, vcgen, impl, currentBoogie, reporter) : vcgen.VerifyImplementation(impl, currentBoogie, reporter);
+        } catch (UnexpectedProverOutputException exc) {
+          outcome = VC.ConditionGeneration.Outcome.OutOfMemory;
+          extraInfo = "caused an exception \"" + exc.Message + "\"";
+        } finally {
+          parent.swVerifyImpl.Stop();
+        }
+
+        if (extraFunctionOptions != null) {
+          CloseVcGen();
+        }
+
+        reporter.PrintSummary(outcome, extraInfo);
+
+        modelCount += reporter.modelCount;
+
+        switch (outcome) {
+          case VC.ConditionGeneration.Outcome.Correct: return VerificationResult.Succeeded;
+          case VC.ConditionGeneration.Outcome.Errors: return VerificationResult.Failed;
+          case VC.ConditionGeneration.Outcome.Inconclusive: return VerificationResult.Inconclusive;
+          case VC.ConditionGeneration.Outcome.OutOfMemory: return VerificationResult.Crashed;
+          case VC.ConditionGeneration.Outcome.TimedOut: return VerificationResult.Crashed;
+          default: return VerificationResult.Crashed;
         }
       } finally {
-        parent.swVcOpt.Stop();
-      }
-
-      
-      VC.ConditionGeneration.Outcome outcome;
-      string extraInfo = null;
-      try {
-        parent.swVerifyImpl.Start();
-        VCGenPlugin plugin = parent.plugin;
-        outcome = plugin != null ? plugin.VerifyImpl(env, vcgen, impl, currentBoogie, reporter) : vcgen.VerifyImplementation(impl, currentBoogie, reporter);
-      } catch (UnexpectedProverOutputException exc) {
-        outcome = VC.ConditionGeneration.Outcome.OutOfMemory;
-        extraInfo = "caused an exception \"" + exc.Message + "\"";
-      } finally {
-        parent.swVerifyImpl.Stop();
-      }
-
-      if (extraFunctionOptions != null) {
-        CloseVcGen();
-      }
-
-      reporter.PrintSummary(outcome, extraInfo);
-
-      modelCount += reporter.modelCount;
-
-      switch (outcome) {
-        case VC.ConditionGeneration.Outcome.Correct: return VerificationResult.Succeeded;
-        case VC.ConditionGeneration.Outcome.Errors: return VerificationResult.Failed;
-        case VC.ConditionGeneration.Outcome.Inconclusive: return VerificationResult.Inconclusive;
-        case VC.ConditionGeneration.Outcome.OutOfMemory: return VerificationResult.Crashed;
-        case VC.ConditionGeneration.Outcome.TimedOut: return VerificationResult.Crashed;
-        default: return VerificationResult.Crashed;
+        if (currentBoogieIsPruned) { currentBoogie = null; }
       }
     }
 
