@@ -1502,7 +1502,7 @@ module Microsoft.Research.Vcc.CAST
   // and thus we get null as Type instead of Bool/Void (they are unitary)
   let voidBogusEC () = { bogusEC with Type = Void }
   let boolBogusEC () = { bogusEC with Type = Bool }
-  let intBogusEC () = { bogusEC with Type = MathInteger }
+  let intBogusEC () = { bogusEC with Type = MathInteger Signed }
   type ExprCommon with
     static member Bogus = bogusEC
   
