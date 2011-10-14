@@ -341,8 +341,6 @@ int main()                                    // A
 }                                             // A
 #endif                                        // A
 
-// the warnings about unreachable code are currently expected, an artifact of the translation of lazy operators
-
 /*`
 Verification of Heap#adm succeeded.
 Verification of swprintf succeeded.
@@ -354,7 +352,4 @@ Verification of insert succeeded.
 Verification of extractMin succeeded.
 Verification of heapSort succeeded.
 Verification of heapSortTestHarness succeeded.
-testcase(327,32) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(327,16) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(326,26) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
 `*/

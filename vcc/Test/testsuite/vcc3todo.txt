@@ -33,6 +33,8 @@ unions.ns-10
 unions.ns-11
 valueStructs.ns-03
 basics2-27
+structEquality.ns-00
+pure-42
 
 # wierd pointer arithmetic
 groups-02
@@ -111,7 +113,6 @@ functionPtrs-07
 functionPtrs-09
 generics-08
 groups-17
-groups-20
 invs-03
 labeledInvariants-00
 leakStack-02
@@ -141,8 +142,10 @@ as_array-04
 records.ns-19
 
 # unions
-structEquality.ns-00
 unionsNeg.ns-02
+
+# wrong path
+ignoreIncludes-01
 
 # examples/
 # Iterator.c

@@ -11,6 +11,5 @@ void foo() {
 }
 
 `
-testcase(9,28) : warning VC9121: failed to infer triggers for '\forall T x; 42)'
 Verification of foo succeeded.
 `

@@ -145,8 +145,8 @@
       <Link>version.cs</Link>
     </Compile>
     <Compile Include="BvdToolWindow.cs" />
+    <Compile Include="ErrorLinesChangedEventArgs.cs" />
     <Compile Include="LanguageVersion.cs" />
-    <Compile Include="LineMarkerClosure.cs" />
     <Compile Include="CustomVerifyForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -154,7 +154,6 @@
       <DependentUpon>CustomVerifyForm.cs</DependentUpon>
     </Compile>
     <Compile Include="ErrorModelToolWindow.cs" />
-    <Compile Include="MarkerClient.cs" />
     <Compile Include="CompilerSettings.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -165,6 +164,7 @@
     <Compile Include="SyntaxHighlighting\VccClassifier.cs" />
     <Compile Include="SyntaxHighlighting\VccClassifierFormats.cs" />
     <Compile Include="SyntaxHighlighting\VccClassifierType.cs" />
+    <Compile Include="SyntaxHighlighting\VccErrorTagger.cs" />
     <Compile Include="VCCOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>

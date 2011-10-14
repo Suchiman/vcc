@@ -205,8 +205,8 @@ namespace Microsoft.Research.Vcc
     let removeLazyOps = 
 
       let splitKnown = function
-        | Expr.Macro(_, "_vcc_known'", expr :: asserts) -> expr, asserts
-        | Expr.Cast(c, cs, Expr.Macro(_, "_vcc_known'", expr :: asserts)) -> expr, asserts
+        | Expr.Macro(_, "_vcc_known'", expr :: stmts) -> expr, stmts
+        | Expr.Cast(c, cs, Expr.Macro(_, "_vcc_known'", expr :: stmts)) -> expr, stmts
         | expr -> expr, []
 
       let rec doRemoveLazyOps inSpecBlock keepKnown ctx self = 
@@ -223,7 +223,8 @@ namespace Microsoft.Research.Vcc
           let tmpRef = Expr.Ref (c, tmp)
           let thAssign = Macro (c', "=", [tmpRef; th])
           let elAssign = Macro (c', "=", [tmpRef; el])          
-          let write = Expr.If (c', None, cond, thAssign, elAssign)
+          let expectUnreach = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_expect_unreachable", []))
+          let write = Expr.If (c', None, cond, Expr.MkBlock([expectUnreach; thAssign]), Expr.MkBlock([expectUnreach; elAssign]))
           addStmtsOpt [VarDecl (c', tmp, []); self write] tmpRef
         | If(c, cl, cond, th, el) ->
           match splitKnown cond with
@@ -242,47 +243,52 @@ namespace Microsoft.Research.Vcc
         | Expr.Macro(c, "_vcc_known", [expr; knownValue]) when not ctx.IsPure ->
           let e, ea = splitKnown (self expr)
           let k, ka = splitKnown (self knownValue)
-          let e' = if e.Type = Type.Bool then e else Expr.Cast({e.Common with Type = Type.Bool}, CheckedStatus.Unchecked, e)
+          let tmp = getTmp helper "known" expr.Type VarKind.Local
+          let tmpRef = Expr.Ref(expr.Common, tmp)
+          let tmpDecl = VarDecl({expr.Common with Type = Type.Void}, tmp, [])
+          let tmpAssign = Macro({expr.Common with Type = Type.Void}, "=", [tmpRef; e])
+          let e' = if e.Type = Type.Bool then tmpRef else Expr.Cast({e.Common with Type = Type.Bool}, CheckedStatus.Unchecked, tmpRef)
           let k' = if k.Type = c.Type then k else Expr.Cast(c, CheckedStatus.Unchecked, k)
-          Some(Expr.Macro(c, "_vcc_known'", k' :: assertEq e' k :: (ea @ ka)))
+          Some(Expr.Macro(c, "_vcc_known'", k' :: tmpDecl :: tmpAssign :: assertEq e' k :: (ea @ ka)))
         | Expr.Prim(c, (Op("!", _) as op), [arg]) when not ctx.IsPure ->
           let arg' = self arg
           match splitKnown arg' with
-            | (Cast(_, _, BoolLiteral(ec, b)) | BoolLiteral(ec, b)), asserts -> Some(Expr.Macro(c, "_vcc_known'", BoolLiteral(ec, not b) :: asserts))
+            | (Cast(_, _, BoolLiteral(ec, b)) | BoolLiteral(ec, b)), stmts -> Some(Expr.Macro(c, "_vcc_known'", BoolLiteral(ec, not b) :: stmts))
             | _ -> Some(Expr.Prim(c, op, [arg']))
         | Expr.Macro(c, "ite", [cond; th; el]) when not ctx.IsPure ->
           let cond' = self cond
-          let pick e asserts =
-            let e', eAsserts = splitKnown (self e)
-            Some(Expr.Macro(c, "_vcc_known'", Expr.Cast(c, CheckedStatus.Unchecked, e') :: (asserts @ eAsserts)))
+          let pick e stmts =
+            let e', eStmts = splitKnown (self e)
+            Some(Expr.Macro(c, "_vcc_known'", Expr.Cast(c, CheckedStatus.Unchecked, e') :: (stmts @ eStmts)))
           match splitKnown cond' with
-            | (Cast(_,_, BoolLiteral(_, b)) | BoolLiteral(_, b)), asserts -> if b then pick th asserts else pick el asserts
+            | (Cast(_,_, BoolLiteral(_, b)) | BoolLiteral(_, b)), stmts -> if b then pick th stmts else pick el stmts
             | _ -> Some(Expr.Macro(c, "ite", [cond'; self th; self el]))
         | _ -> None
                   
       let eliminateKnown self = function
-        | Expr.Macro(c, "_vcc_known'", e :: asserts) -> Some(self (Expr.MkBlock (asserts @ [e])))
+        | Expr.Macro(c, "_vcc_known'", e :: stmts) -> Some(self (Expr.MkBlock (stmts @ [e])))
         | _ -> None
 
-      deepMapExpressionsCtx propagateKnownValue >> deepMapExpressionsCtx (doRemoveLazyOps false false) >> deepMapExpressions eliminateKnown 
+      deepMapExpressionsCtx propagateKnownValue >> 
+      deepMapExpressionsCtx (doRemoveLazyOps false false) >> 
+      deepMapExpressions eliminateKnown 
     
     // ============================================================================================================
 
     /// Rename locals if their names clashes with parameters or locals from other scopes   
     let doRemoveNestedLocals (f:Function)=
       let subst = new Dict<Variable, Variable>()
-      let seenNames = new Dict<string,bool>()    
-      let addVarToSeen (v : Variable) = seenNames.[v.Name] <- true
+      let seenNames = new HashSet<string>()    
+      let addVarToSeen (v : Variable) = seenNames.Add (v.Name)
 
       let renameVar (v : Variable) =
-        if seenNames.ContainsKey(v.Name) then
-          let renamedVar = { v with Name = v.Name + "#" + subst.Count.ToString()}
-          if v.Kind <> Local && v.Kind <> SpecLocal then die()
-          subst.[v] <- renamedVar
-          renamedVar
-        else
-          addVarToSeen v
-          v 
+        if addVarToSeen v
+          then v
+          else
+            let renamedVar = { v with Name = v.Name + "#" + subst.Count.ToString()}
+            if v.Kind <> Local && v.Kind <> SpecLocal then die()
+            subst.[v] <- renamedVar
+            renamedVar
 
       let rnExpr self = function
         | Expr.VarDecl (ce, var, attr) -> Some(Expr.VarDecl (ce, renameVar var, attr))
@@ -642,7 +648,7 @@ namespace Microsoft.Research.Vcc
           addressableLocals.[v] <- (v', Macro(fakeEC Void, "fake_block", def))
           
       let pointsToStruct = function
-        | Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)})) -> true
+        | Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)} as td)) when not td.IsMathStruct ->  true
         | _ -> false
           
       let rec findThem inBody self = function
@@ -948,10 +954,6 @@ namespace Microsoft.Research.Vcc
           false
         | _ -> true
       
-      let removeSpecMarker self = function
-        | CallMacro(_, "spec", _, [body]) -> Some(self(body))
-        | _ -> None
-      
       let checkParameterTypes (fn:Function) =
         let checkPar (v:Variable) =
           if v.Kind = VarKind.Parameter && isSpecType v.Type then
@@ -976,7 +978,7 @@ namespace Microsoft.Research.Vcc
                  [d] |> deepVisitExpressions (checkNoWritesToPhysicalFromSpec false)
                  [d] |> deepVisitExpressions checkAtMostOnePhysicalAccessInAtomic
         
-      decls |> deepMapExpressions removeSpecMarker
+      decls
 
     // ============================================================================================================\
   

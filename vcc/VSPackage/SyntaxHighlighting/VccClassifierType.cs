@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using Microsoft.VisualStudio.Text.Adornments;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
@@ -10,7 +11,8 @@ namespace Microsoft.Research.Vcc.VSPackage
     internal const string KeywordType = "vcc.keyword";
     internal const string DimmedSpecType = "vcc.spec.dimmed";
     internal const string DimmedKeywordType = "vcc.keyword.dimmed";
-
+    internal const string VccErrorTagType = "vcc.error";
+    internal const string VccWarningTagType = "vcc.warning";
 
     [Export]
     [Name("vcc")]
@@ -66,5 +68,10 @@ namespace Microsoft.Research.Vcc.VSPackage
     // ReSharper disable RedundantDefaultFieldInitializer
     internal static ClassificationTypeDefinition vccDimmedKeywordDefinition = null;
     // ReSharper restore RedundantDefaultFieldInitializer
+
+    [Export]
+    [Name(VccClassificationTypeDefinitions.VccErrorTagType)]
+    [DisplayName(VccClassificationTypeDefinitions.VccErrorTagType)]
+    internal static ErrorTypeDefinition VccErrorTagTypeDefinition = null;
   }
 }

@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using System.Windows.Media;
+using Microsoft.VisualStudio.Text.Adornments;
 
 namespace Microsoft.Research.Vcc.VSPackage
 {
@@ -47,6 +49,20 @@ namespace Microsoft.Research.Vcc.VSPackage
       public VccDimmedKeywordFormat()
       {
         this.ForegroundOpacity = Opacity;
+      }
+    }
+
+    [Export(typeof(EditorFormatDefinition))]
+    [Name(VccClassificationTypeDefinitions.VccErrorTagType)]
+    [Order(After = Priority.High)]
+    [UserVisible(true)]
+    internal class VccErrorTagClassificationFormatDefinition : EditorFormatDefinition
+    {
+      public VccErrorTagClassificationFormatDefinition()
+      {
+        this.ForegroundColor = Colors.MidnightBlue;
+        this.BackgroundCustomizable = false;
+        this.DisplayName = "Verification Error";
       }
     }
   }

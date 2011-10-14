@@ -29,7 +29,7 @@ int ok2(struct S *s)
 
 
 _(ghost 
-int nok2(struct S *s)
+int ok21(struct S *s)
   _(requires \thread_local(s))
 {
   return s->specvol;
@@ -40,6 +40,5 @@ Verification of ok1 succeeded.
 Verification of nok1 failed.
 testcase(19,10) : error VC8512: Assertion 's is mutable (accessing volatile field vol)' did not verify.
 Verification of ok2 succeeded.
-Verification of nok2 failed.
-testcase(34,10) : error VC8512: Assertion 's is mutable (accessing volatile field specvol)' did not verify.
+Verification of ok21 succeeded.
 `

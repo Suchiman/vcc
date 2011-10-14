@@ -24,19 +24,17 @@ namespace Microsoft.Research.Vcc
           
     
   type BvTranslator(ctx:TranslationState) =
-    let generatedBvOps = new Dict<_,_>()
+    let generatedBvOps = new HashSet<_>()
     let helper = ctx.Helper
     
     let bvSignExtensionOp fromBits toBits =
       let boogieName = "$bv_sign_ext_" + fromBits.ToString() + "_" + toBits.ToString()
-      if generatedBvOps.ContainsKey boogieName then boogieName
-      else
-        generatedBvOps.Add(boogieName, true)
+      if generatedBvOps.Add boogieName then 
         let retTp = B.Type.Bv toBits
         let fromTp = B.Type.Bv fromBits
         let fn = B.Decl.Function (retTp, [B.Attribute.StringAttr("bvbuiltin", "sign_extend " + (toBits - fromBits).ToString())], boogieName, [("p", fromTp)], None)
         ctx.AddDecls [fn]
-        boogieName
+      boogieName
     
     let bvZeroExtend fromBits toBits e = B.BvConcat(B.Expr.BvLiteral (new bigint(0), toBits - fromBits), e)
     let bvSignExtend fromBits toBits e = bCall (bvSignExtensionOp fromBits toBits) [e]
@@ -92,15 +90,13 @@ namespace Microsoft.Research.Vcc
           | _ -> die()
       let bvname = "bv" + (if sign then signedName else unsignedName)
       let boogieName = "$bv_" + bvname + sz.ToString()
-      if generatedBvOps.ContainsKey boogieName then boogieName
-      else
-        generatedBvOps.Add (boogieName, true)
+      if generatedBvOps.Add boogieName then
         let bvt = B.Type.Bv sz
         let parms = [for i = 1 to nargs do yield ("p" + i.ToString(), bvt)]
         let retTp = if boolRes then B.Type.Bool else bvt
         let fn = B.Decl.Function (retTp, [B.Attribute.StringAttr ("bvbuiltin", bvname)], boogieName, parms, None)
         ctx.AddDecls [fn]
-        boogieName
+      boogieName
 
     member this.TrBvExpr env expr =
       let bvOpFor = this.BvOpFor

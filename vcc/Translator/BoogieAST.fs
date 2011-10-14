@@ -296,7 +296,7 @@ namespace Microsoft.Research.Vcc
       | Havoc of list<Id>
       | Assign of Expr * Expr
       | Call of Token * list<Id> * Id * list<Expr> // can generate errors
-      | If of Expr * Stmt * Stmt
+      | If of Token * Expr * Stmt * Stmt
       | While of Expr * list<Token * Expr> * Stmt // invariants can generate errors
       | Label of Token * Id // appear in the error trace
       | Goto of Token * list<Id>
@@ -324,7 +324,7 @@ namespace Microsoft.Research.Vcc
             | Stmt.Label _
             | Assign _
             | Call _ -> s
-            | If (c, t, e) -> If (c, self t, self e)
+            | If (c, tok, t, e) -> If (c, tok, self t, self e)
             | While (a, b, s) -> While (a, b, self s)
             | Block stmts -> Block (List.map self stmts)
     
@@ -424,12 +424,12 @@ namespace Microsoft.Research.Vcc
           [Cmd (Microsoft.Boogie.AssignCmd (noToken, glist [lhs], glist [trExpr rhs]) :> Microsoft.Boogie.Cmd)]
         | Call (token, il, f, args) ->
           [Cmd (Microsoft.Boogie.CallCmd (tok token, f, toExprSeq args, toIdentifierExprSeq il) :> Microsoft.Boogie.Cmd)]
-        | If (c, t, Block []) -> 
+        | If (token, c, t, Block []) -> 
           [StructuredCmd 
-            (Microsoft.Boogie.IfCmd (noToken, trExpr c, toStmtList (trStmt t), null, null) :> Microsoft.Boogie.StructuredCmd)]
-        | If (c, t, e) -> 
+            (Microsoft.Boogie.IfCmd (tok token, trExpr c, toStmtList (trStmt t), null, null) :> Microsoft.Boogie.StructuredCmd)]
+        | If (token, c, t, e) -> 
           [StructuredCmd 
-            (Microsoft.Boogie.IfCmd (noToken, trExpr c, toStmtList (trStmt t), null, toStmtList (trStmt e)) :> Microsoft.Boogie.StructuredCmd)]
+            (Microsoft.Boogie.IfCmd (tok token, trExpr c, toStmtList (trStmt t), null, toStmtList (trStmt e)) :> Microsoft.Boogie.StructuredCmd)]
         | While (e, tinvl, b) ->
           [StructuredCmd (Microsoft.Boogie.WhileCmd (noToken, trExpr e, 
                             System.Collections.Generic.List [ 
@@ -537,7 +537,7 @@ namespace Microsoft.Research.Vcc
                 [(impl :> Microsoft.Boogie.Declaration)]
               | _ -> []
         | TypeDef tid ->
-          [(Microsoft.Boogie.TypeCtorDecl (noToken, tid, 0) :> Microsoft.Boogie.Declaration)]
+          [(Microsoft.Boogie.TypeCtorDecl (noToken, sanitize tid, 0) :> Microsoft.Boogie.Declaration)]
     
 
     let trProgram decls =

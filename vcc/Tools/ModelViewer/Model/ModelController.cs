@@ -475,7 +475,6 @@ namespace VccModel.Controller
   {
     Z3ModelVcc model;
     string _modelFileName;
-    string _sourceFileName;
     int _modelNumber;
     int _modelsInFile;
 
@@ -520,7 +519,7 @@ namespace VccModel.Controller
 
     public event EventHandler<ProgressChangedEventArgs> LoadProgressChanged;
 
-    public void LoadModel(string sourceFileName, string modelFileName, int modelNumber)
+    public void LoadModel(string modelFileName, int modelNumber)
     {
       if (modelFileName != null)
       {
@@ -530,7 +529,6 @@ namespace VccModel.Controller
           model = ModelPreprocessor.parse(modelFileName, modelNumber);
           populateModels();
 
-          _sourceFileName = sourceFileName;
           _modelFileName = modelFileName;
           _modelNumber = modelNumber;
           _modelsInFile = ModelPreprocessor.FindNumberOfModelsInFile(modelFileName);

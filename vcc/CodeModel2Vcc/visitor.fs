@@ -41,8 +41,12 @@ namespace Microsoft.Research.Vcc
   open StringLiterals
 
   type Dict<'a, 'b> = System.Collections.Generic.Dictionary<'a, 'b>
+
+  type HashSet<'a> = System.Collections.Generic.HashSet<'a>
   
   and Visitor(contractProvider:Microsoft.Cci.Ast.SourceContractProvider, helper:Helper.Env) =
+
+    inherit Microsoft.Cci.Ast.SourceVisitor()
 
     do C.PointerSizeInBytes := helper.PointerSizeInBytes
 
@@ -56,6 +60,7 @@ namespace Microsoft.Research.Vcc
     
     let mutable localsMap = new Dict<obj, C.Variable>(new ObjEqualityComparer());
     let mutable localVars = []
+    let mutable unfoldingConstant = false
     let globalsMap = new Dict<IGlobalFieldDefinition, C.Variable>()
     let specGlobalsMap = new Dict<string, C.Variable>()
     let methodsMap = new Dict<ISignature, C.Function>()
@@ -107,13 +112,10 @@ namespace Microsoft.Research.Vcc
       forwardingToken e.Token (fun () -> msg.Replace ("@@", e.Token.Value))
 
     let removeDuplicates l =
-      let elements = new Dict<_,bool>()
+      let elements = new HashSet<_>()
       let rec loop = function
         | [] -> []
-        | x::xs ->
-          match elements.TryGetValue x with
-            | true, _ -> loop xs
-            | false, _ -> elements.Add(x, true); x :: loop xs
+        | x::xs -> if elements.Add x then x :: loop xs else loop xs
       loop l
 
     let hasCustomAttr n = List.exists (function C.VccAttr (n', _) -> n = n' | _ -> false)
@@ -171,10 +173,10 @@ namespace Microsoft.Research.Vcc
     
     member private this.DoPrecond (p:IPrecondition) =
       if Visitor.CheckHasError(p.Condition) then oopsLoc p "precondition has errors"; cTrue
-      else this.DoExpression (p.Condition)
+      else this.DoIExpression (p.Condition)
     member private this.DoPostcond (p:IPostcondition) =
       if Visitor.CheckHasError(p.Condition) then oopsLoc p "postcondition has errors"; cFalse
-      else this.DoExpression (p.Condition)
+      else this.DoIExpression (p.Condition)
         
     member this.GetResult () =
       while finalActions.Count > 0 do      
@@ -200,6 +202,10 @@ namespace Microsoft.Research.Vcc
         | _ -> res
     
     member this.ExprCommon (expr:IExpression) = { Token = token expr; Type = this.DoType (expr.Type) } : C.ExprCommon
+      
+    member this.ExprCommon (expr:Expression)  = 
+      let iexpr = expr.ProjectAsIExpression()
+      { Token = token iexpr; Type = this.DoType (iexpr.Type) } : C.ExprCommon
       
     member this.StmtCommon (expr:IStatement) = { Token = token expr; Type = C.Void } : C.ExprCommon
       
@@ -390,15 +396,15 @@ namespace Microsoft.Research.Vcc
               | _ -> ()
               decl.Requires   <- [ for p in contract.Preconditions -> this.DoPrecond p ]
               decl.Ensures    <- [ for r in contract.Postconditions -> this.DoPostcond r ]
-              decl.Writes     <- [ for e in contract.Writes -> this.DoExpression e ]
-              decl.Reads      <- [ for e in contract.Reads -> this.DoExpression e ]
-              decl.Variants   <- [ for e in contract.Variants -> this.DoExpression e ]
+              decl.Writes     <- [ for e in contract.Writes -> this.DoIExpression e ]
+              decl.Reads      <- [ for e in contract.Reads -> this.DoIExpression e ]
+              decl.Variants   <- [ for e in contract.Variants -> this.DoIExpression e ]
               localsMap <- savedLocalsMap
 
             if deferContracts then finalActions.Enqueue doContracts else doContracts()
 
           else if expansion <> null then
-            let ex = this.DoExpression (expansion.ProjectAsIExpression())
+            let ex = this.DoIExpression (expansion.ProjectAsIExpression())
             decl.Ensures <- [ C.Expr.Prim({ex.Common with Type = C.Type.Bool}, C.Op("==", C.CheckedStatus.Unchecked), [C.Expr.Result(ex.Common); ex]) ]
         
     member this.DoStatement (stmt:IStatement) : C.Expr =
@@ -419,11 +425,11 @@ namespace Microsoft.Research.Vcc
         res
      
     member this.DoInvariant (inv:ITypeInvariant) : C.Expr =
-      let cond = this.DoExpression inv.Condition
+      let cond = this.DoIExpression inv.Condition
       let name =if inv.Name <> null then inv.Name.Value else "public"
       C.Expr.Macro(cond.Common, "labeled_invariant", [C.Expr.Macro(C.bogusEC, name, []); cond])
      
-    member this.DoExpression(expr:IExpression) : C.Expr =
+    member this.DoIExpression(expr:IExpression) : C.Expr =
       if Visitor.CheckHasError(expr) then
         oopsLoc expr "error in expr"
         C.Expr.Bogus
@@ -434,6 +440,43 @@ namespace Microsoft.Research.Vcc
         exprRes <- C.Expr.Bogus
         xassert (res <> C.Expr.Bogus)
         res
+
+    member this.DoExpression(expr:Expression) : C.Expr =
+      exprRes <- C.Expr.Bogus
+      match expr with 
+        | :? VccSizeOf as sizeOf -> exprRes <- this.DoSizeOf(sizeOf)
+        | _ -> expr.Dispatch(this :> SourceVisitor)
+      let res = exprRes
+      exprRes <- C.Expr.Bogus
+      assert (res <> C.Expr.Bogus)
+      res
+
+    member this.DoSizeOf(sizeOf : SizeOf) = 
+      C.Expr.SizeOf(this.ExprCommon (sizeOf :> Expression), this.DoType(sizeOf.Expression.ResolvedType))
+
+    member this.DoSizeOf(sizeOf : VccSizeOf) = 
+      C.Expr.SizeOf(this.ExprCommon (sizeOf :> Expression), this.DoType(sizeOf.TypeToSize.ResolvedType))
+
+
+    member this.DoCompileTimeConstant(constant : ICompileTimeConstant) =
+
+      let ec = this.ExprCommon constant
+      match ec.Type with
+        | C.Type.Integer _ ->
+          match constant.Value with
+            | :? char as c -> C.Expr.IntLiteral(ec, new bigint((int)c))
+            | _ -> C.Expr.IntLiteral (ec, bigint.Parse(constant.Value.ToString ()))
+        | C.Type.Bool      -> C.Expr.BoolLiteral (ec, unbox (constant.Value))
+        | C.Type.Primitive _ -> C.Expr.Macro(ec, "float_literal", [C.Expr.UserData(ec, constant.Value)])
+        | C.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.ToUserData(constant.Value)])
+        | C.Ptr (C.Type.Void) -> 
+          let ptrVal = 
+            let ecInt = {ec with Type = C.Type.Integer C.IntKind.Int64}
+            match constant.Value with
+              | :? System.IntPtr as ptr ->  C.Expr.IntLiteral(ecInt, new bigint(ptr.ToInt64()))
+              | _ -> C.Expr.IntLiteral(ecInt, bigint.Parse(constant.Value.ToString()))
+          C.Expr.Cast(ec, C.CheckedStatus.Unchecked, ptrVal)
+        | _ -> die()
 
     member this.DoBlock(block : IBlockStatement) =
      let savedLocalVars = localVars
@@ -448,9 +491,9 @@ namespace Microsoft.Research.Vcc
        else 
         let cs = {Requires  = [ for req in contract.Preconditions -> this.DoPrecond req ];
                   Ensures   = [ for ens in contract.Postconditions -> this.DoPostcond ens ];
-                  Reads     = [ for rd in contract.Reads -> this.DoExpression rd ];
-                  Writes    = [ for wr in contract.Writes -> this.DoExpression wr ];
-                  Decreases = [ for vr in contract.Variants -> this.DoExpression vr ];
+                  Reads     = [ for rd in contract.Reads -> this.DoIExpression rd ];
+                  Writes    = [ for wr in contract.Writes -> this.DoIExpression wr ];
+                  Decreases = [ for vr in contract.Variants -> this.DoIExpression vr ];
                   IsPureBlock = contract.IsPure } : CAST.BlockContract
         match block' with
           | C.Expr.Block (ec,ss,_) -> C.Expr.Block (ec,ss, Some cs)
@@ -459,14 +502,20 @@ namespace Microsoft.Research.Vcc
        //| :? VccSpecBlock -> C.Macro(result.Common, "spec", [result])
        | _ -> result
 
-    member this.DoUnary (op:string, bin:IUnaryOperation, ch) =
-      exprRes <- C.Expr.Prim (this.ExprCommon bin, C.Op(op, checkedStatus ch), [this.DoExpression (bin.Operand)])
+    member this.DoIUnary (op:string, un:IUnaryOperation, ch) =
+      exprRes <- C.Expr.Prim (this.ExprCommon un, C.Op(op, checkedStatus ch), [this.DoIExpression (un.Operand)])
 
-    member this.DoBinary (op:string, bin:IBinaryOperation) =
-      this.DoBinary(op, bin, false)
+    member this.DoUnary (op:string, un:UnaryOperation) =
+      C.Expr.Prim (this.ExprCommon (un :> Expression), C.Op(op, C.Unchecked), [this.DoExpression (un.ConvertedOperand)])
 
-    member this.DoBinary (op:string, bin:IBinaryOperation, ch:bool) =
-      exprRes <- C.Expr.Prim (this.ExprCommon bin, C.Op(op, checkedStatus ch), [this.DoExpression (bin.LeftOperand); this.DoExpression (bin.RightOperand)])
+    member this.DoIBinary (op:string, bin:IBinaryOperation) =
+      this.DoIBinary(op, bin, false)
+
+    member this.DoIBinary (op:string, bin:IBinaryOperation, ch:bool) =
+      exprRes <- C.Expr.Prim (this.ExprCommon bin, C.Op(op, checkedStatus ch), [this.DoIExpression (bin.LeftOperand); this.DoIExpression (bin.RightOperand)])
+
+    member this.DoBinary (op:string, bin:BinaryOperation) =
+      C.Expr.Prim (this.ExprCommon (bin :> Expression), C.Op(op, C.Unchecked), [this.DoExpression (bin.ConvertedLeftOperand); this.DoExpression (bin.ConvertedRightOperand)])
 
     member this.DoGlobal (g:IGlobalFieldDefinition) =
       // TODO initializer?
@@ -481,8 +530,8 @@ namespace Microsoft.Research.Vcc
                     let ec = { Token = token expr; Type = t } : C.ExprCommon
                     C.Macro(ec, "init", [ for e in initializer.Expressions -> doInitializer (this.DoType (e.Type)) e])
                   | _ when expr.Type.ResolvedType = Microsoft.Cci.Dummy.Type ->
-                    this.DoExpression (expr.ContainingBlock.Helper.ImplicitConversionInAssignmentContext(expr, decl.Type.ResolvedType).ProjectAsIExpression())
-                  | _ -> this.DoExpression (expr.ProjectAsIExpression())
+                    this.DoIExpression (expr.ContainingBlock.Helper.ImplicitConversionInAssignmentContext(expr, decl.Type.ResolvedType).ProjectAsIExpression())
+                  | _ -> this.DoIExpression (expr.ProjectAsIExpression())
               let t = this.DoType g.Type
               let t' = if decl.GlobalFieldDeclaration.IsVolatile then C.Type.Volatile(t) else t
               let var = C.Variable.CreateUnique g.Name.Value t' (if decl.IsReadOnly then C.VarKind.ConstGlobal else C.VarKind.Global)
@@ -507,7 +556,7 @@ namespace Microsoft.Research.Vcc
       if instance = null then
         exprRes <-
           match definition with
-            | :? IExpression as e -> this.DoExpression e
+            | :? IExpression as e -> this.DoIExpression e
             | _ when localsMap.ContainsKey definition ->
               C.Expr.Ref (ec, localsMap.[definition]) 
             | :? IParameterDefinition as p ->
@@ -535,7 +584,7 @@ namespace Microsoft.Research.Vcc
         match definition with
           | :? IAddressDereference as deref -> (this :> ICodeVisitor).Visit deref
           | :? IFieldDefinition as def ->
-            let instance = this.DoExpression instance
+            let instance = this.DoIExpression instance
 
             match typestateFieldsMap.TryFind def.Name.Value with
               | Some v1Fn ->
@@ -608,7 +657,6 @@ namespace Microsoft.Research.Vcc
                 else if name.Contains ("._FixedArrayOfSize") then
                   match fields with
                     | f :: _ ->
-                      xassert (typeDef.SizeOf > 0u)
                       let eltype = this.DoType f.Type
                       C.Type.Array (eltype, int typeDef.SizeOf / eltype.SizeOf)
                     | _ -> die()
@@ -730,8 +778,13 @@ namespace Microsoft.Research.Vcc
                         Offset =
                           if f.IsBitField then                               
                             C.FieldOffset.BitField (int f.Offset - minOffset, int (MemberHelper.GetFieldBitOffset f), int f.BitLength)
-                          else
-                            C.FieldOffset.Normal (int f.Offset - minOffset)
+                          else match t with
+                                | C.Type.Array(elType, 0) ->
+                                  // zero-size arrays start after the current type with the proper alignment
+                                  let alignment = elType.SizeOf // TODO: this should really be computed via TypeHelper.GetAlignment
+                                  let offset = ((td.SizeOf + alignment - 1) / alignment) * alignment
+                                  C.FieldOffset.Normal (offset - minOffset)
+                                | _ -> C.FieldOffset.Normal (int f.Offset - minOffset)
                         CustomAttr = convCustomAttributes (token f) f.Attributes
                         UniqueId = C.unique()
                       } : C.Field               
@@ -852,7 +905,7 @@ namespace Microsoft.Research.Vcc
               oopsLoc body "found errors in quantifier body, faking it to be 'true'"
               (cTrue, bindings, [])
             else
-              let resultExpr = this.DoExpression (body)
+              let resultExpr = this.DoIExpression (body)
               let rec collect addVars = function
                 | C.Quant (_, { Variables = vars; Body = b }) ->
                   collect (vars @ addVars) b
@@ -874,9 +927,9 @@ namespace Microsoft.Research.Vcc
           match lblExpr.Expression with
             | :? DummyExpression -> C.Expr.Macro(ec, "labeled_expr", [lbl])
             | e -> 
-              let e' = this.DoExpression(e.ProjectAsIExpression())
+              let e' = this.DoIExpression(e.ProjectAsIExpression())
               C.Expr.Macro(ec, "labeled_expr", [lbl; e'])
-        | _ -> this.DoExpression(expr.ProjectAsIExpression())
+        | _ -> this.DoIExpression(expr.ProjectAsIExpression())
       let triggers = contractProvider.GetTriggersFor(o)
       match triggers with
         | null -> []
@@ -906,12 +959,12 @@ namespace Microsoft.Research.Vcc
       if (contract <> null) then Visitor.CheckHasError(contract) |> ignore
       let conds =
         if contract = null then []
-        else [ for i in contract.Invariants -> C.Expr.MkAssert (this.DoExpression i.Condition) ] @
+        else [ for i in contract.Invariants -> C.Expr.MkAssert (this.DoIExpression i.Condition) ] @
              [ for v in contract.Variants ->
-                  let expr = this.DoExpression v                 
+                  let expr = this.DoIExpression v                 
                   C.Expr.MkAssert (C.Expr.Macro ({ expr.Common with Type = C.Type.Bool }, "loop_variant", [expr]))] @
              [ for w in contract.Writes -> 
-                  let set = this.DoExpression w                    
+                  let set = this.DoIExpression w                    
                   C.Expr.MkAssert (C.Expr.Macro ({ set.Common with Type = C.Type.Bool }, "loop_writes", [set]))]
       C.Expr.Macro (C.bogusEC, "loop_contract", conds)
 
@@ -922,7 +975,7 @@ namespace Microsoft.Research.Vcc
           Visitor.CheckHasError(contract) |> ignore
           for inv in contract.Invariants do
             if inv.IsAxiom then
-              topDecls <- C.Top.Axiom (this.DoExpression inv.Condition) :: topDecls
+              topDecls <- C.Top.Axiom (this.DoIExpression inv.Condition) :: topDecls
               
       let typedefs = glist []
       (assembly :?> VccAssembly).Compilation.Parts |> 
@@ -955,6 +1008,287 @@ namespace Microsoft.Research.Vcc
         if n.Name.Value.StartsWith("_vcc") || n.Name.Value.StartsWith("\\") || List.exists ncmp requestedFunctions || isRequired n.Name.Value then
           n.Dispatch(this)
       this.DoneVisitingAssembly assembly
+
+    //
+    // Source Visitor Implementation, use to recover unfolded version of folded constant expressions
+    //
+
+    override this.Visit(conversion: Conversion) = 
+      exprRes <- C.Expr.Cast (this.ExprCommon (conversion :> Expression), C.Unchecked, this.DoExpression (conversion.ValueToConvert))
+
+    override this.Visit(cast: Cast) = 
+      exprRes <- C.Expr.Cast (this.ExprCommon (cast :> Expression), C.Unchecked, this.DoExpression (cast.ValueToCast))
+
+    override this.Visit(constant: CompileTimeConstant) =
+      exprRes <- this.DoCompileTimeConstant(constant)
+
+    override this.Visit(simpleName : SimpleName) = 
+      exprRes <- this.DoIExpression(simpleName.ProjectAsIExpression())
+
+    override this.Visit(parenthesis : Parenthesis) = 
+      exprRes <- this.DoExpression(parenthesis.ParenthesizedExpression)
+
+    override this.Visit(addition : Addition) =
+      exprRes <- this.DoIExpression(addition.ProjectAsIExpression())
+
+    override this.Visit(bitwiseAnd: BitwiseAnd) = 
+      exprRes <- this.DoBinary("&", bitwiseAnd)
+
+    override this.Visit(bitwiseOr: BitwiseOr) = 
+      exprRes <- this.DoBinary("|", bitwiseOr)
+
+    override this.Visit(checkedExpression: CheckedExpression) = 
+      exprRes <- this.DoExpression(checkedExpression.Operand)
+
+    override this.Visit(conditional: Conditional) = 
+      exprRes <- C.Expr.Macro (this.ExprCommon (conditional :> Expression), "ite",
+                               [this.DoExpression conditional.Condition;
+                                this.DoExpression conditional.ConvertedResultIfTrue;
+                                this.DoExpression conditional.ConvertedResultIfFalse])
+
+    override this.Visit(defaultValue: DefaultValue) = 
+      exprRes <- this.DoIExpression(defaultValue.ProjectAsIExpression())
+
+    override this.Visit(division: Division) =
+      exprRes <- this.DoBinary("/", division)
+
+    override this.Visit(exclusiveOr: ExclusiveOr) =
+      exprRes <- this.DoBinary("^", exclusiveOr)
+
+    override this.Visit(equality: Equality) = 
+      exprRes <- this.DoIExpression(equality.ProjectAsIExpression())
+
+    override this.Visit(greaterThan: GreaterThan) = 
+      exprRes <- this.DoIExpression(greaterThan.ProjectAsIExpression())
+
+    override this.Visit(greaterThanOrEqual: GreaterThanOrEqual) = 
+      exprRes <- this.DoIExpression(greaterThanOrEqual.ProjectAsIExpression())
+
+    override this.Visit(lessThan: LessThan) = 
+      exprRes <- this.DoIExpression(lessThan.ProjectAsIExpression())
+
+    override this.Visit(lessThanOrEqual: LessThanOrEqual) = 
+      exprRes <- this.DoIExpression(lessThanOrEqual.ProjectAsIExpression())
+
+    override this.Visit(logicalOr : LogicalOr) = 
+      exprRes <- this.DoIExpression(logicalOr.ProjectAsIExpression())
+
+    override this.Visit(logicalAnd: LogicalAnd) = 
+      exprRes <- this.DoIExpression(logicalAnd.ProjectAsIExpression())
+
+    override this.Visit(logicalNot: LogicalNot) = 
+      exprRes <- this.DoUnary("!", logicalNot)
+
+    override this.Visit(implies: Implies) = 
+      exprRes <- this.DoBinary("==>", implies)
+
+    override this.Visit(isTrue: IsTrue) = 
+      exprRes <- C.Expr.Cast (this.ExprCommon (isTrue :> Expression), C.Unchecked, this.DoExpression (isTrue.ConvertedOperand))
+
+    override this.Visit(isFalse: IsFalse) = 
+      exprRes <- C.Expr.Cast (this.ExprCommon (isFalse :> Expression), C.Unchecked, this.DoExpression (isFalse.ConvertedOperand))
+
+    override this.Visit(leftShift: LeftShift) =
+      exprRes <- this.DoBinary("<<", leftShift)
+
+    override this.Visit(modulus : Modulus) = 
+      exprRes <- this.DoBinary("%", modulus)
+
+    override this.Visit(multiplication : Multiplication) = 
+      exprRes <- this.DoIExpression(multiplication.ProjectAsIExpression())
+
+    override this.Visit(notEquality : NotEquality) = 
+      exprRes <- this.DoBinary("!=", notEquality)
+
+    override this.Visit(onesComplement : OnesComplement) = 
+      exprRes <- this.DoUnary("~", onesComplement)
+
+    override this.Visit(qualifiedName : QualifiedName) = 
+      exprRes <- this.DoIExpression(qualifiedName.ProjectAsIExpression())
+
+    override this.Visit(rightShift : RightShift) = 
+      exprRes <- this.DoBinary(">>", rightShift)
+
+    override this.Visit(sizeOf : SizeOf) = 
+      exprRes <- this.DoSizeOf(sizeOf)
+
+    override this.Visit(subtraction : Subtraction) = 
+      exprRes <- this.DoIExpression(subtraction.ProjectAsIExpression())
+
+    override this.Visit(unaryNegation : UnaryNegation) = 
+      exprRes <- this.DoUnary("-", unaryNegation)
+    
+    override this.Visit(unaryPlus : UnaryPlus) = 
+      exprRes <- this.DoUnary("+", unaryPlus)
+
+    override this.Visit(uncheckedExpression : UncheckedExpression) = 
+      exprRes <- this.DoExpression(uncheckedExpression.Operand)
+
+    override this.Visit(additionAssignment : AdditionAssignment) = assert false
+    override this.Visit(addressableExpression : AddressableExpression) = assert false
+    override this.Visit(addressDereference : AddressDereference) = assert false
+    override this.Visit(addressOf : AddressOf) = assert false
+    override this.Visit(aliasDeclaraion : AliasDeclaration) = assert false
+    override this.Visit(aliasQualifiedName : AliasQualifiedName) = assert false
+    override this.Visit(anonymousMethod : AnonymousMethod) = assert false
+    override this.Visit(attributeTypeExpression: AttributeTypeExpression) = assert false
+    override this.Visit(arrayTypeExpression: ArrayTypeExpression) = assert false
+    override this.Visit(assertStatement: AssertStatement) = assert false
+    override this.Visit(assignment: Assignment) = assert false
+    override this.Visit(assumeStatement: AssumeStatement) = assert false
+    override this.Visit(baseClassReference: BaseClassReference) = assert false
+    override this.Visit(bitwiseAndAssignment: BitwiseAndAssignment) = assert false
+    override this.Visit(bitwiseOrAssignment: BitwiseOrAssignment) = assert false
+    override this.Visit(blockExpression: BlockExpression) = assert false
+    override this.Visit(block: BlockStatement) = assert false
+    override this.Visit(castIfPossible: CastIfPossible) = assert false
+    override this.Visit(catchClause: CatchClause) = assert false
+    override this.Visit(checkIfInstance: CheckIfInstance) = assert false
+    override this.Visit(clearLastErrorStatement: ClearLastErrorStatement) = assert false
+    override this.Visit(comma: Comma) = assert false
+    override this.Visit(compilation: Compilation) = assert false
+    override this.Visit(compilationPart: CompilationPart) = assert false
+    override this.Visit(conditionalStatement: ConditionalStatement) = assert false
+    override this.Visit(continueStatement: ContinueStatement) = assert false
+    override this.Visit(createAnonymousObject: CreateAnonymousObject) = assert false
+    override this.Visit(createArray: CreateArray) = assert false
+    override this.Visit(createDelegateInstance: CreateDelegateInstance) = assert false
+    override this.Visit(implicitlyTypedArrayCreate: CreateImplicitlyTypedArray) = assert false
+    override this.Visit(createObjectInstance: CreateObjectInstance) = assert false
+    override this.Visit(stackArrayCreate: CreateStackArray) = assert false
+    override this.Visit(indexer: Indexer) = assert false
+    override this.Visit(disableOnErrorHandler: DisableOnErrorHandler) = assert false
+    override this.Visit(divisionAssignment: DivisionAssignment) = assert false
+    override this.Visit(doWhileStatement: DoWhileStatement) = assert false
+    override this.Visit(documentation: Documentation) = assert false
+    override this.Visit(documentationAttribute: DocumentationAttribute) = assert false
+    override this.Visit(documentationElement: DocumentationElement) = assert false
+    override this.Visit(doUntilStatement: DoUntilStatement) = assert false
+    override this.Visit(emptyStatement: EmptyStatement) = assert false
+    override this.Visit(emptyTypeExpression: EmptyTypeExpression) = assert false
+    override this.Visit(endStatement: EndStatement) = assert false
+    override this.Visit(eraseStatement: EraseStatement) = assert false
+    override this.Visit(errorStatement: ErrorStatement) = assert false
+    override this.Visit(eventDeclaration: EventDeclaration) = assert false
+    override this.Visit(exclusiveOrAssignment: ExclusiveOrAssignment) = assert false
+    override this.Visit(breakStatement: BreakStatement) = assert false
+    override this.Visit(exists: Exists) = assert false
+    override this.Visit(exponentiation: Exponentiation) = assert false
+    override this.Visit(expressionStatement: ExpressionStatement) = assert false
+    override this.Visit(fieldDeclaration: FieldDeclaration) = assert false
+    override this.Visit(fixedStatement: FixedStatement) = assert false
+    override this.Visit(forall: Forall) = assert false
+    override this.Visit(forEachStatement: ForEachStatement) = assert false
+    override this.Visit(forRangeStatement: ForRangeStatement) = assert false
+    override this.Visit(forStatement: ForStatement) = assert false
+    override this.Visit(genericInstanceExpression: GenericInstanceExpression) = assert false
+    override this.Visit(genericMethodParameterDeclaration: GenericMethodParameterDeclaration) = assert false
+    override this.Visit(genericTypeInstanceExpression: GenericTypeInstanceExpression) = assert false
+    override this.Visit(gotoStatement: GotoStatement) = assert false
+    override this.Visit(gotoSwitchCaseStatement: GotoSwitchCaseStatement) = assert false
+    override this.Visit(genericTypeInstance: Immutable.GenericTypeInstance) = assert false
+    override this.Visit(genericTypeParameterDeclaration: GenericTypeParameterDeclaration) = assert false
+    override this.Visit(getTypeOfTypedReference: GetTypeOfTypedReference) = assert false
+    override this.Visit(getValueOfTypedReference: GetValueOfTypedReference) = assert false
+    override this.Visit(implicitQualifier: ImplicitQualifier) = assert false
+    override this.Visit(initializeObject: InitializeObject) = assert false
+    override this.Visit(integerDivision: IntegerDivision) = assert false
+    override this.Visit(labeledStatement: LabeledStatement) = assert false
+    override this.Visit(lambda: Lambda) = assert false
+    override this.Visit(lambdaParameter: LambdaParameter) = assert false
+    override this.Visit(leftShiftAssignment: LeftShiftAssignment) = assert false
+    override this.Visit(liftedConversion: LiftedConversion) = assert false
+    override this.Visit(like: Like) = assert false
+    override this.Visit(localDeclaration: LocalDeclaration) = assert false
+    override this.Visit(localDeclarationsStatement: LocalDeclarationsStatement) = assert false
+    override this.Visit(lockStatement: LockStatement) = assert false
+    override this.Visit(_ : AttachEventHandlerStatement) = assert false
+    override this.Visit(_ : LoopInvariant) = assert false
+    override this.Visit(_ : MakeTypedReference) = assert false
+    override this.Visit(_ : Immutable.ManagedPointerType) = assert false
+    override this.Visit(_ : ManagedPointerTypeExpression) = assert false
+    override this.Visit(_ : MethodBody) = assert false
+    override this.Visit(_ : MethodCall) = assert false
+    override this.Visit(_ : MethodDeclaration) = assert false
+    override this.Visit(_ : MethodGroup) = assert false
+    override this.Visit(_ : ModulusAssignment) = assert false
+    override this.Visit(_ : MultiplicationAssignment) = assert false
+    override this.Visit(_ : NamedArgument) = assert false
+    override this.Visit(_ : NameDeclaration) = assert false
+    override this.Visit(_ : NamedTypeExpression) = assert false
+    override this.Visit(_ : NamespaceClassDeclaration) = assert false
+    override this.Visit(_ : NamespaceDeclaration) = assert false
+    override this.Visit(_ : NamespaceDelegateDeclaration) = assert false
+    override this.Visit(_ : NamespaceEnumDeclaration) = assert false
+    override this.Visit(_ : NamespaceImportDeclaration) = assert false
+    override this.Visit(_ : NamespaceInterfaceDeclaration) = assert false
+    override this.Visit(_ : NamespaceReferenceExpression) = assert false
+    override this.Visit(_ : NamespaceStructDeclaration) = assert false
+    override this.Visit(_ : NestedClassDeclaration) = assert false
+    override this.Visit(_ : NestedNamespaceDeclaration) = assert false
+    override this.Visit(_ : NestedDelegateDeclaration) = assert false
+    override this.Visit(_ : NestedEnumDeclaration) = assert false
+    override this.Visit(_ : NestedInterfaceDeclaration) = assert false
+    override this.Visit(_ : NestedStructDeclaration) = assert false
+    override this.Visit(_ : NonNullTypeExpression) = assert false
+    override this.Visit(_ : NullableTypeExpression) = assert false
+    override this.Visit(_ : NullCoalescing) = assert false
+    override this.Visit(_ : OnErrorGotoStatement) = assert false
+    override this.Visit(_ : OnErrorResumeNextStatement) = assert false
+    override this.Visit(_ : OptionDeclaration) = assert false
+    override this.Visit(_ : OutArgument) = assert false
+    override this.Visit(_ : ParameterDeclaration) = assert false
+    override this.Visit(_ : PointerTypeExpression) = assert false
+    override this.Visit(_ : PopulateCollection) = assert false
+    override this.Visit(_ : Postcondition) = assert false
+    override this.Visit(_ : PostfixDecrement) = assert false
+    override this.Visit(_ : PostfixIncrement) = assert false
+    override this.Visit(_ : Precondition) = assert false
+    override this.Visit(_ : PrefixDecrement) = assert false
+    override this.Visit(_ : PrefixIncrement) = assert false
+    override this.Visit(_ : PropertyDeclaration) = assert false
+    override this.Visit(_ : PropertySetterValue) = assert false
+    override this.Visit(_ : RaiseEventStatement) = assert false
+    override this.Visit(_ : Range) = assert false
+    override this.Visit(_ : RedimensionClause) = assert false
+    override this.Visit(_ : RedimensionStatement) = assert false
+    override this.Visit(_ : RefArgument) = assert false
+    override this.Visit(_ : ReferenceEquality) = assert false
+    override this.Visit(_ : ReferenceInequality) = assert false
+    override this.Visit(_ : RemoveEventHandlerStatement) = assert false
+    override this.Visit(_ : ResumeLabeledStatement) = assert false
+    override this.Visit(_ : ResumeNextStatement) = assert false
+    override this.Visit(_ : ResumeStatement) = assert false
+    override this.Visit(_ : ResourceUseStatement) = assert false
+    override this.Visit(_ : RethrowStatement) = assert false
+    override this.Visit(_ : ReturnStatement) = assert false
+    override this.Visit(_ : ReturnValue) = assert false
+    override this.Visit(_ : RightShiftAssignment) = assert false
+    override this.Visit(_ : UnsignedRightShift) = assert false
+    override this.Visit(_ : RootNamespaceExpression) = assert false
+    override this.Visit(_ : RuntimeArgumentHandleExpression) = assert false
+    override this.Visit(_ : SignatureDeclaration) = assert false
+    override this.Visit(_ : Slice) = assert false
+    override this.Visit(_ : SourceCustomAttribute) = assert false
+    override this.Visit(_ : StopStatement) = assert false
+    override this.Visit(_ : StringConcatenation) = assert false
+    override this.Visit(_ : SubtractionAssignment) = assert false
+    override this.Visit(_ : SwitchCase) = assert false
+    override this.Visit(_ : SwitchStatement) = assert false
+    override this.Visit(_ : TargetExpression) = assert false
+    override this.Visit(_ : ThisReference) = assert false
+    override this.Visit(_ : ThrownException) = assert false
+    override this.Visit(_ : ThrowStatement) = assert false
+    override this.Visit(_ : TryCatchFinallyStatement) = assert false
+    override this.Visit(_ : TypeDeclaration) = assert false
+    override this.Visit(_ : TypeInvariant) = assert false
+    override this.Visit(_ : TypeOf) = assert false
+    override this.Visit(_ : UnitSetAliasDeclaration) = assert false
+    override this.Visit(_ : UntilDoStatement) = assert false
+    override this.Visit(_ : WhileDoStatement) = assert false
+    override this.Visit(_ : WithStatement) = assert false
+    override this.Visit(_ : YieldBreakStatement) = assert false
+    override this.Visit(_ : YieldReturnStatement) = assert false
 
     // The idea is to only do dispatch into children, and not put any complicated
     // logic inside Visit(***) methods. The logic should be up, in the Do*** methods.
@@ -1201,46 +1535,46 @@ namespace Microsoft.Research.Vcc
       member this.Visit (addition:IAddition) : unit =
         if (addition.LeftOperand.Type :? IPointerType) || (addition.RightOperand.Type :? IPointerType) then
           exprRes <- C.Expr.Macro (this.ExprCommon addition, "ptr_addition", 
-                                   [this.DoExpression addition.LeftOperand; this.DoExpression addition.RightOperand])
+                                   [this.DoIExpression addition.LeftOperand; this.DoIExpression addition.RightOperand])
         else
-          this.DoBinary ("+", addition, addition.CheckOverflow)
+          this.DoIBinary ("+", addition, addition.CheckOverflow)
 
       member this.Visit (addressableExpression:IAddressableExpression) : unit =
         this.DoField addressableExpression addressableExpression.Instance addressableExpression.Definition
 
       member this.Visit (addressDereference:IAddressDereference) : unit =
-        exprRes <- C.Expr.Deref (this.ExprCommon addressDereference, this.DoExpression (addressDereference.Address))
+        exprRes <- C.Expr.Deref (this.ExprCommon addressDereference, this.DoIExpression (addressDereference.Address))
 
       member this.Visit (addressOf:IAddressOf) : unit =
-        exprRes <- C.Expr.Macro (this.ExprCommon addressOf, "&", [this.DoExpression (addressOf.Expression)])
+        exprRes <- C.Expr.Macro (this.ExprCommon addressOf, "&", [this.DoIExpression (addressOf.Expression)])
 
       member this.Visit (anonymousMethod:IAnonymousDelegate) : unit = assert false
 
       member this.Visit (arrayIndexer:IArrayIndexer) : unit = assert false
 
       member this.Visit (assertStatement:IAssertStatement) : unit =
-        let cond = this.DoExpression (assertStatement.Condition)
+        let cond = this.DoIExpression (assertStatement.Condition)
         stmtRes <- C.Expr.Assert({ cond.Common with Type = C.Type.Void }, cond, this.GetTriggers assertStatement)
 
       member this.Visit (assignment:IAssignment) : unit =
-        let target = this.DoExpression (assignment.Target)
-        let source = this.DoExpression (assignment.Source)
+        let target = this.DoIExpression (assignment.Target)
+        let source = this.DoIExpression (assignment.Source)
         exprRes <- C.Expr.Macro (this.ExprCommon assignment, "=", [target; source])
 
       member this.Visit (assumeStatement:IAssumeStatement) : unit =
-        stmtRes <- C.Expr.MkAssume (this.DoExpression (assumeStatement.Condition))
+        stmtRes <- C.Expr.MkAssume (this.DoIExpression (assumeStatement.Condition))
 
       member this.Visit (bitwiseAnd:IBitwiseAnd) : unit =
-        this.DoBinary ("&", bitwiseAnd)
+        this.DoIBinary ("&", bitwiseAnd)
 
       member this.Visit (bitwiseOr:IBitwiseOr) : unit =
-        this.DoBinary ("|", bitwiseOr)
+        this.DoIBinary ("|", bitwiseOr)
 
       member this.Visit (blockExpression:IBlockExpression) : unit =
         let savedLocalVars = localVars
         localVars <- []
         let stmts = [for s in blockExpression.BlockStatement.Statements -> this.DoStatement s]
-        let expr = this.DoExpression blockExpression.Expression
+        let expr = this.DoIExpression blockExpression.Expression
         exprRes <- C.Expr.Block (this.ExprCommon blockExpression, localVars @ stmts @ [expr], None)
         localVars <- savedLocalVars
         
@@ -1265,49 +1599,56 @@ namespace Microsoft.Research.Vcc
           | _ -> ()
         // set also the type in ExprCommon so we prevent pruning of the type
         let typeExpr = C.Expr.UserData({C.ExprCommon.Bogus with Type = typeToCheck}, typeToCheck ) 
-        exprRes <- C.Expr.Macro(ec, "\\is", [this.DoExpression checkIfInstance.Operand; typeExpr ])
+        exprRes <- C.Expr.Macro(ec, "\\is", [this.DoIExpression checkIfInstance.Operand; typeExpr ])
 
       member this.Visit (constant:ICompileTimeConstant) : unit =
-        let ec = this.ExprCommon constant
-        exprRes <-
-          match ec.Type with
-            | C.Type.Integer _ ->
-              match constant.Value with
-                | :? char as c -> C.Expr.IntLiteral(ec, new bigint((int)c))
-                | _ -> C.Expr.IntLiteral (ec, bigint.Parse(constant.Value.ToString ()))
-            | C.Type.Bool      -> C.Expr.BoolLiteral (ec, unbox (constant.Value))
-            | C.Type.Primitive _ -> C.Expr.Macro(ec, "float_literal", [C.Expr.UserData(ec, constant.Value)])
-            | C.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.ToUserData(constant.Value)])
-            | C.Ptr (C.Type.Void) -> 
-              let ptrVal = 
-                let ecInt = {ec with Type = C.Type.Integer C.IntKind.Int64}
-                match constant.Value with
-                  | :? System.IntPtr as ptr ->  C.Expr.IntLiteral(ecInt, new bigint(ptr.ToInt64()))
-                  | _ -> C.Expr.IntLiteral(ecInt, bigint.Parse(constant.Value.ToString()))
-              C.Expr.Cast(ec, C.CheckedStatus.Unchecked, ptrVal)
-            | _ -> die()
+
+        let unfolded = 
+          if unfoldingConstant then None
+          else
+            match constant with
+              | :? CompileTimeConstant as cconst -> 
+                if cconst :> Expression <> cconst.UnfoldedExpression 
+                   && not (cconst.UnfoldedExpression :? CompileTimeConstant) 
+                   && (cconst.Value = null || cconst.Value.GetType() <> typeof<string>)
+                then
+                  unfoldingConstant <- true
+                  let res = Some(this.DoExpression(cconst.UnfoldedExpression))
+                  unfoldingConstant <- false
+                  res
+                else None
+              | _ -> None
+
+        let cconst = this.DoCompileTimeConstant(constant)
+
+        exprRes <- 
+          match unfolded with
+            | None -> cconst
+            | Some uconst -> 
+              if cconst.ExprEquals(uconst) then cconst 
+              else C.Macro(cconst.Common, "const", [cconst; uconst])
 
       member this.Visit (conversion:IConversion) : unit =
         match conversion with
           | :? Microsoft.Research.Vcc.VccCast.VccCastArrayConversion as arrConv -> 
             let cmn = this.ExprCommon conversion
             exprRes <- C.Expr.Macro({cmn with Type = C.Type.ObjectT}, "_vcc_as_array",
-                                   [this.DoExpression(arrConv.ValueToConvert); this.DoExpression(arrConv.Size)]) 
+                                   [this.DoIExpression(arrConv.ValueToConvert); this.DoIExpression(arrConv.Size)]) 
           | _ -> 
             exprRes <- C.Expr.Cast (this.ExprCommon conversion, 
                                     checkedStatus conversion.CheckNumericRange, 
-                                    this.DoExpression (conversion.ValueToConvert))
+                                    this.DoIExpression (conversion.ValueToConvert))
 
       member this.Visit (conditional:IConditional) : unit =
         exprRes <- C.Expr.Macro (this.ExprCommon conditional, "ite",
-                                 [this.DoExpression conditional.Condition;
-                                  this.DoExpression conditional.ResultIfTrue;
-                                  this.DoExpression conditional.ResultIfFalse])
+                                 [this.DoIExpression conditional.Condition;
+                                  this.DoIExpression conditional.ResultIfTrue;
+                                  this.DoIExpression conditional.ResultIfFalse])
 
       member this.Visit (conditionalStatement:IConditionalStatement) : unit =
         stmtRes <- C.Expr.If (this.StmtCommon conditionalStatement,
                               None,
-                              this.DoExpression conditionalStatement.Condition,
+                              this.DoIExpression conditionalStatement.Condition,
                               this.DoStatement conditionalStatement.TrueBranch,
                               this.DoStatement conditionalStatement.FalseBranch)
 
@@ -1316,7 +1657,7 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (createArray:ICreateArray) : unit = 
         // this is how we project finite set expressions
-        let elems = [ for e in createArray.Initializers -> this.DoExpression e]
+        let elems = [ for e in createArray.Initializers -> this.DoIExpression e]
         let ec = {Token = token createArray; Type = C.Type.Math "\\objset"} : C.ExprCommon
         exprRes <- C.Expr.Macro(ec, "set", elems)
 
@@ -1330,27 +1671,27 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (division:IDivision) : unit =
         match division with 
-          | :? VccDivision as vccDiv -> this.DoBinary ("/", division, vccDiv.CheckOverflow)
-          | _ -> this.DoBinary ("/", division, true)
+          | :? VccDivision as vccDiv -> this.DoIBinary ("/", division, vccDiv.CheckOverflow)
+          | _ -> this.DoIBinary ("/", division, true)
       
       member this.Visit (doUntilStatement:IDoUntilStatement) : unit =
         stmtRes <- C.Expr.Macro (this.StmtCommon doUntilStatement,
                                  "doUntil", 
                                  [this.DoLoopContract doUntilStatement;
                                   this.DoStatement doUntilStatement.Body; 
-                                  this.DoExpression doUntilStatement.Condition])
+                                  this.DoIExpression doUntilStatement.Condition])
 
       member this.Visit (emptyStatement:IEmptyStatement) : unit =
         stmtRes <- C.Expr.Comment (this.StmtCommon emptyStatement, "empty")
 
       member this.Visit (equality:IEquality) : unit =
-        this.DoBinary ("==", equality)
+        this.DoIBinary ("==", equality)
 
       member this.Visit (exclusiveOr:IExclusiveOr) : unit =
-        this.DoBinary ("^", exclusiveOr)
+        this.DoIBinary ("^", exclusiveOr)
 
       member this.Visit (expressionStatement:IExpressionStatement) : unit =
-        let expr = this.DoExpression (expressionStatement.Expression)
+        let expr = this.DoIExpression (expressionStatement.Expression)
         let expr =
           match expr with
             | C.Macro (c, "=", args) -> C.Macro ({ c with Type = C.Void }, "=", args) 
@@ -1367,7 +1708,7 @@ namespace Microsoft.Research.Vcc
                                  "for", 
                                  [this.DoLoopContract forStatement;
                                   inits;
-                                  this.DoExpression forStatement.Condition;
+                                  this.DoIExpression forStatement.Condition;
                                   doStmts forStatement.IncrementStatements;
                                   this.DoStatement forStatement.Body
                                   ])
@@ -1382,23 +1723,23 @@ namespace Microsoft.Research.Vcc
       member this.Visit (getValueOfTypedReference:IGetValueOfTypedReference) : unit = assert false
 
       member this.Visit (greaterThan:IGreaterThan) : unit =
-        this.DoBinary (">", greaterThan)
+        this.DoIBinary (">", greaterThan)
 
       member this.Visit (greaterThanOrEqual:IGreaterThanOrEqual) : unit =
-        this.DoBinary (">=", greaterThanOrEqual)
+        this.DoIBinary (">=", greaterThanOrEqual)
 
       member this.Visit (labeledStatement:ILabeledStatement) : unit = 
         let lblStmt = C.Label(this.StmtCommon labeledStatement, { Name = labeledStatement.Label.Value })
         stmtRes <- C.Expr.MkBlock([lblStmt; this.DoStatement(labeledStatement.Statement)])
 
       member this.Visit (leftShift:ILeftShift) : unit =
-        this.DoBinary ("<<", leftShift)
+        this.DoIBinary ("<<", leftShift)
 
       member this.Visit (lessThan:ILessThan) : unit =
-        this.DoBinary ("<", lessThan)
+        this.DoIBinary ("<", lessThan)
 
       member this.Visit (lessThanOrEqual:ILessThanOrEqual) : unit =
-        this.DoBinary ("<=", lessThanOrEqual)
+        this.DoIBinary ("<=", lessThanOrEqual)
 
       member this.Visit (localDeclarationStatement:ILocalDeclarationStatement) : unit =
         let loc = localDeclarationStatement.LocalVariable
@@ -1427,14 +1768,14 @@ namespace Microsoft.Research.Vcc
           stmtRes <- decl
         else
           let assign = C.Expr.Macro (sc, "=", [C.Expr.Ref({ sc with Type = var.Type }, var); 
-                                                            this.DoExpression init])
+                                                            this.DoIExpression init])
           let assign = if var.Kind = C.VarKind.SpecLocal then C.Expr.SpecCode(assign) else assign
           stmtRes <- assign
 
       member this.Visit (lockStatement:ILockStatement) : unit = assert false
 
       member this.Visit (logicalNot:ILogicalNot) : unit =
-        this.DoUnary ("!", logicalNot, false)
+        this.DoIUnary ("!", logicalNot, false)
 
       member this.Visit (makeTypedReference:IMakeTypedReference) : unit = assert false
 
@@ -1480,7 +1821,7 @@ namespace Microsoft.Research.Vcc
 
         let oopsNumArgs() = oopsLoc methodCall ("unexpected number of arguments for "+ methodName); die ()
 
-        let args() = [for e in methodCall.Arguments -> this.DoExpression e]
+        let args() = [for e in methodCall.Arguments -> this.DoIExpression e]
 
         let trBigIntOp methodName = 
           let mcIsChecked = 
@@ -1539,12 +1880,12 @@ namespace Microsoft.Research.Vcc
           | SystemDiagnosticsContractsCodeContractObjset, ObjsetOp -> trSetOp methodName
           | "Microsoft.Research.Vcc.Runtime", "__noop" -> exprRes <- C.Expr.Macro (ec, "noop", [])
           | MapTypeString, "get_Item" ->
-            let th = this.DoExpression methodCall.ThisArgument
+            let th = this.DoIExpression methodCall.ThisArgument
             match args() with
               | [x] -> exprRes <- C.Expr.Macro (ec, "map_get", [th; x])
               | _ -> oopsNumArgs()
           | MapTypeString, "set_Item" ->
-            let th = this.DoExpression methodCall.ThisArgument
+            let th = this.DoIExpression methodCall.ThisArgument
             match args() with
               | [x; y] -> exprRes <- C.Expr.Macro (ec, "map_set", [th; x; y])
               | _ -> oopsNumArgs()
@@ -1652,15 +1993,15 @@ namespace Microsoft.Research.Vcc
             exprRes <- C.Expr.Call (ec, this.LookupMethod mtc, tArgs, args)
 
       member this.Visit (modulus:IModulus) : unit =
-        this.DoBinary ("%", modulus, false)
+        this.DoIBinary ("%", modulus, false)
 
       member this.Visit (multiplication:IMultiplication) : unit =
-        this.DoBinary ("*", multiplication, multiplication.CheckOverflow)
+        this.DoIBinary ("*", multiplication, multiplication.CheckOverflow)
 
       member this.Visit (namedArgument:INamedArgument) : unit = assert false
 
       member this.Visit (notEquality:INotEquality) : unit =
-        this.DoBinary ("!=", notEquality)        
+        this.DoIBinary ("!=", notEquality)        
 
       member this.Visit (oldValue:IOldValue) : unit =
         let ec = this.ExprCommon oldValue
@@ -1669,20 +2010,20 @@ namespace Microsoft.Research.Vcc
             | (true, f) -> f
             | _ -> oopsLoc oldValue ("cannot find internal type " + name + ". Forgotten #include <vcc.h>?"); die()
         let ts = findTypeOrDie (if helper.Options.NewSyntax then "\\state" else "state_t")
-        let expr = this.DoExpression oldValue.Expression
+        let expr = this.DoIExpression oldValue.Expression
         // the type of expr and old(expr) may disagree in CCI, so we fix it up here
         exprRes <- C.Expr.Old ({ec with Type = expr.Type}, C.Expr.Macro ({ec with Type = C.Type.Ref(ts) }, "prestate", []), expr)
 
       member this.Visit (onesComplement:IOnesComplement) : unit =
-        this.DoUnary ("~", onesComplement, false)
+        this.DoIUnary ("~", onesComplement, false)
 
       member this.Visit (outArgument:IOutArgument) : unit = 
-        exprRes <- C.Expr.Macro(this.ExprCommon outArgument, "out", [this.DoExpression outArgument.Expression])
+        exprRes <- C.Expr.Macro(this.ExprCommon outArgument, "out", [this.DoIExpression outArgument.Expression])
 
       member this.Visit (pointerCall:IPointerCall) : unit = 
         exprRes <- C.Expr.Macro (this.ExprCommon pointerCall, "fnptr_call", 
-                                 this.DoExpression pointerCall.Pointer :: 
-                                   [for e in pointerCall.Arguments -> this.DoExpression e])
+                                 this.DoIExpression pointerCall.Pointer :: 
+                                   [for e in pointerCall.Arguments -> this.DoIExpression e])
 
       member this.Visit (refArgument:IRefArgument) : unit = die()
 
@@ -1696,10 +2037,10 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (returnStatement:IReturnStatement) : unit =
         let expr = returnStatement.Expression
-        stmtRes <- C.Return (this.StmtCommon returnStatement, if expr = null then None else Some (this.DoExpression expr))
+        stmtRes <- C.Return (this.StmtCommon returnStatement, if expr = null then None else Some (this.DoIExpression expr))
 
       member this.Visit (rightShift:IRightShift) : unit =
-        this.DoBinary (">>", rightShift)
+        this.DoIBinary (">>", rightShift)
 
       member this.Visit (runtimeArgumentHandleExpression:IRuntimeArgumentHandleExpression) : unit = die()
 
@@ -1717,19 +2058,23 @@ namespace Microsoft.Research.Vcc
 
       member this.Visit (unwrappingStmt:IVccUnwrappingStatement) : unit =
         let cmn = this.StmtCommon unwrappingStmt
-        let exprs = unwrappingStmt.Objects |> Seq.map this.DoExpression |> Seq.toList
+        let exprs = unwrappingStmt.Objects |> Seq.map this.DoIExpression |> Seq.toList
         let body = this.DoStatement(unwrappingStmt.Body)
         stmtRes <- C.Expr.Macro (cmn, "unwrapping", body :: exprs)
 
       member this.Visit (atomicStmt : IVccAtomicStatement) : unit =
-        let args = [ for arg in atomicStmt.Objects -> this.DoExpression arg ]
+        let args = [ for arg in atomicStmt.Objects -> this.DoIExpression arg ]
         let body = this.DoStatement atomicStmt.Body
+        let args = 
+          if atomicStmt.IsGhostAtomic then 
+            C.Expr.Macro ({ C.bogusEC with Type =  C.Type.ObjectT }, "ghost_atomic", []) :: args
+          else args
         stmtRes <- C.Expr.Atomic (this.StmtCommon atomicStmt, args, body)
 
       member this.Visit (stackArrayCreate:IStackArrayCreate) : unit = 
         match stackArrayCreate with
         | :? CreateStackArray as createStackArray -> 
-          let numberOfElements = this.DoExpression(createStackArray.Size.ProjectAsIExpression())
+          let numberOfElements = this.DoIExpression(createStackArray.Size.ProjectAsIExpression())
           let elementType = this.DoType(createStackArray.ElementType.ResolvedType)
           let isSpec = 
             match createStackArray with 
@@ -1739,14 +2084,14 @@ namespace Microsoft.Research.Vcc
         | _ -> assert false
 
       member this.Visit (subtraction:ISubtraction) : unit =
-        this.DoBinary ("-", subtraction, subtraction.CheckOverflow)
+        this.DoIBinary ("-", subtraction, subtraction.CheckOverflow)
 
       member this.Visit (switchCase:ISwitchCase) : unit = assert false // never encountered during traversal
 
       member this.Visit (switchStatement:IVccMatchStatement) : unit = 
         let doCase (sc : IVccMatchCase) =
           C.Expr.Macro({ C.voidBogusEC () with Token = token sc }, "case", [this.DoStatement sc.Body])
-        let condExprStmt = this.DoExpression switchStatement.Expression
+        let condExprStmt = this.DoIExpression switchStatement.Expression
         let cases = [for sc in switchStatement.Cases -> doCase sc]
         stmtRes <- C.Expr.Macro(this.StmtCommon switchStatement, "match", condExprStmt :: cases)
 
@@ -1754,10 +2099,10 @@ namespace Microsoft.Research.Vcc
         let doCase (sc : ISwitchCase) =
           let (caseLabel,castExprStmt) =
             if sc.Expression = CodeDummy.Constant then ("default", [])
-            else ("case", [this.DoExpression sc.Expression])
+            else ("case", [this.DoIExpression sc.Expression])
           let body = castExprStmt @ [ for stmt in sc.Body -> this.DoStatement stmt]       
           C.Expr.Macro({ C.voidBogusEC () with Token = token sc }, caseLabel, body)
-        let condExprStmt = this.DoExpression switchStatement.Expression
+        let condExprStmt = this.DoIExpression switchStatement.Expression
         let cases = [for sc in switchStatement.Cases -> doCase sc]
         stmtRes <- C.Expr.Macro(this.StmtCommon switchStatement, "switch", condExprStmt :: cases)
 
@@ -1776,15 +2121,15 @@ namespace Microsoft.Research.Vcc
       member this.Visit (typeOf:ITypeOf) : unit = assert false
 
       member this.Visit (unaryNegation:IUnaryNegation) : unit =
-        this.DoUnary ("-", unaryNegation, unaryNegation.CheckOverflow)
+        this.DoIUnary ("-", unaryNegation, unaryNegation.CheckOverflow)
 
       member this.Visit (unaryPlus:IUnaryPlus) : unit =
-        this.DoUnary ("+", unaryPlus, false)
+        this.DoIUnary ("+", unaryPlus, false)
 
       member this.Visit (vectorLength:IVectorLength) : unit = assert false
 
       member this.Visit (whileDoStatement:IWhileDoStatement) : unit =
-        let cond = this.DoExpression (whileDoStatement.Condition)
+        let cond = this.DoIExpression (whileDoStatement.Condition)
         let body = this.DoStatement (whileDoStatement.Body)
         let cmn = this.StmtCommon whileDoStatement
 

@@ -25,6 +25,9 @@ module Microsoft.Research.Vcc.CAST
   let AttrIsolateProof = "isolate_proof"
 
   [<Literal>]
+  let AttrSkipSmoke = "skip_smoke"
+
+  [<Literal>]
   let AttrNoAdmissibility = "no_admissibility"
 
   [<Literal>]
@@ -86,6 +89,9 @@ module Microsoft.Research.Vcc.CAST
 
   [<Literal>]
   let AttrVolatileOwns = "volatile_owns"
+
+  [<Literal>]
+  let AttrPrimitive = "primitive"
 
   type VarKind =    
     | Parameter
@@ -236,6 +242,7 @@ module Microsoft.Research.Vcc.CAST
       this.Kind = Record ||
       List.exists (function VccAttr(AttrRecord, "") -> true | _ -> false) this.CustomAttr 
 
+    member this.IsMathStruct = this.IsRecord || this.IsDataType
 
     override this.ToString () =
       (match this.Kind with
@@ -508,20 +515,41 @@ module Microsoft.Research.Vcc.CAST
                   else
                     (zero, sub (bigint.Pow(two, sz)) one))
                     
-    member this.Subst(typeSubst : Dict<TypeVariable, Type>) =
-      let rec subst = function
-          | TypeVar tv -> 
-            match typeSubst.TryGetValue(tv) with
-              | true, t ->  t
-              | false, _ -> TypeVar tv
-          | SpecPtr(t) -> SpecPtr(subst t)
-          | PhysPtr(t) -> PhysPtr(subst t)
-          | Volatile(t) -> Volatile(subst t)
-          | Array(t, n) -> Array(subst t, n)
-          | Map(t1, t2) -> Map(subst t1, subst t2)
-          | t -> t
+    member this.Subst(typeMap : Type -> Type option) =
+      let rec subst _type =
+        match typeMap _type with
+          | Some t' -> Some t'
+          | None ->
+            match _type with
+              | SpecPtr(t) -> 
+                match subst t with
+                  | Some t' -> Some(SpecPtr t')
+                  | _ -> None
+              | PhysPtr(t) -> 
+                match subst t with
+                  | Some t' -> Some(PhysPtr t')
+                  | _ -> None
+              | Volatile(t) -> 
+                match subst t with
+                  | Some t' -> Some(Volatile t')
+                  | _ -> None
+              | Array(t, n) -> 
+                match subst t with
+                  | Some t' -> Some(Array(t', n))
+                  | _ -> None
+              | Map(t1, t2) -> 
+                match subst t1, subst t2 with
+                  | None, None -> None
+                  | Some t1', None -> Some(Map(t1', t2))
+                  | None, Some t2' -> Some(Map(t1, t2'))
+                  | Some t1', Some t2' -> Some(Map(t1', t2'))
+              | t -> None
       subst this
 
+    member this.ApplySubst(typeMap) = 
+      match this.Subst(typeMap) with
+        | Some t' -> t'
+        | None -> this
         
   and [<CustomEquality; NoComparison>]
     Variable = 
@@ -560,7 +588,6 @@ module Microsoft.Research.Vcc.CAST
           e.SelfMap(replace')
         let vars' = List.map doSubst vars
         vars', replace
-
     
       member this.WriteTo b =
         match this.Kind with
@@ -667,18 +694,30 @@ module Microsoft.Research.Vcc.CAST
 
     member this.Specialize(targs : list<Type>, includeBody : bool) =
       if targs.Length = 0 then this else       
-        let typeSubst = new Dict<_,_>()
+        let typeVarSubst = new Dict<_,_>()
         let varSubst = new Dict<_,_>()
-        List.iter2 (fun tv t -> typeSubst.Add(tv, t)) this.TypeParameters targs 
-        let sv v = 
-          let v' = { v with Type = v.Type.Subst(typeSubst) } : Variable
-          varSubst.Add(v,v')
-          v'
+
+        let toTypeMap (tvs : Dict<TypeVariable, Type>) = function
+          | TypeVar tv -> 
+            match tvs.TryGetValue tv with
+              | true, t -> Some t
+              | false, _ -> None
+          | _ -> None
+
+        List.iter2 (fun tv t -> typeVarSubst.Add(tv, t)) this.TypeParameters targs 
+        let typeMap = toTypeMap typeVarSubst
+        let sv (v : Variable) = 
+          match v.Type.Subst(typeMap) with
+            | None -> v
+            | Some t' ->
+              let v' = { v with Type = t' } : Variable
+              varSubst.Add(v,v')
+              v'
         let pars = List.map sv this.Parameters // do this first to populate varSubst
-        let se (e : Expr) = e.SubstType(typeSubst, varSubst)
+        let se (e : Expr) = e.SubstType(typeMap, varSubst)
         let ses = List.map se
-        { this with OrigRetType = this.OrigRetType.Subst(typeSubst);
-                    RetType = this.RetType.Subst(typeSubst);
+        { this with OrigRetType = this.OrigRetType.ApplySubst(typeMap);
+                    RetType = this.RetType.ApplySubst(typeMap);
                     Parameters = pars;
                     Requires = ses this.Requires;
                     Ensures = ses this.Ensures;
@@ -794,7 +833,7 @@ module Microsoft.Research.Vcc.CAST
     }
 
   and TestClassifier = Expr
-
+  
   and Expr =
     | Ref of ExprCommon * Variable    
     | Prim of ExprCommon * Op * list<Expr>
@@ -841,6 +880,46 @@ module Microsoft.Research.Vcc.CAST
     | Macro of ExprCommon * string * list<Expr>
     | UserData of ExprCommon * obj
     
+    member this.ExprEquals (that:Expr) =
+      let eq (e0 : Expr) (e1 : Expr) = e0.ExprEquals e1
+      let allEq  = List.forall2 (fun (e0 : Expr) (e1 : Expr) -> e0.ExprEquals(e1))
+      let allTypeEq = List.forall2 (fun (t0 : Type) (t1 : Type) -> t0 = t1)
+      let allVarsEq = List.forall2 (fun (v0 : Variable) (v1 : Variable) -> v0.UniqueId = v1.UniqueId)
+      match this, that with
+        | Ref(_, v0), Ref(_, v1) -> v0.UniqueId = v1.UniqueId
+        | Prim(_, op0, args0), Prim(_, op1, args1) -> op0 = op1 && allEq args0 args1
+        | Call(_, fn0, targs0, args0), Call(_, fn1, targs1, args1) -> fn0 = fn1 && allEq args0 args1  && allTypeEq targs0 targs1
+        | IntLiteral(_, i0), IntLiteral(_, i1) -> i0 = i1
+        | BoolLiteral(_, b0), BoolLiteral(_, b1) -> b0 = b1
+        | Deref(_, e0), Deref(_, e1) -> eq e0 e1
+        | Dot(_, e0, f0), Dot(_, e1, f1) -> f0.UniqueId = f1.UniqueId && eq e0 e1
+        | Index(_, e0, i0), Index(_, e1, i1) -> eq e0 e1 && eq i0 i1
+        | Cast(ec0, cs0, e0), Cast(ec1, cs1, e1) -> ec0.Type = ec1.Type && cs0 = cs1 && eq e0 e1
+        | Result _, Result _ -> true
+        | This _, This _ -> true
+        | Old(_, ps0, e0), Old(_, ps1, e1) -> eq ps0 ps1 && eq e0 e1
+        | SizeOf(_, t0), SizeOf(_, t1) -> t0 = t1
+        | VarDecl(_, v0, _), VarDecl(_, v1, _) -> v0.UniqueId = v1.UniqueId
+        | VarWrite(_, vs0, e0), VarWrite(_, vs1, e1) -> allVarsEq vs0 vs1 && eq e0 e1
+        | MemoryWrite(_, m0, e0), MemoryWrite(_, m1, e1) -> eq m0 m1 && eq e0 e1
+        | If(_, None, c0, t0, e0), If(_, None, c1, t1, e1) -> eq c0 c1 && eq t0 t1 && eq e0 e1
+        | Loop(_, e00, e10, e20, e0), Loop(_, e01, e11, e21, e1) ->
+          allEq e00 e01 && allEq e10 e11 && allEq e20 e21 && eq e0 e1
+        | Goto(_, l0), Goto(_, l1) -> l0.Name = l1.Name
+        | Label(_, l0), Label(_, l1) -> l0.Name = l1.Name
+        | Assert(_, e0, l0), Assert(_, e1, l1) -> eq e0 e1 && List.forall2 allEq l0 l1
+        | Assume(_, e0), Assume(_, e1) -> eq e0 e1
+        | Pure(_, e0), Pure(_, e1) -> eq e0 e1
+        | Block(_, b0, None), Block(_, b1, None) -> allEq b0 b1
+        | Return(_, None), Return(_, None) -> true
+        | Return(_, Some(e0)), Return(_, Some(e1)) -> eq e0 e1
+        | Atomic(_, l0, e0), Atomic(_, l1, e1) -> allEq l0 l1 && eq e0 e1
+        | Comment(_, c0), Comment(_, c1) -> c0 = c1
+        | Stmt(_, s0), Stmt(_, s1) -> eq s0 s1
+        | Macro(_, m0, args0), Macro(_, m1, args1) -> m0 = m1 && allEq args0 args1
+        | UserData(_, o0), UserData(_, o1) -> o0 = o1
+        | _,_ -> false
+
     override this.ToString () = toString (this.WriteTo 0 false)
     
     member this.ToStringWT (showTypes) = toString (this.WriteTo 0 showTypes)
@@ -1122,16 +1201,19 @@ module Microsoft.Research.Vcc.CAST
         | Some this' -> this'
     
     // TODO: implement with DeepMap?
-    member this.SubstType(typeSubst : Dict<TypeVariable, Type>, varSubst : Dict<Variable, Variable>) =
-      let sc c = { c with Type = c.Type.Subst(typeSubst) } : ExprCommon
+    member this.SubstType(typeMap, varSubst : Dict<Variable, Variable>) =
+      let sc c = { c with Type = c.Type.ApplySubst(typeMap) } : ExprCommon
       let varSubst = new Dict<_,_>(varSubst) // we add to it, so make a copy first
       let sv v = 
         match varSubst.TryGetValue(v) with
           | true, v' -> v'
           | false, _ ->
-            let v' = { v with Type = v.Type.Subst(typeSubst) }
-            varSubst.Add(v,v')
-            v'
+            match v.Type.Subst(typeMap) with
+              | Some t' ->
+                let v' = { v with Type = t' }
+                varSubst.Add(v,v')
+                v'
+              | None -> v
       let repl self = 
         let selfs = List.map self
         function
@@ -1156,7 +1238,7 @@ module Microsoft.Research.Vcc.CAST
           | Result c -> Some(Result(sc c))
           | This c -> Some(This(sc c))
           | Prim (c, op, es) ->  Some(Prim(sc c, op, selfs es))
-          | Call (c, fn, tas, es) -> Some(Call(sc c, fn, List.map (fun (t : Type) -> t.Subst(typeSubst)) tas, selfs es))
+          | Call (c, fn, tas, es) -> Some(Call(sc c, fn, List.map (fun (t : Type) -> t.ApplySubst(typeMap)) tas, selfs es))
           | Macro (c, op, es) -> Some(Macro(sc c, op, selfs es))
           | Deref (c, e) -> Some(Deref(sc c, self e))
           | Dot (c, e, f) -> Some(Dot(sc c, self e, f))
@@ -1166,9 +1248,9 @@ module Microsoft.Research.Vcc.CAST
           | Quant (c, q) -> Some(Quant(sc c, {q with Triggers = List.map selfs q.Triggers; Condition = Option.map self (q.Condition); Body = self (q.Body)}))
           | VarWrite (c, vs, e) -> Some(VarWrite(sc c, List.map sv vs, self e))
           | Return (c, Some e) -> Some(Return(sc c, Some(self e)))
-          | SizeOf(c, t) -> Some(SizeOf(c, t.Subst(typeSubst)))
+          | SizeOf(c, t) -> Some(SizeOf(c, t.ApplySubst(typeMap)))
       this.SelfMap(repl)
-    
+
     member this.SelfCtxMap (ispure : bool, f : ExprCtx -> (Expr -> Expr) -> Expr -> option<Expr>) : Expr =        
       let rec aux ctx (e:Expr) = e.Map (ispure, f')
       and f' ctx e = f ctx (aux ctx) e
@@ -1420,6 +1502,7 @@ module Microsoft.Research.Vcc.CAST
   // and thus we get null as Type instead of Bool/Void (they are unitary)
   let voidBogusEC () = { bogusEC with Type = Void }
   let boolBogusEC () = { bogusEC with Type = Bool }
+  let intBogusEC () = { bogusEC with Type = MathInteger }
   type ExprCommon with
     static member Bogus = bogusEC
   

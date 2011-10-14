@@ -108,7 +108,6 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
         valueShouldFollow ctx (aux ctx bindings)
 
       // ignored statements
-      | Macro (_, "check_termination", _)
       | Assert _
       | Assume _ 
       | Comment _
@@ -128,8 +127,8 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
 
       | If (ec, _, cond, thn, els) ->
         let rec noEffect = function
+          | If (_, _, Macro (_, "check_termination", _), _, _) -> true
           | If (_, _, _, thn, els) -> noEffect thn && noEffect els
-          | Macro (_, "check_termination", _)
           | Assert _
           | Assume _ 
           | Comment _
@@ -137,7 +136,7 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
           | VarDecl _ -> true
           | Block (_, lst, _) -> List.forall noEffect lst
           | _ -> false
-        if noEffect thn && noEffect els then
+        if noEffect expr then
           self cont
         else
           Macro (ec, "ite", [recExpr cond; self (thn :: cont); self (els :: cont)])
@@ -217,9 +216,6 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         | lst ->
           Some (Expr.MkBlock (lst @ [Call (ec, fn, tps, List.map self args)]))
 
-    | Macro (_, "check_termination", [e]) ->
-      Some (Expr.MkBlock (justChecks e))
-
     | Loop _
     | Goto _ ->
       // as funny as it may sound...
@@ -244,7 +240,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Macro (_, name, _) when name.StartsWith "DP#" ->
       None
 
-    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"|"ite"|"size"), _) ->
+    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"|"ite"|"size"|"check_termination"), _) ->
       None
 
     | Macro (ec, s, args) as e ->
@@ -296,7 +292,8 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           let expr = turnIntoPureExpression helper fn.RetType origBody
           if fn.Reads = [] then
             fn.Reads <- computeReads expr
-          let vars, repl = Variable.UniqueCopies (fun v -> { v with Kind = QuantBound }) fn.Parameters
+          let suff = "#" + helper.UniqueId().ToString() 
+          let vars, repl = Variable.UniqueCopies (fun v -> { v with Name = v.Name + suff ; Kind = QuantBound }) fn.Parameters
           let ec t = { body.Common with Type = t }
           let app = Call (ec fn.RetType, fn, [], vars |> List.map (fun v -> Expr.Ref (ec v.Type, v)))
           let eq = Prim (ec Type.Bool, Op ("==", Processed), [app; repl expr])
@@ -322,7 +319,8 @@ let insertTerminationChecks (helper:Helper.Env) decls =
 let terminationCheckingPlaceholder (helper:Helper.Env) decls =
   let rec checks = function
     | Expr.Quant (ec, qd) as res ->
-      let vars, repl = Variable.UniqueCopies (fun v -> { v with Kind = SpecLocal }) qd.Variables
+      let suff = "#" + helper.UniqueId().ToString() 
+      let vars, repl = Variable.UniqueCopies (fun v -> { v with Name = v.Name + suff ; Kind = SpecLocal }) qd.Variables
       let decls = vars |> List.map (fun v -> Expr.VarDecl (bogusEC, v, []))
       match qd.Condition with
         | Some e ->
@@ -336,7 +334,7 @@ let terminationCheckingPlaceholder (helper:Helper.Env) decls =
     | Expr.Macro (ec, "ite", [cond; a; b]) ->
       checks cond @ [Expr.If (bogusEC, None, cond, Expr.MkBlock (checks a), Expr.MkBlock (checks b))]
     | Expr.Call (ec, fn, targs, args) as e ->
-      (args |> List.map checks |> List.concat) @ [Expr.Macro (bogusEC, "check_termination", [Expr.Pure (e.Common, e)])]
+      (args |> List.map checks |> List.concat) @ [e]
 
     // just the common stuff, so we know when we run into it
     | Expr.Assert _
@@ -359,17 +357,24 @@ let terminationCheckingPlaceholder (helper:Helper.Env) decls =
       e.ApplyToChildren f |> ignore
       acc |> Seq.toList
       
-  let rec addChecks inQ = function
-    | Quant _ as q ->
-      Expr.MkBlock (checks q @ [q.ApplyToChildren (addChecks true)])
-    | Expr.Call _ as e when inQ ->
-      Expr.Macro (e.Common, "skip_termination_check", [Expr.Pure (e.Common, e.ApplyToChildren (addChecks inQ))])
+  let rec skipChecks = function
+    | Expr.Call _ as e ->
+      Expr.Macro (e.Common, "skip_termination_check", [Expr.Pure (e.Common, e.ApplyToChildren skipChecks)])
     | e ->
-      e.ApplyToChildren (addChecks inQ)
+      e.ApplyToChildren skipChecks
+       
+  let termWrapper checks =
+    Expr.If (voidBogusEC(), None, Expr.Macro (boolBogusEC(), "check_termination", [mkInt (helper.UniqueId())]), Expr.MkBlock(checks @ [Expr.MkAssume (Expr.False)]), Expr.MkBlock [])
+     
+  let rec addChecks = function
+    | Quant _ as q ->
+      Expr.MkBlock [termWrapper (checks q); skipChecks q]
+    | e ->
+      e.ApplyToChildren addChecks
        
   let aux = function
     | Top.FunctionDecl fn as decl when fn.IsWellFounded ->
-      fn.Body <- fn.Body |> Option.map (addChecks false)
+      fn.Body <- fn.Body |> Option.map addChecks
     | _ -> ()
 
   List.iter aux decls

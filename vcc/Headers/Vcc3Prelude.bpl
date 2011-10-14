@@ -57,6 +57,7 @@ const unique $ctype_ptr : $ctype_branch;
 const unique $ctype_spec_ptr : $ctype_branch;
 const unique $ctype_map : $ctype_branch;
 const unique $ctype_array : $ctype_branch;
+const unique $ctype_blob : $ctype_branch;
 
 // inverse functions here (unptr_to, map_domain, map_range) are for the prover
 // so it knows that int*!=short*, i.e. * is injective
@@ -83,6 +84,9 @@ axiom (forall #r:$ctype, #d:$ctype :: {$map_t(#r,#d)} $map_domain($map_t(#r,#d))
 // ----------------------------------------------------------------------------
 
 function $sizeof($ctype): int; // in bytes
+
+function {:inline} $sizeof_object(p:$ptr) : int
+  { $sizeof($typ(p)) }
 
 // for types for which $in_range_t(...) is defined
 function $as_in_range_t($ctype) : $ctype;
@@ -175,6 +179,7 @@ const unique $fk_base : $field_kind;
 const unique $fk_owns : $field_kind;
 const unique $fk_ref_cnt : $field_kind;
 const unique $fk_vol_version : $field_kind;
+const unique $fk_active_option : $field_kind;
 const unique $fk_allocation_root : $field_kind;
 const unique $fk_as_array_first : $field_kind;
 const unique $fk_emb_array : $field_kind;
@@ -259,8 +264,11 @@ axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
      ($in_range_spec_ptr(p) || $is_ghost_field(f) ==> $in_range_spec_ptr($dot(p, f)))
   && ($in_range_phys_ptr(p) && $is_phys_field(f) ==> $in_range_phys_ptr($dot(p, f)))
-  && ($is_proper($dot(p, f)) ==> $non_null(p) ==> $non_null($dot(p, f)))
   && ($is_proper(p) && $field_parent_type(f) == $typ(p) ==> $is_proper($dot(p, f)))
+);
+
+axiom (forall p:$ptr, f:$field :: {$ptr(f, p)}
+  ($is_proper($ptr(f, p)) ==> $non_null(p) ==> $non_null($ptr(f, p)))
 );
 
 function {:inline true} $emb1(p:$ptr) : $ptr
@@ -335,6 +343,7 @@ function $f_root($ctype) : $field;
 function $f_owns($ctype) : $field;
 function $f_ref_cnt($ctype) : $field;
 function $f_vol_version($ctype) : $field;
+function $f_active_option($ctype) : $field;
 
 function {:inline true} $def_special_field(partp:$ctype, f:$field, tp:$ctype, fk:$field_kind) : bool
   {
@@ -367,6 +376,10 @@ axiom (forall t:$ctype :: {$f_vol_version(t)}
   $is_non_primitive(t) ==>
     $def_special_ghost_field(t, $f_vol_version(t), ^$#volatile_version_t, $fk_vol_version) &&
     $is_semi_sequential_field($f_vol_version(t)));
+axiom (forall t:$ctype :: {$f_active_option(t)}
+  $is_non_primitive(t) ==>
+    $def_special_ghost_field(t, $f_active_option(t), ^^field, $fk_active_option) &&
+    $is_sequential_field($f_active_option(t)));
 
 // ----------------------------------------------------------------------------
 // Built-in types and constants
@@ -558,13 +571,14 @@ function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 
 function {:inline true} $is_array_stateless(p:$ptr, T:$ctype, sz:int) : bool
 {   
-     $is(p, T)
-  && $is_proper(p)
-  && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
-  && p == $idx($dot($base(p), $field_arr_root($field(p))), $field_arr_index($field(p)))
-  && $field_kind($field(p)) != $fk_base
-  && $field_arr_index($field(p)) >= 0
-  && $is_non_primitive($typ($emb0(p)))
+    sz == 0 || (
+       $is(p, T)
+    && $is_proper(p)
+    && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
+    && p == $idx($dot($base(p), $field_arr_root($field(p))), $field_arr_index($field(p)))
+    && $field_kind($field(p)) != $fk_base
+    && $field_arr_index($field(p)) >= 0
+    && $is_non_primitive($typ($emb0(p))))
 }
 
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
@@ -636,12 +650,12 @@ axiom (forall S0, S1:$state, p:$ptr, f:$field ::
   {$call_transition(S0, S1), $rd(S1, p, f)}
   $instantiate_int($rd(S0, p, f)));
 
-// $index_within(p, arr) = ($ref(p) - $ref(arr)) / $sizeof($typ(arr))
+// Intuitively:
+//   $index_within(p, arr) = ($addr(p) - $addr(arr)) / $sizeof($typ(arr))
 // To avoid using division, we define a category of simple indices. 
-//   $simple_index(p, arr) iff p == arr[k].f1.f2.f3...fN, where N >= 0.
+//   $index_within(p, arr) == k if p == arr[k].f1.f2.f3...fN, where N >= 0.
 // We're only interested in simple indices for verification.
 function $index_within(p:$ptr, arr:$ptr) : int;
-// function $simple_index(p:$ptr, arr:$ptr) : bool;
 
 axiom (forall i:int, a:$ptr :: {$index_within($idx(a, i), a)}
   $index_within($idx(a, i), a) == i);
@@ -1081,23 +1095,22 @@ axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
     $closed(S, p) ==> $non_null(p));
 
 // Root axioms
-axiom(forall S: $state, p: $ptr :: {$owner(S, p)} {$domain_root(S, p)}
+axiom(forall S: $state, p: $ptr :: {$f_owner(S)[p]} // {$domain_root(S, p)}
   $good_state(S) ==>
-  $owner(S, p) == $me() ==> $is_proper(p) && $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $domain_root(S, p) == p);
+  $f_owner(S)[p] == $me() ==> $is_proper(p) && $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $domain_root(S, p) == p);
 
 // PERF 3.2%
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
   $good_state(S) ==>
-    $non_null($owner(S, r)) && 
-    $is_proper($owner(S, r))
-    &&
+    $non_null($owner(S, r))  && 
+    $is_proper($owner(S, r))  &&
     ($typ($owner(S, r)) != ^$#thread_id_t ==>
       $is_proper(r) && 
       $non_null(r) && 
       $is_non_primitive($typ(r)) &&
-      ($is_sequential_field($f_owns($typ($owner(S, r)))) ==> $domain_root(S, r) == $domain_root(S, $owner(S, r)))
+      ($is_sequential_field($f_owns($typ($owner(S, r)))) ==> $domain_root(S, r) == $domain_root(S, $owner(S, r))) &&
+      true
     )
-
     );
 
 axiom (forall S:$state, p:$ptr ::
@@ -1281,7 +1294,8 @@ function {:inline false} $top_writable(S:$state, begin_time:int, p:$ptr) : bool
       ($owner(S, p) == $me() && ($timestamp(S, p) >= begin_time || $in_writes_at(begin_time, p))) }
 
 function {:inline true} $not_written(S0:$state, p:$ptr, W:$ptrset) : bool
-  { $owner(S0, $domain_root(S0, p)) == $me() && !$in($domain_root(S0, p), W) }
+//  { $owner(S0, $domain_root(S0, p)) == $me() && !$in($domain_root(S0, p), W) }
+  { $f_owner(S0)[$domain_root(S0, p)] == $me() && !$in($domain_root(S0, p), W) }
 // TODO: { if $closed(S0, p) then $in($domain_root(S0, p), W) else $in(p, W) }
 
 function {:inline false} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
@@ -1587,16 +1601,21 @@ procedure $static_wrap_non_owns(o:$ptr, S:$state);
 // Admissibility & unwrap checks
 // ----------------------------------------------------------------------------
 
-function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
+function $spans_the_same_no_timestamp(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { $owns(S1, p) == $owns(S2, p) &&
     (forall f:$field :: {$rdtrig(S2, p, f)}
+      // ref_cnt is not part of the span
       $is_proper($dot(p, f)) && f != $f_ref_cnt(t) ==> $rd(S1, p, f) == $rd(S2, p, f)) }
+
+function $spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
+  { $spans_the_same_no_timestamp(S1, S2, p, t) &&
+    $timestamp(S1, p) == $timestamp(S2, p) }
 
 function $nonvolatile_spans_the_same(S1:$state, S2:$state, p:$ptr, t:$ctype) : bool
   { (forall f:$field :: {$rdtrig(S2, p, f)}
-      // ref_cnt is always volatile
       $is_proper($dot(p, f)) && $is_sequential_field(f)
-        ==> $rd(S1, p, f) == $rd(S2, p, f)) }
+        ==> $rd(S1, p, f) == $rd(S2, p, f)) &&
+    $timestamp(S1, p) == $timestamp(S2, p) }
 
 function $good_for_admissibility(S:$state) : bool;
 function $good_for_post_admissibility(S:$state) : bool;
@@ -1658,7 +1677,7 @@ procedure $unwrap_check(o:$ptr);
   ensures $good_state($s);
   ensures $good_for_post_can_unwrap($s);
 
-  ensures $spans_the_same(old($s), $s, o, $typ(o));
+  ensures $spans_the_same_no_timestamp(old($s), $s, o, $typ(o));
 
   ensures $is_unwrapped(old($s), $s, o);
 
@@ -1763,6 +1782,7 @@ function {:inline true} $claim_killed(S0:$state, S:$state, c:$ptr) : bool
   $f_closed(S) == $f_closed(S0)[ c := false ] &&
   $f_timestamp(S) == $f_timestamp(S0) &&
   $f_owner(S) == $f_owner(S0) &&
+  $roots(S) == $roots(S0) &&
   $heap(S) == $heap(S0) &&
   $good_state(S) &&
   $timestamp_post_strict(S0, S)
@@ -1859,7 +1879,11 @@ procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
   ensures $f_closed($s) == $f_closed(old($s));
   ensures $f_timestamp($s) == $f_timestamp(old($s))[ #p := $current_timestamp($s) ];
   ensures $f_owner($s) == $f_owner(old($s))[ #p := $me() ];
-  ensures $roots($s) == (lambda q:$ptr :: if $domain_root(old($s), q) == $domain_root(old($s), owner) then $domain_root($s, q) else $domain_root(old($s), q));
+  ensures $roots($s) == 
+    (lambda q:$ptr :: 
+       if $domain_root(old($s), q) == $domain_root(old($s), owner) && q != $domain_root(old($s), q)
+       then $domain_root($s, q) 
+       else $domain_root(old($s), q));
   ensures $updated_owns(old($s), $s, owner, $set_difference($owns(old($s), owner), $set_singleton(#p)));
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -2171,10 +2195,14 @@ function $all_first_option_typed(S:$state, p:$ptr) : bool
 }
 
 
-function {:inline true} $union_active(s:$state, p:$ptr, f:$field) : bool
+function {:inline} $union_active(s:$state, p:$ptr, f:$field) : bool
   { $owner(s, $dot(p, f)) != $inactive_union_owner() }
 
-function $active_option(S:$state, p:$ptr) : $field;
+function $active_option(S:$state, p:$ptr) : $field
+  { $int_to_field($rd(S, p, $f_active_option($typ(p)))) }
+
+function {:inline} $active_member(S:$state, p:$ptr) : $ptr
+  { $dot(p, $active_option(S, p)) }
 
 axiom (forall S:$state, p:$ptr, f:$field ::
   {$is_union_field(f), $owner(S, $dot(p, f))}
@@ -2908,6 +2936,9 @@ function {:inline} $int_lt_or(called:int, caller:int, otherwise:bool) : bool
 
 const $decreases_level : int;
 
+// for non-deterministic choice of termination checking blocks
+function $check_termination(int) : bool;
+
 // ----------------------------------------------------------------------------
 // Yarra
 // ----------------------------------------------------------------------------
@@ -2925,6 +2956,95 @@ axiom (forall S:$state, id:int, length:int ::
   $good_state(S) ==> 
     $in_range_phys_ptr($get_string_literal(id, length)) &&
     $is_thread_local_array(S, $get_string_literal(id, length), ^^i1, length + 1));
+
+// -----------------------------------------------------------------------
+// Memory reinterpretation
+// -----------------------------------------------------------------------
+
+
+function $address_root(rf:int, tp:$ctype) : $ptr;
+axiom (forall rf:int, tp:$ctype :: {$address_root(rf, tp)}
+  $addr($address_root(rf, tp)) == rf && $typ($address_root(rf, tp)) == tp);
+
+function $blob_type(sz:int) : $ctype;
+axiom (forall s:int :: {$blob_type(s)} 
+     true
+  && $sizeof($blob_type(s)) == s 
+  && $is_non_primitive($blob_type(s))
+  && !$is_claimable($blob_type(s))
+  && $type_branch($blob_type(s)) == $ctype_blob
+  && $is_sequential_field($f_owns($blob_type(s)))
+  && $field_offset($f_root($blob_type(s))) == 0
+);
+axiom (forall S0,S:$state, p:$ptr, s:int :: {$inv2(S0, S, p, $blob_type(s))}
+    $inv2(S0, S, p, $blob_type(s)) <==> $owns(S, p) == $set_empty());
+axiom (forall S:$state, sz:int, p, a:$ptr ::
+  {$in(p, $composite_extent(S, a, $blob_type(sz)))}
+  $in(p, $composite_extent(S, a, $blob_type(sz))) <==> p == a);
+
+
+function {:inline} $blob(p:$ptr, sz:int) : $ptr
+  { $address_root($addr(p), $blob_type(sz)) }
+
+function {:inline} $blob_of(p:$ptr) : $ptr
+  { $blob(p, $sizeof($typ(p))) }
+
+function {:inline} $mutable_root(S:$state, p:$ptr) : bool
+  { $extent_mutable(S, p) && $is_object_root(S, p) && $timestamp_is_now(S, p) }
+
+function {:inline} $root_array(p:$ptr, sz:int) : $ptr
+  { $address_root($addr(p), $array($typ(p), sz)) }
+
+function {:inline} $root_index(p:$ptr, sz:int) : $ptr
+  { $dot($root_array(p, sz), $array_emb($typ(p), sz)) }
+
+procedure $blobify(p:$ptr);
+  // writes extent(p)
+  modifies $s;
+  // TOKEN: the reinterpreted object is not embedded inside of another object
+  requires $is_object_root($s, p); // TODO this needs to be replaced with something weaker
+  // TOKEN: the reinterpreted object sits in physical memory
+  requires $in_range_phys_ptr(p);
+  ensures $mutable_root($s, $blob(p, $sizeof($typ(p))));
+  ensures $modifies(old($s), $s, $extent(old($s), p));
+
+procedure $unblobify(p:$ptr) returns(r:$ptr);
+  // writes _(blob sizeof(p))p
+  modifies $s;
+  ensures $modifies(old($s), $s, $set_singleton($blob(p, $sizeof($typ(p)))));
+  ensures $in_range_phys_ptr(r); // all blobs sit in physical memory
+  ensures $extent_mutable($s, r);
+  ensures $extent_is_fresh(old($s), $s, r);
+  ensures $is_object_root($s, r);
+  ensures r == $address_root($addr(p), $typ(p));
+
+procedure $split_blob(p:$ptr, off:int);
+  // writes p
+  modifies $s;
+  // TOKEN: pointer passed is a blob
+  requires p == $blob_of(p);
+  // TOKEN: split position is non-negative
+  requires 0 <= off;
+  // TOKEN: pointer passed is big enough for split
+  requires off <= $sizeof_object(p);
+
+  ensures $mutable_root($s, $blob(p, off));
+  ensures $mutable_root($s, $address_root($addr(p) + off, $blob_type($sizeof_object(p) - off)));
+  ensures $modifies(old($s), $s, $set_singleton(p));
+
+procedure $join_blobs(a:$ptr, b:$ptr);
+  // writes a, b
+  modifies $s;
+  // TOKEN: the left pointer passed is a blob
+  requires a == $blob_of(a);
+  // TOKEN: the right pointer passed is a blob
+  requires b == $blob_of(b);
+  // TOKEN: the blobs are aligned properly in memory
+  requires $addr(a) + $sizeof_object(a) == $addr(b);
+
+  ensures $mutable_root($s, $blob(a, $sizeof_object(a) + $sizeof_object(b)));
+  ensures $modifies(old($s), $s, (lambda o:$ptr :: o == a || o == b));
+
 
 // ----------------------------------------------------------------------------
 // Datatypes
