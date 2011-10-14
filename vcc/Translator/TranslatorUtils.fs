@@ -200,7 +200,7 @@ namespace Microsoft.Research.Vcc
           | C.Type.Bool -> er "^^bool"
           | C.Type.Integer kind -> er ("^^" + C.Type.IntSuffix kind)
           | C.Type.MathInteger C.MathIntKind.Signed -> er "^^mathint"
-          | C.Type.MathInteger C.MathIntKind.Unsigned -> er "^^mathnat"
+          | C.Type.MathInteger C.MathIntKind.Unsigned -> er "^^nat"
           | C.Type.Primitive kind -> er ("^^" + C.Type.PrimSuffix kind) 
           | C.Type.Void -> er "^^void"
           | C.Type.PhysPtr tp ->

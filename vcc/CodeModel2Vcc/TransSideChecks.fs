@@ -254,13 +254,13 @@ namespace Microsoft.Research.Vcc
             collect [] res |> List.iter handlePath
           let post =
             match res.Type with
+              | Type.MathInteger MathIntKind.Unsigned
               | Type.Integer _ -> 
                 let f = 
                   match !round with
                     | Some f -> f
                     | None -> fun (def:Expr) -> Macro ({ def.Common with Type = res.Type }, "unchecked_" + intSuffix res.Type, [def])
                 Prim (c, Op ("==", Processed), [res; f def])
-              | Type.MathInteger Unsigned -> die()
               | _ -> post
           post
         | expr ->
