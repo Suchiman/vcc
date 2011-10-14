@@ -2532,7 +2532,7 @@ namespace Microsoft.Research.Vcc
       let trRecord2 (td:C.TypeDecl) =
         let intKind = function
           | C.Type.Integer _ as t -> toTypeId t
-          | C.Type.MathInteger C.MathIntKind.Unsigned -> er "^^mathnat"
+          | C.Type.MathInteger C.MathIntKind.Unsigned -> er "^^nat"
           | C.Type.MathInteger C.MathIntKind.Signed -> er "^^mathint"
           | _ -> er "^^mathint"
         let trRecField (f:C.Field) =
