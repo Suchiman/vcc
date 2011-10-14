@@ -174,14 +174,12 @@ namespace Microsoft.Research.Vcc {
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemInt64.ResolvedType);
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, this.PlatformType.SystemUInt64.ResolvedType);
         yield return dummyMethods.GetDummyOp(pointerType, pointerType, bigIntType.ResolvedType);
-        yield return dummyMethods.GetDummyOp(pointerType, pointerType, bigNatType.ResolvedType);
       } else {
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt32.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt32.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemInt64.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, this.PlatformType.SystemUInt64.ResolvedType, pointerType);
         yield return dummyMethods.GetDummyOp(pointerType, bigIntType.ResolvedType, pointerType);
-        yield return dummyMethods.GetDummyOp(pointerType, bigNatType.ResolvedType, pointerType);
       }
     }
 

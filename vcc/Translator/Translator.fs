@@ -2533,8 +2533,8 @@ namespace Microsoft.Research.Vcc
         let intKind = function
           | C.Type.Integer _ as t -> toTypeId t
           | C.Type.MathInteger C.MathIntKind.Unsigned -> er "^^mathnat"
-          | C.Type.MathInteger C.MathIntKind.Signed -> er "^^mathnat"
-          | _ -> die()
+          | C.Type.MathInteger C.MathIntKind.Signed -> er "^^mathint"
+          | _ -> er "^^mathint"
         let trRecField (f:C.Field) =
           [B.Decl.Const { Unique = true; Name = fieldName f; Type = B.Type.Ref "$field" };
            B.Decl.Axiom (bCall "$is_record_field" [toTypeId (C.Type.Ref td); er (fieldName f); toTypeId f.Type]);
