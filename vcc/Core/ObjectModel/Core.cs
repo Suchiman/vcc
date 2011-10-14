@@ -961,6 +961,10 @@ namespace Microsoft.Research.Vcc {
 
       CompileTimeConstant/*?*/ cconst = expression as CompileTimeConstant;
       if (cconst != null) {
+
+        if (TypeHelper.GetTypeName(targetType) == SystemDiagnosticsContractsCodeContractBigNatString && expression.ValueIsPolymorphicCompileTimeConstant)
+          return true;
+
         if (targetTypeAsPtr != null && ExpressionHelper.IsIntegralZero(cconst)) return true;
         // Disable int -> enum so that any enum operation becomes int operation
         if (targetType.IsEnum && cconst.ValueIsPolymorphicCompileTimeConstant) return ImplicitConversionExists(cconst, targetType.UnderlyingType.ResolvedType);
