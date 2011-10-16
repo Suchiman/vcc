@@ -188,6 +188,7 @@ namespace Microsoft.Research.Vcc
                   "take_over",              ".pp";
                   "release",                "..pp";
                   "expect_unreachable",     "";
+                  "possibly_unreachable",   "";
                   "bv_lemma",               ".";
                   "is_non_primitive_ptr",   "p";
                   "extent_mutable",         "Sp";
