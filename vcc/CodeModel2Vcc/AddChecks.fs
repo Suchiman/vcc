@@ -67,7 +67,7 @@ namespace Microsoft.Research.Vcc
   
     // ============================================================================================================
     
-    let expectUnreach = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_expect_unreachable", []))
+    let expectUnreach = Expr.MkAssert (Macro (boolBogusEC(), "_vcc_possibly_unreachable", []))
     
     let bogusSet = { bogusEC with Type = Type.PtrSet }
     let bogusState = { bogusEC with Type = Type.MathState }
