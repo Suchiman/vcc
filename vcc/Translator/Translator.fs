@@ -2919,7 +2919,12 @@ namespace Microsoft.Research.Vcc
                 let theBody =
                   if functionToVerify = null || functionToVerify = h.Name then h.Body
                   else None
+                let replPossiblyUnreachable = function
+                  | B.Stmt.Assert ([], t, (B.FunctionCall ("$possibly_unreachable", []) as call)) ->
+                    Some (B.Stmt.Assert ([B.ExprAttr ("PossiblyUnreachable", bTrue)], t, bTrue))
+                  | _ -> None
                 let proc = { proc with Body = Option.map doBody theBody }
+                let proc = { proc with Body = Option.map (B.mapStmt replPossiblyUnreachable) proc.Body }
                 let proc =
                   match proc.Body with
                     | Some b ->
