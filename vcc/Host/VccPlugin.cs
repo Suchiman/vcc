@@ -633,6 +633,11 @@ namespace Microsoft.Research.Vcc
         return false;
     }
 
+    private static bool IsTokenWithoutLocation(IToken t)
+    {
+      return String.IsNullOrEmpty(t.filename) || t.filename == "<no file>";
+    }
+
     public override void OnUnreachableCode(Implementation impl)
     {
       bool hasIFUnreachable = false;
@@ -693,12 +698,12 @@ namespace Microsoft.Research.Vcc
           }
         }
 
-        if (!String.IsNullOrEmpty(b.TransferCmd.tok.filename))
+        if (!IsTokenWithoutLocation(b.TransferCmd.tok))
           traceTokens.Add(b.TransferCmd.tok);
         else {
           for (int j = b.Cmds.Length - 1; j >= 0; j--)
           {
-            if (!String.IsNullOrEmpty((b.Cmds[j].tok.filename)))
+            if (!IsTokenWithoutLocation(b.Cmds[j].tok))
             {
               traceTokens.Add(b.Cmds[j].tok);
               break;
