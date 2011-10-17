@@ -286,7 +286,7 @@ namespace Microsoft.Research.Vcc
         if addVarToSeen v
           then v
           else
-            let renamedVar = { v with Name = v.Name + "#" + subst.Count.ToString()}
+            let renamedVar = { v.UniqueCopy() with Name = v.Name + "#" + subst.Count.ToString()}
             if v.Kind <> Local && v.Kind <> SpecLocal then die()
             subst.[v] <- renamedVar
             renamedVar
@@ -636,8 +636,8 @@ namespace Microsoft.Research.Vcc
       let fakeEC t = { !fnTok with Type = t }
       let pointernize comm v =
         let mkEc t = { comm with Type = t } : ExprCommon
-        if not (addressableLocals.ContainsKey v) then
-          let v' = { v with Type = Type.MkPtr(v.Type, v.IsSpec); Name = "addr." + v.Name; Kind = VarKind.Local }
+        if not (addressableLocals.ContainsKey (v:Variable)) then
+          let v' = { v.UniqueCopy() with Type = Type.MkPtr(v.Type, v.IsSpec); Name = "addr." + v.Name; Kind = VarKind.Local }
           let vRef = Expr.Ref({forwardingToken (comm.Token) None (fun () -> "&" + v.Name) with Type = v'.Type} , v')
           let alloc = Expr.Call (fakeEC v'.Type, internalFunction helper "stack_alloc", [v.Type], [Macro(bogusEC, "stackframe", []); BoolLiteral(boolBogusEC(), v.IsSpec)])
           let assign = Expr.Macro (fakeEC Void, "=", [vRef; alloc])
@@ -691,13 +691,13 @@ namespace Microsoft.Research.Vcc
       let globalSubst = new Dict<_,_>()
       let handle = function
         | Top.Global ({ Kind = VarKind.Global|VarKind.ConstGlobal; Type = Array (t, sz) } as v, init) ->
-          let v' = { v with Type = PhysPtr t; Kind = VarKind.ConstGlobal }
+          let v' = { v.UniqueCopy() with Type = PhysPtr t; Kind = VarKind.ConstGlobal }
           globalSubst.[v] <- (v', Expr.MkBlock [])
           let is_global = Expr.Macro (boolBogusEC (), "_vcc_is_global_array", 
                                       [mkRef v'; mkInt sz])
           [Top.Global (v', init); Top.GeneratedAxiom(is_global, Top.Global(v', None))]
         | Top.Global ({ Kind = VarKind.Global|VarKind.ConstGlobal|VarKind.SpecGlobal } as v, init) ->
-          let v' = { v with Type = Type.MkPtr(v.Type, v.Kind = VarKind.SpecGlobal); Kind = VarKind.ConstGlobal }
+          let v' = { v.UniqueCopy() with Type = Type.MkPtr(v.Type, v.Kind = VarKind.SpecGlobal); Kind = VarKind.ConstGlobal }
           globalSubst.[v] <- (v', Expr.MkBlock [])
           let is_global = Expr.Macro (boolBogusEC (), "_vcc_is_global", 
                                       [mkRef v'])
