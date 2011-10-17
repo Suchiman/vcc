@@ -188,7 +188,7 @@ namespace Microsoft.Research.Vcc
 
       let handleVar (v : Variable) =
         if not (mapping.ContainsKey v) then
-          let v' = { v with Name = "local." + v.Name; Kind = Local }
+          let v' = { v.UniqueCopy() with Name = "local." + v.Name; Kind = Local }
           mapping.Add (v, v')
           inits := VarDecl (voidBogusEC(), v', []) :: VarWrite(voidBogusEC(), [v'], mkRef v) :: !inits
           
