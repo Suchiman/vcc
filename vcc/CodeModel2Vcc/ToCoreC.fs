@@ -375,7 +375,7 @@ namespace Microsoft.Research.Vcc
       
       let doVar (v:Variable) =
         if isRefToStruct v.Type then
-          let v' = { v with Type = Type.MathStruct; Name = "vs." + v.Name }
+          let v' = { v.UniqueCopy() with Type = Type.MathStruct; Name = "vs." + v.Name }
           (!localsMapping).Add (v, v')
           v'           
         else v
