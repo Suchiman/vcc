@@ -201,10 +201,7 @@ namespace Microsoft.Research.Vcc.Parsing
           var loc = this.scanner.SourceLocationOfLastScannedToken;
           var argument = "";
           this.GetNextToken();
-          if (this.currentToken == Token.Identifier) {
-            argument = this.scanner.GetIdentifierString();
-            this.GetNextToken();
-          } else if (this.currentToken == Token.StringLiteral || this.currentToken == Token.SByteStringLiteral) {
+          if (this.currentToken == Token.StringLiteral || this.currentToken == Token.SByteStringLiteral) {
             argument = this.scanner.GetString();
             this.GetNextToken();
           }
