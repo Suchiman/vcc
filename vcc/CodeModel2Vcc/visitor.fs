@@ -1604,7 +1604,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (constant:ICompileTimeConstant) : unit =
 
         let unfolded = 
-          if unfoldingConstant then None
+          if not helper.Options.UnfoldConstants || unfoldingConstant then None
           else
             match constant with
               | :? CompileTimeConstant as cconst -> 
