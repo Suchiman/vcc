@@ -1,4 +1,4 @@
-`/newsyntax
+`/newsyntax /unfoldconst
 
 #include <vcc.h>
 
