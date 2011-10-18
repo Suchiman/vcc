@@ -62,7 +62,7 @@ namespace Microsoft.Research.Vcc.Parsing
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
             break;
           case Token.SpecLogic:
-            var specifier = new List<Specifier>(1) { new SpecDeclspecSpecifier("spec_macro", this.scanner.SourceLocationOfLastScannedToken) };
+            var specifier = new List<Specifier>(1) { new SpecDeclspecSpecifier("spec_macro", "", this.scanner.SourceLocationOfLastScannedToken) };
             this.GetNextToken();
             this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true, specifier);
             break;
@@ -198,11 +198,21 @@ namespace Microsoft.Research.Vcc.Parsing
         string declspec;
         if (this.declspecExtensions.TryGetValue(id, out declspec)) {
           if (String.IsNullOrEmpty(declspec)) declspec = id;
-          specifiers.Add(new SpecDeclspecSpecifier(declspec, this.scanner.SourceLocationOfLastScannedToken));
+          var loc = this.scanner.SourceLocationOfLastScannedToken;
+          var argument = "";
           this.GetNextToken();
+          if (this.currentToken == Token.Identifier) {
+            argument = this.scanner.GetIdentifierString();
+            this.GetNextToken();
+          } else if (this.currentToken == Token.StringLiteral || this.currentToken == Token.SByteStringLiteral) {
+            argument = this.scanner.GetString();
+            this.GetNextToken();
+          }
+          var specifier = new SpecDeclspecSpecifier(declspec, argument, loc);
+          specifiers.Add(specifier);
         }
       } else if (this.currentToken == Token.Inline) {       
-        specifiers.Add(new SpecDeclspecSpecifier("inline", this.scanner.SourceLocationOfLastScannedToken));
+        specifiers.Add(new SpecDeclspecSpecifier("inline", "", this.scanner.SourceLocationOfLastScannedToken));
         this.GetNextToken();
       } else if (this.currentToken == Token.Colon) {
         var groupLabel = (VccLabeledExpression)this.ParseLabeledExpression(followers);

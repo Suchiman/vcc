@@ -271,7 +271,8 @@ namespace Microsoft.Research.Vcc {
           if (specTokenSpec != null) {
             var attrTypeName = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(containingExpression.ContainingBlock.Compilation.NameTable, "StringVccAttr");
             AttributeTypeExpression attrType = new AttributeTypeExpression(attrTypeName);
-            List<Expression> args = new List<Expression> { new CompileTimeConstant(specTokenSpec.Token, specTokenSpec.SourceLocation), new CompileTimeConstant("", specTokenSpec.SourceLocation) };
+            var argument = new CompileTimeConstant(specTokenSpec.Argument, specTokenSpec.SourceLocation);
+            List<Expression> args = new List<Expression> { new CompileTimeConstant(specTokenSpec.Token, specTokenSpec.SourceLocation), argument };
             SourceCustomAttribute custAttr = new SourceCustomAttribute(AttributeTargets.All, attrType, args, specTokenSpec.SourceLocation);
             custAttr.SetContainingExpression(containingExpression);
             result.Add(custAttr);
