@@ -70,6 +70,8 @@ namespace Microsoft.Research.Vcc
     /// Change if (cond) tmp = e1; else tmp = e2; into tmp = cond?e1:e2; (as there are no
     /// assertions associated with e1 and e2).
     let foldIteBack self = function
+      | If (c, None, cond, Block(_, [Assert(_, Macro(_, "_vcc_possibly_unreachable", []), []); VarWrite (_, tmp, e1)], None),
+                           Block(_, [Assert(_, Macro(_, "_vcc_possibly_unreachable", []), []); VarWrite (_, tmp', e2)], None))
       | If (c, None, cond, VarWrite (_, tmp, e1), VarWrite (_, tmp', e2)) when tmp = tmp' ->
         Some (VarWrite (c, tmp, self (Expr.Macro (e1.Common, "ite", [cond; e1; e2]))))
       | _ -> None
