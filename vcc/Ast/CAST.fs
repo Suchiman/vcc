@@ -174,6 +174,15 @@ module Microsoft.Research.Vcc.CAST
     | VccAttr of string * string
     | ReadsCheck of Function
 
+    override this.ToString () =
+      match this with
+        | IntBoogieAttr (s, i) -> sprintf "_(%s %d)" s i
+        | BoolBoogieAttr (s, b) -> sprintf "_(%s %s)" s (if b then "true" else "false")
+        | VccAttr (s, v) -> sprintf "_(%s \"%s\")" s v
+        | ReadsCheck f -> sprintf "_(reads_check %s)" f.Name
+
+    static member AsString (lst:list<CustomAttr>) = lst |> List.map (fun a -> a.ToString() + " ") |> String.concat ""
+
   and [<StructuralEquality; NoComparison>] TypeKind =
     | Struct
     | Union
@@ -204,8 +213,9 @@ module Microsoft.Research.Vcc.CAST
           | BitField (off, bo, bs) -> sprintf " /* @%d.%d, sz:%d */" off bo bs
           | Normal off -> sprintf " /* @%d */" off
       (if this.IsSpec then "__spec " else "") + 
-        (if this.IsVolatile then "volatile " else "") +
-          this.Type.ToString() + " " + this.Name + postfix
+      (if this.IsVolatile then "volatile " else "") +
+      CustomAttr.AsString this.CustomAttr +
+      this.Type.ToString() + " " + this.Name + postfix
     
     member this.ByteOffset =
       match this.Offset with
@@ -261,6 +271,7 @@ module Microsoft.Research.Vcc.CAST
         | Macro(_, "labeled_invariant", [Macro(_, "", _); i]) -> "invariant " + i.ToString()
         | Macro(_, "labeled_invariant", [Macro(_, lbl, _); i]) -> "invariant " + lbl + ": " + i.ToString()
         | e -> "invariant " + e.ToString()
+      CustomAttr.AsString this.CustomAttr +
       this.ToString () + " {\r\n  " + String.concat ";\r\n  " [for f in this.Fields -> f.ToString ()] + ";\r\n" +
         String.concat "" [for f in this.DataTypeOptions -> f.ToString() ] +
         String.concat "" [for i in this.Invariants -> prInv i + ";\r\n" ] + "}\r\n"
@@ -742,6 +753,7 @@ module Microsoft.Research.Vcc.CAST
       let b = StringBuilder()
       let wr (s:string) = b.Append s |> ignore
       if this.IsSpec then wr "spec " else ()
+      wr (CustomAttr.AsString this.CustomAttr)
       this.RetType.WriteTo b; wr " "
       doArgsAndTArgsb b (fun (p:Variable) -> p.WriteTo b) (fun (tp:TypeVariable) -> tp.WriteTo b) (this.Name) this.Parameters this.TypeParameters 
       wr "\r\n"
