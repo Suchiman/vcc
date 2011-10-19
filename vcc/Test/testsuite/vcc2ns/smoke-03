@@ -126,23 +126,15 @@ int loopexit2_defused()
 Verification of foo1 succeeded.
 Verification of foo1_smoke succeeded.
 testcase(13,3) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(12,12) : warning : trace to unreachable location
-testcase(13,3) : warning : trace to unreachable location
 Verification of foo2 succeeded.
 Verification of foo2_smoke succeeded.
 testcase(26,3) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(25,12) : warning : trace to unreachable location
-testcase(26,3) : warning : trace to unreachable location
 Verification of foo3 succeeded.
 Verification of foo3_smoke succeeded.
 testcase(39,3) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(38,12) : warning : trace to unreachable location
-testcase(39,3) : warning : trace to unreachable location
 Verification of foo4 succeeded.
 Verification of foo4_smoke succeeded.
 testcase(52,3) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(51,12) : warning : trace to unreachable location
-testcase(52,3) : warning : trace to unreachable location
 Verification of foo5 succeeded.
 Verification of foo5_smoke succeeded.
 testcase(65,3) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
