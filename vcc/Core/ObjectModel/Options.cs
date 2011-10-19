@@ -128,6 +128,7 @@ namespace Microsoft.Research.Vcc
       this.OpsAsFunctions = other.OpsAsFunctions;
       this.DetectSyntax = other.DetectSyntax;
       this.OutputDir = other.OutputDir;
+      this.VerificationLocation = other.VerificationLocation;
       this.YarraMode = other.YarraMode;
       this.IgnoreIncludes = other.IgnoreIncludes;
       this.UnfoldConstants = other.UnfoldConstants;
