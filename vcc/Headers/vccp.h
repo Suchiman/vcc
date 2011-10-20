@@ -215,6 +215,7 @@ _(template<typename T> T* \castlike_unblobify(T*);)
 //_(void* \castlike_blobify(void*);)
 
 _(void \blobify(\object);)
+_(void \unblobify_into(\object);)
 _(void \join_blobs(\object a, \object b)
   _(writes a, b))
 _(void \split_blob(\object a, \integer offset)
