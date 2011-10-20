@@ -1982,7 +1982,7 @@ namespace Microsoft.Research.Vcc
           let isAsArray = TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr
           if f.Type.IsComposite || isAsArray then
             let dot = bCall "$dot" [er "p"; er (fieldName f)]
-            if compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
+            if isAsArray || compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
               match f.Type with
                 | C.Type.Array (_, sz) when not isAsArray ->
                   xassert (helper.ErrorReported || not isUnion)
