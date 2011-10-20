@@ -1403,6 +1403,7 @@ procedure $stack_alloc(t:$ctype, sf:int, spec:bool) returns (r:$ptr);
   ensures $is_in_stackframe(sf, r);
   ensures spec ==> $in_range_spec_ptr(r);
   ensures !spec ==> $in_range_phys_ptr(r);
+  ensures $allow_reinterpretation_in(r);
 
 procedure $stack_free(sf:int, x:$ptr);
   modifies $s;
@@ -2998,11 +2999,16 @@ function {:inline} $root_array(p:$ptr, sz:int) : $ptr
 function {:inline} $root_index(p:$ptr, sz:int) : $ptr
   { $dot($root_array(p, sz), $array_emb($typ(p), sz)) }
 
+function $allow_reinterpretation_in(p:$ptr) : bool;
+function $allow_reinterpretation(p:$ptr) : bool;
+axiom (forall p:$ptr :: {$allow_reinterpretation(p)}
+  $allow_reinterpretation_in($emb1(p)) ==> $allow_reinterpretation(p));
+
 procedure $blobify(p:$ptr);
   // writes extent(p)
   modifies $s;
-  // TOKEN: the reinterpreted object is not embedded inside of another object
-  requires $is_object_root($s, p); // TODO this needs to be replaced with something weaker
+  // TOKEN: the object is allowed to be reinterpreted
+  requires $is_object_root($s, p) || $allow_reinterpretation(p);
   // TOKEN: the reinterpreted object sits in physical memory
   requires $in_range_phys_ptr(p);
   ensures $mutable_root($s, $blob(p, $sizeof($typ(p))));
@@ -3017,6 +3023,17 @@ procedure $unblobify(p:$ptr) returns(r:$ptr);
   ensures $extent_is_fresh(old($s), $s, r);
   ensures $is_object_root($s, r);
   ensures r == $address_root($addr(p), $typ(p));
+
+procedure $unblobify_into(r:$ptr);
+  // writes _(blob sizeof(r))r
+  modifies $s;
+  // TOKEN: the embedding of target pointer is mutable
+  requires $mutable($s, $emb1(r));
+  ensures $modifies(old($s), $s, $set_singleton($blob(r, $sizeof($typ(r)))));
+  ensures $in_range_phys_ptr(r); // all blobs sit in physical memory
+  ensures $extent_mutable($s, r);
+  ensures $extent_is_fresh(old($s), $s, r);
+  ensures $allow_reinterpretation(r);
 
 procedure $split_blob(p:$ptr, off:int);
   // writes p
