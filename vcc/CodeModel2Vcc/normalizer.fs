@@ -971,13 +971,13 @@ namespace Microsoft.Research.Vcc
               CustomAttr = VccAttr (AttrIsPure, "") :: VccAttr(AttrBvLemmaCheck, "true") :: inheritedAttrs fn.CustomAttr
               Body = Some (Expr.Block(lemma.Common, [lemma], None))
               IsProcessed = true }
-        let findAmdExtractThem _ = function
+        let findAndExtractThem _ = function
           | Expr.Assert(ec, CallMacro(_, "_vcc_bv_lemma", _, _), _) as _assert ->
             let checkFn = checkFunctionFor _assert
             lemmaCheckFunctionDecls := Top.FunctionDecl(checkFn) :: !lemmaCheckFunctionDecls
             Some(Expr.Comment(ec, "bv_lemma extracted into " + checkFn.Name))
           | _ -> None
-        fn.Body <- Option.map (fun (e : Expr) -> e.SelfMap(findAmdExtractThem)) fn.Body
+        fn.Body <- Option.map (fun (e : Expr) -> e.SelfMap(findAndExtractThem)) fn.Body
 
       for d in decls do
         match d with

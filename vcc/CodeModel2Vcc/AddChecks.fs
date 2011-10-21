@@ -450,8 +450,11 @@ namespace Microsoft.Research.Vcc
     let reportCheckedOpsInBvLemma self = function
       | Expr.Assert (_, Expr.Macro (_, "_vcc_bv_lemma", [e]), _) -> 
         let reportCheckedOpsInBvLemma' self = function 
-          | Expr.Prim (_, Op (("+"|"-"|"*"|"/"|"%"), Checked), _) as e ->
-            helper.Error (e.Token, 9659, "operators in bv_lemma(...) need to be unchecked (expression: " + e.Token.Value + ")")
+          | Expr.Cast(ec, (Checked|Processed), _) ->
+            helper.Error (ec.Token, 9659, "casts in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")")
+            None
+          | Expr.Prim (ec, Op (("+"|"-"|"*"|"/"|"%"), Checked), _) ->
+            helper.Error (ec.Token, 9659, "operators in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")")
             None
           | _ -> None
         let _ = e.Map(false, reportCheckedOpsInBvLemma')

@@ -195,6 +195,8 @@ let init (helper:Helper.Env) =
         let makeUnchecked self = function
           | Prim(ec, Op(_, CheckedStatus.Unchecked), _) -> None
           | Prim(ec, Op(op, _), args) -> Some(Prim(ec, Op(op, CheckedStatus.Unchecked), List.map self args))
+          | Cast(ec, CheckedStatus.Unchecked, _) -> None
+          | Cast(ec, _, expr) -> Some(Cast(ec, CheckedStatus.Unchecked, self expr))
           | _ -> None
         Some(Assert(ec, Expr.Macro(expr.Common, "_vcc_bv_lemma", [expr.SelfMap(makeUnchecked)]), []))
       | Assert(ec, expr, []) -> None
