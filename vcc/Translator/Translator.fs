@@ -1612,7 +1612,8 @@ namespace Microsoft.Research.Vcc
               doCall c [] (Some fn) fn.Name targs args
             | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|"_vcc_set_owns"|
                                   "_vcc_giveup_closed_owner"|"_vcc_set_closed_owner"| 
-                                  "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap") as name), args) -> 
+                                  "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap"|
+                                  "_vcc_unblobify_into") as name), args) -> 
               doCall c [] None name [] args
             | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_deep_unwrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->
               doCall c [] None name [] args         
@@ -1982,7 +1983,7 @@ namespace Microsoft.Research.Vcc
           let isAsArray = TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr
           if f.Type.IsComposite || isAsArray then
             let dot = bCall "$dot" [er "p"; er (fieldName f)]
-            if compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
+            if isAsArray || compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
               match f.Type with
                 | C.Type.Array (_, sz) when not isAsArray ->
                   xassert (helper.ErrorReported || not isUnion)
