@@ -4631,12 +4631,14 @@ namespace Microsoft.Research.Vcc {
 
   public class SpecDeclspecSpecifier : Specifier
   {
-    internal SpecDeclspecSpecifier(string token, ISourceLocation sourceLocation)
+    internal SpecDeclspecSpecifier(string token, string argument, ISourceLocation sourceLocation)
       : base(sourceLocation) {
         this.Token = token;
+        this.Argument = argument;
     }
 
     internal readonly string Token;
+    internal readonly string Argument;
   }
 
   public class PrimitiveTypeSpecifier : Specifier {

@@ -115,7 +115,6 @@ generics-08
 groups-17
 invs-03
 labeledInvariants-00
-leakStack-02
 maps-15
 maps-32
 not_shared-00

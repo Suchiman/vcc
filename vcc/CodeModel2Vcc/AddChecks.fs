@@ -251,7 +251,7 @@ namespace Microsoft.Research.Vcc
         let wrassert = propAssert 8507 "extent({0}) is writable" "writes_check" w
         Some (Expr.MkBlock [wrassert; expr])
         
-      | Macro (ec, "_vcc_unblobify", [obj]) as expr ->
+      | Macro (ec, ("_vcc_unblobify"|"_vcc_unblobify_into"), [obj]) as expr ->
         let w = Macro (obj.Common, "prelude_blob_of", [obj])
         let wrassert = propAssert 8507 ("_(blob ...) ({0}) is writable") "writes_check" w
         Some (Expr.MkBlock [wrassert; expr])
