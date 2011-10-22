@@ -1306,7 +1306,7 @@ function {:inline false} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
     (forall p:$ptr :: {$f_timestamp(S1)[p]} 
       ($not_written(S0, p, W) ==>
         $f_timestamp(S1)[p] == $f_timestamp(S0)[p]) &&
-      ($f_timestamp(S1)[p] >= $f_timestamp(S0)[p])) &&
+      ($f_timestamp(S1)[p] >= $f_timestamp(S0)[p] && $f_timestamp(S1)[p] <= $current_timestamp(S1))) &&
     (forall p:$ptr :: {$f_closed(S1)[p]} $not_written(S0, p, W) ==> $f_closed(S1)[p] == $f_closed(S0)[p]) &&
     (forall p:$ptr :: {$f_owner(S1)[p]} $not_written(S0, p, W) ==> $f_owner(S0)[p] == $f_owner(S1)[p]) &&
     $timestamp_post(S0, S1) }
@@ -1386,7 +1386,7 @@ function {:inline true} $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : b
        && $timestamp_is_now(S, $emb0(r)))
     else
       (    $extent_mutable(S, r)
-        && $extent_is_fresh(S0, S, r)
+        && $extent_is_now(S0, S, r)
         && $all_first_option_typed(S, r))
 }
 
@@ -2128,9 +2128,13 @@ axiom (forall S:$state, T:$ctype, sz:int, p:$ptr :: {$mutable(S, $as_ptr_with_ty
   $in_range_phys_ptr(p) ==>
   $is_primitive(T) && $mutable(S, $as_ptr_with_type(p, $array(T, sz))) ==> $is_mutable_array(S, $as_array_first_index(p), T, sz));
 
-function $extent_is_fresh(S0:$state, S:$state, r:$ptr) : bool
+function $extent_is_now(S0:$state, S:$state, r:$ptr) : bool
   { $timestamp_is_now(S, r) &&
     (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $timestamp_is_now(S, p)) }
+
+function $extent_is_fresh(S0:$state, S:$state, r:$ptr) : bool
+  { $is_fresh(S0, S, r) &&
+    (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $is_fresh(S0, S, p)) }
 
 function $volatile_span(S:$state, q:$ptr) : $ptrset
   { (lambda p:$ptr :: $is_proper(p) && $is_volatile_field($field(p)) && $emb0(p) == q) }
@@ -2158,7 +2162,7 @@ procedure $union_reinterpret(#x:$ptr, #off:$field);
   ensures $owner($s, $dot(#x, #off)) == $me();
   ensures $owner($s, #x) == $me();
   ensures $extent_mutable($s, #x);
-  ensures $extent_is_fresh(old($s), $s, #x);
+  ensures $extent_is_now(old($s), $s, #x);
   ensures $union_havoced(old($s), $s, $composite_extent(old($s), #x, $typ(#x)), $composite_extent($s, #x, $typ(#x)));
   ensures $timestamp_post_strict(old($s), $s);
 
@@ -3020,7 +3024,7 @@ procedure $unblobify(p:$ptr) returns(r:$ptr);
   ensures $modifies(old($s), $s, $set_singleton($blob(p, $sizeof($typ(p)))));
   ensures $in_range_phys_ptr(r); // all blobs sit in physical memory
   ensures $extent_mutable($s, r);
-  ensures $extent_is_fresh(old($s), $s, r);
+  ensures $extent_is_now(old($s), $s, r);
   ensures $is_object_root($s, r);
   ensures r == $address_root($addr(p), $typ(p));
 
@@ -3032,7 +3036,7 @@ procedure $unblobify_into(r:$ptr);
   ensures $modifies(old($s), $s, $set_singleton($blob(r, $sizeof($typ(r)))));
   ensures $in_range_phys_ptr(r); // all blobs sit in physical memory
   ensures $extent_mutable($s, r);
-  ensures $extent_is_fresh(old($s), $s, r);
+  ensures $extent_is_now(old($s), $s, r);
   ensures $allow_reinterpretation(r);
 
 procedure $split_blob(p:$ptr, off:int);
