@@ -135,6 +135,7 @@
         <File Name="VCGeneration.pdb" />
         <File Name="TypedUnivBackPred2.sx" />
         <File Name="UnivBackPred2.sx" />
+        <File Name="UnivBackPred2.smt2" />
       </Component>
       <Component Id="Z3" Guid="8862D1F3-9D6E-4304-A84F-56E2BD309BF1">
         <File Name="z3.exe" KeyPath="yes" />
