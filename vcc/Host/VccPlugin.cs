@@ -37,8 +37,8 @@ namespace Microsoft.Research.Vcc
       // skip AI (inference of variable ranges mostly)
       //"/noinfer",  
       "/liveVariableAnalysis:0",
-      // "/prover:SMTLib",
-      "/prover:Z3",
+      "/prover:SMTLib",
+      // "/prover:Z3",
     };
         
     internal VccFunctionVerifier(VccPlugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, Helper.Env env)
