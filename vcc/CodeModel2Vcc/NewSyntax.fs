@@ -192,7 +192,10 @@ let init (helper:Helper.Env) =
         Some (Macro (ec, "prelude_blob", List.map self args))
       | Macro (ec, "\\castlike_unblobify", args) ->
         let expr' = Macro (ec, "_vcc_unblobify", List.map self args)
-        let decls1, rf = cache helper "blob" expr' VarKind.Local 
+        let kind =
+          if exprDependsOnSpecExpr expr' |> Option.isSome then VarKind.SpecLocal
+          else VarKind.Local
+        let decls1, rf = cache helper "blob" expr' kind
         Some (Expr.MkBlock (decls1 @ [rf]))
       | _ -> None
       
