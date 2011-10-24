@@ -1029,7 +1029,7 @@ namespace Microsoft.Research.Vcc
       exprRes <- this.DoExpression(parenthesis.ParenthesizedExpression)
 
     override this.Visit(addition : Addition) =
-      exprRes <- this.DoIExpression(addition.ProjectAsIExpression())
+      exprRes <- this.DoBinary("+", addition)
 
     override this.Visit(bitwiseAnd: BitwiseAnd) = 
       exprRes <- this.DoBinary("&", bitwiseAnd)
@@ -1095,7 +1095,7 @@ namespace Microsoft.Research.Vcc
       exprRes <- this.DoBinary("%", modulus)
 
     override this.Visit(multiplication : Multiplication) = 
-      exprRes <- this.DoIExpression(multiplication.ProjectAsIExpression())
+      exprRes <- this.DoBinary("*", multiplication)
 
     override this.Visit(notEquality : NotEquality) = 
       exprRes <- this.DoBinary("!=", notEquality)
@@ -1113,7 +1113,7 @@ namespace Microsoft.Research.Vcc
       exprRes <- this.DoSizeOf(sizeOf)
 
     override this.Visit(subtraction : Subtraction) = 
-      exprRes <- this.DoIExpression(subtraction.ProjectAsIExpression())
+      exprRes <- this.DoBinary("-", subtraction)
 
     override this.Visit(unaryNegation : UnaryNegation) = 
       exprRes <- this.DoUnary("-", unaryNegation)
