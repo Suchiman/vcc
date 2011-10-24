@@ -104,6 +104,11 @@ let init (helper:Helper.Env) =
         | _ -> None
 
     let normalizeOwnershipManipulation =
+      let checkOwnsObjectT self = function
+        | Macro (ec, "_vcc_owns", [Macro (_, "&", [e])]) when e.Type = Type.ObjectT ->
+          Some (Macro (ec, "_vcc_owns", [self e]))
+        | _ -> None
+
       let rec aux inAtomic self = 
         let selfs = List.map self
         function
@@ -130,6 +135,7 @@ let init (helper:Helper.Env) =
       let doDecl = function
         | Top.FunctionDecl f when f.Body.IsSome ->
           let isAtomic = hasCustomAttr "atomic_inline" f.CustomAttr
+          f.Body <- Some (f.Body.Value.SelfMap checkOwnsObjectT)
           f.Body <- Some (f.Body.Value.SelfMap (aux isAtomic))
           Top.FunctionDecl f
         | d -> d
