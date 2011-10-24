@@ -15,34 +15,6 @@ namespace Microsoft.Research.Vcc
  
  module Simplifier =
     
-  let exprDependsOnSpecExpr (expr : Expr) = 
-    let (specFound : string option ref) = ref None
-    let continueIfNotFound() = Option.isNone !specFound
-    let hasSpec' self = function
-      | Dot(_, _, f) when f.IsSpec -> specFound := Some("field '" + f.Name + "'"); false
-      | Ref(_, ({Kind = SpecLocal} as v)) -> specFound := Some("variable '" + v.Name + "'"); false
-      | Ref(_, ({Kind = SpecParameter|OutParameter} as v)) -> specFound := Some("parameter '" + v.Name + "'"); false
-      | CallMacro(_, ("_vcc_alloc" | "_vcc_stack_alloc"), _, _) -> false
-      | Macro(_, "by_claim", [_; obj; ptr]) -> self obj; self ptr; false
-      | Call(_, ({IsSpec = true} as f), _, _) -> specFound := Some("function '" + f.Name + "'"); false
-      | Call(_, fn, _, args) ->
-        let checkNonSpecPar (p : Variable) (e : Expr) =
-          if p.Kind <> VarKind.SpecParameter && p.Kind <> VarKind.OutParameter then self e
-        List.iter2 checkNonSpecPar fn.Parameters args
-        false
-      | Old(_, (CallMacro(_, "_vcc_by_claim", _, _)), expr) -> self expr; false
-      | Atomic(_, _, expr) -> self expr; false
-      | Block(_, exprs, _) ->
-        let rec checkLastExpr = function
-          | [] -> ()
-          | [x] -> self x
-          | _ :: xs -> checkLastExpr xs
-        checkLastExpr exprs; false
-      | _ -> continueIfNotFound()
-    expr.SelfVisit hasSpec'
-    !specFound
-    
-
   let inRangeBvExtract (expr:Expr) numOfBits =
     let ec = expr.Common
     let (lower, upper) =
