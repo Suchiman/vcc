@@ -236,6 +236,8 @@ namespace Microsoft.Research.Vcc
             | _ -> printf "unknown security label: %s" s; die()
         | BvLiteral (v, sz) ->
           Microsoft.Boogie.LiteralExpr (noToken, Microsoft.Basetypes.BigNum.FromBigInt v, sz) :> Microsoft.Boogie.Expr
+        | BvConcat(BvLiteral (_, 0), e)
+        | BvConcat(e, BvLiteral (_, 0)) -> trExpr e
         | BvConcat(e1, e2) ->
           Microsoft.Boogie.BvConcatExpr(noToken, trExpr e1, trExpr e2) :> Microsoft.Boogie.Expr
         | BvExtract(e, t, f) -> 
