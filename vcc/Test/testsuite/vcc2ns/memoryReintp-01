@@ -1,0 +1,88 @@
+`/newsyntax
+#include <vcc2test.h>
+
+typedef unsigned char byte;
+
+void *alloc(unsigned __int64  sz)
+  _(ensures \object_root((void[sz])((byte*)\result)))
+  _(ensures \mutable((void[sz])((byte*)\result)))
+  _(ensures \fresh((void[sz])((byte*)\result)))
+  ;
+
+struct A {
+  int x , y;
+};
+
+void f1()
+{
+  struct A * a = alloc(sizeof(struct A));
+  _(from_bytes a, \false)
+  a->x = 10;
+  a->y = 20;
+}
+
+void flatten(struct A *a)
+  _(writes \extent(a))
+  _(requires \object_root(a))
+{
+  byte*p = (byte*) a;
+
+  _(to_bytes a)
+  p[2] = 10;
+}
+
+void shouldFail(byte *p)
+  // missing writes
+  _(requires \mutable((void[sizeof(struct A)])p) && 
+           \object_root((void[sizeof(struct A)])p))
+{
+  _(from_bytes (struct A*)p, \false)
+  ((struct A*)p)->x = 10;
+}
+
+
+void flattenFail1(struct A *a)
+  _(writes \extent(a))
+  _(requires \object_root(a))
+{
+  byte*p = (byte*) a;
+
+  _(to_bytes a)
+  p[9] = 10;
+}
+
+void flattenFail2(struct A *a)
+  _(writes \extent(a))
+{
+  _(to_bytes a)
+}
+
+void flattenFail3(struct A *a)
+  _(requires \mutable(a) && \object_root(a))
+{
+  _(to_bytes a)
+}
+
+void joinShouldFail2(int *p)
+  _(writes \extent((void[sizeof(struct A)])p))
+  _(requires \mutable((void[sizeof(struct A)])((byte*)p)) && 
+           \object_root((void[sizeof(struct A)])((byte*)p)))
+{
+  _(from_bytes (struct A*)p, \false)
+}
+
+`
+Verification of f1 succeeded.
+Verification of flatten succeeded.
+Verification of shouldFail failed.
+testcase(38,19) : error VC8510: Assertion 'as_array((uint8_t*)(struct A*)p, 8) is writable in call to from_bytes (struct A*)p, \false' did not verify.
+Verification of flattenFail1 failed.
+testcase(50,3) : error VC8507: Assertion 'p[9] is writable' did not verify.
+Verification of flattenFail2 failed.
+testcase(56,19) : error VC9502: Call 'to_bytes a' did not verify.
+testcase(0,0) : error VC9599: (related information) Precondition: 'the reinterpreted object is not embedded inside of another object'.
+Verification of flattenFail3 failed.
+testcase(62,19) : error VC8510: Assertion 'a is writable in call to to_bytes a' did not verify.
+Verification of joinShouldFail2 failed.
+testcase(70,19) : error VC8510: Assertion 'as_array((uint8_t*)(struct A*)p, 8) is writable in call to from_bytes (struct A*)p, \false' did not verify.
+`

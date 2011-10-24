@@ -1,0 +1,13 @@
+`/newsyntax
+
+#include <Vcc.h>
+
+_(assume_correct) struct S {
+  int i;
+  _(invariant i > 0)
+};
+
+void foo(struct S *p) { }
+`
+Verification of foo succeeded.
+`
