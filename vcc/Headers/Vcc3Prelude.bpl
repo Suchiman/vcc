@@ -3017,6 +3017,7 @@ procedure $blobify(p:$ptr);
   requires $in_range_phys_ptr(p);
   ensures $mutable_root($s, $blob(p, $sizeof($typ(p))));
   ensures $modifies(old($s), $s, $extent(old($s), p));
+  ensures $owns($s, $blob(p, $sizeof($typ(p)))) == $set_empty();
 
 procedure $unblobify(p:$ptr) returns(r:$ptr);
   // writes _(blob sizeof(p))p
