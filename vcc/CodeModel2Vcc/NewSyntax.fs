@@ -104,6 +104,11 @@ let init (helper:Helper.Env) =
         | _ -> None
 
     let normalizeOwnershipManipulation =
+      let checkOwnsObjectT self = function
+        | Macro (ec, "_vcc_owns", [Macro (_, "&", [e])]) when e.Type = Type.ObjectT ->
+          Some (Macro (ec, "_vcc_owns", [self e]))
+        | _ -> None
+
       let rec aux inAtomic self = 
         let selfs = List.map self
         function
@@ -130,6 +135,7 @@ let init (helper:Helper.Env) =
       let doDecl = function
         | Top.FunctionDecl f when f.Body.IsSome ->
           let isAtomic = hasCustomAttr "atomic_inline" f.CustomAttr
+          f.Body <- Some (f.Body.Value.SelfMap checkOwnsObjectT)
           f.Body <- Some (f.Body.Value.SelfMap (aux isAtomic))
           Top.FunctionDecl f
         | d -> d
@@ -186,7 +192,10 @@ let init (helper:Helper.Env) =
         Some (Macro (ec, "prelude_blob", List.map self args))
       | Macro (ec, "\\castlike_unblobify", args) ->
         let expr' = Macro (ec, "_vcc_unblobify", List.map self args)
-        let decls1, rf = cache helper "blob" expr' VarKind.Local 
+        let kind =
+          if exprDependsOnSpecExpr expr' |> Option.isSome then VarKind.SpecLocal
+          else VarKind.Local
+        let decls1, rf = cache helper "blob" expr' kind
         Some (Expr.MkBlock (decls1 @ [rf]))
       | _ -> None
       
