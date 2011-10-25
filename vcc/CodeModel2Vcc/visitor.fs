@@ -1042,7 +1042,7 @@ namespace Microsoft.Research.Vcc
 
     override this.Visit(conditional: Conditional) = 
       exprRes <- C.Expr.Macro (this.ExprCommon (conditional :> Expression), "ite",
-                               [this.DoExpression conditional.Condition;
+                               [this.DoIExpression (conditional :> IConditional).Condition
                                 this.DoExpression conditional.ConvertedResultIfTrue;
                                 this.DoExpression conditional.ConvertedResultIfFalse])
 
@@ -1625,8 +1625,9 @@ namespace Microsoft.Research.Vcc
           match unfolded with
             | None -> cconst
             | Some uconst -> 
-              if cconst.ExprEquals(uconst) then cconst 
-              else C.Macro(cconst.Common, "const", [cconst; uconst])
+              let uconst' = if uconst.Type <> cconst.Type then C.Expr.Cast({uconst.Common with Type = cconst.Type}, C.CheckedStatus.Unchecked, uconst) else uconst
+              if cconst.ExprEquals(uconst') then cconst 
+              else C.Macro(cconst.Common, "const", [cconst; uconst'])
 
       member this.Visit (conversion:IConversion) : unit =
         match conversion with
