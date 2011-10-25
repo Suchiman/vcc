@@ -2932,7 +2932,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     {
       switch (operatorToken) {
         case Token.AddOne: return new PrefixIncrement(new TargetExpression(operand), slb);
-        case Token.BitwiseNot: return new OnesComplement(operand, slb);
+        case Token.BitwiseNot: return new VccOnesComplement(operand, slb);
         case Token.LogicalNot: return new LogicalNot(operand, slb);
         case Token.Multiply: return new VccAddressDereference(operand, slb);
         case Token.Plus: return new UnaryPlus(operand, slb);
