@@ -72,6 +72,10 @@ namespace Microsoft.Research.Vcc.Parsing
                 this.GetNextToken();
                 this.ParseDataTypeDefinition(members, globalMembers, followersOrDeclarationStart);
                 break;
+              case "type":
+                this.GetNextToken();
+                this.ParseAbstractTypeDefinition(members, globalMembers, followersOrDeclarationStart);
+                break;
               default:
                 this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
                 break;
@@ -87,12 +91,34 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, followers, true);
     }
 
+    void ParseAbstractTypeDefinition(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers)
+    {
+      var noSpecifiers = new Specifier[0];
+      var name = this.ParseNameDeclaration(true);
+      var loc = name.SourceLocation;
+      var name0 = name.Name.Value;
+      var mangledName = new VccNameDeclaration(this.GetNameFor("_vcc_math_type_" + name0), loc);
+
+      var tpMembers = new List<ITypeDeclarationMember>();
+      var fld = new FieldDefinition(new List<Specifier>(), 0,VccCompilationHelper.GetBigIntType(nameTable), 
+                                    new VccNameDeclaration(this.GetNameFor("_vcc_dummy"), loc), null, true, loc);
+      tpMembers.Add(fld);
+      var strct = new VccStructDeclaration(mangledName, tpMembers, noSpecifiers, loc);
+      members.Add(strct);
+
+      var tp = new VccNamedTypeExpression(new VccSimpleName(mangledName, mangledName.SourceLocation));
+
+      var typedefDecl = new TypedefDeclaration(tp, name, loc);
+      this.RegisterTypedef(name.Value, typedefDecl);
+      globalMembers.Add(typedefDecl);
+    }
+
     void ParseDataTypeDefinition(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers)
     {
       var noSpecifiers = new Specifier[0];
       var name = this.ParseNameDeclaration(true);
       var loc = name.SourceLocation;
-      var mangledName = new VccNameDeclaration(this.GetNameFor("_vcc_datatype_" + name.Name.Value), loc);
+      var mangledName = new VccNameDeclaration(this.GetNameFor("_vcc_math_type_" + name.Name.Value), loc);
       var ctornames = new List<FunctionDeclaration>();
       var strct = new VccDatatypeDeclaration(mangledName, new List<ITypeDeclarationMember>(), noSpecifiers, ctornames, loc);
       members.Add(strct);
