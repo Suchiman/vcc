@@ -3,7 +3,7 @@
 
 unsigned int foo() {
   unsigned int x = 5;
-  return x & ~7;
+  return x & (unsigned)~7;
 }
 
 unsigned short foo2() {
