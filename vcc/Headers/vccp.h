@@ -26,7 +26,7 @@ typedef _Bool bool;
  *** Types
  ***/
 
-#define SPEC_TYPE(name) typedef struct _concat_identifiers(_vcc_math_type_, name) {char _vcc_marker_for_math_type;} _concat_identifiers(\,name);
+#define SPEC_TYPE(name) type _concat_identifiers(\,name)
 
 
 _(const bool \true = 1;)
@@ -38,10 +38,10 @@ _(typedef unsigned __int64 \natural;)
 _(typedef struct \claim_struct { } ^\claim;)
 _(typedef unsigned __int64 \size_t;)
 
-_(SPEC_TYPE(objset))
-_(SPEC_TYPE(state))
-_(SPEC_TYPE(type))
-_(SPEC_TYPE(thread_id))
+_(type \objset)
+_(type \state)
+_(type \type)
+_(type \thread_id)
 
 _(typedef \thread_id ^\thread;)
 

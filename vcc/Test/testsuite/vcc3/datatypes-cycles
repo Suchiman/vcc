@@ -6,7 +6,7 @@ _(datatype Bar {
 })
 
 _(datatype Baz0 { 
-  case c1(struct _vcc_datatype_Baz1)
+  case c1(struct _vcc_math_type_Baz1)
 })
 
 _(datatype Baz1 { 
