@@ -129,9 +129,8 @@ namespace Microsoft.Research.Vcc.Parsing
         this.currentSpecificationFields = null;
         this.currentTypeInvariants = null;
         SourceLocationBuilder sctx = this.GetSourceLocationBuilderForLastScannedToken();
-        List<ITypeDeclarationMember> newTypeMembers = new List<ITypeDeclarationMember>();
 
-        this.ParseRestOfTypeDeclaration(sctx, members, tp.Expression, newTypeMembers, followers);
+        this.ParseRestOfTypeDeclaration(sctx, members, tp.Expression, tpMembers, followers);
         if (this.currentToken == Token.EndOfFile) {
           ISourceLocation errorLocation = this.scanner.SourceLocationOfLastScannedToken;
           this.HandleError(errorLocation, Error.MissingSemicolonAfterStruct, "end-of-file");

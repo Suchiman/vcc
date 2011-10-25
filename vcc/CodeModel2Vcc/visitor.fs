@@ -612,8 +612,16 @@ namespace Microsoft.Research.Vcc
     member this.TryGetDatatypeDefinition (typeDef:ITypeDefinition) =
       match typeDef with
         | :? NamedTypeDefinition as ntd ->
-          match ntd.TypeDeclarations |> Seq.map (fun o -> o :> obj) |> Seq.toList with
-            | (:? IVccDatatypeDeclaration as dt) :: _ -> dt
+          let dts =
+             ntd.TypeDeclarations |> 
+             Seq.map (fun o -> o :> obj) |>
+             Seq.collect 
+               (function
+                  | (:? IVccDatatypeDeclaration as dt) -> [dt]
+                  | _ -> []) |>
+             Seq.toList
+          match dts with
+            | dt :: _ -> dt
             | _ -> null
         | _ -> null
 
@@ -654,8 +662,7 @@ namespace Microsoft.Research.Vcc
                 let isMathRecord =
                   match fields with
                     | [f] when f.Name.Value = "_vcc_dummy" -> false
-                    | [] -> false
-                    | _ -> name.StartsWith mathPref
+                    | _ -> datatypeDefinition = null && name.StartsWith mathPref
                      
                 if name.StartsWith mathPref && datatypeDefinition = null && not isMathRecord then
                   if name.Substring(mathPref.Length) = "label_t"
