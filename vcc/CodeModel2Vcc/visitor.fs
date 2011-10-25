@@ -651,7 +651,13 @@ namespace Microsoft.Research.Vcc
                     | _ -> die()
                 let mathPref = "_vcc_math_type_"
                 let datatypeDefinition = this.TryGetDatatypeDefinition typeDef
-                if name.StartsWith mathPref && datatypeDefinition = null then
+                let isMathRecord =
+                  match fields with
+                    | [f] when f.Name.Value = "_vcc_dummy" -> false
+                    | [] -> false
+                    | _ -> name.StartsWith mathPref
+                     
+                if name.StartsWith mathPref && datatypeDefinition = null && not isMathRecord then
                   if name.Substring(mathPref.Length) = "label_t"
                     then C.Type.SecLabel None
                     else
@@ -684,6 +690,10 @@ namespace Microsoft.Research.Vcc
                     | x :: xs -> List.exists (fun y -> y <> x) xs
                     | _ -> die()                        
                   let customAttr = convCustomAttributes tok typeDef.Attributes
+                  let customAttr =
+                    if isMathRecord then
+                      C.VccAttr (C.AttrRecord, "") :: customAttr
+                    else customAttr
                   let contract = contractProvider.GetTypeContractFor(typeDef)
                   let specFromContract = 
                     match contract with

@@ -26,7 +26,7 @@ typedef _Bool bool;
  *** Types
  ***/
 
-#define SPEC_TYPE(name) _(type _concat_identifiers(\,name))
+#define SPEC_TYPE(name) type _concat_identifiers(\,name)
 
 
 _(const bool \true = 1;)
