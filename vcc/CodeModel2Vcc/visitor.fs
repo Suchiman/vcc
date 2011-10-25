@@ -608,7 +608,15 @@ namespace Microsoft.Research.Vcc
                 let dot =  C.Expr.MkDot(ec, instance, field)
                 exprRes <- C.Expr.Deref (ec, dot)
           | _ -> assert false
-    
+   
+    member this.TryGetDatatypeDefinition (typeDef:ITypeDefinition) =
+      match typeDef with
+        | :? NamedTypeDefinition as ntd ->
+          match ntd.TypeDeclarations |> Seq.map (fun o -> o :> obj) |> Seq.toList with
+            | (:? IVccDatatypeDeclaration as dt) :: _ -> dt
+            | _ -> null
+        | _ -> null
+
     member this.DoTypeDefinition (typeDef:ITypeDefinition) =
       typeRes <-
           match typeDef.TypeCode with
@@ -642,11 +650,12 @@ namespace Microsoft.Research.Vcc
                     | :? INestedTypeDefinition as n -> n.ContainingTypeDefinition.ToString() + "." + n.Name.Value
                     | _ -> die()
                 let mathPref = "_vcc_math_type_"
-                if name.StartsWith mathPref then
+                let datatypeDefinition = this.TryGetDatatypeDefinition typeDef
+                if name.StartsWith mathPref && datatypeDefinition = null then
                   if name.Substring(mathPref.Length) = "label_t"
                     then C.Type.SecLabel None
                     else
-                      let typeName = (if helper.Options.NewSyntax then "\\" else "") + (name.Substring (mathPref.Length))
+                      let typeName = name.Substring (mathPref.Length)
                       let td = C.Type.MathTd typeName
                       typesMap.Add(typeDef, td)
                       typeNameMap.Add(td.Name, td)
@@ -808,17 +817,12 @@ namespace Microsoft.Research.Vcc
                   
                   //if (contract <> null) then contract.HasErrors |> ignore
 
-                  match typeDef with
-                    | :? NamedTypeDefinition as ntd ->
-                      match ntd.TypeDeclarations |> Seq.map (fun o -> o :> obj) |> Seq.toList with
-                        | (:? IVccDatatypeDeclaration as dt) :: _ ->
-                          td.DataTypeOptions <- 
-                            dt.Constructors |> Seq.map (fun fd -> this.LookupMethod fd.ResolvedMethod) |> Seq.toList
-                          td.Kind <- C.TypeKind.MathType
-                          let pref = "_vcc_datatype_"
-                          td.Name <- td.Name.Substring pref.Length
-                        | _ -> ()
-                    | _ -> ()
+                  if datatypeDefinition <> null then
+                    td.DataTypeOptions <- 
+                      datatypeDefinition.Constructors |> Seq.map (fun fd -> this.LookupMethod fd.ResolvedMethod) |> Seq.toList
+                    td.Kind <- C.TypeKind.MathType
+                    let pref = "_vcc_math_type_"
+                    td.Name <- td.Name.Substring pref.Length
 
                   match fields with
                     | [] when not (VccScopedName.IsGroupType(typeDef)) && not td.IsSpec ->
@@ -1410,7 +1414,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
         let rec isAdmissibleMapDomainType = function
           | C.Volatile t -> isAdmissibleMapDomainType t
-          | C.Type.Ref td when helper.Options.Vcc3 -> td.IsRecord || td.IsDataType
+          | C.Type.Ref td when helper.Options.Vcc3 -> td.IsMathValue // TODO exclude big types
           | C.Type.Ref _ -> false
           | C.TypeVar _
           | C.Array _
