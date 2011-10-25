@@ -34,8 +34,6 @@ namespace Microsoft.Research.Vcc
       | _ -> ()
     markTypeDecl eqKind td
 
-  let isRecord (td : TypeDecl) = td.IsRecord
-  
   // ============================================================================================================
   
   
@@ -1180,19 +1178,25 @@ namespace Microsoft.Research.Vcc
         if (td.Kind = TypeKind.Union) then
           helper.Error(td.Token, 9682, "union '" + td.Name + "' cannot be flattened into a struct and thus cannot be marked as record type")
         else 
-          let checkField (f:Field) =
+          let checkType tok loc tp =
             let rec checkType = function
-              | Type.Ref(td') when not td'.IsRecord && not td'.IsDataType ->
-                helper.Error(f.Token, 9680, "field '" + f.Name + "' of record type '" + td.Name + "' cannot be of non-record structured type '" + td'.Name + "'", Some(td'.Token))
-              | Type.Volatile _ -> helper.Error(f.Token, 9683, "volatile modified on field '" + f.Name + "' in record type '" + td.Name + "' is currently not supported")
-              | Type.Array _ -> helper.Error(f.Token, 9688, "inline array field '" + f.Name + "' in record type '" + td.Name + "' is currently not supported")
+              | Type.Ref(td') when not td'.IsMathValue ->
+                helper.Error(tok, 9680, loc() + " cannot be of non-record structured type '" + td'.Name + "'", Some(td'.Token))
+              | Type.Volatile _ -> helper.Error(tok, 9683, "volatile modifier on " + loc() + " is currently not supported")
+              | Type.Array _ -> helper.Error(tok, 9688, "inline array in " + loc() + " is currently not supported")
               | _ -> ()
+            checkType tp
+
+          let checkField (f:Field) =
+            checkType f.Token (fun () -> "field '" + f.Name + "' of record type '" + td.Name + "'") f.Type
             // we now automatically mark them all as spec
             //if (f.IsSpec) then helper.Warning(f.Token, 9118, "field '" + f.Name + "' in record type does not need to marked as spec field")
-            checkType f.Type
+          
+          let checkCtor (f:Function) =
+            f.Parameters |> List.iter (fun v -> checkType f.Token (fun () -> "parameter of constructor '" + f.Name + "'") v.Type)
+
           List.iter checkField td.Fields
-          
-          
+          List.iter checkCtor td.DataTypeOptions
       
       for d in decls do
         match d with

@@ -43,7 +43,23 @@ namespace Microsoft.Research.Vcc.Parsing
 
     override protected void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
       bool savedInSpecCode = this.SkipIntoSpecBlock();
-      if (this.currentToken == Token.Identifier && this.declspecExtensions.ContainsKey(this.scanner.GetIdentifierString())) {
+
+      var id = "";
+      if (this.currentToken == Token.Identifier)
+        id = this.scanner.GetIdentifierString();
+
+      if (id == "record") {
+        // don't treat _(record identifier ...) as a specifier, it will be handled as type definition
+        var snap = this.scanner.MakeSnapshot();
+        this.GetNextToken();
+        if (this.currentToken == Token.Identifier) {
+          id = "";
+        }
+        this.scanner.RevertToSnapshot(snap);
+        this.currentToken = Token.Identifier;
+      }
+
+      if (this.declspecExtensions.ContainsKey(id)) {
         this.ParseDeclarationWithSpecModifiers(members, globalMembers, followers, true, savedInSpecCode);
         return;
       }
@@ -72,6 +88,14 @@ namespace Microsoft.Research.Vcc.Parsing
                 this.GetNextToken();
                 this.ParseDataTypeDefinition(members, globalMembers, followersOrDeclarationStart);
                 break;
+              case "type":
+                this.GetNextToken();
+                this.ParseTypeDefinition(members, globalMembers, followersOrDeclarationStart, isRecord: false);
+                break;
+              case "record":
+                this.GetNextToken();
+                this.ParseTypeDefinition(members, globalMembers, followersOrDeclarationStart, isRecord: true);
+                break;
               default:
                 this.ParseNonLocalDeclaration(members, globalMembers, followersOrDeclarationStart, true);
                 break;
@@ -87,12 +111,55 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, followers, true);
     }
 
+    void ParseTypeDefinition(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers, bool isRecord)
+    {
+      var noSpecifiers = new Specifier[0];
+      var name = this.ParseNameDeclaration(true);
+      var loc = name.SourceLocation;
+      var name0 = name.Name.Value;
+      var mangledName = new VccNameDeclaration(this.GetNameFor("_vcc_math_type_" + name0), loc);
+
+      var tpMembers = new List<ITypeDeclarationMember>();
+      var strct = new VccStructDeclaration(mangledName, tpMembers, noSpecifiers, loc);
+      var tp = new VccNamedTypeExpression(new VccSimpleName(mangledName, mangledName.SourceLocation));
+
+      if (isRecord) {
+        List<FieldDeclaration>/*?*/ savedSpecificationFields = this.currentSpecificationFields;
+        List<TypeInvariant>/*?*/ savedTypeInvariants = this.currentTypeInvariants;
+        this.currentSpecificationFields = null;
+        this.currentTypeInvariants = null;
+        SourceLocationBuilder sctx = this.GetSourceLocationBuilderForLastScannedToken();
+        List<ITypeDeclarationMember> newTypeMembers = new List<ITypeDeclarationMember>();
+
+        this.ParseRestOfTypeDeclaration(sctx, members, tp.Expression, newTypeMembers, followers);
+        if (this.currentToken == Token.EndOfFile) {
+          ISourceLocation errorLocation = this.scanner.SourceLocationOfLastScannedToken;
+          this.HandleError(errorLocation, Error.MissingSemicolonAfterStruct, "end-of-file");
+        }
+        this.SkipTo(followers);
+        this.AssociateTypeWithTypeContract(strct, this.currentSpecificationFields, this.currentTypeInvariants, this.InSpecCode);
+
+        this.currentSpecificationFields = savedSpecificationFields;
+        this.currentTypeInvariants = savedTypeInvariants;
+      } else {
+        var fld = new FieldDefinition(new List<Specifier>(), 0, VccCompilationHelper.GetBigIntType(nameTable),
+                                      new VccNameDeclaration(this.GetNameFor("_vcc_dummy"), loc), null, true, loc);
+        tpMembers.Add(fld);
+      }
+
+      members.Add(strct);
+
+      var typedefDecl = new TypedefDeclaration(tp, name, loc);
+      this.RegisterTypedef(name.Value, typedefDecl);
+      globalMembers.Add(typedefDecl);
+    }
+
     void ParseDataTypeDefinition(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers)
     {
       var noSpecifiers = new Specifier[0];
       var name = this.ParseNameDeclaration(true);
       var loc = name.SourceLocation;
-      var mangledName = new VccNameDeclaration(this.GetNameFor("_vcc_datatype_" + name.Name.Value), loc);
+      var mangledName = new VccNameDeclaration(this.GetNameFor("_vcc_math_type_" + name.Name.Value), loc);
       var ctornames = new List<FunctionDeclaration>();
       var strct = new VccDatatypeDeclaration(mangledName, new List<ITypeDeclarationMember>(), noSpecifiers, ctornames, loc);
       members.Add(strct);

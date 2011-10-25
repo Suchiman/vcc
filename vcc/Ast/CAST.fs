@@ -252,7 +252,7 @@ module Microsoft.Research.Vcc.CAST
       this.Kind = Record ||
       List.exists (function VccAttr(AttrRecord, "") -> true | _ -> false) this.CustomAttr 
 
-    member this.IsMathStruct = this.IsRecord || this.IsDataType
+    member this.IsMathValue = this.IsRecord || this.IsDataType || this.Kind = MathType
 
     override this.ToString () =
       (match this.Kind with
