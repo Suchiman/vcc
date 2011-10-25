@@ -18,6 +18,7 @@ _(record blah {
 
 _(ghost void f(foobar f, \baz b, blah bb)
 {
+  int k = bb.x;
 })
 
 `
