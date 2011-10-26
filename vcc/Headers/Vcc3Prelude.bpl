@@ -469,10 +469,26 @@ axiom $def_composite_type(^$#thread_id_t, 1, false, true);
 axiom $is_nice_spec_ptr($me(), ^$#thread_id_t);
 function $is_threadtype(t:$ctype) : bool { t == ^$#thread_id_t }
 
-const unique $inactive_union_owner_type : $ctype;
-function $inactive_union_owner() : $ptr;
-axiom $def_composite_type($inactive_union_owner_type, 1, false, true);
-axiom $is_nice_spec_ptr($inactive_union_owner(), $inactive_union_owner_type);
+const unique $untyped_owner_type : $ctype;
+function $untyped_owner() : $ptr;
+axiom $def_composite_type($untyped_owner_type, 1, false, true);
+axiom $is_nice_spec_ptr($untyped_owner(), $untyped_owner_type);
+
+function $untyped_owner_owner() : $ptr;
+axiom $is_nice_spec_ptr($untyped_owner_owner(), ^$#thread_id_t);
+axiom $me() != $untyped_owner_owner();
+
+axiom (forall S:$state ::
+  {$owner(S, $untyped_owner())}
+  {$domain_root(S, $untyped_owner())}
+  $good_state(S) ==> 
+    $owner(S, $untyped_owner()) == $untyped_owner_owner() &&
+    $domain_root(S, $untyped_owner()) == $untyped_owner());
+
+axiom (forall S:$state, t:$ctype ::
+  {$owner(S, $null_of(t))}
+  $good_state(S) ==> 
+    $owner(S, $null_of(t)) == $untyped_owner());
 
 // ----------------------------------------------------------------------------
 // Arrays
@@ -914,7 +930,7 @@ axiom (forall S:$state, p, q:$ptr ::
   $good_state(S) ==>
     $is_proper(p) &&
     $in_range_phys_ptr(p) &&
-    $owner(S, $domain_root(S, $emb0(p))) == $me() ==>
+    ($typed(S, $emb0(p)) || $owner(S, $domain_root(S, $emb0(p))) == $me()) ==>
       $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
 
 function $as_addr(p:$ptr, t:$ctype, a:int) : $ptr;
@@ -978,10 +994,10 @@ function {:inline true} $thread_local2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $thread_local(S, #p) }
 
 function {:inline true} $typed2(S:$state, p:$ptr, t:$ctype) : bool
-  { $thread_local2(S, p, t) }
+  { $typed(S, p) && $is(p, t) }
 
-function {:inline true} $typed(S:$state, p:$ptr) : bool
-  { $thread_local(S, p) }
+function $typed(S:$state, p:$ptr) : bool
+  { $owner(S, p) != $untyped_owner() }
 
 function {:inline true} $readable_span(S:$state, p:$ptr) : bool
 {
@@ -1922,6 +1938,7 @@ axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
     $closed(S, p) &&
     $set_in(p, $domain(S, q)) &&
     $inv(S, p, $typ(p)) && 
+    $owner(S, p) != $untyped_owner() &&
     $set_in0(p, $owns(S, $owner(S, p)))));
 
 axiom (forall S:$state, p:$ptr, q:$ptr :: {$in_domain(S, p, q)}
@@ -2190,7 +2207,7 @@ function {:inline true} $is_first_union_field(f:$field) : bool
 
 function $first_option_typed(S:$state, #p:$ptr) : bool
   { $is_union_type($typ(#p)) ==>
-      $owner(S, $dot(#p, $first_union_field($typ(#p)))) != $inactive_union_owner() }
+      $owner(S, $dot(#p, $first_union_field($typ(#p)))) != $untyped_owner() }
 
 function $all_first_option_typed(S:$state, p:$ptr) : bool
 {
@@ -2201,7 +2218,7 @@ function $all_first_option_typed(S:$state, p:$ptr) : bool
 
 
 function {:inline} $union_active(s:$state, p:$ptr, f:$field) : bool
-  { $owner(s, $dot(p, f)) != $inactive_union_owner() }
+  { $owner(s, $dot(p, f)) != $untyped_owner() }
 
 function $active_option(S:$state, p:$ptr) : $field
   { $int_to_field($rd(S, p, $f_active_option($typ(p)))) }
@@ -2213,15 +2230,15 @@ axiom (forall S:$state, p:$ptr, f:$field ::
   {$is_union_field(f), $owner(S, $dot(p, f))}
   $good_state(S) &&
   $is_union_field(f) && 
-  ($owner(S, $dot(p, f)) != $inactive_union_owner() ==> $active_option(S, p) == f) &&
-  ($owner(S, $dot(p, f)) == $inactive_union_owner() ==> 
+  ($owner(S, $dot(p, f)) != $untyped_owner() ==> $active_option(S, p) == f) &&
+  ($owner(S, $dot(p, f)) == $untyped_owner() ==> 
     (forall q:$ptr :: {$extent_hint(q, p)} $in(q, $composite_extent(S, $dot(p, f), $typ($dot(p, f)))) ==> !$thread_local_np(S, q))));
 
 axiom (forall S:$state, p:$ptr, f:$field ::
   {$is_union_field(f), $dot(p, f), $active_option(S, p)}
   $good_state(S) &&
   $is_union_field(f) ==>
-  f == $active_option(S, p) || $owner(S, $dot(p, f)) == $inactive_union_owner());
+  f == $active_option(S, p) || $owner(S, $dot(p, f)) == $untyped_owner());
 
 // ----------------------------------------------------------------------------
 // Struct coping
