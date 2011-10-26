@@ -141,9 +141,11 @@ namespace Microsoft.Research.Vcc.Parsing
         this.currentSpecificationFields = savedSpecificationFields;
         this.currentTypeInvariants = savedTypeInvariants;
       } else {
+        /*
         var fld = new FieldDefinition(new List<Specifier>(), 0, VccCompilationHelper.GetBigIntType(nameTable),
                                       new VccNameDeclaration(this.GetNameFor("_vcc_dummy"), loc), null, true, loc);
         tpMembers.Add(fld);
+        */
       }
 
       members.Add(strct);
