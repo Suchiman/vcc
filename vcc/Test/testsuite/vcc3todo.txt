@@ -105,7 +105,6 @@ records.ns-09
 
 ###START
 # Real TODO starts here
-claims-33
 containingRecord-00
 containingRecord-01
 fieldInlining.ns-01
