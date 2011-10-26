@@ -23,8 +23,8 @@ _(def bool g(int a[], S s)
 }
 )
 `
-testcase(21,14) : warning VC9314: [possible unsoundness]: only integer arguments are currently accepted in _(decreases ...) clauses
+testcase(21,14) : warning VC9314: [possible unsoundness]: only integer arguments are currently accepted in _(decreases ...) clauses; consider using \size(...)
+testcase(21,14) : warning VC9321: [possible unsoundness]: no measure to decrease when calling 'f(a)'; consider using _(level ...)
 Verification of f succeeded.
-Verification of g failed.
-testcase(21,14) : error VC8029: the call 'f(a)' might not terminate.
+Verification of g succeeded.
 `
