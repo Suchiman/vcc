@@ -460,21 +460,45 @@ namespace Microsoft.Research.Vcc
 
     member this.DoCompileTimeConstant(constant : ICompileTimeConstant) =
 
-      let ec = this.ExprCommon constant
+      let ec, value =
+        match constant with
+          | :? CompileTimeConstant as cconst ->
+            let unfolded = cconst.UnfoldedExpression
+
+            // this is an ungly workaround for the situation where CCI converts constants, which could be
+            // either signed or unsigned to their unsigned form, which looses the sign extension
+            // should they really be meant as signed the are then being cast to a larger signed type
+            // the example from the test suite, where this happens is this:
+            //
+            // address = (__int32 *) (((__int64) Target) & (~0x3));
+            //
+            // Here, the ~0x3 is the negative number -4, which should then be cast to __int64, without this
+            // fix, it is treated as (__int64)(unsigned __int32)(~0x3), which is wrong
+
+            if constant.Type.ResolvedType <> unfolded.Type.ResolvedType 
+              && TypeHelper.IsSignedPrimitiveInteger(constant.Type.ResolvedType)
+              && TypeHelper.IsSignedPrimitiveInteger(unfolded.Type.ResolvedType)
+              && constant.Value <> unfolded.Value 
+            then
+              this.ExprCommon (cconst.ProjectAsIExpression()), unfolded.Value
+            else
+              this.ExprCommon constant, constant.Value
+          | _ -> this.ExprCommon constant, constant.Value
+
       match ec.Type with
         | C.Type.Integer _ ->
-          match constant.Value with
+          match value with
             | :? char as c -> C.Expr.IntLiteral(ec, new bigint((int)c))
-            | _ -> C.Expr.IntLiteral (ec, bigint.Parse(constant.Value.ToString ()))
-        | C.Type.Bool      -> C.Expr.BoolLiteral (ec, unbox (constant.Value))
-        | C.Type.Primitive _ -> C.Expr.Macro(ec, "float_literal", [C.Expr.UserData(ec, constant.Value)])
-        | C.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.ToUserData(constant.Value)])
+            | _ -> C.Expr.IntLiteral (ec, bigint.Parse(value.ToString ()))
+        | C.Type.Bool -> C.Expr.BoolLiteral (ec, unbox value)
+        | C.Type.Primitive _ -> C.Expr.Macro(ec, "float_literal", [C.Expr.UserData(ec, value)])
+        | C.Ptr (C.Type.Integer C.IntKind.UInt8) -> C.Expr.Macro (ec, "string", [C.Expr.ToUserData(value)])
         | C.Ptr (C.Type.Void) -> 
           let ptrVal = 
             let ecInt = {ec with Type = C.Type.Integer C.IntKind.Int64}
-            match constant.Value with
+            match value with
               | :? System.IntPtr as ptr ->  C.Expr.IntLiteral(ecInt, new bigint(ptr.ToInt64()))
-              | _ -> C.Expr.IntLiteral(ecInt, bigint.Parse(constant.Value.ToString()))
+              | _ -> C.Expr.IntLiteral(ecInt, bigint.Parse(value.ToString()))
           C.Expr.Cast(ec, C.CheckedStatus.Unchecked, ptrVal)
         | _ -> die()
 
