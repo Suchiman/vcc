@@ -146,6 +146,12 @@ namespace Microsoft.Research.Vcc
 
     private static void CheckOptions(MetadataHostEnvironment hostEnvironment, VccOptions options)
     {
+      if (options.Vcc3 && options.SaveModel) {
+        options.SaveModel = false;
+        options.PrintCEVModel = true;
+        options.SaveModelForBvd = true;
+      }
+
       if (options.RunTestSuite &&
           options.RunTestSuiteMultiThreaded != -1 &&
           !String.IsNullOrEmpty(options.XmlLogFile)) {
