@@ -193,7 +193,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
                 | (MathInteger _ | Integer _), (MathInteger _ | Integer _) ->
                   Expr.Macro (boolBogusEC(), "prelude_int_lt_or", [c; s; computeCheck (ss, cc)])
                 | _ ->
-                  helper.GraveWarning (e.Token, 9314, "only integer arguments are currently accepted in _(decreases ...) clauses")
+                  helper.GraveWarning (e.Token, 9314, "only integer arguments are currently accepted in _(decreases ...) clauses; consider using \\size(...)")
                   Expr.False
             // missing elements are treated as Top, e.g. consider:
             // f(a) = ... f(a-1) ... g(a-1,b) ...
@@ -201,9 +201,13 @@ let insertTerminationChecks (helper:Helper.Env) decls =
             | (_, []) -> Expr.False
             | ([], _) -> Expr.True 
           let check = computeCheck (decrRefs, callVariants)
-          let check = check.WithCommon (afmte 8029 "the call '{0}' might not terminate" [e])
-          let check = Expr.MkAssert check
-          assigns @ [check]
+          if check = Expr.False then
+            helper.GraveWarning (e.Token, 9321, "no measure to decrease when calling '" + e.ToString() + "'; consider using _(level ...)")
+            assigns
+          else
+            let check = check.WithCommon (afmte 8029 "the call '{0}' might not terminate" [e])
+            let check = Expr.MkAssert check
+            assigns @ [check]
         else
           helper.GraveWarning (e.Token, 9315, "function '" + fn.Name + "' should by defined with _(def) or _(abstract) for termination checking")
           []
@@ -264,13 +268,9 @@ let insertTerminationChecks (helper:Helper.Env) decls =
       didSomething := false
       List.iter computeDefReads decls
    
-  let aux = function
+  let setDefaultVariants = function
     | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition 
                                     || fn.CustomAttr |> hasCustomAttr AttrAbstract ->
-      if fn.Body.IsNone then
-        helper.GraveWarning (fn.Token, 9318, "definition functions need to have body")
-        [decl]
-      else
         if fn.Variants = [] then
           let aux acc (v:Variable) =
             let rf = Ref ({ bogusEC with Type = v.Type }, v)
@@ -283,6 +283,15 @@ let insertTerminationChecks (helper:Helper.Env) decls =
                 sz :: acc
               | _ -> acc
           fn.Variants <- fn.Parameters |> List.fold aux [] |> List.rev
+    | _ -> ()
+   
+  let aux = function
+    | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition 
+                                    || fn.CustomAttr |> hasCustomAttr AttrAbstract ->
+      if fn.Body.IsNone then
+        helper.GraveWarning (fn.Token, 9318, "definition functions need to have body")
+        [decl]
+      else
         let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
         let origBody = fn.Body.Value
         let body = Expr.MkBlock (assigns @ [origBody])
@@ -314,6 +323,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | decl -> [decl]
 
   computeAllDefReads decls
+  List.iter setDefaultVariants decls
   List.collect aux decls
 
 let terminationCheckingPlaceholder (helper:Helper.Env) decls =
