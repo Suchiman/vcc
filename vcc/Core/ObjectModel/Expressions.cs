@@ -4589,11 +4589,21 @@ namespace Microsoft.Research.Vcc {
     public EnumSpecifier(TypeExpression typeExpression)
       : base(typeExpression) {
     }
+
+    public override string ToString()
+    {
+      return "enum";
+    }
   }
 
   public class StructSpecifier : CompositeTypeSpecifier {
     public StructSpecifier(TypeExpression typeExpression)
       : base(typeExpression) {
+    }
+
+    public override string ToString()
+    {
+      return "struct";
     }
   }
 
@@ -4601,12 +4611,22 @@ namespace Microsoft.Research.Vcc {
     public UnionSpecifier(TypeExpression typeExpression)
       : base(typeExpression) {
     }
+
+    public override string ToString()
+    {
+      return "union";
+    }
   }
 
   public class OutSpecifier : Specifier
   {
     public OutSpecifier(ISourceLocation sourceLocation)
       : base(sourceLocation) {
+    }
+
+    public override string ToString()
+    {
+      return "out";
     }
   }
 
@@ -4617,6 +4637,11 @@ namespace Microsoft.Research.Vcc {
     }
 
     public readonly Parsing.Token Token;
+
+    public override string ToString()
+    {
+      return Token.ToString();
+    }
   }
 
   public class DeclspecSpecifier : Specifier {
@@ -4654,6 +4679,11 @@ namespace Microsoft.Research.Vcc {
     //^ invariant this.Token == Token.Void || this.Token == Token.Char || this.Token == Token.Short || this.Token == Token.Int || this.Token == Token.Int8 || this.Token == Token.Int16 ||
     //^    this.Token == Token.Int32 || this.Token == Token.Int64 || this.Token == Token.Long || this.Token == Token.Float || this.Token == Token.Double || 
     //^    this.Token == Token.Signed || this.Token == Token.Unsigned ||  this.Token == Token.Bool;
+
+    public override string ToString()
+    {
+      return Token.ToString();
+    }
   }
 
   public class ScopedTypeNameSpecifier : Specifier {
@@ -4682,6 +4712,11 @@ namespace Microsoft.Research.Vcc {
     }
 
     public readonly SimpleName TypedefName;
+
+    public override string ToString()
+    {
+      return TypedefName.Name.Value;
+    }
   }
 
   public class TypeQualifier : Specifier {
@@ -4691,6 +4726,11 @@ namespace Microsoft.Research.Vcc {
     }
 
     public readonly Parsing.Token Token;
+
+    public override string ToString()
+    {
+      return Token.ToString();
+    }
   }
 
   public class FunctionSpecifier : Specifier {
