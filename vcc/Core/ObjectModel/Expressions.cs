@@ -3155,36 +3155,6 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
-  public class VccOnesComplement : OnesComplement
-  {
-
-    public VccOnesComplement(Expression operand, ISourceLocation sourceLocation) :
-      base(operand, sourceLocation)
-    {      
-    }
-
-    protected VccOnesComplement(BlockStatement containingBlock, VccOnesComplement template) :
-      base(containingBlock, template)
-    {
-    }
-
-    public override Expression MakeCopyFor(BlockStatement containingBlock)
-    {
-      if (containingBlock == this.ContainingBlock) return this;
-      return new VccOnesComplement(containingBlock, this);
-    }
-
-    public override bool CouldBeInterpretedAsNegativeSignedInteger
-    {
-      get { return false; }
-    }
-
-    public override bool CouldBeInterpretedAsUnsignedInteger
-    {
-      get { return true; }
-    }
-  }
-
   public class VccOutArgument : OutArgument
   {
     public VccOutArgument(TargetExpression expression, ISourceLocation sourceLocation)
