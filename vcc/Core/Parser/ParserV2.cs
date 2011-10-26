@@ -111,6 +111,19 @@ namespace Microsoft.Research.Vcc.Parsing
       this.SkipOutOfSpecBlock(savedInSpecCode, followers, true);
     }
 
+    void UpdateForwardDeclaration(List<INamespaceDeclarationMember> members, VccStructuredTypeDeclaration tp)
+    {
+      var name = tp.Name.Name;
+      for (var i = 0; i < members.Count; ++i) {
+        var strct = members[i] as VccStructDeclaration;
+        if (strct != null && strct.IsAbstractType && strct.Name.Name.Equals(name)) {
+          members[i] = tp;
+          return;
+        }
+      }
+      members.Add(tp);
+    }
+
     void ParseTypeDefinition(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers, bool isRecord)
     {
       var noSpecifiers = new Specifier[0];
@@ -122,6 +135,8 @@ namespace Microsoft.Research.Vcc.Parsing
       var tpMembers = new List<ITypeDeclarationMember>();
       var strct = new VccStructDeclaration(mangledName, tpMembers, noSpecifiers, loc);
       var tp = new VccNamedTypeExpression(new VccSimpleName(mangledName, mangledName.SourceLocation));
+
+      UpdateForwardDeclaration(members, strct);
 
       if (isRecord) {
         List<FieldDeclaration>/*?*/ savedSpecificationFields = this.currentSpecificationFields;
@@ -141,14 +156,13 @@ namespace Microsoft.Research.Vcc.Parsing
         this.currentSpecificationFields = savedSpecificationFields;
         this.currentTypeInvariants = savedTypeInvariants;
       } else {
+        strct.IsAbstractType = true;
         /*
         var fld = new FieldDefinition(new List<Specifier>(), 0, VccCompilationHelper.GetBigIntType(nameTable),
                                       new VccNameDeclaration(this.GetNameFor("_vcc_dummy"), loc), null, true, loc);
         tpMembers.Add(fld);
         */
       }
-
-      members.Add(strct);
 
       var typedefDecl = new TypedefDeclaration(tp, name, loc);
       this.RegisterTypedef(name.Value, typedefDecl);
@@ -163,7 +177,7 @@ namespace Microsoft.Research.Vcc.Parsing
       var mangledName = new VccNameDeclaration(this.GetNameFor("_vcc_math_type_" + name.Name.Value), loc);
       var ctornames = new List<FunctionDeclaration>();
       var strct = new VccDatatypeDeclaration(mangledName, new List<ITypeDeclarationMember>(), noSpecifiers, ctornames, loc);
-      members.Add(strct);
+      UpdateForwardDeclaration(members, strct);
 
       var tp = new VccNamedTypeExpression(new VccSimpleName(mangledName, mangledName.SourceLocation));
 

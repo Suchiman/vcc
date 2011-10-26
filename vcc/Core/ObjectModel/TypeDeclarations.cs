@@ -318,6 +318,8 @@ namespace Microsoft.Research.Vcc {
       : base(name, members, extendedAttributes, sourceLocation) {
     }
 
+    internal bool IsAbstractType;
+
     protected VccStructDeclaration(NamespaceDeclaration containingNamespaceDeclaration, VccStructDeclaration template)
       : base(containingNamespaceDeclaration, template) {
     }
