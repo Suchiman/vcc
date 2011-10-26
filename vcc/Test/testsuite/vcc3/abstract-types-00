@@ -18,6 +18,7 @@ _(typedef _(record) struct _blah {
 
 _(ghost void f(foobar f, \baz b, blah bb)
 {
+  int k = bb.x;
 })
 
 `

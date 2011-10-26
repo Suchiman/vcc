@@ -659,10 +659,8 @@ namespace Microsoft.Research.Vcc
                     | _ -> die()
                 let mathPref = "_vcc_math_type_"
                 let datatypeDefinition = this.TryGetDatatypeDefinition typeDef
-                let isMathRecord =
-                  match fields with
-                    | [f] when f.Name.Value = "_vcc_dummy" -> false
-                    | _ -> datatypeDefinition = null && name.StartsWith mathPref
+                let contract = contractProvider.GetTypeContractFor(typeDef)
+                let isMathRecord = contract <> null && Seq.length contract.ContractFields > 0 && name.StartsWith mathPref
                      
                 if name.StartsWith mathPref && datatypeDefinition = null && not isMathRecord then
                   if name.Substring(mathPref.Length) = "label_t"
@@ -701,7 +699,6 @@ namespace Microsoft.Research.Vcc
                     if isMathRecord then
                       C.VccAttr (C.AttrRecord, "") :: customAttr
                     else customAttr
-                  let contract = contractProvider.GetTypeContractFor(typeDef)
                   let specFromContract = 
                     match contract with
                       | :? VccTypeContract as vccTypeContract -> vccTypeContract.IsSpec
