@@ -36,6 +36,7 @@ namespace Microsoft.Research.Vcc
       "/proverWarnings:1",
       // skip AI (inference of variable ranges mostly)
       //"/noinfer",  
+      "/z3opt:/memory:300",
       "/liveVariableAnalysis:0",
       "/prover:SMTLib",
       // "/prover:Z3",
