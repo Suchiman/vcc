@@ -2144,7 +2144,7 @@ namespace Microsoft.Research.Vcc
                     helper.Error(f.Token, 9656, "equality for structures with nested arrays not supported", Some(td.Token))
                     die()
                   | None -> read (Some t) v t 
-              | C.Ref(td) ->
+              | C.Ref(td) when not td.IsMathValue ->
                   bCall "$vs_ctor" [ state; bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]]
               | t when vcc3 ->
                 typedRead state (fldAccess v f) t
@@ -2158,7 +2158,7 @@ namespace Microsoft.Research.Vcc
 
           match f.Type with // _vcc_deep_struct_eq.S($vs_ctor(#s2, $dot(#p, T.s1)),
             | C.Ref _ when not deep && not inUnion -> None
-            | C.Ref td' ->
+            | C.Ref td' when not td'.IsMathValue ->
                 let funName = eqFunName td'.Name (if deep then "deep" else "shallow")
                 Some(bCall funName [read s1 f.Type; read s2 f.Type]) 
             | C.Array(t,n) -> 
