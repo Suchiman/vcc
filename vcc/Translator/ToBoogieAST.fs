@@ -311,11 +311,6 @@ namespace Microsoft.Research.Vcc
         let errs = prog.Resolve()
         let errs =
           if errs = 0 then
-            for d in prog.TopLevelDeclarations do
-              match d with
-                | :? Boogie.Function as f ->
-                  f.expansions <- null
-                | _ -> ()
             prog.Typecheck()
           else errs
         match decls with
