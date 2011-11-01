@@ -288,8 +288,10 @@ let insertTerminationChecks (helper:Helper.Env) decls =
   let aux = function
     | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition 
                                     || fn.CustomAttr |> hasCustomAttr AttrAbstract ->
+      let isDef = fn.CustomAttr |> hasCustomAttr AttrDefinition 
       if fn.Body.IsNone then
-        helper.GraveWarning (fn.Token, 9318, "definition functions need to have body")
+        if isDef then
+          helper.GraveWarning (fn.Token, 9318, "definition functions need to have body")
         [decl]
       else
         let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
@@ -297,7 +299,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
         let body = Expr.MkBlock (assigns @ [origBody])
         let body = body.SelfMap (check fn refs)
         fn.Body <- Some body
-        if fn.RetType <> Type.Void && fn.CustomAttr |> hasCustomAttr AttrDefinition then
+        if fn.RetType <> Type.Void && isDef then
           let expr = turnIntoPureExpression helper fn.RetType origBody
           if fn.Reads = [] then
             fn.Reads <- computeReads expr
