@@ -517,7 +517,7 @@ namespace Microsoft.Research.Vcc.Parsing
         var tp = new VccTypeExpressionOf(res);
         name = new GenericInstanceExpression(name, new TypeExpression[] { tp }, loc);
       }
-      var call = new VccMethodCall(name, parameters.AsReadOnly(), slb);
+      var call = this.CheckedExpressionIfRequested(new VccMethodCall(name, parameters.AsReadOnly(), slb));
       contract.AddPrecondition(new Precondition(call, null, call.SourceLocation));
     }
 
