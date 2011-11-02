@@ -5,5 +5,5 @@ void foo() {
   _(assert \forall int i; i != 0 ==> \forall int i; i != 0)
 }
 `
-testcase(4,60) : error VC9675: Quantified variable 'i' clashes with earlier declaration
+testcase(4,46) : error VC9675: Quantified variable 'i' clashes with earlier declaration
 `

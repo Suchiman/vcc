@@ -51,5 +51,5 @@ void LockFreeIncr(struct A *a _(ghost \claim c))
 Verification of A#adm succeeded.
 Verification of LockFreeIncr failed.
 testcase(48,1) : error VC9501: Post condition 'c->\claim_count == \old(c->\claim_count)' did not verify.
-testcase(20,27) : error VC9599: (related information) Location of post condition.
+testcase(20,13) : error VC9599: (related information) Location of post condition.
 `

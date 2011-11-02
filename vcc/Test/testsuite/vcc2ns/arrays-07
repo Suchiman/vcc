@@ -40,5 +40,5 @@ _(pure) bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
 `
 Verification of ABS#adm succeeded.
 Verification of DESC#adm failed.
-testcase(26,28) : error VC8012: invariant(AbsConcRel(&\this->abs,\this->conc)) of DESC is not admissible.
+testcase(26,14) : error VC8012: invariant(AbsConcRel(&\this->abs,\this->conc)) of DESC is not admissible.
 `

@@ -75,7 +75,7 @@ void bar(union A3 *a)
 }
 `
 Verification of fooShouldFail failed.
-testcase(49,26) : error VC9500: Assertion 'a->tag == 10' did not verify.
+testcase(49,12) : error VC9500: Assertion 'a->tag == 10' did not verify.
 Verification of foo1 succeeded.
 Verification of foo2 succeeded.
 Verification of bar failed.

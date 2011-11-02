@@ -43,6 +43,6 @@ Verification of S#adm succeeded.
 Verification of S##G#adm succeeded.
 Verification of maintainGroupInvariant succeeded.
 Verification of destroyGroupInvariantShouldFail failed.
-testcase(37,24) : error VC8014: invariant(\this->a == \this->c) of S##G fails on wrap.
-testcase(6,32) : error VC9599: (related information) location of the invariant.
+testcase(37,10) : error VC8014: invariant(\this->a == \this->c) of S##G fails on wrap.
+testcase(6,18) : error VC9599: (related information) location of the invariant.
 `

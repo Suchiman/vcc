@@ -27,8 +27,8 @@ void foo3(i2i f1, i2i f2)
   _(assert f1 == f2 ==> f1(1) == f2(1)) // OK
 }
 `
-testcase(19,26) : error VC9635: function 'i2i#1' used in pure context, but not marked with 'ispure'
-testcase(19,35) : error VC9635: function 'i2i#1' used in pure context, but not marked with 'ispure'
-testcase(26,39) : error VC9635: function 'i2i#1' used in pure context, but not marked with 'ispure'
-testcase(26,48) : error VC9635: function 'i2i#1' used in pure context, but not marked with 'ispure'
+testcase(19,12) : error VC9635: function 'i2i#1' used in pure context, but not marked with 'ispure'
+testcase(19,21) : error VC9635: function 'i2i#1' used in pure context, but not marked with 'ispure'
+testcase(26,25) : error VC9635: function 'i2i#1' used in pure context, but not marked with 'ispure'
+testcase(26,34) : error VC9635: function 'i2i#1' used in pure context, but not marked with 'ispure'
 `

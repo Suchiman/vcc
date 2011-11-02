@@ -18,5 +18,5 @@ void foo() {
 Verification of foo succeeded.
 Verification of foo#fnptr#bar_to_TF#1 failed.
 testcase(12,10) : error VC9502: Call '&bar' did not verify.
-testcase(8,28) : error VC9599: (related information) Precondition: 'x > 2'.
+testcase(8,14) : error VC9599: (related information) Precondition: 'x > 2'.
 `

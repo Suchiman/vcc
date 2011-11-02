@@ -104,18 +104,18 @@ void fail3(struct A*a, struct A*b _(ghost \claim c))
 `
 Verification of B#adm succeeded.
 Verification of B_fail1#adm failed.
-testcase(58,29) : error VC8012: invariant(y == __specification(by_claim ca)(a->x)) of B_fail1 is not admissible.
+testcase(58,15) : error VC8012: invariant(y == _(by_claim ca)(a->x)) of B_fail1 is not admissible.
 Verification of B_fail2#adm failed.
-testcase(67,29) : error VC8012: invariant(y == __specification(by_claim ca)(a->x)) of B_fail2 is not admissible.
+testcase(67,15) : error VC8012: invariant(y == _(by_claim ca)(a->x)) of B_fail2 is not admissible.
 Verification of B_fail3#adm failed.
-testcase(77,29) : error VC8012: invariant(y == a->vol_x) of B_fail3 is not admissible.
+testcase(77,15) : error VC8012: invariant(y == a->vol_x) of B_fail3 is not admissible.
 Verification of B_may_fail1#adm failed.
-testcase(86,29) : error VC8012: invariant(y == a->x) of B_may_fail1 is not admissible.
+testcase(86,15) : error VC8012: invariant(y == a->x) of B_may_fail1 is not admissible.
 Verification of ok1 succeeded.
 Verification of fail1 failed.
-testcase(37,39) : error VC8509: Assertion 'object a is claimed by c (in by_claim(c, a))' did not verify.
+testcase(37,25) : error VC8509: Assertion 'object a is claimed by c (in by_claim(c, a))' did not verify.
 Verification of fail2 failed.
-testcase(48,35) : error VC8508: Assertion 'c is a valid claim (in by_claim(c, a))' did not verify.
+testcase(48,21) : error VC8508: Assertion 'c is a valid claim (in by_claim(c, a))' did not verify.
 Verification of may_fail1 failed.
 testcase(93,11) : error VC8512: Assertion 'a is thread local (accessing field x)' did not verify.
 Verification of fail3 failed.

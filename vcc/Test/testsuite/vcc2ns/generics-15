@@ -30,5 +30,5 @@ void foo(struct T *p)
 }
 `
 testcase(16,1) : error VC9693: Cannot return value of generic type 'T'
-testcase(17,30) : error VC9691: Expression 't' is of generic type 'T'; only pointers to generic types are supported.
+testcase(17,16) : error VC9691: Expression 't' is of generic type 'T'; only pointers to generic types are supported.
 `

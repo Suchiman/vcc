@@ -45,9 +45,9 @@ void fail4(int x)
 }
 `
 Verification of fail1 failed.
-testcase(5,26) : error VC9500: Assertion 'x > 0' did not verify.
+testcase(5,12) : error VC9500: Assertion 'x > 0' did not verify.
 Verification of fail2 failed.
-testcase(11,26) : error VC9500: Assertion 'x > 0' did not verify.
+testcase(11,12) : error VC9500: Assertion 'x > 0' did not verify.
 Verification of ok1 succeeded.
 Verification of ok2 succeeded.
 Verification of ok3 succeeded.

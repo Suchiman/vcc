@@ -15,5 +15,5 @@ void bar(struct S *s)
 `
 Verification of bar failed.
 testcase(12,3) : error VC9502: Call 'foo(s)' did not verify.
-testcase(4,28) : error VC9599: (related information) Precondition: '\wrapped(t)'.
+testcase(4,14) : error VC9599: (related information) Precondition: '\wrapped(t)'.
 `

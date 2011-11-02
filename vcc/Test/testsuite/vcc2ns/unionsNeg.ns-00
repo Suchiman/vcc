@@ -29,5 +29,5 @@ void reint(union B *b)
 }
 `
 Verification of reint failed.
-testcase(26,26) : error VC9500: Assertion '&b->y.i \in \extent(b)' did not verify.
+testcase(26,12) : error VC9500: Assertion '&b->y.i \in \extent(b)' did not verify.
 `

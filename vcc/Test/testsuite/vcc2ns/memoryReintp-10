@@ -30,5 +30,5 @@ int test(unsigned char *u)
 
 `
 Verification of test failed.
-testcase(26,27) : error VC9500: Assertion '\false' did not verify.
+testcase(26,13) : error VC9500: Assertion '\false' did not verify.
 `

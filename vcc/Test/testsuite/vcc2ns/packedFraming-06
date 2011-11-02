@@ -112,8 +112,8 @@ Verification of foo succeeded.
 Verification of foo2 succeeded.
 Verification of foo3 succeeded.
 Verification of fooFail1 failed.
-testcase(79,28) : error VC9500: Assertion 'b->a \in \vdomain(b)' did not verify.
+testcase(79,14) : error VC9500: Assertion 'b->a \in \vdomain(b)' did not verify.
 Verification of fooComplex succeeded.
 Verification of fooFail2 failed.
-testcase(102,28) : error VC9500: Assertion 'b->a \in \vdomain(b)' did not verify.
+testcase(102,14) : error VC9500: Assertion 'b->a \in \vdomain(b)' did not verify.
 `

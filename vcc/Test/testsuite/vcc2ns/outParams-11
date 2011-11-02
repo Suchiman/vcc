@@ -14,5 +14,5 @@ void bar()
   _(ghost z = foo(1, 2 _(out z) _(out y)))
 }
 `
-testcase(13,58) : error VC9676: duplicate out parameter 'z'
+testcase(13,30) : error VC9676: duplicate out parameter 'z'
 `

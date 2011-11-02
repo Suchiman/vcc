@@ -12,5 +12,5 @@ void foo(unsigned *a, unsigned n)
 		a[i] = 0;
 }
 `
-testcase(10,29) : error VC0000: Invalid expression term 'unsigned'.
+testcase(10,15) : error VC0000: Invalid expression term 'unsigned'.
 `

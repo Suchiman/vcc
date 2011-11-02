@@ -17,5 +17,5 @@ _(requires t->\valid)
 }
 `
 Verification of f failed.
-testcase(15,28) : error VC9500: Assertion '\exists struct S* s; s->\valid && (s == (struct S*) t))' did not verify.
+testcase(15,14) : error VC9500: Assertion '\exists struct S* s; s->\valid && (s == (struct S*) t))' did not verify.
 `

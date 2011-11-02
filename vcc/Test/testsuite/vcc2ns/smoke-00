@@ -6,5 +6,5 @@ void smoke() _(requires 0) { }
 `
 Verification of nosmoke succeeded.
 Verification of smoke succeeded.
-testcase(4,44) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
+testcase(4,30) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
 `

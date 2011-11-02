@@ -22,7 +22,7 @@ _(ghost void bar()
 })
 `
 Verification of foo failed.
-testcase(13,26) : error VC9500: Assertion 'm[7] == n[7]' did not verify.
-testcase(14,26) : error VC9500: Assertion 'r.y == q.y' did not verify.
+testcase(13,12) : error VC9500: Assertion 'm[7] == n[7]' did not verify.
+testcase(14,12) : error VC9500: Assertion 'r.y == q.y' did not verify.
 Verification of bar succeeded.
 `

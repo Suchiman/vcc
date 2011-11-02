@@ -75,9 +75,9 @@ Verification of f1 succeeded.
 Verification of f2 succeeded.
 Verification of g1 succeeded.
 Verification of g2 failed.
-testcase(50,25) : error VC9500: Assertion 'o->a.a==p->a.a' did not verify.
+testcase(50,11) : error VC9500: Assertion 'o->a.a==p->a.a' did not verify.
 Verification of h1 succeeded.
 Verification of h2 failed.
-testcase(67,25) : error VC9500: Assertion 'o->b.b==p->b.b' did not verify.
-testcase(68,25) : error VC9500: Assertion 'o->b.a.a==p->b.a.a' did not verify.
+testcase(67,11) : error VC9500: Assertion 'o->b.b==p->b.b' did not verify.
+testcase(68,11) : error VC9500: Assertion 'o->b.a.a==p->b.a.a' did not verify.
 `

@@ -13,5 +13,5 @@ void foo(UINT32 NumberToClear) {
 
 `
 Verification of foo failed.
-testcase(10,26) : error VC9500: Assertion 'NumberToClear < 8' did not verify.
+testcase(10,12) : error VC9500: Assertion 'NumberToClear < 8' did not verify.
 `

@@ -9,5 +9,5 @@ void foo(__int64 i)
 
 `
 Verification of foo failed.
-testcase(6,26) : error VC9500: Assertion '\false' did not verify.
+testcase(6,12) : error VC9500: Assertion '\false' did not verify.
 `

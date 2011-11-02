@@ -63,11 +63,11 @@ _(ghost void bzz2X2()
 })
 `
 Verification of bar failed.
-testcase(14,26) : error VC9500: Assertion '\false' did not verify.
+testcase(14,12) : error VC9500: Assertion '\false' did not verify.
 Verification of bzz2 failed.
-testcase(32,26) : error VC9500: Assertion '\false' did not verify.
+testcase(32,12) : error VC9500: Assertion '\false' did not verify.
 Verification of bzz2X failed.
-testcase(49,26) : error VC9500: Assertion '\false' did not verify.
+testcase(49,12) : error VC9500: Assertion '\false' did not verify.
 Verification of bzz2X2 failed.
-testcase(61,26) : error VC9500: Assertion '\false' did not verify.
+testcase(61,12) : error VC9500: Assertion '\false' did not verify.
 `

@@ -8,5 +8,5 @@ void foo() {
 }
 `
 Verification of foo failed.
-testcase(6,26) : error VC9500: Assertion '((unsigned)-1) < x' did not verify.
+testcase(6,12) : error VC9500: Assertion '((unsigned)-1) < x' did not verify.
 `

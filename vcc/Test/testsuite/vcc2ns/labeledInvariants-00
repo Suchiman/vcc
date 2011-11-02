@@ -47,9 +47,9 @@ void baz(struct S *s)
 Verification of S#adm succeeded.
 Verification of foo succeeded.
 Verification of fooShouldFail failed.
-testcase(21,26) : error VC9500: Assertion 's->a == s->b' did not verify.
+testcase(21,12) : error VC9500: Assertion 's->a == s->b' did not verify.
 Verification of bar succeeded.
 Verification of barShouldFail failed.
-testcase(35,26) : error VC9500: Assertion 's->a == 20' did not verify.
+testcase(35,12) : error VC9500: Assertion 's->a == 20' did not verify.
 Verification of baz succeeded.
 `

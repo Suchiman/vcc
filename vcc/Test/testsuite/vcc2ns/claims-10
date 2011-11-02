@@ -14,5 +14,5 @@ void foo(struct A *a, struct A *b)
   _(assert c == \make_claim({a}, \true))
 }
 `
-testcase(13,31) : error VC9652: claim(...) used in pure context
+testcase(13,17) : error VC9652: claim(...) used in pure context
 `

@@ -42,6 +42,6 @@ void SetDescAbsArray(struct DESC *desc, uint64 index, uint64 Value)
 `
 Verification of DESC#adm succeeded.
 Verification of SetDescAbsArrayFail failed.
-testcase(23,25) : error VC9500: Assertion '\false' did not verify.
+testcase(23,11) : error VC9500: Assertion '\false' did not verify.
 Verification of SetDescAbsArray succeeded.
 `

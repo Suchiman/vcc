@@ -62,19 +62,19 @@ void bugs()
   _(assert \forall unsigned i; p2[p1[i]] == i && p3[p1[i]] == i)
 }
 `
-testcase(14,29) : warning VC9122: inferred triggers at {:level 0}: {\mine(n->next)} {:hint \mine(n->next)} for '\forall struct Node *n; \mine(n) ==> \mine(n->next))'
-testcase(15,29) : warning VC9122: inferred triggers at {:level 0}: {\mine(n)} {:hint \mine(n)} for '\forall struct Node *n; \mine(n) ==> perm[n->idx] == k)'
-testcase(30,26) : warning VC9122: inferred triggers at {:level 3}: {(&)buf[i], (&)buf[j]} for '\forall unsigned i, j; i < j && j < len ==> buf[i] <= buf[j])'
-testcase(31,26) : warning VC9122: inferred triggers at {:level 3}: {perm[i], perm[j]} for '\forall unsigned i, j; i < j && j < len ==> perm[i] <= perm[j])'
-testcase(34,26) : warning VC9122: inferred triggers at {:level 1}: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len && buf2[perm[i]] == buf[i])'
-testcase(37,26) : warning VC9122: inferred triggers at {:level 1}: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len && \at(s0, buf[perm[i]]) == buf[i])'
-testcase(40,26) : warning VC9122: inferred triggers at {:level 3}: {perm[i], perm[j]} for '\forall unsigned i, j; i < j && j < len ==> perm[i] != perm[j])'
-testcase(41,26) : warning VC9122: inferred triggers at {:level 3}: {(&)buf[i], (&)buf[j]} for '\forall unsigned i, j; i < j && j < len ==> buf[i] != buf[j])'
-testcase(44,26) : warning VC9122: inferred triggers at {:level 1}: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len)'
-testcase(45,26) : warning VC9122: inferred triggers at {:level 2}: {(&)buf[i]} for '\forall unsigned i; i < len ==> buf[i] < 0)'
-testcase(50,26) : warning VC9122: inferred triggers at {:level 0}: {n->next \in q->\owns} {:hint n->next \in q->\owns} for '\forall struct Node *n; n \in q->\owns ==> n->next \in q->\owns)'
-testcase(53,26) : warning VC9122: inferred triggers at {:level 0}: {n \in q->\owns} {:hint n \in q->\owns} for '\forall struct Node *n; n \in q->\owns ==> perm[n->idx] == 0)'
-testcase(61,26) : warning VC9122: inferred triggers at {:level 1}: {p1[i]} for '\forall unsigned i; p2[p1[i]] == i && p3[p1[i]] == i)'
+testcase(14,15) : warning VC9122: inferred triggers at {:level 0}: {\mine(n->next)} {:hint \mine(n->next)} for '\forall struct Node *n; \mine(n) ==> \mine(n->next))'
+testcase(15,15) : warning VC9122: inferred triggers at {:level 0}: {\mine(n)} {:hint \mine(n)} for '\forall struct Node *n; \mine(n) ==> perm[n->idx] == k)'
+testcase(30,12) : warning VC9122: inferred triggers at {:level 3}: {(&)buf[i], (&)buf[j]} for '\forall unsigned i, j; i < j && j < len ==> buf[i] <= buf[j])'
+testcase(31,12) : warning VC9122: inferred triggers at {:level 3}: {perm[i], perm[j]} for '\forall unsigned i, j; i < j && j < len ==> perm[i] <= perm[j])'
+testcase(34,12) : warning VC9122: inferred triggers at {:level 1}: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len && buf2[perm[i]] == buf[i])'
+testcase(37,12) : warning VC9122: inferred triggers at {:level 1}: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len && \at(s0, buf[perm[i]]) == buf[i])'
+testcase(40,12) : warning VC9122: inferred triggers at {:level 3}: {perm[i], perm[j]} for '\forall unsigned i, j; i < j && j < len ==> perm[i] != perm[j])'
+testcase(41,12) : warning VC9122: inferred triggers at {:level 3}: {(&)buf[i], (&)buf[j]} for '\forall unsigned i, j; i < j && j < len ==> buf[i] != buf[j])'
+testcase(44,12) : warning VC9122: inferred triggers at {:level 1}: {perm[i]} for '\forall unsigned i; i < len ==> perm[i] < len)'
+testcase(45,12) : warning VC9122: inferred triggers at {:level 2}: {(&)buf[i]} for '\forall unsigned i; i < len ==> buf[i] < 0)'
+testcase(50,12) : warning VC9122: inferred triggers at {:level 0}: {n->next \in q->\owns} {:hint n->next \in q->\owns} for '\forall struct Node *n; n \in q->\owns ==> n->next \in q->\owns)'
+testcase(53,12) : warning VC9122: inferred triggers at {:level 0}: {n \in q->\owns} {:hint n \in q->\owns} for '\forall struct Node *n; n \in q->\owns ==> perm[n->idx] == 0)'
+testcase(61,12) : warning VC9122: inferred triggers at {:level 1}: {p1[i]} for '\forall unsigned i; p2[p1[i]] == i && p3[p1[i]] == i)'
 Verification of Mgr#adm succeeded.
 Verification of commonHandledPatterns succeeded.
 Verification of bugs succeeded.

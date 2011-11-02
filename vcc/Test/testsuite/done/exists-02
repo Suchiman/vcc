@@ -9,5 +9,5 @@ void foo()
 }
 `
 Verification of foo failed.
-testcase(7,26) : error VC9500: Assertion '\exists int i,j; {f(i),f(j)} i+j < 0 && i+j == x)' did not verify.
+testcase(7,12) : error VC9500: Assertion '\exists int i,j; {f(i),f(j)} i+j < 0 && i+j == x)' did not verify.
 `

@@ -4,5 +4,5 @@
 _(pure) _(atomic_inline) void foo();
 void bar() { foo(); }
 `
-testcase(3,17) : error VC9667: Pure function 'foo' cannot be inlined.
+testcase(3,3) : error VC9667: Pure function 'foo' cannot be inlined.
 `

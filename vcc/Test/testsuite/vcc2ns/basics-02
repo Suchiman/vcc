@@ -25,9 +25,9 @@ void t2()
 #endif
 `
 Verification of foo failed.
-testcase(6,28) : error VC9500: Assertion '(s->b)->\owner == s' did not verify.
+testcase(6,14) : error VC9500: Assertion '(s->b)->\owner == s' did not verify.
 Verification of foo2 succeeded.
 Verification of t succeeded.
 Verification of t2 failed.
-testcase(22,26) : error VC9500: Assertion '\non_primitive_ptr(&x)' did not verify.
+testcase(22,12) : error VC9500: Assertion '\non_primitive_ptr(&x)' did not verify.
 `

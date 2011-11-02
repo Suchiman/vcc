@@ -328,8 +328,8 @@ Verification of bf_foo succeeded.
 Verification of bm_foo succeeded.
 Verification of union_foo1 succeeded.
 Verification of union_foo2ShouldFail failed.
-testcase(278,26) : error VC9500: Assertion 'u->b==0' did not verify.
+testcase(278,12) : error VC9500: Assertion 'u->b==0' did not verify.
 Verification of union_foo3 succeeded.
 Verification of union_foo4ShouldFail failed.
-testcase(294,26) : error VC9500: Assertion 'u->a==0' did not verify.
+testcase(294,12) : error VC9500: Assertion 'u->a==0' did not verify.
 `

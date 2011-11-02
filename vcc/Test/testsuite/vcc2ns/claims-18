@@ -40,7 +40,7 @@ void bar()
 
 `
 Verification of foo failed.
-testcase(16,35) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
+testcase(16,21) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
 Verification of bar failed.
-testcase(34,35) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
+testcase(34,21) : error VC8521: Assertion 'chunk sp->x > 0 of the claim holds after a step of the machine' did not verify.
 `

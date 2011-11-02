@@ -5,5 +5,5 @@ void foo() { \
 }
 `
 Verification of foo failed.
-testcase(3,26) : error VC9500: Assertion '\false' did not verify.
+testcase(3,12) : error VC9500: Assertion '\false' did not verify.
 `

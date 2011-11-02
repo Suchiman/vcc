@@ -55,8 +55,8 @@ Verification of nothing succeeded.
 Verification of something succeeded.
 Verification of test succeeded.
 Verification of test2 failed.
-testcase(25,28) : error VC9500: Assertion 'val(p,len) == 0' did not verify.
+testcase(25,14) : error VC9500: Assertion 'val(p,len) == 0' did not verify.
 Verification of test3 succeeded.
 Verification of test4 failed.
-testcase(49,28) : error VC9500: Assertion 'val(p + 20, 20) == 7' did not verify.
+testcase(49,14) : error VC9500: Assertion 'val(p + 20, 20) == 7' did not verify.
 `

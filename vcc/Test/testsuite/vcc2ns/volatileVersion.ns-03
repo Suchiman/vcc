@@ -13,6 +13,6 @@ struct VS1 {
   _(invariant \approves(a.x, y))
 };
 `
-testcase(11,29) : error VC9669: approves(...) needs this->field as the second parameter
-testcase(12,29) : error VC9670: approves(...) needs owner(this) or this->field as the first parameter
+testcase(11,15) : error VC9669: approves(...) needs this->field as the second parameter
+testcase(12,15) : error VC9670: approves(...) needs owner(this) or this->field as the first parameter
 `

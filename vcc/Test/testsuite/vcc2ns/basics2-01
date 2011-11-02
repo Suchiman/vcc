@@ -4,5 +4,5 @@
 struct x { int a; };
 void foo() { _(assert x.a==x.a) }
 `
-testcase(4,37) : error VC0000: left of '.a' must have struct/union type
+testcase(4,23) : error VC0000: left of '.a' must have struct/union type
 `

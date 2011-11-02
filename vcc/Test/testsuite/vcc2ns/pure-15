@@ -10,5 +10,5 @@ void foo()
   _(assert Length(&x))
 }
 `
-testcase(3,17) : error VC9650: the specification refers to memory, but function is missing a reads clause
+testcase(3,3) : error VC9650: the specification refers to memory, but function is missing a reads clause
 `

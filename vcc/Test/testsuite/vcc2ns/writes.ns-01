@@ -53,7 +53,7 @@ void foo6(struct A *a)
 `
 Verification of foo4 succeeded.
 Verification of foo5 failed.
-testcase(32,28) : error VC8021: 'a' is not writable before unwrapping it.
+testcase(32,14) : error VC8021: 'a' is not writable before unwrapping it.
 Verification of foo6 failed.
-testcase(43,28) : error VC8011: writes clause of the loop might not be included writes clause of the function.
+testcase(43,14) : error VC8011: writes clause of the loop might not be included writes clause of the function.
 `

@@ -31,8 +31,8 @@ struct A2 {
 };
 `
 Verification of X#adm failed.
-testcase(7,29) : error VC8013: invariant(y ==> x > \old(x)) is not admissible (stuttering).
+testcase(7,15) : error VC8013: invariant(y ==> x > \old(x)) is not admissible (stuttering).
 Verification of A2#adm failed.
-testcase(29,44) : error VC8013: invariant(\old(p)!=0 ==> q<7) is not admissible (stuttering).
+testcase(29,30) : error VC8013: invariant(\old(p)!=0 ==> q<7) is not admissible (stuttering).
 Verification of f succeeded.
 `

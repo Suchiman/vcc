@@ -23,5 +23,5 @@ _(ghost void foo()
 `
 Verification of rd succeeded.
 Verification of foo failed.
-testcase(19,26) : error VC9500: Assertion '\false' did not verify.
+testcase(19,12) : error VC9500: Assertion '\false' did not verify.
 `

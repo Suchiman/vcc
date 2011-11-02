@@ -20,5 +20,5 @@ int sumup(int *p, int sz)
 }
 `
 Verification of sumup failed.
-testcase(14,44) : error VC8512: Assertion 'p[i] is thread local' did not verify.
+testcase(14,30) : error VC8512: Assertion 'p[i] is thread local' did not verify.
 `

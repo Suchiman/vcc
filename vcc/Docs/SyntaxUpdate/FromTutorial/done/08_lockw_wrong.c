@@ -21,5 +21,5 @@ void Release(struct Lock *l)
 /*`
 Verification of Lock#adm succeeded.
 Verification of Release failed.
-testcase(16,27) : error VC8510: Assertion 'l->protected_obj is writable in call to l->\owns += l->protected_obj' did not verify.
+testcase(16,13) : error VC8510: Assertion 'l->protected_obj is writable in call to l->\owns += l->protected_obj' did not verify.
 `*/

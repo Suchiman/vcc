@@ -34,5 +34,5 @@ Verification of donothing_pure succeeded.
 Verification of t1 succeeded.
 Verification of t1_fail succeeded.
 Verification of t1_failAlso failed.
-testcase(29,26) : error VC9500: Assertion '\old(\embedding(x)) != \embedding(x)' did not verify.
+testcase(29,12) : error VC9500: Assertion '\old(\embedding(x)) != \embedding(x)' did not verify.
 `

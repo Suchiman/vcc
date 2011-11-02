@@ -37,7 +37,7 @@ void adm_B2(struct B2* x)
 }
 `
 Verification of B#adm failed.
-testcase(11,65) : error VC8012: invariant(a->x == 12) of B is not admissible.
+testcase(11,51) : error VC8012: invariant(a->x == 12) of B is not admissible.
 Verification of B2#adm succeeded.
 Verification of foo succeeded.
 Verification of adm_B2 failed.

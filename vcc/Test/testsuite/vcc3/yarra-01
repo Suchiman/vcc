@@ -69,10 +69,10 @@ void ff_fail(ST *st)
 Verification of S#adm succeeded.
 Verification of ST#adm succeeded.
 Verification of foo failed.
-testcase(26,26) : error VC9500: Assertion 't->y == 17' did not verify.
-testcase(29,26) : error VC9500: Assertion 't->y == 18' did not verify.
-testcase(32,26) : error VC9500: Assertion 't->y == 18' did not verify.
+testcase(26,12) : error VC9500: Assertion 't->y == 17' did not verify.
+testcase(29,12) : error VC9500: Assertion 't->y == 18' did not verify.
+testcase(32,12) : error VC9500: Assertion 't->y == 18' did not verify.
 Verification of ff succeeded.
 Verification of ff_fail failed.
-testcase(62,30) : error VC9500: Assertion 't->y == 12' did not verify.
+testcase(62,16) : error VC9500: Assertion 't->y == 12' did not verify.
 `

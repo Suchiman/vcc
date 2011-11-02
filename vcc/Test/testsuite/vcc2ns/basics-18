@@ -6,5 +6,5 @@ void foo()
   _(assert *x == 2)
 }
 `
-testcase(5,26) : error VC0000: Illegal indirection.
+testcase(5,12) : error VC0000: Illegal indirection.
 `

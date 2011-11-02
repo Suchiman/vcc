@@ -10,7 +10,7 @@ void bar(int i)
   _(assert foo(i) > 0)
 }
 `
-testcase(3,39) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+testcase(3,11) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
 Verification of bar failed.
-testcase(9,26) : error VC9500: Assertion 'foo(i) > 0' did not verify.
+testcase(9,12) : error VC9500: Assertion 'foo(i) > 0' did not verify.
 `

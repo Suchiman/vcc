@@ -20,9 +20,9 @@ void foo2(int **p, int *q)
 Verification of foo failed.
 testcase(8,4) : error VC8507: Assertion '*p is writable' did not verify.
 testcase(9,1) : error VC8536: Post condition 'unchanged(emb(*p)) (inferred from writes clause)' did not verify.
-testcase(5,26) : error VC9599: (related information) Location of post condition.
+testcase(5,12) : error VC9599: (related information) Location of post condition.
 Verification of foo2 failed.
 testcase(16,4) : error VC8507: Assertion '*p is writable' did not verify.
 testcase(17,1) : error VC8536: Post condition 'unchanged(emb(*p)) (inferred from writes clause)' did not verify.
-testcase(13,26) : error VC9599: (related information) Location of post condition.
+testcase(13,12) : error VC9599: (related information) Location of post condition.
 `
