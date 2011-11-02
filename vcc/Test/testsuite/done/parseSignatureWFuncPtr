@@ -1,0 +1,7 @@
+`/newsyntax
+#include <vcc.h>
+
+typedef __int32 INT32;
+void RtlSort(INT32 (*Comp)());
+`
+`
