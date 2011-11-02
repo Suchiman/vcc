@@ -16,7 +16,7 @@ namespace Microsoft.Research.Vcc.Parsing
   internal class ParserV2 : Parser
   {
      internal ParserV2(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) 
-    : base(compilation, sourceLocation, scannerAndParserErrors) {
+    : base(compilation, sourceLocation, scannerAndParserErrors, isV2: true) {
     }
 
     override protected bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {

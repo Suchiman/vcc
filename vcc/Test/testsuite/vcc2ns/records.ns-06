@@ -36,12 +36,12 @@ _(ghost struct S foo2(int k, struct S s0)
 `
 Verification of foo failed.
 testcase(11,3) : error VC9501: Post condition '\result == s0 / { .a = 11 }' did not verify.
-testcase(9,27) : error VC9599: (related information) Location of post condition.
+testcase(9,13) : error VC9599: (related information) Location of post condition.
 Verification of bar failed.
-testcase(17,26) : error VC9500: Assertion 's.a == 10' did not verify.
+testcase(17,12) : error VC9500: Assertion 's.a == 10' did not verify.
 Verification of baz failed.
-testcase(23,26) : error VC9500: Assertion 's.a <= 0x7ffffff0' did not verify.
+testcase(23,12) : error VC9500: Assertion 's.a <= 0x7ffffff0' did not verify.
 Verification of foo2 failed.
 testcase(33,5) : error VC9501: Post condition '\result == (k ? s0 / { .a = 10 } : s0 / { .b = 10 })' did not verify.
-testcase(28,27) : error VC9599: (related information) Location of post condition.
+testcase(28,13) : error VC9599: (related information) Location of post condition.
 `

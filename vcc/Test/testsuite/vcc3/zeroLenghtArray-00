@@ -32,5 +32,5 @@ void foo()
 
 `
 Verification of foo failed.
-testcase(29,25) : error VC9500: Assertion '\wrapped(c) ==> \addr(c->buf) == \addr(c) + sizeof(__int64)' did not verify.
+testcase(29,11) : error VC9500: Assertion '\wrapped(c) ==> \addr(c->buf) == \addr(c) + sizeof(__int64)' did not verify.
 `

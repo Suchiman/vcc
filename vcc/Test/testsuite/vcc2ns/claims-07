@@ -26,5 +26,5 @@ bool push(struct Node *n, struct Stack *s _(ghost \claim c))
 `
 Verification of Node#adm succeeded.
 Verification of push failed.
-testcase(21,36) : error VC8532: Assertion 's is atomically updated in call to s->\owns += n' did not verify.
+testcase(21,22) : error VC8532: Assertion 's is atomically updated in call to s->\owns += n' did not verify.
 `

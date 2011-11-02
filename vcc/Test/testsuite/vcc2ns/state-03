@@ -26,10 +26,10 @@ void foo()
   _(assert \at(s1, \at(\at(\now(),s3), *p)) == 2)
 }
 `
-testcase(18,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(s2, *p))' has no effect
-testcase(19,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s2, \at(s1, *p))' has no effect
-testcase(20,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(\now(), *p))' has no effect
-testcase(23,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(s3, *p))' has no effect
-testcase(25,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(\at(\now(),s3), *p))' has no effect
+testcase(18,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(s2, *p))' has no effect
+testcase(19,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s2, \at(s1, *p))' has no effect
+testcase(20,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(\now(), *p))' has no effect
+testcase(23,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(s3, *p))' has no effect
+testcase(25,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\at(s1, \at(\at(\now(),s3), *p))' has no effect
 Verification of foo succeeded.
 `

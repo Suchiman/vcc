@@ -9,5 +9,5 @@ int foo(int a)
 #endif
   
 `
-testcase(6,25) : error VC9648: non-pointers are not supported in reads clauses
+testcase(6,11) : error VC9648: non-pointers are not supported in reads clauses
 `

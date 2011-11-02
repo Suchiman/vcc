@@ -14,5 +14,5 @@ void adm_A(struct A* x)
 `
 Verification of A#adm succeeded.
 Verification of adm_A failed.
-testcase(9,39) : error VC8002: state was altered after havoc_others().
+testcase(9,11) : error VC8002: state was altered after havoc_others().
 `

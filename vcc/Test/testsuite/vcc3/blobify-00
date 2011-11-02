@@ -51,9 +51,9 @@ void f2_fail3()
 `
 Verification of f2 succeeded.
 Verification of f2_fail1 failed.
-testcase(37,27) : error VC8507: Assertion 'extent(b) is writable' did not verify.
+testcase(37,13) : error VC8507: Assertion 'extent(b) is writable' did not verify.
 Verification of f2_fail2 failed.
-testcase(43,45) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) - 1)) is writable' did not verify.
+testcase(43,31) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) - 1)) is writable' did not verify.
 Verification of f2_fail3 failed.
-testcase(48,45) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) + 1)) is writable' did not verify.
+testcase(48,31) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) + 1)) is writable' did not verify.
 `

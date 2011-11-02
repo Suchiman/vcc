@@ -33,10 +33,10 @@ void fail2(struct A *a)
 Verification of ok1 succeeded.
 Verification of fail1 failed.
 testcase(15,3) : error VC9502: Call 'foo(x)' did not verify.
-testcase(4,28) : error VC9599: (related information) Precondition: 'x > 0'.
+testcase(4,14) : error VC9599: (related information) Precondition: 'x > 0'.
 Verification of ok2 succeeded.
 Verification of fail2 failed.
-testcase(29,24) : error VC8020: 'a' is not writable before wrapping it.
-testcase(29,19) : error VC9502: Call 'wrap a' did not verify.
+testcase(29,10) : error VC8020: 'a' is not writable before wrapping it.
+testcase(29,5) : error VC9502: Call 'wrap a' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is mutable'.
 `

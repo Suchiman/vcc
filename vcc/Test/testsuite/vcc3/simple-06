@@ -31,5 +31,5 @@ void foo()
 `
 Verification of bar succeeded.
 Verification of foo failed.
-testcase(26,26) : error VC9500: Assertion 'a.g == 2' did not verify.
+testcase(26,12) : error VC9500: Assertion 'a.g == 2' did not verify.
 `

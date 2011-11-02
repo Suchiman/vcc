@@ -18,5 +18,5 @@ _(def List F(List k)
 
 `
 Verification of F failed.
-testcase(14,41) : error VC9500: Assertion '\false' did not verify.
+testcase(14,27) : error VC9500: Assertion '\false' did not verify.
 `

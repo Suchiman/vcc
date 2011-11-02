@@ -9,8 +9,8 @@ void foo() {
     _(assert \claims(&i,1))
 }
 `
-testcase(7,28) : error VC0000: The best overloaded method match for '__Globals__.\claims(\claim_struct*, bool)' has some invalid arguments.
-testcase(7,36) : error VC0000: Argument '1': cannot convert from '\claim_struct^^' to '\claim_struct^'.
-testcase(8,28) : error VC0000: The best overloaded method match for '__Globals__.\claims(\claim_struct*, bool)' has some invalid arguments.
-testcase(8,36) : error VC0000: Argument '1': cannot convert from 'uint*' to '\claim_struct^'.
+testcase(7,14) : error VC0000: The best overloaded method match for '__Globals__.\claims(\claim_struct*, bool)' has some invalid arguments.
+testcase(7,22) : error VC0000: Argument '1': cannot convert from '\claim_struct^^' to '\claim_struct^'.
+testcase(8,14) : error VC0000: The best overloaded method match for '__Globals__.\claims(\claim_struct*, bool)' has some invalid arguments.
+testcase(8,22) : error VC0000: Argument '1': cannot convert from 'uint*' to '\claim_struct^'.
 `

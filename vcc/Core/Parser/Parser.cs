@@ -56,12 +56,12 @@ namespace Microsoft.Research.Vcc.Parsing {
       else return new Parser(compilation, sourceLocation, scannerAndParserErrors);
     }
 
-    internal Parser(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors)
+    internal Parser(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors, bool isV2 = false)
     {
       this.compilation = compilation;
       this.nameTable = compilation.NameTable;
       this.scannerAndParserErrors = scannerAndParserErrors;
-      this.scanner = new Scanner(scannerAndParserErrors, sourceLocation, true);
+      this.scanner = new Scanner(scannerAndParserErrors, sourceLocation, ignoreComments: true, underscoreIsKeyword: isV2);
       this.rootNs = new RootNamespaceExpression(SourceDummy.SourceLocation);
       this.systemNs = new AliasQualifiedName(rootNs, this.GetSimpleNameFor("System"), SourceDummy.SourceLocation);
     }

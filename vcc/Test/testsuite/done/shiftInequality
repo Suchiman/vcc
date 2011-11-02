@@ -75,12 +75,12 @@ void bar(UINT64 num)
 `
 Verification of foo19 succeeded.
 Verification of foo19ShouldFail failed.
-testcase(24,28) : error VC9500: Assertion 'num < (1UI64 << nineteen)' did not verify.
+testcase(24,14) : error VC9500: Assertion 'num < (1UI64 << nineteen)' did not verify.
 Verification of foo20 succeeded.
 Verification of foo20ShouldFail failed.
-testcase(42,28) : error VC9500: Assertion 'num < (1UI64 << twenty)' did not verify.
+testcase(42,14) : error VC9500: Assertion 'num < (1UI64 << twenty)' did not verify.
 Verification of foo62 succeeded.
 Verification of foo62ShouldFail failed.
-testcase(60,28) : error VC9500: Assertion 'num < (1UI64 << sixtyTwo)' did not verify.
+testcase(60,14) : error VC9500: Assertion 'num < (1UI64 << sixtyTwo)' did not verify.
 Verification of bar succeeded.
 `

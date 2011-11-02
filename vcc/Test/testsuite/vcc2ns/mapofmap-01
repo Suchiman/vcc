@@ -19,5 +19,5 @@ void fail2()
 }
 `
 Verification of fail2 failed.
-testcase(17,47) : error VC9500: Assertion 'b[4] == 27' did not verify.
+testcase(17,19) : error VC9500: Assertion 'b[4] == 27' did not verify.
 `

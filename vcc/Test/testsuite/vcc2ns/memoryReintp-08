@@ -22,6 +22,6 @@ void f1()
 }
 `
 Verification of f1 failed.
-testcase(18,19) : error VC9502: Call 'from_bytes a, \true' did not verify.
+testcase(18,5) : error VC9502: Call 'from_bytes a, \true' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'extent_zero holds for the reinterpreted array'.
 `

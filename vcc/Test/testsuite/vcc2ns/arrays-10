@@ -33,5 +33,5 @@ void fooShouldFail(T* t)
 `
 Verification of foo succeeded.
 Verification of fooShouldFail failed.
-testcase(30,26) : error VC9500: Assertion '\false' did not verify.
+testcase(30,12) : error VC9500: Assertion '\false' did not verify.
 `

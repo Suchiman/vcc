@@ -9,5 +9,5 @@ void foo(_(out int o))
 `
 Verification of foo failed.
 testcase(6,1) : error VC9501: Post condition 'o == 5' did not verify.
-testcase(4,27) : error VC9599: (related information) Location of post condition.
+testcase(4,13) : error VC9599: (related information) Location of post condition.
 `

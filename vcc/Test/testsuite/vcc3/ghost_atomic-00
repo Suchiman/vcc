@@ -53,7 +53,7 @@ void foo_fail(struct Foo *f)
 `
 Verification of foo_ok succeeded.
 Verification of foo_fail2 failed.
-testcase(30,28) : error VC9500: Assertion 'f->x == 7' did not verify.
+testcase(30,14) : error VC9500: Assertion 'f->x == 7' did not verify.
 Verification of foo_fail failed.
-testcase(45,28) : error VC9500: Assertion 'f->x == 7' did not verify.
+testcase(45,14) : error VC9500: Assertion 'f->x == 7' did not verify.
 `

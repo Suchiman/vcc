@@ -6,5 +6,5 @@ void bar(unsigned i) {
     _(ghost a = (\lambda unsigned j; (i = 0)))
 }
 `
-testcase(5,53) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.
+testcase(5,39) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.
 `

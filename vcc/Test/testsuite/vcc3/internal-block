@@ -35,5 +35,5 @@ void barFail() {
 `
 Verification of bar succeeded.
 Verification of barFail failed.
-testcase(30,25) : error VC9500: Assertion 'x == 7' did not verify.
+testcase(30,11) : error VC9500: Assertion 'x == 7' did not verify.
 `

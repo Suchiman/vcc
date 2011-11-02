@@ -28,7 +28,7 @@ void RequiresIsNotEnough(struct A *a)
 `
 Verification of A#adm succeeded.
 Verification of ClaimsValidOnlyInFullStops failed.
-testcase(17,28) : error VC9500: Assertion '\false' did not verify.
+testcase(17,14) : error VC9500: Assertion '\false' did not verify.
 Verification of RequiresIsNotEnough failed.
-testcase(24,26) : error VC8527: Assertion 'a is closed (for atomic(...))' did not verify.
+testcase(24,12) : error VC8527: Assertion 'a is closed (for atomic(...))' did not verify.
 `

@@ -154,14 +154,14 @@ void test8()
 `
 Verification of test1 succeeded.
 Verification of test2 failed.
-testcase(35,30) : error VC9500: Assertion 'p->v == 1' did not verify.
+testcase(35,16) : error VC9500: Assertion 'p->v == 1' did not verify.
 Verification of test3 succeeded.
 Verification of test4 succeeded.
 Verification of test5 failed.
-testcase(96,30) : error VC9500: Assertion 'p->v == 12' did not verify.
+testcase(96,16) : error VC9500: Assertion 'p->v == 12' did not verify.
 Verification of test6 failed.
-testcase(113,28) : error VC9500: Assertion '\not_shared(p)' did not verify.
+testcase(113,14) : error VC9500: Assertion '\not_shared(p)' did not verify.
 Verification of test7 failed.
-testcase(131,28) : error VC9500: Assertion '\not_shared(p)' did not verify.
+testcase(131,14) : error VC9500: Assertion '\not_shared(p)' did not verify.
 Verification of test8 succeeded.
 `

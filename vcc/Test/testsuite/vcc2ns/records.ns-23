@@ -15,6 +15,6 @@ _(ghost void foo(R abs, S conc)
     _(assert abs == conc)
 })
 `
-testcase(13,28) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and '__int32'.
-testcase(14,28) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and 'S'.
+testcase(13,14) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and '__int32'.
+testcase(14,14) : error VC0000: Operator '==' cannot be applied to operands of type 'R' and 'S'.
 `

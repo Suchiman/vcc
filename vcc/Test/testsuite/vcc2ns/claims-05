@@ -54,11 +54,11 @@ void claim_A2(struct A2 *a)
 Verification of A#adm succeeded.
 Verification of A2#adm succeeded.
 Verification of kill_A failed.
-testcase(17,19) : error VC9502: Call 'unwrap a' did not verify.
+testcase(17,5) : error VC9502: Call 'unwrap a' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the object has no outstanding claims'.
 Verification of kill_A2 succeeded.
 Verification of kill_A_ok succeeded.
 Verification of claim_A succeeded.
 Verification of claim_A2 failed.
-testcase(49,36) : error VC8009: type of object a was not marked with vcc(claimable).
+testcase(49,22) : error VC8009: type of object a was not marked with vcc(claimable).
 `

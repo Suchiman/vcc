@@ -3,5 +3,5 @@
 
 void foo(int *x) _(requires \fresh(x)) {};
 `
-testcase(3,43) : error VC9697: calling '_vcc_is_fresh' is allowed only in two-state contexts
+testcase(3,29) : error VC9697: calling '_vcc_is_fresh' is allowed only in two-state contexts
 `

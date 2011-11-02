@@ -25,5 +25,5 @@ Verification of foo succeeded.
 Verification of bar succeeded.
 Verification of baz failed.
 testcase(19,3) : error VC9502: Call 'bar(0,4)' did not verify.
-testcase(12,28) : error VC9599: (related information) Precondition: 'i <==> j'.
+testcase(12,14) : error VC9599: (related information) Precondition: 'i <==> j'.
 `

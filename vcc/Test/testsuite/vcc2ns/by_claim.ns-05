@@ -14,5 +14,5 @@ void ThpCreateThread(PTH_PROCESS Process _(ghost \claim c))
 }
 `
 Verification of ThpCreateThread failed.
-testcase(12,26) : error VC9500: Assertion '__specification(by_claim c)(Process->x) == 0' did not verify.
+testcase(12,12) : error VC9500: Assertion '_(by_claim c)(Process->x) == 0' did not verify.
 `

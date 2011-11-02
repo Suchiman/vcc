@@ -63,11 +63,11 @@ void barFail3(int *p, int *q)
 }
 `
 Verification of barFail1 failed.
-testcase(8,25) : error VC8027: writes clause of the block might not be included writes clause of the function.
+testcase(8,11) : error VC8027: writes clause of the block might not be included writes clause of the function.
 Verification of barFail2 failed.
 testcase(20,5) : error VC8507: Assertion 'q is writable' did not verify.
 Verification of barOk succeeded.
 Verification of barOk2 succeeded.
 Verification of barFail3 failed.
-testcase(61,26) : error VC9500: Assertion '*q > 1' did not verify.
+testcase(61,12) : error VC9500: Assertion '*q > 1' did not verify.
 `

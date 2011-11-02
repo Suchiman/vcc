@@ -22,5 +22,5 @@ _(writes q)
 `
 Verification of q1#adm succeeded.
 Verification of f failed.
-testcase(19,39) : error VC8026: q->s is not in q->\owns before trying to remove it.
+testcase(19,25) : error VC8026: q->s is not in q->\owns before trying to remove it.
 `

@@ -90,49 +90,49 @@ void testQN2(_(ghost bool s[struct Node *]))
 
 `
 Verification of foo failed.
-testcase(6,26) : error VC9500: Assertion 'a > b' did not verify.
-testcase(6,35) : error VC9500: Assertion 'b > c' did not verify.
+testcase(6,12) : error VC9500: Assertion 'a > b' did not verify.
+testcase(6,21) : error VC9500: Assertion 'b > c' did not verify.
 Verification of bar failed.
-testcase(13,29) : error VC9500: Loop entry invariant 'b > 0' did not verify.
-testcase(14,29) : error VC9500: Loop entry invariant 'a > b' did not verify.
-testcase(14,38) : error VC9500: Loop entry invariant 'b > c' did not verify.
-testcase(14,29) : error VC9500: Loop body invariant 'a > b' did not verify.
+testcase(13,15) : error VC9500: Loop entry invariant 'b > 0' did not verify.
+testcase(14,15) : error VC9500: Loop entry invariant 'a > b' did not verify.
+testcase(14,24) : error VC9500: Loop entry invariant 'b > c' did not verify.
+testcase(14,15) : error VC9500: Loop body invariant 'a > b' did not verify.
 Verification of baz failed.
-testcase(27,35) : error VC9500: Assertion 'i > 0 ==> n[i] < 0 in \forall int i; i > 0 ==> m[i] > 0 && n[i] < 0)' did not verify.
+testcase(27,21) : error VC9500: Assertion 'i > 0 ==> n[i] < 0 in \forall int i; i > 0 ==> m[i] > 0 && n[i] < 0)' did not verify.
 Verification of baz2 failed.
-testcase(37,35) : error VC9500: Assertion 'n[i] < 0 in \forall int i,j; m[j] > 0 && n[i] < 0)' did not verify.
+testcase(37,21) : error VC9500: Assertion 'n[i] < 0 in \forall int i,j; m[j] > 0 && n[i] < 0)' did not verify.
 Verification of foo2 failed.
-testcase(46,30) : error VC9500: Assertion 'a > b' did not verify.
-testcase(41,17) : error VC9599: (related information) from expansion of 'And(a > b, b > c && b > 0)'.
-testcase(46,37) : error VC9500: Assertion 'b > c' did not verify.
-testcase(41,17) : error VC9599: (related information) from expansion of 'And(a > b, b > c && b > 0)'.
-testcase(46,46) : error VC9500: Assertion 'b > 0' did not verify.
-testcase(41,17) : error VC9599: (related information) from expansion of 'And(a > b, b > c && b > 0)'.
+testcase(46,16) : error VC9500: Assertion 'a > b' did not verify.
+testcase(41,3) : error VC9599: (related information) from expansion of 'And(a > b, b > c && b > 0)'.
+testcase(46,23) : error VC9500: Assertion 'b > c' did not verify.
+testcase(41,3) : error VC9599: (related information) from expansion of 'And(a > b, b > c && b > 0)'.
+testcase(46,32) : error VC9500: Assertion 'b > 0' did not verify.
+testcase(41,3) : error VC9599: (related information) from expansion of 'And(a > b, b > c && b > 0)'.
 Verification of testQ failed.
-testcase(61,26) : error VC9500: Assertion '\forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
-testcase(57,65) : error VC9599: (related information) from expansion of 'nextClosed(s)'.
+testcase(61,12) : error VC9500: Assertion '\forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
+testcase(57,51) : error VC9599: (related information) from expansion of 'nextClosed(s)'.
 Verification of testQ2 failed.
-testcase(66,35) : error VC9500: Assertion 'S[n] && n->next != 0 ==> S[n->next] in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
-testcase(57,65) : error VC9599: (related information) from expansion of 'nextClosed(s)'.
-testcase(66,35) : error VC9500: Assertion 'S[n] && n->next != 0 ==> n->next->d < n->d in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
-testcase(57,65) : error VC9599: (related information) from expansion of 'nextClosed(s)'.
+testcase(66,21) : error VC9500: Assertion 'S[n] && n->next != 0 ==> S[n->next] in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
+testcase(57,51) : error VC9599: (related information) from expansion of 'nextClosed(s)'.
+testcase(66,21) : error VC9500: Assertion 'S[n] && n->next != 0 ==> n->next->d < n->d in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
+testcase(57,51) : error VC9599: (related information) from expansion of 'nextClosed(s)'.
 Verification of testQ3 failed.
-testcase(73,26) : error VC9500: Assertion 'S[n] && n->next != 0 ==> S[n->next] in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
-testcase(69,75) : error VC9599: (related information) from expansion of 'nextClosed2(s)'.
-testcase(73,26) : error VC9500: Assertion 'S[n] && n->next != 0 ==> n->next->d < n->d in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
-testcase(69,75) : error VC9599: (related information) from expansion of 'nextClosed2(s)'.
+testcase(73,12) : error VC9500: Assertion 'S[n] && n->next != 0 ==> S[n->next] in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
+testcase(69,61) : error VC9599: (related information) from expansion of 'nextClosed2(s)'.
+testcase(73,12) : error VC9500: Assertion 'S[n] && n->next != 0 ==> n->next->d < n->d in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
+testcase(69,61) : error VC9599: (related information) from expansion of 'nextClosed2(s)'.
 Verification of testQN failed.
-testcase(82,26) : error VC9500: Assertion '\forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
-testcase(77,67) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
-testcase(82,26) : error VC9500: Assertion '\forall struct Node *n; S[n] && n->prev != 0 ==> S[n->prev] && n->prev->d < n->d)' did not verify.
+testcase(82,12) : error VC9500: Assertion '\forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
+testcase(77,53) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
+testcase(82,12) : error VC9500: Assertion '\forall struct Node *n; S[n] && n->prev != 0 ==> S[n->prev] && n->prev->d < n->d)' did not verify.
 testcase(78,3) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
 Verification of testQN2 failed.
-testcase(87,35) : error VC9500: Assertion 'S[n] && n->next != 0 ==> S[n->next] in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
-testcase(77,67) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
-testcase(87,35) : error VC9500: Assertion 'S[n] && n->next != 0 ==> n->next->d < n->d in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
-testcase(77,67) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
-testcase(87,35) : error VC9500: Assertion 'S[n] && n->prev != 0 ==> S[n->prev] in \forall struct Node *n; S[n] && n->prev != 0 ==> S[n->prev] && n->prev->d < n->d)' did not verify.
+testcase(87,21) : error VC9500: Assertion 'S[n] && n->next != 0 ==> S[n->next] in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
+testcase(77,53) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
+testcase(87,21) : error VC9500: Assertion 'S[n] && n->next != 0 ==> n->next->d < n->d in \forall struct Node *n; S[n] && n->next != 0 ==> S[n->next] && n->next->d < n->d)' did not verify.
+testcase(77,53) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
+testcase(87,21) : error VC9500: Assertion 'S[n] && n->prev != 0 ==> S[n->prev] in \forall struct Node *n; S[n] && n->prev != 0 ==> S[n->prev] && n->prev->d < n->d)' did not verify.
 testcase(78,3) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
-testcase(87,35) : error VC9500: Assertion 'S[n] && n->prev != 0 ==> n->prev->d < n->d in \forall struct Node *n; S[n] && n->prev != 0 ==> S[n->prev] && n->prev->d < n->d)' did not verify.
+testcase(87,21) : error VC9500: Assertion 'S[n] && n->prev != 0 ==> n->prev->d < n->d in \forall struct Node *n; S[n] && n->prev != 0 ==> S[n->prev] && n->prev->d < n->d)' did not verify.
 testcase(78,3) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
 `

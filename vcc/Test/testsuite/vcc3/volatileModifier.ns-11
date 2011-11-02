@@ -8,6 +8,6 @@ struct S {
     _(invariant c!=&a)
 };
 `
-testcase(7,31) : warning VC9124: pointers of different types (claim_t and int32_t) are never equal in pure context
+testcase(7,17) : warning VC9124: pointers of different types (claim_t and int32_t) are never equal in pure context
 Verification of S#adm succeeded.
 `

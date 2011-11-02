@@ -19,9 +19,6 @@ typedef _Bool bool;
 
 #ifdef VERIFY2
 
-#define spec __specification
-#define _ spec
-
 /***
  *** Types
  ***/

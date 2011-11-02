@@ -10,6 +10,6 @@ void foo() {
     _(invariant i < 10) ;
 }
 `
-testcase(9,39) : warning VC0000: Possible mistaken null statement.
+testcase(9,25) : warning VC0000: Possible mistaken null statement.
 Verification of foo succeeded.
 `

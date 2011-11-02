@@ -19,5 +19,5 @@ void foo(struct Foo *o _(ghost \claim c))
 }
 `
 Verification of foo failed.
-testcase(15,32) : error VC8520: Assertion 'chunk \false of the claim initially holds' did not verify.
+testcase(15,18) : error VC8520: Assertion 'chunk \false of the claim initially holds' did not verify.
 `

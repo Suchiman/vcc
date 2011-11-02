@@ -10,6 +10,6 @@ struct foo {
 };
 `
 Verification of foo#adm failed.
-testcase(7,29) : error VC8018: invariant(_vcc_full_stop()) of foo forbids unwrapping.
-testcase(7,29) : error VC8012: invariant(_vcc_full_stop()) of foo is not admissible.
+testcase(7,15) : error VC8018: invariant(_vcc_full_stop()) of foo forbids unwrapping.
+testcase(7,15) : error VC8012: invariant(_vcc_full_stop()) of foo is not admissible.
 `

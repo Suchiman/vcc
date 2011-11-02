@@ -38,5 +38,5 @@ void LockFreeIncr(struct A *a _(ghost \claim c))
 `
 Verification of A#adm succeeded.
 Verification of LockFreeIncr failed.
-testcase(34,33) : error VC8520: Assertion 'chunk y < a->x of the claim initially holds' did not verify.
+testcase(34,19) : error VC8520: Assertion 'chunk y < a->x of the claim initially holds' did not verify.
 `

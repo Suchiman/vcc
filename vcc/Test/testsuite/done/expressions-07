@@ -30,7 +30,7 @@ void baz(unsigned x, unsigned y)
 }
 `
 Verification of foo failed.
-testcase(6,26) : error VC9500: Assertion 'r >= a' did not verify.
+testcase(6,12) : error VC9500: Assertion 'r >= a' did not verify.
 Verification of bar failed.
 testcase(11,7) : error VC8004: -x might overflow.
 Verification of foobar succeeded.

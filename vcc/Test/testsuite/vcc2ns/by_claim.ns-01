@@ -28,7 +28,7 @@ void fail2(struct A*a, int *x _(ghost \claim c))
   int z = _(by_claim c)(*x);
 }
 `
-testcase(15,34) : error VC9629: by_claim(...) can only refer to a non-volatile field
+testcase(15,20) : error VC9629: by_claim(...) can only refer to a non-volatile field
 testcase(6,3) : error : (Location of symbol related to previous error.)
 testcase(21,11) : error VC9629: by_claim(...) can only refer to a non-volatile field
 testcase(6,3) : error : (Location of symbol related to previous error.)

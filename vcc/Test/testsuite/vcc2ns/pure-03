@@ -7,5 +7,5 @@ void donothing_pure_fail(int *x)
 {
 }
 `
-testcase(3,17) : error VC9623: writes specified on a pure function
+testcase(3,3) : error VC9623: writes specified on a pure function
 `

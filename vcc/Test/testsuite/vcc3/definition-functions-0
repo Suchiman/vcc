@@ -34,5 +34,5 @@ void check_soundness()
 Verification of foo succeeded.
 Verification of t1 succeeded.
 Verification of check_soundness failed.
-testcase(30,26) : error VC9500: Assertion '\false' did not verify.
+testcase(30,12) : error VC9500: Assertion '\false' did not verify.
 `

@@ -20,5 +20,5 @@ void fux()
 `
 Verification of r_f1 succeeded.
 Verification of fux failed.
-testcase(17,26) : error VC8005: intercepted call to reads check (in call 'r_f1(&y)').
+testcase(17,12) : error VC8005: intercepted call to reads check (in call 'r_f1(&y)').
 `

@@ -9,5 +9,5 @@ void bar(int i) {
   foo(_(out i));
 }
 `
-testcase(4,28) : error VC0000: Reference to out parameter 'i' not allowed in this context.
+testcase(4,14) : error VC0000: Reference to out parameter 'i' not allowed in this context.
 `

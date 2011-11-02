@@ -9,5 +9,5 @@ _(assert q == p+i)
 }
 `
 Verification of test failed.
-testcase(6,24) : error VC9500: Assertion 'p <= q' did not verify.
+testcase(6,10) : error VC9500: Assertion 'p <= q' did not verify.
 `

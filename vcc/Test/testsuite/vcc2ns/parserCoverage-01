@@ -8,5 +8,5 @@ struct S {
 
 void foo(struct S *s) { }
 `
-testcase(5,46) : error VC0000: Invalid expression term '}'.
+testcase(5,32) : error VC0000: Invalid expression term '}'.
 `

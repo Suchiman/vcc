@@ -30,5 +30,5 @@ _(requires \object_root(a))
 }
 `
 Verification of test failed.
-testcase(27,28) : error VC9500: Assertion 'a->ghost == 7' did not verify.
+testcase(27,14) : error VC9500: Assertion 'a->ghost == 7' did not verify.
 `

@@ -80,7 +80,7 @@ Verification of baz succeeded.
 Verification of alloc_C succeeded.
 Verification of baz_C succeeded.
 Verification of fail failed.
-testcase(59,26) : error VC9500: Assertion '\mutable(b) ==> \extent_mutable(b)' did not verify.
+testcase(59,12) : error VC9500: Assertion '\mutable(b) ==> \extent_mutable(b)' did not verify.
 Verification of ok succeeded.
 Verification of ok2 succeeded.
 `

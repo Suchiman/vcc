@@ -12,7 +12,7 @@ return 0;
 }
 
 `
-testcase(9,72) : warning VC9121: failed to infer triggers for '\forall int blob; a <= blob)'
-testcase(9,24) : warning VC9121: failed to infer triggers for '\forall int blob; blob == (-2147483647 - 1) ==> foo(blob))'
+testcase(9,58) : warning VC9121: failed to infer triggers for '\forall int blob; a <= blob)'
+testcase(9,10) : warning VC9121: failed to infer triggers for '\forall int blob; blob == (-2147483647 - 1) ==> foo(blob))'
 Verification of main succeeded.
 `

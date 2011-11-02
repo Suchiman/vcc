@@ -15,6 +15,6 @@ void foo()
 `
 Verification of _Y#adm succeeded.
 Verification of foo failed.
-testcase(12,24) : error VC8014: invariant(\unchanged(\this->\closed) || x > 0) of _Y fails on wrap.
-testcase(5,29) : error VC9599: (related information) location of the invariant.
+testcase(12,10) : error VC8014: invariant(\unchanged(\this->\closed) || x > 0) of _Y fails on wrap.
+testcase(5,15) : error VC9599: (related information) location of the invariant.
 `

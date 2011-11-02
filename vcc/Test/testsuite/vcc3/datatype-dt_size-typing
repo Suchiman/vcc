@@ -13,5 +13,5 @@ return 0;
 }
 )
 `
-testcase(9,29) : error VC9737: \size() can only be called on data types, records and integers
+testcase(9,15) : error VC9737: \size() can only be called on data types, records and integers
 `
