@@ -508,7 +508,7 @@ namespace Microsoft.Research.Vcc.Parsing
       var slb = new SourceLocationBuilder(name.SourceLocation);
       var parameters = new List<Expression>();
       if (this.currentToken != Token.RightParenthesis)
-        this.ParseList(parameters, ts => this.ParseArgumentExpression(ts), followers | Token.RightParenthesis);
+        this.ParseList(parameters, ts => this.ParseExpression(ts), followers | Token.RightParenthesis);
       parameters.TrimExcess();
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       if (fnName.StartsWith("\\result_macro_")) {
