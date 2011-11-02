@@ -16,5 +16,5 @@ _(assert tmp == 0)
 }
 `
 Verification of main failed.
-testcase(13,24) : error VC9500: Assertion 'tmp == 0' did not verify.
+testcase(13,10) : error VC9500: Assertion 'tmp == 0' did not verify.
 `

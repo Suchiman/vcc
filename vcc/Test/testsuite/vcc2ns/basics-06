@@ -28,6 +28,6 @@ struct BarOK {
 };
 `
 Verification of Bar#adm failed.
-testcase(18,29) : error VC8012: invariant(&baz \in (&foo)->\owns) of Bar is not admissible.
+testcase(18,15) : error VC8012: invariant(&baz \in (&foo)->\owns) of Bar is not admissible.
 Verification of BarOK#adm succeeded.
 `

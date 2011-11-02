@@ -24,9 +24,9 @@ void dbz4() {
 Verification of dbz1 failed.
 testcase(5,11) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
 Verification of dbz2 failed.
-testcase(10,38) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
+testcase(10,24) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
 Verification of dbz3 failed.
 testcase(15,11) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
 Verification of dbz4 failed.
-testcase(20,38) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
+testcase(20,24) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
 `

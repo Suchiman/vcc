@@ -10,5 +10,5 @@ void baz() {
 }
 `
 Verification of baz failed.
-testcase(8,25) : error VC9500: Assertion 'foo(b,4711)' did not verify.
+testcase(8,11) : error VC9500: Assertion 'foo(b,4711)' did not verify.
 `

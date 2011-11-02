@@ -35,7 +35,7 @@ void barFail2(int *p, struct A *a)
 `
 Verification of barOk succeeded.
 Verification of barFail failed.
-testcase(22,25) : error VC9500: Assertion '*p == 3' did not verify.
+testcase(22,11) : error VC9500: Assertion '*p == 3' did not verify.
 Verification of barFail2 failed.
 testcase(30,5) : error VC8507: Assertion 'p is writable' did not verify.
 `

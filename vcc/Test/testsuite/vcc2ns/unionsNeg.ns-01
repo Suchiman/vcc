@@ -34,5 +34,5 @@ void reint(union B *b)
 }
 `
 Verification of reint failed.
-testcase(32,26) : error VC9500: Assertion 'b->x.a == 7' did not verify.
+testcase(32,12) : error VC9500: Assertion 'b->x.a == 7' did not verify.
 `

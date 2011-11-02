@@ -53,9 +53,9 @@ Verification of B#adm succeeded.
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 Verification of fooFail1 failed.
-testcase(33,30) : error VC8014: invariant(b->x > 0) of A fails on wrap.
-testcase(12,29) : error VC9599: (related information) location of the invariant.
+testcase(33,16) : error VC8014: invariant(b->x > 0) of A fails on wrap.
+testcase(12,15) : error VC9599: (related information) location of the invariant.
 Verification of fooFail2 failed.
-testcase(44,33) : error VC8014: invariant(x < 100) of B fails on wrap.
-testcase(6,29) : error VC9599: (related information) location of the invariant.
+testcase(44,19) : error VC8014: invariant(x < 100) of B fails on wrap.
+testcase(6,15) : error VC9599: (related information) location of the invariant.
 `

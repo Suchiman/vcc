@@ -10,6 +10,6 @@ void foo(struct S *s1, struct S *s2)
 }
 `
 Verification of foo failed.
-testcase(8,36) : error VC8528: Assertion 'object s1 is closed before claiming it' did not verify.
-testcase(8,36) : error VC8528: Assertion 'object s2 is closed before claiming it' did not verify.
+testcase(8,22) : error VC8528: Assertion 'object s1 is closed before claiming it' did not verify.
+testcase(8,22) : error VC8528: Assertion 'object s2 is closed before claiming it' did not verify.
 `

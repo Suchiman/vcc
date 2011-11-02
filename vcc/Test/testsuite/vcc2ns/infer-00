@@ -42,10 +42,10 @@ void fooFail3(struct A *a)
 Verification of A#adm succeeded.
 Verification of foo succeeded.
 Verification of fooFail failed.
-testcase(17,26) : error VC9500: Assertion 'k > 0 ==> a->x > 0' did not verify.
+testcase(17,12) : error VC9500: Assertion 'k > 0 ==> a->x > 0' did not verify.
 Verification of fooOk succeeded.
 Verification of fooFail2 failed.
-testcase(31,26) : error VC9500: Assertion 'a->x > 0' did not verify.
+testcase(31,12) : error VC9500: Assertion 'a->x > 0' did not verify.
 Verification of fooFail3 failed.
-testcase(38,26) : error VC9500: Assertion 'a->x > 0' did not verify.
+testcase(38,12) : error VC9500: Assertion 'a->x > 0' did not verify.
 `

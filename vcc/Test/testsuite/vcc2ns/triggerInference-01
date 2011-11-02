@@ -10,7 +10,7 @@ void trg2()
   _(assert \forall unsigned x; {p[x]} p[x] > 0)
 }
 `
-testcase(8,26) : warning VC9122: inferred triggers at {:level 2}: {(&)p[x]} for '\forall unsigned x; p[x] > 0)'
-testcase(9,26) : warning VC9122: inferred triggers at {:level 2}: {(&)p[x]} for '\forall unsigned x; {p[x]} p[x] > 0)'
+testcase(8,12) : warning VC9122: inferred triggers at {:level 2}: {(&)p[x]} for '\forall unsigned x; p[x] > 0)'
+testcase(9,12) : warning VC9122: inferred triggers at {:level 2}: {(&)p[x]} for '\forall unsigned x; {p[x]} p[x] > 0)'
 Verification of trg2 succeeded.
 `

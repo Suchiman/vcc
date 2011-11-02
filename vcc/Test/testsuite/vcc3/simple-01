@@ -26,6 +26,6 @@ void foo(struct B *a, struct C *c) {
 Verification of A#adm succeeded.
 Verification of B#adm succeeded.
 Verification of C#adm failed.
-testcase(18,29) : error VC8012: invariant(a->x > y) of C is not admissible.
+testcase(18,15) : error VC8012: invariant(a->x > y) of C is not admissible.
 Verification of foo succeeded.
 `

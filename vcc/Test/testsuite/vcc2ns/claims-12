@@ -16,5 +16,5 @@ struct B {
 
 `
 Verification of B#adm failed.
-testcase(12,29) : error VC8012: invariant(a->x > 0) of B is not admissible.
+testcase(12,15) : error VC8012: invariant(a->x > 0) of B is not admissible.
 `

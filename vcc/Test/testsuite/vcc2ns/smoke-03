@@ -147,12 +147,12 @@ testcase(77,10) : warning : trace to unreachable location
 testcase(78,3) : warning : trace to unreachable location
 Verification of loopexit1 succeeded.
 testcase(83,3) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(84,31) : warning : trace to unreachable location
+testcase(84,17) : warning : trace to unreachable location
 testcase(83,3) : warning : trace to unreachable location
 Verification of loopexit1_defused succeeded.
 Verification of loopexit2 succeeded.
 testcase(104,3) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(105,31) : warning : trace to unreachable location
+testcase(105,17) : warning : trace to unreachable location
 testcase(104,3) : warning : trace to unreachable location
 Verification of loopexit2_defused succeeded.
 `

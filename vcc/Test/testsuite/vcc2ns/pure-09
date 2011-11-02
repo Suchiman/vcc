@@ -20,7 +20,7 @@ void fux()
   f3(&y);
 }
 `
-testcase(12,25) : error VC9648: unsupported pointer set in reads clauses
-testcase(8,25) : error VC9647: void* and obj_t are not supported in reads clauses
-testcase(4,25) : error VC9647: void* and obj_t are not supported in reads clauses
+testcase(12,11) : error VC9648: unsupported pointer set in reads clauses
+testcase(8,11) : error VC9647: void* and obj_t are not supported in reads clauses
+testcase(4,11) : error VC9647: void* and obj_t are not supported in reads clauses
 `

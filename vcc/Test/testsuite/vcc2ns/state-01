@@ -10,8 +10,8 @@ void bar() {
   _(assert \old(i) == i)
 }
 `
-testcase(4,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\old(i)' has no effect
-testcase(9,26) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\old(i)' has no effect
+testcase(4,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\old(i)' has no effect
+testcase(9,12) : warning VC9106: 'old', 'in_state', or 'when_claimed' in '\old(i)' has no effect
 Verification of foo succeeded.
 Verification of bar succeeded.
 `

@@ -50,8 +50,8 @@ Verification of baz succeeded.
 Verification of baz2 succeeded.
 Verification of baz_fail failed.
 testcase(33,34) : error VC9502: Call 'bar(x)' did not verify.
-testcase(13,28) : error VC9599: (related information) Precondition: 'foo(x)'.
+testcase(13,14) : error VC9599: (related information) Precondition: 'foo(x)'.
 Verification of baz2_fail failed.
 testcase(40,45) : error VC9502: Call 'foo2(x)' did not verify.
-testcase(8,28) : error VC9599: (related information) Precondition: 'x > 0'.
+testcase(8,14) : error VC9599: (related information) Precondition: 'x > 0'.
 `

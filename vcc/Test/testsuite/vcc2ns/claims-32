@@ -7,5 +7,5 @@ struct S {
 };
 
 `
-testcase(5,31) : error VC9708: 'when_claimed' cannot be used outside of a claim.
+testcase(5,17) : error VC9708: 'when_claimed' cannot be used outside of a claim.
 `

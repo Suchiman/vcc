@@ -28,5 +28,5 @@ S fooShouldFail()
 Verification of foo succeeded.
 Verification of fooShouldFail failed.
 testcase(23,3) : error VC9501: Post condition '\result.x == 1 && \result.y == 2' did not verify.
-testcase(18,27) : error VC9599: (related information) Location of post condition.
+testcase(18,13) : error VC9599: (related information) Location of post condition.
 `

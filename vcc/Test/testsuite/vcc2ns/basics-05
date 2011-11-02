@@ -12,5 +12,5 @@ struct y {
 };
 `
 Verification of y#adm failed.
-testcase(10,29) : error VC8012: invariant(xp->\closed) of y is not admissible.
+testcase(10,15) : error VC8012: invariant(xp->\closed) of y is not admissible.
 `

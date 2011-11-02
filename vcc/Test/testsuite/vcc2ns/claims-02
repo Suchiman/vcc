@@ -27,5 +27,5 @@ void LockFreeIncr(struct A *a _(ghost \claim c))
 `
 Verification of A#adm succeeded.
 Verification of LockFreeIncr failed.
-testcase(22,27) : error VC8010: object c might equal c.
+testcase(22,13) : error VC8010: object c might equal c.
 `

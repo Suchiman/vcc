@@ -14,5 +14,5 @@ void foo()
 
 #endif
 `
-testcase(11,32) : error VC0000: Cannot determine initializer's type from context.
+testcase(11,18) : error VC0000: Cannot determine initializer's type from context.
 `

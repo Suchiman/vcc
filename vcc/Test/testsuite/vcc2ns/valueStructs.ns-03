@@ -60,7 +60,7 @@ Verification of foo succeeded.
 Verification of fooShouldFail failed.
 testcase(32,18) : error VC8512: Assertion 'q->Privileges is thread local' did not verify.
 Verification of fooShouldFailToo failed.
-testcase(39,26) : error VC9500: Assertion '&q->Privileges \in \domain(q)' did not verify.
+testcase(39,12) : error VC9500: Assertion '&q->Privileges \in \domain(q)' did not verify.
 Verification of baz succeeded.
 Verification of bazShouldFail failed.
 testcase(54,9) : error VC8512: Assertion 's.Privileges is thread local' did not verify.

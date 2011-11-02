@@ -51,6 +51,9 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// <summary>True if the scanner should not return tokens corresponding to comments.</summary>
     private bool ignoreComments = true;
 
+    /// <summary>True if _ should be treated as a keyword.</summary>
+    private bool underscoreIsKeyword = false;
+
     /// <summary>An array of linked lists of keywords, to be indexed with the first character of the keyword.</summary>
     private static readonly Keyword/*?*/[] Keywords = Keyword.InitKeywords();
     // ^ invariant Keywords.Length == 26; //TODO: Boogie crashes on this invariant
@@ -79,7 +82,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     /// <summary>The contents of the last string literal scanned, with escape sequences already replaced with their corresponding characters.</summary>
     private string/*?*/ unescapedString;
 
-    public Scanner(List<IErrorMessage>/*?*/ scannerErrors, ISourceLocation sourceLocation, bool ignoreComments) {
+    public Scanner(List<IErrorMessage>/*?*/ scannerErrors, ISourceLocation sourceLocation, bool ignoreComments, bool underscoreIsKeyword) {
       this.scannerErrors = scannerErrors;
       this.sourceLocation = sourceLocation;
       char[] buffer = new char[8192];
@@ -88,6 +91,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.endPos = this.startPos = 0;
       this.offset = 0;
       this.ignoreComments = ignoreComments;
+      this.underscoreIsKeyword = underscoreIsKeyword;
     }
 
     private char GetCurrentChar()
@@ -945,6 +949,8 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
       }
       Keyword extendedKeyword = microsoftKeyword ? Scanner.MicrosoftKeywords : Scanner.ExtendedKeywords;
+      if (this.underscoreIsKeyword && this.startPos + 1 == this.endPos)
+        return Token.Specification;
       return extendedKeyword.GetKeyword(this.buffer, this.startPos, this.endPos);
     }
 
@@ -2351,6 +2357,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       //keyword = new Keyword(Token.Imaginary, "_Imaginary");
       //keyword = new Keyword(Token.Complex, "_Complex", keyword);
       keyword = new Keyword(Token.Bool, "_Bool");
+      // keyword = new Keyword(Token.Specification, "_", keyword);
 
       return keyword;
     }

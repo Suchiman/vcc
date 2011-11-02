@@ -49,12 +49,12 @@ Verification of FooTestOk succeeded.
 Verification of CallFooPreconditionTestOk succeeded.
 Verification of CallFooconditionTestFails failed.
 testcase(17,3) : error VC9502: Call 'FooTestOk(0)' did not verify.
-testcase(6,28) : error VC9599: (related information) Precondition: 'y ==1'.
+testcase(6,14) : error VC9599: (related information) Precondition: 'y ==1'.
 Verification of PostConditionTestOk succeeded.
 Verification of PostConditionTestFails failed.
-testcase(29,26) : error VC9500: Assertion 'x<=100' did not verify.
+testcase(29,12) : error VC9500: Assertion 'x<=100' did not verify.
 Verification of SumTestOk succeeded.
 Verification of CallSumTestFails failed.
 testcase(44,10) : error VC9502: Call 'SumTestOk(x, x/y)' did not verify.
-testcase(34,42) : error VC9599: (related information) Precondition: 'y <= 0'.
+testcase(34,28) : error VC9599: (related information) Precondition: 'y <= 0'.
 `

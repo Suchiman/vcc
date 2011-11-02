@@ -43,8 +43,8 @@ void fooFail2(struct A *a)
 Verification of B#adm succeeded.
 Verification of A#adm succeeded.
 Verification of fooFail1 failed.
-testcase(20,30) : error VC8530: Assertion 'skinny_expose(a, ...) body has written at an unlisted location' did not verify.
-testcase(20,33) : error VC9502: Call 'wrap(a->b)' did not verify.
+testcase(20,16) : error VC8530: Assertion 'skinny_expose(a, ...) body has written at an unlisted location' did not verify.
+testcase(20,19) : error VC9502: Call 'wrap(a->b)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the object being wrapped is not closed'.
 Verification of fooFail2 failed.
 testcase(37,5) : error VC8507: Assertion 'a->b->x is writable' did not verify.

@@ -123,15 +123,15 @@ Verification of Stack#adm succeeded.
 Verification of drain succeeded.
 Verification of move succeeded.
 Verification of drainFail1 failed.
-testcase(67,28) : error VC8524: Assertion 'chunk head != ((void*)0) ==> \mine(head) of invariant of s holds after atomic' did not verify.
+testcase(67,14) : error VC8524: Assertion 'chunk head != ((void*)0) ==> \mine(head) of invariant of s holds after atomic' did not verify.
 Verification of moveFail1 failed.
-testcase(97,23) : error VC8510: Assertion '\new_ownees(owner, owns) is writable in call to set_closed_owns s2, s1_owns' did not verify.
-testcase(97,23) : error VC9502: Call 'set_closed_owns s2, s1_owns' did not verify.
+testcase(97,9) : error VC8510: Assertion '\new_ownees(owner, owns) is writable in call to set_closed_owns s2, s1_owns' did not verify.
+testcase(97,9) : error VC9502: Call 'set_closed_owns s2, s1_owns' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'all newly owned objects are wrapped'.
-testcase(95,30) : error VC8524: Assertion 'chunk \forall PNode n; {&n->next} n \in \this->\owns ==> n->next == ((void*)0) || n->next \in \this->\owns) of invariant of s2 holds after atomic' did not verify.
+testcase(95,16) : error VC8524: Assertion 'chunk \forall PNode n; {&n->next} n \in \this->\owns ==> n->next == ((void*)0) || n->next \in \this->\owns) of invariant of s2 holds after atomic' did not verify.
 Verification of foo failed.
-testcase(110,21) : error VC9502: Call 'set_closed_owns n, {}' did not verify.
+testcase(110,7) : error VC9502: Call 'set_closed_owns n, {}' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the owner has volatile owns set'.
 Verification of foo2 failed.
-testcase(118,19) : error VC8532: Assertion 's is atomically updated in call to set_closed_owns s, {}' did not verify.
+testcase(118,5) : error VC8532: Assertion 's is atomically updated in call to set_closed_owns s, {}' did not verify.
 `

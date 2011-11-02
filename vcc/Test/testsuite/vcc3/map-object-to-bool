@@ -17,5 +17,5 @@ _(invariant \forall Node *n;
 };
 `
 Verification of List#adm failed.
-testcase(12,27) : error VC8012: invariant(\forall Node *n; node[n] ==> n->data && typ[n->data] )) of List is not admissible.
+testcase(12,13) : error VC8012: invariant(\forall Node *n; node[n] ==> n->data && typ[n->data] )) of List is not admissible.
 `

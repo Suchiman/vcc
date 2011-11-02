@@ -31,5 +31,5 @@ _(writes &PCB[i])
 }
 
 `
-testcase(23,54) : error VC0000: Operator '<' cannot be applied to operands of type '__int32' and 'unsigned __int32'.
+testcase(23,40) : error VC0000: Operator '<' cannot be applied to operands of type '__int32' and 'unsigned __int32'.
 `

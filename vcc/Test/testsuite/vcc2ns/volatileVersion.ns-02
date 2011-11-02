@@ -26,7 +26,7 @@ struct VS3 {
 };
 
 `
-testcase(7,29) : error VC9672: volatile field 'yappr' is an approver, but not a self-approver
-testcase(15,29) : error VC9673: approver field 'yappr' should have obj_t type, it has 'struct VS1*'
-testcase(24,35) : error VC9671: approves(...) can only be used as a top-level invariant
+testcase(7,15) : error VC9672: volatile field 'yappr' is an approver, but not a self-approver
+testcase(15,15) : error VC9673: approver field 'yappr' should have obj_t type, it has 'struct VS1*'
+testcase(24,21) : error VC9671: approves(...) can only be used as a top-level invariant
 `

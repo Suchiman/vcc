@@ -64,7 +64,7 @@ Verification of C2#adm succeeded.
 Verification of okC succeeded.
 Verification of okC2 succeeded.
 Verification of fail1C failed.
-testcase(46,26) : error VC8016: 'c->b' is not wrapped before unwrap.
+testcase(46,12) : error VC8016: 'c->b' is not wrapped before unwrap.
 Verification of fail1C2 failed.
-testcase(55,26) : error VC8016: 'c->b' is not wrapped before unwrap.
+testcase(55,12) : error VC8016: 'c->b' is not wrapped before unwrap.
 `

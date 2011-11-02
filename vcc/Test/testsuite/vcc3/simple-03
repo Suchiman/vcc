@@ -28,5 +28,5 @@ void foo()
 }
 `
 Verification of foo failed.
-testcase(26,26) : error VC9500: Assertion '&b->y.b \in \extent(c)' did not verify.
+testcase(26,12) : error VC9500: Assertion '&b->y.b \in \extent(c)' did not verify.
 `

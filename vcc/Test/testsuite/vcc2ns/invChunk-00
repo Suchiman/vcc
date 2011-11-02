@@ -19,6 +19,6 @@ void foo(struct A *a)
 `
 Verification of A#adm succeeded.
 Verification of foo failed.
-testcase(16,24) : error VC8014: invariant(\this->y > 0) of A fails on wrap.
-testcase(7,45) : error VC9599: (related information) location of the invariant.
+testcase(16,10) : error VC8014: invariant(\this->y > 0) of A fails on wrap.
+testcase(7,31) : error VC9599: (related information) location of the invariant.
 `

@@ -39,9 +39,9 @@ void foo()
 }
 
 `
-testcase(21,26) : warning VC9124: pointers of different types (struct S and struct T) are never equal in pure context
-testcase(22,26) : warning VC9124: pointers of different types (struct S and struct T) are never equal in pure context
-testcase(23,26) : warning VC9124: pointers of different types (struct S and int32_t) are never equal in pure context
+testcase(21,12) : warning VC9124: pointers of different types (struct S and struct T) are never equal in pure context
+testcase(22,12) : warning VC9124: pointers of different types (struct S and struct T) are never equal in pure context
+testcase(23,12) : warning VC9124: pointers of different types (struct S and int32_t) are never equal in pure context
 Verification of foo failed.
-testcase(21,26) : error VC9500: Assertion 's == t' did not verify.
+testcase(21,12) : error VC9500: Assertion 's == t' did not verify.
 `

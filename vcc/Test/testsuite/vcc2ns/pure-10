@@ -15,5 +15,5 @@ void fux()
    _(ghost r_f1(&y);) 
 }
 `
-testcase(7,23) : error VC9646: the reads check is required to have a body
+testcase(7,9) : error VC9646: the reads check is required to have a body
 `

@@ -6,5 +6,5 @@ void foo() {
   _(ghost int i)
 } 
 `
-testcase(4,26) : error VC0000: Cannot use local variable 'i' before it is declared.
+testcase(4,12) : error VC0000: Cannot use local variable 'i' before it is declared.
 `

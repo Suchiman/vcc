@@ -8,6 +8,6 @@ void foo() {
   }
 }
 `
-testcase(5,33) : warning VC0000: Possible mistaken null statement.
+testcase(5,19) : warning VC0000: Possible mistaken null statement.
 Verification of foo succeeded.
 `

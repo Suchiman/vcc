@@ -14,5 +14,5 @@ void bar(B* a)
 
 `
 Verification of bar failed.
-testcase(11,28) : error VC8510: Assertion '\span(obj) is writable in call to a->\owns += a' did not verify.
+testcase(11,14) : error VC8510: Assertion '\span(obj) is writable in call to a->\owns += a' did not verify.
 `

@@ -46,8 +46,8 @@ void ok1()
 }
 `
 Verification of t1 failed.
-testcase(28,26) : error VC9500: Assertion 'x.f.b == 3' did not verify.
+testcase(28,12) : error VC9500: Assertion 'x.f.b == 3' did not verify.
 Verification of t2 failed.
-testcase(36,26) : error VC9500: Assertion 'x.f.b == 3' did not verify.
+testcase(36,12) : error VC9500: Assertion 'x.f.b == 3' did not verify.
 Verification of ok1 succeeded.
 `

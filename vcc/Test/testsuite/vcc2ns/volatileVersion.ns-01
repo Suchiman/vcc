@@ -83,9 +83,9 @@ Verification of VS#adm succeeded.
 Verification of foo1 succeeded.
 Verification of foo2 succeeded.
 Verification of foo1fail failed.
-testcase(57,26) : error VC9500: Assertion 'vs->x == 10' did not verify.
+testcase(57,12) : error VC9500: Assertion 'vs->x == 10' did not verify.
 Verification of foo1fail2 failed.
-testcase(67,26) : error VC9500: Assertion 'vs->x == 10' did not verify.
+testcase(67,12) : error VC9500: Assertion 'vs->x == 10' did not verify.
 Verification of foo1fail3 failed.
-testcase(77,26) : error VC9500: Assertion 'vs->y == 10' did not verify.
+testcase(77,12) : error VC9500: Assertion 'vs->y == 10' did not verify.
 `

@@ -23,10 +23,10 @@ void bar() {
   _(unwrap (p = foo()))
 }
 `
-testcase(21,25) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
-testcase(22,27) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
-testcase(21,29) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(21,11) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(22,13) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(21,15) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
 testcase(8,8) : error : (Location of symbol related to previous error.)
-testcase(22,31) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
+testcase(22,17) : error VC9635: function 'foo' used in pure context, but not marked with 'ispure'
 testcase(8,8) : error : (Location of symbol related to previous error.)
 `

@@ -31,8 +31,8 @@ struct OK1 {
 
 `
 Verification of ShouldFailStabilityOfAB#adm failed.
-testcase(15,29) : error VC8012: invariant(\mine(a.b)) of ShouldFailStabilityOfAB is not admissible.
+testcase(15,15) : error VC8012: invariant(\mine(a.b)) of ShouldFailStabilityOfAB is not admissible.
 Verification of ShouldFailStabilityOfAB2#adm failed.
-testcase(21,29) : error VC8012: invariant(\mine(a.b)) of ShouldFailStabilityOfAB2 is not admissible.
+testcase(21,15) : error VC8012: invariant(\mine(a.b)) of ShouldFailStabilityOfAB2 is not admissible.
 Verification of OK1#adm succeeded.
 `

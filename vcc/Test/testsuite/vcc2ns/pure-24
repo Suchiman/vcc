@@ -44,7 +44,7 @@ _(ghost void test_mov_reg()
     c = mov_reg_f1(1, 16, c);
 })
 `
-testcase(20,39) : warning VC9312: [possible unsoundness]: 'result' cannot be used in let binding in a pure function definition
-testcase(29,39) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+testcase(20,11) : warning VC9312: [possible unsoundness]: 'result' cannot be used in let binding in a pure function definition
+testcase(29,11) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
 Verification of test_mov_reg succeeded.
 `

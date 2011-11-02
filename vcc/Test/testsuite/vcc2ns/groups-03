@@ -7,5 +7,5 @@ struct S {
 
 void foo(struct S *s) { }
 `
-testcase(4,38) : error VC0000: 'S' does not contain a definition for 'G'.
+testcase(4,24) : error VC0000: 'S' does not contain a definition for 'G'.
 `

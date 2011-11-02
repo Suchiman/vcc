@@ -21,5 +21,5 @@ void bar(struct A *a, struct B *b)
 }
 `
 Verification of bar failed.
-testcase(15,26) : error VC9500: Assertion 'b \in \domain(a)' did not verify.
+testcase(15,12) : error VC9500: Assertion 'b \in \domain(a)' did not verify.
 `

@@ -13,5 +13,5 @@ do { } while(_(known  \false)i);
 `
 Verification of foo succeeded.
 Verification of bar failed.
-testcase(10,44) : error VC8533: Assertion 'i has the value \false specified by known(...)' did not verify.
+testcase(10,30) : error VC8533: Assertion 'i has the value \false specified by known(...)' did not verify.
 `

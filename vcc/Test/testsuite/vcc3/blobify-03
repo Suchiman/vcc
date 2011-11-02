@@ -138,28 +138,28 @@ void fail4_align()
 Verification of B#adm succeeded.
 Verification of ticket_blob succeeded.
 Verification of f2_fail0 failed.
-testcase(48,19) : error VC9502: Call 'split_blob __specification(blob total)b, -20' did not verify.
+testcase(48,5) : error VC9502: Call 'split_blob _(blob total)b, -20' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'split position is non-negative'.
 Verification of f2_fail1 failed.
-testcase(58,19) : error VC9502: Call 'split_blob __specification(blob total)b, 300' did not verify.
+testcase(58,5) : error VC9502: Call 'split_blob _(blob total)b, 300' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'pointer passed is big enough for split'.
 Verification of f2_fail3 failed.
-testcase(69,19) : error VC8510: Assertion 'b is writable in call to split_blob b, 0' did not verify.
-testcase(69,19) : error VC9502: Call 'split_blob b, 0' did not verify.
+testcase(69,5) : error VC8510: Assertion 'b is writable in call to split_blob b, 0' did not verify.
+testcase(69,5) : error VC9502: Call 'split_blob b, 0' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'pointer passed is a blob'.
 Verification of fail_write failed.
-testcase(75,19) : error VC8510: Assertion '__specification(blob 5)p is writable in call to split_blob __specification(blob 5)p, 2' did not verify.
+testcase(75,5) : error VC8510: Assertion '_(blob 5)p is writable in call to split_blob _(blob 5)p, 2' did not verify.
 Verification of ok_write succeeded.
 Verification of ok_align succeeded.
 Verification of fail1_align failed.
-testcase(103,19) : error VC9502: Call 'join_blobs __specification(blob 5)p, __specification(blob 10)(p + 10)' did not verify.
+testcase(103,5) : error VC9502: Call 'join_blobs _(blob 5)p, _(blob 10)(p + 10)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the blobs are aligned properly in memory'.
 Verification of fail2_align failed.
-testcase(113,19) : error VC8510: Assertion '__specification(blob 10)p is writable in call to join_blobs __specification(blob 10)p, __specification(blob 10)(p + 10)' did not verify.
+testcase(113,5) : error VC8510: Assertion '_(blob 10)p is writable in call to join_blobs _(blob 10)p, _(blob 10)(p + 10)' did not verify.
 Verification of fail3_align failed.
-testcase(123,19) : error VC9502: Call 'join_blobs t, __specification(blob 5)(p + 5)' did not verify.
+testcase(123,5) : error VC9502: Call 'join_blobs t, _(blob 5)(p + 5)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the left pointer passed is a blob'.
 Verification of fail4_align failed.
-testcase(133,19) : error VC9502: Call 'join_blobs __specification(blob 5)(p + 5), t' did not verify.
+testcase(133,5) : error VC9502: Call 'join_blobs _(blob 5)(p + 5), t' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the right pointer passed is a blob'.
 `

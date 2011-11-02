@@ -40,9 +40,9 @@ void bar(union B *a)
 }
 `
 Verification of fooShouldFail failed.
-testcase(11,26) : error VC9500: Assertion 'a->x >= 0' did not verify.
+testcase(11,12) : error VC9500: Assertion 'a->x >= 0' did not verify.
 Verification of barShouldFail failed.
-testcase(22,26) : error VC9500: Assertion 'a->y < 3000000000' did not verify.
+testcase(22,12) : error VC9500: Assertion 'a->y < 3000000000' did not verify.
 Verification of foo succeeded.
 Verification of bar succeeded.
 `

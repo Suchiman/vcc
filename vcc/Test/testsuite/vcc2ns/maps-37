@@ -3,6 +3,6 @@
 
 void bar() { _(ghost int f[void]) }
 `
-testcase(3,42) : error VC0000: Illegal type 'void' in map domain.
-testcase(3,36) : error VC0000: 'f' : illegal use of type 'void'.
+testcase(3,28) : error VC0000: Illegal type 'void' in map domain.
+testcase(3,22) : error VC0000: 'f' : illegal use of type 'void'.
 `
