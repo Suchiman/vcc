@@ -12,6 +12,6 @@ void bar()
 }
 
 `
-testcase(4,19) : error VC9734: _(level ...) needs a compile time constant
-testcase(9,19) : error VC9733: _(level ...) needs to fit integer range
+testcase(4,5) : error VC9734: _(level ...) needs a compile time constant
+testcase(9,5) : error VC9733: _(level ...) needs to fit integer range
 `

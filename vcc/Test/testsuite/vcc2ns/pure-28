@@ -49,10 +49,10 @@ void foo2()
   _(assert \false)
 }
 `
-testcase(25,45) : warning VC9309: [possible unsoundness]: value of '\result.overlap1' was already defined in this pure function contract (as '\result.a')
-testcase(29,49) : warning VC9311: [possible unsoundness]: value of '\result.b' was already defined in this pure function contract (as '\result.AsInt')
-testcase(33,27) : warning VC9311: [possible unsoundness]: value of '\result.b' was already defined in this pure function contract (as '\result.AsInt')
+testcase(25,31) : warning VC9309: [possible unsoundness]: value of '\result.overlap1' was already defined in this pure function contract (as '\result.a')
+testcase(29,35) : warning VC9311: [possible unsoundness]: value of '\result.b' was already defined in this pure function contract (as '\result.AsInt')
+testcase(33,13) : warning VC9311: [possible unsoundness]: value of '\result.b' was already defined in this pure function contract (as '\result.AsInt')
 Verification of foo failed.
-testcase(39,26) : error VC9500: Assertion '\false' did not verify.
+testcase(39,12) : error VC9500: Assertion '\false' did not verify.
 Verification of foo2 succeeded.
 `

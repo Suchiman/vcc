@@ -39,7 +39,7 @@ int baz()
 Verification of baz succeeded.
 Verification of baz#fnptr#fail_to_FOO#2 failed.
 testcase(34,7) : error VC9501: Post condition '\result == i' did not verify.
-testcase(5,27) : error VC9599: (related information) Location of post condition.
+testcase(5,13) : error VC9599: (related information) Location of post condition.
 Verification of baz#fnptr#foo_to_FOO#2 succeeded.
 Verification of baz#fnptr#foo_to_BAR#1 succeeded.
 `

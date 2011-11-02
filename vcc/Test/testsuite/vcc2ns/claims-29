@@ -135,18 +135,18 @@ void twoFail1(struct Counter *cnt1, struct Counter *cnt2 _(ghost \claim cl1) _(g
 Verification of Counter#adm succeeded.
 Verification of foo succeeded.
 Verification of fooFail1 failed.
-testcase(33,34) : error VC8025: the claim cl has outstanding claims.
+testcase(33,20) : error VC8025: the claim cl has outstanding claims.
 Verification of fooFail2 failed.
-testcase(69,34) : error VC8521: Assertion 'chunk cnt->count >= y of the claim holds after a step of the machine' did not verify.
-testcase(72,26) : error VC9500: Assertion '\claims_object(res, cnt)' did not verify.
+testcase(69,20) : error VC8521: Assertion 'chunk cnt->count >= y of the claim holds after a step of the machine' did not verify.
+testcase(72,12) : error VC9500: Assertion '\claims_object(res, cnt)' did not verify.
 Verification of fooFail3 failed.
-testcase(88,34) : error VC8024: the claim cl is not wrapped before upgrade.
-testcase(88,34) : error VC8025: the claim cl has outstanding claims.
+testcase(88,20) : error VC8024: the claim cl is not wrapped before upgrade.
+testcase(88,20) : error VC8025: the claim cl has outstanding claims.
 Verification of fooFail4 failed.
-testcase(103,34) : error VC8023: cl is non-writable and (and thus is impossible to upgrade).
+testcase(103,20) : error VC8023: cl is non-writable and (and thus is impossible to upgrade).
 Verification of two succeeded.
 Verification of twoFail1 failed.
-testcase(130,32) : error VC8521: Assertion 'chunk cnt1->count + cnt2->count >= 0 of the claim holds after a step of the machine' did not verify.
+testcase(130,18) : error VC8521: Assertion 'chunk cnt1->count + cnt2->count >= 0 of the claim holds after a step of the machine' did not verify.
 testcase(131,1) : error VC9501: Post condition '\wrapped0(res) && \claims(res, cnt1->count + cnt2->count >= 0) && \claims_object(res, cnt1) && \claims_object(res, cnt2) && \fresh(res)' did not verify.
-testcase(125,27) : error VC9599: (related information) Location of post condition.
+testcase(125,13) : error VC9599: (related information) Location of post condition.
 `

@@ -9,5 +9,5 @@ void foo(unsigned int n) {
     _(invariant i = 10) { x = 1;}
 }
 `
-testcase(8,31) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.
+testcase(8,17) : error VC0000: Evaluating this expression has the side effect of modifying memory, which is not permitted in this context.
 `

@@ -13,5 +13,5 @@ _(frameaxiom) _(pure) int f2(int *x)
 `
 Verification of f2#reads succeeded.
 Verification of f1#reads failed.
-testcase(4,17) : error VC8007: the value of 'result' changed (in reads check of 'f1').
+testcase(4,3) : error VC8007: the value of 'result' changed (in reads check of 'f1').
 `

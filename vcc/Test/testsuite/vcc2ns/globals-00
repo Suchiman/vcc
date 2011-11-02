@@ -16,6 +16,6 @@ void bar()
 }
 `
 Verification of admis_B failed.
-testcase(7,24) : error VC9500: Assertion '\false' did not verify.
+testcase(7,10) : error VC9500: Assertion '\false' did not verify.
 Verification of bar succeeded.
 `

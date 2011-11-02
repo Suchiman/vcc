@@ -50,9 +50,9 @@ void fooFailWrap(struct A *a)
 
 `
 Verification of fooFail failed.
-testcase(13,29) : error VC8011: writes clause of the loop might not be included writes clause of the function.
+testcase(13,15) : error VC8011: writes clause of the loop might not be included writes clause of the function.
 Verification of fooOk succeeded.
 Verification of fooOkWrap succeeded.
 Verification of fooFailWrap failed.
-testcase(44,29) : error VC8011: writes clause of the loop might not be included writes clause of the function.
+testcase(44,15) : error VC8011: writes clause of the loop might not be included writes clause of the function.
 `

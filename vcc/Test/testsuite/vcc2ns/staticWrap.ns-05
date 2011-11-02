@@ -24,7 +24,7 @@ struct A4 {
   _(invariant \forall int x; 0 <= x && x < 5 ==> &b[x] \in \this->\owns)
 };
 `
-testcase(9,42) : error VC9662: Explicit reference to owns-set of type 'A2', which is static. Use keeps(...) or mark 'A2' with vcc(dynamic_owns).
-testcase(16,43) : error VC9662: Explicit reference to owns-set of type 'A3', which is static. Use keeps(...) or mark 'A3' with vcc(dynamic_owns).
-testcase(23,74) : error VC9662: Explicit reference to owns-set of type 'A4', which is static. Use keeps(...) or mark 'A4' with vcc(dynamic_owns).
+testcase(9,28) : error VC9662: Explicit reference to owns-set of type 'A2', which is static. Use keeps(...) or mark 'A2' with vcc(dynamic_owns).
+testcase(16,29) : error VC9662: Explicit reference to owns-set of type 'A3', which is static. Use keeps(...) or mark 'A3' with vcc(dynamic_owns).
+testcase(23,60) : error VC9662: Explicit reference to owns-set of type 'A4', which is static. Use keeps(...) or mark 'A4' with vcc(dynamic_owns).
 `

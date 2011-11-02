@@ -27,5 +27,5 @@ Verification of foo succeeded.
 Verification of foo2 succeeded.
 Verification of t succeeded.
 Verification of t2 failed.
-testcase(22,26) : error VC9500: Assertion '\non_primitive_ptr(&x)' did not verify.
+testcase(22,12) : error VC9500: Assertion '\non_primitive_ptr(&x)' did not verify.
 `

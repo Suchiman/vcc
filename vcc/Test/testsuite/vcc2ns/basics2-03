@@ -8,6 +8,6 @@ void test()
 } 
 `
 Verification of test failed.
-testcase(5,26) : error VC9500: Assertion '\forall \integer m; 0 < m ==> ((1 % m) == (0 % m) ))' did not verify.
-testcase(6,26) : error VC9500: Assertion '\forall \integer m; 0 < m ==> ((1 / m) == (0 / m) ))' did not verify.
+testcase(5,12) : error VC9500: Assertion '\forall \integer m; 0 < m ==> ((1 % m) == (0 % m) ))' did not verify.
+testcase(6,12) : error VC9500: Assertion '\forall \integer m; 0 < m ==> ((1 / m) == (0 / m) ))' did not verify.
 `

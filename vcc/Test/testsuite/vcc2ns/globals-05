@@ -12,5 +12,5 @@ void fooShouldFail(_(ghost \claim p))
 }
 `
 Verification of fooShouldFail failed.
-testcase(8,29) : error VC8525: Assertion 'invariant of \gemb(&i) holds after atomic' did not verify.
+testcase(8,15) : error VC8525: Assertion 'invariant of \gemb(&i) holds after atomic' did not verify.
 `

@@ -3,5 +3,5 @@
 _(pure) int foo(int *x) _(reads x) _(returns \old(*x));
 void bar() { int x; foo(&x); }
 `
-testcase(2,88) : error VC9697: old(...) is allowed only in two-state contexts
+testcase(2,46) : error VC9697: old(...) is allowed only in two-state contexts
 `

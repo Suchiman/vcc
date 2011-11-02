@@ -41,6 +41,6 @@ void fooMayFail1(struct A *a, struct A *b)
 `
 Verification of foo succeeded.
 Verification of fooFail1 failed.
-testcase(27,26) : error VC9500: Assertion 'b->x == \old(b->x)' did not verify.
+testcase(27,12) : error VC9500: Assertion 'b->x == \old(b->x)' did not verify.
 Verification of fooMayFail1 succeeded.
 `

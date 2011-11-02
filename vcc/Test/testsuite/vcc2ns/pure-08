@@ -18,6 +18,6 @@ void fux()
 `
 Verification of fux succeeded.
 Verification of f2#reads failed.
-testcase(7,17) : error VC8007: the value of 'result' changed (in reads check of 'f2').
+testcase(7,3) : error VC8007: the value of 'result' changed (in reads check of 'f2').
 Verification of f1#reads succeeded.
 `

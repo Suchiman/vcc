@@ -11,5 +11,5 @@ _(ghost _(pure) BITMAP ToBitMap(UINT64 n);)
 
 _(axiom \forall UINT64 x; (\forall UINT64 i; i < 64 ==> !ToBitMap(x)) ==> x == 0)
 `
-testcase(11,71) : error VC0000: Operator '!' cannot be applied to operand of type 'System.Diagnostics.Contracts.CodeContract.Map<ulong, bool>'.
+testcase(11,57) : error VC0000: Operator '!' cannot be applied to operand of type 'System.Diagnostics.Contracts.CodeContract.Map<ulong, bool>'.
 `

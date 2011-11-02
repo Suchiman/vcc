@@ -36,7 +36,7 @@ void fail2()
 `
 Verification of foo succeeded.
 Verification of fail1 failed.
-testcase(23,26) : error VC9500: Assertion 'foo[&x] == 121' did not verify.
+testcase(23,12) : error VC9500: Assertion 'foo[&x] == 121' did not verify.
 Verification of fail2 failed.
-testcase(32,26) : error VC9500: Assertion 'foo[&x] == 22' did not verify.
+testcase(32,12) : error VC9500: Assertion 'foo[&x] == 22' did not verify.
 `

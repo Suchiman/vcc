@@ -12,5 +12,5 @@ _(requires \wrapped(a))
 }
 `
 Verification of test failed.
-testcase(8,30) : error VC8510: Assertion 'a is writable in call to _(unwrap a)' did not verify.
+testcase(8,16) : error VC8510: Assertion 'a is writable in call to _(unwrap a)' did not verify.
 `

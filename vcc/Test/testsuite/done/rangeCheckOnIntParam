@@ -20,11 +20,11 @@ void i64ShouldFail(__int64 x) {
 
 `
 Verification of i8ShouldFail failed.
-testcase(4,26) : error VC9500: Assertion '0 <= x' did not verify.
+testcase(4,12) : error VC9500: Assertion '0 <= x' did not verify.
 Verification of i16ShouldFail failed.
-testcase(8,26) : error VC9500: Assertion '0 <= x' did not verify.
+testcase(8,12) : error VC9500: Assertion '0 <= x' did not verify.
 Verification of i32ShouldFail failed.
-testcase(12,26) : error VC9500: Assertion '0 <= x' did not verify.
+testcase(12,12) : error VC9500: Assertion '0 <= x' did not verify.
 Verification of i64ShouldFail failed.
-testcase(17,26) : error VC9500: Assertion '0 <= x' did not verify.
+testcase(17,12) : error VC9500: Assertion '0 <= x' did not verify.
 `

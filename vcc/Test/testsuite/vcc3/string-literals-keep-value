@@ -19,5 +19,5 @@ void foo_fail()
 `
 Verification of foo succeeded.
 Verification of foo_fail failed.
-testcase(16,26) : error VC9500: Assertion 'p[0] == 'f'' did not verify.
+testcase(16,12) : error VC9500: Assertion 'p[0] == 'f'' did not verify.
 `

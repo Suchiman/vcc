@@ -78,22 +78,22 @@ void foo2Fail7(int *arr1, int *arr2)
 Verification of foo succeeded.
 Verification of foo2 succeeded.
 Verification of foo2Fail1 failed.
-testcase(24,19) : error VC8510: Assertion '\extent(arr1) is writable in call to join_arrays (void[99])arr1, (void[32])arr2' did not verify.
-testcase(24,19) : error VC9502: Call 'join_arrays (void[99])arr1, (void[32])arr2' did not verify.
+testcase(24,5) : error VC8510: Assertion '\extent(arr1) is writable in call to join_arrays (void[99])arr1, (void[32])arr2' did not verify.
+testcase(24,5) : error VC9502: Call 'join_arrays (void[99])arr1, (void[32])arr2' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the first array to join is not embedded inside of another object'.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the first array ends, where the second array starts'.
 Verification of foo2Fail2 succeeded.
 Verification of foo2Fail3 failed.
-testcase(40,19) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.
+testcase(40,5) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'types of arrays to join agree'.
 Verification of foo2Fail4 failed.
-testcase(48,19) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.
+testcase(48,5) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the first array to join is not embedded inside of another object'.
 Verification of foo2Fail5 failed.
-testcase(56,19) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.
+testcase(56,5) : error VC9502: Call 'join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the second array to join is not embedded inside of another object'.
 Verification of foo2Fail6 failed.
-testcase(64,19) : error VC8510: Assertion '\extent(arr2) is writable in call to join_arrays (void[100])arr1, (void[32])arr2' did not verify.
+testcase(64,5) : error VC8510: Assertion '\extent(arr2) is writable in call to join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 Verification of foo2Fail7 failed.
-testcase(73,19) : error VC8510: Assertion '\extent(arr1) is writable in call to join_arrays (void[100])arr1, (void[32])arr2' did not verify.
+testcase(73,5) : error VC8510: Assertion '\extent(arr1) is writable in call to join_arrays (void[100])arr1, (void[32])arr2' did not verify.
 `

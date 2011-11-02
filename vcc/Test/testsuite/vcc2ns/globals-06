@@ -47,5 +47,5 @@ Verification of GlobalsOwner#adm succeeded.
 Verification of f succeeded.
 Verification of foo succeeded.
 Verification of fooShouldFail failed.
-testcase(40,26) : error VC8525: Assertion 'invariant of \gemb(&global) holds after atomic' did not verify.
+testcase(40,12) : error VC8525: Assertion 'invariant of \gemb(&global) holds after atomic' did not verify.
 `

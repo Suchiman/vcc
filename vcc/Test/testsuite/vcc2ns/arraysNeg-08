@@ -13,6 +13,6 @@ unsigned y() {
 `
 Verification of x failed.
 testcase(5,3) : error VC9501: Post condition '\disjoint(\array_range(X, z - k + 1), \array_range(X + j, k - j + 1))' did not verify.
-testcase(4,29) : error VC9599: (related information) Location of post condition.
+testcase(4,15) : error VC9599: (related information) Location of post condition.
 Verification of y succeeded.
 `

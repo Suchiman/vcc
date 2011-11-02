@@ -9,5 +9,5 @@ _(assert (\forall \thread t; (t!=\me)) ;)
 }
 `
 Verification of main failed.
-testcase(7,25) : error VC9500: Assertion '\forall \thread t; (t!=\me))' did not verify.
+testcase(7,11) : error VC9500: Assertion '\forall \thread t; (t!=\me))' did not verify.
 `

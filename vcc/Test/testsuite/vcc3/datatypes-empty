@@ -4,5 +4,5 @@
 _(datatype Foo { })
 
 `
-testcase(3,33) : error VC0000: Empty switch block.
+testcase(3,19) : error VC0000: Empty switch block.
 `

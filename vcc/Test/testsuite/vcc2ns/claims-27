@@ -41,7 +41,7 @@ void fooFail2(struct A *a _(ghost \claim c1) _(ghost \claim c2) _(ghost \claim c
 `
 Verification of foo succeeded.
 Verification of fooFail1 failed.
-testcase(26,26) : error VC9500: Assertion 'a->\claim_count >= 3' did not verify.
+testcase(26,12) : error VC9500: Assertion 'a->\claim_count >= 3' did not verify.
 Verification of fooFail2 failed.
-testcase(35,26) : error VC9500: Assertion '\account_claim(c1, a)' did not verify.
+testcase(35,12) : error VC9500: Assertion '\account_claim(c1, a)' did not verify.
 `

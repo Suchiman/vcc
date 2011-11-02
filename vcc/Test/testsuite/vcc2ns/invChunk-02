@@ -26,7 +26,7 @@ void foo(struct S *p) {
 }
 `
 Verification of S#adm failed.
-testcase(19,29) : error VC8012: invariant(\this->t->a == \this->t->b) of S is not admissible.
-testcase(20,29) : error VC8012: invariant(\this->r->c == \this->r->d) of S is not admissible.
+testcase(19,15) : error VC8012: invariant(\this->t->a == \this->t->b) of S is not admissible.
+testcase(20,15) : error VC8012: invariant(\this->r->c == \this->r->d) of S is not admissible.
 Verification of foo succeeded.
 `

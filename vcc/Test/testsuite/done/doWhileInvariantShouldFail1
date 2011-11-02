@@ -39,5 +39,5 @@ void foo()
 `
 Verification of bar succeeded.
 Verification of foo failed.
-testcase(32,31) : error VC9500: Loop body invariant 'i < 10' did not verify.
+testcase(32,17) : error VC9500: Loop body invariant 'i < 10' did not verify.
 `

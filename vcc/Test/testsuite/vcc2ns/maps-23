@@ -15,5 +15,5 @@ _(invariant Sset == \lambda S_t s; (s.id < 42))
 } abs;)
  
 `
-testcase(4,31) : error VC9702: Illegal type 'struct S_str' in map domain.
+testcase(4,17) : error VC9702: Illegal type 'struct S_str' in map domain.
 `

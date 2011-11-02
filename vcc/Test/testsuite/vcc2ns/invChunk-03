@@ -37,7 +37,7 @@ void fail2(struct A *a _(ghost \claim c))
 `
 Verification of A#adm succeeded.
 Verification of fail1 failed.
-testcase(23,28) : error VC8524: Assertion 'chunk \old(\this->x) == \this->x || \old(\this->x) - 1 == \this->x of invariant of a holds after atomic' did not verify.
+testcase(23,14) : error VC8524: Assertion 'chunk \old(\this->x) == \this->x || \old(\this->x) - 1 == \this->x of invariant of a holds after atomic' did not verify.
 Verification of fail2 failed.
-testcase(32,28) : error VC8524: Assertion 'chunk x >= 0 of invariant of a holds after atomic' did not verify.
+testcase(32,14) : error VC8524: Assertion 'chunk x >= 0 of invariant of a holds after atomic' did not verify.
 `

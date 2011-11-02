@@ -14,5 +14,5 @@ _(ghost void bar(\object map[int])
 `
 Verification of foo succeeded.
 Verification of bar failed.
-testcase(11,26) : error VC9500: Assertion 'map[3] \is int' did not verify.
+testcase(11,12) : error VC9500: Assertion 'map[3] \is int' did not verify.
 `

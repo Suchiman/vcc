@@ -47,5 +47,5 @@ void foo1(struct Token *t, struct Foobar *fb, struct Foobar *fb2)
 `
 Verification of auth succeeded.
 Verification of foo1 failed.
-testcase(42,26) : error VC9500: Assertion 'fb->baz == 12' did not verify.
+testcase(42,12) : error VC9500: Assertion 'fb->baz == 12' did not verify.
 `

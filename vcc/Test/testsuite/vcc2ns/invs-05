@@ -13,5 +13,5 @@ int f ()
   _(assert \false)
 }
 `
-testcase(5,30) : error VC9712: Use of 'inv(...)' or 'inv2(...)' with negative polarity.
+testcase(5,16) : error VC9712: Use of 'inv(...)' or 'inv2(...)' with negative polarity.
 `

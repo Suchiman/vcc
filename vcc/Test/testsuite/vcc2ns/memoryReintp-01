@@ -75,14 +75,14 @@ void joinShouldFail2(int *p)
 Verification of f1 succeeded.
 Verification of flatten succeeded.
 Verification of shouldFail failed.
-testcase(38,19) : error VC8510: Assertion 'as_array((uint8_t*)(struct A*)p, 8) is writable in call to from_bytes (struct A*)p, \false' did not verify.
+testcase(38,5) : error VC8510: Assertion 'as_array((uint8_t*)(struct A*)p, 8) is writable in call to from_bytes (struct A*)p, \false' did not verify.
 Verification of flattenFail1 failed.
 testcase(50,3) : error VC8507: Assertion 'p[9] is writable' did not verify.
 Verification of flattenFail2 failed.
-testcase(56,19) : error VC9502: Call 'to_bytes a' did not verify.
+testcase(56,5) : error VC9502: Call 'to_bytes a' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the reinterpreted object is not embedded inside of another object'.
 Verification of flattenFail3 failed.
-testcase(62,19) : error VC8510: Assertion 'a is writable in call to to_bytes a' did not verify.
+testcase(62,5) : error VC8510: Assertion 'a is writable in call to to_bytes a' did not verify.
 Verification of joinShouldFail2 failed.
-testcase(70,19) : error VC8510: Assertion 'as_array((uint8_t*)(struct A*)p, 8) is writable in call to from_bytes (struct A*)p, \false' did not verify.
+testcase(70,5) : error VC8510: Assertion 'as_array((uint8_t*)(struct A*)p, 8) is writable in call to from_bytes (struct A*)p, \false' did not verify.
 `

@@ -89,8 +89,8 @@ Verification of bar succeeded.
 Verification of baz succeeded.
 Verification of mux succeeded.
 Verification of mux_Fail1 failed.
-testcase(70,26) : error VC9500: Assertion 'wont_tell_nf(a)' did not verify.
+testcase(70,12) : error VC9500: Assertion 'wont_tell_nf(a)' did not verify.
 Verification of mux_Fail2 failed.
-testcase(81,26) : error VC9500: Assertion 'wont_tell_A(a)' did not verify.
+testcase(81,12) : error VC9500: Assertion 'wont_tell_A(a)' did not verify.
 Verification of is_zerop#reads succeeded.
 `

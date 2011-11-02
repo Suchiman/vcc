@@ -21,5 +21,5 @@ void foo(struct S *p _(ghost \claim c))
 `
 Verification of S#adm succeeded.
 Verification of foo failed.
-testcase(17,34) : error VC8031: not in a full-stop state when calling function 'f' inside atomic.
+testcase(17,20) : error VC8031: not in a full-stop state when calling function 'f' inside atomic.
 `

@@ -11,6 +11,6 @@ struct T {
 };
 
 `
-testcase(9,47) : warning VC9107: 'is' applied to a pointer type; this is probably not what you intended
+testcase(9,33) : warning VC9107: 'is' applied to a pointer type; this is probably not what you intended
 Verification of T#adm succeeded.
 `

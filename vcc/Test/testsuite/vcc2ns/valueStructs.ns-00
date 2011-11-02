@@ -31,5 +31,5 @@ void baz2(struct B b)
 `
 Verification of baz succeeded.
 Verification of baz2 failed.
-testcase(28,26) : error VC9500: Assertion 'b.a.y == 0' did not verify.
+testcase(28,12) : error VC9500: Assertion 'b.a.y == 0' did not verify.
 `

@@ -23,7 +23,7 @@ _(ghost void foo3()
 })
 `
 Verification of foo failed.
-testcase(10,26) : error VC9500: Assertion 'x == 0' did not verify.
+testcase(10,12) : error VC9500: Assertion 'x == 0' did not verify.
 Verification of foo2 failed.
 testcase(15,3) : error VC8507: Assertion 'x is writable' did not verify.
 Verification of foo3 failed.

@@ -28,7 +28,7 @@ void foo()
    }
 }
 `
-testcase(12,31) : error VC9674: _(unwrapping ...) does not allow contracts other than _(writes ...)
-testcase(18,28) : error VC9674: _(unwrapping ...) does not allow contracts other than _(writes ...)
-testcase(24,30) : error VC9674: _(unwrapping ...) does not allow contracts other than _(writes ...)
+testcase(12,17) : error VC9674: _(unwrapping ...) does not allow contracts other than _(writes ...)
+testcase(18,14) : error VC9674: _(unwrapping ...) does not allow contracts other than _(writes ...)
+testcase(24,16) : error VC9674: _(unwrapping ...) does not allow contracts other than _(writes ...)
 `

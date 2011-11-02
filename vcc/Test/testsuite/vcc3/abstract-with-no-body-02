@@ -15,7 +15,7 @@ void bar(int x)
 }
 `
 Verification of foo failed.
-testcase(7,43) : error VC9501: Post condition '\result > x' did not verify.
-testcase(5,27) : error VC9599: (related information) Location of post condition.
+testcase(7,29) : error VC9501: Post condition '\result > x' did not verify.
+testcase(5,13) : error VC9599: (related information) Location of post condition.
 Verification of bar succeeded.
 `

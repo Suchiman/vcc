@@ -6,6 +6,6 @@ struct S {
     _(invariant \mine({}))
 };
 `
-testcase(5,31) : error VC0000: The best overloaded method match for '__Globals__.\mine(System.Diagnostics.Contracts.CodeContract.TypedPtr, __arglist)' has some invalid arguments.
-testcase(5,37) : error VC0000: Argument '1': cannot convert from 'System.Diagnostics.Contracts.CodeContract.Objset' to 'obj_t'.
+testcase(5,17) : error VC0000: The best overloaded method match for '__Globals__.\mine(System.Diagnostics.Contracts.CodeContract.TypedPtr, __arglist)' has some invalid arguments.
+testcase(5,23) : error VC0000: Argument '1': cannot convert from 'System.Diagnostics.Contracts.CodeContract.Objset' to 'obj_t'.
 `

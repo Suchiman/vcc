@@ -23,7 +23,7 @@ void failWrites(struct B *b)
 `
 Verification of A#adm succeeded.
 Verification of failWrapped failed.
-testcase(13,26) : error VC8016: 'b' is not wrapped before unwrap.
+testcase(13,12) : error VC8016: 'b' is not wrapped before unwrap.
 Verification of failWrites failed.
-testcase(19,26) : error VC8021: 'b' is not writable before unwrapping it.
+testcase(19,12) : error VC8021: 'b' is not writable before unwrapping it.
 `

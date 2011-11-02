@@ -8,5 +8,5 @@ void bar() {
 }
 
 `
-testcase(6,27) : error VC0000: The left-hand side of an assignment must be a variable, property or indexer.
+testcase(6,13) : error VC0000: The left-hand side of an assignment must be a variable, property or indexer.
 `

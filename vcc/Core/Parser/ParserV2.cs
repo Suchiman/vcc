@@ -16,7 +16,7 @@ namespace Microsoft.Research.Vcc.Parsing
   internal class ParserV2 : Parser
   {
      internal ParserV2(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) 
-    : base(compilation, sourceLocation, scannerAndParserErrors) {
+    : base(compilation, sourceLocation, scannerAndParserErrors, isV2: true) {
     }
 
     override protected bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {
@@ -489,28 +489,36 @@ namespace Microsoft.Research.Vcc.Parsing
               contract.AddReads(reads);
               break;
             case Token.Identifier:
-              var keyword = this.scanner.GetIdentifierString();
-              var fnName = this.functionContractExtensions[keyword];
-              var loc = this.GetSourceLocationBuilderForLastScannedToken();
-              Expression name = this.GetSimpleNameFor(fnName);
-              this.GetNextToken();
-              var slb = new SourceLocationBuilder(name.SourceLocation);
-              var parameters = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
-              slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-              if (fnName.StartsWith("\\result_macro_")) {
-                var res = new VccReturnValue(loc);
-                parameters.Insert(0, res);
-                var tp = new VccTypeExpressionOf(res);
-                name = new GenericInstanceExpression(name, new TypeExpression[] { tp }, loc);
-              }
-              var call = new VccMethodCall(name, parameters.AsReadOnly(), slb);
-              contract.AddPrecondition(new Precondition(call, null, call.SourceLocation));
+              this.ParseContractMacro(contract, followers);
               break;
           }
           this.SkipSemicolonsInSpecBlock(STS.FunctionOrBlockContract | Token.RightParenthesis);
         }
         this.SkipOutOfSpecBlock(savedInSpecCode, followers | Token.Specification);
       }
+    }
+
+    private void ParseContractMacro(FunctionOrBlockContract contract, TokenSet followers)
+    {
+      var keyword = this.scanner.GetIdentifierString();
+      var fnName = this.functionContractExtensions[keyword];
+      var loc = this.GetSourceLocationBuilderForLastScannedToken();
+      Expression name = this.GetSimpleNameFor(fnName);
+      this.GetNextToken();
+      var slb = new SourceLocationBuilder(name.SourceLocation);
+      var parameters = new List<Expression>();
+      if (this.currentToken != Token.RightParenthesis)
+        this.ParseList(parameters, ts => this.ParseExpression(ts), followers | Token.RightParenthesis);
+      parameters.TrimExcess();
+      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
+      if (fnName.StartsWith("\\result_macro_")) {
+        var res = new VccReturnValue(loc);
+        parameters.Insert(0, res);
+        var tp = new VccTypeExpressionOf(res);
+        name = new GenericInstanceExpression(name, new TypeExpression[] { tp }, loc);
+      }
+      var call = this.CheckedExpressionIfRequested(new VccMethodCall(name, parameters.AsReadOnly(), slb));
+      contract.AddPrecondition(new Precondition(call, null, call.SourceLocation));
     }
 
     protected override List<Parameter> ParseParameterList(TokenSet followers) {
