@@ -23,6 +23,6 @@ int main()
 /*`
 Verification of min failed.
 testcase(8,3) : error VC9501: Post condition '\result <= a && \result <= b' did not verify.
-testcase(6,28) : error VC9599: (related information) Location of post condition.
+testcase(6,14) : error VC9599: (related information) Location of post condition.
 Verification of main succeeded.
 `*/
