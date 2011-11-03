@@ -1,0 +1,12 @@
+`/newsyntax
+#include <vcc.h>
+
+static int arr[1024];
+
+void foo() {
+  unsigned int i = (unsigned int)arr;
+}
+
+`
+Verification of foo succeeded.
+`
