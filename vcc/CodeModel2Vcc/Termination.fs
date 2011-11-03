@@ -11,6 +11,17 @@ open Microsoft.Research.Vcc.Util
 open Microsoft.Research.Vcc.TransUtil
 open Microsoft.Research.Vcc.CAST
 
+let checkTermination (helper:Helper.Env) (fn:Function) =
+  if fn.CustomAttr |> hasCustomAttr AttrDefinition || fn.CustomAttr |> hasCustomAttr AttrAbstract then
+    helper.Options.TerminationForPure
+  // if explicit measure is given, and termination is not disabled, then check it 
+  elif helper.Options.TerminationForPure && fn.Variants <> [] then
+    true
+  elif fn.IsSpec then
+    helper.Options.TerminationForGhost
+  else
+    helper.Options.TerminationForAll
+
 let setDecreasesLevel (helper:Helper.Env) decls =
   let aux = function
     | Top.FunctionDecl fn ->
@@ -29,7 +40,7 @@ let setDecreasesLevel (helper:Helper.Env) decls =
         | e -> e
       fn.Requires <- List.map checkDecr fn.Requires
       let lev =
-        if fn.DecreasesLevel <> 0 || fn.IsWellFounded then
+        if fn.DecreasesLevel <> 0 || checkTermination helper fn then
           fn.DecreasesLevel
         else
           System.Int32.MaxValue
@@ -108,10 +119,10 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
         valueShouldFollow ctx (aux ctx bindings)
 
       // ignored statements
+      | Label _
       | Assert _
       | Assume _ 
       | Comment _
-      | Label _ 
       | VarDecl _ ->
         valueShouldFollow ctx self
 
@@ -165,7 +176,21 @@ let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
   aux ctx Map.empty [expr]
 
 let insertTerminationChecks (helper:Helper.Env) decls =
-  let check (currFn:Function) decrRefs self e =
+  let check (currFn:Function) decrRefs (labels:Dict<_,_>) self e =
+    let rec computeCheck tok = function
+      | ((s:Expr) :: ss, (c:Expr) :: cc) ->
+        match s.Type, c.Type with
+          | (MathInteger _ | Integer _), (MathInteger _ | Integer _) ->
+            Expr.Macro (boolBogusEC(), "prelude_int_lt_or", [c; s; computeCheck tok (ss, cc)])
+          | _ ->
+            helper.GraveWarning (tok, 9314, "only integer arguments are currently accepted in _(decreases ...) clauses; consider using \\size(...)")
+            Expr.False
+      // missing elements are treated as Top, e.g. consider:
+      // f(a) = ... f(a-1) ... g(a-1,b) ...
+      // g(a,b) = ... g(a,b-1) ... f(a-1) ...
+      | (_, []) -> Expr.False
+      | ([], _) -> Expr.True 
+
     let rec justChecks = function
       | Pure (_, e) -> justChecks e
 
@@ -181,26 +206,13 @@ let insertTerminationChecks (helper:Helper.Env) decls =
                                System.String.Format ("calling function '{0}' (level {1}) from lower-level function ('{2}' at level {3})", 
                                                      fn.Name, fn.DecreasesLevel, currFn.Name, currFn.DecreasesLevel))
           []
-        elif fn.IsWellFounded then        
+        elif checkTermination helper fn then
           let subst = fn.CallSubst args
           let assigns, callVariants = 
             fn.Variants 
               |> List.map (fun e -> e.Subst subst)
               |> cacheMultiple helper lateCache "callDecr" VarKind.SpecLocal
-          let rec computeCheck = function
-            | ((s:Expr) :: ss, (c:Expr) :: cc) ->
-              match s.Type, c.Type with
-                | (MathInteger _ | Integer _), (MathInteger _ | Integer _) ->
-                  Expr.Macro (boolBogusEC(), "prelude_int_lt_or", [c; s; computeCheck (ss, cc)])
-                | _ ->
-                  helper.GraveWarning (e.Token, 9314, "only integer arguments are currently accepted in _(decreases ...) clauses; consider using \\size(...)")
-                  Expr.False
-            // missing elements are treated as Top, e.g. consider:
-            // f(a) = ... f(a-1) ... g(a-1,b) ...
-            // g(a,b) = ... g(a,b-1) ... f(a-1) ...
-            | (_, []) -> Expr.False
-            | ([], _) -> Expr.True 
-          let check = computeCheck (decrRefs, callVariants)
+          let check = computeCheck e.Token (decrRefs, callVariants)
           if check = Expr.False then
             helper.GraveWarning (e.Token, 9321, "no measure to decrease when calling '" + e.ToString() + "'; consider using _(level ...)")
             assigns
@@ -209,21 +221,40 @@ let insertTerminationChecks (helper:Helper.Env) decls =
             let check = Expr.MkAssert check
             assigns @ [check]
         else
-          helper.GraveWarning (e.Token, 9315, "function '" + fn.Name + "' should by defined with _(def) or _(abstract) for termination checking")
+          helper.GraveWarning (e.Token, 9315, "termination checking not enabled for function '" + fn.Name + "'; consider supplying _(decreases ...) clause")
           []
       | _ -> helper.Die()
 
     match e with
+    | Call (_, { Name = "_vcc_stack_alloc" }, _, _) ->
+      None
+
     | Call (ec, fn, tps, args) as e ->
       match justChecks e with
         | [] -> None
         | lst ->
           Some (Expr.MkBlock (lst @ [Call (ec, fn, tps, List.map self args)]))
 
-    | Loop _
-    | Goto _ ->
-      // as funny as it may sound...
-      helper.GraveWarning (e.Token, 9316, "loops and gotos are currently not supported in termination checking")
+    | Loop (ec, inv, wr, decr, body) ->
+      if decr = [] then
+        helper.GraveWarning (ec.Token, 9323, "failed to infer _(decreases ...) clause for the loop; please supply one")
+        Some (Loop (ec, inv, wr, decr, self body))
+      else
+        let body = self body
+        let assigns0, refs0 = cacheMultiple helper lateCacheRef "loopDecrBeg" VarKind.SpecLocal decr
+        let assigns1, refs1 = cacheMultiple helper lateCacheRef "loopDecrEnd" VarKind.SpecLocal decr
+        let check = computeCheck ec.Token (refs0, refs1)
+        let check = check.WithCommon (afmte 8033 "the loop fails to decrease termination measure" [e])
+        let body = Expr.MkBlock (assigns0 @ [body] @ assigns1 @ [Expr.MkAssert check])
+        Some (Loop (ec, inv, wr, decr, body))
+
+    | Label (_, { Name = n }) ->
+      labels.[n] <- true
+      None
+
+    | Goto (ec, { Name = n }) ->
+      if labels.ContainsKey n then
+        helper.GraveWarning (e.Token, 9316, "backward gotos are currently not supported in termination checking")
       Some e
 
     | Assert _
@@ -244,7 +275,8 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Macro (_, name, _) when name.StartsWith "DP#" ->
       None
 
-    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"|"vs_fetch"|"ite"|"size"|"check_termination"), _) ->
+    | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"
+                  |"vs_fetch"|"ite"|"size"|"check_termination"|"map_updated"|"stackframe"), _) ->
       None
 
     | Macro (ec, s, args) as e ->
@@ -269,8 +301,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
       List.iter computeDefReads decls
    
   let setDefaultVariants = function
-    | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition 
-                                    || fn.CustomAttr |> hasCustomAttr AttrAbstract ->
+    | Top.FunctionDecl fn as decl when checkTermination helper fn ->
         if fn.Variants = [] then
           let aux acc (v:Variable) =
             let rf = Ref ({ bogusEC with Type = v.Type }, v)
@@ -285,22 +316,15 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           fn.Variants <- fn.Parameters |> List.fold aux [] |> List.rev
     | _ -> ()
    
-  let aux = function
-    | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition 
-                                    || fn.CustomAttr |> hasCustomAttr AttrAbstract ->
-      let isDef = fn.CustomAttr |> hasCustomAttr AttrDefinition 
-      if fn.Body.IsNone then
-        if isDef then
+  let genDefAxiom = function
+    | Top.FunctionDecl fn as decl when fn.CustomAttr |> hasCustomAttr AttrDefinition ->
+      match fn.Body with
+        | None ->
           helper.GraveWarning (fn.Token, 9318, "definition functions need to have body")
-        [decl]
-      else
-        let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
-        let origBody = fn.Body.Value
-        let body = Expr.MkBlock (assigns @ [origBody])
-        let body = body.SelfMap (check fn refs)
-        fn.Body <- Some body
-        if fn.RetType <> Type.Void && isDef then
-          let expr = turnIntoPureExpression helper fn.RetType origBody
+          [decl]
+        | _ when fn.RetType = Void -> [decl]
+        | Some body ->
+          let expr = turnIntoPureExpression helper fn.RetType body
           if fn.Reads = [] then
             fn.Reads <- computeReads expr
           let suff = "#" + helper.UniqueId().ToString() 
@@ -320,13 +344,21 @@ let insertTerminationChecks (helper:Helper.Env) decls =
             }
           let axiom = Top.Axiom (if vars = [] then eq else Quant (ec Type.Bool, qd))
           [decl; axiom]
-        else
-          [decl]
     | decl -> [decl]
+   
+  let genChecks = function
+    | Top.FunctionDecl ({ Body = Some body } as fn) when checkTermination helper fn ->
+      let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
+      let body = Expr.MkBlock (assigns @ [body])
+      let body = body.SelfMap (check fn refs (gdict()))
+      fn.Body <- Some body
+    | decl -> ()
 
   computeAllDefReads decls
   List.iter setDefaultVariants decls
-  List.collect aux decls
+  let decls = List.collect genDefAxiom decls
+  List.iter genChecks decls
+  decls
 
 let terminationCheckingPlaceholder (helper:Helper.Env) decls =
   let rec skipChecks = function
@@ -385,7 +417,7 @@ let terminationCheckingPlaceholder (helper:Helper.Env) decls =
       e.ApplyToChildren addChecks
        
   let aux = function
-    | Top.FunctionDecl fn as decl when fn.IsWellFounded ->
+    | Top.FunctionDecl fn as decl when checkTermination helper fn ->
       fn.Body <- fn.Body |> Option.map addChecks
     | _ -> ()
 

@@ -24,7 +24,7 @@ namespace Microsoft.Research.Vcc
   //
   // "id" numbers
   //      
-  // Verification errors:  between 8001 and 8499: First available: 8032
+  // Verification errors:  between 8001 and 8499: First available: 8033
   // Assertions:           between 8501 and 8999: First available: 8539
   //
 
