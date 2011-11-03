@@ -19,5 +19,5 @@ int main()
 /*`
 Verification of min succeeded.
 Verification of main failed.
-testcase(15,26) : error VC9500: Assertion 'z <= x' did not verify.
+testcase(15,12) : error VC9500: Assertion 'z <= x' did not verify.
 `*/

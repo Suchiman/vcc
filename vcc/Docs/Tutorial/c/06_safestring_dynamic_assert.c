@@ -48,8 +48,8 @@ void sstr_append_char(struct SafeString *s, char c)
 /*{out}*/
 // Not that the output makes so much sense, but at least there are no parse errors.
 /*`
-testcase(24,26) : error VC0000: The best overloaded method match for '__Globals__.\writable(System.Diagnostics.Contracts.CodeContract.TypedPtr)' has some invalid arguments.
-testcase(24,36) : error VC0000: Argument '1': cannot convert from 'System.Diagnostics.Contracts.CodeContract.Objset' to 'obj_t'.
-testcase(32,26) : error VC0000: The best overloaded method match for '__Globals__.\writable(System.Diagnostics.Contracts.CodeContract.TypedPtr)' has some invalid arguments.
-testcase(32,36) : error VC0000: Argument '1': cannot convert from 'System.Diagnostics.Contracts.CodeContract.Objset' to 'obj_t'.
+testcase(24,12) : error VC0000: The best overloaded method match for '__Globals__.\writable(System.Diagnostics.Contracts.CodeContract.TypedPtr)' has some invalid arguments.
+testcase(24,22) : error VC0000: Argument '1': cannot convert from 'System.Diagnostics.Contracts.CodeContract.Objset' to 'obj_t'.
+testcase(32,12) : error VC0000: The best overloaded method match for '__Globals__.\writable(System.Diagnostics.Contracts.CodeContract.TypedPtr)' has some invalid arguments.
+testcase(32,22) : error VC0000: Argument '1': cannot convert from 'System.Diagnostics.Contracts.CodeContract.Objset' to 'obj_t'.
 `*/
