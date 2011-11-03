@@ -67,6 +67,11 @@ namespace Microsoft.Research.Vcc
     public bool TerminationForPure { get { return TerminationLevel >= 1; } }
     public bool TerminationForGhost { get { return TerminationLevel >= 2; } }
     public bool TerminationForAll { get { return TerminationLevel >= 3; } }
+    public bool ExplicitTargetsGiven {
+      get {
+        return VerificationLocation != null || 0 < Functions.Count || 0 < FunctionsWithExactName.Count;
+      }
+    }
 
     public void CopyFrom(VccOptions other)
     {

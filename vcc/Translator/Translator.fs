@@ -1909,7 +1909,7 @@ namespace Microsoft.Research.Vcc
                   match attr with
                     | C.IntBoogieAttr (key, value) -> yield (B.ExprAttr (key, bInt value))
                     | C.BoolBoogieAttr (key, value) -> yield (B.ExprAttr (key, B.Expr.BoolLiteral value))
-                    | C.VccAttr(C.AttrSkipVerification, _) when helper.Options.VerificationLocation = null -> yield (B.ExprAttr ("verify", bFalse))
+                    | C.VccAttr(C.AttrSkipVerification, _) when not helper.Options.ExplicitTargetsGiven -> yield (B.ExprAttr ("verify", bFalse))
                     | C.VccAttr ("extra_options", o) -> yield (B.StringAttr ("vcc_extra_options", o))
                     | C.VccAttr (C.AttrBvLemmaCheck, o) -> yield (B.StringAttr ("vcc_bv_lemma_check", o))
                     | C.VccAttr (C.AttrSkipSmoke, o) -> yield (B.StringAttr("vcc_skip_smoke", o))
