@@ -38,8 +38,8 @@ void sstr_append_char(struct SafeString *s, char c)
 }
 /*{out}*/
 /*`
-testcase(26,25) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
-testcase(36,25) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
-testcase(26,25) : error VC9612: don't know how to write to @_vcc_closed(s)
-testcase(36,25) : error VC9612: don't know how to write to @_vcc_closed(s)
+testcase(26,11) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(36,11) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(26,11) : error VC9612: don't know how to write to @_vcc_closed(s)
+testcase(36,11) : error VC9612: don't know how to write to @_vcc_closed(s)
 `*/

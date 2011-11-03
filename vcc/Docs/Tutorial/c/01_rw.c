@@ -41,5 +41,5 @@ Verification of read2 succeeded.
 Verification of read_wrong failed.
 testcase(21,11) : error VC8512: Assertion 'p is thread local' did not verify.
 Verification of test_them failed.
-testcase(32,26) : error VC9500: Assertion 'a == 3' did not verify.
+testcase(32,12) : error VC9500: Assertion 'a == 3' did not verify.
 `*/
