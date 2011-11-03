@@ -158,6 +158,7 @@
 /suite &lt;file or directory&gt;     Treat the given file or directory as a collection of test cases with expected output and report any differences (Short form: /s)
 /time                          Display more detailed time statistics.
 /translate                     Translate the source files into corresponding BPL files (Short form: /t)
+/termination:&lt;n&gt;               Check termination behavior of: 0-nothing, 1-pure functions (default), 2-also ghost functions, 3-also regular functions (Short form: /term)
 /version                       Display the compiler version.
 /warningsaserrors              Treat warnings as errors (Short form: /wx)
 /warn:&lt;n&gt;                      Set warning level (0-2), default is 1 (Short form: /w)

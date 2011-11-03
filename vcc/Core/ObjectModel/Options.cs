@@ -63,6 +63,10 @@ namespace Microsoft.Research.Vcc
     public string OutputDir;
     public string IgnoreIncludes;
     public bool UnfoldConstants;
+    public int TerminationLevel = 1;
+    public bool TerminationForPure { get { return TerminationLevel >= 1; } }
+    public bool TerminationForGhost { get { return TerminationLevel >= 2; } }
+    public bool TerminationForAll { get { return TerminationLevel >= 3; } }
 
     public void CopyFrom(VccOptions other)
     {
@@ -132,6 +136,7 @@ namespace Microsoft.Research.Vcc
       this.YarraMode = other.YarraMode;
       this.IgnoreIncludes = other.IgnoreIncludes;
       this.UnfoldConstants = other.UnfoldConstants;
+      this.TerminationLevel = other.TerminationLevel;
     }
   }
 
@@ -151,6 +156,9 @@ namespace Microsoft.Research.Vcc
         options.PrintCEVModel = true;
         options.SaveModelForBvd = true;
       }
+
+      if (!options.Vcc3)
+        options.TerminationLevel = 0;
 
       if (options.RunTestSuite &&
           options.RunTestSuiteMultiThreaded != -1 &&
@@ -522,6 +530,12 @@ namespace Microsoft.Research.Vcc
           bool? translateToBpl = this.ParseNamedBoolean(arg, "translate", "t");
           if (translateToBpl != null) {
             this.options.TranslateToBPL = translateToBpl.Value;
+            return true;
+          }
+          ushort termLevel;
+          string termLevelStr = this.ParseNamedArgument(arg, "termination", "term");
+          if (termLevelStr != null && ushort.TryParse(termLevelStr, out termLevel)) {
+            this.options.TerminationLevel = termLevel;
             return true;
           }
           return false;
