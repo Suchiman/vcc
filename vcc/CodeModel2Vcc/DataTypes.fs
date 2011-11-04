@@ -138,7 +138,7 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
           Some (Expr.MkBlock (save @ [compileCases expr dtTd cases]))
         | tp ->
           helper.Error (ec.Token, 9729, "cannot match on non-datatype " + tp.ToString())
-          None
+          Some (Expr.MkBlock [])
     | _ -> None
 
 let init (helper:Helper.Env) =
