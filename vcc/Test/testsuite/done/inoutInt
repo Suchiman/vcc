@@ -1,0 +1,9 @@
+`/newsyntax
+#include <vcc.h>
+#include <sal.h>
+
+void foo(__inout int x) { }
+
+`
+Verification of foo succeeded.
+`
