@@ -115,7 +115,7 @@ void test_main()
         while (i < CAPACITY)
             _(invariant \wrapped(S))
             _(invariant i == Length(S))
-        {   
+        {
             Push(S, _(unchecked)((int)i));
             i++;
         }
@@ -123,7 +123,7 @@ void test_main()
         while (i > 0)
             _(invariant \wrapped(S))
             _(invariant i == Length(S))
-        {   
+        {
             j = Top(S);
             Pop(S);
             i--;

@@ -17,13 +17,13 @@ typedef _(claimable) struct _Protector {
 } Protector;
 
 typedef _(claimable) _(volatile_owns) struct _Rundown {
-   _(ghost volatile \claim self_claim;) 
-   _(ghost \object protected_obj;) 
+   _(ghost volatile \claim self_claim;)
+   _(ghost \object protected_obj;)
   volatile unsigned int count;
 
-   _(ghost volatile bool alive;) 
-   _(ghost volatile bool enabled;) 
-   _(ghost Protector enabled_protector;) 
+   _(ghost volatile bool alive;)
+   _(ghost volatile bool enabled;)
+   _(ghost Protector enabled_protector;)
   _(invariant \old((&enabled_protector)->\closed) ==> \unchanged(enabled) && \unchanged(alive))
 
   _(invariant !alive ==> !enabled && count == 0)
@@ -85,12 +85,12 @@ void ReferenceRundown(Rundown *r _(out \claim res) _(ghost \claim rdi))
   // the claim will reference r->self_claim, will guarantee that the protected_obj is closed and the rundown is initialized
   _(ensures \claims(res, \claims_object(res, r->self_claim) && r->\closed && (r->protected_obj)->\closed && r->count > 0))
 {
-   _(ghost \claim c;) 
+   _(ghost \claim c;)
 
   _(atomic r, rdi) {
     _(assume r->count < 0xffffffff)
     InterlockedIncrement(&r->count);
-     _(ghost res = \make_claim({r->self_claim}, r->count > 0 && (r->protected_obj)->\closed && \when_claimed(r->self_claim) == r->self_claim);) 
+     _(ghost res = \make_claim({r->self_claim}, r->count > 0 && (r->protected_obj)->\closed && \when_claimed(r->self_claim) == r->self_claim);)
   }
 }
 
@@ -114,7 +114,7 @@ typedef _(claimable) struct _Resource {
 typedef struct _RundownContainer {
   Resource *rsc;
   bool enabled;
-   _(ghost \claim rd_claim;) 
+   _(ghost \claim rd_claim;)
 
   _(invariant \mine(rd_claim, &rsc->rd, &rsc->rd.enabled_protector))
 
@@ -183,7 +183,7 @@ Resource *KillRundownContainerDead(RundownContainer *cont)
   Resource *rsc;
   unsigned int cur_count;
   Rundown *rd = &cont->rsc->rd;
-  _(ghost \claim tmp, is_zero;) 
+  _(ghost \claim tmp, is_zero;)
 
   _(unwrap cont)
     rsc = cont->rsc;
@@ -195,7 +195,7 @@ Resource *KillRundownContainerDead(RundownContainer *cont)
     {
       _(atomic cont->rd_claim, rd) {
         cur_count = rd->count;
-        
+
            _(ghost if (cur_count == 0) {
              is_zero = \make_claim({cont->rd_claim}, rd->count == 0);
            })
@@ -224,7 +224,7 @@ Resource *KillRundownContainerDead(RundownContainer *cont)
 void UseRundown(Resource *a, Rundown *r _(ghost \claim rdi))
   _(always rdi, r->\closed && r->protected_obj == a && r->enabled)
 {
-   _(ghost \claim ac;) 
+   _(ghost \claim ac;)
   ReferenceRundown(r _(out ac) _(ghost rdi));
   _(atomic rdi, ac, a) {
     a->x = 12;

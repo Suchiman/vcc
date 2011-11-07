@@ -33,11 +33,11 @@ _(volatile_owns) struct Stack {
     _(invariant \this->hd != NULL <==> \this->\owns != {})
     _(invariant \this->hd != NULL <==>\this->hd \in \this->\owns)
     _(invariant \this->hd != NULL ==>
-                  (\forall struct Node *x; {x \in \this->\owns} 
+                  (\forall struct Node *x; {x \in \this->\owns}
                     x \in \this->\owns ==> x->\valid && x->next != \this->hd)
-               && (\forall struct Node *x; {x->next \in \this->\owns} 
+               && (\forall struct Node *x; {x->next \in \this->\owns}
                     x \in \this->\owns && x->next != NULL ==> x->next \in \this->\owns)
-               && \forall struct Node *x; struct Node *y; {x->next, y->next} 
+               && \forall struct Node *x; struct Node *y; {x->next, y->next}
                     x \in \this->\owns && y \in \this->\owns && x->next == y->next ==> x == y)
 };
 
@@ -46,7 +46,7 @@ bool push(struct Node *n, struct Stack *s _(ghost \claim c))
     _(requires n->\owns == {})
     _(writes \extent(n))
 {
-    while (true) 
+    while (true)
         _(invariant \mutable(n) && n->\owns == {})
     {
         struct Node *h;
@@ -54,11 +54,11 @@ bool push(struct Node *n, struct Stack *s _(ghost \claim c))
 
         _(atomic c, s) {
           h = s->hd;
-	}
+        }
         n->next = h;
 
         ok = false;
-	_(atomic c, s) {
+        _(atomic c, s) {
             _(wrap n)
 	    _(begin_update)
         ok = (InterlockedCompareExchangePointer(&s->hd, n, h) == h);
@@ -68,9 +68,9 @@ bool push(struct Node *n, struct Stack *s _(ghost \claim c))
             }
 	}
 
-        if (ok) 
+        if (ok)
             return true;
-	
+
 	_(unwrap n)
     }
 }
@@ -86,8 +86,8 @@ bool pop(struct Node **n, struct Stack *s)
 {
     _(assume s->hd != NULL)
     _(assume s->\owns != {})
-    
-    while (true) 
+
+    while (true)
     _(invariant /*mutable(s->hd) && */\mutable(*n) && s->\owns != {})
     {
         struct Node *h;
@@ -103,7 +103,7 @@ bool pop(struct Node **n, struct Stack *s)
             assert (owns(s) == set_empty());
             return false;
         }
-        else 
+        else
 */
 //        {
 
@@ -121,7 +121,7 @@ bool pop(struct Node **n, struct Stack *s)
                 }
             }
 
-            if (ok) 
+            if (ok)
                 return true;
 
 //        }

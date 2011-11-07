@@ -4,14 +4,14 @@
 struct Collection {
   int *arr;
   int ver;
-  
+
   _(group  _(claimable) Shadow)
-   _(ghost _(:Shadow) volatile \state shadow;) 
+  _(ghost _(:Shadow) volatile \state shadow;)
   _(invariant :Shadow \approves(\this->\owner, shadow))
   _(invariant :Shadow \at(\old(shadow), ver) <= \at(shadow, ver))
   _(invariant :Shadow \at(\old(shadow), ver) == \at(shadow, ver) ==>
-                       \at(\old(shadow), arr) == \at(shadow, arr))
-  
+                      \at(\old(shadow), arr) == \at(shadow, arr))
+
   _(invariant \mine(\this::Shadow))
   _(invariant \at(shadow, arr) == arr)
   _(invariant \at(shadow, ver) == ver)
@@ -42,23 +42,21 @@ void add(struct Collection *c)
   int x;
 
   _(unwrapping c) {
-    _(assert \inv(c))
     c->arr = &x;
     c->ver++;
-    
-    
-      _(ghost _(atomic c::Shadow) {
-        c->shadow = \now();
-	_(bump_volatile_version c::Shadow)
-      })
+
+    _(ghost _(atomic c::Shadow) {
+      c->shadow = \now();
+      _(bump_volatile_version c::Shadow)
+    })
   }
 }
 
 struct Iterator {
   struct Collection *coll;
   int ver;
-   _(ghost \claim cl;) 
-   _(ghost int *arr;) 
+   _(ghost \claim cl;)
+   _(ghost int *arr;)
 
 #define shadow_copy(o, f) \at((o)->shadow, \at(\now(), o)->f)
   _(invariant \mine(cl) && \claims_object(cl, coll::Shadow))
@@ -73,9 +71,9 @@ void get_iter(struct Collection *c)
   if (iter != NULL) {
     iter->coll = c;
     iter->ver = c->ver;
-     _(ghost iter->arr = c->arr;) 
+     _(ghost iter->arr = c->arr;)
     _(atomic c) {
-       _(ghost iter->cl = \make_claim({c::Shadow}, \true);) 
+       _(ghost iter->cl = \make_claim({c::Shadow}, \true);)
     }
 
     _(wrap iter)

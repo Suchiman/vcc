@@ -4,7 +4,7 @@
 typedef _(claimable) _(volatile_owns) struct _LOCK {
   volatile int locked;
 
-   _(ghost \object protected_obj;) 
+   _(ghost \object protected_obj)
 
   _(invariant locked == 0 ==> \mine(protected_obj))
 } LOCK;
@@ -17,7 +17,7 @@ void InitializeLock(LOCK *l _(ghost \object obj))
   l->locked = 0;
   _(ghost {
     l->protected_obj = obj;
-    _(ghost l->\owns =  {obj});
+    l->\owns = {obj};
     _(wrap l)
   })
 }
@@ -33,7 +33,7 @@ _(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int E
 
 void Acquire(LOCK *l _(ghost \claim c))
   _(always c, l->\closed)
-  _(ensures  \wrapped(l->protected_obj) && \fresh(l->protected_obj))
+  _(ensures \wrapped(l->protected_obj) && \fresh(l->protected_obj))
 {
   int stop = 0;
 
@@ -48,8 +48,8 @@ void Acquire(LOCK *l _(ghost \claim c))
 void Release(LOCK *l _(ghost \claim c))
   _(always c, l->\closed)
   _(requires l->protected_obj != c)
-  _(writes  l->protected_obj)
-  _(requires  \wrapped(l->protected_obj))
+  _(writes l->protected_obj)
+  _(requires \wrapped(l->protected_obj))
 {
   _(atomic c, l) {
     _(ghost l->\owns += l->protected_obj);
@@ -68,7 +68,7 @@ _(ghost _(claimable) struct _DATA_CONTAINER {
   int dummy;
   _(invariant \mine(&DataLock))
   _(invariant DataLock.protected_obj == &Data)
-} DataContainer;)
+} DataContainer)
 
 
 LOCK DataLock;
@@ -98,7 +98,7 @@ void boot()
   _(ghost (&DataContainer)->\owns += &DataLock);
   _(wrap &DataContainer)
 
-  _(ghost c = \make_claim({&DataContainer}, (&DataContainer)->\closed);) 
+  _(ghost c = \make_claim({&DataContainer}, (&DataContainer)->\closed))
   testit(_(ghost c));
 }
 

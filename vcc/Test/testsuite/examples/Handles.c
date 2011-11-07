@@ -5,16 +5,16 @@ struct X { int y; };
 
 struct Data {
   int dummy;
-   _(ghost volatile bool handles[struct Handle*];) 
+  _(ghost volatile bool handles[struct Handle*];)
   _(invariant \on_unwrap(\this, \forall struct Handle *h; ! handles[h]))
   _(invariant \approves(\this->\owner, handles))
-  //invariant(forall(struct Handle *h; closed(h) && h->data == this ==> handles[h]))
+  //_(invariant \forall struct Handle *h; h->\closed && h->data == \this ==> handles[h]))
   _(invariant \forall struct Handle *h; \old(handles[h]) && !handles[h] ==> !h->\closed)
 };
 
 struct Handle {
   int dummy;
-   _(ghost struct Data *data;) 
+  _(ghost struct Data *data;)
   _(invariant (\this->\valid && !\ghost(\this)) && data->\closed && data->handles[\this])
 };
 
@@ -28,18 +28,18 @@ void wrapped_use()
 
   _(ghost {
 
-  d.handles = (\lambda struct Handle *h; (\false));
-  _(assert \forall struct Handle *h; h->data == &d ==> !\inv(h))
-  _(wrap &d)
-  _(assert &d \in \domain(&d))
+    d.handles = \lambda struct Handle *h; \false;
+    _(assert \forall struct Handle *h; h->data == &d ==> !\inv(h))
+    _(wrap &d)
+    _(assert &d \in \domain(&d))
 
-  _(atomic &d) {
-    d.handles = (\lambda struct Handle *hh; (hh == &h));
-    _(bump_volatile_version &d)
-  }
-  _(assert &d \in \domain(&d))
-  h.data = &d;
-  _(wrap &h)
+    _(atomic &d) {
+      d.handles = \lambda struct Handle *hh; hh == &h;
+      _(bump_volatile_version &d)
+    }
+    _(assert &d \in \domain(&d))
+    h.data = &d;
+    _(wrap &h)
 
   })
 
@@ -47,15 +47,15 @@ void wrapped_use()
 
   _(ghost {
 
-  _(atomic &d) {
-    _(unwrap &h)
-    _(begin_update)
-    d.handles = (\lambda struct Handle *hh; (\false));
-    _(bump_volatile_version &d)
-  }
-  _(assert &d \in \domain(&d))
+    _(atomic &d) {
+      _(unwrap &h)
+      _(begin_update)
+      d.handles = (\lambda struct Handle *hh; (\false));
+      _(bump_volatile_version &d)
+    }
+    _(assert &d \in \domain(&d))
 
-  _(unwrap &d)
+    _(unwrap &d)
 
   })
 }
@@ -73,7 +73,7 @@ void init()
 {
   struct Container *c = (struct Container *)malloc(sizeof(struct Container));
   if (c != NULL) {
-     _(ghost c->d.handles = (\lambda struct Handle *h; (\false));) 
+     _(ghost c->d.handles = \lambda struct Handle *h; \false;)
     _(assert \forall struct Handle *h; h->data == &c->d ==> !\inv(h))
     _(wrap &c->d)
     _(wrap c)
@@ -85,14 +85,14 @@ void closed_use(struct Container *c)
   _(requires \wrapped(c))
   _(ensures \wrapped(&c->h) && c->h.data == &c->d)
 {
-_(ghost {
-  _(atomic &c->d) {
-    _(assert \inv(c))
-    c->d.handles = (\lambda struct Handle *hh; (hh == &c->h || c->d.handles[hh]));
-  }
-  c->h.data = &c->d;
-  _(wrap &c->h)
-})
+  _(ghost {
+    _(atomic &c->d) {
+      _(assert \inv(c))
+      c->d.handles = \lambda struct Handle *hh; hh == &c->h || c->d.handles[hh];
+    }
+    c->h.data = &c->d;
+    _(wrap &c->h)
+  })
 }
 
 /*`
