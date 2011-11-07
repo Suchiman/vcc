@@ -1,0 +1,17 @@
+`/newsyntax
+#include <vcc.h>
+
+void foo(int p)
+  _(level p)
+{
+}
+
+void bar()
+  _(level 100000000000)
+{
+}
+
+`
+testcase(4,5) : error VC9734: _(level ...) needs a compile time constant
+testcase(9,5) : error VC9733: _(level ...) needs to fit integer range
+`
