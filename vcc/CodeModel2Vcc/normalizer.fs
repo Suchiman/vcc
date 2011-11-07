@@ -1180,7 +1180,8 @@ namespace Microsoft.Research.Vcc
         let (lhss, rhs) = collectLhss [] assignment 
         if lhss.Length = 1 then None
         else 
-          let tmp = getTmp helper "nested" rhs.Type VarKind.Local
+          let varKind = if Option.isSome (exprDependsOnSpecExpr rhs) then VarKind.SpecLocal else VarKind.Local
+          let tmp = getTmp helper "nested" rhs.Type varKind
           let tmpRef = mkRef tmp
           let varDecl = VarDecl({ec with Type = Void}, tmp, [])
           let rhsassign = Macro(ec, "=", [tmpRef; self rhs])
