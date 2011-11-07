@@ -27,27 +27,27 @@ void incr(struct A *a, int *res _(ghost \claim c) _(out \claim cres))
   _(atomic c,a) {
     val = a->x;
   }
-  
+
   *res = val;
-   _(ghost cres = \make_claim({c}, \when_claimed(*res) <= a->x);) 
+   _(ghost cres = \make_claim({c}, \when_claimed(*res) <= a->x);)
 }
 
 void use_case()
 {
   struct A *a;
   int tmp;
-   _(ghost \claim c;) 
-   _(ghost \claim c2;) 
+   _(ghost \claim c;)
+   _(ghost \claim c2;)
 
   a = malloc(sizeof(*a));
   _(assume a != NULL)
   a->x = 0;
   _(wrap a)
 
-   _(ghost c = \make_claim({a}, \true);) 
+   _(ghost c = \make_claim({a}, \true);)
   incr(a, &tmp _(ghost c) _(out c2) );
   _(assert \wrapped(c))
- 
+
   _(assert \active_claim(c2))
   _(assert tmp <= a->x)
 

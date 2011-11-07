@@ -12,23 +12,23 @@ _(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int E
 
 struct A {
   volatile int x;
-  _(invariant \old(\this->x) == \this->x || \old(\this->x) + 1 == \this->x)
+  _(invariant \unchanged(x) || \old(x) + 1 == x)
 };
 
 void LockFreeIncr(struct A *a _(ghost \claim c))
   _(writes c)
   _(always c, a->\closed)
-  _(ensures c->\claim_count == \old(c->\claim_count))
+  _(ensures \unchanged(c->\claim_count))
 {
   int y;
   int z;
-   _(ghost \claim c1, c2;) 
+   _(ghost \claim c1, c2)
 
-  _(atomic c,a) {
+  _(atomic c, a) {
     y = a->x;
-     _(ghost c1 = \make_claim({c}, y <= a->x);) 
+     _(ghost c1 = \make_claim({c}, y <= a->x))
   }
-  
+
   if (y >= 0x7fffffff) {
     _(ghost \destroy_claim(c1, {c}));
     return;
@@ -36,7 +36,7 @@ void LockFreeIncr(struct A *a _(ghost \claim c))
 
   _(atomic c, c1, a) {
     z = InterlockedCompareExchange(&a->x, y+1, y);
-     _(ghost c2 = \make_claim({c}, y < a->x);) 
+     _(ghost c2 = \make_claim({c}, y < a->x))
   }
 
   _(atomic c, c2, a) {
@@ -45,8 +45,8 @@ void LockFreeIncr(struct A *a _(ghost \claim c))
 
   _(assert y < z)
 
-  _(ghost \destroy_claim(c1, {c}));
-  _(ghost \destroy_claim(c2, {c}));
+  _(ghost \destroy_claim(c1, {c}))
+  _(ghost \destroy_claim(c2, {c}))
 }
 
 /*`
