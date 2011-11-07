@@ -41,7 +41,7 @@ int writeStruct(struct ConcreteStruct *s, int v)
 
   // Need to save s->abs into a local, otherwise when using s->abs in claims,
   // the prover thinks that it might change (which is true).
-   _(ghost struct AbstractStruct *abs = s->abs;) 
+   _(ghost struct AbstractStruct *abs = s->abs;)
 
   // We unwrap s and immediately take a claim on the protector and abs.
   // The claim holds initially, because we're right after unwrap, therefore
@@ -61,7 +61,7 @@ int writeStruct(struct ConcreteStruct *s, int v)
     // begin_update().  If you look below, you see that the second one cannot
     // hold.  The first assert we do explicitly, allowing us to still make use
     // of the claim here.
-    
+
     // We use the claim, so we know abs->value didn't change.
     _(assert \active_claim(c))
     // We get rid of the claim...

@@ -6,61 +6,37 @@ typedef unsigned __int32 UINT32;
 
 _(ghost typedef bool BITMAP[UINT64])
 
+_(pure BITMAP ToBm64(UINT64 n))
 
-_(ghost _(pure) BITMAP ToBm64(UINT64 n);) 
+_(pure BITMAP ToBm32(UINT32 n))
 
+_(pure BITMAP Bm64Singleton(UINT64 i) _(ensures \result == \lambda UINT64 j; (j == i)))
 
+_(pure BITMAP Bm32Singleton(UINT64 i) _(ensures \result == \lambda UINT64 j; (j == i)))
 
-_(ghost _(pure) BITMAP ToBm32(UINT32 n);) 
+_(pure BITMAP Bm64Union(BITMAP bm1, BITMAP bm2)
+  _(ensures \result == \lambda UINT64 i; i < 64 ==> (bm1[i] || bm2[i])))
 
+_(pure BITMAP Bm32Union(BITMAP bm1, BITMAP bm2)
+  _(ensures \result == \lambda UINT64 i; i < 32 ==> (bm1[i] || bm2[i])))
 
+_(pure BITMAP Bm64Intersect(BITMAP bm1, BITMAP bm2)
+  _(ensures \result == \lambda UINT64 i; i < 64 ==> (bm1[i] && bm2[i])))
 
-_(ghost _(pure) BITMAP Bm64Singleton(UINT64 i) _(ensures \result == \lambda UINT64 j; (j == i));)
+_(pure BITMAP Bm32Intersect(BITMAP bm1, BITMAP bm2)
+  _(ensures \result == \lambda UINT64 i; i < 32 ==> (bm1[i] && bm2[i])))
 
+_(pure BITMAP Bm64SymmetricDiff(BITMAP bm1, BITMAP bm2)
+  _(ensures \result == \lambda UINT64 i; i < 64 ==> (!(bm1[i] <==> bm2[i]))))
 
+_(pure BITMAP Bm32SymmetricDiff(BITMAP bm1, BITMAP bm2)
+  _(ensures \result == \lambda UINT64 i; i < 32 ==> (!(bm1[i] <==> bm2[i]))))
 
-_(ghost _(pure) BITMAP Bm32Singleton(UINT64 i) _(ensures \result == \lambda UINT64 j; (j == i));)
+_(pure bool Bm64SpecialValue(UINT64 bm)
+  _(returns \true))
 
-
-
-_(ghost _(pure) BITMAP Bm64Union(BITMAP bm1, BITMAP bm2)  
-  _(ensures \result == \lambda UINT64 i; i < 64 ==> (bm1[i] || bm2[i]));)
-
-
-
-_(ghost _(pure) BITMAP Bm32Union(BITMAP bm1, BITMAP bm2)  
-  _(ensures \result == \lambda UINT64 i; i < 32 ==> (bm1[i] || bm2[i]));)
-
-
-
-_(ghost _(pure) BITMAP Bm64Intersect(BITMAP bm1, BITMAP bm2)
-  _(ensures \result == \lambda UINT64 i; i < 64 ==> (bm1[i] && bm2[i]));)
-
-
-
-_(ghost _(pure) BITMAP Bm32Intersect(BITMAP bm1, BITMAP bm2)
-  _(ensures \result == \lambda UINT64 i; i < 32 ==> (bm1[i] && bm2[i]));)
-
-
-
-_(ghost _(pure) BITMAP Bm64SymmetricDiff(BITMAP bm1, BITMAP bm2)
-  _(ensures \result == \lambda UINT64 i; i < 64 ==> (!(bm1[i] <==> bm2[i])));)
-
-
-
-_(ghost _(pure) BITMAP Bm32SymmetricDiff(BITMAP bm1, BITMAP bm2)
-  _(ensures \result == \lambda UINT64 i; i < 32 ==> (!(bm1[i] <==> bm2[i])));)
-
-
-
-_(ghost _(pure) bool Bm64SpecialValue(UINT64 bm)
-  _(ensures \result == \true);)
-
-
-
-_(ghost _(pure) bool Bm32SpecialValue(UINT32 bm)
-  _(ensures \result == \true);)
-
+_(pure bool Bm32SpecialValue(UINT32 bm)
+  _(ensures \result == \true))
 
 _(axiom \forall UINT64 i; i < 64 ==> !ToBm64(0)[i])
 _(axiom \forall UINT64 i; i < 64 ==> ToBm64((UINT64)-1)[i])
@@ -175,7 +151,7 @@ typedef struct _toto {
 bool
 test(ptoto ob)
 _(requires \wrapped(ob))
-_(requires ob->inti==0)
+_(requires ob->inti == 0)
 _(writes ob)
 {
   _(unwrap ob)
@@ -186,9 +162,10 @@ _(writes ob)
   _(assert ob->inti == 2)
   _(assert ToBm64(ob->inti)[1])
   _(assert \forall UINT64 i; i < 64 && i != 1 ==> !ToBm64(ob->inti)[i])
-  //assert((ob->inti & (1UI64<<1)) == 2);
+  //_(assert (ob->inti & (1UI64<<1)) == 2);
   return 1;
 };
+
 /*`
 Verification of Add64 succeeded.
 Verification of InSet64 succeeded.

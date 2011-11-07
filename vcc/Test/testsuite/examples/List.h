@@ -52,7 +52,7 @@ _(ghost _(dynamic_owns) struct _LIST_MANAGER
 
     // The invariant explicitly talks about this node, and thus we explicitly state
     // we own it.
-    _(invariant \mine(ListHead->Blink)) 
+    _(invariant \mine(ListHead->Blink))
 
     // Each list entry, that can be reached via a Flink is also in the ownership
     // domain of the list manager. Additionally each Blink of an entry p->Flink points
