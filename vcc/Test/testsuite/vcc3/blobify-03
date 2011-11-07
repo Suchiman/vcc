@@ -83,6 +83,15 @@ void ok_write(void *p)
   _(split_blob _(blob 5)p, 2)
 }
 
+void ok_owns(void *p)
+  _(requires \mutable(_(blob 5)p))
+  _(writes _(blob 5)p)
+{
+  _(split_blob _(blob 5)p, 2)
+  _(assert (_(blob 2) p)->\owns == {})
+  _(assert (_(blob 3) (((char*) p) + 2))->\owns == {})
+}
+
 void ok_align()
 {
   _(ghost \claim t)
@@ -150,16 +159,18 @@ testcase(0,0) : error VC9599: (related information) Precondition: 'pointer passe
 Verification of fail_write failed.
 testcase(75,5) : error VC8510: Assertion '_(blob 5)p is writable in call to split_blob _(blob 5)p, 2' did not verify.
 Verification of ok_write succeeded.
+Verification of ok_owns failed.
+testcase(91,12) : error VC9500: Assertion '(_(blob 3) (((char*) p) + 2))->\owns == {}' did not verify.
 Verification of ok_align succeeded.
 Verification of fail1_align failed.
-testcase(103,5) : error VC9502: Call 'join_blobs _(blob 5)p, _(blob 10)(p + 10)' did not verify.
+testcase(112,5) : error VC9502: Call 'join_blobs _(blob 5)p, _(blob 10)(p + 10)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the blobs are aligned properly in memory'.
 Verification of fail2_align failed.
-testcase(113,5) : error VC8510: Assertion '_(blob 10)p is writable in call to join_blobs _(blob 10)p, _(blob 10)(p + 10)' did not verify.
+testcase(122,5) : error VC8510: Assertion '_(blob 10)p is writable in call to join_blobs _(blob 10)p, _(blob 10)(p + 10)' did not verify.
 Verification of fail3_align failed.
-testcase(123,5) : error VC9502: Call 'join_blobs t, _(blob 5)(p + 5)' did not verify.
+testcase(132,5) : error VC9502: Call 'join_blobs t, _(blob 5)(p + 5)' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the left pointer passed is a blob'.
 Verification of fail4_align failed.
-testcase(133,5) : error VC9502: Call 'join_blobs _(blob 5)(p + 5), t' did not verify.
+testcase(142,5) : error VC9502: Call 'join_blobs _(blob 5)(p + 5), t' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'the right pointer passed is a blob'.
 `
