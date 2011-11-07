@@ -37,12 +37,12 @@ typedef struct _ENTRY
 typedef _(dynamic_owns) struct _RESERVE
 {
     void *Compartment;
-    void *ListHead;   
+    void *ListHead;
     UINT64 ListDepth;
 
     _(ghost UINT64 ListIndex[struct _ENTRY *])
     _(ghost PENTRY _ListHead)
-    
+
     _(invariant Compartment != NULL)
     _(invariant _ListHead == (PENTRY)ListHead)
     _(invariant _ListHead == NULL <==> ListDepth == 0)
@@ -54,7 +54,7 @@ typedef _(dynamic_owns) struct _RESERVE
     _(invariant _ListHead != NULL ==> ListIndex[_ListHead] + 1 == ListDepth)
     _(invariant \forall PENTRY p; { p \in0 \this->\owns } p \in0 \this->\owns ==> ListDepth > ListIndex[p])
     _(invariant \forall PENTRY p; { p \in0 \this->\owns } p \in0 \this->\owns ==> p->h&& (p->f || p->g))
-    
+
 } RESERVE, *PRESERVE;
 
 void
@@ -66,7 +66,7 @@ Check(PRESERVE Reserve)
 
     _(assert Reserve != NULL)
     _(assert Reserve->Compartment != NULL)
-        
+
     for (pfn = (PENTRY) Reserve->ListHead, pageCount = Reserve->ListDepth;
          pageCount != 0;
          pfn = pfn->NextPfn, pageCount--)

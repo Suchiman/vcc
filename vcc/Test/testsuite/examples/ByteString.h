@@ -35,7 +35,7 @@ _(logic bool nonempty(ByteString s) = valid(s) && s.length > 0)
 _(def ByteString empty()
 	_(level 1)
 {
-	return (ByteString) { 
+	return (ByteString) {
 		.length = 0,
 		.bytes = \lambda \integer i; (BYTE) 0
 		};
@@ -47,10 +47,10 @@ _(def ByteString cons(ByteString s, BYTE b)
 	_(ensures \result.bytes[0] == b)
 	_(level 1)
 {
-	return (ByteString) { 
+	return (ByteString) {
 		.length = s.length + 1,
-		.bytes = \lambda \integer i; 
-			i == 0						?	b : 
+		.bytes = \lambda \integer i;
+			i == 0						?	b :
 			1 <= i && i < s.length + 1	?	s.bytes[i - 1] :
 											(BYTE) 0
 		};
@@ -63,9 +63,9 @@ _(def ByteString substring(ByteString s, \integer first, \integer len)
 	_(requires 0 <= len && len < s.length - first + 1)
 	_(level 1)
 {
-	return (ByteString) { 
+	return (ByteString) {
 		.length = len,
-		.bytes = \lambda \integer i; 
+		.bytes = \lambda \integer i;
 			0 <= i && i < len	?	s.bytes[first + i] :
 									(BYTE) 0
 		};
@@ -76,10 +76,10 @@ _(def ByteString concat(ByteString s1, ByteString s2)
 	_(requires valid(s1) && valid(s2))
 	_(level 1)
 {
-	return (ByteString) { 
+	return (ByteString) {
 		.length = s1.length + s2.length,
-		.bytes = \lambda \integer i; 
-			0 <= i && i < s1.length						?	s1.bytes[i] : 
+		.bytes = \lambda \integer i;
+			0 <= i && i < s1.length						?	s1.bytes[i] :
 			s1.length <= i && i < s1.length + s2.length	?	s2.bytes [i - s1.length] :
 			(BYTE) 0
 		};
@@ -90,9 +90,9 @@ _(def ByteString reversed(ByteString s)
 	_(requires valid(s))
 	_(level 1)
 {
-	return (ByteString) { 
+	return (ByteString) {
 		.length = s.length,
-		.bytes = \lambda \integer i; 
+		.bytes = \lambda \integer i;
 			0 <= i && i < s.length	?	s.bytes [s.length - i - 1]:
 										(BYTE) 0
 		};
@@ -105,10 +105,10 @@ _(def ByteString from_array(BYTE a[], \integer size)
 	_(ensures \forall \integer i; {a[i]} 0 <= i && i < size ==> a[i] == \result.bytes[i])
 	_(level 1)
 {
-	return (ByteString) { 
+	return (ByteString) {
 		.length = size,
-		.bytes = \lambda \integer i; 
-			0 <= i && i < size	?	a [i] : 
+		.bytes = \lambda \integer i;
+			0 <= i && i < size	?	a [i] :
 									(BYTE) 0
 		};
 }
@@ -185,7 +185,7 @@ _(pure) void lemma_reverse_twice(ByteString s)
 {}
 
 _(pure) void lemma_reverse_injective(ByteString s1, ByteString s2)
-	_(requires valid(s1) && valid(s2)) 
+	_(requires valid(s1) && valid(s2))
 	_(ensures reversed(s1) == reversed(s2) <==> s1 == s2)
 {
 	lemma_reverse_twice(s1);

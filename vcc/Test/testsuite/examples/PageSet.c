@@ -8,13 +8,12 @@ typedef unsigned __int64 UINT64, *PUINT64;
 
 typedef struct _PAGE_SET
 {
-    UINT32 PageCount;          
+    UINT32 PageCount;
     UINT32 PagesAllocated;
     PUINT64 Array;
 
     _(invariant PagesAllocated <= PageCount)
-    _(invariant \mine((void[PageCount])Array))
-    _(invariant ((void[PageCount])Array)->\valid)
+    _(invariant \mine((UINT64[PageCount])Array))
 
 } PAGE_SET, *PPAGE_SET;
 
@@ -23,8 +22,8 @@ void Init(
     UINT32 PageCount,
     UINT64 Array[]
     )
-    _(writes \extent(PageSet), (void[PageCount])Array)
-    _(requires \wrapped((void[PageCount])Array))
+    _(writes \extent(PageSet), (UINT64[PageCount])Array)
+    _(requires \wrapped((UINT64[PageCount])Array))
     _(ensures PageSet->PageCount == PageCount)
     _(ensures PageSet->PagesAllocated == 0)
     _(ensures PageSet->Array == Array)
@@ -40,7 +39,7 @@ void CallInit() {
   PAGE_SET *ps = (PAGE_SET *)malloc(sizeof(PAGE_SET));
   PUINT64 arr = malloc(sizeof(UINT64) * 100);
   if (ps != NULL && arr != NULL) {
-    _(wrap (void[100])arr)
+    _(wrap (UINT64[100])arr)
     Init(ps, 100, arr);
   }
 }

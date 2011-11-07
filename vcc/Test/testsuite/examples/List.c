@@ -9,15 +9,15 @@ void InitializeListHead( PLIST_ENTRY ListHead )
     _(ghost PLIST_MANAGER ListManager)
     ListHead->Flink = ListHead->Blink = ListHead;
 
-_(ghost {
-    ListManager = \alloc<LIST_MANAGER>();
-    ListManager->size = 1;
-    ListManager->index[ListHead] = 0;
-    ListManager->ListHead = ListHead;
-    ListHead->Manager = ListManager;
-    _(ghost ListManager->\owns = {ListHead});
-    _(wrap ListHead)
-    _(wrap ListManager)
+    _(ghost {
+        ListManager = \alloc<LIST_MANAGER>();
+        ListManager->size = 1;
+        ListManager->index[ListHead] = 0;
+        ListManager->ListHead = ListHead;
+        ListHead->Manager = ListManager;
+        ListManager->\owns = {ListHead};
+        _(wrap ListHead)
+        _(wrap ListManager)
     })
 }
 
@@ -46,10 +46,10 @@ bool RemoveEntryList( PLIST_ENTRY Entry )
             Flink->Blink = Blink;
         }
 
-_(ghost {
-        ListManager->size--;
-        _(ghost ListManager->\owns -= Entry);
-        ListManager->index = (\lambda PLIST_ENTRY x; (ListManager->index[x] < ListManager->index[Entry]
+        _(ghost {
+            ListManager->size--;
+            ListManager->\owns -= Entry;
+            ListManager->index = (\lambda PLIST_ENTRY x; (ListManager->index[x] < ListManager->index[Entry]
                 ? ListManager->index[x]
                 : ListManager->index[x] - 1));
         })
@@ -77,10 +77,10 @@ PLIST_ENTRY RemoveHeadList( PLIST_ENTRY ListHead )
             Flink->Blink = ListHead;
         }
 
-_(ghost {
-        ListManager->size--;
-        _(ghost ListManager->\owns -= Entry);
-        ListManager->index = (\lambda PLIST_ENTRY x; (ListManager->index[x] < ListManager->index[Entry]
+        _(ghost {
+            ListManager->size--;
+            ListManager->\owns -= Entry;
+            ListManager->index = (\lambda PLIST_ENTRY x; (ListManager->index[x] < ListManager->index[Entry]
                 ? ListManager->index[x]
                 : ListManager->index[x] - 1));
         })
@@ -107,10 +107,10 @@ PLIST_ENTRY RemoveTailList( PLIST_ENTRY ListHead )
             Blink->Flink = ListHead;
         }
 
-_(ghost {
-        ListManager->size--;
-        _(ghost ListManager->\owns -= Entry);
-        ListManager->index = (\lambda PLIST_ENTRY x; (ListManager->index[x] < ListManager->index[Entry]
+        _(ghost {
+            ListManager->size--;
+            ListManager->\owns -= Entry;
+            ListManager->index = (\lambda PLIST_ENTRY x; (ListManager->index[x] < ListManager->index[Entry]
                 ? ListManager->index[x]
                 : ListManager->index[x] - 1));
         })
@@ -138,19 +138,19 @@ void InsertTailList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
             ListHead->Blink = Entry;
         }
 
-_(ghost {
-        ListManager->size++;
-        _(ghost ListManager->\owns += Entry);
+        _(ghost {
+            ListManager->size++;
+            ListManager->\owns += Entry;
 
-        if (ListHead == ListManager->ListHead) {
-            ListManager->index[Entry] = ListManager->size - 1;
-        } else {
-            ListManager->index = (\lambda PLIST_ENTRY x; (x==Entry
+            if (ListHead == ListManager->ListHead) {
+                ListManager->index[Entry] = ListManager->size - 1;
+            } else {
+                ListManager->index = (\lambda PLIST_ENTRY x; (x == Entry
                     ? ListManager->index[ListHead]
                     : (ListManager->index[x] < ListManager->index[ListHead]
                         ? ListManager->index[x]
                         : ListManager->index[x] + 1)));
-        }
+            }
         })
     }
 }
@@ -174,10 +174,10 @@ void InsertHeadList( PLIST_ENTRY ListHead, PLIST_ENTRY Entry )
             ListHead->Flink = Entry;
         }
 
-_(ghost {
-        ListManager->size++;
-        _(ghost ListManager->\owns += Entry);
-        ListManager->index = (\lambda PLIST_ENTRY x; (x==Entry
+        _(ghost {
+            ListManager->size++;
+            ListManager->\owns += Entry;
+            ListManager->index = (\lambda PLIST_ENTRY x; (x == Entry
                 ? ListManager->index[ListHead] + 1
                 : (ListManager->index[x] <= ListManager->index[ListHead]
                     ? ListManager->index[x]
