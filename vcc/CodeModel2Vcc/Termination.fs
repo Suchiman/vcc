@@ -22,6 +22,23 @@ let checkTermination (helper:Helper.Env) (fn:Function) =
   else
     helper.Options.TerminationForAll
 
+let checkCallCycles (helper:Helper.Env) decls = 
+  let calls = gdict()
+  let aux = function
+    | Top.FunctionDecl { UniqueId = id; Body = Some b } ->
+      let called = gdict()
+      let calledList = glist[]
+      let aux _ = function
+        | Call (_, fn, _, _) when not (called.ContainsKey fn.UniqueId) ->
+          called.[fn.UniqueId] <- true
+          calledList.Add fn
+          true
+        | _ -> true
+      b.SelfVisit aux
+      calls.[id] <- calledList |> Seq.toList
+    | _ -> ()
+  List.iter aux decls
+
 let setDecreasesLevel (helper:Helper.Env) decls =
   let aux = function
     | Top.FunctionDecl fn ->

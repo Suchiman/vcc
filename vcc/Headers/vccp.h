@@ -253,6 +253,10 @@ _(template<typename T> bool \result_macro_returns(T res, T expr)
 _(bool \macro_level(\integer l)
   _(requires \decreases_level(l)))
 
+_(bool \recurses(void *))
+_(bool \macro_recurses(void *p)
+  _(requires \recurses(p)))
+
 _(logic bool \wrapped0(\object o) = \wrapped(o) && o->\claim_count == 0)
 _(logic template<typename T> bool \unchanged(T expr) = \old(expr) == expr)
 
