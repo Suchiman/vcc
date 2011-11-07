@@ -229,6 +229,9 @@ let insertTerminationChecks (helper:Helper.Env) decls =
     | Call (_, { Name = "_vcc_stack_alloc" }, _, _) ->
       None
 
+    | CallMacro (_, name, _, _) when helper.PureCallSignature name |> Option.isSome ->
+      None
+
     | Call (ec, fn, tps, args) as e ->
       match justChecks e with
         | [] -> None
@@ -276,7 +279,20 @@ let insertTerminationChecks (helper:Helper.Env) decls =
       None
 
     | Macro (_, ("rec_update"|"rec_fetch"|"map_zero"|"rec_zero"|"havoc_locals"|"_vcc_rec_eq"|"map_get"
-                  |"vs_fetch"|"ite"|"size"|"check_termination"|"map_updated"|"stackframe"), _) ->
+                  |"vs_fetch"|"ite"|"size"|"check_termination"|"map_updated"|"stackframe"|"map_eq"
+                  |"ignore_me"|"null"|"by_claim"|"vs_updated"|"state"|"ghost_atomic"
+                  |"bv_update"|"bv_extract_unsigned"|"float_literal"|"_vcc_by_claim"
+                  |"rec_update_bv"|"prestate"|"_vcc_ptr_eq_pure"|"bogus"
+                  |"_vcc_ptr_eq_null"|"_vcc_ptr_neq_null"), _) ->
+      None
+
+    | Macro (_, ("_vcc_static_wrap"|"_vcc_static_unwrap"|"havoc"|"_vcc_unblobify"|"_vcc_blobify"
+                  |"_vcc_wrap"|"_vcc_unwrap"|"_vcc_static_wrap_non_owns"
+                  |"_vcc_havoc_others"|"_vcc_unwrap_check"|"inlined_atomic"
+                  |"unclaim"|"claim"|"begin_update"|"upgrade_claim"), _) ->
+      None
+
+    | Macro (_, s, _) when s.StartsWith "prelude_" || s.StartsWith "unchecked_" -> 
       None
 
     | Macro (ec, s, args) as e ->
