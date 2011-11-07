@@ -1692,6 +1692,10 @@ namespace Microsoft.Research.Vcc
                                      assumeSync env stmt.Token]
                       condLevelCheck :: setPC, resetPC, env'
                 else [],[],env
+              let s2 =
+                match s2 with                   
+                  | C.Expr.Comment(c, "empty") -> C.Expr.MkAssert (C.Expr.Macro (C.boolBogusEC(), "_vcc_possibly_unreachable", []))
+                  | _ -> s2
               captureState "" ec.Token ::
               B.Stmt.Comment ("if (" + c.ToString() + ") ...") ::
               prefix @
