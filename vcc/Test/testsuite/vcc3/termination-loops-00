@@ -42,7 +42,7 @@ _(void foo_fail3()
 {
   \integer i, n;
 
-  while (i > n) 
+  while (1) 
   {
     i = i + 1;
   }
