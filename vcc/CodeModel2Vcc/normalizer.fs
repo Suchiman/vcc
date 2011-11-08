@@ -25,6 +25,15 @@ namespace Microsoft.Research.Vcc
   }
 
   let isSpecMacro (fn:Function) = hasCustomAttr AttrSpecMacro fn.CustomAttr
+
+  let specMacroBody fn =
+    if not (isSpecMacro fn) then None
+    else
+      match fn.Ensures with
+        | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))]
+        | [Expr.Macro (_, "_vcc_set_eq", ([Result _; e]|[e; Result _]))] ->
+          Some e
+        | _ -> None
  
   // ============================================================================================================          
   let rec doHandleComparison helper self = function
@@ -214,9 +223,8 @@ namespace Microsoft.Research.Vcc
               None
             else
               let fn' = fn.Specialize(targs, false)
-              match fn'.Ensures with
-                | [Expr.Prim (_, Op ("==", _), ([Result _; e]|[e; Result _]))]
-                | [Expr.Macro (_, "_vcc_set_eq", ([Result _; e]|[e; Result _]))] ->
+              match specMacroBody fn' with
+                | Some e ->
                   if e.HasSubexpr (function Result _ -> true | _ -> false) then
                     helper.Error (fn.Token, 9714, "'result' cannot be used recursively in a spec macro definition", Some ec.Token)
                     None
