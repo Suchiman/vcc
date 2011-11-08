@@ -382,7 +382,10 @@ module Microsoft.Research.Vcc.CAST
       match this with 
       | Integer sz -> sz |> Type.sizeSign |> snd
       | _          -> false
-      
+    
+    member this.IsNumber =
+      this._IsInteger || this._IsMathInteger
+
     member this.Deref =
       match this with
       | SpecPtr t 

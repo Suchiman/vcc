@@ -2958,6 +2958,11 @@ function {:inline} $int_lt_or(called:int, caller:int, otherwise:bool) : bool
   (0 <= caller && called < caller) || (called == caller && otherwise)
 }
 
+function $int_distance(a:int, b:int) : int
+{
+  if a < b then b - a else a - b
+}
+
 const $decreases_level : int;
 
 // for non-deterministic choice of termination checking blocks

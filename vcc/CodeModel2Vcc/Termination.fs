@@ -48,6 +48,7 @@ let checkCallCycles (helper:Helper.Env, decls) =
           let aux _ = function
             | Macro (_, "get_fnptr", [Call (_, f, _, _)]) ->
               if recurses.ContainsKey tfn.UniqueId then
+                // maybe we should take the union?
                 helper.Error (ec.Token, 9744, "_(recurses_with ...) specified more than once; you can pick any function as representiative of a call group")
               if recRoot f <> tfn then // prevent infinit recursion on cycles
                 recurses.[tfn.UniqueId] <- f 
@@ -323,6 +324,25 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           []
       | _ -> helper.Die()
 
+    let inferDecr (body:Expr) =
+      let rec hasBreak = function
+        | Block (_, lst, _) -> List.exists hasBreak lst
+        | Goto (_, id) when id.Name.StartsWith "#break" -> true
+        | _ -> false
+      let res = ref None 
+      let rec lookForCondition = function
+        | e when (!res).IsSome -> e
+        | If (_, _, Prim (ec, Op (("<"|">"|"<="|">="|"!="), _), [a; b]), th, el) as e 
+          when (hasBreak th || hasBreak el) && a.Type.IsNumber && b.Type.IsNumber ->
+          res := Some (Macro ({ ec with Type = Type.MathInteger MathIntKind.Signed }, "prelude_int_distance", [a; b]))
+          e
+        | e ->
+          e.ApplyToChildren lookForCondition
+      body.ApplyToChildren lookForCondition |> ignore
+      match !res with
+        | Some expr -> [expr]
+        | _ -> []
+     
     match e with
     | Call (_, { Name = "_vcc_stack_alloc" }, _, _) ->
       None
@@ -337,7 +357,10 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           Some (Expr.MkBlock (lst @ [Call (ec, fn, tps, List.map self args)]))
 
     | Loop (ec, inv, wr, decr, body) ->
-      if decr = [] then
+      let decr = 
+        if decr <> [] then decr
+        else inferDecr body
+      if decr = [] then 
         helper.GraveWarning (ec.Token, 9323, "failed to infer _(decreases ...) clause for the loop; please supply one")
         Some (Loop (ec, inv, wr, decr, self body))
       else
@@ -527,6 +550,9 @@ let terminationCheckingPlaceholder (helper:Helper.Env) decls =
   let rec addChecks = function
     | Quant _ as q ->
       Expr.MkBlock [termWrapper (checks q); skipChecks q]
+    | Macro (_, "loop_contract", _) 
+    | Assert _
+    | Assume _ as e -> e
     | e ->
       e.ApplyToChildren addChecks
        
