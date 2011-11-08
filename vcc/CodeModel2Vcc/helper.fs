@@ -294,7 +294,7 @@ namespace Microsoft.Research.Vcc
         this.Oops(tok, "internal compiler error")
         this.Die()
       
-      // 9100 <= code <= 9199; First available: 9126
+      // 9100 <= code <= 9199; First available: 9127
       member this.Warning (tok:Token, code, msg:string) =
         if not (tok.SuppressWarning code) then
           hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true))
@@ -312,7 +312,7 @@ namespace Microsoft.Research.Vcc
       member this.GraveWarning (tok, code, msg:string, relatedTok) =
         this.Warning (tok, code, "[possible unsoundness]: " + msg, relatedTok)
       
-      // 9601 <= code <= 9799; First available: 9743
+      // 9601 <= code <= 9799; First available: 9745
       member this.Error (tok:Token, code, msg:string) =
         this.Error (tok, code, msg, None)
         

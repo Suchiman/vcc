@@ -148,6 +148,8 @@ namespace Microsoft.Research.Vcc
         if (parent.options.AggressivePruning || HasIsolateProofAttribute(funcName)) {
           restartProver = true;
           currentBoogieIsPruned = true;
+          // this needs to be done before pruning; otherwise call cycles might get hidden
+          Termination.checkCallCycles(env, currentDecls);
           var decls = TransUtil.pruneBy(env, funcName, currentDecls);
           var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude, decls);
           if (!env.ShouldContinue) return VerificationResult.UserError;

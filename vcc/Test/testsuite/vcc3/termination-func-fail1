@@ -15,6 +15,7 @@ _(def \integer loop2(\integer x)
 
 
 _(def \integer f1(\integer x, \integer y)
+  _(recursive_with f2)
   _(decreases x, y)
 {
   return f2(x);
@@ -32,6 +33,6 @@ testcase(6,10) : error VC8029: the call 'loop(x)' might not terminate.
 Verification of loop2 failed.
 testcase(12,10) : error VC8029: the call 'loop2(x + 1)' might not terminate.
 Verification of f1 failed.
-testcase(19,10) : error VC8029: the call 'f2(x)' might not terminate.
+testcase(20,10) : error VC8029: the call 'f2(x)' might not terminate.
 Verification of f2 succeeded.
 `
