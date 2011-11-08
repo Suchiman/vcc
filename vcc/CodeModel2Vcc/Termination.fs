@@ -39,9 +39,13 @@ let checkCallCycles (helper:Helper.Env, decls) =
       | _ -> f
   let calls = gdict()
   let funs = glist[]
+  let specMacros = glist[]
   let buildCallGraph = function
-    | Top.FunctionDecl tfn when checkTermination helper tfn && tfn.DecreasesLevel = 0 ->
-      funs.Add tfn
+    | Top.FunctionDecl tfn when tfn.DecreasesLevel = 0 && (Normalizer.isSpecMacro tfn || checkTermination helper tfn) ->
+      if Normalizer.isSpecMacro tfn then
+        specMacros.Add tfn
+      else
+        funs.Add tfn
       let recur = ref None
       let keepIt = function
         | CallMacro (ec, "\\macro_recursive_with", _, [expr]) ->
@@ -59,26 +63,60 @@ let checkCallCycles (helper:Helper.Env, decls) =
         | _ -> true
       tfn.Requires <- tfn.Requires |> List.filter keepIt
 
-      match tfn.Body with
+      let body =
+        if Normalizer.isSpecMacro tfn then
+          Normalizer.specMacroBody tfn
+        else tfn.Body
+
+      match body with
         | Some b ->
-          let called = gdict()
-          let calledList = glist[]
+          let called = ulist()
           let aux _ = function
-            | Call (ec, fn, _, _) when not (called.ContainsKey fn.UniqueId) ->
-              if checkTermination helper fn then
-                called.[fn.UniqueId] <- true
-                calledList.Add fn
+            | Call (ec, fn, _, _) when not (called.Contains fn) ->
+              if checkTermination helper fn || Normalizer.isSpecMacro fn then
+                called.Add fn
               elif fn.IsWellFounded then
                 ()
               else
-                helper.GraveWarning (ec.Token, 9315, "termination checking not enabled for function '" + fn.Name + "'; consider supplying _(decreases ...) clause")
+                // for expanded spec-macros we should get an error later
+                if not (Normalizer.isSpecMacro tfn) then
+                  helper.GraveWarning (ec.Token, 9315, "termination checking not enabled for function '" + fn.Name + "'; consider supplying _(decreases ...) clause")
               true
             | _ -> true
           b.SelfVisit aux
-          calls.[tfn.UniqueId] <- calledList |> Seq.toList
+          calls.[tfn.UniqueId] <- called
         | _ -> ()
     | _ -> ()
   List.iter buildCallGraph decls
+
+  let expandSpec (fn:Function) =
+    let visited = gdict()
+    let normCalled = ulist()
+    let rec visit (f:Function) =
+      if visited.ContainsKey f then ()
+      else
+        visited.[f] <- true
+        lookupWithDefault calls (ulist()) fn.UniqueId
+          |> Seq.iter (fun g -> 
+               if Normalizer.isSpecMacro g then
+                 visit g
+               elif checkTermination helper g then
+                 normCalled.Add g)
+    visit fn
+    calls.[fn.UniqueId] <- normCalled
+  specMacros |> Seq.iter expandSpec
+  let calls0 = gdict()
+  let expandNorm (fn:Function) = 
+    let newCalled = ulist()
+    lookupWithDefault calls (ulist()) fn.UniqueId
+      |> Seq.iter (fun f ->
+           if Normalizer.isSpecMacro f then
+             newCalled.AddRange calls.[f.UniqueId]
+           else
+             newCalled.Add f) 
+    calls0.[fn.UniqueId] <- newCalled |> Seq.toList
+  funs |> Seq.iter expandNorm
+  let calls = calls0
 
   let entries = gdict()
   let entryList = glist[]

@@ -120,3 +120,34 @@ namespace Microsoft.Research.Vcc
       
     let dbgBreak() = System.Diagnostics.Debugger.Break()
     
+    type UniqueList<'a when 'a : equality>() =
+      let l = glist[]
+      let d = gdict()
+    
+      member this.Add (e:'a) =
+        if d.ContainsKey e then ()
+        else
+          d.Add (e, l.Count)
+          l.Add e
+      member this.AddRange (elts:seq<'a>) =
+        Seq.iter this.Add elts 
+      member this.Remove e =
+        let idx = d.[e]
+        if idx <> l.Count - 1 then
+          let e' = l.[l.Count - 1]
+          l.[idx] <- e'
+          d.[e'] <- idx
+        d.Remove e |> ignore
+        l.RemoveAt (l.Count - 1)
+      member this.Elements = l :> seq<'a>
+      member this.Contains e = d.ContainsKey e 
+      member this.Count = l.Count
+
+      interface System.Collections.Generic.IEnumerable<'a> with
+        member this.GetEnumerator() = l.GetEnumerator() :> System.Collections.Generic.IEnumerator<'a>
+
+      interface System.Collections.IEnumerable with
+        member this.GetEnumerator() = l.GetEnumerator() :> System.Collections.IEnumerator
+
+    let ulist() = UniqueList<_>()
+    
