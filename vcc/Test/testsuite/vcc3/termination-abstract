@@ -14,14 +14,14 @@ _(def int foo1()
 })
 
 _(def int bar0()
-  _(level 1)
+  
   _(ensures \result > 0)
 {
   return foo0();
 })
 
 _(def int bar1()
-  _(level 1)
+  
   _(ensures \result > 0)
 {
   return foo1();

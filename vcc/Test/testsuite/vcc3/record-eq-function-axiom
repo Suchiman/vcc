@@ -16,7 +16,7 @@ _(def ByteString from_array(BYTE a[], \integer size)
     _(reads \universe())
     _(requires size >= 0)
     _(ensures \forall \integer i; {a[i]} 0 <= i && i < size ==> a[i] == \result.bytes[i])
-    _(level 1)
+    
 {
     return (ByteString) { 
         .length = size,
