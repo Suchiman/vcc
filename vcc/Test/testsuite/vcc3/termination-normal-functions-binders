@@ -23,6 +23,7 @@ _(void foo()
 
 
 _(abstract int bar2(int k)
+  _(recursive_with foo2)
   _(decreases 1)
 {
 })
@@ -47,5 +48,5 @@ Verification of bar succeeded.
 Verification of foo succeeded.
 Verification of bar2 succeeded.
 Verification of foo2 failed.
-testcase(39,29) : error VC8029: the call 'bar2(z)' might not terminate.
+testcase(40,29) : error VC8029: the call 'bar2(z)' might not terminate.
 `

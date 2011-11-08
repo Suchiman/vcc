@@ -21,7 +21,7 @@ _(def List cdr(List l) {
 })
 
 _(def List F(List k)
-  _(level 1)
+  
   _(decreases \size(k), \size(car(k)))
 {
        switch (k) {
@@ -37,7 +37,7 @@ _(def List F(List k)
 })
 
 _(def List F_fail1(List k)
-  _(level 1)
+  
   _(decreases \size(k), \size(cdr(k)))
 {
        switch (k) {
@@ -52,7 +52,7 @@ _(def List F_fail1(List k)
 })
 
 _(def List F_fail2(List k)
-  _(level 1)
+  
 {
        switch (k) {
               case Nil(): return k;

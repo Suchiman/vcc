@@ -8,21 +8,21 @@ _(abstract bool bar(\integer i)
   { })
 
 _(def bool baz(bool L[\integer])
-  _(level 1)
+  
 {
   return (\forall \integer n; L[n] ==>
              foo(n) && bar(n) && foo(n));
 })
 
 _(def bool baz_fail(bool L[\integer])
-  _(level 1)
+  
 {
   return (\forall \integer n; L[n] ==>
              bar(n) && foo(n));
 })
 
 _(def bool baz_fail2(bool L[\integer])
-  _(level 1)
+  
 {
   return (\forall \integer n; L[n] ==>
              qux(n) && bar(n) && foo(n));

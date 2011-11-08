@@ -16,6 +16,7 @@ _(def S f(int a[])
 )
 
 _(def bool g(int a[], S s)
+	_(recursive_with f)
 	_(decreases a, s)
 {
 //_(assert \false)
@@ -23,8 +24,8 @@ _(def bool g(int a[], S s)
 }
 )
 `
-testcase(21,14) : warning VC9314: [possible unsoundness]: only integer arguments are currently accepted in _(decreases ...) clauses; consider using \size(...)
-testcase(21,14) : warning VC9321: [possible unsoundness]: no measure to decrease when calling 'f(a)'; consider using _(level ...)
+testcase(22,14) : warning VC9314: [possible unsoundness]: only integer arguments are currently accepted in _(decreases ...) clauses; consider using \size(...)
+testcase(22,14) : warning VC9321: [possible unsoundness]: no measure to decrease when calling 'f(a)'; consider using _(level ...)
 Verification of f succeeded.
 Verification of g succeeded.
 `

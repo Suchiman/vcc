@@ -9,7 +9,7 @@ _(typedef _(record) struct {
 } log;)
 
 _(def bool bar[\integer][\integer](log L, \integer seed)
-  _(level 1)
+  
 {
   bool res[\integer][\integer];
   bool innerMap[\integer];

@@ -4,7 +4,6 @@
 _(type foo)
 
 _(abstract \integer bz(foo f)
-  _(level -1)
   {
   })
 

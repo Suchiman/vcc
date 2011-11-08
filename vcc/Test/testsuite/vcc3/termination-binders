@@ -10,12 +10,13 @@ _(def \integer foo(\integer x)
 })
 
 _(def imap allfoos_fail(\integer xx)
+  _(recursive_with foo)
 {
   return \lambda \integer x; foo(x);
 })
 
 _(def imap allfoos_ok()
-  _(level 1)
+  
 {
   return \lambda \integer x; foo(x);
 })
@@ -27,27 +28,27 @@ _(def iset mux(\integer x)
 
 _(def iset mux1(\integer x)
 {
-  return \lambda \integer y; x <= 0 || mux(x - 1)[y];
+  return \lambda \integer y; x <= 0 || mux1(x - 1)[y];
 })
 
 _(def iset mux1_fail(\integer x)
 {
-  return \lambda \integer y; x >= 0 || mux(x - 1)[y];
+  return \lambda \integer y; x >= 0 || mux1_fail(x - 1)[y];
 })
 
 _(def iset mux_fail(\integer x)
 {
-  return \lambda \integer y; mux(y)[x - 1];
+  return \lambda \integer y; mux_fail(y)[x - 1];
 })
 
 _(def iset mux_fail1(\integer x)
 {
-  return \lambda \integer y; mux(x)[y - 1];
+  return \lambda \integer y; mux_fail1(x)[y - 1];
 })
 
 _(def iset mux_fail2(\integer x)
 {
-  return \lambda \integer y; mux(x - 1)[x - 1];
+  return \lambda \integer y; mux_fail2(x - 1)[x - 1];
 })
 
 
@@ -64,32 +65,32 @@ _(def bool fa1(\integer x)
 
 _(def bool fa0_fail(\integer x)
 {
-  return \forall \integer y; 0 < y && y <= x ==> fa0(y);
+  return \forall \integer y; 0 < y && y <= x ==> fa0_fail(y);
 })
 
 _(def bool fa1_fail(\integer x)
 {
-  return \forall \integer y; {fa1(y)} 0 < y && y < x ==> fa1(x);
+  return \forall \integer y; {fa1_fail(y)} 0 < y && y < x ==> fa1_fail(x);
 })
 `
 Verification of foo succeeded.
 Verification of allfoos_fail failed.
-testcase(13,30) : error VC8029: the call 'foo(x)' might not terminate.
+testcase(14,30) : error VC8029: the call 'foo(x)' might not terminate.
 Verification of allfoos_ok succeeded.
 Verification of mux succeeded.
 Verification of mux1 succeeded.
 Verification of mux1_fail failed.
-testcase(34,40) : error VC8029: the call 'mux(x - 1)' might not terminate.
+testcase(35,40) : error VC8029: the call 'mux1_fail(x - 1)' might not terminate.
 Verification of mux_fail failed.
-testcase(39,30) : error VC8029: the call 'mux(y)' might not terminate.
+testcase(40,30) : error VC8029: the call 'mux_fail(y)' might not terminate.
 Verification of mux_fail1 failed.
-testcase(44,30) : error VC8029: the call 'mux(x)' might not terminate.
+testcase(45,30) : error VC8029: the call 'mux_fail1(x)' might not terminate.
 Verification of mux_fail2 failed.
-testcase(49,30) : error VC8029: the call 'mux(x - 1)' might not terminate.
+testcase(50,30) : error VC8029: the call 'mux_fail2(x - 1)' might not terminate.
 Verification of fa0 succeeded.
 Verification of fa1 succeeded.
 Verification of fa0_fail failed.
-testcase(66,50) : error VC8029: the call 'fa0(y)' might not terminate.
+testcase(67,50) : error VC8029: the call 'fa0_fail(y)' might not terminate.
 Verification of fa1_fail failed.
-testcase(71,58) : error VC8029: the call 'fa1(x)' might not terminate.
+testcase(72,63) : error VC8029: the call 'fa1_fail(x)' might not terminate.
 `

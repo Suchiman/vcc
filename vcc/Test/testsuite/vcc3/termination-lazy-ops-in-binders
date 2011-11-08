@@ -12,31 +12,31 @@ _(abstract bool foo2(int x)
 
 _(abstract bool bar(int x)
   _(requires foo(x)) 
-  _(level 1) 
+   
 { 
 })
 
 _(def bool baz(bool m[int])
-  _(level 2)
+  
 {
   return \forall int x; m[x] ==> foo(x) && bar(x);
 })
 
 _(def bool baz2(bool m[int])
-  _(level 2)
+  
 {
   return \forall int x; m[x] && x > 0 ==> foo2(x);
 })
 
 _(def bool baz_fail(bool m[int])
-  _(level 2)
+  
 {
   return \forall int x; m[x] ==> bar(x) && foo(x);
 })
 
 
 _(def bool baz2_fail(bool m[int])
-  _(level 2)
+  
 {
   return \forall int x; m[x] && x > -10 ==> foo2(x);
 })
