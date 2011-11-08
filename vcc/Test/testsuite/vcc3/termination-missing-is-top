@@ -12,6 +12,7 @@ _(def \integer f(\integer a)
 
 _(def \integer g(\integer b, \integer a)
   _(decreases a, b)
+  _(recursive_with f)
 {
   if (a < 0)
     return 0;

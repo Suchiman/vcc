@@ -22,37 +22,118 @@ let checkTermination (helper:Helper.Env) (fn:Function) =
   else
     helper.Options.TerminationForAll
 
-let checkCallCycles (helper:Helper.Env) decls = 
+type CallGraphEntry =
+  {
+    Functions : GList<Function>
+    mutable Level : int
+    mutable Visited : bool
+    mutable Visiting : bool
+    mutable LocVisited : bool
+  }
+
+let checkCallCycles (helper:Helper.Env, decls) = 
+  let recurses = gdict()
+  let rec recRoot (f:Function) =
+    match recurses.TryGetValue f.UniqueId with
+      | true, v -> recRoot v
+      | _ -> f
   let calls = gdict()
-  let aux = function
-    | Top.FunctionDecl { UniqueId = id; Body = Some b } ->
-      let called = gdict()
-      let calledList = glist[]
-      let aux _ = function
-        | Call (_, fn, _, _) when not (called.ContainsKey fn.UniqueId) ->
-          called.[fn.UniqueId] <- true
-          calledList.Add fn
-          true
+  let funs = glist[]
+  let buildCallGraph = function
+    | Top.FunctionDecl tfn when checkTermination helper tfn && tfn.DecreasesLevel = 0 ->
+      funs.Add tfn
+      let recur = ref None
+      let keepIt = function
+        | CallMacro (ec, "\\macro_recursive_with", _, [expr]) ->
+          let aux _ = function
+            | Macro (_, "get_fnptr", [Call (_, f, _, _)]) ->
+              if recurses.ContainsKey tfn.UniqueId then
+                helper.Error (ec.Token, 9744, "_(recurses_with ...) specified more than once; you can pick any function as representiative of a call group")
+              if recRoot f <> tfn then // prevent infinit recursion on cycles
+                recurses.[tfn.UniqueId] <- f 
+              true
+            | _ -> true
+          expr.SelfVisit aux
+          false
         | _ -> true
-      b.SelfVisit aux
-      calls.[id] <- calledList |> Seq.toList
+      tfn.Requires <- tfn.Requires |> List.filter keepIt
+
+      match tfn.Body with
+        | Some b ->
+          let called = gdict()
+          let calledList = glist[]
+          let aux _ = function
+            | Call (ec, fn, _, _) when not (called.ContainsKey fn.UniqueId) ->
+              if checkTermination helper fn then
+                called.[fn.UniqueId] <- true
+                calledList.Add fn
+              elif fn.IsWellFounded then
+                ()
+              else
+                helper.GraveWarning (ec.Token, 9315, "termination checking not enabled for function '" + fn.Name + "'; consider supplying _(decreases ...) clause")
+              true
+            | _ -> true
+          b.SelfVisit aux
+          calls.[tfn.UniqueId] <- calledList |> Seq.toList
+        | _ -> ()
     | _ -> ()
-  List.iter aux decls
+  List.iter buildCallGraph decls
+
+  let entries = gdict()
+  let entryList = glist[]
+  funs |> Seq.iter (fun f ->
+    let r = recRoot f
+    match entries.TryGetValue r.UniqueId with
+      | true, (e:CallGraphEntry) ->
+        e.Functions.Add f
+        entries.[f.UniqueId] <- e
+      | false, _ ->
+        let e = 
+          {
+            Functions = glist [f]
+            Level = 1
+            Visited = false 
+            LocVisited = false 
+            Visiting = false
+          }
+        entries.[r.UniqueId] <- e
+        entries.[f.UniqueId] <- e
+        entryList.Add e)
+  let rec dfs (e:CallGraphEntry) =
+    let children = glist[]
+    let addCall (f:Function) =
+      let entry = entries.[f.UniqueId]
+      if not entry.LocVisited then
+        entry.LocVisited <- true
+        children.Add (entry, f)
+    e.Functions |> Seq.iter (fun f -> lookupWithDefault calls [] f.UniqueId |> List.iter addCall)
+    children |> Seq.iter (fun (e, _) -> e.LocVisited <- false)
+    e.Visited <- true
+    let check (ch:CallGraphEntry, f:Function) =
+      if ch.Visited then
+        if ch.Visiting && ch <> e then
+          helper.Error (f.Token, 9743, "function '" + f.Name + "' calls '" + e.Functions.[0].Name + "' recursively, but they are not part of the same call group; please use _(recurses_with ...)")
+      else
+        dfs ch
+    e.Visiting <- true 
+    children |> Seq.iter check 
+    e.Visiting <- false
+    let levels = children |> Seq.map (fun (e, _) -> e.Level)
+    if levels |> Seq.isEmpty then ()
+    else e.Level <- Seq.max levels + 1
+  let processEntry (e:CallGraphEntry) =
+    if not e.Visited then dfs e
+    e.Functions |> Seq.iter (fun f -> f.DecreasesLevel <- e.Level)
+  entryList |> Seq.iter processEntry
+
+
 
 let setDecreasesLevel (helper:Helper.Env) decls =
   let aux = function
     | Top.FunctionDecl fn ->
       let checkDecr = function
         | CallMacro (ec, "_vcc_decreases_level", _, [arg]) ->
-          match arg with
-            | Expr.IntLiteral (_, n) ->
-              match System.Int32.TryParse (n.ToString()) with
-                | true, k ->
-                  fn.DecreasesLevel <- k
-                | _ ->
-                  helper.Error (ec.Token, 9733, "_(level ...) needs to fit integer range")
-            | _ -> 
-              helper.Error (ec.Token, 9734, "_(level ...) needs a compile time constant")
+          helper.Warning (ec.Token, 9126, "_(level ...) annotations have no effect now; use _(recursive_with ...) if required")
           Expr.True
         | e -> e
       fn.Requires <- List.map checkDecr fn.Requires
@@ -459,6 +540,7 @@ let terminationCheckingPlaceholder (helper:Helper.Env) decls =
 
 let init (helper:Helper.Env) =
   if helper.Options.Vcc3 then
+    helper.AddTransformerAfter ("termination-compute-cycles", Helper.Decl (fun decls -> checkCallCycles (helper, decls); decls), "begin")
     helper.AddTransformer ("termination-set-level", Helper.Decl (setDecreasesLevel helper))
     helper.AddTransformer ("termination-add-checks", Helper.Decl (insertTerminationChecks helper))
     helper.AddTransformerBefore ("termination-insert-placeholders", Helper.Decl (terminationCheckingPlaceholder helper), "desugar-lambdas")
