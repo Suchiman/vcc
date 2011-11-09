@@ -82,6 +82,11 @@ let checkCallCycles (helper:Helper.Env, decls) =
                 if not (Normalizer.isSpecMacro tfn) then
                   helper.GraveWarning (ec.Token, 9315, "termination checking not enabled for function '" + fn.Name + "'; consider supplying _(decreases ...) clause")
               true
+              (*
+            | Assert _
+            | Assume _
+            | Macro (_, "loop_contract", _) -> false 
+            *)
             | _ -> true
           b.SelfVisit aux
           calls.[tfn.UniqueId] <- called
