@@ -848,6 +848,16 @@ namespace Microsoft.Research.Vcc
             self e
           | "check_termination", [e] ->
             bCall "$check_termination" [self e]
+          | n, [e] when n.StartsWith "limited#" ->
+            let n = if n = "limited#0" then "" else "#" + n
+            let repl = function
+              | B.FunctionCall (nn, args) when nn.StartsWith "F#" ->
+                bCall (nn + n) args
+              | ee -> die()
+            match self e with
+              | B.FunctionCall (name, [e; t]) when name.StartsWith "$" ->
+                bCall name [repl e; t]
+              | e -> repl e
           | name, [e] when name.StartsWith "DP#" ->
             bCall name [self e]
           | name, [e1; e2] when name.StartsWith("_vcc_deep_struct_eq.") || name.StartsWith("_vcc_shallow_struct_eq.") ->
@@ -2747,6 +2757,18 @@ namespace Microsoft.Research.Vcc
               helper.Warning (h.Token, 0, "wrong " + String.concat "; " (lst |> List.map (fun e -> e.ToString())))
             *)  
           let (fappls, fdecls) = (h.RetType, "") :: List.map (fun (v:C.Variable) -> (v.Type, "OP#" + v.Name)) h.OutParameters |> List.map fForPureContext |> List.unzip
+          
+          let rec limitedFun decls prevName n =
+            if n > h.DefExpansionLevel then decls
+            else
+              let (limappl, limdecl) = fForPureContext (h.RetType, "limited#" + n.ToString())
+              let curName, fappl = 
+                match limappl with
+                  | B.FunctionCall (n, args) -> n, B.FunctionCall (prevName, args)
+                  | _ -> die()
+              let axBody = bEq fappl limappl
+              let ax = B.Decl.Axiom (B.Expr.Forall(Token.NoToken, qargs, [[fappl]], weight "eqdef-userfun", axBody))
+              limitedFun (ax :: limdecl :: decls) curName (n + 1)
 
           let fappl  = fappls.Head
           let subst = bSubst (("$s", er "#s") :: List.zip ("$result" :: List.map (fun (v:C.Variable) -> "OP#" + v.Name) h.OutParameters)  fappls )
@@ -2761,6 +2783,7 @@ namespace Microsoft.Research.Vcc
             if (defBody = bTrue) then [] 
             else if qargs = [] then [B.Decl.Axiom defBody]
             else [B.Decl.Axiom (B.Expr.Forall(Token.NoToken, qargs, List.map (fun x -> [x]) fappls, weight "eqdef-userfun", defBody))]
+          let defAxiom = limitedFun defAxiom fname 1
           let defAxiom = defAxiom @ equalityInstantiation h fappl parameters
           let fnconst = "cf#" + h.Name
           let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$pure_function" }
