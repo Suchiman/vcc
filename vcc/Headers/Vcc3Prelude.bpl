@@ -2955,8 +2955,11 @@ function $function_arg_type(fnname:$pure_function, idx:int, tp:$ctype) : bool;
 
 function {:inline} $int_lt_or(called:int, caller:int, otherwise:bool) : bool
 {
+  $may_diverge() || 
   (0 <= caller && called < caller) || (called == caller && otherwise)
 }
+
+function $may_diverge() : bool;
 
 function $int_distance(a:int, b:int) : int
 {
