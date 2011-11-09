@@ -499,26 +499,36 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           [decl]
         | _ when fn.RetType = Void -> [decl]
         | Some body ->
+          fn.DefExpansionLevel <- 3 // TODO attribute
           let expr = turnIntoPureExpression helper fn.RetType body
-          if fn.Reads = [] then
-            fn.Reads <- computeReads expr
-          let suff = "#" + helper.UniqueId().ToString() 
-          let vars, repl = Variable.UniqueCopies (fun v -> { v with Name = v.Name + suff ; Kind = QuantBound }) fn.Parameters
-          let ec t = { body.Common with Type = t }
-          let app = Call (ec fn.RetType, fn, [], vars |> List.map (fun v -> Expr.Ref (ec v.Type, v)))
-          let eq = Prim (ec Type.Bool, Op ("==", Processed), [app; repl expr])
-          let preconds = fn.Requires |> multiAnd |> repl
-          let impl = Prim (ec Type.Bool, Op ("==>", Processed), [preconds; eq])
-          let qd = 
-            {
-              Body = eq
-              Variables = vars
-              Kind = Forall
-              Condition = None
-              Triggers = [[app]]
-            }
-          let axiom = Top.Axiom (if vars = [] then eq else Quant (ec Type.Bool, qd))
-          [decl; axiom]
+          let rec genAxiom k =
+            if k <= 0 then []
+            else
+              let addLimits k self = function
+                | Call (ec, f, targs, args) as e when f.DecreasesLevel = fn.DecreasesLevel ->
+                  Some (Macro (ec, "limited#" + k.ToString(), [Call (ec, f, targs, List.map self args)]))
+                | _ -> None
+              let expr = expr.SelfMap (addLimits k)
+              if fn.Reads = [] then
+                fn.Reads <- computeReads expr
+              let suff = "#" + helper.UniqueId().ToString() 
+              let vars, repl = Variable.UniqueCopies (fun v -> { v with Name = v.Name + suff ; Kind = QuantBound }) fn.Parameters
+              let ec t = { body.Common with Type = t }
+              let app = Call (ec fn.RetType, fn, [], vars |> List.map (fun v -> Expr.Ref (ec v.Type, v)))
+              let app = Macro (app.Common, "limited#" + (k-1).ToString(), [app])
+              let eq = Prim (ec Type.Bool, Op ("==", Processed), [app; repl expr])
+              let preconds = fn.Requires |> multiAnd |> repl
+              let impl = Prim (ec Type.Bool, Op ("==>", Processed), [preconds; eq])
+              let qd = 
+                {
+                  Body = eq
+                  Variables = vars
+                  Kind = Forall
+                  Condition = None
+                  Triggers = [[app]]
+                }
+              Top.Axiom (if vars = [] then eq else Quant (ec Type.Bool, qd)) :: genAxiom (k - 1)
+          decl :: genAxiom fn.DefExpansionLevel
     | decl -> [decl]
    
   let genChecks = function

@@ -659,6 +659,7 @@ module Microsoft.Research.Vcc.CAST
       mutable Body:option<Expr>;
       mutable IsProcessed:bool;
       mutable DecreasesLevel:int;
+      mutable DefExpansionLevel:int;
       UniqueId:Unique;
     }
 
@@ -680,6 +681,7 @@ module Microsoft.Research.Vcc.CAST
         Body = None
         IsProcessed = false
         AcceptsExtraArguments = false
+        DefExpansionLevel = 0
         UniqueId = unique() } : Function
     
     override this.GetHashCode () = int this.UniqueId
