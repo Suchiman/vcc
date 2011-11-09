@@ -145,6 +145,7 @@ _(\integer _(_boogie0) \index_within(\object,\object))
 _(\integer _(_boogie0) \sizeof_object(\object))
 _(bool _(_boogie0) \in_range_phys_ptr(\object))
 _(bool _(_boogie0) \in_range_spec_ptr(\object))
+_(bool _(_boogie0) \may_diverge())
 
 _(template<typename T> \integer \size(T dt);)
 
