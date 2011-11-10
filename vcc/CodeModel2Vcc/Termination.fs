@@ -504,7 +504,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
           [decl]
         | _ when fn.RetType = Void -> [decl]
         | Some body ->
-          fn.DefExpansionLevel <- 3 // TODO attribute
+          fn.DefExpansionLevel <- helper.Options.DefExpansionLevel
           let expr = turnIntoPureExpression helper fn.RetType body
           let rec genAxiom k =
             if k <= 0 then []
