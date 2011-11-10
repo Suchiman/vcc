@@ -72,6 +72,7 @@ namespace Microsoft.Research.Vcc
         return VerificationLocation != null || 0 < Functions.Count || 0 < FunctionsWithExactName.Count;
       }
     }
+    public int DefExpansionLevel = 3;
 
     public void CopyFrom(VccOptions other)
     {
@@ -142,6 +143,7 @@ namespace Microsoft.Research.Vcc
       this.IgnoreIncludes = other.IgnoreIncludes;
       this.UnfoldConstants = other.UnfoldConstants;
       this.TerminationLevel = other.TerminationLevel;
+      this.DefExpansionLevel = other.DefExpansionLevel;
     }
   }
 
@@ -311,6 +313,13 @@ namespace Microsoft.Research.Vcc
           dump = this.ParseNamedBoolean(arg, "dumpsource0", "d0");
           if (dump != null) {
             this.options.PipeOperations.Add("dump before begin");
+            return true;
+          }
+
+          string expansionStr = this.ParseNamedArgument(arg, "defexpansion", "dexp");
+          int expansionLev;
+          if (expansionStr != null && int.TryParse(expansionStr, out expansionLev)) {
+            this.options.DefExpansionLevel = expansionLev;
             return true;
           }
 
