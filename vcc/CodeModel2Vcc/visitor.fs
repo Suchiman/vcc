@@ -426,7 +426,7 @@ namespace Microsoft.Research.Vcc
      
     member this.DoInvariant (inv:ITypeInvariant) : C.Expr =
       let cond = this.DoIExpression inv.Condition
-      let name =if inv.Name <> null then inv.Name.Value else "public"
+      let name = if inv.Name <> null then inv.Name.Value else "public"
       C.Expr.Macro(cond.Common, "labeled_invariant", [C.Expr.Macro(C.bogusEC, name, []); cond])
      
     member this.DoIExpression(expr:IExpression) : C.Expr =

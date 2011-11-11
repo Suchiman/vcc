@@ -829,6 +829,12 @@ axiom (forall #s1:$state, #p:$ptr, typ:$ctype :: {$inv(#s1, #p, typ)}
 // for each struct/union T.
 function $inv2(#s1:$state, #s2:$state, #p:$ptr, typ:$ctype) returns (bool);
 
+// the same as inv2 but w/o the lemmas, so we check them during admissibility
+function $inv2_without_lemmas(#s1:$state, #s2:$state, #p:$ptr, typ:$ctype) returns (bool);
+
+axiom (forall S1:$state, S2:$state, p:$ptr, typ:$ctype :: {$inv2_without_lemmas(S1,S2,p,typ)}
+    $inv2(S1,S2,p,typ) ==> $inv2_without_lemmas(S1,S2,p,typ));
+
 // used in admissibility check
 function {:inline true} $inv2_when_closed(#s1:$state, #s2:$state, #p:$ptr, typ:$ctype) returns (bool)
   { (!$closed(#s1, #p) && !$closed(#s2, #p)) || ($inv2(#s1, #s2, #p, typ) && $nonvolatile_spans_the_same(#s1, #s2, #p, typ)) }
@@ -1256,12 +1262,12 @@ function $good_for_admissibility(S:$state) returns(bool);
 function $good_for_post_admissibility(S:$state) returns(bool);
 
 function {:inline true} $stuttering_pre(S:$state, p:$ptr) returns(bool)
-  { (forall #q: $ptr :: {$st(S, #q)} $closed(S, #q) ==> $inv(S, #q, $typ(#q))) &&
+  { (forall #q: $ptr :: {$st(S, #q)} $closed(S, #q) ==> $inv2_without_lemmas(S, S, #q, $typ(#q))) &&
     $good_for_admissibility(S)
   }
 
 function {:inline true} $admissibility_pre(S:$state, p:$ptr) returns(bool)
-  { $closed(S, p) && $inv(S, p, $typ(p)) && $stuttering_pre(S, p) }
+  { $closed(S, p) && $inv2_without_lemmas(S, S, p, $typ(p)) && $stuttering_pre(S, p) }
 
 procedure $havoc_others(p:$ptr, t:$ctype);
   modifies $s;
