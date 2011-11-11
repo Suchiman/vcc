@@ -14,13 +14,10 @@ namespace Microsoft.Research.Vcc
  
  module AddChecks =
    
-  let invariantsOf (td:TypeDecl) =
-    let stripLabels = function
-      | Macro(_, "labeled_invariant", [_; i]) -> i
-      | i -> i
-    td.Invariants |> List.map splitConjunction |> List.concat
+  let invariantsOf (td:TypeDecl) preSplitCond = 
+    td.Invariants |> List.filter preSplitCond |> List.map splitConjunction |> List.concat
     
-  let invariantCheck (helper:Helper.Env) cond errno suffix prestate (this:Expr) =
+  let invariantCheck (helper:Helper.Env) preSplitCond cond errno suffix prestate (this:Expr) =
     match this.Type with
       | Ptr (Type.Ref td) ->
         let replaceThisOld self = function 
@@ -33,7 +30,7 @@ namespace Microsoft.Research.Vcc
         let mkAssertFromInvariant (expr : Expr) =
           let primaryToken = if this.Token = bogusEC.Token then expr.Token else this.Token
           Expr.Macro (afmter errno fmt primaryToken (Some(new ForwardingToken(expr.Token, fun () -> "location of the invariant") :> Token)) [expr], "inv_check", [expr])
-        [ for inv in invariantsOf td do
+        [ for inv in invariantsOf td preSplitCond do
             if cond inv then yield mkAssertFromInvariant (inv.SelfMap replaceThisOld) 
             else yield! [] ]
       | Ptr (TypeVar _)
@@ -53,12 +50,18 @@ namespace Microsoft.Research.Vcc
                                 Prim (_, Op ("!", _), [CallMacro (_, "_vcc_closed", _, [_; This _])])), _) -> true
     | _ -> false
   
+  let isLemmaInv = function
+    | Macro(_, "labeled_invariant", [Macro(_, "lemma", []); i]) -> true
+    | _ -> false
+
+
+
   let saveAndCheckInvariant helper cond errno suffix this =
     let this = ignoreEffects this
     let prestate = getTmp helper "prestate" Type.MathState VarKind.SpecLocal
     let nowstate = Expr.Macro ({ bogusEC with Type = Type.MathState }, "_vcc_current_state", [])
     let saveState = [VarDecl (bogusEC, prestate, []); VarWrite (bogusEC, [prestate], nowstate)]
-    let check = invariantCheck helper cond errno suffix (mkRef prestate) this
+    let check = invariantCheck helper (fun i -> not (isLemmaInv i)) cond errno suffix (mkRef prestate) this
     (saveState, List.map Expr.MkAssert check)  
     
   

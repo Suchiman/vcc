@@ -1350,10 +1350,14 @@ namespace Microsoft.Research.Vcc
               let mkAssert (e:C.Expr) =
                 let tok = afmtet obj.Token 8524 "chunk {0} of invariant of {1} holds after atomic" [e; obj]
                 B.Stmt.MkAssert (tok, trExpr env' e |> bSubst [("$_this", bobj)])
-              td.Invariants |> List.map TransUtil.splitConjunction |> List.concat |> List.map mkAssert
+              td.Invariants 
+              |> List.filter (fun i -> not (AddChecks.isLemmaInv i)) 
+              |> List.map TransUtil.splitConjunction 
+              |> List.concat 
+              |> List.map mkAssert
             | _ ->
               [B.Stmt.MkAssert (afmte 8525 "invariant of {0} holds after atomic" [obj],
-                              bCall "$inv2" [oldState; bState; bobj; getType obj bobj])]
+                              bCall "$inv2_without_lemmas" [oldState; bState; bobj; getType obj bobj])]
         
         let valid_claims =
           [for c in claims ->
@@ -2326,7 +2330,10 @@ namespace Microsoft.Research.Vcc
         List.iter (function C.VccAttr ("claimable", _) -> is_claimable := true
                           | C.VccAttr ("volatile_owns", _) -> owns_set_is_volatile := true
                           | _ -> ()) td.CustomAttr
-                                                        
+            
+        let isNoLemmaInvariant = function
+          | C.Macro(_, "labeled_invariant", [C.Macro(_, "lemma", []); _]) -> false
+          | _ -> true
         let stripLabel = function
           | C.Macro(_, "labeled_invariant", [_; i]) -> i                  
           | i -> i
@@ -2358,15 +2365,17 @@ namespace Microsoft.Research.Vcc
             trExpr initialEnv |>
             substOld [("$s", s1)] |>
             bSubst [("$_this", p); ("$s", s2)]
-        let inv exprs = bMultiAnd ((if vcc3 then bTrue else bCall "$typed" [s2; p]) :: (exprs |> List.map doInv) ) 
+        let toInv exprs = bMultiAnd ((if vcc3 then bTrue else bCall "$typed" [s2; p]) :: (exprs |> List.map doInv) ) 
         let invcall = bCall "$inv2" s1s2pwe
+        let invWithoutLemmasCall = bCall "$inv2_without_lemmas" s1s2pwe
         let typedPtr = bCall "$ptr" [we; r]
         let invlabcall lbl = bCall "$inv_lab" [s2; typedPtr; er (ctx.TrInvLabel lbl)]
         let normalizeLabeledInvariant = bSubst [("#s1", er "#s2"); ("#p", typedPtr)] >> removeTrivialEqualities
         let invlab (lbl,exprs) = 
           let invcall = invlabcall lbl
-          B.Forall(Token.NoToken, s2r, [[invcall]], weight "eqdef-inv", (bEq (invcall) (inv exprs |> normalizeLabeledInvariant)))
-        let inv = B.Forall (Token.NoToken, s1s2p, [[invcall]], weight "eqdef-inv", (bEq invcall (inv (td.Invariants |> List.map stripLabel))))
+          B.Forall(Token.NoToken, s2r, [[invcall]], weight "eqdef-inv", (bEq (invcall) (toInv exprs |> normalizeLabeledInvariant)))
+        let inv = B.Forall (Token.NoToken, s1s2p, [[invcall]], weight "eqdef-inv", (bEq invcall (toInv (td.Invariants |> List.map stripLabel))))
+        let invWithoutLemmas = B.Forall (Token.NoToken, s1s2p, [[invWithoutLemmasCall]], weight "eqdef-inv", (bEq invWithoutLemmasCall (toInv (td.Invariants |> List.filter isNoLemmaInvariant |> List.map stripLabel))))
         let labeledInvs = td.Invariants |> gatherByLabel |> List.map invlab |> List.map (fun e -> B.Axiom(e))
         
         let extentCall extentName meta union1 (fields:list<C.Field>) =
@@ -2556,12 +2565,12 @@ namespace Microsoft.Research.Vcc
           //| [] -> forward
           | _ when vcc3 ->
             forward @ 
-               [ B.Decl.Axiom inv; B.Decl.Axiom (trCompositeExtent td) ] 
+               [ B.Decl.Axiom inv; B.Decl.Axiom invWithoutLemmas; B.Decl.Axiom (trCompositeExtent td) ] 
                  @ List.concat (List.map (trField3 td) allFields)
           | _ -> 
             forward @ 
               [B.Decl.Axiom (bEq (bCall "$sizeof" [we]) (bInt td.SizeOf));
-               B.Decl.Axiom inv ] @ labeledInvs @
+               B.Decl.Axiom inv; B.Decl.Axiom invWithoutLemmas; ] @ labeledInvs @
                 [B.Decl.Axiom in_full_extent_of;
                  B.Decl.Axiom in_extent_of;
                  B.Decl.Axiom in_span_of;

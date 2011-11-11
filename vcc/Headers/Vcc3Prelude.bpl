@@ -1051,6 +1051,12 @@ function {:inline true} $inv2nt(S1:$state, S2:$state, p:$ptr) : bool
 // for each struct/union T.
 function $inv2(#s1:$state, #s2:$state, #p:$ptr, typ:$ctype) : bool;
 
+// the same as inv2 but w/o the lemmas, so we check them during admissibility
+function $inv2_without_lemmas(#s1:$state, #s2:$state, #p:$ptr, typ:$ctype) returns (bool);
+
+axiom (forall S1:$state, S2:$state, p:$ptr, typ:$ctype :: {$inv2_without_lemmas(S1,S2,p,typ)}
+    $inv2(S1,S2,p,typ) ==> $inv2_without_lemmas(S1,S2,p,typ));
+
 function {:inline true} $full_stop_ext(t:$token, S:$state) : bool
   { $good_state_ext(t, S) && $full_stop(S) }
 
@@ -1642,12 +1648,12 @@ function $admissibility_start(p:$ptr, t:$ctype) : bool
   { $is(p, t) && $is_proper(p) }
 
 function {:inline true} $stuttering_pre(S:$state, p:$ptr) : bool
-  { (forall q: $ptr :: {$closed(S, q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
+  { (forall q: $ptr :: {$closed(S, q)} $closed(S, q) ==> $inv2_without_lemmas(S, S, q, $typ(q))) &&
     $good_for_admissibility(S)
   }
 
 function {:inline true} $admissibility_pre(S:$state, p:$ptr) : bool
-  { $closed(S, p) && $inv(S, p, $typ(p)) && $stuttering_pre(S, p) }
+  { $closed(S, p) && $inv2_without_lemmas(S, S, p, $typ(p)) && $stuttering_pre(S, p) }
 
 procedure $havoc_others(p:$ptr, t:$ctype);
   modifies $s;

@@ -21,10 +21,13 @@ namespace Microsoft.Research.Vcc
   let prestate = Macro ({ bogusEC with Type = Type.MathState }, "prestate", [])
   
   let admChecks helper p =
-    AddChecks.invariantCheck helper (fun _ -> true) 8012 "is not admissible" prestate (mkRef p)
+    AddChecks.invariantCheck helper (fun e -> not (AddChecks.isLemmaInv e)) (fun _ -> true) 8012 "is not admissible" prestate (mkRef p)
+
+  let lemmaChecks helper p =
+    AddChecks.invariantCheck helper AddChecks.isLemmaInv (fun _ -> true) 8033 "is not a lemma" prestate (mkRef p)
   
   let unwrapChecks helper p =
-    AddChecks.invariantCheck helper (fun e -> not (AddChecks.isOnUnwrap e)) 8018 "forbids unwrapping" prestate (mkRef p)
+    AddChecks.invariantCheck helper (fun _ -> true) (fun e -> not (AddChecks.isOnUnwrap e)) 8018 "forbids unwrapping" prestate (mkRef p)
 
   let stuttChecks helper p =    
     let stutteringCheck (inv:Expr) =
@@ -40,7 +43,7 @@ namespace Microsoft.Research.Vcc
         [Expr.Macro(afmte 8013 "invariant({0}) is not admissible (stuttering)" [inv], "token_holder", [inv])]
             else []
     let td = match p.Type with Ptr (Type.Ref td) -> td | _ -> die()
-    List.map stutteringCheck (AddChecks.invariantsOf td) |> List.concat
+    List.map stutteringCheck (AddChecks.invariantsOf td (fun _ -> true)) |> List.concat
 
   let addDefaultAdmissibilityChecks (explicitAdm:Dict<_,_>) (helper:Helper.Env) =
     let handleDecl = function
@@ -96,8 +99,9 @@ namespace Microsoft.Research.Vcc
           let post = 
             List.map (mkImpl isAdm) (admChecks helper parm) @
             List.map (mkImpl isStutt) (stuttChecks helper parm) @
-            List.map (mkImpl isUnwrap) (unwrapChecks helper parm)
-                    
+            List.map (mkImpl isUnwrap) (unwrapChecks helper parm) @
+            List.map (mkImpl isAdm) (lemmaChecks helper parm)
+          
               //Expr.Assert( { afmte 8514 "invariant({0}) holds (in admissibility check)" [expr] with Type = Type.Void }, expr )
           let check = 
             { Function.Empty() with
