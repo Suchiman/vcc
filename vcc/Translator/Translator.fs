@@ -1322,7 +1322,14 @@ namespace Microsoft.Research.Vcc
             | C.Pure (_, C.Macro (_, "ghost_atomic", [])) :: rest -> true, rest
             | _ -> false, objs
 
-        let (objs, claims) = List.partition (fun (e:C.Expr) -> e.Type <> C.Type.SpecPtr C.Claim) objs
+        let isClaim (e:C.Expr) = e.Type = C.Type.SpecPtr C.Claim
+        let rec normObj = function
+          | C.Pure (_, e) -> normObj e
+          | C.Macro (_, "read_only", [e]) when isClaim e -> e
+          | e -> e
+
+        let (claims, objs) = objs |> List.map normObj |> List.partition isClaim
+
         let (before, after) =
           match body with
             | C.Block (_, lst, _) -> split [] lst
@@ -1332,7 +1339,7 @@ namespace Microsoft.Research.Vcc
         let (atomicInits, atomicObjs, rwObjs) =
           let init = ref []
           let stripRo = function
-            | C.Pure (ec, C.Macro (_, "read_only", [a])) -> C.Pure (ec, a)
+            | C.Macro (_, "read_only", [a]) -> C.Pure (ec, a)
             | a -> a
           let saveRef e =
             let e' = trExpr env (stripRo e)
