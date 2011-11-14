@@ -1046,6 +1046,9 @@ function {:inline true} $inv(#s1:$state, #p:$ptr, typ:$ctype) : bool
 function {:inline true} $inv2nt(S1:$state, S2:$state, p:$ptr) : bool
   { $inv2(S1, S2, p, $typ(p)) }
 
+function {:inline true} $inv2s(S1:$state, S2:$state, p:$ptr) : bool
+  { $inv2(S1, S2, p, $typ(p)) }
+
 // We generate axioms like:
 //   inv2(S1,S2,p,T) <==> invariant of T
 // for each struct/union T.
