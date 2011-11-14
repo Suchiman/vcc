@@ -159,7 +159,7 @@
 /time                          Display more detailed time statistics.
 /translate                     Translate the source files into corresponding BPL files (Short form: /t)
 /termination:&lt;n&gt;               Check termination behavior of: 0-nothing, 1-pure functions (default), 2-also ghost functions, 3-also regular functions (Short form: /term)
-/defexpansion:&lt;n&gt;              Specify number of expansion levels for recursive _(def ...) functions (default: 3; Short form: /dexp)
+/defexpansion:&lt;n&gt;              Specify number of expansion levels for recursive _(def ...) functions (default: 3; 0 is no limit; Short form: /dexp)
 /version                       Display the compiler version.
 /warningsaserrors              Treat warnings as errors (Short form: /wx)
 /warn:&lt;n&gt;                      Set warning level (0-2), default is 1 (Short form: /w)
