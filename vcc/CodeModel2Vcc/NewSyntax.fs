@@ -178,6 +178,7 @@ let init (helper:Helper.Env) =
       | Macro (ec, n, [primary; Macro (_, "argument_tuple", secondary)]) when n.StartsWith "\\castlike_va_" ->
         match n.Substring 13 with
           | "atomic_read" ->
+            let secondary = secondary |> List.map (fun e -> Pure (e.Common, Macro (e.Common, "read_only", [e])))
             Some (Macro (ec, "atomic_op", secondary @ [Expr.False; primary]))
           | n ->              
             helper.Oops (ec.Token, "unknown \\castlike_va_ function " + n)
