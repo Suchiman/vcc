@@ -1329,19 +1329,23 @@ namespace Microsoft.Research.Vcc
             | _ -> [], [body]
         let (save, oldState) = saveState "beforeAtomic"
         let ctx = { ClaimChecks = []; ClaimInits = [] }
-        let (atomicInits, atomicObjs) =
+        let (atomicInits, atomicObjs, rwObjs) =
           let init = ref []
+          let stripRo = function
+            | C.Pure (ec, C.Macro (_, "read_only", [a])) -> C.Pure (ec, a)
+            | a -> a
           let saveRef e =
-            let e' = trExpr env e
+            let e' = trExpr env (stripRo e)
             let tmp = "atomicObj#" + (helper.UniqueId()).ToString()
             init := B.Stmt.VarDecl ((tmp, tpPtr), None) :: B.Stmt.Assign (er tmp, e') :: !init
             (er tmp, e)
-          let res = List.map saveRef objs
-          (!init, res)
+          let res_rw = objs |> List.filter (fun e -> stripRo e = e) |> List.map saveRef
+          let res_ro = objs |> List.filter (fun e -> stripRo e <> e) |> List.map saveRef
+          (!init, res_ro @ res_rw, res_rw)
           
         let preEnv = { env with AtomicReads = List.map fst atomicObjs }
-        let env' = { preEnv with AtomicObjects = List.map fst atomicObjs ;
-                                 OldState = oldState ;
+        let env' = { preEnv with AtomicObjects = List.map fst rwObjs
+                                 OldState = oldState;
                                  ClaimContext = Some ctx }
         let flmap f l = List.map f l |> List.concat
         let checkInv (bobj, (obj:C.Expr)) =
@@ -1388,7 +1392,7 @@ namespace Microsoft.Research.Vcc
         ctx.ClaimInits @
         atomicAction @ 
         ctx.ClaimChecks @
-        flmap checkInv atomicObjs @
+        flmap checkInv rwObjs @
         [assumeSync env ec.Token]
         
       

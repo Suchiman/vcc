@@ -207,6 +207,7 @@ _(template<typename T> T* \castlike_retype(T*);)
 _(template<typename T> T \castlike_by_claim(T v, \claim c);)
 _(template<typename T> T \castlike_precise(T v);)
 
+_(\object \castlike_read_only(\object ptr))
 _(\object \castlike_blob(\object ptr, \integer sz))
 _(\object \castlike_blob_of(\object ptr))
 _(template<typename T> T* \castlike_unblobify(T*);)

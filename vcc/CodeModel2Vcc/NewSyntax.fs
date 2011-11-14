@@ -197,6 +197,8 @@ let init (helper:Helper.Env) =
           else VarKind.Local
         let decls1, rf = cache helper "blob" expr' kind
         Some (Expr.MkBlock (decls1 @ [rf]))
+      | Macro (ec, "\\castlike_read_only", [arg]) ->
+        Some (Expr.Macro (ec, "read_only", [self arg]))
       | _ -> None
       
     let rewriteBvAssertAsBvLemma self = function
