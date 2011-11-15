@@ -268,9 +268,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ requires this.currentToken != Token.EndOfFile;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
-      List<TemplateParameterDeclarator>/*?*/ templateParameters = this.ParseTemplateParameters(followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
+      List<TemplateParameterDeclarator>/*?*/ templateParameters = this.ParseTemplateParameters(followers|TS.DeclaratorStartOrRightParenOrSemicolon);
       this.InitializeLocallyDefinedNamesFromParameters(templateParameters);
-      List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, specSpecifiers, followers | TS.DeclaratorStart | Token.Semicolon | Token.Colon);
+      List<Specifier> specifiers = this.ParseSpecifiers(namespaceMembers, typeMembers, specSpecifiers, followers | TS.DeclaratorStart | Token.Semicolon);
 
       if (this.currentToken == Token.Specification) 
         ParseNonLocalDeclarationInSpecBlock(namespaceMembers, typeMembers, followers, isGlobal, templateParameters, specifiers);
@@ -282,7 +282,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
       this.Skip(Token.LeftParenthesis);
-      specifiers.AddRange(this.ParseSpecifiers(namespaceMembers, typeMembers, null, followers | TS.DeclaratorStart | Token.Semicolon | Token.Colon | Token.RightParenthesis));
+      specifiers.AddRange(this.ParseSpecifiers(namespaceMembers, typeMembers, null, followers | TS.DeclaratorStartOrRightParenOrSemicolon));
       ParseNonLocalDeclaration(typeMembers, followers | Token.RightParenthesis, isGlobal, templateParameters, specifiers);
       this.Skip(Token.RightParenthesis);
       this.LeaveSpecBlock(savedInSpecCode);
@@ -1295,7 +1295,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (this.currentToken == Token.LeftParenthesis){
         this.GetNextToken();
         if (!TS.DeclarationStart[this.currentToken])
-          specifiers = this.ParseSpecifiers(new List<INamespaceDeclarationMember>(), null, null, followers|TS.DeclaratorStart|Token.RightParenthesis|Token.Semicolon);
+          specifiers = this.ParseSpecifiers(new List<INamespaceDeclarationMember>(), null, null, followers|TS.DeclaratorStartOrRightParenOrSemicolon);
         result = this.ParseDeclarator(templateParameters, followers | Token.RightParenthesis, requireIdentifier);
         this.Skip(Token.RightParenthesis);
       } else if (this.currentToken == Token.Colon) {
@@ -3882,6 +3882,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       public static readonly TokenSet ContractStart;
       public static readonly TokenSet DeclarationStart;
       public static readonly TokenSet DeclaratorStart;
+      public static readonly TokenSet DeclaratorStartOrRightParenOrSemicolon;
       public static readonly TokenSet EndOfFile;
       public static readonly TokenSet InfixOperators;
       public static readonly TokenSet LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart;
@@ -4004,6 +4005,11 @@ namespace Microsoft.Research.Vcc.Parsing {
         DeclaratorStart |= Token.Identifier;
         DeclaratorStart |= Token.LeftParenthesis;
         DeclaratorStart |= Token.Colon; // occurs in anonymous bitfields
+
+        DeclaratorStartOrRightParenOrSemicolon = new TokenSet();
+        DeclaratorStartOrRightParenOrSemicolon |= Token.RightParenthesis;
+        DeclaratorStartOrRightParenOrSemicolon |= Token.Semicolon;
+        DeclaratorStartOrRightParenOrSemicolon |= TS.DeclaratorStart;
 
         EndOfFile = new TokenSet();
         EndOfFile |= Token.EndOfFile;
