@@ -3658,6 +3658,48 @@ namespace Microsoft.Research.Vcc {
     }
   }
 
+  public class VccQualifiedTypeExpression : TypeExpression
+  {
+    private readonly TypeExpression typeExpression;
+    private readonly List<TypeQualifier> qualifiers;
+
+    public VccQualifiedTypeExpression(TypeExpression typeExpression, List<TypeQualifier> qualifiers, ISourceLocation sourceLocation)
+      :base(sourceLocation)
+    {
+      this.typeExpression = typeExpression;
+      this.qualifiers = qualifiers;
+    }
+
+    protected VccQualifiedTypeExpression(BlockStatement containingBlock, VccQualifiedTypeExpression template) 
+      : base(containingBlock, template)
+    {
+      this.typeExpression = (TypeExpression) template.typeExpression.MakeCopyFor(containingBlock);
+      this.qualifiers = new List<TypeQualifier>(template.qualifiers);
+    }
+
+    public IEnumerable<TypeQualifier> Qualifiers
+    {
+      get { return this.qualifiers; }
+    }
+
+    protected override ITypeDefinition Resolve()
+    {
+      return this.typeExpression.ResolvedType;
+    }
+
+    public override void SetContainingExpression(Expression containingExpression)
+    {
+      base.SetContainingExpression(containingExpression);
+      this.typeExpression.SetContainingExpression(containingExpression);
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    {
+      if (containingBlock == this.ContainingBlock) return this;
+      return new VccQualifiedTypeExpression(containingBlock, this);
+    }
+  }
+
   public class VccQualifiedName : QualifiedName
   {
     public VccQualifiedName(Expression qualifier, SimpleName simpleName, ISourceLocation sourceLocation)

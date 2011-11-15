@@ -994,6 +994,11 @@ namespace Microsoft.Research.Vcc
               let f' = {f with Type = Type.Array(Type.Ref(td'), size)}
               initialFldToVolatileFld.Add(f, f')
               f'
+            | Type.Array(Type.Ref({Kind = Struct|Union} as td), size) when f.IsVolatile ->
+              let td' = mkVolTd td
+              let f' = {f with Type = Type.Array(Type.Ref(td'), size); IsVolatile=false}
+              initialFldToVolatileFld.Add(f, f')
+              f'
             | Type.Array(Type.Volatile(t), size) ->
               let f' = {f with Type = Type.Array(t, size); IsVolatile=true}
               initialFldToVolatileFld.Add(f, f')
@@ -1068,6 +1073,26 @@ namespace Microsoft.Research.Vcc
             Some(Pure(ec, se))
         | _ -> None
       
+
+      let typeSubst = new Dict<Type, Type>()
+
+      let findVolatileTypes self (expr : Expr) =
+        match expr.Common.Type with
+          | PtrSoP(Volatile(Type.Ref(td)), isSpec) -> 
+            typeSubst.[expr.Common.Type] <- Type.MkPtr(Type.Ref(mkVolTd td), isSpec); true
+          | _ -> true
+
+        
+      do deepVisitExpressions findVolatileTypes decls
+
+      let typeMap t = 
+        match typeSubst.TryGetValue t with
+          | true, t' -> Some t'
+          | false, _ -> None
+        
+
+      let decls = deepMapExpressions (fun _ (expr : Expr) -> Some(expr.SubstType(typeMap, new Dict<Variable, Variable>()))) decls
+
       for d in decls do
         match d with
           | Top.TypeDecl(td) -> pushDownOne true td

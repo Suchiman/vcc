@@ -773,21 +773,10 @@ namespace Microsoft.Research.Vcc
                   topDecls <- C.Top.TypeDecl (td) :: topDecls
                   
                   let trField isSpec (f:IFieldDefinition) =
-                    let (fldMarkedVolatile, fldDeclaredAsPointer) = 
+                    let fldVolatile = 
                       match f with
-                        | :? Microsoft.Cci.Ast.FieldDefinition as fd -> (fd.FieldDeclaration.IsVolatile,
-                                                                         match fd.FieldDeclaration.Type with
-                                                                           | :? VccPointerTypeExpression -> true
-                                                                           | :? VccArrayTypeExpression -> true
-                                                                           | _ -> false )
-                        | _ -> false, false
-                    let ptrDeclaredAsVolatile = 
-                      match f.Type.ResolvedType with
-                        | :? IPointerType as pt -> VccCompilationHelper.IsVolatilePointer(pt)
+                        | :? Microsoft.Cci.Ast.FieldDefinition as fd -> fd.FieldDeclaration.IsVolatile
                         | _ -> false
-                    let (fldVolatile, pointsToVolatile) =
-                      if fldDeclaredAsPointer then (ptrDeclaredAsVolatile, fldMarkedVolatile)
-                      else (fldMarkedVolatile, ptrDeclaredAsVolatile)
                       
                     let name =
                       match f with
@@ -797,11 +786,7 @@ namespace Microsoft.Research.Vcc
                             | _ -> f.Name.Value
                         | _ -> f.Name.Value
 
-                    let t = 
-                      match this.DoType (f.Type) with
-                        | C.PtrSoP(typ, isSpec) when pointsToVolatile -> C.Type.MkPtr(C.Type.Volatile(typ), isSpec)
-                        | C.Type.Array(typ, size) when pointsToVolatile -> C.Type.Array(C.Type.Volatile(typ), size)
-                        | typ -> typ
+                    let t = this.DoType (f.Type)
                     let tok = token f
                     let isSpec = isSpec || td.IsSpec
                     let isSpec =
@@ -1545,10 +1530,15 @@ namespace Microsoft.Research.Vcc
       member this.Visit (parameterTypeInformation:IParameterTypeInformation) : unit = assert false
 
       member this.Visit (pointerTypeReference:IPointerTypeReference) : unit =
-        let isSpec = match pointerTypeReference with
-                      | :? IPointerType as pt -> VccCompilationHelper.IsSpecPointer(pt)
-                      | _ -> false // TODO: Ptr kind
-        typeRes <- C.Type.MkPtr (this.DoType (pointerTypeReference.TargetType), isSpec)
+        let targetType = this.DoType (pointerTypeReference.TargetType)
+        let isSpec, targetType' = 
+          match pointerTypeReference with
+            | :? IPointerType as pt -> 
+              VccCompilationHelper.IsSpecPointer(pt),
+              if VccCompilationHelper.IsVolatilePointer(pt) then C.Type.Volatile(targetType) else targetType
+            | _ -> false, targetType
+
+        typeRes <- C.Type.MkPtr (targetType', isSpec)
 
       member this.Visit (propertyDefinition:IPropertyDefinition) : unit = assert false
 
@@ -1787,18 +1777,13 @@ namespace Microsoft.Research.Vcc
       member this.Visit (localDeclarationStatement:ILocalDeclarationStatement) : unit =
         let loc = localDeclarationStatement.LocalVariable
         let sc = this.StmtCommon localDeclarationStatement
-        let declaredAsVolatile, varkind, attrs = 
+        let varkind, attrs = 
           match loc with 
             | :? Microsoft.Research.Vcc.VccLocalDefinition as vcLoc -> 
-                ( vcLoc.IsVolatile,  
-                  (if vcLoc.IsSpec then C.VarKind.SpecLocal else C.VarKind.Local),
-                  convCustomAttributes sc.Token vcLoc.Attributes )
-            | _ -> false, C.VarKind.Local, []
-        let t = 
-          match this.DoType (loc.Type) with
-            | C.PtrSoP(t, isSpec) when declaredAsVolatile -> C.Type.MkPtr(C.Volatile(t), isSpec)
-            | t -> t
-        let var = C.Variable.CreateUnique loc.Name.Value t varkind
+                (if vcLoc.IsSpec then C.VarKind.SpecLocal else C.VarKind.Local),
+                convCustomAttributes sc.Token vcLoc.Attributes
+            | _ -> C.VarKind.Local, []
+        let var = C.Variable.CreateUnique loc.Name.Value (this.DoType (loc.Type)) varkind
         localsMap.Add(loc, var)
         let decl = C.Expr.VarDecl (sc, var, attrs) 
         localVars <- decl :: localVars

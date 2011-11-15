@@ -1,5 +1,5 @@
 `/newsyntax
-#define PVOID void*
+typedef void *PVOID;
 #define NULL ((void*)0)
 
 #include "vcc.h"

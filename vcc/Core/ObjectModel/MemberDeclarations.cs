@@ -1475,13 +1475,15 @@ namespace Microsoft.Research.Vcc {
 
   internal sealed class PointerDeclarator : Declarator {
 
-    internal PointerDeclarator(List<Pointer> pointers, Declarator declarator, ISourceLocation sourceLocation)
+    internal PointerDeclarator(List<Pointer> pointers, Declarator declarator, List<TypeQualifier> qualifiers, ISourceLocation sourceLocation)
       : base(sourceLocation) {
       this.Pointers = pointers;
       this.Declarator = declarator;
-    }
+      this.Qualifiers = qualifiers;
+      }
 
-    internal List<Pointer> Pointers;
+    internal readonly List<TypeQualifier> /*?*/ Qualifiers;
+    internal readonly List<Pointer> Pointers;
     internal Declarator Declarator;
     internal override NameDeclaration Identifier {
       get { return this.Declarator.Identifier; }
