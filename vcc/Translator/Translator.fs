@@ -1544,9 +1544,18 @@ namespace Microsoft.Research.Vcc
               [cmt (); B.Stmt.MkAssume (trExpr env e)]
             | C.Expr.Return (c, s) ->
               match s with
-              | None -> [cmt (); B.Stmt.MkAssert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
+              | None -> 
+                [cmt ()
+                 captureState "function exit" c.Token
+                 B.Stmt.MkAssert (c.Token, bCall "$position_marker" [])
+                 B.Stmt.Goto (c.Token, ["#exit"])
+                 ]
               | (Some e) -> 
-                [cmt (); B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e)); B.Stmt.MkAssert (c.Token, bCall "$position_marker" []); B.Stmt.Goto (c.Token, ["#exit"])]
+                [cmt ()
+                 B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e))
+                 captureState "function exit" c.Token
+                 B.Stmt.MkAssert (c.Token, bCall "$position_marker" [])
+                 B.Stmt.Goto (c.Token, ["#exit"])]
             | C.Expr.Macro (_, "havoc", [e ;t]) ->
               [cmt (); B.Stmt.Call (e.Token, [], "$havoc", [trExpr env e; trExpr env t]); assumeSync env e.Token]
             | C.Expr.Macro (_, "_vcc_add_member", [p; c]) ->
