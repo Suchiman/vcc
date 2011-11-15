@@ -337,7 +337,7 @@ namespace Microsoft.Research.Vcc.Parsing {
             FunctionDeclarator fDecl = iDecl.Declarator as FunctionDeclarator;
           }
           //TODO: complain if templateParameters are not null
-          this.AddTypeDeclarationMember(specifiers, declarator, typeMembers);
+          this.AddTypeDeclarationMember(specifiers, declarator, typeMembers, isGlobal);
         }
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
@@ -658,19 +658,37 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.compilation.ContractProvider.AssociateMethodWithContract(func, funcDeclarator.Contract.ToMethodContract());
     }
 
-    protected bool IsPointerDeclarator(Declarator declarator) {
-      if (declarator is PointerDeclarator) return true;
-      InitializedDeclarator/*?*/ id = declarator as InitializedDeclarator;
-      if (id != null) return this.IsPointerDeclarator(id.Declarator);
-      return (declarator is ArrayDeclarator);
+    private bool IsArrayDeclarator(Declarator declarator)
+    {
+      if (declarator is ArrayDeclarator) return true;
+      var id = declarator as InitializedDeclarator;
+      if (id != null) return IsArrayDeclarator(id.Declarator);
+      return false;
+    }
+
+    protected bool IsPointerDeclarator(Declarator declarator, out List<TypeQualifier> qualifiers) {
+      var pd = declarator as PointerDeclarator;
+      if (pd != null) {
+        qualifiers = pd.Qualifiers;
+        return true;
+      }
+      var id = declarator as InitializedDeclarator;
+      if (id != null) return this.IsPointerDeclarator(id.Declarator, out qualifiers);
+      qualifiers = null;
+      var ad = declarator as ArrayDeclarator;
+      if (ad != null) return ad.ArraySize == null;
+      return false;
     }
 
     protected void AddDeclarationStatement(List<Specifier> specifiers, Declarator declarator, List<Statement> statements) {
       SourceLocationBuilder slb = new SourceLocationBuilder(declarator.SourceLocation);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[0].SourceLocation);
       TypeExpression localType = this.GetTypeExpressionFor(specifiers, declarator, FixedSizeArrayContext.AsLocal);
+      List<TypeQualifier> pointerDeclaratorQualifiers;
       FieldDeclaration.Flags constOrVolatile = 
-        this.IsPointerDeclarator(declarator) ? LookForConstAndVolatileForLocalPointer(specifiers) : LookForConstAndVolatile(specifiers);
+        this.IsPointerDeclarator(declarator, out pointerDeclaratorQualifiers) 
+        ? LookForConstAndVolatile(pointerDeclaratorQualifiers) 
+        : LookForConstAndVolatile(specifiers);
       //Token sct = GetStorageClassToken(specifiers); //TODO: use a LocalDeclaration subclass that can record and interpret the storage class
       Expression/*?*/ initializer = null;
       InitializedDeclarator/*?*/ initializedDeclarator = declarator as InitializedDeclarator;
@@ -718,11 +736,20 @@ namespace Microsoft.Research.Vcc.Parsing {
       statements.Add(new LocalDeclarationsStatement((constOrVolatile & FieldDeclaration.Flags.ReadOnly) != 0, false, false, localType, declarations, slb));
     }
 
-    protected void AddTypeDeclarationMember(List<Specifier> specifiers, Declarator declarator, List<ITypeDeclarationMember> typeMembers) {
+    protected void AddTypeDeclarationMember(List<Specifier> specifiers, Declarator declarator, List<ITypeDeclarationMember> typeMembers, bool isGlobal = false) {
       SourceLocationBuilder slb = new SourceLocationBuilder(declarator.SourceLocation);
       if (specifiers.Count > 0) slb.UpdateToSpan(specifiers[0].SourceLocation);
       TypeExpression memberType = this.GetTypeExpressionFor(specifiers, declarator, FixedSizeArrayContext.AsField);
-      FieldDeclaration.Flags flags = LookForConstAndVolatile(specifiers) ;
+      List<TypeQualifier> pointerDeclaratorQualifiers;
+      FieldDeclaration.Flags flags = 
+        this.IsPointerDeclarator(declarator, out pointerDeclaratorQualifiers) 
+        ? LookForConstAndVolatile(pointerDeclaratorQualifiers)
+        : LookForConstAndVolatile(specifiers);
+
+      if (isGlobal 
+        && IsArrayDeclarator(declarator) 
+        && specifiers.Exists(s => s is TypeQualifier && ((TypeQualifier)s).Token == Token.Const)) flags |= FieldDeclaration.Flags.ReadOnly;
+
       // C's const will be treated as readonly. When we are inside a type, isConst is never true because you 
       // cannot initialize it.
       Token sct = GetStorageClassToken(specifiers);
@@ -880,8 +907,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected FieldDeclaration.Flags LookForConstAndVolatile(List<Specifier> specifiers) {
+    protected FieldDeclaration.Flags LookForConstAndVolatile(IEnumerable<Specifier> specifiers) {
       FieldDeclaration.Flags result = 0;
+      if (specifiers == null) return result;
       foreach (Specifier specifier in specifiers) {
         TypeQualifier/*?*/ tqual = specifier as TypeQualifier;
         if (tqual != null) {
@@ -901,8 +929,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, Declarator declarator, FixedSizeArrayContext fsaCtx = FixedSizeArrayContext.AsField, Expression/*?*/ initializer = null) {
-      InitializedDeclarator/*?*/ initialized = declarator as InitializedDeclarator;
+    protected TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, Declarator declarator, FixedSizeArrayContext fsaCtx = FixedSizeArrayContext.AsField, Expression/*?*/ initializer = null)
+    {
+      InitializedDeclarator /*?*/ initialized = declarator as InitializedDeclarator;
       if (initialized != null)
         return this.GetTypeExpressionFor(specifiers, initialized.Declarator, fsaCtx, initialized.InitialValue);
       else {
@@ -973,7 +1002,15 @@ namespace Microsoft.Research.Vcc.Parsing {
         foreach (Pointer p in pointerDeclarator.Pointers) {
           SourceLocationBuilder pslb = new SourceLocationBuilder(p.SourceLocation);
           pslb.UpdateToSpan(slb);
-          result = new VccPointerTypeExpression(result, p.Qualifiers, pslb);
+          if (result is VccQualifiedTypeExpression) {
+            var qte = result as VccQualifiedTypeExpression;
+            var qualifiers = new List<TypeQualifier>();
+            if (p.Qualifiers != null) qualifiers.AddRange(p.Qualifiers);
+            if (qte.Qualifiers != null) qualifiers.AddRange(qte.Qualifiers);
+            result = new VccPointerTypeExpression(result, qualifiers, pslb);
+          } else {
+            result = new VccPointerTypeExpression(result, p.Qualifiers, pslb);
+          }
         }
       }
       return result;
@@ -1017,22 +1054,33 @@ namespace Microsoft.Research.Vcc.Parsing {
       PrimitiveTypeSpecifier/*?*/ length = null;
       PrimitiveTypeSpecifier/*?*/ primitiveType = null;
       List<TypeQualifier> typeQualifiers = null;
+      List<TypeQualifier> skippedQualifiers = null;
       foreach (Specifier specifier in specifiers) {
         CompositeTypeSpecifier/*?*/ cts = specifier as CompositeTypeSpecifier;
         if (cts != null) {
           //TODO: if (result != null || sign != null || length != null || primitiveType != null) Error;
           result = cts.TypeExpression;
+          if (skippedQualifiers != null)
+          {
+            result = new VccQualifiedTypeExpression(result, skippedQualifiers, result.SourceLocation);
+          }
           continue;
         }
         TypeQualifier/*?*/ tq = specifier as TypeQualifier;
-        if (tq != null && result != null) {
-          TypeExpression/*?*/ elementType = this.TypeExpressionHasPointerType(result);
-          if (elementType != null) {
-            if (typeQualifiers == null) {
-              typeQualifiers = new List<TypeQualifier>(2);
-              result = new VccPointerTypeExpression(elementType, typeQualifiers, result.SourceLocation);
+        if (tq != null) {
+          if (result != null) {
+            TypeExpression /*?*/ elementType = this.TypeExpressionHasPointerType(result);
+            if (elementType != null) {
+              if (typeQualifiers == null) {
+                typeQualifiers = new List<TypeQualifier>(2);
+                result = new VccPointerTypeExpression(elementType, typeQualifiers, result.SourceLocation);
+              }
+              typeQualifiers.Add(tq);
             }
-            typeQualifiers.Add(tq);
+          } else {
+            if (skippedQualifiers == null)
+              skippedQualifiers = new List<TypeQualifier>();
+            skippedQualifiers.Add(tq);
           }
           continue;
         }
@@ -1240,7 +1288,8 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^   result is PointerDeclarator || result is AbstractMapDeclarator || result is InitializedDeclarator;
     {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
-      List<Pointer> pointers = this.ParsePointers();
+      List<TypeQualifier> fieldQualifiers;
+      List<Pointer> pointers = this.ParsePointers(out fieldQualifiers);
       Declarator result;
       List<Specifier>/*?*/ specifiers = null;
       if (this.currentToken == Token.LeftParenthesis){
@@ -1264,7 +1313,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       if (pointers.Count > 0) {
         slb.UpdateToSpan(result.SourceLocation);
-        result = new PointerDeclarator(pointers, result, slb);
+        result = new PointerDeclarator(pointers, result, fieldQualifiers, slb);
       }
       if (this.currentToken == Token.Assign)
         result = this.ParseInitializedDeclarator(result, followers);
@@ -1280,11 +1329,12 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ ensures result is IdentifierDeclarator || result is PointerDeclarator;
 {
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
-      List<Pointer> pointers = this.ParsePointers();
+      List<TypeQualifier> fieldQualifiers;
+      List<Pointer> pointers = this.ParsePointers(out fieldQualifiers);
       Declarator result = new IdentifierDeclarator(this.ParseNameDeclaration(true));
       if (pointers.Count > 0) {
         slb.UpdateToSpan(result.SourceLocation);
-        result = new PointerDeclarator(pointers, result, slb);
+        result = new PointerDeclarator(pointers, result, fieldQualifiers, slb);
       }
       this.SkipTo(followers);
       return result;
@@ -1409,22 +1459,28 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected List<Pointer> ParsePointers() {
-      List<Pointer> result = new List<Pointer>(2);
-      while (this.currentToken == Token.Multiply || this.currentToken == Token.BitwiseXor) {
-        result.Add(this.ParsePointer());
+    protected List<Pointer> ParsePointers(out List<TypeQualifier> fieldQualifiers) {
+      var result = new List<Pointer>(2);
+      while (true)
+      {
+        List<TypeQualifier>/*?*/ qualifiers = this.ParseTypeQualifiers();
+        if (this.currentToken != Token.Multiply && this.currentToken != Token.BitwiseXor)
+        {
+          fieldQualifiers = qualifiers;
+          break;
+        }
+        result.Add(this.ParsePointer(qualifiers));      
       }
       result.TrimExcess();
       return result;
     }
 
-    protected Pointer ParsePointer()
+    protected Pointer ParsePointer(List<TypeQualifier>/*?*/ qualifiers)
       //^ requires this.currentToken == Token.Multiply || this.currentToken == Token.BitwiseXor;
     {
       SourceLocationBuilder sloc = this.GetSourceLocationBuilderForLastScannedToken();
       bool isSpec = this.currentToken == Token.BitwiseXor;
       this.GetNextToken();
-      List<TypeQualifier>/*?*/ qualifiers = this.ParseTypeQualifiers();
       if (isSpec) {
         if (qualifiers == null) qualifiers = new List<TypeQualifier>(1);
         qualifiers.Add(new TypeQualifier(Token.Specification, sloc));
