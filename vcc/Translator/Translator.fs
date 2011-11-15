@@ -1830,7 +1830,8 @@ namespace Microsoft.Research.Vcc
                                  List.map (ctx.AssumeLocalIs comm.Token) ctx.SoFarAssignedLocals @
                                  trStmt env s @
                                  [captureState "after loop iter" comm.Token] ))
-              bump @ save @ wrCheck @ [body; assumeSync env comm.Token]
+              let capture = captureState "before loop" comm.Token
+              bump @ save @ wrCheck @ [capture; body; assumeSync env comm.Token]
                 
             | C.Expr.VarDecl (b, v, _) when env.hasIF ->
               if v.Kind = C.Parameter || v.Kind = C.SpecParameter || v.Kind = C.OutParameter then []
