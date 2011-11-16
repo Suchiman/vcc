@@ -352,7 +352,7 @@ namespace Microsoft.Research.Vcc
     }
 
     private static Plugin currentPlugin;
-    private static void RunPlugin(string fileName, string ppFileName, VccOptions commandLineOptions)
+    private static void RunPlugin(string fileName, StreamReader instream, VccOptions commandLineOptions)
     {
       HostEnvironment hostEnvironment = new HostEnvironment(commandLineOptions.PointerSize);
       hostEnvironment.Errors += new CciErrorHandler(commandLineOptions).HandleErrors;
@@ -362,7 +362,6 @@ namespace Microsoft.Research.Vcc
       List<IModuleReference> moduleReferences = new List<IModuleReference>();
       assemblyReferences.Add(hostEnvironment.LoadAssembly(hostEnvironment.CoreAssemblySymbolicIdentity));
       assemblyReferences.Add(hostEnvironment.LoadAssembly(hostEnvironment.VccRuntimeAssemblyIdentity));
-      StreamReader instream = File.OpenText(ppFileName);
       List<VccSourceDocument> programSources = new List<VccSourceDocument>(1);
       VccAssembly assem = new VccAssembly(assemName, Path.GetFullPath(fileName), hostEnvironment, commandLineOptions, assemblyReferences, moduleReferences, programSources);
       VccCompilationHelper helper = new VccCompilationHelper(assem.Compilation);

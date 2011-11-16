@@ -2,6 +2,10 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
   <?define SamplesDir="..\src\vcc\Test\testsuite" ?>
+  
+  <!--
+  <?define VccVersion="3.0.0.42" ?>
+  -->
 
 
   <Product Id="*" Codepage="1252" Language="1033" Manufacturer="Microsoft Research" Name="Microsoft Research Vcc $(var.VccVersion) Samples" UpgradeCode="0D83B0B8-4A3B-47C1-AA42-5536B9C061CC" Version="$(var.VccVersion)">

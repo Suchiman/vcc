@@ -9,25 +9,28 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Linq;
 
 namespace Microsoft.Research.Vcc
 {
   class CCompilerHelper
   {
-    public static IEnumerable<String> Preprocess(VccOptions commandLineOptions, out bool hasErrors) {
+    public static IEnumerable<StreamReader> Preprocess(VccOptions commandLineOptions, out bool hasErrors) {
       hasErrors = false;
-      if (commandLineOptions.NoPreprocessor) return commandLineOptions.FileNames;
+      if (commandLineOptions.NoPreprocessor) {
+        return commandLineOptions.FileNames.Select(s => new StreamReader(s));
+      }
       string savedCurentDir = Directory.GetCurrentDirectory();
-      List<String> preprocessedFiles = new List<string>();
+      var preprocessedFiles = new List<StreamReader>();
       try {
         foreach (string fileName in commandLineOptions.FileNames) {
           Directory.SetCurrentDirectory(Path.GetDirectoryName(fileName));
-          string ppFileName = RunPreprocessor(fileName, commandLineOptions);
-          if (String.IsNullOrEmpty(ppFileName)) {
+          var ppStream = RunPreprocessor(fileName, commandLineOptions);
+          if (ppStream == null) {
             hasErrors = true;
             break;
           } else {
-            preprocessedFiles.Add(ppFileName);
+            preprocessedFiles.Add(ppStream);
           }
         }
       } catch (Exception e) {
@@ -78,7 +81,7 @@ namespace Microsoft.Research.Vcc
       return hasErrors;
     }
 
-    private static string RunPreprocessor(string fileName, VccOptions commandLineOptions) {
+    private static StreamReader RunPreprocessor(string fileName, VccOptions commandLineOptions) {
       string args = GenerateClArgs(fileName, commandLineOptions);
       string outExtension = ".i";
       if (commandLineOptions.ModifiedPreprocessorFiles) outExtension += "." + System.Diagnostics.Process.GetCurrentProcess().Id;
@@ -86,12 +89,10 @@ namespace Microsoft.Research.Vcc
       if (commandLineOptions.OutputDir != null) {
         outFileName = Path.Combine(commandLineOptions.OutputDir, Path.GetFileName(outFileName));
       }
-      if (StartClProcessAndReturnTrueIfErrorsAreFound(fileName, args, outFileName, commandLineOptions))
-        return null;
-      return outFileName;
+      return StartClProcessAndReturnOutput(fileName, args, outFileName, commandLineOptions);
     }
 
-    private static bool StartClProcessAndReturnTrueIfErrorsAreFound(string fileName, string arguments, string outFileName, VccOptions commandLineOptions) {
+    private static StreamReader StartClProcessAndReturnOutput(string fileName, string arguments, string outFileName, VccOptions commandLineOptions) {
 
       StringBuilder errors = new StringBuilder();
       ProcessStartInfo info = ConfigureStartInfoForClVersion10Or9(commandLineOptions);
@@ -102,21 +103,44 @@ namespace Microsoft.Research.Vcc
       info.UseShellExecute = false;
       info.StandardOutputEncoding = Encoding.UTF8;
 
-      using (StreamWriter outFile = new StreamWriter(outFileName, false, Encoding.UTF8))
-      using (Process process = Process.Start(info)) {
-        process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs args) {
+      StreamWriter outFile = null;
+      MemoryStream tmpOut = null;
+
+      if (commandLineOptions.KeepPreprocessorFiles)
+        outFile = new StreamWriter(outFileName, false, Encoding.UTF8);
+      else
+        outFile = new StreamWriter(tmpOut = new MemoryStream());
+
+      try {
+        using (Process process = Process.Start(info)) {
+          process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs args)
+          {
             if (args.Data != null) outFile.WriteLine(args.Data);
-        };
+          };
 
-        process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs args) {
-          if (args.Data != null) errors.AppendLine(args.Data);
-        };
+          process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs args)
+          {
+            if (args.Data != null) errors.AppendLine(args.Data);
+          };
 
-        process.BeginErrorReadLine();
-        process.BeginOutputReadLine();
-        process.WaitForExit();
+          process.BeginErrorReadLine();
+          process.BeginOutputReadLine();
+          process.WaitForExit();
+        }
+      } finally {
+        if (tmpOut == null) outFile.Close();
+        else outFile.Flush();
       }
-      return ProcessOutputAndReturnTrueIfErrorsAreFound(fileName, errors);
+
+      if (ProcessOutputAndReturnTrueIfErrorsAreFound(fileName, errors))
+        return null;
+
+      if (tmpOut == null)
+        return new StreamReader(outFileName);
+      else {
+        tmpOut.Seek(0, SeekOrigin.Begin);
+        return new StreamReader(tmpOut);
+      }
     }
     
 
