@@ -558,6 +558,10 @@ namespace Microsoft.Research.Vcc {
       return HasModifier(type, type.PlatformType.SystemRuntimeCompilerServicesIsVolatile);
     }
 
+    public static bool IsConstPointer(IPointerType type) {
+      return HasModifier(type, type.PlatformType.SystemRuntimeCompilerServicesIsConst);
+    }
+
 
     //^ [Pure]
     protected override Expression Conversion(Expression expression, ITypeDefinition targetType, bool isExplicitConversion, ISourceLocation sourceLocation) {
@@ -895,6 +899,10 @@ namespace Microsoft.Research.Vcc {
     public Expression ImplicitConversionInAssignmentContext(Expression expression, ITypeDefinition targetType, bool allowUnsafeNumericConversions) {
       if (VccCompilationHelper.TypesAreEquivalent(expression.Type, targetType)) 
         return expression;
+
+      if (VccCompilationHelper.TypesAreEquivalent(TypeWithoutIgnorableModifiers(expression.Type), TypeWithoutIgnorableModifiers(targetType)))
+        return expression;
+
       if (targetType.IsEnum && TypeHelper.IsPrimitiveInteger(expression.Type))
         return this.ExplicitConversion(expression, targetType);
       if (expression.Type.IsEnum && TypeHelper.IsPrimitiveInteger(targetType))
@@ -1002,6 +1010,36 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
+    private ITypeDefinition TypeWithoutIgnorableModifiers(ITypeDefinition type)
+    {
+      ModifiedPointerType typeAsModifiedPtrType = type as ModifiedPointerType;
+      if (typeAsModifiedPtrType == null) return type;
+
+      List<ICustomModifier> nonIgnorableModifiers = new List<ICustomModifier>();
+
+      int modifierCount = 0;
+      foreach (var modifier in typeAsModifiedPtrType.CustomModifiers)
+      {
+        modifierCount++;
+        if (modifier.Modifier.InternedKey == type.PlatformType.SystemRuntimeCompilerServicesIsVolatile.InternedKey)
+          continue;
+        if (modifier.Modifier.InternedKey == type.PlatformType.SystemRuntimeCompilerServicesIsConst.InternedKey)
+          continue;
+       
+        nonIgnorableModifiers.Add(modifier);
+      }
+
+      if (nonIgnorableModifiers.Count == 0)
+        return PointerType.GetPointerType(typeAsModifiedPtrType.TargetType,
+                                          this.Compilation.HostEnvironment.InternFactory);
+
+      if (nonIgnorableModifiers.Count != modifierCount)
+        return ModifiedPointerType.GetModifiedPointerType(typeAsModifiedPtrType.TargetType,
+                                                          nonIgnorableModifiers,
+                                                          this.Compilation.HostEnvironment.InternFactory);
+      return type;
+    }
+
     //^ [Pure]
     public override bool ImplicitConversionExists(ITypeDefinition sourceType, ITypeDefinition targetType) {
 
@@ -1023,6 +1061,13 @@ namespace Microsoft.Research.Vcc {
       if (targetType.IsEnum && TypeHelper.IsPrimitiveInteger(sourceType))
         return this.ImplicitConversionExists(sourceType, targetType.UnderlyingType.ResolvedType);
 
+      var sourceUnmod = TypeWithoutIgnorableModifiers(sourceType);
+      var targetUnmod = TypeWithoutIgnorableModifiers(targetType);
+
+      if (sourceUnmod != sourceType || targetUnmod != targetType) {
+        return this.ImplicitConversionExists(sourceUnmod, targetUnmod);
+      }
+
       // special pointer conversion rules
       IPointerType/*?*/ srcPointerType;
       IPointerType/*?*/ tgtPointerType;
@@ -1038,6 +1083,7 @@ namespace Microsoft.Research.Vcc {
         if (srcKind == PtrConvKind.SpecPtr || srcKind == PtrConvKind.VoidSpecP || tgtKind == PtrConvKind.SpecPtr || tgtKind == PtrConvKind.VoidSpecP)
           return false;
       }
+
 
       return base.ImplicitConversionExists(sourceType, targetType);
 
@@ -1202,7 +1248,8 @@ namespace Microsoft.Research.Vcc {
       if (pt != null) {
         var ptrSym = VccCompilationHelper.IsSpecPointer(pt) ? "^" : "*";
         var vol = VccCompilationHelper.IsVolatilePointer(pt) ? "volatile " : "";
-        return vol + this.GetTypeName(pt.TargetType, formattingOptions) + ptrSym;
+        var _const = VccCompilationHelper.IsConstPointer(pt) ? "const " : "";
+        return vol + _const + this.GetTypeName(pt.TargetType, formattingOptions) + ptrSym;
       }
       return base.GetPointerTypeName(pointerType, formattingOptions);
     }
