@@ -271,12 +271,12 @@ namespace Microsoft.Research.Vcc
       hostEnvironment.Errors += errorHandler.HandleErrors;
 
       bool errorsInPreprocessor;
-      CCompilerHelper.Preprocess(options, out errorsInPreprocessor);
-      StreamReader tempStreamReader = new StreamReader(fileNameI);
-      test = tempStreamReader.ReadToEnd();
-      tempStreamReader.Close();
+      var f = CCompilerHelper.Preprocess(options, out errorsInPreprocessor);
+      var st = f.First();
+      test = st.ReadToEnd();
+      st.Close();
       File.Delete(fileNameC);
-      if (!options.KeepPreprocessorFiles) File.Delete(fileNameI);
+      // if (!options.KeepPreprocessorFiles) File.Delete(fileNameI);
 
       IName name = hostEnvironment.NameTable.GetNameFor(suiteName);
       List<IAssemblyReference> assemblyReferences = new List<IAssemblyReference>();
