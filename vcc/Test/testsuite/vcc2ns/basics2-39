@@ -1,0 +1,17 @@
+`/newsyntax 
+#include <vcc.h>
+
+struct S {
+	int a;
+};
+
+void foo(const struct S *p) { }
+
+void bar() {
+	struct S s;
+	foo(&s);
+}
+`
+Verification of foo succeeded.
+Verification of bar succeeded.
+`
