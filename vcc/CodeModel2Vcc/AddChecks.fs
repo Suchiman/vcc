@@ -55,7 +55,6 @@ namespace Microsoft.Research.Vcc
     | _ -> false
 
 
-
   let init (helper:Helper.Env) =
   
   
@@ -82,6 +81,23 @@ namespace Microsoft.Research.Vcc
         | e -> updateFor e @ acc
       List.fold addToOwns [] checks
     
+
+    let rec listOfObjects = function
+      | CallMacro (_, "_vcc_set_union", _, [set1; set2]) -> listOfObjects set1 @ listOfObjects set2
+      | CallMacro (_, "_vcc_set_singleton", _, obj) -> obj
+      | _ -> []
+
+    let setOfObjects objs =
+      let union obj =
+        let set1 = Expr.Macro (bogusSet, "_vcc_set_singleton", [obj])
+        function
+          | None -> Some set1
+          | Some set2 ->
+            Some (Expr.Macro (bogusSet, "_vcc_set_union", [set1; set2]))
+      match List.foldBack union objs None with
+        | None -> Expr.Macro (bogusSet, "_vcc_set_empty", [])
+        | Some set -> set
+
     // TODO this could use some refactoring
     /// Handle things like _vcc_unwrap(...), _vcc_set_owns(...)
         (* It seems there is not much to handle here, the only special handling is adding
@@ -106,13 +122,19 @@ namespace Microsoft.Research.Vcc
           let nowstate = Expr.Macro (bogusState, "_vcc_current_state", [])
           (state, [VarDecl (bogusEC, state, []); VarWrite (bogusEC, [state], nowstate)])
 
+      let theState = function
+        | Some state -> mkRef state
+        | None -> Expr.Macro (bogusState, "_vcc_current_state", [])
+
       let checkInvariant prestate cond errno suffix this =
         let this = ignoreEffects this
         let check = invariantCheck helper (fun i -> not (isLemmaInv i)) cond errno suffix (mkRef prestate) this
         List.map Expr.MkAssert check
 
-      let preWrap isStatic =
-        let name = if isStatic then "_vcc_pre_static_wrap" else "_vcc_pre_wrap"
+      let preWrap isStatic isSet =
+        let name =
+          if isStatic then "_vcc_pre_static_wrap"
+          else "_vcc_pre_wrap" + (if isSet then "_set" else "")
         Expr.MkAssume (Macro (boolBogusEC(), name, []))
 
       let wrapExpr expr stmtComm callComm (wrapName: string) this = function
@@ -130,26 +152,34 @@ namespace Microsoft.Research.Vcc
         let p = ignoreEffects p
         Expr.MkAssert (Expr.Macro (afmte id msg [this; p], name, [p]))
             
-      let collectWrap tok st (this: Expr) =
+      let collectWrap tok single st (this: Expr) =
         match st with
         | None -> None
-        | Some (prestate, curstate, pre, _, post) ->
+        | Some (prestate, curstate1, curstate2, pre, _, dyns, stas, post) ->
           let (prestate, save) = saveState "prestate" prestate
           match this.Type with
           | Ptr (Type.Ref td) when staticOwns td ->
-            let (curstate, save1) = saveState "staticWrapState" curstate
+            let (curstate1, save1) = saveState "staticWrapState" curstate1
+            let (curstate2, save2) = saveState "heapState" curstate2
+            let save2 = if single then [] else save2
             let initOwns, tmpowns = genTmpOwns()
             let check = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 8014 "fails on wrap" this
             let updateFor obj =
               [staticWrapAssert 8018 "'{1}' is not wrapped before wrapping '{0}' (its owner)" "_vcc_wrapped" obj this;
                staticWrapAssert 8019 "'{1}' is not writable before wrapping '{0}' (its owner)" "writes_check" obj this;
                addToOwns tmpowns obj;
-               VarWrite (bogusEC, [curstate], 
-                 pureEx (Macro (bogusState, "_vcc_take_over", [mkRef curstate; this; obj])))]
+               VarWrite (bogusEC, [curstate1], 
+                 pureEx (Macro (bogusState, "_vcc_take_over", [mkRef curstate1; this; obj])))]
             let addOwnees = extractKeeps updateFor check
+            let updateHeapOwns =
+              if single then []
+              else
+                [VarWrite (bogusEC, [curstate2], 
+                   pureEx (Macro (bogusState, "_vcc_update_heap_owns", [mkRef curstate2; this; mkRef tmpowns])))]
             let checkWr = propAssert 8020 "'{0}' is not writable before wrapping it" "writes_check" this
-            Some (Some prestate, Some curstate, pre @ save @ save1 @ initOwns @ [checkWr] @ addOwnees,
-              Some (curstate, tmpowns), post @ check)
+            Some (Some prestate, Some curstate1, Some curstate2,
+              pre @ save @ save1 @ save2 @ initOwns @ [checkWr] @ addOwnees @ updateHeapOwns,
+              Some (curstate1, tmpowns), dyns, stas @ [this], post @ check)
           | _ ->
             match this.Type with
               | ObjectT
@@ -157,7 +187,15 @@ namespace Microsoft.Research.Vcc
               | Ptr (TypeVar _)
               | Array (_, _) -> 
                 let check = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 8014 "fails on wrap" this
-                Some (Some prestate, curstate, pre @ save, None, post @ check)
+                let (curstate1, save1) = saveState "staticWrapState" curstate1
+                let save1 = if single then [] else save1
+                let changeOwner =
+                  if single then []
+                  else
+                    [VarWrite (bogusEC, [curstate1], 
+                       pureEx (Macro (bogusState, "_vcc_change_owner", [mkRef prestate; mkRef curstate1; this])))]
+                Some (Some prestate, Some curstate1, curstate2, pre @ save @ save1 @ changeOwner,
+                  None, dyns @ [this], stas, post @ check)
               | t -> 
                 helper.Error (tok, 9621, "call to wrap(...) with an improper type: " + t.ToString(), None)
                 None
@@ -167,14 +205,16 @@ namespace Microsoft.Research.Vcc
           Macro (callComm, "_vcc_static_unwrap", [pureEx this; mkRef curstate])
         | None -> expr
 
-      let preUnwrap isStatic =
-        let name = if isStatic then "_vcc_pre_static_unwrap" else "_vcc_pre_unwrap"
+      let preUnwrap isStatic isSet =
+        let name =
+          if isStatic then "_vcc_pre_static_unwrap"
+          else "_vcc_pre_unwrap" + (if isSet then "_set" else "")
         Expr.MkAssume (Macro (boolBogusEC(), name, []))
 
       let collectUnwrap tok st (this: Expr) =
         match st with
         | None -> None
-        | Some (prestate, curstate, all_save, pre, _, post) ->
+        | Some (prestate, curstate, all_save, pre, _, dyns, stas, post) ->
           let (prestate, save) = saveState "prestate" prestate
           match this.Type with
           | Ptr (Type.Ref td) when staticOwns td ->
@@ -195,7 +235,7 @@ namespace Microsoft.Research.Vcc
             let addOwnees = extractKeeps updateFor props
             Some (Some prestate, Some curstate, initOwns @ all_save @ save @ save1,
               pre @ [checkWrap; checkWr; assumeInv] @ addOwnees @ [assumeOwns],
-              Some curstate, post @ check)
+              Some curstate, dyns, stas @ [this], post @ check)
           | _ -> 
             match this.Type with
               | ObjectT
@@ -206,7 +246,7 @@ namespace Microsoft.Research.Vcc
                 let checkWrap = propAssert 8016 "'{0}' is not wrapped before unwrap" "_vcc_wrapped" this
                 let assumeInv = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_inv", [ignoreEffects this]))
                 Some (Some prestate, curstate, all_save @ save,
-                  pre @ [checkWrap; assumeInv], None, post @ check)
+                  pre @ [checkWrap; assumeInv], None, dyns @ [this], stas, post @ check)
               | t -> 
                 helper.Error (tok, 9621, "call to unwrap(...) with an improper type: " + t.ToString(), None)
                 None
@@ -216,19 +256,40 @@ namespace Microsoft.Research.Vcc
         Some (Expr.MkBlock (es @ [assume]))
         
       function
+      | CallMacro (callComm, ("_vcc_wrap_set" as name), _, [set]) as expr ->
+        let objs = listOfObjects set
+        let init = Some (None, None, None, [], None, [], [], [])
+        match List.fold (collectWrap expr.Token false) init objs with
+          | Some (_, curstate1, curstate2, pre, _, dyns, stas, post) ->
+            let curstate1 = theState curstate1
+            let curstate2 = theState curstate2
+            let expr = Macro (callComm, name,
+              [setOfObjects dyns; setOfObjects stas; curstate1; curstate2])
+            makeBlock (pre @ [preWrap false true; expr] @ post)
+          | _ -> None
       | Stmt (stmtComm, CallMacro (callComm, (("_vcc_wrap"|"_vcc_wrap_non_owns") as wrapName), _, [this])) as expr ->
-        let init = Some (None, None, [], None, [])
-        match collectWrap expr.Token init this with
-          | Some (_, _, pre, arg, post) ->
+        let init = Some (None, None, None, [], None, [], [], [])
+        match collectWrap expr.Token true init this with
+          | Some (_, _, _, pre, arg, _, _, post) ->
             let expr = wrapExpr expr stmtComm callComm wrapName this arg
-            makeBlock (pre @ [preWrap (Option.isSome arg); expr] @ post)
+            makeBlock (pre @ [preWrap (Option.isSome arg) false; expr] @ post)
+          | _ -> None
+      | CallMacro (callComm, ("_vcc_unwrap_set" as name), _, [set]) as expr ->
+        let objs = listOfObjects set
+        let init = Some (None, None, [], [], None, [], [], [])
+        match List.fold (collectUnwrap expr.Token) init objs with
+          | Some (_, curstate, save, pre, arg, dyns, stas, post) ->
+            let curstate = theState curstate
+            let expr = Macro (callComm, name,
+              [setOfObjects dyns; setOfObjects stas; curstate])
+            makeBlock (save @ pre @ [preUnwrap false true; expr] @ post)
           | _ -> None
       | Stmt (_, CallMacro (callComm, "_vcc_unwrap", _, [this])) as expr ->
-        let init = Some (None, None, [], [], None, [])
+        let init = Some (None, None, [], [], None, [], [], [])
         match collectUnwrap expr.Token init this with
-          | Some (_, _, save, pre, arg, post) ->
+          | Some (_, _, save, pre, arg, _, _, post) ->
             let expr = unwrapExpr expr callComm this arg
-            makeBlock (save @ pre @ [preUnwrap (Option.isSome arg); expr] @ post)
+            makeBlock (save @ pre @ [preUnwrap (Option.isSome arg) false; expr] @ post)
           | _ -> None
       | _ -> None
 
@@ -292,6 +353,30 @@ namespace Microsoft.Research.Vcc
         Some (Expr.MkBlock [Expr.MkAssert (Expr.Macro (prop, "writes_check", [w])); 
                             Macro (c, fn.Name, List.map self args)])
       
+      | Macro (c, (("_vcc_wrap_set"|"_vcc_unwrap_set") as name), args) ->
+        let makeCheck n expr =
+          let prop =
+            afmte 8510 ("{0} is writable in call to " + n + "(...)") [expr]
+          let ch =
+            match expr.Type with
+              | Ptr t when t <> Void && not t.IsComposite -> "prim_writes_check"
+              | _ -> "writes_check"
+          Expr.MkAssert (Expr.Macro (prop, ch, [expr]))
+        let checks =
+          match name with
+            | "_vcc_wrap_set" ->
+              let addCheck (this: Expr) = 
+                let getValue _ = this.Token.Value + "->\owns"
+                  // FIXME: hardcoded syntax strings are bad -- how to improve this?
+                let tok = ForwardingToken(this.Token, getValue)
+                let ec = { bogusSet with Token = tok }
+                [makeCheck "wrap" this;
+                 makeCheck "wrap" (Macro (ec, "_vcc_owns", [this]))]
+              List.collect addCheck (listOfObjects (List.head args))
+            | "_vcc_unwrap_set" ->
+              List.map (makeCheck "unwrap") (listOfObjects (List.head args))
+            | _ -> []
+        Some (Expr.MkBlock (checks @ [Macro (c, name, List.map self args)]))
       | Call (c, f, targs, args) as call when not ctx.IsPure ->
         let f' = f.Specialize(targs, false)
         let wrasserts =

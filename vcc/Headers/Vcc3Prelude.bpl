@@ -1483,6 +1483,8 @@ function $pre_unwrap($state) : bool;
 function $pre_static_wrap($state) : bool;
 function $pre_static_unwrap($state) : bool;
 function $post_unwrap(S1:$state, S2:$state) : bool;
+function $pre_wrap_set($state) : bool;
+function $pre_unwrap_set($state) : bool;
 
 function $is_unwrapped_dynamic(S0:$state, S:$state, o:$ptr) : bool
 {
@@ -1624,6 +1626,84 @@ procedure $static_wrap_non_owns(o:$ptr, S:$state);
   ensures $is_wrapped(old($s), $s, o, $owns(old($s), o));
   ensures $heap($s) == $heap(old($s));
   ensures $f_owner($s) == $f_owner(S);
+
+///////
+
+function $change_owner(S0:$state, S:$state, p:$ptr) : $state;
+function $update_heap_owns(S1:$state, o:$ptr, owns:$ptrset) : $state;
+
+axiom (forall S0, S:$state, p:$ptr :: {$change_owner(S0, S, p)}
+  $f_owner($change_owner(S0, S, p)) == (lambda r:$ptr :: if $set_in(r, $owns(S0, p)) then p else $f_owner(S)[r]));
+
+axiom (forall S:$state, o:$ptr, owns:$ptrset :: {$update_heap_owns(S, o, owns)}
+  $heap($update_heap_owns(S, o, owns)) == $update($heap(S), o, $f_owns($typ(o)), $ptrset_to_int(owns)));
+
+function $is_unwrapped_set(S0:$state, S1:$state, S:$state, dynamic:$ptrset, static:$ptrset) : bool
+{
+     $heap(S) == $heap(S0)
+  && $typemap($f_owner(S0)) == $typemap($f_owner(S))
+  && (forall o:$ptr :: $set_in(o, dynamic) ==>
+       (forall r:$ptr :: {$owner(S, r)} {$closed(S, r)}
+         $set_in(r, $owns(S0, o)) ==>
+           $owner(S0, r) == o && $wrapped(S, r, $typ(r))))
+  && $f_owner(S) == (lambda r:$ptr ::
+       if $set_in($owner(S0, r), dynamic) then $me() else $f_owner(S1)[r])
+  && $f_timestamp(S) == (lambda r:$ptr ::
+       if $set_in(r, static) then $current_timestamp(S0)
+       else if $set_in($owner(S0, r), dynamic) || $set_in($owner(S0, r), static) then $current_timestamp(S)
+       else $f_timestamp(S0)[r])
+  && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==> $mutable(S, o))
+  && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==> $owns(S0, o) == $owns(S, o))
+  && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==>
+       (forall p:$ptr :: {$domain_root(S, p)}
+         ($domain_root(S0, p) != o && $domain_root(S0, p) == $domain_root(S, p)) ||
+         ($domain_root(S0, p) == o && ($domain_root(S, p) == p || $owner(S0, p) != o) && ($owner(S, $domain_root(S, p)) == $me()))))
+  && $f_closed(S) == (lambda o:$ptr :: if $set_in(o, dynamic) || $set_in(o, static) then false else $f_closed(S0)[o])
+  && $timestamp_post_strict(S0, S)
+  && $post_unwrap(S0, S)
+}
+
+function $is_wrapped_set(S0:$state, S1:$state, S2:$state, S:$state, dynamic:$ptrset, static:$ptrset) : bool
+{
+     $heap(S) == $heap(S2)
+  && $f_owner(S) == $f_owner(S1)
+  && $f_closed(S) == (lambda o:$ptr :: if $set_in(o, dynamic) || $set_in(o, static) then true else $f_closed(S0)[o])
+  && $f_timestamp(S) == (lambda o:$ptr :: if $set_in(o, dynamic) || $set_in(o, static) then $current_timestamp(S) else $f_timestamp(S0)[o])
+  && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==>
+       (forall p:$ptr :: {$domain_root(S, p)}
+         $domain_root(S, p) == $domain_root(S0, p) ||
+         ($domain_root(S, p) == o && (p == o || $set_in($domain_root(S0, p), $owns(S2, o))))))
+  && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==> $wrapped(S, o, $typ(o)))
+  && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==> ($is_claimable($typ(o)) ==> $ref_cnt(S0, o) == 0 && $ref_cnt(S, o) == 0))
+  && (forall o:$ptr :: $set_in(o, dynamic) ==> $owns(S0, o) == $owns(S, o))
+  && $timestamp_post_strict(S0, S)
+  && $typemap($f_owner(S0)) == $typemap($f_owner(S))
+}
+
+
+procedure $unwrap_set(dynamic:$ptrset, static:$ptrset, S1:$state);
+  modifies $s;
+  // TOKEN: OOPS: pre_unwrap_set must hold
+  requires $pre_unwrap_set($s);
+  // TOKEN: the objects have no outstanding claims
+  requires (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==> ! $is_claimable($typ(o)) || $ref_cnt($s, o) == 0);
+
+  ensures $is_unwrapped_set(old($s), S1, $s, dynamic, static);
+
+
+procedure $wrap_set(dynamic:$ptrset, static:$ptrset, S1:$state, S2:$state);
+  modifies $s;
+  // TOKEN: OOPS: pre_wrap_set must hold
+  requires $pre_wrap_set($s);
+  // TOKEN: the wrapped types are non-primitive
+  requires (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==> $is_non_primitive($typ(o)));
+  // TOKEN: the objects being wrapped are mutable
+  requires (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==> $mutable($s, o));
+  // TOKEN: every object in the dynamic owns sets is wrapped
+  requires (forall o:$ptr :: $set_in(o, dynamic) ==>
+    (forall p:$ptr :: {$dont_instantiate(p)} $set_in0(p, $owns($s, o)) ==> $wrapped($s, p, $typ(p))));
+
+  ensures $is_wrapped_set(old($s), S1, S2, $s, dynamic, static);
 
 // ----------------------------------------------------------------------------
 // Admissibility & unwrap checks

@@ -172,8 +172,8 @@ _(struct \TypeState {
 
 // Statement-like functions
 
-_(void \wrap(\object o) _(writes o, o->\owns);)
-_(void \unwrap(\object o) _(writes o);)
+_(void \wrap(\object o, ...) _(writes o, o->\owns);)
+_(void \unwrap(\object o, ...) _(writes o);)
 _(void \destroy_claim(\claim, \objset);)
 _(void \reads_havoc();)
 _(void \havoc_others(\object p);)

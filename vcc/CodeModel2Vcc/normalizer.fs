@@ -1136,6 +1136,13 @@ namespace Microsoft.Research.Vcc
       function
       | Call(ec, { Name = "_vcc_keeps" }, _, args) ->
         Some(Macro(ec, "_vcc_keeps", List.map self args))
+      | Call(ec, ({ Name = ("_vcc_unwrap"|"_vcc_wrap") as name } as id), _, args) as expr ->
+        if List.length args = 1 then Some expr
+        else
+          let ptrsetEC = { bogusEC with Type = Type.PtrSet }
+          let empty = Expr.Macro (ptrsetEC, "_vcc_set_empty", [])
+          let set = Expr.Macro (ptrsetEC, "_vcc_create_set", empty :: args)
+          Some(Macro(ec, id.Name + "_set", [self set]))
       | Call(ec, { Name = fnName }, _, args) when Map.containsKey fnName ignoredVarArgsFunctions ->
         None
       | Call(ec, { Name = "__annotation"}, _, args) ->

@@ -1439,6 +1439,8 @@ namespace Microsoft.Research.Vcc
                   | "$deep_unwrap" 
                   | "$static_wrap"
                   | "$static_unwrap"
+                  | "$wrap_set"
+                  | "$unwrap_set"
                   | "$alloc" ->
                     helper.Error (c.Token, 9626, name.Substring 5 + "(...) cannot be used inside atomic update/read", None)
                   | "$bump_volatile_version"
@@ -1520,6 +1522,8 @@ namespace Microsoft.Research.Vcc
               | "$static_wrap"
               | "$static_unwrap"
               | "$static_wrap_non_owns"
+              | "$wrap_set"
+              | "$unwrap_set" 
               | "$atomic_havoc"
               | "$havoc_others"
               | "$unwrap_check" -> { env with AtomicObjects = [er "$no_such_thing"] }
@@ -1647,6 +1651,7 @@ namespace Microsoft.Research.Vcc
             | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|"_vcc_set_owns"|
                                   "_vcc_giveup_closed_owner"|"_vcc_set_closed_owner"| 
                                   "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap"|
+                                  "_vcc_wrap_set"|"_vcc_unwrap_set"|
                                   "_vcc_unblobify_into") as name), args) -> 
               doCall c [] None name [] args
             | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_deep_unwrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->
