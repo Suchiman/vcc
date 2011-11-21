@@ -67,6 +67,7 @@ namespace Microsoft.Research.Vcc
                   "array",                  ".i";
                   "as_array",               "ti";
                   "byte_ptr_subtraction",   "pp";
+                  "change_owner",           "..p";
                   "closed",                 "Sp";
                   "nested",                 "Sp";
                   "claims_obj",             "pp";
@@ -164,7 +165,8 @@ namespace Microsoft.Research.Vcc
                   "u1_to_ptr",              ".";
                   "u2_to_ptr",              ".";
                   "u4_to_ptr",              ".";
-                  "u8_to_ptr",              ".";                  
+                  "u8_to_ptr",              ".";   
+                  "update_heap_owns",       ".pa";               
                   "vs_ctor",                "Sp";
                   "when_claimed",           "";
                   "mutable_increases",      "sS";
@@ -180,6 +182,8 @@ namespace Microsoft.Research.Vcc
                   "pre_unwrap",             "S";
                   "pre_static_wrap",        "S";
                   "pre_static_unwrap",      "S";
+                  "pre_wrap_set",           "S";
+                  "pre_unwrap_set",         "S";
                   "unwrap_check_pre",       "Sp";
                   "good_for_post_can_unwrap","S";
                   "unwrap_post",            "..pp";

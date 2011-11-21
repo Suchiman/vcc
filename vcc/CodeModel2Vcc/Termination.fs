@@ -452,6 +452,7 @@ let insertTerminationChecks (helper:Helper.Env) decls =
 
     | Macro (_, ("_vcc_static_wrap"|"_vcc_static_unwrap"|"havoc"|"_vcc_unblobify"|"_vcc_blobify"
                   |"_vcc_wrap"|"_vcc_unwrap"|"_vcc_static_wrap_non_owns"
+                  |"_vcc_wrap_set"|"_vcc_unwrap_set"
                   |"_vcc_havoc_others"|"_vcc_unwrap_check"|"inlined_atomic"
                   |"unclaim"|"claim"|"begin_update"|"upgrade_claim"), _) ->
       None
