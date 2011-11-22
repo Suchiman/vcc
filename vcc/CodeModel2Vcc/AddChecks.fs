@@ -263,8 +263,7 @@ namespace Microsoft.Research.Vcc
           | Some (_, curstate1, curstate2, pre, _, dyns, stas, post) ->
             let curstate1 = theState curstate1
             let curstate2 = theState curstate2
-            let expr = Macro (callComm, name,
-              [setOfObjects dyns; setOfObjects stas; curstate1; curstate2])
+            let expr = Macro (callComm, name, [setOfObjects dyns; setOfObjects stas; curstate1; curstate2])
             makeBlock (pre @ [preWrap false true; expr] @ post)
           | _ -> None
       | Stmt (stmtComm, CallMacro (callComm, (("_vcc_wrap"|"_vcc_wrap_non_owns") as wrapName), _, [this])) as expr ->
@@ -280,8 +279,7 @@ namespace Microsoft.Research.Vcc
         match List.fold (collectUnwrap expr.Token) init objs with
           | Some (_, curstate, save, pre, arg, dyns, stas, post) ->
             let curstate = theState curstate
-            let expr = Macro (callComm, name,
-              [setOfObjects dyns; setOfObjects stas; curstate])
+            let expr = Macro (callComm, name, [setOfObjects dyns; setOfObjects stas; curstate])
             makeBlock (save @ pre @ [preUnwrap false true; expr] @ post)
           | _ -> None
       | Stmt (_, CallMacro (callComm, "_vcc_unwrap", _, [this])) as expr ->
