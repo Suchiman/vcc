@@ -638,23 +638,11 @@ namespace Microsoft.Research.Vcc
       return false;
     }
 
-    protected override bool DirectoryIsOk(string path, string pattern, string extension) {
+    protected override bool DirectoryIsOk(string path, string pattern, string extension)
+    {
       if (!this.options.RunTestSuite) return false;
-      bool foundADirectory = false;
-      if (path != null && Directory.Exists(path)) {
-        if ((path == ".\\" || path == "..\\") && pattern == ".") {
-          this.options.FileNames.Add(Path.GetFullPath(path));
-          foundADirectory = true;
-        } else {
-          foreach (string file in Directory.GetDirectories(path, pattern)) {
-            string ext = Path.HasExtension(file) ? Path.GetExtension(file) : "";
-            if (string.Compare(extension, ext, true, System.Globalization.CultureInfo.InvariantCulture) != 0) continue;
-            this.options.FileNames.Add(Path.GetFullPath(file));
-            foundADirectory = true;
-          }
-        }
-      }
-      return foundADirectory;
+      this.options.FileNames.Add(path + pattern);
+      return true;
     }
   }
 }
