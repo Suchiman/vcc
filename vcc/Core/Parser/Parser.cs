@@ -883,6 +883,20 @@ namespace Microsoft.Research.Vcc.Parsing {
       return false;
     }
 
+    private TypeExpression HandleTypeQualifiersForPointer(IEnumerable<Specifier> specifiers, TypeExpression type, Declarator declarator)
+    {
+      List<TypeQualifier> fldQualifiers;
+      if (this.IsPointerDeclarator(declarator, out fldQualifiers)) {
+        var ptrQualifiers =
+          new List<TypeQualifier>(specifiers.Where(s => s is TypeQualifier).Select(s => s as TypeQualifier));
+        if (ptrQualifiers.Count > 0) {
+          type = new VccQualifiedTypeExpression(type, ptrQualifiers, type.SourceLocation);
+        }
+      }
+
+      return type;
+    }
+
     /// <summary>
     /// For a local variable of pointer type, see if it is const or volatile. 
     /// If volatile appears in the specifiers, then it is volatile;
@@ -934,8 +948,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       InitializedDeclarator /*?*/ initialized = declarator as InitializedDeclarator;
       if (initialized != null)
         return this.GetTypeExpressionFor(specifiers, initialized.Declarator, fsaCtx, initialized.InitialValue);
-      else {
-        return this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, declarator as IdentifierDeclarator), declarator, fsaCtx, initializer);
+      else
+      {
+        var elementType = this.GetTypeExpressionFor(specifiers, declarator is IdentifierDeclarator ? (declarator as IdentifierDeclarator).SourceLocation : null);
+        elementType = HandleTypeQualifiersForPointer(specifiers, elementType, declarator);
+        return this.GetTypeExpressionFor(elementType, declarator, fsaCtx, initializer);
       }
     }
 
@@ -989,10 +1006,14 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
         return result;
       }
+
       PointerDeclarator/*?*/ pointer = declarator as PointerDeclarator;
-      elementType = AddIndirectionsToType(elementType, pointer, slb);
       if (pointer != null)
-        return this.GetTypeExpressionFor(elementType, pointer.Declarator, fsaCtx, initializer);
+      {
+        elementType = AddIndirectionsToType(elementType, pointer, slb);
+        return this.GetTypeExpressionFor(elementType, pointer.Declarator, fsaCtx, initializer);        
+      }
+
       return elementType;
     }
 
@@ -1016,15 +1037,19 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, IdentifierDeclarator/*?*/ declarator) {
+    protected TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, ISourceLocation declaratorLocationForErrorReporting) {
       TypeExpression/*?*/ result = this.TryToGetTypeExpressionFor(specifiers);
       if (result != null) return result;
-      ISourceLocation/*?*/ errorLocation = null;
-      if (declarator != null)
-        errorLocation = declarator.SourceLocation;
-      else {
-        foreach (Specifier specifier in specifiers) errorLocation = specifier.SourceLocation;
+
+      ISourceLocation /*?*/ errorLocation = declaratorLocationForErrorReporting;
+      if (errorLocation == null) {
+        foreach (Specifier specifier in specifiers)
+        {
+          errorLocation = specifier.SourceLocation;
+          if (errorLocation != null) break;
+        }
       }
+
       if (errorLocation != null)
         this.HandleError(errorLocation, Error.UnexpectedToken, errorLocation.Source);
       return TypeExpression.For(Dummy.Type);
@@ -1054,16 +1079,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       PrimitiveTypeSpecifier/*?*/ length = null;
       PrimitiveTypeSpecifier/*?*/ primitiveType = null;
       List<TypeQualifier> typeQualifiers = null;
-      List<TypeQualifier> skippedQualifiers = null;
       foreach (Specifier specifier in specifiers) {
         CompositeTypeSpecifier/*?*/ cts = specifier as CompositeTypeSpecifier;
         if (cts != null) {
           //TODO: if (result != null || sign != null || length != null || primitiveType != null) Error;
           result = cts.TypeExpression;
-          if (skippedQualifiers != null)
-          {
-            result = new VccQualifiedTypeExpression(result, skippedQualifiers, result.SourceLocation);
-          }
           continue;
         }
         TypeQualifier/*?*/ tq = specifier as TypeQualifier;
@@ -1077,11 +1097,7 @@ namespace Microsoft.Research.Vcc.Parsing {
               }
               typeQualifiers.Add(tq);
             }
-          } else {
-            if (skippedQualifiers == null)
-              skippedQualifiers = new List<TypeQualifier>();
-            skippedQualifiers.Add(tq);
-          }
+          } 
           continue;
         }
         TypedefNameSpecifier/*?*/ tdns = specifier as TypedefNameSpecifier;
@@ -3431,7 +3447,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Specifier> specifiers = this.ParseSpecifiers(members, null, null, followers|Token.Multiply|Token.RightParenthesis|Token.LeftBracket);
       Declarator declarator = this.ParseDeclarator(followers);
       slb.UpdateToSpan(declarator.SourceLocation);
-      TypeExpression type = this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, null), declarator);
+      TypeExpression type = this.GetTypeExpressionFor(specifiers, null);
+      type = HandleTypeQualifiersForPointer(specifiers, type, declarator);
+      type = this.GetTypeExpressionFor(type, declarator);
       this.SkipTo(followers);
       return type;
     }

@@ -3,7 +3,7 @@
 
 void *
 CompareAndSwapPointer(
-    void volatile ** Destination,
+    void * volatile * Destination,
     void * Exchange,
     void * Comperand
     );
@@ -13,7 +13,7 @@ template<typename T>
 _(atomic_inline)
 T *
 CompareAndSwapPointer(
-    T volatile** Destination,
+    T* volatile * Destination,
     T* Exchange,
     T* Comperand
     )

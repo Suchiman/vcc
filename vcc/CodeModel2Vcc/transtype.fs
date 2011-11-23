@@ -1073,7 +1073,6 @@ namespace Microsoft.Research.Vcc
             Some(Pure(ec, se))
         | _ -> None
       
-
       let typeSubst = new Dict<Type, Type>()
 
       let findVolatileTypes self (expr : Expr) =
@@ -1081,8 +1080,7 @@ namespace Microsoft.Research.Vcc
           | PtrSoP(Volatile(Type.Ref(td)), isSpec) -> 
             typeSubst.[expr.Common.Type] <- Type.MkPtr(Type.Ref(mkVolTd td), isSpec); true
           | _ -> true
-
-        
+       
       do deepVisitExpressions findVolatileTypes decls
 
       let typeMap t = 
@@ -1090,23 +1088,35 @@ namespace Microsoft.Research.Vcc
           | true, t' -> Some t'
           | false, _ -> None
         
-
       let decls = deepMapExpressions (fun _ (expr : Expr) -> Some(expr.SubstType(typeMap, new Dict<Variable, Variable>()))) decls
 
       for d in decls do
         match d with
           | Top.TypeDecl(td) -> pushDownOne true td
-          | Top.FunctionDecl({Body = Some(body)}) ->
-            let pdLocalDecls self = function
-              | VarDecl(_, ({Type = PtrSoP(Volatile(Type.Ref(td)), isSpec)} as v), _) -> 
+          | Top.FunctionDecl({Body = Some(body)} as fn) ->
+
+            let mkVolatileType = function
+              | PtrSoP(Volatile(Type.Ref(td)), isSpec) -> 
                 let td' = mkVolTd td
-                volatileVars.Add(v, {v with Type = Type.MkPtr(Type.Ref(td'), isSpec || td'.IsSpec)})
-                false
-              | VarDecl(_, ({Type = PtrSoP(Volatile(t), isSpec)} as v), _) ->
-                helper.Warning(d.Token, 9120, "Ignoring volatile modifier on pointer to non-structured type '" + t.ToString() + "'")
-                volatileVars.Add(v, {v with Type = Type.MkPtr(t, isSpec)})
-                false
+                Some(Type.MkPtr(Type.Ref(td'), isSpec || td'.IsSpec))
+              | PtrSoP(Volatile(t), isSpec) ->
+                Some(Type.MkPtr(t, isSpec))
+              | _ -> None
+            let mkVolatileVar (v:Variable) =
+              match mkVolatileType v.Type with
+                | Some t' ->
+                  let v' = { v with Type = t' }
+                  volatileVars.Add(v, v')
+                  v'
+                | _ -> v
+            let pdLocalDecls self = function
+              | VarDecl(_, v, _) when v.Kind <> VarKind.Parameter && v.Kind <> VarKind.SpecParameter && v.Kind <> VarKind.OutParameter -> 
+                mkVolatileVar v |> ignore; false
               | _ -> true
+            fn.Parameters <- List.map mkVolatileVar fn.Parameters
+            do match mkVolatileType fn.RetType with
+                | None -> ()
+                | Some t' -> fn.RetType <- t' // TODO: might require retyping of 'result' in contracts            
             body.SelfVisit pdLocalDecls
           | Top.Global({Type = Type.Volatile(Type.Ref(td))} as v, _) ->
             let td' = mkVolTd td

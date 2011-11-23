@@ -145,7 +145,11 @@ namespace Microsoft.Research.Vcc
             yield! []
         | _ -> yield! []
       ]
-    
+
+    let isTypeWhereVolatileMatters = function
+      | C.Type.Ref(_) -> true
+      | _ -> false
+        
     static member private CheckHasError(e : IExpression) =
      match e with
        | :? IErrorCheckable as ec -> ec.HasErrors
@@ -1535,7 +1539,8 @@ namespace Microsoft.Research.Vcc
           match pointerTypeReference with
             | :? IPointerType as pt -> 
               VccCompilationHelper.IsSpecPointer(pt),
-              if VccCompilationHelper.IsVolatilePointer(pt) then C.Type.Volatile(targetType) else targetType
+              if VccCompilationHelper.IsVolatilePointer(pt) && isTypeWhereVolatileMatters targetType 
+              then C.Type.Volatile(targetType) else targetType
             | _ -> false, targetType
 
         typeRes <- C.Type.MkPtr (targetType', isSpec)

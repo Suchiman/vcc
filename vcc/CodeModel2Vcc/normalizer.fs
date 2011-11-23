@@ -309,7 +309,8 @@ namespace Microsoft.Research.Vcc
       | Atomic (c, objs, body) -> 
         let errorIfNotPtrToStruct (expr : Expr) =
           match expr.Type with
-            | Ptr(Type.Ref(_)| Claim) -> ()
+            | Ptr(Volatile(Type.Ref(_))) 
+            | Ptr(Type.Ref(_)| Claim) 
             | Type.ObjectT -> ()
             | t -> helper.Error(expr.Token, 9668, "'" + expr.Token.Value + "' has non-admissible type '" + t.ToString() + "' for atomic")
         List.iter errorIfNotPtrToStruct objs
