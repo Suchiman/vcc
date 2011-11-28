@@ -996,7 +996,7 @@ function {:inline true} $thread_local2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $thread_local(S, #p) }
 
 function {:inline true} $typed2(S:$state, p:$ptr, t:$ctype) : bool
-  { $typed(S, p) && $is(p, t) }
+  { $is_proper(p) && $typed(S, $emb(S, p)) && $is(p, t) }
 
 function $typed(S:$state, p:$ptr) : bool
   { $owner(S, p) != $untyped_owner() }
@@ -1131,7 +1131,7 @@ axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
   $good_state(S) ==>
     $non_null($owner(S, r))  && 
     $is_proper($owner(S, r))  &&
-    ($typ($owner(S, r)) != ^$#thread_id_t ==>
+    ($owner(S, r) != $untyped_owner() ==>
       $is_proper(r) && 
       $non_null(r) && 
       $is_non_primitive($typ(r)) &&
