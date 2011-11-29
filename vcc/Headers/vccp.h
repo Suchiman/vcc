@@ -204,7 +204,7 @@ _(ghost extern const \thread \me;)
 _(\integer \argument_tuple(\object, ...); ) 
 _(template<typename T> T \castlike_va_atomic_read(T op, \integer);)
 _(template<typename T> T \castlike_known(T v, bool expected);)
-_(template<typename T> T* \castlike_retype(T*);)
+_(template<typename T> T \castlike_retype(T);)
 _(template<typename T> T \castlike_by_claim(T v, \claim c);)
 _(template<typename T> T \castlike_precise(T v);)
 
