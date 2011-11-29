@@ -1,0 +1,13 @@
+`/newsyntax
+#include "vcc.h"
+
+template<typename T> void foo(int *p, T **a);
+
+void bar() {
+  int *p;
+  int j;
+  foo(&j, &p);
+}
+`
+Verification of bar succeeded.
+`
