@@ -1208,8 +1208,16 @@ procedure $write_int_local(h0:[$ptr]int, f:$field, p:$ptr, v:int) returns(h:[$pt
   ensures $heap($s) == $update($heap(old($s)), p, f, v);
   ensures $timestamp_post_strict(old($s), $s);
   ensures h == h0[p := v];
+
   ensures old($heap($s))[f] == h0;
   ensures $heap($s)[f] == h;
+
+/*
+function $touch_sk(h:[$ptr]int) : int;
+function {:inline true} $touch(h:[$ptr]int) : [$ptr]int
+  { h[ $null := $touch_sk(h) ] }
+  // { h }
+*/
 
 function {:inline true} $rd_local(h:[$ptr]int, f:$field, p:$ptr) : int
   { h[p] }
