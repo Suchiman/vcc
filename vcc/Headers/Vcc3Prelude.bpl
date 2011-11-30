@@ -31,7 +31,7 @@ type $token;
 
 type $state;
 
-type $object = [$field][$base]int;
+type $object = [$field][$ptr]int;
 type $owner = [$ptr]$ptr;
 type $closed = [$ptr]bool;
 type $timestamps = [$ptr]int;
@@ -224,7 +224,8 @@ function $addr0(p:$ptr) : int
   { $base(p) + $field_offset($field(p)) }
 
 function {:inline true} $cast_props(p:$ptr, t:$ctype, c:$ptr) : bool
-  { $typ(c) == t && $is_null(c) == $is_null(p) && $field(c) == $as_field_with_type($field(c), t) }
+  { $typ(c) == t && $is_null(c) == $is_null(p) && $field(c) == $as_field_with_type($field(c), t) &&
+    ($is_primitive(t) || c == $ptr($f_root(t), $addr0(p)))   }
 axiom (forall p:$ptr, t:$ctype :: {$spec_ptr_cast(p, t)}
   $cast_props(p, t, $spec_ptr_cast(p, t)) && $in_range_spec_ptr($spec_ptr_cast(p, t)));
 axiom (forall p:$ptr, t:$ctype :: {$phys_ptr_cast(p, t)}
@@ -286,11 +287,13 @@ axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
   ($is_proper($dot(p, f)) ==> $non_null(p) ==> $non_null($dot(p, f)))
 );
 
+function {:inline true} $simple_emb(p:$ptr) : $ptr { $prim_emb(p) }
+
 function $emb(S:$state,p:$ptr) : $ptr
   { if $is_primitive($typ(p)) then $prim_emb(p) else $emb(S, p) }
 function $maybe_emb(p:$ptr) : $ptr
   { if $is_primitive($typ(p)) then $prim_emb(p) else p }
-function {:inline true} $prim_emb(p:$ptr) : $ptr
+function $prim_emb(p:$ptr) : $ptr
   { $ptr($f_root($field_parent_type($field(p))), $base(p)) }
 
 // means roughly volatile, owner-approved
@@ -553,10 +556,11 @@ function {:inline true} $def_ghost_as_array_field(partp:$ctype, f:$field, tp:$ct
 
 function {:inline true} $idx_inline(p:$ptr, i:int) : $ptr
   { if $is_primitive($typ(p)) then
-      $ptr($field_plus($field(p), i), $base(p)) 
+      $dot($prim_emb(p), $field_plus($field(p), i))
     else
       $ptr($f_root($typ(p)), $base(p) + i * $sizeof($typ(p)))
     }
+//  { $dot(p, $field_plus($field(p), i)) }
 
 function $idx(p:$ptr, i:int) : $ptr
   {
@@ -813,7 +817,7 @@ function {:inline true} $domain_root(s:$state, p:$ptr) : $ptr
   { $roots(s)[p] }
 
 function {:inline true} $rd_inv(s:$state, f:$field, p:$ptr) : int { $rd(s,p,f) }
-function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int { $heap(s)[f][$base(p)] }
+function {:inline true} $rd(s:$state, p:$ptr, f:$field) : int { $heap(s)[f][p] }
 
 function {:inline true} $rdtrig(s:$state, p:$ptr, f:$field) : int { $rd(s, p, f) }
 //function $rdtrig(s:$state, p:$ptr, f:$field) : bool;
@@ -860,16 +864,16 @@ function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
 
 function $mutable(S:$state, p:$ptr) : bool
   {  $is_proper(p) &&
-     $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p)) 
+     $owner(S, $maybe_emb(p)) == $me() && !$closed(S, $maybe_emb(p)) 
   }
 
 function {:inline true} $thread_owned(S:$state, p:$ptr) : bool
-  { $owner(S, $emb(S, p)) == $me() }
+  { $owner(S, $maybe_emb(p)) == $me() }
 
 function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
   {
     if $is_primitive($typ(p)) then
-      $owner(S, $emb(S, p)) == $me() && !$closed(S, $emb(S, p))
+      $owner(S, $maybe_emb(p)) == $me() && !$closed(S, $maybe_emb(p))
     else
       $owner(S, p) == $me()
   }
@@ -998,7 +1002,7 @@ function $thread_local(S:$state, p:$ptr) : bool
   { 
     $is_proper(p) &&
     if $is_primitive($typ(p)) then
-      ($is_sequential_field($field(p)) || !$closed(S, $emb(S, p))) && $thread_local_np(S, $emb(S, p))
+      ($is_sequential_field($field(p)) || !$closed(S, $prim_emb(p))) && $thread_local_np(S, $prim_emb(p))
     else
       $thread_local_np(S, p) }
 
@@ -1006,7 +1010,7 @@ function {:inline true} $thread_local2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $thread_local(S, #p) }
 
 function {:inline true} $typed2(S:$state, p:$ptr, t:$ctype) : bool
-  { $is_proper(p) && $typed(S, $emb(S, p)) && $is(p, t) }
+  { $is_proper(p) && $typed(S, $maybe_emb(p)) && $is(p, t) }
 
 function $typed(S:$state, p:$ptr) : bool
   { $owner(S, p) != $untyped_owner() }
@@ -1177,7 +1181,7 @@ axiom (forall S:$state, p:$ptr, f:$field, t:$ctype ::
 // ----------------------------------------------------------------------------
 
 function {:inline true} $update(h:$object, r:$ptr, f:$field, v:int) : $object
-  { h[ f := h[f][ $base(r) := v ] ] }
+  { h[ f := h[f][ r := v ] ] }
 
 function {:inline true} $havoc_at(S0:$state, S:$state, p:$ptr, f:$field) : bool
   { $heap(S) == $update($heap(S0), p, f, $rd(S, p, f)) }
