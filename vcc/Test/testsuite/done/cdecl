@@ -1,0 +1,8 @@
+`/newsyntax
+#include <vcc.h>
+
+void* __cdecl tu(double  v,...);
+int main() {}
+`
+Verification of main succeeded.
+`
