@@ -340,7 +340,7 @@ namespace Microsoft.Research.Vcc
       let decomposeDot e = 
         match tryDecomposeDot e with
           | Some r -> r
-          | None -> [bCall "$emb0" [e]; bCall "$field" [e]]
+          | None -> [bCall "$prim_emb" [e]; bCall "$field" [e]]
 
       let typedRead s p t =
         if vcc3 then
