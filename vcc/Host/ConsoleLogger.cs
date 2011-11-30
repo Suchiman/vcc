@@ -174,7 +174,7 @@ namespace Microsoft.Research.Vcc
     public override void LogWithLocation(string code, string msg, Location loc, LogKind kind, bool isRelated)
     {
       Location normalizedLoc;
-      if (loc.FileName.EndsWith("vccp.h")) {
+      if (loc.FileName != null && loc.FileName.EndsWith("vccp.h")) {
         normalizedLoc = new Location("vccp.h", 0, 0);
       } else {
         normalizedLoc = new Location("testcase", loc.Line, loc.Column);
