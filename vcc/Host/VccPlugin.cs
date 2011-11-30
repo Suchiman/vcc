@@ -622,18 +622,26 @@ namespace Microsoft.Research.Vcc
       }
     }
 
+    private static bool HasRequiresFalse(Implementation impl)
+    {
+      foreach (Requires req in impl.Proc.Requires) {
+        LiteralExpr f = req.Condition as LiteralExpr;
+        if (f != null && f.IsFalse) return true;
+      }
+
+      return false;
+    }
+
     private static bool HasAssertFalse(Block b)
     {
-        foreach (var cmd in b.Cmds) {
-          PredicateCmd pred = cmd as PredicateCmd;
-          if (pred != null) {
-            LiteralExpr f = pred.Expr as LiteralExpr;
-            if (f != null) {
-              if (f.IsFalse) return true;
-            }
-          }
+      foreach (var cmd in b.Cmds) {
+        PredicateCmd pred = cmd as PredicateCmd;
+        if (pred != null) {
+          LiteralExpr f = pred.Expr as LiteralExpr;
+          if (f != null && f.IsFalse) return true;            
         }
-        return false;
+      }
+      return false;
     }
 
     private static bool IsTokenWithoutLocation(IToken t)
@@ -643,6 +651,9 @@ namespace Microsoft.Research.Vcc
 
     public override void OnUnreachableCode(Implementation impl)
     {
+
+      if (HasRequiresFalse(impl)) return;
+
       bool hasIFUnreachable = false;
       this.unreachableChildren = new Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr>(new List<IdentifierExpr>());
       for (int i = impl.Blocks.Count - 1; i >= 0; i--)
