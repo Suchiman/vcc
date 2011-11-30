@@ -7,7 +7,7 @@
         <DirectoryRef Id="INSTALLLOCATION">
             <Directory Id="dir_examples" Name="examples" />
             <Directory Id="dir_done" Name="done" />
-            <Directory Id="dir_tutorial" Name="tutorial" />
+            <Directory Id="dir_old_tutorial" Name="old_tutorial" />
             <Directory Id="dir_vcc2" Name="vcc2" />
         </DirectoryRef>
     </Fragment>
@@ -1186,10 +1186,10 @@
         </DirectoryRef>
     </Fragment>
     <Fragment>
-        <DirectoryRef Id="dir_tutorial" FileSource="$(var.SamplesDir)\tutorial">
-            <Component Id="samples_tutorial" Guid="B112E30E-253B-4050-9C73-7B5230CD4DBC">
-                <RemoveFolder Id="dir_tutorial" On="uninstall" />
-                <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="samples_tutorial" Type="integer" Value="1" KeyPath="yes" />
+        <DirectoryRef Id="dir_old_tutorial" FileSource="$(var.SamplesDir)\old_tutorial">
+            <Component Id="samples_old_tutorial" Guid="B112E30E-253B-4050-9C73-7B5230CD4DBC">
+                <RemoveFolder Id="dir_old_tutorial" On="uninstall" />
+                <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="samples_old_tutorial" Type="integer" Value="1" KeyPath="yes" />
                 <File Name="inc.c" />
                 <File Name="lsearch.c" />
                 <File Name="max.c" />
@@ -1204,7 +1204,7 @@
     <Fragment>
         <ComponentGroup Id="samples_all">
             <ComponentRef Id="samples_done" />
-            <ComponentRef Id="samples_tutorial" />
+            <ComponentRef Id="samples_old_tutorial" />
             <ComponentRef Id="samples_vcc2" />
             <ComponentRef Id="samples_examples" />
         </ComponentGroup>
