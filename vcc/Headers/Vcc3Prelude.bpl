@@ -166,6 +166,7 @@ function {:inline true} $is_null(p:$ptr) : bool
   { $addr0(p) == 0 }
 axiom (forall p:$ptr :: {$addr(p)} 
   ($addr(p) == 0 <==> $is_null(p)) &&
+  ($addr(p) >= 0) &&
   ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr(p) + $sizeof($typ(p))))
   );
 
@@ -199,7 +200,7 @@ function $is_proper(p:$ptr) : bool;
 
 axiom (forall p:$ptr :: {$is_proper(p)}
   $is_primitive($typ(p)) &&
-  $is_proper(p) ==> $field_parent_type($field(p)) == $typ($prim_emb(p)));
+  $is_proper(p) ==> $is_proper_field($field(p)) && $field_parent_type($field(p)) == $typ($prim_emb(p)));
 
 //typed pointer test
 function $is(p:$ptr, t:$ctype) : bool
@@ -220,7 +221,7 @@ axiom (forall p:$ptr, t:$ctype ::
   $addr($phys_ptr_cast(p, t)) == $addr(p));
 
 function $addr0(p:$ptr) : int
-  { $base(p) + $field_offset($field(p)) }
+  { $unchk_add_ptr($base(p), $field_offset($field(p))) }
 
 function {:inline true} $cast_props(p:$ptr, t:$ctype, c:$ptr) : bool
   { $typ(c) == t && $is_null(c) == $is_null(p) && $field(c) == $as_field_with_type($field(c), t) &&
@@ -282,14 +283,12 @@ axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
      ($in_range_spec_ptr(p) || $is_ghost_field(f) ==> $in_range_spec_ptr($dot(p, f)))
   && ($in_range_phys_ptr(p) && $is_phys_field(f) ==> $in_range_phys_ptr($dot(p, f)))
-  && ($is_proper(p) && $field_parent_type(f) == $typ(p) ==> $is_proper($dot(p, f)))
+  && ($is_proper(p) && $field_parent_type(f) == $typ(p) && $is_proper_field(f) ==> $is_proper($dot(p, f)))
 );
 
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
   ($is_proper($dot(p, f)) ==> $non_null(p) ==> $non_null($dot(p, f)))
 );
-
-function {:inline true} $simple_emb(p:$ptr) : $ptr { $prim_emb(p) }
 
 function $emb(S:$state,p:$ptr) : $ptr
   { if $is_primitive($typ(p)) then $prim_emb(p) else $emb(S, p) }
@@ -317,6 +316,7 @@ axiom (forall f:$field :: {$field_parent_type(f)} $is_non_primitive($field_paren
 function {:inline true} $def_field_family(partp:$ctype, f:$field, tp:$ctype) : bool
   { 
     $field_parent_type(f) == partp &&
+    $is_proper_field(f) &&
     $field_type(f) == tp &&
     $as_field_with_type(f, tp) == f &&
     ($is_primitive(tp) ==> $as_primitive_field(f) == f) &&
@@ -474,6 +474,7 @@ function $field_offset($field) : int;
 function $field_parent_type($field) : $ctype;
 function $is_ghost_field($field) : bool;
 function $is_phys_field($field) : bool;
+function $is_proper_field($field) : bool;
 
 function {:inline true} $is_nice_spec_ptr(p:$ptr, t:$ctype) : bool
   { $in_range_spec_ptr(p) && $non_null(p) && $is_proper(p) && $field(p) == $f_root(t) }
@@ -524,8 +525,8 @@ axiom (forall f:$field, i:int :: {$field_arr_ctor(f, i)}
   $field_arr_index($field_arr_ctor(f, i)) == i &&
   $field_arr_size($field_arr_ctor(f, i)) == $field_arr_size(f) && 
   $same_field_meta($field_arr_ctor(f, i), f) &&
-  ($in_range(0, i, $field_arr_size(f) - 1) ==>
-    $field_parent_type($field_arr_ctor(f, i)) == $field_parent_type(f)));
+  ($in_range(0, i, $field_arr_size(f) - 1) ==> $is_proper_field($field_arr_ctor(f, i)))
+);
 
 function {:inline true} $same_field_meta(f:$field, g:$field) : bool
   {
@@ -535,6 +536,7 @@ function {:inline true} $same_field_meta(f:$field, g:$field) : bool
     $is_sequential_field(f) == $is_sequential_field(g) &&
     $is_volatile_field(f) == $is_volatile_field(g) &&
     $is_phys_field(f) == $is_phys_field(g) &&
+    $field_parent_type(f) == $field_parent_type(g) &&
     true
   }
 
@@ -949,6 +951,7 @@ axiom (forall S:$state, p:$ptr ::
     $in_range_phys_ptr(p) &&
     $owner(S, $domain_root(S, $emb0(p))) == $me() ==>
       $typemap($f_owner(S))[$addr(p), $typ(p)] == p);
+*/
 
 axiom (forall S:$state, p:$ptr, f:$field ::
   {$addr($dot(p, f)), $owner(S, $domain_root(S, p))}
@@ -958,6 +961,7 @@ axiom (forall S:$state, p:$ptr, f:$field ::
     $owner(S, $domain_root(S, p)) == $me() ==>
       $typemap($f_owner(S))[$addr($dot(p, f)), $field_type(f)] == $dot(p, f));
 
+/*
 axiom (forall S:$state, p, q:$ptr ::
   {$retype(S, q), $as_addr(p, $typ(q), $addr(q))}
   $good_state(S) ==>
@@ -970,8 +974,8 @@ function $as_addr(p:$ptr, t:$ctype, a:int) : $ptr;
 axiom (forall p:$ptr :: {$addr(p)} $as_addr(p, $typ(p), $addr(p)) == p);
 */
 
-function $retype(S:$state, p:$ptr) : $ptr;
-//  { $typemap($f_owner(S))[$addr(p), $typ(p)] }
+function $retype(S:$state, p:$ptr) : $ptr
+  { $typemap($f_owner(S))[$addr(p), $typ(p)] }
 
 function $ptr_eq(p1:$ptr, p2:$ptr) : bool
   { $addr(p1) == $addr(p2) }
