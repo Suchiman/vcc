@@ -166,8 +166,7 @@ function {:inline true} $is_null(p:$ptr) : bool
   { $addr0(p) == 0 }
 axiom (forall p:$ptr :: {$addr(p)} 
   ($addr(p) == 0 <==> $is_null(p)) &&
-  ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr(p))) &&
-  ($in_range_phys_ptr(p) && $is_proper(p) ==> $in_range_uintptr($addr(p) + $sizeof($typ(p))))
+  ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr(p) + $sizeof($typ(p))))
   );
 
 const $null : $ptr;
@@ -271,6 +270,9 @@ function $dot(p:$ptr, f:$field) : $ptr
     else
       $ptr($f_root($field_type(f)), $base(p) + $field_offset(f))
     }
+
+axiom (forall t:$ctype, b:$base :: {$is_proper($ptr($f_root(t), b))}
+  !$is_primitive(t) ==> $is_proper($ptr($f_root(t), b)));
 
 axiom (forall p:$ptr, f:$field :: {$addr($dot(p, f))}
   $is_phys_field(f) ==>
@@ -517,7 +519,25 @@ function $field_arr_ctor($field, int) : $field;
 axiom (forall f:$field :: {$field_arr_index(f)}
   f == $field_arr_ctor($field_arr_root(f), $field_arr_index(f)));
 axiom (forall f:$field, i:int :: {$field_arr_ctor(f, i)}
-  $field_arr_root($field_arr_ctor(f, i)) == f && $field_arr_index($field_arr_ctor(f, i)) == i);
+  $field_arr_root($field_arr_ctor(f, i)) == f && 
+  (i == 0 ==> $field_arr_root($field_arr_ctor(f, i)) == $field_arr_ctor(f, i)) &&
+  $field_arr_index($field_arr_ctor(f, i)) == i &&
+  $field_arr_size($field_arr_ctor(f, i)) == $field_arr_size(f) && 
+  $same_field_meta($field_arr_ctor(f, i), f) &&
+  ($in_range(0, i, $field_arr_size(f) - 1) ==>
+    $field_parent_type($field_arr_ctor(f, i)) == $field_parent_type(f)));
+
+function {:inline true} $same_field_meta(f:$field, g:$field) : bool
+  {
+    $field_kind(f) == $field_kind(g) &&
+    $field_type(f) == $field_type(g) &&
+    $as_field_with_type(f, $field_type(f)) == f &&
+    $is_sequential_field(f) == $is_sequential_field(g) &&
+    $is_volatile_field(f) == $is_volatile_field(g) &&
+    $is_phys_field(f) == $is_phys_field(g) &&
+    true
+  }
+
 
 function {:inline true} $def_arr_field(partp:$ctype, f:$field, tp:$ctype, isvolatile:bool, sz:int) : bool
   { $def_field(partp, f, tp, isvolatile) &&
@@ -579,24 +599,11 @@ axiom (forall p:$ptr, i:int :: {$idx(p, i)}
 
 axiom (forall p:$ptr, i:int :: {$idx(p, i)}
   ($in_range_phys_ptr(p) || $in_range_phys_ptr($maybe_emb(p)))
-  && $is_proper($idx(p, i)) ==> $in_range_phys_ptr($idx(p, i)));
+  // && $is_proper($idx(p, i)) 
+    ==> $in_range_phys_ptr($idx(p, i)));
 
-function $field_plus($field, int) : $field;
-
-axiom (forall f:$field, i:int :: {$field_plus(f, i)}
-  $field_kind($field_plus(f, i)) == $field_kind(f) &&
-  $field_arr_root($field_plus(f, i)) == $field_arr_root(f) &&
-  $field_arr_index($field_plus(f, i)) == $field_arr_index(f) + i &&
-  $field_arr_size($field_plus(f, i)) == $field_arr_size(f) &&
-  $field_type($field_plus(f, i)) == $field_type(f) &&
-  $as_field_with_type($field_plus(f, i), $field_type(f)) == $field_plus(f, i) &&
-  $is_sequential_field($field_plus(f, i)) == $is_sequential_field(f) &&
-  $is_volatile_field($field_plus(f, i)) == $is_volatile_field(f) &&
-  $is_phys_field($field_plus(f, i)) == $is_phys_field(f) &&
-  ($in_range(0, $field_arr_index(f) + i, $field_arr_size(f) - 1) ==> 
-     $field_parent_type($field_plus(f, i)) == $field_parent_type($field_arr_root(f))) &&
-  true
-  );
+function {:inline true} $field_plus(f:$field, i:int) : $field
+  { $field_arr_ctor($field_arr_root(f), $field_arr_index(f) + i) }
 
 function $is_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {
@@ -783,13 +790,20 @@ axiom (forall t:$ctype, sz:int :: {$array_emb(t, sz)} {$array(t, sz)}
   $field_offset($array_emb(t, sz)) == 0 &&
   $field_arr_size($array_emb(t, sz)) == sz &&
   $field_arr_index($array_emb(t, sz)) == 0 &&
-  $field_arr_root($array_emb(t, sz)) == $array_emb(t, sz) &&
   $is_sequential_field($array_emb(t, sz)) &&
   true);
 
 function $as_array(p:$ptr, T:$ctype, sz:int) : $ptr
   {
-      $ptr($f_root($array(T, sz)), $addr0(p))
+      if $is_primitive(T) then
+        if $is_proper(p) &&
+           $field(p) == $array_emb(T, sz) &&
+           true then
+          $prim_emb(p)
+        else
+          $ptr($f_root($array(T, sz)), 0)
+      else
+        $ptr($f_root($array(T, sz)), $addr0(p))
   }
 
 
@@ -1121,9 +1135,9 @@ axiom (forall S:$state, p:$ptr, q:$ptr :: {$set_in_pos(p, $owns(S, q)), $is_non_
       ($set_in(p, $owns(S, q)) <==> $owner(S, p) == q));
 */
 
-axiom (forall S:$state, #r:$base, #t:$ctype, #f:$field, #sz:int :: {$owns(S, $ptr($as_field_with_type(#f,$array(#t,#sz)), #r))}
+axiom (forall S:$state, p:$ptr, t:$ctype, sz:int :: {$owns(S, $as_ptr_with_type(p, $array(t, sz)))}
   $good_state(S) ==>
-    $owns(S, $ptr($as_field_with_type(#f,$array(#t,#sz)), #r)) == $set_empty());
+    $is(p, $array(t, sz)) ==> $owns(S, p) == $set_empty());
 
 axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
   $invok_state(S) && $closed(S, #p) ==> $inv(S, #p, #t));
@@ -1846,9 +1860,9 @@ function {:inline true} $claim_transitivity_assumptions(#s1:$state, #s2:$state, 
     }
 
 function {:inline true} $valid_claim_impl(S0:$state, S1:$state) : bool
-  { (forall r:$ptr, f:$field :: {$closed(S1, $dot(r, $as_field_with_type(f, ^^claim)))}
-       $is($dot(r, f), ^^claim) ==> 
-       $closed(S0, $dot(r, f)) && $closed(S1, $dot(r, f)) ==> $valid_claim(S1, $dot(r, f))) }
+  { (forall r:$ptr :: {$closed(S1, $as_ptr_with_type(r, ^^claim))}
+       $is(r, ^^claim) ==> 
+       $closed(S0, r) && $closed(S1, r) ==> $valid_claim(S1, r)) }
 
 function $claims_claim(c1:$ptr, c2:$ptr) : bool;
 axiom (forall c1:$ptr, c2:$ptr :: {$claims_claim(c1, c2)}
