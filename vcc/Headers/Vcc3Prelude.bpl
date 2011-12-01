@@ -708,7 +708,11 @@ axiom (forall p, a:$ptr, f:$field :: {$index_within($dot(p, f), a)}
 axiom (forall p, q:$ptr, t:$ctype ::
   {$index_within($as_ptr_with_type(p, t), $as_ptr_with_type(q, t))}
   $typ(p) == t && $typ(q) == t ==>
-    $index_within(p, q) == $field_arr_index($field(p)) - $field_arr_index($field(q)));
+    if $is_primitive(t) then
+      $index_within(p, q) == $field_arr_index($field(p)) - $field_arr_index($field(q))
+    else
+      $sizeof(t) * $index_within(p, q) == $base(p) - $base(q)
+      );
 
 function $array_range_no_state(p:$ptr, T:$ctype, sz:int) : $ptrset
   { if $is_primitive(T) then
@@ -2240,12 +2244,19 @@ procedure $bump_volatile_version(p:$ptr);
 
 function $composite_extent(S:$state, r:$ptr, t:$ctype) : $ptrset;
 
+function $dot_emb($ptr) : $ptr;
+
+axiom (forall p:$ptr ::  {$dot_emb(p)}
+  $dot_emb(p) == $maybe_emb(p) &&
+  ($is_primitive($typ(p)) ==> $dot($prim_emb(p), $field(p)) == p));
+
+
 function $extent(S:$state, r:$ptr) : $ptrset
-  { (lambda p:$ptr :: $is_proper(p) && $composite_extent(S, r, $typ(r))[$maybe_emb(p)]) }
+  { (lambda p:$ptr :: $is_proper(p) && $composite_extent(S, r, $typ(r))[$dot_emb(p)]) }
 
 const $full_extent_state : $state;
 function $full_extent(r:$ptr) : $ptrset
-  { (lambda p:$ptr :: $is_proper(p) && $composite_extent($full_extent_state, r, $typ(r))[$maybe_emb(p)]) }
+  { (lambda p:$ptr :: $is_proper(p) && $composite_extent($full_extent_state, r, $typ(r))[$dot_emb(p)]) }
 
 axiom (forall S:$state, p, r:$ptr ::
   {$in(p, $composite_extent(S, r, $typ(r)))}
