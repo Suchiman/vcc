@@ -1362,7 +1362,10 @@ namespace Microsoft.Research.Vcc
                   let p' = { p.UniqueCopy() with Type = t'}
                   paramSubst.Add(p, p')
                   p'
-            fn.Parameters <- List.map retypeParameter fn.Parameters            
+            fn.Parameters <- List.map retypeParameter fn.Parameters
+            fn.RetType <- match fn.RetType.Subst(typeMap) with
+                           | None -> fn.RetType
+                           | Some t' -> t'
           | Top.TypeDecl(td) ->
             let retypeField (fld:Field) =
               match fld.Type.Subst(typeMap) with
