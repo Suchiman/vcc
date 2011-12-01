@@ -646,6 +646,9 @@ namespace Microsoft.Research.Vcc
 
           | "_vcc_rec_eq", [r1; r2] when vcc3 ->
             bCall ("REQ#" + (recType r1.Type).Name) [self r1; self r2]
+
+          | "_vcc_simple_emb", [C.Dot (_, p, _)] ->
+            self p
              
           | "rec_zero", [] -> 
             if vcc3 then
