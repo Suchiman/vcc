@@ -165,9 +165,8 @@ function {:inline true} $non_null(p:$ptr) : bool
 function {:inline true} $is_null(p:$ptr) : bool
   { $addr0(p) == 0 }
 axiom (forall p:$ptr :: {$addr(p)} 
-  ($addr(p) == 0 <==> $is_null(p)) &&
-  ($addr(p) >= 0) &&
-  ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr(p) + $sizeof($typ(p))))
+  ($addr(p) == $addr0(p)) &&
+  ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr(p)))
   );
 
 const $null : $ptr;
@@ -286,9 +285,11 @@ axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
   && ($is_proper(p) && $field_parent_type(f) == $typ(p) && $is_proper_field(f) ==> $is_proper($dot(p, f)))
 );
 
+/*
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
   ($is_proper($dot(p, f)) ==> $non_null(p) ==> $non_null($dot(p, f)))
 );
+*/
 
 function $emb(S:$state,p:$ptr) : $ptr
   { if $is_primitive($typ(p)) then $prim_emb(p) else $emb(S, p) }
@@ -595,9 +596,11 @@ axiom (forall p:$ptr, i:int, j:int :: {$idx($idx(p, i), j)}
 axiom (forall p:$ptr, i:int :: {$addr($idx(p, i))}
     $addr($idx(p, i)) == $unchk_add_ptr($addr(p), $sizeof($typ(p)) * i));
 
+/*
 axiom (forall p:$ptr, i:int :: {$idx(p, i)}
   $is_proper($idx(p, i)) ==>
     $non_null(p) ==> $non_null($idx(p, i)));
+*/
 
 axiom (forall p:$ptr, i:int :: {$idx(p, i)}
   ($in_range_phys_ptr(p) || $in_range_phys_ptr($maybe_emb(p)))
@@ -975,7 +978,8 @@ axiom (forall p:$ptr :: {$addr(p)} $as_addr(p, $typ(p), $addr(p)) == p);
 */
 
 function $retype(S:$state, p:$ptr) : $ptr
-  { $typemap($f_owner(S))[$addr(p), $typ(p)] }
+  { if $is_primitive($typ(p)) then $typemap($f_owner(S))[$addr(p), $typ(p)] 
+    else p }
 
 function $ptr_eq(p1:$ptr, p2:$ptr) : bool
   { $addr(p1) == $addr(p2) }
@@ -1153,6 +1157,7 @@ axiom (forall S:$state, #p:$ptr, #t:$ctype :: {$inv(S, #p, #t)}
 axiom (forall S:$state :: {$good_state(S)}
   $good_state(S) ==> $closed_is_transitive(S));
 
+// TODO remove?
 axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
   $good_state(S) ==>
     $closed(S, p) ==> $non_null(p));
@@ -1161,6 +1166,10 @@ axiom(forall S: $state, p: $ptr :: {$closed(S, p)}
 axiom(forall S: $state, p: $ptr :: {$f_owner(S)[p]} // {$domain_root(S, p)}
   $good_state(S) ==>
   $f_owner(S)[p] == $me() ==> $is_proper(p) && $non_null(p) && $is_non_primitive($typ(p)) && $is_proper(p) && $domain_root(S, p) == p);
+
+axiom (forall S:$state, r:$ptr :: {$owner(S, r), $addr(r)}
+  $owner(S, r) != $untyped_owner() && $in_range_phys_ptr(r) ==>
+    $in_range_uintptr($addr(r) + $sizeof($typ(r))));
 
 // PERF 3.2%
 axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
