@@ -626,7 +626,7 @@ function {:inline true} $is_array_stateless(p:$ptr, T:$ctype, sz:int) : bool
     && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
     && p == $idx($ptr($field_arr_root($field(p)), $base(p)), $field_arr_index($field(p)))
     && $field_kind($field(p)) != $fk_base
-    && ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr0(p) + $sizeof(T) * sz))
+//    && ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr0(p) + $sizeof(T) * sz))
     && $field_arr_index($field(p)) >= 0)
 //    && $is_non_primitive($typ($emb0(p))))
 }
@@ -1193,6 +1193,11 @@ axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
       true
     )
     );
+
+axiom (forall S:$state, r:$ptr, f:$field :: {$owner(S, r), $dot(r, f)}
+  $good_state(S) ==>
+    $owner(S, r) != $untyped_owner() && $field_parent_type(f) == $typ(r) ==>
+      $non_null($dot(r, f)));
 
 axiom (forall S:$state, p:$ptr ::
   {$domain_root(S, $domain_root(S, p))}
@@ -3152,9 +3157,8 @@ axiom (forall S:$state, id:int, length:int ::
 // -----------------------------------------------------------------------
 
 
-function $address_root(rf:int, tp:$ctype) : $ptr;
-axiom (forall rf:int, tp:$ctype :: {$address_root(rf, tp)}
-  $addr($address_root(rf, tp)) == rf && $typ($address_root(rf, tp)) == tp);
+function {:inline} $address_root(rf:int, tp:$ctype) : $ptr
+  { $ptr($f_root(tp), rf) }
 
 function $blob_type(sz:int) : $ctype;
 axiom (forall s:int :: {$blob_type(s)} 
@@ -3190,8 +3194,8 @@ function {:inline} $root_index(p:$ptr, sz:int) : $ptr
 
 function $allow_reinterpretation_in(p:$ptr) : bool;
 function $allow_reinterpretation(p:$ptr) : bool;
-axiom (forall p:$ptr :: {$allow_reinterpretation(p)}
-  $allow_reinterpretation_in($prim_emb(p)) ==> $allow_reinterpretation(p));
+axiom (forall p:$ptr, f:$field :: {$allow_reinterpretation($dot(p, f))}
+  $allow_reinterpretation_in(p) && $field_parent_type(f) == $typ(p) ==> $allow_reinterpretation($dot(p, f)));
 
 procedure $blobify(p:$ptr);
   // writes extent(p)
