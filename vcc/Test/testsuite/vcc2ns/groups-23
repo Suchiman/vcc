@@ -1,0 +1,29 @@
+`/newsyntax
+
+#include <vcc.h>
+
+_(claimable)
+struct S {
+  _(group G)
+  _(:G) int a;
+  int b;
+  _(:G) int c;
+  
+  _(invariant :volatile \mine(\this::G))
+};
+
+
+void foo(volatile struct S *s)
+	_(requires \wrapped(s))
+{
+	_(atomic s::G) {
+		s->a = 5;
+	}
+}
+`
+Verification of foo failed.
+testcase(18,11) : error VC8527: Assertion 's::G is closed (for atomic(...))' did not verify.
+testcase(19,3) : error VC8507: Assertion 's->a is writable' did not verify.
+testcase(18,11) : error VC8524: Assertion 'chunk of invariant of s::G holds after atomic' did not verify.
+Verification of volatile#S#adm succeeded.
+`

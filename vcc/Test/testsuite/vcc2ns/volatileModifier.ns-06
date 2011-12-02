@@ -5,6 +5,7 @@ typedef _(claimable) struct _counter {
  int xxx;
 
  _(invariant \depends(\this->\owner, \this))
+ _(invariant :volatile \depends(\this->\owner, \this))
 } counter;
 
 typedef volatile counter vcounter;
