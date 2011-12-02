@@ -19,6 +19,4 @@ void foo(volatile struct S *s)
 
 `
 Verification of foo succeeded.
-testcase(12,14) : warning : found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)
-testcase(17,1) : warning : trace to unreachable location
 `
