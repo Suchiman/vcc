@@ -446,7 +446,7 @@ namespace Microsoft.Research.Vcc
       let suff = intSuffix t
       Expr.Macro (ec, "in_range_div_" + suff, args)
 
-    let addShiftChecks ctx self = function
+    let addShiftWidthChecks ctx self = function
       | Prim(c, (Op((">>"|"<<"), _) as op), [arg1; arg2]) when not ctx.IsPure ->
         let arg1 = self arg1
         let arg2 = self arg2
@@ -457,6 +457,15 @@ namespace Microsoft.Research.Vcc
         addStmtsOpt [Expr.MkAssert(inrange)] (Prim(c, op, [arg1; arg2]))
       | _ -> None
                                                                     
+    let addShiftArgumentPositiveCheck ctx self = function
+      | Prim(c, (Op("<<", _) as op), [arg1; arg2]) when not ctx.IsPure && arg1.Type.IsSignedInteger ->
+        let arg1 = self arg1
+        let arg1' = ignoreEffects arg1
+        let arg2 = self arg2
+        let comm = afmte 8539 "{0} in not negative (in shift)" [arg1']
+        let inrange = Expr.Prim(comm, Op("<=", Processed), [mkInt 0; arg1'])
+        addStmtsOpt [Expr.MkAssert(inrange)] (Prim(c, op, [arg1; arg2]))
+      | _ -> None
 
     let isFloatingPoint = function | Type.Primitive _ -> true | _ -> false
 
@@ -617,7 +626,8 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("check-ptr-range", Helper.ExprCtx addPointerConversionChecks)
     helper.AddTransformer ("check-overflows", Helper.ExprCtx addOverflowChecks)
     helper.AddTransformer ("check-div-by-zero", Helper.ExprCtx addDivByZeroChecks)
-    helper.AddTransformer ("check-shift-bits-in-range", Helper.ExprCtx addShiftChecks)
+    helper.AddTransformer ("check-shift-bits-in-range", Helper.ExprCtx addShiftWidthChecks)
+    helper.AddTransformer ("check-shift-arg-not-negative", Helper.ExprCtx addShiftArgumentPositiveCheck)
     helper.AddTransformer ("check-fullstop-in-atomic", Helper.Expr addFullstopCheckInAtomic)
     helper.AddTransformer ("check-remove-checked", Helper.Expr stripRemainingChecked)
     

@@ -2683,8 +2683,13 @@ axiom(forall x:int, y:int :: {$unchk_add(^^u8, x, y)}
 axiom(forall x:int, y:int :: {$unchk_add(^^u4, x, y)} 
   $in_range_u4(x) && $in_range_u4(y) && x + y > $max.u8 ==> $unchk_add(^^u4, x, y) == x + y - $max.u4 - 1
 );
-function $_shl(t:$ctype, x:int, y:int) : int
-  { $unchecked(t, x * $_pow2(y)) }
+
+function $_shl(t:$ctype, x:int, y:int) : int;
+
+axiom(forall t:$ctype, x:int, y:int :: { $_shl(t, x, y) }
+  x >= 0 ==> $_shl(t,x,y) == $unchecked(t, x * $_pow2(y))
+);
+
 function $_shr(x:int, y:int) : int
   { x / $_pow2(y) }
 

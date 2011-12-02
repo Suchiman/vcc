@@ -25,7 +25,7 @@ namespace Microsoft.Research.Vcc
   // "id" numbers
   //      
   // Verification errors:  between 8001 and 8499: First available: 8034
-  // Assertions:           between 8501 and 8999: First available: 8539
+  // Assertions:           between 8501 and 8999: First available: 8540
   //
 
   let afmt (id:int) fmt (args : list<string>) =
