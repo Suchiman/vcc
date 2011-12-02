@@ -15,5 +15,4 @@ struct t {
 `
 Verification of _s#adm succeeded.
 Verification of t#adm succeeded.
-Verification of volatile#_s#adm succeeded.
 `

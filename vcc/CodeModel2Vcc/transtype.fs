@@ -925,6 +925,19 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let removeVolatileInvariants decls = 
+      for d in decls do
+        match d with  
+          | Top.TypeDecl(td) ->
+            td.Invariants <- 
+              td.Invariants |> 
+              List.choose (function | Macro(_, "labeled_invariant", [Macro(_, "volatile", []); inv]) -> None | inv -> Some inv)
+          | _ -> ()
+
+      decls
+    
+    // ============================================================================================================
+
     
     let handleVolatileModifiers decls =
     
@@ -971,7 +984,10 @@ namespace Microsoft.Research.Vcc
             typeToVolatileType.Add(td, td')
             typeToVolatileType.Add(td', td')
             let vFields = List.map (mkVolFld td') td'.Fields
-            td'.Invariants <- List.map (fun (expr:Expr) -> expr.SelfMap(retypeThis td td').SelfMap (fixFields td'.Fields vFields)) td'.Invariants
+            td'.Invariants <- 
+              td'.Invariants |>
+              List.choose (function | Macro(_, "labeled_invariant", [Macro(_, "volatile", []); inv]) -> Some inv | _ -> None) |>
+              List.map (fun (expr:Expr) -> expr.SelfMap(retypeThis td td').SelfMap (fixFields td'.Fields vFields)) 
             td'.Fields <- vFields
             volatileTds := td' :: !volatileTds
             pushDownOne false td'  
@@ -1410,6 +1426,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("type-primitive-structs", Helper.Decl handlePrimitiveStructs)
     helper.AddTransformer ("type-check-records", Helper.Decl checkRecordValidity)
     helper.AddTransformer ("type-volatile-modifiers", Helper.Decl handleVolatileModifiers)
+    helper.AddTransformer ("type-remove-volatile-invariants", Helper.Decl removeVolatileInvariants)
     helper.AddTransformer ("type-struct-equality", Helper.Expr handleStructAndRecordEquality)
     helper.AddTransformer ("type-globals", Helper.Decl addAxiomsForGlobals)
     helper.AddTransformer ("type-end", Helper.DoNothing)
