@@ -1130,6 +1130,9 @@ namespace Microsoft.Research.Vcc.Parsing {
               //TODO: error if sign != null || result != null;
               sign = pts;
               break;
+            case Token.W64:
+              length = pts;
+              break;
             case Token.Short:
               //TODO: error if length != null || result != null;;
               length = pts;
@@ -1173,6 +1176,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         SourceLocationBuilder slb = new SourceLocationBuilder(primitiveType.SourceLocation);
         if (length != null) {
           slb.UpdateToSpan(length.SourceLocation);
+
           if (length.Token == Token.Short) {
             //TODO: error if primitive type != int
           } else {
@@ -1243,13 +1247,23 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
       }
       //get here if primitive type is int or has not been specified
+
+      Token effectiveLengthToken = Token.None;
+
+      if (length != null) {
+        effectiveLengthToken = length.Token;
+        if (effectiveLengthToken == Token.W64) {
+          effectiveLengthToken = this.compilation.HostEnvironment.PointerSize == 4 ? Token.Long : Token.Int64;
+        }
+      }
+
       if (sign != null) {
         if (sign.Token == Token.Unsigned) {
           if (length == null) return this.GetTypeExpressionFor(TypeCode.UInt32, sign.SourceLocation);
           SourceLocationBuilder slb = new SourceLocationBuilder(sign.SourceLocation);
           slb.UpdateToSpan(length.SourceLocation);
           if (primitiveType != null) slb.UpdateToSpan(primitiveType.SourceLocation);
-          switch (length.Token) {
+          switch (effectiveLengthToken) {
             case Token.Short: return this.GetTypeExpressionFor(TypeCode.UInt16, slb);
             case Token.Long: return this.GetTypeExpressionFor(TypeCode.UInt32, slb);
             case Token.Int64: return this.GetTypeExpressionFor(TypeCode.UInt64, slb);
@@ -1259,7 +1273,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           SourceLocationBuilder slb = new SourceLocationBuilder(sign.SourceLocation);
           slb.UpdateToSpan(length.SourceLocation);
           if (primitiveType != null) slb.UpdateToSpan(primitiveType.SourceLocation);
-          switch (length.Token) {
+          switch (effectiveLengthToken) {
             case Token.Short: return this.GetTypeExpressionFor(TypeCode.Int16, slb);
             case Token.Long: return this.GetTypeExpressionFor(TypeCode.Int32, slb);
             case Token.Int64: return this.GetTypeExpressionFor(TypeCode.Int64, slb);
@@ -1269,7 +1283,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (length != null) {
         SourceLocationBuilder slb = new SourceLocationBuilder(length.SourceLocation);
         if (primitiveType != null) slb.UpdateToSpan(primitiveType.SourceLocation);
-        switch (length.Token) {
+        switch (effectiveLengthToken) {
           case Token.Short: return this.GetTypeExpressionFor(TypeCode.Int16, slb);
           case Token.Long: return this.GetTypeExpressionFor(TypeCode.Int32, slb);
           case Token.Int64: return this.GetTypeExpressionFor(TypeCode.Int64, slb);

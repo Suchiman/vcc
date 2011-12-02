@@ -174,7 +174,7 @@ bool IsIn(struct Stack *S, size_t value)
     _(reads \universe())
     _(returns \exists size_t v; v < S->abs->high_mark && S->abs->entries[v] == value)
 {
-    unsigned index;
+    unsigned __int64 index;
 
     _(assert S->elementsAsArray \in \domain(S))
     _(assert S->abs \in \domain(S))
