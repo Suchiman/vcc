@@ -158,7 +158,7 @@ function $field($ptr) : $field;
 function $ptr($field,$base): $ptr;
 axiom (forall t:$field, b:$base :: $field($ptr(t,b))==t);
 axiom (forall t:$field, b:$base :: $base($ptr(t,b))==b);
-axiom (forall p:$ptr :: {$base(p)} {$field(p)} $ptr($field(p), $base(p)) == p); // PERF 6.7%
+axiom (forall p:$ptr :: {$base(p)} {$field(p)} $base(p) >= 0 && $ptr($field(p), $base(p)) == p); // PERF 6.7%
 
 function {:inline true} $non_null(p:$ptr) : bool
   { !$is_null(p) }
@@ -526,6 +526,7 @@ axiom (forall f:$field, i:int :: {$field_arr_ctor(f, i)}
   $field_arr_index($field_arr_ctor(f, i)) == i &&
   $field_arr_size($field_arr_ctor(f, i)) == $field_arr_size(f) && 
   $same_field_meta($field_arr_ctor(f, i), f) &&
+  $field_offset($field_arr_ctor(f, i)) == $field_offset(f) + i * $sizeof($field_type(f)) &&
   ($in_range(0, i, $field_arr_size(f) - 1) ==> $is_proper_field($field_arr_ctor(f, i)))
 );
 
@@ -577,13 +578,15 @@ function {:inline true} $def_ghost_as_array_field(partp:$ctype, f:$field, tp:$ct
 
 // idx() function
 
+function $idx_inline_prim(p:$ptr, i:int) : $ptr
+  { $dot($prim_emb(p), $field_plus($field(p), i)) }
+
+function $idx_inline_comp(p:$ptr, i:int) : $ptr
+  { $ptr($f_root($typ(p)), $base(p) + i * $sizeof($typ(p))) }
+
 function {:inline true} $idx_inline(p:$ptr, i:int) : $ptr
-  { if $is_primitive($typ(p)) then
-      $dot($prim_emb(p), $field_plus($field(p), i))
-    else
-      $ptr($f_root($typ(p)), $base(p) + i * $sizeof($typ(p)))
-    }
-//  { $dot(p, $field_plus($field(p), i)) }
+  { if $is_primitive($typ(p)) then $idx_inline_prim(p, i)
+    else $idx_inline_comp(p, i) }
 
 function $idx(p:$ptr, i:int) : $ptr
   {
@@ -623,6 +626,7 @@ function {:inline true} $is_array_stateless(p:$ptr, T:$ctype, sz:int) : bool
     && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
     && p == $idx($ptr($field_arr_root($field(p)), $base(p)), $field_arr_index($field(p)))
     && $field_kind($field(p)) != $fk_base
+    && ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr0(p) + $sizeof(T) * sz))
     && $field_arr_index($field(p)) >= 0)
 //    && $is_non_primitive($typ($emb0(p))))
 }
@@ -665,15 +669,20 @@ axiom (forall a:$ptr, al:int, b:$ptr, bl:int ::
   $set_disjoint($array_range_no_state(a, $typ(a), al), $array_range_no_state(b, $typ(b), bl)) ==>
   $arrays_disjoint(a, al, b, bl));
 
-axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
-  {$arrays_disjoint(a, al, b, bl), $idx(a, i)}
-  $arrays_disjoint(a, al, b, bl) &&
-  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx(a, i)) == 0);
+function F#mark($ptr,$ptr) : bool;
 
 axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
-  {$arrays_disjoint(a, al, b, bl), $idx(b, i)}
+  {$arrays_disjoint(a, al, b, bl), $idx_inline_prim(a, i)}
+  {$arrays_disjoint(a, al, b, bl), $idx_inline_comp(a, i)}
+  F#mark(a,$idx_inline(a,i)) && (
   $arrays_disjoint(a, al, b, bl) &&
-  0 <= i && i < bl ==> $arrays_disjoint_id(a, al, b, bl, $idx(b, i)) == 1);
+  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx_inline(a, i)) == 0));
+
+axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
+  {$arrays_disjoint(a, al, b, bl), $idx_inline_prim(b, i)}
+  {$arrays_disjoint(a, al, b, bl), $idx_inline_comp(b, i)}
+  $arrays_disjoint(a, al, b, bl) &&
+  0 <= i && i < bl ==> $arrays_disjoint_id(a, al, b, bl, $idx_inline(b, i)) == 1);
 
 function {:inline true} $mem_range(s:$state, p:$ptr, sz:int) : int
   { $mem_range_heap($heap(s), p, sz) }
@@ -1036,10 +1045,10 @@ function {:inline true} $thread_local2(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p, #t) && $thread_local(S, #p) }
 
 function {:inline true} $typed2(S:$state, p:$ptr, t:$ctype) : bool
-  { $is_proper(p) && $typed(S, $maybe_emb(p)) && $is(p, t) }
+  { $typed(S, p) && $is(p, t) }
 
 function $typed(S:$state, p:$ptr) : bool
-  { $owner(S, p) != $untyped_owner() }
+  { $non_null(p) && $is_proper(p) && $owner(S, $maybe_emb(p)) != $untyped_owner() }
 
 function {:inline true} $readable_span(S:$state, p:$ptr) : bool
 {
