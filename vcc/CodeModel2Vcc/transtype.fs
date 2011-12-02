@@ -947,16 +947,18 @@ namespace Microsoft.Research.Vcc
       let volatileTds = ref []
       let typeToVolatileType = new Dict<_,_>()
     
-      let mkVolFld td (f : Field) = 
+      let rec mkVolFld td (f : Field) = 
         let f' = 
           match f.Type with
-            | Array(Type.Ref({Kind = Struct|Union}) as t, size) ->
-              { f with Type = Array(Volatile(t), size); Parent = td }
+            | Array(Type.Ref({Kind = Struct|Union} as tdRef), size) when not tdRef.IsRecord->
+              { f with Type = Array(Type.Ref(mkVolTd tdRef), size); Parent = td }
+            | Type.Ref({Kind = Struct|Union} as tdRef) when not tdRef.IsRecord ->
+              { f with Type = Type.Ref(mkVolTd tdRef);  Parent = td }
             | _ -> { f with IsVolatile = true; Parent = td}
         fldToVolatileFld.Add(f,f')
         f'
 
-      let rec mkVolTd (td : TypeDecl) =
+      and mkVolTd (td : TypeDecl) =
       
         let fixFields oldFields newFields =
           let fieldSubst = new Dict<Field,Field>()
