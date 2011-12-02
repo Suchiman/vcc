@@ -269,7 +269,8 @@ namespace Microsoft.Research.Vcc
         // rewrite (user supplied) casts to group types into field accesses
         | Cast (c, _, e) ->
           match c.Type, e.Type with
-            | Ptr (Type.Ref gr), Ptr (Type.Ref par) ->
+            | Ptr (Type.Ref gr), Ptr (Type.Ref par)
+            | Ptr (Type.Ref gr), Ptr (Volatile(Type.Ref par)) ->
               match groupParent.TryGetValue gr with
                 | true, (tp, fld) when tp = par ->
                   Some (self (Dot (c, e, fld)))
