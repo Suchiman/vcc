@@ -393,7 +393,7 @@ namespace Microsoft.Research.Vcc.Parsing
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       NameDeclaration nameDecl = null;
       this.GetNextToken();
-      Expression condition = this.ParseLabeledExpression(followers);
+      Expression condition = this.ParseLabeledExpression(followers, true);
       var labeledInvariant = condition as VccLabeledExpression;
       if (labeledInvariant != null) {
         nameDecl = labeledInvariant.Label;
@@ -818,12 +818,18 @@ namespace Microsoft.Research.Vcc.Parsing
       return new VccMethodCall(this.GetSimpleNameFor("\\labeled_expression"), args, slb.GetSourceLocation());
     }
 
-    protected override Expression ParseLabeledExpression(TokenSet followers)
+    protected override Expression ParseLabeledExpression(TokenSet followers, bool isInvariant = false)
     {
       if (this.currentToken == Token.Colon) {
         SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
         this.GetNextToken();
-        var label = this.ParseNameDeclaration(true);
+        NameDeclaration label;
+        if (isInvariant && this.currentToken == Token.Volatile) {
+          label = new VccNameDeclaration(this.GetNameFor("volatile"), false, slb);
+          this.GetNextToken();
+        } else {
+          label = this.ParseNameDeclaration(true);
+        }
         Expression expr;
         if (TS.UnaryStart[this.currentToken] || TS.PrimaryStart[this.currentToken]) {
           expr = this.ParseExpression(followers);

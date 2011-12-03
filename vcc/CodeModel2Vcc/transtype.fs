@@ -269,7 +269,8 @@ namespace Microsoft.Research.Vcc
         // rewrite (user supplied) casts to group types into field accesses
         | Cast (c, _, e) ->
           match c.Type, e.Type with
-            | Ptr (Type.Ref gr), Ptr (Type.Ref par) ->
+            | Ptr (Type.Ref gr), Ptr (Type.Ref par)
+            | Ptr (Type.Ref gr), Ptr (Volatile(Type.Ref par)) ->
               match groupParent.TryGetValue gr with
                 | true, (tp, fld) when tp = par ->
                   Some (self (Dot (c, e, fld)))
@@ -924,6 +925,19 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let removeVolatileInvariants decls = 
+      for d in decls do
+        match d with  
+          | Top.TypeDecl(td) ->
+            td.Invariants <- 
+              td.Invariants |> 
+              List.choose (function | Macro(_, "labeled_invariant", [Macro(_, "volatile", []); inv]) -> None | inv -> Some inv)
+          | _ -> ()
+
+      decls
+    
+    // ============================================================================================================
+
     
     let handleVolatileModifiers decls =
     
@@ -933,16 +947,18 @@ namespace Microsoft.Research.Vcc
       let volatileTds = ref []
       let typeToVolatileType = new Dict<_,_>()
     
-      let mkVolFld td (f : Field) = 
+      let rec mkVolFld td (f : Field) = 
         let f' = 
           match f.Type with
-            | Array(Type.Ref({Kind = Struct|Union}) as t, size) ->
-              { f with Type = Array(Volatile(t), size); Parent = td }
+            | Array(Type.Ref({Kind = Struct|Union} as tdRef), size) when not tdRef.IsRecord->
+              { f with Type = Array(Type.Ref(mkVolTd tdRef), size); Parent = td }
+            | Type.Ref({Kind = Struct|Union} as tdRef) when not tdRef.IsRecord ->
+              { f with Type = Type.Ref(mkVolTd tdRef);  Parent = td }
             | _ -> { f with IsVolatile = true; Parent = td}
         fldToVolatileFld.Add(f,f')
         f'
 
-      let rec mkVolTd (td : TypeDecl) =
+      and mkVolTd (td : TypeDecl) =
       
         let fixFields oldFields newFields =
           let fieldSubst = new Dict<Field,Field>()
@@ -970,7 +986,10 @@ namespace Microsoft.Research.Vcc
             typeToVolatileType.Add(td, td')
             typeToVolatileType.Add(td', td')
             let vFields = List.map (mkVolFld td') td'.Fields
-            td'.Invariants <- List.map (fun (expr:Expr) -> expr.SelfMap(retypeThis td td').SelfMap (fixFields td'.Fields vFields)) td'.Invariants
+            td'.Invariants <- 
+              td'.Invariants |>
+              List.choose (function | Macro(_, "labeled_invariant", [Macro(_, "volatile", []); inv]) -> Some inv | _ -> None) |>
+              List.map (fun (expr:Expr) -> expr.SelfMap(retypeThis td td').SelfMap (fixFields td'.Fields vFields)) 
             td'.Fields <- vFields
             volatileTds := td' :: !volatileTds
             pushDownOne false td'  
@@ -1362,7 +1381,10 @@ namespace Microsoft.Research.Vcc
                   let p' = { p.UniqueCopy() with Type = t'}
                   paramSubst.Add(p, p')
                   p'
-            fn.Parameters <- List.map retypeParameter fn.Parameters            
+            fn.Parameters <- List.map retypeParameter fn.Parameters
+            fn.RetType <- match fn.RetType.Subst(typeMap) with
+                           | None -> fn.RetType
+                           | Some t' -> t'
           | Top.TypeDecl(td) ->
             let retypeField (fld:Field) =
               match fld.Type.Subst(typeMap) with
@@ -1406,6 +1428,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("type-primitive-structs", Helper.Decl handlePrimitiveStructs)
     helper.AddTransformer ("type-check-records", Helper.Decl checkRecordValidity)
     helper.AddTransformer ("type-volatile-modifiers", Helper.Decl handleVolatileModifiers)
+    helper.AddTransformer ("type-remove-volatile-invariants", Helper.Decl removeVolatileInvariants)
     helper.AddTransformer ("type-struct-equality", Helper.Expr handleStructAndRecordEquality)
     helper.AddTransformer ("type-globals", Helper.Decl addAxiomsForGlobals)
     helper.AddTransformer ("type-end", Helper.DoNothing)
