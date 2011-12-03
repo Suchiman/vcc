@@ -1,7 +1,7 @@
 `/newsyntax
 #include <vcc.h>
 
-typedef unsigned int size_t;
+typedef __w64 unsigned int size_t;
 void __stosq(size_t Count);
 `
 `

@@ -557,7 +557,7 @@ namespace Microsoft.Research.Vcc
           }
           if (!checkThisFunction) continue;
         }
-	else if (commandLineOptions.IgnoreIncludes != null)
+        else if (commandLineOptions.IgnoreIncludes != null)
         {
           bool fileFound = false;
           if (commandLineOptions.IgnoreIncludes == "")
