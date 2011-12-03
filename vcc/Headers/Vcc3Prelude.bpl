@@ -669,14 +669,11 @@ axiom (forall a:$ptr, al:int, b:$ptr, bl:int ::
   $set_disjoint($array_range_no_state(a, $typ(a), al), $array_range_no_state(b, $typ(b), bl)) ==>
   $arrays_disjoint(a, al, b, bl));
 
-function F#mark($ptr,$ptr) : bool;
-
 axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
   {$arrays_disjoint(a, al, b, bl), $idx_inline_prim(a, i)}
   {$arrays_disjoint(a, al, b, bl), $idx_inline_comp(a, i)}
-  F#mark(a,$idx_inline(a,i)) && (
   $arrays_disjoint(a, al, b, bl) &&
-  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx_inline(a, i)) == 0));
+  0 <= i && i < al ==> $arrays_disjoint_id(a, al, b, bl, $idx_inline(a, i)) == 0);
 
 axiom (forall a:$ptr, al:int, b:$ptr, bl:int, i:int ::
   {$arrays_disjoint(a, al, b, bl), $idx_inline_prim(b, i)}
