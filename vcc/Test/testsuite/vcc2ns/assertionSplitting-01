@@ -17,20 +17,9 @@ void foo3()
   _(assert And2(a > b, b > c && b > 0))
 }
 
-
-_(logic bool And3(bool a, bool b) = (\result && b);)
-
-void foo4()
-{
-  int a, b, c;
-  _(assert And3(a > b, b > c && b > 0))
-}
-
 `
 testcase(3,3) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
 testcase(8,12) : error : (Location of symbol related to previous error.)
 testcase(11,3) : error VC9715: spec macros should have one ensures clause of the form 'result == expr'
 testcase(16,12) : error : (Location of symbol related to previous error.)
-testcase(20,3) : error VC9714: 'result' cannot be used recursively in a spec macro definition
-testcase(25,12) : error : (Location of symbol related to previous error.)
 `

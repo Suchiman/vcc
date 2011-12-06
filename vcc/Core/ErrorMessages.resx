@@ -3683,4 +3683,7 @@
   <data name="LoopWithOnlySpecStatements" xml:space="preserve">
     <value>This loop body contains only specification code.</value>
   </data>
+  <data name="ResultNotAllowedHere" xml:space="preserve">
+    <value>Cannot use '\result' in this context.</value>
+  </data>
 </root>

@@ -672,7 +672,9 @@ namespace Microsoft.Research.Vcc.Parsing
             scanner.RevertToSnapshot(scannerState);
             this.currentToken = Token.Specification;
 
+            if (id == "atomic_op") this.resultIsAKeyword = true;
             Expression expr = this.ParseExpression(true, false, followers | Token.Semicolon);
+            this.resultIsAKeyword = false;
             var eStat = new ExpressionStatement(expr, new SourceLocationBuilder(expr.SourceLocation));
             this.SkipSemiColonAfterDeclarationOrStatement(followers);
             return eStat;
@@ -866,9 +868,12 @@ namespace Microsoft.Research.Vcc.Parsing
         //  id = id.Substring(1);
         if (id == "atomic_op" || this.castlikeFunctions.ContainsKey(id)) {
           var methodName = id == "atomic_op" ? "" : this.castlikeFunctions[id];
+          var savedResultIsKeyword = this.resultIsAKeyword;
+          this.resultIsAKeyword = (id == "atomic_op");
           var isVarArgs = methodName.StartsWith("\\castlike_va_");
           this.GetNextToken();
           List<Expression> exprs = this.currentToken == Token.RightParenthesis ? new List<Expression>() : this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+          this.resultIsAKeyword = savedResultIsKeyword;
           this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);
           if (isVarArgs) {
             slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
