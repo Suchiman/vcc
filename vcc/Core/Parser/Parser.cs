@@ -3170,7 +3170,12 @@ namespace Microsoft.Research.Vcc.Parsing {
           break;
           // the following ones will only occur in the next syntax
         case Token.Result:
-          expression = new VccReturnValue(this.GetSourceLocationBuilderForLastScannedToken());
+          if (this.resultIsAKeyword) {
+            expression = new VccReturnValue(this.GetSourceLocationBuilderForLastScannedToken());
+          } else {
+            expression = new DummyExpression(this.GetSourceLocationBuilderForLastScannedToken());
+            this.HandleError(Error.ResultNotAllowedHere);
+          }
           this.GetNextToken();
           break;
         case Token.This:

@@ -567,14 +567,6 @@ namespace Microsoft.Research.Vcc
           }
           return false;
         case 'v':
-          if (this.ParseName(arg, "verify", "v")) {
-            DummyExpression dummyExpression = new DummyExpression(SourceDummy.SourceLocation);
-            this.hostEnvironment.ReportError(new AstErrorMessage(dummyExpression,
-                                                                 Microsoft.Cci.Ast.Error.InvalidCompilerOption,
-                                                                 "/verify is the default option and does not need to be specified explicitly"));
-            return true;
-          }
-
           if (this.ParseName(arg, "version", "version")) {
             this.options.DisplayVersion = true;
             return true;
