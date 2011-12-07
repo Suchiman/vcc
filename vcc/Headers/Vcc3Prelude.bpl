@@ -285,6 +285,7 @@ axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
   && ($is_proper(p) && $field_parent_type(f) == $typ(p) && $is_proper_field(f) ==> $is_proper($dot(p, f)))
 );
 
+
 /*
 axiom (forall p:$ptr, f:$field :: {$dot(p, f)}
   ($is_proper($dot(p, f)) ==> $non_null(p) ==> $non_null($dot(p, f)))
@@ -902,7 +903,7 @@ function {:inline true} $thread_owned(S:$state, p:$ptr) : bool
 function {:inline true} $thread_owned_or_even_mutable(S:$state, p:$ptr) : bool
   {
     if $is_primitive($typ(p)) then
-      $owner(S, $maybe_emb(p)) == $me() && !$closed(S, $maybe_emb(p))
+      $owner(S, $prim_emb(p)) == $me() && !$closed(S, $prim_emb(p))
     else
       $owner(S, p) == $me()
   }
@@ -1191,10 +1192,15 @@ axiom (forall S:$state, r:$ptr :: {$owner(S, r)}
     )
     );
 
+axiom (forall S:$state, p:$ptr :: {$owner(S, $prim_emb(p))}
+  $is_proper(p) && $owner(S, $prim_emb(p)) != $untyped_owner() ==> $non_null(p));
+
+/*
 axiom (forall S:$state, r:$ptr, f:$field :: {$owner(S, r), $dot(r, f)}
   $good_state(S) ==>
     $owner(S, r) != $untyped_owner() && $field_parent_type(f) == $typ(r) ==>
       $non_null($dot(r, f)));
+*/
 
 axiom (forall S:$state, p:$ptr ::
   {$domain_root(S, $domain_root(S, p))}
