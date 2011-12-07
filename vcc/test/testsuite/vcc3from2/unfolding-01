@@ -1,4 +1,4 @@
-`/newsyntax /unfoldconst
+`/newsyntax
 #include <vcc.h>
 
 #define pow2(y) (1UI32<<(y))
