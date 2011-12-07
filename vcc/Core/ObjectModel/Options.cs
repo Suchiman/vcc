@@ -62,7 +62,6 @@ namespace Microsoft.Research.Vcc
     public string VerificationLocation;
     public string OutputDir;
     public string IgnoreIncludes;
-    public bool UnfoldConstants;
     public int TerminationLevel = 1;
     public bool TerminationForPure { get { return TerminationLevel >= 1; } }
     public bool TerminationForGhost { get { return TerminationLevel >= 2; } }
@@ -141,7 +140,6 @@ namespace Microsoft.Research.Vcc
       this.VerificationLocation = other.VerificationLocation;
       this.YarraMode = other.YarraMode;
       this.IgnoreIncludes = other.IgnoreIncludes;
-      this.UnfoldConstants = other.UnfoldConstants;
       this.TerminationLevel = other.TerminationLevel;
       this.DefExpansionLevel = other.DefExpansionLevel;
     }
@@ -558,11 +556,6 @@ namespace Microsoft.Research.Vcc
           uint lineNo;
           if (lineStr != null && UInt32.TryParse(lineStr, out lineNo)) {
             this.options.VerifyUpToLine = lineNo;
-            return true;
-          }
-          bool? unfoldConstants = this.ParseNamedBoolean(arg, "unfoldconst", "ufc");
-          if (unfoldConstants != null) {
-            this.options.UnfoldConstants = unfoldConstants.Value;
             return true;
           }
           return false;

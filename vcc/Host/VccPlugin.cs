@@ -147,18 +147,18 @@ namespace Microsoft.Research.Vcc
 
         if (parent.options.AggressivePruning || HasIsolateProofAttribute(funcName)) {
           restartProver = true;
-          currentBoogieIsPruned = true;
           // this needs to be done before pruning; otherwise call cycles might get hidden
           Termination.checkCallCycles(env, currentDecls);
           var decls = TransUtil.pruneBy(env, funcName, currentDecls);
           var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude, decls);
           if (!env.ShouldContinue) return VerificationResult.UserError;
-          PrepareBoogie(boogieDecls);
+          currentBoogie = PrepareBoogie(boogieDecls);
+          currentBoogieIsPruned = true;
         } else {
           if (currentBoogie == null) {
             var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
             if (!env.ShouldContinue) return VerificationResult.UserError;
-            PrepareBoogie(boogieDecls);
+            currentBoogie = PrepareBoogie(boogieDecls);
           }
         }
 
@@ -293,7 +293,7 @@ namespace Microsoft.Research.Vcc
     public override void DumpInternalsToFile(string fn, bool generate) {
       if (generate) {
         var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
-        PrepareBoogie(boogieDecls);
+        currentBoogie = PrepareBoogie(boogieDecls);
       }
 
       fn = Path.ChangeExtension(fn, (bplFileCounter++) + ".bpl");
@@ -307,9 +307,9 @@ namespace Microsoft.Research.Vcc
 
     long bplFileCounter;
 
-    private void PrepareBoogie(Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
+    private Program PrepareBoogie(Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
     {
-      currentBoogie = parent.GetBoogieProgram(boogieDecls);
+      var boogieProgram = parent.GetBoogieProgram(boogieDecls);
       CloseVcGen();
       CommandLineOptions.Clo.Parse(standardBoogieOptions);
       IErrorSink errorSink = new BoogieErrorSink(parent.options.NoPreprocessor);
@@ -318,14 +318,14 @@ namespace Microsoft.Research.Vcc
 
       try {
         parent.swBoogieResolve.Start();
-        numErrors = currentBoogie.Resolve(errorSink);
+        numErrors = boogieProgram.Resolve(errorSink);
       } finally {
         parent.swBoogieResolve.Stop();
       }
       if (numErrors == 0) {
         try {
           parent.swBoogieTypecheck.Start();
-          numErrors = currentBoogie.Typecheck(errorSink);
+          numErrors = boogieProgram.Typecheck(errorSink);
         } finally {
           parent.swBoogieTypecheck.Stop();
         }
@@ -333,14 +333,14 @@ namespace Microsoft.Research.Vcc
       if (numErrors == 0) {
         try {
           parent.swBoogieAI.Start();
-          AbstractInterpretation.RunAbstractInterpretation(currentBoogie);
+          AbstractInterpretation.RunAbstractInterpretation(boogieProgram);
         } finally {
           parent.swBoogieAI.Stop();
         }
       }
 
       if (Boogie.CommandLineOptions.Clo.ExpandLambdas && numErrors == 0) {
-        Boogie.LambdaHelper.ExpandLambdas(currentBoogie);
+        Boogie.LambdaHelper.ExpandLambdas(boogieProgram);
       }
 
       if (numErrors != 0) {
@@ -353,7 +353,7 @@ namespace Microsoft.Research.Vcc
             filename = Path.Combine(parent.options.OutputDir, filename);
           }
           using(TokenTextWriter writer = new TokenTextWriter(filename))
-            currentBoogie.Emit(writer);
+            boogieProgram.Emit(writer);
         }
         errorMode = true;
       } else {
@@ -367,6 +367,9 @@ namespace Microsoft.Research.Vcc
           }
         }
       }
+
+      return boogieProgram;
+
     }
   }
     

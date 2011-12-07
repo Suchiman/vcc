@@ -1,4 +1,4 @@
-`/newsyntax /unfoldconst
+`/newsyntax
 #include <vcc.h>
 
 void InterlockedIncrement8(__int8 * Target)
