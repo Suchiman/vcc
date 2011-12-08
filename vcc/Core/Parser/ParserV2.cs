@@ -506,10 +506,12 @@ namespace Microsoft.Research.Vcc.Parsing
       Expression name = this.GetSimpleNameFor(fnName);
       this.GetNextToken();
       var slb = new SourceLocationBuilder(name.SourceLocation);
-      var parameters = new List<Expression>();
-      if (this.currentToken != Token.RightParenthesis)
-        this.ParseList(parameters, ts => this.ParseExpression(ts), followers | Token.RightParenthesis);
-      parameters.TrimExcess();
+      List<Expression> parameters;
+      if (this.currentToken != Token.RightParenthesis) {
+        parameters = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+      } else {
+        parameters = new List<Expression>();
+      }
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       if (fnName.StartsWith("\\result_macro_")) {
         var res = new VccReturnValue(loc);
