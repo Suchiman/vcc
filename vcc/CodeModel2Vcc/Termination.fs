@@ -532,12 +532,19 @@ module Termination =
             decl :: axioms
       | decl -> [decl]
    
+    let warnForIgnoredDecreases (fn : Function) self = function
+      | Loop(_, _, _, decreases :: _, _) -> helper.GraveWarning(decreases.Token, 9324, "_(decreases ...) is ignored because function '" + fn.Name + "' is not checked for termination"); true
+      | _ -> true
+
     let genChecks = function
       | Top.FunctionDecl ({ Body = Some body } as fn) when checkTermination helper fn ->
         let assigns, refs = cacheMultiple helper lateCacheRef "thisDecr" VarKind.SpecLocal fn.Variants 
         let body = Expr.MkBlock (assigns @ [body])
         let body = body.SelfMap (check fn refs (gdict()))
         fn.Body <- Some body
+      | Top.FunctionDecl ({ Body = Some body } as fn) ->
+        body.SelfVisit(warnForIgnoredDecreases fn)
+        ()
       | decl -> ()
 
     computeAllDefReads decls
