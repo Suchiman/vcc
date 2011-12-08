@@ -306,6 +306,7 @@ namespace Microsoft.Research.Vcc
         fn = Path.Combine(parent.options.OutputDir, Path.GetFileName(fn));
       }
 
+      CommandLineOptions.Install(new CommandLineOptions());
       using (TokenTextWriter writer = new TokenTextWriter(fn))
         currentBoogie.Emit(writer);
     }
@@ -357,6 +358,8 @@ namespace Microsoft.Research.Vcc
           {
             filename = Path.Combine(parent.options.OutputDir, filename);
           }
+
+          CommandLineOptions.Install(new CommandLineOptions());
           using(TokenTextWriter writer = new TokenTextWriter(filename))
             boogieProgram.Emit(writer);
         }
@@ -452,9 +455,10 @@ namespace Microsoft.Research.Vcc
         if (env.ShouldContinue) {
           try {
             swSaveBPL.Start();
-            TokenTextWriter writer = new TokenTextWriter(AddOutputDirIfRequested(Path.ChangeExtension(fileName, ".bpl")));
-            p.Emit(writer);
-            writer.Close();
+            CommandLineOptions.Install(new CommandLineOptions());
+            using (var writer = new TokenTextWriter(AddOutputDirIfRequested(Path.ChangeExtension(fileName, ".bpl")))) {
+              p.Emit(writer);
+            }
           } finally {
             swSaveBPL.Stop();
           }
