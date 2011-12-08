@@ -600,3 +600,15 @@ namespace Microsoft.Research.Vcc
       match d with
         | Top.TypeDecl(td) -> List.iter (fun (i:Expr) -> (i.SelfVisit f)) td.Invariants
         | _ -> ()
+
+  let checkTermination (helper:Helper.Env) (fn:Function) =
+    if fn.CustomAttr |> hasCustomAttr AttrDefinition || fn.CustomAttr |> hasCustomAttr AttrAbstract then
+      helper.Options.TerminationForPure
+    // if explicit measure is given, and termination is not disabled, then check it 
+    elif helper.Options.TerminationForPure && fn.Variants <> [] then
+      true
+    elif fn.IsSpec then
+      helper.Options.TerminationForGhost
+    else
+      helper.Options.TerminationForAll
+
