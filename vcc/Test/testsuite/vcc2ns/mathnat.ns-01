@@ -14,5 +14,6 @@ _(ghost
   return y;
 }) 
 `
+testcase(7,3) : warning VC9323: [possible unsoundness]: ghost loop not checked for termination
 Verification of plus succeeded.
 `

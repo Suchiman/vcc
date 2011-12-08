@@ -797,7 +797,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================\
 
 
-    let checkSpecCodeAndRemoveSpecMark decls =
+    let checkSpecCode decls =
 
       let isPhysicalLocation triggerOnlyOnVolatileFields = 
         let rec isPhysicalLocation' = function 
@@ -1063,7 +1063,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("desugar-approvers", Helper.Decl handleApprovers)
     helper.AddTransformer ("desugar-assign-ops", Helper.Expr removeAssignOps)
     helper.AddTransformer ("desugar-lambdas", Helper.Decl desugarLambdas)
-    helper.AddTransformer ("check-spec-code", Helper.Decl checkSpecCodeAndRemoveSpecMark)
+    helper.AddTransformer ("check-spec-code", Helper.Decl checkSpecCode)
     helper.AddTransformer ("desugar-push-decls-into-blocks", Helper.Decl pushDeclsIntoBlocks)
     helper.AddTransformer ("desugar-addressable-locals", Helper.Decl heapifyAddressedLocals)
     helper.AddTransformer ("desugar-globals", Helper.Decl handleGlobals)

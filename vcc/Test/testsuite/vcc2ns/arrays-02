@@ -119,6 +119,7 @@ void use2()
 }
 */
 `
+testcase(38,3) : warning VC9323: [possible unsoundness]: ghost loop not checked for termination
 Verification of donothing succeeded.
 Verification of donothingSpec succeeded.
 Verification of set0 succeeded.
