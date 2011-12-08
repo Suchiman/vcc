@@ -88,9 +88,14 @@ namespace Microsoft.Research.Vcc
 
     private static bool ReParseBoogieOptions(List<string> options, bool runningFromCommandLine)
     {
-      CommandLineOptions.ResetClo();
-      CommandLineOptions.Clo.RunningBoogieFromCommandLine = runningFromCommandLine;
-      return CommandLineOptions.Clo.Parse(options.ToArray()) == 1;
+      var clo = new CommandLineOptions();
+      if (clo.Parse(options.ToArray())) {
+        clo.RunningBoogieFromCommandLine = runningFromCommandLine;
+        CommandLineOptions.Install(clo);
+        return true;
+      }
+
+      return false;
     }
 
     private bool InitBoogie()
