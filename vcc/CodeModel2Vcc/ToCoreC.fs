@@ -838,7 +838,7 @@ namespace Microsoft.Research.Vcc
                 let stripInitialPure = List.map (function | Pure(_, e) -> e | e -> e)
 
                 let fn = { Function.Empty() with 
-                             Token = b.Token
+                             Token = if block.IsEmpty then ec.Token else block.Head.Token
                              Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut
                              Name = (!currentFunction).Name + "#block#" + blockPrefix + blockId
                              Requires = stripInitialPure cs'.Requires
