@@ -651,6 +651,8 @@ namespace Microsoft.Research.Vcc
             List.iter (fun (e:Expr) -> e.SelfVisit (findThem false)) (d.Reads @ d.Writes @ d.Requires @ d.Ensures)
             b.SelfVisit (findThem true)
             let b = b.SelfMap (replaceWithPointers addressableLocals)
+            let outParDecls = [ for kvp in addressableLocals do if kvp.Key.Kind = VarKind.OutParameter then yield snd (kvp.Value) ]
+            let b = Expr.MkBlock(outParDecls @ [b])
             d.Body <- Some b
           | None -> ()
         d
