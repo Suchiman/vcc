@@ -5748,13 +5748,14 @@
             rewriting each mutable node it visits by updating the node's children with recursivly rewritten nodes.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.#ctor(Microsoft.Cci.IMetadataHost)">
+        <member name="M:Microsoft.Cci.MutableCodeModel.MetadataRewriter.#ctor(Microsoft.Cci.IMetadataHost,System.Boolean)">
             <summary>
             A class that traverses a metadata model in depth first, left to right order,
             rewriting each mutable node it visits by updating the node's children with recursivly rewritten nodes.
             </summary>
             <param name="host">An object representing the application that is hosting this rewriter. It is used to obtain access to some global
             objects and services such as the shared name table and the table for interning references.</param>
+            <param name="copyAndRewriteImmutableReferences">If true, the rewriter replace frozen or immutable references with shallow copies.</param>
         </member>
         <member name="F:Microsoft.Cci.MutableCodeModel.MetadataRewriter.host">
             <summary>
