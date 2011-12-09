@@ -72,6 +72,7 @@ namespace Microsoft.Research.Vcc
       }
     }
     public int DefExpansionLevel = 3;
+    public bool NoVerification;
 
     public void CopyFrom(VccOptions other)
     {
@@ -142,6 +143,7 @@ namespace Microsoft.Research.Vcc
       this.IgnoreIncludes = other.IgnoreIncludes;
       this.TerminationLevel = other.TerminationLevel;
       this.DefExpansionLevel = other.DefExpansionLevel;
+      this.NoVerification = other.NoVerification;
     }
   }
 
@@ -423,6 +425,10 @@ namespace Microsoft.Research.Vcc
         case 'n':
           if (this.ParseName(arg, "nopreprocessor", "n")) {
             this.options.NoPreprocessor = true;
+            return true;
+          }
+          if (this.ParseName(arg, "noverification", "nv")) {
+            this.options.NoVerification = true;
             return true;
           }
           if (this.ParseName(arg, "newsyntax", "ns")) {

@@ -437,7 +437,7 @@ namespace Microsoft.Research.Vcc
 
     public override bool IsModular()
     {
-      if (options.TranslateToBPL) return false;
+      if (options.TranslateToBPL || options.NoVerification) return false;
       else return true;
     }
 
@@ -446,6 +446,8 @@ namespace Microsoft.Research.Vcc
       // this really only dumps the code to the .bpl file
       Init(env, fileName);
       decls = env.ApplyTransformers(decls);
+      if (options.NoVerification) return;
+
       if (env.ShouldContinue) {
         if (env.Options.AggressivePruning && env.Options.Functions.Count > 0) {
           decls = TransUtil.pruneBy(env, env.Options.Functions[0], decls);
