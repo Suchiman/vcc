@@ -2647,13 +2647,13 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     protected List<Expression> ParseExpressionList(Token separator, TokenSet followers) {
-      return this.ParseExpressionList(new List<Expression>(), separator, followers);
+      return this.ParseExpressionList(new List<Expression>(), separator, true, followers);
     }
 
-    protected List<Expression> ParseExpressionList(List<Expression> listToAddTo, Token separator, TokenSet followers) {
+    protected List<Expression> ParseExpressionList(List<Expression> listToAddTo, Token separator, bool checkedExpressions, TokenSet followers) {
       while (true) {
         Expression e = this.ParseExpression(followers | separator);
-        e = this.CheckedExpressionIfRequested(e);
+        if (checkedExpressions) { e = this.CheckedExpressionIfRequested(e); }
         listToAddTo.Add(e);
         if (this.currentToken != separator) break;
         this.GetNextToken();
@@ -2668,7 +2668,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected List<Expression> ParseExpressionListWithParens(List<Expression> listToAddTo, Token leftParen, Token separator, Token rightParen, TokenSet followers) {
       this.GetNextToken();
       this.Skip(leftParen);
-      this.ParseExpressionList(listToAddTo, separator, followers | rightParen);
+      this.ParseExpressionList(listToAddTo, separator, true, followers | rightParen);
       this.SkipOverTo(rightParen, followers);
       return listToAddTo;
     }

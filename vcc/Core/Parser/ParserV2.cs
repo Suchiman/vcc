@@ -430,11 +430,11 @@ namespace Microsoft.Research.Vcc.Parsing
               break;
             case Token.SpecWrites:
               this.GetNextToken();
-              this.ParseExpressionList(writes, Token.Comma, followers | Token.RightParenthesis);
+              this.ParseExpressionList(writes, Token.Comma, true, followers | Token.RightParenthesis);
               break;
             case Token.SpecDecreases:              
               this.GetNextToken();
-              this.ParseExpressionList(variants, Token.Comma, followers | Token.RightParenthesis);
+              this.ParseExpressionList(variants, Token.Comma, true, followers | Token.RightParenthesis);
               break;
           }
           this.SkipSemicolonsInSpecBlock(STS.LoopContract | Token.RightParenthesis);
@@ -506,12 +506,10 @@ namespace Microsoft.Research.Vcc.Parsing
       Expression name = this.GetSimpleNameFor(fnName);
       this.GetNextToken();
       var slb = new SourceLocationBuilder(name.SourceLocation);
-      List<Expression> parameters;
+      List<Expression> parameters = new List<Expression>();
       if (this.currentToken != Token.RightParenthesis) {
-        parameters = this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
-      } else {
-        parameters = new List<Expression>();
-      }
+        this.ParseExpressionList(parameters, Token.Comma, false, followers | Token.RightParenthesis);
+      } 
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       if (fnName.StartsWith("\\result_macro_")) {
         var res = new VccReturnValue(loc);
@@ -711,7 +709,7 @@ namespace Microsoft.Research.Vcc.Parsing
             slb = new SourceLocationBuilder(name.SourceLocation);
             var parameters = new List<Expression>();
             if (this.currentToken != Token.RightParenthesis) {
-              this.ParseExpressionList(parameters, Token.Comma, followers | Token.RightParenthesis);
+              this.ParseExpressionList(parameters, Token.Comma, true, followers | Token.RightParenthesis);
               slb.UpdateToSpan(parameters[parameters.Count - 1].SourceLocation);
             }
             var call = new VccMethodCall(name, parameters.AsReadOnly(), slb);
