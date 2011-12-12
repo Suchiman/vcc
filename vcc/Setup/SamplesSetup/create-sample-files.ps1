@@ -1,5 +1,5 @@
 # Use like this:
-# powershell -Command ".\create-sample-files.ps1 > Samples.Files.wxs"
+# powershell -Command ".\create-sample-files.ps1 | Out-File -filepath 'Samples.Files.wxs' -encoding utf8"
 
 function Hash([string]$string) {
   $local:hashAlgo = [System.Security.Cryptography.Sha1]::Create();
@@ -31,7 +31,8 @@ cd $hg_root
 $directories = @();
 $componentrefs = @();
 
-'<?xml version="1.0" encoding="utf-16le"?>'
+[System.Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+'<?xml version="1.0" encoding="utf-8"?>'
 '<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">'
 '  <?define RootDir="..\..\.." ?>'
 
