@@ -211,16 +211,10 @@ namespace Microsoft.Research.Vcc
         | Type.Void
         | Type.Ref({Kind = TypeKind.MathType; Name = "$$bogus$$" }) -> true
         | _ -> false
-      let splitLast = 
-        let rec loop acc = function
-          | [] -> helper.Die()
-          | [x] -> x, List.rev acc
-          | x::xs -> loop (x::acc) xs
-        loop []
       let rec stmtalize = function
         | Block(ec, [], cso) -> [Block(ec, [], cso)]
         | Block(ec, stmts, cso) ->
-          let last, stmts' = splitLast stmts
+          let last, stmts' = TransUtil.splitLast stmts
           [Block({ec with Type = Type.Void}, stmts' @ stmtalize last, cso)]
         | expr when ignoreType expr.Type -> [expr]
         | expr ->

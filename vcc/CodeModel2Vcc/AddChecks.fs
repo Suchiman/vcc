@@ -405,12 +405,8 @@ namespace Microsoft.Research.Vcc
         let rec removeOuterBlock = function
           | Block (ec, es, None) -> es
           | e -> [e]
-        let rec last acc = function
-          | [] -> die()
-          | [e] -> acc,e
-          | x::xs -> last (x::acc) xs
-        let checksO,orig' = last [] (removeOuterBlock (orig.SelfMap(addMemoryChecks true ctx).SelfMap(ToCoreC.removeFakeBlocks)))
-        let checksD,dest' = last [] (removeOuterBlock (dest.SelfMap(addMemoryChecks true ctx).SelfMap(ToCoreC.removeFakeBlocks)))
+        let orig',checksO = TransUtil.splitLast (removeOuterBlock (orig.SelfMap(addMemoryChecks true ctx).SelfMap(ToCoreC.removeFakeBlocks)))
+        let dest',checksD = TransUtil.splitLast (removeOuterBlock (dest.SelfMap(addMemoryChecks true ctx).SelfMap(ToCoreC.removeFakeBlocks)))
         Some (Expr.Macro(ec, "fake_block", checksO @ checksD @ [Macro(ec, "_vcc_downgrade_to", [orig'; dest'])]))
         
       | Deref (c, p) when isYarraIgnore p ->
@@ -581,6 +577,17 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let checkWritable self = function
+      | CallMacro(ec, "_vcc_writable", [], [e]) ->
+        let writable =
+          match e.Type with
+            | Ptr t when t <> Void && not t.IsComposite -> "prim_writes_check"
+            | _ -> "writes_check"
+        Some(Macro(ec, writable, [self e]))
+      | _ -> None
+
+    // ============================================================================================================
+
     let addFullstopCheckInAtomic _ = 
 
       let isSafeFunction fn = 
@@ -629,6 +636,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("check-shift-bits-in-range", Helper.ExprCtx addShiftWidthChecks)
     helper.AddTransformer ("check-shift-arg-not-negative", Helper.ExprCtx addShiftArgumentPositiveCheck)
     helper.AddTransformer ("check-fullstop-in-atomic", Helper.Expr addFullstopCheckInAtomic)
+    helper.AddTransformer ("check-writable", Helper.Expr checkWritable)
     helper.AddTransformer ("check-remove-checked", Helper.Expr stripRemainingChecked)
     
     helper.AddTransformer ("check-end", Helper.DoNothing)

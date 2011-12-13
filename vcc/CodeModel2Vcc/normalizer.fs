@@ -1023,11 +1023,7 @@ namespace Microsoft.Research.Vcc
           // initializer
           | VarDecl(_,v,attr) as decl when hasCustomAttr AttrAsArray attr -> asArrayDecls.Add v |> ignore; false
           | Macro(_, "=", [Ref(_, v); Block(_, VarDecl(_,vTemp,_) :: stmts, _)]) when asArrayDecls.Contains v ->
-            let rec last = function
-              | [x] -> x
-              | _ :: xs -> last xs
-              | _ -> die()              
-            match last stmts with
+            match TransUtil.last stmts with
               | Ref(_, v') when v = v' -> asArrayDecls.Add vTemp |> ignore
               | _ -> ()
             true
