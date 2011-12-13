@@ -66,6 +66,9 @@ namespace Microsoft.Research.Vcc
     
     let fieldName (f:C.Field) = f.Parent.Name + "." + f.Name
 
+    let genPureFunctionDef (f:C.Function) = 
+      f.IsPure && f.RetType <> C.Void && not (f.Name.Contains("#block#"))
+
     let currentPC (env:Env) =
       match env.IFContexts with
         | [] -> die()
@@ -1903,7 +1906,7 @@ namespace Microsoft.Research.Vcc
         let env = { initialEnv with Writes = header.Writes }
         let te e = trExpr env e
         let pureEq =
-          if header.IsPure && header.RetType <> C.Void then 
+          if genPureFunctionDef header then 
             let parms = 
               (if header.IsStateless then [] else [bState]) @ [for tv in header.TypeParameters -> typeVarRef tv] 
                                                             @ [for v in header.InParameters -> varRef v]
@@ -2763,7 +2766,7 @@ namespace Microsoft.Research.Vcc
         else []
 
       let trPureFunction (h:C.Function) =
-        if not h.IsPure || h.RetType = C.Void then []
+        if not (genPureFunctionDef h) then  []
         else
           let parameters =  List.map trTypeVar h.TypeParameters @ List.map trVar h.InParameters
           let qargs = (if h.IsStateless then [] else [("#s", tpState)]) @ parameters
