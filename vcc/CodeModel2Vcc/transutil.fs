@@ -39,14 +39,22 @@ namespace Microsoft.Research.Vcc
   
   let afmter id fmt primary related (args : list<Expr>) =
     forwardingToken primary related (fun () -> afmt id fmt [ for a in args -> a.Token.Value ])
-  
+
+  let rec last = function
+    | [x] -> x
+    | _ :: xs -> last xs
+    | [] -> die()
+
+  let splitLast l = 
+    let rec loop acc = function
+      | [] -> die()
+      | [x] -> x, List.rev acc
+      | x::xs -> loop (x::acc) xs
+    loop [] l
+ 
   let ignoreEffects e =
     let aux self = function 
       | Block (_, stmts, _) ->
-        let rec last = function
-          | [x] -> x
-          | _ :: xs -> last xs
-          | [] -> die()
         Some (self (last stmts))
       | _ -> None
     (e:Expr).SelfMap aux 
