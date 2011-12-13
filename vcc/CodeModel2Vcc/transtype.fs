@@ -315,7 +315,7 @@ namespace Microsoft.Research.Vcc
             for f in td.Fields do
               if f.Name = "" || f.Name.StartsWith "#" then
                 match f.Type with
-                  | Type.Ref td' when td'.Name.StartsWith(td.Name + ".")  ->
+                  | Type.Ref td' ->
                     td'.IsNestedAnon <- true
                   | _ -> ()
           | _ -> ()
