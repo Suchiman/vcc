@@ -1541,7 +1541,7 @@ module Microsoft.Research.Vcc.CAST
         | stmts -> 
           let lstmt = last stmts 
           Block ({ bogusEC with Type = lstmt.Type; Token = lstmt.Token }, stmts, None)
-  ``
+  
     static member MkAssert (expr:Expr) =
       Assert ({ expr.Common with Type = Void }, expr, [])
     
