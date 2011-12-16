@@ -1,0 +1,22 @@
+`/newsyntax
+#include <vcc.h>
+
+_(atomic_inline) bool f() {
+  return 1;
+}
+
+void test(_(ghost \object o) _(ghost \claim lock_access_claim))
+  _(requires \wrapped(o))
+{
+  _(ghost int i)
+  _(atomic_op 
+    o,
+    \result + f())1
+    ;
+}
+`
+testcase(11,3) : warning VC9001: The expression '_(atomic_op 
+    o,
+    \result + f())1' has no side effect; expected operation with side effect.
+Verification of test succeeded.
+`
