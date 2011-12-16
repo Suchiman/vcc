@@ -150,10 +150,13 @@ namespace Microsoft.Research.Vcc
 
       bool restartProver = false;
       bool currentBoogieIsPruned = false;
+      bool isolateProof = HasIsolateProofAttribute(funcName);
+
+      if (isolateProof) { CloseVcGen(); }
 
       try {
 
-        if (parent.options.AggressivePruning || HasIsolateProofAttribute(funcName)) {
+        if (parent.options.AggressivePruning || isolateProof) {
           restartProver = true;
           // this needs to be done before pruning; otherwise call cycles might get hidden
           Termination.checkCallCycles(env, currentDecls);
