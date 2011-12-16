@@ -145,6 +145,9 @@ namespace Microsoft.Research.Vcc
     {
       double start = VccCommandLineHost.GetTime();
 
+      // Match replacement in Boogie names
+      string sanitizedFuncName = funcName.Replace('\\', '#');
+
       bool restartProver = false;
       bool currentBoogieIsPruned = false;
 
@@ -170,7 +173,7 @@ namespace Microsoft.Research.Vcc
         Implementation impl = null;
         foreach (Declaration decl in currentBoogie.TopLevelDeclarations) {
           impl = decl as Implementation;
-          if (impl != null && impl.Name == funcName) break;
+          if (impl != null && impl.Name == sanitizedFuncName) break;
           impl = null;
         }
         if (impl == null) {
