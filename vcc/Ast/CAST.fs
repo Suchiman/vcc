@@ -695,7 +695,8 @@ module Microsoft.Research.Vcc.CAST
       List.exists (function VccAttr((AttrDefinition|AttrAbstract|AttrIsDatatypeOption), "") -> true | _ -> false) this.CustomAttr 
 
     member this.IsPure =
-      if (this.Name.StartsWith "_vcc_"  || this.Name.StartsWith "\\") && this.Writes = [] then
+      let isReadsCheck = List.exists (function ReadsCheck _ -> true | _ -> false) this.CustomAttr 
+      if (this.Name.StartsWith "_vcc_"  || (this.Name.StartsWith "\\" && not isReadsCheck)) && this.Writes = [] then
         true
       //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
       //  true // HACK
