@@ -67,6 +67,7 @@ namespace Microsoft.Research.Vcc
                   "array",                  ".i";
                   "as_array",               "ti";
                   "byte_ptr_subtraction",   "pp";
+                  "change_owner",           "..p";
                   "closed",                 "Sp";
                   "nested",                 "Sp";
                   "claims_obj",             "pp";
@@ -164,7 +165,8 @@ namespace Microsoft.Research.Vcc
                   "u1_to_ptr",              ".";
                   "u2_to_ptr",              ".";
                   "u4_to_ptr",              ".";
-                  "u8_to_ptr",              ".";                  
+                  "u8_to_ptr",              ".";   
+                  "update_heap_owns",       ".pa";               
                   "vs_ctor",                "Sp";
                   "when_claimed",           "";
                   "mutable_increases",      "sS";
@@ -180,6 +182,8 @@ namespace Microsoft.Research.Vcc
                   "pre_unwrap",             "S";
                   "pre_static_wrap",        "S";
                   "pre_static_unwrap",      "S";
+                  "pre_wrap_set",           "S";
+                  "pre_unwrap_set",         "S";
                   "unwrap_check_pre",       "Sp";
                   "good_for_post_can_unwrap","S";
                   "unwrap_post",            "..pp";
@@ -304,7 +308,7 @@ namespace Microsoft.Research.Vcc
         if not (tok.SuppressWarning code) then
           hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true, (Seq.singleton (VisitorHelper.LocationFromToken relatedTok))))
           
-      // 9300 <= code <= 9399; First available: 9323
+      // 9300 <= code <= 9399; First available: 9325
       member this.GraveWarning (tok, code, msg:string) =
         this.Warning (tok, code, "[possible unsoundness]: " + msg)
      
@@ -312,7 +316,7 @@ namespace Microsoft.Research.Vcc
       member this.GraveWarning (tok, code, msg:string, relatedTok) =
         this.Warning (tok, code, "[possible unsoundness]: " + msg, relatedTok)
       
-      // 9601 <= code <= 9799; First available: 9745
+      // 9601 <= code <= 9799; First available: 9746
       member this.Error (tok:Token, code, msg:string) =
         this.Error (tok, code, msg, None)
         

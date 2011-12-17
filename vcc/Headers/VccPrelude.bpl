@@ -2652,8 +2652,12 @@ axiom(forall x:int, y:int :: {$unchk_add(^^u4, x, y)}
 );
 
 
-function {:weight 0} $_shl(t:$ctype, x:int, y:int) returns(int)
-  { $unchecked(t, x * $_pow2(y)) }
+function $_shl(t:$ctype, x:int, y:int) : int;
+
+axiom(forall t:$ctype, x:int, y:int :: { $_shl(t, x, y) }
+  x >= 0 ==> $_shl(t,x,y) == $unchecked(t, x * $_pow2(y))
+);
+
 function {:weight 0} $_shr(x:int, y:int) returns(int)
   { x / $_pow2(y) }
 

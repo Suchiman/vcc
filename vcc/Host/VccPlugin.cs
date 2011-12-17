@@ -88,9 +88,14 @@ namespace Microsoft.Research.Vcc
 
     private static bool ReParseBoogieOptions(List<string> options, bool runningFromCommandLine)
     {
-      CommandLineOptions.ResetClo();
-      CommandLineOptions.Clo.RunningBoogieFromCommandLine = runningFromCommandLine;
-      return CommandLineOptions.Clo.Parse(options.ToArray()) == 1;
+      var clo = new CommandLineOptions();
+      if (clo.Parse(options.ToArray())) {
+        clo.RunningBoogieFromCommandLine = runningFromCommandLine;
+        CommandLineOptions.Install(clo);
+        return true;
+      }
+
+      return false;
     }
 
     private bool InitBoogie()
@@ -140,32 +145,38 @@ namespace Microsoft.Research.Vcc
     {
       double start = VccCommandLineHost.GetTime();
 
+      // Match replacement in Boogie names
+      string sanitizedFuncName = funcName.Replace('\\', '#');
+
       bool restartProver = false;
       bool currentBoogieIsPruned = false;
+      bool isolateProof = HasIsolateProofAttribute(funcName);
+
+      if (isolateProof) { CloseVcGen(); }
 
       try {
 
-        if (parent.options.AggressivePruning || HasIsolateProofAttribute(funcName)) {
+        if (parent.options.AggressivePruning || isolateProof) {
           restartProver = true;
-          currentBoogieIsPruned = true;
           // this needs to be done before pruning; otherwise call cycles might get hidden
           Termination.checkCallCycles(env, currentDecls);
           var decls = TransUtil.pruneBy(env, funcName, currentDecls);
           var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude, decls);
           if (!env.ShouldContinue) return VerificationResult.UserError;
-          PrepareBoogie(boogieDecls);
+          currentBoogie = PrepareBoogie(boogieDecls);
+          currentBoogieIsPruned = true;
         } else {
           if (currentBoogie == null) {
             var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
             if (!env.ShouldContinue) return VerificationResult.UserError;
-            PrepareBoogie(boogieDecls);
+            currentBoogie = PrepareBoogie(boogieDecls);
           }
         }
 
         Implementation impl = null;
         foreach (Declaration decl in currentBoogie.TopLevelDeclarations) {
           impl = decl as Implementation;
-          if (impl != null && impl.Name == funcName) break;
+          if (impl != null && impl.Name == sanitizedFuncName) break;
           impl = null;
         }
         if (impl == null) {
@@ -293,7 +304,7 @@ namespace Microsoft.Research.Vcc
     public override void DumpInternalsToFile(string fn, bool generate) {
       if (generate) {
         var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
-        PrepareBoogie(boogieDecls);
+        currentBoogie = PrepareBoogie(boogieDecls);
       }
 
       fn = Path.ChangeExtension(fn, (bplFileCounter++) + ".bpl");
@@ -301,15 +312,16 @@ namespace Microsoft.Research.Vcc
         fn = Path.Combine(parent.options.OutputDir, Path.GetFileName(fn));
       }
 
+      CommandLineOptions.Install(new CommandLineOptions());
       using (TokenTextWriter writer = new TokenTextWriter(fn))
         currentBoogie.Emit(writer);
     }
 
     long bplFileCounter;
 
-    private void PrepareBoogie(Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
+    private Program PrepareBoogie(Microsoft.FSharp.Collections.FSharpList<BoogieAST.Decl> boogieDecls)
     {
-      currentBoogie = parent.GetBoogieProgram(boogieDecls);
+      var boogieProgram = parent.GetBoogieProgram(boogieDecls);
       CloseVcGen();
       CommandLineOptions.Clo.Parse(standardBoogieOptions);
       IErrorSink errorSink = new BoogieErrorSink(parent.options.NoPreprocessor);
@@ -318,14 +330,14 @@ namespace Microsoft.Research.Vcc
 
       try {
         parent.swBoogieResolve.Start();
-        numErrors = currentBoogie.Resolve(errorSink);
+        numErrors = boogieProgram.Resolve(errorSink);
       } finally {
         parent.swBoogieResolve.Stop();
       }
       if (numErrors == 0) {
         try {
           parent.swBoogieTypecheck.Start();
-          numErrors = currentBoogie.Typecheck(errorSink);
+          numErrors = boogieProgram.Typecheck(errorSink);
         } finally {
           parent.swBoogieTypecheck.Stop();
         }
@@ -333,14 +345,14 @@ namespace Microsoft.Research.Vcc
       if (numErrors == 0) {
         try {
           parent.swBoogieAI.Start();
-          AbstractInterpretation.RunAbstractInterpretation(currentBoogie);
+          AbstractInterpretation.RunAbstractInterpretation(boogieProgram);
         } finally {
           parent.swBoogieAI.Stop();
         }
       }
 
       if (Boogie.CommandLineOptions.Clo.ExpandLambdas && numErrors == 0) {
-        Boogie.LambdaHelper.ExpandLambdas(currentBoogie);
+        Boogie.LambdaHelper.ExpandLambdas(boogieProgram);
       }
 
       if (numErrors != 0) {
@@ -352,8 +364,10 @@ namespace Microsoft.Research.Vcc
           {
             filename = Path.Combine(parent.options.OutputDir, filename);
           }
+
+          CommandLineOptions.Install(new CommandLineOptions());
           using(TokenTextWriter writer = new TokenTextWriter(filename))
-            currentBoogie.Emit(writer);
+            boogieProgram.Emit(writer);
         }
         errorMode = true;
       } else {
@@ -367,6 +381,9 @@ namespace Microsoft.Research.Vcc
           }
         }
       }
+
+      return boogieProgram;
+
     }
   }
     
@@ -426,7 +443,7 @@ namespace Microsoft.Research.Vcc
 
     public override bool IsModular()
     {
-      if (options.TranslateToBPL) return false;
+      if (options.TranslateToBPL || options.NoVerification) return false;
       else return true;
     }
 
@@ -435,6 +452,8 @@ namespace Microsoft.Research.Vcc
       // this really only dumps the code to the .bpl file
       Init(env, fileName);
       decls = env.ApplyTransformers(decls);
+      if (options.NoVerification) return;
+
       if (env.ShouldContinue) {
         if (env.Options.AggressivePruning && env.Options.Functions.Count > 0) {
           decls = TransUtil.pruneBy(env, env.Options.Functions[0], decls);
@@ -444,9 +463,10 @@ namespace Microsoft.Research.Vcc
         if (env.ShouldContinue) {
           try {
             swSaveBPL.Start();
-            TokenTextWriter writer = new TokenTextWriter(AddOutputDirIfRequested(Path.ChangeExtension(fileName, ".bpl")));
-            p.Emit(writer);
-            writer.Close();
+            CommandLineOptions.Install(new CommandLineOptions());
+            using (var writer = new TokenTextWriter(AddOutputDirIfRequested(Path.ChangeExtension(fileName, ".bpl")))) {
+              p.Emit(writer);
+            }
           } finally {
             swSaveBPL.Stop();
           }
@@ -622,18 +642,26 @@ namespace Microsoft.Research.Vcc
       }
     }
 
+    private static bool HasRequiresFalse(Implementation impl)
+    {
+      foreach (Requires req in impl.Proc.Requires) {
+        LiteralExpr f = req.Condition as LiteralExpr;
+        if (f != null && f.IsFalse) return true;
+      }
+
+      return false;
+    }
+
     private static bool HasAssertFalse(Block b)
     {
-        foreach (var cmd in b.Cmds) {
-          PredicateCmd pred = cmd as PredicateCmd;
-          if (pred != null) {
-            LiteralExpr f = pred.Expr as LiteralExpr;
-            if (f != null) {
-              if (f.IsFalse) return true;
-            }
-          }
+      foreach (var cmd in b.Cmds) {
+        PredicateCmd pred = cmd as PredicateCmd;
+        if (pred != null) {
+          LiteralExpr f = pred.Expr as LiteralExpr;
+          if (f != null && f.IsFalse) return true;            
         }
-        return false;
+      }
+      return false;
     }
 
     private static bool IsTokenWithoutLocation(IToken t)
@@ -643,6 +671,9 @@ namespace Microsoft.Research.Vcc
 
     public override void OnUnreachableCode(Implementation impl)
     {
+
+      if (HasRequiresFalse(impl)) return;
+
       bool hasIFUnreachable = false;
       this.unreachableChildren = new Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr>(new List<IdentifierExpr>());
       for (int i = impl.Blocks.Count - 1; i >= 0; i--)

@@ -135,6 +135,7 @@
 /modelviewer                   Run VCC Model Viewer in case models are available (implies /m; Short form: /mv)
 /modifiedpreprocessorfile      Save C preprocessor output to &lt;currentFile&gt;.i.&lt;PID&gt;
 /nopreprocessor                Do not invoke the C preprocessor on the input files (Short form: /n)
+/noverification                Do not run the verification; stop after semantic analysis (Short form: /nv)
 /newsyntax                     Use _(foobar ...) syntax (Short form: /ns, /2)
 /oldsyntax                     Use foobar(...) syntax (Short form: /os)
 /opsasfuncs                    Translate arithmetic operations into Boogie functions (Short form: /oaf)

@@ -393,7 +393,7 @@ namespace Microsoft.Research.Vcc.Parsing
       SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
       NameDeclaration nameDecl = null;
       this.GetNextToken();
-      Expression condition = this.ParseLabeledExpression(followers);
+      Expression condition = this.ParseLabeledExpression(followers, true);
       var labeledInvariant = condition as VccLabeledExpression;
       if (labeledInvariant != null) {
         nameDecl = labeledInvariant.Label;
@@ -430,11 +430,11 @@ namespace Microsoft.Research.Vcc.Parsing
               break;
             case Token.SpecWrites:
               this.GetNextToken();
-              this.ParseExpressionList(writes, Token.Comma, followers | Token.RightParenthesis);
+              this.ParseExpressionList(writes, Token.Comma, true, followers | Token.RightParenthesis);
               break;
             case Token.SpecDecreases:              
               this.GetNextToken();
-              this.ParseExpressionList(variants, Token.Comma, followers | Token.RightParenthesis);
+              this.ParseExpressionList(variants, Token.Comma, true, followers | Token.RightParenthesis);
               break;
           }
           this.SkipSemicolonsInSpecBlock(STS.LoopContract | Token.RightParenthesis);
@@ -506,10 +506,10 @@ namespace Microsoft.Research.Vcc.Parsing
       Expression name = this.GetSimpleNameFor(fnName);
       this.GetNextToken();
       var slb = new SourceLocationBuilder(name.SourceLocation);
-      var parameters = new List<Expression>();
-      if (this.currentToken != Token.RightParenthesis)
-        this.ParseList(parameters, ts => this.ParseExpression(ts), followers | Token.RightParenthesis);
-      parameters.TrimExcess();
+      List<Expression> parameters = new List<Expression>();
+      if (this.currentToken != Token.RightParenthesis) {
+        this.ParseExpressionList(parameters, Token.Comma, false, followers | Token.RightParenthesis);
+      } 
       slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
       if (fnName.StartsWith("\\result_macro_")) {
         var res = new VccReturnValue(loc);
@@ -672,7 +672,9 @@ namespace Microsoft.Research.Vcc.Parsing
             scanner.RevertToSnapshot(scannerState);
             this.currentToken = Token.Specification;
 
+            if (id == "atomic_op") this.resultIsAKeyword = true;
             Expression expr = this.ParseExpression(true, false, followers | Token.Semicolon);
+            this.resultIsAKeyword = false;
             var eStat = new ExpressionStatement(expr, new SourceLocationBuilder(expr.SourceLocation));
             this.SkipSemiColonAfterDeclarationOrStatement(followers);
             return eStat;
@@ -707,7 +709,7 @@ namespace Microsoft.Research.Vcc.Parsing
             slb = new SourceLocationBuilder(name.SourceLocation);
             var parameters = new List<Expression>();
             if (this.currentToken != Token.RightParenthesis) {
-              this.ParseExpressionList(parameters, Token.Comma, followers | Token.RightParenthesis);
+              this.ParseExpressionList(parameters, Token.Comma, true, followers | Token.RightParenthesis);
               slb.UpdateToSpan(parameters[parameters.Count - 1].SourceLocation);
             }
             var call = new VccMethodCall(name, parameters.AsReadOnly(), slb);
@@ -818,12 +820,18 @@ namespace Microsoft.Research.Vcc.Parsing
       return new VccMethodCall(this.GetSimpleNameFor("\\labeled_expression"), args, slb.GetSourceLocation());
     }
 
-    protected override Expression ParseLabeledExpression(TokenSet followers)
+    protected override Expression ParseLabeledExpression(TokenSet followers, bool isInvariant = false)
     {
       if (this.currentToken == Token.Colon) {
         SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
         this.GetNextToken();
-        var label = this.ParseNameDeclaration(true);
+        NameDeclaration label;
+        if (isInvariant && this.currentToken == Token.Volatile) {
+          label = new VccNameDeclaration(this.GetNameFor("volatile"), false, slb);
+          this.GetNextToken();
+        } else {
+          label = this.ParseNameDeclaration(true);
+        }
         Expression expr;
         if (TS.UnaryStart[this.currentToken] || TS.PrimaryStart[this.currentToken]) {
           expr = this.ParseExpression(followers);
@@ -860,9 +868,12 @@ namespace Microsoft.Research.Vcc.Parsing
         //  id = id.Substring(1);
         if (id == "atomic_op" || this.castlikeFunctions.ContainsKey(id)) {
           var methodName = id == "atomic_op" ? "" : this.castlikeFunctions[id];
+          var savedResultIsKeyword = this.resultIsAKeyword;
+          this.resultIsAKeyword = (id == "atomic_op");
           var isVarArgs = methodName.StartsWith("\\castlike_va_");
           this.GetNextToken();
           List<Expression> exprs = this.currentToken == Token.RightParenthesis ? new List<Expression>() : this.ParseExpressionList(Token.Comma, followers | Token.RightParenthesis);
+          this.resultIsAKeyword = savedResultIsKeyword;
           this.SkipOutOfSpecBlock(savedInSpecCode, TS.UnaryStart | followers);
           if (isVarArgs) {
             slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);

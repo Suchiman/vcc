@@ -989,7 +989,8 @@ namespace Microsoft.Research.Vcc {
       if (IsFixedSizeArrayType(expression.Type) && IsSpecVisitor.Check(expression.ProjectAsIExpression()))
         return this.ImplicitConversionExists(this.GetPointerForFixedSizeArray(expression.Type, true), targetType);
 
-      return base.ImplicitConversionExists(expression, targetType);
+      var result = base.ImplicitConversionExists(expression, targetType);
+      return result;
     }
 
 

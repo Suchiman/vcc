@@ -46,50 +46,72 @@ namespace Microsoft.Research.Vcc
     }
 
     static bool firstFile = true;
-    static bool RunTestSuite(string fileName, VccOptions commandLineOptions) {
-      if (Directory.Exists(fileName)) {
-        int errorCount = 0;
-
-        int threads = NumThreads(commandLineOptions.RunTestSuiteMultiThreaded);
-
-        TestRunnerMT trmt = threads > 1 ? new TestRunnerMT(threads, commandLineOptions) : null;
-
-        foreach (FileInfo fi in new DirectoryInfo(fileName).GetFiles("*", SearchOption.TopDirectoryOnly)) {
-          if (fi.Name.StartsWith(".")) continue;
-          if (fi.Name.Contains(vccSplitSuffix)) continue;
-          if (fi.Extension != ".c" && fi.Extension != "" && !fi.Extension.StartsWith(".ns")) continue; // remove *.ns* case eventually
-
-          if (trmt != null) trmt.Queue(fi);
-          else {
-            if (!TestRunner.RunTestSuite(fi, commandLineOptions))
-              errorCount++;
-          }
-        }
-
-        if (trmt != null) {
-          if (firstFile) {
-            firstFile = false;
-            if (File.Exists("testsuite.log"))
-              File.Delete("testsuite.log");
-          }
-          errorCount += trmt.Run();
-        }
-
-        foreach (DirectoryInfo di in new DirectoryInfo(fileName).GetDirectories("*", SearchOption.TopDirectoryOnly)) {
-          if (di.Name.StartsWith(".")) continue;
-          RunTestSuite(di.FullName, commandLineOptions);
-        }
-
-        if (errorCount != 0) {
-          Logger.Instance.NewLine();
-          Logger.Instance.Error("*** {0} error(s) ***", errorCount);
-          Logger.Instance.NewLine();
-          return false;
-        }
-        return true;
-      } else {
+    static bool RunTestSuite(string fileName, VccOptions commandLineOptions)
+    {
+      if (File.Exists(fileName))
+      {
         return TestRunner.RunTestSuite(new FileInfo(fileName), commandLineOptions);
       }
+
+      string baseDir;
+      string fileSpec;
+
+      if (Directory.Exists(fileName)) {
+        baseDir = fileName;
+        fileSpec = "*";
+      } else {
+
+        baseDir = Path.GetDirectoryName(fileName);
+        if (string.IsNullOrEmpty(baseDir)) baseDir = ".";
+        fileSpec = Path.GetFileName(fileName);
+        if (string.IsNullOrEmpty(fileSpec)) fileSpec = "*";
+      }
+
+      int errorCount = 0;
+      int threads = NumThreads(commandLineOptions.RunTestSuiteMultiThreaded);
+      TestRunnerMT trmt = threads > 1 ? new TestRunnerMT(threads, commandLineOptions) : null;
+
+      foreach (FileInfo fi in new DirectoryInfo(baseDir).GetFiles(fileSpec, SearchOption.TopDirectoryOnly))
+      {
+        if (fi.Name.StartsWith(".")) continue;
+        if (fi.Name.Contains(vccSplitSuffix)) continue;
+        if (fi.Extension != ".c" && fi.Extension != "" && !fi.Extension.StartsWith(".ns"))
+          continue; // remove *.ns* case eventually
+
+        if (trmt != null) trmt.Queue(fi);
+        else
+        {
+          if (!TestRunner.RunTestSuite(fi, commandLineOptions))
+            errorCount++;
+        }
+      }
+
+      if (trmt != null)
+      {
+        if (firstFile)
+        {
+          firstFile = false;
+          if (File.Exists("testsuite.log"))
+            File.Delete("testsuite.log");
+        }
+        errorCount += trmt.Run();
+      }
+
+      foreach (DirectoryInfo di in new DirectoryInfo(baseDir).GetDirectories(fileSpec, SearchOption.TopDirectoryOnly))
+      {
+        if (di.Name.StartsWith(".")) continue;
+        RunTestSuite(di.FullName, commandLineOptions);
+      }
+
+      if (errorCount != 0)
+      {
+        Logger.Instance.NewLine();
+        Logger.Instance.Error("*** {0} error(s) ***", errorCount);
+        Logger.Instance.NewLine();
+        return false;
+      }
+
+      return true;
     }
 
     public static string currentTestcaseName;

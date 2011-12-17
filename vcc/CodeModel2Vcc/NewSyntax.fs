@@ -174,7 +174,9 @@ let init (helper:Helper.Env) =
           | None -> ()
       | _ -> ()
       
-    let normalizeCastLike self = function
+    let rec normalizeCastLike withinSpec self = function
+      | Macro (ec, "spec", [body]) ->
+        Some(Macro(ec, "spec", [body.SelfMap(normalizeCastLike true)]))
       | Macro (ec, n, [primary; Macro (_, "argument_tuple", secondary)]) when n.StartsWith "\\castlike_va_" ->
         match n.Substring 13 with
           | "atomic_read" ->
@@ -194,7 +196,7 @@ let init (helper:Helper.Env) =
       | Macro (ec, "\\castlike_unblobify", args) ->
         let expr' = Macro (ec, "_vcc_unblobify", List.map self args)
         let kind =
-          if exprDependsOnSpecExpr expr' |> Option.isSome then VarKind.SpecLocal
+          if (withinSpec || exprDependsOnSpecExpr expr' |> Option.isSome) then VarKind.SpecLocal
           else VarKind.Local
         let decls1, rf = cache helper "blob" expr' kind
         Some (Expr.MkBlock (decls1 @ [rf]))
@@ -293,7 +295,7 @@ let init (helper:Helper.Env) =
     deepMapExpressions normalizeMisc >> 
     deepMapExpressions rewriteBvAssertAsBvLemma >>
     deepMapExpressions handleExpressionLabels >>
-    deepMapExpressions normalizeCastLike >>
+    deepMapExpressions (normalizeCastLike false) >>
     deepMapExpressions normalizeUnwrapping
 
 

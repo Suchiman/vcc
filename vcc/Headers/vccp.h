@@ -147,6 +147,8 @@ _(\integer _(_boogie0) \sizeof_object(\object))
 _(bool _(_boogie0) \in_range_phys_ptr(\object))
 _(bool _(_boogie0) \in_range_spec_ptr(\object))
 _(bool _(_boogie0) \may_diverge())
+_(bool \normal_exit())
+_(bool \writable(\object))
 
 _(template<typename T> \integer \size(T dt);)
 
@@ -172,8 +174,8 @@ _(struct \TypeState {
 
 // Statement-like functions
 
-_(void \wrap(\object o) _(writes o, o->\owns);)
-_(void \unwrap(\object o) _(writes o);)
+_(void \wrap(\object o, ...) _(writes o, o->\owns);)
+_(void \unwrap(\object o, ...) _(writes o);)
 _(void \destroy_claim(\claim, \objset);)
 _(void \reads_havoc();)
 _(void \havoc_others(\object p);)
@@ -204,7 +206,7 @@ _(ghost extern const \thread \me;)
 _(\integer \argument_tuple(\object, ...); ) 
 _(template<typename T> T \castlike_va_atomic_read(T op, \integer);)
 _(template<typename T> T \castlike_known(T v, bool expected);)
-_(template<typename T> T* \castlike_retype(T*);)
+_(template<typename T> T \castlike_retype(T);)
 _(template<typename T> T \castlike_by_claim(T v, \claim c);)
 _(template<typename T> T \castlike_precise(T v);)
 

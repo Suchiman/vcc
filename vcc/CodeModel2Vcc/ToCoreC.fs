@@ -479,7 +479,7 @@ namespace Microsoft.Research.Vcc
         // fixup block type - needed for struct initilizers
         | Block(ec, exprs, None) -> 
           let exprs = List.map self exprs
-          let last = exprs |> List.rev |> List.head
+          let last = TransUtil.last exprs
           Some (Block ({ec with Type = last.Type}, exprs, None))
 
         | Block(_,_,_) -> None
@@ -706,21 +706,34 @@ namespace Microsoft.Research.Vcc
     
       let currentFunction = ref (Function.Empty())
       let blockFunctionDecls = ref []
+      let exitLabel = { Name = "#block_exit"} : LabelId
     
       let reportErrorForJumpsOutOfBlock (block:Expr) =
-        let internalLabels = new HashSet<_>()
-        let findLabels _ = function
-          | Expr.Label(_, { Name = l }) -> internalLabels.Add l |> ignore ; false
-          | _ -> true
         let reportError _ = function
-          | Expr.Goto(ec, { Name = l }) when not (internalLabels.Contains l) ->
-            helper.Error(ec.Token, 9705, "Block with explicit contract must not contain goto to external label '" + l + "'."); false
           | Expr.Return(ec, _) ->
             helper.Error(ec.Token, 9705, "Block with explicit contract must not contain return statement."); false
           | _ -> true
-        block.SelfVisit(findLabels)
         block.SelfVisit(reportError)
-        
+
+      let findAndReplaceExternalGotos exitStatusVar (stmts : List<Expr>) = 
+        let internalLabels = new HashSet<_>()
+        let externalLabels = ref []
+
+        let findInternalLabels _ = function
+          | Expr.Label(_, lbl) -> internalLabels.Add(lbl) |> ignore; false
+          | _ -> true
+        let findAndReplaceExternalGotos' _ = function
+          | Expr.Goto(ec, lbl) when not (internalLabels.Contains(lbl)) -> 
+            externalLabels := lbl :: !externalLabels
+            Some(Expr.MkBlock([Expr.VarWrite(bogusEC, [exitStatusVar], Expr.False); Expr.Goto(bogusEC, exitLabel)]))
+          | _ -> None
+
+        do List.iter (fun (stmt:Expr) -> stmt.SelfVisit(findInternalLabels)) stmts
+
+        let stmts' = List.map (fun (stmt:Expr) -> stmt.SelfMap(findAndReplaceExternalGotos')) stmts
+
+        (stmts' , !externalLabels)
+                
       let findLocalsAndTurnIntoParameters fBefore fAfter (body : list<Expr>) (cs : BlockContract) =
         let inMap = new Dict<_,_>()
         let outMap = new Dict<_,_>()
@@ -820,48 +833,86 @@ namespace Microsoft.Research.Vcc
           | _ -> die()
         fVar before, fVar after
           
+      let rewriteNormalExit _ = function
+        | CallMacro(ec, "_vcc_normal_exit", [], []) ->
+          Some(Expr.Result(ec))
+        | _ -> None
+
+      let errorForRemainingNormalExit _ = function
+        | CallMacro(ec, "_vcc_normal_exit", [], []) -> helper.Error(ec.Token, 9745, "\normal_exit is only allowed in post-conditions of blocks"); false
+        | _ -> true
+
+      let nonDetDecls = ref []
+
+      let rec notdetJumpToLabels = function
+        | [] ->  die()
+        | [lbl] -> Expr.Goto(bogusEC, lbl)
+        | lbl :: lbls ->
+          let nonDetVar = getTmp helper "nondet" Type.Bool VarKind.Local 
+          let notDetDecl = Expr.VarDecl(bogusEC, nonDetVar, [])
+          do nonDetDecls := notDetDecl :: !nonDetDecls
+          Expr.If(bogusEC, None, Expr.Ref(boolBogusEC(), nonDetVar), Expr.Goto(bogusEC, lbl), notdetJumpToLabels lbls)
+
       let rec liftBlocks findRefs currentBlockId blockPrefix self = function
         | Expr.Block (ec, body, Some ({ Requires = [CallMacro (fc, "_vcc_full_context", _, [])] } as bc)) ->
           Some (Expr.Block (ec, List.map self body, Some bc))
 
-        | Expr.Block(ec, block, Some cs) as b ->
+        | Expr.Block(ec, stmts, Some cs) as b ->
           let blockId = (!currentBlockId).ToString()
           incr currentBlockId
           reportErrorForJumpsOutOfBlock b
           let nestedBlockId = ref 0
-          let block' = List.map (fun (x : Expr) -> x.SelfMap(liftBlocks findRefs nestedBlockId (blockPrefix + blockId + "#"))) block
+          let stmts' = List.map (fun (x : Expr) -> x.SelfMap(liftBlocks findRefs nestedBlockId (blockPrefix + blockId + "#"))) stmts
+          let blockExitStatus = getTmp helper "block" Type.Bool VarKind.Local
+          let (stmts'', externalGotos) = findAndReplaceExternalGotos blockExitStatus stmts'
           let fBefore, fAfter = findRefs b
-          match findLocalsAndTurnIntoParameters fBefore fAfter block' cs with
+          match findLocalsAndTurnIntoParameters fBefore fAfter stmts'' cs with
             | ss, cs', localsThatGoIn, inMap, localsThatGoOut, outMap ->
                 let mkSetOutPar (v : Variable) =
                   Expr.VarWrite(voidBogusEC(), [outMap v], mkRef (inMap v))
                 let stripInitialPure = List.map (function | Pure(_, e) -> e | e -> e)
-
                 let fn = { Function.Empty() with 
-                             Token = b.Token
+                             Token = if stmts.IsEmpty then ec.Token else stmts.Head.Token // see issue 6456
+                             RetType = Type.Bool
+                             OrigRetType = Type.Bool
                              Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut
                              Name = (!currentFunction).Name + "#block#" + blockPrefix + blockId
                              Requires = stripInitialPure cs'.Requires
-                             Ensures = stripInitialPure cs'.Ensures
+                             Ensures = cs'.Ensures |> stripInitialPure |> List.map (fun (expr:Expr) -> expr.SelfMap(rewriteNormalExit))
                              Writes = stripInitialPure cs'.Writes
                              Variants = stripInitialPure cs'.Decreases
                              Reads = stripInitialPure cs'.Reads;
                              CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else []) @ inheritedAttrs (!currentFunction).CustomAttr
-                             Body = Some (Expr.MkBlock(ss @ List.map mkSetOutPar localsThatGoOut))
+                             Body = Some (Expr.MkBlock(Expr.VarDecl(bogusEC, blockExitStatus, []) :: ss 
+                                                          @ [Expr.VarWrite(bogusEC, [blockExitStatus], Expr.True)]
+                                                          @ [Expr.Label(bogusEC, exitLabel)]
+                                                          @ List.map mkSetOutPar localsThatGoOut 
+                                                          @ [Expr.Return((TransUtil.last ss).Common, Some(Expr.Ref(boolBogusEC(), blockExitStatus)))]))
                              IsProcessed = true }
                 blockFunctionDecls := Top.FunctionDecl(fn) :: !blockFunctionDecls
                 let inArgs = List.map mkRef localsThatGoIn 
                 let outArgs = List.map (fun (v:Variable) -> Expr.Macro({bogusEC with Type = v.Type}, "out", [mkRef v])) localsThatGoOut
-                let call = Expr.Call(ec, fn, [], inArgs @ outArgs)
-                Some(Expr.Stmt(ec, call))
-        | _ as e -> None  
-    
+                let call = Expr.Call({ec with Type = Type.Bool}, fn, [], inArgs @ outArgs)
+                let (inits, exitStatus) = lateCache helper "block" call VarKind.Local 
+                let labelBranches = 
+                  match externalGotos with
+                    | [] -> Expr.Comment(bogusEC, "no gotos out of block")
+                    | lbls ->
+                      let branches = notdetJumpToLabels lbls
+                      let ifNotNormalExit = Expr.If(bogusEC, None, Expr.Prim(boolBogusEC(), Op("!", CheckedStatus.Processed), [exitStatus]), branches, Expr.Comment(bogusEC, "no else"))
+                      Expr.MkBlock(!nonDetDecls @ [ ifNotNormalExit ])
+                Some(Expr.MkBlock(inits @ [exitStatus; labelBranches]))
+        | _ as e -> None      
+
       for d in decls do
         match d with
           | Top.FunctionDecl({ Name = name; Body = Some body} as fn) ->
             currentFunction := fn
             fn.Body <- Some(body.SelfMap (liftBlocks (findReferencesBeforeAndAfter fn) (ref 0) ""))
           | _ -> ()
+
+      do deepVisitExpressions errorForRemainingNormalExit decls
+
       decls @ List.sortBy (fun top -> match top with | Top.FunctionDecl(fn) -> fn.Name | _ -> die()) !blockFunctionDecls
 
     

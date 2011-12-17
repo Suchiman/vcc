@@ -66,6 +66,9 @@ namespace Microsoft.Research.Vcc
     
     let fieldName (f:C.Field) = f.Parent.Name + "." + f.Name
 
+    let genPureFunctionDef (f:C.Function) = 
+      f.IsPure && f.RetType <> C.Void && not (f.Name.Contains("#block#"))
+
     let currentPC (env:Env) =
       match env.IFContexts with
         | [] -> die()
@@ -340,7 +343,7 @@ namespace Microsoft.Research.Vcc
       let decomposeDot e = 
         match tryDecomposeDot e with
           | Some r -> r
-          | None -> [bCall "$emb0" [e]; bCall "$field" [e]]
+          | None -> [bCall "$prim_emb" [e]; bCall "$field" [e]]
 
       let typedRead s p t =
         if vcc3 then
@@ -646,6 +649,9 @@ namespace Microsoft.Research.Vcc
 
           | "_vcc_rec_eq", [r1; r2] when vcc3 ->
             bCall ("REQ#" + (recType r1.Type).Name) [self r1; self r2]
+
+          | "_vcc_simple_emb", [C.Dot (_, p, _)] ->
+            self p
              
           | "rec_zero", [] -> 
             if vcc3 then
@@ -1439,6 +1445,8 @@ namespace Microsoft.Research.Vcc
                   | "$deep_unwrap" 
                   | "$static_wrap"
                   | "$static_unwrap"
+                  | "$wrap_set"
+                  | "$unwrap_set"
                   | "$alloc" ->
                     helper.Error (c.Token, 9626, name.Substring 5 + "(...) cannot be used inside atomic update/read", None)
                   | "$bump_volatile_version"
@@ -1520,6 +1528,8 @@ namespace Microsoft.Research.Vcc
               | "$static_wrap"
               | "$static_unwrap"
               | "$static_wrap_non_owns"
+              | "$wrap_set"
+              | "$unwrap_set" 
               | "$atomic_havoc"
               | "$havoc_others"
               | "$unwrap_check" -> { env with AtomicObjects = [er "$no_such_thing"] }
@@ -1647,6 +1657,7 @@ namespace Microsoft.Research.Vcc
             | C.Expr.Macro (c, (("_vcc_reads_havoc"|"_vcc_havoc_others"|"_vcc_unwrap_check"|"_vcc_set_owns"|
                                   "_vcc_giveup_closed_owner"|"_vcc_set_closed_owner"| 
                                   "_vcc_static_wrap"|"_vcc_static_wrap_non_owns"|"_vcc_static_unwrap"|
+                                  "_vcc_wrap_set"|"_vcc_unwrap_set"|
                                   "_vcc_unblobify_into") as name), args) -> 
               doCall c [] None name [] args
             | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_deep_unwrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->
@@ -1895,7 +1906,7 @@ namespace Microsoft.Research.Vcc
         let env = { initialEnv with Writes = header.Writes }
         let te e = trExpr env e
         let pureEq =
-          if header.IsPure && header.RetType <> C.Void then 
+          if genPureFunctionDef header then 
             let parms = 
               (if header.IsStateless then [] else [bState]) @ [for tv in header.TypeParameters -> typeVarRef tv] 
                                                             @ [for v in header.InParameters -> varRef v]
@@ -2755,7 +2766,7 @@ namespace Microsoft.Research.Vcc
         else []
 
       let trPureFunction (h:C.Function) =
-        if not h.IsPure || h.RetType = C.Void then []
+        if not (genPureFunctionDef h) then  []
         else
           let parameters =  List.map trTypeVar h.TypeParameters @ List.map trVar h.InParameters
           let qargs = (if h.IsStateless then [] else [("#s", tpState)]) @ parameters

@@ -25,7 +25,7 @@ namespace Microsoft.Research.Vcc
   // "id" numbers
   //      
   // Verification errors:  between 8001 and 8499: First available: 8034
-  // Assertions:           between 8501 and 8999: First available: 8539
+  // Assertions:           between 8501 and 8999: First available: 8540
   //
 
   let afmt (id:int) fmt (args : list<string>) =
@@ -39,14 +39,22 @@ namespace Microsoft.Research.Vcc
   
   let afmter id fmt primary related (args : list<Expr>) =
     forwardingToken primary related (fun () -> afmt id fmt [ for a in args -> a.Token.Value ])
-  
+
+  let rec last = function
+    | [x] -> x
+    | _ :: xs -> last xs
+    | [] -> die()
+
+  let splitLast l = 
+    let rec loop acc = function
+      | [] -> die()
+      | [x] -> x, List.rev acc
+      | x::xs -> loop (x::acc) xs
+    loop [] l
+ 
   let ignoreEffects e =
     let aux self = function 
       | Block (_, stmts, _) ->
-        let rec last = function
-          | [x] -> x
-          | _ :: xs -> last xs
-          | [] -> die()
         Some (self (last stmts))
       | _ -> None
     (e:Expr).SelfMap aux 
@@ -600,3 +608,15 @@ namespace Microsoft.Research.Vcc
       match d with
         | Top.TypeDecl(td) -> List.iter (fun (i:Expr) -> (i.SelfVisit f)) td.Invariants
         | _ -> ()
+
+  let checkTermination (helper:Helper.Env) (fn:Function) =
+    if fn.CustomAttr |> hasCustomAttr AttrDefinition || fn.CustomAttr |> hasCustomAttr AttrAbstract then
+      helper.Options.TerminationForPure
+    // if explicit measure is given, and termination is not disabled, then check it 
+    elif helper.Options.TerminationForPure && fn.Variants <> [] then
+      true
+    elif fn.IsSpec then
+      helper.Options.TerminationForGhost
+    else
+      helper.Options.TerminationForAll
+

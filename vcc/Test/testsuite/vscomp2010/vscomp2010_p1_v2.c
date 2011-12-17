@@ -78,6 +78,7 @@ int main(int argc, char **argv) {
 #endif
 
 /*`
+testcase(17,3) : warning VC9323: [possible unsoundness]: ghost loop not checked for termination
 testcase(4,11) : warning VC9303: [possible unsoundness]: cycle in pure function calls: fsum -> fsum
 Verification of fsum succeeded.
 Verification of fsum_lemma succeeded.
