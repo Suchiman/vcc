@@ -62,7 +62,6 @@ namespace Microsoft.Research.Vcc
     public string VerificationLocation;
     public string OutputDir;
     public string IgnoreIncludes;
-    public bool UnfoldConstants;
     public int TerminationLevel = 1;
     public bool TerminationForPure { get { return TerminationLevel >= 1; } }
     public bool TerminationForGhost { get { return TerminationLevel >= 2; } }
@@ -73,6 +72,7 @@ namespace Microsoft.Research.Vcc
       }
     }
     public int DefExpansionLevel = 3;
+    public bool NoVerification;
 
     public void CopyFrom(VccOptions other)
     {
@@ -141,9 +141,9 @@ namespace Microsoft.Research.Vcc
       this.VerificationLocation = other.VerificationLocation;
       this.YarraMode = other.YarraMode;
       this.IgnoreIncludes = other.IgnoreIncludes;
-      this.UnfoldConstants = other.UnfoldConstants;
       this.TerminationLevel = other.TerminationLevel;
       this.DefExpansionLevel = other.DefExpansionLevel;
+      this.NoVerification = other.NoVerification;
     }
   }
 
@@ -427,6 +427,10 @@ namespace Microsoft.Research.Vcc
             this.options.NoPreprocessor = true;
             return true;
           }
+          if (this.ParseName(arg, "noverification", "nv")) {
+            this.options.NoVerification = true;
+            return true;
+          }
           if (this.ParseName(arg, "newsyntax", "ns")) {
             this.options.NewSyntax = true;
             return true;
@@ -560,21 +564,8 @@ namespace Microsoft.Research.Vcc
             this.options.VerifyUpToLine = lineNo;
             return true;
           }
-          bool? unfoldConstants = this.ParseNamedBoolean(arg, "unfoldconst", "ufc");
-          if (unfoldConstants != null) {
-            this.options.UnfoldConstants = unfoldConstants.Value;
-            return true;
-          }
           return false;
         case 'v':
-          if (this.ParseName(arg, "verify", "v")) {
-            DummyExpression dummyExpression = new DummyExpression(SourceDummy.SourceLocation);
-            this.hostEnvironment.ReportError(new AstErrorMessage(dummyExpression,
-                                                                 Microsoft.Cci.Ast.Error.InvalidCompilerOption,
-                                                                 "/verify is the default option and does not need to be specified explicitly"));
-            return true;
-          }
-
           if (this.ParseName(arg, "version", "version")) {
             this.options.DisplayVersion = true;
             return true;
@@ -638,23 +629,11 @@ namespace Microsoft.Research.Vcc
       return false;
     }
 
-    protected override bool DirectoryIsOk(string path, string pattern, string extension) {
+    protected override bool DirectoryIsOk(string path, string pattern, string extension)
+    {
       if (!this.options.RunTestSuite) return false;
-      bool foundADirectory = false;
-      if (path != null && Directory.Exists(path)) {
-        if ((path == ".\\" || path == "..\\") && pattern == ".") {
-          this.options.FileNames.Add(Path.GetFullPath(path));
-          foundADirectory = true;
-        } else {
-          foreach (string file in Directory.GetDirectories(path, pattern)) {
-            string ext = Path.HasExtension(file) ? Path.GetExtension(file) : "";
-            if (string.Compare(extension, ext, true, System.Globalization.CultureInfo.InvariantCulture) != 0) continue;
-            this.options.FileNames.Add(Path.GetFullPath(file));
-            foundADirectory = true;
-          }
-        }
-      }
-      return foundADirectory;
+      this.options.FileNames.Add(path + pattern);
+      return true;
     }
   }
 }

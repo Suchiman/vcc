@@ -883,6 +883,20 @@ namespace Microsoft.Research.Vcc.Parsing {
       return false;
     }
 
+    private TypeExpression HandleTypeQualifiersForPointer(IEnumerable<Specifier> specifiers, TypeExpression type, Declarator declarator)
+    {
+      List<TypeQualifier> fldQualifiers;
+      if (this.IsPointerDeclarator(declarator, out fldQualifiers)) {
+        var ptrQualifiers =
+          new List<TypeQualifier>(specifiers.Where(s => s is TypeQualifier).Select(s => s as TypeQualifier));
+        if (ptrQualifiers.Count > 0) {
+          type = new VccQualifiedTypeExpression(type, ptrQualifiers, type.SourceLocation);
+        }
+      }
+
+      return type;
+    }
+
     /// <summary>
     /// For a local variable of pointer type, see if it is const or volatile. 
     /// If volatile appears in the specifiers, then it is volatile;
@@ -934,8 +948,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       InitializedDeclarator /*?*/ initialized = declarator as InitializedDeclarator;
       if (initialized != null)
         return this.GetTypeExpressionFor(specifiers, initialized.Declarator, fsaCtx, initialized.InitialValue);
-      else {
-        return this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, declarator as IdentifierDeclarator), declarator, fsaCtx, initializer);
+      else
+      {
+        var elementType = this.GetTypeExpressionFor(specifiers, declarator is IdentifierDeclarator ? (declarator as IdentifierDeclarator).SourceLocation : null);
+        elementType = HandleTypeQualifiersForPointer(specifiers, elementType, declarator);
+        return this.GetTypeExpressionFor(elementType, declarator, fsaCtx, initializer);
       }
     }
 
@@ -989,10 +1006,14 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
         return result;
       }
+
       PointerDeclarator/*?*/ pointer = declarator as PointerDeclarator;
-      elementType = AddIndirectionsToType(elementType, pointer, slb);
       if (pointer != null)
-        return this.GetTypeExpressionFor(elementType, pointer.Declarator, fsaCtx, initializer);
+      {
+        elementType = AddIndirectionsToType(elementType, pointer, slb);
+        return this.GetTypeExpressionFor(elementType, pointer.Declarator, fsaCtx, initializer);        
+      }
+
       return elementType;
     }
 
@@ -1016,15 +1037,19 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, IdentifierDeclarator/*?*/ declarator) {
+    protected TypeExpression GetTypeExpressionFor(IEnumerable<Specifier> specifiers, ISourceLocation declaratorLocationForErrorReporting) {
       TypeExpression/*?*/ result = this.TryToGetTypeExpressionFor(specifiers);
       if (result != null) return result;
-      ISourceLocation/*?*/ errorLocation = null;
-      if (declarator != null)
-        errorLocation = declarator.SourceLocation;
-      else {
-        foreach (Specifier specifier in specifiers) errorLocation = specifier.SourceLocation;
+
+      ISourceLocation /*?*/ errorLocation = declaratorLocationForErrorReporting;
+      if (errorLocation == null) {
+        foreach (Specifier specifier in specifiers)
+        {
+          errorLocation = specifier.SourceLocation;
+          if (errorLocation != null) break;
+        }
       }
+
       if (errorLocation != null)
         this.HandleError(errorLocation, Error.UnexpectedToken, errorLocation.Source);
       return TypeExpression.For(Dummy.Type);
@@ -1054,16 +1079,11 @@ namespace Microsoft.Research.Vcc.Parsing {
       PrimitiveTypeSpecifier/*?*/ length = null;
       PrimitiveTypeSpecifier/*?*/ primitiveType = null;
       List<TypeQualifier> typeQualifiers = null;
-      List<TypeQualifier> skippedQualifiers = null;
       foreach (Specifier specifier in specifiers) {
         CompositeTypeSpecifier/*?*/ cts = specifier as CompositeTypeSpecifier;
         if (cts != null) {
           //TODO: if (result != null || sign != null || length != null || primitiveType != null) Error;
           result = cts.TypeExpression;
-          if (skippedQualifiers != null)
-          {
-            result = new VccQualifiedTypeExpression(result, skippedQualifiers, result.SourceLocation);
-          }
           continue;
         }
         TypeQualifier/*?*/ tq = specifier as TypeQualifier;
@@ -1077,11 +1097,7 @@ namespace Microsoft.Research.Vcc.Parsing {
               }
               typeQualifiers.Add(tq);
             }
-          } else {
-            if (skippedQualifiers == null)
-              skippedQualifiers = new List<TypeQualifier>();
-            skippedQualifiers.Add(tq);
-          }
+          } 
           continue;
         }
         TypedefNameSpecifier/*?*/ tdns = specifier as TypedefNameSpecifier;
@@ -1113,6 +1129,9 @@ namespace Microsoft.Research.Vcc.Parsing {
             case Token.Unsigned:
               //TODO: error if sign != null || result != null;
               sign = pts;
+              break;
+            case Token.W64:
+              length = pts;
               break;
             case Token.Short:
               //TODO: error if length != null || result != null;;
@@ -1157,6 +1176,7 @@ namespace Microsoft.Research.Vcc.Parsing {
         SourceLocationBuilder slb = new SourceLocationBuilder(primitiveType.SourceLocation);
         if (length != null) {
           slb.UpdateToSpan(length.SourceLocation);
+
           if (length.Token == Token.Short) {
             //TODO: error if primitive type != int
           } else {
@@ -1227,13 +1247,23 @@ namespace Microsoft.Research.Vcc.Parsing {
         }
       }
       //get here if primitive type is int or has not been specified
+
+      Token effectiveLengthToken = Token.None;
+
+      if (length != null) {
+        effectiveLengthToken = length.Token;
+        if (effectiveLengthToken == Token.W64) {
+          effectiveLengthToken = this.compilation.HostEnvironment.PointerSize == 4 ? Token.Long : Token.Int64;
+        }
+      }
+
       if (sign != null) {
         if (sign.Token == Token.Unsigned) {
           if (length == null) return this.GetTypeExpressionFor(TypeCode.UInt32, sign.SourceLocation);
           SourceLocationBuilder slb = new SourceLocationBuilder(sign.SourceLocation);
           slb.UpdateToSpan(length.SourceLocation);
           if (primitiveType != null) slb.UpdateToSpan(primitiveType.SourceLocation);
-          switch (length.Token) {
+          switch (effectiveLengthToken) {
             case Token.Short: return this.GetTypeExpressionFor(TypeCode.UInt16, slb);
             case Token.Long: return this.GetTypeExpressionFor(TypeCode.UInt32, slb);
             case Token.Int64: return this.GetTypeExpressionFor(TypeCode.UInt64, slb);
@@ -1243,7 +1273,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           SourceLocationBuilder slb = new SourceLocationBuilder(sign.SourceLocation);
           slb.UpdateToSpan(length.SourceLocation);
           if (primitiveType != null) slb.UpdateToSpan(primitiveType.SourceLocation);
-          switch (length.Token) {
+          switch (effectiveLengthToken) {
             case Token.Short: return this.GetTypeExpressionFor(TypeCode.Int16, slb);
             case Token.Long: return this.GetTypeExpressionFor(TypeCode.Int32, slb);
             case Token.Int64: return this.GetTypeExpressionFor(TypeCode.Int64, slb);
@@ -1253,7 +1283,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       if (length != null) {
         SourceLocationBuilder slb = new SourceLocationBuilder(length.SourceLocation);
         if (primitiveType != null) slb.UpdateToSpan(primitiveType.SourceLocation);
-        switch (length.Token) {
+        switch (effectiveLengthToken) {
           case Token.Short: return this.GetTypeExpressionFor(TypeCode.Int16, slb);
           case Token.Long: return this.GetTypeExpressionFor(TypeCode.Int32, slb);
           case Token.Int64: return this.GetTypeExpressionFor(TypeCode.Int64, slb);
@@ -2617,13 +2647,13 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     protected List<Expression> ParseExpressionList(Token separator, TokenSet followers) {
-      return this.ParseExpressionList(new List<Expression>(), separator, followers);
+      return this.ParseExpressionList(new List<Expression>(), separator, true, followers);
     }
 
-    protected List<Expression> ParseExpressionList(List<Expression> listToAddTo, Token separator, TokenSet followers) {
+    protected List<Expression> ParseExpressionList(List<Expression> listToAddTo, Token separator, bool checkedExpressions, TokenSet followers) {
       while (true) {
         Expression e = this.ParseExpression(followers | separator);
-        e = this.CheckedExpressionIfRequested(e);
+        if (checkedExpressions) { e = this.CheckedExpressionIfRequested(e); }
         listToAddTo.Add(e);
         if (this.currentToken != separator) break;
         this.GetNextToken();
@@ -2638,7 +2668,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     protected List<Expression> ParseExpressionListWithParens(List<Expression> listToAddTo, Token leftParen, Token separator, Token rightParen, TokenSet followers) {
       this.GetNextToken();
       this.Skip(leftParen);
-      this.ParseExpressionList(listToAddTo, separator, followers | rightParen);
+      this.ParseExpressionList(listToAddTo, separator, true, followers | rightParen);
       this.SkipOverTo(rightParen, followers);
       return listToAddTo;
     }
@@ -3140,7 +3170,12 @@ namespace Microsoft.Research.Vcc.Parsing {
           break;
           // the following ones will only occur in the next syntax
         case Token.Result:
-          expression = new VccReturnValue(this.GetSourceLocationBuilderForLastScannedToken());
+          if (this.resultIsAKeyword) {
+            expression = new VccReturnValue(this.GetSourceLocationBuilderForLastScannedToken());
+          } else {
+            expression = new DummyExpression(this.GetSourceLocationBuilderForLastScannedToken());
+            this.HandleError(Error.ResultNotAllowedHere);
+          }
           this.GetNextToken();
           break;
         case Token.This:
@@ -3324,7 +3359,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result.AsReadOnly();
     }
 
-    protected virtual Expression ParseLabeledExpression(TokenSet followers) {
+    protected virtual Expression ParseLabeledExpression(TokenSet followers, bool inInvariant) {
       return this.ParseExpression(followers); // this is purely a syntax refresh concept
     }
 
@@ -3336,7 +3371,7 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Expression> result = new List<Expression>();
       TokenSet followersOrCommaOrRightBrace = followers | TS.CommaOrRightBrace;
       while (this.currentToken != Token.RightBrace) {
-        Expression e = this.ParseLabeledExpression(followersOrCommaOrRightBrace);
+        Expression e = this.ParseLabeledExpression(followersOrCommaOrRightBrace, false);
         result.Add(e);
         if (this.currentToken != Token.Comma) break;
         this.GetNextToken();
@@ -3431,7 +3466,9 @@ namespace Microsoft.Research.Vcc.Parsing {
       List<Specifier> specifiers = this.ParseSpecifiers(members, null, null, followers|Token.Multiply|Token.RightParenthesis|Token.LeftBracket);
       Declarator declarator = this.ParseDeclarator(followers);
       slb.UpdateToSpan(declarator.SourceLocation);
-      TypeExpression type = this.GetTypeExpressionFor(this.GetTypeExpressionFor(specifiers, null), declarator);
+      TypeExpression type = this.GetTypeExpressionFor(specifiers, null);
+      type = HandleTypeQualifiersForPointer(specifiers, type, declarator);
+      type = this.GetTypeExpressionFor(type, declarator);
       this.SkipTo(followers);
       return type;
     }

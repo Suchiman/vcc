@@ -521,7 +521,7 @@ namespace Microsoft.Research.Vcc
       double beforeBoogie = GetTime();
       int numErrors = 0;
       double beforeMethods = GetTime();
-      bool checkSpecificFunctions = commandLineOptions.Functions.Count > 0 || commandLineOptions.FunctionsWithExactName.Count > 0;
+      bool checkSpecificFunctions = commandLineOptions.ExplicitTargetsGiven;
       List<string> foundFunctionSpecifiers = new List<string>();
 
       if (commandLineOptions.DumpBoogie)
@@ -531,23 +531,6 @@ namespace Microsoft.Research.Vcc
 
       foreach (var func in fver.FunctionsToVerify())
       {
-
-        if (commandLineOptions.IgnoreIncludes != null)
-        {
-          bool fileFound = false;
-          if (commandLineOptions.IgnoreIncludes == "")
-          {
-            if (commandLineOptions.FileNames.Any(file => String.Equals(file, func.Item1, StringComparison.OrdinalIgnoreCase)))
-            {
-              fileFound = true;
-            }
-          } else if (String.Equals(Path.GetFullPath(commandLineOptions.IgnoreIncludes), func.Item1, StringComparison.OrdinalIgnoreCase))
-          {
-            fileFound = true;
-          }
-
-          if (!fileFound) continue;
-        }
 
         if (checkSpecificFunctions)
         {
@@ -573,6 +556,22 @@ namespace Microsoft.Research.Vcc
             }
           }
           if (!checkThisFunction) continue;
+        }
+        else if (commandLineOptions.IgnoreIncludes != null)
+        {
+          bool fileFound = false;
+          if (commandLineOptions.IgnoreIncludes == "")
+          {
+            if (commandLineOptions.FileNames.Any(file => String.Equals(file, func.Item1, StringComparison.OrdinalIgnoreCase)))
+            {
+              fileFound = true;
+            }
+          } else if (String.Equals(Path.GetFullPath(commandLineOptions.IgnoreIncludes), func.Item1, StringComparison.OrdinalIgnoreCase))
+          {
+            fileFound = true;
+          }
+
+          if (!fileFound) continue;
         }
 
         var outcome = fver.Verify(func.Item2);

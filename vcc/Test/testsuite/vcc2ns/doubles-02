@@ -1,0 +1,12 @@
+`/newsyntax
+#include <vcc.h>
+
+int foo()
+{
+	double f = 0;
+	_(assert f == 0)
+	return 0;
+}
+`
+Verification of foo succeeded.
+`

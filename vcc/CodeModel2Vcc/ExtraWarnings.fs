@@ -18,6 +18,25 @@ namespace Microsoft.Research.Vcc
 
   let init (helper:Helper.Env) =
 
+    let warnForUncheckedGhostLoops decls = 
+
+      let rec warnForUncheckedGhostLoops fn withinSpec self = function
+        | Loop(ec, _, _, _, _) 
+        | Macro(ec, ("while"|"doUntil"|"for"), _) when withinSpec -> helper.GraveWarning (ec.Token, 9323, "ghost loop not checked for termination"); true
+        | CallMacro(_, "spec", _, args) -> List.iter (fun (e:Expr) -> e.SelfVisit(warnForUncheckedGhostLoops fn true)) args; false
+        | _ -> true    
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl({Body = Some body} as fn) when not (checkTermination helper fn) ->
+            body.SelfVisit(warnForUncheckedGhostLoops fn fn.IsSpec)
+            ()
+          | _ -> ()
+
+      decls
+
+    // ============================================================================================================          
+
     let warnForOldWithoutVolatiles decls =
       
       let rec isVolatileType = function
@@ -56,5 +75,6 @@ namespace Microsoft.Research.Vcc
 
     helper.AddTransformer ("warn-begin", Helper.DoNothing)
     helper.AddTransformer ("warn-two-state-inv-without-volatile", Helper.Decl warnForOldWithoutVolatiles)
+    helper.AddTransformer ("warn-unchecked-ghost-loops", Helper.Decl warnForUncheckedGhostLoops)
     helper.AddTransformer ("warn-end", Helper.DoNothing)
 

@@ -26,7 +26,7 @@
     </Directory>
 
     <DirectoryRef Id="INSTALLLOCATION">
-      <Component Id="SampleFolderHygene" Guid="A0E2107E-F490-400E-A643-D709865F2A34">
+      <Component Id="SampleFolderHygiene" Guid="A0E2107E-F490-400E-A643-D709865F2A34">
         <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="samples" Type="integer" Value="1" KeyPath="yes" />
         <RemoveFolder Id="INSTALLLOCATION" On="uninstall" />
       </Component>
@@ -41,8 +41,8 @@
     </DirectoryRef>
 
     <Feature Id="ProductFeature" Title="VCC Samples" Level="1">
-      <ComponentRef Id="SampleFolderHygene" />
-      <ComponentGroupRef Id="samples_all" />
+      <ComponentRef Id="SampleFolderHygiene" />
+      <ComponentGroupRef Id="all_samples" />
       <ComponentRef Id="Shortcuts" />
     </Feature>
 

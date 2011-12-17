@@ -181,5 +181,11 @@ namespace Microsoft.Research.Vcc {
     /// </summary>
     LoopWithOnlySpecStatements,
 
+    /// <summary>
+    /// Cannot use '\result' in this context.
+    /// </summary>
+    ResultNotAllowedHere,
+
+
   }
 }

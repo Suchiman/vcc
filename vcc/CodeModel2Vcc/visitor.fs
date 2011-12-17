@@ -37,6 +37,11 @@ namespace Microsoft.Research.Vcc
     [<Literal>]
     let SystemDiagnosticsContractsCodeContractObjset = "System.Diagnostics.Contracts.CodeContract.Objset"
 
+    [<Literal>]
+    let SystemDouble = "System.Double"
+
+    [<Literal>]
+    let SystemFloat = "System.Float"
 
   open StringLiterals
 
@@ -145,7 +150,11 @@ namespace Microsoft.Research.Vcc
             yield! []
         | _ -> yield! []
       ]
-    
+
+    let isTypeWhereVolatileMatters = function
+      | C.Type.Ref(_) -> true
+      | _ -> false
+        
     static member private CheckHasError(e : IExpression) =
      match e with
        | :? IErrorCheckable as ec -> ec.HasErrors
@@ -1535,7 +1544,8 @@ namespace Microsoft.Research.Vcc
           match pointerTypeReference with
             | :? IPointerType as pt -> 
               VccCompilationHelper.IsSpecPointer(pt),
-              if VccCompilationHelper.IsVolatilePointer(pt) then C.Type.Volatile(targetType) else targetType
+              if VccCompilationHelper.IsVolatilePointer(pt) && isTypeWhereVolatileMatters targetType 
+              then C.Type.Volatile(targetType) else targetType
             | _ -> false, targetType
 
         typeRes <- C.Type.MkPtr (targetType', isSpec)
@@ -1636,7 +1646,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (constant:ICompileTimeConstant) : unit =
 
         let unfolded = 
-          if not helper.Options.UnfoldConstants || unfoldingConstant then None
+          if unfoldingConstant then None
           else
             match constant with
               | :? CompileTimeConstant as cconst -> 
@@ -1817,14 +1827,22 @@ namespace Microsoft.Research.Vcc
         let methodName = methodToCall.Name.Value
         let containingTypeDefinitionName = TypeHelper.GetTypeName(methodToCall.ContainingTypeDefinition)        
 
-        let opMap = Map.ofList [ "op_Equality", ("==", false) ; "op_Inequality", ("!=", false); "op_Addition", ("+", false);
-                                 "op_Subtraction", ("-", true); "op_Division", ("/", true); "op_Modulus", ("%", true);
-                                 "op_Multiply", ("*", false); "op_LessThan", ("<", false); "op_LessThanOrEqual", ("<=", false);
-                                 "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false);
-                                 "op_UnaryNegation", ("-", false);
-                                 "op_LeftShift", ("<<", false); "op_RightShift", (">>", false); "op_BitwiseAnd", ("&", false);
-                                 "op_BitwiseOr", ("|", false); "op_BitwiseNot", ("~", false); "op_ExclusiveOr", ("^", false);
-                               ]
+        let bigIntOpMap = Map.ofList [ "op_Equality", ("==", false) ; "op_Inequality", ("!=", false); "op_Addition", ("+", false);
+                                       "op_Subtraction", ("-", true); "op_Division", ("/", true); "op_Modulus", ("%", true);
+                                       "op_Multiply", ("*", false); "op_LessThan", ("<", false); "op_LessThanOrEqual", ("<=", false);
+                                       "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false);
+                                       "op_UnaryNegation", ("-", false);
+                                       "op_LeftShift", ("<<", false); "op_RightShift", (">>", false); "op_BitwiseAnd", ("&", false);
+                                       "op_BitwiseOr", ("|", false); "op_BitwiseNot", ("~", false); "op_ExclusiveOr", ("^", false);
+                                    ]
+
+        let floatOpMap = Map.ofList [ "op_Equality", ("==", false) ; "op_Inequality", ("!=", false); "op_Addition", ("+", false);
+                                      "op_Subtraction", ("-", true); "op_Division", ("/", true); 
+                                       "op_Multiply", ("*", false); "op_LessThan", ("<", false); "op_LessThanOrEqual", ("<=", false);
+                                       "op_GreaterThan", (">", false); "op_GreaterThanOrEqual", (">=", false);
+                                       "op_UnaryNegation", ("-", false);                                       
+                                    ]
+
 
         this.EnsureMethodIsVisited(methodToCall)
 
@@ -1833,7 +1851,12 @@ namespace Microsoft.Research.Vcc
           | _ -> None
 
         let (|BigIntOp|_|) = fun s ->
-          if Map.containsKey s opMap then
+          if Map.containsKey s bigIntOpMap then
+            Some ()
+          else None
+
+        let (|FloatOp|_|) = fun s ->
+          if Map.containsKey s floatOpMap then
             Some ()
           else None
 
@@ -1851,20 +1874,23 @@ namespace Microsoft.Research.Vcc
 
         let args() = [for e in methodCall.Arguments -> this.DoIExpression e]
 
-        let trBigIntOp methodName = 
+        let trOp opMap methodName = 
           let mcIsChecked = 
             match methodCall with
               | :? Expression as expr -> expr.ContainingBlock.UseCheckedArithmetic
               | _ -> true
           match args() with
             | [e1] when methodName = "op_UnaryNegation" ->
-              let op, isChecked = opMap.[methodName]
+              let op, isChecked = Map.find methodName opMap
               exprRes <- C.Expr.Prim (ec, C.Op(op, checkedStatus (isChecked && mcIsChecked)), [e1])
             | [e1; e2] -> 
-              let op, isChecked = opMap.[methodName]
+              let op, isChecked = Map.find methodName opMap
               exprRes <- C.Expr.Prim (ec, C.Op(op, checkedStatus (isChecked && mcIsChecked)), [e1; e2])
             | _ -> oopsNumArgs()
             
+        let trBigIntOp = trOp bigIntOpMap
+        let trFloatOp = trOp floatOpMap
+
         let trSetOp methodName =
           match args() with
            | [e1; e2] ->
@@ -1905,6 +1931,7 @@ namespace Microsoft.Research.Vcc
           | BigIntTypeName, "op_Implicit" -> trTrivialCast()
           | BigIntTypeName, "op_Explicit" -> trCast()
           | BigIntTypeName, BigIntOp -> trBigIntOp methodName
+          | (SystemDouble | SystemFloat), FloatOp -> trFloatOp methodName
           | SystemDiagnosticsContractsCodeContractObjset, ObjsetOp -> trSetOp methodName
           | "Microsoft.Research.Vcc.Runtime", "__noop" -> exprRes <- C.Expr.Macro (ec, "noop", [])
           | MapTypeString, "get_Item" ->

@@ -45,11 +45,12 @@ namespace Microsoft.Research.Vcc
 
     private static string GenerateClArgs(string fileName, VccOptions commandLineOptions) {
       StringBuilder args = new StringBuilder();
-      args.Append("/nologo /TC");
+      args.Append("/nologo /TC /u /E /DVERIFY /D_WIN32");
       // VCC doesn't like /D_PREFAST_ with VS2010
-      args.Append(" /E /DVERIFY /D_USE_DECLSPECS_FOR_SAL /DSAL_NO_ATTRIBUTE_DECLARATIONS"); // TODO revisit these
+      args.Append(" /D_USE_DECLSPECS_FOR_SAL /DSAL_NO_ATTRIBUTE_DECLARATIONS"); // TODO revisit these
       if (commandLineOptions.Vcc3) args.Append(" /DVERIFY3");
       if (commandLineOptions.NewSyntax) args.Append(" /DVERIFY2");
+      if (commandLineOptions.PointerSize == 64) args.Append(" /D_WIN64");
 
       foreach (string ppOption in commandLineOptions.PreprocessorOptions) {
         args.Append(' ');

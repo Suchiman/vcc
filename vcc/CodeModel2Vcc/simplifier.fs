@@ -651,6 +651,8 @@ namespace Microsoft.Research.Vcc
             List.iter (fun (e:Expr) -> e.SelfVisit (findThem false)) (d.Reads @ d.Writes @ d.Requires @ d.Ensures)
             b.SelfVisit (findThem true)
             let b = b.SelfMap (replaceWithPointers addressableLocals)
+            let outParDecls = [ for kvp in addressableLocals do if kvp.Key.Kind = VarKind.OutParameter then yield snd (kvp.Value) ]
+            let b = Expr.MkBlock(outParDecls @ [b])
             d.Body <- Some b
           | None -> ()
         d
@@ -797,7 +799,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================\
 
 
-    let checkSpecCodeAndRemoveSpecMark decls =
+    let checkSpecCode decls =
 
       let isPhysicalLocation triggerOnlyOnVolatileFields = 
         let rec isPhysicalLocation' = function 
@@ -854,7 +856,7 @@ namespace Microsoft.Research.Vcc
         | _ when ctx.IsPure -> 
           false
         | CallMacro(_, "spec", _, _) 
-        | CallMacro(_, ("_vcc_unwrap"|"_vcc_wrap"|"_vcc_wrap_non_owns"|"_vcc_alloc"|"_vcc_free"|"_vcc_stack_alloc"), _, _)
+        | CallMacro(_, ("_vcc_unwrap"|"_vcc_wrap"|"_vcc_wrap_non_owns"|"_vcc_wrap_set"|"_vcc_unwrap_set"|"_vcc_alloc"|"_vcc_free"|"_vcc_stack_alloc"), _, _)
         | CallMacro(_, ("_vcc_from_bytes"|"_vcc_to_bytes"|"_vcc_havoc_others"), _, _)
         | CallMacro(_, ("_vcc_bump_volatile_version"|"_vcc_deep_unwrap"|"_vcc_union_reinterpret"|"_vcc_reads_havoc"),_ , _)
         | CallMacro(_, ("_vcc_set_owns"|"_vcc_set_closed_owner"|"_vcc_set_closed_owns"|"_vcc_split_array"|"_vcc_join_arrays"),_ , _)
@@ -1063,7 +1065,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("desugar-approvers", Helper.Decl handleApprovers)
     helper.AddTransformer ("desugar-assign-ops", Helper.Expr removeAssignOps)
     helper.AddTransformer ("desugar-lambdas", Helper.Decl desugarLambdas)
-    helper.AddTransformer ("check-spec-code", Helper.Decl checkSpecCodeAndRemoveSpecMark)
+    helper.AddTransformer ("check-spec-code", Helper.Decl checkSpecCode)
     helper.AddTransformer ("desugar-push-decls-into-blocks", Helper.Decl pushDeclsIntoBlocks)
     helper.AddTransformer ("desugar-addressable-locals", Helper.Decl heapifyAddressedLocals)
     helper.AddTransformer ("desugar-globals", Helper.Decl handleGlobals)
