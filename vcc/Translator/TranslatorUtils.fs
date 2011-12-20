@@ -398,19 +398,21 @@ namespace Microsoft.Research.Vcc
       
       // TODO: this shouldn't be here
       member this.AssumeLocalIs tok (l:C.Variable) =
-        let pos = this.GetTokenConst tok
-        let name = "#loc." + l.Name
-        if not (tokenConstantNames.Contains name) then
-          soFarAssignedLocals := l :: !soFarAssignedLocals
-        this.RegisterToken name
-        let valIs suff v = bCall ("$local_value_is" + suff) [bState; er pos; er name; v; toTypeId l.Type]
-        let cond =
-          match l.Type with
-            | C.Ptr _ when not vcc3 -> 
-              let v' = this.AddType l.Type (this.VarRef l)
-              bAnd (valIs "" (bCall "$ptr_to_int" [v'])) (valIs "_ptr" v')
-            | _ -> valIs "" (this.CastToInt (trType l.Type) (this.VarRef l))
-        B.Stmt.MkAssume cond
+        if this.Helper.Options.Vcc3 then B.Stmt.Empty
+        else
+          let pos = this.GetTokenConst tok
+          let name = "#loc." + l.Name
+          if not (tokenConstantNames.Contains name) then
+            soFarAssignedLocals := l :: !soFarAssignedLocals
+          this.RegisterToken name
+          let valIs suff v = bCall ("$local_value_is" + suff) [bState; er pos; er name; v; toTypeId l.Type]
+          let cond =
+            match l.Type with
+              | C.Ptr _ when not vcc3 -> 
+                let v' = this.AddType l.Type (this.VarRef l)
+                bAnd (valIs "" (bCall "$ptr_to_int" [v'])) (valIs "_ptr" v')
+              | _ -> valIs "" (this.CastToInt (trType l.Type) (this.VarRef l))
+          B.Stmt.MkAssume cond
         
       member this.TrInvLabel (lbl:string) =
         let result = "l#" + lbl;
