@@ -306,6 +306,7 @@ namespace Microsoft.Research.Vcc
       | VarDecl of Var * option<Expr>
       | Comment of string    
       | Return of Token
+      | Empty
 
       static member MkAssume e = Assume ([], e)
       static member MkAssert (t, e) = Assert ([], t, e)
@@ -325,6 +326,7 @@ namespace Microsoft.Research.Vcc
             | Havoc _
             | Stmt.Label _
             | Assign _
+            | Empty
             | Call _ -> s
             | If (c, tok, t, e) -> If (c, tok, self t, self e)
             | While (a, b, s) -> While (a, b, self s)
@@ -446,6 +448,7 @@ namespace Microsoft.Research.Vcc
           List.concat (List.map trStmt stmts)
         | Comment s ->
           [Cmd (Microsoft.Boogie.CommentCmd (s) :> Microsoft.Boogie.Cmd)]
+        | Empty -> []
         | Return t ->
           [TransferCmd (Microsoft.Boogie.ReturnCmd (tok t))]
         | VarDecl _ -> die()
