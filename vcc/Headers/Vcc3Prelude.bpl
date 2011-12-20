@@ -866,7 +866,7 @@ function {:inline false} $owner(S:$state, p:$ptr) : $ptr
   { $f_owner(S)[p] }
 function {:inline false} $closed(S:$state, p:$ptr) : bool
   { $is_proper(p) && $f_closed(S)[p] }
-function {:inline false} $timestamp(S:$state, p:$ptr) : int
+function {:inline true} $timestamp(S:$state, p:$ptr) : int
   { $f_timestamp(S)[p] }
 function {:inline false} $ref_cnt(S:$state, p:$ptr) : int
   { $rd(S, p, $f_ref_cnt($typ(p))) }
@@ -1317,9 +1317,6 @@ procedure $set_owns(p:$ptr, owns:$ptrset);
 function {:inline true} $timestamp_is_now(S:$state, p:$ptr) : bool
   { $timestamp(S, p) == $current_timestamp(S) }
 
-function {:inline true} $now_writable(S:$state, p:$ptr) : bool
-  { $timestamp_is_now(S, p) && $mutable(S, p) }
-
 function {:inline true} $timestamp_post(M1:$state, M2:$state) : bool
   { $current_timestamp(M1) <= $current_timestamp(M2) &&
     /*(forall p:$ptr :: 
@@ -1480,7 +1477,7 @@ function {:inline true} $is_allocated(S0:$state, S:$state, r:$ptr, t:$ctype) : b
     if $is_primitive(t) then
       (   $mutable(S, $prim_emb(r))
        && r == $dot($prim_emb(r), $field(r))
-       && $timestamp_is_now(S, $prim_emb(r)))
+       && $timestamp_updated(S0, S, $prim_emb(r)))
     else
       (    $extent_mutable(S, r)
         && $extent_is_now(S0, S, r)
@@ -1556,11 +1553,23 @@ function $post_unwrap(S1:$state, S2:$state) : bool;
 function $pre_wrap_set($state) : bool;
 function $pre_unwrap_set($state) : bool;
 
+function {:inline true} $timestamp_updated(S0:$state, S:$state, p:$ptr) : bool
+{
+  $current_timestamp(S0) < $f_timestamp(S)[p] &&
+  $f_timestamp(S)[p] < $current_timestamp(S)
+}
+
+function {:inline true} $timestamp_possibly_updated(S0:$state, S:$state, p:$ptr, cond:bool) : bool
+{
+  if cond then $timestamp_updated(S0, S, p)
+  else $f_timestamp(S0)[p] == $f_timestamp(S)[p]
+}
+
 function $is_unwrapped_dynamic(S0:$state, S:$state, o:$ptr) : bool
 {
      $is_unwrapped(S0, S, o)
-  && $f_timestamp(S) == 
-       (lambda r:$ptr :: if $owner(S0, r) == o || r == o then $current_timestamp(S) else $f_timestamp(S0)[r])
+  && (forall r:$ptr :: {$f_timestamp(S)[r]}
+        $timestamp_possibly_updated(S0, S, r, $owner(S0, r) == o || r == o))
   // && (forall r:$ptr :: {$owner(S0, r)} $owner(S0, r) != o ==> !$set_in(r, $owns(S0, o)))
   && (forall r:$ptr :: {$owner(S, r)} {$closed(S, r)}
          $set_in(r, $owns(S0, o)) ==>
@@ -1655,7 +1664,8 @@ axiom (forall S:$state, l:$ptr, p:$ptr :: {$take_over(S, l, p)}
 
 axiom (forall S0,S:$state, l:$ptr, p:$ptr :: {$release(S0, S, l, p)}
   $f_owner($release(S0, S, l, p)) == $f_owner(S)[p := $me()] &&
-  $f_timestamp($release(S0, S, l, p)) == $f_timestamp(S)[p := $current_timestamp(S0)]
+  $f_timestamp($release(S0, S, l, p)) == $f_timestamp(S)[p := $current_timestamp(S)] &&
+  $current_timestamp($release(S0, S, l, p)) > $current_timestamp(S)
   );
 
 procedure $static_unwrap(o:$ptr, S:$state);
@@ -1667,7 +1677,7 @@ procedure $static_unwrap(o:$ptr, S:$state);
 
   ensures $is_unwrapped(old($s), $s, o);
   ensures $f_owner($s) == $f_owner(S);
-  ensures $f_timestamp($s) == $f_timestamp(S)[o := $current_timestamp(old($s))];
+  ensures $f_timestamp($s) == $f_timestamp(S)[o := $current_timestamp($s)];
 
 
 procedure $static_wrap(o:$ptr, S:$state, owns:$ptrset);
@@ -1718,10 +1728,9 @@ function $is_unwrapped_set(S0:$state, S1:$state, S:$state, dynamic:$ptrset, stat
            $owner(S0, r) == o && $wrapped(S, r, $typ(r))))
   && $f_owner(S) == (lambda r:$ptr ::
        if $set_in($owner(S0, r), dynamic) then $me() else $f_owner(S1)[r])
-  && $f_timestamp(S) == (lambda r:$ptr ::
-       if $set_in(r, static) then $current_timestamp(S0)
-       else if $set_in($owner(S0, r), dynamic) || $set_in($owner(S0, r), static) then $current_timestamp(S)
-       else $f_timestamp(S0)[r])
+  && (forall r:$ptr :: {$timestamp(S, r)}
+       $timestamp_possibly_updated(S0, S, r, 
+         $set_in(r, static) || $set_in($owner(S0, r), dynamic) || $set_in($owner(S0, r), static)))
   && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==> $mutable(S, o))
   && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==> $owns(S0, o) == $owns(S, o))
   && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==>
@@ -1738,7 +1747,9 @@ function $is_wrapped_set(S0:$state, S1:$state, S2:$state, S:$state, dynamic:$ptr
      $heap(S) == $heap(S2)
   && $f_owner(S) == $f_owner(S1)
   && $f_closed(S) == (lambda o:$ptr :: if $set_in(o, dynamic) || $set_in(o, static) then true else $f_closed(S0)[o])
-  && $f_timestamp(S) == (lambda o:$ptr :: if $set_in(o, dynamic) || $set_in(o, static) then $current_timestamp(S) else $f_timestamp(S0)[o])
+  && (forall o:$ptr :: {$timestamp(S, o)}
+       $timestamp_possibly_updated(S0, S, o, 
+         $set_in(o, dynamic) || $set_in(o, static)))
   && (forall o:$ptr :: $set_in(o, dynamic) || $set_in(o, static) ==>
        (forall p:$ptr :: {$domain_root(S, p)}
          $domain_root(S, p) == $domain_root(S0, p) ||
@@ -1947,7 +1958,7 @@ axiom $typ($no_claim) == ^^claim && $is_null($no_claim);
 procedure $alloc_claim() returns(r:$ptr);
   modifies $s;
   ensures $is_allocated0(old($s), $s, r, ^^claim);
-  ensures $timestamp_is_now($s, r);
+  ensures $timestamp_updated(old($s), $s, r);
   ensures $wrapped($s, r, ^^claim);
   ensures $in_range_spec_ptr(r);
   ensures $owns($s, r) == $set_empty();
@@ -2314,8 +2325,8 @@ axiom (forall S:$state, T:$ctype, sz:int, p:$ptr :: {$mutable(S, $as_ptr_with_ty
   $is_primitive(T) && $mutable(S, $as_ptr_with_type(p, $array(T, sz))) ==> $is_mutable_array(S, $as_array_first_index(p), T, sz));
 
 function $extent_is_now(S0:$state, S:$state, r:$ptr) : bool
-  { $timestamp_is_now(S, r) &&
-    (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $timestamp_is_now(S, p)) }
+  { $timestamp_updated(S0, S, r) &&
+    (forall p:$ptr :: {$extent_hint(p, r)} $in(p, $composite_extent(S, r, $typ(r))) ==> $timestamp_updated(S0, S, p)) }
 
 function $extent_is_fresh(S0:$state, S:$state, r:$ptr) : bool
   { $is_fresh(S0, S, r) &&
