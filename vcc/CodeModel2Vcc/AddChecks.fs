@@ -60,8 +60,6 @@ namespace Microsoft.Research.Vcc
   
     // ============================================================================================================
     
-    let expectUnreach = Expr.MkAssert (Macro (boolBogusEC(), "_vcc_possibly_unreachable", []))
-    
     let bogusSet = { bogusEC with Type = Type.PtrSet }
     let bogusState = { bogusEC with Type = Type.MathState }
     let pureEx (e:Expr) = Pure (e.Common, e)
@@ -77,7 +75,7 @@ namespace Microsoft.Research.Vcc
           let body = splitConjunction keeps |> List.map updateFor |> List.concat
           if body.IsEmpty then acc
           else
-            If (bogusEC, None, pureEx cond, Expr.MkBlock (body @ [expectUnreach]), Expr.MkBlock [expectUnreach]) :: acc
+            If (bogusEC, None, pureEx cond, Expr.MkBlock (body @ [TransUtil.possiblyUnreachable]), Expr.MkBlock [TransUtil.possiblyUnreachable]) :: acc
         | e -> updateFor e @ acc
       List.fold addToOwns [] checks
     
