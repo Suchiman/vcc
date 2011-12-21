@@ -69,6 +69,8 @@ namespace Microsoft.Research.Vcc
   let propAssert id msg name p =
     let p = ignoreEffects p
     Expr.MkAssert (Expr.Macro (afmte id msg [p], name, [p]))
+
+  let possiblyUnreachable = Expr.MkAssert (Macro (boolBogusEC(), "_vcc_possibly_unreachable", []))
   
   let addSuffix tok getsuff =
     forwardingToken tok None (fun () -> tok.Value + " " + getsuff())

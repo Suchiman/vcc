@@ -846,12 +846,13 @@ namespace Microsoft.Research.Vcc
         let nonDetDecls = ref []
         let rec nondetJumpToLabels' = function
         | [] ->  die()
-        | [lbl] -> Expr.Goto(bogusEC, lbl)
+        | [lbl] -> Expr.MkBlock([TransUtil.possiblyUnreachable; Expr.Goto(bogusEC, lbl)])
         | lbl :: lbls ->
           let nonDetVar = getTmp helper "nondet" Type.Bool VarKind.Local 
           let notDetDecl = Expr.VarDecl(bogusEC, nonDetVar, [])
           do nonDetDecls := notDetDecl :: !nonDetDecls
-          Expr.If(bogusEC, None, Expr.Ref(boolBogusEC(), nonDetVar), Expr.Goto(bogusEC, lbl), nondetJumpToLabels' lbls)
+          Expr.MkBlock([TransUtil.possiblyUnreachable; 
+                        Expr.If(bogusEC, None, Expr.Ref(boolBogusEC(), nonDetVar), Expr.MkBlock([TransUtil.possiblyUnreachable; Expr.Goto(bogusEC, lbl)]), nondetJumpToLabels' lbls)])
 
         (nondetJumpToLabels' expr, !nonDetDecls)
 
@@ -901,7 +902,8 @@ namespace Microsoft.Research.Vcc
                     | [] -> Expr.Comment(bogusEC, "no gotos out of block")
                     | lbls ->
                       let (branches, nonDetDecls) = notdetJumpToLabels lbls
-                      let ifNotNormalExit = Expr.If(bogusEC, None, Expr.Prim(boolBogusEC(), Op("!", CheckedStatus.Processed), [exitStatus]), branches, Expr.Comment(bogusEC, "no else"))
+                      //let branches' = Expr.MkBlock([TransUtil.possiblyUnreachable; branches])
+                      let ifNotNormalExit = Expr.If(bogusEC, None, Expr.Prim(boolBogusEC(), Op("!", CheckedStatus.Processed), [exitStatus]), branches, TransUtil.possiblyUnreachable)
                       Expr.MkBlock(nonDetDecls @ [ ifNotNormalExit ])
                 Some(Expr.MkBlock(inits @ [exitStatus; labelBranches]))
         | _ as e -> None      
