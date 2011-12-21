@@ -1,0 +1,60 @@
+`/newsyntax
+#include <vcc.h>
+
+_(dynamic_owns) union U {
+  unsigned __int64 a;
+  __int64 b;
+  int c;
+  unsigned int d;
+  struct {
+    int e;
+    int f;
+  } x;
+  
+  
+  _(invariant \union_active(&\this->x) ==> &\this->x \in \this->\owns)
+};
+
+struct S {
+  int a;
+  int b;
+  _(ghost int m[int])
+};
+
+struct T {
+  int a;
+  int b;
+  struct S s1;
+  struct S s2;
+  union U u1,u2;
+  
+  _(invariant \mine(&s1, &s2, &u1, &u2))
+  _(invariant \deep_eq(s1, s2))
+  _(invariant \deep_eq(u1, u2))
+};
+
+
+bool eq_S(struct S s1, struct S s2) 
+  _(requires \deep_eq(s1, s2))
+{
+  _(assert s1.a == s2.a)
+  _(assert s1.b == s2.b)
+  _(assert s1.m == s2.m)
+}
+
+bool eq_T(struct T t1, struct T t2) 
+  _(requires \deep_eq(t1, t2))
+{
+  _(assert t1.a == t2.a)
+  _(assert t1.b == t2.b)
+  _(assert \deep_eq(t1.s1, t2.s1))
+  _(assert \deep_eq(t1.s2, t2.s2))
+}
+
+`
+testcase(20,11) : warning VC9108: structured type equality treats map equality as map identity
+Verification of U#adm succeeded.
+Verification of T#adm succeeded.
+Verification of eq_S succeeded.
+Verification of eq_T succeeded.
+`
