@@ -3,7 +3,7 @@
 #include <vcc.h>
 #include <stdlib.h>
 /*{obj}*/
-_(logic bool \writable(\object o) = \true; )
+
 struct SafeString {
   unsigned capacity, len;
   char *content;

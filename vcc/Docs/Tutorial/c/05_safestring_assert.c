@@ -10,8 +10,7 @@ struct SafeString {
   _(invariant content[len] == '\0')
 };
 
-_(logic bool \writable(\object o) = \true; )
-_(logic bool \writable(\objset o) = \true; )
+_(bool \writable(\objset o) _(returns \true))
 
 /*{assert}*/
 void sstr_append_char(struct SafeString *s, char c)
@@ -24,7 +23,7 @@ void sstr_append_char(struct SafeString *s, char c)
   _(assert \wrapped(s))
   _(assume s->len <= SSTR_MAXLEN &&
            s->content[s->len] == '\0')
-  _(ghost s->\closed = \false;)
+  _(ghost s->\closed = \false)
   _(assume \writable(\span(s)))
 
   s->content[s->len++] = c;
@@ -34,12 +33,12 @@ void sstr_append_char(struct SafeString *s, char c)
   _(assert \mutable(s))
   _(assert s->len <= SSTR_MAXLEN &&
            s->content[s->len] == '\0')
-  _(ghost s->\closed = \true;)
+  _(ghost s->\closed = \true)
 }
 /*{out}*/
 /*`
-testcase(26,11) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
-testcase(36,11) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
-testcase(26,11) : error VC9612: don't know how to write to @_vcc_closed(s)
-testcase(36,11) : error VC9612: don't know how to write to @_vcc_closed(s)
+testcase(25,11) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(35,11) : warning VC9300: [possible unsoundness]: assignment to physical location from specification code
+testcase(25,11) : error VC9612: don't know how to write to @_vcc_closed(s)
+testcase(35,11) : error VC9612: don't know how to write to @_vcc_closed(s)
 `*/

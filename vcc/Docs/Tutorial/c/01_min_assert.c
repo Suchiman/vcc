@@ -41,6 +41,8 @@ int main()
 testcase(6,7) : error VC0000: Invalid expression term '\r'.
 testcase(10,5) : error VC0000: Invalid expression term '\r'.
 testcase(11,8) : error VC0000: Invalid expression term '\r'.
+testcase(13,12) : error VC0000: Cannot use '\result' in this context.
+testcase(13,28) : error VC0000: Cannot use '\result' in this context.
 testcase(18,7) : error VC0000: Invalid expression term '\r'.
 testcase(32,3) : error VC0000: Invalid expression term '\result'.
 testcase(32,13) : warning VC9001: The expression '0' has no side effect; expected operation with side effect.

@@ -632,7 +632,19 @@ namespace Microsoft.Research.Vcc
     protected override bool DirectoryIsOk(string path, string pattern, string extension)
     {
       if (!this.options.RunTestSuite) return false;
-      this.options.FileNames.Add(path + pattern);
+      
+      string fixPath = path;
+      if (pattern != "")
+      {
+          if (!fixPath.EndsWith("\\")) fixPath += "\\";
+          fixPath += pattern;
+      }
+      if (extension != "" && !fixPath.EndsWith(extension))
+      {
+          // Note: doesn't hit, normally extension already included
+          fixPath += extension;
+      }
+      this.options.FileNames.Add(fixPath);
       return true;
     }
   }
