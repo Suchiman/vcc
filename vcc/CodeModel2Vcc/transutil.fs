@@ -52,6 +52,13 @@ namespace Microsoft.Research.Vcc
       | x::xs -> loop (x::acc) xs
     loop [] l
  
+  let removeDuplicates l =
+    let elements = new HashSet<_>()
+    let rec loop = function
+      | [] -> []
+      | x::xs -> if elements.Add x then x :: loop xs else loop xs
+    loop l
+
   let ignoreEffects e =
     let aux self = function 
       | Block (_, stmts, _) ->
