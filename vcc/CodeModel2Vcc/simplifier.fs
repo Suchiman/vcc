@@ -171,9 +171,6 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================
     
-     
-    let expectUnreach = Expr.MkAssert (Macro (boolBogusEC(), "_vcc_possibly_unreachable", []))
-
     /// Get rid of &&, || -- operators that alter control flow.
     /// Actually FELT translates them all to "ite" (IConditional) nodes.
     let removeLazyOps = 
@@ -197,7 +194,7 @@ namespace Microsoft.Research.Vcc
           let tmpRef = Expr.Ref (c, tmp)
           let thAssign = Macro (c', "=", [tmpRef; th])
           let elAssign = Macro (c', "=", [tmpRef; el])          
-          let write = Expr.If (c', None, cond, Expr.MkBlock([expectUnreach; thAssign]), Expr.MkBlock([expectUnreach; elAssign]))
+          let write = Expr.If (c', None, cond, Expr.MkBlock([TransUtil.possiblyUnreachable; thAssign]), Expr.MkBlock([TransUtil.possiblyUnreachable; elAssign]))
           addStmtsOpt [VarDecl (c', tmp, []); self write] tmpRef
         | If(c, cl, cond, th, el) ->
           match splitKnown cond with
@@ -750,7 +747,7 @@ namespace Microsoft.Research.Vcc
           let (mkLoop, inBody, break_lbl, continue_lbl) = doLoop wtok conds
           mkLoop [ If (wtok, None, cond, 
                           inBody body, 
-                          Expr.MkBlock([expectUnreach; Goto (wtok, break_lbl)]));
+                          Expr.MkBlock([TransUtil.possiblyUnreachable; Goto (wtok, break_lbl)]));
                    Label (wtok, continue_lbl)]
      
         | Macro (wtok, "doUntil", [Macro (_, "loop_contract", conds); body; cond]) ->
@@ -778,7 +775,7 @@ namespace Microsoft.Research.Vcc
           let loop =
             mkLoop [If (wtok, None, cond,
                          inBody body,
-                         Expr.MkBlock([expectUnreach; Goto (wtok, break_lbl)]));
+                         Expr.MkBlock([TransUtil.possiblyUnreachable; Goto (wtok, break_lbl)]));
                     Label (wtok, continue_lbl);
                     inBody incr ]
           Some (Expr.MkBlock [init; loop.Value])

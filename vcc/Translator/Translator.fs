@@ -1739,7 +1739,7 @@ namespace Microsoft.Research.Vcc
                 else [],[],env
               let s2 =
                 match s2 with                   
-                  | C.Expr.Comment(c, "empty") -> C.Expr.MkAssert (C.Expr.Macro (C.boolBogusEC(), "_vcc_possibly_unreachable", []))
+                  | C.Expr.Comment(c, "empty") -> TransUtil.possiblyUnreachable
                   | _ -> s2
               captureState "" ec.Token ::
               B.Stmt.Comment ("if (" + c.ToString() + ") ...") ::
