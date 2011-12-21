@@ -732,7 +732,7 @@ namespace Microsoft.Research.Vcc
 
         let stmts' = List.map (fun (stmt:Expr) -> stmt.SelfMap(findAndReplaceExternalGotos')) stmts
 
-        (stmts' , !externalLabels)
+        (stmts' , TransUtil.removeDuplicates !externalLabels)
                 
       let findLocalsAndTurnIntoParameters fBefore fAfter (body : list<Expr>) (cs : BlockContract) =
         let inMap = new Dict<_,_>()
@@ -842,16 +842,18 @@ namespace Microsoft.Research.Vcc
         | CallMacro(ec, "_vcc_normal_exit", [], []) -> helper.Error(ec.Token, 9745, "\normal_exit is only allowed in post-conditions of blocks"); false
         | _ -> true
 
-      let nonDetDecls = ref []
-
-      let rec notdetJumpToLabels = function
+      let notdetJumpToLabels expr =      
+        let nonDetDecls = ref []
+        let rec nondetJumpToLabels' = function
         | [] ->  die()
         | [lbl] -> Expr.Goto(bogusEC, lbl)
         | lbl :: lbls ->
           let nonDetVar = getTmp helper "nondet" Type.Bool VarKind.Local 
           let notDetDecl = Expr.VarDecl(bogusEC, nonDetVar, [])
           do nonDetDecls := notDetDecl :: !nonDetDecls
-          Expr.If(bogusEC, None, Expr.Ref(boolBogusEC(), nonDetVar), Expr.Goto(bogusEC, lbl), notdetJumpToLabels lbls)
+          Expr.If(bogusEC, None, Expr.Ref(boolBogusEC(), nonDetVar), Expr.Goto(bogusEC, lbl), nondetJumpToLabels' lbls)
+
+        (nondetJumpToLabels' expr, !nonDetDecls)
 
       let rec liftBlocks findRefs currentBlockId blockPrefix self = function
         | Expr.Block (ec, body, Some ({ Requires = [CallMacro (fc, "_vcc_full_context", _, [])] } as bc)) ->
@@ -898,9 +900,9 @@ namespace Microsoft.Research.Vcc
                   match externalGotos with
                     | [] -> Expr.Comment(bogusEC, "no gotos out of block")
                     | lbls ->
-                      let branches = notdetJumpToLabels lbls
+                      let (branches, nonDetDecls) = notdetJumpToLabels lbls
                       let ifNotNormalExit = Expr.If(bogusEC, None, Expr.Prim(boolBogusEC(), Op("!", CheckedStatus.Processed), [exitStatus]), branches, Expr.Comment(bogusEC, "no else"))
-                      Expr.MkBlock(!nonDetDecls @ [ ifNotNormalExit ])
+                      Expr.MkBlock(nonDetDecls @ [ ifNotNormalExit ])
                 Some(Expr.MkBlock(inits @ [exitStatus; labelBranches]))
         | _ as e -> None      
 
