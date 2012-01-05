@@ -2030,6 +2030,7 @@ procedure $set_closed_owner(#p:$ptr, owner:$ptr);
   ensures $roots($s) == (lambda q:$ptr :: if $domain_root(old($s), q) == #p then $domain_root($s, q) else $domain_root(old($s), q));
   ensures $updated_owns(old($s), $s, owner, $set_union($set_singleton(#p), $owns(old($s), owner)));
   ensures $set_in(#p, $owns($s, owner));
+  ensures $timestamp_post(old($s), $s);
 
 function {:inline true} $new_ownees(S:$state, o:$ptr, owns:$ptrset) returns($ptrset)
   { $set_difference(owns, $owns(S, o)) }
@@ -2052,6 +2053,7 @@ procedure $set_closed_owns(owner:$ptr, owns:$ptrset);
   ensures $f_owner($s) == (lambda q:$ptr :: if $in(q, owns) then owner else $f_owner(old($s))[q]);
   ensures $roots($s) == (lambda q:$ptr :: if $in($domain_root(old($s), q), owns) then $domain_root($s, q) else $domain_root(old($s), q));
   ensures $updated_owns(old($s), $s, owner, owns);
+  ensures $timestamp_post(old($s), $s);
 
 procedure $giveup_closed_owner(#p:$ptr, owner:$ptr);
   // writes owner
