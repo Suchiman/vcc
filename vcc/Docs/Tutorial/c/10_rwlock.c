@@ -13,10 +13,10 @@ _(atomic_inline) unsigned InterlockedCompareExchange(volatile unsigned *Destinat
 }
 _(ghost struct Token {
   int dummy;
-} )
+})
 _(ghost _(claimable) struct Counter {
   int dummy;
-} )
+})
 /*{refcnt}*/
 _(volatile_owns)
 struct RwLock {
@@ -41,7 +41,7 @@ void init(struct RwLock *r _(ghost \object rsc))
   _(ensures \wrapped(r) && r->resource == rsc)
 {
   r->cnt = 0;
-  _(ghost r->resource = rsc;)
+  _(ghost r->resource = rsc)
   _(wrap &r->token)
   _(wrap &r->claim_counter)
   _(ghost r->\owns = { &r->token, rsc, &r->claim_counter })
@@ -49,7 +49,7 @@ void init(struct RwLock *r _(ghost \object rsc))
 }
 /*{incr}*/
 void acquire_read(struct RwLock *r _(ghost \claim c)
-             _(	out \claim ret))
+             _(out \claim ret))
   _(always c, r->\closed)
   _(ensures \claims_object(ret, &r->claim_counter) && \claims(ret, r->resource->\closed) && \wrapped0(ret) && \fresh(ret))
 {
@@ -92,7 +92,7 @@ void release_read(struct RwLock *r _(ghost \claim c) _(ghost \claim handle))
       n = InterlockedCompareExchange(&r->cnt, v - 2, v);
       _(ghost
         if (v == n) {
-          _(ghost \destroy_claim(handle, {&r->claim_counter}));
+          \destroy_claim(handle, {&r->claim_counter});
         })
     }
 
@@ -101,7 +101,7 @@ void release_read(struct RwLock *r _(ghost \claim c) _(ghost \claim handle))
 }
 void acquire_write(struct RwLock *r _(ghost \claim c))
   _(always c, r->\closed)
-  _(ensures \wrapped(r->resource))
+  _(ensures \wrapped(r->resource) && \fresh(r->resource))
 {
   unsigned v, n;
 
@@ -162,7 +162,7 @@ struct B {
 void useb(struct B *b _(ghost \claim c))
   _(always c, b->\closed)
 {
-  _(ghost \claim ac;)
+  _(ghost \claim ac)
   acquire_read(&b->rc _(ghost c) _(out ac));
     _(atomic &b->a, ac) {
       b->a.x = 10;
