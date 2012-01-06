@@ -73,6 +73,7 @@ namespace Microsoft.Research.Vcc
     }
     public int DefExpansionLevel = 3;
     public bool NoVerification;
+    public bool DeterminizeOutput;
 
     public void CopyFrom(VccOptions other)
     {
@@ -144,6 +145,7 @@ namespace Microsoft.Research.Vcc
       this.TerminationLevel = other.TerminationLevel;
       this.DefExpansionLevel = other.DefExpansionLevel;
       this.NoVerification = other.NoVerification;
+      this.DeterminizeOutput = other.DeterminizeOutput;
     }
   }
 
@@ -313,6 +315,11 @@ namespace Microsoft.Research.Vcc
           dump = this.ParseNamedBoolean(arg, "dumpsource0", "d0");
           if (dump != null) {
             this.options.PipeOperations.Add("dump before begin");
+            return true;
+          }
+
+          if (this.ParseName(arg, "determinize", "det")) {
+            this.options.DeterminizeOutput = true;
             return true;
           }
 
