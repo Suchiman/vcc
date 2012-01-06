@@ -577,12 +577,11 @@ namespace Microsoft.Research.Vcc
         var outcome = fver.Verify(func.Item2);
         //verificationErrorHandler.FlushErrors();
 
+        if (commandLineOptions.DumpBoogie) {
+          fver.DumpInternalsToFile(baseName, false);
+        }
+       
         if (outcome == VerificationResult.Succeeded || outcome == VerificationResult.Skipped) { } else { numErrors++; }
-      }
-
-      if (commandLineOptions.DumpBoogie)
-      {
-        fver.DumpInternalsToFile(baseName, false);
       }
 
       if (checkSpecificFunctions)
