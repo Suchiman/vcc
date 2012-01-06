@@ -507,13 +507,11 @@ namespace Microsoft.Research.Vcc
 
       
   let doPruneBy funcName decls =
-    let used = objDict()
+    let used = new HashSet<obj>()
     let generatedAxioms = objDict()
     let todo = ref []
     let axioms = ref []
-    let shouldDo (o:obj) =
-      if used.ContainsKey o then false
-      else used.Add (o, true); true      
+    let shouldDo (o:obj) = used.Add(o)
     
     let rec add top = 
       walkTop cb top
@@ -537,10 +535,7 @@ namespace Microsoft.Research.Vcc
       { new PruneCallback with
           member self.UseTypeDecl td = if shouldDo td then add (Top.TypeDecl td)
           member self.UseGlobal v =    if shouldDo v then add (Top.Global (v, None))
-          member self.UseFunction f =  if shouldDo f then 
-                                                       let saveBody = f.Body
-                                                       f.Body <- None; add (Top.FunctionDecl f) 
-                                                       f.Body <- saveBody
+          member self.UseFunction f =  if shouldDo f then add (Top.FunctionDecl f) 
       }
     
     let pickOutAxioms = function
@@ -554,10 +549,14 @@ namespace Microsoft.Research.Vcc
       
     List.iter pickOutAxioms decls
     
+    let doDecl d = deepVisitExpressions (walkExpr cb) [d]
+
+
     let findTheOne = function 
       | FunctionDecl f as d when f.Name = funcName ->
         shouldDo f |> ignore
         add d 
+        doDecl d
       | _ -> ()
     List.iter findTheOne decls
     
@@ -565,7 +564,15 @@ namespace Microsoft.Research.Vcc
       while not (!todo).IsEmpty do
         let lst = !todo
         todo := []
-        deepVisitExpressions (walkExpr cb) lst
+
+        for d in lst do
+          match d with
+            | Top.FunctionDecl fn -> 
+              let savedBody = fn.Body
+              fn.Body <- None
+              doDecl d
+              fn.Body <- savedBody
+            | _ -> doDecl d
 
     drainTodo()
 
@@ -573,9 +580,9 @@ namespace Microsoft.Research.Vcc
       let usedReferenced = ref false
       let anyReferenced = ref false
       let cb = { new PruneCallback with 
-                   member self.UseTypeDecl td = anyReferenced := true;  if used.ContainsKey td then usedReferenced := true
-                   member self.UseGlobal v = anyReferenced := true;  if used.ContainsKey v then usedReferenced := true
-                   member self.UseFunction f = anyReferenced := true;  if used.ContainsKey f then usedReferenced := true }
+                   member self.UseTypeDecl td = anyReferenced := true;  if used.Contains td then usedReferenced := true
+                   member self.UseGlobal v = anyReferenced := true;  if used.Contains v then usedReferenced := true
+                   member self.UseFunction f = anyReferenced := true;  if used.Contains f then usedReferenced := true }
                    
       match axiom with
         | Top.Axiom(Quant(_, {Triggers =  tr})) when List.concat tr = [] -> walkTop cb axiom // no, or only empty, triggers, walk all
@@ -592,11 +599,11 @@ namespace Microsoft.Research.Vcc
       axioms := if axs1.IsEmpty then [] else axs2
     
     let rec needed = function
-      | FunctionDecl f -> used.ContainsKey f
-      | TypeDecl t -> used.ContainsKey t
-      | Global (v, _) -> used.ContainsKey v
+      | FunctionDecl f -> used.Contains f
+      | TypeDecl t -> used.Contains t
+      | Global (v, _) -> used.Contains v
       | GeneratedAxiom (_, origin) -> needed origin
-      | Axiom _ as ax -> used.ContainsKey ax
+      | Axiom _ as ax -> used.Contains ax
     
     let discardFunctionBodysExceptFor fname = function
       | FunctionDecl({Name = name}) as fdecl when name = fname -> fdecl
