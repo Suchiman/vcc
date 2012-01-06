@@ -121,6 +121,7 @@
     <value>/aggressivepruning             Remove unreferenced items when verifying specific functions (Short form: /a)
 /boogie:&lt;boogie option list&gt;   Options to pass on to Boogie (Short form: /b)
 /checked[+|-]                  Generate arithmetic overflow checks (Short form: /c)
+/determinize                   Sort items to generate more deterministic Boogie files (Short form: /det)
 /dumpsource0                   Print source before syntax transformations (Short form: /d0)
 /dumpsource                    Print source after syntax transformations (Short form: /d)
 /eager                         Eager error reporting for contracts and specification functions (Short form: /e)

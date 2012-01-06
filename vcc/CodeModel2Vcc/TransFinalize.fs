@@ -565,6 +565,35 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let sortDecls decls = 
+      if not helper.Options.DeterminizeOutput then decls
+      else
+        let rec declCompare d0 d1 = 
+          match d0, d1 with
+            | Top.Global (g0, _), Top.Global (g1, _) -> g0.Name.CompareTo(g1.Name)
+            | Top.Global _, _ -> -1
+
+            | Top.TypeDecl t0, Top.TypeDecl t1 -> t0.Name.CompareTo(t1.Name)
+            | Top.TypeDecl _, Top.Global _ -> 1
+            | Top.TypeDecl _, _ -> -1
+
+            | Top.FunctionDecl f0, Top.FunctionDecl f1 -> f0.Name.CompareTo(f1.Name)
+            | Top.FunctionDecl _, Top.Global _-> 1
+            | Top.FunctionDecl _, Top.TypeDecl _-> 1
+            | Top.FunctionDecl _, _ -> -1
+
+            | Top.Axiom a0, Top.Axiom a1 -> a0.Token.Byte.CompareTo(a1.Token.Byte)
+            | Top.Axiom _, Top.GeneratedAxiom _ -> -1
+            | Top.Axiom _, _ -> 1
+
+            | Top.GeneratedAxiom(a0, t0), Top.GeneratedAxiom(a1, t1) ->
+              let ct = declCompare t0 t1
+              if ct <> 0 then ct else a0.Token.Byte.CompareTo(a1.Token.Byte)
+            | Top.GeneratedAxiom _, _ -> 1
+        List.sortWith declCompare decls
+
+    // ============================================================================================================
+
     helper.AddTransformer ("final-begin", Helper.DoNothing)
     
     helper.AddTransformer ("final-range-assumptions", Helper.Decl addRangeAssumptions)
@@ -596,5 +625,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-insert-type-arguments", Helper.Expr insertTypeArgumentForWrapUnwrap)
     helper.AddTransformer ("final-insert-state-arguments", Helper.Expr (ToCoreC.handlePureCalls helper))
     helper.AddTransformer ("final-remove-trivial", Helper.Decl removeTrivial)
+    helper.AddTransformer ("final-sort-decls", Helper.Decl sortDecls)
     
     helper.AddTransformer ("final-end", Helper.DoNothing)
