@@ -2380,7 +2380,7 @@ namespace Microsoft.Research.Vcc
               | C.Macro(_, "labeled_invariant", [C.Macro(_, lbl, []); i]) -> add' lbl i
               | i -> add' "public" i
           List.iter add invs
-          [ for kv in dict -> (kv.Key, List.rev kv.Value) ]
+          [ for kv in dict -> (kv.Key, List.rev kv.Value) ] |> List.sortBy fst
           
         let removeTrivialEqualities (bExpr : B.Expr) =
           let rec rte = function

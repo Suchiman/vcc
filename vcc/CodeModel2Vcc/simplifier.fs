@@ -601,6 +601,7 @@ namespace Microsoft.Research.Vcc
 
     let heapifyAddressedLocals decls =
       let addressableLocals = new Dict<_,_>()
+      let addressableLocalsList = ref []
       let fnTok = ref bogusEC
       let fakeEC t = { !fnTok with Type = t }
       let pointernize comm v =
@@ -616,6 +617,7 @@ namespace Microsoft.Research.Vcc
             else []
           let def = VarDecl (fakeEC Void, v', []) :: assign :: init
           addressableLocals.[v] <- (v', Macro(fakeEC Void, "fake_block", def))
+          addressableLocalsList := (v, (v', Macro(fakeEC Void, "fake_block", def))) :: !addressableLocalsList
           
       let pointsToStruct = function
         | Ptr(Type.Ref({Kind = (TypeKind.Struct|TypeKind.Union)} as td)) when not td.IsMathValue ->  true
@@ -648,7 +650,7 @@ namespace Microsoft.Research.Vcc
             List.iter (fun (e:Expr) -> e.SelfVisit (findThem false)) (d.Reads @ d.Writes @ d.Requires @ d.Ensures)
             b.SelfVisit (findThem true)
             let b = b.SelfMap (replaceWithPointers addressableLocals)
-            let outParDecls = [ for kvp in addressableLocals do if kvp.Key.Kind = VarKind.OutParameter then yield snd (kvp.Value) ]
+            let outParDecls = [ for (v, (_, expr)) in !addressableLocalsList do if v.Kind = VarKind.OutParameter then yield expr ]
             let b = Expr.MkBlock(outParDecls @ [b])
             d.Body <- Some b
           | None -> ()
