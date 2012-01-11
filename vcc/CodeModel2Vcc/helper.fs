@@ -363,9 +363,9 @@ namespace Microsoft.Research.Vcc
               aux (i + 1) decls
             else 
               topDecls := decls
-              let start = System.DateTime.Now
+              let start = System.DateTime.UtcNow
               let decls' = apply t.Func decls
-              let tm = System.DateTime.Now - start            
+              let tm = System.DateTime.UtcNow - start            
               times.[t.Name] <- tm.Ticks
               aux (i + 1) decls'
         try
