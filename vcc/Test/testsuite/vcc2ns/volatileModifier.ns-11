@@ -1,0 +1,12 @@
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+    int dummy;
+    _(ghost \claim volatile c;)
+    _(ghost int a;)
+    _(invariant c!=&a)
+};
+`
+Verification of S#adm succeeded.
+`
