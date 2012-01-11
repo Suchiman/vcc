@@ -122,7 +122,7 @@ namespace Microsoft.Research.Vcc
     }
 
     static bool RunTestSuite(string directoryName, string suiteName, StreamReader instream, VccOptions commandLineOptions) {
-      var startTime = DateTime.Now;
+      var startTime = DateTime.UtcNow;
       System.Diagnostics.Debug.Listeners.Remove("Default");
       var errorHandler = new CciErrorHandler(commandLineOptions);
       StringBuilder source = null;
@@ -228,7 +228,7 @@ namespace Microsoft.Research.Vcc
 
         }
         instream.Close();
-        var runtime = DateTime.Now.Subtract(startTime).TotalSeconds;
+        var runtime = DateTime.UtcNow.Subtract(startTime).TotalSeconds;
         if (errors == 0)
           Logger.Instance.Log("{0} passed [{1:0.00}]", suiteName, runtime);
         else {
