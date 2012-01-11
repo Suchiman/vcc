@@ -30,13 +30,16 @@ module Ast =
                   "unchecked" ;
                   "wrap" ;
                   "writes" ;
-                  // macros defined in vccp.h:
                   "maintains" ;
                   "always" ;
                   "updates" ;
                   "out_param" ;
                   "returns" ;
                   "level";
+                  "recursive_with";
+                  "read_only" ;
+                  "by_claim" ;
+                  "retype" ;
     ]
 
   let private guardedKeywords =
@@ -150,6 +153,16 @@ module Ast =
                   "\\from_bytes" ;
                   "\\match_long" ;
                   "\\match_ulong" ;
+                  "\\writable" ;
+                  "\\inv2s" ;
+                  "\\may_diverge" ;
+                  "\\in_range_phys_ptr";
+                  "\\in_range_spec_ptr";
+                  "\\index_within";
+                  "\\wrapped0";
+                  "\\unchanged";
+                  "\\recursive_with";
+                  "\\natural" ;
     ]
 
   let isGuardedKeyword chars = Set.contains chars guardedKeywords
