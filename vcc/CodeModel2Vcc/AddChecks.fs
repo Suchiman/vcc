@@ -127,7 +127,14 @@ namespace Microsoft.Research.Vcc
       let checkInvariant prestate cond errno suffix this =
         let this = ignoreEffects this
         let check = invariantCheck helper (fun i -> not (isLemmaInv i)) cond errno suffix (mkRef prestate) this
-        List.map Expr.MkAssert check
+        let asserts = List.map Expr.MkAssert check
+        match this with
+          | Macro (_, "isolate", [_]) when asserts <> [] ->
+            [If (bogusEC, None,
+                 Macro (boolBogusEC(), "*", []), 
+                 Expr.MkBlock (asserts @ [Expr.MkAssume Expr.False]),
+                 Expr.MkBlock [])]
+          | _ -> asserts
 
       let preWrap isStatic isSet =
         let name =
