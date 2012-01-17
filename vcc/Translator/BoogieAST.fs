@@ -212,6 +212,8 @@ namespace Microsoft.Research.Vcc
 
     and trExpr e =
       match e with
+        | Ref "*" ->
+          null :> Microsoft.Boogie.Expr
         | Ref id -> 
           (trIdent id) :> Microsoft.Boogie.Expr
         | Primitive (op, args) ->
