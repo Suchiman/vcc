@@ -2736,6 +2736,9 @@ axiom $unchecked(^^u4, $max.u4 + 1) == 0;
 axiom $unchecked(^^u8, -1) == $max.u8;
 axiom $unchecked(^^u8, $max.u8 + 1) == 0;
 
+//axiom (forall i:int :: {$unchecked(^^u4, i)} 
+//   $in_range_u4(i - ($max.u4+1)) ==> $unchecked(^^u4, i) == i - ($max.u4+1));
+
 function $in_range_ubits(bits:int, v:int) : bool
   { $in_range(0, v, $_pow2(bits) - 1) }
 
