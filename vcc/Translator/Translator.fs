@@ -854,6 +854,9 @@ namespace Microsoft.Research.Vcc
             self e
           | "check_termination", [e] ->
             bCall "$check_termination" [self e]
+          | "isolate", [e] -> self e
+          | "*", [] ->
+            er "*"
           | n, [e] when n.StartsWith "limited#" ->
             let n = if n = "limited#0" then "" else "#" + n
             let repl = function
