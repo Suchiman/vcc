@@ -890,7 +890,7 @@ function {:inline true} $nested(S:$state, p:$ptr) : bool
   { $typ($owner(S, p)) != ^$#thread_id_t }
 
 function {:inline true} $irrelevant(S:$state, p:$ptr) : bool
-  { $owner(S, p) != $me() || ($is_primitive($typ(p)) && $closed(S, p)) }
+  { $owner(S, $maybe_emb(p)) != $me() || ($is_primitive($typ(p)) && $closed(S, $maybe_emb(p))) }
 
 function $mutable(S:$state, p:$ptr) : bool
   {  $is_proper(p) &&
@@ -3288,5 +3288,54 @@ procedure $join_blobs(a:$ptr, b:$ptr);
 // ----------------------------------------------------------------------------
 // Datatypes
 // ----------------------------------------------------------------------------
+
+// --------------------------------------------------------------------------------
+// Skinny writes
+// --------------------------------------------------------------------------------
+
+function $precise_test($ptr) : bool;
+
+function $updated_only_values(S1:$state, S2:$state, W:$ptrset) : bool;
+function $updated_only_domains(S1:$state, S2:$state, W:$ptrset) : bool;
+
+axiom (forall S1:$state, S2:$state, W:$ptrset ::
+  {$updated_only_values(S1, S2, W)}
+  (forall p:$ptr :: {$dont_instantiate(p)}
+      $is_primitive($typ(p)) ==> 
+        $irrelevant(S1, p) ||
+        $mem(S1, p) == $mem(S2, p) || $set_in(p, W))
+  &&
+  (forall p:$ptr :: {$dont_instantiate(p)}
+      $is_non_primitive($typ(p)) ==> 
+        $irrelevant(S1, p) ||
+        $timestamp(S1, p) == $timestamp(S2, p) || $set_in(p, W))
+  ==> $updated_only_values(S1, S2, W));
+
+axiom (forall S1:$state, S2:$state, W:$ptrset ::
+  {$updated_only_domains(S1, S2, W)}
+  (forall p:$ptr :: {$dont_instantiate(p)}
+    $in(p, W) && $is_non_primitive($typ(p)) ==>
+      $timestamp(S1, p) == $timestamp(S2, p) || 
+      $domain_updated_at(S1, S2, p, W))
+  ==> $updated_only_domains(S1, S2, W));
+
+/*
+function $version_store(v:$version, W:$ptrset) returns($version);
+axiom (forall v:$version, p:$ptr, W:$ptrset :: {$fetch_from_domain($version_store(v, W), p)}
+   $is_primitive_ch($typ(p)) && !$set_in(p, W) ==>
+     $fetch_from_domain($version_store(v, W), p) == $fetch_from_domain(v, p));
+
+axiom (forall v:$version, W1:$ptrset, W2:$ptrset :: 
+  {$version_store($version_store(v, W1), W2), $version_store(v, $set_union(W1, W2)) }
+  $version_store($version_store(v, W1), W2) == $version_store(v, $set_union(W1, W2)));
+*/
+
+function $domain_updated_at(S1:$state, S2:$state, p:$ptr, W:$ptrset) : bool
+  { (forall q:$ptr, f:$field :: {$fetch_from_domain($read_version(S2, p), q, f)}
+       $is_proper($dot(q, f)) &&
+       $is_primitive($field_type(f)) && !$set_in($dot(q, f), W) ==>
+         $fetch_from_domain($read_version(S1, p), q, f) ==
+         $fetch_from_domain($read_version(S2, p), q, f)) &&
+    $domain(S1, p) == $domain(S2, p) }
 
 // That's all folks.
