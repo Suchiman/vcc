@@ -209,7 +209,6 @@ _(template<typename T> T \castlike_known(T v, bool expected);)
 _(template<typename T> T \castlike_retype(T);)
 _(template<typename T> T \castlike_by_claim(T v, \claim c);)
 _(template<typename T> T \castlike_precise(T v);)
-_(template<typename T> T \castlike_isolate(T v);) // as in _(wrap _(isolate)x) for isolate invariant check
 
 _(\object \castlike_read_only(\object ptr))
 _(\object \castlike_blob(\object ptr, \integer sz))

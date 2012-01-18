@@ -202,8 +202,6 @@ let init (helper:Helper.Env) =
         Some (Expr.MkBlock (decls1 @ [rf]))
       | Macro (ec, "\\castlike_read_only", [arg]) ->
         Some (Expr.Macro (ec, "read_only", [self arg]))
-      | Macro (ec, "\\castlike_isolate", [arg]) ->
-        Some (Expr.Macro (ec, "isolate", [self arg]))
       | _ -> None
       
     let rewriteBvAssertAsBvLemma self = function

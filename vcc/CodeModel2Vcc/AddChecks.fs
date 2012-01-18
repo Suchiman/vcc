@@ -127,16 +127,7 @@ namespace Microsoft.Research.Vcc
       let checkInvariant prestate cond errno suffix this =
         let this = ignoreEffects this
         let check = invariantCheck helper (fun i -> not (isLemmaInv i)) cond errno suffix (mkRef prestate) this
-        let asserts = List.map Expr.MkAssert check
-        let block =
-          match this with
-            | Macro (_, "isolate", [_]) when asserts <> [] ->
-              [If (bogusEC, None,
-                 Macro (boolBogusEC(), "*", []), 
-                 Expr.MkBlock (asserts @ [Expr.MkAssume Expr.False]),
-                 Expr.MkBlock [])]
-            | _ -> asserts
-        (block, asserts)
+        List.map Expr.MkAssert check
 
       let preWrap isStatic isSet =
         let name =
@@ -170,14 +161,14 @@ namespace Microsoft.Research.Vcc
             let (curstate2, save2) = saveState "heapState" curstate2
             let save2 = if single then [] else save2
             let initOwns, tmpowns = genTmpOwns()
-            let (check, asserts) = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 8014 "fails on wrap" this
+            let check = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 8014 "fails on wrap" this
             let updateFor obj =
               [staticWrapAssert 8018 "'{1}' is not wrapped before wrapping '{0}' (its owner)" "_vcc_wrapped" obj this;
                staticWrapAssert 8019 "'{1}' is not writable before wrapping '{0}' (its owner)" "writes_check" obj this;
                addToOwns tmpowns obj;
                VarWrite (bogusEC, [curstate1], 
                  pureEx (Macro (bogusState, "_vcc_take_over", [mkRef curstate1; this; obj])))]
-            let addOwnees = extractKeeps updateFor asserts
+            let addOwnees = extractKeeps updateFor check
             let updateHeapOwns =
               if single then []
               else
@@ -193,7 +184,7 @@ namespace Microsoft.Research.Vcc
               | Ptr (Type.Ref _) 
               | Ptr (TypeVar _)
               | Array (_, _) -> 
-                let (check, _) = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 8014 "fails on wrap" this
+                let check = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 8014 "fails on wrap" this
                 let (curstate1, save1) = saveState "staticWrapState" curstate1
                 let save1 = if single then [] else save1
                 let changeOwner =
@@ -225,14 +216,14 @@ namespace Microsoft.Research.Vcc
           let (prestate, save) = saveState "prestate" prestate
           match this.Type with
           | Ptr (Type.Ref td) when staticOwns td ->
-            let (check, _) = checkInvariant prestate isOnUnwrap 8015 "fails on unwrap" this
+            let check = checkInvariant prestate isOnUnwrap 8015 "fails on unwrap" this
             let checkWrap = propAssert 8016 "'{0}' is not wrapped before unwrap" "_vcc_wrapped" this
             let checkWr = propAssert 8021 "'{0}' is not writable before unwrapping it" "writes_check" this
             let assumeInv = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_inv", [ignoreEffects this]))
             let initOwns, tmpowns = genTmpOwns()
             let assumeOwns = Expr.MkAssume (mkEq (mkRef tmpowns) (Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_owns", [this])))
             let (curstate, save1) = saveState "prestate" curstate
-            let (_, props) = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 0 "OOPS" this
+            let props = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 0 "OOPS" this
             let now = Macro (bogusState, "_vcc_current_state", [])
             let updateFor obj =
               [VarWrite (bogusEC, [curstate], 
@@ -249,7 +240,7 @@ namespace Microsoft.Research.Vcc
               | Ptr (Type.Ref _) 
               | Ptr (TypeVar _)
               | Array (_, _) -> 
-                let (check, _) = checkInvariant prestate isOnUnwrap 8015 "fails on unwrap" this
+                let check = checkInvariant prestate isOnUnwrap 8015 "fails on unwrap" this
                 let checkWrap = propAssert 8016 "'{0}' is not wrapped before unwrap" "_vcc_wrapped" this
                 let assumeInv = Expr.MkAssume (Macro (boolBogusEC(), "_vcc_inv", [ignoreEffects this]))
                 Some (Some prestate, curstate, all_save @ save,
