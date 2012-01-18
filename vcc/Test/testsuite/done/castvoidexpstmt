@@ -1,0 +1,11 @@
+`/newsyntax
+#include <vcc.h>
+
+//top level casting to void is permitted.
+
+int main(){
+  (void) (2);
+}
+`
+Verification of main succeeded.
+`
