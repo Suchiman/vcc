@@ -232,7 +232,7 @@ namespace Microsoft.Research.Vcc
             let initOwns, tmpowns = genTmpOwns()
             let assumeOwns = Expr.MkAssume (mkEq (mkRef tmpowns) (Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_owns", [this])))
             let (curstate, save1) = saveState "prestate" curstate
-            let (props, _) = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 0 "OOPS" this
+            let (_, props) = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 0 "OOPS" this
             let now = Macro (bogusState, "_vcc_current_state", [])
             let updateFor obj =
               [VarWrite (bogusEC, [curstate], 
