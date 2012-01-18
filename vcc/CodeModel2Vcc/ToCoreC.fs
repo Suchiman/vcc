@@ -843,18 +843,14 @@ namespace Microsoft.Research.Vcc
         | _ -> true
 
       let notdetJumpToLabels expr =      
-        let nonDetDecls = ref []
         let rec nondetJumpToLabels' = function
         | [] ->  die()
         | [lbl] -> Expr.MkBlock([TransUtil.possiblyUnreachable; Expr.Goto(bogusEC, lbl)])
         | lbl :: lbls ->
-          let nonDetVar = getTmp helper "nondet" Type.Bool VarKind.Local 
-          let notDetDecl = Expr.VarDecl(bogusEC, nonDetVar, [])
-          do nonDetDecls := notDetDecl :: !nonDetDecls
           Expr.MkBlock([TransUtil.possiblyUnreachable; 
-                        Expr.If(bogusEC, None, Expr.Ref(boolBogusEC(), nonDetVar), Expr.MkBlock([TransUtil.possiblyUnreachable; Expr.Goto(bogusEC, lbl)]), nondetJumpToLabels' lbls)])
+                        Expr.If(bogusEC, None, Macro(boolBogusEC(), "*", []), Expr.MkBlock([TransUtil.possiblyUnreachable; Expr.Goto(bogusEC, lbl)]), nondetJumpToLabels' lbls)])
 
-        (nondetJumpToLabels' expr, !nonDetDecls)
+        nondetJumpToLabels' expr
 
       let rec liftBlocks findRefs currentBlockId blockPrefix self = function
         | Expr.Block (ec, body, Some ({ Requires = [CallMacro (fc, "_vcc_full_context", _, [])] } as bc)) ->
@@ -901,10 +897,9 @@ namespace Microsoft.Research.Vcc
                   match externalGotos with
                     | [] -> Expr.Comment(bogusEC, "no gotos out of block")
                     | lbls ->
-                      let (branches, nonDetDecls) = notdetJumpToLabels lbls
+                      let branches = notdetJumpToLabels lbls
                       //let branches' = Expr.MkBlock([TransUtil.possiblyUnreachable; branches])
-                      let ifNotNormalExit = Expr.If(bogusEC, None, Expr.Prim(boolBogusEC(), Op("!", CheckedStatus.Processed), [exitStatus]), branches, TransUtil.possiblyUnreachable)
-                      Expr.MkBlock(nonDetDecls @ [ ifNotNormalExit ])
+                      Expr.If(bogusEC, None, Expr.Prim(boolBogusEC(), Op("!", CheckedStatus.Processed), [exitStatus]), branches, TransUtil.possiblyUnreachable)
                 Some(Expr.MkBlock(inits @ [exitStatus; labelBranches]))
         | _ as e -> None      
 
