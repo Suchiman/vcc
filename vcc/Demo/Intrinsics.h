@@ -11,6 +11,9 @@ _(atomic_inline) int __interlockedcompareexchange(volatile int *Destination, int
   }
 }
 
+#ifdef VERIFY
+// Hide overloaded version from regular compiler
+
 _(atomic_inline) unsigned __interlockedcompareexchange(volatile unsigned *Destination, unsigned Exchange, unsigned Comparand) {
   if (*Destination == Comparand) {
     *Destination = Exchange;
@@ -19,3 +22,4 @@ _(atomic_inline) unsigned __interlockedcompareexchange(volatile unsigned *Destin
     return *Destination;
   }
 }
+#endif
