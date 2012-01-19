@@ -13,6 +13,12 @@
 #include <stdlib.h>
 #include "vcc.h"
 
+#ifdef VERIFY
+#define speccast(_TYPE_, _EXPR_) ((_TYPE_)(_EXPR_))
+#else
+#define speccast(_TYPE_, _EXPR_) (_EXPR_)
+#endif
+
 struct ArrayList {
     size_t capacity;
     size_t length;
@@ -91,7 +97,7 @@ void DisposeArrayList(struct ArrayList *A)
 {
     _(unwrap A)
     _(unwrap (int[A->capacity])A->array)
-    free((int[A->capacity])A->array);
+    free(speccast(int[A->capacity], A->array));
     free(A);
 }
 
@@ -123,7 +129,7 @@ void Add(struct ArrayList *A, int v)
                 tmp[i] = A->array[i];
                 i = i + 1;
             }
-            free((int[A->capacity])A->array);
+            free(speccast(int[A->capacity], A->array));
             A->capacity = newCapacity;
             A->array = tmp;
         }
