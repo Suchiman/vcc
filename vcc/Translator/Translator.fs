@@ -240,7 +240,6 @@ namespace Microsoft.Research.Vcc
             | C.Type.MathInteger C.MathIntKind.Unsigned 
             | _ -> bTrue
         
-        let selStorPP = bTrue // TODO
         let selStorPQ =
           bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"])
               (B.Expr.Ite (tpEq t1 (er "p") (er "q"), v, selMP))
@@ -254,7 +253,6 @@ namespace Microsoft.Research.Vcc
                              eqM1M2
         let eqM1M2Ax2 = bImpl eqM1M2 (bEq (er "M1") (er "M2"))
         
-        let eqRecAx = bTrue // TODO
         let mpv = ["M", tp; "p", bt1; "v", bt2]
         let m1m2 = ["M1", tp; "M2", tp]
         [B.Decl.TypeDef mapName;
@@ -264,13 +262,12 @@ namespace Microsoft.Research.Vcc
          B.Decl.Const({Unique = false; Name = "MT#" + sel; Type = tpCtype});
          B.Decl.Axiom(bEq (er ("MT#" + sel)) (toTypeId t));
          B.Decl.Const({Unique = false; Name = zero; Type = mapType});
-         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", selStorPP));
+         B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv, [], weight "select-map-eq", bTrue));
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, mpv @ ["q", bt1], [], weight "select-map-neq", selStorPQ));
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax1));
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, m1m2, [[eqM1M2]], weight "select-map-eq", eqM1M2Ax2));
          B.Decl.Axiom (bEq (castFromInt mt (bInt 0)) (er zero));
          B.Decl.Axiom (B.Expr.Forall (Token.NoToken, ["p", bt1], [], weight "select-map-eq", selZero));
-         B.Decl.Axiom eqRecAx
         ] @ inRange
       
       let recTypeName (td:C.TypeDecl) = "RT#" + td.Name
@@ -343,12 +340,10 @@ namespace Microsoft.Research.Vcc
           | C.Ptr t -> toTypeId t
           | _ -> failwith ("pointer type expected " + expr.ToString())        
       
-      let stripType t e = e // TODO
-        
       let convertArgs (fn:C.Function) args =
         let rec loop = function
           | ((f: C.Variable) :: ff, a :: aa) ->
-            stripType f.Type a :: loop (ff, aa)
+            a :: loop (ff, aa)
           | ([], a) -> a // varargs functions
           | _ -> helper.Die()
         loop (fn.InParameters, args)
@@ -572,7 +567,7 @@ namespace Microsoft.Research.Vcc
             match a.Type with
               | C.Type.Map (f, t) ->
                 let fn = "$select." + (trType a.Type).ToString()
-                let select = bCall fn [self a; stripType f (self b)]
+                let select = bCall fn [self a; self b]
                 if n = "map_get" then addType t select else select
               | _ -> die()          
           | "map_zero", _ -> er ("$zero." + ctx.TypeIdToName(toTypeId ec.Type))
@@ -580,7 +575,7 @@ namespace Microsoft.Research.Vcc
             match a.Type with
               | C.Type.Map (f, t) ->
                 let fn = "$store." + (trType a.Type).ToString()
-                bCall fn [self a; stripType f (self b); stripType t (self c)]
+                bCall fn [self a; (self b); (self c)]
               | _ -> die()
           | "field", [C.Expr.UserData (_, ( :? C.Field as f))] ->
             er (fieldName f)
@@ -900,7 +895,6 @@ namespace Microsoft.Research.Vcc
           let (codeTp, codeTh, suff) =
             if isWf then (8501, 8502, " (in well-formedness check)")
             else         (8511, 8512, "")
-          let tp = [] // TODO
           let th =
             match p with
               | C.Dot (_, p', f) when not f.Parent.IsUnion ->
@@ -928,7 +922,7 @@ namespace Microsoft.Research.Vcc
                 let tok, prop =
                   cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local" [cState; p]
                 tok, bMultiOr (prop :: isAtomic)
-          List.map B.Stmt.MkAssert (tp @ [th])
+          [B.Stmt.MkAssert th]
       
       and writesMultiCheck use_wr env tok f =
         let name = "#writes" + ctx.TokSuffix tok
@@ -1019,7 +1013,7 @@ namespace Microsoft.Research.Vcc
         match e2.Type with
           | C.MathTypeRef "struct" -> die()
           | _ -> ()
-        let e2' = stripType t (trExpr env e2)
+        let e2' = trExpr env e2
         match e2.Type with
           | C.Ptr _ -> bCall "$ptr_to_int" [e2']
           | C.Type.Integer _ -> e2'
@@ -1439,7 +1433,7 @@ namespace Microsoft.Research.Vcc
                  ]
               | (Some e) -> 
                 [cmt ()
-                 B.Stmt.Assign (B.Expr.Ref "$result", stripType e.Type (trExpr env e))
+                 B.Stmt.Assign (B.Expr.Ref "$result", trExpr env e)
                  captureState "function exit" c.Token
                  B.Stmt.MkAssert (c.Token, bCall "$position_marker" [])
                  B.Stmt.Goto (c.Token, ["#exit"])]
@@ -1543,15 +1537,15 @@ namespace Microsoft.Research.Vcc
                B.Stmt.Assign (varRef v, B.Expr.FunctionCall("$ptrclub.construct", [B.Expr.Ref "$ptrclub.empty"; trExpr env l]))]
             | C.Expr.VarWrite (c, [v], e) when (not env.hasIF) ->
               [cmt ();
-               B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e))]
+               B.Stmt.Assign (varRef v, trExpr env e)]
             | C.Expr.VarWrite (c, [v], e) when env.hasIF ->
               match v.Type with
                 | C.Type.Ref s when s.Name.StartsWith("$map_t.") ->
                   cmt () ::
-                  B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) :: []
+                  B.Stmt.Assign (varRef v, trExpr env e) :: []
                 | C.Type.Map _ ->
                   cmt () ::
-                  B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) :: []
+                  B.Stmt.Assign (varRef v, trExpr env e) :: []
                 | _ ->
                   let (vname,_) = trVar v
                   let asPointer =
@@ -1560,7 +1554,7 @@ namespace Microsoft.Research.Vcc
                       | _ -> false
                   let secLabel = IF.contextify (IF.exprLevel asPointer e)
                   cmt () ::
-                  B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
+                  B.Stmt.Assign (varRef v, trExpr env e) ::
                   IF.setLLabel ("FlowData#"+vname) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) secLabel) ::
                   IF.setLMeta ("FlowData#"+vname) IF.getPC :: []
             | C.Expr.If (ec, cl, c, s1, s2) ->
@@ -2398,20 +2392,8 @@ namespace Microsoft.Research.Vcc
                                extentProp "zero" false isUnion false readAnyIsZero td.Fields ]
         
         let (state_spans_the_same, state_nonvolatile_spans_the_same) = spansCalls primFields
-        
-        let firstOptionTyped =
-          let ptr = bCall "$ptr" [we; r]
-          let firstOptionTypedCall = bCall "$first_option_typed" [s; ptr]
-          let firstOptionTypedAxiom f =
-            B.Decl.Axiom (B.Expr.Forall (Token.NoToken, [("#r", B.Type.Int); ("#s", tpState)], 
-                                         [[firstOptionTypedCall]], 
-                                         weight "typedef-union_active",
-                                         bInvImpl firstOptionTypedCall (bCall "$union_active" [s; ptr; toFieldRef f])))
-          match List.tryFind (fun (f:C.Field) -> not f.IsSpec) allFields with
-            | _ -> [] // TODO
-        
-        let forward =
-          [bDeclUnique tpCtype ("^" + td.Name)] @ firstOptionTyped
+                
+        let forward = [bDeclUnique tpCtype ("^" + td.Name)]
                           
         let forward =
           let defName = if isUnion then "$def_union_type" else "$def_struct_type"
@@ -2429,12 +2411,10 @@ namespace Microsoft.Research.Vcc
           | C.StructEqualityKind.NoEq -> forward
           | C.StructEqualityKind.ShallowEq -> (trStructEq false td) @ forward
           | C.StructEqualityKind.DeepEq -> (trStructEq true td) @ (trStructEq false td) @ forward
-        match td.Fields with
-          //| [] -> forward
-          | _ -> // TODO
-            forward @ 
-               [ B.Decl.Axiom inv; B.Decl.Axiom invWithoutLemmas; B.Decl.Axiom (trCompositeExtent td) ] 
-                 @ List.concat (List.map (trField3 td) allFields)
+
+        forward @ 
+            [ B.Decl.Axiom inv; B.Decl.Axiom invWithoutLemmas; B.Decl.Axiom (trCompositeExtent td) ] 
+              @ List.concat (List.map (trField3 td) allFields)
 
       let trRecord2 (td:C.TypeDecl) =
         let intKind = function

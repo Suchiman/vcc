@@ -591,7 +591,7 @@ namespace Microsoft.Research.Vcc
     while not (!axioms).IsEmpty do
       let axs1, axs2 = List.partition axiomWouldTriggerOnUsed !axioms
       List.iter (shouldDo >> ignore) axs1
-      todo  := axs1
+      todo := axs1
       drainTodo()
       axioms := if axs1.IsEmpty then [] else axs2
     
