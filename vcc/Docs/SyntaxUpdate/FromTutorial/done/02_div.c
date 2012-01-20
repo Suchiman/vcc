@@ -1,4 +1,4 @@
-//`/newsyntax /b:/timeLimit:30
+//` /b:/timeLimit:30
 #include <vcc.h>
 //--
 _(axiom \forall unsigned a,b; a > b && b != 0 ==> a % b == (a - b) % b)

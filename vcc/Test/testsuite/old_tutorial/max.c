@@ -1,4 +1,3 @@
-//`/newsyntax
 #include "vcc.h"
 
 _(pure) int max(int a, int b)

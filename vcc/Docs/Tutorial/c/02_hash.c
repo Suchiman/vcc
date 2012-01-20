@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 
 unsigned hash(unsigned char *s, unsigned len)

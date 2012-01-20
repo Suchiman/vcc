@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 void foo(int b) {
   __int64 c = -1;

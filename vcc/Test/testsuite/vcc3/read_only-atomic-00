@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(abstract bool P(int q, int x))

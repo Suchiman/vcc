@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 // A fixed bug that causes incorrect signature in binaries.

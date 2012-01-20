@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(def \integer f(\integer x) { return x / 2; })

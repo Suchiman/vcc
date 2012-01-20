@@ -1,4 +1,4 @@
-`/a /functions:baz /newsyntax
+`/a /functions:baz 
 
 #include <vcc.h>
 

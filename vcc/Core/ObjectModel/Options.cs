@@ -50,8 +50,6 @@ namespace Microsoft.Research.Vcc
     public bool DetailedTimes;
     public bool PrintCEVModel;
     public int PointerSize = 64;
-    public bool NewSyntax;
-    public bool DetectSyntax;
     public bool Vcc3;
     public bool YarraMode;
     public string PreludePath = "VccPrelude.bpl"; // we might want an option for setting it
@@ -130,14 +128,12 @@ namespace Microsoft.Research.Vcc
       this.DetailedTimes = other.DetailedTimes;
       this.PrintCEVModel = other.PrintCEVModel;
       this.PointerSize = other.PointerSize;
-      this.NewSyntax = other.NewSyntax;
       this.Vcc3 = other.Vcc3;
       this.PreludePath = other.PreludePath;
       this.InferTriggers = other.InferTriggers;
       this.DumpTriggers = other.DumpTriggers;
       this.KeepPreprocessorFiles = other.KeepPreprocessorFiles;
       this.OpsAsFunctions = other.OpsAsFunctions;
-      this.DetectSyntax = other.DetectSyntax;
       this.OutputDir = other.OutputDir;
       this.VerificationLocation = other.VerificationLocation;
       this.YarraMode = other.YarraMode;
@@ -244,20 +240,12 @@ namespace Microsoft.Research.Vcc
       ch = arg[1];
       switch (ch)
       {
-        case '2':
-          bool? vcc2 = this.ParseNamedBoolean(arg, "2", "2");
-          if (vcc2 != null) {
-            this.options.NewSyntax = vcc2.Value;
-            return true;
-          }
-          return false;
         case '3':
           bool? vcc3 = this.ParseNamedBoolean(arg, "3", "3");
           if (vcc3 != null) {
             this.options.Vcc3 = vcc3.Value;
             this.options.PreludePath = "Vcc3Prelude.bpl";
             this.options.InferTriggers = true;
-            this.options.NewSyntax = true;
             this.options.Z3Options.Add("CASE_SPLIT=5");
             return true;
           }
@@ -331,7 +319,6 @@ namespace Microsoft.Research.Vcc
           }
 
           return
-            this.TryParseNamedBoolean(arg, "detectsyntax", "ds", ref this.options.DetectSyntax) ||
             this.TryParseNamedBoolean(arg, "dumpboogie", "db", ref this.options.DumpBoogie) ||
             this.TryParseNamedInteger(arg, "dumptriggers", "dt", ref this.options.DumpTriggers);
 
@@ -438,10 +425,6 @@ namespace Microsoft.Research.Vcc
             this.options.NoVerification = true;
             return true;
           }
-          if (this.ParseName(arg, "newsyntax", "ns")) {
-            this.options.NewSyntax = true;
-            return true;
-          }
           return false;
         case 'o':
           string /*?*/ path = this.ParseNamedArgument(arg, "out", "o");
@@ -460,10 +443,6 @@ namespace Microsoft.Research.Vcc
           }
           if (this.ParseName(arg, "opsasfuncs", "oaf")) {
             this.options.OpsAsFunctions = true;
-            return true;
-          }
-          if (this.ParseName(arg, "oldsyntax", "os")) {
-            this.options.NewSyntax = false;
             return true;
           }
           return false;

@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 #include <stdlib.h>
 _(dynamic_owns) typedef struct Node {

@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 // An unset memberbinding's Type causes wrong IL to be generated. For the repro, 

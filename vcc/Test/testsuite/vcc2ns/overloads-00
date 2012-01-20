@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(pure) int foo(int i) _(ensures \result == 1) {

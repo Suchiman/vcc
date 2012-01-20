@@ -1,4 +1,4 @@
-//`/newsyntax /it
+//` /it
 /*
 Copyright (c) 2010, Microsoft Corporation
 All rights reserved.

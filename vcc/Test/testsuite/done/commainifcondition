@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 // should return 0... the tester wouldnt complain..

@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 void barFail1(int *p, int *q)

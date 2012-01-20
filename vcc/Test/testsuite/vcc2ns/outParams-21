@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 int f(int y _(out int x))

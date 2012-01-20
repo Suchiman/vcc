@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 _(def int foo(int x)

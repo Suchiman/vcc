@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(ghost _(pure, no_reads_check, frameaxiom) int val(int *p, size_t len)

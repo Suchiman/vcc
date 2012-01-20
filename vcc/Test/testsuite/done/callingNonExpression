@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 __specification (bool f1(unsigned __int64 i);)

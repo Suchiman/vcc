@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 void foo(void *f) { 
   void *p = f + 3;

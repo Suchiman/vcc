@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 #define ULLONG_MAX (unsigned __int64)-1

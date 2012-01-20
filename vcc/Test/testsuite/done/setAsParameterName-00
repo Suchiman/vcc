@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 short _InterlockedAnd16(short ptrset);

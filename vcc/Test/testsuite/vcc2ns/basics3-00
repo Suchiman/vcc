@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 void foo(struct S *x, struct T y) {

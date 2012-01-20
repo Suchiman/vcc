@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 _(ghost _(pure) bool foo(unsigned n))
 _(ghost _(pure) bool bar(unsigned *map) _(reads \universe()))

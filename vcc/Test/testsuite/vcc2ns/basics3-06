@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 // the following used to seen Z3 into a loop

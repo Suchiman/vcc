@@ -1,4 +1,4 @@
-`/b:/noSuchBoogieOption /newsyntax
+`/b:/noSuchBoogieOption 
 #include "vcc.h"
 
 void foo() {

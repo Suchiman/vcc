@@ -52,8 +52,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     internal static Parser Create(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors) {
-      if (((VccOptions)compilation.Options).NewSyntax) return new ParserV2(compilation, sourceLocation, scannerAndParserErrors);
-      else return new Parser(compilation, sourceLocation, scannerAndParserErrors);
+      return new ParserV2(compilation, sourceLocation, scannerAndParserErrors);
     }
 
     internal Parser(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors, bool isV2 = false)

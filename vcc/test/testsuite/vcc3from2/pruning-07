@@ -1,4 +1,4 @@
-`/functions:bar2 /a /newsyntax
+`/functions:bar2 /a 
 
 #include "vcc.h"
 

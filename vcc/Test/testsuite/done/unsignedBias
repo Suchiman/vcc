@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 void foo(unsigned __int8 u) 
   _(requires u > 0)

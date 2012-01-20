@@ -1,3 +1,0 @@
-#!/bin/sh
-
-Boogie "$@"  /noinfer | grep -q '1 verified'

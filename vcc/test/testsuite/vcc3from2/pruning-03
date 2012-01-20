@@ -1,4 +1,4 @@
-`/a /functions:LeaveTurnstile /newsyntax
+`/a /functions:LeaveTurnstile 
 #include <vcc.h>
 
 void LeaveTurnstile()

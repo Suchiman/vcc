@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 
 int read_pointer(int *p)

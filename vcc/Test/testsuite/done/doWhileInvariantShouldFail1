@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 // the current behavior is actually correct, loop invariants in Boogie are not supposed

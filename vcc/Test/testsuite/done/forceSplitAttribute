@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 vcc_force_splits(20)

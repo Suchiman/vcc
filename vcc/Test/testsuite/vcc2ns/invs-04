@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 _(ghost _(pure) bool a_is_increasing(\state s1, \state s2, struct S *s)

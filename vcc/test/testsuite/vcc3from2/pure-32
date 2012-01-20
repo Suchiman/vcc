@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 _(pure) int foo(int *x) _(reads x) _(returns \old(*x));
 void bar() { int x; foo(&x); }

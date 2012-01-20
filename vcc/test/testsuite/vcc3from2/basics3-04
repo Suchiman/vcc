@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 _(ghost struct U { _(invariant \this==&u) } u)
 `

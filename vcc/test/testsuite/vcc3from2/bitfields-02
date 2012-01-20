@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 struct X { unsigned __int64 Y : 42; };

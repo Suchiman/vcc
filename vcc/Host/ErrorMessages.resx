@@ -131,14 +131,12 @@
 /hide:&lt;warning list&gt;           Hide specified warnings (by number; short form: /h)
 /inspector                     Run Z3 Inspector to show progress of verification (Short form: /i)
 /ignoreincludes[:&lt;filename&gt;]   Only verify entities from the files on the command line, not included files (Short form: /ii)
-							   With filename: verify only entities from that file
+                 With filename: verify only entities from that file
 /model                         Save model to &lt;currentFile&gt;.vccmodel (Short form: /m)
 /modelviewer                   Run VCC Model Viewer in case models are available (implies /m; Short form: /mv)
 /modifiedpreprocessorfile      Save C preprocessor output to &lt;currentFile&gt;.i.&lt;PID&gt;
 /nopreprocessor                Do not invoke the C preprocessor on the input files (Short form: /n)
 /noverification                Do not run the verification; stop after semantic analysis (Short form: /nv)
-/newsyntax                     Use _(foobar ...) syntax (Short form: /ns, /2)
-/oldsyntax                     Use foobar(...) syntax (Short form: /os)
 /opsasfuncs                    Translate arithmetic operations into Boogie functions (Short form: /oaf)
 /omitrw                        Omit reads/writes clause checking
 /out:&lt;directory&gt;               Place generated files in &lt;directory&gt; (Short form: /o)

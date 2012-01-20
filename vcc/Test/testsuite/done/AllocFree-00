@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 extern void* malloc(unsigned int);

@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(abstract \integer PRNGen(\integer seed) {return;})

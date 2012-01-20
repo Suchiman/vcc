@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 void foo(int i) {
   int j = (i == 0) ? 5 i;
