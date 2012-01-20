@@ -66,14 +66,11 @@ namespace Microsoft.Research.Vcc.VSPackage
 
       switch (options.LanguageVersion)
       {
-        case LanguageVersion.V1:
-          result += " /model";
-          break;
         case LanguageVersion.V2:
-          result += " /2 /model";
+          result += "/model";
           break;
         case LanguageVersion.V3:
-          result += " /2 /3 /bvd";
+          result += "/3 /bvd";
           break;
       }
 
