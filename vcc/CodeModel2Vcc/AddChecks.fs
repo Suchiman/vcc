@@ -291,10 +291,6 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
     
-    let notInTestsuite expr =
-      if helper.Options.RunTestSuite || true then Expr.MkBlock [] // TODO
-      else expr
-
     let rec isYarraIgnore (p:Expr) =
       if not helper.Options.YarraMode then false
       else
@@ -316,7 +312,7 @@ namespace Microsoft.Research.Vcc
         let wrassert = 
           if isYarraIgnore p then Expr.MkBlock [] 
           else propAssert 8507 "{0} is writable" "prim_writes_check" p
-        Some (Expr.MkBlock [notInTestsuite istyped; wrassert; MemoryWrite (c, self p, self expr)])
+        Some (Expr.MkBlock [wrassert; MemoryWrite (c, self p, self expr)])
       
       | Macro (ec, "by_claim", ([c; obj; _] as args)) when not ctx.IsPure ->
         let vc = Expr.MkAssert (Macro (afmte 8508 "{1} is a valid claim (in by_claim({1}, {0}))" [obj; c], "_vcc_valid_claim", [c]))
@@ -327,7 +323,7 @@ namespace Microsoft.Research.Vcc
         let istyped = propAssert 8506 "{0} is typed" "_vcc_typed2" obj
         let w = Macro ({ obj.Common with Type = Type.PtrSet }, "_vcc_extent", [obj])
         let wrassert = propAssert 8507 "extent({0}) is writable" "writes_check" w
-        Some (Expr.MkBlock [notInTestsuite istyped; wrassert; Macro(ec, "havoc", [self obj; t])])
+        Some (Expr.MkBlock [wrassert; Macro(ec, "havoc", [self obj; t])])
         
       | CallMacro (ec, "_vcc_blobify", _, [obj]) as expr ->
         let w = Macro ({ obj.Common with Type = Type.PtrSet }, "_vcc_extent", [obj])
