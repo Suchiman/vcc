@@ -29,7 +29,6 @@ namespace Microsoft.Research.Vcc
     public List<string> FunctionsWithExactName = new List<string>();
     public bool RunningFromCommandLine;
     public uint? VerifyUpToLine;
-    public bool EagerTranslation;
     public bool OmitReadWriteChecking;
     public bool RunInBatchMode;
     public Dictionary<long, bool> DisabledWarnings = new Dictionary<long, bool>();
@@ -105,7 +104,6 @@ namespace Microsoft.Research.Vcc
       this.ClPath = other.ClPath;
       this.RunningFromCommandLine = other.RunningFromCommandLine;
       this.VerifyUpToLine = other.VerifyUpToLine;
-      this.EagerTranslation = other.EagerTranslation;
       this.OmitReadWriteChecking = other.OmitReadWriteChecking;
       this.RunInBatchMode = other.RunInBatchMode;
       this.AggressivePruning = other.AggressivePruning;
@@ -291,20 +289,6 @@ namespace Microsoft.Research.Vcc
             this.TryParseNamedBoolean(arg, "dumpboogie", "db", ref this.options.DumpBoogie) ||
             this.TryParseNamedInteger(arg, "dumptriggers", "dt", ref this.options.DumpTriggers);
 
-        case 'e':
-          bool? eager = this.ParseNamedBoolean(arg, "eager", "e");
-          if (eager != null) {
-            this.options.EagerTranslation = eager.Value;
-            return true;
-          }
-
-          bool? exe = this.ParseNamedBoolean(arg, "exe", "exe");
-          if (exe != null) {
-            this.options.EagerTranslation = eager.Value;
-            return true;
-          }
-
-          return false;
         case 'f':
           var functions = this.ParseNamedArgumentList(arg, "functions", "f");
           if (functions == null || functions.Count == 0) return false;
