@@ -208,8 +208,8 @@ namespace Microsoft.Research.Vcc
           er ("DZ#" + td.Name)
         | C.Type.Ref({Name = n; Kind = C.TypeKind.MathType}) -> 
           match n with 
-            | "ptrset" -> bCall "$set_empty" []
-            | "state_t" -> er "$state_zero"
+            | "\\objset" -> bCall "$set_empty" []
+            | "\\state" -> er "$state_zero"
             | _ -> er "$struct_zero"
         | C.Type.Bool -> bFalse
         | C.Type.Map _ as t -> er ("$zero." + ctx.TypeIdToName(toTypeId t))
@@ -888,7 +888,7 @@ namespace Microsoft.Research.Vcc
                   match args with
                     | arg :: _ ->
                       match arg.Type with
-                        | C.MathTypeRef "state_t" -> ()
+                        | C.MathTypeRef "\\state" -> ()
                         | _ -> die()
                     | _ -> die()
                           
@@ -952,7 +952,7 @@ namespace Microsoft.Research.Vcc
             | C.ObjectT
             | C.Ptr _ ->
               inWritesOrIrrelevant false env (trExpr env e) (if prim then Some e else None)
-            | C.MathTypeRef "ptrset" ->
+            | C.MathTypeRef "\\objset" ->
               xassert (not prim)
               writesMultiCheck false env tok (fun p -> bCall "$set_in" [p; trExpr env e])
             | _ -> 
@@ -1043,7 +1043,7 @@ namespace Microsoft.Research.Vcc
             match e.Type with
               | C.ObjectT
               | C.Ptr _ -> bEq p (trExpr env e)
-              | C.MathTypeRef "ptrset" -> 
+              | C.MathTypeRef "\\objset" -> 
                 if isSetEmpty e then bFalse
                 else bCall "$set_in" [p; trExpr env e]
               | _ -> helper.Error (e.Token, 9618, "unsupported writes clause " + e.ToString(), None); er "$bogus"
@@ -2728,11 +2728,11 @@ namespace Microsoft.Research.Vcc
 
       let trMathType (td:C.TypeDecl) =
         match td.Name with
-          | "state_t"
-          | "thread_id_t"
+          | "\\state"
+          | "\\thread_id_t"
           | "tptr"
-          | "typeid_t"
-          | "ptrset" -> []
+          | "\\type"
+          | "\\objset" -> []
           | origname ->
             let name = "$#" + origname
             let t = B.Type.Ref name
@@ -2843,7 +2843,7 @@ namespace Microsoft.Research.Vcc
                       (bTrue, te (C.Deref ({ e.Common with Type = t }, e)), trType t)
                     else
                       (bCall "$closed" [er "#s"; te e], bCall "$read_version" [er "#s"; te e], tpVersion)
-                  | C.MathTypeRef "ptrset" ->
+                  | C.MathTypeRef "\\objset" ->
                     match e with 
                       | C.Macro(_, "_vcc_array_range", [_; ptr; length]) -> 
                         (bTrue, bCall "$mem_range" [er "#s"; te ptr; te length], B.Type.Int)
@@ -2927,7 +2927,7 @@ namespace Microsoft.Research.Vcc
                         bCall (if t.IsComposite then "$thread_owned" else "$mutable") [bState; e']
                       | C.ObjectT ->
                         bCall "$thread_owned_or_even_mutable" [bState; e']
-                      | C.MathTypeRef "ptrset" ->
+                      | C.MathTypeRef "\\objset" ->
                         let mut extOf name =
                           let p = er "#p"
                           let triggers =

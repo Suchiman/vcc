@@ -149,7 +149,7 @@ namespace Microsoft.Research.Vcc
     let firstIsState = function
         | (arg : Expr) :: _ ->
           match arg.Type with
-            | MathTypeRef "state_t" -> true
+            | MathTypeRef "\\state" -> true
             | _ -> false
         | _ -> false  
     

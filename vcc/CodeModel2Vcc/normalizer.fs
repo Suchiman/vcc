@@ -516,7 +516,7 @@ namespace Microsoft.Research.Vcc
     let normalizeWrites decls =
       let fixOne (e:Expr) =
         match e.Type with
-          | MathTypeRef "ptrset"
+          | MathTypeRef "\\objset"
           | ObjectT
           | Array _
           | Ptr _ -> e         
@@ -657,7 +657,7 @@ namespace Microsoft.Research.Vcc
       let setify acc (e:Expr) =
         let e = 
           match e.Type with 
-            | MathTypeRef "ptrset" -> e
+            | MathTypeRef "\\objset" -> e
             | _ -> single e
         if acc = empty then e
         else union acc e
@@ -782,7 +782,7 @@ namespace Microsoft.Research.Vcc
         let bec = { forwardingToken obj.Token None msg with Type = PhysPtr Type.Byte } // TODO Ptr kind
         Macro (bec, "_vcc_as_array", [Cast (bec, Unchecked, obj); sz])
       let typeId (obj:Expr) =
-        Macro ({ obj.Common with Type = Type.Math "typeid_t" }, "_vcc_typeof", [obj])
+        Macro ({ obj.Common with Type = Type.Math "\\type" }, "_vcc_typeof", [obj])
       function
         | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [CallMacro (_, "_vcc_as_array", [], [arg; sz]) as arr; preserveZero]) ->
           let eltSz =

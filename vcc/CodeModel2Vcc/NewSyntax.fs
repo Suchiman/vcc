@@ -49,12 +49,6 @@ let init (helper:Helper.Env) =
                                   "\\castlike_known",      "_vcc_known"
                                 ]
 
-    let newToOldType = Map.ofList [ "\\objset", "ptrset"
-                                    "\\state",  "state_t"
-                                    "\\type",   "typeid_t"
-                                    "\\label",  "label_t"
-                                    "\\thread_id", "thread_id" ]
-
     let fnMap = new Dict<_,_>()
 
     let normalizeCallsAndFindKeyFunctions = function
@@ -169,10 +163,6 @@ let init (helper:Helper.Env) =
           | Some oldName -> fn.Name <- oldName
           | None when fn.Token.Filename.EndsWith("vccp.h", System.StringComparison.OrdinalIgnoreCase) -> fn.Name <- "_vcc_" + fn.Name.Substring(1)
           | _ -> ()
-      | Top.TypeDecl(td) ->
-        match newToOldType.TryFind td.Name with
-          | Some oldName -> td.Name <- oldName
-          | None -> ()
       | _ -> ()
       
     let rec normalizeCastLike withinSpec self = function

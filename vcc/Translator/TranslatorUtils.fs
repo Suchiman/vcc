@@ -220,8 +220,12 @@ namespace Microsoft.Research.Vcc
           | C.Type.Map (range, dom) -> 
             internalizeType t (bCall "$map_t" [toTypeId' false range; toTypeId' false dom])
           | C.Type.Ref { Name = n; Kind = (C.MathType|C.Record|C.FunctDecl _) } ->
-            if n = "thread_id" then er "^$#thread_id_t"
-            else er ("^$#" + n)
+            match n with
+              | "\\thread_id" -> er "^$#thread_id_t"
+              | "\\objset"  -> er "^$#ptrset"
+              | "\\state"   -> er "^$#state_t"
+              | "\\type"    -> er "^$#typeid_t"
+              | _ -> er ("^$#" + n)
           | C.Type.Ref td -> er ("^" + td.Name)
           | C.Type.TypeIdT -> er "^$#typeid_t"
           | C.Type.Claim -> er "^^claim"
@@ -285,9 +289,9 @@ namespace Microsoft.Research.Vcc
           | C.Type.Ref td when td.IsDataType -> B.Type.Ref ("DT#" + td.Name)
           | C.Type.Ref ({ Name = n; Kind = (C.MathType|C.FunctDecl _) }) ->
             match n with
-              | "ptrset" -> tpPtrset
+              | "\\objset" -> tpPtrset
               | "struct" -> tpStruct
-              | "state_t" -> tpState
+              | "\\state" -> tpState
               | "club_t" -> B.Type.Ref "$ptrclub"
               | _ -> B.Type.Ref ("$#" + n)
           | C.Type.Volatile _

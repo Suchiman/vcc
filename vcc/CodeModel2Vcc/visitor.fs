@@ -207,7 +207,7 @@ namespace Microsoft.Research.Vcc
       if typ.TypeCode <> PrimitiveTypeCode.Invalid && res = C.Type.Bogus then
         die ()
       match res with
-        | C.Type.Ref ({ Name = "typeid_t"; Kind = C.MathType }) -> C.Type.TypeIdT
+        | C.Type.Ref ({ Name = "\\type"; Kind = C.MathType }) -> C.Type.TypeIdT
         | _ -> res
     
     member this.ExprCommon (expr:IExpression) = { Token = token expr; Type = this.DoType (expr.Type) } : C.ExprCommon
