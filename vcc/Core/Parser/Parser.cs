@@ -15,7 +15,7 @@ using System.Linq;
 namespace Microsoft.Research.Vcc.Parsing {
 
   [System.Diagnostics.DebuggerDisplay("CurrentToken = {this.currentToken}, {this.scanner.GetIdentifierString()}")]
-  internal class Parser {
+  internal abstract class Parser {
 
     protected delegate TResult Func<in T, out TResult>(T arg);
     protected delegate TResult Func<in T1, in T2, out TResult>(T1 arg1, T2 arg2);
@@ -55,7 +55,26 @@ namespace Microsoft.Research.Vcc.Parsing {
       return new ParserV2(compilation, sourceLocation, scannerAndParserErrors);
     }
 
-    internal Parser(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors, bool isV2 = false)
+    // the following virtual functions used to make the difference between the V1 and V2 syntax
+    // now that the V1 syntax is no-longer supported, they remain abstract
+
+    protected abstract void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers);
+    protected abstract void ParseNonLocalDeclarationInSpecBlock(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers);
+    protected abstract LoopContract/*?*/ ParseLoopContract(TokenSet followers);
+    protected abstract bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result);
+    protected abstract Expression ParseBraceLabeledExpression(SourceLocationBuilder slb, TokenSet followers);
+    protected abstract List<Parameter> ParseParameterList(TokenSet followers);
+    protected abstract void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers);
+    protected abstract bool ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers);
+    protected abstract void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers);
+    protected abstract Statement ParseSpecStatements(TokenSet followers);
+    protected abstract Expression ParseSpecCastExpression(TokenSet followers);
+    protected abstract Expression ParseQuantifier(TokenSet followers);
+    protected abstract Expression ParseLabeledExpression(TokenSet followers, bool inInvariant);
+    protected abstract List<Expression> ParseArgumentList(SourceLocationBuilder slb, TokenSet followers);
+    protected abstract void SkipSemiColonAfterDeclarationOrStatement(TokenSet followers);
+
+    protected Parser(Compilation compilation, ISourceLocation sourceLocation, List<IErrorMessage> scannerAndParserErrors, bool isV2 = false)
     {
       this.compilation = compilation;
       this.nameTable = compilation.NameTable;
@@ -247,18 +266,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected virtual void ParseGlobalSpecDeclarationList(List<INamespaceDeclarationMember> members, List<ITypeDeclarationMember> globalMembers, TokenSet followers) {
-      bool savedInSpecCode = this.EnterSpecBlock();
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      this.ParseGlobalDeclarationList(members, globalMembers, followers | Token.RightParenthesis);
-      this.Skip(Token.RightParenthesis);
-      if (this.currentToken == Token.Semicolon) 
-        this.SkipSemiColon(followers);
-      this.SkipTo(followers);
-      this.LeaveSpecBlock(savedInSpecCode);
-    }
-
     protected void ParseNonLocalDeclaration(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal) {
       this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, isGlobal, null);
     }
@@ -275,16 +282,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         ParseNonLocalDeclarationInSpecBlock(namespaceMembers, typeMembers, followers, isGlobal, templateParameters, specifiers);
       else 
         ParseNonLocalDeclaration(typeMembers, followers, isGlobal, templateParameters, specifiers);
-    }
-
-    protected virtual void ParseNonLocalDeclarationInSpecBlock(List<INamespaceDeclarationMember>/*?*/ namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
-      bool savedInSpecCode = this.EnterSpecBlock();
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      specifiers.AddRange(this.ParseSpecifiers(namespaceMembers, typeMembers, null, followers | TS.DeclaratorStartOrRightParenOrSemicolon));
-      ParseNonLocalDeclaration(typeMembers, followers | Token.RightParenthesis, isGlobal, templateParameters, specifiers);
-      this.Skip(Token.RightParenthesis);
-      this.LeaveSpecBlock(savedInSpecCode);
     }
 
     private void ParseNonLocalDeclaration(List<ITypeDeclarationMember> typeMembers, TokenSet followers, bool isGlobal, List<TemplateParameterDeclarator> templateParameters, List<Specifier> specifiers) {
@@ -383,26 +380,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       this.SkipSemiColonAfterDeclarationOrStatement(followers);
       return result;
-    }
-
-    protected virtual LoopContract/*?*/ ParseLoopContract(TokenSet followers)
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      if (this.currentToken != Token.Invariant && this.currentToken != Token.Writes) return null;
-      List<LoopInvariant> invariants = new List<LoopInvariant>();
-      List<Expression> writes = new List<Expression>();
-      List<Expression> variants = new List<Expression>();
-      LoopContract loopContract = new LoopContract(invariants, writes, variants);
-      TokenSet loopContractFollowers = followers | Token.Invariant | Token.Writes | Token.Decreases;
-      while (TS.LoopContractStart[this.currentToken]) {
-        switch (this.currentToken) {
-          case Token.Invariant: invariants.Add(ParseLoopInvariant(loopContractFollowers)); break;
-          case Token.Writes: this.ParseExpressionListWithParens(writes, Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, loopContractFollowers); break;
-          case Token.Decreases: variants.Add(ParseLoopVariant(loopContractFollowers)); break;
-        }
-      }
-      this.SkipTo(followers);
-      return loopContract;
     }
 
     protected LoopInvariant ParseLoopInvariant(TokenSet followers)
@@ -1054,24 +1031,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       return TypeExpression.For(Dummy.Type);
     }
 
-    protected virtual bool TryToGetBuiltInSpecTypeName(TypedefNameSpecifier typedefName, out TypeExpression result) {
-      switch (typedefName.TypedefName.ToString()) {
-        case "_vcc_obj_t":
-          Expression typePtrRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.nameTable, "TypedPtr");
-          result = new VccNamedTypeExpression(typePtrRef);
-          return true;
-        case "_vcc_integer_t":
-          result = VccCompilationHelper.GetBigIntType(this.nameTable);
-          return true;
-        case "_vcc_natural_t":
-          result = VccCompilationHelper.GetBigIntType(this.nameTable);
-          return true;
-        default:
-          result = null;
-          return false;
-      }
-    }
-
     protected TypeExpression/*?*/ TryToGetTypeExpressionFor(IEnumerable<Specifier> specifiers) {
       TypeExpression/*?*/ result = null;
       PrimitiveTypeSpecifier/*?*/ sign = null;
@@ -1436,11 +1395,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected virtual Expression ParseBraceLabeledExpression(SourceLocationBuilder slb, TokenSet followers)
-    {
-      return null; // syntax-refresh concept
-    }
-
     protected Expression ParseInitializer(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
     {
@@ -1535,14 +1489,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected virtual List<Parameter> ParseParameterList(TokenSet followers) {
-      List<Parameter> result = new List<Parameter>();
-      this.Skip(Token.LeftParenthesis);
-      if (this.currentToken != Token.RightParenthesis)
-        this.ParseList(result, ts => this.ParseParameter(ts), followers);
-      return result;
-    }
-
     protected FunctionDeclarator ParseFunctionDeclarator(Declarator functionName, List<TemplateParameterDeclarator> templateParameters, TokenSet followers)
       //^ requires this.currentToken == Token.LeftParenthesis;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
@@ -1599,45 +1545,6 @@ namespace Microsoft.Research.Vcc.Parsing {
         return new CheckedExpression(expr, expr.SourceLocation);
       else
         return expr;
-    }
-
-    protected virtual void ParseFunctionOrBlockContract(FunctionOrBlockContract contract, TokenSet followers)
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      TokenSet followersOrContractStart = followers|TS.ContractStart;
-      while (TS.ContractStart[this.currentToken]){
-        Expression condition;
-        List<Expression> exprList;
-        switch (this.currentToken) {
-          case Token.Requires: 
-            condition = this.ParseExpressionWithParens(followersOrContractStart, (expr, slb) => expr);
-            condition = CheckedExpressionIfRequested(condition);
-            contract.AddPrecondition(new Precondition(condition, null, condition.SourceLocation));
-            break;
-          case Token.Ensures:
-            this.resultIsAKeyword = true;
-            condition = this.ParseExpressionWithParens(followersOrContractStart, (expr, slb) => expr);
-            this.resultIsAKeyword = false;
-            condition = CheckedExpressionIfRequested(condition);
-            contract.AddPostcondition(new Postcondition(condition, condition.SourceLocation));
-            break;
-          case Token.Decreases:
-            this.resultIsAKeyword = true;
-            condition = this.ParseExpressionWithParens(followersOrContractStart, (expr, slb) => expr);
-            this.resultIsAKeyword = false;
-            contract.AddMethodVariant(condition);
-            break;
-          case Token.Reads: 
-            exprList = this.ParseExpressionListWithParens(Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, followersOrContractStart);
-            contract.AddReads(exprList);
-            break;
-          case Token.Writes:
-            exprList = this.ParseExpressionListWithParens(Token.LeftParenthesis, Token.Comma, Token.RightParenthesis, followersOrContractStart);
-            contract.AddWrites(exprList);
-            break;
-        }
-      }
-      this.SkipTo(followers);
     }
 
     protected TypeExpression/*?*/ TypeExpressionHasPointerType(TypeExpression typeExpr)
@@ -1854,10 +1761,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected virtual bool  ParseSpecTypeModifiers(List<Specifier> specifiers, TokenSet followers) {
-      return false;
-    }
-
     protected IList<Specifier> MoveMisplacedSpecifiers(IList<Specifier> specifiers) {
 
       List<Specifier> result = null;
@@ -2036,19 +1939,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       this.currentTypeMembers = savedCurrentTypeMembers;
     }
 
-    protected virtual void ParseTypeMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
-      TokenSet expectedTokens = TS.DeclarationStart | Token.Colon | Token.Invariant;
-      while (expectedTokens[this.currentToken]) {
-        if (this.currentToken == Token.Invariant) {
-          this.ParseTypeInvariant(followers);
-        } else if (this.currentToken == Token.Specification) {
-          this.ParseTypeSpecMemberDeclarationList(namespaceMembers, typeMembers, followers);
-        } else {
-          this.ParseNonLocalDeclaration(namespaceMembers, typeMembers, followers, false);
-        }
-      }
-    }
-
     protected void ParseTypeSpecMemberDeclarationList(List<INamespaceDeclarationMember> namespaceMembers, List<ITypeDeclarationMember> typeMembers, TokenSet followers) {
       bool savedInSpecCode = this.EnterSpecBlock();
       this.GetNextToken();
@@ -2185,25 +2075,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       this.SkipOverTo(Token.RightBrace, followers);
       return result;
-    }
-
-    protected virtual Statement ParseSpecStatements(TokenSet followers) {
-      bool savedInSpecCode = this.EnterSpecBlock();
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      List<Statement> statements = new List<Statement>();
-      this.ParseStatementList(statements, followers | Token.RightParenthesis);
-      List<Statement> specStatements = new List<Statement>(statements.Count);
-      foreach (var stmt in statements) {
-        LocalDeclarationsStatement localDecl = stmt as LocalDeclarationsStatement;
-        if (localDecl != null)
-          specStatements.Add(localDecl);
-        else
-          specStatements.Add(new VccSpecStatement(stmt, stmt.SourceLocation));
-      }
-      this.LeaveSpecBlock(savedInSpecCode);
-      this.SkipOverTo(Token.RightParenthesis, followers);
-      return StatementGroup.Create(specStatements);
     }
 
     protected void ParseStatementList(List<Statement> statements, TokenSet followers)
@@ -3212,12 +3083,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       return new VccByteStringLiteral(sb.ToString(), slb);
     }
 
-    protected virtual Expression ParseSpecCastExpression(TokenSet followers) {
-      // this is a new syntax construct, so here we just report and error and carry on
-      this.HandleError(Error.UnexpectedVccKeyword, this.scanner.GetTokenSource());
-      return this.ParseUnaryExpression(followers);
-    }
-
     protected Expression ParseCastExpression(TokenSet followers)
       //^ requires this.currentToken == Token.LeftParenthesis;
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
@@ -3295,59 +3160,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       return result;
     }
 
-    protected virtual Expression ParseQuantifier(TokenSet followers)
-      //^ requires this.currentToken == Token.Exists || this.currentToken == Token.Forall || this.currentToken == Token.Lambda;
-      //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-    {
-      Token tok = this.currentToken;
-      SourceLocationBuilder slb = this.GetSourceLocationBuilderForLastScannedToken();
-      this.GetNextToken();
-      this.Skip(Token.LeftParenthesis);
-      TokenSet followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart = followers | TS.LeftBraceOrRightParenthesisOrSemicolonOrUnaryStart;
-      List<LocalDeclarationsStatement> boundVariables = this.ParseQuantifierBoundVariables(followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart);
-      if (boundVariables.Count == 0) this.HandleError(slb, Error.NoQuantifiedVariables);
-      IEnumerable<IEnumerable<Expression>> triggers = this.ParseQuantifierTriggers(followersOrLeftBraceOrRightParenthesisOrSemicolonOrUnaryStart);
-      Expression condition = this.ParseExpression(followers|Token.RightParenthesis|Token.Semicolon);
-      Expression body = null;
-      if (this.currentToken == Token.Semicolon)
-      {
-          // for the case of __regionunion, we want error message if there is ) not ;
-          this.Skip(Token.Semicolon);
-          body = this.ParseExpression(followers | Token.RightParenthesis);
-          if (tok == Token.Forall)
-          {
-              condition = new Implies(condition, body, slb);
-              body = null;
-          }
-          else if (tok == Token.Exists)
-          {
-              condition = new VccLogicalAnd(condition, body, slb);
-              body = null;
-          }
-      }
-      else if (tok == Token.Lambda)
-      {
-          body = condition;
-          condition = new CompileTimeConstant(true, slb);
-      }
-      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      this.Skip(Token.RightParenthesis);
-      Expression result;
-      if (tok == Token.Exists)
-        result = new Exists(boundVariables, condition, slb);
-      else if (tok == Token.Forall)
-        result = new Forall(boundVariables, condition, slb);
-      else if (tok == Token.Lambda)
-        result = new VccLambda(boundVariables, condition, body, slb);
-      else {
-        //^ assert false;
-        result = null;
-      }
-      this.compilation.ContractProvider.AssociateTriggersWithQuantifier(result, triggers);
-      //^ assume followers[this.currentToken] || this.currentToken == Token.EndOfFile;
-      return result;
-    }
-
     protected IEnumerable<IEnumerable<Expression>> ParseQuantifierTriggers(TokenSet followers) {
       List<IEnumerable<Expression>> result = new List<IEnumerable<Expression>>();
       while (this.currentToken == Token.LeftBrace) {
@@ -3356,10 +3168,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
       result.TrimExcess();
       return result.AsReadOnly();
-    }
-
-    protected virtual Expression ParseLabeledExpression(TokenSet followers, bool inInvariant) {
-      return this.ParseExpression(followers); // this is purely a syntax refresh concept
     }
 
     protected IEnumerable<Expression>/*?*/ ParseQuantifierTrigger(TokenSet followers) 
@@ -3535,16 +3343,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected virtual List<Expression> ParseArgumentList(SourceLocationBuilder slb, TokenSet followers) {
-      List<Expression> arguments = new List<Expression>();
-      this.Skip(Token.LeftParenthesis);
-      if (this.currentToken != Token.RightParenthesis)
-        this.ParseList(arguments, ts => this.ParseArgumentExpression(ts), followers);
-      arguments.TrimExcess();
-      slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
-      this.SkipOverTo(Token.RightParenthesis, followers);
-      return arguments;
-    }
 
     protected Expression ParseArgumentExpression(TokenSet followers)
     {
@@ -3833,9 +3631,6 @@ namespace Microsoft.Research.Vcc.Parsing {
       }
     }
 
-    protected virtual void SkipSemiColonAfterDeclarationOrStatement(TokenSet followers) {
-      this.SkipSemiColon(followers);
-    }
 
     protected void SkipSemiColon(TokenSet followers)
       //^ ensures followers[this.currentToken] || this.currentToken == Token.EndOfFile;
