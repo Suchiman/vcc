@@ -32,7 +32,6 @@ namespace Microsoft.Research.Vcc.VSPackage
   // This attribute makes sure this package is loaded and initialized when a solution exists
   [ProvideOptionPage(typeof(VccOptionPage), "VCC", "General", 101, 106, true)]
   [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
-  [ProvideToolWindow(typeof(ErrorModelToolWindow))]
   [ProvideToolWindow(typeof(BvdToolWindow))]
   [Guid(GuidList.GuidVSPackagePkgString)]
   public sealed class VSPackagePackage : Package
@@ -338,8 +337,6 @@ namespace Microsoft.Research.Vcc.VSPackage
           this.RegisterCommand(mcs, InsertIntersection, null, PkgCmdIDList.cmdidMathSymbolIntersection);
           this.RegisterCommand(mcs, InsertUnion, null, PkgCmdIDList.cmdidMathSymbolUnion);
       }
-
-      ErrorModelToolWindow.ModelViewer.LineColumnChanged += VSIntegration.ModelViewer_LineColumnChanged;
     }
 
     /// <summary>

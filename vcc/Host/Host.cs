@@ -630,7 +630,7 @@ namespace Microsoft.Research.Vcc
       int _errorCount = Boogie.Parser.Parse(_preludePath, new List<string>(), out prelude);
       if (prelude == null || _errorCount > 0)
       {
-        Logger.Instance.Error("There were errors parsing VccPrelude.bpl.");
+        Logger.Instance.Error("There were errors parsing Vcc3Prelude.bpl.");
         return new Program();
       }
       else

@@ -248,7 +248,7 @@ namespace Microsoft.Research.Vcc
         }
       }
       if (commandLineOptions != null && commandLineOptions.RunTestSuite && isPrelude) {
-        reqTok.filename = "VccPrelude.bpl";
+        reqTok.filename = "Vcc3Prelude.bpl";
         reqTok.line = 0;
         reqTok.col = 0;
       }
