@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 #define BUF_LEN	100

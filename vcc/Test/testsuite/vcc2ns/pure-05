@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(ghost _(pure) int g1(int x) _(ensures \result == g2(x)))

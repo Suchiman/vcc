@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 int foo(_(out int o) _(out int o1)) 

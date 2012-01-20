@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 
 #define my_mutable_array(arr, len) (\forall unsigned i; {arr + i} i < len ==> \mutable(arr + i))

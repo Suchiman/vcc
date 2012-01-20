@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc2test.h>
 
 _(atomic_inline) unsigned int InterlockedIncrement(volatile unsigned int *p) {

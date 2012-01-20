@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 _(pure, frameaxiom) int foo(int *arr, unsigned int len)

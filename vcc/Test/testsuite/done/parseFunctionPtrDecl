@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 typedef void (*RTL_RB_KEY_COMPARE_ROUTINE)(__int32 TargetKey);

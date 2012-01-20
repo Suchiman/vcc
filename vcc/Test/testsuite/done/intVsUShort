@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 const unsigned __int16 RtlpCrc1021Table[256] =

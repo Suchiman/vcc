@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 int a[1000];

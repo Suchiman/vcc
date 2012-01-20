@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(ghost _(pure) int f(int a) _(ensures \result == (a == 0 ? 1 : -1));)

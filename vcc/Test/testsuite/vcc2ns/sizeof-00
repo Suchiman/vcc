@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 #include <stdint.h>
 

@@ -1,4 +1,3 @@
-//`/newsyntax
 /*
 Copyright (c) 2010, Microsoft Corporation
 All rights reserved.

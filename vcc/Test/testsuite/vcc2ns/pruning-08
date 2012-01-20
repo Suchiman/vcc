@@ -1,4 +1,4 @@
-`/a /functions:bar /newsyntax
+`/a /functions:bar 
 
 #include <vcc.h>
 

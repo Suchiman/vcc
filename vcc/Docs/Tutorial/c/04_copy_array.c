@@ -1,4 +1,3 @@
-//`/newsyntax
 #include<vcc.h>
 /*{begin}*/
 void my_memcpy(unsigned char *dst, unsigned char *src, unsigned len)

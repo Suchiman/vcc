@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 
 void ssort(int *a, unsigned len)

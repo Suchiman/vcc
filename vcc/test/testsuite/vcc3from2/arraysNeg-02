@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 void setk(int *p, size_t sz)

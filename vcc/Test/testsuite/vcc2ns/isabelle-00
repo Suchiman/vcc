@@ -1,4 +1,4 @@
-`/b:/prover:Isabelle /b:/proverOpt:ISABELLE_INPUT=..\dummy.b2i /newsyntax
+`/b:/prover:Isabelle /b:/proverOpt:ISABELLE_INPUT=..\dummy.b2i 
 
 #include <vcc.h>
 void foo() { }

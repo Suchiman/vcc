@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 // This example should yield a warning / error
 int foo(_(out int a));

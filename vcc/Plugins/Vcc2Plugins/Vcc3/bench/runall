@@ -1,4 +1,0 @@
-for run in 1 2 3 4 5 6 7 ; do
-  ./measure-axioms.pl $run /proc:insert tree.bpl | tee log-treeins-$run
-#  ./measure-axioms.pl $run /proc:insert Heap.bpl | tee log-heap-$run
-done

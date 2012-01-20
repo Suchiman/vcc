@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 _(ghost \integer toto()
 _(requires \result > 0)

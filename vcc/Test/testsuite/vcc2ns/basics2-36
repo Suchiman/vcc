@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(axiom \forall int x,y; { x < y } \true)

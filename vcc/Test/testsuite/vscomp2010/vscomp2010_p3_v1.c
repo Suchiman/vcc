@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h> 
 
 typedef _(dynamic_owns) struct List {

@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(pure \integer a(\integer x))

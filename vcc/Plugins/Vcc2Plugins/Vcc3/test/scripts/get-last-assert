@@ -1,9 +1,0 @@
-#!/bin/sh
-set -x
-set -e
-vcc2 /st /3 /pvcc3:boogie=list1.bpl /b:/noinfer List.c /f:RemoveEntryList
-perl last-assert.pl < list1.bpl > list2.bpl
-Boogie list2.bpl /proverLog:list.sx /z3opt:TRACE=true
-z3 -st list.sx
-z3vis list2.bpl z3.log &
-sleep 1

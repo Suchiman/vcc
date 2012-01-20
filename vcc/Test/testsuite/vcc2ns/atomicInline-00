@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc2test.h>
 
 typedef _(claimable) _(volatile_owns) struct _LOCK {

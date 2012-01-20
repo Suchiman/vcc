@@ -1,4 +1,3 @@
-`/newsyntax
 typedef __int32 INT32;
 typedef INT32 volatile VINT32;
 

@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 void fill(void *arr, unsigned len, int fill)

@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(logic \integer \plus(\integer a, \integer b) = a + b)

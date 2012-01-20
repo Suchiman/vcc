@@ -52,6 +52,7 @@ let init (helper:Helper.Env) =
     let newToOldType = Map.ofList [ "\\objset", "ptrset"
                                     "\\state",  "state_t"
                                     "\\type",   "typeid_t"
+                                    "\\label",  "label_t"
                                     "\\thread_id", "thread_id" ]
 
     let fnMap = new Dict<_,_>()

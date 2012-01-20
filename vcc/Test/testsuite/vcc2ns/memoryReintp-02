@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc2test.h>
 
 void fooFail1(int *arr)
