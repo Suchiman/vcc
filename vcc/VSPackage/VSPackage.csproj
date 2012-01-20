@@ -146,7 +146,6 @@
     </Compile>
     <Compile Include="BvdToolWindow.cs" />
     <Compile Include="ErrorLinesChangedEventArgs.cs" />
-    <Compile Include="LanguageVersion.cs" />
     <Compile Include="CustomVerifyForm.cs">
       <SubType>Form</SubType>
     </Compile>

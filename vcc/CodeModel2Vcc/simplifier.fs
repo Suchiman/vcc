@@ -1069,9 +1069,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("desugar-addressable-locals", Helper.Decl heapifyAddressedLocals)
     helper.AddTransformer ("desugar-globals", Helper.Decl handleGlobals)
     helper.AddTransformer ("desugar-loops", Helper.Expr (loopAndSwitchDesugaring None))
-
-    if helper.Options.Vcc3 then
-      helper.AddTransformer ("fix-group-casts", Helper.Expr fixGroupCasts)
-      helper.AddTransformer ("datatype-wrap-ctors", Helper.Expr (DataTypes.handleSize helper))
+    helper.AddTransformer ("fix-group-casts", Helper.Expr fixGroupCasts)
+    helper.AddTransformer ("datatype-wrap-ctors", Helper.Expr (DataTypes.handleSize helper))
      
     helper.AddTransformer ("desugar-end", Helper.DoNothing)

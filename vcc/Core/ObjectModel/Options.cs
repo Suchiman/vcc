@@ -32,7 +32,6 @@ namespace Microsoft.Research.Vcc
     public bool EagerTranslation;
     public bool OmitReadWriteChecking;
     public bool RunInBatchMode;
-    public bool ModifiedPreprocessorFiles;
     public Dictionary<long, bool> DisabledWarnings = new Dictionary<long, bool>();
     public bool AggressivePruning;
     public List<string> PipeOperations = new List<string>();
@@ -43,17 +42,12 @@ namespace Microsoft.Research.Vcc
     public bool WarningsAsErrors;
     public int WarningLevel = 1;
     public bool DebugOnWarningOrError;
-    public bool SaveModel;
     public bool SaveModelForBvd;
-    public bool RunModelViewer;
     public bool RunInspector;
     public bool DetailedTimes;
     public bool PrintCEVModel;
     public int PointerSize = 64;
-    public bool Vcc3;
     public bool YarraMode;
-    public string PreludePath = "VccPrelude.bpl"; // we might want an option for setting it
-    public bool InferTriggers;
     public int DumpTriggers; // 0-none, 1-C syntax, 2-C+Boogie syntax
     public bool KeepPreprocessorFiles;
     public bool OpsAsFunctions;
@@ -114,23 +108,17 @@ namespace Microsoft.Research.Vcc
       this.EagerTranslation = other.EagerTranslation;
       this.OmitReadWriteChecking = other.OmitReadWriteChecking;
       this.RunInBatchMode = other.RunInBatchMode;
-      this.ModifiedPreprocessorFiles = other.ModifiedPreprocessorFiles;
       this.AggressivePruning = other.AggressivePruning;
       this.DumpBoogie = other.DumpBoogie;
       this.GenerateFieldOffsetAxioms = other.GenerateFieldOffsetAxioms;
       this.WarningsAsErrors = other.WarningsAsErrors;
       this.WarningLevel = other.WarningLevel;
       this.DebugOnWarningOrError = other.DebugOnWarningOrError;
-      this.SaveModel = other.SaveModel;
       this.SaveModelForBvd = other.SaveModelForBvd;
-      this.RunModelViewer = other.RunModelViewer;
       this.RunInspector = other.RunInspector;
       this.DetailedTimes = other.DetailedTimes;
       this.PrintCEVModel = other.PrintCEVModel;
       this.PointerSize = other.PointerSize;
-      this.Vcc3 = other.Vcc3;
-      this.PreludePath = other.PreludePath;
-      this.InferTriggers = other.InferTriggers;
       this.DumpTriggers = other.DumpTriggers;
       this.KeepPreprocessorFiles = other.KeepPreprocessorFiles;
       this.OpsAsFunctions = other.OpsAsFunctions;
@@ -156,15 +144,6 @@ namespace Microsoft.Research.Vcc
 
     private static void CheckOptions(MetadataHostEnvironment hostEnvironment, VccOptions options)
     {
-      if (options.Vcc3 && options.SaveModel) {
-        options.SaveModel = false;
-        options.PrintCEVModel = true;
-        options.SaveModelForBvd = true;
-      }
-
-      if (!options.Vcc3)
-        options.TerminationLevel = 0;
-
       if (options.RunTestSuite &&
           options.RunTestSuiteMultiThreaded != -1 &&
           !String.IsNullOrEmpty(options.XmlLogFile)) {
@@ -239,17 +218,7 @@ namespace Microsoft.Research.Vcc
       this.options.HandledOptions.Add(arg);
       ch = arg[1];
       switch (ch)
-      {
-        case '3':
-          bool? vcc3 = this.ParseNamedBoolean(arg, "3", "3");
-          if (vcc3 != null) {
-            this.options.Vcc3 = vcc3.Value;
-            this.options.PreludePath = "Vcc3Prelude.bpl";
-            this.options.InferTriggers = true;
-            this.options.Z3Options.Add("CASE_SPLIT=5");
-            return true;
-          }
-          return false;
+      {          
         case 'a':
           bool? aggressivePruning = this.ParseNamedBoolean(arg, "aggressivepruning", "a");
           if (aggressivePruning != null) {
@@ -383,7 +352,7 @@ namespace Microsoft.Research.Vcc
               return true;
           }
 
-          return this.TryParseNamedBoolean(arg, "infertriggers", "it", ref this.options.InferTriggers);
+          return false;
 
         case 'k':
           return this.TryParseNamedBoolean(arg, "keepppoutput", "keepppoutput", ref this.options.KeepPreprocessorFiles);
@@ -401,21 +370,6 @@ namespace Microsoft.Research.Vcc
 
           break;
 
-        case 'm':
-          if (this.ParseName(arg, "modifiedpreprocessorfile", "modifiedpreprocessorfile")) {
-            this.options.ModifiedPreprocessorFiles = true;
-            return true;
-          }
-          if (this.ParseName(arg, "modelviewer", "mv")) {
-            this.options.SaveModel = true;
-            this.options.RunModelViewer = true;
-            return true;
-          }
-          if (this.ParseName(arg, "model", "m")) {
-            this.options.SaveModel = true;
-            return true;
-          }
-          return false;
         case 'n':
           if (this.ParseName(arg, "nopreprocessor", "n")) {
             this.options.NoPreprocessor = true;

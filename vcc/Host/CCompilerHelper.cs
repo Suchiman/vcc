@@ -48,7 +48,6 @@ namespace Microsoft.Research.Vcc
       args.Append("/nologo /TC /u /E /DVERIFY /D_WIN32");
       // VCC doesn't like /D_PREFAST_ with VS2010
       args.Append(" /D_USE_DECLSPECS_FOR_SAL /DSAL_NO_ATTRIBUTE_DECLARATIONS"); // TODO revisit these
-      if (commandLineOptions.Vcc3) args.Append(" /DVERIFY3");
       if (commandLineOptions.PointerSize == 64) args.Append(" /D_WIN64");
 
       foreach (string ppOption in commandLineOptions.PreprocessorOptions) {
@@ -84,7 +83,6 @@ namespace Microsoft.Research.Vcc
     private static StreamReader RunPreprocessor(string fileName, VccOptions commandLineOptions) {
       string args = GenerateClArgs(fileName, commandLineOptions);
       string outExtension = ".i";
-      if (commandLineOptions.ModifiedPreprocessorFiles) outExtension += "." + System.Diagnostics.Process.GetCurrentProcess().Id;
       string outFileName = Path.ChangeExtension(fileName, outExtension);
       if (commandLineOptions.OutputDir != null) {
         outFileName = Path.Combine(commandLineOptions.OutputDir, Path.GetFileName(outFileName));

@@ -1,4 +1,4 @@
-` /dt:3 /it
+` /dt:3
 #include "vcc.h"
 
 void trg2()

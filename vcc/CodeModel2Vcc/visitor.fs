@@ -1446,8 +1446,7 @@ namespace Microsoft.Research.Vcc
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
         let rec isAdmissibleMapDomainType = function
           | C.Volatile t -> isAdmissibleMapDomainType t
-          | C.Type.Ref td when helper.Options.Vcc3 -> td.IsMathValue // TODO exclude big types
-          | C.Type.Ref _ -> false
+          | C.Type.Ref td -> td.IsMathValue // TODO exclude big types
           | C.TypeVar _
           | C.Array _
           | C.Void -> false

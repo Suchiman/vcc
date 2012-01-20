@@ -92,10 +92,7 @@ namespace Microsoft.Research.Vcc
                 assumeNot explicitAdm isAdm |>
                 assumeNot explicitStutt isStutt |>
                 assumeNot explicitUnwrap isUnwrap
-          let body =
-            if helper.Options.Vcc3 then
-              Expr.MkBlock [assume "_vcc_admissibility_start"; body]
-            else body
+          let body = Expr.MkBlock [assume "_vcc_admissibility_start"; body]
           let post = 
             List.map (mkImpl isAdm) (admChecks helper parm) @
             List.map (mkImpl isStutt) (stuttChecks helper parm) @
@@ -455,19 +452,9 @@ namespace Microsoft.Research.Vcc
                 | t when t.IsPtrSet ->
                   match expr with
                     | Macro(_, "_vcc_set_empty", _) -> Expr.MkBlock []
-                    | Macro(_, "_vcc_array_range", args) when helper.Options.Vcc3 ->
+                    | Macro(_, "_vcc_array_range", args) ->
                       let setIn = Expr.Macro(boolBogusEC(), "reads_same_arr", args)
                       Expr.MkAssume setIn
-                    | Macro(_, "_vcc_array_range", [_; ptr; _]) ->
-                      let p = Variable.CreateUnique "#p" ptr.Type VarKind.QuantBound
-                      let pRef = Expr.Ref({bogusEC with Type = p.Type}, p)
-                      let setIn = Expr.Macro(boolBogusEC(), "_vcc_set_in", [pRef; subst (mkOld expr.Common "prestate" expr)])
-                      let allInSetReadsSame = Expr.Quant(boolBogusEC(), { Kind = QuantKind.Forall;
-                                                                          Variables = [p];
-                                                                          Triggers = [[Deref ({pRef.Common with Type = p.Type.Deref }, pRef)]];
-                                                                          Condition = Some(setIn);
-                                                                          Body = Macro (boolBogusEC(), "reads_same", [pRef]) })
-                      Expr.MkAssume allInSetReadsSame
                     | _ -> helper.Error (expr.Token, 9648, "unsupported pointer set in reads clauses", None)
                            Expr.MkBlock []
                 | _ ->

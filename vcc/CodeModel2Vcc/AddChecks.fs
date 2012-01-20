@@ -292,7 +292,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     let notInTestsuite expr =
-      if helper.Options.RunTestSuite || helper.Options.Vcc3 then Expr.MkBlock []
+      if helper.Options.RunTestSuite || true then Expr.MkBlock [] // TODO
       else expr
 
     let rec isYarraIgnore (p:Expr) =
@@ -424,10 +424,7 @@ namespace Microsoft.Research.Vcc
                 deepReadsCheck (Expr.MkDot(ec, e, fld))
               locAssert :: (td.Fields |> List.map fldAssert |> List.concat)
             | _ -> []
-        let readsCheck =
-          if helper.Options.Vcc3 then
-            [propAssert 8538 "{0} has thread-local extent in struct assignment" "_vcc_extent_thread_local" (self p)]
-          else deepReadsCheck p
+        let readsCheck = [propAssert 8538 "{0} has thread-local extent in struct assignment" "_vcc_extent_thread_local" (self p)]
         Some (Expr.MkBlock(readsCheck @ [Macro(c, "_vcc_vs_ctor", [self p])]))
         
       | _ -> None
@@ -551,7 +548,7 @@ namespace Microsoft.Research.Vcc
           | PtrSoP(_, s), _ ->
             let expectedRange, checkFn, errno = if s then "spec", "in_range_spec_ptr", 8534 else "physical", "in_range_phys_ptr", 8535
             let comm = afmte errno ("{0} is in " + expectedRange + " pointer range (in cast)") [e']
-            let casted = if helper.Options.Vcc3 then e' else Expr.Cast({e'.Common with Type= Type.MathInteger Signed}, CheckedStatus.Processed, e')
+            let casted = e'
             let check = Expr.Macro (comm, checkFn, [casted])
             addStmtsOpt [Expr.MkAssert check] newe
           | _ -> None
