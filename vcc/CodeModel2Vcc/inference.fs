@@ -243,7 +243,7 @@ namespace Microsoft.Research.Vcc
       
     let inferSetIn decl =   
       let isSetType = function
-        | Type.Ref { Name = "ptrset"; Kind = TypeKind.MathType } -> true
+        | Type.Ref { Name = "\\objset"; Kind = TypeKind.MathType } -> true
         | _ -> false
       let doInferSetIn self = function
         | CallMacro(c, "_vcc_set_eq", _, [e1; e2]) as expr when (isSetType e1.Type) && (isSetType e2.Type) -> 

@@ -409,9 +409,9 @@ module Microsoft.Research.Vcc.CAST
       | Type.Ref({Kind = MathType; Name = name'}) when name = name' -> true
       | _ -> false
 
-    member this.IsPtrSet = this.IsMathType "ptrset"
+    member this.IsPtrSet = this.IsMathType "\\objset"
     member this.IsMathStruct = this.IsMathType "struct"
-    member this.IsMathState = this.IsMathType "state_t"
+    member this.IsMathState = this.IsMathType "\\state"
 
     // those should be treated as immutable
     static member MathTd name = 
@@ -442,9 +442,9 @@ module Microsoft.Research.Vcc.CAST
  
     static member Math name = Type.Ref (Type.MathTd name)    
     static member Bogus = Type.Math "$$bogus$$"
-    static member PtrSet = Type.Math "ptrset"
+    static member PtrSet = Type.Math "\\objset"
     static member MathStruct = Type.Math "struct"
-    static member MathState = Type.Math "state_t"
+    static member MathState = Type.Math "\\state"
     static member FieldT = Type.Math "field_t"
     static member Byte = Type.Integer IntKind.UInt8
     
