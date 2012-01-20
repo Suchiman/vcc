@@ -1,0 +1,37 @@
+#include <vcc.h>
+
+struct {
+  bool fooS;
+  volatile bool foo;
+} bar;
+
+void baz()
+{
+  _(ghost bool b = bar.foo)
+  _(ghost bool b2 = bar.fooS)
+}
+  
+_(ghost void baz_g()
+{
+  bool b = bar.foo;
+  bool b2 = bar.fooS;
+}) 
+
+void baz_fail()
+  _(requires \wrapped(&bar))
+{
+  bool b = bar.foo;
+}
+
+void baz_fail2()
+{
+  bool b = bar.fooS;
+}
+`
+Verification of baz succeeded.
+Verification of baz_g succeeded.
+Verification of baz_fail failed.
+testcase(23,12) : error VC8512: Assertion 'bar is mutable (accessing volatile field foo)' did not verify.
+Verification of baz_fail2 failed.
+testcase(28,12) : error VC8512: Assertion 'bar is thread local (accessing field fooS)' did not verify.
+`
