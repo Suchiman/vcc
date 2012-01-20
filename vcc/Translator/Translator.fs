@@ -131,7 +131,6 @@ namespace Microsoft.Research.Vcc
       let castToInt = ctx.CastToInt
       let trType = ctx.TrType
       let weight = ctx.Weight
-      let vcc3 = helper.Options.Vcc3
       
       let captureStateAttrs suff (tok:Token) =
         if helper.Options.PrintCEVModel && suff <> "<skip>" then             
@@ -154,27 +153,17 @@ namespace Microsoft.Research.Vcc
         B.Stmt.Assume (captureStateAttrs suff tok, bTrue)
 
       let addType t e =
-        if vcc3 then
-          match t with
-            | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [e; toTypeId t]
-            | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [e; toTypeId t]
-            | _ -> e
-        else
-          match t with
-            | C.Type.SpecPtr t
-            | C.Type.PhysPtr t -> bCall "$ptr" [toTypeId t; e]
-            | _ -> e
+        match t with
+          | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [e; toTypeId t]
+          | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [e; toTypeId t]
+          | _ -> e
      
       let intToTyped t fetch =
         match t with
           | C.Type.MathInteger C.MathIntKind.Unsigned
           | C.Type.Integer _ ->
             bCall "$unchecked" [toTypeId t; fetch]
-          | C.Ptr t ->
-            if vcc3 then
-              addType t (castFromInt (trType t) fetch)
-            else
-              bCall "$ptr" [toTypeId t; fetch]
+          | C.Ptr t -> addType t (castFromInt (trType t) fetch)
           | C.Bool ->
             bNeq fetch (bInt 0)
           | t ->
@@ -182,7 +171,7 @@ namespace Microsoft.Research.Vcc
          
       let typedEq tp e1 e2 =
         match tp with
-          | C.Type.Ref td when td.IsRecord && vcc3 ->
+          | C.Type.Ref td when td.IsRecord ->
             bCall ("REQ#" + td.Name) [e1; e2]
           | C.Type.Ref td when td.IsDataType ->
             bCall ("DEQ#" + td.Name) [e1; e2]
@@ -192,18 +181,12 @@ namespace Microsoft.Research.Vcc
             bEq e1 e2
        
       let defaultValueOf = function
-        | C.Ptr _ as t ->
-          if vcc3 then addType t (er "$null")
-          else bInt 0              
+        | C.Ptr _ as t -> addType t (er "$null")
         | C.Type.Claim
         | C.Type.MathInteger _
         | C.Type.Integer _ -> bInt 0
         | C.Type.ObjectT _ -> er "$null"
-        | C.Type.Ref({Kind = C.TypeKind.Record} as td) ->
-          if vcc3 then 
-            er ("RZ#" + td.Name)
-          else
-            er "$rec_zero"
+        | C.Type.Ref({Kind = C.TypeKind.Record} as td) -> er ("RZ#" + td.Name)
         | C.Type.Ref(td) when td.IsDataType ->
           er ("DZ#" + td.Name)
         | C.Type.Ref({Name = n; Kind = C.TypeKind.MathType}) -> 
@@ -218,7 +201,6 @@ namespace Microsoft.Research.Vcc
       let mapEqAxioms t =
         let t1, t2 =
           match t with
-            | C.Type.Map (C.Type.ObjectT, C.Type.Bool) when not vcc3 -> die()
             | C.Type.Map (t1, t2) -> t1, t2            
             | _ -> die()
         let bt1 = trType t1
@@ -249,49 +231,30 @@ namespace Microsoft.Research.Vcc
             | C.Type.MathInteger C.MathIntKind.Unsigned
             | C.Type.Integer _ ->
               bCall "$unchecked" [toTypeId t; e]
-            | C.Ptr _ when vcc3 ->
-              addType t e
+            | C.Ptr _ -> addType t e
             | _ -> e
         let v = unchk t2 v
         let tpEq t p q = typedEq t (unchk t p) (unchk t q)
         let argRange = 
           match t1 with
             | C.Type.MathInteger C.MathIntKind.Unsigned 
-            | C.Type.Integer _ when not vcc3 -> 
-              bCall "$in_range_t" [toTypeId t1; er "p"]
             | _ -> bTrue
         
-        let selStorPP = 
-          if vcc3 then bTrue
-          else bImpl argRange (bEq (bCall sel [bCall stor [er "M"; er "p"; er "v"]; er "p"]) v)
+        let selStorPP = bTrue // TODO
         let selStorPQ =
-          if vcc3 then
-            bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"])
-                (B.Expr.Ite (tpEq t1 (er "p") (er "q"), v, selMP))
-          else
-            bInvImpl (bNeq (er "p") (er "q"))
-                      (bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"]) selMP)
+          bEq (bCall sel [bCall stor [er "M"; er "q"; er "v"]; er "p"])
+              (B.Expr.Ite (tpEq t1 (er "p") (er "q"), v, selMP))
         let selZero =
           let zeroVal = defaultValueOf t2
           bEq (bCall sel [er zero; er "p"]) zeroVal
         let eqM1M2 = bCall eq [er "M1"; er "M2"]
-        let unchkp = if vcc3 then unchk t1 (er "p") else er "p"
+        let unchkp = unchk t1 (er "p")
         let eqM1M2Ax1 = bImpl (B.Expr.Forall(Token.NoToken, ["p", bt1], [], weight "select-map-eq", 
                                              bImpl argRange (tpEq t2 (bCall sel [er "M1"; unchkp]) (bCall sel [er "M2"; unchkp]))))
                              eqM1M2
         let eqM1M2Ax2 = bImpl eqM1M2 (bEq (er "M1") (er "M2"))
         
-        let eqRecAx = 
-          if vcc3 then bTrue
-          else
-            let m1 = bCall "$rec_fetch" [er "r1"; er "f"]
-            let m2 = bCall "$rec_fetch" [er "r2"; er "f"]
-            let recEq = bCall "$rec_base_eq" [m1; m2]
-            let mapEq = bCall eq [castFromInt mt m1; castFromInt mt m2]                    
-            let vars = ["r1", tpRecord; "r2", tpRecord; "f", tpField; "R", tpCtype]
-            let isRecFld = bCall "$is_record_field" [er "R"; er "f"; toTypeId (C.Type.Map (t1, t2))]
-            B.Expr.Forall (Token.NoToken, vars, [[recEq; isRecFld]], weight "select-map-eq", bImpl mapEq recEq)
-        
+        let eqRecAx = bTrue // TODO
         let mpv = ["M", tp; "p", bt1; "v", bt2]
         let m1m2 = ["M1", tp; "M2", tp]
         [B.Decl.TypeDef mapName;
@@ -346,23 +309,14 @@ namespace Microsoft.Research.Vcc
           | None -> [bCall "$prim_emb" [e]; bCall "$field" [e]]
 
       let typedRead s p t =
-        if vcc3 then
-          let decomp p = List.rev (decomposeDot p)
-          match t with
-            | C.SpecPtr t ->
-              bCall "$rd_spec_ptr" (s :: decomp p @ [toTypeId t])
-            | C.PhysPtr t ->
-              bCall "$rd_phys_ptr" (s :: decomp p @ [toTypeId t])
-            | _ ->
-              castFromInt (trType t) (bCall "$rd_inv" (s :: decomp p))
-        else
-          match t with
-            | C.Ptr t ->
-              bCall "$read_ptr" [s; p; toTypeId t]
-            | C.Bool ->
-              bCall "$read_bool" [s; p]
-            | t ->                
-              castFromInt (trType t) (bCall "$mem" [s; p])
+        let decomp p = List.rev (decomposeDot p)
+        match t with
+          | C.SpecPtr t ->
+            bCall "$rd_spec_ptr" (s :: decomp p @ [toTypeId t])
+          | C.PhysPtr t ->
+            bCall "$rd_phys_ptr" (s :: decomp p @ [toTypeId t])
+          | _ ->
+            castFromInt (trType t) (bCall "$rd_inv" (s :: decomp p))
 
       let varRef v = er (ctx.VarName v)
 
@@ -379,10 +333,8 @@ namespace Microsoft.Research.Vcc
         match v.Type with
           | C.Type.MathInteger C.MathIntKind.Unsigned -> (v', Some (bCall "$in_range_nat" [varRef v]))
           | C.Type.Integer k -> (v', Some (bCall ("$in_range_" + C.Type.IntSuffix k) [varRef v]))
-          | C.Type.PhysPtr t when vcc3 -> (v', None) // (v', Some (bCall "$is_phys_ptr" [varRef v; toTypeId t]))
-          | C.Type.SpecPtr t when vcc3 -> (v', None) // (v', Some (bCall "$is_spac_ptr" [varRef v; toTypeId t]))
-          | C.Type.PhysPtr _ -> (v', Some (bCall "$in_range_phys_ptr" [varRef v]))
-          | C.Type.SpecPtr _ -> (v', Some (bCall "$in_range_spec_ptr" [varRef v]))
+          | C.Type.PhysPtr t 
+          | C.Type.SpecPtr t -> (v', None) // (v', Some (bCall "$is_spac_ptr" [varRef v; toTypeId t]))
           | _ -> (v', None)
     
       let ptrType (expr:C.Expr) =
@@ -391,12 +343,7 @@ namespace Microsoft.Research.Vcc
           | C.Ptr t -> toTypeId t
           | _ -> failwith ("pointer type expected " + expr.ToString())        
       
-      let stripType t e =
-        match t with
-          | C.Type.SpecPtr t
-          | C.Type.PhysPtr t when not vcc3 ->
-            bCall "$ref" [e]
-          | _ -> e
+      let stripType t e = e // TODO
         
       let convertArgs (fn:C.Function) args =
         let rec loop = function
@@ -438,7 +385,7 @@ namespace Microsoft.Research.Vcc
             abstractSizeUndef
 
       let mkIdx ptr idx getTypeWhichIsIgnoredForVcc3 =
-        if vcc3 then bCall "$idx" [ptr; idx] else bCall "$idx" [ptr; idx; getTypeWhichIsIgnoredForVcc3()]
+        bCall "$idx" [ptr; idx]
 
       let rec trExpr (env:Env) expr =
         let self = trExpr env
@@ -472,19 +419,12 @@ namespace Microsoft.Research.Vcc
                   | C.Type.SecLabel _ ->
                     self e'
                   | _ -> die()
-              | C.Cast ({ Type = C.Type.MathInteger _}, _, e') when e'.Type._IsPtr ->
-                if vcc3 then                
-                  bCall "$addr" [self e']
-                else
-                  bCall "$ref" [self e']
+              | C.Cast ({ Type = C.Type.MathInteger _}, _, e') when e'.Type._IsPtr -> bCall "$addr" [self e']
               | C.Expr.Cast (_, _, e') when expr.Type._IsPtr && e'.Type._IsPtr ->
-                if vcc3 then
-                  match expr.Type with
-                    | C.SpecPtr _ -> bCall "$spec_ptr_cast" [self e'; ptrType expr]
-                    | C.PhysPtr _ -> bCall "$phys_ptr_cast" [self e'; ptrType expr]
-                    | _ -> die()
-                else
-                  bCall "$ptr_cast" [self e'; ptrType expr]
+                match expr.Type with
+                  | C.SpecPtr _ -> bCall "$spec_ptr_cast" [self e'; ptrType expr]
+                  | C.PhysPtr _ -> bCall "$phys_ptr_cast" [self e'; ptrType expr]
+                  | _ -> die()
               | C.Expr.Cast ({ Type = C.Type.ObjectT }, _, C.Expr.IntLiteral(_, z)) when z = bigint.Zero -> er "$null"
               | C.Expr.Cast ({ Type = C.Type.MathInteger _}, _, e') -> self e'
               | C.Expr.Pure (_, e') -> self e'
@@ -620,12 +560,12 @@ namespace Microsoft.Research.Vcc
         match n, args with
           | "writes_check", [a] -> writesCheck env ec.Token false a
           | "prim_writes_check", [a] -> writesCheck env ec.Token true a
-          | ("in_range_phys_ptr"|"in_range_spec_ptr") as in_range, [p] when vcc3 ->
+          | ("in_range_phys_ptr"|"in_range_spec_ptr") as in_range, [p] ->
             bCall ("$" + in_range) [self p]
           | in_range, args when in_range.StartsWith ("in_range") -> bCall ("$" + in_range) (selfs args)
           | ("unchecked_sbits"|"unchecked_ubits"), args ->
             bCall ("$" + n) (selfs args)
-          | "_vcc_typed2", [_; a] when vcc3 && a.Type.IsFunctionPtr ->
+          | "_vcc_typed2", [_; a] when a.Type.IsFunctionPtr ->
             bCall "$valid_fnptr" [self a]
           | unchecked, args when unchecked.StartsWith ("unchecked_") -> bCall "$unchecked" (er ("^^" + unchecked.Substring (unchecked.IndexOf '_' + 1)) :: selfs args)
           | ("map_get"|"map_get_trig"), [a; b] ->
@@ -647,30 +587,20 @@ namespace Microsoft.Research.Vcc
           | "owns_field", [e] ->
             bCall "$f_owns" [toTypeId e.Type.Deref]
 
-          | "_vcc_rec_eq", [r1; r2] when vcc3 ->
+          | "_vcc_rec_eq", [r1; r2] ->
             bCall ("REQ#" + (recType r1.Type).Name) [self r1; self r2]
 
           | "_vcc_simple_emb", [C.Dot (_, p, _)] ->
             self p
              
           | "rec_zero", [] -> 
-            if vcc3 then
-              er ("RZ#" + (recType ec.Type).Name)
-            else
-              er "$rec_zero"
+            er ("RZ#" + (recType ec.Type).Name)
           
           | "rec_fetch", [r; C.UserData(_, (:? C.Field as f))] ->
-            if vcc3 then
-              trRecordFetch3 (recType r.Type) (self r) f
-            else
-              let fetch = bCall "$rec_fetch" [self r; er (fieldName f)]
-              intToTyped f.Type fetch
+            trRecordFetch3 (recType r.Type) (self r) f
             
           | "rec_update", [r; C.UserData(_, ( :? C.Field as f) ); v] ->
-            if vcc3 then
-              trRecordUpdate3 (recType r.Type) (self r) f (self v)
-            else
-              bCall "$rec_update" [self r; er (fieldName f); trForWrite env f.Type v]
+            trRecordUpdate3 (recType r.Type) (self r) f (self v)
           
           | "rec_update_bv", [r; C.UserData(_, (:? C.Field as f)); bvSize; bvStart; bvEnd; v] ->
             bCall "$rec_update_bv" [self r; er (fieldName f); self bvSize; self bvStart; self bvEnd; trForWrite env f.Type v]
@@ -761,7 +691,7 @@ namespace Microsoft.Research.Vcc
           | "reads_same", [ptr] ->
             let sptr = self ptr
             match ptr.Type with
-              | C.Ptr t when vcc3 && t.IsComposite ->
+              | C.Ptr t when t.IsComposite ->
                 let expr = bCall "$read_version" [bState; sptr]
                 B.Primitive ("==", [expr; B.Old expr])                
               | _ ->
@@ -970,9 +900,7 @@ namespace Microsoft.Research.Vcc
           let (codeTp, codeTh, suff) =
             if isWf then (8501, 8502, " (in well-formedness check)")
             else         (8511, 8512, "")
-          let tp =
-            if helper.Options.RunTestSuite || vcc3 then []
-            else [cond codeTp ("{0} is typed" + suff) "_vcc_typed2" [cState;p] ]
+          let tp = [] // TODO
           let th =
             match p with
               | C.Dot (_, p', f) when not f.Parent.IsUnion ->
@@ -985,7 +913,7 @@ namespace Microsoft.Research.Vcc
                   if f.IsVolatile then
                     cond codeTh ("{0} is mutable " + msg + "(accessing volatile field " + f.Name + ")" + suff) "_vcc_mutable" [cState; p']
                   else
-                    if vcc3 && not f.Type.IsComposite then
+                    if not f.Type.IsComposite then
                       cond codeTh ("{0} is thread local " + msg + "(accessing field " + f.Name + ")" + suff) "_vcc_thread_local" [cState; p']
                     else
                       cond codeTh ("{0} is thread local" + suff) "_vcc_thread_local2" [cState; p]
@@ -998,10 +926,7 @@ namespace Microsoft.Research.Vcc
                        // TODO: shouldn't that be $volatile_span()?
                       " or atomically updated", List.map (fun o -> bCall "$set_in" [trExpr env p; bCall "$span" [o]]) env.AtomicReads
                 let tok, prop =
-                  if vcc3 then
-                    cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local" [cState; p]
-                  else
-                    cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local2" [cState; p]
+                  cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local" [cState; p]
                 tok, bMultiOr (prop :: isAtomic)
           List.map B.Stmt.MkAssert (tp @ [th])
       
@@ -1023,19 +948,16 @@ namespace Microsoft.Research.Vcc
               bMultiOr
           else bFalse
         let pred = if prim || use_wr then "$writable" else "$top_writable"
-        if vcc3 then
-          let ch = 
-            if prim then
-              bCall "$writable_prim" [bState; env.WritesTime; e]
-            else
-              bCall pred (bState :: env.WritesTime :: [e])
-          bOr atomicWr ch
-          (*
-          match origPrim with
-            | Some (C.Dot (_, p, f)) when f.Parent.Kind = C.Struct ->
-            | _ -> *)
-        else
-          bOr atomicWr (bCall pred [bState; env.WritesTime; e])
+        let ch = 
+          if prim then
+            bCall "$writable_prim" [bState; env.WritesTime; e]
+          else
+            bCall pred (bState :: env.WritesTime :: [e])
+        bOr atomicWr ch
+        (*
+        match origPrim with
+          | Some (C.Dot (_, p, f)) when f.Parent.Kind = C.Struct ->
+          | _ -> *)
         
       and isInWrites (env:Env) (p:B.Expr) =
         let trWrites acc (e:C.Expr) =
@@ -1099,10 +1021,7 @@ namespace Microsoft.Research.Vcc
           | _ -> ()
         let e2' = stripType t (trExpr env e2)
         match e2.Type with
-          | C.Ptr _ ->
-            match t with 
-              | C.Ptr _ when not vcc3 -> e2'
-              | _ -> bCall "$ptr_to_int" [e2']
+          | C.Ptr _ -> bCall "$ptr_to_int" [e2']
           | C.Type.Integer _ -> e2'
           | _ ->
             castToInt (trType t) e2'
@@ -1130,23 +1049,10 @@ namespace Microsoft.Research.Vcc
       let stateChanges (env:Env) =
         if env.Writes = [] then
           bCall "$writes_nothing" [env.WritesState; bState]
-        else if vcc3 then
+        else 
           let inWr = isInWrites env (er "#p") |> bSubst [("$s", env.WritesState)]
           let wrSet = B.Lambda (Token.NoToken, [("#p", tpPtr)], [], inWr)
           bCall "$modifies" [env.WritesState; bState; wrSet]
-        else
-          let p = er "#p"
-          let t = er "#t"
-          let inWr = isInWrites env p |> bSubst [("$s", env.WritesState)]
-          let base_ = bOr (bCall "$irrelevant" [env.WritesState; p]) inWr
-          
-          let quant prop =
-            let newState = bCall prop [bState; p]
-            let stateEq = bCall (prop + "_eq") [env.WritesState; bState; p]
-            B.Expr.Forall (Token.NoToken, ["#p", tpPtr], [[newState]], weight ("writes-" + prop.Replace ("$", "")), bOr base_ stateEq)
-            
-          let timestamp = bCall "$timestamp_post" [env.WritesState; bState]
-          bMultiAnd [quant "$mem"; quant "$st"; quant "$ts"; timestamp]
               
       let rec hasSideEffect = function
         | C.Expr.Ref _
@@ -1244,8 +1150,7 @@ namespace Microsoft.Research.Vcc
             let claims_obj = List.map (fun e -> B.Stmt.MkAssume (bCall (if upgrade then "$claims_upgrade" else "$claims_obj") [er claim; trExpr env e])) objects 
             
             let assign = 
-              [B.Stmt.Assign (varRef local, if vcc3 then er claim else bCall "$ref" [er claim]);
-               ctx.AssumeLocalIs tok local;
+              [B.Stmt.Assign (varRef local, er claim);
                assumeSyncCS "claim constructed" env tok]
                                       
             let initial =
@@ -1280,10 +1185,7 @@ namespace Microsoft.Research.Vcc
         let inWritesAt = bCall "$in_writes_at" [er name; p]
         let env = { env with Writes = wr; WritesTime = er name }
         let defWrites =
-          if vcc3 then
-            B.Stmt.MkAssume (bCall "$def_writes" [bState; er name; B.Expr.Lambda (Token.NoToken, [("#p", tpPtr)], [],  (isInWrites env p))])
-          else
-            B.Stmt.MkAssume (B.Expr.Forall (Token.NoToken, [("#p", tpPtr)], [[inWritesAt]], weight "begin-writes", bEq inWritesAt (isInWrites env p)))
+          B.Stmt.MkAssume (bCall "$def_writes" [bState; er name; B.Expr.Lambda (Token.NoToken, [("#p", tpPtr)], [],  (isInWrites env p))])
         let init =
           [B.Stmt.VarDecl ((name, B.Type.Int), None);
            B.Stmt.MkAssume (bEq (er name) (bCall "$current_timestamp" [bState]));
@@ -1484,35 +1386,7 @@ namespace Microsoft.Research.Vcc
               | [B.Expr.FunctionCall ("$dot", [p; f])], "$union_reinterpret" -> [p; f]
               | _ -> args
           let resBuf, tail = 
-            if not vcc3 && resultIsObjT <> varIsObjT then
-              let tmp = "#callConv#" + (!callConvCnt).ToString()
-              incr callConvCnt
-              let vardecl = B.Stmt.VarDecl ((tmp, if resultIsObjT then tpPtr else B.Type.Int), None)
-              let resV = res.Head
-              let rs =
-                if resultIsObjT then
-                  bCall "$ref" [er tmp]
-                else
-                  match resV.Type with
-                    | C.Ptr t ->
-                      bCall "$ptr" [toTypeId t; er tmp]
-                    | _ -> die()
-              let assign = B.Stmt.Assign (varRef resV, rs)
-              let vname,_ = trVar resV
-              let setSecLabel = if (env.hasIF) then
-                                  match name' with
-                                    | ("$stack_alloc"|"$alloc"|"$spec_alloc"|"$spec_alloc_array"|"$alloc_claim") ->
-                                     [IF.setPLabel stmt.Token (er tmp) (B.Expr.Ref "$lblset.top")   // Uninitialised memory is high
-                                      assumeSync env stmt.Token
-                                      IF.setPMeta stmt.Token (er tmp) IF.getPC
-                                      assumeSync env stmt.Token
-                                      IF.setLLabel ("FlowData#"+vname) (B.Expr.Ref "$lblset.bot")   // This is the label of the pointer, not the raw data
-                                      IF.setLMeta ("FlowData#"+vname) IF.getPC]
-                                    | _ -> []
-                                else []
-              [tmp], [vardecl; assign] @ setSecLabel
-            else
-              let setSecLabel = if (env.hasIF) then
+            let setSecLabel = if (env.hasIF) then
                                   match name' with
                                     | ("$stack_alloc"|"$alloc"|"$spec_alloc"|"$spec_alloc_array"|"$alloc_claim") ->
                                      [IF.setPLabel stmt.Token (er (fst (trVar res.Head))) (B.Expr.Ref "$lblset.top")   // Uninitialised memory is high
@@ -1523,7 +1397,7 @@ namespace Microsoft.Research.Vcc
                                       IF.setLMeta ("FlowData#"+(fst (trVar res.Head))) IF.getPC]
                                     | _ -> []
                                 else []
-              List.map ctx.VarName res, setSecLabel
+            List.map ctx.VarName res, setSecLabel
           let syncEnv =
             match name' with
               | "$wrap"
@@ -1612,9 +1486,7 @@ namespace Microsoft.Research.Vcc
                   | _ -> die()
               let e1' = trExpr env e1
               let write_call_args =
-                if vcc3 then
-                  (List.rev (decomposeDot e1')) @ [e2']
-                else [e1'; e2']
+                (List.rev (decomposeDot e1')) @ [e2']
               [cmt (); 
                B.Stmt.Call (C.bogusToken, [], "$write_int", write_call_args); 
                assumeSync env e1.Token]
@@ -1650,10 +1522,10 @@ namespace Microsoft.Research.Vcc
               captureState "" ec.Token :: trAtomic trStmt env ec objs body
               
             | C.Expr.VarWrite (_, vs, C.Expr.Call (c, fn, targs, args)) -> 
-              doCall c vs (Some fn) fn.Name targs args @ List.map (fun v -> ctx.AssumeLocalIs c.Token v) vs
+              doCall c vs (Some fn) fn.Name targs args
               
             | C.Expr.VarWrite (_, vs, C.Expr.Macro (c, ("_vcc_blobify"|"_vcc_unblobify" as name), args)) -> 
-              doCall c vs None name [] args @ List.map (fun v -> ctx.AssumeLocalIs c.Token v) vs
+              doCall c vs None name [] args
               
             | C.Expr.Stmt (_, C.Expr.Call (c, fn, targs, args))        -> 
               doCall c [] (Some fn) fn.Name targs args
@@ -1670,19 +1542,16 @@ namespace Microsoft.Research.Vcc
               [cmt ()
                B.Stmt.Assign (varRef v, B.Expr.FunctionCall("$ptrclub.construct", [B.Expr.Ref "$ptrclub.empty"; trExpr env l]))]
             | C.Expr.VarWrite (c, [v], e) when (not env.hasIF) ->
-              cmt () ::
-              B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
-              ctx.AssumeLocalIs c.Token v :: []
+              [cmt ();
+               B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e))]
             | C.Expr.VarWrite (c, [v], e) when env.hasIF ->
               match v.Type with
                 | C.Type.Ref s when s.Name.StartsWith("$map_t.") ->
                   cmt () ::
-                  B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
-                  ctx.AssumeLocalIs c.Token v :: []
+                  B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) :: []
                 | C.Type.Map _ ->
                   cmt () ::
-                  B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
-                  ctx.AssumeLocalIs c.Token v :: []
+                  B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) :: []
                 | _ ->
                   let (vname,_) = trVar v
                   let asPointer =
@@ -1693,8 +1562,7 @@ namespace Microsoft.Research.Vcc
                   cmt () ::
                   B.Stmt.Assign (varRef v, stripType v.Type (trExpr env e)) ::
                   IF.setLLabel ("FlowData#"+vname) (IF.secLabelToBoogie (trExpr env) (fun v -> fst(trVar v)) secLabel) ::
-                  IF.setLMeta ("FlowData#"+vname) IF.getPC ::
-                  ctx.AssumeLocalIs c.Token v :: []
+                  IF.setLMeta ("FlowData#"+vname) IF.getPC :: []
             | C.Expr.If (ec, cl, c, s1, s2) ->
               let prefix,suffix,innerEnv = 
                 if (env.hasIF)              
@@ -1764,13 +1632,10 @@ namespace Microsoft.Research.Vcc
                     let name = "#loopWrites^" + (ctx.TokSuffix wrTok)
                     let p = er name
                     let impl = 
-                      if vcc3 then
-                        let repl = function
-                          | B.FunctionCall ("$top_writable", args) -> Some (bCall "$listed_in_writes" args)
-                          | _ -> None
-                        bImpl ((objectWritesCheck env' p).Map repl) (objectWritesCheck env p)
-                      else
-                        bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
+                      let repl = function
+                        | B.FunctionCall ("$top_writable", args) -> Some (bCall "$listed_in_writes" args)
+                        | _ -> None
+                      bImpl ((objectWritesCheck env' p).Map repl) (objectWritesCheck env p)
                     let tok = afmtet wrTok 8027 "writes clause of the block might not be included writes clause of the function" []
                     let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
                     let check = [B.Stmt.MkAssert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
@@ -1812,7 +1677,7 @@ namespace Microsoft.Research.Vcc
               let env = { env with OldState = oldState }
               let writes =
                 match writes, env.Writes with
-                  | [], fst :: rest when vcc3 ->
+                  | [], fst :: rest ->
                     fst.WithCommon ({ comm with Type = fst.Type }) :: rest
                   | x, _ -> x
               let (bump, wrCheck, env) =
@@ -1824,13 +1689,10 @@ namespace Microsoft.Research.Vcc
                     let name = "#loopWrites^" + (ctx.TokSuffix fst.Token)
                     let p = er name
                     let impl = 
-                      if vcc3 then
-                        let repl = function
-                          | B.FunctionCall ("$top_writable", args) -> Some (bCall "$listed_in_writes" args)
-                          | _ -> None
-                        bImpl ((objectWritesCheck env' p).Map repl) (objectWritesCheck env p)
-                      else
-                        bImpl (objectWritesCheck env' p) (objectWritesCheck env p)
+                      let repl = function
+                        | B.FunctionCall ("$top_writable", args) -> Some (bCall "$listed_in_writes" args)
+                        | _ -> None
+                      bImpl ((objectWritesCheck env' p).Map repl) (objectWritesCheck env p)
                     let tok = afmtet fst.Common.Token 8011 "writes clause of the loop might not be included writes clause of the function" []
                     let bump =  [B.Stmt.Call (tok, [], "$bump_timestamp", []); assumeSync env tok]
                     let check = [B.Stmt.MkAssert (tok, B.Forall (Token.NoToken, [name, tpPtr], [[bCall "$dont_instantiate" [p]]], weight "dont-inst", impl))]
@@ -1841,7 +1703,6 @@ namespace Microsoft.Research.Vcc
                   B.Stmt.Block ([B.Stmt.MkAssume (stateChanges env);
                                  B.Stmt.MkAssume (bCall "$timestamp_post" [env.OldState; bState]);
                                  assumeSync env comm.Token] @
-                                 List.map (ctx.AssumeLocalIs comm.Token) ctx.SoFarAssignedLocals @
                                  trStmt env s @
                                  [captureState "after loop iter" comm.Token] ))
               let capture = captureState "before loop" comm.Token
@@ -1854,7 +1715,6 @@ namespace Microsoft.Research.Vcc
                 let vname,_ = v'
                 cmt() ::
                 B.Stmt.VarDecl (v', w) ::
-                ctx.AssumeLocalIs b.Token v ::
                 B.Stmt.VarDecl (("FlowData#"+vname,B.Type.Ref "$flowdata"),None) ::
                 IF.setLLabel ("FlowData#"+vname) (B.Expr.Ref "$lblset.top") ::
                 IF.setLMeta ("FlowData#"+vname) (B.Expr.Ref "$lblset.bot") :: []
@@ -1863,8 +1723,7 @@ namespace Microsoft.Research.Vcc
               else
                 let (v', w) = trWhereVar v
                 cmt() ::
-                B.Stmt.VarDecl (v', w) ::
-                ctx.AssumeLocalIs b.Token v :: []
+                B.Stmt.VarDecl (v', w) :: []
             | C.Expr.Goto (c, l) when (not env.hasIF) -> [cmt (); B.Stmt.Goto (c.Token, [trLabel l])]
             | C.Expr.Goto (c,l) when (env.hasIF) ->
               let curPC = currentPC env
@@ -2199,14 +2058,14 @@ namespace Microsoft.Research.Vcc
                   | None -> read (Some t) v t 
               | C.Ref(td) when not td.IsMathValue ->
                   bCall "$vs_ctor" [ state; bCall "$dot" [bCall "$vs_base" [v; typeRef]; er (fieldName f)]]
-              | t when vcc3 ->
-                typedRead state (fldAccess v f) t
-              | C.Bool -> bCall "$read_bool" [state; fldAccess v f]
-              | C.Integer _
-              | C.Ptr _ // using $read_ptr() would add type information, but this isn't needed
-              | C.Map(_,_) -> bCall "$mem" [state; fldAccess v f]
               | t ->
-                die()
+                typedRead state (fldAccess v f) t
+//              | C.Bool -> bCall "$read_bool" [state; fldAccess v f]
+//              | C.Integer _
+//              | C.Ptr _ // using $read_ptr() would add type information, but this isn't needed
+//              | C.Map(_,_) -> bCall "$mem" [state; fldAccess v f]
+//              | t ->
+//                die()
           let read = read None
 
           match f.Type with // _vcc_deep_struct_eq.S($vs_ctor(#s2, $dot(#p, T.s1)),
@@ -2215,20 +2074,12 @@ namespace Microsoft.Research.Vcc
                 let funName = eqFunName td'.Name (if deep then "deep" else "shallow")
                 Some(bCall funName [read s1 f.Type; read s2 f.Type]) 
             | C.Array(t,n) -> 
-              if not vcc3 then
-                // not sure about this one yet
-                helper.Error(f.Token, 9730, "equality or assignment of structs with fixed-size arrays is currently only supported with /3")
               let cond = B.Expr.Primitive ("==>", [ bAnd (B.Expr.Primitive("<=", [bInt 0; idx])) (B.Expr.Primitive("<", [idx; bInt n]));
                                                       bEq (read s1 f.Type) (read s2 f.Type) ])
               Some(B.Forall(Token.NoToken, [("#i", B.Int)], [], weight "array-structeq", cond))
-            | C.Map(_,_) when not vcc3 ->                 
-              helper.Warning(f.Token, 9108, "structured type equality treats map equality as map identity")
-              Some(bEq (read s1 f.Type) (read s2 f.Type))
+
             | _ -> 
-              if vcc3 then
-                Some (typedEq f.Type (read s1 f.Type) (read s2 f.Type))
-              else
-                Some(bEq (read s1 f.Type) (read s2 f.Type))
+              Some (typedEq f.Type (read s1 f.Type) (read s2 f.Type))
         let andOpt e = function 
           | None -> e
           | Some e' -> bAnd e e'
@@ -2400,7 +2251,7 @@ namespace Microsoft.Research.Vcc
             trExpr initialEnv |>
             substOld [("$s", s1)] |>
             bSubst [("$_this", p); ("$s", s2)]
-        let toInv exprs = bMultiAnd ((if vcc3 then bTrue else bCall "$typed" [s2; p]) :: (exprs |> List.map doInv) ) 
+        let toInv exprs = bMultiAnd (exprs |> List.map doInv) 
         let invcall = bCall "$inv2" s1s2pwe
         let invWithoutLemmasCall = bCall "$inv2_without_lemmas" s1s2pwe
         let typedPtr = bCall "$ptr" [we; r]
@@ -2497,19 +2348,7 @@ namespace Microsoft.Research.Vcc
           let bExtentCall = prop (auxPtr r)
           B.Forall (Token.NoToken, qvars, [[bExtentCall]], weight "eqdef-extentprop", bEq bExtentCall body)
         
-        let allFields = 
-          match td.Fields with
-            | x when vcc3 -> x
-            | [] -> []
-            | lst -> ({ Name = "$owns" 
-                        Token = td.Token
-                        Type = C.Type.PtrSet
-                        Parent = td 
-                        IsSpec = true 
-                        IsVolatile = !owns_set_is_volatile
-                        Offset = C.FieldOffset.Normal 0 
-                        CustomAttr = []
-                        UniqueId = C.unique() } : C.Field) :: lst
+        let allFields = td.Fields
         let primFields = List.filter (function fld -> not (isComp (fld))) allFields
         let in_full_extent_of = extentCall "$in_full_extent_of" false false allFields
         
@@ -2569,24 +2408,18 @@ namespace Microsoft.Research.Vcc
                                          weight "typedef-union_active",
                                          bInvImpl firstOptionTypedCall (bCall "$union_active" [s; ptr; toFieldRef f])))
           match List.tryFind (fun (f:C.Field) -> not f.IsSpec) allFields with
-            | Some f when not vcc3 && isUnion -> [firstOptionTypedAxiom f]
-            | _ -> []
+            | _ -> [] // TODO
         
         let forward =
           [bDeclUnique tpCtype ("^" + td.Name)] @ firstOptionTyped
                           
         let forward =
-          if vcc3 then
-            let defName = if isUnion then "$def_union_type" else "$def_struct_type"
-            let defAx = bCall defName [we; bInt td.SizeOf; B.Expr.BoolLiteral !is_claimable; B.Expr.BoolLiteral !owns_set_is_volatile]
-            let seq =
-              if !owns_set_is_volatile || td.Fields |> List.exists (fun f -> f.IsVolatile) then []
-              else [B.Decl.Axiom (bCall "$is_span_sequential" [we])]
-            forward @ seq @ [B.Decl.Axiom defAx]
-          else
-            forward @ 
-              [B.Decl.Axiom (bCall "$is_composite" [we]);
-               B.Decl.Axiom (bEq (bCall "$ptr_level" [we]) (bInt 0))]
+          let defName = if isUnion then "$def_union_type" else "$def_struct_type"
+          let defAx = bCall defName [we; bInt td.SizeOf; B.Expr.BoolLiteral !is_claimable; B.Expr.BoolLiteral !owns_set_is_volatile]
+          let seq =
+            if !owns_set_is_volatile || td.Fields |> List.exists (fun f -> f.IsVolatile) then []
+            else [B.Decl.Axiom (bCall "$is_span_sequential" [we])]
+          forward @ seq @ [B.Decl.Axiom defAx]
            
         let volatile_owns = B.Decl.Axiom (bEq (bCall "$has_volatile_owns_set" [we]) (B.Expr.BoolLiteral !owns_set_is_volatile))
         let claimable = B.Decl.Axiom (bEq (bCall "$is_claimable" [we]) (B.Expr.BoolLiteral !is_claimable))
@@ -2598,24 +2431,11 @@ namespace Microsoft.Research.Vcc
           | C.StructEqualityKind.DeepEq -> (trStructEq true td) @ (trStructEq false td) @ forward
         match td.Fields with
           //| [] -> forward
-          | _ when vcc3 ->
+          | _ -> // TODO
             forward @ 
                [ B.Decl.Axiom inv; B.Decl.Axiom invWithoutLemmas; B.Decl.Axiom (trCompositeExtent td) ] 
                  @ List.concat (List.map (trField3 td) allFields)
-          | _ -> 
-            forward @ 
-              [B.Decl.Axiom (bEq (bCall "$sizeof" [we]) (bInt td.SizeOf));
-               B.Decl.Axiom inv; B.Decl.Axiom invWithoutLemmas; ] @ labeledInvs @
-                [B.Decl.Axiom in_full_extent_of;
-                 B.Decl.Axiom in_extent_of;
-                 B.Decl.Axiom in_span_of;
-                 B.Decl.Axiom state_spans_the_same;
-                 B.Decl.Axiom state_nonvolatile_spans_the_same;
-                 claimable;
-                 volatile_owns
-                 ] @ extentProps 
-                   @ List.concat (List.map (trField td) allFields)
-      
+
       let trRecord2 (td:C.TypeDecl) =
         let intKind = function
           | C.Type.Integer _ as t -> toTypeId t
@@ -2740,11 +2560,10 @@ namespace Microsoft.Research.Vcc
             let (additions, kind) = 
               match td.Kind with
                 | C.FunctDecl _ -> (typeDef, "fnptr")
-                | C.Record when vcc3 -> (trRecord3 td, "record")
-                | C.Record -> (trRecord2 td, "record")
+                | C.Record -> (trRecord3 td, "record")
                 | _ when td.IsDataType -> (trDataType td, "datatype")
                 | _ -> (typeDef, "math")
-            let def = if vcc3 then "$def_" else "$is_"
+            let def = "$def_" 
                         
             [B.Decl.Const { Unique = true
                             Name = "^" + name
@@ -2753,7 +2572,7 @@ namespace Microsoft.Research.Vcc
              ] @ additions
 
       let equalityInstantiation (h:C.Function) fappl parameters =
-        if vcc3 && not h.IsStateless then
+        if not h.IsStateless then
           let f0 = bSubst ["#s", er "#s0"] fappl
           let f1 = bSubst ["#s", er "#s1"] fappl
           match typedEq h.RetType f0 f1 with
@@ -2945,26 +2764,24 @@ namespace Microsoft.Research.Vcc
                             // writes(set_universe()) is for debugging, so disable the immediate false that we could conclude
                             // writes(set_empty()) doesn't mean anything, so also ignore it
                             bTrue
-                          | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent"), args) when vcc3 ->
+                          | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent"), args) ->
                             let args = if args.Length = 1 then bState :: args else args
                             bCall "$extent_mutable" args
-                          | B.Expr.FunctionCall ("$span", [o]) when vcc3 ->
+                          | B.Expr.FunctionCall ("$span", [o]) ->
                             bCall "$mutable" [bState; o]
-                          | B.Expr.FunctionCall ("$array_range", args) when vcc3 ->
+                          | B.Expr.FunctionCall ("$array_range", args) ->
                             bCall "$initially_mutable_array" args
                           | B.Expr.FunctionCall (("$struct_extent" | "$extent" | "$full_extent" | "$span"), args) ->
-                            if vcc3 then bCall "$initially_mutable" [bState; e']
-                            else mut (Some (List.head (List.rev args))) "$mutable"
+                            bCall "$initially_mutable" [bState; e']
                           | _ -> 
-                            if vcc3 then bCall "$initially_thread_owned_or_mutable" [bState; e']
-                            else mut None "$thread_owned_or_even_mutable"                            
+                            bCall "$initially_thread_owned_or_mutable" [bState; e']
                       | _ -> bTrue
                   B.Stmt.MkAssume assump
                   
                 let inParams = h.Parameters |> List.filter (fun v -> v.Kind <> C.VarKind.OutParameter)
                 let inParamLabels = if env.hasIF then List.collect (fun (v:CAST.Variable) -> [B.Stmt.VarDecl (("FlowData#P#"+(v.Name),B.Type.Ref "$flowdata"), None)]) inParams
                                                  else []
-                let init = List.map (ctx.AssumeLocalIs h.Token) inParams @ inParamLabels @ init                    
+                let init = inParamLabels @ init                    
                 
                 let can_frame =
                   if List.exists (function C.ReadsCheck _ -> true | _ -> false) h.CustomAttr then []
@@ -3027,59 +2844,43 @@ namespace Microsoft.Research.Vcc
               let res = trExpr initialEnv e
               let res = res.Map replMS
 
-              if vcc3 then
-                let e =
-                  if not !seenState then e
-                  else
-                    let stateVar = C.Variable.CreateUnique "__vcc_state" C.Type.MathState C.VarKind.QuantBound
-                    let stateRef = C.Expr.Ref ({ C.bogusEC with Type = stateVar.Type }, stateVar)
-                    let inState (e:C.Expr) =
-                      let ec = { e.Common with Token = WarningSuppressingToken (e.Token, 9106) }
-                      C.Old (ec, stateRef, e)
-                    let goodState = C.Expr.Macro (C.boolBogusEC(), "prelude_good_state", [stateRef])
-                    match e with
-                      | C.Quant (ec, ({ Kind = C.Forall } as qd)) ->
-                        let qd =
-                          { qd with 
-                              Variables = stateVar :: qd.Variables
-                              Body = inState qd.Body
-                              Condition =
-                                match qd.Condition with
-                                  | Some c -> Some (TransUtil.mkAnd goodState (inState c))
-                                  | None -> Some goodState
-                              Triggers = List.map (List.map inState) qd.Triggers }
-                        C.Quant (ec, qd)
-                      | _ ->
-                        let qd = 
-                            {
-                              Kind = C.QuantKind.Forall
-                              Variables = [stateVar]
-                              Triggers = []
-                              Condition = Some goodState
-                              Body = inState e
-                            } : C.QuantData
-                        C.Expr.Quant (e.Common, qd)
-                // run trExpr again, so it will infer triggers 
-                [B.Decl.Axiom (trExpr initialEnv e)]
-              else
-                let res, vars = 
-                  if !seenState then (bImpl (bCall "$good_state" [er "#s"]) res), [("#s", tpState)] else res, []
-                  //if !seenState then res, [("#s", tpState)] else res, []
-                let res =
-                  match vars, res with
-                    | [], _ -> res
-                    | _, B.Expr.Forall (tok, vars2, triggers, attrs, body) ->
-                      B.Expr.Forall (tok, vars @ vars2, triggers, attrs, body)
-                    | _, _ -> 
-                      B.Expr.Forall (Token.NoToken, vars, [], weight "user-axiom", res)
-                [B.Decl.Axiom res]
+              let e =
+                if not !seenState then e
+                else
+                  let stateVar = C.Variable.CreateUnique "__vcc_state" C.Type.MathState C.VarKind.QuantBound
+                  let stateRef = C.Expr.Ref ({ C.bogusEC with Type = stateVar.Type }, stateVar)
+                  let inState (e:C.Expr) =
+                    let ec = { e.Common with Token = WarningSuppressingToken (e.Token, 9106) }
+                    C.Old (ec, stateRef, e)
+                  let goodState = C.Expr.Macro (C.boolBogusEC(), "prelude_good_state", [stateRef])
+                  match e with
+                    | C.Quant (ec, ({ Kind = C.Forall } as qd)) ->
+                      let qd =
+                        { qd with 
+                            Variables = stateVar :: qd.Variables
+                            Body = inState qd.Body
+                            Condition =
+                              match qd.Condition with
+                                | Some c -> Some (TransUtil.mkAnd goodState (inState c))
+                                | None -> Some goodState
+                            Triggers = List.map (List.map inState) qd.Triggers }
+                      C.Quant (ec, qd)
+                    | _ ->
+                      let qd = 
+                          {
+                            Kind = C.QuantKind.Forall
+                            Variables = [stateVar]
+                            Triggers = []
+                            Condition = Some goodState
+                            Body = inState e
+                          } : C.QuantData
+                      C.Expr.Quant (e.Common, qd)
+              // run trExpr again, so it will infer triggers 
+              [B.Decl.Axiom (trExpr initialEnv e)]
 
             | C.Top.Global ({ Kind = C.ConstGlobal ; Type = C.Ptr t } as v, _) ->
-              if vcc3 then
-                [bDeclUnique tpPtr (ctx.VarName v);
-                 B.Decl.Axiom (bCall "$def_global" [varRef v; toTypeId t])]
-              else
-                [bDeclUnique B.Type.Int (ctx.VarName v)]
+              [bDeclUnique tpPtr (ctx.VarName v);
+                B.Decl.Axiom (bCall "$def_global" [varRef v; toTypeId t])]
 
             | C.Top.Global _ -> die()
           with

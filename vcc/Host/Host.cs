@@ -18,6 +18,8 @@ namespace Microsoft.Research.Vcc
 
   public class VccCommandLineHost
   {
+    const string StandardPreludePath = "Vcc3Prelude.bpl";
+
     /// <summary>
     /// The main entry point for the application.
     /// </summary>
@@ -42,7 +44,7 @@ namespace Microsoft.Research.Vcc
           dummyHostEnvironment.Errors += cciErrorHandler.HandleErrors;
           var commandLineOptions = OptionParser.ParseCommandLineArguments(dummyHostEnvironment, args);
           commandLineOptions.RunningFromCommandLine = true;
-          standardPreludePath = commandLineOptions.PreludePath;
+          standardPreludePath = "Vcc3Prelude.bpl"; 
           cciErrorHandler.CommandLineOptions = commandLineOptions;
           verificationErrorHandler = new VerificationErrorHandler(commandLineOptions);
 
@@ -132,7 +134,7 @@ namespace Microsoft.Research.Vcc
         Plugin selectedPlugin = null;
         VCGenPlugin vcgenPlugin = null;
 
-        if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp || commandLineOptions.Vcc3)
+        if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp)
         {
           pluginManager = new PluginManager(commandLineOptions);
           string pluginDir = PathHelper.PluginDir;
@@ -151,13 +153,6 @@ namespace Microsoft.Research.Vcc
               return null;
             }
           }
-
-          /*
-          if (commandLineOptions.Vcc3 && pluginName == null) {
-            pluginName = "Vcc3";
-            commandLineOptions.PluginOptions[pluginName] = new List<string>();
-          }
-           */
 
           if (pluginName != null)
           {
@@ -622,11 +617,10 @@ namespace Microsoft.Research.Vcc
     }
 
     static List<String> standardPreludeLines;
-    static string standardPreludePath;
 
     private static Program GetStandardPrelude()
     {
-      string _preludePath = PathHelper.PreludePath(standardPreludePath);
+      string _preludePath = PathHelper.PreludePath(StandardPreludePath);
       if (standardPreludeLines == null)
       {
         var lines = File.ReadAllLines(_preludePath, Encoding.UTF8);

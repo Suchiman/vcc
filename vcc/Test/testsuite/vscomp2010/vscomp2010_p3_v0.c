@@ -1,4 +1,3 @@
-//` /it
 #include <vcc.h>
 
 struct Node {

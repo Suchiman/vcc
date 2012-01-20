@@ -621,8 +621,8 @@ module Termination =
     decls
 
   let init (helper:Helper.Env) =
-    if helper.Options.Vcc3 then
-      helper.AddTransformerAfter ("termination-compute-cycles", Helper.Decl (fun decls -> checkCallCycles (helper, decls); decls), "begin")
-      helper.AddTransformer ("termination-set-level", Helper.Decl (setDecreasesLevel helper))
-      helper.AddTransformer ("termination-add-checks", Helper.Decl (insertTerminationChecks helper))
-      helper.AddTransformerBefore ("termination-insert-placeholders", Helper.Decl (terminationCheckingPlaceholder helper), "desugar-lambdas")
+
+    helper.AddTransformerAfter ("termination-compute-cycles", Helper.Decl (fun decls -> checkCallCycles (helper, decls); decls), "begin")
+    helper.AddTransformer ("termination-set-level", Helper.Decl (setDecreasesLevel helper))
+    helper.AddTransformer ("termination-add-checks", Helper.Decl (insertTerminationChecks helper))
+    helper.AddTransformerBefore ("termination-insert-placeholders", Helper.Decl (terminationCheckingPlaceholder helper), "desugar-lambdas")

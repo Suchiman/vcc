@@ -131,11 +131,9 @@ namespace Microsoft.Research.Vcc
       let invLabelConstants = ref []
       let floatLiterals = new Dict<_,_>()
       
-      let vcc3 = helper.Options.Vcc3
-
       let addDecls lst = tokenConstants := lst @ !tokenConstants
     
-      let defaultWeights = if vcc3 then [("user-forall", 10); ("user-exists", 10); ("eqprop", 5); ("", 1)] else [("", 1)]
+      let defaultWeights = [("user-forall", 10); ("user-exists", 10); ("eqprop", 5); ("", 1)]
     
       let weights = defaultWeights
       let weight (id:string) =
@@ -206,11 +204,7 @@ namespace Microsoft.Research.Vcc
             internalizeType t (bCall "$ptr_to" [toTypeId' false tp])
           | C.Type.SpecPtr tp ->
             internalizeType t (bCall "$spec_ptr_to" [toTypeId' false tp])
-          | C.Type.ObjectT ->
-            if vcc3 then
-              er "^^object"
-            else
-              toTypeId' false (C.Type.PhysPtr C.Void)
+          | C.Type.ObjectT -> er "^^object"
           | C.Type.Array (tp, _) when translateArrayAsPtr ->
             internalizeType (C.Type.PhysPtr tp) (bCall "$ptr_to" [toTypeId' translateArrayAsPtr tp])
           | C.Type.Array (tp, sz) ->
@@ -263,11 +257,7 @@ namespace Microsoft.Research.Vcc
           | C.Type.MathInteger _
           | C.Type.Integer _  -> B.Type.Int
           | C.Type.SpecPtr _
-          | C.Type.PhysPtr _ -> 
-            if vcc3 then
-              tpPtr
-            else
-              B.Type.Int
+          | C.Type.PhysPtr _ -> tpPtr
           | C.Type.Primitive _ -> tpPrimitive
           | C.Type.Bool -> B.Type.Bool
           | C.Type.ObjectT -> tpPtr
@@ -279,13 +269,10 @@ namespace Microsoft.Research.Vcc
             let bt2 = trType t2
             let mapName = typeIdToName (toTypeId t)
             let mapType = B.Type.Ref mapName
-            if vcc3 || not (t1 = C.Type.ObjectT && t2 = C.Type.Bool) then
-              if mapTypes.Add mapName then
-                mapTypeList.Add t
+            if mapTypes.Add mapName then
+              mapTypeList.Add t
             mapType
-          | C.Type.Ref ({ Kind = C.Record } as td) ->
-            if helper.Options.Vcc3 then B.Type.Ref ("RT#" + td.Name)
-            else B.Type.Ref "$record"
+          | C.Type.Ref ({ Kind = C.Record } as td) -> B.Type.Ref ("RT#" + td.Name)
           | C.Type.Ref td when td.IsDataType -> B.Type.Ref ("DT#" + td.Name)
           | C.Type.Ref ({ Name = n; Kind = (C.MathType|C.FunctDecl _) }) ->
             match n with
@@ -399,25 +386,7 @@ namespace Microsoft.Research.Vcc
           | C.Type.PhysPtr t ->
             bCall "$ptr" [toTypeId t; e]
           | _ -> e
-      
-      // TODO: this shouldn't be here
-      member this.AssumeLocalIs tok (l:C.Variable) =
-        if this.Helper.Options.Vcc3 then B.Stmt.Empty
-        else
-          let pos = this.GetTokenConst tok
-          let name = "#loc." + l.Name
-          if not (tokenConstantNames.Contains name) then
-            soFarAssignedLocals := l :: !soFarAssignedLocals
-          this.RegisterToken name
-          let valIs suff v = bCall ("$local_value_is" + suff) [bState; er pos; er name; v; toTypeId l.Type]
-          let cond =
-            match l.Type with
-              | C.Ptr _ when not vcc3 -> 
-                let v' = this.AddType l.Type (this.VarRef l)
-                bAnd (valIs "" (bCall "$ptr_to_int" [v'])) (valIs "_ptr" v')
-              | _ -> valIs "" (this.CastToInt (trType l.Type) (this.VarRef l))
-          B.Stmt.MkAssume cond
-        
+              
       member this.TrInvLabel (lbl:string) =
         let result = "l#" + lbl;
         if invLabels.Add result then 

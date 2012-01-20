@@ -120,6 +120,7 @@
   <data name="Usage" xml:space="preserve">
     <value>/aggressivepruning             Remove unreferenced items when verifying specific functions (Short form: /a)
 /boogie:&lt;boogie option list&gt;   Options to pass on to Boogie (Short form: /b)
+/bvd                           Generate counter examples for the Boogie Verification Debugger
 /checked[+|-]                  Generate arithmetic overflow checks (Short form: /c)
 /determinize                   Sort items to generate more deterministic Boogie files (Short form: /det)
 /dumpsource0                   Print source before syntax transformations (Short form: /d0)
@@ -132,8 +133,6 @@
 /inspector                     Run Z3 Inspector to show progress of verification (Short form: /i)
 /ignoreincludes[:&lt;filename&gt;]   Only verify entities from the files on the command line, not included files (Short form: /ii)
                  With filename: verify only entities from that file
-/model                         Save model to &lt;currentFile&gt;.vccmodel (Short form: /m)
-/modelviewer                   Run VCC Model Viewer in case models are available (implies /m; Short form: /mv)
 /modifiedpreprocessorfile      Save C preprocessor output to &lt;currentFile&gt;.i.&lt;PID&gt;
 /nopreprocessor                Do not invoke the C preprocessor on the input files (Short form: /n)
 /noverification                Do not run the verification; stop after semantic analysis (Short form: /nv)
@@ -165,7 +164,6 @@
 /warn:&lt;n&gt;                      Set warning level (0-2), default is 1 (Short form: /w)
 /xml:&lt;fil&gt;                     Write XML log to &lt;file&gt;.
 /z3:&lt;z3 option list&gt;           Options to pass on to Z3 (Short form: /z)
-/infertriggers[+|-]            Infer quantifier trigger annotations in VCC, not in SMT solver (Short form: /it)
 /dumptriggers:&lt;n&gt;              1-report inferred triggers, 2-report results for different {:level}s, 3-report also when explicit triggers are present, 4-include Boogie form, 5-debug (Short form: /dt)</value>
   </data>
   <data name="Version" xml:space="preserve">

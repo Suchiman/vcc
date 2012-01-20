@@ -61,12 +61,6 @@ namespace Microsoft.Research.Vcc
     {
       base.Close();
       CloseVcGen();
-      if (modelCount > 0 && parent.options.RunModelViewer && parent.ModelFileName != null) {
-        var p = new System.Diagnostics.Process();
-        p.StartInfo = new System.Diagnostics.ProcessStartInfo(PathHelper.ModelViewerPath, PathHelper.Quote(parent.ModelFileName));
-        p.StartInfo.UseShellExecute = false;
-        p.Start();
-      }
     }
 
     private static string/*?*/ GetStringAttrValue(Implementation impl, string attrName) {
@@ -105,13 +99,8 @@ namespace Microsoft.Research.Vcc
         options.Add(PathHelper.InspectorOption);
 
       options.AddRange(standardBoogieOptions);
-      if (parent.options.Vcc3) {
-        options.Add("/z3opt:QI_EAGER_THRESHOLD=1000");
-      }
-      if (parent.ModelFileName != null) {
-        options.Add("/printModel:1");
-        options.Add("/printModelToFile:" + parent.ModelFileName);
-      }
+      options.Add("/z3opt:QI_EAGER_THRESHOLD=1000");
+
       if (parent.BvdModelFileName != null) {
         options.Add("/mv:" + parent.BvdModelFileName);
       }
@@ -210,6 +199,8 @@ namespace Microsoft.Research.Vcc
         if (isBvLemmaCheck) {
           effectiveOptions.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
           effectiveOptions.Add("/z3opt:CASE_SPLIT=1");
+        } else {
+          effectiveOptions.Add("/z3opt:CASE_SPLIT=5");
         }
 
         if (skipSmoke) {
@@ -391,7 +382,6 @@ namespace Microsoft.Research.Vcc
   internal class VccPlugin : Plugin
   {
     internal VccOptions options;
-    internal string ModelFileName;
     internal string BvdModelFileName;
     internal VCGenPlugin plugin;
 
@@ -494,7 +484,6 @@ namespace Microsoft.Research.Vcc
       Transformers.init(env);
       Transformers.processPipeOptions(env);
       options = env.Options;
-      this.ModelFileName = options.SaveModel ? AddOutputDirIfRequested(Path.ChangeExtension(filename, "vccmodel")) : null;
       this.BvdModelFileName = options.SaveModelForBvd ? AddOutputDirIfRequested(Path.ChangeExtension(filename, "model")) : null;
     }
 

@@ -118,9 +118,8 @@ namespace Microsoft.Research.Vcc
               None
         else None
       | _ -> None
-    if helper.Options.Vcc3 then
-      deepMapExpressionsCtx aux decls
-    else decls
+
+    deepMapExpressionsCtx aux decls
 
   let handleConversions helper = 
     deepMapExpressions (doHandleComparison helper) >> 
@@ -1117,7 +1116,6 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
    
     let fixAsArrayRefs self = function
-      | _ when not helper.Options.Vcc3 -> None
       | Dot (ec, p, f) when hasCustomAttr AttrAsArray f.CustomAttr ->
         Some (Macro (ec, "prelude_as_array_first_index", [Dot (ec, self p, f)]))
       | _ -> None
@@ -1292,6 +1290,5 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("norm-atomic-inline", Helper.Decl inlineAtomics)
     helper.AddTransformer ("norm-reintp", Helper.Expr normalizeReinterpretation)
     helper.AddTransformer ("norm-on-unwrap", Helper.Decl normalizeOnUnwrap)
-    if helper.Options.Vcc3 then
-      helper.AddTransformer ("norm-strings", Helper.Decl desugarStringLiterals)
+    helper.AddTransformer ("norm-strings", Helper.Decl desugarStringLiterals)
     helper.AddTransformer ("norm-end", Helper.DoNothing)

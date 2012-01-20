@@ -1,4 +1,3 @@
-//` /it
 #include <vcc.h>
 
 _(logic bool sorted(int *buf, unsigned len) =
