@@ -152,7 +152,6 @@
     <Compile Include="CustomVerifyForm.Designer.cs">
       <DependentUpon>CustomVerifyForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="ErrorModelToolWindow.cs" />
     <Compile Include="CompilerSettings.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -220,18 +219,6 @@
     <ProjectReference Include="..\SyntaxHighlightingParser\SyntaxHighlightingParser.fsproj">
       <Project>{2CEF7032-BCDB-4B3B-BACC-F18EA9CBB25E}</Project>
       <Name>SyntaxHighlightingParser</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Tools\ModelViewer\ModelViewer\VccModelViewer.csproj">
-      <Project>{19CF9E68-12F6-4249-ADE9-D9D7EC18F41D}</Project>
-      <Name>VccModelViewer</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Tools\ModelViewer\Model\VccModel.csproj">
-      <Project>{58F55EE8-F35F-427F-B4C3-F650A9843485}</Project>
-      <Name>VccModel</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Tools\ModelViewer\Z3ModelParser\Z3ModelParser.csproj">
-      <Project>{3CE03E07-26AB-4969-97AD-BDDCE41B0A28}</Project>
-      <Name>Z3ModelParser</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
