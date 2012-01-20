@@ -1,0 +1,38 @@
+#include "vcc.h"
+
+union U {
+   struct {
+    volatile int a;
+    volatile int b;
+  } _(m1);
+
+  _(invariant \depends(\this->\owner, \this))
+  
+  struct {
+    unsigned int c;
+    unsigned int d;
+  };
+};
+
+_(dynamic_owns) struct S {
+	union U uc;
+	_(invariant \mine(&uc))
+	_(ghost \claim c;)
+	_(invariant \mine(c) && (\union_active(&(&uc)->m1) ==> \claims(c, (&(&uc)->m1)->\closed)))
+	_(invariant \union_active(&(&uc)->m1) ==> \mine(&(&uc)->m1))
+	int dummy;
+};
+
+void foo(struct S *s)
+  _(maintains \wrapped(s))
+  _(requires \union_active(&(&s->uc)->m1))
+{
+	_(atomic &(&s->uc)->m1) {
+		s->uc.a = 12;
+	}
+}
+`
+Verification of U#adm succeeded.
+Verification of S#adm succeeded.
+Verification of foo succeeded.
+`

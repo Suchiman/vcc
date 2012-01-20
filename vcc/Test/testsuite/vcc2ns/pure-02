@@ -1,0 +1,38 @@
+#include <vcc2test.h>
+
+void donothing_nonpure();
+
+_(pure)
+void donothing_pure()
+{
+  int x = 0;
+  x++;
+  x++;
+}
+
+
+void t1(int *x)
+{
+  donothing_pure();
+  _(assert \old(\embedding(x)) == \embedding(x))
+}
+
+void t1_fail(int *x)
+{
+  donothing_nonpure();
+  _(assert \old(\embedding(x)) == \embedding(x))
+}
+
+void t1_failAlso(int *x)
+{
+  donothing_nonpure();
+  _(assert \old(\embedding(x)) != \embedding(x))
+}
+`
+Verification of donothing_pure succeeded.
+Verification of t1 succeeded.
+Verification of t1_fail failed.
+testcase(23,12) : error VC9500: Assertion '\old(\embedding(x)) == \embedding(x)' did not verify.
+Verification of t1_failAlso failed.
+testcase(29,12) : error VC9500: Assertion '\old(\embedding(x)) != \embedding(x)' did not verify.
+`
